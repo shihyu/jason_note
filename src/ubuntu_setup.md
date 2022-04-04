@@ -1,0 +1,169 @@
+## 開發環境安裝
+
+
+
+### 選擇套件來源
+
+```sh
+sudo /usr/bin/software-properties-gtk
+```
+
+### ubuntu 20.04 package
+
+```sh
+sudo apt-get install autoconf automake linux-headers-`uname -r` \
+                     libclang-dev p7zip guake p7zip-full liblzma-dev \
+                     indicator-multiload filezilla pidgin pcmanx-gtk2 gparted meld \
+                     speedcrunch vim ssh id-utils cflow autogen \
+                     cutecom hexedit ccache clang pbzip2 smplayer plink putty-tools \
+                     ghex doxygen doxygen-doc libstdc++6 lib32stdc++6 build-essential \
+                     doxygen-gui graphviz git-core cconv alsa-oss wmctrl terminator \
+                     curl gnome-tweak-tool cgdb dos2unix libreadline-dev \
+                     hexedit ccache ruby subversion htop astyle ubuntu-restricted-extras \
+                     libncurses5-dev xdot exuberant-ctags cscope \
+                     libsdl1.2-dev gitk libncurses5-dev binutils-dev gtkterm \
+                     libtool mpi-default-dev libbz2-dev libicu-dev python-dev scons csh \
+                     enca ttf-anonymous-pro libperl4-corelibs-perl cgvg catfish gawk \
+                     i2c-tools sshfs wavesurfer audacity fcitx fcitx-chewing libswitch-perl bin86 \
+                     inotify-tools u-boot-tools subversion crash tree mscgen krename umbrello \
+                     intel2gas kernelshark trace-cmd pppoe dcfldd flex bison help2man \
+                     texinfo texi2html ghp-import autossh samba sdcv xournal cloc geogebra \
+                     libluajit-5.1-dev libacl1-dev libgpmg1-dev libgtk-3-dev libgtk2.0-dev \
+                     liblua5.2-dev libperl-dev libselinux1-dev libtinfo-dev libxaw7-dev \
+                     libxpm-dev libxt-dev lua5.2 python3-dev ruby ruby-dev tcl-dev gnome-control-center
+```
+
+### ubuntu 有線連線不見（網路圖示不見）解決方法
+
+```sh
+sudo apt-get install gnome-control-center
+sudo service network-manager stop
+sudo rm /var/lib/NetworkManager/NetworkManager.state
+sudo service network-manager start
+sudo gedit /etc/NetworkManager/NetworkManager.conf
+（把false改成true）
+sudo service network-manager restart
+```
+
+
+
+### gnome-open
+
+```sh
+sudo ln -s /usr/bin/xdg-open ~/.mybin/o
+```
+
+
+
+### 將 /tmp 設到 RamDisk (tmpfs) 的方法
+
+
+
+```sh
+基本上只要打以下指令，就能將 /tmp 綁定到 /dev/shm
+mkdir /dev/shm/tmp
+chmod 1777 /dev/shm/tmp
+sudo mount --bind /dev/shm/tmp /tmp
+
+※ 註：為何是用 mount --bind 綁定，而不是 ln -s 軟連結，原因是 /tmp 目錄，系統不給刪除。
+
+不過每次開機都要打指令才能用，這樣是行不通的，必須讓它開機時自動執行，才會方便。
+
+用文書編輯器，建立 /etc/init.d/ramtmp.sh 內容如下：
+
+#!/bin/sh
+# RamDisk tmp
+PATH=/sbin:/bin:/usr/bin:/usr/sbin
+
+mkdir -p /dev/shm/tmp
+mkdir -p /dev/shm/cache
+mount --bind /dev/shm/tmp /tmp
+mount --bind /dev/shm/cache /home/shihyu/.cache
+chmod 1777 /dev/shm/tmp
+chmod 1777 /dev/shm/cache
+
+
+將此檔改權限為 755，使其可執行
+
+sudo chmod 755 /etc/init.d/ramtmp.sh
+
+在 /etc/rcS.d 中，建立相關軟連結(捷徑)，使其一開機就執行 以下指令僅能終端機操作
+
+cd /etc/rcS.d
+sudo ln -s ../init.d/ramtmp.sh S50ramtmp.sh
+```
+
+
+
+### im-config  新酷音
+
+```sh
+sudo apt-get install fcitx-table-boshiamy (嘸蝦米）
+sudo apt-get install fcitx-table-cangjie-big （倉頡大字集）
+sudo apt-get install fcitx-table-zhengma-large （鄭碼大字集）
+sudo apt-get install fcitx-table-wubi-large （五筆大字集）
+sudo apt-get install fcitx-chewing （新酷音）
+sudo apt-get install fcitx-sunpinyin （雙拼）
+sudo apt-get install fcitx-table-easy-big （輕鬆大詞庫）
+sudo apt-get install fcitx-m17n
+sudo apt-get remove ibus
+
+im-config
+
+選fcitx為預設
+重開機或登入
+在有可輸入中文的框中，按Ctrl+Space，然後用Ctrl+Shift選輸入法輸入，預設的簡繁轉換為Ctrl+Shift+F
+```
+
+### Gitbook 安裝
+
+```sh
+sudo apt-get update
+sudo apt-get install nodejs
+sudo apt-get install npm
+
+sudo npm install gitbook -g
+```
+
+### node 安裝
+
+```sh
+https://nodejs.org/en/  
+
+export N_PREFIX=$HOME/.mybin/node-v17.8.0-linux-x64/
+export PATH=$N_PREFIX/bin:$PATH
+```
+
+
+
+### 多個 SSH Key 對應多個 Github 帳號
+
+```sh
+$ cd ~/.ssh
+$ ssh-keygen -t rsa -C "account1@email.com" -f id_rsa_account1
+$ ssh-keygen -t rsa -C "account2@email.com" -f id_rsa_account2
+
+建立 config 檔
+$ cd ~/.ssh
+$ touch config
+$ gedit config
+
+#account1
+Host github.com-account1
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_rsa_account1
+
+#account2
+Host github.com-account2
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_rsa_account2
+    
+修改相對應 repo 的 remote url。例如：
+ssh://git@github.com-account1/github account/repo1.git
+github account 是github帳號 ex : jasonblog , ccccjason , shihyu
+```
+
+
+
