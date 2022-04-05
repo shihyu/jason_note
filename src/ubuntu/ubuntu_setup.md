@@ -183,3 +183,13 @@ github account 是github帳號 ex : jasonblog , ccccjason , shihyu
 
 
 
+## Rust
+
+```sh
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
+
+更新 Rust 版本
+rustup update
+```
+
