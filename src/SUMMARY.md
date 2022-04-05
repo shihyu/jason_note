@@ -9,3 +9,6 @@
   - [Rust 生命周期 (Lifetime)](rust/lifetime.md)
   - [Rust 型別系統](rust/type.md)
 - [Go](go/go.md)
+  - [Go編程實戰派基礎入門](go/Go編程實戰派基礎入門.md)
+  - [Go編程實戰派Web開發基礎](go/Go編程實戰派Web開發基礎.md)
+
