@@ -33,3 +33,25 @@ sudo n 16
 sudo apt-get install xclip xsel
 ```
 
+
+
+- ~/.config/nvim/coc-settings.json
+
+```sh
+{
+    "java.home": "/usr/lib/jvm/java-13-openjdk-amd64/",
+    "python.pythonPath": "/home/shihyu/anaconda3/bin/python",
+}
+```
+
+```sh
+clangd.path 要空的
+
+CocInstall coc-clangd
+CocCommand clangd.install
+```
+
+
+
+
+
