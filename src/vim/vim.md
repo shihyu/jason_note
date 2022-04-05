@@ -1,8 +1,4 @@
-## NVIM
-
-
-
-### 編譯
+## NVIM 編譯
 
 ```sh
 # 關閉  anaconda 因為編譯環境會導向 anaconda lib
