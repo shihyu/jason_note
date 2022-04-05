@@ -6,5 +6,12 @@
 
 - [SSH](ssh/ssh.md)
 
+- [Rust](rust/rust.md)
+  - [Rust 基本教學](rust/basic.md)
+  - [Rust 所有權系統](rust/ownership.md)
+  - [Rust 生命周期 (Lifetime)](rust/lifetime.md)
+  - [Rust 型別系統](rust/type.md)
+
+
 
 
