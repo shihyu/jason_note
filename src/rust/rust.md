@@ -76,3 +76,5 @@ rustup self uninstall
 - [通过大量的链表学习Rust](https://weathfold.gitbooks.io/rust-too-many-lists-zhcn/content/)
 - [Rust入門祕籍](https://shihyu.github.io/rust_hacks/)
 - [Rust 程式設計語言](https://rust-lang.tw/book-tw/title-page.html#rust-程式設計語言)
+  - https://github.com/rust-tw/book-tw
+
