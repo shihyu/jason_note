@@ -1,6 +1,14 @@
 ## 開發環境安裝
 
-
+```sh
+git clone https://github.com/clvv/fasd
+git clone https://github.com/junegunn/fzf
+git clone https://github.com/sharkdp/fd
+git clone https://github.com/cgdb/cgdb
+git clone https://github.com/neovim/neovim.git
+git clone https://github.com/BurntSushi/ripgrep
+git clone https://github.com/ggreer/the_silver_searcher
+```
 
 ### 選擇套件來源
 
