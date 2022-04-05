@@ -41,6 +41,16 @@ sudo apt-get install autoconf automake linux-headers-`uname -r` \
  libxpm-dev libxt-dev lua5.2 python3-dev ruby ruby-dev tcl-dev gnome-control-center
 ```
 
+
+
+## foliate 支持.epub，.mobi，.azw和.azw3文件。 它不支持PDF文件。
+
+```sh
+sudo add-apt-repository ppa:apandada1/foliate
+sudo apt update
+sudo apt install foliate
+```
+
 ### ubuntu 有線連線不見（網路圖示不見）解決方法
 
 ```sh
