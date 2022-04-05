@@ -1,4 +1,6 @@
-## 開發環境安裝
+## ubuntu
+
+### 開發環境安裝
 
 ```sh
 git clone https://github.com/clvv/fasd
