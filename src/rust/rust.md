@@ -62,3 +62,17 @@ rustup self uninstall
 
 - https://www.rust-lang.org/tools/install
 - https://doc.rust-lang.org/book/ch01-01-installation.html
+
+---
+
+### 學習網站
+
+- [令狐一沖](https://github.com/anonymousGiga/learn_rust/)
+- [Rust 程式設計語言](https://rust-lang.tw/book-tw/#rust-程式設計語言)
+- [通過例子學 Rust 中文版](https://rustwiki.org/zh-CN/rust-by-example/)
+- [RustPrimer](https://rustcc.gitbooks.io/rustprimer/content/)
+- [RustPrimer繁體](https://shihyu.github.io/RustPrimerBook/)
+- [Rust學習筆記](https://skyao.io/learning-rust/)
+- [通过大量的链表学习Rust](https://weathfold.gitbooks.io/rust-too-many-lists-zhcn/content/)
+- [Rust入門祕籍](https://shihyu.github.io/rust_hacks/)
+- [Rust 程式設計語言](https://rust-lang.tw/book-tw/title-page.html#rust-程式設計語言)
