@@ -39,16 +39,20 @@ sudo apt-get install xclip xsel
 
 ```sh
 {
-    "java.home": "/usr/lib/jvm/java-13-openjdk-amd64/",
-    "python.pythonPath": "/home/shihyu/anaconda3/bin/python",
+// 要空
 }
 ```
 
 ```sh
 clangd.path 要空的
-
 CocInstall coc-clangd
 CocCommand clangd.install
+
+CocInstall coc-go
+CocCommand go.install.gopls
+
+CocInstall coc-pyright
+CocInstall coc-json coc-tsserver
 ```
 
 
