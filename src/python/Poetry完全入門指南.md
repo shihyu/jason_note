@@ -41,6 +41,8 @@
 
 我覺得 [Poetry 官網](https://python-poetry.org/)的 slogan 更加簡潔有力：
 
+![](images/qTTgg0U.png)
+
 簡單來說，**Poetry 類似 pip，能協助你進行套件管理**（dependency management），**但又比 pip 強大得多**，因為它還包含了 pip 所未有的功能：
 
 - 虛擬環境管理

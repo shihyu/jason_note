@@ -14,5 +14,7 @@
   - [Go編程實戰派基礎入門](go/Go編程實戰派基礎入門.md)
   - [Go編程實戰派Web開發基礎](go/Go編程實戰派Web開發基礎.md)
 - [Python](python/python.md)
+  - [Poetry完全入門指南](python/Poetry完全入門指南.md)
+
 - [Mermaid](mermaid/mermaid.md)
 
