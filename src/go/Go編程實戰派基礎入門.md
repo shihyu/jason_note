@@ -50,15 +50,10 @@
 ## 1.1 安裝Go
 
 https://golang.google.cn/dl/
-`PATH`
 
 ## 1.2 第一個Go程序
 
 ```
-helloWorld.go`
-`go run helloWorld.go`
-`go build helloWorld.go`
-`helloWorld.exe
 package main
 
 import "fmt"

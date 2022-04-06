@@ -189,3 +189,8 @@ fn main () {
   不能夠長於擁有者
 
   - 範例在生命周期的章節再寫
+
+## Also see
+
+- https://shihyu.github.io/rust_hacks/ch6/02_move_copy.html
+- https://rust-lang.tw/book-tw/ch04-01-what-is-ownership.html
