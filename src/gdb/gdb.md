@@ -34,7 +34,7 @@ which python
 /home/shihyu/anaconda2/bin/python
 ```
 
-#### 若為Anaconda，則使用Anaconda/lib
+#### 若為 Anaconda，則使用 Anaconda/lib
 
 ```sh
 設置環境變量
