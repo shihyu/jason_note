@@ -54,7 +54,6 @@ def hello(name):
 接下來，我們創建一個 `hello.proto` 檔案，裡面描述了我們要使用的 message 以及 service
 
 ```python
-# hello.proto
 syntax = "proto3";
 
 message HelloRequest {
