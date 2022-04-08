@@ -1,188 +1,185 @@
 # 教你用Python搭建gRPC服務
 
+## 前言
 
+前陣子剛好有個要使用 gRPC 的機會，同事看了一下官網的 Tutorial 覺得一時之間有點迷路，所以就寫了一份比較簡單的 gRPC Tutorial for Python，應該可以讓需要的人更快入門。
 
-gRPC是一個高效能、通用的開源RPC框架，其由Google主要面向移動應用開發並基於HTTP/2協議標準而設計，基於ProtoBuf序列化協議開發，且支援眾多開發語言。一個gRPC服務的大體結構圖為：
+## protocol buffers 簡介
 
+在介紹 gRPC 之前先來講講 [protocol buffers](https://developers.google.com/protocol-buffers/)。我們在不同 service 之間做訊息溝通的時候，最常使用的也許是透過 json 來做傳遞，不過在使用 json 上面可能會遇到以下幾個問題：
 
+1. json 的 serialize/de-serialize 速度太慢
+2. 透過 json 傳資料的結構不夠清楚，得靠 API 文件搞定
+3. 用 json 傳資料的 size 太大
 
+[protocol buffers](https://developers.google.com/protocol-buffers/) 便是 Google 爲了解決以上問題而生，它可以透過一個 `.proto` 檔案，在各語言生出相對應的檔案使用。目前[支援的程式語言很多](https://github.com/google/protobuf)，有 Python、golang、js、java 等等。
 
-![技術實踐：教你用Python搭建gRPC服務](https://i.iter01.com/images/f590cd3ff1eb5c75b4a9fc6cd554fa80c007ba02ead30acb497a56a808ee72ba.png)
+## grpc 簡介
 
-圖一表明，grpc的服務是跨語言的，但需要遵循相同的協議（proto）。相比於REST服務，gPRC 的一個很明顯的優勢是它使用了二進位制編碼，所以它比 JSON/HTTP 更快，且有清晰的介面規範以及支援流式傳輸，但它的實現相比rest服務要稍微要複雜一些，下面簡單介紹搭建gRPC服務的步驟。
+有了 [protocol buffers](https://developers.google.com/protocol-buffers/) 之後，google 更進一步的推出了 gRPC。透過 gRPC，我們可以在 `.proto` 檔案當中也一併定義好 service，讓遠端使用的 client 可以如同呼叫本地的 library 一樣使用，不用再自己處理 routing 、連線等等的問題。
 
-## 1.安裝python需要的庫
+![img](images/1_ZVirmBhtvTcIPYSqo9gXAA.png)
 
+上圖是從 [gRPC 官網](https://grpc.io/)上面截下來的圖，可以看到 gRPC Server 是由 `C++` 撰寫，client 則分別是 Java 以及 Ruby，Server 跟 Client 端則是透過 [protocol buffers](https://developers.google.com/protocol-buffers/) 來做傳遞。
+
+## 開發 gRPC 流程
+
+接下來讓我們來用 Python 開發一個最簡單的 gRPC service。分別有以下四個部分：
+
+1. 環境安裝 – 最基本的套件安裝
+2. `.proto` 檔案 – 定義 [protocol buffers](https://developers.google.com/protocol-buffers/) 還有 service
+3. Server – server 的 code
+4. Client – client 呼叫 server 的 code
+
+最後完成的程式碼會放在 https://github.com/daikeren/gprc_tutorial
+
+### 環境安裝以及設定
+
+首先我們要安裝相對應的套件，這邊我們用 [pipenv](https://docs.pipenv.org/) 來作為環境管理工具。輸入以下指令安裝 grpcio 以及 grpcio-tools。
+
+```bash
+pipenv install grpcio grpcio-tools
 ```
-pip install grpcio
-pip install grpcio-tools  
-pip install protobuf
+
+接着，我們先來定義我們 service 的功能，我們這邊爲了 demo，我們這個 service 做的事情很簡單，只是將傳遞進來的 name 前面加上 “Hello” 再回傳回去。這邊當然是可以改成任何我們想要 Python Function。
+
+```python
+# hello.py
+def hello(name):
+    return f"Hello {name}"
 ```
 
-## 2.定義gRPC的介面
+### `.proto` 檔案
 
-建立 gRPC 服務的第一步是在.proto 檔案中定義好介面，proto是一個協議檔案，客戶端和伺服器的通訊介面正是通過proto檔案協定的，可以根據不同語言生成對應語言的程式碼檔案。這個協議檔案主要就是定義好服務（service）介面，以及請求引數和相應結果的資料結構，具體的proto語法參見如下連結（https://www.jianshu.com/p/da7ed5914088），關於二維陣列、字典等python中常用的資料型別，proto語法的表達見連結（https://blog.csdn.net/xiaoxiaojie521/article/details/106938519），下面是一個簡單的例子。
+接下來，我們創建一個 `hello.proto` 檔案，裡面描述了我們要使用的 message 以及 service
 
-```
+```python
+# hello.proto
 syntax = "proto3";
 
-option cc_generic_services = true;
-
-//定義服務介面
-service GrpcService {
-    rpc hello (HelloRequest) returns (HelloResponse) {}  //一個服務中可以定義多個介面，也就是多個函式功能
+message HelloRequest {
+    string value = 1;
 }
 
-//請求的引數
-message HelloRequest {
-    string data = 1;   //數字1,2是引數的位置順序，並不是對引數賦值
-    Skill skill = 2;  //支援自定義的資料格式，非常靈活
-};
-
-//返回的物件
 message HelloResponse {
-    string result = 1;
-    map<string, int32> map_result = 2; //支援map資料格式，類似dict
-};
+    string value = 1;
+}
 
-message Skill {
-    string name = 1;
-};
+service Hello {
+    rpc Hello(HelloRequest) returns (HelloResponse) {}
+}
 ```
 
-## 3.使用 protoc 和相應的外掛編譯生成對應語言的程式碼
+這邊的 message 代表了我們要跟 gRPC 傳遞的參數、型別，service 則是敘述了 service name 以及傳入、傳回的參數。之後我們會透過 `gprc_tools` 來讀取 `.proto` 檔案產生相對應的 Python class。這邊可以看到我們定義的 message 以及 service 如下：
 
+- message: 這邊定義了兩種 message，分別是 `HelloRequest` 以及 `HelloResponse`，裡面都只有一個叫做 `value` 的欄位，形態是 `string`
+- service: 這邊定義了一個 service，裡面只有一個叫做 Hello 的 rpc 傳入值是 `HelloRequest`，傳回值則是 `HelloResponse`
+
+接下來，我們輸入以下指令爲 Python 產生 gRPC 的 class
+
+```bash
+pipenv run python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. hello.proto
 ```
-python -m grpc_tools.protoc -I ./ --python_out=./ --grpc_python_out=. ./hello.proto
-```
 
-利用編譯工具把proto檔案轉化成py檔案，直接在當前檔案目錄下執行上述程式碼即可。
+你會看到多出了兩個檔案
 
-1. -I 指定proto所在目錄
-2. -m 指定通過protoc生成py檔案
-3. --python_out指定生成py檔案的輸出路徑
-4. hello.proto 輸入的proto檔案
+- `hello_pb2.py`: 定義了相對應的 message class
+- `hello_pb2_grpc.py`: 定義了相對應的 service class
 
-執行上述命令後，生成hello_pb2.py 和hello_pb2_grpc.py這兩個檔案。
+### Server
 
-## 4.編寫grpc的服務端程式碼
+有了 `hello_pb2.py` 以及 `hello_pb2_grpc.py`，我們就可以開始實作我們的 gRPC server，詳細的程式碼如下：
 
 ```python
-#! /usr/bin/env python
-# coding=utf8
-
-import time
+# server.py
 from concurrent import futures
+import time
 
-import grpc
+import grpc 
+import hello_pb2
+import hello_pb2_grpc
 
-from gRPC_example import hello_pb2_grpc, hello_pb2
+import hello
 
-_ONE_DAY_IN_SECONDS = 60 * 60 * 24
+# 創建一個 HelloServicer，要繼承自 hello_pb2_grpc.HelloServicer
+class HelloServicer(hello_pb2_grpc.HelloServicer):
+
+# 由於我們 service 定義了 Hello 這個 rpc，所以要實作 Hello 這個 method
+    def Hello(self, request, context):
+
+# response 是個 HelloResponse 形態的 message
+        response = hello_pb2.HelloResponse()
+        response.value = hello.hello(request.value)
+        return response
 
 
-class TestService(hello_pb2_grpc.GrpcServiceServicer):
-    '''
-    繼承GrpcServiceServicer,實現hello方法
-    '''
-    def __init__(self):
-        pass
+def serve():
+# 創建一個 gRPC server
+	server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 
-    def hello(self, request, context):
-        '''
-        具體實現hello的方法，並按照pb的返回物件構造HelloResponse返回
-        :param request:
-        :param context:
-        :return:
-        '''
-        result = request.data + request.skill.name + " this is gprc test service"
-        list_result = {"12": 1232}
-        return hello_pb2.HelloResponse(result=str(result),
-                                       map_result=list_result)
+# 利用 add_HelloServicer_to_server 這個 method 把上面定義的 HelloServicer 加到 server 當中
+	hello_pb2_grpc.add_HelloServicer_to_server(HelloServicer(), server)
 
-def run():
-    '''
-    模擬服務啟動
-    :return:
-    '''
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    hello_pb2_grpc.add_GrpcServiceServicer_to_server(TestService(),server)
-    server.add_insecure_port('[::]:50052')
-    server.start()
-    print("start service...")
-    try:
-        while True:
-            time.sleep(_ONE_DAY_IN_SECONDS)
-    except KeyboardInterrupt:
-        server.stop(0)
+# 讓 server 跑在 port 50051 中
+	server.add_insecure_port('[::]:50051')
+	server.start()
+	try:
+		while True:
+			time.sleep(86400)
+	except KeyboardInterrupt:
+		server.stop(0)
 
 
 if __name__ == '__main__':
-    run()
+	serve()
 ```
 
-在服務端側，需要實現hello的方法來滿足proto檔案中GrpcService的介面需求，hello方法的傳入引數，是在proto檔案中定義的HelloRequest，context是保留欄位，不用管，返回引數則是在proto中定義的HelloResponse，服務啟動的程式碼是標準的，可以根據需求修改提供服務的ip地址以及埠號。
+接着我們可以輸入以下指令啓動 gRPC server
 
-## 5.編寫gRPC客戶端的程式碼
+```bash
+pipenv run python server.py
+```
+
+### Client
+
+client side 的 code 很單純，就是建立一個 channel 連線到 gRPC server，再用 stub 來呼叫。
 
 ```python
-#! /usr/bin/env python
-# coding=utf8
+# client.py 
 
 import grpc
 
-from gRPC_example import #! /usr/bin/env python
-# coding=utf8
+import hello_pb2
+import hello_pb2_grpc
 
-import grpc
+# 連接到 localhost:50051
+channel = grpc.insecure_channel('localhost:50051')
 
-from gRPC_example import hello_pb2_grpc, hello_pb2
+# 創建一個 stub (gRPC client)
+stub = hello_pb2_grpc.HelloStub(channel)
 
+# 創建一個 HelloRequest 丟到 stub 去
+request = hello_pb2.HelloRequest(value="World")
 
-def run():
-    '''
-    模擬請求服務方法資訊
-    :return:
-    '''
-    conn=grpc.insecure_channel('localhost:50052')
-    client = hello_pb2_grpc.GrpcServiceStub(channel=conn)
-    skill = hello_pb2.Skill(name="engineer")
-    request = hello_pb2.HelloRequest(data="xiao gang", skill=skill)
-    respnse = client.hello(request)
-    print("received:",respnse.result)
+# 呼叫 Hello service，回傳 HelloResponse
+response = stub.Hello(request)
 
-
-if __name__ == '__main__':
-    run()
-
-
-def run():
-    '''
-    模擬請求服務方法資訊
-    :return:
-    '''
-    conn=grpc.insecure_channel('localhost:50052')
-    client = hello_pb2_grpc.GrpcServiceStub(channel=conn)
-    skill = hello_pb2.Skill(name="engineer")
-    request = hello_pb2.HelloRequest(data="xiao gang", skill=skill)
-    response = client.hello(request)
-    print("received:",response.result)
-
-
-if __name__ == '__main__':
-    run()
+print(response.value)
 ```
 
-客戶端側程式碼的實現比較簡單，首先定義好訪問ip和埠號，然後定義好HelloRequest資料結構，遠端呼叫hello即可。需要強調的是，客戶端和服務端一定要import相同proto檔案編譯生成的hello_pb2_grpc, hello_pb2模組，即使服務端和客戶端使用的語言不一樣，這也是grpc介面規範一致的體現。
+因爲我們已經在 localhost 跑起來 server 了，執行以下的 client 程式碼：
 
-## 6.呼叫測試
+```bash
+pipenv run python client.py
+Hello World
+```
 
-先啟動執行服務端的程式碼，再啟動執行客戶端的程式碼即可。
+## 小結
 
-## 7.gRPC的使用總結
+看到這邊應該可以理解一個簡單的 gRPC 該怎麼實作，相信以這爲基礎應該可以很容易擴展出未來更多的 gRPC 應用。
 
-1. 定義好介面文件
-2. 工具生成服務端/客戶端程式碼
-3. 服務端補充業務程式碼
-4. 客戶端建立 gRPC 連線後，使用自動生成的程式碼呼叫函式
-5. 編譯、執行
+
+
+## 參考
+
+- https://www.icoding.co/2020/07/grpc-tutorial-for-python
