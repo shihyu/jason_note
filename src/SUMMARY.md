@@ -19,6 +19,7 @@
   - [Go編程實戰派Web開發基礎](go/Go編程實戰派Web開發基礎.md)
 - [Python](python/python.md)
   - [Poetry完全入門指南](python/Poetry完全入門指南.md)
-
+  - [搭建gRPC服務](python/搭建gRPC服務.md)
+  
 - [Mermaid](mermaid/mermaid.md)
 
