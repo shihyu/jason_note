@@ -1,3 +1,5 @@
+# VIM
+
 ## NVIM 編譯
 
 ```sh
@@ -58,10 +60,6 @@ CocCommand go.install.gopls
 CocInstall coc-pyright
 CocInstall coc-json coc-tsserver
 ```
-
----
-
-
 
 ````sh
 # neovim

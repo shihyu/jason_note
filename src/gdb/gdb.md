@@ -1,6 +1,6 @@
-# 編譯
+# GDB
 
-## gdb-7.9 build gdbserver and gdb
+## 編譯 gdb-7.9 build gdbserver and gdb
 
 建議： 給特定用戶安裝 GDB 的 pretty-printer 打印出可讀性更好的 stdc++ 的 STL 容器 在編譯 GDB 之前，先安裝 ncurses 庫和 Python 庫（用於在 GDB 中 開啟 Python 支持，編譯 GDB 時必須添加 --with-python 選項）。
 
