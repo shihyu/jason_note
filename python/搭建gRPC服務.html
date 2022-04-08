@@ -1,0 +1,356 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="sidebar-visible no-js rust">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>搭建gRPC服務 - Jason Notes</title>
+        <!-- Custom HTML head -->
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/custom/custom.css">
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "rust";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../ubuntu/ubuntu_setup.html">Ubuntu</a></li><li class="chapter-item expanded "><a href="../vim/vim.html">Vim</a></li><li class="chapter-item expanded "><a href="../gdb/gdb.html">Gdb</a><a class="toggle"><div>❱</div></a></li><li><ol class="section"><li class="chapter-item "><a href="../gdb/常用指令.html">常用指令</a></li></ol></li><li class="chapter-item expanded "><a href="../c++/cpp.html">C++</a></li><li class="chapter-item expanded "><a href="../ssh/ssh.html">SSH</a></li><li class="chapter-item expanded "><a href="../rust/rust.html">Rust</a><a class="toggle"><div>❱</div></a></li><li><ol class="section"><li class="chapter-item "><a href="../rust/note.html">Rust筆記</a></li><li class="chapter-item "><a href="../rust/basic.html">Rust 基本教學</a></li><li class="chapter-item "><a href="../rust/ownership.html">Rust 所有權系統</a></li><li class="chapter-item "><a href="../rust/lifetime.html">Rust 生命周期 (Lifetime)</a></li><li class="chapter-item "><a href="../rust/type.html">Rust 型別系統</a></li></ol></li><li class="chapter-item expanded "><a href="../go/go.html">Go</a><a class="toggle"><div>❱</div></a></li><li><ol class="section"><li class="chapter-item "><a href="../go/Go編程實戰派基礎入門.html">Go編程實戰派基礎入門</a></li><li class="chapter-item "><a href="../go/Go編程實戰派Web開發基礎.html">Go編程實戰派Web開發基礎</a></li></ol></li><li class="chapter-item expanded "><a href="../python/python.html">Python</a><a class="toggle"><div>❱</div></a></li><li><ol class="section"><li class="chapter-item "><a href="../python/Poetry完全入門指南.html">Poetry完全入門指南</a></li><li class="chapter-item expanded "><a href="../python/搭建gRPC服務.html" class="active">搭建gRPC服務</a></li></ol></li><li class="chapter-item expanded "><a href="../mermaid/mermaid.html">Mermaid</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="教你用python搭建grpc服務"><a class="header" href="#教你用python搭建grpc服務">教你用Python搭建gRPC服務</a></h1>
+<p>gRPC是一個高效能、通用的開源RPC框架，其由Google主要面向移動應用開發並基於HTTP/2協議標準而設計，基於ProtoBuf序列化協議開發，且支援眾多開發語言。一個gRPC服務的大體結構圖為：</p>
+<p><img src="https://i.iter01.com/images/f590cd3ff1eb5c75b4a9fc6cd554fa80c007ba02ead30acb497a56a808ee72ba.png" alt="技術實踐：教你用Python搭建gRPC服務" /></p>
+<p>圖一表明，grpc的服務是跨語言的，但需要遵循相同的協議（proto）。相比於REST服務，gPRC 的一個很明顯的優勢是它使用了二進位制編碼，所以它比 JSON/HTTP 更快，且有清晰的介面規範以及支援流式傳輸，但它的實現相比rest服務要稍微要複雜一些，下面簡單介紹搭建gRPC服務的步驟。</p>
+<h2 id="1安裝python需要的庫"><a class="header" href="#1安裝python需要的庫">1.安裝python需要的庫</a></h2>
+<pre><code>pip install grpcio
+pip install grpcio-tools  
+pip install protobuf
+</code></pre>
+<h2 id="2定義grpc的介面"><a class="header" href="#2定義grpc的介面">2.定義gRPC的介面</a></h2>
+<p>建立 gRPC 服務的第一步是在.proto 檔案中定義好介面，proto是一個協議檔案，客戶端和伺服器的通訊介面正是通過proto檔案協定的，可以根據不同語言生成對應語言的程式碼檔案。這個協議檔案主要就是定義好服務（service）介面，以及請求引數和相應結果的資料結構，具體的proto語法參見如下連結（https://www.jianshu.com/p/da7ed5914088），關於二維陣列、字典等python中常用的資料型別，proto語法的表達見連結（https://blog.csdn.net/xiaoxiaojie521/article/details/106938519），下面是一個簡單的例子。</p>
+<pre><code>syntax = &quot;proto3&quot;;
+
+option cc_generic_services = true;
+
+//定義服務介面
+service GrpcService {
+    rpc hello (HelloRequest) returns (HelloResponse) {}  //一個服務中可以定義多個介面，也就是多個函式功能
+}
+
+//請求的引數
+message HelloRequest {
+    string data = 1;   //數字1,2是引數的位置順序，並不是對引數賦值
+    Skill skill = 2;  //支援自定義的資料格式，非常靈活
+};
+
+//返回的物件
+message HelloResponse {
+    string result = 1;
+    map&lt;string, int32&gt; map_result = 2; //支援map資料格式，類似dict
+};
+
+message Skill {
+    string name = 1;
+};
+</code></pre>
+<h2 id="3使用-protoc-和相應的外掛編譯生成對應語言的程式碼"><a class="header" href="#3使用-protoc-和相應的外掛編譯生成對應語言的程式碼">3.使用 protoc 和相應的外掛編譯生成對應語言的程式碼</a></h2>
+<pre><code>python -m grpc_tools.protoc -I ./ --python_out=./ --grpc_python_out=. ./hello.proto
+</code></pre>
+<p>利用編譯工具把proto檔案轉化成py檔案，直接在當前檔案目錄下執行上述程式碼即可。</p>
+<ol>
+<li>-I 指定proto所在目錄</li>
+<li>-m 指定通過protoc生成py檔案</li>
+<li>--python_out指定生成py檔案的輸出路徑</li>
+<li>hello.proto 輸入的proto檔案</li>
+</ol>
+<p>執行上述命令後，生成hello_pb2.py 和hello_pb2_grpc.py這兩個檔案。</p>
+<h2 id="4編寫grpc的服務端程式碼"><a class="header" href="#4編寫grpc的服務端程式碼">4.編寫grpc的服務端程式碼</a></h2>
+<pre><code class="language-python">#! /usr/bin/env python
+# coding=utf8
+
+import time
+from concurrent import futures
+
+import grpc
+
+from gRPC_example import hello_pb2_grpc, hello_pb2
+
+_ONE_DAY_IN_SECONDS = 60 * 60 * 24
+
+
+class TestService(hello_pb2_grpc.GrpcServiceServicer):
+    '''
+    繼承GrpcServiceServicer,實現hello方法
+    '''
+    def __init__(self):
+        pass
+
+    def hello(self, request, context):
+        '''
+        具體實現hello的方法，並按照pb的返回物件構造HelloResponse返回
+        :param request:
+        :param context:
+        :return:
+        '''
+        result = request.data + request.skill.name + &quot; this is gprc test service&quot;
+        list_result = {&quot;12&quot;: 1232}
+        return hello_pb2.HelloResponse(result=str(result),
+                                       map_result=list_result)
+
+def run():
+    '''
+    模擬服務啟動
+    :return:
+    '''
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    hello_pb2_grpc.add_GrpcServiceServicer_to_server(TestService(),server)
+    server.add_insecure_port('[::]:50052')
+    server.start()
+    print(&quot;start service...&quot;)
+    try:
+        while True:
+            time.sleep(_ONE_DAY_IN_SECONDS)
+    except KeyboardInterrupt:
+        server.stop(0)
+
+
+if __name__ == '__main__':
+    run()
+</code></pre>
+<p>在服務端側，需要實現hello的方法來滿足proto檔案中GrpcService的介面需求，hello方法的傳入引數，是在proto檔案中定義的HelloRequest，context是保留欄位，不用管，返回引數則是在proto中定義的HelloResponse，服務啟動的程式碼是標準的，可以根據需求修改提供服務的ip地址以及埠號。</p>
+<h2 id="5編寫grpc客戶端的程式碼"><a class="header" href="#5編寫grpc客戶端的程式碼">5.編寫gRPC客戶端的程式碼</a></h2>
+<pre><code class="language-python">#! /usr/bin/env python
+# coding=utf8
+
+import grpc
+
+from gRPC_example import #! /usr/bin/env python
+# coding=utf8
+
+import grpc
+
+from gRPC_example import hello_pb2_grpc, hello_pb2
+
+
+def run():
+    '''
+    模擬請求服務方法資訊
+    :return:
+    '''
+    conn=grpc.insecure_channel('localhost:50052')
+    client = hello_pb2_grpc.GrpcServiceStub(channel=conn)
+    skill = hello_pb2.Skill(name=&quot;engineer&quot;)
+    request = hello_pb2.HelloRequest(data=&quot;xiao gang&quot;, skill=skill)
+    respnse = client.hello(request)
+    print(&quot;received:&quot;,respnse.result)
+
+
+if __name__ == '__main__':
+    run()
+
+
+def run():
+    '''
+    模擬請求服務方法資訊
+    :return:
+    '''
+    conn=grpc.insecure_channel('localhost:50052')
+    client = hello_pb2_grpc.GrpcServiceStub(channel=conn)
+    skill = hello_pb2.Skill(name=&quot;engineer&quot;)
+    request = hello_pb2.HelloRequest(data=&quot;xiao gang&quot;, skill=skill)
+    response = client.hello(request)
+    print(&quot;received:&quot;,response.result)
+
+
+if __name__ == '__main__':
+    run()
+</code></pre>
+<p>客戶端側程式碼的實現比較簡單，首先定義好訪問ip和埠號，然後定義好HelloRequest資料結構，遠端呼叫hello即可。需要強調的是，客戶端和服務端一定要import相同proto檔案編譯生成的hello_pb2_grpc, hello_pb2模組，即使服務端和客戶端使用的語言不一樣，這也是grpc介面規範一致的體現。</p>
+<h2 id="6呼叫測試"><a class="header" href="#6呼叫測試">6.呼叫測試</a></h2>
+<p>先啟動執行服務端的程式碼，再啟動執行客戶端的程式碼即可。</p>
+<h2 id="7grpc的使用總結"><a class="header" href="#7grpc的使用總結">7.gRPC的使用總結</a></h2>
+<ol>
+<li>定義好介面文件</li>
+<li>工具生成服務端/客戶端程式碼</li>
+<li>服務端補充業務程式碼</li>
+<li>客戶端建立 gRPC 連線後，使用自動生成的程式碼呼叫函式</li>
+<li>編譯、執行</li>
+</ol>
+
+                        <script src="https://utteranc.es/client.js"
+                            repo="imxood/imxood.github.io"
+                            issue-term="pathname"
+                            theme="boxy-light"
+                            crossorigin="anonymous"
+                            async>
+                        </script>
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../python/Poetry完全入門指南.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                            <a rel="next" href="../mermaid/mermaid.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../python/Poetry完全入門指南.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                    <a rel="next" href="../mermaid/mermaid.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+        <script type="text/javascript">
+            window.playground_line_numbers = true;
+        </script>
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        <script src="../ace.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../editor.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mode-rust.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../theme-dawn.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../theme-tomorrow_night.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        <script type="text/javascript" src="../theme/custom/mermaid.min.js"></script>
+        <script type="text/javascript" src="../theme/custom/mermaid-init.js"></script>
+    </body>
+</html>
