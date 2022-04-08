@@ -1,5 +1,6 @@
 # Summary
 
+- [Jason Notes](index.md)
 - [Ubuntu](ubuntu/ubuntu_setup.md)
 - [Vim](vim/vim.md)
 - [Gdb](gdb/gdb.md)
