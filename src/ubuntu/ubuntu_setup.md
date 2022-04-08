@@ -12,6 +12,7 @@ git clone https://github.com/cgdb/cgdb
 git clone https://github.com/neovim/neovim.git
 git clone https://github.com/BurntSushi/ripgrep
 git clone https://github.com/ggreer/the_silver_searcher
+git clone https://github.com/universal-ctags/ctags
 ```
 
 ### 選擇套件來源
