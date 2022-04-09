@@ -1,1 +1,0 @@
-/home/shihyu/github/jason_note/src/rust/src/rust-call-c-cargo/target/debug/rust-call-c-cargo: /home/shihyu/github/jason_note/src/rust/src/rust-call-c-cargo/build.rs /home/shihyu/github/jason_note/src/rust/src/rust-call-c-cargo/src/main.rs
