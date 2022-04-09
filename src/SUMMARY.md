@@ -14,7 +14,8 @@
   - [Rust 所有權系統](rust/ownership.md)
   - [Rust 生命周期 (Lifetime)](rust/lifetime.md)
   - [Rust 型別系統](rust/type.md)
-
+  - [Rust call C](rust_call_c.md)
+  
 - [Go](go/go.md)
   - [Go編程實戰派基礎入門](go/Go編程實戰派基礎入門.md)
   - [Go編程實戰派Web開發基礎](go/Go編程實戰派Web開發基礎.md)
