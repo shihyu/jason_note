@@ -19,9 +19,11 @@
 - [Go](go/go.md)
   - [Go編程實戰派基礎入門](go/Go編程實戰派基礎入門.md)
   - [Go編程實戰派Web開發基礎](go/Go編程實戰派Web開發基礎.md)
+  - [Golang Deubgger](go/golang_debugger.md)
 - [Python](python/python.md)
   - [Poetry完全入門指南](python/Poetry完全入門指南.md)
   - [搭建gRPC服務](python/搭建gRPC服務.md)
+  - [Python Debugger](python/python_debugger.md)
   
 - [Mermaid](mermaid/mermaid.md)
 
