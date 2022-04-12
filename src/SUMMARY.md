@@ -24,6 +24,7 @@
   - [Poetry完全入門指南](python/Poetry完全入門指南.md)
   - [搭建gRPC服務](python/搭建gRPC服務.md)
   - [Python Debugger](python/python_debugger.md)
+  - [Python decorator](python/decorator.md)
   
 - [Mermaid](mermaid/mermaid.md)
 
