@@ -38,5 +38,6 @@
 
   - [Kafka的通俗總結](mq/kafka-python.md)
 
-  
 
+- Database
+  - [Redis](database/redis.md)
