@@ -41,3 +41,4 @@
 
 - [Database](database/redis.md)
   - [Redis](database/redis.md)
+  - [Redis Hash](database/hash.md)
