@@ -31,6 +31,7 @@
   - [搭建gRPC服務](python/搭建gRPC服務.md)
   - [Python Debugger](python/python_debugger.md)
   - [Python decorator](python/decorator.md)
+  - [裝飾器看這一篇就夠了](python/python-decorator.md)
   
 - [Mermaid](mermaid/mermaid.md)
 
