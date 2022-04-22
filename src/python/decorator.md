@@ -1,7 +1,6 @@
 # 神奇又美好的 Decorator ，嗷嗚！
 
 
-
 # 【導言】
 
 由於 Python 的基本語法過於簡潔，所以大部分的設計與技巧都會為了強化其架構的依賴性與開發性，而讓 Python 的語法變得比原先的繁複。
@@ -65,8 +64,6 @@ if __name__ == "__main__":
     # > Miaow ~~~
 ```
 
-<iframe src="https://medium.com/media/e89ba7b7f5134ab5de524c3a6e27a622" allowfullscreen="" frameborder="0" height="543" width="692" title="python_decorator_1.py" class="fq aq as ag ea" scrolling="auto" style="box-sizing: inherit; height: 543px; top: 0px; left: 0px; width: 692px; position: absolute;"></iframe>
-
 sample-1 https://gist.github.com/JackInTaiwan/8779504fbcbd0d8420e9996fab3c8641
 
 以上的範例可以看到我們有兩個主要的 functions： `dog_bark()` 和 `cat_miaow()` 要執行，但兩個 functions 都有一個共同要做的事情，都想要先 print 出自己的 function name，所以對於共同要做的事情我們抽出來用 function `print_func_name(func)` 來完成。
@@ -113,7 +110,6 @@ if __name__ == "__main__":
     # > Miaow ~~~
 ```
 
-<iframe src="https://medium.com/media/fd5cba6f5b94d48290b6af9c6a5843e0" allowfullscreen="" frameborder="0" height="587" width="692" title="python_decorator_2.py" class="fq aq as ag ea" scrolling="auto" style="box-sizing: inherit; height: 587px; top: 0px; left: 0px; width: 692px; position: absolute;"></iframe>
 
 sample-2 https://gist.github.com/JackInTaiwan/8c27ec000a5ab6f8f4ad124f9b5d9f5e
 
@@ -159,7 +155,6 @@ if __name__ == "__main__":
     # > Bark !!!
 ```
 
-<iframe src="https://medium.com/media/0129ab31a83ceb9d6e1a6f58445c2134" allowfullscreen="" frameborder="0" height="631" width="692" title="python_decorator_3.py" class="fq aq as ag ea" scrolling="auto" style="box-sizing: inherit; height: 631px; top: 0px; left: 0px; width: 692px; position: absolute;"></iframe>
 
 sample-3 https://gist.github.com/JackInTaiwan/15ebaa7abe6312ae12215bf56b6f2d5f
 
@@ -215,7 +210,6 @@ if __name__ == "__main__":
     # > Miaow !!!
 ```
 
-<iframe src="https://medium.com/media/97bb008a942a5e81b59508e7fe0dc17d" allowfullscreen="" frameborder="0" height="851" width="692" title="python_decorator_4.py" class="fq aq as ag ea" scrolling="auto" style="box-sizing: inherit; height: 851px; top: 0px; left: 0px; width: 692px; position: absolute;"></iframe>
 
 sample-4 https://gist.github.com/JackInTaiwan/41ded88d4c8c13c53c56f4455534e71b
 
@@ -259,7 +253,6 @@ if __name__ == "__main__":
     # > Bark !!!
 ```
 
-<iframe src="https://medium.com/media/b34eda95887a59dd7fd3fcb801e1ff9b" allowfullscreen="" frameborder="0" height="587" width="692" title="python_decorator_5.py" class="fq aq as ag ea" scrolling="auto" style="box-sizing: inherit; height: 587px; top: 0px; left: 0px; width: 692px; position: absolute;"></iframe>
 
 sample-5 https://gist.github.com/JackInTaiwan/3fda507a8803d4d30a9a0f13df834f9c
 
@@ -302,8 +295,6 @@ if __name__ == "__main__":
     dog.talent()
     # > I can pee very hard......
 ```
-
-<iframe src="https://medium.com/media/ff488b9dc90f5c91718567fac88736a0" allowfullscreen="" frameborder="0" height="587" width="692" title="python_decorator_6.py" class="fq aq as ag ea" scrolling="auto" style="box-sizing: inherit; height: 587px; top: 0px; left: 0px; width: 692px; position: absolute;"></iframe>
 
 sample-6 https://gist.github.com/JackInTaiwan/6f70279c19ed337a58c875f8f2f75cae
 
@@ -352,7 +343,6 @@ if __name__ == "__main__":
     # > I can poo like a super pooping machine!
 ```
 
-<iframe src="https://medium.com/media/cb48a64f1fa94c441bf646bc8cb684c4" allowfullscreen="" frameborder="0" height="829" width="692" title="python_decorator_7.py" class="fq aq as ag ea" scrolling="auto" style="box-sizing: inherit; height: 829px; top: 0px; left: 0px; width: 692px; position: absolute;"></iframe>
 
 sample-7 https://gist.github.com/JackInTaiwan/4557776e4d04a398258d19b5bab4ef08
 
