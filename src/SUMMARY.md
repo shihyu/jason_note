@@ -32,6 +32,7 @@
   - [Python Debugger](python/python_debugger.md)
   - [Python decorator](python/decorator.md)
   - [裝飾器看這一篇就夠了](python/python-decorator.md)
+  - [pytago](python/pytago.md)
   
 - [Mermaid](mermaid/mermaid.md)
 
