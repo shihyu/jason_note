@@ -33,6 +33,7 @@
   - [Python decorator](python/decorator.md)
   - [裝飾器看這一篇就夠了](python/python-decorator.md)
   - [pytago](python/pytago.md)
+  - [import-concept](python/import-concept.md)
   
 - [Mermaid](mermaid/mermaid.md)
 
