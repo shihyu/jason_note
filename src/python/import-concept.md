@@ -647,9 +647,149 @@ print(name)
 
 最後這個練習就讓大家動手玩玩看囉
 
-
-
 # 參考文章
 
 1. [Python 的 Import 陷阱](https://medium.com/pyladies-taiwan/python-的-import-陷阱-3538e74f57e3)
 2. [理解Python的 relative 和 absolute import](https://carsonwah.github.io/15213187969322.html)
+
+
+
+# Python-import導入上級目錄文件
+
+假設有如下目錄結構：
+
+```text
+-- dir0
+　　| file1.py
+　　| file2.py
+　　| dir3
+　　　| file3.py
+　　| dir4
+　　　| file4.py
+```
+
+dir0文件夾下有file1.py、file2.py兩個文件和dir3、dir4兩個子文件夾，dir3中有file3.py文件，dir4中有file4.py文件。
+
+## 1.導入同級模塊
+
+python導入同級模塊（在同一個文件夾中的py文件）直接導入即可。
+
+```python
+import xxx
+```
+
+如在file1.py中想導入file2.py，注意無需加後綴".py"：
+
+```python
+import file2
+# 使用file2中函數時需加上前綴"file2."，即：
+# file2.fuction_name()
+```
+
+## 2.導入下級模塊
+
+導入下級目錄模塊也很容易，需在下級目錄中新建一個空白的__init__.py文件再導入：
+
+```python
+from dirname import xxx
+```
+
+如在file1.py中想導入dir3下的file3.py，首先要在dir3中新建一個空白的__init*__*.py文件。
+
+```text
+-- dir0
+　　| file1.py
+　　| file2.py
+　　| dir3
+　　　| __init__.py
+　　　| file3.py
+　　| dir4
+　　　| file4.py
+```
+
+再使用如下語句：
+
+```python
+# plan A
+from dir3 import file3
+```
+
+或是
+
+```python
+# plan B
+import dir3.file3
+# import dir3.file3 as df3
+```
+
+但使用第二種方式則下文需要一直帶著路徑dir3書寫，較為累贅，建議可以另起一個別名。
+
+## 3.導入上級模塊
+
+要導入上級目錄下模塊，可以使用sys.path： 　
+
+```python
+import sys 
+sys.path.append("..") 
+import xxx
+```
+
+如在file4.py中想引入import上級目錄下的file1.py：
+
+```python
+import sys 
+sys.path.append("..") 
+import file1
+```
+
+**sys.path的作用：**當使用import語句導入模塊時，解釋器會搜索當前模塊所在目錄以及sys.path指定的路徑去找需要import的模塊，所以這裡是直接把上級目錄加到了sys.path裡。
+
+**“..”的含義：**等同於linux裡的‘..’，表示當前工作目錄的上級目錄。實際上python中的‘.’也和linux中一致，表示當前目錄。
+
+## 4.導入隔壁文件夾下的模塊
+
+如在file4.py中想引入import在dir3目錄下的file3.py。
+
+這其實是前面兩個操作的組合，其思路本質上是將上級目錄加到sys.path裡，再按照對下級目錄模塊的方式導入。
+
+同樣需要被引文件夾也就是dir3下有空的__init__.py文件。
+
+```text
+-- dir
+　　| file1.py
+　　| file2.py
+　　| dir3
+　　　| __init__.py
+　　　| file3.py
+　　| dir4
+　　　| file4.py
+```
+
+同時也要將上級目錄加到sys.path裡：
+
+```python
+import sys
+sys.path.append("..")
+from dir3 import file3
+```
+
+## 5.常見錯誤及import原理：
+
+在使用直接從上級目錄引入模塊的操作時：
+
+```python
+from .. import xxx
+```
+
+經常會報錯:
+
+```python3
+ValueError: attempted relative import beyond top-level package
+```
+
+這是由於相對導入時，文件夾實質上充當的是package，也就是包的角色（比如我們常用的numpy、pandas都是包）。如果python解釋器沒有認同該文件夾是package，那麼這就是一個普通的文件夾，無法實現相對導入。
+
+文件夾作為package需要滿足如下兩個條件：
+
+1. 文件夾中必須存在有__init__.py文件，可以為空。
+2. 不能作為頂層模塊來執行該文件夾中的py文件。
