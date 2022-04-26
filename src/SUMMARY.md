@@ -31,6 +31,8 @@
   - [搭建gRPC服務](python/搭建gRPC服務.md)
   - [Python Debugger](python/python_debugger.md)
   - [Python decorator](python/decorator.md)
+  - [裝飾器看這一篇就夠了](python/python-decorator.md)
+  - [pytago](python/pytago.md)
   
 - [Mermaid](mermaid/mermaid.md)
 
@@ -38,5 +40,7 @@
 
   - [Kafka的通俗總結](mq/kafka-python.md)
 
-  
 
+- [Database](database/redis.md)
+  - [Redis](database/redis.md)
+  - [Redis Hash](database/hash.md)
