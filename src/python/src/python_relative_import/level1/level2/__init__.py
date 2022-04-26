@@ -1,0 +1,1 @@
+print('& [level1/level2] __init__.py')
