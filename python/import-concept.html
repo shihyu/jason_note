@@ -682,6 +682,94 @@ print(name)
 <li><a href="https://medium.com/pyladies-taiwan/python-%E7%9A%84-import-%E9%99%B7%E9%98%B1-3538e74f57e3">Python 的 Import 陷阱</a></li>
 <li><a href="https://carsonwah.github.io/15213187969322.html">理解Python的 relative 和 absolute import</a></li>
 </ol>
+<h1 id="python-import導入上級目錄文件"><a class="header" href="#python-import導入上級目錄文件">Python-import導入上級目錄文件</a></h1>
+<p>假設有如下目錄結構：</p>
+<pre><code class="language-text">-- dir0
+　　| file1.py
+　　| file2.py
+　　| dir3
+　　　| file3.py
+　　| dir4
+　　　| file4.py
+</code></pre>
+<p>dir0文件夾下有file1.py、file2.py兩個文件和dir3、dir4兩個子文件夾，dir3中有file3.py文件，dir4中有file4.py文件。</p>
+<h2 id="1導入同級模塊"><a class="header" href="#1導入同級模塊">1.導入同級模塊</a></h2>
+<p>python導入同級模塊（在同一個文件夾中的py文件）直接導入即可。</p>
+<pre><code class="language-python">import xxx
+</code></pre>
+<p>如在file1.py中想導入file2.py，注意無需加後綴&quot;.py&quot;：</p>
+<pre><code class="language-python">import file2
+# 使用file2中函數時需加上前綴&quot;file2.&quot;，即：
+# file2.fuction_name()
+</code></pre>
+<h2 id="2導入下級模塊"><a class="header" href="#2導入下級模塊">2.導入下級模塊</a></h2>
+<p>導入下級目錄模塊也很容易，需在下級目錄中新建一個空白的__init__.py文件再導入：</p>
+<pre><code class="language-python">from dirname import xxx
+</code></pre>
+<p>如在file1.py中想導入dir3下的file3.py，首先要在dir3中新建一個空白的__init*__*.py文件。</p>
+<pre><code class="language-text">-- dir0
+　　| file1.py
+　　| file2.py
+　　| dir3
+　　　| __init__.py
+　　　| file3.py
+　　| dir4
+　　　| file4.py
+</code></pre>
+<p>再使用如下語句：</p>
+<pre><code class="language-python"># plan A
+from dir3 import file3
+</code></pre>
+<p>或是</p>
+<pre><code class="language-python"># plan B
+import dir3.file3
+# import dir3.file3 as df3
+</code></pre>
+<p>但使用第二種方式則下文需要一直帶著路徑dir3書寫，較為累贅，建議可以另起一個別名。</p>
+<h2 id="3導入上級模塊"><a class="header" href="#3導入上級模塊">3.導入上級模塊</a></h2>
+<p>要導入上級目錄下模塊，可以使用sys.path： 　</p>
+<pre><code class="language-python">import sys 
+sys.path.append(&quot;..&quot;) 
+import xxx
+</code></pre>
+<p>如在file4.py中想引入import上級目錄下的file1.py：</p>
+<pre><code class="language-python">import sys 
+sys.path.append(&quot;..&quot;) 
+import file1
+</code></pre>
+<p>**sys.path的作用：**當使用import語句導入模塊時，解釋器會搜索當前模塊所在目錄以及sys.path指定的路徑去找需要import的模塊，所以這裡是直接把上級目錄加到了sys.path裡。</p>
+<p>**“..”的含義：**等同於linux裡的‘..’，表示當前工作目錄的上級目錄。實際上python中的‘.’也和linux中一致，表示當前目錄。</p>
+<h2 id="4導入隔壁文件夾下的模塊"><a class="header" href="#4導入隔壁文件夾下的模塊">4.導入隔壁文件夾下的模塊</a></h2>
+<p>如在file4.py中想引入import在dir3目錄下的file3.py。</p>
+<p>這其實是前面兩個操作的組合，其思路本質上是將上級目錄加到sys.path裡，再按照對下級目錄模塊的方式導入。</p>
+<p>同樣需要被引文件夾也就是dir3下有空的__init__.py文件。</p>
+<pre><code class="language-text">-- dir
+　　| file1.py
+　　| file2.py
+　　| dir3
+　　　| __init__.py
+　　　| file3.py
+　　| dir4
+　　　| file4.py
+</code></pre>
+<p>同時也要將上級目錄加到sys.path裡：</p>
+<pre><code class="language-python">import sys
+sys.path.append(&quot;..&quot;)
+from dir3 import file3
+</code></pre>
+<h2 id="5常見錯誤及import原理"><a class="header" href="#5常見錯誤及import原理">5.常見錯誤及import原理：</a></h2>
+<p>在使用直接從上級目錄引入模塊的操作時：</p>
+<pre><code class="language-python">from .. import xxx
+</code></pre>
+<p>經常會報錯:</p>
+<pre><code class="language-python3">ValueError: attempted relative import beyond top-level package
+</code></pre>
+<p>這是由於相對導入時，文件夾實質上充當的是package，也就是包的角色（比如我們常用的numpy、pandas都是包）。如果python解釋器沒有認同該文件夾是package，那麼這就是一個普通的文件夾，無法實現相對導入。</p>
+<p>文件夾作為package需要滿足如下兩個條件：</p>
+<ol>
+<li>文件夾中必須存在有__init__.py文件，可以為空。</li>
+<li>不能作為頂層模塊來執行該文件夾中的py文件。</li>
+</ol>
 
                         <script src="https://utteranc.es/client.js"
                             repo="imxood/imxood.github.io"
