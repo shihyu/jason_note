@@ -1,4 +1,13 @@
-##  Thread and Process 
+##  Multi-processing 和Multi-threading 的優缺點：
+
+- Multi-processing (多處理程序/多進程)：
+  1. 資料在彼此間傳遞變得更加複雜及花時間，因為一個 process 在作業系統的管理下是無法去存取別的 process 的 memory
+  2. 適合需要 CPU 密集，像是迴圈計算
+- Multi-threading (多執行緒/多線程)：
+  1. 資料彼此傳遞簡單，因為多執行緒的 memory 之間是共用的，但也因此要避免會有 Race Condition 問題
+  2. 適合需要 I/O 密集，像是爬蟲需要時間等待 request 回覆
+
+
 
 ```python
 import threading, logging, time
