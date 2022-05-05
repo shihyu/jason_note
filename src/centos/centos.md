@@ -38,3 +38,11 @@ systemctl status cassandra
 nodetool status
 ```
 
+- 刪除 cassandra
+
+```
+sudo rm -r /var/lib/cassandra
+sudo rm -r /var/log/cassandra
+sudo yum remove "cassandra-*"
+```
+
