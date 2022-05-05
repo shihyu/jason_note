@@ -11,6 +11,8 @@
 
 - [C++](c++/cpp.md)
 
+- [CentOS](centos/centos.md)
+
 - [SSH](ssh/ssh.md)
 
 - [Docker](docker/docker_helloworld.md)
