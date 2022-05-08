@@ -6,7 +6,7 @@
 
 下面是一個示例：
 
-```
+```python
 import btalib
 import pandas as pd
 
@@ -32,14 +32,14 @@ print(btc_df.tail(5))
 
 我們可以使用相同的 mean（） 函數，只需在 DataFrame 的最後 20 行上運行它，如下所示：
 
-```
+```python
 # calculate just the last value for the 20 moving average
 mean = btc_df.close.tail(20).mean()
 ```
 
 熊貓可以做的還有很多。我們可以很容易地抓住今年交易的最高價格比特幣，如下所示 –
 
-```
+```python
 # get the highest closing price in 2020
 max_val = btc_df.close['2020'].max()
 ```
@@ -60,7 +60,7 @@ pip install bta-lib
 
 讓我們嘗試用庫計算相同的移動平均線作為比較 –
 
-```
+```python
 sma = btalib.sma(btc_df.close)
 print(sma.df)
 ```
@@ -75,7 +75,7 @@ print(sma.df)
 
 我們可以複製我們之前的相同函數，並計算20條移動平均線，並將其作為列附加到我們原來的DataFrame上，就像這樣。
 
-```
+```python
 # create sma and attach as column to original df
 btc_df['sma'] = btalib.sma(btc_df.close, period=20).df
 print(btc_df.tail())
@@ -83,13 +83,13 @@ print(btc_df.tail())
 
 讓我們再創建幾個指標。以下是我們使用bta-lib庫計算RSI的方法 –
 
-```
+```python
 rsi = btalib.rsi(btc_df, period=14)
 ```
 
 再次返回包含 df 的物件。我們可以像這樣訪問最後一個值。
 
-```
+```python
 print(rsi.df.rsi[-1])
 ```
 
@@ -97,13 +97,13 @@ print(rsi.df.rsi[-1])
 
 以下是我們如何計算bta-lib中比特幣的MACD。
 
-```
+```python
 macd = btalib.macd(btc_df, pfast=20, pslow=50, psignal=13)
 ```
 
 最後，我們將把RSI和MACD值加入到我們的原始比特幣價格DataFrame中。
 
-```
+```python
 # join the rsi and macd calculations as columns in original df
 btc_df = btc_df.join([rsi.df, macd.df])
 print(btc_df.tail())
@@ -117,7 +117,7 @@ print(btc_df.tail())
 
 我們使用的庫具有一個函數，允許我們創建測試訂單。下面是一個示例：
 
-```
+```python
 buy_order_limit = client.create_test_order(
     symbol='ETHUSDT',
     side='BUY',
@@ -131,7 +131,7 @@ buy_order_limit = client.create_test_order(
 
 例如，如果我們將上述代碼中的類型更改為”MARKET”，它將引發異常。原因是**timeInForce**和**價格**參數不用於市場訂單。相反，市場訂單將如下所示：
 
-```
+```python
 buy_order = client.create_test_order(symbol='ETHUSDT', side='BUY', type='MARKET', quantity=100)
 ```
 
