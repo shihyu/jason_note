@@ -52,3 +52,6 @@
 - [Database](database/redis.md)
   - [Redis](database/redis.md)
   - [Redis Hash](database/hash.md)
+- [CryptoTrade](cryptotrade/cryptotrade.md)
+
+  - [Binance](cryptotrade/binance/binance.md)
