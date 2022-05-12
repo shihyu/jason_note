@@ -32,6 +32,7 @@
   - [Go編程實戰派Web開發基礎](go/Go編程實戰派Web開發基礎.md)
   - [Golang Deubgger](go/golang_debugger.md)
   - [從一知半解到略懂 Go modules](go/golang-go-module-tutorial.md)
+  - [Go modules](go/go_mod.md)
   
 - [Python](python/python.md)
   - [Poetry完全入門指南](python/Poetry完全入門指南.md)
