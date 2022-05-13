@@ -5,6 +5,7 @@
 - [Ubuntu](ubuntu/ubuntu_setup.md)
 
 - [Vim](vim/vim.md)
+  - [copilot](vim/copilot.md)
 
 - [Gdb](gdb/gdb.md)
   - [常用指令](gdb/常用指令.md)
@@ -18,7 +19,7 @@
 - [Docker](docker/docker_helloworld.md)
   - [Docker 基本教學](docker/docker.md)
   - [Perfect python dockerfile](docker/creating-the-perfect-python-dockerfile.md)
-  
+
 - [Rust](rust/rust.md)
   - [Rust筆記](rust/note.md)
   - [Rust 基本教學](rust/basic.md)
@@ -33,7 +34,7 @@
   - [Golang Deubgger](go/golang_debugger.md)
   - [從一知半解到略懂 Go modules](go/golang-go-module-tutorial.md)
   - [Go modules](go/go_mod.md)
-  
+
 - [Python](python/python.md)
   - [Poetry完全入門指南](python/Poetry完全入門指南.md)
   - [搭建gRPC服務](python/搭建gRPC服務.md)
