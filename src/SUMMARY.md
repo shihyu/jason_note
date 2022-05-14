@@ -45,6 +45,7 @@
   - [import-concept](python/import-concept.md)
   - [Process/Thread優缺點](python/process_thread.md)
   - [Python中的wait和notify](python/condition.md)
+  - [生產者消費者模式](python/生產者消費者模式.md)
   
 - [Mermaid](mermaid/mermaid.md)
 
