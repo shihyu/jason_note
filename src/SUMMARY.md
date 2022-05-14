@@ -44,7 +44,8 @@
   - [pytago](python/pytago.md)
   - [import-concept](python/import-concept.md)
   - [Process/Thread優缺點](python/process_thread.md)
-
+  - [Python中的wait和notify](python/condition.md)
+  
 - [Mermaid](mermaid/mermaid.md)
 
 - [MQ](mq/kafka.md)
