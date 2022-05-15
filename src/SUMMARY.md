@@ -4,7 +4,7 @@
 
 - [Ubuntu](ubuntu/ubuntu_setup.md)
 
-- [Toos]
+- [Toos](tools/tools.md)
   - [asciinema 把終端操作錄製成 gif 動畫](tools/asciinema.md)
 
 - [Vim](vim/vim.md)
