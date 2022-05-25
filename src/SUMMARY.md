@@ -50,7 +50,8 @@
   - [Process/Thread優缺點](python/process_thread.md)
   - [Python中的wait和notify](python/condition.md)
   - [生產者消費者模式](python/生產者消費者模式.md)
-
+  - [Loguru](python/Loguru.md)
+  
 - [Mermaid](mermaid/mermaid.md)
 
 - [MQ](mq/kafka.md)
