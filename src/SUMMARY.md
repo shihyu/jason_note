@@ -38,7 +38,8 @@
   - [Golang Deubgger](go/golang_debugger.md)
   - [從一知半解到略懂 Go modules](go/golang-go-module-tutorial.md)
   - [Go modules](go/go_mod.md)
-
+  - [Golang大殺器之跟蹤剖析trace](go/trace.md)
+  
 - [Python](python/python.md)
   - [Poetry完全入門指南](python/Poetry完全入門指南.md)
   - [搭建gRPC服務](python/搭建gRPC服務.md)
