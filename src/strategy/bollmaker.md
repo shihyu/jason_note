@@ -204,3 +204,6 @@ bbgo run
 - 幣安 https://accounts.binance.com/en/register?ref=38192708
 - MAX https://max.maicoin.com/signup?r=c7982718
 - FTX https://ftx.com/referrals#a=bbgo
+
+出處
+https://c9s.medium.com/bbgo-bollmaker-%E7%A9%BF%E8%B6%8A%E7%89%9B%E7%86%8A%E7%9A%84%E8%87%AA%E5%8B%95%E4%BA%A4%E6%98%93%E7%AD%96%E7%95%A5-b573ba6625b3
