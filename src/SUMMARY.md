@@ -43,7 +43,7 @@
   - [生產者消費者模式](python/生產者消費者模式.md)
   - [Loguru](python/Loguru.md)
 - [Mermaid](mermaid/mermaid.md)
-- [strategy](strategy/bollmaker.md)
+- [Strategy](strategy/bollmaker.md)
 - [MQ](mq/kafka.md)
 - [Kafka的通俗總結](mq/kafka-python.md)
 

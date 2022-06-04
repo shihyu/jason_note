@@ -159,9 +159,6 @@ exchangeStrategies:
 ```
 
 
-
-<iframe src="https://c9s.medium.com/media/4d3ceb80b7845d7a8d09ea6009f93ce8" allowfullscreen="" frameborder="0" height="1082" width="692" title="bbgo bollmaker for BNB" class="gl aq as ag cf" scrolling="auto" style="box-sizing: inherit; height: 1082px; top: 0px; left: 0px; width: 692px; position: absolute;"></iframe>
-
 以上，我們先看到 persistence 有設定 redis。 bbgo 基本上要執行是可以不用 redis 的，但是因為我們需要紀錄部位資訊，重開 bbgo 之後也要能夠載入回來，所以這邊要設定一下 redis，沒有的話，可以裝一下:
 
 ```
