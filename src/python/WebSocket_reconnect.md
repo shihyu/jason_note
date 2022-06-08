@@ -179,3 +179,73 @@ ws.close()
 出處
 
 https://www.bbsmax.com/A/pRdBKapazn/
+
+
+
+---
+
+## python websocket 斷線自動重連
+
+先定義連接函數
+
+```python
+def connection_tmp(ws):
+    websocket.enableTrace(True)
+    ws = websocket.WebSocketApp("ws://localhost:8000/ws",
+                              on_message = on_message,
+                            #   on_data=on_data_test,
+                              on_error = on_error,
+                              on_close = on_close)
+    
+    ws.on_open = on_open
+    try:
+        ws.run_forever()
+    except KeyboardInterrupt:
+        ws.close()  
+    except:
+        ws.close() 
+```
+
+再定義錯誤函數
+
+```python
+def on_error(ws, error):
+
+    global reconnect_count
+    print(type(error))
+    print(error)
+    if type(error)==ConnectionRefusedError or type(error)==websocket._exceptions.WebSocketConnectionClosedException:
+        print("正在嘗試第%d次重連"%reconnect_count)
+        reconnect_count+=1
+        if reconnect_count<100:
+            connection_tmp(ws)
+    else:
+        print("其他error!")
+```
+
+設置屬性全部global即可
+
+```python
+global reconnect_count
+global ws
+ws=None
+reconnect_count=0
+<class 'websocket._exceptions.WebSocketConnectionClosedException'>
+Connection is already closed.
+正在嘗試第4次重連
+<class 'KeyboardInterrupt'>
+
+其他error!
+### closed ###!
+### closed ###!
+### closed ###!
+### closed ###!
+### closed ###!
+### closed ###!
+```
+
+
+
+出處
+
+https://www.cxybb.com/article/u013673826/105605631
