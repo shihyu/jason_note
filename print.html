@@ -11174,6 +11174,59 @@ ws.close()
 </code></pre>
 <p>出處</p>
 <p>https://www.bbsmax.com/A/pRdBKapazn/</p>
+<hr />
+<h2 id="python-websocket-斷線自動重連"><a class="header" href="#python-websocket-斷線自動重連">python websocket 斷線自動重連</a></h2>
+<p>先定義連接函數</p>
+<pre><code class="language-python">def connection_tmp(ws):
+    websocket.enableTrace(True)
+    ws = websocket.WebSocketApp(&quot;ws://localhost:8000/ws&quot;,
+                              on_message = on_message,
+                            #   on_data=on_data_test,
+                              on_error = on_error,
+                              on_close = on_close)
+    
+    ws.on_open = on_open
+    try:
+        ws.run_forever()
+    except KeyboardInterrupt:
+        ws.close()  
+    except:
+        ws.close() 
+</code></pre>
+<p>再定義錯誤函數</p>
+<pre><code class="language-python">def on_error(ws, error):
+
+    global reconnect_count
+    print(type(error))
+    print(error)
+    if type(error)==ConnectionRefusedError or type(error)==websocket._exceptions.WebSocketConnectionClosedException:
+        print(&quot;正在嘗試第%d次重連&quot;%reconnect_count)
+        reconnect_count+=1
+        if reconnect_count&lt;100:
+            connection_tmp(ws)
+    else:
+        print(&quot;其他error!&quot;)
+</code></pre>
+<p>設置屬性全部global即可</p>
+<pre><code class="language-python">global reconnect_count
+global ws
+ws=None
+reconnect_count=0
+&lt;class 'websocket._exceptions.WebSocketConnectionClosedException'&gt;
+Connection is already closed.
+正在嘗試第4次重連
+&lt;class 'KeyboardInterrupt'&gt;
+
+其他error!
+### closed ###!
+### closed ###!
+### closed ###!
+### closed ###!
+### closed ###!
+### closed ###!
+</code></pre>
+<p>出處</p>
+<p>https://www.cxybb.com/article/u013673826/105605631</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="mermaid"><a class="header" href="#mermaid">mermaid</a></h1>
 <ul>
 <li>https://mermaid-js.github.io/mermaid/#/</li>
