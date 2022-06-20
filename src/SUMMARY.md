@@ -43,6 +43,7 @@
   - [生產者消費者模式](python/生產者消費者模式.md)
   - [Loguru](python/Loguru.md)
   - [Python WebSocket長連接心跳與短連接](python/WebSocket_reconnect.md)
+  - [bloomrpc](python/bloomrpc.md)
 - [Mermaid](mermaid/mermaid.md)
 - [Strategy](strategy/bollmaker.md)
 - [MQ](mq/kafka.md)
