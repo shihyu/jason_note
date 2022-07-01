@@ -38,7 +38,7 @@ sudo apt-get install xclip xsel
 
 
 ```sh
-CocInstall coc-tabnine coc-clangd coc-cmake coc-css coc-html coc-json coc-r-lsp coc-go coc-pyright coc-tsserver coc-sh coc-rls!
+CocInstall coc-tabnine coc-clangd coc-cmake coc-css coc-html coc-json coc-r-lsp coc-go coc-pyright coc-tsserver coc-sh coc-rls
 ```
 
 - ~/.config/nvim/coc-settings.json
