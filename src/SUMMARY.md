@@ -25,6 +25,7 @@
   - [給 C++ 使用者的 Rust 簡介](rust/10-rust-an-introduction.md)
   - [學習順序](rust/rust_note.md)
   - [大局觀](rust/overview.md)
+  - [理解字串](rust/String.md)
 - [Go](go/go.md)
   - [Go編程實戰派基礎入門](go/Go編程實戰派基礎入門.md)
   - [Go編程實戰派Web開發基礎](go/Go編程實戰派Web開發基礎.md)
