@@ -1,6 +1,4 @@
-# 變數的所有權與借出變數
-
-## Move, Borrow & Ownership
+# 變數的所有權與借出變數 Move, Borrow & Ownership
 
 這篇與下一篇要介紹 Rust 中可說是最複雜，卻也是最重要的一個觀念，變數的所有權 (ownership) ，在 Rust 中每個變數都有其所屬的範圍 (scope) ，在變數的有效的範圍中，可以選擇將變數「借 (borrow)」給其它的 scope ，也可以將所有權整個轉移 (move) 出去，送給別人喔，當然，送出去的東西如果別人不還你的話是拿不回來的，但借出去的就只是暫時的給別人使用而已。
 
@@ -15,12 +13,6 @@ fn main() {
   println!("{}", message);
 }
 ```
-
-[![Playground](https://i.imgur.com/7F0C6a1.png)](https://play.rust-lang.org/?gist=2e8d72baf064c582fcd1d7563b0ed682&version=stable&mode=debug&edition=2015)
-
-> 範例的下方若有個 ![Playground](https://i.imgur.com/7F0C6a1.png) 的連結，按下去就會連到 Rust Playground ，讓你可以直接執行範例。
-
-> 補充一個之前忘了提的東西， `!` 在這邊並不是打錯了， `println!` 是一起的
 
 ```rust
 fn greet(message: String) {
@@ -56,8 +48,6 @@ let b = a.clone();
 println!("{}", a);
 ```
 
-[![Playground](https://i.imgur.com/7F0C6a1.png)](https://play.rust-lang.org/?gist=bbd5cea5645d6f17a52376a1105d2ef6&version=stable&mode=debug&edition=2015)
-
 > 數字的大小則是固定的，於是在發生把變數送出去的情況時， Rust 會使用複製一份的方式給別人，所以就變成了兩個人都擁有，不會發生錯誤的情況。
 >
 > > 如果你想知道哪個型態可以被複製，可以參考文件的 [`std::marker::Copy`](https://doc.rust-lang.org/stable/std/marker/trait.Copy.html) ，你會在底下看到如 `impl Copy for i32` 這就代表 `i32` 可以被複製
@@ -82,8 +72,6 @@ fn main() {
 }
 ```
 
-[![Playground](https://i.imgur.com/7F0C6a1.png)](https://play.rust-lang.org/?gist=0ef153bf8dae80d3d812b57dd934e6c9&version=stable&mode=debug&edition=2015)
-
 ## Borrow
 
 Rust 中把出借變數直接稱為 borrow ， Rust 中使用在變數前面加一個 `&` 來代表出借變數，borrow 的用途是當你不想把變數送出去時，你就可以把你的變數 **借** 出去，但還有個前提是對方要 **願意跟你借** ，底下是個借出變數給函式的範例：
@@ -100,8 +88,6 @@ fn main() {
   println!("{}", message); // 借出去的東西只是暫時給別人而已，自己還可以使用
 }
 ```
-
-[![Playground](https://i.imgur.com/7F0C6a1.png)](https://play.rust-lang.org/?gist=a1740013bff718d8141cec6cba465392&version=stable&mode=debug&edition=2015)
 
 ```rust
 // 這邊沒有加上 & 代表我想要整個拿走
@@ -134,8 +120,6 @@ fn main() {
   println!("{}", message); // 這邊就會印出 Hello, World
 }
 ```
-
-[![Playground](https://i.imgur.com/7F0C6a1.png)](https://play.rust-lang.org/?gist=845ebd1e9abf0c3cdf0def4f5dbcad1e&version=stable&mode=debug&edition=2015)
 
 > 還記得前一篇的猜數字裡有 `stdin().read_line(&mut input)` 嗎？
 
