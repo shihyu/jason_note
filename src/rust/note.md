@@ -1,6 +1,6 @@
 # Rust 筆記
 
-## as_ptr()
+- as_ptr()
 
 ```rust
 fn print_type_of<T>(_: T) {
@@ -26,6 +26,45 @@ fn main() {
     // 4. friends_coloring_book栈上的地址
     let b = &friends_coloring_book;
     println!("address: {:p}", b);
+}
+```
+
+- Rc / Box 用法
+
+```rust
+use std::rc::Rc;
+
+struct Aa {
+    id: i32,
+}
+
+impl Drop for Aa {
+    fn drop(&mut self) {
+        println!("Aa Drop, id: {}", self.id);
+    }
+}
+
+fn print_type_of<T>(_: &T) {
+    println!("{}", std::any::type_name::<T>());
+}
+
+fn test_1() {
+    let a1 = Aa { id: 1 }; // 数据分配在栈中
+    let a1 = Rc::new(a1); // 数据 move 到了堆中？
+    print_type_of(&a1);
+    //drop(a1);
+    println!("xxxxxxx");
+}
+
+fn test_2() {
+    let a1 = Aa { id: 1 }; // 数据分配在栈中
+    let a1 = Box::new(a1); // 数据 move 到了堆中？
+    print_type_of(&a1);
+}
+
+fn main() {
+    test_1();
+    test_2();
 }
 ```
 
