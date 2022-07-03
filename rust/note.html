@@ -139,7 +139,9 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="rust-筆記"><a class="header" href="#rust-筆記">Rust 筆記</a></h1>
-<h2 id="as_ptr"><a class="header" href="#as_ptr">as_ptr()</a></h2>
+<ul>
+<li>as_ptr()</li>
+</ul>
 <pre><pre class="playground"><code class="language-rust">fn print_type_of&lt;T&gt;(_: T) {
     println!(&quot;{}&quot;, std::any::type_name::&lt;T&gt;());
 }
@@ -163,6 +165,98 @@ fn main() {
     // 4. friends_coloring_book栈上的地址
     let b = &amp;friends_coloring_book;
     println!(&quot;address: {:p}&quot;, b);
+}
+</code></pre></pre>
+<ul>
+<li>Rc / Box 用法</li>
+</ul>
+<pre><pre class="playground"><code class="language-rust">use std::rc::Rc;
+
+struct Aa {
+    id: i32,
+}
+
+impl Drop for Aa {
+    fn drop(&amp;mut self) {
+        println!(&quot;Aa Drop, id: {}&quot;, self.id);
+    }
+}
+
+fn print_type_of&lt;T&gt;(_: &amp;T) {
+    println!(&quot;{}&quot;, std::any::type_name::&lt;T&gt;());
+}
+
+fn test_1() {
+    let a1 = Aa { id: 1 }; // 数据分配在栈中
+    let a1 = Rc::new(a1); // 数据 move 到了堆中？
+    print_type_of(&amp;a1);
+    //drop(a1);
+    println!(&quot;xxxxxxx&quot;);
+}
+
+fn test_2() {
+    let a1 = Aa { id: 1 }; // 数据分配在栈中
+    let a1 = Box::new(a1); // 数据 move 到了堆中？
+    print_type_of(&amp;a1);
+}
+
+fn main() {
+    test_1();
+    test_2();
+}
+</code></pre></pre>
+<ul>
+<li>data  bss text heap stack</li>
+</ul>
+<pre><pre class="playground"><code class="language-rust">/// .Text段存放的是程序中的可執行代碼
+/// .Data段保存的是已經初始化了的全局變量和靜態變量
+/// .ROData（ReadOnlyData）段存放程序中的常量值，如字符串常量
+/// .BSS段存放的是未初始化的全局變量和靜態變量，程序執行前會先進行一遍初始化
+const G_ARRAY: [i32; 5] = [10; 5];
+const G_X: i32 = 100;
+static G_VAR: i32 = 1000;
+
+fn test06_heap_or_stack() {
+    let s: &amp;str = &quot;test list&quot;;
+    //字符串字面量，位於ROData段
+    println!(&quot;&amp;str: {:p}&quot;, s); //&amp;str: 0x7ff77e4c6b88
+    println!(&quot;{:p}&quot;, &amp;G_ARRAY); //data段:0x7ff6c5fc6bb8
+    println!(&quot;{:p}&quot;, &amp;G_X); //data段:0x7ff6c5fc64f0
+    println!(&quot;{:p}&quot;, &amp;G_VAR); //data段:0x7ff77e4c6200
+    println!(&quot;{}&quot;, &quot;-&quot;.repeat(10));
+
+    // 位於堆
+    let bi = Box::new(30);
+    println!(&quot;{:p}&quot;, bi); //堆:0x19f6c6585e0
+                          // 將字符串字面量從內存中的代碼區（ROData段）復制一份到堆
+                          // 棧上分配的變量s1指向堆內存
+    let mut s1: String = String::from(&quot;Hello&quot;);
+    // 可以通過std::mem::transmute將
+    // 從24字節的長度的3個uszie讀出來
+    let pstr: [usize; 3] = unsafe { std::mem::transmute(s1) };
+    // pstr[0]是一個堆內存地址
+    println!(&quot;ptr: 0x{:x}&quot;, pstr[0]); //ptr: 0x19f6c658750
+
+    println!(&quot;{}&quot;, &quot;-&quot;.repeat(10));
+    // 位於棧
+    let nums1 = [1, 2, 3, 4, 5, 6];
+    let mut list: Vec&lt;i32&gt; = vec![20, 30, 40];
+    let t = 100;
+    println!(&quot;{:p}&quot;, &amp;t); //棧0x116aeff104
+    println!(&quot;{:p}&quot;, &amp;nums1); //棧0x116aeff0d0
+    println!(&quot;{:p}&quot;, &amp;list); //棧0x116aeff0e8
+                             // 從ROData區復制了一份字符串字面量放到堆上，
+                             // 然後用棧上分配的s指向堆
+    let s: String = &quot;Hello&quot;.to_owned();
+    println!(&quot;{:p}&quot;, &amp;s); //0x116aeff1f8
+    let s: String = String::from(&quot;Hello&quot;);
+    println!(&quot;{:p}&quot;, &amp;s); //0x116aeff260
+    let s: String = &quot;Hello&quot;.into();
+    println!(&quot;{:p}&quot;, &amp;s); //0x116aeff2c8
+}
+
+fn main() {
+    test06_heap_or_stack();
 }
 </code></pre></pre>
 
