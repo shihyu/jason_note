@@ -264,3 +264,83 @@ src/jemalloc.c:1811是je_free函數實現的地方.
 這篇文章主要介紹了如何調試jemalloc, 是分析jemalloc的准備工作, 也是分析其他開源c程序的普遍方法.
 
 首先使用valgrind+dot打印函數調用圖, 找到函數執行的流程. 然後分析基礎的數據結構與其附屬的操作, 快速明白各種變量會有怎樣的轉換. 最後順著調用圖, 分析各個函數的實現, 以及各種結構體之間的關系. 至此, 所有的源代碼幾乎查看完畢, 一個軟件也分析完畢.
+
+
+
+---
+
+## 使用jemalloc來對c，c++程序進行內存管理
+
+
+
+```sh
+git clone https://github.com/jemalloc/jemalloc
+
+cd jemalloc
+
+注意：這一步確定要把jemalloc的函數編譯成哪種形式，比如下面的配置就會把分配內存的函數編譯成je_malloc的形式，把calloc編譯成je_calloc等等。這樣就不會和系統的libc的分配函數malloc沖突，因為若不指定該選項默認編譯的分配函數是malloc。
+
+ ./configure --enable-debug --with-jemalloc-prefix=je_
+
+make -j8
+```
+
+## 使用jemalloc
+
+```sh
+mkdir jem_test
+```
+
+```c
+#include <stdio.h>
+#include <jemalloc/jemalloc.h>
+//define to jemalloc
+#define malloc(size) je_malloc(size)
+#define calloc(count,size) je_calloc(count,size)
+#define realloc(ptr,size) je_realloc(ptr,size)
+#define free(ptr) je_free(ptr)
+
+int main(void)
+{
+    char* pcon;
+
+    pcon = malloc(10 * sizeof(char));
+
+    if (!pcon) {
+        fprintf(stderr, "malloc failed!\n");
+    }
+
+    if (pcon != NULL) {
+        free(pcon);
+        pcon = NULL;
+    }
+
+    fprintf(stderr, "main end!\n");
+    return 0;
+}
+```
+
+```makefile
+CC=gcc
+CFLAGS=-Wall -g
+INCLUDES=-I /home/shihyu/github/jemalloc/include
+ALLOC_DEP=/home/shihyu/github/jemalloc/lib/libjemalloc.a
+ALLOC_LINK=$(ALLOC_DEP) -lpthread -ldl
+
+dtest: dtest.o
+	$(CC) $(INCLUDES) $(CFLAGS) -o dtest dtest.o $(ALLOC_LINK)
+
+dtest.o: dtest.c $(ALLOC_DEP)
+	$(CC) -c $(INCLUDES) $(CFLAGS) dtest.c
+
+clean:
+	rm -f dtest dtest.o
+```
+
+```sh
+cgdb dtest 
+b je_malloc
+r
+```
+
+http://www.web-lovers.com/c-jemalloc-address-problem.html
