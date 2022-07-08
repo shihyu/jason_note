@@ -8,6 +8,7 @@
   - [copilot](vim/copilot.md)
 - [Gdb](gdb/gdb.md)
   - [常用指令](gdb/常用指令.md)
+  - [jemalloc](gdb/jemalloc.md)
 - [C++](c++/cpp.md)
 - [CentOS](centos/centos.md)
 - [SSH](ssh/ssh.md)
