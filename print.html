@@ -2393,6 +2393,68 @@ ls -al .
 <h3 id="總結"><a class="header" href="#總結">總結</a></h3>
 <p>這篇文章主要介紹了如何調試jemalloc, 是分析jemalloc的准備工作, 也是分析其他開源c程序的普遍方法.</p>
 <p>首先使用valgrind+dot打印函數調用圖, 找到函數執行的流程. 然後分析基礎的數據結構與其附屬的操作, 快速明白各種變量會有怎樣的轉換. 最後順著調用圖, 分析各個函數的實現, 以及各種結構體之間的關系. 至此, 所有的源代碼幾乎查看完畢, 一個軟件也分析完畢.</p>
+<hr />
+<h2 id="使用jemalloc來對cc程序進行內存管理"><a class="header" href="#使用jemalloc來對cc程序進行內存管理">使用jemalloc來對c，c++程序進行內存管理</a></h2>
+<pre><code class="language-sh">git clone https://github.com/jemalloc/jemalloc
+
+cd jemalloc
+
+注意：這一步確定要把jemalloc的函數編譯成哪種形式，比如下面的配置就會把分配內存的函數編譯成je_malloc的形式，把calloc編譯成je_calloc等等。這樣就不會和系統的libc的分配函數malloc沖突，因為若不指定該選項默認編譯的分配函數是malloc。
+
+ ./configure --enable-debug --with-jemalloc-prefix=je_
+
+make -j8
+</code></pre>
+<h2 id="使用jemalloc"><a class="header" href="#使用jemalloc">使用jemalloc</a></h2>
+<pre><code class="language-sh">mkdir jem_test
+</code></pre>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;jemalloc/jemalloc.h&gt;
+//define to jemalloc
+#define malloc(size) je_malloc(size)
+#define calloc(count,size) je_calloc(count,size)
+#define realloc(ptr,size) je_realloc(ptr,size)
+#define free(ptr) je_free(ptr)
+
+int main(void)
+{
+    char* pcon;
+
+    pcon = malloc(10 * sizeof(char));
+
+    if (!pcon) {
+        fprintf(stderr, &quot;malloc failed!\n&quot;);
+    }
+
+    if (pcon != NULL) {
+        free(pcon);
+        pcon = NULL;
+    }
+
+    fprintf(stderr, &quot;main end!\n&quot;);
+    return 0;
+}
+</code></pre>
+<pre><code class="language-makefile">CC=gcc
+CFLAGS=-Wall -g
+INCLUDES=-I /home/shihyu/github/jemalloc/include
+ALLOC_DEP=/home/shihyu/github/jemalloc/lib/libjemalloc.a
+ALLOC_LINK=$(ALLOC_DEP) -lpthread -ldl
+
+dtest: dtest.o
+	$(CC) $(INCLUDES) $(CFLAGS) -o dtest dtest.o $(ALLOC_LINK)
+
+dtest.o: dtest.c $(ALLOC_DEP)
+	$(CC) -c $(INCLUDES) $(CFLAGS) dtest.c
+
+clean:
+	rm -f dtest dtest.o
+</code></pre>
+<pre><code class="language-sh">cgdb dtest 
+b je_malloc
+r
+</code></pre>
+<p>http://www.web-lovers.com/c-jemalloc-address-problem.html</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="c"><a class="header" href="#c">C++</a></h1>
 <ul>
 <li>
