@@ -349,3 +349,7 @@ Context Switchs過高，導致CPU就像個搬運工一樣，頻繁在暫存器(C
  性能分析查看Context Switches的方法
 
 Linux中可以通過工具vmstat, dstat, pidstat來觀察CS的切換情況。vmstat, dstat只能觀察整個系統的切換情況，而pidstat可以更精確地觀察某個處理程序的上下文切換情況。
+
+
+
+最常見的，在一些[排程](https://zh.wikipedia.org/wiki/排程)（scheduling）[演算法](https://zh.wikipedia.org/wiki/算法)內，其中行程有時候需要暫時離開CPU，讓另一個行程進來CPU運作。在先佔式多工系統中，每一個行程都將輪流執行不定長度的時間，這些時間段落稱為[時間片](https://zh.wikipedia.org/wiki/时间片)。如果行程並非自願讓出CPU(例如執行[I/O](https://zh.wikipedia.org/wiki/I/O)操作時，行程就需放棄CPU使用權)，當時限到時，系統將產生一個定時中斷，[作業系統](https://zh.wikipedia.org/wiki/操作系統)將排定由其它的行程來執行。此機制用以確保CPU不致被較依賴處理器[運算](https://zh.wikipedia.org/wiki/运算)的行程壟斷。若無定時中斷，除非行程自願讓出CPU，否則該行程將持續執行。對於擁有較多I/O[指令](https://zh.wikipedia.org/wiki/指令)的行程，往往執行不了多久，便需要讓出CPU；而較依賴處理器的行程相對而言I/O操作較少，反而能一直持續使用CPU，便形成了[壟斷](https://zh.wikipedia.org/wiki/独占)現象。
