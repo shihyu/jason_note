@@ -1,0 +1,381 @@
+
+术语“互斥”指的是对共享资源的互斥访问。互斥锁通常用于避免由于多个执行线程，访问相同的数据而导致的数据损坏和竞争条件。互斥锁通常使用锁来限制线程的访问。
+
+STL在<mutex>头文件中提供了mutex和lock类。
+
+
+\subsubsection{How to do it…}
+
+这个示例中，我们将使用一个简单的Animal类来实验锁定和解锁互斥量:
+
+\begin{itemize}
+\item 
+首先，创建一个互斥对象:
+
+\begin{lstlisting}[style=styleCXX]
+std::mutex animal_mutex;
+\end{lstlisting}
+
+互斥锁是在全局作用域中声明的，因此相关对象都可以访问它。
+
+\item 
+我们的Animal类有一个名字和一个朋友列表:
+
+\begin{lstlisting}[style=styleCXX]
+class Animal {
+	using friend_t = list<Animal>;
+	string_view s_name{ "unk" };
+	friend_t l_friends{};
+public:
+	Animal() = delete;
+	Animal(const string_view n) : s_name{n} {}
+	...
+}
+\end{lstlisting}
+
+添加和删除好友对互斥是一个有用的测试用例。
+
+\item 
+等式运算符是我们唯一需要的运算符:
+
+\begin{lstlisting}[style=styleCXX]
+bool operator==(const Animal& o) const {
+	return s_name.data() == o.s_name.data();
+}
+\end{lstlisting}
+
+s\_name成员是一个string\_view对象，因此可以测试其数据存储地址是否相等。
+
+\item 
+is\_friend()方法测试是否有其他动物在l\_friends列表中:
+
+\begin{lstlisting}[style=styleCXX]
+bool is_friend(const Animal& o) const {
+	for(const auto& a : l_friends) {
+		if(a == o) return true;
+	}
+	return false;
+}
+\end{lstlisting}
+
+\item 
+find\_friend()方法返回一个可选对象，若找到Animal，则带有指向Animal的迭代器:
+
+\begin{lstlisting}[style=styleCXX]
+optional<friend_t::iterator>
+find_friend(const Animal& o) noexcept {
+	for(auto it{l_friends.begin()};
+	it != l_friends.end(); ++it) {
+		if(*it == o) return it;
+	}
+	return {};
+}
+\end{lstlisting}
+
+\item 
+print()方法输出s\_name和l\_friends列表中每个Animal对象的名称:
+
+\begin{lstlisting}[style=styleCXX]
+void print() const noexcept {
+	auto n_animals{ l_friends.size() };
+	cout << format("Animal: {}, friends: ", s_name);
+	if(!n_animals) cout << "none";
+	else {
+		for(auto n : l_friends) {
+			cout << n.s_name;
+			if(--n_animals) cout << ", ";
+		}
+	}
+	cout << '\n';
+}
+\end{lstlisting}
+
+\item 
+add\_friend()方法将一个Animal对象添加到l\_friends列表中:
+
+\begin{lstlisting}[style=styleCXX]
+bool add_friend(Animal& o) noexcept {
+	cout << format("add_friend {} -> {}\n", s_name,
+		o.s_name);
+	if(*this == o) return false;
+	std::lock_guard<std::mutex> l(animal_mutex);
+	if(!is_friend(o)) l_friends.emplace_back(o);
+	if(!o.is_friend(*this))
+		o.l_friends.emplace_back(*this);
+	return true;
+}
+\end{lstlisting}
+
+\item 
+delete\_friend()方法从l\_friends列表中删除一个Animal对象:
+
+\begin{lstlisting}[style=styleCXX]
+bool delete_friend(Animal& o) noexcept {
+	cout << format("delete_friend {} -> {}\n",
+		s_name, o.s_name);
+	if(*this == o) return false;
+	if(auto it = find_friend(o))
+		l_friends.erase(it.value());
+	if(auto it = o.find_friend(*this))
+		o.l_friends.erase(it.value());
+	return true;
+}
+\end{lstlisting}
+
+\item 
+main()函数中，我们创建了一些Animal对象:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	auto cat1 = std::make_unique<Animal>("Felix");
+	auto tiger1 = std::make_unique<Animal>("Hobbes");
+	auto dog1 = std::make_unique<Animal>("Astro");
+	auto rabbit1 = std::make_unique<Animal>("Bugs");
+	...
+\end{lstlisting}
+
+\item 
+使用async()在对象上调用add\_friends()，在不同的线程中运行:
+
+\begin{lstlisting}[style=styleCXX]
+auto a1 = std::async([&]{ cat1->add_friend(*tiger1); });
+auto a2 = std::async([&]{ cat1->add_friend(*rabbit1); });
+auto a3 = std::async([&]{ rabbit1->add_friend(*dog1); });
+auto a4 = std::async([&]{ rabbit1->add_friend(*cat1); });
+a1.wait();
+a2.wait();
+a3.wait();
+a4.wait();
+\end{lstlisting}
+
+可以使用wait()对线程进行阻塞式等待。
+
+\item 
+可以使用print()来查看动物们和他们之间的关系:
+
+\begin{lstlisting}[style=styleCXX]
+auto p1 = std::async([&]{ cat1->print(); });
+auto p2 = std::async([&]{ tiger1->print(); });
+auto p3 = std::async([&]{ dog1->print(); });
+auto p4 = std::async([&]{ rabbit1->print(); });
+p1.wait();
+p2.wait();
+p3.wait();
+p4.wait();
+\end{lstlisting}
+
+\item 
+最后，使用delete\_friend()来删除一个朋友:
+
+\begin{lstlisting}[style=styleCXX]
+auto a5 = std::async([&]{ cat1->delete_friend(*rabbit1);
+});
+a5.wait();
+auto p5 = std::async([&]{ cat1->print(); });
+auto p6 = std::async([&]{ rabbit1->print(); });
+\end{lstlisting}
+
+\item 
+此时，输出是这样的:
+
+\begin{tcblisting}{commandshell={}}
+add_friend Bugs -> Felix
+add_friend Felix -> Hobbes
+add_friend Felix -> Bugs
+add_friend Bugs -> Astro
+Animal: Felix, friends: Bugs, Hobbes
+Animal: Hobbes, friends: Animal: Bugs, friends:
+FelixAnimal: Astro, friends: Felix
+, Astro
+Bugs
+delete_friend Felix -> Bugs
+Animal: Felix, friends: Hobbes
+Animal: Bugs, friends: Astro
+\end{tcblisting}
+
+这个输出有点混乱。每次运行都是不同的。有时候可能没问题，但这就可能是问题。我们需要添加一些互斥锁来控制对数据的访问。
+
+\item 
+使用互斥的一种方法是使用它的lock()和unlock()方法，可以将其添加到add\_friend()函数中:
+
+\begin{lstlisting}[style=styleCXX]
+bool add_friend(Animal& o) noexcept {
+	cout << format("add_friend {} -> {}\n", s_name, o.s_
+	name);
+	if(*this == o) return false;
+	animal_mutex.lock();
+	if(!is_friend(o)) l_friends.emplace_back(o);
+	if(!o.is_friend(*this)) o.l_friends.emplace_
+	back(*this);
+	animal_mutex.unlock();
+	return true;
+}
+\end{lstlisting}
+
+lock()方法尝试获取互斥锁。若互斥锁已经锁定，会等待(块执行)互斥锁打开。
+
+\item 
+我们还需要添加一个锁来delete\_friend():
+
+\begin{lstlisting}[style=styleCXX]
+bool delete_friend(Animal& o) noexcept {
+	cout << format("delete_friend {} -> {}\n",
+		s_name, o.s_name);
+	if(*this == o) return false;
+	animal_mutex.lock();
+	if(auto it = find_friend(o))
+		l_friends.erase(it.value());
+	if(auto it = o.find_friend(*this))
+		o.l_friends.erase(it.value());
+	animal_mutex.unlock();
+	return true;
+}
+\end{lstlisting}
+
+\item 
+现在，需要为print()添加一个锁，以便在打印时不更改数据:
+
+\begin{lstlisting}[style=styleCXX]
+void print() const noexcept {
+	animal_mutex.lock();
+	auto n_animals{ l_friends.size() };
+	cout << format("Animal: {}, friends: ", s_name);
+	if(!n_animals) cout << "none";
+	else {
+		for(auto n : l_friends) {
+			cout << n.s_name;
+			if(--n_animals) cout << ", ";
+		}
+	}
+	cout << '\n';
+	animal_mutex.unlock();
+}
+\end{lstlisting}
+
+现在，输出是合理的:
+
+\begin{tcblisting}{commandshell={}}
+add_friend Bugs -> Felix
+add_friend Bugs -> Astro
+add_friend Felix -> Hobbes
+add_friend Felix -> Bugs
+Animal: Felix, friends: Bugs, Hobbes
+Animal: Hobbes, friends: Felix
+Animal: Astro, friends: Bugs
+Animal: Bugs, friends: Felix, Astro
+delete_friend Felix -> Bugs
+Animal: Felix, friends: Hobbes
+Animal: Bugs, friends: Astro
+\end{tcblisting}
+
+由于异步操作，输出的行顺序可能不同。
+
+\item 
+lock()和unlock()方法很少直接使用。std::lock\_guard类使用适当的资源获取初始化(RAII)模式管理锁，该模式在销毁锁时自动释放锁。下面是带lock\_guard的add\_friend()方法:
+
+\begin{lstlisting}[style=styleCXX]
+bool add_friend(Animal& o) noexcept {
+	cout << format("add_friend {} -> {}\n", s_name, o.s_
+		name);
+	if(*this == o) return false;
+	std::lock_guard<std::mutex> l(animal_mutex);
+	if(!is_friend(o)) l_friends.emplace_back(o);
+	if(!o.is_friend(*this))
+		o.l_friends.emplace_back(*this);
+	return true;
+}
+\end{lstlisting}
+
+lock\_guard对象创建并持有一个锁，直到它销毁。和lock()方法一样，lock\_guard也会阻塞至有锁可用为止。
+
+\item 
+让我们对delete\_friend()和print()方法使用lock\_guard。
+
+delete\_friend():
+
+\begin{lstlisting}[style=styleCXX]
+bool delete_friend(Animal& o) noexcept {
+	cout << format("delete_friend {} -> {}\n",
+		s_name, o.s_name);
+	if(*this == o) return false;
+	std::lock_guard<std::mutex> l(animal_mutex);
+	if(auto it = find_friend(o))
+		l_friends.erase(it.value());
+	if(auto it = o.find_friend(*this))
+		o.l_friends.erase(it.value());
+	return true;
+}
+\end{lstlisting}
+
+print():
+
+\begin{lstlisting}[style=styleCXX]
+void print() const noexcept {
+	std::lock_guard<std::mutex> l(animal_mutex);
+	auto n_animals{ l_friends.size() };
+	cout << format("Animal: {}, friends: ", s_name);
+	if(!n_animals) cout << "none";
+	else {
+		for(auto n : l_friends) {
+			cout << n.s_name;
+			if(--n_animals) cout << ", ";
+		}
+	}
+	cout << '\n';
+}
+\end{lstlisting}
+
+输出保持一致:
+
+\begin{tcblisting}{commandshell={}}
+add_friend Felix -> Hobbes
+add_friend Bugs -> Astro
+add_friend Felix -> Bugs
+add_friend Bugs -> Felix
+Animal: Felix, friends: Bugs, Hobbes
+Animal: Astro, friends: Bugs
+Animal: Hobbes, friends: Felix
+Animal: Bugs, friends: Astro, Felix
+delete_friend Felix -> Bugs
+Animal: Felix, friends: Hobbes
+Animal: Bugs, friends: Astro
+\end{tcblisting}
+
+与前面一样，由于异步操作，输出的行顺序可能不同。
+
+\end{itemize}
+
+\subsubsection{How it works…}
+
+互斥锁并不锁定数据，理解这一点很重要，它阻碍了执行。如本文所示，在对象方法中应用互斥锁时，可以使用它强制对数据进行互斥访问。
+
+当一个线程用lock()或lock\_guard锁住一个互斥量时，就说这个线程拥有这个互斥量。其他试图锁定同一个互斥锁的线程都将阻塞，直到锁的所有者将其解锁。
+
+互斥对象在被任何线程拥有时不能被销毁。同样，当线程拥有互斥时，不能销毁。与RAII兼容的包装器，比如lock\_guard，将确保这种情况不会发生。
+
+\subsubsection{There's more…}
+
+虽然，std::mutex提供了一个适用于许多排他性互斥锁，但STL确实提供了一些其他选择:
+
+\begin{itemize}
+\item 
+shared\_mutex 允许多个线程同时拥有一个互斥量。
+
+\item 
+recursive\_mutex 允许一个线程在一个互斥锁上叠加多个锁。
+
+\item 
+timed\_mutex 为互斥锁提供超时。shared\_mutex和recursive\_mutex也有定时版本可用。
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+

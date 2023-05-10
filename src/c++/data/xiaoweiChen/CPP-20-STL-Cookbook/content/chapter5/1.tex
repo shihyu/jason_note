@@ -1,0 +1,115 @@
+
+lambda本质上是一个匿名函数作为字面表达式:
+
+\begin{lstlisting}[style=styleCXX]
+auto la = []{ return "Hello\n"; };
+\end{lstlisting}
+
+变量la现在可以像函数一样使用:
+
+\begin{lstlisting}[style=styleCXX]
+cout << la();
+\end{lstlisting}
+
+可以传递给另一个函数:
+
+\begin{lstlisting}[style=styleCXX]
+f(la);
+\end{lstlisting}
+
+也可以传递给另一个lambda:
+
+\begin{lstlisting}[style=styleCXX]
+const auto la = []{ return "Hello\n"; };
+const auto lb = [](auto a){ return a(); };
+cout << lb(la);
+\end{lstlisting}
+
+输出为
+
+\begin{tcblisting}{commandshell={}}
+Hello
+\end{tcblisting}
+
+或者它可以匿名传递(作为一个文字):
+
+\begin{lstlisting}[style=styleCXX]
+const auto lb = [](auto a){ return a(); };
+cout << lb([]{ return "Hello\n"; });
+\end{lstlisting}
+
+\subsubsection{闭包}
+
+闭包这个术语通常应用于匿名函数。严格地说，闭包是一个允许在自己的词法范围之外使用符号的函数。
+
+可能已经注意到lambda定义中的方括号:
+
+\begin{lstlisting}[style=styleCXX]
+auto la = []{ return "Hello\n"; };
+\end{lstlisting}
+
+方括号用于指定捕获列表，捕获是可从lambda体范围内访问的外部变量。若试图使用外部变量而没有将其列为捕获，会得到一个编译错误:
+
+\begin{lstlisting}[style=styleCXX]
+const char * greeting{ "Hello\n" };
+const auto la = []{ return greeting; };
+cout << la();
+\end{lstlisting}
+
+当尝试用GCC编译这个时，会得到了以下的错误:
+
+\begin{tcblisting}{commandshell={}}
+In lambda function:
+error: 'greeting' is not captured
+\end{tcblisting}
+
+因为lambda的主体有自己的词法作用域，而greeting变量在该作用域之外。
+
+可以在捕获中指定greeting变量，这允许变量进入lambda的作用域:
+
+\begin{lstlisting}[style=styleCXX]
+const char * greeting{ "Hello\n" };
+const auto la = [greeting]{ return greeting; };
+cout << la();
+\end{lstlisting}
+
+现在，程序就能按预期编译和运行:
+
+\begin{tcblisting}{commandshell={}}
+$ ./working
+Hello
+\end{tcblisting}
+
+这种捕获自身作用域之外变量的能力使lambda成为闭包。人们用不同的方式使用这个词，只要能相互理解就好。尽管如此，了解这个术语的含义还是很有必要的。
+
+lambda表达式允许我们编写良好、干净的泛型代码，了可以使用函数式编程模式，其中可以使用lambda作为算法，甚至作为其他lambda函数的参数。
+
+本章中，我们将在以下主题中介绍lambda在STL中的使用:
+
+\begin{itemize}
+\item 
+用于作用域可重用代码
+
+\item 
+算法库中作为谓词
+
+\item 
+与std::function一起作为多态包装器
+
+\item 
+用递归连接lambda
+
+\item 
+将谓词与逻辑连接词结合起来
+
+\item 
+用相同的输入调用多个lambda
+
+\item 
+对跳转表使用映射lambda
+\end{itemize}
+
+
+
+
+

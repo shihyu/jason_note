@@ -1,0 +1,51 @@
+version: '3.9'
+
+networks:
+  mynetwork:
+    driver: bridge
+
+services:
+  zookeeper:
+    container_name: my-zookeeper
+    image: wurstmeister/zookeeper
+    networks:
+      - mynetwork
+    ports:
+      - "2181:2181"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=my-zookeeper:2888:3888
+
+  kafka:
+    container_name: my-kafka
+    image: wurstmeister/kafka
+    networks:
+      - mynetwork
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: my-kafka
+      KAFKA_ZOOKEEPER_CONNECT: my-zookeeper:2181
+      KAFKA_CREATE_TOPICS: "test:1:1"
+    depends_on:
+      - zookeeper
+
+  redis:
+    container_name: my-redis
+    image: redis
+    restart: always
+    networks:
+      - mynetwork
+    ports:
+      - "1234:6379"
+
+  python:
+    container_name: my-python
+    image: python:3.11
+    restart: always
+    ports:
+      - 8001:80
+    command: sh -c 'pip install redis && tail -f /dev/null'
+    networks:
+      - mynetwork
+

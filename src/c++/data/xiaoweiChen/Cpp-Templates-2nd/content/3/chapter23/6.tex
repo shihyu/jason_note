@@ -1,0 +1,79 @@
+
+早期的C++，枚举值是在类声明中创建“真正的常量”(称为常量表达式)作为命名成员的唯一机制，可以定义一个Pow3元程序来计算3的幂:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{meta/pow3enum.hpp}
+\begin{lstlisting}[style=styleCXX]
+// primary template to compute 3 to the Nth
+template<int N>
+struct Pow3 {
+	enum { value = 3 * Pow3<N-1>::value };
+};
+
+// full specialization to end the recursion
+template<>
+struct Pow3<0> {
+	enum { value = 1 };
+};
+\end{lstlisting}
+
+C++98的标准化引入了类内静态常量初始化器的概念，因此Pow3元程序可以这样写:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{meta/pow3const.hpp}
+\begin{lstlisting}[style=styleCXX]
+// primary template to compute 3 to the Nth
+template<int N>
+struct Pow3 {
+	static int const value = 3 * Pow3<N-1>::value;
+};
+
+// full specialization to end the recursion
+template<>
+struct Pow3<0> {
+	static int const value = 1;
+};
+\end{lstlisting}
+
+这个版本有一个缺点:静态常量成员是左值(参见附录B)
+
+\begin{lstlisting}[style=styleCXX]
+void foo(int const&);
+\end{lstlisting}
+
+将元程序的结果进行传递:
+
+\begin{lstlisting}[style=styleCXX]
+foo(Pow3<7>::value);
+\end{lstlisting}
+
+编译器必须传递Pow3<7>::value的地址，这迫使编译器实例化和分配静态成员的定义，计算不再局限于纯粹的“编译时”效应。
+
+枚举值不是左值(没有地址)，当通过引用传递时，没有使用静态内存。就像将计算值作为文字传递一样。因此，本书的第一版在这类应用程序中更倾向于使用枚举常量。
+
+然而，C++11引入了constexpr静态数据成员，而且这些成员不限于整型。它们没有解决上面提出的地址问题，尽管有这个缺点，不过目前是生成元程序结果的常用方法。其优点是具有正确的类型(与手动enum类型相反)，并且当使用auto类型说明符声明静态成员时，可以推导出该类型。C++17添加了内联静态数据成员，这确实解决了上面提出的地址问题，并且可以与constexpr一起使用。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

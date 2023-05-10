@@ -1,0 +1,87 @@
+我们已经学习了函数模板和类模板。本节中，我们将学习如何在非模板类和类模板中定义成员函数模板。为了理解它们的区别，先来看个例子:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T>
+class composition
+{
+public:
+	T add(T const a, T const b)
+	{
+		return a + b;
+	}
+};
+\end{lstlisting}
+
+复合类是一个类模板，有一个名为add的成员函数，使用类型形参T。这个类可以这样使用:
+
+\begin{lstlisting}[style=styleCXX]
+composition<int> c;
+c.add(41, 21);
+\end{lstlisting}
+
+首先需要实例化组合类的一个对象，必须显式地指定类型形参T的实参，因为编译器不能自己推导出来(没有上下文)。当调用add函数时，只提供参数。其类型(由T类型模板形参表示，之前解析为int)是已知的，像c.add<int>(42, 21)这样的调用使编译器报错。add函数不是一个函数模板，而是一个常规函数，它是复合类模板的成员。
+
+下一个示例中，复合类略有变化。先来看看定义:
+
+\begin{lstlisting}[style=styleCXX]
+class composition
+{
+public:
+	template <typename T>
+	T add(T const a, T const b)
+	{
+		return a + b;
+	}
+};
+\end{lstlisting}
+
+composition是非模板类，但add函数是一个函数模板。要调用这个函数，必须执行以下操作:
+
+\begin{lstlisting}[style=styleCXX]
+composition c;
+c.add<int>(41, 21);
+\end{lstlisting}
+
+为T类型模板形参显式指定int类型是多余的，编译器可以从调用的实参中自行推导出int类型。这里是为了更好地理解这两种实现之间的差异。
+
+除了类模板的成员函数和类成员函数模板这两种情况外，还可以有类模板的成员函数模板。这种情况下，成员函数模板的模板形参必须与类模板的模板形参不同;否则，编译器将报错。回到包装器类模板的示例，并对其进行如下修改:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T>
+class wrapper
+{
+public:
+	wrapper(T const v) :value(v)
+	{}
+	
+	T const& get() const { return value; }
+	
+	template <typename U>
+	U as() const
+	{
+		return static_cast<U>(value);
+	}
+private:
+	T value;
+};
+\end{lstlisting}
+
+这个实现还有一个成员，一个名为as的函数。这是一个函数模板，有一个名为U的类型模板形参。该函数用于将包装的值从类型T转换为类型U，并将其返回给调用者:
+
+
+\begin{lstlisting}[style=styleCXX]
+wrapper<double> a(42.0);
+auto d = a.get(); // double
+auto n = a.as<int>(); // int
+\end{lstlisting}
+
+模板形参的实参在实例化包装器类时指定(double)——尽管在C++17中这是冗余的，并且在调用as函数(int)执行时也可以指定。
+
+继续其他内容(例如实例化、特化和其他形式的模板，包括变量和别名)之前，花点时间了解更多关于模板参数的知识非常重要。
+
+
+
+
+
+
+

@@ -1,0 +1,10 @@
+add_executable(main main.cpp)
+
+find_package(TBB)
+if (TBB_FOUND)
+    message(STATUS "TBB found at: ${TBB_DIR}")
+    target_link_libraries(main PUBLIC TBB::tbb)
+    target_compile_definitions(main PUBLIC WITH_TBB)
+else()
+    message(WARNING "TBB not found! using serial for")
+endif()

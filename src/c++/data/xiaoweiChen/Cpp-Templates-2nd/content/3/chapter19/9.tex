@@ -1,0 +1,168 @@
+
+特征模板示例已经用于确定模板参数的属性:表示什么类型，应用于该类型值的操作符的结果类型等。这样的特征称为属性特征。
+
+一些特征定义了某些类型应该如何对待，称之为策略特征。这让人想起了前面讨论的策略类的概念(特征和策略之间的区别并不完全清晰)，但是策略特征往往是与模板参数相关联的唯一属性(而策略类通常独立于其他模板参数)。
+
+虽然属性特征通常可以作为类型函数实现，但策略特征通常将策略封装在成员函数中。让我们来看一个类型函数，定义了传递只读参数的策略。
+
+\subsubsubsection{19.9.1\hspace{0.2cm}只读参数类型}
+
+C和C++中，函数调用参数默认按值传递。调用方计算的参数值可复制到被调用方控制的位置。对于大型结构来说，这样做的代价会很高，而且对于这样的结构来说，可以通过指向const的引用(或C中指向const的指针)传递参数。对于较小的结构，从性能角度来看，最好的机制取决于所编写代码的架构。大多数情况下，这并不是那么重要，但有时即使是很小的结构也必须谨慎处理。
+
+对于模板，事情变得更加微妙:事先不知道替换的模板参数类型有多大。此外，这个决定不仅取决于大小:小的结构可能会附带一个昂贵的复制构造函数，仍然可以通过引用到const来验证传递只读参数。
+
+这个问题可以通过一个策略特征模板处理，该模板是一个类型函数:该函数将预期的参数类型T映射到最优参数类型T或T const\&。主模板可以对不超过两个指针的类型使用按值传递，对其他类型使用引用const传递:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+struct RParam {
+	using Type = typename IfThenElseT<sizeof(T)<=2*sizeof(void*),
+									T,
+									T const&>::Type;
+};
+\end{lstlisting}
+
+另一方面，对于sizeof返回小值的容器类型，可能会涉及昂贵的复制构造函数，因此可能需要许多特化和偏特化:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+struct RParam<Array<T>> {
+	using Type = Array<T> const&;
+};
+\end{lstlisting}
+
+因为这类类型在C++中很常见，所以只使用简单的复制和移动构造函数，作为值类型来标记小类型可能会更安全
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}若对复制或移动构造函数的调用，可以用底层字节的简单复制来替换，则将其称trivial。
+\end{tcolorbox}
+
+然后有选择地添加其他类类型(std::is\_trivially\_copy\_constructible和std::is\_trivially\ move\ constructible类型特征是C++标准库的一部分)。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{traits/rparam.hpp}
+\begin{lstlisting}[style=styleCXX]
+#ifndef RPARAM_HPP
+#define RPARAM_HPP
+
+#include "ifthenelse.hpp"
+#include <type_traits>
+
+template<typename T>
+struct RParam {
+	using Type
+	= IfThenElse<(sizeof(T) <= 2*sizeof(void*)
+					&& std::is_trivially_copy_constructible<T>::value
+					&& std::is_trivially_move_constructible<T>::value),
+				T,
+				T const&>;
+};
+
+#endif // RPARAM_HPP
+\end{lstlisting}
+
+无论采用哪种方式，策略现在都可以集中在特征模板定义中，外部可以很好地利用它。假设有两个类，其中一个类指定通过值调用更适合只读参数:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{traits/rparamcls.hpp}
+\begin{lstlisting}[style=styleCXX]
+#include "rparam.hpp"
+#include <iostream>
+
+class MyClass1 {
+	public:
+	MyClass1 () {
+	}
+	MyClass1 (MyClass1 const&) {
+		std::cout << "MyClass1 copy constructor called\n";
+	}
+};
+
+class MyClass2 {
+	public:
+	MyClass2 () {
+	}
+	MyClass2 (MyClass2 const&) {
+		std::cout << "MyClass2 copy constructor called\n";
+	}
+};
+
+// pass MyClass2 objects with RParam<> by value
+template<>
+class RParam<MyClass2> {
+	public:
+	using Type = MyClass2;
+};
+\end{lstlisting}
+
+可以声明使用RParam<>作为只读参数的函数，并调用这些函数:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{traits/rparam1.cpp}
+\begin{lstlisting}[style=styleCXX]
+#include "rparam.hpp"
+#include "rparamcls.hpp"
+
+// function that allows parameter passing by value or by reference
+template<typename T1, typename T2>
+void foo (typename RParam<T1>::Type p1,
+typename RParam<T2>::Type p2)
+{
+	...
+}
+
+int main()
+{
+	MyClass1 mc1;
+	MyClass2 mc2;
+	foo<MyClass1,MyClass2>(mc1,mc2);
+}
+\end{lstlisting}
+
+使用RParam有一些明显的缺点。首先，函数声明明显更混乱。其次，因为模板参数只出现在函数参数的限定符中，所以不能用参数推导调用foo()。因此，调用站点必须明确指定模板参数。
+
+这个选项的一个笨拙的解决方法是使用内联包装器函数模板，提供完美的转发功能(第15.6.3节)，但其假定编译器会省略内联函数:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{traits/rparam2.cpp}
+\begin{lstlisting}[style=styleCXX]
+#include "rparam.hpp"
+#include "rparamcls.hpp"
+
+// function that allows parameter passing by value or by reference
+template<typename T1, typename T2>
+void foo_core (typename RParam<T1>::Type p1,
+				typename RParam<T2>::Type p2)
+{
+	...
+}
+
+// wrapper to avoid explicit template parameter passing
+template<typename T1, typename T2>
+void foo (T1 && p1, T2 && p2)
+{
+	foo_core<T1,T2>(std::forward<T1>(p1),std::forward<T2>(p2));
+}
+
+int main()
+{
+	MyClass1 mc1;
+	MyClass2 mc2;
+	foo(mc1,mc2); // same as foo_core<MyClass1,MyClass2>(mc1,mc2)
+}
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+

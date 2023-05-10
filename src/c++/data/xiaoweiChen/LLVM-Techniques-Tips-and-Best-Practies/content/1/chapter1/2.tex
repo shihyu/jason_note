@@ -1,0 +1,74 @@
+正如本章开头所说，如果用默认的(CMake)配置来构建LLVM，可以通过CMake构建整个项目，整个过程可能需要几个小时才能完成:
+
+\begin{tcblisting}{commandshell={}}
+$ cmake ../llvm
+$ make all
+\end{tcblisting}
+
+可以通过使用一些工具和改变环境来避免这么久的耗时。本节中，将介绍一些指导原则，以帮助您选择正确的工具和配置，从而加快构建时间，以及改善内存占用。
+
+\subsubsubsection{1.2.1\hspace{0.2cm}使用Ninja替换GNU Make}
+
+第一个改进是使用Ninja(\url{https://ninja-build.org})而不是GNU Make，后者是CMake在主要Linux/Unix平台上生成的默认构建系统。
+
+以下是在系统上设置Ninja构建的步骤:
+
+\begin{enumerate}
+
+\item 在Ubuntu上，可以通过以下命令来安装Ninja:
+\begin{tcblisting}{commandshell={}}
+$ git clone https://github.com/llvm/llvm-project
+\end{tcblisting}
+Ninja is also available in most Linux distributions.
+	
+\item 然后，为LLVM构建调用CMake时，需要额外添加一个参数:
+\begin{tcblisting}{commandshell={}}
+$ cmake -G "Ninja" ../llvm
+\end{tcblisting}
+	
+\item 最后，使用下面的命令进行构建:
+\begin{tcblisting}{commandshell={}}
+$ ninja all
+\end{tcblisting}
+
+\end{enumerate}
+
+Ninja在大型代码库(如LLVM)上的运行速度明显快于GNU Make。Ninja的快速运行速度的秘密是，虽然像Makefile这样的大多数构建脚本都是手工编写的，但Ninja的构建脚本的语法是build.ninja，更类似于汇编代码(它不应该由开发人员编辑，而是由其他高级构建系统(如CMake)生成)。Ninja使用类似于程序集的构建脚本，这使得它能够在底层进行优化，并消除许多冗余，比如:在调用构建时，解析速度会变慢。Ninja在构建目标之间产生更好的依赖关系方面也能很好的完成。
+
+Ninja会根据其并行度做出决定，以智能的方式绝对最大程度并行执行多个作业。如果想显式地分配工作线程的数量，GNU Make使用的命令行选项仍然可以在这里使用:
+
+\begin{tcblisting}{commandshell={}}
+$ ninja -j8 all
+\end{tcblisting}
+
+接下来，让我们看看如何避免使用BFD链接器。
+
+\subsubsubsection{1.2.2\hspace{0.2cm}避免使用BFD连接器}
+
+第二个改进是使用BFD链接器以外的链接器，这是在大多数Linux系统中使用的默认链接器。BFD连接器是Unix/Linux系统上最成熟的连接器，但在速度或内存消耗方面并没有得到优化。这将造成性能瓶颈，特别是对于像LLVM这样的大型项目。因为与编译阶段不同，链接阶段很难进行文件级的并行化。更不用说，在建立LLVM时，BFD链路的峰值内存消耗通常需要20GB左右，这对内存较少的计算机造成了负担。幸运的是，目前至少有两个连接器提供了良好的单线程性能和较低的内存消耗:GNU gold连接器和LLVM自己的连接器LLD。
+
+gold链接器最初是由谷歌开发的，并捐赠给GNU的binutils。在现代Linux发行版中，默认情况下应该将其放在binutils包中。LLD是LLVM的子项目之一，具有更快的连接速度和实验性的并行连接技术。一些Linux发行版(例如较新的Ubuntu版本)已经在包存储库中包含了LLD。您也可以从LLVM的官方网站下载预构建版本。
+
+要使用gold链接器或LLD来构建LLVM，添加一个额外的CMake参数，使用你想要使用的链接器的名称。
+
+对于gold链接器，可以使用以下命令:
+
+\begin{tcblisting}{commandshell={}}
+$ cmake -G "Ninja" -DLLVM_USE_LINKER=gold ../llvm
+\end{tcblisting}
+
+类似地，对于LLD，使用如下命令:
+
+\begin{tcblisting}{commandshell={}}
+$ cmake -G "Ninja" -DLLVM_USE_LINKER=lld ../llvm
+\end{tcblisting}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=限制用于链接的并行线程的数量]
+\hspace*{0.7cm}限制用于链接的并行线程的数量是减少(峰值)内存消耗的另一种方法。你可以在cmake过程中，通过指定\texttt{LLVM\_PARALLEL\_LINK\_JOBS=<N>}变量来实现，其中\texttt{N}是期望的工作线程数。
+\end{tcolorbox}
+
+因此，只要使用不同的工具，构建时间就可以显著减少。下一节中，我们将通过调整LLVM的CMake参数来提高构建速度。
+
+
+
+

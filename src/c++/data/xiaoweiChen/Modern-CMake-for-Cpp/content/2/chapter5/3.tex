@@ -1,0 +1,257 @@
+
+预处理器在构建过程中起着巨大的作用，但其功能却又如此简单和有限。在接下来的小节中，将介绍如何提供包含文件的路径，以及如何使用预处理器定义。还将解释如何使用CMake配置包含的头文件。
+
+\subsubsubsection{5.3.1\hspace{0.2cm}提供包含文件的路径}
+
+预处理器最基本的特性是能够使用\#include指令包含.h/.hpp头文件。它有两种形式:
+
+\begin{itemize}
+\item 
+\#include <path-spec>: 尖括号式
+
+\item 
+\#include "path-spec": 引号式
+\end{itemize}
+
+预处理器将用指定路径中的文件内容替换这些指令。找到这些文件可能是个问题。我们按什么顺序搜索哪些目录?但C++标准并没有明确规定这一点，这需要查看编译器的手册。
+
+通常，尖括号形式将检查标准包含目录，包括标准C++库和标准C库头文件存储在系统中的目录。
+
+引号式将开始在当前文件的目录中搜索包含的文件，然后在目录中查找带尖括号的目录。
+
+CMake提供了一个指令来操作头文件的搜索路径，以找到需要包含的头文件:
+
+\begin{lstlisting}[style=styleCMake]
+target_include_directories(<target> [SYSTEM] [AFTER|BEFORE]
+	<INTERFACE|PUBLIC|PRIVATE> [item1...]
+	[<INTERFACE|PUBLIC|PRIVATE> [item2...] ...])
+\end{lstlisting}
+
+可以添加希望编译器检查的自定义路径，CMake会将它们添加到生成的构建系统中的编译器调用中，这将提供一个特定于编译器的标志(通常是-I)。
+
+使用BEFORE或AFTER确定路径是应该添加到目标INCLUDE\_DIRECTORIES属性的前面还是后面，这仍然由编译器决定是在默认目录之前还是之后检查这里提供的目录(通常是在之前)。
+
+SYSTEM关键字通知编译器所提供的目录是标准的系统目录(与尖括号形式一起使用)。对于许多编译器，这个值将作为-system标志提供。
+
+\subsubsubsection{5.3.2\hspace{0.2cm}预处理宏定义}
+
+还记得在描述编译阶段时提到的预处理器的\#define和\#if、\#elif和\#endif指令吗?看看下面的例子:
+
+\begin{lstlisting}[style=styleCXX]
+// chapter05/02-definitions/definitions.cpp
+
+#include <iostream>
+int main() {
+#if defined(ABC)
+	std::cout << "ABC is defined!" << std::endl;
+#endif
+
+#if (DEF < 2*4-3)
+	std::cout << "DEF is greater than 5!" << std::endl;
+#endif
+}
+\end{lstlisting}
+
+实际上，这个例子什么也没有做;既没有定义ABC也没有定义DEF(在本例中DEF默认为0)。可以通过在这段代码的顶部添加两行代码来轻松地改变这一点:
+
+\begin{lstlisting}[style=styleCXX]
+#define ABC
+#define DEF 8
+\end{lstlisting}
+
+编译并执行这段代码后，可以在控制台中看到这两条信息:
+
+\begin{lstlisting}[style=styleCXX]
+ABC is defined!
+DEF is greater than 5!
+\end{lstlisting}
+
+这看起来很简单，但若我们想根据外部因素(如操作系统、体系结构或其他东西)来调整这些部分，会发生什么情况呢?好消息!可以将值从CMake传递到C++编译器，这一点也不复杂。
+
+target\_compile\_definitions()指令就可以做到这一点:
+
+\begin{lstlisting}[style=styleCMake]
+# chapter05/02-definitions/CMakeLists.txt
+
+set(VAR 8)
+add_executable(defined definitions.cpp)
+target_compile_definitions(defined PRIVATE ABC
+	"DEF=${VAR}")
+\end{lstlisting}
+
+前面的代码将完全类似于两个\#define语句，可以自由使用CMake的变量和生成器表达式，并且可以将命令放在条件块中。
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=重要的Note]
+这些定义通常以-D标志——-DFOO=1——传递给编译器，一些开发者仍然在这个命令中使用这个标志:
+
+\begin{lstlisting}[style=styleCMake]
+target_compile_definitions(hello PRIVATE -DFOO)
+\end{lstlisting}  
+
+CMake可以识别这一点，并将删除任何前导-D标志。也会忽略空字符串，所以可以这样写:
+
+\begin{lstlisting}[style=styleCMake]
+target_compile_definitions(hello PRIVATE -D FOO)
+\end{lstlisting}   
+
+-D是一个单独的参数，在删除后成为一个空字符串，然后被忽略。
+\end{tcolorbox}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{单元测试私有类的常见问题}
+
+为了单元测试的目的，一些在线资源建议使用特定的-D定义和\#ifdef/ifndef指令的组合。最简单的方法是将访问说明符包装在条件包含中，并在定义UNIT\_TEST时忽略它们:
+
+\begin{lstlisting}[style=styleCXX]
+class X {
+#ifndef UNIT_TEST
+	private:
+#endif
+	int x_;
+}
+\end{lstlisting}
+
+虽然这个用例非常方便(允许测试直接访问私有成员)，但代码不干净。单元测试应该只测试公共接口中的方法是否按预期工作，并将底层实现视为黑盒机制。这里建议只将此作为压箱底的手段。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{使用Git进行编译版本跟踪}
+
+从了解环境或文件系统的细节中受益的用例，一个很好的例子可能是传递用于构建二进制文件的修订或提交SHA:
+
+\begin{lstlisting}[style=styleCMake]
+# chapter05/03-git/CMakeLists.txt
+
+add_executable(print_commit print_commit.cpp)
+execute_process(COMMAND git log -1 --pretty=format:%h
+				OUTPUT_VARIABLE SHA)
+target_compile_definitions(print_commit PRIVATE
+	"SHA=${SHA}")
+\end{lstlisting}  
+
+然后可以在应用中使用:
+
+\begin{lstlisting}[style=styleCXX]
+// chapter05/03-git/print_commit.cpp
+	
+#include <iostream>
+// special macros to convert definitions into c-strings:
+#define str(s) #s
+#define xstr(s) str(s)
+int main()
+{
+#if defined(SHA)
+	std::cout << "GIT commit: " << xstr(SHA) << std::endl;
+#endif
+}
+\end{lstlisting}  
+
+当然，前面的代码要求用户在他们的PATH中安装了Git。当在生产主机上运行的程序来自持续集成/部署流水时，这很有用。若软件有问题，也可以快速检查到底是哪一个Git提交构建了有问题的产品。
+
+跟踪准确的提交对于调试非常有用。对于单个变量来说，这不是很多工作，但是当有几十个变量要传递给头文件时会发生什么呢?
+
+\subsubsubsection{5.3.3\hspace{0.2cm}配置头文件}
+
+若有多个变量，可以通过target\_compile\_definitions()传递定义可能会有一点开销。但不能只提供一个头文件，其中包含引用各种变量的占位符，然后让CMake填充它们吗?
+
+可以使用configure\_file(<input> <output>)指令，可以从这样的模板生成新的文件:
+
+\begin{lstlisting}[style=styleCXX]
+//chapter05/04-configure/configure.h.in
+
+#cmakedefine FOO_ENABLE
+#cmakedefine FOO_STRING1 "@FOO_STRING@"
+#cmakedefine FOO_STRING2 "${FOO_STRING}"
+#cmakedefine FOO_UNDEFINED "@FOO_UNDEFINED@"
+\end{lstlisting}  
+
+然后，可以像这样使用:
+
+\begin{lstlisting}[style=styleCMake]
+# chapter05/04-configure/CMakeLists.txt
+
+add_executable(configure configure.cpp)
+set(FOO_ENABLE ON)
+set(FOO_STRING1 "abc")
+set(FOO_STRING2 "def")
+configure_file(configure.h.in configured/configure.h)
+target_include_directories(configure PRIVATE
+							${CMAKE_CURRENT_BINARY_DIR})
+\end{lstlisting}  
+
+可以让CMake生成一个输出文件，像这样:
+
+\begin{lstlisting}[style=styleCXX]
+//chapter05/04-configure/<build_tree>/configure.h
+	
+#define FOO_ENABLE
+#define FOO_STRING1 "abc"
+#define FOO_STRING2 "def"
+/* #undef FOO_UNDEFINED "@FOO_UNDEFINED@" */
+\end{lstlisting}  
+
+@VAR@和\$\{VAR\}变量占位符被CMake列表文件中的值所替换。对于已定义的变量，\#cmakedefine替换为\#define，而对于未定义的变量使用/* \#undef VAR */替换。
+
+若需要显式的\#define 1或\#define 0为\# If块，可以使用\#cmakedefine01代替。
+
+如何在应用中使用这样的配置头文件呢?可以将它包含在实现文件中:
+
+\begin{lstlisting}[style=styleCXX]
+//chapter05/04-configure/configure.cpp
+
+#include <iostream>
+#include "configured/configure.h"
+// special macros to convert definitions into c-strings:
+#define str(s) #s
+
+#define xstr(s) str(s)
+using namespace std;
+int main()
+{
+#ifdef FOO_ENABLE
+	cout << "FOO_ENABLE: ON" << endl;
+#endif
+	cout << "FOO_ENABLE1: " << xstr(FOO_ENABLE1) << endl;
+	cout << "FOO_ENABLE2: " << xstr(FOO_ENABLE2) << endl;
+	cout << "FOO_UNDEFINED: " << xstr(FOO_UNDEFINED) << endl;
+}
+\end{lstlisting}
+
+并且这里已经用target\_include\_directories()指令将构建树目录添加到include路径中，所以可以编译这个例子并运行:
+
+\begin{tcblisting}{commandshell={}}
+FOO_ENABLE: ON
+FOO_ENABLE1: FOO_ENABLE1
+FOO_ENABLE2: FOO_ENABLE2
+FOO_UNDEFINED: FOO_UNDEFINED
+\end{tcblisting}
+
+configure\_file()指令还有许多格式化和文件权限选项。若感兴趣请查看在线文档以获取详细信息(链接在扩展阅读部分)。
+
+准备好头文件和源文件的完整组合之后，就可以讨论在接下来的步骤中如何形成输出代码。由于不能直接影响语言分析或汇编(这些步骤遵循严格的标准)，所以肯定可以访问优化器的配置。让我们来学习这是如何影响最终结果的吧。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

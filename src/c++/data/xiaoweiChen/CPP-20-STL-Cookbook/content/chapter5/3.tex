@@ -1,0 +1,294 @@
+
+Lambda表达式可以定义和存储供后续使用，也可以作为参数传递，存储在数据结构中，并在不同的上下文中使用不同的参数调用。它们和函数一样灵活，并且具有数据的移动性。
+
+\subsubsection{How to do it…}
+
+从一个简单的程序开始，可用其来测试lambda表达式的各种设置:
+
+\begin{itemize}
+\item 
+首先定义一个main()函数，并使用它来测试lambda:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	... // code goes here
+}
+\end{lstlisting}
+
+\item 
+在main()函数内部，将声明两个lambda。lambda基本定义需要一对方括号和花括号:
+
+\begin{lstlisting}[style=styleCXX]
+auto one = [](){ return "one"; };
+auto two = []{ return "two"; }
+\end{lstlisting}
+
+注意，第一个示例one在方括号后包含圆括号，而第二个示例two则没有。空参数括号通常包括在内，但并不总是必需的。返回类型由编译器推断。
+
+\item 
+可以用cout或format调用这些函数，或在接受C-string的上下文中使用:
+
+\begin{lstlisting}[style=styleCXX]
+cout << one() << '\n';
+cout << format("{}\n", two());
+\end{lstlisting}
+
+\item 
+通常，编译器可以通过自动类型推断确定返回类型。否则，可以使用->操作符指定返回类型:
+
+\begin{lstlisting}[style=styleCXX]
+auto one = []() -> const char * { return "one"; };
+auto two = []() -> auto { return "two"; };
+\end{lstlisting}
+
+lambda使用尾部返回类型语法，由->操作符和类型规范组成。若没有指定返回类型，则认为它是auto。若使用尾部返回类型，则需要参数括号。
+
+\item 
+来定义一个lambda来输出其他lambda的值:
+
+\begin{lstlisting}[style=styleCXX]
+auto p = [](auto v) { cout << v() << '\n'; };
+\end{lstlisting}
+
+p()需要一个lambda(或函数)作为参数v，并在函数体中调用它。
+
+auto类型参数使此lambda成为缩写模板。C++20前，这是创建lambda模板的唯一方法。从C++20开始，可以在捕获括号之后指定模板参数(不带template关键字)。这与模板参数相同:
+
+\begin{lstlisting}[style=styleCXX]
+auto p = []<template T>(T v) { cout << v() << '\n'; };
+\end{lstlisting}
+
+缩写的auto版本更简单，也更常见。
+
+\item 
+现在可以在函数调用中传递一个匿名lambda:
+
+\begin{lstlisting}[style=styleCXX]
+p([]{ return "lambda call lambda"; });
+\end{lstlisting}
+
+输出结果为:
+
+\begin{tcblisting}{commandshell={}}
+lambda call lambda
+\end{tcblisting}
+
+\item 
+若需要将参数传递给匿名的lambda，可以将其放在lambda表达式后的括号中:
+
+\begin{lstlisting}[style=styleCXX]
+<< [](auto l, auto r){ return l + r; }(47, 73)
+	<< '\n';
+\end{lstlisting}
+
+函数参数47和73传递给函数体后括号中的匿名lambda。
+
+\item 
+可以通过将变量包含在方括号中来访问lambda的外部作用域的变量:
+
+\begin{lstlisting}[style=styleCXX]
+int num{1};
+p([num]{ return num; });
+\end{lstlisting}
+
+\item 
+或者通过引用来捕获它们:
+
+\begin{lstlisting}[style=styleCXX]
+int num{0};
+auto inc = [&num]{ num++; };
+for (size_t i{0}; i < 5; ++i) {
+	inc();
+}
+cout << num << '\n';
+\end{lstlisting}
+
+输出如下所示:
+
+\begin{tcblisting}{commandshell={}}
+5
+\end{tcblisting}
+
+可以修改捕获的变量。
+
+
+\item 
+
+也可以定义一个本地捕获变量来维护其状态:
+
+\begin{lstlisting}[style=styleCXX]
+auto counter = [n = 0]() mutable { return ++n; };
+for (size_t i{0}; i < 5; ++i) {
+	cout << format("{}, ", counter());
+}
+cout << '\n';
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+1, 2, 3, 4, 5,
+\end{tcblisting}
+
+可变说明符允许lambda修改它的捕获，lambda默认限定为const。
+
+与尾部返回类型一样，任何说明符都需要参数圆括号。
+
+\item 
+lambda支持两种默认捕获类型:
+
+\begin{lstlisting}[style=styleCXX]
+int a = 47;
+int b = 73;
+auto l1 = []{ return a + b; };
+\end{lstlisting}
+
+若试图编译这段代码，会得到一个错误，其中包括:
+
+\begin{tcblisting}{commandshell={}}
+note: the lambda has no capture-default
+\end{tcblisting}
+
+一种默认捕获类型用等号表示:
+
+\begin{lstlisting}[style=styleCXX]
+auto l1 = [=]{ return a + b; };
+\end{lstlisting}
+
+这将捕获lambda作用域中的所有符号，等号通过复制执行捕获。将捕获对象的副本，就像使用赋值操作符复制对象一样。
+
+另一个默认捕获使用\&号进行引用捕获:
+
+\begin{lstlisting}[style=styleCXX]
+auto l1 = [&]{ return a + b; };
+\end{lstlisting}
+
+这是通过引用进行捕获方式。
+
+默认捕获只在引用时使用，所以并不像看起来那样混乱。我建议在可能的情况下使用显式捕获，这样可读性更高。
+
+\end{itemize}
+
+\subsubsection{How it works…}
+
+lambda表达式的语法如下:
+
+\begin{lstlisting}[style=styleCXX]
+// Syntax of the lambda expression
+[capture-list] (parameters)
+	mutable   (optional)
+	constexpr (optional)
+	exception attr (optional)
+	-> return type (optional)
+{ body }
+\end{lstlisting}
+
+lambda表达式唯一需要的部分是捕获列表和函数体，函数体可以为空:
+
+\begin{lstlisting}[style=styleCXX]
+[]{}
+\end{lstlisting}
+
+这是最简单的lambda表达式，什么也没捕捉到，什么也没做。
+
+来了解一下表达式的每一部分。
+
+\noindent
+\textbf{捕获列表}
+
+捕获列表指定我们捕获什么(如果有的话)。不能省略，但可以是空的。可以使用[=]通过复制来捕获所有变量，或者使用[\&]通过引用来捕获lambda范围内的所有变量。
+
+可以通过在括号中列出单个变量来捕获:
+
+\begin{lstlisting}[style=styleCXX]
+[a, b]{ return a + b; }
+\end{lstlisting}
+
+指定的捕获要复制的默认值，可以通过引用操作符来获取:
+
+\begin{lstlisting}[style=styleCXX]
+[&a, &b]{ return a + b; }
+\end{lstlisting}
+
+当通过引用捕获时，可以修改引用的变量。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black,title=Note]
+在类内使用lambda时，不能直接捕获对象成员，可以捕获this或*this来解除对类成员的引用。
+\end{tcolorbox}
+
+\noindent
+\textbf{参数}
+
+与函数一样，形参可在括号中指定:
+
+\begin{lstlisting}[style=styleCXX]
+[](int a, int b){ return a + b };
+\end{lstlisting}
+
+若没有参数、说明符或尾部返回类型，圆括号是可选的。说明符或尾部返回类型使括号成为必需项:
+
+\begin{lstlisting}[style=styleCXX]
+[]() -> int { return 47 + 73 };
+\end{lstlisting}
+
+\noindent
+\textbf{可变修饰符(可选)}
+
+lambda表达式默认为const限定的，除非指定了可变修饰符。这允许在const上下文中使用，但不能修改复制捕获的变量。例如:
+
+\begin{lstlisting}[style=styleCXX]
+[a]{ return ++a; };
+\end{lstlisting}
+
+这将导致编译失败，并出现如下错误消息:
+
+\begin{tcblisting}{commandshell={}}
+In lambda function:
+error: increment of read-only variable 'a'
+\end{tcblisting}
+
+使用mutable修饰符，lambda不再是const限定的，捕获的变量可能会更改:
+
+\begin{lstlisting}[style=styleCXX]
+[a]() mutable { return ++a; };
+\end{lstlisting}
+
+
+\noindent
+\textbf{constexpr说明符(可选)}
+
+可以使用constexpr显式指定您希望将lambda视为常量表达式，其可以在编译时计算。弱lambda满足要求，即使没有说明符，也可以将其视为constexpr。
+
+\noindent
+\textbf{异常属性(可选)}
+
+可以使用noexcept说明符表明lambda表达式不抛出任何异常。
+
+\noindent
+\textbf{尾部的返回类型(可选)}
+
+默认情况下，lambda返回类型是从return语句中推导出来的，就像是一个wuto返回类型一样。可以选择使用->操作符指定一个尾部返回类型:
+
+\begin{lstlisting}[style=styleCXX]
+[](int a, int b) -> long { return a + b; };
+\end{lstlisting}
+
+若使用可选说明符或尾部？返回类型，则必须使用参数括号。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black,title=Note]
+包括GCC在内的一些编译器允许省略空参数括号，即使有说明符或尾随返回类型。这是不正确的！根据规范，当包含参数、说明符和尾部返回类型都是lambda声明器的一部分时，都需要括号。这在C++的未来版本中可能会改变。
+\end{tcolorbox}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

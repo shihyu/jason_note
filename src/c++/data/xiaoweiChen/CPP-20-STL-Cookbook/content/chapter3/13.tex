@@ -1,0 +1,174 @@
+
+对于作者来说，确保使用了不同的句子长度，或者确保句子不太长对相关工作会很有帮助。现在，来构建一个评估文本句子长度的工具。在使用STL时，选择适当的容器是关键。若需要一些有序的东西，通常最好使用关联容器，比如map或multimap。这种情况下，因为需要自定义排序，所以vector可能更合适。
+
+vector容器通常是STL容器中最灵活的。每当另一种容器类型看起来合适，但缺少一个重要功能时，vector通常是有效的解决方案。所以，需要自定义排序时，就很适合使用vector完成。
+
+这个示例使用了vector的vector。内部vector存储句子中的单词，外部vector存储内部vector，这在保留所有相关数据的同时提供了很大的灵活性。
+
+\subsubsection{How to do it…}
+
+程序需要读入单词，找到句子的结尾，存储和排序句子，然后打印出结果。
+
+\begin{itemize}
+\item 
+先写一个小函数来判断什么时候到达了句尾:
+
+\begin{lstlisting}[style=styleCXX]
+bool is_eos(const string_view & str) {
+	constexpr const char * end_punct{ ".!?" };
+	for(auto c : str) {
+		if(strchr(end_punct, c) != nullptr) return
+		true;
+	}
+	return false;
+}
+\end{lstlisting}
+
+is\_eos()函数使用string\_view，因为它很有效，而且不需要其他东西。然后，使用strchr()库函数检查单词是否包含句尾标点字符(".!?")。这是英语中结束句子最有可能的三个字符。
+
+\item 
+main()函数中，我们首先定义vector的vector:
+
+\begin{lstlisting}[style=styleCXX]
+vector<vector<string>> vv_sentences{vector<string>{}};
+\end{lstlisting}
+
+这定义了一个名为vv\_sentence的元素vector，类型为vector<string>。vv\_sentence对象初始化为第一个句子的空vector。
+
+这将创建一个包含其他vector的vector，内部vector将每个包含一个词的句子。
+
+\item 
+现在可以处理单词流了:
+
+\begin{lstlisting}[style=styleCXX]
+for(string s{}; cin >> s; ) {
+	vv_sentences.back().emplace_back(s);
+	if(is_eos(s)) {
+		vv_sentences.emplace_back(vector<string>{});
+	}
+}
+\end{lstlisting}
+
+for循环每次从输入流返回一个单词。vv\_sentence对象上的back()方法用于访问单词的当前vector，并且使用emplace\_back()添加当前单词。然后，使用is\_eos()来查看这是否是句子的结尾。所以，可以添加一个空的vector到vv\_sentence的下一个句子中。
+
+\item 
+我们总是在vv\_sentence的每个句尾字符之后添加一个新的空vector，所以需要在结尾得到一个空的句子vector。在这里进行检查，并在必要时将其删除:
+
+\begin{lstlisting}[style=styleCXX]
+	// delete back if empty
+	if(vv_sentences.back().empty())
+		vv_sentences.pop_back();
+\end{lstlisting}
+
+\item 
+现在可以根据句子的大小对vv\_sentence vector进行排序:
+
+\begin{lstlisting}[style=styleCXX]
+	sort(vv_sentences, [](const auto& l,
+		const auto& r) {
+			return l.size() > r.size();
+		});
+\end{lstlisting}
+
+这就是为什么vector对这个项目如此方便。使用ranges::sort()算法和一个简单的谓词，会使按大小降序排序非常快速和容易。
+
+\item 
+现在可以打印结果了:
+
+\begin{lstlisting}[style=styleCXX]
+	constexpr int WLIMIT{10};
+	for(auto& v : vv_sentences) {
+		size_t size = v.size();
+		size_t limit{WLIMIT};
+		cout << format("{}: ", size);
+		for(auto& s : v) {
+			cout << format("{} ", s);
+			if(--limit == 0) {
+				if(size > WLIMIT) cout << "...";
+				break;
+			}
+		}
+		cout << '\n';
+	}
+	cout << '\n';
+}
+\end{lstlisting}
+
+外环和内环分别对应于外vector和内vector。简单地遍历这些vector，并使用format("\{\}: "， size)打印出内部vector的大小，然后使用format("\{\} "， s)打印出每个单词。若不想完整地打印非常长的句子，可以定义了10个单词的限制，若有更多，则打印省略号。
+
+\item 
+输出看起来像这样:
+
+\begin{tcblisting}{commandshell={}}
+$ ./sentences < sentences.txt
+27: It can be useful for a writer to make sure ...
+19: Whenever another container type seems appropriate,
+but is missing one ...
+18: If you need something ordered, it's often best to use
+...
+17: The inner vector stores the words of a sentence, and
+...
+16: In this case, however, since we need a descending
+sort, ...
+16: In this case, where we need our output sorted in ...
+15: As you'll see, this affords a lot of flexibility
+while ...
+12: Let's build a tool that evaluates a text file for ...
+11: The vector is generally the most flexible of the STL
+...
+9: Choosing the appropriate container key when using the
+STL.
+7: This recipe uses a vector of vectors.
+\end{tcblisting}
+
+\end{itemize}
+
+
+\subsubsection{How it works…}
+
+使用C标准库中的strchr()函数查找标点符号非常简单，所有的C及其标准库都包含在C++语言的定义中，可以在适当的时候使用。
+
+\begin{lstlisting}[style=styleCXX]
+bool is_eos(const string_view & str) {
+	constexpr const char * end_punct{ ".!?" };
+	for(auto c : str) {
+		if(strchr(end_punct, c) != nullptr) return true;
+	}
+	return false;
+}
+\end{lstlisting}
+
+若单词中间有标点符号，这个函数将无法正确地分开句子。这可能发生在某些形式的诗歌或格式糟糕的文本文件中。我曾见过用std::string迭代器和正则表达式来实现这一点，但对于我们来说，快速和简单就够了。
+
+使用cin逐字读取文本文件:
+
+\begin{lstlisting}[style=styleCXX]
+for(string s{}; cin >> s; ) {
+	...
+}
+\end{lstlisting}
+
+这避免了一次性将一个大文件读入内存的开销。vector已经很大，包含文件的所有单词，没有必要将整个文本文件也保存在内存中。在文件过大的情况下，有必要找到另一种策略，或使用数据库。
+
+“vector的vector”乍一看可能很复杂，但它并不比使用两个独立的vector复杂。
+
+\begin{lstlisting}[style=styleCXX]
+vector<vector<string>> vv_sentences{vector<string>{}};
+\end{lstlisting}
+
+这声明了一个外部vector，内部元素类型为vector<string>。外层vector命名为vv\_sentence。内vector是匿名的，不需要命名。这里的定义用一个空vector<string>对象初始化vv\_sentence对象。
+
+当前的内部vector，可以作为vv\_sentence.back()使用:
+
+\begin{lstlisting}[style=styleCXX]
+vv_sentences.back().emplace_back(s);
+\end{lstlisting}
+
+当完成一个内部vector量时，可以简单地创建一个新vector:
+
+\begin{lstlisting}[style=styleCXX]
+vv_sentences.emplace_back(vector<string>{});
+\end{lstlisting}
+
+这将创建一个新的匿名vector<string>对象，并将其放置在vv\_sentence对象的后面。
+

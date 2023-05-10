@@ -1,0 +1,165 @@
+
+从C++17开始，许多标准的STL算法可以并行执行。该特性允许算法将其工作拆分为子任务，以便在多个核上同时运行。这些算法接受一个执行策略对象，该对象指定应用于算法的并行度类型，该特性需要硬件支持。
+
+\subsubsection{How to do it…}
+
+执行策略在<execution>头文件中和std:: Execution命名空间中定义。本节中，我们将使用std::transform()算法测试可用的策略:
+
+\begin{itemize}
+\item 
+出于计时的目的，将使用带有std::milli比率的duration对象，这样就可以以毫秒为单位进行测量:
+
+\begin{lstlisting}[style=styleCXX]
+using dur_t = duration<double, std::milli>;
+\end{lstlisting}
+
+\item 
+出于演示目的，将从一个具有1000万个随机值的vector<unsigned>开始:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	std::vector<unsigned> v(10 * 1000 * 1000);
+	std::random_device rng;
+	for(auto &i : v) i = rng() % 0xFFFF;
+	...
+\end{lstlisting}
+
+\item 
+现在，进行一个简单的变换:
+
+\begin{lstlisting}[style=styleCXX]
+auto mul2 = [](int n){ return n * 2; };
+auto t1 = steady_clock::now();
+std::transform(v.begin(), v.end(), v.begin(), mul2);
+dur_t dur1 = steady_clock::now() - t1;
+cout << format("no policy: {:.3}ms\n", dur1.count());
+\end{lstlisting}
+
+mul2 lambda只是将一个值乘以2。transform()算法将mul2应用于vector的每个成员。
+
+此转换不指定执行策略。
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+no policy: 4.71ms
+\end{tcblisting}
+
+\item 
+可以在算法的第一个参数中指定执行策略:
+
+\begin{lstlisting}[style=styleCXX]
+std::transform(execution::seq,
+	v.begin(), v.end(), v.begin(), mul2);
+\end{lstlisting}
+
+seq策略意味着算法不能并行化，这与没有执行策略一样。
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+execution::seq: 4.91ms
+\end{tcblisting}
+
+注意，持续时间与没有策略时大致相同。因为它每次运行都会变化，所以永远不会是精确的。
+
+\item 
+execution::par策略允许算法并行化其工作负载:
+
+\begin{lstlisting}[style=styleCXX]
+std::transform(execution::par,
+	v.begin(), v.end(), v.begin(), mul2);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+execution::par: 3.22ms
+\end{tcblisting}
+
+注意，使用并行执行策略时，算法运行得稍微快一些。
+
+\item 
+execute::par\_unseq策略允许工作负载的非排序并行执行:
+
+\begin{lstlisting}[style=styleCXX]
+std::transform(execution::par_unseq,
+	v.begin(), v.end(), v.begin(), mul2);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+execution::par_unseq: 2.93ms
+\end{tcblisting}
+
+这里，我们注意到该策略的另一个性能提升。
+
+execution::par\_unseq策略对算法有更严格的要求，算法不能执行需要并发或需要顺序执行的操作。
+\end{itemize}
+
+\subsubsection{How it works…}
+
+执行策略接口没有指定如何并行算法工作负载，其设计为在不同的负载和环境下使用不同的硬件和处理器。其可以完全在库中实现，也可以依赖于编译器或硬件支持。
+
+并行化将在运算量超过O(n)的算法上表现出最大的改进。例如，sort()显示了显著的改进。下面是一个没有并行化的sort():
+
+\begin{lstlisting}[style=styleCXX]
+auto t0 = steady_clock::now();
+std::sort(v.begin(), v.end());
+dur_t dur0 = steady_clock::now() - t0;
+cout << format("sort: {:.3}ms\n", dur0.count());
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+sort: 751ms
+\end{tcblisting}
+
+使用execution::par，就可以看到显著的性能提升:
+
+\begin{lstlisting}[style=styleCXX]
+std::sort(execution::par, v.begin(), v.end());
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+sort: 163ms
+\end{tcblisting}
+
+execution::par\_unseq的改进会更好:
+
+\begin{lstlisting}[style=styleCXX]
+std::sort(execution::par_unseq, v.begin(), v.end());
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+sort: 152ms
+\end{tcblisting}
+
+在使用并行算法时，做大量的测试是个好主意。若算法或谓词本身不能很好地用于并行化，那么最终可能会获得最小的性能增益，或出现意想不到的副作用。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black,title=Note]
+撰写本文时，GCC对执行策略的支持很差，LLVM/Clang也不支持。这个示例是在运行Windows 10和Visual C++预览版的6核i7上测试的。
+\end{tcolorbox}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

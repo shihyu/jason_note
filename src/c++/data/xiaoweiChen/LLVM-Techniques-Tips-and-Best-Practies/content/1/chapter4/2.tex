@@ -1,0 +1,221 @@
+
+本节简要介绍了重要和常见的TableGen语法，提供了动手编写所需的所有基本知识，在下一节中会提供使用TableGen编写甜甜圈的食谱。
+
+TableGen是一种特定于领域的编程语言，可以对特制的数据布局进行建模。尽管是一种编程语言，但做的事情与传统语言完全不同。\textbf{传统编程语言}通常描述对(输入)数据执行的操作，如何与环境交互，以及它们如何生成结果，而不考虑采用的编程范式(命令式、函数式、事件驱动……)。相比之下，TableGen的行为几乎没有任何描述。
+
+TableGen的描述仅用于静态数据结构。首先，开发人员定义所需数据结构的布局(本质上就是包含许多字段的表)。然后，填充/初始化字段时，需要立即将数据填充到布局中。后一部分可能是TableGen的独特之处：许多编程语言或框架提供了设计特定于领域的数据结构的方法(例如，谷歌的\textbf{Protocol Buffers})，但在这些场景中，数据通常是\textbf{动态}填充的(主要是在使用DSL的代码中)。
+
+\textbf{结构化查询语言(SQL)}在许多方面与TableGen相同:SQL和TableGen(仅)都处理结构化数据，并有定义布局的方法。在SQL中是\texttt{TABLE;}在TableGen中\texttt{class}，这将在本节后面介绍。然而，除了精心设计布局之外，SQL还提供了更多的功能,还可以查询(实际上，这就是它名字的由来:\textbf{结构化查询语言})和动态更新数据，这在TableGen中是不可以的。然而，在本章的后面，您将看到TableGen提供了一个很好的框架来灵活地处理和解释这个(TableGen定义的)数据。
+
+现在我们将介绍四种重要的TableGen结构:
+
+\begin{itemize}
+\item 布局和记录
+\item 叹号操作符
+\item 多记录
+\item \textbf{有向无环图(DAG)}数据类型
+\end{itemize}
+
+\subsubsubsection{4.2.1\hspace{0.2cm}布局和记录}
+
+考虑到TableGen只是描述结构化数据的一种奇特、富有表现力的方式，数据布局和实例化数据都有一个原始的表示。布局通过类语法实现，如下面的代码所示:
+
+\begin{lstlisting}[style=styleCXX]
+class Person {
+	string Name = "John Smith";
+	int Age;
+}
+\end{lstlisting}
+
+正如上所示，class类似于C和许多其他编程语言中的结构体，只包含一组数据字段。每个字段都有一个类型，可以是任何基本类型(\texttt{int}、\texttt{string}、\texttt{bit}等)或其他用户定义的类类型。字段还可以指定一个默认值，比如\texttt{John Smith}。
+
+了解了布局之后，创建一个实例(对TableGen来说就是一个记录)，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+def john_smith : Person;
+\end{lstlisting}
+
+这里，\texttt{john\_smith}是一个使用\texttt{Person}作为模板的记录，因此也有两个字段- \texttt{Name}和\texttt{Age}——\texttt{Name}字段用值\texttt{john Smith}填充。这看起来非常简单，但回想一下TableGen应该定义静态数据，并且大多数字段应该用值填充。现在，\texttt{Age}字段还没有初始化。这里可以用括号闭包和语句覆盖它的值，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+def john_smith : Person {
+	let Age = 87;
+}
+\end{lstlisting}
+
+甚至可以为\texttt{john\_smith}记录定义新的字段:
+
+\begin{lstlisting}[style=styleCXX]
+def john_smith : Person {
+	let Age = 87;
+	string Job = "Teacher";
+}
+\end{lstlisting}
+
+注意，只能覆盖(使用\texttt{let}关键字)声明过的字段。
+
+\subsubsubsection{4.2.1\hspace{0.2cm}叹号操作符}
+
+叹号操作符是一组执行简单任务的函数，例如在TableGen中执行基本的算术或对值进行强制转换。下面是一个简单的把公斤换算成克的例子:
+
+\begin{lstlisting}[style=styleCXX]
+class Weight<int kilogram> {
+	int Gram = !mul(kilogram, 1000);
+}
+\end{lstlisting}
+
+常用的操作符包括算术操作符和位操作符(仅举几个例子)，其中一些在这里概述:
+
+\begin{itemize}
+\ttfamily
+\item !add(a, b): 算术加法
+\item !sub(a, b): 算术减法
+\item !mul(a, b): 算术乘法
+\item !and(a, b): 逻辑和
+\item !or(a, b): 逻辑或
+\item !xor(a, b): 逻辑异或
+\end{itemize}
+
+使用条件运算符的情况，下面列出了一些:
+
+\begin{itemize}
+\ttfamily
+\item !ge(a, b): a大于等于b时返回1，否则返回0
+\item !gt(a, b): a大于b时返回1，否则返回0
+\item !le(a, b): a小于等于b时返回1，否则返回0
+\item !lt(a, b): a小于b时返回1，否则返回0
+\item !eq(a, b): a等于b时返回1，否则返回0
+\end{itemize}
+
+其他有趣的操作符包括:
+
+\begin{itemize}
+\ttfamily
+
+\item !cast<type>(x): 该操作符根据类型参数对x操作数执行类型转换。在类型为数值类型的情况下，例如使用int或bits，这将执行普通的算术类型转换。在一些特殊情况下，假设有以下场景:
+
+如果type是string而x是一个记录，则返回记录的名称。
+
+如果x是一个string，将视为一个记录的名称。TableGen将查找到目前为止的所有记录定义，并对名称为x的记录进行强制转换，并返回与类型参数匹配的类型。
+
+\item !if(pred, then, else): 如果pred为1，该操作符返回then表达式，否则返回else表达式。
+
+\item !cond(cond1 : val1, cond2 : val2, …, condN : valN): 此操作符是!if操作符的增强版本。在返回其关联的val表达式之前，将连续计算cond1…condN，直到其中一个表达式返回1。
+\end{itemize}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, fonttitle=\bfseries,title=Note]
+\hspace*{0.7cm}与运行时求值的函数不同，叹号操作符更像宏，在构建时求值——或者用TableGen的术语来说，当这些语法由TableGen后端处理时进行求值。
+\end{tcolorbox}
+
+\subsubsubsection{4.2.3\hspace{0.2cm}多记录}
+
+许多情况下，我们想要同时定义多个记录。例如，下面的代码片段尝试为多辆车创建汽车部件记录:
+
+\begin{lstlisting}[style=styleCXX]
+class AutoPart<int quantity> {…}
+
+def car1_fuel_tank : AutoPart<1>;
+def car1_engine : AutoPart<1>;
+def car1_wheels : AutoPart<4>;
+…
+def car2_fuel_tank : AutoPart<1>;
+def car2_engine : AutoPart<1>;
+def car2_wheels : AutoPart<4>;
+…
+\end{lstlisting}
+
+我们可以通过使用多记录语法进一步简化，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+class AutoPart<int quantity> {…}
+
+multiclass Car<int quantity> {
+	def _fuel_tank : AutoPart<quantity>;
+	def _engine : AutoPart<quantity>;
+	def _wheels : AutoPart<!mul(quantity, 4)>;
+	…
+}
+\end{lstlisting}
+
+创建记录实例时，使用defm语法而不是def，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+defm car1 : Car<1>;
+defm car2 : Car<1>;
+\end{lstlisting}
+
+因此，仍然会生成名称为\texttt{car1\_fuel\_tank}、\texttt{car1\_engine}、\texttt{car2\_fuel\_tank}的记录。
+
+尽管名称中有\texttt{class}，但\texttt{multiclass}与\texttt{class}没有任何关系。\texttt{multiclass}描述的不是记录的布局，而是作为模板来生成记录。在一个\texttt{multiclass}模板中是要创建的预期记录，以及在模板展开之后的记录名称后缀。例如，前面代码段中\texttt{的defm car1: Car<1>}指令最终扩展为三个\texttt{def}指令:
+
+\begin{itemize}
+\ttfamily
+\item def car1\_fuel\_tank : AutoPart<1>;
+\item def car1\_engine : AutoPart<1>;
+\item def car1\_wheels : AutoPart<!mul(1, 4)>;
+\end{itemize}
+
+正如前面的列表中看到的，会发现在multiclass中的名称后缀(例如，\texttt{\_fuel\_tank})与本例中出现在发现\texttt{defm-car1}之后的名称连接在一起。此外，来自\texttt{multiclass}的\texttt{quantity}模板参数也会实例化到每个扩展的记录中。
+
+简而言之，\texttt{multiclass}会尝试从多个记录实例中提取公共参数，并使一次性创建这些参数成为可能。
+
+\subsubsubsection{4.2.4\hspace{0.2cm}有向无环图(DAG)数据类型}
+
+除了常规的数据类型之外，TableGen还有一个非常独特的第一类类型:\texttt{dag}类型，用于表示DAG实例。要创建一个DAG实例，你可以使用以下语法:
+
+\begin{lstlisting}[style=styleCXX]
+(operator operand1, operand2,…, operandN)
+\end{lstlisting}
+
+虽然操作符只能是一个记录实例，但操作数\texttt{(operand1…operandN)}可以是任意类型。下面是一个尝试建模算术表达式x * 2 + y + 8 * z的例子:
+
+\begin{lstlisting}[style=styleCXX]
+class Variable {…}
+class Operator {…}
+class Expression<dag expr> {…}
+
+// define variables
+def x : Variable;
+def y : Variable;
+def z : Variable;
+
+// define operators
+def mul : Operator;
+def plus : Operator;
+
+// define expression
+def tmp1 : Expression<(mul x, 2)>;
+def tmp2 : Expression<(mul 8, z)>;
+def result : Expression<(plus tmp1, tmp2, y)>;
+\end{lstlisting}
+
+(可选)可以将操作符和/或每个操作数与标记相关联，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+…
+def tmp1 : Expression<(mul:$op x, 2)>;
+def tmp2 : Expression<(mul:$op 8, z)>;
+def result : Expression<(plus tmp1:$term1, tmp2:$term2,
+y:$term3)>;
+\end{lstlisting}
+
+标签总是以美元符号\texttt{\$}开头，然后是用户定义的标签名。这些标记提供了每个DAG组件的逻辑描述，在TableGen后端处理DAG时非常有用。
+
+本节中，介绍了TableGen语言的主要组件，并介绍了一些基本的语法。下一节中，将动手使用TableGen编写“美味的甜甜圈”。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

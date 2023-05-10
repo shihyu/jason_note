@@ -1,0 +1,336 @@
+
+CMake中的变量是一个复杂的主题。有三类变量——普通变量、缓存变量和环境变量——而且它们还在不同的作用域中，并对一个作用域如何影响另一个作用域具有特定的规则。通常情况下，对所有这些规则的不理解会成为bug和头痛的根源。我建议仔细学习这一节，确保在继续学习之前理解了这些概念。
+
+先从CMake中关于变量的关键点开始:
+
+\begin{itemize}
+\item 
+变量名区分大小写，可以包含任何字符。
+
+\item 
+变量都在内部作为字符串存储，有些智力可以解释为其他数据类型的值(甚至是列表!)
+
+\item 
+基本的变量操作指令是set()和unset()，但还有其他指令可以影响变量，如string()和list()。
+\end{itemize}
+
+要设置变量，只需使用set()，提供名称和值:
+
+\begin{lstlisting}[style=styleCMake]
+# chapter02/02-variables/set.cmake
+
+set(MyString1 "Text1")
+set([[My String2]] "Text2")
+set("My String 3" "Text3")
+message(${MyString1})
+message(${My\ String2})
+message(${My\ String\ 3})
+\end{lstlisting}
+
+使用括号和引号参数允许在变量名中包含空格。但当以后引用时，必须使用反斜杠来转义空格(\verb|\|)。因此，建议在变量名中只使用字母数字字符、减号(-)和下划线(\_)。
+
+还要避免使用任何字符开头的保留名称(上、下或混合大小写):CMAKE\_、\_CMAKE\_或下划线(\_)，后面跟着CMake指令的名称。
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Note]
+set()指令接受纯文本变量名作为第一个参数，但message()使用包装在\$\{\}语法中的变量引用。若向set()提供包装在\$\{\}语法中的变量，会发生什么?要回答这个问题，需要更好地理解引用变量。
+\end{tcolorbox}
+
+要取消变量的设置，可以使用：unset(MyString1)。
+
+\subsubsubsection{2.3.1\hspace{0.2cm}引用变量}
+
+已经在指令参数部分提到了引用，这是为引号和非引号参数进行计算的。创建对已定义变量的引用，需要使用\$\{\}语法:message(\$\{MyString1\})。
+
+求值时CMake将遍历作用域堆栈，并将\$\{MyString1\}替换为值，若没有找到变量则替换为空字符串(CMake不会产生错误)。这个过程称为变量求值、展开或插值。
+
+这样的插值是由内而外的方式执行的:
+
+\begin{itemize}
+\item 
+若遇到以下引用——\$\{MyOuter\$\{MyInner\}\}——CMake将首先尝试求值MyInner，而不是搜索名为MyOuter\$\{MyInner\}的变量。
+
+\item 
+若MyInner变量成功展开，CMake将重复展开过程，直到不能再展开为止。
+\end{itemize}
+
+考虑包含以下变量的例子:
+
+\begin{itemize}
+\item 
+MyInner的值是Hello
+
+\item 
+MyOuter的值是\$\{My
+\end{itemize}
+
+若使用message("\$\{MyOuter\}Inner\} World")，输出将是Hello World，这是因为\$\{My替换了\$\{MyOuter\}，当与顶层值Inner\}结合时，会创建另一个变量引用——\$\{MyInner\}。
+
+CMake执行这个扩展，只有这样它才会将结果值作为参数传递给命令。这就是为什么使用set(\$\{MyInner\} "Hi")时，实际上不会更改MyInner变量，而是更改Hello变量。CMake将\$\{MyInner\}展开为Hello，并将该字符串作为第一个参数传递给set()，以及一个新值Hi。很多时候，这并不是我们想要的。
+
+当涉及到变量类别时，变量引用的工作方式有点奇怪。以下是通常情况适用的方式:
+
+\begin{itemize}
+\item 
+\$\{\}用于引用普通变量或缓存变量。
+
+\item 
+\$ENV\{\}用于引用环境变量。
+
+\item 
+\$CACHE\{\}用于引用缓存变量。
+\end{itemize}
+
+没错，使用\$\{\}以从一个类别或另一个类别获得值，后续章节会有详解。先介绍一些其他类型的变量，以便了解它们是什么。
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Note]
+可以通过命令行在-{}-标记之后将参数传递给脚本。值将存储在CMAKE\_ARGV<n>变量中，传递的参数的计数将存储在CMAKE\_ARGC变量中。
+\end{tcolorbox}
+
+\subsubsubsection{2.3.2\hspace{0.2cm}环境变量}
+
+这是最简单的一种变量。CMake生成环境中用于启动CMake进程的变量的副本，并使它们在单一的全局作用域中可用。要引用这些变量，使用\$ENV\{<name>\}。
+
+CMake还允许设置变量(set())和取消设置变量(unset())，但更改只会在运行的CMake进程中对本地副本进行，而不会对实际的系统环境进行更改;此外，这些更改对于构建或测试的后续运行不可见。
+
+要修改或创建一个变量，使用set(ENV\{<variable>\} <value>)指令:
+
+\begin{lstlisting}[style=styleCMake]
+set(ENV{CXX} "clang++")
+\end{lstlisting}
+
+要清除环境变量，使用unset(ENV\{<variable>\}):
+
+\begin{lstlisting}[style=styleCMake]
+unset(ENV{VERBOSE})
+\end{lstlisting}
+
+注意，有几个环境变量会影响CMake行为的不同方面。CXX变量就是其中之一——指定编译C++文件时，使用什么可执行文件。我们将讨论其他环境变量，因为它们与本书相关。完整的列表可以在文档中找到:
+
+\url{https://cmake.org/cmake/help/latest/manual/cmake-envvariables.7.html}
+
+若使用ENV变量作为指令的参数，这些值将在生成构建系统期间插入，并且会将其嵌入到构建树中。
+
+例子:
+
+\begin{lstlisting}[style=styleCMake]
+# chapter02/03-environment/CMakeLists.txt
+
+cmake_minimum_required(VERSION 3.20.0)
+project(Environment)
+message("generated with " $ENV{myenv})
+add_custom_target(EchoEnv ALL COMMAND echo "myenv in build
+	is" $ENV{myenv})
+\end{lstlisting}
+
+前面的示例有两个步骤:将在配置期间打印myenv环境变量，并通过add\_custom\_target()添加一个构建阶段，该阶段作为构建过程的一部分响应相同的变量。可以测试bash脚本会发生什么，在配置阶段使用一个值，在构建阶段使用另一个值:
+
+\begin{lstlisting}[style=stylePython]
+# chapter02/03-environment/build.sh
+	
+#!/bin/bash
+export myenv=first
+echo myenv is now $myenv
+cmake -B build .
+cd build
+export myenv=second
+echo myenv is now $myenv
+cmake --build .
+\end{lstlisting}
+
+运行上面的代码，可以清楚地看到在配置过程中，设置的值会保留在生成的构建系统中:
+
+\begin{tcblisting}{commandshell={}}
+$ ./build.sh | grep -v "\-\-"
+myenv is now first
+generated with first
+myenv is now second
+Scanning dependencies of target EchoEnv
+myenv in build is first
+Built target EchoEnv
+\end{tcblisting}
+
+\subsubsubsection{2.3.3\hspace{0.2cm}缓存变量}
+
+它们是存储在构建树中的CMakeCache.txt文件中的变量，包含在项目配置阶段收集的信息，包括从系统(到编译器、链接器、工具和其他的路径)和通过GUI从用户收集的信息。缓存变量在脚本中不可用(因为没有CMakeCache.txt文件)——其只存在于项目中。
+
+缓存变量可以通过\$CACHE\{<name>\}语法来引用。
+
+要设置一个缓存变量，使用set():
+
+\begin{lstlisting}[style=styleCMake]
+set(<variable> <value> CACHE <type> <docstring> [FORCE]) 
+\end{lstlisting}
+
+这里有一些必需参数(与用于普通变量的set()指令相比)，还引入了第一个关键字:CACHE和FORCE。
+
+将CACHE指定为set()参数可以更改在配置阶段提供的内容，要求提供变量<type>和<docstring>值。这是因为用户可以配置这些变量，GUI需要知道如何显示它们。通常接受以下类型:
+
+\begin{itemize}
+\item 
+BOOL: 一个布尔的开/关值。GUI将显示一个复选框。
+
+\item 
+FILEPATH: 磁盘上文件的路径。GUI将打开一个文件对话框。
+
+\item 
+STRING: 一行字符串。GUI提供了一个要填充的文本字段，可以通过下拉控件选择替换。
+
+\begin{lstlisting}[style=styleCMake]
+set_property(CACHE <variable> STRINGS <values>)
+\end{lstlisting}
+
+\item 
+INTERNAL: 一行字符串。GUI跳过内部条目。内部条目可以用于跨运行持久化存储变量。使用此类型会隐式添加FORCE关键字。
+\end{itemize}
+
+<doctring>值只是一个标签，将由GUI显示在字段旁边，以便向用户提供关于该设置的更多详细信息。即使是INTERNAL类型也需要它。
+
+设置缓存变量遵循与环境变量相同的规则——仅在当前执行CMake时覆盖值:
+
+\begin{lstlisting}[style=styleCMake]
+set(FOO "BAR" CACHE STRING "interesting value")
+\end{lstlisting}
+
+若变量存在于缓存中，上述调用不会产生永久影响。然而，若该值在缓存中不存在或指定了可选的FORCE参数，则该值将固定:
+
+\begin{lstlisting}[style=styleCMake]
+set(FOO "BAR" CACHE STRING "interesting value" FORCE)
+\end{lstlisting}
+
+设置缓存变量有一些不明显的含义，具有相同名称的普通变量都将删除。我们将在下一节中找出原因。
+
+需要提醒的是，缓存变量也可以在命令行端进行管理。
+
+\subsubsubsection{2.3.4\hspace{0.2cm}如何正确使用变量作用域}
+
+变量作用域可能是CMake语言整个概念中最难的部分。这可能是因为我们太习惯于在更高级语言中做事情的方式。CMake没有这些机制，所以它用自己的方式处理这个问题。
+
+需要说明的是，变量作用域作为一个通用概念是为了分离不同的抽象层，以便在调用用户定义的函数时，该函数中设置的变量是局部的。这些局部变量不会影响全局作用域，即使局部变量的名称与全局变量的名称完全相同。若显式需要，函数也应该具有对全局变量的读/写访问权。这种变量(或作用域)分离必须在多个层面上工作——当一个函数调用另一个函数时，分离规则同样适用。
+
+CMake有两个作用域:
+
+\begin{itemize}
+\item 
+函数作用域:用于执行用function()定义的自定义函数
+
+\item 
+目录作用域:当从add\_subdirectory()指令执行嵌套目录中的CMakeLists.txt文件时
+\end{itemize}
+
+将在本书后面介绍上述指令。首先，需要知道变量作用域的概念如何实现。当创建嵌套作用域时，CMake只需用来自当前作用域的所有变量的副本填充。后续命令将影响这些副本。但若完成了嵌套作用域的执行，所有的副本都会删除，而原始的父作用域将恢复。
+
+考虑以下场景:
+
+\begin{enumerate}
+\item 
+父作用域将VAR变量设置为ONE。
+
+\item 
+开始嵌套作用域，并将VAR输出到控制台。
+
+\item 
+VAR变量设置为TWO，并且VAR输出到控制台。
+
+\item 
+嵌套的作用域结束，VAR再输出到控制台。
+\end{enumerate}
+
+控制台的输出应该是:ONE, TWO, ONE。这是因为在嵌套作用域结束后，复制的VAR变量将丢弃。
+
+CMake中作用域的概念如何工作，若在嵌套作用域中执行时取消设置(unset())父作用域中创建的变量，只会在嵌套作用域中消失。当嵌套作用域完成时，变量将恢复到以前的值。
+
+这就引出了变量引用的行为和\$\{\}语法。每当尝试访问普通变量时，CMake将从当前作用域搜索变量，若定义了具有这样一个名称的变量，它将返回其值，但当CMake找不到具有该名称的变量时(例如，若它不存在或未设置(unset()))，将搜索缓存变量，若找到匹配则从那里返回一个值。
+
+若有一个使用unset()的嵌套作用域，这可能是个问题。根据引用该变量的位置——内部还是外部作用域——将访问缓存或原始值。
+
+若真的需要更改调用(父)作用域中的变量，该怎么办呢?
+
+CMake有一个PARENT\_SCOPE标志，可以在set()和unset()指令的末尾添加:
+
+\begin{lstlisting}[style=styleCMake]
+set(MyVariable "New Value" PARENT_SCOPE)
+unset(MyVariable PARENT_SCOPE)
+\end{lstlisting}
+
+这种解决方法有一定的局限性，因为其不允许访问超过一个级别的变量。另一件值得注意的事情是，使用PARENT\_SCOPE不会改变当前作用域中的变量。
+
+来看看变量作用域在实践中是如何工作的:
+
+\begin{lstlisting}[style=styleCMake]
+# chapter02/04-scope/CMakeLists.txt
+
+function(Inner)
+	message(" > Inner: ${V}")
+	set(V 3)
+	message(" < Inner: ${V}")
+endfunction()
+
+function(Outer)
+	message(" > Outer: ${V}")
+	set(V 2)
+	Inner()
+	message(" < Outer: ${V}")
+endfunction()
+
+set(V 1)
+message("> Global: ${V}")
+Outer()
+message("< Global: ${V}")
+\end{lstlisting}
+
+将全局变量V设为1，然后调用Outer函数;然后将V设置为2并调用Inner函数，然后将V设置为3。每一步后面，都将变量打印到控制台:
+
+\begin{tcblisting}{commandshell={}}
+> Global: 1
+  > Outer: 1
+    > Inner: 2
+    < Inner: 3
+  < Outer: 2
+< Global: 1
+\end{tcblisting}
+
+深入函数时，变量值会复制到嵌套作用域，但当退出作用域时，原始值将恢复。
+
+若改变Inner函数的set()来操作父作用域:set(V 3 PARENT\_SCOPE)，输出会是什么?
+
+\begin{tcblisting}{commandshell={}}
+> Global: 1
+  > Outer: 1
+    > Inner: 2
+    < Inner: 2
+  < Outer: 3
+< Global: 1
+\end{tcblisting}
+
+我们影响了外部函数的作用域，但没有影响内部函数的作用域或全局作用域!
+
+CMake文档还提到CMake脚本在一个目录范围内绑定变量(这有点多余，因为唯一有效创建目录范围的命令add\_subdirectory()在脚本中是不允许的)。
+
+由于所有变量都存储为字符串，CMake必须采用更有效的方法来处理更复杂的数据结构，如列表。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

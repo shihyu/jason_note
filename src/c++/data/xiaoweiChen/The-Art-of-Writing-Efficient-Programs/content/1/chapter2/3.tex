@@ -1,0 +1,201 @@
+
+收集關於程序性能信息的最簡單的方法就是運行，並測量運行所花費的時間。當然，要進行有效的優化，需要更多的數據。最好知道程序的哪些部分耗時最長，其他代碼可能非常低效，但也只需要很少的時間，因此不會對最終結果有任何影響。
+
+在示例程序中添加計時器後，我們知道了排序需要花費多長時間。簡而言之，這就是\textbf{基準測試}。其餘的工作都是體力活，用計時器檢測代碼，收集信息，並以可讀的格式進行報告。看看有什麼工具可以做到這一點，先從語言本身提供的計時器開始。
+
+\subsubsubsection{2.3.1\hspace{0.2cm}C++的chrono計時器}
+
+C++在chrono庫中有一些工具可以用來收集計時信息，可以測量程序中經過任意兩點之間所需的時間:
+
+%\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{example.C}
+\begin{lstlisting}[style=styleCXX]
+#include <chrono>
+using std::chrono::duration_cast;
+using std::chrono::milliseconds;
+using std::chrono::system_clock;
+  …
+auto t0 = system_clock::now();
+  … do some work …
+auto t1 = system_clock::now();
+auto delta_t = duration_cast<milliseconds>(t1 – t0);
+cout << "Time: " << delta_t.count() << endl;
+\end{lstlisting}
+
+應該指出的是，C++計時時鐘測量的是實時時間(通常稱為\textit{掛鐘時間})。通常，這就是想要測量的時間。更詳細的分析通常需要測量CPU時間，即CPU的工作時間，以及CPU空閒的時間。單線程程序中，CPU時間不能大於實際時間。當程序是計算密集型時，這兩個時間理論上相同，這意味著完全使用CPU進行計算了。另一方面，用戶界面程序會把大部分時間都花在等待用戶和閒置CPU上，所以我們希望CPU時間儘可能的短，這樣的程序就是高效的，並且使用盡可能少的CPU資源來滿足用戶的請求。
+
+
+\subsubsubsection{2.3.2\hspace{0.2cm}高精度計時器}
+
+為了測試CPU時間，我們必須使用特定於操作系統的系統函數，在Linux和其他posix兼容的系統上，可以使用\texttt{clock\_gettime()}來使用硬件的高精度計時器:
+
+%\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{clocks.C}
+\begin{lstlisting}[style=styleCXX]
+timespec t0, t1;
+clockid_t clock_id = …; // Specific clock
+clock_gettime(clock_id, &t0);
+  … do some work …
+clock_gettime(clock_id, &t1);
+double delta_t = t1.tv_sec – t0.tv_sec +
+  1e-9*(t1.tv_nsec – t0.tv_nsec);
+\end{lstlisting}
+
+第二個參數的函數返回當前時間，\texttt{tv\_sec}是過去某一時刻到現在的秒數，\texttt{tv\_nsec}是上一整個秒到現在的納秒數。時間的起始是多少並不重要，因為我們總是測量時間間隔。這裡要先減去秒，然後再加納秒。
+
+在前面的代碼中已經使用了幾個硬件計時器，可以通過\texttt{clock\_id}的值進行選擇，這些計時器與我們已經使用過的系統或實時時鐘相同，其ID為\texttt{CLOCK\_REALTIME}。我們感興趣的另外兩個計時器是兩個CPU計時器:\texttt{CLOCK\_PROCESS\_CPUTIME\_ID}是測量當前程序使用CPU時間的計時器，而\texttt{CLOCK\_THREAD\_CPUTIME\_ID}是測量線程調用使用時間的計時器。
+
+對代碼進行基準測試時，使用多個計時器進行測量通常很有幫助。一個單線程程序若進行不間斷的計算時，三個計時器應該返回相同的結果:
+
+%\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{clocks.C}
+\begin{lstlisting}[style=styleCXX]
+double duration(timespec a, timespec b) {
+	return a.tv_sec - b.tv_sec + 1e-9*(a.tv_nsec - b.tv_nsec);
+}
+…
+{
+	timespec rt0, ct0, tt0;
+	clock_gettime(CLOCK_REALTIME, &rt0);
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ct0);
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tt0);
+	constexpr double X = 1e6;
+	double s = 0;
+	for (double x = 0; x < X; x += 0.1) s += sin(x);
+	timespec rt1, ct1, tt1;
+	clock_gettime(CLOCK_REALTIME, &rt1);
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ct1);
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tt1);
+	cout << "Real time: " << duration(rt1, rt0) << "s, "
+	  "CPU time: " << duration(ct1, ct0) << "s, "
+	  "Thread time: " << duration(tt1, tt0) << "s" <<
+	  endl;
+}
+\end{lstlisting}
+
+這裡的“CPU密集型的工作”是一種計算，所以三個計時器的時間幾乎相同。時間將取決於計算機的運行速度，結果是這樣的:
+
+\begin{tcblisting}{commandshell={}}
+Real time: 0.3717s, CPU time: 0.3716s, Thread time: 0.3716s
+\end{tcblisting}
+
+如果CPU時間與實際時間不匹配，則很可能是機器過載(許多其他進程正在爭奪CPU資源)，或程序耗盡內存(如果程序使用的內存超過機器上的物理內存，將使用慢得多的磁盤進行數據交換，當程序等待從磁盤調入內存時，CPU無法執行任何工作)。
+
+另外，如果沒有太多的計算，而是等待用戶輸入，或者從網絡接收數據，亦或做一些其他不佔用太多CPU資源的工作，則會看到不同的結果。觀察這種行為的最簡單方法是調用\texttt{sleep()}函數:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{clocks.C}
+\begin{lstlisting}[style=styleCXX]
+{
+	timespec rt0, ct0, tt0;
+	clock_gettime(CLOCK_REALTIME, &rt0);
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ct0);
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tt0);
+	sleep(1);
+	timespec rt1, ct1, tt1;
+	clock_gettime(CLOCK_REALTIME, &rt1);
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ct1);
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tt1);
+	cout << "Real time: " << duration(rt1, rt0) << "s, "
+	  "CPU time: " << duration(ct1, ct0) << "s, "
+	  "Thread time: " << duration(tt1, tt0) << "s" <<
+  	  endl;
+}
+\end{lstlisting}
+
+可以看到休眠程序幾乎不怎麼使用CPU:
+
+\begin{tcblisting}{commandshell={}}
+Real time: 1.000s, CPU time: 3.23e-05s, Thread time: 3.32e-05s
+\end{tcblisting}
+
+對於傳輸套接字或讀取文件阻塞的程序，或者正在等待用戶操作的程序，也是這樣幾乎不怎麼使用CPU。
+
+目前為止，還沒有看到兩個CPU計時器之間的區別(除非程序使用線程，否則不會看到區別)。我們可以讓這個需要大量計算的程序，完成同樣的工作，但為其創建一個單獨的線程進行計算:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{clocks.C}
+\begin{lstlisting}[style=styleCXX]
+{
+	timespec rt0, ct0, tt0;
+	clock_gettime(CLOCK_REALTIME, &rt0);
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ct0);
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tt0);
+	constexpr double X = 1e6;
+	double s = 0;
+	auto f = std::async(std::launch::async,
+	  [&]{ for (double x = 0; x < X; x += 0.1) s += sin(x);
+	  });
+	f.wait();
+	timespec rt1, ct1, tt1;
+	clock_gettime(CLOCK_REALTIME, &rt1);
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ct1);
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tt1);
+	cout << "Real time: " << duration(rt1, rt0) << "s, "
+	  "CPU time: " << duration(ct1, ct0) << "s, "
+	  "Thread time: " << duration(tt1, tt0) << "s" <<
+	  endl;
+}
+\end{lstlisting}
+
+總的計算量保持不變，並且只有一個線程在執行這項工作，因此我們不期望對實時性或整個進程的CPU時間有任何改進。不過，調用計時器的線程現在是空閒的，它所做的就是等待\texttt{std::async}返回\texttt{future}，直到工作完成。這種等待與前面例子中的\texttt{sleep()}非常類似:
+
+\begin{tcblisting}{commandshell={}}
+Real time: 0.3774s, CPU time: 0.377s, Thread time: 7.77e-05s
+\end{tcblisting}
+
+現在，實時和進程的CPU時間與“計算密集型”示例中的CPU時間相似，但線程特定的CPU時間較低，就像“休眠”示例中的CPU時間一樣。因為程序都在做大量的計算，但是使用計時器的線程，大部分時間都在休眠。
+
+大多數情況下，如果打算使用線程進行計算，我們的目標是更快地進行更多的計算，因此會使用幾個線程，並將不同的工作分配給它們。我們修改一下前面的例子，讓其在主線程上也能進行計算:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{clocks.C}
+\begin{lstlisting}[style=styleCXX]
+{
+	timespec rt0, ct0, tt0;
+	clock_gettime(CLOCK_REALTIME, &rt0);
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ct0);
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tt0);
+	constexpr double X = 1e6;
+	double s1 = 0, s2 = 0;
+	auto f = std::async(std::launch::async,
+	  [&]{ for (double x = 0; x < X; x += 0.1) s1 += sin(x);
+	  });
+	for (double x = 0; x < X; x += 0.1) s2 += sin(x);
+	f.wait();
+	timespec rt1, ct1, tt1;
+	clock_gettime(CLOCK_REALTIME, &rt1);
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ct1);
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tt1);
+	cout << "Real time: " << duration(rt1, rt0) << "s, "
+	  "CPU time: " << duration(ct1, ct0) << "s, "
+	  "Thread time: " << duration(tt1, tt0) << "s" <<
+	  endl;
+}
+\end{lstlisting}
+
+兩個線程都在進行計算，因此程序的CPU時間是實際時間的兩倍:
+
+\begin{tcblisting}{commandshell={}}
+Real time: 0.5327s, CPU time: 1.01s, Thread time: 0.5092s
+\end{tcblisting}
+
+這還不錯！我們在0.53秒的實時時間內完成了1秒的計算。理想情況下，這應該是0.5秒，但啟動線程和等待線程會有一定的開銷。另外，兩個線程中的一個可能會花費稍長的時間來完成工作，而另一個線程在某些時候可能空閒。
+
+對程序進行基準測試是一種收集性能數據的方法。通過觀察執行一個函數，或處理一個事件所花費的時間，可以對代碼的性能瞭解很多。在計算密集型的代碼中，可以瞭解程序是否在不間斷地進行計算，或者正在等待什麼。對於多線程程序，可以測量併發的有效性和開銷。不僅限於收集執行時間，還可以輸出相關的任何計數和值，比如：調用函數的次數、排序的平均字符串的長度等，以便進行分析程序的各項指標。
+
+然而，這種靈活性是有代價的。使用基準測試，可以瞭解關於程序性能的問題。不過，這裡只報告了測量數據，如果想知道某個函數需要多長時間，就必須給它添加計時器。問題是，在代碼中到處撒計時器是不行的，這些函數的調用代價相當昂貴，所以使用太多計時器會減慢程序的速度，並嚴重影響性能測試。若具有經驗和良好的編碼規則，可以提前編寫一些代碼，這樣就可以針對其主要部分進行基準測試了。
+
+如果不知道從哪裡開始，該怎麼做？如果接手了一個沒有進行任何基準測試的代碼庫，該怎麼辦？或者，性能瓶頸存在於一大坨代碼中，但其中沒有計時器，該怎麼辦？一種方法是繼續測試代碼，直到有足夠的數據來分析問題。不過，這種暴力的方法很慢，所以需要一些關於性能數據分析的引導。這就是\textbf{分析工具}的作用所在，它可以自動收集程序的性能數據，而非手工檢測，從而便於進行簡單的基準測試。我們將在下一節中學習如何使用性能分析工具。
+
+
+
+
+
+

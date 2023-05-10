@@ -1,0 +1,13 @@
+import type { IChartApi, IPriceLine, IPriceScaleApi, ISeriesApi, ITimeScaleApi, SeriesType } from 'lightweight-charts';
+import type { PriceLineParams } from '../../internal/lines';
+import type { Reference } from '../../internal/utils.js';
+import type { PriceScaleParams } from '../../internal/price-scale';
+import type { TimeScaleParams } from '../../internal/time-scale';
+import { SeriesParams } from '../../internal/series.js';
+export type Context = IChartApi | ISeriesApi<SeriesType>;
+export declare function context<T extends Context>(value: T): void;
+export declare function context<T extends Context>(): T;
+export declare function useSeriesEffect<T extends SeriesParams>(callback: () => [params: T, ref: Reference<ISeriesApi<T['type']>> | undefined]): void;
+export declare function useLineEffect(callback: () => [params: PriceLineParams, ref: Reference<IPriceLine> | undefined]): void;
+export declare function useTimeScaleEffect(callback: () => [params: TimeScaleParams, ref: Reference<ITimeScaleApi> | undefined]): void;
+export declare function usePriceScaleEffect(callback: () => [params: PriceScaleParams, ref: Reference<IPriceScaleApi> | undefined]): void;

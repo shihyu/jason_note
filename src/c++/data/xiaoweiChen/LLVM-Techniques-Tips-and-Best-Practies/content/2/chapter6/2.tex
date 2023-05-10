@@ -1,0 +1,63 @@
+当使用源码文件时，最基本的问题之一是编译器前端如何能够在文件中定位字符串片段。一方面，良好地打印格式消息(例如，编译错误和警告消息)是一项至关重要的工作，其中必须显示准确的行号和列号。另一方面，前端可能需要同时管理多个文件，并以一种有效的方式访问内存中的内容。在Clang中，这些问题主要由两个类处理:\texttt{SourceLocation}和\texttt{SourceManager}。我们将简要介绍它们，并展示如何在实践中进行使用。
+
+\subsubsubsection{6.2.1\hspace{0.2cm}SourceLocation}
+
+\texttt{SourceLocation}类用于表示代码在文件中的位置。在实现时，使用行号和列号可能是最直观的方式。然而，在现实场景中，事情可能会变得复杂，例如：在内部不能天真地使用一对数字作为源代码位置的内存表示。主要原因是，Clang的代码库中广泛使用了\texttt{SourceLocation}实例，并且基本上贯穿了整个前端编译管道。因此，重要的是使用一种简洁的方式来存储信息，而不是两个32位整数(这可能还不够，因为还想知道具体的文件!)，这很容易使Clang的运行时占用过多的内存。
+
+Clang通过使用优雅设计，将\texttt{SourceLocation}作为一个大数据缓冲区的\textbf{指针}(或句柄)来解决这个问题，该缓冲区存储了所有真正的源代码内容，例如：\texttt{SourceLocation}只使用一个无符号整型，这也意味着其实例可以复制——这可以带来一些性能上的好处。由于\texttt{SourceLocation}是指针，所以只有当它与刚才提到的数据缓冲区一起使用才有意义，数据缓冲区是由本文中的第二个主要角色\texttt{SourceManager}管理的。
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, fonttitle=\bfseries,title=其他实用工具]
+\hspace*{0.7cm}\texttt{SourceRange}是一对\texttt{SourceLocation}对象，表示源代码范围的开始和结束。\texttt{FullSourceLocation}将普通的\texttt{SourceLocation}类和它关联的\texttt{SourceManager}类封装到一个类中，这样只需要一个\texttt{FullSourceLocation}实例即可，而不是两个对象(一个\texttt{SourceLocation}对象和一个\texttt{SourceManager}对象)。
+\end{tcolorbox}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{可复制的}
+
+除非有很好的理由，否则在编写C++的正常情况下，应该避免通过对象的值传递对象(例如，作为函数调用的参数)。因为涉及到对底层数据成员的复制，所以应该通过指针或引用来传递。但是，如果仔细设计，类型实例可以来回复制，而不需要做很多工作，例如：给没有成员变量或成员变量很少的类，加上一个默认的复制构造函数。如果实例可以复制，那么可以通过值来进行传递。
+
+\subsubsubsection{6.2.2\hspace{0.2cm}SourceManager}
+
+\texttt{SourceManager}类管理存储在内存中的所有源文件，并提供访问它们的接口。还提供API来处理源代码位置，通过刚刚介绍的\texttt{SourceLocation}实例，例如：要从\texttt{SourceLocation}实例获取行号和列号，运行以下代码:
+
+\begin{lstlisting}[style=styleCXX]
+void foo(SourceManager &SM, SourceLocation SLoc) {
+	auto Line = SM.getSpellingLineNumber(SLoc),
+	Column = SM.getSpellingColumnNumber(SLoc);
+	…
+}
+\end{lstlisting}
+
+前面代码片段中的\texttt{Line}和\texttt{Column}变量，分别是\texttt{SLoc}所指向源码位置的行号和列号。
+
+想知道为什么在前面的代码片段中使用术语\texttt{spellingLineNumber}，而不是使用\texttt{LineNumber}吗？在宏展开(或任何在预处理过程中发生的展开)的情况下，Clang会在展开之前和之后跟踪宏内容的\texttt{SourceLocation}实例。拼写位置表示最初编写源代码的位置，而非宏扩展后的位置。
+
+也可以使用以下API创建一个新的与拼写相关的扩展:
+
+\begin{lstlisting}[style=styleCXX]
+SourceLocation NewSLoc = SM.createExpansionLoc(
+	SpellingLoc, // The original macro spelling location
+	ExpansionStart, // Start of the location where macro is
+	//expanded
+	ExpansionEnd, // End of the location where macro is
+	// expanded
+	Len // Length of the content you want to expand
+);
+\end{lstlisting}
+
+返回的\texttt{NewSLoc}可以通过\texttt{SourceManager}查询与拼写扩展关联的位置信息。
+
+在后面的章节中，这些重要的概念和API将帮助您处理源代码位置——特别是在处理预处理程序时。下一节将介绍Clang中预处理器和词法分析器开发的一些背景知识，这些知识对于开发自定义预处理器插件和回调非常有用。
+
+
+
+
+
+
+
+
+
+
+
+
+

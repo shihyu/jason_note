@@ -1,0 +1,340 @@
+类型擦除描述了一种模式，其中删除类型信息，允许以通用方式处理不一定相关的类型。这不是C++语言特有的东西，这个概念也存在于其他语言(如Python和Java)。有不同形式的类型擦除，如多态性和使用void指针(C语言的使用方式，需要避免)，但真正的类型擦除是通过模板实现的。讨论这个问题之前，先简要地看一下其他问题。
+
+类型擦除的最基本形式是使用void指针。这是典型的C语言方式，尽管在C++中可以，但绝不推荐这样做。这样做不是类型安全的，因此很容易出错。但为了便于讨论，来看看这种方法。
+
+再次假设我们有knight和mage类型，他们都有攻击功能(行为)，我们希望以一种共同的方式来对待他们，以展示这种行为:
+
+\begin{lstlisting}[style=styleCXX]
+struct knight
+{
+	void attack() { std::cout << "draw sword\n"; }
+};
+
+struct mage
+{
+	void attack() { std::cout << "spell magic curse\n"; }
+};
+\end{lstlisting}
+
+类C语言的实现中，可以为每一种类型都创建一个函数，对该类型的对象使用void*，将其转换为预期的指针类型，然后调用attack成员函数:
+
+\begin{lstlisting}[style=styleCXX]
+void fight_knight(void* k)
+{
+	reinterpret_cast<knight*>(k)->attack();
+}
+
+void fight_mage(void* m)
+{
+	reinterpret_cast<mage*>(m)->attack();
+}
+\end{lstlisting}
+
+它们有相似的特征，唯一不同的是名字。可以定义一个函数指针，然后将一个对象(或者更准确地说，一个指向对象的指针)与一个指向处理它的正确函数的指针关联起来。以下是具体实现:
+
+\begin{lstlisting}[style=styleCXX]
+using fight_fn = void(*)(void*);
+void fight(
+	std::vector<std::pair<void*, fight_fn>> const& units)
+{
+	for (auto& u : units)
+	{
+		u.second(u.first);
+	}
+}
+\end{lstlisting}
+
+最后一个代码片段中没有关于类型的信息，所有这些都已使用void指针擦除。fight函数可以按如下方式调用:
+
+\begin{lstlisting}[style=styleCXX]
+knight k;
+mage m;
+
+std::vector<std::pair<void*, fight_fn>> units {
+	{&k, &fight_knight},
+	{&m, &fight_mage},
+};
+
+fight(units);
+\end{lstlisting}
+
+C++的角度来看，这可能看起来很奇怪。这个示例中，我将C与C++类相结合，希望不会在生产环境中看到这样的代码片段。若将一个mage传递给fight\_knight函数或者相反，就会因为一个简单的输入错误而出错。然而，这是可能的，并且是类型擦除的一种形式。C++中一个明显的替代解决方案是通过继承使用多态性。
+
+这是在本章开头看到的第一个解决方案：
+
+\begin{lstlisting}[style=styleCXX]
+struct game_unit
+{
+	virtual void attack() = 0;
+};
+
+struct knight : game_unit
+{
+	void attack() override
+	{ std::cout << "draw sword\n"; }
+};
+
+struct mage : game_unit
+{
+	void attack() override
+	{ std::cout << "spell magic curse\n"; }
+};
+
+void fight(std::vector<game_unit*> const & units)
+{
+	for (auto unit : units)
+		unit->attack();
+}
+\end{lstlisting}
+
+fight功能可以同时处理knight和mage的对象，不知道传递给它地址的实际对象(在vector内)，因此可以说类型并没有完全删除。knight和mage都是game\_unit，而fight函数处理任何game\_unit。对于这个函数要处理的另一种类型，需要派生自game\_unit纯抽象类。
+
+有时候这是不可能的。在类似的事情中处理不相关的类型(鸭子类型的过程)，但不能改变这些类型。例如，我们并不拥有源代码。这个问题的解决方案，就是使用模板进行真正的类型擦除。
+
+看到这个模式是什么样子之前，来一步一步理解这个模式的发展，从不相关的knight和mage开始，以及不能修改他们的实现作为前提。但我们可以编写包装器，为公共功能(行为)提供统一的接口:
+
+\begin{lstlisting}[style=styleCXX]
+struct knight
+{
+	void attack() { std::cout << "draw sword\n"; }
+};
+
+struct mage
+{
+	void attack() { std::cout << "spell magic curse\n"; }
+};
+
+struct game_unit
+{
+	virtual void attack() = 0;
+	virtual ~game_unit() = default;
+};
+
+struct knight_unit : game_unit
+{
+	knight_unit(knight& u) : k(u) {}
+	void attack() override { k.attack(); }
+	
+private:
+	knight& k;
+};
+
+struct mage_unit : game_unit
+{
+	mage_unit(mage& u) : m(u) {}
+	void attack() override { m.attack(); }
+	
+private:
+	mage& m;
+};
+
+void fight(std::vector<game_unit*> const & units)
+{
+	for (auto u : units)
+	u->attack();
+}
+\end{lstlisting}
+
+我们不需要像在knight和mage中那样调用game\_unit中的attack成员函数，其名称可以随意，纯粹是基于模仿原始行为名称。fight函数接受一个指向game\_unit的指针集合，因此能够同时处理knight和mage对象:
+
+\begin{lstlisting}[style=styleCXX]
+knight k;
+mage m;
+
+knight_unit ku{ k };
+mage_unit mu{ m };
+
+std::vector<game_unit*> v{ &ku, &mu };
+fight(v);
+\end{lstlisting}
+
+这个解决方案的问题是有很多重复的代码，knight\_unit和mage\_unit基本上是一样的。当其他类需要类似地处理时，这种重复会增加更多。代码复制的解决方案是使用模板。我们用下面的职业模板替换knight\_unit和mage\_unit:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T>
+struct game_unit_wrapper : public game_unit
+{
+	game_unit_wrapper(T& unit) : t(unit) {}
+	
+	void attack() override { t.attack(); }
+private:
+	T& t;
+};
+\end{lstlisting}
+
+这个类在源代码中只有一个副本，但是编译器会使用实例化多个特化。除某些类型限制外，类型信息都会擦除——T类型必须有一个名为attack的成员函数，该函数不接受参数。注意，fight函数根本没有改变。调用端代码需要稍作修改:
+
+\begin{lstlisting}[style=styleCXX]
+knight k;
+mage m;
+
+game_unit_wrapper ku{ k };
+game_unit_wrapper mu{ m };
+
+std::vector<game_unit*> v{ &ku, &mu };
+fight(v);
+\end{lstlisting}
+
+这将我们引向类型擦除模式的形式，将抽象基类和包装器类模板放在另一个类中:
+
+\begin{lstlisting}[style=styleCXX]
+struct game
+{
+	struct game_unit
+	{
+		virtual void attack() = 0;
+		virtual ~game_unit() = default;
+	};
+
+	template <typename T>
+	struct game_unit_wrapper : public game_unit
+	{
+		game_unit_wrapper(T& unit) : t(unit) {}
+		
+		void attack() override { t.attack(); }
+	private:
+		T& t;
+	};
+
+	template <typename T>
+	void addUnit(T& unit)
+	{
+		units.push_back(
+		std::make_unique<game_unit_wrapper<T>>(unit));
+	}
+
+	void fight()
+	{
+		for (auto& u : units)
+			u->attack();
+	}
+private:
+	std::vector<std::unique_ptr<game_unit>> units;
+};
+\end{lstlisting}
+
+game类包含game\_unit对象的集合，并有一个向game\_unit(具有attack成员函数)添加新包装器的方法。还有一个成员函数fight，用于调用常见的行为。这次的调用端的代码如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+knight k;
+mage m;
+
+game g;
+g.addUnit(k);
+g.addUnit(m);
+
+g.fight();
+\end{lstlisting}
+
+类型擦除模式中，抽象基类称为概念，继承的包装器称为模型。若要以既定的方式实现类型擦除模式，可以进行如下实现:
+
+\begin{lstlisting}[style=styleCXX]
+struct unit
+{
+	template <typename T>
+	unit(T&& obj) :
+		unit_(std::make_shared<unit_model<T>>(
+				std::forward<T>(obj)))
+	{}
+	
+	void attack()
+	{
+		unit_->attack();
+	}
+
+	struct unit_concept
+	{
+		virtual void attack() = 0;
+		virtual ~unit_concept() = default;
+	};
+
+	template <typename T>
+	struct unit_model : public unit_concept
+	{
+		unit_model(T& unit) : t(unit) {}
+		
+		void attack() override { t.attack(); }
+	private:
+		T& t;
+	};
+
+private:
+	std::shared_ptr<unit_concept> unit_;
+};
+
+void fight(std::vector<unit>& units)
+{
+	for (auto& u : units)
+		u.attack();
+}
+\end{lstlisting}
+
+这段代码片中，game\_unit重命名为unit\_concept，game\_unit\_wrapper重命名为unit\_model，除了名字没有其他变化。它们是名为unit的新类的成员，该类存储一个指针，指向实现unit\_concept的对象;这可以是unit\_model<knight>或unit\_model<mage>。unit类有一个模板构造函数，能够从knight和mage对象中创建模型对象。
+
+其还有一个公共成员函数attack(同样，它可以有任何名称)。另一方面，fight函数处理unit对象，并调用它们的fight成员函数。调用端代码可能如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+knight k;
+mage m;
+
+std::vector<unit> v{ unit(k), unit(m) };
+
+fight(v);
+\end{lstlisting}
+
+若想知道这个模式在实际代码中现在哪里使用，标准库中就有两个例子:
+
+\begin{itemize}
+\item
+std::function: 这是一个通用的多态函数包装器，能够存储、复制和调用可调用的东西，例如函数、Lambda表达式、绑定表达式、函数对象、指向成员函数的指针和指向数据成员的指针。下面是一个使用std::function的例子:
+
+\begin{lstlisting}[style=styleCXX]
+class async_bool
+{
+	std::function<bool()> check;
+public:
+	async_bool() = delete;
+	async_bool(std::function<bool()> checkIt)
+		: check(checkIt)
+	{ }
+	
+	async_bool(bool val)
+		: check([val]() {return val; })
+	{ }
+	
+	operator bool() const { return check(); }
+};
+
+async_bool b1{ false };
+async_bool b2{ true };
+async_bool b3{ []() { std::cout << "Y/N? ";
+					  char c; std::cin >> c;
+					  return c == 'Y' || c == 'y'; } };
+				  
+if (b1) { std::cout << "b1 is true\n"; }
+if (b2) { std::cout << "b2 is true\n"; }
+if (b3) { std::cout << "b3 is true\n"; }
+\end{lstlisting}
+
+\item
+std::any: 这是一个将容器表示为可复制构造类型值的类。下面的代码中使用了一个例子:
+
+\begin{lstlisting}[style=styleCXX]
+std::any u;
+
+u = knight{};
+if (u.has_value())
+	std::any_cast<knight>(u).attack();
+
+u = mage{};
+if (u.has_value())
+	std::any_cast<mage>(u).attack();
+\end{lstlisting}
+\end{itemize}
+
+类型擦除是一种习语，将面向对象编程的继承与模板结合起来，以创建可以存储任何类型的包装器。本节中，我们了解了模式的表现形式和工作方式，以及该模式的一些实际实现。
+
+下一节中，我们将讨论标记分派。
+
+
+

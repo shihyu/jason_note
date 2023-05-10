@@ -1,0 +1,149 @@
+目标描述中指令的定义允许构造解码器表，解码器表用于将目标文件反汇编成文本汇编程序。解码器表和解码器函数是由llvm-tblgen工具生成的。除了生成的代码外，我们只需要提供注册和初始化M88kDisassembler类的代码，以及一些解码寄存器和操作数的帮助函数。\par
+
+我们将实现放在Disassembler/M88kDisassembler.cpp文件中。M88kDisassembler类的get\allowbreak Instruction()方法执行解码工作。它接受一个字节数组作为输入，并将下一条指令解码到MCInst类的实例中。类声明如下:\par
+
+\begin{lstlisting}[caption={}]
+using DecodeStatus = MCDisassembler::DecodeStatus;
+
+namespace {
+	
+class M88kDisassembler : public MCDisassembler {
+public:
+	M88kDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx)
+		: MCDisassembler(STI, Ctx) {}
+	~M88kDisassembler() override = default;
+	
+	DecodeStatus getInstruction(MCInst &instr, uint64_t &Size,
+								ArrayRef<uint8_t> Bytes,
+								uint64_t Address,
+								raw_ostream &CStream) const
+														override;
+};
+}
+\end{lstlisting}
+
+生成的类以非限定的方式引用DecodeStatus枚举，因此必须使名称可见。\par
+
+为了初始化反汇编器，我们定义了一个工厂函数，只是实例化一个新对象:\par
+
+\begin{lstlisting}[caption={}]
+static MCDisassembler *
+createM88kDisassembler(const Target &T,
+						const MCSubtargetInfo &STI,
+						MCContext &Ctx) {
+	return new M88kDisassembler(STI, Ctx);
+}
+\end{lstlisting}
+
+LLVMInitializeM88kDisassembler()函数中，将工厂函数注册到目标注册表中:\par
+
+\begin{lstlisting}[caption={}]
+extern "C" LLVM_EXTERNAL_VISIBILITY void
+LLVMInitializeM88kDisassembler() {
+	TargetRegistry::RegisterMCDisassembler(
+		getTheM88kTarget(), createM88kDisassembler);
+}
+\end{lstlisting}
+
+当LLVM核心库初始化时，会调用initializealldisassemers()函数或InitializeNativeTarget\allowbreak Disassembler()函数。\par
+
+生成的解码器函数需要助手函数来解码寄存器和操作数，这些元素的编码通常涉及目标描述中没有表示的特殊情况，例如：两个指令之间的距离总是偶数，所以最小的位可以忽略，因为它总是零。\par
+
+要解码寄存器，必须定义DecodeGPRRegisterClass()函数。32个寄存器用0到31之间的数字进行编码，我们可以使用静态GPRDecoderTable表来映射编码和生成的寄存器枚举之间的关系:\par
+
+\begin{lstlisting}[caption={}]
+static const uint16_t GPRDecoderTable[] = {
+	M88k::R0, M88k::R1, M88k::R2, M88k::R3,
+	M88k::R4, M88k::R5, M88k::R6, M88k::R7,
+	M88k::R8, M88k::R9, M88k::R10, M88k::R11,
+	M88k::R12, M88k::R13, M88k::R14, M88k::R15,
+	M88k::R16, M88k::R17, M88k::R18, M88k::R19,
+	M88k::R20, M88k::R21, M88k::R22, M88k::R23,
+	M88k::R24, M88k::R25, M88k::R26, M88k::R27,
+	M88k::R28, M88k::R29, M88k::R30, M88k::R31,
+};
+
+static DecodeStatus
+DecodeGPRRegisterClass(MCInst &Inst, uint64_t RegNo,
+						uint64_t Address,
+						const void *Decoder) {
+	if (RegNo > 31)
+		return MCDisassembler::Fail;
+		
+	unsigned Register = GPRDecoderTable[RegNo];
+	Inst.addOperand(MCOperand::createReg(Register));
+	return MCDisassembler::Success;
+}
+\end{lstlisting}
+
+所有其他所需的解码器函数遵循与DecodeGPRRegisterClass()函数相同的模式:\par
+
+\begin{enumerate}
+\item 检查要解码的值是否符合所需的大小限制。如果不是，则返回MCDisassembler::Fail。
+
+\item 解码该值并将其添加到MCInst实例中。
+
+\item 返回MCDisassembler::Success表示成功。
+
+\end{enumerate}
+
+然后，需要可以包括生成的解码器表和函数:\par
+
+\begin{lstlisting}[caption={}]
+#include "M88kGenDisassemblerTables.inc"
+\end{lstlisting}
+
+最后，可以定义getInstruction()方法。这个方法有两个结果值，解码的指令和指令的大小。如果字节数组太小，则必须将大小设置为0。这很重要，因为即使解码失败，size参数也会将指针推进到下一个内存位置。\par
+
+在M88k架构的情况下，方法很简单，因为所有指令都是4个字节长。因此，从数组中提取4个字节后，可以调用生成的解码器函数:\par
+
+\begin{lstlisting}[caption={}]
+DecodeStatus M88kDisassembler::getInstruction(
+		MCInst &MI, uint64_t &Size, ArrayRef<uint8_t> Bytes,
+		uint64_t Address, raw_ostream &CS) const {
+	if (Bytes.size() < 4) {
+		Size = 0;
+		return MCDisassembler::Fail;
+	}
+	Size = 4;
+	
+	uint32_t Inst = 0;
+	for (uint32_t I = 0; I < Size; ++I)
+		Inst = (Inst << 8) | Bytes[I];
+	return decodeInstruction(DecoderTableM88k32, MI, Inst,
+							 Address, this, STI);
+}
+\end{lstlisting}
+
+这就完成了反汇编程序的实现。\par
+
+在实现了所有类之后，只需要设置构建系统来获取新的目标后端，我们将在下一节中添加它。\par
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,271 @@
+\begin{center}
+\includegraphics[width=0.4\textwidth]{content/3/chapter4/images/40.png}\\
+Cippi正在使用她的新工具
+\end{center}
+
+C++20的改进使模板更加一致，在编写泛型程序时更不容易出错。
+
+\subsubsubsection{4.6.1\hspace{0.2cm}条件显式构造函数}
+
+有时需要一个类，需要有接受不同类型的构造函数。例如，一个VariantWrapper类，包含接受各种类型的std::variant。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{包含std::variant的VariantWrapper类}
+\begin{lstlisting}[style=styleCXX]
+class VariantWrapper {
+	std::variant<bool, char, int, double, float, std::string> myVariant;
+};
+\end{lstlisting}
+
+可以使用bool、char、int、double、float或std::string初始化VariantWrapper，VariantWrapper类需要为每个列出的类型提供相应构造函数。懒惰是一种美德——至少对程序员来说是这样——因此，可以使用泛型构造函数。
+
+Implicit类展示了一个泛型构造函数。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{泛型构造函数}
+\begin{lstlisting}[style=styleCXX]
+// implicitExplicitGenericConstructor.cpp
+
+#include <iostream>
+#include <string>
+
+struct Implicit {
+template <typename T>
+	Implicit(T t) {
+		std::cout << t << '\n';
+	}
+};
+
+struct Explicit {
+template <typename T>
+	explicit Explicit(T t) {
+		std::cout << t << '\n';
+	}
+};
+
+int main() {
+	
+	std::cout << '\n';
+	
+	Implicit imp1 = "implicit";
+	Implicit imp2("explicit");
+	Implicit imp3 = 1998;
+	Implicit imp4(1998);
+	
+	std::cout << '\n';
+	
+	// Explicit exp1 = "implicit";
+	Explicit exp2{"explicit"};
+	// Explicit exp3 = 2011;
+	Explicit exp4{2011};
+	
+	std::cout << '\n';
+
+}
+\end{lstlisting}
+
+现在，问题来了。泛型构造函数(第7行)是一个全能构造函数，可以接受任何类型。但构造函数太贪婪了，可以通过在构造函数(第14行)前面放置explicit关键字，避免隐式转换(第31和33行)，只有显式调用(第32和34行)的方式是有效的。
+
+\begin{tcblisting}{commandshell={}}
+implicit
+implicit
+1998
+1998
+
+explicit
+2011
+\end{tcblisting}
+
+\begin{center}
+隐式和现实泛型构造函数
+\end{center}
+
+C++20中，explicit更有用。假设有一个MyBool类型，只支持从bool类型的隐式转换，而不支持其他隐式转换。这种情况下，explicit可以有条件地使用。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{允许从bool类型进行隐式转换的泛型构造函数}
+\begin{lstlisting}[style=styleCXX]
+// conditionallyConstructor.cpp
+
+#include <iostream>
+#include <type_traits>
+#include <typeinfo>
+
+struct MyBool {
+	template <typename T>
+	explicit(!std::is_same<T, bool>::value) MyBool(T t) {
+		std::cout << typeid(t).name() << '\n';
+	}
+};
+
+void needBool(MyBool b){ }
+
+int main() {
+
+	MyBool myBool1(true);
+	MyBool myBool2 = false;
+	
+	needBool(myBool1);
+	needBool(true);
+	// needBool(5);
+	// needBool("true");
+
+}
+\end{lstlisting}
+
+显式(!std::is\_same<T, bool>::value)表达式保证MyBool只能由布尔值隐式创建。函数std::is\_same是来自\href{https://en.cppreference.com/w/cpp/header/type_traits}{类型特性库}的编译时谓词。因为是编译时谓词，所以std::is\_same可在编译时进行计算，并返回一个布尔值。因此，可以对布尔类型进行隐式转换(第19和22行)，但不能从int和C-string类型进行转换(第23和24行，注释行)。
+
+\subsubsubsection{4.6.2\hspace{0.2cm}非类型模板参数}
+
+C++支持非类型作为模板参数。本质上非类型可能是
+
+\begin{itemize}
+\item 
+整数和枚举数
+
+\item 
+指向对象、函数和类属性的指针或引用
+
+\item 
+std::nullptr\_t
+\end{itemize}
+
+\begin{tcolorbox}[breakable,enhanced jigsaw,colback=mygreen!5!white,colframe=mygreen!75!black,title={典型的非类型模板参数}]
+	
+当我问我班上的学生是否使用过非类型作为模板形参时，他们说:没有!
+
+那只能由我回答这个棘手的问题了，并展示一个使用的非类型模板参数示例:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{定义std::array}
+\begin{lstlisting}[style=styleCXX]
+std::array<int, 5> myVec;
+\end{lstlisting}
+
+常量5是一个非类型的模板参数。
+\end{tcolorbox}	
+
+从C++98开始，C++社区就一直在讨论支持浮点模板形参。现在，C++20支持浮点数、文字类型和字符串文字作为非类型。
+
+\noindent
+\textbf{4.6.2.1\hspace{0.2cm}浮点和文字类型}
+
+文字类型有以下两个属性:
+
+\begin{itemize}
+\item 
+所有基类和非静态数据成员都是public，且不可变
+
+\item 
+所有基类和非静态数据成员的类型都是结构类型或数组
+\end{itemize}
+
+文字类型必须具有constexpr构造函数。下面的程序使用浮点类型和文字类型作为非类型模板参数：
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{使用浮点和文字类型作为非类型模板参数}
+\begin{lstlisting}[style=styleCXX]
+// nonTypeTemplateParameter.cpp
+
+struct ClassType {
+	constexpr ClassType(int) {}
+};
+
+template <ClassType cl>
+auto getClassType() {
+	return cl;
+}
+
+template <double d>
+auto getDouble() {
+	return d;
+}
+
+int main() {
+
+	auto c1 = getClassType<ClassType(2020)>();
+	
+	auto d1 = getDouble<5.5>();
+	auto d2 = getDouble<6.5>();
+
+}
+\end{lstlisting}
+
+ClassType有一个constexpr构造函数(第4行)，可以用作模板参数(第19行)。函数模板getDouble(第13行)也是如此，只能接受double类型。我想强调的是，每次调用函数模板getDouble(第21和22行)都会创建一个新函数getDouble，这个函数是给定double值的全特化版本。
+
+C++20起，字符串可以用作非类型模板形参。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{4.6.2.2\hspace{0.2cm}字符串字面值}
+
+StringLiteral类有一个constexpr构造函数。
+
+\begin{lstlisting}[style=styleCXX]
+// nonTypeTemplateParameterString.cpp
+
+#include <algorithm>
+#include <iostream>
+
+template <int N>
+class StringLiteral {
+public:
+	constexpr StringLiteral(char const (&str)[N]) {
+		std::copy(str, str + N, data);
+	}
+	char data[N];
+};
+
+template <StringLiteral str>
+class ClassTemplate {};
+
+template <StringLiteral str>
+void FunctionTemplate() {
+	std::cout << str.data << '\n';
+}
+
+ int main() {
+	
+	std::cout << '\n';
+	
+	ClassTemplate<"string literal"> cls;
+	FunctionTemplate<"string literal">();
+	
+	std::cout << '\n';
+
+}
+\end{lstlisting}
+
+StringLiteral是一个文字类型，因此可以用作ClassTemplate(第15行)和FunctionTemplate(第18行)的非类型模板参数。constexpr构造函数(第9行)接受C-string作为参数。
+
+\begin{tcblisting}{commandshell={}}
+string literal
+\end{tcblisting}
+
+读者们可能想知道，为什么需要字符串字面量作为非类型模板参数呢?
+
+\begin{tcolorbox}[breakable,enhanced jigsaw,colback=mygreen!5!white,colframe=mygreen!75!black,title={编译时的正则表达式}]
+
+字符串字面量的一个经典用例就是\href{https://github.com/hanickadot/compile-time-regular-expressions}{编译时正则表达式解析}。C++23已经有了一个提案:\href{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1433r0.pdf}{P1433R0:编译时正则表达式}。Hana Dusíková作为提案的作者，希望C++在编译时可以使用正则表达式:“当前的std::regex设计和实现[\href{https://en.cppreference.com/w/cpp/regex}{正则表达式库}]太慢了，主要是因为RE[正则表达式]模式是在运行时解析和编译的。用户通常不需要运行时RE[正则表达式]解析器引擎。许多常见的用例中，模式是在编译时就已知了。我认为这违背了C++的承诺:『不使用就不支付』”。
+
+\hspace*{\fill} \\ %插入空行
+若RE[正则表达式]在编译时已知，则应该在编译期间检查。但std::regex的设计不允许这种[编译时求值]的方式，因为RE输入是一个运行时字符串，语法错误会作为异常抛出。
+
+\end{tcolorbox}
+
+\begin{tcolorbox}[breakable,enhanced jigsaw,colback=mygreen!5!white,colframe=mygreen!75!black,title={总结}]
+\begin{itemize}
+\item 
+有条件显式构造函数，允许显式控制泛型构造函数中可以使用的类型。
+
+\item 
+C++20支持更多类型作为非类型模板参数:浮点数和字符串字面值。
+\end{itemize}
+\end{tcolorbox}
+
+\newpage

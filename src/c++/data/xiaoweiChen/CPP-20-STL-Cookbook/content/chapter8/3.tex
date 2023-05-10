@@ -1,0 +1,193 @@
+
+C++17中引入了std::any类，可为任何类型的单个对象提供了类型安全的容器。
+
+例如，这是一个默认构造的any对象:
+
+\begin{lstlisting}[style=styleCXX]
+any x{};
+\end{lstlisting}
+
+该对象无值，可以使用has\_value()方法进行测试:
+
+\begin{lstlisting}[style=styleCXX]
+if(x.has_value()) cout << "have value\n";
+else cout << "no value\n";
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+no value
+\end{tcblisting}
+
+我们使用赋值操作符为any对象赋值:
+
+\begin{lstlisting}[style=styleCXX]
+x = 42;
+\end{lstlisting}
+
+现在，any对象有一个值和一个类型:
+
+\begin{lstlisting}[style=styleCXX]
+if(x.has_value()) {
+	cout << format("x has type: {}\n", x.type().name());
+	cout << format("x has value: {}\n", any_cast<int>(x));
+} else {
+	cout << "no value\n";
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+x has type: i
+x has value: 42
+\end{tcblisting}
+
+type()方法返回一个type\_info对象，type\_info::name()方法返回C-string类型的实现定义的名称。在本例中，GCC中i表示int。
+
+使用any\_cast<type>()非成员函数强制转换值进行使用。
+
+可以用不同类型的不同值重新赋值:
+
+\begin{lstlisting}[style=styleCXX]
+x = "abc"s;
+cout << format("x is type {} with value {}\n",
+	x.type().name(), any_cast<string>(x))
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+x is type NSt7__cxx1112basic_string... with value abc
+\end{tcblisting}
+
+用GCC缩写了这个长类型名，相同的对象，曾经持有int，现在包含一个STL字符串对象。
+
+any类的主要是创建一个多态函数，来看看这个示例。
+
+\subsubsection{How to do it…}
+
+这个示例中，将使用any类构建一个多态函数，可以在其参数中接受不同类型对象的函数:
+
+\begin{itemize}
+\item 
+多态函数可以接受任意对象，并打印其类型和值:
+
+\begin{lstlisting}[style=styleCXX]
+void p_any(const any& a) {
+	if (!a.has_value()) {
+		cout << "None.\n";
+	} else if (a.type() == typeid(int)) {
+		cout << format("int: {}\n", any_cast<int>(a));
+	} else if (a.type() == typeid(string)) {
+		cout << format("string: \"{}\"\n",
+		any_cast<const string&>(a));
+	} else if (a.type() == typeid(list<int>)) {
+		cout << "list<int>: ";
+		for(auto& i : any_cast<const list<int>&>(a))
+			cout << format("{} ", i);
+		cout << '\n';
+	} else {
+		cout << format("something else: {}\n",
+		a.type().name());
+	}
+}
+\end{lstlisting}
+
+p\_any()函数首先测试对象是否有值，针对各种类型测试type()方法，并对每种类型采取适当的操作。
+
+在any类之前，必须为这个函数编写四种不同的特化，并且不能简单地处理默认的情况。
+
+\item 
+在main()使用这个函数:
+
+\begin{lstlisting}[style=styleCXX]
+p_any({});
+p_any(47);
+p_any("abc"s);
+p_any(any(list{ 1, 2, 3 }));
+p_any(any(vector{ 1, 2, 3 }));
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+one.
+int: 47
+string: "abc"
+list<int>: 1 2 3
+something else: St6vectorIiSaIiEE
+\end{tcblisting}
+
+\end{itemize}
+
+我们的多态函数用最少的代码处理了各种类型的变量。
+
+\subsubsection{How it works…}
+
+any复制构造函数和赋值操作符，可以直接初始化来生成目标对象的非const副本作为包含对象，包含的对象类型可以作为typeid单独存储。
+
+初始化后，any对象有以下方法:
+
+\begin{itemize}
+\item 
+emplace() 替换包含的对象，在适当的位置构造新对象。
+
+\item 
+reset() 替换包含的对象，在适当的位置构造新对象。
+
+\item 
+has\_value() 若有包含对象，则返回true。
+
+\item 
+type() 返回typeid对象，表示所包含对象的类型。
+
+\item 
+operator=() 用复制或移动操作替换包含的对象。
+\end{itemize}
+
+any类还支持以下非成员函数:
+
+\begin{itemize}
+\item 
+any\_cast<T>()，模板函数，提供对包含对象的类型安全访问。
+
+any\_cast<T>()函数返回包含对象的副本，可以使用any\_cast<T\&>()来返回引用。
+
+\item 
+std::swap()专门处理std::swap算法。
+\end{itemize}
+
+若用错误的类型强制转换any对象，则会抛出一个bad\_any\_cast异常:
+
+\begin{lstlisting}[style=styleCXX]
+try {
+	cout << any_cast<int>(x) << '\n';
+} catch(std::bad_any_cast& e) {
+	cout << format("any: {}\n", e.what());
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+any: bad any_cast
+\end{tcblisting}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

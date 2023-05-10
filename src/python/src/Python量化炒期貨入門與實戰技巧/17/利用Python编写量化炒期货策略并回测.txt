@@ -1,0 +1,39 @@
+import jqdata
+from jqlib.technical_analysis import *
+
+def initialize(context):
+    # 定义一个全局变量, 保存要操作的白银主力合约对应的具体合约
+    g.security = get_dominant_future('AG')
+    # 设定上证指数作为基准
+    set_benchmark('000001.XSHG')
+    # 开启动态复权模式(真实价格)
+    set_option('use_real_price', True)
+    # 设定账户为期货账户
+set_subportfolios([SubPortfolioConfig(cash=context.portfolio.starting_cash, type='futures')])
+    # 期货类每笔交易时的手续费是：买入时万分之0.23,卖出时万分之0.23,平今仓为万分之23
+    set_order_cost(OrderCost(open_commission=0.000023, close_commission=0.000023,close_today_commission=0.0023), type='futures')
+    # 设定保证金比例
+    set_option('futures_margin_rate', 0.15)
+    # 设置期货交易的滑点
+    set_slippage(StepRelatedSlippage(2))
+
+
+def handle_data(context, data):
+    #获取初始化中要操作的白银主力合约
+    security = g.security
+    #调用MACD函数，并获取期货的MACD指标的DIF，DEA和MACD的值
+    macd_diff, macd_dea, macd_macd = MACD(security,check_date=context.current_dt, SHORT = 12, LONG = 26, MID = 9)
+    # 获取当前的现金
+    cash = context.portfolio.cash
+    # 如果当前有余额，并且DIFF、DEA均为正，DIFF向上突破DEA
+    if cash >0 and macd_diff[security] > 0 and macd_dea[security] >0 and macd_diff[security] > macd_dea[security] :
+        #调用按价值下单函数，做多1手白银主力合约
+        order(security, 1, side='long')
+        # 记录这次买入，即写入log日志
+        log.info("买入期货 %s" % (security))
+    # 如果DIFF、DEA均为负，DIFF向下跌破DEA，并且目前有头寸
+    elif macd_diff[security] < 0 and macd_dea[security] < 0 and macd_diff[security] < macd_dea[security]  and context.portfolio.positions[security].closeable_amount> 0:
+        # 全部卖出，即持有仓位为0
+        order_target(security, 0, side='long')
+        # 记录这次卖出，即写入log日志
+        log.info("卖出期货 %s" % (security))

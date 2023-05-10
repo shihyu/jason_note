@@ -1,0 +1,281 @@
+概念可以让代码有更好的可读性和错误消息。了解如何使用概念之前，先来回顾一下之前的例子:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T>
+T add(T const a, T const b)
+{
+	return a + b;
+}
+\end{lstlisting}
+
+这个函数模板接受两个参数，并返回它们的和。实际上，返回的不是和，而是对两个参数应用加号运算符后的结果。用户定义的类型可以重载此操作符并执行某些特定的操作。术语“和”只有在讨论数学类型时才有意义，例如整型、浮点类型、std::complex类型、矩阵类型、向量类型等。
+
+对于字符串类型，加号操作符可以表示连接。对于大多数类型来说，重载根本没有意义。因此，只看函数的声明，而不检查它的主体，不能真正说这个函数可以接受什么作为输入，以及这个函数是做什么的。可以这样调用这个函数:
+
+\begin{lstlisting}[style=styleCXX]
+add(42, 1); // [1]
+add(42.0, 1.0); // [2]
+add("42"s, "1"s); // [3]
+add("42", "1"); // [4] error: cannot add two pointers
+\end{lstlisting}
+
+前三个调用都很好。第一个调用添加两个整数，第二个调用添加两个double值，第三个调用连接两个std::string对象。但第四次调用将产生编译器错误，因为const char *替换了T类型模板参数，并且指针类型没有重载加号操作符。
+
+这个add函数模板的目的是只允许传递算术类型的值，即整型和浮点型。C++20之前，可以通过几种方式实现这一点。一种方法是使用std::enable\_if和SFINAE，就像在前一章看到的那样:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T,
+	typename = typename std::enable_if_t
+		<std::is_arithmetic_v<T>>>
+T add(T const a, T const b)
+{
+	return a + b;
+}
+\end{lstlisting}
+
+首先，可读性下降了。第二，类模板参数难以阅读，需要对模板有很好的了解才能理解，但[3]和[4]行上的调用都产生了编译器错误。不同的编译器会产生不同的错误消息。下面是三个主要编译器的代码:
+
+\begin{itemize}
+\item
+VC++ 17:
+
+\begin{tcblisting}{commandshell={}}
+error C2672: 'add': no matching overloaded function found
+error C2783: 'T add(const T,const T)': could not deduce
+template argument for '<unnamed-symbol>'
+\end{tcblisting}
+
+\item
+GCC 12:
+\begin{tcblisting}{commandshell={}}
+prog.cc: In function 'int main()':
+prog.cc:15:8: error: no matching function for call
+to 'add(std::__cxx11::basic_string<char>, std::__
+cxx11::basic_string<char>)'
+15 |         add("42"s, "1"s);
+   |       ~~~^~~~~~~~~~~~~
+prog.cc:6:6: note: candidate: 'template<class T, class> T
+add(T, T)'
+6 | T add(T const a, T const b)
+  |     ^~~
+prog.cc:6:6: note: template argument deduction/
+substitution failed:
+In file included from /opt/wandbox/gcc-head/include/
+c++/12.0.0/bits/move.h:57,
+                 from /opt/wandbox/gcc-head/include/
+c++/12.0.0/bits/nested_exception.h:40,
+                 from /opt/wandbox/gcc-head/include/
+c++/12.0.0/exception:154,
+                 from /opt/wandbox/gcc-head/include/
+c++/12.0.0/ios:39,
+                 from /opt/wandbox/gcc-head/include/
+c++/12.0.0/ostream:38,
+                 from /opt/wandbox/gcc-head/include/
+c++/12.0.0/iostream:39,
+                 from prog.cc:1:
+/opt/wandbox/gcc-head/include/c++/12.0.0/type_traits: In
+substitution of 'template<bool _Cond, class _Tp> using
+enable_if_t = typename std::enable_if::type [with bool _
+Cond = false; _Tp = void]':
+prog.cc:5:14: required from here
+/opt/wandbox/gcc-head/include/c++/12.0.0/type_traits:2603:11:
+error: no type named 'type' in 'struct std::enable_if<false, 
+void>'
+2603 | using enable_if_t = typename enable_if<_Cond, _Tp>::type;
+     |            ^~~~~~~~~~~
+\end{tcblisting}
+
+\item
+Clang 13:
+\begin{tcblisting}{commandshell={}}
+prog.cc:15:5: error: no matching function for call to
+'add'
+    add("42"s, "1"s);
+    ^~~
+prog.cc:6:6: note: candidate template ignored:
+requirement 'std::is_arithmetic_v<std::string>' was not
+satisfied [with T = std::string]
+   T add(T const a, T const b)
+      ^
+\end{tcblisting}
+\end{itemize}
+
+GCC中的错误消息非常冗长，VC++没有说明匹配模板参数失败的原因是什么。可以说，Clang在提供可理解的错误消息方面做得更好。
+
+C++20之前，定义此函数限制的另一种方法是使用static\_assert:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T>
+T add(T const a, T const b)
+{
+	static_assert(std::is_arithmetic_v<T>,
+				  "Arithmetic type required");
+	return a + b;
+}
+\end{lstlisting}
+
+这个实现中，回到了最初的问题，即仅通过查看函数的声明，不知道它会接受什么样的参数，没有任何限制。另一方面，错误信息如下所示:
+
+\begin{itemize}
+\item
+VC++ 17:
+
+\begin{tcblisting}{commandshell={}}
+error C2338: Arithmetic type required
+main.cpp(157): message : see reference to function
+template instantiation 'T add<std::string>(const T,const
+T)' being compiled
+     with
+     [
+         T=std::string
+     ]
+\end{tcblisting}
+
+\item
+GCC 12:
+
+\begin{tcblisting}{commandshell={}}
+prog.cc: In instantiation of 'T add(T, T) [with T =
+std::__cxx11::basic_string<char>]':
+prog.cc:15:8: required from here
+prog.cc:7:24: error: static assertion failed: Arithmetic
+type required
+    7 | static_assert(std::is_arithmetic_v<T>,
+"Arithmetic type required");
+      |                         ~~~~~^~~~~~~~~~~~~~~~~~
+prog.cc:7:24: note: 'std::is_arithmetic_v<std::__
+cxx11::basic_string<char> >' evaluates to false
+\end{tcblisting}
+
+\item
+Clang 13:
+
+\begin{tcblisting}{commandshell={}}
+prog.cc:7:5: error: static_assert failed due to
+requirement 'std::is_arithmetic_v<std::string>'
+"Arithmetic type required"
+     static_assert(std::is_arithmetic_v<T>, "Arithmetic
+type required");
+     ^ ~~~~~~~~~~~~~~~~~~~~~~~
+prog.cc:15:5: note: in instantiation of function template
+specialization 'add<std::string>' requested here
+    add("42"s, "1"s);
+    ^
+\end{tcblisting}
+\end{itemize}
+
+不管编译器是什么，使用static\_assert会出现类似的错误消息。
+
+C++20中，可以通过使用约束来改进这两个方面(可读性和错误消息)。可以通过新关键字requires引入，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T>
+requires std::is_arithmetic_v<T>
+T add(T const a, T const b)
+{
+	return a + b;
+}
+\end{lstlisting}
+
+requires关键字引入了requires子句，定义了模板参数的约束。实际上，有两种可供选择的语法:一种是requires子句跟在模板参数列表后面，如前所述;另一种是requires子句跟在函数声明后面，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T>
+T add(T const a, T const b)
+requires std::is_arithmetic_v<T>
+{
+	return a + b;
+}
+\end{lstlisting}
+
+这两种语法可以根据个人喜好进行选择，但这两种情况，可读性都比C++20之前的实现好得多。通过阅读声明，就知道T类型模板参数必须是算术类型。此外，函数只是两个数字的相加，不需要看定义就能知道。当调用带有无效参数的函数时，错误消息为:
+
+\begin{itemize}
+\item
+VC++ 17:
+
+\begin{tcblisting}{commandshell={}}
+error C2672: 'add': no matching overloaded function found
+error C7602: 'add': the associated constraints are not
+satisfied
+\end{tcblisting}
+
+\item
+GCC 12:
+
+\begin{tcblisting}{commandshell={}}
+prog.cc: In function 'int main()':
+prog.cc:15:8: error: no matching function for call
+to 'add(std::__cxx11::basic_string<char>, std::__cxx11::
+basic_string<char>)'
+  15 |    add("42"s, "1"s);
+     |     ~~~^~~~~~~~~~~~~
+prog.cc:6:6: note: candidate: 'template<class T> 
+requires is_arithmetic_v<T> T add(T, T)'
+  6  |    T add(T const a, T const b)
+     |      ^~~
+prog.cc:6:6: note: template argument deduction/substitution
+ failed:
+prog.cc:6:6: note: constraints not satisfied
+prog.cc: In substitution of 'template<class
+T> requires is_arithmetic_v<T> T add(T, T) [with T =
+std::__cxx11::basic_string<char>]':
+prog.cc:15:8: required from here
+prog.cc:6:6: required by the constraints of
+'template<class T> requires is_arithmetic_v<T> T add(T,
+T)'
+prog.cc:5:15: note: the expression 'is_arithmetic_v<T>
+[with T = std::__cxx11::basic_string<char, std::char_
+traits<char>, std::allocator<char> >]' evaluated to 'false'
+    5 | requires std::is_arithmetic_v<T>
+      |               ~~~~~^~~~~~~~~~~~~~~~~~
+\end{tcblisting}
+
+\item
+Clang 13:
+
+\begin{tcblisting}{commandshell={}}
+prog.cc:15:5: error: no matching function for call to
+'add'
+add("42"s, "1"s);
+^~~
+prog.cc:6:6: note: candidate template ignored:
+constraints not satisfied [with T = std::string]
+T add(T const a, T const b)
+^
+prog.cc:5:10: note: because 'std::is_arithmetic_
+v<std::string>' evaluated to false
+requires std::is_arithmetic_v<T>
+^
+\end{tcblisting}
+\end{itemize}
+
+错误消息遵循相同的模式:GCC太冗长，VC++缺少基本信息(未满足的约束)，而Clang更简洁，更好地定位错误的原因。总的来说，错误消息看起来有了改进，但仍有改进空间。
+
+约束是在编译时求值为true或false的谓词。前一个例子中使用的表达式std::is\_arithmetic\_v<T>，只是使用了一个标准类型特征(前一章中看到过)，这些不同类型的表达式都可以在约束中使用。
+
+下一节中，我们将讨论如何定义和使用命名约束。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

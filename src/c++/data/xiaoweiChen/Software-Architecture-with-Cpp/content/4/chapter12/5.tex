@@ -1,0 +1,242 @@
+
+面向服务的架构可以扩展到当前的云计算趋势。虽然企业服务总线提供的服务通常是内部开发的，但通过云计算，可以使用一个或多个云提供商提供的服务。
+
+为云计算设计应用程序架构时，在实现替代方案之前，应该始终考虑提供商提供的托管服务。例如，在决定用选定的插件托管自己的PostgreSQL数据库之前，请确保了解与提供商提供的托管数据库相比的利弊和成本。
+
+当前的云环境提供了很多服务，旨在处理如下流行的用例:
+
+\begin{itemize}
+\item 
+存储
+
+\item 
+关系数据库
+
+\item 
+文档(NoSQL)数据库
+
+\item 
+内存缓存
+
+\item 
+电子邮件
+
+\item 
+消息队列
+
+\item 
+容器编排器
+
+\item 
+计算机视觉
+
+\item 
+自然语言处理
+
+\item 
+语音合成和语音识别
+
+\item 
+监视、日志记录和跟踪
+
+\item 
+大数据
+
+\item 
+网络加速器
+
+\item 
+数据分析
+
+\item 
+任务管理与调度
+
+\item 
+身份管理
+
+\item 
+密钥和机密管理
+\end{itemize}
+
+由于有大量可用的第三方服务可供选择，云计算非常适合面向服务的架构。
+
+\subsubsubsection{12.5.1\hspace{0.2cm}云计算是SOA的扩展}
+
+云计算是虚拟机托管的扩展。云计算提供商与传统VPS提供商的区别在于两点:
+
+\begin{itemize}
+\item 
+云计算可以通过API使用，这使它本身成为一种服务。
+
+\item 
+除了虚拟机实例之外，云计算还提供其他服务，如存储、托管数据库、可编程网络等。所有这些都可以通过API获得。
+\end{itemize}
+
+有几种方法可以使用云提供商的API在应用程序中提供特性，现在将介绍这些方法。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{直接使用API}
+
+如果云提供商提供了以选择的语言访问的API，就可以直接在应用程序中与云资源交互。
+
+例如:有一个允许用户上传自己照片的应用程序。这个应用程序使用云API为每个新注册的用户创建一个存储桶:
+
+\begin{lstlisting}[style=styleCXX]
+#include <aws/core/Aws.h>
+#include <aws/s3/S3Client.h>
+#include <aws/s3/model/CreateBucketRequest.h>
+
+#include <spdlog/spdlog.h>
+
+const Aws::S3::Model::BucketLocationConstraint region =
+	Aws::S3::Model::BucketLocationConstraint::eu_central_1;
+bool create_user_bucket(const std::string &username) {
+	Aws::S3::Model::CreateBucketRequest request;
+	
+	Aws::String bucket_name("userbucket_" + username);
+	request.SetBucket(bucket_name);
+	
+	Aws::S3::Model::CreateBucketConfiguration bucket_config;
+	bucket_config.SetLocationConstraint(region);
+	request.SetCreateBucketConfiguration(bucket_config);
+	
+	Aws::S3::S3Client s3_client;
+	auto outcome = s3_client.CreateBucket(request);
+	
+	if (!outcome.IsSuccess()) {
+		auto err = outcome.GetError();
+		spdlog::error("ERROR: CreateBucket: {}: {}",
+			err.GetExceptionName(),
+			err.GetMessage());
+		return false;
+	}
+	return true;
+}
+\end{lstlisting}
+
+本例中，有一个C++函数，创建了一个AWS S3 bucket，该bucket以参数中提供的用户名命名。此桶配置为保存在给定区域中。如果操作失败，希望获得错误消息，并使用spdlog记录。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{通过CLI工具使用API}
+
+操作不必在应用程序运行时执行。通常在部署期间运行，因此可以在shell脚本中自动运行。使用CLI工具创建VPC的场景如下:
+
+\begin{tcblisting}{commandshell={}}
+gcloud compute networks create database --description "A VPC to access the database from private instances"
+\end{tcblisting}
+
+使用来自Google云平台的gcloud CLI工具创建一个名为数据库的网络，将用于处理从私有实例到数据库的通信。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{与云API交互的第三方工具}
+
+看一个运行HashiCorp Packer来构建一个虚拟机实例镜像的例子，它已经预先配置好了应用程序:
+
+\begin{tcblisting}{commandshell={}}
+{
+  variables : {
+    do_api_token : {{env `DIGITALOCEAN_ACCESS_TOKEN`}} ,
+    region : fra1 ,
+    packages : "customer"
+    version : 1.0.3
+  },
+  builders : [
+    {
+      type : digitalocean ,
+      api_token : {{user `do_api_token`}} ,
+      image : ubuntu-20-04-x64 ,
+      region : {{user `region`}} ,
+      size : 512mb ,
+      ssh_username : root
+    }
+  ],
+  provisioners: [
+    {
+      type : file ,
+      source : ./{{user `package`}}-{{user `version`}}.deb ,
+      destination : /home/ubuntu/
+    },
+    {
+      type : shell ,
+      inline :[
+        dpkg -i /home/ubuntu/{{user `package`}}-{{user `version`}}.deb
+      ]
+    }
+  ]
+}
+\end{tcblisting}
+
+前面的代码中，提供了所需的凭证和区域，并雇佣了一个构建器来从Ubuntu映像为我们准备一个实例。我们感兴趣的实例需要有512MB RAM。然后，通过发送一个.deb包给它来提供实例，然后通过执行shell命令来安装这个包。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{访问云API}
+
+通过API访问云计算资源是区别于传统托管的最重要特性之一。使用API意味着可以随意创建和删除实例，而不需要操作符的干预。这样，就很容易实现一些特性，比如基于负载的自动扩展、高级部署(Canary版本或Blue-Green版本)以及应用程序的自动化开发和测试环境。
+
+云提供商通常将其API公开为RESTful服务。除此之外，还经常为几种编程语言提供客户端库。虽然三家最流行的提供商都支持C++作为客户端库，但来自较小供应商的支持可能有所不同。
+
+如果正在考虑将C++应用程序部署到云上并计划使用云API，请确保提供商已经发布了一个C++软件开发工具包(SDK)。在没有官方SDK的情况下仍然可以使用Cloud API，例如使用CPP REST SDK库。但请注意，后续将需要更多的工作。 
+
+要访问Cloud SDK，还需要访问控制。通常，有两种方法可以验证你的应用程序使用云API:
+
+\begin{itemize}
+\item 
+通过提供API令牌
+
+API令牌应该是保密的，永远不要作为版本控制系统的一部分或在编译后的二进制文件中存储。为了防止被盗，也应该加密。
+
+将API令牌安全地传递给应用程序的方法之一是通过HashiCorp Vault这样的安全框架，是可编程的秘密存储内置租赁时间管理和密钥旋转。
+
+\item 
+通过托管在具有适当访问权限的实例上
+
+许多云提供商允许为特定的虚拟机实例提供访问权限。这样，保存在此类实例上的应用程序就不必使用单独的令牌进行身份验证。然后，访问控制将基于产生云API请求的实例。
+
+这种方法更容易实现，因为它不需要考虑秘密管理的需要。缺点是，当实例受到破坏时，访问权限将对运行在那里的所有应用程序可用，而不仅仅是部署的应用程序。
+\end{itemize}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{使用云命令行}
+
+人工操作人员通常使用Cloud CLI与Cloud API进行交互。另外，也可以用于编写脚本，或者使用带有官方不支持的语言的Cloud API。
+
+例如，Bourne Shell脚本在Microsoft Azure云上创建一个资源组，然后创建一个属于该资源组的虚拟机:
+
+\begin{tcblisting}{commandshell={}}
+#!/bin/sh
+RESOURCE_GROUP=dominicanfair
+VM_NAME=dominic
+REGION=germanynorth
+
+az group create --name $RESOURCE_GROUP --location $REGION
+
+az vm create --resource-group $RESOURCE_GROUP --name $VM_NAME --image
+UbuntuLTS --ssh-key-values dominic_key.pub
+\end{tcblisting}
+
+查找关于如何管理云资源的文档时，将遇到许多使用Cloud CLI的示例。即使通常不会使用CLI，而是更喜欢像Terraform这样的解决方案，手边有一个Cloud CLI也可以调试环境问题。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{与云API交互的工具}
+
+已经了解了使用云提供商的产品时锁定供应商的危险。通常，每个云提供商将为所有其他云提供商提供不同的API和不同的CLI。某些情况下，较小的提供商提供抽象层，允许通过类似于知名提供商的API访问它们的产品。这种方法旨在帮助将应用程序从一个平台迁移到另一个平台。
+
+不过，这种情况很少发生，而且通常用于与来自一个提供者的服务交互的工具与来自另一个提供者的服务不兼容，这不仅仅是在考虑从一个平台迁移到另一个平台时才会出现的问题。如果希望将应用程序托管在各种平台上，这也可能会有问题。
+
+为此，出现了一组新的工具，统称为基础架构代码(IaC)工具，在不同的平台之上提供了一个抽象层。这些工具也不一定仅限于云提供商。它们是通用的，有助于将应用程序自动化架构在不同层上。
+
+在第9章时，简要介绍了其中的一些。
+
+\subsubsubsection{12.5.2\hspace{0.2cm}原生云架构}
+
+新工具允许架构师和开发人员进一步抽象环境，并首先在构建时考虑到云。Kubernetes和OpenShift等流行的解决方案正在推动这一趋势，但这个领域也包含许多体量较小的参与者。本书的最后一章专门介绍了云原生设计，并描述了这种构建应用程序的现代方法。
+
+
+
+

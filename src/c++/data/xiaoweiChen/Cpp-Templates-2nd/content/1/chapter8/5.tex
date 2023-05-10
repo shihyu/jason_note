@@ -1,0 +1,99 @@
+偏特化、SFINAE和std::enable\_if允许启用或禁用模板。C++17引入了编译时if语句，允许我们根据编译时条件启用或禁用特定语句。使用if constexpr(…)语法，编译器使用编译时表达式来决定是应用then部分，还是else部分(如果有的话)。
+
+作为第一个例子，4.1.1节中介绍的可变参数函数模板print()，使用递归打印参数(任意类型)。与提供一个单独的函数来结束递归不同，constexpr if特性决定是否继续递归:
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}虽然代码读取if constexpr，但该特性称为constexpr if，因为它是if的“constexpr”形式(由于历史原因)。
+\end{tcolorbox}
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T, typename... Types>
+void print (T const& firstArg, Types const&... args)
+{
+	std::cout << firstArg << ’\n’;
+	if constexpr(sizeof...(args) > 0) {
+		print(args...); // code only available if sizeof...(args)>0 (since C++17)
+	}
+}
+\end{lstlisting}
+
+这里，若只对一个参数调用print()， args将成为空的参数包，因此sizeof…(args)将变为0。结果，print()的递归调用变成了一个丢弃的语句，代码没有实例化。因此，相应的函数不需要存在，递归结束。
+
+代码没有实例化意味着只执行第一个翻译阶段，检查正确的语法和不依赖于模板参数的名称(参见第1.1.3节)。
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+void foo(T t)
+{
+	if constexpr(std::is_integral_v<T>) {
+		if (t > 0) {
+			foo(t-1); // OK
+		}
+	}
+	else {
+		undeclared(t); // error if not declared and not discarded (i.e. T is not integral)
+		undeclared(); // error if not declared (even if discarded)
+		static_assert(false, "no integral"); // always asserts (even if discarded)
+		static_assert(!std::is_integral_v<T>, "no integral"); // OK
+	}
+}
+\end{lstlisting}
+
+若constexpr可以用于任何函数，而不仅在模板中。只需要一个产生布尔值的编译时表达式。例如:
+
+\begin{lstlisting}[style=styleCXX]
+int main()
+{
+	if constexpr(std::numeric_limits<char>::is_signed) {
+		foo(42); // OK
+	}
+	else {
+		undeclared(42); // error if undeclared() not declared
+		static_assert(false, "unsigned"); // always asserts (even if discarded)
+		static_assert(!std::numeric_limits<char>::is_signed,
+		"char is unsigned"); // OK
+	}
+}
+\end{lstlisting}
+
+有了这个特性，若给定的大小不是质数，可以使用第8.2节中的isPrime()在编译时执行:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T, std::size_t SZ>
+void foo (std::array<T,SZ> const& coll)
+{
+	if constexpr(!isPrime(SZ)) {
+		... // special additional handling if the passed array has no prime number as size
+	}
+	...
+}
+\end{lstlisting}
+
+详见14.6节。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

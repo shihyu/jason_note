@@ -1,0 +1,216 @@
+
+shared\_ptr类是一个智能指针，拥有自己的托管对象，并维护一个使用计数器来跟踪副本。此示例探索了shared\_ptr的使用方式，以在共享指针副本的同时管理内存。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black,title=Note]
+有关智能指针的更多详细信息，请参阅本章前面关于使用std::unique\_ptr管理已分配内存的介绍。
+\end{tcolorbox}
+
+\subsubsection{How to do it…}
+
+在这个示例中，用一个演示类检查std::shared\_ptr，当调用它的构造函数和析构函数时进行打印输出:
+
+\begin{itemize}
+\item 
+首先，创建一个简单的演示类:
+
+\begin{lstlisting}[style=styleCXX]
+struct Thing {
+	string_view thname{ "unk" };
+	Thing() {
+		cout << format("default ctor: {}\n", thname);
+	}
+	Thing(const string_view& n) : thname(n) {
+		cout << format("param ctor: {}\n", thname);
+	}
+	~Thing() {
+		cout << format("dtor: {}\n", thname);
+	}
+};
+\end{lstlisting}
+
+该类有一个默认构造函数、一个参数化构造函数和一个析构函数。每一个都有打印语句，显示调用了哪些函数。
+
+\item 
+shared\_ptr类的工作原理与其他智能指针非常相似，也可以用new操作符或make\_shared()函数来构造:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	shared_ptr<Thing> p1{ new Thing("Thing 1") };
+	auto p2 = make_shared<Thing>("Thing 2");
+	cout << "end of main()\n";
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+param ctor: Thing 1
+param ctor: Thing 2
+end of main()
+dtor: Thing 2
+dtor: Thing 1
+\end{tcblisting}
+
+推荐使用make\_shared()函数，它会管理构造过程，并且不太容易出错。
+
+与其他智能指针一样，当指针超出作用域时，托管对象将销毁，其内存将返回到堆中。
+
+\item 
+下面是一个检查shared\_ptr对象的使用计数的函数:
+
+\begin{lstlisting}[style=styleCXX]
+void check_thing_ptr(const shared_ptr<Thing>& p) {
+	if(p) cout << format("{} use count: {}\n",
+	p->thname, p.use_count());
+	else cout << "invalid pointer\n";
+}
+\end{lstlisting}
+
+thname是Thing类的成员，因此可以通过带有p->成员解引用操作符的指针访问它。use\_count()函数是shared\_ptr类的成员，因此，可以使用p.object成员操作符访问它。
+
+让我们使用指针来对其进行调用:
+
+\begin{lstlisting}[style=styleCXX]
+check_thing_ptr(p1);
+check_thing_ptr(p2);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+Thing 1 use count: 1
+Thing 2 use count: 1
+\end{tcblisting}
+
+
+\item 
+当复制指针时，使用计数会增加，但不会构造新的对象:
+
+\begin{lstlisting}[style=styleCXX]
+cout << "make 4 copies of p1:\n";
+auto pa = p1;
+auto pb = p1;
+auto pc = p1;
+auto pd = p1;
+check_thing_ptr(p1);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+make 4 copies of p1:
+Thing 1 use count: 5
+\end{tcblisting}
+
+\item 
+当我们检查其他副本时，会得到相同的结果:
+
+\begin{lstlisting}[style=styleCXX]
+check_thing_ptr(pa);
+check_thing_ptr(pb);
+check_thing_ptr(pc);
+check_thing_ptr(pd);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+Thing 1 use count: 5
+Thing 1 use count: 5
+Thing 1 use count: 5
+Thing 1 use count: 5
+\end{tcblisting}
+
+每个指针都会报告相同的使用计数。
+
+\item 
+当副本超出作用域时，将进行销毁，并使计数递减:
+
+\begin{lstlisting}[style=styleCXX]
+{ // new scope
+	cout << "make 4 copies of p1:\n";
+	auto pa = p1;
+	auto pb = p1;
+	auto pc = p1;
+	auto pd = p1;
+	check_thing_ptr(p1);
+} // end of scope
+check_thing_ptr(p1);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+make 4 copies of p1:
+Thing 1 use count: 5
+Thing 1 use count: 1
+\end{tcblisting}
+
+\item 
+销毁副本将减少使用计数，但不会销毁管理对象。当最终副本超出作用域且使用计数为零时，对象将销毁:
+
+\begin{lstlisting}[style=styleCXX]
+{
+	cout << "make 4 copies of p1:\n";
+	auto pa = p1;
+	auto pb = p1;
+	auto pc = p1;
+	auto pd = p1;
+	check_thing_ptr(p1);
+	pb.reset();
+	p1.reset();
+	check_thing_ptr(pd);
+} // end of scope
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+make 4 copies of p1:
+Thing 1 use count: 5
+Thing 1 use count: 3
+dtor: Thing 1
+\end{tcblisting}
+
+销毁pb(一个副本)和p1(原始)会留下三个指针副本(pa、bc和pd)，因此管理对象仍然存在。
+
+其余三个指针副本将在创建它们的作用域的末尾销毁。然后销毁对象，并将其内存返回到堆中。
+
+\end{itemize}
+
+\subsubsection{How it works…}
+
+shared\_ptr类的区别在于它对指向同一个托管对象的多个指针的管理。
+
+shared\_ptr对象的复制构造函数和复制赋值操作符增加一个使用计数器。析构函数将使用计数器减为零，然后销毁托管对象，并将其内存返还给堆。
+
+shared\_ptr类同时管理托管对象和堆分配的控制块。控制块包含使用计数器以及其他管家对象，控制块与管理对象一起在副本之间进行管理和共享。所以原始shared\_ptr对象将控制权转让给其副本，以便其他shared\_ptr可以管理对象及其内存。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

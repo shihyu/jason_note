@@ -1,0 +1,181 @@
+因为对构建系统灵活性的要求，LLVM的构建方式已经从GNU autoconf切换到CMake。从那以后，LLVM提出了许多定制的CMake函数、宏和规则来优化自己的使用。本节将为您概述其中最重要和最常用的几个。我们将学习如何以及何时使用它们。
+
+\subsubsubsection{2.2.1\hspace{0.2cm}使用CMake添加新的库}
+
+库是LLVM框架的基本构建块。要为一个新库编写CMakeLists.txt时，不要使用\texttt{add\_library}指令:
+
+\begin{lstlisting}[style=styleCMake]
+# In an in-tree CMakeLists.txt file…
+add_library(MyLLVMPass SHARED
+  MyPass.cpp) # Do NOT do this to add a new LLVM library
+\end{lstlisting}
+
+使用\texttt{add\_library}有几个缺点:
+
+\begin{itemize}
+\item 第1章在构建LLVM时，LLVM更喜欢使用全局CMake参数(即\texttt{BUILD\_SHARED\_LIBS})来控制所有的组件库是静态构建还是动态构建。使用内置指令很难做到这一点的。
+
+\item 类似的，LLVM更喜欢使用一个全局的CMake参数来控制一些编译标志，比如是否启用\textbf{运行时类型信息(RTTI)}和代码库中的\textbf{\texttt{C++}异常处理}。
+
+\item 通过使用定制的CMake函数/宏，LLVM可以创建自己的组件系统，这为开发人员提供了更高级别的抽象，可以以更容易的方式指定构建目标依赖项。
+
+\end{itemize}
+
+因此，可以使用\texttt{add\_llvm\_component\_library}：
+
+\begin{lstlisting}[style=styleCMake]
+# In a CMakeLists.txt
+add_llvm_component_library(LLVMFancyOpt
+  FancyOpt.cpp)
+\end{lstlisting}
+
+这里，\texttt{LLVMFancyOpt}是库名，\texttt{FancyOpt.cpp}是源文件。
+
+常规的CMake脚本中，可以使用\texttt{target\_link\_libraries}来指定给定目标的库依赖关系，然后使用\texttt{add\_dependencies}在不同的构建目标之间，分配依赖关系来创建显式的描绘构建顺序。当使用LLVM的自定义CMake函数来创建库目标时，有一个更简单的方法来完成这些任务。
+
+通过使用\texttt{add\_llvm\_component\_library}中的\texttt{LINK\_COMPONENTS}参数(或\texttt{add\_llvm\_library}，是前一个的更底层实现)，可以为目标指定需要链接的组件:
+
+\begin{lstlisting}[style=styleCMake]
+add_llvm_component_library(LLVMFancyOpt
+	FancyOpt.cpp
+	LINK_COMPONENTS
+	Analysis ScalarOpts)
+\end{lstlisting}
+
+或者，可以对\texttt{LLVM\_LINK\_COMPONENTS}变量做同样的事情，而且需要在函数调用之前定义:
+
+\begin{lstlisting}[style=styleCMake]
+set(LLVM_LINK_COMPONENTS
+	Analysis ScalarOpts)
+add_llvm_component_library(LLVMFancyOpt
+	FancyOpt.cpp)
+\end{lstlisting}
+
+当需要使用的LLVM构建块时，组件库不过是具有特殊意义的普通库。如果选择构建它，其就会包含在巨大的libLLVM库中，组件名与真正的库名会略有不同。如果需要从组件名映射到库名，可以使用下面的CMake函数:
+
+\begin{lstlisting}[style=styleCMake]
+add_llvm_component_library(LLVMFancyOpt
+	FancyOpt.cpp
+	LINK_LIBS
+	${BOOST_LIBRARY})
+\end{lstlisting}
+
+如果想直接链接到一个普通的库(非LLVM组件)，可以使用\texttt{LINK\_LIBS}参数:
+
+\begin{lstlisting}[style=styleCMake]
+add_llvm_component_library(LLVMFancyOpt
+	FancyOpt.cpp
+	LINK_LIBS
+	${BOOST_LIBRARY})
+\end{lstlisting}
+
+要将常规构建目标依赖分配给库目标(相当于\texttt{add\_dependencies})，可以使用\texttt{DEPENDS}参数:
+
+\begin{lstlisting}[style=styleCMake]
+add_llvm_component_library(LLVMFancyOpt
+	FancyOpt.cpp
+	DEPENDS
+	intrinsics_gen)
+\end{lstlisting}
+
+\texttt{intrinsics\_gen}是一个常见的目标，表示生成包含LLVM intrinsics的头文件。
+
+\hspace*{\fill} \\
+\noindent
+\textbf{为每个文件夹添加一个构建目标}
+
+许多LLVM定制的CMake函数都有涉及到源文件检测陷阱。假设有一个这样的目录结构:
+
+\begin{tcolorbox}[colback=white,colframe=black]
+\tt
+\zihao{-5}
+/FancyOpt \\
+\hspace*{0.5cm}|\_\_\_ FancyOpt.cpp \\
+\hspace*{0.5cm}|\_\_\_ AggressiveFancyOpt.cpp \\
+\hspace*{0.5cm}|\_\_\_ CMakeLists.txt
+\end{tcolorbox}
+
+这里，有两个源文件：FancyOpt.cpp和AggressiveFancyOpt.cpp。FancyOpt.cpp是这种优化的基线版本，而AggressiveFancyOpt.cpp是一个(更激进的)实现版本。通常，希望将它们独立成库，以便用户选择。所以，可以这样写一个CMakeLists.txt文件:
+
+\begin{lstlisting}[style=styleCMake]
+# In /FancyOpt/CMakeLists.txt
+add_llvm_component_library(LLVMFancyOpt
+	FancyOpt.cpp)
+add_llvm_component_library(LLVMAggressiveFancyOpt
+	AggressiveFancyOpt.cpp)
+\end{lstlisting}
+
+不幸的是，当处理第一个\texttt{add\_llvm\_component\_library}语句时，会产生错误：\texttt{Found unknown source AggressiveFancyOpt.cpp …}
+
+LLVM的构建系统会执行更严格的规则，以确保同一文件夹中的所有\texttt{C/C++}源文件都能添加到相同的库、可执行文件或插件中。为了解决这个问题，需要将两个文件拆分到单独的文件夹中，如下所示:
+
+\begin{tcolorbox}[colback=white,colframe=black]
+\tt
+/FancyOpt \\
+\hspace*{0.5cm}|\_\_\_ FancyOpt.cpp \\
+\hspace*{0.5cm}|\_\_\_ CMakeLists.txt \\
+\hspace*{0.5cm}|\_\_\_ /AggressiveFancyOpt \\
+\hspace*{1cm}|\_\_\_ AggressiveFancyOpt.cpp \\
+\hspace*{1cm}|\_\_\_ CMakeLists.txt
+\end{tcolorbox}
+
+/FancyOpt/CMakeLists.txt：
+
+\begin{lstlisting}[style=styleCMake]
+add_llvm_component_library(LLVMFancyOpt
+	FancyOpt.cpp)
+add_subdirectory(AggressiveFancyOpt)
+\end{lstlisting}
+
+/FancyOpt/AggressiveFancyOpt/CMakeLists.txt：
+
+\begin{lstlisting}[style=styleCMake]
+add_llvm_component_library(LLVMAggressiveFancyOpt
+	AggressiveFancyOpt.cpp)
+\end{lstlisting}
+
+这些是使用LLVM的自定义CMake指令为(组件)库添加构建目标的重要方式。接下来的两节中，将展示如何使用不同的(LLVM的)CMake指令来添加可执行文件和Pass插件构建目标。
+
+\subsubsubsection{2.2.2\hspace{0.2cm}使用CMake函数添加可执行文件和工具}
+
+与\texttt{add\_llvm\_component\_library}类似，添加一个新的可执行目标，可以使用\texttt{add\_llvm\_executable}或\texttt{add\_llvm\_tool}:
+
+\begin{lstlisting}[style=styleCMake]
+add_llvm_tool(myLittleTool
+	MyLittleTool.cpp)
+\end{lstlisting}
+
+这两个函数语法相同，只有通过\texttt{add\_llvm\_tool}创建的目标将包含在安装过程中。还有一个全局的CMake变量\texttt{LLVM\_BUILD\_TOOLS}，用来启用/禁用LLVM工具。
+
+这两个函数也可以通过\texttt{DEPENDS}参数来设置依赖项，类似于前面的\texttt{add\_llvm\_library}。这里，只能使用\texttt{LLVM\_LINK\_COMPONENTS}来指定链接组件。
+
+\subsubsubsection{2.2.3\hspace{0.2cm}使用CMake函数添加Pass插件}
+
+虽然本书的后面章节会讨论Pass插件的开发，但了解如何为Pass插件添加构建目标现最为合适(早期的LLVM版本仍然使用\texttt{add\_llvm\_library}和一些特定的参数):
+
+\begin{lstlisting}[style=styleCMake]
+add_llvm_pass_plugin(MyPass
+	HelloWorldPass.cpp)
+\end{lstlisting}
+
+\texttt{LINK\_COMPONENTS}、\texttt{LINK\_LIBS}和\texttt{DEPENDS}参数也可以在这里使用，其用法和功能与\\\texttt{add\_llvm\_component\_library}相同。
+
+这是一些常见和重要的(与llvm相关的)CMake指令，使用这些指令不仅可以使CMake代码更简洁。如果想做一些源码树内的开发，还可以与LLVM的构建系统同步。下一节中，利用本章所了解到的知识，了解如何将LLVM集成到源码树外的CMake项目中。
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, fonttitle=\bfseries,title=LLVM源码内/外的开发]
+\hspace*{0.7cm}本书中，源码树内开发是直接向LLVM项目贡献代码，例如：修复LLVM Cug或向现有的LLVM库添加新特性。另一方面，源码树外开发，要么为LLVM创建扩展(例如，编写一个LLVM pass)，要么在其他项目中使用LLVM库(例如，使用LLVM的代码生成库来实现属于自己的编程语言)。
+\end{tcolorbox}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,142 @@
+
+vector是STL中使用最广泛的容器之一，并且可以使用[]操作符来访问vector中的元素:
+
+\begin{lstlisting}[style=styleCXX]
+vector v{ 19, 71, 47, 192, 4004 };
+auto & i = v[2];
+\end{lstlisting}
+
+vector类还提供了一个成员函数，与[]操作符效果相同:
+
+\begin{lstlisting}[style=styleCXX]
+auto & i = v.at(2);
+\end{lstlisting}
+
+结果一样，但有一个重要的区别。at()函数执行边界检查，而[]操作符不检查，[]操作符为了保持与原始C数组的兼容性。
+
+\subsubsection{How to do it…}
+
+有两种方法访问vector中带有索引的元素。at()成员函数执行边界检查，而[]操作符不检查。
+
+\begin{itemize}
+\item 
+下面是一个简单的main()函数，其初始化一个vector并访问一个元素:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	vector v{ 19, 71, 47, 192, 4004 };
+	auto & i = v[2];
+	cout << format("element is {}\n", i);
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+element is 47
+\end{tcblisting}
+
+这里，使用[]操作符直接访问vector中的第三个元素。与C++中的大多数顺序对象一样，索引从0开始，因此第三个元素是2。
+
+\item 
+这个vector有5个元素，从0到4。若访问5号元素，将超出vector的边界:
+
+\begin{lstlisting}[style=styleCXX]
+vector v{ 19, 71, 47, 192, 4004 };
+auto & i = v[5];
+cout << format("element is {}\n", i);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+element is 0
+\end{tcblisting}
+
+这个结果极具欺骗性。这是一个常见的错误，因为人类倾向于从1开始计数，而不是0。但是不能保证vector范围外的元素的值。
+
+\item 
+更糟糕的是，[]操作符会无声地允许对超出vector结尾的位置进行写入:
+
+\begin{lstlisting}[style=styleCXX]
+vector v{ 19, 71, 47, 192, 4004 };
+v[5] = 2001;
+auto & i = v[5];
+cout << format("element is {}\n", i);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+element is 2001
+\end{tcblisting}
+
+现在已经写入内存，编译器会默许这样的行为，不会出现任何错误信息或崩溃。但是不要被骗了——这是极其危险的代码，在未来的某个时候会出现问题。越界内存访问是安全漏洞的主要原因之一。
+
+\item 
+解决方案是尽可能使用at()成员函数，而不是[]操作符:
+
+\begin{lstlisting}[style=styleCXX]
+vector v{ 19, 71, 47, 192, 4004 };
+auto & i = v.at(5);
+cout << format("element is {}\n", i);
+\end{lstlisting}
+
+现在出现了一个运行时异常:
+
+\begin{tcblisting}{commandshell={}}
+terminate called after throwing an instance of 'std::out_
+of_range'
+  what(): vector::_M_range_check: __n (which is 5) >=
+this->size() (which is 5)
+Aborted
+\end{tcblisting}
+
+代码编译时没有错误，但是at()函数检查容器的边界，并尝试访问这些边界之外的内存时，就抛出运行时异常。这是来自GCC编译器编译的代码的异常消息，在不同的环境中，信息也会不同。
+\end{itemize}
+
+\subsubsection{How it works…}
+
+[]操作符和at()成员函数做同样的工作，可根据容器元素的索引位置直接访问容器元素。[]操作符不进行边界检查，因此在一些频繁迭代的应用程序中，会快一点。
+
+不过，at()函数应该是首选。虽然边界检查可能需要几个CPU周期，但这是一种成本很低的保险。对于大多数应用来说，这样做物有所值。
+
+vector类通常用作直接访问容器，而array和deque容器也同时支持[]操作符和at()成员函数。
+
+\subsubsection{There's more…}
+
+某些应用程序中，可能不希望应用程序在遇到出界条件时崩溃。这种情况下，可以捕获异常:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	vector v{ 19, 71, 47, 192, 4004 };
+	try {
+		v.at(5) = 2001;
+	} catch (const std::out_of_range & e) {
+		std::cout <<
+		format("Ouch!\n{}\n", e.what());
+	}
+	cout << format("end element is {}\n", v.back());
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+Ouch!
+vector::_M_range_check: __n (which is 5) >= this->size() (which is 5)
+end element is 4004
+\end{tcblisting}
+
+try块捕获catch子句中指定的异常，当前的异常是std::out\_of\_range。e.what()函数返回一个C字串，其中包含来自STL库的错误消息。当然，每个库都会有不同的消息，这也适用于array和deque容器。
+
+
+
+
+
+
+
+
+
+
+

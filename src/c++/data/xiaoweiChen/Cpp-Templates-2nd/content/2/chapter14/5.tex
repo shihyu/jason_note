@@ -1,0 +1,158 @@
+
+可以为模板特化显式地创建实例化点。实现点的构造称为显式实例化指令。语法上，由关键字template和要实例化的特化声明组成。例如:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+void f(T)
+{ }
+
+// four valid explicit instantiations:
+template void f<int>(int);
+template void f<>(float);
+template void f(long);
+template void f(char);
+\end{lstlisting}
+
+每个实例化指令都有效，模板参数可以推导(参见第15章)。
+
+类模板的成员也可以这样显式实例化:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class S {
+	public:
+	void f() {
+	}
+};
+
+template void S<int>::f();
+
+template class S<void>;
+\end{lstlisting}
+
+此外，可以通过显式实例化类模板特化，来显式实例化类模板特化的所有成员。因为这些显式实例化指令创建了命名模板特化(或其成员)的定义，所以上面的显式实例化指令，可以称为显式实例化定义。因为这意味着两个定义可能是不同的(因此违反了ODR)，所以显式实例化的模板特化不应该显式特化，反之亦然。
+
+\subsubsubsection{14.5.1\hspace{0.2cm}手动实例化}
+
+许多C++开发者已经注意到，自动模板实例化对构建时间有很大的负面影响。对于实现贪婪实例化的编译器来说尤其如此(第14.4.1节)，因为相同的模板特化，可能在许多不同的翻译单元中实例化和优化。
+
+改进构建时间的技术包括，在特定位置手动实例化程序所需的那些模板特化，并在所有其他翻译单元中抑制实例化。确保这种抑制的一种可移植的方法是不提供模板定义，除非在显式实例化的翻译单元中定义。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}1998年和2003年的C++标准中，这是在其他翻译单元中禁止实例化的唯一可移植方法。
+\end{tcolorbox}
+
+例如：
+
+\begin{lstlisting}[style=styleCXX]
+// translation unit 1:
+template<typename T> void f(); // no definition: prevents instantiation
+								// in this translation unit
+void g()
+{
+	f<int>();
+}
+
+// translation unit 2:
+template<typename T> void f()
+{
+	// implementation
+}
+
+template void f<int>(); // manual instantiation
+
+void g();
+
+int main()
+{
+	g();
+}
+\end{lstlisting}
+
+第一个翻译单元中，编译器无法看到函数模板f的定义，因此不会(不能)生成f<int>的实例化。第二个翻译单元通过显式实例化定义提供f<int>的定义;没有它，程序将无法连接。
+
+手动实例化有一个明显的缺点:必须小心地跟踪要实例化的实体。对于大型项目来说，这很快就会成为一个负担;因此，我们不建议这样做。我们曾参与过几个最初低估了这个负担的项目，随着代码的成熟，我们后面就开始后悔开始的决定。
+
+然而，手动实例化也有一些优点，因为可以根据程序的需要进行调整。显然，避免了巨型头文件的开销，也避免了在多个翻译单元中使用相同参数重复实例化相同模板的开销。此外，模板定义的源代码可以隐藏，但是使用程序就不能进行额外的实例化。
+
+通过将模板定义放置到第三个源文件(通常扩展名为.tpp)中，可以减轻手动实例化的一些负担。对于函数f，可以分解为:
+
+\begin{lstlisting}[style=styleCXX]
+// f.hpp:
+template<typename T> void f(); // no definition: prevents instantiation
+
+// f.tpp:
+#include "f.hpp"
+template<typename T> void f() // definition
+{
+	// implementation
+}
+
+// f.cpp:
+#include "f.tpp"
+
+template void f<int>(); // manual instantiation
+\end{lstlisting}
+
+这种结构提供了一定的灵活性。可以只包含f.hpp来获得f的声明，可以根据需要将显式实例化添加到f.cpp中。或者，若手动实例化过于繁重，还可以包含f.tpp来启用自动实例化。
+
+\subsubsubsection{14.5.2\hspace{0.2cm}显式实例化声明}
+
+消除冗余自动实例化的一种更有针对性的方法是使用显式实例化声明，它以关键字extern为前缀的显式实例化指令。显式实例化声明通常会抑制已命名模板特化的自动实例化，因为声明已命名模板特化将在程序中的某个地方定义(通过显式实例化定义)。之所以说一般，是因为有很多例外情况:
+
+\begin{itemize}
+\item 
+内联函数仍然可以实例化，以便内联扩展(不会生成单独的目标代码)。
+
+\item 
+具有auto或decltype(auto)类型的变量，以及具有推导返回类型的函数，可以实例化以确定类型。
+
+\item 
+值可用作常量表达式的变量仍然可以实例化，以便计算它们的值。
+
+\item 
+引用类型的变量仍然可以实例化，以便解析引用的实体。
+
+\item 
+类模板和别名模板仍然可以实例化，以检查产生的类型。
+\end{itemize}
+
+使用显式的实例化声明，可以在头文件(t.hpp)中提供f的模板定义，然后抑制常用特化的自动实例化，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+// t.hpp:
+template<typename T> void f()
+{ }
+
+extern template void f<int>(); // declared but not defined
+extern template void f<float>(); // declared but not defined
+
+// t.cpp:
+template void f<int>(); // definition
+template void f<float>(); // definition
+\end{lstlisting}
+
+每个显式实例化声明必须与相应的显式实例化定义配对，该定义必须在显式实例化声明之后。省略该定义将导致链接器报错。
+
+在许多不同的翻译单元中使用特定的专特化时，可以使用显式实例化声明来改进编译或链接时间。手动实例化需要在需要新的特化时手动更新显式实例化定义列表。与手动实例化不同的是，可以将显式实例化声明作为一种优化引入。然而，编译时的好处可能没有手动实例化那么显著，因为可能会出现一些冗余的自动实例化，而且模板定义仍然会作为头文件的一部分进行解析。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}这个优化问题的有趣部分是，确定哪些特化适合显式的实例化声明。低层实用程序(如Unix工具nm)在识别程序的目标文件中的自动实例化方面非常有用。
+\end{tcolorbox}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

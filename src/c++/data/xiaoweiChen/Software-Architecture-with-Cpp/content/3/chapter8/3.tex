@@ -1,0 +1,180 @@
+
+至于框架，目前的标准是Google的GTest，与对应的GMock组成了一个小型工具套件，可以遵循C++测试的最佳实践。
+
+GTest/GMock组合的其他替代方案是Catch2、CppUnit和Doctest。CppUnit已经存在很长一段时间了，但缺少更新，所以不推荐使用。Catch2和Doctest都支持现代C++标准——特别是C++14、C++17和C++20。
+
+为了比较这些测试框架，将使用想要测试的代码库。以它为基础，在每个框架中实现测试。
+
+\subsubsubsection{8.3.1\hspace{0.2cm}GTest}
+
+下面是用GTest编写的一个测试示例:
+
+\begin{lstlisting}[style=styleCXX]
+#include "customer/customer.h"
+
+#include <gtest/gtest.h>
+
+TEST(basic_responses,
+given_name_when_prepare_responses_then_greets_friendly) {
+	auto name = "Bob";
+	auto code_and_string = responder{}.prepare_response(name);
+	ASSERT_EQ(code_and_string.first, web::http::status_codes::OK);
+	ASSERT_EQ(code_and_string.second, web::json::value("Hello, Bob!"));
+}
+\end{lstlisting}
+
+测试期间大部分任务已经抽象，这里主要关注于提供测试的动作(\texttt{prepare\_response})和所需的行为(有\texttt{ASSERT\_EQ}的行)。
+
+\subsubsubsection{8.3.2\hspace{0.2cm}Catch2}
+
+下面是用Catch2编写的一个测试示例:
+
+\begin{lstlisting}[style=styleCXX]
+#include "customer/customer.h"
+
+#define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do
+						  // this in one cpp file
+#include "catch2/catch.hpp"
+
+TEST_CASE("Basic responses",
+	"Given Name When Prepare Responses Then Greets Friendly") {
+	auto name = "Bob";
+	auto code_and_string = responder{}.prepare_response(name);
+	REQUIRE(code_and_string.first == web::http::status_codes::OK);
+	REQUIRE(code_and_string.second == web::json::value("Hello, Bob!"));
+}
+\end{lstlisting}
+
+看起来和前一个例子很像。有些关键字不同(\texttt{TEST}和\texttt{TEST\_CASE})，检查结果的方式也不同(使用\texttt{REQUIRE(a == b)}而不是\texttt{ASSERT\_EQ(a, b)})。
+
+\subsubsubsection{8.3.3\hspace{0.2cm}CppUnit}
+
+下面是用CppUnit编写的测试示例，将把它分成几个片段。
+
+代码为使用CppUnit库中的构造做了准备工作:
+
+\begin{lstlisting}[style=styleCXX]
+#include <cppunit/BriefTestProgressListener.h>
+#include <cppunit/CompilerOutputter.h>
+#include <cppunit/TestCase.h>
+#include <cppunit/TestFixture.h>
+#include <cppunit/TestResult.h>
+#include <cppunit/TestResultCollector.h>
+#include <cppunit/TestRunner.h>
+#include <cppunit/XmlOutputter.h>
+#include <cppunit/extensions/HelperMacros.h>
+#include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/ui/text/TextTestRunner.h>
+
+#include "customer/customer.h"
+
+using namespace CppUnit;
+using namespace std;
+\end{lstlisting}
+
+接下来，必须定义测试类并实现执行测试用例的方法。之后，注册这个类，以便在测试运行器中使用:
+
+\begin{lstlisting}[style=styleCXX]
+class TestBasicResponses : public CppUnit::TestFixture {
+	CPPUNIT_TEST_SUITE(TestBasicResponses);
+	CPPUNIT_TEST(testBob);
+	CPPUNIT_TEST_SUITE_END();
+	
+protected:
+	void testBob();
+};
+
+void TestBasicResponses::testBob() {
+	auto name = "Bob";
+	auto code_and_string = responder{}.prepare_response(name);
+	CPPUNIT_ASSERT(code_and_string.first == web::http::status_codes::OK);
+	CPPUNIT_ASSERT(code_and_string.second == web::json::value("Hello,
+		Bob!"));
+}
+
+CPPUNIT_TEST_SUITE_REGISTRATION(TestBasicResponses);
+\end{lstlisting}
+
+最后，必须提供测试运行器的行为:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	CPPUNIT_NS::TestResult testresult;
+	
+	CPPUNIT_NS::TestResultCollector collectedresults;
+	testresult.addListener(&collectedresults);
+	CPPUNIT_NS::BriefTestProgressListener progress;
+	testresult.addListener(&progress);
+	CPPUNIT_NS::TestRunner testrunner;
+	testrunner.addTest(CPPUNIT_NS::TestFactoryRegistry::getRegistry().makeTest(
+	));
+	testrunner.run(testresult);
+	
+	CPPUNIT_NS::CompilerOutputter compileroutputter(&collectedresults,
+	std::cerr);
+	compileroutputter.write();
+	
+	ofstream xmlFileOut("cppTestBasicResponsesResults.xml");
+	XmlOutputter xmlOut(&collectedresults, xmlFileOut);
+	xmlOut.write();
+	
+	return collectedresults.wasSuccessful() ? 0 : 1;
+}
+\end{lstlisting}
+
+与前面的两个示例相比，这里有很多样板文件，而测试看起来与前面的示例非常相似。
+
+\subsubsubsection{8.3.4\hspace{0.2cm}Doctest}
+
+下面是用Doctest编写的一个测试示例:
+
+\begin{lstlisting}[style=styleCXX]
+#include "customer/customer.h"
+
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest/doctest.h>
+
+TEST_CASE("Basic responses") {
+	auto name = "Bob";
+	auto code_and_string = responder{}.prepare_response(name);
+	REQUIRE(code_and_string.first == web::http::status_codes::OK);
+	REQUIRE(code_and_string.second == web::json::value("Hello, Bob!"));
+}
+\end{lstlisting}
+
+代码很清晰，也很容易理解。Doctest的主要卖点是，与其他具有类似特性的替代产品相比，在编译时和运行时都最快。
+
+\subsubsubsection{8.3.5\hspace{0.2cm}编译时测试}
+
+模板元编程允许编写在编译时执行的C++代码。C++11中添加的\texttt{constexpr}关键字允许开发者使用更多的编译时代码，而C++20中的\texttt{consteval}关键字旨在对代码的计算方式有更大的控制权。
+
+编译时编程的问题是没有简单的方法来进行测试。虽然用于执行时代码的单元测试框架非常丰富(正如刚才看到的)，但关于编译时编程的资源并不多。部分原因可能是编译时编程仍然很复杂，而且只针对专家。
+
+尽管如此，不容易并不意味着不可能。就像执行时间测试依赖于在运行时检查断言一样，可以使用\texttt{static\_assert}检查编译时代码的行为，\texttt{static\_assert}在C++11中与\texttt{constexpr}一起引入。
+
+下面是使用\texttt{static\_assert}的简单示例:
+
+\begin{lstlisting}[style=styleCXX]
+#include <string_view>
+constexpr int generate_lucky_number(std::string_view name) {
+	if (name == "Bob") {
+		number = number * 7 + static_cast<int>(letter);
+	}
+	return number;
+}
+
+static_assert(generate_lucky_number("Bob") == 808);
+\end{lstlisting}
+
+因为可以在编译时计算这里测试的每个值，所以可以使用编译器作为测试框架。
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,141 @@
+约束是在使用它们的地方定义的匿名谓词。许多约束是通用的，可以在多个地方使用。以下是类似于add函数的函数示例，这个函数执行算术乘法:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T>
+requires std::is_arithmetic_v<T>
+T mul(T const a, T const b)
+{
+	return a * b;
+}
+\end{lstlisting}
+
+与add函数相同的requires子句也出现在这里。为了避免这种重复的代码，可以定义一个可以在多个地方重用的名称约束，命名约束也称为概念。概念用新关键字concept和模板语法定义。这里有一个例子:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+concept arithmetic = std::is_arithmetic_v<T>;
+\end{lstlisting}
+
+即使赋值为布尔值，概念名也不应该包含动词。它们表示需求，并用作模板参数的属性或限定符，所以应该使用arithmetic、copyable、serializable、container等名称，而不是is\_arithmetic、is\_copyable、is\_serializable和is\_container。前面定义的arithmetic概念可以这样使用:
+
+\begin{lstlisting}[style=styleCXX]
+template <arithmetic T>
+T add(T const a, T const b) { return a + b; }
+
+template <arithmetic T>
+T mul(T const a, T const b) { return a * b; }
+\end{lstlisting}
+
+这里直接使用了这个概念，而不是typename关键字。它用arithmetic来限定T类型，只有满足此要求的类型才能用作模板参数。相同的算术概念可以用不同的语法定义，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+concept arithmetic = requires { std::is_arithmetic_v<T>; };
+\end{lstlisting}
+
+这使用了requires表达式，其使用大括号分支\{\}，而requires子句没有。requires表达式可以包含不同类型的需求序列:简单需求、类型需求、复合需求和嵌套需求。这里看到的是一个简单的需求。为了定义这个特定的概念，这种语法更加复杂，但具有相同的最终效果。但在某些情况下，确实需要复杂的要求。
+
+考虑这样一种情况，想要定义一个模板时，只接受容器类型作为参数。在概念出现之前，这个问题可以通过类型特征和SFINAE或static\_assert来解决，就像在本章开头看到的那样。不过，容器类型实际上不容易定义，可以基于标准容器的一些属性来实现:
+
+\begin{itemize}
+\item
+其成员类型有value\_type、size\_type、allocator\_type、iterator和const\_iterator。
+
+\item
+具有成员函数size，该函数返回容器中元素的数量。
+
+\item
+具有成员函数begin/end和cbegin/cend，返回指向容器中第一个和倒数一个元素的迭代器和常量迭代器。
+\end{itemize}
+
+根据第5章的知识，可以这样定义is\_container类型特征:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T, typename U = void>
+struct is_container : std::false_type {};
+
+template <typename T>
+struct is_container<T,
+	std::void_t<typename T::value_type,
+				typename T::size_type,
+				typename T::allocator_type,
+				typename T::iterator,
+				typename T::const_iterator,
+				decltype(std::declval<T>().size()),
+				decltype(std::declval<T>().begin()),
+				decltype(std::declval<T>().end()),
+				decltype(std::declval<T>().cbegin()),
+				decltype(std::declval<T>().cend())>>
+	: std::true_type{};
+
+template <typename T, typename U = void>
+constexpr bool is_container_v = is_container<T, U>::value;
+\end{lstlisting}
+
+可以在static\_assert的帮助下验证类型特征是否正确地标识了容器类型:
+
+\begin{lstlisting}[style=styleCXX]
+struct foo {};
+
+static_assert(!is_container_v<foo>);
+static_assert(is_container_v<std::vector<foo>>);
+\end{lstlisting}
+
+概念使得编写这样的模板约束更加容易，可以使用概念语法和requires表达式来定义以下内容:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T>
+concept container = requires(T t)
+{
+	typename T::value_type;
+	typename T::size_type;
+	typename T::allocator_type;
+	typename T::iterator;
+	typename T::const_iterator;
+	t.size();
+	t.begin();
+	t.end();
+	t.cbegin();
+	t.cend();
+};
+\end{lstlisting}
+
+这个定义更短，可读性更强。既使用简单需求，如t.size()，也使用类型需求，如typename T::value\_type。可以用前面看到的方式来约束模板参数，但也可以与static\_assert一起使用(约束计算为编译时布尔值):
+
+\begin{lstlisting}[style=styleCXX]
+struct foo{};
+
+static_assert(!container<foo>);
+static_assert(container<std::vector<foo>>);
+
+template <container C>
+void process(C&& c) {}
+\end{lstlisting}
+
+下一节中，将深入探讨可以在requires表达式中使用的各种需求。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

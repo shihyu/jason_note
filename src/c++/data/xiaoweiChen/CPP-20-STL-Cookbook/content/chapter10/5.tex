@@ -1,0 +1,285 @@
+
+为了演示遍历和搜索目录结构，创建了一个工作方式类似Unix grep的简单程序。这个程序使用recursive\_directory\_iterator遍历嵌套目录，并使用正则表达式搜索文件以查找匹配。
+
+\subsubsection{How to do it…}
+
+这个示例中，我们编写了一个简单的grep程序，可以遍历目录以使用正则表达式搜索文件:
+
+\begin{itemize}
+\item 
+先从一些别名开始:
+
+\begin{lstlisting}[style=styleCXX]
+namespace fs = std::filesystem;
+using de = fs::directory_entry;
+using rdit = fs::recursive_directory_iterator;
+using match_v = vector<std::pair<size_t, std::string>>;
+\end{lstlisting}
+
+match\_v是一个正则表达式匹配结果的vector。
+
+\item 
+继续使用path对象的格式化特化:
+
+\begin{lstlisting}[style=styleCXX]
+template<>
+struct std::formatter<fs::path>:
+std::formatter<std::string> {
+	template<typename FormatContext>
+	auto format(const fs::path& p, FormatContext& ctx) {
+		return format_to(ctx.out(), "{}", p.string());
+	}
+};
+\end{lstlisting}
+
+\item 
+我们有一个简单的函数，用于从文件中获取正则表达式匹配:
+
+\begin{lstlisting}[style=styleCXX]
+match_v matches(const fs::path& fpath, const regex& re) {
+	match_v matches{};
+	std::ifstream instrm(fpath.string(),
+		std::ios_base::in);
+	string s;
+	for(size_t lineno{1}; getline(instrm, s); ++lineno) {
+		if(std::regex_search(s.begin(), s.end(), re)) {
+			matches.emplace_back(lineno, move(s));
+		}
+	}
+	return matches;
+}
+\end{lstlisting}
+
+在这个函数中，使用ifstream打开文件，使用getline()从文件中读取行，并使用regex\_search()匹配正则表达式。在vector中收集结果并返回。
+
+\item 
+现在可以在main()中使用这个函数:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	constexpr const char * fn{ "working.cpp" };
+	constexpr const char * pattern{ "path" };
+	
+	fs::path fpath{ fn };
+	regex re{ pattern };
+	auto regmatches{ matches(fpath, re) };
+	for(const auto& [lineno, line] : regmatches) {
+		cout << format("{}: {}\n", lineno, line);
+	}
+	cout << format("found {} matches\n", regmatches.
+	size());
+}
+\end{lstlisting}
+
+在本例中，使用常量作为文件名和正则表达式模式。创建path和regex对象，调用matches()函数，并打印结果。
+
+输出行号和匹配行的字符串:
+
+\begin{tcblisting}{commandshell={}}
+25: struct std::formatter<fs::path>:
+std::formatter<std::string> {
+27: auto format(const fs::path& p, FormatContext& ctx) {
+32: match_v matches(const fs::path& fpath, const regex& re) {
+34: std::ifstream instrm(fpath.string(), std::ios_base::in);
+62: constexpr const char * pattern{ "path" };
+64: fs::path fpath{ fn };
+66: auto regmatches{ matches(fpath, re) };
+\end{tcblisting}
+
+\item 
+程序需要接受regex模式和文件名的命令行参数，其能够遍历目录或获取文件名列表(这可能是命令行通配符展开的结果)。这需要main()函数中的一些逻辑处理。
+
+首先，需要一个辅助函数:
+
+\begin{lstlisting}[style=styleCXX]
+size_t pmatches(const regex& re, const fs::path& epath,
+const fs::path& search_path) {
+	fs::path target{epath};
+	auto regmatches{ matches(epath, re) };
+	auto matchcount{ regmatches.size() };
+	if(!matchcount) return 0;
+	
+	if(!(search_path == epath)) {
+		target =
+		epath.lexically_relative(search_path);
+	}
+	for (const auto& [lineno, line] : regmatches) {
+		cout << format("{} {}: {}\n", target, lineno,
+		line);
+	}
+	return regmatches.size();
+}
+\end{lstlisting}
+
+这个函数调用matches()函数并输出结果，其接受一个regex对象和两个path对象。epath是目录搜索的结果，而search\_path是搜索目录本身。我们将在main()中设置这些参数。
+
+\item 
+在main()中，使用argc和argv命令行参数，并声明了几个变量:
+
+\begin{lstlisting}[style=styleCXX]
+int main(const int argc, const char** argv) {
+	const char * arg_pat{};
+	regex re{};
+	fs::path search_path{};
+	size_t matchcount{};
+	...
+\end{lstlisting}
+
+这里需要声明的变量是:
+
+\begin{itemize}
+\item
+arg\_pat用于命令行中的正则表达式模式
+
+\item
+re是正则表达式对象
+
+\item
+search\_path命令行搜索路径是参数
+
+\item
+matchcount是用来计数匹配的行
+\end{itemize}
+
+\item 
+若没有参数，则打印一个简短的用法字符串:
+
+\begin{lstlisting}[style=styleCXX]
+if(argc < 2) {
+	auto cmdname{ fs::path(argv[0]).filename() };
+	cout << format("usage: {} pattern [path/file]\n",
+		cmdname);
+	return 1;
+}
+\end{lstlisting}
+
+argv[1]始终是来自命令行的调用命令。cmdname使用filename()方法，会返回只包含调用命令路径的文件名。
+
+\item 
+接下来，解析正则表达式。使用try-catch块来捕获来自正则表达式解析器的错误:
+
+\begin{lstlisting}[style=styleCXX]
+arg_pat = argv[1];
+try {
+	re = regex(arg_pat, std::regex_constants::icase);
+} catch(const std::regex_error& e) {
+	cout << format("{}: {}\n", e.what(), arg_pat);
+	return 1;
+}
+\end{lstlisting}
+
+使用icase标志告诉正则表达式解析器忽略大小写。
+
+\item 
+若argc == 2，只有一个参数，将其视为正则表达式模式，并且使用当前目录作为搜索路径:
+
+\begin{lstlisting}[style=styleCXX]
+if(argc == 2) {
+	search_path = ".";
+	for (const auto& entry : rdit{ search_path }) {
+		const auto epath{ entry.path() };
+		matchcount += pmatches(re, epath,
+		search_path);
+	}
+}
+\end{lstlisting}
+
+rdit是recursive\_directory\_iterator类的别名，该类从起始路径遍历目录树，为遇到的每个文件返回一个directory\_entry对象。然后，创建一个path对象，并调用pmatches()遍历文件，从而打印所有正则表达式匹配项。
+
+\item 
+此时在main()中，argc是>=2。现在，处理命令行上有一个或多个文件路径的情况:
+
+\begin{lstlisting}[style=styleCXX]
+int count{ argc - 2 };
+while(count-- > 0) {
+	fs::path p{ argv[count + 2] };
+	if(!exists(p)) {
+		cout << format("not found: {}\n", p);
+		continue;
+	}
+	if(is_directory(p)) {
+		for (const auto& entry : rdit{ p }) {
+			const auto epath{ entry.path() };
+			matchcount += pmatches(re, epath, p);
+		}
+	} else {
+		matchcount += pmatches(re, p, p);
+	}
+}
+\end{lstlisting}
+
+while循环处理命令行上搜索模式以外的一个或多个参数，其检查每个文件名以确保其存在。然后，若其是一个目录，将为recursive\_directory\_iterator类使用rdit别名，来遍历目录并调用pmatches()来打印文件中的模式匹配。
+
+若是单个文件，则可在该文件上调用pmatches()。
+
+\item 
+可以用一个参数作为搜索模式运行我们的grep:
+
+\begin{tcblisting}{commandshell={}}
+$ ./bwgrep using
+dir.cpp 12: using std::format;
+dir.cpp 13: using std::cout;
+dir.cpp 14: using std::string;
+...
+formatter.cpp 10: using std::cout;
+formatter.cpp 11: using std::string;
+formatter.cpp 13: using namespace std::filesystem;
+found 33 matches
+\end{tcblisting}
+
+可以用第二个参数作为目录来运行:
+
+\begin{tcblisting}{commandshell={}}
+$ ./bwgrep using ..
+chap04/iterator-adapters.cpp 12: using std::format;
+chap04/iterator-adapters.cpp 13: using std::cout;
+chap04/iterator-adapters.cpp 14: using std::cin;
+...
+chap01/hello-version.cpp 24: using std::print;
+chap01/chrono.cpp 8: using namespace std::chrono_
+literals;
+chap01/working.cpp 15: using std::cout;
+chap01/working.cpp 34: using std::vector;
+found 529 matches
+\end{tcblisting}
+
+注意，这里通过遍历目录树来查找子目录中的文件。
+
+或者，可以用一个文件参数运行它:
+
+\begin{tcblisting}{commandshell={}}
+$ ./bwgrep using bwgrep.cpp
+bwgrep.cpp 13: using std::format;
+bwgrep.cpp 14: using std::cout;
+bwgrep.cpp 15: using std::string;
+...
+bwgrep.cpp 22: using rdit = fs::recursive_directory_
+iterator;
+bwgrep.cpp 23: using match_v = vector<std::pair<size_t,
+std::string>>;
+found 9 matches
+\end{tcblisting}
+
+\end{itemize}
+
+\subsubsection{How it works…}
+
+虽然，这个程序的主要任务是正则表达式匹配，但我们主要关注递归处理文件目录的技术。
+
+recursive\_directory\_iterator对象可与directory\_iterator对象互换，不同的是recursive\_directory\_iterator对象对每个子目录的所有条目进行递归操作。
+
+\subsubsection{See also…}
+
+有关正则表达式的更多信息，请参见第7章的相关章节。
+
+
+
+
+
+
+
+
+
+
+
+

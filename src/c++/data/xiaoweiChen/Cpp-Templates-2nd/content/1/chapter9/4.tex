@@ -1,0 +1,404 @@
+普通的编译错误通常是非常简洁和直指要害的。例如，当编译器说“类X没有‘fun’成员”时，通常不难找出我代码中的问题(例如，可能把run错输入为fun)。模板就不是这样了，来看一些例子。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{类型不匹配}
+
+考虑以下使用C++标准库例子:
+
+\noindent
+\textit{basics/errornovel1.cpp}
+\begin{lstlisting}[style=styleCXX]
+#include <string>
+#include <map>
+#include <algorithm>
+int main()
+{
+	std::map<std::string,double> coll;
+	...
+	// find the first nonempty string in coll:
+	auto pos = std::find_if (coll.begin(), coll.end(),
+	[] (std::string const& s) {
+		return s != "";
+	});
+}
+\end{lstlisting}
+
+包含一个相当小的错误:用于查找集合中第一个匹配字符串的Lambda中，针对给定的字符串进行检查。因为map中的元素是键/值对，所以期望得到std::pair<std::string const，double>。
+
+GNU C++编译器的某个版本会报告以下错误:
+
+{\scriptsize
+\begin{tcblisting}{commandshell={}}
+
+1 In file included from /cygdrive/p/gcc/gcc61-include/bits/stl_algobase.h:71:0,
+2                  from /cygdrive/p/gcc/gcc61-include/bits/char_traits.h:39,
+3                  from /cygdrive/p/gcc/gcc61-include/string:40,
+4                  from errornovel1.cpp:1:
+5  /cygdrive/p/gcc/gcc61-include/bits/predefined_ops.h: In instantiation of ’bool __gnu_cxx
+   ::__ops::_Iter_pred<_Predicate>::operator()(_Iterator) [with _Iterator = std::_Rb_tree_i
+   terator<std::pair<const std::__cxx11::basic_string<char>, double> >; _Predicate = main()
+   ::<lambda(const string&)>]’:
+6  /cygdrive/p/gcc/gcc61-include/bits/stl_algo.h:104:42: required from ’_InputIterator
+   std::__find_if(_InputIterator, _InputIterator, _Predicate, std::input_iterator_tag)
+   [with _InputIterator = std::_Rb_tree_iterator<std::pair<const std::__cxx11::basic_string
+   <char>, double> >; _Predicate = __gnu_cxx::__ops::_Iter_pred<main()::<lambda(const
+   string&)> >]’
+7  /cygdrive/p/gcc/gcc61-include/bits/stl_algo.h:161:23: required from ’_Iterator std::__
+   find_if(_Iterator, _Iterator, _Predicate) [with _Iterator = std::_Rb_tree_iterator<std::
+   pair<const std::__cxx11::basic_string<char>, double> >; _Predicate = __gnu_cxx::__ops::_
+   Iter_pred<main()::<lambda(const string&)> >]’
+8   /cygdrive/p/gcc/gcc61-include/bits/stl_algo.h:3824:28: required from ’_IIter std::find
+   _if(_IIter, _IIter, _Predicate) [with _IIter = std::_Rb_tree_iterator<std::pair<const
+   std::__cxx11::basic_string<char>, double> >; _Predicate = main()::<lambda(const string&)
+   >]’
+9   errornovel1.cpp:13:29: required from here
+10 /cygdrive/p/gcc/gcc61-include/bits/predefined_ops.h:234:11: error: no match for call to
+   ’(main()::<lambda(const string&)>) (std::pair<const std::__cxx11::basic_string<char>,
+   double>&)’
+11 { return bool(_M_pred(*__it)); }
+12              ^~~~~~~~~~~~~~~~~~~~
+13 /cygdrive/p/gcc/gcc61-include/bits/predefined_ops.h:234:11: 
+   note: candidate: bool (*)(const string&) {aka bool (*)
+   (const std::__cxx11::basic_string<char>&)} <conversion>
+14 /cygdrive/p/gcc/gcc61-include/bits/predefined_ops.h:234:11: 
+   note: candidate expects 2 arguments, 2 provided
+15 errornovel1.cpp:11:52: note: candidate: main()::<lambda(
+   const string&)>
+16                              [] (std::string const& s) {
+17                                                             ^
+\end{tcblisting}
+}
+{\scriptsize
+\begin{tcblisting}{commandshell={}}
+18 errornovel1.cpp:11:52: note: no known conversion for 
+   argument 1 from ’std::pair<const std::__cxx11::basic_string<char>, 
+   double>’ to ’const string& {aka const std::__cxx11::basic_string
+   <char>&}’
+\end{tcblisting}
+}
+
+这样的信息开始看起来更像一本小说，这可能会让模板新手感到沮丧。通过对这样的消息进行管理，错误会相对更容易定位。
+
+错误消息的第一部分说错误发生在内部predefined\_ops.h头文件中的函数模板实例中，errornovel1.cpp通过其他头文件包含其中。下面几行中，编译器报告用哪个参数实例化了什么。本例中，一切都从errornovel1.cpp的第13行语句开始:
+
+\begin{lstlisting}[style=styleCXX]
+auto pos = 
+std::find_if (coll.begin(), coll.end(),
+	[] (std::string const& s) {
+		return s != "";
+	});
+\end{lstlisting}
+
+这导致在stl\_go.h头文件的第115行实例化了一个find\_if模板
+
+\begin{lstlisting}[style=styleCXX]
+_IIter std::find_if(_IIter, _IIter, _Predicate)
+\end{lstlisting}
+
+实例化为
+
+\begin{lstlisting}[style=styleCXX]
+_IIter = std::_Rb_tree_iterator<std::pair<
+	const std::__cxx11::basic_string<char>, double> >
+_Predicate = main()::<lambda(const string&)>
+\end{lstlisting}
+
+编译器都会进行报告，不期望这些模板实例化。
+
+我们的例子中，所有类型的模板都需要实例化，只是想知道为什么它不工作。这个信息出现在消息的最后一部分:表示“调用不匹配”意味着函数调用无法解析，因为实参类型和形参类型不匹配。
+
+\begin{lstlisting}[style=styleCXX]
+(main()::<lambda(const string&)>) (std::pair<const std::__cxx11::basic_string<char>, double>&)
+\end{lstlisting}
+
+导致调用代码错误:
+
+\begin{lstlisting}[style=styleCXX]
+{ return bool(_M_pred(*__it)); }
+\end{lstlisting}
+
+之后，包含“note: candidate:”的行解释了有一个候选类型需要一个const字符串\&，这个候选类型在errornovel1.cpp的第11行定义为Lambda函数[](std::string const\& s)，并说明了为什么候选类型不适合:
+
+{\scriptsize
+\begin{tcblisting}{commandshell={}}
+no known conversion for argument 1
+from ’std::pair<const std::__cxx11::basic_string<char>, double>’
+to ’const string& {aka const std::__cxx11::basic_string<char>&}’
+\end{tcblisting}
+}
+
+这也描述了我们的问题。
+
+毫无疑问，错误消息可以呈现的更好。实际问题会在实例化之前发出，而不是使用完全扩展的模板实例化名称，如std::\_\_cxx11::basic\_string<char>，只使用std::string可能就足够了。然而，诊断中的所有信息在某些情况下也可能有用。因此，其他编译器提供类似的信息也就不足为奇了(尽管有些使用了上面提到的结构化技术)。
+
+例如，Visual C++编译器会输出如下错误信息:
+
+{\scriptsize
+\begin{tcblisting}{commandshell={}}
+1  c:\tools_root\cl\inc\algorithm(166): error C2664: ’bool main::<lambda_b863c1c7cd07048816
+   f454330789acb4>::operator ()(const std::string &) const’: cannot convert argument 1 from
+   ’std::pair<const _Kty,_Ty>’ to ’const std::string &’
+2          with
+3          [
+4              _Kty=std::string,
+5              _Ty=double
+6          ]
+7  c:\tools_root\cl\inc\algorithm(166): note: Reason: cannot convert from ’std::pair<const
+   _Kty,_Ty>’ to ’const std::string’
+8          with
+9          [
+10             _Kty=std::string,
+11             _Ty=double
+12         ]
+13 c:\tools_root\cl\inc\algorithm(166): note: No user-defined-conversion operator available
+   that can perform this conversion, or the operator cannot be called
+14 c:\tools_root\cl\inc\algorithm(177): note: see reference to function template instantiat
+   ion ’_InIt std::_Find_if_unchecked<std::_Tree_unchecked_iterator<_Mytree>,_Pr>(_InIt,_In
+   It,_Pr &)’ being compiled
+15         with
+16         [
+17              _InIt=std::_Tree_unchecked_iterator<std::_Tree_val<std::_Tree_simple_types
+                <std::pair<const std::string,double>>>>,
+18              _Mytree=std::_Tree_val<std::_Tree_simple_types<std::pair<const std::string,
+                double>>>,
+19              _Pr=main::<lambda_b863c1c7cd07048816f454330789acb4>
+20         ]
+21 main.cpp(13): note: see reference to function template instantiation ’_InIt std::find_if
+   <std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<const _Kty,_Ty>>>>
+   ,main::<lambda_b863c1c7cd07048816f454330789acb4>>(_InIt,_InIt,_Pr)’ being compiled
+22         with
+23         [
+24             _InIt=std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<
+               const std::string,double>>>>,
+25             _Kty=std::string,
+26             _Ty=double,
+27             _Pr=main::<lambda_b863c1c7cd07048816f454330789acb4>
+28         ]
+\end{tcblisting}
+}
+
+再次提供了实例化链，并告诉哪些参数实例化了代码中的哪些位置，我们看到了两次
+
+{\scriptsize
+\begin{tcblisting}{commandshell={}}
+cannot convert from ’std::pair<const _Kty,_Ty>’ to ’const std::string’
+with
+[
+    _Kty=std::string,
+    _Ty=double
+]
+\end{tcblisting}
+}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{缺少const的编译器}
+
+有时泛型代码的问题只是因为某些编译器。考虑下面的例子:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/errornovel2.cpp}
+\begin{lstlisting}[style=styleCXX]
+#include <string>
+#include <unordered_set>
+class Customer
+{
+private:
+	std::string name;
+public:
+	Customer (std::string const& n)
+	: name(n) {
+	}
+	std::string getName() const {
+		return name;
+	}
+};
+
+int main()
+{
+	// provide our own hash function:
+	struct MyCustomerHash {
+		// NOTE: missing const is only an error with g++ and clang:
+		std::size_t operator() (Customer const& c) {
+			return std::hash<std::string>()(c.getName());
+		}
+	};
+
+	// and use it for a hash table of Customers:
+	std::unordered_set<Customer,MyCustomerHash> coll;
+	...
+}
+\end{lstlisting}
+
+Visual Studio 2013或2015中，这段代码按预期编译。但是，使用g++或clang时，代码编译时会出错。例如，在g++ 6.1上，第一个错误消息如下所示:
+
+{\scriptsize
+\begin{tcblisting}{commandshell={}}
+1  In file included from /cygdrive/p/gcc/gcc61-include/bits/hashtable.h:35:0,
+2                   from /cygdrive/p/gcc/gcc61-include/unordered_set:47,
+3                   from errornovel2.cpp:2:
+4  /cygdrive/p/gcc/gcc61-include/bits/hashtable_policy.h: In instantiation of ’struct std::
+   __detail::__is_noexcept_hash<Customer, main()::MyCustomerHash>’:
+5  /cygdrive/p/gcc/gcc61-include/type_traits:143:12: required from ’struct std::__and_<
+   std::__is_fast_hash<main()::MyCustomerHash>, std::__detail::__is_noexcept_hash<Customer,
+   main()::MyCustomerHash> >’
+6  /cygdrive/p/gcc/gcc61-include/type_traits:154:38: required from ’struct std::__not_<
+   std::__and_<std::__is_fast_hash<main()::MyCustomerHash>, std::__detail::__is_noexcept_
+   hash<Customer, main()::MyCustomerHash> > >’
+7  /cygdrive/p/gcc/gcc61-include/bits/unordered_set.h:95:63: required from ’class std::
+   unordered_set<Customer, main()::MyCustomerHash>’
+8  errornovel2.cpp:28:47: required from here
+9  /cygdrive/p/gcc/gcc61-include/bits/hashtable_policy.h:85:34: error: no match for call to
+   ’(const main()::MyCustomerHash) (const Customer&)’
+10 noexcept(declval<const _Hash&>()(declval<const _Key&>()))>
+11              ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+12 errornovel2.cpp:22:17: note: candidate: std::size_t main()::MyCustomerHash::operator()(
+   const Customer&) <near match>
+13 std::size_t operator() (const Customer& c) {
+14                  ^~~~~~~~
+15 errornovel2.cpp:22:17: note: passing ’const main()::MyCustomerHash*’ as ’this’ argument
+   discards qualifiers
+\end{tcblisting}
+}
+
+紧接着是20多条其他错误消息:
+
+{\scriptsize
+\begin{tcblisting}{commandshell={}}
+16 In file included from /cygdrive/p/gcc/gcc61-include/bits/move.h:57:0,
+17                  from /cygdrive/p/gcc/gcc61-include/bits/stl_pair.h:59,
+18                  from /cygdrive/p/gcc/gcc61-include/bits/stl_algobase.h:64,
+19 from /cygdrive/p/gcc/gcc61-include/bits/char_traits.h:39,
+20                  from /cygdrive/p/gcc/gcc61-include/string:40,
+21                  from errornovel2.cpp:1:
+22 /cygdrive/p/gcc/gcc61-include/type_traits: In instantiation of ’struct std::__not_<std::
+   __and_<std::__is_fast_hash<main()::MyCustomerHash>, std::__detail::__is_noexcept_hash<
+   Customer, main()::MyCustomerHash> > >’:
+23 /cygdrive/p/gcc/gcc61-include/bits/unordered_set.h:95:63: required from ’class std::
+   unordered_set<Customer, main()::MyCustomerHash>’
+24 errornovel2.cpp:28:47: required from here
+25 /cygdrive/p/gcc/gcc61-include/type_traits:154:38: error: ’value’ is not a member of ’std
+   ::__and_<std::__is_fast_hash<main()::MyCustomerHash>, std::__detail::__is_noexcept_hash<
+   Customer, main()::MyCustomerHash> >’
+26      : public integral_constant<bool, !_Pp::value>
+27                                                  ^~~~
+28 In file included from /cygdrive/p/gcc/gcc61-include/unordered_set:48:0,
+29                  from errornovel2.cpp:2:
+30 /cygdrive/p/gcc/gcc61-include/bits/unordered_set.h: In instantiation of ’class std::
+   unordered_set<Customer, main()::MyCustomerHash>’:
+31 errornovel2.cpp:28:47: required from here
+\end{tcblisting}
+}
+{\scriptsize
+\begin{tcblisting}{commandshell={}}
+32 /cygdrive/p/gcc/gcc61-include/bits/unordered_set.h:95:63: error: ’value’ is not a member
+   of ’std::__not_<std::__and_<std::__is_fast_hash<main()::MyCustomerHash>, std::__detail::
+   __is_noexcept_hash<Customer, main()::MyCustomerHash> > >’
+33        typedef __uset_hashtable<_Value, _Hash, _Pred, _Alloc> _Hashtable;
+34                                                                                  ^~~~~~~~~~
+35 /cygdrive/p/gcc/gcc61-include/bits/unordered_set.h:102:45: error: ’value’ is not a member
+   of ’std::__not_<std::__and_<std::__is_fast_hash<main()::MyCustomerHash>, std::__detail::
+   __is_noexcept_hash<Customer, main()::MyCustomerHash> > >’
+36 typedef typename _Hashtable::key_type key_type;
+37                                                     ^~~~~~~~
+...
+\end{tcblisting}
+}
+
+同样，阅读错误消息也很困难(甚至找到每个消息的开头和结尾都很麻烦)。其要表达的是头文件中hashtable\_policy.h在实例化std::unordered\_set<>中需要
+
+\begin{lstlisting}[style=styleCXX]
+std::unordered_set<Customer,MyCustomerHash> coll;
+\end{lstlisting}
+
+在实例化中
+
+\begin{lstlisting}[style=styleCXX]
+noexcept(declval<const _Hash&>()(declval<const _Key&>()))>
+\end{lstlisting}
+
+有匹配的调用
+
+\begin{lstlisting}[style=styleCXX]
+const main()::MyCustomerHash (const Customer&)
+\end{lstlisting}
+
+(declval<const\_Hash\&>()是main()::MyCustomerHash类型的表达式。)一个可能的候选是
+
+\begin{lstlisting}[style=styleCXX]
+std::size_t main()::MyCustomerHash::operator()(const Customer&)
+\end{lstlisting}
+
+声明为
+
+\begin{lstlisting}[style=styleCXX]
+std::size_t operator() (const Customer& c) {
+\end{lstlisting}
+
+错误信息最后说明了这个问题:
+
+{\scriptsize
+\begin{tcblisting}{commandshell={}}
+passing ’const main()::MyCustomerHash*’ as ’this’ argument discards qualifiers
+\end{tcblisting}
+}
+
+能看出问题出在哪里吗?
+
+这个std::unordered\_set类模板的实现要求哈希对象的函数调用操作符是const成员函数(参见第11.1.1节)；否则，算法内部就会出现错误。
+
+所有其他错误消息从第一个开始级联，并在将const限定符简单地添加到哈希函数操作符时消失:
+
+\begin{lstlisting}[style=styleCXX]
+std::size_t operator() (const Customer& c) const {
+	...
+}
+\end{lstlisting}
+
+Clang 3.9在第一个错误消息的末尾给出了更好的提示，哈希函数的operator()没有标记为const:
+
+{\scriptsize
+\begin{tcblisting}{commandshell={}}
+...
+errornovel2.cpp:28:47: note: in instantiation of template class ’std::unordered_set<Customer
+, MyCustomerHash, std::equal_to<Customer>, std::allocator<Customer> >’ requested here
+std::unordered_set<Customer,MyCustomerHash> coll;
+                                                           ^
+errornovel2.cpp:22:17: note: candidate function not viable: ’this’ argument has type ’const
+MyCustomerHash’, but method is not marked const
+std::size_t operator() (const Customer& c) {
+                ^
+\end{tcblisting}
+}
+
+clang在这里提到了默认的模板参数，比如std::allocator<Customer>，而gcc跳过了它们。
+
+使用多个编译器来测试代码是有帮助的。不仅有助于编写更可移植的代码，而且当一个编译器产生特别难以理解的错误消息时，另一个编译器可能会提供易懂的信息。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

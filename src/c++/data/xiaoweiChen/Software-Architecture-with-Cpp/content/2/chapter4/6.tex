@@ -1,0 +1,319 @@
+
+
+尽管部署服务听起来很简单，如果仔细观察，会发现还有很多事情需要考虑。本节将描述如何执行有效的部署、在安装服务后配置服务、在部署后检查服务是否保持正常运行，以及如何在最小化宕机时间内的同时完成这些工作。
+
+\subsubsubsection{4.6.1\hspace{0.2cm}边车设计模式}
+
+还记得本章前面提到的Envoy吗？对于高效的应用程序开发来说，它是一个非常有用的工具。可以将Envoy代理与应用程序一起部署，就像在摩托车旁边部署挎车一样，而不是将日志、监控或网络等基础设施服务嵌入到应用程序中，加在一起会比没有sidekick(这种模式的另一种叫法)的应用做得更多。
+
+使用边车可以加速开发，因为它带来的许多功能需要由微服务独立开发。因为边车独立于应用程序，所以可以使用适合的编程语言进行开发。边车及其提供的所有功能，都可以由独立的开发团队进行维护，并独立于主服务进行更新。
+
+因为边车就在需要增强的应用程序旁边，可以使用本地的进程进行通信。通常，与另一个主机通信相比，这就已经足够快，而且要快得多。但请记住，这有时可能是一个巨大的负担。
+
+即使部署了第三方服务，将所选的边车部署到旁边仍然有用:可以监视资源使用情况，以及主机和服务的状况，还可以在整个分布式系统中跟踪请求。有时也可以根据服务的情况，通过编辑配置文件或Web界面动态地配置服务。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{使用Envoy部署带有跟踪和反向代理的服务}
+
+现在让Envoy作为部署的代理。首先创建Envoy的配置文件，例子中名为\textit{envoy-front\_proxy.yaml}，代理地址为:
+
+\begin{tcblisting}{commandshell={}}
+static_resources:
+  listeners:
+    - address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 8080
+      traffic_direction: INBOUND
+\end{tcblisting}
+
+这里已经指定Envoy将侦听端口8080上的传入信息。在配置后，将把信息转到服务中。现在，让指定使用服务的实例集来处理HTTP请求，并在上面添加一些跟踪功能。首先，添加一个HTTP端点:
+
+\begin{tcblisting}{commandshell={}}
+filter_chains:
+  - filters:
+  - name: envoy.filters.network.http_connection_manager
+    typed_config:
+      "@type":
+type.googleapis.com/envoy.extensions.filters.network.
+http_connection_manager.v3.HttpConnectionManager
+\end{tcblisting}
+
+现在，指定请求分配ID，并由分布式跟踪系统Jaeger跟踪:
+
+\begin{tcblisting}{commandshell={}}
+generate_request_id: true
+tracing:
+  provider:
+    name: envoy.tracers.dynamic_ot
+    typed_config:
+      "@type":
+type.googleapis.com/envoy.config.trace.v3.DynamicOtConfig
+     library: /usr/local/lib/libjaegertracing_plugin.so
+     config:
+       service_name: front_proxy
+       sampler:
+         type: const
+         param: 1
+       reporter:
+         localAgentHostPort: jaeger:6831
+       headers:
+         jaegerDebugHeader: jaeger-debug-id
+         jaegerBaggageHeader: jaeger-baggage
+         traceBaggageHeaderPrefix: uberctx-
+       baggage_restrictions:
+         denyBaggageOnInitializationFailure: false
+         hostPort: ""
+\end{tcblisting}
+
+将为请求创建ID，并在本地Jaeger插件中使用OpenTracing标准(\textit{DynamicOtConfig})。该插件将生成一个Jaeger实例在指定地址下运行，并添加指定的头文件。
+
+还需要指定来自所有域名的所有信息(参见匹配部分)都应转到我们的服务集群:
+
+\begin{tcblisting}{commandshell={}}
+codec_type: auto
+stat_prefix: ingress_http
+route_config:
+  name: example_route
+  virtual_hosts:
+    - name: front_proxy
+      domains:
+        - "*"
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
+      routes:
+        - match:
+            prefix: "/"
+          route:
+            cluster: example_service
+          decorator:
+            operation: example_operation
+\end{tcblisting}
+
+这里定义了\textit{example\_service}集群。注意，到达集群的每个请求都将由预定义的操作修饰符标记。还需要指定路由器地址:
+
+\begin{tcblisting}{commandshell={}}
+http_filters:
+- name: envoy.filters.http.router
+  typed_config: {}
+use_remote_address: true
+\end{tcblisting}
+
+现在知道了如何处理和跟踪请求，剩下的就是定义使用的集群。先从我们的服务集群开始:
+
+\begin{tcblisting}{commandshell={}}
+clusters:
+  - name: example_service
+    connect_timeout: 0.250s
+    type: strict_dns
+    lb_policy: round_robin
+    load_assignment:
+      cluster_name: example_service
+      endpoints:
+        - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: example_service
+                port_value: 5678
+\end{tcblisting}
+
+每个集群可以有多个实例(端点)。这里，若决定添加更多端点，则将使用循环策略对传入请求进行负载平衡。
+
+再添加一个管理界面:
+
+\begin{tcblisting}{commandshell={}}
+admin:
+  access_log_path: /tmp/admin_access.log
+  address:
+   socket_address:
+     address: 0.0.0.0
+     port_value: 9901
+\end{tcblisting}
+
+现在将配置放在一个容器中，使用Dockerfile运行Envoy，将其命名为\textit{Dockerfile-front\_proxy}:
+
+\begin{tcblisting}{commandshell={}}
+FROM envoyproxy/envoy:v1.17-latest
+
+RUN apt-get update && \
+apt-get install -y curl && \
+rm -rf /var/lib/apt/lists/*
+RUN curl -Lo -
+https://github.com/tetratelabs/getenvoy-package/files/3518103/getenvoy-cent
+os-jaegertracing-plugin.tar.gz | tar -xz && mv libjaegertracing.so.0.4.2
+/usr/local/lib/libjaegertracing_plugin.so
+
+COPY envoy-front_proxy.yaml /etc/envoy/envoy.yaml
+
+\end{tcblisting}
+
+还下载了在Envoy配置中使用的Jaeger本地插件。
+
+现在指定如何使用Docker Compose在几个容器中运行代码。从前端代理服务定义开始，创建一个\textit {docker-compose.yaml}文件:
+
+\begin{tcblisting}{commandshell={}}
+version: "3.7"
+
+services:
+  front_proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile-front_proxy
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
+    networks:
+      - example_network
+    ports:
+      - 12345:12345
+      - 9901:9901
+\end{tcblisting}
+
+这里使用Dockerfile，这是一个简单的网络，在主机上公开了容器的两个端口:服务和管理接口。现在让添加代理要指向的服务:
+
+\begin{tcblisting}{commandshell={}}
+example_service:
+  image: hashicorp/http-echo
+  networks:
+    - example_network
+  command: -text "It works!"
+
+\end{tcblisting}
+
+在例子中，服务只会在一个简单的Web服务器中显示一个预定义的字符串。
+
+现在，在另一个容器中运行Jaeger，将其端口暴露给外部:
+
+\begin{tcblisting}{commandshell={}}
+jaeger:
+  image: jaegertracing/all-in-one
+  environment:
+    - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+  networks:
+    - example_network
+  ports:
+    - 16686:16686
+\end{tcblisting}
+
+最后一步是定义网络:
+
+\begin{tcblisting}{commandshell={}}
+  networks:
+    example_network: {}
+\end{tcblisting}
+
+完成了。现在可以使用\texttt{docker-compose up -\,-build}运行这个服务，并将浏览器指向特定的端口。
+
+使用边车代理还有一个好处:即使服务死机，边车通常是活着的，可以在主服务关闭时响应外部请求。当服务重新部署(例如，由于更新)时，这同样适用。说到这里，继续了解如何最小化相关的宕机时间。
+
+\subsubsubsection{4.5.2\hspace{0.2cm}零宕机部署}
+
+有两种常见的方法来最小化部署期间的宕机风险:\textbf{蓝绿部署}和\textbf{金丝雀发布}。两者都可以使用Envoy边车模式。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{蓝绿部署}
+
+\textbf{蓝绿部署}可以最小化宕机时间和与部署应用程序的相关风险。为此，需要两个相同的生产环境，称为蓝色和绿色。绿色服务于客户，可以执行蓝色的更新。一旦进行了更新，服务进行了测试，所有看起来都很稳定，可以切换流量，让其流到更新的(蓝色)环境。
+
+如果在切换后蓝色环境中发现了问题，绿色环境仍然存在——可以将切换回来。用户甚至可能不会注意到，而且由于两个环境都已启动并运行，在切换期间应该不会停机。只要确保在切换期间不会丢失任何数据(例如，在新环境中进行的事务)即可。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{金丝雀发布}
+
+要避免所有服务实例在更新后都失败，最简单的方法是，不要一次更新所有服务实例。这就是蓝绿部署的增量变体背后的关键思想，也称为\textbf{金丝雀发布}。
+
+在Envoy中，可以在配置的\textit{routes}部分中输入以下内容:
+
+\begin{tcblisting}{commandshell={}}
+- match:
+    prefix: "/"
+  route:
+    weighted_clusters:
+      clusters:
+      - name: new_version
+        weight: 5
+      - name: old_version
+        weight: 95
+\end{tcblisting}
+
+还应该记得在前面的代码片段中定义两个集群，第一个是旧版服务:
+
+\begin{tcblisting}{commandshell={}}
+clusters:
+  - name: old_version
+    connect_timeout: 0.250s
+    type: strict_dns
+    lb_policy: round_robin
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
+    load_assignment:
+      cluster_name: old_version
+      endpoints:
+        - lb_endpoints:
+          - endpoint:
+            address:
+              socket_address:
+                address: old_version
+                port_value: 5678
+
+\end{tcblisting}
+
+第二个集群将运行新版本:
+
+\begin{tcblisting}{commandshell={}}
+- name: new_version
+  connect_timeout: 0.250s
+  type: strict_dns
+  lb_policy: round_robin
+  load_assignment:
+    cluster_name: new_version
+    endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: new_version
+                port_value: 5678
+\end{tcblisting}
+
+当一个部署更新时，服务的新版本将只会让一小部分(这里:5\%)的用户看到和使用。如果更新的实例保持稳定，并且没有检查和验证失败，那么可以分几个步骤逐步更新越来越多的主机，直到所有主机都切换到新版本。可以通过手动更新配置文件或使用管理端点来实现。
+
+现在，来了解一下最后一个部署模式。
+
+\subsubsubsection{4.5.3\hspace{0.2cm}外部配置存储}
+
+若部署的是一个简单的应用程序，可以只部署其配置。然而，当希望有一个包含许多应用程序实例的更复杂的部署时，为了重新配置而重新部署新版本的应用程序很快就会成为一种负担，从而手动配置更改是不可取的。引入外部配置存储是解决问题的好方法。
+
+从本质上说，应用程序可以从上述商店获取配置，而不是仅仅依赖于本地配置文件。这可以为多个实例提供公共设置，并为其中一些实例调优参数，同时拥有一种简单而集中的方式来监视所有配置。如果想让仲裁程序决定哪些节点将作为主节点，哪些节点将作为备份节点，外部配置存储可以为实例提供此类信息。实现配置更新过程也很有用，这样可以在操作期间轻松地重新配置实例。可以使用现成的解决方案，如Firebase Remote Config，利用基于Java的Netflix Archaius，或者制作一个存储配置，利用云存储和更改通知。
+
+了解了一些有用的部署模式，接下来转向另一个高级主题:API。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

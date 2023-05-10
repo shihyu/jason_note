@@ -1,0 +1,177 @@
+
+map容器是一个关联容器，由按键值对组织的元素组成。键用于查找，并且必须是唯一的。
+
+在这个示例中，我们将利用map容器的唯一键值来计算文本文件中每个单词的出现次数。
+
+\subsubsection{How to do it…}
+
+这个任务有几个部分可以分开解决:
+
+\begin{enumerate}
+\item 
+要从一个文件中获取文本，使用cin流。
+
+\item 
+需要把单词和标点符号，以及其他非单词的内容分开，所以需要使用正则表达式库。
+
+\item 
+需要计算每个单词的出现频率，为此使用map容器。
+
+\item 
+最后，需要对结果进行排序，首先按频率排序，然后按频率内的单词的字母顺序排序，将对vector容器进行排序。
+\end{enumerate}
+
+\begin{itemize}
+\item 
+为了方便起见，先从别名开始:
+
+\begin{lstlisting}[style=styleCXX]
+namespace ranges = std::ranges;
+namespace regex_constants = std::regex_constants;
+\end{lstlisting}
+
+对于std::空间中的命名空间，我喜欢使用短别名。在范围(ranges)命名空间中，会复用现有算法的名称。
+
+\item 
+将正则表达式存储在一个常量中。我不喜欢使全局名称空间混乱，因为这会导致冲突。我倾向于使用基于我名字首字母的命名空间，比如:
+
+\begin{lstlisting}[style=styleCXX]
+namespace bw {
+	constexpr const char * re{"(\\w+)"};
+}
+\end{lstlisting}
+
+稍后使用bw::re很容易获取它。
+
+\item 
+在main()的顶部，定义了数据结构:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	map<string, int> wordmap{};
+	vector<pair<string, int>> wordvec{};
+	regex word_re(bw::re);
+	size_t total_words{};
+\end{lstlisting}
+
+我们的主map叫做wordmap。我们有一个名为wordvec的vector，我们将对其进行排序。最后，是正则表达式类，word\_re。
+
+\item 
+for循环是大部分工作发生的地方，从cin流中读取文本，应用正则表达式，并将单词存储在map中:
+
+\begin{lstlisting}[style=styleCXX]
+for(string s{}; cin >> s; ) {
+	auto words_begin{
+		sregex_iterator(s.begin(), s.end(), word_re) };
+	auto words_end{ sregex_iterator() };
+	for(auto r_it{words_begin}; r_it != words_end;
+	++r_it) {
+		smatch match{ *r_it };
+		auto word_str{match.str()};
+		ranges::transform(word_str, word_str.begin(),
+			[](unsigned char c){ return tolower(c); });
+		auto [map_it, result] =
+			wordmap.try_emplace(word_str, 0);
+		auto & [w, count] = *map_it;
+		++total_words;
+		++count;
+	}
+}
+\end{lstlisting}
+
+我喜欢for循环，因为它可以控制变量s的作用域。
+
+首先为正则表达式结果定义迭代器。这使我们能够区分多个单词，即使周围只有标点符号。for(r\_it…)循环返回cin字符串中的单个单词。
+
+smatch类型是正则表达式字符串匹配类的特化，给出了正则表达式中的下一个单词。
+
+然后，使用转换算法使单词小写——这样就可以不考虑大小写而计算单词。(例如，“The”和“the”是同一个词。)
+
+接下来，使用try\_emplace()将单词添加到map中。若已经有了，就不会替换。
+
+最后，使用++count增加map中单词的计数。
+
+\item 
+现在，map上有了单词和它们的频率计数，目前按字母顺序排列。不过，我们希望按词频降序排列。为此，会将其放在一个vector中，并对这个vector进行排序:
+
+\begin{lstlisting}[style=styleCXX]
+auto unique_words = wordmap.size();
+wordvec.reserve(unique_words);
+ranges::move(wordmap, back_inserter(wordvec));
+ranges::sort(wordvec, [](const auto& a, const
+auto& b) {
+	if(a.second != b.second)
+	return (a.second > b.second);
+	return (a.first < b.first);
+});
+cout << format("unique word count: {}\n",
+	total_words);
+cout << format("unique word count: {}\n",
+	unique_words);
+\end{lstlisting}
+
+Wordvec是一个vector，每个元素包含有单词和频率计数。
+
+使用ranges::move()算法来填充vector，然后使用ranges::sort()算法对vector进行排序。注意，谓词Lambda函数首先按计数排序(降序)，然后按单词排序(升序)。
+
+\item 
+最后，打印结果:
+
+\begin{lstlisting}[style=styleCXX]
+	for(int limit{20}; auto& [w, count] : wordvec) {
+		cout << format("{}: {}\n", count, w);
+		if(--limit == 0) break;
+	}
+}
+\end{lstlisting}
+
+目前，设置了只打印前20个条目的限制。读者们可以注释掉if(-limit == 0) break;，从而可以打印整个列表。
+
+\item 
+示例文件中，包含了埃德加·艾伦·坡的《乌鸦》的文本文件，我们可以用它来测试程序:
+
+\begin{tcblisting}{commandshell={}}
+$ ./word-count < the-raven.txt
+total word count: 1098
+unique word count: 439
+56: the
+38: and
+32: i
+24: my
+21: of
+17: that
+17: this
+15: a
+14: door
+11: chamber
+11: is
+11: nevermore
+10: bird
+10: on
+10: raven
+9: me
+8: at
+8: from
+8: in
+8: lenore
+\end{tcblisting}
+
+\end{itemize}
+
+这首诗共有1098个单词，其中出现了439个单词。
+
+\subsubsection{How it works…}
+
+这个示例的核心是使用一个map对象来计数重复的单词。
+
+我们使用cin流从标准输入中读取文本。默认情况下，cin在读入字符串对象时会跳过空格。通过将一个字符串对象放在>{}>操作符的右边(cin >{}> s)，可以得到用空格分隔的文本块。对于许多目的来说，这是足够好的定义，但我们需要语言学上的单词。为此，需要使用正则表达式。
+
+regex类提供了正则表达式语法的选择，它默认为ECMA语法。在ECMA语法中，正则表达式“(\verb|\|w+)”是“([a- za -z0-9\_]+)”的简写。这将选择包含这些字符的单词。
+
+正则表达式本身就是一种语言。要了解更多关于正则表达式的知识，我推荐Jeffrey Friedl的《Mastering regular expressions》这本书。
+
+当从正则表达式引擎获取每个单词时，可以使用map对象的try\_emplace()方法有条件地将单词添加到单词map中。若单词不在map中，则将其添加为0。若单词已经在map中，则计数不会受到影响。我们在后面的循环中增加计数，所以其内容总是正确的。
+
+在用文件中的所有单词填充map后，我们使用ranges::move()算法将其传输到一个vector中，move()算法使这种传输快速而有效。然后，可以使用ranges::sort()对vector进行排序。用于排序的谓词lambda函数包括对对两边的比较，因此最终得到一个按字数(降序)和单词排序的结果。
+
+

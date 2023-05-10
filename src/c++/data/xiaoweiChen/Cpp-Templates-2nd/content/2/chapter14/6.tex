@@ -1,0 +1,108 @@
+正如第8.5节中介绍的，C++17添加了一种新的语句类型，编写模板时非常有用:编译时if。不过，这在实例化过程中引入了一个新的问题。
+
+下面的例子演示了其基本操作:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T> bool f(T p) {
+	if constexpr (sizeof(T) <= sizeof(long long)) {
+		return p>0;
+	} else {
+		return p.compare(0) > 0;
+	}
+}
+
+bool g(int n) {
+	return f(n); // OK
+}
+\end{lstlisting}
+
+编译时if是一个if语句，其中if关键字紧跟着constexpr关键字(如本例所示)。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}虽然代码读取if constexpr，但该特性称为constexpr if，因为它是if的“constexpr”形式。
+\end{tcolorbox}
+
+后面的圆括号条件必须有一个确定的布尔值(包含了对bool的隐式转换)。因此，编译器知道将选择哪个分支;另一个分支为丢弃分支。特别值得注意的是，在模板(包括泛型Lambda)的实例化期间，不会实例化丢弃分支。我们使用T = int实例化f(T)，将丢弃else分支。如果没有丢弃，将会实例化，并且会遇到表达式p.compare(0)的错误信息(当p是一个简单整数时，这个表达式是错误是)。
+
+C++17及其constexpr if语句可用之前，为了避免此类错误，需要显式的模板特化或重载(参见第16章)来达到类似的效果。
+
+上面的例子中，在C++14可以这样实现:
+
+\begin{lstlisting}[style=styleCXX]
+template<bool b> struct Dispatch { // only to be instantiated when b is false
+	static bool f(T p) { // (due to next specialization for true)
+		return p.compare(0) > 0;
+	}
+};
+
+template<> struct Dispatch<true> {
+	static bool f(T p) {
+		return p > 0;
+	}
+};
+
+template<typename T> bool f(T p) {
+	return Dispatch<sizeof(T) <= sizeof(long long)>::f(p);
+}
+
+bool g(int n) {
+	return f(n); // OK
+}
+\end{lstlisting}
+
+显然，constexpr if替代方案使我们的意图，更加清楚和简洁。然而，需要实现来细化实例化的单元:以前的函数定义总是作为一个整体实例化，现在必须抑制部分实例化。
+
+constexpr if的另一个用法是表示处理函数参数包所需的递归。为了推广这个例子，在第8.5节中进行了介绍:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename Head, typename... Remainder>
+void f(Head&& h, Remainder&&... r) 
+	doSomething(std::forward<Head>(h));
+	if constexpr (sizeof...(r) != 0) {
+		// handle the remainder recursively (perfectly forwarding the arguments):
+		f(std::forward<Remainder>(r)...);
+	}
+}
+\end{lstlisting}
+
+如果没有constexpr if语句，就需要对f()模板进行重载，以确保递归终止。
+
+即使在非模板上下文中，constexpr if语句也有些独特的效果:
+
+\begin{lstlisting}[style=styleCXX]
+void h();
+void g() {
+	if constexpr (sizeof(int) == 1) {
+		h();
+	}
+}
+\end{lstlisting}
+
+在大多数平台上，g()中的条件为false，因此会丢弃h()的调用。因此，h()不需要定义(当然，除非在其他地方使用)。如果本例中省略了关键字constexpr，那么缺少h()的定义通常会在链接时引起错误。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}优化可能会掩盖错误。如果保证不存在问题，则可以使用constexpr。
+\end{tcolorbox}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

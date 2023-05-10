@@ -1,0 +1,234 @@
+标准库提供了一组基本概念，可用于定义对函数模板、类模板、变量模板和别名模板的模板实参的需求，正如在本章中看到的那样。C++20中的标准概念分布在多个头文件和命名空间中。我们将在本节中介绍其中一些，可以在\url{https://en.cppreference.com/}上找到所有的概念。
+
+主要的概念集可以在<concepts>头文件和std命名空间中找到。这些概念中的大多数等价于一个或多个现有的类型特征。对于其中一些，它们的实现是定义良好的;另一些，则是不明确的。可分为四类:核心语言概念、比较概念、对象概念和可调用概念。这组概念包含以下内容(但不仅如此):
+
+\begin{table}[H]
+\centering
+	\begin{tabular}{|l|l|}
+		\hline
+		\textbf{概念}   & \textbf{描述}                                                                                            \\ \hline
+		same\_as           & 类型T与另一个类型U相同。 \\ \hline
+		derived\_from      & 类型D从另一个类型B派生。 \\ \hline
+		convertible\_to &
+		类型T可以隐式转换为另一类型U。 \\ \hline
+		common\_reference\_with &
+		类型T和U具有共同引用类型。 \\ \hline
+		common\_with &
+		类型T和U具有共同类型，这两种类型都可以转换为共同类型。 \\ \hline
+		integral           & 类型T是整型。            \\ \hline
+		signed\_integral   & 类型T是有符号整型。      \\ \hline
+		unsigned\_integral & 类型T是无符号整型。  \\ \hline
+		floating\_point    & 类型T是浮点类型。      \\ \hline
+		assignable\_from &
+		U类型的表达式可以赋值给T类型的左值表达式。 \\ \hline
+		swappable &
+		两个相同类型T的值可以交换。 \\ \hline
+		swappable\_with &
+		类型T的值可以与类型U的值相匹配。 \\ \hline
+		destructible &
+		可以安全地销毁类型T的值(析构函数不抛出异常)。 \\ \hline
+		constructible\_from &
+		可以用给定的参数类型集构造类型为T的对象。 \\ \hline
+		default\_initializable &
+		\begin{tabular}[c]{@{}l@{}}类型T的对象可以是默认可构造(值初始化T()，从空初始化列表T\{\}\\ 直接列表初始化，或默认初始化，如T t;)。\end{tabular} \\ \hline
+		move\_constructible &
+		可以用移动语义构造类型T的对象。 \\ \hline
+		copy\_constructible &
+		类型T的对象可以复制构造和移动构造。 \\ \hline
+		moveable &
+		可以移动和交换类型为T的对象。 \\ \hline
+		copyable &
+		可以复制、移动和交换类型为T的对象。 \\ \hline
+		regular &
+		类型T需要同时满足semiregular和equality\_comparable两个概念。 \\ \hline
+		semiregular &
+		可以复制、移动、交换和默认构造类型为T的对象。 \\ \hline
+		equality\_comparable &
+		\begin{tabular}[c]{@{}l@{}}类型T的比较运算符==反映相等，当两个值相等时为true。\\ 类似的，=!表示了不相等。\end{tabular} \\ \hline
+		predicate &
+		\begin{tabular}[c]{@{}l@{}}可调用类型T是布尔谓词。\end{tabular} \\ \hline
+	\end{tabular}
+\end{table}
+
+\begin{center}
+表 6.1
+\end{center}
+
+其中一些概念是使用类型特征定义的，一些是其他概念或概念与类型特征的组合，还有一些具有部分未指定的实现。下面是一些例子:
+
+\begin{lstlisting}[style=styleCXX]
+template < class T >
+concept integral = std::is_integral_v<T>;
+
+template < class T >
+concept signed_integral = std::integral<T> &&
+                          std::is_signed_v<T>;
+
+template <class T>
+concept regular = std::semiregular<T> &&
+                  std::equality_comparable<T>;
+\end{lstlisting}
+
+C++20还引入了一个新的基于概念的迭代器系统，并在<iterator>头文件中定义了一组概念。下表列出了其中一些概念:
+
+\begin{table}[H]
+\centering
+	\begin{tabular}{|l|l|}
+		\hline
+		\textbf{概念} &
+		\textbf{描述} \\ \hline
+		indirectly\_readable &
+		可以通过应用*operator读取类型值。 \\ \hline
+		indirectly\_writable &
+		迭代器类型所引用的对象可以写入。 \\ \hline
+		input\_iterator &
+		类型是输入迭代器(支持读取、前缀递增和后缀递增)。 \\ \hline
+		output\_iterator &
+		类型是输出迭代器(支持写入、前缀递增和后缀递增)。 \\ \hline
+		forward\_iterator &
+		\begin{tabular}[c]{@{}l@{}}作为input\_iterator的类型同时也是前向迭代器(支持相等比较和多次传递)\end{tabular} \\ \hline
+		bidirectional\_iterator &
+		作为forward\_iterator的类型同时，也是双向迭代器(支持向后移动) \\ \hline
+		randon\_access\_iterator &
+		\begin{tabular}[c]{@{}l@{}}作为bidirectional\_iterator类型的同时，也是随机迭代器(支持在常数时间\\ 内下标和前进)。\end{tabular} \\ \hline
+		contiguous\_iterator &
+		\begin{tabular}[c]{@{}l@{}}作为random\_access\_iterator类型同时，也是连续迭代器(元素存储在连续\\ 的内存位置)的要求。\end{tabular} \\ \hline
+	\end{tabular}
+\end{table}
+
+\begin{center}
+表 6.2
+\end{center}
+
+下面是C++标准中random\_access\_iterator概念的定义:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename I>
+concept random_access_iterator =
+	std::bidirectional_iterator<I> &&
+	std::derived_from</*ITER_CONCEPT*/<I>,
+					  std::random_access_iterator_tag> &&
+	std::totally_ordered<I> &&
+	std::sized_sentinel_for<I, I> &&
+	requires(I i,
+			 const I j,
+			 const std::iter_difference_t<I> n)
+	{
+		{ i += n } -> std::same_as<I&>;
+		{ j + n } -> std::same_as<I>;
+		{ n + j } -> std::same_as<I>;
+		{ i -= n } -> std::same_as<I&>;
+		{ j - n } -> std::same_as<I>;
+		{ j[n] } -> std::same_as<std::iter_reference_t<I>>;
+	};
+\end{lstlisting}
+
+这里使用了几个概念(其中一些没有在这里列出)，以及一个requires表达式来确保某些表达式是格式良好的。
+
+此外，<iterator>头文件中，有一组旨在简化通用算法约束的概念。下表列出了其中一些概念:
+
+\begin{table}[H]
+\centering
+	\begin{tabular}{|l|l|}
+		\hline
+		\textbf{概念} & \textbf{描述}                                                                                                            \\ \hline
+		indriectly\_movable &
+		值可以从indirectly\_readable类型移动到indirectly\_readable类型。 \\ \hline
+		indirectly\_copyable &
+		\begin{tabular}[c]{@{}l@{}}值可以从indirectly\_readable类型复制到indirectly\_copyable类型。\end{tabular} \\ \hline
+		mergeable &
+		\begin{tabular}[c]{@{}l@{}}通过复制元素将排序序列合并为输出序列的算法。\end{tabular} \\ \hline
+		sortable         & \begin{tabular}[c]{@{}l@{}}将序列修改为有序序列的算法。\end{tabular} \\ \hline
+		permutable       & \begin{tabular}[c]{@{}l@{}}对元素重新排序的算法。\end{tabular}               \\ \hline
+	\end{tabular}
+\end{table}
+
+\begin{center}
+表 6.3
+\end{center}
+
+C++20中包含的几个主要特性之一(以及概念、模块和协程)是范围。范围库定义了一系列类和函数，用于简化使用范围操作。其中有一组概念，在<ranges>头文件和std::ranges命名空间中定义。其中的一些概念:
+
+\begin{table}[H]
+\centering
+	\begin{tabular}{|l|l|}
+		\hline
+		\textbf{概念} &
+		\textbf{描述} \\ \hline
+		range &
+		\begin{tabular}[c]{@{}l@{}}类型R为范围，需要提供了一个开始迭代器和一个结束哨兵。\end{tabular} \\ \hline
+		sized\_range &
+		\begin{tabular}[c]{@{}l@{}}类型R是在常数时间内已知大小的范围。\end{tabular} \\ \hline
+		view &
+		\begin{tabular}[c]{@{}l@{}}类型T是视图，需要提供了恒定时间的复制、移动和赋值操作。\end{tabular} \\ \hline
+		input\_range &
+		\begin{tabular}[c]{@{}l@{}}类型R是一个范围，其迭代器类型需要满足input\_iterator概念。\end{tabular} \\ \hline
+		output\_range &
+		\begin{tabular}[c]{@{}l@{}}类型R是一个范围，其迭代器类型需要满足output\_iterator概念。\end{tabular} \\ \hline
+		forward\_range &
+		\begin{tabular}[c]{@{}l@{}}类型R是一个范围，其迭代器类型需要满足forward\_iterator概念。\end{tabular} \\ \hline
+		bidirectional\_range &
+		\begin{tabular}[c]{@{}l@{}}类型R是一个范围，其迭代器类型需要满足bidirectional\_iterator概念。\end{tabular} \\ \hline
+		random\_access\_range &
+		类型R是一个范围，其迭代器类型需要满足random\_access\_iterator概念。 \\ \hline
+		contiguous\_range &
+		\begin{tabular}[c]{@{}l@{}}类型R是一个范围，其迭代器类型需要满足contiguous\_iterator概念。\end{tabular} \\ \hline
+	\end{tabular}
+\end{table}
+
+\begin{center}
+表 6.4
+\end{center}
+
+以下是其中一些概念的定义:
+
+\begin{lstlisting}[style=styleCXX]
+template< class T >
+concept range = requires( T& t ) {
+	ranges::begin(t);
+	ranges::end (t);
+};
+
+template< class T >
+concept sized_range = ranges::range<T> &&
+	requires(T& t) {
+		ranges::size(t);
+	};
+
+template< class T >
+concept input_range = ranges::range<T> &&
+	std::input_iterator<ranges::iterator_t<T>>;
+\end{lstlisting}
+
+如前所述，这里列出的概念要比这里列出的多得多，未来可能还会增加。本节不打算作为标准概念的完整参考，而是作为它们的介绍。感兴趣的读者可以在\url{https://en.cppreference.com/}官方C++参考文档了解更多关于这些概念的信息。至于范围库，我们将在第8章中了解到更多，并探索标准库提供了什么。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

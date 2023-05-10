@@ -1,0 +1,197 @@
+
+迭代器本质上是一种抽象，有一个特定的接口，并以特定的方式使用。除此之外，其代码可以用于其他目的。迭代器适配器是一个看起来像迭代器，但需要做其他事情的类。
+
+STL附带了各种迭代器适配器，通常与算法库一起使用。STL迭代器适配器通常分为三类:
+
+\begin{itemize}
+\item 
+插入迭代器或插入器用于在容器中插入元素。
+
+\item 
+流迭代器读取和写入流。
+
+\item 
+反向迭代器反转迭代器的方向。
+\end{itemize}
+
+\subsubsection{How to do it…}
+
+在本节示例中，有一些STL迭代器适配器的例子:
+
+\begin{itemize}
+\item 
+一个简单的函数，打印容器的内容:
+
+\begin{lstlisting}[style=styleCXX]
+void printc(const auto & v, const string_view s = "") {
+	if(s.size()) cout << format("{}: ", s);
+	for(auto e : v) cout << format("{} ", e);
+	cout << '\n';
+}
+\end{lstlisting}
+
+printc()函数可以轻松地查看算法的结果，其包含一个可选的string\_view参数用于描述。
+
+\item 
+main()函数中，将定义两个deque容器。使用的是deque容器，所以可以在两端进行插入:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	deque<int> d1{ 1, 2, 3, 4, 5 };
+	deque<int> d2(d1.size());
+	copy(d1.begin(), d1.end(), d2.begin());
+	printc(d1);
+	printc(d2, "d2 after copy");
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+1 2 3 4 5
+d2 after copy: 1 2 3 4 5
+\end{tcblisting}
+
+我们为相同数量的元素定义了带有5个int值的deque d1和带有空格的d2。copy()算法不会分配空间，因此d2必须为元素留有空间。
+
+copy()算法接受三个迭代器:begin和end迭代器表示要复制的元素范围，begin迭代器表示目标范围，不检查迭代器以确保它们有效。(尝试不分配空间的vector，会出现段错误)
+
+我们在两个容器上调用printc()来显示结果。
+
+\item 
+copy()算法对此并不总可行。有时想复制并添加元素到容器的末尾，若有一个算法可以为每个元素调用push\_back()就太好了。这就是迭代器适配器有用的地方。让我们在main()的末尾添加一些代码:
+
+\begin{lstlisting}[style=styleCXX]
+copy(d1.begin(), d1.end(), back_inserter(d2));
+printc(d2, "d2 after back_inserter");
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+d2 after back_inserter: 1 2 3 4 5 1 2 3 4 5
+\end{tcblisting}
+
+back\_inserter()是一个插入迭代器适配器，为分配给它的每个项调用push\_back()，可以在需要输出迭代器的地方使用。
+
+\item 
+还有一个front\_inserter()适配器，用于在容器的前端插入元素:
+
+\begin{lstlisting}[style=styleCXX]
+deque<int> d3{ 47, 73, 114, 138, 54 };
+copy(d3.begin(), d3.end(), front_inserter(d2));
+printc(d2, "d2 after front_inserter");
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+d2 after front_inserter: 54 138 114 73 47 1 2 3 4 5 1 2 3 4 5
+\end{tcblisting}
+
+front\_inserter()适配器使用容器的push\_front()方法在前端插入元素。因为每个元素都插入到前一个元素之前，所以目标容器中的元素是反向的。
+
+\item 
+若想在中间插入，可以使用inserter()适配器:
+
+\begin{lstlisting}[style=styleCXX]
+auto it2{ d2.begin() + 2};
+copy(d1.begin(), d1.end(), inserter(d2, it2));
+printc(d2, "d2 after middle insert");
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+d2 after middle insert: 54 138 1 2 3 4 5 114 73 47 ...
+\end{tcblisting}
+
+inserter()适配器接受插入起始点的迭代器。
+
+\item 
+流迭代器可以方便地读写iostream对象，这是ostream\_iterator():
+
+\begin{lstlisting}[style=styleCXX]
+cout << "ostream_iterator: ";
+copy(d1.begin(), d1.end(), ostream_iterator<int>(cout));
+cout << '\n';
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+ostream_iterator: 12345
+\end{tcblisting}
+
+\item 
+下面是istream\_iterator():
+
+\begin{lstlisting}[style=styleCXX]
+vector<string> vs{};
+copy(istream_iterator<string>(cin),
+	istream_iterator<string>(),
+	back_inserter(vs));
+printc(vs, "vs2");
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+$ ./working < five-words.txt
+vs2: this is not a haiku
+\end{tcblisting}
+
+若没有流迭代器，istream\_iterator()适配器将默认返回一个结束迭代器。
+
+\item 
+反向适配器包含在大多数容器中，如函数成员rbegin()和rend():
+
+\begin{lstlisting}[style=styleCXX]
+for(auto it = d1.rbegin(); it != d1.rend(); ++it) {
+	cout << format("{} ", *it);
+}
+cout << '\n';
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+5 4 3 2 1
+\end{tcblisting}
+\end{itemize}
+
+\subsubsection{How it works…}
+
+迭代器适配器通过包装现有容器来工作。当调用一个适配器时，比如用容器对象的back\_inserter():
+
+\begin{lstlisting}[style=styleCXX]
+copy(d1.begin(), d1.end(), back_inserter(d2));
+\end{lstlisting}
+
+适配器返回一个模拟迭代器的对象，在本例中是std::back\_insert\_iterator对象，在每次赋值给迭代器时调用容器对象上的push\_back()方法。可以使用适配器代替迭代器，同时执行其他任务。
+
+istream\_adapter()也需要一个哨兵，哨兵表示长度不确定的迭代器的结束。当从一个流中读取时，并不知道流中有多少对象。当流到达结束时，哨兵将与迭代器进行相等比较，标志流的结束。istream\_adapter()在不带参数的情况下调用时会创建一个哨兵:
+
+\begin{lstlisting}[style=styleCXX]
+auto it = istream_adapter<string>(cin);
+auto it_end = istream_adapter<string>(); // creates sentinel
+\end{lstlisting}
+
+这允许测试流的结束，就像测试其他容器一样:
+
+\begin{lstlisting}[style=styleCXX]
+for(auto it = istream_iterator<string>(cin);
+		it != istream_iterator<string>();
+		++it) {
+	cout << format("{} ", *it);
+}
+cout << '\n';
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+$ ./working < five-words.txt
+this is not a haiku
+\end{tcblisting}
+

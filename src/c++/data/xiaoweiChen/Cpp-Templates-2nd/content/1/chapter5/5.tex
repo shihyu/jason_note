@@ -1,0 +1,335 @@
+
+类成员可以是模板，对于嵌套类和成员函数都有可能。Stack<>类模板可以再次展示这种能力的应用和优势。通常，只有具有相同的类型时，才能相互分配堆栈，这意味着元素具有相同的类型。但不能将其他类型的元素赋值给堆栈，即使对定义的元素类型有隐式的类型转换:
+
+\begin{lstlisting}[style=styleCXX]
+Stack<int> intStack1, intStack2; // stacks for ints
+Stack<float> floatStack; // stack for floats
+...
+intStack1 = intStack2; // OK: stacks have same type
+floatStack = intStack1; // ERROR: stacks have different types
+\end{lstlisting}
+
+默认赋值操作符要求赋值操作符的两端具有相同的类型。
+
+将赋值操作符定义为模板，可以使用定义了适当类型转换的元素对堆栈赋值。需要进行如下声明:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/stack5decl.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class Stack {
+private:
+	std::deque<T> elems; // elements
+	
+public:
+	void push(T const&); // push element
+	void pop(); // pop element
+	T const& top() const; // return top element
+	bool empty() const { // return whether the stack is empty
+		return elems.empty();
+	}
+	
+	// assign stack of elements of type T2
+	template<typename T2>
+	Stack& operator= (Stack<T2> const&);
+};
+\end{lstlisting}
+
+进行了以下两处修改:
+
+\begin{enumerate}
+\item 
+为另一种类型T2的元素堆栈添加了赋值操作符声明。
+
+\item 
+栈现在使用std::deque<>作为元素的内部容器。同样，这也是新赋值操作符实现的结果。
+\end{enumerate}
+
+新赋值操作符的实现如下所示:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/stack5assign.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+template<typename T2>
+Stack<T>& Stack<T>::operator= (Stack<T2> const& op2)
+{
+	Stack<T2> tmp(op2); // create a copy of the assigned stack
+	
+	elems.clear(); // remove existing elements
+	while (!tmp.empty()) { // copy all elements
+		elems.push_front(tmp.top());
+		tmp.pop();
+	}
+	return *this;
+}
+\end{lstlisting}
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}这只是一个模板特性的基本实现。像异常处理的实现，这里没有添加。
+\end{tcolorbox}
+
+首先看看定义成员模板的语法。模板参数为T的模板内部，定义了一个模板参数为T2的内部模板:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+template<typename T2>
+...
+\end{lstlisting}
+
+成员函数中，可能只希望访问所赋堆栈op2的必要数据。但这个堆栈有不同的类型(若为两种不同的参数类型实例化一个类模板，将得到两种不同的类类型)，因此只能使用公共接口。所以，访问元素的唯一方法是top()。然而，每个元素都必须成为顶部元素。因此，必须创建op2的副本，以便通过调用pop()从该副本中获取元素。因为top()返回压入堆栈的最后一个元素，所以可能更倾向于使用支持在集合的另一端插入元素的容器。所以，这里使用std::deque<>的push\_front()，将元素放在集合的另一端。
+
+要访问op2的所有成员，可以将所有其他堆栈实例声明为友元:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/stack6decl.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class Stack {
+private:
+	std::deque<T> elems; // elements
+	
+public:
+	void push(T const&); // push element
+	void pop(); // pop element
+	T const& top() const; // return top element
+	bool empty() const { // return whether the stack is empty
+		return elems.empty();
+	}
+
+	// assign stack of elements of type T2
+	template<typename T2>
+	Stack& operator= (Stack<T2> const&);
+	// to get access to private members of Stack<T2> for any type T2:
+	template<typename> friend class Stack;
+};
+\end{lstlisting}
+
+因为模板参数的名字没有使用，所以可以省略:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename> friend class Stack;
+\end{lstlisting}
+
+现在，模板赋值操作符的实现可能是这样:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/stack6assign.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+template<typename T2>
+Stack<T>& Stack<T>::operator= (Stack<T2> const& op2)
+{
+	elems.clear(); // remove existing elements
+	elems.insert(elems.begin(), // insert at the beginning
+				op2.elems.begin(), // all elements from op2
+				op2.elems.end());
+	return *this;
+}
+\end{lstlisting}
+
+无论实现什么样，有了这个成员模板，现在可以将一堆int型对象赋值给一堆float型对象:
+
+\begin{lstlisting}[style=styleCXX]
+Stack<int> intStack; // stack for ints
+Stack<float> floatStack; // stack for floats
+...
+floatStack = intStack; // OK: stacks have different types,
+						// but int converts to float
+\end{lstlisting}
+
+当然，这个赋值不会改变堆栈及其元素的类型。赋值之后，floatStack的元素仍然是浮点数，因此top()仍然返回一个浮点数。
+
+这个函数可能会禁用类型检查，这样就可以将任何类型的元素赋给堆栈，但事实并非如此。当源堆栈(副本)的元素移动到目标堆栈时，就会进行类型检查:
+
+\begin{lstlisting}[style=styleCXX]
+elems.push_front(tmp.top());
+\end{lstlisting}
+
+若一堆string赋值给一堆float数，这一行的编译会产生一个错误信息，表示tmp.top()返回的字符串不能作为参数传递给elems.push\_front()(错误信息会随编译器而变化，但这是其含义的重点):
+
+\begin{lstlisting}[style=styleCXX]
+Stack<std::string> stringStack; // stack of strings
+Stack<float> floatStack; // stack of floats
+...
+floatStack = stringStack; // ERROR: std::string doesn’t convert to float
+\end{lstlisting}
+
+同样，可以改变实现来参数化内部容器类型:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/stack7decl.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename T, typename Cont = std::deque<T>>
+class Stack {
+private:
+	Cont elems; // elements
+	
+public:
+	void push(T const&); // push element
+	void pop(); // pop element
+	T const& top() const; // return top element
+	bool empty() const { // return whether the stack is empty
+		return elems.empty();
+	}
+
+	// assign stack of elements of type T2
+	template<typename T2, typename Cont2>
+	Stack& operator= (Stack<T2,Cont2> const&);
+	// to get access to private members of Stack<T2> for any type T2:
+	template<typename, typename> friend class Stack;
+};
+\end{lstlisting}
+
+所以模板赋值操作符就可以这样实现:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/stack7assign.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename T, typename Cont>
+template<typename T2, typename Cont2>
+Stack<T,Cont>&
+Stack<T,Cont>::operator= (Stack<T2,Cont2> const& op2)
+{
+	elems.clear(); // remove existing elements
+	elems.insert(elems.begin(), // insert at the beginning
+				op2.elems.begin(), // all elements from op2
+				op2.elems.end());
+	return *this;
+}
+\end{lstlisting}
+
+对于类模板，只有那些调用的成员函数才会实例化。因此，若需要避免在堆栈中分配不同类型的元素，可以使用vector作为内部容器:
+
+\begin{lstlisting}[style=styleCXX]
+// stack for ints using a vector as an internal container
+Stack<int,std::vector<int>> vStack;
+...
+vStack.push(42);
+vStack.push(7);
+std::cout << vStack.top() << '\n';
+\end{lstlisting}
+
+因为赋值操作符模板不是必需，所以不会出现缺少成员函数push\_front()的错误消息。
+
+要获得上一个示例的完整实现，请参阅子目录基础中以stack7开头的文件。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{成员函数模板的特化}
+
+成员函数模板也可以全特化，但不能偏特化。例如，对于以下类:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/boolstring.hpp}
+\begin{lstlisting}[style=styleCXX]
+class BoolString {
+private:
+	std::string value;
+public:
+	BoolString (std::string const& s)
+	: value(s) {
+	}
+	template<typename T = std::string>
+	T get() const { // get value (converted to T)
+		return value;
+	}
+};
+\end{lstlisting}
+
+可以为如下所示的成员函数模板提供全特化:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/boolstringgetbool.hpp}
+\begin{lstlisting}[style=styleCXX]
+// full specialization for BoolString::getValue<>() for bool
+template<>
+inline bool BoolString::get<bool>() const {
+	return value == "true" || value == "1" || value == "on";
+}
+\end{lstlisting}
+
+不需要也不能对特化进行声明，只需要定义。因为它是全特化的，且位于头文件中，所以若定义包含在不同的转译单元中，必须使用内联声明，以避免错误。
+
+可以使用类的全特化，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+std::cout << std::boolalpha;
+BoolString s1("hello");
+std::cout << s1.get() << '\n'; // prints hello
+std::cout << s1.get<bool>() << '\n'; // prints false
+BoolString s2("on");
+std::cout << s2.get<bool>() << '\n'; // prints true
+\end{lstlisting}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{特殊成员函数的模板}
+
+只要特殊成员函数允许复制或移动对象，就可以使用模板成员函数。与上面定义的赋值操作符类似，也可以是构造函数。但模板构造函数或模板赋值操作符，不能取代预定义构造函数或赋值操作符，成员模板不作为复制或移动对象的特殊成员函数。本例中，对于相同类型的堆栈赋值，仍然使用默认赋值操作符。
+
+这种影响有好有坏:
+
+\begin{itemize}
+\item 
+模板构造函数或赋值操作符，可能比预定义的复制/移动构造函数或赋值操作符更匹配，尽管只提供了用于初始化其他类型的模板版本。请参见6.2节。
+
+\item 
+要对复制/移动构造函数进行“模板化”以约束其存在是非常困难的。详见章节6.4。
+\end{itemize}
+
+\subsubsubsection{5.5.1\hspace{0.2cm}.template构造}
+
+有时，在调用成员模板时，需要显式限定模板参数。这种情况下，必须使用template关键字来确保<是模板参数列表的开头。考虑下面使用标准bitset类型的例子:
+
+\begin{lstlisting}[style=styleCXX]
+template<unsigned long N>
+void printBitset (std::bitset<N> const& bs) {
+	std::cout << bs.template to_string<char, std::char_traits<char>,
+			std::allocator<char>>();
+}
+\end{lstlisting}
+
+对于bitset bs，使用to\_string()的成员函数模板，同时显式指定字符串类型的信息。如果没有使用.template，编译器就不知道后面的小于标记(<)是模板参数列表的开头。注意，只有在句点之前的构造依赖于模板参数时才会出现问题。在例子中，参数bs依赖于模板参数N。
+
+.template表示法(以及类似的表示法，如\texttt{->}template和::template)应该只在模板内部使用，只有当它们遵循依赖于模板的某些参数时才会使用。详细信息请参见13.3.3。
+
+\subsubsubsection{5.5.2\hspace{0.2cm}泛型Lambda和成员模板}
+
+注意，C++14中引入的泛型Lambda是成员模板的快捷方式。计算任意类型的两个参数的“加和”的简单Lambda表达式:
+
+\begin{lstlisting}[style=styleCXX]
+[] (auto x, auto y) {
+	return x + y;
+}
+\end{lstlisting}
+
+是以下类默认构造对象的快捷方式:
+
+\begin{lstlisting}[style=styleCXX]
+class SomeCompilerSpecificName {
+	public:
+	SomeCompilerSpecificName(); // constructor only callable by compiler
+	template<typename T1, typename T2>
+	auto operator() (T1 x, T2 y) const {
+		return x + y;
+	}
+};
+\end{lstlisting}
+
+详细信息请参见15.10.6。
+
+
+
+
+
+
+

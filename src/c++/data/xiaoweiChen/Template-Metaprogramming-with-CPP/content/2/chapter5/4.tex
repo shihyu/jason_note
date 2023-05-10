@@ -1,0 +1,167 @@
+C++17的constexpr if特性使得SFINAE更加简单，是if语句的编译时版本，有助于用更简单的版本替换复杂的模板代码。先看一下serialize函数的C++17实现，可以统一序列化widget和gadget:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T>
+void serialize(std::ostream& os, T const& value)
+{
+	if constexpr (uses_write_v<T>)
+		value.write(os);
+	else
+		os << value;
+}
+\end{lstlisting}
+
+其语法是if constexpr(condition)，条件必须是编译时表达式，求值表达式不执行短路逻辑。若表达式具有形式a \&\& b或a || b，那么a和b都必须是定义良好的。
+
+constexpr if能够在编译时根据表达式的值丢弃分支。例子中，当uses\_write\_v为true时，else分支将丢弃，而第一个分支的主体将保留，最终得到了widget和gadget类的特化:
+
+\begin{lstlisting}[style=styleCXX]
+template<>
+void serialize<widget>(std::ostream & os,
+                      widget const & value)
+{
+	if constexpr(true)
+	{
+		value.write(os);
+	}
+}
+
+template<>
+void serialize<gadget>(std::ostream & os,
+                      gadget const & value)
+{
+	if constexpr(false)
+	{
+	}
+	else
+	{
+		os << value;
+	}
+}
+\end{lstlisting}
+
+当然，编译器可能会进一步简化这段代码，这些特化可能会像下面这样:
+
+\begin{lstlisting}[style=styleCXX]
+template<>
+void serialize<widget>(std::ostream & os,
+                       widget const & value)
+{
+	value.write(os);
+}
+
+template<>
+void serialize<gadget>(std::ostream & os,
+					   gadget const & value)
+{
+	os << value;
+}
+\end{lstlisting}
+
+最终结果与使用SFINAE和enable\_if实现的结果相同，但这里编写的实际代码更简单，更容易理解。
+
+constexpr if是一个很好的简化代码的工具，在第3章中看到过，当时实现了一个名为sum的函数:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T, typename... Args>
+T sum(T a, Args... args)
+{
+	if constexpr (sizeof...(args) == 0)
+		return a;
+	else
+		return a + sum(args...);
+}
+\end{lstlisting}
+
+本例中，constexpr if协助我们避免出现两个重载，一个用于一般情况，另一个用于结束递归。本书中已经介绍了另一个例子，这个例子中，constexpr if可以简化实现，是第4章中的阶乘函数模板。该函数的实现如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+template <unsigned int n>
+constexpr unsigned int factorial()
+{
+	return n * factorial<n - 1>();
+}
+
+template<>
+constexpr unsigned int factorial<1>() { return 1; }
+
+template<>
+constexpr unsigned int factorial<0>() { return 1; }
+\end{lstlisting}
+
+使用constexpr if，可以用一个模板替换所有这些，并让编译器负责提供正确的特化。C++17版本的函数实现如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+template <unsigned int n>
+constexpr unsigned int factorial()
+{
+	if constexpr (n > 1)
+		return n * factorial<n - 1>();
+	else
+		return 1;
+}
+\end{lstlisting}
+
+constexpr if在很多情况下都很有用。本节给出的最后一个示例是一个名为are\_equal的函数模板，其决定提供的两个参数是否相等。通常，会认为使用operator==就足以确定两个值是否相等。大多数情况下是正确的，除了浮点数。因为浮点数可以存储而没有精度损失(像1,1.25,1.5这样的数字，并且小数部分都可以表示为2的逆幂级数)，所以在比较浮点数时需要特别注意。通常，这是通过确保两个浮点值之间的差值小于某个阈值来解决的，所以函数的实现可能如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T>
+bool are_equal(T const& a, T const& b)
+{
+	if constexpr (std::is_floating_point_v<T>)
+		return std::abs(a - b) < 0.001;
+	else
+		return a == b;
+}
+\end{lstlisting}
+
+当T类型是浮点类型时，将两个数字之差的绝对值与所选阈值进行比较。否则，退回到operator==。这使得不仅可以对算术类型使用此函数，还可以对其他重载了相等操作符的类型使用此函数。
+
+\begin{lstlisting}[style=styleCXX]
+are_equal(1, 1); // OK
+are_equal(1.999998, 1.999997); // OK
+are_equal(std::string{ "1" }, std::string{ "1" }); // OK
+are_equal(widget{ 1, "one" }, widget{ 1, "two" }); // error
+\end{lstlisting}
+
+可以使用参数类型为int、double和std::string调用are\_equal函数模板，但尝试对widget类型的值执行相同的操作将使编译器报错，因为==操作符没有在此类型中进行重载。
+
+本章中，我们已经了解了什么是类型特征，以及执行条件编译的不同方法。还看到了标准库中可用的一些类型特征。本章的第二部分，我们将探讨标准中关于类型特征的内容。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

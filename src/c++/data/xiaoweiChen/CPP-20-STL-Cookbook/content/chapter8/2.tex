@@ -1,0 +1,220 @@
+
+C++17引入的std::optional类保存了一个可选值。
+
+假设有一个函数，它可能返回值，也可能不返回值——例如，一个函数检查一个数字是否是质数，但若存在第一个因数，则返回第一个因数。此函数应返回值或bool状态。可以创建一个同时包含值和状态的结构体:
+
+\begin{lstlisting}[style=styleCXX]
+struct factor_t {
+	bool is_prime;
+	long factor;
+};
+factor_t factor(long n) {
+	factor_t r{};
+	for(long i = 2; i <= n / 2; ++i) {
+		if (n % i == 0) {
+			r.is_prime = false;
+			r.factor = i;
+			return r;
+		}
+	}
+	r.is_prime = true;
+	return r;
+}
+\end{lstlisting}
+
+这是一个笨拙的解决方案，但它是有效的，而且很常见。
+
+optional类可以让这个任务变得简单:
+
+\begin{lstlisting}[style=styleCXX]
+optional<long> factor(long n) {
+	for (long i = 2; i <= n / 2; ++i) {
+		if (n % i == 0) return {i};
+	}
+	return {};
+}
+\end{lstlisting}
+
+使用optional，可以返回值或非值。
+
+我们可以这样使用:
+
+\begin{lstlisting}[style=styleCXX]
+long a{ 42 };
+long b{ 73 };
+auto x = factor(a);
+auto y = factor(b);
+if(x) cout << format("lowest factor of {} is {}\n", a, *x);
+else cout << format("{} is prime\n", a);
+if(y) cout << format("lowest factor of {} is {}\n", b, *y);
+else cout << format("{} is prime\n", b);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+lowest factor of 42 is 2
+73 is prime
+\end{tcblisting}
+
+\subsubsection{How to do it…}
+
+这个示例中，来看看如何使用optional类的例子:
+
+\begin{itemize}
+\item 
+optional类非常简单。使用标准模板表示法构造一个optional:
+
+\begin{lstlisting}[style=styleCXX]
+optional<int> a{ 42 };
+cout << *a << '\n';
+\end{lstlisting}
+
+使用指针的解引用操作符访问可选对象的值。
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+42
+\end{tcblisting}
+
+\item 
+使用bool操作符来测试optional是否有值:
+
+\begin{lstlisting}[style=styleCXX]
+if(a) cout << *a << '\n';
+else cout << "no value\n";
+\end{lstlisting}
+
+若构造a时不带值:
+
+\begin{lstlisting}[style=styleCXX]
+optional<int> a{};
+\end{lstlisting}
+
+输出将输出else的内容:
+
+\begin{tcblisting}{commandshell={}}
+no value
+\end{tcblisting}
+
+\item 
+我们可以通过声明类型别名来进一步简化:
+
+\begin{lstlisting}[style=styleCXX]
+using oint = std::optional<int>;
+oint a{ 42 };
+oint b{ 73 };
+\end{lstlisting}
+
+\item 
+若想对oint对象进行操作，可以对操作符进行重载:
+
+\begin{lstlisting}[style=styleCXX]
+oint operator+(const oint& a, const oint& b) {
+	if(a && b) return *a + *b;
+	else return {};
+}
+oint operator+(const oint& a, const int b) {
+	if(a) return *a + b;
+	else return {};
+}
+\end{lstlisting}
+
+现在，可以直接操作oint对象:
+
+\begin{lstlisting}[style=styleCXX]
+auto sum{ a + b };
+if(sum) {
+	cout << format("{} + {} = {}\n", *a, *b, *sum);
+} else {
+	cout << "NAN\n";
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{lstlisting}[style=styleCXX]
+42 + 73 = 115
+\end{lstlisting}
+
+\item 
+假设用默认构造函数声明b:
+
+\begin{lstlisting}[style=styleCXX]
+oint b{};
+\end{lstlisting}
+
+现在，可得到else分支的输出:
+
+\begin{lstlisting}[style=styleCXX]
+NAN
+\end{lstlisting}
+\end{itemize}
+
+
+\subsubsection{How it works…}
+
+std::optional类是为了简单而创建的，其为许多常用函数提供操作符重载。还包括成员函数，可提供更进一步的灵活性。
+
+optional类提供了一个操作符bool重载，用于确定对象是否有值:
+
+\begin{lstlisting}[style=styleCXX]
+optional<int> n{ 42 };
+if(n) ... // has a value
+\end{lstlisting}
+
+或者，可以使用has\_value()成员函数:
+
+\begin{lstlisting}[style=styleCXX]
+if(n.has_value()) ... // has a value
+\end{lstlisting}
+
+要访问该值，可以使用解引用操作符的重载:
+
+\begin{lstlisting}[style=styleCXX]
+x = *n; // * retruns the value
+\end{lstlisting}
+
+或者，可以使用value()成员函数:
+
+\begin{lstlisting}[style=styleCXX]
+x = n.value(); // * retruns the value
+\end{lstlisting}
+
+reset()成员函数可以销毁该值，并重置可选对象的状态:
+
+\begin{lstlisting}[style=styleCXX]
+n.reset(); // no longer has a value
+\end{lstlisting}
+
+
+\subsubsection{There's more…}
+
+optional类通过value()方法提供异常支持:
+
+\begin{lstlisting}[style=styleCXX]
+b.reset();
+try {
+	cout << b.value() << '\n';
+} catch(const std::bad_optional_access& e) {
+	cout << format("b.value(): {}\n", e.what());
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+b.value(): bad optional access
+\end{tcblisting}
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black,title=Note]
+只有value()方法会抛出异常。对于无效值，解引用操作符的行为未定义。
+\end{tcolorbox}
+
+
+
+
+
+
+

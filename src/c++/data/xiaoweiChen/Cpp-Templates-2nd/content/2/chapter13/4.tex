@@ -1,0 +1,186 @@
+
+类模板可以继承或被继承，模板和非模板场景之间没有显著的区别。然而，当从依赖名称引用的基类派生类模板时，有一个微妙区别。让我们首先看看非依赖型基类的情况。
+
+\subsubsubsection{13.4.1\hspace{0.2cm}非依赖型基类}
+
+类模板中，非依赖型基类是具有完整类型的类，可以在不知道模板参数的情况下即可确定的基类。换句话说，这个基类的名称是使用非依赖型名称表示的。
+
+\begin{lstlisting}[style=styleCXX]
+template<typename X>
+class Base {
+	public:
+	int basefield;
+	using T = int;
+};
+
+class D1: public Base<Base<void>> { // not a template case really
+	public:
+	void f() { basefield = 3; } // usual access to inherited member
+};
+
+template<typename T>
+class D2 : public Base<double> { // nondependent base
+	public:
+	void f() { basefield = 7; } // usual access to inherited member
+	T strange; // T is Base<double>::T, not the template parameter!
+};
+\end{lstlisting}
+
+模板中的非依赖型基类类似于普通非模板类中的基类，但当在模板派生中查找非限定名称时，非依赖型基类会优先考虑该名称，而后才是模板参数列表。类模板D2的成员strange总是对应Base<double>::T(就是int)的类型T。例如，下面的函数是无效的:
+
+\begin{lstlisting}[style=styleCXX]
+void g (D2<int*>& d2, int* p)
+{
+	d2.strange = p; // ERROR: type mismatch!
+}
+\end{lstlisting}
+
+这有些违反直觉，并且要求派生模板的编写者知道派生自的非依赖型基类中的名称——即使该派生是间接的或名称是私有的。将模板参数放在“模板化”的范围中可能会更好。
+
+\subsubsubsection{13.4.2\hspace{0.2cm}依赖型基类}
+
+前面的例子中，基类完全确定，不依赖于模板参数。只要知道模板定义，C++编译器就可以在这些基类中查找非依赖性名称。另一种方法(C++标准不允许)是延迟对这些名称的查找，直到模板实例化时再进行查找。这种方法的缺点是，由于缺少符号而导致的错误消息延迟至实例化。因此，C++标准在模板中出现的非依赖名称时就立即查找。看看下面的例子:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class DD : public Base<T> { // dependent base
+	public:
+	void f() { basefield = 0; } // #1 problem...
+};
+
+template<> // explicit specialization
+class Base<bool> {
+	public:
+	enum { basefield = 42 }; // #2 tricky!
+};
+
+void g (DD<bool>& d)
+{
+	d.f(); // #3 oops?
+}
+\end{lstlisting}
+
+\#1找到了对非依赖名称basefield的引用，立即查找它。假设在Base模板中查找，并将它绑定到其中找到的int成员上。此之后不久，我们使用显式特化重写了Base的定义。恰巧，这种特化改变了已经提交的basefield成员的含义!因此，在\#3实例化DD::f的定义时，发现太急于在\#1绑定非依赖名称。DD<bool>中没有在\#2特化basefield，并且产生错误消息。
+
+为了规避这个问题，标准C++在依赖型基类中不会查找非依赖名称(但在遇到时仍然会查找)。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}这是两阶段查找规则的一部分，用来区分第一次看到模板定义时的第一阶段和模板实例化时的第二阶段(参见第14.3.1节)。
+\end{tcolorbox}
+
+因此，标准C++编译器将在\#1发出错误信息。要纠正代码，使名称basefield具有依赖性就好，因为依赖型名称只能在实例化时查找，而那时必须查找的具体基类实例类型就明朗了。编译器在\#3将知道DD<bool>的基类是Base<bool>，并且这已经显式特化了。这种情况下，推荐的方式就是让名称转成依赖型:
+
+\begin{lstlisting}[style=styleCXX]
+// Variation 1:
+template<typename T>
+class DD1 : public Base<T> {
+	public:
+	void f() { this->basefield = 0; } // lookup delayed
+};
+\end{lstlisting}
+
+另一种方法是使用限定名引入依赖:
+
+\begin{lstlisting}[style=styleCXX]
+// Variation 2:
+template<typename T>
+class DD2 : public Base<T> {
+	public:
+	void f() { Base<T>::basefield = 0; }
+};
+\end{lstlisting}
+
+使用这种解决方案必须小心，若使用非限定的非依赖名称来形成虚函数调用，那么限定会抑制虚函数调用机制，程序的含义也会发生变化。在某些情况下，当遇到第2种解决方案不适用的情况，可以使用方案1:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class B {
+	public:
+	enum E { e1 = 6, e2 = 28, e3 = 496 };
+	virtual void zero(E e = e1);
+	virtual void one(E&);
+};
+
+template<typename T>
+class D : public B<T> {
+	public:
+	void f() {
+		typename D<T>::E e; // this->E would not be valid syntax
+		this->zero(); // D<T>::zero() would inhibit virtuality
+		one(e); // one is dependent because its argument
+	} // is dependent
+};
+\end{lstlisting}
+
+这个例子中是如何用D<T>::E替换B<T>::E的。这种情况下，二者皆可。然而，在多重继承的情况下，可能不知道哪个基类提供了所需的成员(使用派生类进行限定)，或者多个基类可能声明相同的名称(必须使用特定的基类名称来消除歧义)。
+
+注意，调用one(e)中的名称one依赖于模板参数，因为调用的显式参数之一是类型依赖型的。因为编译器在确定查找之前无法验证默认参数，所以对于依赖于模板形参的类型，隐式使用的默认参数无效。为了避免这些问题，我们更倾向于在允许的情况下使用this\texttt{->}前缀——同样适用于非模板代码。
+
+如果发现重复的限制使代码陷入混乱，可以从派生类中的依赖型基类中引入一个名称，从而一劳永逸:
+
+\begin{lstlisting}[style=styleCXX]
+// Variation 3:
+template<typename T>
+class DD3 : public Base<T> {
+	public:
+	using Base<T>::basefield; // #1 dependent name now in scope
+	void f() { basefield = 0; } // #2 fine
+};
+\end{lstlisting}
+
+\#2的查找成功并找到\#1的使用的声明。然而，using声明直到实例化时才确定。这个方案有一些限制，例如：如果派生了多个基类，开发者必须准确地选择包含所需成员的基类。
+
+在当前实例化中搜索限定名称时，C++标准指定在当前实例化和所有非依赖型基类中首先搜索名称查找，类似于对该名称执行限定查找的方式。若找到，则限定名称将引用当前实例化的成员，而不是依赖于名称。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}但在实例化模板时仍然要重复查找，若在该上下文中产生了不同的结果，则该程序的格式不正确。
+\end{tcolorbox}
+
+若没有找到这样的名称，并且类还有其他的依赖型基类，那么受限名称就会指代未知特化实例的某个成员。例如:
+
+\begin{lstlisting}[style=styleCXX]
+class NonDep {
+	public:
+	using Type = int;
+};
+
+template<typename T>
+class Dep {
+	public:
+	using OtherType = T;
+};
+
+template<typename T>
+class DepBase : public NonDep, public Dep<T> {
+	public:
+	void f() {
+		typename DepBase<T>::Type t; // finds NonDep::Type;
+		// typename keyword is optional
+		typename DepBase<T>::OtherType* ot; // finds nothing; DepBase<T>::OtherType
+		// is a member of an unknown specialization
+	}
+};
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

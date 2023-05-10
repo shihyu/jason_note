@@ -1,0 +1,233 @@
+
+STL具有丰富的算法库。然而，有时可能会发现它缺少自己需要的东西。一个常见的需求是split函数。
+
+split函数在字符分隔符上拆分字符串。例如，下面是标准Debian安装的Unix /etc/passwd文件:
+
+\begin{tcblisting}{commandshell={}}
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+sys:x:3:3:sys:/dev:/usr/sbin/nologin
+sync:x:4:65534:sync:/bin:/bin/sync
+\end{tcblisting}
+
+每个字段用冒号:character分隔，其中字段为:
+
+
+\begin{enumerate}
+\item 
+账号
+
+\item 
+可加密的密码
+
+\item 
+用户名
+
+\item 
+组名
+
+\item 
+用户名或评论
+
+\item 
+主目录
+
+\item 
+可选的命令解释器
+\end{enumerate}
+
+这是基于POSIX的操作系统中的标准文件，还有其他类似的文件。大多数脚本语言都包含一个内置函数，用于在分隔符上分隔字符串。C++中有一些简单的方法可以做到这一点，但std::string只是STL中的另一个容器，在分隔符上分割容器的通用算法可能是有用补充。让我们来创建一个。
+
+\subsubsection{How to do it…}
+
+在这个示例中，我们构建了一个通用算法，它在分隔符上拆分容器，并将结果放入目标容器中。
+
+\begin{itemize}
+\item 
+我们的算法在bw命名空间中，以避免与std冲突:
+
+\begin{lstlisting}[style=styleCXX]
+namespace bw {
+	template<typename It, typename Oc, typename V,
+	typename Pred>
+	It split(It it, It end_it, Oc& dest,
+	const V& sep, Pred& f) {
+		using SliceContainer = typename
+		Oc::value_type;
+		while(it != end_it) {
+			SliceContainer dest_elm{};
+			auto slice{ it };
+			while(slice != end_it) {
+				if(f(*slice, sep)) break;
+				dest_elm.push_back(*slice++);
+			}
+			dest.push_back(dest_elm);
+			if(slice == end_it) return end_it;
+			it = ++slice;
+		}
+		return it;
+	}
+};
+\end{lstlisting}
+
+split()算法在容器中搜索分隔符，并将分离的切片收集到新的输出容器中，其中每部分都是输出容器中的容器。
+
+我希望split()算法尽可能通用，就像算法库中的算法一样。这样，所有的参数都是模板化的，代码可以处理各种各样的参数类型。
+
+首先，来看看模板参数:
+
+\begin{itemize}
+\item 
+It是源容器的输入迭代器类型。
+
+\item 
+Oc输出容器类型。这是容器中的容器。
+
+\item 
+V分隔符类型。
+
+\item 
+Pred为谓词函数。
+\end{itemize}
+
+输出类型是容器的容器，需要容纳切片的容器。可以是vector<string>，其中字符串值是切片，也可以是vector<vector<int>{}>，其中内部的vector<int>包含切片，所以需要从输出容器类型派生内部容器的类型。可以通过函数体中的using声明来做到这一点。
+
+\begin{lstlisting}[style=styleCXX]
+using SliceContainer = typename Oc::value_type;
+\end{lstlisting}
+
+这也是为什么不能为输出形参使用输出迭代器的原因。根据定义，输出迭代器不能确定其内容的类型，并且将其value\_type设置为void。
+
+使用SliceContainer定义一个临时容器，可以将其添加到输出容器中:
+
+\begin{lstlisting}[style=styleCXX]
+dest.push_back(dest_elm);
+\end{lstlisting}
+
+\item 
+谓词是一个二元操作符，用于比较输入元素和分隔符。在bw命名空间中包含了一个默认的相等操作符:
+
+\begin{lstlisting}[style=styleCXX]
+constexpr auto eq = [](const auto& el, const auto& sep) {
+	return el == sep;
+};
+\end{lstlisting}
+
+\item 
+还包含了split()的特化，默认使用eq操作符:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename It, typename Oc, typename V>
+It split(It it, const It end_it, Oc& dest, const V& sep)
+{
+	return split(it, end_it, dest, sep, eq);
+}
+\end{lstlisting}
+
+\item 
+因为分割字符串对象是这个算法的常见用例，包含了一个用于特定目的的辅助函数:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename Cin, typename Cout, typename V>
+Cout& strsplit(const Cin& str, Cout& dest, const V& sep)
+{
+	split(str.begin(), str.end(), dest, sep, eq);
+	return dest;
+}
+\end{lstlisting}
+
+\item 
+我们测试split算法main()函数:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	constexpr char strsep{ ':' };
+	const string str
+		{ "sync:x:4:65534:sync:/bin:/bin/sync" };
+	vector<string> dest_vs{};
+	bw::split(str.begin(), str.end(), dest_vs, strsep,
+		bw::eq);
+	for(const auto& e : dest_vs) cout <<
+		format("[{}] ", e);
+	cout << '\n';
+}
+\end{lstlisting}
+
+使用/etc/passwd文件中的字符串来测试算法，结果如下:
+
+\begin{tcblisting}{commandshell={}}
+[sync] [x] [4] [65534] [sync] [/bin] [/bin/sync]
+\end{tcblisting}
+
+\item 
+使用strsplit()帮助函数会更简单:
+
+\begin{lstlisting}[style=styleCXX]
+vector<string> dest_vs2{};
+bw::strsplit(str, dest_vs2, strsep);
+for(const auto& e : dest_vs2) cout << format("[{}] ", e);
+cout << '\n';
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+[sync] [x] [4] [65534] [sync] [/bin] [/bin/sync]
+\end{tcblisting}
+
+这样就可以很容易地解析/etc/passwd文件。
+
+\item 
+当然，可以对任何容器使用相同算法:
+
+\begin{lstlisting}[style=styleCXX]
+constexpr int intsep{ -1 };
+vector<int> vi{ 1, 2, 3, 4, intsep, 5, 6, 7, 8, intsep,
+	9, 10, 11, 12 };
+vector<vector<int>> dest_vi{};
+bw::split(vi.begin(), vi.end(), dest_vi, intsep);
+for(const auto& v : dest_vi) {
+	string s;
+	for(const auto& e : v) s += format("{}", e);
+	cout << format("[{}] ", s);
+}
+cout << '\n';
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+[1234] [5678] [9101112]
+\end{tcblisting}
+\end{itemize}
+
+\subsubsection{How it works…}
+
+split算法本身比较简单，这个示例的神奇之处在于，模板可使其通用。
+
+using声明中的派生类型，可以创建与输出容器一起使用的容器:
+
+\begin{lstlisting}[style=styleCXX]
+using SliceContainer = typename Oc::value_type;
+\end{lstlisting}
+
+这里别名一个SliceContainer类型，可以用它为切片创建容器:
+
+\begin{lstlisting}[style=styleCXX]
+SliceContainer dest_elm{};
+\end{lstlisting}
+
+这是一个临时容器，可将每个切片添加到输出容器中:
+
+\begin{lstlisting}[style=styleCXX]
+dest.push_back(dest_elm);
+\end{lstlisting}
+
+
+
+
+
+
+
+

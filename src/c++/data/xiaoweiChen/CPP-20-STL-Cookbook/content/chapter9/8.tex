@@ -1,0 +1,101 @@
+
+可能需要在许多线程中运行相同的代码，但只能初始化该代码一次。
+
+一种解决方案是在运行线程之前调用初始化代码。这种方法可以工作，但有一些缺点。通过分离初始化，可以在不必要的时候调用它，也可以在必要的时候忽略它。
+
+std::call\_once函数提供了一个更健壮的解决方案。call\_once在<mutex>头文件中声明。
+
+\subsubsection{How to do it…}
+
+本节中，我们使用print函数进行初始化，所以可以清楚地看到函数什么时候调用:
+
+\begin{itemize}
+\item 
+我们可以使用一个常量来表示要生成的线程数:
+
+\begin{lstlisting}[style=styleCXX]
+constexpr size_t max_threads{ 25 };
+\end{lstlisting}
+
+还需要一个std::once\_flag来同步std::call\_once函数:
+
+\begin{lstlisting}[style=styleCXX]
+std::once_flag init_flag;
+\end{lstlisting}
+
+\item 
+初始化函数只是打印一个字符串，让我们知道其调用了:
+
+\begin{lstlisting}[style=styleCXX]
+void do_init(size_t id) {
+	cout << format("do_init ({}): ", id);
+}
+\end{lstlisting}
+
+\item 
+我们的工作函数do\_print()使用std::call\_once来调用初始化函数，然后打印其id:
+
+\begin{lstlisting}[style=styleCXX]
+void do_print(size_t id) {
+	std::call_once(init_flag, do_init, id);
+	cout << format("{} ", id);
+}
+\end{lstlisting}
+
+\item 
+在main()中，使用列表容器来管理线程对象:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	list<thread> spawn;
+	for (size_t id{}; id < max_threads; ++id) {
+		spawn.emplace_back(do_print, id);
+	}
+	for (auto& t : spawn) t.join();
+	cout << '\n';
+}
+\end{lstlisting}
+
+输出显示初始化首先发生，并且只发生一次:
+
+\begin{tcblisting}{commandshell={}}
+do_init (8): 12 0 2 1 9 6 13 10 11 5 16 3 4 17 7 15 8 14
+18 19 20 21 22 23 24
+\end{tcblisting}
+
+注意，最终调用初始化函数的并不总是第一个衍生线程(0)，但总是第一个调用。若重复运行这个命令，会看到线程0得到初始化，但不是每次都这样。在内核较少的系统中，初始化时更经常看到线程0。
+\end{itemize}
+
+\subsubsection{How it works…}
+
+std::call\_once是一个模板函数，它接受一个标志、一个可调用对象(函数或函子)和一个参数形参包:
+
+\begin{lstlisting}[style=styleCXX]
+template<class Callable, class... Args>
+void call_once(once_flag& flag, Callable&& f, Args&&... args);
+\end{lstlisting}
+
+可调用的f只调用了一次。即使call\_once在多个线程中并发使用，f仍然只调用了一次。
+
+这需要一个std::once\_flag对象进行协调，once\_flag构造函数将其状态设置为指示可调用对象尚未调用。
+
+当call\_once调用可调用对象时，对同一个once\_flag的其他调用都将阻塞，直到可调用对象返回。可调用对象返回后，可以设置once\_flag，从而使后面的call\_once直接返回，而不在调用f。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,79 @@
+C++用各种方法对名称进行分类——方法非常多。为了处理如此丰富的术语，我们提供了表13.1和表13.2，其中描述了这些分类。幸运的是，通过熟悉两个主要的命名概念，就可以很好地了解大多数C++模板问题:
+
+\begin{enumerate}
+\item 
+若名称所属的作用域是使用范围解析操作符(::)或成员访问操作符()显式表示的，则该名称为限定名称。或\texttt{->})。例如，this\texttt{->}count是限定名，但count不是(即使普通计数实际上可能引用类成员)。
+
+\item 
+若名称在某种程度上依赖于模板参数，那么就是从属名称。如果T是模板参数，那么std::vector<T>::iterator通常是一个依赖名称，但如果T是一个已知的类型别名(例如使用T=int时的T)，那么就是一个非依赖名称。
+\end{enumerate}
+
+通读这些表以熟悉用来描述C++模板问题的术语，但没必要记住每个术语的确切含义。需要的时候，可以回来进行查找。
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|l|l|}
+		\hline
+		\textbf{分类} & \textbf{解释及注意事项}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            \\ \hline
+		\begin{tabular}[c]{@{}l@{}}标识符\\ Identifier  \end{tabular}            & \begin{tabular}[c]{@{}l@{}}只能由不间断的字母、下划线和数字组成的名称。不能以数字开头，并且有\\ 些标识符是保留的: 不应该在程序中引入(根据经验，避免开头下划线和双下\\ 划线)。“字母”的概念应该得到广泛的理解，包括从非字母语言编码字形的\\ 特殊通用字符名称(UCNs, universal character names)。\end{tabular}      \\ \hline
+		\begin{tabular}[c]{@{}l@{}}操作符函数标识\\ Operator-function-id  \end{tabular}  & \begin{tabular}[c]{@{}l@{}}关键字operator后面跟着运算符的符号——例如，operator new和operator {[} {]}。\\ 许多运算符都有不同的表示。例如，运算符\&可以等价地写作操作符位与，\\ 即使它表示的是一元运算取地址操作。\end{tabular}                                                                                                                                                                                                                                                                                                                                                                                     \\ \hline
+		\end{tabular}
+\end{table}
+
+\begin{center}
+表13.2. 名称的分类 
+\end{center}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|}
+		\hline
+		\begin{tabular}[c]{@{}l@{}}转换函数标识\\ Conversion-function-id \end{tabular} & \begin{tabular}[c]{@{}l@{}}用于表示用户定义的隐式转换操作符——例如，操作符int\&，很容易与\\ 位与操作(bitand)混淆。\end{tabular}                                                                                                                                                                                                                                                                                                                                                \\ \hline
+		\begin{tabular}[c]{@{}l@{}}字面操作标识\\ Literal-operator-id  \end{tabular}   & \begin{tabular}[c]{@{}l@{}}用于表示用户定义的文字操作符例如——操作符""\_km，可用来表示字\\ 面值(比如100\_km)(C++11).\end{tabular}                                                                                                                                                                                                                                                                                                                                 \\ \hline
+		\begin{tabular}[c]{@{}l@{}}模板标识\\ Template-id   \end{tabular}         & \begin{tabular}[c]{@{}l@{}}模板的名称，后面跟着用尖括号括起来的模板参数，例如：List<T, int, 0>。\\ 也可以是一个操作符函数标识或字面操作标识，后面加上用尖括号括起\\ 来的模板参数; 例如：operator+<X<int>{}>\end{tabular}                                                                                                                               \\ \hline
+		\begin{tabular}[c]{@{}l@{}}非限定性标识\\ Unqualified-id    \end{tabular}      & \begin{tabular}[c]{@{}l@{}}标识符的泛化，可以是上面的标识符(标识符，操作符函数标识，转换\\ 函数标识符，转换函数标识，字面操作标识或模板标识)或是“析构\\ 函数名称”(例如，像$\sim$Data 或 $\sim$List\textless{}T, T, N\textgreater{})。\end{tabular}                                                                                                                                                                                                                  \\ \hline
+		\begin{tabular}[c]{@{}l@{}}限定性标识\\ Qualified-id    \end{tabular}        & \begin{tabular}[c]{@{}l@{}}非限定标识由类、枚举或名称空间的名称限定，或仅由全局作用\\ 域解析操作符限定。这样的名称本身就是限定的。 例如，::X，S::x，\\ Array<T>::y和::N::A<T>::z。\end{tabular}                                                                                                                                                                                                    \\ \hline
+		\begin{tabular}[c]{@{}l@{}}限定名\\ Qualified name    \end{tabular}      & \begin{tabular}[c]{@{}l@{}}这个术语在标准中没有定义，我们用它来指代经过限定查找的名称。具体\\ 来说，这是一个限定性标识或一个非限定标识，用于显式成员访问操作符\\ (.或\texttt{->})。例如 S::x，this\texttt{->}f和p\texttt{->}A::m。但在隐式等效于此的上下文\\ 中只使用class\_mem等价于this\texttt{->}class\_mem不是限定名:成员访问必须显\\ 式。\end{tabular} \\ \hline
+		\begin{tabular}[c]{@{}l@{}}非限定名称\\  Unqualified name    \end{tabular}  & \begin{tabular}[c]{@{}l@{}}非限定标识不是限定名称。这不是一个标准术语，而对应于标准所称的非\\ 限定名称的查找。\end{tabular}                                                                                                                                                                                                                                                                                                                                 \\ \hline
+		\begin{tabular}[c]{@{}l@{}}名称 Name         \end{tabular}           & 一个限定或不限定的名字。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              \\ \hline
+		\begin{tabular}[c]{@{}l@{}}相关名称\\ Dependent name \end{tabular}   & \begin{tabular}[c]{@{}l@{}}在某种程度上依赖于模板参数的名称。通常，显式包含模板参数的限定\\ 名或非限定名是依赖的。此外，成员访问操作符(. 或 \texttt{->})通常是依赖于\\ 访问操作符左侧表达式的类型，这个概念在13.3.6节中讨论过。特别地，\\ 当b出现在模板中时(this\texttt{->}b)，它通常是一个依赖名称。最后，需要根\\ 据参数进行查找的名称(见第13.2节)，例如调用ident(x, y)形式中的\\ ident或表达式x + y中的加法操作符，仅当参数表达式是类型依赖时，\\ 才是一个依赖名称。\end{tabular} \\ \hline
+		\begin{tabular}[c]{@{}l@{}}不相关名称\\ Nondependent name\end{tabular} & 不属于上述描述的名称。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   \\ \hline
+	\end{tabular}
+\end{table}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,56 @@
+def position_auto_switch(context,pindex=0,switch_func=None, callback=None):
+    import re
+    subportfolio = context.subportfolios[pindex]
+    symbols = set(subportfolio.long_positions.keys()) | set(subportfolio.short_positions.keys())
+    switch_result = []
+    for symbol in symbols:
+        match = re.match(r"(?P<underlying_symbol>[A-Z]{1,})", symbol)
+        if not match:
+            raise ValueError("未知期货标的：{}".format(symbol))
+        else:
+            dominant = get_dominant_future(match.groupdict()["underlying_symbol"])
+            cur = get_current_data()
+            symbol_last_price = cur[symbol].last_price
+            dominant_last_price = cur[dominant].last_price
+            if dominant > symbol:
+                for p in (subportfolio.long_positions.get(symbol, None), subportfolio.short_positions.get(symbol, None)):
+                    if p is None:
+                        continue
+                    if switch_func is not None:
+                        switch_func(context, pindex, p, dominant)
+                    else:
+                        amount = p.total_amount
+                        # 跌停不能开空和平多，涨停不能开多和平空。
+                        if p.side == "long":
+                            symbol_low_limit = cur[symbol].low_limit
+                            dominant_high_limit = cur[dominant].high_limit
+                            if symbol_last_price <= symbol_low_limit:
+                                log.warning("标的{}跌停，无法平仓。移仓换月取消。".format(symbol))
+                                continue
+                            elif dominant_last_price >= dominant_high_limit:
+                                log.warning("标的{}涨停，无法开仓。移仓换月取消。".format(symbol))
+                                continue
+                            else:
+                                log.info("进行移仓换月：({0},long) -> ({1},long)".format(symbol, dominant))
+                                order_target(symbol,0,side='long')
+                                order_target(dominant,amount,side='long')
+                                switch_result.append({"before": symbol, "after":dominant, "side": "long"})
+                            if callback:
+                                callback(context, pindex, p, dominant)
+                        if p.side == "short":
+                            symbol_high_limit = cur[symbol].high_limit
+                            dominant_low_limit = cur[dominant].low_limit
+                            if symbol_last_price >= symbol_high_limit:
+                                log.warning("标的{}涨停，无法平仓。移仓换月取消。".format(symbol))
+                                continue
+                            elif dominant_last_price <= dominant_low_limit:
+                                log.warning("标的{}跌停，无法开仓。移仓换月取消。".format(symbol))
+                                continue
+                            else:
+                                log.info("进行移仓换月：({0},short) -> ({1},short)".format(symbol, dominant))
+                                order_target(symbol,0,side='short')
+                                order_target(dominant,amount,side='short')
+                                switch_result.append({"before": symbol, "after": dominant, "side": "short"})
+                                if callback:
+                                    callback(context, pindex, p, dominant)
+    return switch_result

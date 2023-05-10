@@ -1,0 +1,192 @@
+
+输入流的优点是能够解析文本文件中不同类型的数据，并将它们转换为相应的基本类型。下面是一个使用输入流将数据导入结构容器的简单技术。
+
+\subsubsection{How to do it…}
+
+这个示例中，我们将获取一个数据文件，并将其不同的字段导入到struct对象的vector中。数据文件表示城市，及其人口和地图坐标:
+
+\begin{itemize}
+\item 
+这是cities.txt，是要读取的数据文件:
+
+\begin{tcblisting}{commandshell={}}
+Las Vegas
+661903 36.1699 -115.1398
+New York City
+8850000 40.7128 -74.0060
+Berlin
+3571000 52.5200 13.4050
+Mexico City
+21900000 19.4326 -99.1332
+Sydney
+5312000 -33.8688 151.2093
+\end{tcblisting}
+
+城市名称单独在一行上。第二行是人口，然后是经度和纬度。这一模式在五个城市中都重复出现。
+
+\item 
+我们将在一个常量中定义文件名，以便稍后可以打开它:
+
+\begin{lstlisting}[style=styleCXX]
+constexpr const char * fn{ "cities.txt" };
+\end{lstlisting}
+
+\item 
+下面是一个保存数据的City结构体:
+
+\begin{lstlisting}[style=styleCXX]
+struct City {
+	string name;
+	unsigned long population;
+	double latitude;
+	double longitude;
+};
+\end{lstlisting}
+
+\item 
+我们希望读取文件并填充City对象的vector:
+
+\begin{lstlisting}[style=styleCXX]
+vector<City> cities;
+\end{lstlisting}
+
+\item 
+这里是输入流使这变得容易的地方。可以简单地为City类特化操作符>{}>，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+std::istream& operator>>(std::istream& in, City& c) {
+	in >> std::ws;
+	std::getline(in, c.name);
+	in >> c.population >> c.latitude >> c.longitude;
+	return in;
+}
+\end{lstlisting}
+
+std::ws输入操纵符将丢弃输入流中前面的空格。
+
+我们使用getline()来读取城市名称，因为可能由多个单词组成。
+
+这利用填充(unsigned long)的>{}>操作符，以及纬度和经度(都是double)元素来填充正确的类型。
+
+\item 
+现在，可以打开文件并使用>{}>操作符将文件直接读入City对象的vector:
+
+\begin{lstlisting}[style=styleCXX]
+ifstream infile(fn, std::ios_base::in);
+if(!infile.is_open()) {
+	cout << format("failed to open file {}\n", fn);
+	return 1;
+}
+for(City c{}; infile >> c;) cities.emplace_back(c);
+\end{lstlisting}
+
+\item 
+可以使用format()来显示vector:
+
+\begin{lstlisting}[style=styleCXX]
+for (const auto& [name, pop, lat, lon] : cities) {
+	cout << format("{:.<15} pop {:<10} coords {}, {}\n",
+	name, make_commas(pop), lat, lon);
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+$ ./initialize_container < cities.txt
+Las Vegas...... pop 661,903 coords 36.1699, -115.1398
+New York City.. pop 8,850,000 coords 40.7128, -74.006
+Berlin......... pop 3,571,000 coords 52.52, 13.405
+Mexico City.... pop 21,900,000 coords 19.4326, -99.1332
+Sydney......... pop 5,312,000 coords -33.8688, 151.2093
+\end{tcblisting}
+
+\item 
+make\_comma()函数也在第2章中使用，接受一个数值并返回一个字符串对象。为了可读性，添加了逗号:
+
+\begin{lstlisting}[style=styleCXX]
+string make_commas(const unsigned long num) {
+	string s{ std::to_string(num) };
+	for(int l = s.length() - 3; l > 0; l -= 3) {
+		s.insert(l, ",");
+	}
+	return s;
+}
+\end{lstlisting}
+\end{itemize}
+
+\subsubsection{How it works…}
+
+这个示例的核心是istream类操作符>{}>重载:
+
+\begin{lstlisting}[style=styleCXX]
+std::istream& operator>>(std::istream& in, City& c) {
+	in >> std::ws;
+	std::getline(in, c.name);
+	in >> c.population >> c.latitude >> c.longitude;
+	return in;
+}
+\end{lstlisting}
+
+通过在函数头中指定我们的City类，每当一个City对象出现在输入流>{}>操作符的右侧时，将使用这个函数:
+
+\begin{lstlisting}[style=styleCXX]
+City c{};
+infile >> c;
+\end{lstlisting}
+
+这允许我们精确地指定输入流如何将数据读入City对象。
+
+\subsubsection{There's more…}
+
+在Windows系统上运行这段代码时，会注意到第一行的第一个单词损坏了。这是因为Windows总是在任何UTF-8文件的开头包含一个字节顺序标记(BOM)。因此，当在Windows上读取文件时，BOM将包含在读取的第一个对象中。BOM是不合时宜的，但在撰写本文时，没有办法阻止Windows使用它。
+
+解决方案是调用一个函数来检查文件的前三个字节的BOM。UTF-8的BOM是EF BB BF。下面是一个搜索并跳过UTF-8 BOM的函数:
+
+\begin{lstlisting}[style=styleCXX]
+// skip BOM for UTF-8 on Windows
+void skip_bom(auto& fs) {
+	const unsigned char boms[]{ 0xef, 0xbb, 0xbf };
+	bool have_bom{ true };
+	for(const auto& c : boms) {
+		if((unsigned char)fs.get() != c) have_bom = false;
+	}
+	if(!have_bom) fs.seekg(0);
+	return;
+}
+\end{lstlisting}
+
+这将读取文件的前三个字节，并检查是否为UTF-8 BOM签名。若这三个字节中的一个不匹配，会将输入流重置到文件的开头。若文件没有BOM，则不有任何问题。
+
+只需在开始读取文件之前调用这个函数:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	...
+	ifstream infile(fn, std::ios_base::in);
+	if(!infile.is_open()) {
+		cout << format("failed to open file {}\n", fn);
+		return 1;
+	}
+	skip_bom(infile);
+	for(City c{}; infile >> c;) cities.emplace_back(c);
+	...
+}
+\end{lstlisting}
+
+这将确保BOM不包含在文件的第一个字符串中。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black,title=Note]
+因为cin输入流不可定位，所以skip\_bom()函数将不能在cin流上工作，只适用于可搜索的文本文件。
+\end{tcolorbox}
+
+
+
+
+
+
+
+
+
+
+

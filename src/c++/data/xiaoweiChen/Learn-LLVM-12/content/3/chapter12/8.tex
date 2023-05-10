@@ -1,0 +1,141 @@
+MC层负责以文本或二进制形式发出机器码。大多数功能要么在各种MC类中实现(只需要配置)，要么从目标描述生成实现。\par
+
+MC层的初始化在MCTargetDesc/M88kMCTargetDesc.cpp中进行。以下类是在targeregistry单例中注册的:\par
+
+\begin{enumerate}
+\item M88kMCAsmInfo: 该类提供基本信息，如代码指针的大小、堆栈增长的方向、注释符号或汇编指令的名称。
+
+\item M88MCInstrInfo: 该类包含指令的信息，例如：指令名称。
+
+\item M88kRegInfo: 该类提供有关寄存器的信息，例如：寄存器的名称，或哪个寄存器是堆栈指针。
+
+\item M88kSubtargetInfo: 这个类保存调度模型的数据，以及解析和设置CPU特性的方法。
+
+\item M88kMCAsmBackend: 这个类提供了助手方法来获取与目标相关的重新定位数据。它还包含对象书写器类的工厂方法。
+
+\item M88kMCInstPrinter：该类包含以文本形式打印指令和操作数的助手方法。如果操作数在目标描述中定义了自定义打印方法，则要在该类中实现该方法。
+
+\item M88kMCCodeEmitter: 该类将指令的编码写入流。
+\end{enumerate}
+
+根据后端实现的范围，我们不需要注册和实现所有这些类。如果不支持文本汇编器输出，可以忽略注册MCInstPrinter子类。如果不添加对写入对象文件的支持，可以省略MCAsmBackend和MCCodeEmitter子类。\par
+ 
+文件开始包括生成的部分和提供它的工厂方法:\par
+
+\begin{lstlisting}[caption={}]
+#define GET_INSTRINFO_MC_DESC
+#include "M88kGenInstrInfo.inc"
+#define GET_SUBTARGETINFO_MC_DESC
+#include "M88kGenSubtargetInfo.inc"
+#define GET_REGINFO_MC_DESC
+#include "M88kGenRegisterInfo.inc"
+
+static MCInstrInfo *createM88kMCInstrInfo() {
+	MCInstrInfo *X = new MCInstrInfo();
+	InitM88kMCInstrInfo(X);
+	return X;
+}
+
+static MCRegisterInfo *createM88kMCRegisterInfo(
+										const Triple &TT) {
+	MCRegisterInfo *X = new MCRegisterInfo();
+	InitM88kMCRegisterInfo(X, M88k::R1);
+	return X;
+}
+
+static MCSubtargetInfo *createM88kMCSubtargetInfo(
+				const Triple &TT, StringRef CPU, StringRef
+					FS) {
+	return createM88kMCSubtargetInfoImpl(TT, CPU, FS);
+}
+\end{lstlisting}
+
+我们还为在其他文件中实现的类提供了一些工厂方法:\par
+
+\begin{lstlisting}[caption={}]
+static MCAsmInfo *createM88kMCAsmInfo(
+					const MCRegisterInfo &MRI, const Triple &TT,
+					const MCTargetOptions &Options) {
+	return new M88kMCAsmInfo(TT);
+}
+
+static MCInstPrinter *createM88kMCInstPrinter(
+					const Triple &T, unsigned SyntaxVariant,
+					const MCAsmInfo &MAI, const MCInstrInfo &MII,
+					const MCRegisterInfo &MRI) {
+return new M88kInstPrinter(MAI, MII, MRI);
+}
+\end{lstlisting}
+
+为了初始化MC层，只需要将所有的工厂方法注册到TargetRegistry单例中即可:\par
+
+\begin{lstlisting}[caption={}]
+extern "C" LLVM_EXTERNAL_VISIBILITY
+void LLVMInitializeM88kTargetMC() {
+	TargetRegistry::RegisterMCAsmInfo(getTheM88kTarget(),
+										createM88kMCAsmInfo);
+	TargetRegistry::RegisterMCCodeEmitter(getTheM88kTarget(),
+										createM88kMCCodeEmitter);
+	TargetRegistry::RegisterMCInstrInfo(getTheM88kTarget(),
+										createM88kMCInstrInfo);
+	TargetRegistry::RegisterMCRegInfo(getTheM88kTarget(),
+										createM88kMCRegisterInfo);
+	TargetRegistry::RegisterMCSubtargetInfo(getTheM88kTarget(),
+										createM88kMCSubtargetInfo);
+	TargetRegistry::RegisterMCAsmBackend(getTheM88kTarget(),
+										createM88kMCAsmBackend);
+	TargetRegistry::RegisterMCInstPrinter(getTheM88kTarget(),
+										createM88kMCInstPrinter);
+}
+\end{lstlisting}
+
+另外，在MCTargetDesc/M88kTargetDesc.h头文件中，还需要包含生成的源文件的头文件部分:\par
+
+\begin{lstlisting}[caption={}]
+#define GET_REGINFO_ENUM
+#include "M88kGenRegisterInfo.inc"
+#define GET_INSTRINFO_ENUM
+
+#include "M88kGenInstrInfo.inc"
+#define GET_SUBTARGETINFO_ENUM
+#include "M88kGenSubtargetInfo.inc"
+\end{lstlisting}
+
+我们将注册类的源文件全部放在MCTargetDesc目录中。对于第一个实现，只提供这些类的部分就足够了，例如：只要不将内存地址支持添加到目标描述中，就不会生成补丁。M88kMCAsmInfo类可以很快实现，只需要在构造函数中设置一些属性:\par
+
+\begin{lstlisting}[caption={}]
+M88kMCAsmInfo::M88kMCAsmInfo(const Triple &TT) {
+	CodePointerSize = 4;
+	IsLittleEndian = false;
+	MinInstAlignment = 4;
+	CommentString = "#";
+}
+\end{lstlisting}
+
+实现了MC层的支持类之后，就可以将机器码生成到文件中了。\par
+
+下一节中，我们实现反汇编所需的类，这是反向的操作:将对象文件转换回汇编文本。\par
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

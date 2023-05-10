@@ -1,0 +1,239 @@
+\begin{center}
+\includegraphics[width=0.6\textwidth]{content/3/chapter5/images/32.png}\\
+Cippi在上楼
+\end{center}
+
+\subsubsubsection{5.7.1\hspace{0.2cm}std::bind\_front}
+
+std::bind\_front (Func\&\& Func, Args\&\&…Args)会为func可调用对象创建包装器。std::bind\_front可以有任意数量的参数，并将其参数绑定到前面。
+
+\begin{tcolorbox}[breakable,enhanced jigsaw,colback=blue!5!white,colframe=blue!75!black,title={std::bind\_front与std::bind}]
+	
+C++11时就有了\href{https://en.cppreference.com/w/cpp/utility/functional/bind}{std::bind}和\href{https://en.cppreference.com/w/cpp/language/lambda}{Lambda表达式}。C++20中，添加了\href{https://en.cppreference.com/w/cpp/utility/functional/bind_front}{std::bind\_front}。这可能会大伙感到疑惑。std::bind自\href{https://en.wikipedia.org/wiki/C%2B%2B_Technical_Report_1}{技术报告1} (TR1)开始可用，std::bind和Lambda表达式可以用来替换std::bind\_front。此外，std::bind\_front看起来像是std::bind的姊妹，因为std::bind支持参数的重排。当然，使用std::bind\_front是有原因的:与std::bind相反，std::bind\_front会传播底层调用操作符的异常规范。
+	
+\end{tcolorbox}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{比较std::bind\_front、std::bind和Lambda表达式}
+\begin{lstlisting}[style=styleCXX]
+// bindFront.cpp
+
+#include <functional>
+#include <iostream>
+
+int plusFunction(int a, int b) {
+	return a + b;
+}
+
+auto plusLambda = [](int a, int b) {
+	return a + b;
+};
+
+int main() {
+
+	std::cout << '\n';
+	
+	auto twoThousandPlus1 = std::bind_front(plusFunction, 2000);
+	std::cout << "twoThousandPlus1(20): " << twoThousandPlus1(20) << '\n';
+	
+	auto twoThousandPlus2 = std::bind_front(plusLambda, 2000);
+	std::cout << "twoThousandPlus2(20): " << twoThousandPlus2(20) << '\n';
+	
+	auto twoThousandPlus3 = std::bind_front(std::plus<int>(), 2000);
+	std::cout << "twoThousandPlus3(20): " << twoThousandPlus3(20) << '\n';
+	
+	std::cout << "\n\n";
+	
+	using namespace std::placeholders;
+	
+	auto twoThousandPlus4 = std::bind(plusFunction, 2000, _1);
+	std::cout << "twoThousandPlus4(20): " << twoThousandPlus4(20) << '\n';
+	
+	auto twoThousandPlus5 = [](int b) { return plusLambda(2000, b); };
+	std::cout << "twoThousandPlus5(20): " << twoThousandPlus5(20) << '\n';
+	
+	std::cout << '\n';
+
+}
+\end{lstlisting}
+
+每个调用(第18、21、24、31和34行)获得一个带有两个参数的可调用对象，并返回一个只带有一个参数的可调用对象，并且第一个参数绑定到2000。可调用对象是一个函数(第18行)、一个Lambda表达式(第21行)和一个预定义的函数对象(第24行)。\_1就是占位符(第31行)，代表缺失的参数。使用Lambda表达式(第34行)，可以直接应用一个参数，并为缺失的形参提供参数b。从可读性的角度来看，std::bind\_front可能比std::bind或Lambda表达式更容易阅读。
+
+\begin{tcblisting}{commandshell={}}
+twoThousandPlus1(20): 2020
+twoThousandPlus2(20): 2020
+twoThousandPlus3(20): 2020
+
+twoThousandPlus4(20): 2020
+twoThousandPlus5(20): 2020
+\end{tcblisting}
+
+\subsubsubsection{5.7.2\hspace{0.2cm}std::is\_constant\_evaluated}
+
+std::is\_constant\_evaluted决定函数是在编译时执行，还是在运行时执行。为什么需要类型特征库中的这个函数呢?C++20中，我们大致介绍了三种函数:
+
+\begin{itemize}
+\item 
+consteval声明函数在编译时运行:consteval int alwaysCompiletime();
+
+\item 
+constexpr声明的函数可以在编译时或运行时运行；constexpr int itDepends();
+
+\item 
+一般的函数在运行时运行:int alwaysRuntime();
+\end{itemize}
+
+现在，我要写一个复杂的例子:constexpr函数可以在编译时或运行时运行。有时这些函数的行为应该不同，这取决于函数是在编译时执行，还是在运行时执行。像getSum这样的constexpr函数有可能就在编译时运行。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{使用constexr的函数声明}
+\begin{lstlisting}[style=styleCXX]
+constexpr int getSum(int l, int r) {
+	return l + r;
+}
+\end{lstlisting}
+
+如何确定函数在编译时执行?有三种可能。
+
+\begin{enumerate}
+\item 
+constexpr函数在编译时执行:
+\begin{itemize}
+\item 
+该函数用于常量求值上下文中，常量求值上下文可以在constexpr函数或static\_assert中使用。
+
+\item 
+函数显式地希望在编译时得到结果:constexpr auto res = getSum(2000,11)。现在，getSum()必须在编译时运行.
+\end{itemize}
+
+\item 
+若参数不是constexpr，则只能在运行时执行constexpr函数。函数getSum(a, 11)用一个变量调用，若这个变量没有声明为constexpr: int a = 2000，就会出现这种情况。
+
+\item 
+规则1和规则2都不适用时，就可以在编译时或运行时执行constexpr函数。所以两个选项都是有效的，而这个决策则交由编译器完成。
+\end{enumerate}
+
+正是第3点，使得std::is\_constant\_evaluate的功能开始发挥作用。可以检测程序是在编译时运行，还是在运行时运行，并执行不同的操作。\href{https://en.cppreference.com/w/cpp/types/is_constant_evaluated}{cppreference.com/is\_constant\_evaluated}显示了一个不过的用例。在编译时，手动计算两个数字的幂;在运行时，使用std::pow。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{编译时和运行时执行不同的代码}
+\begin{lstlisting}[style=styleCXX]
+// constantEvaluated.cpp
+
+#include <type_traits>
+#include <cmath>
+#include <iostream>
+
+constexpr double power(double b, int x) {
+	if (std::is_constant_evaluated() && !(b == 0.0 && x < 0)) {
+		
+		if (x == 0)
+			return 1.0;
+		double r = 1.0, p = x > 0 ? b : 1.0 / b;
+		auto u = unsigned(x > 0 ? x : -x);
+		while (u != 0) {
+			if (u & 1) r *= p;
+			u /= 2;
+			p *= p;
+		}
+		return r;
+	}
+	else {
+		return std::pow(b, double(x));
+	}
+}
+
+int main() {
+	
+	std::cout << '\n';
+	
+	constexpr double kilo1 = power(10.0, 3);
+	std::cout << "kilo1: " << kilo1 << '\n';
+	
+	int n = 3;
+	double kilo2 = power(10.0, n);
+	std::cout << "kilo2: " << kilo2 << '\n';
+	
+	std::cout << '\n';
+}
+\end{lstlisting}
+
+我想分享一个有趣的观察结果。可以在consteval声明的函数，或只能在运行时运行的函数中使用std::is\_constant\_evaluate，这些调用的结果总是true或false。
+
+\subsubsubsection{5.7.3\hspace{0.2cm}std::source\_location}
+
+std::source\_location表示源代码的信息，包括文件名、行号和函数名。当需要关于调用站点的信息时，例如：用于调试、日志记录或测试目的时，这些信息非常有价值。类std::source\_location是比C++11宏\_\_FILE\_\_和\_\_LINE\_\_更好的选择，推荐使用。
+
+std::source\_location可以给你以下信息。
+
+\begin{center}
+std::source\_location src
+\end{center}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\textbf{函数}                & \textbf{描述}                      \\ \hline
+std::source\_location::current() & 创建一个source\_location对象src \\
+src.line()                       & 返回行号                   \\
+src.column()                     & 返回列号                 \\
+src.file\_name()                 & 返回文件名                     \\
+src.function\_name()             & 返回函数名                
+\end{tabular}
+\end{table}
+
+使用std::source\_location::current()创建一个新的源位置对象src，该对象表示相应调用点的信息。2020年底，没有C++编译器支持std::source\_location，所以下面的程序sourcellocation.cpp来自\href{https://en.cppreference.com/w/cpp/utility/source_location}{cppreference.com/source\_location}。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{使用std::source\_location显示有关调用点的信息}
+\begin{lstlisting}[style=styleCXX]
+// sourceLocation.cpp
+// from cppreference.com
+
+#include <iostream>
+#include <string_view>
+#include <source_location>
+
+void log(std::string_view message,
+		 const std::source_location& location = std::source_location::current())
+{
+	std::cout << "info:"
+			  << location.file_name() << ':'
+			  << location.line() << ' '
+			  << message << '\n';
+}
+
+int main()
+{
+	log("Hello world!"); // info:main.cpp:19 Hello world!
+}
+\end{lstlisting}
+
+程序的输出是其源码的一部分。
+
+\begin{tcolorbox}[breakable,enhanced jigsaw,colback=mygreen!5!white,colframe=mygreen!75!black,title={总结}]
+
+\begin{itemize}
+\item 
+std::bind\_front是std::bind(C++11)变体，可能比std::bind更容易使用。与std::bind不同，std::bind\_front不允许对其参数进行重新排列。
+
+\item 
+std::is\_constant\_evaluted决定函数是在编译时执行，还是在运行时执行。
+
+\item 
+std::source\_location表示源代码的信息。此信息包括文件名、行号和函数名，对于调试、日志记录或测试非常有用。
+\end{itemize}
+
+\end{tcolorbox}
+
+
+
+
+
+
+
+

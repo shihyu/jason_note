@@ -1,0 +1,178 @@
+
+要测试应用程序，需要编写单元测试。这是确保软件正常运行的好方法。然而，可能的输入呈指数级增长，很可能会错过某些奇怪的输入，以及一些bug。\par
+
+模糊测试可以在这里提供帮助。其思想是为应用程序提供随机生成的数据，或基于有效输入但随机更改的数据。这是一遍又一遍地进行的，因此您的应用程序将使用大量输入进行测试。这是一种非常强大的测试方法。通过模糊测试，发现了网络浏览器和其他软件中的数百个漏洞。\par
+
+LLVM自带了自己的模糊测试库。libFuzzer实现最初是LLVM核心库的一部分，后来移到了compiler-rt上。该库旨在测试小而快速的函数。\par
+
+让我们运行一个小示例。需要提供LLVMFuzzerTestOneInput()函数。这个函数由fuzzer驱动程序调用，并为您提供一些输入。下面的函数计算输入中的连续ASCII数字，然后我们将随机输入输入给它。需要将示例保存在fuzzer.c文件中:\par
+
+\begin{lstlisting}[caption={}]
+#include <stdint.h>
+#include <stdlib.h>
+
+int count(const uint8_t *Data, size_t Size) {
+	int cnt = 0;
+	if (Size)
+		while (Data[cnt] >= '0' && Data[cnt] <= '9') ++cnt;
+	return cnt;
+}
+
+int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t
+							Size) {
+	count(Data, Size);
+	return 0;
+}
+\end{lstlisting}
+
+代码中，count()函数计算Data变量所指向的内存中的位数。只检查数据的大小以确定是否有可用的字节。在while循环中，不检查数据长度。\par
+
+与普通C字符串一起使用时，不会出现错误，因为C字符串总是以0字节结束。LLVMFuzzer\allowbreak TestOneInput()函数就是fuzz目标，它是libFuzzer调用的函数。调用我们想要测试的函数并返回0，这是目前唯一允许的值。\par
+
+要使用libFuzzer编译文件，需要添加-fsanitize=fuzzer选项。建议还启用地址sanitizer和调试符号的生成:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+\$ clang -fsanitize=fuzzer,address -g fuzzer.c -o fuzzer
+\end{tcolorbox}
+
+当您运行测试时，会产生一个冗长的报告。报告包含比堆栈跟踪更多的信息，所以让我们仔细来看看:\par
+
+\begin{enumerate}
+\item 第一行告诉您用于初始化随机数生成器的种子。可以使用-seed=来重复执行:
+\begin{tcolorbox}[colback=white,colframe=black]
+INFO: Seed: 1297394926
+\end{tcolorbox}
+
+\item 默认情况下，libFuzzer将输入限制为最多4,096字节。可以使用-max \underline{~}len=来更改默认值:
+\begin{tcolorbox}[colback=white,colframe=black]
+INFO: -max\underline{~}len is not provided; libFuzzer will not \\
+generate inputs larger than 4096 bytes
+\end{tcolorbox}
+
+\item 现在，在不提供示例输入的情况下运行测试。所有样本输入的集合称为语料库，在这次运行中它是空的:
+\begin{tcolorbox}[colback=white,colframe=black]
+INFO: A corpus is not provided, starting from an empty corpus
+\end{tcolorbox}
+
+\item 下面是一些关于生成的测试数据的信息。尝试了28个输入，找到了6个输入，总长度为19字节，总共覆盖了6个点或基本块:
+\begin{tcolorbox}[colback=white,colframe=black]
+\#28 NEW cov: 6 ft: 9 corp: 6/19b lim: 4 exec/s: 0 \\
+rss: 29Mb L: 4/4 MS: 4 CopyPart-PersAutoDict-CopyPart- \\
+ChangeByte- DE: "1$\setminus$x00"-
+\end{tcolorbox}
+
+\item 之后，检测到内存溢出，然后就是地址sanitizer的信息。最后，报告显示导致内存溢出的输入在哪里:
+\begin{tcolorbox}[colback=white,colframe=black]
+artifact\underline{~}prefix='./'; Test unit written to ./crash-17ba0791499db908433b80f37c5fbc89b87\allowbreak 0084b
+\end{tcolorbox}
+
+\end{enumerate}
+
+保存了输入，就可以用崩溃的输入再次执行测试用例:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+\$ ./fuzzer crash-17ba0791499db908433b80f37c5fbc89b870084b
+\end{tcolorbox}
+
+这显然对识别问题有很大帮助。只是，使用随机数据通常不是很有帮助。如果您尝试对tinylang词法分析器或解析器进行模糊测试，因为无法找到有效的标记，所以纯随机数据将导致输入立即被拒绝。\par
+
+这种情况下，提供一小组称为语料库的有效输入更有用。然后，对语料库中的文件进行随机变异并作为输入。您可以认为输入基本上是有效的，只翻转了几个位。这也适用于其他必须具有特定格式的输入，例如：对于处理JPEG和PNG文件的库，可以将提供一些小的JPEG和PNG文件作为语料库。\par
+
+您可以将语料库文件保存在一个或多个目录中，并可以在printf命令的帮助下为fuzz测试创建一个简单的语料库:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+\$ mkdir corpus \\
+\$ printf "012345$\setminus$0" >corpus/12345.txt \\
+\$ printf "987$\setminus$0" >corpus/987.txt
+\end{tcolorbox}
+
+当运行测试时，可以在命令行上提供语料库目录:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+\$ ./fuzzer corpus/
+\end{tcolorbox}
+
+然后使用语料库作为生成随机输入的基础，如报告所示:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+INFO: seed corpus: files: 2 min: 4b max: 7b total: 11b rss: 29Mb
+\end{tcolorbox}
+
+如果您正在测试一个作用于令牌或其他魔数值(如编程语言)的函数，那么可以通过提供一个带有令牌的字典来加快这个过程。对于编程语言，字典将包含该语言中使用的所有关键字和特殊符号。字典定义遵循简单的键-值样式，例如：要在字典中定义if关键字，可以添加以下内容:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+kw1="if"
+\end{tcolorbox}
+
+但是，这个键是可选的，可以省略。然后可以使用-dict=在命令行上指定字典文件。下一节中，我们将了解libFuzzer实现的限制和替代方案。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{限制和替代}
+
+libFuzzer实现速度很快，但对测试目标有许多限制:\par
+
+
+\begin{itemize}
+\item 测试函数必须在内存中以数组的形式接受输入。有些库函数需要数据的文件路径，不能用libFuzzer测试它们。
+
+\item 不应该调用exit()函数。
+
+\item 全局状态不应改变。
+
+\item 不应该使用硬件随机数生成器。
+\end{itemize}
+
+从前面提到的限制中可以看出，前两个限制是libFuzzer作为库实现的一个含义。在后两个限制是必需的，以避免在评估算法中的混淆。如果没有满足其中一个限制，那么对模糊目标的两次相同调用可能会得到不同的结果。\par
+
+最著名的模糊测试替代工具是AFL，可以在\url{https://github.com/google/AFL}找到。AFL需要一个检测的二进制文件(提供了一个用于检测的LLVM插件)，并要求应用程序将输入作为命令行上的文件路径。AFL和libFuzzer可以共享相同的语料库和字典文件。因此，可以使用这两种工具来测试应用程序。在libFuzzer不适用的情况下，AFL是一个很好的替代方案。\par
+
+有很多方法可以影响libFuzzer的工作方式，可以在\url{https://llvm.org/docs/LibFuzzer.html}了解更多细节。\par
+
+下一节中，我们将讨论应用程序可能存在的一个完全不同的问题，试图查找性能瓶颈。\par
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

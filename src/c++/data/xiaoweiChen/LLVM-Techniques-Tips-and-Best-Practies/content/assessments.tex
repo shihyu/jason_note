@@ -1,0 +1,136 @@
+
+
+本部分包含了所有章节问题的答案。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{第6章}
+
+\begin{enumerate}
+\item 大多数情况下，令牌是从提供的源代码中获取的，但在某些情况下，令牌可以在\texttt{Preprocessor}中动态生成，例如：\texttt{\_\_LINE\_\_}内置宏扩展为当前行号，而\texttt{\_\_DATE\_\_}宏扩展为当前日历日期。Clang如何将生成的文本内容放入\texttt{SourceManager}的源代码缓冲区？Clang如何分配\texttt{Sour ceLocation}给这些令牌？
+
+\begin{itemize}
+\item 开发人员可以利用\texttt{clang::ScratchBuffer}类来插入动态\texttt{Token}实例。
+\end{itemize}
+
+\item 当我们讨论实现一个自定义的\texttt{PragmaHandler}时，我们使用\texttt{Preprocessor::Lex}来获取pragma名称后面的令牌，直到我们遇到\texttt{eod}令牌类型。我们能继续在\texttt{eod}标记之外进行词法分析吗？如果可以在\texttt{\#pragma}指令后使用任意标记，你会做什么有趣的事情？
+
+\begin{itemize}
+\item 是的，我们可以继续在\texttt{eod}令牌之外进行词法分析，它只使用\texttt{\#pragma}行后面的内容。通过这种方式，你可以创建一个自定义的\texttt{\#pragma}，它允许你编写任意内容(在它下面)——例如，编写Clang不支持的编程语言。下面是一个例子:
+
+\begin{lstlisting}[style=styleCXX]
+#pragma javascript function
+const my_func = (arg) => {
+	console.log(`Hello ${arg}`);
+};
+\end{lstlisting}
+
+前面的代码片段展示了如何创建一个自定义的\texttt{\#pragma}，允许您在它下面定义一个Java Script函数。
+
+\end{itemize}
+
+\item 在宏保护项目的开发自定义预处理器插件和回调部分，警告消息的格式为\texttt{[WARNING] In <source location>: …}。显然，这不是我们从Clang中看到的典型的编译器警告，它看起来像\texttt{<source location="">: warning:…}:
+
+\begin{tcblisting}{commandshell={}}
+./simple_warn.c:2:7: warning: unused variable 'y'…
+int y = x + 1;
+     ^
+1 warning generated.
+\end{tcblisting}
+
+在受支持的终端中，警告字符串甚至是彩色的。我们如何打印这样的警告消息呢？在Clang有这样的基础设施吗？
+
+\begin{itemize}
+\item 开发人员可以使用Clang中的诊断框架来打印这样的消息。在第7章“处理AST”的“打印诊断消息”一节中，其中我们将向您展示这个框架的用法。
+\end{itemize}
+
+\end{enumerate}
+
+\newpage
+\noindent
+\textbf{第8章}
+
+\begin{enumerate}
+\item 重写汇编和链接阶段是很常见的，因为不同的平台倾向于支持不同的汇编器和链接器。但是是否可以覆盖编译阶段(即Clang)？如果有可能，我们该怎么做？人们这样做的原因可能是什么？
+
+\begin{itemize}
+\item 可以覆盖\texttt{ToolChain::SelectTool}方法，并根据参数提供一个替代的\texttt{Tool}实例(表示编译阶段)。下面是一个例子:
+
+\begin{lstlisting}[style=styleCXX]
+Tool*
+MyToolChain::SelectTool(const JobAction &JA) const
+override {
+	if (JA.getKind() == Action::CompileJobClass &&
+		  getTriple().getArch() == CUSTOM_HARDWARE)
+		return new MyCompiler(…);
+	…
+	// Run the default `SelectTool` otherwise
+	return ToolChain::SelectTool(JA);
+}
+\end{lstlisting}
+
+在上的代码片段中，我们提供了自己的编译器实例——\texttt{MyCompiler}——它是一个从\texttt{Tool}派生出来的类。如果我们要为特定的硬件架构编译代码的话，可以这样做。
+
+当目标平台(例如，前面代码中的\texttt{CUSTOM\_HARDWARE})或输入文件Clang不支持时，提供一个替代编译器实例是有用的，但你仍然想为所有的构建工作使用相同的Clang命令行接口，例如：假设正在尝试将相同的项目交叉编译到多个不同的体系结构，但是Clang还不支持其中的一些。因此，当Clang命令行工具要求为那些体系结构构建项目时，您可以创建一个自定义的Clang工具链，并将编译工作外包给其他(重定向到外部)编译器(例如，\texttt{gcc})。
+
+\end{itemize}
+
+\item 当我们使用\texttt{tools::zipline::Linker::ConstructJob}时，如果用户通过\texttt{-fuse-l}d标志提供了不支持的压缩器名称，我们只需使用\texttt{llvm\_unreachable}来清理编译过程。我们是否可以用在第7章“处理AST”中的\textbf{诊断}框架来替换它，以打印出更好的消息？
+
+\begin{itemize}
+\item \texttt{Driver}类提供了访问诊断框架的快捷方式。在\texttt{Tool}的派生类中，你可以使用\texttt{get\\ToolChain().getdriver()}来获取一个\texttt{Driver}实例，然后使用\texttt{Driver::Diag}方法打印出诊断消息。
+\end{itemize}
+
+\item 就像可以使用\texttt{-Xclang}将标志直接传递给前端一样，我们也可以使用驱动标志(例如\texttt{-Wa}(用于汇编器)和\texttt{-Wl}(用于链接器))将特定于汇编器或链接器的标志直接传递给汇编器或链接器。我们如何在Zipline的自定义汇编器和链接器阶段使用这些标志？
+
+\begin{itemize}
+\item 在\texttt{ConstructJob}方法中，可以读取\texttt{options::OPT\_Wa\_COMMA}和\texttt{options::OPT\\\_Wl\_COMMA}的值来分别检索特定于汇编器和链接器的命令行标志。下面是一个例子:
+\end{itemize}
+
+\begin{lstlisting}[style=styleCXX]
+void
+MyAssembler::ConstructJob(Compilation &C,
+						  const JobAction &JA,
+						  const InputInfo &Output,
+						  const InputInfoList &Inputs,
+						  const ArgList &Args,
+						  const char *LinkingOutput)
+						  const {
+	if (Arg *A = Args.getLastArg(options::OPT_Wl_COMMA)) {
+		// `A` contains linker-specific flags
+		…
+	}
+	…
+}
+\end{lstlisting}
+
+\end{enumerate}
+
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{第9章}
+
+\begin{enumerate}
+\item 在为新PassManager部分编写LLVM Pass的\texttt{StrictOpt}示例中，我们如何在不派生\texttt{Pass\\InfoMixin}类的情况下编写Pass ?
+
+\begin{itemize}
+\item \texttt{PassInfoMixin}类只为您定义了一个实用函数\texttt{name}，该函数返回此Pass的名称。因此，可以很容易地自己创建一个。下面是一个例子:
+
+\begin{lstlisting}[style=styleCXX]
+struct MyPass {
+	  static StringRef name() { return "MyPass"; }
+	PreservedAnalyses run(Function&, FunctionAnalysisManager&);
+};
+\end{lstlisting}
+
+\end{itemize}
+
+\item 我们如何为新PassManager开发自定义工具？在不修改LLVM源树的情况下，我们如何做到这一点？(提示:使用我们在本章中学习的Pass插件。)
+
+\begin{itemize}
+\item Pass检测是在LLVM传递之前和/或之后运行的一段代码。这篇博客文章演示了一个通过Pass插件开发自定义Pass工具的例子:\url{https://medium.com/@mshockwave/writing-passinstrument-for-llvm-newpm-f17c57d3369f}。
+\end{itemize}
+
+\end{enumerate}
+

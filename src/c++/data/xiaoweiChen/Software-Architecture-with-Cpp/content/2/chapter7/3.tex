@@ -1,0 +1,219 @@
+
+本节中，将深入研究CMake脚本，它是全世界范围内用于C++项目的标准构建系统生成器。
+
+\subsubsubsection{7.3.1\hspace{0.2cm}CMake}
+
+CMake是一个构建系统生成器，而不是构建系统本身是什么意思呢？简单地说，CMake可以用来生成各种类型的构建系统。可以使用它来生成Visual Studio项目、Makefile项目、基于Ninja的项目、Sublime、Eclipse和其他一些项目。
+
+CMake附带了一组其他工具，如用于执行测试的CTest和用于打包和创建安装程序的CPack。CMake本身也允许导出和安装目标。
+
+CMake的生成器可以是单配置生成器，比如Make或NMAKE，也可以是多配置生成器，比如Visual Studio。对于单配置生成器，第一次在一个文件夹中运行生成时，应该传递\texttt{CMAKE\_BUILD\_TYPE}标志。例如，要配置一个调试版本，可以运行\texttt{cmake <project\_directory> -DCMAKE\_BUILD\_TYPE=Debug}。其他预定义的配置包括Release、RelWithDebInfo(带有调试符号的版本)和MinSizeRel(为最小二进制优化版本)。为了保持源目录的整洁，总是创建一个单独的构建文件夹，并从那里运行CMake生成。
+
+尽管可以添加自己的构建类型，但尽量不要这样做，因为这会使某些IDE使用起来会变得更加困难，而且无法扩展。更好的选择是使用选项。
+
+CMake文件可以用两种风格编写:过时的基于变量的风格，以及基于目标的现代CMake风格。这里我们只关注后者。尽量避免通过全局变量进行设置，在重用目标时，这会导致问题。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{创建CMake工程}
+
+每个CMake项目在顶部CMakeLists.txt文件中应该有以下几行:
+
+\begin{lstlisting}[style=styleCMake]
+cmake_minimum_required(VERSION 3.15...3.19)
+
+project(
+	Customer
+	VERSION 0.0.1
+	LANGUAGES CXX)
+\end{lstlisting}
+
+设置支持的最小和最大版本很重要，因为它会通过设置策略影响CMake的行为。如果需要，也可以手动设置。
+
+项目的定义指定了它的名称、版本(将用于填充一些变量)和CMake将用于构建项目(填充更多变量并找到所需的工具)的编程语言。
+
+通常，一个C++项目有以下目录:
+
+\begin{itemize}
+\item 
+cmake: CMake脚本
+
+\item 
+include: 公共头文件，通常带有以项目名称命名的子文件夹
+
+\item 
+src: 源文件和私有头文件
+
+\item 
+test: 测试
+\end{itemize}
+
+可以使用CMake目录来存储定制的CMake模块。为了方便地从这个目录访问脚本，可以添加到CMake的\texttt{include()}搜索路径中，如下所示:
+
+\begin{lstlisting}[style=styleCMake]
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake"
+\end{lstlisting}
+
+当包含CMake模块时，可以省略\texttt{.cmake}后缀。这样，\texttt{include(CommonCompileFlags.cmake)}就等价于\texttt{include(CommonCompileFlags)}。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{CMake内置目录变量}
+
+在CMake中目录有一个常见的陷阱，并不是每个人都知道。当编写CMake脚本时，试着区分以下内置变量:
+
+\begin{itemize}
+\item 
+\texttt{PROJECT\_SOURCE\_DIR}: 项目命令CMake脚本调用的目录。
+
+\item 
+\texttt{PROJECT\_BINARY\_DIR}: 与前面的示例类似，但用于构建目录。
+
+\item 
+\texttt{CMAKE\_SOURCE\_DIR}: 顶层源目录(这可能在另一个项目中，只是将当前项目的作为依赖项/子目录添加)。
+
+\item 
+\texttt{CMAKE\_BINARY\_DIR}: 类似于\texttt{CMAKE\_SOURCE\_DIR}，但用于构建目录。
+
+\item 
+\texttt{CMAKE\_CURRENT\_SOURCE\_DIR}: 对应于当前处理的CMakeLists.txt文件的源目录。
+
+\item 
+\texttt{CMAKE\_CURRENT\_BINARY\_DIR}: 与\texttt{CMAKE\_CURRENT\_SOURCE\_DIR}匹配的二进制(构建)目录。
+
+\item 
+\texttt{CMAKE\_CURRENT\_LIST\_DIR}: \texttt{CMAKE\_CURRENT\_LIST\_FILE}目录。如果当前的CMake脚本包含在另一个目录中(对于包含的CMake模块来说很常见)，可以不同于当前的源目录。
+\end{itemize}
+
+在顶层的CMakeLists.txt文件中，可能需要调用\texttt{add\_subdirectory(src)}以便CMake处理该目录。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{指定CMake目标}
+
+src目录中，应该有另一个CMakeLists.txt文件，这次可能定义了一个或两个目标。现在为前面提到的多米尼加博览会系统，添加一个客户微服务的可执行文件:
+
+\begin{lstlisting}[style=styleCMake]
+add_executable(customer main.cpp)
+\end{lstlisting}
+
+源文件可以在前面的代码行中指定，或者使用\texttt{target\_sources}添加。
+
+常见的CMake反模式是使用globs指定源文件，这种方式的缺点是CMake在重新运行生成步骤之前，不会知道文件是否已经添加。这样做的后果是，如果从存储库中提取更改并简单地构建，可能会错过编译和运行新的单元测试或其他代码。即使使用带有\texttt{CONFIGURE\_DEPENDS}的globs，构建时间也会变长，因为globs必须作为每个构建的一部分进行检查。此外，该标志可能并不适用于所有生成器。甚至CMake的作者也不喜欢使用它，而是喜欢显式地声明源文件。
+
+好的，定义了代码来源。现在指定目标需要编译器支持C++17:
+
+\begin{lstlisting}[style=styleCMake]
+target_compile_features(customer PRIVATE cxx_std_17)
+\end{lstlisting}
+
+\texttt{PRIVATE}关键字说明这是一个内部需求，也就是只对这个特定目标可见，但对依赖它的目标不可见。如果正在编写一个为用户提供C++17 API的库，那么可以使用\texttt{INTERFACE}关键字。要指定接口和内部需求，可以使用\texttt{PUBLIC}关键字。当用户链接到目标时，CMake也会自动要求支持C++ 17。如果正在编写一个未构建的目标(即仅包含头文件的库或导入的目标)，使用\texttt{INTERFACE}关键字通常就足够了。
+
+指定目标使用C++17特性，并不会强制执行C++标准，也不允许对目标进行编译器扩展。为此，应该这样使用:
+
+\begin{lstlisting}[style=styleCMake]
+set_target_properties(customer PROPERTIES
+	CXX_STANDARD 17
+	CXX_STANDARD_REQUIRED YES
+	CXX_EXTENSIONS NO
+)
+\end{lstlisting}
+
+若想要有一组编译器标志来传递给每个目标，可以将它们存储在一个变量中。若想创建一个目标，将这些标志设置为\texttt{INTERFACE}，并且没有任何源文件，并在\texttt{target\_link\_libraries}中使用这个目标:
+
+\begin{lstlisting}[style=styleCMake]
+target_compile_options(customer PRIVATE ${BASE_COMPILE_FLAGS})
+\end{lstlisting}
+
+除了添加链接器标志外，该命令还自动传播包括目录、选项、宏和其他属性。说到链接，先创建一个要链接的库:
+
+\begin{lstlisting}[style=styleCMake]
+add_library(libcustomer lib.cpp)
+add_library(domifair::libcustomer ALIAS libcustomer)
+set_target_properties(libcustomer PROPERTIES OUTPUT_NAME customer)
+# ...
+target_link_libraries(customer PRIVATE libcustomer)
+\end{lstlisting}
+
+\texttt{add\_library}可用于创建静态、动态、对象和接口(仅考虑头文件)库，以及定义导入库。
+
+它的\texttt{ALIAS}版本创建了一个命名空间目标，这有助于调试许多CMake问题，是现代CMake推荐的实践方式。
+
+因已经给目标一个lib前缀，所以输出名称为ibcustomer.a，而不是liblibcustomer.a。
+
+最后，将可执行文件与添加的库链接起来。尽量为\texttt{target\_link\_libraries}命令指定\texttt{PUBLIC}、\texttt{PRIVATE}或\texttt{INTERFACE}关键字，因为这对于CMake管理目标依赖项的可传递性至关重要。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{指定输出目录}
+
+当使用\texttt{cmake -\,-build .}等命令构建代码，可能想知道在哪里可以找到构建好的组件。默认情况下，CMake将在与定义它们的源目录相匹配的目录中创建它们。例如，如果有一个\texttt{src/CMakeLists.txt}文件，其中有一个\texttt{add\_executable}指令，那么这个二进制文件将默认放在构建目录的src子目录中。也可以使用以下代码进行覆盖:
+
+\begin{lstlisting}[style=styleCMake]
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
+\end{lstlisting}
+
+通过这种方式，二进制文件和DLL文件将放在项目的构建目录的bin子目录中，而静态和动态Linux库将放在lib子目录中。
+
+\subsubsubsection{7.3.2\hspace{0.2cm}生成器表达式}
+
+在设置编译标志方面，同时支持单配置和多配置生成器可能会很棘手，因为CMake在配置时执行\texttt{if}语句和许多其他构造，而不是在构建/安装时执行。
+
+这意味着以下是CMake的反模式:
+
+\begin{lstlisting}[style=styleCMake]
+if(CMAKE_BUILD_TYPE STREQUAL Release)
+	target_compile_definitions(libcustomer PRIVATE RUN_FAST)
+endif()
+\end{lstlisting}
+
+相反，生成器表达式是实现相同目标的正确方法，因为它们将在稍后处理。若想为Release配置添加一个预处理器定义，可以这样写:
+
+\begin{lstlisting}[style=styleCMake]
+target_compile_definitions(libcustomer PRIVATE
+"$<$<CONFIG:Release>:RUN_FAST>")
+\end{lstlisting}
+
+这将解析为在特定的配置下，对\texttt{RUN\_FAST}进行构建。对于其他配置，将解析为空值。它适用于单配置和多配置生成器。不过，这并不是生成器表达式的唯一用例。
+
+当项目在构建期间使用目标，而其他项目在安装目标时，使用目标的方式可能会有所不同。比如\texttt{include}目录，在CMake中处理这个的常见方法如下:
+
+\begin{lstlisting}[style=styleCMake]
+target_include_directories(
+	libcustomer PUBLIC $<INSTALL_INTERFACE:include>
+		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>)
+\end{lstlisting}
+
+本例中，有两个生成器表达式。第一个在安装时可以在\texttt{include}目录中找到包含文件，相对于安装前缀(安装的根目录)。如果不安装，这个表达式将变成一个空表达式。这就是为什么有另一个表达“构建”的短语，这个将解析为找到最后一个使用的\texttt{project()}目录的\texttt{include}子目录。
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
+\hspace*{0.7cm}不要使用带有模块外部路径的\texttt{target\_include\_directories}。如果这样做，就是在窃取别人的头文件，而不是显式声明库/目标依赖。这是CMake的一个反模式。
+\end{tcolorbox}
+
+CMake定义了许多生成器表达式，可以使用它们来查询编译器和平台，以及目标(例如全名、目标文件列表、任何属性值等)。除此之外，还有运行布尔运算、\texttt{if}语句、字符串比较等的表达式。
+
+现在，对于更复杂的例子，若想要在目标中使用一组编译标志，并且依赖于使用的编译器，可以这样定义:
+
+\begin{lstlisting}[style=styleCMake]
+list(
+		APPEND
+		BASE_COMPILE_FLAGS
+	"$<$<OR:$<CXX_COMPILER_ID:Clang>,
+	$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPIL
+	ER_ID:GNU>>:-Wall;-Wextra;-pedantic;-Werror>"
+		"$<$<CXX_COMPILER_ID:MSVC>:/W4;/WX>")
+\end{lstlisting}
+
+如果编译器是Clang、AppleClang或GCC，这将附加一组标志，如果使用MSVC则附加另一组标志。注意，这里用分号分隔标志，因为这是CMake分隔列表元素的方式。
+
+接下来，来看看如何添加项目，并使用的外部代码。
+
+
+
+
+
+
+
+

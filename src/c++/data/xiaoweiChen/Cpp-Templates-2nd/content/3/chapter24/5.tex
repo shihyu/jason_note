@@ -1,0 +1,136 @@
+引入可变参数模板前，可以使用模仿LISP的cons单元的递归数据结构来制定类型列表。每个Cons单元格包含一个值(列表头部)和一个嵌套列表，后者可以是另一个Cons单元格，也可以是空列表nil。这个概念可以直接用C++表示:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typelist/cons.hpp}
+\begin{lstlisting}[style=styleCXX]
+class Nil { };
+
+template<typename HeadT, typename TailT = Nil>
+class Cons {
+	public:
+	using Head = HeadT;
+	using Tail = TailT;
+};
+\end{lstlisting}
+
+空的类型列表写为Nil，而包含int的单元素列表写为Cons<int, Nil>，或者更简单的Cons<int>。较长的列表则需要嵌套:
+
+\begin{lstlisting}[style=styleCXX]
+using TwoShort = Cons<short, Cons<unsigned short>>;
+\end{lstlisting}
+
+可以通过深度递归嵌套来构造任意长度的类型列表，手工编写这样长的列表可能会有些蠢:
+
+\begin{lstlisting}[style=styleCXX]
+using SignedIntegralTypes = Cons<signed char, Cons<short, Cons<int,
+							Cons<long, Cons<long long, Nil>>>>>;
+\end{lstlisting}
+
+提取Cons样式列表中的第一个元素直接指向列表的头:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typelist/consfront.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename List>
+class FrontT {
+	public:
+	using Type = typename List::Head;
+};
+
+template<typename List>
+using Front = typename FrontT<List>::Type;
+\end{lstlisting}
+
+前面添加一个元素将对现有列表进行限制:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typelist/conspushfront.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename List, typename Element>
+class PushFrontT {
+	public:
+	using Type = Cons<Element, List>;
+};
+
+template<typename List, typename Element>
+using PushFront = typename PushFrontT<List, Element>::Type;
+\end{lstlisting}
+
+最后，从递归类型列表中删除第一个元素将提取列表的尾部:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typelist/conspopfront.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename List>
+class PopFrontT {
+	public:
+	using Type = typename List::Tail;
+};
+
+template<typename List>
+using PopFront = typename PopFrontT<List>::Type;
+\end{lstlisting}
+
+Nil的IsEmpty特化完成了核心类型列表操作集:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typelist/consisempty.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename List>
+struct IsEmpty {
+	static constexpr bool value = false;
+};
+
+template<>
+struct IsEmpty<Nil> {
+	static constexpr bool value = true;
+};
+\end{lstlisting}
+
+有了这些类型列表操作，就可以使用在24.2.7节中定义的InsertionSort算法，这次使用Cons风格的列表:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typelist/conslisttest.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename T, typename U>
+struct SmallerThanT {
+	static constexpr bool value = sizeof(T) < sizeof(U);
+};
+
+void conslisttest()
+{
+	using ConsList = Cons<int, Cons<char, Cons<short, Cons<double>>>>;
+	using SortedTypes = InsertionSort<ConsList, SmallerThanT>;
+	using Expected = Cons<char, Cons<short, Cons<int, Cons<double>>>>;
+	std::cout << std::is_same<SortedTypes, Expected>::value << ’\n’;
+}
+\end{lstlisting}
+
+正如在插入排序中看到的，Cons风格的类型列表可以表达适用于可变类型列表上的所有算法。但这也有一些缺点，所以我们更倾向于可变类型的版本:首先，嵌套使得长Cons风格类型列表在源代码很难书写，并且编译器与之相关的诊断信息很难读懂。第二，一些算法(包括PushBack和Transform)可以专门用于可变类型列表，以提供更有效的实现(通过实例化的数量来衡量)。最后，在类型列表中使用可变参数模板与在异构容器中使用可变参数模板相同，这已在第25章和第26章中讨论过了。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

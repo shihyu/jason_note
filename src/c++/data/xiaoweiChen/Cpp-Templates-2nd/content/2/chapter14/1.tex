@@ -1,0 +1,89 @@
+当C++编译器遇到模板特化时，将通过替换模板参数来创建该特化。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}术语特化用于一般意义上的实体，是模板的一个特定实例(参见第10章)，不涉及第16章中描述的显式特化机制。
+\end{tcolorbox}
+
+特化是自动完成的，不需要特殊代码(或者模板定义)的指导。这种按需变化的实例化特性将C++模板与其他早期编译语言不同(如Ada或Eiffel;一些语言需要显式的实例化指令，而其他语言则使用运行时分发机制来避免实例化)。这有时也称为隐式或自动实例化。
+
+按需实例化要求编译器在使用时，需要经常访问模板及其部分成员的完整定义(不仅仅是声明)。看看下面的示例:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T> class C; // #1 declaration only
+
+C<int>* p = 0; // #2 fine: definition of C<int> not needed
+template<typename T>
+
+class C {
+	public:
+	void f(); // #3 member declaration
+}; // #4 class template definition completed
+
+void g (C<int>& c) // #5 use class template declaration only
+{
+	c.f(); // #6 use class template definition;
+} // will need definition of C::f()
+
+// in this translation unit
+template<typename T>
+void C<T>::f() // required definition due to #6
+{ }
+\end{lstlisting}
+
+\#1处只有模板的声明是可用的，而不是定义(这种声明称为前置声明)。与普通类的情况一样，不需要类模板的定义来声明指向该类型的指针或引用，就像\#2那样。例如，函数g()的参数类型不需要模板C的完整定义。但当组件需要知道模板特化的大小时，或者访问类的特化成员时，整个类模板定义就必须可见。这解释了为什么在源代码中\#6，必须看到类模板定义;否则，编译器无法验证该成员是否存在，以及是否可访问(不是private或protected)。此外，也需要成员函数的定义，因为\#6的调用需要C<int>::f()。
+
+下面是另一个表达式，因为需要C<void>的大小，所以需要实例化之前的类模板:
+
+\begin{lstlisting}[style=styleCXX]
+C<void>* p = new C<void>;
+\end{lstlisting}
+
+这种情况下需要实例化，以便编译器可以确定C<void>的大小，new表达式需要确定分配多少存储空间。对于这个特定的模板，替代T的参数X的类型不会影响模板的大小，因为C<X>是一个空类。但编译器不需要分析模板定义来避免实例化(编译器都会执行实例化)。此外，本例中还需要实例化来确定C<void>是否具有可访问的默认构造函数，并确保C<void>不会声明成员操作符new或delete。
+
+访问类模板成员在源代码中并不总是显式可见，例如:C++重载解析要求对候选函数的参数类型可见:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class C {
+public:
+	C(int); // a constructor that can be called with a single parameter
+}; // may be used for implicit conversions
+
+void candidate(C<double>); // #1
+void candidate(int) { } // #2
+
+int main()
+{
+	candidate(42); // both previous function declarations can be called
+}
+\end{lstlisting}
+
+调用candidate(42)时，将解析为在\#2处的重载声明。然而，\#1的声明也可以实例化，以检查是否是匹配的候选(因为单参数构造函数可以隐式地将42转换为类型C<double>的右值)。如果编译器可以在没有实例化的情况下解析调用，则允许(但不是必需)执行此实例化(本例可能就是这种情况，因为在精确匹配上不会选择隐式转换)。还要注意，C<double>的实例化可能会触发错误。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,546 @@
+
+Web服务的共同特征是基于标准的Web技术。大多数时候，这将意味着超文本传输协议(HTTP)，这是本节重点关注的技术。尽管可以基于不同的协议实现Web服务，但这样的服务非常罕见，超出了本书的范围。
+
+\subsubsubsection{12.4.1\hspace{0.2cm}调试Web服务的工具}
+
+使用HTTP作为传输的主要好处之一是工具的广泛可用性。通常，测试和调试Web服务只需要使用Web浏览器即可。除此之外，还有很多其他的程序可能对自动化很有帮助。其中包括:
+
+\begin{itemize}
+\item 
+标准的Unix文件下载程序wget
+
+\item 
+现代HTTP客户端curl
+
+\item 
+流行的开源库，如libcurl、curlpp、C++ REST SDK、cpr(C++ HTTP请求库)和NFHTTP
+
+\item 
+测试框架，如Selenium或Robot Framework
+
+\item 
+浏览器扩展，如Boomerang
+
+\item 
+独立的解决方案，如Postman和Postwoman
+
+\item 
+专用测试软件包括SoapUI和Katalon Studio
+\end{itemize}
+
+基于HTTP的Web服务通过向使用适当HTTP动词(如GET、POST和PUT)的HTTP请求返回HTTP响应来工作。请求和响应，以及传递数据的语义在不同的实现中也是不同的。
+
+大多数实现分为两类:基于XML的Web服务和基于JSON的Web服务。目前，基于JSON的Web服务正在取代基于XML的Web服务，但使用XML格式的服务仍然很常见。
+
+对于处理用JSON或XML编码的数据，可能需要额外的工具，如xmllint、xmlstarlet、jq和libxml2。
+
+\subsubsubsection{12.4.2\hspace{0.2cm}基于XML的Web服务}
+
+第一个获得关注的Web服务主要基于XML的。XML或可扩展标记语言在当时是分布式计算和网络环境中交换格式的选择。使用XML有效负载设计服务有几种不同的方法。
+
+可能希望与组织内部或外部开发的基于XML的现有Web服务进行交互。但建议使用更轻量级的方法来实现新的Web服务，比如基于JSON的Web服务、REST的Web服务或gRPC。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{XML-RPC}
+
+出现的第一个标准被称为XML-RPC。该项目背后的想法是提供一种RPC技术，可以与当时流行的公共对象模型(COM)和CORBA竞争。其目的是将HTTP作为一种传输协议，并使这种格式既可由人类读/写，也可由机器解析。为此，选择XML作为数据编码格式。
+
+当使用XML-RPC时，希望执行远程过程调用的客户机向服务器发送HTTP请求。请求可以有多个参数，服务器用一个响应响应。XML-RPC协议为参数和结果定义了几种数据类型。
+
+尽管SOAP具有类似的数据类型，但它使用XML模式定义，这使得消息的可读性比XML-RPC低得多。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{与SOAP的关系}
+
+由于XML-RPC不再积极地维护，因此标准没有现代C++实现。如果想从现代代码中与XML-RPC Web服务交互，最好的方法可能是使用支持XML-RPC和其他基于XML Web服务标准的gSOAP工具包。
+
+对XML-RPC的批评是，与发送普通的XML请求和响应相比，它没有提供太多的价值，同时使消息明显变多了。
+
+随着标准的发展，它变成了SOAP。作为SOAP，它形成了W3C Web服务协议栈的基础。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{SOAP}
+
+SOAP最初的缩写是简单对象访问协议(Simple Object Access Protocol)。该缩写在标准的1.2版中删除了，它是XML-RPC标准的扩展。
+
+SOAP由三部分组成:
+
+\begin{itemize}
+\item 
+SOAP包络，定义消息的结构和处理规则
+
+\item 
+SOAP头规则定义特定于应用程序的数据类型(可选)
+
+\item 
+SOAP主体，它携带远程过程调用和响应
+\end{itemize}
+
+下面是一个使用HTTP作为传输的SOAP消息示例:
+
+\begin{tcblisting}{commandshell={}}
+POST /FindMerchants HTTP/1.1
+Host: www.domifair.org
+Content-Type: application/soap+xml; charset=utf-8
+Content-Length: 345
+SOAPAction: "http://www.w3.org/2003/05/soap-envelope"
+
+<?xml version="1.0"?>
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+  <soap:Header>
+  </soap:Header>
+  <soap:Body xmlns:m="https://www.domifair.org">
+    <m:FindMerchants>
+      <m:Lat>54.350989</m:Lat>
+      <m:Long>18.6548168</m:Long>
+      <m:Distance>200</m:Distance>
+    </m:FindMerchants>
+  </soap:Body>
+</soap:Envelope>
+\end{tcblisting}
+
+该示例使用标准HTTP头和POST方法调用远程过程，SOAP唯一的一个报头是SOAPAction。它指向一个标识操作意图的URI，由客户机决定如何解释这个URI。
+
+\texttt{soap:Header}是可选的，所以为空。它与\texttt{soap:Body}一起包含在\texttt{soap:Envelope}中，主要调用发生在\texttt{soap:Body}中。我们引入了自己的XML名称空间，这是多米尼加博览会应用程序特有的。命名空间指向域的根，调用FindMerchants，并提供三个参数:纬度、纬度和距离。
+
+由于SOAP设计为可扩展、传输中立和独立于编程模型，导致了其他伴随标准的创建。从而在使用SOAP之前，通常有必要了解所有相关的标准和协议。
+
+如果应用程序大量使用XML，并且开发团队熟悉所有术语和规范，这自然不是问题。然而，如果想要的只是为第三方公开API，更简单的方法是构建REST API，因为它对开发者和使用者来说学习成本更低。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{WSDL}
+
+Web服务描述语言(Web Services Description Language, WSDL)提供了关于如何调用服务以及应该如何形成消息的机器可读描述。与其他W3C Web服务标准一样，它是用XML编码的。
+
+经常与SOAP一起使用来定义Web服务提供的接口。
+
+当用WSDL定义了API，就可以(而且应该!)使用自动化工具在此基础上创建代码。对于C++来说，gSOAP就是带有此类工具的框架。它附带了一个名为wsdl2h的工具，该工具将根据定义生成一个头文件。然后，可以使用另一个工具soapcpp2生成从接口定义到实现的绑定。
+
+不幸的是，由于消息的冗长，SOAP服务的大小和带宽需求通常非常大。如果这不是问题，那么SOAP可以使用。同时允许同步和异步调用，以及有状态和无状态操作。如果需要严格的、正式的通信方式，SOAP也可以提供，只要确保使用协议的1.2版本，因为它引入了许多改进(其中之一就是增强了服务的安全性)。另一个优点是改进了服务本身的定义，这有助于互操作性，或者能够正式定义传输方式(允许使用消息队列)，等等。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{UDDI}
+
+记录Web服务接口之后的下一步是发现服务，它允许应用程序查找并连接到由其他方实现的服务。
+
+统一描述、发现和集成(UDDI)是可以手动或自动搜索的WSDL文件的注册中心。与本节讨论的其他技术一样，UDDI使用XML格式。
+
+可以用SOAP消息查询UDDI注册中心，以便自动发现服务。尽管UDDI提供了WSDL的逻辑扩展，但公开版本仍然令人失望。仍然有可能找到公司内部使用的UDDI系统。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{SOAP库}
+
+两个主流的SOAP库是Apache Axis和gSOAP。
+
+Apache Axis适合实现SOAP(包括WSDL)和REST Web服务。值得注意的是，该库已经有十多年没有发布过新版本了。
+
+gSOAP是一个工具包，它允许创建基于XML的Web服务并与之交互，重点关注于SOAP。它处理数据绑定、SOAP和WSDL支持、JSON和RSS解析、UDDI API以及其他一些相关的Web服务标准。虽然它没有使用现代的C++，但是它仍然积极地维护着。
+
+\subsubsubsection{12.4.3\hspace{0.2cm}基于JSON的Web服务}
+
+JSON代表JavaScript对象表示法。与它的名字相反，它并不局限于JavaScript(其是独立于语言的)。JSON的解析器和序列化器存在于大多数编程语言中，JSON比XML紧凑得多。
+
+其语法来源于JavaScript，因为基于JavaScript子集。
+
+JSON支持的数据类型如下:
+
+\begin{itemize}
+\item 
+数字:具体的格式可能在不同的实现中有所不同;默认为JavaScript中的双精度浮点。
+
+\item 
+字符串:unicode编码的。
+
+\item 
+布尔值:使用true和false值。
+
+\item 
+数组:可能为空。
+
+\item 
+对象:具有键-值对的映射。
+
+\item 
+null:表示空值。
+\end{itemize}
+
+第9章中介绍的Packer配置是JSON文档的一个例子:
+
+\begin{tcblisting}{commandshell={}}
+{
+  "variables": {
+    "aws_access_key": "",
+    "aws_secret_key": ""
+  },
+  "builders": [{
+    "type": "amazon-ebs",
+    "access_key": "{{user `aws_access_key`}}",
+    "secret_key": "{{user `aws_secret_key`}}",
+    "region": "eu-central-1",
+    "source_ami": "ami-5900cc36",
+    "instance_type": "t2.micro",
+    "ssh_username": "admin",
+    "ami_name": "Project's Base Image {{timestamp}}"
+  }],
+  "provisioners": [{
+    "type": "ansible",
+    "playbook_file": "./provision.yml",
+    "user": "admin",
+    "host_alias": "baseimage"
+  }],
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
+  "post-processors": [{
+    "type": "manifest",
+    "output": "manifest.json",
+    "strip_path": true
+  }]
+}
+\end{tcblisting}
+
+使用JSON作为格式的标准之一是JSON-RPC协议。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{JSON-RPC}
+
+JSON-RPC是一种JSON编码的远程过程调用协议，类似于XML-RPC和SOAP。与XML不同，它需要很少的开销。在维护XML-RPC的人类可读性的同时，它也是非常简单的。
+
+这就是前面用JSON-RPC 2.0在SOAP调用中表示的示例:
+
+\begin{tcblisting}{commandshell={}}
+{
+  "jsonrpc": "2.0",
+  "method": "FindMerchants",
+  "params": {
+    "lat": "54.350989",
+    "long": "18.6548168",
+    "distance": 200
+  },
+  "id": 1
+}
+\end{tcblisting}
+
+这个JSON文档仍然需要适当的HTTP报头，但即使有了报头，仍然比对应的XML文档小得多。唯一存在的元数据是带有JSON-RPC版本和请求ID的文件，方法和参数字段几乎是自解释的，不过SOAP并不总是如此。
+
+尽管该协议是轻量级的，易于实现和使用，但与SOAP和REST Web服务相比，还没有广泛采用。它发布的时间比SOAP晚得多，与REST服务开始流行的时间差不多。REST很快就获得了成功(可能是由于它的灵活性)，而JSON-RPC却未能获得类似的成功。
+
+两个有用的C++实现是libjson-rpc-cpp和json-rpc-cxx，json-rpc-cxx是以前库的现代重置版。
+
+\subsubsubsection{12.4.4\hspace{0.2cm}表述性状态转移(REST)}
+
+Web服务的另一种方法是表示状态传输(representational State Transfer, REST)。符合这种架构风格的服务通常称为REST式服务。REST与SOAP或JSON-RPC之间的主要区别在于REST几乎完全基于HTTP和URI语义。
+
+REST是在实现Web服务时定义一组约束的架构样式，符合这种风格的服务称为RESTful。其限制如下:
+
+\begin{itemize}
+\item 
+必须使用客户机-服务器模型。
+
+\item 
+无状态(客户机和服务器都不需要存储与其通信相关的状态)。
+
+\item 
+可缓存性(响应应该定义为可缓存或不可缓存，以受益于标准的Web缓存来提高可扩展性和性能)。
+
+\item 
+分层系统(代理和负载均衡器不应该影响客户端和服务器之间的通信)。
+\end{itemize}
+
+REST使用HTTP作为传输协议，RUI代表资源和操作资源或调用操作的HTTP动词。没有关于每个HTTP方法应该如何行为的标准，但最常达成一致的语义如下:
+
+\begin{itemize}
+\item 
+POST – 创建一个新的资源。
+
+\item 
+GET – 检索现有资源。
+
+\item 
+PATCH – 更新现有资源。
+
+\item 
+DELETE – 删除已有资源。
+
+\item 
+PUT – 替换已有资源。
+\end{itemize}
+
+由于对Web标准的依赖，RESTful Web服务可以重用现有的组件，如代理、负载均衡器和缓存。由于开销低，这些服务的性能和效率也非常高。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{描述语言}
+
+就像基于XML的Web服务一样，可以用机器和人类可读的方式描述RESTful服务。目前有一些相互竞争的标准，OpenAPI是最受欢迎的。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{OpenAPI}
+
+OpenAPI是由OpenAPI计划(Linux基金会的一部分)监督的规范。它曾经被称为Swagger规范，因为它曾经是Swagger框架的一部分。
+
+该规范与语言无关。它使用JSON或YAML输入来生成方法、参数和模型的文档。通过这种方式，使用OpenAPI有助于保持文档和源代码的更新。
+
+有很多与OpenAPI兼容的工具可供选择，比如代码生成器、编辑器、用户界面和模拟服务器。OpenAPI生成器可以使用cpp-restsdk或Qt 5为客户端实现生成C++代码。还可以使用Pistache，Restbed或Qt 5 QHTTPEngine生成服务器代码。在线上还有一个方便的OpenAPI编辑器: \url{https://editor.swagger.io/}。
+
+使用OpenAPI文档化的API会像下面这样:
+
+\begin{tcblisting}{commandshell={}}
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Items API overview",
+    "version": "2.0.0"
+  },
+  "paths": {
+    "/item/{itemId}": {
+      "get": {
+        "operationId": "getItem",
+        "summary": "get item details",
+        "parameters": [
+          "name": "itemId",
+          "description": "Item ID",
+          "required": true,
+          "schema": {
+            "type": "string"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "200 response",
+            "content": {
+              "application/json": {
+                "example": {
+                  "itemId": 8,
+                  "name", "Kürtőskalács",
+                  "locationId": 5
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+\end{tcblisting}
+
+前两个字段(openapi和info)是描述文档的元数据。paths字段包含与REST接口的资源和方法对应的所有可能路径。前面的示例中，只记录了单个路径(/项目)和单个方法(GET)。此方法将itemId作为必需参数。提供了一个可能的响应码，即200。200响应包含一个JSON文档本身的主体。与示例键相关联的值是成功响应的示例负载。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{RAML}
+
+另一个与之竞争的规范是RAML，它代表RESTful API建模语言。它使用YAML进行描述，并支持发现、代码重用和模式共享。
+
+建立RAML的基本原理是，虽然OpenAPI是一个记录现有API的伟大工具，但在当时，它并不是设计新API的最佳方式。目前，该规范正考虑成为OpenAPI计划的一部分。
+
+可以将RAML文档转换为OpenAPI来使用可用的工具。
+
+下面是一个使用RAML编写的API示例:
+
+\begin{tcblisting}{commandshell={}}
+#%RAML 1.0
+
+title: Items API overview
+version: 2.0.0
+
+annotationTypes:
+  oas-summary:
+    type: string
+    allowedTargets: Method
+
+/item:
+  get:
+    displayName: getItem
+    queryParameters:
+      itemId:
+        type: string
+    responses:
+     '200':
+       body:
+         application/json:
+           example: |
+             {
+               "itemId": 8,
+               "name", "Kürtőskalács",
+\end{tcblisting}
+\begin{tcblisting}{commandshell={}}
+               "locationId": 5
+             }
+       description: 200 response
+    (oas-summary): get item details
+\end{tcblisting}
+
+这个例子描述了与OpenAPI相同的接口。在YAML中序列化时，OpenAPI 3.0和RAML 2.0看起来非常相似。主要的区别是OpenAPI 3.0要求使用JSON模式来记录结构。使用RAML 2.0，可以重用现有的XML模式定义(XSD)，这使得从基于XML的Web服务迁移或包含外部资源变得更容易。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{API蓝图}
+
+API蓝图提供了与前面两个规范不同的方法，不依赖JSON或YAML，而是使用Markdown来记录数据结构和端点。
+
+方法类似于测试驱动开发方法，因为它鼓励在实现特性之前设计契约。通过这种方式，测试实现是否真正履行了契约就更容易了。
+
+就像使用RAML一样，将API蓝图规范转换为OpenAPI也是可能的，反之亦然。还有一个命令行接口和一个用于解析API蓝图的C++库，称为Drafter，可以在代码中使用它。
+
+一个用API蓝图记录的简单API示例:
+
+\begin{tcblisting}{commandshell={}}
+FORMAT: 1A
+
+# Items API overview
+
+# /item/{itemId}
+
+## GET
+
++ Response 200 (application/json)
+
+    {
+      "itemId": 8,
+      "name": "Kürtőskalács",
+      "locationId": 5
+    }
+\end{tcblisting}
+
+前面，看到指向\texttt{/item}端点的GET方法应该会导致响应代码200，下面是对应于我们的服务通常返回的JSON消息。
+
+API蓝图允许更多自然的文档，其主要缺点是它是目前所描述的格式中最不受欢迎的，所以其文档和工具的质量都远不及OpenAPI。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{RSDL}
+
+与WSDL类似，RSDL(或RESTful服务描述语言)是Web服务的XML描述。它是独立于语言的，并且设计成人机可读的。
+
+API蓝图或RAML相比，比之前提供的替代方案要少得多，也更难阅读。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{超媒体作为应用状态引擎}
+
+尽管提供二进制接口(比如基于gRPC的接口)可以提供很好的性能，但在许多情况下，仍然希望拥有RESTful接口的简单性。如果想要直观的基于REST的API，那么超媒体作为应用程序状态引擎(HATEOAS)是一个有用的原则。
+
+就像打开一个网页并基于显示的超媒体进行导航一样，可以用HATEOAS编写服务来实现同样的事情。这促进了服务器和客户端代码的分离，并允许客户端快速知道发送哪些请求是有效的，而这通常不是二进制API的情况。该发现是动态的，基于所提供的超媒体。
+
+如果采用典型的RESTful服务，在执行操作时，会得到包含对象状态等数据的JSON。除此之外，使用HATEOAS将获得一个链接(URL)列表，显示可以在该对象上运行的有效操作，链接(超媒体)是应用程序的引擎。换句话说，可用的操作是由资源的状态决定的。虽然超媒体这个术语在这里听起来很奇怪，但它基本上是指链接资源，包括文本、图像和视频。
+
+例如，如果有一个REST方法可以通过使用PUT方法添加项，可以添加一个返回参数，该参数链接到以这种方式创建的资源。如果使用JSON进行序列化，可能会出现以下形式:
+
+\begin{tcblisting}{commandshell={}}
+{
+  "itemId": 8,
+  "name": "Kürtőskalács",
+  "locationId": 5,
+  "links": [
+    {
+      "href": "item/8",
+      "rel": "items",
+      "type" : "GET"
+    }
+  ]
+}
+\end{tcblisting}
+
+目前还没有普遍接受的序列化HATEOAS超媒体的方法。一方面，不管服务器实现是什么，都更容易实现。另一方面，客户端需要知道如何解析响应，以找到相关的遍历数据。
+
+HATEOAS的一个好处是，使在服务器端实现API更改成为可能，而不必破坏客户端代码。当其中一个端点重命名时，新的端点将在后续响应中引用，因此客户机将被告知将进一步请求定向到哪里。
+
+同样的机制可以提供分页等特性，或者使发现给定对象可用的方法变得容易。回到我们的示例，下面是在发出GET请求后可能收到的响应:
+
+\begin{tcblisting}{commandshell={}}
+{
+  "itemId": 8,
+  "name": "Kürtőskalács",
+  "locationId": 5,
+  "stock": 8,
+  "links": [
+    {
+      "href": "item/8",
+      "rel": "items",
+      "type" : "GET"
+    },
+    {
+      "href": "item/8",
+      "rel": "items",
+      "type" : "POST"
+    },
+    {
+      "href": "item/8/increaseStock",
+      "rel": "increaseStock",
+      "type" : "POST"
+    },
+    {
+      "href": "item/8/decreaseStock",
+      "rel": "decreaseStock",
+      "type" : "POST"
+    }
+  ]
+}
+\end{tcblisting}
+
+这里，获得了两个负责修改股票的方法的链接。如果股票不再可用，响应将是这样的(注意其中一个方法不再发布):
+
+\begin{tcblisting}{commandshell={}}
+{
+  "itemId": 8,
+  "name": "Kürtőskalács",
+  "locationId": 5,
+  "stock": 0,
+  "links": [
+    {
+      "href": "items/8",
+      "rel": "items",
+      "type" : "GET"
+    },
+    {
+      "href": "items/8",
+      "rel": "items",
+      "type" : "POST"
+    },
+    {
+      "href": "items/8/increaseStock",
+      "rel": "increaseStock",
+      "type" : "POST"
+    }
+  ]
+}
+\end{tcblisting}
+
+与HATEOAS相关的一个重要问题是，这两个设计原则似乎彼此不一致。如果总是以相同的格式呈现，添加可遍历的超媒体将更容易使用。这里的表达自由使得编写不知道服务器实现的客户机变得更加困难。
+
+并不是所有RESTful API都能从引入这一原则中受益——通过引入HATEOAS，将承诺以特定的方式编写客户机，从而使它们能够从这种API风格中受益。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{C++实现的REST}
+
+Microsoft的C++ REST SDK是目前在C++应用程序中实现RESTful API的最佳方法之一。它也称为cpp-restsdk，在本书中使用它来演示各种示例。
+
+\subsubsubsection{12.4.5\hspace{0.2cm}GraphQL}
+
+REST Web服务的最新替代方案是GraphQL，名称中的QL代表查询语言。在GraphQL中，客户机不依赖服务器序列化和呈现必要的数据，而是直接查询和操作数据。除了职责颠倒之外，GraphQL还具有使数据处理更容易的机制。类型、静态验证、内省和模式都是规范的一部分。
+
+GraphQL的服务器实现可用于很多语言，包括C++。其中一个主流的实现是来自Microsoft的cppgraphqlgen。还有许多工具可以帮助开发和调试。有趣的是，由于Hasura或PostGraphile等产品在Postgres数据库上添加了GraphQL API，就可以直接使用GraphQL查询数据库。
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,141 @@
+
+path类在整个文件系统库中用于表示文件或目录路径。在符合posix的系统上，例如macOS和Linux，路径对象使用char类型来表示文件名。在Windows上，path使用wchar\_t。在Windows上，cout和format()不会显示wchar\_t字符的原始字符串，所以没有简单的方法来编写使用文件系统库，并且无法直接POSIX和Windows之间编写可移植的代码。
+
+我们需要使用预处理器指令为Windows编写特定版本的代码。对于某些代码库来说，这可能是一个合理的解决方案，但对于本书来说，这样写出的代码很丑陋，不能满足简单、可移植、可重用的特性。
+
+优雅的解决方案是为path类使用C++20的format进行格式化特化。这就可以简单地、可移植地显示path对象。
+
+\subsubsection{How to do it…}
+
+这个示例中，我们编写了一个格式化特化，用于fs::path类:
+
+\begin{itemize}
+\item 
+从命名空间别名开始，所有的文件系统名称都在std::filesystem命名空间中:
+
+\begin{lstlisting}[style=styleCXX]
+namespace fs = std::filesystem;
+\end{lstlisting}
+
+\item 
+path类的格式化特化简单而简洁:
+
+\begin{lstlisting}[style=styleCXX]
+template<>
+struct std::formatter<fs::path>:
+std::formatter<std::string> {
+	template<typename FormatContext>
+	auto format(const fs::path& p, FormatContext& ctx) {
+		return format_to(ctx.out(), "{}", p.string());
+	}
+};
+\end{lstlisting}
+
+这里，专为fs::path类型设置了格式，使用其string()方法来获得可输出的字符表示。我们不能使用c\_str()方法，因其无法在Windows上处理wchar\_t字符。
+
+本书的第1章中有关于格式化特化的更完整的解释。
+
+\item 
+main()函数中，可以使用命令行传递文件名或路径:
+
+\begin{lstlisting}[style=styleCXX]
+int main(const int argc, const char** argv) {
+	if(argc != 2) {
+		fs::path fn{ argv[0] };
+		cout << format("usage: {} <path>\n",
+		fn.filename());
+		return 0;
+	}
+
+	fs::path dir{ argv[1] };
+	if(!fs::exists(dir)) {
+		cout << format("path: {} does not exist\n",
+		dir);
+		return 1;
+	}
+
+	cout << format("path: {}\n", dir);
+	cout << format("filename: {}\n", dir.filename());
+	cout << format("cannonical: {}\n",
+	fs::canonical(dir));
+}
+\end{lstlisting}
+
+argc和argv参数是标准的命令行参数。
+
+argv[0]始终是可执行文件本身的完整目录路径和文件名，若没有正确数量的参数，则显示argv[0]的文件名部分作为使用消息的一部分。
+
+这个例子中，使用了一些文件系统函数:
+
+\begin{itemize}
+\item 
+fs::exists()函数的作用是:检查目录或文件是否存在。
+
+\item 
+dir是一个path对象。可以直接将path传递给format()，使用特化来显示path的字符串表示形式。
+
+\item 
+filename()方法返回一个新的path对象，直接将其传递给format()。
+
+\item 
+fs::cannonical()函数的作用是:接受一个path对象，并返回一个带有规范绝对目录路径的新path对象。我们将这个path对象直接传递给format()，然后就会从cannical()返回的目录路径，并进行显示。
+\end{itemize}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+$ ./formatter ./formatter.cpp
+path: ./formatter.cpp
+filename: formatter.cpp
+cannonical: /home/billw/working/chap10/formatter.cpp
+\end{tcblisting}
+
+\end{itemize}
+
+\subsubsection{How it works…}
+
+fs::path类在整个文件系统库中用于表示目录路径和文件名。通过提供格式化特化，可以轻松地跨平台显示path对象。
+
+path类提供了一些有用的方法，可以遍历一个path对象:
+
+\begin{lstlisting}[style=styleCXX]
+fs::path p{ "~/include/bwprint.h" };
+cout << format("{}\n", p);
+for(auto& x : p) cout << format("[{}] ", x);
+cout << '\n';
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+~/include/bwprint.h
+[~] [include] [bwprint.h]
+\end{tcblisting}
+
+迭代器为路径的每个元素返回一个path对象。
+
+也可以得到路径的不同部分:
+
+\begin{lstlisting}[style=styleCXX]
+fs::path p{ "~/include/bwprint.h" };
+cout << format("{}\n", p);
+cout << format("{}\n", p.stem());
+cout << format("{}\n", p.extension());
+cout << format("{}\n", p.filename());
+cout << format("{}\n", p.parent_path());
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+~/include/bwprint.h
+bwprint
+.h
+bwprint.h
+~/include
+\end{tcblisting}
+
+在本章中，我们将继续为path类使用这个格式化特化。
+
+
+

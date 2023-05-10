@@ -1,0 +1,122 @@
+
+微服务之所以如此有用，是因为它们可以通过许多不同的方式与其他服务连接起来，从而创造新的价值。然而，由于微服务没有标准，所以没有单一的方式进行连接。
+
+大多数情况下，想要使用一个特定的微服务时，必须学会如何与它交互。好消息是，尽管在微服务中实现任何通信方法都是可能的，但有一些流行的方法是大多数微服务所遵循的。
+
+如何连接微服务只是围绕设计架构时的相关问题。另一个是连接什么，以及连接在哪里，就是服务发现发挥作用的地方。通过服务发现，让微服务使用自动的方法来发现和连接应用程序中的其他服务。
+
+这三个问题，\textit{如何做，做什么，何处做}，将是下一个主题。我们将介绍现代微服务中使用的一些主流的通信和发现方法。
+
+\subsubsubsection{13.5.1\hspace{0.2cm}应用程序编程接口}
+
+就像软件库一样，微服务经常公开API。这些API使得与微服务通信成为可能。由于典型的通信方式利用计算机网络，最流行的API形式是Web API。
+
+前一章中，已经介绍了一些使用Web服务的可能方法。如今，微服务通常使用基于具象状态传输(REpresentational State Transfer，REST)的Web服务。
+
+\subsubsubsection{13.5.2\hspace{0.2cm}远程过程调用}
+
+虽然REST等Web API允许轻松调试和良好的互操作性，但与数据转换和使用HTTP进行传输相关的开销很大。
+
+对于一些微服务来说，这种开销可能太大了，这就是轻量级远程过程调用(Remote Procedure call，RPC)的原因。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{Apache Thrift}
+
+Apache Thrift是一个接口描述语言和二进制通信协议。它用作RPC方法，允许创建以各种语言构建的分布式和可扩展的服务。
+
+支持多种二进制协议和传输方法。每种编程语言都使用本机数据类型，因此即使在现有的代码库中也很容易引入本机的数据。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{gRPC}
+
+如果真的关心性能，通常会发现基于文本的解决方案并不适合。REST无论多么优雅和容易理解，对于需求来说可能太慢了。如果是这种情况，应该尝试围绕二进制协议构建API，其中一种是gRPC。
+
+gRPC是最初由Google开发的RPC系统。使用HTTP/2进行传输，并使用协议缓冲区作为接口描述语言(IDL)来实现多种编程语言之间的互操作性和数据序列化。这可以使用替代技术，例如FlatBuffers。gRPC可以以同步和异步的方式使用，并允许创建简单的服务和流服务。 
+
+假设决定使用protobufs，我们的Greeter服务定义如下:
+
+\begin{lstlisting}[style=styleCXX]
+service Greeter {
+	rpc Greet(GreetRequest) returns (GreetResponse);
+}
+message GreetRequest {
+	string name = 1;
+}
+message GreetResponse {
+	string reply = 1;
+}
+\end{lstlisting}
+
+使用协议编译器，从这个定义创建数据访问代码。假设想为Greeter创建一个同步服务器，可以按以下方式创建服务:
+
+\begin{lstlisting}[style=styleCXX]
+class Greeter : public Greeter::Service {
+		Status sendRequest(ServerContext *context, const GreetRequest
+	*request,
+							GreetReply *reply) override {
+		auto name = request->name();
+		if (name.empty()) return Status::INVALID_ARGUMENT;
+		reply->set_result("Hello " + name);
+		return Status::OK;
+	}
+};
+\end{lstlisting}
+
+然后，必须为它构建并运行服务器:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	Greeter service;
+	ServerBuilder builder;
+	builder.AddListeningPort("localhost", grpc::InsecureServerCredentials());
+	builder.RegisterService(&service);
+	
+	auto server(builder.BuildAndStart());
+	server->Wait();
+}
+\end{lstlisting}
+
+就这么简单。现在看看使用这个服务的客户端:
+
+\begin{lstlisting}[style=styleCXX]
+#include <grpcpp/grpcpp.h>
+
+#include <string>
+
+#include "grpc/service.grpc.pb.h"
+
+using grpc::ClientContext;
+using grpc::Status;
+
+int main() {
+	std::string address("localhost:50000");
+	auto channel =
+		grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+	auto stub = Greeter::NewStub(channel);
+	
+	GreetRequest request;
+	request.set_name("World");
+	
+	GreetResponse reply;
+	ClientContext context;
+	Status status = stub->Greet(&context, request, &reply);
+	
+	if (status.ok()) {
+		std::cout << reply.reply() << '\n';
+	} else {
+		std::cerr << "Error: " << status.error_code() << '\n';
+	}
+}
+\end{lstlisting}
+
+这是一个简单的同步示例。为了让它异步工作，需要添加标签和CompletionQueue，如gRPC网站上描述的那样。
+
+gRPC的一个有趣特性是，可用于Android和iOS上的移动应用程序。如果在内部使用gRPC，不需要提供额外的服务器来转换来自移动应用程序的流量。
+
+本节中，了解了微服务使用的最流行的通信和发现方法。接下来，将了解到微服务是如何扩展的。
+
+
+
+

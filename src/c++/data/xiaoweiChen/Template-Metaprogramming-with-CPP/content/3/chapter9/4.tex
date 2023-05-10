@@ -1,0 +1,360 @@
+标准库包含一系列范围适配器，可用于解决许多不同的任务。新版本的标准中增加了更多的内容。但某些情况下，可能希望创建自己的范围适配器，以便与范围库中的其他适配器一起使用。这实际上不是一项微不足道的任务，所以在本章的最后一节中，我们将探讨编写这样一个范围适配器所需要遵循的步骤。
+
+为此，考虑一个范围适配器，接受范围的第n个元素，而跳过其他元素。我们将这个适配器称为step\_view。我们可以使用它来编写如下代码:
+
+\begin{lstlisting}[style=styleCXX]
+for (auto i : std::views::iota(1, 10) | views::step(1))
+	std::cout << i << '\n';
+
+for (auto i : std::views::iota(1, 10) | views::step(2))
+	std::cout << i << '\n';
+
+for (auto i : std::views::iota(1, 10) | views::step(3))
+	std::cout << i << '\n';
+
+for (auto i : std::views::iota(1, 10) | views::step(2) | 	
+				std::views::take(3))
+	std::cout << i << '\n';
+\end{lstlisting}
+
+第一个循环将打印从1到9的所有数字。第二个循环将输出所有的奇数，1、3、5、7、9。第三个循环将输出1,4,7。最后，第四个循环将输出1,3,5。
+
+为了实现这个，我们需要以下实现:
+
+\begin{itemize}
+\item
+定义范围适配器的类模板
+
+\item
+推导指南，用于帮助演绎范围适配器的类模板参数
+
+\item
+为范围适配器定义迭代器类型的类模板
+
+\item
+为范围适配器定义哨点类型的类模板
+
+\item
+实现所需的重载管道操作符(|)和辅助函子
+
+\item
+编译时常量全局对象，以简化范围适配器的使用
+\end{itemize}
+
+一个个地来了解如何定义它们，从哨兵类开始。哨点是对过尾迭代器的抽象，允许检查迭代是否到达了范围的末端。哨兵可以使结束迭代器的类型与范围迭代器的类型不同，哨兵不能解除引用或增加。下面是其定义:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename R>
+struct step_iterator;
+
+template <typename R>
+struct step_sentinel
+{
+	using base = std::ranges::iterator_t<R>;
+	using size_type = std::ranges::range_difference_t<R>;
+	
+	step_sentinel() = default;
+	
+	constexpr step_sentinel(base end) : end_{ end } {}
+	constexpr bool is_at_end(step_iterator<R> it) const;
+	
+private:
+	base end_;
+};
+
+// definition of the step_iterator type
+
+template <typename R>
+constexpr bool step_sentinel<R>::is_at_end(
+	step_iterator<R> it) const
+{
+	return end_ == it.value();
+}
+\end{lstlisting}
+
+哨兵由迭代器构造，包含一个名为is\_at\_end的成员函数，该函数检查存储的范围迭代器是否等于存储在step\_iterator对象中的范围迭代器。这个类型step\_iterator是一个类模板，定义了范围适配器的迭代器类型，称之为step\_view。下面是该迭代器类型的实现:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename R>
+struct step_iterator : std::ranges::iterator_t<R>
+{
+	using base
+		= std::ranges::iterator_t<R>;
+	using value_type
+		= typename std::ranges::range_value_t<R>;
+	using reference_type
+		= typename std::ranges::range_reference_t<R>;
+		
+	constexpr step_iterator(
+		base start, base end,
+		std::ranges::range_difference_t<R> step) :
+		pos_{ start }, end_{ end }, step_{ step }
+	{
+	}
+
+	constexpr step_iterator operator++(int)
+	{
+		auto ret = *this;
+		pos_ = std::ranges::next(pos_, step_, end_);
+		return ret;
+	}
+
+	constexpr step_iterator& operator++()
+	{
+		pos_ = std::ranges::next(pos_, step_, end_);
+		return *this;
+	}
+
+	constexpr reference_type operator*() const
+	{
+		return *pos_;
+	}
+	constexpr bool operator==(step_sentinel<R> s) const
+	{
+		return s.is_at_end(*this);
+	}
+
+	constexpr base const value() const { return pos_; }
+	
+private:
+	base pos_;
+	base end_;
+	std::ranges::range_difference_t<R> step_;
+};
+\end{lstlisting}
+
+这个类型必须有几个成员:
+
+\begin{itemize}
+\item
+别名模板base，表示基础范围迭代器的类型。
+
+\item
+别名模板称为value\_type，表示底层范围的元素类型。
+
+\item
+重载操作符++和*。
+
+\item
+重载操作符==将该对象与哨兵进行比较。
+\end{itemize}
+
+++操作符的实现使用std::ranges::next约束算法对迭代器增加N个位置，但不超过范围的结束。
+
+为了将step\_iterator和step\_sentinel对用于step\_view范围适配器，必须确保这个对实际上是格式良好的。为此，必须确保step\_iterator类型是一个输入迭代器，并且step\_sentinel类型确实是step\_iterator类型的哨兵类型。这可以在static\_assert帮助下完成:
+
+\begin{lstlisting}[style=styleCXX]
+namespace details
+{
+	using test_range_t =
+		std::ranges::views::all_t<std::vector<int>>;
+	static_assert(
+		std::input_iterator<step_iterator<test_range_t>>);
+	static_assert(
+		std::sentinel_for<step_sentinel<test_range_t>,
+		step_iterator<test_range_t>>);
+}
+\end{lstlisting}
+
+step\_iterator类型用于step\_view范围适配器的实现:
+
+\begin{lstlisting}[style=styleCXX]
+template<std::ranges::view R>
+struct step_view :
+	public std::ranges::view_interface<step_view<R>>
+{
+private:
+	R base_;
+	std::ranges::range_difference_t<R> step_;
+	
+public:
+	step_view() = default;
+	
+	constexpr step_view(
+		R base,
+		std::ranges::range_difference_t<R> step)
+			: base_(std::move(base))
+			, step_(step)
+	{
+	}
+
+	constexpr R base() const&
+		requires std::copy_constructible<R>
+	{ return base_; }
+	constexpr R base()&& { return std::move(base_); }
+	
+	constexpr std::ranges::range_difference_t<R> const&
+	increment() const
+	{ return step_; }
+	
+	constexpr auto begin()
+	{
+		return step_iterator<R const>(
+			std::ranges::begin(base_),
+			std::ranges::end(base_), step_);
+	}
+
+	constexpr auto begin() const
+	requires std::ranges::range<R const>
+	{
+		return step_iterator<R const>(
+			std::ranges::begin(base_),
+			std::ranges::end(base_), step_);
+	}
+
+	constexpr auto end()
+	{
+		return step_sentinel<R const>{
+			std::ranges::end(base_) };
+	}
+
+	constexpr auto end() const
+	requires std::ranges::range<R const>
+	{
+		return step_sentinel<R const>{
+			std::ranges::end(base_) };
+	}
+
+	constexpr auto size() const
+	requires std::ranges::sized_range<R const>
+	{
+		auto d = std::ranges::size(base_);
+		return step_ == 1 ? d :
+			static_cast<int>((d + 1)/step_); 
+	}
+	
+	constexpr auto size()
+	requires std::ranges::sized_range<R>
+	{
+		auto d = std::ranges::size(base_);
+		return step_ == 1 ? d :
+			static_cast<int>((d + 1)/step_);
+	}
+};
+\end{lstlisting}
+
+定义范围适配器时，必须遵循一个模式。这种模式表现为以下几个方面:
+
+\begin{itemize}
+\item
+类模板必须有符合std::ranges::view概念的模板参数。
+
+\item
+类模板应该派生自std::ranges:view\_interface，其本身接受一个模板参数，应该是范围适配器类。这基本上是第7章中的CRTP实现。
+
+\item
+类必须有默认构造函数。
+
+\item
+类必须具有返回基础范围的基成员函数。
+
+\item
+该类必须有begin成员函数，该函数返回指向范围内第一个元素的迭代器。
+
+\item
+该类必须有一个结束成员函数，该函数返回一个指向范围中倒数第一元素的迭代器或一个哨兵。
+
+\item
+对于满足std::ranges::size\_range概念要求的范围，该类还必须包含名为size的成员函数，该函数返回范围内的元素数量。
+\end{itemize}
+
+为了能够对step\_view类使用类模板参数推导，应该定义一个用户定义的推导指南。这在第4中讨论过，指南应该如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+template<class R>
+step_view(R&& base,
+		  std::ranges::range_difference_t<R> step)
+	-> step_view<std::ranges::views::all_t<R>>;
+\end{lstlisting}
+
+为了能够使用管道迭代器(|)将此范围适配器与其他范围适配器组合在一起，必须重载此操作符。但需要一些辅助函数对象，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+namespace details
+{
+	struct step_view_fn_closure
+	{
+		std::size_t step_;
+		constexpr step_view_fn_closure(std::size_t step)
+			: step_(step)
+		{
+		}
+	
+		template <std::ranges::range R>
+		constexpr auto operator()(R&& r) const
+		{
+			return step_view(std::forward<R>(r), step_);
+		}
+	};
+	template <std::ranges::range R>
+	constexpr auto operator | (R&& r,
+								step_view_fn_closure&& a)
+	{
+		return std::forward<step_view_fn_closure>(a)(
+			std::forward<R>(r));
+	}
+}
+\end{lstlisting}
+
+step\_view\_fn\_closure类是一个函数对象，存储了一个表示每个迭代器要跳过的元素数量的值。其重载调用操作符以一个范围作为参数，并返回从该范围创建的step\_view对象和要跳转的步数的值。
+
+最后，希望能够以与标准库中可用的方式类似的方式编写代码，标准库为每个存在的范围适配器在std::views命名空间中提供了一个编译时全局对象。例如，可以使用std::views::transform，而不是std::ranges::transform\_view。类似地，我们希望有一个对象views::step，而不是step\_view(某个命名空间中)。为此，还需要另一个函数对象:
+
+\begin{lstlisting}[style=styleCXX]
+namespace details
+{
+	struct step_view_fn
+	{
+		template<std::ranges::range R>
+		constexpr auto operator () (R&& r,
+								    std::size_t step) const
+		{
+			return step_view(std::forward<R>(r), step);
+		}
+	
+		constexpr auto operator () (std::size_t step) const
+		{
+			return step_view_fn_closure(step);
+		}
+	};
+}
+
+namespace views
+{
+	inline constexpr details::step_view_fn step;
+}
+\end{lstlisting}
+
+step\_view\_fn类型是一个函数对象，对调用操作符有两个重载:一个接受一个范围和一个整数，并返回一个step\_view对象，另一个接受一个整数并返回这个值的闭包。更准确地说，是前面step\_view\_fn\_closure的实例。
+
+实现了这些之后，就可以成功地运行本节开头所示的代码。我们已经完成了一个简单的范围适配器的实现，希望这能让您了解写入范围适配器需要什么。从细节上看，范围库非常复杂。本章中，已经了解了一些关于库内容的基础知识，如何简化代码，以及如何使用自定义特性扩展它。若想利用其他资源了解更多，这些知识应该只能算是一个起点。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

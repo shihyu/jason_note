@@ -1,0 +1,136 @@
+
+我们将通过澄清组件这个术语可能引起的混淆来开始讨论包组件。查看find\_package()的完整签名:
+
+\begin{lstlisting}[style=styleCMake]
+find_package(<PackageName> [version] [EXACT] [QUIET] [MODULE]
+	[REQUIRED] [[COMPONENTS] [components...]]
+	[OPTIONAL_COMPONENTS components...]
+	[NO_POLICY_SCOPE])
+\end{lstlisting}
+
+这里的组件不应该与install()指令中使用的COMPONENT关键字混淆。尽管名称相同，但它们是不同的概念，必须分开理解。我们将在下面的小节中更详细地讨论。
+
+\subsubsubsection{11.5.1\hspace{0.2cm}在find\_package()中使用组件}
+
+当使用带有组件列表的find\_package()或OPTIONAL\_COMPONENTS时，我们只对提供这些组件的包感兴趣。然而，要了解包需要验证的需求，若包供应商没有向创建高级配置文件一节中提到的配置文件添加必要的检查，那么什么也不会发生。
+
+请求的组件传递到<package>\_FIND\_COMPONENTS变量中的配置文件(可选和不可选)。此外，对于每个非可选组件，将设置一个<package>\_FIND\_REQUIRED\_<component>。作为包的作者，可以编写一个宏来扫描这个列表，并检查是否已经提供了所有必需的组件。但这里不需要这样做——这是check\_required\_components()的工作。配置文件应该在找到必要的组件时设置<Package>\_<Component>\_FOUND变量，文件末尾的宏将检查是否设置了所有必需的变量。
+
+\subsubsubsection{11.5.2\hspace{0.2cm}在install()指令中使用组件}
+
+有些生成的工件可能不需要为所有场景安装。例如，一个项目可能为了开发目的而安装静态库和公共头文件，但默认情况下，只能为运行时安装一个动态库。为了使这种双重行为成为可能，可以通过使用COMPONENT关键字将构件分组到一个公共名称下，该关键字在所有install()指令中都可用。将安装限制到特定组件的用户可以通过运行以下命令(组件名称区分大小写)显式请求:
+
+\begin{tcblisting}{commandshell={}}
+cmake --install <build tree> --component=<component name>
+\end{tcblisting}
+
+用COMPONENT关键字标记工件并不意味着它在默认情况下不会安装。为了防止这种情况发生，需要添加EXCLUDE\_FROM\_ALL关键字。
+
+可以通过码示例来探索这些组件:
+
+\begin{lstlisting}[style=styleCMake]
+# chapter-11/11-components/CMakeLists.txt (fragment)
+
+...
+install(TARGETS calc EXPORT CalcTargets
+	ARCHIVE
+		COMPONENT lib
+	PUBLIC_HEADER
+		DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/calc
+		COMPONENT headers
+)
+install(EXPORT CalcTargets
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/calc/cmake
+	NAMESPACE Calc::
+	COMPONENT lib
+)
+install(CODE "MESSAGE(\"Installing 'extra' component\")"
+	COMPONENT extra
+	EXCLUDE_FROM_ALL
+)
+...
+\end{lstlisting}
+
+这些安装命令定义了以下组件:
+
+\begin{itemize}
+\item 
+lib: 这包含静态库和目标导出文件。默认安装。
+
+\item 
+headers: 包含公共头文件。默认安装。
+
+\item 
+extra: 通过打印一条消息来执行一段代码。默认不安装。
+\end{itemize}
+
+这里重申一下:
+
+\begin{itemize}
+\item 
+cmake -{}-install若没有-{}-component参数，将同时安装lib和header组件。
+
+\item 
+cmake -{}-install -{}-component headers 将只安装公共头文件。
+
+\item 
+cmake -{}-install -{}-component extra将打印一个无法访问的消息(因为有EXCLUDE\_FROM\_ALL关键字)。
+\end{itemize}
+
+若没有为安装的工件指定COMPONENT关键字，将从CMAKE\_INSTALL\_DEFAULT\_COMPONENT\_NAME变量中获得一个未指定的默认值。
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Note]
+因为没有简单的方法列出cmake命令行中可用的所有组件，所以包的用户将从列出包组件的文档中受益，也许INSTALL文件是说明这些的好地方。
+\end{tcolorbox}
+
+若对不存在的组件使用-{}-component参数调用cmake，则该命令将成功执行，而不会出现任何警告或错误，就是不会安装任何东西。
+
+将安装划分为组件使用户能够挑选想要安装的组件。我们主要讨论了将已安装的文件分组为组件，但也有一些过程步骤，如install(SCRIPT|CODE)或为动态库创建符号链接。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{管理版本动态库的符号链接}
+
+安装的目标平台可能使用符号链接来帮助链接程序发现动态库的当前安装版本。创建一个lib<name>.so后，将其连接到lib<name>.so.1，然后就可以通过-l<name>来链接这个库。这种符号链接的创建在需要时由CMake的install(TARGETS <target> LIBRARY)处理。
+
+然而，可以通过添加NAMELINK\_SKIP来决定将这个步骤移动到另一个install()指令中:
+
+\begin{lstlisting}[style=styleCMake]
+install(TARGETS <target> LIBRARY COMPONENT cmp
+	NAMELINK_SKIP)
+\end{lstlisting}
+
+要将符号链接分配给另一个组件(而不是完全禁用)，可以为相同的目标重复install()指令，并指定一个不同的组件，后面跟着NAMELINK\_ONLY关键字:
+
+\begin{lstlisting}[style=styleCMake]
+install(TARGETS <target> LIBRARY COMPONENT lnk
+	NAMELINK_ONLY)
+\end{lstlisting}
+
+同样可以通过NAMELINK\_COMPONENT关键字实现:
+
+\begin{lstlisting}[style=styleCMake]
+install(TARGETS <target> LIBRARY
+	COMPONENT cmp NAMELINK_COMPONENT lnk)
+\end{lstlisting}
+
+现在已经配置了自动安装，可以使用CMake中包含的CPack工具为用户提供预构建的构件。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

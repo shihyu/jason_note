@@ -1,0 +1,314 @@
+
+std::chrono库提供了用于测量、报告时间和间隔的工具。
+
+这些类和函数中的许多都是在C++11中引入的，但在C++20中已经有了重大的变化和更新。在撰写本文时，许多更新还没有在我测试的系统上实现。
+
+本示例使用chrono库，为事件进行计时。
+
+\subsubsection{How to do it…}
+
+system\_clock类用于报告当前日期和时间。steady\_clock和high\_resolution\_clock类用于计时事件。让我们来看看这些时钟间的区别:
+
+\begin{itemize}
+\item 
+因为这些名字可能又长又不方便，在整个示例中使用一些类型别名:
+
+\begin{lstlisting}[style=styleCXX]
+using std::chrono::system_clock;
+using std::chrono::steady_clock;
+using std::chrono::high_resolution_clock;
+using std::chrono::duration;
+using seconds = duration<double>;
+using milliseconds = duration<double, std::milli>;
+using microseconds = duration<double, std::micro>;
+using fps24 = duration<unsigned long, std::ratio<1, 24>>;
+\end{lstlisting}
+
+duration类表示两个时间点之间的间隔。这些别名便于使用不同的间隔。
+
+\item 
+可以使用system\_clock类来获取当前时间和日期:
+
+\begin{lstlisting}[style=styleCXX]
+auto t = system_clock::now();
+cout << format("system_clock::now is {:%F %T}\n", t);
+\end{lstlisting}
+
+system\_clock::now()函数的作用是:返回一个time\_point对象。<chrono>库包含了time\_point的format()特化，该特化使用strftime()格式说明符。
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+system_clock::now is 2022-02-05 13:52:15
+\end{tcblisting}
+
+<iomanip>头文件包括put\_time()，其工作方式类似于ostream的strftime():
+
+\begin{lstlisting}[style=styleCXX]
+std::time_t now_t = system_clock::to_time_t(t);
+cout << "system_clock::now is "
+	<< std::put_time(std::localtime(&now_t), "%F %T")
+	<< '\n';
+\end{lstlisting}
+
+put\_time()接受一个指向C风格time\_t*值的指针。system\_clock::to\_time\_t转换time\_point对象为time\_t。
+
+这与format()示例的输出相同:
+
+\begin{tcblisting}{commandshell={}}
+system_clock::now is 2022-02-05 13:52:15
+\end{tcblisting}
+
+\item 
+也可以使用system\_clock为事件计时。首先，需要进行计时。下面是一个计算质数的函数:
+
+\begin{lstlisting}[style=styleCXX]
+constexpr uint64_t MAX_PRIME{ 0x1FFFF }
+uint64_t count_primes() {
+	constexpr auto is_prime = [](const uint64_t n) {
+		for(uint64_t i{ 2 }; i < n / 2; ++i) {
+			if(n % i == 0) return false;
+		}
+		return true;
+	};
+	uint64_t count{ 0 };
+	uint64_t start{ 2 };
+	uint64_t end{ MAX_PRIME };
+	for(uint64_t i{ start }; i <= end ; ++i) {
+		if(is_prime(i)) ++count;
+	}
+	return count;
+}
+\end{lstlisting}
+
+这个函数对2到0x1FFFF(131,071)之间的质数进行计数，在大多数现代系统上，这需要几秒钟的时间。
+
+\item 
+现在，编写一个计时器函数来计时count\_primes():
+
+\begin{lstlisting}[style=styleCXX]
+seconds timer(uint64_t(*f)()) {
+	auto t1{ system_clock::now() };
+	uint64_t count{ f() };
+	auto t2{ system_clock::now() };
+	seconds secs{ t2 - t1 };
+	cout << format("there are {} primes in range\n",
+		count);
+	return secs;
+}
+\end{lstlisting}
+
+这个函数接受一个函数f，并返回duration<double>。这里使用system\_clock::now()来标记调用f()前后的时间。取两个时间之间的差值，并在duration对象中返回。
+
+\item 
+可以在main()中使用timer():
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	auto secs{ timer(count_primes) };
+	cout << format("time elapsed: {:.3f} seconds\n",
+	secs.count());
+	...
+\end{lstlisting}
+
+这将把count\_primes()函数传递给timer()，并以秒为单位存储持续时间对象。
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+there are 12252 primes in range
+time elapsed: 3.573 seconds
+\end{tcblisting}
+
+duration对象上的count()方法返回指定单位的持续时间——本例中为double，表示持续时间的秒数。
+
+这是在一个运行Debian和GCC的VM上运行的，具体的时间在不同的系统上会有所不同。
+
+\item 
+system\_clock类设计用来提供当前挂钟时间。虽然其频率可能支持计时目的，但不保证单调。换句话说，它可能不能提供一致的计时间隔。
+
+chrono库在steady\_clock中提供了一个更合适的时钟。它具有与system\_clock相同的接口，但为计时目的提供了更可靠的计时间隔:
+
+\begin{lstlisting}[style=styleCXX]
+seconds timer(uint64_t(*f)()) {
+	auto t1{ steady_clock::now() };
+	uint64_t count{ f() };
+	auto t2{ steady_clock::now() };
+	seconds secs{ t2 - t1 };
+	cout << format("there are {} primes in range\n",
+		count);
+	return secs;
+}
+\end{lstlisting}
+
+steady\_clock设计用于提供可靠一致的单调，适用于计时事件。它使用一个相对的时间参考，所以不用挂钟时间。system\_clock从固定的时间点(1970年1月1日00:00 UTC)开始测量，而steady\_clock使用相对时间。
+
+另一个选项是high\_resolution\_clock，在给定系统上提供最短的计时间隔期，但在不同的实现中实现不一致。其可能是system\_clock或steady\_clock的别名，可能是单调的，也可能不是。
+
+high\_resolution\_clock不建议通用。
+
+\item 
+timer()函数返回seconds，是duration<double>的别名:
+
+\begin{lstlisting}[style=styleCXX]
+using seconds = duration<double>;
+\end{lstlisting}
+
+duration类接受一个可选的第二个模板形参，一个std::ratio类:
+
+\begin{lstlisting}[style=styleCXX]
+template<class Rep, class Period = std::ratio<1>>
+class duration;
+\end{lstlisting}
+
+<chrono>头文件为许多十进制比率提供了方便的类型，包括milli和micro:
+
+\begin{lstlisting}[style=styleCXX]
+using milliseconds = duration<double, std::milli>;
+using microseconds = duration<double, std::micro>;
+\end{lstlisting}
+
+若需要其他工具，可以自己准备:
+
+\begin{lstlisting}[style=styleCXX]
+using fps24 = duration<unsigned long, std::ratio<1, 24>>;
+\end{lstlisting}
+
+fps24表示以标准的每秒24帧拍摄的电影帧数。比率是1/24秒。
+
+这让我们可以轻松地在不同的持续时间范围之间进行转换:
+
+\begin{lstlisting}[style=styleCXX]
+cout << format("time elapsed: {:.3f} sec\n", secs.
+count());
+cout << format("time elapsed: {:.3f} ms\n",
+	milliseconds(secs).count());
+cout << format("time elapsed: {:.3e} μs\n",
+	microseconds(secs).count());
+cout << format("time elapsed: {} frames at 24 fps\n",
+	floor<fps24>(secs).count());
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+time elapsed: 3.573 sec
+time elapsed: 3573.077 ms
+time elapsed: 3.573e+06 μs
+time elapsed: 85 frames at 24 fps
+\end{tcblisting}
+
+因为fps24别名使用unsigned long，而不是double，所以需要进行类型转换。floor函数通过丢弃小数部分来实现这一点。Round()和ceil()在此上下文中也可用。
+
+\item 
+方便起见，chrono库提供了标准持续时间比的format()特化:
+
+\begin{lstlisting}[style=styleCXX]
+cout << format("time elapsed: {:.3}\n", secs);
+cout << format("time elapsed: {:.3}\n",
+milliseconds(secs));
+cout << format("time elapsed: {:.3}\n",
+microseconds(secs));
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+time elapsed: 3.573s
+time elapsed: 3573.077ms
+time elapsed: 3573076.564μs
+\end{tcblisting}
+
+这些结果在不同的实现上有所不同。
+\end{itemize}
+
+\subsubsection{How it works…}
+
+chrono库有两个主要部分，时钟类和间隔类。
+
+\noindent
+\textbf{时钟类}
+
+时钟类包括：
+
+\begin{itemize}
+\item 
+system\_clock – 提供挂钟时间。
+
+\item 
+steady\_clock – 为时间测量提供有保证的单调计时间隔。
+
+\item 
+high\_resolution\_clock – 提供最短的可用计时间隔周期。某些系统上，其可能是system\_clock或steady\_clock的别名。
+
+\end{itemize}
+
+我们使用system\_clock显示当前时间和日期，用steady\_clock来测量间隔。
+
+每个时钟类都有一个now()方法，该方法返回time\_point，表示时钟的当前值。now()是一个静态成员函数，所以可以不实例化对象:
+
+\begin{lstlisting}[style=styleCXX]
+auto t1{ steady_clock::now() };
+\end{lstlisting}
+
+\noindent
+\textbf{std::duration类}
+
+duration类用于保存时间间隔——即两个time\_point对象之间的差值。它通常由time\_point对象的减法(-)操作符构造。
+
+\begin{lstlisting}[style=styleCXX]
+duration<double> secs{ t2 - t1 };
+\end{lstlisting}
+
+time\_point减去操作符作为duration的构造函数:
+
+\begin{lstlisting}[style=styleCXX]
+template<class C, class D1, class D2>
+constexpr duration<D1,D2>
+operator-( const time_point<C,D1>& pt_lhs,
+	const time_point<C,D2>& pt_rhs );
+\end{lstlisting}
+
+duration类有用于类型表示的模板参数和一个ratio对象:
+
+\begin{lstlisting}[style=styleCXX]
+template<class Rep, class Period = std::ratio<1>>
+class duration;
+\end{lstlisting}
+
+周期模板参数默认为1:1，即秒。
+
+标准库为10次方提供了从atto(1/1,000,000,000,000,000,000)到exa(1,000,000,000,000,000,000/1)的比率别名(例如micro和milli)。我们可以创建标准的持续时间，就像示例中那样:
+
+\begin{lstlisting}[style=styleCXX]
+using milliseconds = duration<double, std::milli>;
+using microseconds = duration<double, std::micro>;
+\end{lstlisting}
+
+count()方法给出了Rep类型中的持续时间:
+
+\begin{lstlisting}[style=styleCXX]
+constexpr Rep count() const;
+\end{lstlisting}
+
+这使得我们可以方便地访问持续时间，并用于显示或其他目的:
+
+\begin{lstlisting}[style=styleCXX]
+cout << format("duration: {}\n", secs.count());
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

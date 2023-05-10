@@ -1,0 +1,99 @@
+链接器会执行ODR，并确保所有外部符号在链接过程中提供的定义。我们可能会遇到的问题是，构建的正确测试。
+
+理想情况下，应该测试在生产环境中运行的完全相同的源代码。详尽的测试流水应该构建源代码，生成的二进制文件上运行测试，然后打包并分发可执行文件(不包含测试本身)。
+
+但要如何做到这一点呢?可执行程序有一个非常特定的执行流，这通常需要读取命令行参数。C++的编译特性并不真正支持可插入单元，这些可插入单元可以临时注入到二进制文件中，仅用于测试目的。看来我们需要一个非常复杂的方法来解决这个问题。
+
+幸运的是，链接器可以以一种优雅的方式处理这个问题。考虑从程序的main()提取所有逻辑到一个外部函数，start\_program():
+
+\begin{lstlisting}[style=styleCXX]
+// chapter06/07-testing/main.cpp
+
+extern int start_program(int, const char**);
+int main(int argc, const char** argv) {
+	return start_program(argc, argv);
+}
+\end{lstlisting}
+
+现在跳过测试这个新的main()函数是合理的，只是将参数转发到别处定义的函数(在另一个文件中)。然后，可以创建一个库，其中包含包装在新函数start\_program()中的main()原始源代码。这个例子中，将使用一个简单的程序来检查命令行参数count是否大于1:
+
+\begin{lstlisting}[style=styleCXX]
+// chapter06/07-testing/program.cpp
+
+#include <iostream>
+int start_program(int argc, const char** argv) {
+	if (argc <= 1) {
+		std::cout << "Not enough arguments" << std::endl;
+		return 1;
+	}
+	return 0;
+}
+\end{lstlisting}
+
+现在可以准备一个项目来构建这个应用程序，并将这两个翻译单元链接在一起:
+
+\begin{lstlisting}[style=styleCMake]
+# chapter06/07-testing/CMakeLists.txt
+
+cmake_minimum_required(VERSION 3.20.0)
+project(Testing CXX)
+
+add_library(program program.cpp)
+
+add_executable(main main.cpp)
+target_link_libraries(main program)
+\end{lstlisting}
+
+主要目标只是提供所需的main()函数，包含所有逻辑的程序目标。现在，可以通过创建另一个可执行文件，以及包含测试逻辑的main()来测试它。
+
+现实场景中，GoogleTest或Catch2等框架会提供main()，可用于替换程序的入口点并运行所有已定义的测试。我们将在第8章中深入研究实际测试。现在，让我们专注于原理，并在另一个main()函数中编写自己的测试:
+
+\begin{lstlisting}[style=styleCXX]
+// chapter06/07-testing/test.cpp
+
+#include <iostream>
+extern int start_program(int, const char**);
+using namespace std;
+int main() {
+	auto exit_code = start_program(0, nullptr);
+	if (exit_code == 0)
+		cout << "Non-zero exit code expected" << endl;
+	
+	const char* arguments[2] = {"hello", "world"};
+	exit_code = start_program(2, arguments);
+	if (exit_code != 0)
+		cout << "Zero exit code expected" << endl;
+}
+\end{lstlisting}
+
+前面的代码将调用start\_program两次，带参数和不带参数，并检查返回的退出代码是否正确。干净的代码和优雅的测试实践方面，这个单元测试还有很多需要改进的地方，但至少这是一个开始。重要的是我们已经两次定义了main():
+
+\begin{enumerate}
+\item 
+在main.cpp中用于生产使用
+
+\item 
+在test.cpp中进行测试
+\end{enumerate}
+
+现在将把第二个可执行文件添加到CMakeLists.txt的底部:
+
+\begin{lstlisting}[style=styleCMake]
+add_executable(test test.cpp)
+target_link_libraries(test program)
+\end{lstlisting}
+
+这将创建另一个目标，该目标与生产对象完全相同的二进制代码相链接，可以自由地调用所有导出函数。得益于此，我们可以自动运行所有代码路径，并检查它们是否按预期工作。太棒了!
+
+
+
+
+
+
+
+
+
+
+
+
+

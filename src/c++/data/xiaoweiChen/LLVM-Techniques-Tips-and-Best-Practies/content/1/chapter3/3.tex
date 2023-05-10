@@ -1,0 +1,298 @@
+
+\textbf{FileCheck}是LLVM的高级模式检查器，与Unix/Linux系统中的grep类似，使用基于行的上下文，从而提供了更强大而简单的语法。此外，可以将\texttt{FileCheck}指令放在测试目标旁，可以让测试用例自包含，使测试更容易理解。
+
+虽然基本的\texttt{FileCheck}语法很容易上手，但\texttt{FileCheck}还有许多其他功能，它们才能真正展示\texttt{FileCheck}的强大功能，并极大地改善了开发者的测试体验——例如创建更简洁的测试脚本和解析更复杂的程序输出，本节将向您展示其中的一些技巧。
+
+\subsubsubsection{3.3.1\hspace{0.2cm}准备示例项目}
+
+首先需要构建\texttt{FileCheck}命令行工具。与前一节类似，在LLVM树中构建一个\texttt{check-XXX}(伪)目标是最简单的方法:
+
+\begin{tcblisting}{commandshell={}}
+$ ninja check-llvm-support
+\end{tcblisting}
+
+在本节中，我们将使用一个假想的命令行工具\texttt{js-obfuscator}，这是一个JavaScript 混淆工具。\textbf{混淆}是一种常用的技术，用于隐藏知识产权或加强安全保护。例如，可以在以下JavaScript代码中使用JavaScript混淆器:
+
+\begin{lstlisting}[style=styleJavaScript]
+const onLoginPOST = (req, resp) => {
+	if(req.name == 'admin')
+		resp.send('OK');
+	else
+		resp.sendError(403);
+}
+myReset.post('/console', onLoginPOST);
+\end{lstlisting}
+
+将转换成以下代码:
+
+\begin{lstlisting}[style=styleJavaScript]
+const t = "nikfmnsdzaO";
+const aaa = (a, b) => {
+	if(a.z[0] == t[9] && a.z[1] == t[7] &&…)
+		b.f0(t[10] + t[2].toUpperCase());
+	else
+		b.f1(0x193);
+}
+G.f4(YYY, aaa);
+\end{lstlisting}
+
+这个工具将尽量使原始脚本让人看不懂。测试部分面临的挑战是，在验证其正确性的同时仍然为随机性保留足够的空间。简单地说，\texttt{js-obfuscator}只有4条混淆规则:
+
+\begin{enumerate}
+\item 只混淆局部变量名，包括形参。形式参数名以\textit{<小写单词><参数索引号>}格式进行混淆。局部变量名混淆成小写字母和大写字母的组合。
+
+\item 如果用箭头语法来声明函数——例如，\texttt{foo = (arg1, arg2) => \{…\}}——箭头和左花括号\texttt{(=> \{})需要放在下一行。
+	
+\item 用不同表示形式的相同值替换文字数，例如：将87替换为0x57或87.000。
+
+\item 当使用\texttt{-\,-shuffle-funcs}选项时，会改变顶层函数的声明/出现顺序。
+
+\end{enumerate}
+
+最后，下面的JavaScript代码是使用\texttt{js-obfuscator}的一个示例:
+
+\begin{lstlisting}[style=styleJavaScript]
+const square = x => x * x;
+const cube = x => x * x * x;
+const my_func1 = (input1, input2, input3) => {
+	// TODO: Check if the arrow and curly brace are in the second
+	// line
+	// TODO: Check if local variable and parameter names are
+	// obfuscated
+	let intermediate = square(input3);
+	let output = input1 + intermediate - input2;
+	return output;
+}
+const my_func2 = (factor1, factor2) => {
+	// TODO: Check if local variable and parameter names are
+	// obfuscated
+	let term2 = cube(factor1);
+	// TODO: Check if literal numbers are obfuscated
+	return my_func1(94, term2, factor2);
+}
+console.log(my_func2(1,2));
+\end{lstlisting}
+
+\subsubsubsection{3.3.2\hspace{0.2cm}书写FileCheck指令}
+
+下面的步骤将填充前面代码中出现的\texttt{TODO}注释:
+
+\begin{enumerate}
+\item 根据行号，第一个任务是检查局部变量和参数是否正确地混淆。根据规范，形参有特殊的重命名规则(即\textit{<小写单词><参数索引号>})，所以使用普通的\texttt{CHECK}指令和FileCheck自己的正则表达式是这里最合适的解决方案:
+
+\begin{lstlisting}[style=styleJavaScript]
+// CHECK: my_func1 = ({{[a-z]+0}}, {{[a-z]+1}},
+// {{[a-z]+2}})
+const my_func1 = (input1, input2, input3) => {
+…
+\end{lstlisting}
+
+FileCheck使用正则表达式的子集来进行模式匹配，使用\texttt{\{\{…\}\}}或\texttt{[[…]]}。
+
+\item 这段代码看起来非常简单。当进行了混淆，代码也需要正确的语义。因此，除了检查格式之外，对参数的后续引用也需要重构，这就是要使用FileCheck的模式绑定的原因：
+
+\begin{lstlisting}[style=styleJavaScript]
+// CHECK: my_func1 = ([[A0:[a-z]+0]],
+// [[A1:[a-z]+1]], [[A2:[a-z]+2]])
+const my_func1 = (input1, input2, input3) => {
+	// CHECK: square([[A2]])
+	let intermediate = square(input3);
+…
+\end{lstlisting}
+
+该代码使用\texttt{[[…]]}语法将形参的模式绑定为名称为\texttt{A0~A2}，其中绑定变量名和模式用冒号分开：\texttt{[[<绑定变量>:<模式>]]}。使用相同的\texttt{[[…]]}语法绑定变量的引用位置，不过没有了模式部分。
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, fonttitle=\bfseries,title=Note]
+\hspace*{0.7cm}一个绑定变量可以有多个定义点，其参考点将读取最后的定义值。
+\end{tcolorbox}
+
+\item 不要忘记第二条规则——函数头的箭头和左花括号需要放在第二行。要实现“后一行”的概念，可以使用\texttt{CHECK-NEXT}指令:
+
+\begin{lstlisting}[style=styleJavaScript]
+// CHECK: my_func1 = ([[A0:[a-z]+0]],
+// [[A1:[a-z]+1]], [[A2:[a-z]+2]])
+const my_func1 = (input1, input2, input3) => {
+	// CHECK-NEXT: => {
+\end{lstlisting}
+
+与原来的\texttt{CHECK}指令相比，\texttt{CHECK-NEXT}指令不仅检查模式是否存在，还确保模式在前一个指令的行后面。
+
+\item 接下来，在\texttt{my\_func1}中检查所有的局部变量和形参:
+
+\begin{lstlisting}[style=styleJavaScript]
+// CHECK: my_func1 = ([[A0:[a-z]+0]],
+// [[A1:[a-z]+1]], [[A2:[a-z]+2]])
+const my_func1 = (input1, input2, input3) => {
+	// CHECK: let [[IM:[a-zA-Z]+]] = square([[A2]]);
+	let intermediate = square(input3);
+	// CHECK: let [[OUT:[a-zA-Z]+]] =
+	// CHECK-SAME: [[A0]] + [[IM]] - [[A1]];
+	let output = input1 + intermediate - input2;
+	// CHECK: return [[OUT]];
+	return output;
+}
+\end{lstlisting}
+
+正如前面代码所示，\texttt{CHECK-SAME}指令用于在同一行中匹配后续的模式。这背后的原理是\texttt{FileCheck}期望不同的\texttt{CHECK}指令在不同的行中进行匹配。那么，假设这段代码的一部分是这样的:
+
+\begin{lstlisting}[style=styleJavaScript]
+// CHECK: let [[OUT:[a-zA-Z]+]] =
+// CHECK: [[A0]] + [[IM]] - [[A1]];
+\end{lstlisting}
+
+它将只匹配跨越两行或更多的代码，如下所示:
+
+\begin{lstlisting}[style=styleJavaScript]
+let BGHr =
+	r0 + jkF + r1;
+\end{lstlisting}
+
+否则将抛出一个错误。如果想避免编写超长的检查语句行，可以使测试脚本更加简洁，并且可读性更强，这个指令就非常有用。
+
+\item 进入\texttt{my\_func2}，现在检查文字数字是否正确混淆。这里的检查语句旨在接受除原始数字之外的任何实例/模式。因此，这里使用\texttt{CHECK-NOT}指令就足够了:
+
+\begin{lstlisting}[style=styleJavaScript]
+…
+// CHECK: return my_func1(
+// CHECK-NOT: 94
+return my_func1(94,
+				term2, factor2);
+\end{lstlisting}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, fonttitle=\bfseries,title=Note]
+\hspace*{0.7cm}因为\texttt{CHECK-NOT}在返回\texttt{my\_func1(94}，所以第一个\texttt{CHECK}指令是必需的。这里，\texttt{CHECK-NOT}将给出假阴性结果，而没有\texttt{CHECK}指令将光标移动到正确的行。
+\end{tcolorbox}
+
+此外，\texttt{CHECK-NOT}在表示\texttt{不<特定模式>…但<正确模式>}时，与\texttt{CHECK-SAME}一起使用会非常好用。
+
+例如，如果混淆规则声明所有的文字数字都需要混淆成十六进制数，那可以用下面的代码来表达\textit{“不想看到94…但是想看到0x5E或0x5e”}的断言:
+
+\begin{lstlisting}[style=styleJavaScript]
+…
+// CHECK: return my_func1
+// CHECK-NOT: 94,
+// CHECK-SAME: {{0x5[eE]}}
+return my_func1(94,
+				term2, factor2);
+\end{lstlisting}
+
+\item 现在，只需要验证一个混淆规则：\texttt{js-obfuscator}工具提供了命令行选项\texttt{-\,-shuffle-funcs}，可以打乱所有顶级函数。这时，即使它们已经打乱了，也还需要检查顶级函数是否保持一定的顺序。在JavaScript中，函数在调用时解析。所以，\texttt{cube}、\texttt{square}、\texttt{my\_func1}和\texttt{my\_func2}可以有任意的顺序，只要放在\texttt{console.log(…)}语句之前。使用\texttt{CHECK-DAG}指令表达这种灵活性非常好用。
+
+相邻的\texttt{CHECK-DAG}指令将以任意顺序匹配文本。例如，假设有以下指令:
+
+\begin{lstlisting}[style=styleJavaScript]
+// CHECK-DAG: 123
+// CHECK-DAG: 456
+\end{lstlisting}
+
+这些指令将匹配以下内容:
+
+\begin{lstlisting}[style=styleJavaScript]
+123
+456
+\end{lstlisting}
+
+还将匹配以下内容:
+
+\begin{lstlisting}[style=styleJavaScript]
+456
+123
+\end{lstlisting}
+
+然而，这种排序自由在\texttt{CHECK}或\texttt{CHECK-NOT}指令中都不存在。例如，假设有这些指令:
+
+\begin{lstlisting}[style=styleJavaScript]
+// CHECK-DAG: 123
+// CHECK-DAG: 456
+// CHECK: 789
+// CHECK-DAG: abc
+// CHECK-DAG: def
+\end{lstlisting}
+
+这些指令将匹配以下文本:
+
+\begin{lstlisting}[style=styleJavaScript]
+456
+123
+789
+def
+abc
+\end{lstlisting}
+
+但是，不匹配以下文本:
+
+\begin{lstlisting}[style=styleJavaScript]
+456
+789
+123
+def
+abc
+\end{lstlisting}
+
+\item 回到我们的例子，可以使用下面的代码来检查混淆规则:
+
+\begin{lstlisting}[style=styleJavaScript]
+…
+// CHECK-DAG: const square =
+// CHECK-DAG: const cube =
+// CHECK-DAG: const my_func1 =
+// CHECK-DAG: const my_func2 =
+// CHECK: console.log
+console.log(my_func2(1,2));
+\end{lstlisting}
+
+但是，只有在向工具提供相应的命令行选项时，才会发生函数变换。不过，\texttt{FileCheck}提供了一种将多个不同检查套件集成到单个文件中的方法，其中每个套件可以自定义运行方式，并将检查与其他套件分离。
+
+\item \texttt{FileCheck}中检查前缀的思想非常简单：可以创建一个独立运行的检查套件。前面提到的所有指令(\texttt{CHECK-NOT}和\texttt{CHECK-SAME})中，每个套件将用相应字符串替换，包括\texttt{CHECK}本身，以区别于同一文件中的其他套件。例如，可以创建一个带有\texttt{YOL}O前缀的套件，这样这个例子(部分)现在看起来如下所示:
+
+\begin{lstlisting}[style=styleJavaScript]
+// YOLO: my_func2 = ([[A0:[a-z]+0]], [[A1:[a-z]+1]])
+const my_func2 = (factor1, factor2) => {
+…
+// YOLO-NOT: return my_func1(94,
+// YOLO-SAME: return my_func1({{0x5[eE]}},
+return my_func1(94,
+				term2, factor2);
+…
+\end{lstlisting}
+
+要使用自定义前缀，需要在\texttt{-\,-check-prefix}选项中指定。这里，像这样使用\texttt{FileCheck}命令:
+
+\begin{tcblisting}{commandshell={}}
+$ cat test.out.js | FileCheck --check-prefix=YOLO test.js
+\end{tcblisting}
+
+\item 最后，回到我们的例子。最后一个混淆规则可以通过\texttt{CHECK-DAG}指令使用另一个前缀来解决:
+
+\begin{lstlisting}[style=styleJavaScript]
+…
+// CHECK-SHUFFLE-DAG: const square =
+// CHECK-SHUFFLE-DAG: const cube =
+// CHECK-SHUFFLE-DAG: const my_func1 =
+// CHECK-SHUFFLE-DAG: const my_func2 =
+// CHECK-SHUFFLE: console.log
+console.log(my_func2(1,2));
+\end{lstlisting}
+
+\end{enumerate}
+
+这必须与默认的检查套件相结合。本节中提到的所有检查可以在两个独立的命令中运行，如下所示:
+
+\begin{tcblisting}{commandshell={}}
+# Running the default check suite
+$ js-obfuscator test.js | FileCheck test.js
+# Running check suite for the function shuffling option
+$ js-obfuscator --shuffle-funcs test.js | \
+    FileCheck --check-prefix=CHECK-SHUFFLE test.js
+\end{tcblisting}
+
+本节中，我们通过示例项目展示了一些高级的\texttt{FileCheck}技能。这些技能提供了不同的方法来编写验证模式，并使LIT测试脚本更简洁。
+
+目前为止，我们一直在讨论测试方法，以及在类Shell环境(即以\texttt{ShTest} LIT格式)中运行测试。下一节中，我们将介绍替代LIT的框架——\texttt{llvm-test-suite}项目的\textit{TestSuite}框架和测试格式——提供了一种与LIT\textit{不同的}的测试方法。
+
+
+
+
+
+
+

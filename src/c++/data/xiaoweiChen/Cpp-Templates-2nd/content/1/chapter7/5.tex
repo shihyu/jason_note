@@ -1,0 +1,104 @@
+
+
+对于返回值，还可以决定是通过值返回，还是通过引用返回。但返回引用可能是麻烦的来源，因为引用的东西超出了控制范围。一些情况下，返回引用是常见的编程实践:
+
+\begin{itemize}
+\item 
+返回容器或字符串元素(例如，通过operator[]或front())
+
+\item 
+授予类成员写访问权限
+
+\item 
+返回链式调用的对象(流的operator<{}<和operator>{}>，类对象的operator=)
+\end{itemize}
+
+此外，通过返回const引用来授予成员读权限。
+
+若使用不当，可能会产生麻烦。例如:
+
+\begin{lstlisting}[style=styleCXX]
+std::string* s = new std::string("whatever");
+auto& c = (*s)[0];
+delete s;
+std::cout << c; // run-time ERROR
+\end{lstlisting}
+
+这里，获得了一个字符串元素的引用，但是当使用这个引用时，底层字符串已经不存在了(创建了一个悬空引用)，并且出现了未定义行为。这个例子有些做作(有经验的程序员可能马上就会注意到问题)，但是事情可能会变得不那么明显。例如:
+
+\begin{lstlisting}[style=styleCXX]
+auto s = std::make_shared<std::string>("whatever");
+auto& c = (*s)[0];
+s.reset();
+std::cout << c; // run-time ERROR
+\end{lstlisting}
+
+因此，应该确保函数模板按值返回结果。正如本章所讨论的，使用模板参数T并不能保证它不是引用，因为T有时可能会隐式推导为引用:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+T retR(T&& p) // p is a forwarding reference
+{
+	return T{...}; // OOPS: returns by reference when called for lvalues
+}
+\end{lstlisting}
+
+即使T是由按值调用推导而来的模板参数，当显式指定模板参数为引用时，也可能成为引用类型:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+T retV(T p) // Note: T might become a reference
+{
+	return T{...}; // OOPS: returns a reference if T is a reference
+}
+
+int x;
+retV<int&>(x); // retT() instantiated for T as int&
+\end{lstlisting}
+
+安全起见，这里有两个选择:
+
+\begin{itemize}
+\item 
+使用类型特征std::remove\_reference<>(参见D.4节)将类型T转换为非引用:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+typename std::remove_reference<T>::type retV(T p)
+{
+	return T{...}; // always returns by value
+}
+\end{lstlisting}
+
+其他特征，如std::decay<>(参见D.4节)，因为隐式地移除引用，在这里也可能会有用。
+
+\item 
+编译器通过声明返回类型auto来推断返回类型(C++14起;参见第1.3.2节)，因为auto总会衰变:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+auto retV(T p) // by-value return type deduced by compiler
+{
+	return T{...}; // always returns by value
+}
+\end{lstlisting}
+
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

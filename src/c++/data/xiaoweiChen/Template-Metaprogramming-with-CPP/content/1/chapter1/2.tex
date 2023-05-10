@@ -1,0 +1,168 @@
+本节中，我们将从三个简单的示例开始编写C++模板，每个示例对应前面给出的代码片段。
+
+前面max函数的模板如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T>
+T max(T const a, T const b)
+{
+	return a > b ? a : b;
+}
+\end{lstlisting}
+
+这里的类型名称(例如int或double)被T(代表类型)取代。T称为类型模板形参，并通过语法template<typename T>或typename<class T>引入。T是一个参数，可以使用任意的名称。
+
+此时，源码中的模板只是一个蓝图，编译器将根据其使用情况生成代码，并将为使用模板的每种类型实例化一个函数重载:
+
+\begin{lstlisting}[style=styleCXX]
+struct foo{};
+int main()
+{
+	foo f1, f2;
+	max(1, 2); // OK, compares ints
+	max(1.0, 2.0); // OK, compares doubles
+	max(f1, f2); // Error, operator> not overloaded for
+	             // foo
+}
+\end{lstlisting}
+
+代码中，首先使用两个整数调用max，operator>可用于int类型。这将生成一个重载int max(int const a, int const b)。其次，用两个double值调用max，这也没关系，因为operator>适用于double值。因此，编译器将生成另一个重载，double max(double const a, double const b)。第三次调用max将生成一个编译器错误，因为foo类型没有重载operator>。
+
+这里不讨论太多细节，使用max函数的方式如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+max<int>(1, 2);
+max<double>(1.0, 2.0);
+max<foo>(f1, f2);
+\end{lstlisting}
+
+编译器能够推断推导参数的类型，因此写上去就是是多余的。但在某些情况下，编译器无法推导参数类型，所以需要使用以下语法显式指定类型。
+
+第二个例子涉及前一节中的函数，是处理void*参数的quicksort()实现，可以很容易地改为模板版本:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T>
+void swap(T* a, T* b)
+{
+	T t = *a;
+	*a = *b;
+	*b = t;
+}
+
+template <typename T>
+int partition(T arr[], int const low, int const high)
+{
+	T pivot = arr[high];
+	int i = (low - 1);
+	
+	for (int j = low; j <= high - 1; j++)
+	{
+		if (arr[j] < pivot)
+		{
+			i++;
+			swap(&arr[i], &arr[j]);
+		}
+	}
+
+	swap(&arr[i + 1], &arr[high]);
+	
+	return i + 1;
+}
+
+template <typename T>
+void quicksort(T arr[], int const low, int const high)
+{
+	if (low < high)
+	{
+		int const pi = partition(arr, low, high);
+		quicksort(arr, low, pi - 1);
+		quicksort(arr, pi + 1, high);
+	}
+}
+\end{lstlisting}
+
+快速排序函数模板的使用与前面的非常类似，并且不需要将指针传递给回调函数了:
+
+\begin{lstlisting}[style=styleCXX]
+int main()
+{
+	int arr[] = { 13, 1, 8, 3, 5, 2, 1 };
+	int n = sizeof(arr) / sizeof(arr[0]);
+	quicksort(arr, 0, n - 1);
+}
+\end{lstlisting}
+
+前一节中看到的第三个例子是vector类，其模板版本如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T>
+struct vector
+{
+	vector();
+	
+	size_t size() const;
+	size_t capacity() const;
+	bool empty() const;
+	
+	void clear();
+	void resize(size_t const size);
+	
+	void push_back(T value);
+	void pop_back();
+	
+	T at(size_t const index) const;
+	T operator[](size_t const index) const;
+	
+private:
+	T* data_;
+	size_t size_;
+	size_t capacity_;
+};
+\end{lstlisting}
+
+max函数那种情况，变化很小。类的模板声明中，元素的int类型可以使用类型模板形参T取代。实现方式如下:
+
+\begin{lstlisting}[style=styleCXX]
+int main()
+{
+	vector<int> v;
+	v.push_back(1);
+	v.push_back(2);
+}
+\end{lstlisting}
+
+声明变量v时必须指定元素的类型。代码中，v的元素是int，否则编译器将无法推断它们的类型。C++17中，有些情况下可以不声明类型，可将其称为\textbf{类模板参数推导}(将在第4章中讨论)。
+
+第四个也是最后一个例子，只有类型不同的情况下声明几个变量。可以用一个模板替换所有这些变量，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+constexpr T NewLine = T('\n');
+\end{lstlisting}
+
+该模板的使用方式如下:
+
+\begin{lstlisting}[style=styleCXX]
+int main()
+{
+	std::wstring test = L"demo";
+	test += NewLine<wchar_t>;
+	std::wcout << test;
+}
+\end{lstlisting}
+
+本节中的示例表明，无论模板表示函数、类还是变量，声明和使用模板的语法都是相同的。这将引导我们进入下一节，通过模板类型而来了解模板。
+
+
+
+
+
+
+
+
+
+
+
+
+
+

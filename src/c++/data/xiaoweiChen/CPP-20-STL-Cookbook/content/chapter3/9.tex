@@ -1,0 +1,150 @@
+
+对于有序map，键的类型必须是可排序的，必须至少支持小于比较操作符。假设希望使用具有不可排序的自定义类型的关联容器。例如，一个向量(0,1)既不大于也不小于(1,0)，只是指向不同的方向。这种情况下，可以使用unordered\_map类型。
+
+\subsubsection{How to do it…}
+
+对于这个示例，我们将创建一个unordered\_map对象，该对象使用x/y坐标作为键。为此，并且需要一些功能支持。
+
+\begin{itemize}
+\item 
+首先，将为坐标定义为一个结构体:
+
+\begin{lstlisting}[style=styleCXX]
+struct Coord {
+	int x{};
+	int y{};
+};
+\end{lstlisting}
+
+有两个元素，x和y，作为坐标。
+
+\item 
+map将使用Coord结构作为键，并使用int作为值:
+
+\begin{lstlisting}[style=styleCXX]
+using Coordmap = unordered_map<Coord, int>;
+\end{lstlisting}
+
+为了方便使用map，我们使用了using别名。
+
+\item 
+要使用Coord结构体作为键，需要几个重载。这些是使用unordered\_map所必需的。首先，定义一个相等比较运算符:
+
+\begin{lstlisting}[style=styleCXX]
+bool operator==(const Coord& lhs, const Coord& rhs) {
+	return lhs.x == rhs.x && lhs.y == rhs.y;
+}
+\end{lstlisting}
+
+这是一个很简单的函数，用来比较x元素和y元素。
+
+\item 
+还需要一个特化的std::hash类，这就可以使用键检索map元素了:
+
+\begin{lstlisting}[style=styleCXX]
+namespace std {
+	template<>
+	struct hash<Coord> {
+		size_t operator()(const Coord& c) const {
+			return static_cast<size_t>(c.x)
+			+ static_cast<size_t>(c.y);
+		}
+	};
+}
+\end{lstlisting}
+
+这为std::unordered\_map类使用的默认哈希类提供了特化，必须在std命名空间中。
+
+\item 
+还需要一个print函数来打印Coordmap对象:
+
+\begin{lstlisting}[style=styleCXX]
+void print_Coordmap(const Coordmap& m) {
+	for (const auto& [key, value] : m) {
+		cout << format("{{ ({}, {}): {} }} ",
+		key.x, key.y, value);
+	}
+	cout << '\n';
+}
+\end{lstlisting}
+
+这使用C++20的format()函数来打印x/y键和值。注意使用双大括号\{\{和\}\}来打印单个大括号。
+
+\item 
+现在有了所有的辅助函数，就可以编写main()函数了。
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	Coordmap m {
+		{ {0, 0}, 1 },
+		{ {0, 1}, 2 },
+		{ {2, 1}, 3 }
+	};
+	print_Coordmap(m);
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+{ (2, 1): 3 } { (0, 1): 2 } { (0, 0): 1 }
+\end{tcblisting}
+
+此时，已经定义了一个Coordmap对象，可接受键的Coord对象，并将它们映射到值。
+
+\item 
+也可以基于Coord键访问单个成员:
+
+\begin{lstlisting}[style=styleCXX]
+Coord k{ 0, 1 };
+cout << format("{{ ({}, {}): {} }}\n", k.x, k.y,
+m.at(k));
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+{ (0, 1): 2 }
+\end{tcblisting}
+
+这里，定义了一个名为k的Coord对象，并使用at()函数从unordered\_map中检索值。
+
+\end{itemize}
+
+\subsubsection{How it works…}
+
+unordered\_map类依赖于哈希类从键中查找元素，通常会这样实例化对象:
+
+\begin{lstlisting}[style=styleCXX]
+std::unordered_map<key_type, value_type> my_map;
+\end{lstlisting}
+
+因为没有创建哈希类，所以其使用了默认的哈希类。unordered\_map类的完整模板类型定义如下:
+
+\begin{lstlisting}[style=styleCXX]
+template<
+	class Key,
+	class T,
+	class Hash = std::hash<Key>,
+	class KeyEqual = std::equal_to<Key>,
+	class Allocator = std::allocator< std::pair<const Key,
+		T> >
+> class unordered_map;
+\end{lstlisting}
+
+该模板为Hash、KeyEqual和Allocator提供了默认值。在示例中，为默认的std::hash类提供了特化。
+
+STL包含std::hash对大多数标准类型的特化，如string、int等。为了与我们的类一起工作，其需要进行特化。
+
+可以向模板形参传递一个函数:
+
+\begin{lstlisting}[style=styleCXX]
+std::unordered_map<coord, value_type, my_hash_type> my_map;
+\end{lstlisting}
+
+但在我看来，特化方式会更通用。
+
+
+
+
+

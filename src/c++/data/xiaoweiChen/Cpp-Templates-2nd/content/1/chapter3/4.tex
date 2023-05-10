@@ -1,0 +1,223 @@
+C++17后，可以定义非类型模板参数。使用这个特性，可以实现一个确定大小的堆栈类:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/stackauto.hpp}
+\begin{lstlisting}[style=styleCXX]
+#include <array>
+#include <cassert>
+
+template<typename T, auto Maxsize>
+class Stack {
+	public:
+	using size_type = decltype(Maxsize);
+private:
+	std::array<T,Maxsize> elems; // elements
+	size_type numElems; // current number of elements
+public:
+	Stack(); // constructor
+	void push(T const& elem); // push element
+	void pop(); // pop element
+	T const& top() const; // return top element
+	bool empty() const { // return whether the stack is empty
+		return numElems == 0;
+	}
+	size_type size() const { // return current number of elements
+		return numElems;
+	}
+};
+
+// constructor
+template<typename T, auto Maxsize>
+Stack<T,Maxsize>::Stack ()
+: numElems(0) // start with no elements
+{
+	// nothing else to do
+}
+
+template<typename T, auto Maxsize>
+void Stack<T,Maxsize>::push (T const& elem)
+{
+	assert(numElems < Maxsize);
+	elems[numElems] = elem; // append element
+	++numElems; // increment number of elements
+}
+
+template<typename T, auto Maxsize>
+void Stack<T,Maxsize>::pop ()
+{
+	assert(!empty());
+	--numElems; // decrement number of elements
+}
+
+template<typename T, auto Maxsize>
+T const& Stack<T,Maxsize>::top () const
+{
+	assert(!empty());
+	return elems[numElems-1]; // return last element
+}
+\end{lstlisting}
+
+定义
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T, auto Maxsize>
+class Stack {
+	...
+};
+\end{lstlisting}
+
+通过使用占位符类型auto，可以将Maxsize定义为尚未指定类型的值，可以是任何允许为非类型模板参数的类型。
+
+内部可以同时使用这两个值:
+
+\begin{lstlisting}[style=styleCXX]
+std::array<T,Maxsize> elems; // elements
+\end{lstlisting}
+
+其类型为:
+
+\begin{lstlisting}[style=styleCXX]
+using size_type = decltype(Maxsize);
+\end{lstlisting}
+
+例如，用作size()成员函数的返回类型:
+
+\begin{lstlisting}[style=styleCXX]
+size_type size() const { // return current number of elements
+	return numElems;
+}
+\end{lstlisting}
+
+C++14后，也可以在这里使用auto作为返回类型，让编译器确定返回类型:
+
+\begin{lstlisting}[style=styleCXX]
+auto size() const { // return current number of elements
+	return numElems;
+}
+\end{lstlisting}
+
+通过这个类声明，当使用堆栈时，元素数量由使用类型定义:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/stackauto.cpp}
+\begin{lstlisting}[style=styleCXX]
+#include <iostream>
+#include <string>
+#include "stackauto.hpp"
+
+int main()
+{
+	Stack<int,20u> int20Stack; // stack of up to 20 ints
+	Stack<std::string,40> stringStack; // stack of up to 40 strings
+	
+	// manipulate stack of up to 20 ints
+	int20Stack.push(7);
+	std::cout << int20Stack.top() << '\n';
+	auto size1 = int20Stack.size();
+	
+	// manipulate stack of up to 40 strings
+	stringStack.push("hello");
+	std::cout << stringStack.top() << '\n';
+	auto size2 = stringStack.size();
+	
+	if (!std::is_same_v<decltype(size1), decltype(size2)>) {
+		std::cout << "size types differ" << '\n';
+	}
+}
+\end{lstlisting}
+
+
+\begin{lstlisting}[style=styleCXX]
+Stack<int,20u> int20Stack; // stack of up to 20 ints
+\end{lstlisting}
+
+因为传递了20u，所以内部大小类型是unsigned int。
+
+\begin{lstlisting}[style=styleCXX]
+Stack<std::string,40> stringStack; // stack of up to 40 strings
+\end{lstlisting}
+
+因为传递了40，内部大小类型是int。
+
+两个堆栈的size()将有不同的返回类型，因此
+
+\begin{lstlisting}[style=styleCXX]
+auto size1 = int20Stack.size();
+...
+auto size2 = stringStack.size();
+\end{lstlisting}
+
+size1和size2的类型不同。可以使用标准类型特征std::is\_same(参见D.3.3节)和decltype，进行检查:
+
+\begin{lstlisting}[style=styleCXX]
+if (!std::is_same<decltype(size1), decltype(size2)>::value) {
+	std::cout << "size types differ" << '\n';
+}
+\end{lstlisting}
+
+因此，输出是:
+
+\begin{tcblisting}{commandshell={}}
+size types differ
+\end{tcblisting}
+
+C++17后，对于返回值可以使用后缀\_v并省略::value(详见5.6节):
+
+\begin{lstlisting}[style=styleCXX]
+if (!std::is_same_v<decltype(size1), decltype(size2)>) {
+	std::cout << "size types differ" << '\n';
+}
+\end{lstlisting}
+
+对非类型模板参数类型的其他约束仍然有效。特别是，第3.3节中讨论的非类型模板参数类型的限制仍然适用。例如:
+
+\begin{lstlisting}[style=styleCXX]
+Stack<int,3.14> sd; // ERROR: Floating-point nontype argument
+\end{lstlisting}
+
+并且，可以将字符串作为常量数组传递(C++17中甚至是静态的局部声明;见第3.3节):
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/message.cpp}
+\begin{lstlisting}[style=styleCXX]
+#include <iostream>
+
+template<auto T> // take value of any possible nontype parameter (since C++17)
+class Message {
+	public:
+	void print() {
+		std::cout << T << '\n';
+	}
+};
+
+int main()
+{
+	Message<42> msg1;
+	msg1.print(); // initialize with int 42 and print that value
+	
+	static char const s[] = "hello";
+	Message<s> msg2; // initialize with char const[6] "hello"
+	msg2.print(); // and print that value
+}
+\end{lstlisting}
+
+还要注意的是，template<decltype(auto) N>也可以，其允许将N实例化为引用:
+
+\begin{lstlisting}[style=styleCXX]
+template<decltype(auto) N>
+class C {
+	...
+};
+
+int i;
+C<(i)> x; // N is int&
+\end{lstlisting}
+
+详情参见15.10.1。
+
+
+
+

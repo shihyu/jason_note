@@ -1,0 +1,266 @@
+
+线程是并发的单位，main()函数可以看作是执行的主线程。在操作系统上下文中，主线程与其他进程拥有的其他线程并发运行。
+
+thread类是STL中并发性的根本，所有其他并发特性都建立在线程类的基础上。
+
+本节中，我们将了解std::thread的基础知识，以及join()和detach()如何确定其执行上下文。
+
+\subsubsection{How to do it…}
+
+在这个示例中，我们创建了一些std::thread对象，并测试了它们的执行选项。
+
+\begin{itemize}
+\item 
+从线程休眠函数开始，单位是毫秒:
+
+\begin{lstlisting}[style=styleCXX]
+void sleepms(const unsigned ms) {
+	using std::chrono::milliseconds;
+	std::this_thread::sleep_for(milliseconds(ms));
+}
+\end{lstlisting}
+
+sleep\_for()函数接受一个duration对象，并在指定的时间内阻塞当前线程的执行。sleepms()函数作为一个方便的包装器，其接受一个unsigned值，表示休眠的毫秒数。
+
+\item 
+现在，需要线程的一个函数。这个函数休眠的毫秒数是可变的，基于一个整数参数:
+
+\begin{lstlisting}[style=styleCXX]
+void fthread(const int n) {
+	cout << format("This is t{}\n", n);
+	for(size_t i{}; i < 5; ++i) {
+		sleepms(100 * n);
+		cout << format("t{}: {}\n", n, i + 1);
+	}
+	cout << format("Finishing t{}\n", n);
+}
+\end{lstlisting}
+
+fthread()调用sleepms() 5次，每次休眠100 * n毫秒。
+
+\item 
+可以在一个单独的线程中(比如主线程)运行std::thread:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	thread t1(fthread, 1);
+	cout << "end of main()\n";
+}
+\end{lstlisting}
+
+可以编译，但运行时会有错误:
+
+\begin{tcblisting}{commandshell={}}
+terminate called without an active exception Aborted
+\end{tcblisting}
+
+(错误信息会有所不同。这是在Debian和GCC上的错误信息。)
+
+问题在于，当线程对象超出作用域时，操作系统不知道该如何处理。必须指定调用者是否等待线程，或者是否分离并独立运行。
+
+\item 
+使用join()来指示调用者将等待线程完成:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	thread t1(fthread, 1);
+	t1.join();
+	cout << "end of main()\n";
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+This is t1
+t1: 1
+t1: 2
+t1: 3
+t1: 4
+t1: 5
+Finishing t1
+end of main()
+\end{tcblisting}
+
+现在，main()会等待线程完成。
+
+\item 
+若使用detach()，那么main()不会等待，程序在线程运行之前就结束了:
+
+\begin{lstlisting}[style=styleCXX]
+thread t1(fthread, 1);
+t1.detach();
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+end of main()
+\end{tcblisting}
+
+\item 
+当线程分离后，需要给它一些运行的时间:
+
+\begin{lstlisting}[style=styleCXX]
+thread t1(fthread, 1);
+t1.detach();
+cout << "main() sleep 2 sec\n";
+sleepms(2000);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+main() sleep 2 sec
+This is t1
+t1: 1
+t1: 2
+t1: 3
+t1: 4
+t1: 5
+Finishing t1
+end of main()
+\end{tcblisting}
+
+\item 
+分离第二个线程，看看会发生什么:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	thread t1(fthread, 1);
+	thread t2(fthread, 2);
+	t1.detach();
+	t2.detach();
+	cout << "main() sleep 2 sec\n";
+	sleepms(2000);
+	cout << "end of main()\n";
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+main() sleep 2 sec
+This is t1
+This is t2
+t1: 1
+t2: 1
+t1: 2
+t1: 3
+t2: 2
+t1: 4
+t1: 5
+Finishing t1
+t2: 3
+t2: 4
+t2: 5
+Finishing t2
+end of main()
+\end{tcblisting}
+
+因为fthread()函数使用它的形参作为sleepms()的乘法器，所以第二个线程比第一个线程运行得慢一些。我们可以看到计时器在输出中交错。
+
+\item 
+若使用join()，而不是detatch()来执行此操作，会得到类似的结果:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	thread t1(fthread, 1);
+	thread t2(fthread, 2);
+	t1.join();
+	t2.join();
+	cout << "end of main()\n";
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+This is t1
+This is t2
+t1: 1
+t2: 1
+t1: 2
+t1: 3
+t2: 2
+t1: 4
+t1: 5
+Finishing t1
+t2: 3
+t2: 4
+t2: 5
+Finishing t2
+end of main()
+\end{tcblisting}
+
+因为join()等待线程完成，所以不再需要main()中2秒的sleepms()来等待线程完成。
+\end{itemize}
+
+\subsubsection{How it works…}
+
+std::thread对象表示一个执行线程，对象和线程之间是一对一的关系。一个线程对象表示一个线程，一个线程由一个线程对象表示。线程对象不能复制或赋值，但可以移动。
+
+其构造函数是这样:
+
+\begin{lstlisting}[style=styleCXX]
+explicit thread( Function&& f, Args&&… args );
+\end{lstlisting}
+
+线程是用一个函数指针和零个或多个参数构造的。函数会立即调用:
+
+\begin{lstlisting}[style=styleCXX]
+thread t1(fthread, 1);
+\end{lstlisting}
+
+这将创建对象t1，并立即以字面值1作为参数调用函数fthread(int)。
+
+创建线程后，必须在线程上使用join()或detach():
+
+\begin{lstlisting}[style=styleCXX]
+t1.join();
+\end{lstlisting}
+
+join()方法阻塞调用线程的执行，直到t1线程完成:
+
+\begin{lstlisting}[style=styleCXX]
+t1.detach();
+\end{lstlisting}
+
+detach()方法允许调用线程独立于t1线程继续运行。
+
+\subsubsection{There's more…}
+
+C++20提供了std::jthread，其会自动在作用域的末尾汇入创建线程:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	std::jthread t1(fthread, 1);
+	cout "< "end of main("\n";
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+end of main()
+This is t1
+t1: 1
+t1: 2
+t1: 3
+t1: 4
+t1: 5
+Finishing t1
+\end{tcblisting}
+
+t1线程可以独立执行，在其作用域的末尾会自动汇入main()线程。
+
+
+
+
+
+
+
+
+
+
+

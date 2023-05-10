@@ -1,0 +1,145 @@
+C++17后，有一个特性可以对参数包的所有参数
+使用二元运算符计算结果(初始值可选)。
+
+例如，下面的函数会返回所有入参的和:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename... T>
+auto foldSum (T... s) {
+	return (... + s); // ((s1 + s2) + s3) ...
+}
+\end{lstlisting}
+
+若参数包为空，表达式通常是错误格式的(除了操作符\&\&的值为true，操作符||的值为false，逗号操作符空参数包的值为void())。
+
+表4.1列出了可能的折叠表达式。
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|l|l|}
+		\hline
+		\textbf{折叠表达式}                                                                                                      & \textbf{展开}                                                                                                                                                                                                     \\ \hline
+		\begin{tabular}[c]{@{}l@{}}( ... op pack )\\ ( pack op ... )\\ ( init op ... op pack )\\ ( pack op ... op init )\end{tabular} & \begin{tabular}[c]{@{}l@{}}((( pack1 op pack2 ) op pack3 ) ... op packN )\\ ( pack1 op ( ... ( packN-1 op packN )))\\ ((( init op pack1 ) op pack2 ) ... op packN )\\ ( pack1 op ( ... ( packN op init )))\end{tabular} \\ \hline
+	\end{tabular}
+\end{table}
+
+\begin{center}
+表4.1. 折叠表达式(C++17)
+\end{center}
+
+几乎所有的二元运算符都可以使用折叠表达式(详见12.4.6节)。例如，可以使用折叠表达式来遍历一个二叉树的路径，使用操作符\texttt{->*}:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/foldtraverse.cpp}
+\begin{lstlisting}[style=styleCXX]
+// define binary tree structure and traverse helpers:
+struct Node {
+	int value;
+	Node* left;
+	Node* right;
+	Node(int i=0) : value(i), left(nullptr), right(nullptr) {
+	}
+	...
+};
+
+auto left = &Node::left;
+auto right = &Node::right;
+
+// traverse tree, using fold expression:
+template<typename T, typename... TP>
+Node* traverse (T np, TP... paths) {
+	return (np ->* ... ->* paths); // np ->* paths1 ->* paths2 ...
+}
+
+int main()
+{
+	// init binary tree structure:
+	Node* root = new Node{0};
+	root->left = new Node{1};
+	root->left->right = new Node{2};
+	...
+	// traverse binary tree:
+	Node* node = traverse(root, left, right);
+	...
+}
+\end{lstlisting}
+
+这里，
+
+\begin{lstlisting}[style=styleCXX]
+(np ->* ... ->* paths)
+\end{lstlisting}
+
+使用折叠表达式遍历从np开始的可变元素路径。
+
+这种使用初始化器的折叠表达式，可以简化可变参数模板来打印上面的所有参数:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename... Types>
+void print (Types const&... args)
+{
+	(std::cout << ... << args) << '\n';
+}
+\end{lstlisting}
+
+但无法为参数包中的每个元素输出添加打印空格。要添加空格，需要一个额外的类模板，确保参数的输出都会添加一个空格:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/addspace.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class AddSpace
+{
+private:
+	T const& ref; // refer to argument passed in constructor
+public:
+	AddSpace(T const& r): ref(r) {
+	}
+	friend std::ostream& operator<< (std::ostream& os, AddSpace<T> s) {
+		return os << s.ref << ' '; // output passed argument and a space
+	}
+};
+
+template<typename... Args>
+void print (Args... args) {
+	( std::cout << ... << AddSpace(args) ) << '\n';
+}
+\end{lstlisting}
+
+表达式AddSpace(args)使用类模板参数推断(参见2.9节)产生AddSpace<Args>(args)，这为每个参数创建一个AddSpace对象，该对象引用传递的参数，并在输出表达式时使用该参数添加一个空格。
+
+关于折叠表达式的详细信息请参见12.4.6节。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

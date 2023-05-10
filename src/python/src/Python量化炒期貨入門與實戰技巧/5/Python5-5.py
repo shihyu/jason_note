@@ -1,0 +1,22 @@
+# 定义列表变量
+list1 = ["C", "python", "C++", "Java"]
+print("原来列表list1中的数据：", list1)
+list2 = list1.copy()  # 复制列表
+print("\n复制列表list2中的数据：", list2)
+list2.reverse()
+print("反向显示列表list2中的数据：", list2)
+list2.sort()
+print("排序显示列表list2中的数据：", list2)
+list2.remove("C++")
+print("\n移除“C++”后的列表list2中的数据：", list2)
+list2.pop()
+print("移除最后一项数据后的列表list2中的数据", list2)
+list2.insert(1, "C#")
+print("\n利用insert插入一项数据：", list2)
+list2.extend(["VB", "VC", "C", "Julia", "C++", "PHP"])
+print("利用extend插入多项数据：", list2)
+print("\n查找list2列中是否有“C#”，如果有是第几个数据：", list2.index("C#"))
+print("统计一下“C”在list2中出现几次：", list2.count("C"))
+list2.clear()
+print("\n列表list2清空后 : ", list2)
+print("原来列表list1中的数据：", list1)

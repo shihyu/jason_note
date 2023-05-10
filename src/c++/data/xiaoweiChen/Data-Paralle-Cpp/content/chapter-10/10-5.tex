@@ -1,0 +1,81 @@
+前面的部分中，内核是API定义的，或者是由特定的句柄创建的，内核通过两个步骤创建:首先创建程序对象，然后从程序对象创建内核。程序对象是内核及其调用的函数集合，这些函数编译为一个单元。\par
+
+对于以Lambda或命名函数对象表示的内核，包含内核的程序对象是隐式的，对应用程序来说不可见。对于需要更多控制的应用程序，可以显式地管理内核和封装程序对象。为了说明为什么这样做，简要地了解下有多少SYCL实现管理即时(JIT)内核编译就能知道了。\par
+
+虽然规范并不要求，但许多实现使用“惰性的”方式编译内核。这是一个很好的策略，因为可以确保快速启动程序，并且仅编译执行的内核。这种策略的缺点是，第一次使用内核的时间通常比后续要长，因为包括编译所需的时间，以及提交和执行内核的时间。对于某些复杂的内核，编译内核的时间可能很长，因此需要在应用程序执行期间将编译进行转移，比如：在应用程序加载时，或者在后台线程中。\par
+
+一些内核还可能受益于实现定义的“构建选项”，以精确地控制内核的编译方式。例如：可以指示内核编译器使用精度较低，但性能更好的数学库。\par
+
+为了更好地控制编译内核的时间和方式，应用程序可以使用特定的构建选项，在使用内核之前显式地编译内核。然后，将预编译的内核提交到一个队列中执行。原理如图10-9所示。\par
+
+\hspace*{\fill} \par %插入空行
+图10-9 使用构建选项编译内核Lambda函数
+\begin{lstlisting}[caption={}]
+// This compiles the kernel named by the specified template
+// parameter using the "fast relaxed math" build option.
+program p(Q.get_context());
+
+p.build_with_kernel_type<class Add>("-cl-fast-relaxed-math");
+
+Q.submit([&](handler& h) {
+	accessor data_acc {data_buf, h};
+	
+	h.parallel_for<class Add>(
+		// This uses the previously compiled kernel.
+		p.get_kernel<class Add>(),
+		range{size},
+		[=](id<1> i) {
+			data_acc[i] = data_acc[i] + 1;
+	});
+});
+\end{lstlisting}
+
+本例中，从SYCL上下文创建程序对象，使用build\_with\_kernel\_type函数构建由指定的模板形参定义的内核。对于这个示例，程序构建选项-cl-fast-relaxed-math表示内核编译器可以使用更快的数学库，但程序构建选项是可选的，如果不需要特殊的程序构建选项，可以省略。本例中，需要指定内核Lambda的模板参数，以确定要编译的内核。\par
+
+也可以从特定设备的上下文上创建程序对象，程序对象可以使用不同的构建选项，将内核编译到不同的设备对象上。\par
+
+除了内核Lambda外，之前编译的内核使用get\_kernel将内核传递给parallel\_for。这可以确保使用使用高效数学库构建的内核。如果之前编译的内核没有传递给parallel\_for，那么内核将再次编译，不需要任何构建选项。这可能在功能上是正确的，但肯定不是预期的行为!\par
+
+许多情况下，这些步骤不太可能对应用程序的行为产生影响，但是在调优应用程序的性能时，需要考虑这些步骤所带来的性能影响。\par
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=改进互动性和程序对象管理]
+虽然本章介绍了描述的用于互动性和程序对象管理的SYCL接口，但它们可能会在SYCL和DPC++的未来版本中得到改进和增强。请参考最新的SYCL和DPC++文档，以找到更新。
+\end{tcolorbox}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

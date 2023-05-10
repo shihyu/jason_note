@@ -1,0 +1,205 @@
+
+函数模板可以有两组不同的类型参数:
+
+\begin{enumerate}
+\item 
+模板参数，用尖括号声明在函数模板名之前:
+\begin{lstlisting}[style=styleCXX]
+template<typename T> // T是模板参数
+\end{lstlisting}
+
+\item 
+调用参数，在函数模板名称后面的圆括号中声明:
+\begin{lstlisting}[style=styleCXX]
+T max (T a, T b) // a和b调用参数
+\end{lstlisting}
+\end{enumerate}
+
+其实，可以有任意多种模板参数。可以为两种不同类型的调用参数定义max()模板:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T1, typename T2>
+T1 max (T1 a, T2 b)
+{
+	return b < a ? a : b;
+}
+...
+auto m = ::max(4, 7.2); // OK, 不过返回类型与第一个参数类型一样
+\end{lstlisting}
+
+将不同类型的参数传递给max()模板这会引发一个问题。若使用其中一种形参类型作为返回类型，则其他参数可能需要向这种类型进行转换。因此，返回类型取决于调用参数的顺序。66.66和42的最大值将是double类型的66.66，而42和66.66的最大值将是int类型的66。
+
+C++提供了不同的方法来处理这个问题:
+
+\begin{itemize}
+\item
+为返回类型引入第三个模板参数。
+
+\item
+让编译器找出返回类型。
+
+\item
+将返回类型声明为两个参数类型的“公共类型”。
+\end{itemize}
+
+\subsubsubsection{1.3.1\hspace{0.2cm}返回类型的模板参数}
+
+模板参数推导可以使用普通调用函数的语法使用函数模板，所以可以不用显式地指定与模板参数对应的类型。
+
+当然，也可以显式地指定模板参数使用的类型:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+T max (T a, T b);
+...
+::max<double>(4, 7.2); // 示例中T是double
+\end{lstlisting}
+
+若模板和调用参数之间没有关系，并且无法确定模板参数，则必须显式指定模板参数。例如，可以引入第三个模板参数类型来指定函数模板的返回类型:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T1, typename T2, typename RT>
+RT max (T1 a, T2 b);
+\end{lstlisting}
+
+然而，模板参数不会去推导返回类型，
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}推导可以视为重载解析的一部分——这个过程不基于返回类型。唯一的例外是转换操作符的返回类型。
+\end{tcolorbox}
+
+RT不会出现在函数调用参数的类型中。因此，不能推导出RT的类型。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}C++中，不可从调用代码的上下文中推断返回类型。
+\end{tcolorbox}
+
+因此，必须显式地指定模板参数。例如:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T1, typename T2, typename RT>
+RT max (T1 a, T2 b);
+...
+::max<int,double,double>(4, 7.2); // OK, 但很无趣
+\end{lstlisting}
+
+了解了显式地指定所有函数模板参数，或没有函数模板参数的情况。另一种方法是只显式指定第一个参数，并允许演绎过程派生其他参数。通常，必须指定最后一个不能隐式确定的参数类型之前的所有参数类型。因此，若在例子中改变了模板参数的顺序，只需要指定返回类型即可:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename RT, typename T1, typename T2>
+RT max (T1 a, T2 b);
+...
+::max<double>(4, 7.2) // OK: 返回类型是double，T1和T2可以进行推演
+\end{lstlisting}
+
+例子中，对max<double>的调用显式地将RT设置为double，但是参数T1和T2根据实参推导为int和double。
+
+注意，max()的这些版本也没什么特别。单参数版本时，若传递了两个不同类型的参数，则可以指定参数(和返回)类型。因此，使用max()单参数版本就好。
+
+关于推导过程的详细信息，请参见第15章。
+
+\subsubsubsection{1.3.2\hspace{0.2cm}推导返回类型}
+
+若返回类型依赖于模板参数，最好和简单的方法是让编译器判断返回类型。从C++14开始，可以不显式声明返回类型(需要声明返回类型为auto):
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/maxauto.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename T1, typename T2>
+auto max (T1 a, T2 b)
+{
+	return b < a ? a : b;
+}
+\end{lstlisting}
+
+返回类型中使用auto，而没有相应的尾部返回类型(\texttt{->})表明需要从函数体中的return语句推导出实际的返回类型。当然，从函数体推断返回类型是可行的。因此，函数体代码必须有效，有多个返回语句时也必须匹配。
+
+C++14之前，只能让编译器通过将函数的实现作为其声明的一部分来确定返回类型。C++11中，尾部的返回类型允许使用调用时的参数，声明的返回类型是从三元操作符某个分支派生的：
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/maxdecltype.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename T1, typename T2>
+auto max (T1 a, T2 b) -> decltype(b<a?a:b)
+{
+	return b < a ? a : b;
+}
+\end{lstlisting}
+
+这有些复杂，返回类型由三元操作符决定，但会产生简答的结果(如果a和b是不同的类型，则会为返回值确定一个通用的类型)。
+
+注意：
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T1, typename T2>
+auto max (T1 a, T2 b) -> decltype(b<a?a:b);
+\end{lstlisting}
+
+是一个声明，使编译器使用三元操作符，可以在编译时找出max()的返回类型，实现也不一定要匹配。事实上，使用true作为操作符的条件就够了:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T1, typename T2>
+auto max (T1 a, T2 b) -> decltype(true?a:b);
+\end{lstlisting}
+
+然而，这个定义有一个缺陷:返回类型可能是引用类型，在某些条件下T可能是引用。因为这个原因，应该返回T衰变的类型:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/maxdecltypedecay.hpp}
+\begin{lstlisting}[style=styleCXX]
+#include <type_traits>
+
+template<typename T1, typename T2>
+auto max (T1 a, T2 b) -> typename std::decay<decltype(true?a:b)>::type
+{
+	return b < a ? a : b;
+}
+\end{lstlisting}
+
+这里使用了std::decay<>，修饰了返回值的类型。其在标准库中的<type\_traits>头文件中定义(参见第D.4节)。因为是类型，必须用typename进行限定才能访问(参见第5.1节)。
+
+auto类型的初始化是衰变的，这也适用于返回类型为auto的返回值。auto作为返回类型的行为就像下面的代码一样，其中a由i(衰变类型)声明:
+
+\begin{lstlisting}[style=styleCXX]
+int i = 42;
+int const& ir = i; // ir引用于i
+auto a = ir; // a的类型为int
+\end{lstlisting}
+
+\subsubsubsection{1.3.3\hspace{0.2cm}返回类型为公共类型}
+
+C++11后，标准库提供了一种方法来指定选择“公共类型”。std::common\_type<>::type会产生由两个(或多个)不同类型作为模板类型的“公共类型”。例如:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/maxcommon.hpp}
+\begin{lstlisting}[style=styleCXX]
+#include <type_traits>
+
+template<typename T1, typename T2>
+std::common_type_t<T1,T2> max (T1 a, T2 b)
+{
+	return b < a ? a : b;
+}
+\end{lstlisting}
+
+std::common\_type在<type\_traits>头文件中定义，其生成一个具有返回类型的结构体。其核心用法如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+typename std::common_type<T1,T2>::type // since C++11
+\end{lstlisting}
+
+C++14起，可以通过在特性名称后面添加\_t跳过typename和::type来简化trait的使用(详见第2.8节)，这样返回类型定义就变成了:
+
+\begin{lstlisting}[style=styleCXX]
+std::common_type_t<T1,T2> // C++14起可用
+\end{lstlisting}
+
+std::common\_type<>使用了一些模板编程技巧，会在第26.5.2节中讨论。内部根据特定类型的三元操作符或特化的语言规则选择结果类型。因此，::max(4,7.2)和::max(7.2, 4)都返回了相同的double类型值7.2。注意std::common\_type<>也会衰变，详见D.5节。
+
+
+
+

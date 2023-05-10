@@ -1,0 +1,144 @@
+
+std::transform()函数非常强大和灵活，是库中最常用的算法之一。它将函数或lambda应用于容器中的每个元素，将结果存储在另一个容器中，同时保留原始的元素。
+
+\subsubsection{How to do it…}
+
+这个示例中，将探索std::transform()函数的某些使用方式:
+
+\begin{itemize}
+\item 
+从一个打印容器内容的函数开始:
+
+\begin{lstlisting}[style=styleCXX]
+void printc(auto& c, string_view s = "") {
+	if(s.size()) cout << format("{}: ", s);
+	for(auto e : c) cout << format("{} ", e);
+	cout << '\n';
+}
+\end{lstlisting}
+
+我们将使用它来查看转换的结果。
+
+\item 
+在main()函数中，声明两个vector:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	vector<int> v1{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+	vector<int> v2;
+	printc(v1, "v1");
+	...
+}
+\end{lstlisting}
+
+输出v1的内容:
+
+\begin{tcblisting}{commandshell={}}
+v1: 1 2 3 4 5 6 7 8 9 10
+\end{tcblisting}
+
+\item 
+现在可以使用transform()函数将每个值的平方插入到v2中:
+
+\begin{lstlisting}[style=styleCXX]
+cout << "squares:\n";
+transform(v1.begin(), v1.end(), back_inserter(v2),
+	[](int x){ return x * x; });
+printc(v2, "v2");
+\end{lstlisting}
+
+transform()函数有四个参数。前两个是源范围的begin()和end()迭代器，第三个参数是目标范围的begin()迭代器。本例中，使用back\_inserter()算法将结果插入到v2中。第四个参数是变换函数，我们使用lambda来对值进行平方。
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+squares:
+v2: 1 4 9 16 25 36 49 64 81 100
+\end{tcblisting}
+
+\item 
+当然，可以对任何类型使用transform()，下面是一个将字符串对象的向量转换为小写的例子。首先，需要一个函数来返回字符串的小写值:
+
+\begin{lstlisting}[style=styleCXX]
+string str_lower(const string& s) {
+	string outstr{};
+	for(const char& c : s) {
+		outstr += tolower(c);
+	}
+	return outstr;
+}
+\end{lstlisting}
+
+现在可以在transform中使用str\_lower()函数了:
+
+\begin{lstlisting}[style=styleCXX]
+vector<string> vstr1{ "Mercury", "Venus", "Earth",
+	"Mars", "Jupiter", "Saturn", "Uranus", "Neptune",
+	"Pluto" };
+vector<string> vstr2;
+printc(vstr1, "vstr1");
+cout << "str_lower:\n";
+transform(vstr1.begin(), vstr1.end(),
+	back_inserter(vstr2),
+	[](string& x){ return str_lower(x); });
+printc(vstr2, "vstr2");
+\end{lstlisting}
+
+这将为vstr1中的每个元素调用str\_lower()，并将结果插入vstr2。结果为:
+
+\begin{tcblisting}{commandshell={}}
+vstr: Mercury Venus Earth Mars Jupiter Saturn Uranus
+Neptune Pluto
+str_lower:
+vstr: mercury venus earth mars jupiter saturn uranus
+neptune pluto
+\end{tcblisting}
+
+(是的，冥王星对我来说永远都是行星。)
+
+\item 
+transform还有一个范围版本:
+
+\begin{lstlisting}[style=styleCXX]
+cout << "ranges squares:\n";
+auto view1 = views::transform(v1, [](int x){
+	return x * x; });
+printc(view1, "view1");
+\end{lstlisting}
+
+范围版本具有更简洁的语法，并返回一个视图对象，而不是填充另一个容器。
+\end{itemize}
+
+\subsubsection{How it works…}
+
+std::transform()函数的工作原理与std::copy()相似，只不过增加了用户提供的函数。输入范围内的每个元素都传递给函数，函数的返回值会复制赋值给目标迭代器。
+
+值得注意的是，transform()并不保证元素将按顺序处理。若需要确保转换的顺序，需要使用for循环:
+
+\begin{lstlisting}[style=styleCXX]
+v2.clear(); // reset vector v2 to empty state
+for(auto e : v1) v2.push_back(e * e);
+printc(v2, "v2");
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+v2: 1 4 9 16 25 36 49 64 81 100
+\end{tcblisting}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,125 @@
+
+首先研究一下如何在用户代码中使用概念(即，定义模板的代码不必定义应用于模板参数的概念)。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{处理需求}
+
+下面是我们的双参数max()模板，其有一个约束条件:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T> requires LessThanComparable<T>
+T max(T a, T b) {
+	return b < a ? a : b;
+}
+\end{lstlisting}
+
+增加了一条requires子句
+
+\begin{lstlisting}[style=styleCXX]
+requires LessThanComparable<T>
+\end{lstlisting}
+
+假设之前已经进行了声明——通过头文件包含——LessThanComparable的概念。
+
+这样的概念是布尔谓词(即产生bool类型值的表达式)，其计算结果为常量表达式。因为约束在编译时计算，因此就生成的代码而言，不会产生多余的开销:这个受约束的模板生成的代码，与之前讨论的不受约束的版本性能一样。
+
+当尝试使用该模板时，其不会实例化，直到对requires子句进行了计算，并生成了true。若产生的是false，则可能会产生一个错误，解释需求的哪一部分失败了(或者，可能会选择一个匹配的重载模板，但是没有满足需求)。
+
+require子句不必用概念来表示(这样做是很好的实践，会产生更好的诊断信息):可以使用布尔常量表达式。如6.5节所讨论的，下面的代码确保模板构造函数不能用作复制构造函数:
+
+\begin{lstlisting}[style=styleCXX]
+class Person
+{
+	private:
+	std::string name;
+	public:
+	template<typename STR>
+	requires std::is_convertible_v<STR,std::string>
+	explicit Person(STR&& n)
+	: name(std::forward<STR>(n)) {
+		std::cout << "TMPL-CONSTR for ’" << name << "’\n";
+	}
+	...
+};
+\end{lstlisting}
+
+因为特别的布尔表达式(在这种情况下使用类型特征)，所以这里不使用命名概念(参见第E.2节)可能更合理
+
+\begin{lstlisting}[style=styleCXX]
+std::is_convertible_v<STR,std::string>
+\end{lstlisting}
+
+用于修复可能使用的模板构造函数，而不是复制构造函数的问题。如何组织概念和约束的细节仍然是C++社区探索的领域，并且可能随着时间的推移而演变，但似乎有一个共识，即概念应该反映代码的含义，而不是它是否可以编译。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{处理多种需求}
+
+上例中，只有一个requires，但是有多个requires的情况并不少见。可以想象一个描述元素值序列的Sequence概念(与标准中相同的概念相匹配)和一个模板find()，给定一个序列和一个值，返回一个指向该序列中第一个出现的值的迭代器(如果有的话)。该模板可以定义如下:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename Seq>
+	requires Sequence<Seq> &&
+			EqualityComparable<typename Seq::value_type>
+	typename Seq::iterator find(Seq const& seq,
+								typename Seq::value_type const& val)
+{
+	return std::find(seq.begin(), seq.end(), val);
+}
+\end{lstlisting}
+
+对该模板的调用都将首先依次检查每个需求，并且只有当所有需求产生true时，才能为调用选择模板，并实例化模板(若重载解析不会因为其他原因丢弃模板)。
+
+也可以使用||来表达“替代”需求。很少需要这样做，在require子句中过度使用||操作符可能会占用编译资源(使编译速度明显变慢)。在某些情况下，这会非常方便。例如:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+	requires Integral<T> ||
+			FloatingPoint<T>
+T power(T b, T p);
+\end{lstlisting}
+
+单需求也可以涉及多个模板参数，而单概念可以表达多个模板参数上的谓词。例如:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T, typename U>
+	requires SomeConcept<T, U>
+auto f(T x, U y) -> decltype(x+y)
+\end{lstlisting}
+
+因此，概念可以在类型参数之间建立关系。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{单个需求的快捷方式}
+
+为了减少requires子句的符号开销，当约束只涉及一个参数时，可以使用一种语法快捷方式。可以通过使用上面max()模板声明的简写:
+
+\begin{lstlisting}[style=styleCXX]
+template<LessThanComparable T>
+T max(T a, T b) {
+	return b < a ? a : b;
+}
+\end{lstlisting}
+
+功能上等价于前面的max()定义。然而，当重新声明一个受约束的模板时，必须使用与原始声明的形式相同(从这个意义上说，它们只在功能上等价)。
+
+可以在find()模板中对这两个需求之一使用相同的简写方式:
+
+\begin{lstlisting}[style=styleCXX]
+template<Sequence Seq>
+	requires EqualityComparable<typename Seq::value_type>
+typename Seq::iterator find(Seq const& seq,
+							typename Seq::value_type const& val)
+{
+	return std::find(seq.begin(), seq.end(), val);
+}
+\end{lstlisting}
+
+这等价于前面为序列类型定义的find()模板。
+
+
+
+
+

@@ -1,0 +1,196 @@
+
+友元声明的基本思想很简单:标识与出现友元声明的类有特权连接的类或函数。然而，由于两个原因，事情变得有些复杂:
+
+\begin{enumerate}
+\item 
+友元声明可能是实体的唯一声明。
+
+\item 
+友元函数的声明可以是定义。
+\end{enumerate}
+
+\subsubsubsection{12.5.1\hspace{0.2cm}类模板的友元类}
+
+友元类声明不能是定义，因此很少有问题。在模板环境中，友元类声明的唯一方式是能够将一个特定的类模板实例命名为友元:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class Node;
+
+template<typename T>
+class Tree {
+	friend class Node<T>;
+	...
+};
+\end{lstlisting}
+
+注意，当类模板的实例成为类或类模板的友元时，类模板必须可见。对于普通类，则没有这样的要求:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class Tree {
+	friend class Factory; // OK even if first declaration of Factory
+	friend class Node<T>; // error if Node isn’t visible
+};
+\end{lstlisting}
+
+13.2.2节对此有更多的说明。
+
+在5.5节中介绍的一个应用是声明其他类模板实例化为友元:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class Stack {
+	public:
+	...
+	// assign stack of elements of type T2
+	template<typename T2>
+	Stack<T>& operator= (Stack<T2> const&);
+	// to get access to private members of Stack<T2> for any type T2:
+	template<typename> friend class Stack;
+	...
+};
+\end{lstlisting}
+
+C++11添加了使模板参数成为友元的语法:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class Wrap {
+	friend T;
+	...
+};
+\end{lstlisting}
+
+这对任何类型T都有效，若T不是实际的类类型，则会忽略。
+
+\subsubsubsection{12.5.2\hspace{0.2cm}类模板的友元函数}
+
+函数模板的实例可以成为友元函数，方法是确保友元函数的名称后面加上尖括号。尖括号可以包含模板参数，若参数可以推导，则尖括号可以为空:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T1, typename T2>
+void combine(T1, T2);
+
+class Mixer {
+	friend void combine<>(int&, int&);
+	// OK: T1 = int&, T2 = int&
+	friend void combine<int, int>(int, int);
+	// OK: T1 = int, T2 = int
+	friend void combine<char>(char, int);
+	// OK: T1 = char T2 = int
+	friend void combine<char>(char&, int);
+	// ERROR: doesn’t match combine() template
+	friend void combine<>(long, long) { ... }
+	// ERROR: definition not allowed!
+};
+\end{lstlisting}
+
+不能定义模板实例(最多只能定义特化)，因此命名实例的友元声明不能成为定义。
+
+若名称后面没有尖括号，则有两种可能:
+
+\begin{enumerate}
+\item 
+若名称没有限定(不包含::)，永远不会引用模板实例。若在友元声明处没有匹配的非模板函数可见，则友元声明是该函数的第一个声明。声明也可以是定义。
+
+\item 
+若该名称是限定的(包含::)，则该名称必须引用先前声明的函数或函数模板。匹配的函数优先于匹配的函数模板。但是，这样的友元声明不能是定义。
+\end{enumerate}
+
+举一个例子:
+
+\begin{lstlisting}[style=styleCXX]
+void multiply(void*); // ordinary function
+
+template<typename T>
+void multiply(T); // function template
+
+class Comrades {
+	friend void multiply(int) { }
+	// defines a new function ::multiply(int)
+	
+	friend void ::multiply(void*);
+	// refers to the ordinary function above,
+	// not to the multiply<void*> instance
+	
+	friend void ::multiply(int);
+	// refers to an instance of the template
+	
+	friend void ::multiply<double*>(double*);
+	// qualified names can also have angle brackets,
+	// but a template must be visible
+	
+	friend void ::error() { }
+	// ERROR: a qualified friend cannot be a definition
+};
+\end{lstlisting}
+
+在一个普通类中声明了友元函数。同样的规则也适用于在类模板中的声明，但是模板参数可以参与识别友元函数:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class Node {
+	Node<T>* allocate();
+	...
+};
+
+template<typename T>
+class List {
+	friend Node<T>* Node<T>::allocate();
+	...
+};
+\end{lstlisting}
+
+友元函数也可以在类模板中定义，其只在实际使用时实例化。这通常要求友元函数在类型中使用类模板本身，这使得在类模板上更容易表示，像在命名空间中调用函数一样:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class Creator {
+	friend void feed(Creator<T>) { // every T instantiates a different function ::feed()
+		...
+	}
+};
+
+int main()
+{
+	Creator<void> one;
+	feed(one); // instantiates ::feed(Creator<void>)
+	Creator<double> two;
+	feed(two); // instantiates ::feed(Creator<double>)
+}
+\end{lstlisting}
+
+这个例子中，每次Creator的实例化都会生成一个不同的函数。尽管这些函数是作为模板实例化的一部分生成的，但这些函数本身是普通函数，而不是模板的实例。但它们是模板实体(参见12.1节)，定义只有在使用时才会实例化。因为这些函数体是在类定义内部定义的，所以是隐式内联的。因此，在两个不同的编译单元中生成相同的函数不会出错。13.2.2节和21.2.1节对这个主题有更多的说明。
+
+\subsubsubsection{12.5.3\hspace{0.2cm}友元模板}
+
+通常，当声明函数或类模板实例的友元时，可以明确表示哪个实体是友元。尽管如此，有时表示模板的所有实例都是类的友元也可以。这需要一个友元模板:
+
+\begin{lstlisting}[style=styleCXX]
+class Manager {
+	template<typename T>
+	friend class Task;
+	
+	template<typename T>
+	friend void Schedule<T>::dispatch(Task<T>*);
+	
+	template<typename T>
+		friend int ticket() {
+			return ++Manager::counter;
+		}
+	static int counter;
+};
+\end{lstlisting}
+
+就像普通的友元声明一样，友元模板只有在命名了一个非限定的、后面没有尖括号的函数名时才可以定义。
+
+友元模板只能声明主模板和主模板的成员。与主模板关联的偏特化和显式特化也认为是友元。
+
+
+
+
+
+
+
+

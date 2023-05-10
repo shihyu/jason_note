@@ -1,0 +1,151 @@
+与前几章的栈实现不同，这里可以通过使用固定大小的元素数组来实现栈。这种方法的优点是避免了内存管理开销，但这为堆栈确定最佳容量带来了困难。指定的容量越小，堆栈越有可能快速填满。指定的容量越大，有可能会浪费内存。好的解决方案是让堆栈的用户指定数组的大小，作为堆栈的最大容量。
+
+为此，可以将size定义为模板参数:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/stacknontype.hpp}
+\begin{lstlisting}[style=styleCXX]
+#include <array>
+#include <cassert>
+
+template<typename T, std::size_t Maxsize>
+class Stack {
+private:
+	std::array<T,Maxsize> elems; // elements
+	std::size_t numElems; // current number of elements
+public:
+	Stack(); // constructor
+	void push(T const& elem); // push element
+	void pop(); // pop element
+	T const& top() const; // return top element
+	bool empty() const { // return whether the stack is empty
+		return numElems == 0;
+	}
+	std::size_t size() const { // return current number of elements
+		return numElems;
+	}
+};
+
+template<typename T, std::size_t Maxsize>
+Stack<T,Maxsize>::Stack ()
+: numElems(0) // start with no elements
+{
+	// nothing else to do
+}
+
+template<typename T, std::size_t Maxsize>
+void Stack<T,Maxsize>::push (T const& elem)
+{
+	assert(numElems < Maxsize);
+	elems[numElems] = elem; // append element
+	++numElems; // increment number of elements
+}
+
+template<typename T, std::size_t Maxsize>
+void Stack<T,Maxsize>::pop ()
+{
+	assert(!empty());
+	--numElems; // decrement number of elements
+}
+
+template<typename T, std::size_t Maxsize>
+T const& Stack<T,Maxsize>::top () const
+{
+	assert(!empty());
+	return elems[numElems-1]; // return last element
+}
+\end{lstlisting}
+
+第二个模板形参Maxsize是std::size\_t类型，指定了堆栈元素内部数组的容量:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T, std::size_t Maxsize>
+class Stack {
+private:
+	std::array<T,Maxsize> elems; // elements
+	...
+};
+\end{lstlisting}
+
+另外，在push()中，可以使用它来检查堆栈是否已满:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T, std::size_t Maxsize>
+void Stack<T,Maxsize>::push (T const& elem)
+{
+	assert(numElems < Maxsize);
+	elems[numElems] = elem; // append element
+	++numElems; // increment number of elements
+}
+\end{lstlisting}
+
+要使用这个类模板，必须同时指定元素类型和最大容量:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/stacknontype.cpp}
+\begin{lstlisting}[style=styleCXX]
+#include "stacknontype.hpp"
+#include <iostream>
+#include <string>
+
+int main()
+{
+	Stack<int,20> int20Stack; // stack of up to 20 ints
+	Stack<int,40> int40Stack; // stack of up to 40 ints
+	Stack<std::string,40> stringStack; // stack of up to 40 strings
+	
+	// manipulate stack of up to 20 ints
+	int20Stack.push(7);
+	std::cout << int20Stack.top() << '\n';
+	int20Stack.pop();
+	
+	// manipulate stack of up to 40 strings
+	stringStack.push("hello");
+	std::cout << stringStack.top() << '\n';
+	stringStack.pop();
+}
+\end{lstlisting}
+
+每个模板实例化都是独立的类型。因此，int20Stack和int40Stack是两种不同的类型。不能使用其中一个来代替另一个，也不能将其中一个分配给另一个。
+
+同样，可以指定模板参数的默认值:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T = int, std::size_t Maxsize = 100>
+class Stack {
+	...
+};
+\end{lstlisting}
+
+但从设计的角度来看，这样的写法在本例中可能不太合适。默认参数是正确的，但对于一般的堆栈类型来说，int类型和最大容量为100似乎都不直观。因此，最好显式地指定这两个值，以便在声明期间进行记录。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

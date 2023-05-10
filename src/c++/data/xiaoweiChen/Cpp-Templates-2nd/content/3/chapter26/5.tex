@@ -1,0 +1,299 @@
+
+is()和get()成员函数可以检查动态值是否为特定类型，并访问该类型的值。但检查变量中的所有可能类型很快就会变成冗长的if语句链。下面打印了名为v的Variant<int, double, string>的值:
+
+\begin{lstlisting}[style=styleCXX]
+if (v.is<int>()) {
+	std::cout << v.get<int>();
+}
+else if (v.is<double>()) {
+	std::cout << v.get<double>();
+}
+else {
+	std::cout << v.get<string>();
+}
+\end{lstlisting}
+
+要一般化输出存储在变量中的值，需要递归实例化函数模板和辅助函数。例如:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{variant/printrec.cpp}
+\begin{lstlisting}[style=styleCXX]
+#include "variant.hpp"
+#include <iostream>
+
+template<typename V, typename Head, typename... Tail>
+void printImpl(V const& v)
+{
+	if (v.template is<Head>()) {
+		std::cout << v.template get<Head>();
+	}
+	else if constexpr (sizeof...(Tail) > 0) {
+		printImpl<V, Tail...>(v);
+	}
+}
+
+template<typename... Types>
+void print(Variant<Types...> const& v)
+{
+	printImpl<Variant<Types...>, Types...>(v);
+}
+
+int main() {
+	Variant<int, short, float, double> v(1.5);
+	print(v);
+}
+\end{lstlisting}
+
+对于一个简单的操作来说，这代码体积已经相当大了。为了简化，通过使用visit()操作扩展Variant来解决这个问题。外部传入访问函数对象，该对象的函数操作符的调用将使用动态值。因为动态值可以是Variant的任何类型，所以这个函数操作符很可能是重载的，或者本身就是一个函数模板。泛型Lambda提供了一个模板函数操作符，可以表示Variant v的打印操作:
+
+\begin{lstlisting}[style=styleCXX]
+v.visit([](auto const& value) {
+			std::cout << value;
+		});
+\end{lstlisting}
+
+泛型Lambda大致等价于下面的函数对象，对于还不支持泛型Lambda的编译器也有用:
+
+\begin{lstlisting}[style=styleCXX]
+class VariantPrinter {
+	public:
+	template<typename T>
+	void operator()(T const& value) const
+	{
+		std::cout << value;
+	}
+};
+\end{lstlisting}
+
+visit()操作的核心类似于递归打印操作:遍历变量的类型，检查动态值是否具有给定的类型(使用is<T>())，然后在找到合适的类型时进行打印:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{variant/variantvisitimpl.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename R, typename V, typename Visitor,
+		 typename Head, typename... Tail>
+R variantVisitImpl(V&& variant, Visitor&& vis, Typelist<Head, Tail...>) {
+	if (variant.template is<Head>()) {
+		return static_cast<R>(
+		std::forward<Visitor>(vis)(
+		std::forward<V>(variant).template get<Head>()));
+	}
+	else if constexpr (sizeof...(Tail) > 0) {
+		return variantVisitImpl<R>(std::forward<V>(variant),
+		std::forward<Visitor>(vis),
+		Typelist<Tail...>());
+	}
+	else {
+		throw EmptyVariant();
+	}
+}
+\end{lstlisting}
+
+variantVisitImpl()是一个带有许多模板参数的非成员函数模板。模板参数R描述了访问操作的结果类型，在稍后返回。V是Variant类型，访问器是Visitor的类型。Head和Tail用于分解Variant中的类型，从而影响递归。
+
+第一个if执行(运行时)检查，以确定给定变量的活动值是否为Head类型:若是，则通过get()从变量中提取值，并传递给visitor，终止递归。第二个if在需要考虑更多元素时执行递归。若没有匹配的类型，则该Variant不包含值，
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}这个案例在第26.4.3节有详细的讨论
+\end{tcolorbox}
+
+这种情况下，实现可以抛出EmptyVariant异常。
+
+除了VisitResult提供的结果类型计算(在下一节中讨论)，visit()的实现也很简单:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{variant/variantvisit.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename... Types>
+	template<typename R, typename Visitor>
+VisitResult<R, Visitor, Types&...>
+Variant<Types...>::visit(Visitor&& vis)& {
+	using Result = VisitResult<R, Visitor, Types&...>;
+	return variantVisitImpl<Result>(*this, std::forward<Visitor>(vis),
+									Typelist<Types...>());
+}
+
+template<typename... Types>
+template<typename R, typename Visitor>
+VisitResult<R, Visitor, Types const&...>
+Variant<Types...>::visit(Visitor&& vis) const& {
+	using Result = VisitResult<R, Visitor, Types const &...>;
+	return variantVisitImpl<Result>(*this, std::forward<Visitor>(vis),
+									Typelist<Types...>());
+}
+
+template<typename... Types>
+template<typename R, typename Visitor>
+VisitResult<R, Visitor, Types&&...>
+Variant<Types...>::visit(Visitor&& vis) && {
+	using Result = VisitResult<R, Visitor, Types&&...>;
+	return variantVisitImpl<Result>(std::move(*this),
+									std::forward<Visitor>(vis),
+									Typelist<Types...>());
+}
+\end{lstlisting}
+
+实现直接委托给variantVisitImpl，传递Variant本身，转发访问器，并提供完整的类型列表。这三种实现之间唯一的区别是，是否将Variant本身作为Variant\&、Variant const\&或Variant\&\&进行传递。
+
+\subsubsubsection{26.5.1\hspace{0.2cm}结果类型}
+
+visit()的结果类型仍然是个谜。给定的访问器可能具有不同的函数操作符重载，以产生不同的结果类型，结果类型依赖于其形参类型的模板函数操作符，或者某种组合。看看下面的泛型Lambda:
+
+\begin{lstlisting}[style=styleCXX]
+[](auto const& value) {
+	return value + 1;
+}
+\end{lstlisting}
+
+这个Lambda的结果类型取决于输入类型:给定int型，则将产生int型值；给定double型，将产生double型值。若这个泛型Lambda传递给了Variant<int, double>的visit()操作，结果类型应该是什么?
+
+这里没有正确的答案，因此visit()操作允许提供结果类型。在另一个Variant<int, double>中捕获结果，可以将结果类型指定为visit()作为第一个模板参数:
+
+\begin{lstlisting}[style=styleCXX]
+v.visit<Variant<int, double>>([](auto const& value) {
+								return value + 1;
+							});
+\end{lstlisting}
+
+当没有通用解决方案时，指定结果类型就很重要。但要求在所有情况下指定结果类型可能会让代码显得非常冗长，visit()使用默认模板参数和简单元程序组合了这两个选项。回顾visit()的声明:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename R = ComputedResultType, typename Visitor>
+VisitResult<R, Visitor, Types&...> visit(Visitor&& vis) &;
+\end{lstlisting}
+
+上面的例子中显式地指定了模板参数R，有一个默认参数，因此不需要总是指定。该默认参数是一个不完整的哨兵类型ComputedResultType:
+
+\begin{lstlisting}[style=styleCXX]
+class ComputedResultType;
+\end{lstlisting}
+
+要计算它的结果类型，visit将所有的模板参数传递给VisitResult，这是一个别名模板，提供了对新类型特征VisitResultT的访问:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{variant/variantvisitresult.hpp}
+\begin{lstlisting}[style=styleCXX]
+// an explicitly-provided visitor result type:
+template<typename R, typename Visitor, typename... ElementTypes>
+class VisitResultT
+{
+	public:
+	using Type = R;
+};
+
+template<typename R, typename Visitor, typename... ElementTypes>
+using VisitResult =
+typename VisitResultT<R, Visitor, ElementTypes...>::Type;
+\end{lstlisting}
+
+VisitResultT的主要定义了处理R参数显式指定的情况，因此Type定义为R。当R接收到默认参数ComputedResultType时，启用偏特化:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename Visitor, typename... ElementTypes>
+class VisitResultT<ComputedResultType, Visitor, ElementTypes...>
+{
+	...
+}
+\end{lstlisting}
+
+这种偏特化负责为常见情况计算适当的结果类型，这是下一节的主题。
+
+\subsubsubsection{26.5.2\hspace{0.2cm}常见的结果类型}
+
+当调用为每个变量的元素类型产生不同类型的访问器时，如何将这些类型组合成一个单独的结果类型用于visit()?有一些简单的情况——若访问器为每个元素类型返回相同的类型，应该是visit()的结果类型。
+
+C++已经有了合理结果类型的概念，在第1.3.3节中介绍过:三元表达式b ? x : y的类型是x和y类型之间的公共类型。若x有int类型，y有double类型，公共类型是double，因为int可以提升为double。也可以在类型特征中捕捉到共同类型的概念:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{variant/commontype.hpp}
+\begin{lstlisting}[style=styleCXX]
+using std::declval;
+
+template<typename T, typename U>
+class CommonTypeT
+{
+	public:
+	using Type = decltype(true? declval<T>() : declval<U>());
+};
+
+template<typename T, typename U>
+using CommonType = typename CommonTypeT<T, U>::Type;
+\end{lstlisting}
+
+公共类型的概念扩展到一组类型:公共类型是集合中的所有类型，都可以提升到的类型。对于访问器，我们希望计算访问器在使用变量中的每个类型调用时，将产生的结果的通用类型:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{variant/variantvisitresultcommon.hpp}
+\begin{lstlisting}[style=styleCXX]
+#include "accumulate.hpp"
+#include "commontype.hpp"
+
+// the result type produced when calling a visitor with a value of type T:
+template<typename Visitor, typename T>
+using VisitElementResult = decltype(declval<Visitor>()(declval<T>()));
+
+// the common result type for a visitor called with each of the given element types:
+template<typename Visitor, typename... ElementTypes>
+class VisitResultT<ComputedResultType, Visitor, ElementTypes...>
+{
+	using ResultTypes =
+		Typelist<VisitElementResult<Visitor, ElementTypes>...>;
+	public:
+	using Type =
+		Accumulate<PopFront<ResultTypes>, CommonTypeT, Front<ResultTypes>>;
+};
+\end{lstlisting}
+
+VisitResult的计算分两个阶段进行。首先，VisitElementResult计算调用访问器的值为T类型时，产生的结果类型。这个元函数应用于每个给定的元素类型，以确定访问器可以产生的所有结果类型，并在类型列表ResultTypes中进行捕获。
+
+接下来，计算使用24.2.6节中描述的Accumulate算法，将公共类型计算应用于结果类型的类型列表。其初始值(Accumulate的第三个参数)是第一个结果类型，通过CommonTypeT与ResultTypes类型列表剩余部分的连续值组合在一起。最终结果是通用类型，访问器的所有结果类型都可以转换为通用类型，若结果类型不兼容，则会出现错误。
+
+C++11后，标准库提供了一个相应的类型特征，std::common\_type<>，有效地结合了CommonTypeT和Accumulate，使用这种方法生成任意数量传递类型的通用类型(参见D.5节)。通过使用std::common\_type<>，VisitResultT的实现可以更简单:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{variant/variantvisitresultstd.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename Visitor, typename... ElementTypes>
+class VisitResultT<ComputedResultType, Visitor, ElementTypes...>
+{
+	public:
+	using Type =
+		std::common_type_t<VisitElementResult<Visitor, ElementTypes>...>;
+};
+\end{lstlisting}
+
+下面的示例程序输出了通过传入泛型Lambda来生成的类型，该泛型Lambda将其得到的值加1:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{variant/visit.cpp}
+\begin{lstlisting}[style=styleCXX]
+#include "variant.hpp"
+#include <iostream>
+#include <typeinfo>
+
+int main()
+{
+	Variant<int, short, double, float> v(1.5);
+	auto result = v.visit([](auto const& value) {
+							return value + 1;
+						});
+	std::cout << typeid(result).name() << ’\n’;
+}
+\end{lstlisting}
+
+因为结果是所有结果类型都可以转换的类型，所以这个程序的输出将是double的type\_info名。
+
+
+
+
+
+
+

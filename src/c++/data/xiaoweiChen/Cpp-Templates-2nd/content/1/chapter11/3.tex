@@ -1,0 +1,74 @@
+如6.1节所示，可以使用转发引用和std::forward<>来“完美转发”泛型参数:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+void f (T&& t) // t is forwarding reference
+{
+	g(std::forward<T>(t)); // perfectly forward passed argument t to g()
+}
+\end{lstlisting}
+
+然而，有时必须完美地转发不通过参数的泛型代码中的数据。可以使用auto\&\&来创建一个可以转发的变量，假设对函数get()和set()进行了链接调用，其中get()的返回值应该完美地转发给set():
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+void foo(T x)
+{
+	set(get(x));
+}
+\end{lstlisting}
+
+进一步假设需要更新代码，以便对get()产生的中间值执行一些操作。通过将值保存在使用auto\&\&声明的变量中来实现:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+void foo(T x)
+{
+	auto&& val = get(x);
+	...
+	// perfectly forward the return value of get() to set():
+	set(std::forward<decltype(val)>(val));
+}
+\end{lstlisting}
+
+这样可以避免对中间值的复制。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

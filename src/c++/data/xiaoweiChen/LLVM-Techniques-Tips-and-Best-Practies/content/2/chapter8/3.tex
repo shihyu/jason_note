@@ -1,0 +1,465 @@
+
+前一节中，我们了解了Clang中驱动程序和工具链的角色。本节中，我们将了解Clang驱动如何通过向Clang添加一个自定义驱动标志来完成这种转换。同样，在单独展示详细步骤之前，我们将先对这个示例项目进行概述。
+
+\subsubsubsection{8.3.1\hspace{0.2cm}项目概述}
+
+本节中，我们将使用的示例项目将添加一个新的驱动标志，当用户给出该标志时，将隐式地在输入代码中包含一个头文件。
+
+更具体地说，我们有一个头文件——\texttt{simple\_log.h}——内容如下所示，定义了一些简单的API来打印日志消息:
+
+\begin{lstlisting}[style=styleCXX]
+#ifndef SIMPLE_LOG_H
+#define SIMPLE_LOG_H
+#include <iostream>
+#include <string>
+#ifdef SLG_ENABLE_DEBUG
+inline void print_debug(const std::string &M) {
+	std::cout << "[DEBUG] " << M << std::endl;
+}
+#endif
+
+#ifdef SLG_ENABLE_ERROR
+inline void print_error(const std::string &M) {
+	std::cout << "[ERROR] " << M << std::endl;
+}
+#endif
+
+#ifdef SLG_ENABLE_INFO
+inline void print_info(const std::string &M) {
+	std::cout << "[INFO] " << M << std::endl;
+}
+#endif
+
+#endif
+\end{lstlisting}
+
+这里的目标是在我们的代码中使用这些API，而不需要编写\texttt{\#include "simple\_log.h"}来导入头文件。只有当我们给\texttt{clang}一个自定义驱动标志\texttt{-fuse-simple-log}时，这个特性才会启用，例如：下面的代码，\texttt{test.cc}:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	print_info("Hello world!!");
+	return 0;
+}
+\end{lstlisting}
+
+尽管没有任何\texttt{\#include}指令，仍然可以编译(使用\texttt{-fussimple-log}标志)，运行也没有任何问题:
+
+\begin{tcblisting}{commandshell={}}
+$ clang++ -fuse-simple-log test.cc -o test
+$ ./test
+[INFO] Hello world!!
+$
+\end{tcblisting}
+
+此外，可以使用\texttt{-fuse-<log level>-simple-log /-fno-use-<log level>-simple-log}包含或排除特定日志级别的函数。例如，让我们前面的代码，在编译代码时添加\texttt{-fno-use-info-simple\\log}:
+
+\begin{tcblisting}{commandshell={}}
+$ clang++ -fuse-simple-log -fno-use-info-simple-log test.cc -o
+test
+test.cc:2:3: error: use of undeclared identifier 'print_info'
+  print_info("Hello World!!");
+  ^
+1 error generated
+$
+\end{tcblisting}
+
+在\texttt{simple\_log.h}中，每个日志打印函数的开关都由它周围的\texttt{\#ifdef}语句控制，例如：只在定义了\texttt{SLG\_ENABLE\_INFO}时才会包含\texttt{print\_info}。之后，在翻译自定义驱动程序标志一节中，我们将展示如何通过驱动程序标志来切换这些宏定义。
+
+最后，可以为\texttt{simple\_log.h}文件指定自定义路径。默认情况下，我们的特性会在源代码的当前文件夹中包含\texttt{simple\_log.h}。可以通过提供\texttt{-fsimple-log-path=<文件路径>}或\texttt{-fuse-simple\\log=<文件路径>}来改变这一点，例如：想使用\texttt{simple\_log.h}的另一个版本——\texttt{advanced\_log.h}，存储在\texttt{/home/user}目录下——提供具有相同接口但不同实现的函数。现在，就可以使用以下命令:
+
+\begin{tcblisting}{commandshell={}}
+$ clang++ -fuse-simple-log=/home/user/advanced_log.h test.cc -o
+test
+[01/28/2021 20:51 PST][INFO] Hello World!!
+$
+\end{tcblisting}
+
+下一节将向展示如何更改Clang驱动程序中的代码，以便实现这些特性。
+
+\subsubsubsection{8.3.2\hspace{0.2cm}声明自定义驱动标志}
+
+首先，完成声明定制驱动程序标志的步骤，例如：\texttt{-fusesimple-log}和\texttt{-fno-use-info-simple-log}。然后，我们将把这些标志写入到实际的前端功能中。
+
+Clang使用TableGen语法来声明所有类型的编译器标志——包括驱动标志和前端标志。
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, fonttitle=\bfseries,title=TableGen]	
+\hspace*{0.7cm}TableGen是一种领域特定语言(DSL)，用于声明结构和关系数据。要了解更多，请查看第4章。
+\end{tcolorbox}
+
+所有这些标志声明都放在\texttt{clang/include/clang/Driver/Options.td}中，例如：以通用的-g标志为例，会生成源级别的调试信息，声明如下:
+
+\begin{lstlisting}[style=stylePython]
+def g_Flag : Flag<["-"], "g">, Group<g_Group>,
+  HelpText<"Generate source-level debug information">;
+\end{lstlisting}
+
+TableGen记录\texttt{g\_Flag}是由几个TableGen类创建的:\texttt{Flag}、\texttt{Group}和\texttt{HelpText}。其中，我们最感兴趣的是\texttt{Flag}，它的模板值(\texttt{["-"]}和\texttt{"g"})描述了实际的命令行标志格式。请注意，声明布尔标志时——该标志的值由存在程度决定，没有随后的其他值——本例从\texttt{Flag}类继承。
+
+如果想要声明一个标记，其值跟在等号(\texttt{"="})后面，继承自\texttt{Joined}类，例如：\texttt{-std=<C++ standard name>}的TableGen声明如下:
+
+\begin{lstlisting}[style=styleJavaScript]
+def std_EQ : Joined<["-", "--"], "std=">, Flags<[CC1Option]>,
+…;
+\end{lstlisting}
+
+通常，这些类型的标记的记录名(在本例中为\texttt{std\_EQ})有\texttt{\_EQ}作为后缀。
+
+最后，\texttt{Flags}(复数)类可以用来指定一些属性，例如：前面代码中的\texttt{CC1Options}，就说明这个标志也可以是前端标志。
+
+现在我们已经了解了驱动标志通常是如何声明的，是时候创建我们自己的驱动标志了:
+
+\begin{enumerate}
+\item 首先，处理\texttt{-fuse-simple-log}标志。下面是声明:
+
+\begin{lstlisting}[style=styleJavaScript]
+def fuse_simple_log : Flag<["-"], "fuse-simple-log">,
+                 Group<f_Group>, Flags<[NoXarchOption]>;
+\end{lstlisting}
+
+除了\texttt{Group}类和\texttt{NoXarchOption}之外，这段代码基本上与我们前面使用的示例没有区别。前者指定该标志所属的逻辑组，例如：\texttt{f\_Group}用于以\texttt{-f}开头的标志。后者告诉我们这个标志只能在驱动中使，例如：不能将它传递给前端(但是我们如何将标志直接传递给前端呢？我们将在本节的最后简短地回答这个问题)。
+
+注意，在这里只声明\texttt{-fuse-simple-log}，而没有声明\texttt{-fuse-simplelog=<文件路径>}——这将在另一个标志中完成。
+
+\item 接下来，我们将处理\texttt{-fuse-<log level>-simple-log}和\texttt{-fno-use-<log level>-simple-log}。在GCC和Clang中，通常会使用\texttt{-f<flag name>/-fno-<flag name>}来启用或禁用某个特性。因此，Clang提供了一个方便的TableGen工具——\texttt{BooleanFFlag}——使创建成对的标记更容易。请参见下面代码中\texttt{-fuse-error-simple-log/-fno-use-error-simple-log}的声明:
+
+\begin{lstlisting}[style=styleJavaScript]
+defm use_error_simple_log : BooleanFFlag<"use-errorsimple-log">,
+   Group<f_Group>, Flags<[NoXarchOption]>;
+\end{lstlisting}
+
+\texttt{BooleanFFlag}是一个\textit{多类}(所以确保使用的是\texttt{defm}，而不是\texttt{def}来创建TableGen记录)。在底层中，同时为\texttt{-f<flag name>}和\texttt{-fno-<flag name>}创建TableGen记录。
+
+现在我们已经了解了如何创建\texttt{use\_error\_simple\_log}，可以使用相同的技巧为其他日志级别创建TableGen记录:
+
+\begin{lstlisting}[style=styleJavaScript]
+defm use_debug_simple_log : BooleanFFlag<"use-debugsimple-log">, 
+   Group<f_Group>, Flags<[NoXarchOption]>;
+defm use_info_simple_log : BooleanFFlag<"use-info-simplelog">, 
+   Group<f_Group>, Flags<[NoXarchOption]>;
+\end{lstlisting}
+
+\item 最后，我们声明\texttt{-fuse-simple-log=<文件路径>}和\texttt{-fsimple-log-path=<文件路径>}标志。前面的步骤中，只处理布尔标志，但这里，我们创建的标志的值跟随等号，所以我们使用了之前引入的\texttt{Joined}类:
+
+\begin{lstlisting}[style=styleJavaScript]
+def fsimple_log_path_EQ : Joined<["-"], "fsimple-logpath=">, 
+  Group<f_Group>, Flags<[NoXarchOption]>;
+def fuse_simple_log_EQ : Joined<["-"], "fuse-simplelog=">, 
+  Group<f_Group>, Flags<[NoXarchOption]>;
+\end{lstlisting}
+
+同样，带值的标志通常会在其TableGen记录名称后缀中使用\texttt{\_EQ}。
+
+\end{enumerate}
+
+这就结束了声明自定义驱动程序标志的所有必要步骤。在Clang的构建过程中，这些TableGen指令将转换成C++枚举和驱动程序使用的其他工具，例如：\texttt{-fuse-simple-log=<文件路径>}将由一个枚举值表示，也就是\texttt{options::OPT\_fuse\_simple\_log\_EQ}。下一节将展示如何从用户给出的所有命令行标志中查询这些标志，最重要的是，如何将自定义标志翻译成前端对应的标志。
+
+\subsubsubsection{8.3.3\hspace{0.2cm}翻译自定义驱动标志}
+
+编译器驱动程序在底层为用户做了很多事情，例如：根据编译目标找出正确的工具链，并翻译由用户指定的驱动标志，这就是我们接下来要做的事情。我们的例子中，当编译时给定了\texttt{-fuse-simp\\le-log}，就要要包含头文件\texttt{simple\_log.h}，并根据\texttt{-fuse-<log level>-simple-log/-fno-use-<log level>-simple-log}标志来定义\texttt{SLG\_ENABLE\_ERROR}这样的宏，来包含或排除某些日志打印函数。更具体地说，这些任务可以分为两个部分:
+
+\begin{itemize}
+\item 如果指定\texttt{-fuse-simple-log}，将其转换为前端标志:
+
+\begin{tcblisting}{commandshell={}}
+-include "simple_log.h"
+\end{tcblisting}
+
+\texttt{-include}前端标志，顾名思义，在编译源代码中隐式地包含指定的文件。
+
+使用相同的逻辑，如果给出\texttt{-fuse-simple-log=/other/file.h}或\texttt{-fusessimple-log -fsim\\ple-log-path=/other/file.h}，将转换为以下内容:
+
+\begin{tcblisting}{commandshell={}}
+-include "/other/file.h"
+\end{tcblisting}
+
+\item 如果指定\texttt{-fuse-<log level>-simple-log}或\texttt{-fno-use-<log level>-simple-log}，例如:\\\texttt{-fuse-error-simple-log}，将翻译成以下内容:
+
+\begin{tcblisting}{commandshell={}}
+-D SLG_ENABLE_ERROR
+\end{tcblisting}
+
+-D标志隐式地为编译源代码定义了一个宏变量。
+
+但是，如果只指定了\texttt{-fuse-simple-only}，该标志将隐式地包含所有日志打印函数。换句话说，\texttt{-fuse-simple-only}不仅会翻译成\texttt{-include}标志，就像前面提到的，还会翻译成下面的标志:
+
+\begin{tcblisting}{commandshell={}}
+-D SLG_ENABLE_ERROR -D SLG_ENABLE_DEBUG -D SLG_ENABLE_INFO
+\end{tcblisting}
+
+假设将\texttt{-fuse-simple-log}和\texttt{-fno-use-<log level>-simple-log}组合使用，例如:
+
+\begin{tcblisting}{commandshell={}}
+-fuse-simple-log -fno-use-error-simple-log
+\end{tcblisting}
+
+将翻译成以下代码:
+
+\begin{tcblisting}{commandshell={}}
+-include "simple_log.h" -D SLG_ENABLE_DEBUG -D SLG_ENABLE_INFO
+\end{tcblisting}
+
+最后，还允许以下组合:
+
+\begin{tcblisting}{commandshell={}}
+-fuse-info-simple-log -fsimple-log-path="my_log.h"
+\end{tcblisting}
+
+也就是说，我们只启用了一个日志打印功能，而不使用\texttt{-fusessimple-log}，并使用一个定制的简单日志头文件。这些驱动标志将翻译成以下代码:
+
+\begin{tcblisting}{commandshell={}}
+-include "my_log.h" -D SLG_ENABLE_INFO
+\end{tcblisting}
+
+前面提到的规则和标志的组合实际上可以以一种非常优雅的方式处理，尽管乍一看很复杂。我们将很快展示如何做到这一点。
+
+\end{itemize}
+
+既然我们已经了解了将要翻译的前端标志，那么现在是时候学习如何进行翻译了。
+
+许多驱动标志转换发生的地方是在\texttt{driver::tools::Clang}类中。更具体地说，这发生在它的\texttt{Clang::ConstructJob}方法中，该方法位于\texttt{clang/lib/Driver/ToolChains/Clang.cpp}文件中。
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, fonttitle=\bfseries,title=关于\texttt{driver::tools::Clang}]	
+\hspace*{0.7cm}对于这个C++类，最主要的问题可能是，它代表什么概念？为什么把它放在名为\textit{ToolChains}的文件夹下？这是否意味着它也是一个工具链？虽然我们将在下一节中详细回答这些问题，但现在读者们可以把它看作为Clang前端的代表。这(在某种程度上)解释了为什么它负责将驱动标志翻译成前端标志。
+\end{tcolorbox}
+
+下面是翻译定制驱动标志的步骤。下面的代码可以插入到\texttt{Clang::ConstructJob}方法的任何地方，在\texttt{addDashXForInput}函数调用前，进行包装翻译:
+
+\begin{enumerate}
+\item 首先，定义了一个助手类——\texttt{dSimpleLogOpts}——来存储我们的自定义标志信息:
+\begin{lstlisting}[style=styleCXX]
+struct SimpleLogOpts {
+	// If a certain log level is enabled
+	bool Error = false,
+	     Info = false,
+	     Debug = false;
+	static inline SimpleLogOpts All() {
+		return {true, true, true};
+	}
+	// If any of the log level is enabled
+	inline operator bool() const {
+		return Error || Info || Debug;
+	}
+};
+// The object we are going to work on later
+SimpleLogOpts SLG;
+\end{lstlisting}
+
+\texttt{SimpleLogOpts}中的\texttt{bool}字段——\texttt{Error}，\texttt{Info}和\texttt{Debug}——表示自定义标志启用的日志级别。我们还定义了一个辅助函数\texttt{SimpleLogOpts::All()}来创建一个启用所有日志级别的\texttt{SimpleLogOpts}，以及一个\texttt{bool}类型的转换操作符，这样就可以使用更清晰的语法(如图所示)来了解启用了哪个级别日志了:
+
+\begin{lstlisting}[style=styleCXX]
+if (SLG) {
+	// At least one log level is enabled!
+}
+\end{lstlisting}
+
+\item 我们先处理最简单的\texttt{-fuse-simple-log}标志。在这一步中，只有在看到\texttt{-fuse-simple-log}标志时，我们才会打开\texttt{SLG}中的所有的日志级别。
+
+在\texttt{Clang::ConstructJob}方法中，用户给出的驱动标志存储在\texttt{Args}变量中(\texttt{ConstructJob}的参数之一)，是\texttt{ArgList}类型。有很多方法可以查询\texttt{Args}，但因为我们只关心\texttt{-fuse-simple\\-log}的存在，所以使用\texttt{hasArg}是最合适的方式:
+
+\begin{lstlisting}[style=styleCXX]
+if (Args.hasArg(options::OPT_fuse_simple_log)) {
+	SLG = SimpleLogOpts::All();
+}
+\end{lstlisting}
+
+我们在前面的代码中通过TableGen语法声明的每个标志都将在\texttt{options}名称空间下由唯一的枚举表示。此例中，枚举值为\texttt{OPT\_fuse\_simple\_log}。当声明该标志时，枚举值的名称通常以\texttt{OPT\_}开头，后面跟着TableGen记录名称(也就是说，名称跟在\texttt{def}或\texttt{defm}后面)。如果给定的标志标识符出现在输入驱动标志中，\texttt{ArgList::hasArg}函数将返回\texttt{true}。
+
+除了\texttt{-fuse-simple-log}外，当指定\texttt{-fuse-simple-log=<文件路径>}时，尽管我们将只处理后面的文件路径，但还需要打开所有的日志级别。因此，我们将把前面的代码改为:
+
+\begin{lstlisting}[style=styleCXX]
+if (Args.hasArg(options::OPT_fuse_simple_log,
+                options::OPT_fuse_simple_log_EQ)) {
+	SLG = SimpleLogOpts::All();
+}
+\end{lstlisting}
+
+\texttt{ArgList::hasAr}g实际上可以接受多个标志标识符，如果其中任何一个出现在输入驱动标志中，则返回true。同样，\texttt{-fuse-simplelog=<…>}标志\texttt{由OPT\_fuse\_simple\_log\_EQ}表示，因为其TableGen记录名称是\texttt{fuse\_simple\_log\_EQ}。
+
+\item 接下来，我们将处理\texttt{-fuse-<log level>-simple-log}/\texttt{-fno-use-<log level>-simple-log}。以错误级别为例(其他级别的标志也以同样的方式使用，就不在这里演示)，我们使用了\\\texttt{ArgList::hasFlag}函数:
+
+\begin{lstlisting}[style=styleCXX]
+SLG.Error = Args.hasFlag(options::OPT_fuse_error_simple_
+log, options::OPT_fno_use_error_simple_log, SLG.Error);
+\end{lstlisting}
+
+如果第一个参数(是\texttt{OPT\_fuse\_error\_simple\_log})或第二个参数(是\texttt{OPT\_fno\_use\_error\_si\\mple\_log})所代表的标志分别出现在输入驱动标志中，\texttt{hasFlag}函数将返回\texttt{true}或\texttt{false}。
+
+如果这两个标志都不存在，\texttt{hasFlag}将返回由第三个参数(本例中为\texttt{SLG.Error})。
+
+使用这种机制，我们已经实现了一些(复杂的)规则和标志组合，在本节前面提到过:
+
+\begin{enumerate}[label=\alph*)]
+\item \texttt{-fno-use-<log level>-simple-log}标志可以在出现\texttt{-fuse-simple-log}时禁用某些日志打印功能。\texttt{-fuse-simple-log}包含了所有日志打印功能。
+
+\item 即使没有\texttt{-fuse-simple-log}，我们仍然可以通过使用\texttt{-fuse-<log level>-simple-log}标志来启用单个日志打印功能。
+\end{enumerate}
+
+\item 目前，我们只是在使用\texttt{SimpleLogOpts}的数据结构。从下一步开始，我们将根据到目前为止构建的\texttt{SimpleLogOpts}实例生成前端标志。在这里生成的第一个前端标志是\texttt{-include <文件路径>}。首先，启用了日志级别才有意义。因此，我们将通过检查\texttt{SLG}将\texttt{-include}的生成封装在\texttt{if}语句中:
+
+\begin{lstlisting}[style=styleCXX]
+if (SLG) {
+	CmdArgs.push_back("-include");
+	…
+}
+\end{lstlisting}
+
+\texttt{CmdArgs}(\texttt{Clang::ConstructJob}中的一个局部变量——具有类向量类型)是我们放置前端标志的地方。
+
+注意，不能推送包含任何空格的前端标志。例如，不能这样做:
+
+\begin{lstlisting}[style=styleCXX]
+if (SLG) {
+	CmdArgs.push_back("-include simple_log.h"); // Error
+	…
+}
+\end{lstlisting}
+
+这是因为这个vector(\texttt{CmdArgs})将视为\texttt{argv}，这可以在C/C++的主函数中看到，并且当这些参数实现时，单个参数中的任何空格都将创建失败。
+
+相反，我们将把路径单独放到一个简单的日志头文件中，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+if (SLG) {
+	CmdArgs.push_back("-include");
+	if (Arg *A = Args.getLastArg(options::OPT_fuse_simple_
+	log_EQ, options::OPT_fsimple_log_path_EQ))
+ 	  CmdArgs.push_back(A->getValue());
+	else
+	  CmdArgs.push_back("simple_log.h");
+	…
+}
+\end{lstlisting}
+
+\texttt{ArgList::getLastArg}函数将检索该值(如果多次出现同一个标志，则为最后一个值)，跟随给定的标志，如果这些标志都不存在，则返回null。例如，在本例中标志是\texttt{-fuse-simple-log=}(第二个参数中的\texttt{-fsimple-log-path=}就只是第一个参数的别名标志)。
+
+\item 最后，我们将生成前端标志来控制应该启用哪些日志打印功能。同样，我们在这里只显示其中一个日志级别的代码，因为其他级别也用相同的方法实现:
+
+\begin{lstlisting}[style=styleCXX]
+if (SLG) {
+	…
+	if (SLG.Error) {
+		CmdArgs.push_back("-D");
+		CmdArgs.push_back("SLG_ENABLE_ERROR");
+	}
+	…
+}
+\end{lstlisting}
+
+\end{enumerate}
+
+这些基本上是我们项目所需的所有修改。在继续之前，我们要做的最后一件事是验证我们的工作。回想一下\texttt{-\#\#\#}命令行标志，它用于打印传递给前端的所有标志。我们在这里可以使用它来查看我们的自定义驱动标志是否能正确翻译。
+
+首先，试试下面的命令:
+
+\begin{tcblisting}{commandshell={}}
+$ clang++ -### -fuse-simple-log -c test.cc
+\end{tcblisting}
+
+输出应该包含以下字符串:
+
+\begin{tcblisting}{commandshell={}}
+"-include" "simple_log.h" "-D" "SLG_ENABLE_ERROR" "-D" "SLG_ENABLE_INFO" 
+"-D" "SLG_ENABLE_DEBUG"
+\end{tcblisting}
+
+再试试下面的命令:
+
+\begin{tcblisting}{commandshell={}}
+$ clang++ -### -fuse-simple-log=my_log.h -fno-use-error-simplelog -c test.cc
+\end{tcblisting}
+
+输出应该包含以下字符串:
+
+\begin{tcblisting}{commandshell={}}
+"-include" "my_log.h" "-D" "SLG_ENABLE_INFO" "-D" "SLG_ENABLE_DEBUG"
+\end{tcblisting}
+
+最后，在来试试这个命令：
+
+\begin{tcblisting}{commandshell={}}
+$ clang++ -### -fuse-info-simple-log -fsimple-log-path=my_log.h
+-c test.cc
+\end{tcblisting}
+
+输出应该包含以下字符串:
+
+\begin{tcblisting}{commandshell={}}
+"-include" "my_log.h" "-D" "SLG_ENABLE_INFO"
+\end{tcblisting}
+
+本节的最后一小节中，我们将讨论一些将标志传递给前端的其他方法。
+
+\subsubsubsection{8.3.4\hspace{0.2cm}向前端传递标志}
+
+在前面的内容中，我们展示了驱动标志和前端标志之间的区别，它们之间的关系，以及Clang的驱动如何将前者转换为后者。此时，读者们可能想知道，我们是否可以跳过驱动，直接将标志传递到前端？哪些标志可以这样传递呢？
+
+对第一个问题的回答是肯定的，实际上已经在前几章做过好几次了。回想一下，在第7章中，我们开发了一个插件——更确切地说，是一个AST插件。我们使用命令行参数在Clang中加载和运行了这个插件:
+
+\begin{tcblisting}{commandshell={}}
+$ clang++ -fplugin=MyPlugin.so \
+            -Xclang -plugin -Xclang ternary-converter \
+            -fsyntax-only test.cc
+\end{tcblisting}
+
+我们需要在\texttt{-plugin}和\texttt{三元转换器}参数之前加上\texttt{-Xclang}标志。答案很简单:这是因为\texttt{-plugin} (及其值\texttt{三元转换器})是一个仅面向前端的标志。
+
+要将一个标志直接传递到前端，可以将\texttt{-Xclang}放在它前面。但使用\texttt{-Xclang}会有一个警告:一个\texttt{-Xclang}只会将一个后续的命令行参数(不带任何空格的字符串)传递给前端。换句话说，不能像这样重写之前的插件加载例子:
+
+\begin{tcblisting}{commandshell={}}
+# Error: `ternary-converter` will not be recognized
+$ clang++ -fplugin=MyPlugin.so \
+            -Xclang -plugin ternary-converter \
+            -fsyntax-only test.cc
+\end{tcblisting}
+
+这是因为\texttt{-Xclang}只会将\texttt{-plugin}转移到前端，而将\texttt{三元转换器}留在后面，在这种情况下，Clang将不知道运行哪个插件。
+
+另一种直接将标志传递给前端的方法是使用\texttt{-cc1}。当我们使用\texttt{-\#\#\#}来打印前几节中驱动翻译过的前端标志时，在这些前端标志中，跟随\texttt{clang}可执行文件路径的第一个始终是\texttt{-cc1}。这个标志可以收集所有命令行参数，并将它们发送到前端。尽管这看起来很方便——没有必要再用\texttt{-Xclang}给每个要传递到前端的标志做前缀了——但要注意，不能在该标志列表中混合任何仅供驱动使用的标志，例如：本节前，当我们在TableGen语法中声明\texttt{-fuse-simple-log}标志时，用\texttt{NoXarchOption}对该标志进行了注释，声明它只能由驱动使用。在这种情况下，\texttt{-cc1}后面就不能再出现\texttt{-fuse-simple-log}了。
+
+这就引出了我们的最后一个问题:哪些标志可以在驱动或前端程序使用，哪些标志二者都可以使用？答案可以通过刚刚提到的\texttt{NoXarchOption}得到。当在TableGen语法中为驱动或前端声明标志时，可以使用\texttt{Flags<…>} TableGen类，及其模板参数来强制一些约束。例如，使用以下指令，可以防止驱动使用\texttt{-foo}标志:
+
+\begin{lstlisting}[style=styleJavaScript]
+def foo : Flag<["-"], "foo">, Flags<[NoDriverOption]>;
+\end{lstlisting}
+
+除了\texttt{NoXarchOption}和\texttt{NoDriverOption}外，这里还有一些可以在\texttt{Flags<…>}中使用的常见注释:
+
+\begin{itemize}
+\item \texttt{CoreOption}:声明该标志可以由\texttt{clang}和\texttt{clang-cl}共享。\texttt{clong-cl}是一个有趣的驱动，它与MSVC (Microsoft Visual Studio使用的编译器框架)使用的命令行界面(包括命令行参数)兼容。
+
+\item \texttt{CC1Option}:声明该标志可以传递给前端。但它并不是说这是一个只能在前端使用的标志。
+
+\item \texttt{Ignored}:声明该标志将会让Clang的驱动忽略(但继续编译过程)。GCC有许多在Clang中不受支持的标志(过时或不适用)。然而，Clang实际上试图识别这些标志，但除了显示缺少实现的警告消息外，什么也不做。这背后的基本原因是，我们希望Clang可以替代GCC，而不需要在许多项目中修改现有的构建脚本(如果没有这个兼容层，Clang会在看到未知标志时终止编译)。
+\end{itemize}
+
+本节中，我们了解了如何为Clang的驱动程序添加自定义标志，并实现将其转换为前端标志的逻辑。当想要以一种更直接和干净的方式切换自定义功能时，这种技能非常有用。
+ 
+下一节中，我们将通过创建自定义工具链来了解工具链扮演的角色，以及其是如何在Clang中工作的。
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

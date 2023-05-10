@@ -1,0 +1,145 @@
+FunctionPtr模板可以直接替代函数指针，但还不支持函数指针提供的一个操作:测试两个FunctionPtr对象是否会调用同一个函数。添加这样的操作需要用等号操作更新FunctorBridge:
+
+\begin{lstlisting}[style=styleCXX]
+virtual bool equals(FunctorBridge const* fb) const = 0;
+\end{lstlisting}
+
+以及SpecificFunctorBridge中的实现，当具有相同类型时比较存储的函数对象:
+
+\begin{lstlisting}[style=styleCXX]
+virtual bool equals(FunctorBridge<R, Args...> const* fb) const override {
+	if (auto specFb = dynamic_cast<SpecificFunctorBridge const*>(fb)) {
+		return functor == specFb->functor;
+	}
+	// functors with different types are never equal:
+	return false;
+}
+\end{lstlisting}
+
+最后，为FunctionPtr实现operator==它首先检查空函子，然后委托给FunctorBridge:
+
+\begin{lstlisting}[style=styleCXX]
+friend bool
+operator==(FunctionPtr const& f1, FunctionPtr const& f2) {
+	if (!f1 || !f2) {
+		return !f1 && !f2;
+	}
+	return f1.bridge->equals(f2.bridge);
+}
+friend bool
+operator!=(FunctionPtr const& f1, FunctionPtr const& f2) {
+	return !(f1 == f2);
+}
+\end{lstlisting}
+
+这个实现正确，但它有一个缺点:若给FunctionPtr赋值或初始化函数对象没有合适的operator==(例如，包含Lambda)，程序将无法编译。因为FunctionPtrsd还没有使用operator==，而且许多其他类模板(如std::vector)可以用没有operator==的类型实例化，只要不使用operator==就好。
+
+operator==的问题由类型擦除导致，因为当对FunctionPtr赋值或初始化，就会丢失函数对象的类型。因此需要在赋值或初始化完成前，捕获关于该类型所需的所有信息。这些信息包括对函数对象的operator==的调用，所以不能确定什么时候需要使用该操作符。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}机制上，调用operator==的代码会实例化，因为类模板的所有虚函数(本例中是SpecificFunctorBridge)通常在类模板本身实例化时实例化。
+\end{tcolorbox}
+
+这里可以使用基于SFINAE的特征(第19.4节中讨论)，在调用operator==之前，使用一个复杂的特征查询是否可用:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{bridge/isequalitycomparable.hpp}
+\begin{lstlisting}[style=styleCXX]
+#include <utility> // for declval()
+#include <type_traits> // for true_type and false_type
+
+template<typename T>
+class IsEqualityComparable
+{
+	private:
+	// test convertibility of == and ! == to bool:
+	static void* conv(bool); // to check convertibility to bool
+	template<typename U>
+	static std::true_type test(decltype(conv(std::declval<U const&>() ==
+											std::declval<U const&>())),
+							decltype(conv(!(std::declval<U const&>() ==
+											std::declval<U const&>())))
+							);
+	
+	// fallback:
+	template<typename U>
+	static std::false_type test(...);
+	public:
+	static constexpr bool value = decltype(test<T>(nullptr,
+													nullptr))::value;
+};
+\end{lstlisting}
+
+IsEqualityComparable特征应用了表达式测试特征的形式，如第19.4.1节所介绍的:两个test()重载，其中一个包含用decltype包装的测试表达式，另一个通过省略号接受任意参数。第一个test()函数尝试使用==比较两个T类型的const对象，并确保结果可以隐式转换为bool(对于第一个参数)并传递给逻辑否定操作符operator!，结果可转换为bool。如果两个操作都定义良好，则参数类型都为void*。
+
+使用IsEqualityComparable特征，可以构造TryEquals类模板，对给定类型调用==(当该类型可用时)，或者在没有合适的==存在时抛出异常:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{bridge/tryequals.hpp}
+\begin{lstlisting}[style=styleCXX]
+#include <exception>
+#include "isequalitycomparable.hpp"
+
+template<typename T,
+bool EqComparable = IsEqualityComparable<T>::value>
+struct TryEquals
+{
+	static bool equals(T const& x1, T const& x2) {
+		return x1 == x2;
+	}
+};
+
+class NotEqualityComparable : public std::exception
+{
+};
+
+template<typename T>
+struct TryEquals<T, false>
+{
+	static bool equals(T const& x1, T const& x2) {
+		throw NotEqualityComparable();
+	}
+};
+\end{lstlisting}
+
+最后，通过在SpecificFunctorBridge的实现中使用TryEquals，当存储的函数对象类型匹配且函数对象支持==操作时，就能够在FunctionPtr中提供==操作:
+
+\begin{lstlisting}[style=styleCXX]
+virtual bool equals(FunctorBridge<R, Args...> const* fb) const override {
+	if (auto specFb = dynamic_cast<SpecificFunctorBridge const*>(fb)) {
+		return TryEquals<Functor>::equals(functor, specFb->functor);
+	}
+	// functors with different types are never equal:
+	return false;
+}
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

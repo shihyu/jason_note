@@ -1,0 +1,163 @@
+std::function<>类型实际上是C++函数指针的泛化形式，提供了相同的基本操作:
+
+\begin{itemize}
+\item 
+可以用于调用函数，而调用者不需要知道函数的信息。
+
+\item 
+可以复制、移动和赋值。
+
+\item 
+可以从另一个函数(带有兼容的签名)初始化或赋值。
+
+\item 
+有一个“空”状态，表示没有函数已绑定。
+\end{itemize}
+
+与C++函数指针不同的是，std::function<>还可以使用合适的函数操作符存储Lambda或其他函数对象，所有这些操作符都可能具有不同的类型。
+
+本节的剩余部分，将构建自己的通用函数指针类模板——FunctionPtr，需要提供这些核心操作和功能，并用来替代std::function:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{bridge/forupto4.cpp}
+\begin{lstlisting}[style=styleCXX]
+#include "functionptr.hpp"
+#include <vector>
+#include <iostream>
+
+void forUpTo(int n, FunctionPtr<void(int)> f)
+{
+	for (int i = 0; i != n; ++i)
+	{
+		f(i); // call passed function f for i
+	}
+}
+
+void printInt(int i)
+{
+	std::cout << i << ’ ’;
+}
+
+int main()
+{
+	std::vector<int> values;
+	
+	// insert values from 0 to 4:
+	forUpTo(5,
+			[&values](int i) {
+				values.push_back(i);
+			});
+		
+	// print elements:
+	forUpTo(5,
+			printInt); // prints 0 1 2 3 4
+	std::cout << ’\n’;
+}
+\end{lstlisting}
+
+FunctionPtr的接口相当简单，提供函数对象的构造、复制、移动、销毁、初始化和赋值，以及底层函数对象的调用。该接口最有趣的部分是，如何在类模板偏特化中进行描述，其将模板参数(一个函数类型)分解为其组件(结果类型和参数类型):
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{bridge/functionptr.hpp}
+\begin{lstlisting}[style=styleCXX]
+// primary template:
+template<typename Signature>
+class FunctionPtr;
+
+// partial specialization:
+template<typename R, typename... Args>
+class FunctionPtr<R(Args...)>
+{
+	private:
+	FunctorBridge<R, Args...>* bridge;
+	public:
+	// constructors:
+	FunctionPtr() : bridge(nullptr) {
+	}
+	FunctionPtr(FunctionPtr const& other); // see functionptr-cpinv.hpp
+	FunctionPtr(FunctionPtr& other)
+	: FunctionPtr(static_cast<FunctionPtr const&>(other)) {
+	}
+	FunctionPtr(FunctionPtr&& other) : bridge(other.bridge) {
+		other.bridge = nullptr;
+	}
+	// construction from arbitrary function objects:
+	template<typename F> FunctionPtr(F&& f); // see functionptr-init.hpp
+	
+	// assignment operators:
+	FunctionPtr& operator=(FunctionPtr const& other) {
+		FunctionPtr tmp(other);
+		swap(*this, tmp);
+		return *this;
+	}
+	FunctionPtr& operator=(FunctionPtr&& other) {
+		delete bridge;
+		bridge = other.bridge;
+		other.bridge = nullptr;
+		return *this;
+	}
+	// construction and assignment from arbitrary function objects:
+	template<typename F> FunctionPtr& operator=(F&& f) {
+		FunctionPtr tmp(std::forward<F>(f));
+		swap(*this, tmp);
+		return *this;
+	}
+
+	// destructor:
+	~FunctionPtr() {
+	delete bridge;
+	}
+
+	friend void swap(FunctionPtr& fp1, FunctionPtr& fp2) {
+	std::swap(fp1.bridge, fp2.bridge);
+	}
+	explicit operator bool() const {
+	return bridge != nullptr;
+	}
+
+	// invocation:
+	R operator()(Args... args) const; // see functionptr-cpinv.hpp
+};
+\end{lstlisting}
+
+该实现包含非静态成员变量bridge，负责存储和操作存储的函数对象。这个指针的所有权与FunctionPtr对象绑定，因此大多数实现仅去管理这个指针。未实现的函数包含实现中的部分，将在下面的小节中进行描述。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

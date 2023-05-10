@@ -1,0 +1,39 @@
+version: "3.0"
+services:
+  finmind-api:
+    image: finminddocker/finmind_visualization:0.1
+    ports:
+        - 8888:80
+    hostname: api
+    command: pipenv run uvicorn visualization.main:app --workers 2 --host 0.0.0.0 --port 80
+    restart: always
+    environment:
+      - TZ=Asia/Taipei
+      - FINMIND_API_TOKEN=${FINMIND_API_TOKEN}
+    networks:
+        - finmind_network
+  
+  finmind-celery:
+    image: finminddocker/finmind_visualization:0.1
+    hostname: finmind
+    command: pipenv run celery -A visualization.tasks.worker worker --loglevel=info --concurrency=3  --hostname=%h -Q finmind
+    environment:
+      - TZ=Asia/Taipei
+      - FINMIND_API_TOKEN=${FINMIND_API_TOKEN}
+    networks:
+        - finmind_network
+  
+  finmind-scheduler:
+    image: finminddocker/finmind_visualization:0.1
+    hostname: scheduler
+    command: pipenv run python visualization/scheduler.py
+    restart: always
+    environment:
+      - TZ=Asia/Taipei
+      - FINMIND_API_TOKEN=${FINMIND_API_TOKEN}
+    networks:
+        - finmind_network
+
+networks:
+  finmind_network:
+    external: true

@@ -1,0 +1,116 @@
+本章讨论的C++的最后一个特性是模块。它们是对C++20的又一个补充，对代码的构建和划分有很大的影响。
+
+C++使用\texttt{\#include}已经有很长时间了。然而，这种文本形式的依赖包含有其缺陷，如下所示:
+
+\begin{itemize}
+\item 
+由于需要处理大量文本(即使是预处理后的Hello World也需要大约50万行代码)，所以速度很慢。这将违反定义规则(ODR)。
+
+\item 
+顺序很重要，但不应该这样。这个问题是前一个问题的两倍，这还会导致循环依赖。
+
+\item 
+最后，很难封装只需要放在头文件中的内容。即使你把一些东西放在一个详细的命名空间中，也会有人使用它，正如Hyrum定律所预测的那样。
+\end{itemize}
+
+这正是模块入场的时候。它应该解决上述的缺陷，极大地加快构建速度，并在构建时提供更好的C++可扩展性。使用模块，可以导出想要导出的内容，这将带来良好的封装。因为导入的顺序并不重要，所以包含依赖项的特定顺序也不是问题。
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=Note]
+\hspace*{0.75cm}不幸的是，在编写本文时，编译器对模块的支持仍然只是部分完成。这就是为什么只展示GCC 11中已有的功能。遗憾的是，这意味着像模块分区这样的东西将不会在这里出现。
+\end{tcolorbox}
+
+每个模块编译后，不仅会编译成目标文件，还会编译成模块接口文件。编译器可以快速知道一个给定模块包含什么类型和函数，而不是解析一个文件的所有依赖项。开发者所需要做的就是输入以下内容:
+
+\begin{lstlisting}[style=styleCXX]
+import my_module;
+\end{lstlisting}
+
+当\texttt{my\_module}编译并可用，就可以使用了。模块本身应该定义在\texttt{.cppm}文件中，但CMake仍然不支持这些文件，所以最好暂时将它们的后缀改成\texttt{.cpp}。
+
+言归正传，回到多米尼加博览会示例，并展示如何在实践中使用它们。
+
+首先，为客户代码创建第一个模块，从下面的指令开始:
+
+\begin{lstlisting}[style=styleCXX]
+module;
+\end{lstlisting}
+
+这个语句标志着，从此以后，这个模块中的所有东西都是私有的。这是放置包含和其他不会导出的内容的好地方。
+
+接下来，必须指定导出的模块名称:
+
+\begin{lstlisting}[style=styleCXX]
+export module customer;
+\end{lstlisting}
+
+这是稍后用于导入模块的名称，并且这一行必须在导出的内容之前。现在，让指定模块导出实际的内容，并在定义前加上\texttt{export}关键字:
+
+\begin{lstlisting}[style=styleCXX]
+export using CustomerId = int;
+
+export CustomerId get_current_customer_id() { return 42; }
+\end{lstlisting}
+
+完成了!我们的第一个模块可以使用了。让为商人创建另一个实例:
+
+\begin{lstlisting}[style=styleCXX]
+module;
+export module merchant;
+export struct Merchant {
+	int id;
+};
+\end{lstlisting}
+
+与第一个模块非常相似，这里指定了要导出的名称和类型(与第一个模块的类型别名和函数相反)。也可以导出其他定义，比如模板。但是，使用宏时需要一些技巧，因为需要导入\texttt{<header\_file>}才能看到。
+
+顺便说一下，模块的一个优点是它们不允许宏传播到导入的模块中。这意味着当你写下面的代码时，模块不会定义\texttt{MY\_MACRO}:
+
+\begin{lstlisting}[style=styleCXX]
+#define MY_MACRO
+import my_module;
+\end{lstlisting}
+
+它有助于在模块中有决定论，因为它可以保护不破坏其他模块中的代码。
+
+现在，为商店和商品定义第三个模块。这里不会讨论导出其他函数、枚举和其他类型，因为它与前两个模块没有区别。有趣的是模块文件的启动方式。首先，在私有模块部分包含需要的内容:
+
+\begin{lstlisting}[style=styleCXX]
+module;
+
+#include <chrono>
+#include <iomanip>
+#include <optional>
+#include <string>
+#include <vector>
+\end{lstlisting}
+
+在C++20标准中，标准库头文件还不是模块，但这在不久的将来可能会改变。
+
+现在，看看接下来会发生什么:
+
+\begin{lstlisting}[style=styleCXX]
+export module store;
+export import merchant;
+\end{lstlisting}
+
+这是有趣的部分。商店模块导入前面定义的商人模块，然后将其作为商店接口的一部分重新导出。如果模块是其他模块的外观，在不久的将来(也是C++20的一部分)的模块分区中，这将非常方便，可以将模块拆分为多个文件。其中一个可以包含以下内容:
+
+\begin{lstlisting}[style=styleCXX]
+export module my_module:foo;
+export template<typename T> foo() {}
+\end{lstlisting}
+
+正如前面所讨论的，然后模块的主文件导出:
+
+\begin{lstlisting}[style=styleCXX]
+export module my_module;
+export import :foo;
+\end{lstlisting}
+
+这就完成了本章所规划的模块和主要的C++特性。现在，总结一下所了解的知识。
+
+
+
+
+
+

@@ -1,0 +1,209 @@
+
+生成器是生成自己的值序列的迭代器，不使用容器。它动态地创建值，根据需要一次返回一个值。并且，C++生成器可以独立运行。
+
+本节示例中，我们将为斐波那契数列构建一个生成器。这是一个数列，其中每个数字都是数列中前两个数字的和，从0和1开始:
+
+\begin{equation*}
+F(n)=
+\begin{cases}
+	0, n = 0 \\
+	1, n = 1 \\
+	F(n-1) + F(n-2), n > 1
+\end{cases}
+\end{equation*}
+
+斐波那契数列的前十个值，不包括零，分别是:1,1,2,3,5,8,13,21,34,55。这与自然界的黄金比例非常接近。
+
+\subsubsection{How to do it…}
+
+斐波那契数列通常是用递归循环创建的。生成器中的递归可能会很困难，而且需要大量资源，因此只保存序列中的前两个值并将它们相加，这样更有效率更高。
+
+\begin{itemize}
+\item 
+首先，定义一个函数来打印序列:
+
+\begin{lstlisting}[style=styleCXX]
+void printc(const auto & v, const string_view s = "") {
+	if(s.size()) cout << format("{}: ", s);
+	for(auto e : v) cout << format("{} ", e);
+	cout << '\n';
+}
+\end{lstlisting}
+
+之前使用过这个printc()函数，可打印一个可迭代范围，以及一个描述字符串。
+
+\item 
+我们的类从一个类型别名和一些对象变量开始，所有这些都在private部分中定义。
+
+\begin{lstlisting}[style=styleCXX]
+class fib_generator {
+	using fib_t = unsigned long;
+	fib_t stop_{};
+	fib_t count_ { 0 };
+	fib_t a_ { 0 };
+	fib_t b_ { 1 };
+\end{lstlisting}
+
+stop\_变量将在后面用作哨兵，设置为要生成的值的数量。count\_用于跟踪生成了多少个值。a\_和b\_是前两个序列值，用于计算下一个值。
+
+\item 
+private部分，有一个简单的函数来计算斐波那契数列中的下一个值。
+
+\begin{lstlisting}[style=styleCXX]
+	constexpr void do_fib() {
+		const fib_t old_b = b_;
+		b_ += a_;
+		a_ = old_b;
+	}
+\end{lstlisting}
+
+\item 
+public部分，有一个简单的构造函数，有一个默认值:
+
+\begin{lstlisting}[style=styleCXX]
+public:
+	explicit fib_generator(fib_t stop = 0) : stop_{ stop
+	} {}
+\end{lstlisting}
+
+该构造函数不带参数，用于创建哨兵。stop参数初始化stop\_变量以表示要生成多少值。
+
+\item 
+其余的公共函数是前向迭代器所期望的操作符重载:
+
+\begin{lstlisting}[style=styleCXX]
+	fib_t operator*() const { return b_; }
+	constexpr fib_generator& operator++() {
+		do_fib();
+		++count_;
+		return *this;
+	}
+	fib_generator operator++(int) {
+		auto temp{ *this };
+		++*this;
+		return temp;
+	}
+	bool operator!=(const fib_generator &o) const {
+		return count_ != o.count_;
+	}
+	bool operator==(const fib_generator&o) const {
+		return count_ == o.count_;
+	}
+	const fib_generator& begin() const { return *this; }
+	const fib_generator end() const {
+		auto sentinel = fib_generator();
+		sentinel.count_ = stop_;
+		return sentinel;
+	}
+	fib_t size() { return stop_; }
+};
+\end{lstlisting}
+
+还有一个简单的size()函数，若需要为复制操作初始化一个目标容器，这个函数会很有用。
+
+\item 
+现在可以在main函数中使用生成器
+
+\begin{lstlisting}[style=styleCXX]
+printc():
+	int main() {
+		printc(fib_generator(10));
+	}
+\end{lstlisting}
+
+这将创建一个匿名的fib\_generator对象传递给printc()函数。
+
+\item 
+用前10个斐波那契数(不包括零)可得到如下输出:
+
+\begin{tcblisting}{commandshell={}}
+1 1 2 3 5 8 13 21 34 55
+\end{tcblisting}
+\end{itemize}
+
+\subsubsection{How it works…}
+
+fib\_generator类作为前向迭代器运行:
+
+\begin{lstlisting}[style=styleCXX]
+fib_generator {
+public:
+	fib_t operator*() const;
+	constexpr fib_generator& operator++();
+	fib_generator operator++(int);
+	bool operator!=(const fib_generator &o) const;
+	bool operator==(const fib_generator&o) const;
+	const fib_generator& begin() const;
+	const fib_generator end() const;
+};
+\end{lstlisting}
+
+就基于范围的for循环而言，这是一个迭代器(看起来像一个迭代器)。
+
+该值在do\_fib()函数中计算:
+
+\begin{lstlisting}[style=styleCXX]
+constexpr void do_fib() {
+	const fib_t old_b = b_;
+	b_ += a_;
+	a_ = old_b;
+}
+\end{lstlisting}
+
+这只是简单地添加了b\_ += a\_，将结果存储在b\_中，将旧的b\_存储在a\_中，为下一次迭代保存必要的值。
+
+解引用操作符返回b\_的值，是序列中的下一个值:
+
+\begin{lstlisting}[style=styleCXX]
+fib_t operator*() const { return b_; }
+\end{lstlisting}
+
+end()函数创建了一个对象，其中count\_变量等于stop\_变量，从而创建了一个哨兵:
+
+\begin{lstlisting}[style=styleCXX]
+const fib_generator end() const {
+	auto sentinel = fib_generator();
+	sentinel.count_ = stop_;
+	return sentinel;
+}
+\end{lstlisting}
+
+现在，相等比较操作符可以很容易地检测序列的结束:
+
+\begin{lstlisting}[style=styleCXX]
+bool operator==(const fib_generator&o) const {
+	return count_ == o.count_;
+}
+\end{lstlisting}
+
+\subsubsection{There's more…}
+
+若想让生成器与算法库一起工作，需要提供特性别名。这些放在public的顶部:
+
+\begin{lstlisting}[style=styleCXX]
+public:
+	using iterator_concept = std::forward_iterator_tag;
+	using iterator_category = std::forward_iterator_tag;
+	using value_type = std::remove_cv_t<fib_t>;
+	using difference_type = std::ptrdiff_t;
+	using pointer = const fib_t*;
+	using reference = const fib_t&;
+\end{lstlisting}
+
+现在可以使用生成器和算法:
+
+\begin{lstlisting}[style=styleCXX]
+fib_generator fib(10);
+auto x = ranges::views::transform(fib,
+	[](unsigned long x){ return x * x; });
+printc(x, "squared:");
+\end{lstlisting}
+
+使用transform()算法的ranges::views版本对每个值进行平方。生成的对象可以用于可以使用迭代器的地方。
+
+可以从printc()中获得以下输出:
+
+\begin{tcblisting}{commandshell={}}
+squared:: 1 1 4 9 25 64 169 441 1156 3025
+\end{tcblisting}
+

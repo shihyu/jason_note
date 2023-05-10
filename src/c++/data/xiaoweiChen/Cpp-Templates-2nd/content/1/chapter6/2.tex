@@ -1,0 +1,194 @@
+成员函数模板也可以用作特殊的成员函数，包括用作构造函数，但这可能会导致意想不到的结果。
+
+看看下面的例子:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/specialmemtmpl1.cpp}
+\begin{lstlisting}[style=styleCXX]
+#include <utility>
+#include <string>
+#include <iostream>
+
+class Person
+{
+private:
+	std::string name;
+public:
+	// constructor for passed initial name:
+	explicit Person(std::string const& n) : name(n) {
+		std::cout << "copying string-CONSTR for '" << name << "'\n";
+	}
+	explicit Person(std::string&& n) : name(std::move(n)) {
+		std::cout << "moving string-CONSTR for '" << name << "'\n";
+	}
+	// copy and move constructor:
+	Person (Person const& p) : name(p.name) {
+		std::cout << "COPY-CONSTR Person '" << name << "'\n";
+	}
+	Person (Person&& p) : name(std::move(p.name)) {
+		std::cout << "MOVE-CONSTR Person '" << name << "'\n";
+	}
+};
+
+int main()
+{
+	std::string s = "sname";
+	Person p1(s); // init with string object => calls copying string-CONSTR
+	Person p2("tmp"); // init with string literal => calls moving string-CONSTR
+	Person p3(p1); // copy Person => calls COPY-CONSTR
+	Person p4(std::move(p1)); // move Person => calls MOVE-CONST
+}
+\end{lstlisting}
+
+这里，有一个具有string成员名的类Person，我们为其提供了初始化构造函数。为了支持移动语义，重载了接受std::string参数的构造函数:
+
+\begin{itemize}
+\item 
+提供了string的构造函数，其名称由传递参数的副本进行初始化:
+
+\begin{lstlisting}[style=styleCXX]
+Person(std::string const& n) : name(n) {
+	std::cout << "copying string-CONSTR for '" << name << "'\n";
+}
+\end{lstlisting}
+
+\item 
+提供了一个可移动string对象的构造函数，使用std::move()来“窃取”下面的值:
+
+\begin{lstlisting}[style=styleCXX]
+Person(std::string&& n) : name(std::move(n)) {
+	std::cout << "moving string-CONSTR for '" << name << "'\n";
+}
+\end{lstlisting}
+\end{itemize}
+
+正如预期的那样，对于传入的字符串对象(lvalues)调用第一种方法，而对于可移动的对象(rvalues)调用后者:
+
+\begin{lstlisting}[style=styleCXX]
+std::string s = "sname";
+Person p1(s); // init with string object => calls copying string-CONSTR
+Person p2("tmp"); // init with string literal => calls moving string-CONSTR
+\end{lstlisting}
+
+除了这些构造函数之外，示例还对复制和移动构造函数有特定的实现，以确定Person作为一个整体何时复制/移动:
+
+\begin{lstlisting}[style=styleCXX]
+Person p3(p1); // copy Person => calls COPY-CONSTR
+Person p4(std::move(p1)); // move Person => calls MOVE-CONSTR
+\end{lstlisting}
+
+现在用一个泛型构造函数替换两个需要传入string的构造函数，完美转发的参数将传递给成员name:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/specialmemtmpl2.hpp}
+\begin{lstlisting}[style=styleCXX]
+#include <utility>
+#include <string>
+#include <iostream>
+
+class Person
+{
+private:
+	std::string name;
+public:
+	// generic constructor for passed initial name:
+	template<typename STR>
+	explicit Person(STR&& n) : name(std::forward<STR>(n)) {
+		std::cout << "TMPL-CONSTR for '" << name << "'\n";
+	}
+
+	// copy and move constructor:
+	Person (Person const& p) : name(p.name) {
+		std::cout << "COPY-CONSTR Person '" << name << "'\n";
+	}
+	Person (Person&& p) : name(std::move(p.name)) {
+		std::cout << "MOVE-CONSTR Person '" << name << "'\n";
+	}
+};
+\end{lstlisting}
+
+传递string的构造函数工作正常:
+
+\begin{lstlisting}[style=styleCXX]
+std::string s = "sname";
+Person p1(s); // init with string object => calls TMPL-CONSTR
+Person p2("tmp"); // init with string literal => calls TMPL-CONSTR
+\end{lstlisting}
+
+在这种情况下p2的构造并没有创建临时字符串，参数STR推导为char const[4]。将std::forward<STR>应用于构造函数的指针参数没有太大的效果，因此name成员是由一个以null结尾的字符串(进行构造)。
+
+但当我们试图调用复制构造函数时，会得到一个错误:
+
+\begin{lstlisting}[style=styleCXX]
+Person p3(p1); // ERROR
+\end{lstlisting}
+
+当用一个可移动对象初始化一个新的Person时，仍然可以正常工作:
+
+\begin{lstlisting}[style=styleCXX]
+Person p4(std::move(p1)); // OK: move Person => calls MOVE-CONST
+\end{lstlisting}
+
+复制一个常量Person也可以正常工作:
+
+\begin{lstlisting}[style=styleCXX]
+Person const p2c("ctmp"); // init constant object with string literal
+Person p3c(p2c); // OK: copy constant Person => calls COPY-CONSTR
+\end{lstlisting}
+
+问题是，根据C++的重载解析规则(参见16.2.4节)，对于一个非常量左值Person p，成员模板
+
+\begin{lstlisting}[style=styleCXX]
+template<typename STR>
+Person(STR&& n)
+\end{lstlisting}
+
+要比(通常是预定义的)复制构造函数匹配的更好:
+
+\begin{lstlisting}[style=styleCXX]
+Person (Person const& p)
+\end{lstlisting}
+
+STR只是替换为Person\&，而对于复制构造函数，需要转换为const。
+
+可以考虑通过提供一个非常量复制构造函数来解决这个问题:
+
+\begin{lstlisting}[style=styleCXX]
+Person (Person& p)
+\end{lstlisting}
+
+这只是部分的解决方案，对于派生类的对象，成员模板仍然是更好的匹配。当传递的参数是Person或可以转换为Person的表达式时，这里需要的是禁用成员模板。这可以通过使用std::enable\_if<>来禁用，这将在下一节中介绍。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
