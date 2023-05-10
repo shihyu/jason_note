@@ -34,6 +34,7 @@
   - [L&R value](c++/l&rvalue.md)
   - [Move](c++/move.md)
   - [CAS](c++/CAS.md)
+  - [HFT](c++/HFT.md)
   
 - [RISC-V](riscv/riscv.md)
   - [QEMU上運行RISV-V Linux](riscv/qemu_riscv_linux.md)
@@ -132,6 +133,8 @@
   - [Other](python/other.md)
 
 - [Mermaid](mermaid/mermaid.md)
+- [Linux System](linux_system/perf.md)
+  - [Socket](linux_system/1_day_socket.md)
 - [Strategy](strategy/bollmaker.md)
   - [造市](strategy/造市/market_market.md)
   - [臺指](strategy/tw_futures.md)
