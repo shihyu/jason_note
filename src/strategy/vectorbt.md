@@ -1,3 +1,42 @@
+## Multiple assets, multiple trade signals per asset 
+
+```python
+import pandas as pd
+import vectorbt as vbt
+
+price = pd.DataFrame({"p1": [1, 2, 3, 4], "p2": [5, 6, 7, 8]})
+price.columns.name = "asset"
+entries = pd.DataFrame(
+    {
+        "en1": [True, False, False, False],
+        "en2": [False, True, False, False],
+        "en3": [False, False, True, False],
+        "en4": [False, False, False, True],
+    }
+)
+entries.columns.name = "entries"
+exits = pd.DataFrame(
+    {
+        "ex1": [False, False, False, True],
+        "ex2": [False, False, False, True],
+        "ex3": [False, False, False, True],
+        "ex4": [False, False, False, True],
+    }
+)
+exits.columns.name = "exits"
+entries = entries.vbt.stack_index(pd.Index(["p1", "p1", "p2", "p2"], name="asset"))
+exits = exits.vbt.stack_index(pd.Index(["p1", "p1", "p2", "p2"], name="asset"))
+portfolio = vbt.Portfolio.from_signals(price, entries, exits)  # not grouped portfolio
+print(portfolio.total_return())
+print(portfolio.total_return(group_by='asset'))  # group not grouped portfolio
+
+portfolio = vbt.Portfolio.from_signals(price, entries, exits, group_by='asset')  # grouped portfolio
+print(portfolio.total_return())
+
+print(portfolio.total_return(group_by=False))  # ungroup grouped portfolio
+
+```
+
 ## from_order_func 做資金加減碼
 
 ```python
