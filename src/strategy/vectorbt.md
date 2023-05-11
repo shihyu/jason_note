@@ -1,3 +1,55 @@
+## from_orders
+
+```python
+import pandas as pd
+import vectorbt as vbt
+import numpy as np
+from datetime import datetime, timedelta
+
+
+# Entry trades
+pf_kwargs = dict(
+    close=pd.Series([1., 2., 3., 4., 5.]),
+    size=pd.Series([1., -2., 2., -2., 1.]),
+    fixed_fees=1.
+)
+
+entry_trades = vbt.Portfolio.from_orders(**pf_kwargs).entry_trades
+print(entry_trades.records_readable)
+exit_trades = vbt.Portfolio.from_orders(**pf_kwargs).exit_trades
+print(exit_trades.records_readable)
+
+# Entry positions
+positions = vbt.Portfolio.from_orders(**pf_kwargs).positions
+print(positions.records_readable)
+
+print(entry_trades.pnl.sum() == exit_trades.pnl.sum() == positions.pnl.sum())
+
+price = pd.Series([1., 2., 3., 4., 3., 2., 1.])
+size = pd.Series([1., -0.5, -0.5, 2., -0.5, -0.5, -0.5])
+trades = vbt.Portfolio.from_orders(price, size).trades
+
+print(trades.count())
+print(trades.pnl.sum())
+print(trades.winning.count())
+print(trades.winning.pnl.sum())
+print(trades.stats())
+
+np.random.seed(42)
+price = pd.DataFrame({
+    'a': np.random.uniform(1, 2, size=100),
+    'b': np.random.uniform(1, 2, size=100)
+}, index=[datetime(2020, 1, 1) + timedelta(days=i) for i in range(100)])
+size = pd.DataFrame({
+    'a': np.random.uniform(-1, 1, size=100),
+    'b': np.random.uniform(-1, 1, size=100),
+}, index=[datetime(2020, 1, 1) + timedelta(days=i) for i in range(100)])
+pf = vbt.Portfolio.from_orders(price, size, fees=0.01, freq='d')
+print(pf.trades['a'].stats(settings=dict(incl_open=True)))
+```
+
+
+
 ## 多幣種回測
 
 ```python
