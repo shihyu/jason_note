@@ -1,3 +1,34 @@
+## 多幣種回測
+
+```python
+import numpy as np
+import pandas as pd
+import vectorbt as vbt
+import warnings
+from datetime import datetime
+
+
+# Prepare data
+start = "2019-01-01 UTC"  # crypto is in UTC
+end = "2020-01-01 UTC"
+btc_price = vbt.YFData.download("BTC-USD", start=start, end=end).get("Close")
+eth_price = vbt.YFData.download("ETH-USD", start=start, end=end).get("Close")
+comb_price = btc_price.vbt.concat(
+    eth_price, keys=pd.Index(["BTC", "ETH"], name="symbol")
+)
+comb_price.vbt.drop_levels(-1, inplace=True)
+
+fast_ma = vbt.MA.run(comb_price, [10, 20], short_name="fast")
+slow_ma = vbt.MA.run(comb_price, [30, 30], short_name="slow")
+
+entries = fast_ma.ma_crossed_above(slow_ma)
+exits = fast_ma.ma_crossed_below(slow_ma)
+
+pf = vbt.Portfolio.from_signals(comb_price, entries, exits)
+print(pf.total_return())
+print(pf.stats())
+```
+
 ## Multiple assets, multiple trade signals per asset 
 
 ```python
