@@ -21,7 +21,7 @@ git clone https://github.com/universal-ctags/ctags
 sudo /usr/bin/software-properties-gtk
 ```
 
-### ubuntu 20.04 package
+### ubuntu 22.04 package
 
 ```sh
 sudo apt-get install autoconf automake linux-headers-`uname -r` \
@@ -31,11 +31,11 @@ sudo apt-get install autoconf automake linux-headers-`uname -r` \
  cutecom hexedit ccache clang pbzip2 smplayer plink putty-tools \
  ghex doxygen doxygen-doc libstdc++6 lib32stdc++6 build-essential \
  doxygen-gui graphviz git-core cconv alsa-oss wmctrl terminator \
- curl gnome-tweak-tool cgdb dos2unix libreadline-dev \
+ curl cgdb dos2unix libreadline-dev \
  hexedit ccache ruby subversion htop astyle ubuntu-restricted-extras \
  libncurses5-dev xdot universal-ctags cscope \
  libsdl1.2-dev gitk libncurses5-dev binutils-dev gtkterm \
- libtool mpi-default-dev libbz2-dev libicu-dev python-dev scons csh \
+ libtool mpi-default-dev libbz2-dev libicu-dev scons csh \
  enca ttf-anonymous-pro libperl4-corelibs-perl cgvg catfish gawk \
  i2c-tools sshfs wavesurfer audacity fcitx fcitx-chewing libswitch-perl bin86 \
  inotify-tools u-boot-tools subversion crash tree mscgen krename umbrello \
@@ -43,7 +43,7 @@ sudo apt-get install autoconf automake linux-headers-`uname -r` \
  texinfo texi2html ghp-import autossh samba sdcv xournal cloc geogebra \
  libluajit-5.1-dev libacl1-dev libgpmg1-dev libgtk-3-dev libgtk2.0-dev \
  liblua5.2-dev libperl-dev libselinux1-dev libtinfo-dev libxaw7-dev \
- libxpm-dev libxt-dev lua5.2 python3-dev ruby ruby-dev tcl-dev gnome-control-center
+ libxpm-dev libxt-dev gnome-control-center
 ```
 
 ## foliate 支持.epub，.mobi，.azw和.azw3文件。 它不支持PDF文件。
