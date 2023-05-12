@@ -31,7 +31,7 @@ sudo apt-get install autoconf automake linux-headers-`uname -r` \
  cutecom hexedit ccache clang pbzip2 smplayer plink putty-tools \
  ghex doxygen doxygen-doc libstdc++6 lib32stdc++6 build-essential \
  doxygen-gui graphviz git-core cconv alsa-oss wmctrl terminator \
- curl cgdb dos2unix libreadline-dev \
+ curl cgdb dos2unix libreadline-dev tmux \
  hexedit ccache ruby subversion htop astyle ubuntu-restricted-extras \
  libncurses5-dev xdot universal-ctags cscope \
  libsdl1.2-dev gitk libncurses5-dev binutils-dev gtkterm \
