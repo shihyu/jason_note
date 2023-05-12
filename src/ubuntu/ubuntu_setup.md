@@ -43,7 +43,7 @@ sudo apt-get install autoconf automake linux-headers-`uname -r` \
  texinfo texi2html ghp-import autossh samba sdcv xournal cloc geogebra \
  libluajit-5.1-dev libacl1-dev libgpmg1-dev libgtk-3-dev libgtk2.0-dev \
  liblua5.2-dev libperl-dev libselinux1-dev libtinfo-dev libxaw7-dev \
- libxpm-dev libxt-dev gnome-control-center
+ libxpm-dev libxt-dev gnome-control-center gettext libtool libtool-bin cmake g++ pkg-config unzip xsel
 ```
 
 ## foliate 支持.epub，.mobi，.azw和.azw3文件。 它不支持PDF文件。
@@ -66,8 +66,6 @@ sudo gedit /etc/NetworkManager/NetworkManager.conf
 sudo service network-manager restart
 ```
 
-
-
 ### gnome-open
 
 ```sh
@@ -77,8 +75,6 @@ sudo ln -s /usr/bin/xdg-open ~/.mybin/o
 
 
 ### 將 /tmp 設到 RamDisk (tmpfs) 的方法
-
-
 
 ```sh
 基本上只要打以下指令，就能將 /tmp 綁定到 /dev/shm
