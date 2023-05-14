@@ -216,3 +216,70 @@ fig3.write_html(r'C:\Users\jay\Desktop\PythonInOffice\plotly_stock_chart\graph.h
 ## Dash
 
 Although our graph is interactive, it’s still lacking something. For example, if we want to draw a chart for another stock, we have to change the stock ticker inside the code and re-run it. In other words, our graph is not fully interactive yet. With Dash, we can create a graph that takes stock tickers as input and draw the chart accordingly.
+
+---
+
+
+
+```python
+import yfinance as yf
+import pandas as pd
+import plotly as plotly
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
+def show_plot(fig, filename):
+    plotly.offline.plot(fig, filename=filename)
+
+
+tsla = yf.Ticker('TSLA')
+hist = tsla.history(period='1y')
+fig = go.Figure(data=go.Scatter(x=hist.index,y=hist['Close'], mode='lines'))
+# 只有線圖
+show_plot(fig, 'test.html')
+
+# 線圖+點
+fig = go.Figure(data=go.Scatter(x=hist.index,y=hist['Close'], mode='lines+markers'))
+show_plot(fig, 'test.html')
+
+
+# 線圖+點+成交量柱狀圖
+fig2 = make_subplots(specs=[[{"secondary_y": True}]])
+fig2.add_trace(go.Scatter(x=hist.index,y=hist['Close'],name='Price'),secondary_y=False)
+fig2.add_trace(go.Bar(x=hist.index,y=hist['Volume'],name='Volume'),secondary_y=True)
+show_plot(fig2, 'test.html')
+
+
+# 線圖+點+成交量柱狀圖+nornalize
+fig2.update_yaxes(range=[0,7000000000],secondary_y=True)
+fig2.update_yaxes(visible=False, secondary_y=True)
+show_plot(fig2, 'test.html')
+
+
+# 線圖+點+成交量柱狀圖+蠟燭圖
+fig3 = make_subplots(specs=[[{"secondary_y": True}]])
+fig3.add_trace(go.Candlestick(x=hist.index,
+                              open=hist['Open'],
+                              high=hist['High'],
+                              low=hist['Low'],
+                              close=hist['Close'],
+                             ))
+show_plot(fig3, 'test.html')
+
+
+# 成交量柱狀圖+蠟燭圖
+fig3.add_trace(go.Bar(x=hist.index, y=hist['Volume'], name='Volume'),secondary_y=True)
+fig3.update_layout(xaxis_rangeslider_visible=False)
+show_plot(fig3, 'test.html')
+
+
+fig3.add_trace(go.Scatter(x=hist.index,y=hist['Close'].rolling(window=20).mean(),marker_color='blue',name='20 Day MA'))
+fig3.add_trace(go.Bar(x=hist.index, y=hist['Volume'], name='Volume'),secondary_y=True)
+fig3.update_layout(title={'text':'TSLA', 'x':0.5})
+fig3.update_yaxes(range=[0,1000000000],secondary_y=True)
+fig3.update_yaxes(visible=False, secondary_y=True)
+fig3.update_layout(xaxis_rangeslider_visible=False)  #hide range slider
+show_plot(fig3, 'test.html')
+
+```
+
