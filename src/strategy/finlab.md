@@ -16,7 +16,8 @@ if __name__ == "__main__":
 
     merged_df = close.merge(rev, on='date', how='left', suffixes=('_close', '_rev'))
     merged_df.fillna(method='bfill', inplace=True)
-    print(merged_df)
+    print(merged_df, merged_df.columns)
+    print(merged_df['2330_close'], merged_df['2330_rev'])
 ```
 
 
