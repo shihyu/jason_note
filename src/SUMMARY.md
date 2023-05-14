@@ -120,6 +120,7 @@
   - [Python WebSocket長連接心跳與短連接](python/WebSocket_reconnect.md)
   - [bloomrpc](python/bloomrpc.md)
   - [任務調度](python/schedule.md)
+  - [Plot](python/plot/plot.md)
   - [Rust bindings for Python](python/Rust_bindings_for_Python.md)
   - [Pandas](python/pandas.md)
   - [Coroutine](python/coroutine.md)
@@ -131,7 +132,7 @@
   - [繪圖](python/plot.md)
   - [永豐shioaji](python/shioaji.md)
   - [Other](python/other.md)
-
+  
 - [Mermaid](mermaid/mermaid.md)
 - [Linux System](linux_system/perf.md)
   - [Socket](linux_system/1_day_socket.md)
