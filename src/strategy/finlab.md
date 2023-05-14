@@ -1,3 +1,26 @@
+## 收盤價跟月營收合併
+
+```python
+import finlab
+import pandas as pd
+from finlab import data
+
+pd.options.display.float_format = lambda x: "%.2f" % x
+
+
+if __name__ == "__main__":
+    close = data.get("price:收盤價")
+    rev = data.get("monthly_revenue:當月營收")
+    print(close)
+    print(rev)
+
+    merged_df = close.merge(rev, on='date', how='left', suffixes=('_close', '_rev'))
+    merged_df.fillna(method='bfill', inplace=True)
+    print(merged_df)
+```
+
+
+
 ## 臺股漲跌與市值板塊圖
 
 出處: https://www.finlab.tw/dashboard2-plotly-treemap/
