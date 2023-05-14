@@ -141,6 +141,7 @@
   - [臺指](strategy/tw_futures.md)
   - [套利](strategy/arbitrage.md)
   - [海龜交易](strategy/海龜交易.md)
+  - [如何避免過擬合](strategy/如何避免過擬合.md)
   - [選擇權](strategy/Option/option.md)
     - [Option note](strategy/Option/option_note.md)
   - [VectorBT](strategy/vectorbt.md)
@@ -174,7 +175,7 @@
     - [Pyfolio](strategy/backtrader/Pyfolio.md)
     - [Sample](strategy/backtrader/Sample.md)
     - [Performance](strategy/backtrader/performance.md)
-
+  
 - [MQ](mq/kafka.md)
 - [Kafka的通俗總結](mq/kafka-python.md)
 
