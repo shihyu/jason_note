@@ -373,17 +373,13 @@ def show_plot(fig, filename):
 
 
 if __name__ == "__main__":
-    tsla = yf.Ticker("TSLA")
-    df = tsla.history(period="1y")
+    stock = "2630.TW"
+    tsla = yf.Ticker(stock)
+    df = tsla.history(period="10y")
 
     df["10_ma"] = df["Close"].rolling(10).mean()
     df["20_ma"] = df["Close"].rolling(20).mean()
-    print(df, df[-120:])
-    input()
-
-    fig = get_candlestick_plot(df[-120:], 10, 20, "TSLA")
+    fig = get_candlestick_plot(df[-120:], 10, 20, stock)
     # fig.show()
     show_plot(fig, "tsla.html")
-
 ```
-
