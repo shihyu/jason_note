@@ -1,3 +1,40 @@
+## 低波動 飆股長相
+
+```python
+def compute_candle_volatility(timeperiod=20):
+    close = data.get("price:收盤價")
+    high = data.get("price:最高價")
+    low = data.get("price:最低價")
+    open_ = data.get("price:開盤價")
+
+    bullish_candle = close >= open_
+    bullish_volatility = (
+        abs(close.shift() - open_)
+        + abs(open_ - low)
+        + abs(low - high)
+        + abs(high - close)
+    )
+    bearish_volatility = (
+        abs(close.shift() - open_)
+        + abs(open_ - high)
+        + abs(high - low)
+        + abs(low - close)
+    )
+    candle_volatility = FinlabDataFrame(
+        np.nan, index=close.index, columns=close.columns
+    )
+    candle_volatility[bullish_candle] = bullish_volatility
+    candle_volatility[~bullish_candle] = bearish_volatility
+    volatility = (
+        candle_volatility.average(timeperiod) / close.average(timeperiod) * 100
+    )
+    return volatility
+```
+
+
+
+
+
 ## 收盤價跟月營收合併
 
 ```python
