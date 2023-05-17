@@ -12,7 +12,7 @@ Perf 可取樣的事件非常多，可以分析 Hardware event，如 cpu-cycles�
 
 首先利用以下指令查看目前的 Kernel config 有沒有啟用 Perf。如果 PC 上是裝一般 Linux distro，預設值應該都有開啟。
 
-```
+```sh
 ＄ cat "/boot/config-`uname -r`" | grep "PERF_EVENT"
 ```
 
@@ -23,7 +23,7 @@ Perf 可取樣的事件非常多，可以分析 Hardware event，如 cpu-cycles�
 1. 前面講到，perf 是 Linux 內建支持的效能優化工具，在 2.6.31 版本之後，我們可以直接到 [Linux Kernel Archives](https://www.kernel.org/) 下載對應版本的程式碼，解壓縮後到 `tools/perf` 裡面去編譯，通常過程中會有相依的套件需要安裝，依指示完成安裝後，編譯即可成功，最後再把編譯完成的 perf 移至 `/usr/bin` 中就可以使用了。 這種方法通常適用於更新過 kernel 的使用者，因為更新過 kernel 後會造成 distribution package 與 kernel version 不相符。一般使用者採用第二種方法即可。
 2. 使用 apt-get 進行安裝。
 
-```
+```sh
 $ sudo apt-get install linux-tools-common
 ```
 
@@ -40,13 +40,13 @@ You may need to install the following packages for this specific kernel:
 
 上面的 Kernel 版本可能和你不一樣，根據指示安裝起來即可。不放心的話可以使用`＄ uname -r`確認。
 
-```
+```sh
 $ sudo apt-get install linux-tools-3.16.0-50-generic linux-cloud-tools-3.16.0-50-generic
 ```
 
 1. 到這裡 perf 的安裝就完成了。不過這裡我再稍微補充一下，如果你不是切換到 root 的情況下輸入
 
-```
+```sh
 $ perf top
 ```
 
@@ -56,7 +56,7 @@ $ perf top
 
 kernel.perf_event_paranoid 是用來決定你在沒有 root 權限下 (Normal User) 使用 perf 時，你可以取得哪些 event data。預設值是 1 ，你可以輸入
 
-```
+```sh
 $ cat /proc/sys/kernel/perf_event_paranoid
 ```
 
@@ -72,7 +72,7 @@ $ cat /proc/sys/kernel/perf_event_paranoid
 
 最後如果要檢測 cache miss event ，需要先取消 kernel pointer 的禁用。
 
-```
+```sh
 $ sudo sh -c " echo 0 > /proc/sys/kernel/kptr_restrict"
 ```
 
@@ -80,7 +80,7 @@ $ sudo sh -c " echo 0 > /proc/sys/kernel/kptr_restrict"
 
 一開始，我們先使用第一次作業 「計算圓周率」 的程式來體會一下 perf 使用。 [perf_top_example.c]
 
-```
+```c
 #include <stdio.h>
 #include <unistd.h>
 
@@ -103,7 +103,7 @@ int main() {
 
 將上述程式存檔為 perf_top_example.c，並執行：
 
-```
+```sh
 g++ -c perf_top_example.c
 g++ perf_top_example.o -o example
 ./example
@@ -111,7 +111,7 @@ g++ perf_top_example.o -o example
 
 執行上述程式後，可以取得一個 pid 值，再根據 pid 輸入
 
-```
+```sh
 perf top -p $pid
 ```
 
@@ -193,13 +193,13 @@ Perf 將 tracepoint 產生的事件記錄下來，生成報告，通過分析這
 
 Perf 包含 20 幾種子工具集，不過我還沒碰過很多，我根據目前理解先介紹以下。 如果想看第一手資料
 
-```
+```sh
 $ perf help <command>
 ```
 
 \###perf list 這應該是大部分的人第一次安裝 perf 後所下的第一個指令，它能印出 perf 可以觸發哪些 event，不同 CPU 可能支援不同 hardware event，不同 kernel 版本支援的 software、tracepoint event 也不同。我的 perf 版本是`3.19.8`，所支援的 event 已經超過 1400 項（另外要列出 Tracepoint event 必須開啟 root 權限）。
 
-```
+```sh
 $ perf list
 ```
 
@@ -209,7 +209,7 @@ $ perf list
 
 perf top 其實跟平常 Linux 內建的 top 指令很相似。它能夠「即時」的分析各個函式在某個 event 上的熱點，找出拖慢系統的兇手，就如同上面那個範例一樣。甚至，即使沒有特定的程序要觀察，你也可以直接下達 `$ perf top` 指令來觀察是什麼程序吃掉系統效能，導致系統異常變慢。譬如我執行一個無窮迴圈：
 
-```
+```c
 int main() {
     long int i = 0;
     while(1) {
@@ -241,7 +241,7 @@ $ perf top -e cache-misses -c 5000
 
 相較於 top，使用 perf stat 往往是你已經有個要優化的目標，對這個目標進行特定或一系列的 event 檢查，進而了解該程序的效能概況。（event 沒有指定的話，預設會有十種常用 event。） 我們來對以下程式使用 perf stat 工具 分析 cache miss 情形
 
-```
+```c
 static char array[10000][10000];
 int main (void){
   int i, j;
@@ -250,6 +250,11 @@ int main (void){
        array[j][i]++;
   return 0;
 }
+```
+
+
+
+```sh
 $ perf stat --repeat 5 -e cache-misses,cache-references,instructions,cycles ./perf_stat_cache_miss
     Performance counter stats for './perf_stat_cache_miss' (5 runs):
     4,416,226        cache-misses        #    3.437 % of all cache refs    ( +-  0.27% )
@@ -278,7 +283,7 @@ cache-references 從 `128,483,262`下降到 `2,414,202`，差了五十幾倍，�
 
 \###perf record & perf report 有別於 stat，record 可以針對函式級別進行 event 統計，方便我們對程序「熱點」作更精細的分析和優化。 我們來對以下程式，使用 perf record 進行 branch 情況分析
 
-```
+```c
 #define N 5000000
 static int array[N] = { 0 };
 void normal_loop(int a) {
@@ -301,6 +306,9 @@ int main() {
     unroll_loop(1);
     return 0;
 }
+```
+
+```sh
 $ perf record -e branch-misses:u,branch-instructions:u ./perf_record_example
 $ perf report
 ```
@@ -309,7 +317,7 @@ $ perf report
 
 另外，使用 record 有可能會碰到的問題是取樣頻率太低，有些函式的訊息沒有沒顯示出來（沒取樣到），這時可以使用 `-F <frequcncy>`來調高取樣頻率，可以輸入以下查看最大值，要更改也沒問題，但能調到多大可能還要查一下。
 
-```
+```sh
 $ cat /proc/sys/kernel/perf_event_max_sample_rate
 ```
 

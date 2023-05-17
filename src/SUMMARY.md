@@ -136,6 +136,8 @@
 - [Mermaid](mermaid/mermaid.md)
 - [Linux System](linux_system/perf.md)
   - [Socket](linux_system/1_day_socket.md)
+  - [Cgroup](linux_system/cgroup.md)
+  - [Perf](linux_system/perf.md)
 - [Strategy](strategy/bollmaker.md)
   - [造市](strategy/造市/market_market.md)
   - [臺指](strategy/tw_futures.md)
