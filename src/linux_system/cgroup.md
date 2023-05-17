@@ -75,3 +75,19 @@ root     3833    10.0     0.1           62820        2580   pts/9    R     11:56
 ```
 
 說明測試程序的CPU使用率已經被成功限制在10%以內，而記憶體佔用不會超過50MB。
+
+## limit chrome
+
+```sh
+# Create a new cgroup called `limitchrome` accessible by your user
+sudo cgcreate -t $USER:$USER -a $USER:$USER  -g memory,cpuset:limitchrome
+# Limit RAM to 1.5G roughly
+echo 1600000000 | sudo tee /sys/fs/cgroup/memory/limitchrome/memory.limit_in_bytes
+# Limit to CPUs 0 and 1 only
+echo 0-1 | sudo tee /sys/fs/cgroup/cpuset/limitchrome/cpuset.cpus
+# Run chrome in this cgroup
+cgexec -g memory,cpuset:limitchrome /opt/google/chrome/google-chrome --profile-directory=Default
+# Delete the cgroup (not required)
+sudo cgdelete -g memory,cpuset:limitchrome
+```
+
