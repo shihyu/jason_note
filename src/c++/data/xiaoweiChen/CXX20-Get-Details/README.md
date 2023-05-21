@@ -3,77 +3,77 @@
 *Get the Details* <a href=""><img src="cover.png" alt="C++20 STL Cookbook" height="256px" align="right"></a>
 
 * 作者：Rainer Grimm 
-* 译者：陈晓伟
-* 首次发布时间：2021年4月20日([来源](https://www.amazon.com/C-20-Details-Rainer-Grimm/dp/B09328NKXK))
+* 譯者：陳曉偉
+* 首次發佈時間：2021年4月20日([來源](https://www.amazon.com/C-20-Details-Rainer-Grimm/dp/B09328NKXK))
 
-> 翻译是译者用自己的思想，换一种语言，对原作者想法的重新阐释。鉴于我的学识所限，误解和错译在所难免。如果你能买到本书的原版，且有能力阅读英文，请直接去读原文。因为与之相较，我的译文可能根本不值得一读。
+> 翻譯是譯者用自己的思想，換一種語言，對原作者想法的重新闡釋。鑑於我的學識所限，誤解和錯譯在所難免。如果你能買到本書的原版，且有能力閱讀英文，請直接去讀原文。因為與之相較，我的譯文可能根本不值得一讀。
 >
-> <p align="right"> — 云风，程序员修炼之道第2版译者</p>
+> <p align="right"> — 雲風，程序員修煉之道第2版譯者</p>
 
-PDF可在本库的[Release页面](https://github.com/xiaoweiChen/CXX20-Get-Details/releases)获取。
+PDF可在本庫的[Release頁面](https://github.com/xiaoweiChen/CXX20-Get-Details/releases)獲取。
 
-## 本书概述
+## 本書概述
 
-这本书既是C++20标准的教程，也是C++20标准的参考资料。会教你如何使用C++20，并提供新C++标准的细节。这里最主要是C++20的四大特性。
+這本書既是C++20標準的教程，也是C++20標準的參考資料。會教你如何使用C++20，並提供新C++標準的細節。這裡最主要是C++20的四大特性。
 
-概念(Concept)改变了思考和编程模板的方式，是模板参数的语义类别，可在类型系统中直接表达意图。若出现错误，将出现一条明确的错误信息。
+概念(Concept)改變了思考和編程模板的方式，是模板參數的語義類別，可在類型系統中直接表達意圖。若出現錯誤，將出現一條明確的錯誤信息。
 
-新的“范围”库(ranges library)，能够直接在容器上执行算法，用管道符号组合算法，并可应用到无限数据流上。
+新的“範圍”庫(ranges library)，能夠直接在容器上執行算法，用管道符號組合算法，並可應用到無限數據流上。
 
-因为协程(coroutines)，C++中的异步编程成为主流。协程是协作任务、事件循环、无限数据流或管道的基础。
+因為協程(coroutines)，C++中的異步編程成為主流。協程是協作任務、事件循環、無限數據流或管道的基礎。
 
-模块(Modules)克服了头文件的限制，例如：头文件和源文件的分离和预处理器一样过时。最后，可以享受更快的构建时间和更简单的构建包方法。
+模塊(Modules)克服了頭文件的限制，例如：頭文件和源文件的分離和預處理器一樣過時。最後，可以享受更快的構建時間和更簡單的構建包方法。
 
-#### 将会了解
+#### 將會了解
 
-- 自动生成的比较运算符
+- 自動生成的比較運算符
 
-- 日期和时区库
+- 日期和時區庫
 
-- 格式库
+- 格式庫
 
-- 连续的内存块
+- 連續的內存塊
 
-- 加强版可中断线程
+- 加強版可中斷線程
 
-- 原子智能指针
+- 原子智能指針
 
-- 信号量
+- 信號量
 
-- 协调原语，如锁存和栅栏
-
-
-
-## 如何阅读
-
-若不熟悉C++20，请从本书的第一部分开始了解。
-
-当有了一定的了解，就可以继续研究核心语言了。每个特性是独立的，但推荐从头到尾阅读这本书。第一次阅读时，可以跳过概述章节中没有提到的特性。
+- 協調原語，如鎖存和柵欄
 
 
 
-## 作者简介
+## 如何閱讀
 
-**Rainer Grimm**自1999年以来一直担任软件架构师、团队领导和讲师。2002年，为公司的进一步教育组织了实习生会议。从2002年起，就开始开设培训课程，第一个教程是关于专有管理软件的，但不久之后开始教授Python和C++。在业余时间，喜欢写关于C++，Python和Haskell的文章，也喜欢在会议上发言。每周都会在英语博客[Modernes Cpp](https://www.modernescpp.com/  )和由[German blog](https://www.grimm-jaud.de/index.php/blog  )主办的德语博客上发表文章。
+若不熟悉C++20，請從本書的第一部分開始瞭解。
 
-自2016年以来，其一直是一名独立讲师，讲授现代C++和Python的研讨会。可以用不同的语言出版了几本关于现代C++的书，特别是关于**并发性**的技术书籍。由于其职业素养，一直在寻找教授现代C++的最佳方法。
-
-
-
-## 致谢
-
-我开始在我的英文博客[ModernesCpp](http://www.modernescpp.com  )上邀请大家进行校对，收到的回复比预期的要多。感谢你们所有人，包括我闺女朱丽叶。
-
-以下是校对人员的名字，按字母顺序排列: Bob Bird, Nicola Bombace, Dave Burchill, Sandor Dargo, James Drobina, Frank Grimm, Kilian Henneberger, Ivan “espkk” Kondakov, Péter Kardos, Rakesh Mane, Jonathan O’Connor, John Plaice, Iwan Smith, Peter Sommerlad, Paul Targosz, Steve Vinoski, and Greg Wagner。
+當有了一定的瞭解，就可以繼續研究核心語言了。每個特性是獨立的，但推薦從頭到尾閱讀這本書。第一次閱讀時，可以跳過概述章節中沒有提到的特性。
 
 
 
-## 本书相关
+## 作者簡介
+
+**Rainer Grimm**自1999年以來一直擔任軟件架構師、團隊領導和講師。2002年，為公司的進一步教育組織了實習生會議。從2002年起，就開始開設培訓課程，第一個教程是關於專有管理軟件的，但不久之後開始教授Python和C++。在業餘時間，喜歡寫關於C++，Python和Haskell的文章，也喜歡在會議上發言。每週都會在英語博客[Modernes Cpp](https://www.modernescpp.com/  )和由[German blog](https://www.grimm-jaud.de/index.php/blog  )主辦的德語博客上發表文章。
+
+自2016年以來，其一直是一名獨立講師，講授現代C++和Python的研討會。可以用不同的語言出版了幾本關於現代C++的書，特別是關於**併發性**的技術書籍。由於其職業素養，一直在尋找教授現代C++的最佳方法。
+
+
+
+## 致謝
+
+我開始在我的英文博客[ModernesCpp](http://www.modernescpp.com  )上邀請大家進行校對，收到的回覆比預期的要多。感謝你們所有人，包括我閨女朱麗葉。
+
+以下是校對人員的名字，按字母順序排列: Bob Bird, Nicola Bombace, Dave Burchill, Sandor Dargo, James Drobina, Frank Grimm, Kilian Henneberger, Ivan “espkk” Kondakov, Péter Kardos, Rakesh Mane, Jonathan O’Connor, John Plaice, Iwan Smith, Peter Sommerlad, Paul Targosz, Steve Vinoski, and Greg Wagner。
+
+
+
+## 本書相關
 
 * github地址：https://github.com/xiaoweiChen/CXX20-Get-Details
-* 译文的LaTeX 环境配置：https://www.cnblogs.com/1625--H/p/11524968.html 
-  * 禁用拼写检查：https://blog.csdn.net/weixin_39278265/article/details/87931348
+* 譯文的LaTeX 環境配置：https://www.cnblogs.com/1625--H/p/11524968.html 
+  * 禁用拼寫檢查：https://blog.csdn.net/weixin_39278265/article/details/87931348
 
 * vscode中配置latex：https://blog.csdn.net/Ruins_LEE/article/details/123555016
-* 原书示例：https://github.com/RainerGrimm/Cpp20
+* 原書示例：https://github.com/RainerGrimm/Cpp20
 

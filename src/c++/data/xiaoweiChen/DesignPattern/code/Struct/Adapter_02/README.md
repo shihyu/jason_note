@@ -1,9 +1,9 @@
-# 对象的适配器模式
+# 對象的適配器模式
 
-Painter为要适配的对象
+Painter為要適配的對象
 
-Banner为适配者
+Banner為適配者
 
-PainterBanner是适配器。
+PainterBanner是適配器。
 
-适配器继承了Painter接口，内部聚合了一个Banner对象，利用Banner已有的功能 实现Painter的接口
+適配器繼承了Painter接口，內部聚合了一個Banner對象，利用Banner已有的功能 實現Painter的接口

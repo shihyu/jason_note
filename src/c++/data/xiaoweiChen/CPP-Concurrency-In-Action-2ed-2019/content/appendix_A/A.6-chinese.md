@@ -1,8 +1,8 @@
-# A.6 变参模板
+# A.6 變參模板
 
-变参模板：就是可以使用不定数量的参数进行特化的模板。就像你接触到的变参函数一样，printf就接受可变参数。现在，就可以给你的模板指定不定数量的参数了。变参模板在整个`C++`线程库中都有使用，例如：`std::thread`的构造函数就是一个变参类模板。从使用者的角度看，仅知道模板可以接受无限个参数就够了，不过当要写一个模板或对其工作原理很感兴趣就需要了解一些细节。
+變參模板：就是可以使用不定數量的參數進行特化的模板。就像你接觸到的變參函數一樣，printf就接受可變參數。現在，就可以給你的模板指定不定數量的參數了。變參模板在整個`C++`線程庫中都有使用，例如：`std::thread`的構造函數就是一個變參類模板。從使用者的角度看，僅知道模板可以接受無限個參數就夠了，不過當要寫一個模板或對其工作原理很感興趣就需要了解一些細節。
 
-和变参函数一样，变参部分可以在参数列表章使用省略号`...`代表，变参模板需要在参数列表中使用省略号：
+和變參函數一樣，變參部分可以在參數列表章使用省略號`...`代表，變參模板需要在參數列表中使用省略號：
 
 ```c++
 template<typename ... ParameterPack>
@@ -10,29 +10,29 @@ class my_template
 {};
 ```
 
-即使主模板不是变参模板，模板进行部分特化的类中，也可以使用可变参数模板。例如，`std::packaged_task<>`(见4.2.1节)的主模板就是一个简单的模板，这个简单的模板只有一个参数：
+即使主模板不是變參模板，模板進行部分特化的類中，也可以使用可變參數模板。例如，`std::packaged_task<>`(見4.2.1節)的主模板就是一個簡單的模板，這個簡單的模板只有一個參數：
 
 ```c++
 template<typename FunctionType>
 class packaged_task;
 ```
 
-不过，并不是所有地方都这样定义。对于部分特化模板来说像是一个“占位符”：
+不過，並不是所有地方都這樣定義。對於部分特化模板來說像是一個“佔位符”：
 
 ```c++
 template<typename ReturnType,typename ... Args>
 class packaged_task<ReturnType(Args...)>;
 ```
 
-部分特化的类就包含实际定义的类。在第4章，可以写一个`std::packaged_task<int(std::string,double)>`来声明一个以`std::string`和double作为参数的任务，当执行这个任务后结果会由`std::future<int>`进行保存。
+部分特化的類就包含實際定義的類。在第4章，可以寫一個`std::packaged_task<int(std::string,double)>`來聲明一個以`std::string`和double作為參數的任務，當執行這個任務後結果會由`std::future<int>`進行保存。
 
-声明展示了两个变参模板的附加特性。第一个比较简单：普通模板参数(例如ReturnType)和可变模板参数(Args)可以同时声明。第二个特性，展示了`Args...`特化类的模板参数列表中如何使用，为了展示实例化模板中的Args的组成类型。实际上，因为是部分特化，所以其作为一种模式进行匹配。在列表中出现的类型(被Args捕获)都会进行实例化。参数包(parameter pack)调用可变参数Args，并且使用`Args...`作为包的扩展。
+聲明展示了兩個變參模板的附加特性。第一個比較簡單：普通模板參數(例如ReturnType)和可變模板參數(Args)可以同時聲明。第二個特性，展示了`Args...`特化類的模板參數列表中如何使用，為了展示實例化模板中的Args的組成類型。實際上，因為是部分特化，所以其作為一種模式進行匹配。在列表中出現的類型(被Args捕獲)都會進行實例化。參數包(parameter pack)調用可變參數Args，並且使用`Args...`作為包的擴展。
 
-和可变参函数一样，变参部分可能什么都没有，也可能有很多类型项。例如，`std::packaged_task<my_class()>`中ReturnType参数就是my_class，并且Args参数包是空的，不过`std::packaged_task<void(int,double,my_class&,std::string*)>`中，ReturnType为void，并且Args列表中的类型就有：int, double, my_class&和std::string*。
+和可變參函數一樣，變參部分可能什麼都沒有，也可能有很多類型項。例如，`std::packaged_task<my_class()>`中ReturnType參數就是my_class，並且Args參數包是空的，不過`std::packaged_task<void(int,double,my_class&,std::string*)>`中，ReturnType為void，並且Args列表中的類型就有：int, double, my_class&和std::string*。
 
-## A.6.1 扩展参数包
+## A.6.1 擴展參數包
 
-变参模板主要依赖扩展功能，因为不能限制有更多的类型添加到模板参数中。首先，列表中的参数类型使用到的时候，可以使用包扩展，比如：需要给其他模板提供类型参数。
+變參模板主要依賴擴展功能，因為不能限制有更多的類型添加到模板參數中。首先，列表中的參數類型使用到的時候，可以使用包擴展，比如：需要給其他模板提供類型參數。
 
 ```c++
 template<typename ... Params>
@@ -42,7 +42,7 @@ struct dummy
 };
 ```
 
-成员变量data是一个`std::tuple<>`实例，包含所有指定类型，所以dummy<int, double, char>的成员变量就为`std::tuple<int, double, char>`。可以将包扩展和普通类型相结合：
+成員變量data是一個`std::tuple<>`實例，包含所有指定類型，所以dummy<int, double, char>的成員變量就為`std::tuple<int, double, char>`。可以將包擴展和普通類型相結合：
 
 ```c++
 template<typename ... Params>
@@ -52,7 +52,7 @@ struct dummy2
 };
 ```
 
-这次，元组中添加了额外的(第一个)成员类型`std::string`。其优雅之处在于，可以通过包扩展的方式创建一种模式，这种模式会在之后将每个元素拷贝到扩展之中，可以使用`...`来表示扩展模式的结束。例如，创建使用参数包来创建元组中所有的元素，不如在元组中创建指针，或使用`std::unique_ptr<>`指针，指向对应元素：
+這次，元組中添加了額外的(第一個)成員類型`std::string`。其優雅之處在於，可以通過包擴展的方式創建一種模式，這種模式會在之後將每個元素拷貝到擴展之中，可以使用`...`來表示擴展模式的結束。例如，創建使用參數包來創建元組中所有的元素，不如在元組中創建指針，或使用`std::unique_ptr<>`指針，指向對應元素：
 
 ```c++
 template<typename ... Params>
@@ -63,7 +63,7 @@ struct dummy3
 };
 ```
 
-类型表达式会比较复杂，提供的参数包是在类型表达式中产生，并且表达式中使用`...`作为扩展。当参数包已经扩展 ，包中的每一项都会代替对应的类型表达式，在结果列表中产生相应的数据项。因此，当参数包Params包含int，int，char类型，那么`std::tuple<std::pair<std::unique_ptr<Params>,double> ... >`将扩展为`std::tuple<std::pair<std::unique_ptr<int>,double>`,`std::pair<std::unique_ptr<int>,double>`,`std::pair<std::unique_ptr<char>, double> >`。如果包扩展当做模板参数列表使用时，模板就不需要变长的参数了。如果不需要了，参数包就要对模板参数的要求进行准确的匹配：
+類型表達式會比較複雜，提供的參數包是在類型表達式中產生，並且表達式中使用`...`作為擴展。當參數包已經擴展 ，包中的每一項都會代替對應的類型表達式，在結果列表中產生相應的數據項。因此，當參數包Params包含int，int，char類型，那麼`std::tuple<std::pair<std::unique_ptr<Params>,double> ... >`將擴展為`std::tuple<std::pair<std::unique_ptr<int>,double>`,`std::pair<std::unique_ptr<int>,double>`,`std::pair<std::unique_ptr<char>, double> >`。如果包擴展當做模板參數列表使用時，模板就不需要變長的參數了。如果不需要了，參數包就要對模板參數的要求進行準確的匹配：
 
 ```c++
 template<typename ... Types>
@@ -71,26 +71,26 @@ struct dummy4
 {
   std::pair<Types...> data;
 };
-dummy4<int,char> a;  // 1 ok，为std::pair<int, char>
-dummy4<int> b;  // 2 错误，无第二个类型
-dummy4<int,int,int> c;  // 3 错误，类型太多
+dummy4<int,char> a;  // 1 ok，為std::pair<int, char>
+dummy4<int> b;  // 2 錯誤，無第二個類型
+dummy4<int,int,int> c;  // 3 錯誤，類型太多
 ```
 
-可以使用包扩展的方式，对函数的参数进行声明：
+可以使用包擴展的方式，對函數的參數進行聲明：
 
 ```c++
 template<typename ... Args>
 void foo(Args ... args);
 ```
 
-这将会创建一个新参数包args，其是一组函数参数，而非一组类型，并且这里`...`也能像之前一样进行扩展。例如，可以在`std::thread`的构造函数中使用，使用右值引用的方式获取函数所有的参数(见A.1节)：
+這將會創建一個新參數包args，其是一組函數參數，而非一組類型，並且這裡`...`也能像之前一樣進行擴展。例如，可以在`std::thread`的構造函數中使用，使用右值引用的方式獲取函數所有的參數(見A.1節)：
 
 ```c++
 template<typename CallableType,typename ... Args>
 thread::thread(CallableType&& func,Args&& ... args);
 ```
 
-函数参数包也可以用来调用其他函数，将制定包扩展成参数列表，匹配调用的函数。如同类型扩展一样，也可以使用某种模式对参数列表进行扩展。例如，使用`std::forward()`以右值引用的方式来保存提供给函数的参数：
+函數參數包也可以用來調用其他函數，將制定包擴展成參數列表，匹配調用的函數。如同類型擴展一樣，也可以使用某種模式對參數列表進行擴展。例如，使用`std::forward()`以右值引用的方式來保存提供給函數的參數：
 
 ```c++
 template<typename ... ArgTypes>
@@ -100,14 +100,14 @@ void bar(ArgTypes&& ... args)
 }
 ```
 
-注意一下这个例子，包扩展包括对类型包ArgTypes和函数参数包args的扩展，并且省略了其余的表达式。当这样调用bar函数：
+注意一下這個例子，包擴展包括對類型包ArgTypes和函數參數包args的擴展，並且省略了其餘的表達式。當這樣調用bar函數：
 
 ```c++
 int i;
 bar(i,3.141,std::string("hello "));
 ```
 
-将会扩展为
+將會擴展為
 
 ```c++
 template<>
@@ -122,11 +122,11 @@ void bar<int&,double,std::string>(
 }
 ```
 
-这样就将第一个参数以左值引用的形式，正确的传递给了foo函数，其他两个函数都是以右值引用的方式传入的。
+這樣就將第一個參數以左值引用的形式，正確的傳遞給了foo函數，其他兩個函數都是以右值引用的方式傳入的。
 
-最后一件事，参数包中使用`sizeof...`操作可以获取类型参数类型的大小，`sizeof...(p)`就是p参数包中所包含元素的个数。不管是类型参数包或函数参数包，结果都是一样的。这可能是唯一一次在使用参数包的时候，没有加省略号；这里的省略号是作为`sizeof...`操作的一部分，所以不算是用到省略号。
+最後一件事，參數包中使用`sizeof...`操作可以獲取類型參數類型的大小，`sizeof...(p)`就是p參數包中所包含元素的個數。不管是類型參數包或函數參數包，結果都是一樣的。這可能是唯一一次在使用參數包的時候，沒有加省略號；這裡的省略號是作為`sizeof...`操作的一部分，所以不算是用到省略號。
 
-下面的函数会返回参数的数量：
+下面的函數會返回參數的數量：
 
 ```c++
 template<typename ... Args>
@@ -136,4 +136,4 @@ unsigned count_args(Args ... args)
 }
 ```
 
-就像普通的sizeof操作一样，`sizeof...`的结果为常量表达式，所以其可以用来指定定义数组长度，等等。
+就像普通的sizeof操作一樣，`sizeof...`的結果為常量表達式，所以其可以用來指定定義數組長度，等等。

@@ -1,14 +1,14 @@
 # Catch
 
-[Catch2]（只有C++11版本）是一个独立且强大的测试工具，它的理念（philosophy）类似于 Python 中的 Pytest。他比 GTest 支持更多的编译器版本，并且会紧跟潮流支持新的事物，比如支持在 M1 版本 MacOS 上使用 Catch。他也有一个相似但是更加快速的双胞胎兄弟，[doctest](https://github.com/onqtam/doctest)，他编译十分迅速但是缺少了一些类似于匹配器（features）的特性。为了在 CMake 项目中使用 Catch，下面是一些可选的方式：
+[Catch2]（只有C++11版本）是一個獨立且強大的測試工具，它的理念（philosophy）類似於 Python 中的 Pytest。他比 GTest 支持更多的編譯器版本，並且會緊跟潮流支持新的事物，比如支持在 M1 版本 MacOS 上使用 Catch。他也有一個相似但是更加快速的雙胞胎兄弟，[doctest](https://github.com/onqtam/doctest)，他編譯十分迅速但是缺少了一些類似於匹配器（features）的特性。為了在 CMake 項目中使用 Catch，下面是一些可選的方式：
 
 ## 如何配置
 
-Catch 对 CMake 支持很友好，不过你还是需要下载整个仓库来使用他。无论是使用 submodules 还是FetchContent 都可以。[`extended-project`](https://gitlab.com/CLIUtils/modern-cmake/-/tree/master/examples/extended-project)  与 [`fetch`](https://gitlab.com/CLIUtils/modern-cmake/-/tree/master/examples/fetch) 这两个示例用的都是 FetchContent 的方式。更多的可以参考[官方文档](https://github.com/catchorg/Catch2/blob/v2.x/docs/cmake-integration.md#top)。
+Catch 對 CMake 支持很友好，不過你還是需要下載整個倉庫來使用他。無論是使用 submodules 還是FetchContent 都可以。[`extended-project`](https://gitlab.com/CLIUtils/modern-cmake/-/tree/master/examples/extended-project)  與 [`fetch`](https://gitlab.com/CLIUtils/modern-cmake/-/tree/master/examples/fetch) 這兩個示例用的都是 FetchContent 的方式。更多的可以參考[官方文檔](https://github.com/catchorg/Catch2/blob/v2.x/docs/cmake-integration.md#top)。
 
 ## Quick download
 
-这可能是最简单并且对老版本 CMake 适配性更好的方式。你可以一步到位地直接下载一个 All-in-one 的头文件：
+這可能是最簡單並且對老版本 CMake 適配性更好的方式。你可以一步到位地直接下載一個 All-in-one 的頭文件：
 
 ```cmake
 add_library(catch_main main.cpp)
@@ -25,7 +25,7 @@ endif()
 target_include_directories(catch_main PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 ```
 
-在 Catch 3 发布后，你可能需要下载两个文件，因为现在需要两个文件进行测试（但是你不再需要自己写 main.cpp 文件）。这个 `main.cpp` 文件看起来像这样：
+在 Catch 3 發佈後，你可能需要下載兩個文件，因為現在需要兩個文件進行測試（但是你不再需要自己寫 main.cpp 文件）。這個 `main.cpp` 文件看起來像這樣：
 
 ```cpp
 #define CATCH_CONFIG_MAIN
@@ -34,7 +34,7 @@ target_include_directories(catch_main PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 
 ## Vendoring
 
-如果你已经把 Catch 加入到你项目的一部分（放到了一个单独的文件夹中），你可以这样来使用 Catch：
+如果你已經把 Catch 加入到你項目的一部分（放到了一個單獨的文件夾中），你可以這樣來使用 Catch：
 
 ```cmake
 # Prepare "Catch" library for other executables
@@ -43,13 +43,13 @@ add_library(Catch2::Catch IMPORTED INTERFACE)
 set_property(Catch2::Catch PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${CATCH_INCLUDE_DIR}")
 ```
 
-然后，你需要链接到 Catch2::Catch。你也可以把它作为一个 INTERFACE 目标，因为你不会导出你的测试模块。
+然後，你需要鏈接到 Catch2::Catch。你也可以把它作為一個 INTERFACE 目標，因為你不會導出你的測試模塊。
 
 
 ## Direct inclusion
 
-如果你使用 ExternalProject，FetchContent 或者 git submodules 的形式来添加库，你也可以使用 `add_subdirectory` 。（CMake 3.1+）
+如果你使用 ExternalProject，FetchContent 或者 git submodules 的形式來添加庫，你也可以使用 `add_subdirectory` 。（CMake 3.1+）
 
-Catch 还提供了两个 CMake 模块（modules），你可以通过这个来注册独立的测试。
+Catch 還提供了兩個 CMake 模塊（modules），你可以通過這個來註冊獨立的測試。
 
 [Catch2]: https://github.com/catchorg/Catch2

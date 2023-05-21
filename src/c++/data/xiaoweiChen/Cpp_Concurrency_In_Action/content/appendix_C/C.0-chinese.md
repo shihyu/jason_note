@@ -1,12 +1,12 @@
-# 消息传递框架与完整的ATM示例
+# 消息傳遞框架與完整的ATM示例
 
-ATM：自动取款机。
+ATM：自動取款機。
 
-1回到第4章，我举了一个使用消息传递框架在线程间发送信息的例子。这里就会使用这个实现来完成ATM功能。下面完整代码就是功能的实现，包括消息传递框架。
+1回到第4章，我舉了一個使用消息傳遞框架在線程間發送信息的例子。這裡就會使用這個實現來完成ATM功能。下面完整代碼就是功能的實現，包括消息傳遞框架。
 
-清单C.1实现了一个消息队列。其可以将消息以指针(指向基类)的方式存储在列表中；指定消息类型会由基类派生模板进行处理。推送包装类的构造实例，以及存储指向这个实例的指针；弹出实例的时候，将会返回指向其的指针。因为message_base类没有任何成员函数，在访问存储消息之前，弹出线程就需要将指针转为wrapped_message<T>指针。
+清單C.1實現了一個消息隊列。其可以將消息以指針(指向基類)的方式存儲在列表中；指定消息類型會由基類派生模板進行處理。推送包裝類的構造實例，以及存儲指向這個實例的指針；彈出實例的時候，將會返回指向其的指針。因為message_base類沒有任何成員函數，在訪問存儲消息之前，彈出線程就需要將指針轉為wrapped_message<T>指針。
 
-清单C.1 简单的消息队列
+清單C.1 簡單的消息隊列
 
 ```
 #include <mutex>
@@ -16,14 +16,14 @@ ATM：自动取款机。
 
 namespace messaging
 {
-  struct message_base  // 队列项的基础类
+  struct message_base  // 隊列項的基礎類
   {
     virtual ~message_base()
     {}
   };
 
   template<typename Msg>
-  struct wrapped_message:  // 每个消息类型都需要特化
+  struct wrapped_message:  // 每個消息類型都需要特化
     message_base
   {
     Msg contents;
@@ -33,24 +33,24 @@ namespace messaging
     {}
   };
 
-  class queue  // 我们的队列
+  class queue  // 我們的隊列
   {
     std::mutex m;
     std::condition_variable c;
-    std::queue<std::shared_ptr<message_base> > q;  // 实际存储指向message_base类指针的队列
+    std::queue<std::shared_ptr<message_base> > q;  // 實際存儲指向message_base類指針的隊列
   public:
     template<typename T>
     void push(T const& msg)
     {
       std::lock_guard<std::mutex> lk(m);
-      q.push(std::make_shared<wrapped_message<T> >(msg));  // 包装已传递的信息，存储指针
+      q.push(std::make_shared<wrapped_message<T> >(msg));  // 包裝已傳遞的信息，存儲指針
       c.notify_all();
     }
 
     std::shared_ptr<message_base> wait_and_pop()
     {
       std::unique_lock<std::mutex> lk(m);
-      c.wait(lk,[&]{return !q.empty();});  // 当队列为空时阻塞
+      c.wait(lk,[&]{return !q.empty();});  // 當隊列為空時阻塞
       auto res=q.front();
       q.pop();
       return res;
@@ -59,22 +59,22 @@ namespace messaging
 }
 ```
 
-发送通过sender类(见清单C.2)实例处理过的消息。只能对已推送到队列中的消息进行包装。对sender实例的拷贝，只是拷贝了指向队列的指针，而非队列本身。
+發送通過sender類(見清單C.2)實例處理過的消息。只能對已推送到隊列中的消息進行包裝。對sender實例的拷貝，只是拷貝了指向隊列的指針，而非隊列本身。
 
-清单C.2 sender类
+清單C.2 sender類
 
 ```
 namespace messaging
 {
   class sender
   {
-    queue*q;  // sender是一个队列指针的包装类
+    queue*q;  // sender是一個隊列指針的包裝類
   public:
-    sender():  // sender无队列(默认构造函数)
+    sender():  // sender無隊列(默認構造函數)
       q(nullptr)
     {}
 
-    explicit sender(queue*q_):  // 从指向队列的指针进行构造
+    explicit sender(queue*q_):  // 從指向隊列的指針進行構造
       q(q_)
     {}
 
@@ -83,29 +83,29 @@ namespace messaging
     {
       if(q)
       {
-        q->push(msg);  // 将发送信息推送给队列
+        q->push(msg);  // 將發送信息推送給隊列
       }
     }
   };
 }
 ```
 
-接收信息部分有些麻烦。不仅要等待队列中的消息，还要检查消息类型是否与所等待的消息类型匹配，并调用处理函数进行处理。那么就从receiver类的实现开始吧。
+接收信息部分有些麻煩。不僅要等待隊列中的消息，還要檢查消息類型是否與所等待的消息類型匹配，並調用處理函數進行處理。那麼就從receiver類的實現開始吧。
 
-清单C.3 receiver类
+清單C.3 receiver類
 
 ```
 namespace messaging
 {
   class receiver
   {
-    queue q;  // 接受者拥有对应队列
+    queue q;  // 接受者擁有對應隊列
   public:
-    operator sender()  // 允许将类中队列隐式转化为一个sender队列
+    operator sender()  // 允許將類中隊列隱式轉化為一個sender隊列
     {
       return sender(&q);
     }
-    dispatcher wait()  // 等待对队列进行调度
+    dispatcher wait()  // 等待對隊列進行調度
     {
       return dispatcher(&q);
     }
@@ -113,14 +113,14 @@ namespace messaging
 }
 ```
 
-sender只是引用一个消息队列，而receiver是拥有一个队列。可以使用隐式转换的方式获取sender引用的类。难点在于wait()中的调度。这里创建了一个dispatcher对象引用receiver中的队列。dispatcher类实现会在下一个清单中看到；如你所见，任务是在析构函数中完成的。在这个例子中，所要做的工作是对消息进行等待，以及对其进行调度。
+sender只是引用一個消息隊列，而receiver是擁有一個隊列。可以使用隱式轉換的方式獲取sender引用的類。難點在於wait()中的調度。這裡創建了一個dispatcher對象引用receiver中的隊列。dispatcher類實現會在下一個清單中看到；如你所見，任務是在析構函數中完成的。在這個例子中，所要做的工作是對消息進行等待，以及對其進行調度。
 
-清单C.4 dispatcher类
+清單C.4 dispatcher類
 
 ```
 namespace messaging
 {
-  class close_queue  // 用于关闭队列的消息
+  class close_queue  // 用於關閉隊列的消息
   {};
   
   class dispatcher
@@ -128,25 +128,25 @@ namespace messaging
     queue* q;
     bool chained;
 
-    dispatcher(dispatcher const&)=delete;  // dispatcher实例不能被拷贝
+    dispatcher(dispatcher const&)=delete;  // dispatcher實例不能被拷貝
     dispatcher& operator=(dispatcher const&)=delete;
  
     template<
       typename Dispatcher,
       typename Msg,
-      typename Func>  // 允许TemplateDispatcher实例访问内部成员
+      typename Func>  // 允許TemplateDispatcher實例訪問內部成員
     friend class TemplateDispatcher;
 
     void wait_and_dispatch()
     {
-      for(;;)  // 1 循环，等待调度消息
+      for(;;)  // 1 循環，等待調度消息
       {
         auto msg=q->wait_and_pop();
         dispatch(msg);
       }
     }
 
-    bool dispatch(  // 2 dispatch()会检查close_queue消息，然后抛出
+    bool dispatch(  // 2 dispatch()會檢查close_queue消息，然後拋出
       std::shared_ptr<message_base> const& msg)
     {
       if(dynamic_cast<wrapped_message<close_queue>*>(msg.get()))
@@ -156,7 +156,7 @@ namespace messaging
       return false;
     }
   public:
-    dispatcher(dispatcher&& other):  // dispatcher实例可以移动
+    dispatcher(dispatcher&& other):  // dispatcher實例可以移動
       q(other.q),chained(other.chained)
     {
       other.chained=true;  // 源不能等待消息
@@ -168,13 +168,13 @@ namespace messaging
 
     template<typename Message,typename Func>
     TemplateDispatcher<dispatcher,Message,Func>
-    handle(Func&& f)  // 3 使用TemplateDispatcher处理指定类型的消息
+    handle(Func&& f)  // 3 使用TemplateDispatcher處理指定類型的消息
     {
       return TemplateDispatcher<dispatcher,Message,Func>(
         q,this,std::forward<Func>(f));
     }
 
-    ~dispatcher() noexcept(false)  // 4 析构函数可能会抛出异常
+    ~dispatcher() noexcept(false)  // 4 析構函數可能會拋出異常
     {  
       if(!chained)
       {
@@ -185,11 +185,11 @@ namespace messaging
 }
 ```
 
-从wait()返回的dispatcher实例将马上被销毁，因为是临时变量，也向前文提到的，析构函数在这里做真正的工作。析构函数调用wait_and_dispatch()函数，这个函数中有一个循环①，等待消息的传入(这样才能进行弹出操作)，然后将消息传递给dispatch()函数。dispatch()函数本身②很简单；会检查小时是否是一个close_queue消息，当是close_queue消息时，抛出一个异常；如果不是，函数将会返回false来表明消息没有被处理。因为会抛出close_queue异常，所以析构函数会标示为`noexcept(false)`；在没有任何标识的情况下，一般情况下析构函数都`noexcept(true)`④型，这表示没有任何异常抛出，并且close_queue异常将会使程序终止。
+從wait()返回的dispatcher實例將馬上被銷燬，因為是臨時變量，也向前文提到的，析構函數在這裡做真正的工作。析構函數調用wait_and_dispatch()函數，這個函數中有一個循環①，等待消息的傳入(這樣才能進行彈出操作)，然後將消息傳遞給dispatch()函數。dispatch()函數本身②很簡單；會檢查小時是否是一個close_queue消息，當是close_queue消息時，拋出一個異常；如果不是，函數將會返回false來表明消息沒有被處理。因為會拋出close_queue異常，所以析構函數會標示為`noexcept(false)`；在沒有任何標識的情況下，一般情況下析構函數都`noexcept(true)`④型，這表示沒有任何異常拋出，並且close_queue異常將會使程序終止。
 
-虽然，不会经常的去调用wait()函数，不过，在大多数时间里，你都希望对一条消息进行处理。这时就需要handle()成员函数③的加入。这个函数是一个模板，并且消息类型不可推断，所以你需要指定需要处理的消息类型，并且传入函数(或可调用对象)进行处理，并将队列传入当前dispatcher对象的handle()函数。这将在清单C.5中展示。这就是为什么，在测试析构函数中的chained值前，要等待消息耳朵原因；不仅是避免“移动”类型的对象对消息进行等待，而且允许将等待状态转移到新的TemplateDispatcher实例中。
+雖然，不會經常的去調用wait()函數，不過，在大多數時間裡，你都希望對一條消息進行處理。這時就需要handle()成員函數③的加入。這個函數是一個模板，並且消息類型不可推斷，所以你需要指定需要處理的消息類型，並且傳入函數(或可調用對象)進行處理，並將隊列傳入當前dispatcher對象的handle()函數。這將在清單C.5中展示。這就是為什麼，在測試析構函數中的chained值前，要等待消息耳朵原因；不僅是避免“移動”類型的對象對消息進行等待，而且允許將等待狀態轉移到新的TemplateDispatcher實例中。
 
-清单C.5 TemplateDispatcher类模板
+清單C.5 TemplateDispatcher類模板
 
 ```
 namespace messaging
@@ -206,14 +206,14 @@ namespace messaging
     TemplateDispatcher& operator=(TemplateDispatcher const&)=delete;
     
     template<typename Dispatcher,typename OtherMsg,typename OtherFunc>
-    friend class TemplateDispatcher;  // 所有特化的TemplateDispatcher类型实例都是友元类
+    friend class TemplateDispatcher;  // 所有特化的TemplateDispatcher類型實例都是友元類
 
     void wait_and_dispatch()
     {
       for(;;)
       {
         auto msg=q->wait_and_pop();
-        if(dispatch(msg))  // 1 如果消息处理过后，会跳出循环
+        if(dispatch(msg))  // 1 如果消息處理過後，會跳出循環
           break;
       }
     }
@@ -221,14 +221,14 @@ namespace messaging
     bool dispatch(std::shared_ptr<message_base> const& msg)
     {
       if(wrapped_message<Msg>* wrapper=
-         dynamic_cast<wrapped_message<Msg>*>(msg.get()))  // 2 检查消息类型，并且调用函数
+         dynamic_cast<wrapped_message<Msg>*>(msg.get()))  // 2 檢查消息類型，並且調用函數
       {
         f(wrapper->contents);
         return true;
       }
       else
       {
-        return prev->dispatch(msg);  // 3 链接到之前的调度器上
+        return prev->dispatch(msg);  // 3 鏈接到之前的調度器上
       }
     }
   public:
@@ -246,14 +246,14 @@ namespace messaging
 
     template<typename OtherMsg,typename OtherFunc>
     TemplateDispatcher<TemplateDispatcher,OtherMsg,OtherFunc>
-    handle(OtherFunc&& of)  // 4 可以链接其他处理器
+    handle(OtherFunc&& of)  // 4 可以鏈接其他處理器
     {
       return TemplateDispatcher<
           TemplateDispatcher,OtherMsg,OtherFunc>(
           q,this,std::forward<OtherFunc>(of));
     }
 
-    ~TemplateDispatcher() noexcept(false)  // 5 这个析构函数也是noexcept(false)的
+    ~TemplateDispatcher() noexcept(false)  // 5 這個析構函數也是noexcept(false)的
     {
       if(!chained)
       {
@@ -264,15 +264,15 @@ namespace messaging
 }
 ```
 
-TemplateDispatcher<>类模板仿照了dispatcher类，二者几乎相同。特别是在析构函数上，都是调用wait_and_dispatch()等待处理消息。
+TemplateDispatcher<>類模板仿照了dispatcher類，二者幾乎相同。特別是在析構函數上，都是調用wait_and_dispatch()等待處理消息。
 
-在处理消息的过程中，如果不抛出异常，就需要检查一下在循环中①，消息是否已经得到了处理。当成功的处理了一条消息，处理过程就可以停止，这样就可以等待下一组消息的传入了。当获取了一个和指定类型匹配的消息，使用函数调用的方式②，就要好于抛出异常(虽然，处理函数也可能会抛出异常)。如果消息类型不匹配，那么就可以链接前一个调度器③。在第一个实例中，dispatcher实例确实作为一个调度器，当在handle()④函数中进行链接后，就允许处理多种类型的消息。在链接了之前的TemplateDispatcher<>实例后，当消息类型和当前的调度器类型不匹配的时候，调度链会依次的向前寻找类型匹配的调度器。因为任何调度器都可能抛出异常(包括dispatcher中对close_queue消息进行处理的默认处理器)，析构函数在这里会再次被声明为`noexcept(false)`⑤。
+在處理消息的過程中，如果不拋出異常，就需要檢查一下在循環中①，消息是否已經得到了處理。當成功的處理了一條消息，處理過程就可以停止，這樣就可以等待下一組消息的傳入了。當獲取了一個和指定類型匹配的消息，使用函數調用的方式②，就要好於拋出異常(雖然，處理函數也可能會拋出異常)。如果消息類型不匹配，那麼就可以鏈接前一個調度器③。在第一個實例中，dispatcher實例確實作為一個調度器，當在handle()④函數中進行鏈接後，就允許處理多種類型的消息。在鏈接了之前的TemplateDispatcher<>實例後，當消息類型和當前的調度器類型不匹配的時候，調度鏈會依次的向前尋找類型匹配的調度器。因為任何調度器都可能拋出異常(包括dispatcher中對close_queue消息進行處理的默認處理器)，析構函數在這裡會再次被聲明為`noexcept(false)`⑤。
 
-这种简单的架构允许你想队列推送任何类型的消息，并且调度器有选择的与接收端的消息进行匹配。同样，也允许为了推送消息，将消息队列的引用进行传递的同时，保持接收端的私有性。
+這種簡單的架構允許你想隊列推送任何類型的消息，並且調度器有選擇的與接收端的消息進行匹配。同樣，也允許為了推送消息，將消息隊列的引用進行傳遞的同時，保持接收端的私有性。
 
-为了完成第4章的例子，消息的组成将在清单C.6中给出，各种状态机将在清单C.7,C.8和C.9中给出。最后，驱动代码将在C.10给出。
+為了完成第4章的例子，消息的組成將在清單C.6中給出，各種狀態機將在清單C.7,C.8和C.9中給出。最後，驅動代碼將在C.10給出。
 
-清单C.6 ATM消息
+清單C.6 ATM消息
 
 ```
 struct withdraw
@@ -422,7 +422,7 @@ struct balance_pressed
 {};
 ```
 
-清单C.7 ATM状态机
+清單C.7 ATM狀態機
 
 ```
 class atm
@@ -621,7 +621,7 @@ public:
 };
 ```
 
-清单C.8 银行状态机
+清單C.8 銀行狀態機
 
 ```
 class bank_machine
@@ -698,7 +698,7 @@ public:
 };
 ```
 
-清单C.9 用户状态机
+清單C.9 用戶狀態機
 
 ```
 class interface_machine
@@ -811,7 +811,7 @@ public:
 };
 ```
 
-清单C.10 驱动代码
+清單C.10 驅動代碼
 
 ```
 int main()

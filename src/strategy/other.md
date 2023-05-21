@@ -1,3 +1,44 @@
+## EMA 楊雲翔
+
+```python
+import yfinance as yf
+import pandas as pd
+
+def ema(data, period, N=2):
+    """
+    計算 EMA（指數移動平均）指標
+    :param data: 包含價格數據的 Pandas DataFrame
+    :param period: EMA 的時間週期
+    :return: 包含 EMA 指標數據的 Pandas Series
+    """
+    # 計算平滑因子
+    alpha = N / (period + 1)
+
+    # 計算首個 EMA 值
+    ema = data['Close'].ewm(alpha=alpha, adjust=False).mean()
+
+    # 計算後續 EMA 值
+    for i in range(1, len(data)):
+        ema[i] = alpha * data['Close'][i] + (1 - alpha) * ema[i - 1]
+
+    return ema
+
+# 獲取股票數據
+symbol = 'AAPL'  # 股票代碼
+start_date = '2021-01-01'  # 開始日期
+end_date = '2021-12-31'  # 結束日期
+data = yf.download(symbol, start=start_date, end=end_date)
+
+# 計算 EMA 指標
+data['N2'] = ema(data, 10)
+data['N1'] = ema(data, 10, 1)
+
+# 輸出結果
+print(data)
+```
+
+
+
 ## 統計大盤每年平均日K振幅
 
 ```python

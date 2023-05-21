@@ -1,16 +1,16 @@
 # GoogleTest
 
-GoogleTest 和 GoogleMock 是非常经典的选择；不过就我个人经验而言，我会推荐你使用 Catch2，因为 GoogleTest 十分遵循谷歌的发展理念；它假定用户总是想使用最新的技术，因此会很快的抛弃旧的编译器（不对其适配）等等。添加 GoogleMock 也常常令人头疼，并且你需要使用 GoogleMock 来获得匹配器(matchers)，这在 Catch2 是一个默认特性，而不需要手动添加（但 docstest 没有这个特性）。
+GoogleTest 和 GoogleMock 是非常經典的選擇；不過就我個人經驗而言，我會推薦你使用 Catch2，因為 GoogleTest 十分遵循谷歌的發展理念；它假定用戶總是想使用最新的技術，因此會很快的拋棄舊的編譯器（不對其適配）等等。添加 GoogleMock 也常常令人頭疼，並且你需要使用 GoogleMock 來獲得匹配器(matchers)，這在 Catch2 是一個默認特性，而不需要手動添加（但 docstest 沒有這個特性）。
 
-## 子模块(Submodule)的方式（首选）
+## 子模塊(Submodule)的方式（首選）
 
-当使用这种方式，只需要将 GoogleTest 设定(checkout) 为一个子模块：[^1]
+當使用這種方式，只需要將 GoogleTest 設定(checkout) 為一個子模塊：[^1]
 
 ```cmake
 git submodule add --branch=release-1.8.0 ../../google/googletest.git extern/googletest
 ```
 
-然后，在你的主 `CMakeLists.txt` 中：
+然後，在你的主 `CMakeLists.txt` 中：
 
 ```cmake
 option(PACKAGE_TESTS "Build the tests" ON)
@@ -21,18 +21,18 @@ if(PACKAGE_TESTS)
 endif()
 ```
 
-我推荐你使用一些像 `PROJECT_NAME STREQUAL CMAKE_PROJECT_NAME` 来设置 `PACKAGE_TEST` 选项的默认值，因为这样只会在项目为主项目时才构建测试单元。
+我推薦你使用一些像 `PROJECT_NAME STREQUAL CMAKE_PROJECT_NAME` 來設置 `PACKAGE_TEST` 選項的默認值，因為這樣只會在項目為主項目時才構建測試單元。
 
-像之前提到的，你必须在你的主 `CMakeLists.txt` 文件中调用 `enable_testing()` 函数。
-现在，在你的 `tests` 目录中：
+像之前提到的，你必須在你的主 `CMakeLists.txt` 文件中調用 `enable_testing()` 函數。
+現在，在你的 `tests` 目錄中：
 
 ```cmake
 add_subdirectory("${PROJECT_SOURCE_DIR}/extern/googletest" "extern/googletest")
 ```
 
-如果你在你的主 `CMakeLists.txt` 中调用它，你可以使用普通的 `add_subdirectory`；这里因为我们是从子目录中调用的，所以我们需要一个额外的路径选项来更正构建路径。
+如果你在你的主 `CMakeLists.txt` 中調用它，你可以使用普通的 `add_subdirectory`；這裡因為我們是從子目錄中調用的，所以我們需要一個額外的路徑選項來更正構建路徑。
 
-下面的代码是可选的，它可以让你的 `CACHE` 更干净：
+下面的代碼是可選的，它可以讓你的 `CACHE` 更乾淨：
 
 ```cmake
 mark_as_advanced(
@@ -51,7 +51,7 @@ set_target_properties(gmock PROPERTIES FOLDER extern)
 set_target_properties(gmock_main PROPERTIES FOLDER extern)
 ```
 
-然后，为了增加一个测试，推荐使用下面的宏：
+然後，為了增加一個測試，推薦使用下面的宏：
 
 ```cmake
 macro(package_add_test TESTNAME)
@@ -73,9 +73,9 @@ endmacro()
 package_add_test(test1 test1.cpp)
 ```
 
-这可以简单、快速的添加测试单元。你可以随意更改来满足你的需求。如果你之前没有了解过 `ARGN`，`ARGN ` 是显式声明的参数外的所有参数。如 `package_add_test(test1 test1.cpp a b c)`，`ARGN` 包含除 `test1` 与 `test1.cpp` 外的所有参数。
+這可以簡單、快速的添加測試單元。你可以隨意更改來滿足你的需求。如果你之前沒有了解過 `ARGN`，`ARGN ` 是顯式聲明的參數外的所有參數。如 `package_add_test(test1 test1.cpp a b c)`，`ARGN` 包含除 `test1` 與 `test1.cpp` 外的所有參數。
 
-可以更改宏来满足你的要求。例如，如果你需要链接不同的库来进行不同的测试，你可以这么写：
+可以更改宏來滿足你的要求。例如，如果你需要鏈接不同的庫來進行不同的測試，你可以這麼寫：
 
 ```cmake
 macro(package_add_test_with_libraries TESTNAME FILES LIBRARIES TEST_WORKING_DIRECTORY)
@@ -92,11 +92,11 @@ package_add_test_with_libraries(test1 test1.cpp lib_to_test "${PROJECT_DIR}/euro
 ```
 
 
-## 下载的方式
+## 下載的方式
 
-你可以通过 CMake 的 `include` 指令使用使用我在 [CMake helper repository][CLIUtils/cmake] 中的下载器，
+你可以通過 CMake 的 `include` 指令使用使用我在 [CMake helper repository][CLIUtils/cmake] 中的下載器，
 
-这是一个 [GoogleTest] 的下载器，基于优秀的 [DownloadProject] 工具。为每个项目下载一个副本是使用 GoogleTest 的推荐方式（so much so, in fact, that they have disabled the automatic CMake install target）, so this respects that design decision. 这个方式在项目配置时下载 GoogleTest，所以 IDEs 可以正确的找到这些库。这样使用起来很简单：
+這是一個 [GoogleTest] 的下載器，基於優秀的 [DownloadProject] 工具。為每個項目下載一個副本是使用 GoogleTest 的推薦方式（so much so, in fact, that they have disabled the automatic CMake install target）, so this respects that design decision. 這個方式在項目配置時下載 GoogleTest，所以 IDEs 可以正確的找到這些庫。這樣使用起來很簡單：
 
 ```cmake
 cmake_minimum_required(VERSION 3.10)
@@ -110,7 +110,7 @@ add_executable(SimpleTest SimpleTest.cu)
 add_gtest(SimpleTest)
 ```
 
-> 提示：`add_gtest` 只是一个添加 `gtest`，`gmock` 以及 `gtest_main` 的宏，然后运行 `add_test` 来创建一个具有相同名字的测试单元
+> 提示：`add_gtest` 只是一個添加 `gtest`，`gmock` 以及 `gtest_main` 的宏，然後運行 `add_test` 來創建一個具有相同名字的測試單元
 >
 > ```cmake
 > target_link_libraries(SimpleTest gtest gmock gtest_main)
@@ -119,7 +119,7 @@ add_gtest(SimpleTest)
 
 ## FetchContent: CMake 3.11
 
-这个例子是用 FetchContent 来添加 GoogleTest：
+這個例子是用 FetchContent 來添加 GoogleTest：
 
 ```cmake
 include(FetchContent)
@@ -137,7 +137,7 @@ if(NOT googletest_POPULATED)
 endif()
 ```
 
-[^1]: 在这里我假设你在 Github 仓库中使用 googletest，然后使用的是 googletest 的相对路径。
+[^1]: 在這裡我假設你在 Github 倉庫中使用 googletest，然後使用的是 googletest 的相對路徑。
 
 
 [CLIUtils/cmake]:  https://github.com/CLIUtils/cmake

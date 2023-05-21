@@ -166,7 +166,7 @@ static void bench_array_ring_insert_int(benchmark::State& state)
 BENCHMARK(bench_array_ring_insert_int)->Arg(10);
 ```
 
-上面的例子展示了如何傳遞和獲取參數：
+上面的例子展示瞭如何傳遞和獲取參數：
 
 1. 傳遞參數使用`BENCHMARK`宏生成的對象的`Arg`方法
 2. 傳遞進來的參數會被放入state對象內部儲存，通過`range`方法獲取，呼叫時的參數0是傳入參數的需要，對應第一個參數

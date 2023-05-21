@@ -1,27 +1,27 @@
-# 调试代码
+# 調試代碼
 
-你可能需要对你的 CMake 构建过程或你的 C++ 代码进行调试。本文将介绍这两者。
+你可能需要對你的 CMake 構建過程或你的 C++ 代碼進行調試。本文將介紹這兩者。
 
-## 调试 CMake
+## 調試 CMake
 
-首先，让我们来盘点一下调试 CMakeLists 和其他 CMake 文件的方法。
+首先，讓我們來盤點一下調試 CMakeLists 和其他 CMake 文件的方法。
 
-### 打印变量
+### 打印變量
 
-通常我们使用的打印语句如下：
+通常我們使用的打印語句如下：
 
 ```cmake
 message(STATUS "MY_VARIABLE=${MY_VARIABLE}")
 ```
 
-然而，通过一个内置的模组 `CMakePrintHelpoers` 可以更方便的打印变量：
+然而，通過一個內置的模組 `CMakePrintHelpoers` 可以更方便的打印變量：
 
 ```cmake
 include(CMakePrintHelpers)
 cmake_print_variables(MY_VARIABLE)
 ```
 
-如何你只是想要打印一个变量，那么上述方法已经很好用了！如何你想要打印一些关于某些目标 (或者是其他拥有变量的项目，比如 `SOURCES`、`DIRECTORIES`、`TESTS` , 或 `CACHE_ENTRIES` - 全局变量好像因为某些原因缺失了) 的变量，与其一个一个打印它们，你可以简单的列举并打印它们：
+如何你只是想要打印一個變量，那麼上述方法已經很好用了！如何你想要打印一些關於某些目標 (或者是其他擁有變量的項目，比如 `SOURCES`、`DIRECTORIES`、`TESTS` , 或 `CACHE_ENTRIES` - 全局變量好像因為某些原因缺失了) 的變量，與其一個一個打印它們，你可以簡單的列舉並打印它們：
 
 ```cmake
 cmake_print_properties(
@@ -31,9 +31,9 @@ cmake_print_properties(
 ```
 
 
-### 跟踪运行
+### 跟蹤運行
 
-你可能想知道构建项目的时候你的 CMake 文件究竟发生了什么，以及这些都是如何发生的？用 `--trace-source="filename"` 就很不错，它会打印出你指定的文件现在运行到哪一行，让你可以知道当前具体在发生什么。另外还有一些类似的选项，但这些命令通常给出一大堆输出，让你找不着头脑。
+你可能想知道構建項目的時候你的 CMake 文件究竟發生了什麼，以及這些都是如何發生的？用 `--trace-source="filename"` 就很不錯，它會打印出你指定的文件現在運行到哪一行，讓你可以知道當前具體在發生什麼。另外還有一些類似的選項，但這些命令通常給出一大堆輸出，讓你找不著頭腦。
 
 例子：
 
@@ -41,11 +41,11 @@ cmake_print_properties(
 cmake -S . -B build --trace-source=CMakeLists.txt
 ```
 
-如果你添加了 `--trace-expand` 选项，变量会直接展开成它们的值。
+如果你添加了 `--trace-expand` 選項，變量會直接展開成它們的值。
 
 
-## 以 debug 模式构建
+## 以 debug 模式構建
 
-对于单一构建模式的生成器 (single-configuration generators)，你可以使用参数 `-DCMAKE_BUILD_TYPE=Debug` 来构建项目，以获得调试标志 (debugging flags)。对于支持多个构建模式的生成器 (multi-configuration generators)，像是多数IDE，你可以在 IDE 里打开调试模式。这种模式有不同的标志（变量以 `_DEBUG` 结尾，而不是 `_RELEASE` 结尾），以及生成器表达式的值 `CONFIG:Debug` 或 `CONFIG:Release`。
+對於單一構建模式的生成器 (single-configuration generators)，你可以使用參數 `-DCMAKE_BUILD_TYPE=Debug` 來構建項目，以獲得調試標誌 (debugging flags)。對於支持多個構建模式的生成器 (multi-configuration generators)，像是多數IDE，你可以在 IDE 裡打開調試模式。這種模式有不同的標誌（變量以 `_DEBUG` 結尾，而不是 `_RELEASE` 結尾），以及生成器表達式的值 `CONFIG:Debug` 或 `CONFIG:Release`。
 
-如果你使用了 debug 模式构建，你就可以在上面运行调试器了，比如gdb或lldb。
+如果你使用了 debug 模式構建，你就可以在上面運行調試器了，比如gdb或lldb。

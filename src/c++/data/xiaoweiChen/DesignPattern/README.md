@@ -1,11 +1,11 @@
 ﻿# Design Pattern
-设计模式
+設計模式
 
-## 简介
+## 簡介
 
-参考书籍 《图解设计模式》，实现各种设计模式
+參考書籍 《圖解設計模式》，實現各種設計模式
 
-使用C++11实现
+使用C++11實現
 
 ## Build status
 
@@ -23,121 +23,121 @@
 ## License
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jaredtao/TaoJson/blob/master/LICENSE)
 
-## 目录
+## 目錄
 
-|编号| 类型   | 模式         | 说明                                                                                                |
+|編號| 類型   | 模式         | 說明                                                                                                |
 |:----:| :----: | :----------: | :-------------------------------------------------------------------------------------------------: |
-| 1 | 创建型 | 工厂方法模式 | [工厂方法模式](code/Create/FactoryMethod/README.md)                                                 |
-| 2 | 创建型 | 抽象工厂模式 | [抽象工厂模式](code/Create/AbstractFactory/README.md)                                               |
-| 3 | 创建型 | 构建模式     | [构建模式](code/Create/Builder/README.md)                                                           |
-| 4 | 创建型 | 单例模式     | [单例模式](code/Create/Singleton/README.md)                                                         |
-| 5 | 创建型 | 原型模式     | [原型模式](code/Create/Prototype/README.md)                                                         |
-| 6 | 结构型 | 复合模式     | [复合模式](code/Struct/Composite/README.md)                                                         |
-| 7 | 结构型 | 适配器模式   | [类适配器模式](code/Struct/Adapter_01/README.md) [对象适配器模式](code/Struct/Adapter_02/README.md) |
-| 8 | 结构型 | 装饰模式     | [装饰模式](code/Struct/Decorator/README.md)                                                         |
-| 9 | 结构型 | 窗口模式     | [窗口模式](code/Struct/Facade/README.md)                                                            |
-| 10 | 结构型 | 轻量模式     | [轻量模式](code/Struct/FlyWeight/README.md)                                                         |
-| 11 | 结构型 | 代理模式     | [代理模式](code/Struct/Proxy/README.md)                                                             |
-| 12 | 结构型 | 桥接模式     | [桥接模式](code/Struct/Bridge/README.md)                                                            |
-| 13 | 行为型 | 迭代器模式   | [迭代器模式](code/Behavior/Iterator/README.md)                                                      |
-| 14 | 行为型 | 模板方法模式 | [模板方法模式](code/Behavior/TemplateMethod/README.md)                                              |
-| 15 | 行为型 | 策略模式     | [策略模式](code/Behavior/Strategy/README.md)                                                        |
-| 16 | 行为型 | 访问者模式   | [访问者模式](code/Behavior/Visitor/README.md)                                                       |
-| 17 | 行为型 | 责任链模式   | [责任链模式](code/Behavior/ResponsibilityChain/README.md)                                           |
-| 18 | 行为型 | 仲裁者模式   | [仲裁者模式](code/Behavior/Mediator/README.md)                                                      |
-| 19 | 行为型 | 观察者模式   | [观察者模式](code/Behavior/Observer/README.md)                                                      |
-| 20 | 行为型 | 备忘录模式   | [备忘录模式](code/Behavior/Memento/README.md)                                                       |
-| 21 | 行为型 | 状态模式     | [状态模式](code/Behavior/State/README.md)                                                           |
-| 22 | 行为型 | 命令模式     | [命令模式](code/Behavior/Command/README.md)                                                         |
-| 23| 行为型 | 解释器模式   | [解释器模式](code/Behavior/Interpreter/README.md)                                                   |
-## 总结
+| 1 | 創建型 | 工廠方法模式 | [工廠方法模式](code/Create/FactoryMethod/README.md)                                                 |
+| 2 | 創建型 | 抽象工廠模式 | [抽象工廠模式](code/Create/AbstractFactory/README.md)                                               |
+| 3 | 創建型 | 構建模式     | [構建模式](code/Create/Builder/README.md)                                                           |
+| 4 | 創建型 | 單例模式     | [單例模式](code/Create/Singleton/README.md)                                                         |
+| 5 | 創建型 | 原型模式     | [原型模式](code/Create/Prototype/README.md)                                                         |
+| 6 | 結構型 | 複合模式     | [複合模式](code/Struct/Composite/README.md)                                                         |
+| 7 | 結構型 | 適配器模式   | [類適配器模式](code/Struct/Adapter_01/README.md) [對象適配器模式](code/Struct/Adapter_02/README.md) |
+| 8 | 結構型 | 裝飾模式     | [裝飾模式](code/Struct/Decorator/README.md)                                                         |
+| 9 | 結構型 | 窗口模式     | [窗口模式](code/Struct/Facade/README.md)                                                            |
+| 10 | 結構型 | 輕量模式     | [輕量模式](code/Struct/FlyWeight/README.md)                                                         |
+| 11 | 結構型 | 代理模式     | [代理模式](code/Struct/Proxy/README.md)                                                             |
+| 12 | 結構型 | 橋接模式     | [橋接模式](code/Struct/Bridge/README.md)                                                            |
+| 13 | 行為型 | 迭代器模式   | [迭代器模式](code/Behavior/Iterator/README.md)                                                      |
+| 14 | 行為型 | 模板方法模式 | [模板方法模式](code/Behavior/TemplateMethod/README.md)                                              |
+| 15 | 行為型 | 策略模式     | [策略模式](code/Behavior/Strategy/README.md)                                                        |
+| 16 | 行為型 | 訪問者模式   | [訪問者模式](code/Behavior/Visitor/README.md)                                                       |
+| 17 | 行為型 | 責任鏈模式   | [責任鏈模式](code/Behavior/ResponsibilityChain/README.md)                                           |
+| 18 | 行為型 | 仲裁者模式   | [仲裁者模式](code/Behavior/Mediator/README.md)                                                      |
+| 19 | 行為型 | 觀察者模式   | [觀察者模式](code/Behavior/Observer/README.md)                                                      |
+| 20 | 行為型 | 備忘錄模式   | [備忘錄模式](code/Behavior/Memento/README.md)                                                       |
+| 21 | 行為型 | 狀態模式     | [狀態模式](code/Behavior/State/README.md)                                                           |
+| 22 | 行為型 | 命令模式     | [命令模式](code/Behavior/Command/README.md)                                                         |
+| 23| 行為型 | 解釋器模式   | [解釋器模式](code/Behavior/Interpreter/README.md)                                                   |
+## 總結
 
-### 创建型模式
-创建型模式对类的实例化过程进行抽象，将软件中对象的创建和使用分离。
-为了使软件的结构更加清晰，外界对于这些对象只需要知道共同的接口，而不清楚其内部实现细节，使整个系统的设计更加符合单一职责原则。
+### 創建型模式
+創建型模式對類的實例化過程進行抽象，將軟件中對象的創建和使用分離。
+為了使軟件的結構更加清晰，外界對於這些對象只需要知道共同的接口，而不清楚其內部實現細節，使整個系統的設計更加符合單一職責原則。
 
-创建型模式在创建什么（what） 、由谁创建（who）、何时创建（when）等方面都为软件设计者提供了尽可能大的灵活性，隐藏了类的实例创建细节，通过隐藏对象
-如何被创建和组合在一起，达到整个系统独立的目的
+創建型模式在創建什麼（what） 、由誰創建（who）、何時創建（when）等方面都為軟件設計者提供了儘可能大的靈活性，隱藏了類的實例創建細節，通過隱藏對象
+如何被創建和組合在一起，達到整個系統獨立的目的
 
-### 结构型模式
+### 結構型模式
 
-描述如何将类和对象结合在一起形成更大的结构，就像搭积木，通过简单积木的组合形成结构复杂、功能强大的结构
-分为 类结构型模式 和 对象结构型模式：
-* 类结构型模式 
+描述如何將類和對象結合在一起形成更大的結構，就像搭積木，通過簡單積木的組合形成結構複雜、功能強大的結構
+分為 類結構型模式 和 對象結構型模式：
+* 類結構型模式 
 
- 关心类的组合，由多个类可以组合成一个更大的
-系统，在类结构型模式中一般只存在继承关系和实现关系
+ 關心類的組合，由多個類可以組合成一個更大的
+系統，在類結構型模式中一般只存在繼承關係和實現關係
 
-* 对象结构型模式
+* 對象結構型模式
 
- 关心类与对象的组合，通过关联关系使得在一 个类中定义另一个类的实例对象，然后通过该对象调用其方法。 根据“合成复用原则”，在系统中尽量使用关联关系来替代继 承关系，因此大部分结构型模式都是对象结构型模式。
-### 行为型模式
-对不同的对象之间划分责任和算法的抽象。
-行为型模式不仅仅关注类和对象的结构，而且重点关注它们之间的相互作用。
-通过行为型模式，可以更加清晰地划分类与对象的职责，并研究系统在运行时实例对象 之间的交互。在系统运行时，对象并不是孤立的，它们可以通过相互通信与协作完成某些复杂功能，一个对象在运行时也将影响到其他对象的运行。
+ 關心類與對象的組合，通過關聯關係使得在一 個類中定義另一個類的實例對象，然後通過該對象調用其方法。 根據“合成複用原則”，在系統中儘量使用關聯關係來替代繼 承關係，因此大部分結構型模式都是對象結構型模式。
+### 行為型模式
+對不同的對象之間劃分責任和算法的抽象。
+行為型模式不僅僅關注類和對象的結構，而且重點關注它們之間的相互作用。
+通過行為型模式，可以更加清晰地劃分類與對象的職責，並研究系統在運行時實例對象 之間的交互。在系統運行時，對象並不是孤立的，它們可以通過相互通信與協作完成某些複雜功能，一個對象在運行時也將影響到其他對象的運行。
 
-行为型模式分为类行为型模式和对象行为型模式两种：
+行為型模式分為類行為型模式和對象行為型模式兩種：
 
-* 类行为型模式
+* 類行為型模式
 
-    类的行为型模式使用继承关系在几个类之间分配行为，类行为型模式主要通过多态等方式来分配父类与子类的职责。
-* 对象行为型模式
+    類的行為型模式使用繼承關係在幾個類之間分配行為，類行為型模式主要通過多態等方式來分配父類與子類的職責。
+* 對象行為型模式
 
-    对象的行为型模式则使用对象的聚合关联关系来分配行为，对象行为型模式主要是通过对象关联等方式来分配两个或多个类的职责。根据“合成复用原则”，系统中要尽量使用关联关系来取代继承关系，因此大部分行为型设计模式都属于对象行为型设计模式。
+    對象的行為型模式則使用對象的聚合關聯關係來分配行為，對象行為型模式主要是通過對象關聯等方式來分配兩個或多個類的職責。根據“合成複用原則”，系統中要儘量使用關聯關係來取代繼承關係，因此大部分行為型設計模式都屬於對象行為型設計模式。
 
-### 代码结构
+### 代碼結構
 
--code  上面"23种指针的使用方式"
+-code  上面"23種指針的使用方式"
 
-    Create  5种创建型
+    Create  5種創建型
 
-    Behavior 11种行为型
+    Behavior 11種行為型
 
-    Struct  7种结构型
+    Struct  7種結構型
 
--Template 用C++模板技巧实现的，个别能复用的设计模式
+-Template 用C++模板技巧實現的，個別能複用的設計模式
     
     Create -> SingleTon  
     
-    单例模板，继承模板以实现复用。
+    單例模板，繼承模板以實現複用。
     
-    c++11的static保证多线程唯一实例, c++17的inline保证创建顺序在main之前。
+    c++11的static保證多線程唯一實例, c++17的inline保證創建順序在main之前。
     
-    “双检测锁定手法”、Boost那个占位器单例、《C++设计新思维》那种“凤凰单例” 都可以被消灭。。。
+    “雙檢測鎖定手法”、Boost那個佔位器單例、《C++設計新思維》那種“鳳凰單例” 都可以被消滅。。。
     
-    懒汉模式：需要时才创建，就用static足够了。
-    饿汉模式：main之前创建。static inline足够了。
+    懶漢模式：需要時才創建，就用static足夠了。
+    餓漢模式：main之前創建。static inline足夠了。
 
     Behavior -> Observer
 
-    观察者模板，继承模板以复用。
+    觀察者模板，繼承模板以複用。
 
-### 联系方式:
+### 聯繫方式:
 
 ***
 
-| 作者 | 涛哥                           |
+| 作者 | 濤哥                           |
 | ---- | -------------------------------- |
-|开发理念 | 弘扬鲁班文化，传承工匠精神 |
+|開發理念 | 弘揚魯班文化，傳承工匠精神 |
 | 博客 | https://jaredtao.github.io/ |
-|知乎专栏| https://zhuanlan.zhihu.com/TaoQt |
-|微信公众号| Qt进阶之路 |
-|QQ群| 734623697(高质量群，只能交流技术、分享书籍、帮助解决实际问题）|
-| 邮箱 | jared2020@163.com                |
+|知乎專欄| https://zhuanlan.zhihu.com/TaoQt |
+|微信公眾號| Qt進階之路 |
+|QQ群| 734623697(高質量群，只能交流技術、分享書籍、幫助解決實際問題）|
+| 郵箱 | jared2020@163.com                |
 | 微信 | xsd2410421                       |
 | QQ、TIM | 759378563                      |
 ***
 
-QQ(TIM)、微信二维码
+QQ(TIM)、微信二維碼
 
 <img src="https://github.com/jaredtao/jaredtao.github.io/blob/master/img/qq_connect.jpg?raw=true" width="30%" height="30%" /><img src="https://github.com/jaredtao/jaredtao.github.io/blob/master/img/weixin_connect.jpg?raw=true" width="30%" height="30%" />
 
 
-###### 请放心联系我，乐于提供咨询服务，也可洽谈有偿技术支持相关事宜。
+###### 請放心聯繫我，樂於提供諮詢服務，也可洽談有償技術支持相關事宜。
 
 ***
-#### **打赏**
+#### **打賞**
 <img src="https://github.com/jaredtao/jaredtao.github.io/blob/master/img/weixin.jpg?raw=true" width="30%" height="30%" /><img src="https://github.com/jaredtao/jaredtao.github.io/blob/master/img/zhifubao.jpg?raw=true" width="30%" height="30%" />
 
-###### 觉得分享的内容还不错, 就请作者喝杯奶茶吧~~
+###### 覺得分享的內容還不錯, 就請作者喝杯奶茶吧~~
 ***

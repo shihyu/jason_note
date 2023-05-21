@@ -1,8 +1,8 @@
-# 测试
+# 測試
 
 ## General Testing Information
 
-你需要在你的主 CMakeLists.txt 文件中添加如下函数调用（而不是在子文件夹 CMakeLists.txt 中）：
+你需要在你的主 CMakeLists.txt 文件中添加如下函數調用（而不是在子文件夾 CMakeLists.txt 中）：
 
 ```cmake
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
@@ -10,9 +10,9 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 endif()
 ```
 
-这么做将可以使得具有 CMake 测试功能，并且具有一个 `BUILD_TESTING` 选项使得用户可以选择开启或关闭测试（还有[一些其他的设置](https://gitlab.kitware.com/cmake/cmake/blob/master/Modules/CTest.cmake)）。或者你可以直接通过调用 `enable_testing()` 函数来开启测试。 
+這麼做將可以使得具有 CMake 測試功能，並且具有一個 `BUILD_TESTING` 選項使得用戶可以選擇開啟或關閉測試（還有[一些其他的設置](https://gitlab.kitware.com/cmake/cmake/blob/master/Modules/CTest.cmake)）。或者你可以直接通過調用 `enable_testing()` 函數來開啟測試。 
 
-当你添加你自己的测试文件夹时，你应该这么做：
+當你添加你自己的測試文件夾時，你應該這麼做：
 
 ```cmake
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
@@ -20,7 +20,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
 endif()
 ```
 
-这么做的（译者注：需要添加 `CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME`）的原因是，如果有他人包含了你的包，并且他们开启了 `BUILD_TESTING` 选项，但他们并不想构建你包内的测试单元，这样会很有用。在极少数的情况下他们可能真的想要开启所有包的测试功能，你可以提供给他们一个可以覆盖的变量（如下例的 `MYPROJECT_BUILD_TESTING`，当设置 `MYPROJECT_BUILD_TESTING` 为 ON 时，会开启该项目的测试功能）：
+這麼做的（譯者注：需要添加 `CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME`）的原因是，如果有他人包含了你的包，並且他們開啟了 `BUILD_TESTING` 選項，但他們並不想構建你包內的測試單元，這樣會很有用。在極少數的情況下他們可能真的想要開啟所有包的測試功能，你可以提供給他們一個可以覆蓋的變量（如下例的 `MYPROJECT_BUILD_TESTING`，當設置 `MYPROJECT_BUILD_TESTING` 為 ON 時，會開啟該項目的測試功能）：
 
 ```cmake
 if((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR MYPROJECT_BUILD_TESTING) AND BUILD_TESTING)
@@ -28,25 +28,25 @@ if((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR MYPROJECT_BUILD_TESTING) AND BUI
 endif()
 ```
 
-本书中的[示例](https://github.com/Modern-CMake-CN/Modern-CMake-zh_CN/blob/master/examples/extended-project/CMakeLists.txt)就使用了覆盖变量的形式来开启所有测试，因为主 CMake 项目确实想要运行所有子项目的测试功能。
+本書中的[示例](https://github.com/Modern-CMake-CN/Modern-CMake-zh_CN/blob/master/examples/extended-project/CMakeLists.txt)就使用了覆蓋變量的形式來開啟所有測試，因為主 CMake 項目確實想要運行所有子項目的測試功能。
 
-你可以这样注册一个测试目标(targets)：
+你可以這樣註冊一個測試目標(targets)：
 
 ```cmake
 add_test(NAME TestName COMMAND TargetName)
 ```
 
-如果你在 `COMMAND` 后写了除 `TargetName` 之外的东西，他将会被注册为在命令行运行的指令。在这里写生成器表达式(generator-expression)也是有效的：
+如果你在 `COMMAND` 後寫了除 `TargetName` 之外的東西，他將會被註冊為在命令行運行的指令。在這裡寫生成器表達式(generator-expression)也是有效的：
 
 ```cmake
 add_test(NAME TestName COMMAND $<TARGET_FILE:${TESTNAME}>)
 ```
 
-这么写将会使用该目标生成的文件（也就是生成的可执行文件）的路径作为参数。
+這麼寫將會使用該目標生成的文件（也就是生成的可執行文件）的路徑作為參數。
 
-## 将构建作为测试的一部分
+## 將構建作為測試的一部分
 
-如果你想在测试时运行 CMake 构建一个项目，这也是可以的（事实上，这也是 CMake 如何进行自我测试的）。例如，如果你的主项目名为 `MyProject` 并且你有一个 `examples/simple` 项目需要在测试时构建，那么可以这么写：
+如果你想在測試時運行 CMake 構建一個項目，這也是可以的（事實上，這也是 CMake 如何進行自我測試的）。例如，如果你的主項目名為 `MyProject` 並且你有一個 `examples/simple` 項目需要在測試時構建，那麼可以這麼寫：
 
 ```cmake
 add_test(
@@ -61,10 +61,10 @@ add_test(
 )
 ```
 
-## 测试框架
+## 測試框架
 
-可以查看子章节了解主流测试框架的使用方式(recipes)：
+可以查看子章節瞭解主流測試框架的使用方式(recipes)：
 
-* [GoogleTest](testing/googletest.md): 一个 Google 出品的主流测试框架。不过开发可能有点慢。
-* [Catch2](testing/catch.md): 一个现代的，具有灵巧的宏的 PyTest-like 的测试框架。
-* [DocTest](https://github.com/onqtam/doctest):  一个 Catch2 框架的替代品，并且编译速度更快、更干净(cleaner)。See Catch2 chapter and replace with DocTest. 
+* [GoogleTest](testing/googletest.md): 一個 Google 出品的主流測試框架。不過開發可能有點慢。
+* [Catch2](testing/catch.md): 一個現代的，具有靈巧的宏的 PyTest-like 的測試框架。
+* [DocTest](https://github.com/onqtam/doctest):  一個 Catch2 框架的替代品，並且編譯速度更快、更乾淨(cleaner)。See Catch2 chapter and replace with DocTest. 

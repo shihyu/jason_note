@@ -1,11 +1,11 @@
-<center>感谢Kim, Hugh和 Erin</center>
+<center>感謝Kim, Hugh和 Erin</center>
 
-首先，要对我的妻子Kim说声“感谢！”，感谢她在我写书时给予我的爱与支持。撰写第一版时，写书占用了我很大一部分空闲时间，当然第二版也需要大量的时间投入。如果没有她的耐心、支持和理解，我肯定没有办法完成本书。
+首先，要對我的妻子Kim說聲“感謝！”，感謝她在我寫書時給予我的愛與支持。撰寫第一版時，寫書佔用了我很大一部分空閒時間，當然第二版也需要大量的時間投入。如果沒有她的耐心、支持和理解，我肯定沒有辦法完成本書。
 
-其次，我要感谢曼宁团队的Marjan Bace(出版商)、Michael Stephens(副出版商)、Cynthia Kane(我的研发编辑)、Aleksandar Dragosavljevic´(审核编辑)、Safis Editing和Heidi Ward(文案编辑)，还有Melody Dolab(校对员)，他们使得本书出版成为可能。如果没有他们，你就不可能读到这本书。
+其次，我要感謝曼寧團隊的Marjan Bace(出版商)、Michael Stephens(副出版商)、Cynthia Kane(我的研發編輯)、Aleksandar Dragosavljevic´(審核編輯)、Safis Editing和Heidi Ward(文案編輯)，還有Melody Dolab(校對員)，他們使得本書出版成為可能。如果沒有他們，你就不可能讀到這本書。
 
-当然，还要感谢C++委员会的其他成员，他们在多线程方面贡献了很多篇论文：Andrei Alexandrescu, Pete Becker, Bob Blainer, Hans Boehm, Beman Dawes, Lawrence Crowl, Peter Dimov, Jeff Garland, Kevlin Henney, Howard Hinnant, Ben Hutchings, Jan Kristofferson, Doug Lea, Paul McKenney, Nick McLaren, Clark Nelson, Bill Pugh, Raul Silvera, Herb Sutter, Detlef Vollmann和Michael Wong，以及那些对论文进行评论的人们，那些在委员会上讨论并发问题的人们，帮助在C++11、C++14、C++17标准和并发技术标准中支持并发和多线程的人们。
+當然，還要感謝C++委員會的其他成員，他們在多線程方面貢獻了很多篇論文：Andrei Alexandrescu, Pete Becker, Bob Blainer, Hans Boehm, Beman Dawes, Lawrence Crowl, Peter Dimov, Jeff Garland, Kevlin Henney, Howard Hinnant, Ben Hutchings, Jan Kristofferson, Doug Lea, Paul McKenney, Nick McLaren, Clark Nelson, Bill Pugh, Raul Silvera, Herb Sutter, Detlef Vollmann和Michael Wong，以及那些對論文進行評論的人們，那些在委員會上討論併發問題的人們，幫助在C++11、C++14、C++17標準和併發技術標準中支持併發和多線程的人們。
 
-最后，感谢给本书建议的人们：Dr. Jamie Allsop, Peter Dimov, Howard Hinnant, Rick Molloy, Jonathan Wakely, and Dr. Russel Winder(特别感谢Russel博士的仔细校对)，Frédéric Flayol作为技术教研员，在本书的制作过程中，仔细的检查了所有内容，以确保终稿中没有明显的错误。
+最後，感謝給本書建議的人們：Dr. Jamie Allsop, Peter Dimov, Howard Hinnant, Rick Molloy, Jonathan Wakely, and Dr. Russel Winder(特別感謝Russel博士的仔細校對)，Frédéric Flayol作為技術教研員，在本書的製作過程中，仔細的檢查了所有內容，以確保終稿中沒有明顯的錯誤。
 
-此外，我还要感谢第二版的评审小组：Al Norman, Andrei de Araújo Formiga, Chad Brewbaker, Dwight Wilkins, Hugo Filipe Lopes, Vieira Durana, Jura Shikin, Kent R.Spillner, Maria Gemini, Mateusz Malenta, Maurizio Tomasi, Nat Luengnaruemitchai, Robert C. Green II, Robert Trausmuth, Sanchir Kartiev和 Steven Parr。还要感谢花时间阅读MEAP版的读者们，感谢你们指出书中的错误和需要特别说明的部分。
+此外，我還要感謝第二版的評審小組：Al Norman, Andrei de Araújo Formiga, Chad Brewbaker, Dwight Wilkins, Hugo Filipe Lopes, Vieira Durana, Jura Shikin, Kent R.Spillner, Maria Gemini, Mateusz Malenta, Maurizio Tomasi, Nat Luengnaruemitchai, Robert C. Green II, Robert Trausmuth, Sanchir Kartiev和 Steven Parr。還要感謝花時間閱讀MEAP版的讀者們，感謝你們指出書中的錯誤和需要特別說明的部分。

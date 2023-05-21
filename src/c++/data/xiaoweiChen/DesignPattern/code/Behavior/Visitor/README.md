@@ -1,15 +1,15 @@
-# 访问者模式
+# 訪問者模式
 
-## 双重分发 
+## 雙重分發 
 
-accept 调用方法是 element.accept(visitor)
+accept 調用方法是 element.accept(visitor)
 
-visit调用方法是visitor.visit(element)
+visit調用方法是visitor.visit(element)
 
-## 将处理算法从数据结构中分离出来
+## 將處理算法從數據結構中分離出來
 
-易于增加Visitor
+易於增加Visitor
 
-难以增加Element
+難以增加Element
 
-Element必须向Visitor公开足够的信息
+Element必須向Visitor公開足夠的信息

@@ -1,8 +1,8 @@
-# D.1 &lt;chrono&gt;头文件
+# D.1 &lt;chrono&gt;頭文件
 
-&lt;chrono&gt;头文件作为`time_point`的提供者，具有代表时间点的类，duration类和时钟类。每个时钟都有一个`is_steady`静态数据成员，这个成员用来表示该时钟是否是一个*稳定的*时钟(以匀速计时的时钟，且不可调节)。`std::chrono::steady_clock`是唯一个能保证稳定的时钟类。
+&lt;chrono&gt;頭文件作為`time_point`的提供者，具有代表時間點的類，duration類和時鐘類。每個時鐘都有一個`is_steady`靜態數據成員，這個成員用來表示該時鐘是否是一個*穩定的*時鐘(以勻速計時的時鐘，且不可調節)。`std::chrono::steady_clock`是唯一個能保證穩定的時鐘類。
 
-头文件正文
+頭文件正文
 
 ```c++
 namespace std
@@ -22,11 +22,11 @@ namespace std
 }
 ```
 
-## D.1.1 std::chrono::duration类型模板
+## D.1.1 std::chrono::duration類型模板
 
-`std::chrono::duration`类模板可以用来表示时间。模板参数`Rep`和`Period`是用来存储持续时间的数据类型，`std::ratio`实例代表了时间的长度(几分之一秒)，其表示了在两次“时钟滴答”后的时间(时钟周期)。因此，`std::chrono::duration<int, std::milli>`即为，时间以毫秒数的形式存储到int类型中，而`std::chrono::duration<short, std::ratio<1,50>>`则是记录1/50秒的个数，并将个数存入short类型的变量中，还有`std::chrono::duration <long long, std::ratio<60,1>>`则是将分钟数存储到long long类型的变量中。
+`std::chrono::duration`類模板可以用來表示時間。模板參數`Rep`和`Period`是用來存儲持續時間的數據類型，`std::ratio`實例代表了時間的長度(幾分之一秒)，其表示了在兩次“時鐘滴答”後的時間(時鐘週期)。因此，`std::chrono::duration<int, std::milli>`即為，時間以毫秒數的形式存儲到int類型中，而`std::chrono::duration<short, std::ratio<1,50>>`則是記錄1/50秒的個數，並將個數存入short類型的變量中，還有`std::chrono::duration <long long, std::ratio<60,1>>`則是將分鐘數存儲到long long類型的變量中。
 
-### 类的定义
+### 類的定義
 
 ```c++
 template <class Rep, class Period=ratio<1> >
@@ -106,50 +106,50 @@ template <class ToDuration, class Rep, class Period>
 
 **要求**
 
-`Rep`必须是内置数值类型，或是自定义的类数值类型。
+`Rep`必須是內置數值類型，或是自定義的類數值類型。
 
-`Period`必须是`std::ratio<>`实例。
+`Period`必須是`std::ratio<>`實例。
 
-### std::chrono::duration::Rep 类型
+### std::chrono::duration::Rep 類型
 
-用来记录`dration`中时钟周期的数量。
+用來記錄`dration`中時鐘週期的數量。
 
-**声明**
+**聲明**
 
 ```c++
 typedef Rep rep;
 ```
 
-`rep`类型用来记录`duration`对象内部的表示。
+`rep`類型用來記錄`duration`對象內部的表示。
 
-### std::chrono::duration::Period 类型
+### std::chrono::duration::Period 類型
 
-这个类型必须是一个`std::ratio`特化实例，用来表示在继续时间中，1s所要记录的次数。例如，当`period`是`std::ratio<1, 50>`，`duration`变量的count()就会在N秒钟返回50N。
+這個類型必須是一個`std::ratio`特化實例，用來表示在繼續時間中，1s所要記錄的次數。例如，當`period`是`std::ratio<1, 50>`，`duration`變量的count()就會在N秒鐘返回50N。
 
-**声明**
+**聲明**
 
 ```c++
 typedef Period period;
 ```
 
-### std::chrono::duration 默认构造函数
+### std::chrono::duration 默認構造函數
 
-使用默认值构造`std::chrono::duration`实例
+使用默認值構造`std::chrono::duration`實例
 
-**声明**
+**聲明**
 
 ```c++
 constexpr duration() = default;
 ```
 
 **效果**
-`duration`内部值(例如`rep`类型的值)都已初始化。
+`duration`內部值(例如`rep`類型的值)都已初始化。
 
-### std::chrono::duration 需要计数值的转换构造函数
+### std::chrono::duration 需要計數值的轉換構造函數
 
-通过给定的数值来构造`std::chrono::duration`实例。
+通過給定的數值來構造`std::chrono::duration`實例。
 
-**声明**
+**聲明**
 
 ```c++
 template <class Rep2>;
@@ -158,37 +158,37 @@ constexpr explicit duration(const Rep2& r);
 
 **效果**
 
-`duration`对象的内部值会使用`static_cast<rep>(r)`进行初始化。
+`duration`對象的內部值會使用`static_cast<rep>(r)`進行初始化。
 
-**结果**
-当Rep2隐式转换为Rep，Rep是浮点类型或Rep2不是浮点类型，这个构造函数才能使用。
+**結果**
+當Rep2隱式轉換為Rep，Rep是浮點類型或Rep2不是浮點類型，這個構造函數才能使用。
 
-**后验条件**
+**後驗條件**
 
 ```c++
 this->count()==static_cast<rep>(r)
 ```
 
-### std::chrono::duration 需要另一个std::chrono::duration值的转化构造函数
+### std::chrono::duration 需要另一個std::chrono::duration值的轉化構造函數
 
-通过另一个`std::chrono::duration`类实例中的计数值来构造一个`std::chrono::duration`类实例。
+通過另一個`std::chrono::duration`類實例中的計數值來構造一個`std::chrono::duration`類實例。
 
-**声明**
+**聲明**
 
 ```c++
 template <class Rep2, class Period>
 constexpr duration(const duration<Rep2,Period2>& d);
 ```
 
-**结果**
+**結果**
 
-duration对象的内部值通过`duration_cast<duration<Rep,Period>>(d).count()`初始化。
+duration對象的內部值通過`duration_cast<duration<Rep,Period>>(d).count()`初始化。
 
 **要求**
 
-当Rep是一个浮点类或Rep2不是浮点类，且Period2是Period数的倍数(比如，ratio_divide&lt;Period2,Period&gt;::den==1)时，才能调用该重载。当一个较小的数据转换为一个较大的数据时，使用该构造函数就能避免数位截断和精度损失。
+當Rep是一個浮點類或Rep2不是浮點類，且Period2是Period數的倍數(比如，ratio_divide&lt;Period2,Period&gt;::den==1)時，才能調用該重載。當一個較小的數據轉換為一個較大的數據時，使用該構造函數就能避免數位截斷和精度損失。
 
-**后验条件**
+**後驗條件**
 
 `this->count() == dutation_cast&lt;duration<Rep, Period>>(d).count()`
 
@@ -196,16 +196,16 @@ duration对象的内部值通过`duration_cast<duration<Rep,Period>>(d).count()`
 
 ```c++
 duration<int, ratio<1, 1000>> ms(5);  // 5毫秒
-duration<int, ratio<1, 1>> s(ms);  // 错误：不能将ms当做s进行存储
+duration<int, ratio<1, 1>> s(ms);  // 錯誤：不能將ms當做s進行存儲
 duration<double, ratio<1,1>> s2(ms);  // 合法：s2.count() == 0.005
 duration<int, ration<1, 1000000>> us<ms>;  // 合法:us.count() == 5000
 ```
 
-### std::chrono::duration::count 成员函数
+### std::chrono::duration::count 成員函數
 
-查询持续时长。
+查詢持續時長。
 
-**声明**
+**聲明**
 
 ```c++
 constexpr rep count() const;
@@ -213,13 +213,13 @@ constexpr rep count() const;
 
 **返回**
 
-返回duration的内部值，其值类型和rep一样。
+返回duration的內部值，其值類型和rep一樣。
 
 ### std::chrono::duration::operator+ 加法操作符
 
-这是一个空操作：只会返回*this的副本。
+這是一個空操作：只會返回*this的副本。
 
-**声明**
+**聲明**
 
 ```c++
 constexpr duration operator+() const;
@@ -228,11 +228,11 @@ constexpr duration operator+() const;
 **返回**
 `*this`
 
-### std::chrono::duration::operator- 减法操作符
+### std::chrono::duration::operator- 減法操作符
 
-返回将内部值只为负数的*this副本。
+返回將內部值只為負數的*this副本。
 
-**声明**
+**聲明**
 
 ```c++
 constexpr duration operator-() const;
@@ -243,15 +243,15 @@ constexpr duration operator-() const;
 
 ### std::chrono::duration::operator++ 前置自加操作符
 
-增加内部计数值。
+增加內部計數值。
 
-**声明**
+**聲明**
 
 ```c++
 duration& operator++();
 ```
 
-**结果**
+**結果**
 
 ```c++
 ++this->internal_count;
@@ -260,17 +260,17 @@ duration& operator++();
 **返回**
 `*this`
 
-### std::chrono::duration::operator++ 后置自加操作符
+### std::chrono::duration::operator++ 後置自加操作符
 
-自加内部计数值，并且返回还没有增加前的*this。
+自加內部計數值，並且返回還沒有增加前的*this。
 
-**声明**
+**聲明**
 
 ```c++
 duration operator++(int);
 ```
 
-**结果**
+**結果**
 
 ```c++
 duration temp(*this);
@@ -278,17 +278,17 @@ duration temp(*this);
 return temp;
 ```
 
-### std::chrono::duration::operator-- 前置自减操作符
+### std::chrono::duration::operator-- 前置自減操作符
 
-自减内部计数值
+自減內部計數值
 
-**声明**
+**聲明**
 
 ```c++
 duration& operator--();
 ```
 
-**结果**
+**結果**
 
 ```c++
 --this->internal_count;
@@ -297,17 +297,17 @@ duration& operator--();
 **返回**
 `*this`
 
-### std::chrono::duration::operator-- 前置自减操作符
+### std::chrono::duration::operator-- 前置自減操作符
 
-自减内部计数值，并且返回还没有减少前的*this。
+自減內部計數值，並且返回還沒有減少前的*this。
 
-**声明**
+**聲明**
 
 ```c++
 duration operator--(int);
 ```
 
-**结果**
+**結果**
 
 ```c++
 duration temp(*this);
@@ -315,17 +315,17 @@ duration temp(*this);
 return temp;
 ```
 
-### std::chrono::duration::operator+= 复合赋值操作符
+### std::chrono::duration::operator+= 複合賦值操作符
 
-将其他duration对象中的内部值增加到现有duration对象当中。
+將其他duration對象中的內部值增加到現有duration對象當中。
 
-**声明**
+**聲明**
 
 ```c++
 duration& operator+=(duration const& other);
 ```
 
-**结果**
+**結果**
 
 ```c++
 internal_count+=other.count();
@@ -334,17 +334,17 @@ internal_count+=other.count();
 **返回**
 `*this`
 
-### std::chrono::duration::operator-= 复合赋值操作符
+### std::chrono::duration::operator-= 複合賦值操作符
 
-现有duration对象减去其他duration对象中的内部值。
+現有duration對象減去其他duration對象中的內部值。
 
-**声明**
+**聲明**
 
 ```c++
 duration& operator-=(duration const& other);
 ```
 
-**结果**
+**結果**
 
 ```c++
 internal_count-=other.count();
@@ -353,17 +353,17 @@ internal_count-=other.count();
 **返回**
 `*this`
 
-### std::chrono::duration::operator*= 复合赋值操作符
+### std::chrono::duration::operator*= 複合賦值操作符
 
-内部值乘以一个给定的值。
+內部值乘以一個給定的值。
 
-**声明**
+**聲明**
 
 ```c++
 duration& operator*=(rep const& rhs);
 ```
 
-**结果**
+**結果**
 
 ```c++
 internal_count*=rhs;
@@ -372,17 +372,17 @@ internal_count*=rhs;
 **返回**
 `*this`
 
-### std::chrono::duration::operator/= 复合赋值操作符
+### std::chrono::duration::operator/= 複合賦值操作符
 
-内部值除以一个给定的值。
+內部值除以一個給定的值。
 
-**声明**
+**聲明**
 
 ```c++
 duration& operator/=(rep const& rhs);
 ```
 
-**结果**
+**結果**
 
 ```c++
 internal_count/=rhs;
@@ -391,17 +391,17 @@ internal_count/=rhs;
 **返回**
 `*this`
 
-### std::chrono::duration::operator%= 复合赋值操作符
+### std::chrono::duration::operator%= 複合賦值操作符
 
-内部值对一个给定的值求余。
+內部值對一個給定的值求餘。
 
-**声明**
+**聲明**
 
 ```c++
 duration& operator%=(rep const& rhs);
 ```
 
-**结果**
+**結果**
 
 ```c++
 internal_count%=rhs;
@@ -410,17 +410,17 @@ internal_count%=rhs;
 **返回**
 `*this`
 
-### std::chrono::duration::operator%= 复合赋值操作符(重载)
+### std::chrono::duration::operator%= 複合賦值操作符(重載)
 
-内部值对另一个duration类的内部值求余。
+內部值對另一個duration類的內部值求餘。
 
-**声明**
+**聲明**
 
 ```c++
 duration& operator%=(duration const& rhs);
 ```
 
-**结果**
+**結果**
 
 ```c++
 internal_count%=rhs.count();
@@ -429,11 +429,11 @@ internal_count%=rhs.count();
 **返回**
 `*this`
 
-### std::chrono::duration::zero 静态成员函数
+### std::chrono::duration::zero 靜態成員函數
 
-返回一个内部值为0的duration对象。
+返回一個內部值為0的duration對象。
 
-**声明**
+**聲明**
 
 ```c++
 constexpr duration zero();
@@ -445,11 +445,11 @@ constexpr duration zero();
 duration(duration_values<rep>::zero());
 ```
 
-### std::chrono::duration::min 静态成员函数
+### std::chrono::duration::min 靜態成員函數
 
-返回duration类实例化后能表示的最小值。
+返回duration類實例化後能表示的最小值。
 
-**声明**
+**聲明**
 
 ```c++
 constexpr duration min();
@@ -461,11 +461,11 @@ constexpr duration min();
 duration(duration_values<rep>::min());
 ```
 
-### std::chrono::duration::max 静态成员函数
+### std::chrono::duration::max 靜態成員函數
 
-返回duration类实例化后能表示的最大值。
+返回duration類實例化後能表示的最大值。
 
-**声明**
+**聲明**
 
 ```c++
 constexpr duration max();
@@ -477,11 +477,11 @@ constexpr duration max();
 duration(duration_values<rep>::max());
 ```
 
-### std::chrono::duration 等于比较操作符
+### std::chrono::duration 等於比較操作符
 
-比较两个duration对象是否相等。
+比較兩個duration對象是否相等。
 
-**声明**
+**聲明**
 
 ```c++
 template <class Rep1, class Period1, class Rep2, class Period2>
@@ -492,17 +492,17 @@ const duration<Rep2, Period2>& rhs);
 
 **要求**
 
-`lhs`和`rhs`两种类型可以互相进行隐式转换。当两种类型无法进行隐式转换，或是可以互相转换的两个不同类型的duration类，则表达式不合理。
+`lhs`和`rhs`兩種類型可以互相進行隱式轉換。當兩種類型無法進行隱式轉換，或是可以互相轉換的兩個不同類型的duration類，則表達式不合理。
 
-**结果**
+**結果**
 
-当`CommonDuration`和`std::common_type< duration< Rep1, Period1>, duration< Rep2, Period2>>::type`同类，那么`lhs==rhs`就会返回`CommonDuration(lhs).count()==CommonDuration(rhs).count()`。
+當`CommonDuration`和`std::common_type< duration< Rep1, Period1>, duration< Rep2, Period2>>::type`同類，那麼`lhs==rhs`就會返回`CommonDuration(lhs).count()==CommonDuration(rhs).count()`。
 
-### std::chrono::duration 不等于比较操作符
+### std::chrono::duration 不等於比較操作符
 
-比较两个duration对象是否不相等。
+比較兩個duration對象是否不相等。
 
-**声明**
+**聲明**
 
 ```c++
 template <class Rep1, class Period1, class Rep2, class Period2>
@@ -513,16 +513,16 @@ constexpr bool operator!=(
 
 **要求**
 
-`lhs`和`rhs`两种类型可以互相进行隐式转换。当两种类型无法进行隐式转换，或是可以互相转换的两个不同类型的duration类，则表达式不合理。
+`lhs`和`rhs`兩種類型可以互相進行隱式轉換。當兩種類型無法進行隱式轉換，或是可以互相轉換的兩個不同類型的duration類，則表達式不合理。
 
 **返回**
 `!(lhs==rhs)`
 
-### std::chrono::duration 小于比较操作符
+### std::chrono::duration 小於比較操作符
 
-比较两个duration对象是否小于。
+比較兩個duration對象是否小於。
 
-**声明**
+**聲明**
 
 ```c++
 template <class Rep1, class Period1, class Rep2, class Period2>
@@ -533,17 +533,17 @@ constexpr bool operator<(
 
 **要求**
 
-`lhs`和`rhs`两种类型可以互相进行隐式转换。当两种类型无法进行隐式转换，或是可以互相转换的两个不同类型的duration类，则表达式不合理。
+`lhs`和`rhs`兩種類型可以互相進行隱式轉換。當兩種類型無法進行隱式轉換，或是可以互相轉換的兩個不同類型的duration類，則表達式不合理。
 
-**结果**
+**結果**
 
-当`CommonDuration`和`std::common_type< duration< Rep1, Period1>, duration< Rep2, Period2>>::type`同类，那么`lhs&lt;rhs`就会返回`CommonDuration(lhs).count()&lt;CommonDuration(rhs).count()`。
+當`CommonDuration`和`std::common_type< duration< Rep1, Period1>, duration< Rep2, Period2>>::type`同類，那麼`lhs&lt;rhs`就會返回`CommonDuration(lhs).count()&lt;CommonDuration(rhs).count()`。
 
-### std::chrono::duration 大于比较操作符
+### std::chrono::duration 大於比較操作符
 
-比较两个duration对象是否大于。
+比較兩個duration對象是否大於。
 
-**声明**
+**聲明**
 
 ```c++
 template <class Rep1, class Period1, class Rep2, class Period2>
@@ -554,16 +554,16 @@ constexpr bool operator>(
 
 **要求**
 
-`lhs`和`rhs`两种类型可以互相进行隐式转换。当两种类型无法进行隐式转换，或是可以互相转换的两个不同类型的duration类，则表达式不合理。
+`lhs`和`rhs`兩種類型可以互相進行隱式轉換。當兩種類型無法進行隱式轉換，或是可以互相轉換的兩個不同類型的duration類，則表達式不合理。
 
 **返回**
 `rhs<lhs`
 
-### std::chrono::duration 小于等于比较操作符
+### std::chrono::duration 小於等於比較操作符
 
-比较两个duration对象是否小于等于。
+比較兩個duration對象是否小於等於。
 
-**声明**
+**聲明**
 
 ```c++
 template <class Rep1, class Period1, class Rep2, class Period2>
@@ -574,16 +574,16 @@ constexpr bool operator<=(
 
 **要求**
 
-`lhs`和`rhs`两种类型可以互相进行隐式转换。当两种类型无法进行隐式转换，或是可以互相转换的两个不同类型的duration类，则表达式不合理。
+`lhs`和`rhs`兩種類型可以互相進行隱式轉換。當兩種類型無法進行隱式轉換，或是可以互相轉換的兩個不同類型的duration類，則表達式不合理。
 
 **返回**
 `!(rhs<lhs)`
 
-### std::chrono::duration 大于等于比较操作符
+### std::chrono::duration 大於等於比較操作符
 
-比较两个duration对象是否大于等于。
+比較兩個duration對象是否大於等於。
 
-**声明**
+**聲明**
 
 ```c++
 template <class Rep1, class Period1, class Rep2, class Period2>
@@ -594,16 +594,16 @@ constexpr bool operator>=(
 
 **要求**
 
-`lhs`和`rhs`两种类型可以互相进行隐式转换。当两种类型无法进行隐式转换，或是可以互相转换的两个不同类型的duration类，则表达式不合理。
+`lhs`和`rhs`兩種類型可以互相進行隱式轉換。當兩種類型無法進行隱式轉換，或是可以互相轉換的兩個不同類型的duration類，則表達式不合理。
 
 **返回**
 `!(lhs<rhs)`
 
-### std::chrono::duration_cast 非成员函数
+### std::chrono::duration_cast 非成員函數
 
-显示将一个`std::chrono::duration`对象转化为另一个`std::chrono::duration`实例。
+顯示將一個`std::chrono::duration`對象轉化為另一個`std::chrono::duration`實例。
 
-**声明**
+**聲明**
 
 ```c++
 template <class ToDuration, class Rep, class Period>
@@ -612,17 +612,17 @@ constexpr ToDuration duration_cast(const duration<Rep, Period>& d);
 
 **要求**
 
-ToDuration必须是`std::chrono::duration`的实例。
+ToDuration必須是`std::chrono::duration`的實例。
 
 **返回**
 
-duration类d转换为指定类型ToDuration。这种方式可以在不同尺寸和表示类型的转换中尽可能减少精度损失。
+duration類d轉換為指定類型ToDuration。這種方式可以在不同尺寸和表示類型的轉換中儘可能減少精度損失。
 
-## D.1.2 std::chrono::time_point类型模板
+## D.1.2 std::chrono::time_point類型模板
 
-`std::chrono::time_point`类型模板通过(特别的)时钟来表示某个时间点。这个时钟代表的是从epoch(1970-01-01 00:00:00 UTC，作为UNIX系列系统的特定时间戳)到现在的时间。模板参数Clock代表使用的使用(不同的使用必定有自己独特的类型)，而Duration模板参数使用来测量从epoch到现在的时间，并且这个参数的类型必须是`std::chrono::duration`类型。Duration默认存储Clock上的测量值。
+`std::chrono::time_point`類型模板通過(特別的)時鐘來表示某個時間點。這個時鐘代表的是從epoch(1970-01-01 00:00:00 UTC，作為UNIX系列系統的特定時間戳)到現在的時間。模板參數Clock代表使用的使用(不同的使用必定有自己獨特的類型)，而Duration模板參數使用來測量從epoch到現在的時間，並且這個參數的類型必須是`std::chrono::duration`類型。Duration默認存儲Clock上的測量值。
 
-### 类型定义
+### 類型定義
 
 ```c++
 template <class Clock,class Duration = typename Clock::duration>
@@ -650,39 +650,39 @@ public:
 };
 ```
 
-### std::chrono::time_point 默认构造函数
+### std::chrono::time_point 默認構造函數
 
-构造time_point代表着，使用相关的Clock，记录从epoch到现在的时间；其内部计时使用Duration::zero()进行初始化。
+構造time_point代表著，使用相關的Clock，記錄從epoch到現在的時間；其內部計時使用Duration::zero()進行初始化。
 
-**声明**
+**聲明**
 
 ```c++
 time_point();
 ```
 
-**后验条件**
+**後驗條件**
 
-对于使用默认构造函数构造出的time_point对象tp，`tp.time_since_epoch() == tp::duration::zero()`。
+對於使用默認構造函數構造出的time_point對象tp，`tp.time_since_epoch() == tp::duration::zero()`。
 
-### std::chrono::time_point 需要时间长度的构造函数
+### std::chrono::time_point 需要時間長度的構造函數
 
-构造time_point代表着，使用相关的Clock，记录从epoch到现在的时间。
+構造time_point代表著，使用相關的Clock，記錄從epoch到現在的時間。
 
-**声明**
+**聲明**
 
 ```c++
 explicit time_point(const duration& d);
 ```
 
-**后验条件**
+**後驗條件**
 
-当有一个time_point对象tp，是通过duration d构造出来的(tp(d))，那么`tp.time_since_epoch() == d`。
+當有一個time_point對象tp，是通過duration d構造出來的(tp(d))，那麼`tp.time_since_epoch() == d`。
 
-### std::chrono::time_point 转换构造函数
+### std::chrono::time_point 轉換構造函數
 
-构造time_point代表着，使用相关的Clock，记录从epoch到现在的时间。
+構造time_point代表著，使用相關的Clock，記錄從epoch到現在的時間。
 
-**声明**
+**聲明**
 
 ```c++
 template <class Duration2>
@@ -691,19 +691,19 @@ time_point(const time_point<clock, Duration2>& t);
 
 **要求**
 
-Duration2必须呢个隐式转换为Duration。
+Duration2必須呢個隱式轉換為Duration。
 
 **效果**
 
-当`time_point(t.time_since_epoch())`存在，从t.time_since_epoch()中获取的返回值，可以隐式转换成Duration类型的对象，并且这个值可以存储在一个新的time_point对象中。
+當`time_point(t.time_since_epoch())`存在，從t.time_since_epoch()中獲取的返回值，可以隱式轉換成Duration類型的對象，並且這個值可以存儲在一個新的time_point對象中。
 
-(扩展阅读：[as-if准则](http://stackoverflow.com/questions/15718262/what-exactly-is-the-as-if-rule))
+(擴展閱讀：[as-if準則](http://stackoverflow.com/questions/15718262/what-exactly-is-the-as-if-rule))
 
-### std::chrono::time_point::time_since_epoch 成员函数
+### std::chrono::time_point::time_since_epoch 成員函數
 
-返回当前time_point从epoch到现在的具体时长。
+返回當前time_point從epoch到現在的具體時長。
 
-**声明**
+**聲明**
 
 ```c++
 duration time_since_epoch() const;
@@ -711,13 +711,13 @@ duration time_since_epoch() const;
 
 **返回**
 
-duration的值存储在*this中。
+duration的值存儲在*this中。
 
-### std::chrono::time_point::operator+= 复合赋值函数
+### std::chrono::time_point::operator+= 複合賦值函數
 
-将指定的duration的值与原存储在指定的time_point对象中的duration相加，并将加后值存储在*this对象中。
+將指定的duration的值與原存儲在指定的time_point對象中的duration相加，並將加後值存儲在*this對象中。
 
-**声明**
+**聲明**
 
 ```c++
 time_point& operator+=(const duration& d);
@@ -725,16 +725,16 @@ time_point& operator+=(const duration& d);
 
 **效果**
 
-将d的值和duration对象的值相加，存储在*this中，就如同this-&gt;internal_duration += d;
+將d的值和duration對象的值相加，存儲在*this中，就如同this-&gt;internal_duration += d;
 
 **返回**
 `*this`
 
-### std::chrono::time_point::operator-= 复合赋值函数
+### std::chrono::time_point::operator-= 複合賦值函數
 
-将指定的duration的值与原存储在指定的time_point对象中的duration相减，并将加后值存储在*this对象中。
+將指定的duration的值與原存儲在指定的time_point對象中的duration相減，並將加後值存儲在*this對象中。
 
-**声明**
+**聲明**
 
 ```c++
 time_point& operator-=(const duration& d);
@@ -742,16 +742,16 @@ time_point& operator-=(const duration& d);
 
 **效果**
 
-将d的值和duration对象的值相减，存储在*this中，就如同this-&gt;internal_duration -= d;
+將d的值和duration對象的值相減，存儲在*this中，就如同this-&gt;internal_duration -= d;
 
 **返回**
 `*this`
 
-### std::chrono::time_point::min 静态成员函数
+### std::chrono::time_point::min 靜態成員函數
 
-获取time_point对象可能表示的最小值。
+獲取time_point對象可能表示的最小值。
 
-**声明**
+**聲明**
 
 ```c++
 static constexpr time_point min();
@@ -763,11 +763,11 @@ static constexpr time_point min();
 time_point(time_point::duration::min()) (see 11.1.1.15)
 ```
 
-### std::chrono::time_point::max 静态成员函数
+### std::chrono::time_point::max 靜態成員函數
 
-获取time_point对象可能表示的最大值。
+獲取time_point對象可能表示的最大值。
 
-**声明**
+**聲明**
 
 ```c++
 static constexpr time_point max();
@@ -779,11 +779,11 @@ static constexpr time_point max();
 time_point(time_point::duration::max()) (see 11.1.1.16)
 ```
 
-##D.1.3 std::chrono::system_clock类
+##D.1.3 std::chrono::system_clock類
 
-`std::chrono::system_clock`类提供给了从系统实时时钟上获取当前时间功能。可以调用`std::chrono::system_clock::now()`来获取当前的时间。`std::chrono::system_clock::time_point`也可以通过`std::chrono::system_clock::to_time_t()`和`std::chrono::system_clock::to_time_point()`函数返回值转换成time_t类型。系统时钟不稳定，所以`std::chrono::system_clock::now()`获取到的时间可能会早于之前的一次调用(比如，时钟被手动调整过或与外部时钟进行了同步)。
+`std::chrono::system_clock`類提供給了從系統實時時鐘上獲取當前時間功能。可以調用`std::chrono::system_clock::now()`來獲取當前的時間。`std::chrono::system_clock::time_point`也可以通過`std::chrono::system_clock::to_time_t()`和`std::chrono::system_clock::to_time_point()`函數返回值轉換成time_t類型。系統時鐘不穩定，所以`std::chrono::system_clock::now()`獲取到的時間可能會早於之前的一次調用(比如，時鐘被手動調整過或與外部時鐘進行了同步)。
 
-###类型定义
+###類型定義
 
 ```c++
 class system_clock
@@ -802,31 +802,31 @@ public:
 };
 ```
 
-### std::chrono::system_clock::rep 类型定义
+### std::chrono::system_clock::rep 類型定義
 
-将时间周期数记录在一个duration值中
+將時間週期數記錄在一個duration值中
 
-**声明**
+**聲明**
 
 ```c++
 typedef unspecified-integral-type rep;
 ```
 
-### std::chrono::system_clock::period 类型定义
+### std::chrono::system_clock::period 類型定義
 
-类型为`std::ratio`类型模板，通过在两个不同的duration或time_point间特化最小秒数(或将1秒分为好几份)。period指定了时钟的精度，而非时钟频率。
+類型為`std::ratio`類型模板，通過在兩個不同的duration或time_point間特化最小秒數(或將1秒分為好幾份)。period指定了時鐘的精度，而非時鐘頻率。
 
-**声明**
+**聲明**
 
 ```c++
 typedef std::ratio<unspecified,unspecified> period;
 ```
 
-### std::chrono::system_clock::duration 类型定义
+### std::chrono::system_clock::duration 類型定義
 
-类型为`std::ratio`类型模板，通过系统实时时钟获取两个时间点之间的时长。
+類型為`std::ratio`類型模板，通過系統實時時鐘獲取兩個時間點之間的時長。
 
-**声明**
+**聲明**
 
 ```c++
 typedef std::chrono::duration<
@@ -834,21 +834,21 @@ typedef std::chrono::duration<
    std::chrono::system_clock::period> duration;
 ```
 
-### std::chrono::system_clock::time_point 类型定义
+### std::chrono::system_clock::time_point 類型定義
 
-类型为`std::ratio`类型模板，通过系统实时时钟获取当前时间点的时间。
+類型為`std::ratio`類型模板，通過系統實時時鐘獲取當前時間點的時間。
 
-**声明**
+**聲明**
 
 ```c++
 typedef std::chrono::time_point&lt;std::chrono::system_clock&gt; time_point;
 ```
 
-### std::chrono::system_clock::now 静态成员函数
+### std::chrono::system_clock::now 靜態成員函數
 
-从系统实时时钟上获取当前的外部设备显示的时间。
+從系統實時時鐘上獲取當前的外部設備顯示的時間。
 
-**声明**
+**聲明**
 
 ```c++
 time_point now() noexcept;
@@ -856,17 +856,17 @@ time_point now() noexcept;
 
 **返回**
 
-time_point类型变量来代表当前系统实时时钟的时间。
+time_point類型變量來代表當前系統實時時鐘的時間。
 
-**抛出**
+**拋出**
 
-当错误发生，`std::system_error`异常将会抛出。
+當錯誤發生，`std::system_error`異常將會拋出。
 
-### std::chrono::system_clock:to_time_t 静态成员函数
+### std::chrono::system_clock:to_time_t 靜態成員函數
 
-将time_point类型值转化为time_t。
+將time_point類型值轉化為time_t。
 
-**声明**
+**聲明**
 
 ```c++
 time_t to_time_t(time_point const& t) noexcept;
@@ -874,15 +874,15 @@ time_t to_time_t(time_point const& t) noexcept;
 
 **返回**
 
-通过对t进行舍入或截断精度，将其转化为一个time_t类型的值。
+通過對t進行舍入或截斷精度，將其轉化為一個time_t類型的值。
 
-**抛出**
+**拋出**
 
-当错误发生，`std::system_error`异常将会抛出。
+當錯誤發生，`std::system_error`異常將會拋出。
 
-### std::chrono::system_clock::from_time_t 静态成员函数
+### std::chrono::system_clock::from_time_t 靜態成員函數
 
-**声明**
+**聲明**
 
 ```c++
 time_point from_time_t(time_t const& t) noexcept;
@@ -890,17 +890,17 @@ time_point from_time_t(time_t const& t) noexcept;
 
 **返回**
 
-time_point中的值与t中的值一样。
+time_point中的值與t中的值一樣。
 
-**抛出**
+**拋出**
 
-当错误发生，`std::system_error`异常将会抛出。
+當錯誤發生，`std::system_error`異常將會拋出。
 
-## D.1.4 std::chrono::steady_clock类
+## D.1.4 std::chrono::steady_clock類
 
-`std::chrono::steady_clock`能访问系统稳定时钟。可以通过调用`std::chrono::steady_clock::now()`获取当前的时间。设备上显示的时间，与使用`std::chrono::steady_clock::now()`获取的时间没有固定的关系。稳定时钟是无法回调的，所以在`std::chrono::steady_clock::now()`两次调用后，第二次调用获取的时间必定等于或大于第一次获得的时间。
+`std::chrono::steady_clock`能訪問系統穩定時鐘。可以通過調用`std::chrono::steady_clock::now()`獲取當前的時間。設備上顯示的時間，與使用`std::chrono::steady_clock::now()`獲取的時間沒有固定的關係。穩定時鐘是無法回調的，所以在`std::chrono::steady_clock::now()`兩次調用後，第二次調用獲取的時間必定等於或大於第一次獲得的時間。
 
-### 类型定义
+### 類型定義
 
 ```c++
 class steady_clock
@@ -918,31 +918,31 @@ public:
 };
 ```
 
-### std::chrono::steady_clock::rep 类型定义
+### std::chrono::steady_clock::rep 類型定義
 
-定义一个整型，用来保存duration的值。
+定義一個整型，用來保存duration的值。
 
-**声明**
+**聲明**
 
 ```c++
 typedef unspecified-integral-type rep;
 ```
 
-### std::chrono::steady_clock::period 类型定义
+### std::chrono::steady_clock::period 類型定義
 
-类型为`std::ratio`类型模板，通过在两个不同的duration或time_point间特化最小秒数(或将1秒分为好几份)。period指定了时钟的精度，而非时钟频率。
+類型為`std::ratio`類型模板，通過在兩個不同的duration或time_point間特化最小秒數(或將1秒分為好幾份)。period指定了時鐘的精度，而非時鐘頻率。
 
-**声明**
+**聲明**
 
 ```c++
 typedef std::ratio<unspecified,unspecified> period;
 ```
 
-### std::chrono::steady_clock::duration 类型定义
+### std::chrono::steady_clock::duration 類型定義
 
-类型为`std::ratio`类型模板，通过系统实时时钟获取两个时间点之间的时长。
+類型為`std::ratio`類型模板，通過系統實時時鐘獲取兩個時間點之間的時長。
 
-**声明**
+**聲明**
 
 ```c++
 typedef std::chrono::duration<
@@ -950,21 +950,21 @@ typedef std::chrono::duration<
    std::chrono::system_clock::period> duration;
 ```
 
-### std::chrono::steady_clock::time_point 类型定义
+### std::chrono::steady_clock::time_point 類型定義
 
-`std::chrono::time_point`类型实例，可以存储从系统稳定时钟返回的时间点。
+`std::chrono::time_point`類型實例，可以存儲從系統穩定時鐘返回的時間點。
 
-**声明**
+**聲明**
 
 ```c++
 typedef std::chrono::time_point<std::chrono::steady_clock> time_point;
 ```
 
-### std::chrono::steady_clock::now 静态成员函数
+### std::chrono::steady_clock::now 靜態成員函數
 
-从系统稳定时钟获取当前时间。
+從系統穩定時鐘獲取當前時間。
 
-**声明**
+**聲明**
 
 ```c++
 time_point now() noexcept;
@@ -972,22 +972,22 @@ time_point now() noexcept;
 
 **返回**
 
-time_point表示当前系统稳定时钟的时间。
+time_point表示當前系統穩定時鐘的時間。
 
-**抛出**
-当遇到错误，会抛出`std::system_error`异常。
+**拋出**
+當遇到錯誤，會拋出`std::system_error`異常。
 
 **同步**
-当先行调用过一次`std::chrono::steady_clock::now()`，那么下一次time_point获取的值，一定大于等于第一次获取的值。
+當先行調用過一次`std::chrono::steady_clock::now()`，那麼下一次time_point獲取的值，一定大於等於第一次獲取的值。
 
-## D.1.5 std::chrono::high_resolution_clock类定义
+## D.1.5 std::chrono::high_resolution_clock類定義
 
-`td::chrono::high_resolution_clock`类能访问系统高精度时钟。和所有其他时钟一样，通过调用`std::chrono::high_resolution_clock::now()`来获取当前时间。`std::chrono::high_resolution_clock`可能是`std::chrono::system_clock`类或`std::chrono::steady_clock`类的别名，也可能就是独立的一个类。
+`td::chrono::high_resolution_clock`類能訪問系統高精度時鐘。和所有其他時鐘一樣，通過調用`std::chrono::high_resolution_clock::now()`來獲取當前時間。`std::chrono::high_resolution_clock`可能是`std::chrono::system_clock`類或`std::chrono::steady_clock`類的別名，也可能就是獨立的一個類。
 
-通过`std::chrono::high_resolution_clock`具有所有标准库支持时钟中最高的精度，这就意味着使用
-`std::chrono::high_resolution_clock::now()`要花掉一些时间。所以，当你再调用`std::chrono::high_resolution_clock::now()`的时候，需要注意函数本身的时间开销。
+通過`std::chrono::high_resolution_clock`具有所有標準庫支持時鐘中最高的精度，這就意味著使用
+`std::chrono::high_resolution_clock::now()`要花掉一些時間。所以，當你再調用`std::chrono::high_resolution_clock::now()`的時候，需要注意函數本身的時間開銷。
 
-### 类型定义
+### 類型定義
 
 ```c++
 class high_resolution_clock

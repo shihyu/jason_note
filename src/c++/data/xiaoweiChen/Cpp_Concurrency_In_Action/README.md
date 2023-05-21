@@ -3,49 +3,49 @@ C++ Concurrency In Action
 *Practical Multithreading*
 -------------------------
 - 作者：Anthony Williams
-- 译者：陈晓伟
+- 譯者：陳曉偉
 
-## 本书概述
+## 本書概述
 
-作为对《C++ Concurrency in Action》的中文翻译。
+作為對《C++ Concurrency in Action》的中文翻譯。
 
-本书是基于C++11新标准的并发和多线程编程深度指南。
+本書是基於C++11新標準的併發和多線程編程深度指南。
 
-从std::thread、std::mutex、std::future和std::async等基础类的使用，到内存模型和原子操作、基于锁和无锁数据结构的构建，再扩展到并行算法、线程管理，最后还介绍了多线程代码的测试工作。
+從std::thread、std::mutex、std::future和std::async等基礎類的使用，到內存模型和原子操作、基於鎖和無鎖數據結構的構建，再擴展到並行算法、線程管理，最後還介紹了多線程代碼的測試工作。
 
-本书的附录部分还对C++11新语言特性中与多线程相关的项目进行了简要的介绍，并提供了C++11线程库的完整参考。
+本書的附錄部分還對C++11新語言特性中與多線程相關的項目進行了簡要的介紹，並提供了C++11線程庫的完整參考。
 
-本书适合于需要深入了解C++多线程开发的读者，以及使用C++进行各类软件开发的开发人员、测试人员。
+本書適合於需要深入瞭解C++多線程開發的讀者，以及使用C++進行各類軟件開發的開發人員、測試人員。
 
-对于使用第三方线程库的读者，也可以从本书后面的章节中了解到相关的指引和技巧。
+對於使用第三方線程庫的讀者，也可以從本書後面的章節中瞭解到相關的指引和技巧。
 
-同时，本书还可以作为C++11线程库的参考工具书。
+同時，本書還可以作為C++11線程庫的參考工具書。
 
-## 书与作者
+## 書與作者
 
-Anthony Williams是BSI C++小组的成员，拥有10多年C++应用经验。
+Anthony Williams是BSI C++小組的成員，擁有10多年C++應用經驗。
 
-如今多核芯处理器使用的越来越普遍。C++11标准支持多线程，这就需要程序员掌握多线程编程的原则、技术和新语言中的并发特性，确保自己处于时代前沿。
+如今多核芯處理器使用的越來越普遍。C++11標準支持多線程，這就需要程序員掌握多線程編程的原則、技術和新語言中的併發特性，確保自己處於時代前沿。
 
-无论你的C++技术如何，本书都会指引你使用C++11写出健壮和优雅的多线程应用。本书将会探讨线程的内存模型，新的多线程库，启动线程和同步工具。在这个过程中，我们会了解并发程序中较为棘手的一些问题。
+無論你的C++技術如何，本書都會指引你使用C++11寫出健壯和優雅的多線程應用。本書將會探討線程的內存模型，新的多線程庫，啟動線程和同步工具。在這個過程中，我們會了解併發程序中較為棘手的一些問題。
 
-内容的大体结构：
+內容的大體結構：
 
-- C++11编程
+- C++11編程
 
-- 多核芯编程
+- 多核芯編程
 
-- 简单例子用于学习，复杂例子用于实践
+- 簡單例子用於學習，複雜例子用於實踐
 
-本书是为C++程序员所写，同僚中可能有人对并发还没什么了解，估计也有人已经使用其他语言、API或平台写过多线程程序。不过，在看本书的时候，你们都在同一“起跑线”上。
+本書是為C++程序員所寫，同僚中可能有人對併發還沒什麼瞭解，估計也有人已經使用其他語言、API或平臺寫過多線程程序。不過，在看本書的時候，你們都在同一“起跑線”上。
 
-访问本书论坛[曼宁-C++ Concurrency in Action](http://www.manning.com/williams/)可获取免费试读章节电子书。
+訪問本書論壇[曼寧-C++ Concurrency in Action](http://www.manning.com/williams/)可獲取免費試讀章節電子書。
 
-## 本书相关
+## 本書相關
 
-- github 翻译地址：https://github.com/xiaoweiChen/Cpp_Concurrency_In_Action
-- gitbook 在线阅读：https://legacy.gitbook.com/book/chenxiaowei/cpp_concurrency_in_action
-- 极客学院在线阅读：http://wiki.jikexueyuan.com/project/cplusplus-concurrency-action/
-- 书中源码：https://github.com/bsmr-c-cpp/Cpp-Concurrency-in-Action
-- 学习C++11/14: http://www.bogotobogo.com/cplusplus/C11
-- 第二版github翻译地址：https://github.com/xiaoweiChen/CPP-Concurrency-In-Action-2ed-2019
+- github 翻譯地址：https://github.com/xiaoweiChen/Cpp_Concurrency_In_Action
+- gitbook 在線閱讀：https://legacy.gitbook.com/book/chenxiaowei/cpp_concurrency_in_action
+- 極客學院在線閱讀：http://wiki.jikexueyuan.com/project/cplusplus-concurrency-action/
+- 書中源碼：https://github.com/bsmr-c-cpp/Cpp-Concurrency-in-Action
+- 學習C++11/14: http://www.bogotobogo.com/cplusplus/C11
+- 第二版github翻譯地址：https://github.com/xiaoweiChen/CPP-Concurrency-In-Action-2ed-2019

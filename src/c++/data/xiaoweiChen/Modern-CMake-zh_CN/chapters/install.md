@@ -1,26 +1,26 @@
-# 导出与安装
+# 導出與安裝
 
-让别人使用库有三种好方法和一种坏方法:
+讓別人使用庫有三種好方法和一種壞方法:
 
-## 查找模块（不好的方式）
+## 查找模塊（不好的方式）
 
-`Find<mypackage>.cmake` 脚本是为那些不支持 CMake 的库所设计，所以已经使用 CMake 的库，无需不要创建这个脚本文件！可以使用 `Config<mypackage>.cmake`，具体方式如下所示。
+`Find<mypackage>.cmake` 腳本是為那些不支持 CMake 的庫所設計，所以已經使用 CMake 的庫，無需不要創建這個腳本文件！可以使用 `Config<mypackage>.cmake`，具體方式如下所示。
 
-## 添加子项目
+## 添加子項目
 
-可以将项目作为一个子目录放置于包中，接着使用 `add_subdirectory` 添加相应的子目录，这适用于纯头文件和快速编译的库。还需要注意的是，安装命令可能会干扰父项目，因此可以使用 `add_subdirectory` 的`EXCLUDE_FROM_ALL`选项；当显式使用的目标时，仍然会进行构建。
+可以將項目作為一個子目錄放置於包中，接著使用 `add_subdirectory` 添加相應的子目錄，這適用於純頭文件和快速編譯的庫。還需要注意的是，安裝命令可能會干擾父項目，因此可以使用 `add_subdirectory` 的`EXCLUDE_FROM_ALL`選項；當顯式使用的目標時，仍然會進行構建。
 
-作为库的作者，请使用 `CMAKE_CURRENT_SOURCE_DIR` 而非 `PROJECT_SOURCE_DIR` (对于其他变量也是如此，比如`CMAKE_CURRRENT_BINARY_DIR`)。通过检查 `CMAKE_PROJECT_NAME` 和 `PROJECT_NAME` 的内容是否相同 （STREQUAL），可以只添加对项目有意义的选项或默认值。
+作為庫的作者，請使用 `CMAKE_CURRENT_SOURCE_DIR` 而非 `PROJECT_SOURCE_DIR` (對於其他變量也是如此，比如`CMAKE_CURRRENT_BINARY_DIR`)。通過檢查 `CMAKE_PROJECT_NAME` 和 `PROJECT_NAME` 的內容是否相同 （STREQUAL），可以只添加對項目有意義的選項或默認值。
 
-此外，使用命名空间也是不错的方式。使用库的方式应该与下面的一致，应该对所有方法的使用进行标准化。
+此外，使用命名空間也是不錯的方式。使用庫的方式應該與下面的一致，應該對所有方法的使用進行標準化。
 
 ```cmake
 add_library(MyLib::MyLib ALIAS MyLib)
 ```
 
-这里的 ALIAS（别名）目标不会在后面导出。
+這裡的 ALIAS（別名）目標不會在後面導出。
 
 
-## 导出
+## 導出
 
-第三种方法是 `*Config.cmake` 脚本，这将是下一章的主题。
+第三種方法是 `*Config.cmake` 腳本，這將是下一章的主題。

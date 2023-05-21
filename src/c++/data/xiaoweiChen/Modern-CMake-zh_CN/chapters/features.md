@@ -1,11 +1,11 @@
-# 为 CMake 项目添加特性
+# 為 CMake 項目添加特性
 
-本节将会涵盖如何为你的 CMake 项目添加特性。你将会学到如何为你的 C++ 项目添加一些常用的选项，如 C++11 支持，以及如何支持 IDE 工具等。
+本節將會涵蓋如何為你的 CMake 項目添加特性。你將會學到如何為你的 C++ 項目添加一些常用的選項，如 C++11 支持，以及如何支持 IDE 工具等。
 
 
-## 默认的构建类型
+## 默認的構建類型
 
-CMake 通常会设置一个 “既不是 Release 也不是Debug” 的空构建类型来作为默认的构建类型，如果你想要自己设置默认的构建类型，你可以参考 [Kitware blog](https://blog.kitware.com/cmake-and-the-default-build-type/) 中指出的方法。
+CMake 通常會設置一個 “既不是 Release 也不是Debug” 的空構建類型來作為默認的構建類型，如果你想要自己設置默認的構建類型，你可以參考 [Kitware blog](https://blog.kitware.com/cmake-and-the-default-build-type/) 中指出的方法。
 
 ```cmake
 set(default_build_type "Release")

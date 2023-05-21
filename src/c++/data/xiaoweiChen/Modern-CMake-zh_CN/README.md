@@ -1,31 +1,31 @@
-# Modern CMake 简体中文版
+# Modern CMake 簡體中文版
 
 ## 概述
 
-这是著名 CMake 教程 [Modern CMake](https://cliutils.gitlab.io/modern-cmake/) 的简体中文翻译版。
+這是著名 CMake 教程 [Modern CMake](https://cliutils.gitlab.io/modern-cmake/) 的簡體中文翻譯版。
 
-你可以在 [这里](https://cliutils.gitlab.io/modern-cmake/) 找到它的原版。
+你可以在 [這裡](https://cliutils.gitlab.io/modern-cmake/) 找到它的原版。
 
-它致力于解决网络上随处可见的糟糕例子以及所谓的“最佳实践”中存在的问题。
+它致力於解決網絡上隨處可見的糟糕例子以及所謂的“最佳實踐”中存在的問題。
 
-如果你想要学好 CMake ，那你应该会从这本书中受益！
+如果你想要學好 CMake ，那你應該會從這本書中受益！
 
-英文原版链接    ：https://cliutils.gitlab.io/modern-cmake/
+英文原版鏈接    ：https://cliutils.gitlab.io/modern-cmake/
 
-简体中文版链接： https://modern-cmake-cn.github.io/Modern-CMake-zh_CN/
+簡體中文版鏈接： https://modern-cmake-cn.github.io/Modern-CMake-zh_CN/
 
-## 许可协议
+## 許可協議
 
-本书采用与原书相同的 [LICENSE](https://gitlab.com/CLIUtils/modern-cmake/-/blob/master/LICENSE)
+本書採用與原書相同的 [LICENSE](https://gitlab.com/CLIUtils/modern-cmake/-/blob/master/LICENSE)
 
 
-## 贡献
+## 貢獻
 
-本书是一篇持续维护的文档，你可以点击文档右上角的编辑按钮来对文章进行编辑。
+本書是一篇持續維護的文檔，你可以點擊文檔右上角的編輯按鈕來對文章進行編輯。
 
-同时，受限于译者的水平，不足之处敬请谅解，欢迎提出 [Issue](https://github.com/Modern-CMake-CN/Modern-CMake-zh_CN/issues) 或 [Pull Request](https://github.com/Modern-CMake-CN/Modern-CMake-zh_CN/pulls)！
+同時，受限於譯者的水平，不足之處敬請諒解，歡迎提出 [Issue](https://github.com/Modern-CMake-CN/Modern-CMake-zh_CN/issues) 或 [Pull Request](https://github.com/Modern-CMake-CN/Modern-CMake-zh_CN/pulls)！
 
-本文档遵循 [中文文案排版指南](https://github.com/sparanoid/chinese-copywriting-guidelines)，为了确保排版的美观以及风格的统一，请确保贡献内容符合指南规范。
+本文檔遵循 [中文文案排版指南](https://github.com/sparanoid/chinese-copywriting-guidelines)，為了確保排版的美觀以及風格的統一，請確保貢獻內容符合指南規範。
 
 <img src="https://img.shields.io/github/contributors-anon/Modern-CMake-CN/Modern-CMake-zh_CN"/>
 

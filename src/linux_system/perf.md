@@ -2,11 +2,11 @@
 
 ## 簡介
 
-[Perf](https://perf.wiki.kernel.org/index.php/Main_Page) 全名是 Performance Event，是在 Linux 2.6.31 以後內建的系統效能分析工具，它隨著核心一併釋出。藉由 perf，應用程式可以利用 PMU (Performance Monitoring Unit), tracepoint 和核心內部的特殊計數器 (counter) 來進行統計，另外還能同時分析運行中的核心程式碼，從而更全面了解應用程式中的效能瓶頸。
+[Perf](https://perf.wiki.kernel.org/index.php/Main_Page) 全名是 Performance Event，是在 Linux 2.6.31 以後內建的系統效能分析工具，它隨著核心一併釋出。藉由 perf，應用程式可以利用 PMU (Performance Monitoring Unit), tracepoint 和核心內部的特殊計數器 (counter) 來進行統計，另外還能同時分析運行中的核心程式碼，從而更全面瞭解應用程式中的效能瓶頸。
 
 相較於 [OProfile](https://en.wikipedia.org/wiki/OProfile) 和 [GProf](https://sourceware.org/binutils/docs/gprof/) ，perf 的優勢在於與 Linux Kernel 緊密結合，並可受益於最先納入核心的新特徵。perf 基本原理是對目標進行取樣，紀錄特定的條件下所偵測的事件是否發生以及發生的次數。例如根據 tick 中斷進行取樣，即在 tick 中斷內觸發取樣點，在取樣點裡判斷行程 (process) 當時的 context。假如一個行程 90% 的時間都花費在函式 foo() 上，那麼 90% 的取樣點都應該落在函式 foo() 的上下文中。
 
-Perf 可取樣的事件非常多，可以分析 Hardware event，如 cpu-cycles、instructions 、cache-misses、branch-misses …等等。可以分析 Software event，如 page-faults、context-switches …等等，另外一種就是 Tracepoint event。知道了 cpu-cycles、instructions 我們可以了解 Instruction per cycle 是多少，進而判斷程式碼有沒有好好利用 CPU，cache-misses 可以曉得是否有善用 Locality of reference ，branch-misses 多了是否導致嚴重的 pipeline hazard？另外 Perf 還可以對函式進行採樣，了解效能卡在哪邊。
+Perf 可取樣的事件非常多，可以分析 Hardware event，如 cpu-cycles、instructions 、cache-misses、branch-misses …等等。可以分析 Software event，如 page-faults、context-switches …等等，另外一種就是 Tracepoint event。知道了 cpu-cycles、instructions 我們可以瞭解 Instruction per cycle 是多少，進而判斷程式碼有沒有好好利用 CPU，cache-misses 可以曉得是否有善用 Locality of reference ，branch-misses 多了是否導致嚴重的 pipeline hazard？另外 Perf 還可以對函式進行採樣，瞭解效能卡在哪邊。
 
 ## 安裝
 
@@ -127,7 +127,7 @@ perf top -p $pid
 
 [Perf – Linux下的系統性能調優工具](https://www.ibm.com/developerworks/cn/linux/l-cn-perf1/)
 
-[簡繁體中文詞彙對照：科技纇](https://zh.wikipedia.org/zh-tw/Wikipedia:繁简分歧词表#.E7.A7.91.E6.8A.80) (本課程斟酌修改詞彙，`==>` 開頭表示補充)
+[簡繁體中文詞彙對照：科技纇](https://zh.wikipedia.org/zh-tw/Wikipedia:繁簡分歧詞表#.E7.A7.91.E6.8A.80) (本課程斟酌修改詞彙，`==>` 開頭表示補充)
 
 - **背景知識**
 
@@ -239,7 +239,7 @@ $ perf top -e cache-misses -c 5000
 
 ### perf stat
 
-相較於 top，使用 perf stat 往往是你已經有個要優化的目標，對這個目標進行特定或一系列的 event 檢查，進而了解該程序的效能概況。（event 沒有指定的話，預設會有十種常用 event。） 我們來對以下程式使用 perf stat 工具 分析 cache miss 情形
+相較於 top，使用 perf stat 往往是你已經有個要優化的目標，對這個目標進行特定或一系列的 event 檢查，進而瞭解該程序的效能概況。（event 沒有指定的話，預設會有十種常用 event。） 我們來對以下程式使用 perf stat 工具 分析 cache miss 情形
 
 ```c
 static char array[10000][10000];
@@ -360,4 +360,4 @@ Linux中可以通過工具vmstat, dstat, pidstat來觀察CS的切換情況。vms
 
 
 
-最常見的，在一些[排程](https://zh.wikipedia.org/wiki/排程)（scheduling）[演算法](https://zh.wikipedia.org/wiki/算法)內，其中行程有時候需要暫時離開CPU，讓另一個行程進來CPU運作。在先佔式多工系統中，每一個行程都將輪流執行不定長度的時間，這些時間段落稱為[時間片](https://zh.wikipedia.org/wiki/时间片)。如果行程並非自願讓出CPU(例如執行[I/O](https://zh.wikipedia.org/wiki/I/O)操作時，行程就需放棄CPU使用權)，當時限到時，系統將產生一個定時中斷，[作業系統](https://zh.wikipedia.org/wiki/操作系統)將排定由其它的行程來執行。此機制用以確保CPU不致被較依賴處理器[運算](https://zh.wikipedia.org/wiki/运算)的行程壟斷。若無定時中斷，除非行程自願讓出CPU，否則該行程將持續執行。對於擁有較多I/O[指令](https://zh.wikipedia.org/wiki/指令)的行程，往往執行不了多久，便需要讓出CPU；而較依賴處理器的行程相對而言I/O操作較少，反而能一直持續使用CPU，便形成了[壟斷](https://zh.wikipedia.org/wiki/独占)現象。
+最常見的，在一些[排程](https://zh.wikipedia.org/wiki/排程)（scheduling）[演算法](https://zh.wikipedia.org/wiki/算法)內，其中行程有時候需要暫時離開CPU，讓另一個行程進來CPU運作。在先佔式多工系統中，每一個行程都將輪流執行不定長度的時間，這些時間段落稱為[時間片](https://zh.wikipedia.org/wiki/時間片)。如果行程並非自願讓出CPU(例如執行[I/O](https://zh.wikipedia.org/wiki/I/O)操作時，行程就需放棄CPU使用權)，當時限到時，系統將產生一個定時中斷，[作業系統](https://zh.wikipedia.org/wiki/操作系統)將排定由其它的行程來執行。此機制用以確保CPU不致被較依賴處理器[運算](https://zh.wikipedia.org/wiki/運算)的行程壟斷。若無定時中斷，除非行程自願讓出CPU，否則該行程將持續執行。對於擁有較多I/O[指令](https://zh.wikipedia.org/wiki/指令)的行程，往往執行不了多久，便需要讓出CPU；而較依賴處理器的行程相對而言I/O操作較少，反而能一直持續使用CPU，便形成了[壟斷](https://zh.wikipedia.org/wiki/獨佔)現象。

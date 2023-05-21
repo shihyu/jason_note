@@ -1,16 +1,16 @@
-# 与你的代码交互
+# 與你的代碼交互
 
-## 通过 CMake 配置文件
+## 通過 CMake 配置文件
 
-CMake 允许你在代码中使用 `configure_file` 来访问 CMake 变量。该命令将一个文件（ 一般以 `.in` 结尾 ）的内容复制到另一个文件中，并替换其中它找到的所有 CMake 变量。如果你想要在你的输入文件中避免替换掉使用  `${}` 包含的内容，你可以使用 `@ONLY` 关键字。还有一个关键字 `COPY_ONLY` 可以用来作为 `file(COPY` 的替代字。
+CMake 允許你在代碼中使用 `configure_file` 來訪問 CMake 變量。該命令將一個文件（ 一般以 `.in` 結尾 ）的內容複製到另一個文件中，並替換其中它找到的所有 CMake 變量。如果你想要在你的輸入文件中避免替換掉使用  `${}` 包含的內容，你可以使用 `@ONLY` 關鍵字。還有一個關鍵字 `COPY_ONLY` 可以用來作為 `file(COPY` 的替代字。
 
 {% hint style='info' %}
 
-译者注：这里原文讲的有些太略，后续补充内容。
+譯者注：這裡原文講的有些太略，後續補充內容。
 
 {% endhint %}
 
-这个功能在 CMake 中使用的相当频繁，例如在下面的 `Version.h.in`  中：
+這個功能在 CMake 中使用的相當頻繁，例如在下面的 `Version.h.in`  中：
 
 #### Version.h.in
 
@@ -32,14 +32,14 @@ configure_file (
 )
 ```
 
-在构建你的项目时，你也应该包括二进制头文件路径。如果你想要在头文件中包含一些 `true/false` 类型的变量，CMake 对 C 语言有特有的 `#cmakedefine` 和 `#cmakedefine01` 替换符来完成上述需求。
+在構建你的項目時，你也應該包括二進制頭文件路徑。如果你想要在頭文件中包含一些 `true/false` 類型的變量，CMake 對 C 語言有特有的 `#cmakedefine` 和 `#cmakedefine01` 替換符來完成上述需求。
 
 
-你也可以使用（ 并且是常用 ）这个来生成 `.cmake` 文件，例如配置文件（ 见 [installing](https://cliutils.gitlab.io/modern-cmake/chapters/install/installing.html) ）。
+你也可以使用（ 並且是常用 ）這個來生成 `.cmake` 文件，例如配置文件（ 見 [installing](https://cliutils.gitlab.io/modern-cmake/chapters/install/installing.html) ）。
 
-## 读入文件
+## 讀入文件
 
-另外一个方向也是行得通的， 你也可以从源文件中读取一些东西（ 例如版本号 ）。例如，你有一个仅包含头文件的库，你想要其在无论有无 CMake 的情况下都可以使用，上述方式将是你处理版本的最优方案。可以像下面这么写：
+另外一個方向也是行得通的， 你也可以從源文件中讀取一些東西（ 例如版本號 ）。例如，你有一個僅包含頭文件的庫，你想要其在無論有無 CMake 的情況下都可以使用，上述方式將是你處理版本的最優方案。可以像下面這麼寫：
 
 
 ```cmake
@@ -58,4 +58,4 @@ string(REGEX REPLACE ${VERSION_REGEX} "\\1" VERSION_STRING "${VERSION_STRING}")
 project(My LANGUAGES CXX VERSION ${VERSION_STRING})
 ```
 
-如上所示， `file(STRINGS file_name variable_name REGEX regex)` 选择了与正则表达式相匹配的行，并且使用了相同的正则表达式来匹配出其中版本号的部分。
+如上所示， `file(STRINGS file_name variable_name REGEX regex)` 選擇了與正則表達式相匹配的行，並且使用了相同的正則表達式來匹配出其中版本號的部分。

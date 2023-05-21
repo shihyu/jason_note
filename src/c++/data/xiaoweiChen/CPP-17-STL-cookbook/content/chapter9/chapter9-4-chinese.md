@@ -1,14 +1,14 @@
-# 打造异常安全的共享锁——std::unique_lock和std::shared_lock
+# 打造異常安全的共享鎖——std::unique_lock和std::shared_lock
 
-由于对于线程的操作严重依赖于操作系统，所以STL提供与系统无关的接口是非常明智的，当然STL也会提供线程间的同步操作。这样就不仅是能够启动和停止线程，使用STL库也能完成线程的同步操作。
+由於對於線程的操作嚴重依賴於操作系統，所以STL提供與系統無關的接口是非常明智的，當然STL也會提供線程間的同步操作。這樣就不僅是能夠啟動和停止線程，使用STL庫也能完成線程的同步操作。
 
-本节中，我们将了解到STL中的互斥量和RAII锁。我们使用这些工具对线程进行同步时，也会了解STL中更多同步辅助的方式。
+本節中，我們將瞭解到STL中的互斥量和RAII鎖。我們使用這些工具對線程進行同步時，也會了解STL中更多同步輔助的方式。
 
 ## How to do it...
 
-我们将使用`std::shared_mutex`在独占(exclusive)和共享(shared)模式下来完成一段程序，并且也会了解到这两种方式意味着什么。另外，我们将不会对手动的对程序进行上锁和解锁的操作，这些操作都交给RAII辅助函数来完成：
+我們將使用`std::shared_mutex`在獨佔(exclusive)和共享(shared)模式下來完成一段程序，並且也會了解到這兩種方式意味著什麼。另外，我們將不會對手動的對程序進行上鎖和解鎖的操作，這些操作都交給RAII輔助函數來完成：
 
-1. 包含必要的头文件，并声明所使用的命名空间：
+1. 包含必要的頭文件，並聲明所使用的命名空間：
 
    ```c++
    #include <iostream>
@@ -20,20 +20,20 @@
    using namespace chrono_literals;
    ```
 
-2. 整个程序都会围绕共享互斥量展开，为了简单，我们定义了一个全局实例：
+2. 整個程序都會圍繞共享互斥量展開，為了簡單，我們定義了一個全局實例：
 
    ```c++
    shared_mutex shared_mut;
    ```
 
-3. 接下来，我们将会使用`std::shared_lock`和`std::unique_lock`这两个RAII辅助者。为了让其类型看起来没那么复杂，这里进行别名操作：
+3. 接下來，我們將會使用`std::shared_lock`和`std::unique_lock`這兩個RAII輔助者。為了讓其類型看起來沒那麼複雜，這裡進行別名操作：
 
    ```c++
    using shrd_lck = shared_lock<shared_mutex>;
    using uniq_lck = unique_lock<shared_mutex>;
    ```
 
-4. 开始写主函数之前，先使用互斥锁的独占模式来实现两个辅助函数。下面的函数中，我们将使用`unique_lock`实例来作为共享互斥锁。其构造函数的第二个参数`defer_lock`会告诉对象让锁处于解锁的状态。否则，构造函数会尝试对互斥量上锁阻塞程序，直至成功为止。然后，会对`exclusive_lock`的成员函数`try_lock`进行调用。该函数会立即返回，并且返回相应的布尔值，布尔值表示互斥量是否已经上锁，或是在其他地方已经锁住：
+4. 開始寫主函數之前，先使用互斥鎖的獨佔模式來實現兩個輔助函數。下面的函數中，我們將使用`unique_lock`實例來作為共享互斥鎖。其構造函數的第二個參數`defer_lock`會告訴對象讓鎖處於解鎖的狀態。否則，構造函數會嘗試對互斥量上鎖阻塞程序，直至成功為止。然後，會對`exclusive_lock`的成員函數`try_lock`進行調用。該函數會立即返回，並且返回相應的布爾值，布爾值表示互斥量是否已經上鎖，或是在其他地方已經鎖住：
 
    ```c++
    static void print_exclusive()
@@ -48,7 +48,7 @@
    }
    ```
 
-5. 另一个函数也差不多。其会将程序阻塞，直至其获取相应的锁。然后，会使用抛出异常的方式来模拟发生错误的情况(只会返回一个整数，而非一个非常复杂的异常对象)。虽然，其会立即退出，并且在上下文中我们获取了一个锁住的互斥量，但是这个互斥量也可以被释放。这是因为`unique_lock`的析构函数在任何情况下都会将对应的锁进行释放：
+5. 另一個函數也差不多。其會將程序阻塞，直至其獲取相應的鎖。然後，會使用拋出異常的方式來模擬發生錯誤的情況(只會返回一個整數，而非一個非常複雜的異常對象)。雖然，其會立即退出，並且在上下文中我們獲取了一個鎖住的互斥量，但是這個互斥量也可以被釋放。這是因為`unique_lock`的析構函數在任何情況下都會將對應的鎖進行釋放：
 
    ```c++
    static void exclusive_throw()
@@ -58,7 +58,7 @@
    }
    ```
 
-6. 现在，让我们来写主函数。首先，先开一个新的代码段，并且实例化一个`shared_lock`实例。其构造函数将会立即对共享模式下的互斥量进行上锁。我们将会在下一步了解到这一动作的意义：
+6. 現在，讓我們來寫主函數。首先，先開一個新的代碼段，並且實例化一個`shared_lock`實例。其構造函數將會立即對共享模式下的互斥量進行上鎖。我們將會在下一步瞭解到這一動作的意義：
 
    ```c++
    int main()
@@ -69,7 +69,7 @@
            cout << "shared lock once.\n";
    ```
 
-7. 现在我们开启另一个代码段，并使用同一个互斥量实例化第二个`shared_lock`实例。现在具有两个`shared_lock`实例，并且都具有同一个互斥量的共享锁。实际上，可以使用同一个互斥量实例化很多的`shared_lock`实例。然后，调用`print_exclusive`，其会尝试使用互斥量的独占模式对互斥量进行上锁。这样的调用当然不会成功，因为互斥量已经在共享模式下锁住了：
+7. 現在我們開啟另一個代碼段，並使用同一個互斥量實例化第二個`shared_lock`實例。現在具有兩個`shared_lock`實例，並且都具有同一個互斥量的共享鎖。實際上，可以使用同一個互斥量實例化很多的`shared_lock`實例。然後，調用`print_exclusive`，其會嘗試使用互斥量的獨佔模式對互斥量進行上鎖。這樣的調用當然不會成功，因為互斥量已經在共享模式下鎖住了：
 
    ```c++
            {
@@ -81,7 +81,7 @@
            }
    ```
 
-8. 离开这个代码段后，`shared_locks12`的析构函数将会释放互斥量的共享锁。`print_exclusive`函数还是失败，这是因为互斥量依旧处于共享锁模式：
+8. 離開這個代碼段後，`shared_locks12`的析構函數將會釋放互斥量的共享鎖。`print_exclusive`函數還是失敗，這是因為互斥量依舊處於共享鎖模式：
 
    ```c++
            cout << "shared lock once again.\n";
@@ -91,7 +91,7 @@
        cout << "lock is free.\n";
    ```
 
-9. 离开这个代码段时，所有`shared_lock`对象就都被销毁了，并且互斥量再次处于解锁状态，现在我们可以在独占模式下对互斥量进行上锁了。调用`exclusive_throw`，然后调用`print_exclusive`。不过因为`unique_lock`是一个RAII对象，所以是异常安全的，也就是无论`exclusive_throw`返回了什么，互斥量最后都会再次解锁。这样即便是互斥量处于锁定状态，`print_exclusive` 也不会被错误的状态所阻塞：
+9. 離開這個代碼段時，所有`shared_lock`對象就都被銷燬了，並且互斥量再次處於解鎖狀態，現在我們可以在獨佔模式下對互斥量進行上鎖了。調用`exclusive_throw`，然後調用`print_exclusive`。不過因為`unique_lock`是一個RAII對象，所以是異常安全的，也就是無論`exclusive_throw`返回了什麼，互斥量最後都會再次解鎖。這樣即便是互斥量處於鎖定狀態，`print_exclusive` 也不會被錯誤的狀態所阻塞：
 
    ```c++
        try {
@@ -104,7 +104,7 @@
    }
    ```
 
-10. 编译并运行这段代码则会得到如下的输出。前两行展示的是两个共享锁实例。然后，`print_exclusive`函数无法使用独占模式对互斥量上锁。在离开内部代码段后，第二个共享锁解锁，`print_exclusive`函数依旧会失败。在离开这个代码段后，将会对互斥量所持有的锁进行释放，这样`exclusive_throw`和`print_exclusive`最终才能对互斥量进行上锁：
+10. 編譯並運行這段代碼則會得到如下的輸出。前兩行展示的是兩個共享鎖實例。然後，`print_exclusive`函數無法使用獨佔模式對互斥量上鎖。在離開內部代碼段後，第二個共享鎖解鎖，`print_exclusive`函數依舊會失敗。在離開這個代碼段後，將會對互斥量所持有的鎖進行釋放，這樣`exclusive_throw`和`print_exclusive`最終才能對互斥量進行上鎖：
 
    ```c++
    $ ./shared_lock
@@ -120,30 +120,30 @@
 
 ## How it works...
 
-查阅C++文档时，我们会对不同的互斥量和RAII辅助锁有些困惑。在我们回看这节的代码之前，让我们来对STL的这两个部分进行总结。
+查閱C++文檔時，我們會對不同的互斥量和RAII輔助鎖有些困惑。在我們回看這節的代碼之前，讓我們來對STL的這兩個部分進行總結。
 
 **互斥量**
 
-其为**mut**ual **ex**clusion的缩写。并发时不同的线程对于相关的共享数据同时进行修改时，可能会造成结果错误，我们在这里就可以使用互斥量对象来避免这种情况的发生，STL提供了不同特性的互斥量。不过，这些互斥量的共同点就是具有`lock`和`unlock`两个成员函数。
+其為**mut**ual **ex**clusion的縮寫。併發時不同的線程對於相關的共享數據同時進行修改時，可能會造成結果錯誤，我們在這裡就可以使用互斥量對象來避免這種情況的發生，STL提供了不同特性的互斥量。不過，這些互斥量的共同點就是具有`lock`和`unlock`兩個成員函數。
 
-一个互斥量在解锁状态下时，当有线程对其使用`lock()`时，这个线程就获取了互斥量，并对互斥量进行上锁。这样，但其他线程要对这互斥量进行上锁时，就会处于阻塞状态，知道第一个线程对该互斥量进行释放。`std::mutex`就可以做到。
+一個互斥量在解鎖狀態下時，當有線程對其使用`lock()`時，這個線程就獲取了互斥量，並對互斥量進行上鎖。這樣，但其他線程要對這互斥量進行上鎖時，就會處於阻塞狀態，知道第一個線程對該互斥量進行釋放。`std::mutex`就可以做到。
 
-这里将STL一些不同的互斥量进行对比：
+這裡將STL一些不同的互斥量進行對比：
 
-| 类型名                                                       | 描述                                                         |
+| 類型名                                                       | 描述                                                         |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| [mutex](http://zh.cppreference.com/w/cpp/thread/mutex)       | 具有`lock`和`unlock`成员函数的标准互斥量。并提供非阻塞函数`try_lock`成员函数。 |
-| [timed_mutex](http://zh.cppreference.com/w/cpp/thread/timed_mutex) | 与互斥量相同，并提供`try_lock_for`和`try_lock_until`成员函数，其能在某个时间段内对程序进行阻塞。 |
-| [recursive_mutex](http://zh.cppreference.com/w/cpp/thread/recursive_mutex) | 与互斥量相同，不过当一个线程对实例进行上锁，其可以对同一个互斥量对象多次调用`lock`而不产生阻塞。持有线程可以多次调用`unlock`，不过需要和`lock`调用的次数匹配时，线程才不再拥有这个互斥量。 |
-| [recursive_timed_mutex](http://zh.cppreference.com/w/cpp/thread/recursive_timed_mutex) | 提供与`timed_mutex`和`recursive_mutex`的特性。               |
-| [shared_mutex](http://zh.cppreference.com/w/cpp/thread/shared_mutex) | 这个互斥量在这方面比较特殊，它可以被锁定为独占模式或共享模式。独占模式时，其与标准互斥量的行为一样。共享模式时，其他线程也可能在共享模式下对其进行上锁。其会在最后一个处于共享模式下的锁拥有者进行解锁时，整个互斥量才会解锁。其行为有些类似于`shared_ptr`，只不过互斥量不对内存进行管理，而是对锁的所有权进行管理。 |
-| [shared_timed_mutex](http://zh.cppreference.com/w/cpp/thread/shared_timed_mutex) | 同时具有`shared_mutex`和`timed_mutex`两种互斥量独占模式和共享模式的特性。 |
+| [mutex](http://zh.cppreference.com/w/cpp/thread/mutex)       | 具有`lock`和`unlock`成員函數的標準互斥量。並提供非阻塞函數`try_lock`成員函數。 |
+| [timed_mutex](http://zh.cppreference.com/w/cpp/thread/timed_mutex) | 與互斥量相同，並提供`try_lock_for`和`try_lock_until`成員函數，其能在某個時間段內對程序進行阻塞。 |
+| [recursive_mutex](http://zh.cppreference.com/w/cpp/thread/recursive_mutex) | 與互斥量相同，不過當一個線程對實例進行上鎖，其可以對同一個互斥量對象多次調用`lock`而不產生阻塞。持有線程可以多次調用`unlock`，不過需要和`lock`調用的次數匹配時，線程才不再擁有這個互斥量。 |
+| [recursive_timed_mutex](http://zh.cppreference.com/w/cpp/thread/recursive_timed_mutex) | 提供與`timed_mutex`和`recursive_mutex`的特性。               |
+| [shared_mutex](http://zh.cppreference.com/w/cpp/thread/shared_mutex) | 這個互斥量在這方面比較特殊，它可以被鎖定為獨佔模式或共享模式。獨佔模式時，其與標準互斥量的行為一樣。共享模式時，其他線程也可能在共享模式下對其進行上鎖。其會在最後一個處於共享模式下的鎖擁有者進行解鎖時，整個互斥量才會解鎖。其行為有些類似於`shared_ptr`，只不過互斥量不對內存進行管理，而是對鎖的所有權進行管理。 |
+| [shared_timed_mutex](http://zh.cppreference.com/w/cpp/thread/shared_timed_mutex) | 同時具有`shared_mutex`和`timed_mutex`兩種互斥量獨佔模式和共享模式的特性。 |
 
-**锁**
+**鎖**
 
-线程对互斥量上锁之后，很多事情都变的非常简单，我们只需要上锁、访问、解锁三步就能完成我们想要做的工作。不过对于有些比较健忘的开发者来说，在上锁之后，很容易忘记对其进行解锁，或是互斥量在上锁状态下抛出一个异常，如果要对这个异常进行处理，那么代码就会变得很难看。最优的方式就是程序能够自动来处理这种事情。这种问题很类似与内存泄漏，开发者在分配内存之后，忘记使用`delete`操作进行内存释放。
+線程對互斥量上鎖之後，很多事情都變的非常簡單，我們只需要上鎖、訪問、解鎖三步就能完成我們想要做的工作。不過對於有些比較健忘的開發者來說，在上鎖之後，很容易忘記對其進行解鎖，或是互斥量在上鎖狀態下拋出一個異常，如果要對這個異常進行處理，那麼代碼就會變得很難看。最優的方式就是程序能夠自動來處理這種事情。這種問題很類似與內存洩漏，開發者在分配內存之後，忘記使用`delete`操作進行內存釋放。
 
-内存管理部分，我们有`unique_ptr`，`shared_ptr`和`weak_ptr`。这些辅助类可以很完美帮我们避免内存泄漏。互斥量也有类似的帮手，最简单的一个就是`std::lock_guard`。使用方式如下：
+內存管理部分，我們有`unique_ptr`，`shared_ptr`和`weak_ptr`。這些輔助類可以很完美幫我們避免內存洩漏。互斥量也有類似的幫手，最簡單的一個就是`std::lock_guard`。使用方式如下：
 
 ```c++
 void critical_function()
@@ -154,22 +154,22 @@ void critical_function()
 }
 ```
 
-`lock_guard`的构造函数能接受一个互斥量，其会立即自动调用`lock`，构造函数会直到获取互斥锁为止。当实例进行销毁时，其会对互斥量再次进行解锁。这样互斥量就很难陷入到`lock/unlock`循环错误中。
+`lock_guard`的構造函數能接受一個互斥量，其會立即自動調用`lock`，構造函數會直到獲取互斥鎖為止。當實例進行銷燬時，其會對互斥量再次進行解鎖。這樣互斥量就很難陷入到`lock/unlock`循環錯誤中。
 
-C++17 STL提供了如下的RAII辅助锁。其都能接受一个模板参数，其与互斥量的类型相同(在C++17中，编译器可以自动推断出相应的类型)：
+C++17 STL提供瞭如下的RAII輔助鎖。其都能接受一個模板參數，其與互斥量的類型相同(在C++17中，編譯器可以自動推斷出相應的類型)：
 
-| 名称                                                         | 描述                                                         |
+| 名稱                                                         | 描述                                                         |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| [lock_guard](http://zh.cppreference.com/w/cpp/thread/lock_guard) | 这个类没有什么其他的，构造函数中调用`lock`，析构函数中调用`unlock`。 |
-| [scoped_lock](http://zh.cppreference.com/w/cpp/thread/scoped_lock) | 与`lock_guard`类似，构造函数支持多个互斥量。析构函数中会以相反的顺序进行解锁。 |
-| [unique_lock](http://zh.cppreference.com/w/cpp/thread/unique_lock) | 使用独占模式对互斥量进行上锁。构造函数也能接受一个参数用于表示超时到的时间，并不会让锁一直处于上锁的状态。其也可能不对互斥量进行上锁，或是假设互斥量已经锁定，或是尝试对互斥量进行上锁。另外，函数可以在`unique_lock`锁的声明周期中，对互斥量进行上锁或解锁。 |
-| [shared_lock](http://zh.cppreference.com/w/cpp/thread/shared_lock) | 与`unique_lock`类似，不过所有操作都是在互斥量的共享模式下进行操作。 |
+| [lock_guard](http://zh.cppreference.com/w/cpp/thread/lock_guard) | 這個類沒有什麼其他的，構造函數中調用`lock`，析構函數中調用`unlock`。 |
+| [scoped_lock](http://zh.cppreference.com/w/cpp/thread/scoped_lock) | 與`lock_guard`類似，構造函數支持多個互斥量。析構函數中會以相反的順序進行解鎖。 |
+| [unique_lock](http://zh.cppreference.com/w/cpp/thread/unique_lock) | 使用獨佔模式對互斥量進行上鎖。構造函數也能接受一個參數用於表示超時到的時間，並不會讓鎖一直處於上鎖的狀態。其也可能不對互斥量進行上鎖，或是假設互斥量已經鎖定，或是嘗試對互斥量進行上鎖。另外，函數可以在`unique_lock`鎖的聲明週期中，對互斥量進行上鎖或解鎖。 |
+| [shared_lock](http://zh.cppreference.com/w/cpp/thread/shared_lock) | 與`unique_lock`類似，不過所有操作都是在互斥量的共享模式下進行操作。 |
 
-`lock_guard`和`scoped_lock`只拥有构造和析构函数，`unique_lock`和`shared_lock`就比较复杂了，但也更为通用。我们将在本章的后续章节中了解到，这些类型如何用于更加复杂的情况。
+`lock_guard`和`scoped_lock`只擁有構造和析構函數，`unique_lock`和`shared_lock`就比較複雜了，但也更為通用。我們將在本章的後續章節中瞭解到，這些類型如何用於更加複雜的情況。
 
-现在我们来回看一下本节的代码。虽然，只在单线程的上下文中运行程序，但是我们可以了解到如何对辅助锁进行使用。`shrd_lck`类型为`shared_lock<shared_mutex>`的缩写，并且其允许我们在共享模式下对一个实例多次上锁。当`sl1`和`sl2`存在的情况下，`print_exclusive`无法使用独占模式对互斥量进行上锁。
+現在我們來回看一下本節的代碼。雖然，只在單線程的上下文中運行程序，但是我們可以瞭解到如何對輔助鎖進行使用。`shrd_lck`類型為`shared_lock<shared_mutex>`的縮寫，並且其允許我們在共享模式下對一個實例多次上鎖。當`sl1`和`sl2`存在的情況下，`print_exclusive`無法使用獨佔模式對互斥量進行上鎖。
 
-现在来看看处于独占模式的上锁函数：
+現在來看看處於獨佔模式的上鎖函數：
 
 ```c++
 int main()
@@ -193,9 +193,9 @@ int main()
 }
 ```
 
-`exclusive_throw`的返回也比较重要，即便是抛出异常退出，`exclusive_throw`函数依旧会让互斥量再度锁上。
+`exclusive_throw`的返回也比較重要，即便是拋出異常退出，`exclusive_throw`函數依舊會讓互斥量再度鎖上。
 
-因为`print_exclusive`使用了一个奇怪的构造函数，我们就再来看一下这个函数：
+因為`print_exclusive`使用了一個奇怪的構造函數，我們就再來看一下這個函數：
 
 ```c++
 void print_exclusive()
@@ -208,4 +208,4 @@ void print_exclusive()
 }	
 ```
 
-这里我们不仅提供了`shared_mut`，还有`defer_lock`作为`unique_lock`构造函数的参数。`defer_lock`是一个空的全局对象，其不会对互斥量立即上锁，所以我们可以通过这个参数对`unique_lock`不同的构造函数进行选择。这样做之后，我们可以调用`l.try_lock()`，其会告诉我们有没有上锁。在互斥量上锁的情况下，就可以做些别的事情了。如果的确有机会获取锁，依旧需要析构函数对互斥量进行清理。
+這裡我們不僅提供了`shared_mut`，還有`defer_lock`作為`unique_lock`構造函數的參數。`defer_lock`是一個空的全局對象，其不會對互斥量立即上鎖，所以我們可以通過這個參數對`unique_lock`不同的構造函數進行選擇。這樣做之後，我們可以調用`l.try_lock()`，其會告訴我們有沒有上鎖。在互斥量上鎖的情況下，就可以做些別的事情了。如果的確有機會獲取鎖，依舊需要析構函數對互斥量進行清理。

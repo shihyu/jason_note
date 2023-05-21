@@ -1,8 +1,8 @@
-# 备忘录模式
+# 備忘錄模式
 
-记录对象状态
+記錄對象狀態
 
-Undo撤销 
-Redo恢复
-History 历史
+Undo撤銷 
+Redo恢復
+History 歷史
 Snapshot快照

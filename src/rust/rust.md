@@ -98,7 +98,7 @@ rustup self uninstall
 - [RustPrimer繁體](https://shihyu.github.io/RustPrimerBook/)
 - [Rust學習筆記](https://skyao.io/learning-rust/)
 - [通過大量的鏈表學習Rust](https://weathfold.gitbooks.io/rust-too-many-lists-zhcn/content/)
-- [Rust入門祕籍](https://shihyu.github.io/rust_hacks/)
+- [Rust入門秘籍](https://shihyu.github.io/rust_hacks/)
 - [Rust 新手村 系列](https://ithelp.ithome.com.tw/users/20129675/ironman/4260?page=1)
 - [30 天深入淺出 Rust 系列](https://ithelp.ithome.com.tw/users/20111802/ironman/1742)
 - [30 天快快樂樂學 Rust 系列](https://ithelp.ithome.com.tw/users/20120293/ironman/5180)

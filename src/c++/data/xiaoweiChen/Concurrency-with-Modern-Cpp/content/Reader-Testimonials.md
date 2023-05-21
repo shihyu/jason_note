@@ -1,12 +1,12 @@
-## 读者推荐
+## 讀者推薦
 
-“《Concurrency with Modern C++》是C++并发编程的指南。本书从C++内存模型开始，有很多经典案例的研究，大量的多线程技巧。将使您更了解并发的特性，甚至满足您的好奇心!”
+“《Concurrency with Modern C++》是C++併發編程的指南。本書從C++內存模型開始，有很多經典案例的研究，大量的多線程技巧。將使您更瞭解併發的特性，甚至滿足您的好奇心!”
 
-<p align="right"> — Bart Vandewoestyne：Esterline高级研发工程师</p>
-”Rainer Grimm的《Concurrency with Modern C++》是一本好书，涵盖了并发性的理论和实践，以及C++20标准的(可能)变化。并提供了关于并发实践的讨论，提供了示例代码，以加强每个主题的细节。内容丰富，值得一读!”
+<p align="right"> — Bart Vandewoestyne：Esterline高級研發工程師</p>
+”Rainer Grimm的《Concurrency with Modern C++》是一本好書，涵蓋了併發性的理論和實踐，以及C++20標準的(可能)變化。並提供了關於併發實踐的討論，提供了示例代碼，以加強每個主題的細節。內容豐富，值得一讀!”
 
-<p align="right"> — Ian Reeve：戴尔软件存储高级工程师。</p>
-”阅读《Concurrency with Modern C++》是成为多线程专家最简单的方法。这本书既有简单的内容，也有进阶的主题。它包含了研发人员所需的一切：大量的理论内容和代码示例，以及出色的解释，还有易错点介绍。我很喜欢它，并强烈推荐所有人阅读。”
+<p align="right"> — Ian Reeve：戴爾軟件存儲高級工程師。</p>
+”閱讀《Concurrency with Modern C++》是成為多線程專家最簡單的方法。這本書既有簡單的內容，也有進階的主題。它包含了研發人員所需的一切：大量的理論內容和代碼示例，以及出色的解釋，還有易錯點介紹。我很喜歡它，並強烈推薦所有人閱讀。”
 
-<p align="right"> — Robert Badea：技术带头人</p>
+<p align="right"> — Robert Badea：技術帶頭人</p>
 ## 

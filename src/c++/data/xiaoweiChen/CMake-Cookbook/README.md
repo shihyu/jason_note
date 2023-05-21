@@ -1,31 +1,31 @@
 CMake Cookbook
 =========================
 - 作者：Radovan Bast & Roberto Di Remigio
-- 译者：陈晓伟
-- 首次出版于2018年9月
+- 譯者：陳曉偉
+- 首次出版於2018年9月
 - ISBN 978-1-78847-071-1
 
-## 本书概述
+## 本書概述
 
-使用CMake软件对项目模块，进行构建、测试和打包。
+使用CMake軟件對項目模塊，進行構建、測試和打包。
 
-## 本书作者
+## 本書作者
 
-**Radovan Bast**就职于特罗姆森的挪威北极大学(UiT, **U**niversity of Norway **i**n **T**roms)的高性能计算小组工作，对项目的代码精简进行指导。他拥有化学博士学位，并作为开发人员参与了许多量子化学项目。喜欢新的编程语言和技术，并向学生和研究人员传授编程经验。在2008年与CMake结缘，并移植了大量源码，并且将一些源码迁移到CMake社区。
+**Radovan Bast**就職於特羅姆森的挪威北極大學(UiT, **U**niversity of Norway **i**n **T**roms)的高性能計算小組工作，對項目的代碼精簡進行指導。他擁有化學博士學位，並作為開發人員參與了許多量子化學項目。喜歡新的編程語言和技術，並向學生和研究人員傳授編程經驗。在2008年與CMake結緣，並移植了大量源碼，並且將一些源碼遷移到CMake社區。
 
-**Roberto Di Remigio**是挪威大学(特罗姆森)和美国弗吉尼亚理工学院的化学博士后研究员，目前在研究随机方法和求解模型。是[PCMSolver](https://github.com/PCMSolver/pcmsolver)和[Psi4](https://github.com/psi4)开源量子化学项目的开发人员。为量子化学的发展做出了贡献，其参与的项目有：Dirac、MRCPP、Dalton、LSDalton、Xcun和ReSpect。经常使用C++和Fortran编码。
+**Roberto Di Remigio**是挪威大學(特羅姆森)和美國弗吉尼亞理工學院的化學博士後研究員，目前在研究隨機方法和求解模型。是[PCMSolver](https://github.com/PCMSolver/pcmsolver)和[Psi4](https://github.com/psi4)開源量子化學項目的開發人員。為量子化學的發展做出了貢獻，其參與的項目有：Dirac、MRCPP、Dalton、LSDalton、Xcun和ReSpect。經常使用C++和Fortran編碼。
 
-*我们要感谢本书评审Eric Noulard和Eric Noulard的宝贵意见和建议。特别是Eric的反馈和建议，明显提高了本书的质量。我们还感谢LoriA.Burns对第8章到第11章的评论和建议。特别感谢特罗姆森公共图书馆为写作和思考提供了一个良好环境。我们非常感谢Travis CI、GmbH、Appveyor Systems公司和Circle Internet Services公司提供的测试设备和支持——正是由于他们的支持，我们才有信心在主流操作系统中完成本书的示例。*
+*我們要感謝本書評審Eric Noulard和Eric Noulard的寶貴意見和建議。特別是Eric的反饋和建議，明顯提高了本書的質量。我們還感謝LoriA.Burns對第8章到第11章的評論和建議。特別感謝特羅姆森公共圖書館為寫作和思考提供了一個良好環境。我們非常感謝Travis CI、GmbH、Appveyor Systems公司和Circle Internet Services公司提供的測試設備和支持——正是由於他們的支持，我們才有信心在主流操作系統中完成本書的示例。*
 
-## 本书评审
+## 本書評審
 
-**Eric Noulard**博士，具有法国恩塞伊特大学的工程学学位，法国乌夫斯克大学的计算机科学博士学位。20多年来，使用多种语言编写源码。从2006年开始使用CMake，这些年来也一直是CMake的积极贡献者。其职业生涯中，曾为私人公司和政府机构工作。现在就职于Antiot，开发和营销高端信息检索技术和解决方案。
+**Eric Noulard**博士，具有法國恩塞伊特大學的工程學學位，法國烏夫斯克大學的計算機科學博士學位。20多年來，使用多種語言編寫源碼。從2006年開始使用CMake，這些年來也一直是CMake的積極貢獻者。其職業生涯中，曾為私人公司和政府機構工作。現在就職於Antiot，開發和營銷高端信息檢索技術和解決方案。
 
-**Eric Noulard**来自以色列，是一名软件开发人员和作家。从2000年起就为置身于各种开源和开放文化项目。除此之外，还发起过游戏解决方案，比如Pysol FC系列纸牌游戏，采用了*财富*模式，解决了290多个[欧拉问题](https://projecteuler.net/index.php?section=view)。在平时，会写了一些故事、随笔和格言之类的文章。
+**Eric Noulard**來自以色列，是一名軟件開發人員和作家。從2000年起就為置身於各種開源和開放文化項目。除此之外，還發起過遊戲解決方案，比如Pysol FC系列紙牌遊戲，採用了*財富*模式，解決了290多個[歐拉問題](https://projecteuler.net/index.php?section=view)。在平時，會寫了一些故事、隨筆和格言之類的文章。
 
-## 本书相关
+## 本書相關
 
-- github翻译地址：https://github.com/xiaoweiChen/CMake-Cookbook
-- 本书源码下载地址：https://github.com/dev-cafe/cmake-cookbook
-- 本书源码下载地址：https://github.com/PacktPublishing/CMake-Cookbook
+- github翻譯地址：https://github.com/xiaoweiChen/CMake-Cookbook
+- 本書源碼下載地址：https://github.com/dev-cafe/cmake-cookbook
+- 本書源碼下載地址：https://github.com/PacktPublishing/CMake-Cookbook
 

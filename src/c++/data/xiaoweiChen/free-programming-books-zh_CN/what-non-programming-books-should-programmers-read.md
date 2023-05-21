@@ -1,7 +1,7 @@
-在 stackoverflow 上有人提问 [程序员应该阅读的非编程类书籍有哪些？](http://stackoverflow.com/q/38210/343194) 本来只想整理编程类书籍，
-不过突然眼前一亮，发现了《The Art of War - Sun Tzu》回答者的推荐说明引用 Wikipedia 上的：
+在 stackoverflow 上有人提問 [程序員應該閱讀的非編程類書籍有哪些？](http://stackoverflow.com/q/38210/343194) 本來只想整理編程類書籍，
+不過突然眼前一亮，發現了《The Art of War - Sun Tzu》回答者的推薦說明引用 Wikipedia 上的：
 
-亚马逊提供免费的　Kindle　版读本：[孙子兵法](http://www.amazon.cn/gp/product/B00AA7KMKG/ref=as_li_ss_tl?ie=UTF8&camp=536&creative=3132&creativeASIN=B00AA7KMKG&linkCode=as2&tag=favbook-23)
+亞馬遜提供免費的　Kindle　版讀本：[孫子兵法](http://www.amazon.cn/gp/product/B00AA7KMKG/ref=as_li_ss_tl?ie=UTF8&camp=536&creative=3132&creativeASIN=B00AA7KMKG&linkCode=as2&tag=favbook-23)
 
 > Much of the text is about how to fight wars without actually having to do battle: 
 > it gives tips on how to outsmart one's opponent so that physical battle is not necessary. 
@@ -11,117 +11,117 @@
 > It's also filled with quotes you can impress your fellow programmers with... :)
 
 
-## 《哥德尔、艾舍尔、巴赫——集异璧之大成》Gödel, Escher, Bach: an Eternal Golden Braid, 
+## 《哥德爾、艾舍爾、巴赫——集異璧之大成》Gödel, Escher, Bach: an Eternal Golden Braid, 
 
-这本书通常被称为[《GEB》](http://www.amazon.cn/gp/product/B0049MPCAS/ref=as_li_ss_tl?ie=UTF8&camp=536&creative=3132&creativeASIN=B0049MPCAS&linkCode=as2&tag=favbook-23)，
-它绝对是一本神书，一本奇书，一本神奇的书。在豆瓣读书的科普类排名中稳居第一。我在博客中，和即将出版的书中，也一而再，再而三的提及此书。
+這本書通常被稱為[《GEB》](http://www.amazon.cn/gp/product/B0049MPCAS/ref=as_li_ss_tl?ie=UTF8&camp=536&creative=3132&creativeASIN=B0049MPCAS&linkCode=as2&tag=favbook-23)，
+它絕對是一本神書，一本奇書，一本神奇的書。在豆瓣讀書的科普類排名中穩居第一。我在博客中，和即將出版的書中，也一而再，再而三的提及此書。
 
-书有点儿厚，而且价格不菲，大概五六十吧。我也曾经不止一次的向朋友们推荐此书，并赠书此书。
+書有點兒厚，而且價格不菲，大概五六十吧。我也曾經不止一次的向朋友們推薦此書，並贈書此書。
 
-作者也乘中文版出版之际，为自己取了一个雅致的汉名──侯世达（Douglas Richard Hofstadter）。侯世达应该是 Hofstadter 的音译。
+作者也乘中文版出版之際，為自己取了一個雅緻的漢名──侯世達（Douglas Richard Hofstadter）。侯世達應該是 Hofstadter 的音譯。
 
-如果你喜爱理科，此书必读。如果你是文科，那就读读《银河系漫游指南》。
+如果你喜愛理科，此書必讀。如果你是文科，那就讀讀《銀河系漫遊指南》。
 
-## 《银河系漫游指南》The Hitchhiker's Guide to the Galaxy
+## 《銀河系漫遊指南》The Hitchhiker's Guide to the Galaxy
 
-亚马逊翻译为[《银河系搭车客指南》](http://www.amazon.cn/gp/product/B00590XCO2/ref=as_li_ss_tl?ie=UTF8&camp=536&creative=3132&creativeASIN=B00590XCO2&linkCode=as2&tag=favbook-23)，
-略带喜感。
+亞馬遜翻譯為[《銀河系搭車客指南》](http://www.amazon.cn/gp/product/B00590XCO2/ref=as_li_ss_tl?ie=UTF8&camp=536&creative=3132&creativeASIN=B00590XCO2&linkCode=as2&tag=favbook-23)，
+略帶喜感。
 
-突如其来的寂静笼罩了地球。
+突如其來的寂靜籠罩了地球。
 
-这事实上比噪音更加可怕。
+這事實上比噪音更加可怕。
 
-有一会儿，什么也没有发生。
+有一會兒，什麼也沒有發生。
 
-巨大的飞船一动不动地挂在空中，覆盖了地球上的每个国家。
+巨大的飛船一動不動地掛在空中，覆蓋了地球上的每個國家。
 
-在黯然退场之前，地球首先被改造成了最终极的声音重放器件，这是有史以来建造过的最伟大的播音系统。
+在黯然退場之前，地球首先被改造成了最終極的聲音重放器件，這是有史以來建造過的最偉大的播音系統。
 
-但伴之而来的不是演奏会，不是音乐，没有开场号曲，而仅仅是一条简短的信息。
+但伴之而來的不是演奏會，不是音樂，沒有開場號曲，而僅僅是一條簡短的信息。
 
-“地球人，请注意了。” 
-一个声音说，这声音堪称完美，仿佛来自四声道系统，完美得无懈可击，失真度低得能让勇敢的男人洒下眼泪。
+“地球人，請注意了。” 
+一個聲音說，這聲音堪稱完美，彷彿來自四聲道系統，完美得無懈可擊，失真度低得能讓勇敢的男人灑下眼淚。
 
-“这里是银河超空间规划委员会。诸位无疑已经知道，银河系边远地区的开发规划要求建造一条穿过贵恒星系的超空间快速通道，令人遗憾的是，贵行星属于计划中预定毁灭的星球之一。毁灭过程将在略少于贵地球时间两分钟后开始。谢谢合作。”
+“這裡是銀河超空間規劃委員會。諸位無疑已經知道，銀河系邊遠地區的開發規劃要求建造一條穿過貴恆星系的超空間快速通道，令人遺憾的是，貴行星屬於計劃中預定毀滅的星球之一。毀滅過程將在略少於貴地球時間兩分鐘後開始。謝謝合作。”
 
-## 《人性的弱点》How to Win Friends and Influence People
+## 《人性的弱點》How to Win Friends and Influence People
 
-[《人性的弱点 Kindle版》](http://www.amazon.cn/gp/product/B008F5WMEE/ref=as_li_ss_tl?ie=UTF8&camp=536&creative=3132&creativeASIN=B008F5WMEE&linkCode=as2&tag=favbook-23)只售 2.9 元。
+[《人性的弱點 Kindle版》](http://www.amazon.cn/gp/product/B008F5WMEE/ref=as_li_ss_tl?ie=UTF8&camp=536&creative=3132&creativeASIN=B008F5WMEE&linkCode=as2&tag=favbook-23)只售 2.9 元。
 
-[《人性的弱点》](http://www.amazon.cn/gp/product/B00119B1AM/ref=as_li_ss_tl?ie=UTF8&camp=536&creative=3132&creativeASIN=B00119B1AM&linkCode=as2&tag=favbook-23)的作者戴尔·卡耐基，美国“成人教育之父”。
-20世纪早期，美国经济陷入萧条，战争和贫困导致人们失去了对美好生活的愿望，而卡耐基独辟蹊径地开创了一套融演讲、推销、为人处世、智能开发于一体的教育方式，他运用社会学和心理学知识，对人性进行了深刻的探讨和分析。
-《人性的弱点》讲述的许多普通人通过奋斗获得成功的真实故事，激励了无数陷和迷茫和困境的人，帮助他们重新找到了自己的人生。
+[《人性的弱點》](http://www.amazon.cn/gp/product/B00119B1AM/ref=as_li_ss_tl?ie=UTF8&camp=536&creative=3132&creativeASIN=B00119B1AM&linkCode=as2&tag=favbook-23)的作者戴爾·卡耐基，美國“成人教育之父”。
+20世紀早期，美國經濟陷入蕭條，戰爭和貧困導致人們失去了對美好生活的願望，而卡耐基獨闢蹊徑地開創了一套融演講、推銷、為人處世、智能開發於一體的教育方式，他運用社會學和心理學知識，對人性進行了深刻的探討和分析。
+《人性的弱點》講述的許多普通人通過奮鬥獲得成功的真實故事，激勵了無數陷和迷茫和困境的人，幫助他們重新找到了自己的人生。
 
-接受卡耐基教育的有社会各界人士，其中不乏军政要员，甚至包括几位美国总结。
-千千万万的人从卡耐基的教育中获益匪浅。 
+接受卡耐基教育的有社會各界人士，其中不乏軍政要員，甚至包括幾位美國總結。
+千千萬萬的人從卡耐基的教育中獲益匪淺。 
 
-《人性的弱点》汇集了卡耐基的思想精华和最激动人心的内容，是作者最成功的励志经典，出版后立即获得了广大读者的欢迎，成为西方世界最持久的人文畅销书。
-无数读者通过阅读和实践书中介绍的各种方法，不仅走出困境，有的还成为世人仰慕的杰出人士。
-只要不断研读《人性的弱点全集》，相信你也可以发掘自己的无穷潜力，创造辉煌的人生。
+《人性的弱點》彙集了卡耐基的思想精華和最激動人心的內容，是作者最成功的勵志經典，出版後立即獲得了廣大讀者的歡迎，成為西方世界最持久的人文暢銷書。
+無數讀者通過閱讀和實踐書中介紹的各種方法，不僅走出困境，有的還成為世人仰慕的傑出人士。
+只要不斷研讀《人性的弱點全集》，相信你也可以發掘自己的無窮潛力，創造輝煌的人生。
 
-## 《别逗了,费曼先生!》Surely You're Joking, Mr. Feynman!
+## 《別逗了,費曼先生!》Surely You're Joking, Mr. Feynman!
 
-[《别逗了,费曼先生》](http://www.amazon.cn/gp/product/B009QVEA8M/ref=as_li_ss_tl?ie=UTF8&camp=536&creative=3132&creativeASIN=B009QVEA8M&linkCode=as2&tag=favbook-23)是一本很棒的读物：挥霍无忌、惊世骇俗，却仍然温馨，很有人情味儿。
+[《別逗了,費曼先生》](http://www.amazon.cn/gp/product/B009QVEA8M/ref=as_li_ss_tl?ie=UTF8&camp=536&creative=3132&creativeASIN=B009QVEA8M&linkCode=as2&tag=favbook-23)是一本很棒的讀物：揮霍無忌、驚世駭俗，卻仍然溫馨，很有人情味兒。
 
-R·P·费曼，他因盘子电动力学方面的研究荣获诺贝尔物理学奖。
-除了作为一个物理学家外，费曼在不同时期还曾是故事大王、艺术家、鼓手和密码破泽专家。
+R·P·費曼，他因盤子電動力學方面的研究榮獲諾貝爾物理學獎。
+除了作為一個物理學家外，費曼在不同時期還曾是故事大王、藝術家、鼓手和密碼破澤專家。
 
 
-> “费曼的一生，或可比作连锁反应。从一点儿临界质量的灰质开始，这个生命向四面八方炸开，产生出热和光。”
-> ——《时代》
+> “費曼的一生，或可比作連鎖反應。從一點兒臨界質量的灰質開始，這個生命向四面八方炸開，產生出熱和光。”
+> ——《時代》
 
-> “费曼以其才华和怪癖，在他的同事们中间，成了一个传奇人物——您在阅读本书的时候，不从头笑到尾，是很难的。”
-> ——《新闻周刊》
+> “費曼以其才華和怪癖，在他的同事們中間，成了一個傳奇人物——您在閱讀本書的時候，不從頭笑到尾，是很難的。”
+> ——《新聞週刊》
 
-> “眉飞色舞，肆意笑闹……费曼的语言，生动活泼，直率真朴一真正令人耳目一新。”
-> ——《芝加哥太阳报》
+> “眉飛色舞，肆意笑鬧……費曼的語言，生動活潑，直率真樸一真正令人耳目一新。”
+> ——《芝加哥太陽報》
 
-> “如果您以为物理学或物理学家中间没有什么乐子一那么来会会费曼吧——一个用一团原子变戏法的最令人捧腹的伙计。”
-> ——《联合日报》
+> “如果您以為物理學或物理學家中間沒有什麼樂子一那麼來會會費曼吧——一個用一團原子變戲法的最令人捧腹的夥計。”
+> ——《聯合日報》
 
-> “科学家都是枯燥无味之人，这样一种老生常谈，一本书就能打破，这本书就是。”
-> ——《底特律自由报》
+> “科學家都是枯燥無味之人，這樣一種老生常談，一本書就能打破，這本書就是。”
+> ——《底特律自由報》
 
-## 《尽管去做》Getting Things Done
+## 《儘管去做》Getting Things Done
 
-如果你增加听说过一个词——GTD，没错，就是这本书 Getting Things Done，还有一种译法是[《搞定1:无压工作的艺术》](http://www.amazon.cn/gp/product/B00368C0FG/ref=as_li_ss_tl?ie=UTF8&camp=536&creative=3132&creativeASIN=B00368C0FG&linkCode=as2&tag=favbook-23)也很信、达，至于雅嘛，呵呵。
+如果你增加聽說過一個詞——GTD，沒錯，就是這本書 Getting Things Done，還有一種譯法是[《搞定1:無壓工作的藝術》](http://www.amazon.cn/gp/product/B00368C0FG/ref=as_li_ss_tl?ie=UTF8&camp=536&creative=3132&creativeASIN=B00368C0FG&linkCode=as2&tag=favbook-23)也很信、達，至於雅嘛，呵呵。
 
-在今天这个信息量和工作量倍增的世界，一些老的工作方法已经失去了效用。
-每一个职场中人或多或少都有这样的体验：压力重重；太多事情都理不清头绪；似乎永远被各种任务和目标追赶着……
+在今天這個信息量和工作量倍增的世界，一些老的工作方法已經失去了效用。
+每一個職場中人或多或少都有這樣的體驗：壓力重重；太多事情都理不清頭緒；似乎永遠被各種任務和目標追趕著……
 
-时间管理大师戴维•艾伦将指导你走出规划和执行工作中的泥沼，通向高效、轻松的彼岸。
-要想让事情井井有条，关键便是——从容、放松。
+時間管理大師戴維•艾倫將指導你走出規劃和執行工作中的泥沼，通向高效、輕鬆的彼岸。
+要想讓事情井井有條，關鍵便是——從容、放鬆。
 
-## 《别让我思考》Don't Make Me Think
+## 《別讓我思考》Don't Make Me Think
 
-先推荐一篇知乎上的文章：[Chrome 浏览器的哪些设计符合「Don't make me think」原则？](http://www.zhihu.com/question/20564451)
+先推薦一篇知乎上的文章：[Chrome 瀏覽器的哪些設計符合「Don't make me think」原則？](http://www.zhihu.com/question/20564451)
 
-在豆瓣和亚马逊搜索了很久中文版，居然没找到，不得已求助 Google，原来被翻译成了[《点石成金:访客至上的网页设计秘笈》](http://www.amazon.cn/gp/product/B0011BTJV8/ref=as_li_ss_tl?ie=UTF8&camp=536&creative=3132&creativeASIN=B0011BTJV8&linkCode=as2&tag=favbook-23)。
+在豆瓣和亞馬遜搜索了很久中文版，居然沒找到，不得已求助 Google，原來被翻譯成了[《點石成金:訪客至上的網頁設計秘笈》](http://www.amazon.cn/gp/product/B0011BTJV8/ref=as_li_ss_tl?ie=UTF8&camp=536&creative=3132&creativeASIN=B0011BTJV8&linkCode=as2&tag=favbook-23)。
 
-如果你在进行网站设计，为网站编程，或者管理网站，那么一定要读一读此书。
+如果你在進行網站設計，為網站編程，或者管理網站，那麼一定要讀一讀此書。
 
-* 有些网站看起来很杂乱；
-* 有些网站能让你轻松地找到资料；
-* 有些网站让你犹如置身迷宫，
+* 有些網站看起來很雜亂；
+* 有些網站能讓你輕鬆地找到資料；
+* 有些網站讓你猶如置身迷宮，
 
-为什么网站的可用性会有如此大的反差？用户在访问网站时有怎样的心理？
-遵循什么样的原则来设计网站才能吸引访客？
-这本全球 Web 设计人员的必读经典会给出答案。
+為什麼網站的可用性會有如此大的反差？用戶在訪問網站時有怎樣的心理？
+遵循什麼樣的原則來設計網站才能吸引訪客？
+這本全球 Web 設計人員的必讀經典會給出答案。
 
-## 《禅与摩托车维修艺术》Zen and the Art of Motorcycle Maintenance
+## 《禪與摩托車維修藝術》Zen and the Art of Motorcycle Maintenance
 
-这是什么书？
+這是什麼書？
 
-[《禅与摩托车维修艺术》](http://www.amazon.cn/gp/product/B005O4PUFC/ref=as_li_ss_tl?ie=UTF8&camp=536&creative=3132&creativeASIN=B005O4PUFC&linkCode=as2&tag=favbook-23)：累积销量超过一千万册，美国大学“禅与现代美国文学”课程的必读参考书。
+[《禪與摩托車維修藝術》](http://www.amazon.cn/gp/product/B005O4PUFC/ref=as_li_ss_tl?ie=UTF8&camp=536&creative=3132&creativeASIN=B005O4PUFC&linkCode=as2&tag=favbook-23)：累積銷量超過一千萬冊，美國大學“禪與現代美國文學”課程的必讀參考書。
 
-70年代的梭罗——罗伯特•M. 波西格，《时代》周刊评选20世纪70年代十本最有影响力的书之一。
+70年代的梭羅——羅伯特•M. 波西格，《時代》週刊評選20世紀70年代十本最有影響力的書之一。
 
-《禅与摩托车维修艺术》主要内容简介：在一个炎热的夏天，父子两人和约翰夫妇骑摩托车从明尼苏达到加州，跨越美国大陆，旅行的过程与一个青年斐德洛研修科学技术与西方经典，寻求自我的解脱，以及探寻生命的意义的过程相互穿插。
+《禪與摩托車維修藝術》主要內容簡介：在一個炎熱的夏天，父子兩人和約翰夫婦騎摩托車從明尼蘇達到加州，跨越美國大陸，旅行的過程與一個青年斐德洛研修科學技術與西方經典，尋求自我的解脫，以及探尋生命的意義的過程相互穿插。
 
-一路上父亲以一场哲学肖陶扩的形式，将见到的自然景色，野外露营的经历，夜晚旅店的谈话，机车修护技术等等日常生活与西方从苏格拉底以来的理性哲学的深入浅出的阐述与评论相结合，进行了对形而上学传统的主客体二元论的反思，以及对科学与艺术，知识与价值，古典主义与浪漫主义，精神与物质，机械论与神秘主义，西方与东方等西方二分法划分下的事物间的关系的思考。
+一路上父親以一場哲學肖陶擴的形式，將見到的自然景色，野外露營的經歷，夜晚旅店的談話，機車修護技術等等日常生活與西方從蘇格拉底以來的理性哲學的深入淺出的闡述與評論相結合，進行了對形而上學傳統的主客體二元論的反思，以及對科學與藝術，知識與價值，古典主義與浪漫主義，精神與物質，機械論與神秘主義，西方與東方等西方二分法劃分下的事物間的關係的思考。
 
-并潜入自己的过去，探寻在现代文明下自己精神的分裂的起源，完成了一次自我心灵与人类文明 的探索。
+並潛入自己的過去，探尋在現代文明下自己精神的分裂的起源，完成了一次自我心靈與人類文明 的探索。
 
-## 《编码宝典》(Cryptonomicon)
+## 《編碼寶典》(Cryptonomicon)
 
-貌似没有中国版。
+貌似沒有中國版。

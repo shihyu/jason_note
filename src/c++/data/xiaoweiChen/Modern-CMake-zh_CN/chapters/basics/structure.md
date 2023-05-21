@@ -1,12 +1,12 @@
-# 如何组织你的项目
+# 如何組織你的項目
 
-下面的说法可能存在一些偏见，但我认为这是一种好的组织方式。我将会讲解如何组织项目的目录结构，这是基于以往的惯例来写的，这么做对你有以下好处：
+下面的說法可能存在一些偏見，但我認為這是一種好的組織方式。我將會講解如何組織項目的目錄結構，這是基於以往的慣例來寫的，這麼做對你有以下好處：
 
-* 可以很容易阅读以相同模式组织的项目
-* 避免可能造成冲突的组织形式
-* 避免使目录结构变得混乱和复杂
+* 可以很容易閱讀以相同模式組織的項目
+* 避免可能造成衝突的組織形式
+* 避免使目錄結構變得混亂和複雜
 
-首先，如果你创建一个名为 `project` 的项目，它有一个名为 `lib` 的库，有一个名为 `app` 的可执行文件，那么目录结构应该如下所示：
+首先，如果你創建一個名為 `project` 的項目，它有一個名為 `lib` 的庫，有一個名為 `app` 的可執行文件，那麼目錄結構應該如下所示：
 
 ```
 - project
@@ -37,21 +37,21 @@
     - helper.py
 ```
 
-其中，文件的名称不是绝对的，你可能会看到关于文件夹名称为 `tests`  还是 `test` 的争论，并且应用程序所在的文件夹可能为其他的名称（ 或者一个项目只有库文件 ）。你也许也会看到一个名为 `python` 的文件夹，那里存储关于 python 绑定器的内容，或者是一个 `cmake` 文件夹用于存储如 `Find<library>.cmake` 这样的 `.cmake` 辅助文件。但是一些比较基础的东西都在上面包括了。
+其中，文件的名稱不是絕對的，你可能會看到關於文件夾名稱為 `tests`  還是 `test` 的爭論，並且應用程序所在的文件夾可能為其他的名稱（ 或者一個項目只有庫文件 ）。你也許也會看到一個名為 `python` 的文件夾，那裡存儲關於 python 綁定器的內容，或者是一個 `cmake` 文件夾用於存儲如 `Find<library>.cmake` 這樣的 `.cmake` 輔助文件。但是一些比較基礎的東西都在上面包括了。
 
-可以注意到一些很明显的问题， `CMakeLists.txt` 文件被分割到除了 `include` 目录外的所有源代码目录下。这是为了能够将 `include` 目录下的所有文件拷贝到 `/usr/include` 目录或其他类似的目录下（除了配置的头文件，这个我将会在另一章讲到），因此为了避免冲突等问题，其中不能有除了头文件外的其他文件。这也是为什么在 `include` 目录下有一个名为项目名的目录。顶层 `CMakeLists.txt` 中应使用 `add_subdirectory` 命令来添加一个包含 `CMakeLists.txt` 的子目录。
+可以注意到一些很明顯的問題， `CMakeLists.txt` 文件被分割到除了 `include` 目錄外的所有源代碼目錄下。這是為了能夠將 `include` 目錄下的所有文件拷貝到 `/usr/include` 目錄或其他類似的目錄下（除了配置的頭文件，這個我將會在另一章講到），因此為了避免衝突等問題，其中不能有除了頭文件外的其他文件。這也是為什麼在 `include` 目錄下有一個名為項目名的目錄。頂層 `CMakeLists.txt` 中應使用 `add_subdirectory` 命令來添加一個包含 `CMakeLists.txt` 的子目錄。
 
-你经常会需要一个 `cmake` 文件夹，里面包含所有用到的辅助模块。这是你放置所有 `Find*.cmake` 的文件。你可以在 [github.com/CLIUtils/cmake](https://github.com/CLIUtils/cmake) 找到一些常见的辅助模块集合。你可以通过以下语句将此目录添加到你的 CMake Path 中：
+你經常會需要一個 `cmake` 文件夾，裡面包含所有用到的輔助模塊。這是你放置所有 `Find*.cmake` 的文件。你可以在 [github.com/CLIUtils/cmake](https://github.com/CLIUtils/cmake) 找到一些常見的輔助模塊集合。你可以通過以下語句將此目錄添加到你的 CMake Path 中：
 
 ```cmake
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 ```
 
-你的 `extern` 应该几乎只包含 git 子模块（ submodule ）。通过此方式，你可以明确地控制依赖的版本，并且可以非常轻松地升级。关于添加子模块的例子，可以参见 [Testing](https://modern-cmake-cn.github.io/Modern-CMake-zh_CN/chapters/testing.html) 章节。
+你的 `extern` 應該幾乎只包含 git 子模塊（ submodule ）。通過此方式，你可以明確地控制依賴的版本，並且可以非常輕鬆地升級。關於添加子模塊的例子，可以參見 [Testing](https://modern-cmake-cn.github.io/Modern-CMake-zh_CN/chapters/testing.html) 章節。
 
-你应该在 `.gitignore` 中添加形如 `/build*` 的规则，这样用户就可以在源代码目录下创建 `build` 目录来构建项目，而不用担心将生成的目标文件添加到 `.git` 中。有一些软件包禁止这么做，不过这还是相比**做一个真正的外部构建并且针对不同的包来使用不同的构建**要好的多。
+你應該在 `.gitignore` 中添加形如 `/build*` 的規則，這樣用戶就可以在源代碼目錄下創建 `build` 目錄來構建項目，而不用擔心將生成的目標文件添加到 `.git` 中。有一些軟件包禁止這麼做，不過這還是相比**做一個真正的外部構建並且針對不同的包來使用不同的構建**要好的多。
 
-如果你想要避免构建目录在有效的（ valid ）源代码目录中，你可以在顶层 `CMakeLists.txt` 文件头部添加如下语句：
+如果你想要避免構建目錄在有效的（ valid ）源代碼目錄中，你可以在頂層 `CMakeLists.txt` 文件頭部添加如下語句：
 
 ```cmake
 ### Require out-of-source builds
@@ -61,4 +61,4 @@ if(EXISTS "${LOC_PATH}")
 endif()
 ```
 
-可以在这里查看 [拓展代码样例](https://github.com/Modern-CMake-CN/Modern-CMake-zh_CN/tree/master/examples/extended-project)
+可以在這裡查看 [拓展代碼樣例](https://github.com/Modern-CMake-CN/Modern-CMake-zh_CN/tree/master/examples/extended-project)

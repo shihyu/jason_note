@@ -3,42 +3,42 @@ C++ Concurrency In Action
 *SECOND EDITION*
 -------------------------
 - 作者：Anthony Williams
-- 译者：陈晓伟
+- 譯者：陳曉偉
 
-> 翻译是译者用自己的思想，换一种语言，对原作者想法的重新阐释。鉴于我的学识所限，误解和错译在所难免。如果你能买到本书的原版，且有能力阅读英文，请直接去读原文。因为与之相较，我的译文可能根本不值得一读。
+> 翻譯是譯者用自己的思想，換一種語言，對原作者想法的重新闡釋。鑑於我的學識所限，誤解和錯譯在所難免。如果你能買到本書的原版，且有能力閱讀英文，請直接去讀原文。因為與之相較，我的譯文可能根本不值得一讀。
 >
-> <p align="right"> — 云风，程序员修炼之道第2版译者</p>
+> <p align="right"> — 雲風，程序員修煉之道第2版譯者</p>
 
-## 本书概述
+## 本書概述
 
-作为对《C++ Concurrency in Action - SECOND EDITION》的中文翻译。
+作為對《C++ Concurrency in Action - SECOND EDITION》的中文翻譯。
 
-第二版根据C++14和C++17标准进行更新和修订，涵盖了所有标准中最新的改动！本次修订版所要解答的问题是，如何用C++17写出优雅且健壮的多线程应用，并告诉你所有的细节！
+第二版根據C++14和C++17標準進行更新和修訂，涵蓋了所有標準中最新的改動！本次修訂版所要解答的問題是，如何用C++17寫出優雅且健壯的多線程應用，並告訴你所有的細節！
 
-## 技术方面
+## 技術方面
 
-当需要应用有足够快的运行速度的时候，您应该选择C++。设计良好的C++并发程序将会充分利用资源，并运行的更快。C++17可以使用多线程或多处理器，使得图像处理、机器学习等性能敏感型任务更加快速的完成。本书特别为工业级C++并发解锁了相应的特性、模式和最佳实践方式。
+當需要應用有足夠快的運行速度的時候，您應該選擇C++。設計良好的C++併發程序將會充分利用資源，並運行的更快。C++17可以使用多線程或多處理器，使得圖像處理、機器學習等性能敏感型任務更加快速的完成。本書特別為工業級C++併發解鎖了相應的特性、模式和最佳實踐方式。
 
-## 关于本书
+## 關於本書
 
-*C++ Concurrency in Action, Second Edition*可以作为C++在编写优雅多线程应用方面的权威指南。并更新了C++17的相关内容，其详细描述了并行开发的各个方面，从启动新线程到设计复杂的多线程算法和数据结构。每一章中并发大师Anthony Williams都为你提供了示例和一些练习，也包括一些独到的见解，这对于开发经验丰富人员来说可能是非常有兴趣的。
+*C++ Concurrency in Action, Second Edition*可以作為C++在編寫優雅多線程應用方面的權威指南。並更新了C++17的相關內容，其詳細描述了並行開發的各個方面，從啟動新線程到設計複雜的多線程算法和數據結構。每一章中併發大師Anthony Williams都為你提供了示例和一些練習，也包括一些獨到的見解，這對於開發經驗豐富人員來說可能是非常有興趣的。
 
-## 内容概述
+## 內容概述
 
-* 对C++17特性全面覆盖
-* 启动和管理线程
-* 同步并发操作
-* 设计并发代码
-* 调试多线程应用
+* 對C++17特性全面覆蓋
+* 啟動和管理線程
+* 同步併發操作
+* 設計併發代碼
+* 調試多線程應用
 
-## 读者须知
+## 讀者須知
 
-本书为C和C++开发人员所编写。无需任何并发经验，在看本书的时候，大家都在同一“起跑线”上。
+本書為C和C++開發人員所編寫。無需任何併發經驗，在看本書的時候，大家都在同一“起跑線”上。
 
-## 本书相关
+## 本書相關
 
-- github翻译地址：https://github.com/xiaoweiChen/CPP-Concurrency-In-Action-2ed-2019
-- 本书源码下载地址：https://www.manning.com/downloads/1954
-- 第一版github 翻译地址：https://github.com/xiaoweiChen/Cpp_Concurrency_In_Action
+- github翻譯地址：https://github.com/xiaoweiChen/CPP-Concurrency-In-Action-2ed-2019
+- 本書源碼下載地址：https://www.manning.com/downloads/1954
+- 第一版github 翻譯地址：https://github.com/xiaoweiChen/Cpp_Concurrency_In_Action
 - 英文原版PDF：https://ru.b-ok2.org/book/3688262/d57395?dsource=recommend
-- 不错的笔记：https://github.com/downdemo/Cpp-Concurrency-in-Action-2ed
+- 不錯的筆記：https://github.com/downdemo/Cpp-Concurrency-in-Action-2ed
