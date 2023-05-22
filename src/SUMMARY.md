@@ -66,6 +66,7 @@
   - [Polars](rust/polars.md)
   - [Rust call C](rust/rust_call_c.md)
   - [給 C++ 使用者的 Rust 簡介](rust/10-rust-an-introduction.md)
+  - [可視化Rust各資料結構的記憶體佈局](rust/可視化Rust各資料結構的記憶體佈局.md)
   - [學習順序](rust/rust_note.md)
   - [大局觀](rust/overview.md)
   - [理解字串](rust/String.md)
@@ -81,7 +82,7 @@
     - [Rust 30 Day](rust/30天深入淺出Rust系列/rust_30_day.md)
     - [變數的所有權與借出變數](rust/30天深入淺出Rust系列/Move_Borrow_Ownership.md)
     - [Lifetime： Borrow 的存活時間](rust/30天深入淺出Rust系列/Lifetime.md)
-
+  
 - [Go](go/go.md)
   - [Golang  Note](go/note.md)
   - [pytago](go/pytago.md)
