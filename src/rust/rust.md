@@ -89,6 +89,7 @@ rustup self uninstall
 
 ### 學習網站
 
+- [Rust Room](https://github.com/rust-boom/rust-boom)
 - [令狐一沖](https://github.com/anonymousGiga/learn_rust/)
 - [Rust 語言之旅](https://shihyu.github.io/my_tour_of_rust/TOC_zh-tw.html)
 - [Rust 程式設計語言](https://rust-lang.tw/book-tw/#rust-程式設計語言)
