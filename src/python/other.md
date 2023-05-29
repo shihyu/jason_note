@@ -1,3 +1,46 @@
+## sched 定時
+
+```python
+import sched
+import time
+import datetime
+
+'''
+導入 sched 模塊和 time 模塊。
+定義一個 main() 函數，用於執行程序的主要邏輯。
+定義一個 run_main() 函數，用於在指定時間執行 main() 函數。
+獲取當前時間，並計算距離下一個執行時間的時間差 delta。
+使用 sched 模塊的 enter() 方法，將 run_main() 函數添加到調度隊列中，並設置下一次執行的時間為當前時間加上 delta。
+使用 sched 模塊的 run() 方法，啟動調度器。
+'''
+
+def main():
+    # 在這裡編寫程序的主要邏輯
+    print("Hello, world!")
+
+def run_main():
+    # 獲取當前時間
+    now = datetime.datetime.now()
+
+    # 計算距離下一個執行時間的時間差
+    next_time = now.replace(hour=8, minute=45, second=0, microsecond=0)
+    if next_time < now:
+        next_time += datetime.timedelta(days=1)
+    delta = next_time - now
+
+    # 計算下一個執行時間，並輸出日誌
+    next_time_str = next_time.strftime("%Y-%m-%d %H:%M:%S")
+    print(f"Next run time: {next_time_str}")
+
+    # 在指定時間執行程序的主要邏輯
+    scheduler = sched.scheduler(time.time, time.sleep)
+    scheduler.enter(delta.total_seconds(), 1, main, ())
+    scheduler.run()
+
+if __name__ == "__main__":
+    run_main()
+```
+
 ## pdf 分割
 
 ```python
