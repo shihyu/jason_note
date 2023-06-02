@@ -1,3 +1,27 @@
+## keyvalue-sqlite
+
+```python
+# pip install keyvalue-sqlite
+from keyvalue_sqlite import KeyValueSqlite
+
+DB_PATH = './db.sqlite'
+
+db = KeyValueSqlite(DB_PATH, 'table-name')
+
+# Now use standard dictionary operators
+db.set('0', {"1101":23, "2330": 100})
+actual_value = db.get('0')
+print(actual_value)
+db.set('0', '211')
+actual_value = db.get('0')
+print(actual_value)
+db.remove('0')
+actual_value = db.get('0')
+print(actual_value)
+```
+
+
+
 ## sched 定時
 
 ```python
