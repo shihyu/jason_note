@@ -1,3 +1,33 @@
+## 抓取美股分K歷史數據 
+
+```python
+import yfinance as yf
+import pandas as pd
+import datetime as dt
+
+# 設置股票代碼和時間範圍
+ticker = 'AAPL'
+end_date = dt.datetime.now()
+start_date = end_date - dt.timedelta(days=30)
+
+# 將時間範圍拆分成多個時間段，每個時間段為 7 天
+date_ranges = pd.date_range(start=start_date, end=end_date, freq='7d')
+
+# 獲取歷史數據
+dataframes = []
+for i in range(len(date_ranges) - 1):
+    start = date_ranges[i].strftime('%Y-%m-%d')
+    end = date_ranges[i+1].strftime('%Y-%m-%d')
+    df = yf.download(ticker, start=start, end=end, interval='1m')
+    dataframes.append(df)
+
+# 合併為一個 DataFrame 對象
+data = pd.concat(dataframes)
+
+# 打印 DataFrame 對象
+print(data)
+```
+
 ## keyvalue-sqlite
 
 ```python
