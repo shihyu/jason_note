@@ -79,6 +79,10 @@ find . -name ".git" -type d -exec sh -c '
   \setCJKmainfont{PingFang TC}
   ```
   
-  
-  
-  
+
+- 每個月底執行 command
+
+```sh
+0 0 28-31 * * [ "$(date +\%d -d tomorrow)" = "01" ] && command
+```
+
