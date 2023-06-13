@@ -1,3 +1,27 @@
+## 創立每列
+```python
+import pandas as pd
+
+# 创建空的 DataFrame
+df = pd.DataFrame(columns=['Technology', 'Consumer', 'Healthcare', 'Energy'])
+
+# 股票字典
+stocks = {
+    'GOOG': ['Technology', 'Healthcare'],
+    'AAPL': ['Consumer']
+}
+
+# 遍历股票字典并将 DataFrame 中相应的单元格设置为 True
+for stock, industries in stocks.items():
+    for industry in industries:
+        df.loc[stock, industry] = True
+
+# 将缺失值（即 False）替换为 False
+df.fillna(False, inplace=True)
+
+print(df)
+```
+
 ## 抓取美股分K歷史數據 
 
 ```python
