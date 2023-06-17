@@ -383,3 +383,44 @@ if __name__ == "__main__":
     # fig.show()
     show_plot(fig, "tsla.html")
 ```
+
+## 子圖
+
+```python
+from plotly.subplots import make_subplots
+import plotly
+import plotly.graph_objects as go
+
+fig = make_subplots(
+    rows=2, cols=2,
+    specs=[[{"type": "xy", 'secondary_y': True}, {"type": "polar"}],
+           [{"type": "domain"}, {"type": "scene"}]],
+    y_title='title'
+)
+'''
+也可以为：specs=[[{'type': 'bar'}, {'type': 'barpolar'}],
+                [{'type': 'pie'}, {'type': 'scatter3d'}]]
+'''
+
+# 使用 secondary_y 参数选择该图相对的 y轴坐标
+fig.add_trace(go.Bar(y=[2, 3, 1]),
+              row=1, col=1, secondary_y=False)
+fig.add_trace(go.Scatter(x=[0, 1, 2], y=[4, 10, 7]),
+              row=1, col=1, secondary_y=True)
+
+fig.add_trace(go.Barpolar(theta=[0, 45, 90], r=[2, 3, 1]),
+              row=1, col=2)
+
+fig.add_trace(go.Pie(values=[2, 3, 1]),
+              row=2, col=1)
+
+fig.add_trace(go.Scatter3d(x=[2, 3, 1], y=[0, 0, 0],
+                           z=[0.5, 1, 2], mode="lines"),
+              row=2, col=2)
+
+fig.update_layout(height=700, showlegend=False)
+
+plotly.offline.plot(fig, filename='test.html')
+```
+
+![](../images/newplot.png)
