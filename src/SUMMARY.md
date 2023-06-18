@@ -153,6 +153,7 @@
   - [Orderbook](strategy/orderbook.md)
   - [選股條件](strategy/選股條件.md)
   - [如何出場](strategy/如何出場.md)
+  - [Stock](strategy/stock.md)
   - [Resource](strategy/note.md)
   - [Nansen](strategy/nansen.md)
   - [Example](strategy/example.md)
