@@ -54,7 +54,7 @@ Design modern systems using effective architecture concepts, design patterns, an
 
 **[Adrian Ostrowski](https://www.amazon.com/Adrian-Ostrowski/e/B08ZQTDGHR/ref=aufs_dp_mata_dsk)**是一個現代C++愛好者，對C++的開發和編寫的高質量代碼都很感興趣。他在IT行業有超過十年的經驗，特別是在C++方面有超過8年的經驗，總是會與他人分享知識。其操刀的項目包括通過光纖網絡進行並行計算，以及在商品交易所的交易系統上工作。目前，他是英特爾和Habana機器學習框架的設計師之一。
 
-在業餘時間裡，他曾與Piotr一起推廣樂隊，並學會了如何駕駛滑翔機。目前，他喜歡騎自行車、參加音樂活動和瀏覽一些網絡梗。
+在業餘時間裡，他曾與Piotr一起推廣樂隊，並學會瞭如何駕駛滑翔機。目前，他喜歡騎自行車、參加音樂活動和瀏覽一些網絡梗。
 
 > 敬Agnieszka，感謝她的愛和支持
 > 敬Mateusz，我的良師益友

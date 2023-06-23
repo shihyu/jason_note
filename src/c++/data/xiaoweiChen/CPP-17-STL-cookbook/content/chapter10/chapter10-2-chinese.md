@@ -28,7 +28,7 @@
    	path p {"testdir/foobar.txt"};
    ```
 
-3. 現在我們來了解一下不同的文件系統庫函數。`current_path`將返回我們執行程序的路徑，也就是工作目錄。`absolute`能接受一個相對地址，就像我們定義的`p`一樣。`system_complete`在Linux，MacOS和類UNIX操作系統上與`absolute`的功能相同。在Windows下我們將獲取一個帶有盤符(比如`c:`)的絕對地址。`canonical`與`absolute`的功能相同，不過其刪除了所有的`.`和`..`。我們可以使用如下的方式使用這些函數：
+3. 現在我們來瞭解一下不同的文件系統庫函數。`current_path`將返回我們執行程序的路徑，也就是工作目錄。`absolute`能接受一個相對地址，就像我們定義的`p`一樣。`system_complete`在Linux，MacOS和類UNIX操作系統上與`absolute`的功能相同。在Windows下我們將獲取一個帶有盤符(比如`c:`)的絕對地址。`canonical`與`absolute`的功能相同，不過其刪除了所有的`.`和`..`。我們可以使用如下的方式使用這些函數：
 
    ```c++
        cout << "current_path : " << current_path()
@@ -98,7 +98,7 @@
 
 很多函數會返回一個轉換或未轉換的`path`實例。我們不會將所有函數都列在這裡，如果想要了解它們，去看下C++手冊是個不錯的選擇。
 
-`path`類中有很多的成員函數，很值得一看。讓我們來了解一下，對於一個路徑來說，成員函數返回的是哪一部分。下面的圖就為我們描述了在Windows和UNIX/Linux下，對應函數所返回的路徑：
+`path`類中有很多的成員函數，很值得一看。讓我們來瞭解一下，對於一個路徑來說，成員函數返回的是哪一部分。下面的圖就為我們描述了在Windows和UNIX/Linux下，對應函數所返回的路徑：
 
 ![](../../images/chapter10/10-2-1.png)
 

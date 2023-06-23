@@ -398,11 +398,11 @@ fig = make_subplots(
     y_title='title'
 )
 '''
-也可以为：specs=[[{'type': 'bar'}, {'type': 'barpolar'}],
+也可以為：specs=[[{'type': 'bar'}, {'type': 'barpolar'}],
                 [{'type': 'pie'}, {'type': 'scatter3d'}]]
 '''
 
-# 使用 secondary_y 参数选择该图相对的 y轴坐标
+# 使用 secondary_y 參數選擇該圖相對的 y軸座標
 fig.add_trace(go.Bar(y=[2, 3, 1]),
               row=1, col=1, secondary_y=False)
 fig.add_trace(go.Scatter(x=[0, 1, 2], y=[4, 10, 7]),

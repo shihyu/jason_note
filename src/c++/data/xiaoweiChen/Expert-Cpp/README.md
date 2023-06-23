@@ -1,5 +1,5 @@
 # Expert C++
-*Become a proficient programmer by learning coding best practices with C++17 and C++20's latest features（各位程序員，來了解一下C++17和20標準的新特性）*
+*Become a proficient programmer by learning coding best practices with C++17 and C++20's latest features（各位程序員，來瞭解一下C++17和20標準的新特性）*
 
 * 作者：Vardan Grigoryan & Shunguang Wu
 * 譯者：陳曉偉

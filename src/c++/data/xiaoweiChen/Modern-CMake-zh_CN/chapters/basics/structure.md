@@ -41,7 +41,7 @@
 
 可以注意到一些很明顯的問題， `CMakeLists.txt` 文件被分割到除了 `include` 目錄外的所有源代碼目錄下。這是為了能夠將 `include` 目錄下的所有文件拷貝到 `/usr/include` 目錄或其他類似的目錄下（除了配置的頭文件，這個我將會在另一章講到），因此為了避免衝突等問題，其中不能有除了頭文件外的其他文件。這也是為什麼在 `include` 目錄下有一個名為項目名的目錄。頂層 `CMakeLists.txt` 中應使用 `add_subdirectory` 命令來添加一個包含 `CMakeLists.txt` 的子目錄。
 
-你經常會需要一個 `cmake` 文件夾，裡面包含所有用到的輔助模塊。這是你放置所有 `Find*.cmake` 的文件。你可以在 [github.com/CLIUtils/cmake](https://github.com/CLIUtils/cmake) 找到一些常見的輔助模塊集合。你可以通過以下語句將此目錄添加到你的 CMake Path 中：
+你經常會需要一個 `cmake` 文件夾，裡麵包含所有用到的輔助模塊。這是你放置所有 `Find*.cmake` 的文件。你可以在 [github.com/CLIUtils/cmake](https://github.com/CLIUtils/cmake) 找到一些常見的輔助模塊集合。你可以通過以下語句將此目錄添加到你的 CMake Path 中：
 
 ```cmake
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})

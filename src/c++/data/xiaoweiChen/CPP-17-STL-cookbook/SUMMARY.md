@@ -56,7 +56,7 @@
 * [第6章 STL算法的高級使用方式](content/chapter6/chapter6-0-chinese.md)
   * [使用STL算法實現單詞查找樹類](content/chapter6/chapter6-1-chinese.md)
   * [使用樹實現搜索輸入建議生成器](content/chapter6/chapter6-2-chinese.md)
-  * [使用STL數值算法實現傅里葉變換](content/chapter6/chapter6-3-chinese.md)
+  * [使用STL數值算法實現傅裡葉變換](content/chapter6/chapter6-3-chinese.md)
   * [計算兩個vector的誤差和](content/chapter6/chapter6-4-chinese.md)
   * [使用ASCII字符曼德爾布羅特集合](content/chapter6/chapter6-5-chinese.md)
   * [實現分割算法](content/chapter6/chapter6-6-chinese.md)
