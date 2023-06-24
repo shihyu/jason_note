@@ -156,6 +156,7 @@
   - [如何出場](strategy/如何出場.md)
   - [JG](strategy/Book/JG.md)
   - [BNF](strategy/bnf.md)
+  - [CIS](strategy/cis.md)
   - [Stock](strategy/stock.md)
   - [Resource](strategy/note.md)
   - [Nansen](strategy/nansen.md)
