@@ -40,7 +40,7 @@ print(
     get_data(
         client,
         # "SELECT * FROM CRYPTO.Bitopro_Orderbook WHERE date > '2022-10-27' AND date < '2022-10-28 10:39:31' ORDER BY date ASC",
-        "SELECT * FROM CRYPTO.BinanceOrderbookPartition_simplifiedFields WHERE date > '2022-12-21 15:10:17'",
+        "SELECT * FROM CRYPTO.BinanceOrderbookPartition_simplifiedFields WHERE date > '2023-06-30 15:10:17'",
         # "SELECT * FROM CRYPTO.Bitopro_Orderbook",
     )
 )
