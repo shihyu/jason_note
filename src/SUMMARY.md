@@ -154,6 +154,7 @@
   - [選股條件](strategy/選股條件.md)
   - [如何進場](strategy/如何進場.md)
   - [如何出場](strategy/如何出場.md)
+  - [建倉加碼](strategy/建倉加碼.md)
   - [JG](strategy/Book/JG.md)
   - [BNF](strategy/bnf.md)
   - [CIS](strategy/cis.md)
