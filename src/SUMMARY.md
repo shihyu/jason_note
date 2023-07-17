@@ -166,7 +166,7 @@
   - [Sample](strategy/sample.md)
   - [Grid](strategy/grid.md)
   - [pine-script](strategy/pine-script.md)
-  - [阿老師](strategy/阿老師.md)
+  - [拾人牙慧](strategy/拾人牙慧.md)
   - [夏普值](strategy/sharpe_ratio.md)
   - [MAE&MFE分析](strategy/display_mae_mfe_analysis.md)
   - [海龜投資法則](strategy/海龜投資法則.md)
