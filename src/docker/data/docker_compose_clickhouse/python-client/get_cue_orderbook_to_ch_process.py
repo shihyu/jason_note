@@ -45,7 +45,10 @@ def getErrMsg(e):
 
 
 logger.add(
-    f"{__file__}.log", encoding="utf-8", enqueue=True, retention="10 days",
+    f"{__file__}.log",
+    encoding="utf-8",
+    enqueue=True,
+    retention="10 days",
 )
 
 
@@ -111,7 +114,7 @@ class WebSocketClient(multiprocessing.Process):
     def run(self):
         # self.__ws.run_forever()
         try:
-            self.__ws.run_forever(ping_interval=0, dispatcher=rel, reconnect=3)
+            self.__ws.run_forever(ping_interval=0, dispatcher=rel, reconnect=5)
             rel.signal(2, rel.abort)  # Keyboard Interrupt
             rel.dispatch()
         except Exception as e:
@@ -150,7 +153,7 @@ class WebSocketClient(multiprocessing.Process):
     def on_close(self, ws, status_code, message):
         logger.warning(f"on_close {status_code} {message}")
         self.__line_notify.send("on_close " + str(message))
-        self.reconnecting()
+        # self.reconnecting()
 
     def on_error(self, ws, error):
         logger.error(str(error))
@@ -178,6 +181,9 @@ class WebSocketClient(multiprocessing.Process):
         # self.__ws.my_close()
         # rel.abort()
         # logger.info(f"{self.__thread_name} websocket closed")
+
+        # if self.__ws and self.__ws.sock:
+        #    self.__ws.close()
 
         rel.abort()
         self.__ws.run_forever(ping_interval=0, dispatcher=rel, reconnect=3)
@@ -216,7 +222,9 @@ class Record(multiprocessing.Process):
             )
         # create_table_cmd_str = f"CREATE TABLE IF NOT EXISTS {str_database}.{str_table} ( {create_table_cmd_str[:-2]}) ENGINE = Log"
         create_table_cmd_str = f"CREATE TABLE IF NOT EXISTS {str_database}.{str_table} ({create_table_cmd_str[:-2]}) ENGINE = MergeTree PARTITION BY year_month_day ORDER BY year_month_day SETTINGS index_granularity = 16384"
-        client = Client(host="clickhouse-server", port="9000", user="halobug", password="FcP5O5HY")
+        client = Client(
+            host="clickhouse-server", port="9000", user="halobug", password="FcP5O5HY"
+        )
         client.execute(f"CREATE DATABASE IF NOT EXISTS {str_database};")
         client.execute(create_table_cmd_str)
 
@@ -389,4 +397,3 @@ if __name__ == "__main__":
 
     for task in tasks:
         task.join()
-
