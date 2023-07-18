@@ -373,22 +373,31 @@ class Manager(multiprocessing.Process):
 if __name__ == "__main__":
     Watcher()
     bitopro_orderbook_queue = Queue(1000)
-    binance_orderbook_queue = Queue(1000)
+    binance_btc_orderbook_queue = Queue(1000)
+    binance_eth_orderbook_queue = Queue(1000)
     tasks = [
+        # Manager(
+        #     thread_name="BitoPro Thread",
+        #     ws_url="wss://stream.bitopro.com:9443/ws/v1/pub/order-books/BTC_USDT:20",
+        #     symbol="",
+        #     params="",
+        #     queue=bitopro_orderbook_queue,
+        #     line_token="KXwzqEGtIp1JEkS5GjqXqRAT0D4BdQQvCNcqOa7ySfz",
+        # ),
         Manager(
-            thread_name="BitoPro Thread",
-            ws_url="wss://stream.bitopro.com:9443/ws/v1/pub/order-books/BTC_USDT:20",
-            symbol="",
-            params="",
-            queue=bitopro_orderbook_queue,
-            line_token="KXwzqEGtIp1JEkS5GjqXqRAT0D4BdQQvCNcqOa7ySfz",
-        ),
-        Manager(
-            thread_name="Binance Thread",
+            thread_name="Binance BTC Thread",
             ws_url="wss://stream.binance.com:9443/ws",
             symbol="",
             params="btcusdt@depth@100ms",
-            queue=binance_orderbook_queue,
+            queue=binance_btc_orderbook_queue,
+            line_token="KXwzqEGtIp1JEkS5GjqXqRAT0D4BdQQvCNcqOa7ySfz",
+        ),
+        Manager(
+            thread_name="Binance ETH Thread",
+            ws_url="wss://stream.binance.com:9443/ws",
+            symbol="",
+            params="ethusdt@depth@100ms",
+            queue=binance_eth_orderbook_queue,
             line_token="KXwzqEGtIp1JEkS5GjqXqRAT0D4BdQQvCNcqOa7ySfz",
         ),
     ]

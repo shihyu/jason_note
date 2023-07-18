@@ -45,7 +45,10 @@ def getErrMsg(e):
 
 
 logger.add(
-    f"{__file__}.log", encoding="utf-8", enqueue=True, retention="10 days",
+    f"{__file__}.log",
+    encoding="utf-8",
+    enqueue=True,
+    retention="10 days",
 )
 
 
@@ -216,7 +219,9 @@ class Record(multiprocessing.Process):
             )
         # create_table_cmd_str = f"CREATE TABLE IF NOT EXISTS {str_database}.{str_table} ( {create_table_cmd_str[:-2]}) ENGINE = Log"
         create_table_cmd_str = f"CREATE TABLE IF NOT EXISTS {str_database}.{str_table} ({create_table_cmd_str[:-2]}) ENGINE = MergeTree PARTITION BY year_month_day ORDER BY year_month_day SETTINGS index_granularity = 16384"
-        client = Client(host="clickhouse-server", port="9000", user="halobug", password="FcP5O5HY")
+        client = Client(
+            host="clickhouse-server", port="9000", user="halobug", password="FcP5O5HY"
+        )
         client.execute(f"CREATE DATABASE IF NOT EXISTS {str_database};")
         client.execute(create_table_cmd_str)
 
@@ -398,4 +403,3 @@ if __name__ == "__main__":
 
     for task in tasks:
         task.join()
-
