@@ -155,6 +155,8 @@
   - [如何進場](strategy/如何進場.md)
   - [如何出場](strategy/如何出場.md)
   - [建倉加碼](strategy/建倉加碼.md)
+  - 奇正
+    - [資金控管與試單策略](strategy/奇正/資金控管與試單策略.md)
   - [JG](strategy/Book/JG.md)
   - [BNF](strategy/bnf.md)
   - [CIS](strategy/cis.md)
