@@ -11,7 +11,7 @@ client.command("USE STOCKS")
 
 
 client.command(
-    "CREATE TABLE new_table (key UInt32, value String, metric Float64) ENGINE MergeTree ORDER BY key"
+    "CREATE TABLE IF NOT EXISTS new_table (key UInt32, value String, metric Float64) ENGINE MergeTree ORDER BY key"
 )
 row1 = [1000, "String Value 1000", 5.233]
 row2 = [2000, "String Value 2000", -107.04]
