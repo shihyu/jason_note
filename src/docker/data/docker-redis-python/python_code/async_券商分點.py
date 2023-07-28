@@ -63,7 +63,6 @@ def test():
     if data is not None:
         df = pickle.loads(data)
         print(df.to_markdown())
-    input()
 
 
 if __name__ == "__main__":
