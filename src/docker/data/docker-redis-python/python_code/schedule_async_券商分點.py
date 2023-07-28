@@ -61,6 +61,7 @@ class StockDataParser:
             return pickle.loads(data)
         return None
 
+
 def run_script():
     loop = asyncio.get_event_loop()
     stock_data_parser = StockDataParser()
@@ -78,10 +79,14 @@ def run_script():
     if df is not None:
         print(df.to_markdown())
 
+
 def run_job():
     print("Running the stock data fetching job...")
-    LineNotify("KXwzqEGtIp1JEkS5GjqXqRAT0D4BdQQvCNcqOa7ySfz").send("Running the stock data fetching job...")
+    LineNotify("KXwzqEGtIp1JEkS5GjqXqRAT0D4BdQQvCNcqOa7ySfz").send(
+        "Running the stock data fetching job..."
+    )
     run_script()
+
 
 if __name__ == "__main__":
     # Schedule the job to run at the specified times
