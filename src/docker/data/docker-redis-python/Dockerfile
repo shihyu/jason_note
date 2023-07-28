@@ -1,6 +1,6 @@
 FROM redis
 
-RUN apt-get update && apt-get install -y vim htop redis-server wget build-essential && \
+RUN apt-get update && apt-get install -y vim tmux htop redis-server wget build-essential && \
     wget -q http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
     tar xzf ta-lib-0.4.0-src.tar.gz && \
     cd ta-lib/ && \
