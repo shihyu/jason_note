@@ -4,6 +4,7 @@
 - [Ubuntu](ubuntu/ubuntu_setup.md)
   - [Command](ubuntu/command.md)
   - [GCP ssh](ubuntu/gcp.md)
+  - [Wine](ubuntu/wine.md)
   
 - [Android](android/android.md)
   - [SDK install](android/install_sdk.md)
