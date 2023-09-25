@@ -147,6 +147,7 @@
   - [臺指](strategy/tw_futures.md)
   - [套利](strategy/arbitrage.md)
   - [海龜交易](strategy/海龜交易.md)
+  - [股海筋肉人](strategy/股海筋肉人.md)
   - [如何避免過擬合](strategy/如何避免過擬合.md)
   - [phcebus](strategy/phcebus/phcebus.md)
     - [菲式思考](strategy/phcebus/菲式思考.md)
