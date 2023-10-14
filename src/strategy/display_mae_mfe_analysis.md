@@ -759,3 +759,8 @@ if __name__ == "__main__":
     print(metrics.get_max_drawdown())
 ```
 
+
+
+## MAE 跟 MDD 差異
+
+- 舉例：若持有期間從原本賺10%變到虧損5%，MAE絕對值為5%，代表持有期間最大虧損 5%，MDD絕對值則是15%
