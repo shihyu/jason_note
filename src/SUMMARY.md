@@ -30,6 +30,7 @@
   - [Move](c++/move.md)
   - [CAS](c++/CAS.md)
   - [HFT](c++/HFT.md)
+- Mojo[mojo/mojo.md]
 - [RISC-V](riscv/riscv.md)
   - [QEMU上運行RISV-V Linux](riscv/qemu_riscv_linux.md)
 - [CentOS](centos/centos.md)
