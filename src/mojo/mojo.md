@@ -37,6 +37,8 @@ curl https://get.modular.com | \
   MODULAR_AUTH=mut_368ff64729824e39b3413866bf6be10d \
   sh -
 
+
+modular auth X &&
 modular install mojo
 ```
 
