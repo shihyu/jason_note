@@ -126,7 +126,7 @@ if __name__ == "__main__":
     task_manager = TaskManager()
     redis_client = redis.StrictRedis(
         host="localhost", port=6379, db=0
-    )  # 修改为您的Redis服务器配置
+    )  # 修改為您的Redis服務器配置
 
     def task1_condition():
         condition_value = redis_client.get("task_test")
@@ -144,10 +144,10 @@ if __name__ == "__main__":
 # 開關 task_test 測試
 import redis
 
-# 创建Redis连接
-redis_client = redis.StrictRedis(host="localhost", port=6379, db=0)  # 修改为您的Redis服务器配置
+# 創建Redis連接
+redis_client = redis.StrictRedis(host="localhost", port=6379, db=0)  # 修改為您的Redis服務器配置
 
-# 将键设置为True
+# 將鍵設置為True
 # redis_client.set("task_test", "True")
 redis_client.set("task_test", "False")
 ```

@@ -1,13 +1,13 @@
 ## Docker 安裝 python 運行 local  python  script
 
 ```dockerfile
-# 使用官方的Python 3.10镜像作为基础镜像
+# 使用官方的Python 3.10鏡像作為基礎鏡像
 FROM python:3.10
 
-# 将当前目录下的所有文件复制到容器的/app目录
+# 將當前目錄下的所有文件複製到容器的/app目錄
 COPY . /app
 
-# 设置工作目录为/app
+# 設置工作目錄為/app
 WORKDIR /app
 ```
 
@@ -15,7 +15,7 @@ WORKDIR /app
 docker build -t my-python-app .
 
 
-docker run -v /本地文件的绝对路径:/app my-python-app python /app/my_script.py
+docker run -v /本地文件的絕對路徑:/app my-python-app python /app/my_script.py
 docker run -v /tmp/test_docker:/app my-python-app python my_script.py 
 ```
 
