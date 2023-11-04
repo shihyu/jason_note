@@ -70,7 +70,91 @@ if __name__=='__main__':
 
 
 
+---
 
+## 新增＆刪除任務排程
+
+```python
+import time
+import schedule
+import redis
+
+
+class TaskManager:
+    def __init__(self):
+        self.tasks = {}
+
+    def add_task(
+        self, condition_func, job_func, task_name, interval_seconds=15, tag=None
+    ):
+        self.tasks[task_name] = {
+            "condition": condition_func,
+            "job": job_func,
+            "job_id": None,
+            "interval": interval_seconds,
+            "tag": tag,
+        }
+
+    def remove_task(self, task_name):
+        if task_name in self.tasks:
+            if self.tasks[task_name]["job_id"] is not None:
+                schedule.clear(self.tasks[task_name]["job_id"])
+            del self.tasks[task_name]
+
+    def run(self):
+        while True:
+            schedule.run_pending()
+            for task_name, task in self.tasks.items():
+                if task["condition"]():
+                    if task["job_id"] is None:
+                        print("Task added, task name: ", task_name)
+                        task["job"]()
+                        task["job_id"] = (
+                            schedule.every(task["interval"])
+                            .seconds.do(task["job"])
+                            .tag(task["tag"])
+                        )
+                else:
+                    if task["job_id"] is not None:
+                        print(f"Task name: {task_name}", task["job_id"])
+                        schedule.clear(tag=task["tag"])
+                    task["job_id"] = None
+            time.sleep(1)
+
+
+if __name__ == "__main__":
+    task_manager = TaskManager()
+    redis_client = redis.StrictRedis(
+        host="localhost", port=6379, db=0
+    )  # 修改为您的Redis服务器配置
+
+    def task1_condition():
+        condition_value = redis_client.get("task_test")
+        return condition_value and condition_value.decode() == "True"
+
+    def task1_job():
+        print("Task 1 - Hello")
+
+    task_manager.add_task(task1_condition, task1_job, "task_test", 3, tag="mm_tasks")
+    task_manager.run()
+
+```
+
+```python
+# 開關 task_test 測試
+import redis
+
+# 创建Redis连接
+redis_client = redis.StrictRedis(host="localhost", port=6379, db=0)  # 修改为您的Redis服务器配置
+
+# 将键设置为True
+# redis_client.set("task_test", "True")
+redis_client.set("task_test", "False")
+```
+
+
+
+---
 
 # Parallel execution
 
