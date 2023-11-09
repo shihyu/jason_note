@@ -1944,3 +1944,52 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+
+
+## Thread 共用變數
+
+```python
+import threading
+
+# 自定義的類別，包含多個共享變數或字段
+class SharedData:
+    def __init__(self):
+        self.variable1 = 0
+        self.variable2 = "Hello"
+        self.variable3 = []
+
+# 定義一個函數，接受共享數據對象作為參數
+def modify_shared_data(shared_data, lock):
+    for _ in range(1000000):
+        # 獲取鎖
+        with lock:
+            shared_data.variable1 += 1
+            shared_data.variable2 = shared_data.variable2.upper()
+            shared_data.variable3.append(shared_data.variable1)
+        # 釋放鎖
+
+# 創建一個共享數據對象
+shared_data = SharedData()
+
+# 創建一個Lock對象，用於線程同步
+lock = threading.Lock()
+
+# 創建兩個線程，將共享數據對象和鎖傳遞給它們的函數
+thread1 = threading.Thread(target=modify_shared_data, args=(shared_data, lock))
+thread2 = threading.Thread(target=modify_shared_data, args=(shared_data, lock))
+
+# 啟動這兩個線程
+thread1.start()
+thread2.start()
+
+# 等待這兩個線程完成
+thread1.join()
+thread2.join()
+
+# 檢查共享數據對象的值
+print("共享變數1的值:", shared_data.variable1)
+print("共享變數2的值:", shared_data.variable2)
+print("共享變數3的值:", shared_data.variable3)
+
+```
+
