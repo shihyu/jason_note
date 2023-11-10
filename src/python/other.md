@@ -2003,6 +2003,7 @@ import redis
 import os
 import time
 
+
 class RedisLock:
     def __init__(self, redis_conn, lock_key, timeout=10):
         self.redis_conn = redis_conn
@@ -2019,6 +2020,7 @@ class RedisLock:
 
             if lock_acquired:
                 self.redis_conn.expire(self.lock_key, self.timeout)
+                self.tid = tid  # Store Thread ID (TID) for printing in release
                 print(f"PID:{self.pid} TID:{tid} acquired the lock.")
                 return True
             else:
@@ -2029,19 +2031,28 @@ class RedisLock:
                 return False
 
     def release(self):
-        tid = threading.get_ident()  # Fetch the Thread ID (TID) during release
+        tid = self.tid  # Fetch the stored Thread ID (TID) during release
         print(f"PID:{self.pid} TID:{tid} released the lock.")
         self.redis_conn.delete(self.lock_key)
 
+    def __enter__(self):
+        if not self.acquire():
+            raise RuntimeError("Could not acquire the lock.")
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.release()
+
+
 def worker(lock, thread_id):
     print(f"Thread-{thread_id} is trying to acquire the lock.")
-    if lock.acquire():
-        try:
-            print(f"Thread-{thread_id} acquired the lock. Performing some critical section operations.")
-            time.sleep(2)  # Simulating some critical section operations
-        finally:
-            lock.release()
-            print(f"Thread-{thread_id} released the lock.")
+    with lock:
+        print(
+            f"Thread-{thread_id} acquired the lock. Performing some critical section operations."
+        )
+        time.sleep(2)  # Simulating some critical section operations
+    print(f"Thread-{thread_id} released the lock.")
+
 
 # Redis connection setup
 redis_conn = redis.StrictRedis(host="localhost", port=6379, db=0)
