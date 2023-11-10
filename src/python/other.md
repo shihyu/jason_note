@@ -2009,7 +2009,6 @@ class RedisLock:
         self.redis_conn = redis_conn
         self.lock_key = lock_key
         self.timeout = timeout
-        self.pid = os.getpid()  # Fetch the Process ID (PID) during initialization
 
     def acquire(self):
         start_time = time.time()
@@ -2020,6 +2019,7 @@ class RedisLock:
 
             if lock_acquired:
                 self.redis_conn.expire(self.lock_key, self.timeout)
+                self.pid = os.getpid()  # Fetch the Process ID (PID) during initialization
                 self.tid = tid  # Store Thread ID (TID) for printing in release
                 print(f"PID:{self.pid} TID:{tid} acquired the lock.")
                 return True
@@ -2068,5 +2068,73 @@ thread2.start()
 
 thread1.join()
 thread2.join()
+```
+
+```python
+import multiprocessing
+import redis
+import os
+import time
+
+
+class RedisLock:
+    def __init__(self, redis_conn, lock_key, timeout=10):
+        self.redis_conn = redis_conn
+        self.lock_key = lock_key
+        self.timeout = timeout
+
+    def acquire(self):
+        start_time = time.time()
+        while True:
+            lock_acquired = self.redis_conn.set(
+                self.lock_key, "locked", ex=self.timeout, nx=True
+            )
+            if lock_acquired:
+                self.pid = os.getpid()  # 取得初始化時的 Process ID (PID)
+                print(f"PID:{self.pid} acquired the lock.")
+                return True
+            else:
+                time.sleep(0.1)
+            elapsed_time = time.time() - start_time
+            if elapsed_time > self.timeout:
+                return False
+
+    def release(self):
+        print(f"PID:{self.pid} released the lock.")
+        self.redis_conn.delete(self.lock_key)
+
+    def __enter__(self):
+        if not self.acquire():
+            raise RuntimeError("Could not acquire the lock.")
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.release()
+
+
+def worker(lock, process_id):
+    print(f"Process-{process_id} is trying to acquire the lock.")
+    with lock:
+        print(
+            f"Process-{process_id} acquired the lock. Performing some critical section operations."
+        )
+        time.sleep(2)  # 模擬一些關鍵區段操作
+    print(f"Process-{process_id} released the lock.")
+
+
+# Redis 連線設定
+redis_conn = redis.StrictRedis(host="localhost", port=6379, db=0)
+lock_key = "my_lock"
+redis_lock = RedisLock(redis_conn, lock_key)
+
+# 創建並啟動進程
+process1 = multiprocessing.Process(target=worker, args=(redis_lock, 1))
+process2 = multiprocessing.Process(target=worker, args=(redis_lock, 2))
+
+process1.start()
+process2.start()
+
+process1.join()
+process2.join()
 ```
 
