@@ -98,3 +98,33 @@ flutter --version
    這將在`build/app/outputs/flutter-apk/`目錄中生成一個APK文件，例如`app-release.apk`。
 
 現在，您已經成功生成了一個Flutter Hello World APK。您可以將這個APK安裝到Android設備上，或者在模擬器中運行。
+
+
+
+## 在Flutter中，您可以使用Android Studio或Visual Studio Code等集成開發環境（IDE）來設計和編輯您的UI
+
+這兩個IDE都提供了可視化的UI編輯器，使得設計和排版Flutter應用程序變得更加容易。
+
+以下是使用Android Studio的基本步驟：
+
+1. **打開Android Studio：** 啟動Android Studio。
+
+2. **打開您的Flutter項目：** 選擇您的Flutter項目文件夾，並打開它。
+
+3. **選擇`lib/main.dart`文件：** 通常，您的主應用程序代碼位於`lib/main.dart`中。選擇該文件以打開代碼編輯器。
+
+4. **切換到設計模式：** 在Android Studio中，有兩種模式，即代碼模式和設計模式。您可以在右下角的選項卡中切換這兩種模式。
+
+   ![Android Studio Design Mode](https://developer.android.com/studio/images/intro/layout-editor_2x.png)
+
+5. **使用可視化編輯器：** 在設計模式中，您可以使用可視化編輯器拖放UI元素，例如按鈕、文本框等，並調整它們的屬性。
+
+   ![Android Studio Visual Editor](https://developer.android.com/studio/images/intro/layout-editor-design_2x.png)
+
+6. **查看預覽：** 您可以在右上角的裝置預覽區域查看您的UI在不同設備上的預覽。
+
+   ![Android Studio Preview](https://developer.android.com/studio/images/intro/layout-editor-toolbar_2x.png)
+
+7. **保存並查看變更：** 完成設計後，請保存文件。您可以回到代碼模式查看生成的Dart代碼。然後，使用`flutter run`命令在模擬器或設備上運行應用程序，查看您的UI的實際外觀。
+
+類似的操作也適用於Visual Studio Code等其他Flutter IDE。這些IDE都提供了方便的工具，使得在Flutter應用程序中進行UI設計和開發變得更加直觀。
