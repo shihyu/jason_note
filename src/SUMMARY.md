@@ -7,6 +7,7 @@
   - [Wine](ubuntu/wine.md)
 - [Android](android/android.md)
   - [SDK install](android/install_sdk.md)
+  - [Flutter](android/flutter.md)
 - [Tools](tools/tools.md)
   - [asciinema 把終端操作錄製成 gif 動畫](tools/asciinema.md)
   - [Finmind](tools/finmind.md)
