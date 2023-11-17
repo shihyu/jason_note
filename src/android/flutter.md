@@ -1,5 +1,30 @@
 # Flutter
 
+## JDK（Java Development Kit）
+
+```sh
+wget https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz
+
+tar -xvf jdk-17_linux-x64_bin.tar.gz
+sudo mv jdk-17.0.7 /usr/lib/jvm/
+```
+
+設置Java環境變量 為了讓系統能夠找到 JDK，需要設置 `JAVA_HOME` 環境變量，並將其添加到 `PATH` 變量中。可以通過`vi ~/.bashrc`來編輯 `~/.bashrc` 或 `~/.profile` 文件來實現。打開文件並在文件末尾添加以下內容： 
+
+```sh
+export JAVA_HOME=/usr/lib/jvm/jdk-17.0.7
+export PATH=$JAVA_HOME/bin:$PATH
+```
+
+```sh
+dioxidecn@dioxidecn-virtual-machine:~$ java -version
+java version "17.0.7" 2023-04-18 LTS
+Java(TM) SE Runtime Environment (build 17.0.7+8-LTS-224)
+Java HotSpot(TM) 64-Bit Server VM (build 17.0.7+8-LTS-224, mixed mode, sharing)
+```
+
+
+
 在Ubuntu上進行Flutter開發，您需要安裝Android SDK。Flutter使用Android SDK來構建和運行Android應用程序。以下是安裝Android SDK的簡單步驟：
 
 **下載 Android SDK：** 您可以從[Android 開發者網站](https://developer.android.com/studio#command-tools)下載 Android SDK Command Line Tools。選擇壓縮檔案（ZIP）版本。
