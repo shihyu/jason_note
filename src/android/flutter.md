@@ -39,7 +39,8 @@ sudo tar -xvzf commandlinetools-linux-xxxxxx_latest.zip -C /usr/local/android-sd
 **設定環境變量：** 在您的`~/.bashrc`或`~/.zshrc`文件中添加以下環境變量：
 
 ```sh
-export ANDROID_SDK_ROOT=/usr/local/android-sdk
+export ANDROID_HOME="/media/shihyu/ssd/android-sdk"
+export ANDROID_SDK_ROOT="/usr/local/android-sdk"
 export PATH="$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/tools/bin"
 ```
 
@@ -48,7 +49,9 @@ export PATH="$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/
 **安裝SDK組件：** 運行以下命令來安裝所需的SDK組件：
 
 ```sh
-sdkmanager --install "platforms;android-30" "build-tools;30.0.3" "platform-tools"
+sdkmanager --sdk_root=/media/shihyu/ssd/android-sdk --install "platforms;android-30" "build-tools;30.0.3" "platform-tools"
+
+sdkmanager --sdk_root=/media/shihyu/ssd/android-sdk  --install "cmdline-tools;latest"
 ```
 
 這將安裝Android 30平臺、30.0.3版本的構建工具以及平臺工具。
@@ -74,6 +77,7 @@ export PATH="$PATH:`pwd`/flutter/bin"
 1. 運行以下命令來檢查Flutter的依賴項：
 
 ```sh
+flutter doctor --android-licenses
 flutter doctor
 ```
 
