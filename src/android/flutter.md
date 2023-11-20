@@ -130,30 +130,98 @@ flutter --version
 
 
 
-## 在Flutter中，您可以使用Android Studio或Visual Studio Code等集成開發環境（IDE）來設計和編輯您的UI
+---
 
-這兩個IDE都提供了可視化的UI編輯器，使得設計和排版Flutter應用程序變得更加容易。
+## Flutter 第一個介面
 
-以下是使用Android Studio的基本步驟：
 
-1. **打開Android Studio：** 啟動Android Studio。
 
-2. **打開您的Flutter項目：** 選擇您的Flutter項目文件夾，並打開它。
+## 專案建立
 
-3. **選擇`lib/main.dart`文件：** 通常，您的主應用程序代碼位於`lib/main.dart`中。選擇該文件以打開代碼編輯器。
+```bash
+# 使用 flutter cli 來建立
+$flutter create --platforms ios,android -e trade_app
+Signing iOS app for device deployment using developer identity: "Apple Development: Mao-Chin Hsu (XXXXXXXXXX)"
+Creating project trade_app...
+Resolving dependencies in trade_app...
+Got dependencies in trade_app.
+Wrote 73 files.
 
-4. **切換到設計模式：** 在Android Studio中，有兩種模式，即代碼模式和設計模式。您可以在右下角的選項卡中切換這兩種模式。
+All done!
+You can find general documentation for Flutter at: https://docs.flutter.dev/
+Detailed API documentation is available at: https://api.flutter.dev/
+If you prefer video documentation, consider: https://www.youtube.com/c/flutterdev
 
-   ![Android Studio Design Mode](https://developer.android.com/studio/images/intro/layout-editor_2x.png)
+In order to run your empty application, type:
 
-5. **使用可視化編輯器：** 在設計模式中，您可以使用可視化編輯器拖放UI元素，例如按鈕、文本框等，並調整它們的屬性。
+  $ cd trade_app
+  $ flutter run
 
-   ![Android Studio Visual Editor](https://developer.android.com/studio/images/intro/layout-editor-design_2x.png)
+Your empty application code is in trade_app/lib/main.dart.
+```
 
-6. **查看預覽：** 您可以在右上角的裝置預覽區域查看您的UI在不同設備上的預覽。
+這邊我先將專案命名為 `trade_app`
+也要注意 `Flutter` 的專案名稱是遵循 `Dart`
 
-   ![Android Studio Preview](https://developer.android.com/studio/images/intro/layout-editor-toolbar_2x.png)
+use `lowercase_with_underscores` for package names.
 
-7. **保存並查看變更：** 完成設計後，請保存文件。您可以回到代碼模式查看生成的Dart代碼。然後，使用`flutter run`命令在模擬器或設備上運行應用程序，查看您的UI的實際外觀。
+Package names should be all lowercase, with underscores to separate words, `just_like_this`. Use only basic Latin letters and Arabic digits: [a-z0-9_]. Also, make sure the name is a valid Dart identifier – that it doesn’t start with digits and isn’t a reserved word.
 
-類似的操作也適用於Visual Studio Code等其他Flutter IDE。這些IDE都提供了方便的工具，使得在Flutter應用程序中進行UI設計和開發變得更加直觀。
+Dart package 命名規則
+
+因為我已經有訂閱 [Apple Developer](https://developer.apple.com/)
+所以會看到 Flutter 已經自動把專案內 iOS 的部分帶入我的開發者信息
+
+### 專案結構
+
+```bash
+.
+├── README.md
+├── analysis_options.yaml
+├── android
+│   ├── app
+│   ├── build.gradle
+│   ├── gradle
+│   ├── gradle.properties
+│   ├── gradlew
+│   ├── gradlew.bat
+│   ├── local.properties
+│   ├── settings.gradle
+│   └── trade_app_android.iml
+├── ios
+│   ├── Flutter
+│   ├── Runner
+│   ├── Runner.xcodeproj
+│   ├── Runner.xcworkspace
+│   └── RunnerTests
+├── lib
+│   └── main.dart
+├── pubspec.lock
+├── pubspec.yaml
+└── trade_app.iml
+```
+
+這邊說明一下剛剛下的創建命令
+如果沒有下 `--platforms ios,android`
+這樣專案內就不會出現 `windows, linux, macOS` 的資料夾
+各位也可以視需求要不要加
+我自己還是習慣 `Flutter` 是在行動裝置上的
+
+至於 `-e` 就是不會出現範例 `code`，以及一大堆的註解說明
+一樣，這看個人，我是覺得每次都要刪一大堆東西很煩
+
+## 啟動模擬器
+
+我這邊會先以 iOS 為主
+畢竟 `Flutter` 就是以能夠同一份 `Code` 做跨平台編譯出名
+
+```bash
+open -a Simulator
+```
+
+![IMG](images/【鐵人賽】DAY-10-Flutter-第一個介面-01.png)
+
+然後就可以在專案資料夾試著先跑起來
+應該要是最基本的 `Hello World!`
+
+![IMG](images/【鐵人賽】DAY-10-Flutter-第一個介面-02.png)
