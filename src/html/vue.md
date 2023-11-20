@@ -2,7 +2,7 @@
 
 Sure, I'll provide you with a step-by-step guide assuming you're using a standard Vue CLI setup. If you don't have Vue CLI installed, you can install it globally using:
 
-```
+```sh
 npm install -g @vue/cli
 ```
 
@@ -10,7 +10,7 @@ Now, let's assume you have a Vue CLI project set up or you want to create a new 
 
 1. **Create a new Vue CLI project:**
 
-   ```
+   ```sh
    vue create my-vue-trading-app
    ```
 
@@ -18,13 +18,13 @@ Now, let's assume you have a Vue CLI project set up or you want to create a new 
 
 2. **Navigate to your project folder:**
 
-   ```
+   ```sh
    cd my-vue-trading-app
    ```
 
 3. **Install `vue-tradingview-widgets`:**
 
-   ```
+   ```sh
    npm install vue-tradingview-widgets
    ```
 
@@ -68,5 +68,5 @@ Now, let's assume you have a Vue CLI project set up or you want to create a new 
 5. **Run your Vue.js application:**
 
    ```sh
-npm run serve
+   npm run serve
    ```
