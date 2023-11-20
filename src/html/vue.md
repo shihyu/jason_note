@@ -65,6 +65,37 @@ Now, let's assume you have a Vue CLI project set up or you want to create a new 
    </style>
    ```
 
+   ```html
+   <template>
+     <div id="app">
+       <Chart />
+     </div>
+   </template>
+   
+   <script>
+   import { defineComponent } from 'vue';
+   import { Chart } from 'vue-tradingview-widgets';
+   
+   export default defineComponent({
+     name: 'App',
+     components: {
+       Chart,
+     },
+   });
+   </script>
+   
+   <style>
+   #app {
+     font-family: Avenir, Helvetica, Arial, sans-serif;
+     text-align: center;
+     color: #2c3e50;
+     margin-top: 60px;
+   }
+   </style>
+   ```
+
+   
+
 5. **Run your Vue.js application:**
 
    ```sh
