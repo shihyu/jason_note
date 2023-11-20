@@ -70,3 +70,12 @@ Now, let's assume you have a Vue CLI project set up or you want to create a new 
    ```sh
    npm run serve
    ```
+
+## Network
+
+```sh
+npm run serve -- --port 8081
+sudo ufw allow 8081
+sudo lsof -i :8081
+```
+
