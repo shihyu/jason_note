@@ -68,6 +68,5 @@ Now, let's assume you have a Vue CLI project set up or you want to create a new 
 5. **Run your Vue.js application:**
 
    ```sh
-   bashCopy code
-   npm run serve
+npm run serve
    ```
