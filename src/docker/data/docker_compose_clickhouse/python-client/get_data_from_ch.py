@@ -1,5 +1,6 @@
 import clickhouse_driver
 import pandas as pd
+import pickle
 
 
 def get_data(client, sql):
@@ -36,11 +37,21 @@ client.execute("INSERT INTO test_table VALUES", df.to_dict("records"))
 result = client.execute("SELECT * FROM test_table")
 print(result)
 
-print(
-    get_data(
+df = get_data(
         client,
         # "SELECT * FROM CRYPTO.Bitopro_Orderbook WHERE date > '2022-10-27' AND date < '2022-10-28 10:39:31' ORDER BY date ASC",
         "SELECT * FROM CRYPTO.BinanceOrderbookPartition_simplifiedFields WHERE date > '2023-08-15 15:10:17'",
         # "SELECT * FROM CRYPTO.Bitopro_Orderbook",
     )
-)
+
+# 保存 DataFrame 到 pickle 文件
+with open('dataframe.pkl', 'wb') as file:
+    pickle.dump(df, file)
+
+# 从 pickle 文件加载 DataFrame
+with open('dataframe.pkl', 'rb') as file:
+    loaded_df = pickle.load(file)
+
+# 打印加载的 DataFrame
+print("Loaded DataFrame:")
+print(loaded_df)
