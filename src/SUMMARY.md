@@ -33,6 +33,7 @@
   - [CAS](c++/CAS.md)
   - [HFT](c++/HFT.md)
   - [高性能程式設計實戰](c++/高性能程式設計實戰.md)
+  - [如何高效地儲存並操作超大規模](c++/如何高效地儲存並操作超大規模.md)
 - [Mojo](mojo/mojo.md)
 - [RISC-V](riscv/riscv.md)
   - [QEMU上運行RISV-V Linux](riscv/qemu_riscv_linux.md)
