@@ -32,6 +32,7 @@
   - [Move](c++/move.md)
   - [CAS](c++/CAS.md)
   - [HFT](c++/HFT.md)
+  - [高性能程式設計實戰](c++/高性能程式設計實戰.md)
 - [Mojo](mojo/mojo.md)
 - [RISC-V](riscv/riscv.md)
   - [QEMU上運行RISV-V Linux](riscv/qemu_riscv_linux.md)
