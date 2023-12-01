@@ -460,3 +460,35 @@ Rust 的生命週期跟所有權，兩者在其語言中的資源管理機制上
 前面有提到 Rust 的型別大多數其實都可以自動判別，而生命週期其實也一樣，都是可以自動推導出來。不過當生命週期以不同方式互相牽連的狀態下，開發者就要自行設定，這也跟型別非常複雜的狀態下，開發者就要自行設定型別一樣。
 
 以上就是 Rust 的生命週期的基本概念，希望大家對 Rust 又更了解了一些。
+
+
+
+---
+
+```rust
+fn example<'a, 'b>(x: &'a str, y: &'b str) -> &'a str
+where 'b: 'a // 'b lives at least as long as 'a  添加了 where 'b: 'a 約束，確保 'b 的生命週期至少與 'a 一樣長
+{
+    if x.len() > y.len() {
+        x
+    } else {
+        y
+    }
+}
+
+fn main() {
+    let x = String::from("hello");
+    let y = String::from("world");
+
+    let x_ref: &str = &x;
+    let y_ref: &str = &y;
+
+    let result = example(x_ref, y_ref);
+    println!("Result: {}", result);
+
+    println!("x content address: {:p}", x.as_ptr());
+    println!("y content address: {:p}", y.as_ptr());
+    println!("result content address: {:p}", result.as_ptr());
+}
+```
+
