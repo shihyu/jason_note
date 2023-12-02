@@ -887,3 +887,144 @@ fn main() {
 ### 結論：
 
 總體而言，泛型是一種更通用的編程概念，用於創建可以處理多種類型的代碼，而 trait 則用於描述類型之間的共同特徵，讓不同的類型可以共享某種行為。在實踐中，泛型和 trait 經常一起使用，使得代碼更加靈活和可擴展。
+
+
+
+## Self 與 self 差異
+
+`Self` 是一個特殊的關鍵字，通常用於表示實現 trait 的類型。它表示實際類型，即實現 trait 的類型本身。使用 `Self` 的時機主要包括：
+
+1. **返回類型聲明：** 當你在 trait 的方法中聲明返回類型時，可以使用 `Self` 來表示實現該 trait 的具體類型。這允許實現方在方法中返回其實際類型。
+
+   ```rust
+   trait ExampleTrait {
+       fn example_method(&self) -> Self;
+   }
+   ```
+
+2. **關聯類型：** `Self` 也可用於關聯類型，這是一種在 trait 中聲明類型並在實現中具體化的方式。
+
+   ```rust
+   trait ExampleTrait {
+       type Item;
+       
+       fn get_item(&self) -> Self::Item;
+   }
+   ```
+
+總體而言，`Self` 用於在 trait 中表示實現該 trait 的類型，並在需要指代實際類型的地方使用。
+
+`type` 是一个关键字，用于声明与trait关联的关联类型。关联类型允许trait中使用的类型在实现trait时具体化。在你的例子中，`type Item;` 就是在trait `ExampleTrait` 中声明了一个关联类型 `Item`。
+
+```rust
+trait ExampleTrait {
+    type Item;  // 关联类型声明
+    
+    fn create_instance() -> Self;  // 使用Self作为返回类型
+    fn get_item(&self) -> Self::Item;  // 使用Self::Item作为返回类型
+}
+
+struct ExampleType;
+
+impl ExampleTrait for ExampleType {
+    type Item = i32;  // 具体化关联类型
+    
+    fn create_instance() -> Self {
+        ExampleType  // 返回实现trait的具体类型
+    }
+
+    fn get_item(&self) -> Self::Item {
+        42  // 在实现中返回关联类型的实例
+    }
+}
+
+fn main() {
+    let instance = ExampleType::create_instance();
+    let item = instance.get_item();
+    
+    println!("Item: {}", item);
+}
+```
+
+
+
+## python 繼承 用 Rust 實作
+
+```python
+# 定义父类
+class Animal:
+    def __init__(self, name):
+        self.name = name
+
+    def speak(self):
+        pass  # 父类中的方法，子类将覆盖它
+
+# 定义子类，继承自 Animal
+class Dog(Animal):
+    def speak(self):
+        return f"{self.name} says Woof!"
+
+# 定义另一个子类，也继承自 Animal
+class Cat(Animal):
+    def speak(self):
+        return f"{self.name} says Meow!"
+
+# 创建实例并调用方法
+dog_instance = Dog("Buddy")
+cat_instance = Cat("Whiskers")
+
+print(dog_instance.speak())  # 输出: Buddy says Woof!
+print(cat_instance.speak())  # 输出: Whiskers says Meow!
+```
+
+```rust
+// 定义 trait
+trait Animal {
+    fn new(name: &str) -> Self;
+    fn speak(&self) -> String;
+}
+
+// 定义结构体实现 trait
+struct Dog {
+    name: String,
+}
+
+impl Animal for Dog {
+    fn new(name: &str) -> Self {
+        Dog {
+            name: name.to_string(),
+        }
+    }
+
+    fn speak(&self) -> String {
+        format!("{} says Woof!", self.name)
+    }
+}
+
+// 定义另一个结构体实现 trait
+struct Cat {
+    name: String,
+}
+
+impl Animal for Cat {
+    fn new(name: &str) -> Self {
+        Cat {
+            name: name.to_string(),
+        }
+    }
+
+    fn speak(&self) -> String {
+        format!("{} says Meow!", self.name)
+    }
+}
+
+fn main() {
+    // 创建实例并调用方法
+    let dog_instance = Dog::new("Buddy");
+    let cat_instance = Cat::new("Whiskers");
+
+    println!("{}", dog_instance.speak()); // 输出: Buddy says Woof!
+    println!("{}", cat_instance.speak()); // 输出: Whiskers says Meow!
+}
+```
+
