@@ -1028,3 +1028,89 @@ fn main() {
 }
 ```
 
+
+
+### enum 跟 impl
+
+在這個例子中，我們使用了列舉 `Animal` 來表示不同類型的動物（狗和貓）。每個動物類型都有一個 `name` 欄位。我們通過在列舉上實現方法來模擬建構函式（`new_dog` 和 `new_cat`）和 `speak` 方法。在 `main` 函數中，我們建立了兩個不同類型的動物實例並呼叫了它們的 `speak` 方法。
+
+```rust
+// 定义一个枚举，表示不同类型的动物
+enum Animal {
+    Dog { name: String },
+    Cat { name: String },
+}
+
+// 枚举上的方法
+impl Animal {
+    // 构造函数
+    fn new_dog(name: &str) -> Self {
+        Animal::Dog { name: name.to_string() }
+    }
+
+    fn new_cat(name: &str) -> Self {
+        Animal::Cat { name: name.to_string() }
+    }
+
+    // 说话的方法
+    fn speak(&self) -> String {
+        match self {
+            Animal::Dog { name } => format!("{} says Woof!", name),
+            Animal::Cat { name } => format!("{} says Meow!", name),
+        }
+    }
+}
+
+fn main() {
+    // 创建实例并调用方法
+    let dog_instance = Animal::new_dog("Buddy");
+    let cat_instance = Animal::new_cat("Whiskers");
+
+    println!("{}", dog_instance.speak()); // 输出: Buddy says Woof!
+    println!("{}", cat_instance.speak()); // 输出: Whiskers says Meow!
+}
+```
+
+
+
+### enum 跟 impl
+
+在這個例子中，我們使用了 `struct` 定義了 `Animal` 結構體，其中包含了 `kind` 表示動物的種類（"Dog" 或 "Cat"），以及 `name` 表示動物的名字。建構函式 `new` 用於建立新的 `Animal` 實例，而 `speak` 方法根據動物的種類輸出不同的聲音。在 `main` 函數中，我們建立了兩個不同類型的動物實例並呼叫了它們的 `speak` 方法。
+
+```rust
+// 定义结构体
+struct Animal {
+    kind: String,
+    name: String,
+}
+
+// Animal 结构体的方法
+impl Animal {
+    // 构造函数
+    fn new(kind: &str, name: &str) -> Self {
+        Animal {
+            kind: kind.to_string(),
+            name: name.to_string(),
+        }
+    }
+
+    // 说话的方法
+    fn speak(&self) -> String {
+        match self.kind.as_str() {
+            "Dog" => format!("{} says Woof!", self.name),
+            "Cat" => format!("{} says Meow!", self.name),
+            _ => format!("Unknown animal"),
+        }
+    }
+}
+
+fn main() {
+    // 创建实例并调用方法
+    let dog_instance = Animal::new("Dog", "Buddy");
+    let cat_instance = Animal::new("Cat", "Whiskers");
+
+    println!("{}", dog_instance.speak()); // 输出: Buddy says Woof!
+    println!("{}", cat_instance.speak()); // 输出: Whiskers says Meow!
+}
+```
+
