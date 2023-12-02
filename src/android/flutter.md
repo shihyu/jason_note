@@ -213,7 +213,7 @@ Dart package 命名規則
 ## 啟動模擬器
 
 我這邊會先以 iOS 為主
-畢竟 `Flutter` 就是以能夠同一份 `Code` 做跨平台編譯出名
+畢竟 `Flutter` 就是以能夠同一份 `Code` 做跨平臺編譯出名
 
 ```bash
 open -a Simulator

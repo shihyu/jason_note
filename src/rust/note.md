@@ -621,7 +621,7 @@ fn main() {
 
 在Rust中，迭代器具有`map`方法，它通過將函數應用於每個元素來轉換迭代器中的每個項目。這裡是一個簡單的例子：
 
-在此示例中，使用`map`方法創建了一個新的迭代器，其中每個元素都加倍。然後使用`collect`方法將迭代器轉換回向量。
+在此示例中，使用`map`方法創建了一個新的迭代器，其中每個元素都加倍。然後使用`collect`方法將迭代器轉換迴向量。
 
 ```rust
 fn main() {
@@ -646,11 +646,11 @@ fn main() {
 閉包允許你編寫更為簡潔、直觀的程式碼。相比於定義一個完整的函數，閉包可以直接在需要時聲明和使用，使程式碼更具靈活性。
 
 ```rust
-// 使用闭包
+// 使用閉包
 let add = |x, y| x + y;
 println!("Sum: {}", add(3, 4));
 
-// 相同的功能使用函数
+// 相同的功能使用函數
 fn add_function(x: i32, y: i32) -> i32 {
     x + y
 }
@@ -674,11 +674,11 @@ closure();
 ```rust
 let data = vec![1, 2, 3];
 let closure = move || {
-    // data 所有权已转移到闭包
+    // data 所有權已轉移到閉包
     println!("{:?}", data);
 };
 closure();
-// 下面的行将会引发编译错误，因为 data 所有权已转移
+// 下面的行將會引發編譯錯誤，因為 data 所有權已轉移
 // println!("{:?}", data);
 ```
 
@@ -762,7 +762,7 @@ fn main() {
 
 trait是一種定義共享行為的機制，它類似於其他語言中的接口（interface）。trait可以用於定義方法簽名，然後類型實現這些trait，以提供對這些方法的具體實現。
 
-以下是一個簡單的示例，演示了如何定義trait和實現它：
+以下是一個簡單的示例，演示瞭如何定義trait和實現它：
 
 ```rust
 // 定義一個名為 Printable 的 trait
@@ -914,27 +914,27 @@ fn main() {
 
 總體而言，`Self` 用於在 trait 中表示實現該 trait 的類型，並在需要指代實際類型的地方使用。
 
-`type` 是一个关键字，用于声明与trait关联的关联类型。关联类型允许trait中使用的类型在实现trait时具体化。在你的例子中，`type Item;` 就是在trait `ExampleTrait` 中声明了一个关联类型 `Item`。
+`type` 是一個關鍵字，用於聲明與trait關聯的關聯類型。關聯類型允許trait中使用的類型在實現trait時具體化。在你的例子中，`type Item;` 就是在trait `ExampleTrait` 中聲明瞭一個關聯類型 `Item`。
 
 ```rust
 trait ExampleTrait {
-    type Item;  // 关联类型声明
+    type Item;  // 關聯類型聲明
     
-    fn create_instance() -> Self;  // 使用Self作为返回类型
-    fn get_item(&self) -> Self::Item;  // 使用Self::Item作为返回类型
+    fn create_instance() -> Self;  // 使用Self作為返回類型
+    fn get_item(&self) -> Self::Item;  // 使用Self::Item作為返回類型
 }
 
 struct ExampleType;
 
 impl ExampleTrait for ExampleType {
-    type Item = i32;  // 具体化关联类型
+    type Item = i32;  // 具體化關聯類型
     
     fn create_instance() -> Self {
-        ExampleType  // 返回实现trait的具体类型
+        ExampleType  // 返回實現trait的具體類型
     }
 
     fn get_item(&self) -> Self::Item {
-        42  // 在实现中返回关联类型的实例
+        42  // 在實現中返回關聯類型的實例
     }
 }
 
@@ -951,40 +951,40 @@ fn main() {
 ## python 繼承 用 Rust 實作
 
 ```python
-# 定义父类
+# 定義父類
 class Animal:
     def __init__(self, name):
         self.name = name
 
     def speak(self):
-        pass  # 父类中的方法，子类将覆盖它
+        pass  # 父類中的方法，子類將覆蓋它
 
-# 定义子类，继承自 Animal
+# 定義子類，繼承自 Animal
 class Dog(Animal):
     def speak(self):
         return f"{self.name} says Woof!"
 
-# 定义另一个子类，也继承自 Animal
+# 定義另一個子類，也繼承自 Animal
 class Cat(Animal):
     def speak(self):
         return f"{self.name} says Meow!"
 
-# 创建实例并调用方法
+# 創建實例並調用方法
 dog_instance = Dog("Buddy")
 cat_instance = Cat("Whiskers")
 
-print(dog_instance.speak())  # 输出: Buddy says Woof!
-print(cat_instance.speak())  # 输出: Whiskers says Meow!
+print(dog_instance.speak())  # 輸出: Buddy says Woof!
+print(cat_instance.speak())  # 輸出: Whiskers says Meow!
 ```
 
 ```rust
-// 定义 trait
+// 定義 trait
 trait Animal {
     fn new(name: &str) -> Self;
     fn speak(&self) -> String;
 }
 
-// 定义结构体实现 trait
+// 定義結構體實現 trait
 struct Dog {
     name: String,
 }
@@ -1001,7 +1001,7 @@ impl Animal for Dog {
     }
 }
 
-// 定义另一个结构体实现 trait
+// 定義另一個結構體實現 trait
 struct Cat {
     name: String,
 }
@@ -1019,12 +1019,12 @@ impl Animal for Cat {
 }
 
 fn main() {
-    // 创建实例并调用方法
+    // 創建實例並調用方法
     let dog_instance = Dog::new("Buddy");
     let cat_instance = Cat::new("Whiskers");
 
-    println!("{}", dog_instance.speak()); // 输出: Buddy says Woof!
-    println!("{}", cat_instance.speak()); // 输出: Whiskers says Meow!
+    println!("{}", dog_instance.speak()); // 輸出: Buddy says Woof!
+    println!("{}", cat_instance.speak()); // 輸出: Whiskers says Meow!
 }
 ```
 
@@ -1035,15 +1035,15 @@ fn main() {
 在這個例子中，我們使用了列舉 `Animal` 來表示不同類型的動物（狗和貓）。每個動物類型都有一個 `name` 欄位。我們通過在列舉上實現方法來模擬建構函式（`new_dog` 和 `new_cat`）和 `speak` 方法。在 `main` 函數中，我們建立了兩個不同類型的動物實例並呼叫了它們的 `speak` 方法。
 
 ```rust
-// 定义一个枚举，表示不同类型的动物
+// 定義一個枚舉，表示不同類型的動物
 enum Animal {
     Dog { name: String },
     Cat { name: String },
 }
 
-// 枚举上的方法
+// 枚舉上的方法
 impl Animal {
-    // 构造函数
+    // 構造函數
     fn new_dog(name: &str) -> Self {
         Animal::Dog { name: name.to_string() }
     }
@@ -1052,7 +1052,7 @@ impl Animal {
         Animal::Cat { name: name.to_string() }
     }
 
-    // 说话的方法
+    // 說話的方法
     fn speak(&self) -> String {
         match self {
             Animal::Dog { name } => format!("{} says Woof!", name),
@@ -1062,12 +1062,12 @@ impl Animal {
 }
 
 fn main() {
-    // 创建实例并调用方法
+    // 創建實例並調用方法
     let dog_instance = Animal::new_dog("Buddy");
     let cat_instance = Animal::new_cat("Whiskers");
 
-    println!("{}", dog_instance.speak()); // 输出: Buddy says Woof!
-    println!("{}", cat_instance.speak()); // 输出: Whiskers says Meow!
+    println!("{}", dog_instance.speak()); // 輸出: Buddy says Woof!
+    println!("{}", cat_instance.speak()); // 輸出: Whiskers says Meow!
 }
 ```
 
@@ -1078,15 +1078,15 @@ fn main() {
 在這個例子中，我們使用了 `struct` 定義了 `Animal` 結構體，其中包含了 `kind` 表示動物的種類（"Dog" 或 "Cat"），以及 `name` 表示動物的名字。建構函式 `new` 用於建立新的 `Animal` 實例，而 `speak` 方法根據動物的種類輸出不同的聲音。在 `main` 函數中，我們建立了兩個不同類型的動物實例並呼叫了它們的 `speak` 方法。
 
 ```rust
-// 定义结构体
+// 定義結構體
 struct Animal {
     kind: String,
     name: String,
 }
 
-// Animal 结构体的方法
+// Animal 結構體的方法
 impl Animal {
-    // 构造函数
+    // 構造函數
     fn new(kind: &str, name: &str) -> Self {
         Animal {
             kind: kind.to_string(),
@@ -1094,7 +1094,7 @@ impl Animal {
         }
     }
 
-    // 说话的方法
+    // 說話的方法
     fn speak(&self) -> String {
         match self.kind.as_str() {
             "Dog" => format!("{} says Woof!", self.name),
@@ -1105,35 +1105,35 @@ impl Animal {
 }
 
 fn main() {
-    // 创建实例并调用方法
+    // 創建實例並調用方法
     let dog_instance = Animal::new("Dog", "Buddy");
     let cat_instance = Animal::new("Cat", "Whiskers");
 
-    println!("{}", dog_instance.speak()); // 输出: Buddy says Woof!
-    println!("{}", cat_instance.speak()); // 输出: Whiskers says Meow!
+    println!("{}", dog_instance.speak()); // 輸出: Buddy says Woof!
+    println!("{}", cat_instance.speak()); // 輸出: Whiskers says Meow!
 }
 ```
 
 ```rust
-// 定义结构体
+// 定義結構體
 struct Point {
     x: f64,
     y: f64,
 }
 
-// 在结构体上实现方法
+// 在結構體上實現方法
 impl Point {
-    // 构造函数
+    // 構造函數
     fn new(x: f64, y: f64) -> Point {
         Point { x, y }
     }
 
-    // 计算两点之间的距离
+    // 計算兩點之間的距離
     fn distance(&self, other: &Point) -> f64 {
         ((self.x - other.x).powi(2) + (self.y - other.y).powi(2)).sqrt()
     }
 
-    // 移动点的位置
+    // 移動點的位置
     fn translate(&mut self, dx: f64, dy: f64) {
         self.x += dx;
         self.y += dy;
@@ -1141,11 +1141,11 @@ impl Point {
 }
 
 fn main() {
-    // 创建 Point 的实例
+    // 創建 Point 的實例
     let point1 = Point::new(0.0, 0.0);
     let point2 = Point::new(3.0, 4.0);
 
-    // 调用 Point 上的方法
+    // 調用 Point 上的方法
     println!("Distance between points: {}", point1.distance(&point2));
 
     let mut point3 = Point::new(1.0, 1.0);
