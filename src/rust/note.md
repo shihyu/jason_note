@@ -543,4 +543,216 @@ fn main() {
   }
   ```
   
-  
+
+
+
+### enum 用法
+
+```rust
+#[allow(clippy::all)]
+enum WebsocketAPI {
+    Default,
+    MultiStream,
+    Custom(String),
+}
+
+fn handle_websocket_api(api: WebsocketAPI) {
+    match api {
+        WebsocketAPI::Default => {
+            println!("Handling default WebSocket API");
+            // Your code for the default case
+        }
+        WebsocketAPI::MultiStream => {
+            println!("Handling multi-stream WebSocket API");
+            // Your code for the multi-stream case
+        }
+        WebsocketAPI::Custom(custom_api) => {
+            println!("Handling custom WebSocket API: {}", custom_api);
+            // Your code for the custom case, using the custom API string
+        }
+    }
+}
+
+fn main() {
+    let default_api = WebsocketAPI::Default;
+    let multi_stream_api = WebsocketAPI::MultiStream;
+    let custom_api = WebsocketAPI::Custom(String::from("wss://custom.api"));
+
+    handle_websocket_api(default_api);
+    handle_websocket_api(multi_stream_api);
+    handle_websocket_api(custom_api);
+}
+
+```
+
+
+
+### HashMap 用法：
+
+`HashMap`是一種鍵-值對的集合，其中每個鍵必須是唯一的。它是Rust標準庫的一部分，用於實現字典或關聯數組。
+
+這是一個使用`HashMap`的例子：
+
+```rust
+use std::collections::HashMap;
+
+fn main() {
+    // Creating a new HashMap
+    let mut my_map = HashMap::new();
+
+    // Inserting key-value pairs
+    my_map.insert("key1", "value1");
+    my_map.insert("key2", "value2");
+    my_map.insert("key3", "value3");
+
+    // Accessing values using keys
+    if let Some(value) = my_map.get("key2") {
+        println!("Value for key2: {}", value);
+    }
+
+    // Iterating over key-value pairs
+    for (key, value) in &my_map {
+        println!("Key: {}, Value: {}", key, value);
+    }
+}
+```
+
+### 迭代器的 `map` 方法：
+
+在Rust中，迭代器具有`map`方法，它通過將函數應用於每個元素來轉換迭代器中的每個項目。這裡是一個簡單的例子：
+
+在此示例中，使用`map`方法創建了一個新的迭代器，其中每個元素都加倍。然後使用`collect`方法將迭代器轉換回向量。
+
+```rust
+fn main() {
+    let numbers = vec![1, 2, 3, 4, 5];
+
+    // Using map to double each number
+    let doubled_numbers: Vec<_> = numbers.into_iter().map(|x| x * 2).collect();
+
+    println!("Original numbers: {:?}", numbers);
+    println!("Doubled numbers: {:?}", doubled_numbers);
+}
+```
+
+
+
+### 閉包（closures）
+
+是一種特殊的函數類型，它可以捕獲其環境中的變數。閉包具有以下幾個用法和優勢：
+
+### 簡潔性和靈活性：
+
+閉包允許你編寫更為簡潔、直觀的程式碼。相比於定義一個完整的函數，閉包可以直接在需要時聲明和使用，使程式碼更具靈活性。
+
+```rust
+// 使用闭包
+let add = |x, y| x + y;
+println!("Sum: {}", add(3, 4));
+
+// 相同的功能使用函数
+fn add_function(x: i32, y: i32) -> i32 {
+    x + y
+}
+println!("Sum: {}", add_function(3, 4));
+```
+
+### 捕獲環境變數：
+
+閉包可以捕獲其所在範疇中的變數，可以是引用（`&`）或移動（`move`）。這允許你在閉包內部使用外部變數，而不需要顯式傳遞參數。
+
+```rust
+let x = 10;
+let closure = || println!("x: {}", x);
+closure();
+```
+
+### **所有權轉移：**
+
+使用 `move` 關鍵字，閉包可以將其環境中的所有權轉移到閉包內，從而實現所有權的轉移。這對於將資料傳遞給執行緒或其他閉包非常有用。
+
+```rust
+let data = vec![1, 2, 3];
+let closure = move || {
+    // data 所有权已转移到闭包
+    println!("{:?}", data);
+};
+closure();
+// 下面的行将会引发编译错误，因为 data 所有权已转移
+// println!("{:?}", data);
+```
+
+### **函數式程式設計：**
+
+閉包使Rust更加適合函數式程式設計風格。你可以將閉包傳遞給其他函數，或者將其作為迭代器的參數。
+
+```rust
+let numbers = vec![1, 2, 3, 4, 5];
+let squared: Vec<_> = numbers.into_iter().map(|x| x * x).collect();
+println!("{:?}", squared);
+```
+
+### **泛型和trait的使用：**
+
+閉包可以與泛型和trait一起使用，使其更加通用和靈活。你可以定義一個接受閉包作為參數的泛型函數，以處理不同類型的操作。
+
+```rust
+fn perform_operation<T, U, F>(value: T, operation: F) -> U
+where
+    F: Fn(T) -> U,
+{
+    operation(value)
+}
+
+fn main() {
+    // 對整數進行操作
+    let result_int = perform_operation(5, |x| x * 2);
+    println!("Result for integer: {}", result_int);
+
+    // 對浮點數進行操作
+    let result_float = perform_operation(3.5, |x| x * 2.0);
+    println!("Result for float: {}", result_float);
+
+    // 對字串進行操作
+    let result_string = perform_operation("Hello", |x| format!("{}!", x));
+    println!("Result for string: {}", result_string);
+}
+```
+
+1. `fn perform_operation<T, U, F>(value: T, operation: F) -> U`: 這是一個泛型函數的聲明。它有三個泛型參數，分別為 `T`、`U` 和 `F`。這表示這個函數可以接受不同類型的值（`T`）和返回不同類型的結果（`U`），同時還接受一個泛型的函數或閉包（`F`）。
+2. `where F: Fn(T) -> U`: 這是一個 trait bound（特徵約束），它規定了泛型 `F` 必須實現 `Fn(T) -> U` 這個特徵。這表示 `F` 必須是一個接受 `T` 類型參數的函數，並返回 `U` 類型的值。換句話說，`operation` 參數必須是一個可以接受 `value` 類型的函數或閉包。
+3. `{ operation(value) }`: 函數體中的這一行是具體的實現。它調用了傳入的 `operation` 函數或閉包，並將 `value` 作為參數傳遞給它。整個函數最終返回 `operation` 的結果，這個結果的類型是 `U`。
+
+這段程式碼的目的是創建一個通用的函數，可以將一個值和一個函數或閉包傳遞給它，並返回該函數或閉包對該值的操作結果。通過使用泛型，這個函數可以處理不同類型的輸入和輸出。
+
+`T`、`U` 和 `F` 只是慣例上常用的泛型參數名稱，實際上你可以使用任何有效的識別符號作為泛型參數名稱。這些字母通常代表不同的概念：
+
+- `T`：通常表示 "Type"，表示泛型的類型參數。
+- `U`：通常用於表示第二個泛型類型參數。
+- `F`：通常表示 "Function"，用於表示接受或返回函數的泛型參數。
+
+這些僅僅是慣例，而不是強制的規則。當你閱讀其他人的代碼或寫自己的代碼時，習慣上使用這樣的字母可以讓代碼更容易閱讀和理解。
+
+```rust
+fn perform_operation<Input, Output, Func>(value: Input, operation: Func) -> Output
+where
+    Func: Fn(Input) -> Output,
+{
+    operation(value)
+}
+
+fn main() {
+    // 對整數進行操作
+    let result_int = perform_operation(5, |x| x * 2);
+    println!("Result for integer: {}", result_int);
+
+    // 對浮點數進行操作
+    let result_float = perform_operation(3.5, |x| x * 2.0);
+    println!("Result for float: {}", result_float);
+
+    // 對字串進行操作
+    let result_string = perform_operation("Hello", |x| format!("{}!", x));
+    println!("Result for string: {}", result_string);
+}
+```
+
