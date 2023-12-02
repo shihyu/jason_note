@@ -1073,7 +1073,7 @@ fn main() {
 
 
 
-### enum 跟 impl
+### struct 跟 impl
 
 在這個例子中，我們使用了 `struct` 定義了 `Animal` 結構體，其中包含了 `kind` 表示動物的種類（"Dog" 或 "Cat"），以及 `name` 表示動物的名字。建構函式 `new` 用於建立新的 `Animal` 實例，而 `speak` 方法根據動物的種類輸出不同的聲音。在 `main` 函數中，我們建立了兩個不同類型的動物實例並呼叫了它們的 `speak` 方法。
 
@@ -1111,6 +1111,46 @@ fn main() {
 
     println!("{}", dog_instance.speak()); // 输出: Buddy says Woof!
     println!("{}", cat_instance.speak()); // 输出: Whiskers says Meow!
+}
+```
+
+```rust
+// 定义结构体
+struct Point {
+    x: f64,
+    y: f64,
+}
+
+// 在结构体上实现方法
+impl Point {
+    // 构造函数
+    fn new(x: f64, y: f64) -> Point {
+        Point { x, y }
+    }
+
+    // 计算两点之间的距离
+    fn distance(&self, other: &Point) -> f64 {
+        ((self.x - other.x).powi(2) + (self.y - other.y).powi(2)).sqrt()
+    }
+
+    // 移动点的位置
+    fn translate(&mut self, dx: f64, dy: f64) {
+        self.x += dx;
+        self.y += dy;
+    }
+}
+
+fn main() {
+    // 创建 Point 的实例
+    let point1 = Point::new(0.0, 0.0);
+    let point2 = Point::new(3.0, 4.0);
+
+    // 调用 Point 上的方法
+    println!("Distance between points: {}", point1.distance(&point2));
+
+    let mut point3 = Point::new(1.0, 1.0);
+    point3.translate(2.0, 3.0);
+    println!("New point location: ({}, {})", point3.x, point3.y);
 }
 ```
 
