@@ -12,3 +12,8 @@ pub extern "C" fn is_prime(num: u64) -> bool {
     }
     true
 }
+
+#[no_mangle]
+pub extern "C" fn calculate_sum(n: u64) -> u64 {
+    (1..=n).sum()
+}
