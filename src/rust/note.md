@@ -1207,3 +1207,54 @@ edition = "2021"
 tokio = { version = "1", features = ["full"] }
 ```
 
+### into
+
+`Into` trait 是一種常見的用於類型轉換的 trait，但並不是唯一的方式。Rust 還提供了一種簡化類型轉換的手段，即使用 `Into` trait 的 `into` 方法。
+
+在 Rust 中，對於任何實現了 `From` trait 的類型，都可以使用 `into` 方法進行類型轉換。這是因為 `Into` trait 是 `From` trait 的逆。具體來說，`Into<T>` trait 的實現是由 `T` 實現的 `From<U>` trait 決定的。
+
+```rust
+// 定義一個結構 Point
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+// 實現 Into<T> trait for Point
+impl Into<(i32, i32)> for Point {
+    fn into(self) -> (i32, i32) {
+        (self.x, self.y)
+    }
+}
+
+fn main() {
+    // 創建一個 Point 實例
+    let point = Point { x: 10, y: 20 };
+
+    // 使用 .into() 將 Point 轉換成 (i32, i32)
+    let tuple: (i32, i32) = point.into();
+
+    // 打印轉換後的結果
+    println!("Tuple: {:?}", tuple);
+}
+```
+
+```rust
+// 定義一個結構 Point
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+fn main() {
+    // 創建一個 Point 實例
+    let point = Point { x: 10, y: 20 };
+
+    // 使用 .into() 將 Point 轉換成 (i32, i32)
+    let tuple: (i32, i32) = point.into();
+
+    // 打印轉換後的結果
+    println!("Tuple: {:?}", tuple);
+}
+```
+
