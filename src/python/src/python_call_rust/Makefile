@@ -8,8 +8,7 @@ RUST_TARGET = lib.so
 all: $(RUST_TARGET)
 
 $(RUST_TARGET): $(RUST_SRC)
-	rustc --crate-type cdylib $<
+	rustc --crate-type cdylib -o $@ $<
 
 clean:
 	rm -f $(RUST_TARGET)
-

@@ -2,7 +2,7 @@
 import ctypes
 
 # Load the Rust library
-lib = ctypes.CDLL('./liblib.so')  # Change to lib.dll on Windows
+lib = ctypes.CDLL('./lib.so')  # Change to lib.dll on Windows
 
 # Define the argument and return types for the Rust function
 lib.is_prime.argtypes = [ctypes.c_uint64]
