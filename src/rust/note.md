@@ -1470,6 +1470,23 @@ fn add<T: std::ops::Add<Output = T>>(a: T, b: T) -> T {
 }
 ```
 
+```rust
+fn multiply_value<T>(value: T, factor: T) -> T
+where
+    T: std::ops::Mul<Output = T>,
+{
+    value * factor
+}
+
+fn main() {
+    let integer_result = multiply_value(5, 3);
+    let float_result = multiply_value(3.5, 2.0);
+
+    println!("Result of multiplying integers: {}", integer_result);
+    println!("Result of multiplying floats: {}", float_result);
+}
+```
+
 `where` 子句的存在讓約束條件更為清晰，有時可以提高代碼的可讀性，特別是當約束條件較長或較複雜時。這種寫法的主要優勢是可以將約束從函數的簽名中分離出來，讓簽名更加簡潔。
 
 總體而言，`where` 子句的使用是為了確定泛型參數滿足特定的條件，提高代碼的可讀性和可維護性。
