@@ -1258,3 +1258,218 @@ fn main() {
 }
 ```
 
+struct 用於定義結構體（structure），即一種用來組織和存儲數據的自定義類型。而 trait 則用於定義接口，即一組方法的集合，這些方法可以被實現在各種不同的類型上。
+
+```rust
+// 定義特徵 Displayable
+trait Displayable {
+    fn display(&self);
+}
+
+// 實現特徵 Displayable for Point
+struct Point {
+    x: f64,
+    y: f64,
+}
+
+impl Displayable for Point {
+    fn display(&self) {
+        println!("Point: ({}, {})", self.x, self.y);
+    }
+}
+
+// 實現特徵 Displayable for Circle
+struct Circle {
+    radius: f64,
+}
+
+impl Displayable for Circle {
+    fn display(&self) {
+        println!("Circle with radius: {}", self.radius);
+    }
+}
+
+// 定義特徵 Add
+trait Add {
+    fn add(&self, other: &Self) -> Self;
+}
+
+// 實現特徵 Add for i32
+impl Add for i32 {
+    fn add(&self, other: &Self) -> Self {
+        *self + *other
+    }
+}
+
+// 實現特徵 Add for f64
+impl Add for f64 {
+    fn add(&self, other: &Self) -> Self {
+        *self + *other
+    }
+}
+
+// 定義特徵 Double
+trait Double {
+    fn double(&self) -> Self;
+}
+
+// 實現特徵 Double for i32
+impl Double for i32 {
+    fn double(&self) -> Self {
+        *self * 2
+    }
+}
+
+// 實現特徵 Double for f64
+impl Double for f64 {
+    fn double(&self) -> Self {
+        *self * 2.0
+    }
+}
+
+// 主函數
+fn main() {
+    // 使用 Displayable 特徵的方法
+    let point = Point { x: 1.0, y: 2.0 };
+    point.display();
+
+    let circle = Circle { radius: 3.0 };
+    circle.display();
+
+    // 使用 Add 特徵的方法
+    let sum_i32 = 10i32.add(&5);
+    let sum_f64 = 3.5f64.add(&2.5);
+
+    println!("Sum of i32: {}", sum_i32);
+    println!("Sum of f64: {}", sum_f64);
+
+    // 使用 Double 特徵的方法
+    let doubled_i32 = 7i32.double();
+    let doubled_f64 = 4.2f64.double();
+
+    println!("Doubled i32: {}", doubled_i32);
+    println!("Doubled f64: {}", doubled_f64);
+}
+```
+
+```rust
+// 定義特徵 Add
+trait Add {
+    fn add(&self, other: &Self) -> Self;
+}
+
+// 實現特徵 Add for i32
+impl Add for i32 {
+    fn add(&self, other: &Self) -> Self {
+        *self + *other
+    }
+}
+
+// 實現特徵 Add for f64
+impl Add for f64 {
+    fn add(&self, other: &Self) -> Self {
+        *self + *other
+    }
+}
+
+// 主函數
+fn main() {
+    // 使用 Add 特徵的方法
+    let sum_i32 = 10i32.add(&5);
+    let sum_f64 = 3.5f64.add(&2.5);
+
+    println!("Sum of i32: {}", sum_i32);
+    println!("Sum of f64: {}", sum_f64);
+}
+```
+
+## 多型（polymorphism）
+
+在 Rust 中通常是通過 trait 和泛型實現的。下面是一個簡單的多型範例，其中使用了 trait 和泛型，允許一個函數接受不同類型的參數：
+
+```rust
+// 定義一個特徵 Display
+trait Display {
+    fn display(&self);
+}
+
+// 實現 Display 特徵的結構體 Point
+struct Point {
+    x: f64,
+    y: f64,
+}
+
+impl Display for Point {
+    fn display(&self) {
+        println!("Point: ({}, {})", self.x, self.y);
+    }
+}
+
+// 實現 Display 特徵的結構體 Circle
+struct Circle {
+    radius: f64,
+}
+
+impl Display for Circle {
+    fn display(&self) {
+        println!("Circle with radius: {}", self.radius);
+    }
+}
+
+// 多型函數，接受實現 Display 特徵的任意類型
+fn show_displayable<T: Display>(item: T) {
+    item.display();
+}
+
+fn main() {
+    let point = Point { x: 1.0, y: 2.0 };
+    let circle = Circle { radius: 3.0 };
+
+    // 調用多型函數，可以接受不同類型的參數
+    show_displayable(point);
+    show_displayable(circle);
+}
+```
+
+## 泛型
+
+```rust
+// 定義一個泛型函數，接受兩個參數並返回它們的和
+fn add<T>(a: T, b: T) -> T
+where
+    T: std::ops::Add<Output = T>,
+{
+    a + b
+}
+
+fn main() {
+    // 使用泛型函數，可以處理不同類型的數據
+    let sum_i32 = add(5, 3);
+    let sum_f64 = add(3.5, 2.5);
+
+    println!("Sum of i32: {}", sum_i32);
+    println!("Sum of f64: {}", sum_f64);
+}
+```
+
+在這個範例中，`add` 函數是一個泛型函數，它接受兩個相同類型的參數 `a` 和 `b`，並返回它們的和。泛型參數 `T` 表示可以是任何類型。`where T: std::ops::Add<Output = T>` 確保 `T` 實現了 `Add` trait，並指定了 `Output` 類型為 `T`。
+
+在 `main` 函數中，我們分別使用整數和浮點數調用了 `add` 函數，顯示了泛型函數可以處理不同類型的數據並返回正確的結果。
+
+在上述的泛型範例中，`where T: std::ops::Add<Output = T>` 是一個泛型約束（generic constraint）子句，用於指定泛型參數 `T` 必須滿足的條件。
+
+這個約束的意義是，泛型參數 `T` 必須實現 `std::ops::Add` trait，並且其 `Add` 實現的輸出類型（Output）必須是 `T`。換句話說，`T` 只能與自己相加，而不是與其他類型相加。
+
+這樣的約束確保了 `add` 函數在編譯時期只能被用於那些支持 `+` 運算的類型，並保證了在編譯時期就能夠確定 `add` 函數的行為。
+
+不使用 `where` 子句的版本可能看起來像這樣：
+
+```rust
+fn add<T: std::ops::Add<Output = T>>(a: T, b: T) -> T {
+    a + b
+}
+```
+
+`where` 子句的存在讓約束條件更為清晰，有時可以提高代碼的可讀性，特別是當約束條件較長或較複雜時。這種寫法的主要優勢是可以將約束從函數的簽名中分離出來，讓簽名更加簡潔。
+
+總體而言，`where` 子句的使用是為了確定泛型參數滿足特定的條件，提高代碼的可讀性和可維護性。
