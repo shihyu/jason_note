@@ -1573,3 +1573,30 @@ match divide(10, 2) {
 ```
 
 或者使用 `unwrap`、`expect`、`map`、`and_then` 等方法進行更複雜的處理。這樣的設計使得在Rust中明確處理可能發生的錯誤，避免了在執行階段出現未處理的異常。這也是Rust中的一種推崇錯誤處理的哲學，通過強制使用 `Result` 類型鼓勵開發者更加關注和處理潛在的錯誤情況。
+
+## 模擬 Result 列舉
+
+```rust
+enum _Result<T, E> {
+    Ok(T),
+    Err(E),
+}
+
+fn divide(a: i32, b: i32) -> _Result<i32, &'static str> {
+    if b == 0 {
+        // 如果尝试除以零，则返回一个 Err 变体，包含错误信息
+        _Result::Err("Cannot divide by zero!")
+    } else {
+        // 如果成功，返回 Ok 变体，包含结果值
+        _Result::Ok(a / b)
+    }
+}
+
+fn main() {
+    match divide(10, 2) {
+        _Result::Ok(result) => println!("Result: {}", result),
+        _Result::Err(err) => println!("Error: {}", err),
+    }
+}
+```
+
