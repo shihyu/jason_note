@@ -1490,3 +1490,86 @@ fn main() {
 `where` 子句的存在讓約束條件更為清晰，有時可以提高代碼的可讀性，特別是當約束條件較長或較複雜時。這種寫法的主要優勢是可以將約束從函數的簽名中分離出來，讓簽名更加簡潔。
 
 總體而言，`where` 子句的使用是為了確定泛型參數滿足特定的條件，提高代碼的可讀性和可維護性。
+
+## `#[derive(Debug)] `
+
+使用 `#[derive(Debug)]` 時，Rust 編譯器會自動生成一個 `Debug` trait 的實現。這個生成的實現通常包含一個 `fmt::Debug` trait 的 `fmt` 方法，該方法負責將類型的偵錯表示格式化為字串。
+
+```rust
+#[derive(Debug)]
+struct Point {
+    x: f64,
+    y: f64,
+}
+```
+
+當你使用 `#[derive(Debug)]` 註解時，Rust 編譯器會自動生成類似以下的程式碼：
+
+```rust
+impl std::fmt::Debug for Point {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // 使用 Formatter 将调试信息格式化为字符串
+        f.debug_struct("Point")
+            .field("x", &self.x)
+            .field("y", &self.y)
+            .finish()
+    }
+}
+```
+
+這個生成的實現為 `Point` 類型實現了 `Debug` trait 中的 `fmt` 方法。在這個方法中，使用了 `std::fmt::Debug` 中提供的 `debug_struct`、`field` 和 `finish` 方法來建構偵錯表示。具體來說：
+
+- `debug_struct("Point")` 建立一個名為 "Point" 的偵錯結構體。
+- `field("x", &self.x)` 新增一個名為 "x" 的欄位，並將 `self.x` 的偵錯表示新增到結構體中。
+- `field("y", &self.y)` 同樣新增一個名為 "y" 的欄位，並將 `self.y` 的偵錯表示新增到結構體中。
+- `finish()` 完成結構體的建構，生成最終的偵錯表示。
+
+這樣，當你使用 `println!` 宏並使用 `{:?}` 預留位置列印 `Point` 類型的實例時，編譯器自動生成的 `Debug` trait 實現將被呼叫，輸出類似於 `Point { x: 3.0, y: 4.0 }` 的偵錯資訊。這種自動生成的實現簡化了偵錯過程，使得偵錯資訊更加易讀和友好。
+
+## Result
+
+`Result` 是一個列舉類型，用於表示函數執行的結果，特別是可能發生錯誤的情況。`Result` 的定義如下：
+
+```rust
+enum Result<T, E> {
+    Ok(T),
+    Err(E),
+}
+```
+
+這裡有兩個變數，`T` 和 `E`。`T` 代表成功時返回的值的類型，而 `E` 代表錯誤時返回的值的類型。`Result` 列舉有兩個變體：
+
+1. `Ok(T)`: 表示操作成功，包含一個成功時返回的值 `T`。
+2. `Err(E)`: 表示操作發生錯誤，包含一個錯誤時返回的值 `E`。
+
+例如，一個函數可能返回 `Result` 類型來表示執行結果：
+
+```rust
+fn divide(a: i32, b: i32) -> Result<i32, &'static str> {
+    if b == 0 {
+        // 如果尝试除以零，则返回一个 Err 变体，包含错误信息
+        Err("Cannot divide by zero!")
+    } else {
+        // 如果成功，返回 Ok 变体，包含结果值
+        Ok(a / b)
+    }
+}
+```
+
+`Result<i32, &'static str>` 是一個 `Result` 類型的實例，表示可能返回一個整數（`i32`類型）的成功結果，或者返回一個靜態字串切片（`&'static str`類型）的錯誤資訊。
+
+讓我們詳細解釋這個類型：
+
+- `Result`: 這是Rust標準庫中的列舉類型，用於表示操作的結果，可以是成功的值（`Ok`變體）或錯誤的值（`Err`變體）。
+- `<i32, &'static str>`: 這是 `Result` 的兩個類型參數。第一個參數 `i32` 表示成功時返回的值的類型，第二個參數 `&'static str` 表示錯誤時返回的值的類型。`&'static str` 是一個指向靜態字串切片的引用，通常用於表示在整個程序生命週期中都有效的字串。
+
+在使用 `Result` 類型時，通常會使用模式匹配（pattern matching）或 `Result` 的方法來處理操作的成功和失敗情況。例如：
+
+```rust
+match divide(10, 2) {
+    Ok(result) => println!("Result: {}", result),
+    Err(err) => println!("Error: {}", err),
+}
+```
+
+或者使用 `unwrap`、`expect`、`map`、`and_then` 等方法進行更複雜的處理。這樣的設計使得在Rust中明確處理可能發生的錯誤，避免了在執行階段出現未處理的異常。這也是Rust中的一種推崇錯誤處理的哲學，通過強制使用 `Result` 類型鼓勵開發者更加關注和處理潛在的錯誤情況。
