@@ -177,6 +177,7 @@
   - [海龜投資法則](strategy/海龜投資法則.md)
   - [彈性進出場的判斷](strategy/edge-ratio-follow-application.md)
   - [三心法順勢操作陳族元10年資產翻10倍](strategy/三心法順勢操作陳族元10年資產翻10倍.md)
+  - [張松允投資心法](strategy/張松允投資心法.md)
   - [Finlab](strategy/finlab.md)
   - [Backtrader](strategy/backtrader/basis.md)
     - [Python回測框架一Backtrader介紹](strategy/backtrader/Python回測框架一Backtrader介紹.md)
