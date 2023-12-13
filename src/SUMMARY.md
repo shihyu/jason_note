@@ -176,6 +176,7 @@
   - [MAE&MFE分析](strategy/display_mae_mfe_analysis.md)
   - [海龜投資法則](strategy/海龜投資法則.md)
   - [彈性進出場的判斷](strategy/edge-ratio-follow-application.md)
+  - [三心法順勢操作陳族元10年資產翻10倍](strategy/三心法順勢操作陳族元10年資產翻10倍.md)
   - [Finlab](strategy/finlab.md)
   - [Backtrader](strategy/backtrader/basis.md)
     - [Python回測框架一Backtrader介紹](strategy/backtrader/Python回測框架一Backtrader介紹.md)
