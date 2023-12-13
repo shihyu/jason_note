@@ -37,6 +37,7 @@
 - [Mojo](mojo/mojo.md)
 - [RISC-V](riscv/riscv.md)
   - [QEMU上運行RISV-V Linux](riscv/qemu_riscv_linux.md)
+  - [QEMU GDB](riscv/qemi_gdb.md)
 - [CentOS](centos/centos.md)
   - [TQDB 安裝紀錄](centos/tqdb_setup.md)
 - [SSH](ssh/ssh.md)
