@@ -1,16 +1,16 @@
-## RISC-V Linux kernel debug 环境搭建
+## RISC-V Linux kernel debug 環境搭建
 
 https://blog.csdn.net/m0_43422086/article/details/125276723
 
 # 一、目的
 
-搭建qemu-gdb risc-v64 linux kernel的调试环境。
+搭建qemu-gdb risc-v64 linux kernel的調試環境。
 
-# 二、准备工作
+# 二、準備工作
 
 ​    Build Ninja 和riscv-toolchain
 
-​    首先安装必要的库(这是编译riscv toolchain必须安装的库文件)
+​    首先安裝必要的庫(這是編譯riscv toolchain必須安裝的庫文件)
 
 ```bash
 sudo apt update 
@@ -51,9 +51,9 @@ cmake --build build-cmake
 12345
 ```
 
-然后在.bashrc中添加ninja/build-cmake目录
+然後在.bashrc中添加ninja/build-cmake目錄
 
-编辑.bashrc如下：
+編輯.bashrc如下：
 
 ```bash
 export PATH=$PATH:/home/kali/Desktop/riscv-debug/ninja/build-cmake
@@ -69,14 +69,14 @@ mv riscv64-unknown-elf-toolchain-10.2.0-2020.12.8-x86_64-linux-ubuntu14  riscv64
 1234
 ```
 
-接着编辑~/.bashrc,加入下面的环境变量：
+接著編輯~/.bashrc,加入下面的環境變量：
 
 ```bash
 export PATH=$PATH:/home/kali/Desktop/riscv-debug/riscv64-unknown-elf-toolchain/bin
 12
 ```
 
-## ③命令行安装gcc-riscv64-linux-gnu-
+## ③命令行安裝gcc-riscv64-linux-gnu-
 
 ```bash
 sudo apt install binutils-riscv64-linux-gnu $ sudo apt install gcc-riscv64-linux-gnu
@@ -116,7 +116,7 @@ vim .config
 1234567
 ```
 
-在.config中添加这句：
+在.config中添加這句：
 
 ```bash
 CONFIG_STATIC=y
@@ -135,9 +135,9 @@ vim etc/init.d/rcS
 1234567
 ```
 
-后保存回到busybox-1.35.0目录
+後保存回到busybox-1.35.0目錄
 
-在rcS中添加以下内容：
+在rcS中添加以下內容：
 
 ```bash
 #!bin/sh 
@@ -147,9 +147,9 @@ mount -t sysfs none /sys
 12345
 ```
 
-添加后保存
+添加後保存
 
-接着执行下面两条指令，这两条指令需要root权限：
+接著執行下面兩條指令，這兩條指令需要root權限：
 
 ```bash
 sudo mknod dev/console c 5 1 
@@ -157,7 +157,7 @@ sudo mknod dev/ram b 1 0
 123
 ```
 
-给rcS文件设置可执行属性：
+給rcS文件設置可執行屬性：
 
 ```bash
 chmod 777 etc/init.d/rcS
@@ -176,7 +176,7 @@ cd linux-5.9.tar.xz
 1234
 ```
 
-在内核Makefile的KBUILD_CFLAGS上添加-g选项，然后再执行下面命令：
+在內核Makefile的KBUILD_CFLAGS上添加-g選項，然後再執行下面命令：
 
 ```bash
 make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- defconfig 
@@ -184,7 +184,7 @@ make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- -j $(nproc)
 123
 ```
 
-以上步骤完成后使用gdb调试qemu启动linux kernel，qemu命令行如下：
+以上步驟完成後使用gdb調試qemu啟動linux kernel，qemu命令行如下：
 
 ```bash
 qemu-system-riscv64 \
@@ -198,7 +198,7 @@ qemu-system-riscv64 \
 123456789
 ```
 
-开启另一个终端，进入刚刚的linux kernel 目录（该目录下有vmlinux文件），使用下面命令启动gdb：
+開啟另一個終端，進入剛剛的linux kernel 目錄（該目錄下有vmlinux文件），使用下面命令啟動gdb：
 
 ```bash
 riscv64-unknown-elf-gdb vmlinux -ex 'target remote localhost:1234'
