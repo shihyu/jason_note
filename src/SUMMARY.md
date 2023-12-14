@@ -25,6 +25,7 @@
   - [jemalloc](gdb/jemalloc.md)
   - [graphs](gdb/graphs.md)
   - [rust gdb](gdb/rust-gdb.md)
+  - [qemu-gdb-risc-v64-kernel](gdb/qemu-gdb-risc-v64.md)
 - [C++](c++/cpp.md)
   - [benchmark](c++/benchmark.md)
   - [Smart pointer](c++/smart_pointer.md)
