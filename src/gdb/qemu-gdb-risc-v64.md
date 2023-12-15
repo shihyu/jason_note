@@ -15,29 +15,30 @@ https://blog.csdn.net/m0_43422086/article/details/125276723
 ```bash
 sudo apt update 
 sudo apt upgrade 
-sudo apt install git \ 
-autoconf \ 
-automake \ 
-autotools-dev \ 
-ninja-build \ 
-build-essential \ 
-libmpc-dev \ 
-libmpfr-dev \ 
-libgmp-dev \ 
-libglib2.0-dev \ 
-libpixman-1-dev \ 
-libncurses5-dev \ 
-libtool \ 
-libexpat-dev \ 
-zlib1g-dev \ 
-curl \ 
-gawk \ 
-bison \ 
-flex \ 
-texinfo \ 
-gperf \ 
-patchutils \ 
-bc 
+sudo apt install \
+  git \
+  autoconf \
+  automake \
+  autotools-dev \
+  ninja-build \
+  build-essential \
+  libmpc-dev \
+  libmpfr-dev \
+  libgmp-dev \
+  libglib2.0-dev \
+  libpixman-1-dev \
+  libncurses5-dev \
+  libtool \
+  libexpat-dev \
+  zlib1g-dev \
+  curl \
+  gawk \
+  bison \
+  flex \
+  texinfo \
+  gperf \
+  patchutils \
+  bc
 ```
 
 ## ①Build Ninja
