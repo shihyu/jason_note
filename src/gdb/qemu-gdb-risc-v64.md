@@ -89,6 +89,14 @@ git submodule init
 git submodule update --recursive
 ./configure --prefix=/home/shihyu/.mybin/qemu
 make
+
+
+wget https://download.qemu.org/qemu-8.2.0-rc3.tar.xz
+tar xvJf qemu-8.2.0-rc3.tar.xz
+cd qemu-8.2.0-rc3
+./configure --prefix=/home/shihyu/.mybin/qemu
+make -j8
+make install
 ```
 
 # 四、Build opensbi
