@@ -38,7 +38,6 @@ texinfo \
 gperf \ 
 patchutils \ 
 bc 
-1234567891011121314151617181920212223242526
 ```
 
 ## ①Build Ninja
@@ -48,7 +47,6 @@ git clone https://github.com/ninja-build/ninja.git
 cd ninja
 cmake -Bbuild-cmake
 cmake --build build-cmake
-12345
 ```
 
 然後在.bashrc中添加ninja/build-cmake目錄
@@ -57,7 +55,6 @@ cmake --build build-cmake
 
 ```bash
 export PATH=$PATH:/home/kali/Desktop/riscv-debug/ninja/build-cmake
-12
 ```
 
 ## ②Build riscv-gnu-compiler toolchain and debug gdb
@@ -66,21 +63,18 @@ export PATH=$PATH:/home/kali/Desktop/riscv-debug/ninja/build-cmake
 wget https://static.dev.sifive.com/dev-tools/freedom-tools/v2020.12/riscv64-unknown-elf-toolchain-10.2.0-2020.12.8-x86_64-linux-ubuntu14.tar.gz
 tar -xzvf riscv64-unknown-elf-toolchain-10.2.0-2020.12.8-x86_64-linux-ubuntu14.tar.gz
 mv riscv64-unknown-elf-toolchain-10.2.0-2020.12.8-x86_64-linux-ubuntu14  riscv64-unknown-elf-toolchain
-1234
 ```
 
 接著編輯~/.bashrc,加入下面的環境變量：
 
 ```bash
 export PATH=$PATH:/home/kali/Desktop/riscv-debug/riscv64-unknown-elf-toolchain/bin
-12
 ```
 
 ## ③命令行安裝gcc-riscv64-linux-gnu-
 
 ```bash
 sudo apt install binutils-riscv64-linux-gnu $ sudo apt install gcc-riscv64-linux-gnu
-12
 ```
 
 # 三、Build Qemu
@@ -92,7 +86,6 @@ git submodule init
 git submodule update --recursive
 ./configure
 make
-1234567
 ```
 
 # 四、Build opensbi
@@ -101,7 +94,6 @@ make
 git clone https://github.com/riscv-software-src/opensbi.git
 cd opensbi/
 make CROSS_COMPILE=riscv64-linux-gnu- PLATFORM=generic
-1234
 ```
 
 # 五、Build Busybox
@@ -113,14 +105,12 @@ cd busybox-1.35.0/
 make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- defconfig
 make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- menuconfig
 vim .config 
-1234567
 ```
 
 在.config中添加這句：
 
 ```bash
 CONFIG_STATIC=y
-12
 ```
 
 添加完成
@@ -132,7 +122,6 @@ cd _install
 mkdir proc sys dev etc etc/init.d
 touch etc/init.d/rcS
 vim etc/init.d/rcS
-1234567
 ```
 
 後保存回到busybox-1.35.0目錄
@@ -144,7 +133,6 @@ vim etc/init.d/rcS
 mount -t proc none /proc 
 mount -t sysfs none /sys 
 /sbin/mdev -s
-12345
 ```
 
 添加後保存
@@ -154,7 +142,6 @@ mount -t sysfs none /sys
 ```bash
 sudo mknod dev/console c 5 1 
 sudo mknod dev/ram b 1 0
-123
 ```
 
 給rcS文件設置可執行屬性：
@@ -162,7 +149,6 @@ sudo mknod dev/ram b 1 0
 ```bash
 chmod 777 etc/init.d/rcS
 find -print0 | cpio -0oH newc | gzip -9 > ../rootfs.img 
-123
 ```
 
 到此busybox操作完成。
@@ -173,7 +159,6 @@ find -print0 | cpio -0oH newc | gzip -9 > ../rootfs.img
 wget https://mirrors.edge.kernel.org/pub/linux/kernel/v5.x/linux-5.9.tar.xz
 tar -xvf linux-5.9.tar.xz
 cd linux-5.9.tar.xz 
-1234
 ```
 
 在內核Makefile的KBUILD_CFLAGS上添加-g選項，然後再執行下面命令：
@@ -181,7 +166,6 @@ cd linux-5.9.tar.xz
 ```bash
 make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- defconfig 
 make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- -j $(nproc)
-123
 ```
 
 以上步驟完成後使用gdb調試qemu啟動linux kernel，qemu命令行如下：
@@ -195,7 +179,6 @@ qemu-system-riscv64 \
         -append "root=/dev/ram rdinit=/sbin/init" \
         -S \
         -s
-123456789
 ```
 
 開啟另一個終端，進入剛剛的linux kernel 目錄（該目錄下有vmlinux文件），使用下面命令啟動gdb：
