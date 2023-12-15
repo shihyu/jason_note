@@ -76,7 +76,8 @@ export PATH=$PATH:/home/kali/Desktop/riscv-debug/riscv64-unknown-elf-toolchain/b
 ## ③命令行安裝gcc-riscv64-linux-gnu-
 
 ```bash
-sudo apt install binutils-riscv64-linux-gnu sudo apt install gcc-riscv64-linux-gnu
+sudo apt install binutils-riscv64-linux-gnu 
+sudo apt install gcc-riscv64-linux-gnu
 ```
 
 # 三、Build Qemu
@@ -86,7 +87,7 @@ git clone https://gitlab.com/qemu-project/qemu.git
 cd qemu
 git submodule init
 git submodule update --recursive
-./configure
+./configure --prefix=/home/shihyu/.mybin/qemu
 make
 ```
 
