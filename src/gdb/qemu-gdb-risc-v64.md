@@ -16,29 +16,30 @@ https://blog.csdn.net/m0_43422086/article/details/125276723
 sudo apt update 
 sudo apt upgrade 
 sudo apt install \
-  git \
-  autoconf \
-  automake \
-  autotools-dev \
-  ninja-build \
-  build-essential \
-  libmpc-dev \
-  libmpfr-dev \
-  libgmp-dev \
-  libglib2.0-dev \
-  libpixman-1-dev \
-  libncurses5-dev \
-  libtool \
-  libexpat-dev \
-  zlib1g-dev \
-  curl \
-  gawk \
-  bison \
-  flex \
-  texinfo \
-  gperf \
-  patchutils \
-  bc
+    git \
+    autoconf \
+    automake \
+    autotools-dev \
+    ninja-build \
+    build-essential \
+    libmpc-dev \
+    libmpfr-dev \
+    libgmp-dev \
+    libglib2.0-dev \
+    libpixman-1-dev \
+    libncurses5-dev \
+    libtool \
+    libexpat-dev \
+    zlib1g-dev \
+    curl \
+    gawk \
+    bison \
+    flex \
+    texinfo \
+    gperf \
+    patchutils \
+    bc
+
 ```
 
 ## ①Build Ninja
@@ -75,7 +76,8 @@ export PATH=$PATH:/home/kali/Desktop/riscv-debug/riscv64-unknown-elf-toolchain/b
 ## ③命令行安裝gcc-riscv64-linux-gnu-
 
 ```bash
-sudo apt install binutils-riscv64-linux-gnu $ sudo apt install gcc-riscv64-linux-gnu
+sudo apt install binutils-riscv64-linux-gnu 
+sudo apt install gcc-riscv64-linux-gnu
 ```
 
 # 三、Build Qemu
@@ -85,8 +87,16 @@ git clone https://gitlab.com/qemu-project/qemu.git
 cd qemu
 git submodule init
 git submodule update --recursive
-./configure
+./configure --prefix=/home/shihyu/.mybin/qemu
 make
+
+
+wget https://download.qemu.org/qemu-8.2.0-rc3.tar.xz
+tar xvJf qemu-8.2.0-rc3.tar.xz
+cd qemu-8.2.0-rc3
+./configure --prefix=/home/shihyu/.mybin/qemu
+make -j8
+make install
 ```
 
 # 四、Build opensbi
