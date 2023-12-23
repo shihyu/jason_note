@@ -192,9 +192,9 @@ make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- -j $(nproc)
 ```bash
 qemu-system-riscv64 \
         -nographic -machine virt \
-        -bios  /home/kali/Desktop/riscv-debug/opensbi/build/platform/generic/firmware/fw_dynamic.bin \
-        -kernel /home/kali/Desktop/riscv-debug/linux-5.9/arch/riscv/boot/Image \
-        -initrd /home/kali/Desktop/riscv-debug/busybox-1.35.0/rootfs.img  \
+        -bios  opensbi/build/platform/generic/firmware/fw_dynamic.bin \
+        -kernel linux-5.9/arch/riscv/boot/Image \
+        -initrd busybox-1.35.0/rootfs.img  \
         -append "root=/dev/ram rdinit=/sbin/init" \
         -S \
         -s
@@ -205,3 +205,12 @@ qemu-system-riscv64 \
 ```bash
 riscv64-unknown-elf-gdb vmlinux -ex 'target remote localhost:1234'
 ```
+
+```sh
+(gdb) b start_kernel 
+Breakpoint 1 at 0xffffffe00000272e
+(gdb) continue
+Continuing.
+Breakpoint 1, 0xffffffe00000272e in start_kernel ()
+```
+
