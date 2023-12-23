@@ -40,6 +40,8 @@ sudo apt install \
     patchutils \
     bc
 
+
+mkdir qemu-gdb-risc-v64 && qemu-gdb-risc-v64
 ```
 
 ## ①Build Ninja
@@ -175,7 +177,7 @@ find -print0 | cpio -0oH newc | gzip -9 > ../rootfs.img
 ```bash
 wget https://mirrors.edge.kernel.org/pub/linux/kernel/v5.x/linux-5.9.tar.xz
 tar -xvf linux-5.9.tar.xz
-cd linux-5.9.tar.xz 
+cd linux-5.9
 ```
 
 在內核Makefile的KBUILD_CFLAGS上添加-g選項，然後再執行下面命令：
