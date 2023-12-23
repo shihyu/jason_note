@@ -87,16 +87,22 @@ git clone https://gitlab.com/qemu-project/qemu.git
 cd qemu
 git submodule init
 git submodule update --recursive
-./configure --prefix=/home/shihyu/.mybin/qemu
+mkdir build && cd build
+../configure --prefix=/home/shihyu/.mybin/qemu
 make
 
 
-wget https://download.qemu.org/qemu-8.2.0-rc3.tar.xz
-tar xvJf qemu-8.2.0-rc3.tar.xz
-cd qemu-8.2.0-rc3
-./configure --prefix=/home/shihyu/.mybin/qemu
-make -j8
-make install
+
+linux-user/ioctls.h:188:1: error: ‘SNDCTL_DSP_MAPINBUF’ undeclared here (not in a function)
+linux-user/ioctls.h:189:1: error: ‘SNDCTL_DSP_MAPOUTBUF’ undeclared here (not in a function)
+linux-user/ioctls.h:244:1: error: ‘SOUND_MIXER_ACCESS’ undeclared here (not in a function)
+
+
+Replace this line :
+#include <linux/soundcard.h>
+by :
+#include <linux/soundcard.h.oss3>
+in the linux-user/syscall.c file.
 ```
 
 # 四、Build opensbi
