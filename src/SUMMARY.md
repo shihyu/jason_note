@@ -162,6 +162,7 @@
   - [奇正](strategy/奇正/奇正.md)
     - [資金控管與試單策略](strategy/奇正/資金控管與試單策略.md)
     - [如何出場](strategy/奇正/如何出場.md)
+  - [PTT Stock](strategy/ptt_stock/a0808996.md)
   - [JG](strategy/Book/JG.md)
   - [BNF](strategy/bnf.md)
   - [CIS](strategy/cis.md)
