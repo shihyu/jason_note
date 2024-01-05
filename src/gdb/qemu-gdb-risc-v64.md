@@ -40,6 +40,8 @@ sudo apt install \
     patchutils \
     bc
 
+
+mkdir qemu-gdb-risc-v64 && qemu-gdb-risc-v64
 ```
 
 ## ①Build Ninja
@@ -87,16 +89,22 @@ git clone https://gitlab.com/qemu-project/qemu.git
 cd qemu
 git submodule init
 git submodule update --recursive
-./configure --prefix=/home/shihyu/.mybin/qemu
+mkdir build && cd build
+../configure --prefix=/home/shihyu/.mybin/qemu
 make
 
 
-wget https://download.qemu.org/qemu-8.2.0-rc3.tar.xz
-tar xvJf qemu-8.2.0-rc3.tar.xz
-cd qemu-8.2.0-rc3
-./configure --prefix=/home/shihyu/.mybin/qemu
-make -j8
-make install
+
+linux-user/ioctls.h:188:1: error: ‘SNDCTL_DSP_MAPINBUF’ undeclared here (not in a function)
+linux-user/ioctls.h:189:1: error: ‘SNDCTL_DSP_MAPOUTBUF’ undeclared here (not in a function)
+linux-user/ioctls.h:244:1: error: ‘SOUND_MIXER_ACCESS’ undeclared here (not in a function)
+
+
+Replace this line :
+#include <linux/soundcard.h>
+by :
+#include <linux/soundcard.h.oss3>
+in the linux-user/syscall.c file.
 ```
 
 # 四、Build opensbi
@@ -169,7 +177,7 @@ find -print0 | cpio -0oH newc | gzip -9 > ../rootfs.img
 ```bash
 wget https://mirrors.edge.kernel.org/pub/linux/kernel/v5.x/linux-5.9.tar.xz
 tar -xvf linux-5.9.tar.xz
-cd linux-5.9.tar.xz 
+cd linux-5.9
 ```
 
 在內核Makefile的KBUILD_CFLAGS上添加-g選項，然後再執行下面命令：
@@ -184,9 +192,9 @@ make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- -j $(nproc)
 ```bash
 qemu-system-riscv64 \
         -nographic -machine virt \
-        -bios  /home/kali/Desktop/riscv-debug/opensbi/build/platform/generic/firmware/fw_dynamic.bin \
-        -kernel /home/kali/Desktop/riscv-debug/linux-5.9/arch/riscv/boot/Image \
-        -initrd /home/kali/Desktop/riscv-debug/busybox-1.35.0/rootfs.img  \
+        -bios  opensbi/build/platform/generic/firmware/fw_dynamic.bin \
+        -kernel linux-5.9/arch/riscv/boot/Image \
+        -initrd busybox-1.35.0/rootfs.img  \
         -append "root=/dev/ram rdinit=/sbin/init" \
         -S \
         -s
@@ -197,3 +205,12 @@ qemu-system-riscv64 \
 ```bash
 riscv64-unknown-elf-gdb vmlinux -ex 'target remote localhost:1234'
 ```
+
+```sh
+(gdb) b start_kernel 
+Breakpoint 1 at 0xffffffe00000272e
+(gdb) continue
+Continuing.
+Breakpoint 1, 0xffffffe00000272e in start_kernel ()
+```
+
