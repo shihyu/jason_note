@@ -23,7 +23,7 @@ def calculate_sum_rust(n):
 
 if __name__ == "__main__":
     # Load the Rust library
-    lib = load_rust_library("./lib.so")  # Change to lib.dll on Windows
+    lib = load_rust_library("./lib.so")
 
     # Setup Rust functions
     is_prime_function = setup_rust_function(
@@ -34,13 +34,8 @@ if __name__ == "__main__":
     )
 
     # Test the Rust is_prime function
-    number_to_check = 17
+    number_to_check = 10000000
     if is_prime_rust(number_to_check):
         print(f"{number_to_check} is prime.")
     else:
         print(f"{number_to_check} is not prime.")
-
-    # Test the Rust calculate_sum function
-    n = 1000000
-    result = calculate_sum_rust(n)
-    print(f"Sum from 1 to {n}: {result}")
