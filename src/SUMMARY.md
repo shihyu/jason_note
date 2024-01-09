@@ -149,6 +149,7 @@
   - [如何避免過擬合](strategy/如何避免過擬合.md)
   - [phcebus](strategy/phcebus/phcebus.md)
     - [菲式思考](strategy/phcebus/菲式思考.md)
+    - [買股3心法](strategy/phcebus/買股3心法.md)
   - [選擇權](strategy/Option/option.md)
     - [Option note](strategy/Option/option_note.md)
   - [VectorBT](strategy/vectorbt.md)
