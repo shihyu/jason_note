@@ -1600,3 +1600,49 @@ fn main() {
 }
 ```
 
+## Rust中字串操作的擁有權和可變引用
+
+這兩個程式碼的主要區別在於函數 `greet` 如何處理字串的擁有權（ownership）：
+
+### 第一個範例：
+
+```rust
+rustCopy codefn greet(mut message: String) -> String {
+    message.push_str(", World!"); // 修改字串的內容
+    println!("{}", message);
+    message
+}
+
+fn main() {
+    let message = String::from("Hello");
+    println!("{}", message);
+    let msg = greet(message);
+    println!("{}", msg);
+}
+```
+
+1. `greet` 函數接受一個 `String` 的擁有權，對它進行修改（push_str），然後返回修改後的字串，同時也轉移了擁有權。
+2. 在 `main` 函數中，`message` 的擁有權在調用 `greet` 函數時轉移到了 `greet` 內，因此 `main` 無法再使用原始的 `message`。
+
+### 第二個範例：
+
+```rust
+rustCopy codefn greet(message: &mut String) {
+    message.push_str(", World!"); // 修改字串的內容
+    println!("{}", message);
+}
+
+fn main() {
+    let mut message = String::from("Hello");
+    println!("{}", message);
+
+    greet(&mut message); // 傳遞字串的可變引用
+    println!("{}", message);
+}
+```
+
+1. `greet` 函數接受一個 `&mut String`，這是字串的可變引用，它允許 `greet` 修改字串的內容，但不轉移擁有權。
+2. 在 `main` 函數中，`message` 保留了擁有權，你可以通過傳遞 `&mut message` 來傳遞對字串的可變引用，使 `greet` 能夠修改字串的內容。
+3. `main` 仍然擁有 `message` 並且可以在 `greet` 被呼叫後繼續使用修改後的 `message`。
+
+總的來說，第二個範例使用了引用和可變引用，保留了 `message` 的擁有權，允許在函數間進行資料的共享，而不是轉移擁有權。
