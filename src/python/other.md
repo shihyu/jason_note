@@ -2138,3 +2138,64 @@ process1.join()
 process2.join()
 ```
 
+
+
+## 透過Queue 監控 thread 重啟
+
+```python
+import threading
+import time
+import queue
+import random
+
+
+class WorkerThread(threading.Thread):
+    def __init__(self, msg_queue):
+        threading.Thread.__init__(self)
+        self.msg_queue = msg_queue
+        self.running = threading.Event()  # 創建一個 Event 對象
+
+    def run(self):
+        print("Worker thread started.")
+        self.running.set()  # 設置 running 標誌為 True
+        while self.running.is_set():  # 當 running 標誌為 True 時，持續運行
+            self.msg_queue.put("Running")
+            sleep_time = random.randint(5, 12)
+            print(
+                f"Worker thread is running... {threading.get_ident()}, sleeping for {sleep_time} seconds"
+            )
+            time.sleep(sleep_time)
+
+    def stop(self):
+        print("Stopping thread...")
+        self.running.clear()  # 清除 running 標誌，使線程退出運行
+
+
+def restart_thread(worker_thread, status_queue):
+    print("Worker thread exited. Restarting...")
+    worker_thread = WorkerThread(status_queue)  # 不需要將 status_queue 作為參數傳遞
+    worker_thread.start()
+    return worker_thread
+
+
+def main():
+    status_queue = queue.Queue()
+    worker_thread = WorkerThread(status_queue)
+    worker_thread.start()
+
+    # 主線程監控
+    while True:
+        try:
+            status = status_queue.get(timeout=10)
+            print(status)
+        except queue.Empty:
+            worker_thread.stop()  # 停止線程
+            worker_thread.join()  # 等待線程結束
+            worker_thread = restart_thread(worker_thread, status_queue)  # 重新啟動線程
+
+
+if __name__ == "__main__":
+    main()
+
+```
+
