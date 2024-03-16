@@ -127,6 +127,7 @@
   - [Coroutine](python/coroutine.md)
   - [FinMind](python/finmind.md)
   - [Telegram Bot](python/telegram_bot.md)
+  - [Different ways kill thread](python/python-different-ways-to-kill-a-thread.md)
   - [Websocket client/server](python/websocket_client_server.md)
   - [從零開始使用 Poetry](python/poetry.md)
   - [Fil-memory-usage-profiler](python/fil-memory-usage-profiler.md)
