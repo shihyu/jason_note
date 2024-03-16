@@ -2145,20 +2145,24 @@ process2.join()
 ```python
 import threading
 import time
+import inspect
+import ctypes
+
+import threading
+import time
 import queue
 import random
 
 
 class WorkerThread(threading.Thread):
-    def __init__(self, msg_queue):
+    def __init__(self, msg_queue, thread_no):
         threading.Thread.__init__(self)
         self.msg_queue = msg_queue
-        self.running = threading.Event()
+        self.thread_no = thread_no
 
     def run(self):
-        print("Worker thread started.")
-        self.running.set()
-        while self.running.is_set():
+        print("Worker thread started, thread no: ", self.thread_no)
+        while True:
             self.msg_queue.put("Running")
             sleep_time = random.randint(5, 12)
             print(
@@ -2166,24 +2170,38 @@ class WorkerThread(threading.Thread):
             )
             time.sleep(sleep_time)
 
-    def stop(self):
-        print("Stopping thread...")
-        self.running.clear()
-        self.join()  # 等待執行緒退出
 
-
-def restart_thread(worker_thread, status_queue):
+def restart_thread(worker_thread, status_queue, thread_no):
     print("Worker thread exited. Restarting...")
-    worker_thread.stop()  # 停止舊執行緒
-    worker_thread.join()  # 等待舊執行緒退出
-    worker_thread = WorkerThread(status_queue)
+    worker_thread = WorkerThread(status_queue, thread_no)
     worker_thread.start()
     return worker_thread
 
 
+def _async_raise(tid, exctype):
+    """Raises an exception in the threads with id tid"""
+    if not inspect.isclass(exctype):
+        raise TypeError("Only types can be raised (not instances)")
+    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
+        ctypes.c_long(tid), ctypes.py_object(exctype)
+    )
+    if res == 0:
+        raise ValueError("invalid thread id")
+    elif res != 1:
+        # """if it returns a number greater than one, you're in trouble,
+        # and you should call it again with exc=NULL to revert the effect"""
+        ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, None)
+        raise SystemError("PyThreadState_SetAsyncExc failed")
+
+
+def stop_thread(thread):
+    _async_raise(thread.ident, SystemExit)
+
+
 def main():
+    thread_no = 0
     status_queue = queue.Queue()
-    worker_thread = WorkerThread(status_queue)
+    worker_thread = WorkerThread(status_queue, thread_no)
     worker_thread.start()
 
     # 主線程監控
@@ -2192,7 +2210,9 @@ def main():
             status = status_queue.get(timeout=10)
             print(status)
         except queue.Empty:
-            worker_thread = restart_thread(worker_thread, status_queue)
+            stop_thread(worker_thread)
+            thread_no += 1
+            worker_thread = restart_thread(worker_thread, status_queue, thread_no)
 
 
 if __name__ == "__main__":
