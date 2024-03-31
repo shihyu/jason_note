@@ -66,6 +66,7 @@
   - [Rust 型別系統](rust/type.md)
   - [Polars](rust/polars.md)
   - [Rust call C](rust/rust_call_c.md)
+  - [PyO3](rust/pyo3.md)
   - [給 C++ 使用者的 Rust 簡介](rust/10-rust-an-introduction.md)
   - [可視化Rust各資料結構的記憶體佈局](rust/可視化Rust各資料結構的記憶體佈局.md)
   - [學習順序](rust/rust_note.md)
