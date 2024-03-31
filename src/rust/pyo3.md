@@ -1060,6 +1060,13 @@ fn python_rust(_py: Python, module: &PyModule) -> PyResult<()> {
 }
 ```
 
+```
+.PHONY: build
+
+build:
+    maturin build --release
+```
+
 定義新函數後，再次使用模組，要記得先解除安裝再重新安裝！
 
 #### 0x03 小結
