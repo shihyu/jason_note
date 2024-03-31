@@ -932,3 +932,139 @@ print(py_lib.calc(a, b, div))  # 51.2.3.4.5.6.7.8.9.10.11.12.13.14.15.16.17.18.1
 如果你發現 Python 程式碼存在大量的 CPU 密集型計算，並且不怎麼涉及複雜的 Python 資料結構，那麼不妨將這些計算交給 Rust。
 
 以上就是本文的內容，後續有空我們介紹如何用 Rust 的 PyO3 來為 Python 編寫擴展。PyO3 的定位類似於 Cython，用它來寫擴展非常的方便，後續有機會我們詳細聊一聊。
+
+---
+
+# Python與Rust互動
+
+
+
+`Rust` 可以與很多語言互動，前面我們已經介紹過與 `C#` 、`JavaScript`，本篇文章將介紹下 `Rust` 如何與 `Python` 互動。
+
+#### 0x01 PyO3
+
+`PyO3` 是一個 `Rust` 的庫。通過它，使得我們從 `Python` 呼叫 `Rust` 變得非常容易。它可以用於建立本機 `Python` 擴展模組的工具。還支援從 `Rust` 二進制檔案運行 `Python` 程式碼並與之互動。
+
+另外，如果要將 `rust` 編譯為 `puthon` 模組，還需要安裝 `maturin`。安裝方法如下：
+
+```
+複製程式碼pip install maturin   
+```
+
+`PyO3` 支援需要以下環境：
+
+註：本文的所有操作默認你已經安裝 `Rust` 和 `Python` 環境。
+
+- Python 3.7 及更高版本（CPython 和 PyPy）
+
+- Rust 1.48 及更高版本
+
+#### 0x02 Python 呼叫 Rust 函數
+
+##### toml 組態
+
+```toml
+[package]
+name = "pyo3_polars_extension"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "python_rust"
+crate-type = ["cdylib"]
+
+
+[features]
+extension-module = ["pyo3/extension-module"]
+default = ["extension-module"]
+
+[dependencies]
+pyo3 = "0.18.3"
+```
+
+##### 編寫程式碼
+
+為了簡單測試，我們使用 Rust 寫一個求和的程式碼。寫函數時跟我們平時寫沒啥區別，但是返回值需要返回 `PyResult`，並且還需要標註 `#[pyfunction]`。`#[pyfunction]` 屬性用於從 Rust 函數定義 Python 函數。定義後，需要使用 `wrap_pyfunction!` 宏將該函數新增到模組中。
+
+我們還需要**建立一個與 `toml` 組態檔案中 `lib.name` 同名函數**（當前也可以使用 `#[pyo3(name = "custom_name")]` 覆蓋模組名稱），並標註為 `#[pymodule]`。`#[pymodule]` 過程宏負責將模組的初始化函數匯出到 Python。
+
+完整的示例程式碼如下：
+
+```rust
+rust複製程式碼use pyo3::prelude::*;
+
+/// 求兩個數的和
+#[pyfunction]
+fn sum(a: isize, b: isize) -> PyResult<isize> {
+    Ok(a + b)
+}
+
+/// 一個用Rust實現的Python模組。
+///
+/// 這個函數的名字必須與`Cargo.toml`中的`lib.name`匹配
+#[pymodule]
+fn python_rust(_py: Python, module: &PyModule) -> PyResult<()> {
+    module.add_function(wrap_pyfunction!(sum, module)?)?;
+    Ok(())
+}
+```
+
+##### 編譯並安裝
+
+官方推薦使用虛擬環境安裝模組，防止與其它模組衝突。我這裡還是喜歡使用 `maturin build` 先編譯，然後手動安裝。
+
+- 運行 `maturin build` 編譯
+- 使用 `pip` 安裝 `target/wheels/模組名稱.whl`
+
+##### 在 python 中使用函數
+
+編寫測試程式碼：
+
+```python
+python複製程式碼import python_rust
+
+sum = python_rust.sum(5, 6)
+print(sum)
+```
+
+成功輸出結果 `11` 。有沒有感覺到很簡單呢。
+
+##### 定義多個函數
+
+當然了，我們還可以定義多個函數，我們只需要在`模組`函數中 `add_function` 就可以了。程式碼如下：
+
+```rust
+rust複製程式碼use pyo3::prelude::*;
+
+/// 求兩個數的和
+#[pyfunction]
+fn sum(a: isize, b: isize) -> PyResult<isize> {
+    Ok(a + b)
+}
+
+#[pyfunction]
+fn multiple(a: isize, b: isize) -> PyResult<isize> {
+    Ok(a * b)
+}
+
+/// 一個用Rust實現的Python模組。
+///
+/// 這個函數的名字必須與`Cargo.toml`中的`lib.name`匹配
+#[pymodule]
+fn python_rust(_py: Python, module: &PyModule) -> PyResult<()> {
+    module.add_function(wrap_pyfunction!(sum, module)?)?;
+    module.add_function(wrap_pyfunction!(multiple, module)?)?;
+    Ok(())
+}
+```
+
+定義新函數後，再次使用模組，要記得先解除安裝再重新安裝！
+
+#### 0x03 小結
+
+本篇文章簡單介紹了 Rust 使用 `PyO3` 來編寫 `python` 模組，其實 `PyO3` 的功能還有很多，接下來我們將繼續介紹如果在Rust中使用不同的類型。
+
+
+
