@@ -1,19 +1,19 @@
-# Rust if语句
+# Rust if語句
 
 ```
-if`语句确定条件是否为真。如果条件为`true``if``if
+if`語句確定條件是否為真。如果條件為`true``if``if
 ```
 
 表示`if`
 
-- if块
-- if-else块
-- if else-if阶梯块
-- 巢状if语句
+- if塊
+- if-else塊
+- if else-if階梯塊
+- 巢狀if語句
 
-## if语句
+## if語句
 
-`if`语句块的语法 -
+`if`語句塊的語法 -
 
 ```rust
 if condition  
@@ -22,13 +22,13 @@ if condition
 }
 ```
 
-在上面的语法中，如果条件为真，则执行块语句，否则跳过`if`
+在上面的語法中，如果條件為真，則執行塊語句，否則跳過`if`
 
-`if`语句的流程图 -
+`if`語句的流程圖 -
 
 ![img](https://tw511.com/upload/images/201910/20191014013903372.png)
 
-**范例：**
+**範例：**
 `if`
 
 ```rust
@@ -42,19 +42,19 @@ fn main(){
 }
 ```
 
-执行上面范例程式码，得到以下结果：
+執行上面範例程式碼，得到以下結果：
 
 ```
 a is equal to 1
 ```
 
-在这个例子中，因此，`a``1``if``println!`
+在這個例子中，因此，`a``1``if``println!`
 
-## if-else语句
+## if-else語句
 
-如果条件为真，则执行 如果条件为假，则跳过`if``else``if``else`
+如果條件為真，則執行 如果條件為假，則跳過`if``else``if``else`
 
-**if-else语句的语法**
+**if-else語句的語法**
 
 ```
 if condition  
@@ -65,11 +65,11 @@ if condition
 }
 ```
 
-**if-else的流程图**
+**if-else的流程圖**
 
 ![img](https://tw511.com/upload/images/201910/20191014013903373.png)
 
-下面来看看一个`if-else`
+下面來看看一個`if-else`
 
 ```rust
 fn main()  
@@ -87,19 +87,19 @@ fn main()
 }
 ```
 
-执行上面范例程式码，得到以下结果 -
+執行上面範例程式碼，得到以下結果 -
 
 ```
 a is smaller than b
 ```
 
-在该范例中，变数 因此，执行`a``3``a``b``else`
+在該範例中，變數 因此，執行`a``3``a``b``else`
 
-## else-if语句
+## else-if語句
 
-如果要检查多个条件，则可使用`else-if`
+如果要檢查多個條件，則可使用`else-if`
 
-`else-if`语句的语法 -
+`else-if`語句的語法 -
 
 ```
 if condition 1  
@@ -116,13 +116,13 @@ else{
 }
 ```
 
-在上面的语法中，Rust为第一个真实条件执行块，当匹配到第一个真条件时，它就不会执行其余的块。
+在上面的語法中，Rust為第一個真實條件執行塊，當匹配到第一個真條件時，它就不會執行其餘的塊。
 
-`else if`语句块的流程图 -
+`else if`語句塊的流程圖 -
 
 ![img](https://tw511.com/upload/images/201910/20191014013903374.png)
 
-下面来看一个`else-if`
+下面來看一個`else-if`
 
 ```rust
 fn main(){
@@ -143,17 +143,17 @@ fn main(){
 }
 ```
 
-执行上面范例程式码，得到以下结果 -
+執行上面範例程式碼，得到以下結果 -
 
 ```shell
 number is less than 0
 ```
 
-在此范例中，变数 因此，`num``-5``num``0``else if`
+在此範例中，變數 因此，`num``-5``num``0``else if`
 
-## 巢状if-else语句
+## 巢狀if-else語句
 
-当 巢状`if-else``if``else``if-else`
+當 巢狀`if-else``if``else``if-else`
 `if-else`
 
 ```rust
@@ -172,7 +172,7 @@ if condition 1
 }
 ```
 
-下面来看一个巢状`if-else`
+下面來看一個巢狀`if-else`
 
 ```rust
 fn main(){
@@ -196,10 +196,10 @@ fn main(){
 }
 ```
 
-执行上面范例程式码，得到以下结果 -
+執行上面範例程式碼，得到以下結果 -
 
 ```shell
 a is less than b
 ```
 
-在此范例中，因此，控制进入 因此，执行`a``b``if``a``b``else``if`
+在此範例中，因此，控制進入 因此，執行`a``b``if``a``b``else``if`

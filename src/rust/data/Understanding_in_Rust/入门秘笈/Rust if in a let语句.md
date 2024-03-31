@@ -1,8 +1,8 @@
-# Rust if in a let语句
+# Rust if in a let語句
 
 在`let``if``if``let`
 
-**if in a let语法**
+**if in a let語法**
 
 ```rust
 Let variable_name= if condition{  
@@ -12,13 +12,13 @@ Let variable_name= if condition{
 }
 ```
 
-在上面的语法中，如果条件为真，则将`if``false``else`
+在上面的語法中，如果條件為真，則將`if``false``else`
 
 ![img](https://tw511.com/upload/images/201910/20191014013905375.png)
 
-**范例1**
+**範例1**
 
-下面来看一个简单的例子。
+下面來看一個簡單的例子。
 
 ```rust
 fn main(){
@@ -35,15 +35,15 @@ fn main(){
 }
 ```
 
-执行上面范例程式码，得到以下结果 -
+執行上面範例程式碼，得到以下結果 -
 
 ```shell
 value of a is: 1
 ```
 
-在此范例中，条件为真。因此，现在，`a``if``a``1`
+在此範例中，條件為真。因此，現在，`a``if``a``1`
 
-下面再来看一个另一个简单的例子。
+下面再來看一個另一個簡單的例子。
 
 ```rust
 fn main(){
@@ -60,10 +60,10 @@ fn main(){
 }
 ```
 
-执行上面范例程式码，得到以下结果 -
+執行上面範例程式碼，得到以下結果 -
 
 ```
 Some errors occurred:E0308
 ```
 
-在此范例中，因此，该程式丢掷错误，因为两个块都包含不同型别的值。`if``else`
+在此範例中，因此，該程式丟擲錯誤，因為兩個塊都包含不同型別的值。`if``else`

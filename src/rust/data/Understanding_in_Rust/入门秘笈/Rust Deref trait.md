@@ -1,11 +1,11 @@
 # Rust Deref trait
 
-`Deref <T> trait`用于自定义解除参照运算子( 如果实现 因此，在参照上工作的程式码也可以用在智慧指标上。`*`
+`Deref <T> trait`用於自定義解除參照運算子( 如果實現 因此，在參照上工作的程式碼也可以用在智慧指標上。`*`
 `Deref <T>`
 
-## 常规参照
+## 常規參照
 
-常规参照是一种指向某个值的指标，该值储存在其他地方。下面来看一个简单的例子来建立`i32` `this`
+常規參照是一種指向某個值的指標，該值儲存在其他地方。下面來看一個簡單的例子來建立`i32` `this`
 
 ```rust
 fn main()  
@@ -24,19 +24,19 @@ fn main()
 }
 ```
 
-执行上面范例程式码，得到以下结果 -
+執行上面範例程式碼，得到以下結果 -
 
 ```shell
 a and *b are equal
 ```
 
-在上面的例子中，如果使用 因此，可以比较变数 如果使用`a` `i32` `20` `b` `a` `* b` `20` `a` `* b` `&b` `* b`
+在上面的例子中，如果使用 因此，可以比較變數 如果使用`a` `i32` `20` `b` `a` `* b` `20` `a` `* b` `&b` `* b`
 
-## `Box <T>`作为参照
+## `Box <T>`作為參照
 
-`Box <T>`指标可用作参照。
+`Box <T>`指標可用作參照。
 
-下面来看一个简单的例子：
+下面來看一個簡單的例子：
 
 ```rust
 fn main()  
@@ -47,22 +47,22 @@ fn main()
 }
 ```
 
-输出结果如下所示 -
+輸出結果如下所示 -
 
 ```shell
 Value of *b is 11
 ```
 
-在上面的范例中，它们之间的唯一区别是b包含指向资料的框，而不是通过使用`Box <T>` `&`
+在上面的範例中，它們之間的唯一區別是b包含指向資料的框，而不是通過使用`Box <T>` `&`
 
-## 智慧指标作为参照
+## 智慧指標作為參照
 
-现在，建立类似于`Box <T>`
+現在，建立類似於`Box <T>`
 
-`Box <T>`可以定义为具有一个元素的元组结构，例如 建立元组结构后，在`MyBox <T>`
+`Box <T>`可以定義為具有一個元素的元組結構，例如 建立元組結構後，在`MyBox <T>`
 `MyBox <T>`
 
-下面来看一个简单的例子：
+下面來看一個簡單的例子：
 
 ```rust
 struct MyBox<T>(T);  
@@ -81,18 +81,18 @@ fn main()
 }
 ```
 
-执行上面范例程式码，得到以下结果 -
+執行上面範例程式碼，得到以下結果 -
 
 ![img](https://tw511.com/upload/images/201910/20191014013953413.png)
 
-在上面的例子中，建立了智慧指标 因此得出结论，无法取消类似于`b` `Box <T>`
+在上面的例子中，建立了智慧指標 因此得出結論，無法取消類似於`b` `Box <T>`
 
-## 实现Deref Trait
+## 實現Deref Trait
 
-- `Deref Trait`在标准库中定义，该库用于实现名为`deref`
+- `Deref Trait`在標準庫中定義，該庫用於實現名為`deref`
 - `deref`方法借用`self`
 
-下面来看一个简单的例子：
+下面來看一個簡單的例子：
 
 ```rust
 struct MyBox<T>  
@@ -115,27 +115,27 @@ fn main()
 }
 ```
 
-执行上面范例程式码，得到以下结果 -
+執行上面範例程式碼，得到以下結果 -
 
 ```shell
 10
 ```
 
-**程式说明**
+**程式說明**
 
 - `Deref trait`在`MyBox`
-- `Deref trait`实现`deref()` `deref()` `a`
-- `type Target = T;`是 关联型别用于宣告泛型型别引数。`Deref trait`
+- `Deref trait`實現`deref()` `deref()` `a`
+- `type Target = T;`是 關聯型別用於宣告泛型型別引數。`Deref trait`
 - 建立了`MyBox` `b`
-- 通过使用`MyBox``b.deref()` `deref()` `deref()`
+- 通過使用`MyBox``b.deref()` `deref()` `deref()`
 
-## Deref强制
+## Deref強制
 
-- `Deref`强制是将实现`Deref trait` `Deref`
-- `Deref`强制是对函式和方法的引数执行的。
-- 当将特定型别的参照传递给与函式定义中的引数型别不匹配的函式时，`Deref`
+- `Deref`強制是將實現`Deref trait` `Deref`
+- `Deref`強制是對函式和方法的引數執行的。
+- 當將特定型別的參照傳遞給與函式定義中的引數型別不匹配的函式時，`Deref`
 
-下面来看一个简单的例子：
+下面來看一個簡單的例子：
 
 ```rust
 struct MyBox<T>(T);  
@@ -167,20 +167,20 @@ fn main()
 }
 ```
 
-执行上面范例程式码，得到以下结果 -
+執行上面範例程式碼，得到以下結果 -
 
 ```
 5
 ```
 
-在上面的例子中，使用引数 在这种情况下，实现`＆b` `print(&b)` `&Box <i32>` `Deref trait` `Deref` `&Box <i32>` `&i32`
+在上面的例子中，使用引數 在這種情況下，實現`＆b` `print(&b)` `&Box <i32>` `Deref trait` `Deref` `&Box <i32>` `&i32`
 
-## Derif强制与可变性的相互作用
+## Derif強制與可變性的相互作用
 
-到目前为止，使用`Deref Trait` `*` `DerefMut Trait` `*`
+到目前為止，使用`Deref Trait` `*` `DerefMut Trait` `*`
 
-Rust在以下三种情况下执行`Deref`
+Rust在以下三種情況下執行`Deref`
 
-- 当T：`Deref <Target = U>` `T` `U` `&T` `&U`
-- 当T：`DerefMut <Target = U>` `T` `U` `&mut T` `&mut U`
-- 当T：`Deref <Target = U>` `T` `U` `&mut T` `&U`
+- 當T：`Deref <Target = U>` `T` `U` `&T` `&U`
+- 當T：`DerefMut <Target = U>` `T` `U` `&mut T` `&mut U`
+- 當T：`Deref <Target = U>` `T` `U` `&mut T` `&U`

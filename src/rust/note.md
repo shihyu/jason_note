@@ -1161,11 +1161,11 @@ fn main() {
 ```rust
 use tokio::time::{sleep, Duration};
 
-// 异步函数
+// 異步函數
 async fn async_function(id: usize) {
     println!("Start of async function {}", id);
 
-    // 模拟异步操作，例如 I/O 操作
+    // 模擬異步操作，例如 I/O 操作
     sleep(Duration::from_secs(2)).await;
 
     println!("End of async function {}", id);
@@ -1176,17 +1176,17 @@ async fn async_function(id: usize) {
 async fn main() {
     println!("Start of main function");
 
-    // 创建一个 Vec 来存储任务句柄
+    // 創建一個 Vec 來存儲任務句柄
     let mut handles = Vec::new();
 
-    // 调用 async_function 5 次
+    // 調用 async_function 5 次
     for i in 0..5 {
-        // 使用 tokio::spawn 启动异步任务，并将任务句柄存储在 Vec 中
+        // 使用 tokio::spawn 啟動異步任務，並將任務句柄存儲在 Vec 中
         let handle = tokio::spawn(async_function(i));
         handles.push(handle);
     }
 
-    // 等待所有任务完成
+    // 等待所有任務完成
     for handle in handles {
         handle.await.expect("Failed to await task");
     }
@@ -1508,7 +1508,7 @@ struct Point {
 ```rust
 impl std::fmt::Debug for Point {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // 使用 Formatter 将调试信息格式化为字符串
+        // 使用 Formatter 將調試信息格式化為字符串
         f.debug_struct("Point")
             .field("x", &self.x)
             .field("y", &self.y)
@@ -1547,10 +1547,10 @@ enum Result<T, E> {
 ```rust
 fn divide(a: i32, b: i32) -> Result<i32, &'static str> {
     if b == 0 {
-        // 如果尝试除以零，则返回一个 Err 变体，包含错误信息
+        // 如果嘗試除以零，則返回一個 Err 變體，包含錯誤信息
         Err("Cannot divide by zero!")
     } else {
-        // 如果成功，返回 Ok 变体，包含结果值
+        // 如果成功，返回 Ok 變體，包含結果值
         Ok(a / b)
     }
 }
@@ -1584,10 +1584,10 @@ enum _Result<T, E> {
 
 fn divide(a: i32, b: i32) -> _Result<i32, &'static str> {
     if b == 0 {
-        // 如果尝试除以零，则返回一个 Err 变体，包含错误信息
+        // 如果嘗試除以零，則返回一個 Err 變體，包含錯誤信息
         _Result::Err("Cannot divide by zero!")
     } else {
-        // 如果成功，返回 Ok 变体，包含结果值
+        // 如果成功，返回 Ok 變體，包含結果值
         _Result::Ok(a / b)
     }
 }

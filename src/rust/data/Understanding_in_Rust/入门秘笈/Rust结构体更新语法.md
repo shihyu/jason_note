@@ -1,6 +1,6 @@
-# Rust结构体更新语法
+# Rust結構體更新語法
 
-使用 当新范例使用旧范例的大部分值时，可以使用 考虑两名员工`Struct`
+使用 當新範例使用舊範例的大部分值時，可以使用 考慮兩名員工`Struct`
 `struct update``employee1``employee2`
 
 - 首先，建立`Employee``employee1`
@@ -14,7 +14,7 @@ let employee1 = Employee{
 };
 ```
 
-- 其次，建立 范例的某些值与 有两种方法可以宣告 第一种方法是在没有语法更新的情况下宣告`employee2``employee2``employee1``employee2`
+- 其次，建立 範例的某些值與 有兩種方法可以宣告 第一種方法是在沒有語法更新的情況下宣告`employee2``employee2``employee1``employee2`
   `employee2`
 
 ```rust
@@ -26,7 +26,7 @@ let employee2 = Employee{
 };
 ```
 
-第二种方法是使用语法更新宣告`employee2`
+第二種方法是使用語法更新宣告`employee2`
 
 ```rust
 let employee2 = Employee{  
@@ -36,9 +36,9 @@ let employee2 = Employee{
 };
 ```
 
-语法`..`
+語法`..`
 
-下面来看一个结构的简单范例：
+下面來看一個結構的簡單範例：
 
 ```rust
 struct Triangle  
@@ -59,7 +59,7 @@ fn area(t:&Triangle)->f64
 }
 ```
 
-执行上面范例程式码，得到以下结果 -
+執行上面範例程式碼，得到以下結果 -
 
 ```shell
 Area of a right angled triangle is 300
