@@ -163,6 +163,7 @@
   - [建倉加碼](strategy/建倉加碼.md)
   - [當沖](strategy/DT.md)
   - [麻道明](strategy/麻道明/麻道明.md)
+  - [賺贏大盤的動能投資法](strategy/賺贏大盤的動能投資法.md)
     - [假突破](strategy/麻道明/假突破.md)
   - [奇正](strategy/奇正/奇正.md)
     - [資金控管與試單策略](strategy/奇正/資金控管與試單策略.md)
