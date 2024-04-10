@@ -2218,3 +2218,27 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+
+
+# 讀取檔案中網址
+
+```python
+import re
+
+def extract_urls_from_file(file_path):
+    urls = []
+    with open(file_path, 'r', encoding='utf-8') as file:
+        for line in file:
+            urls_in_line = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', line)
+            urls.extend(urls_in_line)
+    return urls
+
+file_path = './bb'  
+
+urls = extract_urls_from_file(file_path)
+
+for url in urls:
+    print(url)
+```
+
