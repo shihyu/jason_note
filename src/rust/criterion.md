@@ -19,7 +19,7 @@ FizzBuzz的規則如下：
 
 有[許多種編寫FizzBuzz的方法](https://rosettacode.org/wiki/FizzBuzz)。 所以我們會選擇我最喜歡的一種：
 
-```
+```rust
 fn main() {
     for i in 1..=100 {
         match (i % 3, i % 5) {
@@ -122,9 +122,22 @@ game
 
 將以下程式碼新增到 `lib.rs`：
 
-```
-pub fn play_game(n: u32, print: bool) {    let result = fizz_buzz(n);    if print {        println!("{result}");    }}
-pub fn fizz_buzz(n: u32) -> String {    match (n % 3, n % 5) {        (0, 0) => "FizzBuzz".to_string(),        (0, _) => "Fizz".to_string(),        (_, 0) => "Buzz".to_string(),        (_, _) => n.to_string(),    }}
+```rust
+pub fn play_game(n: u32, print: bool) {
+    let result = fizz_buzz(n);
+    if print {
+        println!("{result}");
+    }
+}
+pub fn fizz_buzz(n: u32) -> String {
+    match (n % 3, n % 5) {
+        (0, 0) => "FizzBuzz".to_string(),
+        (0, _) => "Fizz".to_string(),
+        (_, 0) => "Buzz".to_string(),
+        (_, _) => n.to_string(),
+    }
+}
+
 ```
 
 - `play_game`：接受一個無符號整數 `n`，用該數字呼叫 `fizz_buzz`，如果 `print` 為 `true`，則列印結果。
@@ -132,9 +145,13 @@ pub fn fizz_buzz(n: u32) -> String {    match (n % 3, n % 5) {        (0, 0) => 
 
 然後更新 `main.rs`，使其看起來像這樣：
 
-```
+```rust
 use game::play_game;
-fn main() {    for i in 1..=100 {        play_game(i, true);    }}
+fn main() {
+    for i in 1..=100 {
+        play_game(i, true);
+    }
+}
 ```
 
 - `game::play_game`：從我們剛剛用 `lib.rs` 建立的 `game` 包中匯入 `play_game`。
@@ -157,11 +174,20 @@ game
 
 在`play_game.rs`中增加下列程式碼：
 
-```
+```rust
 use criterion::{criterion_group, criterion_main, Criterion};
 use game::play_game;
-fn bench_play_game(c: &mut Criterion) {    c.bench_function("bench_play_game", |b| {        b.iter(|| {            std::hint::black_box(for i in 1..=100 {                play_game(i, false)            });        });    });}
-criterion_group!(    benches,    bench_play_game,);criterion_main!(benches);
+fn bench_play_game(c: &mut Criterion) {
+    c.bench_function("bench_play_game", |b| {
+        b.iter(|| {
+            std::hint::black_box(for i in 1..=100 {
+                play_game(i, false)
+            });
+        });
+    });
+}
+criterion_group!(benches, bench_play_game,);
+criterion_main!(benches);
 ```
 
 - 匯入`Criterion`基準測試運行器。
@@ -187,7 +213,7 @@ criterion_group!(    benches,    bench_play_game,);criterion_main!(benches);
 
 現在我們已經準備好進行基準測試了，運行`cargo bench`：
 
-```
+```shell
 $ cargo bench   Compiling playground v0.0.1 (/home/bencher)    Finished bench [optimized] target(s) in 4.79s     Running unittests src/main.rs (target/release/deps/game-68f58c96f4025bd4)
 running 0 tests
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
@@ -219,7 +245,7 @@ FizzBuzzFibonacci的規則如下：
 
 有[許多方法可以編寫斐波那契數列](https://rosettacode.org/wiki/Fibonacci_sequence)，同樣也有許多方法可以檢測一個斐波那契數。 所以我們將採用我的最愛：
 
-```
+```rust
 fn is_fibonacci_number(n: u32) -> bool {
     for i in 0..=n {
         let (mut previous, mut current) = (0, 1);
@@ -249,7 +275,7 @@ fn is_fibonacci_number(n: u32) -> bool {
 
 現在我們需要更新我們的 `fizz_buzz` 功能：
 
-```
+```rust
 pub fn fizz_buzz_fibonacci(n: u32) -> String {
     if is_fibonacci_number(n) {
         "Fibonacci".to_string()
@@ -271,7 +297,7 @@ pub fn fizz_buzz_fibonacci(n: u32) -> String {
 
 因為我們將 `fizz_buzz` 重新命名為 `fizz_buzz_fibonacci`，我們也需要更新我們的 `play_game` 功能：
 
-```
+```rust
 pub fn play_game(n: u32, print: bool) {
     let result = fizz_buzz_fibonacci(n);
     if print {
@@ -314,7 +340,7 @@ Open World FizzBuzzFibonacci的規則如下：
 
 為了讓我們的遊戲適應任何數字，我們需要接受一個命令列參數。 將 `main` 函數更新為如下形式：
 
-```
+```rust
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     let i = args
@@ -380,9 +406,17 @@ FizzBuzz
 
 從床上匆忙爬起來後，我試圖弄清楚發生了什麼。 我試圖搜尋日誌，但這非常困難，因為一切都在不停地崩潰。 最後，我發現了問題。孩子們！他們非常喜歡我們的遊戲，以至於玩了高達一百萬次！ 在一股靈感的閃現中，我新增了兩個新的基準測試：
 
-```
-fn bench_play_game_100(c: &mut Criterion) {    c.bench_function("bench_play_game_100", |b| {        b.iter(|| std::hint::black_box(play_game(100, false)));    });}
-fn bench_play_game_1_000_000(c: &mut Criterion) {    c.bench_function("bench_play_game_1_000_000", |b| {        b.iter(|| std::hint::black_box(play_game(1_000_000, false)));    });}
+```rust
+fn bench_play_game_100(c: &mut Criterion) {
+    c.bench_function("bench_play_game_100", |b| {
+        b.iter(|| std::hint::black_box(play_game(100, false)));
+    });
+}
+fn bench_play_game_1_000_000(c: &mut Criterion) {
+    c.bench_function("bench_play_game_1_000_000", |b| {
+        b.iter(|| std::hint::black_box(play_game(1_000_000, false)));
+    });
+}
 ```
 
 - 一個用於玩遊戲並輸入數字一百（`100`）的微基準測試`bench_play_game_100`。
@@ -417,7 +451,7 @@ Found 16 outliers among 100 measurements (16.00%)
 
 讓我們再次看一下 `is_fibonacci_number` 函數：
 
-```
+```rust
 fn is_fibonacci_number(n: u32) -> bool {
     for i in 0..=n {
         let (mut previous, mut current) = (0, 1);
@@ -436,7 +470,7 @@ fn is_fibonacci_number(n: u32) -> bool {
 
 現在我在考慮性能，我意識到我有一個不必要的，額外的循環。 我們可以完全擺脫 `for i in 0..=n {}` 循環， 只需直接比較 `current` 值和給定的數字 (`n`) 🤦
 
-```
+```rust
 fn is_fibonacci_number(n: u32) -> bool {
     let (mut previous, mut current) = (0, 1);
     while current < n {

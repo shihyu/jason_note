@@ -80,6 +80,7 @@
   - [Rust 檔案格式](rust/rust_file_format.md)
   - [Rust 函數庫/執行檔](rust/binary_lib.md)
   - [印出函數名稱](rust/print-function-name-dump-stack.md)
+  - [criterion](rust/criterion.md)
   - [30天深入淺出Rust系列](rust/note.md)
     - [Rust 30 Day](rust/30天深入淺出Rust系列/rust_30_day.md)
     - [變數的所有權與借出變數](rust/30天深入淺出Rust系列/Move_Borrow_Ownership.md)
