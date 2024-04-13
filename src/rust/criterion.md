@@ -204,8 +204,12 @@ criterion_main!(benches);
 在你的`Cargo.toml`檔案的底部新增以下內容：
 
 ```
-[dev-dependencies]criterion = "0.5"
-[[bench]]name = "play_game"harness = false
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "play_game"
+harness = false
 ```
 
 - `criterion`：將`criterion`新增為開發依賴，因為我們只在性能測試中使用它。
@@ -214,13 +218,26 @@ criterion_main!(benches);
 現在我們已經準備好進行基準測試了，運行`cargo bench`：
 
 ```shell
-$ cargo bench   Compiling playground v0.0.1 (/home/bencher)    Finished bench [optimized] target(s) in 4.79s     Running unittests src/main.rs (target/release/deps/game-68f58c96f4025bd4)
+$ cargo bench
+   Compiling playground v0.0.1 (/home/bencher)
+    Finished bench [optimized] target(s) in 4.79s
+     Running unittests src/main.rs (target/release/deps/game-68f58c96f4025bd4)
+
 running 0 tests
+
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
      Running unittests src/main.rs (target/release/deps/game-043972c4132076a9)
+
 running 0 tests
+
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
-     Running benches/play_game.rs (target/release/deps/play_game-e0857103eb02eb56)bench_play_game         time:   [3.0020 µs 3.0781 µs 3.1730 µs]Found 12 outliers among 100 measurements (12.00%)  2 (2.00%) high mild  10 (10.00%) high severe
+
+     Running benches/play_game.rs (target/release/deps/play_game-e0857103eb02eb56)
+bench_play_game         time:   [3.0020 µs 3.0781 µs 3.1730 µs]
+Found 12 outliers among 100 measurements (12.00%)
+  2 (2.00%) high mild
+  10 (10.00%) high severe
 ```
 
 > 🐰 讓我們調高節拍！我們已經得到了第一個基準測試指標！
@@ -313,13 +330,28 @@ pub fn play_game(n: u32, print: bool) {
 現在我們可以重新運行我們的基準測試了：
 
 ```
-$ cargo bench   Compiling playground v0.0.1 (/home/bencher)    Finished bench [optimized] target(s) in 4.79s     Running unittests src/main.rs (target/release/deps/game-68f58c96f4025bd4)
+$ cargo bench
+   Compiling playground v0.0.1 (/home/bencher)
+    Finished bench [optimized] target(s) in 4.79s
+     Running unittests src/main.rs (target/release/deps/game-68f58c96f4025bd4)
+
 running 0 tests
+
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
      Running unittests src/main.rs (target/release/deps/game-043972c4132076a9)
+
 running 0 tests
+
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
-     Running benches/play_game.rs (target/release/deps/play_game-e0857103eb02eb56)bench_play_game         time:   [20.067 µs 20.107 µs 20.149 µs]                        change: [+557.22% +568.69% +577.93%] (p = 0.00 < 0.05)                        Performance has regressed.Found 6 outliers among 100 measurements (6.00%)  4 (4.00%) high mild  2 (2.00%) high severe
+
+     Running benches/play_game.rs (target/release/deps/play_game-e0857103eb02eb56)
+bench_play_game         time:   [20.067 µs 20.107 µs 20.149 µs]
+                        change: [+557.22% +568.69% +577.93%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 6 outliers among 100 measurements (6.00%)
+  4 (4.00%) high mild
+  2 (2.00%) high severe
 ```
 
 哦哦！Criterion向我們顯示了FizzBuzz和FizzBuzzFibonacci遊戲之間性能差距為`+568.69%`。 你的數字會比我的稍微有些不同。 然而，兩者之間的差距可能在`5x`的範圍內。 這對我來說看起來是比較好的結果！特別是考慮到我們將像_Fibonacci_這樣的花哨功能新增到我們的遊戲中。 孩子們會喜歡的！
@@ -421,18 +453,37 @@ fn bench_play_game_1_000_000(c: &mut Criterion) {
 
 - 一個用於玩遊戲並輸入數字一百（`100`）的微基準測試`bench_play_game_100`。
 - 一個用於玩遊戲並輸入數字一百萬（`1_000_000`）的微基準測試`bench_play_game_1_000_000`。
-
+    
 當我運行它時，我得到了這個：
 
 ```
-$ cargo bench   Compiling playground v0.0.1 (/home/bencher)    Finished bench [optimized] target(s) in 4.79s     Running unittests src/main.rs (target/release/deps/game-68f58c96f4025bd4)
+$ cargo bench
+   Compiling playground v0.0.1 (/home/bencher)
+    Finished bench [optimized] target(s) in 4.79s
+     Running unittests src/main.rs (target/release/deps/game-68f58c96f4025bd4)
+
 running 0 tests
+
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
      Running unittests src/main.rs (target/release/deps/game-043972c4132076a9)
+
 running 0 tests
+
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
-     Running benches/play_game.rs (target/release/deps/play_game-e0857103eb02eb56)bench_play_game         time:   [20.024 µs 20.058 µs 20.096 µs]                        change: [-0.0801% +0.1431% +0.3734%] (p = 0.21 > 0.05)                        No change in performance detected.Found 17 outliers among 100 measurements (17.00%)  9 (9.00%) high mild  8 (8.00%) high severe
-bench_play_game_100     time:   [403.00 ns 403.57 ns 404.27 ns]Found 13 outliers among 100 measurements (13.00%)  6 (6.00%) high mild  7 (7.00%) high severe
+
+     Running benches/play_game.rs (target/release/deps/play_game-e0857103eb02eb56)
+bench_play_game         time:   [20.024 µs 20.058 µs 20.096 µs]
+                        change: [-0.0801% +0.1431% +0.3734%] (p = 0.21 > 0.05)
+                        No change in performance detected.
+Found 17 outliers among 100 measurements (17.00%)
+  9 (9.00%) high mild
+  8 (8.00%) high severe
+
+bench_play_game_100     time:   [403.00 ns 403.57 ns 404.27 ns]
+Found 13 outliers among 100 measurements (13.00%)
+  6 (6.00%) high mild
+  7 (7.00%) high severe
 ```
 
 等待一下… 等待一下…
@@ -494,15 +545,40 @@ fn is_fibonacci_number(n: u32) -> bool {
 現在，讓我們重新運行這些基準測試，看看我們做得如何：
 
 ```
-$ cargo bench   Compiling playground v0.0.1 (/home/bencher)    Finished bench [optimized] target(s) in 4.79s     Running unittests src/main.rs (target/release/deps/game-68f58c96f4025bd4)
+$ cargo bench
+   Compiling playground v0.0.1 (/home/bencher)
+    Finished bench [optimized] target(s) in 4.79s
+     Running unittests src/main.rs (target/release/deps/game-68f58c96f4025bd4)
+
 running 0 tests
+
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
      Running unittests src/main.rs (target/release/deps/game-043972c4132076a9)
+
 running 0 tests
+
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
-     Running benches/play_game.rs (target/release/deps/play_game-e0857103eb02eb56)bench_play_game         time:   [3.1201 µs 3.1772 µs 3.2536 µs]                        change: [-84.469% -84.286% -84.016%] (p = 0.00 < 0.05)                        Performance has improved.Found 5 outliers among 100 measurements (5.00%)  1 (1.00%) high mild  4 (4.00%) high severe
-bench_play_game_100     time:   [24.460 ns 24.555 ns 24.650 ns]                        change: [-93.976% -93.950% -93.927%] (p = 0.00 < 0.05)                        Performance has improved.
-bench_play_game_1_000_000                        time:   [30.260 ns 30.403 ns 30.564 ns]                        change: [-100.000% -100.000% -100.000%] (p = 0.00 < 0.05)                        Performance has improved.Found 4 outliers among 100 measurements (4.00%)  1 (1.00%) high mild  3 (3.00%) high severe
+
+     Running benches/play_game.rs (target/release/deps/play_game-e0857103eb02eb56)
+bench_play_game         time:   [3.1201 µs 3.1772 µs 3.2536 µs]
+                        change: [-84.469% -84.286% -84.016%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 5 outliers among 100 measurements (5.00%)
+  1 (1.00%) high mild
+  4 (4.00%) high severe
+
+bench_play_game_100     time:   [24.460 ns 24.555 ns 24.650 ns]
+                        change: [-93.976% -93.950% -93.927%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+bench_play_game_1_000_000
+                        time:   [30.260 ns 30.403 ns 30.564 ns]
+                        change: [-100.000% -100.000% -100.000%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 4 outliers among 100 measurements (4.00%)
+  1 (1.00%) high mild
+  3 (3.00%) high severe
 ```
 
 哦哇！我們的`bench_play_game`基準測試回落到原來FizzBuzz測試的附近位置。 我希望我能記住那個得分是多少。但是已經過了三個星期了。 我的終端歷史記錄沒有回溯這麼遠。 而Criterion只會和最近的結果進行比較。 但我認為這是很接近的！
@@ -520,16 +596,44 @@ bench_play_game_1_000_000                        time:   [30.260 ns 30.403 ns 30
 Bencher有一個[內建的介面卡](https://bencher.dev/zh/docs/explanation/adapters/)， 所以很容易整合到 CI 中。在[遵循快速開始指南](https://bencher.dev/zh/docs/tutorial/quick-start/)後， 我能夠運行我的基準測試並用 Bencher 追蹤它們。
 
 ```
-$ bencher run --project game "cargo bench"    Finished bench [optimized] target(s) in 0.07s     Running unittests src/lib.rs (target/release/deps/game-13f4bad779fbfde4)
+$ bencher run --project game "cargo bench"
+    Finished bench [optimized] target(s) in 0.07s
+     Running unittests src/lib.rs (target/release/deps/game-13f4bad779fbfde4)
+
 running 0 tests
+
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
      Running unittests src/main.rs (target/release/deps/game-043972c4132076a9)
+
 running 0 tests
+
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
-     Running benches/play_game.rs (target/release/deps/play_game-e0857103eb02eb56)Gnuplot not found, using plotters backendbench_play_game         time:   [3.0713 µs 3.0902 µs 3.1132 µs]Found 16 outliers among 100 measurements (16.00%)  3 (3.00%) high mild  13 (13.00%) high severe
-bench_play_game_100     time:   [23.938 ns 23.970 ns 24.009 ns]Found 15 outliers among 100 measurements (15.00%)  5 (5.00%) high mild  10 (10.00%) high severe
-bench_play_game_1_000_000                        time:   [30.004 ns 30.127 ns 30.279 ns]Found 5 outliers among 100 measurements (5.00%)  1 (1.00%) high mild  4 (4.00%) high severe
-Bencher New Report:...View results:- bench_play_game (Latency): https://bencher.dev/console/projects/game/perf?measures=52507e04-ffd9-4021-b141-7d4b9f1e9194&branches=3a27b3ce-225c-4076-af7c-75adbc34ef9a&testbeds=bc05ed88-74c1-430d-b96a-5394fdd18bb0&benchmarks=077449e5-5b45-4c00-bdfb-3a277413180d&start_time=1697224006000&end_time=1699816009000&upper_boundary=true- bench_play_game_100 (Latency): https://bencher.dev/console/projects/game/perf?measures=52507e04-ffd9-4021-b141-7d4b9f1e9194&branches=3a27b3ce-225c-4076-af7c-75adbc34ef9a&testbeds=bc05ed88-74c1-430d-b96a-5394fdd18bb0&benchmarks=96508869-4fa2-44ac-8e60-b635b83a17b7&start_time=1697224006000&end_time=1699816009000&upper_boundary=true- bench_play_game_1_000_000 (Latency): https://bencher.dev/console/projects/game/perf?measures=52507e04-ffd9-4021-b141-7d4b9f1e9194&branches=3a27b3ce-225c-4076-af7c-75adbc34ef9a&testbeds=bc05ed88-74c1-430d-b96a-5394fdd18bb0&benchmarks=ff014217-4570-42ea-8813-6ed0284500a4&start_time=1697224006000&end_time=1699816009000&upper_boundary=true
+
+     Running benches/play_game.rs (target/release/deps/play_game-e0857103eb02eb56)
+Gnuplot not found, using plotters backend
+bench_play_game         time:   [3.0713 µs 3.0902 µs 3.1132 µs]
+Found 16 outliers among 100 measurements (16.00%)
+  3 (3.00%) high mild
+  13 (13.00%) high severe
+
+bench_play_game_100     time:   [23.938 ns 23.970 ns 24.009 ns]
+Found 15 outliers among 100 measurements (15.00%)
+  5 (5.00%) high mild
+  10 (10.00%) high severe
+
+bench_play_game_1_000_000
+                        time:   [30.004 ns 30.127 ns 30.279 ns]
+Found 5 outliers among 100 measurements (5.00%)
+  1 (1.00%) high mild
+  4 (4.00%) high severe
+
+Bencher New Report:
+...
+View results:
+- bench_play_game (Latency): https://bencher.dev/console/projects/game/perf?measures=52507e04-ffd9-4021-b141-7d4b9f1e9194&branches=3a27b3ce-225c-4076-af7c-75adbc34ef9a&testbeds=bc05ed88-74c1-430d-b96a-5394fdd18bb0&benchmarks=077449e5-5b45-4c00-bdfb-3a277413180d&start_time=1697224006000&end_time=1699816009000&upper_boundary=true
+- bench_play_game_100 (Latency): https://bencher.dev/console/projects/game/perf?measures=52507e04-ffd9-4021-b141-7d4b9f1e9194&branches=3a27b3ce-225c-4076-af7c-75adbc34ef9a&testbeds=bc05ed88-74c1-430d-b96a-5394fdd18bb0&benchmarks=96508869-4fa2-44ac-8e60-b635b83a17b7&start_time=1697224006000&end_time=1699816009000&upper_boundary=true
+- bench_play_game_1_000_000 (Latency): https://bencher.dev/console/projects/game/perf?measures=52507e04-ffd9-4021-b141-7d4b9f1e9194&branches=3a27b3ce-225c-4076-af7c-75adbc34ef9a&testbeds=bc05ed88-74c1-430d-b96a-5394fdd18bb0&benchmarks=ff014217-4570-42ea-8813-6ed0284500a4&start_time=1697224006000&end_time=1699816009000&upper_boundary=true
 ```
 
 使用這個由一個友善的兔子給我的巧妙的時間旅行裝置， 我能夠回到過去，重演如果我們一直都在使用Bencher的情況下會發生什麼。 你可以看到我們首次推出存在問題的FizzBuzzFibonacci實現的位置。 我馬上在我的拉取請求評論中得到了CI的失敗資訊。 就在那天，我修復了性能問題，擺脫了那不必要的額外循環。 沒有火災。顧客都非常開心。
