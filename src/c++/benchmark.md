@@ -413,3 +413,55 @@ BENCHMARK(bench_LogN)->RangeMultiplier(10)->Range(10, 1000000)->Complexity(bench
 ![img](images/1434464-20190630014036457-1448575692.jpg)
 
 可以看到，自動的時間複雜度計算基本是精準的，可以在我們對演算法進行測試時提供一個有效的參考。
+
+---
+
+官方編譯
+
+```shell
+# Check out the library.
+$ git clone https://github.com/google/benchmark.git
+# Go to the library root directory
+$ cd benchmark
+# Make a build directory to place the build output.
+$ cmake -E make_directory "build"
+# Generate build system files with cmake, and download any dependencies.
+$ cmake -E chdir "build" cmake -DBENCHMARK_DOWNLOAD_DEPENDENCIES=on -DCMAKE_BUILD_TYPE=Release ../
+# or, starting with CMake 3.13, use a simpler form:
+# cmake -DCMAKE_BUILD_TYPE=Release -S . -B "build"
+# Build the library.
+$ cmake --build "build" --config Release
+```
+
+```sh
+Next, you can run the tests to check the build.
+$ cmake -E chdir "build" ctest --build-config Release
+```
+
+```sh
+If you want to install the library globally, also run:
+
+sudo cmake --build "build" --config Release --target install
+```
+
+```cpp
+#include <benchmark/benchmark.h>
+
+static void BM_SomeFunction(benchmark::State& state) {
+  // Perform setup here
+  for (auto _ : state) {
+    // This code gets timed
+    SomeFunction();
+  }
+}
+// Register the function as a benchmark
+BENCHMARK(BM_SomeFunction);
+// Run the benchmark
+BENCHMARK_MAIN();
+```
+
+```sh
+$ g++ mybenchmark.cc -std=c++11 -isystem benchmark/include \
+  -Lbenchmark/build/src -lbenchmark -lpthread -o mybenchmark
+```
+
