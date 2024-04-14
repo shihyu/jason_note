@@ -80,6 +80,7 @@
   - [Rust 檔案格式](rust/rust_file_format.md)
   - [Rust OO](rust/rust-an-introduction-in-oop.md)
   - [Rust Pointer](rust/rust-an-introduction-smart-pointer.md)
+  - [Pointer](rust/pointer.md)
   - [Rust 函數庫/執行檔](rust/binary_lib.md)
   - [Reqwest](rust/reqwest.md)
   - [印出函數名稱](rust/print-function-name-dump-stack.md)
