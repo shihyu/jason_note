@@ -161,3 +161,151 @@ qemu-system-riscv64 -M virt -m 256M -nographic -kernel linux/arch/riscv/boot/Ima
 
 ![img](images/1*P3u4b9gW1tPmj1817Qlh1w.png)
 
+---
+
+# qemu搭建riscv的可偵錯環境
+
+- riscv工具鏈
+
+（網上大多數用Github直連的工具鏈，但是因為太大，download的時候老是出問題）
+
+選擇使用[Cross-compilation toolchains for Linux - Home (bootlin.com)](https://toolchains.bootlin.com/)進行下載，之後解壓。
+
+![img](images/2161786-20231007093914004-97997124.png)
+
+bin目錄下為可執行的工具鏈，將其新增到PATH中。
+
+- qemu
+
+qemu壓縮包下載：[QEMU](https://www.qemu.org/)，之後解壓。
+
+默認的安裝命令：
+
+![img](images/2161786-20231007094016074-447585000.png)
+
+這樣會生成qemu支援的所有體系架構的可執行檔案。
+
+如果需要只生成一種架構的，需要組態`target-list`選項。
+
+![img](images/2161786-20231007094029317-1991916627.png)
+
+make之後在build目錄下有對應qemu可執行檔案：
+
+![img](images/2161786-20231007094043679-1094466691.png)
+
+將其新增到PATH中。
+
+- opensbi
+
+（opensbi用於系統啟動程式碼跳轉）
+
+項目github地址：https://github.com/riscv-software-src/opensbi
+
+make時指定交叉編譯器CROSS_COMPILE=riscv64-linux。
+
+同時，指定PLATFORM=generic。
+
+
+
+```sh
+export CROSS_COMPILE=riscv64-linux-
+make PLATFORM=generic
+```
+
+![img](images/2161786-20231007094103885-651017148.png)
+
+想要模擬不同類型的裝置，make該項目時的PLATFORM參數可以參考opensbi/docs/platform下的md檔案。
+
+make之後，在opensbi/build/platform/generic/firmware下生成如下檔案：
+
+![img](images/2161786-20231007094116858-1204076076.png)
+
+主要有三種類型的firmware：dynamic、jump、payload。
+
+這裡主要使用jump類型的fw_jump.elf檔案，啟動時直接跳轉到OS入口程式碼。
+
+- linux kernel
+
+直接github上下載linus的分支：[torvalds/linux: Linux kernel source tree (github.com)](https://github.com/torvalds/linux)
+
+然後切換到指定版本的tag。
+
+![img](images/2161786-20231007094140871-460197713.png)
+
+make ARCH=riscv CROSS_COMPILE=riscv64-linux- defconfig，之後make ARCH=riscv CROSS_COMPILE=riscv64-linux- menuconfig。
+
+要使用GDB+qemu偵錯核心的話，一般得選中kernel debug以及取消地址隨機化KASLR（不過在riscv相關的組態中沒有發現這個組態）。
+
+![img](images/2161786-20231007094153553-1380006916.png)
+
+看riscv社區的新聞：[Linux 核心地址空間佈局隨機化 “KASLR” for RISC-V – RISC-V INTERNATIONAL (riscv.org)](https://riscv.org/news/2023/02/linux-kernel-address-space-layout-randomization-kaslr-for-risc-v/)，riscv至今沒有新增該特性。
+
+make之後，會在arch/riscv/boot下生成對應的Image鏡像。
+
+![img](images/2161786-20231007094211942-256766800.png)
+
+- rootfs
+
+（建立根檔案系統）地址：[Buildroot - Making Embedded Linux Easy](https://buildroot.org/download.html)
+
+make menuconfig選擇RISCV
+
+![img](images/2161786-20231007094231343-1255201738.png)
+
+之後sudo make，會在output/images下生成對應的檔案：
+
+![img](images/2161786-20231007094243908-931069835.png)
+
+- 共享檔案
+
+qemu中運行的虛擬機器往往需要和主機間傳輸資料，因此，最常使用的方式就是共享檔案。
+
+```bash
+dd if=/dev/zero of=ext4.img bs=512 count=131072
+mkfs.ext4 ext4.img
+sudo mount -t ext4 -o loop ext4.img ./share
+```
+
+在當前目錄下生成share目錄，可用於虛擬機器和主機間共享資料：
+
+![img](images/2161786-20231007094302749-49829446.png)
+
+- gdb偵錯
+
+```bash
+#!/bin/bash
+
+qemu-system-riscv64 -M virt \
+	-bios fw_jump.elf \
+	-kernel Image \
+	-append "rootwait root=/dev/vda ro" \
+	-drive file=rootfs.ext2, format=raw,id=hd0 \
+	-device virtio-blk-device, device=hd0 \
+	-drive file=ext4.img, format=raw,id=hd1 \
+	-device virtio-blk-device, driver=hd1 \
+	-s -nographic
+```
+
+-s參數使主機端使用連接埠1234進行kernel偵錯。
+
+運行命令後：
+
+![img](images/2161786-20231007094325712-1642476295.png)
+
+主機端偵錯，使用riscv64-linux-gdb偵錯編譯kernel後生成的vmlinux。
+
+target remote localhost:1234用於偵錯虛擬機器。
+
+![img](images/2161786-20231007094341130-1877707423.png)
+
+以調度的關鍵函數finish_task_switch為斷點為例：
+
+![img](images/2161786-20231007094405722-910249324.png)
+
+此時掛載到從init_task切換到下一個處理程序的過程中了。
+
+常規的gdb命令可以用於偵錯kernel，查看kernel執行階段資訊。
+
+![img](images/2161786-20231007094430771-2092245274.png)
+
+![img](images/2161786-20231007094445956-1546940533.png)
