@@ -79,6 +79,7 @@
   - [Rust vs C++語法](rust/rust_vs_cpp.md)
   - [Rust 檔案格式](rust/rust_file_format.md)
   - [Rust 函數庫/執行檔](rust/binary_lib.md)
+  - [Reqwest](rust/reqwest.md)
   - [印出函數名稱](rust/print-function-name-dump-stack.md)
   - [criterion](rust/criterion.md)
   - [30天深入淺出Rust系列](rust/note.md)
