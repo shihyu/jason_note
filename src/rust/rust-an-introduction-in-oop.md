@@ -8,7 +8,7 @@
 
 在之前文章的範例中，我們經常使用 struct，讀者可能會以為 Rust 就如同 C++ 那般，所有 struct 成員都是公開的 (public)。但實際上，Rust 的 struct 成員僅對同一個模組 (module) 內的程式碼公開。而所謂的模組，其實就是 C++ 的命名空間 (namespace)：
 
-```
+```rust
 mod mylib {
     struct Rational { // 有理數
         num: i32, // 分子
@@ -29,7 +29,7 @@ fn main() {
 
 我們可以用 `pub` 關鍵字來公開符號：
 
-```
+```rust
 mod mylib {
     pub struct Rational {
         num: i32,
@@ -53,7 +53,7 @@ fn main() {
 
 我們可以用 `impl` 關鍵字為某個型別定義成員函式：
 
-```
+```rust
 mod mylib {
     pub struct Rational {
         num: i32,
@@ -97,7 +97,7 @@ fn main() {
 
 另外，在 Rust 中物件的建構式[[2\]](https://electronic.blue/blog/2017/04/30-rust-an-introduction-in-oop/#fn2) (constructor) 其實就是回傳該物件的靜態成員函式，Rust 並未規定建構式要叫什麼名字，不過大部份人會依照慣例，使用 `new` 這個名字當作建構式。上述的成員函式定義，如果翻譯成 C++ 會長這個樣子：
 
-```
+```rust
 namespace mylib {
     class Rational {
     private:
@@ -129,7 +129,7 @@ namespace mylib {
 
 宣告抽象介面的方法，是使用 `trait` 關鍵字：
 
-```
+```rust
 trait JsonObject {
     fn to_json(&self) -> String;
 }
@@ -137,7 +137,7 @@ trait JsonObject {
 
 這相當於用 C++ 宣告一個抽象類別：
 
-```
+```rust
 class JsonObject {
 public:
     virtual std::string to_json() const = 0;
@@ -148,7 +148,7 @@ public:
 
 你可以用 `impl` 與 `for` 關鍵字，讓某個型別實作 trait：
 
-```
+```rust
 struct Rational {
     num: i32,
     den: i32,
@@ -180,7 +180,7 @@ fn main() {
 
 當然，你可以用其它型別來實作 `JsonObject`，它代表了任何可以輸出成 JSON 格式的型別。
 
-```
+```rust
 // 表示複數型別
 struct Complex {
     real: f64,
@@ -205,7 +205,7 @@ impl JsonObject for Complex {
 
 你可以使用 `&JsonObject` 來代表一個實作出 `json()` 介面的物件，並且以多型的方式呼叫它：
 
-```
+```rust
 fn dump_json(obj: &JsonObject) {
     println!("{}", obj.to_json());
 }
@@ -222,7 +222,7 @@ fn main() {
 
 使用參考就會受到生命週期的限制，而改用智慧指標可以省去許多麻煩。Rust 的智慧指標與多型操作搭配良好，因此你可以用 `Box<JsonObject>` 來指向任何實作 `JsonObject` 介面的物件。
 
-```
+```rust
 fn dump_json_array(array: &[Box<JsonObject>]) {
     print!("[");
     // 為了正確輸出 JSON 陣列中的逗號，我們使用 split_first()
@@ -253,7 +253,7 @@ fn main() {
 
 Rust 的基本型別與自訂型別地位相同，你也可以替基本型別定義成員函式，甚至讓他實作某個 trait。比如說，我們可以讓最常見的 `i32` 實作 `JsonObject`：
 
-```
+```rust
 impl JsonObject for i32 {
     fn to_json(&self) -> String {
         self.to_string()
@@ -263,7 +263,7 @@ impl JsonObject for i32 {
 
 或是讓內建的 `String` 型別也實作 `JsonObject`：
 
-```
+```rust
 impl JsonObject for String {
     fn to_json(&self) -> String {
         // 為字串前後加上雙引號，並加上跳脫字元
@@ -274,7 +274,7 @@ impl JsonObject for String {
 
 這意味 `Box<i32>` 與 `Box<String>` 可以安全地轉型為 `Box<JsonObject>`：
 
-```
+```rust
 fn main() {
     let mut v: Vec<Box<JsonObject>> = Vec::new();
     v.push(Box::new(1));
@@ -316,7 +316,7 @@ Trait 在泛型程式設計 (generic programming) 中也扮演重要角色，我
 
 你可以實作 `Drop` trait，這麼一來型別就有了解構式，允許你使用 C++ 中常見的 RAII 手段管理資源。
 
-```
+```rust
 struct DatabaseSession {
     connection: i32, // connection 代表底層的資源
 }
@@ -351,7 +351,7 @@ fn main() {
 
 在 C++ 中，只要你心臟夠大顆，可以直接呼叫物件的解構式，只是你得自行避免物件在解構後又被拿來用，或是出現重覆解構的情況。在 Rust 中你也可以手動呼叫 `drop` 來解構物件，但編譯器知道你解構了物件，因此會阻止你做出危險行為。
 
-```
+```rust
 fn main() {
     let session = DatabaseSession::new();
     // ...
@@ -367,7 +367,7 @@ fn main() {
 
 在 C++ 中有所謂的「三位一體原則」(rule of three) 或「五位一體原則」(rule of five)，意思是如果某個類別定義了解構式，那麼一定也要定義出複製建構式 (copy constructor) 並覆載等號賦值 (copy assignment)，否則這個物件很容易因為複製出暫時物件，而導致解構式重覆釋放了內部資源。
 
-```
+```rust
 class DatabaseSession {
 private:
     int connection;
@@ -393,7 +393,7 @@ int main() {
 
 Rust 沒有這樣的規則。在預設情況下，包括 struct 在內的所有自訂型別都具備 move semantics，因此使用等號賦值，或是用 by-value 方式傳遞到函式內，都會導致所有權轉移。只要變數失去了所有權，在它生命週期結束時就不會呼叫解構式，從而避免重覆釋放資源的問題。
 
-```
+```rust
 fn main() {
     let s1 = DatabaseSession::new();
     // ...
@@ -416,7 +416,7 @@ fn foo(session: DatabaseSession) {
 
 如果你自己設計了某些方法來複製資源，比如說額外再增加一個連往相同 server 的連線，Rust 的慣例是實作 `Clone` trait：
 
-```
+```rust
 impl Clone for DatabaseSession {
     fn clone(&self) -> Self {
         let addr = get_server_info(self.connection);
@@ -438,7 +438,7 @@ fn main() {
 
 有些型別的成員都是單純資料 (POD, plain old data)，實作 `Clone` 時也都只有單純的欄位複製，我們可以用 `#[derive(Clone)]` 讓編譯器自動幫我們實作出逐欄位複製的 `clone()`：
 
-```
+```v
 #[derive(Clone)]
 struct Rational {
     num: i32,
@@ -455,7 +455,7 @@ fn main()
 
 `Clone` trait 仍然會保留 move semantics，因此使用等號直接賦值時仍然會導致所有權轉移。如果我們想表達型別完全就是 POD，可以直接用等號直接複製其內容，而不需要轉移所有權，只要再加上 `Copy` trait 即可：
 
-```
+```v
 #[derive(Copy,Clone)]
 struct Rational {
     num: i32,
@@ -482,7 +482,7 @@ fn foo(r: Rational) {
 
 比如說，實作 `Add` trait，我們的型別就可以透過加號進行運算：
 
-```
+```rust
 use std::ops::Add;
 
 impl Add for Rational {
@@ -506,7 +506,7 @@ fn main() {
 
 當然，我們可以讓 `Rational` 與其它型別相加：
 
-```
+```rust
 impl Add<Complex> for Rational {
     type Output = Complex;
     fn add(self, rhs: Complex) -> Complex {
@@ -522,7 +522,7 @@ impl Add<Complex> for Rational {
 
 當不同的型別可以透過運算子覆載進行操作時，往往會讓我們搞不清楚輸出型別，而難以在必要的地方標示型別。比如說我們寫了一個函式把許多 `Rational` 與 `Complex` 加起來：
 
-```
+```v
 fn sum_all(ra: &[Rational], ca: &[Complex]) -> ? {
     // ...
 }
@@ -530,7 +530,7 @@ fn sum_all(ra: &[Rational], ca: &[Complex]) -> ? {
 
 我們知道這兩個型別可以相加，但相加後的型別又是什麼？當然我們可以翻閱文件後填一個正確的型別上去，但如果未來輸出型別有更改，那麼這段函式定義也得跟著改才行。所幸，`Add` trait 中的 `Output` 可以幫我們解決這個問題：
 
-```
+```rust
 fn sum_all(ra: &[Rational], ca: &[Complex]) -> <Rational as Add<Complex>>::Output {
     // ...
 }

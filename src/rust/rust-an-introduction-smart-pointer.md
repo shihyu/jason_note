@@ -14,14 +14,14 @@
 
 在 Rust 中最簡單的智慧指標是 `Box`，它相當於 C++ 中的 `std::unique_ptr`。不同的地方在於你不需要傳遞裸指標來初始化，而是直接傳遞要放在 heap 上的物件內容。
 
-```
+```rust
 let p = Box::new(10); // 即 C++14 的 auto p = make_unique<int>(10);
                       // 或 C++11 的 auto p = unique_ptr<int>(new int(10));
 ```
 
 產生 `Box` 指標後，你可以用星號來存取這個物件的內容，就像直接操作該物件一樣：
 
-```
+```rust
 let mut p = Box::new(10);
 println!("{}", *p); // 10
 *p += 20;
@@ -32,7 +32,7 @@ println!("{}", *p); // 30
 
 `Box` 既然是個智慧指標，自然符合 C++ 使用者習慣的 RAII (Resource Acquisition Is Initialization) 模式：在建構式中取得資源，並在解構式中釋放資源。
 
-```
+```rust
 fn foo() {
     let p = Box::new(10); // p 配置了一個 i32 的記憶體空間存放 10
     // ...
@@ -43,7 +43,7 @@ fn foo() {
 
 `Box` 指標具有和 C++ 的 `unique_ptr` 相同的特性：對任何配置在 heap 上、使用 `Box` 管理的物件，只會有一個獨一無二的 `Box` 指標指向它們。因此 `Box` 具備了 move semantics，當你使用等號賦值時，該物件的所有權會被轉移到另一個 `Box` 指標上，這樣才能避免重覆釋放同一個指標。
 
-```
+```rust
 {
     let p = Box::new(10);
     let q = p; // p 所控制的物件已轉移到 q 上
@@ -55,7 +55,7 @@ fn foo() {
 
 最後，如果 `Box` 指向某個基本型別，或是任何可以使用 `clone()` 進行複製的物件，那麼對 `Box` 指標使用 `clone()` 將會進行深層複製，新的 `Box` 指標將會指向原本物件的複本。
 
-```
+```rust
 let mut p = Box::new("hello".to_string());
 let q = p.clone();
 *p += " world";
@@ -67,7 +67,7 @@ println!("q = {}", *q); // q = hello
 
 在 Rust 中，不管是參考或智慧指標，都必然指向一個合法存在的物件。那麼我們要用什麼型別來表達一個可能存在、也可能不存在的物件呢？答案是使用 `Option` 這個泛形類別：
 
-```
+```rust
 fn check_exist(x: Option<i32>) {
     if x.is_none() {
         println!("x is empty!");
@@ -86,7 +86,7 @@ fn main() {
 
 `unwrap()` 可以取出 `Option` 中的值，然而若在內容為空的時候取值是執行時期錯誤，並導致程式立刻中止。雖然我們可以在呼叫 `unwrap()` 前使用 `is_some()` 來確認內部狀態，但 `unwrap()` 本身仍然會多做一次檢查，因此這樣的寫法並不是 Rust 的慣例 (idiom)。比較好的寫法是使用 pattern matching：
 
-```
+```rust
 fn check_exist(x: Option<i32>) {
     match x {
         Some(value) => println!("x has value {}", value),
@@ -99,7 +99,7 @@ fn check_exist(x: Option<i32>) {
 
 上述的範例中，由於 `i32` 是可複製的型別，因此 `Some(value)` 會是 `x` 的複本。如果我們想要修改 `x` 的內容，可以用 `Some(ref mut value)` 取得內容物的參考，表示 `value` 以 mutable borrow 的方式指向 `Option` 的內容物。
 
-```
+```rust
 let x: Option<i32> = Some(10);
 match x {
     Some(ref mut value) => *value += 1, // 當 x 含有某個 i32 時，value 是指向該 i32 的參考
@@ -114,7 +114,7 @@ match x {
 
 有了 `Box` 與 `Option`，我們終於可以做出一個簡單的二元樹 (binary tree)：
 
-```
+```rust
 struct Node {
     data: i32,
     left: Option<Box<Node>>,
@@ -129,7 +129,7 @@ struct Node {
 
 有了定義後，我們可以試著進行操作：
 
-```
+```rust
 fn traverse(root: &Node) {
     print!("({} ", root.data);
     match root.left {
@@ -148,7 +148,7 @@ fn traverse(root: &Node) {
 
 接著我們簡單實作加入元素的操作：
 
-```
+```rust
 // 產生一個 leaf node
 fn new_leaf(data: i32) -> Option<Box<Node>> {
     Some( Box::new(
@@ -177,7 +177,7 @@ fn insert(root: &mut Node, data: i32) {
 
 這是不考慮二元樹平衡、用最單純的方式實作元素插入。
 
-```
+```rust
 fn main() {
     let mut root = Node { data: 10, left: None, right: None };
     insert(&mut root, 1);
@@ -194,7 +194,7 @@ fn main() {
 
 `Box` 限制了只有一個指標能指向 heap 上的物件。如果你希望能在多個不同地方分享同一個物件，就得改用參考計數指標 `Rc`，它相當於 C++ 的 `shared_ptr`。
 
-```
+```rust
 use std::rc::Rc; // Rc 不在預設的命名空間中，因此需要用 use 引入符號
                  // 相當於 C++ 的 using std::shared_ptr;
 fn main() {
@@ -209,7 +209,7 @@ fn main() {
 
 建立 `Rc` 指標的方法和 `Box` 非常接近，然而當你呼叫 `clone()` 時，`Rc` 會增加參考計數並產生另一個指向相同物件的指標。注意對 C++ 的 `shared_ptr` 來說，只要用等號賦值就會增加參考計數，但等號在 Rust 中是轉移所有權的意思，你要明確呼叫 `clone()` 才會增加參考計數。
 
-```
+```rust
 use std::rc::Rc;
 fn main() {              // // C++ 對照
     let x = Rc::new(10); // auto x = make_shared<int>(10);
@@ -228,7 +228,7 @@ Rust 也提供了弱指標，但因為篇幅有限，我們先跳過這部份，
 
 `Rc` 不提供任何修改內容的操作界面，即使你宣告為 `mut` 也無法寫入新值：
 
-```
+```rust
 let mut p = Rc::new(10);
 *p = 20; // 錯誤
 ```
@@ -239,7 +239,7 @@ let mut p = Rc::new(10);
 
 `Rc` 是指向某物件的智慧指標，因此廣義上也屬於參考型別。同時 `Rc` 允許多個指標指向同一個物件，因此它必需是 immutable borrow，否則就違反了 Rust 對參考型別所設下的原則。如果你對這個概念還有點模糊，不妨考慮以下的例子：
 
-```
+```rust
 use std::rc::Rc;
 fn foo(v1: Rc<Vec<i32>>, mut v2: Rc<Vec<i32>>) {
     let it = v1.iter(); // 取得 v1 的 iterator
@@ -256,7 +256,7 @@ fn main() {
 
 當然，如果共享某塊資料就無法修改其內容，這樣的智慧指標並不是很實用。因此 Rust 提供兩個中介容器，讓你可以透過它們來修改 `Rc` 指向的物件內容，同時又能維持記憶體安全。我們先來看看適合用在內建型別的 `Cell`：
 
-```
+```rust
 use std::rc::Rc;
 use std::cell::Cell;
 fn main(){
@@ -271,7 +271,7 @@ fn main(){
 
 許多型別具有 move semantics，像是 `Vec` 或 `String`。這類型別不能放在 `Cell` 當中，因此 Rust 提供了 `RefCell`，它提供了 `borrow()` 與 `borrow_mut()` 讓你取得內容物的參考，並且在執行時期動態檢查這些參考是否符合 borrow checker 的規則。馬上來看一個範例：
 
-```
+```rust
 use std::rc::Rc;
 use std::cell::RefCell;
 
@@ -286,7 +286,7 @@ fn foo(c1: Rc<RefCell<Vec<i32>>>, c2: Rc<RefCell<Vec<i32>>>) {
 
 這段程式碼**可以**通過編譯，然而如果我們傳入指向同一個 `RefCell` 的指標，將會造成執行時期錯誤：
 
-```
+```rust
 fn main() {
     let c = Rc::new(RefCell::new(vec![1,2,3]));
     foo(c.clone(), c.clone()); // thread 'main' panicked at 'already borrowed: BorrowMutError'
@@ -299,7 +299,7 @@ fn main() {
 
 `RefCell` 的使用對 Rust 初學者而言可說是一大挑戰。它使得型別變得很複雜，同時又需要額外操作才能接觸到真正的內容物件。另一個初學者常見的問題是這樣：
 
-```
+```rust
 fn foo(c: Rc<RefCell<Vec<i32>>>) {
     let it = c.borrow().iter(); // 取得內容物的 iterator
     // ...
@@ -329,7 +329,7 @@ error: borrowed value does not live long enough
 
 正確的作法是把 `borrow()` 的結果存在變數中：
 
-```
+```rust
 fn foo(c: Rc<RefCell<Vec<i32>>>) {
     let r = c.borrow(); // r 的生命週期比 it 長，確保 borrow 存在
     let it = r.iter();
