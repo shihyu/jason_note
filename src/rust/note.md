@@ -1666,3 +1666,100 @@ fn main() {
     println!("{:?}", array);
 }
 ```
+
+
+
+##  如何使用 `Arc` 和 `Mutex` 在多個線程之間安全地共享和修改一個可變的向量數據結構。
+
+
+
+```rust
+use std::sync::{Arc, Mutex};
+use std::thread;
+/*
+ * // 克隆 Arc，以便在两個線程間共享
+ * let shared_data1 = Arc::clone(&shared_data);
+ * let shared_data2 = Arc::clone(&shared_data);
+ * Arc:clone 作用
+ * Arc::clone(&shared_data) 是用於在多個線程之間安全地共享資料的方法。
+ * Arc 是 Rust 標準庫提供的一種參考計數智慧型指標類型,全稱是 Atomic Reference Counted。它的作用是在多個線程間共享所有權,並在沒有線程再使用資料時自動釋放其記憶體。
+ * 當你調用 Arc::clone(&shared_data) 時,它會建立一個新的 Arc 指標,指向與原始 shared_data 相同的堆上資料。這個新指標的參考計數會增加,表示有一個新的所有者。
+ * 這種參考計數機制確保了只要有一個 Arc 指標存在,就不會釋放底層資料。當最後一個 Arc 指標被丟棄時,參考計數會歸零,底層資料的記憶體才會被自動釋放。
+ * 通過在多個線程中克隆 Arc 指標,你可以安全地在它們之間共享資料,而無需深度複製資料或手動管理其生命週期。這在需要在線程間傳遞所有權的情況下非常有用。
+ * 總的來說,Arc::clone 讓你可以建立指向相同資料的多個 Arc 指標,從而在線程間共享資料,而不會產生資料競爭或違反所有權規則。
+ *
+ */
+
+// let mut data = shared_data1.lock().unwrap();` 這行代碼的作用是從 `Arc` 智慧指標中取得可變引用資料的存取權。讓我們仔細解釋一下:
+// 1. `shared_data1` 是一個 `Arc<T>` 類型的智慧指標,它封裝了資料 `T` 並實現了資料的引用計數和線程間安全存取。
+// 2. `.lock()` 方法是由 `Arc<T>` 實現的,它返回一個 `LockResult` 類型,代表對內部資料 `T` 的存取權。
+// 3. `.unwrap()` 是解開 `Result` 類型。如果 `lock()` 成功獲取存取權,它會返回 `Ok(MutexGuard)` 類型,表示獲得了可變引用 `&mut T`。如果失敗返回 `Err(PoisonError)`。`.unwrap()` 會直接解開這個 `Ok` 並取得 `MutexGuard`。
+// 4. `let mut data = ...` 這一行賦值,將從 `lock()` 中獲取的可變引用 `&mut T` 賦值給 `data`。
+//
+// 所以這行代碼的作用是:
+// 1) 通過 `Arc` 智慧指標存取內部資料
+// 2) 獲取該資料的互斥可變引用 (避免資料競爭)
+// 3) 將可變引用賦給新變數 `data`
+// 這樣就可以安全地在單個線程中修改資料,同時其他線程無法同時修改,從而避免資料競爭問題。當 `data` 離開作用域時,可變引用會自動被釋放。
+
+fn main() {
+    // 创建一个共享的可变数据结构
+    let shared_data = Arc::new(Mutex::new(vec![1, 2, 3]));
+
+    // 克隆 Arc，以便在两个线程间共享
+    let shared_data1 = Arc::clone(&shared_data);
+    let shared_data2 = Arc::clone(&shared_data);
+
+    // 在两个线程中分别修改数据
+    let thread1 = thread::spawn(move || {
+        let mut data = shared_data1.lock().unwrap();
+        data.push(4);
+    });
+
+    let thread2 = thread::spawn(move || {
+        let mut data = shared_data2.lock().unwrap();
+        data.push(5);
+    });
+
+    // 等待两个线程完成
+    thread1.join().unwrap();
+    thread2.join().unwrap();
+
+    // 打印最终结果
+    println!("{:?}", shared_data.lock().unwrap());
+}
+```
+
+
+
+## 使用隊列(queue)在兩個線程之間傳遞資料。Rust 標準庫提供了 `std::sync::mpsc` 模組來實現多生產者單消費者(Multiple Producer Single Consumer, MPSC)通道。
+
+```rust
+use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    // 創建一個通道，這會產生一個發送端和一個接收端
+    let (tx, rx) = mpsc::channel();
+
+    // 啟動一個新的線程作為生產者
+    let sender = thread::spawn(move || {
+        // 向通道中發送一些資料
+        tx.send(1).unwrap();
+        // 等待一段時間
+        thread::sleep(Duration::from_secs(3));
+        tx.send(2).unwrap();
+        tx.send(3).unwrap();
+    });
+
+    // 在主線程中接收資料
+    for received in rx {
+        println!("Received: {}", received);
+    }
+
+    // 等待生產者線程結束
+    sender.join().unwrap();
+}
+```
+
