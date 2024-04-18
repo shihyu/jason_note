@@ -1,18 +1,18 @@
-# 🏄💨【最安全的编程语言】Rust工程师枕边资料，大牛文章，开源框架，官方文档，视频，推荐书籍，学习干货，大牛语录
+# 🏄💨【最安全的編程語言】Rust工程師枕邊資料，大牛文章，開源框架，官方文檔，視頻，推薦書籍，學習乾貨，大牛語錄
 
 <div align=center>
 
 ![rust](https://user-images.githubusercontent.com/87457873/132184451-55f1125e-acad-4cc7-9e56-ecbffc0db412.png)
   
-## 一个安全、并发、实用的系统语言
+## 一個安全、併發、實用的系統語言
 
 <br>
 <br>
   
-   [🏝<br>&nbsp;&nbsp;&nbsp; &nbsp;环境搭建&nbsp;&nbsp;&nbsp;&nbsp; ](https://github.com/0voice/Understanding_in_Rust#-%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA)  |[📕<br>&nbsp;&nbsp;&nbsp; 入门秘笈&nbsp;&nbsp;&nbsp; ](https://github.com/0voice/Understanding_in_Rust#-%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88-pdf%E6%A1%A3%E4%B8%8B%E8%BD%BD)|  [📖<br>&nbsp;&nbsp;&nbsp; 推荐书籍&nbsp;&nbsp;&nbsp; ](https://github.com/0voice/Understanding_in_Rust/blob/main/README.md#-%E6%8E%A8%E8%8D%90%E4%B9%A6%E7%B1%8D)
+   [🏝<br>&nbsp;&nbsp;&nbsp; &nbsp;環境搭建&nbsp;&nbsp;&nbsp;&nbsp; ](https://github.com/0voice/Understanding_in_Rust#-%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA)  |[📕<br>&nbsp;&nbsp;&nbsp; 入門秘笈&nbsp;&nbsp;&nbsp; ](https://github.com/0voice/Understanding_in_Rust#-%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88-pdf%E6%A1%A3%E4%B8%8B%E8%BD%BD)|  [📖<br>&nbsp;&nbsp;&nbsp; 推薦書籍&nbsp;&nbsp;&nbsp; ](https://github.com/0voice/Understanding_in_Rust/blob/main/README.md#-%E6%8E%A8%E8%8D%90%E4%B9%A6%E7%B1%8D)
 :-------: | :-------: | :---------:
- **[📑<br>精选文章](https://github.com/0voice/Understanding_in_Rust#-%E5%A4%A7%E7%89%9B%E6%96%87%E7%AB%A0)**  |  **[📰<br>官方文档](https://github.com/0voice/Understanding_in_Rust/blob/main/README.md#-%E5%AE%98%E6%96%B9%E6%96%87%E6%A1%A3)**|  **[✈<br> 杂货铺](https://github.com/0voice/Understanding_in_Rust/blob/main/README.md#-%E6%9D%82%E8%B4%A7%E9%93%BA)**
-**[💽<br>视频](https://github.com/0voice/Understanding_in_Rust#-%E8%A7%86%E9%A2%91)** | **[🏗<br>开源框架](https://github.com/0voice/Understanding_in_Rust#-%E5%BC%80%E6%BA%90%E6%A1%86%E6%9E%B6)** | **[🐂<br>大牛语录](https://github.com/0voice/Understanding_in_Rust/blob/main/README.md#-%E5%A4%A7%E7%89%9B%E8%AF%AD%E5%BD%95)**
+ **[📑<br>精選文章](https://github.com/0voice/Understanding_in_Rust#-%E5%A4%A7%E7%89%9B%E6%96%87%E7%AB%A0)**  |  **[📰<br>官方文檔](https://github.com/0voice/Understanding_in_Rust/blob/main/README.md#-%E5%AE%98%E6%96%B9%E6%96%87%E6%A1%A3)**|  **[✈<br> 雜貨鋪](https://github.com/0voice/Understanding_in_Rust/blob/main/README.md#-%E6%9D%82%E8%B4%A7%E9%93%BA)**
+**[💽<br>視頻](https://github.com/0voice/Understanding_in_Rust#-%E8%A7%86%E9%A2%91)** | **[🏗<br>開源框架](https://github.com/0voice/Understanding_in_Rust#-%E5%BC%80%E6%BA%90%E6%A1%86%E6%9E%B6)** | **[🐂<br>大牛語錄](https://github.com/0voice/Understanding_in_Rust/blob/main/README.md#-%E5%A4%A7%E7%89%9B%E8%AF%AD%E5%BD%95)**
   
 <br>
 <br>  
@@ -24,299 +24,299 @@
 
 # 🤔 Why Rust？Why can？
 
-### Jay Oster, PubNub 架构师 :
+### Jay Oster, PubNub 架構師 :
 
-“除了安全和性能，我们还有：
+“除了安全和性能，我們還有：
 
 - 泛型；
-- 特征；
-- 代数类型；
-- 函数式和命令式范式；
-- 可能是世界上最好的依赖管理和构建工具，实际上解决了‘依赖地狱’问题；
-- 对内嵌文档、测试和性能评测的美妙支持；
-- 一个大的且正在生长的库、抽象、工具生态；
-- 过程宏；
-- 与已有代码的 FFI 交互性；
-- 支持一打平台（更多的在路上！）；
-- 对开发者体验是正向的、毋庸置疑的满足。
+- 特徵；
+- 代數類型；
+- 函數式和命令式範式；
+- 可能是世界上最好的依賴管理和構建工具，實際上解決了‘依賴地獄’問題；
+- 對內嵌文檔、測試和性能評測的美妙支持；
+- 一個大的且正在生長的庫、抽象、工具生態；
+- 過程宏；
+- 與已有代碼的 FFI 交互性；
+- 支持一打平臺（更多的在路上！）；
+- 對開發者體驗是正向的、毋庸置疑的滿足。
 
-Rust 是唯一一个下面所有框框都打勾的语言：
+Rust 是唯一一個下面所有框框都打勾的語言：
 
-- 内存安全
-- 类型安全
-- 消除数据竞争
-- 使用前编译
-- 建立（并且鼓励）在零抽象之上
-- 最小的运行时（无停止世界的垃圾搜集器，无 JIT 编译器，无 VM）
-- 低内存占用（程序可以运行在资源受限的环境，比如小的微控制器）
-- 裸金属目标（比如，写一个 OS 内核或者设备驱动，把 Rust 当一个 ‘高层’汇编器使用）”
+- 內存安全
+- 類型安全
+- 消除數據競爭
+- 使用前編譯
+- 建立（並且鼓勵）在零抽象之上
+- 最小的運行時（無停止世界的垃圾蒐集器，無 JIT 編譯器，無 VM）
+- 低內存佔用（程序可以運行在資源受限的環境，比如小的微控制器）
+- 裸金屬目標（比如，寫一個 OS 內核或者設備驅動，把 Rust 當一個 ‘高層’彙編器使用）”
 
 ### Peter Varo:
 
-“Rust 有一个很香的地方：它像 C 和 C++ 那样底层，因此也具有底层的这些优势（比如，控制、大小、速度等）。同时呢，它又像 Haskell 那样高层，自带令人吃惊的大量功能传承。它还是命令式的，所以容易被大多数人上手。然后它又像 Python 一样灵活，比如，' 鸭子类型（duck-typing）' 的概念出现在编译时（比如，特征限定），然后它又没有陈旧的面向对象模型以及由这个模型导致的各种出名的问题。
+“Rust 有一個很香的地方：它像 C 和 C++ 那樣底層，因此也具有底層的這些優勢（比如，控制、大小、速度等）。同時呢，它又像 Haskell 那樣高層，自帶令人吃驚的大量功能傳承。它還是命令式的，所以容易被大多數人上手。然後它又像 Python 一樣靈活，比如，' 鴨子類型（duck-typing）' 的概念出現在編譯時（比如，特徵限定），然後它又沒有陳舊的面向對象模型以及由這個模型導致的各種出名的問題。
 
-最后但很重要的是，还有一连串的东西被包含进来：精简短小的语法，语言提供的数目不多的特性，标准库及其一致性，高质量的文档的集成，包括对初学者和高级用户都适用的学习材料，这些都是促成因素。”
+最後但很重要的是，還有一連串的東西被包含進來：精簡短小的語法，語言提供的數目不多的特性，標準庫及其一致性，高質量的文檔的集成，包括對初學者和高級用戶都適用的學習材料，這些都是促成因素。”
 
-# 🏝 环境搭建
+# 🏝 環境搭建
 
-**安装及工具：https://www.rust-lang.org/zh-CN/learn/get-started**
+**安裝及工具：https://www.rust-lang.org/zh-CN/learn/get-started**
 
-# 📕 入门秘笈 [（PDF档下载）](https://github.com/0voice/Understanding_in_Rust/blob/main/Rust%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88.pdf)
+# 📕 入門秘笈 [（PDF檔下載）](https://github.com/0voice/Understanding_in_Rust/blob/main/Rust%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88.pdf)
 
-- [Rust简介](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E7%AE%80%E4%BB%8B.md)<br>
-- [Rust的特点](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E7%9A%84%E7%89%B9%E7%82%B9.md)<br>
-- [Rust开发环境安装](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85.md)<br>
-- [Rust第一个程式](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E7%AC%AC%E4%B8%80%E4%B8%AA%E7%A8%8B%E5%BC%8F.md)<br>
-- [Rust if语句](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%20if%E8%AF%AD%E5%8F%A5.md)<br>
-- [Rust if in a let语句](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%20if%20in%20a%20let%E8%AF%AD%E5%8F%A5.md)<br>
-- [Rust loop回圈](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%20loop%E5%9B%9E%E5%9C%88.md)<br>
-- [Rust for回圈](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%20for%E5%9B%9E%E5%9C%88.md)<br>
-- [Rust while回圈](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%20while%E5%9B%9E%E5%9C%88.md)<br>
-- [Rust所有权](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E6%89%80%E6%9C%89%E6%9D%83.md)<br>
-- [Rust参照和借用](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E5%8F%82%E7%85%A7%E5%92%8C%E5%80%9F%E7%94%A8.md)<br>
+- [Rust簡介](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E7%AE%80%E4%BB%8B.md)<br>
+- [Rust的特點](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E7%9A%84%E7%89%B9%E7%82%B9.md)<br>
+- [Rust開發環境安裝](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85.md)<br>
+- [Rust第一個程式](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E7%AC%AC%E4%B8%80%E4%B8%AA%E7%A8%8B%E5%BC%8F.md)<br>
+- [Rust if語句](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%20if%E8%AF%AD%E5%8F%A5.md)<br>
+- [Rust if in a let語句](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%20if%20in%20a%20let%E8%AF%AD%E5%8F%A5.md)<br>
+- [Rust loop迴圈](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%20loop%E5%9B%9E%E5%9C%88.md)<br>
+- [Rust for迴圈](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%20for%E5%9B%9E%E5%9C%88.md)<br>
+- [Rust while迴圈](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%20while%E5%9B%9E%E5%9C%88.md)<br>
+- [Rust所有權](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E6%89%80%E6%9C%89%E6%9D%83.md)<br>
+- [Rust參照和借用](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E5%8F%82%E7%85%A7%E5%92%8C%E5%80%9F%E7%94%A8.md)<br>
 - [Rust切片](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E5%88%87%E7%89%87.md)<br>
-- [Rust结构体](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E7%BB%93%E6%9E%84%E4%BD%93.md)<br>
-- [Rust结构体更新语法](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E7%BB%93%E6%9E%84%E4%BD%93%E6%9B%B4%E6%96%B0%E8%AF%AD%E6%B3%95.md)<br>
-- [Rust结构体方法语法](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E7%BB%93%E6%9E%84%E4%BD%93%E6%96%B9%E6%B3%95%E8%AF%AD%E6%B3%95.md)<br>
-- [Rust列举](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E5%88%97%E4%B8%BE.md)<br>
-- [匹配运算子](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/%E5%8C%B9%E9%85%8D%E8%BF%90%E7%AE%97%E5%AD%90.md)<br>
+- [Rust結構體](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E7%BB%93%E6%9E%84%E4%BD%93.md)<br>
+- [Rust結構體更新語法](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E7%BB%93%E6%9E%84%E4%BD%93%E6%9B%B4%E6%96%B0%E8%AF%AD%E6%B3%95.md)<br>
+- [Rust結構體方法語法](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E7%BB%93%E6%9E%84%E4%BD%93%E6%96%B9%E6%B3%95%E8%AF%AD%E6%B3%95.md)<br>
+- [Rust列舉](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E5%88%97%E4%B8%BE.md)<br>
+- [匹配運算子](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/%E5%8C%B9%E9%85%8D%E8%BF%90%E7%AE%97%E5%AD%90.md)<br>
 - [Rust if let控制流程](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%20if%20let%E6%8E%A7%E5%88%B6%E6%B5%81%E7%A8%8B.md)<br>
-- [Rust模组](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E6%A8%A1%E7%BB%84.md)<br>
-- [Rust档案系统](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E6%A1%A3%E6%A1%88%E7%B3%BB%E7%BB%9F.md)<br>
-- [Rust公开函式](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E5%85%AC%E5%BC%80%E5%87%BD%E5%BC%8F.md)<br>
-- [Rust use关键字参照模组](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%20use%E5%85%B3%E9%94%AE%E5%AD%97%E5%8F%82%E7%85%A7%E6%A8%A1%E7%BB%84.md)<br>
+- [Rust模組](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E6%A8%A1%E7%BB%84.md)<br>
+- [Rust檔案系統](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E6%A1%A3%E6%A1%88%E7%B3%BB%E7%BB%9F.md)<br>
+- [Rust公開函式](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E5%85%AC%E5%BC%80%E5%87%BD%E5%BC%8F.md)<br>
+- [Rust use關鍵字參照模組](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%20use%E5%85%B3%E9%94%AE%E5%AD%97%E5%8F%82%E7%85%A7%E6%A8%A1%E7%BB%84.md)<br>
 - [Rust向量](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E5%90%91%E9%87%8F.md)<br>
 - [Rust字串](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E5%AD%97%E4%B8%B2.md)<br>
-- [Rust错误处理](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86.md)
-- [Rust不可恢复的错误](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E4%B8%8D%E5%8F%AF%E6%81%A2%E5%A4%8D%E7%9A%84%E9%94%99%E8%AF%AF.md)<br>
-- [Rust可恢复的错误](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E5%8F%AF%E6%81%A2%E5%A4%8D%E7%9A%84%E9%94%99%E8%AF%AF.md)<br>
+- [Rust錯誤處理](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86.md)
+- [Rust不可恢復的錯誤](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E4%B8%8D%E5%8F%AF%E6%81%A2%E5%A4%8D%E7%9A%84%E9%94%99%E8%AF%AF.md)<br>
+- [Rust可恢復的錯誤](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E5%8F%AF%E6%81%A2%E5%A4%8D%E7%9A%84%E9%94%99%E8%AF%AF.md)<br>
 - [Rust泛型](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E6%B3%9B%E5%9E%8B.md)<br>
 - [Rust Trait](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%20Trait.md)<br>
-- [Rust生命周期](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F.md)<br>
-- [Rust智慧指标](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E6%99%BA%E6%85%A7%E6%8C%87%E6%A0%87.md)<br>
+- [Rust生命週期](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F.md)<br>
+- [Rust智慧指標](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E6%99%BA%E6%85%A7%E6%8C%87%E6%A0%87.md)<br>
 - [Rust Box<T>](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%20Box%3CT%3E.md)<br>
 - [Rust Deref trait](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%20Deref%20trait.md)<br>
 - [Rust Drop trait](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%20Drop%20trait.md)<br>
 
-# 📖 推荐书籍
+# 📖 推薦書籍
   
-### 国内书籍
+### 國內書籍
   
-- [《深入浅出Rust》](https://jp1lib.org/s/?q=%E3%80%8A%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BARust%E3%80%8B)
+- [《深入淺出Rust》](https://jp1lib.org/s/?q=%E3%80%8A%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BARust%E3%80%8B)
   
-- [《Rust权威指南》](https://book.douban.com/subject/35081743/)
+- [《Rust權威指南》](https://book.douban.com/subject/35081743/)
   
-- [《Rust 程序设计语言》](https://kaisery.github.io/trpl-zh-cn/)
+- [《Rust 程序設計語言》](https://kaisery.github.io/trpl-zh-cn/)
   
 - [《精通Rust(第2版)》](https://jp1lib.org/book/17127064/820864)
   
-### 国外书籍
+### 國外書籍
   
-**入门书籍**
+**入門書籍**
   
 - [《The Rust Programming Language》](https://doc.rust-lang.org/book/)
   
-欢迎！本书将教你有关 Rust 编程语言的知识。Rust 是一种系统编程语言，专注于三个目标：安全性、速度和并发性。它在没有垃圾收集器的情况下实现了这些目标，使其成为其他语言不擅长的许多用例的有用语言：嵌入其他语言、具有特定空间和时间要求的程序以及编写低级代码，例如设备驱动程序和操作系统。它通过在不产生运行时开销的情况下进行大量编译时安全检查，同时消除所有数据竞争，从而改进了针对此空间的当前语言。Rust 还旨在实现“零成本抽象”，尽管其中一些抽象感觉像是高级语言的抽象。即便如此，Rust 仍然允许像低级语言一样进行精确控制。
+歡迎！本書將教你有關 Rust 編程語言的知識。Rust 是一種系統編程語言，專注於三個目標：安全性、速度和併發性。它在沒有垃圾收集器的情況下實現了這些目標，使其成為其他語言不擅長的許多用例的有用語言：嵌入其他語言、具有特定空間和時間要求的程序以及編寫低級代碼，例如設備驅動程序和操作系統。它通過在不產生運行時開銷的情況下進行大量編譯時安全檢查，同時消除所有數據競爭，從而改進了針對此空間的當前語言。Rust 還旨在實現“零成本抽象”，儘管其中一些抽象感覺像是高級語言的抽象。即便如此，Rust 仍然允許像低級語言一樣進行精確控制。
   
 - [《Welcome to Rust-101》](https://www.ralfj.de/projects/rust-101/main.html)
   
-这是 Rust-101，一个 Rust 语言的小教程。它旨在成为一门交互式的动手课程：我相信真正学习一门语言的唯一方法是在其中编写代码，因此您应该在课程中进行编码。如果您有任何未在此处回答的问题，请查看下面的“其他资源”。尤其是，IRC 频道里挤满了愿意帮助你的很棒的人！我在那里花了很多时间 ;-) 我假设对编程有一定的了解，因此不会解释大多数语言共有的基本概念。相反，我将专注于 Rust 的特殊之处。
+這是 Rust-101，一個 Rust 語言的小教程。它旨在成為一門交互式的動手課程：我相信真正學習一門語言的唯一方法是在其中編寫代碼，因此您應該在課程中進行編碼。如果您有任何未在此處回答的問題，請查看下面的“其他資源”。尤其是，IRC 頻道里擠滿了願意幫助你的很棒的人！我在那裡花了很多時間 ;-) 我假設對編程有一定的瞭解，因此不會解釋大多數語言共有的基本概念。相反，我將專注於 Rust 的特殊之處。
   
 - [《Rust by Example》](http://rustbyexample.com/)
   
-Rust by Example (RBE) 是一组可运行的示例，用于说明各种 Rust 概念和标准库。
+Rust by Example (RBE) 是一組可運行的示例，用於說明各種 Rust 概念和標準庫。
   
 - [《Why Rust?》](https://kr1lib.org/book/10990507/3a18af) 
   
-尽管自 40 多年前引入 C 以来，系统编程语言已经有了很大的发展，但我们对造成巨大后果的愚蠢错误的能力仍然没有改变，新闻中经常有生动的例子。这份 O'Reilly 报告研究了 Rust，这是一种新的系统编程语言，它将安全性和安全性与性能相结合，与 C 和 C++ 相当。
+儘管自 40 多年前引入 C 以來，系統編程語言已經有了很大的發展，但我們對造成巨大後果的愚蠢錯誤的能力仍然沒有改變，新聞中經常有生動的例子。這份 O'Reilly 報告研究了 Rust，這是一種新的系統編程語言，它將安全性和安全性與性能相結合，與 C 和 C++ 相當。
   
 - [《Learning Rust》](https://kr1lib.org/book/11689651/08c0b6) 
   
-Rust 是一种高度并发和高性能的语言，专注于安全和速度、内存管理和编写干净的代码。它还保证线程安全，其目的是提高现有应用程序的性能。它得到了 Mozilla 的支持，以解决并发的关键问题。 
+Rust 是一種高度併發和高性能的語言，專注於安全和速度、內存管理和編寫乾淨的代碼。它還保證線程安全，其目的是提高現有應用程序的性能。它得到了 Mozilla 的支持，以解決併發的關鍵問題。 
   
 - [《Beginning Rust - From Novice to Professional》](https://kr1lib.org/book/3490555/7b7c82)
   
-学习在 Unix、Linux shell、macOS 和 Windows 命令行上以简单、循序渐进的方式使用 Rust 进行编程。当您阅读本书时，您将建立在您在前几章中获得的知识的基础上，并了解 Rust 提供了什么。
+學習在 Unix、Linux shell、macOS 和 Windows 命令行上以簡單、循序漸進的方式使用 Rust 進行編程。當您閱讀本書時，您將建立在您在前幾章中獲得的知識的基礎上，並瞭解 Rust 提供了什麼。
 
-开始 Rust 从 Rust 的基础开始，包括如何命名对象、控制执行流和处理原始类型。您将看到如何进行算术运算、分配内存、使用迭代器以及处理输入/输出。一旦掌握了这些核心技能，您将着手处理错误并使用 Rust 的面向对象特性立即构建健壮的 Rust 应用程序。
+開始 Rust 從 Rust 的基礎開始，包括如何命名對象、控制執行流和處理原始類型。您將看到如何進行算術運算、分配內存、使用迭代器以及處理輸入/輸出。一旦掌握了這些核心技能，您將著手處理錯誤並使用 Rust 的面向對象特性立即構建健壯的 Rust 應用程序。
 
-只需要基本的编程知识，最好是 C 或 C++。要理解这本书，知道什么是整数和浮点数，以及区分标识符和字符串文字就足够了。
+只需要基本的編程知識，最好是 C 或 C++。要理解這本書，知道什麼是整數和浮點數，以及區分標識符和字符串文字就足夠了。
   
 - [《Rust Cookbook》](https://kr1lib.org/book/3362654/66eb5a)  
   
-本书将帮助您理解 Rust 语言的核心概念，使您能够通过整合零成本抽象和更好的内存管理等功能来开发高效和高性能的应用程序。深入研究 Rust 中的高级概念，例如错误处理、宏、包和并行性。在本书的最后，学习如何创建 HTTP 服务器和 Web 服务，在服务器端编程方面建立强大的基础知识，并能够提供使用 Rust 构建高性能和更安全的生产级 Web 应用程序和服务的解决方案。
+本書將幫助您理解 Rust 語言的核心概念，使您能夠通過整合零成本抽象和更好的內存管理等功能來開發高效和高性能的應用程序。深入研究 Rust 中的高級概念，例如錯誤處理、宏、包和並行性。在本書的最後，學習如何創建 HTTP 服務器和 Web 服務，在服務器端編程方面建立強大的基礎知識，並能夠提供使用 Rust 構建高性能和更安全的生產級 Web 應用程序和服務的解決方案。
   
 - [《Rust Standard Library Cookbook》](https://kr1lib.org/book/3571952/9b9cdb)  
   
-Mozilla 的 Rust 以其惊人的功能和强大的库而备受关注。本书将带您了解各种秘诀，教您如何利用标准库来实现高效的解决方案。
+Mozilla 的 Rust 以其驚人的功能和強大的庫而備受關注。本書將帶您瞭解各種秘訣，教您如何利用標準庫來實現高效的解決方案。
 
-本书首先简要介绍了标准库和馆藏的基本模块。从这里开始，食谱将涵盖通过解析支持文件/目录处理和交互的包。您将了解与高级数据结构、错误处理和网络相关的包。您还将学习使用期货和实验性夜间功能。这本书还涵盖了 Rust 中最相关的外部 crate。
+本書首先簡要介紹了標準庫和館藏的基本模塊。從這裡開始，食譜將涵蓋通過解析支持文件/目錄處理和交互的包。您將瞭解與高級數據結構、錯誤處理和網絡相關的包。您還將學習使用期貨和實驗性夜間功能。這本書還涵蓋了 Rust 中最相關的外部 crate。
   
 - [《Network Programming with Rust》](https://kr1lib.org/book/3571947/48c564)  
   
-Rust 足够低级，可以提供对内存的细粒度控制，同时通过编译时验证提供安全性。这使得它特别适合编写低级网络应用程序。
+Rust 足夠低級，可以提供對內存的細粒度控制，同時通過編譯時驗證提供安全性。這使得它特別適合編寫低級網絡應用程序。
 
-本书分为三个主要部分，将带您踏上构建功能齐全的 Web 服务器的激动人心的旅程。本书首先对 Rust 和基本的网络概念进行了扎实的介绍。这将为整本书奠定基础并定下基调。在第二部分中，我们将深入研究如何使用 Rust 开发网络软件。从使用套接字的客户端-服务器网络到 IPv4/v6、DNS、TCP、UDP，您还将了解使用 serde 序列化和反序列化数据。这本书展示了如何通过 HTTP 与 REST 服务器进行通信。本书的最后一部分讨论了使用 Tokio 堆栈进行异步网络编程。鉴于安全对于现代系统的重要性，您将看到 Rust 如何支持常见的原语，例如 TLS 和公钥加密。
+本書分為三個主要部分，將帶您踏上構建功能齊全的 Web 服務器的激動人心的旅程。本書首先對 Rust 和基本的網絡概念進行了紮實的介紹。這將為整本書奠定基礎並定下基調。在第二部分中，我們將深入研究如何使用 Rust 開發網絡軟件。從使用套接字的客戶端-服務器網絡到 IPv4/v6、DNS、TCP、UDP，您還將瞭解使用 serde 序列化和反序列化數據。這本書展示瞭如何通過 HTTP 與 REST 服務器進行通信。本書的最後一部分討論了使用 Tokio 堆棧進行異步網絡編程。鑑於安全對於現代系統的重要性，您將看到 Rust 如何支持常見的原語，例如 TLS 和公鑰加密。
   
 - [《Rust Programming by Example》](https://kr1lib.org/book/5669466/ef3a67) 
   
-从介绍 Rust 开始，您将学习基本方面，例如其语法、数据类型、函数、泛型、控制流等。在此之后，您将直接开始构建您的第一个项目，俄罗斯方块游戏。接下来，您将使用 Tokio（可扩展且高效的异步 IO Rust 库）构建图形音乐播放器并使用快速、可靠的网络软件。
+從介紹 Rust 開始，您將學習基本方面，例如其語法、數據類型、函數、泛型、控制流等。在此之後，您將直接開始構建您的第一個項目，俄羅斯方塊遊戲。接下來，您將使用 Tokio（可擴展且高效的異步 IO Rust 庫）構建圖形音樂播放器並使用快速、可靠的網絡軟件。
 
-在本书的过程中，您将探索 Rust 编程的各种特性，包括它的 SDL 特性、事件循环、文件 I/O 和著名的 GTK+ 小部件工具包。通过这些项目，您将看到 Rust 在并发方面的表现——包括并行性、可靠性、改进的性能、泛型、宏和线程安全。我们还将介绍 Rust 的一些异步和反应式编程方面。
+在本書的過程中，您將探索 Rust 編程的各種特性，包括它的 SDL 特性、事件循環、文件 I/O 和著名的 GTK+ 小部件工具包。通過這些項目，您將看到 Rust 在併發方面的表現——包括並行性、可靠性、改進的性能、泛型、宏和線程安全。我們還將介紹 Rust 的一些異步和反應式編程方面。
   
 - [《Rust Quick Start Guide》](https://kr1lib.org/book/11689628/cf06fb)
   
-熟悉使用流行的新系统编程语言编写程序，这些语言将低级语言的强大性能与多线程代码中的线程安全等高级功能结合在一起。
+熟悉使用流行的新系統編程語言編寫程序，這些語言將低級語言的強大性能與多線程代碼中的線程安全等高級功能結合在一起。
   
 - [《Rust in Action [MEAP]》](https://kr1lib.org/book/11235796/a7ef40)  
   
-Rust in Action 是一本面向想要探索 Rust 编程语言世界的中级程序员的书。它适用于可能已经用尽网络上的免费资料但仍想了解更多信息的人。它与 Rust 编程的其他材料不同，因为它还教您有关系统编程的知识。您将能够更多地了解 CPU 的工作原理、计算机如何计时、指针是什么以及您的网卡和键盘如何告诉 CPU 它们已准备好读取输入。
+Rust in Action 是一本面向想要探索 Rust 編程語言世界的中級程序員的書。它適用於可能已經用盡網絡上的免費資料但仍想了解更多信息的人。它與 Rust 編程的其他材料不同，因為它還教您有關係統編程的知識。您將能夠更多地瞭解 CPU 的工作原理、計算機如何計時、指針是什麼以及您的網卡和鍵盤如何告訴 CPU 它們已準備好讀取輸入。
 
-从系统编程书籍的角度来看，它实际上也是独一无二的 - 因为几乎每个示例都适用于 Windows！如果你是那种喜欢实际例子的学习者，你会喜欢阅读这本书。
+從系統編程書籍的角度來看，它實際上也是獨一無二的 - 因為幾乎每個示例都適用於 Windows！如果你是那種喜歡實際例子的學習者，你會喜歡閱讀這本書。
   
 - [《A Gentle Introduction to Rust》](https://stevedonovan.github.io/rust-gentle-intro/)  
   
-Rust 是一种静态和强类型的系统编程语言。静态意味着所有类型在编译时都是已知的，强烈意味着这些类型旨在使编写不正确的程序变得更加困难。一个成功的编译意味着你可以比使用像 C 这样的牛仔语言更好地保证正确性。系统意味着生成最好的机器代码，并完全控制内存使用。因此，其用途非常核心：操作系统、设备驱动程序和甚至可能没有操作系统的嵌入式系统。然而，它实际上也是一种非常令人愉快的语言，可以用来编写普通的应用程序代码。
+Rust 是一種靜態和強類型的系統編程語言。靜態意味著所有類型在編譯時都是已知的，強烈意味著這些類型旨在使編寫不正確的程序變得更加困難。一個成功的編譯意味著你可以比使用像 C 這樣的牛仔語言更好地保證正確性。系統意味著生成最好的機器代碼，並完全控制內存使用。因此，其用途非常核心：操作系統、設備驅動程序和甚至可能沒有操作系統的嵌入式系統。然而，它實際上也是一種非常令人愉快的語言，可以用來編寫普通的應用程序代碼。
 
-与 C 和 C++ 的最大区别在于 Rust 默认是安全的；检查所有内存访问。意外损坏内存是不可能的。
+與 C 和 C++ 的最大區別在於 Rust 默認是安全的；檢查所有內存訪問。意外損壞內存是不可能的。
   
 - [《Practical Machine Learning with Rust: Creating Intelligent Applications in Rust》](https://kr1lib.org/book/5304256/0ff807)  
   
-Rust 中的机器学习已经被社区忽视了很长一段时间。由于宇宙中散布着许多不同的板条箱，这本书试图统一所有的信息和用法，并在某种程度上动摇社区采取行动。数据是新的前沿领域，而 Rust 必须成为其中的一部分。
+Rust 中的機器學習已經被社區忽視了很長一段時間。由於宇宙中散佈著許多不同的板條箱，這本書試圖統一所有的信息和用法，並在某種程度上動搖社區採取行動。數據是新的前沿領域，而 Rust 必須成為其中的一部分。
 
-阅读了使用 Rust 的实用机器学习之后，您将对使用 Rust 创建高计算库有一个深入的了解。掌握了这种神奇语言的知识，您将能够创建性能更高、内存安全且资源占用更少的应用程序。
+閱讀了使用 Rust 的實用機器學習之後，您將對使用 Rust 創建高計算庫有一個深入的瞭解。掌握了這種神奇語言的知識，您將能夠創建性能更高、內存安全且資源佔用更少的應用程序。
   
 - [《Rust Web Development》](https://kr1lib.org/book/11729741/a127f0)  
 
-Rust Web Development 是使用 Rust 构建基于服务器的 Web 应用程序的实践指南。如果您使用 Java、C# 或 PHP 构建了 Web 服务器，您会立即爱上 Rust 提供的性能和开发体验。本书向您展示了如何使用纯 Rust 以及重要的 Rust 库（例如用于异步运行时的 tokio、用于 Web 服务器和 API 的 warp 以及运行外部 HTTP 请求的 reqwest 等）高效工作。
+Rust Web Development 是使用 Rust 構建基於服務器的 Web 應用程序的實踐指南。如果您使用 Java、C# 或 PHP 構建了 Web 服務器，您會立即愛上 Rust 提供的性能和開發體驗。本書向您展示瞭如何使用純 Rust 以及重要的 Rust 庫（例如用於異步運行時的 tokio、用於 Web 服務器和 API 的 warp 以及運行外部 HTTP 請求的 reqwest 等）高效工作。
 
-您可以将这本书交给新聘用的开发人员，并让他们使用这本书。它包含非常实用的示例和模式，并为未来探索该主题奠定了坚实的基础。
+您可以將這本書交給新聘用的開發人員，並讓他們使用這本書。它包含非常實用的示例和模式，併為未來探索該主題奠定了堅實的基礎。
   
-**进阶书籍**
+**進階書籍**
  
 - [《The Rustonomicon》](https://doc.rust-lang.org/nightly/nomicon/)
   
-本书深入探讨了编写正确的不安全 Rust 程序所需的所有可怕细节。由于这个问题的性质，它可能会导致释放出无法言喻的恐怖，将你的心灵粉碎成十亿个无限小的绝望碎片。
+本書深入探討了編寫正確的不安全 Rust 程序所需的所有可怕細節。由於這個問題的性質，它可能會導致釋放出無法言喻的恐怖，將你的心靈粉碎成十億個無限小的絕望碎片。
 
-如果您希望编写 Rust 程序的职业生涯长久而快乐，那么现在您应该回过头来忘记您曾经看过这本书。这不是必要的。但是，如果您打算编写不安全的代码——或者只是想深入了解语言的本质——这本书包含了宝贵的信息。  
+如果您希望編寫 Rust 程序的職業生涯長久而快樂，那麼現在您應該回過頭來忘記您曾經看過這本書。這不是必要的。但是，如果您打算編寫不安全的代碼——或者只是想深入瞭解語言的本質——這本書包含了寶貴的信息。  
   
 - [《Programming Rust》](https://1lib.limited/book/3400043/791885) 
   
-这本实用的书向系统程序员介绍了 Rust，一种新的前沿语言。您将了解 Rust 如何提供静态验证的内存安全和低级控制的罕见且有价值的组合——想象一下 C++，但没有悬空指针、空指针取消引用、泄漏或缓冲区溢出。  
+這本實用的書向系統程序員介紹了 Rust，一種新的前沿語言。您將瞭解 Rust 如何提供靜態驗證的內存安全和低級控制的罕見且有價值的組合——想象一下 C++，但沒有懸空指針、空指針取消引用、洩漏或緩衝區溢出。  
   
 - [《Rust Essentials - Second Edition》](https://1lib.limited/book/3427870/81d715)  
   
-本书首先论证了 Rust 在当今编程语言领域的独特地位。安装 Rust 并学习如何使用它的包管理器 Cargo。逐步介绍各种概念：变量、类型、函数和控制结构，以打下基础。然后探索更多结构化数据，例如字符串、数组和枚举，并了解模式匹配的工作原理。
+本書首先論證了 Rust 在當今編程語言領域的獨特地位。安裝 Rust 並學習如何使用它的包管理器 Cargo。逐步介紹各種概念：變量、類型、函數和控制結構，以打下基礎。然後探索更多結構化數據，例如字符串、數組和枚舉，並瞭解模式匹配的工作原理。
 
-在这一切中，本书强调了 Rust 编译器用来生成安全代码的独特推理方式。接下来看看 Rust 特定的错误处理方式，以及特征在 Rust 代码中的整体重要性。在我们探索各种指针类型时，将深入探讨内存安全的支柱。接下来，看看宏如何简化代码生成，以及如何使用模块和板条箱组合更大的项目。最后，了解我们如何在 Rust 中编写安全的并发代码并与 C 程序接口，了解 Rust 生态系统，并探索标准库的使用。  
+在這一切中，本書強調了 Rust 編譯器用來生成安全代碼的獨特推理方式。接下來看看 Rust 特定的錯誤處理方式，以及特徵在 Rust 代碼中的整體重要性。在我們探索各種指針類型時，將深入探討內存安全的支柱。接下來，看看宏如何簡化代碼生成，以及如何使用模塊和板條箱組合更大的項目。最後，瞭解我們如何在 Rust 中編寫安全的併發代碼並與 C 程序接口，瞭解 Rust 生態系統，並探索標準庫的使用。  
   
 - [《Hands-On Concurrency with Rust》](https://1lib.limited/book/11689707/4154e1)  
   
-本书将教你如何在现代机器上管理程序性能，并在 Rust 中构建快速、内存安全和并发的软件。它从 Rust 的基础开始，讨论机器架构概念。您将了解如何系统地衡量和改进 Rust 代码的性能，以及如何自信地编写集合。您将了解应用于线程的 Sync 和 Send 特性，并使用锁、原子原语、数据并行等来协调线程执行。
+本書將教你如何在現代機器上管理程序性能，並在 Rust 中構建快速、內存安全和併發的軟件。它從 Rust 的基礎開始，討論機器架構概念。您將瞭解如何系統地衡量和改進 Rust 代碼的性能，以及如何自信地編寫集合。您將瞭解應用於線程的 Sync 和 Send 特性，並使用鎖、原子原語、數據並行等來協調線程執行。
 
-本书将向您展示如何在 C++ 代码中有效地嵌入 Rust，并探索用于多线程应用程序的各种 crate 的功能。它深入探讨了实现。您将了解互斥锁的工作原理并自行构建多个互斥锁。您将掌握生态系统中存在的完全不同的方法来构建和管理大规模系统。
+本書將向您展示如何在 C++ 代碼中有效地嵌入 Rust，並探索用於多線程應用程序的各種 crate 的功能。它深入探討了實現。您將瞭解互斥鎖的工作原理並自行構建多個互斥鎖。您將掌握生態系統中存在的完全不同的方法來構建和管理大規模系統。
   
 - [《Hands-On Functional Programming in Rust》](https://1lib.limited/book/11689735/4d162e)
   
-函数式编程允许开发人员将程序划分为更小的、可重用的组件，从整体上简化软件的创建、测试和维护。结合 Rust 的强大功能，您可以开发满足现代软件需求的强大且可扩展的应用程序。本书将帮助您发现可用于以功能方式构建软件的所有 Rust 功能。
+函數式編程允許開發人員將程序劃分為更小的、可重用的組件，從整體上簡化軟件的創建、測試和維護。結合 Rust 的強大功能，您可以開發滿足現代軟件需求的強大且可擴展的應用程序。本書將幫助您發現可用於以功能方式構建軟件的所有 Rust 功能。
 
-我们首先对针对不同问题和模式的函数式方法和面向对象方法进行简要比较。然后我们快速查看控制流的模式、数据以及这些函数式编程独有的抽象。下一部分介绍如何在 Rust 中创建功能性应用程序；还讨论了 Rust 独有的可变性和所有权。接下来检查纯函数，您将掌握闭包、它们的各种类型和柯里化。我们还通过功能设计原则和使用宏的元编程来实现并发。最后，我们看看调试和优化的最佳实践。
+我們首先對針對不同問題和模式的函數式方法和麵向對象方法進行簡要比較。然後我們快速查看控制流的模式、數據以及這些函數式編程獨有的抽象。下一部分介紹如何在 Rust 中創建功能性應用程序；還討論了 Rust 獨有的可變性和所有權。接下來檢查純函數，您將掌握閉包、它們的各種類型和柯里化。我們還通過功能設計原則和使用宏的元編程來實現併發。最後，我們看看調試和優化的最佳實踐。
 
-读完本书，您将熟悉函数式编程方法，并能够在日常工作中使用这些技术。  
+讀完本書，您將熟悉函數式編程方法，並能夠在日常工作中使用這些技術。  
   
 - [《Rust High Performance》](https://1lib.limited/book/11000538/3e9291)
   
-有时，很难从 Rust 中获得最佳性能。这本书教你将你的 Rust 代码的速度优化到 C/C++ 等语言的水平。您将了解并修复常见的陷阱，了解如何通过使用元编程来提高生产力，并通过安全轻松地并发执行部分代码来加速代码。您将掌握这门语言的特性，这将使您脱颖而出，并使用它们来真正提高算法的效率
+有時，很難從 Rust 中獲得最佳性能。這本書教你將你的 Rust 代碼的速度優化到 C/C++ 等語言的水平。您將瞭解並修復常見的陷阱，瞭解如何通過使用元編程來提高生產力，並通過安全輕鬆地併發執行部分代碼來加速代碼。您將掌握這門語言的特性，這將使您脫穎而出，並使用它們來真正提高算法的效率
 
-本书以一个温和的介绍开始，以帮助您识别 Rust 编程时的瓶颈。我们重点介绍了常见的性能缺陷，以及及早发现和解决这些问题的策略。我们继续掌握 Rust 的类型系统，这将使我们能够在编译时在性能和安全性方面进行令人印象深刻的优化。然后，您将学习如何在 Rust 中有效地管理内存，掌握借用检查器。我们继续测量性能，您将看到这如何影响您编写代码的方式。继续前进，您将在 Rust 中执行元编程，以提高代码的性能和生产力。您最终将学习 Rust 中的并行编程，它通过使用多线程和异步编程实现高效和更快的执行。
+本書以一個溫和的介紹開始，以幫助您識別 Rust 編程時的瓶頸。我們重點介紹了常見的性能缺陷，以及及早發現和解決這些問題的策略。我們繼續掌握 Rust 的類型系統，這將使我們能夠在編譯時在性能和安全性方面進行令人印象深刻的優化。然後，您將學習如何在 Rust 中有效地管理內存，掌握借用檢查器。我們繼續測量性能，您將看到這如何影響您編寫代碼的方式。繼續前進，您將在 Rust 中執行元編程，以提高代碼的性能和生產力。您最終將學習 Rust 中的並行編程，它通過使用多線程和異步編程實現高效和更快的執行。
   
 - [《Zero To Production In Rust》](https://zero2prod.com/) 
   
-如果您想学习如何使用 Rust 进行后端开发，这里就是您的最佳选择。
+如果您想學習如何使用 Rust 進行後端開發，這裡就是您的最佳選擇。
 
-Rust 的采用率达到了历史最高水平：越来越多的公司正在尝试和招聘。<br>
-如果您对使用 Rust 构建 API 感兴趣，零到生产是您 Rust 之旅的理想起点。<br>
-您将边做边学：我们将从头开始，一步一步地构建一个功能齐全的电子邮件通讯后端 API。<br>
+Rust 的採用率達到了歷史最高水平：越來越多的公司正在嘗試和招聘。<br>
+如果您對使用 Rust 構建 API 感興趣，零到生產是您 Rust 之旅的理想起點。<br>
+您將邊做邊學：我們將從頭開始，一步一步地構建一個功能齊全的電子郵件通訊後端 API。<br>
 
-您将学习：
+您將學習：
 
-1、导航和利用 Rust 的 crates 生态系统<br>
-2、构建您的应用程序以使其模块化和可扩展<br>
-3、编写测试，从单个单元到成熟的集成测试<br>
-4、使用类型系统为您的域建模以强制执行不变量<br>
-5、收集日志、跟踪和指标以观察应用程序的状态<br>
-6、为您的 Rust 项目设置一个强大的持续集成和持续部署管道<br>
+1、導航和利用 Rust 的 crates 生態系統<br>
+2、構建您的應用程序以使其模塊化和可擴展<br>
+3、編寫測試，從單個單元到成熟的集成測試<br>
+4、使用類型系統為您的域建模以強制執行不變量<br>
+5、收集日誌、跟蹤和指標以觀察應用程序的狀態<br>
+6、為您的 Rust 項目設置一個強大的持續集成和持續部署管道<br>
   
 - [《Programming WebAssembly with Rust》](https://1lib.limited/book/5001228/7b21a9)  
   
-WebAssembly 不仅仅是一项革命性的新技术。它正在重塑我们为 Web 及其他领域构建应用程序的方式。在 ActiveX 和 Flash 等技术失败的地方，您现在可以使用您喜欢的任何语言编写代码并编译为 WebAssembly，以便在浏览器、移动设备、嵌入式设备等中运行的快速、类型安全的代码。将 WebAssembly 的便携、高性能模块与 Rust 的安全性和强大功能相结合，是一个完美的开发组合。
+WebAssembly 不僅僅是一項革命性的新技術。它正在重塑我們為 Web 及其他領域構建應用程序的方式。在 ActiveX 和 Flash 等技術失敗的地方，您現在可以使用您喜歡的任何語言編寫代碼並編譯為 WebAssembly，以便在瀏覽器、移動設備、嵌入式設備等中運行的快速、類型安全的代碼。將 WebAssembly 的便攜、高性能模塊與 Rust 的安全性和強大功能相結合，是一個完美的開發組合。
 
-了解 WebAssembly 的堆栈机器架构如何工作，安装低级 wasm 工具，并发现编写原始废弃代码的黑暗艺术。在此基础上构建并学习如何通过实现跳棋游戏的逻辑从 Rust 编译 WebAssembly 模块。在 Rust 中创建 wasm 模块，以多种引人注目的方式与 JavaScript 进行互操作。将您的新技能应用于非网络主机的世界，并创建从在 Raspberry Pi 上运行的控制照明系统的应用程序到功能齐全的在线多人游戏引擎，开发人员可以上传他们自己的竞技场绑定 WebAssembly 战斗模块.
+瞭解 WebAssembly 的堆棧機器架構如何工作，安裝低級 wasm 工具，並發現編寫原始廢棄代碼的黑暗藝術。在此基礎上構建並學習如何通過實現跳棋遊戲的邏輯從 Rust 編譯 WebAssembly 模塊。在 Rust 中創建 wasm 模塊，以多種引人注目的方式與 JavaScript 進行互操作。將您的新技能應用於非網絡主機的世界，並創建從在 Raspberry Pi 上運行的控制照明系統的應用程序到功能齊全的在線多人遊戲引擎，開發人員可以上傳他們自己的競技場綁定 WebAssembly 戰鬥模塊.
 
-立即开始使用 WebAssembly，并改变您对 Web 的看法。  
+立即開始使用 WebAssembly，並改變您對 Web 的看法。  
   
 - [《Step Ahead with Rust: Systems Programming in Rust》](https://www.armstrong-publications.com/product/step-ahead-with-rust-super-combo/)  
   
-从基本的编程模式到深入了解该语言，Step Ahead with Rust 旨在帮助您从编写程序到使用 Rust 构建软件。本书将向您展示 Rust 语言最重要的特性，包括货物、类型系统、迭代器等。读完本书，您应该会熟悉更多内容，并准备好处理其余的高级主题。
+從基本的編程模式到深入瞭解該語言，Step Ahead with Rust 旨在幫助您從編寫程序到使用 Rust 構建軟件。本書將向您展示 Rust 語言最重要的特性，包括貨物、類型系統、迭代器等。讀完本書，您應該會熟悉更多內容，並準備好處理其餘的高級主題。
 
-在您阅读本书的过程中，我们建议您花时间尝试一下书页中所呈现的内容。这本书都是关于 Rust 的实际应用，所以在实践中应用它是值得期待的。本书涵盖：货物、Rust 类型系统、迭代器、宏、所有权、借用和生命周期、不安全模式、并发。A Step Ahead with Rust 读者应该是一位经验丰富的开发人员，希望提高他们的 Rust 开发技能。  
+在您閱讀本書的過程中，我們建議您花時間嘗試一下書頁中所呈現的內容。這本書都是關於 Rust 的實際應用，所以在實踐中應用它是值得期待的。本書涵蓋：貨物、Rust 類型系統、迭代器、宏、所有權、借用和生命週期、不安全模式、併發。A Step Ahead with Rust 讀者應該是一位經驗豐富的開發人員，希望提高他們的 Rust 開發技能。  
   
 - [《Creative Projects for Rust Programmers》](https://1lib.limited/book/5639719/c52aca)  
   
-了解 Rust 编程语言的最新特性、有用的库和框架的实用指南，将帮助您设计和开发有趣的项目
+瞭解 Rust 編程語言的最新特性、有用的庫和框架的實用指南，將幫助您設計和開發有趣的項目
 
-学习：
+學習：
 
-1、访问 TOML、JSON 和 XML 文件以及 SQLite、PostgreSQL 和 Redis 数据库<br>
-2、使用 JSON 有效负载开发 RESTful Web 服务<br>
-3、使用 HTML 模板和 JavaScript 创建 Web 应用程序，使用 WebAssembly 创建前端 Web 应用程序或 Web 游戏<br>
-4、构建桌面 2D 游戏<br>
-5、为编程语言开发解释器和编译器<br>
-6、创建机器语言模拟器<br>
-7、使用可加载模块扩展 Linux 内核<br>
+1、訪問 TOML、JSON 和 XML 文件以及 SQLite、PostgreSQL 和 Redis 數據庫<br>
+2、使用 JSON 有效負載開發 RESTful Web 服務<br>
+3、使用 HTML 模板和 JavaScript 創建 Web 應用程序，使用 WebAssembly 創建前端 Web 應用程序或 Web 遊戲<br>
+4、構建桌面 2D 遊戲<br>
+5、為編程語言開發解釋器和編譯器<br>
+6、創建機器語言模擬器<br>
+7、使用可加載模塊擴展 Linux 內核<br>
   
 # 📑 大牛文章
   
-- [理解 Rust 的生命周期](https://github.com/0voice/Understanding_in_Rust/blob/main/%E6%96%87%E7%AB%A0/%E7%90%86%E8%A7%A3%20Rust%20%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F.md)
-- [高德技术 | 基于Rust的Android Native内存分析方案](https://github.com/0voice/Understanding_in_Rust/blob/main/%E6%96%87%E7%AB%A0/%E5%9F%BA%E4%BA%8ERust%E7%9A%84Android%20Native%E5%86%85%E5%AD%98%E5%88%86%E6%9E%90%E6%96%B9%E6%A1%88.md)
-- [Rust 与 C++：深入的语言比较](https://github.com/0voice/Understanding_in_Rust/blob/main/%E6%96%87%E7%AB%A0/Rust%20%E4%B8%8E%20C%2B%2B%EF%BC%9A%E6%B7%B1%E5%85%A5%E7%9A%84%E8%AF%AD%E8%A8%80%E6%AF%94%E8%BE%83.md)
+- [理解 Rust 的生命週期](https://github.com/0voice/Understanding_in_Rust/blob/main/%E6%96%87%E7%AB%A0/%E7%90%86%E8%A7%A3%20Rust%20%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F.md)
+- [高德技術 | 基於Rust的Android Native內存分析方案](https://github.com/0voice/Understanding_in_Rust/blob/main/%E6%96%87%E7%AB%A0/%E5%9F%BA%E4%BA%8ERust%E7%9A%84Android%20Native%E5%86%85%E5%AD%98%E5%88%86%E6%9E%90%E6%96%B9%E6%A1%88.md)
+- [Rust 與 C++：深入的語言比較](https://github.com/0voice/Understanding_in_Rust/blob/main/%E6%96%87%E7%AB%A0/Rust%20%E4%B8%8E%20C%2B%2B%EF%BC%9A%E6%B7%B1%E5%85%A5%E7%9A%84%E8%AF%AD%E8%A8%80%E6%AF%94%E8%BE%83.md)
   
-# 📰 官方文档
+# 📰 官方文檔
   
-- [标准库API文档](https://doc.rust-lang.org/std/)
-- [Rust Reference](https://doc.rust-lang.org/reference/index.html): Rust reference 文档，有中文翻译版本 [Rust语言规范](https://rustlang-cn.org/office/rust/reference/) 正在翻译过程中
-- [Rust编译错误索引](https://doc.rust-lang.org/error-index.html)：发生编译错误时，可以通过索引找到具体错误解释
-- [rustdoc文档](https://doc.rust-lang.org/rustdoc/): `restdoc`工具的使用文档
-- [Rustonomicon](https://doc.rust-lang.org/reference/): rust的参考文档。但是目前并不完整，可能有遗漏和错误
-- [Unstable Book](https://doc.rust-lang.org/unstable-book/): 用于尚不稳定特性的文档
-- [Rustonomicon](https://doc.rust-lang.org/nomicon/): unsafe rust的黑暗艺术，有中文翻译版本 [Rust高级编程](https://rustlang-cn.org/office/rust/advrust/)
-- [The Cargo Book](https://doc.rust-lang.org/cargo/index.html): cargo使用介绍，有中文翻译版本 [Cargo教程](https://rustlang-cn.org/office/rust/cargo/) 正在进行中
-- [Rust Edition Guide](https://doc.rust-lang.org/nightly/edition-guide/introduction.html): Rust 版本指南，传递 Rust 不同版本之间大的变更信息
-- [Command line apps in Rust](https://rust-lang-nursery.github.io/cli-wg/#command-line-apps-in-rust): 在Rust中编写命令行程序
+- [標準庫API文檔](https://doc.rust-lang.org/std/)
+- [Rust Reference](https://doc.rust-lang.org/reference/index.html): Rust reference 文檔，有中文翻譯版本 [Rust語言規範](https://rustlang-cn.org/office/rust/reference/) 正在翻譯過程中
+- [Rust編譯錯誤索引](https://doc.rust-lang.org/error-index.html)：發生編譯錯誤時，可以通過索引找到具體錯誤解釋
+- [rustdoc文檔](https://doc.rust-lang.org/rustdoc/): `restdoc`工具的使用文檔
+- [Rustonomicon](https://doc.rust-lang.org/reference/): rust的參考文檔。但是目前並不完整，可能有遺漏和錯誤
+- [Unstable Book](https://doc.rust-lang.org/unstable-book/): 用於尚不穩定特性的文檔
+- [Rustonomicon](https://doc.rust-lang.org/nomicon/): unsafe rust的黑暗藝術，有中文翻譯版本 [Rust高級編程](https://rustlang-cn.org/office/rust/advrust/)
+- [The Cargo Book](https://doc.rust-lang.org/cargo/index.html): cargo使用介紹，有中文翻譯版本 [Cargo教程](https://rustlang-cn.org/office/rust/cargo/) 正在進行中
+- [Rust Edition Guide](https://doc.rust-lang.org/nightly/edition-guide/introduction.html): Rust 版本指南，傳遞 Rust 不同版本之間大的變更信息
+- [Command line apps in Rust](https://rust-lang-nursery.github.io/cli-wg/#command-line-apps-in-rust): 在Rust中編寫命令行程序
   
-# ✈ 杂货铺
+# ✈ 雜貨鋪
   
-- Rust 最大中文社区论坛：https://rustcc.cn/
-- 小众中文社区的翻译资料/论坛：https://learnku.com/rust
-- Rust在线编辑器: https://play.rust-lang.org/
-- 2021 年去哪学 Rust：https://loige.co/where-to-go-to-learn-rust-in-2021/
-- Rust Cheat Sheet（Rust语法备忘单）：https://cheats.rs/
-- Rust 中文书架与资讯：https://budshome.com/ | https://blog.budshome.com/
-- 简要而基础的 Rust 知识（适合在 Rust Book 阶段当作补充材料）：https://learning-rust.github.io/
-- 微软发布的 Rust 新手教程：https://docs.microsoft.com/en-us/learn/paths/rust-first-steps/
-- Rust-leetcodes刷题：https://stevenbai.top/rust-leetcode/
-- Rust by Example 通过例子学 Rust：https://doc.rust-lang.org/rust-by-example/index.html
-- 电子书下载 ：https://jp1lib.org/s/Rust
-- Rust线下全球会议：
+- Rust 最大中文社區論壇：https://rustcc.cn/
+- 小眾中文社區的翻譯資料/論壇：https://learnku.com/rust
+- Rust在線編輯器: https://play.rust-lang.org/
+- 2021 年去哪學 Rust：https://loige.co/where-to-go-to-learn-rust-in-2021/
+- Rust Cheat Sheet（Rust語法備忘單）：https://cheats.rs/
+- Rust 中文書架與資訊：https://budshome.com/ | https://blog.budshome.com/
+- 簡要而基礎的 Rust 知識（適合在 Rust Book 階段當作補充材料）：https://learning-rust.github.io/
+- 微軟發佈的 Rust 新手教程：https://docs.microsoft.com/en-us/learn/paths/rust-first-steps/
+- Rust-leetcodes刷題：https://stevenbai.top/rust-leetcode/
+- Rust by Example 通過例子學 Rust：https://doc.rust-lang.org/rust-by-example/index.html
+- 電子書下載 ：https://jp1lib.org/s/Rust
+- Rust線下全球會議：
   - RustConf: https://rustconf.com/
   - Rust Belt Rust: https://rust-belt-rust.com/
   - RustFest: https://blog.rustfest.eu/
   - Rust Latam: https://rustcon.asia/
   - RustCon Asia: https://rustcon.asia/
   
-# 💽 视频
+# 💽 視頻
   
-Rust 验证研讨会 2021 | 
+Rust 驗證研討會 2021 | 
 :------:|
 [Peeking at compiler-internal data (for fun and profit)](https://www.aliyundrive.com/s/4N4EE3URbBT)|
 [Ferrite- A Rust EDSL for Message-passing Protocol Verification](https://www.aliyundrive.com/s/hGpvaNzWAHS)|
@@ -349,462 +349,462 @@ Rust Linz 2021 |
   
   
 
-# 🏗 开源框架
+# 🏗 開源框架
   
-## 值得新手关注的Rust项目
+## 值得新手關注的Rust項目
 
-- [mini redis](https://github.com/tokio-rs/mini-redis) - 不完整的Redis客户端和服务器实现使用Tokio -仅为学习目的
-- [async-graphql](https://github.com/sunli829/async-graphql) - 一个在Rust中实现的GraphQL服务器库
+- [mini redis](https://github.com/tokio-rs/mini-redis) - 不完整的Redis客戶端和服務器實現使用Tokio -僅為學習目的
+- [async-graphql](https://github.com/sunli829/async-graphql) - 一個在Rust中實現的GraphQL服務器庫
   
-## 应用程序
+## 應用程序
 
-- [alacritty](https://github.com/alacritty/alacritty) — 跨平台、GPU 增强的终端模拟器
-- [AnderEnder/s3find-rs](https://github.com/AnderEnder/s3find-rs) — 用于遍历 Amazon S3 层次结构的命令行实用程序，类似于 Amazon S3 的 find
-- [andschwa/rust-genetic-algorithm](https://github.com/andschwa/rust-genetic-algorithm) — 一种用于学术基准问题的遗传算法
-- [asm-cli-rust](https://github.com/cch123/asm-cli-rust) — 一个用 Rust 编写的交互式程序集外壳.
-- [ballista](https://github.com/ballista-compute/ballista) — 使用 Rust、Apache Arrow 和 Kubernetes 的分布式计算平台的 PoC！
-- [cloudflare/boringtun](https://github.com/cloudflare/boringtun) — 用户空间 WireGuard VPN 实现
-- [darrint/device-blocker](https://github.com/darrint/device-blocker) — 通过阻止家庭 Wifi 路由器上的互联网访问来限制儿童各种移动设备的屏幕时间.
-- [denoland/deno](https://github.com/denoland/deno) — 使用 V8、Rust 和 Tokio 构建的安全 JavaScript/TypeScript 运行时
-- [dlecan/generic-dns-update](https://github.com/dlecan/generic-dns-update) — 使用您的 IP 地址更新 DNS 区域文件的工具
+- [alacritty](https://github.com/alacritty/alacritty) — 跨平臺、GPU 增強的終端模擬器
+- [AnderEnder/s3find-rs](https://github.com/AnderEnder/s3find-rs) — 用於遍歷 Amazon S3 層次結構的命令行實用程序，類似於 Amazon S3 的 find
+- [andschwa/rust-genetic-algorithm](https://github.com/andschwa/rust-genetic-algorithm) — 一種用於學術基準問題的遺傳算法
+- [asm-cli-rust](https://github.com/cch123/asm-cli-rust) — 一個用 Rust 編寫的交互式程序集外殼.
+- [ballista](https://github.com/ballista-compute/ballista) — 使用 Rust、Apache Arrow 和 Kubernetes 的分佈式計算平臺的 PoC！
+- [cloudflare/boringtun](https://github.com/cloudflare/boringtun) — 用戶空間 WireGuard VPN 實現
+- [darrint/device-blocker](https://github.com/darrint/device-blocker) — 通過阻止家庭 Wifi 路由器上的互聯網訪問來限制兒童各種移動設備的屏幕時間.
+- [denoland/deno](https://github.com/denoland/deno) — 使用 V8、Rust 和 Tokio 構建的安全 JavaScript/TypeScript 運行時
+- [dlecan/generic-dns-update](https://github.com/dlecan/generic-dns-update) — 使用您的 IP 地址更新 DNS 區域文件的工具
 - [Factotum](https://github.com/snowplow/factotum) — [A system to programmatically run data pipelines](https://snowplowanalytics.com/blog/2016/04/09/introducing-factotum-data-pipeline-runner/) 
-- [fcsonline/drill](https://github.com/fcsonline/drill) — 受 Ansible 语法启发的 HTTP 负载测试应用程序
-- [Fractalide](https://github.com/fractalide/fractalide) — 简单的 Rust 微服务
-- [habitat](https://community.chef.io/tools/chef-habitat) — 一个工具 [Chef](https://www.chef.io/) 构建、部署和管理应用程序.
-- [Herd](https://github.com/imjacobclark/Herd) — 一个实验性的 HTTP 负载测试应用程序
-- [intecture/api](https://github.com/intecture/api) — API 驱动的服务器管理和配置工具
-- [ivanceras/diwata](https://github.com/ivanceras/diwata) — postgresql 的数据库管理工具
-- [jedisct1/flowgger](https://github.com/awslabs/flowgger) — 快速、简单和轻量级的数据收集器
-- [kbknapp/docli](https://github.com/kbknapp/docli-rs) — 用于管理 DigitalOcean 基础设施的命令行实用程序 
-- [kytan](https://github.com/changlan/kytan) — 高性能点对点 VPN
-- [limonite](https://crates.io/crates/limonite) — 静态博客 / 网站生成器 
-- [linkerd/linkerd2-proxy](https://github.com/linkerd/linkerd2-proxy) — Kubernetes 的超轻服务网格.
-- [MaidSafe](https://maidsafe.net/) — 一个去中心化的平台.
-- [mdBook](https://crates.io/crates/mdbook) — 从 Markdown 文件创建书籍的命令行实用程序 
-- [nicohman/eidolon](https://github.com/nicohman/eidolon) — 适用于 linux 和 macosx 的无 Steam 和 drm 游戏注册表和启动器
-- [notty](https://github.com/withoutboats/notty) — 一种新型终端
-- [Pijul](https://pijul.org/) — 基于补丁的分布式版本控制系统
-- [rsign](https://crates.io/crates/rsign) — 一个简单的命令行工具，用于生成 / 签署 / 验证旨在与 Minisign 兼容的数字签名 
-- [Rudr](https://github.com/oam-dev/rudr) — Kubernetes 实现 [Open Application Model](https://oam.dev/) 规格
-- [rx](https://github.com/cloudhead/rx) — 受 Vi 启发的现代像素艺术编辑器
+- [fcsonline/drill](https://github.com/fcsonline/drill) — 受 Ansible 語法啟發的 HTTP 負載測試應用程序
+- [Fractalide](https://github.com/fractalide/fractalide) — 簡單的 Rust 微服務
+- [habitat](https://community.chef.io/tools/chef-habitat) — 一個工具 [Chef](https://www.chef.io/) 構建、部署和管理應用程序.
+- [Herd](https://github.com/imjacobclark/Herd) — 一個實驗性的 HTTP 負載測試應用程序
+- [intecture/api](https://github.com/intecture/api) — API 驅動的服務器管理和配置工具
+- [ivanceras/diwata](https://github.com/ivanceras/diwata) — postgresql 的數據庫管理工具
+- [jedisct1/flowgger](https://github.com/awslabs/flowgger) — 快速、簡單和輕量級的數據收集器
+- [kbknapp/docli](https://github.com/kbknapp/docli-rs) — 用於管理 DigitalOcean 基礎設施的命令行實用程序 
+- [kytan](https://github.com/changlan/kytan) — 高性能點對點 VPN
+- [limonite](https://crates.io/crates/limonite) — 靜態博客 / 網站生成器 
+- [linkerd/linkerd2-proxy](https://github.com/linkerd/linkerd2-proxy) — Kubernetes 的超輕服務網格.
+- [MaidSafe](https://maidsafe.net/) — 一個去中心化的平臺.
+- [mdBook](https://crates.io/crates/mdbook) — 從 Markdown 文件創建書籍的命令行實用程序 
+- [nicohman/eidolon](https://github.com/nicohman/eidolon) — 適用於 linux 和 macosx 的無 Steam 和 drm 遊戲註冊表和啟動器
+- [notty](https://github.com/withoutboats/notty) — 一種新型終端
+- [Pijul](https://pijul.org/) — 基於補丁的分佈式版本控制系統
+- [rsign](https://crates.io/crates/rsign) — 一個簡單的命令行工具，用於生成 / 簽署 / 驗證旨在與 Minisign 兼容的數字簽名 
+- [Rudr](https://github.com/oam-dev/rudr) — Kubernetes 實現 [Open Application Model](https://oam.dev/) 規格
+- [rx](https://github.com/cloudhead/rx) — 受 Vi 啟發的現代像素藝術編輯器
 - [Sandstorm Collections App](https://github.com/sandstorm-io/collections-app)
-- [Servo](https://github.com/servo/servo) — 原型 Web 浏览器引擎
-- [tiny](https://github.com/osa1/tiny) — 终端 IRC 客户端
-- [trust-dns](https://crates.io/crates/trust-dns) — DNS 服务器
+- [Servo](https://github.com/servo/servo) — 原型 Web 瀏覽器引擎
+- [tiny](https://github.com/osa1/tiny) — 終端 IRC 客戶端
+- [trust-dns](https://crates.io/crates/trust-dns) — DNS 服務器
 - [updns](https://github.com/wyhaya/updns) — DNS 代理工具
 - [Weld](https://github.com/serayuzgur/weld) — 全假 REST API 生成器 
-- [wezterm](https://github.com/wez/wezterm) — 一个gpu加速的跨平台终端模拟器和多路复用器
+- [wezterm](https://github.com/wez/wezterm) — 一個gpu加速的跨平臺終端模擬器和多路複用器
   
-### 音频和音乐技术
+### 音頻和音樂技術
 
-- [enginesound](https://github.com/DasEtwas/enginesound) — 用于按程序生成半逼真引擎声音的 GUI 和命令行应用程序. 具有深度配置、可变采样率和频率分析窗口.
-- [indiscipline/zrtstr](https://github.com/indiscipline/zrtstr) — 用于检查立体声 wav 文件是否为仿立体声（即具有相同通道）并将此类文件转换为单声道的命令行实用程序.
-- [Lyriek](https://github.com/bartwillems/lyriek) — 一个多线程 GTK 3 应用程序，用于获取当前播放歌曲的歌词.
-- [Phate6660/musinfo](https://github.com/Phate6660/musinfo) — 从 mpd 查询音乐信息并将其显示在通知中的程序.
-- [Phate6660/rsmpc](https://github.com/Phate6660/rsmpc) — mpc 的实现，但不是直接实现，因为会有一些差异.
-- [Phate6660/rsmpc](https://github.com/Phate6660/rsmpc-gui) — 用于 mpd 的 gtk 前端.
-- [Polaris](https://github.com/agersant/polaris) — 音乐流媒体应用程序. 
-- [Spotify TUI](https://github.com/Rigellute/spotify-tui) — 一个用 Rust 编写的用于终端的 Spotify 客户端. 
-- [Spotifyd](https://github.com/Spotifyd/spotifyd) — 作为 UNIX 守护程序运行的开源 Spotify 客户端. 
+- [enginesound](https://github.com/DasEtwas/enginesound) — 用於按程序生成半逼真引擎聲音的 GUI 和命令行應用程序. 具有深度配置、可變採樣率和頻率分析窗口.
+- [indiscipline/zrtstr](https://github.com/indiscipline/zrtstr) — 用於檢查立體聲 wav 文件是否為仿立體聲（即具有相同通道）並將此類文件轉換為單聲道的命令行實用程序.
+- [Lyriek](https://github.com/bartwillems/lyriek) — 一個多線程 GTK 3 應用程序，用於獲取當前播放歌曲的歌詞.
+- [Phate6660/musinfo](https://github.com/Phate6660/musinfo) — 從 mpd 查詢音樂信息並將其顯示在通知中的程序.
+- [Phate6660/rsmpc](https://github.com/Phate6660/rsmpc) — mpc 的實現，但不是直接實現，因為會有一些差異.
+- [Phate6660/rsmpc](https://github.com/Phate6660/rsmpc-gui) — 用於 mpd 的 gtk 前端.
+- [Polaris](https://github.com/agersant/polaris) — 音樂流媒體應用程序. 
+- [Spotify TUI](https://github.com/Rigellute/spotify-tui) — 一個用 Rust 編寫的用於終端的 Spotify 客戶端. 
+- [Spotifyd](https://github.com/Spotifyd/spotifyd) — 作為 UNIX 守護程序運行的開源 Spotify 客戶端. 
   
-### 加密数字货币
+### 加密數字貨幣
 
-- [Bitcoin Satoshi's Vision](https://github.com/brentongunning/rust-sv) — 用于处理比特币 SV 的 Rust 库.
-- [cardano-cli](https://github.com/input-output-hk/cardano-cli) — 卡尔达诺命令行界面 (CLI)
-- [ChainX](https://github.com/chainx-org/ChainX) — Polkadot 上完全去中心化的链间加密资产管理.
-- [CITA](https://github.com/citahub/cita) — 面向企业用户的高性能区块链内核.
-- [coinbase-pro-rs](https://github.com/inv2004/coinbase-pro-rs) — Rust 中的 Coinbase pro 客户端，支持同步 / 异步 / websocket 
-- [ethaddrgen](https://github.com/Limeth/ethaddrgen) — 用 Rust 制作的自定义以太坊虚地址生成器 
-- [Grin](https://github.com/mimblewimble/grin/) — MimbleWimble 协议的演变
-- [hdwallet](https://github.com/jjyr/hdwallet) — BIP-32 HD 钱包相关的密钥推导实用程序.
-- [Holochain](https://github.com/holochain/holochain) — 区块链的可扩展 P2P 替代方案，适用于您一直想要构建的所有分布式应用程序. 旧仓库的链接是 [this](https://github.com/holochain/holochain-rust) 不再维护.[ibc-rs](https://github.com/informalsystems/ibc-rs) - Rust 的实现 [Interblockchain Communication](https://xn--ibc-3h3e109w.org/) 协议
-- [infincia/bip39-rs](https://github.com/infincia/bip39-rs) — BIP39 的 Rust 实现.
-- [Joystream](https://github.com/Joystream/joystream) — 一个用户管理的视频平台 
-- [Diem](https://github.com/diem/diem) — Diem 的使命是建立一个简单的全球货币和金融基础设施，为数十亿人赋能.
-- [Lighthouse](https://github.com/sigp/lighthouse) — Rust Ethereum 2.0 客户端
-- [near/nearcore](https://github.com/near/nearcore) — 用于低端移动设备的去中心化智能合约平台.
-- [Nervos CKB](https://github.com/nervosnetwork/ckb) — Nervos CKB 是一个公共的免许可区块链，是 Nervos 网络的公共知识层.
-- [Nimiq](https://github.com/nimiq/core-rs) — Nimiq 节点的 Rust 实现
-- [Parity-Bitcoin](https://github.com/paritytech/parity-bitcoin) — Parity 比特币客户端
-- [Parity-Bridge](https://github.com/paritytech/parity-bridge) — 任何两个基于以太坊的网络之间的桥梁
-- [Parity-Ethereum](https://github.com/openethereum/openethereum) — 快速、轻便、强大的以太坊客户端
-- [Parity-Zcash](https://github.com/paritytech/parity-zcash) — Zcash 协议的 Rust 实现
-- [Phala-Network/phala-blockchain](https://github.com/Phala-Network/phala-blockchain) — 基于 Intel SGX 和 Substrate 的机密智能合约区块链
-- [Polkadot](https://github.com/paritytech/polkadot) — 具有集中安全性的异构多链技术
-- [rbtc](https://github.com/lucawen/rbtc) — 将 BTC 转换为任何货币，反之亦然. 
-- [rust-cardano](https://github.com/input-output-hk/rust-cardano) — Cardano 原语、助手和相关应用程序的 Rust 实现
-- [Substrate](https://github.com/paritytech/substrate) — 用 Rust 编写的通用模块化区块链模板
-- [tendermint-rs](https://github.com/informalsystems/tendermint-rs) - Tendermint 区块链数据结构和客户端的 Rust 实现
-- [wagyu](https://github.com/AleoHQ/wagyu) [[wagyu](https://crates.io/crates/wagyu)] — 用于生成加密货币钱包的 Rust 库
-- [zcash](https://github.com/zcash/zcash) — Zcash 是 “Zerocash” 协议的实现.
-- [YeeCo yeeroot](https://github.com/yeeco/yeeroot) — YeeCo yeeroot 是一个无需许可、安全、高性能和可扩展的公共区块链平台，由基于 Rust 编写的 PoW 共识的全分片技术提供支持
+- [Bitcoin Satoshi's Vision](https://github.com/brentongunning/rust-sv) — 用於處理比特幣 SV 的 Rust 庫.
+- [cardano-cli](https://github.com/input-output-hk/cardano-cli) — 卡爾達諾命令行界面 (CLI)
+- [ChainX](https://github.com/chainx-org/ChainX) — Polkadot 上完全去中心化的鏈間加密資產管理.
+- [CITA](https://github.com/citahub/cita) — 面向企業用戶的高性能區塊鏈內核.
+- [coinbase-pro-rs](https://github.com/inv2004/coinbase-pro-rs) — Rust 中的 Coinbase pro 客戶端，支持同步 / 異步 / websocket 
+- [ethaddrgen](https://github.com/Limeth/ethaddrgen) — 用 Rust 製作的自定義以太坊虛地址生成器 
+- [Grin](https://github.com/mimblewimble/grin/) — MimbleWimble 協議的演變
+- [hdwallet](https://github.com/jjyr/hdwallet) — BIP-32 HD 錢包相關的密鑰推導實用程序.
+- [Holochain](https://github.com/holochain/holochain) — 區塊鏈的可擴展 P2P 替代方案，適用於您一直想要構建的所有分佈式應用程序. 舊倉庫的鏈接是 [this](https://github.com/holochain/holochain-rust) 不再維護.[ibc-rs](https://github.com/informalsystems/ibc-rs) - Rust 的實現 [Interblockchain Communication](https://xn--ibc-3h3e109w.org/) 協議
+- [infincia/bip39-rs](https://github.com/infincia/bip39-rs) — BIP39 的 Rust 實現.
+- [Joystream](https://github.com/Joystream/joystream) — 一個用戶管理的視頻平臺 
+- [Diem](https://github.com/diem/diem) — Diem 的使命是建立一個簡單的全球貨幣和金融基礎設施，為數十億人賦能.
+- [Lighthouse](https://github.com/sigp/lighthouse) — Rust Ethereum 2.0 客戶端
+- [near/nearcore](https://github.com/near/nearcore) — 用於低端移動設備的去中心化智能合約平臺.
+- [Nervos CKB](https://github.com/nervosnetwork/ckb) — Nervos CKB 是一個公共的免許可區塊鏈，是 Nervos 網絡的公共知識層.
+- [Nimiq](https://github.com/nimiq/core-rs) — Nimiq 節點的 Rust 實現
+- [Parity-Bitcoin](https://github.com/paritytech/parity-bitcoin) — Parity 比特幣客戶端
+- [Parity-Bridge](https://github.com/paritytech/parity-bridge) — 任何兩個基於以太坊的網絡之間的橋樑
+- [Parity-Ethereum](https://github.com/openethereum/openethereum) — 快速、輕便、強大的以太坊客戶端
+- [Parity-Zcash](https://github.com/paritytech/parity-zcash) — Zcash 協議的 Rust 實現
+- [Phala-Network/phala-blockchain](https://github.com/Phala-Network/phala-blockchain) — 基於 Intel SGX 和 Substrate 的機密智能合約區塊鏈
+- [Polkadot](https://github.com/paritytech/polkadot) — 具有集中安全性的異構多鏈技術
+- [rbtc](https://github.com/lucawen/rbtc) — 將 BTC 轉換為任何貨幣，反之亦然. 
+- [rust-cardano](https://github.com/input-output-hk/rust-cardano) — Cardano 原語、助手和相關應用程序的 Rust 實現
+- [Substrate](https://github.com/paritytech/substrate) — 用 Rust 編寫的通用模塊化區塊鏈模板
+- [tendermint-rs](https://github.com/informalsystems/tendermint-rs) - Tendermint 區塊鏈數據結構和客戶端的 Rust 實現
+- [wagyu](https://github.com/AleoHQ/wagyu) [[wagyu](https://crates.io/crates/wagyu)] — 用於生成加密貨幣錢包的 Rust 庫
+- [zcash](https://github.com/zcash/zcash) — Zcash 是 “Zerocash” 協議的實現.
+- [YeeCo yeeroot](https://github.com/yeeco/yeeroot) — YeeCo yeeroot 是一個無需許可、安全、高性能和可擴展的公共區塊鏈平臺，由基於 Rust 編寫的 PoW 共識的全分片技術提供支持
   
-### 数据库
+### 數據庫
 
-- [indradb](https://crates.io/crates/indradb) — 基于 Rust 的图形数据库 
-- [Materialize](https://github.com/MaterializeInc/materialize) - 由 Timely Dataflow 提供支持的流式 SQL 数据库：heavy_dollar_sign
-- [noria](https://crates.io/crates/noria) — 用于 Web 应用程序后端的动态变化、部分状态的数据流
+- [indradb](https://crates.io/crates/indradb) — 基於 Rust 的圖形數據庫 
+- [Materialize](https://github.com/MaterializeInc/materialize) - 由 Timely Dataflow 提供支持的流式 SQL 數據庫：heavy_dollar_sign
+- [noria](https://crates.io/crates/noria) — 用於 Web 應用程序後端的動態變化、部分狀態的數據流
 - [Lucid](https://github.com/lucid-kv/lucid) — High performance and distributed KV store accessible through a HTTP API.
-- [ParityDB](https://github.com/paritytech/parity-db) — 快速可靠的数据库，针对读操作进行了优化
-- [PumpkinDB](https://github.com/PumpkinDB/PumpkinDB) — 事件溯源数据库引擎 
-- [seppo0010/rsedis](https://github.com/seppo0010/rsedis) — Rust 中的 Redis 重新实现 
-- [Skytable](https://github.com/skytable/skytable) — 多模型 NoSQL 数据库 
-- [tikv](https://github.com/tikv/tikv) — Rust 中的分布式 KV 数据库 
-- [sled](https://crates.io/crates/sled) —（测试版）现代嵌入式数据库
-- [TerminusDB](https://github.com/terminusdb/terminusdb-store) - 开源图形数据库和文档存储
+- [ParityDB](https://github.com/paritytech/parity-db) — 快速可靠的數據庫，針對讀操作進行了優化
+- [PumpkinDB](https://github.com/PumpkinDB/PumpkinDB) — 事件溯源數據庫引擎 
+- [seppo0010/rsedis](https://github.com/seppo0010/rsedis) — Rust 中的 Redis 重新實現 
+- [Skytable](https://github.com/skytable/skytable) — 多模型 NoSQL 數據庫 
+- [tikv](https://github.com/tikv/tikv) — Rust 中的分佈式 KV 數據庫 
+- [sled](https://crates.io/crates/sled) —（測試版）現代嵌入式數據庫
+- [TerminusDB](https://github.com/terminusdb/terminusdb-store) - 開源圖形數據庫和文檔存儲
   
-### 模拟器
+### 模擬器
 
 - [kondrak/rust64](https://github.com/kondrak/rust64) 
-- [Ruffle](https://github.com/ruffle-rs/ruffle) — Ruffle 是用 Rust 编程语言编写的 Adobe Flash Player 模拟器. Ruffle 使用 WebAssembly 面向桌面和 Web.
+- [Ruffle](https://github.com/ruffle-rs/ruffle) — Ruffle 是用 Rust 編程語言編寫的 Adobe Flash Player 模擬器. Ruffle 使用 WebAssembly 面向桌面和 Web.
 - [Gekkio/mooneye-gb](https://github.com/Gekkio/mooneye-gb) 
 - [mvdnes/rboy](https://github.com/mvdnes/rboy)
 - [NivenT/RGB](https://github.com/nivent/RGB) 
-- [mohanson/gameboy](https://github.com/mohanson/gameboy) — 全功能跨平台 GameBoy 模拟器. 永远的男孩！
-- [michelhe/rustboyadvance-ng](https://github.com/michelhe/rustboyadvance-ng) - RustboyAdvance-ng 是一款 Gameboy Advance 模拟器，具有桌面、安卓和 [WebAssembly](https://michelhe.github.io/rustboyadvance-ng/) 支持.
+- [mohanson/gameboy](https://github.com/mohanson/gameboy) — 全功能跨平臺 GameBoy 模擬器. 永遠的男孩！
+- [michelhe/rustboyadvance-ng](https://github.com/michelhe/rustboyadvance-ng) - RustboyAdvance-ng 是一款 Gameboy Advance 模擬器，具有桌面、安卓和 [WebAssembly](https://michelhe.github.io/rustboyadvance-ng/) 支持.
 - [iamsix/oxidenes](https://github.com/iamsix/oxidenes)
 - [koute/pinky](https://github.com/koute/pinky) 
 - [pcwalton/sprocketnes](https://github.com/pcwalton/sprocketnes)
-- [Amjad50/plastic](https://github.com/Amjad50/plastic) — plastis 是一个用 Rust 构建的全功能 NES 模拟器.
-- [rustation-ng](https://gitlab.com/flio/rustation-ng/) — 使用 Rust 的 Playstation 模拟器
+- [Amjad50/plastic](https://github.com/Amjad50/plastic) — plastis 是一個用 Rust 構建的全功能 NES 模擬器.
+- [rustation-ng](https://gitlab.com/flio/rustation-ng/) — 使用 Rust 的 Playstation 模擬器
 - [pacmancoder/rustzx](https://github.com/pacmancoder/rustzx) 
-- [rodrigorc/raze](https://github.com/rodrigorc/raze) — 对于 WebAssembly， [live version here](https://rodrigorc.github.io/raze/) * 虚拟男孩
+- [rodrigorc/raze](https://github.com/rodrigorc/raze) — 對於 WebAssembly， [live version here](https://rodrigorc.github.io/raze/) * 虛擬男孩
 - [emu-rs/rustual-boy](https://github.com/emu-rs/rustual-boy) 
-- [mohanson/i8080](https://github.com/mohanson/i8080) — Rust 的 Intel 8080 cpu 模拟器 
+- [mohanson/i8080](https://github.com/mohanson/i8080) — Rust 的 Intel 8080 cpu 模擬器 
   
-### 游戏
+### 遊戲
 
-- [lifthrasiir/angolmois-rust](https://github.com/lifthrasiir/angolmois-rust) — 一款支持 BMS 格式的极简音乐视频游戏
-- [citybound](https://github.com/citybound/citybound) - 你应得的城市模拟
-- [schulke-214/connect-four](https://github.com/schulke-214/connect-four) — 一个简单的连接四个实现.
-- [doukutsu-rs](https://github.com/doukutsu-rs/doukutsu-rs) — 对 Cave Story 引擎的 Rust 重新实现，并进行了一些增强.
-- [rsaarelm/magog](https://github.com/rsaarelm/magog) — Rust 中的 roguelike 游戏
-- [schulke-214/rsnake](https://github.com/schulke-214/rsnake) — 用 Rust 编写的 Snake.
-- [soydos](https://github.com/soydos/pusoy_dos2) — Pusoy Dos 的 wasm 实现
-- [cristicbz/rust-doom](https://github.com/cristicbz/rust-doom) — Doom 的渲染器，可能会发展成为一款可玩的游戏 
-- [Thinkofname/rust-quake](https://github.com/Thinkofname/rust-quake) — Rust 中的地震地图渲染器
-- [rhex](https://github.com/dpc/rhex) — 六边形 ascii roguelike
-- [garkimasera/rusted-ruins](https://github.com/garkimasera/rusted-ruins) - 具有像素艺术的可扩展开放世界流氓游戏
-- [Veloren](https://gitlab.com/veloren/veloren) — 一个开放世界、开源的多人体素 RPG 游戏，目前处于 alpha 开发阶段
-- [swatteau/sokoban-rs](https://github.com/swatteau/sokoban-rs) — 推箱子实现
-- [aleshaleksey/TGWM](https://github.com/aleshaleksey/TGWM) — 具有回合制机制的 RPG（正在进行中）
-- [ozkriff/zemeroth](https://github.com/ozkriff/zemeroth) — 一款小型 2D 回合制六角策略游戏
-- [Zone of Control](https://github.com/ozkriff/zoc) — 回合制六角策略游戏 
-- [phantomion/snake_game](https://github.com/phantomion/snake_game) - 用 Rust 编写的简单终端蛇游戏.
+- [lifthrasiir/angolmois-rust](https://github.com/lifthrasiir/angolmois-rust) — 一款支持 BMS 格式的極簡音樂視頻遊戲
+- [citybound](https://github.com/citybound/citybound) - 你應得的城市模擬
+- [schulke-214/connect-four](https://github.com/schulke-214/connect-four) — 一個簡單的連接四個實現.
+- [doukutsu-rs](https://github.com/doukutsu-rs/doukutsu-rs) — 對 Cave Story 引擎的 Rust 重新實現，並進行了一些增強.
+- [rsaarelm/magog](https://github.com/rsaarelm/magog) — Rust 中的 roguelike 遊戲
+- [schulke-214/rsnake](https://github.com/schulke-214/rsnake) — 用 Rust 編寫的 Snake.
+- [soydos](https://github.com/soydos/pusoy_dos2) — Pusoy Dos 的 wasm 實現
+- [cristicbz/rust-doom](https://github.com/cristicbz/rust-doom) — Doom 的渲染器，可能會發展成為一款可玩的遊戲 
+- [Thinkofname/rust-quake](https://github.com/Thinkofname/rust-quake) — Rust 中的地震地圖渲染器
+- [rhex](https://github.com/dpc/rhex) — 六邊形 ascii roguelike
+- [garkimasera/rusted-ruins](https://github.com/garkimasera/rusted-ruins) - 具有像素藝術的可擴展開放世界流氓遊戲
+- [Veloren](https://gitlab.com/veloren/veloren) — 一個開放世界、開源的多人體素 RPG 遊戲，目前處於 alpha 開發階段
+- [swatteau/sokoban-rs](https://github.com/swatteau/sokoban-rs) — 推箱子實現
+- [aleshaleksey/TGWM](https://github.com/aleshaleksey/TGWM) — 具有回合制機制的 RPG（正在進行中）
+- [ozkriff/zemeroth](https://github.com/ozkriff/zemeroth) — 一款小型 2D 回合制六角策略遊戲
+- [Zone of Control](https://github.com/ozkriff/zoc) — 回合制六角策略遊戲 
+- [phantomion/snake_game](https://github.com/phantomion/snake_game) - 用 Rust 編寫的簡單終端蛇遊戲.
 
-### 图形处理
+### 圖形處理
 
-- [Limeth/euclider](https://github.com/Limeth/euclider) — 实时 4D CPU 光线追踪器
-- [RazrFalcon/resvg](https://github.com/RazrFalcon/resvg) — 一个 SVG 渲染库.
-- [ivanceras/svgbob](https://github.com/ivanceras/svgbob) — 将 ASCII 图转换为 SVG 图形 
-- [RazrFalcon/svgcleaner](https://github.com/RazrFalcon/svgcleaner) — 整理 SVG 图形
-- [Twinklebear/tray_rust](https://github.com/Twinklebear/tray_rust) — 光线追踪器
-- [turnage/valora](https://crates.io/crates/valora) — 生成美术图书馆 
-- [mikigraf/Image-Processing-CLI-in-Rust](https://github.com/mikigraf/Image-Processing-CLI-in-Rust) — 用于处理图像、生成直方图的 CLI. 
+- [Limeth/euclider](https://github.com/Limeth/euclider) — 實時 4D CPU 光線追蹤器
+- [RazrFalcon/resvg](https://github.com/RazrFalcon/resvg) — 一個 SVG 渲染庫.
+- [ivanceras/svgbob](https://github.com/ivanceras/svgbob) — 將 ASCII 圖轉換為 SVG 圖形 
+- [RazrFalcon/svgcleaner](https://github.com/RazrFalcon/svgcleaner) — 整理 SVG 圖形
+- [Twinklebear/tray_rust](https://github.com/Twinklebear/tray_rust) — 光線追蹤器
+- [turnage/valora](https://crates.io/crates/valora) — 生成美術圖書館 
+- [mikigraf/Image-Processing-CLI-in-Rust](https://github.com/mikigraf/Image-Processing-CLI-in-Rust) — 用於處理圖像、生成直方圖的 CLI. 
 
-### 工业自动化
+### 工業自動化
 
-- [locka99/opcua](https://github.com/locka99/opcua) —  [OPC UA](https://opcfoundation.org/about/opc-technologies/opc-ua/) 图书馆.
-- [slowtec/tokio-modbus](https://github.com/slowtec/tokio-modbus) - 一种 [tokio](https://tokio.rs/)-based [modbus](https://modbus.org/) 图书馆. 
-- [BiancoRoyal/modbus-iiot-rust](https://github.com/BiancoRoyal/modbus-iiot-rust) — 纯锈 [modbus](https://modbus.org/) 没有或更少依赖的库.
+- [locka99/opcua](https://github.com/locka99/opcua) —  [OPC UA](https://opcfoundation.org/about/opc-technologies/opc-ua/) 圖書館.
+- [slowtec/tokio-modbus](https://github.com/slowtec/tokio-modbus) - 一種 [tokio](https://tokio.rs/)-based [modbus](https://modbus.org/) 圖書館. 
+- [BiancoRoyal/modbus-iiot-rust](https://github.com/BiancoRoyal/modbus-iiot-rust) — 純鏽 [modbus](https://modbus.org/) 沒有或更少依賴的庫.
   
-### 可观察性工具
+### 可觀察性工具
 
-- [timberio/vector](https://github.com/timberio/vector) — 高性能、日志、指标和事件路由器.
-- [Mnwa/gtsa](https://github.com/Mnwa/gtsa) — 将 gelf 消息（Graylog 的消息）代理到 Sentry 的简单解决方案
-- [OpenTelemetry](https://crates.io/crates/opentelemetry) — OpenTelemetry 提供一组 API、库、代理和收集器服务，以从您的应用程序中捕获分布式跟踪和指标. 您可以使用 Prometheus、Jaeger 和其他可观察性工具分析它们.
+- [timberio/vector](https://github.com/timberio/vector) — 高性能、日誌、指標和事件路由器.
+- [Mnwa/gtsa](https://github.com/Mnwa/gtsa) — 將 gelf 消息（Graylog 的消息）代理到 Sentry 的簡單解決方案
+- [OpenTelemetry](https://crates.io/crates/opentelemetry) — OpenTelemetry 提供一組 API、庫、代理和收集器服務，以從您的應用程序中捕獲分佈式跟蹤和指標. 您可以使用 Prometheus、Jaeger 和其他可觀察性工具分析它們.
 
-### 操作系统
+### 操作系統
 
-- [nebulet/nebulet](https://github.com/nebulet/nebulet) — 实现在 Ring 0 中运行的 WebAssembly“用户模式” 的微内核.
+- [nebulet/nebulet](https://github.com/nebulet/nebulet) — 實現在 Ring 0 中運行的 WebAssembly“用戶模式” 的微內核.
 - [redox-os/redox](https://gitlab.redox-os.org/redox-os/redox) 
 - [thepowersgang/rust_os](https://github.com/thepowersgang/rust_os)
-- [tock/tock](https://github.com/tock/tock) — 适用于基于 Cortex-M 的微控制器的安全嵌入式操作系统
+- [tock/tock](https://github.com/tock/tock) — 適用於基於 Cortex-M 的微控制器的安全嵌入式操作系統
 
-### 生产能力
+### 生產能力
 
-- [espanso](https://github.com/federico-terzi/espanso) — 一个用 Rust 编写的跨平台文本扩展器 [eureka](https://crates.io/crates/eureka) — 无需离开终端即可输入和存储您的想法的 CLI 工具
-- [pier-cli/pier](https://github.com/pier-cli/pier) — 用于管理（添加、搜索元数据等）所有单行程序、脚本、工具和 CLI 的中央存储库
-- [subilo](https://github.com/Bansco/subilo) - 持续部署代理
+- [espanso](https://github.com/federico-terzi/espanso) — 一個用 Rust 編寫的跨平臺文本擴展器 [eureka](https://crates.io/crates/eureka) — 無需離開終端即可輸入和存儲您的想法的 CLI 工具
+- [pier-cli/pier](https://github.com/pier-cli/pier) — 用於管理（添加、搜索元數據等）所有單行程序、腳本、工具和 CLI 的中央存儲庫
+- [subilo](https://github.com/Bansco/subilo) - 持續部署代理
 
 ### 安全工具
 
-- [kpcyrd/authoscope](https://github.com/kpcyrd/authoscope) — 一个可编写脚本的网络认证破解器
-- [lethe](https://github.com/kostassoid/lethe) — 安全的跨平台驱动器擦除实用程序 
-- [arvancloud/libinjection-rs](https://github.com/arvancloud/libinjection-rs) — Rust 绑定 [libinjection](https://github.com/client9/libinjection)
-- [ripasso](https://github.com/cortex/ripasso/) — 密码管理器，与 pass 兼容的文件系统
-- [kpcyrd/rshijack](https://github.com/kpcyrd/rshijack) — 一个 TCP 连接劫持者，对 shijack 进行 Rust 重写 
-- [rustscan/rustscan](https://github.com/RustScan/RustScan) — 使用此端口扫描工具使 Nmap 更快
-- [kpcyrd/sniffglue](https://github.com/kpcyrd/sniffglue) — 一个安全的多线程数据包嗅探器
-- [kpcyrd/sn0int](https://github.com/kpcyrd/sn0int) — 半自动 OSINT 框架和包管理器   
+- [kpcyrd/authoscope](https://github.com/kpcyrd/authoscope) — 一個可編寫腳本的網絡認證破解器
+- [lethe](https://github.com/kostassoid/lethe) — 安全的跨平臺驅動器擦除實用程序 
+- [arvancloud/libinjection-rs](https://github.com/arvancloud/libinjection-rs) — Rust 綁定 [libinjection](https://github.com/client9/libinjection)
+- [ripasso](https://github.com/cortex/ripasso/) — 密碼管理器，與 pass 兼容的文件系統
+- [kpcyrd/rshijack](https://github.com/kpcyrd/rshijack) — 一個 TCP 連接劫持者，對 shijack 進行 Rust 重寫 
+- [rustscan/rustscan](https://github.com/RustScan/RustScan) — 使用此端口掃描工具使 Nmap 更快
+- [kpcyrd/sniffglue](https://github.com/kpcyrd/sniffglue) — 一個安全的多線程數據包嗅探器
+- [kpcyrd/sn0int](https://github.com/kpcyrd/sn0int) — 半自動 OSINT 框架和包管理器   
 
-### 系统工具
+### 系統工具
 
-- [ajeetdsouza/zoxide](https://github.com/ajeetdsouza/zoxide/) — 一种快速替代 `cd` 的方法，可以学习你的习惯
-- [bandwhich](https://github.com/imsnif/bandwhich) — 终端带宽利用工具
-- [brocode/fblog](https://github.com/brocode/fblog) — 小型命令行 JSON 日志查看器 
-- [buster/rrun](https://github.com/buster/rrun) — Linux 的命令启动器，类似于 gmrun
-- [cristianoliveira/funzzy](https://github.com/cristianoliveira/funzzy) — 受启发的可配置文件系统观察器 [entr](http://eradman.com/entrproject/) 
-- [dalance/procs](https://github.com/dalance/procs) — Rust 编写的 “ps” 的现代替代品
-- [diskonaut](https://github.com/imsnif/diskonaut) — 终端可视化磁盘空间导航器
-- [dust](https://github.com/bootandy/dust) — 更直观的 du 版本
-- [ddh](https://github.com/darakian/ddh) — 快速重复文件查找器
-- [fselect](https://crates.io/crates/fselect) — 使用类似 SQL 的查询查找文件 
-- [gitui](https://github.com/extrawurst/gitui) - 用 Rust 编写的 git 快速终端客户端.
-- [k0pernicus/zou](https://github.com/k0pernicus/zou) — 下载加速器
-- [Kondo](https://github.com/tbillington/kondo) - 用于删除软件项目工件和回收磁盘空间的 CLI 和 GUI 工具
+- [ajeetdsouza/zoxide](https://github.com/ajeetdsouza/zoxide/) — 一種快速替代 `cd` 的方法，可以學習你的習慣
+- [bandwhich](https://github.com/imsnif/bandwhich) — 終端帶寬利用工具
+- [brocode/fblog](https://github.com/brocode/fblog) — 小型命令行 JSON 日誌查看器 
+- [buster/rrun](https://github.com/buster/rrun) — Linux 的命令啟動器，類似於 gmrun
+- [cristianoliveira/funzzy](https://github.com/cristianoliveira/funzzy) — 受啟發的可配置文件系統觀察器 [entr](http://eradman.com/entrproject/) 
+- [dalance/procs](https://github.com/dalance/procs) — Rust 編寫的 “ps” 的現代替代品
+- [diskonaut](https://github.com/imsnif/diskonaut) — 終端可視化磁盤空間導航器
+- [dust](https://github.com/bootandy/dust) — 更直觀的 du 版本
+- [ddh](https://github.com/darakian/ddh) — 快速重複文件查找器
+- [fselect](https://crates.io/crates/fselect) — 使用類似 SQL 的查詢查找文件 
+- [gitui](https://github.com/extrawurst/gitui) - 用 Rust 編寫的 git 快速終端客戶端.
+- [k0pernicus/zou](https://github.com/k0pernicus/zou) — 下載加速器
+- [Kondo](https://github.com/tbillington/kondo) - 用於刪除軟件項目工件和回收磁盤空間的 CLI 和 GUI 工具
 - [lotabout/rargs](https://github.com/lotabout/rargs) [[rargs](https://crates.io/crates/rargs)] — 支持模式匹配的 xargs + awk
-- [lotabout/skim](https://github.com/lotabout/skim) — 纯锈的模糊取景器
-- [mitnk/cicada](https://github.com/mitnk/cicada) — 一个类似 bash 的 Unix shell
-- [mmstick/concurr](https://github.com/mmstick/concurr) — 带有客户端 - 服务器架构的 GNU Parallel 的替代方案
-- [mmstick/fontfinder](https://github.com/mmstick/fontfinder) — 用于预览和安装 Google 字体的 GTK3 应用程序
-- [mmstick/parallel](https://github.com/mmstick/parallel) — 重新实现 GNU Parallel
-- [mmstick/tv-renamer](https://github.com/mmstick/tv-renamer) — 带有可选 GTK3 前端的电视剧重命名应用程序. 
-- [nushell/nushell](https://github.com/nushell/nushell) — 一个新型Shell. 
-- [organize-rt](https://gitlab.com/FixFromDarkness/organize-rt) — 根据正则表达式规则组织文件（默认为文件扩展名）.
-- [orhun/kmon](https://github.com/orhun/kmon) — Linux 内核管理器和活动监视器 
-- [Peltoche/lsd](https://github.com/Peltoche/lsd) — 一个 ls 有很多漂亮的颜色和很棒的图标 
+- [lotabout/skim](https://github.com/lotabout/skim) — 純鏽的模糊取景器
+- [mitnk/cicada](https://github.com/mitnk/cicada) — 一個類似 bash 的 Unix shell
+- [mmstick/concurr](https://github.com/mmstick/concurr) — 帶有客戶端 - 服務器架構的 GNU Parallel 的替代方案
+- [mmstick/fontfinder](https://github.com/mmstick/fontfinder) — 用於預覽和安裝 Google 字體的 GTK3 應用程序
+- [mmstick/parallel](https://github.com/mmstick/parallel) — 重新實現 GNU Parallel
+- [mmstick/tv-renamer](https://github.com/mmstick/tv-renamer) — 帶有可選 GTK3 前端的電視劇重命名應用程序. 
+- [nushell/nushell](https://github.com/nushell/nushell) — 一個新型Shell. 
+- [organize-rt](https://gitlab.com/FixFromDarkness/organize-rt) — 根據正則表達式規則組織文件（默認為文件擴展名）.
+- [orhun/kmon](https://github.com/orhun/kmon) — Linux 內核管理器和活動監視器 
+- [Peltoche/lsd](https://github.com/Peltoche/lsd) — 一個 ls 有很多漂亮的顏色和很棒的圖標 
 - [ogham/exa](https://github.com/ogham/exa) — 'ls' 的替代品 
-- [pop-os/debrep](https://github.com/pop-os/debrepbuild) — 用于构建和管理 APT 存储库的 APT 存储库工具
-- [pop-os/popsicle](https://github.com/pop-os/popsicle) — GTK3 和 CLI 实用程序，用于并行刷新多个 USB 设备
-- [pueue](https://github.com/nukesor/pueue) — 管理您长时间运行的 shell 命令.
-- [Luminarys/synapse](https://github.com/Luminarys/synapse) — 灵活且快速的 BitTorrent 守护进程. 
-- [pop-os/system76-power](https://github.com/pop-os/system76-power/) — 带有 CLI 工具的 Linux 电源管理守护进程（DBus 接口）.
-- [mxseev/logram](https://github.com/mxseev/logram) — 将日志文件的更新推送到 Telegram
-- [redox-os/ion](https://github.com/redox-os/ion) — 下一代系统外壳 
-- [jamesbirtles/hotkey-rs](https://github.com/jamesbirtles/hotkey-rs) — 在 Rust 中收听全局热键的库
-- [nivekuil/rip](https://github.com/nivekuil/rip) - 一种安全且符合人体工程学的替代`rm` 
-- [sharkdp/bat](https://github.com/sharkdp/bat) — 有翅膀的 cat(1) 克隆体. 
-- [sharkdp/fd](https://github.com/sharkdp/fd) — 一种简单、快速且用户友好的查找替代方案.
-- [sitkevij/hex](https://github.com/sitkevij/hex) — 彩色的 hexdump 终端实用程序.
-- [slai11/goto](https://github.com/slai11/goto) — 跳转到索引目录的简单且用户友好的方式.
-- [m4b/bingrep](https://github.com/m4b/bingrep) — 通过来自各种操作系统和体系结构的二进制文件进行 Greps，并为它们着色. 
-- [uutils/coreutils](https://github.com/uutils/coreutils) — GNU coreutils 的跨平台 Rust 重写
-- [watchexec](https://github.com/watchexec/watchexec) — 执行命令以响应文件修改 
-- [XAMPPRocky/tokei](https://github.com/XAMPPRocky/tokei) — 计算代码行数 
-- [yake](https://crates.io/crates/yake) — Yake 是一个基于 yaml 文件的任务运行器
-- [ytop](https://github.com/cjbassi/ytop) - 一个用 Rust 编写的 TUI 系统监视器 
-- [cocom](https://github.com/LamdaLamdaLamda/cocom) - 纯粹用 Rust 编写的 NTP 客户端. 
+- [pop-os/debrep](https://github.com/pop-os/debrepbuild) — 用於構建和管理 APT 存儲庫的 APT 存儲庫工具
+- [pop-os/popsicle](https://github.com/pop-os/popsicle) — GTK3 和 CLI 實用程序，用於並行刷新多個 USB 設備
+- [pueue](https://github.com/nukesor/pueue) — 管理您長時間運行的 shell 命令.
+- [Luminarys/synapse](https://github.com/Luminarys/synapse) — 靈活且快速的 BitTorrent 守護進程. 
+- [pop-os/system76-power](https://github.com/pop-os/system76-power/) — 帶有 CLI 工具的 Linux 電源管理守護進程（DBus 接口）.
+- [mxseev/logram](https://github.com/mxseev/logram) — 將日誌文件的更新推送到 Telegram
+- [redox-os/ion](https://github.com/redox-os/ion) — 下一代系統外殼 
+- [jamesbirtles/hotkey-rs](https://github.com/jamesbirtles/hotkey-rs) — 在 Rust 中收聽全局熱鍵的庫
+- [nivekuil/rip](https://github.com/nivekuil/rip) - 一種安全且符合人體工程學的替代`rm` 
+- [sharkdp/bat](https://github.com/sharkdp/bat) — 有翅膀的 cat(1) 克隆體. 
+- [sharkdp/fd](https://github.com/sharkdp/fd) — 一種簡單、快速且用戶友好的查找替代方案.
+- [sitkevij/hex](https://github.com/sitkevij/hex) — 彩色的 hexdump 終端實用程序.
+- [slai11/goto](https://github.com/slai11/goto) — 跳轉到索引目錄的簡單且用戶友好的方式.
+- [m4b/bingrep](https://github.com/m4b/bingrep) — 通過來自各種操作系統和體系結構的二進制文件進行 Greps，併為它們著色. 
+- [uutils/coreutils](https://github.com/uutils/coreutils) — GNU coreutils 的跨平臺 Rust 重寫
+- [watchexec](https://github.com/watchexec/watchexec) — 執行命令以響應文件修改 
+- [XAMPPRocky/tokei](https://github.com/XAMPPRocky/tokei) — 計算代碼行數 
+- [yake](https://crates.io/crates/yake) — Yake 是一個基於 yaml 文件的任務運行器
+- [ytop](https://github.com/cjbassi/ytop) - 一個用 Rust 編寫的 TUI 系統監視器 
+- [cocom](https://github.com/LamdaLamdaLamda/cocom) - 純粹用 Rust 編寫的 NTP 客戶端. 
 
-### 文字编辑器
+### 文字編輯器
 
-- [amp](https://amp.rs/) — 受 Vi/Vim 的启发. 
-- [gchp/iota](https://github.com/gchp/iota) — 一个简单的文本编辑器
-- [ilai-deutel/kibi](https://github.com/ilai-deutel/kibi) — 具有语法高亮、增量搜索等功能的小型 (≤1024 LOC) 文本编辑器.
-- [vamolessa/pepper](https://github.com/vamolessa/pepper) [[pepper](https://crates.io/crates/pepper)] — 一个自以为是的模式编辑器，可简化从终端进行的代码编辑
-- [mathall/rim](https://github.com/mathall/rim) — 用 Rust 编写的类似 Vim 的文本编辑器
-- [ox](https://github.com/curlpipe/ox) — 在终端中运行的独立 Rust 文本编辑器！
-- [Remacs](https://github.com/remacs/remacs) — 社区驱动的 Emacs 到 Rust 的移植.
-- [xi-editor](https://github.com/xi-editor/xi-editor) — 一个现代编辑器，后端是用 Rust 编写的.
-- [xray](https://github.com/atom-archive/xray) — 实验性的下一代基于电子的文本编辑器. 
+- [amp](https://amp.rs/) — 受 Vi/Vim 的啟發. 
+- [gchp/iota](https://github.com/gchp/iota) — 一個簡單的文本編輯器
+- [ilai-deutel/kibi](https://github.com/ilai-deutel/kibi) — 具有語法高亮、增量搜索等功能的小型 (≤1024 LOC) 文本編輯器.
+- [vamolessa/pepper](https://github.com/vamolessa/pepper) [[pepper](https://crates.io/crates/pepper)] — 一個自以為是的模式編輯器，可簡化從終端進行的代碼編輯
+- [mathall/rim](https://github.com/mathall/rim) — 用 Rust 編寫的類似 Vim 的文本編輯器
+- [ox](https://github.com/curlpipe/ox) — 在終端中運行的獨立 Rust 文本編輯器！
+- [Remacs](https://github.com/remacs/remacs) — 社區驅動的 Emacs 到 Rust 的移植.
+- [xi-editor](https://github.com/xi-editor/xi-editor) — 一個現代編輯器，後端是用 Rust 編寫的.
+- [xray](https://github.com/atom-archive/xray) — 實驗性的下一代基於電子的文本編輯器. 
 
-### 文本处理
+### 文本處理
 
-- [cpc](https://github.com/probablykasper/cpc) - 解析和计算数学字符串，支持单位和单位转换，从 “1+2” 到“1% 的回合（1 光年 / 14!s 到公里 / 小时）”.
-- [grex](https://github.com/pemistahl/grex) — 用于从用户提供的测试用例生成正则表达式的命令行工具和库
-- [dmerejkowsky/ruplacer](https://github.com/dmerejkowsky/ruplacer) — 在源文件中查找和替换文本
-- [ripgrep](https://crates.io/crates/ripgrep) — 结合了 Silver Searcher 的可用性和 grep 的原始速度
-- [phiresky/ripgrep-all](https://github.com/phiresky/ripgrep-all) — ripgrep，还可以搜索 PDF、电子书、Office 文档、zip、tar.gz 等.
-- [replicadse/complate](https://github.com/replicadse/complate) — 一种终端内文本模板工具，用于标准化消息（如 GIT 提交）. 
-- [sd](https://crates.io/crates/sd) — 直观的查找和替换 CLI
-- [lavifb/todo_r](https://github.com/lavifb/todo_r) — 用一个命令查找所有 TODO 笔记！ 
-- [whitfin/runiq](https://github.com/whitfin/runiq) — 从未排序的输入中过滤重复行的有效方法.
-- [whitfin/bytelines](https://github.com/whitfin/bytelines) — 将输入行读取为字节片以提高效率.
-- [vishaltelangre/ff](https://github.com/vishaltelangre/ff) — 按名称查找文件 (ff)！ 
-- [xsv](https://crates.io/crates/xsv) — 一个快速的 CSV 命令行工具（切片、索引、选择、搜索、采样等）
-- [Lisprez/so_stupid_search](https://github.com/Lisprez/so_stupid_search) — 一个简单快速的人类字符串搜索工具
+- [cpc](https://github.com/probablykasper/cpc) - 解析和計算數學字符串，支持單位和單位轉換，從 “1+2” 到“1% 的回合（1 光年 / 14!s 到公里 / 小時）”.
+- [grex](https://github.com/pemistahl/grex) — 用於從用戶提供的測試用例生成正則表達式的命令行工具和庫
+- [dmerejkowsky/ruplacer](https://github.com/dmerejkowsky/ruplacer) — 在源文件中查找和替換文本
+- [ripgrep](https://crates.io/crates/ripgrep) — 結合了 Silver Searcher 的可用性和 grep 的原始速度
+- [phiresky/ripgrep-all](https://github.com/phiresky/ripgrep-all) — ripgrep，還可以搜索 PDF、電子書、Office 文檔、zip、tar.gz 等.
+- [replicadse/complate](https://github.com/replicadse/complate) — 一種終端內文本模板工具，用於標準化消息（如 GIT 提交）. 
+- [sd](https://crates.io/crates/sd) — 直觀的查找和替換 CLI
+- [lavifb/todo_r](https://github.com/lavifb/todo_r) — 用一個命令查找所有 TODO 筆記！ 
+- [whitfin/runiq](https://github.com/whitfin/runiq) — 從未排序的輸入中過濾重複行的有效方法.
+- [whitfin/bytelines](https://github.com/whitfin/bytelines) — 將輸入行讀取為字節片以提高效率.
+- [vishaltelangre/ff](https://github.com/vishaltelangre/ff) — 按名稱查找文件 (ff)！ 
+- [xsv](https://crates.io/crates/xsv) — 一個快速的 CSV 命令行工具（切片、索引、選擇、搜索、採樣等）
+- [Lisprez/so_stupid_search](https://github.com/Lisprez/so_stupid_search) — 一個簡單快速的人類字符串搜索工具
 
-### 图像处理
+### 圖像處理
 
-- [Imager](https://github.com/imager-io/imager) — 自动图像优化.
+- [Imager](https://github.com/imager-io/imager) — 自動圖像優化.
 
-### 实用工具
+### 實用工具
 
-- [aleshaleksey/AZDice](https://github.com/aleshaleksey/AZDice) — 桌面家庭酿酒商的骰子成功分发生成器. 
-- [yaa110/cb](https://github.com/yaa110/cb) — 管理剪贴板的命令行界面 
-- [brycx/checkpwn](https://github.com/brycx/checkpwn) — 一个 Have I Being Pwned (HIBP) 命令行实用工具，可让您轻松检查被盗用的帐户和密码.
-- [vamolessa/copycat](https://github.com/vamolessa/copycat) [[copycat](https://crates.io/crates/copycat)] — 一个简单的剪贴板 cli 界面，适用于具有文本和 bmp 支持的窗口
-- [evansmurithi/cloak](https://github.com/evansmurithi/cloak) — 命令行 OTP（一次性密码）身份验证器应用程序. 
-- [replydev/cotp](https://github.com/replydev/cotp) - 与外部备份兼容的值得信赖的加密一次性密码验证器应用程序. 
-- [rustdesk/rustdesk](https://github.com/rustdesk/rustdesk) - 远程桌面应用程序. 
-- [arthrp/consoletimer](https://github.com/arthrp/consoleTimer) — 终端的简单计时器.
-- [tversteeg/emplace](https://github.com/tversteeg/emplace) — 在多台机器上同步已安装的包
-- [unrelentingtech/freepass](https://github.com/unrelentingtech/freepass) — 高级用户的免费密码管理器.
-- [yoannfleurydev/gitweb](https://github.com/yoannfleurydev/gitweb) — 在浏览器中打开当前远程存储库.
-- [mme](https://github.com/GoberInfinity/mme) — 命令行工具来记住您有时忘记的命令. 
-- [raftario/licensor](https://github.com/raftario/licensor) — 将许可证写入标准输出
-- [arthrp/quick-skeleton](https://github.com/arthrp/quick-skeleton) — 项目脚手架工具，类似于 Yeoman 和 Slush. 
-- [repoch](https://github.com/lucawen/repoch) — 将纪元转换为日期时间，将日期时间转换为纪元 
-- [whitfin/s3-concat](https://github.com/whitfin/s3-concat) — 使用灵活模式远程连接 Amazon S3 文件的命令行工具.
-- [whitfin/s3-meta](https://github.com/whitfin/s3-meta) — 用于收集有关 Amazon S3 存储桶的元数据的命令行工具.
-- [whitfin/s3-utils](https://github.com/whitfin/s3-utils) — 一个包含基于 Amazon S3 的实用程序的小工具，可提供额外的便利 API.
-- [gorros/s3-edit-rs](https://github.com/gorros/s3-edit-rs) — 直接在 Amazon S3 上编辑文件的命令行工具.
-- [fcsonline/tmux-thumbs](https://github.com/fcsonline/tmux-thumbs) — 用 Rust 编写的 tmux-finger 的闪电般快速版本，像 vimium/vimperator 一样复制 / 粘贴 tmux.
-- [amar-laksh/workstation](https://github.com/amar-laksh/workstation) — 一个命令行工具，可帮助您管理工作站，让您远离屏幕、在您不在时锁定屏幕以及使用 OPENCV 进行其他操作！
-- [guoxbin/dtool](https://github.com/guoxbin/dtool) — 一个有用的命令行工具集合，用于协助开发，包括转换、编解码器、散列、加密等.
-- [nomino](https://github.com/yaa110/nomino) — 开发人员批量重命名实用程序 
-- [barberousse](https://github.com/zeapo/barberousse) — AWS Secrets Manager 编辑器 
-- [vamolessa/verco](https://github.com/vamolessa/verco) [[verco](https://crates.io/crates/verco)] — 一个简单的 Git/Hg tui 客户端，专注于键盘快捷键
+- [aleshaleksey/AZDice](https://github.com/aleshaleksey/AZDice) — 桌面家庭釀酒商的骰子成功分發生成器. 
+- [yaa110/cb](https://github.com/yaa110/cb) — 管理剪貼板的命令行界面 
+- [brycx/checkpwn](https://github.com/brycx/checkpwn) — 一個 Have I Being Pwned (HIBP) 命令行實用工具，可讓您輕鬆檢查被盜用的帳戶和密碼.
+- [vamolessa/copycat](https://github.com/vamolessa/copycat) [[copycat](https://crates.io/crates/copycat)] — 一個簡單的剪貼板 cli 界面，適用於具有文本和 bmp 支持的窗口
+- [evansmurithi/cloak](https://github.com/evansmurithi/cloak) — 命令行 OTP（一次性密碼）身份驗證器應用程序. 
+- [replydev/cotp](https://github.com/replydev/cotp) - 與外部備份兼容的值得信賴的加密一次性密碼驗證器應用程序. 
+- [rustdesk/rustdesk](https://github.com/rustdesk/rustdesk) - 遠程桌面應用程序. 
+- [arthrp/consoletimer](https://github.com/arthrp/consoleTimer) — 終端的簡單計時器.
+- [tversteeg/emplace](https://github.com/tversteeg/emplace) — 在多臺機器上同步已安裝的包
+- [unrelentingtech/freepass](https://github.com/unrelentingtech/freepass) — 高級用戶的免費密碼管理器.
+- [yoannfleurydev/gitweb](https://github.com/yoannfleurydev/gitweb) — 在瀏覽器中打開當前遠程存儲庫.
+- [mme](https://github.com/GoberInfinity/mme) — 命令行工具來記住您有時忘記的命令. 
+- [raftario/licensor](https://github.com/raftario/licensor) — 將許可證寫入標準輸出
+- [arthrp/quick-skeleton](https://github.com/arthrp/quick-skeleton) — 項目腳手架工具，類似於 Yeoman 和 Slush. 
+- [repoch](https://github.com/lucawen/repoch) — 將紀元轉換為日期時間，將日期時間轉換為紀元 
+- [whitfin/s3-concat](https://github.com/whitfin/s3-concat) — 使用靈活模式遠程連接 Amazon S3 文件的命令行工具.
+- [whitfin/s3-meta](https://github.com/whitfin/s3-meta) — 用於收集有關 Amazon S3 存儲桶的元數據的命令行工具.
+- [whitfin/s3-utils](https://github.com/whitfin/s3-utils) — 一個包含基於 Amazon S3 的實用程序的小工具，可提供額外的便利 API.
+- [gorros/s3-edit-rs](https://github.com/gorros/s3-edit-rs) — 直接在 Amazon S3 上編輯文件的命令行工具.
+- [fcsonline/tmux-thumbs](https://github.com/fcsonline/tmux-thumbs) — 用 Rust 編寫的 tmux-finger 的閃電般快速版本，像 vimium/vimperator 一樣複製 / 粘貼 tmux.
+- [amar-laksh/workstation](https://github.com/amar-laksh/workstation) — 一個命令行工具，可幫助您管理工作站，讓您遠離屏幕、在您不在時鎖定屏幕以及使用 OPENCV 進行其他操作！
+- [guoxbin/dtool](https://github.com/guoxbin/dtool) — 一個有用的命令行工具集合，用於協助開發，包括轉換、編解碼器、散列、加密等.
+- [nomino](https://github.com/yaa110/nomino) — 開發人員批量重命名實用程序 
+- [barberousse](https://github.com/zeapo/barberousse) — AWS Secrets Manager 編輯器 
+- [vamolessa/verco](https://github.com/vamolessa/verco) [[verco](https://crates.io/crates/verco)] — 一個簡單的 Git/Hg tui 客戶端，專注於鍵盤快捷鍵
   
-### 视频
+### 視頻
 
-- [Phate6660/rsmpv](https://github.com/Phate6660/rsmpv) — MPV 控制器，需要在 MPV 中启用 IPC.
-- [tgotwig/vidmerger](https://github.com/tgotwig/vidmerger) — ffmpeg 的包装器，可简化多个视频的合并
-- [xiph/rav1e](https://github.com/xiph/rav1e) — 最快、最安全的 AV1 编码器.
-- [yuvadm/slingr](https://github.com/yuvadm/slingr) — 一个简单的 CLI，用于通过本地网络将媒体文件流式传输到 UPnP 媒体渲染器
-- [yuvadm/streamlib](https://github.com/streamlib/streamlib) — 从命令行播放您最喜欢的实时视频和音频流
+- [Phate6660/rsmpv](https://github.com/Phate6660/rsmpv) — MPV 控制器，需要在 MPV 中啟用 IPC.
+- [tgotwig/vidmerger](https://github.com/tgotwig/vidmerger) — ffmpeg 的包裝器，可簡化多個視頻的合併
+- [xiph/rav1e](https://github.com/xiph/rav1e) — 最快、最安全的 AV1 編碼器.
+- [yuvadm/slingr](https://github.com/yuvadm/slingr) — 一個簡單的 CLI，用於通過本地網絡將媒體文件流式傳輸到 UPnP 媒體渲染器
+- [yuvadm/streamlib](https://github.com/streamlib/streamlib) — 從命令行播放您最喜歡的實時視頻和音頻流
 
-### 虚拟化技术
+### 虛擬化技術
 
-- [firecracker-microvm/firecracker](https://github.com/firecracker-microvm/firecracker) — 用于容器工作负载的轻量级虚拟机 [Firecracker Microvm](https://firecracker-microvm.github.io/)
-- [oracle/railcar](https://github.com/oracle/railcar) — Rust 中类似 Docker 的容器 OCI 运行时实现
-- [tailhook/vagga](https://github.com/tailhook/vagga) — 一个没有守护进程的容器化工具
+- [firecracker-microvm/firecracker](https://github.com/firecracker-microvm/firecracker) — 用於容器工作負載的輕量級虛擬機 [Firecracker Microvm](https://firecracker-microvm.github.io/)
+- [oracle/railcar](https://github.com/oracle/railcar) — Rust 中類似 Docker 的容器 OCI 運行時實現
+- [tailhook/vagga](https://github.com/tailhook/vagga) — 一個沒有守護進程的容器化工具
 
 ### Web
 
-- [Plume-org/Plume](https://github.com/Plume-org/Plume) — ActivityPub 联合博客应用程序
-- [LemmyNet/lemmy](https://github.com/LemmyNet/lemmy) — 联邦宇宙的链接聚合器 / reddit 克隆
+- [Plume-org/Plume](https://github.com/Plume-org/Plume) — ActivityPub 聯合博客應用程序
+- [LemmyNet/lemmy](https://github.com/LemmyNet/lemmy) — 聯邦宇宙的鏈接聚合器 / reddit 克隆
 
 ### Web Servers
 
-- [mufeedvh/binserve](https://github.com/mufeedvh/binserve) — 极快的静态 Web 服务器，在单个二进制文件中具有路由、模板和安全性，您可以使用零代码进行设置 
-- [thecoshman/http](https://github.com/thecoshman/http) — 请托管这些东西 — 一个基本的 http 服务器，用于快速简单地托管文件夹 
-- [svenstaro/miniserve](https://github.com/svenstaro/miniserve) — 一个小型的、自包含的跨平台 CLI 工具，允许您只获取二进制文件并通过 HTTP 提供一些文件
-- [TheWaWaR/simple-http-server](https://github.com/TheWaWaR/simple-http-server) — 简单的静态 http 服务器
-- [wyhaya/see](https://github.com/wyhaya/see) — 静态 HTTP 文件服务器
-- [ronanyeah/rust-hasura](https://github.com/ronanyeah/rust-hasura) — Rust GraphQL 服务器如何用作远程模式的演示 [Hasura](https://hasura.io/) 
+- [mufeedvh/binserve](https://github.com/mufeedvh/binserve) — 極快的靜態 Web 服務器，在單個二進制文件中具有路由、模板和安全性，您可以使用零代碼進行設置 
+- [thecoshman/http](https://github.com/thecoshman/http) — 請託管這些東西 — 一個基本的 http 服務器，用於快速簡單地託管文件夾 
+- [svenstaro/miniserve](https://github.com/svenstaro/miniserve) — 一個小型的、自包含的跨平臺 CLI 工具，允許您只獲取二進制文件並通過 HTTP 提供一些文件
+- [TheWaWaR/simple-http-server](https://github.com/TheWaWaR/simple-http-server) — 簡單的靜態 http 服務器
+- [wyhaya/see](https://github.com/wyhaya/see) — 靜態 HTTP 文件服務器
+- [ronanyeah/rust-hasura](https://github.com/ronanyeah/rust-hasura) — Rust GraphQL 服務器如何用作遠程模式的演示 [Hasura](https://hasura.io/) 
   
-## 开发工具
+## 開發工具
   
 - [clippy](https://crates.io/crates/clippy)
-- [clog-tool/clog-cli](https://github.com/clog-tool/clog-cli) — 从 git 元数据生成变更日志 ([conventional changelog](https://blog.thoughtram.io/announcements/tools/2014/09/18/announcing-clog-a-conventional-changelog-generator-for-the-rest-of-us.html)) 
-- [dan-t/rusty-tags](https://github.com/dan-t/rusty-tags) — 为货物项目及其所有依赖项创建 ctags/etags 
-- [datanymizer/datanymizer](https://github.com/datanymizer/datanymizer) - 强大的数据库匿名器，具有灵活的规则
-- [delta](https://crates.io/crates/git-delta) — git 和 diff 输出的语法高亮器
-- [dotenv-linter](https://github.com/dotenv-linter/dotenv-linter) — 用于 `.env` 文件的 Linter[frewsxcv/crate-deps](https://github.com/frewsxcv/crate-deps) — 为 crates.io 上托管的 crate 生成依赖图的图像
-- [geiger](https://github.com/rust-secure-code/cargo-geiger) — 一个程序，列出与在 Rust crate 及其所有依赖项中使用不安全 Rust 代码相关的统计信息m/cargo-geiger/cargo-geiger/_build/latest?definitionId=1&branchName=master)
-- [git-journal](https://github.com/saschagrunert/git-journal/) — Git 提交消息和变更日志生成框架 
-- [gstats](https://github.com/boonshift/gstats/) — 用于打印当前目录下所有 git 存储库的开发人员方便摘要的命令行工具
-- [rust-lang/rustfix](https://github.com/rust-lang/rustfix) — 自动应用 rustc 提出的建议
-- [just](https://github.com/casey/just) — 用于特定项目任务的便捷命令运行器
-- [mask](https://github.com/jakedeichert/mask) — 由一个简单的 Markdown 文件定义的 CLI 任务运行器
-- [Module Linker](https://github.com/fiatjaf/module-linker) —在 GitHub 的 `mod`、`use` 和 `extern crate` 语句中添加 `<a>` 链接到引用的扩展.
-- [ptags](https://github.com/dalance/ptags) — git 存储库的并行通用 ctags 包装器 
-- [Racer](https://github.com/racer-rust/racer) — Rust 的代码完成 
-- [rustfmt](https://github.com/rust-lang/rustfmt) — Rust 代码格式化程序
-- [Rustup](https://github.com/rust-lang/rustup) — Rust 工具链安装程序 
-- [Rust Language Server](https://github.com/rust-lang/rls) — 在后台运行的服务器，为 IDE、编辑器和其他工具提供有关 Rust 程序的信息
-- [Rust Regex Playground](https://2fd.github.io/rust-regex-playground/#method=find&regex=\w%2B&text=abc) — 评估 Rust 正则表达式的 Web 工具
-- [Rust Search Extension](https://github.com/huhu/rust-search-extension) — 一个方便的浏览器扩展，用于在地址栏（多功能框）中搜索 crate 和文档. 
-- [artifact](https://github.com/vitiral/artifact) — 为开发人员制作的设计文档工具 
-- [semantic-rs](https://github.com/semantic-rs/semantic-rs) — 自动 crate 发布
-- [fw](https://github.com/brocode/fw) — 工作空间生产力助推器 
-- [tinyrick](https://github.com/mcandre/tinyrick) 一个基本的任务依赖工具，强调 Rust 功能而不是原始 shell 命令.
-- [scriptisto](https://github.com/igor-petruk/scriptisto) 一种与语言无关的 “shebang 解释器”，它使您能够用编译语言编写一个文件脚本.
+- [clog-tool/clog-cli](https://github.com/clog-tool/clog-cli) — 從 git 元數據生成變更日誌 ([conventional changelog](https://blog.thoughtram.io/announcements/tools/2014/09/18/announcing-clog-a-conventional-changelog-generator-for-the-rest-of-us.html)) 
+- [dan-t/rusty-tags](https://github.com/dan-t/rusty-tags) — 為貨物項目及其所有依賴項創建 ctags/etags 
+- [datanymizer/datanymizer](https://github.com/datanymizer/datanymizer) - 強大的數據庫匿名器，具有靈活的規則
+- [delta](https://crates.io/crates/git-delta) — git 和 diff 輸出的語法高亮器
+- [dotenv-linter](https://github.com/dotenv-linter/dotenv-linter) — 用於 `.env` 文件的 Linter[frewsxcv/crate-deps](https://github.com/frewsxcv/crate-deps) — 為 crates.io 上託管的 crate 生成依賴圖的圖像
+- [geiger](https://github.com/rust-secure-code/cargo-geiger) — 一個程序，列出與在 Rust crate 及其所有依賴項中使用不安全 Rust 代碼相關的統計信息m/cargo-geiger/cargo-geiger/_build/latest?definitionId=1&branchName=master)
+- [git-journal](https://github.com/saschagrunert/git-journal/) — Git 提交消息和變更日誌生成框架 
+- [gstats](https://github.com/boonshift/gstats/) — 用於打印當前目錄下所有 git 存儲庫的開發人員方便摘要的命令行工具
+- [rust-lang/rustfix](https://github.com/rust-lang/rustfix) — 自動應用 rustc 提出的建議
+- [just](https://github.com/casey/just) — 用於特定項目任務的便捷命令運行器
+- [mask](https://github.com/jakedeichert/mask) — 由一個簡單的 Markdown 文件定義的 CLI 任務運行器
+- [Module Linker](https://github.com/fiatjaf/module-linker) —在 GitHub 的 `mod`、`use` 和 `extern crate` 語句中添加 `<a>` 鏈接到引用的擴展.
+- [ptags](https://github.com/dalance/ptags) — git 存儲庫的並行通用 ctags 包裝器 
+- [Racer](https://github.com/racer-rust/racer) — Rust 的代碼完成 
+- [rustfmt](https://github.com/rust-lang/rustfmt) — Rust 代碼格式化程序
+- [Rustup](https://github.com/rust-lang/rustup) — Rust 工具鏈安裝程序 
+- [Rust Language Server](https://github.com/rust-lang/rls) — 在後臺運行的服務器，為 IDE、編輯器和其他工具提供有關 Rust 程序的信息
+- [Rust Regex Playground](https://2fd.github.io/rust-regex-playground/#method=find&regex=\w%2B&text=abc) — 評估 Rust 正則表達式的 Web 工具
+- [Rust Search Extension](https://github.com/huhu/rust-search-extension) — 一個方便的瀏覽器擴展，用於在地址欄（多功能框）中搜索 crate 和文檔. 
+- [artifact](https://github.com/vitiral/artifact) — 為開發人員製作的設計文檔工具 
+- [semantic-rs](https://github.com/semantic-rs/semantic-rs) — 自動 crate 發佈
+- [fw](https://github.com/brocode/fw) — 工作空間生產力助推器 
+- [tinyrick](https://github.com/mcandre/tinyrick) 一個基本的任務依賴工具，強調 Rust 功能而不是原始 shell 命令.
+- [scriptisto](https://github.com/igor-petruk/scriptisto) 一種與語言無關的 “shebang 解釋器”，它使您能夠用編譯語言編寫一個文件腳本.
  
-### 系统编译
+### 系統編譯
 
 - [Cargo](https://crates.io/) — Rust 包管理器
-- [cargo-benchcmp](https://crates.io/crates/cargo-benchcmp) — 比较 Rust 微基准的实用程序 
-- [cargo-bitbake](https://crates.io/crates/cargo-bitbake) — 一个货物扩展，可以利用 meta-rust 中的类生成 BitBake 配方
-- [cargo-cache](https://crates.io/crates/cargo-cache) - 检查 / 管理 / 清理你的货物缓存（`~/.cargo/`/`${CARGO_HOME}`），打印尺寸等
-- [cargo-check](https://crates.io/crates/cargo-check) — `cargo rustc -- -Zno-trans` 的包装器，如果您只需要正确性检查，它可以帮助运行更快的编译
-- [cargo-count](https://crates.io/crates/cargo-count) — 列出有关货物项目的源代码计数和详细信息，包括不安全统计数据
-- [cargo-deb](https://crates.io/crates/cargo-deb) — 生成二进制 Debian 软件包
-- [cargo-deps](https://crates.io/crates/cargo-deps) — 构建 Rust 项目的依赖图
-- [cargo-do](https://crates.io/crates/cargo-do) — 连续运行多个货物命令 
-- [cargo-ebuild](https://crates.io/crates/cargo-ebuild) — 可以使用树内 eclasses 生成 ebuild 的货物扩展
-- [cargo-edit](https://crates.io/crates/cargo-edit) — 允许您通过从命令行读取 / 写入 Cargo.toml 文件来添加和列出依赖项
-- [cargo-generate](https://github.com/cargo-generate/cargo-generate) 通过利用预先存在的 git 存储库作为模板来生成 Rust 项目.
-- [cargo-get](https://crates.io/crates/cargo-get) - Cargo 插件可以轻松地从 Cargo.toml 文件中查询信息 
-- [cargo-graph](https://crates.io/crates/cargo-graph) — 更新了具有附加功能的 `cargo-dot` 分支. 未维护，请参阅`cargo-deps` 
-- [cargo-info](https://crates.io/crates/cargo-info) — 从命令行查询 crates.io 以获取 crates 详细信息 
-- [cargo-license](https://crates.io/crates/cargo-license) — 一个货物子命令，用于快速查看所有依赖项的许可证.
-- [cargo-make](https://crates.io/crates/cargo-make) — Rust 任务运行器和构建工具. 
-- [cargo-modules](https://crates.io/crates/cargo-modules) — 一个货物插件，用于显示板条箱模块的树状概览. 
-- [cargo-multi](https://crates.io/crates/cargo-multi) — 在多个板条箱上运行指定的货物命令
-- [cargo-outdated](https://crates.io/crates/cargo-outdated) — 在新版本的 Rust 依赖项可用或过时时显示
-- [cargo-release](https://crates.io/crates/cargo-release) — 用于发布 git 管理的货物项目、构建、标记、发布、文档和推送的工具 
-- [cargo-script](https://crates.io/crates/cargo-script) — 让人们快速、轻松地运行 Rust “脚本”，它可以利用 Cargo 的包生态系统
-- [cargo-testify](https://crates.io/crates/cargo-testify) — 监视文件更改、运行测试并通过友好的操作系统通知通知结果
-- [cargo-tree](https://github.com/sfackler/cargo-tree) – Cargo 子命令，以树状格式可视化 crate 的依赖关系图
-- [cargo-update](https://crates.io/crates/cargo-update) — 用于检查和应用更新已安装的可执行文件的货物子命令 
-- [cargo-watch](https://crates.io/crates/cargo-watch) — 货物在源更改时编译项目的实用程序
-- [liuchong/cargo-x](https://github.com/liuchong/cargo-x) ——一个非常简单的第三方 cargo 子命令来执行自定义命令
-- [dtolnay/cargo-expand](https://github.com/dtolnay/cargo-expand) — 扩展源代码中的宏
-- [Devolutions/CMakeRust](https://github.com/Devolutions/CMakeRust) — 用于将 Rust 库集成到 CMake 项目中
-- [SiegeLord/RustCMake](https://github.com/SiegeLord/RustCMake) — 一个示例项目，展示了 CMake 与 Rust 的使用 
-- [icepuma/rust-action](https://github.com/icepuma/rust-action) ——Rust github 动作
+- [cargo-benchcmp](https://crates.io/crates/cargo-benchcmp) — 比較 Rust 微基準的實用程序 
+- [cargo-bitbake](https://crates.io/crates/cargo-bitbake) — 一個貨物擴展，可以利用 meta-rust 中的類生成 BitBake 配方
+- [cargo-cache](https://crates.io/crates/cargo-cache) - 檢查 / 管理 / 清理你的貨物緩存（`~/.cargo/`/`${CARGO_HOME}`），打印尺寸等
+- [cargo-check](https://crates.io/crates/cargo-check) — `cargo rustc -- -Zno-trans` 的包裝器，如果您只需要正確性檢查，它可以幫助運行更快的編譯
+- [cargo-count](https://crates.io/crates/cargo-count) — 列出有關貨物項目的源代碼計數和詳細信息，包括不安全統計數據
+- [cargo-deb](https://crates.io/crates/cargo-deb) — 生成二進制 Debian 軟件包
+- [cargo-deps](https://crates.io/crates/cargo-deps) — 構建 Rust 項目的依賴圖
+- [cargo-do](https://crates.io/crates/cargo-do) — 連續運行多個貨物命令 
+- [cargo-ebuild](https://crates.io/crates/cargo-ebuild) — 可以使用樹內 eclasses 生成 ebuild 的貨物擴展
+- [cargo-edit](https://crates.io/crates/cargo-edit) — 允許您通過從命令行讀取 / 寫入 Cargo.toml 文件來添加和列出依賴項
+- [cargo-generate](https://github.com/cargo-generate/cargo-generate) 通過利用預先存在的 git 存儲庫作為模板來生成 Rust 項目.
+- [cargo-get](https://crates.io/crates/cargo-get) - Cargo 插件可以輕鬆地從 Cargo.toml 文件中查詢信息 
+- [cargo-graph](https://crates.io/crates/cargo-graph) — 更新了具有附加功能的 `cargo-dot` 分支. 未維護，請參閱`cargo-deps` 
+- [cargo-info](https://crates.io/crates/cargo-info) — 從命令行查詢 crates.io 以獲取 crates 詳細信息 
+- [cargo-license](https://crates.io/crates/cargo-license) — 一個貨物子命令，用於快速查看所有依賴項的許可證.
+- [cargo-make](https://crates.io/crates/cargo-make) — Rust 任務運行器和構建工具. 
+- [cargo-modules](https://crates.io/crates/cargo-modules) — 一個貨物插件，用於顯示板條箱模塊的樹狀概覽. 
+- [cargo-multi](https://crates.io/crates/cargo-multi) — 在多個板條箱上運行指定的貨物命令
+- [cargo-outdated](https://crates.io/crates/cargo-outdated) — 在新版本的 Rust 依賴項可用或過時時顯示
+- [cargo-release](https://crates.io/crates/cargo-release) — 用於發佈 git 管理的貨物項目、構建、標記、發佈、文檔和推送的工具 
+- [cargo-script](https://crates.io/crates/cargo-script) — 讓人們快速、輕鬆地運行 Rust “腳本”，它可以利用 Cargo 的包生態系統
+- [cargo-testify](https://crates.io/crates/cargo-testify) — 監視文件更改、運行測試並通過友好的操作系統通知通知結果
+- [cargo-tree](https://github.com/sfackler/cargo-tree) – Cargo 子命令，以樹狀格式可視化 crate 的依賴關係圖
+- [cargo-update](https://crates.io/crates/cargo-update) — 用於檢查和應用更新已安裝的可執行文件的貨物子命令 
+- [cargo-watch](https://crates.io/crates/cargo-watch) — 貨物在源更改時編譯項目的實用程序
+- [liuchong/cargo-x](https://github.com/liuchong/cargo-x) ——一個非常簡單的第三方 cargo 子命令來執行自定義命令
+- [dtolnay/cargo-expand](https://github.com/dtolnay/cargo-expand) — 擴展源代碼中的宏
+- [Devolutions/CMakeRust](https://github.com/Devolutions/CMakeRust) — 用於將 Rust 庫集成到 CMake 項目中
+- [SiegeLord/RustCMake](https://github.com/SiegeLord/RustCMake) — 一個示例項目，展示了 CMake 與 Rust 的使用 
+- [icepuma/rust-action](https://github.com/icepuma/rust-action) ——Rust github 動作
 - [peaceiris/actions-mdbook](https://github.com/peaceiris/actions-mdbook) — mdBook 的 GitHub 操作
-- GitHub 网络钩子
-- [snare](https://tratt.net/laurie/src/snare/) — GitHub webhooks 运行器守护进程
-- 网络包
-- [mxseev/rust-loader](https://github.com/mxseev/rust-loader) — Webpack Rust 加载器 (wasm)
+- GitHub 網絡鉤子
+- [snare](https://tratt.net/laurie/src/snare/) — GitHub webhooks 運行器守護進程
+- 網絡包
+- [mxseev/rust-loader](https://github.com/mxseev/rust-loader) — Webpack Rust 加載器 (wasm)
 
-### 调试
+### 調試
 
 - [rust-gdb](https://github.com/rust-lang/rust/blob/master/src/etc/rust-gdb)
-- [gdbgui](https://github.com/cs01/gdbgui) — 基于浏览器的 gdb 前端，用于调试 C、C++、Rust 和 Go.
-- [lldb_batchmode.py](https://github.com/rust-lang/rust/blob/master/src/etc/lldb_batchmode.py) — 允许以类似于 GDB 的批处理模式的方式使用 LLDB.
-- [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) — 一个 LLDB 扩展 [Visual Studio Code](https://code.visualstudio.com/).
+- [gdbgui](https://github.com/cs01/gdbgui) — 基於瀏覽器的 gdb 前端，用於調試 C、C++、Rust 和 Go.
+- [lldb_batchmode.py](https://github.com/rust-lang/rust/blob/master/src/etc/lldb_batchmode.py) — 允許以類似於 GDB 的批處理模式的方式使用 LLDB.
+- [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) — 一個 LLDB 擴展 [Visual Studio Code](https://code.visualstudio.com/).
 
 ### 部署
 
-- [emk/rust-musl-builder](https://github.com/emk/rust-musl-builder) — 用于使用 musl-libc 和 musl-gcc 编译静态 Rust 二进制文件的 Docker 映像，以及有用的 C 库的静态版本
-- [kpcyrd/mini-docker-rust](https://github.com/kpcyrd/mini-docker-rust) — 一个非常小的 Rust docker 镜像的示例项目 
-- [liuchong/docker-rustup](https://github.com/liuchong/docker-rustup) — 多版本（使用 musl 工具）Rust Docker 镜像
-- [messense/rust-musl-cross](https://github.com/messense/rust-musl-cross) — 使用 musl-cross 编译静态 Rust 二进制文件的 Docker 镜像 
-- [rust-lang-nursery/docker-rust](https://github.com/rust-lang/docker-rust) — 官方 Rust Docker 镜像
-- [wasm-template-rust](https://github.com/sn99/wasm-template-rust) — Rust 发布到 gh-pages 的 wasm 模板，无需 npm-deploy 
-- [DenisKolodin/rust-app-engine](https://github.com/DenisKolodin/rust-app-engine) — App Engine Rust 样板
-- [emk/heroku-buildpack-rust](https://github.com/emk/heroku-buildpack-rust) — Heroku 上的 Rust 应用程序构建包
+- [emk/rust-musl-builder](https://github.com/emk/rust-musl-builder) — 用於使用 musl-libc 和 musl-gcc 編譯靜態 Rust 二進制文件的 Docker 映像，以及有用的 C 庫的靜態版本
+- [kpcyrd/mini-docker-rust](https://github.com/kpcyrd/mini-docker-rust) — 一個非常小的 Rust docker 鏡像的示例項目 
+- [liuchong/docker-rustup](https://github.com/liuchong/docker-rustup) — 多版本（使用 musl 工具）Rust Docker 鏡像
+- [messense/rust-musl-cross](https://github.com/messense/rust-musl-cross) — 使用 musl-cross 編譯靜態 Rust 二進制文件的 Docker 鏡像 
+- [rust-lang-nursery/docker-rust](https://github.com/rust-lang/docker-rust) — 官方 Rust Docker 鏡像
+- [wasm-template-rust](https://github.com/sn99/wasm-template-rust) — Rust 發佈到 gh-pages 的 wasm 模板，無需 npm-deploy 
+- [DenisKolodin/rust-app-engine](https://github.com/DenisKolodin/rust-app-engine) — App Engine Rust 樣板
+- [emk/heroku-buildpack-rust](https://github.com/emk/heroku-buildpack-rust) — Heroku 上的 Rust 應用程序構建包
 
 ### 嵌入式
 
-- [japaric/rust-cross](https://github.com/japaric/rust-cross) ——关于交叉编译 Rust 程序你需要知道的一切
-- [japaric/xargo](https://github.com/japaric/xargo) — 轻松地将 Rust 程序交叉编译到自定义的裸机目标，如 ARM Cortex-M
-- [Ogeon/rust-on-raspberry-pi](https://github.com/Ogeon/rust-on-raspberry-pi) — 有关如何为 Raspberry Pi 交叉编译 Rust 项目的说明. * 阿杜诺
-- [avr-rust/ruduino](https://github.com/avr-rust/ruduino) `t Arduino Uno 的可重用组件.
+- [japaric/rust-cross](https://github.com/japaric/rust-cross) ——關於交叉編譯 Rust 程序你需要知道的一切
+- [japaric/xargo](https://github.com/japaric/xargo) — 輕鬆地將 Rust 程序交叉編譯到自定義的裸機目標，如 ARM Cortex-M
+- [Ogeon/rust-on-raspberry-pi](https://github.com/Ogeon/rust-on-raspberry-pi) — 有關如何為 Raspberry Pi 交叉編譯 Rust 項目的說明. * 阿杜諾
+- [avr-rust/ruduino](https://github.com/avr-rust/ruduino) `t Arduino Uno 的可重用組件.
 
 ### FFI
 
-也可以看看 [Foreign Function Interface](https://doc.rust-lang.org/book/first-edition/ffi.html), [The Rust FFI Omnibus](http://jakegoulding.com/rust-ffi-omnibus/) （使用其他语言用 Rust 编写的代码的示例集合）和 [FFI examples written in Rust](https://github.com/alexcrichton/rust-ffi-examples).
+也可以看看 [Foreign Function Interface](https://doc.rust-lang.org/book/first-edition/ffi.html), [The Rust FFI Omnibus](http://jakegoulding.com/rust-ffi-omnibus/) （使用其他語言用 Rust 編寫的代碼的示例集合）和 [FFI examples written in Rust](https://github.com/alexcrichton/rust-ffi-examples).
 
-- [rlhunt/cbindgen](https://github.com/eqrion/cbindgen) — 从 Rust 源文件生成 C 头文件. 在 Gecko 中用于 WebRender 
-- [Sean1708/rusty-cheddar](https://github.com/Sean1708/rusty-cheddar) — 从 Rust 源文件生成 C 头文件
-- [rust-lang/rust-bindgen](https://github.com/rust-lang/rust-bindgen) — Rust 绑定生成器
-- [dtolnay/cxx](https://github.com/dtolnay/cxx) — Rust 和 C++ 之间的安全互操作
-- [rust-cpp](https://crates.io/crates/cpp) - 直接在 Rust 中嵌入 C++ 代码
-- [rusterlium/rustler](https://github.com/rusterlium/rustler) — 用于创建 Erlang NIF 函数的安全 Rust 桥 
-- [mgattozzi/curryrs](https://github.com/mgattozzi/curryrs) — 弥合 Haskell 和 Rust 之间的差距
+- [rlhunt/cbindgen](https://github.com/eqrion/cbindgen) — 從 Rust 源文件生成 C 頭文件. 在 Gecko 中用於 WebRender 
+- [Sean1708/rusty-cheddar](https://github.com/Sean1708/rusty-cheddar) — 從 Rust 源文件生成 C 頭文件
+- [rust-lang/rust-bindgen](https://github.com/rust-lang/rust-bindgen) — Rust 綁定生成器
+- [dtolnay/cxx](https://github.com/dtolnay/cxx) — Rust 和 C++ 之間的安全互操作
+- [rust-cpp](https://crates.io/crates/cpp) - 直接在 Rust 中嵌入 C++ 代碼
+- [rusterlium/rustler](https://github.com/rusterlium/rustler) — 用於創建 Erlang NIF 函數的安全 Rust 橋 
+- [mgattozzi/curryrs](https://github.com/mgattozzi/curryrs) — 彌合 Haskell 和 Rust 之間的差距
 - [mgattozzi/haskellrs](https://github.com/mgattozzi/haskellrs) — Haskell FFI 示例中的 Rust
 - [mgattozzi/rushs](https://github.com/mgattozzi/rushs) — Rust FFI 示例中的 Haskell
 - [j4rs](https://crates.io/crates/j4rs) — 使用 Rust 中的 Java 
 - [bennettanderson/rjni](https://github.com/benanders/rjni) — 使用 Rust 中的 Java
 - [drrb/java-rust-example](https://github.com/drrb/java-rust-example) — 使用 Java 中的 Rust
 - [jni](https://crates.io/crates/jni) — 使用 Java 中的 Rust
-- [jni-sys](https://crates.io/crates/jni-sys) — 对应于 jni.h 的 Rust 定义 
+- [jni-sys](https://crates.io/crates/jni-sys) — 對應於 jni.h 的 Rust 定義 
 - [rucaja](https://crates.io/crates/rucaja) — 使用 Rust 中的 Java 
-- [rawrafox/rust-jdbc](https://github.com/rawrafox/rust-jdbc) — 使用来自 Rust 的 JDBC
-- [jcmoyer/rust-lua53](https://github.com/jcmoyer/rust-lua53) — 用于 Rust 的 Lua 5.3 绑定
+- [rawrafox/rust-jdbc](https://github.com/rawrafox/rust-jdbc) — 使用來自 Rust 的 JDBC
+- [jcmoyer/rust-lua53](https://github.com/jcmoyer/rust-lua53) — 用於 Rust 的 Lua 5.3 綁定
 - [lilyball/rust-lua](https://github.com/lilyball/rust-lua) — Safe Rust bindings to Lua 5.1
-- [tickbh/td_rlua](https://github.com/tickbh/td_rlua) — Rust 的零成本高级 lua 5.3 包装器
-- [tomaka/hlua](https://github.com/tomaka/hlua) - 与 Lua 交互的 Rust 库 
-- [anima-engine/mrusty](https://github.com/anima-engine/mrusty) — Rust 的 mruby 安全绑定
-- [neon-bindings/neon](https://github.com/neon-bindings/neon) — Rust 绑定，用于编写安全且快速的原生 Node.js 模块
-- [infinyon/node-bindgen](https://github.com/infinyon/node-bindgen) - 使用 Rust 生成 nodejs 模块的简单方法 * 目标 - C
-- [SSheldon/rust-objc](https://github.com/SSheldon/rust-objc) — Rust 的 Objective-C 运行时绑定和包装器
-- [vickenty/mi-rust](https://github.com/vickenty/mi-rust) — 添加对 M::I 的支持，以使用 Cargo 构建模块
-- [vickenty/perl-xs](https://github.com/vickenty/perl-xs) — 使用 Rust 创建 Perl XS 模块 
-- [getsentry/milksnake](https://github.com/getsentry/milksnake) — python setuptools 的扩展，它允许您以可想象的最便携的方式在 Python 轮子中分发动态链接库.
-- [dgrunwald/rust-cpython](https://github.com/dgrunwald/rust-cpython) — Python 绑定
-- [PyO3/PyO3](https://github.com/PyO3/PyO3) — Python 解释器的 Rust 绑定 
-- [d-unseductable/ruru](https://github.com/d-unseductable/ruru) — 用 Rust 编写的原生 Ruby 扩展 
-- [danielpclark/rutie](https://github.com/danielpclark/rutie) — 用 Rust 编写的原生 Ruby 扩展，反之亦然 
-- [tildeio/helix](https://github.com/tildeio/helix) — 用 Rust 编写 Ruby 类 
-- [rustwasm/wasm-pack](https://github.com/rustwasm/wasm-pack) —   打包 wasm 并发布到 npm！
-- [rustwasm/wasm-bindgen](https://github.com/rustwasm/wasm-bindgen) — 一个促进 wasm 模块和 JS 之间高级交互的项目. 
-- [rhysd/wain](https://github.com/rhysd/wain) - wain：在 Safe Rust 中从零开始的 WebAssembly 解释器，零依赖 
+- [tickbh/td_rlua](https://github.com/tickbh/td_rlua) — Rust 的零成本高級 lua 5.3 包裝器
+- [tomaka/hlua](https://github.com/tomaka/hlua) - 與 Lua 交互的 Rust 庫 
+- [anima-engine/mrusty](https://github.com/anima-engine/mrusty) — Rust 的 mruby 安全綁定
+- [neon-bindings/neon](https://github.com/neon-bindings/neon) — Rust 綁定，用於編寫安全且快速的原生 Node.js 模塊
+- [infinyon/node-bindgen](https://github.com/infinyon/node-bindgen) - 使用 Rust 生成 nodejs 模塊的簡單方法 * 目標 - C
+- [SSheldon/rust-objc](https://github.com/SSheldon/rust-objc) — Rust 的 Objective-C 運行時綁定和包裝器
+- [vickenty/mi-rust](https://github.com/vickenty/mi-rust) — 添加對 M::I 的支持，以使用 Cargo 構建模塊
+- [vickenty/perl-xs](https://github.com/vickenty/perl-xs) — 使用 Rust 創建 Perl XS 模塊 
+- [getsentry/milksnake](https://github.com/getsentry/milksnake) — python setuptools 的擴展，它允許您以可想象的最便攜的方式在 Python 輪子中分發動態鏈接庫.
+- [dgrunwald/rust-cpython](https://github.com/dgrunwald/rust-cpython) — Python 綁定
+- [PyO3/PyO3](https://github.com/PyO3/PyO3) — Python 解釋器的 Rust 綁定 
+- [d-unseductable/ruru](https://github.com/d-unseductable/ruru) — 用 Rust 編寫的原生 Ruby 擴展 
+- [danielpclark/rutie](https://github.com/danielpclark/rutie) — 用 Rust 編寫的原生 Ruby 擴展，反之亦然 
+- [tildeio/helix](https://github.com/tildeio/helix) — 用 Rust 編寫 Ruby 類 
+- [rustwasm/wasm-pack](https://github.com/rustwasm/wasm-pack) —   打包 wasm 併發布到 npm！
+- [rustwasm/wasm-bindgen](https://github.com/rustwasm/wasm-bindgen) — 一個促進 wasm 模塊和 JS 之間高級交互的項目. 
+- [rhysd/wain](https://github.com/rhysd/wain) - wain：在 Safe Rust 中從零開始的 WebAssembly 解釋器，零依賴 
   
 ### IDEs
 
@@ -813,7 +813,7 @@ Rust Linz 2021 |
 - Atom
 
   - [zargony/atom-language-rust](https://github.com/zargony/atom-language-rust)
-  - [rust-lang/atom-ide-rust](https://github.com/rust-lang/atom-ide-rust) — Rust IDE 对 Atom 的支持，由 Rust 语言服务器 (RLS) 提供支持
+  - [rust-lang/atom-ide-rust](https://github.com/rust-lang/atom-ide-rust) — Rust IDE 對 Atom 的支持，由 Rust 語言服務器 (RLS) 提供支持
 
 - Eclipse
 
@@ -823,17 +823,17 @@ Rust Linz 2021 |
 - Emacs
 
   - [rust-mode](https://github.com/rust-lang/rust-mode) — Rust 主要模式
-  - [rustic](https://github.com/brotzeit/rustic) - Emacs 的 Rust 开发环境 
+  - [rustic](https://github.com/brotzeit/rustic) - Emacs 的 Rust 開發環境 
   - [flycheck-rust](https://github.com/flycheck/flycheck-rust) — Rust 支持 [Flycheck](https://github.com/flycheck/flycheck)
-  - [emacs-racer](https://github.com/racer-rust/emacs-racer) — 自动完成（另见 [company](https://company-mode.github.io/) 和 [auto-complete](https://github.com/auto-complete/auto-complete))
+  - [emacs-racer](https://github.com/racer-rust/emacs-racer) — 自動完成（另見 [company](https://company-mode.github.io/) 和 [auto-complete](https://github.com/auto-complete/auto-complete))
 
-- [gitpod.io](https://gitpod.io/) — 基于 Rust 语言服务器的具有完整 Rust 支持的在线 IDE
+- [gitpod.io](https://gitpod.io/) — 基於 Rust 語言服務器的具有完整 Rust 支持的在線 IDE
 
 - [gnome-builder](https://wiki.gnome.org/Apps/Builder) 自版本 3.22.2 起原生支持 Rust 和 Cargo
 
 - Kakoune
 
-  - [kak-lsp/kak-lsp](https://github.com/kak-lsp/kak-lsp/) — [LSP](https://microsoft.github.io/language-server-protocol/) 客户. 在 Rust 中实现并支持 rls 开箱即用.
+  - [kak-lsp/kak-lsp](https://github.com/kak-lsp/kak-lsp/) — [LSP](https://microsoft.github.io/language-server-protocol/) 客戶. 在 Rust 中實現並支持 rls 開箱即用.
 
 - NetBeans
 
@@ -846,103 +846,103 @@ Rust Linz 2021 |
 
 - [Ride](https://github.com/madeso/ride)
 
-- [SolidOak](https://github.com/oakes/SolidOak) — 一个简单的 Rust IDE，基于 GTK+ 和 [Neovim](https://github.com/neovim/neovim)
+- [SolidOak](https://github.com/oakes/SolidOak) — 一個簡單的 Rust IDE，基於 GTK+ 和 [Neovim](https://github.com/neovim/neovim)
 
 - Sublime Text
 
   - [rust-lang/rust-enhanced](https://github.com/rust-lang/rust-enhanced) — 官方 Rust 包
-  - [sublimehq/packages](https://github.com/sublimehq/Packages/tree/master/Rust) — 原生 Sublime 支持（已安装）
+  - [sublimehq/packages](https://github.com/sublimehq/Packages/tree/master/Rust) — 原生 Sublime 支持（已安裝）
 
 - Vim
 
-  — 无处不在的文本编辑器
+  — 無處不在的文本編輯器
 
-  - [rust.vim](https://github.com/rust-lang/rust.vim) — 提供文件检测、语法高亮、格式化、Syntastic 集成等.
-  - [vim-cargo](https://github.com/timonv/vim-cargo) — 命令绑定以从 vim 快速运行货物.
-  - [vim-racer](https://github.com/racer-rust/vim-racer) — 允许 vim 使用 [Racer](https://github.com/racer-rust/racer) 用于 Rust 代码完成和导航.
-  - [autozimu/LanguageClient-neovim](https://github.com/autozimu/LanguageClient-neovim) — [LSP](https://microsoft.github.io/language-server-protocol/) 客户. 在 Rust 中实现并支持 rls 开箱即用
+  - [rust.vim](https://github.com/rust-lang/rust.vim) — 提供文件檢測、語法高亮、格式化、Syntastic 集成等.
+  - [vim-cargo](https://github.com/timonv/vim-cargo) — 命令綁定以從 vim 快速運行貨物.
+  - [vim-racer](https://github.com/racer-rust/vim-racer) — 允許 vim 使用 [Racer](https://github.com/racer-rust/racer) 用於 Rust 代碼完成和導航.
+  - [autozimu/LanguageClient-neovim](https://github.com/autozimu/LanguageClient-neovim) — [LSP](https://microsoft.github.io/language-server-protocol/) 客戶. 在 Rust 中實現並支持 rls 開箱即用
 
-- 视觉工作室
+- 視覺工作室
 
-  - [PistonDevelopers/VisualRust](https://github.com/PistonDevelopers/VisualRust) — Rust 的 Visual Studio 扩展
-  - [dgriffen/rls-vs2017](https://github.com/ZoeyR/rls-vs2017) — 对 Visual Studio 2017 预览版的 Rust 支持
+  - [PistonDevelopers/VisualRust](https://github.com/PistonDevelopers/VisualRust) — Rust 的 Visual Studio 擴展
+  - [dgriffen/rls-vs2017](https://github.com/ZoeyR/rls-vs2017) — 對 Visual Studio 2017 預覽版的 Rust 支持
 
 - Visual Studio Code
 
-  - [rust-lang/rls-vscode](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust) — 对 Visual Studio Code 的 Rust 支持
-  - [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=matklad.rust-analyzer) — RLS 的替代 Rust 语言服务器
-  - [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) — 一个 LLDB 扩展
-  - [crates](https://github.com/serayuzgur/crates) — crates 是 crates.io 依赖项的扩展. 
+  - [rust-lang/rls-vscode](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust) — 對 Visual Studio Code 的 Rust 支持
+  - [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=matklad.rust-analyzer) — RLS 的替代 Rust 語言服務器
+  - [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) — 一個 LLDB 擴展
+  - [crates](https://github.com/serayuzgur/crates) — crates 是 crates.io 依賴項的擴展. 
   
-### 图像识别
+### 圖像識別
 
-- [sfikas/rusteval](https://github.com/sfikas/rusteval) — 用于评估检索算法输出的工具 
+- [sfikas/rusteval](https://github.com/sfikas/rusteval) — 用於評估檢索算法輸出的工具 
 
 ### 分析
 
-- [bheisler/criterion.rs](https://github.com/bheisler/criterion.rs) — 统计驱动的 Rust 基准测试库
-- [sharkdp/hyperfine](https://github.com/sharkdp/hyperfine) — 命令行基准测试工具 
-- [performancecopilot/hornet](https://github.com/performancecopilot/hornet) — Performance Co-Pilot 内存映射值检测库 
-- [koute/memory-profiler](https://github.com/koute/memory-profiler) — Linux 的内存分析器 
-- [ellisonch/rust-stopwatch](https://github.com/ellisonch/rust-stopwatch) — 一个秒表库 
-- [mrhooray/torch](https://github.com/mrhooray/torch) — 根据 DWARF 调试信息生成 FlameGraphs
+- [bheisler/criterion.rs](https://github.com/bheisler/criterion.rs) — 統計驅動的 Rust 基準測試庫
+- [sharkdp/hyperfine](https://github.com/sharkdp/hyperfine) — 命令行基準測試工具 
+- [performancecopilot/hornet](https://github.com/performancecopilot/hornet) — Performance Co-Pilot 內存映射值檢測庫 
+- [koute/memory-profiler](https://github.com/koute/memory-profiler) — Linux 的內存分析器 
+- [ellisonch/rust-stopwatch](https://github.com/ellisonch/rust-stopwatch) — 一個秒錶庫 
+- [mrhooray/torch](https://github.com/mrhooray/torch) — 根據 DWARF 調試信息生成 FlameGraphs
 - [llogiq/flame](https://github.com/llogiq/flame) 
 
 ### Services
 
-- [deps.rs](https://github.com/deps-rs/deps.rs) — 检测过时或不安全的依赖项
-- [docs.rs](https://docs.rs/) — 自动生成 crate 文档
+- [deps.rs](https://github.com/deps-rs/deps.rs) — 檢測過時或不安全的依賴項
+- [docs.rs](https://docs.rs/) — 自動生成 crate 文檔
   
-### 静态分析
+### 靜態分析
 
-- [facebookexperimental/MIRAI](https://github.com/facebookexperimental/mirai) — 一个在 Rust 的中级中间表示 (MIR) 上运行的抽象解释器
-- [static_assertions](https://crates.io/crates/static_assertions) — 编译时断言以确保满足不变量 
+- [facebookexperimental/MIRAI](https://github.com/facebookexperimental/mirai) — 一個在 Rust 的中級中間表示 (MIR) 上運行的抽象解釋器
+- [static_assertions](https://crates.io/crates/static_assertions) — 編譯時斷言以確保滿足不變量 
 
-### 测试
+### 測試
 
-- [laboratory](https://crates.io/crates/laboratory) — 一个简单、富有表现力的 Rust 单元测试框架 
-- [cucumber-rust](https://crates.io/crates/cucumber-rust) — Rust 的 Cucumber 测试框架的实现.
-- [demonstrate](https://crates.io/crates/demonstrate) — 声明式测试框架 
-- [httpmock](https://github.com/alexliesenfeld/httpmock) — HTTP 模拟 
-- [mockiato](https://crates.io/crates/mockiato) — 一个严格但友好的 Rust 2018 模拟库
-- [mutagen](https://crates.io/crates/mutagen) — 一个源级变异测试框架（仅限每晚）
-- [AlKass/polish](https://github.com/AlKass/polish) — 迷你测试 / 测试驱动框架 
-- [proptest](https://crates.io/crates/proptest) — 受启发的属性测试框架 [Hypothesis](https://hypothesis.works/) Python 框架
-- [quickcheck](https://crates.io/crates/quickcheck) — 一个 Rust 实现 [QuickCheck](https://wiki.haskell.org/Introduction_to_QuickCheck1) 
-- [mockito](https://crates.io/crates/mockito) — HTTP 模拟 
-- [speculate](https://crates.io/crates/speculate) — 一个 RSpec 启发了 Rust 的最小测试框架
-- [rstest](https://crates.io/crates/rstest) — Rust 的基于夹具的测试框架
-- [ruspec](https://crates.io/crates/ruspec) — 像 Rspec 测试框架一样用 Rust 编写 
-- [rust-fuzz/afl.rs](https://github.com/rust-fuzz/afl.rs) — 一个 Rust 模糊器，使用 [AFL](https://lcamtuf.coredump.cx/afl/) 
-- [tarpaulin](https://crates.io/crates/cargo-tarpaulin) — 为 Rust 设计的代码覆盖率工具 
-- [trust](https://github.com/japaric/trust) — Travis CI 和 AppVeyor 模板，用于在 5 种架构上测试您的 Rust crate 并发布其适用于 Linux、macOS 和 Windows 的二进制版本
-- [fake-rs](https://github.com/cksac/fake-rs) — 生成假数据的库 
-- [goldenfile](https://github.com/calder/rust-goldenfile) - 一个为 Goldenfile 测试提供简单 API 的库.
-- [cargo-dinghy](https://crates.io/crates/cargo-dinghy/) - 简化在智能手机和其他小型处理器设备上运行库测试和工作台的货物扩展.
+- [laboratory](https://crates.io/crates/laboratory) — 一個簡單、富有表現力的 Rust 單元測試框架 
+- [cucumber-rust](https://crates.io/crates/cucumber-rust) — Rust 的 Cucumber 測試框架的實現.
+- [demonstrate](https://crates.io/crates/demonstrate) — 聲明式測試框架 
+- [httpmock](https://github.com/alexliesenfeld/httpmock) — HTTP 模擬 
+- [mockiato](https://crates.io/crates/mockiato) — 一個嚴格但友好的 Rust 2018 模擬庫
+- [mutagen](https://crates.io/crates/mutagen) — 一個源級變異測試框架（僅限每晚）
+- [AlKass/polish](https://github.com/AlKass/polish) — 迷你測試 / 測試驅動框架 
+- [proptest](https://crates.io/crates/proptest) — 受啟發的屬性測試框架 [Hypothesis](https://hypothesis.works/) Python 框架
+- [quickcheck](https://crates.io/crates/quickcheck) — 一個 Rust 實現 [QuickCheck](https://wiki.haskell.org/Introduction_to_QuickCheck1) 
+- [mockito](https://crates.io/crates/mockito) — HTTP 模擬 
+- [speculate](https://crates.io/crates/speculate) — 一個 RSpec 啟發了 Rust 的最小測試框架
+- [rstest](https://crates.io/crates/rstest) — Rust 的基於夾具的測試框架
+- [ruspec](https://crates.io/crates/ruspec) — 像 Rspec 測試框架一樣用 Rust 編寫 
+- [rust-fuzz/afl.rs](https://github.com/rust-fuzz/afl.rs) — 一個 Rust 模糊器，使用 [AFL](https://lcamtuf.coredump.cx/afl/) 
+- [tarpaulin](https://crates.io/crates/cargo-tarpaulin) — 為 Rust 設計的代碼覆蓋率工具 
+- [trust](https://github.com/japaric/trust) — Travis CI 和 AppVeyor 模板，用於在 5 種架構上測試您的 Rust crate 併發布其適用於 Linux、macOS 和 Windows 的二進制版本
+- [fake-rs](https://github.com/cksac/fake-rs) — 生成假數據的庫 
+- [goldenfile](https://github.com/calder/rust-goldenfile) - 一個為 Goldenfile 測試提供簡單 API 的庫.
+- [cargo-dinghy](https://crates.io/crates/cargo-dinghy/) - 簡化在智能手機和其他小型處理器設備上運行庫測試和工作臺的貨物擴展.
 
-### 翻译器
+### 翻譯器
 
-- [immunant/c2rust](https://github.com/immunant/c2rust) — 在 Clang/LLVM 之上构建的 C 到 Rust 翻译器和交叉检查器. 
-- [jameysharp/corrode](https://github.com/jameysharp/corrode) — 用 Haskell 编写的 AC 到 Rust 翻译器.
+- [immunant/c2rust](https://github.com/immunant/c2rust) — 在 Clang/LLVM 之上構建的 C 到 Rust 翻譯器和交叉檢查器. 
+- [jameysharp/corrode](https://github.com/jameysharp/corrode) — 用 Haskell 編寫的 AC 到 Rust 翻譯器.
 
-## 收集系统信息
+## 收集系統信息
 
-- [Phate6660/nixinfo](https://github.com/Phate6660/nixinfo) [[crate](https://crates.io/crates/nixinfo)] — 一个用于收集系统信息（如 CPU、发行版、环境、内核等）的 lib crate.
+- [Phate6660/nixinfo](https://github.com/Phate6660/nixinfo) [[crate](https://crates.io/crates/nixinfo)] — 一個用於收集系統信息（如 CPU、發行版、環境、內核等）的 lib crate.
   
-# 🐂 大牛语录
+# 🐂 大牛語錄
   
 ### Matthieum:
   
-“Rust 使编写正确且可读的代码变得更容易，同时获得两者并非巧合。
+“Rust 使編寫正確且可讀的代碼變得更容易，同時獲得兩者並非巧合。
 
-所有权/借用机制（对生命周期、别名和可变性的严格控制）在生成的软件的数据流中强制执行某种简单性，您可以在其他编程语言中获得这种简单性，但通常不会，因为该语言更宽松你得到了一个更复杂的流程。
+所有權/借用機制（對生命週期、別名和可變性的嚴格控制）在生成的軟件的數據流中強制執行某種簡單性，您可以在其他編程語言中獲得這種簡單性，但通常不會，因為該語言更寬鬆你得到了一個更復雜的流程。
 
-你是否曾经在 Java 中调试过 ConcurrentModificationException？当您修改正在迭代的容器时会发生这种情况。当您有一系列回调/观察者时，意外地有导致此异常的循环引用非常容易。在 Rust 中，要解决这种情况，你必须使用 RefCell 或等价物，它应该让您停下来。”
+你是否曾經在 Java 中調試過 ConcurrentModificationException？當您修改正在迭代的容器時會發生這種情況。當您有一系列回調/觀察者時，意外地有導致此異常的循環引用非常容易。在 Rust 中，要解決這種情況，你必須使用 RefCell 或等價物，它應該讓您停下來。”
 
 
-## 联系专栏
+## 聯繫專欄
 
-#### 关注微信公众号【后台服务架构师】——【联系我们】，获取本repo最全PDF学习文档！
+#### 關注微信公眾號【後臺服務架構師】——【聯繫我們】，獲取本repo最全PDF學習文檔！
 
 <img width="65%" height="65%" src="https://user-images.githubusercontent.com/87457873/130796999-03af3f54-3719-47b4-8e41-2e762ab1c68b.png"/>
   

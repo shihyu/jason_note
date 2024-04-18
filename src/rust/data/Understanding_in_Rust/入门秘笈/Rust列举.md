@@ -1,8 +1,8 @@
-# Rust列举
+# Rust列舉
 
-列举是一种自定义资料型别，包含一些确定的值。它在列举名称之前使用 它还包括方法。`enum`
+列舉是一種自定義資料型別，包含一些確定的值。它在列舉名稱之前使用 它還包括方法。`enum`
 
-列举的语法：
+列舉的語法：
 
 ```rust
 enum enum_name  
@@ -14,7 +14,7 @@ enum enum_name
 }
 ```
 
-在上面的语法中，`enum_name``variant1``variant2``..`
+在上面的語法中，`enum_name``variant1``variant2``..`
 
 例如：
 
@@ -28,9 +28,9 @@ enum Computer_language{
 
 在上面的例子中，`computer_language``C``C++``Java``computer_language`
 
-## 列举值
+## 列舉值
 
-下面建立每个变数的范例，如下所示：
+下面建立每個變數的範例，如下所示：
 
 ```rust
 let c = Computer_language::C;  
@@ -38,21 +38,21 @@ let cplus = Computer_language::C++;
 let java = Computer_language::Java;
 ```
 
-在上面的场景中，分别建立了包含值 列举的每个变体都在其识别符号下命名，并使用双冒号。这很有用，因为`C``C++``Java``c``cplus``java``Computer_language::C``Computer_language::C++``Computer_language::Java``Computer_language`
+在上面的場景中，分別建立了包含值 列舉的每個變體都在其識別符號下命名，並使用雙冒號。這很有用，因為`C``C++``Java``c``cplus``java``Computer_language::C``Computer_language::C++``Computer_language::Java``Computer_language`
 
-还可以在特定范例上定义函式，定义采用`Computer_language`
+還可以在特定範例上定義函式，定義採用`Computer_language`
 
 ```rust
 fn language_type(language_name::Computer_language);
 ```
 
-任何变体都可以呼叫此函式：
+任何變體都可以呼叫此函式：
 
 ```rust
 language_type(Computer_language::C++);
 ```
 
-通过一个例子来理解。
+通過一個例子來理解。
 
 ```c
 enum Employee {  
@@ -69,10 +69,10 @@ fn main() {
 }
 ```
 
-执行上面范例程式码，得到以下结果 -
+執行上面範例程式碼，得到以下結果 -
 
 ```shell
 Name("Hema") s Id(2) b Profile("Computer Engineer")
 ```
 
-在上面的范例中，`Employee``Name(String)``Id(i32)``Profile(String)``:?`
+在上面的範例中，`Employee``Name(String)``Id(i32)``Profile(String)``:?`

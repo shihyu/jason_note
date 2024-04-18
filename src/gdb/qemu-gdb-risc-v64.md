@@ -82,6 +82,19 @@ sudo apt install binutils-riscv64-linux-gnu
 sudo apt install gcc-riscv64-linux-gnu
 ```
 
+OR
+
+自己下載工具鏈原始碼進行編譯容易配錯選項，我們使用編譯好的工具鏈即可。
+網址：https://toolchains.bootlin.com
+這個網站提供了一些已經編譯好的工具鏈，我們從中下載即可。
+arch選擇riscv64-lp64d，libc選擇glibc，然後點選下載。
+stable是穩定版，bleeding-edge是最新的，可根據需要選擇，這裡我們選擇bleeding-edge。
+
+```bash
+export PATH=xxxxxxxxxxxxxxxxxxxx/toolchain/riscv64-lp64d--glibc--bleeding-edge-2022.08-1/bin:$PATH
+```
+
+
 # 三、Build Qemu
 
 ```bash
@@ -195,10 +208,11 @@ qemu-system-riscv64 \
         -bios  opensbi/build/platform/generic/firmware/fw_dynamic.bin \
         -kernel linux-5.9/arch/riscv/boot/Image \
         -initrd busybox-1.35.0/rootfs.img  \
-        -append "root=/dev/ram rdinit=/sbin/init" \
+        -append "root=/dev/ram rdinit=/sbin/init nokaslr" \
         -S \
         -s
 ```
+nokaslr 的核心參數是停用隨機分配 kernel 運作位址的功能
 
 開啟另一個終端，進入剛剛的linux kernel 目錄（該目錄下有vmlinux文件），使用下面命令啟動gdb：
 

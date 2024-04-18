@@ -18,12 +18,12 @@ https://www.nuanyun.cloud/?p=1481
 
 ## 3 實驗環境
 
-### 3.1 實驗平台
+### 3.1 實驗平臺
 
 - Linux 發行版: [Ubuntu 20.04 LTS](http://mirrors.zju.edu.cn/ubuntu-releases/releases/20.04.2.0/ubuntu-20.04.2.0-desktop-amd64.iso)
 
 ```
-$ lsb_release -a # 查看當前實驗平台系統發行版的具體版本號 
+$ lsb_release -a # 查看當前實驗平臺系統發行版的具體版本號 
 No LSB modules are available.
 Distributor ID:	Ubuntu
 Description:	Ubuntu 20.04.2 LTS
@@ -40,7 +40,7 @@ Codename:	focal
 
 - [QEMU 6.0.0](https://download.qemu.org/qemu-6.0.0.tar.xz)
 - [Linux Kernel 5.10.42(LTS)](https://mirrors.edge.kernel.org/pub/linux/kernel/v5.x/linux-5.10.42.tar.gz)
-- [RISC‑V Compiler Toolchain](http://riscv-gnu-toolchain: riscv-gnu-toolchain 是一个用来支持 RISC-V 为后端的C和C++交叉编译工具链, 包含通用的ELF/Newlib和更复杂的Linux-ELF/glibc两种 (gitee.com))
+- [RISC‑V Compiler Toolchain](http://riscv-gnu-toolchain: riscv-gnu-toolchain 是一個用來支持 RISC-V 為後端的C和C++交叉編譯工具鏈, 包含通用的ELF/Newlib和更復雜的Linux-ELF/glibc兩種 (gitee.com))
 
 ## 4 背景知識
 
@@ -60,7 +60,7 @@ RISC-V ISA發端於深厚的學術研究，將免費且可擴展的軟硬體架�
 
 #### 4.2.1 什麼是QEMU
 
-QEMU最開始是由法國程式設計師Fabrice Bellard開發的模擬器。QEMU能夠完成使用者程序模擬和系統虛擬化模擬。使用者程序模擬指的是QEMU能夠將為一個平台編譯的二進制檔案運行在另一個不同的平台，如一個ARM指令集的二進製程序，通過QEMU的TCG（Tiny Code Generator）引擎的處理之後，ARM指令被轉化為TCG中間程式碼，然後再轉化為目標平台（比如Intel x86）的程式碼。系統虛擬化模擬指的是QEMU能夠模擬一個完整的系統虛擬機器，該虛擬機器有自己的虛擬CPU，晶片組，虛擬記憶體以及各種虛擬外部裝置，能夠為虛擬機器中運行的作業系統和應用軟體呈現出與物理電腦完全一致的硬體檢視。
+QEMU最開始是由法國程式設計師Fabrice Bellard開發的模擬器。QEMU能夠完成使用者程序模擬和系統虛擬化模擬。使用者程序模擬指的是QEMU能夠將為一個平臺編譯的二進制檔案運行在另一個不同的平臺，如一個ARM指令集的二進製程序，通過QEMU的TCG（Tiny Code Generator）引擎的處理之後，ARM指令被轉化為TCG中間程式碼，然後再轉化為目標平臺（比如Intel x86）的程式碼。系統虛擬化模擬指的是QEMU能夠模擬一個完整的系統虛擬機器，該虛擬機器有自己的虛擬CPU，晶片組，虛擬記憶體以及各種虛擬外部裝置，能夠為虛擬機器中運行的作業系統和應用軟體呈現出與物理電腦完全一致的硬體檢視。
 
 #### 4.2.2 如何使用 QEMU（常見參數介紹）
 
@@ -139,12 +139,12 @@ compiler is a kind of computer software that compiles a high-level language (suc
 - ***\*The host system: The system which runs the compiler binaries.\****
 - ***\*The target system: The system which runs the application code compiled by the compiler binari\****
 
-根據上述不同平台之間的異同，編譯器可以分為如下幾種類型：
+根據上述不同平臺之間的異同，編譯器可以分為如下幾種類型：
 
 - **native compiler**: A compiler where **target** is the same system as **host**.
 - **cross compiler**: A compiler where **target** is not the same system as **host**.
 
-其中**交叉編譯工具鏈（Cross Compiler）**是我們在本系列實驗中改採用的主要編譯工具。交叉編譯指的是在一個平台上編譯可以在另一個平台運行的程序，例如在x86機器上編譯可以在arm平台運行的程序，交叉編譯需要交叉編譯工具鏈的支援。
+其中**交叉編譯工具鏈（Cross Compiler）**是我們在本系列實驗中改採用的主要編譯工具。交叉編譯指的是在一個平臺上編譯可以在另一個平臺運行的程序，例如在x86機器上編譯可以在arm平臺運行的程序，交叉編譯需要交叉編譯工具鏈的支援。
 
 在後續實驗中我們令：
 
@@ -203,8 +203,8 @@ Most of these programs use **BFD**, the Binary File Descriptor library, to do lo
 
 #### 4.5.1 什麼是 GDB
 
-GNU偵錯程式（英語：GNU Debugger，縮寫：gdb）是一個由GNU開源組織發佈的、UNIX/LINUX作業系統下的、基於命令列的、功能強大的程序偵錯工具。借助偵錯程式，我們能夠查看另一個程序在執行時實際在做什麼（比如訪問哪些記憶體、暫存器），在其他程式當掉的時候可以比較快速地瞭解導致程式當掉的原因。
-被偵錯的程序可以是和gdb在同一台機器上（本地偵錯，or native debug），也可以是不同機器上（遠端偵錯， or remote debug）。
+GNU偵錯程式（英語：GNU Debugger，縮寫：gdb）是一個由GNU開源組織發佈的、UNIX/LINUX作業系統下的、基於命令列的、功能強大的程序偵錯工具。藉助偵錯程式，我們能夠查看另一個程序在執行時實際在做什麼（比如訪問哪些記憶體、暫存器），在其他程式當掉的時候可以比較快速地瞭解導致程式當掉的原因。
+被偵錯的程序可以是和gdb在同一臺機器上（本地偵錯，or native debug），也可以是不同機器上（遠端偵錯， or remote debug）。
 
 總的來說，gdb可以有以下4個功能
 
@@ -243,23 +243,23 @@ GNU偵錯程式（英語：GNU Debugger，縮寫：gdb）是一個由GNU開源�
 
 **ARCH** 指定架構，可選的值包括arch目錄下的資料夾名，如x86,arm,arm64等，不同於arm和arm64，32位和64位的RISC-V共用 `arch/riscv` 目錄，通過使用不同的config可以編譯32位或64位的核心。
 
-**CROSS_COMPILE** 指定使用的交叉編譯工具鏈，例如指定 `CROSS_COMPILE=aarch64-linux-gnu-`，則編譯時會採用 `aarch64-linux-gnu-gcc` 作為編譯器，編譯可以在arm64平台上運行的kernel。
+**CROSS_COMPILE** 指定使用的交叉編譯工具鏈，例如指定 `CROSS_COMPILE=aarch64-linux-gnu-`，則編譯時會採用 `aarch64-linux-gnu-gcc` 作為編譯器，編譯可以在arm64平臺上運行的kernel。
 
 **CC** 指定編譯器，通常指定該變數是為了使用clang編譯而不是用gcc編譯，Linux核心在逐步提供對clang編譯的支援，arm64和x86已經能夠很好的使用clang進行編譯。
 
 #### 4.6.3 常用編譯選項
 
 ```
-$ make defconfig	        ### 使用當前平台的默認組態，在x86機器上會使用x86的默認組態
-$ make -j$(nproc)	        ### 編譯當前平台的核心，-j$(nproc)為以機器硬體執行緒數進行多執行緒編譯
+$ make defconfig	        ### 使用當前平臺的默認組態，在x86機器上會使用x86的默認組態
+$ make -j$(nproc)	        ### 編譯當前平臺的核心，-j$(nproc)為以機器硬體執行緒數進行多執行緒編譯
 
-$ make ARCH=riscv defconfig	### 使用RISC-V平台的默認組態
-$ make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- -j$(nproc)     ### 編譯RISC-V平台核心
+$ make ARCH=riscv defconfig	### 使用RISC-V平臺的默認組態
+$ make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- -j$(nproc)     ### 編譯RISC-V平臺核心
 
 $ make clean	                ### 清除所有編譯好的object檔案
 $ make mrproper	                ### 清除編譯的組態檔案，中間檔案和結果檔案
 
-$ make init/main.o	        ### 編譯當前平台的單個object檔案init/main.o（會同時編譯依賴的檔案）
+$ make init/main.o	        ### 編譯當前平臺的單個object檔案init/main.o（會同時編譯依賴的檔案）
 ```
 
 ## 5 實驗步驟

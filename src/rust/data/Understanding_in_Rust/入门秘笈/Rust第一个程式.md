@@ -1,6 +1,6 @@
-# Rust第一个程式
+# Rust第一個程式
 
-在本文中，使用Rust语言编写简单的程式，以了解如何编写，储存和编译Rust程式。现在，开启记事本档案并编写以下程式码：
+在本文中，使用Rust語言編寫簡單的程式，以瞭解如何編寫，儲存和編譯Rust程式。現在，開啟記事本檔案並編寫以下程式碼：
 
 ```rs
 fn main(){
@@ -8,24 +8,24 @@ fn main(){
 }
 ```
 
-将上面内容储存到一个档案：`rustc hello.rs`
+將上面內容儲存到一個檔案：`rustc hello.rs`
 
 ```shell
 Hello, world!
 ```
 
-- `main()`：函式用大括号 函式不包含任何引数，也不返回任何值。`main()``main()``{}``main()`
-- `println!`：这是一个Rust巨集。如果它呼叫该函式，则它不包含符号：`'!'`
-- `"Hello World"`：它是作为引数传递给`println!`
+- `main()`：函式用大括號 函式不包含任何引數，也不返回任何值。`main()``main()``{}``main()`
+- `println!`：這是一個Rust巨集。如果它呼叫該函式，則它不包含符號：`'!'`
+- `"Hello World"`：它是作為引數傳遞給`println!`
 
-## 建立，编译和执行程式的过程
+## 建立，編譯和執行程式的過程
 
-1. 开启记事本档案并将程式码写入记事本档案中。
+1. 開啟記事本檔案並將程式碼寫入記事本檔案中。
 2. 使用`.rs`
-3. 开启命令提示字元
-4. 设定目录的路径，假设专案位于`/home/hema/worsp/rust`
+3. 開啟命令提示字元
+4. 設定目錄的路徑，假設專案位於`/home/hema/worsp/rust`
 5. 使用`rustc`
-6. 最后，使用命令`./filename`
+6. 最後，使用命令`./filename`
 
 ```shell
 hema@yiibai:~/worsp/rust$ rustc hello.rs && ./hello
