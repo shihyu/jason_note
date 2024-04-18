@@ -85,6 +85,7 @@
   - [Reqwest](rust/reqwest.md)
   - [印出函數名稱](rust/print-function-name-dump-stack.md)
   - [criterion](rust/criterion.md)
+  - [Rust的精髓](rust/Rust的精髓.md)
   - [30天深入淺出Rust系列](rust/note.md)
     - [Rust 30 Day](rust/30天深入淺出Rust系列/rust_30_day.md)
     - [變數的所有權與借出變數](rust/30天深入淺出Rust系列/Move_Borrow_Ownership.md)
