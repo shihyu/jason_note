@@ -133,3 +133,31 @@ struct PointListWrapper<'a> {
 - 如果項類型也實現 `Copy` (例如 `[i32; 123456]`)，則所有大小的陣列類型
 - 如果每個元件還實現 `Copy` (例如 `()`，`(i32, bool)`)，則為元組類型
 - 閉包類型，如果它們沒有從環境中捕獲任何值，或者所有此類捕獲的值本身都實現了 `Copy`。 請注意，由共享引用捕獲的變數始終實現 `Copy` (即使引用對象沒有實現)，而由變數引用捕獲的變數從不實現 `Copy`。
+
+
+---
+
+```rust
+#[derive(Debug)]
+struct MyStruct;
+
+impl Copy for MyStruct {
+}
+
+impl Clone for MyStruct {
+    fn clone(&self) -> MyStruct {
+        println!("Cloning MyStruct");
+        *self
+    }
+}
+
+fn main() {
+    let original = MyStruct;
+    let copied = original;
+    let cloned = original.clone();
+
+    println!("Original: {:?}", original);
+    println!("Copied: {:?}", copied);
+    println!("Cloned: {:?}", cloned);
+}
+```
