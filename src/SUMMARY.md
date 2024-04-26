@@ -124,6 +124,7 @@
   - [Python中的wait和notify](python/condition.md)
   - [生產者消費者模式](python/生產者消費者模式.md)
   - [Loguru](python/Loguru.md)
+  - [Cython](python/cython.md)
   - [Python WebSocket長連接心跳與短連接](python/WebSocket_reconnect.md)
   - [bloomrpc](python/bloomrpc.md)
   - [Concurrent futures](python/concurrent.futures.md)
