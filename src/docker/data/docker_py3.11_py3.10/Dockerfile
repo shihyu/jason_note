@@ -11,6 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Add source code in the container
 COPY main.py ./main.py
+COPY test_so ./test_so
 
 # Define container entry point
 ENTRYPOINT ["python", "main.py"]
