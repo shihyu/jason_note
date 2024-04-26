@@ -159,6 +159,7 @@
   - [股海筋肉人](strategy/股海筋肉人.md)
   - [如何避免過擬合](strategy/如何避免過擬合.md)
   - [多空操作術](strategy/多空操作術.md)
+  - [資金控管才是王道](strategy/資金控管才是王道.md)
   - [phcebus](strategy/phcebus/phcebus.md)
     - [菲式思考](strategy/phcebus/菲式思考.md)
     - [買股3心法](strategy/phcebus/買股3心法.md)
