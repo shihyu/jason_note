@@ -112,6 +112,7 @@
   - [Example](go/example.md)
 - [ML](ml/ml.md)
   - [Pytorch](ml/pytorch.md)
+  - [Deap](ml/deap.md)
 - [Python](python/python.md)
   - [Poetry完全入門指南](python/Poetry完全入門指南.md)
   - [搭建gRPC服務](python/搭建gRPC服務.md)
