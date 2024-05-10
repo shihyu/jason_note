@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y vim redis-server wget build-essential &
     cd .. && \
     rm -rf ta-lib ta-lib-0.4.0-src.tar.gz
 
-RUN wget https://repo.anaconda.com/miniconda/Miniconda3-py38_23.1.0-1-Linux-x86_64.sh -O /tmp/miniconda.sh && \
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-py311_24.3.0-0-Linux-x86_64.sh -O /tmp/miniconda.sh && \
     /bin/bash /tmp/miniconda.sh -b -p /opt/conda && \
     rm /tmp/miniconda.sh
 
@@ -22,6 +22,6 @@ RUN pip install -r /tmp/requirements.txt && \
 
 RUN mkdir -p /usr/src/app
 
-COPY *.py /usr/src/app
+# COPY *.py /usr/src/app
 
 WORKDIR /usr/src/app/
