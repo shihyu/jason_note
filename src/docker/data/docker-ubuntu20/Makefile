@@ -3,7 +3,7 @@ IMAGE_NAME = ubuntu-20.04
 IMAGE_VERSION = latest
 
 # 定義主機端資料夾路徑
-HOST_DATA_DIR = ./data
+HOST_DATA_DIR = data
 
 # 建立映像檔
 build:

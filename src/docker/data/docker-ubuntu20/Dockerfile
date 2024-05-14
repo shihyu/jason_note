@@ -1,6 +1,12 @@
 FROM ubuntu:20.04
 
 # Install necessary packages
+RUN apt-get -qq update \
+  && apt-get -qqy --no-install-recommends install dialog apt-utils tzdata \
+  && ln -snf /usr/share/zoneinfo/Asia/Taipei /etc/localtime \
+  && echo "Asia/Taipei" > /etc/timezone
+
+
 RUN apt-get update && apt-get install -y \
     build-essential \
     vim \
