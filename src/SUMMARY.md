@@ -112,6 +112,7 @@
   - [Example](go/example.md)
 - [ML](ml/ml.md)
   - [Pytorch](ml/pytorch.md)
+  - [Pytorch 安裝](ml/pytorch_setup.md)
   - [Deap](ml/deap.md)
   - [簡單解釋梯度下降法](ml/簡單解釋梯度下降法.md)
 - [Python](python/python.md)
