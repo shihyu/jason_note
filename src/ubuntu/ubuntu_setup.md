@@ -49,7 +49,14 @@ sudo apt-get install autoconf automake linux-headers-`uname -r` \
 ##  ubuntu 24.04 package
 
 ```sh
-sudo apt-get install autoconf automake linux-headers-`uname -r`  clang xdot git meld gparted cmake g++ pkg-config unzip xsel terminator universal-ctags cscope htop
+sudo apt-get install autoconf automake linux-headers-`uname -r` \
+clang xdot git meld gparted cmake g++ pkg-config unzip xsel \
+terminator universal-ctags cscope htop libfuse2
+```
+
+## How to make Balena Etcher work in Ubuntu 24.04?
+```sh
+sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 ```
 
 
