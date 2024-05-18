@@ -49,7 +49,7 @@ sudo apt-get install autoconf automake linux-headers-`uname -r` \
 ##  ubuntu 24.04 package
 
 ```sh
-sudo apt-get install autoconf automake linux-headers-`uname -r`  clang xdot git meld gparted cmake g++ pkg-config unzip xsel terminator universal-ctags cscope
+sudo apt-get install autoconf automake linux-headers-`uname -r`  clang xdot git meld gparted cmake g++ pkg-config unzip xsel terminator universal-ctags cscope htop
 ```
 
 
