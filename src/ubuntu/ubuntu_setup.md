@@ -46,6 +46,14 @@ sudo apt-get install autoconf automake linux-headers-`uname -r` \
  libxpm-dev libxt-dev gnome-control-center gettext libtool libtool-bin cmake g++ pkg-config unzip xsel
 ```
 
+##  ubuntu 24.04 package
+
+```sh
+sudo apt-get install autoconf automake linux-headers-`uname -r`  clang xdot git meld gparted cmake g++ pkg-config unzip xsel terminator universal-ctags cscope
+```
+
+
+
 ## foliate 支持.epub，.mobi，.azw和.azw3文件。 它不支持PDF文件。
 
 ```sh
