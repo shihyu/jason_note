@@ -51,7 +51,7 @@ sudo apt-get install autoconf automake linux-headers-`uname -r` \
 ```sh
 sudo apt-get install autoconf automake linux-headers-`uname -r` \
 clang xdot git meld gparted cmake g++ pkg-config unzip xsel \
-terminator universal-ctags cscope htop libfuse2 ghp-import
+terminator universal-ctags cscope htop libfuse2 ghp-import libpcre3-dev
 ```
 
 ## How to make Balena Etcher work in Ubuntu 24.04?
