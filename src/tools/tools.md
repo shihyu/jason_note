@@ -3,7 +3,7 @@
 https://itsfoss.com/rust-cli-tools/
 
 ```sh
-cargo install bottom procs zoxide du-dust exa tealdeer bat difftastic tokei hyperfine fd-find --locked
+cargo install bottom procs zoxide du-dust exa tealdeer bat difftastic tokei hyperfine fd-find sshx --locked
 ```
 
 ```
