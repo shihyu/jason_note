@@ -1,3 +1,27 @@
+
+
+## Docker & Docker-compose  安裝
+
+```sh
+sudo apt install docker.io
+sudo groupadd docker
+sudo usermod -aG docker ${USER}
+sudo chmod 666 /var/run/docker.sock
+sudo service docker restart
+需要退出重新登錄後才會生效
+
+
+
+## docker-compose 
+https://github.com/docker/compose/releases/
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod 755 docker-compose
+```
+
+
+
+---
+
 # Docker 教學
 
 ***docker*實際上,就是一個系統聯合幾個元件一直在欺騙一個處理程序,主要依靠了三個幫兇namespace,*chroot,cgroup*** 
@@ -567,3 +591,4 @@ CMD pserve production.ini
 [Vagrant](https://www.vagrantup.com/downloads.html)[[Vagrant1.8.7](https://releases.hashicorp.com/vagrant/1.8.7/vagrant_1.8.7.dmg)]
 [kubernetes](http://kubernetes.io/docs/getting-started-guides/)
 [minikube](http://kubernetes.io/docs/getting-started-guides/minikube/#install-minikube)
+

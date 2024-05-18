@@ -191,6 +191,7 @@
   - [Example](strategy/example.md)
   - [Other](strategy/other.md)
   - [Sample](strategy/sample.md)
+  - [shioaji 模擬](strategy/shioaji.md)
   - [Grid](strategy/grid.md)
   - [pine-script](strategy/pine-script.md)
   - [拾人牙慧](strategy/拾人牙慧.md)
