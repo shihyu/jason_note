@@ -116,10 +116,10 @@ def compare_data(finmind_api):
 
 
 if __name__ == "__main__":
-    token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkYXRlIjoiMjAyMy0wNC0wMyAxOTo1ODoyOSIsInVzZXJfaWQiOiJ5YW9zaGloeXUiLCJpcCI6IjU4LjExNC4yMi4xNDYifQ.BjoBlPla2vY0W8y3i_2m_VGtGbef0SW2r-2KjPaBOfQ"
+    token = ""
     finmind_api = FinmindAPI(token=token)
     finlab.login(
-        "dyrZWjkJWYCrHnLrnfj3kI7BCTw/jLBDHfsAc7RI8EwcUs/+dv70ktgffV867g9v#vip_m"
+        ""
     )
     # compare_data(finmind_api)
     # input()
