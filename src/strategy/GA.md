@@ -1,6 +1,6 @@
 ## GA + Vectotbt 
 
-
+https://www.youtube.com/watch?v=W-jxEZXu-pQ
 
 ```py
 import numpy as np
