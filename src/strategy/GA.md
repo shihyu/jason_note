@@ -142,6 +142,261 @@ if __name__ == "__main__":
     print(stats)
 ```
 
+## GA_Six_FA_Finlab
+
+```python
+from finlab import data
+from finlab.backtest import sim
+from functools import reduce
+from deap import base, creator, tools
+import json
+import finlab
+import numpy as np
+import pandas as pd
+import random
+import multiprocessing
+import warnings
+
+warnings.filterwarnings("ignore")
+
+
+def eval(index_list, df_list, eval_dict):
+    # Cache:
+    id = "".join([str(value) for value in index_list])
+    if id in eval_dict:
+        return eval_dict[id]
+    else:
+        # Filter the MyClass instances which are selected (index == 1)
+        selected_dfs = [df for index, df in zip(index_list, df_list) if index == 1]
+
+        # If no DataFrames are selected, return an empty DataFrame
+        if not selected_dfs:
+            result = pd.DataFrame()
+        else:
+            # Perform the intersection operation on the selected DataFrames using reduce
+            result = reduce(lambda x, y: x & y, selected_dfs)
+
+        if result.empty:
+            value = 0
+        else:
+            # 年化報酬率 (daily_mean)
+            # 年化夏普率 (daily_sharpe)
+            # 年化所提諾率 (daily_sortino)
+            # 最大回撤率 (max_drawdown)
+            report = sim(result, resample="W", market="TW_STOCK", upload=False)
+            日索提諾 = report.get_stats()["daily_sortino"]
+            max_drawdown = report.get_stats()["max_drawdown"]
+            daily_mean = report.get_stats()["daily_mean"]
+            print(f"日索提諾: {日索提諾}")
+            print(f"最大回撤: {max_drawdown}")
+            print(f"年報酬: {daily_mean}")
+            value = daily_mean / abs(max_drawdown) * 日索提諾
+            print(f"fitness value: {value}")
+            # metrics = report.get_metrics()
+            # value = (
+            #    metrics["profitability"]["annualReturn"]
+            #    / abs(metrics["risk"]["maxDrawdown"])
+            # ) * metrics["ratio"]["sortinoRatio"]
+
+        eval_dict[id] = (value,)
+        return (value,)  # Return a tuple
+
+
+def main(Population_size, Generation_num, Threshold, df_list):
+    # Initialization
+    Cond_num = len(df_list)
+
+    # Creator
+    creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+    creator.create("Individual", list, fitness=creator.FitnessMax)
+
+    # Toolbox
+    toolbox = base.Toolbox()
+    # Attribute generator
+    toolbox.register("attr_bool", random.randint, 0, 1)
+    # Structure initializers
+    toolbox.register(
+        "individual", tools.initRepeat, creator.Individual, toolbox.attr_bool, Cond_num
+    )
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+    # Operators
+    num_cpus = multiprocessing.cpu_count() - 1
+    pool = multiprocessing.Pool(processes=num_cpus)
+    toolbox.register("map", pool.imap)
+
+    # Use Manager to create a shared dictionary
+    manager = multiprocessing.Manager()
+    eval_dict = manager.dict()
+
+    # Pass eval_dict to the evaluate function
+    toolbox.register("evaluate", eval, df_list=df_list, eval_dict=eval_dict)
+    # 交配
+    # cxOnePoint: 隨機選取一個點，將這個點之後的基因交換
+    # cxTwoPoint: 隨機選取兩個點，將這兩個點之間的基因交換
+    # cxUniform: 對每個基因以 indpb 的機率進行交換
+    toolbox.register("mate", tools.cxTwoPoint)
+    # 變異
+    # mutFlipBit: 對每個位元以 indpb 的機率進行反轉 0->1, 1->0
+    toolbox.register("mutate", tools.mutFlipBit, indpb=0.05)
+    # 選擇
+    # selTournament: 隨機選取 tournsize 個個體，再從這 tournsize 個個體中選擇適應度最好的個體
+    # SelRoulette: 依照適應度的比例選擇個體
+    # selBest: 選擇適應度最好的個體
+    toolbox.register("select", tools.selTournament, tournsize=3)
+
+    pop = toolbox.population(n=Population_size)
+
+    # Evaluate the initial population
+    fitnesses = list(toolbox.map(toolbox.evaluate, pop))
+    for ind, fit in zip(pop, fitnesses):
+        ind.fitness.values = fit
+
+    CXPB, MUTPB = 0.5, 0.2
+    g = 0
+
+    # Initialize fits list
+    fits = [ind.fitness.values[0] for ind in pop]
+
+    while max(fits) < Threshold and g < Generation_num:
+        g += 1
+        print("-- Generation %i --" % g)
+
+        offspring = toolbox.select(pop, len(pop))
+        offspring = list(pool.imap(toolbox.clone, offspring))
+
+        for child1, child2 in zip(offspring[::2], offspring[1::2]):
+            if random.random() < CXPB:
+                toolbox.mate(child1, child2)
+                del child1.fitness.values
+                del child2.fitness.values
+
+        for mutant in offspring:
+            if random.random() < MUTPB:
+                toolbox.mutate(mutant)
+                del mutant.fitness.values
+
+        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+        fitnesses = list(toolbox.map(toolbox.evaluate, invalid_ind))
+
+        for ind, fit in zip(invalid_ind, fitnesses):
+            ind.fitness.values = fit
+
+        pop[:] = offspring
+
+        fits = [ind.fitness.values[0] for ind in pop]
+
+        length = len(pop)
+        mean = sum(fits) / length
+        sum2 = sum(x * x for x in fits)
+        std = abs(sum2 / length - mean**2) ** 0.5
+
+        print("  Min %s" % min(fits))
+        print("  Max %s" % max(fits))
+        print("  Avg %s" % mean)
+        print("  Std %s" % std)
+
+    return dict(eval_dict)
+
+
+if __name__ == "__main__":
+    finlab.login(
+        ""
+    )
+
+    # Data preparation
+    close = data.get("price:收盤價")
+    monthly_revenue_grow = data.get("monthly_revenue:去年同月增減(%)").fillna(0)
+    operating_profit = data.get("fundamental_features:營業利益率")
+    net_income_grow = data.get("fundamental_features:稅後淨利成長率")
+    eps = data.get("financial_statement:每股盈餘")
+    stock = data.get("financial_statement:存貨")
+    stock_turnover = data.get("fundamental_features:存貨週轉率").replace(
+        [np.nan, np.inf], 0
+    )
+    season_revenue = data.get("financial_statement:營業收入淨額")
+    fcf_in = data.get("financial_statement:投資活動之淨現金流入_流出")
+    fcf_out = data.get("financial_statement:營業活動之淨現金流入_流出")
+
+    # Processing
+    # Revenue growth
+    monthly_revenue_grow_aa = (
+        ((monthly_revenue_grow > 0).sustain(6))
+        & (monthly_revenue_grow.average(6) > 25)
+        & (monthly_revenue_grow.rise())
+    )
+    # Profit rate
+    operating_profit_stable = (
+        ((operating_profit.diff() / operating_profit.shift().abs()).rolling(3).min())
+        * 100
+    ) > -20
+    operating_profit_aa_1 = operating_profit_stable & (operating_profit.average(4) > 15)
+    operating_profit_aa_2 = operating_profit_stable & (
+        (operating_profit.average(4) <= 15)
+        & ((operating_profit.average(4) > 10))
+        & operating_profit.rise()
+    )
+    operating_profit_aa = operating_profit_aa_1 | operating_profit_aa_2
+    # Profit growth
+    net_income_grow_aa_1 = ((net_income_grow > 0).sustain(3)) & (net_income_grow.rise())
+    net_income_grow_aa_2 = (net_income_grow > 50).sustain(3)
+    net_income_grow_aa = net_income_grow_aa_1 | net_income_grow_aa_2
+    # Profit strength
+    eps_aa = (eps.rolling(4).sum() > 5) & (eps > 0)
+    # Inventory turnover
+    stock_low = (
+        (stock_turnover <= 0)
+        | (stock_turnover > 10)
+        | ((stock / season_revenue) <= 0.04)
+    )
+    # stock_low = ~stock_low
+    # stock_low = stock_low.apply(lambda x: -x)
+    stock_turnover_stable = (
+        stock_turnover.diff() / stock_turnover.shift().abs()
+    ).rolling(3).min() * 100 > -20
+    stock_turnover_cumulate_loss_gt_m20 = (stock_turnover.fall().sustain(3, 2)) & (
+        stock_turnover.pct_change()[stock_turnover.pct_change() < 0].rolling(2).sum()
+        * 100
+        < -20
+    )
+    stock_turnover_aa = (
+        # (~stock_low)
+        stock_low.apply(lambda x: -x)
+        & stock_turnover_stable
+        & (stock_turnover.average(4) > 1.5)
+        # & ~(stock_turnover_cumulate_loss_gt_m20)
+        & stock_turnover_cumulate_loss_gt_m20.apply(lambda x: -x)
+    )
+    # Cash flow
+    fcf = fcf_in + fcf_out
+    fcf_aa = fcf.rolling(6).min() > 0
+
+    # Moving average
+    sma5 = close.average(5)
+    sma20 = close.average(20)
+    sma60 = close.average(60)
+    sma240 = close.average(240)
+    long_sma = (close > sma5) & (sma5 > sma20) & (sma20 > sma60) & (sma60 > sma240)
+
+    df_list = [
+        monthly_revenue_grow_aa,
+        operating_profit_aa,
+        net_income_grow_aa,
+        eps_aa,
+        stock_turnover_aa,
+        fcf_aa,
+        long_sma,
+    ]
+
+    # Example usage:
+    Population_size = 30
+    Generation_num = 5
+    Threshold = 30
+
+    result = main(Population_size, Generation_num, Threshold, df_list)
+    print(json.dumps(result, indent=4))
+```
+
 ---
 
 ## 基於遺傳演算法（deap）的配詞問題與deap框架
