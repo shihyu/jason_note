@@ -114,6 +114,7 @@
   - [Pytorch](ml/pytorch.md)
   - [Pytorch 安裝](ml/pytorch_setup.md)
   - [Deap](ml/deap.md)
+  - [初探基因演算法-用 OneMax 問題示範](ml/初探基因演算法.md)
   - [簡單解釋梯度下降法](ml/簡單解釋梯度下降法.md)
 - [Python](python/python.md)
   - [Poetry完全入門指南](python/Poetry完全入門指南.md)
