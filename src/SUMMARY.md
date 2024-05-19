@@ -185,6 +185,7 @@
   - [JG](strategy/Book/JG.md)
   - [BNF](strategy/bnf.md)
   - [CIS](strategy/cis.md)
+  - [GA](strategy/GA.md)
   - [Stock](strategy/stock.md)
   - [Resource](strategy/note.md)
   - [Nansen](strategy/nansen.md)
