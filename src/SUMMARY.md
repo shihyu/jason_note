@@ -116,6 +116,8 @@
   - [Deap](ml/deap.md)
   - [初探基因演算法-用 OneMax 問題示範](ml/初探基因演算法.md)
   - [簡單解釋梯度下降法](ml/簡單解釋梯度下降法.md)
+  - [梯度下降法 gradient descent](ml/梯度下降法_gradient_descent.md)
+  - [梯度最佳解相關算法](ml/梯度最佳解相關算法.md)
 - [Python](python/python.md)
   - [Poetry完全入門指南](python/Poetry完全入門指南.md)
   - [搭建gRPC服務](python/搭建gRPC服務.md)
