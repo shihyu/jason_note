@@ -1,3 +1,151 @@
+## test_func_nb_order
+
+```python
+from numba import njit
+from binance.client import Client
+from dateutil import relativedelta
+from vectorbt.portfolio.enums import (
+    Direction,
+    NoOrder,
+    OrderStatus,
+    OrderSide,
+)
+from vectorbt.portfolio import nb
+import datetime as dt
+import json
+import os
+import numpy as np
+import pandas as pd
+import vectorbt as vbt
+import warnings
+
+warnings.filterwarnings("ignore")
+
+
+@njit
+def pre_sim_func_nb(c):
+    # We need to define stop price per column once
+    stop_price = np.full(c.target_shape[1], np.nan, dtype=np.float_)
+    return (stop_price,)
+
+
+@njit
+def order_func_nb(c, stop_price, entries, exits, size):
+    # Select info related to this order
+    entry_now = nb.get_elem_nb(c, entries)
+    exit_now = nb.get_elem_nb(c, exits)
+    size_now = nb.get_elem_nb(c, size)
+    price_now = nb.get_elem_nb(c, c.close)
+    stop_price_now = stop_price[c.col]
+
+    # Our logic
+    if entry_now:
+        if c.position_now == 0:
+            return nb.order_nb(
+                size=size_now, price=price_now, direction=Direction.LongOnly
+            )
+    elif exit_now or price_now >= stop_price_now:
+        if c.position_now > 0:
+            return nb.order_nb(
+                size=-size_now, price=price_now, direction=Direction.LongOnly
+            )
+    return NoOrder
+
+
+@njit
+def post_order_func_nb(c, stop_price, stop):
+    # Same broadcasting as for size
+    stop_now = nb.get_elem_nb(c, stop)
+
+    if c.order_result.status == OrderStatus.Filled:
+        if c.order_result.side == OrderSide.Buy:
+            # Position entered: Set stop condition
+            stop_price[c.col] = (1 + stop_now) * c.order_result.price
+        else:
+            # Position exited: Remove stop condition
+            stop_price[c.col] = np.nan
+
+
+def simulate(close, entries, exits, size, threshold):
+    return vbt.Portfolio.from_order_func(
+        close,
+        order_func_nb,
+        vbt.Rep("entries"),
+        vbt.Rep("exits"),
+        vbt.Rep("size"),  # order_args
+        pre_sim_func_nb=pre_sim_func_nb,
+        post_order_func_nb=post_order_func_nb,
+        post_order_args=(vbt.Rep("threshold"),),
+        broadcast_named_args=dict(  # broadcast against each other
+            entries=entries, exits=exits, size=size, threshold=threshold
+        ),
+    )
+
+
+def build_df(klines):
+    cols = [
+        "timestamp",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "close_time",
+        "quote_av",
+        "trades",
+        "tb_base_av",
+        "tb_quote_av",
+        "ignore",
+    ]
+    df = pd.DataFrame(klines, columns=cols)
+    df["timestamp"] = [dt.datetime.fromtimestamp(x / 1000.0) for x in df["timestamp"]]
+    df.set_index("timestamp", inplace=True)
+    df = df[["open", "high", "low", "close", "volume"]]
+    df[["open", "high", "low", "close", "volume"]] = df[
+        ["open", "high", "low", "close", "volume"]
+    ].astype(float)
+    return df
+
+
+def test():
+    close = pd.Series([10, 11, 12, 13, 14])
+    entries = pd.Series([True, True, False, False, False])
+    exits = pd.Series([False, False, False, True, True])
+    pf = simulate(close, entries, exits, np.inf, 0.1)  # .asset_flow()
+    print(pf.asset_flow())
+    print(pf.stats())
+
+
+if __name__ == "__main__":
+    # test()
+
+    coin = "BTCUSDT"
+    configPath = os.environ["HOME"] + "/.mybin/jason/binance_login.txt"
+    KLINE_INTERVAL = Client.KLINE_INTERVAL_1MINUTE
+    with open(configPath, "r") as f:
+        kw_login = json.loads(f.read())
+
+    start_time = dt.datetime.now()
+    client = Client(api_key=kw_login["PUBLIC"], api_secret=kw_login["SECRET"])
+    klines = client.get_historical_klines(
+        symbol=coin,
+        interval=KLINE_INTERVAL,
+        start_str=(start_time - relativedelta.relativedelta(months=1)).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        end_str=start_time.strftime("%Y-%m-%d %H:%M:%S"),
+    )
+    df = build_df(klines)
+    price = df["close"]
+    fast_ma = vbt.MA.run(price, 5)
+    slow_ma = vbt.MA.run(price, 50)
+    entries = fast_ma.ma_crossed_above(slow_ma)
+    exits = fast_ma.ma_crossed_below(slow_ma)
+    pf = simulate(price, entries, exits, np.inf, 0.1)  # .asset_flow()
+    print(pf.stats())
+```
+
+
 ## from_orders
 
 ```python
