@@ -100,7 +100,7 @@
 
 
 
-```
+```python
 class Foo(list):
     spam = 1
 
