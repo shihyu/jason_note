@@ -814,50 +814,56 @@ print('當前最優解：'+ str(x) + '\t對應的函數值為：' + str(resultPo
 
 ```python
 import random
-
+import numpy as np
 from deap import creator, base, tools
 from scipy.stats import bernoulli
 
-random.seed(42) # 確保結果可以復現
-# 描述問題
-creator.create('FitnessMax', base.Fitness, weights=(1.0,)) # 單目標，最大值問題
-creator.create('Individual', list, fitness = creator.FitnessMax) # 編碼繼承list類
+# 設定隨機種子以確保結果可復現
+random.seed(42)
 
-# 二進制個體編碼
-GENE_LENGTH = 26 # 需要26位編碼
+# 定義問題為單目標最大化
+creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+creator.create("Individual", list, fitness=creator.FitnessMax)
 
+# 定義基因編碼長度和工具箱
+GENE_LENGTH = 26
 toolbox = base.Toolbox()
-toolbox.register('binary', bernoulli.rvs, 0.5) #註冊一個Binary的alias，指向scipy.stats中的bernoulli.rvs，機率為0.5
-toolbox.register('individual', tools.initRepeat, creator.Individual, toolbox.binary, n = GENE_LENGTH) #用tools.initRepeat生成長度為GENE_LENGTH的Individual
+toolbox.register("binary", bernoulli.rvs, 0.5)
+toolbox.register(
+    "individual", tools.initRepeat, creator.Individual, toolbox.binary, n=GENE_LENGTH
+)
 
-# 評價函數
+
+# 定義適應度評價函數
 def eval(individual):
-    num = int(''.join([str(_) for _ in individual]), 2) # 解碼到10進制
-    x = -30 + num * 60 / (2**26 - 1) # 對應回-30，30區間
-    return ((np.square(x) + x) * np.cos(2*x) + np.square(x) + x),
-toolbox.register('evaluate', eval)
+    num = int("".join([str(_) for _ in individual]), 2)
+    x = -30 + num * 60 / (2**26 - 1)
+    return (((x**2 + x) * np.cos(2 * x) + x**2 + x),)
 
-# 生成初始族群
-N_POP = 100 # 族群中的個體數量
-toolbox.register('population', tools.initRepeat, list, toolbox.individual)
-pop = toolbox.population(n = N_POP)
 
-# 評價初始族群
+toolbox.register("evaluate", eval)
+
+# 初始化族群
+N_POP = 100
+toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+pop = toolbox.population(n=N_POP)
+
+# 評價初始族群適應度
 fitnesses = map(toolbox.evaluate, pop)
 for ind, fit in zip(pop, fitnesses):
     ind.fitness.values = fit
 
-# 進化迭代
-N_GEN = 50 # 迭代代數
-CXPB = 0.5 # 交叉機率
-MUTPB = 0.2 # 突變機率
+# 設定遺傳演算法參數
+N_GEN = 50  # 最大代數
+CXPB = 0.5  # 交叉概率
+MUTPB = 0.2  # 突變概率
 
-# 註冊進化過程需要的工具：配種選擇、交叉、突變
-toolbox.register('tourSel', tools.selTournament, tournsize = 2) # 註冊Tournsize為2的錦標賽選擇
-toolbox.register('crossover', tools.cxUniform)
-toolbox.register('mutate', tools.mutFlipBit)
+# 註冊遺傳運算子
+toolbox.register("tourSel", tools.selTournament, tournsize=2)
+toolbox.register("crossover", tools.cxUniform)
+toolbox.register("mutate", tools.mutFlipBit)
 
-# 用資料記錄演算法迭代過程
+# 設定記錄演算法狀態
 stats = tools.Statistics(key=lambda ind: ind.fitness.values)
 stats.register("avg", np.mean)
 stats.register("std", np.std)
@@ -865,38 +871,41 @@ stats.register("min", np.min)
 stats.register("max", np.max)
 logbook = tools.Logbook()
 
+# 開始遺傳迭代
 for gen in range(N_GEN):
-    # 配種選擇
-    selectedTour = toolbox.tourSel(pop, N_POP) # 選擇N_POP個體
-    selectedInd = list(map(toolbox.clone, selectedTour)) # 複製個體，供交叉變異用
-    # 對選出的育種族群兩兩進行交叉，對於被改變個體，刪除其適應度值
+
+    # 選擇育種族群
+    selectedTour = toolbox.tourSel(pop, N_POP)
+    selectedInd = list(map(toolbox.clone, selectedTour))
+
+    # 交叉
     for child1, child2 in zip(selectedInd[::2], selectedInd[1::2]):
         if random.random() < CXPB:
             toolbox.crossover(child1, child2, 0.5)
             del child1.fitness.values
             del child2.fitness.values
-      
-    # 對選出的育種族群進行變異，對於被改變個體，刪除適應度值
+
+    # 突變
     for mutant in selectedInd:
         if random.random() < MUTPB:
             toolbox.mutate(mutant, 0.5)
             del mutant.fitness.values
-      
-    # 對於被改變的個體，重新評價其適應度
+
+    # 重新評價被改變個體
     invalid_ind = [ind for ind in selectedInd if not ind.fitness.valid]
     fitnesses = map(toolbox.evaluate, invalid_ind)
     for ind, fit in zip(invalid_ind, fitnesses):
         ind.fitness.values = fit
-    
-    # 完全重插入
+
+    # 更新族群
     pop[:] = selectedInd
-    
-    # 記錄資料
+
+    # 記錄當代狀態
     record = stats.compile(pop)
     logbook.record(gen=gen, **record)
 
-# 輸出計算過程
-logbook.header = 'gen',"avg", "std", 'min', "max"
+# 輸出演算過程記錄
+logbook.header = "gen", "avg", "std", "min", "max"
 print(logbook)
 ```
 
