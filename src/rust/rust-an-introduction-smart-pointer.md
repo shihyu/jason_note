@@ -233,9 +233,9 @@ let mut p = Rc::new(10);
 *p = 20; // 錯誤
 ```
 
-為什麼不能改變 `Rc` 指向的內容呢？我們回想一下 Rust 對參考設下的限制，可以了解它背後的設計思維：
+為什麼不能改變 `Rc` 指向的內容呢？我們回想一下 Rust 對參考設下的限制，可以瞭解它背後的設計思維：
 
-> Rust 在編譯時會保證，任何變數經過取址後，要嘛同時有許多個 immutable borrow，或是只存在唯一一個 mutable borrow，不允許兩種取址方法同時存在，也不允許有多個 mutable borrow。
+> Rust 在編譯時會保證，任何變數經過取址後，要嘛同時有許多個 immutable borrow，或是隻存在唯一一個 mutable borrow，不允許兩種取址方法同時存在，也不允許有多個 mutable borrow。
 
 `Rc` 是指向某物件的智慧指標，因此廣義上也屬於參考型別。同時 `Rc` 允許多個指標指向同一個物件，因此它必需是 immutable borrow，否則就違反了 Rust 對參考型別所設下的原則。如果你對這個概念還有點模糊，不妨考慮以下的例子：
 
@@ -323,7 +323,7 @@ error: borrowed value does not live long enough
   = note: consider using a `let` binding to increase its lifetime
 ```
 
-錯誤的原因在於 `RefCell` 使用 RAII 的方式來管理 borrow 狀態。當你呼叫 `borrow()` 或 `borrow_mut()` 時，`RefCell` 會創造出一個代理物件 (proxy object)，讓你用這個代理物件存取其內容物。而當這個代理物件的生命周期結束時，其解構式會恢復 `RefCell` 內的 borrow 狀態，讓你下次可以繼續對 `RefCell` 呼叫 `borrow()` 或 `borrow_mut()`。
+錯誤的原因在於 `RefCell` 使用 RAII 的方式來管理 borrow 狀態。當你呼叫 `borrow()` 或 `borrow_mut()` 時，`RefCell` 會創造出一個代理物件 (proxy object)，讓你用這個代理物件存取其內容物。而當這個代理物件的生命週期結束時，其解構式會恢復 `RefCell` 內的 borrow 狀態，讓你下次可以繼續對 `RefCell` 呼叫 `borrow()` 或 `borrow_mut()`。
 
 然而，在上述的範例中，我們直接對 `borrow()` 的回傳值呼叫 `iter()`，而沒有把代理物件存在某個變數中。因此代理物件會被放在暫時變數中，並在這個運算式結束時解構，恢復 `RefCell` 的 borrow 狀態。然而，`iter()` 的結果卻還存在 `it` 這個變數內，並且指向內容物，這超出了 `RefCell` 所設下的保護傘。
 
@@ -361,14 +361,14 @@ Rc 額外配置了兩個數字的空間
 
 `Arc` 的結構與 `Rc` 相同，但在增減參考計數時使用原子操作，因此複製或消減時的時間成本會比 `Rc` 更高。
 
-另外，`Cell<T>` 占用的空間與 `T` 完全相同，而 `RefCell<T>` 則需要額外一個空間記錄 borrow 狀態。
+另外，`Cell<T>` 佔用的空間與 `T` 完全相同，而 `RefCell<T>` 則需要額外一個空間記錄 borrow 狀態。
 
 ![](images/cell.svg)
-Cell 不會占用額外空間，RefCell 額外占用一個數字的空間
+Cell 不會佔用額外空間，RefCell 額外佔用一個數字的空間
 
 ## 結語
 
-這篇文章介紹了如何在 Rust 中配置 heap 上的記憶體，並且使用智慧指標以確保程式正確回收資源。相較於其它語言，Rust 在這部份的學習曲線很陡峭：只是要分享資料而已，為什麼搞得這麼複雜呢？
+這篇文章介紹瞭如何在 Rust 中配置 heap 上的記憶體，並且使用智慧指標以確保程式正確回收資源。相較於其它語言，Rust 在這部份的學習曲線很陡峭：只是要分享資料而已，為什麼搞得這麼複雜呢？
 
 其原因在於 Rust 儘可能提供你選擇。C++ 發明人 Bjarne Stroustrup 曾說明過 C++ 的零成本抽象化原則 (zero-overhead rule)：若你沒用到某個功能，就不需要為它付出時間或空間上的成本；若你確實用了某個抽象化的功能，那麼編譯器幫你產生的程式碼至少要和你手寫的最佳化程式碼表現得一樣好。在這個設計原則之下，追求執行效率的程式設計師才能安心使用語言提供的高階抽象功能，讓程式容易維護，又能保有良好的效能。
 

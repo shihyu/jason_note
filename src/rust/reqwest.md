@@ -1,4 +1,4 @@
-## Rust 使用 reqwest 发送 HTTP 请求
+## Rust 使用 reqwest 發送 HTTP 請求
 
 ```rust
 use reqwest;

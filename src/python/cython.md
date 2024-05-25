@@ -240,7 +240,7 @@ setup(
     double sin(double x)
 ```
 
-- 此處聲明了sin()函數，這時我們便可在 Cython 代碼中使用這個函數，並且讓 Cython 生成一份包括math.h 標頭檔的 C 代碼。C 編譯器在編譯時能夠在math.h 中找到原始的函式宣告。但是 Cython 不能解析math.h 並需要一個單獨的定義。
+- 此處聲明瞭sin()函數，這時我們便可在 Cython 代碼中使用這個函數，並且讓 Cython 生成一份包括math.h 標頭檔的 C 代碼。C 編譯器在編譯時能夠在math.h 中找到原始的函式宣告。但是 Cython 不能解析math.h 並需要一個單獨的定義。
 - 正如math 庫中的sin()函數一樣，只要 Cython 生成的模組正確的連結了共用庫或靜態程式庫，我們就可以聲明並調用任意的 C 庫函數。
 - 注意，只要簡單地通過cpdef 聲明，你就能從 Cython 模組中匯出一個外部 C 函數。而且生成了一個 Python 擴展，使得我們可以在 Python 代碼中直接訪問到 C 函數sin()。
 
@@ -366,7 +366,7 @@ with cython.boundscheck(False):
   }
 ```
 
-- 在控制台中輸入
+- 在控制檯中輸入
 
 ```python
 >>> a = np.arange(11)
@@ -414,7 +414,7 @@ def memview_object(int[:, :] a):
     return a[::2, ::2]
 ```
 
-- 在控制台中執行如下代碼：
+- 在控制檯中執行如下代碼：
 
   ```python
   b = np.arange(24).reshape(6, 4)

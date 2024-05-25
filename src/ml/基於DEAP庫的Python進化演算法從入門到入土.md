@@ -1,4 +1,4 @@
-**這次的部落格，雖然參考了上述的連結，但是裡面包含了函數講解 ，可以快速入門，上手。**
+**這次的部落格，雖然參考了上述的連結，但是裡麵包含了函數講解 ，可以快速入門，上手。**
 
 ## 前沿
 
@@ -76,7 +76,7 @@
 
 在建立單目標最佳化問題時，weights用來指示最大化和最小化。此處-1.0即代表問題是一個最小化問題，對於最大化，應將weights改為正數，如1.0。
 
-另外即使是單目標最佳化，weights也需要是一個tuple，以保證單目標和[多目標最佳化](https://so.csdn.net/so/search?q=多目标优化&spm=1001.2101.3001.7020)時資料結構的統一。
+另外即使是單目標最佳化，weights也需要是一個tuple，以保證單目標和[多目標最佳化](https://so.csdn.net/so/search?q=多目標優化&spm=1001.2101.3001.7020)時資料結構的統一。
 
 對於單目標最佳化問題，weights 的絕對值沒有意義，只要符號選擇正確即可。
 
@@ -238,7 +238,7 @@ def register(self, alias, function, *args, **kargs):
 
 第三個參數：實參組成字典傳進來
 
-2、觀察random.random函數，作為第二個參數，function，由於random.random函數里面不需要傳參，所以就沒有了後續的內容
+2、觀察random.random函數，作為第二個參數，function，由於random.random函數裡面不需要傳參，所以就沒有了後續的內容
 
 #### ***\*toolbox.register('Individual', tools.initRepeat, creator.Individual, toolbox.Attr_float, n=IND_SIZE)\**講解**
 
@@ -273,7 +273,7 @@ def initRepeat(container, func, n):
 
 3、觀察***\*toolbox.register與tools.initRepeat整合在一起\****
 
-這個函數里面一共包含了5個實參，那麼如何劃分呢？裡面是對象，套，對象
+這個函數裡面一共包含了5個實參，那麼如何劃分呢？裡面是對象，套，對象
 
 首先***\*toolbox.register\****裡面需要三個參數
 
@@ -319,7 +319,7 @@ def initRepeat(container, func, n):
 
 
 
-以隨機生成一個長度為10的二進制編碼為例，本身DEAP庫中沒有內建的Binary encoding，我們可以借助Scipy模組中的伯努利分佈來生成一個二進制序列。
+以隨機生成一個長度為10的二進制編碼為例，本身DEAP庫中沒有內建的Binary encoding，我們可以藉助Scipy模組中的伯努利分佈來生成一個二進制序列。
 
 ```python
 
@@ -349,7 +349,7 @@ print(ind1)
 
  **toolbox.register('Individual', tools.initRepeat, creator.Individual, toolbox.Binary, n = GENE_LENGTH)**
 
-上面已經說明了**toolbox.register函數的**具體意思。這裡具體說明上述整理的意思：首先**tools.initRepeat** 裡是一個重複性的過程，具體重複的函數是**toolbox.Binary，**同時承載這個函數的是容器**creator.Individual，**重複了**n次toolbox.Binary，**放入容器**creator.Individual**中。
+上面已經說明瞭**toolbox.register函數的**具體意思。這裡具體說明上述整理的意思：首先**tools.initRepeat** 裡是一個重複性的過程，具體重複的函數是**toolbox.Binary，**同時承載這個函數的是容器**creator.Individual，**重複了**n次toolbox.Binary，**放入容器**creator.Individual**中。
 
 最後通過 ind1 = toolbox.Individual() 完成了實例化操作
 
@@ -382,7 +382,7 @@ print(ind1)
 
 ![img](images/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAQ2hhb0ZlaUxp,size_20,color_FFFFFF,t_70,g_se,x_16)
 
- ***\*tools.initIterate\**** 裡面包含了容器和生成器，具體的來講，容器指的是（creator.Individual），生成器指的是（toolbox.Indices  -> 具體指的是random.sample(range(IND_SIZE),IND_SIZE))
+ ***\*tools.initIterate\**** 裡麵包含了容器和生成器，具體的來講，容器指的是（creator.Individual），生成器指的是（toolbox.Indices  -> 具體指的是random.sample(range(IND_SIZE),IND_SIZE))
 
 ![img](images/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAQ2hhb0ZlaUxp,size_20,color_FFFFFF,t_70,g_se,x_16)
 
@@ -565,7 +565,7 @@ pop = toolbox.population(n=5)
 
 該函數的最大值應該出現在![28.309042309042308](https://math.jianshu.com/math?formula=28.309042309042308)處，值為![1657.4235763265594](https://math.jianshu.com/math?formula=1657.4235763265594)。
 
-可以看到該函數有很多局部極值作為干擾項，如果進化演算法過早收斂，很容易陷入某個局部最優。
+可以看到該函數有很多局部極值作為幹擾項，如果進化演算法過早收斂，很容易陷入某個局部最優。
 
 ### 問題的編碼與解碼
 

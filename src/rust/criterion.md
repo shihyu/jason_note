@@ -85,13 +85,13 @@ game
     └── main.rs
 ```
 
-在進一步探討之前，有必要討論微基準測試和宏碁准測試之間的區別。
+在進一步探討之前，有必要討論微基準測試和宏碁準測試之間的區別。
 
-## 微基準測試 vs 宏碁准測試
+## 微基準測試 vs 宏碁準測試
 
-有兩大類軟體基準測試：微基準測試和宏碁准測試。 微基準測試的操作層次和單元測試類似。 例如，為一個確定單個數字是 `Fizz`、 `Buzz`，還是 `FizzBuzz` 的函數設立的基準測試，就是一個微基準測試。 宏碁准測試的操作層次和整合測試類似。 例如，為一函數設立的基準測試，該函數可以玩完整個 FizzBuzz 遊戲，從 `1` 到 `100`，這就是一個宏碁准測試。
+有兩大類軟體基準測試：微基準測試和宏碁準測試。 微基準測試的操作層次和單元測試類似。 例如，為一個確定單個數字是 `Fizz`、 `Buzz`，還是 `FizzBuzz` 的函數設立的基準測試，就是一個微基準測試。 宏碁準測試的操作層次和整合測試類似。 例如，為一函數設立的基準測試，該函數可以玩完整個 FizzBuzz 遊戲，從 `1` 到 `100`，這就是一個宏碁準測試。
 
-通常，儘可能在最低的抽象等級進行測試是最好的。 在基準測試的情況下，這使得它們更易於維護， 並有助於減少測量中的噪聲。 然而，就像有一些端到端測試對於健全性檢查整個系統根據預期組合在一起非常有用一樣， 擁有宏碁准測試對於確保您的軟體中的關鍵路徑保持高性能也非常有用。
+通常，儘可能在最低的抽象等級進行測試是最好的。 在基準測試的情況下，這使得它們更易於維護， 並有助於減少測量中的噪聲。 然而，就像有一些端到端測試對於健全性檢查整個系統根據預期組合在一起非常有用一樣， 擁有宏碁準測試對於確保您的軟體中的關鍵路徑保持高性能也非常有用。
 
 ## 在 Rust 中進行基準測試
 
@@ -194,8 +194,8 @@ criterion_main!(benches);
 - 從我們的`game`包中匯入`play_game`函數。
 - 建立一個名為`bench_play_game`的函數，它接受一個對`Criterion`的可變引用。
 - 使用`Criterion`實例（`c`）來建立一個名為`bench_play_game`的基準測試。
-- 然後使用基準測試運行器（`b`）來多次運行我們的宏碁准測試。
-- 在一個”黑箱”中運行我們的宏碁准測試，這樣編譯器就不會最佳化我們的程式碼。
+- 然後使用基準測試運行器（`b`）來多次運行我們的宏碁準測試。
+- 在一個”黑箱”中運行我們的宏碁準測試，這樣編譯器就不會最佳化我們的程式碼。
 - 從`1`到`100`包括，進行迭代。
 - 對於每一個數字，呼叫`play_game`，設定`print`為`false`。
 
@@ -258,7 +258,7 @@ FizzBuzzFibonacci的規則如下：
 > - 對於是斐波那契數列的數字，只列印 `Fibonacci`
 > - 對於所有其他的，列印該數
 
-[斐波那契數列](https://zh.wikipedia.org/wiki/斐波那契数列)是一個每個數字是前兩個數字之和的序列。 例如，從 `0` 和 `1`開始，斐波那契數列的下一個數字將是 `1`。 後面是：`2`, `3`, `5`, `8` 等等。 斐波那契數列的數字被稱為斐波那契數。所以我們將不得不編寫一個檢測斐波那契數的函數。
+[斐波那契數列](https://zh.wikipedia.org/wiki/斐波那契數列)是一個每個數字是前兩個數字之和的序列。 例如，從 `0` 和 `1`開始，斐波那契數列的下一個數字將是 `1`。 後面是：`2`, `3`, `5`, `8` 等等。 斐波那契數列的數字被稱為斐波那契數。所以我們將不得不編寫一個檢測斐波那契數的函數。
 
 有[許多方法可以編寫斐波那契數列](https://rosettacode.org/wiki/Fibonacci_sequence)，同樣也有許多方法可以檢測一個斐波那契數。 所以我們將採用我的最愛：
 
@@ -638,7 +638,7 @@ View results:
 
 使用這個由一個友善的兔子給我的巧妙的時間旅行裝置， 我能夠回到過去，重演如果我們一直都在使用Bencher的情況下會發生什麼。 你可以看到我們首次推出存在問題的FizzBuzzFibonacci實現的位置。 我馬上在我的拉取請求評論中得到了CI的失敗資訊。 就在那天，我修復了性能問題，擺脫了那不必要的額外循環。 沒有火災。顧客都非常開心。
 
-<iframe title="如何用Criterion对Rust进行基准测试" width="100%" height="800px" src="https://bencher.dev/perf/game/embed?reports_per_page=4&amp;reports_page=1&amp;branches_per_page=8&amp;branches_page=1&amp;testbeds_per_page=8&amp;testbeds_page=1&amp;benchmarks_per_page=8&amp;benchmarks_page=1&amp;clear=true&amp;tab=benchmarks&amp;measures=52507e04-ffd9-4021-b141-7d4b9f1e9194&amp;branches=3a27b3ce-225c-4076-af7c-75adbc34ef9a&amp;testbeds=bc05ed88-74c1-430d-b96a-5394fdd18bb0&amp;benchmarks=077449e5-5b45-4c00-bdfb-3a277413180d&amp;upper_boundary=true&amp;start_time=1697414400000" style="box-sizing: inherit; margin: 0px; padding: 0px; border: 1rem solid rgb(237, 103, 4); color: rgb(74, 74, 74); font-family: BlinkMacSystemFont, -apple-system, &quot;Segoe UI&quot;, Roboto, Oxygen, Ubuntu, Cantarell, &quot;Fira Sans&quot;, &quot;Droid Sans&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif; font-size: 16px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;"></iframe>
+<iframe title="如何用Criterion對Rust進行基準測試" width="100%" height="800px" src="https://bencher.dev/perf/game/embed?reports_per_page=4&amp;reports_page=1&amp;branches_per_page=8&amp;branches_page=1&amp;testbeds_per_page=8&amp;testbeds_page=1&amp;benchmarks_per_page=8&amp;benchmarks_page=1&amp;clear=true&amp;tab=benchmarks&amp;measures=52507e04-ffd9-4021-b141-7d4b9f1e9194&amp;branches=3a27b3ce-225c-4076-af7c-75adbc34ef9a&amp;testbeds=bc05ed88-74c1-430d-b96a-5394fdd18bb0&amp;benchmarks=077449e5-5b45-4c00-bdfb-3a277413180d&amp;upper_boundary=true&amp;start_time=1697414400000" style="box-sizing: inherit; margin: 0px; padding: 0px; border: 1rem solid rgb(237, 103, 4); color: rgb(74, 74, 74); font-family: BlinkMacSystemFont, -apple-system, &quot;Segoe UI&quot;, Roboto, Oxygen, Ubuntu, Cantarell, &quot;Fira Sans&quot;, &quot;Droid Sans&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif; font-size: 16px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;"></iframe>
 
 
 
@@ -649,7 +649,7 @@ View results:
 [Bencher](https://bencher.dev/pricing)是一套持續型的性能基準測試工具。 你是否曾經因為性能回歸影響到了你的使用者？ Bencher可以防止這種情況的發生。 Bencher讓你有能力在性能回歸進入生產環境 *之前* 就進行檢測和預防。
 
 - **運行**: 使用你喜愛的基準測試工具在本地或CI中執行你的基準測試。`bencher` CLI簡單地包裝了你現有的基準測驗裝置並儲存其結果。
-- **追蹤**: 追蹤你的基準測試結果的趨勢。根據源分支、測試床和度量，使用Bencher web控制台來監視、查詢和繪製結果圖表。
+- **追蹤**: 追蹤你的基準測試結果的趨勢。根據源分支、測試床和度量，使用Bencher web控制檯來監視、查詢和繪製結果圖表。
 - **捕獲**: 在CI中捕獲性能回歸。Bencher使用最先進的、可定製的分析技術在它們進入生產環境之前就檢測到性能回歸。
 
 基於防止功能回歸的原因，在CI中運行單元測試，我們也應該使用Bencher在CI中運行基準測試以防止性能回歸。性能問題就是錯誤！

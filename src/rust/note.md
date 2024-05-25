@@ -1677,7 +1677,7 @@ fn main() {
 use std::sync::{Arc, Mutex};
 use std::thread;
 /*
- * // 克隆 Arc，以便在两個線程間共享
+ * // 克隆 Arc，以便在兩個線程間共享
  * let shared_data1 = Arc::clone(&shared_data);
  * let shared_data2 = Arc::clone(&shared_data);
  * Arc:clone 作用
@@ -1703,14 +1703,14 @@ use std::thread;
 // 這樣就可以安全地在單個線程中修改資料,同時其他線程無法同時修改,從而避免資料競爭問題。當 `data` 離開作用域時,可變引用會自動被釋放。
 
 fn main() {
-    // 创建一个共享的可变数据结构
+    // 創建一個共享的可變數據結構
     let shared_data = Arc::new(Mutex::new(vec![1, 2, 3]));
 
-    // 克隆 Arc，以便在两个线程间共享
+    // 克隆 Arc，以便在兩個線程間共享
     let shared_data1 = Arc::clone(&shared_data);
     let shared_data2 = Arc::clone(&shared_data);
 
-    // 在两个线程中分别修改数据
+    // 在兩個線程中分別修改數據
     let thread1 = thread::spawn(move || {
         let mut data = shared_data1.lock().unwrap();
         data.push(4);
@@ -1721,11 +1721,11 @@ fn main() {
         data.push(5);
     });
 
-    // 等待两个线程完成
+    // 等待兩個線程完成
     thread1.join().unwrap();
     thread2.join().unwrap();
 
-    // 打印最终结果
+    // 打印最終結果
     println!("{:?}", shared_data.lock().unwrap());
 }
 ```

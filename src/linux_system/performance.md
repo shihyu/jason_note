@@ -36,7 +36,7 @@
 
 Cache（快取）一般分為 3 級：L1、L2、L3. 通常來說 L1、L2是整合在 CPU 裡面的（可以稱之為On-chip cache），而 L3 是放在 CPU 外面（可以稱之為 Off-chip cache）。當然這個不是絕對的，不同 CPU 的做法可能會不太一樣。當然，Register（暫存器）裡的資料讀寫是最快的。比如，矩陣乘法最佳化：
 
-[寨森Lambda-CDM：C++加速矩阵乘法的最简单方法515 赞同 · 40 评论文章![img](https://pic1.zhimg.com/equation_ipico.jpg)](https://zhuanlan.zhihu.com/p/146250334)
+[寨森Lambda-CDM：C++加速矩陣乘法的最簡單方法515 贊同 · 40 評論文章![img](https://pic1.zhimg.com/equation_ipico.jpg)](https://zhuanlan.zhihu.com/p/146250334)
 
 **2. Cache size**
 
@@ -138,7 +138,7 @@ dequeue(Q *q, TYPE *pvalue) {
 
 關於各種處理程序間通訊的方式詳細介紹和比較，下面這篇文章講得非常詳細：
 
-[凉了！张三同学没答好「进程间通信」，被面试官挂了....mp.weixin.qq.com/s?__biz=MzUxODAzNDg4NQ==&mid=2247485318&idx=1&sn=0da0a684639106f548e9d4454fd49904&scene=21#wechat_redirectmp.weixin.qq.com/s?__biz=MzUxODAzNDg4NQ==&mid=2247485318&idx=1&sn=0da0a684639106f548e9d4454fd49904&scene=21#wechat_redirect](https://link.zhihu.com/?target=https%3A//mp.weixin.qq.com/s%3F__biz%3DMzUxODAzNDg4NQ%3D%3D%26mid%3D2247485318%26idx%3D1%26sn%3D0da0a684639106f548e9d4454fd49904%26scene%3D21%23wechat_redirect)
+[涼了！張三同學沒答好「進程間通信」，被面試官掛了....mp.weixin.qq.com/s?__biz=MzUxODAzNDg4NQ==&mid=2247485318&idx=1&sn=0da0a684639106f548e9d4454fd49904&scene=21#wechat_redirectmp.weixin.qq.com/s?__biz=MzUxODAzNDg4NQ==&mid=2247485318&idx=1&sn=0da0a684639106f548e9d4454fd49904&scene=21#wechat_redirect](https://link.zhihu.com/?target=https%3A//mp.weixin.qq.com/s%3F__biz%3DMzUxODAzNDg4NQ%3D%3D%26mid%3D2247485318%26idx%3D1%26sn%3D0da0a684639106f548e9d4454fd49904%26scene%3D21%23wechat_redirect)
 
 對於本地處理程序間需要高頻次的大量資料互動，首推共用記憶體這種方案。
 
@@ -150,7 +150,7 @@ dequeue(Q *q, TYPE *pvalue) {
 
 ![img](images/v2-5184fa892229e18b389604e8595244db_1440w.webp)
 
-當然，共用記憶體只是最終的資料傳輸載體，雙方要實現通訊還得借助訊號、訊號量等其他通知機制。
+當然，共用記憶體只是最終的資料傳輸載體，雙方要實現通訊還得藉助訊號、訊號量等其他通知機制。
 
 **6. I/O 最佳化 - 多路復用技術**
 
@@ -172,7 +172,7 @@ dequeue(Q *q, TYPE *pvalue) {
 
 多執行緒技術的使用一定程度提升了伺服器的並行能力，但同時，多個執行緒之間為了資料同步，常常需要使用互斥體、訊號、條件變數等手段來同步多個執行緒。這些重量級的同步手段往往會導致執行緒在使用者態/核心態多次切換，系統呼叫，執行緒切換都是不小的開銷。具體實現，請參考這篇文章：
 
-[C++ 多线程（四）：实现一个功能完整的线程池12 赞同 · 4 评论文章](https://zhuanlan.zhihu.com/p/412127997)
+[C++ 多線程（四）：實現一個功能完整的線程池12 贊同 · 4 評論文章](https://zhuanlan.zhihu.com/p/412127997)
 
 ## 4、演算法最佳化
 
@@ -241,7 +241,7 @@ likely/unlikely
 
 變數初始化是一個好的程式設計習慣，但是在性能最佳化的時候，有可能就是一個多餘的動作，需要綜合考慮函數的各個分支，做出決定。
 
-延遲計算也可以是系統層次的最佳化，比如 COW(copy-on-write) 就是在 fork 子處理程序的時候，並沒有複製父處理程序所有的頁表，而是只複製指令部分。當有寫發生的時候，再複製資料部分，這樣可以避免不必要的複製，提供處理程序建立的速度。
+延遲計算也可以是系統層次的最佳化，比如 COW(copy-on-write) 就是在 fork 子處理程序的時候，並沒有複製父處理程序所有的頁表，而是隻複製指令部分。當有寫發生的時候，再複製資料部分，這樣可以避免不必要的複製，提供處理程序建立的速度。
 
 - Early computation （提前計算）
 
@@ -255,7 +255,7 @@ likely/unlikely
 
 比如並行程式設計時，給每個執行緒分配獨立的記憶體空間
 
-- Move exception path out （把 exception 處理放到另一個函數里面）
+- Move exception path out （把 exception 處理放到另一個函數裡面）
 
 只要引入了異常機制，無論系統是否會拋出異常，異常程式碼都會影響程式碼的大小與性能；未觸發異常時對系統影響並不明顯，主要影響一些編譯最佳化手段；觸發異常之後按異常實現機制的不同，其對系統性能的影響也不相同，不過一般很明顯。所以，不用擔心異常對正常程式碼邏輯性能的影響，同時不要借用異常機制處理業務邏輯。現代 C++ 編譯器所使用的異常機制對正常程式碼性能的影響[並不明顯](https://link.zhihu.com/?target=http%3A//www.open-std.org/jtc1/sc22/wg21/docs/TR18015.pdf)，只有出現異常的時候異常機制才會影響整個系統的性能，[這裡](https://link.zhihu.com/?target=https%3A//pspdfkit.com/blog/2020/performance-overhead-of-exceptions-in-cpp/)有一些測試資料。
 
@@ -265,7 +265,7 @@ likely/unlikely
 
 偽共享(false sharing)：就是說兩個無關的變數，一個讀，一個寫，而這兩個變數在一個cache line裡面。那麼寫會導致cache line失效（通常是在多核程式設計裡面，兩個變數在不同的core上引用）。讀寫分離是一個很難運用的技巧，特別是在code很複雜的情況下。需要不斷地偵錯，是個力氣活（如果有工具幫助會好一點，比如 cache miss時觸發 cpu 的 execption 處理之類的）
 
-[以C++为核心语言的高频交易系统是如何做到低延迟的？982 赞同 · 31 评论回答](https://www.zhihu.com/question/23185359/answer/936467060)
+[以C++為核心語言的高頻交易系統是如何做到低延遲的？982 贊同 · 31 評論回答](https://www.zhihu.com/question/23185359/answer/936467060)
 
 ## 6、總結
 

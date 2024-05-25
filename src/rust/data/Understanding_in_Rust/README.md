@@ -915,7 +915,7 @@ Rust Linz 2021 |
 - [ruspec](https://crates.io/crates/ruspec) — 像 Rspec 測試框架一樣用 Rust 編寫 
 - [rust-fuzz/afl.rs](https://github.com/rust-fuzz/afl.rs) — 一個 Rust 模糊器，使用 [AFL](https://lcamtuf.coredump.cx/afl/) 
 - [tarpaulin](https://crates.io/crates/cargo-tarpaulin) — 為 Rust 設計的代碼覆蓋率工具 
-- [trust](https://github.com/japaric/trust) — Travis CI 和 AppVeyor 模板，用於在 5 種架構上測試您的 Rust crate 併發布其適用於 Linux、macOS 和 Windows 的二進制版本
+- [trust](https://github.com/japaric/trust) — Travis CI 和 AppVeyor 模板，用於在 5 種架構上測試您的 Rust crate 併發布其適用於 Linux、macOS 和 Windows 的二進製版本
 - [fake-rs](https://github.com/cksac/fake-rs) — 生成假數據的庫 
 - [goldenfile](https://github.com/calder/rust-goldenfile) - 一個為 Goldenfile 測試提供簡單 API 的庫.
 - [cargo-dinghy](https://crates.io/crates/cargo-dinghy/) - 簡化在智能手機和其他小型處理器設備上運行庫測試和工作臺的貨物擴展.

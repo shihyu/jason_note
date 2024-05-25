@@ -468,7 +468,7 @@ for gen in range(NGEN):
         ind.fitness.values = fitness
    #精英選擇策略，加速收斂 
     combinedPop = pop + offspring#將子代與父代結合起來
-    pop = tools.selBest(combinedPop,N_POP)#再從子代與父代的結合中選擇出適應度最高的一批作為新的種群
+    pop = tools.selBest(combinedPop,N_POP)#再從子代與父代的結閤中選擇出適應度最高的一批作為新的種群
 
 #顯示演算法運行結果
 bestInd = tools.selBest(pop,1)[0]#選擇出最好的個體編號
@@ -563,7 +563,7 @@ for gen in range(NGEN):
         ind.fitness.values = fitness
    #精英選擇策略，加速收斂 
     combinedPop = pop + offspring#將子代與父代結合起來
-    pop = tools.selBest(combinedPop,N_POP)#再從子代與父代的結合中選擇出適應度最高的一批作為新的種群
+    pop = tools.selBest(combinedPop,N_POP)#再從子代與父代的結閤中選擇出適應度最高的一批作為新的種群
 
 bestInd = tools.selBest(pop,1)[0]#選擇出最好的個體編號
 bestFit = bestInd.fitness.values[0]#最好的個體適應度
@@ -596,7 +596,7 @@ toolbox.register('individual', tools.initRepeat, creator.Individual, toolbox.gen
 toolbox.register('genASCII',random.randint, 97, 122)
 ```
 
-再將這個註冊函數代入到個體的註冊函數里面即可。
+再將這個註冊函數代入到個體的註冊函數裡面即可。
 
 ```python
 toolbox.register('individual', tools.initRepeat, creator.Individual, toolbox.genASCII, n=geneLength)
