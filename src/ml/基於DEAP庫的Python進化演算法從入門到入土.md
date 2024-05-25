@@ -94,7 +94,7 @@
 
 第三個參數：會把接下來的所有參數，整理為該類的**屬性（attributes）**，下面的例子說明
 
-![img](https://img-blog.csdnimg.cn/5c8010b363d0414586a93f5459f666f2.png?x-oss-process=image/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAQ2hhb0ZlaUxp,size_16,color_FFFFFF,t_70,g_se,x_16)
+![img](images/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAQ2hhb0ZlaUxp,size_16,color_FFFFFF,t_70,g_se,x_16)
 
 函數舉例：create("Foo", list, bar=dict, spam=1) 相當於：
 
@@ -199,7 +199,7 @@ print(ind1)
 
 ![img](images/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAQ2hhb0ZlaUxp,size_20,color_FFFFFF,t_70,g_se,x_16)
 
-![img](https://img-blog.csdnimg.cn/2c3cda32296d4307a613f2aecde9bc05.png?x-oss-process=image/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAQ2hhb0ZlaUxp,size_20,color_FFFFFF,t_70,g_se,x_16)
+![img](images/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAQ2hhb0ZlaUxp,size_20,color_FFFFFF,t_70,g_se,x_16)
 
 ![img](images/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAQ2hhb0ZlaUxp,size_20,color_FFFFFF,t_70,g_se,x_16)
 
