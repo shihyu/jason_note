@@ -1,93 +1,63 @@
-from deap import algorithms
-from deap import base
-from deap import creator
-from deap import tools
+from deap import algorithms, base, creator, tools
 from scipy.stats import bernoulli
 import numpy as np
 import random
 
+random.seed(42)  # 確保可以復現結果
 
-# 問題描述
-GENE_LENGTH = 26  # 基因長度
-SEARCH_RANGE = (-30, 30)  # 搜索範圍
+# 描述問題
+creator.create("FitnessMax", base.Fitness, weights=(1.0,))  # 單目標，最大值問題
+creator.create("Individual", list, fitness=creator.FitnessMax)  # 編碼繼承list類
+
+# 個體編碼
+GENE_LENGTH = 26  # 需要26位編碼
+
+toolbox = base.Toolbox()
+toolbox.register(
+    "binary", bernoulli.rvs, 0.5
+)  # 註冊一個Binary的alias，指向scipy.stats中的bernoulli.rvs，機率為0.5
+toolbox.register(
+    "individual", tools.initRepeat, creator.Individual, toolbox.binary, n=GENE_LENGTH
+)  # 用tools.initRepeat生成長度為GENE_LENGTH的Individual
 
 
-# 目標函數
-def objective_function(x):
-    return (x**2 + x) * np.cos(2 * x) + x**2 + x
-
-
+# 評價函數
 def decode(individual):
-    """將個體解碼為對應的實數"""
-    num = int("".join([str(_) for _ in individual]), 2)
-    x = SEARCH_RANGE[0] + num * (SEARCH_RANGE[1] - SEARCH_RANGE[0]) / (
-        2**GENE_LENGTH - 1
-    )
+    num = int("".join([str(_) for _ in individual]), 2)  # 解碼到10進制
+    x = -30 + (num / (2**26 - 1)) * 60  # 對應回-30，30區間
     return x
 
 
-def generate_individual():
-    """生成一個隨機個體"""
-    return [random.randint(0, 1) for _ in range(GENE_LENGTH)]
-
-
-def evaluate(individual):
-    """評估個體的適應度"""
+def eval(individual):
     x = decode(individual)
-    return (objective_function(x),)
+    return (((x**2 + x) * np.cos(2 * x) + x**2 + x),)
 
 
-def crossover(parent1, parent2):
-    """均勻交叉"""
-    child1, child2 = tools.cxUniform(parent1, parent2, indpb=0.5)
-    return child1, child2
+# 生成初始族群
+N_POP = 100  # 族群中的個體數量
+toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+pop = toolbox.population(n=N_POP)
 
+# 在工具箱中註冊遺傳演算法需要的工具
+toolbox.register("evaluate", eval)
+toolbox.register(
+    "select", tools.selTournament, tournsize=2
+)  # 註冊Tournsize為2的錦標賽選擇
+toolbox.register("mate", tools.cxUniform, indpb=0.5)  # 注意這裡的indpb需要顯示給出
+toolbox.register("mutate", tools.mutFlipBit, indpb=0.5)
 
-def mutate(individual):
-    """按位翻轉變異"""
-    (child,) = tools.mutFlipBit(individual, indpb=0.2)
-    return child
+# 註冊計算過程中需要記錄的資料
+stats = tools.Statistics(key=lambda ind: ind.fitness.values)
+stats.register("avg", np.mean)
+stats.register("std", np.std)
+stats.register("min", np.min)
+stats.register("max", np.max)
 
+# 呼叫DEAP內建的演算法
+resultPop, logbook = algorithms.eaSimple(
+    pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=50, stats=stats, verbose=False
+)
 
-def select(population):
-    """錦標賽選擇"""
-    return tools.selTournament(population, k=2, tournsize=2)
-
-
-def main():
-    # 初始化
-    random.seed(42)
-    toolbox = base.Toolbox()
-    toolbox.register("individual", generate_individual)
-    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-    toolbox.register("evaluate", evaluate)
-    toolbox.register("select", select)
-    toolbox.register("mate", crossover)
-    toolbox.register("mutate", mutate)
-
-    # 進行遺傳演算法
-    population = toolbox.population(n=100)
-    fit_stats = tools.Statistics(key=lambda ind: ind.fitness.values)
-    fit_stats.register("avg", np.mean)
-    fit_stats.register("std", np.std)
-    fit_stats.register("min", np.min)
-    fit_stats.register("max", np.max)
-
-    population, logbook = algorithms.eaSimple(
-        population,
-        toolbox,
-        cxpb=0.5,
-        mutpb=0.2,
-        ngen=50,
-        stats=fit_stats,
-        verbose=True,
-    )
-
-    # 輸出結果
-    best_individual = tools.selBest(population, k=1)[0]
-    print(f"Best individual: {best_individual}")
-    print(f"Best fitness: {best_individual.fitness.values[0]}")
-
-
-if __name__ == "__main__":
-    main()
+# 輸出計算過程
+logbook.header = "gen", "nevals", "avg", "std", "min", "max"
+print(logbook)
