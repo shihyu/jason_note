@@ -22,7 +22,7 @@ https://ithelp.ithome.com.tw/articles/10273094
 
 XGboost 全名為 eXtreme Gradient Boosting，是目前 Kaggle 競賽中最常見到的算法，同時也是多數得獎者所使用的模型。此機器學習模型是由華盛頓大學博士生陳天奇所提出來的，它是以 Gradient Boosting 為基礎下去實作，並添加一些新的技巧。它可以說是結合 Bagging 和 Boosting 的優點。XGboost 保有 Gradient Boosting 的做法，每一棵樹是互相關聯的，目標是希望後面生成的樹能夠修正前面一棵樹犯錯的地方。此外 XGboost 是採用特徵隨機採樣的技巧，和隨機森林一樣在生成每一棵樹的時候隨機抽取特徵，因此在每棵樹的生成中並不會每一次都拿全部的特徵參與決策。此外為了讓模型過於複雜，XGboost 在目標函數添加了標準化。因為模型在訓練時為了擬合訓練資料，會產生很多高次項的函數，但反而容易被雜訊干擾導致過度擬合。因此 L1/L2 Regularization 目的是讓損失函數更佳平滑，且抗雜訊干擾能力更大。最後 XGboost 還用到了一階導數和二階導數來生成下一棵樹。其中 Gradient 就是所謂的一階導數，而 Hessian 即為二階導數。
 
-![https://ithelp.ithome.com.tw/upload/images/20210927/20107247W0yHGgAOFG.png](https://ithelp.ithome.com.tw/upload/images/20210927/20107247W0yHGgAOFG.png)
+![](images/20210927/20107247W0yHGgAOFG.png)
 
 ## XGBoost 優點
 
@@ -40,7 +40,7 @@ XGBoost 除了可以做分類也能進行迴歸連續性數值的預測，而且
 - Bagging 透過抽樣的方式生成樹，每棵樹彼此獨立
 - Boosting 透過序列的方式生成樹，後面生成的樹會與前一棵樹相關
 
-![https://ithelp.ithome.com.tw/upload/images/20210927/20107247j1llMXV7ZD.png](https://ithelp.ithome.com.tw/upload/images/20210927/20107247j1llMXV7ZD.png)
+![](images/20210927/20107247j1llMXV7ZD.png)
 
 ## Boosting vs. Decision Tree
 
@@ -62,7 +62,7 @@ Gradient Boosting 由 Friedman 於 1999 年提出。其中 GBDT (Gradient Boosti
 
 接下來介紹三個近年三個強大的開源機器學習專案。首先 [XGBoost](https://xgboost.readthedocs.io/en/latest/) 最初是由陳天奇於 2014 年 3 月發起的一個研究項目，並在短時間內成為競賽中的熱門的模型。接著於 2017 年 1 月微軟發布了第一個穩定的 [LightGBM](https://lightgbm.readthedocs.io/en/latest/) 版本。它是一個基於 Gradient Boosting 的輕量級的演算法，優點在於使用少量資源、更快的訓練效率得到更好的準確度。另外在同年的 4 月，俄羅斯的一家科技公司 Yandex 發布了 [CatBoost](https://catboost.ai/)，其核心依然使用了 Gradient Boosting 技巧，並為類別型的特徵做特別的轉換並產生新的數值型特徵。
 
-![https://ithelp.ithome.com.tw/upload/images/20210927/201072476IcBgn7t0E.png](https://ithelp.ithome.com.tw/upload/images/20210927/201072476IcBgn7t0E.png)
+![](images/20210927/201072476IcBgn7t0E.png)
 
 未來幾天將會介紹 LightGBM 與 CatBoost 哦！
 
@@ -119,7 +119,7 @@ print('測試集: ',xgboostModel.score(X_test,y_test))
 
 大家可以試著與前幾天的決策樹和隨機森林兩個模型相比較。是不是 XGBoost 有著更好的預測結果呢？因為有了 Gradient Boosting 學習機制，大幅提升了預測能力。在學習過程中將預測不好的地方，尤其是橘色 (Versicolour) 與綠色 (Virginica) 交界處有更好的評估能力。
 
-![https://ithelp.ithome.com.tw/upload/images/20210927/20107247DEIRbXbcJh.png](https://ithelp.ithome.com.tw/upload/images/20210927/20107247DEIRbXbcJh.png)
+![](images/20210927/20107247DEIRbXbcJh.png)
 
 ## XGBoost (迴歸器)
 
@@ -153,7 +153,7 @@ xgbrModel.fit(x,y)
 predicted=xgbrModel.predict(x)
 ```
 
-![https://ithelp.ithome.com.tw/upload/images/20210927/20107247zmhCwNsfV1.png](https://ithelp.ithome.com.tw/upload/images/20210927/20107247zmhCwNsfV1.png)
+![](images/20210927/20107247zmhCwNsfV1.png)
 
 ## Reference
 
