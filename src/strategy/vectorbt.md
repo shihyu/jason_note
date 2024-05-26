@@ -1,3 +1,121 @@
+## simple_from_signals
+```python
+from binance.client import Client
+from dateutil import relativedelta
+import vectorbt as vbt
+import datetime as dt
+import pandas as pd
+import os
+import json
+import warnings
+
+warnings.simplefilter("ignore", UserWarning)
+
+
+class binanceAPI:
+    def __init__(self, configPath):
+        with open(configPath, "r") as f:
+            self.kw_login = json.loads(f.read())
+        self.api = self.__login(self.kw_login["PUBLIC"], self.kw_login["SECRET"])
+        self.__conncet_redis()
+
+    def __conncet_redis(self):
+        redis_info = {
+            "host": "127.0.0.1",
+            "port": 6379,
+            "max_connections": 2,
+            "db": 1,
+        }
+        pool = redis.ConnectionPool(**redis_info)
+        try:
+            self.rs = redis.Redis(connection_pool=pool)
+        except Exception as err:
+            logger.error(err)
+            raise err
+
+    def __login(self, PUBLIC, SECRET):
+        return Client(api_key=PUBLIC, api_secret=SECRET)
+
+
+def build_df(klines):
+    cols = [
+        "timestamp",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "close_time",
+        "quote_av",
+        "trades",
+        "tb_base_av",
+        "tb_quote_av",
+        "ignore",
+    ]
+    df = pd.DataFrame(klines, columns=cols)
+    df["timestamp"] = [dt.datetime.fromtimestamp(x / 1000.0) for x in df["timestamp"]]
+    df.set_index("timestamp", inplace=True)
+    df = df[["open", "high", "low", "close", "volume"]]
+    df[["open", "high", "low", "close", "volume"]] = df[
+        ["open", "high", "low", "close", "volume"]
+    ].astype(float)
+    df["idx"] = range(0, len(df))
+    return df
+
+
+def backtesting(df):
+    price = df["close"]
+    fast_ma = vbt.MA.run(price, 5)
+    slow_ma = vbt.MA.run(price, 50)
+    entries = fast_ma.ma_crossed_above(slow_ma)
+    exits = fast_ma.ma_crossed_below(slow_ma)
+    show_report(df, entries, exits)
+
+
+def show_report(df, long_entries, long_exits):
+    pf = vbt.Portfolio.from_signals(
+        df["close"],
+        long_entries,
+        long_exits,
+        init_cash=100000,
+        fees=0.000,
+    )
+    stats_info = pf.stats()
+    start = stats_info["Start"]
+    end = stats_info["End"]
+    winrate = stats_info[r"Win Rate [%]"]
+    total_return = stats_info[r"Total Return [%]"]
+    total_profit = pf.total_profit()
+    max_drawdown = pf.max_drawdown()
+    total_trades = len(pf.trades)
+    print(pf.stats())
+    print(
+        f"coin:{coin} {start} ~ {end}, winrate:{round(winrate, 2)}%, total_return:{round(total_return, 2)}, max_drawdown:{round(max_drawdown, 2)}, total_trades:{total_trades}"
+    )
+
+
+if __name__ == "__main__":
+    coin = "BTCUSDT"
+    configPath = os.environ["HOME"] + "/.mybin/jason/binance_login.txt"
+    KLINE_INTERVAL = Client.KLINE_INTERVAL_1MINUTE
+    with open(configPath, "r") as f:
+        kw_login = json.loads(f.read())
+
+    start_time = dt.datetime.now()
+    client = Client(api_key=kw_login["PUBLIC"], api_secret=kw_login["SECRET"])
+    klines = client.get_historical_klines(
+        symbol=coin,
+        interval=KLINE_INTERVAL,
+        start_str=(start_time - relativedelta.relativedelta(months=1)).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        end_str=start_time.strftime("%Y-%m-%d %H:%M:%S"),
+    )
+    df = build_df(klines)
+    backtesting(df)
+```
+
+
 ## test_func_nb_order
 
 ```python
