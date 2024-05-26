@@ -119,6 +119,7 @@
   - [梯度下降法 gradient descent](ml/梯度下降法_gradient_descent.md)
   - [梯度最佳解相關算法](ml/梯度最佳解相關算法.md)
   - [基於DEAP庫的Python進化演算法從入門到入土](ml/基於DEAP庫的Python進化演算法從入門到入土.md)
+  - [GA](ml/GA.md)
   - [XGBoost](ml/XGBoost.md)
 - [Python](python/python.md)
   - [Poetry完全入門指南](python/Poetry完全入門指南.md)
