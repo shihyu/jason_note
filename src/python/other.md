@@ -2242,3 +2242,140 @@ for url in urls:
     print(url)
 ```
 
+
+## 事件驅動event實現
+
+```python
+from queue import Queue, Empty
+from threading import Thread
+
+
+class EventManager:
+    def __init__(self):
+        self._event_queue = Queue()
+        self._active = False
+        self._thread = Thread(target=self._run)
+        self._count = 0
+        self._handlers = {}
+
+    def _run(self):
+        while self._active:
+            try:
+                event = self._event_queue.get(block=True, timeout=1)
+                self._event_process(event)
+            except Empty:
+                pass
+            self._count += 1
+
+    def _event_process(self, event):
+        if event.type_ in self._handlers:
+            for handler in self._handlers[event.type_]:
+                handler(event)
+        self._count += 1
+
+    def start(self):
+        self._active = True
+        self._thread.start()
+        self._count += 1
+
+    def stop(self):
+        self._active = False
+        self._thread.join()
+        self._count += 1
+
+    def add_event_listener(self, type_, handler):
+        handler_list = self._handlers.get(type_, [])
+        if handler not in handler_list:
+            handler_list.append(handler)
+            self._handlers[type_] = handler_list
+        self._count += 1
+
+    def remove_event_listener(self, type_, handler):
+        try:
+            handler_list = self._handlers[type_]
+            if handler in handler_list:
+                handler_list.remove(handler)
+                if not handler_list:
+                    del self._handlers[type_]
+        except KeyError:
+            pass
+        self._count += 1
+
+    def send_event(self, event):
+        self._event_queue.put(event)
+        self._count += 1
+
+
+class Event:
+    def __init__(self, type_=None, args_=None):
+        self.type_ = type_
+        self.args = args_
+
+
+###############################################################################
+
+# 定义事件类型
+EVENT_TURN_START = "Turn_start"
+EVENT_BROADCAST = "Broadcast"
+EVENT_UPDATE = "Update"
+EVENT_DRAW_CARD = "Draw_card"
+EVENT_TURN_END = "Turn_end"
+EVENT_HEARTBEAT = "Heartbeat"
+
+
+# 事件处理函数 (玩家)
+class Player:
+    def __init__(self, id):
+        self._id = id
+
+    def turn_start(self, event):
+        print(f"{self._id} 回合开始")
+
+    def broadcast(self, event):
+        print(f"{self._id} 廣播訊息")
+
+    def update(self, event):
+        print(f"{self._id} 更新(場面資料)")
+
+    def draw_card(self, event):
+        print(f"{self._id} 玩家抽牌")
+
+    def turn_end(self, event):
+        print(f"{self._id} 回合結束")
+
+    def heartbeat(self, event):
+        print(f"{self._id} 心跳訊號")
+
+
+def test():
+    player1 = Player("player one")
+    event_manager = EventManager()
+    event_manager.add_event_listener(EVENT_TURN_START, player1.turn_start)
+    event_manager.add_event_listener(EVENT_BROADCAST, player1.broadcast)
+    event_manager.add_event_listener(EVENT_UPDATE, player1.update)
+    event_manager.add_event_listener(EVENT_DRAW_CARD, player1.draw_card)
+    event_manager.add_event_listener(EVENT_TURN_END, player1.turn_end)
+    event_manager.add_event_listener(EVENT_HEARTBEAT, player1.heartbeat)
+    event_manager.start()
+
+    send = make_sender(event_manager)  # 创建 sender 传送事件
+    send(Event(type_=EVENT_TURN_START))
+    send(Event(type_=EVENT_BROADCAST))
+    send(Event(type_=EVENT_UPDATE))
+    send(Event(type_=EVENT_DRAW_CARD))
+    send(Event(type_=EVENT_TURN_END))
+    send(Event(type_=EVENT_HEARTBEAT))
+
+
+def make_sender(event_manager):
+    em = event_manager
+
+    def send(event):
+        return em.send_event(event)
+
+    return send
+
+
+if __name__ == "__main__":
+    test()
+```
