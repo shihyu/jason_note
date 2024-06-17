@@ -1155,3 +1155,85 @@ fig.write_html(filename,auto_open=True)#圖片儲存並自動展開
 ```
 
 ![img](images/RN85DH1.png)
+
+
+## vectorbt 多空範例
+
+```python
+from numba import njit
+from vectorbt.utils.enum_ import map_enum_fields
+from vectorbt.portfolio import nb
+from vectorbt.portfolio.enums import Direction, NoOrder
+
+import numpy as np
+import vectorbt as vbt
+import pandas as pd
+import warnings
+
+warnings.simplefilter("ignore", UserWarning)
+
+
+def from_order_function_test():
+    @njit
+    def order_func_nb(c, size, direction, fees):
+        print(
+            "Close:",
+            c.close[c.i, c.col],
+            "Size:",
+            size[c.i],
+            "Direction:",
+            direction[c.col],
+            "c.i:",
+            c.i,
+            "c.col:",
+            c.col,
+            "fees:",
+            fees,
+            "position_now:",
+            c.position_now,
+        )
+        return nb.order_nb(
+            price=c.close[c.i, c.col],
+            size=size[c.i],
+            direction=direction[c.col],
+            fees=fees,
+        )
+
+    if True:
+        # 加碼策略
+        size = pd.Series([1, 1, -2, 1, -1])  # per row
+        dates = pd.date_range("20220301", periods=5)
+        price = pd.DataFrame(
+            {"a": [100, 200, 300, 400, 500], "b": [500, 400, 300, 200, 100]},
+            index=dates,
+        )  # per element
+    else:
+        size = pd.Series([1, -1, 1, -1])  # per row
+        dates = pd.date_range("20220301", periods=4)
+        price = pd.DataFrame(
+            {"a": [100, 200, 300, 400], "b": [400, 300, 200, 100]},
+            index=dates,
+        )  # per element
+
+    direction = ["longonly", "shortonly"]  # per column
+    fees = 0.01  # per frame
+    direction_num = map_enum_fields(direction, Direction)
+    # size, direction, fees
+    pf = vbt.Portfolio.from_order_func(
+        price,
+        order_func_nb,
+        np.asarray(size),
+        np.asarray(direction_num),
+        fees,
+        init_cash=10000,
+    )
+    print(pf.orders.records_readable.to_markdown(tablefmt="heavy_grid"))
+    print(pf.assets().to_markdown(tablefmt="heavy_grid"))
+    print(pf.cash().to_markdown(tablefmt="heavy_grid"))
+    print(pf.stats().to_markdown(tablefmt="heavy_grid"))
+
+
+if __name__ == "__main__":
+    pd.options.display.float_format = lambda x: "%.2f" % x
+    from_order_function_test()
+```
