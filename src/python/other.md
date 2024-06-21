@@ -2379,3 +2379,25 @@ def make_sender(event_manager):
 if __name__ == "__main__":
     test()
 ```
+
+
+```python
+import traceback
+import faulthandler
+import ctypes
+
+
+
+def test_segmentation_fault():
+    # 对于segmentation fault并不能catch到异常，即此处try没效果
+    try:
+        ctypes.string_at(0)
+    except Exception as e:
+        print(traceback.format_exc())
+
+
+if __name__ == "__main__":
+    faulthandler.enable()
+    test_segmentation_fault()
+```
+
