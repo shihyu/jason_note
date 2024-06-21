@@ -14,7 +14,7 @@ def client_program():
             message = "Hello, Server!"
             client_socket.send(message.encode())
             print(f"Sent to server: {message}")
-            time.sleep(5)  # wait for 5 seconds before sending the next message
+            time.sleep(15)  # wait for 5 seconds before sending the next message
     except KeyboardInterrupt:
         print("Client stopped.")
     finally:
