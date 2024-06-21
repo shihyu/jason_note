@@ -29,7 +29,7 @@ def server_program():
                         break
                     print(f"Received from client: {data}")
                 except socket.timeout:
-                    print("hello")
+                    print(f"Connection timed out for client: {address}")
                     continue
 
             conn.close()
