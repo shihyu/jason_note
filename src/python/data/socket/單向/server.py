@@ -8,16 +8,21 @@ def server_program():
     server_socket = socket.socket()
     server_socket.bind((host, port))
     server_socket.listen(1)
-    conn, address = server_socket.accept()
-    print(f"Connection from: {address}")
+    print(f"Server listening on {host}:{port}")
 
     while True:
-        data = conn.recv(1024).decode()
-        if not data:
-            break
-        print(f"Received from client: {data}")
+        conn, address = server_socket.accept()
+        print(f"Connection from: {address}")
 
-    conn.close()
+        while True:
+            data = conn.recv(1024).decode()
+            if not data:
+                print(f"Connection closed by client: {address}")
+                break
+            print(f"Received from client: {data}")
+
+        conn.close()
+        print(f"Waiting for new connection...")
 
 
 if __name__ == "__main__":
