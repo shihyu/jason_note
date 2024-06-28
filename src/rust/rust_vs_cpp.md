@@ -913,3 +913,93 @@ int main() {
 }
 ```
 
+## Rust 中的 Trait
+
+在 Rust 中，`Trait` 是一種定義共享行為的方式，可以看作是 C++ 中的介面（interface）或抽象基類（abstract base class）。它們用於定義一組必須由實現該 trait 的類型提供的方法。以下是 Rust 中 `Trait` 和 C++ 中類似概念的一些比較：
+
+在 Rust 中，`Trait` 定義了一組方法，這些方法可以由實現該 trait 的類型提供。以下是一個簡單的例子：
+
+```rust
+trait Animal {
+    fn make_sound(&self);
+}
+
+struct Dog;
+
+impl Animal for Dog {
+    fn make_sound(&self) {
+        println!("Woof!");
+    }
+}
+
+struct Cat;
+
+impl Animal for Cat {
+    fn make_sound(&self) {
+        println!("Meow!");
+    }
+}
+
+fn main() {
+    let dog = Dog;
+    let cat = Cat;
+    
+    dog.make_sound();
+    cat.make_sound();
+}
+```
+
+### C++ 中的介面/抽象基類
+
+在 C++ 中，可以使用抽象基類來實現類似的功能。抽象基類是包含純虛擬函式的類，這些函數必須由派生類實現。以下是一個簡單的例子：
+
+```cpp
+#include <iostream>
+
+class Animal {
+public:
+    virtual void makeSound() const = 0; // 纯虚函数
+    virtual ~Animal() = default; // 虚析构函数
+};
+
+class Dog : public Animal {
+public:
+    void makeSound() const override {
+        std::cout << "Woof!" << std::endl;
+    }
+};
+
+class Cat : public Animal {
+public:
+    void makeSound() const override {
+        std::cout << "Meow!" << std::endl;
+    }
+};
+
+int main() {
+    Dog dog;
+    Cat cat;
+    
+    dog.makeSound();
+    cat.makeSound();
+    
+    return 0;
+}
+```
+
+### 比較
+
+1. **定義和實現**：
+   - 在 Rust 中，使用 `trait` 關鍵字定義 trait，使用 `impl` 關鍵字為類型實現該 trait。
+   - 在 C++ 中，使用抽象基類和純虛擬函式來定義介面，並在派生類中實現這些虛擬函式。
+2. **靜態 vs 動態分發**：
+   - Rust 默認使用靜態分發（即在編譯時決定函數呼叫）。可以使用特徵對象（`dyn Trait`）來實現動態分發。
+   - C++ 使用虛擬函式表（vtable）來實現動態分發。
+3. **所有權和生命週期**：
+   - Rust 中的 trait 和實現需要遵循所有權和生命週期規則，以確保記憶體安全。
+   - C++ 中的抽象基類和派生類遵循不同的記憶體管理模型，需要顯式處理記憶體分配和釋放。
+4. **泛型和特化**：
+   - Rust 的 trait 可以與泛型結合使用，提供更多的靈活性和擴展性。
+   - C++ 中的範本和特化也提供了類似的功能，但實現方式和語法不同。
+
+通過這些比較，可以看出 Rust 的 trait 和 C++ 的抽象基類在概念上類似，但在具體實現和使用方式上有顯著差異。
