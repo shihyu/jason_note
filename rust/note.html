@@ -1657,6 +1657,107 @@ fn main() {
     // 等待生產者線程結束
     sender.join().unwrap();
 }</code></pre></pre>
+<hr />
+<h3 id="示例-1使用可變引用"><a class="header" href="#示例-1使用可變引用">示例 1：使用可變引用</a></h3>
+<pre><pre class="playground"><code class="language-rust">rust複製程式碼fn modify_buffer(buffer: &amp;mut [u8]) {
+    buffer[0] = 1;
+}
+
+fn main() {
+    let buf = &amp;mut [0u8; 1024];
+    modify_buffer(buf);
+}</code></pre></pre>
+<h4 id="說明"><a class="header" href="#說明">說明</a></h4>
+<ol>
+<li>
+<p><strong>函數聲明</strong>：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>rust複製程式碼fn modify_buffer(buffer: &amp;mut [u8]) {
+    buffer[0] = 1;
+}
+<span class="boring">}</span></code></pre></pre>
+<ul>
+<li>這個函數接受一個可變引用 <code>&amp;mut [u8]</code>，指向一個 <code>u8</code> 陣列。</li>
+<li>函數將陣列的第一個元素設定為 1。</li>
+</ul>
+</li>
+<li>
+<p><strong>main 函數</strong>：</p>
+<pre><pre class="playground"><code class="language-rust">rust複製程式碼fn main() {
+    let buf = &amp;mut [0u8; 1024];
+    modify_buffer(buf);
+}</code></pre></pre>
+<ul>
+<li><code>let buf = &amp;mut [0u8; 1024];</code> 建立一個長度為 1024 的 <code>u8</code> 陣列，並建立一個指向這個陣列的可變引用 <code>buf</code>。</li>
+<li><code>modify_buffer(buf);</code> 呼叫 <code>modify_buffer</code> 函數，將 <code>buf</code> 傳遞給它。這傳遞的是陣列的引用，而不是陣列本身。</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h3 id="示例-2直接使用可變陣列"><a class="header" href="#示例-2直接使用可變陣列">示例 2：直接使用可變陣列</a></h3>
+<pre><pre class="playground"><code class="language-rust">rust複製程式碼fn modify_buffer(buffer: &amp;mut [u8; 1024]) {
+    buffer[0] = 1;
+}
+
+fn main() {
+    let mut buf = [0u8; 1024];
+    modify_buffer(&amp;mut buf);
+}</code></pre></pre>
+<h4 id="說明-1"><a class="header" href="#說明-1">說明</a></h4>
+<ol>
+<li>
+<p><strong>函數聲明</strong>：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>rust複製程式碼fn modify_buffer(buffer: &amp;mut [u8; 1024]) {
+    buffer[0] = 1;
+}
+<span class="boring">}</span></code></pre></pre>
+<ul>
+<li>這個函數接受一個可變引用 <code>&amp;mut [u8; 1024]</code>，指向一個長度為 1024 的 <code>u8</code> 陣列。</li>
+<li>函數將陣列的第一個元素設定為 1。</li>
+</ul>
+</li>
+<li>
+<p><strong>main 函數</strong>：</p>
+<pre><pre class="playground"><code class="language-rust">rust複製程式碼fn main() {
+    let mut buf = [0u8; 1024];
+    modify_buffer(&amp;mut buf);
+}</code></pre></pre>
+<ul>
+<li><code>let mut buf = [0u8; 1024];</code> 建立一個長度為 1024 的可變 <code>u8</code> 陣列 <code>buf</code>。</li>
+<li><code>modify_buffer(&amp;mut buf);</code> 呼叫 <code>modify_buffer</code> 函數，將 <code>buf</code> 的可變引用傳遞給它。</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h3 id="主要差異"><a class="header" href="#主要差異">主要差異</a></h3>
+<ol>
+<li><strong>參數類型</strong>：
+<ul>
+<li>示例 1 的 <code>modify_buffer</code> 函數接受一個切片 <code>&amp;mut [u8]</code>，這意味著它可以處理任何長度的可變 <code>u8</code> 陣列。</li>
+<li>示例 2 的 <code>modify_buffer</code> 函數接受一個固定長度的陣列 <code>&amp;mut [u8; 1024]</code>，只能處理長度為 1024 的陣列。</li>
+</ul>
+</li>
+<li><strong>靈活性</strong>：
+<ul>
+<li>示例 1 更靈活，因為它可以處理不同長度的陣列，只要它們是 <code>u8</code> 類型的切片。</li>
+<li>示例 2 更固定，只能處理長度為 1024 的陣列。</li>
+</ul>
+</li>
+<li><strong>記憶體管理</strong>：
+<ul>
+<li>兩個示例中的陣列都是在棧上分配的。沒有使用 <code>Box</code> 或 <code>Vec</code> 進行堆分配。</li>
+</ul>
+</li>
+</ol>
+<h3 id="何時使用哪種方式"><a class="header" href="#何時使用哪種方式">何時使用哪種方式</a></h3>
+<ul>
+<li>如果你需要處理不同長度的陣列或切片，示例 1 的方式更合適。</li>
+<li>如果你只需要處理固定長度的陣列，示例 2 的方式更簡單和直接。</li>
+</ul>
+<p>選擇哪種方式取決於你的具體需求。如果需要更多靈活性和通用性，使用切片。如果只需要處理固定大小的陣列，直接使用陣列更好。</p>
 
                         <script src="https://utteranc.es/client.js"
                             repo="imxood/imxood.github.io"
