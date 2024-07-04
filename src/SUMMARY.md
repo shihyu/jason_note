@@ -211,6 +211,7 @@
   - [張松允投資心法](strategy/張松允投資心法.md)
   - [vectorbt 配對](strategy/vectorbt_配對.md)
   - [交易的行為與思維分享](strategy/交易的行為與思維分享.md)
+  - [投資投機的觀念與心得分享](strategy/投資投機的觀念與心得分享.md)
   - [Finlab](strategy/finlab.md)
   - [Backtrader](strategy/backtrader/basis.md)
     - [Python回測框架一Backtrader介紹](strategy/backtrader/Python回測框架一Backtrader介紹.md)
