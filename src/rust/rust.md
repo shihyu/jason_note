@@ -106,4 +106,5 @@ rustup self uninstall
 - [30天讀完《深入淺出Rust》](https://www.zhihu.com/column/c_1566579693834489856)
 - [Rust 程式設計語言](https://rust-lang.tw/book-tw/title-page.html#rust-程式設計語言)
   - https://github.com/rust-tw/book-tw
+- [The Embedded Rust Book](https://shihyu.github.io/rust-embedded/)
 
