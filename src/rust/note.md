@@ -1770,7 +1770,7 @@ fn main() {
 ### 示例 1：使用可變引用
 
 ```rust
-rust複製程式碼fn modify_buffer(buffer: &mut [u8]) {
+fn modify_buffer(buffer: &mut [u8]) {
     buffer[0] = 1;
 }
 
@@ -1785,7 +1785,7 @@ fn main() {
 1. **函數聲明**：
 
    ```rust
-   rust複製程式碼fn modify_buffer(buffer: &mut [u8]) {
+   fn modify_buffer(buffer: &mut [u8]) {
        buffer[0] = 1;
    }
    ```
@@ -1796,7 +1796,7 @@ fn main() {
 2. **main 函數**：
 
    ```rust
-   rust複製程式碼fn main() {
+   fn main() {
        let buf = &mut [0u8; 1024];
        modify_buffer(buf);
    }
@@ -1810,7 +1810,7 @@ fn main() {
 ### 示例 2：直接使用可變陣列
 
 ```rust
-rust複製程式碼fn modify_buffer(buffer: &mut [u8; 1024]) {
+fn modify_buffer(buffer: &mut [u8; 1024]) {
     buffer[0] = 1;
 }
 
@@ -1825,7 +1825,7 @@ fn main() {
 1. **函數聲明**：
 
    ```rust
-   rust複製程式碼fn modify_buffer(buffer: &mut [u8; 1024]) {
+   fn modify_buffer(buffer: &mut [u8; 1024]) {
        buffer[0] = 1;
    }
    ```
@@ -1836,7 +1836,7 @@ fn main() {
 2. **main 函數**：
 
    ```rust
-   rust複製程式碼fn main() {
+   fn main() {
        let mut buf = [0u8; 1024];
        modify_buffer(&mut buf);
    }
@@ -1885,8 +1885,8 @@ fn main() {
 
 #### 棧上的 `Copy` 類型
 
-```
-rust複製程式碼fn main() {
+```rust
+fn main() {
     let x = 5;
     let y = x; // x 是一個實現了 Copy trait 的整數類型
     println!("x: {}, y: {}", x, y); // x 和 y 都可以正常使用，因為 x 是被複制的
@@ -1895,8 +1895,8 @@ rust複製程式碼fn main() {
 
 #### 堆上的 `Move` 類型
 
-```
-rust複製程式碼fn main() {
+```rust
+fn main() {
     let s1 = String::from("hello");
     let s2 = s1; // s1 是 String 類型，沒有實現 Copy trait
     // println!("{}", s1); // 這行會導致編譯錯誤，因為 s1 的所有權已被轉移到 s2
@@ -1910,8 +1910,8 @@ rust複製程式碼fn main() {
 
 #### 結構體示例
 
-```
-rust複製程式碼#[derive(Debug, Copy, Clone)]
+```rust
+#[derive(Debug, Copy, Clone)]
 struct Point {
     x: i32,
     y: i32,
@@ -1923,7 +1923,10 @@ fn main() {
     println!("{:?}", p1); // p1 可以正常使用
     println!("{:?}", p2); // p2 也可以正常使用
 }
-rust複製程式碼struct Custom {
+```
+
+```rust
+struct Custom {
     data: String,
 }
 
