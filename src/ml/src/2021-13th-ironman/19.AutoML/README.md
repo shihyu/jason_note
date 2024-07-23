@@ -1,7 +1,7 @@
 # AutoML
 
 ## 今日學習目標
-- 了解何謂 AutoML
+- 瞭解何謂 AutoML
 - 超參數調參方法
     - Grid Search
     - Random Search
@@ -24,7 +24,7 @@
 - [talos](https://github.com/autonomio/talos)
 
 ## AutoML 扮演的角色
-自動化機器學習提供了一系列的方法和自動化的學習流程，以提高機器學習的效率並加速機器學習的研究。透過 AutoML 集結專家的先驗知識，大幅降低了機器學習建模的困難度。雖然領域專家與 AI 工程師必然扮演重要的角色，但是近年來 `No Code` 無程式碼開發平台形成一股潮流。AI 再也不是需要資訊背景的人才能做的事，目的是讓大家不用透過寫程式也能快速地進行資料探索與建立預測模型。然而近年來許多企業開發了各種需求的 AutoML 平台，如雨後春雨般的出現：
+自動化機器學習提供了一系列的方法和自動化的學習流程，以提高機器學習的效率並加速機器學習的研究。透過 AutoML 集結專家的先驗知識，大幅降低了機器學習建模的困難度。雖然領域專家與 AI 工程師必然扮演重要的角色，但是近年來 `No Code` 無程式碼開發平臺形成一股潮流。AI 再也不是需要資訊背景的人才能做的事，目的是讓大家不用透過寫程式也能快速地進行資料探索與建立預測模型。然而近年來許多企業開發了各種需求的 AutoML 平臺，如雨後春雨般的出現：
 
 - Google: Cloud AutoML
 - Microsoft: Azure Machine Learning
@@ -74,7 +74,7 @@ clf.cv_results_
 ```
 
 ### Random Search
-Random Search (隨機搜索) 按照字面上的意思就是在所有可能的候選參數中隨機挑選一個數值並嘗試。如果需要調的參數較多的時候，使用隨機搜索可以降低搜索時間，同時又能確保一定的模型準確性。在 Sklearn 套件中也有提供 [RandomizedSearchCV](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.RandomizedSearchCV.html) 方法可以呼叫，與網格搜索的差別在於使用者可以將欲搜尋的超參數設定一個期望的範圍。該方法會在此範圍中隨機抽一個數值並進行模型訓練並驗證模型。並找出所有隨機組合中表現最好的一組超參數。
+Random Search (隨機搜索) 按照字面上的意思就是在所有可能的候選參數中隨機挑選一個數值並嘗試。如果需要調的參數較多的時候，使用隨機搜索可以降低搜索時間，同時又能確保一定的模型準確性。在 Sklearn 套件中也有提供 [RandomizedSearchCV](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.RandomizedSearchCV.html) 方法可以呼叫，與網格搜索的差別在於使用者可以將欲搜尋的超參數設定一個期望的範圍。該方法會在此範圍中隨機抽一個數值並進行模型訓練並驗證模型。並找出所有隨機組閤中表現最好的一組超參數。
 
 ```py
 from sklearn.datasets import load_iris
@@ -104,7 +104,7 @@ Bayesian Optimization (貝葉斯優化) 目標是要在最少的試驗下尋找�
 
 ![](./image/img19-4.png)
 
-[Auto-sklearn](https://automl.github.io/auto-sklearn/master/) 就是一個透過貝葉斯優化來尋找最佳超參數的一個工具。同時它也能搜索在 Sklearn 中所有可能的算法，並為你推薦一個合適的模型與資料前處理方式。明天我們就來一探究竟該套件背後的神秘原理以及程式實作吧！
+[Auto-sklearn](https://automl.github.io/auto-sklearn/master/) 就是一個透過貝葉斯優化來尋找最佳超參數的一個工具。同時它也能搜索在 Sklearn 中所有可能的算法，並為你推薦一個合適的模型與資料前處理方式。明天我們就來一探究竟該套件背後的神祕原理以及程式實作吧！
 
 ## Reference
 - [automl.org](https://www.automl.org/automl/)

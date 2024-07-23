@@ -460,7 +460,7 @@ epoll 池怎麼配合？
 
 還記得套接字 buffer 數據來了的時候的回調嗎？
 
-調用的是 `sk->sk_data_ready` 這個函數指針，這個字段在 socket 初始化的時候被賦值為  `sock_def_readable` ，這個函數裡面會**依次調用**所有掛接到 socket 的 wait 隊列的對象（ 表頭：`sk->sk_wq` ），在這個 wait 隊列中存在和 epoll 關聯的秘密。
+調用的是 `sk->sk_data_ready` 這個函數指針，這個字段在 socket 初始化的時候被賦值為  `sock_def_readable` ，這個函數裡面會**依次調用**所有掛接到 socket 的 wait 隊列的對象（ 表頭：`sk->sk_wq` ），在這個 wait 隊列中存在和 epoll 關聯的祕密。
 
 回憶下，在  深入剖析 epoll 篇 提到，epoll_ctl 的時候，在把 socket fd 註冊進 epoll 池的時候，會把一個 wait 對象掛接到這個 socket 的 `sk->sk_wq` 中 ，回調函數就是 `ep_poll_callback` 。
 

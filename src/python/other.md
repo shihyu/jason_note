@@ -2314,7 +2314,7 @@ class Event:
 
 ###############################################################################
 
-# 定义事件类型
+# 定義事件類型
 EVENT_TURN_START = "Turn_start"
 EVENT_BROADCAST = "Broadcast"
 EVENT_UPDATE = "Update"
@@ -2323,13 +2323,13 @@ EVENT_TURN_END = "Turn_end"
 EVENT_HEARTBEAT = "Heartbeat"
 
 
-# 事件处理函数 (玩家)
+# 事件處理函數 (玩家)
 class Player:
     def __init__(self, id):
         self._id = id
 
     def turn_start(self, event):
-        print(f"{self._id} 回合开始")
+        print(f"{self._id} 回合開始")
 
     def broadcast(self, event):
         print(f"{self._id} 廣播訊息")
@@ -2358,7 +2358,7 @@ def test():
     event_manager.add_event_listener(EVENT_HEARTBEAT, player1.heartbeat)
     event_manager.start()
 
-    send = make_sender(event_manager)  # 创建 sender 传送事件
+    send = make_sender(event_manager)  # 創建 sender 傳送事件
     send(Event(type_=EVENT_TURN_START))
     send(Event(type_=EVENT_BROADCAST))
     send(Event(type_=EVENT_UPDATE))
@@ -2389,7 +2389,7 @@ import ctypes
 
 
 def test_segmentation_fault():
-    # 对于segmentation fault并不能catch到异常，即此处try没效果
+    # 對於segmentation fault並不能catch到異常，即此處try沒效果
     try:
         ctypes.string_at(0)
     except Exception as e:

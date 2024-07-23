@@ -9,7 +9,7 @@
 <br>
 <br>
   
-   [🏝<br>&nbsp;&nbsp;&nbsp; &nbsp;環境搭建&nbsp;&nbsp;&nbsp;&nbsp; ](https://github.com/0voice/Understanding_in_Rust#-%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA)  |[📕<br>&nbsp;&nbsp;&nbsp; 入門秘笈&nbsp;&nbsp;&nbsp; ](https://github.com/0voice/Understanding_in_Rust#-%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88-pdf%E6%A1%A3%E4%B8%8B%E8%BD%BD)|  [📖<br>&nbsp;&nbsp;&nbsp; 推薦書籍&nbsp;&nbsp;&nbsp; ](https://github.com/0voice/Understanding_in_Rust/blob/main/README.md#-%E6%8E%A8%E8%8D%90%E4%B9%A6%E7%B1%8D)
+   [🏝<br>&nbsp;&nbsp;&nbsp; &nbsp;環境搭建&nbsp;&nbsp;&nbsp;&nbsp; ](https://github.com/0voice/Understanding_in_Rust#-%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA)  |[📕<br>&nbsp;&nbsp;&nbsp; 入門祕笈&nbsp;&nbsp;&nbsp; ](https://github.com/0voice/Understanding_in_Rust#-%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88-pdf%E6%A1%A3%E4%B8%8B%E8%BD%BD)|  [📖<br>&nbsp;&nbsp;&nbsp; 推薦書籍&nbsp;&nbsp;&nbsp; ](https://github.com/0voice/Understanding_in_Rust/blob/main/README.md#-%E6%8E%A8%E8%8D%90%E4%B9%A6%E7%B1%8D)
 :-------: | :-------: | :---------:
  **[📑<br>精選文章](https://github.com/0voice/Understanding_in_Rust#-%E5%A4%A7%E7%89%9B%E6%96%87%E7%AB%A0)**  |  **[📰<br>官方文檔](https://github.com/0voice/Understanding_in_Rust/blob/main/README.md#-%E5%AE%98%E6%96%B9%E6%96%87%E6%A1%A3)**|  **[✈<br> 雜貨鋪](https://github.com/0voice/Understanding_in_Rust/blob/main/README.md#-%E6%9D%82%E8%B4%A7%E9%93%BA)**
 **[💽<br>視頻](https://github.com/0voice/Understanding_in_Rust#-%E8%A7%86%E9%A2%91)** | **[🏗<br>開源框架](https://github.com/0voice/Understanding_in_Rust#-%E5%BC%80%E6%BA%90%E6%A1%86%E6%9E%B6)** | **[🐂<br>大牛語錄](https://github.com/0voice/Understanding_in_Rust/blob/main/README.md#-%E5%A4%A7%E7%89%9B%E8%AF%AD%E5%BD%95)**
@@ -61,7 +61,7 @@ Rust 是唯一一個下面所有框框都打勾的語言：
 
 **安裝及工具：https://www.rust-lang.org/zh-CN/learn/get-started**
 
-# 📕 入門秘笈 [（PDF檔下載）](https://github.com/0voice/Understanding_in_Rust/blob/main/Rust%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88.pdf)
+# 📕 入門祕笈 [（PDF檔下載）](https://github.com/0voice/Understanding_in_Rust/blob/main/Rust%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88.pdf)
 
 - [Rust簡介](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E7%AE%80%E4%BB%8B.md)<br>
 - [Rust的特點](https://github.com/0voice/Understanding_in_Rust/blob/main/%E5%85%A5%E9%97%A8%E7%A7%98%E7%AC%88/Rust%E7%9A%84%E7%89%B9%E7%82%B9.md)<br>
@@ -148,7 +148,7 @@ Rust 是一種高度併發和高性能的語言，專注於安全和速度、內
   
 - [《Rust Standard Library Cookbook》](https://kr1lib.org/book/3571952/9b9cdb)  
   
-Mozilla 的 Rust 以其驚人的功能和強大的庫而備受關注。本書將帶您瞭解各種秘訣，教您如何利用標準庫來實現高效的解決方案。
+Mozilla 的 Rust 以其驚人的功能和強大的庫而備受關注。本書將帶您瞭解各種祕訣，教您如何利用標準庫來實現高效的解決方案。
 
 本書首先簡要介紹了標準庫和館藏的基本模塊。從這裡開始，食譜將涵蓋通過解析支持文件/目錄處理和交互的包。您將瞭解與高級數據結構、錯誤處理和網絡相關的包。您還將學習使用期貨和實驗性夜間功能。這本書還涵蓋了 Rust 中最相關的外部 crate。
   

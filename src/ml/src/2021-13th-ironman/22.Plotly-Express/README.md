@@ -36,7 +36,7 @@ df_data
 ![](./image/img22-2.png)
 
 ## 直方圖
-為了更清楚了解特徵的分布狀況，我們可以採用直方圖 histogram 做更近一步的分析。從直方圖我們可以更清楚知道特徵的每個值的頻率分佈。由於目前版本在 Notebook 無法直接使用 `fig.show()` 顯示互動圖，必須安裝一些小插件模組與設定。因此範例中採用最簡單方法，先轉換成 HTML code 並透過 `IPython.display` 中的 HTML 方法顯示出來。
+為了更清楚瞭解特徵的分佈狀況，我們可以採用直方圖 histogram 做更近一步的分析。從直方圖我們可以更清楚知道特徵的每個值的頻率分佈。由於目前版本在 Notebook 無法直接使用 `fig.show()` 顯示互動圖，必須安裝一些小插件模組與設定。因此範例中採用最簡單方法，先轉換成 HTML code 並透過 `IPython.display` 中的 HTML 方法顯示出來。
 
 ```py
 fig = px.histogram(df_data, x="sepal_width")
@@ -45,7 +45,7 @@ HTML(fig.to_html())
 
 ![](./image/img22-3.png)
 
-除此之外我們也能觀察每一個獨立特徵對於花的品種的每個分布狀況。每個不同的顏色代表不同的花朵品種，我們可以藉由參數設定每個直方圖是否重疊，以及重疊的透明程度。
+除此之外我們也能觀察每一個獨立特徵對於花的品種的每個分佈狀況。每個不同的顏色代表不同的花朵品種，我們可以藉由參數設定每個直方圖是否重疊，以及重疊的透明程度。
 
 ```py
 fig = px.histogram(df_data, x="sepal_width", color="species")
@@ -106,7 +106,7 @@ HTML(fig.to_html())
 ![](https://i.imgur.com/qBlYsR7.gif)
 
 ## 箱形圖
-我們可以透過箱形圖進行特徵的分布狀況分析。從視覺化圖中可以清楚地知道花萼的寬度範圍介於 2~4.5 之間，以及四分位數和離群值的訊息。
+我們可以透過箱形圖進行特徵的分佈狀況分析。從視覺化圖中可以清楚地知道花萼的寬度範圍介於 2~4.5 之間，以及四分位數和離群值的訊息。
 
 ```py
 fig = px.box(df_data, y="sepal_width")
@@ -115,7 +115,7 @@ HTML(fig.to_html())
 
 ![](./image/img22-10.png)
 
-除此之外我們能夠更近一步的分析花萼寬度對於每個品種的分布狀況。
+除此之外我們能夠更近一步的分析花萼寬度對於每個品種的分佈狀況。
 
 ```py
 fig = px.box(df_data, x="species", y="sepal_width",color="species")

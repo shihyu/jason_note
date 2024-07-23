@@ -5144,7 +5144,7 @@ C++11 新增：基於哈希的映射表 unordered_map
 
 原理：unordered_map 中的桶
 
-unordered_map 如何快速檢索數據？高效的秘訣在於 unordered_map 內部是一個數組，一個桶的數組，把鍵值對存到鍵的 hash 對應編號的桶去。
+unordered_map 如何快速檢索數據？高效的祕訣在於 unordered_map 內部是一個數組，一個桶的數組，把鍵值對存到鍵的 hash 對應編號的桶去。
 
 例如鍵為 "hello"，假設算出他的 hash 為 42。而桶的數量（bucket_count）是 32 個，則會把 "hello" 存到 42 % 32 = 10 號桶去。
 

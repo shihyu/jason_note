@@ -1,13 +1,13 @@
 
 ## 今日學習目標
 - 資料特徵觀察與離群值分析
-- 檢視資料的分布狀態
+- 檢視資料的分佈狀態
     - 偏度 (Skewness)
     - 峰度 (Kurtosis)
 - 修正特徵偏度的方法
 
 ## 前言
-資料前處理 (Data Preprocessing)，是機器學習中最重要的一部分。今日的內容可分為兩部份，前半部份算是一些對資料的觀察與分析，後半部主要是針對特徵 x 進行統計方法的資料分布觀察以及如何修正資料單峰偏左和偏右的常見方法。
+資料前處理 (Data Preprocessing)，是機器學習中最重要的一部分。今日的內容可分為兩部份，前半部份算是一些對資料的觀察與分析，後半部主要是針對特徵 x 進行統計方法的資料分佈觀察以及如何修正資料單峰偏左和偏右的常見方法。
 
 ## 載入資料
 在今日的範例中我們採用波士頓房價預測的資料集。此資料集共有 506 筆資料。其中我們挑選兩個特徵來進行示範，分別有 LSTAT: 區域中被認為是低收入階層的比例、AGE: 1940年之前建成的自用房屋比例。
@@ -32,14 +32,14 @@ boston
 我們可以透過 Pandas 的 `describe()` 方法先來查看每個特徵的平均數、標準差、四分位數以及最大值與最小值。
 
 ```py
-# 查看資料分布狀況
+# 查看資料分佈狀況
 boston.describe()
 ```
 
 ![](./image/img23-2.png)
 
 ## 離群值分析
-以 `LSTAT` 特徵舉例。我們可以透過 boxplot 來查看該特徵在 506 筆資料中的分布狀況，我們可以看出平均值約 12，最大值接近 38，最小值接近 2。我們可以發現大於 32 以外有多個零散的數據點，這些資料我們可以來分析是否為異常點。因為這些異常點所造成的離群值可能會造成特徵的分布狀況嚴重的偏移。
+以 `LSTAT` 特徵舉例。我們可以透過 boxplot 來查看該特徵在 506 筆資料中的分佈狀況，我們可以看出平均值約 12，最大值接近 38，最小值接近 2。我們可以發現大於 32 以外有多個零散的數據點，這些資料我們可以來分析是否為異常點。因為這些異常點所造成的離群值可能會造成特徵的分佈狀況嚴重的偏移。
 
 ```python
 plt.figure(figsize=(2,5))
@@ -53,16 +53,16 @@ plt.show()
 
 ## 偏度 & 峰度
 ### 偏度 (Skewness)
-偏度 (Skewness) 是用來衡量資料分布的型態，同時也說明資料分配不對稱的程度。其判別方式如下：
+偏度 (Skewness) 是用來衡量資料分佈的型態，同時也說明資料分配不對稱的程度。其判別方式如下：
 
 ![](./image/img23-4.png)
 
 - 右偏(正偏)，表示有少數幾筆資料很大，故平均數>中位數，所以偏度>0。
-- 偏度=0 表示資料分布對稱，呈鐘形常態分布。
+- 偏度=0 表示資料分佈對稱，呈鐘形常態分佈。
 - 左偏(負偏)，表示有少數幾筆資料很小，故平均數<中位數，所以偏度<0。
 
 ### 峰度 (Kurtosis)
-峰度 (Kurtossis) 可以反映資料的分布形狀。例如該資料是否比較高聳或是扁平的形狀。其判別方式如下：
+峰度 (Kurtossis) 可以反映資料的分佈形狀。例如該資料是否比較高聳或是扁平的形狀。其判別方式如下：
 
 ![](./image/img23-5.png)
 
@@ -70,7 +70,7 @@ plt.show()
 - 峰度=0 表示資料呈現常態峰。
 - 峰度<0 表示資料呈現低潤峰。
 
-## 分布狀態
+## 分佈狀態
 ### LSTAT 特徵觀察
 我們可以發現 LSTAT 特徵呈現右偏。透過 Pandas 計算該特徵的偏度與峰度。由結果可以得知偏度 `0.91>0` 呈右偏，而峰度 `0.49>0` 呈現高峽峰形狀。
 
@@ -81,7 +81,7 @@ skewness = round(boston['LSTAT'].skew(), 2)
 kurtosis = round(boston['LSTAT'].kurt(), 2)
 print(f"偏度(Skewness): {skewness}, 峰度(Kurtosis): {kurtosis}")
 
-# 繪製分布圖
+# 繪製分佈圖
 sns.histplot(boston['LSTAT'], kde=True)
 plt.show()
 ```
@@ -98,7 +98,7 @@ skewness = round(boston['AGE'].skew(), 2)
 kurtosis = round(boston['AGE'].kurt(), 2)
 print(f"偏度(Skewness): {skewness}, 峰度(Kurtosis): {kurtosis}")
 
-# 繪製分布圖
+# 繪製分佈圖
 sns.histplot(boston['AGE'], kde=True)
 plt.show()
 ```
@@ -107,7 +107,7 @@ plt.show()
 
 
 ## 修正資料偏態的方法
-在數學統計或是機器學習中我們都會提出假設，前提是資料樣本是具有常態分佈。我們可以透過剛剛所講的偏度與峰度來評估特徵的分布狀態，或是透過直方圖與核密度估計視覺化查看資料分布。當資料呈現單峰偏斜時，我們會透過一些資料轉換技巧，讓所有資料能夠修正回常態分佈。以下整幾幾個常見的修正特徵偏度的方法：
+在數學統計或是機器學習中我們都會提出假設，前提是資料樣本是具有常態分佈。我們可以透過剛剛所講的偏度與峰度來評估特徵的分佈狀態，或是透過直方圖與核密度估計視覺化查看資料分佈。當資料呈現單峰偏斜時，我們會透過一些資料轉換技巧，讓所有資料能夠修正回常態分佈。以下整幾幾個常見的修正特徵偏度的方法：
 
 - 對數轉換 (資料不能有0或負數)
 - 平方根轉換 (資料不能是負數)
@@ -126,7 +126,7 @@ skewness = round(transform_data.skew(), 2)
 kurtosis = round(transform_data.kurt(), 2)
 print(f"偏度(Skewness): {skewness}, 峰度(Kurtosis): {kurtosis}")
 
-# 繪製分布圖
+# 繪製分佈圖
 sns.histplot(transform_data, kde=True)
 plt.show()
 ```
@@ -142,7 +142,7 @@ skewness = round(transform_data.skew(), 2)
 kurtosis = round(transform_data.kurt(), 2)
 print(f"偏度(Skewness): {skewness}, 峰度(Kurtosis): {kurtosis}")
 
-# 繪製分布圖
+# 繪製分佈圖
 sns.histplot(transform_data, kde=True)
 plt.show()
 ```
@@ -158,7 +158,7 @@ skewness = round(transform_data.skew(), 2)
 kurtosis = round(transform_data.kurt(), 2)
 print(f"偏度(Skewness): {skewness}, 峰度(Kurtosis): {kurtosis}")
 
-# 繪製分布圖
+# 繪製分佈圖
 sns.histplot(transform_data, kde=True)
 plt.show()
 ```
@@ -175,14 +175,14 @@ skewness = round(transform_data.skew(), 2)
 kurtosis = round(transform_data.kurt(), 2)
 print(f"偏度(Skewness): {skewness}, 峰度(Kurtosis): {kurtosis}")
 
-# 繪製分布圖
+# 繪製分佈圖
 sns.histplot(transform_data, kde=True)
 plt.show()
 ```
 
 ![](./image/img23-11.png)
 
-> 原本的資料分布低潤峰且有點雙峰的趨勢，因此轉換出來會有兩座山的感覺。
+> 原本的資料分佈低潤峰且有點雙峰的趨勢，因此轉換出來會有兩座山的感覺。
 
 ## Box-Cox 轉換
 
@@ -195,7 +195,7 @@ skewness = round(transform_data.skew(), 2)
 kurtosis = round(transform_data.kurt(), 2)
 print(f"偏度(Skewness): {skewness}, 峰度(Kurtosis): {kurtosis}")
 
-# 繪製分布圖
+# 繪製分佈圖
 sns.histplot(transform_data, kde=True)
 plt.show()
 ```

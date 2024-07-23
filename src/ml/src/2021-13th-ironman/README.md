@@ -15,7 +15,7 @@
 | ------------- | ------------- |
 | [[Day 1] 全民瘋AI系列2.0-機器學習實戰手冊](https://ithelp.ithome.com.tw/articles/10263409) | -  |
 | [[Day 2] 快來探索AI的世界](https://ithelp.ithome.com.tw/articles/10263822) | -  |
-| [[Day 3] 你真了解資料嗎？試試看視覺化分析吧！](https://ithelp.ithome.com.tw/articles/10264416) | [Code](https://colab.research.google.com/github/andy6804tw/2021-13th-ironman/blob/main/3.你真了解資料嗎？試試看視覺化分析吧！/3.你真了解資料嗎？試試看視覺化分析吧！.ipynb)  |
+| [[Day 3] 你真瞭解資料嗎？試試看視覺化分析吧！](https://ithelp.ithome.com.tw/articles/10264416) | [Code](https://colab.research.google.com/github/andy6804tw/2021-13th-ironman/blob/main/3.你真瞭解資料嗎？試試看視覺化分析吧！/3.你真瞭解資料嗎？試試看視覺化分析吧！.ipynb)  |
 | [[Day 4] 咱們一起做資料清理和前處理](https://ithelp.ithome.com.tw/articles/10265253) | [Code](https://colab.research.google.com/github/andy6804tw/2021-13th-ironman/blob/main/4.咱們一起做資料清理和前處理/4.咱們一起做資料清理和前處理.ipynb)  |
 | [[Day 5] 機器學習大補帖](https://ithelp.ithome.com.tw/articles/10265942) | - |
 | [[Day 6] 非監督式學習 K-means 分群](https://ithelp.ithome.com.tw/articles/10266672) | [Code](https://colab.research.google.com/github/andy6804tw/2021-13th-ironman/blob/main/6.非監督式學習k-means分群/6.非監督式學習k-means分群.ipynb) |
@@ -35,7 +35,7 @@
 | [[Day 20] 機器學習金手指 - Auto-sklearn](https://ithelp.ithome.com.tw/articles/10276333) | [Code](https://colab.research.google.com/github/andy6804tw/2021-13th-ironman/blob/main/20.Auto-Sklearn/20.Auto-sklearn(iris-classification).ipynb) |
 | [[Day 21] 調整模型超參數利器 - Optuna](https://ithelp.ithome.com.tw/articles/10276835) | [Code](https://colab.research.google.com/github/andy6804tw/2021-13th-ironman/blob/main/21.Optuna/21.optuna-tutorial.ipynb) |
 | [[Day 22] Python 視覺化解釋數據 - Plotly Express](https://ithelp.ithome.com.tw/articles/10277258) | [Code](https://colab.research.google.com/github/andy6804tw/2021-13th-ironman/blob/main/22.Plotly-Express/22.Plotly-Express.ipynb) |
-| [[Day 23] 資料分布與離群值處理](https://ithelp.ithome.com.tw/articles/10278000) | [Code](https://colab.research.google.com/github/andy6804tw/2021-13th-ironman/blob/main/23.資料分布與離群值處理/23.資料分布與離群值處理.ipynb) |
+| [[Day 23] 資料分佈與離群值處理](https://ithelp.ithome.com.tw/articles/10278000) | [Code](https://colab.research.google.com/github/andy6804tw/2021-13th-ironman/blob/main/23.資料分佈與離群值處理/23.資料分佈與離群值處理.ipynb) |
 | [[Day 24] 機器學習 - 不能忽視的過擬合與欠擬合](https://ithelp.ithome.com.tw/articles/10278254) | - |
 | [[Day 25] 交叉驗證 Cross-Validation 簡介](https://ithelp.ithome.com.tw/articles/10278851) | - |
 | [[Day 26] 交叉驗證 K-Fold Cross-Validation](https://ithelp.ithome.com.tw/articles/10279240) | - |
@@ -50,15 +50,15 @@
 
 ![](./1.全民瘋AI系列2.0目標介紹/image/img1-1.jpg)
 
-## 此系列教學適合誰?
-如果您是之前的舊讀者，歡迎回來為自己充電～新的系列文章保證讓你收穫滿滿！若您是新來的讀者歡迎加入人工智慧的世界，此系列文章正適合初學者閱讀。另外建議可以搭配我[上一屆](https://ithelp.ithome.com.tw/users/20107247/ironman/3719)鐵人賽的影片教學進行學習。
+## 此係列教學適合誰?
+如果您是之前的舊讀者，歡迎回來為自己充電～新的系列文章保證讓你收穫滿滿！若您是新來的讀者歡迎加入人工智慧的世界，此係列文章正適合初學者閱讀。另外建議可以搭配我[上一屆](https://ithelp.ithome.com.tw/users/20107247/ironman/3719)鐵人賽的影片教學進行學習。
 
 ## 系列文章內容規劃
-在本次鐵人賽預計新增了許多新內容，特別是近年來比較新的演算法套件，以及在模型訓練中必須注意的大小事。本系列要在短短30天內講完所有 AI 領域相關應用是不太可能的事情，因此我的規劃是從認識人工智慧開始切入主題。先讓大家知道何謂人工智慧以及相關應用有哪些。接著帶各位了解成為資料科學家的第一步，就是資料分析與視覺化，再來會有一系列經典的機器學習演算法介紹。最後也是大家可能會有興趣的整合部分，會以實際的帶大家手把手部署我們的AI模型以及前後端串接的概念。
+在本次鐵人賽預計新增了許多新內容，特別是近年來比較新的演算法套件，以及在模型訓練中必須注意的大小事。本系列要在短短30天內講完所有 AI 領域相關應用是不太可能的事情，因此我的規劃是從認識人工智慧開始切入主題。先讓大家知道何謂人工智慧以及相關應用有哪些。接著帶各位瞭解成為資料科學家的第一步，就是資料分析與視覺化，再來會有一系列經典的機器學習演算法介紹。最後也是大家可能會有興趣的整合部分，會以實際的帶大家手把手部署我們的AI模型以及前後端串接的概念。
 
 
 ## 前置作業資源
-本系列教學將有大量的程式實作，並採用 Google Colab 做為程式雲端運行的編輯執行環境。各位可以直接利用 Colab 開啟本系列文章的範例程式。在使用此平台之前每個人都必須要有自己的 Google 帳號，才能順利的開啟並執行程式碼。Colab 可讓你輕鬆地在瀏覽器上撰寫並執行 Python 程式語言，它可以說是機器學習新手的入門工具。此外 Colab 具備了以下幾個優點：
+本系列教學將有大量的程式實作，並採用 Google Colab 做為程式雲端運行的編輯執行環境。各位可以直接利用 Colab 開啟本系列文章的範例程式。在使用此平臺之前每個人都必須要有自己的 Google 帳號，才能順利的開啟並執行程式碼。Colab 可讓你輕鬆地在瀏覽器上撰寫並執行 Python 程式語言，它可以說是機器學習新手的入門工具。此外 Colab 具備了以下幾個優點：
 
 - 不必進行任何設定與安裝
 - 免費額度使用 GPU、TPU 資源
@@ -70,7 +70,7 @@
 本系列文章若有問題或是內容建議都可以來 GitHub 中的 [issue](https://github.com/andy6804tw/2021-13th-ironman/issues) 提出。歡迎大家一同貢獻為這系列文章有更好的閱讀品質。
 
 ## 關於作者
-曾任職於台灣人工智慧學校擔任AI工程師，具有豐富教學經驗，熱衷網頁前後端整合發與AI演算法開發。希望藉由鐵人賽，將所學貢獻出來提升臺灣在AI領域的資源。
+曾任職於臺灣人工智慧學校擔任AI工程師，具有豐富教學經驗，熱衷網頁前後端整合發與AI演算法開發。希望藉由鐵人賽，將所學貢獻出來提升臺灣在AI領域的資源。
 
 [@andy6804tw](https://github.com/andy6804tw)
 

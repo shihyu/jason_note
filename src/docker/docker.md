@@ -24,7 +24,7 @@ chmod 755 docker-compose
 
 # Docker 教學
 
-***docker*實際上,就是一個系統聯合幾個元件一直在欺騙一個處理程序,主要依靠了三個幫兇namespace,*chroot,cgroup*** 
+***docker*實際上,就是一個系統聯合幾個元件一直在欺騙一個處理程序,主要依靠了三個幫凶namespace,*chroot,cgroup*** 
 
 Containers as a Service ( CaaS ) - 容器如同服務
 Docker 是一個開源專案，出現於 2013 年初，最初是 Dotcloud 公司內部的 Side-Project。

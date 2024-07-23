@@ -63,7 +63,7 @@ Methods:
 - fit: K個集群分類模型訓練。
 - predict: 預測並回傳類別。
 - fit_predict: 先呼叫fit()做集群分類，之後在呼叫predict()預測最終類別並回傳輸出。
-- transform: 回傳的陣列每一行是每一個樣本到kmeans中各個中心點的L2(歐幾里得)距離。
+- transform: 回傳的陣列每一行是每一個樣本到kmeans中各個中心點的L2(歐幾裡得)距離。
 - fit_transform: 先呼叫fit()再執行transform()。
 
 

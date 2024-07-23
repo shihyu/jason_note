@@ -1,7 +1,7 @@
 # 整體學習 (Ensemble Learning)
 
 ## 今日學習目標
-- 了解整體學習
+- 瞭解整體學習
     - 何謂整體學習？
 - 三種不同的整體學習
     - Bagging、Boosting、Stacking

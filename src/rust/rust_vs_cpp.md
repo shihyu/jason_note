@@ -958,8 +958,8 @@ fn main() {
 
 class Animal {
 public:
-    virtual void makeSound() const = 0; // 纯虚函数
-    virtual ~Animal() = default; // 虚析构函数
+    virtual void makeSound() const = 0; // 純虛函數
+    virtual ~Animal() = default; // 虛析構函數
 };
 
 class Dog : public Animal {

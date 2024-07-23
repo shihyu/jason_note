@@ -2,7 +2,7 @@
 
 ## 今日學習目標
 - LightGBM 與 XGBoost 比較
-- 了解 LightGBM 優點
+- 瞭解 LightGBM 優點
 - 實作 LightGBM 處理資料不平衡資料
     - 信用卡盜刷偵測 (二元分類)
 

@@ -152,7 +152,7 @@
 * [HgInit (中文版)](http://bucunzai.net/hginit/)
 * [沉浸式學 Git](http://igit.linuxtoy.org)
 * [Git-Cheat-Sheet](https://github.com/flyhigher139/Git-Cheat-Sheet) （感謝 @flyhigher139 翻譯了中文版）
-* [GitHub秘籍](https://snowdream86.gitbooks.io/github-cheat-sheet/content/zh/index.html)
+* [GitHub祕籍](https://snowdream86.gitbooks.io/github-cheat-sheet/content/zh/index.html)
 * [GitHub幫助文檔](https://github.com/waylau/github-help)
 * [git-flow 備忘清單](http://danielkummer.github.io/git-flow-cheatsheet/index.zh_CN.html)
 * [svn 手冊](http://svnbook.red-bean.com/nightly/zh/index.html)
@@ -232,7 +232,7 @@
 ### Web
 
 * [關於瀏覽器和網絡的 20 項須知](http://www.20thingsilearned.com/zh-CN/home)
-* [瀏覽器開發工具的秘密](http://jinlong.github.io/2013/08/29/devtoolsecrets/)
+* [瀏覽器開發工具的祕密](http://jinlong.github.io/2013/08/29/devtoolsecrets/)
 * [Chrome 開發者工具中文手冊](https://github.com/CN-Chrome-DevTools/CN-Chrome-DevTools)
 * [Chrome擴展開發文檔](http://open.chrome.360.cn/extension_dev/overview.html)
 * [Grunt中文文檔](http://www.gruntjs.net/)
@@ -408,7 +408,7 @@
 * [iOS開發60分鐘入門](https://github.com/qinjx/30min_guides/blob/master/ios.md)
 * [iOS7人機界面指南](http://isux.tencent.com/ios-human-interface-guidelines-ui-design-basics-ios7.html)
 * [Google Objective-C Style Guide 中文版](http://zh-google-styleguide.readthedocs.org/en/latest/google-objc-styleguide/)
-* [iPhone 6 屏幕揭秘](http://wileam.com/iphone-6-screen-cn/)
+* [iPhone 6 屏幕揭祕](http://wileam.com/iphone-6-screen-cn/)
 * [Apple Watch開發初探](http://nilsun.github.io/apple-watch/)
 * [馬上著手開發 iOS 應用程序](https://developer.apple.com/library/ios/referencelibrary/GettingStarted/RoadMapiOSCh/index.html)
 * [網易斯坦福大學公開課：iOS 7應用開發字幕文件](https://github.com/jkyin/Subtitle)
@@ -445,10 +445,10 @@
 * [JavaScript 標準參考教程（alpha）](http://javascript.ruanyifeng.com/)
 * [Javascript編程指南](http://pij.robinqu.me/) ([源碼](https://github.com/RobinQu/Programing-In-Javascript))
 * [javascript 的 12 個怪癖](https://github.com/justjavac/12-javascript-quirks)
-* [JavaScript 秘密花園](http://bonsaiden.github.io/JavaScript-Garden/zh/)
+* [JavaScript 祕密花園](http://bonsaiden.github.io/JavaScript-Garden/zh/)
 * [JavaScript核心概念及實踐](http://icodeit.org/jsccp/) (PDF) (此書已由人民郵電出版社出版發行，但作者依然免費提供PDF版本，希望開發者們去購買，支持作者)
 * [《JavaScript 模式》](https://github.com/jayli/javascript-patterns) “JavaScript patterns”中譯本
-* [命名函數表達式探秘](http://justjavac.com/named-function-expressions-demystified.html)  (注:原文由[為之漫筆](http://www.cn-cuckoo.com)翻譯，原始地址無法打開，所以此處地址為我博客上的備份)
+* [命名函數表達式探祕](http://justjavac.com/named-function-expressions-demystified.html)  (注:原文由[為之漫筆](http://www.cn-cuckoo.com)翻譯，原始地址無法打開，所以此處地址為我博客上的備份)
 * [學用 JavaScript 設計模式](http://www.oschina.net/translate/learning-javascript-design-patterns) (開源中國)
 * [深入理解JavaScript系列](http://www.cnblogs.com/TomXu/archive/2011/12/15/2288411.html)   
 * [ECMAScript 5.1 中文版](http://yanhaijing.com/es5)   
@@ -652,7 +652,7 @@
 
 ### R
 
-* [R語言忍者秘笈](https://github.com/yihui/r-ninja)
+* [R語言忍者祕笈](https://github.com/yihui/r-ninja)
 
 ### Ruby
 
@@ -883,7 +883,7 @@
 * [HgInit (中文版)](http://bucunzai.net/hginit/)
 * [沉浸式學 Git](http://igit.linuxtoy.org)
 * [Git-Cheat-Sheet](https://github.com/flyhigher139/Git-Cheat-Sheet) （感謝 @flyhigher139 翻譯了中文版）
-* [GitHub秘籍](https://snowdream86.gitbooks.io/github-cheat-sheet/content/zh/index.html)
+* [GitHub祕籍](https://snowdream86.gitbooks.io/github-cheat-sheet/content/zh/index.html)
 * [GitHub幫助文檔](https://github.com/waylau/github-help)
 * [git-flow 備忘清單](http://danielkummer.github.io/git-flow-cheatsheet/index.zh_CN.html)
 * [svn 手冊](http://svnbook.red-bean.com/nightly/zh/index.html)
@@ -963,7 +963,7 @@
 ### Web
 
 * [關於瀏覽器和網絡的 20 項須知](http://www.20thingsilearned.com/zh-CN/home)
-* [瀏覽器開發工具的秘密](http://jinlong.github.io/2013/08/29/devtoolsecrets/)
+* [瀏覽器開發工具的祕密](http://jinlong.github.io/2013/08/29/devtoolsecrets/)
 * [Chrome 開發者工具中文手冊](https://github.com/CN-Chrome-DevTools/CN-Chrome-DevTools)
 * [Chrome擴展開發文檔](http://open.chrome.360.cn/extension_dev/overview.html)
 * [Grunt中文文檔](http://www.gruntjs.net/)
@@ -1138,7 +1138,7 @@
 * [iOS開發60分鐘入門](https://github.com/qinjx/30min_guides/blob/master/ios.md)
 * [iOS7人機界面指南](http://isux.tencent.com/ios-human-interface-guidelines-ui-design-basics-ios7.html)
 * [Google Objective-C Style Guide 中文版](http://zh-google-styleguide.readthedocs.org/en/latest/google-objc-styleguide/)
-* [iPhone 6 屏幕揭秘](http://wileam.com/iphone-6-screen-cn/)
+* [iPhone 6 屏幕揭祕](http://wileam.com/iphone-6-screen-cn/)
 * [Apple Watch開發初探](http://nilsun.github.io/apple-watch/)
 * [馬上著手開發 iOS 應用程序](https://developer.apple.com/library/ios/referencelibrary/GettingStarted/RoadMapiOSCh/index.html)
 * [網易斯坦福大學公開課：iOS 7應用開發字幕文件](https://github.com/jkyin/Subtitle)
@@ -1175,10 +1175,10 @@
 * [JavaScript 標準參考教程（alpha）](http://javascript.ruanyifeng.com/)
 * [Javascript編程指南](http://pij.robinqu.me/) ([源碼](https://github.com/RobinQu/Programing-In-Javascript))
 * [javascript 的 12 個怪癖](https://github.com/justjavac/12-javascript-quirks)
-* [JavaScript 秘密花園](http://bonsaiden.github.io/JavaScript-Garden/zh/)
+* [JavaScript 祕密花園](http://bonsaiden.github.io/JavaScript-Garden/zh/)
 * [JavaScript核心概念及實踐](http://icodeit.org/jsccp/) (PDF) (此書已由人民郵電出版社出版發行，但作者依然免費提供PDF版本，希望開發者們去購買，支持作者)
 * [《JavaScript 模式》](https://github.com/jayli/javascript-patterns) “JavaScript patterns”中譯本
-* [命名函數表達式探秘](http://justjavac.com/named-function-expressions-demystified.html)  (注:原文由[為之漫筆](http://www.cn-cuckoo.com)翻譯，原始地址無法打開，所以此處地址為我博客上的備份)
+* [命名函數表達式探祕](http://justjavac.com/named-function-expressions-demystified.html)  (注:原文由[為之漫筆](http://www.cn-cuckoo.com)翻譯，原始地址無法打開，所以此處地址為我博客上的備份)
 * [學用 JavaScript 設計模式](http://www.oschina.net/translate/learning-javascript-design-patterns) (開源中國)
 * [深入理解JavaScript系列](http://www.cnblogs.com/TomXu/archive/2011/12/15/2288411.html)   
 * [ECMAScript 5.1 中文版](http://yanhaijing.com/es5)   
@@ -1382,7 +1382,7 @@
 
 ### R
 
-* [R語言忍者秘笈](https://github.com/yihui/r-ninja)
+* [R語言忍者祕笈](https://github.com/yihui/r-ninja)
 
 ### Ruby
 
