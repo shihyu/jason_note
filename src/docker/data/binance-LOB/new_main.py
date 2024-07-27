@@ -12,7 +12,6 @@ from model import (
 )
 from datetime import datetime
 import asyncio
-import aiohttp
 from pydantic import BaseModel, ValidationError
 from time import time
 from config import CONFIG
@@ -140,6 +139,17 @@ async def handle_depth_stream(
                             symbol_full,
                         )
 
+                    print(
+                        f"timestamp: {timestamp}, "
+                        f"symbol: {symbol_full}, "
+                        f"first_update_id: {first_update_id}, "
+                        f"final_update_id: {final_update_id}, "
+                        f"bids_quantity: {bids_quantity}, "
+                        f"bids_price: {bids_price}, "
+                        f"asks_quantity: {asks_quantity}, "
+                        f"asks_price: {asks_price}"
+                    )
+
                     dispatcher.insert(
                         timestamp,
                         first_update_id,
@@ -168,6 +178,7 @@ async def setup():
         logger.log_msg("Starting event loop...", LoggingLevel.INFO)
         tasks = []
         for symbol in CONFIG.symbols:
+            print(f"symbol:{symbol}")
             if "USD_" in symbol:
                 tasks.append(
                     handle_depth_stream(
