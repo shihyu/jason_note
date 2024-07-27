@@ -1,5 +1,7 @@
 # 定義一些變量
 DOCKER_COMPOSE = docker-compose
+CLICKHOUSE_CONTAINER = my_clickhouse
+MAIN_CONTAINER = my_main_app
 SERVICE = main
 
 # 幫助信息
@@ -12,6 +14,8 @@ help:
 	@echo "  logs         - 查看服務日誌"
 	@echo "  restart      - 重啟服務"
 	@echo "  clean        - 清理未使用的 Docker 資源"
+	@echo "  exec-clickhouse - 進入 ClickHouse 容器並啟動 Bash"
+	@echo "  exec-main    - 進入主應用容器並啟動 Bash"
 
 # 構建 Docker 映像
 .PHONY: build
@@ -42,4 +46,14 @@ restart:
 .PHONY: clean
 clean:
 	docker system prune -f
+
+# 進入 ClickHouse 容器並啟動 Bash
+.PHONY: exec-clickhouse
+exec-clickhouse:
+	docker exec -it $(CLICKHOUSE_CONTAINER) bash
+
+# 進入主應用容器並啟動 Bash
+.PHONY: exec-main
+exec-main:
+	docker exec -it $(MAIN_CONTAINER) bash
 
