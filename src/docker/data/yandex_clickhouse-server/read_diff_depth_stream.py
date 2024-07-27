@@ -46,8 +46,8 @@ if __name__ == "__main__":
     db = Database(CONFIG.db_name, db_url=f"http://{CONFIG.host_name}:8123/")
 
     # 範例：讀取最近一小時的記錄（使用本地時間）
-    local_tz = pytz.timezone("Asia/Taipei") # 使用台北時區作為示例
+    local_tz = pytz.timezone("Asia/Taipei")  # 使用台北時區作為示例
     end_time = datetime.now(local_tz)
-    start_time = end_time - timedelta(hours=1)
+    start_time = end_time - timedelta(minutes=5)
 
     read_diff_depth_stream(db, start_time, end_time)
