@@ -48,6 +48,6 @@ if __name__ == "__main__":
     # 範例：讀取最近一小時的記錄（使用本地時間）
     local_tz = pytz.timezone("Asia/Taipei")  # 使用台北時區作為示例
     end_time = datetime.now(local_tz)
-    start_time = end_time - timedelta(minutes=5)
+    start_time = end_time - timedelta(hours=10)
 
     read_diff_depth_stream(db, start_time, end_time)
