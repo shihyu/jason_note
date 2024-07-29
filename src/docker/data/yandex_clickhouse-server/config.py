@@ -2,7 +2,9 @@ import json
 from pathlib import Path
 from typing import Dict, Any, List
 import os
-from pydantic import BaseSettings
+
+# from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 
 def json_config_settings_source(settings: BaseSettings) -> Dict[str, Any]:
@@ -20,7 +22,7 @@ def json_config_settings_source(settings: BaseSettings) -> Dict[str, Any]:
 class Config(BaseSettings):
     api_key: str = ""
     api_secret: str = ""
-    symbols: List[str]
+    symbols: List[str] = ["BTCUSD", "ETHUSD", "XRPUSD", "LTCUSD", "BNBUSD"]  # 添加默認值
     full_fetch_interval: int = 60 * 60
     full_fetch_limit: int = 1000
     stream_interval: int = 100
