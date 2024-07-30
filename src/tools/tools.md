@@ -86,3 +86,9 @@ find . -name ".git" -type d -exec sh -c '
 0 0 28-31 * * [ "$(date +\%d -d tomorrow)" = "01" ] && command
 ```
 
+
+- 解壓 zip
+
+```sh
+ find . -type f -name '*.zip' -exec unzip -d unzip {} \;
+ ```
