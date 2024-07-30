@@ -1,0 +1,31 @@
+services:
+  # ClickHouse 資料庫服務
+  clickhouse:
+    image: yandex/clickhouse-server  # 使用 Yandex 官方 ClickHouse 映像檔
+    container_name: my_clickhouse  # 自訂容器名稱為 my_clickhouse
+    volumes:
+      - ./database:/var/lib/clickhouse  # 將本地 ./database 目錄掛載到容器的 /var/lib/clickhouse
+    ulimits: 
+      nofile:
+        soft: 262144  # 設置軟限制為 262144 個開啟檔案
+        hard: 262144  # 設置硬限制為 262144 個開啟檔案
+    ports:
+      - "8123:8123"  # 映射 HTTP 介面埠
+      - "9000:9000"  # 映射 Native 介面埠
+    restart: always  # 容器退出時總是重新啟動
+    networks:
+      - my-network  # 連接到 my-network 網路
+
+  # 主應用服務
+  main:
+    build: .  # 使用當前目錄的 Dockerfile 構建映像檔
+    container_name: my_main_app  # 自訂容器名稱為 my_main_app
+    restart: always  # 容器退出時總是重新啟動
+    depends_on:
+      - clickhouse  # 依賴於 clickhouse 服務，會在 clickhouse 啟動後再啟動
+    networks:
+      - my-network  # 連接到 my-network 網路
+
+# 自定義網路
+networks:
+  my-network:  # 定義一個名為 my-network 的網路，用於服務間通訊
