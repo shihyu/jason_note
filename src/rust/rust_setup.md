@@ -28,7 +28,6 @@ cargo watch -x run
 輸出如下：
 
 ```js
-duidaima.com
 cargo watch -x run
 [Running 'cargo run']
 Hello, world!
