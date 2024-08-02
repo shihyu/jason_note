@@ -36,7 +36,7 @@ sudo apt-get install xclip xsel
 ```
 
 ```sh
-CocInstall coc-tabnine coc-clangd coc-cmake coc-css coc-html coc-json coc-r-lsp coc-go coc-pyright coc-tsserver coc-sh coc-rls
+CocInstall coc-rust-analyzer coc-tabnine coc-clangd coc-cmake coc-css coc-html coc-json coc-r-lsp coc-go coc-pyright coc-tsserver coc-sh coc-rls
 ```
 
 Inlay Hints默認是打開的，下次打開vim還會啟用，永久關閉可以在coc-nvim的組態檔案裡修改。

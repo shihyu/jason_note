@@ -64,6 +64,7 @@
   - [Rust 所有權系統](rust/ownership.md)
   - [Rust 生命週期 (Lifetime)](rust/lifetime.md)
   - [Rust 型別系統](rust/type.md)
+  - [Rust Tools](rust/rust_setup.md)
   - [Polars](rust/polars.md)
   - [Rust call C](rust/rust_call_c.md)
   - [PyO3](rust/pyo3.md)
