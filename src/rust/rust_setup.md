@@ -70,7 +70,7 @@ cargo add rand@0.7
 ```
 
 這將自動更新Cargo.toml檔案：
-![img](https://img.duidaima.com/PorkBelly/Article/Big/f361926c-badc-4400-8553-455abd274480.png)
+![img](images/f361926c-badc-4400-8553-455abd274480.png)
 如圖所示，rang 0.7不是最新版本，我們可以使用以下命令來升級依賴項：
 
 ```js
@@ -205,7 +205,7 @@ cargo nextest run
 ```
 
 結果如下：
-![img](https://img.duidaima.com/PorkBelly/Article/Big/650af877-6567-4cd0-b0fa-ca391dd3783d.png)
+![img](images/650af877-6567-4cd0-b0fa-ca391dd3783d.png)
 正如你所看到的，輸出是有組織的，並且具有漂亮的顏色，這有助於提高可讀性。
 
 **7. Cargo make**
@@ -251,7 +251,7 @@ cargo make --makefile build.toml build-flow
 ```
 
 結果如下：
-![img](https://img.duidaima.com/PorkBelly/Article/Big/b44ae5e9-4b70-4fcf-9bd7-3ef2092db46d.png)
+![img](images/b44ae5e9-4b70-4fcf-9bd7-3ef2092db46d.png)
 至此，你應該知道的7個Rust Cargo外掛已經介紹完了，希望對你有所幫助。
 
 
@@ -276,7 +276,7 @@ rustup component add rust-src # LSP(rust-analyzer)追加
 
 Cargo Watch 在你的項目上創建了一個監聽器，並在發生更改時運行 Cargo 命令。
 
-![img](https://www.readfog.com/assets/53/c8/811b8c9a03aa82263082ed54f3db.png)
+![img](images/811b8c9a03aa82263082ed54f3db.png)
 
 我們從創建一個新項目開始。對於我們的例子，我們將其稱爲 cargo-watch-example：
 
@@ -304,7 +304,7 @@ cargo watch -w src -x run
 
 例如：
 
-![img](https://www.readfog.com/assets/4b/58/137c3ac85f6133bcff9895e51047.png)
+![img](images/137c3ac85f6133bcff9895e51047.png)
 
 前面的例子是觀察整個項目或特定目錄上的變化的最簡單的配置，但你可以做的事情更多，這裏是命令說明：
 
