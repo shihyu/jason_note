@@ -36,8 +36,12 @@ def detect_single_image(model_path, image_path):
     # 使用 plot() 方法繪製結果
     res_plotted = r.plot()
     cv2.imwrite(save_path, res_plotted)
-
     logger.info(f"Result saved to {save_path}")
+
+    # 顯示圖片
+    cv2.imshow("Detection Result", res_plotted)
+    cv2.waitKey(0)  # 等待按鍵
+    cv2.destroyAllWindows()  # 關閉所有窗口
 
 
 def main():
@@ -46,11 +50,12 @@ def main():
     try:
         # 設定模型路徑和測試圖片路徑
         model_path = "./models/best.pt"
-        image_path = "/home/shihyu/github/jason_note/src/ml/data/yolov8/dataset/test/images/12_jpg.rf.21556877459eb00db94f49693a0c3e1a.jpg"
+        image_path = (
+            "./dataset/test/images/12_jpg.rf.21556877459eb00db94f49693a0c3e1a.jpg"
+        )
 
         # 執行檢測
         detect_single_image(model_path, image_path)
-
         logger.success("Detection completed successfully.")
 
     except Exception as e:
