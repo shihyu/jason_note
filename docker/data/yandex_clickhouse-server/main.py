@@ -59,4 +59,4 @@ if __name__ == "__main__":
     while True:
         random_data = generate_random_data()
         insert_diff_depth_stream(db, random_data)
-        time.sleep(0.1)
+        time.sleep(1)
