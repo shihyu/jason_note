@@ -123,6 +123,7 @@
   - [基於DEAP庫的Python進化演算法從入門到入土](ml/基於DEAP庫的Python進化演算法從入門到入土.md)
   - [GA](ml/GA.md)
   - [XGBoost](ml/XGBoost.md)
+  - [YOLO](ml/YOLO.md)
 - [Python](python/python.md)
   - [Poetry完全入門指南](python/Poetry完全入門指南.md)
   - [搭建gRPC服務](python/搭建gRPC服務.md)
