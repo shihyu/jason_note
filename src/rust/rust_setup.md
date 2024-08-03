@@ -262,6 +262,7 @@ cargo make --makefile build.toml build-flow
 rustup update # バージョン更新
 rustup component add rustfmt # フォーマッタ追加
 rustup component add rust-src # LSP(rust-analyzer)追加
+rustup component add rust-analyzer
 ```
 
 
