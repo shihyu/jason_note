@@ -50,7 +50,7 @@ sudo apt-get install autoconf automake linux-headers-`uname -r` \
 
 ```sh
 sudo apt-get install autoconf automake linux-headers-`uname -r` \
-clang xdot git meld gparted cmake g++ pkg-config unzip xsel \
+clang xdot git meld gparted cmake g++ pkg-config unzip xsel librust-openssl-dev \
 terminator universal-ctags cscope htop libfuse2 ghp-import libpcre3-dev libpcre2-dev curl fonts-firacode \
 
 ```

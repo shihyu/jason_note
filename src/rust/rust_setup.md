@@ -58,7 +58,8 @@ cargo watch -c -q -w ./src -x run
 cargo edit 允許你從命令列新增、升級和刪除依賴項。
 安裝命令如下：
 
-```js
+```sh
+sudo apt-get install librust-openssl-dev
 cargo install cargo-edit
 ```
 
