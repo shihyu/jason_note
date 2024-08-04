@@ -5,14 +5,10 @@ import cv2
 
 
 def setup_logging():
-    logger.add("detection_single.log", rotation="10 MB")
+    logger.add("detection_all.log", rotation="10 MB")
 
 
-def detect_single_image(model_path, image_path):
-    # 載入模型
-    model = YOLO(model_path)
-    logger.info(f"Model loaded from: {model_path}")
-
+def detect_single_image(model, image_path):
     # 進行預測
     results = model(image_path)
 
@@ -48,15 +44,18 @@ def main():
     setup_logging()
 
     try:
-        # 設定模型路徑和測試圖片路徑
+        # 設定模型路徑和圖片資料夾路徑
         model_path = "./models/best.pt"
-        image_path = (
-            "dataset/test/images/10_jpg.rf.b6b02537e89208b9542b7e06db0f8a55.jpg"
-        )
+        images_dir = Path("dataset/test/images/")
+
+        # 載入模型
+        model = YOLO(model_path)
+        logger.info(f"Model loaded from: {model_path}")
 
         # 執行檢測
-        detect_single_image(model_path, image_path)
-        logger.success("Detection completed successfully.")
+        for image_path in images_dir.glob("*.jpg"):
+            detect_single_image(model, str(image_path))
+        logger.success("Detection completed successfully for all images.")
 
     except Exception as e:
         logger.exception(f"An error occurred: {e}")
