@@ -124,6 +124,7 @@
   - [GA](ml/GA.md)
   - [XGBoost](ml/XGBoost.md)
   - [YOLO](ml/YOLO.md)
+  - [YOLOv8手勢識別](ml/yolov8手勢識別.md)
   - [Roboflow](ml/Roboflow.md)
 - [Python](python/python.md)
   - [Poetry完全入門指南](python/Poetry完全入門指南.md)
