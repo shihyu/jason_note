@@ -1942,3 +1942,81 @@ fn main() {
 
 ---
 
+## 使用 Rust 特徵（Traits）和組合（Composition）來模擬繼承的一個完整範例
+
+```rust
+// 定義一個特徵 Animal，表示動物的行為
+trait Animal {
+    fn speak(&self); // 定義一個方法 speak，沒有默認實現
+}
+
+// 定義一個結構體 Dog，表示狗
+struct Dog;
+
+// 為結構體 Dog 實現特徵 Animal
+impl Animal for Dog {
+    fn speak(&self) {
+        println!("汪汪!"); // 狗的具體實現，打印 "汪汪!"
+    }
+}
+
+// 定義另一個結構體 Cat，表示貓
+struct Cat;
+
+// 為結構體 Cat 實現特徵 Animal
+impl Animal for Cat {
+    fn speak(&self) {
+        println!("喵喵!"); // 貓的具體實現，打印 "喵喵!"
+    }
+}
+
+// 定義一個通用函數，接受一個實現了 Animal 特徵的引用
+fn make_animal_speak(animal: &dyn Animal) {
+    animal.speak(); // 調用特徵的方法
+}
+
+// 定義一個結構體 Engine，表示引擎
+struct Engine {
+    horsepower: u32, // 引擎的馬力
+}
+
+// 定義一個結構體 Car，表示車輛
+struct Car {
+    engine: Engine, // 車輛包含一個引擎
+    model: String, // 車輛的型號
+}
+
+// 為結構體 Car 定義方法
+impl Car {
+    fn start(&self) {
+        println!(
+            "{} 的引擎擁有 {} 馬力正在啟動!",
+            self.model, self.engine.horsepower
+        );
+    }
+}
+
+// 主函數
+fn main() {
+    // 創建一個 Dog 實例
+    let dog = Dog;
+    // 創建一個 Cat 實例
+    let cat = Cat;
+
+    // 調用通用函數，使動物發聲
+    make_animal_speak(&dog); // 輸出: 汪汪!
+    make_animal_speak(&cat); // 輸出: 喵喵!
+
+    // 創建一個 Engine 實例
+    let engine = Engine { horsepower: 150 };
+    // 創建一個 Car 實例
+    let car = Car {
+        engine,
+        model: String::from("Toyota"),
+    };
+
+    // 啟動車輛
+    car.start(); // 輸出: Toyota 的引擎擁有 150 馬力正在啟動!
+}
+```
+
