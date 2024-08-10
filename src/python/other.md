@@ -2495,44 +2495,58 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from typing import List, Callable
-import time
+import websockets
+import os
+import json
+import threading
+import queue
 import pandas as pd
 from collections import deque
-import threading
 from concurrent.futures import ThreadPoolExecutor
 from loguru import logger
 
 
+def print_pid_tid(tag):
+    print(f"{tag} PID: {os.getpid()}, TID: {threading.get_ident()}")
+
+
 class DataPublisher:
-    def __init__(self):
-        self.tick_queue = asyncio.Queue()
-        self.orderbook_queue = asyncio.Queue()
+    def __init__(self, tick_queue, orderbook_queue):
+        symbol = "btcusdt"
+        self.tick_url = f"wss://stream.binance.com:9443/ws/{symbol}@trade"
+        self.orderbook_url = f"wss://stream.binance.com:9443/ws/{symbol}@depth20@100ms"
+        self.tick_queue = tick_queue
+        self.orderbook_queue = orderbook_queue
 
-    async def publish_tick(self, tick_data):
-        await self.tick_queue.put(tick_data)
+    def _start_websocket(self, url, queue):
+        asyncio.run(self._websocket_handler(url, queue))
 
-    async def publish_orderbook(self, orderbook_data):
-        await self.orderbook_queue.put(orderbook_data)
+    async def _websocket_handler(self, url, queue):
+        async with websockets.connect(url) as websocket:
+            while True:
+                print_pid_tid(url)
+                response = await websocket.recv()
+                data = json.loads(response)
+                # print(f"Received Data: {data}")
+                queue.put(data)  # Put data into the queue (no await)
 
-    async def process_queues(self, data_processor):
-        asyncio.create_task(self._process_tick_queue(data_processor))
-        asyncio.create_task(self._process_orderbook_queue(data_processor))
-
-    async def _process_tick_queue(self, data_processor):
-        while True:
-            tick_data = await self.tick_queue.get()
-            await data_processor.on_tick(tick_data)
-
-    async def _process_orderbook_queue(self, data_processor):
-        while True:
-            orderbook_data = await self.orderbook_queue.get()
-            await data_processor.on_orderbook(orderbook_data)
+    def start(self):
+        # Start tick and order book WebSocket connections in separate threads
+        threading.Thread(
+            target=self._start_websocket,
+            args=(self.tick_url, self.tick_queue),
+            daemon=True,
+        ).start()
+        threading.Thread(
+            target=self._start_websocket,
+            args=(self.orderbook_url, self.orderbook_queue),
+            daemon=True,
+        ).start()
 
 
 class DataProcessor:
-    def __init__(self, event_loop):
-        self.kline_subscribers: List[Callable] = []
+    def __init__(self, event_loop, tick_queue, orderbook_queue):
+        self.kline_subscribers = []
         self.current_kline = {
             "open": None,
             "high": None,
@@ -2547,44 +2561,62 @@ class DataProcessor:
         self.orderbook_history = deque(maxlen=1000)
         self.latest_tick = None
         self.latest_orderbook = None
-        self.max_kline_history = 1000  # 限制K線歷史記錄為1000條
+        self.max_kline_history = 1000  # Limit K-line history to 1000 records
         self.kline_lock = threading.Lock()
-        self.tick_data_list = deque(maxlen=5000)  # 用於收集 tick 數據
-        self.executor = ThreadPoolExecutor(max_workers=4)  # 創建線程池
+        self.tick_data_list = deque(maxlen=5000)  # Collect tick data
+        self.executor = ThreadPoolExecutor(max_workers=4)  # Create thread pool
         self.event_loop = event_loop
+        self.tick_queue = tick_queue
+        self.orderbook_queue = orderbook_queue
 
-    def subscribe_kline(self, callback: Callable):
+    def subscribe_kline(self, callback):
         self.kline_subscribers.append(callback)
 
-    async def on_tick(self, tick_data):
+    def process_ticks(self):
+        while True:
+            tick_data = self.tick_queue.get()  # Get tick data from the queue
+            print_pid_tid("process_ticks")
+            # self.on_tick(tick_data)
+
+    def process_orderbooks(self):
+        while True:
+            orderbook_data = (
+                self.orderbook_queue.get()
+            )  # Get orderbook data from the queue
+            print_pid_tid("process_orderbooks")
+            # self.on_orderbook(orderbook_data)
+
+    def on_tick(self, tick_data):
+        print_pid_tid("DataProcessor on_tick")
         self.latest_tick = tick_data
         self.tick_data_list.append(
-            {"datetime": tick_data["timestamp"], "close": tick_data["price"]}
+            {"datetime": tick_data["T"], "close": tick_data["p"]}
         )
 
-        # 使用線程池來處理K線計算
+        # Use thread pool to process K-line calculation
         future = self.executor.submit(self.update_and_publish_kline)
         future.add_done_callback(self._handle_thread_result)
 
-    async def on_orderbook(self, orderbook_data):
+    def on_orderbook(self, orderbook_data):
+        print_pid_tid("DataProcessor on_orderbook")
         self.latest_orderbook = orderbook_data
         self.orderbook_history.append(orderbook_data)
 
     def update_and_publish_kline(self):
+        print_pid_tid("DataProcessor update_and_publish_kline")
         try:
-            # 將 tick 數據轉換為 DataFrame
+            # Convert tick data to DataFrame
             tick_df = pd.DataFrame(list(self.tick_data_list))
             tick_df.set_index("datetime", inplace=True)
-            tick_df.index = pd.to_datetime(tick_df.index, unit="s")
+            tick_df.index = pd.to_datetime(tick_df.index, unit="ms")
 
-            # 獲取當前時間並將其轉換為 datetime64[ns] 類型
             now = pd.Timestamp.now(tz="UTC")
             current_minute_start = now.floor("T").to_datetime64()
 
-            # 只處理最新1分鐘的數據
+            # Only process the latest 1 minute of data
             recent_ticks = tick_df.loc[tick_df.index >= current_minute_start]
 
-            # 如果有足夠的數據，計算1分鐘K線數據
+            # If there is sufficient data, calculate 1-minute K-line data
             if not recent_ticks.empty:
                 futures_1min_kbars = recent_ticks["close"].resample("1T").ohlc()
 
@@ -2595,7 +2627,7 @@ class DataProcessor:
                             "high": kline["high"],
                             "low": kline["low"],
                             "close": kline["close"],
-                            "volume": 0,  # 假設沒有 volume 數據
+                            "volume": 0,  # Assume no volume data
                             "start_time": timestamp,
                         }
                         new_kline = pd.DataFrame([self.current_kline])
@@ -2603,7 +2635,7 @@ class DataProcessor:
                             [self.kline_df, new_kline]
                         ).reset_index(drop=True)
 
-                        # 限制K線歷史記錄為最新的1000條
+                        # Limit K-line history to the latest 1000 records
                         if len(self.kline_df) > self.max_kline_history:
                             self.kline_df = self.kline_df.iloc[
                                 -self.max_kline_history :
@@ -2614,12 +2646,11 @@ class DataProcessor:
                                 subscriber(self.current_kline), self.event_loop
                             )
 
-            # 清理已經處理過的數據，保留未來可能用到的 tick 數據
             self.tick_data_list = deque(
                 [
                     tick
                     for tick in self.tick_data_list
-                    if pd.to_datetime(tick["datetime"], unit="s").to_datetime64()
+                    if pd.to_datetime(tick["datetime"], unit="ms").to_datetime64()
                     >= current_minute_start
                 ]
             )
@@ -2646,54 +2677,24 @@ class DataProcessor:
             }
 
 
-class Strategy:
-    def __init__(self, name: str, data_processor: DataProcessor):
-        self.name = name
-        self.data_processor = data_processor
-
-    async def on_tick(self, tick_data):
-        data = self.data_processor.get_latest_data()
-        logger.info(f"Strategy {self.name} received tick: {tick_data}")
-        logger.info(f"Latest K-line: {data['latest_kline']}")
-        logger.info(f"OrderBook history size: {len(data['orderbook_history'])}")
-
-    async def on_kline(self, kline_data):
-        data = self.data_processor.get_latest_data()
-        logger.info(f"Strategy {self.name} received new K-line: {kline_data}")
-        logger.info(f"K-line history size: {len(data['kline_history'])}")
-
-
 async def main():
+    tick_queue = queue.Queue()
+    orderbook_queue = queue.Queue()
+    event_loop = asyncio.get_event_loop()
+
+    data_processor = DataProcessor(event_loop, tick_queue, orderbook_queue)
+    data_publisher = DataPublisher(tick_queue, orderbook_queue)
+    data_publisher.start()  # Start DataPublisher in a separate thread
+
     loop = asyncio.get_event_loop()
-    publisher = DataPublisher()
-    processor = DataProcessor(loop)
 
-    # 連接 DataPublisher 和 DataProcessor
-    await publisher.process_queues(processor)
+    # Process both ticks and order books in separate threads
+    threading.Thread(target=data_processor.process_ticks, daemon=True).start()
+    threading.Thread(target=data_processor.process_orderbooks, daemon=True).start()
 
-    # 創建多個策略
-    strategies = [Strategy(f"Strategy{i}", processor) for i in range(3)]
-
-    # 訂閱數據
-    for strategy in strategies:
-        processor.subscribe_kline(strategy.on_kline)
-
-    # 模擬接收數據
-    for i in range(1500):  # 增加迭代次數以測試K線歷史記錄限制
-        await publisher.publish_tick(
-            {"price": 100 + i % 10, "volume": 1, "timestamp": int(time.time())}
-        )
-        await publisher.publish_orderbook(
-            {
-                "timestamp": int(time.time()),
-                "bids": [(100 - j, 1) for j in range(5)],
-                "asks": [(100 + j, 1) for j in range(5)],
-            }
-        )
-        await asyncio.sleep(0.1)
-
-    # 打印最終的K線歷史記錄大小
-    logger.info(f"Final K-line history size: {len(processor.kline_df)}")
+    while True:
+        data = data_processor.get_latest_data()
+        await asyncio.sleep(1)
 
 
 if __name__ == "__main__":
