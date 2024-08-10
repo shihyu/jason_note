@@ -2401,3 +2401,94 @@ if __name__ == "__main__":
     test_segmentation_fault()
 ```
 
+
+
+
+
+```python
+"""
+這個設計的主要特點：
+
+使用asyncio實現異步編程，提高效能和並發性。
+DataPublisher類實現了發布-訂閱模式，允許多個策略訂閱tick和orderbook數據。
+使用asyncio.Queue作為數據緩衝，確保數據接收不會被策略處理阻塞。
+每個策略都是獨立的對象，可以獨立處理接收到的數據。
+主循環中的asyncio.create_task()確保數據處理在後台運行，不會阻塞主程序。
+
+這個設計允許高效地接收和處理tick和orderbook數據，同時支持多個策略並發運行。你可以根據實際需求進一步優化和擴展這個框架，例如添加錯誤處理、日誌記錄、性能監控等功能。
+"""
+
+import asyncio
+from collections import deque
+from typing import Dict, List, Callable
+
+
+class DataPublisher:
+    def __init__(self):
+        self.tick_subscribers: List[Callable] = []
+        self.orderbook_subscribers: List[Callable] = []
+        self.tick_queue = asyncio.Queue()
+        self.orderbook_queue = asyncio.Queue()
+
+    def subscribe_tick(self, callback: Callable):
+        self.tick_subscribers.append(callback)
+
+    def subscribe_orderbook(self, callback: Callable):
+        self.orderbook_subscribers.append(callback)
+
+    async def publish_tick(self, tick_data):
+        await self.tick_queue.put(tick_data)
+
+    async def publish_orderbook(self, orderbook_data):
+        await self.orderbook_queue.put(orderbook_data)
+
+    async def process_tick_queue(self):
+        while True:
+            tick_data = await self.tick_queue.get()
+            for subscriber in self.tick_subscribers:
+                await subscriber(tick_data)
+
+    async def process_orderbook_queue(self):
+        while True:
+            orderbook_data = await self.orderbook_queue.get()
+            for subscriber in self.orderbook_subscribers:
+                await subscriber(orderbook_data)
+
+
+class Strategy:
+    def __init__(self, name: str):
+        self.name = name
+
+    async def on_tick(self, tick_data):
+        print(f"Strategy {self.name} received tick: {tick_data}")
+
+    async def on_orderbook(self, orderbook_data):
+        print(f"Strategy {self.name} received orderbook: {orderbook_data}")
+
+
+async def main():
+    publisher = DataPublisher()
+
+    # 創建多個策略
+    strategies = [Strategy(f"Strategy{i}") for i in range(3)]
+
+    # 訂閱數據
+    for strategy in strategies:
+        publisher.subscribe_tick(strategy.on_tick)
+        publisher.subscribe_orderbook(strategy.on_orderbook)
+
+    # 啟動數據處理任務
+    asyncio.create_task(publisher.process_tick_queue())
+    asyncio.create_task(publisher.process_orderbook_queue())
+
+    # 模擬接收數據
+    for i in range(10):
+        await publisher.publish_tick(f"Tick {i}")
+        await publisher.publish_orderbook(f"Orderbook {i}")
+        await asyncio.sleep(0.1)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
