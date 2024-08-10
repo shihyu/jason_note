@@ -2413,7 +2413,7 @@ if __name__ == "__main__":
 DataPublisher類實現了發布-訂閱模式，允許多個策略訂閱tick和orderbook數據。
 使用asyncio.Queue作為數據緩衝，確保數據接收不會被策略處理阻塞。
 每個策略都是獨立的對象，可以獨立處理接收到的數據。
-主循環中的asyncio.create_task()確保數據處理在後台運行，不會阻塞主程序。
+主循環中的asyncio.create_task()確保數據處理在後臺運行，不會阻塞主程序。
 
 這個設計允許高效地接收和處理tick和orderbook數據，同時支持多個策略並發運行。你可以根據實際需求進一步優化和擴展這個框架，例如添加錯誤處理、日誌記錄、性能監控等功能。
 """
@@ -2495,24 +2495,19 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from typing import Dict, List, Callable
+from typing import List, Callable
 import time
 import pandas as pd
 from collections import deque
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from loguru import logger
 
 
 class DataPublisher:
     def __init__(self):
-        self.tick_subscribers: List[Callable] = []
-        self.orderbook_subscribers: List[Callable] = []
         self.tick_queue = asyncio.Queue()
         self.orderbook_queue = asyncio.Queue()
-
-    def subscribe_tick(self, callback: Callable):
-        self.tick_subscribers.append(callback)
-
-    def subscribe_orderbook(self, callback: Callable):
-        self.orderbook_subscribers.append(callback)
 
     async def publish_tick(self, tick_data):
         await self.tick_queue.put(tick_data)
@@ -2520,21 +2515,23 @@ class DataPublisher:
     async def publish_orderbook(self, orderbook_data):
         await self.orderbook_queue.put(orderbook_data)
 
-    async def process_tick_queue(self):
+    async def process_queues(self, data_processor):
+        asyncio.create_task(self._process_tick_queue(data_processor))
+        asyncio.create_task(self._process_orderbook_queue(data_processor))
+
+    async def _process_tick_queue(self, data_processor):
         while True:
             tick_data = await self.tick_queue.get()
-            for subscriber in self.tick_subscribers:
-                await subscriber(tick_data)
+            await data_processor.on_tick(tick_data)
 
-    async def process_orderbook_queue(self):
+    async def _process_orderbook_queue(self, data_processor):
         while True:
             orderbook_data = await self.orderbook_queue.get()
-            for subscriber in self.orderbook_subscribers:
-                await subscriber(orderbook_data)
+            await data_processor.on_orderbook(orderbook_data)
 
 
 class DataProcessor:
-    def __init__(self):
+    def __init__(self, event_loop):
         self.kline_subscribers: List[Callable] = []
         self.current_kline = {
             "open": None,
@@ -2551,60 +2548,102 @@ class DataProcessor:
         self.latest_tick = None
         self.latest_orderbook = None
         self.max_kline_history = 1000  # 限制K線歷史記錄為1000條
+        self.kline_lock = threading.Lock()
+        self.tick_data_list = deque(maxlen=5000)  # 用於收集 tick 數據
+        self.executor = ThreadPoolExecutor(max_workers=4)  # 創建線程池
+        self.event_loop = event_loop
 
     def subscribe_kline(self, callback: Callable):
         self.kline_subscribers.append(callback)
 
     async def on_tick(self, tick_data):
         self.latest_tick = tick_data
-        await self.update_and_publish_kline(tick_data)
+        self.tick_data_list.append(
+            {"datetime": tick_data["timestamp"], "close": tick_data["price"]}
+        )
+
+        # 使用線程池來處理K線計算
+        future = self.executor.submit(self.update_and_publish_kline)
+        future.add_done_callback(self._handle_thread_result)
 
     async def on_orderbook(self, orderbook_data):
         self.latest_orderbook = orderbook_data
         self.orderbook_history.append(orderbook_data)
 
-    async def update_and_publish_kline(self, tick_data):
-        current_time = int(time.time())
-        price, volume = tick_data["price"], tick_data["volume"]
-        if (
-            self.current_kline["start_time"] is None
-            or current_time - self.current_kline["start_time"] >= 60
-        ):
-            if self.current_kline["start_time"] is not None:
-                new_kline = pd.DataFrame([self.current_kline])
-                self.kline_df = pd.concat([self.kline_df, new_kline]).reset_index(
-                    drop=True
-                )
+    def update_and_publish_kline(self):
+        try:
+            # 將 tick 數據轉換為 DataFrame
+            tick_df = pd.DataFrame(list(self.tick_data_list))
+            tick_df.set_index("datetime", inplace=True)
+            tick_df.index = pd.to_datetime(tick_df.index, unit="s")
 
-                # 限制K線歷史記錄為最新的1000條
-                if len(self.kline_df) > self.max_kline_history:
-                    self.kline_df = self.kline_df.iloc[-self.max_kline_history :]
+            # 獲取當前時間並將其轉換為 datetime64[ns] 類型
+            now = pd.Timestamp.now(tz="UTC")
+            current_minute_start = now.floor("T").to_datetime64()
 
-                for subscriber in self.kline_subscribers:
-                    await subscriber(self.current_kline)
+            # 只處理最新1分鐘的數據
+            recent_ticks = tick_df.loc[tick_df.index >= current_minute_start]
 
-            self.current_kline = {
-                "open": price,
-                "high": price,
-                "low": price,
-                "close": price,
-                "volume": volume,
-                "start_time": current_time - (current_time % 60),
-            }
-        else:
-            self.current_kline["high"] = max(self.current_kline["high"], price)
-            self.current_kline["low"] = min(self.current_kline["low"], price)
-            self.current_kline["close"] = price
-            self.current_kline["volume"] += volume
+            # 如果有足夠的數據，計算1分鐘K線數據
+            if not recent_ticks.empty:
+                futures_1min_kbars = recent_ticks["close"].resample("1T").ohlc()
+
+                with self.kline_lock:
+                    for timestamp, kline in futures_1min_kbars.iterrows():
+                        self.current_kline = {
+                            "open": kline["open"],
+                            "high": kline["high"],
+                            "low": kline["low"],
+                            "close": kline["close"],
+                            "volume": 0,  # 假設沒有 volume 數據
+                            "start_time": timestamp,
+                        }
+                        new_kline = pd.DataFrame([self.current_kline])
+                        self.kline_df = pd.concat(
+                            [self.kline_df, new_kline]
+                        ).reset_index(drop=True)
+
+                        # 限制K線歷史記錄為最新的1000條
+                        if len(self.kline_df) > self.max_kline_history:
+                            self.kline_df = self.kline_df.iloc[
+                                -self.max_kline_history :
+                            ]
+
+                        for subscriber in self.kline_subscribers:
+                            asyncio.run_coroutine_threadsafe(
+                                subscriber(self.current_kline), self.event_loop
+                            )
+
+            # 清理已經處理過的數據，保留未來可能用到的 tick 數據
+            self.tick_data_list = deque(
+                [
+                    tick
+                    for tick in self.tick_data_list
+                    if pd.to_datetime(tick["datetime"], unit="s").to_datetime64()
+                    >= current_minute_start
+                ]
+            )
+
+        except Exception as e:
+            logger.error(f"Error in update_and_publish_kline: {e}")
+
+    def _handle_thread_result(self, future):
+        try:
+            future.result()
+        except Exception as e:
+            logger.error(f"Thread processing error: {e}")
 
     def get_latest_data(self):
-        return {
-            "latest_tick": self.latest_tick,
-            "latest_kline": self.kline_df.iloc[-1] if not self.kline_df.empty else None,
-            "kline_history": self.kline_df,
-            "latest_orderbook": self.latest_orderbook,
-            "orderbook_history": list(self.orderbook_history),
-        }
+        with self.kline_lock:
+            return {
+                "latest_tick": self.latest_tick,
+                "latest_kline": (
+                    self.kline_df.iloc[-1] if not self.kline_df.empty else None
+                ),
+                "kline_history": self.kline_df,
+                "latest_orderbook": self.latest_orderbook,
+                "orderbook_history": list(self.orderbook_history),
+            }
 
 
 class Strategy:
@@ -2614,35 +2653,30 @@ class Strategy:
 
     async def on_tick(self, tick_data):
         data = self.data_processor.get_latest_data()
-        print(f"Strategy {self.name} received tick: {tick_data}")
-        print(f"Latest K-line: {data['latest_kline']}")
-        print(f"OrderBook history size: {len(data['orderbook_history'])}")
+        logger.info(f"Strategy {self.name} received tick: {tick_data}")
+        logger.info(f"Latest K-line: {data['latest_kline']}")
+        logger.info(f"OrderBook history size: {len(data['orderbook_history'])}")
 
     async def on_kline(self, kline_data):
         data = self.data_processor.get_latest_data()
-        print(f"Strategy {self.name} received new K-line: {kline_data}")
-        print(f"K-line history size: {len(data['kline_history'])}")
+        logger.info(f"Strategy {self.name} received new K-line: {kline_data}")
+        logger.info(f"K-line history size: {len(data['kline_history'])}")
 
 
 async def main():
+    loop = asyncio.get_event_loop()
     publisher = DataPublisher()
-    processor = DataProcessor()
+    processor = DataProcessor(loop)
 
     # 連接 DataPublisher 和 DataProcessor
-    publisher.subscribe_tick(processor.on_tick)
-    publisher.subscribe_orderbook(processor.on_orderbook)
+    await publisher.process_queues(processor)
 
     # 創建多個策略
     strategies = [Strategy(f"Strategy{i}", processor) for i in range(3)]
 
     # 訂閱數據
     for strategy in strategies:
-        publisher.subscribe_tick(strategy.on_tick)
         processor.subscribe_kline(strategy.on_kline)
-
-    # 啟動數據處理任務
-    asyncio.create_task(publisher.process_tick_queue())
-    asyncio.create_task(publisher.process_orderbook_queue())
 
     # 模擬接收數據
     for i in range(1500):  # 增加迭代次數以測試K線歷史記錄限制
@@ -2659,7 +2693,7 @@ async def main():
         await asyncio.sleep(0.1)
 
     # 打印最終的K線歷史記錄大小
-    print(f"Final K-line history size: {len(processor.kline_df)}")
+    logger.info(f"Final K-line history size: {len(processor.kline_df)}")
 
 
 if __name__ == "__main__":
