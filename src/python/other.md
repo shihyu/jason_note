@@ -3196,3 +3196,34 @@ if __name__ == "__main__":
     main()
 
 ```
+
+
+## Numba 可以用於加速一些涉及 DataFrame 的操作 
+
+```python
+import pandas as pd
+import numpy as np
+from numba import njit
+
+# 创建一个示例 DataFrame
+df = pd.DataFrame({
+    'A': np.random.rand(1000),
+    'B': np.random.rand(1000)
+})
+
+@njit
+def calculate_sum(A, B):
+    result = np.empty(A.shape[0])
+    for i in range(A.shape[0]):
+        result[i] = A[i] + B[i]
+    return result
+
+# 将 DataFrame 转换为 NumPy 数组
+A = df['A'].values
+B = df['B'].values
+
+# 使用 Numba 加速计算
+df['C'] = calculate_sum(A, B)
+
+print(df.head())
+```
