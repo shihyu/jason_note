@@ -3128,3 +3128,71 @@ if __name__ == "__main__":
     asyncio.run(main())
 
 ```
+
+## 使用 Multiprocessing Pool 和 Thread 的範例
+
+```python
+import multiprocessing
+import threading
+import time
+
+
+def generate_data(data, num_elements=10):
+    for i in range(num_elements):
+        data.append(i)
+        time.sleep(0.5)  # 模擬生成數據的延遲
+
+
+def square(x):
+    print(
+        f"square PID: {multiprocessing.current_process().pid}, TID: {threading.current_thread().ident}"
+    )
+    return x * x
+
+
+def main():
+    data = []
+    num_elements = 10
+
+    # 創建一個線程來生成數據
+    data_thread = threading.Thread(target=generate_data, args=(data, num_elements))
+    data_thread.start()
+
+    # 創建一個進程池
+    pool = multiprocessing.Pool()
+
+    # 獲取進程池中各個進程的 PID
+    pool_pids = [p.pid for p in pool._pool]
+    print(f"Pool PIDs: {pool_pids}")
+
+    while True:
+        print(
+            f"main PID: {multiprocessing.current_process().pid}, TID: {threading.current_thread().ident}"
+        )
+        # 如果數據生成完成，退出循環
+        if len(data) == num_elements:
+            break
+        # 當前數據量
+        current_data = data[:]
+        # 使用 pool.map 計算當前數據
+        if current_data:
+            results = pool.map(square, current_data)
+            print(f"Current data: {current_data}, Squared results: {results}")
+        time.sleep(1)  # 等待一段時間以便數據生成
+
+    # 等待數據生成線程結束
+    data_thread.join()
+
+    # 處理最終數據
+    results = pool.map(square, data)
+    print(f"Final data: {data}, Final squared results: {results}")
+
+    # 關閉進程池
+    pool.close()
+    pool.join()
+
+
+if __name__ == "__main__":
+    main()
+
+```
