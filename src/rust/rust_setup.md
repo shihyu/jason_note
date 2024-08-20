@@ -70,7 +70,10 @@ cargo add rand@0.7
 ```
 
 這將自動更新Cargo.toml檔案：
+
+
 ![img](images/f361926c-badc-4400-8553-455abd274480.png)
+
 如圖所示，rang 0.7不是最新版本，我們可以使用以下命令來升級依賴項：
 
 ```js
