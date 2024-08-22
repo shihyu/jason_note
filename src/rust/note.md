@@ -2020,3 +2020,51 @@ fn main() {
 }
 ```
 
+
+以下是幾種解決方案：
+
+1. 返回所有權
+讓函數返回傳入的 String，這樣可以將所有權返還給呼叫者。
+
+```rust
+fn say_hello(name: String) -> String {
+    println!("Hello {name}");
+    name
+}
+
+fn main() {
+    let name = String::from("Alice");
+    let name = say_hello(name);
+    let name = say_hello(name);
+}
+```
+
+2. 傳遞引用
+如果你不需要在函數內部修改 String，可以傳遞一個引用，這樣所有權不會轉移。
+
+```rust
+fn say_hello(name: &String) {
+    println!("Hello {name}");
+}
+
+fn main() {
+    let name = String::from("Alice");
+    say_hello(&name);
+    say_hello(&name);
+}
+```
+
+3. 使用 clone
+你可以使用 clone 方法來建立一個 String 的深複製，並傳遞它給函數。這樣你可以保留原來的變數，但會有額外的記憶體開銷。
+
+```rust
+fn say_hello(name: String) {
+    println!("Hello {name}");
+}
+
+fn main() {
+    let name = String::from("Alice");
+    say_hello(name.clone());
+    say_hello(name.clone());
+}
+```
