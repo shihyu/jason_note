@@ -2007,6 +2007,138 @@ fn main() {
     say_hello(name.clone());
 }
 </code></pre></pre>
+<hr />
+<p>了解這些概念後，我可以為你提供一些簡單的 C++ 範例來說明資料複製和轉移的行為。以下是相關範例及其解釋：</p>
+<h3 id="1-c-中的資料複製"><a class="header" href="#1-c-中的資料複製">1. <strong>C++ 中的資料複製</strong></a></h3>
+<p>在 C++ 中，當使用 <code>=</code> 進行賦值時，通常會執行資料複製。如果涉及到堆積記憶體分配（例如字串、動態陣列等），這樣的複製行為會影響資源管理。</p>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;string&gt;
+
+int main() {
+    std::string s1 = &quot;Hello, World!&quot;;
+    std::string s2 = s1;  // 複製 s1 到 s2
+
+    std::cout &lt;&lt; &quot;s1: &quot; &lt;&lt; s1 &lt;&lt; std::endl;
+    std::cout &lt;&lt; &quot;s2: &quot; &lt;&lt; s2 &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+<p><strong>解釋</strong>：</p>
+<ul>
+<li>當 <code>s2 = s1</code> 時，s1 的資料會被複製到 s2。此時，s1 和 s2 各自擁有一份獨立的字串資料。如果 <code>s1</code> 被釋放，s2 仍然有效且可用。</li>
+</ul>
+<h3 id="2-c-中的資料轉移"><a class="header" href="#2-c-中的資料轉移">2. <strong>C++ 中的資料轉移</strong></a></h3>
+<p>C++ 中使用 <code>std::move</code> 來明確表示資料應該被轉移而非複製。</p>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;string&gt;
+
+int main() {
+    std::string s1 = &quot;Hello, World!&quot;;
+    std::string s2 = std::move(s1);  // 轉移 s1 到 s2
+
+    std::cout &lt;&lt; &quot;s1: &quot; &lt;&lt; s1 &lt;&lt; std::endl;  // s1 處於有效但未指定的狀態
+    std::cout &lt;&lt; &quot;s2: &quot; &lt;&lt; s2 &lt;&lt; std::endl;  // s2 擁有原來 s1 的資料
+
+    return 0;
+}
+</code></pre>
+<p><strong>解釋</strong>：</p>
+<ul>
+<li>當 <code>s2 = std::move(s1)</code> 時，<code>s1</code> 的資料會被轉移到 <code>s2</code>。這意味著 <code>s2</code> 現在擁有 <code>s1</code> 的資源，而 <code>s1</code> 處於有效但未指定的狀態（內容可能是空的，但未定義）。</li>
+<li>與 Rust 不同的是，C++ 中的 <code>s1</code> 雖然已經被轉移，但仍然可以使用，不會導致程序崩潰。</li>
+</ul>
+<h3 id="3-複製和轉移的行為差異"><a class="header" href="#3-複製和轉移的行為差異">3. <strong>複製和轉移的行為差異</strong></a></h3>
+<p>C++ 的 <code>=</code> 運算符可以依據型別來決定是複製還是轉移。例如，如果使用的是基本型別，則會進行複製，而對於支持轉移語義的型別（如 <code>std::string</code>），則會根據上下文決定是否進行轉移。</p>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+
+int main() {
+    std::vector&lt;int&gt; v1 = {1, 2, 3, 4, 5};
+    std::vector&lt;int&gt; v2 = std::move(v1);  // 轉移 v1 到 v2
+
+    std::cout &lt;&lt; &quot;v1 size: &quot; &lt;&lt; v1.size() &lt;&lt; std::endl;  // v1 處於有效但未指定的狀態
+    std::cout &lt;&lt; &quot;v2 size: &quot; &lt;&lt; v2.size() &lt;&lt; std::endl;  // v2 擁有原來 v1 的資料
+
+    return 0;
+}
+</code></pre>
+<p><strong>解釋</strong>：</p>
+<ul>
+<li>在這個例子中，<code>v1</code> 的資料會被轉移到 <code>v2</code>，使得 <code>v1</code> 成為一個空的容器，而 <code>v2</code> 則擁有原來 <code>v1</code> 的資料。</li>
+<li><code>std::move</code> 允許程式設計師明確表示希望轉移所有權，而非進行昂貴的資料複製操作。</li>
+</ul>
+<p>這些範例展示了 C++ 中資料複製和轉移的基本概念，並且突顯了 C++ 與 Rust 在處理所有權和資源管理方面的一些差異。</p>
+<p>在 Rust 中，所有權、借用和生命週期是核心概念，這些機制有助於避免記憶體洩漏和資料競爭。Rust 的所有權系統確保在編譯時檢查並強制執行資源管理的規則。</p>
+<h3 id="1-rust-中的所有權轉移"><a class="header" href="#1-rust-中的所有權轉移">1. <strong>Rust 中的所有權轉移</strong></a></h3>
+<p>在 Rust 中，當將一個變數賦值給另一個變數時，所有權會被轉移（移動），而不是複製。</p>
+<pre><pre class="playground"><code class="language-rust">fn main() {
+    let s1 = String::from(&quot;Hello, World!&quot;);
+    let s2 = s1;  // s1 的所有權被轉移到 s2
+
+    // println!(&quot;{}&quot;, s1);  // 這一行會導致編譯錯誤，因為 s1 的所有權已經被轉移
+    println!(&quot;{}&quot;, s2);  // s2 現在擁有原來 s1 的所有權
+}
+</code></pre></pre>
+<p><strong>解釋</strong>：</p>
+<ul>
+<li>在這個例子中，<code>s1</code> 的所有權被轉移給 <code>s2</code>，因此 <code>s1</code> 在此之後不再有效。如果你試圖使用 <code>s1</code>，編譯器會報錯，提示 <code>s1</code> 已經被轉移。</li>
+<li>Rust 的所有權轉移避免了重複釋放記憶體的問題，確保資源在一個特定時間點只能有一個所有者。</li>
+</ul>
+<h3 id="2-rust-中的資料複製"><a class="header" href="#2-rust-中的資料複製">2. <strong>Rust 中的資料複製</strong></a></h3>
+<p>在 Rust 中，只有實現了 <code>Copy</code> trait 的類型（如整數、浮點數、布爾值等）可以進行淺複製（按位複製）。這些類型不會發生所有權轉移。</p>
+<pre><pre class="playground"><code class="language-rust">fn main() {
+    let x = 5;
+    let y = x;  // x 被複製到 y
+
+    println!(&quot;x = {}, y = {}&quot;, x, y);  // x 和 y 都有效，因為它們是 Copy 類型
+}
+</code></pre></pre>
+<p><strong>解釋</strong>：</p>
+<ul>
+<li>由於整數是 <code>Copy</code> 類型，當 <code>x</code> 賦值給 <code>y</code> 時，<code>x</code> 的值會被複製，而不是轉移。因此，<code>x</code> 和 <code>y</code> 都可以繼續使用。</li>
+</ul>
+<h3 id="3-rust-中的借用與引用"><a class="header" href="#3-rust-中的借用與引用">3. <strong>Rust 中的借用與引用</strong></a></h3>
+<p>Rust 提供了引用來借用資料而不轉移所有權。這使得可以安全地共享資料。</p>
+<pre><pre class="playground"><code class="language-rust">fn main() {
+    let s1 = String::from(&quot;Hello, World!&quot;);
+    let s2 = &amp;s1;  // s1 的不可變引用被借用給 s2
+
+    println!(&quot;s1 = {}, s2 = {}&quot;, s1, s2);  // s1 和 s2 都可以被使用
+}
+</code></pre></pre>
+<p><strong>解釋</strong>：</p>
+<ul>
+<li>在這個例子中，<code>s2</code> 是 <code>s1</code> 的引用（借用），這意味著 <code>s2</code> 可以訪問 <code>s1</code> 的資料，而不會轉移所有權。Rust 確保在引用的生命週期內，原變數（<code>s1</code>）不會被修改或轉移。</li>
+</ul>
+<h3 id="4-rust-中的可變借用"><a class="header" href="#4-rust-中的可變借用">4. <strong>Rust 中的可變借用</strong></a></h3>
+<p>Rust 允許可變借用，但同一時間只能有一個可變借用，這防止了資料競爭。</p>
+<pre><pre class="playground"><code class="language-rust">fn main() {
+    let mut s1 = String::from(&quot;Hello, World!&quot;);
+    let s2 = &amp;mut s1;  // s1 的可變引用被借用給 s2
+
+    s2.push_str(&quot;!!!&quot;);  // 可以通過 s2 修改 s1 的值
+    println!(&quot;s2 = {}&quot;, s2);  // s2 擁有對 s1 的可變借用
+}
+</code></pre></pre>
+<p><strong>解釋</strong>：</p>
+<ul>
+<li>在這裡，<code>s2</code> 是 <code>s1</code> 的可變引用，允許通過 <code>s2</code> 修改 <code>s1</code> 的值。在可變借用期間，Rust 確保不會有其他引用可以訪問 <code>s1</code>，這樣避免了資料競爭。</li>
+</ul>
+<h3 id="5-rust-中的克隆"><a class="header" href="#5-rust-中的克隆">5. <strong>Rust 中的克隆</strong></a></h3>
+<p>如果需要在 Rust 中顯式複製非 <code>Copy</code> 類型的資料，可以使用 <code>.clone()</code> 方法。</p>
+<pre><pre class="playground"><code class="language-rust">fn main() {
+    let s1 = String::from(&quot;Hello, World!&quot;);
+    let s2 = s1.clone();  // 顯式複製 s1 到 s2
+
+    println!(&quot;s1 = {}, s2 = {}&quot;, s1, s2);  // s1 和 s2 都可以被使用
+}
+</code></pre></pre>
+<p><strong>解釋</strong>：</p>
+<ul>
+<li><code>clone</code> 方法會進行深複製，複製堆上的資料，讓 <code>s1</code> 和 <code>s2</code> 各自擁有一份獨立的資料。這避免了所有權轉移的問題，使得兩者都可以在之後使用。</li>
+</ul>
+<p>這些範例展示了 Rust 如何通過所有權和借用機制來管理資源，防止記憶體洩漏和資料競爭，同時與 C++ 的做法形成了鮮明對比。</p>
 
                         <script src="https://utteranc.es/client.js"
                             repo="imxood/imxood.github.io"
