@@ -1,8 +1,10 @@
 #![allow(unused)]
 
 use anyhow::Error;
-use odbc_api::{buffers::TextRowSet, Cursor, Environment, ConnectionOptions, 
-               Connection, ResultSetMetadata, IntoParameter};
+use odbc_api::{
+    buffers::TextRowSet, Connection, ConnectionOptions, Cursor, Environment, IntoParameter,
+    ResultSetMetadata,
+};
 use std::{
     ffi::CStr,
     io::{stdout, Write},
@@ -16,9 +18,8 @@ const BATCH_SIZE: usize = 5000;
 struct UserRecord {
     first_name: String,
     last_name: String,
-    age: i32 
-}    
-
+    age: i32,
+}
 
 // 查詢資料庫
 fn query(connection: &Connection, sql: &str) -> Result<(), Error> {
@@ -29,7 +30,7 @@ fn query(connection: &Connection, sql: &str) -> Result<(), Error> {
     match connection.execute(sql, ())? {
         Some(mut cursor) => {
             // 將欄位名稱顯示在螢幕上
-            let mut headline : Vec<String> = cursor.column_names()?.collect::<Result<_,_>>()?;
+            let mut headline: Vec<String> = cursor.column_names()?.collect::<Result<_, _>>()?;
             writer.write_record(headline)?;
 
             // 設定欄位最大長度為 4KB
@@ -52,45 +53,45 @@ fn query(connection: &Connection, sql: &str) -> Result<(), Error> {
             }
         }
         None => {
-            eprintln!(
-                "無資料 !!"
-            );
+            eprintln!("無資料 !!");
         }
     }
 
     Ok(())
 }
 
-fn insert(conn: &Connection, record: UserRecord) -> Result<(), Error>{   
+fn insert(conn: &Connection, record: UserRecord) -> Result<(), Error> {
     conn.execute(
         "INSERT INTO users VALUES (?, ?, ?)",
-        (&record.first_name.into_parameter(), 
-         &record.last_name.into_parameter(), 
-         &record.age)
+        (
+            &record.first_name.into_parameter(),
+            &record.last_name.into_parameter(),
+            &record.age,
+        ),
     )?;
     Ok(())
 }
 
-fn update(conn: &Connection, record: UserRecord) -> Result<(), Error>{   
+fn update(conn: &Connection, record: UserRecord) -> Result<(), Error> {
     conn.execute(
         "UPDATE users SET first_name = ?, last_name= ?, age= ? where first_name = ?",
-        (&record.first_name.clone().into_parameter(), 
-         &record.last_name.into_parameter(), 
-         &record.age,
-         &record.first_name.into_parameter()
-         )
+        (
+            &record.first_name.clone().into_parameter(),
+            &record.last_name.into_parameter(),
+            &record.age,
+            &record.first_name.into_parameter(),
+        ),
     )?;
     Ok(())
 }
 
-fn delete(conn: &Connection, first_name: &str) -> Result<(), Error>{   
+fn delete(conn: &Connection, first_name: &str) -> Result<(), Error> {
     conn.execute(
         "DELETE FROM users Where first_name = ?",
-        (&first_name.into_parameter())
+        (&first_name.into_parameter()),
     )?;
     Ok(())
 }
-
 
 fn main() {
     // 建立環境
@@ -100,35 +101,36 @@ fn main() {
     let connection_string = "
         Driver={ODBC Driver 17 for SQL Server};\
         Server=localhost;Database=testdb;UID=test;PWD=1234;";
-    
+
     // 資料庫連線
-    let connection = environment.connect_with_connection_string(
-                connection_string, ConnectionOptions::default()).unwrap();
+    let connection = environment
+        .connect_with_connection_string(connection_string, ConnectionOptions::default())
+        .unwrap();
 
     // Connect using DSN
     // let connection = environment.connect(
-        // "DataSourceName",
-        // "Username",
-        // "Password",
-        // ConnectionOptions::default(),
+    // "DataSourceName",
+    // "Username",
+    // "Password",
+    // ConnectionOptions::default(),
     // )?;
-    
+
     // insert
     let record = UserRecord {
         first_name: "Tom".to_string(),
         last_name: "Chen".to_string(),
-        age: 27
+        age: 27,
     };
-    insert(&connection, record); 
-    
+    insert(&connection, record);
+
     let record = UserRecord {
         first_name: "Tom".to_string(),
         last_name: "Wang".to_string(),
-        age: 30
+        age: 30,
     };
-    update(&connection, record); 
+    update(&connection, record);
 
     query(&connection, "SELECT * FROM users");
-    
-    delete(&connection, "Tom"); 
+
+    delete(&connection, "Tom");
 }

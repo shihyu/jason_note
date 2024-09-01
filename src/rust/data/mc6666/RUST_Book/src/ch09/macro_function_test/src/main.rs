@@ -19,7 +19,7 @@ fn main() {
     // 生成 macro
     create_function!(foo);
     create_function!(bar);
-    
+
     // 測試函數
     foo();
     bar();

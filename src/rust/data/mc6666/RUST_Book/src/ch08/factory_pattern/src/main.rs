@@ -8,14 +8,14 @@ trait Shape {
 enum ShapeType {
     Rectangle,
     Circle,
-    Line
+    Line,
 }
 
 struct Rectangle {
-    x:i32,
-    y:i32,
-    width:i32,
-    height:i32
+    x: i32,
+    y: i32,
+    width: i32,
+    height: i32,
 }
 
 impl Shape for Rectangle {
@@ -25,9 +25,9 @@ impl Shape for Rectangle {
 }
 
 struct Circle {
-    x:i32,
-    y:i32,
-    radius:i32    
+    x: i32,
+    y: i32,
+    radius: i32,
 }
 
 impl Shape for Circle {
@@ -37,10 +37,10 @@ impl Shape for Circle {
 }
 
 struct Line {
-    x1:i32,
-    y1:i32,
-    x2:i32,
-    y2:i32,
+    x1: i32,
+    y1: i32,
+    x2: i32,
+    y2: i32,
 }
 
 impl Shape for Line {
@@ -53,9 +53,23 @@ struct ShapeFactory;
 impl ShapeFactory {
     fn new_shape(s: &ShapeType) -> Box<dyn Shape> {
         match s {
-            ShapeType::Circle => Box::new(Circle {x:0, y:0, radius:1}),
-            ShapeType::Rectangle => Box::new(Rectangle {x:0, y:0, width:1, height:1}),
-            ShapeType::Line => Box::new(Line {x1:0, y1:0, x2:1, y2:1}),
+            ShapeType::Circle => Box::new(Circle {
+                x: 0,
+                y: 0,
+                radius: 1,
+            }),
+            ShapeType::Rectangle => Box::new(Rectangle {
+                x: 0,
+                y: 0,
+                width: 1,
+                height: 1,
+            }),
+            ShapeType::Line => Box::new(Line {
+                x1: 0,
+                y1: 0,
+                x2: 1,
+                y2: 1,
+            }),
         }
     }
 }

@@ -1,16 +1,16 @@
 #![allow(unused)]
 
-use tch::Tensor;
 use anyhow::Result;
-use tch::{nn, nn::ModuleT, Device};
 use std::env;
 use tch::vision::{imagenet, resnet};
+use tch::Tensor;
+use tch::{nn, nn::ModuleT, Device};
 
 fn main() -> Result<()> {
     // 取得參數：要辨識的圖檔
     let args: Vec<String> = env::args().collect();
     let image_file = &args[1];
-    
+
     // 縮放解析度為 224x224
     let image = imagenet::load_image_and_resize224(image_file)?;
 
@@ -32,6 +32,6 @@ fn main() -> Result<()> {
     // 顯示前5名的預測類別及機率
     for (probability, class) in imagenet::top(&output, 5).iter() {
         println!("{:50} {:5.2}%", class, 100.0 * probability)
-    };
+    }
     Ok(())
 }

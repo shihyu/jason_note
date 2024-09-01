@@ -1,5 +1,5 @@
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use actix_files as fs;
+use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 
 #[get("/hello/{name}")]
 async fn greet(name: web::Path<String>) -> impl Responder {
@@ -19,10 +19,11 @@ async fn manual_hello() -> impl Responder {
 #[actix_web::main] // or #[tokio::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
-        App::new().service(greet)
-        .service(echo)
-        .service(fs::Files::new("/static", "./static").show_files_listing())
-        .route("/hey", web::get().to(manual_hello))
+        App::new()
+            .service(greet)
+            .service(echo)
+            .service(fs::Files::new("/static", "./static").show_files_listing())
+            .route("/hey", web::get().to(manual_hello))
     })
     .bind(("127.0.0.1", 8000))?
     .run()

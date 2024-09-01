@@ -1,6 +1,6 @@
-use diesel::prelude::*;
 use chrono::prelude::*;
 use chrono::{DateTime, Local, NaiveDate};
+use diesel::prelude::*;
 
 #[derive(Insertable, Queryable, Selectable, PartialEq, Debug)]
 #[diesel(table_name = crate::schema::orders)]

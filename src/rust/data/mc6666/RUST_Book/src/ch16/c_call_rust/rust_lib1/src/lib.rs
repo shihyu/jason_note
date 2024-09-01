@@ -4,7 +4,7 @@ pub extern "C" fn rust_function() {
 }
 
 #[no_mangle]
-pub extern fn add_numbers(number1: i32, number2: i32) -> i32 {
+pub extern "C" fn add_numbers(number1: i32, number2: i32) -> i32 {
     println!("Hello from rust!");
     number1 + number2
 }

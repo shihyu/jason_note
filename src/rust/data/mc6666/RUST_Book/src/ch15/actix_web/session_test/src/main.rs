@@ -1,5 +1,5 @@
-use actix_session::{Session, SessionMiddleware, storage::CookieSessionStore};
-use actix_web::{web, App, Error, HttpResponse, HttpServer, cookie::Key};
+use actix_session::{storage::CookieSessionStore, Session, SessionMiddleware};
+use actix_web::{cookie::Key, web, App, Error, HttpResponse, HttpServer};
 
 async fn index(session: Session) -> Result<HttpResponse, Error> {
     // 讀取 session 變數 counter
@@ -22,12 +22,10 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .wrap(
-                // 使用 session middleware 建立 cookie 
-                SessionMiddleware::builder(
-                    CookieSessionStore::default()
-                    , Key::from(&[0; 64]))
+                // 使用 session middleware 建立 cookie
+                SessionMiddleware::builder(CookieSessionStore::default(), Key::from(&[0; 64]))
                     .cookie_secure(false)
-                    .build()
+                    .build(),
             )
             .service(web::resource("/").to(index))
     })

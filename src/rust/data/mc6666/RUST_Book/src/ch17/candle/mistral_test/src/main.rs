@@ -12,8 +12,8 @@ extern crate intel_mkl_src;
 
 #[cfg(feature = "accelerate")]
 extern crate accelerate_src;
-mod token_output_stream;
 mod load_model;
+mod token_output_stream;
 use anyhow::{Error as E, Result};
 use clap::Parser;
 
@@ -21,10 +21,10 @@ use candle_transformers::models::mistral::{Config, Model as Mistral};
 use candle_transformers::models::quantized_mistral::Model as QMistral;
 
 use candle_core::{DType, Device, Tensor};
-use token_output_stream::TokenOutputStream;
 use candle_nn::VarBuilder;
 use candle_transformers::generation::{LogitsProcessor, Sampling};
 use hf_hub::{api::sync::Api, Repo, RepoType};
+use token_output_stream::TokenOutputStream;
 use tokenizers::Tokenizer;
 
 enum Model {

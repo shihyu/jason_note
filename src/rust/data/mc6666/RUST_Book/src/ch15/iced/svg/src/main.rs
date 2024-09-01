@@ -35,19 +35,18 @@ impl Tiger {
         let svg = svg(handle).width(Length::Fill).height(Length::Fill);
         // no color attribute
         // let svg = svg(handle).width(Length::Fill).height(Length::Fill).style(
-            // |_theme, _status| svg::Style {
-                // color: if self.apply_color_filter {
-                    // Some(color!(0x0000ff))
-                // } else {
-                    // None
-                // },
-            // },
+        // |_theme, _status| svg::Style {
+        // color: if self.apply_color_filter {
+        // Some(color!(0x0000ff))
+        // } else {
+        // None
+        // },
+        // },
         // );
 
         // 選擇效果
-        let apply_color_filter =
-            checkbox("Apply a color filter", self.apply_color_filter)
-                .on_toggle(Message::ToggleColorFilter);
+        let apply_color_filter = checkbox("Apply a color filter", self.apply_color_filter)
+            .on_toggle(Message::ToggleColorFilter);
 
         // SVG 控制項
         container(

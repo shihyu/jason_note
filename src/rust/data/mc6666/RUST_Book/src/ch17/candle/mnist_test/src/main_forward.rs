@@ -20,13 +20,13 @@ fn main() -> Result<()> {
 
     // This has changed (784, 100) -> (100, 784) !
     let weight = Tensor::randn(0f32, 1.0, (100, 784), &device)?;
-    let bias = Tensor::randn(0f32, 1.0, (100, ), &device)?;
+    let bias = Tensor::randn(0f32, 1.0, (100,), &device)?;
     let first = Linear::new(weight, Some(bias));
-    
+
     let weight = Tensor::randn(0f32, 1.0, (10, 100), &device)?;
-    let bias = Tensor::randn(0f32, 1.0, (10, ), &device)?;
+    let bias = Tensor::randn(0f32, 1.0, (10,), &device)?;
     let second = Linear::new(weight, Some(bias));
-    
+
     let model = Model { first, second };
 
     let dummy_image = Tensor::randn(0f32, 1.0, (1, 784), &device)?;

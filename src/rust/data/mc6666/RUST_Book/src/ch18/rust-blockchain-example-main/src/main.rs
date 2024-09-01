@@ -33,12 +33,12 @@ pub struct App {
 // 區塊
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Block {
-    pub id: u64,        // 區塊代號
-    pub hash: String,   // 雜湊值
+    pub id: u64,               // 區塊代號
+    pub hash: String,          // 雜湊值
     pub previous_hash: String, // 前一區塊雜湊值
-    pub timestamp: i64, // 區塊創建日期/時間
-    pub data: String,   // 內容
-    pub nonce: u64,     // 一次性的驗證碼
+    pub timestamp: i64,        // 區塊創建日期/時間
+    pub data: String,          // 內容
+    pub nonce: u64,            // 一次性的驗證碼
 }
 
 impl Block {
@@ -58,8 +58,7 @@ impl Block {
 }
 
 // 計算雜湊值
-fn calculate_hash(id: u64, timestamp: i64, previous_hash: &str,
-                data: &str, nonce: u64) -> Vec<u8> {
+fn calculate_hash(id: u64, timestamp: i64, previous_hash: &str, data: &str, nonce: u64) -> Vec<u8> {
     let data = serde_json::json!({
         "id": id,
         "previous_hash": previous_hash,
@@ -73,8 +72,7 @@ fn calculate_hash(id: u64, timestamp: i64, previous_hash: &str,
 }
 
 // 挖礦(Mining)
-fn mine_block(id: u64, timestamp: i64, previous_hash: &str, 
-            data: &str) -> (u64, String) {
+fn mine_block(id: u64, timestamp: i64, previous_hash: &str, data: &str) -> (u64, String) {
     info!("mining block...");
     let mut nonce = 0;
 
@@ -223,8 +221,7 @@ async fn main() {
         .boxed();
 
     // 定義發布/訂閱訊息的處理程序
-    let behaviour = p2p::AppBehaviour::new(App::new(), response_sender, 
-                    init_sender.clone()).await;
+    let behaviour = p2p::AppBehaviour::new(App::new(), response_sender, init_sender.clone()).await;
 
     // swarm：使用通訊協定，多工處理各種訊息
     let mut swarm = SwarmBuilder::new(transp, behaviour, *p2p::PEER_ID)

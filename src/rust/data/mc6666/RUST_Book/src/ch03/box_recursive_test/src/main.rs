@@ -11,7 +11,7 @@ enum List {
 fn main() {
     let list1 = Cons(1, Box::new(Cons(2, Box::new(Nil))));
     println!("{:?}", list1);
-    
+
     let list2 = Cons(1, Box::new(Cons(2, Box::new(Cons(3, Box::new(Nil))))));
     println!("{:?}", list2);
 }

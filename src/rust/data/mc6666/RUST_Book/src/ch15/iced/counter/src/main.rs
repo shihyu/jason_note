@@ -17,7 +17,7 @@ impl Counter {
     fn update(&mut self, message: Message) {
         match message {
             // value 增加(Increment)
-            Message::Increment => { 
+            Message::Increment => {
                 self.value += 1;
             }
             // value 減少(Decrement)
@@ -33,7 +33,8 @@ impl Counter {
         let button1_text = text("增加").font(FONT1).size(50);
         let button2_text = text("減少").font(FONT1).size(50);
 
-        column![ // 垂直排列
+        column![
+            // 垂直排列
             // 點選【Increment】按鈕時會傳遞 Increment 訊息
             // button("Increment").on_press(Message::Increment),
             button(button1_text).on_press(Message::Increment),

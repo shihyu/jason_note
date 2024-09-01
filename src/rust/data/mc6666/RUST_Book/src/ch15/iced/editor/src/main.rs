@@ -1,8 +1,7 @@
 use iced::highlighter::{self, Highlighter};
 use iced::keyboard;
 use iced::widget::{
-    button, column, container, horizontal_space, pick_list, row, text,
-    text_editor, tooltip,
+    button, column, container, horizontal_space, pick_list, row, text, text_editor, tooltip,
 };
 use iced::{Alignment, Command, Element, Font, Length, Subscription, Theme};
 
@@ -128,16 +127,15 @@ impl Editor {
 
     fn subscription(&self) -> Subscription<Message> {
         keyboard::on_key_press(|key, modifiers| match key.as_ref() {
-            keyboard::Key::Character("s") if modifiers.command() => {
-                Some(Message::SaveFile)
-            }
+            keyboard::Key::Character("s") if modifiers.command() => Some(Message::SaveFile),
             _ => None,
         })
     }
 
     fn view(&self) -> Element<Message> {
         const FONT1: Font = Font::with_name("細明體"); // 標楷體
-        let controls = row![ // 水平排列
+        let controls = row![
+            // 水平排列
             action(new_icon(), "New file", Some(Message::NewFile)),
             action(
                 open_icon(),
@@ -172,17 +170,20 @@ impl Editor {
                 }
             } else {
                 String::from("New file")
-            }).font(FONT1),
+            })
+            .font(FONT1),
             horizontal_space(),
             text({
                 let (line, column) = self.content.cursor_position();
 
                 format!("{}:{}", line + 1, column + 1)
-            }).font(FONT1)
+            })
+            .font(FONT1)
         ]
         .spacing(10);
 
-        column![ // 垂直排列
+        column![
+            // 垂直排列
             controls,
             text_editor(&self.content)
                 .height(Length::Fill)
@@ -238,9 +239,7 @@ async fn open_file() -> Result<(PathBuf, Arc<String>), Error> {
     load_file(picked_file).await
 }
 
-async fn load_file(
-    path: impl Into<PathBuf>,
-) -> Result<(PathBuf, Arc<String>), Error> {
+async fn load_file(path: impl Into<PathBuf>) -> Result<(PathBuf, Arc<String>), Error> {
     let path = path.into();
 
     let contents = tokio::fs::read_to_string(&path)
@@ -251,10 +250,7 @@ async fn load_file(
     Ok((path, contents))
 }
 
-async fn save_file(
-    path: Option<PathBuf>,
-    contents: String,
-) -> Result<PathBuf, Error> {
+async fn save_file(path: Option<PathBuf>, contents: String) -> Result<PathBuf, Error> {
     let path = if let Some(path) = path {
         path
     } else {

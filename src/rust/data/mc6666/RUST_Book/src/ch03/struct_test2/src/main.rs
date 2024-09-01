@@ -61,7 +61,7 @@ fn main() {
         p1: Point::origin(),
         p2: Point::new(3.0, 4.0),
     };
-    
+
     // 顯示週長、面積
     println!("週長: {}", rectangle.perimeter());
     println!("面積: {}", rectangle.area());

@@ -1,9 +1,9 @@
 #![allow(unused)]
 
-use native_windows_gui as nwg;
-use nwg::NativeUi;
 use native_windows_derive as nwd;
+use native_windows_gui as nwg;
 use nwd::NwgUi;
+use nwg::NativeUi;
 
 // 視窗及控制項佈局
 #[derive(Default, NwgUi)]
@@ -70,7 +70,6 @@ pub struct TreeViewApp {
 }
 
 impl TreeViewApp {
-    
     fn load_data(&self) {
         let tv = &self.tree_view;
         let icons = &self.view_icons;
@@ -81,18 +80,29 @@ impl TreeViewApp {
         tv.set_image_list(Some(icons));
 
         let root = tv.insert_item("Caniformia", None, nwg::TreeInsert::Root);
-        tv.insert_item("Canidae (dogs and other canines)", Some(&root), 
-                nwg::TreeInsert::Last);
-        
+        tv.insert_item(
+            "Canidae (dogs and other canines)",
+            Some(&root),
+            nwg::TreeInsert::Last,
+        );
+
         let arc = tv.insert_item("Arctoidea", Some(&root), nwg::TreeInsert::Last);
         tv.insert_item("Ursidae (bears)", Some(&arc), nwg::TreeInsert::Last);
-        
+
         let mus = tv.insert_item("Musteloidea (weasel)", Some(&arc), nwg::TreeInsert::Last);
 
         tv.insert_item("Mephitidae (skunks)", Some(&mus), nwg::TreeInsert::Last);
         tv.insert_item("Ailuridae (red panda)", Some(&mus), nwg::TreeInsert::Last);
-        tv.insert_item("Procyonidae (raccoons and allies)", Some(&mus), nwg::TreeInsert::Last);
-        tv.insert_item("Mustelidae (weasels and allies)", Some(&mus), nwg::TreeInsert::Last);
+        tv.insert_item(
+            "Procyonidae (raccoons and allies)",
+            Some(&mus),
+            nwg::TreeInsert::Last,
+        );
+        tv.insert_item(
+            "Mustelidae (weasels and allies)",
+            Some(&mus),
+            nwg::TreeInsert::Last,
+        );
 
         tv.set_text_color(50, 50, 200);
 
@@ -109,8 +119,8 @@ impl TreeViewApp {
         if btn == &self.add_btn {
             let text = self.new_item.text();
             let item = match tv.selected_item() {
-                Some(i) => { tv.insert_item(&text, Some(&i), nwg::TreeInsert::Last) },
-                None => { tv.insert_item(&text, None, nwg::TreeInsert::Root) }
+                Some(i) => tv.insert_item(&text, Some(&i), nwg::TreeInsert::Last),
+                None => tv.insert_item(&text, None, nwg::TreeInsert::Root),
             };
 
             tv.set_item_image(&item, 1, true);
@@ -128,21 +138,19 @@ impl TreeViewApp {
     fn exit(&self) {
         nwg::stop_thread_dispatch();
     }
-
 }
 
 fn main() {
     // 初始化
     nwg::init().expect("Failed to init Native Windows GUI");
-    
+
     // 設定字體
     nwg::Font::set_global_family("標楷體") // "Segoe UI")
         .expect("Failed to set default font");
-        
+
     // 呼叫內建函數建立視窗
-    let _app = TreeViewApp::build_ui(Default::default())
-        .expect("Failed to build UI");
-    
+    let _app = TreeViewApp::build_ui(Default::default()).expect("Failed to build UI");
+
     // 監聽並提取與程式有關的訊息
     nwg::dispatch_thread_events();
 }

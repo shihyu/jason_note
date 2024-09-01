@@ -4,7 +4,7 @@ fn main() {
     // 解構(destructuring)
     let (x, y, z) = tup; // x = 500, y = 6.4, z = 1
     println!("The value of y is: {y}");
-    
+
     let five_hundred = tup.0;
     println!("The value of five_hundred is: {five_hundred}");
 }

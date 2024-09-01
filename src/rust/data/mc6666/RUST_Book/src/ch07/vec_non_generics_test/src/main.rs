@@ -34,5 +34,4 @@ fn main() {
     let char_list = vec!['y', 'm', 'a', 'q'];
     let result = largest_char(&char_list);
     println!("The largest char is {}", result);
-    
 }

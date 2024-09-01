@@ -1,10 +1,9 @@
 use iced::alignment;
 use iced::mouse;
-use iced::widget::{canvas, container};
 use iced::widget::canvas::{stroke, Cache, Geometry, LineCap, Path, Stroke};
+use iced::widget::{canvas, container};
 use iced::{
-    Degrees, Element, Font, Length, Point, Rectangle, Renderer, Subscription,
-    Theme, Vector,
+    Degrees, Element, Font, Length, Point, Rectangle, Renderer, Subscription, Theme, Vector,
 };
 
 pub fn main() -> iced::Result {
@@ -63,8 +62,7 @@ impl Clock {
     }
 
     fn theme(&self) -> Theme {
-        Theme::ALL[(self.now.unix_timestamp() as usize / 10) % Theme::ALL.len()]
-            .clone()
+        Theme::ALL[(self.now.unix_timestamp() as usize / 10) % Theme::ALL.len()].clone()
     }
 }
 
@@ -98,11 +96,9 @@ impl<Message> canvas::Program<Message> for Clock {
             let background = Path::circle(center, radius);
             frame.fill(&background, palette.secondary.strong.color);
 
-            let short_hand =
-                Path::line(Point::ORIGIN, Point::new(0.0, -0.5 * radius));
+            let short_hand = Path::line(Point::ORIGIN, Point::new(0.0, -0.5 * radius));
 
-            let long_hand =
-                Path::line(Point::ORIGIN, Point::new(0.0, -0.8 * radius));
+            let long_hand = Path::line(Point::ORIGIN, Point::new(0.0, -0.8 * radius));
 
             let width = radius / 100.0;
 
@@ -148,10 +144,7 @@ impl<Message> canvas::Program<Message> for Clock {
                 frame.fill_text(canvas::Text {
                     content: theme.to_string(),
                     size: (radius / 15.0).into(),
-                    position: Point::new(
-                        (0.78 * radius) * rotate_factor,
-                        -width * 2.0,
-                    ),
+                    position: Point::new((0.78 * radius) * rotate_factor, -width * 2.0),
                     color: palette.secondary.strong.text,
                     horizontal_alignment: if rotate_factor > 0.0 {
                         alignment::Horizontal::Right

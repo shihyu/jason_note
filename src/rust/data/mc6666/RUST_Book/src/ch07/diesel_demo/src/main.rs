@@ -1,18 +1,17 @@
 mod schema;
 
-use diesel;
-use dotenv::dotenv;
-use diesel::prelude::*;
-use std::env;
-use diesel::{Connection, ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection};
-use diesel::result::Error;
 use crate::schema::human;
+use diesel;
+use diesel::prelude::*;
+use diesel::result::Error;
+use diesel::{Connection, ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection};
+use dotenv::dotenv;
+use std::env;
 
 fn establish_connection() -> SqliteConnection {
     dotenv().ok();
 
-    let database_url = env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     SqliteConnection::establish(&database_url)
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
@@ -33,8 +32,12 @@ struct NewHuman<'a> {
     age: Option<i32>,
 }
 
-fn insert_into<'a>(conn: &mut SqliteConnection, 
-    first_name: &'a str, last_name: &'a str, age: Option<i32>) -> Human {
+fn insert_into<'a>(
+    conn: &mut SqliteConnection,
+    first_name: &'a str,
+    last_name: &'a str,
+    age: Option<i32>,
+) -> Human {
     let new_human = NewHuman {
         first_name,
         last_name,
@@ -42,7 +45,9 @@ fn insert_into<'a>(conn: &mut SqliteConnection,
     };
 
     let _ = conn.transaction::<(), Error, _>(|conn| {
-        diesel::insert_into(human::table).values(&new_human).execute(conn)
+        diesel::insert_into(human::table)
+            .values(&new_human)
+            .execute(conn)
             .expect("Error inserting new human");
         // Err(Error::RollbackTransaction)
         Ok(())
@@ -66,13 +71,16 @@ fn query_db(conn: &mut SqliteConnection) -> Human {
 }
 
 fn main() {
-    // insert new row 
+    // insert new row
     let conn = &mut establish_connection();
     truncate(conn);
     let new_human = insert_into(conn, "John", "Doe", None);
     let new_human2 = insert_into(conn, "Michael", "Lin", Some(26));
-    println!("New human inserted with ID: {} {}", new_human.id, new_human2.id);
-    
+    println!(
+        "New human inserted with ID: {} {}",
+        new_human.id, new_human2.id
+    );
+
     // query db
     let person = query_db(conn);
     // let person = human.filter(human::age.eq(25)).first(conn).expect("Error querying database");

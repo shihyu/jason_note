@@ -11,7 +11,7 @@ fn main() {
 
     unsafe {
         println!("[Rust] Calling function in C..");
-        
+
         // 呼叫C的multiply函數
         let result = multiply(5000, 5);
 

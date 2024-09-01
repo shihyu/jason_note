@@ -22,7 +22,10 @@ fn main() {
     // 計算執行時間
     let old_time: DateTime<Utc> = Utc::now();
 
-    println!("fibonacci number: {}", fibonacci(guess, Zero::zero(), One::one()));
+    println!(
+        "fibonacci number: {}",
+        fibonacci(guess, Zero::zero(), One::one())
+    );
     let duration = Utc::now().signed_duration_since(old_time);
 
     println!(

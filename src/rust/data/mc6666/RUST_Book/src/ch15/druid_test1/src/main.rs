@@ -13,10 +13,10 @@ fn main() -> Result<(), PlatformError> {
 // 建立控制項
 fn ui_builder() -> impl Widget<u32> {
     // 標籤
-    let text = LocalizedString::new("hello-counter")
-        .with_arg("count", |data: &u32, _env| (*data).into());
+    let text =
+        LocalizedString::new("hello-counter").with_arg("count", |data: &u32, _env| (*data).into());
     let label = Label::new(text).padding(5.0).center();
-    
+
     // 按鈕
     let button = Button::new("increment")
         .on_click(|_ctx, data, _env| *data += 1)

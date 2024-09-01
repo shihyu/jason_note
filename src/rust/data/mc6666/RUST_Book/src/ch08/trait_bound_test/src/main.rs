@@ -20,7 +20,7 @@ impl HasArea for Circle {
     fn area(&self) -> f64 {
         std::f64::consts::PI * (self.radius * self.radius)
     }
-    
+
     // 周長
     fn perimeter(&self) -> f64 {
         2.0 * std::f64::consts::PI * self.radius
@@ -41,7 +41,7 @@ impl HasArea for Square {
     fn area(&self) -> f64 {
         self.side * self.side
     }
-    
+
     // 周長
     fn perimeter(&self) -> f64 {
         4.0 * self.side
@@ -76,5 +76,4 @@ fn main() {
 
     print_perimeter(c);
     print_perimeter(s);
-
 }

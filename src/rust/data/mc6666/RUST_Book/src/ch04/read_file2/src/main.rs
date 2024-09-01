@@ -1,4 +1,4 @@
-fn open_file(file_path:String) -> Result<String, std::io::Error> {
+fn open_file(file_path: String) -> Result<String, std::io::Error> {
     let result = std::fs::read_to_string(file_path);
     return result;
 }

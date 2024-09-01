@@ -1,23 +1,23 @@
 #![allow(unused)]
 
 use std::fs::File;
-use std::io::prelude::*;
 use std::fs::OpenOptions;
+use std::io::prelude::*;
 use std::io::Error;
 
-fn simplest_read_file(filepath:&str) -> Result<Vec<u8>, Error> {
+fn simplest_read_file(filepath: &str) -> Result<Vec<u8>, Error> {
     let data = std::fs::read(filepath)?;
     Ok(data)
 }
 
-fn read_file(filepath:&str) -> Result<String, Error> {
+fn read_file(filepath: &str) -> Result<String, Error> {
     let mut file = File::open(filepath)?;
     let mut data = String::new();
     file.read_to_string(&mut data)?;
     Ok(data)
 }
 
-fn read_file_by_line(filepath:&str) -> Result<Vec<String>, Error> {
+fn read_file_by_line(filepath: &str) -> Result<Vec<String>, Error> {
     let file = File::open(filepath)?;
     let reader = std::io::BufReader::new(file);
 
@@ -28,7 +28,7 @@ fn read_file_by_line(filepath:&str) -> Result<Vec<String>, Error> {
     Ok(contents)
 }
 
-fn read_file_by_block(filepath:&str) -> Result<Vec<u8>, Error> {
+fn read_file_by_block(filepath: &str) -> Result<Vec<u8>, Error> {
     const BUFFER_LEN: usize = 512;
     let mut buffer = [0u8; BUFFER_LEN];
     let mut file = File::open(filepath)?;
@@ -53,7 +53,7 @@ fn main() {
     let _ = match simplest_read_file("data.txt") {
         Err(err) => println!("{err}"),
         Ok(data) => {
-            let data2 = String::from_utf8(data).unwrap(); 
+            let data2 = String::from_utf8(data).unwrap();
             println!("{}\n", data2)
         }
     };
@@ -61,20 +61,20 @@ fn main() {
     // read file, return string
     let _ = match read_file("data.txt") {
         Err(err) => println!("{err}"),
-        Ok(data) => println!("{}\n", data)
+        Ok(data) => println!("{}\n", data),
     };
 
     // read file, return vector
     let _ = match read_file_by_line("data.txt") {
         Err(err) => println!("{err}"),
-        Ok(data) => println!("{}\n", data.join("\n"))
+        Ok(data) => println!("{}\n", data.join("\n")),
     };
 
     // read file per block
     let _ = match read_file_by_block("data.txt") {
         Err(err) => println!("{err}"),
         Ok(data) => {
-            let data2 = String::from_utf8(data).unwrap(); 
+            let data2 = String::from_utf8(data).unwrap();
             println!("{}\n", data2)
         }
     };

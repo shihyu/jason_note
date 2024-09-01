@@ -19,9 +19,7 @@ fn arc_test() {
     let s = Arc::new(String::from("test"));
     for _ in 0..10 {
         let s = Arc::clone(&s);
-        let handle = thread::spawn(move || {
-           println!("{}", s)
-        });
+        let handle = thread::spawn(move || println!("{}", s));
         handle.join().unwrap();
     }
 }
@@ -31,11 +29,11 @@ fn arc_test2() {
     for _ in 0..10 {
         let counter_arc = Arc::clone(&counter); // 複製智慧指標副本
         let handle = thread::spawn(move || {
-           *counter_arc.lock().unwrap() +=1;  // 鎖定並更新變數值
+            *counter_arc.lock().unwrap() += 1; // 鎖定並更新變數值
         });
         handle.join().unwrap();
     }
-   println!("{:?}", counter);
+    println!("{:?}", counter);
 }
 
 fn main() {

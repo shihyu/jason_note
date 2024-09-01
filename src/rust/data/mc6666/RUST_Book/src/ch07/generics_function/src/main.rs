@@ -1,8 +1,8 @@
-fn add<T: std::ops::Add<Output = T>>(a:T, b:T) -> T {
+fn add<T: std::ops::Add<Output = T>>(a: T, b: T) -> T {
     a + b
 }
 
-fn max<T: std::cmp::PartialOrd>(a:T, b:T) -> T {
+fn max<T: std::cmp::PartialOrd>(a: T, b: T) -> T {
     if a > b {
         a
     } else {
@@ -31,7 +31,7 @@ fn main() {
     println!("max i8: {}", max(2i8, 3i8));
     println!("max i32: {}", max(20, 30));
     println!("max f64: {}", max(1.23, 1.23));
-    
+
     // get_largest test for number
     let number_list = vec![34, 50, 25, 100, 65];
     let result = get_largest(&number_list);
@@ -41,5 +41,4 @@ fn main() {
     let char_list = vec!['y', 'm', 'a', 'q'];
     let result = get_largest(&char_list);
     println!("The largest char is {}", result);
-    
 }

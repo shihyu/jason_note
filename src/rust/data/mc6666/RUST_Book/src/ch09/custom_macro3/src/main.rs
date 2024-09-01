@@ -21,9 +21,9 @@ macro_rules! find_min {
 
 fn main() {
     // my_vec test
-    let vec = my_vec![1,2,3];
+    let vec = my_vec![1, 2, 3];
     println!("{:?}", vec);
-    
+
     // find_min test
     println!("{}", find_min!(5, 2 * 3, 4));
 }

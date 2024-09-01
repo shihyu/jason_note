@@ -1,9 +1,9 @@
 #![allow(unused)]
 
-use native_windows_gui as nwg;
-use nwg::NativeUi;
 use native_windows_derive as nwd;
+use native_windows_gui as nwg;
 use nwd::NwgUi;
+use nwg::NativeUi;
 
 // 視窗及控制項佈局
 #[derive(Default, NwgUi)]
@@ -13,7 +13,7 @@ pub struct DataViewApp {
     #[nwg_events( OnWindowClose: [DataViewApp::exit], 
         OnInit: [DataViewApp::load_data])]
     window: nwg::Window,
-    
+
     #[nwg_resource(family: "Arial", size: 19)]
     arial: nwg::Font,
 
@@ -44,11 +44,10 @@ pub struct DataViewApp {
         , selected_index: Some(1), font: Some(&data.arial))]
     #[nwg_layout_item(layout: layout, col: 4, row: 1)]
     #[nwg_events( OnComboxBoxSelection: [DataViewApp::update_view] )]
-    view_style: nwg::ComboBox<&'static str>
+    view_style: nwg::ComboBox<&'static str>,
 }
 
 impl DataViewApp {
-    
     fn load_data(&self) {
         let dv = &self.data_view;
         let icons = &self.view_icons;
@@ -57,29 +56,33 @@ impl DataViewApp {
         // Load the listview images，影像來自圖檔
         icons.add_icon_from_filename("./test_rc/cog.ico").unwrap();
         icons.add_icon_from_filename("./test_rc/love.ico").unwrap();
-        icons_small.add_icon_from_filename("./test_rc/cog.ico").unwrap();
-        icons_small.add_icon_from_filename("./test_rc/love.ico").unwrap();
+        icons_small
+            .add_icon_from_filename("./test_rc/cog.ico")
+            .unwrap();
+        icons_small
+            .add_icon_from_filename("./test_rc/love.ico")
+            .unwrap();
 
         // Setting up the listview data
         dv.set_image_list(Some(icons), nwg::ListViewImageListType::Normal);
         dv.set_image_list(Some(icons_small), nwg::ListViewImageListType::Small);
 
         dv.insert_column("Name");
-        dv.insert_column(nwg::InsertListViewColumn{
+        dv.insert_column(nwg::InsertListViewColumn {
             index: Some(1),
             fmt: Some(nwg::ListViewColumnFlags::RIGHT),
             width: Some(100),
-            text: Some("test".into())
+            text: Some("test".into()),
         });
         dv.set_headers_enabled(true);
 
         // Passing a str to this method will automatically push the item at the end of the list in the first column
         dv.insert_item("Cat");
-        dv.insert_item(nwg::InsertListViewItem { 
+        dv.insert_item(nwg::InsertListViewItem {
             index: Some(0),
             column_index: 1,
             text: Some("Felis".into()),
-            image: None
+            image: None,
         });
 
         // To insert a new row, use the index 0.
@@ -97,30 +100,46 @@ impl DataViewApp {
             image: None,
         });
 
-        // Insert multiple item on a single row. 
+        // Insert multiple item on a single row.
         dv.insert_items_row(None, &["Dog", "Canis"]);
 
         // Insert many item at one
         dv.insert_items(&["Duck", "Horse", "Boomalope"]);
         dv.insert_items(&[
-            nwg::InsertListViewItem { index: Some(3), column_index: 1, 
-                text: Some("Anas".into()), image: None },
-            nwg::InsertListViewItem { index: Some(4), column_index: 1, 
-                text: Some("Equus".into()), image: None },
+            nwg::InsertListViewItem {
+                index: Some(3),
+                column_index: 1,
+                text: Some("Anas".into()),
+                image: None,
+            },
+            nwg::InsertListViewItem {
+                index: Some(4),
+                column_index: 1,
+                text: Some("Equus".into()),
+                image: None,
+            },
         ]);
 
         // Update items
-        dv.update_item(2, 
-            nwg::InsertListViewItem { image: Some(1), 
-            ..Default::default() });
-        dv.update_item(4, 
-            nwg::InsertListViewItem { image: Some(1), 
-            ..Default::default() });
+        dv.update_item(
+            2,
+            nwg::InsertListViewItem {
+                image: Some(1),
+                ..Default::default()
+            },
+        );
+        dv.update_item(
+            4,
+            nwg::InsertListViewItem {
+                image: Some(1),
+                ..Default::default()
+            },
+        );
     }
 
     fn update_view(&self) {
         let value = self.view_style.selection_string();
-        
+
         let style = match value.as_ref().map(|v| v as &str) {
             Some("Icon") => nwg::ListViewStyle::Icon,
             Some("Icon small") => nwg::ListViewStyle::SmallIcon,
@@ -134,22 +153,19 @@ impl DataViewApp {
     fn exit(&self) {
         nwg::stop_thread_dispatch();
     }
-
 }
 
 fn main() {
     // 初始化
     nwg::init().expect("Failed to init Native Windows GUI");
-    
+
     // 設定字體
     nwg::Font::set_global_family("標楷體") // "Segoe UI")
         .expect("Failed to set default font");
-        
+
     // 呼叫內建函數建立視窗
-    let _app = DataViewApp::build_ui(Default::default())
-        .expect("Failed to build UI");
-    
+    let _app = DataViewApp::build_ui(Default::default()).expect("Failed to build UI");
+
     // 監聽並提取與程式有關的訊息
     nwg::dispatch_thread_events();
 }
-

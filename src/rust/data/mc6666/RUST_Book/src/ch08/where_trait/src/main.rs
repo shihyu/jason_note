@@ -9,8 +9,10 @@ fn foo<T: Clone, K: Clone + Debug>(x: T, y: K) {
 }
 
 fn bar<T, K>(x: T, y: K)
-    where T: Clone,
-          K: Clone + Debug {
+where
+    T: Clone,
+    K: Clone + Debug,
+{
     x.clone();
     y.clone();
     println!("{:?}", y);

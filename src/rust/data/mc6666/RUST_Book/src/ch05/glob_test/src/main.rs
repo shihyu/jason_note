@@ -9,7 +9,7 @@ fn main() {
             Err(e) => println!("{:?}", e),
         }
     }
-    
+
     // method 2
     println!("\nmethod 2:");
     for entry in glob("*").expect("Failed to read glob pattern") {

@@ -53,8 +53,7 @@ fn main() -> Result<()> {
 }
 
 // 訊息處理
-extern "system" fn wndproc(window: HWND, message: u32, 
-            wparam: WPARAM, lparam: LPARAM) -> LRESULT {
+extern "system" fn wndproc(window: HWND, message: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     unsafe {
         match message {
             WM_PAINT => {

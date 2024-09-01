@@ -1,6 +1,6 @@
 #![allow(unused_imports)]
-use log::{error, warn, info, debug, trace};
 use env_logger;
+use log::{debug, error, info, trace, warn};
 
 fn main() {
     env_logger::init();

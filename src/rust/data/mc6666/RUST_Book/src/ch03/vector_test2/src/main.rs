@@ -24,7 +24,7 @@ fn main() {
     let mut arr = vec!["Alice", "Bob", "Charlie"];
     arr.sort_by_key(|s| s.len());
     println!("sort_by_key: {:?}", arr);
-    
+
     let mut arr = [-2i32, -1, 0, 3];
     arr.sort_by_key(|n| n.abs());
     println!("sort_by_key: {:?}", arr);

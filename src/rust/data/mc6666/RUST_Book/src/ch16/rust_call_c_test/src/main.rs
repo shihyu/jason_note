@@ -3,7 +3,7 @@
 use std::ffi::CString;
 use std::os::raw::c_char;
 // use libc::wchar_t;
-use wchar::{wch, wchz, wchar_t};
+use wchar::{wch, wchar_t, wchz};
 
 extern "C" {
     fn abs(input: i32) -> i32;
@@ -14,12 +14,12 @@ extern "C" {
 fn main() {
     // 設定C的字串型別
     let to_print = CString::new("Hello !").unwrap();
-    
+
     unsafe {
         println!("呼叫C的絕對值(abs): {}", abs(-3));
-        
+
         puts(to_print.as_ptr()); // 傳送字串指標
-        
+
         let to_print: &[wchar_t] = wchz!("Rust中文測試");
         _putws(to_print.as_ptr()); // 傳送字串指標
     }

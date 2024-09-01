@@ -3,7 +3,7 @@ fn add(m: i8, n: i8) {
 }
 
 fn main() {
-    let m : i8 = 120;
-    let n : i8 = 120;
+    let m: i8 = 120;
+    let n: i8 = 120;
     add(m, n);
 }

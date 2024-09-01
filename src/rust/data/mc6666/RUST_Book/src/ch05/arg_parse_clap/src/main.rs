@@ -1,7 +1,7 @@
 use clap::Parser;
 
 // filepath 預設值
-const DEFAULT_PATH:&str = "*.*";
+const DEFAULT_PATH: &str = "*.*";
 
 // 設定參數結構
 #[derive(Parser, Debug)]
@@ -10,7 +10,7 @@ struct Args {
     /// 比對字串
     #[arg(short, long)]
     pattern: String,
-    
+
     /// file to load
     #[arg(short, long, default_value_t = DEFAULT_PATH.to_string())]
     filepath: String,

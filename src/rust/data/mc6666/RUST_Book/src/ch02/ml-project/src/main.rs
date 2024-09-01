@@ -26,26 +26,23 @@ fn main() -> Result<()> {
 
     // 測試資料預測
     let gini_pred_y = gini_model.predict(&test);
-    
+
     // 混淆矩陣
     let cm = gini_pred_y.confusion_matrix(&test)?;
     println!("混淆矩陣：{:?}", cm);
 
-    println!(
-        "準確率: {:.2}%",
-        100.0 * cm.accuracy()
-    );
+    println!("準確率: {:.2}%", 100.0 * cm.accuracy());
 
     let feats = gini_model.features();
     println!("特徵重要性排序 {:?}", feats);
 
     // println!("Training model with entropy criterion ...");
     // let entropy_model = DecisionTree::params()
-        // .split_quality(SplitQuality::Entropy)
-        // .max_depth(Some(100))
-        // .min_weight_split(10.0)
-        // .min_weight_leaf(10.0)
-        // .fit(&train)?;
+    // .split_quality(SplitQuality::Entropy)
+    // .max_depth(Some(100))
+    // .min_weight_split(10.0)
+    // .min_weight_leaf(10.0)
+    // .fit(&train)?;
 
     // let entropy_pred_y = entropy_model.predict(&test);
     // let cm = entropy_pred_y.confusion_matrix(&test)?;
@@ -53,8 +50,8 @@ fn main() -> Result<()> {
     // println!("{:?}", cm);
 
     // println!(
-        // "Test accuracy with Entropy criterion: {:.2}%",
-        // 100.0 * cm.accuracy()
+    // "Test accuracy with Entropy criterion: {:.2}%",
+    // 100.0 * cm.accuracy()
     // );
 
     // let feats = entropy_model.features();
@@ -62,11 +59,11 @@ fn main() -> Result<()> {
 
     // let mut tikz = File::create("decision_tree_example.tex").unwrap();
     // tikz.write_all(
-        // gini_model
-            // .export_to_tikz()
-            // .with_legend()
-            // .to_string()
-            // .as_bytes(),
+    // gini_model
+    // .export_to_tikz()
+    // .with_legend()
+    // .to_string()
+    // .as_bytes(),
     // )
     // .unwrap();
     // println!(" => generate Gini tree description with `latex decision_tree_example.tex`!");

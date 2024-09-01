@@ -5,10 +5,10 @@ extern crate intel_mkl_src;
 #[cfg(feature = "accelerate")]
 extern crate accelerate_src;
 
+use candle_core::{DType, Device, Result, Tensor, D};
+use candle_nn::{loss, ops, Conv2d, Linear, Module, ModuleT, Optimizer, VarBuilder, VarMap};
 use clap::{Parser, ValueEnum};
 use rand::prelude::*;
-use candle_core::{Device, DType, Result, Tensor, D};
-use candle_nn::{loss, ops, Conv2d, Linear, Module, ModuleT, Optimizer, VarBuilder, VarMap};
 
 const IMAGE_DIM: usize = 784;
 const LABELS: usize = 10;

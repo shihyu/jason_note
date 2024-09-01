@@ -36,15 +36,15 @@ pub struct LocalChainRequest {
 // 事件類別
 pub enum EventType {
     LocalChainResponse(ChainResponse), // 網路的回應
-    Input(String),  // 鍵盤輸入的命令
-    Init,           // 初始化事件
+    Input(String),                     // 鍵盤輸入的命令
+    Init,                              // 初始化事件
 }
 
 // P2P 核心功能
 #[derive(NetworkBehaviour)]
 pub struct AppBehaviour {
     pub floodsub: Floodsub,
-    pub mdns: Mdns,         // 在區域網路內自動尋找其他節點
+    pub mdns: Mdns, // 在區域網路內自動尋找其他節點
     #[behaviour(ignore)]
     pub response_sender: mpsc::UnboundedSender<ChainResponse>,
     #[behaviour(ignore)]
@@ -82,18 +82,15 @@ impl NetworkBehaviourEventProcess<FloodsubEvent> for AppBehaviour {
     fn inject_event(&mut self, event: FloodsubEvent) {
         if let FloodsubEvent::Message(msg) = event {
             // 其他節點的回應
-            if let Ok(resp) = serde_json::from_slice::<ChainResponse>
-                (&msg.data) {
+            if let Ok(resp) = serde_json::from_slice::<ChainResponse>(&msg.data) {
                 if resp.receiver == PEER_ID.to_string() {
                     info!("Response from {}:", msg.source);
                     resp.blocks.iter().for_each(|r| info!("{:?}", r));
                     // 選擇本機(Local)或遠端(Remote)區塊鏈
-                    self.app.blocks = self.app.choose_chain(
-                            self.app.blocks.clone(), resp.blocks);
+                    self.app.blocks = self.app.choose_chain(self.app.blocks.clone(), resp.blocks);
                 }
             // 若是其他節點的請求，則送出本機區塊
-            } else if let Ok(resp) = 
-                serde_json::from_slice::<LocalChainRequest>(&msg.data) {
+            } else if let Ok(resp) = serde_json::from_slice::<LocalChainRequest>(&msg.data) {
                 info!("sending local chain to {}", msg.source.to_string());
                 let peer_id = resp.from_peer_id;
                 if PEER_ID.to_string() == peer_id {

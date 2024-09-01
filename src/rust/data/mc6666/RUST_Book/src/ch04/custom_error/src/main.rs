@@ -1,7 +1,7 @@
+use std::fmt;
+use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
-use std::fs::File;
-use std::fmt;
 
 struct MyError(String);
 impl fmt::Display for MyError {
@@ -10,21 +10,19 @@ impl fmt::Display for MyError {
     }
 }
 
-fn read_file(file_path:String) -> Result<String, MyError> {
+fn read_file(file_path: String) -> Result<String, MyError> {
     // 建立檔案路徑
     let path = Path::new(&file_path);
 
     // 開啟檔案
     let mut file = File::open(&path)
-        .map_err(|err| MyError(format!("(E1101) 開啟檔案 {} 錯誤: {}"
-                , file_path, err)))?;
+        .map_err(|err| MyError(format!("(E1101) 開啟檔案 {} 錯誤: {}", file_path, err)))?;
 
     // 讀取檔案內容
     let mut contents = String::new();
     file.read_to_string(&mut contents)
-        .map_err(|err| MyError(format!("(E1102) 讀取檔案 {} 內容錯誤: {}"
-            , file_path, err)))?;
-    
+        .map_err(|err| MyError(format!("(E1102) 讀取檔案 {} 內容錯誤: {}", file_path, err)))?;
+
     // 回傳檔案內容
     Ok(contents)
 }
@@ -32,6 +30,6 @@ fn read_file(file_path:String) -> Result<String, MyError> {
 fn main() {
     let _ = match read_file("data.txt".to_string()) {
         Err(error) => panic!("{}", error),
-        Ok(contents) => println!("contents:{}", contents)
+        Ok(contents) => println!("contents:{}", contents),
     };
 }

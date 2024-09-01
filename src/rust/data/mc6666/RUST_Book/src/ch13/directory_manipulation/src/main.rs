@@ -1,8 +1,8 @@
 #![allow(unused)]
 
-use std::{fs, io};
 use std::fs::DirEntry;
 use std::path::Path;
+use std::{fs, io};
 
 fn get_files(path: &Path) -> Vec<String> {
     let result = fs::read_dir(path).unwrap();
@@ -54,23 +54,25 @@ fn main() {
         // 刪除目錄及其下檔案與子目錄
         fs::remove_dir_all("./test");
     }
-    
+
     // 建立目錄及其下子目錄
     fs::create_dir_all(TEST_FOLDER_STR);
     // 只能建立一層目錄
     fs::create_dir("./test/test1");
-    
+
     // 掃描一層目錄
-    let mut entries = fs::read_dir(".\\test").unwrap()
+    let mut entries = fs::read_dir(".\\test")
+        .unwrap()
         .map(|res| res.map(|e| e.path()))
-        .collect::<Result<Vec<_>, io::Error>>().unwrap();
+        .collect::<Result<Vec<_>, io::Error>>()
+        .unwrap();
     entries.sort();
     println!("{:?}\n", entries);
-    
+
     // 掃描一層目錄
     let mut entries = list_dir(".\\test").unwrap();
     println!("{:?}\n", entries);
-    
+
     // 測試：複製檔案
     fs::copy("data1.txt", "./test/test1/data1.txt");
     fs::copy("data2.txt", "./test/test2/data2.txt");
@@ -79,8 +81,4 @@ fn main() {
     // 掃描目錄及其下子目錄
     let files = get_files(Path::new(".\\test"));
     println!("{:?}", files);
-    
-
-    
-    
 }

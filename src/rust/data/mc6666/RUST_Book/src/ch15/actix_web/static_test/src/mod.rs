@@ -5,10 +5,7 @@ struct NewUser<'a> {
     name: &'a str,
 }
 
-fn insert_new_user(
-    conn: &mut SqliteConnection,
-    user_name: String,
-) -> diesel::QueryResult<User> {
+fn insert_new_user(conn: &mut SqliteConnection, user_name: String) -> diesel::QueryResult<User> {
     use crate::schema::users::dsl::*;
 
     // Create insertion model
@@ -31,4 +28,3 @@ fn insert_new_user(
 
     Ok(user)
 }
-

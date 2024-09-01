@@ -1,6 +1,6 @@
+use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
-use std::fs::File;
 
 fn main() {
     // 建立檔案路徑

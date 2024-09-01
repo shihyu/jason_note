@@ -10,11 +10,10 @@ fn main() {
         let c = Rc::clone(&a);
         println!("建立 c 後的計數 = {}", Rc::strong_count(&a));
     }
-    
+
     // 另一種表示法
     let d = a.clone();
     println!("建立 d 後的計數 = {}", Rc::strong_count(&a));
-    
-    println!("{}", d);
 
+    println!("{}", d);
 }

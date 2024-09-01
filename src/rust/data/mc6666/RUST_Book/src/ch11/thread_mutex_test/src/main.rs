@@ -9,7 +9,7 @@ fn main() {
 
     for _ in 0..10 {
         // let counter = Rc::clone(&counter);  // 複製指標
-        let counter = Arc::clone(&counter);  // 複製指標
+        let counter = Arc::clone(&counter); // 複製指標
         let handle = thread::spawn(move || {
             let mut num = counter.lock().unwrap(); // 存取 num 前，先鎖定
             *num += 1;

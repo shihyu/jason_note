@@ -21,6 +21,10 @@ impl HasArea for Circle {
 
 // 測試：建立Circle物件，計算圓的面積
 fn main() {
-    let circle = Circle{x:5.0, y:10.0, radius:5.0};
+    let circle = Circle {
+        x: 5.0,
+        y: 10.0,
+        radius: 5.0,
+    };
     println!("{}", circle.area());
 }

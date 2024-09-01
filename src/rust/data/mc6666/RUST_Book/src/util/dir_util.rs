@@ -1,27 +1,29 @@
-use std::{fmt::Debug, fs::{self, File}, io::{BufReader, BufWriter, Read, Write}};
+use std::{
+    fmt::Debug,
+    fs::{self, File},
+    io::{BufReader, BufWriter, Read, Write},
+};
 
-#[derive(Clone)]
-#[derive(Debug)]
-#[derive(Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct DirWalkerEntry {
     pub file_name: String,
     pub path: String,
     pub depth: u32,
     pub is_dir: bool,
     pub is_file: bool,
-    pub size: u64
+    pub size: u64,
 }
 
 pub struct DirWalker {
     pub items: Vec<DirWalkerEntry>,
-    pub depth: u32
+    pub depth: u32,
 }
 
 impl DirWalker {
     pub fn new() -> DirWalker {
         DirWalker {
             items: Vec::new(),
-            depth: 0
+            depth: 0,
         }
     }
 
@@ -50,18 +52,17 @@ impl DirWalker {
                     depth: depth,
                     is_dir: true,
                     is_file: false,
-                    size: 0
+                    size: 0,
                 });
                 self.walk(path.to_str().unwrap(), depth + 1);
-            }
-            else {
+            } else {
                 self.items.push(DirWalkerEntry {
                     file_name: item.file_name().to_str().unwrap().to_string(),
                     path: path.to_str().unwrap().to_string(),
                     depth: depth,
                     is_dir: false,
                     is_file: true,
-                    size: fs::metadata(&path).unwrap().len()
+                    size: fs::metadata(&path).unwrap().len(),
                 });
             }
         }
@@ -73,14 +74,19 @@ impl DirWalker {
     }
 
     pub fn ext(&mut self, extensions: Vec<&str>) -> &mut Self {
-        self.items = self.items.clone().into_iter().filter(|item| {
-            for ext in &extensions {
-                if item.file_name.ends_with(ext) {
-                    return true;
+        self.items = self
+            .items
+            .clone()
+            .into_iter()
+            .filter(|item| {
+                for ext in &extensions {
+                    if item.file_name.ends_with(ext) {
+                        return true;
+                    }
                 }
-            }
-            false
-        }).collect();
+                false
+            })
+            .collect();
         self
     }
 

@@ -14,7 +14,7 @@ macro_rules! add {
 
 fn main() {
     say_something!("Hello, world!");
-    
+
     // add test
     let result = add!(1, 2);
     println!("{}", result);

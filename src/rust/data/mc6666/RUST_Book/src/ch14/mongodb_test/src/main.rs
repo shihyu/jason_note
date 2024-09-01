@@ -1,10 +1,10 @@
 #![allow(unused)]
 
-use mongodb::{Client, options::ClientOptions, Cursor};
-use mongodb::error::Error;
+use futures_util::TryStreamExt;
 use mongodb::bson::Document;
+use mongodb::error::Error;
 use mongodb::{bson::doc, options::FindOptions};
-use futures_util::TryStreamExt; // for cursor.try_next()
+use mongodb::{options::ClientOptions, Client, Cursor}; // for cursor.try_next()
 
 async fn list_database_names() -> Result<Client, Error> {
     // 使用本機的連線字串，未設帳號/密碼
@@ -20,7 +20,7 @@ async fn list_database_names() -> Result<Client, Error> {
     Ok(client)
 }
 
-async fn list_collection_names(client:Client, db: &str) -> Result<bool, Error> {
+async fn list_collection_names(client: Client, db: &str) -> Result<bool, Error> {
     // 連線資料庫
     let db = client.database(db);
 
@@ -32,7 +32,7 @@ async fn list_collection_names(client:Client, db: &str) -> Result<bool, Error> {
 }
 
 // 顯示所有文件(documents)
-async fn list_document(client:Client, db: &str, collection: &str) -> Result<bool, Error> {
+async fn list_document(client: Client, db: &str, collection: &str) -> Result<bool, Error> {
     // 連線資料庫
     let db = client.database(db);
 
@@ -52,7 +52,7 @@ async fn list_document(client:Client, db: &str, collection: &str) -> Result<bool
     Ok(true)
 }
 
-async fn insert_document(client:Client, db: &str, collection: &str) -> Result<bool, Error> {
+async fn insert_document(client: Client, db: &str, collection: &str) -> Result<bool, Error> {
     // Get a handle to a database.
     let db = client.database(db);
 

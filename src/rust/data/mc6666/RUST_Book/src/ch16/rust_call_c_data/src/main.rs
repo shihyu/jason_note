@@ -3,7 +3,7 @@ use std::fmt;
 // this extern block links to the libm library
 #[cfg(target_family = "windows")]
 #[link(name = "msvcrt")]
-extern {
+extern "C" {
     // this is a foreign function
     // that computes the square root of a single precision complex number
     fn csqrtf(z: Complex) -> Complex;
@@ -12,7 +12,7 @@ extern {
 }
 #[cfg(target_family = "unix")]
 #[link(name = "m")]
-extern {
+extern "C" {
     // this is a foreign function
     // that computes the square root of a single precision complex number
     fn csqrtf(z: Complex) -> Complex;

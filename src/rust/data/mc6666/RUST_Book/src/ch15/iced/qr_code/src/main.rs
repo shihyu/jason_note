@@ -1,6 +1,4 @@
-use iced::widget::{
-    column, container, pick_list, qr_code, row, text, text_input,
-};
+use iced::widget::{column, container, pick_list, qr_code, row, text, text_input};
 use iced::{Alignment, Element, Length, Theme};
 
 pub fn main() -> iced::Result {
@@ -49,11 +47,10 @@ impl QRGenerator {
     fn view(&self) -> Element<Message> {
         let title = text("QR Code Generator").size(70);
 
-        let input =
-            text_input("Type the data of your QR code here...", &self.data)
-                .on_input(Message::DataChanged)
-                .size(30)
-                .padding(15);
+        let input = text_input("Type the data of your QR code here...", &self.data)
+            .on_input(Message::DataChanged)
+            .size(30)
+            .padding(15);
 
         let choose_theme = row![
             text("Theme:"),

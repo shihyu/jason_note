@@ -33,7 +33,6 @@ impl From<(i32, i32)> for Coord {
 mod tests {
     use super::*;
 
-
     #[test]
     fn tuple_into_coord() {
         let a: Coord = (1, 10).into();

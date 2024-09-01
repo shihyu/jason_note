@@ -1,9 +1,11 @@
 #![allow(unused)]
 
-use std::future::Future;
 use futures::executor::block_on;
+use std::future::Future;
 
-async fn borrow_x(x: &u8) -> u8 { *x + 1 }
+async fn borrow_x(x: &u8) -> u8 {
+    *x + 1
+}
 
 fn test1() -> impl Future<Output = u8> {
     async {
@@ -23,11 +25,11 @@ fn main() {
     // println!("{}", x);
 
     block_on(test1());
-    
+
     // no printing
     let mut x1 = 5;
     test2(&mut x1);
-    
+
     // enable printing
     let mut x2 = 5;
     block_on(test2(&mut x2));

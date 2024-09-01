@@ -1,18 +1,17 @@
 #![allow(unused)]
 
-use std::convert::Infallible;
-use std::net::SocketAddr;
-use hyper::body::Bytes;
 use http_body_util::Full;
+use hyper::body::Bytes;
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
 use hyper::{Request, Response};
-use tokio::net::TcpListener;
 use hyper_util::rt::TokioIo;
+use std::convert::Infallible;
+use std::net::SocketAddr;
+use tokio::net::TcpListener;
 
 // 回傳 Hello World!
-async fn hello(_: Request<impl hyper::body::Body>) -> 
-        Result<Response<Full<Bytes>>, Infallible> {
+async fn hello(_: Request<impl hyper::body::Body>) -> Result<Response<Full<Bytes>>, Infallible> {
     Ok(Response::new(Full::new(Bytes::from("Hello World!"))))
 }
 
@@ -30,7 +29,7 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     loop {
         // 接受連線請求
         let (tcp, _) = listener.accept().await?;
-        // Tokio 初始化 
+        // Tokio 初始化
         let io = TokioIo::new(tcp);
 
         // 生成一個新的執行緒處理連線請求

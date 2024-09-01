@@ -40,10 +40,10 @@ fn test1() -> PyResult<()> {
 }
 
 fn main() {
-     let _ = test1();
-     
-     let code = std::fs::read_to_string("example.py").unwrap();
-     let _ = Python::with_gil(|py| -> PyResult<()> {
+    let _ = test1();
+
+    let code = std::fs::read_to_string("example.py").unwrap();
+    let _ = Python::with_gil(|py| -> PyResult<()> {
         PyModule::from_code_bound(py, &code, "example.py", "example")?;
         Ok(())
     });

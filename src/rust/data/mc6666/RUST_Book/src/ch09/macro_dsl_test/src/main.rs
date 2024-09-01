@@ -9,7 +9,7 @@ macro_rules! calculate {
 
 fn main() {
     calculate! {
-        eval 1 + 2 
+        eval 1 + 2
     }
 
     calculate! {

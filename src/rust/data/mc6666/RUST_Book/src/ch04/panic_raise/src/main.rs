@@ -1,5 +1,7 @@
-fn check_age(age:i32) {
-    if age < 0 { panic!("年齡有誤 !"); }
+fn check_age(age: i32) {
+    if age < 0 {
+        panic!("年齡有誤 !");
+    }
     println!("年齡:{age}.");
 }
 

@@ -8,8 +8,8 @@ fn sum_as_string(a: usize, b: usize) -> PyResult<String> {
 
 #[pyfunction]
 fn factorial(a: i32) -> PyResult<i32> {
-    let mut sum1:i32 = 1;
-    for i in 1..(a+1) {
+    let mut sum1: i32 = 1;
+    for i in 1..(a + 1) {
         sum1 = sum1 * i;
     }
     Ok(sum1)

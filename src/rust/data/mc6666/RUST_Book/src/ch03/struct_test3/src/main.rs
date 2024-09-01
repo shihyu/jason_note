@@ -20,30 +20,23 @@ struct Point3d {
 }
 
 fn main() {
-    let mut p1 = Point {
-        x: 1,
-        y: 2,
-    };
-    
+    let mut p1 = Point { x: 1, y: 2 };
+
     // 修改位址指到的p1.x
-    let r = PointRef { x: &mut p1.x, y: p1.y };
+    let r = PointRef {
+        x: &mut p1.x,
+        y: p1.y,
+    };
     *r.x = 5; // 修改p1.x
     println!("{:?}", r);
     println!("{}", p1.x);
 
     // 宣告一個物件p2，其中成員的值可以來自另一個物件p1
-    let p1 = Point3d {
-        x: 1,
-        y: 2,
-        z: 3,
-    };
-    
-    let p2 = Point3d {
-        x: 10,
-        .. p1
-    };
+    let p1 = Point3d { x: 1, y: 2, z: 3 };
+
+    let p2 = Point3d { x: 10, ..p1 };
     println!("{:?}", p2);
-    
+
     let mut p3 = Point3d {
         x: 15,
         y: p1.y,
@@ -52,6 +45,4 @@ fn main() {
     println!("{:?}", p3);
     p3.y = 5;
     println!("{:?}", p1);
-    
-    
 }

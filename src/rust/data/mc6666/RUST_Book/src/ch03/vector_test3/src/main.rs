@@ -11,17 +11,19 @@ fn main() {
     println!("{:?}", vec2.unwrap());
     let vec2 = vec.last(); // 最後1個元素
     println!("{:?}", vec2.unwrap());
-    
+
     // skip + take
     let vec = vec!["john", "mary", "helen", "tom", "michael"];
     let vec2 = vec.into_iter().skip(1).take(2);
-    for i in vec2 { println!("{}", i); }
-    
+    for i in vec2 {
+        println!("{}", i);
+    }
+
     // contains：是否包含特定元素?
     let vec = vec![1, 2, 3, 4, 5];
     let vec2 = vec.contains(&3);
     println!("{}", vec2);
-    
+
     // contains：字串是否包含特定元素?
     let vec = vec!["john", "mary", "helen", "tom", "michael"];
     let vec2 = vec.contains(&"mary");
@@ -46,5 +48,4 @@ fn main() {
     let vec = vec![[1, 2], [3, 4]];
     let vec2 = vec.concat();
     println!("{:?}", vec2);
-
 }

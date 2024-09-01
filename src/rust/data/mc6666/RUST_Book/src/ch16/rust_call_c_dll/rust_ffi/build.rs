@@ -1,8 +1,7 @@
-use std::path::Path;
 use cmake::Config;
+use std::path::Path;
 
-fn main()
-{
+fn main() {
     let dst = Config::new(Path::new("..").join("c_cpp")).build();
 
     println!("cargo:rustc-link-search=native={}", dst.display());

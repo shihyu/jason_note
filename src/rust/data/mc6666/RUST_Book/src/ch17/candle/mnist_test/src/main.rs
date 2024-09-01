@@ -14,11 +14,10 @@ extern crate accelerate_src;
 
 use std::time::{Duration, Instant};
 
+use candle_core::{DType, Device, Result, Tensor, D};
+use candle_nn::{loss, ops, Conv2d, Linear, Module, ModuleT, Optimizer, VarBuilder, VarMap};
 use clap::{Parser, ValueEnum};
 use rand::prelude::*;
-use candle_core::{Device, DType, Result, Tensor, D};
-use candle_nn::{loss, ops, Conv2d, Linear, Module, 
-        ModuleT, Optimizer, VarBuilder, VarMap};
 
 const IMAGE_DIM: usize = 784;
 const LABELS: usize = 10;
@@ -70,10 +69,7 @@ impl ConvNet {
     }
 }
 
-fn train_model(
-    m: candle_datasets::vision::Dataset,
-    args: &TrainingArgs,
-) -> anyhow::Result<()> {
+fn train_model(m: candle_datasets::vision::Dataset, args: &TrainingArgs) -> anyhow::Result<()> {
     const BSIZE: usize = 2000;
 
     let dev = Device::Cpu;
@@ -145,7 +141,7 @@ fn main() -> anyhow::Result<()> {
     println!("test-labels: {:?}", m.test_labels.shape());
 
     let start = Instant::now();
-    
+
     // 訓練模型
     let training_args = TrainingArgs {
         epochs: 5,

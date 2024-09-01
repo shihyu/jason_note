@@ -2,10 +2,9 @@
 
 use reqwest;
 
-async fn fetch_url(url:&str) -> Result<String, reqwest::Error> {
-    let response = reqwest::get(url)
-                    .await?.text().await?;
-    Ok(response)                
+async fn fetch_url(url: &str) -> Result<String, reqwest::Error> {
+    let response = reqwest::get(url).await?.text().await?;
+    Ok(response)
 }
 
 #[tokio::main]
@@ -16,5 +15,5 @@ async fn main() {
         println!("{:?}", response);
     } else {
         println!("無此網頁: {:?}", response.err().unwrap());
-    }   
+    }
 }

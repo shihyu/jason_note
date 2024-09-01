@@ -12,7 +12,7 @@ fn main() {
         String::from("的"),
         String::from("嗨"),
     ];
-    
+
     thread::spawn(move || {
         // 分段傳送訊息
         for val in vals {

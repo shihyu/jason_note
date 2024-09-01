@@ -14,7 +14,7 @@ fn main() {
         add_num(5);
     }
     println!("with move：{:#?}\n", num);
-    
+
     // Closure 可以回傳結果
     let mut counter = || {
         let mut count = 0;
@@ -25,5 +25,4 @@ fn main() {
     }();
     println!("Counter: {}", counter()); // Output: Counter: 1
     println!("Counter: {}", counter()); // Output: Counter: 2
-    
 }

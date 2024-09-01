@@ -18,9 +18,10 @@ async fn manual_hello() -> impl Responder {
 #[actix_web::main] // or #[tokio::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
-        App::new().service(greet)
-        .service(echo)
-        .route("/hey", web::get().to(manual_hello))
+        App::new()
+            .service(greet)
+            .service(echo)
+            .route("/hey", web::get().to(manual_hello))
     })
     .bind(("127.0.0.1", 8000))?
     .run()

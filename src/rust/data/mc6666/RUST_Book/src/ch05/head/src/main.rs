@@ -3,14 +3,18 @@ use std::io::BufReader;
 
 fn main() {
     let path = std::env::args().nth(1).expect("請提供檔名.");
-    let n:i32;
+    let n: i32;
     if std::env::args().len() <= 2 {
         n = 5;
     } else {
-        n = std::env::args().nth(2).expect("請提供讀取列數.")
-            .trim().parse().expect("請提供讀取列數.");
+        n = std::env::args()
+            .nth(2)
+            .expect("請提供讀取列數.")
+            .trim()
+            .parse()
+            .expect("請提供讀取列數.");
     }
-    
+
     // check file exist?
     if !std::path::Path::new(&path).exists() {
         panic!("檔案 {path} 不存在.");

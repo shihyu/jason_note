@@ -2,7 +2,7 @@ use wasm_bindgen::prelude::*; // Rust與JavaScript溝通的橋樑
 
 // JavaScript函數，Rust可呼叫
 #[wasm_bindgen]
-extern {
+extern "C" {
     pub fn alert(s: &str);
 }
 

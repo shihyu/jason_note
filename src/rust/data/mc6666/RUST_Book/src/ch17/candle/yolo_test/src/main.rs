@@ -10,13 +10,13 @@ mod coco_classes;
 mod model;
 use model::{Multiples, YoloV8, YoloV8Pose};
 
+use ab_glyph::Rect;
+use candle_core::Error;
 use candle_core::{DType, Device, IndexOp, Result, Tensor};
 use candle_nn::{Module, VarBuilder};
 use candle_transformers::object_detection::{non_maximum_suppression, Bbox, KeyPoint};
 use clap::{Parser, ValueEnum};
 use image::DynamicImage;
-use candle_core::Error;
-use ab_glyph::Rect;
 
 // Keypoints as reported by ChatGPT :)
 // Nose
@@ -107,11 +107,7 @@ pub fn report_detect(
     let font = ab_glyph::FontRef::try_from_slice(&font).map_err(Error::wrap)?;
     for (class_index, bboxes_for_class) in bboxes.iter().enumerate() {
         for b in bboxes_for_class.iter() {
-            println!(
-                "{}: {:?}",
-                coco_classes::NAMES[class_index],
-                b
-            );
+            println!("{}: {:?}", coco_classes::NAMES[class_index], b);
             let xmin = (b.xmin * w_ratio) as i32;
             let ymin = (b.ymin * h_ratio) as i32;
             let dx = (b.xmax - b.xmin) * w_ratio;

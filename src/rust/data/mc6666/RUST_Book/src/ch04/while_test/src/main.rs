@@ -2,11 +2,11 @@ fn main() {
     let mut i = 1;
     let mut sum = 0;
     while i <= 100 {
-       sum+=i;
-       i+=1;
+        sum += i;
+        i += 1;
     }
     println!("sum:{sum}");
-    
+
     // while let
     let mut optional = Some(0);
 

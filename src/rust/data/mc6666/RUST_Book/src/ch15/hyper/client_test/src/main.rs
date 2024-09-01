@@ -1,16 +1,15 @@
 #![allow(unused)]
 
-use std::env;
-use hyper::body::Bytes;
 use http_body_util::{BodyExt, Empty};
+use hyper::body::Bytes;
 use hyper::Request;
+use hyper_util::rt::TokioIo;
+use std::env;
 use tokio::io::{self, AsyncWriteExt as _};
 use tokio::net::TcpStream;
-use hyper_util::rt::TokioIo;
 
 // 自訂 Result
-type Result<T> = std::result::Result<T, 
-            Box<dyn std::error::Error + Send + Sync>>;
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 #[tokio::main]
 async fn main() -> Result<()> {

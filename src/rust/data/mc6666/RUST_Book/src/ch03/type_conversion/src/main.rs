@@ -22,7 +22,7 @@ fn main() {
     let x1 = '2';
     let result = x1.to_digit(10).unwrap(); // 10 進位
     println!("{}", result);
-    let x1 = 'f'; 
+    let x1 = 'f';
     let result = x1.to_digit(16).unwrap(); // 16 進位
     println!("{}", result);
 
@@ -37,18 +37,16 @@ fn main() {
     // 取得資料型別
     let x1: f32 = 20.5;
     println!("{:?}", print_type_of(&x1));
-    
+
     let x1 = "中文";
     println!("{:?}", print_type_of(&x1));
-    
-    let x1:String = "中文".to_string();
+
+    let x1: String = "中文".to_string();
     println!("{:?}", print_type_of(&x1));
-    
-    let x1:String = "中文".to_string();
+
+    let x1: String = "中文".to_string();
     println!("{:?}", print_type_of(&x1.as_bytes()));
-
 }
-
 
 fn print_type_of<T>(_: &T) -> &'static str {
     std::any::type_name::<T>()
