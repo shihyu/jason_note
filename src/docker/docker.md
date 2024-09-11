@@ -584,6 +584,64 @@ EXPOSE 6543
 CMD pserve production.ini
 ```
 
+
+---
+要在 Docker 中安裝 Ubuntu 24.04 並登入 Bash，然後安裝 `pip`、`python`、`vim`、`unzip` 和 `wget`，你可以按照以下步驟操作：
+
+### 1. 建立並啟動 Docker 容器
+首先，在終端機中執行以下命令來從 Docker Hub 拉取 Ubuntu 24.04 的映像檔，並建立一個容器：
+
+```bash
+docker pull ubuntu:24.04
+docker run -it --name ubuntu-container ubuntu:24.04 bash
+```
+
+這會將你帶入 Ubuntu 容器的 Bash 環境中。
+
+### 2. 更新軟體包
+在容器內，首先更新軟體包列表：
+
+```bash
+apt update
+```
+
+### 3. 安裝 Python, pip, vim, unzip, wget
+接下來，安裝所需的軟體包：
+
+```bash
+apt install -y python3 python3-pip vim unzip wget
+```
+
+### 4. 驗證安裝
+確認安裝是否成功：
+
+```bash
+python3 --version
+pip3 --version
+vim --version
+unzip -v
+wget --version
+```
+
+這些指令應該顯示安裝的版本資訊。
+
+### 5. 保存和退出 Docker 容器
+完成後，可以保存和退出容器：
+
+```bash
+exit
+```
+
+### 6. 再次進入容器
+你可以隨時再次進入容器：
+
+```bash
+docker start ubuntu-container
+docker exec -it ubuntu-container bash
+```
+
+這樣你就能再次進入並使用已安裝的軟體。
+
 ### 參考
 
 [VM-for-Devops](http://school.soft-arch.net/courses/enrolled/vm-for-devops)
