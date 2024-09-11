@@ -188,6 +188,8 @@
   - [如何出場](strategy/如何出場.md)
   - [建倉加碼](strategy/建倉加碼.md)
   - [當沖](strategy/DT.md)
+  - [當沖做空](strategy/當沖做空.md)
+  - [抄底](strategy/抄底.md)
   - [麻道明](strategy/麻道明/麻道明.md)
   - [賺贏大盤的動能投資法](strategy/賺贏大盤的動能投資法.md)
     - [假突破](strategy/麻道明/假突破.md)
