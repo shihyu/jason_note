@@ -642,6 +642,64 @@ docker exec -it ubuntu-container bash
 
 這樣你就能再次進入並使用已安裝的軟體。
 
+
+這個錯誤訊息是由於 Ubuntu 24.04 預設使用 "externally managed environment" 來管理 Python 軟體包，這意味著你不能直接使用 `pip` 在系統範圍內安裝 Python 軟體包（例如在全域範圍內）。這是因為使用 `pip` 安裝軟體包可能會和系統管理的 Python 軟體包產生衝突。
+
+### 解決方案
+你可以有以下幾個選項來解決這個問題：
+
+#### 1. 使用 `apt` 安裝 Python 軟體包
+如果你需要安裝 Python 軟體包，建議使用 Ubuntu 的套件管理工具 `apt`：
+
+```bash
+apt install python3-pip
+```
+
+這樣可以避免和系統衝突，因為 `apt` 會使用預先打包好的軟體包版本。
+
+#### 2. 創建一個虛擬環境
+如果你需要使用 `pip` 安裝一些系統沒有的 Python 軟體包，建議創建一個虛擬環境：
+
+```bash
+apt install python3-venv  # 首先安裝虛擬環境模組
+python3 -m venv myenv     # 創建虛擬環境
+source myenv/bin/activate # 啟用虛擬環境
+```
+
+在啟用虛擬環境後，使用 `pip` 安裝軟體包：
+
+```bash
+pip install <package_name>
+```
+
+當你不再需要虛擬環境時，可以執行 `deactivate` 來退出。
+
+#### 3. 使用 `pipx` 來安裝應用程式
+如果你想安裝一個獨立的 Python 應用程式，可以使用 `pipx` 來安裝。首先安裝 `pipx`：
+
+```bash
+apt install pipx
+pipx ensurepath
+```
+
+然後使用 `pipx` 安裝應用程式：
+
+```bash
+pipx install <application_name>
+```
+
+#### 4. 使用 `--break-system-packages` 強制安裝（不推薦）
+你也可以強制繞過這個限制，但這可能會導致系統不穩定或產生衝突，不推薦這樣做：
+
+```bash
+pip install <package_name> --break-system-packages
+```
+
+這種方式應謹慎使用，只適合那些了解其風險的用戶。
+
+#### 建議
+建議使用虛擬環境 (`venv`) 或 `pipx`，這樣可以避免破壞系統環境，同時也能滿足你對 Python 軟體包的安裝需求。
+
 ### 參考
 
 [VM-for-Devops](http://school.soft-arch.net/courses/enrolled/vm-for-devops)
