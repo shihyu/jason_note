@@ -3227,3 +3227,26 @@ df['C'] = calculate_sum(A, B)
 
 print(df.head())
 ```
+
+## 指定 CPU 跑在特定核心上運行 
+
+```python
+import os
+import psutil
+
+# 取得當前進程的 PID
+pid = os.getpid()
+p = psutil.Process(pid)
+
+# 設置程序只運行在 CPU 核心 1（第二核）
+p.cpu_affinity([1])
+
+# 驗證當前的 CPU 親和性設定
+print(f"CPU 親和性設定為: {p.cpu_affinity()}")
+
+# 模擬負載，觀察運行情況
+while True:
+    pass  # 佔用 CPU，方便觀察
+
+
+```
