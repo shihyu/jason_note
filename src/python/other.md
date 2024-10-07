@@ -3250,3 +3250,54 @@ while True:
 
 
 ```
+
+
+
+## talib  pandas_ta
+
+```python
+import pandas as pd
+import talib
+import pandas_ta as ta
+
+# 模擬較多的 K 線數據
+data = {
+    "high": [130, 132, 131, 133, 135, 136, 138, 140, 142, 145, 147, 149, 151, 153, 155],
+    "low": [125, 126, 128, 130, 132, 133, 134, 137, 139, 141, 143, 145, 146, 148, 150],
+    "close": [
+        128,
+        129,
+        130,
+        132,
+        134,
+        135,
+        137,
+        139,
+        141,
+        143,
+        145,
+        147,
+        149,
+        151,
+        153,
+    ],
+}
+
+df = pd.DataFrame(data)
+
+# 設定 ATR 長度
+atr_len = 5
+
+# 使用 talib 計算 TR 和 ATR
+df["TR_talib"] = talib.TRANGE(df["high"], df["low"], df["close"])
+df["ATR_talib"] = talib.EMA(df["TR_talib"], timeperiod=atr_len)
+
+# 使用 pandas_ta 計算 TR 和 ATR
+df["ATR_pandas_ta"] = ta.atr(df["high"], df["low"], df["close"], length=1)
+df["ATR_pandas_ta_ema"] = ta.ema(df["ATR_pandas_ta"], length=atr_len)
+
+# 輸出結果
+print("DataFrame 結果：")
+print(df)
+```
+
