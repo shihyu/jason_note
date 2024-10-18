@@ -63,9 +63,11 @@ def detect_pullback(tick_data, threshold=0.02, lookback=10):
             if tick_data["close"][i] < tick_data["close"][high_idx]:
                 return {
                     "triggered": True,
-                    "low_time": tick_data["ts"][low_idx],
-                    "high_time": tick_data["ts"][high_idx],
-                    "pullback_time": tick_data["ts"][i],
+                    "low_time": low_idx,  # 直接使用 low_idx，稍後使用索引取得時間
+                    "high_time": high_idx,  # 直接使用 high_idx，稍後使用索引取得時間
+                    "pullback_time": tick_data.iloc[
+                        i
+                    ].name,  # 直接使用 i，稍後使用索引取得時間
                 }
 
     return {"triggered": False}
@@ -91,15 +93,23 @@ if __name__ == "__main__":
     # 訂閱
     contract = api.Contracts.Stocks["2330"]
     # 取得tick
-    ticks = api.ticks(contract=api.Contracts.Stocks["2330"], date="2023-01-16")
+    ticks = api.ticks(contract=api.Contracts.Stocks["1316"], date="2024-02-27")
     df_ticks = pd.DataFrame({**ticks})
     df_ticks.ts = pd.to_datetime(df_ticks.ts)
     df_ticks = df_ticks.set_index("ts")
     print(df_ticks.to_markdown(floatfmt=".2f"))
+    input()
 
-    result = detect_pullback(df_ticks)
-    print(result)
-    print_usage(api)
-    api.logout()
+    ## 偵測是否觸發回檔
+    try:
+        # 去除同個時間戳的重複數據，只保留最後一筆
+        df_cleaned = df_ticks[~df_ticks.index.duplicated(keep="last")]
+        result = detect_pullback(df_cleaned)
+        print(result)
+        print_usage(api)
+        api.logout()
+    except Exception as e:
+        logger.exception(e)
+        api.logout()
+
 ```
-
