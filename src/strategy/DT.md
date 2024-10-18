@@ -9,23 +9,26 @@
 ---
 
 ```python
+import os
+import json
 from loguru import logger
 import pandas as pd
 import shioaji as sj
-import os
-import json
 
 
-def login():
-    api = sj.Shioaji(simulation=False)
-    token_file = os.environ["HOME"] + "/.mybin/shioaji_tokens.json"
-    with open(token_file, "r") as f:
+def load_credentials(file_path):
+    """Load API credentials from a JSON file."""
+    with open(file_path, "r") as f:
         users = json.load(f)
-        api.login(
-            users["Jason"]["api_key"],
-            users["Jason"]["secret_key"],
-            contracts_timeout=30000,
-        )
+    return users["Jason"]["api_key"], users["Jason"]["secret_key"]
+
+
+def login(simulation=False):
+    """Login to the Shioaji API."""
+    api = sj.Shioaji(simulation=simulation)
+    token_file = os.path.expanduser("~/.mybin/shioaji_tokens.json")
+    api_key, secret_key = load_credentials(token_file)
+    api.login(api_key, secret_key, contracts_timeout=30000)
     return api
 
 
@@ -41,75 +44,72 @@ def detect_pullback(tick_data, threshold=0.02, lookback=10):
     :param lookback: 在多少範圍內尋找高點與低點 (預設 10 個 tick)
     :return: 回傳一個字典，包含觸發與否和相關時間
     """
-    # 初始化變量
-    low_idx = None
-    high_idx = None
 
     for i in range(lookback, len(tick_data)):
-        # 在過去的 lookback 範圍內找低點和高點
-        lookback_data = tick_data[i - lookback : i]
+        window = tick_data.iloc[i - lookback : i]
+        low_idx = window["close"].idxmin()
+        high_idx = window["close"].idxmax()
 
-        low_idx = lookback_data["close"].idxmin()  # 找出低點的位置
-        high_idx = lookback_data["close"].idxmax()  # 找出高點的位置
-
-        # 確保低點在高點的左邊，且高點與低點的差異超過 threshold
-        if (
-            low_idx < high_idx
-            and (tick_data["close"][high_idx] - tick_data["close"][low_idx])
-            / tick_data["close"][low_idx]
-            >= threshold
-        ):
-            # 檢查是否出現回檔，即價格從高點拉回
-            if tick_data["close"][i] < tick_data["close"][high_idx]:
+        if low_idx < high_idx:
+            price_change = (
+                tick_data.loc[high_idx, "close"] - tick_data.loc[low_idx, "close"]
+            ) / tick_data.loc[low_idx, "close"]
+            if (
+                price_change >= threshold
+                and tick_data.iloc[i]["close"] < tick_data.loc[high_idx, "close"]
+            ):
                 return {
                     "triggered": True,
-                    "low_time": low_idx,  # 直接使用 low_idx，稍後使用索引取得時間
-                    "high_time": high_idx,  # 直接使用 high_idx，稍後使用索引取得時間
-                    "pullback_time": tick_data.iloc[
-                        i
-                    ].name,  # 直接使用 i，稍後使用索引取得時間
+                    "low_time": low_idx,
+                    "high_time": high_idx,
+                    "pullback_time": tick_data.index[i],
                 }
 
     return {"triggered": False}
 
 
 def print_usage(api):
+    """Print API usage statistics."""
     usage_status = api.usage()
-    connections = usage_status.connections
-    usage_MB = usage_status.bytes / 1024 / 1024
-    limit_MB = usage_status.limit_bytes / 1024 / 1024
-    remaining_MB = usage_status.remaining_bytes / 1024 / 1024
+    usage_MB = usage_status.bytes / (1024 * 1024)
+    limit_MB = usage_status.limit_bytes / (1024 * 1024)
+    remaining_MB = usage_status.remaining_bytes / (1024 * 1024)
 
     logger.info(
-        f"connections={connections}, "
+        f"connections={usage_status.connections}, "
         f"usage MB={usage_MB:.2f}, "
         f"limit MB={limit_MB:.2f}, "
         f"remaining MB={remaining_MB:.2f}"
     )
 
 
-if __name__ == "__main__":
-    api = login()
-    # 訂閱
-    contract = api.Contracts.Stocks["2330"]
-    # 取得tick
-    ticks = api.ticks(contract=api.Contracts.Stocks["1316"], date="2024-02-27")
+def fetch_and_process_ticks(api, stock_code, date):
+    """Fetch and process tick data for a given stock and date."""
+    contract = api.Contracts.Stocks[stock_code]
+    ticks = api.ticks(contract=contract, date=date)
     df_ticks = pd.DataFrame({**ticks})
-    df_ticks.ts = pd.to_datetime(df_ticks.ts)
+    df_ticks["ts"] = pd.to_datetime(df_ticks["ts"])
     df_ticks = df_ticks.set_index("ts")
-    print(df_ticks.to_markdown(floatfmt=".2f"))
-    input()
+    return df_ticks[~df_ticks.index.duplicated(keep="last")]
 
-    ## 偵測是否觸發回檔
+
+def main():
+    api = login()
     try:
-        # 去除同個時間戳的重複數據，只保留最後一筆
-        df_cleaned = df_ticks[~df_ticks.index.duplicated(keep="last")]
-        result = detect_pullback(df_cleaned)
+        df_ticks = fetch_and_process_ticks(api, "1316", "2024-02-27")
+        print(df_ticks.to_markdown(floatfmt=".2f"))
+
+        result = detect_pullback(df_ticks)
         print(result)
+
         print_usage(api)
-        api.logout()
     except Exception as e:
         logger.exception(e)
+    finally:
         api.logout()
+
+
+if __name__ == "__main__":
+    main()
 
 ```
