@@ -195,6 +195,188 @@ CPU Affinity：將特定的線程綁定到特定的 CPU 核心上運行。這樣
 
 ---
 
+
+
+在 Linux 中，使用 C 語言實現自旋鎖 (Spinlock) 通常依賴於原子操作，特別是使用 `pthread` 庫中的自旋鎖來實現多執行緒的同步。以下是使用 C 語言和 `pthread` 實現自旋鎖的範例。
+
+### 使用 pthread 實現的 Spinlock 範例
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+
+#define NUM_THREADS 4
+#define INCREMENTS 100000
+
+pthread_spinlock_t spinlock; // 定義自旋鎖
+int counter = 0; // 需要保護的共享資源
+
+void* increment_counter(void* arg) {
+    for (int i = 0; i < INCREMENTS; ++i) {
+        pthread_spin_lock(&spinlock); // 獲取自旋鎖
+        counter++; // 共享資源的操作
+        pthread_spin_unlock(&spinlock); // 釋放自旋鎖
+    }
+    return NULL;
+}
+
+int main() {
+    pthread_t threads[NUM_THREADS];
+
+    // 初始化自旋鎖
+    if (pthread_spin_init(&spinlock, PTHREAD_PROCESS_PRIVATE) != 0) {
+        perror("Failed to initialize spinlock");
+        return EXIT_FAILURE;
+    }
+
+    // 創建多個執行緒
+    for (int i = 0; i < NUM_THREADS; ++i) {
+        if (pthread_create(&threads[i], NULL, increment_counter, NULL) != 0) {
+            perror("Failed to create thread");
+            return EXIT_FAILURE;
+        }
+    }
+
+    // 等待所有執行緒完成
+    for (int i = 0; i < NUM_THREADS; ++i) {
+        pthread_join(threads[i], NULL);
+    }
+
+    printf("Final counter value: %d\n", counter);
+
+    // 銷毀自旋鎖
+    pthread_spin_destroy(&spinlock);
+    return EXIT_SUCCESS;
+}
+```
+
+### 總結
+
+1. **自旋鎖的定義**：我們使用 `pthread_spinlock_t` 來定義自旋鎖。
+2. **自旋鎖的初始化**：使用 `pthread_spin_init()` 初始化自旋鎖。
+3. **獲取和釋放自旋鎖**：使用 `pthread_spin_lock()` 和 `pthread_spin_unlock()` 來獲取和釋放自旋鎖，確保對共享資源的安全訪問。
+4. **多執行緒創建**：使用 `pthread_create()` 創建多個執行緒，並使用 `pthread_join()` 等待它們完成。
+5. **自旋鎖的銷毀**：最後，使用 `pthread_spin_destroy()` 銷毀自旋鎖。
+
+這個範例展示了如何在 Linux 環境中使用 C 語言實現自旋鎖來保護共享資源，並在多執行緒環境中進行計數操作。
+
+
+
+以下是 C++ 和 Python 中自旋鎖 (Spinlock) 的範例實現。自旋鎖是一種鎖，當鎖不可用時，執行緒會在一個循環中忙等待，直到鎖可用為止。
+
+### C++ Spinlock 範例
+
+```cpp
+#include <atomic>
+#include <thread>
+#include <iostream>
+#include <vector>
+
+class Spinlock {
+public:
+    Spinlock() : flag(ATOMIC_FLAG_INIT) {}
+
+    void lock() {
+        while (flag.test_and_set(std::memory_order_acquire)) {
+            // 可能可以加個小延遲，讓 CPU 不至於佔用過多資源
+            std::this_thread::yield(); // 提高效率，讓其他執行緒有機會執行
+        }
+    }
+
+    void unlock() {
+        flag.clear(std::memory_order_release);
+    }
+
+private:
+    std::atomic_flag flag;
+};
+
+// 測試自旋鎖
+void test_spinlock(Spinlock &spinlock, int &counter) {
+    for (int i = 0; i < 100000; ++i) {
+        spinlock.lock();
+        ++counter; // 需要保護的共享資源
+        spinlock.unlock();
+    }
+}
+
+int main() {
+    Spinlock spinlock;
+    int counter = 0;
+    std::vector<std::thread> threads;
+
+    // 創建多個執行緒來測試自旋鎖
+    for (int i = 0; i < 4; ++i) {
+        threads.emplace_back(test_spinlock, std::ref(spinlock), std::ref(counter));
+    }
+
+    // 等待所有執行緒完成
+    for (auto &t : threads) {
+        t.join();
+    }
+
+    std::cout << "Final counter value: " << counter << std::endl;
+    return 0;
+}
+```
+
+### Python Spinlock 範例
+
+```python
+import threading
+import time
+
+class Spinlock:
+    def __init__(self):
+        self.locked = False
+
+    def lock(self):
+        while True:
+            # 嘗試獲得鎖
+            if not self.locked:
+                self.locked = True
+                return
+            # 短暫休眠以減少 CPU 使用率
+            time.sleep(0)
+
+    def unlock(self):
+        self.locked = False
+
+# 測試自旋鎖
+def test_spinlock(spinlock, counter):
+    for _ in range(100000):
+        spinlock.lock()
+        counter[0] += 1  # 需要保護的共享資源
+        spinlock.unlock()
+
+if __name__ == "__main__":
+    spinlock = Spinlock()
+    counter = [0]  # 使用列表來保證共享可變性
+    threads = []
+
+    # 創建多個執行緒來測試自旋鎖
+    for _ in range(4):
+        t = threading.Thread(target=test_spinlock, args=(spinlock, counter))
+        threads.append(t)
+        t.start()
+
+    # 等待所有執行緒完成
+    for t in threads:
+        t.join()
+
+    print(f"Final counter value: {counter[0]}")
+```
+
+### 總結
+- **C++ 版本**使用 `std::atomic_flag` 來實現自旋鎖，並在鎖不可用時使用 `std::this_thread::yield()` 來提高效率。
+- **Python 版本**使用簡單的布林變數來表示鎖的狀態，並在鎖不可用時使用 `time.sleep(0)` 來減少 CPU 使用率。
+
+這兩個範例展示了如何在 C++ 和 Python 中實現自旋鎖，並在多執行緒環境中使用它們來保護共享資源。
+
+---
+
 當設計和實施高效能項目時，以下是一些關鍵的策略和最佳實踐，可以幫助提升系統性能和響應速度，特別在高頻交易和其他要求低延遲的應用中：
 
 ### 高效能項目總結
