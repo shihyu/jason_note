@@ -377,6 +377,181 @@ if __name__ == "__main__":
 
 ---
 
+要故意增加 context switch 數量，可以利用大量的**多執行緒或多進程**操作，這樣可以強制系統在不同執行緒或進程間頻繁地切換，從而增加 context switch 次數。
+
+以下是一個 Python 程式範例，它通過多執行緒不停地進行計算操作，來增加 context switch 數量。你可以在執行這段程式碼的同時使用 `perf` 來觀察 context switch 數量的增長。
+
+### Python 程式碼：產生大量的 Context Switch
+
+這個範例會啟動多個執行緒，每個執行緒進行計算並在短時間內進入睡眠，以迫使系統頻繁地在不同執行緒之間切換。
+
+```python
+import threading
+import time
+
+def cpu_intensive_task():
+    while True:
+        # 模擬 CPU 密集型工作
+        sum(i * i for i in range(1000))
+        # 短暫休眠，讓系統有機會進行 context switch
+        time.sleep(0.001)
+
+# 啟動多個執行緒
+threads = []
+for _ in range(100):  # 可以調整執行緒數量來增加負載
+    t = threading.Thread(target=cpu_intensive_task)
+    t.start()
+    threads.append(t)
+
+# 保持主程式運行一段時間
+try:
+    time.sleep(10)  # 可以調整時間長度
+except KeyboardInterrupt:
+    pass
+finally:
+    # 停止所有執行緒
+    for t in threads:
+        t.join(timeout=0)
+```
+
+### 步驟
+
+1. **執行上述 Python 程式碼**來創建多個執行緒。
+   
+   ```bash
+   python3 your_script_name.py
+   ```
+
+2. **同時使用 `perf` 工具**來測量 context switch 數量。在新終端中執行：
+
+   ```bash
+   sudo perf stat -e context-switches sleep 10
+   ```
+
+   或直接執行 `perf`，讓它在多執行緒程式運行時計算 context switch 次數：
+
+   ```bash
+   sudo perf stat -e context-switches python3 your_script_name.py
+   ```
+
+### 解釋
+
+- 這個程式會啟動 100 個執行緒，每個執行緒都執行 CPU 密集的計算操作並短暫休眠。這種設計可以強制系統頻繁地在不同執行緒之間進行切換，從而產生大量的 context switch。
+- **`time.sleep(0.001)`** 是為了給系統一個切換執行緒的機會，加快 context switch 的頻率。
+- 調整執行緒數量（`100` 可以增加或減少），以及程式運行的時間（例如 `sleep 10`），可以控制 context switch 數量。
+
+### 注意
+
+這種方法會給 CPU 帶來較大的負擔，請在空閒時間或非生產環境下執行，以免影響系統其他進程。
+
+---
+
+在高頻交易中，記憶體破頁（page faults）對效能的影響非常顯著。高頻交易系統通常需要在微秒或更短的時間內處理大量數據，因此頻繁的破頁將會增加內存訪問延遲，降低交易速度，甚至導致潛在的延遲和損失。
+
+以下是破頁對高頻交易的影響以及減少破頁的建議：
+
+### 破頁在高頻交易中的影響
+1. **延遲增加**：高頻交易的效能依賴於最低的延遲。破頁會導致 CPU 將資料從主記憶體（RAM）載入到快取，這會增加內存訪問延遲，影響下單和訂單匹配的速度。
+2. **資源浪費**：頻繁的破頁會消耗額外的 CPU 時間和內存頻寬，佔用交易系統的資源，導致在高負載狀況下系統效能下降。
+3. **不可預測的延遲**：破頁導致的延遲在每次發生時長度不一，這對高頻交易系統的穩定性和預測性是一個挑戰。
+
+### 減少破頁的建議
+1. **記憶體對齊與連續分配**：盡量使用連續的記憶體分配，如使用 `numpy` 或結構化的資料陣列來儲存行情或交易資料。這樣可以減少訪問時的破頁次數，提升內存的快取命中率。
+
+2. **使用 Huge Pages**：在 Linux 上配置「大頁面（Huge Pages）」功能，讓應用程式將資料分配到大頁面，減少頁面數量，從而減少破頁次數。
+
+3. **減少動態分配**：避免頻繁的動態記憶體分配。高頻交易系統通常會預先分配好固定大小的記憶體空間，並重複利用，減少在交易過程中動態分配和釋放記憶體的次數。
+
+4. **資料結構的選擇**：使用內存效率高的資料結構（如陣列或 `numpy`）代替 Python 清單或字典，減少破頁的可能性。陣列和 `numpy` 陣列會在連續的內存中分配，對於高頻訪問的資料（如行情資料和訂單數據）特別有利。
+
+5. **關注 L1/L2 快取利用率**：設計程式時，可以將頻繁使用的資料儲存在 L1/L2 快取大小內，避免頻繁訪問主記憶體。儲存高頻訪問的資料到固定大小的資料結構中，並優化內存訪問模式，最大化快取命中率。
+
+6. **定期的記憶體清理**：對於不可避免的動態記憶體分配場景，確保定期釋放已不再需要的記憶體空間，避免破頁增多。 
+
+### 具體實踐
+可以使用如下工具檢查內存訪問情況和破頁次數：
+- **perf**：可以用 `perf stat -e page-faults` 來監控破頁次數。
+- **Huge Pages 配置**：
+  - 確保 Linux 上的 Huge Pages 設定（如 `echo 1000 > /proc/sys/vm/nr_hugepages` 設置大頁面數量）。
+  - 程式內啟用 `mmap` 等接口，專門為大頁面記憶體進行分配。
+
+### 總結
+減少破頁對高頻交易的效能有顯著提升。有效利用記憶體分配和管理策略，可以顯著降低記憶體延遲對交易系統的影響，從而保持交易速度的穩定性和一致性。
+
+
+
+要讓程式引發大量的 page faults，可以使用一些會不斷分配和釋放大量記憶體的小資料結構，並頻繁訪問隨機位置的資料。相比之下，減少 page faults 的程式可以採用連續的記憶體分配方式，並在一開始就將所有資料載入。
+
+以下是兩個範例：
+
+1. 第一個範例會產生大量 page faults，因為它隨機分配和訪問資料。
+2. 第二個範例則會減少 page faults，因為它使用了連續分配並優化訪問模式。
+
+可以使用 `perf` 來執行這些程式，並比較 page faults 的數量。
+
+### 1. 高 page faults 範例
+
+此範例不斷隨機分配並訪問記憶體中的資料，導致頻繁的 page faults：
+
+```python
+import random
+import time
+
+def high_page_faults():
+    data = []
+    try:
+        for _ in range(100000):
+            # 每次隨機生成大約 1 MB 的字串並放入列表中
+            data.append("A" * 1024 * 1024)
+            # 隨機訪問資料，增加 page faults 的機會
+            _ = data[random.randint(0, len(data) - 1)]
+    except MemoryError:
+        print("記憶體不足，退出程式。")
+
+if __name__ == "__main__":
+    high_page_faults()
+```
+
+### 2. 低 page faults 範例
+
+此範例會一次性分配一大塊連續的記憶體，並有序訪問資料以減少 page faults 的發生：
+
+```python
+import numpy as np
+
+def low_page_faults():
+    # 一次性分配約 100 MB 的連續記憶體
+    data = np.zeros((100, 1024 * 1024 // 8), dtype=np.float64)
+    for i in range(len(data)):
+        # 有序訪問記憶體中的資料
+        data[i] = i
+
+if __name__ == "__main__":
+    low_page_faults()
+```
+
+### 使用 `perf` 比較 page faults
+
+1. 先執行 **高 page faults** 程式：
+
+   ```bash
+   sudo perf stat -e page-faults python3 high_page_faults.py
+   ```
+
+2. 接著執行 **低 page faults** 程式：
+
+   ```bash
+   sudo perf stat -e page-faults python3 low_page_faults.py
+   ```
+
+### 結果比較
+
+`perf` 執行後會顯示 `page-faults` 的計數結果。理論上，`high_page_faults.py` 應該顯示更高的 page faults 計數，而 `low_page_faults.py` 則會顯示較少的 page faults。這主要是因為 `high_page_faults.py` 使用隨機分配和訪問，導致更多的記憶體頁面被頻繁釋放和重載入；而 `low_page_faults.py` 使用連續記憶體和有序訪問，使快取更有效。
+
+
+
+---
+
 當設計和實施高效能項目時，以下是一些關鍵的策略和最佳實踐，可以幫助提升系統性能和響應速度，特別在高頻交易和其他要求低延遲的應用中：
 
 ### 高效能項目總結
