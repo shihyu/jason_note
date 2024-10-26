@@ -548,7 +548,216 @@ if __name__ == "__main__":
 
 `perf` 執行後會顯示 `page-faults` 的計數結果。理論上，`high_page_faults.py` 應該顯示更高的 page faults 計數，而 `low_page_faults.py` 則會顯示較少的 page faults。這主要是因為 `high_page_faults.py` 使用隨機分配和訪問，導致更多的記憶體頁面被頻繁釋放和重載入；而 `low_page_faults.py` 使用連續記憶體和有序訪問，使快取更有效。
 
+---
 
+在高頻交易系統中，對於需要頻繁執行的任務，**鎖的選擇至關重要**。高頻交易要求最低延遲和高併發，因此傳統的鎖（如普通的互斥鎖或全局鎖）可能會導致性能瓶頸。以下是一些適合高頻交易系統的鎖，並介紹它們的適用情況：
+
+### 1. 自旋鎖（Spinlock）
+自旋鎖是一種高效的鎖，適合短時間內可以取得資源的情況。自旋鎖的運作方式是持鎖者會不斷輪詢，直到鎖被釋放。這可以避免切換上下文的開銷。
+
+**優點**：
+- 適合在鎖定時間非常短的情況。
+- 避免了上下文切換的開銷。
+
+**缺點**：
+- 如果鎖定時間長，會導致 CPU 資源浪費。
+
+**適用情況**：適合非常短的臨界區，適合多執行緒的併發訪問（例如頻繁更新行情資訊）。
+
+**Python 示例**：
+
+```python
+import threading
+
+lock = threading.Lock()
+
+def high_freq_task():
+    while True:
+        if lock.acquire(False):  # 嘗試自旋
+            try:
+                # 執行短期的臨界區代碼
+                pass
+            finally:
+                lock.release()
+```
+
+### 2. 無鎖資料結構（Lock-Free Data Structures）
+無鎖資料結構基於原子操作（如 CAS，Compare-And-Swap），在多執行緒併發訪問時無需使用鎖。這些資料結構包括無鎖佇列、無鎖堆疊等。
+
+**優點**：
+- 無需鎖定，避免了鎖的競爭和上下文切換。
+- 提高了執行緒間的併發度。
+
+**缺點**：
+- 實現複雜，且需要仔細考慮記憶體一致性問題。
+
+**適用情況**：適合高度併發的任務，例如事件隊列、交易指令池等。
+
+### 3. 讀寫鎖（Read-Write Lock）
+如果某些資源的讀取遠多於寫入，可以使用讀寫鎖。這種鎖允許多個讀取執行緒同時讀取，但只允許一個寫入執行緒操作。
+
+**優點**：
+- 增加了讀取併發度，適合多讀少寫的情況。
+  
+
+**缺點**：
+- 在寫入密集的情況下效能不佳。
+
+**適用情況**：適合行情訂閱、讀取市場數據等多讀少寫的場景。
+
+**Python 示例**（使用 `threading` 模組中的 `RLock` 作為讀寫鎖）：
+
+```python
+import threading
+
+lock = threading.RLock()
+
+def read_data():
+    with lock:
+        # 讀取操作
+        pass
+
+def write_data():
+    with lock:
+        # 寫入操作
+        pass
+```
+
+### 4. 異步編程與協程
+在一些高頻交易場景中，尤其是 I/O 密集型操作，可以避免使用鎖，改為使用協程和事件驅動的編程模式（如 Python 中的 `asyncio`）。這樣可以減少同步鎖的開銷，充分利用 CPU 資源。
+
+**優點**：
+- 無需鎖，減少了鎖競爭開銷。
+- 更適合 I/O 密集型和多網路請求的場景。
+
+**適用情況**：適合 I/O 密集的操作，如多訂閱數據源的數據流處理。
+
+**Python 示例**：
+
+```python
+import asyncio
+
+async def fetch_data():
+    # 異步執行讀取操作
+    await asyncio.sleep(1)
+
+async def main():
+    await asyncio.gather(fetch_data(), fetch_data())
+
+# 執行異步任務
+asyncio.run(main())
+```
+
+### 總結
+- **自旋鎖**：適合短期的臨界區。
+- **無鎖資料結構**：適合需要高併發的數據結構（如佇列）。
+- **讀寫鎖**：適合多讀少寫的場景。
+- **異步編程和協程**：適合 I/O 密集型任務。
+
+在高頻交易系統中，可以根據特定情境選擇合適的鎖或替代方法，以確保系統在高併發下仍具備低延遲和高效能。
+
+
+
+---
+
+要比較使用 `Spinlock` 和 `普通互斥鎖（Mutex）` 的效能，可以創建一個多執行緒程式，並讓每個執行緒執行短期的臨界區操作。這樣可以觀察在高頻進入和退出臨界區的情況下，兩種鎖的性能差異。Python 中可以模擬 `Spinlock` 的行為，但需要注意，由於 GIL（Global Interpreter Lock）的存在，純 Python 程式的執行緒並不完全適合多核併發性能測試。以下範例展示了使用自旋行為來模擬 `Spinlock`，以及傳統的 `Lock` 比較。
+
+### 範例設置
+
+以下程式使用了兩種鎖：
+1. **自旋鎖（Spinlock）**：使用輪詢等待的方式模擬自旋鎖。
+2. **普通互斥鎖（Mutex）**：使用 Python 中的 `threading.Lock` 作為傳統鎖。
+
+### 程式碼
+
+```python
+import threading
+import time
+
+class Spinlock:
+    def __init__(self):
+        self.lock = threading.Lock()
+
+    def acquire(self):
+        # 自旋行為，直到取得鎖
+        while not self.lock.acquire(blocking=False):
+            pass
+
+    def release(self):
+        self.lock.release()
+
+# 共享變數和次數
+counter = 0
+num_iterations = 1000000  # 每個執行緒的迭代次數
+
+def task_with_spinlock(lock):
+    global counter
+    for _ in range(num_iterations):
+        lock.acquire()
+        counter += 1  # 進行簡單操作
+        lock.release()
+
+def task_with_mutex(lock):
+    global counter
+    for _ in range(num_iterations):
+        lock.acquire()
+        counter += 1
+        lock.release()
+
+def measure_performance(lock_type):
+    global counter
+    counter = 0  # 重置計數器
+    num_threads = 4
+    threads = []
+
+    start_time = time.time()
+
+    # 建立執行緒
+    if lock_type == "spinlock":
+        lock = Spinlock()
+        for _ in range(num_threads):
+            thread = threading.Thread(target=task_with_spinlock, args=(lock,))
+            threads.append(thread)
+    elif lock_type == "mutex":
+        lock = threading.Lock()
+        for _ in range(num_threads):
+            thread = threading.Thread(target=task_with_mutex, args=(lock,))
+            threads.append(thread)
+
+    # 啟動所有執行緒
+    for thread in threads:
+        thread.start()
+
+    # 等待所有執行緒結束
+    for thread in threads:
+        thread.join()
+
+    end_time = time.time()
+    print(f"{lock_type.capitalize()} duration: {end_time - start_time:.4f} seconds, Counter: {counter}")
+
+# 測試自旋鎖和互斥鎖效能
+measure_performance("spinlock")
+measure_performance("mutex")
+```
+
+### 程式說明
+
+1. **Spinlock 類別**：使用自旋行為來模擬，當鎖不可用時，執行緒會不斷嘗試取得鎖而不阻塞。
+2. **task_with_spinlock 與 task_with_mutex 函數**：這兩個函數分別執行 `Spinlock` 和 `Mutex` 鎖的操作，對共享變數 `counter` 增加計數。
+3. **measure_performance 函數**：測試兩種鎖的效能，記錄每次測試的執行時間。
+
+### 執行結果
+
+執行該程式後，將得到自旋鎖和互斥鎖的執行時間。結果大致會如下：
+
+```plaintext
+Spinlock duration: 1.2345 seconds, Counter: 4000000
+Mutex duration: 1.5678 seconds, Counter: 4000000
+```
+
+### 分析結果
+
+在高頻交易環境中，`Spinlock` 在鎖的持有時間短時表現較佳，但如果執行緒的數量增加並且鎖持有時間增加，會導致較高的 CPU 使用率，反而降低效能。相對地，`Mutex` 更適合在需要稍長時間鎖定的情況，因為它會阻塞執行緒而不是不斷輪詢。
 
 ---
 
