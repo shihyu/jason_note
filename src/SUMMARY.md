@@ -28,7 +28,7 @@
   - [qemu-gdb-risc-v64-kernel](gdb/qemu-gdb-risc-v64.md)
 - [C++](c++/cpp.md)
   - [benchmark](c++/benchmark.md)
-  - [乘以 0.01 和除以 100 哪個快](c++/乘以 0.01 和除以 100 哪個快.md)
+  - [乘以 0.01 和除以 100 哪個快](c++/乘以0.01和除以100哪個快.md)
   - [Smart pointer](c++/smart_pointer.md)
   - [L&R value](c++/l&rvalue.md)
   - [Move](c++/move.md)
