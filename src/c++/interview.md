@@ -389,3 +389,67 @@ D (0)   E (2)  F (1)   G (3)
 - 當 `path` 不同且深度一致時，可以一次性向上找到公共祖先，而不必多層次逐步上溯。
 
 這種方法利用了整數位元的快速比較特性，有效地優化了查找的速度，特別是在深度較大的樹中，可以顯著提升查找效率。
+
+```python
+# 查找最近公共祖先的索引 **第一版**：
+def find_lca_index(self, idx1, idx2):
+    node1_idx = idx1
+    node2_idx = idx2
+
+    node1 = self.nodes[node1_idx]
+    node2 = self.nodes[node2_idx]
+
+    while node1_idx != node2_idx:
+        if node1.depth > node2.depth:
+            node1_idx = node1.parent_index
+            node1 = self.nodes[node1_idx]
+        elif node2.depth > node1.depth:
+            node2_idx = node2.parent_index
+            node2 = self.nodes[node2_idx]
+        else:
+            node1_idx = node1.parent_index
+            node2_idx = node2.parent_index
+            node1 = self.nodes[node1_idx]
+            node2 = self.nodes[node2_idx
+```
+
+```python
+# 利用 path 和 depth 找到最近公共祖先的索引  **第二版**：
+def find_lca_index(self, idx1, idx2):
+    # 獲取兩個節點的初始節點對象
+    node1, node2 = self.nodes[idx1], self.nodes[idx2]
+
+    # 當兩個節點的 path 不相等時，進行回溯以找到公共祖先
+    while node1.path != node2.path:
+        # 如果 node1 深度大於 node2，則將 node1 向上移動至父節點
+        if node1.depth > node2.depth:
+            idx1 = node1.parent_index
+            node1 = self.nodes[idx1]
+        # 如果 node2 深度大於 node1，則將 node2 向上移動至父節點
+        elif node2.depth > node1.depth:
+            idx2 = node2.parent_index
+            node2 = self.nodes[idx2]
+        # 如果兩個節點的深度相同，則同時向上移動到各自的父節點
+        else:
+            idx1, idx2 = node1.parent_index, node2.parent_index
+            node1, node2 = self.nodes[idx1], self.nodes[idx2]
+
+    # 當 node1 和 node2 的 path 相等時，即找到了最近公共祖先
+    return idx1
+```
+
+
+
+在這兩個版本的 `find_lca_index` 中，主要區別在於條件的檢查方式。第一個版本直接比較兩個節點的索引，利用索引回溯至同一節點；第二個版本則比較兩個節點的 `path`，而回溯流程上是類似的。
+
+### 效能分析
+1. **第一版**：
+   - 直接比對索引 (`node1_idx` 和 `node2_idx`)，當兩者相同即找到最近公共祖先。當兩者深度不同時，會將較深的節點上移至父節點，否則同時將兩者上移。
+   - **效能優點**：操作相對簡潔，直接使用索引對比，減少了對 `path` 的檢查操作。
+
+2. **第二版**：
+   - 比較兩個節點的 `path`，當 `path` 不同時才進行回溯操作。
+   - **效能優點**：當樹具有多層且每層節點密集時，`path` 可以有效縮短查找最近公共祖先的步數。因為如果 `path` 不同，說明兩個節點在不同的分支中，能有效地排除分支差異，從而更快定位到共同的祖先。
+   
+### 效能結論
+第二版使用 `path` 來進行篩選，尤其在多層大樹結構中，能夠減少冗餘的節點回溯數量，因此 **在深層且節點數量多的樹結構中，會更具效能優勢**。
