@@ -1051,6 +1051,24 @@ end
 ```
 
 
+## core dump
+
+```sh
+# 查看當前系統允許的 Core Dump 文件大小限制
+# 如果顯示 "0"，表示 Core Dump 文件生成被禁用
+ulimit -c
+
+# 設置 Core Dump 文件大小無限制
+# 這條命令允許程序崩潰時生成 Core Dump 文件，便於調試
+ulimit -c unlimited
+
+# 停止 Apport 服務，Apport 是 Ubuntu 的錯誤報告系統
+# Ubuntu 默認使用 Apport 來攔截崩潰錯誤，會干擾 Core Dump 文件的生成
+# 通過停止 Apport，可以讓系統直接生成標準的 Core Dump 文件
+sudo service apport stop
+```
+
+
 
 ## 100個gdb小技巧
 
