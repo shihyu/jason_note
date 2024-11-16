@@ -34,6 +34,7 @@
   - [Move](c++/move.md)
   - [CAS](c++/CAS.md)
   - [HFT](c++/HFT.md)
+  - [Note](c++/cpp_note.md)
   - [高性能程式設計實戰](c++/高性能程式設計實戰.md)
   - [如何高效地儲存並操作超大規模](c++/如何高效地儲存並操作超大規模.md)
   - [UC_CAPITAL](c++/UC_CAPITAL.md)
