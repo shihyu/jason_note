@@ -3301,3 +3301,29 @@ print("DataFrame 結果：")
 print(df)
 ```
 
+---
+
+## 富邦 API  FubonSDK
+
+```sh
+docker pull python:3.10-slim
+docker run -it --name my_python_env python:3.10-slim bash
+apt update && apt install -y vim unzip wget
+
+wget https://www.fbs.com.tw/TradeAPI_SDK/fubon_binary/fubon_neo-1.3.2-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.zip
+unzip fubon_neo-1.3.2-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.zip
+pip install fubon_neo-1.3.2-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+pip install requests
+```
+
+```python
+from fubon_neo.sdk import FubonSDK
+sdk = FubonSDK() 
+```
+
+```sh
+python -m venv myenv
+source myenv/bin/activate
+pip install fubon_neo-1.3.2-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+```
+
