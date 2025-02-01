@@ -26,6 +26,7 @@ ssh-rsa AAAAB3Nza... autoicash2023
 4. 設定 SSH 金鑰權限：
 ```bash
 chmod 600 ~/.ssh/myssh/gcp_new
+ssh-add ~/.ssh/myssh/gcp_new
 ```
 
 5. SSH 連線：
