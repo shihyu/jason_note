@@ -3327,3 +3327,127 @@ source myenv/bin/activate
 pip install fubon_neo-1.3.2-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 ```
 
+---
+## Python 工作時間監控與自動進程重啟系統
+
+```python
+import threading
+import time
+import datetime
+import os
+import sys
+import logging
+import ctypes
+import subprocess
+
+# 設置日誌
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - [PID:%(process)d][TID:%(thread)d] - %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+
+def get_thread_id():
+    """獲取當前線程ID"""
+    if hasattr(threading, "get_native_id"):  # Python 3.8+
+        return threading.get_native_id()
+    elif sys.platform == "win32":
+        return ctypes.windll.kernel32.GetCurrentThreadId()
+    else:
+        # Linux/Unix系統通過調用syscall獲取
+        try:
+            import ctypes
+
+            libc = ctypes.cdll.LoadLibrary("libc.so.6")
+            return libc.syscall(186)  # SYS_gettid
+        except:
+            return os.getpid()  # 備用方案
+
+
+def is_work_time():
+    """檢查當前是否在工作時間內（星期一到星期五，8:20-13:31）"""
+    now = datetime.datetime.now()
+    # 獲取星期幾 (0=星期一, 6=星期日)
+    weekday = now.weekday()
+
+    # 檢查是否為工作日（星期一到星期五）
+    if weekday >= 5:  # 星期六或星期日
+        return False
+
+    # 獲取當前時間
+    current_time = now.time()
+    work_start = datetime.time(8, 20)
+    work_end = datetime.time(13, 31)
+
+    # 檢查是否在工作時間內
+    return work_start <= current_time <= work_end
+
+
+def restart_program():
+    """重新啟動當前程式（保留相同的PID）"""
+    logger.info(f"重新啟動程式 (PID: {os.getpid()} 將保持不變)")
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
+
+
+def restart_with_new_pid():
+    """用新的 PID 重啟程序"""
+    logger.info(f"用新 PID 重啟程序 (當前 PID: {os.getpid()})")
+    python = sys.executable
+    subprocess.Popen([python] + sys.argv)
+    sys.exit(0)  # 終止當前進程
+
+
+def monitoring_thread(use_new_pid=False):
+    """監控時間並在非工作時間重啟程式"""
+    tid = get_thread_id()
+    logger.info(f"時間監控線程已啟動 (TID: {tid})")
+
+    while True:
+        if not is_work_time():
+            logger.info(f"當前時間不在工作時間範圍內 (TID: {tid})")
+            time.sleep(5)  # 延遲5秒後重啟
+
+            if use_new_pid:
+                restart_with_new_pid()  # 使用新的PID重啟
+            else:
+                restart_program()  # 使用原有PID重啟
+
+        # 每分鐘檢查一次
+        time.sleep(60)
+
+
+def main():
+    """主程式"""
+    pid = os.getpid()
+    tid = get_thread_id()
+    logger.info(f"\n\n程式啟動 (PID: {pid}, 主線程 TID: {tid})")
+
+    # 決定是否使用新PID重啟
+    use_new_pid = True  # 設為True可以使用新PID重啟
+
+    # 啟動監控線程
+    monitor = threading.Thread(
+        target=monitoring_thread, args=(use_new_pid,), daemon=True
+    )
+    monitor.start()
+    logger.info(f"監控線程 ID: {monitor.ident}")
+
+    # 這裡放置您的主要程式邏輯
+    try:
+        while True:
+            # 您的程式主邏輯
+            logger.info(f"主程式運行中... (PID: {pid}, TID: {tid})")
+
+            # 添加更多的主程式邏輯...
+
+            time.sleep(300)  # 示例：每5分鐘執行一次某些任務
+    except KeyboardInterrupt:
+        logger.info(f"程式被使用者中斷 (PID: {pid}, TID: {tid})")
+        sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
+```
