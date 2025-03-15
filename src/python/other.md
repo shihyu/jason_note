@@ -3451,3 +3451,48 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+
+---
+## 使用 multiprocessing 進行 fork 並殺死主行程的範例
+
+
+```python
+
+import multiprocessing
+import os
+import time
+import sys
+
+def 子行程():
+    """子行程要執行的任務"""
+    print(f"新行程啟動，行程ID: {os.getpid()}")
+    while True:
+        print("子行程正在執行...")
+        time.sleep(5)
+
+def 主程式():
+    # 建立上下文
+    ctx = multiprocessing.get_context('fork')
+    
+    # 建立新行程
+    子行程實例 = ctx.Process(target=子行程)
+    子行程實例.start()
+    
+    print(f"主行程ID: {os.getpid()}")
+    print(f"新行程ID: {子行程實例.pid}")
+    
+    # 等待一段時間
+    time.sleep(3)
+    
+    # 嘗試殺死主行程
+    try:
+        # 在某些系統可能需要管理員權限
+        os.kill(os.getpid(), 9)  # 9 對應 SIGKILL
+    except Exception as e:
+        print(f"殺死行程出錯: {e}")
+        sys.exit()
+
+if __name__ == "__main__":
+    主程式()
+```
