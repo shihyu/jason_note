@@ -80,6 +80,71 @@ rustup self uninstall
 - beta: nightly 的新 bug feature 過一段時間穩定後，會在 beta 版出現
 - stable: 最穩定的版本，但相對的功能較舊
 
+
+
+# Rustup 與 Cargo 角色介紹
+
+## Rustup
+
+Rustup 是 Rust 程式語言的官方工具鏈管理器，主要負責：
+
+- 安裝與管理不同版本的 Rust 編譯器
+- 切換發布渠道（stable、beta、nightly）
+- 管理交叉編譯目標平台
+- 安裝或移除 Rust 組件
+
+### Rustup 常用指令：
+
+- `rustup install <toolchain>` - 安裝特定版本的 Rust
+- `rustup update` - 更新所有已安裝的工具鏈
+- `rustup default <toolchain>` - 設定默認工具鏈
+- `rustup show` - 顯示目前工具鏈資訊
+- `rustup component add <component>` - 安裝組件
+- `rustup component remove <component>` - 移除組件
+- `rustup target add <target>` - 增加交叉編譯目標
+- `rustup target remove <target>` - 移除交叉編譯目標
+- `rustup self update` - 更新 rustup 工具本身
+- `rustup toolchain list` - 列出已安裝的工具鏈
+
+## Cargo
+
+Cargo 是 Rust 的套件管理器與建構系統，主要負責：
+
+- 創建新的 Rust 專案
+- 編譯與執行 Rust 專案
+- 管理專案依賴關係
+- 執行測試及基準測試
+- 發布套件到 crates.io（Rust 的官方套件儲存庫）
+
+### Cargo 常用指令：
+
+- `cargo new <project>` - 創建新專案
+- `cargo init` - 在現有目錄中初始化 Rust 專案
+- `cargo build` - 編譯專案
+- `cargo run` - 編譯並執行專案
+- `cargo test` - 執行測試
+- `cargo bench` - 執行基準測試
+- `cargo add <crate>` - 添加依賴
+- `cargo remove <crate>` - 移除依賴
+- `cargo update` - 更新依賴
+- `cargo check` - 檢查代碼但不生成執行檔
+- `cargo doc` - 生成文檔
+- `cargo publish` - 發布套件到 crates.io
+- `cargo search <keyword>` - 搜尋 crates.io 上的套件
+- `cargo clean` - 清除編譯生成的檔案
+- `cargo fmt` - 使用 rustfmt 格式化代碼
+- `cargo clippy` - 使用 clippy 進行更嚴格的代碼檢查
+
+## 兩者關係
+
+Rustup 與 Cargo 的關係：
+
+- **Rustup** 管理 Rust 語言本身的安裝、版本與組件
+- **Cargo** 管理 Rust 專案及其依賴
+
+當您安裝 Rustup 時，它會自動為您安裝 Cargo。這兩個工具協同工作，提供完整的 Rust 開發環境，從語言工具鏈的安裝與管理，到專案的創建、編譯、測試與發布。
+
+
 ## 參考資料
 
 - https://www.rust-lang.org/tools/install
