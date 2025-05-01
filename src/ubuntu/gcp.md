@@ -8,6 +8,11 @@
 ssh-keygen -t rsa -b 2048 -C "your.email@gmail.com" -f ~/.ssh/myssh/gcp_new
 ```
 
+```bash
+gcp 帳號 chhi3758
+ssh-keygen -t rsa -b 2048 -C "chhi3758" -f ~/.ssh/myssh/gcp_chhi3758
+```
+
 2. 修改並複製公鑰：
 ```bash
 # 查看公鑰
