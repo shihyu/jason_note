@@ -3,12 +3,10 @@ use reqwest::{Client as HttpClient, StatusCode};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
-use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::Mutex;
 use tokio_tungstenite::{
     connect_async, 
-    tungstenite::{protocol::Message, Error as WsError}
+    tungstenite::protocol::Message
 };
 use futures::{SinkExt, StreamExt};
 use url::Url;
