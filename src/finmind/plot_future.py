@@ -545,5 +545,7 @@ def main():
         plot_frequency_data(args.csv_file, start_time, end_time)
 
 
+# python plot_future.py --start-time 00:00:00 --end-time 05:00:00 --combined TaiwanFuturesTick/days/2025-05-08.csv
+
 if __name__ == "__main__":
     main()
