@@ -1,10 +1,11 @@
+import argparse
+import os
+import re
+import webbrowser
+
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import argparse
-import os
-import webbrowser
-import re
 
 
 def plot_futures_data(csv_file):
