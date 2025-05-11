@@ -880,5 +880,6 @@ def main():
         create_index_html()
 
 
+# python batch_plot_futures.py --start-time 00:00:00 --end-time 05:00:00  --plot-type combined
 if __name__ == "__main__":
     main()
