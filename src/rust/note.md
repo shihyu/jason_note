@@ -2222,3 +2222,176 @@ fn main() {
 - `clone` 方法會進行深複製，複製堆上的資料，讓 `s1` 和 `s2` 各自擁有一份獨立的資料。這避免了所有權轉移的問題，使得兩者都可以在之後使用。
 
 這些範例展示了 Rust 如何通過所有權和借用機制來管理資源，防止記憶體洩漏和資料競爭，同時與 C++ 的做法形成了鮮明對比。
+
+
+## Rust 異步編程示例
+
+```rust
+use std::future::Future;
+use std::pin::Pin;
+use std::task::{Context, Poll, Wake, Waker};
+use std::sync::{Arc, Mutex};
+use std::thread;
+use std::sync::mpsc::{channel, Sender, Receiver};
+
+// 定義一個簡單的 Future
+struct CountDown {
+    count: u32,
+}
+
+impl Future for CountDown {
+    type Output = u32;
+    
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        println!("正在執行 poll，當前計數: {}", self.count);
+        
+        if self.count == 0 {
+            Poll::Ready(0)
+        } else {
+            self.count -= 1;
+            if self.count == 0 {
+                Poll::Ready(0)
+            } else {
+                // 在真實情況下，我們應該在這裡安排一個喚醒（wake）
+                let waker = cx.waker().clone();
+                thread::spawn(move || {
+                    thread::sleep(std::time::Duration::from_millis(500));
+                    println!("喚醒 Future");
+                    waker.wake();
+                });
+                
+                Poll::Pending
+            }
+        }
+    }
+}
+
+// 定義一個異步函數
+async fn simple_async_function() -> u32 {
+    println!("進入異步函數");
+    let countdown = CountDown { count: 3 };
+    let result = countdown.await;
+    println!("異步函數完成，結果: {}", result);
+    result
+}
+
+// 一個簡單的執行器實現
+struct SimpleExecutor {
+    task_sender: Sender<Arc<SimpleFutureTask>>,
+    task_receiver: Receiver<Arc<SimpleFutureTask>>,
+}
+
+struct SimpleFutureTask {
+    future: Mutex<Option<Pin<Box<dyn Future<Output = ()> + Send>>>>,
+    task_sender: Sender<Arc<SimpleFutureTask>>,
+}
+
+impl Wake for SimpleFutureTask {
+    fn wake(self: Arc<Self>) {
+        let _ = self.task_sender.send(self.clone());
+    }
+}
+
+impl SimpleExecutor {
+    fn new() -> Self {
+        let (task_sender, task_receiver) = channel();
+        SimpleExecutor {
+            task_sender,
+            task_receiver,
+        }
+    }
+
+    fn spawn<F>(&self, future: F)
+    where
+        F: Future<Output = ()> + Send + 'static,
+    {
+        let task = Arc::new(SimpleFutureTask {
+            future: Mutex::new(Some(Box::pin(future))),
+            task_sender: self.task_sender.clone(),
+        });
+        let _ = self.task_sender.send(task);
+    }
+
+    fn run(&self) {
+        while let Ok(task) = self.task_receiver.recv() {
+            let mut future_slot = task.future.lock().unwrap();
+            if let Some(mut future) = future_slot.take() {
+                let waker = Waker::from(task.clone());
+                let mut cx = Context::from_waker(&waker);
+                match Future::poll(Pin::new(&mut future), &mut cx) {
+                    Poll::Pending => {
+                        *future_slot = Some(future);
+                    }
+                    Poll::Ready(()) => {
+                        // Future 完成，不再放回隊列
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * # 用生活白話解釋 Rust 中的 await
+ * 
+ * 想像你去麥當勞點餐。傳統的同步（非 await）方式和使用 await 的異步方式有很大不同：
+ * 
+ * ## 同步方式（沒有 await）
+ * 
+ * 你去麥當勞點了一個漢堡：
+ * 1. 你站在櫃檯前，告訴店員你要一個漢堡
+ * 2. 然後你就站在那裡**一動不動地等待**
+ * 3. 其他人想點餐都不行，因為你擋住了櫃檯
+ * 4. 店員做好漢堡後，終於把漢堡遞給你
+ * 5. 你拿到漢堡，這時其他人才能點餐
+ * 
+ * 這就像程式中的阻塞調用 - 整個系統（櫃檯）被你占用，無法處理其他事情。
+ * 
+ * ## 異步方式（使用 await）
+ * 
+ * 你去麥當勞點了一個漢堡，但使用了"取餐號碼牌"系統：
+ * 1. 你告訴店員你要一個漢堡
+ * 2. 店員給你一個號碼牌，說："漢堡還沒好，你先去旁邊坐著吧，好了會叫你"
+ * 3. 你拿著號碼牌去旁邊坐下（這就是 `await` 的時刻）
+ * 4. **此時櫃檯空出來了**，其他人可以上前點餐
+ * 5. 你可以玩手機、看書或聊天 - 做些其他事情
+ * 6. 廣播叫到你的號碼時（相當於 `waker.wake()`），你回到櫃檯
+ * 7. 拿到你的漢堡後，你才繼續後面的活動（買飲料、找座位等）
+ * 
+ * 這就是 `await` 的精髓：
+ * - **讓出資源**：當你的漢堡還沒準備好時，你不是傻站在櫃檯前，而是先去坐著，讓櫃檯可以服務其他人
+ * - **保留上下文**：系統記住你點了什麼、付了多少錢（你的程式狀態）
+ * - **通知恢復**：漢堡做好時會通知你（wake 機制）
+ * - **繼續執行**：拿到漢堡後，你可以繼續你的用餐計劃（代碼的後續部分）
+ * 
+ * ## 再具體一點的例子
+ * 
+ * `let result = simple_async_function().await;` 就像：
+ * "我要點一個特殊漢堡（調用 simple_async_function）然後等它好了（await）才繼續點飲料"
+ * 
+ * 而在底層，系統不是讓你站在那傻等，而是：
+ * 1. 記錄下你當前的狀態（"這人要特殊漢堡，之後想點飲料"）
+ * 2. 給你一個號碼牌，讓你先坐著
+ * 3. 當漢堡好了，叫你的號碼
+ * 4. 你回來拿漢堡，然後繼續點飲料
+ * 
+ * 這就是為什麼 `await` 這麼神奇 - 它讓程式能高效利用等待時間做其他事情，而不是傻傻地阻塞在那裡。
+ */
+
+fn main() {
+    println!("程序開始");
+    
+    let executor = SimpleExecutor::new();
+    
+    // 把我們的異步函數封裝並發送到執行器
+    executor.spawn(async {
+        let result = simple_async_function().await;
+        println!("最終結果: {}", result);
+    });
+    
+    // 運行執行器，處理所有任務
+    executor.run();
+    
+    println!("程序結束");
+}
+```
