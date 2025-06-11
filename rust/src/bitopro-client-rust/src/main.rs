@@ -322,6 +322,8 @@ fn websocket_handler(message: &str) {
     
     // 首先打印原始消息以便調試
     println!("原始消息: {}", message);
+    // 打印型態
+    // println!("消息類型: {}", message.chars().next().unwrap_or('N'));
     
     // 嘗試解析 JSON
     match serde_json::from_str::<serde_json::Value>(message) {
