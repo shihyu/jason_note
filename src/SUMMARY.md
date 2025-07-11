@@ -63,6 +63,7 @@
   - [clickhouse-setup](docker/clickhouse-setup.md)
   - [Docker run local](docker/python_run_from_local.md)
   - [Redpanda](docker/redpanda.md)
+  - [運行最新版GCC](docker/gcc.md)
 - [Rust](rust/rust.md)
   - [Rust筆記](rust/note.md)
   - [Rust 基本教學](rust/basic.md)
