@@ -1,8 +1,8 @@
-我來提供 Go 和 Rust 的簡單程式範例，讓你測試 GDB 調試功能：## 編譯和調試指令
+# Go 和 Rust GDB 調試指南
 
-### Go 測試：
+## Go 測試範例
 
-
+### 程式碼 (main.go)
 ```go
 package main
 
@@ -61,6 +61,7 @@ func main() {
 }
 ```
 
+### 編譯和調試指令
 ```bash
 # 編譯 (關閉優化)
 go build -gcflags="-N -l" -o go_debug main.go
@@ -77,17 +78,16 @@ gdb ./go_debug
 (gdb) continue
 ```
 
-### Rust 測試：
+## Rust 測試範例
 
+### 建立專案
 ```bash
 # 建立 Cargo 專案
 cargo new rust_debug_test
 cd rust_debug_test
+```
 
-# 將程式碼放到 src/main.rs，然後編譯
-
-
-
+### 程式碼 (src/main.rs)
 ```rust
 fn add(a: i32, b: i32) -> i32 {
     let result = a + b;
@@ -152,6 +152,9 @@ fn main() {
 }
 ```
 
+### 編譯和調試指令
+```bash
+# 編譯
 cargo build
 
 # 使用 rust-gdb (推薦)
@@ -172,26 +175,63 @@ gdb ./target/debug/rust_debug_test
 
 ## 實用的 GDB 指令
 
+### 設置斷點
 ```bash
-# 設置斷點
-break function_name
-break file.rs:line_number
-
-# 執行控制
-run                # 開始執行
-continue          # 繼續執行
-next              # 執行下一行
-step              # 進入函數
-finish            # 執行完當前函數
-
-# 查看變數
-print variable_name
-info locals       # 顯示所有局部變數
-info args         # 顯示函數參數
-
-# 查看堆疊
-backtrace         # 顯示調用堆疊
-frame n           # 切換到第 n 個堆疊框架
+break function_name           # 在函數入口設置斷點
+break file.rs:line_number     # 在指定行設置斷點
+break main.go:25              # 在指定檔案的指定行設置斷點
+info breakpoints              # 顯示所有斷點
+delete 1                      # 刪除編號 1 的斷點
 ```
 
-這些範例包含了各種常見的程式結構，你可以嘗試在不同位置設置斷點，觀察變數的值變化。Go 的調試體驗可能會比較複雜，而 Rust 通常會更順暢一些。
+### 執行控制
+```bash
+run                          # 開始執行程式
+continue                     # 繼續執行直到下一個斷點
+next                         # 執行下一行 (不進入函數)
+step                         # 執行下一行 (進入函數)
+finish                       # 執行完當前函數並返回
+quit                         # 退出 GDB
+```
+
+### 查看變數和狀態
+```bash
+print variable_name          # 顯示變數值
+print *pointer              # 顯示指標指向的值
+info locals                 # 顯示所有局部變數
+info args                   # 顯示函數參數
+whatis variable_name        # 顯示變數類型
+```
+
+### 查看堆疊和框架
+```bash
+backtrace                   # 顯示調用堆疊
+bt                          # backtrace 的縮寫
+frame n                     # 切換到第 n 個堆疊框架
+up                          # 上移一個框架
+down                        # 下移一個框架
+```
+
+### 查看程式碼
+```bash
+list                        # 顯示當前位置的程式碼
+list function_name          # 顯示指定函數的程式碼
+list file.rs:20             # 顯示指定檔案的指定行
+```
+
+## 調試技巧
+
+### Go 特定注意事項
+- 使用 `-gcflags="-N -l"` 關閉優化，否則變數可能被優化掉
+- Go 的 goroutine 調試需要特殊處理
+- 某些 Go 內建類型在 GDB 中可能顯示不完整
+
+### Rust 特定注意事項
+- 優先使用 `rust-gdb` 而非一般 GDB，它有更好的 Rust 支援
+- Rust 的 `Option` 和 `Result` 類型在 GDB 中可能需要特殊處理
+- 使用 `cargo build` 而非 `cargo build --release` 以保留調試資訊
+
+### 通用技巧
+- 在關鍵位置添加 `sleep` 或 `pause` 來方便設置斷點
+- 使用 `info locals` 快速查看所有局部變數
+- 善用 `backtrace` 了解函數調用關係
