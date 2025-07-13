@@ -26,6 +26,7 @@
   - [graphs](gdb/graphs.md)
   - [rust gdb](gdb/rust-gdb.md)
   - [qemu-gdb-risc-v64-kernel](gdb/qemu-gdb-risc-v64.md)
+  - [使用gdb 追蹤go/rust程式碼](gdb/go-rust-gdb-debug.md)
 - [C++](c++/cpp.md)
   - [benchmark](c++/benchmark.md)
   - [乘以 0.01 和除以 100 哪個快](c++/乘以0.01和除以100哪個快.md)
