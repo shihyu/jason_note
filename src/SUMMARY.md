@@ -107,7 +107,7 @@
   - [Rust-RESTful-API-完整開發指南](rust/Rust-RESTful-API-完整開發指南.md)
   - [Rust-self-Self-與-C++-this-對比指南](rust/Rust-self-Self-與-C++-this-對比指南.md)
   - [Rust Derive Traits 比較：自動生成 vs 手動實作](rust/rust-derive-traits-comparison.md)
-  - [Rust Traits 白話解釋：與 C++ 的比較](rust/rust-traits-explained.md)
+  - [Rust Traits 白話解釋：與 C++ 的比較](rust/rust_traits_explained.md)
 - [Go](go/go.md)
   - [Golang  Note](go/note.md)
   - [pytago](go/pytago.md)
