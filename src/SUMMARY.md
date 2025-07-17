@@ -106,6 +106,7 @@
   - [C++ Move 語義 vs Rust 所有權系統的核心差異](rust/cpp-move-vs-rust-ownership.md)
   - [Rust-RESTful-API-完整開發指南](rust/Rust-RESTful-API-完整開發指南.md)
   - [Rust-self-Self-與-C++-this-對比指南](rust/Rust-self-Self-與-C++-this-對比指南.md)
+  - [Rust Derive Traits 比較：自動生成 vs 手動實作](rust/rust-derive-traits-comparison.md)
 - [Go](go/go.md)
   - [Golang  Note](go/note.md)
   - [pytago](go/pytago.md)
