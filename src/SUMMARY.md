@@ -44,6 +44,7 @@
   - [C++ Move 語意完整指南](c++/cpp-move-semantics-guide.md)
   - [interview](c++/interview.md)
 - [Mojo](mojo/mojo.md)
+  - [Mojo 爬蟲完整指南](mojo/mojo_crawler_guide.md)
 - [RISC-V](riscv/riscv.md)
   - [QEMU上運行RISV-V Linux](riscv/qemu_riscv_linux.md)
   - [QEMU GDB](riscv/qemi_gdb.md)
