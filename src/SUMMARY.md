@@ -100,6 +100,7 @@
     - [Rust 30 Day](rust/30天深入淺出Rust系列/rust_30_day.md)
     - [變數的所有權與借出變數](rust/30天深入淺出Rust系列/Move_Borrow_Ownership.md)
     - [Lifetime： Borrow 的存活時間](rust/30天深入淺出Rust系列/Lifetime.md)
+  - [C++ vs. Rust: 全面特性比較](rust/cpp_vs_rust_comparison.md)
 - [Go](go/go.md)
   - [Golang  Note](go/note.md)
   - [pytago](go/pytago.md)
