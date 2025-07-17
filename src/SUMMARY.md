@@ -41,6 +41,7 @@
   - [如何高效地儲存並操作超大規模](c++/如何高效地儲存並操作超大規模.md)
   - [UC_CAPITAL](c++/UC_CAPITAL.md)
   - [unique_ptr vs shared_ptr](c++/cpp-smart-pointers-guide.md)
+  - [C++ Move 語意完整指南](c++/cpp-move-semantics-guide.md)
   - [interview](c++/interview.md)
 - [Mojo](mojo/mojo.md)
 - [RISC-V](riscv/riscv.md)
