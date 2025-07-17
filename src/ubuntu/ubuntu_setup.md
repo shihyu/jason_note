@@ -350,3 +350,106 @@ export PATH="$HOME/.mybin/cmake/bin:$PATH"
 > ＃ **crontab -e**
 > **@daily /usr/sbin/ntpdate [time.stdtime.gov.tw](http://time.stdtime.gov.tw/) > /dev/null**
 > 將對時寫進 crontab 每天做一次
+
+
+
+# AdGuard VPN
+
+Linux
+
+怎麼安裝登入使用在　ubuntu
+
+在 Ubuntu 上安裝、登入和使用 AdGuard VPN（特別是 AdGuard VPN CLI）非常簡單，以下是完整步驟：
+
+## 1. 安裝 AdGuard VPN CLI
+
+打開終端機（Terminal），輸入以下指令安裝最新穩定版本：
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/AdguardTeam/AdGuardVPNCLI/master/scripts/release/install.sh | sh -s -- -v
+```
+
+系統會要求你輸入管理員密碼。安裝過程中會詢問是否在 `/usr/local/bin` 建立連結，按 `y` 確認即可[^1][^2][^3]。
+
+---
+
+## 2. 登入 AdGuard VPN
+
+安裝完成後，輸入以下指令登入（或註冊）帳號：
+
+```sh
+adguardvpn-cli login
+```
+
+依照提示輸入你的電子郵件和密碼。若還沒有帳號，系統會引導你註冊[^4][^5][^2]。
+
+---
+
+## 3. 連線到 VPN
+
+- **快速連線**（自動選擇最快或上次使用的伺服器）：
+
+```sh
+adguardvpn-cli connect
+```
+
+- **查看可用伺服器位置**：
+
+```sh
+adguardvpn-cli list-locations
+```
+
+- **連線到指定位置**（例如 Tokyo）：
+
+```sh
+adguardvpn-cli connect -l Tokyo
+```
+
+或使用國家代碼（如 JP 或 US）[^4][^5][^2]。
+
+---
+
+## 4. 常用指令
+
+- **登出**：
+
+```sh
+adguardvpn-cli logout
+```
+
+- **檢查更新**：
+
+```sh
+adguardvpn-cli check-update
+```
+
+- **查看所有可用指令**：
+
+```sh
+adguardvpn-cli --help-all
+```
+
+
+---
+
+## 5. 注意事項
+
+- **AdGuard VPN CLI 沒有圖形介面，所有操作都在終端機進行**[^2][^3]。
+- **建議定期檢查更新**，確保安全性與穩定性[^4][^5]。
+
+---
+
+## 6. 移除 AdGuard VPN CLI
+
+如需移除，請參考官方知識庫，通常可執行：
+
+```sh
+adguardvpn-cli uninstall
+```
+
+（若沒有此指令，請參考官方文件手動移除）
+
+---
+
+這樣你就可以在 Ubuntu 上順利安裝、登入及使用 AdGuard VPN CLI 了！
+
