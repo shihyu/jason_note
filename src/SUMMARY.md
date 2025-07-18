@@ -111,6 +111,7 @@
   - [Rust Traits 白話解釋：與 C++ 的比較](rust/rust_traits_explained.md)
   - [Rust 中 trait 和 impl 的差異](rust/rust_trait_impl_markdown.md)
   - [Rust vs C++ 詳細對比指南](rust/rust_cpp_comparison_md.md)
+  - [Rust 模組系統完整指南](rust/rust_module_system_markdown.md)
 - [Go](go/go.md)
   - [Golang  Note](go/note.md)
   - [pytago](go/pytago.md)
