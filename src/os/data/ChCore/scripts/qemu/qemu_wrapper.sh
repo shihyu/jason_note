@@ -12,15 +12,30 @@ verlt() {
 
 qemu=$1
 shift
-qemu_options=$@
-qemu_version=$($qemu --version | head -n 1 | awk '{print $NF}')
+qemu_options="$*"
+
+# 修正版本解析 - 只取數字部分
+qemu_version_raw=$($qemu --version | head -n 1)
+qemu_version=$(echo "$qemu_version_raw" | grep -oP '\d+\.\d+\.\d+' | head -n 1)
+
+# Debug output
+echo "DEBUG: QEMU: $qemu" >&2
+echo "DEBUG: Raw version: $qemu_version_raw" >&2
+echo "DEBUG: Parsed version: $qemu_version" >&2
+echo "DEBUG: Original options: $qemu_options" >&2
 
 if [[ "$qemu" == *"qemu-system-aarch64"* ]]; then
-    if verlt $qemu_version 6.2.0; then
-        # in qemu < 6.2.0, machine type = raspi3
-        # in qemu >= 6.2.0, machine type = raspi3b
-        qemu_options=$(echo $qemu_options | sed 's/-machine[ \t]\{1,\}raspi3b/-machine raspi3/g')
+    # 根據實際支援的機器類型調整邏輯
+    # 你的 QEMU 8.2.2 支援 raspi3b 但不支援 raspi3
+    if verlt "$qemu_version" "6.2.0"; then
+        echo "DEBUG: Version < 6.2.0, but your QEMU supports raspi3b, keeping raspi3b" >&2
+        # 不做任何轉換，保持 raspi3b
+    else
+        echo "DEBUG: Version >= 6.2.0, using raspi3b" >&2
     fi
 fi
 
-$qemu $qemu_options
+echo "DEBUG: Final options: $qemu_options" >&2
+echo "DEBUG: Executing: $qemu $qemu_options" >&2
+
+exec $qemu $qemu_options

@@ -1,5 +1,4 @@
 LAB := 5
-
 V := @
 PROJECT_DIR := .
 BUILD_DIR := $(PROJECT_DIR)/build
@@ -15,7 +14,6 @@ CHBUILD := $(PROJECT_DIR)/chbuild
 all: build
 
 .PHONY: defconfig build clean distclean
-
 defconfig:
 	$(V)$(CHBUILD) defconfig
 
@@ -30,7 +28,6 @@ distclean:
 	$(V)$(CHBUILD) distclean
 
 .PHONY: qemu qemu-gdb gdb
-
 qemu:
 	$(V)$(_QEMU) $(QEMU_OPTS)
 
@@ -41,7 +38,6 @@ gdb:
 	$(V)gdb-multiarch -x $(PROJECT_DIR)/.gdbinit
 
 .PHONY: grade
-
 grade:
 	$(V)test -f $(PROJECT_DIR)/.config && cp $(PROJECT_DIR)/.config $(PROJECT_DIR)/.config.bak
 	$(V)$(PROJECT_DIR)/scripts/grade/lab$(LAB).sh
