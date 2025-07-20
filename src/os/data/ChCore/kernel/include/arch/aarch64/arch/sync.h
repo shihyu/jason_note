@@ -67,15 +67,15 @@
 
 static inline s64 atomic_exchange_64(s64* ptr, s64 exchange)
 {
-        s64 oldval;
-        s32 ret;
-        asm volatile("1: ldaxr   %x0, %2\n"
-                     "   stlxr   %w1, %x3, %2\n"
-                     "   cbnz    %w1, 1b\n"
-                     "2:"
-                     : "=&r"(oldval), "=&r"(ret), "+Q"(*ptr)
-                     : "r"(exchange));
-        return oldval;
+    s64 oldval;
+    s32 ret;
+    asm volatile("1: ldaxr   %x0, %2\n"
+                 "   stlxr   %w1, %x3, %2\n"
+                 "   cbnz    %w1, 1b\n"
+                 "2:"
+                 : "=&r"(oldval), "=&r"(ret), "+Q"(*ptr)
+                 : "r"(exchange));
+    return oldval;
 }
 
 #define __atomic_fetch_op(ptr, val, len, width, op)                            \
@@ -103,17 +103,22 @@ static inline s64 atomic_exchange_64(s64* ptr, s64 exchange)
 
 static inline u64 atomic_fetch_add_64_unless(u64* ptr, int add, int not_expect)
 {
-        u64 val = *ptr, oldval;
-        smp_rmb();
+    u64 val = * ptr, oldval;
+    smp_rmb();
 
-        while (true) {
-                if (val == not_expect)
-                        break;
-                oldval = atomic_compare_exchange_64(ptr, val, val + add);
-                if (oldval == val)
-                        break;
-                val = *ptr;
+    while (true) {
+        if (val == not_expect) {
+            break;
         }
 
-        return val;
+        oldval = atomic_compare_exchange_64(ptr, val, val + add);
+
+        if (oldval == val) {
+            break;
+        }
+
+        val = * ptr;
+    }
+
+    return val;
 }

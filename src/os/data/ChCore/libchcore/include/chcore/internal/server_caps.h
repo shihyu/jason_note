@@ -26,4 +26,5 @@ void __chcore_set_tmpfs_cap(int cap);
 
 #ifdef __cplusplus
 }
+
 #endif

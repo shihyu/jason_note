@@ -36,4 +36,5 @@ typedef int bool;
 
 #ifdef __cplusplus
 }
+
 #endif

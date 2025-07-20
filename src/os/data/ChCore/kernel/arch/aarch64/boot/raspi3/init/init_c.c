@@ -33,75 +33,76 @@ volatile u64 clear_bss_flag = NOT_BSS;
 
 /* Uart */
 void early_uart_init(void);
-void uart_send_string(char *);
+void uart_send_string(char*);
 
 static void wakeup_other_cores(void)
 {
-        u64 *addr;
+    u64* addr;
 
-        /*
-         * Set the entry address for non-primary cores.
-         * 0xe0, 0xe8, 0xf0 are fixed in the firmware (armstub8.bin).
-         */
-        // addr = (u64 *)0xd8;
-        // *addr = TEXT_OFFSET;
-        addr = (u64 *)0xe0;
-        *addr = TEXT_OFFSET;
-        addr = (u64 *)0xe8;
-        *addr = TEXT_OFFSET;
-        addr = (u64 *)0xf0;
-        *addr = TEXT_OFFSET;
+    /*
+     * Set the entry address for non-primary cores.
+     * 0xe0, 0xe8, 0xf0 are fixed in the firmware (armstub8.bin).
+     */
+    // addr = (u64 *)0xd8;
+    // *addr = TEXT_OFFSET;
+    addr = (u64*)0xe0;
+    * addr = TEXT_OFFSET;
+    addr = (u64*)0xe8;
+    * addr = TEXT_OFFSET;
+    addr = (u64*)0xf0;
+    * addr = TEXT_OFFSET;
 
-        /*
-         * Instruction sev (set event) for waking up other (non-primary) cores
-         * that executes wfe instruction.
-         */
-        asm volatile("sev");
+    /*
+     * Instruction sev (set event) for waking up other (non-primary) cores
+     * that executes wfe instruction.
+     */
+    asm volatile("sev");
 }
 
 static void clear_bss(void)
 {
-        u64 bss_start_addr;
-        u64 bss_end_addr;
-        u64 i;
+    u64 bss_start_addr;
+    u64 bss_end_addr;
+    u64 i;
 
-        bss_start_addr = (u64)&_bss_start;
-        bss_end_addr = (u64)&_bss_end;
+    bss_start_addr = (u64) & _bss_start;
+    bss_end_addr = (u64) & _bss_end;
 
-        for (i = bss_start_addr; i < bss_end_addr; ++i)
-                *(char *)i = 0;
+    for (i = bss_start_addr; i < bss_end_addr; ++i) {
+        * (char*)i = 0;
+    }
 
-        clear_bss_flag = 0;
+    clear_bss_flag = 0;
 }
 
 void init_c(void)
 {
-        /* Clear the bss area for the kernel image */
-        clear_bss();
+    /* Clear the bss area for the kernel image */
+    clear_bss();
 
-        /* Initialize UART before enabling MMU. */
-        early_uart_init();
-        uart_send_string("boot: init_c\r\n");
+    /* Initialize UART before enabling MMU. */
+    early_uart_init();
+    uart_send_string("boot: init_c\r\n");
 
-        wakeup_other_cores();
+    wakeup_other_cores();
 
-        /* Initialize Boot Page Table. */
-        uart_send_string("[BOOT] Install boot page table\r\n");
-        init_boot_pt();
+    /* Initialize Boot Page Table. */
+    uart_send_string("[BOOT] Install boot page table\r\n");
+    init_boot_pt();
 
-        /* Enable MMU. */
-        el1_mmu_activate();
-        uart_send_string("[BOOT] Enable el1 MMU\r\n");
+    /* Enable MMU. */
+    el1_mmu_activate();
+    uart_send_string("[BOOT] Enable el1 MMU\r\n");
 
-        /* Call Kernel Main. */
-        uart_send_string("[BOOT] Jump to kernel main\r\n");
-        start_kernel(secondary_boot_flag);
+    /* Call Kernel Main. */
+    uart_send_string("[BOOT] Jump to kernel main\r\n");
+    start_kernel(secondary_boot_flag);
 
-        /* Never reach here */
+    /* Never reach here */
 }
 
 void secondary_init_c(int cpuid)
 {
-        el1_mmu_activate();
-        secondary_cpu_boot(cpuid);
+    el1_mmu_activate();
+    secondary_cpu_boot(cpuid);
 }

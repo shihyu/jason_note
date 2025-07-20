@@ -25,23 +25,24 @@
 #define RADIX_LEVELS (DIV_ROUND_UP(RADIX_MAX_BITS, RADIX_NODE_BITS))
 
 struct radix_node {
-        union {
-                struct radix_node *children[RADIX_NODE_SIZE];
-                void *values[RADIX_NODE_SIZE];
-        };
+    union {
+        struct radix_node* children[RADIX_NODE_SIZE];
+        void* values[RADIX_NODE_SIZE];
+    };
 };
+
 struct radix {
-        struct radix_node *root;
-        struct lock radix_lock;
-        void (*value_deleter)(void *);
+    struct radix_node* root;
+    struct lock radix_lock;
+    void ( * value_deleter)(void*);
 };
 
 /* interfaces */
-struct radix *new_radix(void);
-void init_radix(struct radix *radix);
-int radix_add(struct radix *radix, u64 key, void *value);
-void *radix_get(struct radix *radix, u64 key);
-int radix_free(struct radix *radix);
-int radix_del(struct radix *radix, u64 key);
+struct radix* new_radix(void);
+void init_radix(struct radix* radix);
+int radix_add(struct radix* radix, u64 key, void* value);
+void* radix_get(struct radix* radix, u64 key);
+int radix_free(struct radix* radix);
+int radix_del(struct radix* radix, u64 key);
 
-void init_radix_w_deleter(struct radix *radix, void (*value_deleter)(void *));
+void init_radix_w_deleter(struct radix* radix, void ( * value_deleter)(void*));

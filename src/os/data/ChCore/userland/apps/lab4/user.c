@@ -14,6 +14,6 @@
 
 int main(int argc, char* argv[])
 {
-        printf("Hello from user.bin!\n");
-        return 0;
+    printf("Hello from user.bin!\n");
+    return 0;
 }

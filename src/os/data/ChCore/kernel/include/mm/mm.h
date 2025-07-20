@@ -26,10 +26,10 @@ void flush_tlbs(struct vmspace*, u64, u64);
 
 static inline bool is_user_addr(vaddr_t vaddr)
 {
-        return vaddr < KBASE;
+    return vaddr < KBASE;
 }
 
 static inline bool is_user_addr_range(vaddr_t vaddr, size_t len)
 {
-        return (vaddr + len >= vaddr) && is_user_addr(vaddr + len);
+    return (vaddr + len >= vaddr) && is_user_addr(vaddr + len);
 }

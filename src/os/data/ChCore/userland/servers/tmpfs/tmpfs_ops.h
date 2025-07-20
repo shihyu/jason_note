@@ -21,28 +21,30 @@
 #include "../fs_base/fs_wrapper_defs.h"
 #include "../fs_base/fs_vnode.h"
 
-int tmpfs_open(char *path, int flags, int mode, unsigned long *vnode_id, size_t *vnode_size, int *vnode_type, void **vnode_private);
+int tmpfs_open(char* path, int flags, int mode, unsigned long* vnode_id,
+               size_t* vnode_size, int* vnode_type, void** vnode_private);
 
-int tmpfs_read(void *foperator, unsigned long offset, size_t size, char *buf);
+int tmpfs_read(void* foperator, unsigned long offset, size_t size, char* buf);
 
-int tmpfs_write(void *foperator, unsigned long offset, size_t size, const char *buf);
+int tmpfs_write(void* foperator, unsigned long offset, size_t size,
+                const char* buf);
 
-int tmpfs_close(void *foperator, bool is_dir);
+int tmpfs_close(void* foperator, bool is_dir);
 
-int fs_creat(const char *path);
+int fs_creat(const char* path);
 
-int tmpfs_creat(struct ipc_msg *ipc_msg, struct fs_request *fr);
+int tmpfs_creat(struct ipc_msg* ipc_msg, struct fs_request* fr);
 
-int tmpfs_unlink(const char *path, int flags);
+int tmpfs_unlink(const char* path, int flags);
 
-int tmpfs_rmdir(const char *path, int flags);
+int tmpfs_rmdir(const char* path, int flags);
 
 
-int tmpfs_mkdir(const char *path, mode_t mode);
+int tmpfs_mkdir(const char* path, mode_t mode);
 
-int tfs_scan(struct inode *dir, unsigned int start, void *buf, void *end,
-		    int *read_bytes);
+int tfs_scan(struct inode* dir, unsigned int start, void* buf, void* end,
+             int* read_bytes);
 
-int tmpfs_getdents(struct ipc_msg *ipc_msg, struct fs_request *fr);
+int tmpfs_getdents(struct ipc_msg* ipc_msg, struct fs_request* fr);
 
 int tmpfs_get_size(char* path);

@@ -44,33 +44,33 @@
  * This part of ELF header is endianness-independent.
  */
 struct elf_indent {
-        u8 ei_magic[4];
-        u8 ei_class;
-        u8 ei_data;
-        u8 ei_version;
-        u8 ei_osabi;
-        u8 ei_abiversion;
-        u8 ei_pad[7];
+    u8 ei_magic[4];
+    u8 ei_class;
+    u8 ei_data;
+    u8 ei_version;
+    u8 ei_osabi;
+    u8 ei_abiversion;
+    u8 ei_pad[7];
 };
 
 /*
  * ELF header format. One should check the `e_indent` to decide the endianness.
  */
 struct elf_header {
-        struct elf_indent e_indent;
-        u16 e_type;
-        u16 e_machine;
-        u32 e_version;
-        u64 e_entry;
-        u64 e_phoff;
-        u64 e_shoff;
-        u32 e_flags;
-        u16 e_ehsize;
-        u16 e_phentsize; /* The size of a program header table entry */
-        u16 e_phnum; /* The number of entries in the program header table */
-        u16 e_shentsize; /* The size of a section header table entry */
-        u16 e_shnum; /* The number of entries in the section header table */
-        u16 e_shstrndx; /* Index of the section header table entry that
+    struct elf_indent e_indent;
+    u16 e_type;
+    u16 e_machine;
+    u32 e_version;
+    u64 e_entry;
+    u64 e_phoff;
+    u64 e_shoff;
+    u32 e_flags;
+    u16 e_ehsize;
+    u16 e_phentsize; /* The size of a program header table entry */
+    u16 e_phnum; /* The number of entries in the program header table */
+    u16 e_shentsize; /* The size of a section header table entry */
+    u16 e_shnum; /* The number of entries in the section header table */
+    u16 e_shstrndx; /* Index of the section header table entry that
                            contains the section names. */
 };
 
@@ -78,73 +78,75 @@ struct elf_header {
  * 32-Bit of the elf_header. Check the `e_indent` first to decide.
  */
 struct elf_header_32 {
-        struct elf_indent e_indent;
-        u16 e_type;
-        u16 e_machine;
-        u32 e_version;
-        u32 e_entry;
-        u32 e_phoff;
-        u32 e_shoff;
-        u32 e_flags;
-        u16 e_ehsize;
-        u16 e_phentsize;
-        u16 e_phnum;
-        u16 e_shentsize;
-        u16 e_shnum;
-        u16 e_shstrndx;
+    struct elf_indent e_indent;
+    u16 e_type;
+    u16 e_machine;
+    u32 e_version;
+    u32 e_entry;
+    u32 e_phoff;
+    u32 e_shoff;
+    u32 e_flags;
+    u16 e_ehsize;
+    u16 e_phentsize;
+    u16 e_phnum;
+    u16 e_shentsize;
+    u16 e_shnum;
+    u16 e_shstrndx;
 };
 
 struct elf_program_header {
-        u32 p_type;
-        u32 p_flags;
-        u64 p_offset;
-        u64 p_vaddr;
-        u64 p_paddr;
-        u64 p_filesz;
-        u64 p_memsz;
-        u64 p_align;
+    u32 p_type;
+    u32 p_flags;
+    u64 p_offset;
+    u64 p_vaddr;
+    u64 p_paddr;
+    u64 p_filesz;
+    u64 p_memsz;
+    u64 p_align;
 };
+
 struct elf_program_header_32 {
-        u32 p_type;
-        u32 p_offset;
-        u32 p_vaddr;
-        u32 p_paddr;
-        u32 p_filesz;
-        u32 p_memsz;
-        u32 p_flags;
-        u32 p_align;
+    u32 p_type;
+    u32 p_offset;
+    u32 p_vaddr;
+    u32 p_paddr;
+    u32 p_filesz;
+    u32 p_memsz;
+    u32 p_flags;
+    u32 p_align;
 };
 
 struct elf_section_header {
-        u32 sh_name;
-        u32 sh_type;
-        u64 sh_flags;
-        u64 sh_addr;
-        u64 sh_offset;
-        u64 sh_size;
-        u32 sh_link;
-        u32 sh_info;
-        u64 sh_addralign;
-        u64 sh_entsize;
+    u32 sh_name;
+    u32 sh_type;
+    u64 sh_flags;
+    u64 sh_addr;
+    u64 sh_offset;
+    u64 sh_size;
+    u32 sh_link;
+    u32 sh_info;
+    u64 sh_addralign;
+    u64 sh_entsize;
 };
+
 struct elf_section_header_32 {
-        u32 sh_name;
-        u32 sh_type;
-        u32 sh_flags;
-        u32 sh_addr;
-        u32 sh_offset;
-        u32 sh_size;
-        u32 sh_link;
-        u32 sh_info;
-        u32 sh_addralign;
-        u32 sh_entsize;
+    u32 sh_name;
+    u32 sh_type;
+    u32 sh_flags;
+    u32 sh_addr;
+    u32 sh_offset;
+    u32 sh_size;
+    u32 sh_link;
+    u32 sh_info;
+    u32 sh_addralign;
+    u32 sh_entsize;
 };
 
 struct elf_file {
-        struct elf_header header;
-        struct elf_program_header *p_headers;
-        struct elf_section_header *s_headers;
+    struct elf_header header;
+    struct elf_program_header* p_headers;
+    struct elf_section_header* s_headers;
 };
 
-struct elf_file *elf_parse_file(const char *code);
-void elf_free(struct elf_file *elf);
+struct elf_file* elf_parse_file(const char* code);
+void elf_free(struct elf_file* elf);

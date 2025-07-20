@@ -32,7 +32,7 @@
 
 /* This peripheral mapped offset is specific to BCM2837 */
 #ifndef KBASE
-#define KBASE 0xFFFFFF0000000000
+    #define KBASE 0xFFFFFF0000000000
 #endif
 #define PHYSADDR_OFFSET (KBASE + 0x3F000000UL)
 

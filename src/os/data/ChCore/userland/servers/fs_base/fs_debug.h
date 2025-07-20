@@ -28,40 +28,43 @@
 
 #define UNUSED(x) ((void)x)
 
-static inline void print_hex(char *buf, int size, int per_line)
+static inline void print_hex(char* buf, int size, int per_line)
 {
-	int i;
-	for (i = 0; i < size; i++) {
-		if (i % per_line == 0) {
-			printf("\n");
-		}
-		printf("%02x ", buf[i]);
-	}
-	printf("\n");
+    int i;
+
+    for (i = 0; i < size; i++) {
+        if (i % per_line == 0) {
+            printf("\n");
+        }
+
+        printf("%02x ", buf[i]);
+    }
+
+    printf("\n");
 }
 
 #define colored_printf(COLOR, fmt, ...) printf(COLOR""fmt""COLOR_DEFAULT, ##__VA_ARGS__)
 #define colored_printf_with_lineinfo(COLOR, fmt, ...) do { \
-		colored_printf(COLOR, "<%s:%s:%d>: ", __FILE__, __func__, __LINE__);	\
-		printf(fmt, ##__VA_ARGS__); \
-	} while (0)
+        colored_printf(COLOR, "<%s:%s:%d>: ", __FILE__, __func__, __LINE__);    \
+        printf(fmt, ##__VA_ARGS__); \
+    } while (0)
 
 #if FS_DEBUG == 1
-	#define fs_debug(fmt, ...) colored_printf_with_lineinfo(COLOR_YELLOW, fmt, ##__VA_ARGS__)
-	#define fs_debug_newline() printf("\n")
-	#define fs_debug_print_hex(buf, size) print_hex(buf, size, PRINT_HEX_PERLINE)
+    #define fs_debug(fmt, ...) colored_printf_with_lineinfo(COLOR_YELLOW, fmt, ##__VA_ARGS__)
+    #define fs_debug_newline() printf("\n")
+    #define fs_debug_print_hex(buf, size) print_hex(buf, size, PRINT_HEX_PERLINE)
 #else
-	#define fs_debug(fmt, ...) do { } while (0)
-	#define fs_debug_newline() do { } while (0)
-	#define fs_debug_print_hex(...) do { } while (0)
+    #define fs_debug(fmt, ...) do { } while (0)
+    #define fs_debug_newline() do { } while (0)
+    #define fs_debug_print_hex(...) do { } while (0)
 #endif
- 
+
 // /* Tracing prints */
 #if FS_DEBUG
-	#define fs_debug_error(fmt, ...) colored_printf_with_lineinfo(COLOR_RED, fmt, ##__VA_ARGS__)
-	#define fs_debug_warn(fmt, ...) colored_printf_with_lineinfo(COLOR_YELLOW_BG, fmt, ##__VA_ARGS__)
+    #define fs_debug_error(fmt, ...) colored_printf_with_lineinfo(COLOR_RED, fmt, ##__VA_ARGS__)
+    #define fs_debug_warn(fmt, ...) colored_printf_with_lineinfo(COLOR_YELLOW_BG, fmt, ##__VA_ARGS__)
 #else
-	#define fs_debug_error(fmt, ...) do { } while (0)
-	#define fs_debug_warn(fmt, ...) do { } while (0)
+    #define fs_debug_error(fmt, ...) do { } while (0)
+    #define fs_debug_warn(fmt, ...) do { } while (0)
 #endif
 

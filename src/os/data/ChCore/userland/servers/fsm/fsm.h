@@ -22,7 +22,7 @@
 int init_fsm(void);
 int fsm_init_procmgr_struct(int cap);
 
-int fsm_mount_fs(const char *path, const char *mount_point);
-int fsm_umount_fs(const char *path);
+int fsm_mount_fs(const char* path, const char* mount_point);
+int fsm_umount_fs(const char* path);
 
-void fsm_dispatch(ipc_msg_t *ipc_msg, u64 client_badge);
+void fsm_dispatch(ipc_msg_t* ipc_msg, u64 client_badge);

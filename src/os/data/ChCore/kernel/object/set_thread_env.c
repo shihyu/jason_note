@@ -49,9 +49,9 @@
 #define AT_EXECFN        31 /* filename of program */
 
 #if defined(CHCORE_ARCH_AARCH64)
-const char PLAT[] = "aarch64";
+    const char PLAT[] = "aarch64";
 #else
-const char PLAT[] = "unknown";
+    const char PLAT[] = "unknown";
 #endif
 
 /*
@@ -60,98 +60,100 @@ const char PLAT[] = "unknown";
  * env: stack top address used by kernel
  * top_vaddr: stack top address mapped to user
  */
-void prepare_env(char *env, u64 top_vaddr, struct process_metadata *meta,
-                 char *name)
+void prepare_env(char* env, u64 top_vaddr, struct process_metadata* meta,
+                 char* name)
 {
-        int i;
-        char *name_str;
-        char *plat_str;
-        u64 *p;
+    int i;
+    char* name_str;
+    char* plat_str;
+    u64* p;
 
-        /* clear env */
-        memset(env, 0, ENV_SIZE);
+    /* clear env */
+    memset(env, 0, ENV_SIZE);
 
-        /* strings */
-        /* the last 64 bytes */
-        name_str = env + ENV_SIZE - 64;
-        i = 0;
-        while (name[i] != '\0') {
-                name_str[i] = name[i];
-                ++i;
-        }
+    /* strings */
+    /* the last 64 bytes */
+    name_str = env + ENV_SIZE - 64;
+    i = 0;
 
-        /* the second last 64 bytes */
-        plat_str = env + ENV_SIZE - 2 * 64;
-        i = 0;
-        while (PLAT[i] != '\0') {
-                plat_str[i] = PLAT[i];
-                ++i;
-        }
+    while (name[i] != '\0') {
+        name_str[i] = name[i];
+        ++i;
+    }
 
-        p = (u64 *)env;
-        *p++ = (u64)ENV_MAGIC;
+    /* the second last 64 bytes */
+    plat_str = env + ENV_SIZE - 2 * 64;
+    i = 0;
 
-        /* pmo map addresses and caps */
-        *p++ = (u64)ENV_NO_CAPS; /* No caps */
+    while (PLAT[i] != '\0') {
+        plat_str[i] = PLAT[i];
+        ++i;
+    }
 
-        /* argc */
-        *p++ = 1;
+    p = (u64*)env;
+    * p++ = (u64)ENV_MAGIC;
 
-        /* argv */
-        *p++ = top_vaddr - 64;
-        *p++ = (u64)NULL;
+    /* pmo map addresses and caps */
+    * p++ = (u64)ENV_NO_CAPS; /* No caps */
 
-        /* envp */
-        *p++ = (u64)NULL;
+    /* argc */
+    * p++ = 1;
 
-        /* auxv */
-        *p++ = AT_SECURE;
-        *p++ = 0;
+    /* argv */
+    * p++ = top_vaddr - 64;
+    * p++ = (u64)NULL;
 
-        *p++ = AT_PAGESZ;
-        *p++ = 0x1000;
+    /* envp */
+    * p++ = (u64)NULL;
 
-        *p++ = AT_PHDR;
-        *p++ = meta->phdr_addr;
+    /* auxv */
+    * p++ = AT_SECURE;
+    * p++ = 0;
 
-        *p++ = AT_PHENT;
-        *p++ = meta->phentsize;
+    * p++ = AT_PAGESZ;
+    * p++ = 0x1000;
 
-        *p++ = AT_PHNUM;
-        *p++ = meta->phnum;
+    * p++ = AT_PHDR;
+    * p++ = meta->phdr_addr;
 
-        *p++ = AT_FLAGS;
-        *p++ = meta->flags;
+    * p++ = AT_PHENT;
+    * p++ = meta->phentsize;
 
-        *p++ = AT_ENTRY;
-        *p++ = meta->entry;
+    * p++ = AT_PHNUM;
+    * p++ = meta->phnum;
 
-        *p++ = AT_UID;
-        *p++ = 1000;
+    * p++ = AT_FLAGS;
+    * p++ = meta->flags;
 
-        *p++ = AT_EUID;
-        *p++ = 1000;
+    * p++ = AT_ENTRY;
+    * p++ = meta->entry;
 
-        *p++ = AT_GID;
-        *p++ = 1000;
+    * p++ = AT_UID;
+    * p++ = 1000;
 
-        *p++ = AT_EGID;
-        *p++ = 1000;
+    * p++ = AT_EUID;
+    * p++ = 1000;
 
-        *p++ = AT_CLKTCK;
-        *p++ = 100;
+    * p++ = AT_GID;
+    * p++ = 1000;
 
-        *p++ = AT_HWCAP;
-        *p++ = 0;
+    * p++ = AT_EGID;
+    * p++ = 1000;
 
-        *p++ = AT_PLATFORM;
-        *p++ = top_vaddr - 64 * 2;
+    * p++ = AT_CLKTCK;
+    * p++ = 100;
 
-        *p++ = AT_RANDOM;
-        *p++ = top_vaddr - 64; /* random 16 bytes */
+    * p++ = AT_HWCAP;
+    * p++ = 0;
 
-        *p++ = AT_NULL;
-        *p++ = 0;
+    * p++ = AT_PLATFORM;
+    * p++ = top_vaddr - 64 * 2;
 
-        /* add more auxv here */
+    * p++ = AT_RANDOM;
+    * p++ = top_vaddr - 64; /* random 16 bytes */
+
+    * p++ = AT_NULL;
+    * p++ = 0;
+
+    /* add more auxv here */
 }

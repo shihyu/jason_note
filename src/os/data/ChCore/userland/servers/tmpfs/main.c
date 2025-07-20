@@ -21,32 +21,33 @@
 
 int init_tmpfs(void);
 
-int tfs_load_image(const char *start);
+int tfs_load_image(const char* start);
 
 extern const char __binary_ramdisk_cpio_start;
 extern u64 __binary_ramdisk_cpio_size;
 
-void fs_server_dispatch(struct ipc_msg *ipc_msg, u64 client_badge);
+void fs_server_dispatch(struct ipc_msg* ipc_msg, u64 client_badge);
 
 #ifdef TMPFS_TEST
-void tfs_test();
+    void tfs_test();
 #endif
 
 int main()
 {
 
-        init_tmpfs();
+    init_tmpfs();
 
-#ifdef TMPFS_TEST
-        tfs_test();
-#else 
-        tfs_load_image(&__binary_ramdisk_cpio_start);
-#endif
+    #ifdef TMPFS_TEST
+    tfs_test();
+    #else
+    tfs_load_image( & __binary_ramdisk_cpio_start);
+    #endif
 
-        ipc_register_server(fs_server_dispatch);
+    ipc_register_server(fs_server_dispatch);
 
-        while (1) {
-                __chcore_sys_yield();
-        }
-        return 0;
+    while (1) {
+        __chcore_sys_yield();
+    }
+
+    return 0;
 }

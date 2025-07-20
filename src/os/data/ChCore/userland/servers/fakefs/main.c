@@ -26,37 +26,39 @@
 
 struct list_head fakefs_files;
 struct spinlock fs_lock;
-struct server_entry *server_entrys[MAX_SERVER_ENTRY_NUM];
+struct server_entry* server_entrys[MAX_SERVER_ENTRY_NUM];
 struct list_head fs_vnode_list;
 bool mounted;
 bool using_page_cache;
 
 void fakefs_test();
-void init_fakefs_file_node(struct fakefs_file_node *n);
+void init_fakefs_file_node(struct fakefs_file_node* n);
 
-void fakefs_init() {
-	init_list_head(&fakefs_files);
-	spinlock_init(&fs_lock);
-	struct fakefs_file_node *n = (struct fakefs_file_node *)malloc(sizeof(struct fakefs_file_node));
-	init_fakefs_file_node(n);
-	strcpy(n->path, "/");
-	n->isdir = true;
-	/* Insert node to fsm_server_entry_mapping */
-	list_append(&n->node, &fakefs_files);
+void fakefs_init()
+{
+    init_list_head( & fakefs_files);
+    spinlock_init( & fs_lock);
+    struct fakefs_file_node* n = (struct fakefs_file_node*)malloc(sizeof(
+                                     struct fakefs_file_node));
+    init_fakefs_file_node(n);
+    strcpy(n->path, "/");
+    n->isdir = true;
+    /* Insert node to fsm_server_entry_mapping */
+    list_append( & n->node, & fakefs_files);
 }
 
 
-int main(int argc, const char *argv[]) 
+int main(int argc, const char* argv[])
 {
-	mounted = true;
-	using_page_cache = false;
-	init_fs_wrapper();
-	fakefs_init();
+    mounted = true;
+    using_page_cache = false;
+    init_fs_wrapper();
+    fakefs_init();
 
     ipc_register_server(fs_server_dispatch);
 
-     while (1) {
-             __chcore_sys_yield();
-     }
+    while (1) {
+        __chcore_sys_yield();
+    }
 
 }

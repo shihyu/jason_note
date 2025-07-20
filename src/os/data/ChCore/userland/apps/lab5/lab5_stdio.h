@@ -21,29 +21,29 @@
 #include <chcore/procm.h>
 #include <chcore/fs/defs.h>
 
-extern struct ipc_struct *tmpfs_ipc_struct;
+extern struct ipc_struct* tmpfs_ipc_struct;
 
 typedef struct FILE {
-	/* LAB 5 TODO BEGIN */
-	int fd;
-	unsigned int mode;
-	char filename[FS_REQ_PATH_BUF_LEN];
-	int offset;
-	int refcnt;
-	/* LAB 5 TODO END */
+    /* LAB 5 TODO BEGIN */
+    int fd;
+    unsigned int mode;
+    char filename[FS_REQ_PATH_BUF_LEN];
+    int offset;
+    int refcnt;
+    /* LAB 5 TODO END */
 } FILE;
 
-FILE *fopen(const char * filename, const char * mode);
+FILE* fopen(const char* filename, const char* mode);
 
-size_t fwrite(const void * src, size_t size, size_t nmemb, FILE * f);
+size_t fwrite(const void* src, size_t size, size_t nmemb, FILE* f);
 
-size_t fread(void * destv, size_t size, size_t nmemb, FILE * f);
+size_t fread(void* destv, size_t size, size_t nmemb, FILE* f);
 
-int fclose(FILE *f);
+int fclose(FILE* f);
 
-int fscanf(FILE * f, const char * fmt, ...);
+int fscanf(FILE* f, const char* fmt, ...);
 
-int fprintf(FILE * f, const char * fmt, ...);
+int fprintf(FILE* f, const char* fmt, ...);
 
 typedef __builtin_va_list va_list;
 #define va_start(v, l) __builtin_va_start(v, l)

@@ -20,4 +20,5 @@ void chcore_fsm_test();
 
 #ifdef __cplusplus
 }
+
 #endif

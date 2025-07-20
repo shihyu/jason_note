@@ -17,5 +17,5 @@
 
 /* size in registers.h (to be used in asm) */
 typedef struct arch_exec_cont {
-        u64 reg[REG_NUM];
+    u64 reg[REG_NUM];
 } arch_exec_cont_t;

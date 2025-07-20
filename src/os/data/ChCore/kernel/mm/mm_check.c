@@ -22,12 +22,14 @@
  */
 u64 get_free_mem_size(void)
 {
-        u64 size;
-        int i;
+    u64 size;
+    int i;
 
-        size = get_free_mem_size_from_slab();
-        for (i = 0; i < physmem_map_num; ++i) {
-                size += get_free_mem_size_from_buddy(&global_mem[i]);
-        }
-        return size;
+    size = get_free_mem_size_from_slab();
+
+    for (i = 0; i < physmem_map_num; ++i) {
+        size += get_free_mem_size_from_buddy( & global_mem[i]);
+    }
+
+    return size;
 }

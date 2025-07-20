@@ -23,15 +23,15 @@ int handle_ipi(u32 ipi);
 #define IPI_DATA_ARG_NUM (7)
 
 struct ipi_data {
-        /* start  <- 1: the ipi_data (argments) is ready */
-        volatile u16 start;
-        /* finish <- 1: the ipi_data (argments) is handled */
-        volatile u16 finish;
+    /* start  <- 1: the ipi_data (argments) is ready */
+    volatile u16 start;
+    /* finish <- 1: the ipi_data (argments) is handled */
+    volatile u16 finish;
 
-        /* The IPI_vector */
-        u32 vector;
+    /* The IPI_vector */
+    u32 vector;
 
-        u64 args[IPI_DATA_ARG_NUM];
+    u64 args[IPI_DATA_ARG_NUM];
 };
 
 extern struct ipi_data global_ipi_data[];
@@ -51,4 +51,4 @@ u64 get_ipi_tx_arg(u32 target_cpu, u32 arg_index);
 void mark_finish_ipi_tx(u32 target_cpu);
 void handle_ipi_on_tlb_shootdown(void);
 
-void handle_ipi_request_to_local_cpu(struct ipi_data *);
+void handle_ipi_request_to_local_cpu(struct ipi_data*);

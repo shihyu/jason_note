@@ -44,20 +44,20 @@
 
 void enable_cpu_cnt(void)
 {
-        asm volatile("msr pmuserenr_el0, %0" ::"r"(
-                PMUSERENR_EL0_EN | PMUSERENR_EL0_SW | PMUSERENR_EL0_CR
-                | PMUSERENR_EL0_ER));
-        asm volatile("msr pmcr_el0, %0" ::"r"(PMCR_EL0_LC | PMCR_EL0_E));
-        asm volatile("msr pmcntenset_el0, %0" ::"r"(PMCNTENSET_EL0_C));
+    asm volatile("msr pmuserenr_el0, %0" ::"r"(
+                     PMUSERENR_EL0_EN | PMUSERENR_EL0_SW | PMUSERENR_EL0_CR
+                     | PMUSERENR_EL0_ER));
+    asm volatile("msr pmcr_el0, %0" ::"r"(PMCR_EL0_LC | PMCR_EL0_E));
+    asm volatile("msr pmcntenset_el0, %0" ::"r"(PMCNTENSET_EL0_C));
 }
 
 void disable_cpu_cnt(void)
 {
-        asm volatile("msr pmcr_el0, %0" ::"r"(~PMCR_EL0_E));
-        asm volatile("msr pmcntenset_el0, %0" ::"r"(0));
+    asm volatile("msr pmcr_el0, %0" ::"r"(~PMCR_EL0_E));
+    asm volatile("msr pmcntenset_el0, %0" ::"r"(0));
 }
 
 void pmu_init(void)
 {
-        enable_cpu_cnt();
+    enable_cpu_cnt();
 }

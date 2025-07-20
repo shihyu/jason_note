@@ -21,7 +21,7 @@ int sys_create_pmos(u64 user_buf, u64 cnt);
 int sys_write_pmo(u64 pmo_cap, u64 offset, u64 user_ptr, u64 len);
 int sys_read_pmo(u64 pmo_cap, u64 offset, u64 user_ptr, u64 len);
 int sys_get_pmo_paddr(u64 pmo_cap, u64 user_buf);
-int sys_get_phys_addr(u64 va, u64 *pa_buf);
+int sys_get_phys_addr(u64 va, u64* pa_buf);
 int sys_map_pmo(u64 target_cap_group_cap, u64 pmo_cap, u64 addr, u64 perm,
                 u64 len);
 int sys_map_pmos(u64 target_cap_group_cap, u64 user_buf, u64 cnt);

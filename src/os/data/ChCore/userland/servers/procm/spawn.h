@@ -16,4 +16,4 @@
 #include <chcore/memory.h>
 #include <chcore/internal/idman.h>
 
-int spawn(const char *filename, int *new_thread_cap);
+int spawn(const char* filename, int* new_thread_cap);

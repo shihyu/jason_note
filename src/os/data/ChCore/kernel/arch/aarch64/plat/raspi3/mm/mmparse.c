@@ -34,10 +34,10 @@ extern char img_end;
 
 void parse_mem_map(void)
 {
-        physmem_map_num = 1;
-        physmem_map[0][0] = USABLE_MEM_START; /* 4K-aligned */
-        physmem_map[0][1] = USABLE_MEM_END - RESERVED_FOR_GPU; /* 4K-aligned */
-        kinfo("physmem_map: [0x%lx, 0x%lx)\n",
-              physmem_map[0][0],
-              physmem_map[0][1]);
+    physmem_map_num = 1;
+    physmem_map[0][0] = USABLE_MEM_START; /* 4K-aligned */
+    physmem_map[0][1] = USABLE_MEM_END - RESERVED_FOR_GPU; /* 4K-aligned */
+    kinfo("physmem_map: [0x%lx, 0x%lx)\n",
+          physmem_map[0][0],
+          physmem_map[0][1]);
 }

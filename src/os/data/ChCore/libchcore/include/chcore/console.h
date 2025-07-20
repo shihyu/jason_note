@@ -24,9 +24,10 @@ extern "C" {
 void chcore_console_putc(int ch);
 int chcore_console_getc(void);
 
-void chcore_console_puts(const char *str);
-int chcore_console_printf(const char *fmt, ...);
+void chcore_console_puts(const char* str);
+int chcore_console_printf(const char* fmt, ...);
 
 #ifdef __cplusplus
 }
+
 #endif

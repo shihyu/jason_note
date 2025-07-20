@@ -26,82 +26,89 @@
 #include "elf.h"
 #include "spawn.h"
 
-static void ipc_dispatch(struct ipc_msg *ipc_msg, u64 client_pid)
+static void ipc_dispatch(struct ipc_msg* ipc_msg, u64 client_pid)
 {
-        int ret = 0;
-        int mt_cap, pcid, pid;
-        bool path_valid = false;
-        struct procm_ipc_data *ipc_data;
+    int ret = 0;
+    int mt_cap, pcid, pid;
+    bool path_valid = false;
+    struct procm_ipc_data* ipc_data;
 
-        if (!ipc_msg)
-                ipc_return(0, ret);
+    if (!ipc_msg) {
+        ipc_return(0, ret);
+    }
 
-        ipc_data = (struct procm_ipc_data *)ipc_get_msg_data(ipc_msg);
-        switch (ipc_data->request) {
-        case PROCM_IPC_REQ_SPAWN:
-                for (int i = 0; i < sizeof(ipc_data->spawn.args.path); i++) {
-                        if (ipc_data->spawn.args.path[i] == '\0') {
-                                path_valid = true;
-                                break;
-                        }
-                }
-                chcore_bug_on(!path_valid);
-                pid = spawn(ipc_data->spawn.args.path, &mt_cap);
-                if (pid > 0) {
-                        ipc_data->spawn.returns.pid = pid;
-                        ipc_msg->cap_slot_number = 1;
-                        ipc_set_msg_cap(ipc_msg, 0, mt_cap);
-                }
+    ipc_data = (struct procm_ipc_data*)ipc_get_msg_data(ipc_msg);
+
+    switch (ipc_data->request) {
+    case PROCM_IPC_REQ_SPAWN:
+        for (int i = 0; i < sizeof(ipc_data->spawn.args.path); i++) {
+            if (ipc_data->spawn.args.path[i] == '\0') {
+                path_valid = true;
                 break;
-        default:
-                ret = -1;
-                break;
+            }
         }
 
-        if (ret < 0) {
-                ipc_return(ipc_msg, ret);
-        } else {
-                ipc_return_with_cap(ipc_msg, ret);
+        chcore_bug_on(!path_valid);
+        pid = spawn(ipc_data->spawn.args.path, & mt_cap);
+
+        if (pid > 0) {
+            ipc_data->spawn.returns.pid = pid;
+            ipc_msg->cap_slot_number = 1;
+            ipc_set_msg_cap(ipc_msg, 0, mt_cap);
         }
+
+        break;
+
+    default:
+        ret = -1;
+        break;
+    }
+
+    if (ret < 0) {
+        ipc_return(ipc_msg, ret);
+    } else {
+        ipc_return_with_cap(ipc_msg, ret);
+    }
 }
 
 void chcore_fakefs_test(int fakefs_cap);
-static void *procm_main(void *arg)
+static void* procm_main(void* arg)
 {
-        int ret, cap;
+    int ret, cap;
 
-        /* wait until procm cap being set */
-        while (__chcore_get_procm_cap() < 0)
-                ;
-        printf("Hello from ChCore Process Manager!\n");
-        ipc_register_server(ipc_dispatch);
+    /* wait until procm cap being set */
+    while (__chcore_get_procm_cap() < 0)
+        ;
 
-        /* start tmpfs */
-        ret = spawn("/tmpfs.srv", &cap);
-        chcore_bug_on(ret < 0);
-        __chcore_set_tmpfs_cap(cap);
+    printf("Hello from ChCore Process Manager!\n");
+    ipc_register_server(ipc_dispatch);
 
-        /* start fsm */
-        ret = spawn("/fsm.srv", &cap);
-        chcore_bug_on(ret < 0);
-        __chcore_set_fsm_cap(cap);
- 
-        int shell_cap;
-        spawn("/shell.srv", &shell_cap);
+    /* start tmpfs */
+    ret = spawn("/tmpfs.srv", & cap);
+    chcore_bug_on(ret < 0);
+    __chcore_set_tmpfs_cap(cap);
 
-        /* Server does not exit */
-        while (1) {
-                __chcore_sys_yield();
-        }
+    /* start fsm */
+    ret = spawn("/fsm.srv", & cap);
+    chcore_bug_on(ret < 0);
+    __chcore_set_fsm_cap(cap);
+
+    int shell_cap;
+    spawn("/shell.srv", & shell_cap);
+
+    /* Server does not exit */
+    while (1) {
+        __chcore_sys_yield();
+    }
 }
 
-int main(int argc, const char *argv[])
+int main(int argc, const char* argv[])
 {
-        int cap;
+    int cap;
 
-        /* Init procedure */
-        cap = chcore_thread_create(procm_main, 0, 0, TYPE_USER);
-        chcore_bug_on(cap < 0);
-        __chcore_set_procm_cap(cap);
-        return 0;
+    /* Init procedure */
+    cap = chcore_thread_create(procm_main, 0, 0, TYPE_USER);
+    chcore_bug_on(cap < 0);
+    __chcore_set_procm_cap(cap);
+    return 0;
 }

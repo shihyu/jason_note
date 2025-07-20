@@ -17,7 +17,7 @@
 
 #define TMPFS_INFO_VADDR 0x200000
 
-#define MAX_FS_NUM 10			/* TODO: remove */
+#define MAX_FS_NUM 10           /* TODO: remove */
 #define MAX_MOUNT_POINT_LEN 255
 #define MAX_PATH_LEN 511
 

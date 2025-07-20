@@ -20,7 +20,7 @@ void cache_setup(void);
 
 void arch_mm_init(void)
 {
-        cache_setup();
+    cache_setup();
 }
 
 /*
@@ -33,30 +33,30 @@ void arch_mm_init(void)
  */
 #define ASID_SHIFT 48
 
-void arch_vmspace_init(struct vmspace *vmspace)
+void arch_vmspace_init(struct vmspace* vmspace)
 {
-        /* In aarch64, this function is not needed. */
+    /* In aarch64, this function is not needed. */
 }
 
-struct vmspace *create_idle_vmspace(void)
+struct vmspace* create_idle_vmspace(void)
 {
-        struct vmspace *vmspace;
+    struct vmspace* vmspace;
 
-        vmspace = (struct vmspace *)kzalloc(sizeof(*vmspace));
-        /*
-         * An idle thread on aarch64 does not require a pgtbl
-         * for user-space.
-         */
-        return vmspace;
+    vmspace = (struct vmspace*)kzalloc(sizeof( * vmspace));
+    /*
+     * An idle thread on aarch64 does not require a pgtbl
+     * for user-space.
+     */
+    return vmspace;
 }
 
 /* Change vmspace to the target one */
-void switch_vmspace_to(struct vmspace *vmspace)
+void switch_vmspace_to(struct vmspace* vmspace)
 {
-        paddr_t pa;
+    paddr_t pa;
 
-        pa = virt_to_phys(vmspace->pgtbl);
-        /* The upper 16 bits of TTBR0_EL1 represent ASID */
-        pa |= (u64)(vmspace->pcid) << ASID_SHIFT;
-        set_page_table(pa);
+    pa = virt_to_phys(vmspace->pgtbl);
+    /* The upper 16 bits of TTBR0_EL1 represent ASID */
+    pa |= (u64)(vmspace->pcid) << ASID_SHIFT;
+    set_page_table(pa);
 }

@@ -29,39 +29,46 @@ unsigned long mutex_test_count = 0;
 
 void tst_mutex(void)
 {
-        /* ============ Start Barrier ============ */
-        lock_kernel();
-        mutex_start_flag++;
-        unlock_kernel();
-        while (mutex_start_flag != PLAT_CPU_NUM)
-                ;
-        /* ============ Start Barrier ============ */
+    /* ============ Start Barrier ============ */
+    lock_kernel();
+    mutex_start_flag++;
+    unlock_kernel();
 
-        /* Mutex Lock */
-        for (int i = 0; i < LOCK_TEST_NUM; i++) {
-                if (i % 2)
-                        while (try_lock(&big_kernel_lock) != 0)
-                                ;
-                else
-                        lock_kernel();
-                /* Critical Section */
-                mutex_test_count++;
-                unlock_kernel();
+    while (mutex_start_flag != PLAT_CPU_NUM)
+        ;
+
+    /* ============ Start Barrier ============ */
+
+    /* Mutex Lock */
+    for (int i = 0; i < LOCK_TEST_NUM; i++) {
+        if (i % 2)
+            while (try_lock( & big_kernel_lock) != 0)
+                ;
+        else {
+            lock_kernel();
         }
 
-        /* ============ Finish Barrier ============ */
-        lock_kernel();
-        mutex_finish_flag++;
+        /* Critical Section */
+        mutex_test_count++;
         unlock_kernel();
-        while (mutex_finish_flag != PLAT_CPU_NUM)
-                ;
-        /* ============ Finish Barrier ============ */
+    }
 
-        /* Check */
-        BUG_ON(mutex_test_count != PLAT_CPU_NUM * LOCK_TEST_NUM);
-        if (smp_get_cpu_id() == 0) {
-                lock_kernel();
-                kinfo("Pass tst_mutex!\n");
-                unlock_kernel();
-        }
+    /* ============ Finish Barrier ============ */
+    lock_kernel();
+    mutex_finish_flag++;
+    unlock_kernel();
+
+    while (mutex_finish_flag != PLAT_CPU_NUM)
+        ;
+
+    /* ============ Finish Barrier ============ */
+
+    /* Check */
+    BUG_ON(mutex_test_count != PLAT_CPU_NUM* LOCK_TEST_NUM);
+
+    if (smp_get_cpu_id() == 0) {
+        lock_kernel();
+        kinfo("Pass tst_mutex!\n");
+        unlock_kernel();
+    }
 }

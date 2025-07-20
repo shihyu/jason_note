@@ -21,19 +21,19 @@
 /* LOG_LEVEL is INFO by default */
 
 #if LOG_LEVEL >= WARNING
-#define kwarn(fmt, ...) printk("[WARN] file:%s " fmt, __FILE__, ##__VA_ARGS__)
+    #define kwarn(fmt, ...) printk("[WARN] file:%s " fmt, __FILE__, ##__VA_ARGS__)
 #else
-#define kwarn(fmt, ...)
+    #define kwarn(fmt, ...)
 #endif
 
 #if LOG_LEVEL >= INFO
-#define kinfo(fmt, ...) printk("[INFO] " fmt, ##__VA_ARGS__)
+    #define kinfo(fmt, ...) printk("[INFO] " fmt, ##__VA_ARGS__)
 #else
-#define kinfo(fmt, ...)
+    #define kinfo(fmt, ...)
 #endif
 
 #if LOG_LEVEL >= DEBUG
-#define kdebug(fmt, ...) printk("[DEBUG] " fmt, ##__VA_ARGS__)
+    #define kdebug(fmt, ...) printk("[DEBUG] " fmt, ##__VA_ARGS__)
 #else
-#define kdebug(fmt, ...)
+    #define kdebug(fmt, ...)
 #endif

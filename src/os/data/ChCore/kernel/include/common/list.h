@@ -16,42 +16,42 @@
 #include <common/types.h>
 
 struct list_head {
-        struct list_head *prev;
-        struct list_head *next;
+    struct list_head* prev;
+    struct list_head* next;
 };
 
-static inline void init_list_head(struct list_head *list)
+static inline void init_list_head(struct list_head* list)
 {
-        list->next = list;
-        list->prev = list;
+    list->next = list;
+    list->prev = list;
 }
 
-static inline void list_add(struct list_head *new, struct list_head *head)
+static inline void list_add(struct list_head* new, struct list_head* head)
 {
-        new->next = head->next;
-        new->prev = head;
-        head->next->prev = new;
-        head->next = new;
+    new->next = head->next;
+    new->prev = head;
+    head->next->prev = new;
+    head->next = new;
 }
 
-static inline void list_append(struct list_head *new, struct list_head *head)
+static inline void list_append(struct list_head* new, struct list_head* head)
 {
-        struct list_head *tail = head->prev;
-        return list_add(new, tail);
+    struct list_head* tail = head->prev;
+    return list_add(new, tail);
 }
 
-static inline void list_del(struct list_head *node)
+static inline void list_del(struct list_head* node)
 {
-        node->prev->next = node->next;
-        node->next->prev = node->prev;
+    node->prev->next = node->next;
+    node->next->prev = node->prev;
 }
 
-static inline bool list_empty(struct list_head *head)
+static inline bool list_empty(struct list_head* head)
 {
-        /* When this thing happens, it means someone at the middle of operation
-         */
-        // BUG_ON((head->prev == head) != (head->next == head));
-        return head->next == head;
+    /* When this thing happens, it means someone at the middle of operation
+     */
+    // BUG_ON((head->prev == head) != (head->next == head));
+    return head->next == head;
 }
 
 #define next_container_of_safe(obj, type, field)               \
@@ -79,42 +79,49 @@ static inline bool list_empty(struct list_head *head)
         __for_each_in_list_safe (elem, tmp, typeof(*elem), field, head)
 
 struct hlist_head {
-        struct hlist_node *next;
+    struct hlist_node* next;
 };
+
 struct hlist_node {
-        struct hlist_node *next;
-        struct hlist_node **pprev; /* the field that points to this node */
+    struct hlist_node* next;
+    struct hlist_node** pprev; /* the field that points to this node */
 };
 
-static inline void init_hlist_head(struct hlist_head *head)
+static inline void init_hlist_head(struct hlist_head* head)
 {
-        head->next = NULL;
-}
-static inline void init_hlist_node(struct hlist_node *node)
-{
-        node->next = NULL;
-        node->pprev = NULL;
+    head->next = NULL;
 }
 
-static inline void hlist_add(struct hlist_node *new, struct hlist_head *head)
+static inline void init_hlist_node(struct hlist_node* node)
 {
-        new->next = head->next;
-        new->pprev = &head->next;
-        if (head->next)
-                head->next->pprev = &new->next;
-        head->next = new;
+    node->next = NULL;
+    node->pprev = NULL;
 }
 
-static inline void hlist_del(struct hlist_node *node)
+static inline void hlist_add(struct hlist_node* new, struct hlist_head* head)
 {
-        if (node->next)
-                node->next->pprev = node->pprev;
-        *node->pprev = node->next;
+    new->next = head->next;
+    new->pprev = & head->next;
+
+    if (head->next) {
+        head->next->pprev = & new->next;
+    }
+
+    head->next = new;
 }
 
-static inline bool hlist_empty(struct hlist_head *head)
+static inline void hlist_del(struct hlist_node* node)
 {
-        return head->next == NULL;
+    if (node->next) {
+        node->next->pprev = node->pprev;
+    }
+
+    * node->pprev = node->next;
+}
+
+static inline bool hlist_empty(struct hlist_head* head)
+{
+    return head->next == NULL;
 }
 
 #define hlist_entry(ptr, type, field) container_of(ptr, type, field)

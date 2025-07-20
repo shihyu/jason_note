@@ -25,17 +25,17 @@
 #define FAKEFS_MAX_PATH_LEN 512
 
 struct fakefs_file_node {
-	char path[FAKEFS_MAX_PATH_LEN];
-	char* file;
-	int offset;
-	int size;
-	int refcnt;
-	bool isdir;
+    char path[FAKEFS_MAX_PATH_LEN];
+    char* file;
+    int offset;
+    int size;
+    int refcnt;
+    bool isdir;
 
-	struct list_head node;
+    struct list_head node;
 };
 
 struct del_file_node {
-	struct fakefs_file_node* del_node;
-	struct list_head node;
+    struct fakefs_file_node* del_node;
+    struct list_head node;
 };

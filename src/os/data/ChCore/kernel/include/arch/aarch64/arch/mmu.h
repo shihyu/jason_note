@@ -13,8 +13,8 @@
 #pragma once
 
 #ifndef KBASE
-#define KBASE              0xFFFFFF0000000000
-#define PHYSICAL_ADDR_MASK (40)
+    #define KBASE              0xFFFFFF0000000000
+    #define PHYSICAL_ADDR_MASK (40)
 #endif // KBASE
 
 #ifndef __ASM__
@@ -28,12 +28,12 @@ typedef u64 vmr_prop_t;
 #define VMR_NOCACHE (1 << 4)
 
 /* functions */
-int map_range_in_pgtbl(void *pgtbl, vaddr_t va, paddr_t pa, size_t len,
+int map_range_in_pgtbl(void* pgtbl, vaddr_t va, paddr_t pa, size_t len,
                        vmr_prop_t flags);
-int unmap_range_in_pgtbl(void *pgtbl, vaddr_t va, size_t len);
-int map_range_in_pgtbl_huge(void *pgtbl, vaddr_t va, paddr_t pa, size_t len,
+int unmap_range_in_pgtbl(void* pgtbl, vaddr_t va, size_t len);
+int map_range_in_pgtbl_huge(void* pgtbl, vaddr_t va, paddr_t pa, size_t len,
                             vmr_prop_t flags);
-int unmap_range_in_pgtbl_huge(void *pgtbl, vaddr_t va, size_t len);
+int unmap_range_in_pgtbl_huge(void* pgtbl, vaddr_t va, size_t len);
 
 // function for lab2:Q9
 void reconfig_kernel_page_table();

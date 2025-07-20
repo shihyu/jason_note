@@ -32,74 +32,83 @@
     } \
   } while (0)
 
-extern struct ipc_struct *fs_ipc_struct_for_shell;
+extern struct ipc_struct* fs_ipc_struct_for_shell;
 
 
 static void test_readline()
 {
-	char* buf = readline("1>");
-	printf("%s\n", buf);
-	readline("2>");
+    char* buf = readline("1>");
+    printf("%s\n", buf);
+    readline("2>");
 }
 
 static void test_echo()
 {
-	builtin_cmd("echo abc123XYZ");
+    builtin_cmd("echo abc123XYZ");
 }
 
-static void test_ls() {
-	builtin_cmd("ls /");
+static void test_ls()
+{
+    builtin_cmd("ls /");
 }
 
-static void test_cat() {
-	builtin_cmd("cat /test.txt");
+static void test_cat()
+{
+    builtin_cmd("cat /test.txt");
 }
 
-static void test_top() {
-	do_top();
+static void test_top()
+{
+    do_top();
 }
 
-static void test_run() {
-	run_cmd("/helloworld.bin");
+static void test_run()
+{
+    run_cmd("/helloworld.bin");
 }
 
-void shell_test() {
-	test_echo();
-	printf("\nSHELL ");
-	test_ls();
-	printf("\nSHELL ");
-	test_cat();
-	printf("\n");
-	test_readline();
-	test_top();
-	test_run();
-	for (int i = 0; i < 10000; i++) {
-        __chcore_sys_yield(); 
-	}	
-	run_cmd("/lab5.bin");
-	for (int i = 0; i < 10000 * 5; i++) {
-    	__chcore_sys_yield(); 
-	}
+void shell_test()
+{
+    test_echo();
+    printf("\nSHELL ");
+    test_ls();
+    printf("\nSHELL ");
+    test_cat();
+    printf("\n");
+    test_readline();
+    test_top();
+    test_run();
+
+    for (int i = 0; i < 10000; i++) {
+        __chcore_sys_yield();
+    }
+
+    run_cmd("/lab5.bin");
+
+    for (int i = 0; i < 10000 * 5; i++) {
+        __chcore_sys_yield();
+    }
 
 }
 
-void fsm_test() {
+void fsm_test()
+{
 
-	int fsm_cap = __chcore_get_fsm_cap();
-	chcore_assert(fsm_cap >= 0);
-	fs_ipc_struct_for_shell = ipc_register_client(fsm_cap);
-	chcore_assert(fs_ipc_struct_for_shell);
-	mount_fs("/fakefs.srv", "/fakefs");	
-	printf("\nFSM ");
-	builtin_cmd("ls /");
-	printf("\nFSM ");
-	builtin_cmd("ls /fakefs");
-	printf("\nFSM ");
-	builtin_cmd("cat /fakefs/test.txt");
-	printf("\nFSM ");
-	builtin_cmd("cat /test.txt");
-	printf("\n");
+    int fsm_cap = __chcore_get_fsm_cap();
+    chcore_assert(fsm_cap >= 0);
+    fs_ipc_struct_for_shell = ipc_register_client(fsm_cap);
+    chcore_assert(fs_ipc_struct_for_shell);
+    mount_fs("/fakefs.srv", "/fakefs");
+    printf("\nFSM ");
+    builtin_cmd("ls /");
+    printf("\nFSM ");
+    builtin_cmd("ls /fakefs");
+    printf("\nFSM ");
+    builtin_cmd("cat /fakefs/test.txt");
+    printf("\nFSM ");
+    builtin_cmd("cat /test.txt");
+    printf("\n");
 
-	chcore_fsm_test();
+    chcore_fsm_test();
 
 }

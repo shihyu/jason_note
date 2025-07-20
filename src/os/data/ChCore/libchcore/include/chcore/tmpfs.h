@@ -17,23 +17,24 @@ extern "C" {
 #endif
 
 enum tmpfs_ipc_request {
-        TMPFS_IPC_REQ_TEST,
-        TMPFS_IPC_REQ_MAX,
+    TMPFS_IPC_REQ_TEST,
+    TMPFS_IPC_REQ_MAX,
 };
 
 struct tmpfs_ipc_data {
-        enum tmpfs_ipc_request request;
-        union {
-                struct {
-                        struct {
-                                int arg1;
-                                int arg2;
-                        } args;
-                        struct {
-                                int fd;
-                        } returns;
-                } test;
-        };
+    enum tmpfs_ipc_request request;
+    union {
+        struct {
+            struct {
+                int arg1;
+                int arg2;
+            } args;
+
+            struct {
+                int fd;
+            } returns;
+        } test;
+    };
 };
 
 /**
@@ -45,4 +46,5 @@ int chcore_tmpfs_test(int arg1, int arg2);
 
 #ifdef __cplusplus
 }
+
 #endif

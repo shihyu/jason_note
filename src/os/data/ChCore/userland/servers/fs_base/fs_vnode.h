@@ -23,9 +23,9 @@
 #define MAX_SERVER_ENTRY_NUM 1024
 
 enum fs_vnode_type {
-	FS_NODE_RESERVED = 0,
-	FS_NODE_REG,
-	FS_NODE_DIR
+    FS_NODE_RESERVED = 0,
+    FS_NODE_REG,
+    FS_NODE_DIR
 };
 
 /*
@@ -33,57 +33,59 @@ enum fs_vnode_type {
  */
 #define PC_HASH_SIZE 512
 struct fs_vnode {
-	unsigned long vnode_id;				/* identifier */
+    unsigned long vnode_id;             /* identifier */
 
-	enum fs_vnode_type type;		/* regular or directory */
-	int refcnt;				/* reference count */
-	size_t size;				/* file size or directory entry number */
-	struct page_cache_entity_of_inode *page_cache;
-	int pmo_cap;				/* fmap fault is handled by this */
-	void *private;
+    enum fs_vnode_type type;        /* regular or directory */
+    int refcnt;             /* reference count */
+    size_t size;                /* file size or directory entry number */
+    struct page_cache_entity_of_inode* page_cache;
+    int pmo_cap;                /* fmap fault is handled by this */
+    void* private;
 
-	struct list_head node;			/* for linked list */
+    struct list_head node;          /* for linked list */
 };
 
 /*
  * per-fd
  */
 struct server_entry {
-	/* `flags` and `offset` is assigned to each fd */
-	u64 flags;
-	unsigned long long offset;
+    /* `flags` and `offset` is assigned to each fd */
+    u64 flags;
+    unsigned long long offset;
 
-	/* Different FS may use different struct to store path, normally `char*` */
-	void *path;
+    /* Different FS may use different struct to store path, normally `char*` */
+    void* path;
 
-	/* Each vnode is binding with a disk inode */
-	struct fs_vnode *vnode;
+    /* Each vnode is binding with a disk inode */
+    struct fs_vnode* vnode;
 };
 
-extern struct server_entry *server_entrys[MAX_SERVER_ENTRY_NUM];
+extern struct server_entry* server_entrys[MAX_SERVER_ENTRY_NUM];
 
 extern void free_entry(int entry_idx);
 extern int alloc_entry();
-extern void assign_entry(struct server_entry *e, u64 f, unsigned long long o, void *p, struct fs_vnode *n);
+extern void assign_entry(struct server_entry* e, u64 f, unsigned long long o,
+                         void* p, struct fs_vnode* n);
 
 /* fs_vnode pool */
 extern struct list_head fs_vnode_list;
 
 extern void fs_vnode_init();
-extern struct fs_vnode *alloc_fs_vnode(unsigned long id, enum fs_vnode_type type,
-						size_t size, void *private);
-extern void push_fs_vnode(struct fs_vnode *n);
-extern void pop_free_fs_vnode(struct fs_vnode *n);
-extern struct fs_vnode *get_fs_vnode_by_id(unsigned long vnode_id);
+extern struct fs_vnode* alloc_fs_vnode(unsigned long id,
+                                       enum fs_vnode_type type,
+                                       size_t size, void* private);
+extern void push_fs_vnode(struct fs_vnode* n);
+extern void pop_free_fs_vnode(struct fs_vnode* n);
+extern struct fs_vnode* get_fs_vnode_by_id(unsigned long vnode_id);
 
 /* refcnt for vnode */
-static inline void inc_ref_fs_vnode(struct fs_vnode *n)
+static inline void inc_ref_fs_vnode(struct fs_vnode* n)
 {
-	n->refcnt++;
+    n->refcnt++;
 }
 
-static inline void dec_ref_fs_vnode(struct fs_vnode *n)
+static inline void dec_ref_fs_vnode(struct fs_vnode* n)
 {
-	n->refcnt--;
-	chcore_assert(n->refcnt >= 0);
+    n->refcnt--;
+    chcore_assert(n->refcnt >= 0);
 }

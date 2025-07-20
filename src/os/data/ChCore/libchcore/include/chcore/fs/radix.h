@@ -35,238 +35,272 @@ extern "C" {
 #define RADIX_LEVELS (DIV_UP(RADIX_MAX_BITS, RADIX_NODE_BITS))
 
 struct radix_node {
-	union {
-		struct radix_node *children[RADIX_NODE_SIZE];
-		void *values[RADIX_NODE_SIZE];
-	};
+    union {
+        struct radix_node* children[RADIX_NODE_SIZE];
+        void* values[RADIX_NODE_SIZE];
+    };
 };
+
 struct radix {
-	struct radix_node *root;
-	void (*value_deleter)(void *);
+    struct radix_node* root;
+    void ( * value_deleter)(void*);
 };
 
-static inline void init_radix(struct radix *radix)
+static inline void init_radix(struct radix* radix)
 {
-	/* radix->root = calloc(1, sizeof(*radix->root)); */
-	radix->root = (struct radix_node *)calloc(1, sizeof(*radix->root));
-	BUG_ON(!radix->root);
-	radix->value_deleter = NULL;
+    /* radix->root = calloc(1, sizeof(*radix->root)); */
+    radix->root = (struct radix_node*)calloc(1, sizeof( * radix->root));
+    BUG_ON(!radix->root);
+    radix->value_deleter = NULL;
 }
 
-static inline void init_radix_w_deleter(struct radix *radix,
-					void (*value_deleter)(void *))
+static inline void init_radix_w_deleter(struct radix* radix,
+                                        void ( * value_deleter)(void*))
 {
-	init_radix(radix);
-	radix->value_deleter = value_deleter;
+    init_radix(radix);
+    radix->value_deleter = value_deleter;
 }
 
-static inline struct radix_node *new_radix_node(void)
+static inline struct radix_node* new_radix_node(void)
 {
-	/* struct radix_node *n = calloc(1, sizeof(struct radix_node)); */
-	struct radix_node *n =
-		(struct radix_node *)calloc(1, sizeof(struct radix_node));
+    /* struct radix_node *n = calloc(1, sizeof(struct radix_node)); */
+    struct radix_node* n =
+        (struct radix_node*)calloc(1, sizeof(struct radix_node));
 
-	if (!n)
-		return (struct radix_node *)CHCORE_ERR_PTR(-ENOMEM);
+    if (!n) {
+        return (struct radix_node*)CHCORE_ERR_PTR(-ENOMEM);
+    }
 
-	return n;
+    return n;
 }
 
-static inline int radix_add(struct radix *radix, u64 key, void *value)
+static inline int radix_add(struct radix* radix, u64 key, void* value)
 {
-	struct radix_node *node;
-	struct radix_node *new_node;
-	u16 index[RADIX_LEVELS];
-	int i;
-	int k;
+    struct radix_node* node;
+    struct radix_node* new_node;
+    u16 index[RADIX_LEVELS];
+    int i;
+    int k;
 
-	if (!radix->root) {
-		new_node = new_radix_node();
-		if (CHCORE_IS_ERR(new_node))
-			return -ENOMEM;
-		radix->root = new_node;
-	}
-	node = radix->root;
+    if (!radix->root) {
+        new_node = new_radix_node();
 
-	/* calculate index for each level */
-	for (i = 0; i < RADIX_LEVELS; ++i) {
-		index[i] = key & RADIX_NODE_MASK;
-		key >>= RADIX_NODE_BITS;
-	}
+        if (CHCORE_IS_ERR(new_node)) {
+            return -ENOMEM;
+        }
 
-	/* the intermediate levels */
-	for (i = RADIX_LEVELS - 1; i > 0; --i) {
-		k = index[i];
-		if (!node->children[k]) {
-			new_node = new_radix_node();
-			if (CHCORE_IS_ERR(new_node))
-				return -ENOMEM;
-			node->children[k] = new_node;
-		}
-		node = node->children[k];
-	}
+        radix->root = new_node;
+    }
 
-	/* the leaf level */
-	k = index[0];
-	node->values[k] = value;
+    node = radix->root;
 
-	return 0;
+    /* calculate index for each level */
+    for (i = 0; i < RADIX_LEVELS; ++i) {
+        index[i] = key& RADIX_NODE_MASK;
+        key >>= RADIX_NODE_BITS;
+    }
+
+    /* the intermediate levels */
+    for (i = RADIX_LEVELS - 1; i > 0; --i) {
+        k = index[i];
+
+        if (!node->children[k]) {
+            new_node = new_radix_node();
+
+            if (CHCORE_IS_ERR(new_node)) {
+                return -ENOMEM;
+            }
+
+            node->children[k] = new_node;
+        }
+
+        node = node->children[k];
+    }
+
+    /* the leaf level */
+    k = index[0];
+    node->values[k] = value;
+
+    return 0;
 }
 
-static inline void *radix_get(struct radix *radix, u64 key)
+static inline void* radix_get(struct radix* radix, u64 key)
 {
-	struct radix_node *node;
-	u16 index[RADIX_LEVELS];
-	int i;
-	int k;
+    struct radix_node* node;
+    u16 index[RADIX_LEVELS];
+    int i;
+    int k;
 
-	if (!radix->root)
-		return NULL;
-	node = radix->root;
+    if (!radix->root) {
+        return NULL;
+    }
 
-	/* calculate index for each level */
-	for (i = 0; i < RADIX_LEVELS; ++i) {
-		index[i] = key & RADIX_NODE_MASK;
-		key >>= RADIX_NODE_BITS;
-	}
+    node = radix->root;
 
-	/* the intermediate levels */
-	for (i = RADIX_LEVELS - 1; i > 0; --i) {
-		k = index[i];
-		if (!node->children[k])
-			return NULL;
-		node = node->children[k];
-	}
+    /* calculate index for each level */
+    for (i = 0; i < RADIX_LEVELS; ++i) {
+        index[i] = key& RADIX_NODE_MASK;
+        key >>= RADIX_NODE_BITS;
+    }
 
-	/* the leaf level */
-	k = index[0];
-	return node->values[k];
+    /* the intermediate levels */
+    for (i = RADIX_LEVELS - 1; i > 0; --i) {
+        k = index[i];
+
+        if (!node->children[k]) {
+            return NULL;
+        }
+
+        node = node->children[k];
+    }
+
+    /* the leaf level */
+    k = index[0];
+    return node->values[k];
 }
 
 __attribute__((__unused__)) static inline int
-radix_del(struct radix *radix, u64 key, int delete_value)
+radix_del(struct radix* radix, u64 key, int delete_value)
 {
-	struct radix_node *node;
-	u16 index[RADIX_LEVELS];
-	int i;
-	int k;
+    struct radix_node* node;
+    u16 index[RADIX_LEVELS];
+    int i;
+    int k;
 
-	if (!radix->root)
-		return -1;
-	node = radix->root;
+    if (!radix->root) {
+        return -1;
+    }
 
-	/* calculate index for each level */
-	for (i = 0; i < RADIX_LEVELS; ++i) {
-		index[i] = key & RADIX_NODE_MASK;
-		key >>= RADIX_NODE_BITS;
-	}
+    node = radix->root;
 
-	/* the intermediate levels */
-	for (i = RADIX_LEVELS - 1; i > 0; --i) {
-		k = index[i];
-		if (!node->children[k])
-			return -1;
-		node = node->children[k];
-	}
+    /* calculate index for each level */
+    for (i = 0; i < RADIX_LEVELS; ++i) {
+        index[i] = key& RADIX_NODE_MASK;
+        key >>= RADIX_NODE_BITS;
+    }
 
-	/* the leaf level */
-	k = index[0];
-	if (radix->value_deleter && delete_value)
-		radix->value_deleter(node->values[k]);
-	node->values[k] = NULL;
-	return 0;
+    /* the intermediate levels */
+    for (i = RADIX_LEVELS - 1; i > 0; --i) {
+        k = index[i];
+
+        if (!node->children[k]) {
+            return -1;
+        }
+
+        node = node->children[k];
+    }
+
+    /* the leaf level */
+    k = index[0];
+
+    if (radix->value_deleter && delete_value) {
+        radix->value_deleter(node->values[k]);
+    }
+
+    node->values[k] = NULL;
+    return 0;
 }
 
-static inline void radix_free_node(struct radix_node *node, int node_level,
-				   void (*value_deleter)(void *))
+static inline void radix_free_node(struct radix_node* node, int node_level,
+                                   void ( * value_deleter)(void*))
 {
-	int i;
+    int i;
 
-	WARN_ON(!node, "should not try to free a node pointed by NULL");
+    WARN_ON(!node, "should not try to free a node pointed by NULL");
 
-	if (node_level == RADIX_LEVELS - 1) {
-		if (value_deleter) {
-			for (i = 0; i < RADIX_NODE_SIZE; i++) {
-				if (node->values[i])
-					value_deleter(node->values[i]);
-			}
-		}
-	} else {
-		for (i = 0; i < RADIX_NODE_SIZE; i++) {
-			if (node->children[i])
-				radix_free_node(node->children[i],
-						node_level + 1,
-						value_deleter);
-		}
-	}
+    if (node_level == RADIX_LEVELS - 1) {
+        if (value_deleter) {
+            for (i = 0; i < RADIX_NODE_SIZE; i++) {
+                if (node->values[i]) {
+                    value_deleter(node->values[i]);
+                }
+            }
+        }
+    } else {
+        for (i = 0; i < RADIX_NODE_SIZE; i++) {
+            if (node->children[i])
+                radix_free_node(node->children[i],
+                                node_level + 1,
+                                value_deleter);
+        }
+    }
 }
 
-static inline int radix_free(struct radix *radix)
+static inline int radix_free(struct radix* radix)
 {
-	if (!radix || !radix->root) {
-		WARN("trying to free an empty radix tree");
-		return -EINVAL;
-	}
+    if (!radix || !radix->root) {
+        WARN("trying to free an empty radix tree");
+        return -EINVAL;
+    }
 
-	// recurssively free nodes and values (if value_deleter is not NULL)
-	radix_free_node(radix->root, 0, radix->value_deleter);
+    // recurssively free nodes and values (if value_deleter is not NULL)
+    radix_free_node(radix->root, 0, radix->value_deleter);
 
-	return 0;
+    return 0;
 }
 
-typedef int (*radix_scan_cb)(void *value, void *privdata);
+typedef int ( * radix_scan_cb)(void* value, void* privdata);
 
-static inline int __radix_scan(struct radix_node *node, int node_level,
-			       u64 start, radix_scan_cb cb, void *data)
+static inline int __radix_scan(struct radix_node* node, int node_level,
+                               u64 start, radix_scan_cb cb, void* data)
 {
-	int start_i;
-	int i;
-	int err;
-	u64 mask;
-	int shift;
+    int start_i;
+    int i;
+    int err;
+    u64 mask;
+    int shift;
 
-	WARN_ON(!node, "should not try to free a node pointed by NULL");
+    WARN_ON(!node, "should not try to free a node pointed by NULL");
 
-	shift = (RADIX_LEVELS - node_level - 1) * RADIX_NODE_BITS;
-	mask = RADIX_NODE_MASK << shift;
-	start_i = (start & mask) >> shift;
+    shift = (RADIX_LEVELS - node_level - 1) * RADIX_NODE_BITS;
+    mask = RADIX_NODE_MASK << shift;
+    start_i = (start& mask) >> shift;
 
-	if (node_level == RADIX_LEVELS - 1) {
-		for (i = start_i; i < RADIX_NODE_SIZE; i++) {
-			if (!node->values[i])
-				continue;
-			err = cb(node->values[i], data);
-			if (err)
-				return err;
-		}
-		return 0;
-	}
+    if (node_level == RADIX_LEVELS - 1) {
+        for (i = start_i; i < RADIX_NODE_SIZE; i++) {
+            if (!node->values[i]) {
+                continue;
+            }
 
-	for (i = start_i; i < RADIX_NODE_SIZE; i++) {
-		if (node->children[i]) {
-			err = __radix_scan(node->children[i],
-					   node_level + 1,
-					   start,
-					   cb,
-					   data);
-			if (err)
-				return err;
-		}
-		start = 0;
-	}
+            err = cb(node->values[i], data);
 
-	return 0;
+            if (err) {
+                return err;
+            }
+        }
+
+        return 0;
+    }
+
+    for (i = start_i; i < RADIX_NODE_SIZE; i++) {
+        if (node->children[i]) {
+            err = __radix_scan(node->children[i],
+                               node_level + 1,
+                               start,
+                               cb,
+                               data);
+
+            if (err) {
+                return err;
+            }
+        }
+
+        start = 0;
+    }
+
+    return 0;
 }
 
 /**
  * Scan the radix from @start (inclusive), to the end.
  */
-static inline int radix_scan(struct radix *radix, u64 start, radix_scan_cb cb,
-			     void *cb_args)
+static inline int radix_scan(struct radix* radix, u64 start, radix_scan_cb cb,
+                             void* cb_args)
 {
-	return __radix_scan(radix->root, 0, start, cb, cb_args);
+    return __radix_scan(radix->root, 0, start, cb, cb_args);
 }
 
 #ifdef __cplusplus
 }
+
 #endif

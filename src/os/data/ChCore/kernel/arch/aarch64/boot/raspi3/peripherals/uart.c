@@ -34,53 +34,57 @@
 
 void early_uart_init(void)
 {
-        unsigned int ra;
+    unsigned int ra;
 
-        ra = early_get32(GPFSEL1);
-        ra &= ~(7 << 12);
-        ra |= 2 << 12;
-        ra &= ~(7 << 15);
-        ra |= 2 << 15;
-        early_put32(GPFSEL1, ra);
+    ra = early_get32(GPFSEL1);
+    ra &= ~(7 << 12);
+    ra |= 2 << 12;
+    ra &= ~(7 << 15);
+    ra |= 2 << 15;
+    early_put32(GPFSEL1, ra);
 
-        early_put32(GPPUD, 0);
-        delay(150);
-        early_put32(GPPUDCLK0, (1 << 14) | (1 << 15));
-        delay(150);
-        early_put32(GPPUDCLK0, 0);
+    early_put32(GPPUD, 0);
+    delay(150);
+    early_put32(GPPUDCLK0, (1 << 14) | (1 << 15));
+    delay(150);
+    early_put32(GPPUDCLK0, 0);
 
-        early_put32(AUX_ENABLES, 1);
-        early_put32(AUX_MU_IER_REG, 0);
-        early_put32(AUX_MU_CNTL_REG, 0);
-        early_put32(AUX_MU_IER_REG, 0);
-        early_put32(AUX_MU_LCR_REG, 3);
-        early_put32(AUX_MU_MCR_REG, 0);
-        early_put32(AUX_MU_BAUD_REG, 270);
+    early_put32(AUX_ENABLES, 1);
+    early_put32(AUX_MU_IER_REG, 0);
+    early_put32(AUX_MU_CNTL_REG, 0);
+    early_put32(AUX_MU_IER_REG, 0);
+    early_put32(AUX_MU_LCR_REG, 3);
+    early_put32(AUX_MU_MCR_REG, 0);
+    early_put32(AUX_MU_BAUD_REG, 270);
 
-        early_put32(AUX_MU_CNTL_REG, 3);
+    early_put32(AUX_MU_CNTL_REG, 3);
 }
 
 static unsigned int early_uart_lsr(void)
 {
-        return early_get32(AUX_MU_LSR_REG);
+    return early_get32(AUX_MU_LSR_REG);
 }
 
 static void early_uart_send(unsigned int c)
 {
-        while (1) {
-                if (early_uart_lsr() & 0x20)
-                        break;
+    while (1) {
+        if (early_uart_lsr() & 0x20) {
+            break;
         }
-        early_put32(AUX_MU_IO_REG, c);
+    }
+
+    early_put32(AUX_MU_IO_REG, c);
 }
 
-void uart_send_string(char *str)
+void uart_send_string(char* str)
 {
-        /* LAB 1 TODO 3 BEGIN */
-        early_uart_init();
-        while (str && *str) {
-                early_uart_send(*str);
-                ++str;
-        }
-        /* LAB 1 TODO 3 END */
+    /* LAB 1 TODO 3 BEGIN */
+    early_uart_init();
+
+    while (str && * str) {
+        early_uart_send( * str);
+        ++str;
+    }
+
+    /* LAB 1 TODO 3 END */
 }

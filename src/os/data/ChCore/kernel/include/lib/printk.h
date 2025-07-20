@@ -12,4 +12,4 @@
 
 #pragma once
 
-void printk(const char *fmt, ...);
+void printk(const char* fmt, ...);

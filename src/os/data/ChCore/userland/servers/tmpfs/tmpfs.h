@@ -31,42 +31,48 @@
 #include "cpio.h"
 #include "../fs_base/fs_vnode.h"
 
-extern struct inode *tmpfs_root;
-extern struct dentry *tmpfs_root_dent;
+extern struct inode* tmpfs_root;
+extern struct dentry* tmpfs_root_dent;
 extern struct id_manager fidman;
 extern struct fid_record fid_records[MAX_NR_FID_RECORDS];
 
 int init_tmpfs(void);
 
-int tfs_creat(struct inode *dir, const char *name, size_t len);
-int tfs_mkdir(struct inode *dir, const char *name, size_t len);
+int tfs_creat(struct inode* dir, const char* name, size_t len);
+int tfs_mkdir(struct inode* dir, const char* name, size_t len);
 
-int tfs_namex(struct inode **dirat, const char **name, int mkdir_p);
-int tfs_remove(struct inode *dir, const char *name, size_t len);
+int tfs_namex(struct inode** dirat, const char** name, int mkdir_p);
+int tfs_remove(struct inode* dir, const char* name, size_t len);
 
-ssize_t tfs_file_read(struct inode *inode, off_t offset, char *buff,
-		      size_t size);
-ssize_t tfs_file_write(struct inode *inode, off_t offset, const char *data,
-		       size_t size);
+ssize_t tfs_file_read(struct inode* inode, off_t offset, char* buff,
+                      size_t size);
+ssize_t tfs_file_write(struct inode* inode, off_t offset, const char* data,
+                       size_t size);
 
-int tfs_scan(struct inode *dir, unsigned int start, void *buf, void *end, int *readbytes);
-struct inode *tfs_open_path(const char *path);
+int tfs_scan(struct inode* dir, unsigned int start, void* buf, void* end,
+             int* readbytes);
+struct inode* tfs_open_path(const char* path);
 
-int tfs_load_image(const char *start);
+int tfs_load_image(const char* start);
 
-int del_inode(struct inode *inode);
+int del_inode(struct inode* inode);
 
-static inline struct inode *get_inode(struct inode *i)
+static inline struct inode* get_inode(struct inode* i)
 {
-	i->refcnt++;
-	return i;
+    i->refcnt++;
+    return i;
 }
-static inline int put_inode(struct inode *i) {
-	i->refcnt--;
-	chcore_assert(i->refcnt >= 0);
-	if (!i->refcnt)
-		return del_inode(i);
-	return 0;
+
+static inline int put_inode(struct inode* i)
+{
+    i->refcnt--;
+    chcore_assert(i->refcnt >= 0);
+
+    if (!i->refcnt) {
+        return del_inode(i);
+    }
+
+    return 0;
 }
 
 

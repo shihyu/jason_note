@@ -76,90 +76,95 @@
 /* table format */
 // clang-format off
 typedef union {
-        struct {
-                u64 is_valid : 1,
-                    is_table : 1,
-                    ignored1 : 10,
-                    next_table_addr : 36,
-                    reserved : 4,
-                    ignored2 : 7,
-                    PXNTable : 1, // Privileged Execute-never for next level
-                    XNTable : 1, // Execute-never for next level
-                    APTable : 2, // Access permissions for next level
-                    NSTable : 1;
-        } table;
-        struct {
-                u64 is_valid : 1,
-                    is_table : 1,
-                    attr_index : 3, // Memory attributes index
-                    NS : 1, // Non-secure
-                    AP : 2, // Data access permissions
-                    SH : 2, // Shareability
-                    AF : 1, // Accesss flag
-                    nG : 1, // Not global bit
-                    reserved1 : 4,
-                    nT : 1,
-                    reserved2 : 13,
-                    pfn : 18,
-                    reserved3 : 2,
-                    GP : 1,
-                    reserved4 : 1,
-                    DBM : 1, // Dirty bit modifier
-                    Contiguous : 1,
-                    PXN : 1, // Privileged execute-never
-                    UXN : 1, // Execute never
-                    soft_reserved : 4,
-                    PBHA : 4; // Page based hardware attributes
-        } l1_block;
-        struct {
-                u64 is_valid : 1,
-                    is_table : 1,
-                    attr_index : 3, // Memory attributes index
-                    NS : 1, // Non-secure
-                    AP : 2, // Data access permissions
-                    SH : 2, // Shareability
-                    AF : 1, // Accesss flag
-                    nG : 1, // Not global bit
-                    reserved1 : 4,
-                    nT : 1,
-                    reserved2 : 4,
-                    pfn : 27,
-                    reserved3 : 2,
-                    GP : 1,
-                    reserved4 : 1,
-                    DBM : 1, // Dirty bit modifier
-                    Contiguous : 1,
-                    PXN : 1, // Privileged execute-never
-                    UXN : 1, // Execute never
-                    soft_reserved : 4,
-                    PBHA : 4; // Page based hardware attributes
-        } l2_block;
-        struct {
-                u64 is_valid : 1,
-                    is_page : 1,
-                    attr_index : 3, // Memory attributes index
-                    NS : 1, // Non-secure
-                    AP : 2, // Data access permissions
-                    SH : 2, // Shareability
-                    AF : 1, // Accesss flag
-                    nG : 1, // Not global bit
-                    pfn : 36,
-                    reserved : 3,
-                    DBM : 1, // Dirty bit modifier
-                    Contiguous : 1,
-                    PXN : 1, // Privileged execute-never
-                    UXN : 1, // Execute never
-                    soft_reserved : 4,
-                    PBHA : 4, // Page based hardware attributes
-                    ignored : 1;
-        } l3_page;
-        u64 pte;
+    struct {
+        u64 is_valid : 1,
+            is_table : 1,
+            ignored1 : 10,
+            next_table_addr : 36,
+            reserved : 4,
+            ignored2 : 7,
+            PXNTable : 1, // Privileged Execute-never for next level
+            XNTable : 1, // Execute-never for next level
+            APTable : 2, // Access permissions for next level
+            NSTable : 1;
+    } table;
+
+    struct {
+        u64 is_valid : 1,
+            is_table : 1,
+            attr_index : 3, // Memory attributes index
+            NS : 1, // Non-secure
+            AP : 2, // Data access permissions
+            SH : 2, // Shareability
+            AF : 1, // Accesss flag
+            nG : 1, // Not global bit
+            reserved1 : 4,
+            nT : 1,
+            reserved2 : 13,
+            pfn : 18,
+            reserved3 : 2,
+            GP : 1,
+            reserved4 : 1,
+            DBM : 1, // Dirty bit modifier
+            Contiguous : 1,
+            PXN : 1, // Privileged execute-never
+            UXN : 1, // Execute never
+            soft_reserved : 4,
+            PBHA : 4; // Page based hardware attributes
+    } l1_block;
+
+    struct {
+        u64 is_valid : 1,
+            is_table : 1,
+            attr_index : 3, // Memory attributes index
+            NS : 1, // Non-secure
+            AP : 2, // Data access permissions
+            SH : 2, // Shareability
+            AF : 1, // Accesss flag
+            nG : 1, // Not global bit
+            reserved1 : 4,
+            nT : 1,
+            reserved2 : 4,
+            pfn : 27,
+            reserved3 : 2,
+            GP : 1,
+            reserved4 : 1,
+            DBM : 1, // Dirty bit modifier
+            Contiguous : 1,
+            PXN : 1, // Privileged execute-never
+            UXN : 1, // Execute never
+            soft_reserved : 4,
+            PBHA : 4; // Page based hardware attributes
+    } l2_block;
+
+    struct {
+        u64 is_valid : 1,
+            is_page : 1,
+            attr_index : 3, // Memory attributes index
+            NS : 1, // Non-secure
+            AP : 2, // Data access permissions
+            SH : 2, // Shareability
+            AF : 1, // Accesss flag
+            nG : 1, // Not global bit
+            pfn : 36,
+            reserved : 3,
+            DBM : 1, // Dirty bit modifier
+            Contiguous : 1,
+            PXN : 1, // Privileged execute-never
+            UXN : 1, // Execute never
+            soft_reserved : 4,
+            PBHA : 4, // Page based hardware attributes
+            ignored : 1;
+    } l3_page;
+
+    u64 pte;
 } pte_t;
+
 // clang-format on
 
 #define PTE_DESCRIPTOR_INVALID (0)
 
 /* page_table_page type */
 typedef struct {
-        pte_t ent[PTP_ENTRIES];
+    pte_t ent[PTP_ENTRIES];
 } ptp_t;
