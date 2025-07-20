@@ -325,17 +325,111 @@ fn process_large_data(data: &amp;Vec&lt;u8&gt;) -&gt; usize {
 <li><strong>返回值</strong>：從函數返回</li>
 <li><strong>複雜的所有權關係</strong></li>
 </ol>
+<h2 id="-特殊情況函數參數和返回值"><a class="header" href="#-特殊情況函數參數和返回值">🚨 特殊情況：函數參數和返回值</a></h2>
+<h3 id="-不寫生命週期會編譯失敗的情況"><a class="header" href="#-不寫生命週期會編譯失敗的情況">❌ 不寫生命週期會編譯失敗的情況</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 這樣寫會編譯錯誤！
+fn longest(x: &amp;str, y: &amp;str) -&gt; &amp;str {
+    if x.len() &gt; y.len() {
+        x
+    } else {
+        y
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>編譯器錯誤訊息</strong>：</p>
+<pre><code>error[E0106]: missing lifetime specifier
+ --&gt; src/lib.rs:1:37
+  |
+1 | fn longest(x: &amp;str, y: &amp;str) -&gt; &amp;str {
+  |               ----     ----     ^ expected named lifetime parameter
+  |
+  = help: this function's return type contains a borrowed value, 
+          but the signature does not say whether it is borrowed from `x` or `y`
+</code></pre>
+<h3 id="-編譯器的困惑"><a class="header" href="#-編譯器的困惑">🤔 編譯器的困惑</a></h3>
+<p>編譯器不知道：</p>
+<ul>
+<li>返回的 <code>&amp;str</code> 是來自 <code>x</code> 還是 <code>y</code>？</li>
+<li>如果來自 <code>x</code>，那 <code>x</code> 要活多久？</li>
+<li>如果來自 <code>y</code>，那 <code>y</code> 要活多久？</li>
+<li>我該如何檢查生命週期安全？😵</li>
+</ul>
+<h3 id="-正確的寫法"><a class="header" href="#-正確的寫法">✅ 正確的寫法</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn longest&lt;'a&gt;(x: &amp;'a str, y: &amp;'a str) -&gt; &amp;'a str {
+    if x.len() &gt; y.len() {
+        x
+    } else {
+        y
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>編譯器現在理解了</strong>：</p>
+<ul>
+<li><code>x</code> 和 <code>y</code> 都有相同的生命週期 <code>'a</code></li>
+<li>返回值也是 <code>'a</code> 生命週期</li>
+<li>返回的引用不會比 <code>x</code> 或 <code>y</code> 活得更久 ✅</li>
+</ul>
+<h3 id="-實際使用範例"><a class="header" href="#-實際使用範例">🎯 實際使用範例</a></h3>
+<pre><pre class="playground"><code class="language-rust">fn main() {
+    let string1 = "long string is long";
+    
+    {
+        let string2 = "xyz";
+        let result = longest(string1, string2);
+        println!("The longest string is {}", result);
+        // result 在這裡還可以使用，因為 string1 和 string2 都還活著
+    }
+    // string2 死了，但沒關係，我們已經用完 result 了
+}</code></pre></pre>
+<h3 id="-不想寫生命週期的替代方案"><a class="header" href="#-不想寫生命週期的替代方案">💡 不想寫生命週期的替代方案</a></h3>
+<h4 id="方案-1返回擁有權"><a class="header" href="#方案-1返回擁有權">方案 1：返回擁有權</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn longest_owned(x: &amp;str, y: &amp;str) -&gt; String {
+    if x.len() &gt; y.len() {
+        x.to_string()  // 創建新的 String
+    } else {
+        y.to_string()  // 創建新的 String
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="方案-2返回索引或布林值"><a class="header" href="#方案-2返回索引或布林值">方案 2：返回索引或布林值</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn longest_index(x: &amp;str, y: &amp;str) -&gt; bool {
+    x.len() &gt; y.len()  // 返回 true 表示 x 比較長
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="方案-3使用靜態字串"><a class="header" href="#方案-3使用靜態字串">方案 3：使用靜態字串</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn longest_static() -&gt; &amp;'static str {
+    "這是一個靜態字串"  // 'static 生命週期，活到程式結束
+}
+<span class="boring">}</span></code></pre></pre>
 <h2 id="-記憶口訣"><a class="header" href="#-記憶口訣">🧠 記憶口訣</a></h2>
+<h3 id="生命週期必須寫的情況"><a class="header" href="#生命週期必須寫的情況">生命週期必須寫的情況</a></h3>
+<ul>
+<li><strong>函數接收引用 + 返回引用</strong> → 必須寫生命週期標註 ⚠️</li>
+<li><strong>只接收引用，不返回引用</strong> → 不需要寫 ✅</li>
+<li><strong>返回擁有權</strong> → 不需要寫 ✅</li>
+</ul>
 <h3 id="簡單判斷法"><a class="header" href="#簡單判斷法">簡單判斷法</a></h3>
 <ul>
-<li><strong>如果是 <code>&amp;</code> 開頭</strong> → 需要生命週期 ⏰</li>
+<li><strong>如果是 <code>&amp;</code> 開頭</strong> → 可能需要生命週期 ⏰</li>
 <li><strong>如果沒有 <code>&amp;</code></strong> → 不需要生命週期 ✅</li>
+<li><strong>函數簽名有借用進也有借用出</strong> → 一定需要生命週期 🚨</li>
 </ul>
 <h3 id="實用建議"><a class="header" href="#實用建議">實用建議</a></h3>
 <ol>
 <li><strong>初學者策略</strong>：多用擁有權，少用借用</li>
 <li><strong>進階優化</strong>：理解後再使用借用提升效能</li>
 <li><strong>記住原則</strong>：編譯器是你的朋友，會阻止記憶體錯誤</li>
+<li><strong>函數設計</strong>：如果可能，優先返回擁有權而不是借用</li>
 </ol>
 <h2 id="-總結"><a class="header" href="#-總結">📝 總結</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>概念</th><th>特徵</th><th>生命週期</th><th>使用場景</th></tr></thead><tbody>
