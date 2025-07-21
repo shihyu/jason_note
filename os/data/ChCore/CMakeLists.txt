@@ -15,10 +15,35 @@ if(CHCORE_VERBOSE_BUILD)
     set(CMAKE_VERBOSE_MAKEFILE ON)
 endif()
 
+# ============================================================================
+# Compiler Optimization Settings - Set to -O0 (No Optimization)
+# ============================================================================
+set(CMAKE_C_FLAGS_DEBUG "-g -O0")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+set(CMAKE_C_FLAGS_RELEASE "-O0")
+set(CMAKE_CXX_FLAGS_RELEASE "-O0")
+set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g -O0")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O0")
+set(CMAKE_C_FLAGS_MINSIZEREL "-O0")
+set(CMAKE_CXX_FLAGS_MINSIZEREL "-O0")
+
+# Force debug build type if not specified
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+
+# Add -O0 to common args that will be passed to all subprojects
 set(_common_args
     -DCMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}
     -DCHCORE_PROJECT_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-    -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE})
+    -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE}
+    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DCMAKE_C_FLAGS_DEBUG=-g\ -O0
+    -DCMAKE_CXX_FLAGS_DEBUG=-g\ -O0
+    -DCMAKE_C_FLAGS_RELEASE=-O0
+    -DCMAKE_CXX_FLAGS_RELEASE=-O0
+    -DCMAKE_C_FLAGS_RELWITHDEBINFO=-g\ -O0
+    -DCMAKE_CXX_FLAGS_RELWITHDEBINFO=-g\ -O0)
 
 # Construct cache args list for subprojects (kernel, libchcore, etc)
 macro(chcore_config _config_name _config_type _default _description)
@@ -134,3 +159,13 @@ add_custom_target(
     COMMAND ${CMAKE_COMMAND} --build . --target kernel-clean
     COMMAND ${CMAKE_COMMAND} --build . --target userland-clean
     COMMAND ${CMAKE_COMMAND} --build . --target libchcore-clean)
+
+# ============================================================================
+# Debug Information
+# ============================================================================
+message(STATUS "=== ChCore Build Configuration ===")
+message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "C Flags: ${CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE}}")
+message(STATUS "CXX Flags: ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}")
+message(STATUS "Optimization: Disabled (-O0)")
+message(STATUS "====================================")
