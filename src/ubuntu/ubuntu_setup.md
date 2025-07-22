@@ -1,8 +1,15 @@
+# Ubuntu 系統設定與開發環境
 
+## 目錄
+- [開發工具安裝](#開發工具安裝)
+- [系統套件管理](#系統套件管理)
+- [系統設定](#系統設定)
+- [開發環境配置](#開發環境配置)
+- [進階設定](#進階設定)
 
-# Ubuntu
+## 開發工具安裝
 
-### 開發環境安裝
+### 常用開發工具 Git Repositories
 
 ```sh
 git clone https://github.com/clvv/fasd
@@ -15,13 +22,15 @@ git clone https://github.com/ggreer/the_silver_searcher
 git clone https://github.com/universal-ctags/ctags
 ```
 
+## 系統套件管理
+
 ### 選擇套件來源
 
 ```sh
 sudo /usr/bin/software-properties-gtk
 ```
 
-### ubuntu 22.04 package
+### Ubuntu 22.04 套件安裝
 
 ```sh
 sudo apt-get install autoconf automake linux-headers-`uname -r` \
@@ -46,7 +55,7 @@ sudo apt-get install autoconf automake linux-headers-`uname -r` \
  libxpm-dev libxt-dev gnome-control-center gettext libtool libtool-bin cmake g++ pkg-config unzip xsel
 ```
 
-##  ubuntu 24.04 package
+### Ubuntu 24.04 套件安裝
 
 ```sh
 sudo apt-get install autoconf automake linux-headers-`uname -r` \
@@ -55,14 +64,15 @@ terminator universal-ctags cscope htop libfuse2 ghp-import libpcre3-dev libpcre2
 
 ```
 
-## How to make Balena Etcher work in Ubuntu 24.04?
+### Balena Etcher 在 Ubuntu 24.04 的修正
 ```sh
 sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 ```
 
 
 
-## foliate 支持.epub，.mobi，.azw和.azw3文件。 它不支持PDF文件。
+### 電子書閱讀器 Foliate
+閱讀器支援 .epub、.mobi、.azw 和 .azw3 格式，不支援 PDF 檔案。
 
 ```sh
 sudo add-apt-repository ppa:apandada1/foliate
@@ -70,7 +80,10 @@ sudo apt update
 sudo apt install foliate
 ```
 
-### ubuntu 有線連線不見（網路圖示不見）解決方法
+## 系統設定
+
+### 網路連線修復
+解決有線連線不見或網路圖示消失的問題：
 
 ```sh
 sudo apt-get install gnome-control-center
@@ -82,7 +95,7 @@ sudo gedit /etc/NetworkManager/NetworkManager.conf
 sudo service network-manager restart
 ```
 
-### gnome-open
+### 檔案開啟工具設定
 
 ```sh
 sudo ln -s /usr/bin/xdg-open ~/.mybin/o
@@ -90,7 +103,8 @@ sudo ln -s /usr/bin/xdg-open ~/.mybin/o
 
 
 
-### 將 /tmp 設到 RamDisk (tmpfs) 的方法
+### RamDisk 設定
+將 /tmp 目錄設置到記憶體中以提升效能：
 
 ```sh
 基本上只要打以下指令，就能將 /tmp 綁定到 /dev/shm
@@ -128,7 +142,7 @@ sudo ln -s ../init.d/ramtmp.sh S50ramtmp.sh
 
 
 
-### im-config  新酷音
+### 中文輸入法設定
 
 ```sh
 sudo apt-get install fcitx-table-boshiamy (嘸蝦米）
@@ -148,7 +162,9 @@ im-config
 在有可輸入中文的框中，按Ctrl+Space，然後用Ctrl+Shift選輸入法輸入，預設的簡繁轉換為Ctrl+Shift+F
 ```
 
-### Gitbook 安裝
+## 開發環境配置
+
+### GitBook 安裝
 
 ```sh
 sudo apt-get update
@@ -158,7 +174,7 @@ sudo apt-get install npm
 sudo npm install gitbook -g
 ```
 
-### node 安裝
+### Node.js 安裝
 
 ```sh
 https://nodejs.org/en/  
@@ -169,7 +185,7 @@ export PATH=$N_PREFIX/bin:$PATH
 
 
 
-### 多個 SSH Key 對應多個 Github 帳號
+### GitHub 多帳號 SSH 設定
 
 ```sh
 $ cd ~/.ssh
@@ -200,7 +216,7 @@ github account 是github帳號 ex : jasonblog , ccccjason , shihyu
 
 
 
-## Rust
+### Rust 程式語言安裝
 
 ```sh
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -210,7 +226,7 @@ source $HOME/.cargo/env
 rustup update
 ```
 
-## cmake Setup
+### CMake 編譯工具安裝
 
 ```sh
 wget https://cmake.org/files/v3.26/cmake-3.26.0.tar.gz
@@ -222,7 +238,9 @@ export PATH="$HOME/.mybin/cmake/bin:$PATH"
 
 
 
-## 新增虛擬記憶體(swap)
+## 進階設定
+
+### 虛擬記憶體 (Swap) 設定
 
 
 
@@ -269,7 +287,7 @@ export PATH="$HOME/.mybin/cmake/bin:$PATH"
 
 
 
-## 改時區
+### 時區設定
 
 > ＃ **tzselect**
 > Please identify a location so that time zone rules can be set correctly.
@@ -353,7 +371,7 @@ export PATH="$HOME/.mybin/cmake/bin:$PATH"
 
 
 
-# AdGuard VPN
+### AdGuard VPN 安裝與設定
 
 Linux
 
