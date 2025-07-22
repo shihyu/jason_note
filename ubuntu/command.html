@@ -178,26 +178,55 @@
 
                 <div id="content" class="content">
                     <main>
-                        <pre><code class="language-sh">find . -type f -size +10M  ! -name '*.cpp' ! -name '*.c' ! -name '*.rs' ! -name '*.java'
+                        <h1 id="常用指令"><a class="header" href="#常用指令">常用指令</a></h1>
+<h2 id="檔案管理"><a class="header" href="#檔案管理">檔案管理</a></h2>
+<h3 id="查找大檔案"><a class="header" href="#查找大檔案">查找大檔案</a></h3>
+<pre><code class="language-sh">find . -type f -size +10M  ! -name '*.cpp' ! -name '*.c' ! -name '*.rs' ! -name '*.java'
 </code></pre>
+<h3 id="清理非代碼檔案"><a class="header" href="#清理非代碼檔案">清理非代碼檔案</a></h3>
 <pre><code class="language-sh">find . -not -path '*/\.git/*' -not -path '*readme*' -type f    ! -name '*.cpp' ! -name '*.c' ! -name '*.rs' ! -name '*.java' ! -name '*.go' ! -name '*.cc' ! -name '*.h' ! -name '*.kt' ! -name '*.py'  ! -name '*.sh'  ! -name '*.asm' ! -name '*.pl' ! -name '*.sed'  ! -name '*.hpp'  ! -name '*.cxx' ! -name '*makefile*'  ! -name '*.json' -exec rm {} \;
 </code></pre>
-<ul>
-<li>https://github.com/dutchcoders/transfer.sh</li>
-</ul>
-<pre><code class="language-sh">transfer(){ if [ $# -eq 0 ];then echo "No arguments specified.\nUsage:\n transfer &lt;file|directory&gt;\n ... | transfer &lt;file_name&gt;"&gt;&amp;2;return 1;fi;if tty -s;then file="$1";file_name=$(basename "$file");if [ ! -e "$file" ];then echo "$file: No such file or directory"&gt;&amp;2;return 1;fi;if [ -d "$file" ];then file_name="$file_name.zip" ,;(cd "$file"&amp;&amp;zip -r -q - .)|curl --progress-bar --upload-file "-" "https://transfer.sh/$file_name"|tee /dev/null,;else cat "$file"|curl --progress-bar --upload-file "-" "https://transfer.sh/$file_name"|tee /dev/null;fi;else file_name=$1;curl --progress-bar --upload-file "-" "https://transfer.sh/$file_name"|tee /dev/null;fi;}
-</code></pre>
-<pre><code class="language-sh"># Upload using cURL
-$ curl --upload-file ./hello.txt https://transfer.sh/hello.txt https://transfer.sh/wPbvjO/hello.txt
-
-# Using the shell function
-$ transfer hello.txt
-##################################################### 100.0% https://transfer.sh/zmlFh3/hello.txt
-
-# Upload from web
-Drag your files here, or click to browse.
-</code></pre>
+<h3 id="查找超過-1mb-的檔案"><a class="header" href="#查找超過-1mb-的檔案">查找超過 1MB 的檔案</a></h3>
 <pre><code class="language-sh">find . -type f -not -path '*/\.git/*' -size +1M
+</code></pre>
+<h2 id="檔案傳輸工具"><a class="header" href="#檔案傳輸工具">檔案傳輸工具</a></h2>
+<h3 id="transfersh"><a class="header" href="#transfersh">Transfer.sh</a></h3>
+<p>使用 <a href="https://github.com/dutchcoders/transfer.sh">transfer.sh</a> 快速分享檔案</p>
+<h4 id="安裝-transfer-函數"><a class="header" href="#安裝-transfer-函數">安裝 transfer 函數</a></h4>
+<pre><code class="language-sh">transfer(){ 
+    if [ $# -eq 0 ];then 
+        echo "No arguments specified.\nUsage:\n transfer &lt;file|directory&gt;\n ... | transfer &lt;file_name&gt;"&gt;&amp;2
+        return 1
+    fi
+    if tty -s;then 
+        file="$1"
+        file_name=$(basename "$file")
+        if [ ! -e "$file" ];then 
+            echo "$file: No such file or directory"&gt;&amp;2
+            return 1
+        fi
+        if [ -d "$file" ];then 
+            file_name="$file_name.zip"
+            (cd "$file"&amp;&amp;zip -r -q - .)|curl --progress-bar --upload-file "-" "https://transfer.sh/$file_name"|tee /dev/null
+        else 
+            cat "$file"|curl --progress-bar --upload-file "-" "https://transfer.sh/$file_name"|tee /dev/null
+        fi
+    else 
+        file_name=$1
+        curl --progress-bar --upload-file "-" "https://transfer.sh/$file_name"|tee /dev/null
+    fi
+}
+</code></pre>
+<h4 id="使用範例"><a class="header" href="#使用範例">使用範例</a></h4>
+<pre><code class="language-sh"># 使用 cURL 直接上傳
+curl --upload-file ./hello.txt https://transfer.sh/hello.txt
+
+# 使用 transfer 函數
+transfer hello.txt
+# 輸出: ##################################################### 100.0% https://transfer.sh/zmlFh3/hello.txt
+
+# 網頁上傳
+# 將檔案拖拽到 transfer.sh 網站或點擊選擇檔案
 </code></pre>
 
                     </main>
