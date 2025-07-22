@@ -116,7 +116,7 @@
     - [Rust 所有權系統 - 生活化詳解](rust/rust_ownership_guide.md)
     - [Rust 所有權完整指南 - 從基礎到精通](rust/rust_ownership_complete_guide.md)
     - [Rust 記憶體配置指南：Stack vs Heap](rust/rust_memory_guide.md)
-    - [Rust 記憶體配置指南：Stack vs Heap](rust/rust_wrappers_guide.md)
+    - [Rust 包裝類型白話指南📦](rust/rust_wrappers_guide.md)
 - [Go](go/go.md)
     - [Golang  Note](go/note.md)
     - [pytago](go/pytago.md)
