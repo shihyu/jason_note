@@ -26,7 +26,7 @@ def main():
     
     # Rust fibonacci
     start = time.time()
-    rust_fib = rust_python_example.fibonacci(100)
+    rust_fib = rust_python_example.fibonacci(35)
     rust_time = time.time() - start
     print(f"Rust fibonacci(35) = {rust_fib}, time: {rust_time:.4f}s")
     
@@ -37,7 +37,7 @@ def main():
         return python_fibonacci(n-1) + python_fibonacci(n-2)
     
     start = time.time()
-    python_fib = python_fibonacci(100)
+    python_fib = python_fibonacci(35)
     python_time = time.time() - start
     print(f"Python fibonacci(35) = {python_fib}, time: {python_time:.4f}s")
     
