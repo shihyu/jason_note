@@ -274,6 +274,8 @@
 - [CryptoTrade](cryptotrade/cryptotrade.md)
     - [Binance](cryptotrade/binance/binance.md)
     - [如何將OCO訂單發送到Binance](cryptotrade/binance/oco.md)
+- [CV](cv/cv.md)
+    - [Supervision 電腦視覺套件完整指南](cv/supervision.md)
 - [Git](git/git.md)
     - [git-remove-commited-files](git/git-remove-commited-files.md)
     - [Git 常用](git/cheat-sheet.md)
