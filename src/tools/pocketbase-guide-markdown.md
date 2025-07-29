@@ -360,8 +360,11 @@ pb_data/
 
 PocketBase 的最大優勢就是**極度簡單**，非常適合快速開發和部署！
 
+---
 
---- 
+## 🔬 測試範例
+
+### Python 測試腳本
 
 ```python
 from pocketbase import PocketBase
@@ -412,9 +415,9 @@ else:
         print("用戶認證成功:", user_auth.token)
     except Exception as e:
         print(f"用戶認證失敗: {e}")
-
 ```
 
+### Shell 腳本測試
 
 ```shell
 #!/bin/bash
@@ -458,6 +461,7 @@ curl -s -X GET "http://202.182.118.167:8090/api/collections/users/records" \
   -H "Authorization: Bearer $TOKEN" | jq '.'
 ```
 
+### 股票數據操作腳本
 
 ```shell
 #!/bin/bash
@@ -560,5 +564,4 @@ echo "- 集合已創建"
 echo "- 3筆股票數據已寫入"
 echo "- 數據已顯示"
 echo "- CSV已導出"
-
 ```
