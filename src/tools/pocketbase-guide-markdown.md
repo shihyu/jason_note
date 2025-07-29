@@ -414,3 +414,46 @@ else:
         print(f"用戶認證失敗: {e}")
 
 ```
+
+
+```shell
+#!/bin/bash
+
+# 獲取 token
+TOKEN=$(curl -s -X POST "http://202.182.118.167:8090/api/admins/auth-with-password" \
+  -H "Content-Type: application/json" \
+  -d '{"identity":"xxxxxxxxxx@gmail.com","password":"2lxxx"}' | jq -r '.token')
+
+echo "Token: $TOKEN"
+
+
+echo "=== 所有 Collections ==="
+COLLECTIONS=$(curl -s -X GET "http://202.182.118.167:8090/api/collections" \
+  -H "Authorization: Bearer $TOKEN")
+
+echo "$COLLECTIONS" | jq '.items[] | {
+  name: .name,
+  type: .type,
+  id: .id,
+  created: .created,
+  schema_fields: [.schema[] | .name]
+}'
+
+# 創建測試用戶
+echo "=== 創建用戶 ==="
+curl -X POST "http://202.182.118.167:8090/api/collections/users/records" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "username": "john_doe_tt",
+    "email": "john.doeTT@example.com",
+    "password": "securepass1235",
+    "passwordConfirm": "securepass1235",
+    "name": "John Doe TT"
+  }' | jq '.'
+
+# 查看所有用戶
+echo "=== 查看所有用戶 ==="
+curl -s -X GET "http://202.182.118.167:8090/api/collections/users/records" \
+  -H "Authorization: Bearer $TOKEN" | jq '.'
+```
