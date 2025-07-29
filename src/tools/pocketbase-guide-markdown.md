@@ -565,3 +565,129 @@ echo "- 3筆股票數據已寫入"
 echo "- 數據已顯示"
 echo "- CSV已導出"
 ```
+
+
+```bash
+#!/bin/bash
+
+# 股票買賣超資料腳本
+TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTUwMTA1NzgsImlkIjoiMnloYjhsd2tsZ3k0Zzk0IiwidHlwZSI6ImFkbWluIn0.rPi3xend3dCrHzDIpG86uDwsZ4eGXrNb4SsK8poDaRw"
+BASE_URL="http://202.182.118.167:8090"
+
+echo "=== 股票券商買賣超資料 ==="
+
+# 1. 建立集合
+echo "1. 創建集合 broker_trades..."
+curl -X POST "$BASE_URL/api/collections" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "name": "broker_trades",
+    "type": "base",
+    "schema": [
+      {"name": "symbol", "type": "text", "required": true},
+      {"name": "date", "type": "date", "required": true},
+      {"name": "type", "type": "text", "required": true},
+      {"name": "broker", "type": "text", "required": true},
+      {"name": "volume", "type": "number", "required": true},
+      {"name": "avg_buy", "type": "number", "required": true},
+      {"name": "avg_sell", "type": "number", "required": true}
+    ]
+  }' > /dev/null 2>&1
+echo "✓ 集合創建完成"
+
+# 資料共用參數
+SYMBOL="2330"
+DATE="2025-07-29"
+
+# 2. 寫入買超 Top15
+echo "2. 寫入買超 Top15..."
+declare -a BUYERS=(
+"新加坡商瑞銀,1337,1140.32,1140.55"
+"美商高盛,1328,1136.23,1133.81"
+"美林,1142,1134.32,1134.55"
+"富邦-台北,1027,1137.64,1133.18"
+"凱基-台北,593,1134.65,1132.22"
+"花旗環球,311,1135.53,1137.82"
+"港商麥格理,166,1136.74,1136.80"
+"永豐金,128,1135.34,1134.11"
+"永豐金-中正,61,1135.74,1130.32"
+"華南永昌-岡山,58,1134.33,1130.00"
+"台中銀,56,1130.10,1132.78"
+"凱基-松山,50,1136.30,1134.96"
+"第一金-彰化,44,1130.46,1137.09"
+"香港上海匯豐,33,1135.15,1135.60"
+"元大-天母,33,1132.91,1133.75"
+)
+
+for line in "${BUYERS[@]}"; do
+  IFS=',' read -r BROKER VOLUME BUY SELL <<< "$line"
+  curl -s -X POST "$BASE_URL/api/collections/broker_trades/records" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $TOKEN" \
+    -d "{
+      \"symbol\": \"$SYMBOL\",
+      \"date\": \"$DATE\",
+      \"type\": \"buy\",
+      \"broker\": \"$BROKER\",
+      \"volume\": $VOLUME,
+      \"avg_buy\": $BUY,
+      \"avg_sell\": $SELL
+    }" > /dev/null
+done
+
+# 3. 寫入賣超 Top15
+echo "3. 寫入賣超 Top15..."
+declare -a SELLERS=(
+"摩根士丹利,1751,1137.06,1132.54"
+"摩根大通,1533,1137.90,1136.03"
+"富邦-南京,657,1131.71,1139.32"
+"富邦,403,1133.88,1134.93"
+"元大,258,1133.46,1134.04"
+"大和國泰,238,1130.00,1141.76"
+"港商野村,222,1134.49,1136.85"
+"國泰,187,1134.92,1134.45"
+"元富,113,1133.70,1134.56"
+"致和,99,1131.23,1144.90"
+"兆豐-三民,96,1138.28,1129.90"
+"凱基,88,1137.39,1131.14"
+"中國信託,85,1133.87,1131.53"
+"第一金,79,1134.46,1130.28"
+"第一金-新興,78,1136.50,1130.34"
+)
+
+for line in "${SELLERS[@]}"; do
+  IFS=',' read -r BROKER VOLUME BUY SELL <<< "$line"
+  curl -s -X POST "$BASE_URL/api/collections/broker_trades/records" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $TOKEN" \
+    -d "{
+      \"symbol\": \"$SYMBOL\",
+      \"date\": \"$DATE\",
+      \"type\": \"sell\",
+      \"broker\": \"$BROKER\",
+      \"volume\": $VOLUME,
+      \"avg_buy\": $BUY,
+      \"avg_sell\": $SELL
+    }" > /dev/null
+done
+
+echo "✓ 資料寫入完成"
+
+# 4. 讀取資料
+echo "4. 顯示資料..."
+curl -s "$BASE_URL/api/collections/broker_trades/records" \
+  -H "Authorization: Bearer $TOKEN" | \
+  jq '.items[] | {symbol, date, type, broker, volume, avg_buy, avg_sell}'
+
+# 5. 匯出CSV
+echo "5. 導出 CSV..."
+echo "symbol,date,type,broker,volume,avg_buy,avg_sell" > broker_trades.csv
+curl -s "$BASE_URL/api/collections/broker_trades/records" \
+  -H "Authorization: Bearer $TOKEN" | \
+  jq -r '.items[] | [.symbol, .date, .type, .broker, .volume, .avg_buy, .avg_sell] | @csv' >> broker_trades.csv
+
+echo "✓ 資料已導出 broker_trades.csv"
+echo ""
+echo "=== 完成 ==="
+```
