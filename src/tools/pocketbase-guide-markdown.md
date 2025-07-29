@@ -457,3 +457,108 @@ echo "=== 查看所有用戶 ==="
 curl -s -X GET "http://202.182.118.167:8090/api/collections/users/records" \
   -H "Authorization: Bearer $TOKEN" | jq '.'
 ```
+
+
+```shell
+#!/bin/bash
+
+# 簡單股票數據腳本
+TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTUwMTA1NzgsImlkIjoiMnloYjhsd2tsZ3k0Zzk0IiwidHlwZSI6ImFkbWluIn0.rPi3xend3dCrHzDIpG86uDwsZ4eGXrNb4SsK8poDaRw"
+BASE_URL="http://202.182.118.167:8090"
+
+echo "=== 股票數據操作 ==="
+
+# 1. 創建股票數據集合
+echo "1. 創建股票集合..."
+curl -X POST "$BASE_URL/api/collections" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "name": "stocks",
+    "type": "base",
+    "schema": [
+      {"name": "symbol", "type": "text", "required": true},
+      {"name": "name", "type": "text"},
+      {"name": "date", "type": "date", "required": true},
+      {"name": "open", "type": "number", "required": true},
+      {"name": "high", "type": "number", "required": true},
+      {"name": "low", "type": "number", "required": true},
+      {"name": "close", "type": "number", "required": true},
+      {"name": "volume", "type": "number", "required": true}
+    ]
+  }' > /dev/null 2>&1
+
+echo "✓ 集合創建完成"
+
+# 2. 寫入股票數據
+echo "2. 寫入股票數據..."
+
+# 台積電
+curl -s -X POST "$BASE_URL/api/collections/stocks/records" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "symbol": "2330",
+    "name": "台積電",
+    "date": "2025-07-29",
+    "open": 1010.0,
+    "high": 1025.0,
+    "low": 1005.0,
+    "close": 1020.0,
+    "volume": 15623000
+  }' > /dev/null
+
+# 鴻海
+curl -s -X POST "$BASE_URL/api/collections/stocks/records" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "symbol": "2317",
+    "name": "鴻海",
+    "date": "2025-07-29",
+    "open": 120.5,
+    "high": 122.0,
+    "low": 119.0,
+    "close": 121.5,
+    "volume": 8945000
+  }' > /dev/null
+
+# 聯發科
+curl -s -X POST "$BASE_URL/api/collections/stocks/records" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "symbol": "2454",
+    "name": "聯發科",
+    "date": "2025-07-29",
+    "open": 800.0,
+    "high": 815.0,
+    "low": 795.0,
+    "close": 810.0,
+    "volume": 3245000
+  }' > /dev/null
+
+echo "✓ 股票數據寫入完成"
+
+# 3. 讀取數據
+echo "3. 讀取股票數據..."
+curl -s "$BASE_URL/api/collections/stocks/records" \
+  -H "Authorization: Bearer $TOKEN" | \
+  jq '.items[] | {symbol, name, date, open, high, low, close, volume}'
+
+# 4. 導出 CSV
+echo "4. 導出 CSV..."
+echo "symbol,name,date,open,high,low,close,volume" > stocks.csv
+curl -s "$BASE_URL/api/collections/stocks/records" \
+  -H "Authorization: Bearer $TOKEN" | \
+  jq -r '.items[] | [.symbol, .name, .date, .open, .high, .low, .close, .volume] | @csv' >> stocks.csv
+
+echo "✓ 數據已導出到 stocks.csv"
+echo ""
+echo "=== 完成 ==="
+echo "- 集合已創建"
+echo "- 3筆股票數據已寫入"
+echo "- 數據已顯示"
+echo "- CSV已導出"
+
+```
