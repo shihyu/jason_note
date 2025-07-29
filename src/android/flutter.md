@@ -243,9 +243,7 @@ sudo apt install curl git unzip xz-utils zip libglu1-mesa
 到 [Flutter 官網](https://flutter.dev/docs/get-started/install/linux) 查看最新版，或用下方命令：
 
 ```bash
-cd ~
-curl -O https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_<version>-stable.tar.xz
-tar xf flutter_linux_<version>-stable.tar.xz
+git clone https://github.com/flutter/flutter.git
 ```
 
 請將 `<version>` 替換為實際版本號，例如 `3.22.0`。
@@ -253,8 +251,7 @@ tar xf flutter_linux_<version>-stable.tar.xz
 ## 3. 設定環境變數
 
 ```bash
-echo 'export PATH="$PATH:$HOME/flutter/bin"' >> ~/.bashrc
-source ~/.bashrc
+export PATH="$PATH:`pwd`/flutter/bin"
 ```
 
 
