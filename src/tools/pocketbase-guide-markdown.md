@@ -359,3 +359,58 @@ pb_data/
 - 學習和實驗用途
 
 PocketBase 的最大優勢就是**極度簡單**，非常適合快速開發和部署！
+
+
+--- 
+
+```python
+from pocketbase import PocketBase
+import requests
+
+client = PocketBase("http://202.182.118.167:8090")
+
+
+# 方法1: 直接 HTTP 請求測試
+def test_auth_endpoints():
+    endpoints = [
+        "/api/admins/auth-with-password",
+    ]
+
+    for endpoint in endpoints:
+        url = f"http://202.182.118.167:8090{endpoint}"
+        payload = {"identity": "yaoshihyu@gmail.com", "password": "2lraroai2lraroai"}
+
+        try:
+            response = requests.post(url, json=payload, timeout=10)
+            print(f"Testing {endpoint}:")
+            print(f"  Status: {response.status_code}")
+            if response.status_code == 200:
+                print(f"  Success! Response: {response.json()}")
+                return endpoint, response.json()
+            else:
+                print(f"  Error: {response.text}")
+        except Exception as e:
+            print(f"  Exception: {e}")
+
+    return None, None
+
+
+# 測試不同端點
+endpoint, auth_data = test_auth_endpoints()
+
+if auth_data:
+    print(f"\n成功認證使用端點: {endpoint}")
+else:
+    print("\n所有端點都失敗了")
+
+    # 方法2: 嘗試使用 PocketBase 客戶端的不同方法
+    try:
+        # 嘗試作為普通用戶認證
+        user_auth = client.collection("users").auth_with_password(
+            "xxxxxxxx@gmail.com", "2lxxxxx"
+        )
+        print("用戶認證成功:", user_auth.token)
+    except Exception as e:
+        print(f"用戶認證失敗: {e}")
+
+```
