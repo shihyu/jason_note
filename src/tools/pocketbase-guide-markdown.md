@@ -691,3 +691,160 @@ echo "✓ 資料已導出 broker_trades.csv"
 echo ""
 echo "=== 完成 ==="
 ```
+
+```python
+import requests
+import csv
+
+# === 設定 ===
+TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTUwMTA1NzgsImlkIjoiMnloYjhsd2tsZ3k0Zzk0IiwidHlwZSI6ImFkbWluIn0.rPi3xend3dCrHzDIpG86uDwsZ4eGXrNb4SsK8poDaRw"
+
+BASE_URL = "http://202.182.118.167:8090"
+HEADERS = {"Content-Type": "application/json", "Authorization": f"Bearer {TOKEN}"}
+
+SYMBOL = "2330"
+DATE = "2025-07-29"
+COLLECTION = "broker_trades"
+
+# === 資料 ===
+buyers = [
+    ("新加坡商瑞銀", 1337, 1140.32, 1140.55),
+    ("美商高盛", 1328, 1136.23, 1133.81),
+    ("美林", 1142, 1134.32, 1134.55),
+    ("富邦-台北", 1027, 1137.64, 1133.18),
+    ("凱基-台北", 593, 1134.65, 1132.22),
+    ("花旗環球", 311, 1135.53, 1137.82),
+    ("港商麥格理", 166, 1136.74, 1136.80),
+    ("永豐金", 128, 1135.34, 1134.11),
+    ("永豐金-中正", 61, 1135.74, 1130.32),
+    ("華南永昌-岡山", 58, 1134.33, 1130.00),
+    ("台中銀", 56, 1130.10, 1132.78),
+    ("凱基-松山", 50, 1136.30, 1134.96),
+    ("第一金-彰化", 44, 1130.46, 1137.09),
+    ("香港上海匯豐", 33, 1135.15, 1135.60),
+    ("元大-天母", 33, 1132.91, 1133.75),
+]
+
+sellers = [
+    ("摩根士丹利", 1751, 1137.06, 1132.54),
+    ("摩根大通", 1533, 1137.90, 1136.03),
+    ("富邦-南京", 657, 1131.71, 1139.32),
+    ("富邦", 403, 1133.88, 1134.93),
+    ("元大", 258, 1133.46, 1134.04),
+    ("大和國泰", 238, 1130.00, 1141.76),
+    ("港商野村", 222, 1134.49, 1136.85),
+    ("國泰", 187, 1134.92, 1134.45),
+    ("元富", 113, 1133.70, 1134.56),
+    ("致和", 99, 1131.23, 1144.90),
+    ("兆豐-三民", 96, 1138.28, 1129.90),
+    ("凱基", 88, 1137.39, 1131.14),
+    ("中國信託", 85, 1133.87, 1131.53),
+    ("第一金", 79, 1134.46, 1130.28),
+    ("第一金-新興", 78, 1136.50, 1130.34),
+]
+
+
+# === 工具函式 ===
+
+
+def create_collection():
+    print("1. 創建集合...")
+    payload = {
+        "name": COLLECTION,
+        "type": "base",
+        "schema": [
+            {"name": "symbol", "type": "text", "required": True},
+            {"name": "date", "type": "date", "required": True},
+            {"name": "type", "type": "text", "required": True},
+            {"name": "broker", "type": "text", "required": True},
+            {"name": "volume", "type": "number", "required": True},
+            {"name": "avg_buy", "type": "number", "required": True},
+            {"name": "avg_sell", "type": "number", "required": True},
+        ],
+    }
+    r = requests.post(f"{BASE_URL}/api/collections", headers=HEADERS, json=payload)
+    if r.ok:
+        print("✓ 集合已創建")
+    else:
+        print(f"⚠️ 集合創建失敗：{r.status_code} - {r.text}")
+
+
+def insert_records(records, trade_type):
+    for broker, volume, avg_buy, avg_sell in records:
+        payload = {
+            "symbol": SYMBOL,
+            "date": DATE,
+            "type": trade_type,
+            "broker": broker,
+            "volume": volume,
+            "avg_buy": avg_buy,
+            "avg_sell": avg_sell,
+        }
+        r = requests.post(
+            f"{BASE_URL}/api/collections/{COLLECTION}/records",
+            headers=HEADERS,
+            json=payload,
+        )
+        if not r.ok:
+            print(f"⚠️ 寫入失敗: {broker} ({trade_type})")
+
+
+def fetch_all_records():
+    res = requests.get(
+        f"{BASE_URL}/api/collections/{COLLECTION}/records", headers=HEADERS
+    )
+    if not res.ok:
+        print("⚠️ 讀取資料失敗")
+        return []
+    return res.json().get("items", [])
+
+
+def print_records(records):
+    print("4. 資料預覽：")
+    for item in records:
+        print(
+            f"{item['date']} [{item['type']}] {item['broker']}: "
+            f"{item['volume']} 張 | 買 {item['avg_buy']} 賣 {item['avg_sell']}"
+        )
+
+
+def export_to_csv(records, filename="broker_trades.csv"):
+    print(f"5. 匯出 CSV 至 {filename}...")
+    with open(filename, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(
+            ["symbol", "date", "type", "broker", "volume", "avg_buy", "avg_sell"]
+        )
+        for item in records:
+            writer.writerow(
+                [
+                    item["symbol"],
+                    item["date"],
+                    item["type"],
+                    item["broker"],
+                    item["volume"],
+                    item["avg_buy"],
+                    item["avg_sell"],
+                ]
+            )
+    print("✓ 匯出完成")
+
+
+# === 執行流程 ===
+def main():
+    create_collection()
+    print("2. 寫入買超 Top15...")
+    insert_records(buyers, "buy")
+    print("3. 寫入賣超 Top15...")
+    insert_records(sellers, "sell")
+    print("✓ 資料已寫入")
+
+    data = fetch_all_records()
+    print_records(data)
+    export_to_csv(data)
+
+
+if __name__ == "__main__":
+    main()
+
+```
