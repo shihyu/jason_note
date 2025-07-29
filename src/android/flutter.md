@@ -225,3 +225,224 @@ open -a Simulator
 應該要是最基本的 `Hello World!`
 
 ![IMG](images/【鐵人賽】DAY-10-Flutter-第一個介面-02.png)
+
+
+# Ubuntu 24.04 安裝 Flutter ＆ 建立 Web/Android/iOS 編譯範例
+
+## 1. 安裝必要套件
+
+```bash
+sudo apt update
+sudo apt upgrade
+sudo apt install curl git unzip xz-utils zip libglu1-mesa
+```
+
+
+## 2. 下載並安裝 Flutter
+
+到 [Flutter 官網](https://flutter.dev/docs/get-started/install/linux) 查看最新版，或用下方命令：
+
+```bash
+cd ~
+curl -O https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_<version>-stable.tar.xz
+tar xf flutter_linux_<version>-stable.tar.xz
+```
+
+請將 `<version>` 替換為實際版本號，例如 `3.22.0`。
+
+## 3. 設定環境變數
+
+```bash
+echo 'export PATH="$PATH:$HOME/flutter/bin"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+
+## 4. 驗證安裝
+
+```bash
+flutter doctor
+```
+
+根據提示安裝缺漏的依賴（如 Android Studio、Android SDK、等）。
+
+## 5. 安裝 Android 開發環境
+
+- 下載 Android Studio: [官方下載頁](https://developer.android.com/studio)
+- 安裝時請確保有安裝 Android SDK、SDK platform tools \& build tools。
+
+執行：
+
+```bash
+flutter doctor --android-licenses
+```
+
+全部選擇 `y` 同意授權。
+
+## 6. iOS 編譯（僅可於 macOS 測試編譯。Linux 可編輯/寫 code，打正式包需 Mac）
+
+- Linux 僅能寫/預備 iOS 專案，最終打包與 Emulator 上運行需在 macOS 完成。
+
+
+## 7. 建立 Flutter 專案（同時支援 Web、Android、iOS）
+
+```bash
+flutter create my_demo_app
+cd my_demo_app
+```
+
+
+## 8. 啟用 Web 支援（預設自 Flutter 2.0 以上已內建）
+
+檢查已支援 Web：
+
+```bash
+flutter devices
+```
+
+應該會出現 `chrome` 等 web 選項。
+
+## 9. 執行/編譯簡單範例
+
+**Web:**
+
+```bash
+flutter run -d chrome
+```
+
+**Android:**
+手機插上 USB 開啟偵錯功能，或用 emulator
+
+```bash
+flutter run -d [android-device-id]
+```
+
+**iOS:**
+僅限 Mac 執行，如有 Mac:
+
+```bash
+flutter run -d ios
+```
+
+
+## 10. Release Build
+
+- Web:
+
+```bash
+flutter build web
+```
+
+- Android:
+
+```bash
+flutter build apk
+```
+
+- iOS (限 Mac):
+
+```bash
+flutter build ios
+```
+
+
+## 範例 code（`lib/main.dart`）
+
+```dart
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter 多平台 Demo',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Hello Flutter Web/Android/iOS')),
+      body: const Center(child: Text('你好，Flutter 多平台！')),
+    );
+  }
+}
+```
+
+
+## 常見問題處理
+
+- 執行 `flutter doctor` 查看缺少依賴
+- Android 設備不偵測請確認 USB 偵錯與驅動
+- Web 若失敗，請使用支援的瀏覽器如 Chrome
+
+這樣就可以開始開發 Flutter Web、Android、iOS App！更多細節可參考 [Flutter 官方文件][^3_1][^3_2][^3_3]。
+
+<div style="text-align: center">⁂</div>
+
+[^3_1]: https://docs.flutter.dev/get-started/install/linux/android
+
+[^3_2]: https://techpiezo.com/linux/install-flutter-in-ubuntu-24-04/
+
+[^3_3]: https://docs.flutter.dev/platform-integration/web/building
+
+[^3_4]: https://www.youtube.com/watch?v=mtqTnGAAHw0
+
+[^3_5]: https://www.server-world.info/en/note?os=Ubuntu_24.04\&p=flutter\&f=1
+
+[^3_6]: https://docs.flutter.dev/get-started/install/linux
+
+[^3_7]: https://shape.host/resources/how-to-install-flutter-on-ubuntu-22-04
+
+[^3_8]: https://linuxgenie.net/getting-started-with-flutter-on-ubuntu/
+
+[^3_9]: https://pieces.app/blog/building-a-flutter-web-app-from-scratch-a-complete-guide
+
+[^3_10]: https://ubuntu.com/blog/getting-started-with-flutter-on-ubuntu
+
+[^3_11]: https://www.youtube.com/watch?v=Jve3t0-_Wdo
+
+[^3_12]: https://ayusch.com/creating-a-flutter-web-android-ios-application/
+
+[^3_13]: https://www.reddit.com/r/flutterhelp/comments/1d0hz4j/flutter_devs_on_ubuntu_2404_lts_please_help/
+
+[^3_14]: https://www.cnblogs.com/demodeom/p/18549653
+
+[^3_15]: https://docs.flutter.dev/deployment/ios
+
+[^3_16]: https://www.ezone.co.uk/blog/app-center-for-ubuntu-24-04-is-made-with-flutter.html
+
+[^3_17]: https://askubuntu.com/questions/1530390/how-to-correct-problems-when-installing-flutter
+
+[^3_18]: https://docs.flutter.dev/get-started/codelab
+
+[^3_19]: https://stackoverflow.com/questions/62810008/how-to-create-single-backend-website-ios-app-and-android-app-using-flutter
+
+[^3_20]: https://www.reddit.com/r/FlutterDev/comments/1eka3nd/best_way_to_take_an_existing_website_and_make_it/
+
+[^3_21]: https://www.youtube.com/watch?v=5cVOnXchj2g
+
+[^3_22]: https://www.youtube.com/watch?v=R47hx1e1v9A
+
+[^3_23]: https://www.youtube.com/watch?v=h0xA5o_wGts
+
+[^3_24]: https://www.youtube.com/watch?v=VGs-y_kL_Eg
+
+[^3_25]: https://www.youtube.com/watch?v=tdkjCZ03Aj4
+
+[^3_26]: https://www.youtube.com/watch?v=U2H6RVxg_5M
+
