@@ -304,22 +304,205 @@ class HomePage extends StatelessWidget {
 }
 ```
 
-## 13. 常見問題處理
+## 13. Android 設備偵測與常見問題處理
 
-### Android 相關
+### 13.1 檢查 Android 設備是否被偵測
+
+#### 基本檢查指令
 ```bash
-# 如果 Android 裝置未偵測到
+# 使用 ADB 檢查連接的設備
 adb devices
-sudo usermod -aG plugdev $USER  # 加入用戶組
-# 重新登入或重啟
 
+# 詳細資訊
+adb devices -l
+
+# 使用 Flutter 檢查可用設備
+flutter devices
+
+# 檢查 USB 設備
+lsusb
+
+# 查看系統日誌（插入設備時）
+dmesg | tail -20
+```
+
+#### 正常輸出範例
+```
+List of devices attached
+1234567890ABCDEF	device
+```
+
+#### 問題狀態範例
+```
+List of devices attached
+1234567890ABCDEF	unauthorized    # 需要授權
+1234567890ABCDEF	offline         # 設備離線
+# 或完全沒有顯示任何設備（List of devices attached 下方空白）
+```
+
+### 13.2 Android 設備無法偵測的解決方案
+
+#### 步驟 1：檢查 Android 設備設置
+在 Android 設備上：
+1. 進入「設定」→「關於手機」
+2. 連續點擊「版本號碼」7次啟用開發者選項
+3. 回到「設定」→「開發者選項」
+4. 啟用「USB 調試」
+5. 確保使用數據傳輸線（不是只充電的線）
+
+#### 步驟 2：安裝 ADB 工具和設置權限
+```bash
+# 確保 ADB 已安裝
+sudo apt install android-tools-adb android-tools-fastboot
+
+# 添加用戶到 plugdev 群組
+sudo usermod -aG plugdev $USER
+
+# 檢查用戶群組
+groups $USER  # 應該包含 plugdev
+
+# 重新登入或執行
+newgrp plugdev
+```
+
+#### 步驟 3：設置 USB 規則（重要）
+```bash
+# 創建 Android USB 規則
+sudo nano /etc/udev/rules.d/51-android.rules
+```
+
+在文件中添加以下內容：
+```
+# Google
+SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", MODE="0666", GROUP="plugdev"
+# Samsung
+SUBSYSTEM=="usb", ATTR{idVendor}=="04e8", MODE="0666", GROUP="plugdev"
+# HTC
+SUBSYSTEM=="usb", ATTR{idVendor}=="0bb4", MODE="0666", GROUP="plugdev"
+# Motorola
+SUBSYSTEM=="usb", ATTR{idVendor}=="22b8", MODE="0666", GROUP="plugdev"
+# LG
+SUBSYSTEM=="usb", ATTR{idVendor}=="1004", MODE="0666", GROUP="plugdev"
+# Huawei
+SUBSYSTEM=="usb", ATTR{idVendor}=="12d1", MODE="0666", GROUP="plugdev"
+# Xiaomi
+SUBSYSTEM=="usb", ATTR{idVendor}=="2717", MODE="0666", GROUP="plugdev"
+# OnePlus
+SUBSYSTEM=="usb", ATTR{idVendor}=="2a70", MODE="0666", GROUP="plugdev"
+# Sony
+SUBSYSTEM=="usb", ATTR{idVendor}=="0fce", MODE="0666", GROUP="plugdev"
+```
+
+```bash
+# 設置權限
+sudo chmod a+r /etc/udev/rules.d/51-android.rules
+
+# 重新載入 udev 規則
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+```
+
+#### 步驟 4：查找特定設備的 Vendor ID
+```bash
+# 插入設備後執行，查看 USB 設備
+lsusb
+```
+
+會看到類似輸出：
+```
+Bus 001 Device 003: ID 04e8:6860 Samsung Electronics Co., Ltd Galaxy series
+```
+
+如果你的設備廠商不在規則列表中，添加對應的 Vendor ID：
+```bash
+# 例如設備 Vendor ID 是 1234，添加規則
+echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="1234", MODE="0666", GROUP="plugdev"' | sudo tee -a /etc/udev/rules.d/51-android.rules
+```
+
+#### 步驟 5：重啟 ADB 服務
+```bash
+# 停止 ADB 服務
+adb kill-server
+
+# 啟動 ADB 服務
+adb start-server
+
+# 重新檢查設備
+adb devices
+```
+
+#### 步驟 6：重新連接設備
+1. 拔掉 USB 線
+2. 重新載入 udev 規則：`sudo udevadm control --reload-rules`
+3. 停止 ADB：`adb kill-server`
+4. 重新插入 USB 線
+5. 啟動 ADB：`adb start-server`
+6. 檢查設備：`adb devices`
+
+#### Android 設備授權
+重新連接後，Android 設備可能會彈出提示：
+- 「允許 USB 調試嗎？」→ 點擊「確定」並勾選「一律允許這台電腦」
+- 「USB 用途」→ 選擇「檔案傳輸/Android Auto」
+
+### 13.3 使用 Android 模擬器（替代方案）
+如果實體設備仍有問題，可以使用模擬器：
+
+```bash
+# 檢查可用的模擬器
+avdmanager list avd
+
+# 創建新的模擬器
+avdmanager create avd -n "flutter_emulator" -k "system-images;android-34;google_apis;x86_64"
+
+# 啟動模擬器
+emulator -avd flutter_emulator
+
+# 在另一個終端檢查
+adb devices
+
+# 使用 Flutter 啟動模擬器
+flutter emulators --launch flutter_emulator
+```
+
+### 13.4 其他 Android 相關問題
+```bash
 # 如果缺少特定 Android SDK 組件
 sdkmanager --list  # 查看可用組件
 sdkmanager "組件名稱"  # 安裝特定組件
 
 # 檢查 Flutter 與 Android SDK 的整合狀態
 flutter doctor -v
+
+# 完全重新安裝 ADB（最後手段）
+sudo apt remove android-tools-adb
+sudo apt install android-tools-adb
 ```
+
+### 13.5 完整檢查流程
+```bash
+# 1. 檢查 ADB 版本
+adb version
+
+# 2. 檢查設備連接
+adb devices
+
+# 3. 檢查 Flutter 識別狀況
+flutter devices
+
+# 4. 檢查系統日誌
+dmesg | grep -i usb
+
+# 5. 檢查用戶權限
+groups $USER  # 應包含 plugdev
+
+# 6. 檢查 USB 設備
+lsusb
+```
+
+**成功連接的標誌**：
+- `adb devices` 顯示設備為 `device` 狀態
+- `flutter devices` 列出你的 Android 設備
+- 可以正常執行 `flutter run`
 
 ### Web 相關
 ```bash
