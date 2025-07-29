@@ -45,41 +45,74 @@ source ~/.bashrc
 flutter doctor
 ```
 
-## 6. 安裝 Android 開發環境
+## 6. 安裝 Android 開發環境（僅 SDK）
 
-### 6.1 下載並安裝 Android Studio
+### 6.1 安裝 Android SDK Command Line Tools
 ```bash
-# 下載 Android Studio
-wget https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2023.3.1.18/android-studio-2023.3.1.18-linux.tar.gz
+# 創建 Android SDK 目錄
+mkdir -p ~/Android/Sdk
+cd ~/Android/Sdk
 
-# 解壓縮
-tar -xzf android-studio-*.tar.gz -C ~/
+# 下載 Command Line Tools（最新版本）
+wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
 
-# 啟動安裝程式
-~/android-studio/bin/studio.sh
+# 解壓縮到正確位置
+unzip commandlinetools-linux-*_latest.zip
+mkdir -p cmdline-tools/latest
+mv cmdline-tools/* cmdline-tools/latest/ 2>/dev/null || true
+
+# 清理下載檔案
+rm commandlinetools-linux-*_latest.zip
 ```
 
-### 6.2 Android Studio 安裝步驟
-1. 選擇 "Standard" 安裝類型
-2. 確保安裝以下組件：
-   - Android SDK
-   - Android SDK Platform-Tools
-   - Android SDK Build-Tools
-   - Android Emulator
-   - Android SDK Command-line Tools
-
-### 6.3 設定 Android SDK 環境變數
+### 6.2 設定 Android SDK 環境變數
 ```bash
 echo 'export ANDROID_HOME="$HOME/Android/Sdk"' >> ~/.bashrc
-echo 'export PATH="$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools:$PATH"' >> ~/.bashrc
+echo 'export PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin"' >> ~/.bashrc
+echo 'export PATH="$PATH:$ANDROID_HOME/platform-tools"' >> ~/.bashrc
+echo 'export PATH="$PATH:$ANDROID_HOME/emulator"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
-### 6.4 接受 Android 授權
+### 6.3 安裝必要的 SDK 組件
+```bash
+# 更新 SDK 管理器
+sdkmanager --update
+
+# 安裝基本組件
+sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34"
+
+# 安裝額外推薦組件
+sdkmanager "build-tools;33.0.0" "platforms;android-33"
+sdkmanager "extras;android;m2repository" "extras;google;m2repository"
+
+# 如果需要模擬器
+sdkmanager "emulator" "system-images;android-34;google_apis;x86_64"
+```
+
+### 6.4 驗證 Android SDK 安裝
+```bash
+# 檢查安裝的組件
+sdkmanager --list_installed
+
+# 檢查 ADB 工具
+adb version
+```
+
+### 6.5 接受 Android 授權
 ```bash
 flutter doctor --android-licenses
 ```
 全部輸入 `y` 同意授權。
+
+### 6.6 創建 Android 虛擬裝置（可選）
+```bash
+# 創建 AVD
+avdmanager create avd -n "flutter_emulator" -k "system-images;android-34;google_apis;x86_64"
+
+# 啟動模擬器
+emulator -avd flutter_emulator
+```
 
 ## 7. iOS 開發環境（Linux 限制說明）
 
@@ -280,8 +313,12 @@ adb devices
 sudo usermod -aG plugdev $USER  # 加入用戶組
 # 重新登入或重啟
 
-# 如果缺少 Android SDK
-flutter doctor  # 查看詳細錯誤訊息
+# 如果缺少特定 Android SDK 組件
+sdkmanager --list  # 查看可用組件
+sdkmanager "組件名稱"  # 安裝特定組件
+
+# 檢查 Flutter 與 Android SDK 的整合狀態
+flutter doctor -v
 ```
 
 ### Web 相關
@@ -298,9 +335,44 @@ flutter pub get
 ```bash
 # 給予 Flutter 執行權限
 chmod +x ~/flutter/bin/flutter
+
+# 給予 Android SDK 工具執行權限
+chmod +x ~/Android/Sdk/cmdline-tools/latest/bin/*
 ```
 
-## 14. 效能最佳化建議
+## 14. Android SDK 管理指令
+
+### 查看和管理 SDK 組件
+```bash
+# 列出所有可用組件
+sdkmanager --list
+
+# 列出已安裝組件
+sdkmanager --list_installed
+
+# 更新所有已安裝組件
+sdkmanager --update
+
+# 安裝特定組件
+sdkmanager "platforms;android-33" "build-tools;33.0.0"
+
+# 解除安裝組件
+sdkmanager --uninstall "組件名稱"
+```
+
+### 管理 Android 虛擬裝置
+```bash
+# 列出可用的系統映像
+sdkmanager --list | grep system-images
+
+# 列出已創建的 AVD
+avdmanager list avd
+
+# 刪除 AVD
+avdmanager delete avd -n "AVD名稱"
+```
+
+## 15. 效能最佳化建議
 
 ### 開發階段
 - 使用 `flutter run --hot-reload` 進行快速開發
@@ -310,16 +382,24 @@ chmod +x ~/flutter/bin/flutter
 - 啟用程式碼混淆：`flutter build apk --obfuscate --split-debug-info=build/debug-info`
 - 針對不同 CPU 架構建置：`flutter build apk --split-per-abi`
 
-## 15. 驗證完整設定
+## 16. 驗證完整設定
 最後執行完整驗證：
 ```bash
 flutter doctor -v
 ```
 確保所有項目都是綠色勾勾！
 
+預期看到的輸出應該包含：
+- ✅ Flutter (安裝正確)
+- ✅ Android toolchain (Android SDK 可用)
+- ✅ Chrome (Web 開發)
+- ✅ Linux toolchain (Desktop 開發)
+
 ---
 
 **注意事項**：
+- 這種方式比安裝完整 Android Studio 輕量很多，僅安裝開發必需的工具
 - iOS 開發仍需 macOS 環境進行最終建置和測試
 - Linux desktop 支援需要 Flutter 3.0+
 - Web 版本建議使用現代瀏覽器（Chrome、Firefox、Safari、Edge）
+- 如果後續需要 Android Studio 的 IDE 功能，可以單獨安裝，它會自動偵測現有的 SDK
