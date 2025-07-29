@@ -471,3 +471,86 @@ adguardvpn-cli uninstall
 
 這樣你就可以在 Ubuntu 上順利安裝、登入及使用 AdGuard VPN CLI 了！
 
+
+# Ubuntu 24.04 安裝庫注音與 fcitx5 指南
+
+## 安裝 fcitx5 和相關組件
+
+```bash
+# 更新套件列表
+sudo apt update
+
+# 安裝 fcitx5 核心組件
+sudo apt install fcitx5 fcitx5-chinese-addons fcitx5-frontend-gtk4 fcitx5-frontend-gtk3 fcitx5-frontend-qt5
+
+# 安裝庫注音輸入法
+sudo apt install fcitx5-chewing
+
+# 安裝 fcitx5 設定工具
+sudo apt install fcitx5-config-qt
+
+# 安裝語言包（可選）
+sudo apt install fcitx5-data
+```
+
+## 設定環境變數
+
+編輯環境變數檔案：
+
+```bash
+# 編輯 .bashrc 或 .profile
+nano ~/.bashrc
+```
+
+在檔案末尾加入以下內容：
+
+```bash
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
+export INPUT_METHOD=fcitx
+export SDL_IM_MODULE=fcitx
+export GLFW_IM_MODULE=ibus
+```
+
+## 設定開機自動啟動
+
+```bash
+# 將 fcitx5 加入自動啟動
+cp /usr/share/applications/org.fcitx.Fcitx5.desktop ~/.config/autostart/
+```
+
+## 重新登入或重開機
+
+完成上述設定後，登出再重新登入，或直接重開機讓設定生效。
+
+## 設定輸入法
+
+1. 開啟 fcitx5 設定工具：在應用程式選單中找到「Fcitx 5 Configuration」
+2. 點擊左下角的「+」號新增輸入法
+3. 取消勾選「Only Show Current Language」
+4. 搜尋「Chewing」並加入
+5. 可以調整輸入法的順序
+
+## 切換輸入法
+
+- **預設切換鍵**：`Ctrl + Space`
+- 可在設定中自訂快捷鍵
+
+## 故障排除
+
+如果遇到問題，可以在終端機執行以下指令來診斷設定：
+
+```bash
+fcitx5-diagnose
+```
+
+## 注意事項
+
+- 完成安裝後需要重新登入或重開機才能正常使用
+- 確保所有環境變數都正確設定
+- 如果在某些應用程式中無法使用輸入法，可能需要安裝對應的前端支援套件
+
+---
+
+完成以上步驟後，就可以在 Ubuntu 24.04 上正常使用庫注音輸入法了！
