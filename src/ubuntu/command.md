@@ -137,3 +137,22 @@ ccusage daily --instances --project myproject --json
 
 需要我幫你加入範例畫面或轉成 GitHub README 模板嗎？
 
+
+
+# 使用 Docker 編譯 GitBook 說明
+
+使用下列指令，可以在 Docker 環境中編譯 GitBook 專案，不需在本機安裝 GitBook：
+
+```bash
+docker run --rm -v "$PWD":/book -w /book fellah/gitbook gitbook build
+
+
+| 參數                | 說明                                                   |
+| ----------------- | ---------------------------------------------------- |
+| `docker run`      | 使用 Docker 執行一個容器                                     |
+| `--rm`            | 執行完後自動移除容器，保持環境乾淨                                    |
+| `-v "$PWD":/book` | 將當前目錄（`$PWD`）掛載到容器的 `/book` 目錄，讓容器能存取你的 GitBook 專案檔案 |
+| `-w /book`        | 設定容器內的工作目錄為 `/book`（也就是你專案的根目錄）                      |
+| `fellah/gitbook`  | 使用的 Docker 映像，內含 GitBook 編譯工具                        |
+| `gitbook build`   | GitBook 的編譯指令，會將 Markdown 轉換成靜態 HTML，輸出到 `_book` 目錄中 |
+
