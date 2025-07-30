@@ -17,6 +17,7 @@
     - [Network](tools/network.md)
     - [實作 AES 對稱式加密](tools/python-pycryptodome-aes-symmetric-encryption-tutorial-examples.md)
     - [PocketBase 完整安裝使用指南](tools/pocketbase-guide-markdown.md)
+    - [changedetection.io 使用教學](tools/changedetection-setup.md)
 - [HTML](html/html.md)
     - [Vue](html/vue.md)
 - [Vim](vim/vim.md)
