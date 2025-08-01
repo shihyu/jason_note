@@ -1,24 +1,208 @@
 
 
-## Docker & Docker-compose  安裝
+# Docker & Docker Compose 安裝與配置
 
-```sh
+## Docker 安裝
+
+### Ubuntu/Debian 系統安裝 Docker
+
+```bash
+# 更新系統套件
+sudo apt update
+
+# 安裝 Docker
 sudo apt install docker.io
+
+# 創建 docker 用戶組（如果不存在）
 sudo groupadd docker
+
+# 將當前用戶加入 docker 組
 sudo usermod -aG docker ${USER}
+
+# 設置 Docker socket 權限
 sudo chmod 666 /var/run/docker.sock
-sudo service docker restart
-需要退出重新登錄後才會生效
 
+# 重啟 Docker 服務
+sudo systemctl enable docker
+sudo systemctl start docker
 
+# 需要退出重新登錄後才會生效
+```
 
-## docker-compose 
-https://github.com/docker/compose/releases/
-sudo curl -L "https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod 755 docker-compose
+### 驗證 Docker 安裝
+
+```bash
+docker --version
+docker run hello-world
+```
+
+## Docker Compose 安裝
+
+### 方法 1: 使用 apt 安裝（推薦）
+
+```bash
+# Ubuntu 20.04+ 可直接使用 apt 安裝最新版本
+sudo apt update
+sudo apt install docker-compose-plugin
+
+# 驗證安裝
+docker compose version
+```
+
+### 方法 2: 手動安裝最新版本
+
+```bash
+# 下載最新版本的 Docker Compose
+# 請先檢查最新版本：https://github.com/docker/compose/releases/
+COMPOSE_VERSION="v2.24.0"
+sudo curl -L "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+
+# 設置可執行權限
+sudo chmod +x /usr/local/bin/docker-compose
+
+# 創建符號連結（可選）
+sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+
+# 驗證安裝
+docker-compose --version
+```
+
+### 方法 3: 使用 pip 安裝
+
+```bash
+# 使用 Python pip 安裝
+pip3 install docker-compose
+
+# 或者使用虛擬環境安裝
+python3 -m venv docker-env
+source docker-env/bin/activate
+pip install docker-compose
 ```
 
 
+
+---
+
+# Docker Compose 基本使用
+
+## Docker Compose 簡介
+
+Docker Compose 是用於定義和執行多容器 Docker 應用程式的工具。使用 YAML 檔案來配置應用程式的服務，然後使用一個命令就可以創建並啟動所有服務。
+
+## Docker Compose 基本命令
+
+| 命令 | 說明 | 範例 |
+|------|------|------|
+| `docker compose up` | 啟動所有服務 | `docker compose up -d` |
+| `docker compose down` | 停止並移除所有服務 | `docker compose down` |
+| `docker compose ps` | 查看服務狀態 | `docker compose ps` |
+| `docker compose logs` | 查看服務日誌 | `docker compose logs -f` |
+| `docker compose build` | 建置服務 | `docker compose build` |
+| `docker compose restart` | 重啟服務 | `docker compose restart web` |
+
+## docker-compose.yml 範例
+
+### 基本的 Web 應用程式 + 資料庫
+
+```yaml
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://user:pass@db:5432/mydb
+    volumes:
+      - .:/app
+    
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
+```
+
+### WordPress + MySQL 範例
+
+```yaml
+version: '3.8'
+
+services:
+  wordpress:
+    image: wordpress:latest
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: password
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wordpress_data:/var/www/html
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: rootpassword
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  wordpress_data:
+  mysql_data:
+```
+
+## Docker Compose 常用選項
+
+### 服務配置選項
+
+- `build`: 建置 Docker 映像檔的路徑或配置
+- `image`: 使用的 Docker 映像檔
+- `ports`: 連接埠映射
+- `volumes`: 資料卷掛載
+- `environment`: 環境變數
+- `depends_on`: 服務依賴關係
+- `networks`: 網路配置
+- `restart`: 重啟策略
+
+### 執行選項
+
+```bash
+# 背景執行
+docker compose up -d
+
+# 重新建置並啟動
+docker compose up --build
+
+# 指定檔案
+docker compose -f docker-compose.prod.yml up
+
+# 擴展服務實例
+docker compose up --scale web=3
+
+# 停止並移除所有容器、網路
+docker compose down
+
+# 停止並移除所有容器、網路、映像檔、卷
+docker compose down --rmi all --volumes
+```
 
 ---
 
@@ -83,38 +267,6 @@ LXC 利用controler groups 與namespaces的功能， 提供應用軟體一個獨
 docker --help
 ```
 
-#### Containers(容器) vs Virtual Machines(虛擬主機)
-
-![螢幕快照 2019-02-19 上午11.07.39.png](https://wt-box.worktile.com/public/7db7ad1b-7830-4713-b96e-d3a103a4f7dc)
-
-#### Docker 三個基本概念
-
-##### 映像檔（Image）
-
-- Docker 映像檔就是一個唯讀的模板。
-- 映像檔可以用來建立 Docker 容器。
-
-##### 容器（Container）
-
-- 容器是從映像檔建立的執行實例。
-- Docker 利用容器來執行應用。
-- 可以被啟動、開始、停止、刪除。
-- 每個容器都是相互隔離的、保證安全的平臺。
-
-##### 倉庫（Repository）
-
-- 倉庫是集中存放映像檔檔案的場所。
-- 每個倉庫中又包含了多個映像檔。
-- 每個映像檔有不同的標籤（tag）。
-- 倉庫分為公開倉庫（Public）和私有倉庫（Private）兩種形式。
-
-![螢幕快照 2019-02-19 上午11.10.38.png](https://wt-box.worktile.com/public/95ae632e-9016-416b-9c66-07b8c8e22ff9)
-
-### 指令說明 - 安裝、指令
-
-```
-docker --help
-```
 
 #### 安裝Docker
 
@@ -135,10 +287,10 @@ docker --help
 |     login      | 登入 | docker login docker.okborn.com  |
 |      push      | 上傳 |           docker push           |
 
-##### Search 搜尋 Centos 映像檔
+##### Search 搜尋 CentOS 映像檔
 
-```
-docker search contos
+```bash
+docker search centos
 ```
 
 ![螢幕快照 2019-02-19 下午1.45.28.png](images/440a5d54-fbbe-495d-a6b9-e756aae5d6ec)
@@ -151,8 +303,8 @@ AUTOMATED：自動化
 
 ##### 顯示目前本機的 Images 列表
 
-```
-docker iamges
+```bash
+docker images
 ```
 
 REPOSITORY：倉庫位置和映像檔名稱
@@ -447,7 +599,7 @@ CMD /usr/sbin/nginx
 
 
 
-\####Dockerfile 基本語法
+#### Dockerfile 基本語法
 
 |                     指令                      |           說明           |                            範例                             |
 | :-------------------------------------------: | :----------------------: | :---------------------------------------------------------: |
@@ -487,9 +639,10 @@ WORKDIR：可以使用多個 WORKDIR 指令，後續命令如果參數是相對�
 
 ```dockerfile
 # 映像檔Image
-FROM python:3.5
-# 維護者
-MAINTAINER Pellok "pellok@double-cash.com"
+FROM python:3.11
+# 維護者（已廢棄，建議使用 LABEL）
+# MAINTAINER Pellok "pellok@double-cash.com"
+LABEL maintainer="pellok@double-cash.com"
 # 更新
 RUN apt-get -y update && apt-get install -y supervisor
 # 創建專案資料夾
@@ -497,7 +650,7 @@ RUN mkdir -p /usr/src/app
 # 指定工作目錄在專案資料夾
 WORKDIR /usr/src/app
 # 預先要安裝的requirements複製到Docker裡面
-ADD requirements.txt /usr/src/app/
+COPY requirements.txt /usr/src/app/
 # 安裝需要用的插件
 RUN pip install --upgrade pip setuptools
 RUN pip install --no-cache-dir -r requirements.txt
