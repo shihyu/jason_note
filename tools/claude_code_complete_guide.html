@@ -1,0 +1,816 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Claude Code 完整自動化開發指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="claude-code-完整自動化開發指南"><a class="header" href="#claude-code-完整自動化開發指南">Claude Code 完整自動化開發指南</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ol>
+<li><a href="#%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5">基本概念</a></li>
+<li><a href="#%E5%AE%89%E8%A3%9D%E8%88%87%E8%A8%AD%E7%BD%AE">安裝與設置</a></li>
+<li><a href="#%E5%91%BD%E4%BB%A4%E4%BD%BF%E7%94%A8%E6%96%B9%E5%BC%8F">命令使用方式</a></li>
+<li><a href="#%E8%87%AA%E5%8B%95%E5%8C%96%E6%A8%A1%E5%BC%8F%E8%A9%B3%E8%A7%A3">自動化模式詳解</a></li>
+<li><a href="#%E5%A4%9C%E9%96%93%E8%87%AA%E5%8B%95%E5%8C%96%E8%A8%AD%E7%BD%AE">夜間自動化設置</a></li>
+<li><a href="#token-%E7%AE%A1%E7%90%86%E8%88%87%E7%9B%A3%E6%8E%A7">Token 管理與監控</a></li>
+<li><a href="#%E5%AF%A6%E7%94%A8%E8%85%B3%E6%9C%AC%E7%AF%84%E4%BE%8B">實用腳本範例</a></li>
+<li><a href="#%E5%AE%89%E5%85%A8%E8%80%83%E9%87%8F%E8%88%87%E6%9C%80%E4%BD%B3%E5%AF%A6%E8%B8%90">安全考量與最佳實踐</a></li>
+<li><a href="#%E6%95%85%E9%9A%9C%E6%8E%92%E9%99%A4">故障排除</a></li>
+</ol>
+<hr />
+<h2 id="基本概念"><a class="header" href="#基本概念">基本概念</a></h2>
+<p>Claude Code 是 Anthropic 的命令行工具，讓開發者可以直接在終端中與 Claude 協作進行編程任務。</p>
+<h3 id="主要特性"><a class="header" href="#主要特性">主要特性</a></h3>
+<ul>
+<li><strong>完整代碼庫感知</strong>：理解整個項目結構和模式</li>
+<li><strong>直接文件操作</strong>：編輯文件、執行命令、管理 git 操作</li>
+<li><strong>自主執行</strong>：可執行複雜的多步驟工作流程</li>
+<li><strong>上下文保持</strong>：維持項目慣例的長期記憶</li>
+<li><strong>確定性自動化</strong>：使用 hooks 保證特定動作總是發生</li>
+</ul>
+<hr />
+<h2 id="安裝與設置"><a class="header" href="#安裝與設置">安裝與設置</a></h2>
+<h3 id="安裝步驟"><a class="header" href="#安裝步驟">安裝步驟</a></h3>
+<pre><code class="language-bash"># 通過 npm 安裝
+npm install -g @anthropic-ai/claude-code
+
+# 驗證安裝
+claude --version
+
+# 設置 API 密鑰
+export ANTHROPIC_API_KEY="your-api-key-here"
+
+# 或者初次使用時會提示輸入
+claude auth
+</code></pre>
+<h3 id="環境變數設置"><a class="header" href="#環境變數設置">環境變數設置</a></h3>
+<pre><code class="language-bash"># 添加到 ~/.bashrc 或 ~/.zshrc
+export ANTHROPIC_API_KEY="your-api-key-here"
+
+# 設置常用別名
+alias cc="claude --dangerously-skip-permissions"
+alias claude-auto="claude --dangerously-skip-permissions"
+</code></pre>
+<hr />
+<h2 id="命令使用方式"><a class="header" href="#命令使用方式">命令使用方式</a></h2>
+<h3 id="基本命令格式"><a class="header" href="#基本命令格式">基本命令格式</a></h3>
+<pre><code class="language-bash"># 命令名稱是 claude（不是 claude-code）
+claude [選項] [提示]
+
+# 查看所有可用選項
+claude --help
+claude -h
+</code></pre>
+<h3 id="常用命令選項"><a class="header" href="#常用命令選項">常用命令選項</a></h3>
+<pre><code class="language-bash"># 互動模式（預設）
+claude
+
+# 單次任務模式
+claude -p "修復所有 lint 錯誤"
+
+# 跳過權限確認
+claude --dangerously-skip-permissions
+
+# JSON 輸出格式
+claude -p "分析代碼品質" --output-format json
+
+# 詳細模式（調試用）
+claude --verbose
+
+# Headless 模式（CI/CD 用）
+claude -p "執行測試" --output-format stream-json
+</code></pre>
+<hr />
+<h2 id="自動化模式詳解"><a class="header" href="#自動化模式詳解">自動化模式詳解</a></h2>
+<h3 id="1-預設模式有權限確認"><a class="header" href="#1-預設模式有權限確認">1. 預設模式（有權限確認）</a></h3>
+<pre><code class="language-bash">claude
+</code></pre>
+<p><strong>特點：</strong></p>
+<ul>
+<li>每個操作都需要確認</li>
+<li>安全性最高</li>
+<li>適合精確控制場景</li>
+<li>會中斷工作流程</li>
+</ul>
+<h3 id="2-完全自動化模式"><a class="header" href="#2-完全自動化模式">2. 完全自動化模式</a></h3>
+<pre><code class="language-bash">claude --dangerously-skip-permissions
+</code></pre>
+<p><strong>特點：</strong></p>
+<ul>
+<li>繞過所有權限檢查</li>
+<li>不間斷執行直到完成</li>
+<li>類似 "yolo 模式"</li>
+<li>適合夜間自動化</li>
+</ul>
+<h3 id="3-auto-accept-模式"><a class="header" href="#3-auto-accept-模式">3. Auto-Accept 模式</a></h3>
+<pre><code class="language-bash"># 啟動後按 Shift+Tab 切換
+claude
+# 然後按 Shift+Tab 進入自動接受模式
+</code></pre>
+<p><strong>特點：</strong></p>
+<ul>
+<li>部分自動化</li>
+<li>可隨時切換</li>
+<li>保持一定控制權</li>
+</ul>
+<h3 id="4-print-模式單次任務"><a class="header" href="#4-print-模式單次任務">4. Print 模式（單次任務）</a></h3>
+<pre><code class="language-bash">claude -p "具體任務描述"
+</code></pre>
+<p><strong>特點：</strong></p>
+<ul>
+<li>非互動式</li>
+<li>適合腳本化</li>
+<li>執行完就結束</li>
+</ul>
+<h3 id="5-任務排隊系統"><a class="header" href="#5-任務排隊系統">5. 任務排隊系統</a></h3>
+<pre><code class="language-bash"># 啟動自動化模式後，可連續輸入多個任務
+claude --dangerously-skip-permissions
+
+# 然後輸入一系列任務（Claude 會智能排序執行）
+"修復所有 lint 錯誤"
+"運行完整測試套件並修復失敗測試"
+"重構重複代碼"
+"添加缺失的註解和文檔"
+"優化性能瓶頸"
+</code></pre>
+<hr />
+<h2 id="夜間自動化設置"><a class="header" href="#夜間自動化設置">夜間自動化設置</a></h2>
+<h3 id="適合夜間運行的任務類型"><a class="header" href="#適合夜間運行的任務類型">適合夜間運行的任務類型</a></h3>
+<h4 id="bug-修復和建構問題"><a class="header" href="#bug-修復和建構問題">Bug 修復和建構問題</a></h4>
+<ul>
+<li>修復編譯錯誤</li>
+<li>解決依賴衝突</li>
+<li>修復測試失敗</li>
+<li>處理 lint 警告</li>
+<li>解決類型錯誤</li>
+</ul>
+<h4 id="代碼品質改善"><a class="header" href="#代碼品質改善">代碼品質改善</a></h4>
+<ul>
+<li>重構重複代碼</li>
+<li>添加單元測試</li>
+<li>更新過時文檔</li>
+<li>優化性能</li>
+<li>改善錯誤處理</li>
+</ul>
+<h4 id="自動化維護"><a class="header" href="#自動化維護">自動化維護</a></h4>
+<ul>
+<li>更新依賴版本</li>
+<li>清理無用代碼</li>
+<li>格式化代碼風格</li>
+<li>生成 API 文檔</li>
+<li>整理 git 歷史</li>
+</ul>
+<h3 id="夜間自動化啟動方式"><a class="header" href="#夜間自動化啟動方式">夜間自動化啟動方式</a></h3>
+<h4 id="方式一直接啟動"><a class="header" href="#方式一直接啟動">方式一：直接啟動</a></h4>
+<pre><code class="language-bash"># 睡前執行（在專案目錄中）
+cd /path/to/your/project
+claude --dangerously-skip-permissions
+</code></pre>
+<p>然後輸入任務清單：</p>
+<pre><code>檢查並修復所有建構錯誤
+運行完整測試套件，修復所有失敗的測試
+處理所有 ESLint 和 TypeScript 警告
+重構重複代碼並提高可讀性
+添加缺失的單元測試，確保覆蓋率達到 80%
+更新依賴到最新穩定版本
+生成或更新 API 文檔
+優化數據庫查詢和 API 響應時間
+添加錯誤處理和日誌記錄
+清理無用的註解和死代碼
+</code></pre>
+<h4 id="方式二單行命令啟動"><a class="header" href="#方式二單行命令啟動">方式二：單行命令啟動</a></h4>
+<pre><code class="language-bash">claude --dangerously-skip-permissions -p "執行完整的夜間維護：修復所有 bug、運行測試、重構代碼、更新文檔、優化性能"
+</code></pre>
+<hr />
+<h2 id="token-管理與監控"><a class="header" href="#token-管理與監控">Token 管理與監控</a></h2>
+<h3 id="token-使用監控工具"><a class="header" href="#token-使用監控工具">Token 使用監控工具</a></h3>
+<h4 id="安裝監控工具"><a class="header" href="#安裝監控工具">安裝監控工具</a></h4>
+<pre><code class="language-bash"># CC Usage - CLI 工具用於管理和分析 Claude Code 使用情況
+npm install -g cc-usage
+
+# Claude Code Usage Monitor - 實時終端監控工具
+npm install -g claude-code-usage-monitor
+</code></pre>
+<h4 id="使用監控工具"><a class="header" href="#使用監控工具">使用監控工具</a></h4>
+<pre><code class="language-bash"># 查看 token 使用情況
+cc-usage dashboard
+
+# 實時監控
+claude-code-usage-monitor
+</code></pre>
+<h3 id="節省-token-的策略"><a class="header" href="#節省-token-的策略">節省 Token 的策略</a></h3>
+<h4 id="1-代碼優化"><a class="header" href="#1-代碼優化">1. 代碼優化</a></h4>
+<ul>
+<li>使用簡潔變數名稱（i, j, e, el）</li>
+<li>避免過長的函數和類名</li>
+<li>刪除不必要的註解</li>
+</ul>
+<h4 id="2-分階段執行"><a class="header" href="#2-分階段執行">2. 分階段執行</a></h4>
+<pre><code class="language-bash"># 階段性執行而非一次性大任務
+claude -p "階段1：只修復編譯錯誤"
+# 完成後
+claude -p "階段2：只運行並修復測試"
+# 完成後  
+claude -p "階段3：只重構重複代碼"
+</code></pre>
+<h4 id="3-使用壓縮指令"><a class="header" href="#3-使用壓縮指令">3. 使用壓縮指令</a></h4>
+<pre><code class="language-bash"># 當對話接近上下文限制時
+/compact
+</code></pre>
+<h3 id="token-耗盡自動重啟機制"><a class="header" href="#token-耗盡自動重啟機制">Token 耗盡自動重啟機制</a></h3>
+<h4 id="監控腳本"><a class="header" href="#監控腳本">監控腳本</a></h4>
+<pre><code class="language-bash">#!/bin/bash
+# token-monitor.sh
+
+PROJECT_PATH="/path/to/your/project"
+LOG_FILE="/tmp/claude-auto.log"
+
+check_tokens() {
+    # 檢查 token 使用情況（需要配合監控工具）
+    remaining=$(cc-usage check-remaining)
+    echo "剩餘 tokens: $remaining"
+    
+    if [ "$remaining" -lt 1000 ]; then
+        return 1  # token 不足
+    else
+        return 0  # token 充足
+    fi
+}
+
+while true; do
+    if check_tokens; then
+        echo "$(date): Tokens 充足，啟動 Claude..." | tee -a $LOG_FILE
+        cd $PROJECT_PATH
+        
+        timeout 4h claude --dangerously-skip-permissions -p "
+        繼續開發任務：
+        1. 檢查並修復任何建構問題
+        2. 運行測試並修復失敗項目
+        3. 改善代碼品質
+        4. 更新文檔
+        完成後進入待機模式
+        " | tee -a $LOG_FILE
+        
+    else
+        echo "$(date): Token 不足，等待補充..." | tee -a $LOG_FILE
+        sleep 3600  # 等待1小時
+    fi
+    
+    sleep 300  # 5分鐘後再檢查
+done
+</code></pre>
+<hr />
+<h2 id="實用腳本範例"><a class="header" href="#實用腳本範例">實用腳本範例</a></h2>
+<h3 id="1-基本夜間自動化腳本"><a class="header" href="#1-基本夜間自動化腳本">1. 基本夜間自動化腳本</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# basic-auto-dev.sh
+
+PROJECT_PATH="/path/to/your/project"
+LOG_FILE="/tmp/claude-dev-$(date +%Y%m%d).log"
+
+echo "$(date): 開始夜間自動化開發" | tee -a $LOG_FILE
+
+cd $PROJECT_PATH
+
+# 啟動完全自動化模式，設置最大6小時執行時間
+timeout 6h claude --dangerously-skip-permissions -p "
+🌙 夜間自動化開發任務清單：
+
+## 第一優先級（必須完成）
+1. 檢查並修復所有編譯錯誤
+2. 解決建構失敗問題
+3. 修復所有測試失敗
+
+## 第二優先級（代碼品質）  
+4. 處理所有 lint 警告和錯誤
+5. 修復 TypeScript 類型錯誤
+6. 重構重複代碼
+
+## 第三優先級（改善和優化）
+7. 添加缺失的單元測試
+8. 更新過時的註解和文檔
+9. 優化性能瓶頸
+10. 清理死代碼和無用導入
+
+## 第四優先級（維護）
+11. 更新依賴到最新穩定版本
+12. 生成 API 文檔
+13. 整理 git 提交歷史
+
+請按優先級順序執行，完成一個階段後報告進度。
+如果遇到需要人工決策的問題，請詳細記錄並繼續下一個任務。
+" | tee -a $LOG_FILE
+
+exit_code=$?
+
+if [ $exit_code -eq 124 ]; then
+    echo "$(date): 6小時超時完成" | tee -a $LOG_FILE
+elif [ $exit_code -eq 0 ]; then
+    echo "$(date): 所有任務完成" | tee -a $LOG_FILE
+else
+    echo "$(date): 執行中斷，錯誤代碼: $exit_code" | tee -a $LOG_FILE
+fi
+
+echo "$(date): 夜間自動化結束，檢查日誌: $LOG_FILE" | tee -a $LOG_FILE
+</code></pre>
+<h3 id="2-循環重啟腳本"><a class="header" href="#2-循環重啟腳本">2. 循環重啟腳本</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# continuous-auto-dev.sh
+
+PROJECT_PATH="/path/to/your/project"
+LOG_FILE="/tmp/claude-continuous.log"
+MAX_CYCLES=5  # 最多重啟5次
+
+cd $PROJECT_PATH
+
+for i in $(seq 1 $MAX_CYCLES); do
+    echo "$(date): 開始第 $i/$MAX_CYCLES 輪開發循環" | tee -a $LOG_FILE
+    
+    timeout 2h claude --dangerously-skip-permissions -p "
+    開發循環 $i：
+    1. 檢查項目狀態
+    2. 修復發現的問題  
+    3. 改善代碼品質
+    4. 如果沒有明顯問題，進行優化工作
+    
+    報告這輪完成的工作和發現的問題。
+    " | tee -a $LOG_FILE
+    
+    echo "$(date): 第 $i 輪完成，休息5分鐘..." | tee -a $LOG_FILE
+    sleep 300
+done
+
+echo "$(date): 所有循環完成" | tee -a $LOG_FILE
+</code></pre>
+<h3 id="3-cron-定時任務設置"><a class="header" href="#3-cron-定時任務設置">3. Cron 定時任務設置</a></h3>
+<pre><code class="language-bash"># 編輯 crontab
+crontab -e
+
+# 添加以下任務：
+
+# 每晚10點啟動夜間開發
+0 22 * * * cd /path/to/project &amp;&amp; /path/to/basic-auto-dev.sh
+
+# 每6小時檢查一次（適合長期項目）
+0 */6 * * * cd /path/to/project &amp;&amp; claude --dangerously-skip-permissions -p "快速檢查並修復緊急問題" &gt;&gt; /tmp/claude-check.log 2&gt;&amp;1
+
+# 每天早上8點生成開發報告
+0 8 * * * cd /path/to/project &amp;&amp; claude -p "生成昨夜開發工作摘要報告" &gt; /tmp/daily-report-$(date +\%Y\%m\%d).txt
+
+# 週末進行深度重構（每週六凌晨2點）
+0 2 * * 6 cd /path/to/project &amp;&amp; timeout 8h claude --dangerously-skip-permissions -p "執行深度代碼重構和架構優化"
+</code></pre>
+<h3 id="4-項目特定配置腳本"><a class="header" href="#4-項目特定配置腳本">4. 項目特定配置腳本</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# project-specific-setup.sh
+
+PROJECT_PATH="/path/to/your/project"
+cd $PROJECT_PATH
+
+# 創建 CLAUDE.md 配置文件
+cat &gt; CLAUDE.md &lt;&lt; 'EOF'
+# 項目開發指南
+
+## 技術棧
+- Frontend: React + TypeScript + Tailwind CSS
+- Backend: Node.js + Express + PostgreSQL  
+- Testing: Jest + React Testing Library
+- Build: Vite + ESBuild
+
+## 代碼風格
+- 使用 TypeScript 嚴格模式
+- 遵循 ESLint + Prettier 規則
+- 函數命名使用 camelCase
+- 組件命名使用 PascalCase
+- 常量使用 UPPER_CASE
+
+## 測試要求
+- 每個 API 端點都要有測試
+- React 組件需要渲染測試
+- 工具函數需要單元測試  
+- 總覆蓋率需達到 80% 以上
+
+## 常見任務命令
+- 安裝依賴：`npm install`
+- 啟動開發：`npm run dev`
+- 運行測試：`npm test`
+- 代碼檢查：`npm run lint`
+- 代碼格式化：`npm run format` 
+- 建構項目：`npm run build`
+- 類型檢查：`npm run type-check`
+
+## 部署流程
+1. 確保所有測試通過
+2. 更新版本號
+3. 建構生產版本
+4. 部署到 staging 環境測試
+5. 部署到 production 環境
+
+## 已知問題
+- [ ] API 響應時間偶爾較慢
+- [ ] 某些組件的 TypeScript 類型定義不完整
+- [ ] 測試覆蓋率還未達到目標
+
+## 優化目標
+- [ ] 改善 API 性能
+- [ ] 完善類型定義
+- [ ] 增加測試覆蓋率
+- [ ] 重構重複代碼
+- [ ] 更新過時文檔
+EOF
+
+echo "CLAUDE.md 配置文件已創建"
+
+# 設置 hooks（如果需要）
+mkdir -p .claude/hooks
+
+# 創建自動格式化 hook
+cat &gt; .claude/hooks/post-edit &lt;&lt; 'EOF'
+#!/bin/bash
+# 文件編輯後自動格式化
+if [[ "$CLAUDE_TOOL_OUTPUT" == *.js ]] || [[ "$CLAUDE_TOOL_OUTPUT" == *.ts ]] || [[ "$CLAUDE_TOOL_OUTPUT" == *.tsx ]]; then
+    npm run format "$CLAUDE_TOOL_OUTPUT"
+fi
+EOF
+
+chmod +x .claude/hooks/post-edit
+
+echo "項目配置完成，可以開始使用 Claude Code"
+</code></pre>
+<hr />
+<h2 id="安全考量與最佳實踐"><a class="header" href="#安全考量與最佳實踐">安全考量與最佳實踐</a></h2>
+<h3 id="安全措施"><a class="header" href="#安全措施">安全措施</a></h3>
+<h4 id="1-備份策略"><a class="header" href="#1-備份策略">1. 備份策略</a></h4>
+<pre><code class="language-bash"># 設置自動備份
+# 在啟動 Claude 前執行備份
+git add . &amp;&amp; git commit -m "Pre-Claude backup $(date)"
+
+# 使用專用分支進行 AI 開發
+git checkout -b ai-development-$(date +%Y%m%d)
+</code></pre>
+<h4 id="2-容器化隔離推薦"><a class="header" href="#2-容器化隔離推薦">2. 容器化隔離（推薦）</a></h4>
+<pre><code class="language-dockerfile"># Dockerfile for safe Claude development
+FROM node:18-alpine
+
+WORKDIR /app
+COPY . .
+
+# 安裝 Claude Code
+RUN npm install -g @anthropic-ai/claude-code
+
+# 限制網路存取（可選）
+# RUN apk add --no-cache iptables
+
+CMD ["claude", "--dangerously-skip-permissions"]
+</code></pre>
+<pre><code class="language-bash"># 使用 Docker 運行
+docker build -t claude-dev .
+docker run -it -v $(pwd):/app claude-dev
+</code></pre>
+<h4 id="3-權限配置替代方案"><a class="header" href="#3-權限配置替代方案">3. 權限配置替代方案</a></h4>
+<pre><code class="language-json">// ~/.claude.json - 較安全的權限設置
+{
+  "allowedTools": [
+    "Read(*)",
+    "Write(*.js,*.ts,*.tsx,*.json,*.md)",
+    "Bash(npm *)",
+    "Bash(git add *)",
+    "Bash(git commit *)",
+    "Edit(*)"
+  ],
+  "deniedTools": [
+    "Bash(rm *)",
+    "Bash(sudo *)", 
+    "Bash(curl *)",
+    "Bash(wget *)"
+  ]
+}
+</code></pre>
+<h3 id="風險控制"><a class="header" href="#風險控制">風險控制</a></h3>
+<h4 id="風險評估"><a class="header" href="#風險評估">風險評估</a></h4>
+<ul>
+<li><strong>高風險</strong>：系統文件被誤刪</li>
+<li><strong>中風險</strong>：重要代碼被錯誤修改</li>
+<li><strong>低風險</strong>：配置文件被更改</li>
+</ul>
+<h4 id="預防措施"><a class="header" href="#預防措施">預防措施</a></h4>
+<pre><code class="language-bash"># 1. 定期備份
+alias backup-before-claude="git add . &amp;&amp; git commit -m 'Backup before Claude $(date)'"
+
+# 2. 監控文件變化
+alias show-claude-changes="git diff HEAD~1"
+
+# 3. 快速回滾
+alias undo-claude="git reset --hard HEAD~1"
+</code></pre>
+<hr />
+<h2 id="故障排除"><a class="header" href="#故障排除">故障排除</a></h2>
+<h3 id="常見問題與解決方案"><a class="header" href="#常見問題與解決方案">常見問題與解決方案</a></h3>
+<h4 id="1-token-用完"><a class="header" href="#1-token-用完">1. Token 用完</a></h4>
+<pre><code class="language-bash"># 檢查使用量
+claude --version  # 查看配額信息
+
+# 等待重置或升級計劃
+# 設置監控腳本自動重試
+</code></pre>
+<h4 id="2-權限問題"><a class="header" href="#2-權限問題">2. 權限問題</a></h4>
+<pre><code class="language-bash"># 檢查權限設置
+claude --help | grep permission
+
+# 重新設置權限
+/permissions  # 在 Claude 內部使用
+</code></pre>
+<h4 id="3-任務中斷"><a class="header" href="#3-任務中斷">3. 任務中斷</a></h4>
+<pre><code class="language-bash"># 使用 /compact 壓縮上下文
+/compact
+
+# 重新啟動並要求繼續
+claude --dangerously-skip-permissions -p "繼續之前未完成的開發任務"
+</code></pre>
+<h4 id="4-性能問題"><a class="header" href="#4-性能問題">4. 性能問題</a></h4>
+<pre><code class="language-bash"># 清理 Claude 緩存
+rm -rf ~/.claude/cache/*
+
+# 重新啟動 Claude
+</code></pre>
+<h3 id="調試技巧"><a class="header" href="#調試技巧">調試技巧</a></h3>
+<h4 id="1-詳細模式"><a class="header" href="#1-詳細模式">1. 詳細模式</a></h4>
+<pre><code class="language-bash"># 啟用詳細日誌
+claude --verbose --dangerously-skip-permissions
+</code></pre>
+<h4 id="2-日誌分析"><a class="header" href="#2-日誌分析">2. 日誌分析</a></h4>
+<pre><code class="language-bash"># 查看 Claude 日誌
+tail -f ~/.claude/logs/claude.log
+
+# 分析錯誤模式
+grep "ERROR" ~/.claude/logs/* | head -20
+</code></pre>
+<h4 id="3-逐步調試"><a class="header" href="#3-逐步調試">3. 逐步調試</a></h4>
+<pre><code class="language-bash"># 分步執行任務
+claude -p "只檢查項目狀態，不要修改任何文件"
+claude -p "只修復編譯錯誤，一次一個文件"
+claude -p "只運行測試，報告結果"
+</code></pre>
+<hr />
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<p>Claude Code 可以實現真正的「睡覺前啟動，早上看結果」的自動化開發工作流程。關鍵要素：</p>
+<h3 id="-成功要素"><a class="header" href="#-成功要素">✅ 成功要素</a></h3>
+<ol>
+<li><strong>正確使用命令</strong>：<code>claude</code>（不是 claude-code）</li>
+<li><strong>完全自動化</strong>：<code>--dangerously-skip-permissions</code></li>
+<li><strong>任務排隊</strong>：一次性輸入多個相關任務</li>
+<li><strong>Token 管理</strong>：監控使用量，設置自動重啟</li>
+<li><strong>安全備份</strong>：使用 git 和定期備份</li>
+<li><strong>腳本化</strong>：使用 shell 腳本或 cron 自動化</li>
+</ol>
+<h3 id="-最佳實踐"><a class="header" href="#-最佳實踐">🚀 最佳實踐</a></h3>
+<ul>
+<li>在專用分支進行 AI 開發</li>
+<li>設置 CLAUDE.md 項目配置文件</li>
+<li>使用容器隔離提高安全性</li>
+<li>定期監控和調整自動化腳本</li>
+<li>保持任務具體明確，避免模糊指令</li>
+</ul>
+<h3 id="-注意事項"><a class="header" href="#-注意事項">⚠️ 注意事項</a></h3>
+<ul>
+<li><code>--dangerously-skip-permissions</code> 有風險，需要適當預防措施</li>
+<li>Token 使用量需要監控，避免超額</li>
+<li>複雜任務可能需要分階段執行</li>
+<li>定期檢查和調整自動化策略</li>
+</ul>
+<p>這樣的設置特別適合處理重複性維護任務、bug 修復、代碼品質改善和日常開發工作。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tools/changedetection-setup.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../html/html.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tools/changedetection-setup.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../html/html.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
