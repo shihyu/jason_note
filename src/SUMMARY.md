@@ -18,6 +18,7 @@
     - [實作 AES 對稱式加密](tools/python-pycryptodome-aes-symmetric-encryption-tutorial-examples.md)
     - [PocketBase 完整安裝使用指南](tools/pocketbase-guide-markdown.md)
     - [changedetection.io 使用教學](tools/changedetection-setup.md)
+    - [Claude Code 完整自動化開發指南](tools/claude_code_complete_guide.md)
 - [HTML](html/html.md)
     - [Vue](html/vue.md)
 - [Vim](vim/vim.md)
