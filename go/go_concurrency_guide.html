@@ -1,0 +1,2282 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Go 並行機制完整指南 🐹 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="go-並行機制完整指南-"><a class="header" href="#go-並行機制完整指南-">Go 並行機制完整指南 🐹</a></h1>
+<h2 id="-目錄結構"><a class="header" href="#-目錄結構">📑 目錄結構</a></h2>
+<p>這份指南分為以下部分：</p>
+<h3 id="第一部分概覽與基礎"><a class="header" href="#第一部分概覽與基礎">第一部分：概覽與基礎</a></h3>
+<ul>
+<li><a href="#%E8%A6%96%E8%A6%BA%E5%8C%96%E6%A6%82%E8%A6%BD">視覺化概覽</a></li>
+<li><a href="#goroutine-%E5%92%8C-channel">Goroutine 和 Channel</a></li>
+<li><a href="#mutex-%E5%92%8C-rwmutex">Mutex 和 RWMutex</a></li>
+</ul>
+<h3 id="第二部分高效能原語"><a class="header" href="#第二部分高效能原語">第二部分：高效能原語</a></h3>
+<ul>
+<li><a href="#sync-%E5%8C%85%E5%8E%9F%E8%AA%9E">Sync 包原語</a></li>
+<li><a href="#atomic-%E5%8E%9F%E5%AD%90%E6%93%8D%E4%BD%9C">Atomic 原子操作</a></li>
+</ul>
+<h3 id="第三部分高級同步機制"><a class="header" href="#第三部分高級同步機制">第三部分：高級同步機制</a></h3>
+<ul>
+<li><a href="#context-%E4%B8%8A%E4%B8%8B%E6%96%87">Context 上下文</a></li>
+<li><a href="#waitgroup-%E5%92%8C-once">WaitGroup 和 Once</a></li>
+</ul>
+<h3 id="第四部分實戰與最佳實踐"><a class="header" href="#第四部分實戰與最佳實踐">第四部分：實戰與最佳實踐</a></h3>
+<ul>
+<li><a href="#%E9%AB%98%E7%B4%9A%E4%B8%A6%E8%A1%8C%E6%A8%A1%E5%BC%8F">高級並行模式</a></li>
+<li><a href="#%E9%81%B8%E6%93%87%E6%8C%87%E5%8D%97%E8%88%87%E6%9C%80%E4%BD%B3%E5%AF%A6%E8%B8%90">選擇指南與最佳實踐</a></li>
+</ul>
+<hr />
+<h2 id="-視覺化概覽"><a class="header" href="#-視覺化概覽">📊 視覺化概覽</a></h2>
+<pre><code>Go 並行的選擇流程圖：
+┌─────────────────┐
+│   需要並行嗎？   │
+└─────┬───────────┘
+      │ 是
+      ▼
+┌─────────────────┐    ┌──────────────────┐
+│   簡單並行任務？ │───▶│  使用 Goroutine  │
+└─────┬───────────┘ 是 │  🏃 協程          │
+      │ 否           └──────────────────┘
+      ▼
+┌─────────────────┐    ┌──────────────────┐
+│   執行緒間通訊？ │───▶│  使用 Channel    │
+└─────┬───────────┘ 是 │  📡 通道          │
+      │ 否           └──────────────────┘
+      ▼
+┌─────────────────┐    ┌──────────────────┐
+│   共享記憶體？   │───▶│  使用 Mutex      │
+└─────┬───────────┘ 是 │  🔒 互斥鎖        │
+      │ 否           └──────────────────┘
+      ▼
+┌─────────────────┐    ┌──────────────────┐
+│   多讀少寫？     │───▶│  使用 RWMutex    │
+└─────┬───────────┘ 是 │  📖 讀寫鎖        │
+      │ 否           └──────────────────┘
+      ▼
+┌─────────────────┐    ┌──────────────────┐
+│   原子操作？     │───▶│  使用 Atomic     │
+└─────┬───────────┘ 是 │  ⚛️ 原子類型      │
+      │ 否           └──────────────────┘
+      ▼
+┌─────────────────┐
+│  組合使用多種   │
+│  🎯 混合模式     │
+└─────────────────┘
+</code></pre>
+<h3 id="效能與使用場景快速參考"><a class="header" href="#效能與使用場景快速參考">效能與使用場景快速參考</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>類型</th><th>效能</th><th>使用場景</th><th>特點</th></tr></thead><tbody>
+<tr><td><code>Goroutine</code></td><td>🥇 最快</td><td>並行任務</td><td>輕量級執行緒</td></tr>
+<tr><td><code>Channel</code></td><td>🥈 很快</td><td>執行緒通訊</td><td>類型安全通訊</td></tr>
+<tr><td><code>sync/atomic</code></td><td>🥉 快</td><td>原子操作</td><td>無鎖操作</td></tr>
+<tr><td><code>RWMutex</code> (讀)</td><td>🏅 中等</td><td>多讀少寫</td><td>並行讀取</td></tr>
+<tr><td><code>Mutex</code></td><td>🏅 中等</td><td>基本互斥</td><td>簡單可靠</td></tr>
+<tr><td><code>WaitGroup</code></td><td>🏅 中等</td><td>同步等待</td><td>任務協調</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="goroutine-和-channel-基礎-"><a class="header" href="#goroutine-和-channel-基礎-">Goroutine 和 Channel 基礎 🏃📡</a></h2>
+<p><strong>白話解釋</strong>: Goroutine 像輕量級的工人，Channel 像他們之間的傳輸帶</p>
+<pre><code>Goroutine + Channel 工作示意圖：
+Goroutine1: 🏃 ──┐
+Goroutine2: 🏃 ──┼──▶ 📡 Channel ──▶ 🏃 Goroutine3
+Goroutine3: 🏃 ──┘
+</code></pre>
+<h3 id="基本-goroutine-範例"><a class="header" href="#基本-goroutine-範例">基本 Goroutine 範例</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "runtime"
+    "sync"
+    "time"
+)
+
+func basicGoroutineExample() {
+    fmt.Println("主執行緒開始")
+    fmt.Printf("CPU 核心數: %d\n", runtime.NumCPU())
+    
+    var wg sync.WaitGroup
+    
+    // 啟動多個 goroutine
+    for i := 0; i &lt; 5; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            
+            for j := 0; j &lt; 3; j++ {
+                fmt.Printf("Goroutine %d 執行第 %d 次\n", id, j+1)
+                time.Sleep(100 * time.Millisecond)
+            }
+            fmt.Printf("Goroutine %d 完成\n", id)
+        }(i)
+    }
+    
+    wg.Wait()
+    fmt.Println("所有 goroutine 完成")
+}
+
+func main() {
+    basicGoroutineExample()
+}
+</code></pre>
+<h3 id="channel-基本使用範例"><a class="header" href="#channel-基本使用範例">Channel 基本使用範例</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "time"
+)
+
+func basicChannelExample() {
+    // 無緩衝通道
+    ch := make(chan string)
+    
+    // 發送者 goroutine
+    go func() {
+        messages := []string{"Hello", "World", "From", "Go"}
+        for _, msg := range messages {
+            fmt.Printf("發送: %s\n", msg)
+            ch &lt;- msg
+            time.Sleep(500 * time.Millisecond)
+        }
+        close(ch)
+    }()
+    
+    // 接收者
+    for msg := range ch {
+        fmt.Printf("接收: %s\n", msg)
+    }
+}
+
+// 緩衝通道範例
+func bufferedChannelExample() {
+    // 建立緩衝通道，容量為3
+    ch := make(chan int, 3)
+    
+    // 發送者
+    go func() {
+        for i := 1; i &lt;= 5; i++ {
+            fmt.Printf("嘗試發送 %d\n", i)
+            ch &lt;- i
+            fmt.Printf("成功發送 %d\n", i)
+        }
+        close(ch)
+    }()
+    
+    // 接收者故意延遲
+    time.Sleep(2 * time.Second)
+    
+    for value := range ch {
+        fmt.Printf("接收: %d\n", value)
+        time.Sleep(500 * time.Millisecond)
+    }
+}
+</code></pre>
+<h3 id="生產者-消費者範例"><a class="header" href="#生產者-消費者範例">生產者-消費者範例</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "math/rand"
+    "sync"
+    "time"
+)
+
+type Job struct {
+    ID   int
+    Data string
+}
+
+type Result struct {
+    Job    Job
+    Output string
+    Worker int
+}
+
+func producerConsumerExample() {
+    const numWorkers = 3
+    const numJobs = 10
+    
+    jobs := make(chan Job, 5)
+    results := make(chan Result, 5)
+    
+    var wg sync.WaitGroup
+    
+    // 啟動工作者
+    for w := 1; w &lt;= numWorkers; w++ {
+        wg.Add(1)
+        go worker(w, jobs, results, &amp;wg)
+    }
+    
+    // 結果收集器
+    go func() {
+        for result := range results {
+            fmt.Printf("結果: 工作者 %d 完成任務 %d - %s\n",
+                result.Worker, result.Job.ID, result.Output)
+        }
+    }()
+    
+    // 生產者：發送工作
+    for j := 1; j &lt;= numJobs; j++ {
+        job := Job{
+            ID:   j,
+            Data: fmt.Sprintf("任務資料 %d", j),
+        }
+        jobs &lt;- job
+    }
+    close(jobs)
+    
+    wg.Wait()
+    close(results)
+    
+    time.Sleep(100 * time.Millisecond) // 等待結果輸出
+}
+
+func worker(id int, jobs &lt;-chan Job, results chan&lt;- Result, wg *sync.WaitGroup) {
+    defer wg.Done()
+    
+    for job := range jobs {
+        fmt.Printf("工作者 %d 開始處理任務 %d\n", id, job.ID)
+        
+        // 模擬工作
+        time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
+        
+        result := Result{
+            Job:    job,
+            Output: fmt.Sprintf("處理完成: %s", job.Data),
+            Worker: id,
+        }
+        
+        results &lt;- result
+    }
+    
+    fmt.Printf("工作者 %d 結束\n", id)
+}
+</code></pre>
+<h3 id="select-多路復用"><a class="header" href="#select-多路復用">Select 多路復用</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "time"
+)
+
+func selectExample() {
+    ch1 := make(chan string)
+    ch2 := make(chan string)
+    quit := make(chan bool)
+    
+    // 發送者1
+    go func() {
+        for i := 0; i &lt; 5; i++ {
+            time.Sleep(1 * time.Second)
+            ch1 &lt;- fmt.Sprintf("通道1訊息 %d", i)
+        }
+    }()
+    
+    // 發送者2
+    go func() {
+        for i := 0; i &lt; 5; i++ {
+            time.Sleep(1500 * time.Millisecond)
+            ch2 &lt;- fmt.Sprintf("通道2訊息 %d", i)
+        }
+    }()
+    
+    // 超時控制
+    go func() {
+        time.Sleep(8 * time.Second)
+        quit &lt;- true
+    }()
+    
+    // 選擇器
+    for {
+        select {
+        case msg1 := &lt;-ch1:
+            fmt.Printf("收到通道1: %s\n", msg1)
+        case msg2 := &lt;-ch2:
+            fmt.Printf("收到通道2: %s\n", msg2)
+        case &lt;-quit:
+            fmt.Println("超時退出")
+            return
+        case &lt;-time.After(500 * time.Millisecond):
+            fmt.Println("等待中...")
+        }
+    }
+}
+</code></pre>
+<hr />
+<h2 id="mutex-和-rwmutex-"><a class="header" href="#mutex-和-rwmutex-">Mutex 和 RWMutex 🔒📖</a></h2>
+<p><strong>白話解釋</strong>: Mutex 像廁所門鎖，一次只能一個人用；RWMutex 像圖書館，多人可以看書但寫字時要清場</p>
+<pre><code>Mutex vs RWMutex:
+Mutex:   🚪🔒 (互斥存取)
+RWMutex: 👀👀👀 或 ✍️🚫 (讀者並行，寫者獨占)
+</code></pre>
+<h3 id="基本-mutex-範例"><a class="header" href="#基本-mutex-範例">基本 Mutex 範例</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+type SafeCounter struct {
+    mu    sync.Mutex
+    value int
+}
+
+func (c *SafeCounter) Increment() {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    
+    c.value++
+    fmt.Printf("計數器增加到: %d\n", c.value)
+}
+
+func (c *SafeCounter) Value() int {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    return c.value
+}
+
+func mutexExample() {
+    counter := &amp;SafeCounter{}
+    var wg sync.WaitGroup
+    
+    // 多個 goroutine 並行增加計數器
+    for i := 0; i &lt; 5; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            for j := 0; j &lt; 3; j++ {
+                counter.Increment()
+                time.Sleep(100 * time.Millisecond)
+            }
+        }(i)
+    }
+    
+    wg.Wait()
+    fmt.Printf("最終計數: %d\n", counter.Value())
+}
+</code></pre>
+<h3 id="rwmutex-讀寫鎖範例"><a class="header" href="#rwmutex-讀寫鎖範例">RWMutex 讀寫鎖範例</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+type ConfigCache struct {
+    mu       sync.RWMutex
+    settings map[string]string
+    version  int
+}
+
+func NewConfigCache() *ConfigCache {
+    return &amp;ConfigCache{
+        settings: make(map[string]string),
+        version:  1,
+    }
+}
+
+func (c *ConfigCache) Get(key string) (string, bool) {
+    c.mu.RLock()
+    defer c.mu.RUnlock()
+    
+    value, exists := c.settings[key]
+    fmt.Printf("讀取設定 %s: %s (版本: %d)\n", key, value, c.version)
+    return value, exists
+}
+
+func (c *ConfigCache) Set(key, value string) {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    
+    c.settings[key] = value
+    c.version++
+    fmt.Printf("更新設定 %s = %s (新版本: %d)\n", key, value, c.version)
+}
+
+func (c *ConfigCache) GetAll() map[string]string {
+    c.mu.RLock()
+    defer c.mu.RUnlock()
+    
+    // 複製 map 以避免外部修改
+    result := make(map[string]string)
+    for k, v := range c.settings {
+        result[k] = v
+    }
+    return result
+}
+
+func rwMutexExample() {
+    cache := NewConfigCache()
+    var wg sync.WaitGroup
+    
+    // 初始化一些設定
+    cache.Set("theme", "dark")
+    cache.Set("language", "zh-TW")
+    
+    // 多個讀者
+    for i := 0; i &lt; 5; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            for j := 0; j &lt; 3; j++ {
+                cache.Get("theme")
+                time.Sleep(100 * time.Millisecond)
+            }
+        }(i)
+    }
+    
+    // 少數寫者
+    for i := 0; i &lt; 2; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            time.Sleep(200 * time.Millisecond)
+            cache.Set("theme", fmt.Sprintf("theme_%d", id))
+        }(i)
+    }
+    
+    wg.Wait()
+    
+    fmt.Println("最終設定:")
+    for k, v := range cache.GetAll() {
+        fmt.Printf("  %s: %s\n", k, v)
+    }
+}
+</code></pre>
+<h3 id="效能比較範例"><a class="header" href="#效能比較範例">效能比較範例</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+func performanceComparison() {
+    const iterations = 100000
+    const goroutines = 10
+    
+    // Mutex 測試
+    fmt.Println("測試 Mutex 效能...")
+    start := time.Now()
+    
+    var mutex sync.Mutex
+    data := 0
+    var wg sync.WaitGroup
+    
+    for i := 0; i &lt; goroutines; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            for j := 0; j &lt; iterations; j++ {
+                mutex.Lock()
+                _ = data // 模擬讀取
+                mutex.Unlock()
+            }
+        }()
+    }
+    
+    wg.Wait()
+    mutexTime := time.Since(start)
+    
+    // RWMutex 測試 (只讀)
+    fmt.Println("測試 RWMutex 讀取效能...")
+    start = time.Now()
+    
+    var rwMutex sync.RWMutex
+    
+    for i := 0; i &lt; goroutines; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            for j := 0; j &lt; iterations; j++ {
+                rwMutex.RLock()
+                _ = data // 模擬讀取
+                rwMutex.RUnlock()
+            }
+        }()
+    }
+    
+    wg.Wait()
+    rwMutexTime := time.Since(start)
+    
+    fmt.Printf("Mutex 時間: %v\n", mutexTime)
+    fmt.Printf("RWMutex 時間: %v\n", rwMutexTime)
+    fmt.Printf("RWMutex 比 Mutex 快 %.2fx\n", 
+        float64(mutexTime.Nanoseconds())/float64(rwMutexTime.Nanoseconds()))
+}
+</code></pre>
+<hr />
+<h2 id="sync-包原語-"><a class="header" href="#sync-包原語-">Sync 包原語 📦</a></h2>
+<h3 id="waitgroup-同步等待"><a class="header" href="#waitgroup-同步等待">WaitGroup 同步等待</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+func waitGroupExample() {
+    var wg sync.WaitGroup
+    tasks := []string{"任務A", "任務B", "任務C", "任務D"}
+    
+    fmt.Println("開始執行並行任務...")
+    
+    for i, task := range tasks {
+        wg.Add(1)
+        go func(id int, taskName string) {
+            defer wg.Done()
+            
+            fmt.Printf("開始 %s\n", taskName)
+            // 模擬不同的工作時間
+            time.Sleep(time.Duration(id+1) * 500 * time.Millisecond)
+            fmt.Printf("完成 %s\n", taskName)
+        }(i, task)
+    }
+    
+    wg.Wait()
+    fmt.Println("所有任務完成！")
+}
+
+// 錯誤示範：WaitGroup 的常見錯誤
+func waitGroupWrongExample() {
+    var wg sync.WaitGroup
+    
+    for i := 0; i &lt; 3; i++ {
+        // ❌ 錯誤：在 goroutine 內部調用 Add
+        go func(id int) {
+            wg.Add(1) // 競爭條件！
+            defer wg.Done()
+            fmt.Printf("任務 %d 完成\n", id)
+        }(i)
+    }
+    
+    wg.Wait() // 可能提前結束
+}
+
+// 正確示範
+func waitGroupCorrectExample() {
+    var wg sync.WaitGroup
+    
+    for i := 0; i &lt; 3; i++ {
+        wg.Add(1) // ✅ 正確：在啟動 goroutine 前調用 Add
+        go func(id int) {
+            defer wg.Done()
+            fmt.Printf("任務 %d 完成\n", id)
+        }(i)
+    }
+    
+    wg.Wait()
+}
+</code></pre>
+<h3 id="once-單次執行"><a class="header" href="#once-單次執行">Once 單次執行</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+type Singleton struct {
+    data string
+}
+
+var (
+    instance *Singleton
+    once     sync.Once
+)
+
+func GetSingleton() *Singleton {
+    once.Do(func() {
+        fmt.Println("建立單例實例...")
+        instance = &amp;Singleton{data: "我是單例"}
+    })
+    return instance
+}
+
+func onceExample() {
+    var wg sync.WaitGroup
+    
+    // 多個 goroutine 嘗試獲取單例
+    for i := 0; i &lt; 5; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            
+            singleton := GetSingleton()
+            fmt.Printf("Goroutine %d 獲得: %s\n", id, singleton.data)
+        }(i)
+    }
+    
+    wg.Wait()
+}
+
+// 初始化函數範例
+var config map[string]string
+var configOnce sync.Once
+
+func loadConfig() {
+    configOnce.Do(func() {
+        fmt.Println("載入配置文件...")
+        config = map[string]string{
+            "database_url": "localhost:5432",
+            "api_key":      "secret123",
+        }
+    })
+}
+
+func getConfig(key string) string {
+    loadConfig() // 保證只執行一次
+    return config[key]
+}
+</code></pre>
+<h3 id="cond-條件變數"><a class="header" href="#cond-條件變數">Cond 條件變數</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+func condExample() {
+    var mu sync.Mutex
+    cond := sync.NewCond(&amp;mu)
+    queue := make([]int, 0)
+    
+    // 消費者
+    go func() {
+        mu.Lock()
+        defer mu.Unlock()
+        
+        for len(queue) == 0 {
+            fmt.Println("消費者等待...")
+            cond.Wait() // 釋放鎖並等待
+        }
+        
+        item := queue[0]
+        queue = queue[1:]
+        fmt.Printf("消費者取得: %d\n", item)
+    }()
+    
+    // 生產者
+    go func() {
+        for i := 1; i &lt;= 3; i++ {
+            time.Sleep(1 * time.Second)
+            
+            mu.Lock()
+            queue = append(queue, i)
+            fmt.Printf("生產者新增: %d\n", i)
+            cond.Signal() // 通知等待的 goroutine
+            mu.Unlock()
+        }
+    }()
+    
+    time.Sleep(5 * time.Second)
+}
+
+// 多消費者範例
+func multiConsumerExample() {
+    var mu sync.Mutex
+    cond := sync.NewCond(&amp;mu)
+    items := []string{"蘋果", "香蕉", "橘子"}
+    
+    // 多個消費者
+    for i := 0; i &lt; 3; i++ {
+        go func(id int) {
+            mu.Lock()
+            defer mu.Unlock()
+            
+            for len(items) == 0 {
+                fmt.Printf("消費者 %d 等待中...\n", id)
+                cond.Wait()
+            }
+            
+            if len(items) &gt; 0 {
+                item := items[0]
+                items = items[1:]
+                fmt.Printf("消費者 %d 取得: %s\n", id, item)
+            }
+        }(i)
+    }
+    
+    time.Sleep(1 * time.Second)
+    
+    // 喚醒所有等待者
+    mu.Lock()
+    fmt.Println("生產者準備喚醒所有消費者")
+    cond.Broadcast()
+    mu.Unlock()
+    
+    time.Sleep(1 * time.Second)
+}
+</code></pre>
+<hr />
+<h2 id="atomic-原子操作-"><a class="header" href="#atomic-原子操作-">Atomic 原子操作 ⚛️</a></h2>
+<p><strong>白話解釋</strong>: 原子操作像不可分割的動作，要嘛全做完，要嘛不做</p>
+<h3 id="基本原子操作"><a class="header" href="#基本原子操作">基本原子操作</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "sync"
+    "sync/atomic"
+    "time"
+)
+
+func basicAtomicExample() {
+    var counter int64
+    var wg sync.WaitGroup
+    
+    // 啟動多個 goroutine 進行原子增加
+    for i := 0; i &lt; 5; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            
+            for j := 0; j &lt; 1000; j++ {
+                atomic.AddInt64(&amp;counter, 1)
+            }
+            fmt.Printf("Goroutine %d 完成\n", id)
+        }(i)
+    }
+    
+    wg.Wait()
+    
+    fmt.Printf("最終計數: %d\n", atomic.LoadInt64(&amp;counter))
+}
+
+// 原子標誌範例
+func atomicFlagExample() {
+    var running int32 = 1
+    var wg sync.WaitGroup
+    
+    // 工作 goroutine
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+        
+        for atomic.LoadInt32(&amp;running) == 1 {
+            fmt.Println("工作中...")
+            time.Sleep(500 * time.Millisecond)
+        }
+        fmt.Println("工作結束")
+    }()
+    
+    // 主執行緒等待後停止
+    time.Sleep(3 * time.Second)
+    atomic.StoreInt32(&amp;running, 0)
+    
+    wg.Wait()
+}
+</code></pre>
+<h3 id="compare-and-swap-cas-操作"><a class="header" href="#compare-and-swap-cas-操作">Compare-And-Swap (CAS) 操作</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "sync"
+    "sync/atomic"
+    "time"
+)
+
+func casExample() {
+    var value int64 = 10
+    var wg sync.WaitGroup
+    
+    // 多個 goroutine 嘗試將值翻倍
+    for i := 0; i &lt; 3; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            
+            for {
+                oldValue := atomic.LoadInt64(&amp;value)
+                newValue := oldValue * 2
+                
+                if atomic.CompareAndSwapInt64(&amp;value, oldValue, newValue) {
+                    fmt.Printf("Goroutine %d 成功將 %d 更新為 %d\n", 
+                        id, oldValue, newValue)
+                    break
+                } else {
+                    fmt.Printf("Goroutine %d CAS 失敗，重試...\n", id)
+                    time.Sleep(1 * time.Millisecond)
+                }
+            }
+        }(i)
+    }
+    
+    wg.Wait()
+    fmt.Printf("最終值: %d\n", atomic.LoadInt64(&amp;value))
+}
+
+// 無鎖堆疊實現
+type LockFreeStack struct {
+    head unsafe.Pointer
+}
+
+type node struct {
+    data int
+    next unsafe.Pointer
+}
+
+func (s *LockFreeStack) Push(data int) {
+    newNode := &amp;node{data: data}
+    
+    for {
+        oldHead := atomic.LoadPointer(&amp;s.head)
+        newNode.next = oldHead
+        
+        if atomic.CompareAndSwapPointer(&amp;s.head, oldHead, unsafe.Pointer(newNode)) {
+            break
+        }
+    }
+}
+
+func (s *LockFreeStack) Pop() (int, bool) {
+    for {
+        oldHead := atomic.LoadPointer(&amp;s.head)
+        if oldHead == nil {
+            return 0, false
+        }
+        
+        oldNode := (*node)(oldHead)
+        newHead := atomic.LoadPointer(&amp;oldNode.next)
+        
+        if atomic.CompareAndSwapPointer(&amp;s.head, oldHead, newHead) {
+            return oldNode.data, true
+        }
+    }
+}
+</code></pre>
+<h3 id="原子值-atomicvalue"><a class="header" href="#原子值-atomicvalue">原子值 (atomic.Value)</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "sync"
+    "sync/atomic"
+    "time"
+)
+
+type Config struct {
+    Host string
+    Port int
+}
+
+func atomicValueExample() {
+    var config atomic.Value
+    
+    // 初始配置
+    config.Store(Config{Host: "localhost", Port: 8080})
+    
+    var wg sync.WaitGroup
+    
+    // 多個讀者
+    for i := 0; i &lt; 3; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            
+            for j := 0; j &lt; 5; j++ {
+                cfg := config.Load().(Config)
+                fmt.Printf("讀者 %d: %s:%d\n", id, cfg.Host, cfg.Port)
+                time.Sleep(200 * time.Millisecond)
+            }
+        }(i)
+    }
+    
+    // 寫者
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+        
+        time.Sleep(1 * time.Second)
+        config.Store(Config{Host: "production", Port: 9090})
+        fmt.Println("配置已更新")
+        
+        time.Sleep(1 * time.Second)
+        config.Store(Config{Host: "backup", Port: 7070})
+        fmt.Println("配置再次更新")
+    }()
+    
+    wg.Wait()
+}
+</code></pre>
+<hr />
+<h2 id="context-上下文-"><a class="header" href="#context-上下文-">Context 上下文 🎯</a></h2>
+<p><strong>白話解釋</strong>: Context 像控制器，可以取消操作、設定超時、傳遞值</p>
+<pre><code class="language-go">package main
+
+import (
+    "context"
+    "fmt"
+    "time"
+)
+
+// 基本超時控制
+func contextTimeoutExample() {
+    ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+    defer cancel()
+    
+    go func() {
+        select {
+        case &lt;-time.After(3 * time.Second):
+            fmt.Println("工作完成")
+        case &lt;-ctx.Done():
+            fmt.Printf("工作被取消: %v\n", ctx.Err())
+        }
+    }()
+    
+    &lt;-ctx.Done()
+    fmt.Println("主程式結束")
+}
+
+// 手動取消
+func contextCancelExample() {
+    ctx, cancel := context.WithCancel(context.Background())
+    
+    go func() {
+        for {
+            select {
+            case &lt;-ctx.Done():
+                fmt.Printf("工作被取消: %v\n", ctx.Err())
+                return
+            default:
+                fmt.Println("工作進行中...")
+                time.Sleep(500 * time.Millisecond)
+            }
+        }
+    }()
+    
+    time.Sleep(2 * time.Second)
+    fmt.Println("發送取消信號")
+    cancel()
+    
+    time.Sleep(1 * time.Second)
+}
+
+// 值傳遞
+func contextValueExample() {
+    type key string
+    
+    ctx := context.WithValue(context.Background(), key("userID"), "12345")
+    ctx = context.WithValue(ctx, key("requestID"), "req-789")
+    
+    processRequest(ctx)
+}
+
+func processRequest(ctx context.Context) {
+    userID := ctx.Value("userID")
+    requestID := ctx.Value("requestID")
+    
+    fmt.Printf("處理請求 - 用戶ID: %v, 請求ID: %v\n", userID, requestID)
+    
+    // 傳遞給下層函數
+    handleDatabase(ctx)
+}
+
+func handleDatabase(ctx context.Context) {
+    userID := ctx.Value("userID")
+    fmt.Printf("資料庫操作 - 用戶ID: %v\n", userID)
+}
+
+// 鏈式取消
+func contextChainExample() {
+    // 根上下文，10秒超時
+    parentCtx, parentCancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer parentCancel()
+    
+    // 子上下文，5秒超時
+    childCtx, childCancel := context.WithTimeout(parentCtx, 5*time.Second)
+    defer childCancel()
+    
+    // 孫上下文，手動取消
+    grandChildCtx, grandChildCancel := context.WithCancel(childCtx)
+    defer grandChildCancel()
+    
+    go func() {
+        select {
+        case &lt;-grandChildCtx.Done():
+            fmt.Printf("孫上下文結束: %v\n", grandChildCtx.Err())
+        }
+    }()
+    
+    // 2秒後手動取消孫上下文
+    time.Sleep(2 * time.Second)
+    grandChildCancel()
+    
+    time.Sleep(1 * time.Second)
+}
+</code></pre>
+<h3 id="http-服務器範例"><a class="header" href="#http-服務器範例">HTTP 服務器範例</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "context"
+    "fmt"
+    "net/http"
+    "time"
+)
+
+func httpServerExample() {
+    http.HandleFunc("/long-task", longTaskHandler)
+    
+    server := &amp;http.Server{
+        Addr:    ":8080",
+        Handler: nil,
+    }
+    
+    go func() {
+        fmt.Println("服務器啟動在 :8080")
+        if err := server.ListenAndServe(); err != nil &amp;&amp; err != http.ErrServerClosed {
+            fmt.Printf("服務器錯誤: %v\n", err)
+        }
+    }()
+    
+    // 模擬運行10秒後關閉
+    time.Sleep(10 * time.Second)
+    
+    shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer shutdownCancel()
+    
+    if err := server.Shutdown(shutdownCtx); err != nil {
+        fmt.Printf("服務器關閉錯誤: %v\n", err)
+    } else {
+        fmt.Println("服務器優雅關閉")
+    }
+}
+
+func longTaskHandler(w http.ResponseWriter, r *http.Request) {
+    ctx := r.Context()
+    
+    // 模擬長時間任務
+    select {
+    case &lt;-time.After(8 * time.Second):
+        fmt.Fprintf(w, "任務完成")
+    case &lt;-ctx.Done():
+        fmt.Printf("請求被取消: %v\n", ctx.Err())
+        http.Error(w, "請求被取消", http.StatusRequestTimeout)
+    }
+}
+</code></pre>
+<hr />
+<h2 id="高級並行模式-"><a class="header" href="#高級並行模式-">高級並行模式 🚀</a></h2>
+<h3 id="worker-pool-模式"><a class="header" href="#worker-pool-模式">Worker Pool 模式</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+type WorkerPool struct {
+    workerCount int
+    jobs        chan Job
+    results     chan Result
+    wg          sync.WaitGroup
+}
+
+type Job struct {
+    ID   int
+    Data interface{}
+}
+
+type Result struct {
+    Job    Job
+    Output interface{}
+    Error  error
+}
+
+func NewWorkerPool(workerCount int) *WorkerPool {
+    return &amp;WorkerPool{
+        workerCount: workerCount,
+        jobs:        make(chan Job, workerCount*2),
+        results:     make(chan Result, workerCount*2),
+    }
+}
+
+func (wp *WorkerPool) Start() {
+    for i := 0; i &lt; wp.workerCount; i++ {
+        wp.wg.Add(1)
+        go wp.worker(i)
+    }
+}
+
+func (wp *WorkerPool) worker(id int) {
+    defer wp.wg.Done()
+    
+    for job := range wp.jobs {
+        fmt.Printf("工作者 %d 處理任務 %d\n", id, job.ID)
+        
+        // 模擬處理時間
+        time.Sleep(time.Duration(job.ID%3+1) * 500 * time.Millisecond)
+        
+        result := Result{
+            Job:    job,
+            Output: fmt.Sprintf("任務 %d 的結果", job.ID),
+            Error:  nil,
+        }
+        
+        wp.results &lt;- result
+    }
+    
+    fmt.Printf("工作者 %d 結束\n", id)
+}
+
+func (wp *WorkerPool) Submit(job Job) {
+    wp.jobs &lt;- job
+}
+
+func (wp *WorkerPool) Stop() {
+    close(wp.jobs)
+    wp.wg.Wait()
+    close(wp.results)
+}
+
+func (wp *WorkerPool) Results() &lt;-chan Result {
+    return wp.results
+}
+
+func workerPoolExample() {
+    pool := NewWorkerPool(3)
+    pool.Start()
+    
+    // 提交任務
+    go func() {
+        for i := 1; i &lt;= 10; i++ {
+            pool.Submit(Job{ID: i, Data: fmt.Sprintf("data-%d", i)})
+        }
+        pool.Stop()
+    }()
+    
+    // 收集結果
+    for result := range pool.Results() {
+        if result.Error != nil {
+            fmt.Printf("任務 %d 失敗: %v\n", result.Job.ID, result.Error)
+        } else {
+            fmt.Printf("收到結果: %v\n", result.Output)
+        }
+    }
+}
+</code></pre>
+<h3 id="pipeline-管道模式"><a class="header" href="#pipeline-管道模式">Pipeline 管道模式</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+// 階段1: 數字生成器
+func numberGenerator(nums ...int) &lt;-chan int {
+    out := make(chan int)
+    go func() {
+        for _, n := range nums {
+            out &lt;- n
+        }
+        close(out)
+    }()
+    return out
+}
+
+// 階段2: 平方計算
+func square(in &lt;-chan int) &lt;-chan int {
+    out := make(chan int)
+    go func() {
+        for n := range in {
+            out &lt;- n * n
+        }
+        close(out)
+    }()
+    return out
+}
+
+// 階段3: 結果收集
+func collect(in &lt;-chan int) []int {
+    var results []int
+    for n := range in {
+        results = append(results, n)
+    }
+    return results
+}
+
+func pipelineExample() {
+    // 建立管道
+    numbers := numberGenerator(1, 2, 3, 4, 5)
+    squares := square(numbers)
+    results := collect(squares)
+    
+    fmt.Printf("結果: %v\n", results)
+}
+
+// 扇出-扇入模式
+func fanOutFanInExample() {
+    numbers := numberGenerator(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+    
+    // 扇出: 多個工作者處理
+    worker1 := square(numbers)
+    worker2 := square(numbers)
+    worker3 := square(numbers)
+    
+    // 扇入: 合併結果
+    merged := fanIn(worker1, worker2, worker3)
+    
+    // 收集結果
+    for result := range merged {
+        fmt.Printf("結果: %d\n", result)
+    }
+}
+
+func fanIn(channels ...&lt;-chan int) &lt;-chan int {
+    var wg sync.WaitGroup
+    out := make(chan int)
+    
+    // 為每個輸入通道啟動一個 goroutine
+    multiplex := func(c &lt;-chan int) {
+        for n := range c {
+            out &lt;- n
+        }
+        wg.Done()
+    }
+    
+    wg.Add(len(channels))
+    for _, c := range channels {
+        go multiplex(c)
+    }
+    
+    // 等待所有輸入完成後關閉輸出通道
+    go func() {
+        wg.Wait()
+        close(out)
+    }()
+    
+    return out
+}
+</code></pre>
+<h3 id="publish-subscribe-模式"><a class="header" href="#publish-subscribe-模式">Publish-Subscribe 模式</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+type PubSub struct {
+    mu          sync.RWMutex
+    subscribers map[string][]chan interface{}
+}
+
+func NewPubSub() *PubSub {
+    return &amp;PubSub{
+        subscribers: make(map[string][]chan interface{}),
+    }
+}
+
+func (ps *PubSub) Subscribe(topic string) &lt;-chan interface{} {
+    ps.mu.Lock()
+    defer ps.mu.Unlock()
+    
+    ch := make(chan interface{}, 1)
+    ps.subscribers[topic] = append(ps.subscribers[topic], ch)
+    
+    return ch
+}
+
+func (ps *PubSub) Publish(topic string, data interface{}) {
+    ps.mu.RLock()
+    defer ps.mu.RUnlock()
+    
+    for _, ch := range ps.subscribers[topic] {
+        select {
+        case ch &lt;- data:
+        default:
+            // 非阻塞發送，避免慢消費者阻塞發布者
+        }
+    }
+}
+
+func (ps *PubSub) Unsubscribe(topic string, ch &lt;-chan interface{}) {
+    ps.mu.Lock()
+    defer ps.mu.Unlock()
+    
+    subs := ps.subscribers[topic]
+    for i, subscriber := range subs {
+        if subscriber == ch {
+            ps.subscribers[topic] = append(subs[:i], subs[i+1:]...)
+            close(subscriber)
+            break
+        }
+    }
+}
+
+func pubSubExample() {
+    ps := NewPubSub()
+    
+    // 訂閱者1
+    news := ps.Subscribe("news")
+    go func() {
+        for msg := range news {
+            fmt.Printf("新聞訂閱者收到: %v\n", msg)
+        }
+    }()
+    
+    // 訂閱者2
+    sports := ps.Subscribe("sports")
+    go func() {
+        for msg := range sports {
+            fmt.Printf("體育訂閱者收到: %v\n", msg)
+        }
+    }()
+    
+    // 訂閱者3 (也訂閱新聞)
+    news2 := ps.Subscribe("news")
+    go func() {
+        for msg := range news2 {
+            fmt.Printf("新聞訂閱者2收到: %v\n", msg)
+        }
+    }()
+    
+    // 發布訊息
+    time.Sleep(100 * time.Millisecond)
+    
+    ps.Publish("news", "重要新聞：Go 1.22 發布")
+    ps.Publish("sports", "足球賽事：台灣 vs 日本")
+    ps.Publish("news", "科技新聞：AI 新突破")
+    
+    time.Sleep(1 * time.Second)
+}
+</code></pre>
+<h3 id="限制器-rate-limiter"><a class="header" href="#限制器-rate-limiter">限制器 (Rate Limiter)</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "context"
+    "fmt"
+    "sync"
+    "time"
+)
+
+type RateLimiter struct {
+    tokens chan struct{}
+    ticker *time.Ticker
+    done   chan struct{}
+}
+
+func NewRateLimiter(rate int, capacity int) *RateLimiter {
+    rl := &amp;RateLimiter{
+        tokens: make(chan struct{}, capacity),
+        ticker: time.NewTicker(time.Second / time.Duration(rate)),
+        done:   make(chan struct{}),
+    }
+    
+    // 初始填滿令牌桶
+    for i := 0; i &lt; capacity; i++ {
+        rl.tokens &lt;- struct{}{}
+    }
+    
+    // 定期添加令牌
+    go func() {
+        for {
+            select {
+            case &lt;-rl.ticker.C:
+                select {
+                case rl.tokens &lt;- struct{}{}:
+                default:
+                    // 桶已滿，丟棄令牌
+                }
+            case &lt;-rl.done:
+                return
+            }
+        }
+    }()
+    
+    return rl
+}
+
+func (rl *RateLimiter) Allow() bool {
+    select {
+    case &lt;-rl.tokens:
+        return true
+    default:
+        return false
+    }
+}
+
+func (rl *RateLimiter) Wait(ctx context.Context) error {
+    select {
+    case &lt;-rl.tokens:
+        return nil
+    case &lt;-ctx.Done():
+        return ctx.Err()
+    }
+}
+
+func (rl *RateLimiter) Stop() {
+    rl.ticker.Stop()
+    close(rl.done)
+}
+
+func rateLimiterExample() {
+    limiter := NewRateLimiter(2, 5) // 每秒2個請求，容量5
+    defer limiter.Stop()
+    
+    var wg sync.WaitGroup
+    
+    // 模擬10個並發請求
+    for i := 1; i &lt;= 10; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            
+            ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+            defer cancel()
+            
+            start := time.Now()
+            if err := limiter.Wait(ctx); err != nil {
+                fmt.Printf("請求 %d 超時: %v\n", id, err)
+                return
+            }
+            
+            fmt.Printf("請求 %d 通過，等待時間: %v\n", id, time.Since(start))
+        }(i)
+    }
+    
+    wg.Wait()
+}
+</code></pre>
+<hr />
+<h2 id="選擇指南與最佳實踐-"><a class="header" href="#選擇指南與最佳實踐-">選擇指南與最佳實踐 🎯</a></h2>
+<h3 id="完整選擇決策樹"><a class="header" href="#完整選擇決策樹">完整選擇決策樹</a></h3>
+<pre><code class="language-go">/*
+Go 並行原語選擇指南：
+
+1. 需要並行執行嗎？
+   └─ 否 → 順序執行
+   └─ 是 → 繼續
+
+2. 執行緒間需要通訊嗎？
+   ├─ 需要 → Channel (推薦)
+   │   ├─ 一對一 → 無緩衝 Channel
+   │   ├─ 一對多 → 緩衝 Channel
+   │   ├─ 多對一 → 工作者池
+   │   └─ 複雜路由 → Select + 多 Channel
+   └─ 不需要 → 繼續
+
+3. 需要共享狀態嗎？
+   ├─ 簡單計數/標誌 → Atomic
+   ├─ 複雜資料結構 → Mutex/RWMutex
+   │   ├─ 多讀少寫 → RWMutex
+   │   └─ 讀寫平衡 → Mutex
+   └─ 不需要 → Goroutine + WaitGroup
+
+4. 需要取消/超時嗎？
+   └─ 是 → Context
+
+5. 需要同步等待嗎？
+   ├─ 等待多個任務完成 → WaitGroup
+   ├─ 單次初始化 → Once
+   └─ 條件等待 → Cond
+
+記住：優先使用 Channel，它是 Go 的核心設計理念
+*/
+</code></pre>
+<h3 id="效能對比表"><a class="header" href="#效能對比表">效能對比表</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>同步原語</th><th>延遲</th><th>吞吐量</th><th>記憶體使用</th><th>複雜度</th><th>適用場景</th></tr></thead><tbody>
+<tr><td><code>Goroutine</code></td><td>🟢 極低</td><td>🟢 極高</td><td>🟢 極小</td><td>🟢 簡單</td><td>並行任務</td></tr>
+<tr><td><code>Channel</code></td><td>🟡 中等</td><td>🟢 高</td><td>🟡 中等</td><td>🟢 簡單</td><td>執行緒通訊</td></tr>
+<tr><td><code>sync/atomic</code></td><td>🟢 極低</td><td>🟢 極高</td><td>🟢 極小</td><td>🟡 中等</td><td>原子操作</td></tr>
+<tr><td><code>RWMutex</code> (讀)</td><td>🟢 低</td><td>🟢 高</td><td>🟡 中等</td><td>🟡 中等</td><td>多讀少寫</td></tr>
+<tr><td><code>Mutex</code></td><td>🟡 中等</td><td>🟡 中等</td><td>🟡 中等</td><td>🟢 簡單</td><td>基本互斥</td></tr>
+<tr><td><code>WaitGroup</code></td><td>🟡 中等</td><td>N/A</td><td>🟢 小</td><td>🟢 簡單</td><td>同步等待</td></tr>
+<tr><td><code>Context</code></td><td>🟡 中等</td><td>N/A</td><td>🟡 中等</td><td>🟡 中等</td><td>取消控制</td></tr>
+</tbody></table>
+</div>
+<h3 id="最佳實踐指南"><a class="header" href="#最佳實踐指南">最佳實踐指南</a></h3>
+<h4 id="1-goroutine-管理"><a class="header" href="#1-goroutine-管理">1. Goroutine 管理</a></h4>
+<pre><code class="language-go">package main
+
+import (
+    "context"
+    "fmt"
+    "sync"
+    "time"
+)
+
+// ✅ 好的模式：明確的生命週期管理
+func goodGoroutineManagement() {
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+    
+    var wg sync.WaitGroup
+    
+    for i := 0; i &lt; 3; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            worker(ctx, id)
+        }(i)
+    }
+    
+    wg.Wait()
+    fmt.Println("所有工作者完成")
+}
+
+func worker(ctx context.Context, id int) {
+    for {
+        select {
+        case &lt;-ctx.Done():
+            fmt.Printf("工作者 %d 收到取消信號\n", id)
+            return
+        case &lt;-time.After(500 * time.Millisecond):
+            fmt.Printf("工作者 %d 工作中\n", id)
+        }
+    }
+}
+
+// ❌ 避免的模式：洩漏 goroutine
+func avoidGoroutineLeak() {
+    ch := make(chan int)
+    
+    // 這個 goroutine 可能永遠不會結束
+    go func() {
+        for {
+            select {
+            case n := &lt;-ch:
+                fmt.Println(n)
+            // 缺少退出條件！
+            }
+        }
+    }()
+    
+    // 如果沒有發送資料，goroutine 會洩漏
+}
+</code></pre>
+<h4 id="2-channel-最佳實踐"><a class="header" href="#2-channel-最佳實踐">2. Channel 最佳實踐</a></h4>
+<pre><code class="language-go">// ✅ 好的模式：適當的 Channel 緩衝
+func goodChannelBuffering() {
+    // 無緩衝：用於同步
+    sync := make(chan bool)
+    
+    go func() {
+        // 做一些工作
+        time.Sleep(1 * time.Second)
+        sync &lt;- true // 同步信號
+    }()
+    
+    &lt;-sync // 等待完成
+    
+    // 有緩衝：用於解耦
+    buffer := make(chan int, 10)
+    
+    // 生產者
+    go func() {
+        for i := 0; i &lt; 5; i++ {
+            buffer &lt;- i
+        }
+        close(buffer)
+    }()
+    
+    // 消費者
+    for val := range buffer {
+        fmt.Println(val)
+    }
+}
+
+// ✅ 好的模式：Channel 方向
+func goodChannelDirection() {
+    ch := make(chan int, 5)
+    
+    // 只能發送
+    go producer(ch)
+    
+    // 只能接收
+    consumer(ch)
+}
+
+func producer(ch chan&lt;- int) {
+    for i := 0; i &lt; 5; i++ {
+        ch &lt;- i
+    }
+    close(ch)
+}
+
+func consumer(ch &lt;-chan int) {
+    for val := range ch {
+        fmt.Printf("消費: %d\n", val)
+    }
+}
+</code></pre>
+<h4 id="3-錯誤處理"><a class="header" href="#3-錯誤處理">3. 錯誤處理</a></h4>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+// 強健的錯誤處理
+type WorkerResult struct {
+    ID    int
+    Data  interface{}
+    Error error
+}
+
+func robustWorkerPattern() {
+    jobs := make(chan int, 10)
+    results := make(chan WorkerResult, 10)
+    var wg sync.WaitGroup
+    
+    // 啟動工作者
+    for i := 0; i &lt; 3; i++ {
+        wg.Add(1)
+        go func(workerID int) {
+            defer wg.Done()
+            defer func() {
+                if r := recover(); r != nil {
+                    results &lt;- WorkerResult{
+                        ID:    workerID,
+                        Error: fmt.Errorf("panic: %v", r),
+                    }
+                }
+            }()
+            
+            for job := range jobs {
+                result := processJob(workerID, job)
+                results &lt;- result
+            }
+        }(i)
+    }
+    
+    // 發送任務
+    go func() {
+        for i := 1; i &lt;= 10; i++ {
+            jobs &lt;- i
+        }
+        close(jobs)
+    }()
+    
+    // 收集結果
+    go func() {
+        wg.Wait()
+        close(results)
+    }()
+    
+    // 處理結果
+    for result := range results {
+        if result.Error != nil {
+            fmt.Printf("工作者 %d 錯誤: %v\n", result.ID, result.Error)
+        } else {
+            fmt.Printf("工作者 %d 完成: %v\n", result.ID, result.Data)
+        }
+    }
+}
+
+func processJob(workerID, job int) WorkerResult {
+    // 模擬可能失敗的工作
+    if job%7 == 0 {
+        return WorkerResult{
+            ID:    workerID,
+            Error: fmt.Errorf("任務 %d 失敗", job),
+        }
+    }
+    
+    time.Sleep(100 * time.Millisecond)
+    return WorkerResult{
+        ID:   workerID,
+        Data: fmt.Sprintf("任務 %d 完成", job),
+    }
+}
+</code></pre>
+<h4 id="4-效能優化技巧"><a class="header" href="#4-效能優化技巧">4. 效能優化技巧</a></h4>
+<pre><code class="language-go">package main
+
+import (
+    "runtime"
+    "sync"
+    "sync/atomic"
+    "time"
+)
+
+// 效能監控
+type PerformanceMonitor struct {
+    goroutineCount int64
+    requestCount   int64
+    errorCount     int64
+}
+
+func (pm *PerformanceMonitor) IncrementGoroutine() {
+    atomic.AddInt64(&amp;pm.goroutineCount, 1)
+}
+
+func (pm *PerformanceMonitor) DecrementGoroutine() {
+    atomic.AddInt64(&amp;pm.goroutineCount, -1)
+}
+
+func (pm *PerformanceMonitor) IncrementRequest() {
+    atomic.AddInt64(&amp;pm.requestCount, 1)
+}
+
+func (pm *PerformanceMonitor) IncrementError() {
+    atomic.AddInt64(&amp;pm.errorCount, 1)
+}
+
+func (pm *PerformanceMonitor) Report() {
+    goroutines := atomic.LoadInt64(&amp;pm.goroutineCount)
+    requests := atomic.LoadInt64(&amp;pm.requestCount)
+    errors := atomic.LoadInt64(&amp;pm.errorCount)
+    
+    fmt.Printf("📊 效能報告:\n")
+    fmt.Printf("  活躍 Goroutine: %d\n", goroutines)
+    fmt.Printf("  系統 Goroutine: %d\n", runtime.NumGoroutine())
+    fmt.Printf("  處理請求數: %d\n", requests)
+    fmt.Printf("  錯誤數: %d\n", errors)
+    if requests &gt; 0 {
+        fmt.Printf("  錯誤率: %.2f%%\n", float64(errors)/float64(requests)*100)
+    }
+}
+
+// 自適應工作者池
+type AdaptiveWorkerPool struct {
+    minWorkers int
+    maxWorkers int
+    current    int
+    jobs       chan func()
+    monitor    *PerformanceMonitor
+    mu         sync.Mutex
+}
+
+func NewAdaptiveWorkerPool(min, max int) *AdaptiveWorkerPool {
+    pool := &amp;AdaptiveWorkerPool{
+        minWorkers: min,
+        maxWorkers: max,
+        current:    min,
+        jobs:       make(chan func(), max*2),
+        monitor:    &amp;PerformanceMonitor{},
+    }
+    
+    // 啟動最小工作者數量
+    for i := 0; i &lt; min; i++ {
+        go pool.worker()
+    }
+    
+    // 定期調整工作者數量
+    go pool.autoScale()
+    
+    return pool
+}
+
+func (pool *AdaptiveWorkerPool) worker() {
+    pool.monitor.IncrementGoroutine()
+    defer pool.monitor.DecrementGoroutine()
+    
+    for job := range pool.jobs {
+        job()
+        pool.monitor.IncrementRequest()
+    }
+}
+
+func (pool *AdaptiveWorkerPool) Submit(job func()) {
+    pool.jobs &lt;- job
+}
+
+func (pool *AdaptiveWorkerPool) autoScale() {
+    ticker := time.NewTicker(5 * time.Second)
+    defer ticker.Stop()
+    
+    for range ticker.C {
+        pool.mu.Lock()
+        queueLen := len(pool.jobs)
+        
+        // 如果隊列積壓太多，增加工作者
+        if queueLen &gt; pool.current &amp;&amp; pool.current &lt; pool.maxWorkers {
+            pool.current++
+            go pool.worker()
+            fmt.Printf("擴展工作者池到 %d\n", pool.current)
+        }
+        
+        // 如果隊列空閒，減少工作者（實際實現會更複雜）
+        if queueLen == 0 &amp;&amp; pool.current &gt; pool.minWorkers {
+            // 這裡簡化處理，實際需要優雅關閉工作者
+            pool.current--
+            fmt.Printf("縮減工作者池到 %d\n", pool.current)
+        }
+        
+        pool.mu.Unlock()
+        pool.monitor.Report()
+    }
+}
+</code></pre>
+<h3 id="除錯與診斷技巧"><a class="header" href="#除錯與診斷技巧">除錯與診斷技巧</a></h3>
+<h4 id="1-goroutine-洩漏檢測"><a class="header" href="#1-goroutine-洩漏檢測">1. Goroutine 洩漏檢測</a></h4>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "runtime"
+    "time"
+)
+
+func detectGoroutineLeak() {
+    initial := runtime.NumGoroutine()
+    fmt.Printf("初始 Goroutine 數量: %d\n", initial)
+    
+    // 執行一些可能洩漏的操作
+    for i := 0; i &lt; 10; i++ {
+        leakyFunction()
+    }
+    
+    // 等待一段時間讓正常的 goroutine 結束
+    time.Sleep(2 * time.Second)
+    
+    final := runtime.NumGoroutine()
+    fmt.Printf("最終 Goroutine 數量: %d\n", final)
+    
+    if final &gt; initial {
+        fmt.Printf("⚠️ 可能存在 Goroutine 洩漏: %d 個\n", final-initial)
+        
+        // 打印 goroutine 堆疊
+        buf := make([]byte, 1&lt;&lt;16)
+        stackSize := runtime.Stack(buf, true)
+        fmt.Printf("Goroutine 堆疊:\n%s\n", buf[:stackSize])
+    }
+}
+
+func leakyFunction() {
+    ch := make(chan int)
+    
+    // 這個 goroutine 會洩漏，因為沒有發送者
+    go func() {
+        &lt;-ch // 永遠阻塞
+    }()
+}
+</code></pre>
+<h4 id="2-死鎖檢測"><a class="header" href="#2-死鎖檢測">2. 死鎖檢測</a></h4>
+<pre><code class="language-go">package main
+
+import (
+    "sync"
+    "time"
+)
+
+func deadlockExample() {
+    var mu1, mu2 sync.Mutex
+    
+    // Goroutine 1: 先鎖 mu1，再鎖 mu2
+    go func() {
+        mu1.Lock()
+        defer mu1.Unlock()
+        
+        time.Sleep(100 * time.Millisecond)
+        
+        mu2.Lock()
+        defer mu2.Unlock()
+        
+        fmt.Println("Goroutine 1 完成")
+    }()
+    
+    // Goroutine 2: 先鎖 mu2，再鎖 mu1 (死鎖)
+    go func() {
+        mu2.Lock()
+        defer mu2.Unlock()
+        
+        time.Sleep(100 * time.Millisecond)
+        
+        mu1.Lock()
+        defer mu1.Unlock()
+        
+        fmt.Println("Goroutine 2 完成")
+    }()
+    
+    time.Sleep(1 * time.Second)
+    fmt.Println("可能發生死鎖")
+}
+
+// 死鎖預防：鎖排序
+func preventDeadlock() {
+    var mu1, mu2 sync.Mutex
+    
+    lockInOrder := func(first, second *sync.Mutex) {
+        first.Lock()
+        defer first.Unlock()
+        
+        second.Lock()
+        defer second.Unlock()
+    }
+    
+    // 總是按照相同順序獲取鎖
+    go func() {
+        lockInOrder(&amp;mu1, &amp;mu2)
+        fmt.Println("Goroutine 1 完成")
+    }()
+    
+    go func() {
+        lockInOrder(&amp;mu1, &amp;mu2) // 相同順序
+        fmt.Println("Goroutine 2 完成")
+    }()
+    
+    time.Sleep(1 * time.Second)
+}
+</code></pre>
+<hr />
+<h2 id="學習路徑與總結-"><a class="header" href="#學習路徑與總結-">學習路徑與總結 🎓</a></h2>
+<h3 id="學習路徑建議"><a class="header" href="#學習路徑建議">學習路徑建議</a></h3>
+<pre><code>🌱 初學者 (0-2個月):
+├── 理解 Goroutine 基礎
+├── 掌握 Channel 基本用法
+├── 學習 WaitGroup 和基本同步
+└── 實作簡單並行程式
+
+🚀 中級者 (2-4個月):
+├── 深入 Select 和複雜 Channel 模式
+├── 掌握 Context 的使用
+├── 學習 Mutex 和 Atomic 操作
+└── 實作 Worker Pool 等模式
+
+🎯 高級者 (4個月以上):
+├── 掌握高級並行模式
+├── 效能調優和監控
+├── 自訂同步原語
+└── 大規模並行系統設計
+</code></pre>
+<h3 id="go-並行編程的核心理念"><a class="header" href="#go-並行編程的核心理念">Go 並行編程的核心理念</a></h3>
+<p><strong>💡 設計哲學:</strong></p>
+<blockquote>
+<p>"Don't communicate by sharing memory; share memory by communicating."
+不要透過共享記憶體來通訊；要透過通訊來共享記憶體。</p>
+</blockquote>
+<p><strong>🎯 核心原則:</strong></p>
+<ol>
+<li><strong>Goroutine 優先</strong> - 使用輕量級協程而非傳統執行緒</li>
+<li><strong>Channel 為王</strong> - 優先使用 Channel 進行通訊</li>
+<li><strong>CSP 模型</strong> - 基於通訊循序程序的並行模型</li>
+<li><strong>組合勝過繼承</strong> - 透過介面和組合構建複雜系統</li>
+</ol>
+<p><strong>🛠️ 最佳實踐總結:</strong></p>
+<h4 id="何時使用什麼"><a class="header" href="#何時使用什麼">何時使用什麼：</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>場景</th><th>推薦方案</th><th>原因</th></tr></thead><tbody>
+<tr><td>🔄 <strong>執行緒間通訊</strong></td><td>Channel</td><td>Go 的核心設計</td></tr>
+<tr><td>🏃 <strong>並行任務</strong></td><td>Goroutine + WaitGroup</td><td>輕量且高效</td></tr>
+<tr><td>🔒 <strong>共享狀態保護</strong></td><td>Mutex/RWMutex</td><td>當 Channel 不適用時</td></tr>
+<tr><td>⚛️ <strong>簡單原子操作</strong></td><td>sync/atomic</td><td>最高效能</td></tr>
+<tr><td>⏰ <strong>超時和取消</strong></td><td>Context</td><td>標準做法</td></tr>
+<tr><td>🎯 <strong>一次性初始化</strong></td><td>sync.Once</td><td>執行緒安全的單例</td></tr>
+<tr><td>📊 <strong>效能監控</strong></td><td>pprof + 自訂監控</td><td>可觀測性</td></tr>
+</tbody></table>
+</div>
+<h4 id="常見陷阱與解決方案"><a class="header" href="#常見陷阱與解決方案">常見陷阱與解決方案：</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>問題</th><th>症狀</th><th>解決方案</th></tr></thead><tbody>
+<tr><td><strong>Goroutine 洩漏</strong></td><td>記憶體持續增長</td><td>使用 Context 控制生命週期</td></tr>
+<tr><td><strong>Channel 死鎖</strong></td><td>程式掛起</td><td>檢查 Channel 的發送/接收平衡</td></tr>
+<tr><td><strong>競爭條件</strong></td><td>不一致的結果</td><td>使用適當的同步原語</td></tr>
+<tr><td><strong>過度同步</strong></td><td>效能低下</td><td>重新設計，減少共享狀態</td></tr>
+</tbody></table>
+</div>
+<h4 id="效能調優指南"><a class="header" href="#效能調優指南">效能調優指南：</a></h4>
+<pre><code class="language-go">// 效能調優檢查清單
+func performanceTuning() {
+    // 1. Goroutine 數量控制
+    // - 避免無限制建立 Goroutine
+    // - 使用 Worker Pool 模式
+    
+    // 2. Channel 緩衝優化
+    // - 根據生產消費速度調整緩衝大小
+    // - 避免過大的緩衝區導致記憶體浪費
+    
+    // 3. 鎖競爭最小化
+    // - 縮短臨界區
+    // - 使用 RWMutex 優化讀多寫少場景
+    // - 考慮無鎖資料結構
+    
+    // 4. 記憶體分配優化
+    // - 重用物件，減少 GC 壓力
+    // - 使用 sync.Pool 池化物件
+    
+    // 5. 監控和診斷
+    // - 使用 pprof 分析效能
+    // - 監控 Goroutine 數量
+    // - 檢測記憶體洩漏
+}
+</code></pre>
+<h3 id="進階學習資源"><a class="header" href="#進階學習資源">進階學習資源</a></h3>
+<p><strong>📚 必讀資料:</strong></p>
+<ul>
+<li><a href="https://talks.golang.org/2012/concurrency.slide">Go Concurrency Patterns</a></li>
+<li><a href="https://talks.golang.org/2013/advconc.slide">Advanced Go Concurrency Patterns</a></li>
+<li><a href="https://golang.org/ref/mem">Go Memory Model</a></li>
+</ul>
+<p><strong>🔧 實用工具:</strong></p>
+<ul>
+<li><code>go tool pprof</code> - 效能分析</li>
+<li><code>go test -race</code> - 競爭條件檢測</li>
+<li><code>GODEBUG=schedtrace=1000</code> - 排程器追蹤</li>
+</ul>
+<p><strong>🎯 實戰項目建議:</strong></p>
+<ol>
+<li><strong>聊天伺服器</strong> - 練習 Channel 和 Goroutine</li>
+<li><strong>爬蟲系統</strong> - 練習 Worker Pool 和限流</li>
+<li><strong>快取服務</strong> - 練習 RWMutex 和原子操作</li>
+<li><strong>微服務閘道器</strong> - 練習 Context 和超時控制</li>
+</ol>
+<h3 id="總結"><a class="header" href="#總結">總結</a></h3>
+<p>Go 的並行模型是其最大的特色之一，透過 Goroutine 和 Channel 提供了一種直觀且高效的並行程式設計方式。記住以下要點：</p>
+<p><strong>🎯 核心記憶點:</strong></p>
+<ul>
+<li><strong>Goroutine 輕量</strong> - 可以輕鬆建立數百萬個</li>
+<li><strong>Channel 安全</strong> - 型別安全的通訊機制</li>
+<li><strong>Context 控制</strong> - 優雅的取消和超時處理</li>
+<li><strong>組合優於繼承</strong> - 透過介面和嵌入構建複雜系統</li>
+</ul>
+<p><strong>🚀 進階發展:</strong>
+隨著經驗累積，你會發現 Go 的並行模型不僅簡單易用，更能幫助你構建高效、可維護的分散式系統。從簡單的 Goroutine 開始，逐步掌握複雜的並行模式，最終能夠設計出優雅的高並行架構。</p>
+<p>Go 的哲學是 "簡單而強大"，其並行機制完美體現了這一點。透過本指南的學習，相信你已經掌握了 Go 並行程式設計的精髓，現在是時候在實際項目中應用這些知識了！🐹✨</p>
+<hr />
+<p><em>完整指南到此結束。記住：在 Go 中，並行不僅是一種技術，更是一種思維方式。享受 Go 並行程式設計的樂趣吧！</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../go/mutex-rwmutex.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../go/interface.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../go/mutex-rwmutex.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../go/interface.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
