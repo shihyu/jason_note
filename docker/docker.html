@@ -178,20 +178,173 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="docker--docker-compose--安裝"><a class="header" href="#docker--docker-compose--安裝">Docker &amp; Docker-compose  安裝</a></h2>
-<pre><code class="language-sh">sudo apt install docker.io
+                        <h1 id="docker--docker-compose-安裝與配置"><a class="header" href="#docker--docker-compose-安裝與配置">Docker &amp; Docker Compose 安裝與配置</a></h1>
+<h2 id="docker-安裝"><a class="header" href="#docker-安裝">Docker 安裝</a></h2>
+<h3 id="ubuntudebian-系統安裝-docker"><a class="header" href="#ubuntudebian-系統安裝-docker">Ubuntu/Debian 系統安裝 Docker</a></h3>
+<pre><code class="language-bash"># 更新系統套件
+sudo apt update
+
+# 安裝 Docker
+sudo apt install docker.io
+
+# 創建 docker 用戶組（如果不存在）
 sudo groupadd docker
+
+# 將當前用戶加入 docker 組
 sudo usermod -aG docker ${USER}
+
+# 設置 Docker socket 權限
 sudo chmod 666 /var/run/docker.sock
-sudo service docker restart
-需要退出重新登錄後才會生效
 
+# 重啟 Docker 服務
+sudo systemctl enable docker
+sudo systemctl start docker
 
+# 需要退出重新登錄後才會生效
+</code></pre>
+<h3 id="驗證-docker-安裝"><a class="header" href="#驗證-docker-安裝">驗證 Docker 安裝</a></h3>
+<pre><code class="language-bash">docker --version
+docker run hello-world
+</code></pre>
+<h2 id="docker-compose-安裝"><a class="header" href="#docker-compose-安裝">Docker Compose 安裝</a></h2>
+<h3 id="方法-1-使用-apt-安裝推薦"><a class="header" href="#方法-1-使用-apt-安裝推薦">方法 1: 使用 apt 安裝（推薦）</a></h3>
+<pre><code class="language-bash"># Ubuntu 20.04+ 可直接使用 apt 安裝最新版本
+sudo apt update
+sudo apt install docker-compose-plugin
 
-## docker-compose 
-https://github.com/docker/compose/releases/
-sudo curl -L "https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod 755 docker-compose
+# 驗證安裝
+docker compose version
+</code></pre>
+<h3 id="方法-2-手動安裝最新版本"><a class="header" href="#方法-2-手動安裝最新版本">方法 2: 手動安裝最新版本</a></h3>
+<pre><code class="language-bash"># 下載最新版本的 Docker Compose
+# 請先檢查最新版本：https://github.com/docker/compose/releases/
+COMPOSE_VERSION="v2.24.0"
+sudo curl -L "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+
+# 設置可執行權限
+sudo chmod +x /usr/local/bin/docker-compose
+
+# 創建符號連結（可選）
+sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+
+# 驗證安裝
+docker-compose --version
+</code></pre>
+<h3 id="方法-3-使用-pip-安裝"><a class="header" href="#方法-3-使用-pip-安裝">方法 3: 使用 pip 安裝</a></h3>
+<pre><code class="language-bash"># 使用 Python pip 安裝
+pip3 install docker-compose
+
+# 或者使用虛擬環境安裝
+python3 -m venv docker-env
+source docker-env/bin/activate
+pip install docker-compose
+</code></pre>
+<hr />
+<h1 id="docker-compose-基本使用"><a class="header" href="#docker-compose-基本使用">Docker Compose 基本使用</a></h1>
+<h2 id="docker-compose-簡介"><a class="header" href="#docker-compose-簡介">Docker Compose 簡介</a></h2>
+<p>Docker Compose 是用於定義和執行多容器 Docker 應用程式的工具。使用 YAML 檔案來配置應用程式的服務，然後使用一個命令就可以創建並啟動所有服務。</p>
+<h2 id="docker-compose-基本命令"><a class="header" href="#docker-compose-基本命令">Docker Compose 基本命令</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>命令</th><th>說明</th><th>範例</th></tr></thead><tbody>
+<tr><td><code>docker compose up</code></td><td>啟動所有服務</td><td><code>docker compose up -d</code></td></tr>
+<tr><td><code>docker compose down</code></td><td>停止並移除所有服務</td><td><code>docker compose down</code></td></tr>
+<tr><td><code>docker compose ps</code></td><td>查看服務狀態</td><td><code>docker compose ps</code></td></tr>
+<tr><td><code>docker compose logs</code></td><td>查看服務日誌</td><td><code>docker compose logs -f</code></td></tr>
+<tr><td><code>docker compose build</code></td><td>建置服務</td><td><code>docker compose build</code></td></tr>
+<tr><td><code>docker compose restart</code></td><td>重啟服務</td><td><code>docker compose restart web</code></td></tr>
+</tbody></table>
+</div>
+<h2 id="docker-composeyml-範例"><a class="header" href="#docker-composeyml-範例">docker-compose.yml 範例</a></h2>
+<h3 id="基本的-web-應用程式--資料庫"><a class="header" href="#基本的-web-應用程式--資料庫">基本的 Web 應用程式 + 資料庫</a></h3>
+<pre><code class="language-yaml">version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://user:pass@db:5432/mydb
+    volumes:
+      - .:/app
+    
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
+</code></pre>
+<h3 id="wordpress--mysql-範例"><a class="header" href="#wordpress--mysql-範例">WordPress + MySQL 範例</a></h3>
+<pre><code class="language-yaml">version: '3.8'
+
+services:
+  wordpress:
+    image: wordpress:latest
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: password
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wordpress_data:/var/www/html
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: rootpassword
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  wordpress_data:
+  mysql_data:
+</code></pre>
+<h2 id="docker-compose-常用選項"><a class="header" href="#docker-compose-常用選項">Docker Compose 常用選項</a></h2>
+<h3 id="服務配置選項"><a class="header" href="#服務配置選項">服務配置選項</a></h3>
+<ul>
+<li><code>build</code>: 建置 Docker 映像檔的路徑或配置</li>
+<li><code>image</code>: 使用的 Docker 映像檔</li>
+<li><code>ports</code>: 連接埠映射</li>
+<li><code>volumes</code>: 資料卷掛載</li>
+<li><code>environment</code>: 環境變數</li>
+<li><code>depends_on</code>: 服務依賴關係</li>
+<li><code>networks</code>: 網路配置</li>
+<li><code>restart</code>: 重啟策略</li>
+</ul>
+<h3 id="執行選項"><a class="header" href="#執行選項">執行選項</a></h3>
+<pre><code class="language-bash"># 背景執行
+docker compose up -d
+
+# 重新建置並啟動
+docker compose up --build
+
+# 指定檔案
+docker compose -f docker-compose.prod.yml up
+
+# 擴展服務實例
+docker compose up --scale web=3
+
+# 停止並移除所有容器、網路
+docker compose down
+
+# 停止並移除所有容器、網路、映像檔、卷
+docker compose down --rmi all --volumes
 </code></pre>
 <hr />
 <h1 id="docker-教學"><a class="header" href="#docker-教學">Docker 教學</a></h1>
@@ -241,32 +394,6 @@ LXC 利用controler groups 與namespaces的功能， 提供應用軟體一個獨
 <h3 id="指令說明---安裝指令"><a class="header" href="#指令說明---安裝指令">指令說明 - 安裝、指令</a></h3>
 <pre><code>docker --help
 </code></pre>
-<h4 id="containers容器-vs-virtual-machines虛擬主機-1"><a class="header" href="#containers容器-vs-virtual-machines虛擬主機-1">Containers(容器) vs Virtual Machines(虛擬主機)</a></h4>
-<p><img src="https://wt-box.worktile.com/public/7db7ad1b-7830-4713-b96e-d3a103a4f7dc" alt="螢幕快照 2019-02-19 上午11.07.39.png" /></p>
-<h4 id="docker-三個基本概念-1"><a class="header" href="#docker-三個基本概念-1">Docker 三個基本概念</a></h4>
-<h5 id="映像檔image-1"><a class="header" href="#映像檔image-1">映像檔（Image）</a></h5>
-<ul>
-<li>Docker 映像檔就是一個唯讀的模板。</li>
-<li>映像檔可以用來建立 Docker 容器。</li>
-</ul>
-<h5 id="容器container-1"><a class="header" href="#容器container-1">容器（Container）</a></h5>
-<ul>
-<li>容器是從映像檔建立的執行實例。</li>
-<li>Docker 利用容器來執行應用。</li>
-<li>可以被啟動、開始、停止、刪除。</li>
-<li>每個容器都是相互隔離的、保證安全的平臺。</li>
-</ul>
-<h5 id="倉庫repository-1"><a class="header" href="#倉庫repository-1">倉庫（Repository）</a></h5>
-<ul>
-<li>倉庫是集中存放映像檔檔案的場所。</li>
-<li>每個倉庫中又包含了多個映像檔。</li>
-<li>每個映像檔有不同的標籤（tag）。</li>
-<li>倉庫分為公開倉庫（Public）和私有倉庫（Private）兩種形式。</li>
-</ul>
-<p><img src="https://wt-box.worktile.com/public/95ae632e-9016-416b-9c66-07b8c8e22ff9" alt="螢幕快照 2019-02-19 上午11.10.38.png" /></p>
-<h3 id="指令說明---安裝指令-1"><a class="header" href="#指令說明---安裝指令-1">指令說明 - 安裝、指令</a></h3>
-<pre><code>docker --help
-</code></pre>
 <h4 id="安裝docker"><a class="header" href="#安裝docker">安裝Docker</a></h4>
 <p><a href="https://docs.docker.com/docker-for-mac/">官方文件 Get started with Docker for Mac</a>
 <a href="https://docs.docker.com/docker-for-windows/">官方官方 Get started with Docker for Windows</a>
@@ -283,8 +410,8 @@ LXC 利用controler groups 與namespaces的功能， 提供應用軟體一個獨
 <tr><td style="text-align: center">push</td><td style="text-align: center">上傳</td><td style="text-align: center">docker push</td></tr>
 </tbody></table>
 </div>
-<h5 id="search-搜尋-centos-映像檔"><a class="header" href="#search-搜尋-centos-映像檔">Search 搜尋 Centos 映像檔</a></h5>
-<pre><code>docker search contos
+<h5 id="search-搜尋-centos-映像檔"><a class="header" href="#search-搜尋-centos-映像檔">Search 搜尋 CentOS 映像檔</a></h5>
+<pre><code class="language-bash">docker search centos
 </code></pre>
 <p><img src="images/440a5d54-fbbe-495d-a6b9-e756aae5d6ec" alt="螢幕快照 2019-02-19 下午1.45.28.png" /></p>
 <p>NAME：映像檔名稱
@@ -293,7 +420,7 @@ STARS：越多代表越多人使用
 OFFICIAL：官方Image
 AUTOMATED：自動化</p>
 <h5 id="顯示目前本機的-images-列表"><a class="header" href="#顯示目前本機的-images-列表">顯示目前本機的 Images 列表</a></h5>
-<pre><code>docker iamges
+<pre><code class="language-bash">docker images
 </code></pre>
 <p>REPOSITORY：倉庫位置和映像檔名稱
 TAG：映像檔標籤(通常是定義版本號)
@@ -491,7 +618,7 @@ RUN echo "\ndaemon off;" &gt;&gt; /etc/nginx/nginx.conf
 # 建立新容器時要執行的指令
 CMD /usr/sbin/nginx
 </code></pre>
-<p>####Dockerfile 基本語法</p>
+<h4 id="dockerfile-基本語法"><a class="header" href="#dockerfile-基本語法">Dockerfile 基本語法</a></h4>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: center">指令</th><th style="text-align: center">說明</th><th style="text-align: center">範例</th></tr></thead><tbody>
 <tr><td style="text-align: center">FROM :</td><td style="text-align: center">映像檔來源</td><td style="text-align: center">FROM python:3.5</td></tr>
 <tr><td style="text-align: center">MAINTAINER</td><td style="text-align: center">維護者訊息</td><td style="text-align: center">MAINTAINER docker_user docker_user@email.com</td></tr>
@@ -525,9 +652,10 @@ USER：要臨時取得管理員權限可以使用 gosu，而不推薦 sudo。
 WORKDIR：可以使用多個 WORKDIR 指令，後續命令如果參數是相對路徑，則會基於之前命令指定的路徑</p>
 <h4 id="docker-file-base"><a class="header" href="#docker-file-base">Docker File Base</a></h4>
 <pre><code class="language-dockerfile"># 映像檔Image
-FROM python:3.5
-# 維護者
-MAINTAINER Pellok "pellok@double-cash.com"
+FROM python:3.11
+# 維護者（已廢棄，建議使用 LABEL）
+# MAINTAINER Pellok "pellok@double-cash.com"
+LABEL maintainer="pellok@double-cash.com"
 # 更新
 RUN apt-get -y update &amp;&amp; apt-get install -y supervisor
 # 創建專案資料夾
@@ -535,7 +663,7 @@ RUN mkdir -p /usr/src/app
 # 指定工作目錄在專案資料夾
 WORKDIR /usr/src/app
 # 預先要安裝的requirements複製到Docker裡面
-ADD requirements.txt /usr/src/app/
+COPY requirements.txt /usr/src/app/
 # 安裝需要用的插件
 RUN pip install --upgrade pip setuptools
 RUN pip install --no-cache-dir -r requirements.txt
