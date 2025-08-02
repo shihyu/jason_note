@@ -88,7 +88,7 @@ Thread C: 🔑 ──┘
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-fn basic_example() {
+fn main() {
     let counter = Arc::new(Mutex::new(0));
     let mut handles = vec![];
 
@@ -115,6 +115,10 @@ fn basic_example() {
 ### 共享資料結構範例
 
 ```rust
+use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
+
 #[derive(Debug)]
 struct SharedData {
     value: i32,
@@ -135,7 +139,7 @@ impl SharedData {
     }
 }
 
-fn shared_data_example() {
+fn main() {
     let data = Arc::new(Mutex::new(SharedData::new()));
     let mut handles = vec![];
 
@@ -149,7 +153,7 @@ fn shared_data_example() {
                     shared.add_item(item.clone());
                     println!("新增: {}", item);
                 }
-                thread::sleep(std::time::Duration::from_millis(100));
+                thread::sleep(Duration::from_millis(100));
             }
         });
         handles.push(handle);
@@ -166,6 +170,14 @@ fn shared_data_example() {
 ### 錯誤處理與毒化機制
 
 ```rust
+use std::sync::{Arc, Mutex};
+use std::thread;
+
+fn main() {
+    poison_handling_example();
+    safe_wrapper_example();
+}
+
 fn poison_handling_example() {
     let data = Arc::new(Mutex::new(vec![1, 2, 3]));
     let data_clone = Arc::clone(&data);
@@ -187,7 +199,7 @@ fn poison_handling_example() {
             let vec = poisoned.into_inner();
             println!("強制獲取的資料: {:?}", *vec);
         }
-    }
+    };
 }
 
 // 安全的 Mutex 存取包裝器
@@ -202,6 +214,18 @@ where
             let mut guard = poisoned.into_inner();
             Ok(f(&mut guard))
         }
+    }
+}
+
+fn safe_wrapper_example() {
+    let data = Arc::new(Mutex::new(42));
+    
+    match safe_mutex_access(&data, |value| {
+        *value += 1;
+        *value
+    }) {
+        Ok(result) => println!("操作成功，新值: {}", result),
+        Err(e) => println!("操作失敗: {}", e),
     }
 }
 ```
@@ -251,6 +275,10 @@ impl Config {
     }
 }
 
+fn main() {
+    config_cache_example();
+}
+
 fn config_cache_example() {
     let config = Arc::new(RwLock::new(Config::new()));
     let mut handles = vec![];
@@ -292,9 +320,15 @@ fn config_cache_example() {
 ### 效能比較範例
 
 ```rust
+use std::sync::{Arc, RwLock, Mutex};
+use std::thread;
+use std::time::{Duration, Instant};
+
+fn main() {
+    performance_comparison();
+}
+
 fn performance_comparison() {
-    use std::time::Instant;
-    
     let iterations = 10000;
     let thread_count = 4;
     
@@ -372,6 +406,10 @@ use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 
+fn main() {
+    basic_atomic_example();
+}
+
 fn basic_atomic_example() {
     let counter = Arc::new(AtomicI32::new(0));
     let mut handles = vec![];
@@ -398,6 +436,15 @@ fn basic_atomic_example() {
 ### 原子布林值控制執行緒
 
 ```rust
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::Arc;
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    atomic_flag_example();
+}
+
 fn atomic_flag_example() {
     let running = Arc::new(AtomicBool::new(true));
     let counter = Arc::new(AtomicUsize::new(0));
@@ -425,6 +472,14 @@ fn atomic_flag_example() {
 ### Compare-And-Swap (CAS) 進階操作
 
 ```rust
+use std::sync::atomic::{AtomicI32, Ordering};
+use std::sync::Arc;
+use std::thread;
+
+fn main() {
+    cas_example();
+}
+
 fn cas_example() {
     let value = Arc::new(AtomicI32::new(10));
     let mut handles = vec![];
@@ -466,6 +521,15 @@ fn cas_example() {
 ### 記憶體順序 (Memory Ordering)
 
 ```rust
+use std::sync::atomic::{AtomicI32, AtomicBool, Ordering};
+use std::sync::Arc;
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    memory_ordering_example();
+}
+
 fn memory_ordering_example() {
     let data = Arc::new(AtomicI32::new(0));
     let flag = Arc::new(AtomicBool::new(false));
@@ -504,6 +568,15 @@ fn memory_ordering_example() {
 ### 記憶體順序效能比較
 
 ```rust
+use std::sync::atomic::{AtomicI32, Ordering};
+use std::sync::Arc;
+use std::thread;
+use std::time::Instant;
+
+fn main() {
+    ordering_performance_test();
+}
+
 fn ordering_performance_test() {
     let counter = Arc::new(AtomicI32::new(0));
     let iterations = 1_000_000;
@@ -563,6 +636,10 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 
+fn main() {
+    basic_channel_example();
+}
+
 fn basic_channel_example() {
     let (tx, rx) = mpsc::channel();
     
@@ -598,6 +675,14 @@ fn basic_channel_example() {
 ### 同步通道範例
 
 ```rust
+use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    sync_channel_example();
+}
+
 fn sync_channel_example() {
     // 建立同步通道，緩衝區大小為2
     let (tx, rx) = mpsc::sync_channel(2);
@@ -628,6 +713,14 @@ fn sync_channel_example() {
 ### 工作分發系統範例
 
 ```rust
+use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    work_distribution_example();
+}
+
 fn work_distribution_example() {
     let (job_tx, job_rx) = mpsc::channel();
     let (result_tx, result_rx) = mpsc::channel();
@@ -692,14 +785,21 @@ fn work_distribution_example() {
 ### 跨平台高效能 Channel (crossbeam)
 
 ```rust
-// Cargo.toml: crossbeam = "0.8"
-use crossbeam::channel;
+// 注意：此範例需要在 Cargo.toml 中添加：crossbeam = "0.8"
+// 如果沒有 crossbeam，可以使用標準庫的 mpsc 替代
+
+use std::sync::mpsc;
 use std::thread;
-use std::time::{Duration, Instant};
+use std::time::Duration;
+
+fn main() {
+    crossbeam_channel_example();
+}
 
 fn crossbeam_channel_example() {
-    let (tx, rx) = channel::unbounded();
-    let (bounded_tx, bounded_rx) = channel::bounded(10);
+    // 使用標準庫的 channel，因為 crossbeam 可能不可用
+    let (tx, rx) = mpsc::channel();
+    let (bounded_tx, bounded_rx) = mpsc::sync_channel(10);
     
     // 多個生產者
     let mut producers = vec![];
@@ -715,25 +815,28 @@ fn crossbeam_channel_example() {
         producers.push(producer);
     }
     
-    // 使用 select! 處理多個通道
+    // 使用簡單的接收器處理多個通道
     let selector = thread::spawn(move || {
+        let mut count = 0;
         loop {
-            crossbeam::select! {
-                recv(rx) -> msg => {
-                    match msg {
-                        Ok(message) => println!("從無界通道收到: {}", message),
-                        Err(_) => break,
+            match rx.try_recv() {
+                Ok(message) => {
+                    println!("從無界通道收到: {}", message);
+                    count += 1;
+                }
+                Err(_) => {
+                    // 沒有訊息，檢查是否完成
+                    if count >= 15 { // 3 個生產者 * 5 條訊息
+                        break;
                     }
-                },
-                recv(bounded_rx) -> msg => {
-                    match msg {
-                        Ok(message) => println!("從有界通道收到: {}", message),
-                        Err(_) => {},
-                    }
-                },
-                default(Duration::from_millis(100)) => {
-                    println!("等待訊息超時...");
-                },
+                    thread::sleep(Duration::from_millis(10));
+                }
+            }
+            
+            // 檢查有界通道
+            match bounded_rx.try_recv() {
+                Ok(message) => println!("從有界通道收到: {}", message),
+                Err(_) => {}
             }
         }
     });
@@ -753,17 +856,44 @@ fn crossbeam_channel_example() {
     drop(tx);
     selector.join().unwrap();
 }
+
+// 如果想使用 crossbeam，可以解除註釋以下程式碼：
+/*
+// 需要在 Cargo.toml 添加：crossbeam = "0.8"
+use crossbeam::channel;
+
+fn crossbeam_example() {
+    let (tx, rx) = channel::unbounded();
+    
+    crossbeam::select! {
+        recv(rx) -> msg => {
+            println!("收到: {:?}", msg);
+        },
+        default(Duration::from_millis(100)) => {
+            println!("超時");
+        },
+    }
+}
+*/
 ```
 
 ### Channel 效能測試
 
 ```rust
+use std::sync::mpsc;
+use std::thread;
+use std::time::Instant;
+
+fn main() {
+    channel_performance_test();
+}
+
 fn channel_performance_test() {
-    let message_count = 1_000_000;
+    let message_count = 100_000; // 降低數量以避免過長執行時間
     
-    // 標準庫 channel
+    // 標準庫 channel (異步)
     let start = Instant::now();
-    let (tx, rx) = std::sync::mpsc::channel();
+    let (tx, rx) = mpsc::channel();
     
     let sender = thread::spawn(move || {
         for i in 0..message_count {
@@ -779,11 +909,11 @@ fn channel_performance_test() {
     
     sender.join().unwrap();
     receiver.join().unwrap();
-    let std_time = start.elapsed();
+    let async_time = start.elapsed();
     
-    // crossbeam channel
+    // 標準庫同步 channel
     let start = Instant::now();
-    let (tx, rx) = channel::unbounded();
+    let (tx, rx) = mpsc::sync_channel(1000); // 有界通道
     
     let sender = thread::spawn(move || {
         for i in 0..message_count {
@@ -799,12 +929,19 @@ fn channel_performance_test() {
     
     sender.join().unwrap();
     receiver.join().unwrap();
-    let crossbeam_time = start.elapsed();
+    let sync_time = start.elapsed();
     
-    println!("標準庫 channel: {:?}", std_time);
-    println!("Crossbeam channel: {:?}", crossbeam_time);
-    println!("效能比較: {:.2}x", 
-        std_time.as_nanos() as f64 / crossbeam_time.as_nanos() as f64);
+    println!("異步 channel: {:?}", async_time);
+    println!("同步 channel: {:?}", sync_time);
+    println!("效能比較: 異步比同步快 {:.2}x", 
+        sync_time.as_nanos() as f64 / async_time.as_nanos() as f64);
+    
+    // 測試吞吐量
+    let throughput_async = message_count as f64 / async_time.as_secs_f64();
+    let throughput_sync = message_count as f64 / sync_time.as_secs_f64();
+    
+    println!("異步通道吞吐量: {:.0} 訊息/秒", throughput_async);
+    println!("同步通道吞吐量: {:.0} 訊息/秒", throughput_sync);
 }
 ```
 
@@ -838,6 +975,10 @@ use std::sync::{Arc, Mutex, Condvar};
 use std::thread;
 use std::time::Duration;
 use std::collections::VecDeque;
+
+fn main() {
+    producer_consumer_example();
+}
 
 struct ProducerConsumer<T> {
     buffer: Mutex<VecDeque<T>>,
@@ -924,6 +1065,14 @@ fn producer_consumer_example() {
 ### 任務協調範例
 
 ```rust
+use std::sync::{Arc, Mutex, Condvar};
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    task_coordination_example();
+}
+
 struct TaskCoordinator {
     workers_ready: Mutex<usize>,
     all_ready: Condvar,
@@ -988,6 +1137,14 @@ fn task_coordination_example() {
 ### 超時等待範例
 
 ```rust
+use std::sync::{Arc, Mutex, Condvar};
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    timeout_example();
+}
+
 fn timeout_example() {
     let pair = Arc::new((Mutex::new(false), Condvar::new()));
     let pair_clone = Arc::clone(&pair);
@@ -1047,6 +1204,10 @@ Panic:     👀✍️   (同時存在會panic!)
 ```rust
 use std::rc::Rc;
 use std::cell::RefCell;
+
+fn main() {
+    tree_example();
+}
 
 #[derive(Debug)]
 struct Node {
@@ -1113,6 +1274,13 @@ fn tree_example() {
 ### 遊戲狀態管理範例
 
 ```rust
+use std::rc::Rc;
+use std::cell::RefCell;
+
+fn main() {
+    game_state_example();
+}
+
 #[derive(Debug)]
 struct GameState {
     score: i32,
@@ -1200,6 +1368,14 @@ fn game_state_example() {
 ### 借用檢查錯誤處理
 
 ```rust
+use std::rc::Rc;
+use std::cell::RefCell;
+
+fn main() {
+    borrowing_safety_example();
+    safe_borrow_pattern();
+}
+
 fn borrowing_safety_example() {
     let data = Rc::new(RefCell::new(vec![1, 2, 3]));
     
@@ -1257,7 +1433,12 @@ fn safe_borrow_pattern() {
 ### Weak 引用避免循環引用
 
 ```rust
-use std::rc::Weak;
+use std::rc::{Rc, Weak};
+use std::cell::RefCell;
+
+fn main() {
+    weak_reference_example();
+}
 
 #[derive(Debug)]
 struct Parent {
@@ -1333,6 +1514,10 @@ fn weak_reference_example() {
 use std::sync::mpsc;
 use std::thread;
 use std::collections::HashMap;
+
+fn main() {
+    actor_pattern_example();
+}
 
 // Actor 訊息定義
 #[derive(Debug)]
@@ -1444,6 +1629,11 @@ fn actor_pattern_example() {
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc;
 use std::thread;
+use std::time::Duration;
+
+fn main() {
+    thread_pool_example();
+}
 
 type Job = Box<dyn FnOnce() + Send + 'static>;
 
@@ -1526,22 +1716,29 @@ fn thread_pool_example() {
     for i in 0..8 {
         pool.execute(move || {
             println!("執行任務 {}", i);
-            thread::sleep(std::time::Duration::from_secs(1));
+            thread::sleep(Duration::from_secs(1));
             println!("任務 {} 完成", i);
         });
     }
     
     println!("所有任務已提交");
+    
+    // 等待一段時間讓任務完成
+    thread::sleep(Duration::from_secs(3));
 }
 ```
 
 ### 效能監控系統
 
 ```rust
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use std::thread;
+
+fn main() {
+    performance_monitoring_example();
+}
 
 #[derive(Debug)]
 struct LockMetrics {
@@ -1690,10 +1887,14 @@ fn performance_monitoring_example() {
 ### 死鎖檢測系統
 
 ```rust
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use std::thread::{self, ThreadId};
 use std::time::Duration;
+
+fn main() {
+    deadlock_detection_example();
+}
 
 struct DeadlockDetector {
     // 記錄哪個執行緒持有哪些鎖
@@ -1761,7 +1962,7 @@ impl DeadlockDetector {
         let waiting = self.waiting_for.lock().unwrap();
         let owners = self.lock_owners.lock().unwrap();
         
-        let mut visited = std::collections::HashSet::new();
+        let mut visited = HashSet::new();
         let mut current_thread = start_thread;
         
         loop {
@@ -1975,7 +2176,11 @@ struct Config { setting: String }
 #### 3. 錯誤處理最佳實踐
 
 ```rust
-use std::sync::PoisonError;
+use std::sync::{Arc, Mutex, PoisonError};
+
+fn main() {
+    safe_counter_increment();
+}
 
 // 強健的錯誤處理
 fn robust_operation<T, R>(
@@ -2012,6 +2217,14 @@ fn safe_counter_increment() {
 #### 4. Channel 使用模式
 
 ```rust
+use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    graceful_shutdown_pattern();
+}
+
 // 優雅關閉模式
 fn graceful_shutdown_pattern() {
     let (tx, rx) = mpsc::channel();
@@ -2020,20 +2233,23 @@ fn graceful_shutdown_pattern() {
     // 工作執行緒
     let worker = thread::spawn(move || {
         loop {
-            select! {
-                recv(rx) -> msg => {
-                    match msg {
-                        Ok(work) => process_work(work),
-                        Err(_) => break, // 通道關閉
-                    }
-                }
-                recv(shutdown_rx) -> _ => {
-                    println!("收到關閉信號");
-                    break;
-                }
-                default(Duration::from_millis(100)) => {
-                    // 定期維護工作
+            // 檢查關閉信號
+            if let Ok(_) = shutdown_rx.try_recv() {
+                println!("收到關閉信號");
+                break;
+            }
+            
+            // 處理工作
+            match rx.try_recv() {
+                Ok(work) => process_work(work),
+                Err(mpsc::TryRecvError::Empty) => {
+                    // 沒有工作，進行維護
                     maintenance_work();
+                    thread::sleep(Duration::from_millis(100));
+                }
+                Err(mpsc::TryRecvError::Disconnected) => {
+                    println!("工作通道已關閉");
+                    break;
                 }
             }
         }
@@ -2043,7 +2259,11 @@ fn graceful_shutdown_pattern() {
     // 發送一些工作
     for i in 0..5 {
         tx.send(i).unwrap();
+        thread::sleep(Duration::from_millis(50));
     }
+    
+    // 等待工作完成
+    thread::sleep(Duration::from_millis(500));
     
     // 優雅關閉
     shutdown_tx.send(()).unwrap();
@@ -2052,20 +2272,24 @@ fn graceful_shutdown_pattern() {
 
 fn process_work(work: i32) {
     println!("處理工作: {}", work);
+    thread::sleep(Duration::from_millis(100));
 }
 
 fn maintenance_work() {
-    // 定期維護
+    // 定期維護工作
+    println!("執行維護工作");
 }
-
-// 需要引入 crossbeam 的 select! 巨集
-use crossbeam::select;
 ```
 
 #### 5. 記憶體順序指南
 
 ```rust
 use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
+use std::thread;
+
+fn main() {
+    optimized_memory_ordering();
+}
 
 // 生產者-消費者的最佳化記憶體順序
 static DATA: AtomicI32 = AtomicI32::new(0);
@@ -2073,7 +2297,7 @@ static READY: AtomicBool = AtomicBool::new(false);
 
 fn optimized_memory_ordering() {
     // 生產者
-    thread::spawn(|| {
+    let producer = thread::spawn(|| {
         // 1. 寫入資料 (可以是 Relaxed)
         DATA.store(42, Ordering::Relaxed);
         
@@ -2084,7 +2308,7 @@ fn optimized_memory_ordering() {
     });
     
     // 消費者
-    thread::spawn(|| {
+    let consumer = thread::spawn(|| {
         // 1. 等待準備標誌 (必須是 Acquire)
         while !READY.load(Ordering::Acquire) {
             std::hint::spin_loop();
@@ -2094,6 +2318,13 @@ fn optimized_memory_ordering() {
         let value = DATA.load(Ordering::Relaxed);
         println!("消費者: 讀取到 {}", value);
     });
+    
+    producer.join().unwrap();
+    consumer.join().unwrap();
+    
+    // 重置狀態
+    READY.store(false, Ordering::Relaxed);
+    DATA.store(0, Ordering::Relaxed);
 }
 ```
 
@@ -2133,6 +2364,22 @@ fn enable_deadlock_detection() {
 #### 2. 效能分析工具
 
 ```rust
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Instant;
+
+fn main() {
+    let profiler = PerformanceProfiler::new();
+    
+    // 模擬一些操作
+    for _ in 0..1000 {
+        profiler.record_operation();
+        // 模擬工作
+        std::thread::sleep(std::time::Duration::from_micros(10));
+    }
+    
+    profiler.report();
+}
+
 // 自訂效能分析器
 struct PerformanceProfiler {
     start_time: Instant,
