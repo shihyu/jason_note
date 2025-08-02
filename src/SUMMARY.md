@@ -187,6 +187,7 @@
     - [Fil-memory-usage-profiler](python/fil-memory-usage-profiler.md)
     - [繪圖](python/plot.md)
     - [永豐shioaji](python/shioaji.md)
+    - [Python 鎖機制完整指南 🐍](python/python_locks-guide.md)
     - [Other](python/other.md)
 - [Mermaid](mermaid/mermaid.md)
 - [Linux System](linux_system/linux_system.md)
