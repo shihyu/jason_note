@@ -254,12 +254,10 @@ Thread B: 🔑 ──┼──▶ 📦 Mutex&lt;T&gt;
 Thread C: 🔑 ──┘
 </code></pre>
 <h3 id="基本使用範例"><a class="header" href="#基本使用範例">基本使用範例</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use std::sync::{Arc, Mutex};
+<pre><pre class="playground"><code class="language-rust">use std::sync::{Arc, Mutex};
 use std::thread;
 
-fn basic_example() {
+fn main() {
     let counter = Arc::new(Mutex::new(0));
     let mut handles = vec![];
 
@@ -280,12 +278,13 @@ fn basic_example() {
     }
 
     println!("最終計數: {}", *counter.lock().unwrap());
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h3 id="共享資料結構範例"><a class="header" href="#共享資料結構範例">共享資料結構範例</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>#[derive(Debug)]
+<pre><pre class="playground"><code class="language-rust">use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
+
+#[derive(Debug)]
 struct SharedData {
     value: i32,
     items: Vec&lt;String&gt;,
@@ -305,7 +304,7 @@ impl SharedData {
     }
 }
 
-fn shared_data_example() {
+fn main() {
     let data = Arc::new(Mutex::new(SharedData::new()));
     let mut handles = vec![];
 
@@ -319,7 +318,7 @@ fn shared_data_example() {
                     shared.add_item(item.clone());
                     println!("新增: {}", item);
                 }
-                thread::sleep(std::time::Duration::from_millis(100));
+                thread::sleep(Duration::from_millis(100));
             }
         });
         handles.push(handle);
@@ -330,12 +329,17 @@ fn shared_data_example() {
     }
 
     println!("最終資料: {:?}", *data.lock().unwrap());
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h3 id="錯誤處理與毒化機制"><a class="header" href="#錯誤處理與毒化機制">錯誤處理與毒化機制</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>fn poison_handling_example() {
+<pre><pre class="playground"><code class="language-rust">use std::sync::{Arc, Mutex};
+use std::thread;
+
+fn main() {
+    poison_handling_example();
+    safe_wrapper_example();
+}
+
+fn poison_handling_example() {
     let data = Arc::new(Mutex::new(vec![1, 2, 3]));
     let data_clone = Arc::clone(&amp;data);
     
@@ -356,7 +360,7 @@ fn shared_data_example() {
             let vec = poisoned.into_inner();
             println!("強制獲取的資料: {:?}", *vec);
         }
-    }
+    };
 }
 
 // 安全的 Mutex 存取包裝器
@@ -373,7 +377,18 @@ where
         }
     }
 }
-<span class="boring">}</span></code></pre></pre>
+
+fn safe_wrapper_example() {
+    let data = Arc::new(Mutex::new(42));
+    
+    match safe_mutex_access(&amp;data, |value| {
+        *value += 1;
+        *value
+    }) {
+        Ok(result) =&gt; println!("操作成功，新值: {}", result),
+        Err(e) =&gt; println!("操作失敗: {}", e),
+    }
+}</code></pre></pre>
 <hr />
 <h2 id="arcrwlock-讀寫鎖-"><a class="header" href="#arcrwlock-讀寫鎖-">Arc&lt;RwLock<T>&gt; 讀寫鎖 📖</a></h2>
 <p><strong>白話解釋</strong>: 像圖書館規則，多人可以同時看書(讀)，但寫字時要清場</p>
@@ -382,9 +397,7 @@ where
 寫入模式: ✍️ → [Data] ← 👀💤👀💤 (讀者等待)
 </code></pre>
 <h3 id="設定檔快取範例"><a class="header" href="#設定檔快取範例">設定檔快取範例</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use std::sync::{Arc, RwLock};
+<pre><pre class="playground"><code class="language-rust">use std::sync::{Arc, RwLock};
 use std::thread;
 use std::time::Duration;
 use std::collections::HashMap;
@@ -412,6 +425,10 @@ impl Config {
         self.settings.insert(key, value);
         self.version += 1;
     }
+}
+
+fn main() {
+    config_cache_example();
 }
 
 fn config_cache_example() {
@@ -449,14 +466,17 @@ fn config_cache_example() {
     for handle in handles {
         handle.join().unwrap();
     }
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h3 id="效能比較範例"><a class="header" href="#效能比較範例">效能比較範例</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>fn performance_comparison() {
-    use std::time::Instant;
-    
+<pre><pre class="playground"><code class="language-rust">use std::sync::{Arc, RwLock, Mutex};
+use std::thread;
+use std::time::{Duration, Instant};
+
+fn main() {
+    performance_comparison();
+}
+
+fn performance_comparison() {
     let iterations = 10000;
     let thread_count = 4;
     
@@ -506,8 +526,7 @@ fn config_cache_example() {
     println!("RwLock 時間: {:?}", rwlock_time);
     println!("RwLock 比 Mutex 快 {:.2}x", 
         mutex_time.as_nanos() as f64 / rwlock_time.as_nanos() as f64);
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h1 id="rust-鎖機制指南---第二部分高效能原語-"><a class="header" href="#rust-鎖機制指南---第二部分高效能原語-">Rust 鎖機制指南 - 第二部分：高效能原語 ⚡</a></h1>
 <h2 id="atomic-類型-"><a class="header" href="#atomic-類型-">Atomic 類型 ⚛️</a></h2>
 <p><strong>白話解釋</strong>: 像原子彈一樣，操作不可分割，要嘛全做完，要嘛不做</p>
@@ -521,12 +540,14 @@ Thread1: fetch_add(1) → 6
 Thread2: fetch_add(1) → 7 ← 正確!
 </code></pre>
 <h3 id="基本原子操作範例"><a class="header" href="#基本原子操作範例">基本原子操作範例</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use std::sync::atomic::{AtomicI32, AtomicBool, AtomicUsize, Ordering};
+<pre><pre class="playground"><code class="language-rust">use std::sync::atomic::{AtomicI32, AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
+
+fn main() {
+    basic_atomic_example();
+}
 
 fn basic_atomic_example() {
     let counter = Arc::new(AtomicI32::new(0));
@@ -548,12 +569,18 @@ fn basic_atomic_example() {
     }
     
     println!("最終計數: {}", counter.load(Ordering::SeqCst));
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h3 id="原子布林值控制執行緒"><a class="header" href="#原子布林值控制執行緒">原子布林值控制執行緒</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>fn atomic_flag_example() {
+<pre><pre class="playground"><code class="language-rust">use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::Arc;
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    atomic_flag_example();
+}
+
+fn atomic_flag_example() {
     let running = Arc::new(AtomicBool::new(true));
     let counter = Arc::new(AtomicUsize::new(0));
     
@@ -574,12 +601,17 @@ fn basic_atomic_example() {
     
     worker.join().unwrap();
     println!("總計數: {}", counter.load(Ordering::SeqCst));
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h3 id="compare-and-swap-cas-進階操作"><a class="header" href="#compare-and-swap-cas-進階操作">Compare-And-Swap (CAS) 進階操作</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>fn cas_example() {
+<pre><pre class="playground"><code class="language-rust">use std::sync::atomic::{AtomicI32, Ordering};
+use std::sync::Arc;
+use std::thread;
+
+fn main() {
+    cas_example();
+}
+
+fn cas_example() {
     let value = Arc::new(AtomicI32::new(10));
     let mut handles = vec![];
     
@@ -614,12 +646,18 @@ fn basic_atomic_example() {
     }
     
     println!("最終值: {}", value.load(Ordering::SeqCst));
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h3 id="記憶體順序-memory-ordering"><a class="header" href="#記憶體順序-memory-ordering">記憶體順序 (Memory Ordering)</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>fn memory_ordering_example() {
+<pre><pre class="playground"><code class="language-rust">use std::sync::atomic::{AtomicI32, AtomicBool, Ordering};
+use std::sync::Arc;
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    memory_ordering_example();
+}
+
+fn memory_ordering_example() {
     let data = Arc::new(AtomicI32::new(0));
     let flag = Arc::new(AtomicBool::new(false));
     
@@ -651,12 +689,18 @@ fn basic_atomic_example() {
     
     producer.join().unwrap();
     consumer.join().unwrap();
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h3 id="記憶體順序效能比較"><a class="header" href="#記憶體順序效能比較">記憶體順序效能比較</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>fn ordering_performance_test() {
+<pre><pre class="playground"><code class="language-rust">use std::sync::atomic::{AtomicI32, Ordering};
+use std::sync::Arc;
+use std::thread;
+use std::time::Instant;
+
+fn main() {
+    ordering_performance_test();
+}
+
+fn ordering_performance_test() {
     let counter = Arc::new(AtomicI32::new(0));
     let iterations = 1_000_000;
     
@@ -688,8 +732,7 @@ fn basic_atomic_example() {
     println!("Relaxed 時間: {:?}", relaxed_time);
     println!("Relaxed 比 SeqCst 快 {:.2}x", 
         seqcst_time.as_nanos() as f64 / relaxed_time.as_nanos() as f64);
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <hr />
 <h2 id="channel-通道-"><a class="header" href="#channel-通道-">Channel 通道 📡</a></h2>
 <p><strong>白話解釋</strong>: 像郵筒，一邊投信一邊收信，是 Rust 的特色並行通訊方式</p>
@@ -703,11 +746,13 @@ Sync:   發送者等待接收者準備好
 Async:  發送者立即返回，訊息進入佇列
 </code></pre>
 <h3 id="標準庫-channel-基本範例"><a class="header" href="#標準庫-channel-基本範例">標準庫 Channel 基本範例</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use std::sync::mpsc;
+<pre><pre class="playground"><code class="language-rust">use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
+
+fn main() {
+    basic_channel_example();
+}
 
 fn basic_channel_example() {
     let (tx, rx) = mpsc::channel();
@@ -738,12 +783,17 @@ fn basic_channel_example() {
         let received = rx.recv().unwrap();
         println!("接收: {}", received);
     }
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h3 id="同步通道範例"><a class="header" href="#同步通道範例">同步通道範例</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>fn sync_channel_example() {
+<pre><pre class="playground"><code class="language-rust">use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    sync_channel_example();
+}
+
+fn sync_channel_example() {
     // 建立同步通道，緩衝區大小為2
     let (tx, rx) = mpsc::sync_channel(2);
     
@@ -767,12 +817,17 @@ fn basic_channel_example() {
     }
     
     sender.join().unwrap();
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h3 id="工作分發系統範例"><a class="header" href="#工作分發系統範例">工作分發系統範例</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>fn work_distribution_example() {
+<pre><pre class="playground"><code class="language-rust">use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    work_distribution_example();
+}
+
+fn work_distribution_example() {
     let (job_tx, job_rx) = mpsc::channel();
     let (result_tx, result_rx) = mpsc::channel();
     
@@ -830,19 +885,23 @@ fn basic_channel_example() {
     }
     
     println!("所有結果: {:?}", results);
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h3 id="跨平台高效能-channel-crossbeam"><a class="header" href="#跨平台高效能-channel-crossbeam">跨平台高效能 Channel (crossbeam)</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// Cargo.toml: crossbeam = "0.8"
-use crossbeam::channel;
+<pre><pre class="playground"><code class="language-rust">// 注意：此範例需要在 Cargo.toml 中添加：crossbeam = "0.8"
+// 如果沒有 crossbeam，可以使用標準庫的 mpsc 替代
+
+use std::sync::mpsc;
 use std::thread;
-use std::time::{Duration, Instant};
+use std::time::Duration;
+
+fn main() {
+    crossbeam_channel_example();
+}
 
 fn crossbeam_channel_example() {
-    let (tx, rx) = channel::unbounded();
-    let (bounded_tx, bounded_rx) = channel::bounded(10);
+    // 使用標準庫的 channel，因為 crossbeam 可能不可用
+    let (tx, rx) = mpsc::channel();
+    let (bounded_tx, bounded_rx) = mpsc::sync_channel(10);
     
     // 多個生產者
     let mut producers = vec![];
@@ -858,25 +917,28 @@ fn crossbeam_channel_example() {
         producers.push(producer);
     }
     
-    // 使用 select! 處理多個通道
+    // 使用簡單的接收器處理多個通道
     let selector = thread::spawn(move || {
+        let mut count = 0;
         loop {
-            crossbeam::select! {
-                recv(rx) -&gt; msg =&gt; {
-                    match msg {
-                        Ok(message) =&gt; println!("從無界通道收到: {}", message),
-                        Err(_) =&gt; break,
+            match rx.try_recv() {
+                Ok(message) =&gt; {
+                    println!("從無界通道收到: {}", message);
+                    count += 1;
+                }
+                Err(_) =&gt; {
+                    // 沒有訊息，檢查是否完成
+                    if count &gt;= 15 { // 3 個生產者 * 5 條訊息
+                        break;
                     }
-                },
-                recv(bounded_rx) -&gt; msg =&gt; {
-                    match msg {
-                        Ok(message) =&gt; println!("從有界通道收到: {}", message),
-                        Err(_) =&gt; {},
-                    }
-                },
-                default(Duration::from_millis(100)) =&gt; {
-                    println!("等待訊息超時...");
-                },
+                    thread::sleep(Duration::from_millis(10));
+                }
+            }
+            
+            // 檢查有界通道
+            match bounded_rx.try_recv() {
+                Ok(message) =&gt; println!("從有界通道收到: {}", message),
+                Err(_) =&gt; {}
             }
         }
     });
@@ -896,37 +958,41 @@ fn crossbeam_channel_example() {
     drop(tx);
     selector.join().unwrap();
 }
-<span class="boring">}</span></code></pre></pre>
-<h3 id="channel-效能測試"><a class="header" href="#channel-效能測試">Channel 效能測試</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>fn channel_performance_test() {
-    let message_count = 1_000_000;
-    
-    // 標準庫 channel
-    let start = Instant::now();
-    let (tx, rx) = std::sync::mpsc::channel();
-    
-    let sender = thread::spawn(move || {
-        for i in 0..message_count {
-            tx.send(i).unwrap();
-        }
-    });
-    
-    let receiver = thread::spawn(move || {
-        for _ in 0..message_count {
-            rx.recv().unwrap();
-        }
-    });
-    
-    sender.join().unwrap();
-    receiver.join().unwrap();
-    let std_time = start.elapsed();
-    
-    // crossbeam channel
-    let start = Instant::now();
+
+// 如果想使用 crossbeam，可以解除註釋以下程式碼：
+/*
+// 需要在 Cargo.toml 添加：crossbeam = "0.8"
+use crossbeam::channel;
+
+fn crossbeam_example() {
     let (tx, rx) = channel::unbounded();
     
+    crossbeam::select! {
+        recv(rx) -&gt; msg =&gt; {
+            println!("收到: {:?}", msg);
+        },
+        default(Duration::from_millis(100)) =&gt; {
+            println!("超時");
+        },
+    }
+}
+*/</code></pre></pre>
+<h3 id="channel-效能測試"><a class="header" href="#channel-效能測試">Channel 效能測試</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::sync::mpsc;
+use std::thread;
+use std::time::Instant;
+
+fn main() {
+    channel_performance_test();
+}
+
+fn channel_performance_test() {
+    let message_count = 100_000; // 降低數量以避免過長執行時間
+    
+    // 標準庫 channel (異步)
+    let start = Instant::now();
+    let (tx, rx) = mpsc::channel();
+    
     let sender = thread::spawn(move || {
         for i in 0..message_count {
             tx.send(i).unwrap();
@@ -941,14 +1007,40 @@ fn crossbeam_channel_example() {
     
     sender.join().unwrap();
     receiver.join().unwrap();
-    let crossbeam_time = start.elapsed();
+    let async_time = start.elapsed();
     
-    println!("標準庫 channel: {:?}", std_time);
-    println!("Crossbeam channel: {:?}", crossbeam_time);
-    println!("效能比較: {:.2}x", 
-        std_time.as_nanos() as f64 / crossbeam_time.as_nanos() as f64);
-}
-<span class="boring">}</span></code></pre></pre>
+    // 標準庫同步 channel
+    let start = Instant::now();
+    let (tx, rx) = mpsc::sync_channel(1000); // 有界通道
+    
+    let sender = thread::spawn(move || {
+        for i in 0..message_count {
+            tx.send(i).unwrap();
+        }
+    });
+    
+    let receiver = thread::spawn(move || {
+        for _ in 0..message_count {
+            rx.recv().unwrap();
+        }
+    });
+    
+    sender.join().unwrap();
+    receiver.join().unwrap();
+    let sync_time = start.elapsed();
+    
+    println!("異步 channel: {:?}", async_time);
+    println!("同步 channel: {:?}", sync_time);
+    println!("效能比較: 異步比同步快 {:.2}x", 
+        sync_time.as_nanos() as f64 / async_time.as_nanos() as f64);
+    
+    // 測試吞吐量
+    let throughput_async = message_count as f64 / async_time.as_secs_f64();
+    let throughput_sync = message_count as f64 / sync_time.as_secs_f64();
+    
+    println!("異步通道吞吐量: {:.0} 訊息/秒", throughput_async);
+    println!("同步通道吞吐量: {:.0} 訊息/秒", throughput_sync);
+}</code></pre></pre>
 <h3 id="channel-選擇指南"><a class="header" href="#channel-選擇指南">Channel 選擇指南</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>場景</th><th>推薦類型</th><th>原因</th></tr></thead><tbody>
 <tr><td>🔄 一對一通訊</td><td><code>mpsc::channel</code></td><td>簡單可靠</td></tr>
@@ -966,12 +1058,14 @@ fn crossbeam_channel_example() {
 消費者: 👤💤 ──▶ 🔔收到通知 ──▶ 👤🏃‍♂️ 開始工作
 </code></pre>
 <h3 id="生產者-消費者範例"><a class="header" href="#生產者-消費者範例">生產者-消費者範例</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use std::sync::{Arc, Mutex, Condvar};
+<pre><pre class="playground"><code class="language-rust">use std::sync::{Arc, Mutex, Condvar};
 use std::thread;
 use std::time::Duration;
 use std::collections::VecDeque;
+
+fn main() {
+    producer_consumer_example();
+}
 
 struct ProducerConsumer&lt;T&gt; {
     buffer: Mutex&lt;VecDeque&lt;T&gt;&gt;,
@@ -1052,12 +1146,17 @@ fn producer_consumer_example() {
     
     producer.join().unwrap();
     consumer.join().unwrap();
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h3 id="任務協調範例"><a class="header" href="#任務協調範例">任務協調範例</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>struct TaskCoordinator {
+<pre><pre class="playground"><code class="language-rust">use std::sync::{Arc, Mutex, Condvar};
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    task_coordination_example();
+}
+
+struct TaskCoordinator {
     workers_ready: Mutex&lt;usize&gt;,
     all_ready: Condvar,
     target_count: usize,
@@ -1115,12 +1214,17 @@ fn task_coordination_example() {
     for handle in handles {
         handle.join().unwrap();
     }
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h3 id="超時等待範例"><a class="header" href="#超時等待範例">超時等待範例</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>fn timeout_example() {
+<pre><pre class="playground"><code class="language-rust">use std::sync::{Arc, Mutex, Condvar};
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    timeout_example();
+}
+
+fn timeout_example() {
     let pair = Arc::new((Mutex::new(false), Condvar::new()));
     let pair_clone = Arc::clone(&amp;pair);
     
@@ -1152,8 +1256,7 @@ fn task_coordination_example() {
     cvar.notify_one();
     
     waiter.join().unwrap();
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <hr />
 <h2 id="rcrefcell-單執行緒共享-"><a class="header" href="#rcrefcell-單執行緒共享-">Rc&lt;RefCell<T>&gt; 單執行緒共享 🏠</a></h2>
 <p><strong>白話解釋</strong>: 像家裡的共用冰箱，只有一個家庭(執行緒)使用，但可以有多個使用者</p>
@@ -1169,10 +1272,12 @@ Mutable:   ✍️     (一個可變借用)
 Panic:     👀✍️   (同時存在會panic!)
 </code></pre>
 <h3 id="樹狀結構範例"><a class="header" href="#樹狀結構範例">樹狀結構範例</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use std::rc::Rc;
+<pre><pre class="playground"><code class="language-rust">use std::rc::Rc;
 use std::cell::RefCell;
+
+fn main() {
+    tree_example();
+}
 
 #[derive(Debug)]
 struct Node {
@@ -1233,12 +1338,16 @@ fn tree_example() {
     
     println!("\n修改後的樹狀結構:");
     Node::print_tree(&amp;root, 0);
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h3 id="遊戲狀態管理範例"><a class="header" href="#遊戲狀態管理範例">遊戲狀態管理範例</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>#[derive(Debug)]
+<pre><pre class="playground"><code class="language-rust">use std::rc::Rc;
+use std::cell::RefCell;
+
+fn main() {
+    game_state_example();
+}
+
+#[derive(Debug)]
 struct GameState {
     score: i32,
     level: i32,
@@ -1319,12 +1428,17 @@ fn game_state_example() {
     
     player2.take_damage();
     player2.show_status();
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h3 id="借用檢查錯誤處理"><a class="header" href="#借用檢查錯誤處理">借用檢查錯誤處理</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>fn borrowing_safety_example() {
+<pre><pre class="playground"><code class="language-rust">use std::rc::Rc;
+use std::cell::RefCell;
+
+fn main() {
+    borrowing_safety_example();
+    safe_borrow_pattern();
+}
+
+fn borrowing_safety_example() {
     let data = Rc::new(RefCell::new(vec![1, 2, 3]));
     
     // ✅ 正確的使用方式
@@ -1375,12 +1489,14 @@ fn safe_borrow_pattern() {
     } else {
         println!("操作失敗，資源被借用中");
     }
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h3 id="weak-引用避免循環引用"><a class="header" href="#weak-引用避免循環引用">Weak 引用避免循環引用</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use std::rc::Weak;
+<pre><pre class="playground"><code class="language-rust">use std::rc::{Rc, Weak};
+use std::cell::RefCell;
+
+fn main() {
+    weak_reference_example();
+}
 
 #[derive(Debug)]
 struct Parent {
@@ -1430,8 +1546,7 @@ fn weak_reference_example() {
     if child1.borrow().parent.borrow().upgrade().is_none() {
         println!("父節點已被丟棄，weak 引用失效");
     }
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h3 id="使用場景總結"><a class="header" href="#使用場景總結">使用場景總結</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>場景</th><th>適用性</th><th>原因</th></tr></thead><tbody>
 <tr><td>🌳 <strong>樹狀結構</strong></td><td>✅ 很適合</td><td>需要父子雙向引用</td></tr>
@@ -1445,11 +1560,13 @@ fn weak_reference_example() {
 <h1 id="rust-鎖機制指南---第四部分實戰應用與最佳實踐-"><a class="header" href="#rust-鎖機制指南---第四部分實戰應用與最佳實踐-">Rust 鎖機制指南 - 第四部分：實戰應用與最佳實踐 🎯</a></h1>
 <h2 id="高級並行模式-"><a class="header" href="#高級並行模式-">高級並行模式 🚀</a></h2>
 <h3 id="actor-模式實現"><a class="header" href="#actor-模式實現">Actor 模式實現</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use std::sync::mpsc;
+<pre><pre class="playground"><code class="language-rust">use std::sync::mpsc;
 use std::thread;
 use std::collections::HashMap;
+
+fn main() {
+    actor_pattern_example();
+}
 
 // Actor 訊息定義
 #[derive(Debug)]
@@ -1552,14 +1669,16 @@ fn actor_pattern_example() {
     // 停止 Actor
     actor_sender.send(Message::Stop).unwrap();
     actor_handle.join().unwrap();
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h3 id="執行緒池實現"><a class="header" href="#執行緒池實現">執行緒池實現</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use std::sync::{Arc, Mutex};
+<pre><pre class="playground"><code class="language-rust">use std::sync::{Arc, Mutex};
 use std::sync::mpsc;
 use std::thread;
+use std::time::Duration;
+
+fn main() {
+    thread_pool_example();
+}
 
 type Job = Box&lt;dyn FnOnce() + Send + 'static&gt;;
 
@@ -1642,21 +1761,25 @@ fn thread_pool_example() {
     for i in 0..8 {
         pool.execute(move || {
             println!("執行任務 {}", i);
-            thread::sleep(std::time::Duration::from_secs(1));
+            thread::sleep(Duration::from_secs(1));
             println!("任務 {} 完成", i);
         });
     }
     
     println!("所有任務已提交");
-}
-<span class="boring">}</span></code></pre></pre>
+    
+    // 等待一段時間讓任務完成
+    thread::sleep(Duration::from_secs(3));
+}</code></pre></pre>
 <h3 id="效能監控系統"><a class="header" href="#效能監控系統">效能監控系統</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+<pre><pre class="playground"><code class="language-rust">use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use std::thread;
+
+fn main() {
+    performance_monitoring_example();
+}
 
 #[derive(Debug)]
 struct LockMetrics {
@@ -1799,15 +1922,16 @@ fn performance_monitoring_example() {
     println!("最終計數: {}", *counter.lock());
     println!("\n最終統計:");
     counter.metrics().report();
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h3 id="死鎖檢測系統"><a class="header" href="#死鎖檢測系統">死鎖檢測系統</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use std::collections::HashMap;
+<pre><pre class="playground"><code class="language-rust">use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use std::thread::{self, ThreadId};
 use std::time::Duration;
+
+fn main() {
+    deadlock_detection_example();
+}
 
 struct DeadlockDetector {
     // 記錄哪個執行緒持有哪些鎖
@@ -1875,7 +1999,7 @@ impl DeadlockDetector {
         let waiting = self.waiting_for.lock().unwrap();
         let owners = self.lock_owners.lock().unwrap();
         
-        let mut visited = std::collections::HashSet::new();
+        let mut visited = HashSet::new();
         let mut current_thread = start_thread;
         
         loop {
@@ -1981,8 +2105,7 @@ fn deadlock_detection_example() {
     
     t1.join().unwrap();
     t2.join().unwrap();
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <hr />
 <h2 id="選擇指南與最佳實踐-"><a class="header" href="#選擇指南與最佳實踐-">選擇指南與最佳實踐 🎯</a></h2>
 <h3 id="完整選擇決策樹"><a class="header" href="#完整選擇決策樹">完整選擇決策樹</a></h3>
@@ -2079,9 +2202,11 @@ struct Session { token: String }
 struct Config { setting: String }
 <span class="boring">}</span></code></pre></pre>
 <h4 id="3-錯誤處理最佳實踐"><a class="header" href="#3-錯誤處理最佳實踐">3. 錯誤處理最佳實踐</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use std::sync::PoisonError;
+<pre><pre class="playground"><code class="language-rust">use std::sync::{Arc, Mutex, PoisonError};
+
+fn main() {
+    safe_counter_increment();
+}
 
 // 強健的錯誤處理
 fn robust_operation&lt;T, R&gt;(
@@ -2112,10 +2237,17 @@ fn safe_counter_increment() {
         Ok(new_value) =&gt; println!("計數器值: {}", new_value),
         Err(e) =&gt; eprintln!("操作失敗: {}", e),
     }
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <h4 id="4-channel-使用模式"><a class="header" href="#4-channel-使用模式">4. Channel 使用模式</a></h4>
-<pre><pre class="playground"><code class="language-rust">// 優雅關閉模式
+<pre><pre class="playground"><code class="language-rust">use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    graceful_shutdown_pattern();
+}
+
+// 優雅關閉模式
 fn graceful_shutdown_pattern() {
     let (tx, rx) = mpsc::channel();
     let (shutdown_tx, shutdown_rx) = mpsc::channel();
@@ -2123,20 +2255,23 @@ fn graceful_shutdown_pattern() {
     // 工作執行緒
     let worker = thread::spawn(move || {
         loop {
-            select! {
-                recv(rx) -&gt; msg =&gt; {
-                    match msg {
-                        Ok(work) =&gt; process_work(work),
-                        Err(_) =&gt; break, // 通道關閉
-                    }
-                }
-                recv(shutdown_rx) -&gt; _ =&gt; {
-                    println!("收到關閉信號");
-                    break;
-                }
-                default(Duration::from_millis(100)) =&gt; {
-                    // 定期維護工作
+            // 檢查關閉信號
+            if let Ok(_) = shutdown_rx.try_recv() {
+                println!("收到關閉信號");
+                break;
+            }
+            
+            // 處理工作
+            match rx.try_recv() {
+                Ok(work) =&gt; process_work(work),
+                Err(mpsc::TryRecvError::Empty) =&gt; {
+                    // 沒有工作，進行維護
                     maintenance_work();
+                    thread::sleep(Duration::from_millis(100));
+                }
+                Err(mpsc::TryRecvError::Disconnected) =&gt; {
+                    println!("工作通道已關閉");
+                    break;
                 }
             }
         }
@@ -2146,7 +2281,11 @@ fn graceful_shutdown_pattern() {
     // 發送一些工作
     for i in 0..5 {
         tx.send(i).unwrap();
+        thread::sleep(Duration::from_millis(50));
     }
+    
+    // 等待工作完成
+    thread::sleep(Duration::from_millis(500));
     
     // 優雅關閉
     shutdown_tx.send(()).unwrap();
@@ -2155,18 +2294,20 @@ fn graceful_shutdown_pattern() {
 
 fn process_work(work: i32) {
     println!("處理工作: {}", work);
+    thread::sleep(Duration::from_millis(100));
 }
 
 fn maintenance_work() {
-    // 定期維護
-}
-
-// 需要引入 crossbeam 的 select! 巨集
-use crossbeam::select;</code></pre></pre>
+    // 定期維護工作
+    println!("執行維護工作");
+}</code></pre></pre>
 <h4 id="5-記憶體順序指南"><a class="header" href="#5-記憶體順序指南">5. 記憶體順序指南</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
+<pre><pre class="playground"><code class="language-rust">use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
+use std::thread;
+
+fn main() {
+    optimized_memory_ordering();
+}
 
 // 生產者-消費者的最佳化記憶體順序
 static DATA: AtomicI32 = AtomicI32::new(0);
@@ -2174,7 +2315,7 @@ static READY: AtomicBool = AtomicBool::new(false);
 
 fn optimized_memory_ordering() {
     // 生產者
-    thread::spawn(|| {
+    let producer = thread::spawn(|| {
         // 1. 寫入資料 (可以是 Relaxed)
         DATA.store(42, Ordering::Relaxed);
         
@@ -2185,7 +2326,7 @@ fn optimized_memory_ordering() {
     });
     
     // 消費者
-    thread::spawn(|| {
+    let consumer = thread::spawn(|| {
         // 1. 等待準備標誌 (必須是 Acquire)
         while !READY.load(Ordering::Acquire) {
             std::hint::spin_loop();
@@ -2195,8 +2336,14 @@ fn optimized_memory_ordering() {
         let value = DATA.load(Ordering::Relaxed);
         println!("消費者: 讀取到 {}", value);
     });
-}
-<span class="boring">}</span></code></pre></pre>
+    
+    producer.join().unwrap();
+    consumer.join().unwrap();
+    
+    // 重置狀態
+    READY.store(false, Ordering::Relaxed);
+    DATA.store(0, Ordering::Relaxed);
+}</code></pre></pre>
 <h3 id="除錯與診斷技巧"><a class="header" href="#除錯與診斷技巧">除錯與診斷技巧</a></h3>
 <h4 id="1-死鎖診斷"><a class="header" href="#1-死鎖診斷">1. 死鎖診斷</a></h4>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -2229,9 +2376,23 @@ fn enable_deadlock_detection() {
 }
 <span class="boring">}</span></code></pre></pre>
 <h4 id="2-效能分析工具"><a class="header" href="#2-效能分析工具">2. 效能分析工具</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// 自訂效能分析器
+<pre><pre class="playground"><code class="language-rust">use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Instant;
+
+fn main() {
+    let profiler = PerformanceProfiler::new();
+    
+    // 模擬一些操作
+    for _ in 0..1000 {
+        profiler.record_operation();
+        // 模擬工作
+        std::thread::sleep(std::time::Duration::from_micros(10));
+    }
+    
+    profiler.report();
+}
+
+// 自訂效能分析器
 struct PerformanceProfiler {
     start_time: Instant,
     operations: AtomicUsize,
@@ -2259,8 +2420,7 @@ impl PerformanceProfiler {
         println!("  總操作數: {}", ops);
         println!("  每秒操作數: {:.2}", ops_per_sec);
     }
-}
-<span class="boring">}</span></code></pre></pre>
+}</code></pre></pre>
 <hr />
 <h2 id="學習路徑與總結-"><a class="header" href="#學習路徑與總結-">學習路徑與總結 🎓</a></h2>
 <h3 id="學習路徑建議"><a class="header" href="#學習路徑建議">學習路徑建議</a></h3>
