@@ -73,6 +73,8 @@ void* worker_thread(void* arg) {
 }
 ```
 
+> 💡 **完整範例**: 查看 `locks_examples/01_pthread_mutex.c` 獲得完整可編譯的程式碼
+
 ---
 
 ### 2. Semaphore (信號量) 🚗
@@ -994,3 +996,29 @@ shared_mutex → spinlock → 無鎖程式設計
 > **選擇合適的工具解決對應的問題，簡單場景用簡單工具，複雜場景用複雜工具** 🎯
 
 無論您是初學者還是經驗豐富的開發者，掌握這些同步機制都將幫助您寫出更安全、更高效的多執行緒程式！
+
+---
+
+## 📁 完整範例程式
+
+本指南的所有程式碼範例都可以在 `locks_examples/` 目錄中找到完整的可編譯版本：
+
+### 🔧 快速開始
+```bash
+cd locks_examples/
+make          # 編譯所有範例
+make test     # 編譯並測試所有範例
+make help     # 查看詳細說明
+```
+
+### 📋 範例列表
+- **Linux C 範例**: `01_pthread_mutex.c` 到 `05_condition_variable.c`
+- **C++ 範例**: `06_std_mutex.cpp` 到 `12_lock_comparison.cpp`
+
+每個範例都包含：
+- ✅ 完整的可編譯程式碼
+- ✅ 詳細的註解說明
+- ✅ 實際運行結果展示
+- ✅ 錯誤處理機制
+
+更多詳細資訊請參考 `locks_examples/README.md`。
