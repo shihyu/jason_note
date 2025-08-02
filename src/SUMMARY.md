@@ -140,6 +140,7 @@
     - [Goroutine 與 GMP 原理全面分析](go/golang-goroutine.md)
     - [OO](go/oo.md)
     - [sync.Mutex 和 sync.RWMutex](go/mutex-rwmutex.md)
+    - [Go 並行機制完整指南 🐹](go/go_concurrency_guide.md)
     - [interface](go/interface.md)
     - [Example](go/example.md)
     - [LiveKit](go/LiveKit.md)
