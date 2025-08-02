@@ -1,22 +1,82 @@
-# Rust 鎖機制指南 - 測試項目
+# 🦀 Rust 鎖機制完整指南 - 範例程式集
 
-這個項目驗證了 `rust_locks_guide.md` 中所有範例的正確性。
+這個專案包含了完整的 Rust 並行程式設計範例，對應 `rust_locks_guide.md` 文件中的所有概念和程式碼。所有範例都經過測試，確保可以直接編譯和執行。
 
-## 項目結構
+## 📋 專案結構
 
-- `src/mutex_examples.rs` - Arc<Mutex<T>> 基本互斥鎖範例
-- `src/rwlock_examples.rs` - Arc<RwLock<T>> 讀寫鎖範例  
-- `src/atomic_examples.rs` - Atomic 原子類型範例
-- `src/channel_examples.rs` - Channel 通道範例
-- `src/condvar_examples.rs` - Condvar 條件變數範例
-- `src/refcell_examples.rs` - Rc<RefCell<T>> 單執行緒共享範例
-- `src/advanced_examples.rs` - 高級模式範例 (Actor、ThreadPool 等)
-- `src/main.rs` - 批量測試所有範例
+```
+rust_locks_test/
+├── src/                          # 原始完整範例 (binary targets)
+│   ├── main.rs                   # 統一測試執行器
+│   ├── mutex_examples.rs         # Arc<Mutex<T>> 範例
+│   ├── rwlock_examples.rs        # Arc<RwLock<T>> 範例
+│   ├── atomic_examples.rs        # Atomic 類型範例
+│   ├── channel_examples.rs       # Channel 通道範例
+│   ├── condvar_examples.rs       # Condvar 條件變數範例
+│   ├── refcell_examples.rs       # Rc<RefCell<T>> 範例
+│   └── advanced_examples.rs      # 高級並行模式範例
+├── examples/                     # 組織化的學習範例
+│   ├── 01_basic_mutexes/         # 基本互斥鎖
+│   ├── 03_atomic_operations/     # 原子操作
+│   └── ... (更多分類範例)
+├── Cargo.toml                    # 專案配置
+├── test_all_examples.sh          # 完整測試腳本
+└── README.md                     # 本檔案
+```
 
-## 運行測試
+## 🚀 快速開始
 
-### 運行單個範例
+### 1. 編譯專案
+```bash
+cargo build
+```
 
+### 2. 執行完整測試
+```bash
+./test_all_examples.sh
+```
+
+### 3. 執行特定範例
+```bash
+# 執行組織化範例
+cargo run --example basic_counter
+cargo run --example atomic_flags
+
+# 執行完整範例集
+cargo run --bin mutex_examples
+cargo run --bin atomic_examples
+```
+
+## 📚 學習路徑
+
+### 🌱 初學者路徑 (推薦順序)
+
+1. **基本互斥鎖** (`examples/01_basic_mutexes/`)
+   - `basic_counter.rs` - 基本概念
+   - `shared_data_structure.rs` - 複雜資料
+   - `error_handling.rs` - 錯誤處理
+
+2. **原子操作** (`examples/03_atomic_operations/`)
+   - `basic_atomic_counter.rs` - 原子計數器
+   - `atomic_flags.rs` - 旗標控制
+   - `compare_and_swap.rs` - CAS 操作
+
+3. **完整範例集** (`src/*.rs`)
+   - 按照指南順序學習各種鎖機制
+
+### 運行測試
+
+#### 運行組織化範例 (推薦學習方式)
+```bash
+cargo run --example basic_counter         # 基本計數器
+cargo run --example shared_data_structure # 共享資料結構
+cargo run --example error_handling        # 錯誤處理
+cargo run --example basic_atomic_counter  # 原子計數器
+cargo run --example atomic_flags          # 原子旗標
+cargo run --example compare_and_swap      # CAS 操作
+```
+
+#### 運行完整範例集
 ```bash
 cargo run --bin mutex_examples      # 測試 Arc<Mutex<T>>
 cargo run --bin rwlock_examples     # 測試 Arc<RwLock<T>>
@@ -27,16 +87,10 @@ cargo run --bin refcell_examples    # 測試 Rc<RefCell<T>>
 cargo run --bin advanced_examples   # 測試高級模式
 ```
 
-### 批量測試所有範例
-
+#### 批量測試
 ```bash
 cargo run --bin all_examples        # 運行所有範例測試
-```
-
-### 檢查編譯
-
-```bash
-cargo check --all-targets           # 檢查所有目標是否編譯成功
+./test_all_examples.sh              # 完整自動化測試
 ```
 
 ## 測試結果
