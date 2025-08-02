@@ -46,6 +46,7 @@
     - [UC_CAPITAL](c++/UC_CAPITAL.md)
     - [unique_ptr vs shared_ptr](c++/cpp-smart-pointers-guide.md)
     - [C++ Move 語意完整指南](c++/cpp-move-semantics-guide.md)
+    - [Linux 系統鎖與 C++ 鎖機制完整指南 📚](c++/locks_guide.md)
     - [interview](c++/interview.md)
 - [Mojo](mojo/mojo.md)
     - [Mojo 爬蟲完整指南](mojo/mojo_crawler_guide.md)
