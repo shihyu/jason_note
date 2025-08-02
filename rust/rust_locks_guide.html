@@ -1,0 +1,2370 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Rust 鎖機制完整指南 🦀 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="rust-鎖機制完整指南-"><a class="header" href="#rust-鎖機制完整指南-">Rust 鎖機制完整指南 🦀</a></h1>
+<h2 id="-目錄結構"><a class="header" href="#-目錄結構">📑 目錄結構</a></h2>
+<p>這份指南分為以下部分：</p>
+<h3 id="第一部分概覽與基礎"><a class="header" href="#第一部分概覽與基礎">第一部分：概覽與基礎</a></h3>
+<ul>
+<li><a href="#%E8%A6%96%E8%A6%BA%E5%8C%96%E6%A6%82%E8%A6%BD">視覺化概覽</a></li>
+<li><a href="#arc-mutex-%E5%9F%BA%E6%9C%AC%E4%BA%92%E6%96%A5%E9%8E%96">Arc&lt;Mutex<T>&gt;</a></li>
+<li><a href="#arc-rwlock-%E8%AE%80%E5%AF%AB%E9%8E%96">Arc&lt;RwLock<T>&gt;</a></li>
+</ul>
+<h3 id="第二部分高效能原語"><a class="header" href="#第二部分高效能原語">第二部分：高效能原語</a></h3>
+<ul>
+<li><a href="#atomic-%E9%A1%9E%E5%9E%8B">Atomic 類型</a></li>
+<li><a href="#channel-%E9%80%9A%E9%81%93">Channel 通道</a></li>
+</ul>
+<h3 id="第三部分高級同步"><a class="header" href="#第三部分高級同步">第三部分：高級同步</a></h3>
+<ul>
+<li><a href="#condvar-%E6%A2%9D%E4%BB%B6%E8%AE%8A%E6%95%B8">Condvar 條件變數</a></li>
+<li><a href="#rc-refcell-%E5%96%AE%E5%9F%B7%E8%A1%8C%E7%B7%92%E5%85%B1%E4%BA%AB">Rc&lt;RefCell<T>&gt;</a></li>
+</ul>
+<h3 id="第四部分實戰與最佳實踐"><a class="header" href="#第四部分實戰與最佳實踐">第四部分：實戰與最佳實踐</a></h3>
+<ul>
+<li><a href="#%E9%AB%98%E7%B4%9A%E4%B8%A6%E8%A1%8C%E6%A8%A1%E5%BC%8F">高級並行模式</a></li>
+<li><a href="#%E9%81%B8%E6%93%87%E6%8C%87%E5%8D%97%E8%88%87%E6%9C%80%E4%BD%B3%E5%AF%A6%E8%B8%90">選擇指南與最佳實踐</a></li>
+</ul>
+<hr />
+<h2 id="-視覺化概覽"><a class="header" href="#-視覺化概覽">📊 視覺化概覽</a></h2>
+<pre><code>Rust 鎖的選擇流程圖：
+┌─────────────────┐
+│   需要共享嗎？   │
+└─────┬───────────┘
+      │ 是
+      ▼
+┌─────────────────┐    ┌──────────────────┐
+│   簡單原子操作？ │───▶│  使用 Atomic     │
+└─────┬───────────┘ 是 │  🔢 原子類型      │
+      │ 否           └──────────────────┘
+      ▼
+┌─────────────────┐    ┌──────────────────┐
+│   單一執行緒？   │───▶│  使用 Rc&lt;RefCell&gt;│
+└─────┬───────────┘ 是 │  🏠 單執行緒共享  │
+      │ 否           └──────────────────┘
+      ▼
+┌─────────────────┐    ┌──────────────────┐
+│   多讀少寫？     │───▶│  使用 RwLock     │
+└─────┬───────────┘ 是 │  📖 讀寫鎖        │
+      │ 否           └──────────────────┘
+      ▼
+┌─────────────────┐    ┌──────────────────┐
+│   需要等待？     │───▶│  使用 Condvar    │
+└─────┬───────────┘ 是 │  🚌 條件變數      │
+      │ 否           └──────────────────┘
+      ▼
+┌─────────────────┐
+│  使用 Mutex     │
+│  🔒 互斥鎖       │
+└─────────────────┘
+</code></pre>
+<h3 id="效能與使用場景快速參考"><a class="header" href="#效能與使用場景快速參考">效能與使用場景快速參考</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>類型</th><th>效能</th><th>使用場景</th><th>特點</th></tr></thead><tbody>
+<tr><td><code>Atomic</code></td><td>🥇 最快</td><td>簡單計數/標誌</td><td>無鎖，編譯時保證</td></tr>
+<tr><td><code>Arc&lt;RwLock&gt;</code> (讀)</td><td>🥈 很快</td><td>多讀少寫</td><td>並行讀取</td></tr>
+<tr><td><code>Channel</code></td><td>🥉 快</td><td>執行緒通訊</td><td>零拷貝傳遞</td></tr>
+<tr><td><code>Arc&lt;Mutex&gt;</code></td><td>🏅 中等</td><td>基本互斥</td><td>簡單可靠</td></tr>
+<tr><td><code>Condvar</code></td><td>🏅 中等</td><td>條件等待</td><td>事件驅動</td></tr>
+<tr><td><code>Rc&lt;RefCell&gt;</code></td><td>🏅 中等</td><td>單執行緒共享</td><td>運行時檢查</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="arcmutex-基本互斥鎖-"><a class="header" href="#arcmutex-基本互斥鎖-">Arc&lt;Mutex<T>&gt; 基本互斥鎖 🔒</a></h2>
+<p><strong>白話解釋</strong>: 像有多把鑰匙的保險箱，每個執行緒都有鑰匙(Arc)，但一次只能一個人開箱子(Mutex)</p>
+<pre><code>Arc&lt;Mutex&lt;T&gt;&gt; 工作示意圖：
+Thread A: 🔑 ──┐
+Thread B: 🔑 ──┼──▶ 📦 Mutex&lt;T&gt;
+Thread C: 🔑 ──┘
+</code></pre>
+<h3 id="基本使用範例"><a class="header" href="#基本使用範例">基本使用範例</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::{Arc, Mutex};
+use std::thread;
+
+fn basic_example() {
+    let counter = Arc::new(Mutex::new(0));
+    let mut handles = vec![];
+
+    for i in 0..5 {
+        let counter = Arc::clone(&amp;counter);
+        let handle = thread::spawn(move || {
+            for _ in 0..1000 {
+                let mut num = counter.lock().unwrap();
+                *num += 1;
+            }
+            println!("執行緒 {} 完成", i);
+        });
+        handles.push(handle);
+    }
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+
+    println!("最終計數: {}", *counter.lock().unwrap());
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="共享資料結構範例"><a class="header" href="#共享資料結構範例">共享資料結構範例</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Debug)]
+struct SharedData {
+    value: i32,
+    items: Vec&lt;String&gt;,
+}
+
+impl SharedData {
+    fn new() -&gt; Self {
+        SharedData {
+            value: 0,
+            items: Vec::new(),
+        }
+    }
+    
+    fn add_item(&amp;mut self, item: String) {
+        self.value += 1;
+        self.items.push(item);
+    }
+}
+
+fn shared_data_example() {
+    let data = Arc::new(Mutex::new(SharedData::new()));
+    let mut handles = vec![];
+
+    for i in 0..3 {
+        let data = Arc::clone(&amp;data);
+        let handle = thread::spawn(move || {
+            for j in 0..3 {
+                let item = format!("執行緒{}-項目{}", i, j);
+                {
+                    let mut shared = data.lock().unwrap();
+                    shared.add_item(item.clone());
+                    println!("新增: {}", item);
+                }
+                thread::sleep(std::time::Duration::from_millis(100));
+            }
+        });
+        handles.push(handle);
+    }
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+
+    println!("最終資料: {:?}", *data.lock().unwrap());
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="錯誤處理與毒化機制"><a class="header" href="#錯誤處理與毒化機制">錯誤處理與毒化機制</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn poison_handling_example() {
+    let data = Arc::new(Mutex::new(vec![1, 2, 3]));
+    let data_clone = Arc::clone(&amp;data);
+    
+    // 建立會 panic 的執行緒
+    let handle = thread::spawn(move || {
+        let mut vec = data_clone.lock().unwrap();
+        vec.push(4);
+        panic!("故意的 panic!");
+    });
+    
+    let _ = handle.join();
+    
+    // 處理毒化的 Mutex
+    match data.lock() {
+        Ok(vec) =&gt; println!("成功獲取: {:?}", *vec),
+        Err(poisoned) =&gt; {
+            println!("Mutex 被毒化了！");
+            let vec = poisoned.into_inner();
+            println!("強制獲取的資料: {:?}", *vec);
+        }
+    }
+}
+
+// 安全的 Mutex 存取包裝器
+fn safe_mutex_access&lt;T, F, R&gt;(mutex: &amp;Mutex&lt;T&gt;, f: F) -&gt; Result&lt;R, String&gt;
+where
+    F: FnOnce(&amp;mut T) -&gt; R,
+{
+    match mutex.lock() {
+        Ok(mut guard) =&gt; Ok(f(&amp;mut guard)),
+        Err(poisoned) =&gt; {
+            eprintln!("警告: Mutex 被毒化，嘗試恢復...");
+            let mut guard = poisoned.into_inner();
+            Ok(f(&amp;mut guard))
+        }
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="arcrwlock-讀寫鎖-"><a class="header" href="#arcrwlock-讀寫鎖-">Arc&lt;RwLock<T>&gt; 讀寫鎖 📖</a></h2>
+<p><strong>白話解釋</strong>: 像圖書館規則，多人可以同時看書(讀)，但寫字時要清場</p>
+<pre><code>RwLock 狀態圖：
+讀取模式: 👀👀👀👀 → [Data] ← ✍️💤 (寫者等待)
+寫入模式: ✍️ → [Data] ← 👀💤👀💤 (讀者等待)
+</code></pre>
+<h3 id="設定檔快取範例"><a class="header" href="#設定檔快取範例">設定檔快取範例</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::{Arc, RwLock};
+use std::thread;
+use std::time::Duration;
+use std::collections::HashMap;
+
+#[derive(Debug, Clone)]
+struct Config {
+    settings: HashMap&lt;String, String&gt;,
+    version: u32,
+}
+
+impl Config {
+    fn new() -&gt; Self {
+        let mut settings = HashMap::new();
+        settings.insert("theme".to_string(), "dark".to_string());
+        settings.insert("language".to_string(), "zh-TW".to_string());
+        
+        Config { settings, version: 1 }
+    }
+    
+    fn get_setting(&amp;self, key: &amp;str) -&gt; Option&lt;String&gt; {
+        self.settings.get(key).cloned()
+    }
+    
+    fn update_setting(&amp;mut self, key: String, value: String) {
+        self.settings.insert(key, value);
+        self.version += 1;
+    }
+}
+
+fn config_cache_example() {
+    let config = Arc::new(RwLock::new(Config::new()));
+    let mut handles = vec![];
+    
+    // 多個讀者執行緒
+    for i in 0..5 {
+        let config = Arc::clone(&amp;config);
+        let handle = thread::spawn(move || {
+            for j in 0..3 {
+                let reader = config.read().unwrap();
+                let theme = reader.get_setting("theme").unwrap_or_default();
+                println!("讀者 {} 第 {} 次: theme={}", i, j, theme);
+                drop(reader);
+                thread::sleep(Duration::from_millis(100));
+            }
+        });
+        handles.push(handle);
+    }
+    
+    // 寫者執行緒
+    for i in 0..2 {
+        let config = Arc::clone(&amp;config);
+        let handle = thread::spawn(move || {
+            thread::sleep(Duration::from_millis(200));
+            let mut writer = config.write().unwrap();
+            let new_theme = if i == 0 { "light" } else { "auto" };
+            writer.update_setting("theme".to_string(), new_theme.to_string());
+            println!("寫者 {} 更新主題為: {}", i, new_theme);
+        });
+        handles.push(handle);
+    }
+    
+    for handle in handles {
+        handle.join().unwrap();
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="效能比較範例"><a class="header" href="#效能比較範例">效能比較範例</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn performance_comparison() {
+    use std::time::Instant;
+    
+    let iterations = 10000;
+    let thread_count = 4;
+    
+    // Mutex 測試
+    let mutex_data = Arc::new(Mutex::new(0));
+    let start = Instant::now();
+    
+    let mut handles = vec![];
+    for _ in 0..thread_count {
+        let data = Arc::clone(&amp;mutex_data);
+        let handle = thread::spawn(move || {
+            for _ in 0..iterations {
+                let _guard = data.lock().unwrap();
+                // 模擬讀取操作
+            }
+        });
+        handles.push(handle);
+    }
+    
+    for handle in handles {
+        handle.join().unwrap();
+    }
+    let mutex_time = start.elapsed();
+    
+    // RwLock 測試
+    let rwlock_data = Arc::new(RwLock::new(0));
+    let start = Instant::now();
+    
+    let mut handles = vec![];
+    for _ in 0..thread_count {
+        let data = Arc::clone(&amp;rwlock_data);
+        let handle = thread::spawn(move || {
+            for _ in 0..iterations {
+                let _guard = data.read().unwrap();
+                // 模擬讀取操作
+            }
+        });
+        handles.push(handle);
+    }
+    
+    for handle in handles {
+        handle.join().unwrap();
+    }
+    let rwlock_time = start.elapsed();
+    
+    println!("Mutex 時間: {:?}", mutex_time);
+    println!("RwLock 時間: {:?}", rwlock_time);
+    println!("RwLock 比 Mutex 快 {:.2}x", 
+        mutex_time.as_nanos() as f64 / rwlock_time.as_nanos() as f64);
+}
+<span class="boring">}</span></code></pre></pre>
+<h1 id="rust-鎖機制指南---第二部分高效能原語-"><a class="header" href="#rust-鎖機制指南---第二部分高效能原語-">Rust 鎖機制指南 - 第二部分：高效能原語 ⚡</a></h1>
+<h2 id="atomic-類型-"><a class="header" href="#atomic-類型-">Atomic 類型 ⚛️</a></h2>
+<p><strong>白話解釋</strong>: 像原子彈一樣，操作不可分割，要嘛全做完，要嘛不做</p>
+<pre><code>Atomic vs Mutex 性能對比：
+非原子操作問題 ❌:
+Thread1: 讀取(5) → +1 → 寫入(6)
+Thread2:   讀取(5) → +1 → 寫入(6) ← 丟失更新!
+
+原子操作 ✅:
+Thread1: fetch_add(1) → 6
+Thread2: fetch_add(1) → 7 ← 正確!
+</code></pre>
+<h3 id="基本原子操作範例"><a class="header" href="#基本原子操作範例">基本原子操作範例</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::atomic::{AtomicI32, AtomicBool, AtomicUsize, Ordering};
+use std::sync::Arc;
+use std::thread;
+use std::time::{Duration, Instant};
+
+fn basic_atomic_example() {
+    let counter = Arc::new(AtomicI32::new(0));
+    let mut handles = vec![];
+    
+    for i in 0..5 {
+        let counter = Arc::clone(&amp;counter);
+        let handle = thread::spawn(move || {
+            for _ in 0..1000 {
+                counter.fetch_add(1, Ordering::SeqCst);
+            }
+            println!("執行緒 {} 完成", i);
+        });
+        handles.push(handle);
+    }
+    
+    for handle in handles {
+        handle.join().unwrap();
+    }
+    
+    println!("最終計數: {}", counter.load(Ordering::SeqCst));
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="原子布林值控制執行緒"><a class="header" href="#原子布林值控制執行緒">原子布林值控制執行緒</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn atomic_flag_example() {
+    let running = Arc::new(AtomicBool::new(true));
+    let counter = Arc::new(AtomicUsize::new(0));
+    
+    // 工作執行緒
+    let running_clone = Arc::clone(&amp;running);
+    let counter_clone = Arc::clone(&amp;counter);
+    let worker = thread::spawn(move || {
+        while running_clone.load(Ordering::SeqCst) {
+            counter_clone.fetch_add(1, Ordering::SeqCst);
+            thread::sleep(Duration::from_millis(10));
+        }
+        println!("工作執行緒結束");
+    });
+    
+    // 主執行緒等待3秒後停止
+    thread::sleep(Duration::from_secs(3));
+    running.store(false, Ordering::SeqCst);
+    
+    worker.join().unwrap();
+    println!("總計數: {}", counter.load(Ordering::SeqCst));
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="compare-and-swap-cas-進階操作"><a class="header" href="#compare-and-swap-cas-進階操作">Compare-And-Swap (CAS) 進階操作</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn cas_example() {
+    let value = Arc::new(AtomicI32::new(10));
+    let mut handles = vec![];
+    
+    for i in 0..3 {
+        let value = Arc::clone(&amp;value);
+        let handle = thread::spawn(move || {
+            loop {
+                let current = value.load(Ordering::SeqCst);
+                let new_value = current * 2;
+                
+                match value.compare_exchange_weak(
+                    current, 
+                    new_value, 
+                    Ordering::SeqCst, 
+                    Ordering::SeqCst
+                ) {
+                    Ok(_) =&gt; {
+                        println!("執行緒 {} 成功將 {} 更新為 {}", i, current, new_value);
+                        break;
+                    }
+                    Err(actual) =&gt; {
+                        println!("執行緒 {} CAS 失敗，期望 {} 但實際是 {}", i, current, actual);
+                    }
+                }
+            }
+        });
+        handles.push(handle);
+    }
+    
+    for handle in handles {
+        handle.join().unwrap();
+    }
+    
+    println!("最終值: {}", value.load(Ordering::SeqCst));
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="記憶體順序-memory-ordering"><a class="header" href="#記憶體順序-memory-ordering">記憶體順序 (Memory Ordering)</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn memory_ordering_example() {
+    let data = Arc::new(AtomicI32::new(0));
+    let flag = Arc::new(AtomicBool::new(false));
+    
+    // 生產者執行緒
+    let data_producer = Arc::clone(&amp;data);
+    let flag_producer = Arc::clone(&amp;flag);
+    let producer = thread::spawn(move || {
+        // 1. 寫入資料
+        data_producer.store(42, Ordering::Relaxed);
+        
+        // 2. 設定旗標 (Release語義)
+        flag_producer.store(true, Ordering::Release);
+        
+        println!("生產者：資料寫入完成");
+    });
+    
+    // 消費者執行緒
+    let data_consumer = Arc::clone(&amp;data);
+    let flag_consumer = Arc::clone(&amp;flag);
+    let consumer = thread::spawn(move || {
+        // 等待旗標 (Acquire語義)
+        while !flag_consumer.load(Ordering::Acquire) {
+            thread::sleep(Duration::from_millis(1));
+        }
+        
+        let value = data_consumer.load(Ordering::Relaxed);
+        println!("消費者：讀取到資料 {}", value);
+    });
+    
+    producer.join().unwrap();
+    consumer.join().unwrap();
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="記憶體順序效能比較"><a class="header" href="#記憶體順序效能比較">記憶體順序效能比較</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn ordering_performance_test() {
+    let counter = Arc::new(AtomicI32::new(0));
+    let iterations = 1_000_000;
+    
+    // 測試 SeqCst (最強順序)
+    let start = Instant::now();
+    let counter_seqcst = Arc::clone(&amp;counter);
+    let handle = thread::spawn(move || {
+        for _ in 0..iterations {
+            counter_seqcst.fetch_add(1, Ordering::SeqCst);
+        }
+    });
+    handle.join().unwrap();
+    let seqcst_time = start.elapsed();
+    
+    counter.store(0, Ordering::SeqCst);
+    
+    // 測試 Relaxed (最弱順序)
+    let start = Instant::now();
+    let counter_relaxed = Arc::clone(&amp;counter);
+    let handle = thread::spawn(move || {
+        for _ in 0..iterations {
+            counter_relaxed.fetch_add(1, Ordering::Relaxed);
+        }
+    });
+    handle.join().unwrap();
+    let relaxed_time = start.elapsed();
+    
+    println!("SeqCst 時間: {:?}", seqcst_time);
+    println!("Relaxed 時間: {:?}", relaxed_time);
+    println!("Relaxed 比 SeqCst 快 {:.2}x", 
+        seqcst_time.as_nanos() as f64 / relaxed_time.as_nanos() as f64);
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="channel-通道-"><a class="header" href="#channel-通道-">Channel 通道 📡</a></h2>
+<p><strong>白話解釋</strong>: 像郵筒，一邊投信一邊收信，是 Rust 的特色並行通訊方式</p>
+<pre><code>Channel 通訊示意圖：
+Producer1: 📤 ──┐
+Producer2: 📤 ──┼──▶ 📬 Channel ──▶ 📥 Consumer
+Producer3: 📤 ──┘
+
+同步 vs 異步:
+Sync:   發送者等待接收者準備好
+Async:  發送者立即返回，訊息進入佇列
+</code></pre>
+<h3 id="標準庫-channel-基本範例"><a class="header" href="#標準庫-channel-基本範例">標準庫 Channel 基本範例</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
+
+fn basic_channel_example() {
+    let (tx, rx) = mpsc::channel();
+    
+    // 發送者執行緒
+    let tx_clone = tx.clone();
+    thread::spawn(move || {
+        for i in 0..5 {
+            let message = format!("訊息 {}", i);
+            tx_clone.send(message).unwrap();
+            println!("發送: 訊息 {}", i);
+            thread::sleep(Duration::from_millis(100));
+        }
+    });
+    
+    // 另一個發送者
+    thread::spawn(move || {
+        for i in 5..10 {
+            let message = format!("訊息 {}", i);
+            tx.send(message).unwrap();
+            println!("發送: 訊息 {}", i);
+            thread::sleep(Duration::from_millis(150));
+        }
+    });
+    
+    // 接收者
+    for _ in 0..10 {
+        let received = rx.recv().unwrap();
+        println!("接收: {}", received);
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="同步通道範例"><a class="header" href="#同步通道範例">同步通道範例</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn sync_channel_example() {
+    // 建立同步通道，緩衝區大小為2
+    let (tx, rx) = mpsc::sync_channel(2);
+    
+    let sender = thread::spawn(move || {
+        for i in 0..5 {
+            println!("準備發送 {}", i);
+            match tx.send(i) {
+                Ok(_) =&gt; println!("成功發送 {}", i),
+                Err(e) =&gt; println!("發送失敗: {}", e),
+            }
+            thread::sleep(Duration::from_millis(100));
+        }
+    });
+    
+    // 接收者故意延遲
+    thread::sleep(Duration::from_millis(500));
+    
+    for received in rx {
+        println!("接收: {}", received);
+        thread::sleep(Duration::from_millis(200));
+    }
+    
+    sender.join().unwrap();
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="工作分發系統範例"><a class="header" href="#工作分發系統範例">工作分發系統範例</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn work_distribution_example() {
+    let (job_tx, job_rx) = mpsc::channel();
+    let (result_tx, result_rx) = mpsc::channel();
+    
+    // 工作者執行緒池
+    let mut workers = vec![];
+    for worker_id in 0..3 {
+        let job_rx = job_rx.clone();
+        let result_tx = result_tx.clone();
+        
+        let worker = thread::spawn(move || {
+            loop {
+                match job_rx.recv() {
+                    Ok(job) =&gt; {
+                        println!("工作者 {} 處理任務: {}", worker_id, job);
+                        thread::sleep(Duration::from_millis(500));
+                        let result = format!("任務 {} 的結果", job);
+                        result_tx.send((worker_id, result)).unwrap();
+                    }
+                    Err(_) =&gt; {
+                        println!("工作者 {} 結束", worker_id);
+                        break;
+                    }
+                }
+            }
+        });
+        workers.push(worker);
+    }
+    
+    // 任務分發者
+    let job_distributor = thread::spawn(move || {
+        for i in 0..10 {
+            job_tx.send(i).unwrap();
+        }
+        drop(job_tx); // 關閉通道
+    });
+    
+    // 結果收集者
+    let result_collector = thread::spawn(move || {
+        let mut results = vec![];
+        for (worker_id, result) in result_rx {
+            println!("收到來自工作者 {} 的結果: {}", worker_id, result);
+            results.push(result);
+            if results.len() == 10 {
+                break;
+            }
+        }
+        results
+    });
+    
+    job_distributor.join().unwrap();
+    let results = result_collector.join().unwrap();
+    
+    for worker in workers {
+        worker.join().unwrap();
+    }
+    
+    println!("所有結果: {:?}", results);
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="跨平台高效能-channel-crossbeam"><a class="header" href="#跨平台高效能-channel-crossbeam">跨平台高效能 Channel (crossbeam)</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Cargo.toml: crossbeam = "0.8"
+use crossbeam::channel;
+use std::thread;
+use std::time::{Duration, Instant};
+
+fn crossbeam_channel_example() {
+    let (tx, rx) = channel::unbounded();
+    let (bounded_tx, bounded_rx) = channel::bounded(10);
+    
+    // 多個生產者
+    let mut producers = vec![];
+    for i in 0..3 {
+        let tx = tx.clone();
+        let producer = thread::spawn(move || {
+            for j in 0..5 {
+                let message = format!("生產者 {} 的訊息 {}", i, j);
+                tx.send(message).unwrap();
+                thread::sleep(Duration::from_millis(50));
+            }
+        });
+        producers.push(producer);
+    }
+    
+    // 使用 select! 處理多個通道
+    let selector = thread::spawn(move || {
+        loop {
+            crossbeam::select! {
+                recv(rx) -&gt; msg =&gt; {
+                    match msg {
+                        Ok(message) =&gt; println!("從無界通道收到: {}", message),
+                        Err(_) =&gt; break,
+                    }
+                },
+                recv(bounded_rx) -&gt; msg =&gt; {
+                    match msg {
+                        Ok(message) =&gt; println!("從有界通道收到: {}", message),
+                        Err(_) =&gt; {},
+                    }
+                },
+                default(Duration::from_millis(100)) =&gt; {
+                    println!("等待訊息超時...");
+                },
+            }
+        }
+    });
+    
+    // 向有界通道發送訊息
+    thread::spawn(move || {
+        for i in 0..3 {
+            bounded_tx.send(format!("有界訊息 {}", i)).unwrap();
+            thread::sleep(Duration::from_millis(200));
+        }
+    });
+    
+    for producer in producers {
+        producer.join().unwrap();
+    }
+    
+    drop(tx);
+    selector.join().unwrap();
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="channel-效能測試"><a class="header" href="#channel-效能測試">Channel 效能測試</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn channel_performance_test() {
+    let message_count = 1_000_000;
+    
+    // 標準庫 channel
+    let start = Instant::now();
+    let (tx, rx) = std::sync::mpsc::channel();
+    
+    let sender = thread::spawn(move || {
+        for i in 0..message_count {
+            tx.send(i).unwrap();
+        }
+    });
+    
+    let receiver = thread::spawn(move || {
+        for _ in 0..message_count {
+            rx.recv().unwrap();
+        }
+    });
+    
+    sender.join().unwrap();
+    receiver.join().unwrap();
+    let std_time = start.elapsed();
+    
+    // crossbeam channel
+    let start = Instant::now();
+    let (tx, rx) = channel::unbounded();
+    
+    let sender = thread::spawn(move || {
+        for i in 0..message_count {
+            tx.send(i).unwrap();
+        }
+    });
+    
+    let receiver = thread::spawn(move || {
+        for _ in 0..message_count {
+            rx.recv().unwrap();
+        }
+    });
+    
+    sender.join().unwrap();
+    receiver.join().unwrap();
+    let crossbeam_time = start.elapsed();
+    
+    println!("標準庫 channel: {:?}", std_time);
+    println!("Crossbeam channel: {:?}", crossbeam_time);
+    println!("效能比較: {:.2}x", 
+        std_time.as_nanos() as f64 / crossbeam_time.as_nanos() as f64);
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="channel-選擇指南"><a class="header" href="#channel-選擇指南">Channel 選擇指南</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>場景</th><th>推薦類型</th><th>原因</th></tr></thead><tbody>
+<tr><td>🔄 一對一通訊</td><td><code>mpsc::channel</code></td><td>簡單可靠</td></tr>
+<tr><td>🚀 高效能需求</td><td><code>crossbeam::channel</code></td><td>更快的實現</td></tr>
+<tr><td>📦 固定緩衝區</td><td><code>sync_channel</code></td><td>背壓控制</td></tr>
+<tr><td>🎯 選擇性接收</td><td><code>crossbeam::select!</code></td><td>多通道處理</td></tr>
+<tr><td>🔂 廣播模式</td><td><code>crossbeam::channel</code> + clone</td><td>一對多通訊</td></tr>
+</tbody></table>
+</div>
+<h1 id="rust-鎖機制指南---第三部分高級同步機制-"><a class="header" href="#rust-鎖機制指南---第三部分高級同步機制-">Rust 鎖機制指南 - 第三部分：高級同步機制 🚀</a></h1>
+<h2 id="condvar-條件變數-"><a class="header" href="#condvar-條件變數-">Condvar 條件變數 🚌</a></h2>
+<p><strong>白話解釋</strong>: 像等公車的站牌，只有當公車來了(條件滿足)才上車</p>
+<pre><code>Condvar 工作流程：
+生產者: 🏭 ──▶ [緩衝區] ──▶ 📢 notify()
+消費者: 👤💤 ──▶ 🔔收到通知 ──▶ 👤🏃‍♂️ 開始工作
+</code></pre>
+<h3 id="生產者-消費者範例"><a class="header" href="#生產者-消費者範例">生產者-消費者範例</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::{Arc, Mutex, Condvar};
+use std::thread;
+use std::time::Duration;
+use std::collections::VecDeque;
+
+struct ProducerConsumer&lt;T&gt; {
+    buffer: Mutex&lt;VecDeque&lt;T&gt;&gt;,
+    not_empty: Condvar,
+    not_full: Condvar,
+    capacity: usize,
+}
+
+impl&lt;T&gt; ProducerConsumer&lt;T&gt; {
+    fn new(capacity: usize) -&gt; Self {
+        ProducerConsumer {
+            buffer: Mutex::new(VecDeque::new()),
+            not_empty: Condvar::new(),
+            not_full: Condvar::new(),
+            capacity,
+        }
+    }
+    
+    fn produce(&amp;self, item: T) {
+        let mut buffer = self.buffer.lock().unwrap();
+        
+        // 等待緩衝區有空間
+        while buffer.len() &gt;= self.capacity {
+            println!("緩衝區滿了，生產者等待...");
+            buffer = self.not_full.wait(buffer).unwrap();
+        }
+        
+        buffer.push_back(item);
+        println!("生產了一個項目，緩衝區大小: {}", buffer.len());
+        
+        // 通知消費者
+        self.not_empty.notify_one();
+    }
+    
+    fn consume(&amp;self) -&gt; T {
+        let mut buffer = self.buffer.lock().unwrap();
+        
+        // 等待緩衝區有資料
+        while buffer.is_empty() {
+            println!("緩衝區空了，消費者等待...");
+            buffer = self.not_empty.wait(buffer).unwrap();
+        }
+        
+        let item = buffer.pop_front().unwrap();
+        println!("消費了一個項目，緩衝區大小: {}", buffer.len());
+        
+        // 通知生產者
+        self.not_full.notify_one();
+        
+        item
+    }
+}
+
+fn producer_consumer_example() {
+    let pc = Arc::new(ProducerConsumer::new(3)); // 緩衝區大小為3
+    
+    // 生產者執行緒
+    let pc_producer = Arc::clone(&amp;pc);
+    let producer = thread::spawn(move || {
+        for i in 0..10 {
+            let item = format!("項目-{}", i);
+            pc_producer.produce(item);
+            thread::sleep(Duration::from_millis(100));
+        }
+        println!("生產者完成");
+    });
+    
+    // 消費者執行緒
+    let pc_consumer = Arc::clone(&amp;pc);
+    let consumer = thread::spawn(move || {
+        for _ in 0..10 {
+            let item = pc_consumer.consume();
+            println!("收到: {}", item);
+            thread::sleep(Duration::from_millis(200)); // 消費比生產慢
+        }
+        println!("消費者完成");
+    });
+    
+    producer.join().unwrap();
+    consumer.join().unwrap();
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="任務協調範例"><a class="header" href="#任務協調範例">任務協調範例</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct TaskCoordinator {
+    workers_ready: Mutex&lt;usize&gt;,
+    all_ready: Condvar,
+    target_count: usize,
+}
+
+impl TaskCoordinator {
+    fn new(target_count: usize) -&gt; Self {
+        TaskCoordinator {
+            workers_ready: Mutex::new(0),
+            all_ready: Condvar::new(),
+            target_count,
+        }
+    }
+    
+    fn worker_ready(&amp;self, worker_id: usize) {
+        let mut count = self.workers_ready.lock().unwrap();
+        *count += 1;
+        
+        println!("工作者 {} 準備就緒 ({}/{})", worker_id, *count, self.target_count);
+        
+        if *count &gt;= self.target_count {
+            println!("所有工作者準備就緒，開始任務！");
+            self.all_ready.notify_all();
+        } else {
+            // 等待其他工作者
+            while *count &lt; self.target_count {
+                println!("工作者 {} 等待其他工作者...", worker_id);
+                count = self.all_ready.wait(count).unwrap();
+            }
+        }
+    }
+}
+
+fn task_coordination_example() {
+    let coordinator = Arc::new(TaskCoordinator::new(3));
+    let mut handles = vec![];
+    
+    for i in 0..3 {
+        let coordinator = Arc::clone(&amp;coordinator);
+        let handle = thread::spawn(move || {
+            // 模擬準備時間
+            thread::sleep(Duration::from_millis((i + 1) * 500));
+            
+            // 報告準備就緒並等待開始信號
+            coordinator.worker_ready(i);
+            
+            // 開始執行任務
+            println!("工作者 {} 開始執行任務", i);
+            thread::sleep(Duration::from_secs(2));
+            println!("工作者 {} 完成任務", i);
+        });
+        handles.push(handle);
+    }
+    
+    for handle in handles {
+        handle.join().unwrap();
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="超時等待範例"><a class="header" href="#超時等待範例">超時等待範例</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn timeout_example() {
+    let pair = Arc::new((Mutex::new(false), Condvar::new()));
+    let pair_clone = Arc::clone(&amp;pair);
+    
+    // 等待執行緒
+    let waiter = thread::spawn(move || {
+        let (lock, cvar) = &amp;*pair_clone;
+        let mut started = lock.lock().unwrap();
+        
+        // 等待條件滿足，最多等待2秒
+        let result = cvar.wait_timeout_while(
+            started,
+            Duration::from_secs(2),
+            |&amp;mut pending| !pending,
+        ).unwrap();
+        
+        if result.1.timed_out() {
+            println!("等待超時！");
+        } else {
+            println!("條件滿足！");
+        }
+    });
+    
+    // 主執行緒等待3秒後設定條件
+    thread::sleep(Duration::from_secs(3));
+    
+    let (lock, cvar) = &amp;*pair;
+    let mut started = lock.lock().unwrap();
+    *started = true;
+    cvar.notify_one();
+    
+    waiter.join().unwrap();
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="rcrefcell-單執行緒共享-"><a class="header" href="#rcrefcell-單執行緒共享-">Rc&lt;RefCell<T>&gt; 單執行緒共享 🏠</a></h2>
+<p><strong>白話解釋</strong>: 像家裡的共用冰箱，只有一個家庭(執行緒)使用，但可以有多個使用者</p>
+<pre><code>Rc&lt;RefCell&lt;T&gt;&gt; 設計圖：
+Reference Counting (Rc):
+Owner1: 📎 ──┐
+Owner2: 📎 ──┼──▶ 📦 RefCell&lt;T&gt;
+Owner3: 📎 ──┘
+
+Runtime Borrow Checking:
+Immutable: 👀👀👀 (多個不可變借用)
+Mutable:   ✍️     (一個可變借用)
+Panic:     👀✍️   (同時存在會panic!)
+</code></pre>
+<h3 id="樹狀結構範例"><a class="header" href="#樹狀結構範例">樹狀結構範例</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::rc::Rc;
+use std::cell::RefCell;
+
+#[derive(Debug)]
+struct Node {
+    value: i32,
+    children: Vec&lt;Rc&lt;RefCell&lt;Node&gt;&gt;&gt;,
+    parent: Option&lt;Rc&lt;RefCell&lt;Node&gt;&gt;&gt;,
+}
+
+impl Node {
+    fn new(value: i32) -&gt; Rc&lt;RefCell&lt;Self&gt;&gt; {
+        Rc::new(RefCell::new(Node {
+            value,
+            children: Vec::new(),
+            parent: None,
+        }))
+    }
+    
+    fn add_child(parent: &amp;Rc&lt;RefCell&lt;Node&gt;&gt;, child: &amp;Rc&lt;RefCell&lt;Node&gt;&gt;) {
+        // 借用父節點並添加子節點
+        parent.borrow_mut().children.push(Rc::clone(child));
+        
+        // 設定子節點的父節點引用
+        child.borrow_mut().parent = Some(Rc::clone(parent));
+    }
+    
+    fn print_tree(node: &amp;Rc&lt;RefCell&lt;Node&gt;&gt;, depth: usize) {
+        let indent = "  ".repeat(depth);
+        let borrowed = node.borrow();
+        println!("{}Node: {}", indent, borrowed.value);
+        
+        for child in &amp;borrowed.children {
+            Node::print_tree(child, depth + 1);
+        }
+    }
+    
+    fn update_value(node: &amp;Rc&lt;RefCell&lt;Node&gt;&gt;, new_value: i32) {
+        node.borrow_mut().value = new_value;
+    }
+}
+
+fn tree_example() {
+    // 建立樹狀結構
+    let root = Node::new(1);
+    let child1 = Node::new(2);
+    let child2 = Node::new(3);
+    let grandchild = Node::new(4);
+    
+    // 建立父子關係
+    Node::add_child(&amp;root, &amp;child1);
+    Node::add_child(&amp;root, &amp;child2);
+    Node::add_child(&amp;child1, &amp;grandchild);
+    
+    println!("原始樹狀結構:");
+    Node::print_tree(&amp;root, 0);
+    
+    // 修改節點值
+    Node::update_value(&amp;grandchild, 42);
+    
+    println!("\n修改後的樹狀結構:");
+    Node::print_tree(&amp;root, 0);
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="遊戲狀態管理範例"><a class="header" href="#遊戲狀態管理範例">遊戲狀態管理範例</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Debug)]
+struct GameState {
+    score: i32,
+    level: i32,
+    lives: i32,
+}
+
+impl GameState {
+    fn new() -&gt; Self {
+        GameState {
+            score: 0,
+            level: 1,
+            lives: 3,
+        }
+    }
+    
+    fn add_score(&amp;mut self, points: i32) {
+        self.score += points;
+        if self.score &gt;= self.level * 1000 {
+            self.level_up();
+        }
+    }
+    
+    fn level_up(&amp;mut self) {
+        self.level += 1;
+        self.lives += 1;
+        println!("升級！等級: {}, 生命: {}", self.level, self.lives);
+    }
+    
+    fn lose_life(&amp;mut self) {
+        self.lives -= 1;
+        println!("失去生命！剩餘: {}", self.lives);
+    }
+}
+
+struct Player {
+    name: String,
+    game_state: Rc&lt;RefCell&lt;GameState&gt;&gt;,
+}
+
+impl Player {
+    fn new(name: String, game_state: Rc&lt;RefCell&lt;GameState&gt;&gt;) -&gt; Self {
+        Player { name, game_state }
+    }
+    
+    fn score_points(&amp;self, points: i32) {
+        println!("{} 獲得 {} 分", self.name, points);
+        self.game_state.borrow_mut().add_score(points);
+    }
+    
+    fn take_damage(&amp;self) {
+        println!("{} 受到傷害", self.name);
+        self.game_state.borrow_mut().lose_life();
+    }
+    
+    fn show_status(&amp;self) {
+        let state = self.game_state.borrow();
+        println!("{} - 分數: {}, 等級: {}, 生命: {}", 
+            self.name, state.score, state.level, state.lives);
+    }
+}
+
+fn game_state_example() {
+    let game_state = Rc::new(RefCell::new(GameState::new()));
+    
+    // 多個玩家共享遊戲狀態
+    let player1 = Player::new("玩家1".to_string(), Rc::clone(&amp;game_state));
+    let player2 = Player::new("玩家2".to_string(), Rc::clone(&amp;game_state));
+    
+    // 遊戲過程
+    player1.score_points(500);
+    player1.show_status();
+    
+    player2.score_points(300);
+    player2.show_status();
+    
+    player1.score_points(700); // 應該升級
+    player1.show_status();
+    
+    player2.take_damage();
+    player2.show_status();
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="借用檢查錯誤處理"><a class="header" href="#借用檢查錯誤處理">借用檢查錯誤處理</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn borrowing_safety_example() {
+    let data = Rc::new(RefCell::new(vec![1, 2, 3]));
+    
+    // ✅ 正確的使用方式
+    {
+        let borrowed = data.borrow();
+        println!("不可變借用: {:?}", *borrowed);
+    } // borrowed 在這裡被釋放
+    
+    {
+        let mut borrowed = data.borrow_mut();
+        borrowed.push(4);
+        println!("可變借用後: {:?}", *borrowed);
+    } // borrowed 在這裡被釋放
+    
+    // ✅ 安全的檢查方式
+    if let Ok(borrowed) = data.try_borrow() {
+        println!("安全借用: {:?}", *borrowed);
+    } else {
+        println!("無法借用，已被其他人使用");
+    }
+    
+    // ❌ 這會在運行時 panic！
+    // let borrowed1 = data.borrow();
+    // let borrowed2 = data.borrow_mut(); // panic: already borrowed
+}
+
+// 安全的借用包裝器
+fn safe_borrow_pattern() {
+    let data = Rc::new(RefCell::new(0));
+    
+    // 使用函數包裝器避免長時間借用
+    fn with_data&lt;F, R&gt;(data: &amp;Rc&lt;RefCell&lt;i32&gt;&gt;, f: F) -&gt; Option&lt;R&gt;
+    where
+        F: FnOnce(&amp;mut i32) -&gt; R,
+    {
+        if let Ok(mut guard) = data.try_borrow_mut() {
+            Some(f(&amp;mut guard))
+        } else {
+            None
+        }
+    }
+    
+    if let Some(result) = with_data(&amp;data, |value| {
+        *value += 1;
+        *value
+    }) {
+        println!("操作成功，新值: {}", result);
+    } else {
+        println!("操作失敗，資源被借用中");
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="weak-引用避免循環引用"><a class="header" href="#weak-引用避免循環引用">Weak 引用避免循環引用</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::rc::Weak;
+
+#[derive(Debug)]
+struct Parent {
+    children: RefCell&lt;Vec&lt;Rc&lt;RefCell&lt;Child&gt;&gt;&gt;&gt;,
+}
+
+#[derive(Debug)]
+struct Child {
+    parent: RefCell&lt;Weak&lt;RefCell&lt;Parent&gt;&gt;&gt;,
+    value: i32,
+}
+
+impl Parent {
+    fn new() -&gt; Rc&lt;RefCell&lt;Self&gt;&gt; {
+        Rc::new(RefCell::new(Parent {
+            children: RefCell::new(Vec::new()),
+        }))
+    }
+    
+    fn add_child(parent: &amp;Rc&lt;RefCell&lt;Parent&gt;&gt;, value: i32) -&gt; Rc&lt;RefCell&lt;Child&gt;&gt; {
+        let child = Rc::new(RefCell::new(Child {
+            parent: RefCell::new(Rc::downgrade(parent)),
+            value,
+        }));
+        
+        parent.borrow().children.borrow_mut().push(Rc::clone(&amp;child));
+        child
+    }
+}
+
+fn weak_reference_example() {
+    let parent = Parent::new();
+    let child1 = Parent::add_child(&amp;parent, 1);
+    let child2 = Parent::add_child(&amp;parent, 2);
+    
+    println!("父節點有 {} 個子節點", 
+        parent.borrow().children.borrow().len());
+    
+    // 通過 weak 引用訪問父節點
+    if let Some(parent_ref) = child1.borrow().parent.borrow().upgrade() {
+        println!("子節點可以訪問父節點");
+    }
+    
+    // 當父節點被丟棄時，weak 引用會失效
+    drop(parent);
+    
+    if child1.borrow().parent.borrow().upgrade().is_none() {
+        println!("父節點已被丟棄，weak 引用失效");
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="使用場景總結"><a class="header" href="#使用場景總結">使用場景總結</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>場景</th><th>適用性</th><th>原因</th></tr></thead><tbody>
+<tr><td>🌳 <strong>樹狀結構</strong></td><td>✅ 很適合</td><td>需要父子雙向引用</td></tr>
+<tr><td>🎮 <strong>單執行緒遊戲狀態</strong></td><td>✅ 適合</td><td>多個系統共享狀態</td></tr>
+<tr><td>🖼️ <strong>GUI 元件</strong></td><td>✅ 適合</td><td>元件間複雜引用關係</td></tr>
+<tr><td>📊 <strong>單執行緒圖結構</strong></td><td>✅ 適合</td><td>節點間相互引用</td></tr>
+<tr><td>🌐 <strong>多執行緒場景</strong></td><td>❌ 不適合</td><td>無法跨執行緒共享</td></tr>
+<tr><td>🔄 <strong>簡單資料</strong></td><td>❌ 不推薦</td><td>過度複雜化</td></tr>
+</tbody></table>
+</div>
+<h1 id="rust-鎖機制指南---第四部分實戰應用與最佳實踐-"><a class="header" href="#rust-鎖機制指南---第四部分實戰應用與最佳實踐-">Rust 鎖機制指南 - 第四部分：實戰應用與最佳實踐 🎯</a></h1>
+<h2 id="高級並行模式-"><a class="header" href="#高級並行模式-">高級並行模式 🚀</a></h2>
+<h3 id="actor-模式實現"><a class="header" href="#actor-模式實現">Actor 模式實現</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::mpsc;
+use std::thread;
+use std::collections::HashMap;
+
+// Actor 訊息定義
+#[derive(Debug)]
+enum Message {
+    Set { key: String, value: String },
+    Get { key: String, response: mpsc::Sender&lt;Option&lt;String&gt;&gt; },
+    Delete { key: String },
+    Stop,
+}
+
+// Key-Value Actor
+struct KeyValueActor {
+    receiver: mpsc::Receiver&lt;Message&gt;,
+    data: HashMap&lt;String, String&gt;,
+}
+
+impl KeyValueActor {
+    fn new() -&gt; (mpsc::Sender&lt;Message&gt;, thread::JoinHandle&lt;()&gt;) {
+        let (sender, receiver) = mpsc::channel();
+        
+        let handle = thread::spawn(move || {
+            let mut actor = KeyValueActor {
+                receiver,
+                data: HashMap::new(),
+            };
+            actor.run();
+        });
+        
+        (sender, handle)
+    }
+    
+    fn run(&amp;mut self) {
+        loop {
+            match self.receiver.recv() {
+                Ok(Message::Set { key, value }) =&gt; {
+                    println!("Actor: 設定 {} = {}", key, value);
+                    self.data.insert(key, value);
+                }
+                Ok(Message::Get { key, response }) =&gt; {
+                    let value = self.data.get(&amp;key).cloned();
+                    println!("Actor: 查詢 {} = {:?}", key, value);
+                    let _ = response.send(value);
+                }
+                Ok(Message::Delete { key }) =&gt; {
+                    let removed = self.data.remove(&amp;key);
+                    println!("Actor: 刪除 {} = {:?}", key, removed);
+                }
+                Ok(Message::Stop) =&gt; {
+                    println!("Actor: 停止運行");
+                    break;
+                }
+                Err(_) =&gt; {
+                    println!("Actor: 發送端已關閉，退出");
+                    break;
+                }
+            }
+        }
+    }
+}
+
+fn actor_pattern_example() {
+    let (actor_sender, actor_handle) = KeyValueActor::new();
+    
+    // 多個客戶端執行緒
+    let mut clients = vec![];
+    
+    for i in 0..3 {
+        let sender = actor_sender.clone();
+        let client = thread::spawn(move || {
+            // 設定值
+            sender.send(Message::Set {
+                key: format!("key{}", i),
+                value: format!("value{}", i),
+            }).unwrap();
+            
+            // 查詢值
+            let (response_tx, response_rx) = mpsc::channel();
+            sender.send(Message::Get {
+                key: format!("key{}", i),
+                response: response_tx,
+            }).unwrap();
+            
+            if let Ok(value) = response_rx.recv() {
+                println!("客戶端 {} 收到回應: {:?}", i, value);
+            }
+            
+            // 刪除值
+            sender.send(Message::Delete {
+                key: format!("key{}", i),
+            }).unwrap();
+        });
+        clients.push(client);
+    }
+    
+    // 等待所有客戶端完成
+    for client in clients {
+        client.join().unwrap();
+    }
+    
+    // 停止 Actor
+    actor_sender.send(Message::Stop).unwrap();
+    actor_handle.join().unwrap();
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="執行緒池實現"><a class="header" href="#執行緒池實現">執行緒池實現</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::{Arc, Mutex};
+use std::sync::mpsc;
+use std::thread;
+
+type Job = Box&lt;dyn FnOnce() + Send + 'static&gt;;
+
+pub struct ThreadPool {
+    workers: Vec&lt;Worker&gt;,
+    sender: mpsc::Sender&lt;Job&gt;,
+}
+
+impl ThreadPool {
+    pub fn new(size: usize) -&gt; ThreadPool {
+        assert!(size &gt; 0);
+        
+        let (sender, receiver) = mpsc::channel();
+        let receiver = Arc::new(Mutex::new(receiver));
+        
+        let mut workers = Vec::with_capacity(size);
+        
+        for id in 0..size {
+            workers.push(Worker::new(id, Arc::clone(&amp;receiver)));
+        }
+        
+        ThreadPool { workers, sender }
+    }
+    
+    pub fn execute&lt;F&gt;(&amp;self, f: F)
+    where
+        F: FnOnce() + Send + 'static,
+    {
+        let job = Box::new(f);
+        self.sender.send(job).unwrap();
+    }
+}
+
+impl Drop for ThreadPool {
+    fn drop(&amp;mut self) {
+        println!("關閉所有工作者...");
+        
+        for worker in &amp;mut self.workers {
+            println!("關閉工作者 {}", worker.id);
+            
+            if let Some(thread) = worker.thread.take() {
+                thread.join().unwrap();
+            }
+        }
+    }
+}
+
+struct Worker {
+    id: usize,
+    thread: Option&lt;thread::JoinHandle&lt;()&gt;&gt;,
+}
+
+impl Worker {
+    fn new(id: usize, receiver: Arc&lt;Mutex&lt;mpsc::Receiver&lt;Job&gt;&gt;&gt;) -&gt; Worker {
+        let thread = thread::spawn(move || loop {
+            let job = receiver.lock().unwrap().recv();
+            
+            match job {
+                Ok(job) =&gt; {
+                    println!("工作者 {} 執行任務", id);
+                    job();
+                }
+                Err(_) =&gt; {
+                    println!("工作者 {} 斷開連接，關閉", id);
+                    break;
+                }
+            }
+        });
+        
+        Worker {
+            id,
+            thread: Some(thread),
+        }
+    }
+}
+
+fn thread_pool_example() {
+    let pool = ThreadPool::new(4);
+    
+    for i in 0..8 {
+        pool.execute(move || {
+            println!("執行任務 {}", i);
+            thread::sleep(std::time::Duration::from_secs(1));
+            println!("任務 {} 完成", i);
+        });
+    }
+    
+    println!("所有任務已提交");
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="效能監控系統"><a class="header" href="#效能監控系統">效能監控系統</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
+use std::thread;
+
+#[derive(Debug)]
+struct LockMetrics {
+    acquisitions: AtomicU64,
+    contentions: AtomicU64,
+    total_wait_time: AtomicU64,
+    max_wait_time: AtomicU64,
+}
+
+impl LockMetrics {
+    fn new() -&gt; Self {
+        LockMetrics {
+            acquisitions: AtomicU64::new(0),
+            contentions: AtomicU64::new(0),
+            total_wait_time: AtomicU64::new(0),
+            max_wait_time: AtomicU64::new(0),
+        }
+    }
+    
+    fn record_acquisition(&amp;self, wait_time: Duration, contended: bool) {
+        self.acquisitions.fetch_add(1, Ordering::Relaxed);
+        
+        if contended {
+            self.contentions.fetch_add(1, Ordering::Relaxed);
+        }
+        
+        let wait_nanos = wait_time.as_nanos() as u64;
+        self.total_wait_time.fetch_add(wait_nanos, Ordering::Relaxed);
+        
+        // 更新最大等待時間
+        let mut current_max = self.max_wait_time.load(Ordering::Relaxed);
+        while wait_nanos &gt; current_max {
+            match self.max_wait_time.compare_exchange_weak(
+                current_max,
+                wait_nanos,
+                Ordering::Relaxed,
+                Ordering::Relaxed,
+            ) {
+                Ok(_) =&gt; break,
+                Err(x) =&gt; current_max = x,
+            }
+        }
+    }
+    
+    fn report(&amp;self) {
+        let acquisitions = self.acquisitions.load(Ordering::Relaxed);
+        let contentions = self.contentions.load(Ordering::Relaxed);
+        let total_wait = self.total_wait_time.load(Ordering::Relaxed);
+        let max_wait = self.max_wait_time.load(Ordering::Relaxed);
+        
+        if acquisitions &gt; 0 {
+            let contention_rate = (contentions as f64 / acquisitions as f64) * 100.0;
+            let avg_wait = total_wait as f64 / acquisitions as f64;
+            
+            println!("🔒 鎖統計報告:");
+            println!("  總獲取次數: {}", acquisitions);
+            println!("  競爭次數: {}", contentions);
+            println!("  競爭率: {:.2}%", contention_rate);
+            println!("  平均等待時間: {:.2}ns", avg_wait);
+            println!("  最大等待時間: {}ns", max_wait);
+        }
+    }
+}
+
+// 監控包裝器
+struct MonitoredMutex&lt;T&gt; {
+    inner: Mutex&lt;T&gt;,
+    metrics: LockMetrics,
+}
+
+impl&lt;T&gt; MonitoredMutex&lt;T&gt; {
+    fn new(data: T) -&gt; Self {
+        MonitoredMutex {
+            inner: Mutex::new(data),
+            metrics: LockMetrics::new(),
+        }
+    }
+    
+    fn lock(&amp;self) -&gt; std::sync::MutexGuard&lt;T&gt; {
+        let start = Instant::now();
+        let guard = self.inner.lock().unwrap();
+        let wait_time = start.elapsed();
+        
+        // 判斷是否有競爭 (簡單的啟發式方法)
+        let contended = wait_time &gt; Duration::from_nanos(1000);
+        self.metrics.record_acquisition(wait_time, contended);
+        
+        guard
+    }
+    
+    fn metrics(&amp;self) -&gt; &amp;LockMetrics {
+        &amp;self.metrics
+    }
+}
+
+fn performance_monitoring_example() {
+    let counter = Arc::new(MonitoredMutex::new(0));
+    let mut handles = vec![];
+    
+    // 建立多個競爭執行緒
+    for i in 0..4 {
+        let counter = Arc::clone(&amp;counter);
+        let handle = thread::spawn(move || {
+            for j in 0..1000 {
+                {
+                    let mut guard = counter.lock();
+                    *guard += 1;
+                    
+                    // 模擬一些工作
+                    if j % 100 == 0 {
+                        thread::sleep(Duration::from_micros(10));
+                    }
+                }
+                
+                // 偶爾讓出CPU
+                if j % 50 == 0 {
+                    thread::yield_now();
+                }
+            }
+            println!("執行緒 {} 完成", i);
+        });
+        handles.push(handle);
+    }
+    
+    // 監控執行緒
+    let counter_monitor = Arc::clone(&amp;counter);
+    let monitor = thread::spawn(move || {
+        for _ in 0..5 {
+            thread::sleep(Duration::from_secs(1));
+            counter_monitor.metrics().report();
+        }
+    });
+    
+    for handle in handles {
+        handle.join().unwrap();
+    }
+    
+    monitor.join().unwrap();
+    
+    println!("最終計數: {}", *counter.lock());
+    println!("\n最終統計:");
+    counter.metrics().report();
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="死鎖檢測系統"><a class="header" href="#死鎖檢測系統">死鎖檢測系統</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use std::thread::{self, ThreadId};
+use std::time::Duration;
+
+struct DeadlockDetector {
+    // 記錄哪個執行緒持有哪些鎖
+    lock_owners: Arc&lt;Mutex&lt;HashMap&lt;String, ThreadId&gt;&gt;&gt;,
+    // 記錄執行緒等待哪些鎖
+    waiting_for: Arc&lt;Mutex&lt;HashMap&lt;ThreadId, String&gt;&gt;&gt;,
+}
+
+impl DeadlockDetector {
+    fn new() -&gt; Self {
+        DeadlockDetector {
+            lock_owners: Arc::new(Mutex::new(HashMap::new())),
+            waiting_for: Arc::new(Mutex::new(HashMap::new())),
+        }
+    }
+    
+    fn try_acquire_lock(&amp;self, lock_id: &amp;str) -&gt; bool {
+        let current_thread = thread::current().id();
+        
+        // 檢查鎖是否被其他執行緒持有
+        let mut owners = self.lock_owners.lock().unwrap();
+        
+        if let Some(&amp;owner) = owners.get(lock_id) {
+            if owner != current_thread {
+                // 記錄等待關係
+                drop(owners);
+                let mut waiting = self.waiting_for.lock().unwrap();
+                waiting.insert(current_thread, lock_id.to_string());
+                drop(waiting);
+                
+                // 檢查死鎖
+                if self.detect_deadlock(current_thread) {
+                    println!("⚠️ 檢測到死鎖！執行緒 {:?} 等待鎖 {}", current_thread, lock_id);
+                    return false;
+                }
+                
+                println!("執行緒 {:?} 等待鎖 {}", current_thread, lock_id);
+                return false;
+            }
+        }
+        
+        // 獲取鎖
+        owners.insert(lock_id.to_string(), current_thread);
+        println!("🔒 執行緒 {:?} 獲取鎖 {}", current_thread, lock_id);
+        
+        // 清除等待記錄
+        drop(owners);
+        let mut waiting = self.waiting_for.lock().unwrap();
+        waiting.remove(&amp;current_thread);
+        
+        true
+    }
+    
+    fn release_lock(&amp;self, lock_id: &amp;str) {
+        let current_thread = thread::current().id();
+        let mut owners = self.lock_owners.lock().unwrap();
+        
+        if owners.get(lock_id) == Some(&amp;current_thread) {
+            owners.remove(lock_id);
+            println!("🔓 執行緒 {:?} 釋放鎖 {}", current_thread, lock_id);
+        }
+    }
+    
+    fn detect_deadlock(&amp;self, start_thread: ThreadId) -&gt; bool {
+        let waiting = self.waiting_for.lock().unwrap();
+        let owners = self.lock_owners.lock().unwrap();
+        
+        let mut visited = std::collections::HashSet::new();
+        let mut current_thread = start_thread;
+        
+        loop {
+            if visited.contains(&amp;current_thread) {
+                return true; // 發現環，即死鎖
+            }
+            
+            visited.insert(current_thread);
+            
+            // 找到當前執行緒等待的鎖
+            if let Some(waiting_lock) = waiting.get(&amp;current_thread) {
+                // 找到持有該鎖的執行緒
+                if let Some(&amp;lock_owner) = owners.get(waiting_lock) {
+                    if lock_owner == start_thread {
+                        return true; // 回到起始執行緒，發現死鎖
+                    }
+                    current_thread = lock_owner;
+                } else {
+                    break; // 鎖沒有被持有
+                }
+            } else {
+                break; // 執行緒沒有等待任何鎖
+            }
+        }
+        
+        false
+    }
+}
+
+// 有序鎖包裝器
+struct OrderedLock {
+    id: String,
+    inner: Mutex&lt;i32&gt;,
+    detector: Arc&lt;DeadlockDetector&gt;,
+}
+
+impl OrderedLock {
+    fn new(id: String, detector: Arc&lt;DeadlockDetector&gt;) -&gt; Self {
+        OrderedLock {
+            id,
+            inner: Mutex::new(0),
+            detector,
+        }
+    }
+    
+    fn lock(&amp;self) -&gt; Option&lt;std::sync::MutexGuard&lt;i32&gt;&gt; {
+        // 嘗試獲取鎖
+        while !self.detector.try_acquire_lock(&amp;self.id) {
+            thread::sleep(Duration::from_millis(10));
+        }
+        
+        Some(self.inner.lock().unwrap())
+    }
+    
+    fn unlock(&amp;self) {
+        self.detector.release_lock(&amp;self.id);
+    }
+}
+
+fn deadlock_detection_example() {
+    let detector = Arc::new(DeadlockDetector::new());
+    
+    let lock1 = Arc::new(OrderedLock::new("lock1".to_string(), Arc::clone(&amp;detector)));
+    let lock2 = Arc::new(OrderedLock::new("lock2".to_string(), Arc::clone(&amp;detector)));
+    
+    let lock1_clone = Arc::clone(&amp;lock1);
+    let lock2_clone = Arc::clone(&amp;lock2);
+    
+    // 執行緒1: 先鎖lock1，再鎖lock2
+    let t1 = thread::spawn(move || {
+        if let Some(_guard1) = lock1_clone.lock() {
+            println!("執行緒1獲得lock1");
+            thread::sleep(Duration::from_millis(100));
+            
+            if let Some(_guard2) = lock2_clone.lock() {
+                println!("執行緒1獲得lock2");
+                thread::sleep(Duration::from_millis(100));
+                lock2_clone.unlock();
+            }
+            lock1_clone.unlock();
+        }
+    });
+    
+    let lock1_clone2 = Arc::clone(&amp;lock1);
+    let lock2_clone2 = Arc::clone(&amp;lock2);
+    
+    // 執行緒2: 先鎖lock2，再鎖lock1 (可能造成死鎖)
+    let t2 = thread::spawn(move || {
+        thread::sleep(Duration::from_millis(50)); // 錯開啟動時間
+        
+        if let Some(_guard2) = lock2_clone2.lock() {
+            println!("執行緒2獲得lock2");
+            thread::sleep(Duration::from_millis(100));
+            
+            if let Some(_guard1) = lock1_clone2.lock() {
+                println!("執行緒2獲得lock1");
+                thread::sleep(Duration::from_millis(100));
+                lock1_clone2.unlock();
+            }
+            lock2_clone2.unlock();
+        }
+    });
+    
+    t1.join().unwrap();
+    t2.join().unwrap();
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="選擇指南與最佳實踐-"><a class="header" href="#選擇指南與最佳實踐-">選擇指南與最佳實踐 🎯</a></h2>
+<h3 id="完整選擇決策樹"><a class="header" href="#完整選擇決策樹">完整選擇決策樹</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 決策輔助函數
+fn choose_synchronization_primitive() -&gt; &amp;'static str {
+    // 這是一個概念性的決策樹
+    "
+    選擇流程：
+    
+    1. 需要共享資料嗎？
+       └─ 否 → 使用所有權轉移 (move)
+       └─ 是 → 繼續
+    
+    2. 單執行緒還是多執行緒？
+       └─ 單執行緒 → Rc&lt;RefCell&lt;T&gt;&gt;
+       └─ 多執行緒 → 繼續
+    
+    3. 什麼類型的操作？
+       ├─ 簡單計數/標誌 → Atomic 類型
+       ├─ 複雜資料結構 → 繼續
+       └─ 執行緒間通訊 → Channel
+    
+    4. 讀寫模式？
+       ├─ 多讀少寫 → Arc&lt;RwLock&lt;T&gt;&gt;
+       └─ 讀寫平衡 → Arc&lt;Mutex&lt;T&gt;&gt;
+    
+    5. 需要等待條件？
+       └─ 是 → Condvar + Mutex
+    "
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="效能對比表"><a class="header" href="#效能對比表">效能對比表</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>同步原語</th><th>延遲</th><th>吞吐量</th><th>記憶體使用</th><th>複雜度</th><th>適用場景</th></tr></thead><tbody>
+<tr><td><code>Atomic</code></td><td>🟢 極低</td><td>🟢 極高</td><td>🟢 極小</td><td>🟢 簡單</td><td>計數器、標誌</td></tr>
+<tr><td><code>Arc&lt;RwLock&gt;</code> (讀)</td><td>🟢 低</td><td>🟢 高</td><td>🟡 中等</td><td>🟡 中等</td><td>設定檔、快取</td></tr>
+<tr><td><code>Channel</code></td><td>🟡 中等</td><td>🟡 中等</td><td>🟡 中等</td><td>🟢 簡單</td><td>執行緒通訊</td></tr>
+<tr><td><code>Arc&lt;Mutex&gt;</code></td><td>🟡 中等</td><td>🟡 中等</td><td>🟡 中等</td><td>🟢 簡單</td><td>基本共享</td></tr>
+<tr><td><code>Condvar</code></td><td>🔴 高</td><td>🔴 低</td><td>🟡 中等</td><td>🔴 複雜</td><td>條件等待</td></tr>
+<tr><td><code>Rc&lt;RefCell&gt;</code></td><td>🟢 低</td><td>🟢 高</td><td>🟢 小</td><td>🟡 中等</td><td>單執行緒共享</td></tr>
+</tbody></table>
+</div>
+<h3 id="最佳實踐指南"><a class="header" href="#最佳實踐指南">最佳實踐指南</a></h3>
+<h4 id="1-所有權驅動設計"><a class="header" href="#1-所有權驅動設計">1. 所有權驅動設計</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ 好的設計：清晰的所有權
+fn good_ownership_design() {
+    let data = vec![1, 2, 3, 4, 5];
+    
+    // 移動所有權給工作執行緒
+    let handle = thread::spawn(move || {
+        let processed: Vec&lt;_&gt; = data.iter().map(|x| x * 2).collect();
+        processed
+    });
+    
+    let result = handle.join().unwrap();
+    println!("處理結果: {:?}", result);
+}
+
+// ❌ 避免的模式：不必要的共享
+fn avoid_unnecessary_sharing() {
+    let data = Arc::new(Mutex::new(vec![1, 2, 3, 4, 5]));
+    
+    // 如果只是為了傳遞資料，不如直接移動所有權
+    let data_clone = Arc::clone(&amp;data);
+    thread::spawn(move || {
+        let guard = data_clone.lock().unwrap();
+        println!("資料: {:?}", *guard);
+    });
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="2-鎖的粒度控制"><a class="header" href="#2-鎖的粒度控制">2. 鎖的粒度控制</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ 細粒度鎖：更好的並行性
+struct FinegrainedCache {
+    user_cache: Arc&lt;RwLock&lt;HashMap&lt;u64, User&gt;&gt;&gt;,
+    session_cache: Arc&lt;RwLock&lt;HashMap&lt;String, Session&gt;&gt;&gt;,
+    config: Arc&lt;RwLock&lt;Config&gt;&gt;,
+}
+
+// ❌ 粗粒度鎖：限制並行性
+struct CoarseGrainedCache {
+    data: Arc&lt;Mutex&lt;(HashMap&lt;u64, User&gt;, HashMap&lt;String, Session&gt;, Config)&gt;&gt;,
+}
+
+#[derive(Clone)]
+struct User { name: String }
+#[derive(Clone)]
+struct Session { token: String }
+#[derive(Clone)]
+struct Config { setting: String }
+<span class="boring">}</span></code></pre></pre>
+<h4 id="3-錯誤處理最佳實踐"><a class="header" href="#3-錯誤處理最佳實踐">3. 錯誤處理最佳實踐</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::PoisonError;
+
+// 強健的錯誤處理
+fn robust_operation&lt;T, R&gt;(
+    mutex: &amp;Arc&lt;Mutex&lt;T&gt;&gt;,
+    operation: impl FnOnce(&amp;mut T) -&gt; R,
+) -&gt; Result&lt;R, String&gt; {
+    match mutex.lock() {
+        Ok(mut guard) =&gt; Ok(operation(&amp;mut guard)),
+        Err(poisoned) =&gt; {
+            // 記錄毒化事件
+            eprintln!("警告: Mutex 被毒化，嘗試恢復操作");
+            
+            // 嘗試恢復
+            let mut guard = poisoned.into_inner();
+            Ok(operation(&amp;mut guard))
+        }
+    }
+}
+
+// 使用範例
+fn safe_counter_increment() {
+    let counter = Arc::new(Mutex::new(0));
+    
+    match robust_operation(&amp;counter, |count| {
+        *count += 1;
+        *count
+    }) {
+        Ok(new_value) =&gt; println!("計數器值: {}", new_value),
+        Err(e) =&gt; eprintln!("操作失敗: {}", e),
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="4-channel-使用模式"><a class="header" href="#4-channel-使用模式">4. Channel 使用模式</a></h4>
+<pre><pre class="playground"><code class="language-rust">// 優雅關閉模式
+fn graceful_shutdown_pattern() {
+    let (tx, rx) = mpsc::channel();
+    let (shutdown_tx, shutdown_rx) = mpsc::channel();
+    
+    // 工作執行緒
+    let worker = thread::spawn(move || {
+        loop {
+            select! {
+                recv(rx) -&gt; msg =&gt; {
+                    match msg {
+                        Ok(work) =&gt; process_work(work),
+                        Err(_) =&gt; break, // 通道關閉
+                    }
+                }
+                recv(shutdown_rx) -&gt; _ =&gt; {
+                    println!("收到關閉信號");
+                    break;
+                }
+                default(Duration::from_millis(100)) =&gt; {
+                    // 定期維護工作
+                    maintenance_work();
+                }
+            }
+        }
+        println!("工作執行緒優雅退出");
+    });
+    
+    // 發送一些工作
+    for i in 0..5 {
+        tx.send(i).unwrap();
+    }
+    
+    // 優雅關閉
+    shutdown_tx.send(()).unwrap();
+    worker.join().unwrap();
+}
+
+fn process_work(work: i32) {
+    println!("處理工作: {}", work);
+}
+
+fn maintenance_work() {
+    // 定期維護
+}
+
+// 需要引入 crossbeam 的 select! 巨集
+use crossbeam::select;</code></pre></pre>
+<h4 id="5-記憶體順序指南"><a class="header" href="#5-記憶體順序指南">5. 記憶體順序指南</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
+
+// 生產者-消費者的最佳化記憶體順序
+static DATA: AtomicI32 = AtomicI32::new(0);
+static READY: AtomicBool = AtomicBool::new(false);
+
+fn optimized_memory_ordering() {
+    // 生產者
+    thread::spawn(|| {
+        // 1. 寫入資料 (可以是 Relaxed)
+        DATA.store(42, Ordering::Relaxed);
+        
+        // 2. 發布準備標誌 (必須是 Release)
+        READY.store(true, Ordering::Release);
+        
+        println!("生產者: 資料已準備");
+    });
+    
+    // 消費者
+    thread::spawn(|| {
+        // 1. 等待準備標誌 (必須是 Acquire)
+        while !READY.load(Ordering::Acquire) {
+            std::hint::spin_loop();
+        }
+        
+        // 2. 讀取資料 (可以是 Relaxed)
+        let value = DATA.load(Ordering::Relaxed);
+        println!("消費者: 讀取到 {}", value);
+    });
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="除錯與診斷技巧"><a class="header" href="#除錯與診斷技巧">除錯與診斷技巧</a></h3>
+<h4 id="1-死鎖診斷"><a class="header" href="#1-死鎖診斷">1. 死鎖診斷</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 使用 parking_lot 的死鎖檢測
+#[cfg(feature = "deadlock_detection")]
+fn enable_deadlock_detection() {
+    use parking_lot::deadlock;
+    use std::time::Duration;
+    
+    thread::spawn(move || {
+        loop {
+            thread::sleep(Duration::from_secs(10));
+            let deadlocks = deadlock::check_deadlock();
+            
+            if deadlocks.is_empty() {
+                continue;
+            }
+            
+            println!("🚨 檢測到 {} 個死鎖", deadlocks.len());
+            for (i, threads) in deadlocks.iter().enumerate() {
+                println!("死鎖 #{}", i);
+                for t in threads {
+                    println!("  執行緒 ID: {:?}", t.thread_id());
+                    println!("  堆疊追蹤: {:#?}", t.backtrace());
+                }
+            }
+        }
+    });
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="2-效能分析工具"><a class="header" href="#2-效能分析工具">2. 效能分析工具</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 自訂效能分析器
+struct PerformanceProfiler {
+    start_time: Instant,
+    operations: AtomicUsize,
+}
+
+impl PerformanceProfiler {
+    fn new() -&gt; Self {
+        PerformanceProfiler {
+            start_time: Instant::now(),
+            operations: AtomicUsize::new(0),
+        }
+    }
+    
+    fn record_operation(&amp;self) {
+        self.operations.fetch_add(1, Ordering::Relaxed);
+    }
+    
+    fn report(&amp;self) {
+        let elapsed = self.start_time.elapsed();
+        let ops = self.operations.load(Ordering::Relaxed);
+        let ops_per_sec = ops as f64 / elapsed.as_secs_f64();
+        
+        println!("📊 效能報告:");
+        println!("  執行時間: {:?}", elapsed);
+        println!("  總操作數: {}", ops);
+        println!("  每秒操作數: {:.2}", ops_per_sec);
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="學習路徑與總結-"><a class="header" href="#學習路徑與總結-">學習路徑與總結 🎓</a></h2>
+<h3 id="學習路徑建議"><a class="header" href="#學習路徑建議">學習路徑建議</a></h3>
+<pre><code>🌱 初學者 (0-3個月):
+├── 理解所有權系統
+├── 掌握 Arc&lt;Mutex&lt;T&gt;&gt;
+├── 學習基本 Channel
+└── 實作簡單併發程式
+
+🚀 中級者 (3-6個月):
+├── 深入 RwLock 和 Atomic
+├── 掌握 Condvar 使用
+├── 學習效能最佳化
+└── 實作複雜併發系統
+
+🎯 高級者 (6個月以上):
+├── 無鎖程式設計
+├── 自訂同步原語
+├── 記憶體順序深度理解
+└── 高效能系統設計
+</code></pre>
+<h3 id="總結要點"><a class="header" href="#總結要點">總結要點</a></h3>
+<p><strong>✨ Rust 並行編程的獨特優勢:</strong></p>
+<ul>
+<li>🛡️ <strong>編譯時安全</strong> - 防止資料競爭</li>
+<li>⚡ <strong>零成本抽象</strong> - 高效能不犧牲安全</li>
+<li>🎯 <strong>所有權清晰</strong> - 明確的資源管理</li>
+<li>🔧 <strong>豐富工具</strong> - 從基礎到高級的完整工具鏈</li>
+</ul>
+<p><strong>🎯 核心設計原則:</strong></p>
+<ol>
+<li><strong>優先訊息傳遞</strong> - Channel 勝過共享記憶體</li>
+<li><strong>最小化共享</strong> - 只在必要時使用 Arc</li>
+<li><strong>明確所有權</strong> - 讓類型系統指導設計</li>
+<li><strong>測試驅動</strong> - 併發程式的正確性至關重要</li>
+</ol>
+<p><strong>🚀 實踐建議:</strong></p>
+<ul>
+<li>從簡單的 Arc&lt;Mutex<T>&gt; 開始學習</li>
+<li>重視編譯器的錯誤訊息和建議</li>
+<li>使用效能分析工具監控程式行為</li>
+<li>積極使用 Rust 社群的最佳實踐</li>
+</ul>
+<p>記住 Rust 的核心理念：<strong>如果程式能夠編譯通過，它很可能就是正確的並行程式</strong> 🦀✨</p>
+<hr />
+<p><em>完整指南到此結束。通過這四個部分，您已經掌握了 Rust 並行程式設計的完整知識體系！</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../rust/rust_wrappers_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../go/go.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../rust/rust_wrappers_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../go/go.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
