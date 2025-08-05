@@ -83,7 +83,7 @@ fn main() {
 ### 2.2 where 子句
 
 ```rust
-use std::fmt::Display;
+use std::fmt::{Display, Debug};
 use std::clone::Clone;
 
 // 使用 where 讓函數簽名更清晰
@@ -101,6 +101,14 @@ fn complex_function_inline<T: Display + Clone, U: Clone + std::fmt::Debug, V: Di
     t: T, u: U, v: V
 ) -> String {
     format!("t: {}, u: {:?}, v: {}", t, u, v)
+}
+
+fn main() {
+    let result1 = complex_function("hello", vec![1, 2, 3], 42);
+    println!("{}", result1);
+    
+    let result2 = complex_function_inline("world", vec!["a", "b"], 3.14);
+    println!("{}", result2);
 }
 ```
 
@@ -294,6 +302,8 @@ fn main() {
 ### 5.1 基本約束語法
 
 ```rust
+use std::fmt::{Display, Debug};
+
 // 內聯約束語法
 fn function1<T: Display + Debug>(item: T) {
     println!("Display: {}", item);
@@ -319,6 +329,14 @@ fn function3(item: impl Display + Debug) {
 // impl Trait 語法（返回值）
 fn function4() -> impl Display + Debug {
     42 // 返回實現了 Display + Debug 的類型
+}
+
+fn main() {
+    function1("Hello world!");
+    function2(42);
+    function3(true);
+    let result = function4();
+    println!("function4 result: {}", result);
 }
 ```
 
@@ -455,6 +473,8 @@ fn main() {
 
 #### Copy - 隱式複製
 ```rust
+use std::fmt::Debug;
+
 // Copy trait 只能應用於簡單類型
 #[derive(Copy, Clone, Debug)]
 struct SimplePoint {
@@ -503,6 +523,7 @@ fn main() {
 #### Clone - 明確複製
 ```rust
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 #[derive(Clone, Debug)]
 struct ExpensiveStruct {
@@ -542,6 +563,7 @@ fn main() {
 #### PartialEq - 部分相等比較
 ```rust
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 #[derive(Debug)]
 struct Person {
@@ -605,11 +627,12 @@ fn main() {
 
 #### Eq - 完全相等
 ```rust
+use std::collections::HashSet;
+use std::fmt::Debug;
+
 // Eq 是 PartialEq 的子 trait，保證反身性 (a == a 總是 true)
 #[derive(PartialEq, Eq, Debug, Hash)]
 struct Id(u32);
-
-use std::collections::HashSet;
 
 // 只有實現 Eq 的類型才能用作 HashMap/HashSet 的鍵
 fn unique_items<T: Eq + std::hash::Hash + Debug>(items: Vec<T>) -> HashSet<T> {
@@ -626,6 +649,7 @@ fn main() {
 #### PartialOrd 和 Ord - 排序比較
 ```rust
 use std::cmp::{PartialOrd, Ord, Ordering};
+use std::fmt::Debug;
 
 #[derive(Debug, PartialEq, Eq)]
 struct Score {
@@ -838,8 +862,8 @@ fn get_static_string() -> &'static str {
 }
 
 // 泛型函數要求 'static 生命週期
-fn store_for_later<T: 'static + Send>(data: T) -> Box<dyn Fn() -> T + Send> {
-    Box::new(move || data)
+fn store_for_later<T: 'static + Send + Clone>(data: T) -> Box<dyn Fn() -> T + Send> {
+    Box::new(move || data.clone())
 }
 
 fn spawn_with_data<T: Send + 'static>(data: T) -> std::thread::JoinHandle<T> {
@@ -1124,7 +1148,7 @@ impl Deserialize for Person {
 
 fn main() {
     // 緩存使用
-    let mut cache = Cache::new(2);
+    let mut cache: Cache<String, i32> = Cache::new(2);
     cache.insert("key1".to_string(), 42);
     cache.insert("key2".to_string(), 100);
     cache.insert("key3".to_string(), 200); // 會導致 key1 被移除
@@ -1134,7 +1158,7 @@ fn main() {
     }
     
     // 持久化存儲
-    let mut store = PersistentStore::new();
+    let mut store: PersistentStore<Person> = PersistentStore::new();
     store.add(Person { name: "Alice".to_string(), age: 30 });
     store.add(Person { name: "Bob".to_string(), age: 25 });
     
