@@ -713,7 +713,7 @@ fn sync_channel_example() {
 ### 工作分發系統範例
 
 ```rust
-use std::sync::mpsc;
+use std::sync::{Arc, Mutex, mpsc};
 use std::thread;
 use std::time::Duration;
 
@@ -725,15 +725,23 @@ fn work_distribution_example() {
     let (job_tx, job_rx) = mpsc::channel();
     let (result_tx, result_rx) = mpsc::channel();
     
+    // 將接收端包裝在 Arc<Mutex<>> 中以便在多個執行緒間共享
+    let job_rx = Arc::new(Mutex::new(job_rx));
+    
     // 工作者執行緒池
     let mut workers = vec![];
     for worker_id in 0..3 {
-        let job_rx = job_rx.clone();
+        let job_rx = Arc::clone(&job_rx);
         let result_tx = result_tx.clone();
         
         let worker = thread::spawn(move || {
             loop {
-                match job_rx.recv() {
+                let job_result = {
+                    let receiver = job_rx.lock().unwrap();
+                    receiver.recv()
+                };
+                
+                match job_result {
                     Ok(job) => {
                         println!("工作者 {} 處理任務: {}", worker_id, job);
                         thread::sleep(Duration::from_millis(500));
@@ -1115,7 +1123,7 @@ fn task_coordination_example() {
         let coordinator = Arc::clone(&coordinator);
         let handle = thread::spawn(move || {
             // 模擬準備時間
-            thread::sleep(Duration::from_millis((i + 1) * 500));
+            thread::sleep(Duration::from_millis(((i + 1) * 500) as u64));
             
             // 報告準備就緒並等待開始信號
             coordinator.worker_ready(i);
@@ -2105,6 +2113,11 @@ fn choose_synchronization_primitive() -> &'static str {
        └─ 是 → Condvar + Mutex
     "
 }
+
+fn main() {
+    let guide = choose_synchronization_primitive();
+    println!("{}", guide);
+}
 ```
 
 ### 效能對比表
@@ -2123,6 +2136,8 @@ fn choose_synchronization_primitive() -> &'static str {
 #### 1. 所有權驅動設計
 
 ```rust
+use std::thread;
+
 // ✅ 好的設計：清晰的所有權
 fn good_ownership_design() {
     let data = vec![1, 2, 3, 4, 5];
@@ -2139,6 +2154,8 @@ fn good_ownership_design() {
 
 // ❌ 避免的模式：不必要的共享
 fn avoid_unnecessary_sharing() {
+    use std::sync::{Arc, Mutex};
+    
     let data = Arc::new(Mutex::new(vec![1, 2, 3, 4, 5]));
     
     // 如果只是為了傳遞資料，不如直接移動所有權
@@ -2153,6 +2170,9 @@ fn avoid_unnecessary_sharing() {
 #### 2. 鎖的粒度控制
 
 ```rust
+use std::sync::{Arc, RwLock, Mutex};
+use std::collections::HashMap;
+
 // ✅ 細粒度鎖：更好的並行性
 struct FinegrainedCache {
     user_cache: Arc<RwLock<HashMap<u64, User>>>,
@@ -2171,6 +2191,21 @@ struct User { name: String }
 struct Session { token: String }
 #[derive(Clone)]
 struct Config { setting: String }
+
+fn main() {
+    // 示例用法
+    let _fine_cache = FinegrainedCache {
+        user_cache: Arc::new(RwLock::new(HashMap::new())),
+        session_cache: Arc::new(RwLock::new(HashMap::new())),
+        config: Arc::new(RwLock::new(Config { setting: "default".to_string() })),
+    };
+    
+    let _coarse_cache = CoarseGrainedCache {
+        data: Arc::new(Mutex::new((HashMap::new(), HashMap::new(), Config { setting: "default".to_string() }))),
+    };
+    
+    println!("緩存結構已建立");
+}
 ```
 
 #### 3. 錯誤處理最佳實踐
@@ -2334,6 +2369,8 @@ fn optimized_memory_ordering() {
 
 ```rust
 // 使用 parking_lot 的死鎖檢測
+use std::thread;
+
 #[cfg(feature = "deadlock_detection")]
 fn enable_deadlock_detection() {
     use parking_lot::deadlock;
