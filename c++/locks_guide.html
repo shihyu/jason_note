@@ -229,6 +229,7 @@ T3: B釋放鎖 🔓      C獲得鎖✅
 <p><strong>程式碼範例:</strong></p>
 <pre><code class="language-c">#include &lt;pthread.h&gt;
 #include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 int shared_counter = 0;
@@ -239,6 +240,24 @@ void* worker_thread(void* arg) {
     printf("Counter: %d\n", shared_counter);
     pthread_mutex_unlock(&amp;mutex);
     return NULL;
+}
+
+int main() {
+    pthread_t threads[5];
+    
+    // 創建5個執行緒
+    for (int i = 0; i &lt; 5; i++) {
+        pthread_create(&amp;threads[i], NULL, worker_thread, NULL);
+    }
+    
+    // 等待所有執行緒完成
+    for (int i = 0; i &lt; 5; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    
+    printf("Final counter: %d\n", shared_counter);
+    pthread_mutex_destroy(&amp;mutex);
+    return 0;
 }
 </code></pre>
 <blockquote>
@@ -263,21 +282,41 @@ sem_init(&amp;sem, 0, 3);  // 最多3個同時進入
 </code></pre>
 <p><strong>程式碼範例:</strong></p>
 <pre><code class="language-c">#include &lt;semaphore.h&gt;
+#include &lt;pthread.h&gt;
+#include &lt;stdio.h&gt;
 #include &lt;unistd.h&gt;
+#include &lt;stdlib.h&gt;
 
 sem_t semaphore;
 
 void* worker(void* arg) {
+    int id = *(int*)arg;
     sem_wait(&amp;semaphore);  // 取得資源
-    printf("Working...\n");
+    printf("Worker %d: Working...\n", id);
     sleep(2);  // 模擬工作
+    printf("Worker %d: Done\n", id);
     sem_post(&amp;semaphore);  // 釋放資源
     return NULL;
 }
 
 int main() {
+    pthread_t threads[6];
+    int ids[6];
+    
     sem_init(&amp;semaphore, 0, 3);  // 最多3個執行緒同時工作
-    // 創建執行緒...
+    
+    // 創建6個執行緒
+    for (int i = 0; i &lt; 6; i++) {
+        ids[i] = i + 1;
+        pthread_create(&amp;threads[i], NULL, worker, &amp;ids[i]);
+    }
+    
+    // 等待所有執行緒完成
+    for (int i = 0; i &lt; 6; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    
+    sem_destroy(&amp;semaphore);
     return 0;
 }
 </code></pre>
@@ -302,15 +341,40 @@ Mutex 🔒:
 </code></pre>
 <p><strong>程式碼範例:</strong></p>
 <pre><code class="language-c">#include &lt;pthread.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
 
 pthread_spinlock_t spinlock;
+int shared_data = 0;
 
 void* fast_operation(void* arg) {
-    pthread_spin_lock(&amp;spinlock);
-    // 很快完成的操作
-    shared_data++;
-    pthread_spin_unlock(&amp;spinlock);
+    for (int i = 0; i &lt; 1000; i++) {
+        pthread_spin_lock(&amp;spinlock);
+        // 很快完成的操作
+        shared_data++;
+        pthread_spin_unlock(&amp;spinlock);
+    }
     return NULL;
+}
+
+int main() {
+    pthread_t threads[4];
+    
+    pthread_spin_init(&amp;spinlock, PTHREAD_PROCESS_PRIVATE);
+    
+    // 創建4個執行緒
+    for (int i = 0; i &lt; 4; i++) {
+        pthread_create(&amp;threads[i], NULL, fast_operation, NULL);
+    }
+    
+    // 等待所有執行緒完成
+    for (int i = 0; i &lt; 4; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    
+    printf("Final shared_data: %d\n", shared_data);
+    pthread_spin_destroy(&amp;spinlock);
+    return 0;
 }
 </code></pre>
 <hr />
@@ -334,23 +398,58 @@ ReadWrite:  RRR──W─RR  (讀取並行)
 </code></pre>
 <p><strong>程式碼範例:</strong></p>
 <pre><code class="language-c">#include &lt;pthread.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
 
 pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
 int shared_data = 0;
 
 void* reader(void* arg) {
+    int id = *(int*)arg;
     pthread_rwlock_rdlock(&amp;rwlock);
-    printf("Reading data: %d\n", shared_data);
+    printf("Reader %d: Reading data: %d\n", id, shared_data);
+    usleep(100000);  // 模擬讀取時間
     pthread_rwlock_unlock(&amp;rwlock);
     return NULL;
 }
 
 void* writer(void* arg) {
+    int id = *(int*)arg;
     pthread_rwlock_wrlock(&amp;rwlock);
     shared_data++;
-    printf("Updated data to: %d\n", shared_data);
+    printf("Writer %d: Updated data to: %d\n", id, shared_data);
+    usleep(200000);  // 模擬寫入時間
     pthread_rwlock_unlock(&amp;rwlock);
     return NULL;
+}
+
+int main() {
+    pthread_t readers[5], writers[2];
+    int reader_ids[5], writer_ids[2];
+    
+    // 創建多個讀者
+    for (int i = 0; i &lt; 5; i++) {
+        reader_ids[i] = i + 1;
+        pthread_create(&amp;readers[i], NULL, reader, &amp;reader_ids[i]);
+    }
+    
+    // 創建少數寫者
+    for (int i = 0; i &lt; 2; i++) {
+        writer_ids[i] = i + 1;
+        pthread_create(&amp;writers[i], NULL, writer, &amp;writer_ids[i]);
+    }
+    
+    // 等待所有執行緒完成
+    for (int i = 0; i &lt; 5; i++) {
+        pthread_join(readers[i], NULL);
+    }
+    for (int i = 0; i &lt; 2; i++) {
+        pthread_join(writers[i], NULL);
+    }
+    
+    pthread_rwlock_destroy(&amp;rwlock);
+    return 0;
 }
 </code></pre>
 <hr />
@@ -375,17 +474,22 @@ void* writer(void* arg) {
 </code></pre>
 <p><strong>程式碼範例:</strong></p>
 <pre><code class="language-c">#include &lt;pthread.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t condition = PTHREAD_COND_INITIALIZER;
 int ready = 0;
 
 void* waiter(void* arg) {
+    int id = *(int*)arg;
     pthread_mutex_lock(&amp;mutex);
+    printf("Waiter %d: Waiting for condition...\n", id);
     while (!ready) {
         pthread_cond_wait(&amp;condition, &amp;mutex);
     }
-    printf("Condition met!\n");
+    printf("Waiter %d: Condition met!\n", id);
     pthread_mutex_unlock(&amp;mutex);
     return NULL;
 }
@@ -393,10 +497,35 @@ void* waiter(void* arg) {
 void* signaler(void* arg) {
     sleep(2);
     pthread_mutex_lock(&amp;mutex);
+    printf("Signaler: Setting ready flag\n");
     ready = 1;
-    pthread_cond_signal(&amp;condition);
+    pthread_cond_broadcast(&amp;condition);  // 喚醒所有等待者
     pthread_mutex_unlock(&amp;mutex);
     return NULL;
+}
+
+int main() {
+    pthread_t waiters[3], sig;
+    int waiter_ids[3];
+    
+    // 創建等待者執行緒
+    for (int i = 0; i &lt; 3; i++) {
+        waiter_ids[i] = i + 1;
+        pthread_create(&amp;waiters[i], NULL, waiter, &amp;waiter_ids[i]);
+    }
+    
+    // 創建信號執行緒
+    pthread_create(&amp;sig, NULL, signaler, NULL);
+    
+    // 等待所有執行緒完成
+    for (int i = 0; i &lt; 3; i++) {
+        pthread_join(waiters[i], NULL);
+    }
+    pthread_join(sig, NULL);
+    
+    pthread_mutex_destroy(&amp;mutex);
+    pthread_cond_destroy(&amp;condition);
+    return 0;
 }
 </code></pre>
 <hr />
@@ -667,6 +796,16 @@ private:
     std::atomic&lt;Node*&gt; tail{head.load()};
 
 public:
+    ~LockFreeQueue() {
+        // 清理所有節點
+        while (Node* head_node = head.load()) {
+            head.store(head_node-&gt;next.load());
+            T* data = head_node-&gt;data.load();
+            if (data) delete data;
+            delete head_node;
+        }
+    }
+    
     void enqueue(T item) {
         Node* new_node = new Node;
         T* data = new T(std::move(item));
@@ -691,8 +830,11 @@ public:
         
         result = *data;
         delete data;
-        head.store(next);
-        delete head_node;
+        
+        // 更安全的 head 更新
+        if (head.compare_exchange_weak(head_node, next)) {
+            delete head_node;
+        }
         return true;
     }
 };
@@ -846,7 +988,10 @@ public:
 };
 </code></pre>
 <h4 id="5-等待條件的問題"><a class="header" href="#5-等待條件的問題">5. <strong>等待條件的問題</strong></a></h4>
-<pre><code class="language-cpp">// ❌ 用 atomic 實現等待是低效的
+<pre><code class="language-cpp">#include &lt;atomic&gt;
+#include &lt;iostream&gt;
+
+// ❌ 用 atomic 實現等待是低效的
 std::atomic&lt;bool&gt; ready{false};
 std::atomic&lt;int&gt; data{0};
 
@@ -855,7 +1000,7 @@ void busy_wait_consumer() {
     while (!ready.load()) {
         // 空轉等待 - 浪費CPU
     }
-    process(data.load());
+    std::cout &lt;&lt; "Processed data: " &lt;&lt; data.load() &lt;&lt; std::endl;
 }
 
 // ✅ 正確做法：用 condition_variable
@@ -867,7 +1012,7 @@ int data = 0;
 void efficient_consumer() {
     std::unique_lock&lt;std::mutex&gt; lock(mtx);
     cv.wait(lock, []{ return ready; });  // CPU休眠等待
-    process(data);
+    std::cout &lt;&lt; "Efficiently processed data: " &lt;&lt; data &lt;&lt; std::endl;
 }
 </code></pre>
 <h4 id="6-記憶體順序的複雜性"><a class="header" href="#6-記憶體順序的複雜性">6. <strong>記憶體順序的複雜性</strong></a></h4>
@@ -965,20 +1110,44 @@ unique_lock 🎛️ (手動門):
 <p><strong>lock_guard</strong>: 簡單的 RAII 鎖包裝器<br />
 <strong>unique_lock</strong>: 更靈活，支援延遲鎖定、手動解鎖等</p>
 <pre><code class="language-cpp">#include &lt;mutex&gt;
+#include &lt;thread&gt;
+#include &lt;iostream&gt;
+#include &lt;chrono&gt;
 
 std::mutex mtx;
+int shared_data = 0;
 
 void use_lock_guard() {
     std::lock_guard&lt;std::mutex&gt; lock(mtx);
+    shared_data++;
+    std::cout &lt;&lt; "lock_guard: " &lt;&lt; shared_data &lt;&lt; std::endl;
     // 自動在作用域結束時解鎖
 }
 
 void use_unique_lock() {
     std::unique_lock&lt;std::mutex&gt; lock(mtx);
+    shared_data++;
+    std::cout &lt;&lt; "unique_lock (locked): " &lt;&lt; shared_data &lt;&lt; std::endl;
+    
     // 可以手動解鎖
     lock.unlock();
-    // 做其他事情
+    
+    // 做其他事情 (不需要鎖)
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    
     lock.lock();  // 再次鎖定
+    shared_data++;
+    std::cout &lt;&lt; "unique_lock (re-locked): " &lt;&lt; shared_data &lt;&lt; std::endl;
+}
+
+int main() {
+    std::thread t1(use_lock_guard);
+    std::thread t2(use_unique_lock);
+    
+    t1.join();
+    t2.join();
+    
+    return 0;
 }
 </code></pre>
 <hr />
