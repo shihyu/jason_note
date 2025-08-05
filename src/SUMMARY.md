@@ -124,6 +124,7 @@
     - [Rust 記憶體配置指南：Stack vs Heap](rust/rust_memory_guide.md)
     - [Rust 包裝類型白話指南📦](rust/rust_wrappers_guide.md)
     - [Rust 鎖機制完整指南 🦀](rust/rust_locks_guide.md)
+    - [Rust 泛型完整指南：從簡單到進階](rust/rust_generics_guide.md)
 - [Go](go/go.md)
     - [Golang  Note](go/note.md)
     - [pytago](go/pytago.md)
