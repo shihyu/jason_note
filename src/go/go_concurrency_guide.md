@@ -836,6 +836,7 @@ import (
     "sync"
     "sync/atomic"
     "time"
+    "unsafe"
 )
 
 func casExample() {
@@ -1797,6 +1798,7 @@ func processJob(workerID, job int) WorkerResult {
 package main
 
 import (
+    "fmt"
     "runtime"
     "sync"
     "sync/atomic"
@@ -1967,6 +1969,7 @@ func leakyFunction() {
 package main
 
 import (
+    "fmt"
     "sync"
     "time"
 )
