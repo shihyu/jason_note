@@ -246,9 +246,7 @@ fn main() {
     compare_and_print("rust", "go");
 }</code></pre></pre>
 <h3 id="22-where-子句"><a class="header" href="#22-where-子句">2.2 where 子句</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use std::fmt::Display;
+<pre><pre class="playground"><code class="language-rust">use std::fmt::{Display, Debug};
 use std::clone::Clone;
 
 // 使用 where 讓函數簽名更清晰
@@ -267,7 +265,14 @@ fn complex_function_inline&lt;T: Display + Clone, U: Clone + std::fmt::Debug, V:
 ) -&gt; String {
     format!("t: {}, u: {:?}, v: {}", t, u, v)
 }
-<span class="boring">}</span></code></pre></pre>
+
+fn main() {
+    let result1 = complex_function("hello", vec![1, 2, 3], 42);
+    println!("{}", result1);
+    
+    let result2 = complex_function_inline("world", vec!["a", "b"], 3.14);
+    println!("{}", result2);
+}</code></pre></pre>
 <h3 id="23-泛型方法"><a class="header" href="#23-泛型方法">2.3 泛型方法</a></h3>
 <pre><pre class="playground"><code class="language-rust">struct Container&lt;T&gt; {
     value: T,
@@ -433,9 +438,9 @@ fn main() {
 }</code></pre></pre>
 <h2 id="5-trait-約束詳解"><a class="header" href="#5-trait-約束詳解">5. Trait 約束詳解</a></h2>
 <h3 id="51-基本約束語法"><a class="header" href="#51-基本約束語法">5.1 基本約束語法</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// 內聯約束語法
+<pre><pre class="playground"><code class="language-rust">use std::fmt::{Display, Debug};
+
+// 內聯約束語法
 fn function1&lt;T: Display + Debug&gt;(item: T) {
     println!("Display: {}", item);
     println!("Debug: {:?}", item);
@@ -461,7 +466,14 @@ fn function3(item: impl Display + Debug) {
 fn function4() -&gt; impl Display + Debug {
     42 // 返回實現了 Display + Debug 的類型
 }
-<span class="boring">}</span></code></pre></pre>
+
+fn main() {
+    function1("Hello world!");
+    function2(42);
+    function3(true);
+    let result = function4();
+    println!("function4 result: {}", result);
+}</code></pre></pre>
 <h3 id="52-條件實現-conditional-implementation"><a class="header" href="#52-條件實現-conditional-implementation">5.2 條件實現 (Conditional Implementation)</a></h3>
 <pre><pre class="playground"><code class="language-rust">use std::fmt::Display;
 
@@ -581,7 +593,9 @@ fn main() {
 }</code></pre></pre>
 <h3 id="62-複製和移動-traits"><a class="header" href="#62-複製和移動-traits">6.2 複製和移動 Traits</a></h3>
 <h4 id="copy---隱式複製"><a class="header" href="#copy---隱式複製">Copy - 隱式複製</a></h4>
-<pre><pre class="playground"><code class="language-rust">// Copy trait 只能應用於簡單類型
+<pre><pre class="playground"><code class="language-rust">use std::fmt::Debug;
+
+// Copy trait 只能應用於簡單類型
 #[derive(Copy, Clone, Debug)]
 struct SimplePoint {
     x: i32,
@@ -626,6 +640,7 @@ fn main() {
 }</code></pre></pre>
 <h4 id="clone---明確複製"><a class="header" href="#clone---明確複製">Clone - 明確複製</a></h4>
 <pre><pre class="playground"><code class="language-rust">use std::collections::HashMap;
+use std::fmt::Debug;
 
 #[derive(Clone, Debug)]
 struct ExpensiveStruct {
@@ -661,6 +676,7 @@ fn main() {
 <h3 id="63-比較-traits"><a class="header" href="#63-比較-traits">6.3 比較 Traits</a></h3>
 <h4 id="partialeq---部分相等比較"><a class="header" href="#partialeq---部分相等比較">PartialEq - 部分相等比較</a></h4>
 <pre><pre class="playground"><code class="language-rust">use std::collections::HashMap;
+use std::fmt::Debug;
 
 #[derive(Debug)]
 struct Person {
@@ -721,11 +737,12 @@ fn main() {
     }
 }</code></pre></pre>
 <h4 id="eq---完全相等"><a class="header" href="#eq---完全相等">Eq - 完全相等</a></h4>
-<pre><pre class="playground"><code class="language-rust">// Eq 是 PartialEq 的子 trait，保證反身性 (a == a 總是 true)
+<pre><pre class="playground"><code class="language-rust">use std::collections::HashSet;
+use std::fmt::Debug;
+
+// Eq 是 PartialEq 的子 trait，保證反身性 (a == a 總是 true)
 #[derive(PartialEq, Eq, Debug, Hash)]
 struct Id(u32);
-
-use std::collections::HashSet;
 
 // 只有實現 Eq 的類型才能用作 HashMap/HashSet 的鍵
 fn unique_items&lt;T: Eq + std::hash::Hash + Debug&gt;(items: Vec&lt;T&gt;) -&gt; HashSet&lt;T&gt; {
@@ -739,6 +756,7 @@ fn main() {
 }</code></pre></pre>
 <h4 id="partialord-和-ord---排序比較"><a class="header" href="#partialord-和-ord---排序比較">PartialOrd 和 Ord - 排序比較</a></h4>
 <pre><pre class="playground"><code class="language-rust">use std::cmp::{PartialOrd, Ord, Ordering};
+use std::fmt::Debug;
 
 #[derive(Debug, PartialEq, Eq)]
 struct Score {
@@ -940,8 +958,8 @@ fn get_static_string() -&gt; &amp;'static str {
 }
 
 // 泛型函數要求 'static 生命週期
-fn store_for_later&lt;T: 'static + Send&gt;(data: T) -&gt; Box&lt;dyn Fn() -&gt; T + Send&gt; {
-    Box::new(move || data)
+fn store_for_later&lt;T: 'static + Send + Clone&gt;(data: T) -&gt; Box&lt;dyn Fn() -&gt; T + Send&gt; {
+    Box::new(move || data.clone())
 }
 
 fn spawn_with_data&lt;T: Send + 'static&gt;(data: T) -&gt; std::thread::JoinHandle&lt;T&gt; {
@@ -1218,7 +1236,7 @@ impl Deserialize for Person {
 
 fn main() {
     // 緩存使用
-    let mut cache = Cache::new(2);
+    let mut cache: Cache&lt;String, i32&gt; = Cache::new(2);
     cache.insert("key1".to_string(), 42);
     cache.insert("key2".to_string(), 100);
     cache.insert("key3".to_string(), 200); // 會導致 key1 被移除
@@ -1228,7 +1246,7 @@ fn main() {
     }
     
     // 持久化存儲
-    let mut store = PersistentStore::new();
+    let mut store: PersistentStore&lt;Person&gt; = PersistentStore::new();
     store.add(Person { name: "Alice".to_string(), age: 30 });
     store.add(Person { name: "Bob".to_string(), age: 25 });
     
