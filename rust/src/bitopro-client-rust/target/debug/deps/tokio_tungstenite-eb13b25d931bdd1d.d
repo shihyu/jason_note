@@ -1,0 +1,10 @@
+/home/shihyu/github/jason_note/src/rust/src/bitopro-client-rust/target/debug/deps/libtokio_tungstenite-eb13b25d931bdd1d.rmeta: /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.19.0/src/lib.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.19.0/src/compat.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.19.0/src/connect.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.19.0/src/handshake.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.19.0/src/stream.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.19.0/src/tls.rs
+
+/home/shihyu/github/jason_note/src/rust/src/bitopro-client-rust/target/debug/deps/tokio_tungstenite-eb13b25d931bdd1d.d: /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.19.0/src/lib.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.19.0/src/compat.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.19.0/src/connect.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.19.0/src/handshake.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.19.0/src/stream.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.19.0/src/tls.rs
+
+/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.19.0/src/lib.rs:
+/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.19.0/src/compat.rs:
+/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.19.0/src/connect.rs:
+/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.19.0/src/handshake.rs:
+/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.19.0/src/stream.rs:
+/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-tungstenite-0.19.0/src/tls.rs:
