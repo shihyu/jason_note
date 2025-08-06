@@ -146,6 +146,7 @@
     - [Go 並行機制完整指南 🐹](go/go_concurrency_guide.md)
     - [Go + MySQL 死鎖問題調查指南](go/go_mysql_deadlock_debug.md)
     - [Go 語言完整特性與常見誤解指南 (Python/C++ 開發者版)](go/golang_guide.md)
+    - [Goroutine vs C++/Rust 協程完整對比指南](go/goroutine_complete_guide.md)
     - [interface](go/interface.md)
     - [Example](go/example.md)
     - [LiveKit](go/LiveKit.md)
