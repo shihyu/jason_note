@@ -9,6 +9,124 @@
 - **大量 Goroutine**：實際工作單位，但都共享少數線程執行
 - **難以追蹤**：無法直接從系統層面定位具體是哪個 goroutine 造成問題
 
+## Go 語言架構特性
+
+### 單一 Process 設計
+
+Go 程式**預設只有一個 process**，不會自動產生多個 process：
+
+```go
+func main() {
+    // 不管你寫多複雜的程式
+    for i := 0; i < 10000; i++ {
+        go func() {
+            // 開 10000 個 goroutine
+            doSomething()
+        }()
+    }
+    // 在作業系統看來，還是只有一個 process
+}
+```
+
+### 系統層面的觀察
+
+```bash
+# 只會看到一個程序
+ps aux | grep your-go-app
+# PID   USER    COMMAND
+# 1234  user    ./your-go-app
+
+# 但這個程序內部有多個線程
+ps -T -p 1234
+# PID   SPID  COMMAND
+# 1234  1234  ./your-go-app
+# 1234  1235  ./your-go-app  
+# 1234  1236  ./your-go-app
+# ... (會有多個線程，SPID 不同但 PID 相同)
+```
+
+### 多核心環境下的表現
+
+以 **10核心20線程** 的主機為例：
+
+```go
+// Go 會自動偵測到系統有 20 個邏輯處理器
+// 預設 GOMAXPROCS = 20
+fmt.Println(runtime.GOMAXPROCS(0)) // 輸出: 20
+```
+
+**實際運作方式**：
+- Go runtime 會建立 **20 個 OS 線程**
+- 對應 CPU 的 20 個邏輯處理器（10物理核心 × 2超線程）
+- 10000 個 goroutine 會被分配到這 20 個線程上執行
+
+**餐廳比喻**：
+- **物理核心** = 10 個廚房區域  
+- **邏輯處理器** = 20 個工作台（每個廚房區域有2個工作台）
+- **OS 線程** = 20 個廚師（每個工作台配一個廚師）
+- **Goroutine** = 成千上萬張訂單
+- **Go runtime** = 餐廳經理，分配訂單給20個廚師
+
+### 為什麼採用單一 Process 設計？
+
+**效率考量**：
+- **Process 切換成本高** - 需要切換記憶體空間
+- **Goroutine 切換成本低** - 只需要切換堆疊  
+- **記憶體共享容易** - 同一個 process 內的 goroutine 可以直接共享記憶體
+
+**架構比較**：
+```
+傳統多進程模式：
+Process 1: Thread 1, Thread 2, Thread 3
+Process 2: Thread 1, Thread 2, Thread 3  
+Process 3: Thread 1, Thread 2, Thread 3
+→ 9 個線程，3 個記憶體空間，進程間通訊複雜
+
+Go 模式：
+Process 1: 20個線程 + 10000個 Goroutine  
+→ 20 個線程，1 個記憶體空間，goroutine 間通訊簡單
+```
+
+### 何時會有多個 Process？
+
+**只有主動建立時**：
+
+#### 1. 使用 os/exec 套件
+```go
+import "os/exec"
+
+func main() {
+    // 主動啟動另一個程序
+    cmd := exec.Command("ls", "-l")
+    cmd.Run() // 這會產生新的 process
+}
+```
+
+#### 2. 部署時開多個實例
+```bash
+# 手動啟動多個程序
+./my-go-app --port=8080 &  # Process 1234
+./my-go-app --port=8081 &  # Process 1235  
+./my-go-app --port=8082 &  # Process 1236
+```
+
+### 對死鎖調查的影響
+
+**多核心環境下更複雜**：
+1. **更多同時進行的操作** - 20個線程同時運行
+2. **更高的並行度** - 死鎖發生機會更高
+3. **更複雜的交互** - 線程間資源競爭更激烈
+
+**log 記錄會更混亂**：
+```
+Thread-01: [TraceID-001] Locking user 123
+Thread-15: [TraceID-089] Locking user 456  
+Thread-03: [TraceID-024] Locking user 123  // <- 可能造成衝突
+Thread-08: [TraceID-067] Locking user 456  // <- 可能造成衝突
+Thread-12: [TraceID-099] Transfer complete
+... (同時會有很多 log 混在一起)
+```
+
 ## 調查方法
 
 ### 1. 從資料庫端找線索
@@ -136,6 +254,28 @@ func TestDeadlock(t *testing.T) {
         }()
     }
     wg.Wait()
+}
+```
+
+**可能需要的配置調整**：
+```go
+// 如果死鎖問題嚴重，可以考慮限制並行度
+runtime.GOMAXPROCS(10) // 只用10個線程而不是20個
+
+// 或者調整資料庫連接池
+db.SetMaxOpenConns(10) // 限制最大連接數
+db.SetMaxIdleConns(5)  // 限制閒置連接數
+```
+
+**監控策略**：
+```go
+// 需要更詳細的 goroutine 和線程資訊
+func logWithRuntimeInfo() {
+    log.Printf("PID: %d, GOMAXPROCS: %d, NumGoroutine: %d, NumCPU: %d", 
+               os.Getpid(),
+               runtime.GOMAXPROCS(0), 
+               runtime.NumGoroutine(),
+               runtime.NumCPU())
 }
 ```
 
