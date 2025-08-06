@@ -144,6 +144,7 @@
     - [OO](go/oo.md)
     - [sync.Mutex 和 sync.RWMutex](go/mutex-rwmutex.md)
     - [Go 並行機制完整指南 🐹](go/go_concurrency_guide.md)
+    - [Go + MySQL 死鎖問題調查指南](go/go_mysql_deadlock_debug.md
     - [interface](go/interface.md)
     - [Example](go/example.md)
     - [LiveKit](go/LiveKit.md)
