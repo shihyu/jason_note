@@ -694,20 +694,127 @@ func BenchmarkAdd(b *testing.B) {
 <li>❌ 動態載入</li>
 <li>❌ 指標運算</li>
 </ul>
-<h2 id="-goroutine-vs-thread-比喻"><a class="header" href="#-goroutine-vs-thread-比喻">🚗 Goroutine vs Thread 比喻</a></h2>
-<h3 id="傳統-thread-cpython"><a class="header" href="#傳統-thread-cpython"><strong>傳統 Thread (C++/Python):</strong></a></h3>
+<h2 id="-thread-vs-goroutine-卡車比喻詳解"><a class="header" href="#-thread-vs-goroutine-卡車比喻詳解">🚗 Thread vs Goroutine 卡車比喻詳解</a></h2>
+<h3 id="傳統-thread-模式一任務一卡車"><a class="header" href="#傳統-thread-模式一任務一卡車"><strong>傳統 Thread 模式：一任務一卡車</strong></a></h3>
+<h4 id="cpython-threading"><a class="header" href="#cpython-threading"><strong>C++/Python Threading</strong></a></h4>
+<pre><code>任務1 → 🚚 (卡車1)
+任務2 → 🚚 (卡車2)  
+任務3 → 🚚 (卡車3)
+...
+任務10000 → 🚚 (卡車10000)
+</code></pre>
+<p><strong>問題:</strong></p>
 <ul>
-<li>像是 <strong>每個任務都要一輛卡車</strong></li>
-<li>10,000 個任務 = 10,000 輛卡車在路上</li>
-<li>卡車很重，啟動慢，油耗高，會塞車</li>
+<li><strong>買卡車很貴</strong> (每個 thread 需要 8MB 記憶體)</li>
+<li><strong>養卡車很貴</strong> (OS 需要管理所有卡車)</li>
+<li><strong>路會塞車</strong> (太多 thread 互相搶 CPU)</li>
+<li><strong>停車場不夠</strong> (系統資源限制)</li>
 </ul>
-<h3 id="go-goroutines"><a class="header" href="#go-goroutines"><strong>Go Goroutines:</strong></a></h3>
+<h4 id="實際例子"><a class="header" href="#實際例子"><strong>實際例子:</strong></a></h4>
+<pre><code class="language-python"># Python - 10000 個任務，需要 10000 個卡車
+import threading
+for i in range(10000):
+    threading.Thread(target=deliver_package, args=(i,)).start()
+# 結果：系統可能崩潰！
+</code></pre>
+<h3 id="go-的-goroutine-模式共享卡車運輸"><a class="header" href="#go-的-goroutine-模式共享卡車運輸"><strong>Go 的 Goroutine 模式：共享卡車運輸</strong></a></h3>
+<h4 id="智慧物流系統"><a class="header" href="#智慧物流系統"><strong>智慧物流系統</strong></a></h4>
+<pre><code>貨物1, 貨物2, 貨物3... 貨物10000 (輕量級包裹)
+         ↓
+    調度中心 (Go Scheduler)
+         ↓
+   🚚 🚚 🚚 🚚 (只有4輛卡車，對應4個CPU核心)
+</code></pre>
+<p><strong>運作方式:</strong></p>
+<ol>
+<li><strong>調度中心很聰明</strong> - 知道每輛卡車在哪，載什麼貨</li>
+<li><strong>卡車不停運轉</strong> - 送完一批立刻回來載下一批</li>
+<li><strong>貨物很輕</strong> - 每個包裹只有幾 KB</li>
+<li><strong>彈性調度</strong> - 如果卡車1塞車，貨物可以轉給卡車2</li>
+</ol>
+<h4 id="實際例子-1"><a class="header" href="#實際例子-1"><strong>實際例子:</strong></a></h4>
+<pre><code class="language-go">// Go - 10000 個任務，只用 4 輛卡車
+for i := 0; i &lt; 10000; i++ {
+    go deliverPackage(i)  // 10000 個輕量級"包裹"
+}
+// 結果：順暢運行！
+</code></pre>
+<h3 id="-卡車司機的一天"><a class="header" href="#-卡車司機的一天"><strong>📦 卡車司機的一天</strong></a></h3>
+<h4 id="傳統-thread-世界"><a class="header" href="#傳統-thread-世界"><strong>傳統 Thread 世界:</strong></a></h4>
+<pre><code>早上: 老闆說有 1000 個包裹要送
+老闆: 好！雇 1000 個司機，買 1000 輛卡車！
+結果: 
+- 💰 破產 (成本太高)
+- 🚦 大塞車 (太多卡車)
+- 😵 司機累死 (context switch 開銷)
+</code></pre>
+<h4 id="go-goroutine-世界"><a class="header" href="#go-goroutine-世界"><strong>Go Goroutine 世界:</strong></a></h4>
+<pre><code>早上: 老闆說有 1000 個包裹要送
+調度中心: 我們有 4 個超厲害司機，4 輛卡車就夠了！
+
+司機1: 送完包裹1-50，立刻載包裹51-100
+司機2: 送完包裹101-150，立刻載包裹151-200
+司機3: 如果司機1塞車，我幫他載一些包裹
+司機4: 如果有司機去吃飯，我頂替他
+
+結果:
+- 💰 成本低 (只要4個司機)
+- 🚗 路很順 (卡車數量適中)
+- 😊 效率高 (智慧調度)
+</code></pre>
+<h3 id="-當包裹需要等待時"><a class="header" href="#-當包裹需要等待時"><strong>🔄 當包裹需要等待時</strong></a></h3>
+<h4 id="傳統-thread"><a class="header" href="#傳統-thread"><strong>傳統 Thread:</strong></a></h4>
+<pre><code>司機開卡車到客戶家
+客戶: "等一下，我在洗澡，10分鐘後收包裹"
+司機: "好吧..." (整輛卡車和司機都在那邊乾等)
+💸 浪費資源：卡車停在那，司機也不能做別的事
+</code></pre>
+<h4 id="go-goroutine"><a class="header" href="#go-goroutine"><strong>Go Goroutine:</strong></a></h4>
+<pre><code>司機開卡車到客戶家
+客戶: "等一下，我在洗澡，10分鐘後收包裹"
+調度中心: "司機你先回來！卡車給別人用，10分鐘後再派人去"
+司機: 回到公司，開始送其他包裹
+10分鐘後: 調度中心派任何一個空閒司機去收件
+
+💡 資源最大化：卡車從不閒置，司機總是在工作
+</code></pre>
+<h3 id="-成本對比表"><a class="header" href="#-成本對比表"><strong>📊 成本對比表</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th>項目</th><th>Thread (傳統)</th><th>Goroutine (Go)</th></tr></thead><tbody>
+<tr><td>🚚 卡車成本</td><td>8MB/輛</td><td>2KB/個包裹</td></tr>
+<tr><td>👷 司機薪水</td><td>高 (OS 管理)</td><td>低 (Go 管理)</td></tr>
+<tr><td>🏗️ 基礎建設</td><td>需要大停車場</td><td>小倉庫就夠</td></tr>
+<tr><td>🚦 交通管制</td><td>OS 內核管制</td><td>用戶態調度</td></tr>
+<tr><td>📈 擴展性</td><td>千輛卡車就塞車</td><td>百萬個包裹沒問題</td></tr>
+</tbody></table>
+</div>
+<h3 id="-關鍵領悟"><a class="header" href="#-關鍵領悟"><strong>💡 關鍵領悟</strong></a></h3>
+<p><strong>Thread 思維 (舊模式):</strong></p>
 <ul>
-<li>像是 <strong>貨物 (goroutine) + 少數卡車 (OS thread)</strong></li>
-<li>10,000 件貨物，但只用 4 輛卡車運送</li>
-<li>卡車跑完一趟，回來載下一批貨物</li>
-<li><strong>Go 調度器</strong> = 聰明的調度中心，決定哪件貨先送</li>
+<li>"我需要處理 1000 個任務 → 我需要 1000 個工人"</li>
+<li>一對一的重量級資源分配</li>
 </ul>
+<p><strong>Goroutine 思維 (新模式):</strong></p>
+<ul>
+<li>"我需要處理 1000 個任務 → 我需要聰明的調度系統"</li>
+<li>多對少的輕量級任務調度</li>
+</ul>
+<h3 id="-實際開發體驗"><a class="header" href="#-實際開發體驗"><strong>🎯 實際開發體驗</strong></a></h3>
+<pre><code class="language-go">// 在 Go 裡，你可以這樣寫而不用擔心：
+for i := 0; i &lt; 1000000; i++ {
+    go func(id int) {
+        // 處理任務
+        fmt.Printf("Task %d completed\n", id)
+    }(i)
+}
+// 一百萬個 goroutine？沒問題！
+</code></pre>
+<pre><code class="language-python"># 在 Python 裡，你絕對不敢這樣寫：
+import threading
+for i in range(1000000):
+    threading.Thread(target=task, args=(i,)).start()
+# 系統會掛掉！
+</code></pre>
+<p><strong>結論:</strong> Go 讓你能用<strong>寫玩具程式的心態</strong>來寫<strong>生產級的高併發應用</strong>！</p>
 <h2 id="-context-switch-詳解"><a class="header" href="#-context-switch-詳解">🔧 Context Switch 詳解</a></h2>
 <h3 id="兩種-context-switch"><a class="header" href="#兩種-context-switch"><strong>兩種 Context Switch:</strong></a></h3>
 <h4 id="thread-context-switch-輕量級"><a class="header" href="#thread-context-switch-輕量級"><strong>Thread Context Switch (輕量級)</strong></a></h4>
