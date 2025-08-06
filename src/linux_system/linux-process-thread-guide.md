@@ -41,10 +41,10 @@ task_struct (PID=1237, TGID=1234)  ← Thread 3
 
 ### 混淆二：Process vs Thread 的本質
 
-| 概念 | User Space 視角 | Kernel Space 視角 |
-|------|----------------|-------------------|
-| Process | 獨立的程序實體 | 一組共享 TGID 的 task |
-| Thread | Process 內的執行單元 | 就是 task，與 process 無區別 |
+| 概念     | User Space 視角        | Kernel Space 視角               |
+|----------|------------------------|---------------------------------|
+| Process  | 獨立的程序實體          | 一組共享 TGID 的 task           |
+| Thread   | Process 內的執行單元    | 就是 task，與 process 無區別     |
 | 創建方式 | `fork()`, `exec()` vs `pthread_create()` | 都是 `clone()`，只是參數不同 |
 
 ### 混淆三：資源管理
@@ -107,14 +107,14 @@ clone(CLONE_VM | CLONE_FILES | CLONE_FS | CLONE_SIGHAND | CLONE_THREAD, ...)
 
 ### Clone Flags 說明
 
-| Flag | 意義 |
-|------|------|
-| `SIGCHLD` | 子進程結束時發送信號給父進程 |
-| `CLONE_VM` | 共享虛擬記憶體空間 |
-| `CLONE_FILES` | 共享檔案描述符表 |
-| `CLONE_FS` | 共享檔案系統資訊 |
-| `CLONE_SIGHAND` | 共享信號處理器 |
-| `CLONE_THREAD` | 放入同一個 thread group |
+| Flag            | 意義                          |
+|-----------------|-------------------------------|
+| `SIGCHLD`       | 子進程結束時發送信號給父進程   |
+| `CLONE_VM`      | 共享虛擬記憶體空間             |
+| `CLONE_FILES`   | 共享檔案描述符表               |
+| `CLONE_FS`      | 共享檔案系統資訊               |
+| `CLONE_SIGHAND` | 共享信號處理器                 |
+| `CLONE_THREAD`  | 放入同一個 thread group        |
 
 ## 6. 實際例子對比
 
@@ -157,13 +157,13 @@ User Space TID = Kernel Space PID
 
 ### 基本定義對比
 
-| 特性 | Process | Thread |
-|------|---------|--------|
-| **定義** | 獨立的執行環境 | Process 內的執行單元 |
-| **記憶體** | 獨立的地址空間 | 共享 Process 的地址空間 |
-| **創建成本** | 高（需複製資源） | 低（共享現有資源） |
-| **通信方式** | IPC（管道、信號、共享記憶體） | 直接存取共享變數 |
-| **錯誤隔離** | 一個 Process 崩潰不影響其他 | 一個 Thread 崩潰可能影響整個 Process |
+| 特性     | Process                        | Thread                          |
+|----------|--------------------------------|---------------------------------|
+| **定義** | 獨立的執行環境                 | Process 內的執行單元             |
+| **記憶體** | 獨立的地址空間                | 共享 Process 的地址空間          |
+| **創建成本** | 高（需複製資源）              | 低（共享現有資源）               |
+| **通信方式** | IPC（管道、信號、共享記憶體）   | 直接存取共享變數                 |
+| **錯誤隔離** | 一個 Process 崩潰不影響其他    | 一個 Thread 崩潰可能影響整個 Process |
 
 ### 常見誤解與澄清
 
@@ -351,18 +351,6 @@ htop -H    # 顯示 Thread
 (gdb) print global_variable
 ```
 
-## 總結
-
-> **核心概念**: User space 的抽象概念在 kernel space 都被統一成 task 來處理
-
-### 關鍵記憶點
-
-1. **記憶體共享**：Thread 共享 code/data/heap，但各有獨立 stack
-2. **成本差異**：Process 創建成本高但隔離性好，Thread 輕量但易互相影響  
-3. **除錯觀念**：理解虛擬記憶體 vs 實體記憶體的差異
-4. **資源管理**：Thread 資源需要明確管理（join/detach）
-5. **COW 機制**：fork 不會立即複製記憶體，而是使用 Copy-on-Write
-
 ## 12. Signal 與 Process/Thread 關係
 
 ### Signal 常見誤解
@@ -373,9 +361,9 @@ htop -H    # 顯示 Thread
 ✅ 正確：Linux 支持發送 Signal 給特定 Thread
 
 發送方式:
-kill(pid, SIGTERM);        // 發給整個 Process Group  
-pthread_kill(thread_id, SIGTERM);  // 發給特定 Thread
-tgkill(tgid, tid, SIGTERM); // Kernel 層面發給特定 Thread
+kill(pid, SIGTERM);                 // 發給整個 Process Group  
+pthread_kill(thread_id, SIGTERM);   // 發給特定 Thread
+tgkill(tgid, tid, SIGTERM);         // Kernel 層面發給特定 Thread
 ```
 
 #### 誤解二：「多個 Thread 會同時收到 Signal」
@@ -475,11 +463,11 @@ fcntl(fd, F_SETFD, FD_CLOEXEC);  // exec 時自動關閉
 
 ### Mutex vs Spinlock vs Semaphore
 
-| 機制 | 使用時機 | CPU 行為 | 適用場景 |
-|------|---------|----------|----------|
-| **Mutex** | 長時間等待 | Thread 讓出 CPU | I/O 操作、長運算 |
-| **Spinlock** | 短時間等待 | 持續檢查，不讓出 CPU | 保護共享計數器 |  
-| **Semaphore** | 資源計數 | 可設定資源數量 | 連線池、記憶體池 |
+| 機制       | 使用時機     | CPU 行為             | 適用場景         |
+|------------|-------------|---------------------|------------------|
+| **Mutex**    | 長時間等待   | Thread 讓出 CPU      | I/O 操作、長運算  |
+| **Spinlock** | 短時間等待   | 持續檢查，不讓出 CPU | 保護共享計數器    |  
+| **Semaphore** | 資源計數    | 可設定資源數量       | 連線池、記憶體池  |
 
 ### 常見同步錯誤
 
@@ -521,13 +509,13 @@ void safe_function() {
 
 ```
 Process Context Switch:
-1. 保存暫存器狀態 (~50 cycles)
-2. 切換記憶體映射表 (~100-500 cycles) ← 昂貴
-3. TLB flush (~1000+ cycles) ← 非常昂貴  
+1. 保存暫存器狀態     (~50 cycles)
+2. 切換記憶體映射表   (~100-500 cycles) ← 昂貴
+3. TLB flush         (~1000+ cycles) ← 非常昂貴  
 4. Cache miss penalty (~數千 cycles) ← 最昂貴
 
 Thread Context Switch (同一 Process):
-1. 保存暫存器狀態 (~50 cycles)
+1. 保存暫存器狀態     (~50 cycles)
 2. 切換 Stack pointer (~10 cycles)
 3. 不需切換記憶體映射 ← 省下大量成本
 ```
@@ -539,8 +527,8 @@ Thread Context Switch (同一 Process):
 
 實際測量:
 Process Switch: ~1-10 microseconds  
-Thread Switch: ~0.1-1 microseconds
-Function Call: ~1-10 nanoseconds
+Thread Switch:  ~0.1-1 microseconds
+Function Call:  ~1-10 nanoseconds
 ```
 
 ## 16. 系統限制與配置
@@ -1514,5 +1502,28 @@ perf top -e sched:sched_switch # 即時調度切換監控
 perf sched record -- sleep 10  # 記錄調度活動
 perf sched latency             # 分析調度延遲
 ```
+
+## 總結
+
+> **核心概念**: User space 的抽象概念在 kernel space 都被統一成 task 來處理
+
+### 關鍵記憶點
+
+1. **記憶體共享**：Thread 共享 code/data/heap，但各有獨立 stack
+2. **成本差異**：Process 創建成本高但隔離性好，Thread 輕量但易互相影響  
+3. **除錯觀念**：理解虛擬記憶體 vs 實體記憶體的差異
+4. **資源管理**：Thread 資源需要明確管理（join/detach）
+5. **COW 機制**：fork 不會立即複製記憶體，而是使用 Copy-on-Write
+6. **調度統一**：Linux 內核將 Process 和 Thread 都視為 task，使用相同的調度器
+7. **CFS 公平性**：透過 vruntime 機制確保所有任務獲得公平的 CPU 時間
+8. **OOM 保護**：了解 OOM Killer 機制，適當設定記憶體限制和監控
+
+### 實務建議
+
+1. **選擇原則**：需要隔離性選 Process，需要共享資料選 Thread
+2. **記憶體監控**：定期檢查記憶體使用，預防 OOM 事件
+3. **調度調優**：根據工作負載特性調整 Nice 值和調度參數
+4. **除錯工具**：熟悉 htop、perf、valgrind 等工具
+5. **同步機制**：正確使用 mutex、semaphore 等避免競爭條件
 
 記住這個關鍵差異，就能理解為什麼很多系統行為看起來與直覺不符 - 因為我們習慣用 user space 的概念思考，但實際執行是在 kernel space 的邏輯下進行的。
