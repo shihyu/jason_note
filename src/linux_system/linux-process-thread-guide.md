@@ -1,7 +1,5 @@
 # Linux Process、Thread 與系統概念完整指南
 
-> **檔案名稱建議**: `linux-process-thread-guide.md`
-
 ## 1. 空間劃分概念
 
 ```
