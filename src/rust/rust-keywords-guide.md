@@ -387,6 +387,26 @@ struct Rectangle {
     height: f64,
 }
 
+impl Drawable for Circle {
+    fn draw(&self) {
+        println!("繪製半徑為 {} 的圓形", self.radius);
+    }
+    
+    fn area(&self) -> f64 {
+        3.14159 * self.radius * self.radius
+    }
+}
+
+impl Drawable for Rectangle {
+    fn draw(&self) {
+        println!("繪製 {}x{} 的矩形", self.width, self.height);
+    }
+    
+    fn area(&self) -> f64 {
+        self.width * self.height
+    }
+}
+
 fn main() {
     let circle = Circle { radius: 5.0 };
     let rect = Rectangle { width: 4.0, height: 6.0 };
@@ -623,6 +643,10 @@ fn main() {
 ## 8. 異步編程
 
 ### `async` / `await` - 異步編程
+```toml
+# Cargo.toml 中需要添加依賴:
+# tokio = { version = "1.0", features = ["full"] }
+```
 ```rust
 use std::time::Duration;
 
@@ -669,10 +693,23 @@ where
     }
 }
 
+// 或者使用不同的泛型約束來支持浮點數
+fn print_if_positive_float<T>(value: T) 
+where 
+    T: PartialOrd<f64> + Debug,
+{
+    if value > 0.0 {
+        println!("正數: {:?}", value);
+    } else {
+        println!("非正數: {:?}", value);
+    }
+}
+
 fn main() {
     print_if_positive(5);
     print_if_positive(-3);
-    print_if_positive(2.5);
+    print_if_positive_float(2.5);
+    print_if_positive_float(-1.5);
 }
 ```
 
