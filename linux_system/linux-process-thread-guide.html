@@ -1,0 +1,803 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Linux Process、Thread 與系統概念完整指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="linux-processthread-與系統概念完整指南"><a class="header" href="#linux-processthread-與系統概念完整指南">Linux Process、Thread 與系統概念完整指南</a></h1>
+<blockquote>
+<p><strong>檔案名稱建議</strong>: <code>linux-process-thread-guide.md</code></p>
+</blockquote>
+<h2 id="1-空間劃分概念"><a class="header" href="#1-空間劃分概念">1. 空間劃分概念</a></h2>
+<pre><code>Memory Layout:
+┌─────────────────┐ 0xFFFFFFFF
+│   Kernel Space  │ (內核空間)
+│   - 內核代碼      │
+│   - 內核數據      │
+│   - 驅動程序      │
+├─────────────────┤ 0xC0000000 (典型分界)
+│   User Space    │ (用戶空間)
+│   - 應用程序      │
+│   - 庫文件        │
+│   - 用戶數據      │
+└─────────────────┘ 0x00000000
+</code></pre>
+<h2 id="2-常見混淆概念對比"><a class="header" href="#2-常見混淆概念對比">2. 常見混淆概念對比</a></h2>
+<h3 id="混淆一pid-的不同含義"><a class="header" href="#混淆一pid-的不同含義">混淆一：PID 的不同含義</a></h3>
+<pre><code>User Space 視角:
+Process A (PID=1234)
+├─ Thread 1 
+├─ Thread 2
+└─ Thread 3
+
+Kernel Space 視角:
+task_struct (PID=1234, TGID=1234)  ← Process A 主線程
+task_struct (PID=1235, TGID=1234)  ← Thread 1
+task_struct (PID=1236, TGID=1234)  ← Thread 2  
+task_struct (PID=1237, TGID=1234)  ← Thread 3
+</code></pre>
+<p><strong>關鍵理解</strong>：</p>
+<ul>
+<li>User space 的 "PID" = Kernel 的 "TGID"</li>
+<li>Kernel 的每個 task 都有獨立的 PID</li>
+</ul>
+<h3 id="混淆二process-vs-thread-的本質"><a class="header" href="#混淆二process-vs-thread-的本質">混淆二：Process vs Thread 的本質</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>概念</th><th>User Space 視角</th><th>Kernel Space 視角</th></tr></thead><tbody>
+<tr><td>Process</td><td>獨立的程序實體</td><td>一組共享 TGID 的 task</td></tr>
+<tr><td>Thread</td><td>Process 內的執行單元</td><td>就是 task，與 process 無區別</td></tr>
+<tr><td>創建方式</td><td><code>fork()</code>, <code>exec()</code> vs <code>pthread_create()</code></td><td>都是 <code>clone()</code>，只是參數不同</td></tr>
+</tbody></table>
+</div>
+<h3 id="混淆三資源管理"><a class="header" href="#混淆三資源管理">混淆三：資源管理</a></h3>
+<pre><code class="language-c">// User Space 認知
+Process A: 有自己的記憶體、檔案等
+  Thread 1: 共享 Process A 的資源
+  Thread 2: 共享 Process A 的資源
+
+// Kernel Space 實際
+task_struct A: 指向一組共享資源
+task_struct B: 指向相同的 mm_struct (記憶體)、files_struct (檔案) 等
+task_struct C: 指向相同的共享資源
+</code></pre>
+<h2 id="3-權限與保護"><a class="header" href="#3-權限與保護">3. 權限與保護</a></h2>
+<pre><code>User Space (Ring 3):
+- 受限制的指令集
+- 無法直接存取硬體
+- 透過 system call 請求服務
+
+System Call Interface:
+- read(), write(), fork(), clone()
+- 從 user mode 切換到 kernel mode
+
+Kernel Space (Ring 0):  
+- 完整的指令集權限
+- 直接存取硬體
+- 管理所有資源
+</code></pre>
+<h2 id="4-調度的誤解"><a class="header" href="#4-調度的誤解">4. 調度的誤解</a></h2>
+<p><strong>❌ 錯誤認知</strong>：Kernel 調度 process，process 內部調度 thread</p>
+<p><strong>✅ 正確理解</strong>：</p>
+<pre><code>Linux Scheduler (CFS):
+├─ task_struct (原 Process A 主線程)
+├─ task_struct (原 Thread 1)  
+├─ task_struct (原 Thread 2)
+├─ task_struct (原 Process B)
+└─ task_struct (原 Thread 3)
+</code></pre>
+<ul>
+<li>Kernel 只看到 task，統一調度</li>
+<li>不區分來源是 process 還是 thread</li>
+</ul>
+<h2 id="5-創建方式的差異"><a class="header" href="#5-創建方式的差異">5. 創建方式的差異</a></h2>
+<pre><code class="language-c">// 創建 process (fork)
+clone(SIGCHLD)
+
+// 創建 thread (pthread_create 內部調用)
+clone(CLONE_VM | CLONE_FILES | CLONE_FS | CLONE_SIGHAND | CLONE_THREAD, ...)
+</code></pre>
+<h3 id="clone-flags-說明"><a class="header" href="#clone-flags-說明">Clone Flags 說明</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Flag</th><th>意義</th></tr></thead><tbody>
+<tr><td><code>SIGCHLD</code></td><td>子進程結束時發送信號給父進程</td></tr>
+<tr><td><code>CLONE_VM</code></td><td>共享虛擬記憶體空間</td></tr>
+<tr><td><code>CLONE_FILES</code></td><td>共享檔案描述符表</td></tr>
+<tr><td><code>CLONE_FS</code></td><td>共享檔案系統資訊</td></tr>
+<tr><td><code>CLONE_SIGHAND</code></td><td>共享信號處理器</td></tr>
+<tr><td><code>CLONE_THREAD</code></td><td>放入同一個 thread group</td></tr>
+</tbody></table>
+</div>
+<h2 id="6-實際例子對比"><a class="header" href="#6-實際例子對比">6. 實際例子對比</a></h2>
+<pre><code class="language-bash"># User Space 命令
+ps aux              # 看到 process 列表
+ps -eLf            # 看到 thread 列表  
+top                # 預設顯示 process
+
+# 對應的 Kernel 視角
+cat /proc/*/task/*  # 每個都是 task_struct
+ls /proc/*/task/    # 看到所有 task ID
+</code></pre>
+<h2 id="7-重要標識符"><a class="header" href="#7-重要標識符">7. 重要標識符</a></h2>
+<h3 id="user-space-視角"><a class="header" href="#user-space-視角">User Space 視角</a></h3>
+<ul>
+<li><strong>PID</strong>: Process ID（實際上是 Kernel 的 TGID）</li>
+<li><strong>TID</strong>: Thread ID（在某些工具中顯示）</li>
+</ul>
+<h3 id="kernel-space-視角"><a class="header" href="#kernel-space-視角">Kernel Space 視角</a></h3>
+<ul>
+<li><strong>PID</strong>: 每個 task_struct 的唯一 ID</li>
+<li><strong>TGID</strong>: Thread Group ID，同一 process 內所有 thread 共享</li>
+</ul>
+<pre><code>實際對應關係:
+User Space PID = Kernel Space TGID
+User Space TID = Kernel Space PID
+</code></pre>
+<h2 id="8-核心要點記憶法"><a class="header" href="#8-核心要點記憶法">8. 核心要點記憶法</a></h2>
+<ol>
+<li><strong>統一原則</strong>：Kernel 把一切都當作 task</li>
+<li><strong>共享程度</strong>：Process vs Thread 只是資源共享程度不同</li>
+<li><strong>視角差異</strong>：User space 有層次概念，Kernel space 是平面的</li>
+<li><strong>PID 混淆</strong>：User 的 PID = Kernel 的 TGID</li>
+<li><strong>調度統一</strong>：Kernel 調度器不區分 process/thread</li>
+</ol>
+<h2 id="9-thread-vs-process-基本概念與常見誤解"><a class="header" href="#9-thread-vs-process-基本概念與常見誤解">9. Thread vs Process 基本概念與常見誤解</a></h2>
+<h3 id="基本定義對比"><a class="header" href="#基本定義對比">基本定義對比</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>Process</th><th>Thread</th></tr></thead><tbody>
+<tr><td><strong>定義</strong></td><td>獨立的執行環境</td><td>Process 內的執行單元</td></tr>
+<tr><td><strong>記憶體</strong></td><td>獨立的地址空間</td><td>共享 Process 的地址空間</td></tr>
+<tr><td><strong>創建成本</strong></td><td>高（需複製資源）</td><td>低（共享現有資源）</td></tr>
+<tr><td><strong>通信方式</strong></td><td>IPC（管道、信號、共享記憶體）</td><td>直接存取共享變數</td></tr>
+<tr><td><strong>錯誤隔離</strong></td><td>一個 Process 崩潰不影響其他</td><td>一個 Thread 崩潰可能影響整個 Process</td></tr>
+</tbody></table>
+</div>
+<h3 id="常見誤解與澄清"><a class="header" href="#常見誤解與澄清">常見誤解與澄清</a></h3>
+<h4 id="誤解一thread-比較快"><a class="header" href="#誤解一thread-比較快">誤解一：「Thread 比較快」</a></h4>
+<pre><code>❌ 錯誤理解：Thread 執行比 Process 快
+✅ 正確理解：
+- Thread 創建/切換成本較低
+- 但執行速度取決於工作負載，不是 Thread/Process 本身
+- 單核心上過多 Thread 反而可能因競爭資源而變慢
+</code></pre>
+<h4 id="誤解二process-無法共享資料"><a class="header" href="#誤解二process-無法共享資料">誤解二：「Process 無法共享資料」</a></h4>
+<pre><code>❌ 錯誤理解：Process 間完全無法共享資料
+✅ 正確理解：Process 可透過多種 IPC 機制共享資料
+- 共享記憶體 (shared memory)
+- 記憶體映射檔案 (mmap)
+- 管道 (pipe)、訊息佇列等
+</code></pre>
+<h4 id="誤解三thread-一定比-process-省記憶體"><a class="header" href="#誤解三thread-一定比-process-省記憶體">誤解三：「Thread 一定比 Process 省記憶體」</a></h4>
+<pre><code>❌ 錯誤理解：Thread 總是比 Process 節省記憶體
+✅ 正確理解：
+- Thread 共享 code、data、heap 區段
+- 但每個 Thread 仍需獨立的 stack 空間
+- 大量 Thread 的 stack 總和可能很可觀
+</code></pre>
+<h2 id="10-記憶體管理深度解析"><a class="header" href="#10-記憶體管理深度解析">10. 記憶體管理深度解析</a></h2>
+<h3 id="process-記憶體布局"><a class="header" href="#process-記憶體布局">Process 記憶體布局</a></h3>
+<pre><code>Process A 記憶體空間:
+┌─────────────────┐ 高位址
+│     Stack       │ ← 各 Thread 獨立
+├─────────────────┤
+│       ↓         │
+│                 │
+│   未使用空間      │
+│                 │
+│       ↑         │ 
+├─────────────────┤
+│      Heap       │ ← 所有 Thread 共享
+├─────────────────┤
+│  Uninitialized  │ ← BSS 段
+│     Data        │
+├─────────────────┤  
+│   Initialized   │ ← Data 段 (所有 Thread 共享)
+│     Data        │
+├─────────────────┤
+│      Code       │ ← Text 段 (所有 Thread 共享)
+└─────────────────┘ 低位址
+</code></pre>
+<h3 id="thread-記憶體共享詳解"><a class="header" href="#thread-記憶體共享詳解">Thread 記憶體共享詳解</a></h3>
+<pre><code class="language-c">// 共享區域 (所有 Thread 可存取)
+- Code segment (程式碼)
+- Data segment (全域變數、靜態變數)  
+- Heap (malloc/new 分配的記憶體)
+- 開啟的檔案描述符
+- 信號處理器
+
+// 私有區域 (各 Thread 獨立)
+- Stack (區域變數、函數參數)
+- 暫存器狀態
+- Program Counter (PC)
+- Stack Pointer (SP)
+</code></pre>
+<h3 id="記憶體相關誤解"><a class="header" href="#記憶體相關誤解">記憶體相關誤解</a></h3>
+<h4 id="誤解一thread-共享所有記憶體"><a class="header" href="#誤解一thread-共享所有記憶體">誤解一：「Thread 共享所有記憶體」</a></h4>
+<pre><code>❌ 錯誤：Thread 共享包含 stack 在內的所有記憶體
+✅ 正確：Thread 有各自獨立的 stack 空間
+
+實例:
+void* thread_func(void* arg) {
+    int local_var = 10;  // 各 Thread 獨立，存在各自 stack
+    static int static_var = 20;  // 所有 Thread 共享
+    return NULL;
+}
+</code></pre>
+<h4 id="誤解二process-fork-會完整複製記憶體"><a class="header" href="#誤解二process-fork-會完整複製記憶體">誤解二：「Process fork 會完整複製記憶體」</a></h4>
+<pre><code>❌ 錯誤：fork() 立即複製所有記憶體內容
+✅ 正確：現代系統使用 Copy-on-Write (COW)
+
+機制說明:
+1. fork() 後，父子 Process 共享相同的實體記憶體頁面
+2. 當任一方嘗試寫入時，才真正複製該頁面
+3. 大幅減少 fork() 的記憶體成本
+</code></pre>
+<h4 id="誤解三thread-stack-大小固定"><a class="header" href="#誤解三thread-stack-大小固定">誤解三：「Thread Stack 大小固定」</a></h4>
+<pre><code>❌ 錯誤：每個 Thread 都有固定大小的 stack
+✅ 正確：Stack 大小可以設定，且有預設值
+
+Linux 預設值:
+- 主 Thread: 8MB (可透過 ulimit 調整)
+- 其他 Thread: 2MB (可透過 pthread_attr_setstacksize 調整)
+
+查看方式:
+ulimit -s          # 查看 stack 大小限制
+cat /proc/PID/maps # 查看記憶體映射
+</code></pre>
+<h3 id="virtual-memory-與實際記憶體"><a class="header" href="#virtual-memory-與實際記憶體">Virtual Memory 與實際記憶體</a></h3>
+<pre><code>虛擬記憶體視角:
+Process A: 0x00000000 - 0xFFFFFFFF (4GB 虛擬空間)
+Process B: 0x00000000 - 0xFFFFFFFF (4GB 虛擬空間)
+
+實體記憶體視角:
+實際可能只有 8GB RAM，透過 MMU 進行映射
+- 相同虛擬位址可能對應不同實體位址
+- 相同實體位址可能被多個虛擬位址映射 (shared library)
+</code></pre>
+<h3 id="記憶體洩漏常見情境"><a class="header" href="#記憶體洩漏常見情境">記憶體洩漏常見情境</a></h3>
+<h4 id="thread-相關記憶體洩漏"><a class="header" href="#thread-相關記憶體洩漏">Thread 相關記憶體洩漏</a></h4>
+<pre><code class="language-c">// ❌ 常見錯誤
+pthread_t threads[1000];
+for (int i = 0; i &lt; 1000; i++) {
+    pthread_create(&amp;threads[i], NULL, worker, NULL);
+    // 忘記 pthread_join 或 pthread_detach
+}
+// 結果：Thread 資源無法回收
+
+// ✅ 正確做法
+pthread_t thread;
+pthread_create(&amp;thread, NULL, worker, NULL);
+pthread_join(thread, NULL);  // 或 pthread_detach(thread);
+</code></pre>
+<h4 id="共享記憶體洩漏"><a class="header" href="#共享記憶體洩漏">共享記憶體洩漏</a></h4>
+<pre><code class="language-c">// ❌ 多個 Thread 都去 malloc，但只有一個 free
+void* shared_ptr = malloc(1024);  // Thread 1 分配
+free(shared_ptr);                 // Thread 2 釋放，其他 Thread 不知道
+
+// ✅ 明確記憶體管理責任
+// 使用 reference counting 或明確定義 owner
+</code></pre>
+<h2 id="11-實務除錯技巧"><a class="header" href="#11-實務除錯技巧">11. 實務除錯技巧</a></h2>
+<h3 id="查看-processthread-狀態"><a class="header" href="#查看-processthread-狀態">查看 Process/Thread 狀態</a></h3>
+<pre><code class="language-bash"># 查看 Process 記憶體使用
+cat /proc/PID/status | grep -E "(VmSize|VmRSS|Threads)"
+
+# 查看所有 Thread
+ps -eLf | grep PROCESS_NAME
+
+# 查看記憶體映射
+cat /proc/PID/maps
+
+# 即時監控
+htop -H    # 顯示 Thread
+</code></pre>
+<h3 id="gdb-除錯-thread"><a class="header" href="#gdb-除錯-thread">GDB 除錯 Thread</a></h3>
+<pre><code class="language-bash"># 查看所有 Thread
+(gdb) info threads
+
+# 切換到特定 Thread
+(gdb) thread 2
+
+# 查看 Thread 的 stack
+(gdb) bt
+
+# 查看共享變數
+(gdb) print global_variable
+</code></pre>
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<blockquote>
+<p><strong>核心概念</strong>: User space 的抽象概念在 kernel space 都被統一成 task 來處理</p>
+</blockquote>
+<h3 id="關鍵記憶點"><a class="header" href="#關鍵記憶點">關鍵記憶點</a></h3>
+<ol>
+<li><strong>記憶體共享</strong>：Thread 共享 code/data/heap，但各有獨立 stack</li>
+<li><strong>成本差異</strong>：Process 創建成本高但隔離性好，Thread 輕量但易互相影響</li>
+<li><strong>除錯觀念</strong>：理解虛擬記憶體 vs 實體記憶體的差異</li>
+<li><strong>資源管理</strong>：Thread 資源需要明確管理（join/detach）</li>
+<li><strong>COW 機制</strong>：fork 不會立即複製記憶體，而是使用 Copy-on-Write</li>
+</ol>
+<h2 id="12-signal-與-processthread-關係"><a class="header" href="#12-signal-與-processthread-關係">12. Signal 與 Process/Thread 關係</a></h2>
+<h3 id="signal-常見誤解"><a class="header" href="#signal-常見誤解">Signal 常見誤解</a></h3>
+<h4 id="誤解一signal-只發給-process"><a class="header" href="#誤解一signal-只發給-process">誤解一：「Signal 只發給 Process」</a></h4>
+<pre><code>❌ 錯誤：Signal 只能發送給整個 Process
+✅ 正確：Linux 支持發送 Signal 給特定 Thread
+
+發送方式:
+kill(pid, SIGTERM);        // 發給整個 Process Group  
+pthread_kill(thread_id, SIGTERM);  // 發給特定 Thread
+tgkill(tgid, tid, SIGTERM); // Kernel 層面發給特定 Thread
+</code></pre>
+<h4 id="誤解二多個-thread-會同時收到-signal"><a class="header" href="#誤解二多個-thread-會同時收到-signal">誤解二：「多個 Thread 會同時收到 Signal」</a></h4>
+<pre><code>❌ 錯誤：Signal 發給 Process 時所有 Thread 都會收到
+✅ 正確：只有一個 Thread 會處理 Signal
+
+處理規則:
+1. 如果有 Thread 明確 blocked 該 Signal → 跳過
+2. 如果有 Thread 在等待該 Signal (sigwait) → 優先給它
+3. 否則隨機選一個 Thread 處理
+</code></pre>
+<h3 id="signal-mask-機制"><a class="header" href="#signal-mask-機制">Signal Mask 機制</a></h3>
+<pre><code class="language-c">// 各 Thread 有獨立的 Signal Mask
+sigset_t set;
+sigemptyset(&amp;set);
+sigaddset(&amp;set, SIGINT);
+pthread_sigmask(SIG_BLOCK, &amp;set, NULL);  // 只影響當前 Thread
+
+// 但 Signal Handler 是所有 Thread 共享的
+signal(SIGINT, handler);  // 影響整個 Process
+</code></pre>
+<h2 id="13-file-descriptor-與-processthread"><a class="header" href="#13-file-descriptor-與-processthread">13. File Descriptor 與 Process/Thread</a></h2>
+<h3 id="檔案描述符共享機制"><a class="header" href="#檔案描述符共享機制">檔案描述符共享機制</a></h3>
+<h4 id="fork-後的-fd-行為"><a class="header" href="#fork-後的-fd-行為">Fork 後的 FD 行為</a></h4>
+<pre><code class="language-c">int fd = open("test.txt", O_RDONLY);
+pid_t pid = fork();
+
+if (pid == 0) {
+    // 子 Process
+    read(fd, buffer, 100);  // ✅ 可以使用，與父 Process 共享
+    close(fd);              // ❌ 會影響父 Process！
+} else {
+    // 父 Process  
+    read(fd, buffer, 100);  // 可能讀到子 Process 讀過的位置
+}
+</code></pre>
+<p><strong>關鍵概念</strong>: Fork 後 FD 共享同一個 file table entry</p>
+<ul>
+<li>檔案位置指標 (file offset) 是共享的</li>
+<li>一方 close() 會減少 reference count</li>
+<li>只有所有引用都 close() 後才真正關閉檔案</li>
+</ul>
+<h4 id="thread-間的-fd-共享"><a class="header" href="#thread-間的-fd-共享">Thread 間的 FD 共享</a></h4>
+<pre><code class="language-c">// Thread 間完全共享 FD table
+int fd = open("test.txt", O_RDONLY);
+
+void* thread1(void* arg) {
+    lseek(fd, 100, SEEK_SET);  // 設定檔案位置
+    return NULL;
+}
+
+void* thread2(void* arg) {
+    char buffer[10];
+    read(fd, buffer, 10);  // 會從位置 100 開始讀！
+    return NULL;
+}
+</code></pre>
+<h3 id="常見-fd-管理錯誤"><a class="header" href="#常見-fd-管理錯誤">常見 FD 管理錯誤</a></h3>
+<h4 id="錯誤一多-thread-同時操作同一-fd"><a class="header" href="#錯誤一多-thread-同時操作同一-fd">錯誤一：多 Thread 同時操作同一 FD</a></h4>
+<pre><code class="language-c">// ❌ 危險：多個 Thread 同時寫入同一檔案
+void* writer_thread(void* arg) {
+    write(shared_fd, data, size);  // 可能與其他 Thread 的寫入交錯
+}
+
+// ✅ 安全：使用 mutex 保護
+pthread_mutex_t fd_mutex = PTHREAD_MUTEX_INITIALIZER;
+void* safe_writer_thread(void* arg) {
+    pthread_mutex_lock(&amp;fd_mutex);
+    write(shared_fd, data, size);
+    pthread_mutex_unlock(&amp;fd_mutex);
+}
+</code></pre>
+<h4 id="錯誤二忘記設定-fd_cloexec"><a class="header" href="#錯誤二忘記設定-fd_cloexec">錯誤二：忘記設定 FD_CLOEXEC</a></h4>
+<pre><code class="language-c">// ❌ 子 Process 會繼承不必要的 FD
+int fd = open("config.txt", O_RDONLY);
+execve("/usr/bin/program", argv, envp);  // program 也能存取 config.txt
+
+// ✅ 使用 FD_CLOEXEC
+int fd = open("config.txt", O_RDONLY);  
+fcntl(fd, F_SETFD, FD_CLOEXEC);  // exec 時自動關閉
+</code></pre>
+<h2 id="14-同步機制常見誤解"><a class="header" href="#14-同步機制常見誤解">14. 同步機制常見誤解</a></h2>
+<h3 id="mutex-vs-spinlock-vs-semaphore"><a class="header" href="#mutex-vs-spinlock-vs-semaphore">Mutex vs Spinlock vs Semaphore</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>機制</th><th>使用時機</th><th>CPU 行為</th><th>適用場景</th></tr></thead><tbody>
+<tr><td><strong>Mutex</strong></td><td>長時間等待</td><td>Thread 讓出 CPU</td><td>I/O 操作、長運算</td></tr>
+<tr><td><strong>Spinlock</strong></td><td>短時間等待</td><td>持續檢查，不讓出 CPU</td><td>保護共享計數器</td></tr>
+<tr><td><strong>Semaphore</strong></td><td>資源計數</td><td>可設定資源數量</td><td>連線池、記憶體池</td></tr>
+</tbody></table>
+</div>
+<h3 id="常見同步錯誤"><a class="header" href="#常見同步錯誤">常見同步錯誤</a></h3>
+<h4 id="錯誤一誤用-spinlock"><a class="header" href="#錯誤一誤用-spinlock">錯誤一：誤用 Spinlock</a></h4>
+<pre><code class="language-c">// ❌ 錯誤：在可能長時間等待的場景使用 Spinlock
+spinlock_t lock;
+spin_lock(&amp;lock);
+sleep(1);  // 持有 lock 時睡眠 → CPU 空轉
+spin_unlock(&amp;lock);
+
+// ✅ 正確：使用 Mutex
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_lock(&amp;mutex);
+sleep(1);
+pthread_mutex_unlock(&amp;mutex);
+</code></pre>
+<h4 id="錯誤二死鎖-deadlock"><a class="header" href="#錯誤二死鎖-deadlock">錯誤二：死鎖 (Deadlock)</a></h4>
+<pre><code class="language-c">// ❌ 典型死鎖場景
+Thread 1: lock(A) → lock(B)
+Thread 2: lock(B) → lock(A)
+
+// ✅ 解決方案：統一加鎖順序
+void safe_function() {
+    // 總是先鎖 A 再鎖 B
+    pthread_mutex_lock(&amp;mutex_A);
+    pthread_mutex_lock(&amp;mutex_B);
+    // 做事情
+    pthread_mutex_unlock(&amp;mutex_B);
+    pthread_mutex_unlock(&amp;mutex_A);
+}
+</code></pre>
+<h2 id="15-context-switch-開銷誤解"><a class="header" href="#15-context-switch-開銷誤解">15. Context Switch 開銷誤解</a></h2>
+<h3 id="真實的-context-switch-成本"><a class="header" href="#真實的-context-switch-成本">真實的 Context Switch 成本</a></h3>
+<pre><code>Process Context Switch:
+1. 保存暫存器狀態 (~50 cycles)
+2. 切換記憶體映射表 (~100-500 cycles) ← 昂貴
+3. TLB flush (~1000+ cycles) ← 非常昂貴  
+4. Cache miss penalty (~數千 cycles) ← 最昂貴
+
+Thread Context Switch (同一 Process):
+1. 保存暫存器狀態 (~50 cycles)
+2. 切換 Stack pointer (~10 cycles)
+3. 不需切換記憶體映射 ← 省下大量成本
+</code></pre>
+<h4 id="誤解thread-switch-沒有成本"><a class="header" href="#誤解thread-switch-沒有成本">誤解：「Thread Switch 沒有成本」</a></h4>
+<pre><code>❌ 錯誤：Thread 間切換完全沒有開銷
+✅ 正確：有開銷，但比 Process Switch 小很多
+
+實際測量:
+Process Switch: ~1-10 microseconds  
+Thread Switch: ~0.1-1 microseconds
+Function Call: ~1-10 nanoseconds
+</code></pre>
+<h2 id="16-系統限制與配置"><a class="header" href="#16-系統限制與配置">16. 系統限制與配置</a></h2>
+<h3 id="重要的系統限制"><a class="header" href="#重要的系統限制">重要的系統限制</a></h3>
+<pre><code class="language-bash"># Thread 相關限制
+cat /proc/sys/kernel/threads-max     # 系統最大 Thread 數
+ulimit -u                           # 每個使用者最大 Process 數
+cat /proc/sys/kernel/pid_max        # 最大 PID 值
+
+# 記憶體相關限制  
+ulimit -s                           # Stack 大小限制
+ulimit -v                           # 虛擬記憶體限制
+cat /proc/sys/vm/max_map_count      # 記憶體映射數量限制
+
+# 檔案相關限制
+ulimit -n                           # 每個 Process 最大 FD 數
+cat /proc/sys/fs/file-max           # 系統最大檔案數
+</code></pre>
+<h3 id="常見的無法創建-thread錯誤"><a class="header" href="#常見的無法創建-thread錯誤">常見的「無法創建 Thread」錯誤</a></h3>
+<pre><code class="language-c">// 錯誤排查步驟
+int ret = pthread_create(&amp;thread, NULL, worker, NULL);
+if (ret != 0) {
+    switch(ret) {
+        case EAGAIN:  // 超過系統限制
+            printf("系統資源不足或達到 Thread 數量限制\n");
+            break;
+        case ENOMEM:  // 記憶體不足
+            printf("無法分配記憶體給新 Thread\n");  
+            break;
+        case EPERM:   // 權限不足
+            printf("沒有權限創建 Thread\n");
+            break;
+    }
+}
+</code></pre>
+<h2 id="17-效能監控與分析"><a class="header" href="#17-效能監控與分析">17. 效能監控與分析</a></h2>
+<h3 id="實用監控命令"><a class="header" href="#實用監控命令">實用監控命令</a></h3>
+<pre><code class="language-bash"># 即時監控 Process/Thread
+htop -H                    # 顯示 Thread
+top -H -p PID             # 監控特定 Process 的 Thread
+
+# 分析 Context Switch
+vmstat 1                  # cs 欄位顯示 context switch 次數
+pidstat -w 1              # 每個 Process 的 context switch
+
+# 記憶體分析
+pmap PID                  # Process 記憶體映射
+cat /proc/PID/smaps       # 詳細記憶體使用
+
+# CPU 使用分析
+perf top                  # 即時 CPU hotspot
+perf stat -p PID          # Process 效能統計
+</code></pre>
+<h3 id="效能分析工具鏈"><a class="header" href="#效能分析工具鏈">效能分析工具鏈</a></h3>
+<pre><code class="language-bash"># 系統呼叫追蹤
+strace -f -p PID          # 追蹤 Process 及其子 Process/Thread
+ltrace -f -p PID          # 追蹤函式庫呼叫
+
+# Thread 同步分析  
+helgrind ./program        # Valgrind 工具，檢測競爭條件
+drd ./program             # 另一個同步檢測工具
+</code></pre>
+<h2 id="18-實戰最佳實踐"><a class="header" href="#18-實戰最佳實踐">18. 實戰最佳實踐</a></h2>
+<h3 id="process-vs-thread-選擇指南"><a class="header" href="#process-vs-thread-選擇指南">Process vs Thread 選擇指南</a></h3>
+<pre><code>選擇 Process 當：
+✅ 需要強隔離性（一個崩潰不影響其他）
+✅ 需要不同權限等級
+✅ 需要分散到不同機器（微服務架構）
+✅ CPU 密集型工作且可平行處理
+
+選擇 Thread 當：
+✅ 需要頻繁共享大量資料
+✅ I/O 密集型工作（如網路服務）
+✅ 需要細粒度的併發控制
+✅ 記憶體使用需要優化
+</code></pre>
+<h3 id="避免常見陷阱"><a class="header" href="#避免常見陷阱">避免常見陷阱</a></h3>
+<pre><code class="language-c">// 1. Thread 安全的單例模式
+class Singleton {
+private:
+    static std::once_flag flag;
+    static Singleton* instance;
+public:
+    static Singleton* getInstance() {
+        std::call_once(flag, []() {
+            instance = new Singleton();
+        });
+        return instance;
+    }
+};
+
+// 2. 正確的 Thread 終止
+volatile bool should_exit = false;
+void* worker_thread(void* arg) {
+    while (!should_exit) {
+        // 做工作
+        if (should_exit) break;  // 檢查退出條件
+    }
+    return NULL;
+}
+
+// 3. 記憶體屏障的重要性
+// 在某些架構上，需要明確的記憶體屏障
+__sync_synchronize();  // GCC builtin
+// 或使用 C11 atomic 操作
+</code></pre>
+<p>記住這個關鍵差異，就能理解為什麼很多系統行為看起來與直覺不符 - 因為我們習慣用 user space 的概念思考，但實際執行是在 kernel space 的邏輯下進行的。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../linux_system/performance.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../strategy/bollmaker.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../linux_system/performance.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../strategy/bollmaker.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
