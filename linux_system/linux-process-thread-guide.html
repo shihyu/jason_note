@@ -471,18 +471,6 @@ htop -H    # 顯示 Thread
 # 查看共享變數
 (gdb) print global_variable
 </code></pre>
-<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
-<blockquote>
-<p><strong>核心概念</strong>: User space 的抽象概念在 kernel space 都被統一成 task 來處理</p>
-</blockquote>
-<h3 id="關鍵記憶點"><a class="header" href="#關鍵記憶點">關鍵記憶點</a></h3>
-<ol>
-<li><strong>記憶體共享</strong>：Thread 共享 code/data/heap，但各有獨立 stack</li>
-<li><strong>成本差異</strong>：Process 創建成本高但隔離性好，Thread 輕量但易互相影響</li>
-<li><strong>除錯觀念</strong>：理解虛擬記憶體 vs 實體記憶體的差異</li>
-<li><strong>資源管理</strong>：Thread 資源需要明確管理（join/detach）</li>
-<li><strong>COW 機制</strong>：fork 不會立即複製記憶體，而是使用 Copy-on-Write</li>
-</ol>
 <h2 id="12-signal-與-processthread-關係"><a class="header" href="#12-signal-與-processthread-關係">12. Signal 與 Process/Thread 關係</a></h2>
 <h3 id="signal-常見誤解"><a class="header" href="#signal-常見誤解">Signal 常見誤解</a></h3>
 <h4 id="誤解一signal-只發給-process"><a class="header" href="#誤解一signal-只發給-process">誤解一：「Signal 只發給 Process」</a></h4>
@@ -490,9 +478,9 @@ htop -H    # 顯示 Thread
 ✅ 正確：Linux 支持發送 Signal 給特定 Thread
 
 發送方式:
-kill(pid, SIGTERM);        // 發給整個 Process Group  
-pthread_kill(thread_id, SIGTERM);  // 發給特定 Thread
-tgkill(tgid, tid, SIGTERM); // Kernel 層面發給特定 Thread
+kill(pid, SIGTERM);                 // 發給整個 Process Group  
+pthread_kill(thread_id, SIGTERM);   // 發給特定 Thread
+tgkill(tgid, tid, SIGTERM);         // Kernel 層面發給特定 Thread
 </code></pre>
 <h4 id="誤解二多個-thread-會同時收到-signal"><a class="header" href="#誤解二多個-thread-會同時收到-signal">誤解二：「多個 Thread 會同時收到 Signal」</a></h4>
 <pre><code>❌ 錯誤：Signal 發給 Process 時所有 Thread 都會收到
@@ -613,13 +601,13 @@ void safe_function() {
 <h2 id="15-context-switch-開銷誤解"><a class="header" href="#15-context-switch-開銷誤解">15. Context Switch 開銷誤解</a></h2>
 <h3 id="真實的-context-switch-成本"><a class="header" href="#真實的-context-switch-成本">真實的 Context Switch 成本</a></h3>
 <pre><code>Process Context Switch:
-1. 保存暫存器狀態 (~50 cycles)
-2. 切換記憶體映射表 (~100-500 cycles) ← 昂貴
-3. TLB flush (~1000+ cycles) ← 非常昂貴  
+1. 保存暫存器狀態     (~50 cycles)
+2. 切換記憶體映射表   (~100-500 cycles) ← 昂貴
+3. TLB flush         (~1000+ cycles) ← 非常昂貴  
 4. Cache miss penalty (~數千 cycles) ← 最昂貴
 
 Thread Context Switch (同一 Process):
-1. 保存暫存器狀態 (~50 cycles)
+1. 保存暫存器狀態     (~50 cycles)
 2. 切換 Stack pointer (~10 cycles)
 3. 不需切換記憶體映射 ← 省下大量成本
 </code></pre>
@@ -629,8 +617,8 @@ Thread Context Switch (同一 Process):
 
 實際測量:
 Process Switch: ~1-10 microseconds  
-Thread Switch: ~0.1-1 microseconds
-Function Call: ~1-10 nanoseconds
+Thread Switch:  ~0.1-1 microseconds
+Function Call:  ~1-10 nanoseconds
 </code></pre>
 <h2 id="16-系統限制與配置"><a class="header" href="#16-系統限制與配置">16. 系統限制與配置</a></h2>
 <h3 id="重要的系統限制"><a class="header" href="#重要的系統限制">重要的系統限制</a></h3>
@@ -1474,6 +1462,29 @@ perf top -e sched:sched_switch # 即時調度切換監控
 perf sched record -- sleep 10  # 記錄調度活動
 perf sched latency             # 分析調度延遲
 </code></pre>
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<blockquote>
+<p><strong>核心概念</strong>: User space 的抽象概念在 kernel space 都被統一成 task 來處理</p>
+</blockquote>
+<h3 id="關鍵記憶點"><a class="header" href="#關鍵記憶點">關鍵記憶點</a></h3>
+<ol>
+<li><strong>記憶體共享</strong>：Thread 共享 code/data/heap，但各有獨立 stack</li>
+<li><strong>成本差異</strong>：Process 創建成本高但隔離性好，Thread 輕量但易互相影響</li>
+<li><strong>除錯觀念</strong>：理解虛擬記憶體 vs 實體記憶體的差異</li>
+<li><strong>資源管理</strong>：Thread 資源需要明確管理（join/detach）</li>
+<li><strong>COW 機制</strong>：fork 不會立即複製記憶體，而是使用 Copy-on-Write</li>
+<li><strong>調度統一</strong>：Linux 內核將 Process 和 Thread 都視為 task，使用相同的調度器</li>
+<li><strong>CFS 公平性</strong>：透過 vruntime 機制確保所有任務獲得公平的 CPU 時間</li>
+<li><strong>OOM 保護</strong>：了解 OOM Killer 機制，適當設定記憶體限制和監控</li>
+</ol>
+<h3 id="實務建議"><a class="header" href="#實務建議">實務建議</a></h3>
+<ol>
+<li><strong>選擇原則</strong>：需要隔離性選 Process，需要共享資料選 Thread</li>
+<li><strong>記憶體監控</strong>：定期檢查記憶體使用，預防 OOM 事件</li>
+<li><strong>調度調優</strong>：根據工作負載特性調整 Nice 值和調度參數</li>
+<li><strong>除錯工具</strong>：熟悉 htop、perf、valgrind 等工具</li>
+<li><strong>同步機制</strong>：正確使用 mutex、semaphore 等避免競爭條件</li>
+</ol>
 <p>記住這個關鍵差異，就能理解為什麼很多系統行為看起來與直覺不符 - 因為我們習慣用 user space 的概念思考，但實際執行是在 kernel space 的邏輯下進行的。</p>
 
                     </main>
