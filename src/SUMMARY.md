@@ -8,6 +8,7 @@
 - [Android](android/android.md)
     - [SDK install](android/install_sdk.md)
     - [Flutter](android/flutter.md)
+    - [Flutter 架構圖與基本檔案結構說明](android/flutter_architecture_and_project_structure.md)
     - [Ubuntu 24.04 安裝 Flutter](android/flutter_ubuntu_guide.md)
 - [Tools](tools/tools.md)
     - [asciinema 把終端操作錄製成 gif 動畫](tools/asciinema.md)
