@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>HTML - Jason Notes</title>
+        <title>DuckDNS 註冊與自動更新 IP 教學 - Jason Notes</title>
 
 
         <!-- Custom HTML head -->
@@ -178,69 +178,62 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="lightweight-charts"><a class="header" href="#lightweight-charts">lightweight-charts</a></h2>
-<pre><code class="language-sh">npm install lightweight-charts svelte-lightweight-charts
-</code></pre>
-<pre><code class="language-html">&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-  &lt;head&gt;
-    &lt;meta charset="UTF-8" /&gt;
-    &lt;title&gt;My Chart&lt;/title&gt;
-    &lt;script src="https://unpkg.com/lightweight-charts@3.0.0/dist/lightweight-charts.standalone.production.js"&gt;&lt;/script&gt;
-  &lt;/head&gt;
-  &lt;body&gt;
-    &lt;div id="chart"&gt;&lt;/div&gt;
-    &lt;script&gt;
-      const symbol = 'BTCUSDT';
-      const interval = '1d';
-      const limit = 1000;
-
-      const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&amp;interval=${interval}&amp;limit=${limit}`;
-
-      fetch(url)
-        .then(response =&gt; response.json())
-        .then(data =&gt; {
-          const chartData = data.map(item =&gt; ({
-            time: item[0] / 1000,
-            open: parseFloat(item[1]),
-            high: parseFloat(item[2]),
-            low: parseFloat(item[3]),
-            close: parseFloat(item[4]),
-          }));
-
-          const chart = LightweightCharts.createChart(document.getElementById('chart'), {
-            width: 600,
-            height: 300,
-          });
-
-          const candlestickSeries = chart.addCandlestickSeries();
-
-          candlestickSeries.setData(chartData);
-        });
-    &lt;/script&gt;
-  &lt;/body&gt;
-&lt;/html&gt;
-</code></pre>
+                        <h1 id="duckdns-註冊與自動更新-ip-教學"><a class="header" href="#duckdns-註冊與自動更新-ip-教學">DuckDNS 註冊與自動更新 IP 教學</a></h1>
+<h2 id="-步驟一註冊帳號"><a class="header" href="#-步驟一註冊帳號">🧾 步驟一：註冊帳號</a></h2>
+<ol>
+<li>前往 <a href="https://www.duckdns.org/">https://www.duckdns.org/</a></li>
+<li>使用 <strong>Google</strong> 或 <strong>GitHub</strong> 其中一個帳號登入</li>
+</ol>
 <hr />
-<h2 id="trading-vue-js"><a class="header" href="#trading-vue-js">trading-vue-js</a></h2>
-<p>https://github.com/tvjsx/trading-vue-js</p>
-<pre><code class="language-sh">npm i trading-vue-js
-</code></pre>
-<h2 id="reference"><a class="header" href="#reference">Reference</a></h2>
+<h2 id="-步驟二建立子網域"><a class="header" href="#-步驟二建立子網域">🌐 步驟二：建立子網域</a></h2>
+<ol>
+<li>登入後，在首頁輸入你想要的子網域名稱（例如：<code>gamegame</code>）</li>
+<li>點選 <strong>add domain</strong>，建立 <code>gamegame.duckdns.org</code></li>
+</ol>
+<hr />
+<h2 id="-步驟三取得你的-token"><a class="header" href="#-步驟三取得你的-token">🛠️ 步驟三：取得你的 Token</a></h2>
 <ul>
-<li>https://medium.com/marcius-studio/financial-charts-for-your-application-cfcceb147786</li>
-<li>https://codesandbox.io/examples/package/trading-vue-js</li>
+<li>登入後首頁會顯示你的專屬 <strong>Token</strong>（例如：<code>xxxxxxxxxxxxxxxxxxxxxxxxx</code>）</li>
 </ul>
+<hr />
+<h2 id="-步驟四設定自動更新-ip"><a class="header" href="#-步驟四設定自動更新-ip">🔄 步驟四：設定自動更新 IP</a></h2>
+<blockquote>
+<p>建議在家用伺服器或樹莓派上設定，讓 DDNS 持續更新 IP</p>
+</blockquote>
+<h3 id="1-建立資料夾與更新指令"><a class="header" href="#1-建立資料夾與更新指令">1. 建立資料夾與更新指令</a></h3>
+<pre><code class="language-bash">mkdir -p ~/duckdns
+echo url="https://www.duckdns.org/update?domains=gamegame&amp;token=xxxxxxxxxxxxxxxxxxxxxxxxx&amp;ip=" | curl -k -o ~/duckdns/duck.log -K -
+</code></pre>
+<ul>
+<li><code>gamegame</code> 請換成你自己的子網域</li>
+<li><code>token=</code> 後面換成你自己的 Token</li>
+</ul>
+<hr />
+<h3 id="2-設定-crontab-每-5-分鐘自動更新"><a class="header" href="#2-設定-crontab-每-5-分鐘自動更新">2. 設定 crontab 每 5 分鐘自動更新</a></h3>
+<pre><code class="language-bash">crontab -e
+</code></pre>
+<p>在打開的編輯器中加上以下一行：</p>
+<pre><code class="language-bash">*/5 * * * * echo url="https://www.duckdns.org/update?domains=gamegame&amp;token=xxxxxxxxxxxxxxxxxxxxxxxxx&amp;ip=" | curl -k -o ~/duckdns/duck.log -K -
+</code></pre>
+<blockquote>
+<p>儲存後即可每 5 分鐘更新一次 IP，讓你的子網域自動指向你目前的公网 IP。</p>
+</blockquote>
+<hr />
+<h2 id="-測試確認"><a class="header" href="#-測試確認">✅ 測試確認</a></h2>
+<p>你可以在瀏覽器中打開：</p>
+<pre><code>https://www.duckdns.org/update?domains=gamegame&amp;token=xxxxxxxxxxxxxxxxxxxxxxxxx&amp;ip=
+</code></pre>
+<p>如果回傳 <code>OK</code> 表示成功！</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../tools/duckdns-setup-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../tools/slack_socket_mode_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../html/vue.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../html/html.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -250,11 +243,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../tools/duckdns-setup-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../tools/slack_socket_mode_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../html/vue.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../html/html.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
