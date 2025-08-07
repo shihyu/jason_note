@@ -20,6 +20,7 @@
     - [changedetection.io 使用教學](tools/changedetection-setup.md)
     - [Claude Code 完整自動化開發指南](tools/claude_code_complete_guide.md)
     - [Claude Code 最佳實踐指南](tools/claude_code_best_practices.md)
+    - [Slack Socket Mode 完整設定指南](tools/slack_socket_mode_guide.md)
 - [HTML](html/html.md)
     - [Vue](html/vue.md)
 - [Vim](vim/vim.md)
