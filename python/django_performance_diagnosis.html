@@ -1,0 +1,689 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Django 網站效能診斷完整指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="django-網站效能診斷完整指南"><a class="header" href="#django-網站效能診斷完整指南">Django 網站效能診斷完整指南</a></h1>
+<h2 id="-快速診斷檢查清單"><a class="header" href="#-快速診斷檢查清單">🔍 快速診斷檢查清單</a></h2>
+<p>先進行這些基本檢查，快速定位問題所在：</p>
+<h3 id="-1分鐘快速檢查"><a class="header" href="#-1分鐘快速檢查">⚡ 1分鐘快速檢查</a></h3>
+<pre><code class="language-bash"># 1. 檢查伺服器資源使用率
+htop
+# 或
+top
+
+# 2. 檢查磁碟空間
+df -h
+
+# 3. 檢查記憶體使用
+free -h
+
+# 4. 檢查網路連線
+ping google.com
+curl -w "@curl-format.txt" -o /dev/null -s "http://your-site.com"
+</code></pre>
+<p><strong>curl-format.txt 內容：</strong></p>
+<pre><code>     time_namelookup:  %{time_namelookup}\n
+        time_connect:  %{time_connect}\n
+     time_appconnect:  %{time_appconnect}\n
+    time_pretransfer:  %{time_pretransfer}\n
+       time_redirect:  %{time_redirect}\n
+  time_starttransfer:  %{time_starttransfer}\n
+                     ----------\n
+          time_total:  %{time_total}\n
+</code></pre>
+<hr />
+<h2 id="-網路和連線測試"><a class="header" href="#-網路和連線測試">🌐 網路和連線測試</a></h2>
+<h3 id="在線測試工具"><a class="header" href="#在線測試工具">在線測試工具</a></h3>
+<pre><code class="language-bash"># 1. GTmetrix (推薦)
+# https://gtmetrix.com
+# 提供詳細的效能分析和建議
+
+# 2. Google PageSpeed Insights
+# https://pagespeed.web.dev
+# Google 官方工具，移動端和桌面端分析
+
+# 3. WebPageTest
+# https://www.webpagetest.org
+# 可選擇不同地區測試
+
+# 4. Pingdom
+# https://tools.pingdom.com
+</code></pre>
+<h3 id="命令列測試"><a class="header" href="#命令列測試">命令列測試</a></h3>
+<pre><code class="language-bash"># 測試網站回應時間
+curl -w "Connect: %{time_connect} TTFB: %{time_starttransfer} Total: %{time_total}\n" -o /dev/null -s http://your-site.com
+
+# 測試 DNS 解析時間
+dig your-domain.com
+
+# 測試從不同地點的連線速度
+# 使用 mtr 追蹤路由
+mtr your-domain.com
+</code></pre>
+<hr />
+<h2 id="-伺服器端效能檢查"><a class="header" href="#-伺服器端效能檢查">🖥️ 伺服器端效能檢查</a></h2>
+<h3 id="系統資源監控"><a class="header" href="#系統資源監控">系統資源監控</a></h3>
+<pre><code class="language-bash"># 1. CPU 使用率監控
+# 高 CPU 使用率可能表示程式碼效率問題
+watch -n 1 'cat /proc/loadavg'
+
+# 2. 記憶體使用監控
+# 記憶體不足會導致 swap，大幅降低效能
+watch -n 1 'free -h'
+
+# 3. 磁碟 I/O 監控
+# 高磁碟使用率會拖慢資料庫查詢
+iostat -x 1
+
+# 4. 網路使用監控
+iftop
+# 或
+nethogs
+</code></pre>
+<h3 id="資料庫效能檢查"><a class="header" href="#資料庫效能檢查">資料庫效能檢查</a></h3>
+<pre><code class="language-bash"># PostgreSQL 檢查
+sudo -u postgres psql -c "
+SELECT query, calls, total_time, mean_time 
+FROM pg_stat_statements 
+ORDER BY mean_time DESC 
+LIMIT 10;"
+
+# MySQL 檢查
+mysql -e "SHOW PROCESSLIST;"
+mysql -e "SHOW STATUS LIKE 'Slow_queries';"
+
+# 檢查慢查詢日誌
+tail -f /var/log/mysql/slow.log
+# 或
+tail -f /var/log/postgresql/postgresql.log
+</code></pre>
+<hr />
+<h2 id="-django-應用效能診斷"><a class="header" href="#-django-應用效能診斷">🐍 Django 應用效能診斷</a></h2>
+<h3 id="1-django-debug-toolbar開發環境"><a class="header" href="#1-django-debug-toolbar開發環境">1. Django Debug Toolbar（開發環境）</a></h3>
+<pre><code class="language-python"># settings.py（僅開發環境）
+if DEBUG:
+    INSTALLED_APPS += ['debug_toolbar']
+    MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
+    
+    # Debug Toolbar 設定
+    DEBUG_TOOLBAR_CONFIG = {
+        'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,
+    }
+    
+    # 內部 IP 設定（如果是遠端伺服器）
+    INTERNAL_IPS = ['127.0.0.1', 'YOUR_EXTERNAL_IP']
+</code></pre>
+<p><strong>安裝指令：</strong></p>
+<pre><code class="language-bash">pip install django-debug-toolbar
+</code></pre>
+<h3 id="2-django-效能分析工具"><a class="header" href="#2-django-效能分析工具">2. Django 效能分析工具</a></h3>
+<pre><code class="language-python"># 在 views.py 中加入效能測量
+import time
+import logging
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+
+logger = logging.getLogger(__name__)
+
+def performance_monitor(view_func):
+    def wrapper(request, *args, **kwargs):
+        start_time = time.time()
+        response = view_func(request, *args, **kwargs)
+        end_time = time.time()
+        
+        duration = (end_time - start_time) * 1000  # 轉換為毫秒
+        logger.info(f"View {view_func.__name__} took {duration:.2f}ms")
+        
+        return response
+    return wrapper
+
+# 使用裝飾器
+@performance_monitor
+def my_view(request):
+    # 你的 view 邏輯
+    pass
+</code></pre>
+<h3 id="3-資料庫查詢優化檢查"><a class="header" href="#3-資料庫查詢優化檢查">3. 資料庫查詢優化檢查</a></h3>
+<pre><code class="language-python"># 在 Django shell 中檢查查詢
+python manage.py shell
+
+# 檢查 N+1 查詢問題
+from django.db import connection
+from django.conf import settings
+
+# 開啟查詢記錄
+settings.DEBUG = True
+
+# 執行你的查詢
+from myapp.models import MyModel
+queryset = MyModel.objects.all()
+for obj in queryset:
+    print(obj.related_field.name)  # 這可能造成 N+1 問題
+
+# 查看執行的 SQL
+print(len(connection.queries))
+for query in connection.queries:
+    print(query['sql'])
+</code></pre>
+<p><strong>優化方案：</strong></p>
+<pre><code class="language-python"># 使用 select_related（一對一、多對一）
+queryset = MyModel.objects.select_related('foreign_key_field')
+
+# 使用 prefetch_related（一對多、多對多）
+queryset = MyModel.objects.prefetch_related('many_to_many_field')
+
+# 組合使用
+queryset = MyModel.objects.select_related('user').prefetch_related('tags')
+
+# 只選擇需要的欄位
+queryset = MyModel.objects.only('id', 'name', 'created_at')
+
+# 或排除不需要的欄位
+queryset = MyModel.objects.defer('large_text_field')
+</code></pre>
+<hr />
+<h2 id="-效能監控腳本"><a class="header" href="#-效能監控腳本">📊 效能監控腳本</a></h2>
+<h3 id="自動化監控腳本"><a class="header" href="#自動化監控腳本">自動化監控腳本</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# Django 效能監控腳本
+# 儲存為 monitor_performance.sh
+
+LOG_FILE="/var/log/django_performance.log"
+SITE_URL="https://your-site.com"
+
+echo "$(date): 開始效能檢查" &gt;&gt; "$LOG_FILE"
+
+# 1. 檢查網站回應時間
+RESPONSE_TIME=$(curl -w "%{time_total}" -o /dev/null -s "$SITE_URL")
+echo "$(date): 網站回應時間: ${RESPONSE_TIME}s" &gt;&gt; "$LOG_FILE"
+
+# 2. 檢查伺服器資源
+CPU_USAGE=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
+MEMORY_USAGE=$(free | grep Mem | awk '{printf("%.1f"), $3/$2 * 100.0}')
+DISK_USAGE=$(df -h / | awk 'NR==2 {print $5}')
+
+echo "$(date): CPU使用率: ${CPU_USAGE}%" &gt;&gt; "$LOG_FILE"
+echo "$(date): 記憶體使用率: ${MEMORY_USAGE}%" &gt;&gt; "$LOG_FILE"
+echo "$(date): 磁碟使用率: ${DISK_USAGE}" &gt;&gt; "$LOG_FILE"
+
+# 3. 檢查 Gunicorn 程序
+GUNICORN_PROCESSES=$(pgrep -c gunicorn)
+echo "$(date): Gunicorn 程序數: ${GUNICORN_PROCESSES}" &gt;&gt; "$LOG_FILE"
+
+# 4. 如果回應時間超過 3 秒，發送警告
+if (( $(echo "$RESPONSE_TIME &gt; 3.0" | bc -l) )); then
+    echo "$(date): 警告! 網站回應時間過慢: ${RESPONSE_TIME}s" &gt;&gt; "$LOG_FILE"
+    # 可以在這裡加入發送通知的邏輯
+fi
+
+echo "$(date): 效能檢查完成" &gt;&gt; "$LOG_FILE"
+echo "----------------------------------------" &gt;&gt; "$LOG_FILE"
+</code></pre>
+<p><strong>設定定期執行：</strong></p>
+<pre><code class="language-bash"># 給予執行權限
+chmod +x monitor_performance.sh
+
+# 加入 crontab（每10分鐘執行一次）
+crontab -e
+# 加入這行：
+*/10 * * * * /path/to/monitor_performance.sh
+</code></pre>
+<hr />
+<h2 id="-django-效能優化建議"><a class="header" href="#-django-效能優化建議">🚀 Django 效能優化建議</a></h2>
+<h3 id="1-快取策略"><a class="header" href="#1-快取策略">1. 快取策略</a></h3>
+<pre><code class="language-python"># settings.py
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'KEY_PREFIX': 'myapp',
+        'TIMEOUT': 300,  # 5分鐘
+    }
+}
+
+# 快取用法
+from django.core.cache import cache
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+
+# View 層快取
+@cache_page(60 * 5)  # 快取5分鐘
+def my_view(request):
+    # 你的邏輯
+    pass
+
+# Template 快取
+{% load cache %}
+{% cache 300 sidebar %}
+    &lt;!-- 耗時的模板內容 --&gt;
+{% endcache %}
+
+# 低階快取
+def expensive_function():
+    result = cache.get('expensive_result')
+    if result is None:
+        # 執行昂貴的計算
+        result = perform_expensive_calculation()
+        cache.set('expensive_result', result, 300)
+    return result
+</code></pre>
+<h3 id="2-資料庫優化"><a class="header" href="#2-資料庫優化">2. 資料庫優化</a></h3>
+<pre><code class="language-python"># models.py - 添加資料庫索引
+class MyModel(models.Model):
+    name = models.CharField(max_length=100, db_index=True)  # 單一索引
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['name', 'created_at']),  # 複合索引
+            models.Index(fields=['-created_at']),  # 降序索引
+        ]
+
+# 資料庫連線池
+# settings.py
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'your_db',
+        'USER': 'your_user',
+        'PASSWORD': 'your_password',
+        'HOST': 'localhost',
+        'PORT': '5432',
+        'OPTIONS': {
+            'MAX_CONNS': 20,  # 最大連線數
+        },
+        'CONN_MAX_AGE': 600,  # 連線重用時間（秒）
+    }
+}
+</code></pre>
+<h3 id="3-靜態檔案優化"><a class="header" href="#3-靜態檔案優化">3. 靜態檔案優化</a></h3>
+<pre><code class="language-python"># settings.py
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
+
+# 壓縮靜態檔案
+INSTALLED_APPS += ['compressor']
+STATICFILES_FINDERS += ['compressor.finders.CompressorFinder']
+
+COMPRESS_ENABLED = True
+COMPRESS_OFFLINE = True  # 預先壓縮
+</code></pre>
+<p><strong>Nginx 靜態檔案配置：</strong></p>
+<pre><code class="language-nginx"># /etc/nginx/sites-available/your-site
+server {
+    # ... 其他配置
+
+    # 靜態檔案直接由 Nginx 服務
+    location /static/ {
+        alias /path/to/your/static/files/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+        
+        # 啟用 gzip 壓縮
+        gzip on;
+        gzip_types text/css application/javascript image/svg+xml;
+    }
+    
+    location /media/ {
+        alias /path/to/your/media/files/;
+        expires 7d;
+    }
+}
+</code></pre>
+<hr />
+<h2 id="-進階診斷工具"><a class="header" href="#-進階診斷工具">🔧 進階診斷工具</a></h2>
+<h3 id="1-apm-工具生產環境推薦"><a class="header" href="#1-apm-工具生產環境推薦">1. APM 工具（生產環境推薦）</a></h3>
+<pre><code class="language-python"># 安裝 New Relic（免費版可用）
+pip install newrelic
+
+# settings.py
+if not DEBUG:
+    import newrelic.agent
+    newrelic.agent.initialize('/path/to/newrelic.ini')
+
+# 或使用 Sentry 效能監控
+pip install sentry-sdk
+
+SENTRY_DSN = "your-sentry-dsn"
+sentry_sdk.init(
+    dsn=SENTRY_DSN,
+    traces_sample_rate=1.0,  # 效能監控採樣率
+    profiles_sample_rate=1.0,  # 效能分析採樣率
+)
+</code></pre>
+<h3 id="2-程式碼分析工具"><a class="header" href="#2-程式碼分析工具">2. 程式碼分析工具</a></h3>
+<pre><code class="language-bash"># 安裝分析工具
+pip install django-silk
+pip install py-spy
+
+# 使用 py-spy 分析執行中的 Python 程序
+sudo py-spy record -o profile.svg --pid $(pgrep -f gunicorn)
+
+# 使用 cProfile 分析特定功能
+python -m cProfile -o profile.stats manage.py runserver
+</code></pre>
+<h3 id="3-記憶體分析"><a class="header" href="#3-記憶體分析">3. 記憶體分析</a></h3>
+<pre><code class="language-python"># 記憶體使用分析
+import tracemalloc
+from django.core.management.base import BaseCommand
+
+class Command(BaseCommand):
+    def handle(self, *args, **options):
+        tracemalloc.start()
+        
+        # 執行你的邏輯
+        # ...
+        
+        current, peak = tracemalloc.get_traced_memory()
+        print(f"Current memory usage: {current / 1024 / 1024:.1f} MB")
+        print(f"Peak memory usage: {peak / 1024 / 1024:.1f} MB")
+        tracemalloc.stop()
+</code></pre>
+<hr />
+<h2 id="-效能基準測試"><a class="header" href="#-效能基準測試">📈 效能基準測試</a></h2>
+<h3 id="建立效能基準"><a class="header" href="#建立效能基準">建立效能基準</a></h3>
+<pre><code class="language-bash"># 使用 Apache Bench 進行壓力測試
+ab -n 100 -c 10 http://your-site.com/
+
+# 使用 wrk 進行更詳細的測試
+wrk -t12 -c400 -d30s http://your-site.com/
+
+# 測試特定頁面的載入時間
+for i in {1..10}; do
+    curl -w "Try $i: %{time_total}s\n" -o /dev/null -s http://your-site.com/
+done
+</code></pre>
+<h3 id="效能目標設定"><a class="header" href="#效能目標設定">效能目標設定</a></h3>
+<p><strong>良好的效能指標：</strong></p>
+<ul>
+<li><strong>首次內容繪製 (FCP)</strong>：&lt; 1.8 秒</li>
+<li><strong>最大內容繪製 (LCP)</strong>：&lt; 2.5 秒</li>
+<li><strong>累積版面配置偏移 (CLS)</strong>：&lt; 0.1</li>
+<li><strong>首次輸入延遲 (FID)</strong>：&lt; 100 毫秒</li>
+<li><strong>伺服器回應時間 (TTFB)</strong>：&lt; 600 毫秒</li>
+</ul>
+<hr />
+<h2 id="-快速修復檢查清單"><a class="header" href="#-快速修復檢查清單">✅ 快速修復檢查清單</a></h2>
+<h3 id="立即可做的優化"><a class="header" href="#立即可做的優化">立即可做的優化</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+<strong>啟用 Gzip 壓縮</strong>（Nginx 層級）</li>
+<li><input disabled="" type="checkbox"/>
+<strong>設定靜態檔案快取</strong>（30天過期）</li>
+<li><input disabled="" type="checkbox"/>
+<strong>優化圖片大小</strong>（WebP 格式，適當尺寸）</li>
+<li><input disabled="" type="checkbox"/>
+<strong>移除未使用的 CSS/JS</strong></li>
+<li><input disabled="" type="checkbox"/>
+<strong>啟用資料庫連線池</strong></li>
+<li><input disabled="" type="checkbox"/>
+<strong>加入關鍵查詢的資料庫索引</strong></li>
+<li><input disabled="" type="checkbox"/>
+<strong>實作基本快取策略</strong></li>
+</ul>
+<h3 id="中期優化"><a class="header" href="#中期優化">中期優化</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+<strong>設定 Redis 快取</strong></li>
+<li><input disabled="" type="checkbox"/>
+<strong>優化資料庫查詢</strong>（解決 N+1 問題）</li>
+<li><input disabled="" type="checkbox"/>
+<strong>實作 CDN</strong>（Cloudflare 免費版）</li>
+<li><input disabled="" type="checkbox"/>
+<strong>程式碼分析和重構</strong></li>
+<li><input disabled="" type="checkbox"/>
+<strong>升級伺服器硬體</strong>（如需要）</li>
+</ul>
+<h3 id="長期優化"><a class="header" href="#長期優化">長期優化</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+<strong>微服務架構</strong>（如適用）</li>
+<li><input disabled="" type="checkbox"/>
+<strong>資料庫讀寫分離</strong></li>
+<li><input disabled="" type="checkbox"/>
+<strong>搜尋引擎</strong>（Elasticsearch）</li>
+<li><input disabled="" type="checkbox"/>
+<strong>訊息佇列</strong>（Celery + Redis）</li>
+<li><input disabled="" type="checkbox"/>
+<strong>效能監控系統</strong></li>
+</ul>
+<p>使用這個指南，你應該能夠找出網站速度慢的根本原因並針對性地進行優化！</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../python/nginx_django_ssl_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../python/other.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../python/nginx_django_ssl_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../python/other.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
