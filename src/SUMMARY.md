@@ -200,6 +200,7 @@
     - [永豐shioaji](python/shioaji.md)
     - [Python 鎖機制完整指南 🐍](python/python_locks_guide.md)
     - [Django 架構與專案結構完整指南](python/django_architecture_guide.md)
+    - [Django + Nginx + Gunicorn + SSL 完整部署指南](python/nginx_django_ssl_guide.md)
     - [Other](python/other.md)
 - [Mermaid](mermaid/mermaid.md)
 - [Linux System](linux_system/linux_system.md)
