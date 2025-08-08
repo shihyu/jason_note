@@ -23,6 +23,7 @@
     - [Claude Code 最佳實踐指南](tools/claude_code_best_practices.md)
     - [Slack Socket Mode 完整設定指南](tools/slack_socket_mode_guide.md)
     - [DuckDNS 註冊與自動更新 IP 教學](tools/duckdns-setup-guide.md)
+    - [免費 DNS 與 SSL 完整指南](tools/free_dns_ssl_guide.md)
 - [HTML](html/html.md)
     - [Vue](html/vue.md)
 - [Vim](vim/vim.md)
