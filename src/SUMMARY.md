@@ -272,6 +272,7 @@
     - [投資投機的觀念與心得分享](strategy/投資投機的觀念與心得分享.md)
     - [Finlab](strategy/finlab.md)
     - [韭菜的自我修養核心要點](strategy/韭菜的自我修養核心要點.md)
+    - [新世代是怎麼被收割的?](strategy/新世代收割術-經濟結構分析.md)
     - [Backtrader](strategy/backtrader/basis.md)
         - [Python回測框架一Backtrader介紹](strategy/backtrader/Python回測框架一Backtrader介紹.md)
         - [Python 回測框架（二）定期定額投資](strategy/backtrader/Python回測框架二定期定額投資.md)
