@@ -869,4 +869,310 @@ class ButtplugPlatform {
       final result = await _channel.invokeMethod('connectInProcess');
       return result as bool;
     } on PlatformException catch (e) {
-      print("Faile
+      print("Failed to connect: '${e.message}'");
+      return false;
+    }
+  }
+
+  static Future<bool> startScanning() async {
+    try {
+      final result = await _channel.invokeMethod('startScanning');
+      return result as bool;
+    } on PlatformException catch (e) {
+      print("Failed to start scanning: '${e.message}'");
+      return false;
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getDevices() async {
+    try {
+      final result = await _channel.invokeMethod('getDevices');
+      return List<Map<String, dynamic>>.from(result);
+    } on PlatformException catch (e) {
+      print("Failed to get devices: '${e.message}'");
+      return [];
+    }
+  }
+}
+```
+
+---
+
+## 建構配置指南
+
+### Android 配置
+
+#### NDK 設定
+```gradle
+// android/app/build.gradle
+android {
+    compileSdkVersion 34
+    ndkVersion "25.1.8937393"
+    
+    defaultConfig {
+        ndk {
+            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64'
+        }
+    }
+    
+    externalNativeBuild {
+        cmake {
+            path "../native/CMakeLists.txt"
+        }
+    }
+}
+```
+
+#### CMake 配置
+```cmake
+# native/CMakeLists.txt
+cmake_minimum_required(VERSION 3.10)
+project(buttplug_ffi)
+
+set(CMAKE_CXX_STANDARD 17)
+
+# 添加 Rust 庫
+add_library(buttplug_rust SHARED IMPORTED)
+set_target_properties(buttplug_rust PROPERTIES
+    IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/target/${ANDROID_ABI}/release/libbuttplug_ffi.so
+)
+
+# 創建包裝庫
+add_library(buttplug_ffi SHARED
+    src/android_wrapper.cpp
+)
+
+target_link_libraries(buttplug_ffi buttplug_rust)
+```
+
+### iOS 配置
+
+#### Xcode 專案設定
+```ruby
+# ios/Podfile
+platform :ios, '11.0'
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  
+  # 添加 Rust 靜態庫
+  pod 'buttplug_ffi', :path => '../native/ios'
+end
+```
+
+#### Framework 配置
+```ruby
+# native/ios/buttplug_ffi.podspec
+Pod::Spec.new do |spec|
+  spec.name          = 'buttplug_ffi'
+  spec.version       = '0.1.0'
+  spec.summary       = 'Buttplug FFI for iOS'
+  
+  spec.source_files = 'Classes/**/*'
+  spec.public_header_files = 'Classes/**/*.h'
+  
+  spec.ios.deployment_target = '11.0'
+  
+  # 靜態庫連結
+  spec.vendored_libraries = 'lib/libbuttplug_ffi.a'
+  spec.libraries = 'buttplug_ffi'
+end
+```
+
+---
+
+## 效能與大小比較
+
+### 檔案大小影響
+
+| 方案 | Android APK 增加 | iOS IPA 增加 | 總體大小 |
+|------|------------------|---------------|----------|
+| **Dart 套件** | +2MB | +2MB | ~32MB |
+| **FFI 直接** | +45MB | +60MB | ~120MB |
+| **flutter_rust_bridge** | +40MB | +55MB | ~110MB |
+| **WASM (Web only)** | N/A | N/A | ~15MB |
+| **Platform Channel** | +45MB | +60MB | ~120MB |
+
+### 效能比較
+
+| 方案 | 啟動時間 | 記憶體使用 | CPU 使用 | 網路延遲 |
+|------|----------|------------|----------|----------|
+| **Dart 套件** | 快 | 低 | 低 | 有 (WebSocket) |
+| **FFI 直接** | 慢 | 中 | 中 | 無 |
+| **flutter_rust_bridge** | 慢 | 中 | 中 | 無 |
+| **WASM** | 中 | 中 | 中 | 有 |
+| **Platform Channel** | 慢 | 高 | 中 | 無 |
+
+---
+
+## 開發複雜度分析
+
+### 學習曲線
+
+```mermaid
+graph TB
+    A[Dart 套件] --> B[Easy]
+    C[flutter_rust_bridge] --> D[Medium]
+    E[WASM] --> F[Medium]
+    G[FFI 直接] --> H[Hard]
+    I[Platform Channel] --> J[Hard]
+```
+
+### 維護成本
+
+| 方案 | 初始開發 | 版本更新 | Bug 修復 | 平台移植 |
+|------|----------|----------|----------|----------|
+| **Dart 套件** | 1天 | 簡單 | 簡單 | 自動 |
+| **flutter_rust_bridge** | 1週 | 中等 | 中等 | 手動 |
+| **WASM** | 3天 | 中等 | 困難 | Web Only |
+| **FFI 直接** | 2週 | 困難 | 困難 | 手動 |
+| **Platform Channel** | 3週 | 困難 | 困難 | 手動 |
+
+---
+
+## 推薦決策樹
+
+```mermaid
+flowchart TD
+    A[需要 Buttplug Rust 整合] --> B{是否可接受外部依賴?}
+    B -->|是| C[使用 Dart buttplug 套件 ⭐⭐⭐⭐⭐]
+    B -->|否| D{主要平台?}
+    D -->|Web| E[使用 WASM ⭐⭐⭐]
+    D -->|Mobile| F{開發資源充足?}
+    F -->|是| G[使用 flutter_rust_bridge ⭐⭐⭐]
+    F -->|否| H[重新考慮外部依賴]
+    D -->|跨平台| I{需要最高性能?}
+    I -->|是| J[FFI 直接調用 ⭐⭐]
+    I -->|否| K[flutter_rust_bridge ⭐⭐⭐]
+```
+
+---
+
+## 最佳實踐建議
+
+### 1. 優先選擇簡單方案
+- ✅ 除非有特殊需求，優先使用 Dart buttplug 套件
+- ✅ 外部依賴通常比內嵌複雜度更可接受
+- ✅ 官方維護的解決方案更可靠
+
+### 2. 如果必須整合 Rust
+```dart
+// 使用抽象介面隔離複雜性
+abstract class ButtplugInterface {
+  Future<void> connect();
+  Future<void> startScanning();
+  Future<List<Device>> getDevices();
+}
+
+// 實現可以是 FFI、Bridge 或其他方案
+class ButtplugFFIImpl implements ButtplugInterface {
+  // FFI 實現
+}
+
+class ButtplugBridgeImpl implements ButtplugInterface {
+  // flutter_rust_bridge 實現
+}
+```
+
+### 3. 錯誤處理和日誌
+```dart
+class ButtplugErrorHandler {
+  static void handleFFIError(dynamic error) {
+    if (error is String && error.contains('Bluetooth')) {
+      // 處理藍牙相關錯誤
+      showBluetoothErrorDialog();
+    } else if (error.toString().contains('Permission')) {
+      // 處理權限錯誤
+      requestPermissions();
+    }
+    
+    // 記錄錯誤以供除錯
+    FirebaseCrashlytics.instance.recordError(error, null);
+  }
+}
+```
+
+### 4. 效能優化
+```dart
+// 使用 Isolate 避免阻塞 UI
+class ButtplugIsolate {
+  static Future<T> runInIsolate<T>(Future<T> Function() operation) async {
+    return await Isolate.run(operation);
+  }
+}
+
+// 實際使用
+final devices = await ButtplugIsolate.runInIsolate(() async {
+  return await buttplugClient.getDevices();
+});
+```
+
+### 5. 記憶體管理
+```dart
+class ButtplugLifecycleManager with WidgetsBindingObserver {
+  ButtplugClient? _client;
+  
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.paused:
+        _client?.disconnect();
+        break;
+      case AppLifecycleState.resumed:
+        _reconnectIfNeeded();
+        break;
+      default:
+        break;
+    }
+  }
+  
+  void dispose() {
+    _client?.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+  }
+}
+```
+
+---
+
+## 總結
+
+### 推薦方案排序
+
+1. **🥇 Dart buttplug 套件 + Intiface Central**
+   - 最簡單、最穩定的方案
+   - 官方維護，更新及時
+   - 適合 95% 的使用案例
+
+2. **🥈 flutter_rust_bridge**
+   - 適合需要完全控制的進階用戶
+   - 自動化程度高，減少手動 FFI 工作
+   - 需要一定的 Rust 知識
+
+3. **🥉 WebAssembly (Web 限定)**
+   - Web 平台的最佳選擇
+   - 效能和檔案大小平衡
+   - 只適用於 Flutter Web
+
+4. **FFI 直接調用**
+   - 最大靈活性，但複雜度極高
+   - 只有在其他方案無法滿足需求時考慮
+   - 需要深厚的系統程式設計知識
+
+5. **Platform Channel**
+   - 傳統方案，但開發成本最高
+   - 需要維護多套原生程式碼
+   - 不推薦用於新專案
+
+### 最終建議
+
+對於大多數開發者，**強烈建議使用 Dart buttplug 套件**。這個方案：
+- 開發速度最快
+- 維護成本最低
+- 穩定性最高
+- 檔案大小最小
+
+只有在確實需要完全離線運行且無法接受外部依賴的情況下，才考慮複雜的整合方案。
