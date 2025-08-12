@@ -147,7 +147,29 @@ android-build: build copy-libs flutter-deps ## 建置 Android APK
 
 android-release: build copy-libs flutter-deps ## 建置 Android release APK
 	@echo "${BLUE}📱 Building Android release APK...${NC}"
-	cd $(FLUTTER_APP_DIR) && flutter build apk --release
+	@echo "${CYAN}🕐 Build started at: ${NC}$$(date '+%Y-%m-%d %H:%M:%S')"
+	@echo "${CYAN}🎯 Target: ${NC}Android release APK"
+	@echo "${CYAN}🏗️  Build mode: ${NC}Release"
+	@echo "${CYAN}📁 Flutter directory: ${NC}$(FLUTTER_APP_DIR)"
+	@echo "${CYAN}🔧 Build command: ${NC}flutter build apk --release"
+	@echo "${YELLOW}⏳ Starting build process...${NC}"
+	@start_time=$$(date +%s); \
+	cd $(FLUTTER_APP_DIR) && flutter build apk --release --verbose; \
+	end_time=$$(date +%s); \
+	build_time=$$((end_time - start_time)); \
+	echo "${CYAN}⏱️  Build duration: ${NC}$${build_time} seconds"
+	@echo "${CYAN}📦 Checking APK details...${NC}"
+	@if [ -f $(FLUTTER_APP_DIR)/build/app/outputs/flutter-apk/app-release.apk ]; then \
+		apk_size=$$(du -h $(FLUTTER_APP_DIR)/build/app/outputs/flutter-apk/app-release.apk | cut -f1); \
+		echo "${CYAN}📏 APK size: ${NC}$${apk_size}"; \
+		echo "${CYAN}📍 APK location: ${NC}$(FLUTTER_APP_DIR)/build/app/outputs/flutter-apk/app-release.apk"; \
+		echo "${CYAN}🔍 APK info: ${NC}"; \
+		aapt dump badging $(FLUTTER_APP_DIR)/build/app/outputs/flutter-apk/app-release.apk | grep -E "package:|sdkVersion:|targetSdkVersion:" || true; \
+	else \
+		echo "${RED}❌ APK file not found!${NC}"; \
+		exit 1; \
+	fi
+	@echo "${CYAN}🕐 Build completed at: ${NC}$$(date '+%Y-%m-%d %H:%M:%S')"
 	@echo "${GREEN}✅ Android release APK built successfully${NC}"
 
 # Cross-compilation targets
