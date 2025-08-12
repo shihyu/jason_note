@@ -13,6 +13,7 @@
     - [Flutter Buttplug 完整開發指南](android/buttplug_flutter_complete_guide.md)
     - [Buttplug Rust 到 Flutter 的 Porting 方案指南](android/buttplug_porting_guide.md)
     - [Android Native (C/C++/Rust) 與 Flutter 整合完整指南](android/android_native_flutter_integration.md)
+    - [直接 FFI vs flutter_rust_bridge 詳細比較](android/ffi_vs_flutter_rust_bridge.md)
 - [Tools](tools/tools.md)
     - [asciinema 把終端操作錄製成 gif 動畫](tools/asciinema.md)
     - [Finmind](tools/finmind.md)
