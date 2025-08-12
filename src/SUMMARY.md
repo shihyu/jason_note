@@ -30,6 +30,7 @@
     - [DuckDNS 註冊與自動更新 IP 教學](tools/duckdns-setup-guide.md)
     - [免費 DNS 與 SSL 完整指南](tools/free_dns_ssl_guide.md)
     - [DuckDNS + Let's Encrypt 一鍵安裝指南](tools/duckdns_letsencrypt_guide.md)
+    - [Cross Compiler 與 LLVM vs GCC 完整解析](tools/cross-compiler-llvm-gcc-guide.md)
 - [HTML](html/html.md)
     - [Vue](html/vue.md)
 - [Vim](vim/vim.md)
