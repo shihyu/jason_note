@@ -42,6 +42,7 @@
     - [Buttplug Python 安裝設置指南](tools/buttplug_python_setup.md)
     - [Buttplug Python 簡易指南](tools/buttplug_complete_guide.md)
     - [Claude Code 效能測試與正確性驗證完整指南](tools/claude-code-performance-testing-guide.md)
+    - [Claude Nights Watch - 自主任務執行系統](tools/claude_nights_watch_zh.md)
     - [Cross Compiler 與 LLVM vs GCC 完整解析](tools/cross-compiler-llvm-gcc-guide.md)
 
 ## Programming Languages
