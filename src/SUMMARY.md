@@ -32,6 +32,7 @@
     - [DuckDNS + Let's Encrypt 一鍵安裝指南](tools/duckdns_letsencrypt_guide.md)
     - [Buttplug Python 安裝設置指南](tools/buttplug_python_setup.md)
     - [Buttplug Python 簡易指南](tools/buttplug_complete_guide.md)
+    - [laude Code 效能測試與正確性驗證完整指南](tools/claude-code-performance-testing-guide.md)
     - [Cross Compiler 與 LLVM vs GCC 完整解析](tools/cross-compiler-llvm-gcc-guide.md)
 - [HTML](html/html.md)
     - [Vue](html/vue.md)
