@@ -45,6 +45,7 @@
     - [Claude Nights Watch - 自主任務執行系統](tools/claude_nights_watch_zh.md)
     - [Cross Compiler 與 LLVM vs GCC 完整解析](tools/cross-compiler-llvm-gcc-guide.md)
     - [🎯 完整的 Solana Token 出入金系統指南](tools/solana_token_guide.md)
+    - [WebAssembly (WASM) 完整開發指南](tools/wasm_guide.md)
 
 ## Programming Languages
 - [C++](c++/cpp.md)
