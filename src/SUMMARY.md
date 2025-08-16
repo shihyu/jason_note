@@ -181,7 +181,9 @@
     - [Mojo 爬蟲完整指南](mojo/mojo_crawler_guide.md)
 
 ## Web Development
-- [WebAssembly (WASM) 完整知識指南](web/webassembly-rust-guide.md)
+- [Web 開發資源](web/README.md)
+    - [WebAssembly (WASM) 完整知識指南](web/webassembly-rust-guide.md)
+    - [Buttplug WASM 開發流程](web/buttplug_wasm_flow.md)
 
 ## System & Debug
 - [GDB](gdb/gdb.md)
