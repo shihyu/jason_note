@@ -1,0 +1,714 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>WebAssembly (WASM) 完整開發指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="webassembly-wasm-完整開發指南"><a class="header" href="#webassembly-wasm-完整開發指南">WebAssembly (WASM) 完整開發指南</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ul>
+<li><a href="#%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5">基本概念</a></li>
+<li><a href="#%E5%B7%A5%E5%85%B7%E9%8F%88%E9%97%9C%E4%BF%82">工具鏈關係</a></li>
+<li><a href="#%E7%B7%A8%E8%AD%AF%E7%AF%84%E4%BE%8B">編譯範例</a></li>
+<li><a href="#%E6%95%88%E8%83%BD%E5%B0%8D%E6%AF%94">效能對比</a></li>
+<li><a href="#%E5%B8%B8%E8%A6%8B%E8%AA%A4%E8%A7%A3">常見誤解</a></li>
+<li><a href="#%E6%9C%80%E4%BD%B3%E5%AF%A6%E8%B8%90">最佳實踐</a></li>
+</ul>
+<h2 id="基本概念"><a class="header" href="#基本概念">基本概念</a></h2>
+<h3 id="webassembly-是什麼"><a class="header" href="#webassembly-是什麼">WebAssembly 是什麼？</a></h3>
+<p>WebAssembly (WASM) 是一種低階的類似組語的語言，具有緊湊的二進制格式，為其他語言提供一個編譯目標，使它們能夠在 Web 上運行，同時提供接近原生的效能。</p>
+<h3 id="核心特性"><a class="header" href="#核心特性">核心特性</a></h3>
+<ul>
+<li><strong>安全性</strong>：運行在沙盒環境中</li>
+<li><strong>效能</strong>：接近原生代碼的執行速度</li>
+<li><strong>可移植性</strong>：跨平台執行</li>
+<li><strong>語言無關</strong>：支援多種編程語言</li>
+<li><strong>Web 標準</strong>：W3C 標準，所有主流瀏覽器支持</li>
+</ul>
+<h3 id="記憶體模型"><a class="header" href="#記憶體模型">記憶體模型</a></h3>
+<pre><code class="language-javascript">// WASM 使用線性記憶體模型
+const memory = new WebAssembly.Memory({
+    initial: 10,  // 10 頁 (640KB)
+    maximum: 100  // 最大 100 頁 (6.4MB)
+});
+
+// 每頁 = 64KB
+// 記憶體是連續的，類似 C 的 malloc
+</code></pre>
+<h3 id="類型系統"><a class="header" href="#類型系統">類型系統</a></h3>
+<p>WASM 支援四種基本數值類型：</p>
+<ul>
+<li><code>i32</code>: 32位整數</li>
+<li><code>i64</code>: 64位整數</li>
+<li><code>f32</code>: 32位浮點數</li>
+<li><code>f64</code>: 64位浮點數</li>
+</ul>
+<h2 id="工具鏈關係"><a class="header" href="#工具鏈關係">工具鏈關係</a></h2>
+<h3 id="基本關係圖"><a class="header" href="#基本關係圖">基本關係圖</a></h3>
+<pre><code>Source Code (Rust/C/C++)
+        ↓
+    Cargo.toml (配置)
+        ↓
+    cargo build (編譯)
+        ↓
+    wasm-pack (包裝)
+        ↓
+    WebAssembly + JS綁定
+</code></pre>
+<h3 id="cargo-與-cargotoml"><a class="header" href="#cargo-與-cargotoml">Cargo 與 Cargo.toml</a></h3>
+<p><strong>Cargo</strong> 是 Rust 的包管理工具和構建系統
+<strong>Cargo.toml</strong> 是項目配置文件，定義：</p>
+<pre><code class="language-toml">[package]
+name = "my-wasm-project"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]  # 生成動態庫供 WASM 使用
+
+[dependencies]
+wasm-bindgen = "0.2"
+serde = { version = "1.0", features = ["derive"] }
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+  "console",
+  "Document",
+  "Element",
+  "HtmlElement",
+  "Window",
+]
+
+[features]
+default = ["console_error_panic_hook"]
+console_error_panic_hook = ["console_error_panic_hook/dep"]
+</code></pre>
+<h3 id="wasm-pack-的作用"><a class="header" href="#wasm-pack-的作用">wasm-pack 的作用</a></h3>
+<p>wasm-pack 是 cargo 的高層包裝，執行以下步驟：</p>
+<ol>
+<li><strong>編譯 WASM</strong>：<code>cargo build --target wasm32-unknown-unknown</code></li>
+<li><strong>生成綁定</strong>：使用 wasm-bindgen 創建 JS/TS 接口</li>
+<li><strong>優化</strong>：使用 wasm-opt 優化二進制文件</li>
+<li><strong>打包</strong>：生成 npm 可用的包結構</li>
+</ol>
+<h3 id="參數說明"><a class="header" href="#參數說明">參數說明</a></h3>
+<h4 id="wasm-pack-build-參數"><a class="header" href="#wasm-pack-build-參數">wasm-pack build 參數</a></h4>
+<pre><code class="language-bash"># 開發模式（未優化，保留調試信息）
+wasm-pack build --dev
+
+# 禁用默認特性
+wasm-pack build --no-default-features
+
+# 指定目標
+wasm-pack build --target web           # 適用於 ES6 模組
+wasm-pack build --target nodejs       # 適用於 Node.js
+wasm-pack build --target bundler      # 適用於 Webpack 等
+
+# 輸出目錄
+wasm-pack build --out-dir pkg
+
+# 範圍（用於 npm 發布）
+wasm-pack build --scope mycompany
+</code></pre>
+<h2 id="編譯範例"><a class="header" href="#編譯範例">編譯範例</a></h2>
+<h3 id="1-基本-rust--wasm-設定"><a class="header" href="#1-基本-rust--wasm-設定">1. 基本 Rust + WASM 設定</a></h3>
+<p><strong>Cargo.toml</strong>:</p>
+<pre><code class="language-toml">[package]
+name = "hello-wasm"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+  "console",
+]
+
+[features]
+default = ["console_error_panic_hook"]
+
+[dependencies.console_error_panic_hook]
+version = "0.1.6"
+optional = true
+</code></pre>
+<p><strong>src/lib.rs</strong>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>mod utils;
+
+use wasm_bindgen::prelude::*;
+
+// 導入 `console.log` 函數
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &amp;str);
+}
+
+// 定義一個宏來方便調用 `console.log`
+macro_rules! console_log {
+    ($($t:tt)*) =&gt; (log(&amp;format_args!($($t)*).to_string()))
+}
+
+#[wasm_bindgen]
+pub fn greet(name: &amp;str) {
+    console_log!("Hello, {}!", name);
+}
+
+#[wasm_bindgen]
+pub fn add(a: i32, b: i32) -&gt; i32 {
+    a + b
+}
+
+// 複雜運算示例
+#[wasm_bindgen]
+pub fn fibonacci(n: u32) -&gt; u32 {
+    match n {
+        0 =&gt; 0,
+        1 =&gt; 1,
+        _ =&gt; fibonacci(n - 1) + fibonacci(n - 2),
+    }
+}
+
+// 處理數組
+#[wasm_bindgen]
+pub fn sum_array(numbers: &amp;[i32]) -&gt; i32 {
+    numbers.iter().sum()
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="2-編譯命令"><a class="header" href="#2-編譯命令">2. 編譯命令</a></h3>
+<pre><code class="language-bash"># 初始化項目
+cargo generate --git https://github.com/rustwasm/wasm-pack-template
+cd my-wasm-project
+
+# 開發版本編譯
+wasm-pack build --dev
+
+# 生產版本編譯
+wasm-pack build --release
+
+# 指定特定特性
+wasm-pack build --no-default-features --features "web-feature"
+
+# 針對不同目標
+wasm-pack build --target web --out-dir pkg-web
+wasm-pack build --target nodejs --out-dir pkg-node
+</code></pre>
+<h3 id="3-javascript-使用"><a class="header" href="#3-javascript-使用">3. JavaScript 使用</a></h3>
+<p><strong>在 Web 中使用</strong>:</p>
+<pre><code class="language-javascript">import init, { greet, add, fibonacci } from './pkg/hello_wasm.js';
+
+async function run() {
+    // 初始化 WASM 模組
+    await init();
+    
+    // 調用函數
+    greet('World');
+    console.log('2 + 3 =', add(2, 3));
+    console.log('fibonacci(10) =', fibonacci(10));
+}
+
+run();
+</code></pre>
+<p><strong>在 Node.js 中使用</strong>:</p>
+<pre><code class="language-javascript">const wasm = require('./pkg-node/hello_wasm.js');
+
+// Node.js 版本通常是同步初始化
+console.log('2 + 3 =', wasm.add(2, 3));
+</code></pre>
+<h3 id="4-高級範例圖像處理"><a class="header" href="#4-高級範例圖像處理">4. 高級範例：圖像處理</a></h3>
+<p><strong>Cargo.toml</strong>:</p>
+<pre><code class="language-toml">[dependencies]
+wasm-bindgen = "0.2"
+js-sys = "0.3"
+image = { version = "0.24", default-features = false, features = ["png", "jpeg"] }
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+  "console",
+  "ImageData",
+  "CanvasRenderingContext2d",
+]
+</code></pre>
+<p><strong>src/lib.rs</strong>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use wasm_bindgen::prelude::*;
+use wasm_bindgen::Clamped;
+use web_sys::{CanvasRenderingContext2d, ImageData};
+
+#[wasm_bindgen]
+pub struct ImageProcessor {
+    width: u32,
+    height: u32,
+    data: Vec&lt;u8&gt;,
+}
+
+#[wasm_bindgen]
+impl ImageProcessor {
+    #[wasm_bindgen(constructor)]
+    pub fn new(width: u32, height: u32) -&gt; ImageProcessor {
+        ImageProcessor {
+            width,
+            height,
+            data: vec![0; (width * height * 4) as usize],
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn apply_grayscale(&amp;mut self) {
+        for pixel in self.data.chunks_exact_mut(4) {
+            let gray = (0.299 * pixel[0] as f64 
+                      + 0.587 * pixel[1] as f64 
+                      + 0.114 * pixel[2] as f64) as u8;
+            pixel[0] = gray;
+            pixel[1] = gray;
+            pixel[2] = gray;
+            // Alpha 通道保持不變
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn get_image_data(&amp;self, ctx: &amp;CanvasRenderingContext2d) -&gt; Result&lt;ImageData, JsValue&gt; {
+        ImageData::new_with_u8_clamped_array_and_sh(
+            Clamped(&amp;self.data),
+            self.width,
+            self.height,
+        )
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="效能對比"><a class="header" href="#效能對比">效能對比</a></h2>
+<h3 id="web-環境效能比較"><a class="header" href="#web-環境效能比較">Web 環境效能比較</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>技術</th><th>適用場景</th><th>效能</th><th>限制</th></tr></thead><tbody>
+<tr><td><strong>純 JavaScript</strong></td><td>DOM 操作、輕量運算</td><td>基準</td><td>V8 優化限制</td></tr>
+<tr><td><strong>WebAssembly</strong></td><td>CPU 密集運算</td><td>2-10x 更快</td><td>調用邊界開銷</td></tr>
+<tr><td><strong>.so 庫</strong></td><td>❌ 不支援</td><td>N/A</td><td>瀏覽器沙盒限制</td></tr>
+</tbody></table>
+</div>
+<h3 id="手機環境效能比較"><a class="header" href="#手機環境效能比較">手機環境效能比較</a></h3>
+<h4 id="react-native--hybrid-apps"><a class="header" href="#react-native--hybrid-apps">React Native / Hybrid Apps</a></h4>
+<pre><code class="language-javascript">// .so 庫調用 (Android)
+import { NativeModules } from 'react-native';
+const { MyNativeModule } = NativeModules;
+
+// ⭐ 效能最佳 - 直接 JNI 調用
+MyNativeModule.computeHeavyTask(data)
+    .then(result =&gt; console.log(result));
+
+// WASM 調用
+import wasmModule from './my_module.wasm';
+// ⚠️ 需要額外的 runtime，效能較差
+</code></pre>
+<h4 id="原生-app"><a class="header" href="#原生-app">原生 App</a></h4>
+<pre><code class="language-java">// Android - 直接 JNI 調用
+static {
+    System.loadLibrary("mynative");
+}
+public native int computeTask(int[] data);
+</code></pre>
+<pre><code class="language-swift">// iOS - 直接調用 C/C++ Framework
+import MyNativeFramework
+let result = MyNativeFramework.computeTask(data)
+</code></pre>
+<h3 id="效能測試結果"><a class="header" href="#效能測試結果">效能測試結果</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>環境</th><th>.so 庫</th><th>WASM</th><th>效能比較</th></tr></thead><tbody>
+<tr><td><strong>Web 瀏覽器</strong></td><td>❌</td><td>✅ 良好</td><td>WASM 唯一選擇</td></tr>
+<tr><td><strong>React Native</strong></td><td>⭐ 極佳</td><td>⚠️ 受限</td><td>.so 快 3-5x</td></tr>
+<tr><td><strong>Android 原生</strong></td><td>⭐ 極佳</td><td>❌</td><td>.so 最優</td></tr>
+<tr><td><strong>iOS 原生</strong></td><td>⭐ 極佳</td><td>❌</td><td>Native 最優</td></tr>
+<tr><td><strong>Node.js</strong></td><td>⭐ 極佳</td><td>✅ 良好</td><td>.so 快 1.5-3x</td></tr>
+</tbody></table>
+</div>
+<h2 id="常見誤解"><a class="header" href="#常見誤解">常見誤解</a></h2>
+<h3 id="-誤解-1wasm-總是比-javascript-快"><a class="header" href="#-誤解-1wasm-總是比-javascript-快">❌ 誤解 1：WASM 總是比 JavaScript 快</a></h3>
+<pre><code class="language-javascript">// 錯誤：頻繁的小運算調用
+for (let i = 0; i &lt; 1000; i++) {
+    wasmAdd(i, i + 1); // 每次調用都有邊界開銷
+}
+
+// 正確：批量處理
+const results = wasmBatchAdd(array1, array2);
+</code></pre>
+<p><strong>解釋</strong>：JS ↔ WASM 調用有開銷，小運算可能比純 JS 慢。</p>
+<h3 id="-誤解-2手機瀏覽器支援-so-調用"><a class="header" href="#-誤解-2手機瀏覽器支援-so-調用">❌ 誤解 2：手機瀏覽器支援 .so 調用</a></h3>
+<pre><code class="language-javascript">// 完全錯誤 - 手機瀏覽器仍是沙盒環境
+loadLibrary('./native.so'); // ❌ 不可能
+</code></pre>
+<h3 id="-誤解-3wasm-檔案大小不重要"><a class="header" href="#-誤解-3wasm-檔案大小不重要">❌ 誤解 3：WASM 檔案大小不重要</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 錯誤：包含大量無用依賴
+[dependencies]
+tokio = "1.0"        // 異步 runtime，WASM 中無用
+reqwest = "0.11"     // HTTP 客戶端，用 fetch API 即可
+serde_json = "1.0"   // 如果只需簡單序列化
+
+// 正確：最小化依賴
+[dependencies]
+wasm-bindgen = "0.2"
+serde = { version = "1.0", features = ["derive"] }
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-誤解-4所有運算都適合-wasm"><a class="header" href="#-誤解-4所有運算都適合-wasm">❌ 誤解 4：所有運算都適合 WASM</a></h3>
+<pre><code class="language-javascript">// 錯誤：DOM 操作用 WASM
+wasm.updateElement(id, value); // 反而更慢
+
+// 正確：分工合作
+const processed = wasm.processData(rawData); // CPU 密集用 WASM
+document.getElementById(id).value = processed; // DOM 操作用 JS
+</code></pre>
+<h3 id="-誤解-5wasm-可以直接操作-dom"><a class="header" href="#-誤解-5wasm-可以直接操作-dom">❌ 誤解 5：WASM 可以直接操作 DOM</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 錯誤理解 - WASM 無法直接訪問 DOM
+// 需要通過 web-sys 綁定
+use web_sys::{console, Document, Element, HtmlElement, Window};
+
+#[wasm_bindgen]
+pub fn update_dom(id: &amp;str, text: &amp;str) {
+    let window = web_sys::window().unwrap();
+    let document = window.document().unwrap();
+    let element = document.get_element_by_id(id).unwrap();
+    element.set_text_content(Some(text));
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="最佳實踐"><a class="header" href="#最佳實踐">最佳實踐</a></h2>
+<h3 id="1-選擇合適的場景"><a class="header" href="#1-選擇合適的場景">1. 選擇合適的場景</a></h3>
+<p><strong>✅ 適合 WASM：</strong></p>
+<ul>
+<li>數學密集運算（加密、圖像處理、物理模擬）</li>
+<li>數據處理（排序、過濾、統計）</li>
+<li>遊戲邏輯</li>
+<li>音訊/視訊處理</li>
+</ul>
+<p><strong>❌ 不適合 WASM：</strong></p>
+<ul>
+<li>DOM 操作</li>
+<li>網絡請求</li>
+<li>簡單的業務邏輯</li>
+<li>頻繁的小運算</li>
+</ul>
+<h3 id="2-優化編譯"><a class="header" href="#2-優化編譯">2. 優化編譯</a></h3>
+<pre><code class="language-bash"># 生產環境優化
+wasm-pack build --release --target web
+
+# 進一步優化
+wasm-opt -Oz -o optimized.wasm original.wasm
+
+# 壓縮
+gzip optimized.wasm
+</code></pre>
+<h3 id="3-記憶體管理"><a class="header" href="#3-記憶體管理">3. 記憶體管理</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub struct LargeData {
+    data: Vec&lt;f64&gt;,
+}
+
+#[wasm_bindgen]
+impl LargeData {
+    #[wasm_bindgen(constructor)]
+    pub fn new(size: usize) -&gt; LargeData {
+        LargeData {
+            data: vec![0.0; size],
+        }
+    }
+    
+    // 提供明確的清理方法
+    #[wasm_bindgen]
+    pub fn free(self) {
+        // Rust 會自動清理
+        drop(self);
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="4-錯誤處理"><a class="header" href="#4-錯誤處理">4. 錯誤處理</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub fn safe_divide(a: f64, b: f64) -&gt; Result&lt;f64, JsValue&gt; {
+    if b == 0.0 {
+        Err(JsValue::from_str("Division by zero"))
+    } else {
+        Ok(a / b)
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="5-調試技巧"><a class="header" href="#5-調試技巧">5. 調試技巧</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 開發環境啟用 panic hook
+#[cfg(feature = "console_error_panic_hook")]
+console_error_panic_hook::set_once();
+
+// 日志輸出
+web_sys::console::log_1(&amp;format!("Debug: {}", value).into());
+<span class="boring">}</span></code></pre></pre>
+<h3 id="6-性能監控"><a class="header" href="#6-性能監控">6. 性能監控</a></h3>
+<pre><code class="language-javascript">// 測量 WASM 載入時間
+console.time('WASM Load');
+await init();
+console.timeEnd('WASM Load');
+
+// 測量函數執行時間
+console.time('WASM Execution');
+const result = wasmFunction(data);
+console.timeEnd('WASM Execution');
+</code></pre>
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<p>WebAssembly 是 Web 平台上實現高效能運算的重要技術，但需要：</p>
+<ol>
+<li><strong>正確選擇使用場景</strong>：CPU 密集型任務</li>
+<li><strong>合理的架構設計</strong>：JS 處理 I/O，WASM 處理運算</li>
+<li><strong>適當的優化策略</strong>：編譯優化、記憶體管理</li>
+<li><strong>跨平台考量</strong>：Web 用 WASM，Native App 用原生庫</li>
+</ol>
+<p>記住：技術選型沒有銀彈，要根據具體需求和環境做出最佳選擇。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tools/solana_token_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../c++/cpp.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tools/solana_token_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../c++/cpp.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
