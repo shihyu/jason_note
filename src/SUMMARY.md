@@ -185,6 +185,7 @@
     - [WebAssembly (WASM) 完整知識指南](web/webassembly-rust-guide.md)
     - [Buttplug WASM 開發流程](web/buttplug_wasm_flow.md)
     - [wasm_bindgen 作用整理](web/wasm_bindgen_guide.md)
+    - [Buttplug 函數呼叫詳細整理](web/buttplug_function_calls.md)
 
 ## System & Debug
 - [GDB](gdb/gdb.md)
