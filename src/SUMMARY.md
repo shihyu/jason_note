@@ -115,6 +115,7 @@
     - [Rust 鎖機制完整指南](rust/rust_locks_guide.md)
     - [Rust 泛型完整指南：從簡單到進階](rust/rust_generics_guide.md)
     - [Rust 保留關鍵字完整範例指南](rust/rust-keywords-guide.md)
+    - [Rust WASM 編譯流程詳解](rust/rust-wasm-compilation-guide.md)
 - [Go](go/go.md)
     - [Golang Note](go/note.md)
     - [pytago](go/pytago.md)
