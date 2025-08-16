@@ -179,6 +179,9 @@
 - [Mojo](mojo/mojo.md)
     - [Mojo 爬蟲完整指南](mojo/mojo_crawler_guide.md)
 
+## Web Development
+- [WebAssembly (WASM) 完整知識指南](web/webassembly-rust-guide.md)
+
 ## System & Debug
 - [GDB](gdb/gdb.md)
     - [常用指令](gdb/常用指令.md)
