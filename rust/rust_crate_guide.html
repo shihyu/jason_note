@@ -1,0 +1,593 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Rust Crate 依賴與 API 設計完整指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="rust-crate-依賴與-api-設計完整指南"><a class="header" href="#rust-crate-依賴與-api-設計完整指南">Rust Crate 依賴與 API 設計完整指南</a></h1>
+<h2 id="-問題背景"><a class="header" href="#-問題背景">🤔 問題背景</a></h2>
+<p>你有一個 <code>buttplug_server</code> crate，裡面依賴了 <code>buttplug_server_device_config</code>：</p>
+<pre><code class="language-toml">[dependencies]
+buttplug_server_device_config = { path = "../buttplug_server_device_config" }
+</code></pre>
+<p>現在要編譯成 <code>.so</code> 文件給外部程序使用，<strong>關鍵問題是</strong>：</p>
+<blockquote>
+<p>外部程序能不能透過 <code>buttplug_server</code> 直接使用 <code>buttplug_server_device_config</code> 的功能？</p>
+</blockquote>
+<h2 id="-核心概念"><a class="header" href="#-核心概念">📝 核心概念</a></h2>
+<h3 id="重要觀念-1cargotoml-依賴--公開-api"><a class="header" href="#重要觀念-1cargotoml-依賴--公開-api">重要觀念 1：Cargo.toml 依賴 ≠ 公開 API</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ 這樣寫，外部看不到 buttplug_server_device_config
+// Cargo.toml 有依賴，但沒有 pub use
+
+// ✅ 要這樣寫才能讓外部使用
+pub use buttplug_server_device_config::*;
+<span class="boring">}</span></code></pre></pre>
+<p><strong>白話解釋</strong>：
+想像你家有一個工具箱（<code>buttplug_server</code>），裡面放了一把螺絲起子（<code>buttplug_server_device_config</code>）。</p>
+<ul>
+<li>📦 <strong>Cargo.toml 的依賴</strong> = 你把螺絲起子放進工具箱裡</li>
+<li>🚪 <strong>pub use</strong> = 你在工具箱外面貼標籤說"裡面有螺絲起子，可以直接拿"</li>
+</ul>
+<p><strong>沒有 pub use 的情況</strong>：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 你的 lib.rs 裡面
+use buttplug_server_device_config::DeviceConfig;  // 只有你自己能用
+
+// 外部想用：
+use buttplug_server::DeviceConfig;  // ❌ 找不到！編譯錯誤
+<span class="boring">}</span></code></pre></pre>
+<p>就像朋友想借螺絲起子，但你沒貼標籤，他不知道工具箱裡有什麼。</p>
+<p><strong>有 pub use 的情況</strong>：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 你的 lib.rs 裡面  
+pub use buttplug_server_device_config::DeviceConfig;  // 重新導出
+
+// 外部可以用：
+use buttplug_server::DeviceConfig;  // ✅ 可以找到！
+<span class="boring">}</span></code></pre></pre>
+<p>你在工具箱外面貼了標籤，朋友就能直接跟你借螺絲起子。</p>
+<h3 id="重要觀念-2rust-模組預設私有"><a class="header" href="#重要觀念-2rust-模組預設私有">重要觀念 2：Rust 模組預設私有</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>mod internal_stuff;        // ❌ 外部看不到
+pub mod public_stuff;      // ✅ 外部可以看到
+<span class="boring">}</span></code></pre></pre>
+<h2 id="-三種設計模式詳解"><a class="header" href="#-三種設計模式詳解">🎯 三種設計模式詳解</a></h2>
+<h3 id="模式一-facade-模式統一門面"><a class="header" href="#模式一-facade-模式統一門面">模式一：🏢 Facade 模式（統一門面）</a></h3>
+<p><strong>作法</strong>：在 <code>buttplug_server/src/lib.rs</code> 裡重新導出</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// === buttplug_server/src/lib.rs ===
+// 重新導出子 crate 的功能
+pub use buttplug_server_device_config::{
+    DeviceConfig, 
+    ConfigError, 
+    load_config,
+    // 你想要公開的所有東西
+};
+
+// 可以包裝一層更友善的 API
+pub fn easy_load_device_config(path: &amp;str) -&gt; Result&lt;DeviceConfig, ConfigError&gt; {
+    buttplug_server_device_config::load_config(path)
+}
+
+// 其他 server 功能
+pub struct ButtplugServer { /* ... */ }
+impl ButtplugServer {
+    pub fn new() -&gt; Self { /* ... */ }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>外部使用</strong>：</p>
+<pre><pre class="playground"><code class="language-rust">// 外部 Cargo.toml 只需要一個依賴
+[dependencies]
+buttplug_server = { path = "../buttplug_server" }
+
+// 使用時很簡潔
+use buttplug_server::{ButtplugServer, DeviceConfig, easy_load_device_config};
+
+fn main() {
+    let config = easy_load_device_config("devices.json").unwrap();
+    let server = ButtplugServer::new();
+    // ...
+}</code></pre></pre>
+<p><strong>優點</strong>：</p>
+<ul>
+<li>🎯 一站式服務，外部只要依賴一個 crate</li>
+<li>📦 API 統一，容易使用</li>
+<li>🔧 可以包裝更友善的接口</li>
+</ul>
+<p><strong>缺點</strong>：</p>
+<ul>
+<li>💥 內部架構改變會破壞外部 API</li>
+<li>🔗 強耦合，子 crate 換名字就炸了</li>
+<li>📈 維護成本高</li>
+</ul>
+<hr />
+<h3 id="模式二-internal-only各自獨立"><a class="header" href="#模式二-internal-only各自獨立">模式二：🔒 Internal Only（各自獨立）</a></h3>
+<p><strong>作法</strong>：<code>buttplug_server</code> 只管自己的事，不重新導出</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// === buttplug_server/src/lib.rs ===
+use buttplug_server_device_config::DeviceConfig; // 內部使用，不公開
+
+pub struct ButtplugServer {
+    config: DeviceConfig, // 內部使用
+}
+
+impl ButtplugServer {
+    pub fn new_with_config_file(config_path: &amp;str) -&gt; Result&lt;Self, Box&lt;dyn std::error::Error&gt;&gt; {
+        let config = buttplug_server_device_config::load_config(config_path)?;
+        Ok(Self { config })
+    }
+    
+    // 只提供必要的 server 功能
+    pub fn start(&amp;self) { /* ... */ }
+    pub fn stop(&amp;self) { /* ... */ }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>外部使用</strong>：</p>
+<pre><pre class="playground"><code class="language-rust">// 外部 Cargo.toml 需要兩個依賴
+[dependencies]
+buttplug_server = { path = "../buttplug_server" }
+buttplug_server_device_config = { path = "../buttplug_server_device_config" }
+
+// 使用時分開處理
+use buttplug_server::ButtplugServer;
+use buttplug_server_device_config::{DeviceConfig, load_config};
+
+fn main() {
+    // 方案 1：分開處理
+    let config = load_config("devices.json").unwrap();
+    let server = ButtplugServer::new_with_config_file("devices.json").unwrap();
+    
+    // 方案 2：或者直接用 server 包裝好的方法
+    let server = ButtplugServer::new_with_config_file("devices.json").unwrap();
+}</code></pre></pre>
+<p><strong>優點</strong>：</p>
+<ul>
+<li>🛡️ API 穩定，內部改動不影響外部</li>
+<li>🎨 各 crate 職責清楚</li>
+<li>🔄 容易重構和測試</li>
+</ul>
+<p><strong>缺點</strong>：</p>
+<ul>
+<li>📦 外部要記住多個依賴</li>
+<li>📚 學習成本稍高</li>
+</ul>
+<hr />
+<h3 id="模式三-ffiso-模式跨語言"><a class="header" href="#模式三-ffiso-模式跨語言">模式三：🌍 FFI/.so 模式（跨語言）</a></h3>
+<p><strong>作法</strong>：提供 C 風格的 API</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// === buttplug_server/src/lib.rs ===
+use std::ffi::{CStr, CString};
+use std::os::raw::c_char;
+
+// 內部 Rust 功能
+use buttplug_server_device_config::load_config;
+
+// 對外的 C API
+#[no_mangle]
+pub extern "C" fn buttplug_load_device_config(path: *const c_char) -&gt; i32 {
+    let c_str = unsafe { CStr::from_ptr(path) };
+    let path_str = match c_str.to_str() {
+        Ok(s) =&gt; s,
+        Err(_) =&gt; return -1, // 錯誤碼
+    };
+    
+    match load_config(path_str) {
+        Ok(_) =&gt; 0,  // 成功
+        Err(_) =&gt; -1, // 失敗
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn buttplug_server_start() -&gt; i32 {
+    // 啟動 server 邏輯
+    0
+}
+
+#[no_mangle]
+pub extern "C" fn buttplug_server_stop() -&gt; i32 {
+    // 停止 server 邏輯
+    0
+}
+
+// 記憶體清理
+#[no_mangle]
+pub extern "C" fn buttplug_free_string(ptr: *mut c_char) {
+    if !ptr.is_null() {
+        unsafe { drop(CString::from_raw(ptr)) };
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>編譯設定</strong>：</p>
+<pre><code class="language-toml">[lib]
+name = "buttplug_server"
+crate-type = ["cdylib", "rlib"]  # cdylib 生成 .so
+</code></pre>
+<p><strong>外部使用（C/C++）</strong>：</p>
+<pre><code class="language-c">// buttplug.h
+extern int buttplug_load_device_config(const char* path);
+extern int buttplug_server_start();
+extern int buttplug_server_stop();
+extern void buttplug_free_string(char* ptr);
+
+// main.c
+#include "buttplug.h"
+
+int main() {
+    if (buttplug_load_device_config("devices.json") != 0) {
+        printf("載入設定失敗\n");
+        return 1;
+    }
+    
+    if (buttplug_server_start() == 0) {
+        printf("伺服器啟動成功\n");
+    }
+    
+    buttplug_server_stop();
+    return 0;
+}
+</code></pre>
+<p><strong>外部使用（Python）</strong>：</p>
+<pre><code class="language-python">import ctypes
+
+# 載入 .so 檔
+lib = ctypes.CDLL('./libbuttplug_server.so')
+
+# 定義函數簽名
+lib.buttplug_load_device_config.argtypes = [ctypes.c_char_p]
+lib.buttplug_load_device_config.restype = ctypes.c_int
+
+# 使用
+result = lib.buttplug_load_device_config(b"devices.json")
+if result == 0:
+    print("載入成功")
+else:
+    print("載入失敗")
+</code></pre>
+<p><strong>優點</strong>：</p>
+<ul>
+<li>🌍 跨語言支援（C/C++/Python/Dart/Flutter）</li>
+<li>🛡️ 完全隔離內部實作</li>
+<li>📦 外部只需要 .so 檔案</li>
+</ul>
+<p><strong>缺點</strong>：</p>
+<ul>
+<li>🔧 只能用你定義的 API，彈性低</li>
+<li>💻 需要處理 C 字串和記憶體管理</li>
+<li>🐛 錯誤處理比較麻煩</li>
+</ul>
+<hr />
+<h2 id="-模式比較表"><a class="header" href="#-模式比較表">📊 模式比較表</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>Facade 模式</th><th>Internal Only</th><th>FFI/.so 模式</th></tr></thead><tbody>
+<tr><td><strong>外部依賴</strong></td><td>只需 <code>buttplug_server</code></td><td>需要 <code>buttplug_server</code> + <code>buttplug_server_device_config</code></td><td>只需 <code>.so</code> 檔案</td></tr>
+<tr><td><strong>使用方式</strong></td><td><code>use buttplug_server::DeviceConfig;</code></td><td><code>use buttplug_server_device_config::DeviceConfig;</code></td><td><code>buttplug_load_device_config("...")</code></td></tr>
+<tr><td><strong>API 穩定性</strong></td><td>⚠️ 風險高</td><td>✅ 穩定</td><td>✅ 與內部無關</td></tr>
+<tr><td><strong>學習成本</strong></td><td>🟢 簡單</td><td>🟡 中等</td><td>🔴 需要了解 FFI</td></tr>
+<tr><td><strong>跨語言</strong></td><td>❌ 只支援 Rust</td><td>❌ 只支援 Rust</td><td>✅ 支援所有語言</td></tr>
+<tr><td><strong>錯誤處理</strong></td><td>✅ Rust Result</td><td>✅ Rust Result</td><td>🔴 錯誤碼</td></tr>
+<tr><td><strong>型別安全</strong></td><td>✅ 完全安全</td><td>✅ 完全安全</td><td>⚠️ 需要小心</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="-實際建議"><a class="header" href="#-實際建議">🎯 實際建議</a></h2>
+<h3 id="針對-buttplug_server-專案"><a class="header" href="#針對-buttplug_server-專案">針對 <code>buttplug_server</code> 專案：</a></h3>
+<ol>
+<li>
+<p><strong>如果主要給 Rust 開發者用</strong>：</p>
+<ul>
+<li>建議用 <strong>Internal Only</strong>，保持各 crate 獨立</li>
+<li>在 <code>buttplug_server</code> 提供高階 API，但不重新導出所有子 crate</li>
+</ul>
+</li>
+<li>
+<p><strong>如果要跨語言支援</strong>：</p>
+<ul>
+<li>用 <strong>FFI 模式</strong>，提供簡潔的 C API</li>
+<li>內部可以隨意重構，不影響外部</li>
+</ul>
+</li>
+<li>
+<p><strong>如果想要最好用</strong>：</p>
+<ul>
+<li>可以 <strong>混合使用</strong>：
+<ul>
+<li>Rust 用戶：提供 Internal Only + 一些便利的 Facade API</li>
+<li>其他語言：提供 FFI API</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="推薦的混合架構"><a class="header" href="#推薦的混合架構">推薦的混合架構：</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// === buttplug_server/src/lib.rs ===
+
+// 1. 內部使用，不公開
+use buttplug_server_device_config::{DeviceConfig, load_config};
+
+// 2. 核心 server 功能
+pub struct ButtplugServer { /* ... */ }
+
+// 3. 便利的 Rust API（可選的 Facade）
+pub mod config {
+    pub use buttplug_server_device_config::{DeviceConfig, ConfigError};
+    
+    pub fn load_device_config(path: &amp;str) -&gt; Result&lt;DeviceConfig, ConfigError&gt; {
+        buttplug_server_device_config::load_config(path)
+    }
+}
+
+// 4. FFI API
+#[no_mangle]
+pub extern "C" fn buttplug_load_device_config(path: *const c_char) -&gt; i32 {
+    // ...
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>外部使用</strong>：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Rust 用戶可以選擇
+use buttplug_server::ButtplugServer;                    // 只用 server
+use buttplug_server::config::load_device_config;       // 用便利 API
+use buttplug_server_device_config::load_config;        // 直接用原始 crate
+<span class="boring">}</span></code></pre></pre>
+<p>這樣既保持了彈性，也提供了便利性！</p>
+<hr />
+<h2 id="-總結"><a class="header" href="#-總結">💡 總結</a></h2>
+<ul>
+<li><strong>依賴寫在 Cargo.toml ≠ 外部可以用</strong></li>
+<li><strong>要用 <code>pub use</code> 才能重新導出</strong>（就像在門口貼告示牌）</li>
+<li><strong>選擇模式要看使用場景</strong>：
+<ul>
+<li>給 Rust 用 → Internal Only</li>
+<li>要跨語言 → FFI 模式</li>
+<li>要最方便 → 混合使用</li>
+</ul>
+</li>
+</ul>
+<p>記住：<strong>API 設計是給人用的，不是給編譯器用的</strong> 🚀</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../rust/dependency_import_patterns.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../go/go.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../rust/dependency_import_patterns.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../go/go.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
