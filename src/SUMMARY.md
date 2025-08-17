@@ -116,6 +116,8 @@
     - [Rust 泛型完整指南：從簡單到進階](rust/rust_generics_guide.md)
     - [Rust 保留關鍵字完整範例指南](rust/rust-keywords-guide.md)
     - [Rust WASM 編譯流程詳解](rust/rust-wasm-compilation-guide.md)
+    - [套件管理：聲明 vs 使用 完全對照](rust/dependency_import_patterns.md)
+    - [Rust Crate 依賴與 API 設計完整指南](rust/rust_crate_guide.md)
 - [Go](go/go.md)
     - [Golang Note](go/note.md)
     - [pytago](go/pytago.md)
