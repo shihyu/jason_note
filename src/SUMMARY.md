@@ -188,6 +188,7 @@
     - [wasm_bindgen 作用整理](web/wasm_bindgen_guide.md)
     - [Buttplug 函數呼叫詳細整理](web/buttplug_function_calls.md)
     - [wasm-objdump 分析指南：深入 WASM 檔案與 Buttplug 依賴解析](web/wasm_dependency_analysis.md)
+    - [wasm-objdump 完整使用指南](web/wasm-objdump-guide.md)
 
 ## System & Debug
 - [GDB](gdb/gdb.md)
