@@ -45,7 +45,6 @@
     - [Claude Nights Watch - 自主任務執行系統](tools/claude_nights_watch_zh.md)
     - [Cross Compiler 與 LLVM vs GCC 完整解析](tools/cross-compiler-llvm-gcc-guide.md)
     - [🎯 完整的 Solana Token 出入金系統指南](tools/solana_token_guide.md)
-    - [WebAssembly (WASM) 完整開發指南](tools/wasm_guide.md)
 
 ## Programming Languages
 - [C++](c++/cpp.md)
@@ -184,7 +183,7 @@
 
 ## Web Development
 - [Web 開發資源](web/README.md)
-    - [WebAssembly (WASM) 完整知識指南](web/webassembly-rust-guide.md)
+    - [WebAssembly (WASM) 完整開發指南](web/webassembly_complete_guide.md)
     - [Buttplug WASM 開發流程](web/buttplug_wasm_flow.md)
     - [wasm_bindgen 作用整理](web/wasm_bindgen_guide.md)
     - [Buttplug 函數呼叫詳細整理](web/buttplug_function_calls.md)
