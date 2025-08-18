@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ERICA 簡化自動測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            padding: 15px 25px;
+            margin: 10px 5px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-blue { background: #007bff; color: white; }
+        .btn-green { background: #28a745; color: white; }
+        .btn-orange { background: #fd7e14; color: white; }
+        .btn-red { background: #dc3545; color: white; }
+        .btn-gray { background: #6c757d; color: white; }
+        
+        .control-group {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .device-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .logs {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 400px;
+            overflow-y: scroll;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: #f5f5f5;
+        }
+        
+        .intensity-control {
+            margin: 20px 0;
+        }
+        
+        .intensity-control input[type="range"] {
+            width: 300px;
+            margin: 10px;
+        }
+        
+        .status-good { color: #28a745; }
+        .status-error { color: #dc3545; }
+        .status-info { color: #007bff; }
+    </style>
+</head>
+<body>
+    <h1>🤖 ERICA 自動協議測試</h1>
+    <p class="status-info">使用預設的 Svakom V4 協議自動控制 ERICA 設備</p>
+    
+    <div class="control-group">
+        <h3>連接控制</h3>
+        <button id="connectBtn" class="btn-blue">🔍 掃描並連接 ERICA</button>
+        <button id="activateBtn" class="btn-green" disabled>🔧 重新激活設備</button>
+        <button id="disconnectBtn" class="btn-gray" disabled>❌ 斷開連接</button>
+    </div>
+    
+    <div class="control-group">
+        <h3>設備信息</h3>
+        <div id="deviceInfo" class="device-info">
+            尚未連接設備
+        </div>
+    </div>
+    
+    <div class="control-group">
+        <h3>振動控制</h3>
+        <div class="intensity-control">
+            <label>振動強度: <span id="intensityValue">30%</span></label><br>
+            <input type="range" id="intensitySlider" min="0" max="100" value="30" disabled>
+        </div>
+        
+        <button id="startVibrateBtn" class="btn-red" disabled>🎮 開始振動</button>
+        <button id="stopVibrateBtn" class="btn-gray" disabled>⏹️ 停止振動</button>
+    </div>
+    
+    <div class="control-group">
+        <h3>預設測試模式</h3>
+        <button id="testSequenceBtn" class="btn-orange" disabled>🧪 運行測試序列</button>
+        <p><small>自動測試不同強度: 20% → 50% → 80% → 停止</small></p>
+    </div>
+    
+    <div class="control-group">
+        <h3>通信日誌</h3>
+        <div id="logs" class="logs"></div>
+        <button id="clearLogsBtn" class="btn-gray">🗑️ 清除日誌</button>
+    </div>
+
+    <script>
+        let device = null;
+        let writeCharacteristic = null;
+        let notifyCharacteristic = null;
+        let isConnected = false;
+        let isVibrating = false;
+        let keepaliveInterval = null;
+        let currentIntensity = 0;
+
+        function log(message, type = 'info') {
+            const div = document.getElementById('logs');
+            const time = new Date().toLocaleTimeString();
+            const colorClass = type === 'error' ? 'status-error' : 
+                              type === 'success' ? 'status-good' : 'status-info';
+            div.innerHTML += `<div class="${colorClass}">[${time}] ${message}</div>`;
+            div.scrollTop = div.scrollHeight;
+            console.log(message);
+        }
+
+        function updateDeviceInfo(info) {
+            document.getElementById('deviceInfo').innerHTML = info;
+        }
+
+        function updateButtons() {
+            document.getElementById('activateBtn').disabled = !isConnected;
+            document.getElementById('disconnectBtn').disabled = !isConnected;
+            document.getElementById('intensitySlider').disabled = !isConnected;
+            document.getElementById('startVibrateBtn').disabled = !isConnected;
+            document.getElementById('stopVibrateBtn').disabled = !isConnected || !isVibrating;
+            document.getElementById('testSequenceBtn').disabled = !isConnected;
+        }
+
+        // Svakom V4 協議實現
+        function createSvakomV4Command(intensity) {
+            // 基於 svakom_v4.rs 的實現
+            // [0x55, 0x03, feature_index + 1, 0x00, mode, intensity]
+            const featureIndex = 0; // 第一個振動器
+            const mode = intensity > 0 ? 0x03 : 0x00; // 0x03=振動模式, 0x00=停止
+            
+            return new Uint8Array([
+                0x55,                           // 固定頭部
+                0x03,                           // 命令類型
+                featureIndex + 1,               // 特徵索引 (1)
+                0x00,                           // 保留位
+                mode,                           // 模式
+                Math.round(intensity * 255 / 100) // 強度 0-255
+            ]);
+        }
+
+        async function sendSvakomCommand(intensity, description) {
+            if (!writeCharacteristic) return false;
+            
+            try {
+                const command = createSvakomV4Command(intensity);
+                const hex = Array.from(command).map(b => b.toString(16).padStart(2, '0')).join(' ');
+                
+                log(`📤 發送 ${description}: [${Array.from(command).join(', ')}] = [0x${hex}]`, 'info');
+                
+                await writeCharacteristic.writeValue(command);
+                log(`✅ 命令發送成功`, 'success');
+                
+                await new Promise(resolve => setTimeout(resolve, 100));
+                return true;
+            } catch (error) {
+                log(`❌ 發送失敗: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function activateErica() {
+            log("🔧 開始 ERICA 設備激活序列...", 'info');
+            
+            // ERICA 需要的激活命令序列
+            const activationCommands = [
+                { cmd: [0x55, 0x01, 0x00], desc: "Svakom 基本激活", wait: 300 },
+                { cmd: [0x55, 0x02, 0x00], desc: "Svakom 握手", wait: 300 },
+                { cmd: [0x55, 0x00, 0x00], desc: "Svakom 初始化", wait: 300 },
+                { cmd: [0x55, 0x03, 0x00, 0x01, 0x00, 0x00], desc: "Svakom 模式設定", wait: 500 },
+            ];
+            
+            for (const activation of activationCommands) {
+                try {
+                    const hex = activation.cmd.map(b => b.toString(16).padStart(2, '0')).join(' ');
+                    log(`📤 激活命令: ${activation.desc} [0x${hex}]`, 'info');
+                    
+                    await writeCharacteristic.writeValue(new Uint8Array(activation.cmd));
+                    await new Promise(resolve => setTimeout(resolve, activation.wait));
+                } catch (error) {
+                    log(`⚠️ 激活命令失敗: ${error.message}`, 'info');
+                }
+            }
+            
+            log("✅ ERICA 激活序列完成", 'success');
+        }
+
+        async function connectToErica() {
+            try {
+                log("🔍 開始掃描 ERICA 設備...", 'info');
+                
+                device = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: 'ERICA' }],
+                    optionalServices: [
+                        '0000ffe0-0000-1000-8000-00805f9b34fb',
+                        'device_information'
+                    ]
+                });
+                
+                log(`✅ 找到設備: ${device.name} (ID: ${device.id})`, 'success');
+                
+                const server = await device.gatt.connect();
+                log("✅ GATT 連接成功", 'success');
+                
+                const service = await server.getPrimaryService('0000ffe0-0000-1000-8000-00805f9b34fb');
+                log("✅ 服務獲取成功", 'success');
+                
+                writeCharacteristic = await service.getCharacteristic('0000ffe1-0000-1000-8000-00805f9b34fb');
+                log("✅ 寫入特徵獲取成功", 'success');
+                
+                try {
+                    notifyCharacteristic = await service.getCharacteristic('0000ffe2-0000-1000-8000-00805f9b34fb');
+                    
+                    notifyCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+                        const value = event.target.value;
+                        const bytes = Array.from(new Uint8Array(value));
+                        const hex = bytes.map(b => b.toString(16).padStart(2, '0')).join(' ');
+                        log(`📨 收到回應: [${bytes.join(', ')}] = [0x${hex}]`, 'info');
+                    });
+                    
+                    await notifyCharacteristic.startNotifications();
+                    log("✅ 通知啟用成功", 'success');
+                } catch (e) {
+                    log("⚠️ 通知特徵不可用", 'info');
+                }
+                
+                // 自動執行激活序列
+                await activateErica();
+                
+                isConnected = true;
+                updateDeviceInfo(`
+                    <strong>設備名稱:</strong> ${device.name}<br>
+                    <strong>設備 ID:</strong> ${device.id}<br>
+                    <strong>協議:</strong> Svakom V4 (已激活)<br>
+                    <strong>狀態:</strong> <span class="status-good">已連接並激活</span>
+                `);
+                updateButtons();
+                log("🎉 ERICA 連接並激活完成！可以開始測試振動", 'success');
+                
+            } catch (error) {
+                log(`❌ 連接失敗: ${error.message}`, 'error');
+                isConnected = false;
+                updateButtons();
+            }
+        }
+
+        async function disconnect() {
+            stopKeepalive(); // 停止保活定時器
+            
+            if (device && device.gatt.connected) {
+                await device.gatt.disconnect();
+            }
+            isConnected = false;
+            isVibrating = false;
+            currentIntensity = 0;
+            device = null;
+            writeCharacteristic = null;
+            notifyCharacteristic = null;
+            
+            updateDeviceInfo("尚未連接設備");
+            updateButtons();
+            log("🔌 設備已斷開連接", 'info');
+        }
+
+        function startKeepalive(intensity) {
+            // 清除之前的保活定時器
+            if (keepaliveInterval) {
+                clearInterval(keepaliveInterval);
+            }
+            
+            // 根據 Svakom V4 協議，需要每 2 秒重複發送命令
+            keepaliveInterval = setInterval(async () => {
+                if (isVibrating && writeCharacteristic) {
+                    await sendSvakomCommand(intensity, `保活 ${intensity}%`);
+                }
+            }, 2000);
+        }
+
+        function stopKeepalive() {
+            if (keepaliveInterval) {
+                clearInterval(keepaliveInterval);
+                keepaliveInterval = null;
+            }
+        }
+
+        async function startVibration() {
+            const intensity = parseInt(document.getElementById('intensitySlider').value);
+            currentIntensity = intensity;
+            
+            // 發送初始振動命令
+            if (await sendSvakomCommand(intensity, `振動強度 ${intensity}%`)) {
+                isVibrating = true;
+                startKeepalive(intensity); // 啟動保活機制
+                updateButtons();
+                log(`🎮 開始振動，強度: ${intensity}% (保活模式)`, 'success');
+            }
+        }
+
+        async function stopVibration() {
+            stopKeepalive(); // 停止保活
+            
+            if (await sendSvakomCommand(0, "停止振動")) {
+                isVibrating = false;
+                currentIntensity = 0;
+                updateButtons();
+                log("⏹️ 振動已停止", 'success');
+            }
+        }
+
+        async function runTestSequence() {
+            log("🧪 開始運行增強測試序列...", 'info');
+            
+            const intensities = [100, 80, 60, 40, 20, 0];
+            const descriptions = ["最大振動", "強烈振動", "中強振動", "中等振動", "輕微振動", "停止"];
+            const waitTimes = [5000, 5000, 4000, 4000, 3000, 1000];
+            
+            for (let i = 0; i < intensities.length; i++) {
+                const intensity = intensities[i];
+                const desc = descriptions[i];
+                
+                log(`🎯 測試 ${i + 1}/${intensities.length}: ${desc} (${intensity}%)`, 'info');
+                
+                // 發送多次確保設備收到
+                await sendSvakomCommand(intensity, desc);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                await sendSvakomCommand(intensity, `${desc} (重複)`);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                await sendSvakomCommand(intensity, `${desc} (確認)`);
+                
+                if (i < intensities.length - 1) {
+                    log(`⏱️ 等待 ${waitTimes[i]/1000} 秒...`, 'info');
+                    await new Promise(resolve => setTimeout(resolve, waitTimes[i]));
+                }
+            }
+            
+            isVibrating = false;
+            updateButtons();
+            log("🏁 增強測試序列完成", 'success');
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+
+        // 事件綁定
+        document.getElementById('connectBtn').onclick = connectToErica;
+        document.getElementById('activateBtn').onclick = activateErica;
+        document.getElementById('disconnectBtn').onclick = disconnect;
+        document.getElementById('startVibrateBtn').onclick = startVibration;
+        document.getElementById('stopVibrateBtn').onclick = stopVibration;
+        document.getElementById('testSequenceBtn').onclick = runTestSequence;
+        document.getElementById('clearLogsBtn').onclick = clearLogs;
+        
+        document.getElementById('intensitySlider').oninput = (e) => {
+            document.getElementById('intensityValue').textContent = e.target.value + '%';
+        };
+
+        // 初始化
+        log("🚀 ERICA 自動協議測試已準備就緒", 'success');
+        log("📋 使用預設的 Svakom V4 協議: 55 03 01 00 03 XX", 'info');
+        log("🎯 點擊「掃描並連接 ERICA」開始測試", 'info');
+        
+        updateButtons();
+    </script>
+</body>
+</html>

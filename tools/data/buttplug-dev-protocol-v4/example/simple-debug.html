@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>簡單診斷頁面</title>
+</head>
+<body>
+    <h2>簡單診斷測試</h2>
+    
+    <div>
+        <button id="testBtn" style="padding: 10px; margin: 5px; background: green; color: white;">測試按鈕點擊</button>
+        <button id="bluetoothBtn" style="padding: 10px; margin: 5px; background: blue; color: white;">測試藍牙掃描</button>
+    </div>
+    
+    <div id="logs" style="border: 1px solid #ccc; padding: 10px; margin: 10px 0; height: 400px; overflow-y: scroll; font-family: monospace; font-size: 12px;">
+    </div>
+
+    <script>
+        function log(message) {
+            const div = document.getElementById('logs');
+            const time = new Date().toLocaleTimeString();
+            div.innerHTML += `[${time}] ${message}<br>`;
+            div.scrollTop = div.scrollHeight;
+            console.log(message);
+        }
+
+        async function testBluetooth() {
+            log("🔍 測試藍牙功能...");
+            
+            if (!navigator.bluetooth) {
+                log("❌ 瀏覽器不支援 Web Bluetooth");
+                return;
+            }
+            
+            log("✅ 瀏覽器支援 Web Bluetooth");
+            
+            try {
+                log("正在請求設備選擇...");
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: [
+                        'device_information',
+                        'battery_service',
+                        '0000ffe0-0000-1000-8000-00805f9b34fb', // ERICA 的服務
+                    ]
+                });
+                
+                log(`✅ 選擇了設備: ${device.name || '未命名'}`);
+                
+                if (device.name === 'ERICA') {
+                    log("🎯 這是 ERICA 設備！開始測試振動協議...");
+                    await testERICAVibration(device);
+                }
+                
+            } catch (error) {
+                log(`❌ 錯誤: ${error.name} - ${error.message}`);
+            }
+        }
+
+        async function testERICAVibration(device) {
+            try {
+                log("正在連接到 ERICA...");
+                const server = await device.gatt.connect();
+                log("✅ 連接成功");
+                
+                const service = await server.getPrimaryService('0000ffe0-0000-1000-8000-00805f9b34fb');
+                const characteristic = await service.getCharacteristic('0000ffe1-0000-1000-8000-00805f9b34fb');
+                log("✅ 找到振動控制特徵");
+                
+                const testProtocols = [
+                    { name: "單字節 50", data: [50] },
+                    { name: "單字節 100", data: [100] },
+                    { name: "單字節 200", data: [200] },
+                    { name: "雙字節 0x01+50", data: [0x01, 50] },
+                    { name: "雙字節 0xAA+50", data: [0xAA, 50] },
+                    { name: "雙字節 0x55+50", data: [0x55, 50] },
+                    { name: "ASCII V50", data: Array.from(new TextEncoder().encode("V50")) },
+                ];
+                
+                for (let i = 0; i < testProtocols.length; i++) {
+                    const protocol = testProtocols[i];
+                    log(`🧪 測試 ${i+1}: ${protocol.name} [${protocol.data.join(', ')}]`);
+                    
+                    try {
+                        await characteristic.writeValue(new Uint8Array(protocol.data));
+                        log(`✅ 發送成功，測試 2 秒...`);
+                        
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        
+                        // 停止
+                        await characteristic.writeValue(new Uint8Array([0]));
+                        log(`⏹️ 停止命令發送`);
+                        
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        
+                    } catch (error) {
+                        log(`❌ 協議 ${i+1} 失敗: ${error.message}`);
+                    }
+                }
+                
+                log("🏁 測試完成！");
+                
+            } catch (error) {
+                log(`❌ ERICA 測試失敗: ${error.message}`);
+            }
+        }
+
+        // 立即執行初始化
+        log("頁面載入完成");
+        
+        document.getElementById('testBtn').onclick = () => {
+            log("✅ 測試按鈕點擊正常！");
+        };
+        
+        document.getElementById('bluetoothBtn').onclick = () => {
+            log("藍牙按鈕被點擊");
+            testBluetooth();
+        };
+        
+        log("🎉 事件綁定完成");
+    </script>
+</body>
+</html>

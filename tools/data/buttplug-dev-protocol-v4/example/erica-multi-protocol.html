@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ERICA 多協議測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-blue { background: #007bff; color: white; }
+        .btn-green { background: #28a745; color: white; }
+        .btn-orange { background: #fd7e14; color: white; }
+        .btn-red { background: #dc3545; color: white; }
+        .btn-gray { background: #6c757d; color: white; }
+        .btn-purple { background: #6f42c1; color: white; }
+        
+        .control-group {
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .protocol-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .device-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .logs {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 400px;
+            overflow-y: scroll;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            background: #f5f5f5;
+        }
+        
+        .status-good { color: #28a745; }
+        .status-error { color: #dc3545; }
+        .status-info { color: #007bff; }
+        .status-warning { color: #ffc107; }
+    </style>
+</head>
+<body>
+    <h1>🔬 ERICA 多協議測試中心</h1>
+    <p class="status-info">測試所有已知的 Svakom 協議版本，找到正確的振動控制協議</p>
+    
+    <div class="control-group">
+        <h3>連接控制</h3>
+        <button id="connectBtn" class="btn-blue">🔍 連接 ERICA</button>
+        <button id="disconnectBtn" class="btn-gray" disabled>❌ 斷開連接</button>
+    </div>
+    
+    <div class="control-group">
+        <h3>設備信息</h3>
+        <div id="deviceInfo" class="device-info">
+            尚未連接設備
+        </div>
+    </div>
+    
+    <div class="control-group">
+        <h3>協議測試 (強度: <span id="intensityValue">50%</span>)</h3>
+        <input type="range" id="intensitySlider" min="10" max="100" value="50" style="width: 300px;">
+        <div class="protocol-grid">
+            <button id="testV1Btn" class="btn-red" disabled>🎮 測試 Svakom V1</button>
+            <button id="testV2Btn" class="btn-red" disabled>🎮 測試 Svakom V2</button>
+            <button id="testV3Btn" class="btn-red" disabled>🎮 測試 Svakom V3</button>
+            <button id="testV4Btn" class="btn-red" disabled>🎮 測試 Svakom V4</button>
+            <button id="testAllBtn" class="btn-orange" disabled>🧪 測試所有協議</button>
+            <button id="stopBtn" class="btn-gray" disabled>⏹️ 停止振動</button>
+        </div>
+    </div>
+    
+    <div class="control-group">
+        <h3>手動協議測試</h3>
+        <input type="text" id="customCmd" placeholder="輸入16進制命令，如：55 04 03 00 01 32" style="width: 400px;">
+        <button id="sendCustomBtn" class="btn-purple" disabled>📤 發送自定義命令</button>
+    </div>
+    
+    <div class="control-group">
+        <h3>通信日誌</h3>
+        <div id="logs" class="logs"></div>
+        <button id="clearLogsBtn" class="btn-gray">🗑️ 清除日誌</button>
+    </div>
+
+    <script>
+        let device = null;
+        let writeCharacteristic = null;
+        let notifyCharacteristic = null;
+        let isConnected = false;
+
+        function log(message, type = 'info') {
+            const div = document.getElementById('logs');
+            const time = new Date().toLocaleTimeString();
+            const colorClass = type === 'error' ? 'status-error' : 
+                              type === 'success' ? 'status-good' : 
+                              type === 'warning' ? 'status-warning' : 'status-info';
+            div.innerHTML += `<div class="${colorClass}">[${time}] ${message}</div>`;
+            div.scrollTop = div.scrollHeight;
+        }
+
+        function updateDeviceInfo(info) {
+            document.getElementById('deviceInfo').innerHTML = info;
+        }
+
+        function updateButtons() {
+            const connected = isConnected;
+            document.getElementById('disconnectBtn').disabled = !connected;
+            document.getElementById('testV1Btn').disabled = !connected;
+            document.getElementById('testV2Btn').disabled = !connected;
+            document.getElementById('testV3Btn').disabled = !connected;
+            document.getElementById('testV4Btn').disabled = !connected;
+            document.getElementById('testAllBtn').disabled = !connected;
+            document.getElementById('stopBtn').disabled = !connected;
+            document.getElementById('sendCustomBtn').disabled = !connected;
+        }
+
+        // 不同協議的命令生成函數
+        function createSvakomV1Command(intensity) {
+            // V1: [0x55, 0x04, 0x03, 0x00, multiplier, speed]
+            const multiplier = intensity > 0 ? 0x01 : 0x00;
+            return new Uint8Array([0x55, 0x04, 0x03, 0x00, multiplier, Math.round(intensity * 255 / 100)]);
+        }
+
+        function createSvakomV2Command(intensity, featureIndex = 0) {
+            // V2: 根據 feature_index 不同
+            if (featureIndex === 1) {
+                // [0x55, 0x06, 0x01, 0x00, speed, speed]
+                const speed = Math.round(intensity * 255 / 100);
+                return new Uint8Array([0x55, 0x06, 0x01, 0x00, speed, speed]);
+            } else {
+                // [0x55, 0x03, 0x03, 0x00, multiplier, speed]
+                const multiplier = intensity > 0 ? 0x01 : 0x00;
+                return new Uint8Array([0x55, 0x03, 0x03, 0x00, multiplier, Math.round(intensity * 255 / 100)]);
+            }
+        }
+
+        function createSvakomV3Command(intensity, featureIndex = 0) {
+            // V3: [0x55, cmd, param, 0x00, multiplier, speed]
+            const cmd = featureIndex === 0 ? 0x03 : 0x09;
+            const param = featureIndex === 0 ? 0x03 : 0x00;
+            const multiplier = intensity > 0 ? 0x01 : 0x00;
+            return new Uint8Array([0x55, cmd, param, 0x00, multiplier, Math.round(intensity * 255 / 100)]);
+        }
+
+        function createSvakomV4Command(intensity, featureIndex = 0) {
+            // V4: [0x55, 0x03, feature+1, 0x00, mode, speed]
+            const mode = intensity > 0 ? 0x03 : 0x00;
+            return new Uint8Array([0x55, 0x03, featureIndex + 1, 0x00, mode, Math.round(intensity * 255 / 100)]);
+        }
+
+        async function sendCommand(command, description) {
+            if (!writeCharacteristic) return false;
+            
+            try {
+                const hex = Array.from(command).map(b => b.toString(16).padStart(2, '0')).join(' ');
+                log(`📤 ${description}: [${Array.from(command).join(', ')}] = [0x${hex}]`, 'info');
+                
+                await writeCharacteristic.writeValue(command);
+                log(`✅ 命令發送成功`, 'success');
+                await new Promise(resolve => setTimeout(resolve, 100));
+                return true;
+            } catch (error) {
+                log(`❌ 發送失敗: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function connectToErica() {
+            try {
+                log("🔍 掃描 ERICA 設備...", 'info');
+                
+                device = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: 'ERICA' }],
+                    optionalServices: [
+                        '0000ffe0-0000-1000-8000-00805f9b34fb',
+                        'device_information'
+                    ]
+                });
+                
+                log(`✅ 找到設備: ${device.name} (${device.id})`, 'success');
+                
+                const server = await device.gatt.connect();
+                log("✅ GATT 連接成功", 'success');
+                
+                const service = await server.getPrimaryService('0000ffe0-0000-1000-8000-00805f9b34fb');
+                writeCharacteristic = await service.getCharacteristic('0000ffe1-0000-1000-8000-00805f9b34fb');
+                log("✅ 寫入特徵獲取成功", 'success');
+                
+                try {
+                    notifyCharacteristic = await service.getCharacteristic('0000ffe2-0000-1000-8000-00805f9b34fb');
+                    notifyCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+                        const value = event.target.value;
+                        const bytes = Array.from(new Uint8Array(value));
+                        if (bytes.length > 0) {
+                            const hex = bytes.map(b => b.toString(16).padStart(2, '0')).join(' ');
+                            log(`📨 設備回應: [${bytes.join(', ')}] = [0x${hex}]`, 'success');
+                        }
+                    });
+                    await notifyCharacteristic.startNotifications();
+                    log("✅ 通知啟用成功", 'success');
+                } catch (e) {
+                    log("⚠️ 通知特徵不可用", 'warning');
+                }
+                
+                isConnected = true;
+                updateDeviceInfo(`
+                    <strong>設備名稱:</strong> ${device.name}<br>
+                    <strong>設備 ID:</strong> ${device.id}<br>
+                    <strong>狀態:</strong> <span class="status-good">已連接，準備測試協議</span>
+                `);
+                updateButtons();
+                log("🎉 ERICA 連接完成！可以開始測試不同協議", 'success');
+                
+            } catch (error) {
+                log(`❌ 連接失敗: ${error.message}`, 'error');
+                isConnected = false;
+                updateButtons();
+            }
+        }
+
+        async function disconnect() {
+            if (device && device.gatt.connected) {
+                await device.gatt.disconnect();
+            }
+            isConnected = false;
+            device = null;
+            writeCharacteristic = null;
+            notifyCharacteristic = null;
+            
+            updateDeviceInfo("尚未連接設備");
+            updateButtons();
+            log("🔌 設備已斷開連接", 'info');
+        }
+
+        async function testProtocol(version) {
+            const intensity = parseInt(document.getElementById('intensitySlider').value);
+            log(`🧪 測試 Svakom ${version} 協議，強度: ${intensity}%`, 'info');
+            
+            let command;
+            switch(version) {
+                case 'V1':
+                    command = createSvakomV1Command(intensity);
+                    break;
+                case 'V2':
+                    command = createSvakomV2Command(intensity, 0);
+                    await sendCommand(command, `Svakom V2 (feature 0)`);
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    command = createSvakomV2Command(intensity, 1);
+                    await sendCommand(command, `Svakom V2 (feature 1)`);
+                    return;
+                case 'V3':
+                    command = createSvakomV3Command(intensity, 0);
+                    await sendCommand(command, `Svakom V3 (feature 0)`);
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    command = createSvakomV3Command(intensity, 1);
+                    await sendCommand(command, `Svakom V3 (feature 1)`);
+                    return;
+                case 'V4':
+                    command = createSvakomV4Command(intensity, 0);
+                    break;
+            }
+            
+            await sendCommand(command, `Svakom ${version}`);
+        }
+
+        async function testAllProtocols() {
+            const intensity = parseInt(document.getElementById('intensitySlider').value);
+            log("🔥 開始測試所有協議版本...", 'info');
+            
+            const protocols = ['V1', 'V2', 'V3', 'V4'];
+            
+            for (let i = 0; i < protocols.length; i++) {
+                const protocol = protocols[i];
+                log(`🎯 測試 ${i+1}/${protocols.length}: ${protocol}`, 'info');
+                await testProtocol(protocol);
+                
+                if (i < protocols.length - 1) {
+                    log("⏱️ 等待 3 秒...", 'info');
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                }
+            }
+            
+            // 最後發送停止命令
+            log("🛑 發送停止命令", 'info');
+            await sendCommand(createSvakomV4Command(0), "停止 (V4)");
+            await sendCommand(createSvakomV1Command(0), "停止 (V1)");
+            
+            log("🏁 所有協議測試完成", 'success');
+        }
+
+        async function stopVibration() {
+            log("⏹️ 發送多協議停止命令", 'info');
+            await sendCommand(createSvakomV1Command(0), "停止 V1");
+            await sendCommand(createSvakomV2Command(0, 0), "停止 V2-F0");
+            await sendCommand(createSvakomV2Command(0, 1), "停止 V2-F1");
+            await sendCommand(createSvakomV3Command(0, 0), "停止 V3-F0");
+            await sendCommand(createSvakomV3Command(0, 1), "停止 V3-F1");
+            await sendCommand(createSvakomV4Command(0), "停止 V4");
+        }
+
+        async function sendCustomCommand() {
+            const input = document.getElementById('customCmd').value.trim();
+            if (!input) return;
+            
+            try {
+                const bytes = input.split(/[\s,]+/).map(hex => {
+                    const num = parseInt(hex, 16);
+                    if (isNaN(num) || num < 0 || num > 255) {
+                        throw new Error(`無效的16進制數字: ${hex}`);
+                    }
+                    return num;
+                });
+                
+                await sendCommand(new Uint8Array(bytes), "自定義命令");
+            } catch (error) {
+                log(`❌ 自定義命令錯誤: ${error.message}`, 'error');
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+
+        // 事件綁定
+        document.getElementById('connectBtn').onclick = connectToErica;
+        document.getElementById('disconnectBtn').onclick = disconnect;
+        document.getElementById('testV1Btn').onclick = () => testProtocol('V1');
+        document.getElementById('testV2Btn').onclick = () => testProtocol('V2');
+        document.getElementById('testV3Btn').onclick = () => testProtocol('V3');
+        document.getElementById('testV4Btn').onclick = () => testProtocol('V4');
+        document.getElementById('testAllBtn').onclick = testAllProtocols;
+        document.getElementById('stopBtn').onclick = stopVibration;
+        document.getElementById('sendCustomBtn').onclick = sendCustomCommand;
+        document.getElementById('clearLogsBtn').onclick = clearLogs;
+        
+        document.getElementById('intensitySlider').oninput = (e) => {
+            document.getElementById('intensityValue').textContent = e.target.value + '%';
+        };
+
+        document.getElementById('customCmd').onkeypress = (e) => {
+            if (e.key === 'Enter') {
+                sendCustomCommand();
+            }
+        };
+
+        // 初始化
+        log("🔬 ERICA 多協議測試中心已啟動", 'success');
+        log("📋 將測試以下協議:", 'info');
+        log("   • Svakom V1: 55 04 03 00 XX XX", 'info');
+        log("   • Svakom V2: 55 03/06 XX XX XX XX", 'info');
+        log("   • Svakom V3: 55 03/09 XX 00 XX XX", 'info');
+        log("   • Svakom V4: 55 03 01 00 03 XX", 'info');
+        log("🎯 點擊「連接 ERICA」開始測試", 'info');
+        
+        updateButtons();
+    </script>
+</body>
+</html>

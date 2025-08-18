@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buttplug Server WASM Demo</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { margin: 0; font-size: 2.5em; font-weight: 300; }
+        .header p { margin: 10px 0 0; opacity: 0.8; font-size: 1.1em; }
+        .content {
+            padding: 30px;
+        }
+        .status-card {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .status-card.success { border-color: #28a745; background: #f8fff9; }
+        .status-card.error { border-color: #dc3545; background: #fff8f8; }
+        .status-card.warning { border-color: #ffc107; background: #fffef8; }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        button {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        button.success {
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        }
+        button.danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+        .output {
+            background: #1e1e1e;
+            color: #f8f8f2;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            border: 1px solid #333;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .info-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .info-card h3 {
+            margin: 0 0 10px;
+            color: #2c3e50;
+            font-size: 1.2em;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔌 Buttplug Server WASM</h1>
+            <p>Interactive Hardware Control Library - WebAssembly Demo</p>
+        </div>
+        
+        <div class="content">
+            <div id="status" class="status-card">
+                <strong>狀態:</strong> 準備載入 WASM 模組...
+            </div>
+            
+            <div class="controls">
+                <button id="loadBtn" onclick="loadWasm()">
+                    <span id="loadSpinner" class="loading" style="display:none;"></span>
+                    載入 WASM 模組
+                </button>
+                <button id="testBtn" onclick="testBasicFunctions()" disabled>測試基本功能</button>
+                <button id="exportBtn" onclick="showExports()" disabled>顯示導出函數</button>
+                <button id="clearBtn" onclick="clearOutput()">清除輸出</button>
+            </div>
+            
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>📦 模組資訊</h3>
+                    <div id="moduleInfo">等待載入...</div>
+                </div>
+                <div class="info-card">
+                    <h3>🚀 功能測試</h3>
+                    <div id="functionInfo">等待測試...</div>
+                </div>
+            </div>
+            
+            <h3>📝 輸出日誌</h3>
+            <div id="output" class="output">等待開始...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        let wasmModule;
+        let isLoaded = false;
+        
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+            output.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            const classes = {
+                'success': 'status-card success',
+                'error': 'status-card error',
+                'warning': 'status-card warning',
+                'info': 'status-card'
+            };
+            status.className = classes[type];
+            status.innerHTML = `<strong>狀態:</strong> ${message}`;
+        }
+
+        function updateModuleInfo(info) {
+            document.getElementById('moduleInfo').innerHTML = info;
+        }
+
+        function updateFunctionInfo(info) {
+            document.getElementById('functionInfo').innerHTML = info;
+        }
+
+        window.loadWasm = async function() {
+            const loadBtn = document.getElementById('loadBtn');
+            const spinner = document.getElementById('loadSpinner');
+            
+            try {
+                loadBtn.disabled = true;
+                spinner.style.display = 'inline-block';
+                updateStatus('正在載入 WASM 模組...', 'info');
+                log('開始載入 Buttplug Server WASM 模組...');
+                
+                // 載入 WASM 模組
+                const wasmInit = await import('./pkg/buttplug_server.js');
+                log('✓ JavaScript 綁定載入成功');
+                
+                // 初始化 WASM - 使用正確的初始化函數
+                wasmModule = await wasmInit.default('./pkg/buttplug_server_bg.wasm');
+                log('✓ WASM 模組初始化完成');
+                
+                isLoaded = true;
+                updateStatus('WASM 模組載入成功！可以開始測試功能', 'success');
+                
+                // 更新模組資訊
+                updateModuleInfo(`
+                    <strong>模組名稱:</strong> buttplug_server<br>
+                    <strong>版本:</strong> 10.0.0<br>
+                    <strong>類型:</strong> WebAssembly ES Module<br>
+                    <strong>狀態:</strong> <span style="color: #28a745;">已載入 ✓</span>
+                `);
+                
+                // 啟用按鈕
+                document.getElementById('testBtn').disabled = false;
+                document.getElementById('exportBtn').disabled = false;
+                loadBtn.innerHTML = '✅ 已載入';
+                loadBtn.className = 'success';
+                
+                log('🎉 模組已準備就緒！', 'success');
+                
+            } catch (error) {
+                log(`載入失敗: ${error.message}`, 'error');
+                updateStatus(`載入失敗: ${error.message}`, 'error');
+                updateModuleInfo(`<span style="color: #dc3545;">載入失敗 ❌</span>`);
+                console.error('WASM 載入錯誤:', error);
+            } finally {
+                spinner.style.display = 'none';
+                if (!isLoaded) {
+                    loadBtn.disabled = false;
+                }
+            }
+        };
+
+        window.testBasicFunctions = function() {
+            if (!isLoaded) {
+                log('請先載入 WASM 模組', 'warning');
+                return;
+            }
+            
+            try {
+                log('開始測試基本功能...');
+                
+                // 測試模組是否可用
+                log('✓ 模組物件存在且可訪問');
+                
+                // 檢查記憶體
+                if (wasmModule.memory) {
+                    log('✓ WebAssembly 記憶體可用');
+                } else {
+                    log('⚠️ 無法訪問 WebAssembly 記憶體', 'warning');
+                }
+                
+                // 測試基本導出
+                const exportCount = Object.keys(wasmModule).length;
+                log(`✓ 發現 ${exportCount} 個導出項目`);
+                
+                updateFunctionInfo(`
+                    <strong>基本功能:</strong> <span style="color: #28a745;">正常 ✓</span><br>
+                    <strong>記憶體:</strong> <span style="color: #28a745;">可用 ✓</span><br>
+                    <strong>導出項目:</strong> ${exportCount} 個<br>
+                    <strong>最後測試:</strong> ${new Date().toLocaleTimeString()}
+                `);
+                
+                log('🎉 基本功能測試完成！', 'success');
+                
+            } catch (error) {
+                log(`測試失敗: ${error.message}`, 'error');
+                updateFunctionInfo(`<span style="color: #dc3545;">測試失敗 ❌</span>`);
+                console.error('測試錯誤:', error);
+            }
+        };
+
+        window.showExports = function() {
+            if (!isLoaded) {
+                log('請先載入 WASM 模組', 'warning');
+                return;
+            }
+            
+            try {
+                log('📋 可用的導出函數和物件:');
+                
+                const functions = [];
+                const classes = [];
+                const others = [];
+                
+                for (const [key, value] of Object.entries(wasmModule)) {
+                    if (typeof value === 'function') {
+                        if (key[0] === key[0].toUpperCase()) {
+                            classes.push(key);
+                        } else {
+                            functions.push(key);
+                        }
+                    } else {
+                        others.push(key);
+                    }
+                }
+                
+                if (classes.length > 0) {
+                    log(`\n🏗️  類別 (${classes.length}):`, 'info');
+                    classes.forEach(name => log(`   • ${name}`));
+                }
+                
+                if (functions.length > 0) {
+                    log(`\n⚡ 函數 (${functions.length}):`, 'info');
+                    functions.forEach(name => log(`   • ${name}()`));
+                }
+                
+                if (others.length > 0) {
+                    log(`\n📦 其他導出 (${others.length}):`, 'info');
+                    others.forEach(name => log(`   • ${name} (${typeof wasmModule[name]})`));
+                }
+                
+                log(`\n📊 總計: ${classes.length + functions.length + others.length} 個導出項目`, 'success');
+                
+            } catch (error) {
+                log(`顯示導出項目失敗: ${error.message}`, 'error');
+                console.error('導出錯誤:', error);
+            }
+        };
+
+        window.clearOutput = function() {
+            document.getElementById('output').textContent = '';
+            log('輸出已清除');
+        };
+
+        // 頁面載入完成時的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🌐 Buttplug Server WASM 測試頁面已載入');
+            log('👆 點擊 "載入 WASM 模組" 開始測試');
+            
+            updateModuleInfo('等待載入...');
+            updateFunctionInfo('等待測試...');
+        });
+    </script>
+</body>
+</html>

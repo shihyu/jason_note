@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ERICA 直接測試 - WebBluetooth</title>
+</head>
+<body>
+    <h2>ERICA 直接測試</h2>
+    <p style="color: blue;">✅ 跳過WASM連接器，直接使用WebBluetooth API測試</p>
+    
+    <div style="margin: 20px 0;">
+        <button id="scanBtn" style="padding: 15px; background: blue; color: white; font-size: 16px;">掃描並連接 ERICA</button>
+        <button id="testBtn" style="padding: 15px; background: orange; color: white; font-size: 16px;" disabled>測試振動</button>
+    </div>
+    
+    <div style="margin: 20px 0;">
+        <h3>手動振動控制</h3>
+        <div style="margin: 10px 0;">
+            <label for="vibrateSlider">振動強度: </label>
+            <input type="range" id="vibrateSlider" min="1" max="10" value="3" style="width: 200px;" disabled>
+            <span id="vibrateValue">3</span>
+        </div>
+        <div style="margin: 10px 0;">
+            <button id="vibrateBtn" style="padding: 10px; background: red; color: white;" disabled>開始振動</button>
+            <button id="stopBtn" style="padding: 10px; background: gray; color: white;" disabled>停止振動</button>
+        </div>
+    </div>
+    
+    <div style="margin: 20px 0;">
+        <h3>設備狀態</h3>
+        <div id="deviceStatus" style="border: 1px solid #ccc; padding: 10px; min-height: 50px; background: #f9f9f9;">
+            未連接設備
+        </div>
+    </div>
+    
+    <div id="logs" style="border: 1px solid #ccc; padding: 10px; margin: 10px 0; height: 400px; overflow-y: scroll; font-family: monospace; font-size: 11px; background: #f5f5f5;">
+        <div style="color: green; font-weight: bold;">[系統] ERICA 直接測試模式已啟動</div>
+    </div>
+
+    <script>
+        let device = null;
+        let writeCharacteristic = null;
+        let notifyCharacteristic = null;
+        let isConnected = false;
+        let isVibrating = false;
+
+        function log(message) {
+            const div = document.getElementById('logs');
+            const time = new Date().toLocaleTimeString();
+            div.innerHTML += `<div style="margin: 2px 0;">[${time}] ${message}</div>`;
+            div.scrollTop = div.scrollHeight;
+            console.log(message);
+        }
+
+        function updateStatus(status) {
+            document.getElementById('deviceStatus').innerHTML = status;
+        }
+
+        function updateButtons() {
+            document.getElementById('testBtn').disabled = !isConnected;
+            document.getElementById('vibrateSlider').disabled = !isConnected;
+            document.getElementById('vibrateBtn').disabled = !isConnected;
+            document.getElementById('stopBtn').disabled = !isConnected;
+        }
+
+        async function scanAndConnect() {
+            try {
+                log("🔍 <strong>開始掃描 ERICA 設備...</strong>");
+                
+                // 直接請求 ERICA 設備
+                device = await navigator.bluetooth.requestDevice({
+                    filters: [
+                        { name: 'ERICA' }
+                    ],
+                    optionalServices: [
+                        '0000ffe0-0000-1000-8000-00805f9b34fb',
+                        'device_information'
+                    ]
+                });
+                
+                log(`✅ <span style="color: green;">找到 ERICA: ${device.name}</span>`);
+                updateStatus(`已找到設備: ${device.name}<br>設備 ID: ${device.id}`);
+                
+                log("🔗 <strong>連接到 ERICA...</strong>");
+                const server = await device.gatt.connect();
+                log("✅ <span style=\"color: green;\">GATT 連接成功</span>");
+                
+                // 獲取主要服務
+                const service = await server.getPrimaryService('0000ffe0-0000-1000-8000-00805f9b34fb');
+                log("✅ <span style=\"color: green;\">獲取服務成功</span>");
+                
+                // 獲取寫入特徵
+                writeCharacteristic = await service.getCharacteristic('0000ffe1-0000-1000-8000-00805f9b34fb');
+                log("✅ <span style=\"color: green;\">獲取寫入特徵成功</span>");
+                
+                // 獲取通知特徵
+                try {
+                    notifyCharacteristic = await service.getCharacteristic('0000ffe2-0000-1000-8000-00805f9b34fb');
+                    
+                    // 啟用通知
+                    notifyCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+                        const value = event.target.value;
+                        const bytes = Array.from(new Uint8Array(value));
+                        log(`📨 <span style="color: purple;">收到回應: [${bytes.join(', ')}]</span>`);
+                    });
+                    
+                    await notifyCharacteristic.startNotifications();
+                    log("✅ <span style=\"color: green;\">通知已啟用</span>");
+                } catch (e) {
+                    log("⚠️ <span style=\"color: orange;\">通知特徵不可用</span>");
+                }
+                
+                isConnected = true;
+                updateStatus(`✅ <strong style="color: green;">已成功連接到 ${device.name}</strong><br>可以開始振動測試`);
+                updateButtons();
+                
+                // 斷線監聽
+                device.addEventListener('gattserverdisconnected', () => {
+                    log("🔌 <span style=\"color: red;\">設備已斷線</span>");
+                    isConnected = false;
+                    isVibrating = false;
+                    updateStatus("<span style=\"color: red;\">設備已斷線</span>");
+                    updateButtons();
+                });
+                
+                log("🎉 <strong style=\"color: green;\">ERICA 連接成功！可以開始測試振動</strong>");
+                
+            } catch (error) {
+                log(`❌ <span style="color: red;">連接失敗: ${error.message}</span>`);
+                updateStatus(`<span style="color: red;">連接失敗: ${error.message}</span>`);
+            }
+        }
+
+        async function testVibration() {
+            if (!writeCharacteristic) return;
+            
+            try {
+                log("🧪 <strong>開始 ERICA 振動測試...</strong>");
+                
+                // 使用已知有效的 Svakom ERICA 協議
+                const testSequences = [
+                    { name: "輕微振動 (強度2)", data: [0x55, 0x03, 0x00, 0x00, 0x00, 0x02], duration: 2000 },
+                    { name: "中等振動 (強度5)", data: [0x55, 0x03, 0x00, 0x00, 0x00, 0x05], duration: 2000 },
+                    { name: "強烈振動 (強度8)", data: [0x55, 0x03, 0x00, 0x00, 0x00, 0x08], duration: 3000 },
+                ];
+                
+                for (let i = 0; i < testSequences.length; i++) {
+                    const seq = testSequences[i];
+                    log(`🎮 <strong>測試 ${i+1}/3: ${seq.name}</strong>`);
+                    log(`📤 發送命令: [${seq.data.join(', ')}]`);
+                    
+                    try {
+                        await writeCharacteristic.writeValue(new Uint8Array(seq.data));
+                        log(`✅ <span style="color: green;">命令發送成功，振動 ${seq.duration/1000} 秒...</span>`);
+                        
+                        await new Promise(resolve => setTimeout(resolve, seq.duration));
+                        
+                        // 發送停止命令
+                        await writeCharacteristic.writeValue(new Uint8Array([0x55, 0x03, 0x00, 0x00, 0x00, 0x00]));
+                        log(`⏹️ 停止振動`);
+                        
+                        if (i < testSequences.length - 1) {
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                        }
+                        
+                    } catch (error) {
+                        log(`❌ <span style="color: red;">測試 ${i+1} 失敗: ${error.message}</span>`);
+                    }
+                }
+                
+                log("🏁 <strong style=\"color: green;\">振動測試完成！</strong>");
+                
+            } catch (error) {
+                log(`❌ <span style="color: red;">測試失敗: ${error.message}</span>`);
+            }
+        }
+
+        async function startVibration() {
+            if (!writeCharacteristic) return;
+            
+            const slider = document.getElementById('vibrateSlider');
+            const intensity = parseInt(slider.value);
+            
+            try {
+                isVibrating = true;
+                log(`🎮 <strong>開始手動振動，強度: ${intensity}/10</strong>`);
+                
+                // 使用 Svakom ERICA 協議
+                const command = new Uint8Array([
+                    0x55, 0x03, 0x00,  // 固定頭部
+                    0x00,              // kind: 普通振動
+                    0x00,              // preset: 無預設
+                    intensity          // intensity: 1-10
+                ]);
+                
+                await writeCharacteristic.writeValue(command);
+                log(`✅ <span style="color: green;">振動命令發送: [${Array.from(command).join(', ')}]</span>`);
+                
+            } catch (error) {
+                log(`❌ <span style="color: red;">振動失敗: ${error.message}</span>`);
+                isVibrating = false;
+            }
+        }
+
+        async function stopVibration() {
+            if (!writeCharacteristic) return;
+            
+            try {
+                isVibrating = false;
+                log("🛑 <strong>停止振動</strong>");
+                
+                // Svakom 停止命令
+                const command = new Uint8Array([0x55, 0x03, 0x00, 0x00, 0x00, 0x00]);
+                await writeCharacteristic.writeValue(command);
+                log(`✅ <span style="color: green;">停止命令發送: [${Array.from(command).join(', ')}]</span>`);
+                
+            } catch (error) {
+                log(`❌ <span style="color: red;">停止失敗: ${error.message}</span>`);
+            }
+        }
+
+        async function updateVibrationIntensity() {
+            if (!isVibrating || !writeCharacteristic) return;
+            
+            const slider = document.getElementById('vibrateSlider');
+            const intensity = parseInt(slider.value);
+            
+            try {
+                const command = new Uint8Array([0x55, 0x03, 0x00, 0x00, 0x00, intensity]);
+                await writeCharacteristic.writeValue(command);
+                log(`🔧 調整強度到 ${intensity}/10`);
+            } catch (error) {
+                // 忽略調整錯誤，避免日誌過多
+            }
+        }
+
+        // 初始化
+        log("<span style=\"color: blue; font-weight: bold;\">[初始化] ERICA 直接測試準備就緒</span>");
+        log("💡 <strong>說明</strong>：此頁面直接使用 WebBluetooth API，跳過 WASM 連接器");
+        log("📋 <strong>步驟</strong>：1) 點擊掃描按鈕 → 2) 選擇 ERICA 設備 → 3) 測試振動");
+        
+        document.getElementById('scanBtn').onclick = scanAndConnect;
+        document.getElementById('testBtn').onclick = testVibration;
+        document.getElementById('vibrateBtn').onclick = startVibration;
+        document.getElementById('stopBtn').onclick = stopVibration;
+        
+        // 滑桿事件
+        const slider = document.getElementById('vibrateSlider');
+        const valueDisplay = document.getElementById('vibrateValue');
+        
+        slider.oninput = () => {
+            valueDisplay.textContent = slider.value;
+            if (isVibrating) {
+                updateVibrationIntensity();
+            }
+        };
+        
+        updateButtons();
+        log("🎉 <strong style=\"color: green;\">準備完成！請點擊「掃描並連接 ERICA」開始測試</strong>");
+    </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+/home/shihyu/github/jason_note/src/tools/data/buttplug-dev/target/wasm32-unknown-unknown/release/deps/libthiserror-40f31b77a2530f79.rmeta: /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/lib.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/aserror.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/display.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/provide.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/var.rs
+
+/home/shihyu/github/jason_note/src/tools/data/buttplug-dev/target/wasm32-unknown-unknown/release/deps/libthiserror-40f31b77a2530f79.rlib: /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/lib.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/aserror.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/display.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/provide.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/var.rs
+
+/home/shihyu/github/jason_note/src/tools/data/buttplug-dev/target/wasm32-unknown-unknown/release/deps/thiserror-40f31b77a2530f79.d: /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/lib.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/aserror.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/display.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/provide.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/var.rs
+
+/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/lib.rs:
+/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/aserror.rs:
+/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/display.rs:
+/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/provide.rs:
+/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.15/src/var.rs:
