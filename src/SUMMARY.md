@@ -7,6 +7,7 @@
     - [Command](ubuntu/command.md)
     - [GCP SSH](ubuntu/gcp.md)
     - [Wine](ubuntu/wine.md)
+    - [Ubuntu 藍牙設備設定指南](ubuntu/ubuntu_bluetooth_setup.md)
 - [Docker](docker/docker_helloworld.md)
     - [Docker Basic Tutorial](docker/docker.md)
     - [Simple Example](docker/example.md)
