@@ -17,22 +17,26 @@ try {
 
 // 在頁面上顯示 log
 function addLog(message) {
-  const logDiv = document.getElementById('logs') || createLogDiv();
+  const logDiv = document.getElementById('logs');
+  if (!logDiv) {
+    console.error('Debug logs container not found');
+    console.log(message);
+    return;
+  }
+  
   const p = document.createElement('p');
   p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
   logDiv.appendChild(p);
+  
+  // 自動滾動到最新訊息
+  logDiv.scrollTop = logDiv.scrollHeight;
+  
   console.log(message);
 }
 
 function createLogDiv() {
-  const logDiv = document.createElement('div');
-  logDiv.id = 'logs';
-  logDiv.style.cssText = 'border:1px solid #ccc; padding:10px; margin:10px 0; height:300px; overflow-y:scroll; font-family:monospace; font-size:12px';
-  const title = document.createElement('h3');
-  title.textContent = 'Debug Logs:';
-  document.body.insertBefore(title, document.body.firstChild);
-  document.body.insertBefore(logDiv, title.nextSibling);
-  return logDiv;
+  // 此函數不再需要，因為 logs div 已經在 HTML 中定義
+  return document.getElementById('logs');
 }
 
 // 全域變數來追蹤狀態
@@ -226,10 +230,15 @@ onload = () => {
   slider.oninput = () => {
     const intensity = slider.value / 100;
     valueDisplay.textContent = slider.value + '%';
+    addLog(`振動強度調整為: ${slider.value}%`);
     
     // 即時調整振動強度
     if (isVibrating) {
       setVibrationIntensity(intensity);
+    } else if (connectedDevices.length === 0) {
+      addLog("尚未連接設備，無法調整振動強度");
+    } else {
+      addLog("設備已連接但未開始振動，請先點擊「開始振動」");
     }
   };
   
