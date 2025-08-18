@@ -24,8 +24,7 @@ build: install build-wasm build-js build-dist copy-wasm
 # 編譯 Rust WASM
 build-wasm:
 	@echo "編譯 Rust WASM..."
-	# cd $(RUST_DIR) && wasm-pack build --release --target web
-	cd $(RUST_DIR) && wasm-pack build --target web --release --no-default-features --features wasm
+	cd $(RUST_DIR) && wasm-pack build --release --target web
 
 # 編譯 JS 專案
 build-js:

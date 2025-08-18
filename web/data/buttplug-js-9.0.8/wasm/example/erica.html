@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERICA Bluetooth Controller</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+      
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 20px;
+        height: calc(100vh - 40px);
+      }
+      
+      .panel {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      }
+      
+      h1 {
+        color: #333;
+        margin-bottom: 20px;
+        font-size: 28px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      
+      h2 {
+        color: #555;
+        margin: 20px 0 15px;
+        font-size: 18px;
+        font-weight: 600;
+      }
+      
+      .control-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+      }
+      
+      button {
+        padding: 12px 24px;
+        font-size: 16px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        margin: 5px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+      }
+      
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      }
+      
+      button:active {
+        transform: translateY(0);
+      }
+      
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+      
+      .btn-success {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+      }
+      
+      .btn-danger {
+        background: linear-gradient(135deg, #f53844 0%, #df1f2f 100%);
+        color: white;
+      }
+      
+      .btn-warning {
+        background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+        color: white;
+      }
+      
+      input[type="range"] {
+        width: 100%;
+        height: 8px;
+        border-radius: 5px;
+        background: #ddd;
+        outline: none;
+        -webkit-appearance: none;
+        margin: 20px 0;
+      }
+      
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        cursor: pointer;
+      }
+      
+      input[type="range"]::-moz-range-thumb {
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        cursor: pointer;
+      }
+      
+      .intensity-display {
+        font-size: 48px;
+        font-weight: bold;
+        text-align: center;
+        color: #667eea;
+        margin: 10px 0;
+      }
+      
+      #deviceList {
+        min-height: 100px;
+        padding: 15px;
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+      }
+      
+      .device-item {
+        padding: 15px;
+        margin: 10px 0;
+        background: #f5f5f5;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+      }
+      
+      .device-item strong {
+        color: #333;
+        font-size: 16px;
+      }
+      
+      .status {
+        padding: 10px 15px;
+        border-radius: 8px;
+        margin: 10px 0;
+        font-weight: 500;
+      }
+      
+      .status-connected {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      
+      .status-scanning {
+        background: #cce5ff;
+        color: #004085;
+        border: 1px solid #b8daff;
+      }
+      
+      .status-disconnected {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      
+      .debug-logs {
+        height: calc(100vh - 160px);
+        overflow-y: auto;
+        background: #f9f9f9;
+        border-radius: 10px;
+        padding: 15px;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+      }
+      
+      .debug-logs p {
+        margin: 3px 0;
+        padding: 3px 0;
+        border-bottom: 1px solid #eee;
+        word-wrap: break-word;
+      }
+      
+      .pattern-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 15px;
+      }
+      
+      @media (max-width: 768px) {
+        .container {
+          grid-template-columns: 1fr;
+        }
+        
+        .debug-logs {
+          height: 300px;
+        }
+      }
+    </style>
+</head>
+<body>
+    <div class="container">
+      <div class="panel">
+        <h1>🎮 ERICA Bluetooth Controller</h1>
+        
+        <div class="control-section">
+          <h2>📡 連接控制</h2>
+          <div id="status" class="status status-disconnected">未連接</div>
+          <div style="margin-top: 15px;">
+            <button id="scanBtn" class="btn-primary">開始掃描</button>
+            <button id="disconnectBtn" class="btn-danger">斷開連接</button>
+          </div>
+        </div>
+        
+        <div class="control-section">
+          <h2>🎛️ 振動控制</h2>
+          <div class="intensity-display" id="intensityDisplay">0%</div>
+          <input type="range" id="vibrateSlider" min="0" max="100" value="0">
+          <div style="text-align: center;">
+            <button id="vibrateBtn" class="btn-success">開始振動</button>
+            <button id="stopBtn" class="btn-danger">停止</button>
+          </div>
+          <div class="pattern-buttons">
+            <button id="pulseBtn" class="btn-warning">脈衝模式</button>
+            <button id="waveBtn" class="btn-warning">波浪模式</button>
+            <button id="randomBtn" class="btn-warning">隨機模式</button>
+          </div>
+        </div>
+        
+        <div class="control-section">
+          <h2>📱 已連接設備</h2>
+          <div id="deviceList">
+            尚無連接設備
+          </div>
+        </div>
+      </div>
+      
+      <div class="panel">
+        <h2>🔍 調試日誌</h2>
+        <button id="clearLogsBtn" style="margin-bottom: 10px;">清除日誌</button>
+        <div id="logs" class="debug-logs"></div>
+      </div>
+    </div>
+
+    <script type="module">
+      // Import modules
+      let ButtplugWasmClientConnector, ButtplugClient;
+      
+      function addLog(message) {
+        const logDiv = document.getElementById('logs');
+        const p = document.createElement('p');
+        p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logDiv.appendChild(p);
+        logDiv.scrollTop = logDiv.scrollHeight;
+        console.log(message);
+      }
+      
+      // 異步載入模組的函數
+      async function loadModules() {
+        try {
+          // 只在支援 WebBluetooth 的瀏覽器載入 WASM
+          if ('bluetooth' in navigator) {
+            const wasmModule = await import("@wasm");
+            ButtplugWasmClientConnector = wasmModule.ButtplugWasmClientConnector;
+            addLog("✅ WASM 模組載入成功");
+          } else {
+            addLog("⚠️ WebBluetooth 不支援，跳過 WASM 載入");
+          }
+          
+          const buttplugModule = await import("@buttplug");
+          // Try different possible export names
+          ButtplugClient = buttplugModule.ButtplugClient || buttplugModule.kn || buttplugModule.default?.ButtplugClient;
+          if (!ButtplugClient) {
+            throw new Error("ButtplugClient not found in module exports");
+          }
+          addLog("✅ Buttplug 客戶端載入成功");
+          return true;
+        } catch (error) {
+          addLog(`❌ 模組載入失敗: ${error.message}`);
+          console.error(error);
+          return false;
+        }
+      }
+
+      // Global state
+      let client = null;
+      let isScanning = false;
+      let connectedDevices = [];
+      let currentPattern = null;
+      let patternInterval = null;
+      let isLoggingActivated = false;
+
+      function updateStatus(message, className) {
+        const statusDiv = document.getElementById('status');
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${className}`;
+      }
+
+      function updateDeviceList() {
+        const deviceListDiv = document.getElementById('deviceList');
+        if (connectedDevices.length === 0) {
+          deviceListDiv.innerHTML = '尚無連接設備';
+        } else {
+          deviceListDiv.innerHTML = connectedDevices.map(device => {
+            const vibratorCount = device.vibrateAttributes?.length || 
+                                 device.messageAttributes?.ScalarCmd?.length || 0;
+            return `<div class="device-item">
+              <strong>${device.name}</strong> (索引: ${device.index})
+              <br>振動器數量: ${vibratorCount}
+              <br>API類型: ${device.vibrateAttributes ? 'vibrate()' : 'scalar()'}
+            </div>`;
+          }).join('');
+        }
+      }
+
+      async function startScanning() {
+        try {
+          // 確保模組已載入
+          if (!ButtplugWasmClientConnector || !ButtplugClient) {
+            addLog("❌ 必要模組未載入，無法開始掃描");
+            return;
+          }
+          
+          // 檢測 WebBluetooth 支援情況
+          addLog("=== 開始檢測 WebBluetooth 支援 ===");
+          addLog(`瀏覽器: ${navigator.userAgent}`);
+          
+          if (typeof navigator === 'undefined') {
+            addLog("❌ navigator 物件不存在");
+          } else {
+            addLog("✅ navigator 物件存在");
+            
+            // 檢測 bluetooth API
+            if ('bluetooth' in navigator) {
+              addLog("✅ navigator.bluetooth 存在");
+              addLog(`navigator.bluetooth 類型: ${typeof navigator.bluetooth}`);
+              addLog(`navigator.bluetooth 物件: ${navigator.bluetooth}`);
+              
+              // 嘗試列出可用的方法
+              try {
+                const bluetoothMethods = Object.getOwnPropertyNames(Object.getPrototypeOf(navigator.bluetooth));
+                addLog(`可用的 Bluetooth 方法: ${bluetoothMethods.join(', ')}`);
+              } catch (e) {
+                addLog(`無法列出 Bluetooth 方法: ${e.message}`);
+              }
+              
+              // 檢測 getAvailability
+              if (navigator.bluetooth.getAvailability) {
+                try {
+                  const isAvailable = await navigator.bluetooth.getAvailability();
+                  addLog(`Bluetooth 可用性: ${isAvailable ? '可用' : '不可用'}`);
+                } catch (e) {
+                  addLog(`無法檢測 Bluetooth 可用性: ${e.message}`);
+                }
+              } else {
+                addLog("⚠️ getAvailability 方法不存在");
+              }
+              
+              // 檢測 requestDevice
+              if (navigator.bluetooth.requestDevice) {
+                addLog("✅ requestDevice 方法存在");
+              } else {
+                addLog("❌ requestDevice 方法不存在");
+              }
+            } else {
+              addLog("❌ navigator.bluetooth 不存在");
+              addLog("提示: Firefox 不支援 WebBluetooth API");
+              addLog("請使用 Chrome、Edge 或 Opera 瀏覽器");
+              
+              // 檢查是否有其他相關 API
+              if ('usb' in navigator) {
+                addLog("ℹ️ 發現 WebUSB API");
+              }
+              if ('serial' in navigator) {
+                addLog("ℹ️ 發現 WebSerial API");
+              }
+            }
+          }
+          addLog("=== WebBluetooth 檢測完成 ===");
+          
+          if (isScanning || client) {
+            // Stop and restart
+            if (client) {
+              try {
+                if (isScanning) await client.stopScanning();
+                await client.disconnect();
+              } catch (e) {
+                addLog(`停止警告: ${e.message}`);
+              }
+              client = null;
+              isScanning = false;
+              connectedDevices = [];
+              updateDeviceList();
+            }
+          }
+          
+          addLog("創建客戶端...");
+          client = new ButtplugClient("ERICA Controller");
+          
+          // Setup event listeners
+          client.addListener('deviceadded', (device) => {
+            addLog(`✅ 發現設備: ${device.name}`);
+            connectedDevices.push(device);
+            updateDeviceList();
+            updateStatus(`已連接: ${device.name}`, 'status-connected');
+          });
+          
+          client.addListener('deviceremoved', (device) => {
+            addLog(`❌ 設備移除: ${device.name}`);
+            connectedDevices = connectedDevices.filter(d => d.index !== device.index);
+            updateDeviceList();
+            if (connectedDevices.length === 0) {
+              updateStatus('未連接', 'status-disconnected');
+            }
+          });
+          
+          client.addListener('scanningfinished', () => {
+            addLog("掃描結束");
+            isScanning = false;
+            if (connectedDevices.length > 0) {
+              updateStatus(`已連接 ${connectedDevices.length} 個設備`, 'status-connected');
+            } else {
+              updateStatus('未找到設備', 'status-disconnected');
+            }
+          });
+          
+          // Activate logging once
+          if (!isLoggingActivated) {
+            try {
+              await ButtplugWasmClientConnector.activateLogging();
+              isLoggingActivated = true;
+            } catch (e) {
+              addLog(`日誌激活警告: ${e.message}`);
+            }
+          }
+          
+          // Connect
+          const connector = new ButtplugWasmClientConnector();
+          await client.connect(connector);
+          addLog("已連接到伺服器");
+          
+          // Start scanning
+          updateStatus('正在掃描設備...', 'status-scanning');
+          isScanning = true;
+          await client.startScanning();
+          addLog("開始掃描藍牙設備...");
+          
+          // Auto-stop after 10 seconds
+          setTimeout(async () => {
+            if (isScanning && client) {
+              try {
+                await client.stopScanning();
+                isScanning = false;
+              } catch (e) {
+                addLog(`自動停止警告: ${e.message}`);
+              }
+            }
+          }, 10000);
+          
+        } catch (error) {
+          addLog(`❌ 錯誤: ${error.message}`);
+          console.error(error);
+          isScanning = false;
+          client = null;
+          updateStatus('連接失敗', 'status-disconnected');
+        }
+      }
+
+      async function disconnect() {
+        stopPattern();
+        
+        if (client) {
+          try {
+            if (isScanning) await client.stopScanning();
+            await client.disconnect();
+          } catch (error) {
+            addLog(`斷開警告: ${error.message}`);
+          } finally {
+            client = null;
+            connectedDevices = [];
+            updateDeviceList();
+            isScanning = false;
+            updateStatus('未連接', 'status-disconnected');
+            addLog("已斷開連接");
+          }
+        }
+      }
+
+      async function setVibration(intensity) {
+        if (connectedDevices.length === 0) return;
+        
+        try {
+          for (const device of connectedDevices) {
+            // Try vibrate() API first (older devices)
+            if (device.vibrateAttributes && device.vibrateAttributes.length > 0) {
+              const vibrateArray = new Array(device.vibrateAttributes.length).fill(intensity);
+              await device.vibrate(vibrateArray);
+            }
+            // Try scalar() API (newer devices)
+            else if (device.messageAttributes?.ScalarCmd) {
+              await device.scalar(intensity);
+            }
+          }
+        } catch (error) {
+          addLog(`振動錯誤: ${error.message}`);
+        }
+      }
+
+      async function startVibration() {
+        const slider = document.getElementById('vibrateSlider');
+        const intensity = slider.value / 100;
+        
+        if (connectedDevices.length === 0) {
+          addLog("無連接設備");
+          return;
+        }
+        
+        stopPattern();
+        await setVibration(intensity);
+        addLog(`振動強度設置為 ${slider.value}%`);
+      }
+
+      async function stopVibration() {
+        stopPattern();
+        
+        if (connectedDevices.length === 0) return;
+        
+        try {
+          for (const device of connectedDevices) {
+            await device.stop();
+          }
+          document.getElementById('vibrateSlider').value = 0;
+          document.getElementById('intensityDisplay').textContent = '0%';
+          addLog("振動已停止");
+        } catch (error) {
+          addLog(`停止錯誤: ${error.message}`);
+        }
+      }
+
+      function stopPattern() {
+        if (patternInterval) {
+          clearInterval(patternInterval);
+          patternInterval = null;
+          currentPattern = null;
+        }
+      }
+
+      function startPulsePattern() {
+        if (connectedDevices.length === 0) {
+          addLog("無連接設備");
+          return;
+        }
+        
+        stopPattern();
+        currentPattern = 'pulse';
+        addLog("啟動脈衝模式");
+        
+        let intensity = 0;
+        let direction = 1;
+        
+        patternInterval = setInterval(async () => {
+          intensity += direction * 0.05;
+          if (intensity >= 1) {
+            intensity = 1;
+            direction = -1;
+          } else if (intensity <= 0) {
+            intensity = 0;
+            direction = 1;
+          }
+          
+          document.getElementById('vibrateSlider').value = intensity * 100;
+          document.getElementById('intensityDisplay').textContent = Math.round(intensity * 100) + '%';
+          
+          try {
+            await setVibration(intensity);
+          } catch (error) {
+            addLog(`模式錯誤: ${error.message}`);
+            stopPattern();
+          }
+        }, 100);
+      }
+
+      function startWavePattern() {
+        if (connectedDevices.length === 0) {
+          addLog("無連接設備");
+          return;
+        }
+        
+        stopPattern();
+        currentPattern = 'wave';
+        addLog("啟動波浪模式");
+        
+        let phase = 0;
+        
+        patternInterval = setInterval(async () => {
+          const intensity = (Math.sin(phase) + 1) / 2;
+          phase += 0.1;
+          
+          document.getElementById('vibrateSlider').value = intensity * 100;
+          document.getElementById('intensityDisplay').textContent = Math.round(intensity * 100) + '%';
+          
+          try {
+            await setVibration(intensity);
+          } catch (error) {
+            addLog(`模式錯誤: ${error.message}`);
+            stopPattern();
+          }
+        }, 50);
+      }
+
+      function startRandomPattern() {
+        if (connectedDevices.length === 0) {
+          addLog("無連接設備");
+          return;
+        }
+        
+        stopPattern();
+        currentPattern = 'random';
+        addLog("啟動隨機模式");
+        
+        patternInterval = setInterval(async () => {
+          const intensity = Math.random();
+          
+          document.getElementById('vibrateSlider').value = intensity * 100;
+          document.getElementById('intensityDisplay').textContent = Math.round(intensity * 100) + '%';
+          
+          try {
+            await setVibration(intensity);
+          } catch (error) {
+            addLog(`模式錯誤: ${error.message}`);
+            stopPattern();
+          }
+        }, 300);
+      }
+
+      // Initialize UI
+      window.onload = async () => {
+        addLog("🚀 ERICA控制器初始化中...");
+        
+        // 載入模組
+        const modulesLoaded = await loadModules();
+        if (!modulesLoaded) {
+          addLog("❌ 模組載入失敗，部分功能可能無法使用");
+        }
+        
+        addLog("🚀 ERICA控制器已就緒");
+        
+        // Buttons
+        document.getElementById('scanBtn').onclick = startScanning;
+        document.getElementById('disconnectBtn').onclick = disconnect;
+        document.getElementById('vibrateBtn').onclick = startVibration;
+        document.getElementById('stopBtn').onclick = stopVibration;
+        document.getElementById('pulseBtn').onclick = startPulsePattern;
+        document.getElementById('waveBtn').onclick = startWavePattern;
+        document.getElementById('randomBtn').onclick = startRandomPattern;
+        
+        // Slider
+        const slider = document.getElementById('vibrateSlider');
+        slider.oninput = async () => {
+          const intensity = slider.value / 100;
+          document.getElementById('intensityDisplay').textContent = slider.value + '%';
+          
+          if (connectedDevices.length > 0 && !currentPattern) {
+            await setVibration(intensity);
+          }
+        };
+        
+        // Clear logs
+        document.getElementById('clearLogsBtn').onclick = () => {
+          document.getElementById('logs').innerHTML = '';
+          addLog("日誌已清除");
+        };
+        
+        // Instructions
+        addLog("使用說明:");
+        addLog("1. 確保ERICA設備已開啟配對模式");
+        addLog("2. 點擊「開始掃描」按鈕");
+        addLog("3. 從藍牙列表中選擇ERICA設備");
+        addLog("4. 連接後即可控制振動");
+      };
+    </script>
+</body>
+</html>
