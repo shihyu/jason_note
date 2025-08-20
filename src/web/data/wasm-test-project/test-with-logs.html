@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WASM Log 顯示測試</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-panel {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .clear-btn {
+            background: #f56565;
+        }
+
+        .clear-btn:hover {
+            background: #e53e3e;
+        }
+
+        .log-container {
+            background: #1a202c;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .log-entry {
+            font-family: 'Consolas', 'Monaco', monospace;
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 4px;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .log-type-log {
+            background: rgba(72, 187, 120, 0.1);
+            color: #48bb78;
+            border-left: 3px solid #48bb78;
+        }
+
+        .log-type-error {
+            background: rgba(245, 101, 101, 0.1);
+            color: #fc8181;
+            border-left: 3px solid #f56565;
+        }
+
+        .log-type-warn {
+            background: rgba(237, 137, 54, 0.1);
+            color: #ed8936;
+            border-left: 3px solid #ed8936;
+        }
+
+        .log-type-info {
+            background: rgba(66, 153, 225, 0.1);
+            color: #4299e1;
+            border-left: 3px solid #4299e1;
+        }
+
+        .log-type-time {
+            background: rgba(159, 122, 234, 0.1);
+            color: #9f7aea;
+            border-left: 3px solid #9f7aea;
+        }
+
+        .timestamp {
+            color: #718096;
+            font-size: 12px;
+            margin-right: 10px;
+        }
+
+        .status {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+
+        .status-label {
+            font-weight: bold;
+            color: #4a5568;
+        }
+
+        .status-value {
+            color: #2d3748;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            margin: 20px 0;
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #c53030;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #2d3748;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4a5568;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #718096;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 WASM Log 即時顯示測試</h1>
+        
+        <div class="status" id="status">
+            <div class="status-item">
+                <span class="status-label">WASM 狀態:</span>
+                <span class="status-value" id="wasmStatus">未載入</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Log 數量:</span>
+                <span class="status-value" id="logCount">0</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">最後更新:</span>
+                <span class="status-value" id="lastUpdate">-</span>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <h3>測試控制面板</h3>
+            <div class="button-group">
+                <button onclick="testBasicMath()">基本數學測試</button>
+                <button onclick="testStringProcessing()">字符串處理測試</button>
+                <button onclick="testHeavyComputation()">重計算測試</button>
+                <button onclick="testArrayProcessing()">數組處理測試</button>
+                <button onclick="testErrorHandling()">錯誤處理測試</button>
+                <button onclick="testPerformance()">性能基準測試</button>
+                <button onclick="testMemoryInfo()">內存信息測試</button>
+                <button onclick="runAllTests()">執行所有測試</button>
+                <button class="clear-btn" onclick="clearLogs()">清除 Logs</button>
+            </div>
+        </div>
+
+        <div class="log-container" id="logContainer">
+            <div class="loading">正在載入 WASM 模組...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        let wasmModule = null;
+        let logCount = 0;
+        const logContainer = document.getElementById('logContainer');
+        const logCountElement = document.getElementById('logCount');
+        const lastUpdateElement = document.getElementById('lastUpdate');
+        const wasmStatusElement = document.getElementById('wasmStatus');
+
+        // 保存原始的 console 方法
+        const originalConsole = {
+            log: console.log.bind(console),
+            error: console.error.bind(console),
+            warn: console.warn.bind(console),
+            info: console.info.bind(console),
+            time: console.time.bind(console),
+            timeEnd: console.timeEnd.bind(console)
+        };
+
+        // 攔截 console 輸出
+        function interceptConsole() {
+            const timeMarks = new Map();
+
+            console.log = function(...args) {
+                originalConsole.log(...args);
+                addLogEntry('log', args.join(' '));
+            };
+
+            console.error = function(...args) {
+                originalConsole.error(...args);
+                addLogEntry('error', args.join(' '));
+            };
+
+            console.warn = function(...args) {
+                originalConsole.warn(...args);
+                addLogEntry('warn', args.join(' '));
+            };
+
+            console.info = function(...args) {
+                originalConsole.info(...args);
+                addLogEntry('info', args.join(' '));
+            };
+
+            console.time = function(label) {
+                originalConsole.time(label);
+                timeMarks.set(label, performance.now());
+                addLogEntry('time', `⏱️ 計時開始: ${label}`);
+            };
+
+            console.timeEnd = function(label) {
+                originalConsole.timeEnd(label);
+                if (timeMarks.has(label)) {
+                    const duration = performance.now() - timeMarks.get(label);
+                    timeMarks.delete(label);
+                    addLogEntry('time', `⏱️ 計時結束: ${label} - ${duration.toFixed(2)}ms`);
+                }
+            };
+        }
+
+        // 添加 log 條目到頁面
+        function addLogEntry(type, message) {
+            // 第一次 log 時清除 loading 訊息
+            if (logCount === 0) {
+                logContainer.innerHTML = '';
+            }
+
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-type-${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString('zh-TW', {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                fractionalSecondDigits: 3
+            });
+            
+            entry.innerHTML = `<span class="timestamp">[${timestamp}]</span>${escapeHtml(message)}`;
+            logContainer.appendChild(entry);
+            
+            // 自動滾動到底部
+            logContainer.scrollTop = logContainer.scrollHeight;
+            
+            // 更新統計
+            logCount++;
+            logCountElement.textContent = logCount;
+            lastUpdateElement.textContent = timestamp;
+        }
+
+        // HTML 轉義
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 清除 logs
+        window.clearLogs = function() {
+            logContainer.innerHTML = '';
+            logCount = 0;
+            logCountElement.textContent = '0';
+            addLogEntry('info', '✨ Logs 已清除');
+        };
+
+        // 載入 WASM
+        async function loadWasm() {
+            try {
+                interceptConsole();
+                
+                addLogEntry('info', '📦 開始載入 WASM 模組...');
+                
+                const module = await import('./pkg/wasm_test_project.js');
+                await module.default();
+                wasmModule = module;
+                
+                wasmStatusElement.textContent = '已載入';
+                wasmStatusElement.style.color = '#48bb78';
+                addLogEntry('info', '✅ WASM 模組載入成功！');
+                
+            } catch (error) {
+                wasmStatusElement.textContent = '載入失敗';
+                wasmStatusElement.style.color = '#f56565';
+                addLogEntry('error', `❌ WASM 載入失敗: ${error.message}`);
+                console.error('WASM 載入失敗:', error);
+            }
+        }
+
+        // 測試函數
+        window.testBasicMath = function() {
+            if (!wasmModule) {
+                addLogEntry('error', '請先等待 WASM 載入完成');
+                return;
+            }
+            const result = wasmModule.test_basic_math(42, 58);
+            addLogEntry('info', `📊 基本數學測試結果: ${result}`);
+        };
+
+        window.testStringProcessing = function() {
+            if (!wasmModule) {
+                addLogEntry('error', '請先等待 WASM 載入完成');
+                return;
+            }
+            const result = wasmModule.test_string_processing("Hello WASM World!");
+            addLogEntry('info', `📝 字符串處理結果: ${result}`);
+        };
+
+        window.testHeavyComputation = function() {
+            if (!wasmModule) {
+                addLogEntry('error', '請先等待 WASM 載入完成');
+                return;
+            }
+            const result = wasmModule.test_heavy_computation(5000);
+            addLogEntry('info', `🔥 重計算結果: ${result}`);
+        };
+
+        window.testArrayProcessing = function() {
+            if (!wasmModule) {
+                addLogEntry('error', '請先等待 WASM 載入完成');
+                return;
+            }
+            const data = new Int32Array([5, 2, 8, 1, 9, 3, 7, 4, 6]);
+            const result = wasmModule.test_array_processing(data);
+            addLogEntry('info', `📊 數組處理結果: [${result}]`);
+        };
+
+        window.testErrorHandling = function() {
+            if (!wasmModule) {
+                addLogEntry('error', '請先等待 WASM 載入完成');
+                return;
+            }
+            
+            try {
+                // 測試成功路徑
+                const successResult = wasmModule.test_error_handling(false);
+                addLogEntry('info', `✅ 錯誤處理測試（成功）: ${successResult}`);
+            } catch (e) {
+                addLogEntry('error', `錯誤處理測試（成功路徑）失敗: ${e}`);
+            }
+            
+            try {
+                // 測試失敗路徑
+                const failResult = wasmModule.test_error_handling(true);
+                addLogEntry('info', `錯誤處理測試（失敗）: ${failResult}`);
+            } catch (e) {
+                addLogEntry('warn', `⚠️ 錯誤處理測試（預期錯誤）: ${e}`);
+            }
+        };
+
+        window.testPerformance = function() {
+            if (!wasmModule) {
+                addLogEntry('error', '請先等待 WASM 載入完成');
+                return;
+            }
+            const duration = wasmModule.test_performance_benchmark();
+            addLogEntry('info', `⚡ 性能測試完成，耗時: ${duration.toFixed(2)}ms`);
+        };
+
+        window.testMemoryInfo = function() {
+            if (!wasmModule) {
+                addLogEntry('error', '請先等待 WASM 載入完成');
+                return;
+            }
+            const info = wasmModule.get_memory_info();
+            addLogEntry('info', `💾 內存信息: ${info}`);
+        };
+
+        window.runAllTests = function() {
+            if (!wasmModule) {
+                addLogEntry('error', '請先等待 WASM 載入完成');
+                return;
+            }
+            addLogEntry('info', '🎯 開始執行所有測試...');
+            const summary = wasmModule.run_all_tests();
+            addLogEntry('info', `📋 測試摘要: ${summary}`);
+        };
+
+        // 初始化
+        loadWasm();
+    </script>
+</body>
+</html>
