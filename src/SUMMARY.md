@@ -192,6 +192,7 @@
     - [wasm-objdump 分析指南：深入 WASM 檔案與 Buttplug 依賴解析](web/wasm_dependency_analysis.md)
     - [wasm-objdump 完整使用指南](web/wasm-objdump-guide.md)
     - [WebAssembly 相容性與載入器完整指南](web/wasm_compatibility_guide.md)
+    - [WASM 最佳化編譯測試](web/wasm-optimized-build-testing.md)
 
 ## System & Debug
 - [GDB](gdb/gdb.md)
