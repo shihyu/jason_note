@@ -4,7 +4,7 @@
 .PHONY: all clean build optimize test debug serve install-deps help
 
 # 變量定義
-PROJECT_NAME = wasm-test-project
+PROJECT_NAME = wasm_test_project
 PKG_DIR = pkg
 WASM_FILE = $(PKG_DIR)/$(PROJECT_NAME)_bg.wasm
 OPTIMIZED_WASM = $(PKG_DIR)/optimized.wasm
@@ -56,7 +56,7 @@ build-debug:
 
 # 優化 WASM 文件
 optimize: build
-	@echo "⚡ 優化 WASM 文件..."
+	@echo "⚡ 準備優化的 WASM 文件..."
 	@if [ ! -f $(WASM_FILE) ]; then \
 		echo "❌ 找不到 WASM 文件，請先執行 make build"; \
 		exit 1; \
@@ -66,24 +66,21 @@ optimize: build
 	@ORIGINAL_SIZE=$$(wc -c < $(WASM_FILE)); \
 	echo "原始大小: $$ORIGINAL_SIZE bytes"; \
 	
-	# 執行優化
-	wasm-opt -Oz --enable-bulk-memory --enable-sign-ext \
-		-o $(OPTIMIZED_WASM) $(WASM_FILE); \
+	# 由於沒有 wasm-opt，直接複製文件
+	@cp $(WASM_FILE) $(OPTIMIZED_WASM); \
+	echo "⚠️ wasm-opt 未安裝，使用原始文件作為優化版本"; \
 	
-	# 計算優化效果
+	# 檢查文件大小
 	@OPTIMIZED_SIZE=$$(wc -c < $(OPTIMIZED_WASM)); \
-	REDUCTION=$$(($$ORIGINAL_SIZE - $$OPTIMIZED_SIZE)); \
-	PERCENTAGE=$$(echo "scale=2; $$REDUCTION * 100 / $$ORIGINAL_SIZE" | bc); \
-	echo "優化後大小: $$OPTIMIZED_SIZE bytes"; \
-	echo "減少: $$REDUCTION bytes ($$PERCENTAGE%)"; \
+	echo "文件大小: $$OPTIMIZED_SIZE bytes"; \
 	
 	# 生成報告
-	@echo "=== WASM 優化報告 ===" > wasm_info.txt; \
+	@echo "=== WASM 文件報告 ===" > wasm_info.txt; \
 	echo "編譯時間: $$(date)" >> wasm_info.txt; \
 	echo "原始大小: $$ORIGINAL_SIZE bytes" >> wasm_info.txt; \
-	echo "優化大小: $$OPTIMIZED_SIZE bytes" >> wasm_info.txt; \
-	echo "壓縮率: $$PERCENTAGE%" >> wasm_info.txt; \
-	echo "✅ 優化完成，報告已保存到 wasm_info.txt"
+	echo "文件大小: $$OPTIMIZED_SIZE bytes" >> wasm_info.txt; \
+	echo "備註: 需要 wasm-opt 進行進一步優化" >> wasm_info.txt; \
+	echo "✅ 文件準備完成，報告已保存到 wasm_info.txt"
 
 # 測試 WASM 功能
 test: optimize test-js
@@ -95,9 +92,10 @@ test-js:
 		echo "❌ 找不到優化的 WASM 文件，請先執行 make optimize"; \
 		exit 1; \
 	fi
-	node test.js > test_results.txt 2>&1 || true
+	node test-detailed.js > test_results.txt 2>&1 || true
 	@echo "📊 測試結果已保存到 test_results.txt"
-	@cat test_results.txt
+	@echo "✅ 主要測試結果:"
+	@grep -E "(✅|❌|🎉)" test_results.txt | head -10 || echo "測試完成"
 
 # WASM 文件分析
 analyze:
@@ -134,14 +132,61 @@ debug-setup: build-debug
 		echo "📋 調試命令:"; \
 		echo "  gdb --args node test-debug.js"; \
 		echo "  或使用: make debug-gdb"; \
+		echo "  或使用: make debug-wasm (直接調試 WASM)"; \
 	else \
 		echo "❌ 調試版 WASM 不存在"; \
 	fi
 
-# 啟動 GDB 調試
+# 啟動 GDB 調試 Node.js
 debug-gdb: debug-setup
-	@echo "🚀 啟動 GDB 調試..."
+	@echo "🚀 啟動 GDB 調試 Node.js..."
 	gdb --args node test-debug.js
+
+# 直接調試 WASM (使用 wasmtime)
+debug-wasm: debug-setup
+	@echo "🐛 使用 wasmtime 調試 WASM..."
+	@test -f ~/.wasmtime/bin/wasmtime || (echo "❌ 請先安裝 wasmtime: curl https://wasmtime.dev/install.sh -sSf | bash" && exit 1)
+	gdb --args ~/.wasmtime/bin/wasmtime --debug-info $(DEBUG_WASM)
+
+# 配置 GDB 調試設定檔
+debug-config:
+	@echo "⚙️ 配置 GDB 調試設定..."
+	@echo "# GDB 調試設定檔" > .gdbinit
+	@echo "set architecture wasm32" >> .gdbinit
+	@echo "set confirm off" >> .gdbinit
+	@echo "set pagination off" >> .gdbinit
+	@echo "set print pretty on" >> .gdbinit
+	@echo "set print array on" >> .gdbinit
+	@echo "# WASM 特殊設定" >> .gdbinit
+	@echo "set debug remote 0" >> .gdbinit
+	@echo "# 自動載入除錯符號" >> .gdbinit
+	@echo "set auto-load safe-path /" >> .gdbinit
+	@echo "✅ GDB 設定檔已建立: .gdbinit"
+
+# 遠端調試設定 (target) - 實際啟動 gdbserver
+debug-remote-target: debug-setup debug-config
+	@echo "🎯 啟動 GDB 遠端調試 Target..."
+	@echo "在 localhost:1234 啟動 gdbserver..."
+	gdbserver --multi localhost:1234 $(DEBUG_WASM)
+
+# 遠端調試連線 (host)
+debug-remote-host: debug-config
+	@echo "🏠 啟動 GDB Host 連線..."
+	@echo "連接到 localhost:1234..."
+	@echo "target extended-remote localhost:1234" > gdb_commands.txt
+	@echo "set remote exec-file $(DEBUG_WASM)" >> gdb_commands.txt
+	@echo "file $(DEBUG_WASM)" >> gdb_commands.txt
+	@echo "break main" >> gdb_commands.txt
+	@echo "continue" >> gdb_commands.txt
+	gdb -x gdb_commands.txt
+
+# 本地直接調試 (推薦)
+debug-local: debug-setup debug-config
+	@echo "🏠 本地直接調試..."
+	@echo "file $(DEBUG_WASM)" > local_debug.txt
+	@echo "break main" >> local_debug.txt
+	@echo "run" >> local_debug.txt
+	gdb ~/.wasmtime/bin/wasmtime -x local_debug.txt --args ~/.wasmtime/bin/wasmtime --debug-info $(DEBUG_WASM)
 
 # 啟動開發服務器
 serve:
@@ -186,7 +231,12 @@ help:
 	@echo "  analyze       - 分析 WASM 文件"
 	@echo "  to-wat        - 轉換為 WAT 格式"
 	@echo "  debug-setup   - 準備 GDB 調試環境"
-	@echo "  debug-gdb     - 啟動 GDB 調試"
+	@echo "  debug-gdb     - 啟動 GDB 調試 Node.js"
+	@echo "  debug-wasm    - 直接調試 WASM (需要 wasmtime)"
+	@echo "  debug-config  - 配置 GDB 設定檔"
+	@echo "  debug-remote-target - 啟動遠端調試 Target (gdbserver)"
+	@echo "  debug-remote-host   - 連線到遠端調試 Host"
+	@echo "  debug-local         - 本地直接調試 (推薦)"
 	@echo "  serve         - 啟動開發服務器"
 	@echo "  benchmark     - 執行性能基準測試"
 	@echo "  test-all      - 執行完整測試套件"
