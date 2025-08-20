@@ -246,6 +246,7 @@
 ## Machine Learning
 - [ML](ml/ml.md)
     - [AI 生態系統完整白話指南](ml/ai_ecosystem_guide.md)
+    - [Ollama 本地大型語言模型管理平台完整指南](ml/ollama_guide_markdown.md)
     - [Pytorch](ml/pytorch.md)
     - [Pytorch 安裝](ml/pytorch_setup.md)
     - [DEAP](ml/deap.md)
