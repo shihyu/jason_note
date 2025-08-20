@@ -1,9 +1,0 @@
-/home/shihyu/github/jason_note/src/web/data/buttplug-js-wasm-scan-pair-ok-features-wasm/wasm/rust/target/release/deps/libfutures_macro-c969dcbb9ccb2b3a.so: /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-macro-0.3.30/src/lib.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-macro-0.3.30/src/executor.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-macro-0.3.30/src/join.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-macro-0.3.30/src/select.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-macro-0.3.30/src/stream_select.rs
-
-/home/shihyu/github/jason_note/src/web/data/buttplug-js-wasm-scan-pair-ok-features-wasm/wasm/rust/target/release/deps/futures_macro-c969dcbb9ccb2b3a.d: /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-macro-0.3.30/src/lib.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-macro-0.3.30/src/executor.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-macro-0.3.30/src/join.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-macro-0.3.30/src/select.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-macro-0.3.30/src/stream_select.rs
-
-/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-macro-0.3.30/src/lib.rs:
-/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-macro-0.3.30/src/executor.rs:
-/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-macro-0.3.30/src/join.rs:
-/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-macro-0.3.30/src/select.rs:
-/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-macro-0.3.30/src/stream_select.rs:
