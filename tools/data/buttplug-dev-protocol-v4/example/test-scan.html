@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>測試修復後的掃描功能</title>
+</head>
+<body>
+    <h2>測試修復後的掃描功能</h2>
+    
+    <div>
+        <button id="loadTest">載入原始頁面並測試</button>
+        <button id="directTest">直接測試 WebBluetooth</button>
+    </div>
+    
+    <div id="logs" style="border: 1px solid #ccc; padding: 10px; margin: 10px 0; height: 400px; overflow-y: scroll; font-family: monospace; font-size: 12px;">
+    </div>
+
+    <script>
+        function log(message) {
+            const div = document.getElementById('logs');
+            div.innerHTML += `[${new Date().toLocaleTimeString()}] ${message}<br>`;
+            div.scrollTop = div.scrollHeight;
+            console.log(message);
+        }
+
+        async function testWebBluetooth() {
+            log("測試 WebBluetooth 功能...");
+            
+            if (!navigator.bluetooth) {
+                log("❌ 瀏覽器不支援 Web Bluetooth");
+                return false;
+            }
+            
+            log("✅ 瀏覽器支援 Web Bluetooth");
+            
+            try {
+                log("正在請求設備選擇...");
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true
+                });
+                
+                log(`✅ 成功選擇設備: ${device.name || '未命名'}`);
+                return true;
+                
+            } catch (error) {
+                log(`測試結果: ${error.name} - ${error.message}`);
+                return false;
+            }
+        }
+
+        function testOriginalPage() {
+            log("正在開啟原始頁面測試...");
+            const newWindow = window.open('index.html', '_blank');
+            
+            setTimeout(() => {
+                if (newWindow) {
+                    log("✅ 原始頁面已開啟，請在新視窗中測試 scan 按鈕");
+                } else {
+                    log("❌ 無法開啟新視窗，請手動訪問 http://localhost:3001/");
+                }
+            }, 1000);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            log("測試頁面載入完成");
+            
+            document.getElementById('loadTest').onclick = testOriginalPage;
+            
+            document.getElementById('directTest').onclick = () => {
+                log("直接測試按鈕被點擊");
+                testWebBluetooth();
+            };
+            
+            log("🎉 測試頁面準備就緒");
+        });
+    </script>
+</body>
+</html>

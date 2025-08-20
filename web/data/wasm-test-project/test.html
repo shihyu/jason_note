@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WASM 測試頁面</title>
+    <style>
+        body {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #4fc3f7;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            background-color: #2d2d2d;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #4fc3f7;
+        }
+        
+        .test-section h2 {
+            color: #66bb6a;
+            margin-top: 0;
+        }
+        
+        button {
+            background-color: #4fc3f7;
+            color: #1a1a1a;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background-color: #29b6f6;
+        }
+        
+        button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+        }
+        
+        .log-output {
+            background-color: #1e1e1e;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .status.loading {
+            background-color: #ff9800;
+            color: #1a1a1a;
+        }
+        
+        .status.success {
+            background-color: #4caf50;
+            color: #1a1a1a;
+        }
+        
+        .status.error {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .input-group {
+            margin: 10px 0;
+        }
+        
+        .input-group label {
+            display: inline-block;
+            width: 100px;
+            color: #b0b0b0;
+        }
+        
+        .input-group input {
+            background-color: #333;
+            border: 1px solid #555;
+            color: #e0e0e0;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🦀 WASM 測試頁面</h1>
+        
+        <div id="status" class="status loading">🔄 載入 WASM 模組中...</div>
+        
+        <div class="test-section">
+            <h2>📊 基本測試</h2>
+            <div class="input-group">
+                <label>數字 A:</label>
+                <input type="number" id="mathA" value="42" />
+            </div>
+            <div class="input-group">
+                <label>數字 B:</label>
+                <input type="number" id="mathB" value="58" />
+            </div>
+            <button onclick="testBasicMath()">測試基本數學</button>
+            <button onclick="testStringProcessing()">測試字符串處理</button>
+            <button onclick="getMemoryInfo()">獲取內存信息</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>⚡ 性能測試</h2>
+            <div class="input-group">
+                <label>計算量:</label>
+                <input type="number" id="computationSize" value="5000" />
+            </div>
+            <button onclick="testHeavyComputation()">重計算測試</button>
+            <button onclick="testPerformanceBenchmark()">性能基準測試</button>
+            <button onclick="runAllTests()">執行所有測試</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>🚨 錯誤處理測試</h2>
+            <button onclick="testErrorHandling(false)">正常執行</button>
+            <button onclick="testErrorHandling(true)">觸發錯誤</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>📋 測試日誌</h2>
+            <button onclick="clearLog()">清空日誌</button>
+            <button onclick="exportLog()">導出日誌</button>
+            <div id="logOutput" class="log-output"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        let wasmModule = null;
+        let wasmExports = null;
+        
+        // 日誌工具
+        function addLog(message, type = 'info') {
+            const logOutput = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const logLine = `[${timestamp}] ${message}\n`;
+            
+            logOutput.textContent += logLine;
+            logOutput.scrollTop = logOutput.scrollHeight;
+            
+            console.log(message);
+        }
+        
+        // 更新狀態
+        function updateStatus(message, type = 'loading') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+        
+        // 載入 WASM 模組
+        async function loadWasm() {
+            try {
+                addLog('🚀 開始載入 WASM 模組...');
+                
+                // 導入 WASM 模組
+                const module = await import('./pkg/wasm_test_project.js');
+                await module.default('./pkg/optimized.wasm');
+                
+                wasmModule = module;
+                wasmExports = module;
+                
+                addLog('✅ WASM 模組載入成功');
+                updateStatus('✅ WASM 模組已準備就緒', 'success');
+                
+                // 啟用所有按鈕
+                const buttons = document.querySelectorAll('button');
+                buttons.forEach(btn => btn.disabled = false);
+                
+            } catch (error) {
+                addLog(`❌ WASM 模組載入失敗: ${error.message}`);
+                updateStatus('❌ WASM 模組載入失敗', 'error');
+                console.error('WASM 載入錯誤:', error);
+            }
+        }
+        
+        // 測試函數
+        window.testBasicMath = function() {
+            if (!wasmExports) return;
+            
+            const a = parseInt(document.getElementById('mathA').value) || 0;
+            const b = parseInt(document.getElementById('mathB').value) || 0;
+            
+            try {
+                addLog(`🧮 執行基本數學測試: ${a} + ${b}`);
+                const result = wasmExports.test_basic_math(a, b);
+                addLog(`✅ 結果: ${result}`);
+            } catch (error) {
+                addLog(`❌ 基本數學測試失敗: ${error.message}`);
+            }
+        };
+        
+        window.testStringProcessing = function() {
+            if (!wasmExports) return;
+            
+            try {
+                addLog('📝 執行字符串處理測試');
+                const result = wasmExports.test_string_processing('Hello WASM World!');
+                addLog(`✅ 字符串處理結果: ${result}`);
+            } catch (error) {
+                addLog(`❌ 字符串處理測試失敗: ${error.message}`);
+            }
+        };
+        
+        window.getMemoryInfo = function() {
+            if (!wasmExports) return;
+            
+            try {
+                addLog('💾 獲取內存信息');
+                const result = wasmExports.get_memory_info();
+                addLog(`✅ 內存信息: ${result}`);
+            } catch (error) {
+                addLog(`❌ 獲取內存信息失敗: ${error.message}`);
+            }
+        };
+        
+        window.testHeavyComputation = function() {
+            if (!wasmExports) return;
+            
+            const size = parseInt(document.getElementById('computationSize').value) || 1000;
+            
+            try {
+                addLog(`⚡ 執行重計算測試 (n=${size})`);
+                const start = performance.now();
+                const result = wasmExports.test_heavy_computation(size);
+                const duration = performance.now() - start;
+                addLog(`✅ 重計算完成: 結果=${result}, 耗時=${duration.toFixed(2)}ms`);
+            } catch (error) {
+                addLog(`❌ 重計算測試失敗: ${error.message}`);
+            }
+        };
+        
+        window.testPerformanceBenchmark = function() {
+            if (!wasmExports) return;
+            
+            try {
+                addLog('⏱️ 執行性能基準測試');
+                const duration = wasmExports.test_performance_benchmark();
+                addLog(`✅ 基準測試完成: 耗時=${duration.toFixed(2)}ms`);
+            } catch (error) {
+                addLog(`❌ 性能基準測試失敗: ${error.message}`);
+            }
+        };
+        
+        window.testErrorHandling = function(shouldFail) {
+            if (!wasmExports) return;
+            
+            try {
+                addLog(`🚨 測試錯誤處理 (should_fail=${shouldFail})`);
+                const result = wasmExports.test_error_handling(shouldFail);
+                addLog(`✅ 錯誤處理測試結果: ${result}`);
+            } catch (error) {
+                addLog(`⚠️ 錯誤處理測試觸發異常: ${error.message}`);
+            }
+        };
+        
+        window.runAllTests = function() {
+            if (!wasmExports) return;
+            
+            try {
+                addLog('🎯 執行所有測試');
+                const result = wasmExports.run_all_tests();
+                addLog(`✅ 所有測試完成: ${result}`);
+            } catch (error) {
+                addLog(`❌ 執行所有測試失敗: ${error.message}`);
+            }
+        };
+        
+        window.clearLog = function() {
+            document.getElementById('logOutput').textContent = '';
+            addLog('🧹 日誌已清空');
+        };
+        
+        window.exportLog = function() {
+            const logContent = document.getElementById('logOutput').textContent;
+            const blob = new Blob([logContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `wasm-test-log-${new Date().toISOString()}.txt`;
+            a.click();
+            
+            URL.revokeObjectURL(url);
+            addLog('📥 日誌已導出');
+        };
+        
+        // 禁用所有按鈕直到 WASM 載入完成
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(btn => btn.disabled = true);
+        
+        // 載入 WASM
+        loadWasm();
+    </script>
+</body>
+</html>

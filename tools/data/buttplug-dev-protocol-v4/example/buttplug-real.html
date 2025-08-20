@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>真正的 Buttplug 協議測試</title>
+</head>
+<body>
+    <h2>真正的 Buttplug 協議測試</h2>
+    
+    <div>
+        <button id="connectBtn" style="padding: 10px; margin: 5px; background: blue; color: white;">連接 Buttplug</button>
+        <button id="scanBtn" style="padding: 10px; margin: 5px; background: green; color: white;">掃描設備</button>
+        <button id="vibrateBtn" style="padding: 10px; margin: 5px; background: red; color: white;">開始振動</button>
+        <button id="stopBtn" style="padding: 10px; margin: 5px; background: gray; color: white;">停止振動</button>
+    </div>
+    
+    <div>
+        <label for="vibrateSlider">振動強度: </label>
+        <input type="range" id="vibrateSlider" min="0" max="100" value="20" style="width: 200px;">
+        <span id="vibrateValue">20%</span>
+    </div>
+    
+    <div>
+        <h3>設備列表</h3>
+        <div id="deviceList" style="border: 1px solid #ccc; padding: 10px; min-height: 50px;">
+            尚未找到設備
+        </div>
+    </div>
+    
+    <div id="logs" style="border: 1px solid #ccc; padding: 10px; margin: 10px 0; height: 400px; overflow-y: scroll; font-family: monospace; font-size: 11px;">
+    </div>
+
+    <script type="module">
+        import { ButtplugClient, ButtplugBrowserWebsocketClientConnector } from 'buttplug';
+
+        let client = null;
+        let connectedDevices = [];
+        let isScanning = false;
+        let isVibrating = false;
+
+        function log(message) {
+            const div = document.getElementById('logs');
+            const time = new Date().toLocaleTimeString();
+            div.innerHTML += `[${time}] ${message}<br>`;
+            div.scrollTop = div.scrollHeight;
+            console.log(message);
+        }
+
+        function updateDeviceList() {
+            const deviceListDiv = document.getElementById('deviceList');
+            if (connectedDevices.length === 0) {
+                deviceListDiv.innerHTML = '尚未找到設備';
+            } else {
+                deviceListDiv.innerHTML = connectedDevices.map(device => 
+                    `<div style="padding: 5px; border-bottom: 1px solid #eee;">
+                        ${device.name || 'Unknown'} (索引: ${device.index})
+                        <br><small>執行器數量: ${device.vibrateAttributes?.length || 0}</small>
+                    </div>`
+                ).join('');
+            }
+        }
+
+        async function connectToButtplug() {
+            try {
+                log("🔗 創建 Buttplug 客戶端...");
+                client = new ButtplugClient("ERICA Test Client");
+                
+                log("🔗 嘗試使用直接客戶端模式...");
+                // Buttplug 3.x 使用不同的方式
+                // 我們直接創建客戶端，它會自動處理設備連接
+                
+                log("✅ Buttplug 客戶端創建成功！");
+                
+                // 監聽設備事件
+                client.addListener('deviceadded', (device) => {
+                    log(`🎯 找到設備: ${device.name || 'Unknown'} (索引: ${device.index})`);
+                    log(`   執行器: ${device.vibrateAttributes?.length || 0} 個`);
+                    connectedDevices.push(device);
+                    updateDeviceList();
+                });
+                
+                client.addListener('deviceremoved', (device) => {
+                    log(`📤 設備移除: ${device.name || 'Unknown'}`);
+                    connectedDevices = connectedDevices.filter(d => d.index !== device.index);
+                    updateDeviceList();
+                });
+                
+                client.addListener('disconnect', () => {
+                    log("🔌 客戶端已斷線");
+                });
+                
+                log("🎉 準備就緒，可以開始掃描設備");
+                
+            } catch (error) {
+                log(`❌ Buttplug 客戶端創建失敗: ${error.message}`);
+            }
+        }
+
+        async function scanForDevices() {
+            if (!client) {
+                log("❌ 請先連接 Buttplug");
+                return;
+            }
+            
+            try {
+                if (isScanning) {
+                    log("🛑 停止掃描...");
+                    await client.stopScanning();
+                    isScanning = false;
+                    log("✅ 掃描已停止");
+                } else {
+                    log("🔍 開始掃描設備...");
+                    isScanning = true;
+                    await client.startScanning();
+                    log("✅ 掃描已開始");
+                    
+                    // 10 秒後自動停止
+                    setTimeout(async () => {
+                        if (isScanning && client) {
+                            try {
+                                await client.stopScanning();
+                                isScanning = false;
+                                log("⏰ 自動停止掃描");
+                            } catch (e) {
+                                log(`停止掃描錯誤: ${e.message}`);
+                            }
+                        }
+                    }, 10000);
+                }
+                
+            } catch (error) {
+                log(`❌ 掃描錯誤: ${error.message}`);
+                isScanning = false;
+            }
+        }
+
+        async function startVibration() {
+            if (connectedDevices.length === 0) {
+                log("❌ 沒有連接的設備");
+                return;
+            }
+            
+            const slider = document.getElementById('vibrateSlider');
+            const intensity = slider.value / 100;
+            
+            try {
+                isVibrating = true;
+                log(`🎮 開始振動，強度: ${Math.round(intensity * 100)}%`);
+                
+                for (const device of connectedDevices) {
+                    if (device.vibrateAttributes && device.vibrateAttributes.length > 0) {
+                        const vibrateArray = new Array(device.vibrateAttributes.length).fill(intensity);
+                        await device.vibrate(vibrateArray);
+                        log(`✅ 設備 ${device.name} 振動命令已發送`);
+                    } else {
+                        log(`⚠️ 設備 ${device.name} 沒有振動執行器`);
+                    }
+                }
+                
+            } catch (error) {
+                log(`❌ 振動控制錯誤: ${error.message}`);
+                isVibrating = false;
+            }
+        }
+
+        async function stopVibration() {
+            if (connectedDevices.length === 0) {
+                log("❌ 沒有連接的設備");
+                return;
+            }
+            
+            try {
+                isVibrating = false;
+                log("🛑 停止所有振動...");
+                
+                for (const device of connectedDevices) {
+                    if (device.vibrateAttributes && device.vibrateAttributes.length > 0) {
+                        const stopArray = new Array(device.vibrateAttributes.length).fill(0);
+                        await device.vibrate(stopArray);
+                        log(`✅ 設備 ${device.name} 已停止振動`);
+                    }
+                }
+                
+            } catch (error) {
+                log(`❌ 停止振動錯誤: ${error.message}`);
+            }
+        }
+
+        async function setVibrationIntensity() {
+            if (!isVibrating || connectedDevices.length === 0) {
+                return;
+            }
+            
+            const slider = document.getElementById('vibrateSlider');
+            const intensity = slider.value / 100;
+            
+            try {
+                for (const device of connectedDevices) {
+                    if (device.vibrateAttributes && device.vibrateAttributes.length > 0) {
+                        const vibrateArray = new Array(device.vibrateAttributes.length).fill(intensity);
+                        await device.vibrate(vibrateArray);
+                    }
+                }
+            } catch (error) {
+                log(`振動強度調整錯誤: ${error.message}`);
+            }
+        }
+
+        // 初始化
+        log("頁面載入完成 - 真正的 Buttplug 協議");
+        
+        document.getElementById('connectBtn').onclick = connectToButtplug;
+        document.getElementById('scanBtn').onclick = scanForDevices;
+        document.getElementById('vibrateBtn').onclick = startVibration;
+        document.getElementById('stopBtn').onclick = stopVibration;
+        
+        // 滑桿事件
+        const slider = document.getElementById('vibrateSlider');
+        const valueDisplay = document.getElementById('vibrateValue');
+        
+        slider.oninput = () => {
+            valueDisplay.textContent = slider.value + '%';
+            if (isVibrating) {
+                setVibrationIntensity();
+            }
+        };
+        
+        log("🎉 真正的 Buttplug 協議測試工具準備就緒");
+    </script>
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ERICA 自動協議測試</title>
+</head>
+<body>
+    <h2>ERICA 自動協議識別測試</h2>
+    <p style="color: green;">🤖 使用 Buttplug WASM 自動識別設備協議</p>
+    
+    <div style="margin: 20px 0;">
+        <button id="initBtn" style="padding: 15px; background: blue; color: white;">初始化 Buttplug</button>
+        <button id="scanBtn" style="padding: 15px; background: green; color: white;" disabled>掃描設備</button>
+        <button id="connectBtn" style="padding: 15px; background: orange; color: white;" disabled>連接 ERICA</button>
+    </div>
+    
+    <div style="margin: 20px 0;">
+        <h3>振動控制</h3>
+        <button id="vibrateBtn" style="padding: 10px; background: red; color: white;" disabled>測試振動</button>
+        <button id="stopBtn" style="padding: 10px; background: gray; color: white;" disabled>停止</button>
+        <br><br>
+        <label>強度: </label>
+        <input type="range" id="intensitySlider" min="0" max="100" value="30" disabled>
+        <span id="intensityValue">30%</span>
+    </div>
+    
+    <div style="margin: 20px 0;">
+        <h3>設備信息</h3>
+        <div id="deviceInfo" style="background: #f0f0f0; padding: 10px; border: 1px solid #ccc;">
+            尚未連接設備
+        </div>
+    </div>
+    
+    <div id="logs" style="border: 1px solid #ccc; padding: 10px; margin: 10px 0; height: 400px; overflow-y: scroll; font-family: monospace; font-size: 11px; background: #f5f5f5;">
+    </div>
+
+    <script type="module">
+        import init, { 
+            buttplug_create_embedded_wasm_server,
+            buttplug_client_send_json_message,
+            buttplug_free_embedded_wasm_server,
+            buttplug_activate_env_logger
+        } from '/wasm/buttplug_server.js';
+
+        let wasmServer = null;
+        let clientConnected = false;
+        let currentDevice = null;
+        let messageId = 1;
+
+        function log(message) {
+            const div = document.getElementById('logs');
+            const time = new Date().toLocaleTimeString();
+            div.innerHTML += `<div style="margin: 1px 0;">[${time}] ${message}</div>`;
+            div.scrollTop = div.scrollHeight;
+            console.log(message);
+        }
+
+        function updateDeviceInfo(info) {
+            document.getElementById('deviceInfo').innerHTML = info;
+        }
+
+        function updateButtons() {
+            document.getElementById('scanBtn').disabled = !clientConnected;
+            document.getElementById('connectBtn').disabled = !currentDevice;
+            document.getElementById('vibrateBtn').disabled = !currentDevice;
+            document.getElementById('stopBtn').disabled = !currentDevice;
+            document.getElementById('intensitySlider').disabled = !currentDevice;
+        }
+
+        async function sendMessage(message) {
+            if (!wasmServer) return null;
+            
+            try {
+                const messageStr = JSON.stringify(message);
+                log(`📤 發送: ${messageStr}`);
+                
+                const response = buttplug_client_send_json_message(wasmServer, messageStr);
+                const responseObj = JSON.parse(response);
+                
+                log(`📨 回應: ${response}`);
+                return responseObj;
+            } catch (error) {
+                log(`❌ 消息錯誤: ${error.message}`);
+                return null;
+            }
+        }
+
+        async function initButtplug() {
+            try {
+                log("🚀 <strong>初始化 Buttplug WASM...</strong>");
+                
+                // 初始化 WASM 模組
+                await init();
+                log("✅ WASM 模組載入成功");
+                
+                // 啟用日誌
+                buttplug_activate_env_logger();
+                log("✅ 日誌系統啟用");
+                
+                // 創建服務器
+                wasmServer = buttplug_create_embedded_wasm_server();
+                log("✅ Buttplug 服務器創建成功");
+                
+                // 連接客戶端
+                const connectMsg = {
+                    "Id": messageId++,
+                    "RequestServerInfo": {
+                        "ClientName": "ERICA 自動測試"
+                    }
+                };
+                
+                const response = await sendMessage(connectMsg);
+                if (response && response.ServerInfo) {
+                    clientConnected = true;
+                    log(`🎉 <strong style="color: green;">客戶端連接成功！</strong>`);
+                    log(`服務器: ${response.ServerInfo.ServerName} v${response.ServerInfo.SpecVersion}`);
+                    updateButtons();
+                } else {
+                    throw new Error("服務器連接失敗");
+                }
+                
+            } catch (error) {
+                log(`❌ <span style="color: red;">初始化失敗: ${error.message}</span>`);
+            }
+        }
+
+        async function startScanning() {
+            try {
+                log("🔍 <strong>開始掃描設備...</strong>");
+                
+                const scanMsg = {
+                    "Id": messageId++,
+                    "StartScanning": {}
+                };
+                
+                const response = await sendMessage(scanMsg);
+                if (response && response.Ok) {
+                    log("✅ 掃描啟動成功");
+                    
+                    // 等待設備掃描
+                    setTimeout(async () => {
+                        await requestDeviceList();
+                    }, 3000);
+                } else {
+                    throw new Error("掃描啟動失敗");
+                }
+                
+            } catch (error) {
+                log(`❌ <span style="color: red;">掃描失敗: ${error.message}</span>`);
+            }
+        }
+
+        async function requestDeviceList() {
+            try {
+                const listMsg = {
+                    "Id": messageId++,
+                    "RequestDeviceList": {}
+                };
+                
+                const response = await sendMessage(listMsg);
+                if (response && response.DeviceList) {
+                    const devices = response.DeviceList.Devices;
+                    log(`📱 找到 ${devices.length} 個設備`);
+                    
+                    for (const device of devices) {
+                        log(`設備: ${device.DeviceName} (索引: ${device.DeviceIndex})`);
+                        
+                        // 檢查是否為 ERICA 或 Svakom Ella
+                        if (device.DeviceName.includes('ERICA') || 
+                            device.DeviceName.includes('Svakom Ella') ||
+                            device.DeviceName.includes('Ella')) {
+                            currentDevice = device;
+                            log(`🎯 <strong style="color: green;">找到 ERICA 設備！</strong>`);
+                            updateDeviceInfo(`
+                                <strong>設備名稱:</strong> ${device.DeviceName}<br>
+                                <strong>設備索引:</strong> ${device.DeviceIndex}<br>
+                                <strong>消息屬性:</strong> ${JSON.stringify(device.DeviceMessages, null, 2)}
+                            `);
+                            updateButtons();
+                            break;
+                        }
+                    }
+                    
+                    if (!currentDevice) {
+                        log("⚠️ 未找到 ERICA 設備，請確認設備已開啟並處於配對模式");
+                    }
+                } else {
+                    throw new Error("獲取設備列表失敗");
+                }
+                
+            } catch (error) {
+                log(`❌ <span style="color: red;">獲取設備列表失敗: ${error.message}</span>`);
+            }
+        }
+
+        async function testVibration() {
+            if (!currentDevice) return;
+            
+            try {
+                const intensity = document.getElementById('intensitySlider').value / 100;
+                log(`🎮 <strong>測試振動，強度: ${Math.round(intensity * 100)}%</strong>`);
+                
+                const vibrateMsg = {
+                    "Id": messageId++,
+                    "DeviceMessage": {
+                        "DeviceIndex": currentDevice.DeviceIndex,
+                        "ScalarCmd": {
+                            "Scalars": [
+                                {
+                                    "Index": 0,
+                                    "Scalar": intensity,
+                                    "ActuatorType": "Vibrate"
+                                }
+                            ]
+                        }
+                    }
+                };
+                
+                const response = await sendMessage(vibrateMsg);
+                if (response && response.Ok) {
+                    log("✅ 振動命令發送成功");
+                } else {
+                    throw new Error("振動命令失敗");
+                }
+                
+            } catch (error) {
+                log(`❌ <span style="color: red;">振動測試失敗: ${error.message}</span>`);
+            }
+        }
+
+        async function stopVibration() {
+            if (!currentDevice) return;
+            
+            try {
+                log("⏹️ <strong>停止振動</strong>");
+                
+                const stopMsg = {
+                    "Id": messageId++,
+                    "DeviceMessage": {
+                        "DeviceIndex": currentDevice.DeviceIndex,
+                        "StopDeviceCmd": {}
+                    }
+                };
+                
+                const response = await sendMessage(stopMsg);
+                if (response && response.Ok) {
+                    log("✅ 停止命令發送成功");
+                } else {
+                    throw new Error("停止命令失敗");
+                }
+                
+            } catch (error) {
+                log(`❌ <span style="color: red;">停止命令失敗: ${error.message}</span>`);
+            }
+        }
+
+        // 事件綁定
+        document.getElementById('initBtn').onclick = initButtplug;
+        document.getElementById('scanBtn').onclick = startScanning;
+        document.getElementById('connectBtn').onclick = requestDeviceList;
+        document.getElementById('vibrateBtn').onclick = testVibration;
+        document.getElementById('stopBtn').onclick = stopVibration;
+        
+        document.getElementById('intensitySlider').oninput = (e) => {
+            document.getElementById('intensityValue').textContent = e.target.value + '%';
+        };
+
+        // 初始化
+        log("<span style=\"color: blue; font-weight: bold;\">[初始化] ERICA 自動協議識別測試</span>");
+        log("🤖 <strong>說明</strong>：使用 Buttplug WASM 自動識別 ERICA 設備協議");
+        log("📋 <strong>步驟</strong>：1) 初始化 → 2) 掃描設備 → 3) 自動識別 ERICA → 4) 測試振動");
+        log("🎉 <strong style=\"color: green;\">準備完成！請點擊「初始化 Buttplug」開始</strong>");
+        
+        updateButtons();
+    </script>
+</body>
+</html>
