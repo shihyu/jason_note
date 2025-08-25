@@ -106,6 +106,7 @@
     - [Rust Derive Traits 比較：自動生成 vs 手動實作](rust/rust-derive-traits-comparison.md)
     - [Rust Traits 白話解釋：與 C++ 的比較](rust/rust_traits_explained.md)
     - [Rust 中 trait 和 impl 的差異](rust/rust_trait_impl_markdown.md)
+    - [Rust Trait 詳細指南](rust/rust_trait_markdown.md)
     - [Rust vs C++ 詳細對比指南](rust/rust_cpp_comparison_md.md)
     - [Rust 模組系統完整指南](rust/rust_module_system_markdown.md)
     - [Rust 擁有權 vs 借用：生命週期問題指南](rust/ownership_vs_borrowing_guide.md)
