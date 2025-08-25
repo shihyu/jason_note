@@ -121,6 +121,7 @@
     - [套件管理：聲明 vs 使用 完全對照](rust/dependency_import_patterns.md)
     - [Rust Crate 依賴與 API 設計完整指南](rust/rust_crate_guide.md)
     - [Rust 標準函式庫範例](rust/rust-stdlib-examples.md)
+    - [Rust 程式追蹤與分析完整指南](rust/rust_trace_guide.md)
 - [Go](go/go.md)
     - [Golang Note](go/note.md)
     - [pytago](go/pytago.md)
