@@ -358,7 +358,9 @@ fn process_large_data(data: &amp;Vec&lt;u8&gt;) -&gt; usize {
 <li><strong>返回值</strong>：從函數返回</li>
 <li><strong>複雜的所有權關係</strong></li>
 </ol>
-<h2 id="-特殊情況函數參數和返回值"><a class="header" href="#-特殊情況函數參數和返回值">🚨 特殊情況：函數參數和返回值</a></h2>
+<h2 id="-特殊情況借用進借用出需要生命週期"><a class="header" href="#-特殊情況借用進借用出需要生命週期">🚨 特殊情況：借用進借用出（需要生命週期）</a></h2>
+<h3 id="核心概念借用進也有借用出--需要生命週期-"><a class="header" href="#核心概念借用進也有借用出--需要生命週期-">核心概念：借用進也有借用出 → 需要生命週期 🚨</a></h3>
+<p>當函數<strong>接收引用參數</strong>（借用進）並且<strong>返回引用</strong>（借用出）時，編譯器需要知道返回的引用能活多久。</p>
 <h3 id="-不寫生命週期會編譯失敗的情況"><a class="header" href="#-不寫生命週期會編譯失敗的情況">❌ 不寫生命週期會編譯失敗的情況</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -406,6 +408,140 @@ fn longest(x: &amp;str, y: &amp;str) -&gt; &amp;str {
 <li>返回值也是 <code>'a</code> 生命週期</li>
 <li>返回的引用不會比 <code>x</code> 或 <code>y</code> 活得更久 ✅</li>
 </ul>
+<h3 id="-更多借用進借用出的範例"><a class="header" href="#-更多借用進借用出的範例">📚 更多借用進借用出的範例</a></h3>
+<h4 id="1-返回引用的一部分"><a class="header" href="#1-返回引用的一部分">1. 返回引用的一部分</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ 編譯錯誤（實際上這個可以省略，因為只有一個輸入引用）
+fn first_word(s: &amp;str) -&gt; &amp;str {
+    let bytes = s.as_bytes();
+    
+    for (i, &amp;item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &amp;s[0..i];  // 返回 s 的一部分
+        }
+    }
+    
+    &amp;s[..]
+}
+
+// ✅ 正確（其實因為生命週期省略規則，上面的寫法也對）
+fn first_word&lt;'a&gt;(s: &amp;'a str) -&gt; &amp;'a str {
+    let bytes = s.as_bytes();
+    
+    for (i, &amp;item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &amp;s[0..i];
+        }
+    }
+    
+    &amp;s[..]
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="2-多個輸入引用返回其中一個"><a class="header" href="#2-多個輸入引用返回其中一個">2. 多個輸入引用，返回其中一個</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ 編譯錯誤：不知道返回哪個引用
+fn pick_one(first: &amp;str, second: &amp;str, use_first: bool) -&gt; &amp;str {
+    if use_first {
+        first
+    } else {
+        second
+    }
+}
+
+// ✅ 正確版本
+fn pick_one&lt;'a&gt;(first: &amp;'a str, second: &amp;'a str, use_first: bool) -&gt; &amp;'a str {
+    if use_first {
+        first
+    } else {
+        second
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="3-不同生命週期的例子"><a class="header" href="#3-不同生命週期的例子">3. 不同生命週期的例子</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 兩個參數可能有不同的生命週期，但返回值綁定到其中一個
+fn choose_first&lt;'a, 'b&gt;(x: &amp;'a str, _y: &amp;'b str) -&gt; &amp;'a str {
+    x  // 總是返回第一個，所以返回值生命週期只跟 'a 有關
+}
+
+// 返回值生命週期必須和至少一個輸入參數相關
+fn get_longer&lt;'a, 'b&gt;(x: &amp;'a str, y: &amp;'b str) -&gt; &amp;'a str 
+where 
+    'b: 'a  // 'b 的生命週期至少要和 'a 一樣長
+{
+    if x.len() &gt; y.len() {
+        x
+    } else {
+        // 這裡實際上有問題，因為 y 的生命週期是 'b
+        // 但我們說返回 'a，所以需要 'b: 'a 約束
+        x  // 為了編譯通過，還是返回 x
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-結構體方法中的借用進借用出"><a class="header" href="#-結構體方法中的借用進借用出">🏗️ 結構體方法中的借用進借用出</a></h3>
+<pre><pre class="playground"><code class="language-rust">// 結構體儲存引用，需要生命週期
+struct Book&lt;'a&gt; {
+    title: &amp;'a str,
+    author: &amp;'a str,
+}
+
+impl&lt;'a&gt; Book&lt;'a&gt; {
+    // 方法返回內部的引用（借用進借用出）
+    fn get_title(&amp;self) -&gt; &amp;'a str {
+        self.title
+    }
+    
+    // 這個也需要，因為 self 是借用，返回也是借用
+    fn get_author(&amp;self) -&gt; &amp;'a str {
+        self.author
+    }
+}
+
+// 更複雜的實際應用範例：字串處理器
+struct TextProcessor&lt;'a&gt; {
+    content: &amp;'a str,
+}
+
+impl&lt;'a&gt; TextProcessor&lt;'a&gt; {
+    // 借用進（self）借用出（返回值）
+    fn find_word(&amp;self, word: &amp;str) -&gt; Option&lt;&amp;'a str&gt; {
+        let start = self.content.find(word)?;
+        let end = start + word.len();
+        Some(&amp;self.content[start..end])
+    }
+    
+    // 借用進借用出：返回內容的一部分
+    fn get_lines(&amp;self) -&gt; Vec&lt;&amp;'a str&gt; {
+        self.content.lines().collect()
+    }
+    
+    // 借用進借用出：返回第一行
+    fn first_line(&amp;self) -&gt; &amp;'a str {
+        self.content.lines().next().unwrap_or("")
+    }
+}
+
+fn main() {
+    let text = String::from("Hello World\nThis is Rust\nLifetime example");
+    let processor = TextProcessor { content: &amp;text };
+    
+    // 查找單詞
+    if let Some(word) = processor.find_word("Rust") {
+        println!("找到: {}", word);
+    }
+    
+    // 取得所有行
+    let lines = processor.get_lines();
+    for (i, line) in lines.iter().enumerate() {
+        println!("第 {} 行: {}", i + 1, line);
+    }
+    
+    // 取得第一行
+    println!("第一行: {}", processor.first_line());
+}</code></pre></pre>
 <h3 id="-實際使用範例"><a class="header" href="#-實際使用範例">🎯 實際使用範例</a></h3>
 <pre><pre class="playground"><code class="language-rust">fn main() {
     let string1 = "long string is long";
@@ -444,18 +580,89 @@ fn longest(x: &amp;str, y: &amp;str) -&gt; &amp;str {
     "這是一個靜態字串"  // 'static 生命週期，活到程式結束
 }
 <span class="boring">}</span></code></pre></pre>
+<h2 id="-完整對比需要-vs-不需要生命週期"><a class="header" href="#-完整對比需要-vs-不需要生命週期">🎯 完整對比：需要 vs 不需要生命週期</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ 不需要生命週期：沒有返回引用
+fn print_string(s: &amp;str) {
+    println!("{}", s);
+}
+
+// ✅ 不需要生命週期：返回擁有所有權的值
+fn make_uppercase(s: &amp;str) -&gt; String {
+    s.to_uppercase()
+}
+
+// ❌ 需要生命週期：借用進 + 借用出
+fn get_part(s: &amp;str) -&gt; &amp;str {
+    &amp;s[0..5]
+}
+
+// ✅ 正確版本
+fn get_part&lt;'a&gt;(s: &amp;'a str) -&gt; &amp;'a str {
+    &amp;s[0..5]
+}
+
+// ❌ 需要生命週期：多個借用進 + 借用出
+fn combine_refs(x: &amp;str, y: &amp;str) -&gt; &amp;str {
+    if x.len() &gt; 0 { x } else { y }
+}
+
+// ✅ 正確版本
+fn combine_refs&lt;'a&gt;(x: &amp;'a str, y: &amp;'a str) -&gt; &amp;'a str {
+    if x.len() &gt; 0 { x } else { y }
+}
+
+// ✅ 不需要生命週期：返回引用但有明確的生命週期（如 'static）
+fn get_static() -&gt; &amp;'static str {
+    "hello"  // 字串字面量是 'static
+}
+<span class="boring">}</span></code></pre></pre>
 <h2 id="-記憶口訣"><a class="header" href="#-記憶口訣">🧠 記憶口訣</a></h2>
-<h3 id="生命週期必須寫的情況"><a class="header" href="#生命週期必須寫的情況">生命週期必須寫的情況</a></h3>
-<ul>
-<li><strong>函數接收引用 + 返回引用</strong> → 必須寫生命週期標註 ⚠️</li>
-<li><strong>只接收引用，不返回引用</strong> → 不需要寫 ✅</li>
-<li><strong>返回擁有權</strong> → 不需要寫 ✅</li>
-</ul>
+<h3 id="判斷是否需要生命週期-"><a class="header" href="#判斷是否需要生命週期-">判斷是否需要生命週期 🚨</a></h3>
+<h4 id="需要生命週期的情況"><a class="header" href="#需要生命週期的情況">需要生命週期的情況</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 1. 借用進 + 借用出
+fn func(x: &amp;str) -&gt; &amp;str { x }
+
+// 2. 多個借用進 + 借用出（不確定返回哪個）
+fn func(x: &amp;str, y: &amp;str) -&gt; &amp;str { x }
+
+// 3. 結構體存儲引用
+struct S&lt;'a&gt; { field: &amp;'a str }
+
+// 4. impl 塊中方法返回引用
+impl&lt;'a&gt; S&lt;'a&gt; {
+    fn get(&amp;self) -&gt; &amp;'a str { self.field }
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="不需要生命週期的情況"><a class="header" href="#不需要生命週期的情況">不需要生命週期的情況</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 1. 只借用進，沒有借用出
+fn func(x: &amp;str) { }
+
+// 2. 返回擁有所有權的值
+fn func(x: &amp;str) -&gt; String { x.to_string() }
+
+// 3. 沒有引用參與
+fn func(x: String) -&gt; String { x }
+
+// 4. 返回引用但有明確的生命週期（如 'static）
+fn func() -&gt; &amp;'static str { "hello" }
+<span class="boring">}</span></code></pre></pre>
 <h3 id="簡單判斷法"><a class="header" href="#簡單判斷法">簡單判斷法</a></h3>
 <ul>
 <li><strong>如果是 <code>&amp;</code> 開頭</strong> → 可能需要生命週期 ⏰</li>
 <li><strong>如果沒有 <code>&amp;</code></strong> → 不需要生命週期 ✅</li>
 <li><strong>函數簽名有借用進也有借用出</strong> → 一定需要生命週期 🚨</li>
+</ul>
+<h3 id="核心口訣"><a class="header" href="#核心口訣">核心口訣</a></h3>
+<p><strong>「借進借出，生命週期要有」</strong></p>
+<ul>
+<li>有 <code>&amp;</code> 進來，有 <code>&amp;</code> 出去 → 需要 <code>'a</code></li>
+<li>只進不出，或出的不是引用 → 不需要 <code>'a</code></li>
 </ul>
 <h3 id="實用建議"><a class="header" href="#實用建議">實用建議</a></h3>
 <ol>
