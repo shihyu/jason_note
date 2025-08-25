@@ -199,6 +199,7 @@
 ## System & Debug
 - [GDB](gdb/gdb.md)
     - [常用指令](gdb/常用指令.md)
+    - [GDB 程式流程追蹤 - 完整使用指南](gdb/gdb_commands.md)
     - [jemalloc](gdb/jemalloc.md)
     - [Graphs](gdb/graphs.md)
     - [Rust GDB](gdb/rust-gdb.md)
