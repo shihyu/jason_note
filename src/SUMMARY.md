@@ -206,6 +206,7 @@
     - [QEMU GDB RISC-V64 Kernel](gdb/qemu-gdb-risc-v64.md)
     - [使用 GDB 追蹤 Go/Rust 程式碼](gdb/go-rust-gdb-debug.md)
     - [GDB 函數調用軌跡分析與流程圖生成完整指南](gdb/gdb-function-trace-to-flowchart-guide.md)
+    - [GDB EX 完整指南](gdb/gdb_ex_complete_guide.md)
 - [Vim](vim/vim.md)
     - [Copilot](vim/copilot.md)
     - [Tabnine](vim/tabnine.md)
