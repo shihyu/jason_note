@@ -47,6 +47,7 @@
     - [Claude Nights Watch Setup](tools/claude-nights-watch-setup.md)
     - [Cross Compiler 與 LLVM vs GCC 完整解析](tools/cross-compiler-llvm-gcc-guide.md)
     - [🎯 完整的 Solana Token 出入金系統指南](tools/solana_token_guide.md)
+    - [Bitwarden CLI 完整使用指南](tools/bitwarden_cli_guide.md)
 
 ## Programming Languages
 - [C++](c++/cpp.md)
