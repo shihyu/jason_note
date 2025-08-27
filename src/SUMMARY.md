@@ -255,6 +255,7 @@
     - [AI 語音與影像辨識技術指南](ml/ai-recognition-guide.md)
     - [Ollama 本地大型語言模型管理平台完整指南](ml/ollama_guide_markdown.md)
     - [Ollama Ubuntu 安裝與使用指南](ml/ollama-ubuntu-guide.md)
+    - [開源 LLM 微調完整指南](ml/opensource-llm-tuning-guide.md)
     - [Pytorch](ml/pytorch.md)
     - [Pytorch 安裝](ml/pytorch_setup.md)
     - [DEAP](ml/deap.md)
