@@ -354,6 +354,7 @@
 
 ## Others
 - [Design Patterns](dp/dp.md)
+    - [設計模式完整指南](dp/design-patterns-guide.md)
     - [響應式系統設計模式完整指南](dp/reactive-patterns-guide.md)
 - [Git](git/git.md)
     - [git-remove-commited-files](git/git-remove-commited-files.md)
