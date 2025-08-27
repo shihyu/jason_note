@@ -353,6 +353,7 @@
     - [如何將 OCO 訂單發送到 Binance](cryptotrade/binance/oco.md)
 
 ## Others
+- [Design Patterns](dp/dp.md)
 - [Git](git/git.md)
     - [git-remove-commited-files](git/git-remove-commited-files.md)
     - [Git 常用](git/cheat-sheet.md)
