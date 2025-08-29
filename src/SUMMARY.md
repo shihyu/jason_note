@@ -226,6 +226,7 @@
     - [Linux Process、Thread 與系統概念完整指南](linux_system/linux-process-thread-guide.md)
     - [Linux Kernel Debug](linux_system/linux-kernel-debug.md)
     - [Systems Performance Tools Guide](linux_system/systems-performance-tools-guide.md)
+    - [Linux 效能檢測工具完整指南](linux_system/linux-performance-tools.md)
 - [SSH](ssh/ssh.md)
 - [Network](network/socket.md)
 
