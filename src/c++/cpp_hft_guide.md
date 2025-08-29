@@ -837,4 +837,396 @@ private:
         rlim.rlim_max = 65536;
         setrlimit(RLIMIT_NOFILE, &rlim);
         
-        // 設置最大內存
+        // 設置最大內存鎖定大小
+        rlim.rlim_cur = RLIM_INFINITY;
+        rlim.rlim_max = RLIM_INFINITY;
+        setrlimit(RLIMIT_MEMLOCK, &rlim);
+        
+        // 設置堆棧大小
+        rlim.rlim_cur = 8 * 1024 * 1024;  // 8MB
+        rlim.rlim_max = 8 * 1024 * 1024;
+        setrlimit(RLIMIT_STACK, &rlim);
+    }
+    
+    static void setup_cpu_and_priority(int cpu_core, int priority) {
+        cpu_set_t cpuset;
+        CPU_ZERO(&cpuset);
+        CPU_SET(cpu_core, &cpuset);
+        sched_setaffinity(0, sizeof(cpuset), &cpuset);
+        
+        struct sched_param param;
+        param.sched_priority = priority;
+        sched_setscheduler(0, SCHED_FIFO, &param);
+    }
+    
+    static void lock_memory() {
+        if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1) {
+            perror("mlockall");
+            exit(1);
+        }
+    }
+    
+    static void isolate_interrupts(int cpu_core) {
+        char cmd[256];
+        snprintf(cmd, sizeof(cmd), 
+                "echo %d > /proc/irq/default_smp_affinity", 
+                ~(1 << cpu_core));
+        system(cmd);
+    }
+    
+    static void tune_system_parameters() {
+        // 設置TCP參數
+        system("echo 1 > /proc/sys/net/ipv4/tcp_low_latency");
+        system("echo 0 > /proc/sys/net/ipv4/tcp_timestamps");
+        system("echo 0 > /proc/sys/kernel/timer_migration");
+    }
+};
+
+---
+
+## 監控與調試工具
+
+### Linux 效能檢測工具完整清單
+
+#### 1. Context Switch 監控工具
+
+```bash
+# vmstat - 系統整體狀態監控
+vmstat 1  # 每秒更新一次，cs列顯示context switch次數
+
+# pidstat - 進程級別監控
+pidstat -w -p [PID] 1  # 監控特定進程的context switch
+pidstat -wt -p [PID] 1  # 包含線程級別的context switch
+
+# perf stat - 詳細的效能統計
+perf stat -e context-switches,cpu-migrations -p [PID]
+perf stat -d -p [PID]  # 詳細模式
+
+# 監控特定CPU核心的context switch
+perf stat -e context-switches -C 0-3  # 監控CPU 0-3
+
+# sar - 系統活動報告
+sar -w 1  # 顯示context switch和進程創建率
+```
+
+#### 2. CPU 效能分析工具
+
+```bash
+# perf top - 實時CPU熱點分析
+perf top -p [PID]  # 監控特定進程
+perf top -C 0  # 監控特定CPU核心
+
+# perf record/report - 詳細的效能分析
+perf record -g -p [PID] -- sleep 10  # 記錄10秒
+perf report  # 查看報告
+
+# mpstat - 多處理器統計
+mpstat -P ALL 1  # 顯示所有CPU核心使用情況
+
+# turbostat - CPU頻率和功耗監控
+turbostat --interval 1
+
+# cpupower - CPU頻率控制
+cpupower frequency-info  # 查看當前頻率設置
+cpupower frequency-set -g performance  # 設置高性能模式
+```
+
+#### 3. 內存與緩存監控
+
+```bash
+# pcm - Intel Performance Counter Monitor
+pcm 1  # 監控內存帶寬、緩存命中率
+
+# perf stat - 緩存性能監控
+perf stat -e cache-references,cache-misses,L1-dcache-loads,L1-dcache-load-misses -p [PID]
+
+# numastat - NUMA統計
+numastat -p [PID]  # 查看進程的NUMA分佈
+numactl --hardware  # 顯示NUMA硬件配置
+
+# smem - 內存使用報告
+smem -P [process_name] -k  # 顯示進程內存使用
+
+# pmap - 進程內存映射
+pmap -x [PID]  # 詳細內存映射信息
+```
+
+#### 4. 網絡延遲監控
+
+```bash
+# ss - Socket統計
+ss -i  # 顯示內部TCP信息（RTT、擁塞窗口等）
+ss -tnp  # 顯示TCP連接和進程信息
+
+# tc - 流量控制（查看隊列延遲）
+tc -s qdisc show dev eth0
+
+# ethtool - 網卡統計
+ethtool -S eth0  # 顯示詳細的網卡統計
+ethtool -g eth0  # 顯示ring buffer設置
+
+# netstat - 網絡統計
+netstat -s  # 顯示網絡統計摘要
+
+# iftop - 實時流量監控
+iftop -i eth0  # 監控特定網卡流量
+```
+
+#### 5. 磁盤 I/O 監控
+
+```bash
+# iotop - I/O 使用率排名
+iotop -p [PID]  # 監控特定進程
+
+# iostat - I/O 統計
+iostat -x 1  # 詳細I/O統計
+iostat -p sda 1  # 監控特定磁盤
+
+# blktrace - 塊設備跟踪
+blktrace -d /dev/sda -o trace
+blkparse trace  # 解析跟踪數據
+
+# biolatency - BPF工具，監控I/O延遲分佈
+biolatency-bpfcc
+```
+
+#### 6. 系統調用追蹤
+
+```bash
+# strace - 系統調用追蹤
+strace -c -p [PID]  # 統計系統調用
+strace -T -p [PID]  # 顯示每個系統調用的時間
+strace -e trace=network -p [PID]  # 只追蹤網絡相關調用
+
+# ltrace - 庫調用追蹤
+ltrace -c -p [PID]  # 統計庫函數調用
+
+# ftrace - 內核函數追蹤
+echo function > /sys/kernel/debug/tracing/current_tracer
+echo 1 > /sys/kernel/debug/tracing/tracing_on
+cat /sys/kernel/debug/tracing/trace
+```
+
+#### 7. 延遲分析工具
+
+```bash
+# latencytop - 系統延遲分析
+latencytop  # 需要內核支持
+
+# cyclictest - 實時延遲測試
+cyclictest -t1 -p 99 -i 1000 -n  # 測試實時延遲
+
+# hwlatdetect - 硬件延遲檢測
+hwlatdetect --duration=60  # 檢測60秒
+```
+
+#### 8. BPF/eBPF 工具集
+
+```bash
+# bpftrace - 高級追蹤語言
+bpftrace -e 'tracepoint:sched:sched_switch { @[comm] = count(); }'
+
+# bcc-tools 工具集
+execsnoop  # 監控新進程執行
+opensnoop  # 監控文件打開
+tcpconnect  # 監控TCP連接
+tcpretrans  # 監控TCP重傳
+runqlat  # CPU運行隊列延遲
+hardirqs  # 硬中斷統計
+softirqs  # 軟中斷統計
+```
+
+### C++ 代碼中的效能監控實現
+
+```cpp
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <fstream>
+#include <sstream>
+
+class PerformanceMonitor {
+private:
+    struct CPUStats {
+        unsigned long long user;
+        unsigned long long nice;
+        unsigned long long system;
+        unsigned long long idle;
+        unsigned long long iowait;
+        unsigned long long irq;
+        unsigned long long softirq;
+    };
+    
+    struct ProcessStats {
+        long voluntary_ctxt_switches;
+        long nonvoluntary_ctxt_switches;
+        double cpu_usage;
+        size_t memory_rss;
+        size_t memory_vms;
+    };
+    
+public:
+    // 獲取進程的context switch統計
+    static ProcessStats get_process_stats(pid_t pid = 0) {
+        ProcessStats stats = {0};
+        
+        if (pid == 0) {
+            pid = getpid();
+        }
+        
+        // 讀取 /proc/[pid]/status
+        std::string status_path = "/proc/" + std::to_string(pid) + "/status";
+        std::ifstream status_file(status_path);
+        std::string line;
+        
+        while (std::getline(status_file, line)) {
+            if (line.find("voluntary_ctxt_switches:") != std::string::npos) {
+                sscanf(line.c_str(), "voluntary_ctxt_switches: %ld", 
+                       &stats.voluntary_ctxt_switches);
+            } else if (line.find("nonvoluntary_ctxt_switches:") != std::string::npos) {
+                sscanf(line.c_str(), "nonvoluntary_ctxt_switches: %ld", 
+                       &stats.nonvoluntary_ctxt_switches);
+            } else if (line.find("VmRSS:") != std::string::npos) {
+                sscanf(line.c_str(), "VmRSS: %zu", &stats.memory_rss);
+            } else if (line.find("VmSize:") != std::string::npos) {
+                sscanf(line.c_str(), "VmSize: %zu", &stats.memory_vms);
+            }
+        }
+        
+        // 獲取CPU使用率
+        stats.cpu_usage = get_cpu_usage(pid);
+        
+        return stats;
+    }
+    
+    // 獲取系統級context switch
+    static long get_system_context_switches() {
+        std::ifstream stat_file("/proc/stat");
+        std::string line;
+        
+        while (std::getline(stat_file, line)) {
+            if (line.find("ctxt") == 0) {
+                long ctxt;
+                sscanf(line.c_str(), "ctxt %ld", &ctxt);
+                return ctxt;
+            }
+        }
+        
+        return -1;
+    }
+    
+    // 監控線程的CPU遷移
+    static int get_cpu_migrations(pid_t tid) {
+        std::string schedstat_path = "/proc/" + std::to_string(tid) + "/schedstat";
+        std::ifstream schedstat_file(schedstat_path);
+        
+        if (!schedstat_file.is_open()) {
+            return -1;
+        }
+        
+        unsigned long long run_time, wait_time;
+        int nr_migrations;
+        schedstat_file >> run_time >> wait_time >> nr_migrations;
+        
+        return nr_migrations;
+    }
+    
+    // 獲取緩存未命中統計（需要perf權限）
+    static void get_cache_stats(pid_t pid, long& l1_misses, long& llc_misses) {
+        char cmd[256];
+        snprintf(cmd, sizeof(cmd), 
+                "perf stat -e L1-dcache-load-misses,LLC-load-misses -p %d sleep 0.1 2>&1", 
+                pid);
+        
+        FILE* pipe = popen(cmd, "r");
+        if (!pipe) {
+            l1_misses = llc_misses = -1;
+            return;
+        }
+        
+        char buffer[256];
+        while (fgets(buffer, sizeof(buffer), pipe)) {
+            if (strstr(buffer, "L1-dcache-load-misses")) {
+                sscanf(buffer, "%ld", &l1_misses);
+            } else if (strstr(buffer, "LLC-load-misses")) {
+                sscanf(buffer, "%ld", &llc_misses);
+            }
+        }
+        
+        pclose(pipe);
+    }
+    
+    // 實時監控並報告
+    static void monitor_performance(int duration_seconds) {
+        pid_t pid = getpid();
+        
+        printf("Monitoring PID %d for %d seconds...\n", pid, duration_seconds);
+        printf("Time\tVol_CS\tNonvol_CS\tCPU%%\tRSS(MB)\tCPU_Migrations\n");
+        
+        for (int i = 0; i < duration_seconds; ++i) {
+            ProcessStats stats = get_process_stats(pid);
+            int migrations = get_cpu_migrations(pid);
+            
+            printf("%d\t%ld\t%ld\t%.2f\t%.2f\t%d\n",
+                   i,
+                   stats.voluntary_ctxt_switches,
+                   stats.nonvoluntary_ctxt_switches,
+                   stats.cpu_usage,
+                   stats.memory_rss / 1024.0,
+                   migrations);
+            
+            sleep(1);
+        }
+    }
+    
+private:
+    static double get_cpu_usage(pid_t pid) {
+        static std::map<pid_t, std::pair<unsigned long long, clock_t>> last_stats;
+        
+        // 讀取進程CPU時間
+        std::string stat_path = "/proc/" + std::to_string(pid) + "/stat";
+        std::ifstream stat_file(stat_path);
+        std::string line;
+        std::getline(stat_file, line);
+        
+        // 解析stat文件（簡化版）
+        std::istringstream iss(line);
+        std::string ignore;
+        unsigned long utime, stime;
+        
+        // 跳過前13個字段
+        for (int i = 0; i < 13; ++i) {
+            iss >> ignore;
+        }
+        iss >> utime >> stime;
+        
+        unsigned long long total_time = utime + stime;
+        clock_t current_time = clock();
+        
+        double cpu_percent = 0.0;
+        
+        if (last_stats.find(pid) != last_stats.end()) {
+            auto& last = last_stats[pid];
+            unsigned long long time_diff = total_time - last.first;
+            clock_t clock_diff = current_time - last.second;
+            
+            if (clock_diff > 0) {
+                cpu_percent = 100.0 * time_diff / clock_diff;
+            }
+        }
+        
+        last_stats[pid] = {total_time, current_time};
+        
+        return cpu_percent;
+    }
+};
+
+// 使用示例
+int main() {
+    // 設置高性能環境
+    RealTimeScheduler::setup_realtime_thread(2, 99);
+    
+    // 開始監控
+    PerformanceMonitor::monitor_performance(10);
+    
+    return 0;
+}
