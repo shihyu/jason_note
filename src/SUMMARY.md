@@ -46,6 +46,7 @@
     - [Claude Nights Watch - 自主任務執行系統](tools/claude_nights_watch_zh.md)
     - [Claude Nights Watch Setup](tools/claude-nights-watch-setup.md)
     - [Cross Compiler 與 LLVM vs GCC 完整解析](tools/cross-compiler-llvm-gcc-guide.md)
+    - [程式分析與效能工具完整指南](tools/cpp-analysis-tools.md)
     - [🎯 完整的 Solana Token 出入金系統指南](tools/solana_token_guide.md)
     - [Bitwarden CLI 完整使用指南](tools/bitwarden_cli_guide.md)
 
@@ -177,6 +178,7 @@
     - [Fil Memory Usage Profiler](python/fil-memory-usage-profiler.md)
     - [繪圖](python/plot.md)
     - [永豐 shioaji](python/shioaji.md)
+    - [Python Profiling 完整指南](python/python-profiling-guide.md)
     - [Python 鎖機制完整指南](python/python_locks_guide.md)
     - [Django 架構與專案結構完整指南](python/django_architecture_guide.md)
     - [Django + Nginx + Gunicorn + SSL 完整部署指南](python/nginx_django_ssl_guide.md)
@@ -219,6 +221,7 @@
     - [Build Lib](linux_system/自製Lib.md)
     - [Performance](linux_system/performance.md)
     - [Linux Process、Thread 與系統概念完整指南](linux_system/linux-process-thread-guide.md)
+    - [Linux Kernel Debug](linux_system/linux-kernel-debug.md)
 - [SSH](ssh/ssh.md)
 - [Network](network/socket.md)
 
