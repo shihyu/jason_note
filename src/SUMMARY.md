@@ -69,6 +69,7 @@
     - [C++ Move 語意完整指南](c++/cpp-move-semantics-guide.md)
     - [Linux 系統鎖與 C++ 鎖機制完整指南](c++/locks_guide.md)
     - [Interview](c++/interview.md)
+    - [C++ HFT 開發完整指南](c++/cpp_hft_guide.md)
 - [Rust](rust/rust.md)
     - [Rust 筆記](rust/note.md)
     - [Rust 基本教學](rust/basic.md)
