@@ -31,36 +31,36 @@
 
 ```mermaid
 graph TB
-    subgraph "使用者空間"
-        APP[應用程式<br/>Python/Go/C++]
-        TOOL[開發工具<br/>bcc/bpftrace]
-        LIB[eBPF 函式庫]
+    subgraph US [使用者空間]
+        APP["應用程式<br/>Python/Go/C++"]
+        TOOL["開發工具<br/>bcc/bpftrace"]
+        LIB["eBPF 函式庫"]
     end
     
-    subgraph "eBPF 子系統"
+    subgraph ES [eBPF 子系統]
         LOAD[載入器]
-        VERIFY[驗證器<br/>Verifier]
-        JIT[JIT 編譯器]
-        MAPS[eBPF Maps<br/>資料儲存]
+        VERIFY["驗證器<br/>Verifier"]
+        JIT["JIT 編譯器"]
+        MAPS["eBPF Maps<br/>資料儲存"]
     end
     
-    subgraph "Linux 核心"
-        HOOK[鉤子點 Hooks]
-        PROG[eBPF 程式<br/>執行環境]
-        HELPER[Helper 函數]
+    subgraph LK [Linux 核心]
+        HOOK["鉤子點 Hooks"]
+        PROG["eBPF 程式<br/>執行環境"]
+        HELPER["Helper 函數"]
         SUBSYS[核心子系統]
     end
     
-    subgraph "硬體層"
-        HW[CPU/記憶體/網卡]
+    subgraph HWL [硬體層]
+        HW["CPU/記憶體/網卡"]
     end
     
     APP --> TOOL
     TOOL --> LIB
-    LIB -->|bpf()系統呼叫| LOAD
+    LIB -->|"bpf()系統呼叫"| LOAD
     LOAD --> VERIFY
-    VERIFY -->|安全檢查通過| JIT
-    JIT -->|機器碼| PROG
+    VERIFY -->|"安全檢查通過"| JIT
+    JIT -->|"機器碼"| PROG
     PROG <--> MAPS
     PROG --> HELPER
     PROG --> HOOK
@@ -90,31 +90,31 @@ eBPF 程序可以附加到多種鉤子點：
 
 ```mermaid
 graph LR
-    subgraph "開發階段"
-        CODE[C/Rust 程式碼]
-        COMPILE[LLVM/Clang<br/>編譯]
-        BYTECODE[eBPF Bytecode]
+    subgraph DEV [開發階段]
+        CODE["C/Rust 程式碼"]
+        COMPILE["LLVM/Clang<br/>編譯"]
+        BYTECODE["eBPF Bytecode"]
     end
     
-    subgraph "載入階段"
-        SYSCALL[bpf() 系統呼叫]
+    subgraph LOADSTAGE [載入階段]
+        SYSCALL["bpf() 系統呼叫"]
         VERIFIER[驗證器檢查]
-        JIT_COMP[JIT 編譯]
+        JIT_COMP["JIT 編譯"]
     end
     
-    subgraph "執行階段"
+    subgraph RUNTIME [執行階段]
         ATTACH[附加到鉤子]
         RUN[事件觸發執行]
-        MAPS_RW[讀寫 Maps]
-        HELPERS[呼叫 Helper]
+        MAPS_RW["讀寫 Maps"]
+        HELPERS["呼叫 Helper"]  
     end
     
     CODE --> COMPILE
     COMPILE --> BYTECODE
     BYTECODE --> SYSCALL
     SYSCALL --> VERIFIER
-    VERIFIER -->|通過| JIT_COMP
-    VERIFIER -->|失敗| REJECT[拒絕載入]
+    VERIFIER -->|"通過"| JIT_COMP
+    VERIFIER -->|"失敗"| REJECT["拒絕載入"]
     JIT_COMP --> ATTACH
     ATTACH --> RUN
     RUN --> MAPS_RW
@@ -132,31 +132,31 @@ Maps 是核心與使用者空間的資料橋樑：
 
 ```mermaid
 graph TB
-    subgraph "使用者空間程式"
-        USER[Python/Go/C++ 應用]
+    subgraph USERSPACE [使用者空間程式]
+        USER["Python/Go/C++ 應用"]
     end
     
-    subgraph "eBPF Maps 類型"
-        HASH[Hash Map<br/>鍵值對儲存]
-        ARRAY[Array<br/>固定大小陣列]
-        PERF[Perf Event Array<br/>事件傳遞]
-        STACK[Stack Trace<br/>堆疊追蹤]
-        LRU[LRU Hash<br/>快取儲存]
-        PERCPU[Per-CPU Array<br/>CPU 獨立儲存]
+    subgraph MAPTYPES [eBPF Maps 類型]
+        HASH["Hash Map<br/>鍵值對儲存"]
+        ARRAY["Array<br/>固定大小陣列"]
+        PERF["Perf Event Array<br/>事件傳遞"]
+        STACK["Stack Trace<br/>堆疊追蹤"]
+        LRU["LRU Hash<br/>快取儲存"]
+        PERCPU["Per-CPU Array<br/>CPU 獨立儲存"]
     end
     
-    subgraph "核心 eBPF 程式"
-        KERNEL[eBPF 程式邏輯]
+    subgraph KERNELPROG [核心 eBPF 程式]
+        KERNEL["eBPF 程式邏輯"]
     end
     
-    USER <-->|讀寫| HASH
-    USER <-->|讀寫| ARRAY
-    USER <--|讀取事件| PERF
+    USER <-->|"讀寫"| HASH
+    USER <-->|"讀寫"| ARRAY
+    USER -->|"讀取事件"| PERF
     
-    KERNEL -->|更新| HASH
-    KERNEL -->|寫入| ARRAY
-    KERNEL -->|提交事件| PERF
-    KERNEL -->|記錄| STACK
+    KERNEL -->|"更新"| HASH
+    KERNEL -->|"寫入"| ARRAY
+    KERNEL -->|"提交事件"| PERF
+    KERNEL -->|"記錄"| STACK
     KERNEL <--> LRU
     KERNEL <--> PERCPU
     
@@ -172,26 +172,26 @@ graph TB
 flowchart TD
     START[eBPF Bytecode]
     
-    CHECK1{檢查指令數量<br/>< 1M ?}
+    CHECK1{"檢查指令數量<br/>< 1M ?"}
     CHECK2{模擬所有路徑}
-    CHECK3{記憶體訪問<br/>安全？}
-    CHECK4{程式會結束？<br/>無無限迴圈}
-    CHECK5{Helper 使用<br/>正確？}
+    CHECK3{"記憶體訪問<br/>安全？"}
+    CHECK4{"程式會結束？<br/>無無限迴圈"}
+    CHECK5{"Helper 使用<br/>正確？"}
     
-    PASS[✅ 載入到核心]
-    FAIL[❌ 拒絕載入]
+    PASS["✅ 載入到核心"]
+    FAIL["❌ 拒絕載入"]
     
     START --> CHECK1
-    CHECK1 -->|是| CHECK2
-    CHECK1 -->|否| FAIL
-    CHECK2 -->|通過| CHECK3
-    CHECK2 -->|失敗| FAIL
-    CHECK3 -->|安全| CHECK4
-    CHECK3 -->|不安全| FAIL
-    CHECK4 -->|是| CHECK5
-    CHECK4 -->|否| FAIL
-    CHECK5 -->|正確| PASS
-    CHECK5 -->|錯誤| FAIL
+    CHECK1 -->|"是"| CHECK2
+    CHECK1 -->|"否"| FAIL
+    CHECK2 -->|"通過"| CHECK3
+    CHECK2 -->|"失敗"| FAIL
+    CHECK3 -->|"安全"| CHECK4
+    CHECK3 -->|"不安全"| FAIL
+    CHECK4 -->|"是"| CHECK5
+    CHECK4 -->|"否"| FAIL
+    CHECK5 -->|"正確"| PASS
+    CHECK5 -->|"錯誤"| FAIL
     
     style PASS fill:#90EE90
     style FAIL fill:#FFB6C1
@@ -203,21 +203,21 @@ flowchart TD
 
 ```mermaid
 graph LR
-    subgraph "編譯流程"
-        BC[eBPF Bytecode<br/>虛擬指令]
-        JIT[JIT 編譯器]
-        MC[機器碼<br/>x86/ARM]
+    subgraph COMPILEFLOW [編譯流程]
+        BC["eBPF Bytecode<br/>虛擬指令"]
+        JIT["JIT 編譯器"]
+        MC["機器碼<br/>x86/ARM"]
     end
     
-    subgraph "效能對比"
-        INTERP[解釋執行<br/>速度: 1x]
-        NATIVE[原生執行<br/>速度: 10x+]
+    subgraph PERFCOMPARE [效能對比]
+        INTERP["解釋執行<br/>速度: 1x"]
+        NATIVE["原生執行<br/>速度: 10x+"]
     end
     
     BC --> JIT
     JIT --> MC
-    BC -.->|沒有 JIT| INTERP
-    MC -->|有 JIT| NATIVE
+    BC -.->|"沒有 JIT"| INTERP
+    MC -->|"有 JIT"| NATIVE
     
     style NATIVE fill:#90EE90
     style INTERP fill:#FFE4B5
@@ -242,21 +242,21 @@ eBPF 程式通過 Helper 函數與核心互動：
 
 ```mermaid
 graph TB
-    subgraph "高階工具"
-        BPFTRACE[bpftrace<br/>一行指令追蹤]
-        BCC[BCC<br/>Python + eBPF]
+    subgraph HIGHLEVEL [高階工具]
+        BPFTRACE["bpftrace<br/>一行指令追蹤"]
+        BCC["BCC<br/>Python + eBPF"]
     end
     
-    subgraph "中階框架"
-        GO[eBPF Go<br/>Go 語言函式庫]
-        RUST[Aya<br/>Rust 框架]
+    subgraph MIDLEVEL [中階框架]
+        GO["eBPF Go<br/>Go 語言函式庫"]
+        RUST["Aya<br/>Rust 框架"]
     end
     
-    subgraph "底層函式庫"
-        LIBBPF[libbpf<br/>C/C++ 函式庫]
+    subgraph LOWLEVEL [底層函式庫]
+        LIBBPF["libbpf<br/>C/C++ 函式庫"]
     end
     
-    subgraph "使用場景"
+    subgraph USECASES [使用場景]
         TRACE[快速診斷]
         PROTO[原型開發]
         PROD[生產環境]
@@ -289,20 +289,20 @@ graph TB
 
 ```mermaid
 graph TD
-    subgraph "第一層：權限控制"
-        PRIV[需要 root 或 CAP_BPF 權限]
+    subgraph L1 [第一層：權限控制]
+        PRIV["需要 root 或 CAP_BPF 權限"]
     end
     
-    subgraph "第二層：驗證器"
-        VER[程式安全性驗證<br/>- 無無限迴圈<br/>- 記憶體訪問安全<br/>- 有界限執行]
+    subgraph L2 [第二層：驗證器]
+        VER["程式安全性驗證<br/>- 無無限迴圈<br/>- 記憶體訪問安全<br/>- 有界限執行"]
     end
     
-    subgraph "第三層：加固"
-        HARD[執行時保護<br/>- 程式唯讀<br/>- Spectre 緩解<br/>- 常數盲化]
+    subgraph L3 [第三層：加固]
+        HARD["執行時保護<br/>- 程式唯讀<br/>- Spectre 緩解<br/>- 常數盲化"]
     end
     
-    subgraph "第四層：隔離"
-        ISO[執行環境隔離<br/>- 不能直接訪問記憶體<br/>- 必須使用 Helper<br/>- 受限的上下文]
+    subgraph L4 [第四層：隔離]
+        ISO["執行環境隔離<br/>- 不能直接訪問記憶體<br/>- 必須使用 Helper<br/>- 受限的上下文"]
     end
     
     PRIV --> VER
@@ -321,15 +321,15 @@ graph TD
 
 ```mermaid
 graph LR
-    subgraph "傳統方式"
+    subgraph TRADITIONAL [傳統方式]
         T1[修改核心原始碼]
         T2[等待數年發布]
         T3[編寫核心模組]
         T4[可能造成崩潰]
     end
     
-    subgraph "eBPF 方式"
-        E1[編寫 eBPF 程式]
+    subgraph EBPFWAY [eBPF 方式]
+        E1["編寫 eBPF 程式"]
         E2[即時載入執行]
         E3[安全沙盒環境]
         E4[動態可程式化]
