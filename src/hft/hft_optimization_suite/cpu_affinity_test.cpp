@@ -43,7 +43,7 @@ public:
         int result = pthread_setaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
         
         if (result != 0) {
-            cerr << "Failed to set CPU affinity: " << strerror(result) << endl;
+            cerr << "設定 CPU 親和性失敗: " << strerror(result) << endl;
             return false;
         }
         
@@ -78,7 +78,7 @@ public:
         param.sched_priority = priority;
         
         if (sched_setscheduler(0, SCHED_FIFO, &param) != 0) {
-            cerr << "Failed to set realtime priority (need root?)" << endl;
+            cerr << "設定即時優先級失敗 (需要 root 權限?)" << endl;
             return false;
         }
         
@@ -87,13 +87,13 @@ public:
     
     // 獲取 NUMA 節點資訊
     static void print_numa_info() {
-        cout << "NUMA info: (libnuma not available - install libnuma-dev for full support)" << endl;
+        cout << "NUMA 資訊: (libnuma 不可用 - 安裝 libnuma-dev 以獲得完整支援)" << endl;
         // Basic NUMA detection via /sys
         ifstream numa_nodes("/sys/devices/system/node/online");
         if (numa_nodes) {
             string nodes;
             getline(numa_nodes, nodes);
-            cout << "NUMA nodes online: " << nodes << endl;
+            cout << "線上 NUMA 節點: " << nodes << endl;
         }
     }
     
@@ -139,13 +139,13 @@ public:
     // 測試不同 CPU 綁定策略
     static void test_cpu_affinity() {
         int num_cpus = CPUAffinityManager::get_cpu_count();
-        cout << "\n=== CPU Affinity Test ===" << endl;
-        cout << "Available CPUs: " << num_cpus << endl;
+        cout << "\n=== CPU 親和性測試 ===" << endl;
+        cout << "可用 CPU 數量: " << num_cpus << endl;
         
         const int num_threads = min(4, num_cpus);
         
         // 測試 1: 不綁定 (系統調度)
-        cout << "\nTest 1: No CPU affinity (system scheduling)" << endl;
+        cout << "\n測試 1: 無 CPU 親和性 (系統調度)" << endl;
         {
             vector<thread> threads;
             auto start = high_resolution_clock::now();
@@ -153,8 +153,8 @@ public:
             for (int i = 0; i < num_threads; i++) {
                 threads.emplace_back([i]() {
                     cpu_intensive_work(ITERATIONS);
-                    cout << "Thread " << i << " finished on CPU " 
-                         << CPUAffinityManager::get_current_cpu() << endl;
+                    cout << "執行緒 " << i << " 在 CPU " 
+                         << CPUAffinityManager::get_current_cpu() << " 上完成" << endl;
                 });
             }
             
@@ -163,11 +163,11 @@ public:
             }
             
             auto duration = high_resolution_clock::now() - start;
-            cout << "Time: " << duration_cast<milliseconds>(duration).count() << " ms" << endl;
+            cout << "時間: " << duration_cast<milliseconds>(duration).count() << " 毫秒" << endl;
         }
         
         // 測試 2: 綁定到不同 CPU
-        cout << "\nTest 2: Each thread pinned to different CPU" << endl;
+        cout << "\n測試 2: 每個執行緒綁定到不同 CPU" << endl;
         {
             vector<thread> threads;
             auto start = high_resolution_clock::now();
@@ -176,8 +176,8 @@ public:
                 threads.emplace_back([i]() {
                     CPUAffinityManager::pin_thread_to_cpu(i);
                     cpu_intensive_work(ITERATIONS);
-                    cout << "Thread " << i << " finished on CPU " 
-                         << CPUAffinityManager::get_current_cpu() << endl;
+                    cout << "執行緒 " << i << " 在 CPU " 
+                         << CPUAffinityManager::get_current_cpu() << " 上完成" << endl;
                 });
             }
             
@@ -186,11 +186,11 @@ public:
             }
             
             auto duration = high_resolution_clock::now() - start;
-            cout << "Time: " << duration_cast<milliseconds>(duration).count() << " ms" << endl;
+            cout << "時間: " << duration_cast<milliseconds>(duration).count() << " 毫秒" << endl;
         }
         
         // 測試 3: 所有綁定到同一 CPU (錯誤示範)
-        cout << "\nTest 3: All threads pinned to same CPU (bad example)" << endl;
+        cout << "\n測試 3: 所有執行緒綁定到同一 CPU (錯誤示範)" << endl;
         {
             vector<thread> threads;
             auto start = high_resolution_clock::now();
@@ -199,8 +199,8 @@ public:
                 threads.emplace_back([i]() {
                     CPUAffinityManager::pin_thread_to_cpu(0);  // 都綁定到 CPU 0
                     cpu_intensive_work(ITERATIONS);
-                    cout << "Thread " << i << " finished on CPU " 
-                         << CPUAffinityManager::get_current_cpu() << endl;
+                    cout << "執行緒 " << i << " 在 CPU " 
+                         << CPUAffinityManager::get_current_cpu() << " 上完成" << endl;
                 });
             }
             
@@ -209,20 +209,20 @@ public:
             }
             
             auto duration = high_resolution_clock::now() - start;
-            cout << "Time: " << duration_cast<milliseconds>(duration).count() << " ms" << endl;
+            cout << "時間: " << duration_cast<milliseconds>(duration).count() << " 毫秒" << endl;
         }
     }
     
     // 測試 NUMA 親和性
     static void test_numa_affinity() {
-        cout << "\n=== NUMA Affinity Test ===" << endl;
+        cout << "\n=== NUMA 親和性測試 ===" << endl;
         
         CPUAffinityManager::print_numa_info();
         
         // Simple memory access test without libnuma
         const size_t buffer_size = 100 * 1024 * 1024;  // 100 MB
         
-        cout << "\nMemory access test:" << endl;
+        cout << "\n記憶體存取測試:" << endl;
         void* buffer = malloc(buffer_size);
         
         if (buffer) {
@@ -232,9 +232,9 @@ public:
             long result = memory_intensive_work(buffer, buffer_size);
             auto duration = high_resolution_clock::now() - start;
             
-            cout << "Memory access time: " 
-                 << duration_cast<microseconds>(duration).count() << " us" << endl;
-            cout << "(Full NUMA testing requires libnuma-dev)" << endl;
+            cout << "記憶體存取時間: " 
+                 << duration_cast<microseconds>(duration).count() << " 微秒" << endl;
+            cout << "(完整 NUMA 測試需要 libnuma-dev)" << endl;
             
             free(buffer);
         }
@@ -242,7 +242,7 @@ public:
     
     // 測試執行緒優先級
     static void test_thread_priority() {
-        cout << "\n=== Thread Priority Test ===" << endl;
+        cout << "\n=== 執行緒優先級測試 ===" << endl;
         
         atomic<int> counter{0};
         atomic<bool> running{true};
@@ -271,13 +271,13 @@ public:
             }
             
             running = false;
-            cout << "High priority thread iterations: " << local_counter << endl;
+            cout << "高優先級執行緒迭代次數: " << local_counter << endl;
         });
         
         low_prio.join();
         high_prio.join();
         
-        cout << "Low priority thread iterations: " << counter << endl;
+        cout << "低優先級執行緒迭代次數: " << counter << endl;
     }
 };
 
@@ -291,7 +291,7 @@ private:
     
 public:
     static void demonstrate_hft_setup() {
-        cout << "\n=== HFT Optimized Setup ===" << endl;
+        cout << "\n=== HFT 優化設定 ===" << endl;
         
         int num_cpus = CPUAffinityManager::get_cpu_count();
         
@@ -300,8 +300,8 @@ public:
             CPUAffinityManager::pin_thread_to_cpu(0);
             CPUAffinityManager::set_realtime_priority(99);
             
-            cout << "IO Thread on CPU " << CPUAffinityManager::get_current_cpu() 
-                 << " with RT priority" << endl;
+            cout << "IO 執行緒在 CPU " << CPUAffinityManager::get_current_cpu() 
+                 << " 上使用即時優先級" << endl;
             
             // 模擬 IO 處理
             for (int i = 0; i < 1000000; i++) {
@@ -317,7 +317,7 @@ public:
             calc_threads.emplace_back([cpu]() {
                 CPUAffinityManager::pin_thread_to_cpu(cpu);
                 
-                cout << "Calc Thread on CPU " << CPUAffinityManager::get_current_cpu() << endl;
+                cout << "計算執行緒在 CPU " << CPUAffinityManager::get_current_cpu() << " 上" << endl;
                 
                 // 模擬策略計算
                 for (int i = 0; i < 1000000; i++) {
@@ -334,8 +334,8 @@ public:
             CPUAffinityManager::pin_thread_to_cpu(num_cpus - 1);
             nice(10);  // 低優先級
             
-            cout << "Log Thread on CPU " << CPUAffinityManager::get_current_cpu() 
-                 << " with low priority" << endl;
+            cout << "日誌執行緒在 CPU " << CPUAffinityManager::get_current_cpu() 
+                 << " 上使用低優先級" << endl;
             
             // 模擬日誌處理
             for (int i = 0; i < 100000; i++) {
@@ -351,12 +351,12 @@ public:
         }
         log_thread.join();
         
-        cout << "HFT setup demonstration completed" << endl;
+        cout << "HFT 設定示範完成" << endl;
     }
     
     // 測試 false sharing
     static void test_false_sharing() {
-        cout << "\n=== False Sharing Test ===" << endl;
+        cout << "\n=== False Sharing 測試 ===" << endl;
         
         const int num_threads = 4;
         const int iterations = 100000000;
@@ -383,8 +383,8 @@ public:
             }
             
             auto duration = high_resolution_clock::now() - start;
-            cout << "With false sharing: " 
-                 << duration_cast<milliseconds>(duration).count() << " ms" << endl;
+            cout << "有 false sharing: " 
+                 << duration_cast<milliseconds>(duration).count() << " 毫秒" << endl;
         }
         
         // 測試 2: 無 false sharing
@@ -407,19 +407,19 @@ public:
             }
             
             auto duration = high_resolution_clock::now() - start;
-            cout << "Without false sharing: " 
-                 << duration_cast<milliseconds>(duration).count() << " ms" << endl;
+            cout << "無 false sharing: " 
+                 << duration_cast<milliseconds>(duration).count() << " 毫秒" << endl;
         }
     }
 };
 
 int main() {
-    cout << "=== CPU Affinity and Threading Optimization Tests ===" << endl;
+    cout << "=== CPU 親和性與執行緒優化測試 ===" << endl;
     
     // 基本系統資訊
-    cout << "\nSystem Information:" << endl;
-    cout << "CPU count: " << CPUAffinityManager::get_cpu_count() << endl;
-    cout << "Current CPU: " << CPUAffinityManager::get_current_cpu() << endl;
+    cout << "\n系統資訊:" << endl;
+    cout << "CPU 數量: " << CPUAffinityManager::get_cpu_count() << endl;
+    cout << "目前 CPU: " << CPUAffinityManager::get_current_cpu() << endl;
     
     // 執行測試
     AffinityBenchmark::test_cpu_affinity();
@@ -430,6 +430,6 @@ int main() {
     HFTOptimizedArchitecture::demonstrate_hft_setup();
     HFTOptimizedArchitecture::test_false_sharing();
     
-    cout << "\nAll tests completed!" << endl;
+    cout << "\n所有測試完成!" << endl;
     return 0;
 }

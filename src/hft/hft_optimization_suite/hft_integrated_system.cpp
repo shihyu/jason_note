@@ -123,7 +123,7 @@ private:
     
 public:
     UltraLowLatencyTradingSystem() {
-        cout << "Initializing Ultra Low Latency Trading System..." << endl;
+        cout << "正在初始化超低延遲交易系統..." << endl;
         initialize();
     }
     
@@ -144,11 +144,11 @@ public:
         // 4. 預熱系統
         warmup_system();
         
-        cout << "System initialized successfully!" << endl;
+        cout << "系統初始化成功!" << endl;
     }
     
     void run() {
-        cout << "Trading system running..." << endl;
+        cout << "交易系統運行中..." << endl;
         
         // 主執行緒作為監控執行緒
         while (running) {
@@ -165,7 +165,7 @@ public:
     }
     
     void shutdown() {
-        cout << "Shutting down trading system..." << endl;
+        cout << "正在關閉交易系統..." << endl;
         running = false;
         
         // 清理資源
@@ -184,7 +184,7 @@ public:
     
 private:
     void setup_huge_pages() {
-        cout << "Setting up huge pages..." << endl;
+        cout << "正在設定大頁面..." << endl;
         
         // 分配 1GB 大頁面給市場數據
         market_data_buffer = mmap(
@@ -197,7 +197,7 @@ private:
         
         if (market_data_buffer == MAP_FAILED) {
             // 降級到 2MB 大頁面
-            cout << "1GB huge pages not available, trying 2MB..." << endl;
+            cout << "1GB 大頁面不可用，嘗試 2MB..." << endl;
             market_data_buffer = mmap(
                 nullptr,
                 MARKET_DATA_BUFFER_SIZE,
@@ -207,7 +207,7 @@ private:
             );
             
             if (market_data_buffer == MAP_FAILED) {
-                throw runtime_error("Failed to allocate huge pages for market data");
+                throw runtime_error("為市場數據分配大頁面失敗");
             }
         }
         
@@ -221,7 +221,7 @@ private:
         );
         
         if (order_buffer == MAP_FAILED) {
-            throw runtime_error("Failed to allocate huge pages for orders");
+            throw runtime_error("為訂單分配大頁面失敗");
         }
         
         // 預觸摸記憶體
@@ -230,21 +230,21 @@ private:
         
         // 鎖定記憶體
         if (mlockall(MCL_CURRENT | MCL_FUTURE) != 0) {
-            cerr << "Warning: Failed to lock memory" << endl;
+            cerr << "警告: 鎖定記憶體失敗" << endl;
         }
         
-        cout << "Huge pages allocated: " 
+        cout << "大頁面已分配: " 
              << (MARKET_DATA_BUFFER_SIZE + ORDER_BUFFER_SIZE) / (1024*1024) 
              << " MB" << endl;
     }
     
     void setup_networking() {
-        cout << "Setting up networking..." << endl;
+        cout << "正在設定網路..." << endl;
         
         // 創建多播 socket 接收市場數據
         multicast_fd = socket(AF_INET, SOCK_DGRAM, 0);
         if (multicast_fd < 0) {
-            throw runtime_error("Failed to create multicast socket");
+            throw runtime_error("創建多播 socket 失敗");
         }
         
         // 設置 socket 選項
@@ -268,7 +268,7 @@ private:
         // 創建訂單發送 socket
         order_send_fd = socket(AF_INET, SOCK_STREAM, 0);
         if (order_send_fd < 0) {
-            throw runtime_error("Failed to create order socket");
+            throw runtime_error("創建訂單 socket 失敗");
         }
         
         // TCP_NODELAY - 關閉 Nagle 算法
@@ -277,7 +277,7 @@ private:
         // 創建 epoll
         epoll_fd = epoll_create1(EPOLL_CLOEXEC);
         if (epoll_fd < 0) {
-            throw runtime_error("Failed to create epoll");
+            throw runtime_error("創建 epoll 失敗");
         }
         
         // 添加市場數據 socket 到 epoll
@@ -286,14 +286,14 @@ private:
         ev.data.fd = multicast_fd;
         epoll_ctl(epoll_fd, EPOLL_CTL_ADD, multicast_fd, &ev);
         
-        cout << "Network setup completed" << endl;
+        cout << "網路設定完成" << endl;
     }
     
     void setup_threads() {
-        cout << "Setting up threads with CPU affinity..." << endl;
+        cout << "正在設定執行緒及 CPU 親和性..." << endl;
         
         int num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
-        cout << "Available CPUs: " << num_cpus << endl;
+        cout << "可用 CPU 數量: " << num_cpus << endl;
         
         // IO 執行緒 - CPU 0
         worker_threads.emplace_back([this]() {
@@ -321,7 +321,7 @@ private:
         set_thread_name("IO_Thread");
         set_realtime_priority(99);
         
-        cout << "IO thread running on CPU " << cpu_id << endl;
+        cout << "IO 執行緒運行在 CPU " << cpu_id << " 上" << endl;
         
         epoll_event events[MAX_EVENTS];
         char buffer[65536];
@@ -350,7 +350,7 @@ private:
                             
                             if (!market_queue.push(*data)) {
                                 // 隊列滿，記錄丟失
-                                cerr << "Market data queue full!" << endl;
+                                cerr << "市場數據佇列已滿!" << endl;
                             } else {
                                 total_market_data++;
                             }
@@ -367,7 +367,7 @@ private:
         set_thread_name("Strategy_Thread");
         set_realtime_priority(98);
         
-        cout << "Strategy thread running on CPU " << cpu_id << endl;
+        cout << "策略執行緒運行在 CPU " << cpu_id << " 上" << endl;
         
         MarketData data;
         
@@ -380,7 +380,7 @@ private:
                 if (order.order_id != 0) {
                     // 發送訂單到訂單隊列
                     if (!order_queue.push(order)) {
-                        cerr << "Order queue full!" << endl;
+                        cerr << "訂單佇列已滿!" << endl;
                     } else {
                         total_orders++;
                         
@@ -403,7 +403,7 @@ private:
         set_thread_name("Order_Thread");
         set_realtime_priority(97);
         
-        cout << "Order thread running on CPU " << cpu_id << endl;
+        cout << "訂單執行緒運行在 CPU " << cpu_id << " 上" << endl;
         
         Order order;
         
@@ -448,7 +448,7 @@ private:
     }
     
     void warmup_system() {
-        cout << "Warming up system..." << endl;
+        cout << "正在預熱系統..." << endl;
         
         // 預熱 CPU 快取
         volatile long sum = 0;
@@ -461,7 +461,7 @@ private:
             static_cast<char*>(order_buffer)[i] = 0;
         }
         
-        cout << "Warmup completed" << endl;
+        cout << "預熱完成" << endl;
     }
     
     void print_statistics() {
@@ -470,17 +470,17 @@ private:
         auto duration = duration_cast<seconds>(now - last_print).count();
         
         if (duration >= 5) {
-            cout << "\n=== System Statistics ===" << endl;
-            cout << "Market data received: " << total_market_data << endl;
-            cout << "Orders generated: " << total_orders << endl;
+            cout << "\n=== 系統統計 ===" << endl;
+            cout << "已接收市場數據: " << total_market_data << endl;
+            cout << "已產生訂單: " << total_orders << endl;
             
             if (total_orders > 0) {
                 uint64_t avg_latency = total_latency_ns / total_orders;
-                cout << "Average latency: " << avg_latency << " cycles" << endl;
+                cout << "平均延遲: " << avg_latency << " 循環" << endl;
             }
             
-            cout << "Market data rate: " << total_market_data / duration << " msg/sec" << endl;
-            cout << "Order rate: " << total_orders / duration << " orders/sec" << endl;
+            cout << "市場數據速率: " << total_market_data / duration << " 訊息/秒" << endl;
+            cout << "訂單速率: " << total_orders / duration << " 訂單/秒" << endl;
             
             last_print = now;
         }
@@ -504,7 +504,7 @@ private:
         param.sched_priority = priority;
         
         if (pthread_setschedparam(pthread_self(), SCHED_FIFO, &param) != 0) {
-            cerr << "Warning: Failed to set realtime priority (need root)" << endl;
+            cerr << "警告: 設定即時優先級失敗 (需要 root 權限)" << endl;
         }
     }
     
@@ -528,7 +528,7 @@ private:
 class SystemBenchmark {
 public:
     static void run_benchmarks() {
-        cout << "\n=== Running System Benchmarks ===" << endl;
+        cout << "\n=== 運行系統基準測試 ===" << endl;
         
         // 測試大頁面 vs 標準頁面
         benchmark_memory_access();
@@ -542,7 +542,7 @@ public:
     
 private:
     static void benchmark_memory_access() {
-        cout << "\n--- Memory Access Benchmark ---" << endl;
+        cout << "\n--- 記憶體存取基準測試 ---" << endl;
         
         const size_t size = 100 * 1024 * 1024;  // 100 MB
         
@@ -575,14 +575,14 @@ private:
             
             munmap(huge_mem, size);
             
-            cout << "Standard pages: " << duration_cast<microseconds>(normal_time).count() << " us" << endl;
-            cout << "Huge pages: " << duration_cast<microseconds>(huge_time).count() << " us" << endl;
-            cout << "Speedup: " << (double)normal_time.count() / huge_time.count() << "x" << endl;
+            cout << "標準頁面: " << duration_cast<microseconds>(normal_time).count() << " 微秒" << endl;
+            cout << "大頁面: " << duration_cast<microseconds>(huge_time).count() << " 微秒" << endl;
+            cout << "加速倍率: " << (double)normal_time.count() / huge_time.count() << "x" << endl;
         }
     }
     
     static void benchmark_cpu_affinity() {
-        cout << "\n--- CPU Affinity Benchmark ---" << endl;
+        cout << "\n--- CPU 親和性基準測試 ---" << endl;
         
         const int iterations = 100000000;
         
@@ -607,12 +607,12 @@ private:
         }
         auto with_affinity_time = high_resolution_clock::now() - start;
         
-        cout << "No CPU affinity: " << duration_cast<milliseconds>(no_affinity_time).count() << " ms" << endl;
-        cout << "With CPU affinity: " << duration_cast<milliseconds>(with_affinity_time).count() << " ms" << endl;
+        cout << "無 CPU 親和性: " << duration_cast<milliseconds>(no_affinity_time).count() << " 毫秒" << endl;
+        cout << "有 CPU 親和性: " << duration_cast<milliseconds>(with_affinity_time).count() << " 毫秒" << endl;
     }
     
     static void benchmark_lock_free_queue() {
-        cout << "\n--- Lock-Free Queue Benchmark ---" << endl;
+        cout << "\n--- 無鎖佇列基準測試 ---" << endl;
         
         SPSCQueue<int, 1024> queue;
         const int iterations = 10000000;
@@ -641,15 +641,15 @@ private:
         
         auto duration = high_resolution_clock::now() - start;
         
-        cout << "Processed " << iterations << " items in " 
-             << duration_cast<milliseconds>(duration).count() << " ms" << endl;
-        cout << "Throughput: " << (iterations * 1000) / duration_cast<milliseconds>(duration).count() 
-             << " items/sec" << endl;
+        cout << "處理了 " << iterations << " 個項目，耗時 " 
+             << duration_cast<milliseconds>(duration).count() << " 毫秒" << endl;
+        cout << "吞吐量: " << (iterations * 1000) / duration_cast<milliseconds>(duration).count() 
+             << " 項/秒" << endl;
     }
 };
 
 int main(int argc, char* argv[]) {
-    cout << "=== HFT Integrated System Demo ===" << endl;
+    cout << "=== HFT 整合系統示範 ===" << endl;
     
     // 忽略 SIGPIPE
     signal(SIGPIPE, SIG_IGN);
@@ -665,7 +665,7 @@ int main(int argc, char* argv[]) {
         
         // 處理 Ctrl+C
         signal(SIGINT, [](int) {
-            cout << "\nReceived shutdown signal..." << endl;
+            cout << "\n收到關閉信號..." << endl;
             exit(0);
         });
         
@@ -673,10 +673,10 @@ int main(int argc, char* argv[]) {
         trading_system.run();
         
     } catch (const exception& e) {
-        cerr << "Error: " << e.what() << endl;
+        cerr << "錯誤: " << e.what() << endl;
         return 1;
     }
     
-    cout << "System shutdown complete" << endl;
+    cout << "系統關閉完成" << endl;
     return 0;
 }

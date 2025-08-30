@@ -29,7 +29,7 @@ public:
     static void* allocate_standard(size_t size) {
         void* ptr = nullptr;
         if (posix_memalign(&ptr, PAGE_SIZE_4KB, size) != 0) {
-            cerr << "Standard allocation failed" << endl;
+            cerr << "標準分配失敗" << endl;
             return nullptr;
         }
         
@@ -38,7 +38,7 @@ public:
         
         // 嘗試鎖定記憶體
         if (mlock(ptr, size) != 0) {
-            cerr << "Warning: mlock failed for standard pages" << endl;
+            cerr << "警告: 標準頁面 mlock 失敗" << endl;
         }
         
         return ptr;
@@ -59,7 +59,7 @@ public:
         );
         
         if (ptr == MAP_FAILED) {
-            cerr << "2MB hugepage allocation failed: " << strerror(errno) << endl;
+            cerr << "2MB 大頁面分配失敗: " << strerror(errno) << endl;
             return nullptr;
         }
         
@@ -68,10 +68,10 @@ public:
         
         // 鎖定記憶體
         if (mlock(ptr, size) != 0) {
-            cerr << "Warning: mlock failed for 2MB hugepages" << endl;
+            cerr << "警告: 2MB 大頁面 mlock 失敗" << endl;
         }
         
-        cout << "Successfully allocated " << size / (1024*1024) << " MB using 2MB hugepages" << endl;
+        cout << "成功分配 " << size / (1024*1024) << " MB 使用 2MB 大頁面" << endl;
         return ptr;
     }
     
@@ -90,7 +90,7 @@ public:
         );
         
         if (ptr == MAP_FAILED) {
-            cerr << "1GB hugepage allocation failed: " << strerror(errno) << endl;
+            cerr << "1GB 大頁面分配失敗: " << strerror(errno) << endl;
             return nullptr;
         }
         
@@ -99,10 +99,10 @@ public:
         
         // 鎖定記憶體
         if (mlock(ptr, size) != 0) {
-            cerr << "Warning: mlock failed for 1GB hugepages" << endl;
+            cerr << "警告: 1GB 大頁面 mlock 失敗" << endl;
         }
         
-        cout << "Successfully allocated " << size / (1024*1024*1024) << " GB using 1GB hugepages" << endl;
+        cout << "成功分配 " << size / (1024*1024*1024) << " GB 使用 1GB 大頁面" << endl;
         return ptr;
     }
     
@@ -112,13 +112,13 @@ public:
         
         // 對齊到 2MB 邊界
         if (posix_memalign(&ptr, PAGE_SIZE_2MB, size) != 0) {
-            cerr << "THP allocation failed" << endl;
+            cerr << "THP 分配失敗" << endl;
             return nullptr;
         }
         
         // 建議內核使用大頁面
         if (madvise(ptr, size, MADV_HUGEPAGE) != 0) {
-            cerr << "madvise MADV_HUGEPAGE failed" << endl;
+            cerr << "madvise MADV_HUGEPAGE 失敗" << endl;
         }
         
         // 預觸摸記憶體確保分配
@@ -142,7 +142,7 @@ public:
     
     // 顯示系統大頁面資訊
     static void show_hugepage_info() {
-        cout << "\n=== System Hugepage Information ===" << endl;
+        cout << "\n=== 系統大頁面資訊 ===" << endl;
         
         ifstream meminfo("/proc/meminfo");
         string line;
@@ -152,7 +152,7 @@ public:
             }
         }
         
-        cout << "\nTransparent Hugepage status: ";
+        cout << "\n透明大頁面狀態: ";
         ifstream thp_enabled("/sys/kernel/mm/transparent_hugepage/enabled");
         if (thp_enabled) {
             getline(thp_enabled, line);
@@ -265,10 +265,10 @@ private:
     
 public:
     static void run_benchmark(const string& name, void* ptr, size_t size) {
-        cout << "\n=== " << name << " Performance Test ===" << endl;
+        cout << "\n=== " << name << " 效能測試 ===" << endl;
         
         if (!ptr) {
-            cout << "Allocation failed, skipping test" << endl;
+            cout << "分配失敗，跳過測試" << endl;
             return;
         }
         
@@ -288,11 +288,11 @@ public:
         
         // 輸出結果
         cout << fixed << setprecision(2);
-        cout << "Random access (4KB stride): " << random_4k << " ns/access" << endl;
-        cout << "Random access (2MB stride): " << random_2m << " ns/access" << endl;
-        cout << "Sequential access: " << sequential << " ns/access" << endl;
+        cout << "隨機存取 (4KB 間隔): " << random_4k << " 奈秒/存取" << endl;
+        cout << "隨機存取 (2MB 間隔): " << random_2m << " 奈秒/存取" << endl;
+        cout << "順序存取: " << sequential << " 奈秒/存取" << endl;
         if (matrix > 0) {
-            cout << "Matrix multiply (512x512): " << matrix << " ms" << endl;
+            cout << "矩陣乘法 (512x512): " << matrix << " 毫秒" << endl;
         }
     }
     
@@ -302,8 +302,8 @@ public:
     ) {
         if (baseline_time > 0 && test_time > 0) {
             double speedup = baseline_time / test_time;
-            cout << test_name << " vs " << baseline_name 
-                 << ": " << fixed << setprecision(2) << speedup << "x speedup" << endl;
+            cout << test_name << " 對比 " << baseline_name 
+                 << ": " << fixed << setprecision(2) << speedup << "x 加速" << endl;
         }
     }
 };
@@ -311,25 +311,25 @@ public:
 class TLBMonitor {
 public:
     static void monitor_tlb_stats() {
-        cout << "\n=== TLB Statistics ===" << endl;
+        cout << "\n=== TLB 統計 ===" << endl;
         
         // 使用 perf 命令獲取 TLB 統計
         system("perf stat -e dTLB-loads,dTLB-load-misses,iTLB-loads,iTLB-load-misses sleep 0.1 2>&1 | grep TLB");
     }
     
     static void check_cpu_support() {
-        cout << "\n=== CPU Hugepage Support ===" << endl;
+        cout << "\n=== CPU 大頁面支援 ===" << endl;
         
         // 檢查 PSE (Page Size Extension) - 2MB pages
-        system("grep -q pse /proc/cpuinfo && echo '2MB pages: Supported' || echo '2MB pages: Not supported'");
+        system("grep -q pse /proc/cpuinfo && echo '2MB 頁面: 支援' || echo '2MB 頁面: 不支援'");
         
         // 檢查 PDPE1GB - 1GB pages
-        system("grep -q pdpe1gb /proc/cpuinfo && echo '1GB pages: Supported' || echo '1GB pages: Not supported'");
+        system("grep -q pdpe1gb /proc/cpuinfo && echo '1GB 頁面: 支援' || echo '1GB 頁面: 不支援'");
     }
 };
 
 int main() {
-    cout << "=== HugePages Performance Testing ===" << endl;
+    cout << "=== 大頁面效能測試 ===" << endl;
     
     // 顯示系統資訊
     TLBMonitor::check_cpu_support();
@@ -337,10 +337,10 @@ int main() {
     
     // 測試參數
     const size_t TEST_SIZE = 256 * 1024 * 1024;  // 256 MB
-    cout << "\nTest memory size: " << TEST_SIZE / (1024*1024) << " MB" << endl;
+    cout << "\n測試記憶體大小: " << TEST_SIZE / (1024*1024) << " MB" << endl;
     
     // 分配不同類型的記憶體
-    cout << "\n=== Memory Allocation ===" << endl;
+    cout << "\n=== 記憶體分配 ===" << endl;
     
     void* standard_mem = HugePagesManager::allocate_standard(TEST_SIZE);
     void* huge_2mb_mem = HugePagesManager::allocate_hugepages_2mb(TEST_SIZE);
@@ -353,32 +353,32 @@ int main() {
     }
     
     // 執行性能測試
-    cout << "\n=== Running Performance Tests ===" << endl;
+    cout << "\n=== 運行效能測試 ===" << endl;
     
     // 標準頁面測試
-    PerformanceTester::run_benchmark("Standard Pages (4KB)", standard_mem, TEST_SIZE);
+    PerformanceTester::run_benchmark("標準頁面 (4KB)", standard_mem, TEST_SIZE);
     // double std_random_time = 120;  // 假設基準時間
     
     // 2MB 大頁面測試
     if (huge_2mb_mem) {
-        PerformanceTester::run_benchmark("HugePages (2MB)", huge_2mb_mem, TEST_SIZE);
+        PerformanceTester::run_benchmark("大頁面 (2MB)", huge_2mb_mem, TEST_SIZE);
     }
     
     // 透明大頁面測試
     if (thp_mem) {
-        PerformanceTester::run_benchmark("Transparent HugePages", thp_mem, TEST_SIZE);
+        PerformanceTester::run_benchmark("透明大頁面", thp_mem, TEST_SIZE);
     }
     
     // 1GB 大頁面測試
     if (huge_1gb_mem) {
-        PerformanceTester::run_benchmark("HugePages (1GB)", huge_1gb_mem, TEST_SIZE);
+        PerformanceTester::run_benchmark("大頁面 (1GB)", huge_1gb_mem, TEST_SIZE);
     }
     
     // 監控 TLB 統計
     TLBMonitor::monitor_tlb_stats();
     
     // 清理
-    cout << "\n=== Cleanup ===" << endl;
+    cout << "\n=== 清理 ===" << endl;
     HugePagesManager::deallocate(standard_mem, TEST_SIZE, false);
     HugePagesManager::deallocate(huge_2mb_mem, TEST_SIZE, true);
     HugePagesManager::deallocate(thp_mem, TEST_SIZE, false);
@@ -386,6 +386,6 @@ int main() {
         HugePagesManager::deallocate(huge_1gb_mem, TEST_SIZE, true);
     }
     
-    cout << "\nTest completed successfully!" << endl;
+    cout << "\n測試成功完成!" << endl;
     return 0;
 }

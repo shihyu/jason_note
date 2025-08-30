@@ -113,7 +113,7 @@ public:
         // 創建監聽 socket
         listen_fd = socket(AF_INET, SOCK_STREAM, 0);
         if (listen_fd < 0) {
-            throw runtime_error("Failed to create socket");
+            throw runtime_error("創建 socket 失敗");
         }
         
         // 設置 socket 選項
@@ -132,18 +132,18 @@ public:
         addr.sin_port = htons(port);
         
         if (bind(listen_fd, (sockaddr*)&addr, sizeof(addr)) < 0) {
-            throw runtime_error("Failed to bind");
+            throw runtime_error("綁定失敗");
         }
         
         // 開始監聽
         if (listen(listen_fd, BACKLOG) < 0) {
-            throw runtime_error("Failed to listen");
+            throw runtime_error("監聽失敗");
         }
         
         // 創建 epoll
         epoll_fd = epoll_create1(EPOLL_CLOEXEC);
         if (epoll_fd < 0) {
-            throw runtime_error("Failed to create epoll");
+            throw runtime_error("創建 epoll 失敗");
         }
         
         // 添加監聽 socket 到 epoll
@@ -152,10 +152,10 @@ public:
         ev.data.fd = listen_fd;
         
         if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, listen_fd, &ev) < 0) {
-            throw runtime_error("Failed to add listen socket to epoll");
+            throw runtime_error("將監聽 socket 加入 epoll 失敗");
         }
         
-        cout << "Event-driven server listening on port " << port << endl;
+        cout << "事件驅動伺服器監聽在埠口 " << port << " 上" << endl;
     }
     
     void run() {
@@ -167,7 +167,7 @@ public:
             
             if (nfds < 0) {
                 if (errno == EINTR) continue;
-                cerr << "epoll_wait error: " << strerror(errno) << endl;
+                cerr << "epoll_wait 錯誤: " << strerror(errno) << endl;
                 break;
             }
             
@@ -194,11 +194,11 @@ public:
     }
     
     void print_stats() const {
-        cout << "\n=== Server Statistics ===" << endl;
-        cout << "Total connections: " << total_connections << endl;
-        cout << "Active connections: " << active_connections << endl;
-        cout << "Total messages: " << total_messages << endl;
-        cout << "Total bytes: " << total_bytes << endl;
+        cout << "\n=== 伺服器統計 ===" << endl;
+        cout << "總連線數: " << total_connections << endl;
+        cout << "活躍連線數: " << active_connections << endl;
+        cout << "總訊息數: " << total_messages << endl;
+        cout << "總位元組數: " << total_bytes << endl;
     }
     
 private:
@@ -222,7 +222,7 @@ private:
                 if (errno == EAGAIN || errno == EWOULDBLOCK) {
                     break;  // 沒有更多連接
                 }
-                cerr << "Accept error: " << strerror(errno) << endl;
+                cerr << "Accept 錯誤: " << strerror(errno) << endl;
                 break;
             }
             
@@ -244,7 +244,7 @@ private:
                 
                 char addr_str[INET_ADDRSTRLEN];
                 inet_ntop(AF_INET, &client_addr.sin_addr, addr_str, sizeof(addr_str));
-                cout << "New connection from " << addr_str 
+                cout << "新連線來自 " << addr_str 
                      << ":" << ntohs(client_addr.sin_port)
                      << " (fd=" << client_fd << ")" << endl;
             } else {
@@ -366,7 +366,7 @@ private:
         clients.erase(fd);
         active_connections--;
         
-        cout << "Client disconnected (fd=" << fd << ")" << endl;
+        cout << "客戶端斷開連線 (fd=" << fd << ")" << endl;
     }
     
     void cleanup_idle_connections() {
@@ -382,7 +382,7 @@ private:
         }
         
         for (int fd : to_remove) {
-            cout << "Removing idle connection (fd=" << fd << ")" << endl;
+            cout << "移除閒置連線 (fd=" << fd << ")" << endl;
             disconnect_client(fd);
         }
     }
@@ -415,7 +415,7 @@ public:
         bind(listen_fd, (sockaddr*)&addr, sizeof(addr));
         listen(listen_fd, 128);
         
-        cout << "Thread-pool server listening on port " << port << endl;
+        cout << "執行緒池伺服器監聽在埠口 " << port << " 上" << endl;
     }
     
     void run() {
@@ -436,7 +436,7 @@ public:
             });
             worker_threads.back().detach();
             
-            cout << "Active threads: " << thread_count << endl;
+            cout << "活躍執行緒數: " << thread_count << endl;
         }
     }
     
@@ -462,10 +462,10 @@ private:
 class LoadTestClient {
 public:
     static void test_server(const string& host, int port, int num_connections, int duration_sec) {
-        cout << "\n=== Load Test ===" << endl;
-        cout << "Target: " << host << ":" << port << endl;
-        cout << "Connections: " << num_connections << endl;
-        cout << "Duration: " << duration_sec << " seconds" << endl;
+        cout << "\n=== 負載測試 ===" << endl;
+        cout << "目標: " << host << ":" << port << endl;
+        cout << "連線數: " << num_connections << endl;
+        cout << "持續時間: " << duration_sec << " 秒" << endl;
         
         vector<int> sockets;
         atomic<size_t> total_requests{0};
@@ -489,7 +489,7 @@ public:
             sockets.push_back(sock);
         }
         
-        cout << "Established " << sockets.size() << " connections" << endl;
+        cout << "已建立 " << sockets.size() << " 個連線" << endl;
         
         // 測試線程
         vector<thread> test_threads;
@@ -533,11 +533,11 @@ public:
         }
         
         // 輸出結果
-        cout << "\n=== Test Results ===" << endl;
-        cout << "Total requests: " << total_requests << endl;
-        cout << "Total responses: " << total_responses << endl;
-        cout << "Requests/sec: " << (total_requests * 1000) / ms << endl;
-        cout << "Responses/sec: " << (total_responses * 1000) / ms << endl;
+        cout << "\n=== 測試結果 ===" << endl;
+        cout << "總請求數: " << total_requests << endl;
+        cout << "總回應數: " << total_responses << endl;
+        cout << "請求/秒: " << (total_requests * 1000) / ms << endl;
+        cout << "回應/秒: " << (total_responses * 1000) / ms << endl;
     }
 };
 
@@ -546,11 +546,11 @@ int main(int argc, char* argv[]) {
     signal(SIGPIPE, SIG_IGN);
     
     if (argc < 2) {
-        cout << "Usage: " << argv[0] << " <mode>" << endl;
-        cout << "Modes:" << endl;
-        cout << "  event    - Run event-driven server" << endl;
-        cout << "  thread   - Run thread-pool server (bad example)" << endl;
-        cout << "  test     - Run load test client" << endl;
+        cout << "用法: " << argv[0] << " <模式>" << endl;
+        cout << "模式:" << endl;
+        cout << "  event    - 運行事件驅動伺服器" << endl;
+        cout << "  thread   - 運行執行緒池伺服器 (錯誤示範)" << endl;
+        cout << "  test     - 運行負載測試客戶端" << endl;
         return 1;
     }
     
@@ -563,7 +563,7 @@ int main(int argc, char* argv[]) {
             
             // 處理 Ctrl+C
             signal(SIGINT, [](int) {
-                cout << "\nShutting down..." << endl;
+                cout << "\n正在關閉..." << endl;
                 exit(0);
             });
             
@@ -572,7 +572,7 @@ int main(int argc, char* argv[]) {
             
         } else if (mode == "thread") {
             // 錯誤的執行緒池模型 (示範用)
-            cout << "WARNING: This is a bad example for demonstration!" << endl;
+            cout << "警告: 這是一個錯誤示範！" << endl;
             ThreadPoolServer server(8081);
             server.run();
             
@@ -581,12 +581,12 @@ int main(int argc, char* argv[]) {
             LoadTestClient::test_server("127.0.0.1", 8080, 100, 10);
             
         } else {
-            cout << "Unknown mode: " << mode << endl;
+            cout << "未知模式: " << mode << endl;
             return 1;
         }
         
     } catch (const exception& e) {
-        cerr << "Error: " << e.what() << endl;
+        cerr << "錯誤: " << e.what() << endl;
         return 1;
     }
     
