@@ -361,6 +361,12 @@
     - [Binance](cryptotrade/binance/binance.md)
     - [如何將 OCO 訂單發送到 Binance](cryptotrade/binance/oco.md)
 
+## High Frequency Trading
+- [高頻交易概念](hft/hft.md)
+    - [高頻交易 C++ 開發指南](hft/hft-cpp-guide.md)
+    - [Rust 高頻交易開發指南](hft/rust-hft-guide.md)
+    - [HugePage、I/O 與 Threading 最佳化指南](hft/hugepages-io-threading-guide.md)
+
 ## Others
 - [Design Patterns](dp/dp.md)
     - [設計模式完整指南](dp/design-patterns-guide.md)
