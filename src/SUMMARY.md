@@ -366,6 +366,7 @@
     - [高頻交易 C++ 開發指南](hft/hft-cpp-guide.md)
     - [Rust 高頻交易開發指南](hft/rust-hft-guide.md)
     - [HugePage、I/O 與 Threading 最佳化指南](hft/hugepages-io-threading-guide.md)
+    - [高頻交易系統：作業系統效能調校實踐](hft/hft-os-tuning.md)
 
 ## Others
 - [Design Patterns](dp/dp.md)
