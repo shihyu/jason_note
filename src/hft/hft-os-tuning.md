@@ -540,6 +540,246 @@ DPDK (Data Plane Development Kit) 透過繞過內核直接處理數據包，帶�
 
 *原文連結：https://zhuanlan.zhihu.com/p/1936428978639467459*
 
+## 效能測試工具與範例
+
+本節介紹用於驗證和量化HFT系統優化效果的測試工具與方法。
+
+### 1. 延遲測試工具
+
+#### cyclictest (實時延遲測試)
+```bash
+# 安裝
+sudo apt-get install rt-tests
+
+# 測試系統延遲抖動
+sudo cyclictest -p 99 -t 1 -n -i 1000 -l 100000 -h 1000 -q
+# -p 99: 優先級99
+# -t 1: 單執行緒
+# -n: 使用nanosleep
+# -i 1000: 間隔1000us
+# -l 100000: 執行100000次
+# -h 1000: 直方圖最大值1000us
+```
+
+#### 自製延遲測試程式
+```cpp
+#include <chrono>
+#include <vector>
+#include <algorithm>
+#include <iostream>
+
+void measure_latency() {
+    const int iterations = 1000000;
+    std::vector<long> latencies;
+    
+    for(int i = 0; i < iterations; i++) {
+        auto start = std::chrono::high_resolution_clock::now();
+        // 你的交易邏輯
+        auto end = std::chrono::high_resolution_clock::now();
+        
+        auto latency = std::chrono::duration_cast<std::chrono::nanoseconds>
+                      (end - start).count();
+        latencies.push_back(latency);
+    }
+    
+    // 計算統計數據
+    std::sort(latencies.begin(), latencies.end());
+    long p50 = latencies[iterations * 0.50];
+    long p99 = latencies[iterations * 0.99];
+    long p999 = latencies[iterations * 0.999];
+    
+    std::cout << "P50: " << p50 << "ns\n";
+    std::cout << "P99: " << p99 << "ns\n";
+    std::cout << "P99.9: " << p999 << "ns\n";
+}
+```
+
+### 2. CPU 和中斷監控
+
+#### perf (系統效能分析)
+```bash
+# 安裝
+sudo apt-get install linux-tools-common linux-tools-generic
+
+# 監控CPU事件
+sudo perf stat -C 8-15 ./strategy_engine
+
+# 分析快取命中率
+sudo perf stat -e cache-references,cache-misses ./strategy_engine
+
+# 監控上下文切換
+sudo perf stat -e context-switches,cpu-migrations ./strategy_engine
+```
+
+#### 監控中斷
+```bash
+# 即時監控中斷分布
+watch -n 1 'cat /proc/interrupts | grep eth0'
+
+# 檢查CPU親和性
+for i in /proc/irq/*/smp_affinity; do 
+    echo "$i: $(cat $i)"
+done
+```
+
+### 3. 記憶體和NUMA測試
+
+#### numactl 測試
+```bash
+# 測試NUMA延遲差異
+numactl --hardware  # 檢視NUMA拓撲
+
+# 測試本地vs遠端記憶體延遲
+# 本地節點
+numactl --cpunodebind=0 --membind=0 ./memory_test
+
+# 遠端節點
+numactl --cpunodebind=0 --membind=1 ./memory_test
+```
+
+#### 記憶體延遲測試程式
+```cpp
+#include <numa.h>
+#include <chrono>
+#include <iostream>
+
+void test_memory_latency() {
+    const size_t size = 1024 * 1024 * 100; // 100MB
+    
+    // 測試本地記憶體
+    numa_set_localalloc();
+    void* local_mem = numa_alloc_local(size);
+    
+    auto start = std::chrono::high_resolution_clock::now();
+    for(int i = 0; i < 1000000; i++) {
+        volatile int* p = (int*)local_mem;
+        *p = i;  // 寫入
+        int val = *p;  // 讀取
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    
+    auto local_time = std::chrono::duration_cast<std::chrono::nanoseconds>
+                     (end - start).count();
+    
+    std::cout << "Local memory latency: " << local_time/1000000 << "ns\n";
+    
+    numa_free(local_mem, size);
+}
+```
+
+### 4. 快取效能測試
+
+#### Intel PCM (快取監控)
+```bash
+# 下載安裝
+git clone https://github.com/intel/pcm.git
+cd pcm && make
+
+# 監控快取使用
+sudo ./pcm 1  # 每秒更新
+
+# 監控記憶體頻寬
+sudo ./pcm-memory 1
+```
+
+#### pqos (快取隔離監控)
+```bash
+# 監控L3快取
+sudo pqos -m llc:1  # 監控LLC使用
+
+# 測試快取隔離效果
+# 隔離前
+sudo pqos -m all:1 -t 10
+
+# 設定隔離
+sudo pqos -e 'llc:1=0xff0'  # 分配快取
+sudo pqos -a 'llc:1=1234'   # 綁定PID
+
+# 隔離後
+sudo pqos -m all:1 -t 10
+```
+
+### 5. 網路延遲測試
+
+#### sockperf (Socket效能測試)
+```bash
+# 安裝
+git clone https://github.com/Mellanox/sockperf.git
+cd sockperf && ./autogen.sh && ./configure && make
+
+# Server端
+./sockperf server -i 192.168.1.100 -p 12345
+
+# Client端測試延遲
+./sockperf ping-pong -i 192.168.1.100 -p 12345 -t 60
+```
+
+#### 網路中斷測試
+```bash
+# 檢查網卡中斷合併設定
+ethtool -c eth0
+
+# 關閉中斷合併以降低延遲
+sudo ethtool -C eth0 rx-usecs 0 tx-usecs 0
+
+# 測試前後延遲差異
+ping -c 1000 -i 0.001 192.168.1.100 | tail -n 3
+```
+
+### 6. 整合測試腳本
+
+```bash
+#!/bin/bash
+# performance_test.sh
+
+echo "=== HFT System Performance Test ==="
+
+# 1. 檢查系統設定
+echo "1. System Configuration:"
+echo "CPU Isolation: $(cat /proc/cmdline | grep isolcpus)"
+echo "Huge Pages: $(grep HugePages_Total /proc/meminfo)"
+echo "CPU Frequency: $(cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor | uniq)"
+
+# 2. 測試CPU延遲
+echo -e "\n2. CPU Latency Test:"
+sudo cyclictest -p 99 -t 1 -n -i 1000 -l 10000 -h 100 -q | tail -n 10
+
+# 3. 測試記憶體延遲
+echo -e "\n3. Memory Latency:"
+sudo numactl --hardware | grep "node distances"
+
+# 4. 測試快取
+echo -e "\n4. Cache Performance:"
+sudo perf stat -e cache-references,cache-misses sleep 1 2>&1 | grep cache
+
+# 5. 測試網路
+echo -e "\n5. Network Latency:"
+ping -c 100 -i 0.001 localhost | tail -n 3
+
+echo -e "\n=== Test Complete ==="
+```
+
+### 7. 效能比較基準
+
+優化前後的典型數值對比：
+
+| 指標 | 優化前 | 優化後 | 測試工具 |
+|------|--------|--------|----------|
+| CPU延遲抖動 | ±50μs | ±1μs | cyclictest |
+| 平均延遲 | 100μs | <20μs | 自製測試程式 |
+| 快取命中率 | 85% | >98% | perf stat |
+| NUMA遠端存取 | +50% | 0% | numactl |
+| 網路RTT | 50μs | <10μs | sockperf |
+| 上下文切換 | >1000/s | <100/s | perf stat |
+
+> 💡 **測試建議**：
+> 1. 按優先級逐步測試：先測基準線，再逐項優化並測試
+> 2. 每次只改變一個變數，以確定優化效果來源
+> 3. 使用自動化腳本定期測試，監控系統效能退化
+> 4. 在實際交易時段測試，模擬真實負載情況
+
+這些工具能幫你量化優化效果，找出系統瓶頸，並驗證每項優化措施的實際收益。
+
 ## 附錄：常用術語快速查詢
 
 | 術語 | 全稱 | 白話解釋 |
