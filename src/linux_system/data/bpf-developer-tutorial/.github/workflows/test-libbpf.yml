@@ -1,0 +1,90 @@
+name: Test eunomia-bpf example CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron:  '0 0 * * 0'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
+    - name: install deps
+      run: |
+        sudo apt-get install -y --no-install-recommends \
+        libelf1 libelf-dev zlib1g-dev \
+        make git clang llvm pkg-config build-essential
+    - name: test 11 bootstrap
+      run: |
+        make -C src/11-bootstrap
+        sudo timeout -s 2 3 src/11-bootstrap/bootstrap || if [ $? = 124 ]; then exit 0; else exit $?; fi
+    - name: test 12 profile
+      run: |
+        make -C src/12-profile
+        # sudo timeout -s 2 3 src/12-profile/profile || if [ $? = 124 ]; then exit 0; else exit $?; fi
+    - name: test 13 tcpconnlat
+      run: |
+        make -C src/13-tcpconnlat
+        sudo timeout -s 2 3 src/13-tcpconnlat/tcpconnlat || if [ $? = 124 ]; then exit 0; else exit $?; fi
+    - name: test 14 tcpstates
+      run: |
+        make -C src/14-tcpstates
+        sudo timeout -s 2 3 src/14-tcpstates/tcpstates || if [ $? = 124 ]; then exit 0; else exit $?; fi
+    - name: test 16 memleak
+      run: |
+        make -C src/16-memleak
+        sudo timeout -s 2 3 src/16-memleak/memleak || if [ $? = 124 ]; then exit 0; else exit $?; fi
+    - name: test 17 biopattern
+      run: |
+        make -C src/17-biopattern
+        sudo timeout -s 2 3 src/17-biopattern/biopattern || if [ $? = 124 ]; then exit 0; else exit $?; fi
+    - name: test 23 http
+      run: |
+        make -C src/23-http
+        sudo timeout -s 2 3 src/23-http/sockfilter || if [ $? = 124 ]; then exit 0; else exit $?; fi
+    - name: test 28 detach
+      run: |
+        make -C src/28-detach
+        sudo mount bpffs -t bpf /sys/fs/bpf
+        sudo mkdir /sys/fs/bpf/textreplace
+        # sudo src/28-detach/textreplace2 -f /proc/modules -i 'joydev' -r 'cryptd' -d || if [ $? = 124 ]; then exit 0; else exit $?; fi
+    - name: test 29 sockops
+      run: |
+        make -C src/29-sockops
+        # TODO: add test
+    - name: test 30 sslsniff
+      run: |
+        make -C src/30-sslsniff
+        sudo timeout -s 2 3 src/30-sslsniff/sslsniff || if [ $? = 124 ]; then exit 0; else exit $?; fi
+
+    - name: test 33 funclatency
+      run: |
+          make -C src/33-funclatency
+    - name: test 35-user-ringbuf
+      run: |
+        make -C src/35-user-ringbuf
+        sudo timeout -s 2 3 src/35-user-ringbuf/user_ringbuf || if [ $? = 124 ]; then exit 0; else exit $?; fi
+
+    - name: test 41 xdp
+      run: |
+          make -C src/41-xdp-tcpdump
+
+    - name: test 42 xdp
+      run: |
+          make -C src/42-xdp-loadbalancer
+
+    - name: test 43 kfuncs
+      run: |
+          make -C src/43-kfuncs
+
+    - name: test 44
+      run: |
+          make -C src/44-scx-simple
+    - name: test 45
+      run: |
+          make -C src/45-scx-nest

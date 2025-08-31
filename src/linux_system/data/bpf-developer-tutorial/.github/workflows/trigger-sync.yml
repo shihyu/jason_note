@@ -1,0 +1,39 @@
+name: Test and trigger downstream tutorial sync
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout website repo
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.repository_owner }}/eunomia.dev
+          ref: main
+          path: ./.
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - name: Install all
+        run: |
+          make install
+
+      - name: Test page build
+        run: |
+          mkdocs build -v
+
+      - name: Trigger sync workflow
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.PAT }}
+          repository: ${{ github.repository_owner }}/eunomia.dev
+          event-type: trigger-tutorial-sync
