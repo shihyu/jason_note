@@ -228,6 +228,7 @@
     - [Systems Performance Tools Guide](linux_system/systems-performance-tools-guide.md)
     - [Linux 效能檢測工具完整指南](linux_system/linux-performance-tools.md)
     - [eBPF 完整指南](linux_system/ebpf-complete-guide.md)
+    - [Understanding eBPF](linux_system/understanding-ebpf.md)
 - [SSH](ssh/ssh.md)
 - [Network](network/socket.md)
 
