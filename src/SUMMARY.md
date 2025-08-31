@@ -364,6 +364,9 @@
     - [Binance](cryptotrade/binance/binance.md)
     - [如何將 OCO 訂單發送到 Binance](cryptotrade/binance/oco.md)
 
+- [Linux Kernel](kernel/linux_kernel.md)
+    - [Linker and Loader Guide](kernel/linker-loader-guide.md)
+
 ## High Frequency Trading
 - [高頻交易概念](hft/hft.md)
     - [高頻交易 C++ 開發指南](hft/hft-cpp-guide.md)
