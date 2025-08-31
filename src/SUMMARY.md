@@ -230,6 +230,7 @@
     - [eBPF 完整指南](linux_system/ebpf-complete-guide.md)
     - [Understanding eBPF](linux_system/understanding-ebpf.md)
 - [Linux Kernel](kernel/linux_kernel.md)
+    - [Linker and Loader Guide](kernel/linker-loader-guide.md)
 - [SSH](ssh/ssh.md)
 - [Network](network/socket.md)
 
@@ -363,9 +364,6 @@
 - [CryptoTrade](cryptotrade/cryptotrade.md)
     - [Binance](cryptotrade/binance/binance.md)
     - [如何將 OCO 訂單發送到 Binance](cryptotrade/binance/oco.md)
-
-- [Linux Kernel](kernel/linux_kernel.md)
-    - [Linker and Loader Guide](kernel/linker-loader-guide.md)
 
 ## High Frequency Trading
 - [高頻交易概念](hft/hft.md)
