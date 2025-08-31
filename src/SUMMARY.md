@@ -255,6 +255,7 @@
     - [Buttplug Rust 到 Flutter 的 Porting 方案指南](android/buttplug_porting_guide.md)
     - [Android Native (C/C++/Rust) 與 Flutter 整合完整指南](android/android_native_flutter_integration.md)
     - [直接 FFI vs flutter_rust_bridge 詳細比較](android/ffi_vs_flutter_rust_bridge.md)
+    - [Android APK SO 檔案分析指南](android/android-apk-so-guide.md)
 - [RISC-V](riscv/riscv.md)
     - [QEMU 上運行 RISC-V Linux](riscv/qemu_riscv_linux.md)
     - [QEMU GDB](riscv/qemi_gdb.md)
