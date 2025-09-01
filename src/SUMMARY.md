@@ -186,6 +186,7 @@
     - [Django 架構與專案結構完整指南](python/django_architecture_guide.md)
     - [Django + Nginx + Gunicorn + SSL 完整部署指南](python/nginx_django_ssl_guide.md)
     - [Django 網站效能診斷完整指南](python/django_performance_diagnosis.md)
+    - [Fast Trading 比較](python/fast_trading_comparison.md)
     - [Other](python/other.md)
 - [HTML](html/html.md)
     - [Vue](html/vue.md)
