@@ -189,6 +189,7 @@
     - [Fast Trading 比較](python/fast_trading_comparison.md)
     - [Python Async 效能完整指南](python/async-performance-complete-guide.md)
     - [Async vs Multithread I/O](python/async-vs-multithread-io.md)
+    - [Python 異步程式效能基準測試完整指南](python/complete-async-benchmark.md)
     - [Other](python/other.md)
 - [HTML](html/html.md)
     - [Vue](html/vue.md)
@@ -378,6 +379,7 @@
     - [高頻交易系統：作業系統效能調校實踐](hft/hft-os-tuning.md)
     - [GitHub高頻交易項目技術實現分析](hft/hft-github-projects.md)
     - [併發模型實戰對比：Go vs Rust vs C++](hft/concurrency_comparison.md)
+    - [Rust 與 C++ API 整合指南](hft/rust-cpp-api-integration.md)
 
 ## Others
 - [Design Patterns](dp/dp.md)
