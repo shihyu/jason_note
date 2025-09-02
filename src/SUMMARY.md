@@ -191,6 +191,7 @@
     - [Async vs Multithread I/O](python/async-vs-multithread-io.md)
     - [Python 異步程式效能基準測試完整指南](python/complete-async-benchmark.md)
     - [Python Async 編程完整指南](python/python-async-guide.md)
+    - [Python 併發編程完整指南](python/python-concurrency-guide.md)
     - [Other](python/other.md)
 - [HTML](html/html.md)
     - [Vue](html/vue.md)
