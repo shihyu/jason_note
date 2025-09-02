@@ -381,6 +381,7 @@
     - [GitHub高頻交易項目技術實現分析](hft/hft-github-projects.md)
     - [併發模型實戰對比：Go vs Rust vs C++](hft/concurrency_comparison.md)
     - [Rust 與 C++ API 整合指南](hft/rust-cpp-api-integration.md)
+    - [HFT vs Async 性能完整對比指南](hft/hft_vs_async_guide.md)
 
 ## Others
 - [Design Patterns](dp/dp.md)
