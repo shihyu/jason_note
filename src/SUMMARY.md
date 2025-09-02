@@ -388,6 +388,7 @@
     - [Rust 與 C++ API 整合指南](hft/rust-cpp-api-integration.md)
     - [HFT vs Async 性能完整對比指南](hft/hft_vs_async_guide.md)
     - [API 交易性能優化完整指南](hft/api-trading-performance-guide.md)
+    - [高頻交易系統優化指南](hft/hft-system-optimization.md)
 
 ## Others
 - [Design Patterns](dp/dp.md)
