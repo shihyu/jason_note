@@ -1,0 +1,513 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Go + MySQL 死鎖問題調查指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="go--mysql-死鎖問題調查指南"><a class="header" href="#go--mysql-死鎖問題調查指南">Go + MySQL 死鎖問題調查指南</a></h1>
+<h2 id="問題背景"><a class="header" href="#問題背景">問題背景</a></h2>
+<p>在 Go 應用中遇到 MySQL InnoDB 死鎖時，由於 Go 的特殊架構，問題調查變得困難：</p>
+<ul>
+<li><strong>單一 PID</strong>：整個程式只有一個 Process ID</li>
+<li><strong>固定線程數</strong>：預設等於 CPU 核心數量</li>
+<li><strong>大量 Goroutine</strong>：實際工作單位，但都共享少數線程執行</li>
+<li><strong>難以追蹤</strong>：無法直接從系統層面定位具體是哪個 goroutine 造成問題</li>
+</ul>
+<h2 id="go-語言架構特性"><a class="header" href="#go-語言架構特性">Go 語言架構特性</a></h2>
+<h3 id="單一-process-設計"><a class="header" href="#單一-process-設計">單一 Process 設計</a></h3>
+<p>Go 程式<strong>預設只有一個 process</strong>，不會自動產生多個 process：</p>
+<pre><code class="language-go">func main() {
+    // 不管你寫多複雜的程式
+    for i := 0; i &lt; 10000; i++ {
+        go func() {
+            // 開 10000 個 goroutine
+            doSomething()
+        }()
+    }
+    // 在作業系統看來，還是只有一個 process
+}
+</code></pre>
+<h3 id="系統層面的觀察"><a class="header" href="#系統層面的觀察">系統層面的觀察</a></h3>
+<pre><code class="language-bash"># 只會看到一個程序
+ps aux | grep your-go-app
+# PID   USER    COMMAND
+# 1234  user    ./your-go-app
+
+# 但這個程序內部有多個線程
+ps -T -p 1234
+# PID   SPID  COMMAND
+# 1234  1234  ./your-go-app
+# 1234  1235  ./your-go-app  
+# 1234  1236  ./your-go-app
+# ... (會有多個線程，SPID 不同但 PID 相同)
+</code></pre>
+<h3 id="多核心環境下的表現"><a class="header" href="#多核心環境下的表現">多核心環境下的表現</a></h3>
+<p>以 <strong>10核心20線程</strong> 的主機為例：</p>
+<pre><code class="language-go">// Go 會自動偵測到系統有 20 個邏輯處理器
+// 預設 GOMAXPROCS = 20
+fmt.Println(runtime.GOMAXPROCS(0)) // 輸出: 20
+</code></pre>
+<p><strong>實際運作方式</strong>：</p>
+<ul>
+<li>Go runtime 會建立 <strong>20 個 OS 線程</strong></li>
+<li>對應 CPU 的 20 個邏輯處理器（10物理核心 × 2超線程）</li>
+<li>10000 個 goroutine 會被分配到這 20 個線程上執行</li>
+</ul>
+<p><strong>餐廳比喻</strong>：</p>
+<ul>
+<li><strong>物理核心</strong> = 10 個廚房區域</li>
+<li><strong>邏輯處理器</strong> = 20 個工作台（每個廚房區域有2個工作台）</li>
+<li><strong>OS 線程</strong> = 20 個廚師（每個工作台配一個廚師）</li>
+<li><strong>Goroutine</strong> = 成千上萬張訂單</li>
+<li><strong>Go runtime</strong> = 餐廳經理，分配訂單給20個廚師</li>
+</ul>
+<h3 id="為什麼採用單一-process-設計"><a class="header" href="#為什麼採用單一-process-設計">為什麼採用單一 Process 設計？</a></h3>
+<p><strong>效率考量</strong>：</p>
+<ul>
+<li><strong>Process 切換成本高</strong> - 需要切換記憶體空間</li>
+<li><strong>Goroutine 切換成本低</strong> - 只需要切換堆疊</li>
+<li><strong>記憶體共享容易</strong> - 同一個 process 內的 goroutine 可以直接共享記憶體</li>
+</ul>
+<p><strong>架構比較</strong>：</p>
+<pre><code>傳統多進程模式：
+Process 1: Thread 1, Thread 2, Thread 3
+Process 2: Thread 1, Thread 2, Thread 3  
+Process 3: Thread 1, Thread 2, Thread 3
+→ 9 個線程，3 個記憶體空間，進程間通訊複雜
+
+Go 模式：
+Process 1: 20個線程 + 10000個 Goroutine  
+→ 20 個線程，1 個記憶體空間，goroutine 間通訊簡單
+</code></pre>
+<h3 id="何時會有多個-process"><a class="header" href="#何時會有多個-process">何時會有多個 Process？</a></h3>
+<p><strong>只有主動建立時</strong>：</p>
+<h4 id="1-使用-osexec-套件"><a class="header" href="#1-使用-osexec-套件">1. 使用 os/exec 套件</a></h4>
+<pre><code class="language-go">import "os/exec"
+
+func main() {
+    // 主動啟動另一個程序
+    cmd := exec.Command("ls", "-l")
+    cmd.Run() // 這會產生新的 process
+}
+</code></pre>
+<h4 id="2-部署時開多個實例"><a class="header" href="#2-部署時開多個實例">2. 部署時開多個實例</a></h4>
+<pre><code class="language-bash"># 手動啟動多個程序
+./my-go-app --port=8080 &amp;  # Process 1234
+./my-go-app --port=8081 &amp;  # Process 1235  
+./my-go-app --port=8082 &amp;  # Process 1236
+</code></pre>
+<h3 id="對死鎖調查的影響"><a class="header" href="#對死鎖調查的影響">對死鎖調查的影響</a></h3>
+<p><strong>多核心環境下更複雜</strong>：</p>
+<ol>
+<li><strong>更多同時進行的操作</strong> - 20個線程同時運行</li>
+<li><strong>更高的並行度</strong> - 死鎖發生機會更高</li>
+<li><strong>更複雜的交互</strong> - 線程間資源競爭更激烈</li>
+</ol>
+<p><strong>log 記錄會更混亂</strong>：</p>
+<pre><code>Thread-01: [TraceID-001] Locking user 123
+Thread-15: [TraceID-089] Locking user 456  
+Thread-03: [TraceID-024] Locking user 123  // &lt;- 可能造成衝突
+Thread-08: [TraceID-067] Locking user 456  // &lt;- 可能造成衝突
+Thread-12: [TraceID-099] Transfer complete
+... (同時會有很多 log 混在一起)
+</code></pre>
+<h2 id="調查方法"><a class="header" href="#調查方法">調查方法</a></h2>
+<h3 id="1-從資料庫端找線索"><a class="header" href="#1-從資料庫端找線索">1. 從資料庫端找線索</a></h3>
+<h4 id="查看死鎖詳情"><a class="header" href="#查看死鎖詳情">查看死鎖詳情</a></h4>
+<pre><code class="language-sql">SHOW ENGINE INNODB STATUS;
+</code></pre>
+<p>可以看到：</p>
+<ul>
+<li>造成死鎖的 SQL 語句</li>
+<li>涉及的資料表和索引</li>
+<li>鎖定的具體資料</li>
+</ul>
+<h4 id="開啟完整死鎖記錄"><a class="header" href="#開啟完整死鎖記錄">開啟完整死鎖記錄</a></h4>
+<pre><code class="language-sql">SET GLOBAL innodb_print_all_deadlocks = ON;
+</code></pre>
+<p>所有死鎖都會記錄到 MySQL 錯誤日誌中</p>
+<h3 id="2-go-程式中加入追蹤"><a class="header" href="#2-go-程式中加入追蹤">2. Go 程式中加入追蹤</a></h3>
+<h4 id="關鍵操作加入詳細-log"><a class="header" href="#關鍵操作加入詳細-log">關鍵操作加入詳細 Log</a></h4>
+<pre><code class="language-go">func transferMoney(fromID, toID int, amount float64) {
+    traceID := generateTraceID() // 產生唯一追蹤ID
+    
+    log.Printf("[%s] START transfer from=%d to=%d amount=%.2f", traceID, fromID, toID, amount)
+    
+    tx, err := db.Begin()
+    if err != nil {
+        log.Printf("[%s] ERROR begin transaction: %v", traceID, err)
+        return err
+    }
+    
+    log.Printf("[%s] LOCK user %d", traceID, fromID)
+    _, err = tx.Exec("SELECT * FROM users WHERE id = ? FOR UPDATE", fromID)
+    if err != nil {
+        log.Printf("[%s] ERROR lock user %d: %v", traceID, fromID, err)
+        return err
+    }
+    
+    // ... 其他操作也都加 log
+}
+</code></pre>
+<h4 id="記錄-goroutine-資訊"><a class="header" href="#記錄-goroutine-資訊">記錄 Goroutine 資訊</a></h4>
+<pre><code class="language-go">import "runtime"
+
+func getGoroutineID() uint64 {
+    // 取得當前 goroutine ID
+    return goid.Get()
+}
+
+// 在每個資料庫操作前記錄
+log.Printf("Goroutine %d executing SQL: %s", getGoroutineID(), sqlQuery)
+</code></pre>
+<h3 id="3-使用分散式追蹤"><a class="header" href="#3-使用分散式追蹤">3. 使用分散式追蹤</a></h3>
+<h4 id="建立追蹤上下文"><a class="header" href="#建立追蹤上下文">建立追蹤上下文</a></h4>
+<pre><code class="language-go">import "github.com/google/uuid"
+
+type Context struct {
+    TraceID string
+    UserID  int
+}
+
+func (c *Context) logSQL(sql string, args ...interface{}) {
+    log.Printf("TraceID=%s UserID=%d SQL=%s Args=%v", 
+               c.TraceID, c.UserID, sql, args)
+}
+
+// 使用範例
+ctx := &amp;Context{
+    TraceID: uuid.New().String(),
+    UserID:  123,
+}
+</code></pre>
+<h3 id="4-業務流程監控"><a class="header" href="#4-業務流程監控">4. 業務流程監控</a></h3>
+<h4 id="記錄完整業務上下文"><a class="header" href="#記錄完整業務上下文">記錄完整業務上下文</a></h4>
+<pre><code class="language-go">func processOrder(orderID int) {
+    log.Printf("=== Processing Order %d START ===", orderID)
+    defer log.Printf("=== Processing Order %d END ===", orderID)
+    
+    log.Printf("Order %d: checking inventory", orderID)
+    // ... SQL操作
+    
+    log.Printf("Order %d: updating stock", orderID) 
+    // ... SQL操作
+    
+    log.Printf("Order %d: creating payment", orderID)
+    // ... SQL操作
+}
+</code></pre>
+<h3 id="5-程式碼靜態分析"><a class="header" href="#5-程式碼靜態分析">5. 程式碼靜態分析</a></h3>
+<h4 id="檢查鎖定順序"><a class="header" href="#檢查鎖定順序">檢查鎖定順序</a></h4>
+<ul>
+<li>搜尋所有 <code>FOR UPDATE</code>、<code>BEGIN TRANSACTION</code> 語句</li>
+<li>檢查不同函數是否以不同順序存取相同資料表</li>
+<li>建立鎖定依賴圖，視覺化潛在死鎖路徑</li>
+</ul>
+<h3 id="6-壓力測試重現"><a class="header" href="#6-壓力測試重現">6. 壓力測試重現</a></h3>
+<h4 id="建立死鎖重現測試"><a class="header" href="#建立死鎖重現測試">建立死鎖重現測試</a></h4>
+<pre><code class="language-go">func TestDeadlock(t *testing.T) {
+    var wg sync.WaitGroup
+    
+    // 同時執行多個會衝突的操作
+    for i := 0; i &lt; 100; i++ {
+        wg.Add(2)
+        go func() {
+            defer wg.Done()
+            transferMoney(1, 2, 100) // A-&gt;B
+        }()
+        go func() {
+            defer wg.Done() 
+            transferMoney(2, 1, 50)  // B-&gt;A
+        }()
+    }
+    wg.Wait()
+}
+</code></pre>
+<p><strong>可能需要的配置調整</strong>：</p>
+<pre><code class="language-go">// 如果死鎖問題嚴重，可以考慮限制並行度
+runtime.GOMAXPROCS(10) // 只用10個線程而不是20個
+
+// 或者調整資料庫連接池
+db.SetMaxOpenConns(10) // 限制最大連接數
+db.SetMaxIdleConns(5)  // 限制閒置連接數
+</code></pre>
+<p><strong>監控策略</strong>：</p>
+<pre><code class="language-go">// 需要更詳細的 goroutine 和線程資訊
+func logWithRuntimeInfo() {
+    log.Printf("PID: %d, GOMAXPROCS: %d, NumGoroutine: %d, NumCPU: %d", 
+               os.Getpid(),
+               runtime.GOMAXPROCS(0), 
+               runtime.NumGoroutine(),
+               runtime.NumCPU())
+}
+</code></pre>
+<h2 id="建議調查順序"><a class="header" href="#建議調查順序">建議調查順序</a></h2>
+<h3 id="第一步資料庫層面分析"><a class="header" href="#第一步資料庫層面分析">第一步：資料庫層面分析</a></h3>
+<ol>
+<li>檢查 <code>SHOW ENGINE INNODB STATUS</code> 輸出</li>
+<li>開啟 <code>innodb_print_all_deadlocks</code> 記錄完整死鎖資訊</li>
+<li>分析死鎖涉及的具體 SQL 語句和資料表</li>
+</ol>
+<h3 id="第二步程式碼對應"><a class="header" href="#第二步程式碼對應">第二步：程式碼對應</a></h3>
+<ol>
+<li>在程式碼中搜尋死鎖相關的 SQL 語句</li>
+<li>找到執行這些 SQL 的函數和業務流程</li>
+<li>檢查是否存在不同順序的資源存取</li>
+</ol>
+<h3 id="第三步加入追蹤"><a class="header" href="#第三步加入追蹤">第三步：加入追蹤</a></h3>
+<ol>
+<li>在可疑程式碼區域加入詳細日誌</li>
+<li>加入 TraceID 或 Goroutine ID 追蹤</li>
+<li>記錄業務操作的完整流程</li>
+</ol>
+<h3 id="第四步重現測試"><a class="header" href="#第四步重現測試">第四步：重現測試</a></h3>
+<ol>
+<li>在測試環境嘗試重現死鎖</li>
+<li>透過壓力測試驗證修復效果</li>
+<li>建立監控機制持續觀察</li>
+</ol>
+<h2 id="關鍵重點"><a class="header" href="#關鍵重點">關鍵重點</a></h2>
+<ul>
+<li><strong>建立業務操作到 SQL 的對應關係</strong>：這是在 goroutine 海中找到問題源頭的關鍵</li>
+<li><strong>詳細記錄執行順序</strong>：死鎖通常與資源存取順序有關</li>
+<li><strong>保留足夠上下文資訊</strong>：TraceID、UserID、OrderID 等業務標識符</li>
+<li><strong>結合資料庫和應用日誌</strong>：兩邊的資訊互相印證才能完整還原問題</li>
+</ul>
+<p>雖然 Go 的 goroutine 架構讓問題追蹤變複雜，但透過適當的日誌記錄和分析方法，還是可以有效定位和解決死鎖問題。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../go/go_concurrency_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../go/golang_guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../go/go_concurrency_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../go/golang_guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

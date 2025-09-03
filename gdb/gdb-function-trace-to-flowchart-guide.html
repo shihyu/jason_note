@@ -1,0 +1,590 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>GDB 函數調用軌跡分析與流程圖生成完整指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="gdb函數調用軌跡分析與流程圖生成完整指南"><a class="header" href="#gdb函數調用軌跡分析與流程圖生成完整指南">GDB函數調用軌跡分析與流程圖生成完整指南</a></h1>
+<blockquote>
+<p>本指南介紹如何使用 GDB 記錄程式執行過程中的函數調用軌跡，並將其轉換為視覺化流程圖，適用於程式分析、調試和文檔製作。</p>
+</blockquote>
+<h2 id="方法一使用-gdb-腳本記錄函數調用"><a class="header" href="#方法一使用-gdb-腳本記錄函數調用">方法一：使用 GDB 腳本記錄函數調用</a></h2>
+<h3 id="1-創建-gdb-追蹤腳本"><a class="header" href="#1-創建-gdb-追蹤腳本">1. 創建 GDB 追蹤腳本</a></h3>
+<pre><code class="language-bash"># trace_functions.gdb
+set logging file function_trace.txt
+set logging on
+
+# 設置在每個函數入口處的斷點
+define trace_function
+    if $argc == 1
+        break $arg0
+        commands
+            silent
+            printf "ENTER: %s at %s:%d\n", $arg0, __FILE__, __LINE__
+            bt 1
+            continue
+        end
+    end
+end
+
+# 設置在函數退出處的斷點
+define trace_return
+    if $argc == 1
+        break $arg0
+        commands
+            silent
+            printf "EXIT: %s\n", $arg0
+            continue
+        end
+    end
+end
+
+# 追蹤特定函數
+trace_function main.main
+trace_function your_target_function
+
+# 開始執行
+run
+</code></pre>
+<h3 id="2-使用腳本運行"><a class="header" href="#2-使用腳本運行">2. 使用腳本運行</a></h3>
+<pre><code class="language-bash">gdb -x trace_functions.gdb ./your_program
+</code></pre>
+<h2 id="方法二使用-gdb-python-腳本自動化"><a class="header" href="#方法二使用-gdb-python-腳本自動化">方法二：使用 GDB Python 腳本自動化</a></h2>
+<h3 id="1-python-腳本記錄調用軌跡"><a class="header" href="#1-python-腳本記錄調用軌跡">1. Python 腳本記錄調用軌跡</a></h3>
+<pre><code class="language-python"># function_tracer.py
+import gdb
+import json
+from datetime import datetime
+
+class FunctionTracer:
+    def __init__(self):
+        self.call_stack = []
+        self.function_calls = []
+        self.depth = 0
+    
+    def trace_function_entry(self, function_name):
+        timestamp = datetime.now().isoformat()
+        call_info = {
+            'type': 'enter',
+            'function': function_name,
+            'depth': self.depth,
+            'timestamp': timestamp,
+            'stack': list(self.call_stack)
+        }
+        self.function_calls.append(call_info)
+        self.call_stack.append(function_name)
+        self.depth += 1
+        print(f"{'  ' * (self.depth-1)}→ {function_name}")
+    
+    def trace_function_exit(self, function_name):
+        timestamp = datetime.now().isoformat()
+        if self.call_stack and self.call_stack[-1] == function_name:
+            self.call_stack.pop()
+            self.depth -= 1
+        
+        call_info = {
+            'type': 'exit',
+            'function': function_name,
+            'depth': self.depth,
+            'timestamp': timestamp
+        }
+        self.function_calls.append(call_info)
+        print(f"{'  ' * self.depth}← {function_name}")
+    
+    def save_trace(self, filename):
+        with open(filename, 'w') as f:
+            json.dump(self.function_calls, f, indent=2)
+
+# 創建全局追蹤器
+tracer = FunctionTracer()
+
+class FunctionBreakpoint(gdb.Breakpoint):
+    def __init__(self, function_name, is_entry=True):
+        super().__init__(function_name)
+        self.function_name = function_name
+        self.is_entry = is_entry
+    
+    def stop(self):
+        if self.is_entry:
+            tracer.trace_function_entry(self.function_name)
+        else:
+            tracer.trace_function_exit(self.function_name)
+        return False  # 不停止執行
+
+# 設置要追蹤的函數
+functions_to_trace = [
+    'main.main',
+    'your_target_function',
+    'another_function'
+]
+
+for func in functions_to_trace:
+    FunctionBreakpoint(func, True)
+
+# 執行完畢後保存
+def save_and_exit():
+    tracer.save_trace('function_trace.json')
+    print("Trace saved to function_trace.json")
+
+# 註冊退出處理
+gdb.events.exited.connect(save_and_exit)
+</code></pre>
+<h3 id="2-使用-python-腳本"><a class="header" href="#2-使用-python-腳本">2. 使用 Python 腳本</a></h3>
+<pre><code class="language-bash">gdb -x function_tracer.py ./your_program
+</code></pre>
+<h2 id="方法三使用外部工具--gdb"><a class="header" href="#方法三使用外部工具--gdb">方法三：使用外部工具 + GDB</a></h2>
+<h3 id="1-使用-ltrace-和-strace-結合"><a class="header" href="#1-使用-ltrace-和-strace-結合">1. 使用 <code>ltrace</code> 和 <code>strace</code> 結合</a></h3>
+<pre><code class="language-bash"># 記錄函數調用
+ltrace -f -o function_calls.txt ./your_program
+
+# 或者使用 strace 記錄系統調用
+strace -f -o system_calls.txt ./your_program
+</code></pre>
+<h3 id="2-使用-perf-記錄調用圖"><a class="header" href="#2-使用-perf-記錄調用圖">2. 使用 <code>perf</code> 記錄調用圖</a></h3>
+<pre><code class="language-bash"># 記錄調用圖
+perf record -g ./your_program
+perf report --stdio &gt; call_graph.txt
+
+# 生成調用圖
+perf script | python /usr/share/perf-core/scripts/python/flamegraph.py &gt; flamegraph.svg
+</code></pre>
+<h2 id="方法四轉換成流程圖"><a class="header" href="#方法四轉換成流程圖">方法四：轉換成流程圖</a></h2>
+<h3 id="1-python-腳本轉換-json-為-mermaid"><a class="header" href="#1-python-腳本轉換-json-為-mermaid">1. Python 腳本轉換 JSON 為 Mermaid</a></h3>
+<pre><code class="language-python"># json_to_mermaid.py
+import json
+import sys
+
+def generate_mermaid_flowchart(trace_file):
+    with open(trace_file, 'r') as f:
+        calls = json.load(f)
+    
+    mermaid = ["graph TD"]
+    
+    # 提取函數調用關係
+    call_stack = []
+    edges = set()
+    
+    for call in calls:
+        if call['type'] == 'enter':
+            if call_stack:
+                parent = call_stack[-1]
+                child = call['function']
+                edges.add((parent, child))
+            call_stack.append(call['function'])
+        elif call['type'] == 'exit' and call_stack:
+            call_stack.pop()
+    
+    # 生成節點
+    functions = set()
+    for parent, child in edges:
+        functions.add(parent)
+        functions.add(child)
+    
+    # 清理函數名作為節點 ID
+    def clean_name(name):
+        return name.replace('.', '_').replace(':', '_')
+    
+    # 添加節點定義
+    for func in functions:
+        clean_func = clean_name(func)
+        mermaid.append(f"    {clean_func}[\"{func}\"]")
+    
+    # 添加邊
+    for parent, child in edges:
+        clean_parent = clean_name(parent)
+        clean_child = clean_name(child)
+        mermaid.append(f"    {clean_parent} --&gt; {clean_child}")
+    
+    return '\n'.join(mermaid)
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python json_to_mermaid.py function_trace.json")
+        sys.exit(1)
+    
+    mermaid_code = generate_mermaid_flowchart(sys.argv[1])
+    
+    with open('function_flowchart.mmd', 'w') as f:
+        f.write(mermaid_code)
+    
+    print("Mermaid flowchart saved to function_flowchart.mmd")
+    print("\nMermaid code:")
+    print(mermaid_code)
+</code></pre>
+<h3 id="2-轉換為-graphviz-dot-格式"><a class="header" href="#2-轉換為-graphviz-dot-格式">2. 轉換為 Graphviz DOT 格式</a></h3>
+<pre><code class="language-python"># json_to_dot.py
+import json
+import sys
+
+def generate_dot_graph(trace_file):
+    with open(trace_file, 'r') as f:
+        calls = json.load(f)
+    
+    dot = ['digraph FunctionCalls {']
+    dot.append('    rankdir=TD;')
+    dot.append('    node [shape=box];')
+    
+    call_stack = []
+    edges = set()
+    
+    for call in calls:
+        if call['type'] == 'enter':
+            if call_stack:
+                parent = call_stack[-1]
+                child = call['function']
+                edges.add((parent, child))
+            call_stack.append(call['function'])
+        elif call['type'] == 'exit' and call_stack:
+            call_stack.pop()
+    
+    # 添加邊
+    for parent, child in edges:
+        dot.append(f'    "{parent}" -&gt; "{child}";')
+    
+    dot.append('}')
+    return '\n'.join(dot)
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python json_to_dot.py function_trace.json")
+        sys.exit(1)
+    
+    dot_code = generate_dot_graph(sys.argv[1])
+    
+    with open('function_graph.dot', 'w') as f:
+        f.write(dot_code)
+    
+    print("DOT graph saved to function_graph.dot")
+    print("Generate PNG with: dot -Tpng function_graph.dot -o function_graph.png")
+</code></pre>
+<h2 id="方法五使用-valgrind-callgrind"><a class="header" href="#方法五使用-valgrind-callgrind">方法五：使用 Valgrind Callgrind</a></h2>
+<h3 id="1-生成調用圖"><a class="header" href="#1-生成調用圖">1. 生成調用圖</a></h3>
+<pre><code class="language-bash"># 使用 Valgrind 生成調用圖
+valgrind --tool=callgrind ./your_program
+
+# 查看調用圖
+callgrind_annotate callgrind.out.*
+
+# 生成可視化調用圖
+gprof2dot -f callgrind callgrind.out.* | dot -Tpng -o callgraph.png
+</code></pre>
+<h2 id="完整工作流程"><a class="header" href="#完整工作流程">完整工作流程</a></h2>
+<h3 id="1-記錄函數調用"><a class="header" href="#1-記錄函數調用">1. 記錄函數調用</a></h3>
+<pre><code class="language-bash"># 1. 編譯程式（保留 debug symbol）
+go build -gcflags="-N -l" -o myprogram main.go
+
+# 2. 使用 GDB Python 腳本記錄
+gdb -x function_tracer.py ./myprogram
+
+# 3. 或者使用簡單的 ltrace
+ltrace -f -o calls.txt ./myprogram
+</code></pre>
+<h3 id="2-轉換為流程圖"><a class="header" href="#2-轉換為流程圖">2. 轉換為流程圖</a></h3>
+<pre><code class="language-bash"># 轉換 JSON 為 Mermaid
+python json_to_mermaid.py function_trace.json
+
+# 或轉換為 DOT 格式
+python json_to_dot.py function_trace.json
+dot -Tpng function_graph.dot -o flowchart.png
+</code></pre>
+<h3 id="3-在線可視化"><a class="header" href="#3-在線可視化">3. 在線可視化</a></h3>
+<ul>
+<li><strong>Mermaid</strong>：貼到 <a href="https://mermaid.live">mermaid.live</a></li>
+<li><strong>Graphviz</strong>：使用 <a href="https://dreampuf.github.io/GraphvizOnline/">Graphviz Online</a></li>
+</ul>
+<h2 id="實用腳本一鍵生成流程圖"><a class="header" href="#實用腳本一鍵生成流程圖">實用腳本：一鍵生成流程圖</a></h2>
+<pre><code class="language-bash">#!/bin/bash
+# generate_flowchart.sh
+
+PROGRAM=$1
+if [ -z "$PROGRAM" ]; then
+    echo "Usage: $0 &lt;program_path&gt;"
+    exit 1
+fi
+
+echo "🔍 分析程式: $PROGRAM"
+
+# 1. 檢查 debug symbol
+if ! file "$PROGRAM" | grep -q "not stripped"; then
+    echo "❌ 程式沒有 debug symbol，請重新編譯"
+    exit 1
+fi
+
+# 2. 使用 ltrace 記錄函數調用
+echo "📊 記錄函數調用..."
+timeout 30 ltrace -f -o function_calls.txt "$PROGRAM" 2&gt;/dev/null
+
+# 3. 解析並生成 DOT 格式
+echo "🎨 生成流程圖..."
+python3 -c "
+import re
+calls = []
+with open('function_calls.txt', 'r') as f:
+    for line in f:
+        match = re.search(r'(\w+)\(', line)
+        if match:
+            calls.append(match.group(1))
+
+# 生成簡單的調用關係
+with open('flowchart.dot', 'w') as f:
+    f.write('digraph G {\\n')
+    f.write('  rankdir=TD;\\n')
+    for i in range(len(calls)-1):
+        f.write(f'  \"{calls[i]}\" -&gt; \"{calls[i+1]}\";\\n')
+    f.write('}\\n')
+"
+
+# 4. 生成 PNG
+if command -v dot &gt;/dev/null; then
+    dot -Tpng flowchart.dot -o flowchart.png
+    echo "✅ 流程圖已生成: flowchart.png"
+else
+    echo "✅ DOT 檔案已生成: flowchart.dot"
+    echo "📝 安裝 graphviz 後執行: dot -Tpng flowchart.dot -o flowchart.png"
+fi
+</code></pre>
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<p>雖然 GDB 本身不能直接生成流程圖，但可以透過：</p>
+<ol>
+<li><strong>記錄函數調用軌跡</strong> (GDB 腳本/Python/ltrace)</li>
+<li><strong>解析調用關係</strong> (Python 腳本)</li>
+<li><strong>轉換為圖形格式</strong> (Mermaid/Graphviz/D3.js)</li>
+</ol>
+<p>這樣的組合可以有效地將程式執行流程可視化！</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../gdb/go-rust-gdb-debug.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../gdb/gdb_ex_complete_guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../gdb/go-rust-gdb-debug.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../gdb/gdb_ex_complete_guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

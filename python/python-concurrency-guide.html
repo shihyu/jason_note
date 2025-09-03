@@ -1,0 +1,761 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Python 併發編程完整指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="python-並發編程完整指南"><a class="header" href="#python-並發編程完整指南">Python 並發編程完整指南</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ol>
+<li><a href="#%E5%9F%BA%E7%A4%8E%E6%A6%82%E5%BF%B5%E5%9F%B7%E8%A1%8C%E7%B7%92%E8%88%87%E9%80%B2%E7%A8%8B">基礎概念：執行緒與進程</a></li>
+<li><a href="#cpu-%E5%AF%86%E9%9B%86%E5%9E%8B-vs-io-%E5%AF%86%E9%9B%86%E5%9E%8B%E4%BB%BB%E5%8B%99">CPU 密集型 vs I/O 密集型任務</a></li>
+<li><a href="#threadpoolexecutor-%E8%A9%B3%E8%A7%A3">ThreadPoolExecutor 詳解</a></li>
+<li><a href="#threadpoolexecutor-vs-asyncio">ThreadPoolExecutor vs asyncio</a></li>
+</ol>
+<hr />
+<h2 id="基礎概念執行緒與進程"><a class="header" href="#基礎概念執行緒與進程">基礎概念：執行緒與進程</a></h2>
+<h3 id="什麼是執行緒thread"><a class="header" href="#什麼是執行緒thread">什麼是執行緒（Thread）？</a></h3>
+<p><strong>執行緒（Thread）是程式執行的最小單位</strong>。當作業系統運行程式時，會將每個程式視為一個「進程（Process）」，而每個進程內部可以有一個或多個執行緒來負責執行不同的工作。</p>
+<h4 id="單執行緒範例"><a class="header" href="#單執行緒範例">單執行緒範例</a></h4>
+<pre><code class="language-python">import time
+
+def task1():
+    print("🔄 任務 1 開始執行")
+    time.sleep(3)  # 模擬 3 秒的工作時間
+    print("✅ 任務 1 完成")
+
+def task2():
+    print("🔄 任務 2 開始執行")
+    time.sleep(2)  # 模擬 2 秒的工作時間
+    print("✅ 任務 2 完成")
+
+print("🚀 開始執行程式")
+task1()
+task2()
+print("🎉 所有任務完成")
+</code></pre>
+<p><strong>執行結果：</strong></p>
+<ul>
+<li>總執行時間：5 秒</li>
+<li>task1() 執行完後，task2() 才開始執行</li>
+</ul>
+<h4 id="多執行緒範例"><a class="header" href="#多執行緒範例">多執行緒範例</a></h4>
+<pre><code class="language-python">import threading
+import time
+
+def task1():
+    print("🔄 任務 1（執行緒 1）開始執行")
+    time.sleep(3)
+    print("✅ 任務 1（執行緒 1）完成")
+
+def task2():
+    print("🔄 任務 2（執行緒 2）開始執行")
+    time.sleep(2)
+    print("✅ 任務 2（執行緒 2）完成")
+
+print("🚀 開始執行程式")
+
+# 創建兩個執行緒
+thread1 = threading.Thread(target=task1)
+thread2 = threading.Thread(target=task2)
+
+# 啟動執行緒
+thread1.start()
+thread2.start()
+
+# 等待執行緒執行完畢
+thread1.join()
+thread2.join()
+
+print("🎉 所有任務完成")
+</code></pre>
+<p><strong>執行結果：</strong></p>
+<ul>
+<li>總執行時間：3 秒（比單執行緒快 2 秒）</li>
+<li>task1() 和 task2() 同時執行</li>
+</ul>
+<h3 id="進程-vs-執行緒比較"><a class="header" href="#進程-vs-執行緒比較">進程 vs 執行緒比較</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>類別</th><th>進程（Process）</th><th>執行緒（Thread）</th></tr></thead><tbody>
+<tr><td><strong>定義</strong></td><td>程式的執行實體</td><td>進程內的執行單位</td></tr>
+<tr><td><strong>記憶體</strong></td><td>不共享記憶體</td><td>共享記憶體</td></tr>
+<tr><td><strong>建立成本</strong></td><td>高（需要獨立記憶體）</td><td>低（共用進程資源）</td></tr>
+<tr><td><strong>適用場景</strong></td><td>CPU 密集型（影像處理、數據計算）</td><td>I/O 密集型（API 請求、爬蟲）</td></tr>
+</tbody></table>
+</div>
+<h3 id="python-實作範例"><a class="header" href="#python-實作範例">Python 實作範例</a></h3>
+<h4 id="進程範例使用-multiprocessing"><a class="header" href="#進程範例使用-multiprocessing">進程範例（使用 multiprocessing）</a></h4>
+<pre><code class="language-python">from multiprocessing import Process
+import time
+
+def task(name):
+    print(f"🔄 進程 {name} 開始執行")
+    time.sleep(2)
+    print(f"✅ 進程 {name} 完成")
+
+if __name__ == "__main__":
+    process1 = Process(target=task, args=("P1",))
+    process2 = Process(target=task, args=("P2",))
+    
+    process1.start()
+    process2.start()
+    
+    process1.join()
+    process2.join()
+    
+    print("🎉 所有進程完成")
+</code></pre>
+<h4 id="執行緒範例使用-threading"><a class="header" href="#執行緒範例使用-threading">執行緒範例（使用 threading）</a></h4>
+<pre><code class="language-python">import threading
+import time
+
+def task(name):
+    print(f"🔄 執行緒 {name} 開始執行")
+    time.sleep(2)
+    print(f"✅ 執行緒 {name} 完成")
+
+thread1 = threading.Thread(target=task, args=("T1",))
+thread2 = threading.Thread(target=task, args=("T2",))
+
+thread1.start()
+thread2.start()
+
+thread1.join()
+thread2.join()
+
+print("🎉 所有執行緒完成")
+</code></pre>
+<h3 id="真實世界的應用案例"><a class="header" href="#真實世界的應用案例">真實世界的應用案例</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>應用程式</th><th>進程（Process）</th><th>執行緒（Thread）</th></tr></thead><tbody>
+<tr><td><strong>Google Chrome</strong></td><td>每個分頁是獨立進程</td><td>分頁內的 JavaScript、影片播放等</td></tr>
+<tr><td><strong>VS Code</strong></td><td>主程式是一個進程</td><td>語法分析、插件運行等</td></tr>
+<tr><td><strong>遊戲（如 GTA 5）</strong></td><td>遊戲本體是進程</td><td>渲染、物理計算、AI 行為</td></tr>
+<tr><td><strong>音樂播放器（Spotify）</strong></td><td>播放器是進程</td><td>下載音樂、播放、UI 顯示</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="cpu-密集型-vs-io-密集型任務"><a class="header" href="#cpu-密集型-vs-io-密集型任務">CPU 密集型 vs I/O 密集型任務</a></h2>
+<h3 id="什麼是-cpu-密集型cpu-bound"><a class="header" href="#什麼是-cpu-密集型cpu-bound">什麼是 CPU 密集型（CPU-Bound）？</a></h3>
+<p>CPU 運算指的是程式執行速度受限於 CPU 的運算能力，這類運算通常需要大量計算。</p>
+<p><strong>常見場景：</strong></p>
+<ul>
+<li>機器學習與深度學習訓練</li>
+<li>影像處理（如 Photoshop 濾鏡）</li>
+<li>數學計算（矩陣運算、大量迴圈）</li>
+<li>數據分析與統計運算</li>
+</ul>
+<p>📌 **適合使用多進程（Multiprocessing）**來充分利用多核心 CPU。</p>
+<h3 id="什麼是-io-密集型io-bound"><a class="header" href="#什麼是-io-密集型io-bound">什麼是 I/O 密集型（I/O-Bound）？</a></h3>
+<p>I/O 操作指的是程式執行速度受限於外部設備（網路、硬碟、資料庫）的存取速度。</p>
+<p><strong>常見場景：</strong></p>
+<ul>
+<li>讀取或寫入檔案</li>
+<li>發送 API 請求</li>
+<li>存取資料庫</li>
+<li>網頁爬蟲</li>
+</ul>
+<p>📌 **適合使用多執行緒（Threading）**來同時執行多個 I/O 任務。</p>
+<h3 id="threadpoolexecutor-vs-processpoolexecutor"><a class="header" href="#threadpoolexecutor-vs-processpoolexecutor">ThreadPoolExecutor vs ProcessPoolExecutor</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>功能</th><th>ThreadPoolExecutor</th><th>ProcessPoolExecutor</th></tr></thead><tbody>
+<tr><td><strong>適用場景</strong></td><td>I/O 密集型（API、爬蟲、檔案讀寫）</td><td>CPU 密集型（數據計算、影像處理）</td></tr>
+<tr><td><strong>資源使用</strong></td><td>多執行緒（共享記憶體）</td><td>多進程（獨立記憶體）</td></tr>
+<tr><td><strong>GIL 限制</strong></td><td>是（Python GIL 限制）</td><td>否（每個進程有獨立解釋器）</td></tr>
+<tr><td><strong>開銷</strong></td><td>低（執行緒切換快）</td><td>高（需要額外記憶體）</td></tr>
+</tbody></table>
+</div>
+<h3 id="實作範例"><a class="header" href="#實作範例">實作範例</a></h3>
+<h4 id="io-密集型使用-threadpoolexecutor"><a class="header" href="#io-密集型使用-threadpoolexecutor">I/O 密集型：使用 ThreadPoolExecutor</a></h4>
+<pre><code class="language-python">from concurrent.futures import ThreadPoolExecutor
+import requests
+
+URLS = [
+    "https://jsonplaceholder.typicode.com/todos/1",
+    "https://jsonplaceholder.typicode.com/todos/2"
+]
+
+def fetch_data(url):
+    response = requests.get(url)
+    return response.json()
+
+with ThreadPoolExecutor(max_workers=2) as executor:
+    results = list(executor.map(fetch_data, URLS))
+    print(results)  # 同時發送 API 請求
+</code></pre>
+<h4 id="cpu-密集型使用-processpoolexecutor"><a class="header" href="#cpu-密集型使用-processpoolexecutor">CPU 密集型：使用 ProcessPoolExecutor</a></h4>
+<pre><code class="language-python">from concurrent.futures import ProcessPoolExecutor
+
+def compute(n):
+    return sum(i**2 for i in range(n))
+
+numbers = [10**6, 10**6, 10**6]
+
+with ProcessPoolExecutor(max_workers=3) as executor:
+    results = list(executor.map(compute, numbers))
+    print(results)  # 使用多核心 CPU 計算
+</code></pre>
+<hr />
+<h2 id="threadpoolexecutor-詳解"><a class="header" href="#threadpoolexecutor-詳解">ThreadPoolExecutor 詳解</a></h2>
+<h3 id="什麼是-threadpoolexecutor"><a class="header" href="#什麼是-threadpoolexecutor">什麼是 ThreadPoolExecutor？</a></h3>
+<p><code>ThreadPoolExecutor</code> 是 Python <code>concurrent.futures</code> 模組的一部分，提供管理執行緒池（Thread Pool）的方式，讓程式能夠更快地處理大量 I/O 操作。</p>
+<h3 id="基本用法"><a class="header" href="#基本用法">基本用法</a></h3>
+<pre><code class="language-python">from concurrent.futures import ThreadPoolExecutor
+import time
+
+def task(n):
+    """模擬一個需要 2 秒的工作"""
+    print(f"🔄 任務 {n} 開始執行")
+    time.sleep(2)
+    print(f"✅ 任務 {n} 完成")
+    return f"任務 {n} 的結果"
+
+# 建立執行緒池，最多允許 3 個執行緒同時運行
+with ThreadPoolExecutor(max_workers=3) as executor:
+    results = list(executor.map(task, range(5)))  # 執行 5 個任務
+    print(results)
+</code></pre>
+<h3 id="submit-vs-map-的差異"><a class="header" href="#submit-vs-map-的差異">submit() vs map() 的差異</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>功能</th><th>submit()</th><th>map()</th></tr></thead><tbody>
+<tr><td><strong>提交方式</strong></td><td>逐個提交（單次處理單一任務）</td><td>批量提交（單次處理多個任務）</td></tr>
+<tr><td><strong>回傳值</strong></td><td>Future 物件（需 .result() 取得）</td><td>直接回傳結果列表</td></tr>
+<tr><td><strong>適用場景</strong></td><td>需要逐步處理結果、錯誤處理</td><td>單輸入對應單輸出的批量處理</td></tr>
+<tr><td><strong>錯誤處理</strong></td><td>更靈活，可單獨捕捉錯誤</td><td>一個任務失敗會中斷整個 map()</td></tr>
+</tbody></table>
+</div>
+<h4 id="submit-範例"><a class="header" href="#submit-範例">submit() 範例</a></h4>
+<pre><code class="language-python">from concurrent.futures import ThreadPoolExecutor
+
+def square(n):
+    return n * n
+
+with ThreadPoolExecutor(max_workers=3) as executor:
+    future1 = executor.submit(square, 2)
+    future2 = executor.submit(square, 3)
+    
+    print(future1.result())  # 4
+    print(future2.result())  # 9
+</code></pre>
+<h4 id="submit-錯誤處理"><a class="header" href="#submit-錯誤處理">submit() 錯誤處理</a></h4>
+<pre><code class="language-python">def divide(n, d):
+    if d == 0:
+        raise ValueError("❌ 除數不能為 0")
+    return n / d
+
+with ThreadPoolExecutor(max_workers=3) as executor:
+    futures = [executor.submit(divide, 10, i) for i in range(3)]
+    
+    for future in futures:
+        try:
+            print(future.result())
+        except Exception as e:
+            print(f"⚠️ 錯誤: {e}")
+</code></pre>
+<h4 id="map-範例"><a class="header" href="#map-範例">map() 範例</a></h4>
+<pre><code class="language-python">def square(n):
+    return n * n
+
+with ThreadPoolExecutor(max_workers=3) as executor:
+    results = executor.map(square, [1, 2, 3, 4, 5])
+    print(list(results))  # [1, 4, 9, 16, 25]
+</code></pre>
+<h3 id="threadpoolexecutor-應用場景"><a class="header" href="#threadpoolexecutor-應用場景">ThreadPoolExecutor 應用場景</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>應用場景</th><th>為什麼適合</th><th>示例應用</th></tr></thead><tbody>
+<tr><td><strong>API 請求</strong></td><td>同時發送多個請求，提高效率</td><td>OpenAI API、天氣查詢</td></tr>
+<tr><td><strong>網路爬蟲</strong></td><td>同時爬取多個網頁</td><td>新聞爬取、批量下載</td></tr>
+<tr><td><strong>檔案 I/O</strong></td><td>同時處理多個文件</td><td>日誌分析、格式轉換</td></tr>
+<tr><td><strong>背景任務</strong></td><td>不影響主流程</td><td>自動備份、數據同步</td></tr>
+</tbody></table>
+</div>
+<h3 id="實戰應用"><a class="header" href="#實戰應用">實戰應用</a></h3>
+<h4 id="同時發送多個-api-請求"><a class="header" href="#同時發送多個-api-請求">同時發送多個 API 請求</a></h4>
+<pre><code class="language-python">from concurrent.futures import ThreadPoolExecutor
+import requests
+
+API_URLS = [
+    "https://jsonplaceholder.typicode.com/todos/1",
+    "https://jsonplaceholder.typicode.com/todos/2",
+    "https://jsonplaceholder.typicode.com/todos/3"
+]
+
+def fetch_data(url):
+    response = requests.get(url)
+    return response.json()
+
+with ThreadPoolExecutor(max_workers=3) as executor:
+    results = list(executor.map(fetch_data, API_URLS))
+    print(results)
+</code></pre>
+<h4 id="批量處理檔案"><a class="header" href="#批量處理檔案">批量處理檔案</a></h4>
+<pre><code class="language-python">from concurrent.futures import ThreadPoolExecutor
+
+def read_file(file_path):
+    with open(file_path, "r", encoding="utf-8") as file:
+        return file.read()
+
+files = ["file1.txt", "file2.txt", "file3.txt"]
+
+with ThreadPoolExecutor(max_workers=3) as executor:
+    contents = list(executor.map(read_file, files))
+    print(contents)
+</code></pre>
+<h3 id="最佳實踐"><a class="header" href="#最佳實踐">最佳實踐</a></h3>
+<ol>
+<li><strong>控制 max_workers</strong>：通常設為 CPU 核心數 * 2</li>
+<li><strong>使用 submit() 處理回傳值</strong>：需要獲取結果時更靈活</li>
+<li><strong>確保使用 with 語法</strong>：自動關閉執行緒池，避免資源浪費</li>
+</ol>
+<h3 id="潛在問題與解決方案"><a class="header" href="#潛在問題與解決方案">潛在問題與解決方案</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>問題</th><th>解決方案</th></tr></thead><tbody>
+<tr><td>大量執行緒導致記憶體耗盡</td><td>適當限制 max_workers</td></tr>
+<tr><td>共享變數的 Race Condition</td><td>使用 threading.Lock() 保護</td></tr>
+<tr><td>網路請求異常（如超時）</td><td>使用 try-except 捕捉錯誤</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="threadpoolexecutor-vs-asyncio"><a class="header" href="#threadpoolexecutor-vs-asyncio">ThreadPoolExecutor vs asyncio</a></h2>
+<h3 id="兩種並發方式的比較"><a class="header" href="#兩種並發方式的比較">兩種並發方式的比較</a></h3>
+<p>Python 提供兩種方式來提高 I/O 操作效率：</p>
+<ol>
+<li><strong>多執行緒（Threading）</strong>：使用 <code>ThreadPoolExecutor</code> 並行執行同步函式</li>
+<li><strong>非同步（Asynchronous）</strong>：使用 <code>asyncio</code> 非同步執行支援 async 的函式</li>
+</ol>
+<h3 id="核心差異"><a class="header" href="#核心差異">核心差異</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>ThreadPoolExecutor</th><th>asyncio</th></tr></thead><tbody>
+<tr><td><strong>並行方式</strong></td><td>多個執行緒</td><td>單執行緒 + 事件迴圈</td></tr>
+<tr><td><strong>適合場景</strong></td><td>同步 I/O（requests、檔案讀寫）</td><td>支援 async 的函式（aiohttp）</td></tr>
+<tr><td><strong>GIL 限制</strong></td><td>是（但 I/O 影響不大）</td><td>否（非同步處理）</td></tr>
+<tr><td><strong>CPU 密集型</strong></td><td>❌ 不適合</td><td>❌ 不適合</td></tr>
+</tbody></table>
+</div>
+<h3 id="threadpoolexecutor-範例"><a class="header" href="#threadpoolexecutor-範例">ThreadPoolExecutor 範例</a></h3>
+<pre><code class="language-python">import requests
+from concurrent.futures import ThreadPoolExecutor
+import time
+
+URLS = [
+    "https://jsonplaceholder.typicode.com/todos/1",
+    "https://jsonplaceholder.typicode.com/todos/2",
+    "https://jsonplaceholder.typicode.com/todos/3",
+]
+
+def fetch(url):
+    """發送 HTTP 請求（同步）"""
+    print(f"🔄 發送請求: {url}")
+    response = requests.get(url)
+    print(f"✅ 完成請求: {url}")
+    return response.json()
+
+start_time = time.time()
+
+# 使用 ThreadPoolExecutor 讓多個請求同時執行
+with ThreadPoolExecutor(max_workers=3) as executor:
+    results = list(executor.map(fetch, URLS))
+
+end_time = time.time()
+print(f"總執行時間: {end_time - start_time:.2f} 秒")
+</code></pre>
+<p><strong>優點：</strong></p>
+<ul>
+<li>簡單易用，不需要修改現有同步程式碼</li>
+<li>適合處理 <code>requests</code> 等同步庫</li>
+</ul>
+<h3 id="asyncio-範例"><a class="header" href="#asyncio-範例">asyncio 範例</a></h3>
+<pre><code class="language-python">import aiohttp
+import asyncio
+
+URLS = [
+    "https://jsonplaceholder.typicode.com/todos/1",
+    "https://jsonplaceholder.typicode.com/todos/2",
+    "https://jsonplaceholder.typicode.com/todos/3",
+]
+
+async def fetch(session, url):
+    """使用 aiohttp 非同步發送請求"""
+    print(f"🔄 發送請求: {url}")
+    async with session.get(url) as response:
+        result = await response.json()
+        print(f"✅ 完成請求: {url}")
+        return result
+
+async def main():
+    async with aiohttp.ClientSession() as session:
+        tasks = [fetch(session, url) for url in URLS]
+        results = await asyncio.gather(*tasks)
+        return results
+
+# 執行非同步主程式
+results = asyncio.run(main())
+print(results)
+</code></pre>
+<p><strong>優點：</strong></p>
+<ul>
+<li>真正的非同步執行，效能更好</li>
+<li>單執行緒，資源消耗更少</li>
+</ul>
+<h3 id="asyncio--threadpoolexecutor-混合使用"><a class="header" href="#asyncio--threadpoolexecutor-混合使用">asyncio + ThreadPoolExecutor 混合使用</a></h3>
+<p>當需要在 asyncio 環境中執行同步函式時，可以使用 <code>run_in_executor</code>：</p>
+<pre><code class="language-python">import asyncio
+import requests
+from concurrent.futures import ThreadPoolExecutor
+
+URL = "https://jsonplaceholder.typicode.com/todos/1"
+
+def fetch():
+    """同步函式"""
+    return requests.get(URL).json()
+
+async def main():
+    loop = asyncio.get_running_loop()
+    
+    # 在執行緒池中執行同步函式
+    with ThreadPoolExecutor() as executor:
+        result = await loop.run_in_executor(executor, fetch)
+        print(result)
+
+asyncio.run(main())
+</code></pre>
+<h3 id="運作流程圖解"><a class="header" href="#運作流程圖解">運作流程圖解</a></h3>
+<h4 id="threadpoolexecutor-運作流程"><a class="header" href="#threadpoolexecutor-運作流程">ThreadPoolExecutor 運作流程</a></h4>
+<pre><code>主執行緒
+    ├─&gt; 執行緒 1: 執行 task1()
+    ├─&gt; 執行緒 2: 執行 task2()
+    └─&gt; 執行緒 3: 執行 task3()
+    
+所有執行緒同時運行，但受 GIL 限制
+</code></pre>
+<h4 id="asyncio-運作流程"><a class="header" href="#asyncio-運作流程">asyncio 運作流程</a></h4>
+<pre><code>事件迴圈（單執行緒）
+    ├─&gt; task1(): 遇到 await，切換到 task2()
+    ├─&gt; task2(): 遇到 await，切換到 task3()
+    └─&gt; task3(): 遇到 await，切換回 task1()
+    
+單執行緒內快速切換，不會阻塞
+</code></pre>
+<h3 id="效能比較"><a class="header" href="#效能比較">效能比較</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>方法</th><th>執行方式</th><th>3 個請求耗時（每個 1 秒）</th></tr></thead><tbody>
+<tr><td><strong>單執行緒（同步）</strong></td><td>逐個請求</td><td>⏳ 3 秒</td></tr>
+<tr><td><strong>ThreadPoolExecutor</strong></td><td>3 個執行緒同時</td><td>🚀 1 秒</td></tr>
+<tr><td><strong>asyncio</strong></td><td>單執行緒非同步</td><td>🚀 1 秒</td></tr>
+</tbody></table>
+</div>
+<h3 id="選擇建議"><a class="header" href="#選擇建議">選擇建議</a></h3>
+<h4 id="使用-threadpoolexecutor-的情況"><a class="header" href="#使用-threadpoolexecutor-的情況">使用 ThreadPoolExecutor 的情況：</a></h4>
+<ul>
+<li>使用 <code>requests</code> 等同步庫</li>
+<li>現有程式碼是同步的，不想大幅修改</li>
+<li>需要快速實現並發功能</li>
+</ul>
+<h4 id="使用-asyncio-的情況"><a class="header" href="#使用-asyncio-的情況">使用 asyncio 的情況：</a></h4>
+<ul>
+<li>使用 <code>aiohttp</code> 等非同步庫</li>
+<li>需要處理大量並發連接（如 WebSocket）</li>
+<li>追求更高的效能和更低的資源消耗</li>
+</ul>
+<h4 id="混合使用的情況"><a class="header" href="#混合使用的情況">混合使用的情況：</a></h4>
+<ul>
+<li>主體使用 asyncio，但需要呼叫某些同步函式</li>
+<li>逐步將同步程式碼遷移到非同步</li>
+</ul>
+<hr />
+<h2 id="總結與最佳實踐"><a class="header" href="#總結與最佳實踐">總結與最佳實踐</a></h2>
+<h3 id="快速選擇指南"><a class="header" href="#快速選擇指南">快速選擇指南</a></h3>
+<pre><code>任務類型判斷：
+├─&gt; CPU 密集型？
+│   └─&gt; 使用 ProcessPoolExecutor
+│
+└─&gt; I/O 密集型？
+    ├─&gt; 需要使用同步庫（requests）？
+    │   └─&gt; 使用 ThreadPoolExecutor
+    │
+    └─&gt; 可以使用非同步庫（aiohttp）？
+        └─&gt; 使用 asyncio
+</code></pre>
+<h3 id="核心要點"><a class="header" href="#核心要點">核心要點</a></h3>
+<ol>
+<li>
+<p><strong>執行緒 vs 進程</strong></p>
+<ul>
+<li>執行緒：共享記憶體，適合 I/O 密集型</li>
+<li>進程：獨立記憶體，適合 CPU 密集型</li>
+</ul>
+</li>
+<li>
+<p><strong>Python GIL 限制</strong></p>
+<ul>
+<li>影響多執行緒的 CPU 運算效能</li>
+<li>不影響 I/O 操作的並發</li>
+</ul>
+</li>
+<li>
+<p><strong>ThreadPoolExecutor 使用場景</strong></p>
+<ul>
+<li>API 請求、檔案處理、網路爬蟲</li>
+<li>快速將同步程式碼並行化</li>
+</ul>
+</li>
+<li>
+<p><strong>asyncio 優勢</strong></p>
+<ul>
+<li>真正的非同步執行</li>
+<li>更高效能、更低資源消耗</li>
+</ul>
+</li>
+</ol>
+<h3 id="實戰建議"><a class="header" href="#實戰建議">實戰建議</a></h3>
+<ol>
+<li><strong>從簡單開始</strong>：先用 ThreadPoolExecutor 優化現有同步程式碼</li>
+<li><strong>逐步遷移</strong>：新專案考慮使用 asyncio</li>
+<li><strong>混合使用</strong>：在 asyncio 中用 run_in_executor 執行同步函式</li>
+<li><strong>監控效能</strong>：根據實際場景測試並選擇最佳方案</li>
+</ol>
+<h3 id="常見陷阱與解決方案"><a class="header" href="#常見陷阱與解決方案">常見陷阱與解決方案</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>陷阱</th><th>解決方案</th></tr></thead><tbody>
+<tr><td>過多執行緒導致資源耗盡</td><td>限制 max_workers 數量</td></tr>
+<tr><td>同步函式阻塞 asyncio</td><td>使用 run_in_executor</td></tr>
+<tr><td>GIL 限制 CPU 運算</td><td>改用 ProcessPoolExecutor</td></tr>
+<tr><td>Race Condition</td><td>使用 Lock 或其他同步機制</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="參考資源"><a class="header" href="#參考資源">參考資源</a></h2>
+<ul>
+<li><a href="https://docs.python.org/3/library/concurrent.futures.html">Python 官方文件 - concurrent.futures</a></li>
+<li><a href="https://docs.python.org/3/library/asyncio.html">Python 官方文件 - asyncio</a></li>
+<li><a href="https://docs.python.org/3/library/threading.html">Python 官方文件 - threading</a></li>
+<li><a href="https://docs.python.org/3/library/multiprocessing.html">Python 官方文件 - multiprocessing</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../python/python-async-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../python/other.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../python/python-async-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../python/other.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

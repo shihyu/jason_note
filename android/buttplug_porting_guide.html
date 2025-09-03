@@ -1,0 +1,1354 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Buttplug Rust 到 Flutter 的 Porting 方案指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="buttplug-rust-到-flutter-的-porting-方案指南"><a class="header" href="#buttplug-rust-到-flutter-的-porting-方案指南">Buttplug Rust 到 Flutter 的 Porting 方案指南</a></h1>
+<h2 id="方案概覽"><a class="header" href="#方案概覽">方案概覽</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>方案</th><th>複雜度</th><th>性能</th><th>維護性</th><th>檔案大小</th><th>推薦指數</th></tr></thead><tbody>
+<tr><td><strong>1. 使用現有 Dart 套件</strong></td><td>🟢 低</td><td>🟡 中</td><td>🟢 高</td><td>🟢 小</td><td>⭐⭐⭐⭐⭐</td></tr>
+<tr><td><strong>2. FFI 直接調用</strong></td><td>🔴 高</td><td>🟢 高</td><td>🔴 低</td><td>🔴 大</td><td>⭐⭐</td></tr>
+<tr><td><strong>3. 使用 flutter_rust_bridge</strong></td><td>🟡 中</td><td>🟢 高</td><td>🟡 中</td><td>🔴 大</td><td>⭐⭐⭐</td></tr>
+<tr><td><strong>4. WebAssembly 方案</strong></td><td>🟡 中</td><td>🟡 中</td><td>🟡 中</td><td>🟡 中</td><td>⭐⭐⭐</td></tr>
+<tr><td><strong>5. Platform Channel</strong></td><td>🔴 高</td><td>🟢 高</td><td>🔴 低</td><td>🔴 大</td><td>⭐⭐</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="方案-1-使用現有-dart-套件-推薦"><a class="header" href="#方案-1-使用現有-dart-套件-推薦">方案 1: 使用現有 Dart 套件 (推薦)</a></h2>
+<h3 id="概述"><a class="header" href="#概述">概述</a></h3>
+<p>使用官方 <code>buttplug</code> Dart 套件，這是純 Dart 實現的客戶端。</p>
+<h3 id="優點"><a class="header" href="#優點">優點</a></h3>
+<ul>
+<li>✅ 零配置，開箱即用</li>
+<li>✅ 官方維護，穩定可靠</li>
+<li>✅ 不需要編譯 Rust</li>
+<li>✅ 跨平台一致性</li>
+<li>✅ 檔案大小最小</li>
+</ul>
+<h3 id="缺點"><a class="header" href="#缺點">缺點</a></h3>
+<ul>
+<li>❌ 需要外部 Intiface Central</li>
+<li>❌ 功能可能不如完整版</li>
+</ul>
+<h3 id="實現方式"><a class="header" href="#實現方式">實現方式</a></h3>
+<pre><code class="language-yaml"># pubspec.yaml
+dependencies:
+  buttplug: ^0.0.7
+</code></pre>
+<pre><code class="language-dart">import 'package:buttplug/buttplug.dart';
+
+final client = ButtplugClient('My App');
+final connector = ButtplugWebsocketConnector(Uri.parse('ws://localhost:12345'));
+await client.connect(connector);
+</code></pre>
+<hr />
+<h2 id="方案-2-ffi-直接調用"><a class="header" href="#方案-2-ffi-直接調用">方案 2: FFI 直接調用</a></h2>
+<h3 id="概述-1"><a class="header" href="#概述-1">概述</a></h3>
+<p>直接使用 Dart FFI 調用編譯後的 Rust 動態庫。</p>
+<h3 id="實現步驟"><a class="header" href="#實現步驟">實現步驟</a></h3>
+<h4 id="step-1-準備-rust-庫"><a class="header" href="#step-1-準備-rust-庫">Step 1: 準備 Rust 庫</a></h4>
+<pre><code class="language-toml"># Cargo.toml
+[lib]
+name = "buttplug_ffi"
+crate-type = ["cdylib"]
+
+[dependencies]
+buttplug = "8.5"
+tokio = { version = "1.0", features = ["rt-multi-thread"] }
+serde_json = "1.0"
+</code></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// src/lib.rs
+use buttplug::{client::ButtplugClient, core::connector::ButtplugInProcessClientConnector};
+use std::ffi::{CStr, CString};
+use std::os::raw::c_char;
+
+#[repr(C)]
+pub struct ButtplugClientHandle {
+    client: Box&lt;ButtplugClient&gt;,
+    runtime: tokio::runtime::Runtime,
+}
+
+#[no_mangle]
+pub extern "C" fn buttplug_create_client(name: *const c_char) -&gt; *mut ButtplugClientHandle {
+    let c_str = unsafe { CStr::from_ptr(name) };
+    let name_str = c_str.to_str().unwrap();
+    
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let client = rt.block_on(async {
+        ButtplugClient::new(name_str)
+    });
+    
+    Box::into_raw(Box::new(ButtplugClientHandle {
+        client: Box::new(client),
+        runtime: rt,
+    }))
+}
+
+#[no_mangle]
+pub extern "C" fn buttplug_connect_in_process(handle: *mut ButtplugClientHandle) -&gt; i32 {
+    if handle.is_null() { return -1; }
+    
+    let handle = unsafe { &amp;mut *handle };
+    
+    match handle.runtime.block_on(async {
+        let connector = ButtplugInProcessClientConnector::default();
+        handle.client.connect(connector).await
+    }) {
+        Ok(_) =&gt; 0,
+        Err(_) =&gt; -1,
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn buttplug_start_scanning(handle: *mut ButtplugClientHandle) -&gt; i32 {
+    if handle.is_null() { return -1; }
+    
+    let handle = unsafe { &amp;mut *handle };
+    
+    match handle.runtime.block_on(async {
+        handle.client.start_scanning().await
+    }) {
+        Ok(_) =&gt; 0,
+        Err(_) =&gt; -1,
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn buttplug_get_devices_json(handle: *mut ButtplugClientHandle) -&gt; *mut c_char {
+    if handle.is_null() { return std::ptr::null_mut(); }
+    
+    let handle = unsafe { &amp;mut *handle };
+    let devices = handle.client.devices();
+    
+    let devices_info: Vec&lt;_&gt; = devices.iter().map(|device| {
+        serde_json::json!({
+            "name": device.name(),
+            "index": device.index(),
+            "messages": device.allowed_messages().keys().collect::&lt;Vec&lt;_&gt;&gt;()
+        })
+    }).collect();
+    
+    let json_str = serde_json::to_string(&amp;devices_info).unwrap();
+    CString::new(json_str).unwrap().into_raw()
+}
+
+#[no_mangle]
+pub extern "C" fn buttplug_vibrate_device(
+    handle: *mut ButtplugClientHandle,
+    device_index: u32,
+    intensity: f64
+) -&gt; i32 {
+    if handle.is_null() { return -1; }
+    
+    let handle = unsafe { &amp;mut *handle };
+    
+    let devices = handle.client.devices();
+    if let Some(device) = devices.iter().find(|d| d.index() == device_index) {
+        match handle.runtime.block_on(async {
+            device.vibrate(&amp;buttplug::client::ScalarValueCommand::ScalarValue(intensity)).await
+        }) {
+            Ok(_) =&gt; 0,
+            Err(_) =&gt; -1,
+        }
+    } else {
+        -1
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn buttplug_free_client(handle: *mut ButtplugClientHandle) {
+    if !handle.is_null() {
+        unsafe { Box::from_raw(handle) };
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn buttplug_free_string(s: *mut c_char) {
+    unsafe {
+        if !s.is_null() {
+            CString::from_raw(s);
+        }
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="step-2-編譯多平台庫"><a class="header" href="#step-2-編譯多平台庫">Step 2: 編譯多平台庫</a></h4>
+<pre><code class="language-bash"># Android
+rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
+
+# iOS  
+rustup target add aarch64-apple-ios x86_64-apple-ios aarch64-apple-ios-sim
+
+# 編譯 Android
+export CC_aarch64_linux_android=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang
+cargo build --target aarch64-linux-android --release
+
+# 編譯 iOS
+cargo build --target aarch64-apple-ios --release
+</code></pre>
+<h4 id="step-3-flutter-ffi-綁定"><a class="header" href="#step-3-flutter-ffi-綁定">Step 3: Flutter FFI 綁定</a></h4>
+<pre><code class="language-dart">// lib/buttplug_ffi.dart
+import 'dart:ffi';
+import 'dart:io';
+import 'dart:convert';
+import 'package:ffi/ffi.dart';
+
+// C 結構體和函數定義
+typedef ButtplugClientHandle = Pointer&lt;Void&gt;;
+
+typedef CreateClientC = ButtplugClientHandle Function(Pointer&lt;Utf8&gt;);
+typedef CreateClient = ButtplugClientHandle Function(Pointer&lt;Utf8&gt;);
+
+typedef ConnectInProcessC = Int32 Function(ButtplugClientHandle);
+typedef ConnectInProcess = int Function(ButtplugClientHandle);
+
+typedef StartScanningC = Int32 Function(ButtplugClientHandle);
+typedef StartScanning = int Function(ButtplugClientHandle);
+
+typedef GetDevicesJsonC = Pointer&lt;Utf8&gt; Function(ButtplugClientHandle);
+typedef GetDevicesJson = Pointer&lt;Utf8&gt; Function(ButtplugClientHandle);
+
+typedef VibrateDeviceC = Int32 Function(ButtplugClientHandle, Uint32, Double);
+typedef VibrateDevice = int Function(ButtplugClientHandle, int, double);
+
+typedef FreeClientC = Void Function(ButtplugClientHandle);
+typedef FreeClient = void Function(ButtplugClientHandle);
+
+typedef FreeStringC = Void Function(Pointer&lt;Utf8&gt;);
+typedef FreeString = void Function(Pointer&lt;Utf8&gt;);
+
+class ButtplugFFI {
+  late DynamicLibrary _lib;
+  late CreateClient _createClient;
+  late ConnectInProcess _connectInProcess;
+  late StartScanning _startScanning;
+  late GetDevicesJson _getDevicesJson;
+  late VibrateDevice _vibrateDevice;
+  late FreeClient _freeClient;
+  late FreeString _freeString;
+  
+  ButtplugClientHandle? _handle;
+
+  ButtplugFFI() {
+    // 加載動態庫
+    if (Platform.isAndroid) {
+      _lib = DynamicLibrary.open('libbuttplug_ffi.so');
+    } else if (Platform.isIOS) {
+      _lib = DynamicLibrary.process();
+    } else {
+      throw UnsupportedError('Unsupported platform');
+    }
+    
+    // 綁定函數
+    _createClient = _lib.lookupFunction&lt;CreateClientC, CreateClient&gt;('buttplug_create_client');
+    _connectInProcess = _lib.lookupFunction&lt;ConnectInProcessC, ConnectInProcess&gt;('buttplug_connect_in_process');
+    _startScanning = _lib.lookupFunction&lt;StartScanningC, StartScanning&gt;('buttplug_start_scanning');
+    _getDevicesJson = _lib.lookupFunction&lt;GetDevicesJsonC, GetDevicesJson&gt;('buttplug_get_devices_json');
+    _vibrateDevice = _lib.lookupFunction&lt;VibrateDeviceC, VibrateDevice&gt;('buttplug_vibrate_device');
+    _freeClient = _lib.lookupFunction&lt;FreeClientC, FreeClient&gt;('buttplug_free_client');
+    _freeString = _lib.lookupFunction&lt;FreeStringC, FreeString&gt;('buttplug_free_string');
+  }
+
+  Future&lt;bool&gt; createClient(String name) async {
+    final namePtr = name.toNativeUtf8();
+    _handle = _createClient(namePtr);
+    malloc.free(namePtr);
+    return _handle != nullptr;
+  }
+
+  Future&lt;bool&gt; connectInProcess() async {
+    if (_handle == null) return false;
+    return _connectInProcess(_handle!) == 0;
+  }
+
+  Future&lt;bool&gt; startScanning() async {
+    if (_handle == null) return false;
+    return _startScanning(_handle!) == 0;
+  }
+
+  Future&lt;List&lt;Map&lt;String, dynamic&gt;&gt;&gt; getDevices() async {
+    if (_handle == null) return [];
+    
+    final jsonPtr = _getDevicesJson(_handle!);
+    if (jsonPtr == nullptr) return [];
+    
+    final jsonStr = jsonPtr.toDartString();
+    _freeString(jsonPtr);
+    
+    final List&lt;dynamic&gt; devices = jsonDecode(jsonStr);
+    return devices.cast&lt;Map&lt;String, dynamic&gt;&gt;();
+  }
+
+  Future&lt;bool&gt; vibrateDevice(int deviceIndex, double intensity) async {
+    if (_handle == null) return false;
+    return _vibrateDevice(_handle!, deviceIndex, intensity) == 0;
+  }
+
+  void dispose() {
+    if (_handle != null) {
+      _freeClient(_handle!);
+      _handle = null;
+    }
+  }
+}
+
+// 高級封裝
+class ButtplugClient {
+  final ButtplugFFI _ffi = ButtplugFFI();
+  final String name;
+  
+  ButtplugClient(this.name);
+
+  Future&lt;void&gt; connect() async {
+    await _ffi.createClient(name);
+    await _ffi.connectInProcess();
+  }
+
+  Future&lt;void&gt; startScanning() async {
+    await _ffi.startScanning();
+  }
+
+  Future&lt;List&lt;ButtplugDevice&gt;&gt; getDevices() async {
+    final deviceData = await _ffi.getDevices();
+    return deviceData.map((data) =&gt; ButtplugDevice.fromJson(data)).toList();
+  }
+
+  void dispose() {
+    _ffi.dispose();
+  }
+}
+
+class ButtplugDevice {
+  final String name;
+  final int index;
+  final List&lt;String&gt; supportedMessages;
+
+  ButtplugDevice({
+    required this.name,
+    required this.index,
+    required this.supportedMessages,
+  });
+
+  factory ButtplugDevice.fromJson(Map&lt;String, dynamic&gt; json) {
+    return ButtplugDevice(
+      name: json['name'],
+      index: json['index'],
+      supportedMessages: List&lt;String&gt;.from(json['messages']),
+    );
+  }
+
+  Future&lt;void&gt; vibrate(double intensity) async {
+    if (supportedMessages.contains('ScalarCmd')) {
+      // 透過全域 FFI 實例調用
+      // 這裡需要重構以支援設備級操作
+    }
+  }
+}
+</code></pre>
+<h4 id="step-4-flutter-使用範例"><a class="header" href="#step-4-flutter-使用範例">Step 4: Flutter 使用範例</a></h4>
+<pre><code class="language-dart">// lib/main.dart
+import 'package:flutter/material.dart';
+import 'buttplug_ffi.dart';
+
+class ButtplugFFIDemo extends StatefulWidget {
+  @override
+  _ButtplugFFIDemoState createState() =&gt; _ButtplugFFIDemoState();
+}
+
+class _ButtplugFFIDemoState extends State&lt;ButtplugFFIDemo&gt; {
+  late ButtplugClient _client;
+  List&lt;ButtplugDevice&gt; _devices = [];
+  bool _isConnected = false;
+  String _status = 'Disconnected';
+
+  @override
+  void initState() {
+    super.initState();
+    _client = ButtplugClient('Flutter FFI Demo');
+  }
+
+  Future&lt;void&gt; _connect() async {
+    try {
+      await _client.connect();
+      setState(() {
+        _isConnected = true;
+        _status = 'Connected';
+      });
+    } catch (e) {
+      setState(() =&gt; _status = 'Connection failed: $e');
+    }
+  }
+
+  Future&lt;void&gt; _startScanning() async {
+    if (!_isConnected) return;
+    
+    try {
+      await _client.startScanning();
+      
+      // 定期更新設備列表
+      Timer.periodic(Duration(seconds: 1), (timer) async {
+        final devices = await _client.getDevices();
+        setState(() =&gt; _devices = devices);
+        
+        if (_devices.isNotEmpty) {
+          timer.cancel();
+          setState(() =&gt; _status = 'Found ${_devices.length} devices');
+        }
+      });
+    } catch (e) {
+      setState(() =&gt; _status = 'Scanning failed: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Buttplug FFI Demo')),
+      body: Column(
+        children: [
+          Card(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Text('Status: $_status'),
+                  SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: _isConnected ? null : _connect,
+                        child: Text('Connect'),
+                      ),
+                      ElevatedButton(
+                        onPressed: _isConnected ? _startScanning : null,
+                        child: Text('Scan'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _devices.length,
+              itemBuilder: (context, index) {
+                final device = _devices[index];
+                return ListTile(
+                  title: Text(device.name),
+                  subtitle: Text('Messages: ${device.supportedMessages.join(', ')}'),
+                  trailing: device.supportedMessages.contains('ScalarCmd')
+                    ? Slider(
+                        value: 0.0,
+                        onChanged: (value) async {
+                          await device.vibrate(value);
+                        },
+                      )
+                    : null,
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _client.dispose();
+    super.dispose();
+  }
+}
+</code></pre>
+<hr />
+<h2 id="方案-3-flutter_rust_bridge-推薦用於複雜整合"><a class="header" href="#方案-3-flutter_rust_bridge-推薦用於複雜整合">方案 3: flutter_rust_bridge (推薦用於複雜整合)</a></h2>
+<h3 id="概述-2"><a class="header" href="#概述-2">概述</a></h3>
+<p>使用 <code>flutter_rust_bridge</code> 自動生成 Dart-Rust 綁定。</p>
+<h3 id="實現步驟-1"><a class="header" href="#實現步驟-1">實現步驟</a></h3>
+<h4 id="step-1-添加依賴"><a class="header" href="#step-1-添加依賴">Step 1: 添加依賴</a></h4>
+<pre><code class="language-yaml"># pubspec.yaml
+dependencies:
+  flutter_rust_bridge: ^1.82.1
+
+dev_dependencies:
+  flutter_rust_bridge_codegen: ^1.82.1
+  ffigen: ^9.0.1
+</code></pre>
+<h4 id="step-2-rust-api-定義"><a class="header" href="#step-2-rust-api-定義">Step 2: Rust API 定義</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// native/src/api.rs
+use buttplug::client::{ButtplugClient, ButtplugClientEvent};
+use buttplug::core::connector::ButtplugInProcessClientConnector;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+
+pub struct ButtplugClientWrapper {
+    client: Arc&lt;Mutex&lt;ButtplugClient&gt;&gt;,
+    runtime: tokio::runtime::Runtime,
+}
+
+impl ButtplugClientWrapper {
+    pub fn new(name: String) -&gt; Self {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let client = rt.block_on(async { ButtplugClient::new(&amp;name) });
+        
+        Self {
+            client: Arc::new(Mutex::new(client)),
+            runtime: rt,
+        }
+    }
+
+    pub fn connect_in_process(&amp;self) -&gt; Result&lt;(), String&gt; {
+        self.runtime.block_on(async {
+            let connector = ButtplugInProcessClientConnector::default();
+            self.client.lock().await.connect(connector).await
+                .map_err(|e| e.to_string())
+        })
+    }
+
+    pub fn start_scanning(&amp;self) -&gt; Result&lt;(), String&gt; {
+        self.runtime.block_on(async {
+            self.client.lock().await.start_scanning().await
+                .map_err(|e| e.to_string())
+        })
+    }
+
+    pub fn get_device_info(&amp;self) -&gt; Vec&lt;DeviceInfo&gt; {
+        self.runtime.block_on(async {
+            let client = self.client.lock().await;
+            client.devices()
+                .iter()
+                .map(|device| DeviceInfo {
+                    name: device.name().to_string(),
+                    index: device.index(),
+                    supported_messages: device.allowed_messages().keys()
+                        .map(|k| k.to_string()).collect(),
+                })
+                .collect()
+        })
+    }
+
+    pub fn vibrate_device(&amp;self, device_index: u32, intensity: f64) -&gt; Result&lt;(), String&gt; {
+        self.runtime.block_on(async {
+            let client = self.client.lock().await;
+            if let Some(device) = client.devices().iter().find(|d| d.index() == device_index) {
+                use buttplug::client::ScalarValueCommand;
+                device.vibrate(&amp;ScalarValueCommand::ScalarValue(intensity)).await
+                    .map_err(|e| e.to_string())
+            } else {
+                Err("Device not found".to_string())
+            }
+        })
+    }
+}
+
+#[derive(Clone)]
+pub struct DeviceInfo {
+    pub name: String,
+    pub index: u32,
+    pub supported_messages: Vec&lt;String&gt;,
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="step-3-生成綁定"><a class="header" href="#step-3-生成綁定">Step 3: 生成綁定</a></h4>
+<pre><code class="language-bash"># 生成 Dart 綁定
+flutter packages get
+flutter_rust_bridge_codegen \
+    --rust-input native/src/api.rs \
+    --dart-output lib/bridge_generated.dart
+</code></pre>
+<h4 id="step-4-flutter-使用"><a class="header" href="#step-4-flutter-使用">Step 4: Flutter 使用</a></h4>
+<pre><code class="language-dart">// lib/buttplug_bridge.dart
+import 'bridge_generated.dart';
+import 'bridge_definitions.dart';
+
+class ButtplugBridge {
+  static const _base = 'buttplug_bridge';
+  late final ButtplugBridgeImpl _impl;
+  ButtplugClientWrapper? _client;
+
+  ButtplugBridge._() {
+    _impl = ButtplugBridgeImpl.init(ExternalLibrary.open(_getLibraryPath()));
+  }
+
+  static ButtplugBridge? _instance;
+  static ButtplugBridge get instance {
+    _instance ??= ButtplugBridge._();
+    return _instance!;
+  }
+
+  String _getLibraryPath() {
+    if (Platform.isAndroid) {
+      return 'lib$_base.so';
+    } else if (Platform.isIOS) {
+      return '$_base.framework/$_base';
+    } else {
+      throw UnsupportedError('Unsupported platform');
+    }
+  }
+
+  Future&lt;void&gt; createClient(String name) async {
+    _client = await _impl.buttplugClientWrapperNew(name: name);
+  }
+
+  Future&lt;void&gt; connectInProcess() async {
+    if (_client == null) throw Exception('Client not created');
+    await _impl.buttplugClientWrapperConnectInProcess(that: _client!);
+  }
+
+  Future&lt;void&gt; startScanning() async {
+    if (_client == null) throw Exception('Client not created');
+    await _impl.buttplugClientWrapperStartScanning(that: _client!);
+  }
+
+  Future&lt;List&lt;DeviceInfo&gt;&gt; getDevices() async {
+    if (_client == null) throw Exception('Client not created');
+    return await _impl.buttplugClientWrapperGetDeviceInfo(that: _client!);
+  }
+
+  Future&lt;void&gt; vibrateDevice(int deviceIndex, double intensity) async {
+    if (_client == null) throw Exception('Client not created');
+    await _impl.buttplugClientWrapperVibrateDevice(
+      that: _client!,
+      deviceIndex: deviceIndex,
+      intensity: intensity,
+    );
+  }
+}
+</code></pre>
+<hr />
+<h2 id="方案-4-webassembly-web-特化"><a class="header" href="#方案-4-webassembly-web-特化">方案 4: WebAssembly (Web 特化)</a></h2>
+<h3 id="概述-3"><a class="header" href="#概述-3">概述</a></h3>
+<p>將 Rust 編譯為 WebAssembly，在 Flutter Web 中使用。</p>
+<h3 id="實現步驟-2"><a class="header" href="#實現步驟-2">實現步驟</a></h3>
+<h4 id="step-1-準備-wasm-庫"><a class="header" href="#step-1-準備-wasm-庫">Step 1: 準備 WASM 庫</a></h4>
+<pre><code class="language-toml"># Cargo.toml
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+buttplug = "8.5"
+wasm-bindgen = "0.2"
+js-sys = "0.3"
+wee_alloc = "0.4"
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+  "console",
+  "Navigator",
+  "Bluetooth",
+  "BluetoothDevice",
+]
+</code></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// src/lib.rs
+use wasm_bindgen::prelude::*;
+use buttplug::client::{ButtplugClient, ButtplugClientEvent};
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &amp;str);
+}
+
+macro_rules! console_log {
+    ($($t:tt)*) =&gt; (log(&amp;format_args!($($t)*).to_string()))
+}
+
+#[wasm_bindgen]
+pub struct ButtplugWASM {
+    client: Option&lt;ButtplugClient&gt;,
+}
+
+#[wasm_bindgen]
+impl ButtplugWASM {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -&gt; Self {
+        console_log!("Creating new ButtplugWASM instance");
+        Self { client: None }
+    }
+
+    #[wasm_bindgen]
+    pub async fn create_client(&amp;mut self, name: &amp;str) -&gt; Result&lt;(), JsValue&gt; {
+        self.client = Some(ButtplugClient::new(name));
+        Ok(())
+    }
+
+    #[wasm_bindgen]
+    pub async fn connect_websocket(&amp;mut self, address: &amp;str) -&gt; Result&lt;(), JsValue&gt; {
+        if let Some(client) = &amp;self.client {
+            let connector = buttplug::client::ButtplugWebsocketClientConnector::new_insecure_connector(address);
+            client.connect(connector).await.map_err(|e| JsValue::from_str(&amp;e.to_string()))?;
+        }
+        Ok(())
+    }
+
+    #[wasm_bindgen]
+    pub async fn start_scanning(&amp;self) -&gt; Result&lt;(), JsValue&gt; {
+        if let Some(client) = &amp;self.client {
+            client.start_scanning().await.map_err(|e| JsValue::from_str(&amp;e.to_string()))?;
+        }
+        Ok(())
+    }
+
+    #[wasm_bindgen]
+    pub fn get_devices(&amp;self) -&gt; String {
+        if let Some(client) = &amp;self.client {
+            let devices: Vec&lt;_&gt; = client.devices().iter().map(|device| {
+                serde_json::json!({
+                    "name": device.name(),
+                    "index": device.index(),
+                })
+            }).collect();
+            serde_json::to_string(&amp;devices).unwrap()
+        } else {
+            "[]".to_string()
+        }
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="step-2-編譯-wasm"><a class="header" href="#step-2-編譯-wasm">Step 2: 編譯 WASM</a></h4>
+<pre><code class="language-bash"># 安裝 wasm-pack
+curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+# 編譯為 WASM
+wasm-pack build --target web --out-dir ../web/pkg
+</code></pre>
+<h4 id="step-3-flutter-web-整合"><a class="header" href="#step-3-flutter-web-整合">Step 3: Flutter Web 整合</a></h4>
+<pre><code class="language-dart">// lib/buttplug_wasm.dart
+@JS()
+library buttplug_wasm;
+
+import 'package:js/js.dart';
+import 'dart:html' as html;
+
+@JS('ButtplugWASM')
+class ButtplugWASMJS {
+  external ButtplugWASMJS();
+  external Future&lt;void&gt; create_client(String name);
+  external Future&lt;void&gt; connect_websocket(String address);
+  external Future&lt;void&gt; start_scanning();
+  external String get_devices();
+}
+
+class ButtplugWASM {
+  late ButtplugWASMJS _wasm;
+  
+  Future&lt;void&gt; initialize() async {
+    // 載入 WASM 模組
+    final script = html.ScriptElement()
+      ..src = 'pkg/buttplug_wasm.js'
+      ..type = 'module';
+    html.document.head!.append(script);
+    
+    await Future.delayed(Duration(milliseconds: 500)); // 等待載入
+    _wasm = ButtplugWASMJS();
+  }
+
+  Future&lt;void&gt; createClient(String name) async {
+    await _wasm.create_client(name);
+  }
+
+  Future&lt;void&gt; connectWebsocket(String address) async {
+    await _wasm.connect_websocket(address);
+  }
+
+  Future&lt;void&gt; startScanning() async {
+    await _wasm.start_scanning();
+  }
+
+  List&lt;Map&lt;String, dynamic&gt;&gt; getDevices() {
+    final jsonStr = _wasm.get_devices();
+    return List&lt;Map&lt;String, dynamic&gt;&gt;.from(jsonDecode(jsonStr));
+  }
+}
+</code></pre>
+<hr />
+<h2 id="方案-5-platform-channel"><a class="header" href="#方案-5-platform-channel">方案 5: Platform Channel</a></h2>
+<h3 id="概述-4"><a class="header" href="#概述-4">概述</a></h3>
+<p>透過 Platform Channel 與原生 Android/iOS 代碼通訊。</p>
+<h3 id="android-實現"><a class="header" href="#android-實現">Android 實現</a></h3>
+<pre><code class="language-kotlin">// android/app/src/main/kotlin/MainActivity.kt
+class MainActivity: FlutterActivity() {
+    private val CHANNEL = "buttplug_channel"
+
+    override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result -&gt;
+            when (call.method) {
+                "createClient" -&gt; {
+                    val name = call.argument&lt;String&gt;("name")
+                    // 調用 JNI 接口到 Rust
+                    result.success(true)
+                }
+                "connectInProcess" -&gt; {
+                    // JNI 調用
+                    result.success(true)
+                }
+                else -&gt; result.notImplemented()
+            }
+        }
+    }
+
+    // JNI 聲明
+    external fun nativeCreateClient(name: String): Long
+    external fun nativeConnectInProcess(handle: Long): Boolean
+    
+    companion object {
+        init {
+            System.loadLibrary("buttplug_jni")
+        }
+    }
+}
+</code></pre>
+<h3 id="flutter-platform-channel-使用"><a class="header" href="#flutter-platform-channel-使用">Flutter Platform Channel 使用</a></h3>
+<pre><code class="language-dart">// lib/buttplug_platform.dart
+import 'package:flutter/services.dart';
+
+class ButtplugPlatform {
+  static const MethodChannel _channel = MethodChannel('buttplug_channel');
+
+  static Future&lt;bool&gt; createClient(String name) async {
+    try {
+      final result = await _channel.invokeMethod('createClient', {'name': name});
+      return result as bool;
+    } on PlatformException catch (e) {
+      print("Failed to create client: '${e.message}'");
+      return false;
+    }
+  }
+
+  static Future&lt;bool&gt; connectInProcess() async {
+    try {
+      final result = await _channel.invokeMethod('connectInProcess');
+      return result as bool;
+    } on PlatformException catch (e) {
+      print("Failed to connect: '${e.message}'");
+      return false;
+    }
+  }
+
+  static Future&lt;bool&gt; startScanning() async {
+    try {
+      final result = await _channel.invokeMethod('startScanning');
+      return result as bool;
+    } on PlatformException catch (e) {
+      print("Failed to start scanning: '${e.message}'");
+      return false;
+    }
+  }
+
+  static Future&lt;List&lt;Map&lt;String, dynamic&gt;&gt;&gt; getDevices() async {
+    try {
+      final result = await _channel.invokeMethod('getDevices');
+      return List&lt;Map&lt;String, dynamic&gt;&gt;.from(result);
+    } on PlatformException catch (e) {
+      print("Failed to get devices: '${e.message}'");
+      return [];
+    }
+  }
+}
+</code></pre>
+<hr />
+<h2 id="建構配置指南"><a class="header" href="#建構配置指南">建構配置指南</a></h2>
+<h3 id="android-配置"><a class="header" href="#android-配置">Android 配置</a></h3>
+<h4 id="ndk-設定"><a class="header" href="#ndk-設定">NDK 設定</a></h4>
+<pre><code class="language-gradle">// android/app/build.gradle
+android {
+    compileSdkVersion 34
+    ndkVersion "25.1.8937393"
+    
+    defaultConfig {
+        ndk {
+            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64'
+        }
+    }
+    
+    externalNativeBuild {
+        cmake {
+            path "../native/CMakeLists.txt"
+        }
+    }
+}
+</code></pre>
+<h4 id="cmake-配置"><a class="header" href="#cmake-配置">CMake 配置</a></h4>
+<pre><code class="language-cmake"># native/CMakeLists.txt
+cmake_minimum_required(VERSION 3.10)
+project(buttplug_ffi)
+
+set(CMAKE_CXX_STANDARD 17)
+
+# 添加 Rust 庫
+add_library(buttplug_rust SHARED IMPORTED)
+set_target_properties(buttplug_rust PROPERTIES
+    IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/target/${ANDROID_ABI}/release/libbuttplug_ffi.so
+)
+
+# 創建包裝庫
+add_library(buttplug_ffi SHARED
+    src/android_wrapper.cpp
+)
+
+target_link_libraries(buttplug_ffi buttplug_rust)
+</code></pre>
+<h3 id="ios-配置"><a class="header" href="#ios-配置">iOS 配置</a></h3>
+<h4 id="xcode-專案設定"><a class="header" href="#xcode-專案設定">Xcode 專案設定</a></h4>
+<pre><code class="language-ruby"># ios/Podfile
+platform :ios, '11.0'
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  
+  # 添加 Rust 靜態庫
+  pod 'buttplug_ffi', :path =&gt; '../native/ios'
+end
+</code></pre>
+<h4 id="framework-配置"><a class="header" href="#framework-配置">Framework 配置</a></h4>
+<pre><code class="language-ruby"># native/ios/buttplug_ffi.podspec
+Pod::Spec.new do |spec|
+  spec.name          = 'buttplug_ffi'
+  spec.version       = '0.1.0'
+  spec.summary       = 'Buttplug FFI for iOS'
+  
+  spec.source_files = 'Classes/**/*'
+  spec.public_header_files = 'Classes/**/*.h'
+  
+  spec.ios.deployment_target = '11.0'
+  
+  # 靜態庫連結
+  spec.vendored_libraries = 'lib/libbuttplug_ffi.a'
+  spec.libraries = 'buttplug_ffi'
+end
+</code></pre>
+<hr />
+<h2 id="效能與大小比較"><a class="header" href="#效能與大小比較">效能與大小比較</a></h2>
+<h3 id="檔案大小影響"><a class="header" href="#檔案大小影響">檔案大小影響</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>方案</th><th>Android APK 增加</th><th>iOS IPA 增加</th><th>總體大小</th></tr></thead><tbody>
+<tr><td><strong>Dart 套件</strong></td><td>+2MB</td><td>+2MB</td><td>~32MB</td></tr>
+<tr><td><strong>FFI 直接</strong></td><td>+45MB</td><td>+60MB</td><td>~120MB</td></tr>
+<tr><td><strong>flutter_rust_bridge</strong></td><td>+40MB</td><td>+55MB</td><td>~110MB</td></tr>
+<tr><td><strong>WASM (Web only)</strong></td><td>N/A</td><td>N/A</td><td>~15MB</td></tr>
+<tr><td><strong>Platform Channel</strong></td><td>+45MB</td><td>+60MB</td><td>~120MB</td></tr>
+</tbody></table>
+</div>
+<h3 id="效能比較"><a class="header" href="#效能比較">效能比較</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>方案</th><th>啟動時間</th><th>記憶體使用</th><th>CPU 使用</th><th>網路延遲</th></tr></thead><tbody>
+<tr><td><strong>Dart 套件</strong></td><td>快</td><td>低</td><td>低</td><td>有 (WebSocket)</td></tr>
+<tr><td><strong>FFI 直接</strong></td><td>慢</td><td>中</td><td>中</td><td>無</td></tr>
+<tr><td><strong>flutter_rust_bridge</strong></td><td>慢</td><td>中</td><td>中</td><td>無</td></tr>
+<tr><td><strong>WASM</strong></td><td>中</td><td>中</td><td>中</td><td>有</td></tr>
+<tr><td><strong>Platform Channel</strong></td><td>慢</td><td>高</td><td>中</td><td>無</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="開發複雜度分析"><a class="header" href="#開發複雜度分析">開發複雜度分析</a></h2>
+<h3 id="學習曲線"><a class="header" href="#學習曲線">學習曲線</a></h3>
+<pre class="mermaid">graph TB
+    A[Dart 套件] --&gt; B[Easy]
+    C[flutter_rust_bridge] --&gt; D[Medium]
+    E[WASM] --&gt; F[Medium]
+    G[FFI 直接] --&gt; H[Hard]
+    I[Platform Channel] --&gt; J[Hard]
+</pre>
+<h3 id="維護成本"><a class="header" href="#維護成本">維護成本</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>方案</th><th>初始開發</th><th>版本更新</th><th>Bug 修復</th><th>平台移植</th></tr></thead><tbody>
+<tr><td><strong>Dart 套件</strong></td><td>1天</td><td>簡單</td><td>簡單</td><td>自動</td></tr>
+<tr><td><strong>flutter_rust_bridge</strong></td><td>1週</td><td>中等</td><td>中等</td><td>手動</td></tr>
+<tr><td><strong>WASM</strong></td><td>3天</td><td>中等</td><td>困難</td><td>Web Only</td></tr>
+<tr><td><strong>FFI 直接</strong></td><td>2週</td><td>困難</td><td>困難</td><td>手動</td></tr>
+<tr><td><strong>Platform Channel</strong></td><td>3週</td><td>困難</td><td>困難</td><td>手動</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="推薦決策樹"><a class="header" href="#推薦決策樹">推薦決策樹</a></h2>
+<pre class="mermaid">flowchart TD
+    A[需要 Buttplug Rust 整合] --&gt; B{是否可接受外部依賴?}
+    B --&gt;|是| C[使用 Dart buttplug 套件 ⭐⭐⭐⭐⭐]
+    B --&gt;|否| D{主要平台?}
+    D --&gt;|Web| E[使用 WASM ⭐⭐⭐]
+    D --&gt;|Mobile| F{開發資源充足?}
+    F --&gt;|是| G[使用 flutter_rust_bridge ⭐⭐⭐]
+    F --&gt;|否| H[重新考慮外部依賴]
+    D --&gt;|跨平台| I{需要最高性能?}
+    I --&gt;|是| J[FFI 直接調用 ⭐⭐]
+    I --&gt;|否| K[flutter_rust_bridge ⭐⭐⭐]
+</pre>
+<hr />
+<h2 id="最佳實踐建議"><a class="header" href="#最佳實踐建議">最佳實踐建議</a></h2>
+<h3 id="1-優先選擇簡單方案"><a class="header" href="#1-優先選擇簡單方案">1. 優先選擇簡單方案</a></h3>
+<ul>
+<li>✅ 除非有特殊需求，優先使用 Dart buttplug 套件</li>
+<li>✅ 外部依賴通常比內嵌複雜度更可接受</li>
+<li>✅ 官方維護的解決方案更可靠</li>
+</ul>
+<h3 id="2-如果必須整合-rust"><a class="header" href="#2-如果必須整合-rust">2. 如果必須整合 Rust</a></h3>
+<pre><code class="language-dart">// 使用抽象介面隔離複雜性
+abstract class ButtplugInterface {
+  Future&lt;void&gt; connect();
+  Future&lt;void&gt; startScanning();
+  Future&lt;List&lt;Device&gt;&gt; getDevices();
+}
+
+// 實現可以是 FFI、Bridge 或其他方案
+class ButtplugFFIImpl implements ButtplugInterface {
+  // FFI 實現
+}
+
+class ButtplugBridgeImpl implements ButtplugInterface {
+  // flutter_rust_bridge 實現
+}
+</code></pre>
+<h3 id="3-錯誤處理和日誌"><a class="header" href="#3-錯誤處理和日誌">3. 錯誤處理和日誌</a></h3>
+<pre><code class="language-dart">class ButtplugErrorHandler {
+  static void handleFFIError(dynamic error) {
+    if (error is String &amp;&amp; error.contains('Bluetooth')) {
+      // 處理藍牙相關錯誤
+      showBluetoothErrorDialog();
+    } else if (error.toString().contains('Permission')) {
+      // 處理權限錯誤
+      requestPermissions();
+    }
+    
+    // 記錄錯誤以供除錯
+    FirebaseCrashlytics.instance.recordError(error, null);
+  }
+}
+</code></pre>
+<h3 id="4-效能優化"><a class="header" href="#4-效能優化">4. 效能優化</a></h3>
+<pre><code class="language-dart">// 使用 Isolate 避免阻塞 UI
+class ButtplugIsolate {
+  static Future&lt;T&gt; runInIsolate&lt;T&gt;(Future&lt;T&gt; Function() operation) async {
+    return await Isolate.run(operation);
+  }
+}
+
+// 實際使用
+final devices = await ButtplugIsolate.runInIsolate(() async {
+  return await buttplugClient.getDevices();
+});
+</code></pre>
+<h3 id="5-記憶體管理"><a class="header" href="#5-記憶體管理">5. 記憶體管理</a></h3>
+<pre><code class="language-dart">class ButtplugLifecycleManager with WidgetsBindingObserver {
+  ButtplugClient? _client;
+  
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.paused:
+        _client?.disconnect();
+        break;
+      case AppLifecycleState.resumed:
+        _reconnectIfNeeded();
+        break;
+      default:
+        break;
+    }
+  }
+  
+  void dispose() {
+    _client?.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+  }
+}
+</code></pre>
+<hr />
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<h3 id="推薦方案排序"><a class="header" href="#推薦方案排序">推薦方案排序</a></h3>
+<ol>
+<li>
+<p><strong>🥇 Dart buttplug 套件 + Intiface Central</strong></p>
+<ul>
+<li>最簡單、最穩定的方案</li>
+<li>官方維護，更新及時</li>
+<li>適合 95% 的使用案例</li>
+</ul>
+</li>
+<li>
+<p><strong>🥈 flutter_rust_bridge</strong></p>
+<ul>
+<li>適合需要完全控制的進階用戶</li>
+<li>自動化程度高，減少手動 FFI 工作</li>
+<li>需要一定的 Rust 知識</li>
+</ul>
+</li>
+<li>
+<p><strong>🥉 WebAssembly (Web 限定)</strong></p>
+<ul>
+<li>Web 平台的最佳選擇</li>
+<li>效能和檔案大小平衡</li>
+<li>只適用於 Flutter Web</li>
+</ul>
+</li>
+<li>
+<p><strong>FFI 直接調用</strong></p>
+<ul>
+<li>最大靈活性，但複雜度極高</li>
+<li>只有在其他方案無法滿足需求時考慮</li>
+<li>需要深厚的系統程式設計知識</li>
+</ul>
+</li>
+<li>
+<p><strong>Platform Channel</strong></p>
+<ul>
+<li>傳統方案，但開發成本最高</li>
+<li>需要維護多套原生程式碼</li>
+<li>不推薦用於新專案</li>
+</ul>
+</li>
+</ol>
+<h3 id="最終建議"><a class="header" href="#最終建議">最終建議</a></h3>
+<p>對於大多數開發者，<strong>強烈建議使用 Dart buttplug 套件</strong>。這個方案：</p>
+<ul>
+<li>開發速度最快</li>
+<li>維護成本最低</li>
+<li>穩定性最高</li>
+<li>檔案大小最小</li>
+</ul>
+<p>只有在確實需要完全離線運行且無法接受外部依賴的情況下，才考慮複雜的整合方案。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../android/buttplug_flutter_complete_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../android/android_native_flutter_integration.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../android/buttplug_flutter_complete_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../android/android_native_flutter_integration.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

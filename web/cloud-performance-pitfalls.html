@@ -1,0 +1,552 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>雲服務效能陷阱完整指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="雲端架構效能陷阱完全指南"><a class="header" href="#雲端架構效能陷阱完全指南">雲端架構效能陷阱完全指南</a></h1>
+<h2 id="前言"><a class="header" href="#前言">前言</a></h2>
+<p>當系統從單體架構轉向微服務、分散式架構時，許多隱藏的效能瓶頸會突然浮現。這些問題在本地開發環境往往不會出現，但在雲端環境卻會讓系統效能瞬間崩潰。</p>
+<h2 id="一iops-限制---最常被忽視的效能殺手"><a class="header" href="#一iops-限制---最常被忽視的效能殺手">一、IOPS 限制 - 最常被忽視的效能殺手</a></h2>
+<h3 id="問題現象"><a class="header" href="#問題現象">問題現象</a></h3>
+<ul>
+<li>系統越跑越慢，甚至完全卡死</li>
+<li>CPU 和記憶體使用率極低，但系統反應遲緩</li>
+<li>本地測試正常，雲端環境異常緩慢</li>
+<li>隨機性的效能問題，難以重現</li>
+</ul>
+<h3 id="根本原因"><a class="header" href="#根本原因">根本原因</a></h3>
+<ol>
+<li>
+<p><strong>公有雲 Storage IOPS 限制</strong></p>
+<ul>
+<li>各家雲端服務商都有 IOPS 上限，但通常不會明確告知</li>
+<li>VM 規格越高，IOPS 上限通常越高</li>
+<li>不同 Storage 類型有不同的 IOPS 限制</li>
+</ul>
+</li>
+<li>
+<p><strong>資源共享問題</strong></p>
+<ul>
+<li>Kubernetes 上所有 Pod 共用同一組 VM 的 Storage</li>
+<li>一個程式的 IO 爆量會拖累所有程式</li>
+<li>MQ、資料庫等 IO 密集型服務特別容易觸發限制</li>
+</ul>
+</li>
+</ol>
+<h3 id="解決方案"><a class="header" href="#解決方案">解決方案</a></h3>
+<ul>
+<li>為 IO 密集型服務配置獨立的高效能 Storage</li>
+<li>選擇適合的 Storage 類型（如 AWS io2、GCP SSD persistent disk）</li>
+<li>監控 Disk Queue Depth 和 IOPS 使用率</li>
+<li>合理規劃資源隔離策略</li>
+</ul>
+<h2 id="二網路層限制"><a class="header" href="#二網路層限制">二、網路層限制</a></h2>
+<h3 id="21-頻寬與-pps-限制"><a class="header" href="#21-頻寬與-pps-限制">2.1 頻寬與 PPS 限制</a></h3>
+<p><strong>問題：</strong></p>
+<ul>
+<li>VM 實例有網路頻寬上限</li>
+<li>Packets Per Second (PPS) 限制常被忽略</li>
+<li>微服務間大量小封包通訊容易觸發 PPS 限制</li>
+</ul>
+<p><strong>解決方案：</strong></p>
+<ul>
+<li>使用批次處理減少請求次數</li>
+<li>啟用 Jumbo Frames (MTU 9000)</li>
+<li>選擇網路優化型實例</li>
+</ul>
+<h3 id="22-連線數限制"><a class="header" href="#22-連線數限制">2.2 連線數限制</a></h3>
+<p><strong>常見瓶頸：</strong></p>
+<ul>
+<li>Load Balancer 連線數上限（如 AWS ALB 每秒新連線限制）</li>
+<li>NAT Gateway 並發連線數限制（AWS NAT Gateway 55,000 連線）</li>
+<li>資料庫 connection pool 大小</li>
+<li>OS 層級 file descriptor 限制</li>
+</ul>
+<p><strong>最佳實踐：</strong></p>
+<pre><code class="language-bash"># 調整系統限制
+ulimit -n 65535
+echo "net.ipv4.ip_local_port_range = 1024 65535" &gt;&gt; /etc/sysctl.conf
+</code></pre>
+<h3 id="23-cross-azregion-問題"><a class="header" href="#23-cross-azregion-問題">2.3 Cross-AZ/Region 問題</a></h3>
+<ul>
+<li>延遲增加（Cross-AZ 約 1-2ms，Cross-Region 可達 100ms+）</li>
+<li>資料傳輸成本大幅增加</li>
+<li>網路不穩定性提高</li>
+</ul>
+<h2 id="三冷啟動與初始化延遲"><a class="header" href="#三冷啟動與初始化延遲">三、冷啟動與初始化延遲</a></h2>
+<h3 id="31-常見冷啟動問題"><a class="header" href="#31-常見冷啟動問題">3.1 常見冷啟動問題</a></h3>
+<ul>
+<li><strong>Serverless 函數</strong>：首次調用延遲可達數秒</li>
+<li><strong>Auto-scaling</strong>：新節點啟動需要時間</li>
+<li><strong>JVM 應用</strong>：JIT 編譯需要 warm-up</li>
+<li><strong>Container</strong>：大型 image 拉取時間長</li>
+</ul>
+<h3 id="32-優化策略"><a class="header" href="#32-優化策略">3.2 優化策略</a></h3>
+<pre><code class="language-yaml"># Kubernetes HPA 預熱配置
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+spec:
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+</code></pre>
+<h2 id="四隱藏的-rate-limiting"><a class="header" href="#四隱藏的-rate-limiting">四、隱藏的 Rate Limiting</a></h2>
+<h3 id="41-雲端服務-api-限制"><a class="header" href="#41-雲端服務-api-限制">4.1 雲端服務 API 限制</a></h3>
+<p><strong>AWS 範例：</strong></p>
+<ul>
+<li>EC2 DescribeInstances: 100 calls/sec</li>
+<li>S3 PUT requests: 3,500/sec per prefix</li>
+<li>DynamoDB: 40,000 read/write units</li>
+</ul>
+<h3 id="42-應用層限制"><a class="header" href="#42-應用層限制">4.2 應用層限制</a></h3>
+<ul>
+<li>API Gateway 請求限制</li>
+<li>DNS 查詢頻率限制</li>
+<li>日誌服務寫入限制（CloudWatch Logs: 5 requests/sec）</li>
+<li>監控指標推送限制</li>
+</ul>
+<h3 id="43-處理策略"><a class="header" href="#43-處理策略">4.3 處理策略</a></h3>
+<pre><code class="language-python"># 實作 exponential backoff
+import time
+import random
+
+def retry_with_backoff(func, max_retries=5):
+    for i in range(max_retries):
+        try:
+            return func()
+        except RateLimitException:
+            wait_time = (2 ** i) + random.uniform(0, 1)
+            time.sleep(wait_time)
+    raise Exception("Max retries exceeded")
+</code></pre>
+<h2 id="五成本陷阱"><a class="header" href="#五成本陷阱">五、成本陷阱</a></h2>
+<h3 id="51-隱藏成本來源"><a class="header" href="#51-隱藏成本來源">5.1 隱藏成本來源</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>項目</th><th>常見陷阱</th><th>預估月成本</th></tr></thead><tbody>
+<tr><td>NAT Gateway</td><td>流量費用 + 固定費用</td><td>$45 + $0.045/GB</td></tr>
+<tr><td>Cross-AZ 傳輸</td><td>微服務間通訊</td><td>$0.01/GB</td></tr>
+<tr><td>EBS Snapshots</td><td>累積未刪除</td><td>$0.05/GB</td></tr>
+<tr><td>Idle Load Balancers</td><td>忘記關閉</td><td>$20-25/月</td></tr>
+<tr><td>CloudWatch Logs</td><td>日誌保留過久</td><td>$0.50/GB</td></tr>
+</tbody></table>
+</div>
+<h3 id="52-成本優化建議"><a class="header" href="#52-成本優化建議">5.2 成本優化建議</a></h3>
+<ul>
+<li>使用 S3 Lifecycle Policies 自動清理舊資料</li>
+<li>實施 Resource Tagging 追蹤成本</li>
+<li>定期檢查 Unattached EBS Volumes</li>
+<li>使用 Spot Instances 進行非關鍵工作負載</li>
+</ul>
+<h2 id="六監控盲點"><a class="header" href="#六監控盲點">六、監控盲點</a></h2>
+<h3 id="61-常被忽略的關鍵指標"><a class="header" href="#61-常被忽略的關鍵指標">6.1 常被忽略的關鍵指標</a></h3>
+<p><strong>系統層級：</strong></p>
+<pre><code class="language-bash"># IO 相關
+iostat -x 1
+- await: 平均 IO 等待時間
+- svctm: 平均服務時間
+- %util: 設備使用率
+
+# 網路相關
+netstat -s | grep -i retrans
+ss -s  # 查看 socket 統計
+
+# 記憶體相關
+vmstat 1
+- si/so: swap in/out
+- bi/bo: block in/out
+</code></pre>
+<p><strong>應用層級：</strong></p>
+<ul>
+<li>P99 延遲（不只看平均值）</li>
+<li>Error rate by error type</li>
+<li>Queue depth（訊息佇列、連線池）</li>
+<li>Cache hit ratio</li>
+<li>GC pause time 與頻率</li>
+</ul>
+<h3 id="62-監控工具建議"><a class="header" href="#62-監控工具建議">6.2 監控工具建議</a></h3>
+<pre><code class="language-yaml"># Prometheus 關鍵指標配置
+- name: disk_io_saturation
+  expr: rate(node_disk_io_time_seconds_total[5m]) &gt; 0.9
+  annotations:
+    summary: "Disk IO saturation on {{ $labels.instance }}"
+
+- name: network_retransmission
+  expr: rate(node_netstat_Tcp_RetransSegs[5m]) &gt; 100
+  annotations:
+    summary: "High network retransmission rate"
+</code></pre>
+<h2 id="七資料庫特定問題"><a class="header" href="#七資料庫特定問題">七、資料庫特定問題</a></h2>
+<h3 id="71-連線池耗盡"><a class="header" href="#71-連線池耗盡">7.1 連線池耗盡</a></h3>
+<pre><code class="language-javascript">// Node.js 連線池配置範例
+const pool = new Pool({
+  max: 20,  // 最大連線數
+  min: 5,   // 最小連線數
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+  // 重要：設定 statement timeout
+  statement_timeout: 10000
+});
+</code></pre>
+<h3 id="72-lock-競爭與死鎖"><a class="header" href="#72-lock-競爭與死鎖">7.2 Lock 競爭與死鎖</a></h3>
+<ul>
+<li>監控 lock wait time</li>
+<li>實施 optimistic locking</li>
+<li>使用 SELECT ... FOR UPDATE SKIP LOCKED</li>
+</ul>
+<h3 id="73-索引失效"><a class="header" href="#73-索引失效">7.3 索引失效</a></h3>
+<ul>
+<li>定期執行 ANALYZE/VACUUM (PostgreSQL)</li>
+<li>監控 slow query log</li>
+<li>避免 SELECT * 和 N+1 查詢</li>
+</ul>
+<h2 id="八快取層問題"><a class="header" href="#八快取層問題">八、快取層問題</a></h2>
+<h3 id="81-快取雪崩"><a class="header" href="#81-快取雪崩">8.1 快取雪崩</a></h3>
+<p><strong>預防措施：</strong></p>
+<ul>
+<li>快取過期時間加入隨機值</li>
+<li>實施快取預熱機制</li>
+<li>使用多層快取架構</li>
+</ul>
+<h3 id="82-快取穿透"><a class="header" href="#82-快取穿透">8.2 快取穿透</a></h3>
+<pre><code class="language-python"># Bloom Filter 防止快取穿透
+from pybloom_live import BloomFilter
+
+bf = BloomFilter(capacity=1000000, error_rate=0.001)
+
+def get_data(key):
+    if key not in bf:
+        return None  # 確定不存在
+    
+    # 檢查快取
+    data = cache.get(key)
+    if data:
+        return data
+    
+    # 查詢資料庫
+    data = db.query(key)
+    if data:
+        cache.set(key, data)
+        bf.add(key)
+    return data
+</code></pre>
+<h2 id="九訊息佇列陷阱"><a class="header" href="#九訊息佇列陷阱">九、訊息佇列陷阱</a></h2>
+<h3 id="91-背壓backpressure處理"><a class="header" href="#91-背壓backpressure處理">9.1 背壓（Backpressure）處理</a></h3>
+<ul>
+<li>實施 consumer rate limiting</li>
+<li>監控 queue depth</li>
+<li>設定合理的 TTL</li>
+</ul>
+<h3 id="92-訊息重複與遺失"><a class="header" href="#92-訊息重複與遺失">9.2 訊息重複與遺失</a></h3>
+<ul>
+<li>實施 idempotent consumers</li>
+<li>使用 exactly-once delivery（如 Kafka transactions）</li>
+<li>維護訊息處理狀態表</li>
+</ul>
+<h2 id="十實戰檢查清單"><a class="header" href="#十實戰檢查清單">十、實戰檢查清單</a></h2>
+<h3 id="部署前檢查"><a class="header" href="#部署前檢查">部署前檢查</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+壓力測試包含 IO 密集場景</li>
+<li><input disabled="" type="checkbox"/>
+確認所有資源限制（IOPS、網路、連線數）</li>
+<li><input disabled="" type="checkbox"/>
+設定適當的 timeout 和 circuit breaker</li>
+<li><input disabled="" type="checkbox"/>
+配置獨立 Storage 給 IO 密集服務</li>
+<li><input disabled="" type="checkbox"/>
+實施完整的監控和告警</li>
+</ul>
+<h3 id="效能優化優先順序"><a class="header" href="#效能優化優先順序">效能優化優先順序</a></h3>
+<ol>
+<li><strong>立即處理</strong>：IOPS 限制、連線池配置</li>
+<li><strong>短期優化</strong>：快取策略、資料庫索引</li>
+<li><strong>長期改進</strong>：架構調整、服務拆分</li>
+</ol>
+<h3 id="成本優化檢查"><a class="header" href="#成本優化檢查">成本優化檢查</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+定期檢查未使用資源</li>
+<li><input disabled="" type="checkbox"/>
+實施自動關閉測試環境</li>
+<li><input disabled="" type="checkbox"/>
+使用 Reserved/Spot Instances</li>
+<li><input disabled="" type="checkbox"/>
+優化資料傳輸路徑</li>
+</ul>
+<h2 id="十一故障排查-sop"><a class="header" href="#十一故障排查-sop">十一、故障排查 SOP</a></h2>
+<h3 id="step-1-快速診斷"><a class="header" href="#step-1-快速診斷">Step 1: 快速診斷</a></h3>
+<pre><code class="language-bash"># 檢查系統資源
+top -c
+iostat -x 1
+netstat -an | grep -c ESTABLISHED
+
+# 檢查雲端限制
+aws ec2 describe-instance-attribute --instance-id i-xxx --attribute ebsOptimized
+</code></pre>
+<h3 id="step-2-深入分析"><a class="header" href="#step-2-深入分析">Step 2: 深入分析</a></h3>
+<ol>
+<li>查看雲端監控面板（CloudWatch、Stackdriver）</li>
+<li>分析應用日誌和錯誤模式</li>
+<li>執行 distributed tracing 分析</li>
+</ol>
+<h3 id="step-3-快速緩解"><a class="header" href="#step-3-快速緩解">Step 3: 快速緩解</a></h3>
+<ol>
+<li>擴展資源（但要知道擴展什麼）</li>
+<li>啟用快取或增加快取</li>
+<li>實施限流和降級</li>
+</ol>
+<h2 id="結語"><a class="header" href="#結語">結語</a></h2>
+<p>雲端架構的效能優化不是單純的擴展資源，而是要理解並解決真正的瓶頸。IOPS 限制只是眾多陷阱之一，但卻是最容易被忽視且影響最大的問題。</p>
+<p>記住：<strong>花錢要花在刀口上</strong>。與其盲目升級 VM 規格，不如先花幾塊美金配置適合的 Storage，效能可能立即提升數十倍。</p>
+<h3 id="關鍵要點"><a class="header" href="#關鍵要點">關鍵要點</a></h3>
+<ol>
+<li><strong>了解限制</strong>：詳讀雲端服務商的 Limits and Quotas 文件</li>
+<li><strong>正確監控</strong>：不只看 CPU/Memory，更要關注 IO、網路、連線數</li>
+<li><strong>資源隔離</strong>：IO 密集型服務需要獨立資源</li>
+<li><strong>成本意識</strong>：了解隱藏成本，避免預算超支</li>
+<li><strong>持續優化</strong>：效能優化是持續的過程，不是一次性任務</li>
+</ol>
+<hr />
+<p><em>最後更新：2025年1月</em></p>
+<p><em>作者註：本文基於實際踩坑經驗整理，希望能幫助更多團隊避免這些陷阱。</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../web/wasm-optimized-build-testing.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../gdb/gdb.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../web/wasm-optimized-build-testing.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../gdb/gdb.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

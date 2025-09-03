@@ -1,0 +1,36 @@
+def market_open(context):
+    log.info('函数运行时间(market_open):'+str(context.current_dt.time()))
+    ## 交易
+    # 当月合约
+    IF_current_month = g.IF_current_month
+    # 下季合约
+    IF_next_quarter = g.IF_next_quarter
+    # 合约列表
+    # 当月合约价格
+    IF_current_month_close = get_bars(IF_current_month, count=1, unit='1d', fields=['close'])["close"]
+    # 下季合约价格
+    IF_next_quarter_close = get_bars(IF_next_quarter, count=1, unit='1d', fields=['close'])["close"]
+    # 计算差值
+    CZ = IF_current_month_close - IF_next_quarter_close
+    # 获取当月合约交割日期
+    end_data = get_CCFX_end_date(IF_current_month)
+    # 判断差值大于80，且空仓，则做空当月合约、做多下季合约；当月合约交割日当天不开仓
+    if (CZ > 80):
+        if (context.current_dt.date() == end_data):
+            # return
+            pass
+        else:
+            if (len(context.portfolio.short_positions) == 0) and (len(context.portfolio.long_positions) == 0):
+                log.info('开仓---差值：', CZ)
+                # 做空1手当月合约
+                order(IF_current_month, 1, side='short')
+                # 做多1手下季合约
+                order(IF_next_quarter, 1, side='long')
+    # 如有持仓，并且基差缩小至70内，则平仓
+    if (CZ < 70):
+        if(len(context.portfolio.short_positions) > 0) and (len(context.portfolio.long_positions) > 0):
+            log.info('平仓---差值：', CZ)
+            # 平仓当月合约
+            order_target(IF_current_month, 0, side='short')
+            # 平仓下季合约
+            order_target(IF_next_quarter, 0, side='long')

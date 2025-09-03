@@ -1,0 +1,50 @@
+# 导入函数库
+import jqdata
+from jqlib.technical_analysis import *
+def initialize(context):
+    # 定义一个全局变量, 保存要操作的铁矿石主力合约对应的具体合约
+    g.security = get_dominant_future('I')
+    # 设定上证指数作为基准
+    set_benchmark('000001.XSHG')
+    # 开启动态复权模式(真实价格)
+    set_option('use_real_price', True)
+    # 设定账户为期货账户
+set_subportfolios([SubPortfolioConfig(cash=context.portfolio.starting_cash, type='futures')])
+    # 期货类每笔交易时的手续费是：买入时万分之0.23,卖出时万分之0.23,平今仓为万分之23
+    set_order_cost(OrderCost(open_commission=0.000023, close_commission=0.000023,close_today_commission=0.0023), type='futures')
+    # 设定保证金比例
+    set_option('futures_margin_rate', 0.15)
+    # 设置期货交易的滑点
+    set_slippage(StepRelatedSlippage(2))
+
+def handle_data(context, data):
+    #获取初始化中要操作的铁矿石主力合约
+    security = g.security
+     # 设定均线
+    n1 = 5
+    n2 = 10
+    n3 = 30
+    # 获取铁矿石主力合约收盘价，其中df为False,表示返回值是一个字典类型，不是DataFrame类型
+    close_data = attribute_history(security, n3+2, '1d', ['close'],df=False)
+    # 取得过去30个交易日的平均收盘价
+    ma_n1 = close_data['close'][-n1:].mean()
+    # 取得过10个交易日的平均收盘价
+    ma_n2 = close_data['close'][-n2:].mean()
+    # 取得过去5个交易日的平均收盘价
+    ma_n3 = close_data['close'][-n3:].mean()
+    # 取得上一时间点价格
+    current_price = close_data['close'][-1]
+    # 取得当前的现金
+    cash = context.portfolio.cash
+    # 如果当前有余额，并且5日均线大于10日均线,10日均线大于30日均线,上一时间点价格高出五天平均价0.1%, 则做多1手期货
+    if ma_n1 > ma_n2 and ma_n2 > ma_n3 and current_price> 1.001*ma_n1 and cash>0 :
+         #调用期货按手数下单函数， 买入1手期货合约
+        order(security, 1, side='long')
+        # 记录这次买入
+        log.info("买入期货 %s" % (security))
+     # 如果5日均线小于10日均线，10日均线小于30日均线, 上一时间点价格低于五天平均价0.1%，并且目前有头寸
+    elif ma_n1 < ma_n2 and ma_n2 < ma_n3 and current_price< 0.999*ma_n1 and context.portfolio.positions[security].closeable_amount > 0:
+        # 全部卖出，即持有仓位为0
+        order_target(security, 0, side='long')
+        # 记录这次卖出
+        log.info("卖出期货 %s" % (security))

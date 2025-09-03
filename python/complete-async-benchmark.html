@@ -1,0 +1,1367 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Python 異步程式效能基準測試完整指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="完整-async-api-效能測試指南"><a class="header" href="#完整-async-api-效能測試指南">完整 Async API 效能測試指南</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ol>
+<li><a href="#%E6%B8%AC%E8%A9%A6%E6%9E%B6%E6%A7%8B%E6%A6%82%E8%BF%B0">測試架構概述</a></li>
+<li><a href="#server-%E7%AB%AF%E5%AF%A6%E4%BD%9C">Server 端實作</a></li>
+<li><a href="#client-%E7%AB%AF%E5%AF%A6%E4%BD%9C">Client 端實作</a></li>
+<li><a href="#%E7%92%B0%E5%A2%83%E8%A8%AD%E7%BD%AE">環境設置</a></li>
+<li><a href="#%E5%9F%B7%E8%A1%8C%E6%B8%AC%E8%A9%A6">執行測試</a></li>
+<li><a href="#%E6%95%88%E8%83%BD%E5%88%86%E6%9E%90">效能分析</a></li>
+</ol>
+<h2 id="測試架構概述"><a class="header" href="#測試架構概述">測試架構概述</a></h2>
+<h3 id="測試目標"><a class="header" href="#測試目標">測試目標</a></h3>
+<p>比較 Python、C++、Rust 三種語言的 async HTTP client 在下單 API 場景中的效能表現。</p>
+<h3 id="關鍵指標"><a class="header" href="#關鍵指標">關鍵指標</a></h3>
+<ul>
+<li><strong>Round Trip Time (RTT)</strong>: Client 發送請求到收到回應的總時間</li>
+<li><strong>Server Latency</strong>: Server 收到請求時間 - Client 發送時間</li>
+<li><strong>Throughput</strong>: 每秒處理的請求數 (RPS)</li>
+<li><strong>P50/P95/P99 延遲</strong>: 延遲分布的百分位數</li>
+</ul>
+<h3 id="測試參數"><a class="header" href="#測試參數">測試參數</a></h3>
+<ul>
+<li>總請求數: 1000-10000</li>
+<li>並發數: 50-200</li>
+<li>Payload 大小: ~200 bytes (模擬真實下單資料)</li>
+</ul>
+<hr />
+<h2 id="server-端實作"><a class="header" href="#server-端實作">Server 端實作</a></h2>
+<h3 id="選項-1-rust-server-actix-web-推薦"><a class="header" href="#選項-1-rust-server-actix-web-推薦">選項 1: Rust Server (Actix-web) 【推薦】</a></h3>
+<h4 id="cargotoml"><a class="header" href="#cargotoml">Cargo.toml</a></h4>
+<pre><code class="language-toml">[package]
+name = "rust_server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "4"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = "0.4"
+env_logger = "0.11"
+</code></pre>
+<h4 id="srcmainrs"><a class="header" href="#srcmainrs">src/main.rs</a></h4>
+<pre><pre class="playground"><code class="language-rust">use actix_web::{web, App, HttpServer, HttpResponse, middleware};
+use serde::{Deserialize, Serialize};
+use std::time::{SystemTime, UNIX_EPOCH};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
+
+#[derive(Deserialize)]
+struct Order {
+    order_id: String,
+    symbol: String,
+    quantity: i32,
+    price: f64,
+    timestamp: u128,
+}
+
+#[derive(Serialize)]
+struct OrderResponse {
+    status: String,
+    order_id: String,
+    server_receive_time: u128,
+    client_send_time: u128,
+    latency_ns: i128,
+}
+
+struct AppState {
+    request_count: AtomicUsize,
+}
+
+async fn place_order(
+    order: web::Json&lt;Order&gt;,
+    data: web::Data&lt;Arc&lt;AppState&gt;&gt;,
+) -&gt; HttpResponse {
+    let server_receive_time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    
+    data.request_count.fetch_add(1, Ordering::SeqCst);
+    
+    let latency_ns = server_receive_time as i128 - order.timestamp as i128;
+    
+    let response = OrderResponse {
+        status: "success".to_string(),
+        order_id: order.order_id.clone(),
+        server_receive_time,
+        client_send_time: order.timestamp,
+        latency_ns,
+    };
+    
+    HttpResponse::Ok().json(response)
+}
+
+async fn get_stats(data: web::Data&lt;Arc&lt;AppState&gt;&gt;) -&gt; HttpResponse {
+    let count = data.request_count.load(Ordering::SeqCst);
+    HttpResponse::Ok().json(serde_json::json!({
+        "total_requests": count
+    }))
+}
+
+#[actix_web::main]
+async fn main() -&gt; std::io::Result&lt;()&gt; {
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("warn"));
+    
+    println!("Starting Rust server on port 8000...");
+    
+    let app_state = Arc::new(AppState {
+        request_count: AtomicUsize::new(0),
+    });
+    
+    HttpServer::new(move || {
+        App::new()
+            .app_data(web::Data::new(app_state.clone()))
+            .route("/order", web::post().to(place_order))
+            .route("/stats", web::get().to(get_stats))
+    })
+    .workers(8)
+    .bind("0.0.0.0:8000")?
+    .run()
+    .await
+}</code></pre></pre>
+<h3 id="選項-2-go-server-gin"><a class="header" href="#選項-2-go-server-gin">選項 2: Go Server (Gin)</a></h3>
+<h4 id="gomod"><a class="header" href="#gomod">go.mod</a></h4>
+<pre><code class="language-go">module server
+
+go 1.21
+
+require github.com/gin-gonic/gin v1.9.1
+</code></pre>
+<h4 id="servergo"><a class="header" href="#servergo">server.go</a></h4>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "net/http"
+    "sync/atomic"
+    "time"
+    
+    "github.com/gin-gonic/gin"
+)
+
+type Order struct {
+    OrderID   string  `json:"order_id"`
+    Symbol    string  `json:"symbol"`
+    Quantity  int     `json:"quantity"`
+    Price     float64 `json:"price"`
+    Timestamp int64   `json:"timestamp"`
+}
+
+type OrderResponse struct {
+    Status           string `json:"status"`
+    OrderID          string `json:"order_id"`
+    ServerReceiveTime int64  `json:"server_receive_time"`
+    ClientSendTime   int64  `json:"client_send_time"`
+    LatencyNs        int64  `json:"latency_ns"`
+}
+
+var requestCount uint64
+
+func placeOrder(c *gin.Context) {
+    var order Order
+    
+    if err := c.ShouldBindJSON(&amp;order); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+    
+    serverReceiveTime := time.Now().UnixNano()
+    atomic.AddUint64(&amp;requestCount, 1)
+    latencyNs := serverReceiveTime - order.Timestamp
+    
+    response := OrderResponse{
+        Status:            "success",
+        OrderID:           order.OrderID,
+        ServerReceiveTime: serverReceiveTime,
+        ClientSendTime:    order.Timestamp,
+        LatencyNs:         latencyNs,
+    }
+    
+    c.JSON(http.StatusOK, response)
+}
+
+func getStats(c *gin.Context) {
+    count := atomic.LoadUint64(&amp;requestCount)
+    c.JSON(http.StatusOK, gin.H{
+        "total_requests": count,
+    })
+}
+
+func main() {
+    gin.SetMode(gin.ReleaseMode)
+    
+    r := gin.New()
+    r.Use(gin.Recovery())
+    
+    r.POST("/order", placeOrder)
+    r.GET("/stats", getStats)
+    
+    fmt.Println("Starting Go server on port 8000...")
+    r.Run(":8000")
+}
+</code></pre>
+<h3 id="選項-3-python-server-fastapi--uvloop-備用"><a class="header" href="#選項-3-python-server-fastapi--uvloop-備用">選項 3: Python Server (FastAPI + uvloop) 【備用】</a></h3>
+<h4 id="requirementstxt"><a class="header" href="#requirementstxt">requirements.txt</a></h4>
+<pre><code>fastapi==0.109.0
+uvicorn[standard]==0.27.0
+uvloop==0.19.0
+pydantic==2.5.0
+</code></pre>
+<h4 id="optimized_serverpy"><a class="header" href="#optimized_serverpy">optimized_server.py</a></h4>
+<pre><code class="language-python">import asyncio
+import uvloop
+import multiprocessing
+from fastapi import FastAPI
+from pydantic import BaseModel
+import uvicorn
+import time
+
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
+app = FastAPI()
+
+class Order(BaseModel):
+    order_id: str
+    symbol: str
+    quantity: int
+    price: float
+    timestamp: int
+
+@app.post("/order")
+async def place_order(order: Order):
+    server_receive_time = time.time_ns()
+    
+    return {
+        "status": "success",
+        "order_id": order.order_id,
+        "server_receive_time": server_receive_time,
+        "client_send_time": order.timestamp,
+        "latency_ns": server_receive_time - order.timestamp
+    }
+
+@app.get("/stats")
+async def get_stats():
+    return {"status": "ok"}
+
+if __name__ == "__main__":
+    workers = multiprocessing.cpu_count()
+    
+    uvicorn.run(
+        "optimized_server:app",
+        host="0.0.0.0",
+        port=8000,
+        workers=workers,
+        loop="uvloop",
+        log_level="warning",
+        access_log=False
+    )
+</code></pre>
+<hr />
+<h2 id="client-端實作"><a class="header" href="#client-端實作">Client 端實作</a></h2>
+<h3 id="python-client"><a class="header" href="#python-client">Python Client</a></h3>
+<h4 id="requirementstxt-1"><a class="header" href="#requirementstxt-1">requirements.txt</a></h4>
+<pre><code>aiohttp==3.9.0
+asyncio==3.4.3
+</code></pre>
+<h4 id="python_clientpy"><a class="header" href="#python_clientpy">python_client.py</a></h4>
+<pre><code class="language-python">import asyncio
+import aiohttp
+import time
+import json
+from typing import List
+import statistics
+
+class PythonBenchmark:
+    def __init__(self, base_url="http://localhost:8000"):
+        self.base_url = base_url
+        self.results = []
+    
+    async def send_order(self, session: aiohttp.ClientSession, order_id: int):
+        order = {
+            "order_id": f"PY_{order_id}",
+            "symbol": "AAPL",
+            "quantity": 100,
+            "price": 150.25,
+            "timestamp": time.time_ns()
+        }
+        
+        start = time.time_ns()
+        try:
+            async with session.post(f'{self.base_url}/order', json=order) as response:
+                result = await response.json()
+                end = time.time_ns()
+                
+                return {
+                    "round_trip_ns": end - start,
+                    "server_latency_ns": result["latency_ns"],
+                    "success": True
+                }
+        except Exception as e:
+            return {
+                "round_trip_ns": 0,
+                "server_latency_ns": 0,
+                "success": False,
+                "error": str(e)
+            }
+    
+    async def benchmark(self, num_requests: int = 1000, concurrent: int = 100):
+        connector = aiohttp.TCPConnector(limit=concurrent, force_close=True)
+        timeout = aiohttp.ClientTimeout(total=30)
+        
+        async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
+            tasks = []
+            all_results = []
+            
+            for i in range(num_requests):
+                task = self.send_order(session, i)
+                tasks.append(task)
+                
+                if len(tasks) &gt;= concurrent:
+                    results = await asyncio.gather(*tasks)
+                    all_results.extend(results)
+                    tasks = []
+            
+            if tasks:
+                results = await asyncio.gather(*tasks)
+                all_results.extend(results)
+        
+        return all_results
+    
+    def print_stats(self, results: List[dict], duration: float):
+        successful = [r for r in results if r["success"]]
+        failed = len(results) - len(successful)
+        
+        if not successful:
+            print("All requests failed!")
+            return
+        
+        round_trips = [r["round_trip_ns"] for r in successful]
+        server_latencies = [r["server_latency_ns"] for r in successful]
+        
+        round_trips.sort()
+        server_latencies.sort()
+        
+        print(f"\n{'='*50}")
+        print(f"Python Client Results")
+        print(f"{'='*50}")
+        print(f"Total Time: {duration:.2f}s")
+        print(f"Total Requests: {len(results)}")
+        print(f"Successful: {len(successful)}")
+        print(f"Failed: {failed}")
+        print(f"Throughput: {len(successful)/duration:.2f} req/s")
+        print(f"\nRound Trip Time:")
+        print(f"  Average: {statistics.mean(round_trips)/1e6:.2f}ms")
+        print(f"  P50: {round_trips[len(round_trips)//2]/1e6:.2f}ms")
+        print(f"  P95: {round_trips[int(len(round_trips)*0.95)]/1e6:.2f}ms")
+        print(f"  P99: {round_trips[int(len(round_trips)*0.99)]/1e6:.2f}ms")
+        print(f"\nServer Latency:")
+        print(f"  Average: {statistics.mean(server_latencies)/1e6:.2f}ms")
+
+async def main():
+    benchmark = PythonBenchmark()
+    
+    print("Python Client Benchmark Starting...")
+    print("Warming up...")
+    await benchmark.benchmark(num_requests=100, concurrent=10)
+    
+    print("Running benchmark...")
+    start_time = time.time()
+    results = await benchmark.benchmark(num_requests=5000, concurrent=100)
+    duration = time.time() - start_time
+    
+    benchmark.print_stats(results, duration)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+</code></pre>
+<h3 id="c-client"><a class="header" href="#c-client">C++ Client</a></h3>
+<h4 id="cmakeliststxt"><a class="header" href="#cmakeliststxt">CMakeLists.txt</a></h4>
+<pre><code class="language-cmake">cmake_minimum_required(VERSION 3.10)
+project(cpp_client)
+
+set(CMAKE_CXX_STANDARD 17)
+
+find_package(Threads REQUIRED)
+
+# 使用 vcpkg 或手動安裝這些庫
+find_package(cpr CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+
+add_executable(cpp_client cpp_client.cpp)
+target_link_libraries(cpp_client 
+    PRIVATE 
+    cpr::cpr 
+    nlohmann_json::nlohmann_json 
+    Threads::Threads
+)
+</code></pre>
+<h4 id="cpp_clientcpp"><a class="header" href="#cpp_clientcpp">cpp_client.cpp</a></h4>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;chrono&gt;
+#include &lt;vector&gt;
+#include &lt;future&gt;
+#include &lt;algorithm&gt;
+#include &lt;numeric&gt;
+#include &lt;thread&gt;
+#include &lt;cpr/cpr.h&gt;
+#include &lt;nlohmann/json.hpp&gt;
+
+using json = nlohmann::json;
+using namespace std::chrono;
+
+struct Result {
+    long long round_trip_ns;
+    long long server_latency_ns;
+    bool success;
+};
+
+class CppBenchmark {
+private:
+    std::string base_url;
+    
+public:
+    CppBenchmark(const std::string&amp; url = "http://localhost:8000") 
+        : base_url(url) {}
+    
+    Result send_order(int order_id) {
+        auto now = duration_cast&lt;nanoseconds&gt;(
+            system_clock::now().time_since_epoch()
+        ).count();
+        
+        json order;
+        order["order_id"] = "CPP_" + std::to_string(order_id);
+        order["symbol"] = "AAPL";
+        order["quantity"] = 100;
+        order["price"] = 150.25;
+        order["timestamp"] = now;
+        
+        auto start = high_resolution_clock::now();
+        
+        try {
+            auto response = cpr::Post(
+                cpr::Url{base_url + "/order"},
+                cpr::Header{{"Content-Type", "application/json"}},
+                cpr::Body{order.dump()}
+            );
+            
+            auto end = high_resolution_clock::now();
+            auto round_trip = duration_cast&lt;nanoseconds&gt;(end - start).count();
+            
+            if (response.status_code == 200) {
+                json resp_json = json::parse(response.text);
+                return {
+                    round_trip,
+                    resp_json["latency_ns"],
+                    true
+                };
+            }
+        } catch (const std::exception&amp; e) {
+            // Handle error
+        }
+        
+        return {0, 0, false};
+    }
+    
+    std::vector&lt;Result&gt; benchmark(int num_requests, int concurrent) {
+        std::vector&lt;std::future&lt;Result&gt;&gt; futures;
+        std::vector&lt;Result&gt; results;
+        
+        for (int i = 0; i &lt; num_requests; i++) {
+            futures.push_back(
+                std::async(std::launch::async, 
+                    &amp;CppBenchmark::send_order, this, i)
+            );
+            
+            if (futures.size() &gt;= concurrent) {
+                for (auto&amp; f : futures) {
+                    results.push_back(f.get());
+                }
+                futures.clear();
+            }
+        }
+        
+        for (auto&amp; f : futures) {
+            results.push_back(f.get());
+        }
+        
+        return results;
+    }
+    
+    void print_stats(const std::vector&lt;Result&gt;&amp; results, double duration) {
+        std::vector&lt;Result&gt; successful;
+        std::copy_if(results.begin(), results.end(), 
+            std::back_inserter(successful),
+            [](const Result&amp; r) { return r.success; });
+        
+        if (successful.empty()) {
+            std::cout &lt;&lt; "All requests failed!" &lt;&lt; std::endl;
+            return;
+        }
+        
+        std::vector&lt;long long&gt; round_trips;
+        std::vector&lt;long long&gt; server_latencies;
+        
+        for (const auto&amp; r : successful) {
+            round_trips.push_back(r.round_trip_ns);
+            server_latencies.push_back(r.server_latency_ns);
+        }
+        
+        std::sort(round_trips.begin(), round_trips.end());
+        std::sort(server_latencies.begin(), server_latencies.end());
+        
+        double avg_rt = std::accumulate(round_trips.begin(), 
+            round_trips.end(), 0.0) / round_trips.size();
+        double avg_sl = std::accumulate(server_latencies.begin(), 
+            server_latencies.end(), 0.0) / server_latencies.size();
+        
+        std::cout &lt;&lt; "\n==================================================" &lt;&lt; std::endl;
+        std::cout &lt;&lt; "C++ Client Results" &lt;&lt; std::endl;
+        std::cout &lt;&lt; "==================================================" &lt;&lt; std::endl;
+        std::cout &lt;&lt; "Total Time: " &lt;&lt; duration &lt;&lt; "s" &lt;&lt; std::endl;
+        std::cout &lt;&lt; "Total Requests: " &lt;&lt; results.size() &lt;&lt; std::endl;
+        std::cout &lt;&lt; "Successful: " &lt;&lt; successful.size() &lt;&lt; std::endl;
+        std::cout &lt;&lt; "Failed: " &lt;&lt; results.size() - successful.size() &lt;&lt; std::endl;
+        std::cout &lt;&lt; "Throughput: " &lt;&lt; successful.size() / duration &lt;&lt; " req/s" &lt;&lt; std::endl;
+        std::cout &lt;&lt; "\nRound Trip Time:" &lt;&lt; std::endl;
+        std::cout &lt;&lt; "  Average: " &lt;&lt; avg_rt / 1e6 &lt;&lt; "ms" &lt;&lt; std::endl;
+        std::cout &lt;&lt; "  P50: " &lt;&lt; round_trips[round_trips.size()/2] / 1e6 &lt;&lt; "ms" &lt;&lt; std::endl;
+        std::cout &lt;&lt; "  P95: " &lt;&lt; round_trips[round_trips.size()*95/100] / 1e6 &lt;&lt; "ms" &lt;&lt; std::endl;
+        std::cout &lt;&lt; "  P99: " &lt;&lt; round_trips[round_trips.size()*99/100] / 1e6 &lt;&lt; "ms" &lt;&lt; std::endl;
+        std::cout &lt;&lt; "\nServer Latency:" &lt;&lt; std::endl;
+        std::cout &lt;&lt; "  Average: " &lt;&lt; avg_sl / 1e6 &lt;&lt; "ms" &lt;&lt; std::endl;
+    }
+};
+
+int main() {
+    CppBenchmark benchmark;
+    
+    std::cout &lt;&lt; "C++ Client Benchmark Starting..." &lt;&lt; std::endl;
+    std::cout &lt;&lt; "Warming up..." &lt;&lt; std::endl;
+    benchmark.benchmark(100, 10);
+    
+    std::cout &lt;&lt; "Running benchmark..." &lt;&lt; std::endl;
+    auto start = high_resolution_clock::now();
+    auto results = benchmark.benchmark(5000, 100);
+    auto end = high_resolution_clock::now();
+    
+    double duration = duration_cast&lt;milliseconds&gt;(end - start).count() / 1000.0;
+    benchmark.print_stats(results, duration);
+    
+    return 0;
+}
+</code></pre>
+<h3 id="rust-client"><a class="header" href="#rust-client">Rust Client</a></h3>
+<h4 id="cargotoml-1"><a class="header" href="#cargotoml-1">Cargo.toml</a></h4>
+<pre><code class="language-toml">[package]
+name = "rust_client"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.11", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+futures = "0.3"
+</code></pre>
+<h4 id="srcmainrs-1"><a class="header" href="#srcmainrs-1">src/main.rs</a></h4>
+<pre><pre class="playground"><code class="language-rust">use reqwest;
+use serde::{Deserialize, Serialize};
+use std::time::{SystemTime, UNIX_EPOCH, Instant};
+use tokio;
+use futures::future::join_all;
+
+#[derive(Serialize, Deserialize)]
+struct Order {
+    order_id: String,
+    symbol: String,
+    quantity: i32,
+    price: f64,
+    timestamp: u128,
+}
+
+#[derive(Deserialize)]
+struct OrderResponse {
+    status: String,
+    order_id: String,
+    server_receive_time: u128,
+    client_send_time: u128,
+    latency_ns: i128,
+}
+
+#[derive(Debug, Clone)]
+struct Result {
+    round_trip_ns: u128,
+    server_latency_ns: i128,
+    success: bool,
+}
+
+struct RustBenchmark {
+    base_url: String,
+    client: reqwest::Client,
+}
+
+impl RustBenchmark {
+    fn new(base_url: &amp;str) -&gt; Self {
+        let client = reqwest::Client::builder()
+            .pool_max_idle_per_host(200)
+            .build()
+            .unwrap();
+        
+        Self {
+            base_url: base_url.to_string(),
+            client,
+        }
+    }
+    
+    async fn send_order(&amp;self, order_id: i32) -&gt; Result {
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        
+        let order = Order {
+            order_id: format!("RUST_{}", order_id),
+            symbol: "AAPL".to_string(),
+            quantity: 100,
+            price: 150.25,
+            timestamp,
+        };
+        
+        let start = Instant::now();
+        
+        match self.client
+            .post(format!("{}/order", self.base_url))
+            .json(&amp;order)
+            .send()
+            .await
+        {
+            Ok(response) =&gt; {
+                match response.json::&lt;OrderResponse&gt;().await {
+                    Ok(resp) =&gt; {
+                        let round_trip = start.elapsed().as_nanos();
+                        Result {
+                            round_trip_ns: round_trip,
+                            server_latency_ns: resp.latency_ns,
+                            success: true,
+                        }
+                    }
+                    Err(_) =&gt; Result {
+                        round_trip_ns: 0,
+                        server_latency_ns: 0,
+                        success: false,
+                    }
+                }
+            }
+            Err(_) =&gt; Result {
+                round_trip_ns: 0,
+                server_latency_ns: 0,
+                success: false,
+            }
+        }
+    }
+    
+    async fn benchmark(&amp;self, num_requests: usize, concurrent: usize) -&gt; Vec&lt;Result&gt; {
+        let mut tasks = Vec::new();
+        let mut all_results = Vec::new();
+        
+        for i in 0..num_requests {
+            let task = self.send_order(i as i32);
+            tasks.push(task);
+            
+            if tasks.len() &gt;= concurrent {
+                let results = join_all(tasks).await;
+                all_results.extend(results);
+                tasks = Vec::new();
+            }
+        }
+        
+        if !tasks.is_empty() {
+            let results = join_all(tasks).await;
+            all_results.extend(results);
+        }
+        
+        all_results
+    }
+    
+    fn print_stats(&amp;self, results: &amp;[Result], duration: f64) {
+        let successful: Vec&lt;&amp;Result&gt; = results.iter()
+            .filter(|r| r.success)
+            .collect();
+        
+        if successful.is_empty() {
+            println!("All requests failed!");
+            return;
+        }
+        
+        let mut round_trips: Vec&lt;u128&gt; = successful.iter()
+            .map(|r| r.round_trip_ns)
+            .collect();
+        let mut server_latencies: Vec&lt;i128&gt; = successful.iter()
+            .map(|r| r.server_latency_ns)
+            .collect();
+        
+        round_trips.sort();
+        server_latencies.sort();
+        
+        let avg_rt = round_trips.iter().sum::&lt;u128&gt;() as f64 / round_trips.len() as f64;
+        let avg_sl = server_latencies.iter().sum::&lt;i128&gt;() as f64 / server_latencies.len() as f64;
+        
+        println!("\n{}", "=".repeat(50));
+        println!("Rust Client Results");
+        println!("{}", "=".repeat(50));
+        println!("Total Time: {:.2}s", duration);
+        println!("Total Requests: {}", results.len());
+        println!("Successful: {}", successful.len());
+        println!("Failed: {}", results.len() - successful.len());
+        println!("Throughput: {:.2} req/s", successful.len() as f64 / duration);
+        println!("\nRound Trip Time:");
+        println!("  Average: {:.2}ms", avg_rt / 1e6);
+        println!("  P50: {:.2}ms", round_trips[round_trips.len()/2] as f64 / 1e6);
+        println!("  P95: {:.2}ms", round_trips[round_trips.len()*95/100] as f64 / 1e6);
+        println!("  P99: {:.2}ms", round_trips[round_trips.len()*99/100] as f64 / 1e6);
+        println!("\nServer Latency:");
+        println!("  Average: {:.2}ms", avg_sl / 1e6);
+    }
+}
+
+#[tokio::main]
+async fn main() {
+    let benchmark = RustBenchmark::new("http://localhost:8000");
+    
+    println!("Rust Client Benchmark Starting...");
+    println!("Warming up...");
+    let _ = benchmark.benchmark(100, 10).await;
+    
+    println!("Running benchmark...");
+    let start = Instant::now();
+    let results = benchmark.benchmark(5000, 100).await;
+    let duration = start.elapsed().as_secs_f64();
+    
+    benchmark.print_stats(&amp;results, duration);
+}</code></pre></pre>
+<hr />
+<h2 id="環境設置"><a class="header" href="#環境設置">環境設置</a></h2>
+<h3 id="系統優化"><a class="header" href="#系統優化">系統優化</a></h3>
+<h4 id="linux-系統優化-ubuntudebian"><a class="header" href="#linux-系統優化-ubuntudebian">Linux 系統優化 (Ubuntu/Debian)</a></h4>
+<pre><code class="language-bash"># 增加文件描述符限制
+sudo bash -c 'echo "* soft nofile 65535" &gt;&gt; /etc/security/limits.conf'
+sudo bash -c 'echo "* hard nofile 65535" &gt;&gt; /etc/security/limits.conf'
+
+# TCP 優化
+sudo sysctl -w net.core.somaxconn=65535
+sudo sysctl -w net.ipv4.tcp_max_syn_backlog=65535
+sudo sysctl -w net.ipv4.ip_local_port_range="1024 65535"
+sudo sysctl -w net.ipv4.tcp_tw_reuse=1
+
+# 永久保存
+sudo bash -c 'echo "net.core.somaxconn=65535" &gt;&gt; /etc/sysctl.conf'
+sudo bash -c 'echo "net.ipv4.tcp_max_syn_backlog=65535" &gt;&gt; /etc/sysctl.conf'
+</code></pre>
+<h3 id="依賴安裝"><a class="header" href="#依賴安裝">依賴安裝</a></h3>
+<h4 id="python-環境"><a class="header" href="#python-環境">Python 環境</a></h4>
+<pre><code class="language-bash">python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+</code></pre>
+<h4 id="rust-環境"><a class="header" href="#rust-環境">Rust 環境</a></h4>
+<pre><code class="language-bash">curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
+</code></pre>
+<h4 id="c-環境-使用-vcpkg"><a class="header" href="#c-環境-使用-vcpkg">C++ 環境 (使用 vcpkg)</a></h4>
+<pre><code class="language-bash"># 安裝 vcpkg
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+./bootstrap-vcpkg.sh
+./vcpkg integrate install
+
+# 安裝依賴
+./vcpkg install cpr nlohmann-json
+</code></pre>
+<h4 id="go-環境"><a class="header" href="#go-環境">Go 環境</a></h4>
+<pre><code class="language-bash"># 下載並安裝 Go
+wget https://go.dev/dl/go1.21.5.linux-amd64.tar.gz
+sudo tar -C /usr/local -xzf go1.21.5.linux-amd64.tar.gz
+export PATH=$PATH:/usr/local/go/bin
+</code></pre>
+<hr />
+<h2 id="執行測試"><a class="header" href="#執行測試">執行測試</a></h2>
+<h3 id="自動化測試腳本"><a class="header" href="#自動化測試腳本">自動化測試腳本</a></h3>
+<h4 id="run_complete_benchmarksh"><a class="header" href="#run_complete_benchmarksh">run_complete_benchmark.sh</a></h4>
+<pre><code class="language-bash">#!/bin/bash
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Configuration
+NUM_REQUESTS=5000
+CONCURRENT=100
+WARMUP_REQUESTS=100
+
+echo -e "${GREEN}=== Complete Async API Benchmark ===${NC}"
+echo "Configuration:"
+echo "  Requests: $NUM_REQUESTS"
+echo "  Concurrent: $CONCURRENT"
+echo ""
+
+# Function to check if port is in use
+check_port() {
+    lsof -Pi :8000 -sTCP:LISTEN -t &gt;/dev/null
+}
+
+# Function to wait for server
+wait_for_server() {
+    echo -n "Waiting for server to start"
+    for i in {1..30}; do
+        if curl -s http://localhost:8000/stats &gt; /dev/null; then
+            echo -e " ${GREEN}✓${NC}"
+            return 0
+        fi
+        echo -n "."
+        sleep 1
+    done
+    echo -e " ${RED}✗${NC}"
+    return 1
+}
+
+# Function to run client benchmark
+run_client() {
+    local client_name=$1
+    local client_cmd=$2
+    
+    echo -e "\n${YELLOW}Testing $client_name Client...${NC}"
+    eval $client_cmd
+}
+
+# Kill any existing server
+if check_port; then
+    echo "Killing existing server on port 8000..."
+    kill $(lsof -Pi :8000 -sTCP:LISTEN -t)
+    sleep 2
+fi
+
+# Test with different servers
+servers=("rust" "go" "python")
+
+for server in "${servers[@]}"; do
+    echo -e "\n${GREEN}═══════════════════════════════════════${NC}"
+    echo -e "${GREEN}Testing with $server server${NC}"
+    echo -e "${GREEN}═══════════════════════════════════════${NC}"
+    
+    # Start server
+    case $server in
+        "rust")
+            echo "Building and starting Rust server..."
+            cd rust_server &amp;&amp; cargo build --release
+            ./target/release/rust_server &amp;
+            ;;
+        "go")
+            echo "Building and starting Go server..."
+            cd go_server &amp;&amp; go build
+            ./server &amp;
+            ;;
+        "python")
+            echo "Starting Python server..."
+            python3 optimized_server.py &amp;
+            ;;
+    esac
+    
+    SERVER_PID=$!
+    cd ..
+    
+    # Wait for server to be ready
+    if ! wait_for_server; then
+        echo -e "${RED}Server failed to start!${NC}"
+        kill $SERVER_PID 2&gt;/dev/null
+        continue
+    fi
+    
+    # Run all clients
+    run_client "Python" "python3 python_client.py"
+    run_client "C++" "./cpp_client/build/cpp_client"
+    run_client "Rust" "cd rust_client &amp;&amp; cargo run --release &amp;&amp; cd .."
+    
+    # Get server stats
+    echo -e "\n${YELLOW}Server Stats:${NC}"
+    curl -s http://localhost:8000/stats | jq .
+    
+    # Stop server
+    echo -e "\nStopping server..."
+    kill $SERVER_PID
+    wait $SERVER_PID 2&gt;/dev/null
+    
+    sleep 2
+done
+
+echo -e "\n${GREEN}═══════════════════════════════════════${NC}"
+echo -e "${GREEN}Benchmark Complete!${NC}"
+echo -e "${GREEN}═══════════════════════════════════════${NC}"
+</code></pre>
+<h3 id="單獨測試腳本"><a class="header" href="#單獨測試腳本">單獨測試腳本</a></h3>
+<h4 id="test_singlesh"><a class="header" href="#test_singlesh">test_single.sh</a></h4>
+<pre><code class="language-bash">#!/bin/bash
+
+SERVER=$1
+CLIENT=$2
+
+if [ -z "$SERVER" ] || [ -z "$CLIENT" ]; then
+    echo "Usage: ./test_single.sh [rust|go|python] [rust|cpp|python]"
+    exit 1
+fi
+
+# Start server
+case $SERVER in
+    "rust")
+        cd rust_server &amp;&amp; cargo run --release &amp;
+        ;;
+    "go")
+        cd go_server &amp;&amp; go run server.go &amp;
+        ;;
+    "python")
+        python3 optimized_server.py &amp;
+        ;;
+esac
+
+SERVER_PID=$!
+sleep 3
+
+# Run client
+case $CLIENT in
+    "rust")
+        cd rust_client &amp;&amp; cargo run --release
+        ;;
+    "cpp")
+        ./cpp_client/build/cpp_client
+        ;;
+    "python")
+        python3 python_client.py
+        ;;
+esac
+
+kill $SERVER_PID
+</code></pre>
+<hr />
+<h2 id="效能分析"><a class="header" href="#效能分析">效能分析</a></h2>
+<h3 id="預期效能結果"><a class="header" href="#預期效能結果">預期效能結果</a></h3>
+<h4 id="server-效能比較"><a class="header" href="#server-效能比較">Server 效能比較</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>Server</th><th>延遲 (P50)</th><th>延遲 (P99)</th><th>最大 RPS</th><th>CPU 使用率</th></tr></thead><tbody>
+<tr><td>Rust</td><td>10-30μs</td><td>50-100μs</td><td>100k+</td><td>30-50%</td></tr>
+<tr><td>Go</td><td>20-50μs</td><td>100-200μs</td><td>50k+</td><td>40-60%</td></tr>
+<tr><td>Python</td><td>100-300μs</td><td>500-1000μs</td><td>10k+</td><td>70-90%</td></tr>
+</tbody></table>
+</div>
+<h4 id="client-效能比較"><a class="header" href="#client-效能比較">Client 效能比較</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>Client</th><th>延遲 (P50)</th><th>延遲 (P99)</th><th>並發能力</th><th>記憶體使用</th></tr></thead><tbody>
+<tr><td>Rust</td><td>0.5-2ms</td><td>5-10ms</td><td>極高</td><td>低</td></tr>
+<tr><td>C++</td><td>0.8-3ms</td><td>8-15ms</td><td>高</td><td>低</td></tr>
+<tr><td>Python</td><td>2-8ms</td><td>15-30ms</td><td>中</td><td>高</td></tr>
+</tbody></table>
+</div>
+<h3 id="效能監控工具"><a class="header" href="#效能監控工具">效能監控工具</a></h3>
+<h4 id="系統監控"><a class="header" href="#系統監控">系統監控</a></h4>
+<pre><code class="language-bash"># CPU 和記憶體監控
+htop
+
+# 網路連線監控
+netstat -an | grep :8000 | wc -l
+
+# IO 監控
+iotop
+
+# 詳細系統資訊
+dstat -tcmndylp
+</code></pre>
+<h4 id="壓力測試工具"><a class="header" href="#壓力測試工具">壓力測試工具</a></h4>
+<pre><code class="language-bash"># 使用 wrk 測試 server 極限
+wrk -t12 -c400 -d30s --latency \
+    -s post.lua \
+    http://localhost:8000/order
+
+# post.lua 內容
+cat &gt; post.lua &lt;&lt; 'EOF'
+wrk.method = "POST"
+wrk.body = '{"order_id":"TEST_1","symbol":"AAPL","quantity":100,"price":150.25,"timestamp":1234567890}'
+wrk.headers["Content-Type"] = "application/json"
+EOF
+
+# 使用 ab 測試
+ab -n 10000 -c 100 -p order.json -T application/json \
+    http://localhost:8000/order
+</code></pre>
+<h3 id="結果分析要點"><a class="header" href="#結果分析要點">結果分析要點</a></h3>
+<ol>
+<li>
+<p><strong>延遲分析</strong></p>
+<ul>
+<li>Round Trip Time = 網路延遲 + Server 處理時間 + Client 處理時間</li>
+<li>Server Latency 主要反映網路延遲</li>
+<li>差值反映 Client 和 Server 的處理效率</li>
+</ul>
+</li>
+<li>
+<p><strong>吞吐量分析</strong></p>
+<ul>
+<li>RPS (Requests Per Second) 越高越好</li>
+<li>注意觀察是否達到瓶頸（CPU、網路、連線數）</li>
+</ul>
+</li>
+<li>
+<p><strong>穩定性分析</strong></p>
+<ul>
+<li>P99 與 P50 的差距反映系統穩定性</li>
+<li>差距越小表示效能越穩定</li>
+</ul>
+</li>
+<li>
+<p><strong>資源使用分析</strong></p>
+<ul>
+<li>CPU 使用率不應超過 80%</li>
+<li>記憶體應保持穩定，無洩漏</li>
+<li>檔案描述符使用量要在限制內</li>
+</ul>
+</li>
+</ol>
+<h3 id="優化建議"><a class="header" href="#優化建議">優化建議</a></h3>
+<h4 id="通用優化"><a class="header" href="#通用優化">通用優化</a></h4>
+<ol>
+<li>
+<p><strong>連線池管理</strong></p>
+<ul>
+<li>適當的連線池大小</li>
+<li>Keep-alive 連線重用</li>
+<li>連線超時設定</li>
+</ul>
+</li>
+<li>
+<p><strong>並發控制</strong></p>
+<ul>
+<li>根據 CPU 核心數調整並發</li>
+<li>使用背壓(backpressure)機制</li>
+<li>避免過度並發導致效能下降</li>
+</ul>
+</li>
+<li>
+<p><strong>協議優化</strong></p>
+<ul>
+<li>考慮使用 HTTP/2</li>
+<li>使用二進位協議（如 gRPC）</li>
+<li>減少 payload 大小</li>
+</ul>
+</li>
+</ol>
+<h4 id="語言特定優化"><a class="header" href="#語言特定優化">語言特定優化</a></h4>
+<p><strong>Python:</strong></p>
+<ul>
+<li>使用 uvloop 替代默認 event loop</li>
+<li>考慮 PyPy 或 Cython</li>
+<li>使用 httpx 替代 aiohttp</li>
+</ul>
+<p><strong>Rust:</strong></p>
+<ul>
+<li>調整 tokio runtime workers</li>
+<li>使用 hyper 直接操作</li>
+<li>啟用 LTO (Link Time Optimization)</li>
+</ul>
+<p><strong>C++:</strong></p>
+<ul>
+<li>使用 jemalloc 或 tcmalloc</li>
+<li>編譯器優化 flags (-O3, -march=native)</li>
+<li>考慮使用 boost.beast</li>
+</ul>
+<h3 id="故障排除"><a class="header" href="#故障排除">故障排除</a></h3>
+<h4 id="常見問題"><a class="header" href="#常見問題">常見問題</a></h4>
+<ol>
+<li>
+<p><strong>"Too many open files" 錯誤</strong></p>
+<pre><code class="language-bash">ulimit -n 65535
+</code></pre>
+</li>
+<li>
+<p><strong>連線被拒絕</strong></p>
+<ul>
+<li>檢查 server 是否啟動</li>
+<li>檢查防火牆設定</li>
+<li>確認 port 沒被占用</li>
+</ul>
+</li>
+<li>
+<p><strong>高延遲</strong></p>
+<ul>
+<li>檢查 CPU 使用率</li>
+<li>檢查網路延遲</li>
+<li>調整並發數</li>
+</ul>
+</li>
+<li>
+<p><strong>記憶體洩漏</strong></p>
+<ul>
+<li>使用 valgrind (C++)</li>
+<li>使用 memory profiler (Python)</li>
+<li>使用 heaptrack (Rust)</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<p>這個完整的測試框架可以幫助你：</p>
+<ol>
+<li><strong>準確測量</strong>三種語言的 async HTTP client 效能</li>
+<li><strong>避免 server 成為瓶頸</strong>，確保測試結果反映 client 真實效能</li>
+<li><strong>全面的指標</strong>包括延遲、吞吐量、穩定性</li>
+<li><strong>可重複執行</strong>的自動化測試流程</li>
+</ol>
+<p>根據測試結果，你可以為不同場景選擇最適合的語言：</p>
+<ul>
+<li><strong>Rust</strong>: 最高效能，適合高頻交易</li>
+<li><strong>C++</strong>: 高效能，適合既有 C++ 系統整合</li>
+<li><strong>Python</strong>: 開發快速，適合原型開發和中低頻交易</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../python/async-vs-multithread-io.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../python/python-async-guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../python/async-vs-multithread-io.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../python/python-async-guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,70 @@
+
+我们需要一些基本的构建块来创建实用模块。实用工具模块最基本的构建模块是函数和宏，因此很有必要了解它们的工作原理。先从函数开始。
+
+\subsubsubsection{13.3.1\hspace{0.2cm}函数}
+
+函数是CMake语言的特性，可以定义一个逻辑代码块，来执行CMake指令。函数以function(…)开始，函数体包含CMake命令，以endfunction()结束。function()需要一个名称作为第一个参数，以及可选的函数参数名称:
+
+\begin{lstlisting}[style=styleCMake]
+function(<name> [<arg1> ...])
+	<commands>
+endfunction()
+\end{lstlisting}
+
+函数定义了一个新的变量作用域，因此对CMake变量所做的更改只在函数体中可见，独立作用域是函数最重要的属性。有了新的作用域就能避免意外地将变量暴露给使用者，除非我们想这样做。大多数时候，我们希望在函数的作用域中包含更改，并且只将函数的结果反映给使用者。由于CMake没有返回值的概念，我们将采用在调用者的作用域方法中定义一个变量来将函数结果返回给使用者。
+
+先定义一个简单的函数来检索当前Git分支名称:
+
+\begin{lstlisting}[style=styleCMake]
+function(git_get_branch_name result_var_name)
+	execute_process(
+		COMMAND git symbolic-ref -q --short HEAD
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+		OUTPUT_VARIABLE git_current_branch_name
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+		ERROR_QUIET
+	)
+	set(${result_var_name} ${git_current_branch_name}
+		PARENT_SCOPE)
+endfunction()
+\end{lstlisting}
+
+git\_get\_branch\_name函数接受名为result\_var\_name的参数。这个参数是将在使用者的作用域中定义的变量的名称，用于将Git分支名称返回给使用者。或者，可以使用一个常量变量名，例如GIT\_CURRENT\_BRANCH\_NAME，并去掉result\_var\_name参数，但若项目已经使用了GIT\_CURRENT\_BRANCH\_NAME名称，这可能会出问题。
+
+经验法则是将命名留给使用者，因为它具有最大的灵活性和可移植性。为了检索当前Git分支名称，使用\texttt{execute\_process()}运行了git symbolic-ref -q -{}-short HEAD命令，其结果存储在函数作用域中的git\_current\_branch\_name变量中。变量在函数的作用域中，所以使用者不能看到git\_current\_branch\_name变量。因此，需要使用\texttt{set(\$\{result\_var\_name\} \$\{git\_current\_branch\_name\} PARENT\_SCOPE)}来定义一个变量，使用外部作用域中result\_var\_name的值和本地git\_current\_branch\_name变量的值相同。
+
+PARENT\_SCOPE参数改变了\texttt{set(…)}指令的作用域，因此它在使用者的作用域内。git\_get\_branch\_name函数的用法如下:
+
+\begin{lstlisting}[style=styleCMake]
+git_get_branch_name(branch_n)
+message(STATUS "Current git branch name is: ${branch_n}")
+\end{lstlisting}
+
+接下来看下宏。
+
+\subsubsubsection{13.3.2\hspace{0.2cm}宏}
+
+如果函数的作用域理解起来有困难，可以考虑使用\texttt{macro(…)}来代替。宏以macro(…)开始，以endmacro()结束。函数和宏在各个方面的行为都相似，但有一点不同:宏不定义新的变量作用域。回到git分支的例子，考虑到\texttt{execute\_process(…)}已经有OUTPUT\_VARIABLE参数，将git\_get\_branch\_name定义为宏，而不是函数会更方便些:
+
+\begin{lstlisting}[style=styleCMake]
+macro(git_get_branch_name_m result_var_name)
+	execute_process(
+		COMMAND git symbolic-ref -q --short HEAD
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+		OUTPUT_VARIABLE ${result_var_name}
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+		ERROR_QUIET
+	)
+endmacro()
+\end{lstlisting}
+
+git\_get\_branch\_name\_m宏的用法与git\_get\_branch\_name()函数完全相同:
+
+\begin{lstlisting}[style=styleCMake]
+git_get_branch_name_m(branch_nn)
+message(STATUS "Current git branch name is: ${branch_nn}")
+\end{lstlisting}
+
+我们已经学习了如何在需要时定义函数或宏。接下来，定义一个CMake模块。
+
+

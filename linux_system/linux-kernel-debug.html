@@ -1,0 +1,763 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Linux Kernel Debug - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="linux-kernel-除錯與追蹤技術完整指南"><a class="header" href="#linux-kernel-除錯與追蹤技術完整指南">Linux Kernel 除錯與追蹤技術完整指南</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ul>
+<li><a href="#%E5%82%B3%E7%B5%B1%E9%99%A4%E9%8C%AF%E6%96%B9%E6%B3%95">傳統除錯方法</a></li>
+<li><a href="#%E7%8F%BE%E4%BB%A3%E8%BF%BD%E8%B9%A4%E6%8A%80%E8%A1%93">現代追蹤技術</a></li>
+<li><a href="#ebpf---%E9%9D%A9%E5%91%BD%E6%80%A7%E6%8A%80%E8%A1%93">eBPF - 革命性技術</a></li>
+<li><a href="#%E5%8B%95%E6%85%8B%E8%BF%BD%E8%B9%A4%E5%B7%A5%E5%85%B7">動態追蹤工具</a></li>
+<li><a href="#%E9%9D%9C%E6%85%8B%E8%BF%BD%E8%B9%A4%E9%BB%9E">靜態追蹤點</a></li>
+<li><a href="#kernel-%E5%B4%A9%E6%BD%B0%E5%88%86%E6%9E%90">Kernel 崩潰分析</a></li>
+<li><a href="#%E5%8D%B3%E6%99%82%E9%99%A4%E9%8C%AF%E6%8A%80%E8%A1%93">即時除錯技術</a></li>
+<li><a href="#%E6%96%B0%E8%88%88%E6%8A%80%E8%A1%93%E8%88%87%E5%B7%A5%E5%85%B7">新興技術與工具</a></li>
+</ul>
+<hr />
+<h2 id="傳統除錯方法"><a class="header" href="#傳統除錯方法">傳統除錯方法</a></h2>
+<h3 id="printk"><a class="header" href="#printk">printk</a></h3>
+<p>最基本但仍然有效的除錯方式</p>
+<pre><code class="language-c">// kernel module 中使用
+printk(KERN_INFO "Debug message: value=%d\n", value);
+printk(KERN_ERR "Error occurred at %s:%d\n", __FILE__, __LINE__);
+
+// 不同的日誌級別
+KERN_EMERG   // 系統無法使用
+KERN_ALERT   // 必須立即採取行動
+KERN_CRIT    // 臨界條件
+KERN_ERR     // 錯誤條件
+KERN_WARNING // 警告條件
+KERN_NOTICE  // 正常但重要
+KERN_INFO    // 資訊
+KERN_DEBUG   // 除錯訊息
+</code></pre>
+<p>檢視訊息：</p>
+<pre><code class="language-bash">dmesg | tail -f
+journalctl -k -f  # systemd 系統
+</code></pre>
+<h3 id="dynamic-debug-dyndbg"><a class="header" href="#dynamic-debug-dyndbg">Dynamic Debug (dyndbg)</a></h3>
+<p>動態開關除錯訊息</p>
+<pre><code class="language-c">// 在 kernel code 中
+pr_debug("Dynamic debug message\n");
+dev_dbg(dev, "Device debug message\n");
+</code></pre>
+<p>控制：</p>
+<pre><code class="language-bash"># 開啟特定檔案的除錯
+echo 'file drivers/usb/core/hub.c +p' &gt; /sys/kernel/debug/dynamic_debug/control
+
+# 開啟特定函數
+echo 'func usb_submit_urb +p' &gt; /sys/kernel/debug/dynamic_debug/control
+
+# 開啟特定模組
+echo 'module usbcore +p' &gt; /sys/kernel/debug/dynamic_debug/control
+</code></pre>
+<h3 id="kgdb"><a class="header" href="#kgdb">KGDB</a></h3>
+<p>Kernel 層級的 GDB 除錯</p>
+<pre><code class="language-bash"># 設定 kernel 參數
+kgdboc=ttyS0,115200 kgdbwait
+
+# 在另一台機器上
+gdb vmlinux
+(gdb) target remote /dev/ttyS0
+(gdb) break sys_open
+(gdb) continue
+</code></pre>
+<hr />
+<h2 id="現代追蹤技術"><a class="header" href="#現代追蹤技術">現代追蹤技術</a></h2>
+<h3 id="ftrace"><a class="header" href="#ftrace">Ftrace</a></h3>
+<p>Linux 內建的追蹤框架</p>
+<pre><code class="language-bash"># 掛載 debugfs
+mount -t debugfs none /sys/kernel/debug
+
+# 基本使用
+cd /sys/kernel/debug/tracing
+
+# 查看可用的 tracer
+cat available_tracers
+
+# 設定 function tracer
+echo function &gt; current_tracer
+echo 1 &gt; tracing_on
+cat trace
+
+# 追蹤特定函數
+echo do_sys_open &gt; set_ftrace_filter
+echo function_graph &gt; current_tracer
+
+# 追蹤函數調用圖
+echo function_graph &gt; current_tracer
+echo 1 &gt; options/funcgraph-proc
+echo 1 &gt; options/funcgraph-duration
+</code></pre>
+<p>進階功能：</p>
+<pre><code class="language-bash"># 設定追蹤 buffer 大小
+echo 8192 &gt; buffer_size_kb
+
+# 只追蹤特定 CPU
+echo 2 &gt; tracing_cpumask
+
+# 追蹤事件
+echo 1 &gt; events/sched/sched_switch/enable
+echo 1 &gt; events/irq/enable
+
+# 使用 trace marker
+echo "Custom marker" &gt; trace_marker
+</code></pre>
+<h3 id="perf-events"><a class="header" href="#perf-events">Perf Events</a></h3>
+<p>強大的效能分析框架</p>
+<pre><code class="language-bash"># 系統整體分析
+perf top
+perf stat -a sleep 10
+
+# Kernel 函數分析
+perf record -ag
+perf report
+
+# 追蹤特定事件
+perf record -e sched:sched_switch -a
+perf script
+
+# 產生火焰圖
+perf record -F 99 -ag -- sleep 60
+perf script | flamegraph.pl &gt; kernel.svg
+
+# 追蹤 kernel 函數
+perf probe --add='do_sys_open filename:string'
+perf record -e probe:do_sys_open -aR
+</code></pre>
+<hr />
+<h2 id="ebpf---革命性技術"><a class="header" href="#ebpf---革命性技術">eBPF - 革命性技術</a></h2>
+<h3 id="基礎概念"><a class="header" href="#基礎概念">基礎概念</a></h3>
+<p>eBPF (extended Berkeley Packet Filter) 是 Linux kernel 的革命性技術</p>
+<pre><code class="language-python"># 使用 BCC (BPF Compiler Collection)
+from bcc import BPF
+
+prog = """
+#include &lt;linux/sched.h&gt;
+
+int trace_sys_open(struct pt_regs *ctx) {
+    char comm[TASK_COMM_LEN];
+    bpf_get_current_comm(&amp;comm, sizeof(comm));
+    bpf_trace_printk("Process %s opened a file\\n", comm);
+    return 0;
+}
+"""
+
+b = BPF(text=prog)
+b.attach_kprobe(event="do_sys_open", fn_name="trace_sys_open")
+b.trace_print()
+</code></pre>
+<h3 id="bpftrace"><a class="header" href="#bpftrace">bpftrace</a></h3>
+<p>高階 eBPF 追蹤語言</p>
+<pre><code class="language-bash"># 一行命令追蹤
+bpftrace -e 'kprobe:do_sys_open { printf("%s opened a file\n", comm); }'
+
+# 追蹤系統調用延遲
+bpftrace -e 'tracepoint:raw_syscalls:sys_enter { @start[tid] = nsecs; }
+             tracepoint:raw_syscalls:sys_exit /@start[tid]/ {
+               @ns[comm] = hist(nsecs - @start[tid]);
+               delete(@start[tid]);
+             }'
+
+# 追蹤 kernel 函數執行時間
+bpftrace -e 'kprobe:vfs_read { @start[tid] = nsecs; }
+             kretprobe:vfs_read /@start[tid]/ {
+               @ns = hist(nsecs - @start[tid]);
+               delete(@start[tid]);
+             }'
+</code></pre>
+<p>複雜腳本範例：</p>
+<pre><code class="language-bash">#!/usr/bin/env bpftrace
+
+BEGIN {
+    printf("Tracing kernel mutex locks... Hit Ctrl-C to end.\n");
+}
+
+kprobe:mutex_lock {
+    @lock_start[tid] = nsecs;
+    @lock_stack[tid] = kstack;
+}
+
+kretprobe:mutex_lock /@lock_start[tid]/ {
+    $duration = nsecs - @lock_start[tid];
+    @lock_time = hist($duration);
+    if ($duration &gt; 1000000) {  // &gt; 1ms
+        printf("Slow mutex: %d us\n", $duration / 1000);
+        printf("%s", @lock_stack[tid]);
+    }
+    delete(@lock_start[tid]);
+    delete(@lock_stack[tid]);
+}
+</code></pre>
+<h3 id="libbpf"><a class="header" href="#libbpf">libbpf</a></h3>
+<p>原生 BPF 程式開發</p>
+<pre><code class="language-c">// kernel space program (kern.c)
+#include &lt;linux/bpf.h&gt;
+#include &lt;bpf/bpf_helpers.h&gt;
+
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __uint(max_entries, 1024);
+    __type(key, u32);
+    __type(value, u64);
+} counts SEC(".maps");
+
+SEC("kprobe/do_sys_open")
+int trace_open(struct pt_regs *ctx) {
+    u32 pid = bpf_get_current_pid_tgid() &gt;&gt; 32;
+    u64 *count;
+    
+    count = bpf_map_lookup_elem(&amp;counts, &amp;pid);
+    if (count) {
+        (*count)++;
+    } else {
+        u64 init_val = 1;
+        bpf_map_update_elem(&amp;counts, &amp;pid, &amp;init_val, BPF_ANY);
+    }
+    return 0;
+}
+
+char LICENSE[] SEC("license") = "GPL";
+</code></pre>
+<hr />
+<h2 id="動態追蹤工具"><a class="header" href="#動態追蹤工具">動態追蹤工具</a></h2>
+<h3 id="systemtap"><a class="header" href="#systemtap">SystemTap</a></h3>
+<p>強大的動態追蹤系統</p>
+<pre><code class="language-bash"># 安裝
+sudo apt-get install systemtap systemtap-runtime
+
+# 簡單範例
+stap -e 'probe kernel.function("do_sys_open") {
+    printf("%s opened %s\n", execname(), kernel_string($filename))
+}'
+
+# 複雜腳本
+cat &gt; trace_io.stp &lt;&lt; 'EOF'
+global io_count
+
+probe vfs.read {
+    io_count[execname()] &lt;&lt;&lt; bytes_to_read
+}
+
+probe timer.s(5) {
+    foreach (name in io_count) {
+        printf("%s: %d reads, avg %d bytes\n", 
+               name, @count(io_count[name]), @avg(io_count[name]))
+    }
+    delete io_count
+}
+EOF
+
+sudo stap trace_io.stp
+</code></pre>
+<h3 id="kprobes--kretprobes"><a class="header" href="#kprobes--kretprobes">kprobes / kretprobes</a></h3>
+<p>動態 kernel 探測點</p>
+<pre><code class="language-c">// kernel module 範例
+#include &lt;linux/kprobes.h&gt;
+
+static struct kprobe kp = {
+    .symbol_name = "do_sys_open",
+};
+
+static int handler_pre(struct kprobe *p, struct pt_regs *regs) {
+    printk(KERN_INFO "do_sys_open called\n");
+    return 0;
+}
+
+static int __init kprobe_init(void) {
+    kp.pre_handler = handler_pre;
+    register_kprobe(&amp;kp);
+    return 0;
+}
+</code></pre>
+<hr />
+<h2 id="靜態追蹤點"><a class="header" href="#靜態追蹤點">靜態追蹤點</a></h2>
+<h3 id="tracepoints"><a class="header" href="#tracepoints">Tracepoints</a></h3>
+<p>預定義的追蹤點</p>
+<pre><code class="language-bash"># 列出所有 tracepoints
+ls /sys/kernel/debug/tracing/events/
+
+# 啟用特定 tracepoint
+echo 1 &gt; /sys/kernel/debug/tracing/events/sched/sched_switch/enable
+
+# 查看輸出
+cat /sys/kernel/debug/tracing/trace
+</code></pre>
+<p>在 kernel module 中使用：</p>
+<pre><code class="language-c">#include &lt;trace/events/sched.h&gt;
+
+static void my_sched_switch_probe(void *data, bool preempt,
+                                  struct task_struct *prev,
+                                  struct task_struct *next) {
+    printk("Switch from %s to %s\n", prev-&gt;comm, next-&gt;comm);
+}
+
+// 註冊
+register_trace_sched_switch(my_sched_switch_probe, NULL);
+</code></pre>
+<h3 id="usdt-user-statically-defined-tracing"><a class="header" href="#usdt-user-statically-defined-tracing">USDT (User Statically-Defined Tracing)</a></h3>
+<p>用戶空間靜態追蹤點</p>
+<pre><code class="language-c">#include &lt;sys/sdt.h&gt;
+
+void process_request() {
+    DTRACE_PROBE(myapp, request_start);
+    // 處理邏輯
+    DTRACE_PROBE1(myapp, request_end, latency);
+}
+</code></pre>
+<hr />
+<h2 id="kernel-崩潰分析"><a class="header" href="#kernel-崩潰分析">Kernel 崩潰分析</a></h2>
+<h3 id="kdumpcrash"><a class="header" href="#kdumpcrash">kdump/crash</a></h3>
+<p>捕獲和分析 kernel crash dump</p>
+<pre><code class="language-bash"># 設定 kdump
+sudo apt-get install kdump-tools crash
+
+# 設定 crashkernel
+# 在 /etc/default/grub 加入
+GRUB_CMDLINE_LINUX_DEFAULT="crashkernel=384M-2G:128M,2G-:256M"
+
+# 分析 crash dump
+crash /usr/lib/debug/boot/vmlinux-$(uname -r) /var/crash/*/dump.*
+
+crash&gt; bt           # backtrace
+crash&gt; ps           # process list
+crash&gt; log          # kernel log
+crash&gt; dis -l function_name  # disassemble
+</code></pre>
+<h3 id="kasan-kernel-address-sanitizer"><a class="header" href="#kasan-kernel-address-sanitizer">KASAN (Kernel Address Sanitizer)</a></h3>
+<p>記憶體錯誤檢測</p>
+<pre><code class="language-bash"># Kernel 編譯選項
+CONFIG_KASAN=y
+CONFIG_KASAN_INLINE=y
+CONFIG_TEST_KASAN=m
+
+# 使用
+insmod test_kasan.ko
+</code></pre>
+<h3 id="ktsan-kernel-thread-sanitizer"><a class="header" href="#ktsan-kernel-thread-sanitizer">KTSAN (Kernel Thread Sanitizer)</a></h3>
+<p>Race condition 檢測</p>
+<pre><code class="language-bash">CONFIG_KTSAN=y
+</code></pre>
+<hr />
+<h2 id="即時除錯技術"><a class="header" href="#即時除錯技術">即時除錯技術</a></h2>
+<h3 id="live-patching-kpatchkgraft"><a class="header" href="#live-patching-kpatchkgraft">Live Patching (kpatch/kGraft)</a></h3>
+<p>無需重啟的 kernel 修補</p>
+<pre><code class="language-bash"># 使用 kpatch
+kpatch-build --sourcedir=/usr/src/linux --config=/boot/config-$(uname -r) patch.diff
+kpatch load kpatch-module.ko
+
+# 檢查載入的 patches
+kpatch list
+</code></pre>
+<h3 id="drgn"><a class="header" href="#drgn">drgn</a></h3>
+<p>可程式化的 kernel 除錯器</p>
+<pre><code class="language-python"># 連接到執行中的 kernel
+from drgn import Program
+prog = Program()
+prog.set_kernel()
+
+# 檢查 kernel 資料結構
+for task in for_each_task(prog):
+    print(task.comm.string_(), task.pid.value_())
+
+# 檢查特定結構
+init_task = prog['init_task']
+print(f"Init task state: {init_task.state.value_()}")
+</code></pre>
+<hr />
+<h2 id="新興技術與工具"><a class="header" href="#新興技術與工具">新興技術與工具</a></h2>
+<h3 id="btf-bpf-type-format"><a class="header" href="#btf-bpf-type-format">BTF (BPF Type Format)</a></h3>
+<p>提供 kernel 資料結構資訊</p>
+<pre><code class="language-bash"># 檢查 BTF 支援
+ls /sys/kernel/btf/vmlinux
+
+# 使用 bpftool 檢查
+bpftool btf dump file /sys/kernel/btf/vmlinux format c
+</code></pre>
+<h3 id="co-re-compile-once---run-everywhere"><a class="header" href="#co-re-compile-once---run-everywhere">CO-RE (Compile Once - Run Everywhere)</a></h3>
+<p>可攜式 BPF 程式</p>
+<pre><code class="language-c">#include &lt;vmlinux.h&gt;
+#include &lt;bpf/bpf_helpers.h&gt;
+#include &lt;bpf/bpf_core_read.h&gt;
+
+SEC("kprobe/do_sys_open")
+int trace_open(struct pt_regs *ctx) {
+    struct task_struct *task = (void *)bpf_get_current_task();
+    char comm[16];
+    bpf_core_read_str(&amp;comm, sizeof(comm), &amp;task-&gt;comm);
+    bpf_printk("Process %s opened file\n", comm);
+    return 0;
+}
+</code></pre>
+<h3 id="retsnoop"><a class="header" href="#retsnoop">Retsnoop</a></h3>
+<p>失敗路徑分析工具</p>
+<pre><code class="language-bash"># 追蹤錯誤返回
+sudo retsnoop -e 'tcp_*' -a ':kernel/net/ipv4/*'
+
+# 追蹤特定錯誤碼
+sudo retsnoop -e '*mount*' -c 'ret == -ENOENT'
+</code></pre>
+<h3 id="bpftool"><a class="header" href="#bpftool">bpftool</a></h3>
+<p>BPF 程式管理工具</p>
+<pre><code class="language-bash"># 列出載入的 BPF 程式
+bpftool prog list
+
+# 顯示 BPF map
+bpftool map list
+bpftool map dump id 1
+
+# 追蹤 BPF 程式執行
+bpftool prog trace log
+</code></pre>
+<hr />
+<h2 id="實戰範例"><a class="header" href="#實戰範例">實戰範例</a></h2>
+<h3 id="追蹤系統調用延遲"><a class="header" href="#追蹤系統調用延遲">追蹤系統調用延遲</a></h3>
+<pre><code class="language-bash">#!/usr/bin/env bpftrace
+
+tracepoint:raw_syscalls:sys_enter {
+    @start[tid] = nsecs;
+    @syscall[tid] = args-&gt;id;
+}
+
+tracepoint:raw_syscalls:sys_exit /@start[tid]/ {
+    $duration = nsecs - @start[tid];
+    @latency[@syscall[tid]] = hist($duration);
+    if ($duration &gt; 10000000) {  // &gt; 10ms
+        printf("Slow syscall %d: %d ms\n", @syscall[tid], $duration / 1000000);
+    }
+    delete(@start[tid]);
+    delete(@syscall[tid]);
+}
+
+END {
+    clear(@start);
+    clear(@syscall);
+}
+</code></pre>
+<h3 id="記憶體分配追蹤"><a class="header" href="#記憶體分配追蹤">記憶體分配追蹤</a></h3>
+<pre><code class="language-python">from bcc import BPF
+
+prog = """
+#include &lt;linux/mm.h&gt;
+
+BPF_HASH(allocs, u64, u64);
+
+TRACEPOINT_PROBE(kmem, kmalloc) {
+    u64 size = args-&gt;bytes_alloc;
+    u64 *total = allocs.lookup(&amp;size);
+    if (total) {
+        (*total)++;
+    } else {
+        u64 one = 1;
+        allocs.update(&amp;size, &amp;one);
+    }
+    return 0;
+}
+"""
+
+b = BPF(text=prog)
+# 執行並顯示結果
+</code></pre>
+<h3 id="檔案系統操作監控"><a class="header" href="#檔案系統操作監控">檔案系統操作監控</a></h3>
+<pre><code class="language-bash"># 使用 opensnoop (BCC 工具)
+sudo opensnoop -p 1234  # 特定 PID
+sudo opensnoop -n nginx # 特定程式名稱
+
+# 自訂 bpftrace 腳本
+bpftrace -e '
+kprobe:vfs_open {
+    @opens[comm] = count();
+}
+kprobe:vfs_read {
+    @reads[comm] = count();
+}
+kprobe:vfs_write {
+    @writes[comm] = count();
+}
+interval:s:5 {
+    print(@opens);
+    print(@reads);
+    print(@writes);
+    clear(@opens);
+    clear(@reads);
+    clear(@writes);
+}'
+</code></pre>
+<hr />
+<h2 id="最佳實踐建議"><a class="header" href="#最佳實踐建議">最佳實踐建議</a></h2>
+<h3 id="開發階段"><a class="header" href="#開發階段">開發階段</a></h3>
+<ol>
+<li>使用 <code>pr_debug()</code> 和 dynamic debug</li>
+<li>編譯時開啟 <code>CONFIG_DEBUG_*</code> 選項</li>
+<li>使用 KASAN 檢測記憶體問題</li>
+</ol>
+<h3 id="測試階段"><a class="header" href="#測試階段">測試階段</a></h3>
+<ol>
+<li>SystemTap 或 bpftrace 進行動態分析</li>
+<li>Ftrace 追蹤函數調用</li>
+<li>perf 進行效能分析</li>
+</ol>
+<h3 id="生產環境"><a class="header" href="#生產環境">生產環境</a></h3>
+<ol>
+<li>eBPF 工具（低開銷）</li>
+<li>有限的 tracepoints</li>
+<li>kdump 準備 crash 分析</li>
+</ol>
+<h3 id="問題診斷流程"><a class="header" href="#問題診斷流程">問題診斷流程</a></h3>
+<ol>
+<li><strong>效能問題</strong>: perf → flamegraph → bpftrace</li>
+<li><strong>記憶體問題</strong>: KASAN → kmemleak → crash dump</li>
+<li><strong>死鎖問題</strong>: lockdep → ftrace → drgn</li>
+<li><strong>系統崩潰</strong>: kdump → crash → gdb</li>
+</ol>
+<hr />
+<h2 id="參考資源"><a class="header" href="#參考資源">參考資源</a></h2>
+<ul>
+<li><a href="https://www.kernel.org/doc/html/latest/">Linux Kernel Documentation</a></li>
+<li><a href="https://docs.cilium.io/en/stable/bpf/">BPF and XDP Reference Guide</a></li>
+<li><a href="http://www.brendangregg.com/bpf-performance-tools-book.html">Brendan Gregg's BPF Tools</a></li>
+<li><a href="https://github.com/iovisor/bcc/blob/master/docs/tutorial.md">bcc Tutorial</a></li>
+<li><a href="https://www.kernel.org/doc/html/latest/trace/index.html">Linux Tracing Technologies</a></li>
+<li><a href="https://ebpf.io/">eBPF.io</a></li>
+<li><a href="https://lwn.net/Kernel/">LWN.net Kernel Articles</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../linux_system/linux-process-thread-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../linux_system/systems-performance-tools-guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../linux_system/linux-process-thread-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../linux_system/systems-performance-tools-guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

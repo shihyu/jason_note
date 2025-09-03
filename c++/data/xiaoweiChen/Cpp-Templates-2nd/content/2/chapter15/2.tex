@@ -1,0 +1,107 @@
+比“T”复杂得多的参数化类型可以匹配到给定的参数类型。下面是一些例子:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+void f1(T*);
+
+template<typename E, int N>
+void f2(E(&)[N]);
+
+template<typename T1, typename T2, typename T3>
+void f3(T1 (T2::*)(T3*));
+
+class S {
+	public:
+	void f(double*);
+};
+
+void g (int*** ppp)
+{
+	bool b[42];
+	f1(ppp); // deduces T to be int**
+	f2(b); // deduces E to be bool and N to be 42
+	f3(&S::f); // deduces T1 = void, T2 = S, and T3 = double
+}
+\end{lstlisting} 
+
+复杂类型声明有基本的构造(指针、引用、数组和函数声明符;指向成员的声明符;模板标识;等等)，匹配过程从顶层构造开始，递归地遍历各个元素。大多数类型声明构造都可以用这种方式匹配，这称为推导上下文。然而，有一些结构不可推导上下文。例如:
+
+\begin{itemize}
+\item 
+限定类型名称。例如，永远不会使用像Q<T>::X这样的类型名来推导模板参数T。
+
+\item 
+非类型参数不只有非类型表达式，像S<I+1>这样的类型名永远不会用于推断I，也不会通过匹配类型为int(\&)[sizeof(S<T>)]的参数来推断T的类型。
+\end{itemize}
+
+这些限制并不奇怪，因为推导过程通常不唯一(甚至是有限的)，尽管限定类型名的这种限制有时容易忽略。非推导上下文不会表示程序出错，甚至不会说明分析的参数不能参与类型推导。为了说明这一点，看看下面这个更复杂的例子:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/fppm.cpp}
+\begin{lstlisting}[style=styleCXX]
+template<int N>
+class X {
+	public:
+	using I = int;
+	void f(int) {
+	}
+};
+
+template<int N>
+void fppm(void (X<N>::*p)(typename X<N>::I));
+
+int main()
+{
+	fppm(&X<33>::f); // fine: N deduced to be 33
+}
+\end{lstlisting}
+
+函数模板fppm()中，子构造X<N>::I不用推导上下文。然而，成员指针类型的成员类组件X<N>可推导上下文，当它推导出的参数N放入到非推导上下文时，将获得与实际参数类型兼容的类型\&X<33>::f。因此，参数匹配，推导成功。
+
+相反，对于完全由推导上下文构建的参数类型，推导也可能出现矛盾。例如，声明的类模板X和Y:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+void f(X<Y<T>, Y<T>>);
+
+void g()
+{
+	f(X<Y<int>, Y<int>>()); // OK
+	f(X<Y<int>, Y<char>>()); // ERROR: deduction fails
+}
+\end{lstlisting}
+
+第二次调用函数模板f()的问题是，两个参数T会推导出不同的类型，这是无效的(两种情况下，函数调用参数是通过调用类模板X的默认构造函数，获得的临时对象)。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

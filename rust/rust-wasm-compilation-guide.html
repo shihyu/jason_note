@@ -1,0 +1,370 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Rust WASM 編譯流程詳解 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="rust-wasm-編譯流程詳解"><a class="header" href="#rust-wasm-編譯流程詳解">Rust WASM 編譯流程詳解</a></h1>
+<p>基於你的 <code>buttplug_wasm</code> 專案，以下是完整的編譯邏輯說明：</p>
+<h2 id="1-依賴解析階段"><a class="header" href="#1-依賴解析階段">1. 依賴解析階段</a></h2>
+<h3 id="cargotoml-的角色"><a class="header" href="#cargotoml-的角色">Cargo.toml 的角色</a></h3>
+<pre><code class="language-toml">[dependencies]
+buttplug = { version = "7.1.13", default-features = false, features = ["wasm"] }
+js-sys = "0.3.68"
+wasm-bindgen = { version = "0.2.91", features = ["serde-serialize"] }
+tokio = { version = "1.36.0", features = ["sync", "macros", "io-util"] }
+# ... 其他依賴
+</code></pre>
+<ul>
+<li><strong>直接依賴</strong>：你在 <code>Cargo.toml</code> 中明確指定的套件</li>
+<li><strong>版本約束</strong>：指定可接受的版本範圍</li>
+<li><strong>特性選擇</strong>：控制編譯哪些功能模組</li>
+</ul>
+<h3 id="cargolock-的角色"><a class="header" href="#cargolock-的角色">Cargo.lock 的角色</a></h3>
+<pre><code class="language-toml">[[package]]
+name = "buttplug"
+version = "7.1.13"
+dependencies = [
+ "aes",
+ "async-stream", 
+ "tokio",
+ # ... 完整的間接依賴清單
+]
+</code></pre>
+<ul>
+<li><strong>版本鎖定</strong>：確保每次編譯使用完全相同的版本</li>
+<li><strong>間接依賴</strong>：記錄所有依賴的依賴關係</li>
+<li><strong>編譯一致性</strong>：不同環境下產生相同的編譯結果</li>
+</ul>
+<h2 id="2-依賴樹建構"><a class="header" href="#2-依賴樹建構">2. 依賴樹建構</a></h2>
+<pre class="mermaid">graph TD
+    A[buttplug_wasm] --&gt; B[buttplug 7.1.13]
+    A --&gt; C[wasm-bindgen 0.2.91]
+    A --&gt; D[tokio 1.36.0]
+    B --&gt; E[async-trait 0.1.77]
+    B --&gt; F[serde 1.0.197]
+    C --&gt; G[js-sys 0.3.68]
+    D --&gt; H[futures 0.3.30]
+    # ... 更多間接依賴
+</pre>
+<h2 id="3-源碼下載與快取"><a class="header" href="#3-源碼下載與快取">3. 源碼下載與快取</a></h2>
+<ul>
+<li><strong>下載位置</strong>：<code>~/.cargo/registry/src/</code></li>
+<li><strong>快取機制</strong>：避免重複下載相同版本</li>
+<li><strong>完整性檢查</strong>：驗證下載的源碼完整性</li>
+</ul>
+<h2 id="4-編譯配置分析"><a class="header" href="#4-編譯配置分析">4. 編譯配置分析</a></h2>
+<h3 id="crate-type-設定"><a class="header" href="#crate-type-設定">crate-type 設定</a></h3>
+<pre><code class="language-toml">[lib]
+crate-type = ["cdylib", "rlib"]
+</code></pre>
+<ul>
+<li><strong>cdylib</strong>：編譯成動態函式庫，用於生成 WASM</li>
+<li><strong>rlib</strong>：Rust 原生函式庫格式，供其他 Rust 專案使用</li>
+</ul>
+<h3 id="特性標誌影響"><a class="header" href="#特性標誌影響">特性標誌影響</a></h3>
+<pre><code class="language-toml">buttplug = { default-features = false, features = ["wasm"] }
+</code></pre>
+<ul>
+<li><strong>條件編譯</strong>：只編譯 WASM 環境需要的程式碼</li>
+<li><strong>減少體積</strong>：排除不需要的功能模組</li>
+</ul>
+<h2 id="5-統一編譯階段"><a class="header" href="#5-統一編譯階段">5. 統一編譯階段</a></h2>
+<h3 id="編譯目標"><a class="header" href="#編譯目標">編譯目標</a></h3>
+<pre><code class="language-bash">wasm-pack build --release --target web
+</code></pre>
+<p><strong>編譯流程</strong>：</p>
+<pre><code>所有 Rust 源碼 (主專案 + 所有依賴)
+    ↓
+rustc (with wasm32-unknown-unknown target)
+    ↓ 
+LLVM 最佳化
+    ↓
+單一 WASM 二進制檔案
+</code></pre>
+<h3 id="跨函式庫最佳化"><a class="header" href="#跨函式庫最佳化">跨函式庫最佳化</a></h3>
+<ul>
+<li><strong>Link Time Optimization (LTO)</strong>：跨套件的函式內聯</li>
+<li><strong>死代碼消除</strong>：移除未使用的函式和類型</li>
+<li><strong>常數摺疊</strong>：編譯時計算常數表達式</li>
+</ul>
+<h2 id="6-wasm-特定最佳化"><a class="header" href="#6-wasm-特定最佳化">6. WASM 特定最佳化</a></h2>
+<h3 id="--release-模式優化"><a class="header" href="#--release-模式優化">--release 模式優化</a></h3>
+<ul>
+<li><strong>程式碼最佳化</strong>：<code>-O3</code> 等級優化</li>
+<li><strong>體積最佳化</strong>：<code>wee_alloc</code> 記憶體分配器</li>
+<li><strong>除錯資訊移除</strong>：減小最終檔案大小</li>
+</ul>
+<h3 id="--target-web-配置"><a class="header" href="#--target-web-配置">--target web 配置</a></h3>
+<pre><code class="language-javascript">// 生成適合瀏覽器的 ES6 模組
+import init, { buttplug_create_embedded_wasm_server } from './pkg/buttplug_wasm.js';
+</code></pre>
+<h2 id="7-輸出產物"><a class="header" href="#7-輸出產物">7. 輸出產物</a></h2>
+<h3 id="主要檔案"><a class="header" href="#主要檔案">主要檔案</a></h3>
+<pre><code>pkg/
+├── buttplug_wasm.wasm          # 主 WASM 二進制檔案 (~500KB-2MB)
+├── buttplug_wasm.js            # JavaScript 綁定
+├── buttplug_wasm_bg.wasm       # 背景 WASM 模組
+├── buttplug_wasm_bg.js         # 背景 JS 綁定
+├── package.json                # NPM 套件設定
+└── buttplug_wasm.d.ts          # TypeScript 型別定義
+</code></pre>
+<h3 id="檔案關係"><a class="header" href="#檔案關係">檔案關係</a></h3>
+<ul>
+<li><strong>WASM 檔案</strong>：包含所有 Rust 程式碼的編譯結果</li>
+<li><strong>JS 綁定</strong>：提供 JavaScript 可調用的介面</li>
+<li><strong>型別定義</strong>：支援 TypeScript 開發</li>
+</ul>
+<h2 id="8-執行時載入"><a class="header" href="#8-執行時載入">8. 執行時載入</a></h2>
+<pre><code class="language-javascript">// 瀏覽器中載入和初始化
+import init, { buttplug_create_embedded_wasm_server } from './pkg/buttplug_wasm.js';
+
+async function main() {
+    await init(); // 載入 WASM 模組
+    const server = buttplug_create_embedded_wasm_server(callback);
+}
+</code></pre>
+<h2 id="9-編譯時間考量"><a class="header" href="#9-編譯時間考量">9. 編譯時間考量</a></h2>
+<ul>
+<li><strong>初次編譯</strong>：需要編譯所有依賴 (5-15 分鐘)</li>
+<li><strong>增量編譯</strong>：只重新編譯修改的部分 (30 秒 - 2 分鐘)</li>
+<li><strong>快取利用</strong>：Cargo 會快取已編譯的依賴</li>
+</ul>
+<p>這個編譯流程確保了最終的 WASM 檔案包含所有必要的功能，同時保持最佳的效能和最小的檔案大小。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../rust/rust-keywords-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../rust/dependency_import_patterns.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../rust/rust-keywords-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../rust/dependency_import_patterns.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

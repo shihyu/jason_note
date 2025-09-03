@@ -1,0 +1,222 @@
+string()命令用于操作字符串。它提供了多种模式，可以对字符串执行不同的操作:搜索和替换、操作、比较、哈希码、生成和JSON操作(自CMake 3.19以来的最后一个可用模式)。
+
+完整的细节可以在在线文档中找到: \url{https://cmake.org/cmake/ help/latest/command/string.html}。
+
+接受<input>参数的String()模式将接受多个<input>值，并在执行命令前将其连接起来:
+
+\begin{lstlisting}[style=styleCMake]
+string(PREPEND myVariable "a" "b" "c")
+\end{lstlisting}
+
+这等价于:
+
+\begin{lstlisting}[style=styleCMake]
+string(PREPEND myVariable "abc")
+\end{lstlisting}
+
+来研究一下所有可用的string()模式。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{搜索和替换}
+
+有以下几种模式:
+
+\begin{itemize}
+\item 
+string(FIND <haystack> <pattern> <out> [REVERSE]) 在<haystack>字符串中搜索<pattern>，并将找到的位置作为整数写入<out>变量。若使用REVERSE标志，将从字符串的末尾搜索到开头。这只适用于ASCII字符串(不提供多字节支持)。
+
+\item 
+string(REPLACE <pattern> <replace> <out> <input>) 用<replace>替换<input>中<pattern>的所有出现，并存储在<out>变量中。
+
+\item 
+string(REGEX MATCH <pattern> <out> <input>) 将<input>中<pattern>的第一次出现与<replace>匹配，并将其存储在<out>变量中。
+
+\item 
+string(REGEX MATCHALL <pattern> <out> <input>) 用<replace>匹配<input>中<pattern>的所有出现，并将它们作为逗号分隔的列表存储在<out>变量中。
+
+\item
+string(REGEX REPLACE <pattern> <replace> <out> <input>) 用<replace>表达式替换<input>中<pattern>的所有出现，并存储在<out>变量中。
+\end{itemize}
+
+正则表达式操作遵循标准库<regex>标头中定义的C++语法。可以使用捕获组添加匹配<replace>表达式与数字占位符:\verb|\|\verb|\|1，\verb|\|\verb|\|2…(需要双反斜杠，以便正确解析参数)。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{操作}
+
+有以下几种模式:
+
+\begin{itemize}
+\item 
+string(APPEND <out> <input>) 通过附加<input>字符串，改变存储在<out>中的字符串。
+
+\item 
+string(PREPEND <out> <input>) 通过在<input>字符串前面加上前缀，改变存储在<out>中的字符串。
+
+\item 
+string(CONCAT <out> <input>) 连接所有提供的<input>字符串并将它们存储在<out>变量中。
+
+\item 
+string(JOIN <glue> <out> <input>) 将所有提供的<input>字符串与<glue>值交错，并将其作为串联的字符串存储在<out>变量中(不要对列表变量使用此模式)。
+
+\item
+string(TOLOWER <string> <out>) 将<string>转换为小写并将其存储在<out>变量中。
+
+\item
+string(LENGTH <string> <out>) 计算<string>的字节数，并将结果存储在<out>变量中。
+
+\item
+string(SUBSTRING <string> <begin> <length> <out>) 从<begin>字节开始提取长度<length>字节的<string>的子字符串，并将其存储在<out>变量中。length为-1可以理解为“直到字符串结束”。
+
+\item
+string(STRIP <string> <out>) 从<string>中删除尾随和前导空格，并将结果存储在<out>变量中。
+
+\item 
+string(GENEX\_STRIP <string> <out>) 删除<string>中使用的所有生成器表达式，并将结果存储在<out>变量中。
+
+\item 
+string(REPEAT <string> <count> <out>) 生成一个包含<string>的<count>次重复的字符串，并将其存储在<out>变量中。
+\end{itemize}
+
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{比较}
+
+字符串的比较形式如下所示:
+
+\begin{lstlisting}[style=styleCMake]
+string(COMPARE <operation> <stringA> <stringB> <out>)
+\end{lstlisting}
+
+<operation>参数是以下参数之一:LESS，GREATER，EQUAL，NOTEQUAL，LESS\_EQUAL或GREATER\_EQUAL。将用于比较<stringa>与<stringb>，结果(true或false)将存储在<out>变量中。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{哈希}
+
+哈希模式有以下签名:
+
+\begin{lstlisting}[style=styleCMake]
+string(<algorithm> <out> <string>)
+\end{lstlisting}
+
+哈希有两个输入<string>和<algorithm>，并将结果存储在<out>变量中。支持以下算法:
+
+\begin{itemize}
+\item 
+MD5: Message-Digest Algorithm 5, RFC 1321
+
+\item 
+SHA1: US Secure Hash Algorithm 1, RFC 3174
+
+\item 
+SHA224: US Secure Hash Algorithms, RFC 4634
+
+\item 
+SHA256: US Secure Hash Algorithms, RFC 4634
+
+\item
+SHA384: US Secure Hash Algorithms, RFC 4634
+
+\item
+SHA512: US Secure Hash Algorithms, RFC 4634
+
+\item
+SHA3\_224: Keccak SHA-3
+
+\item
+SHA3\_256: Keccak SHA-3
+
+\item 
+SHA3\_384: Keccak SHA-3
+
+\item 
+SHA3\_512: Keccak SHA-3
+\end{itemize}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{生成}
+
+有以下几种模式:
+
+\begin{itemize}
+\item 
+string(ASCII <number>... <out>) 在<out>变量中存储给定<number>的ASCII字符。
+
+\item 
+string(HEX <string> <out>) 将<string>转换为它的十六进制表示形式并将其存储在<out>变量中(自CMake 3.18以来)。
+
+\item 
+string(CONFIGURE <string> <out> [@ONLY] [ESCAPE\_QUOTES]) 与configure\_file()的工作原理完全相同，但适用于字符串。结果存储在<out>变量中。
+
+\item 
+string(MAKE\_C\_IDENTIFIER <string> <out>) 将<string>中的非字母数字字符转换为下划线，并将结果存储在<out>变量中。
+
+\item
+string(RANDOM [LENGTH <len>] [ALPHABET <alphabet>] [RANDOM\_SEED <seed>] <out>)使用来自随机种子<seed>的可选<alphabet>生成<len>字符的随机字符串(默认为5)，并将结果存储在<out>变量中。
+
+\item
+string(TIMESTAMP <out> [<format>] [UTC]) 生成一个表示当前日期和时间的字符串，并将其存储在<out>变量中。
+
+\item
+string(UUID <out> ...) 生成一个通用唯一标识符。这种模式使用起来有点复杂。
+\end{itemize}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{JSON}
+
+对JSON格式字符串的操作使用以下签名:
+
+\begin{lstlisting}[style=styleCMake]
+string(JSON <out> [ERROR_VARIABLE <error>] <operation + args>)
+\end{lstlisting}
+
+有几种操作，都将结果存储在<out>变量中，错误存储在<error>变量中。操作及其参数如下:
+
+\begin{itemize}
+\item 
+GET <json> <member|index>... 使用<member>路径或<index>从<json>字符串中返回一个或多个元素的值。
+
+\item 
+TYPE <json> <member|index>... 使用<member>路径或<index>从<json>字符串中返回一个或多个元素的类型。
+
+\item 
+MEMBER <json> <member|index>... <array-index> 使用<member>路径或<index>从<json>字符串返回<array-index>位置上的一个或多个数组类型元素的成员名。
+
+\item 
+LENGTH <json> <member|index>... 使用<member>路径或<index>从<json>字符串中返回一个或多个数组类型元素的元素计数。
+
+\item
+REMOVE <json> <member|index>... 返回使用<member>路径或<index>从<json>字符串中删除一个或多个元素的结果。
+
+\item
+SET <json> <member|index>... <value> 使用<member>路径或<index>从<json>字符串中返回<value>上升到一个或多个元素的结果。
+
+\item
+EQUAL <jsonA> <jsonB> 计算<jsonA>和<jsonB>是否相等。
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,162 @@
+
+算法库包含一组用于在容器中查找元素的函数。std::find()函数及其派生函数在容器中依次搜索并返回指向第一个匹配元素的迭代器，若没有匹配则返回end()。
+
+\subsubsection{How to do it…}
+
+find()算法适用于满足前向或输入迭代器条件的容器。对于这个示例，我们将使用vector容器。find()算法按顺序搜索容器中第一个匹配的元素。先来看几个例子:
+
+\begin{itemize}
+\item 
+首先，在main()函数中声明一个int类型的vector:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	const vector<int> v{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+	...
+}
+\end{lstlisting}
+
+\item 
+现在，搜索值为7的元素:
+
+\begin{lstlisting}[style=styleCXX]
+auto it1 = find(v.begin(), v.end(), 7);
+if(it1 != v.end()) cout << format("found: {}\n", *it1);
+else cout << "not found\n";
+\end{lstlisting}
+
+find()算法接受三个参数:begin()和end()迭代器，以及要搜索的值。算法会返回其找到的第一个元素的迭代器，若搜索未能找到匹配，则返回end()迭代器。
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+found: 7
+\end{tcblisting}
+
+\item 
+也可以寻找比标量更复杂的对象，相应的对象需要支持相等比较运算符。下面是一个简单的结构体，带有operator==()的重载:
+
+\begin{lstlisting}[style=styleCXX]
+struct City {
+	string name{};
+	unsigned pop{};
+	bool operator==(const City& o) const {
+		return name == o.name;
+	}
+	string str() const {
+		return format("[{}, {}]", name, pop);
+	}
+};
+\end{lstlisting}
+
+注意，operator=()重载只比较name成员。
+
+这还包含了一个str()函数，其返回City元素的字符串形式。
+
+\item 
+现在可以声明一个City元素的vector:
+
+\begin{lstlisting}[style=styleCXX]
+const vector<City> c{
+	{ "London", 9425622 },
+	{ "Berlin", 3566791 },
+	{ "Tokyo", 37435191 },
+	{ "Cairo", 20485965 }
+};
+\end{lstlisting}
+
+\item 
+可以像搜索int vector一样搜索City vector:
+
+\begin{lstlisting}[style=styleCXX]
+auto it2 = find(c.begin(), c.end(), City{"Berlin"});
+if(it2 != c.end()) cout << format("found: {}\n",
+	it2->str());
+else cout << "not found\n";
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+found: [Berlin, 3566791]
+\end{tcblisting}
+
+\item 
+若想搜索pop成员而不是name，可以使用find\_if()函数和一个谓词:
+
+\begin{lstlisting}[style=styleCXX]
+auto it3 = find_if(begin(c), end(c),
+	[](const City& item)
+		{ return item.pop > 20000000; });
+if(it3 != c.end()) cout << format("found: {}\n",
+	it3->str());
+else cout << "not found\n";
+\end{lstlisting}
+
+谓词会测试pop成员，可以得到如下输出:
+
+\begin{tcblisting}{commandshell={}}
+found: [Tokyo, 37435191]
+\end{tcblisting}
+
+\item 
+注意，find\_if()的结果只返回满足谓词的第一个元素，尽管vector中有两个元素的pop值大于20,000,000。
+
+find()和find\_if()函数只返回一个迭代器。范围库提供了ranges::views::filter()，这是一个视图适配器，可为我们提供所有匹配的迭代器位置，而不会干扰到vector:
+
+\begin{lstlisting}[style=styleCXX]
+auto vw1 = ranges::views::filter(c,
+	[](const City& c){ return c.pop > 20000000; });
+for(const City& e : vw1) cout << format("{}\n", e.str());
+\end{lstlisting}
+
+输出两个匹配的元素:
+
+\begin{tcblisting}{commandshell={}}
+[Tokyo, 37435191]
+[Cairo, 20485965]
+\end{tcblisting}
+\end{itemize}
+
+\subsubsection{How it works…}
+
+find()和find\_if()函数依次在容器中搜索，检查每个元素，直到找到为止。若找到匹配项，则返回指向该匹配项的迭代器。若到达end()迭代器而没有找到匹配项，则返回end()迭代器表明没有找到匹配项。
+
+find()函数接受三个参数，begin()和end()迭代器，以及一个搜索值。其签名是这样的:
+
+\begin{lstlisting}[style=styleCXX]
+template<class InputIt, class T>
+constexpr InputIt find(InputIt, InputIt, const T&)
+\end{lstlisting}
+
+find\_if()函数使用谓词，而不是值:
+
+\begin{lstlisting}[style=styleCXX]
+template<class InputIt, class UnaryPredicate>
+constexpr InputIt find_if(InputIt, InputIt, UnaryPredicate)
+\end{lstlisting}
+
+
+\subsubsection{There's more…}
+
+find()函数都按顺序搜索并在找到第一个匹配时返回。若想找到更多匹配的元素，可以使用范围库中的filter()函数:
+
+\begin{lstlisting}[style=styleCXX]
+template<ranges::viewable_range R, class Pred>
+constexpr ranges::view auto ranges::views::filter(R&&, Pred&&);
+\end{lstlisting}
+
+filter()函数的作用是返回一个视图，其指向容器，其中只包含筛选过的元素。然后，可以像使用其他容器一样使用视图:
+
+\begin{lstlisting}[style=styleCXX]
+auto vw1 = std::ranges::views::filter(c,
+	[](const City& c){ return c.pop > 20000000; });
+for(const City& e : vw1) cout << format("{}\n", e.str());
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+[Tokyo, 37435191]
+[Cairo, 20485965]
+\end{tcblisting}

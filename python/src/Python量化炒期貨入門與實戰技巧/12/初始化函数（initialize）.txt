@@ -1,0 +1,24 @@
+def initialize(context):
+    # 设定沪深300作为基准
+    set_benchmark('000300.XSHG')
+    # 开启动态复权模式(真实价格)
+    set_option('use_real_price', True)
+    # 过滤掉order系列API产生的比error级别低的log
+    # log.set_level('order', 'error')
+    # 输出内容到日志 log.info()
+    log.info('初始函数开始运行且全局只运行一次')
+    ### 期货相关设定 ###
+    # 设定账户为期货账户
+    set_subportfolios([SubPortfolioConfig(cash=context.portfolio.starting_cash, type='index_futures')])
+    # 期货类每笔交易时的手续费是：买入时万分之0.23,卖出时万分之0.23,平今仓为万分之23
+    set_order_cost(OrderCost(open_commission=0.000023, close_commission=0.000023,close_today_commission=0.0023), type='index_futures')
+    # 设定期货保证金比例
+    set_option('futures_margin_rate', 0.15)
+    # 设置期货交易的滑点
+    set_slippage(StepRelatedSlippage(2))
+      # 开盘前运行
+    run_daily( before_market_open, time='09:00', reference_security='IF8888.CCFX')
+      # 开盘时运行
+    run_daily( market_open, time='09:30', reference_security='IF8888.CCFX')
+      # 收盘后运行
+    run_daily( after_market_close, time='15:30', reference_security='IF8888.CCFX')

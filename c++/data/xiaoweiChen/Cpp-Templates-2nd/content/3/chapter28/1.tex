@@ -1,0 +1,117 @@
+当模板错误发生时，问题通常在实例化后发现，从而会有冗长的错误消息，就像在第9.4节中那样。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}无疑在写代码时会遇到一些错误消息，会使最初的示例看起来很乏味!
+\end{tcolorbox}
+
+为了说明这一点，请考虑以下的手写代码:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+void clear (T& p)
+{
+	*p = 0; // assumes T is a pointer-like type
+}
+
+template<typename T>
+void core (T& p)
+{
+	clear(p);
+}
+
+template<typename T>
+void middle (typename T::Index p)
+{
+	core(p);
+}
+
+template<typename T>
+void shell (T const& env)
+{
+	typename T::Index i;
+	middle<T>(i);
+}
+\end{lstlisting}
+
+这个例子阐明了软件开发的分层:像shell()这样的高级函数模板依赖于像middle()这样的组件，而这些组件本身会使用像core()这样的功能。当实例化shell()时，下面的层也需要实例化。这个例子中，有一个问题:core()实例化为int类型(在middle()中使用Client::Index)，并试图错误的解引用该类型。
+
+该错误仅在实例化时可检测到。例如:
+
+\begin{lstlisting}[style=styleCXX]
+class Client
+{
+	public:
+	using Index = int;
+};
+
+int main()
+{
+	Client mainClient;
+	shell(mainClient);
+}
+\end{lstlisting}
+
+好的通用诊断包括导致问题的所有级别的跟踪，但是获得这么多信息，也会让我们感觉手足无措。
+
+在[StroustrupDnE]中可以找到围绕这个问题核心思想的讨论，Bjarne Stroustrup确定了两类方法来更早地确定模板参数是否满足一组约束:通过语言扩展或更早的参数使用。在第17.8节和附录E中介绍了前一种选择，后一种选择包括在浅层实例化中强制错误。这通过插入未使用的代码来实现，若代码使用的模板参数不满足更深层模板的要求，就会触发错误。
+
+前面的例子中，可以在shell()中添加代码，尝试对T::Index类型的值解引用。例如:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+void ignore(T const&)
+{ }
+
+template<typename T>
+void shell (T const& env)
+{
+	class ShallowChecks
+	{
+		void deref(typename T::Index ptr) {
+			ignore(*ptr);
+		}
+	};
+	typename T::Index i;
+	middle(i);
+}
+\end{lstlisting}
+
+若T是不能解引用T::Index的类型，则会在局部类ShallowChecks上出现编译错误。因为没有使用局部类，所以添加的代码不会影响shell()函数的运行时间，但许多编译器会警告说没有使用ShallowChecks(成员也是如此)。可以使用ignore()模板等技巧来抑制此类警告，但也会增加代码的复杂性。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{概念检查}
+
+显然，示例中的代码开发可能会变得与实现模板的实际功能代码一样复杂。为了控制这种复杂性，可以尝试在某种类型的库中收集各种代码片段。这样的库可以包含宏，当模板参数替换违反该特定参数的概念时，这些宏可以扩展为触发适当错误的代码。这类库中最流行的是Concept Check库，是Boost发行版的一部分(参见[BCCL])。但这种技术的可移植性不是特别好(不同编译器诊断错误的方式不同)，有时还会掩盖在更高级别上无法捕获错误的问题。
+
+当C++中有了概念(参见附录E)，就有了其他的方法来支持需求和预期行为的定义。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

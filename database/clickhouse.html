@@ -1,0 +1,560 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>ClickHouse - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="clickhouse"><a class="header" href="#clickhouse">clickhouse</a></h1>
+<p>https://phoenixnap.com/kb/install-clickhouse-on-ubuntu-20-04</p>
+<h2 id="installing-clickhouse-on-ubuntu-2004"><a class="header" href="#installing-clickhouse-on-ubuntu-2004">Installing ClickHouse on Ubuntu 20.04</a></h2>
+<pre><code class="language-sh">sudo apt-get install -y apt-transport-https ca-certificates dirmngr
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 8919F6BD2B48D754
+
+echo "deb https://packages.clickhouse.com/deb stable main" | sudo tee \
+    /etc/apt/sources.list.d/clickhouse.list
+    
+sudo apt-get update
+
+sudo apt-get install -y clickhouse-server clickhouse-client
+
+sudo service clickhouse-server start
+clickhouse-client # or "clickhouse-client --password" if you've set up a password.
+</code></pre>
+<h2 id="getting-started-with-clickhouse"><a class="header" href="#getting-started-with-clickhouse">Getting Started With ClickHouse</a></h2>
+<pre><code class="language-sh">sudo systemctl start clickhouse-server
+sudo systemctl status clickhouse-server
+</code></pre>
+<pre><code>● clickhouse-server.service - ClickHouse Server (analytic DBMS for big data)
+     Loaded: loaded (/lib/systemd/system/clickhouse-server.service; enabled; vendor preset: enabled)
+     Active: active (running) since Mon 2022-09-12 16:07:10 CST; 5s ago
+   Main PID: 429578 (clckhouse-watch)
+      Tasks: 205 (limit: 18726)
+     Memory: 73.7M
+     CGroup: /system.slice/clickhouse-server.service
+             ├─429578 clickhouse-watchdog        --config=/etc/clickhouse-server/config.xml --pid-file=/run/clickhouse-server/clickhouse-server.pid
+             └─429596 /usr/bin/clickhouse-server --config=/etc/clickhouse-server/config.xml --pid-file=/run/clickhouse-server/clickhouse-server.pid
+
+ 9月 12 16:07:10 nb-jasonyao systemd[1]: Started ClickHouse Server (analytic DBMS for big data).
+ 9月 12 16:07:10 nb-jasonyao clickhouse-server[429578]: Processing configuration file '/etc/clickhouse-server/config.xml'.
+ 9月 12 16:07:10 nb-jasonyao clickhouse-server[429578]: Logging trace to /var/log/clickhouse-server/clickhouse-server.log
+ 9月 12 16:07:10 nb-jasonyao clickhouse-server[429578]: Logging errors to /var/log/clickhouse-server/clickhouse-server.err.log
+ 9月 12 16:07:10 nb-jasonyao clickhouse-server[429596]: Processing configuration file '/etc/clickhouse-server/config.xml'.
+ 9月 12 16:07:10 nb-jasonyao clickhouse-server[429596]: Saved preprocessed configuration to '/var/lib/clickhouse/preprocessed_configs/config.xml'.
+ 9月 12 16:07:10 nb-jasonyao clickhouse-server[429596]: Processing configuration file '/etc/clickhouse-server/users.xml'.
+ 9月 12 16:07:10 nb-jasonyao clickhouse-server[429596]: Merging configuration file '/etc/clickhouse-server/users.d/default-password.xml'.
+ 9月 12 16:07:10 nb-jasonyao clickhouse-server[429596]: Saved preprocessed configuration to '/var/lib/clickhouse/preprocessed_configs/users.xml'.
+</code></pre>
+<pre><code class="language-sh">clickhouse-client --password f0409 --user default
+</code></pre>
+<h1 id="python-clickhouse-driver"><a class="header" href="#python-clickhouse-driver">python clickhouse-driver</a></h1>
+<pre><code class="language-sh">pip install clickhouse-driver
+</code></pre>
+<pre><code class="language-py">from clickhouse_driver import Client
+from io import StringIO
+import requests
+import pandas as pd
+
+client = Client(host="localhost", port="9000", user="default", password="f0409")
+
+def get_wespai_data(url):
+    headers = {
+        "user-agent": "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36"
+    }
+    TAIGU1 = requests.get(url, headers=headers)
+    TAIGU1.encoding = "utf-8"
+    raw_data = pd.read_html(StringIO(TAIGU1.text))[0]
+    #raw_data.to_csv(FILE_name, header=True, index=False, encoding="utf-8")
+    return raw_data
+
+df = get_wespai_data("https://stock.wespai.com/p/48812")
+
+
+def read_sql(sql):
+    data, columns = client.execute(sql, columnar=True, with_column_types=True)
+    df = pd.DataFrame({re.sub(r"\W", "_", col[0]): d for d, col in zip(data, columns)})
+    return df
+
+
+def get_type_dict(tb_name):
+    sql = f"select name, type from system.columns where table='{tb_name}';"
+    df = read_sql(sql)
+    df = df.set_index("name")
+    type_dict = df.to_dict("dict")["type"]
+    return type_dict
+
+
+def to_sql(df, tb_name):
+    type_dict = get_type_dict(tb_name)
+    columns = list(type_dict.keys())
+    # 類型處理
+    for i in range(len(columns)):
+        col_name = columns[i]
+        col_type = type_dict[col_name]
+        if "Date" in col_type:
+            df[col_name] = pd.to_datetime(df[col_name])
+        elif "Int" in col_type:
+            df[col_name] = df[col_name].astype("int")
+        elif "Float" in col_type:
+            df[col_name] = df[col_name].astype("float")
+        elif col_type == "String":
+            df[col_name] = df[col_name].astype("str").fillna("")
+    # df數據存入clickhouse
+    cols = ",".join(columns)
+    data = df.to_dict("records")
+    client.execute(f"INSERT INTO {tb_name} ({cols}) VALUES", data, types_check=True)
+
+
+if __name__ == '__main__':
+    print(client.execute("SHOW DATABASES"))
+    client.execute("DROP TABLE IF EXISTS test")
+    print(client.execute("SHOW TABLES"))
+    client.execute("CREATE TABLE test (x Int32) ENGINE = Memory")
+    print(client.execute("SHOW TABLES"))
+
+    client.execute("INSERT INTO test (x) VALUES", [{"x": 100}])
+    client.execute("INSERT INTO test (x) VALUES", [[200]])
+    client.execute(
+        "INSERT INTO test (x) " "SELECT * FROM system.numbers LIMIT %(limit)s", {"limit": 3}
+    )
+    df = get_wespai_data("https://stock.wespai.com/p/48812")
+    print(df.to_markdown())
+
+</code></pre>
+<h2 id="gui-tool"><a class="header" href="#gui-tool">GUI TOOL</a></h2>
+<p>https://dbeaver.io/download/</p>
+<p>https://dbeaver.io/files/dbeaver-ce-latest-linux.gtk.x86_64.tar.gz</p>
+<h2 id="使用-pandas-讀寫-clickhouse"><a class="header" href="#使用-pandas-讀寫-clickhouse">使用 Pandas 讀寫 ClickHouse</a></h2>
+<p>Pandas 本身不支援 ClickHouse 相關操作, 本篇部落格主要是記錄一下自己封裝的一些讀寫操作, 所以嚴格來說標題應該是: 如何從 ClickHouse 讀取資料到 DataFrame 及將 DataFrame 寫入 ClickHouse.</p>
+<h3 id="一-pandas-讀取-clickhouse"><a class="header" href="#一-pandas-讀取-clickhouse">一. Pandas 讀取 ClickHouse</a></h3>
+<p>GitHub 上面有幾個 Python 操作 ClickHouse 的開放原始碼專案, 不過收藏數量都不多(幾百個 star), 經過試用, 發現 clickhouse_driver 這個項目相對靠譜一點, 先使用 pip 安裝 clickhouse_driver, 讀取資料的程式碼如下:</p>
+<pre><code class="language-py">from clickhouse_driver import Client
+import pandas as pd
+import re
+
+client = Client(host="xxx", database="xxx", user="xxx", password="xxx")
+
+def read_sql(sql):
+    data, columns = client.execute(sql, columnar=True, with_column_types=True)
+    df = pd.DataFrame({re.sub(r"\W", "_", col[0]): d for d, col in zip(data, columns)})
+    return df
+</code></pre>
+<p>使用 ClickHouse 的查詢命令也可以將資料讀出, 而且速度特別快, 但是得到的資料是一個超長的字串, 想要轉成 DataFrame 的話需要自己做切分和轉換, 操作比較麻煩, 以後有時間再嘗試, 查詢資料的程式碼如下:</p>
+<pre><code class="language-python">import subprocess
+
+def read_sql(sql):
+    cmd = f'clickhouse-client -t --query "{sql}"'
+    data = subprocess.getoutput(cmd)
+    return data
+</code></pre>
+<h3 id="二-pandas-寫入-clickhouse"><a class="header" href="#二-pandas-寫入-clickhouse">二. Pandas 寫入 ClickHouse</a></h3>
+<p>由於 Pandas 的資料類型跟 ClickHouse 不同, 所以有些資料類型需要做一些處理, 大概的思路是</p>
+<ul>
+<li>
+<p>獲取 ClickHouse 中指定表的各個欄位的資料類型</p>
+</li>
+<li>
+<p>修改將要寫入 ClickHouse 的 DataFrame 的資料類型</p>
+</li>
+<li>
+<p>將 DataFrame 裝換為字典形式</p>
+</li>
+<li>
+<p>呼叫 ClickHouse 的 insert 命令將字典資料匯入庫中*</p>
+</li>
+</ul>
+<p>程式碼實現如下:</p>
+<pre><code class="language-py">from clickhouse_driver import Client
+import pandas as pd
+import re
+
+client = Client(host="xxx", database="xxx", user="xxx", password="xxx")
+
+
+def read_sql(sql):
+    data, columns = client.execute(sql, columnar=True, with_column_types=True)
+    df = pd.DataFrame({re.sub(r"\W", "_", col[0]): d for d, col in zip(data, columns)})
+    return df
+
+
+def get_type_dict(tb_name):
+    sql = f"select name, type from system.columns where table='{tb_name}';"
+    df = read_sql(sql)
+    df = df.set_index("name")
+    type_dict = df.to_dict("dict")["type"]
+    return type_dict
+
+
+def to_sql(df, tb_name):
+    type_dict = get_type_dict(tb_name)
+    columns = list(type_dict.keys())
+    # 類型處理
+    for i in range(len(columns)):
+        col_name = columns[i]
+        col_type = type_dict[col_name]
+        if "Date" in col_type:
+            df[col_name] = pd.to_datetime(df[col_name])
+        elif "Int" in col_type:
+            df[col_name] = df[col_name].astype("int")
+        elif "Float" in col_type:
+            df[col_name] = df[col_name].astype("float")
+        elif col_type == "String":
+            df[col_name] = df[col_name].astype("str").fillna("")
+    # df數據存入clickhouse
+    cols = ",".join(columns)
+    data = df.to_dict("records")
+    client.execute(f"INSERT INTO {tb_name} ({cols}) VALUES", data, types_check=True)
+
+</code></pre>
+<hr />
+<h2 id="pandas-寫入-clickhouse"><a class="header" href="#pandas-寫入-clickhouse">Pandas 寫入 clickhouse</a></h2>
+<pre><code class="language-py">from clickhouse_driver import Client
+from io import StringIO
+import numpy as np
+import pandahouse as ph
+import requests
+import pandas as pd
+
+
+def get_wespai_data(url):
+    headers = {
+        "user-agent": "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36"
+    }
+    TAIGU1 = requests.get(url, headers=headers)
+    TAIGU1.encoding = "utf-8"
+    raw_data = pd.read_html(StringIO(TAIGU1.text))[0]
+    return raw_data
+
+
+def insert_df_to_ch(df, str_database, str_table, bool_drop=True):
+    dtypes_dict = dict(df.dtypes)
+    dict_dtype = {}
+    ch_type_convert_dict = {
+        np.dtype("datetime64[ns]"): "Datetime64",
+        np.dtype("int64"): "Int64",
+        np.dtype("float64"): "Float64",
+        np.dtype("object"): "String",
+        np.dtype("bool"): "Bool",
+    }
+
+    create_table_cmd_str = ""
+    for x in dtypes_dict:
+        type_str = ch_type_convert_dict.get(dtypes_dict[x], None)
+        if type_str is None:
+            print(f"Undefined type {dtypes_dict[x]}")
+        create_table_cmd_str = create_table_cmd_str + f"`{x}` {type_str} DEFAULT 0, "
+
+    create_table_cmd_str = f"CREATE TABLE IF NOT EXISTS {str_database}.{str_table} ( {create_table_cmd_str[:-2]}) ENGINE = Log"
+    # print(create_table_cmd_str)
+
+    client = Client(host="localhost", port="9000", user="default", password="f0409")
+    client.execute(f'CREATE DATABASE IF NOT EXISTS {str_database};')
+    if bool_drop:
+        client.execute(f'DROP TABLE IF EXISTS {str_database}.{str_table};')
+    client.execute(create_table_cmd_str)
+
+    connection = dict(
+        database=str_database, host="http://127.0.0.1:8123/", user="default", password="f0409"
+    )
+
+    ph.to_clickhouse(df, str_table, index=False, chunksize=100000, connection=connection)
+
+
+if __name__ == '__main__':
+    df = get_wespai_data("https://stock.wespai.com/p/48812")
+    #print(df)
+    insert_df_to_ch(df, "CRYPTO", "TEST11" + "_MM_TEST", True)
+
+</code></pre>
+<hr />
+<pre><code class="language-sh">組態檔案路徑：/etc/clickhouse-server/，默認的組態檔案為config.xml，但是建議將更新的組態放入config.d資料夾下，以防版本更新導致修改檔案被覆蓋。
+
+默認資料保存路徑：/var/lib/clickhouse/
+
+如果改路徑下的儲存空間比較小，建議將其該為大儲存空間下的目錄，例如：/app/clickhouse
+
+注意：請注意/app/clickhouse的存取權，需要賦予clickhouse使用者的存取權，也可以直接使用chmod 775 /app/clickhouse為其設定寫存取權。
+
+
+mkdir clickhouse_data/ 
+sudo chown -R clickhouse:clickhouse clickhouse_data/
+vim /etc/clickhouse-server/config.xml
+&lt;path&gt;/home/shihyu/clickhouse_data/&lt;/path&gt;
+systemctl stop clickhouse-server
+systemctl restart clickhouse-server
+sudo systemctl status clickhouse-server
+</code></pre>
+<h2 id="刪除xx日期之前的數據"><a class="header" href="#刪除xx日期之前的數據">刪除XX日期之前的數據</a></h2>
+<pre><code class="language-python">from clickhouse_driver import Client
+from datetime import datetime, timedelta
+
+client = Client(
+    host="localhost",
+    port="9000",
+    user="default",
+    password="f0409",
+    settings={"allow_experimental_lightweight_delete": True},
+)
+str_database = "CRYPTO"
+str_table = "Bitopro_Orderbook_Partition"
+
+# 計算三個月前的日期
+three_months_ago = datetime.now() - timedelta(days=90)
+print(three_months_ago.strftime("%Y-%m-%d %H:%M:%S"))
+
+# 構建 SQL 語句
+# sql = f"DELETE FROM {str_database}.{str_table} WHERE date &lt; toYYYYMMDD('{three_months_ago.strftime('%Y-%m-%d %H:%M:%S')}');"
+# sql = "DELETE FROM CRYPTO.Binance_Orderbook_Partition WHERE date &lt; '2023-01-27 10:24:30' "
+sql = f"DELETE FROM CRYPTO.Binance_Orderbook_Partition WHERE date &lt; '{three_months_ago.strftime('%Y-%m-%d %H:%M:%S')}' "
+print(sql)
+
+# 執行 SQL 語句
+client.execute(sql)
+</code></pre>
+<h2 id="clickhouse--partition"><a class="header" href="#clickhouse--partition">ClickHouse  Partition</a></h2>
+<p>在 ClickHouse 中，Partition 是一種將表格分割成小塊的技術。可以在表格中設置一個或多個 Partition，這樣它們就可以存儲在不同的位置中。當查詢表格時，ClickHouse 能夠根據分區策略只查詢所需的分區，這樣就能夠提高查詢效率、降低維護成本。</p>
+<p>在 ClickHouse 中，支持以下多種 Partition：</p>
+<ol>
+<li>Range Partition: 根據特定的欄位和一個或多個範圍，將表格分割成多個 Partition，並將每個 Partition 存儲在一個獨立的目錄中。</li>
+<li>List Partition: 根據特定的欄位和一個或多個值的列表，將表格分割成多個 Partition，並將每個 Partition 存儲在一個獨立的目錄中。</li>
+<li>Hash Partition: 將表格分割成多個 Partition，並根據 Hash 函數將每個 Partition 存儲在不同的磁盤上。</li>
+<li>Unpartitioned Table: 不對表格進行分區。</li>
+</ol>
+<p>分區可以幫助 ClickHouse 實現更精確的查詢，因為可以通過分區信息更快地定位查找對象。例如，當表格被分成多個 Partition 時，ClickHouse 可以只查詢特定的 Partition，而非查詢整個表格，從而提高查詢效率。此外，當需要刪除 Partition 時，也不需要刪除整個表格。</p>
+<p>總結來說，ClickHouse 中的 Partition 可以幫助你提高查詢效率、降低維護成本、以及增強表格的可用性和可擴展性。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../database/hash.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../database/dolphin.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../database/hash.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../database/dolphin.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,196 @@
+
+STL使用std::cin对象从标准输入流提供基于字符的输入。cin对象是一个全局单例对象，可从控制台读取输入作为istream输入流。
+
+默认情况下，cin每次读取一个单词，直到流的末尾:
+
+\begin{lstlisting}[style=styleCXX]
+string word{};
+cout << "Enter words: ";
+while(cin >> word) {
+	cout << format("[{}] ", word);
+}
+cout << '\n';
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+$ ./working
+Enter words: big light in sky
+[big] [light] [in] [sky]
+\end{tcblisting}
+
+这可能会让一些人认为cin功能很弱。
+
+虽然cin确实有它的怪癖，但其更容易用来提供面向行的输入。
+
+\subsubsection{How to do it…}
+
+要从cin获得基本的面向行的功能，需要理解两个重要的行为。一种是一次获得一行字的能力，而不是一次获得一个字。另一个是在出现错误条件后重置流的能力。让我们来了解一下细节:
+
+\begin{itemize}
+\item 
+首先，需要提示用户进行输入。下面是一个简单的提示函数:
+
+\begin{lstlisting}[style=styleCXX]
+bool prompt(const string_view s, const string_view s2 = "") {
+	if(s2.size()) cout << format("{} ({}): ", s, s2);
+	else cout << format("{}: ", s);
+	cout.flush();
+	return true;
+}
+\end{lstlisting}
+
+调用count.flush()确保立即显示输出。有时，输出不包括换行符时，输出流可能不会自动刷新。
+
+\item 
+cin类有一个getline()方法，从输入流中获取一行文本，并将其放入C-string数组中:
+
+\begin{lstlisting}[style=styleCXX]
+constexpr size_t MAXLINE{1024 * 10};
+char s[MAXLINE]{};
+const char * p1{ "Words here" };
+prompt(p1);
+cin.getline(s, MAXLINE, '\n');
+cout << s << '\n';
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+Words here: big light in sky
+big light in sky
+\end{tcblisting}
+
+cin.getline()方法有三个参数:
+
+\begin{lstlisting}[style=styleCXX]
+getline(char* s, size_t count, char delim );
+\end{lstlisting}
+
+第一个参数是目标的C-string数组。第二个是数组的大小。第三个是行尾的分隔符。
+
+该函数在数组中放置的字符不超过count-1，为空结束符留出空间。
+
+分隔符默认为换行符'\verb|\|n'字符。
+
+\item 
+STL还提供了一个独立的getline()函数，用于STL字符串对象:
+
+\begin{lstlisting}[style=styleCXX]
+string line{};
+const char * p1a{ "More words here" };
+prompt(p1a, "p1a");
+getline(cin, line, '\n');
+cout << line << '\n';
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+$ ./working
+More words here (p1a): slated to appear in east
+slated to appear in east
+\end{tcblisting}
+
+std::getline()函数有三个参数:
+
+\begin{lstlisting}[style=styleCXX]
+getline(basic_istream&& in, string& str, char delim );
+\end{lstlisting}
+
+第一个参数是输出流，第二个参数是对字符串对象的引用，第三个参数是行结束分隔符。
+
+若未指定，分隔符默认为换行符'\verb|\|n'字符。
+
+我感觉getline()比cin.getline()方法更方便。
+
+\item 
+可以使用cin从输入流中获取特定的类型。要做到这一点，必须能够处理错误条件。
+
+当cin遇到错误时，其将流设置为错误条件并停止接受输入。要在错误后重试输入，必须重置流的状态。下面是一个在错误后重置输入流的函数:
+
+\begin{lstlisting}[style=styleCXX]
+void clearistream() {
+	string s{};
+	cin.clear();
+	getline(cin, s);
+}
+\end{lstlisting}
+
+clear()函数的作用是:重置输入流中的错误标志，但将文本保留在缓冲区中。然后，通过读取一行并丢弃，来清除缓冲区。
+
+\item 
+可以通过对数值类型变量使用cin来接受数值输入:
+
+\begin{lstlisting}[style=styleCXX]
+double a{};
+double b{};
+const char * p2{ "Please enter two numbers" };
+for(prompt(p2); !(cin >> a >> b); prompt(p2)) {
+	cout << "not numeric\n";
+	clearistream();
+}
+cout << format("You entered {} and {}\n", a, b);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+$ ./working
+Please enter two numbers: a b
+not numeric
+Please enter two numbers: 47 73
+You entered 47 and 73
+\end{tcblisting}
+
+cin >{}> a >{}> b表达式接受来自控制台的输入，并尝试将前两个单词转换为与a和b兼容的类型(double)。若失败了，则再次使用clearistream()。
+
+\item 
+可以使用getline()分隔符参数来获取逗号分隔的输入:
+
+\begin{lstlisting}[style=styleCXX]
+line.clear();
+prompt(p3);
+while(line.empty()) getline(cin, line);
+stringstream ss(line);
+while(getline(ss, word, ',')) {
+	if(word.empty()) continue;
+	cout << format("word: [{}]\n", trimstr(word));
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+$ ./working
+Comma-separated words: this, that, other
+word: [this]
+word: [that]
+word: [other]
+\end{tcblisting}
+
+因为这段代码是在数字代码之后运行的，并且因为cin是混乱的，所以缓冲区中可能仍然有结束的行。while(line.empty())循环将有选择地获取空行。
+
+使用一个stringstream对象来处理单词，所以不必使用cin。可以使用getline()来获取一行，而无需等待文件结束状态。
+
+然后，在stringstream对象上调用getline()来解析用逗号分隔的单词。这给了我们带有前导空格的单词。我们使用本章中的trimstr()函数来清理空白字符。
+\end{itemize}
+
+\subsubsection{How it works…}
+
+
+std::cin对象比它看起来更有用，但使用它可能是一个挑战。其倾向于在流上留下行结束符，并且在出现错误的情况下，可能会忽略输入。
+
+解决方案是使用getline()，并在必要时将行放入stringstream中，以便于解析。
+
+
+
+
+
+
+
+
+
+
+

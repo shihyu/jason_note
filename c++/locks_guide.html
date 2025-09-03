@@ -1,0 +1,1315 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Linux 系統鎖與 C++ 鎖機制完整指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="linux-系統鎖與-c-鎖機制完整指南-"><a class="header" href="#linux-系統鎖與-c-鎖機制完整指南-">Linux 系統鎖與 C++ 鎖機制完整指南 📚</a></h1>
+<h2 id="-鎖機制視覺化概覽"><a class="header" href="#-鎖機制視覺化概覽">📊 鎖機制視覺化概覽</a></h2>
+<pre><code>鎖的選擇流程圖：
+┌─────────────────┐
+│   需要同步嗎？   │
+└─────┬───────────┘
+      │ 是
+      ▼
+┌─────────────────┐    ┌──────────────────┐
+│   簡單計數？     │───▶│   使用 atomic    │
+└─────┬───────────┘ 是 │   🔢 原子操作     │
+      │ 否           └──────────────────┘
+      ▼
+┌─────────────────┐    ┌──────────────────┐
+│   多讀少寫？     │───▶│ 使用 shared_mutex│
+└─────┬───────────┘ 是 │   📖 讀寫鎖       │
+      │ 否           └──────────────────┘
+      ▼
+┌─────────────────┐    ┌──────────────────┐
+│   等待時間短？   │───▶│  使用 spinlock   │
+└─────┬───────────┘ 是 │   🌀 自旋鎖       │
+      │ 否           └──────────────────┘
+      ▼
+┌─────────────────┐    ┌──────────────────┐
+│   需要等條件？   │───▶│使用condition_var │
+└─────┬───────────┘ 是 │   🚌 條件變數     │
+      │ 否           └──────────────────┘
+      ▼
+┌─────────────────┐
+│   使用 mutex    │
+│   🔒 互斥鎖      │
+└─────────────────┘
+</code></pre>
+<hr />
+<h2 id="linux-系統鎖-"><a class="header" href="#linux-系統鎖-">Linux 系統鎖 🐧</a></h2>
+<h3 id="1-mutex-互斥鎖-"><a class="header" href="#1-mutex-互斥鎖-">1. Mutex (互斥鎖) 🔒</a></h3>
+<p><strong>白話解釋</strong>: 就像廁所門鎖，一次只能一個人使用，其他人必須在外面等待<br />
+<strong>用途</strong>: 保護共享資源，同一時間只允許一個執行緒存取<br />
+<strong>使用時機</strong>: 當多個執行緒需要存取同一個變數或資料結構時</p>
+<pre><code>Mutex 工作示意圖：
+執行緒A: 🏃‍♂️ ──▶ 🔒[資源] ◀── ⏸️ 執行緒B (等待)
+                              ⏸️ 執行緒C (等待)
+
+時間線：
+T1: A獲得鎖 🔒✅    B等待❌    C等待❌
+T2: A釋放鎖 🔓      B獲得鎖✅   C等待❌  
+T3: B釋放鎖 🔓      C獲得鎖✅
+</code></pre>
+<p><strong>程式碼範例:</strong></p>
+<pre><code class="language-c">#include &lt;pthread.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+int shared_counter = 0;
+
+void* worker_thread(void* arg) {
+    pthread_mutex_lock(&amp;mutex);
+    shared_counter++;
+    printf("Counter: %d\n", shared_counter);
+    pthread_mutex_unlock(&amp;mutex);
+    return NULL;
+}
+
+int main() {
+    pthread_t threads[5];
+    
+    // 創建5個執行緒
+    for (int i = 0; i &lt; 5; i++) {
+        pthread_create(&amp;threads[i], NULL, worker_thread, NULL);
+    }
+    
+    // 等待所有執行緒完成
+    for (int i = 0; i &lt; 5; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    
+    printf("Final counter: %d\n", shared_counter);
+    pthread_mutex_destroy(&amp;mutex);
+    return 0;
+}
+</code></pre>
+<blockquote>
+<p>💡 <strong>完整範例</strong>: 查看 <code>locks_examples/01_pthread_mutex.c</code> 獲得完整可編譯的程式碼</p>
+</blockquote>
+<hr />
+<h3 id="2-semaphore-信號量-"><a class="header" href="#2-semaphore-信號量-">2. Semaphore (信號量) 🚗</a></h3>
+<p><strong>白話解釋</strong>: 像停車場管理員，有固定的停車位數量，滿了就要等有人開走<br />
+<strong>用途</strong>: 控制同時存取資源的執行緒數量<br />
+<strong>使用時機</strong>: 限制同時使用資源的執行緒數量，比如連線池</p>
+<pre><code>Semaphore 工作示意圖 (假設最多3個車位)：
+停車場: [🚗][🚗][🚗] ← 滿了
+等待區: 🚗💤 🚗💤 🚗💤
+
+當有車離開：
+停車場: [🚗][🚗][  ] ← 有空位
+等待區: 🚗💤 🚗💤     ← 一台車可以進入
+
+數量控制：
+sem_init(&amp;sem, 0, 3);  // 最多3個同時進入
+等待中: ████████░░     (8個等待，2個在執行)
+</code></pre>
+<p><strong>程式碼範例:</strong></p>
+<pre><code class="language-c">#include &lt;semaphore.h&gt;
+#include &lt;pthread.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;stdlib.h&gt;
+
+sem_t semaphore;
+
+void* worker(void* arg) {
+    int id = *(int*)arg;
+    sem_wait(&amp;semaphore);  // 取得資源
+    printf("Worker %d: Working...\n", id);
+    sleep(2);  // 模擬工作
+    printf("Worker %d: Done\n", id);
+    sem_post(&amp;semaphore);  // 釋放資源
+    return NULL;
+}
+
+int main() {
+    pthread_t threads[6];
+    int ids[6];
+    
+    sem_init(&amp;semaphore, 0, 3);  // 最多3個執行緒同時工作
+    
+    // 創建6個執行緒
+    for (int i = 0; i &lt; 6; i++) {
+        ids[i] = i + 1;
+        pthread_create(&amp;threads[i], NULL, worker, &amp;ids[i]);
+    }
+    
+    // 等待所有執行緒完成
+    for (int i = 0; i &lt; 6; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    
+    sem_destroy(&amp;semaphore);
+    return 0;
+}
+</code></pre>
+<hr />
+<h3 id="3-spinlock-自旋鎖-"><a class="header" href="#3-spinlock-自旋鎖-">3. Spinlock (自旋鎖) 🌀</a></h3>
+<p><strong>白話解釋</strong>: 像在門外一直敲門等待，不會離開也不會休息，持續檢查門是否開了<br />
+<strong>用途</strong>: 短時間等待的鎖，不會讓執行緒進入睡眠<br />
+<strong>使用時機</strong>: 預期等待時間很短的情況</p>
+<pre><code>Spinlock vs Mutex 比較：
+
+Spinlock 🌀:
+執行緒B: 🏃‍♂️ ──▶ 🌀🌀🌀 (一直轉圈檢查)
+        消耗CPU: ████████████
+
+Mutex 🔒:
+執行緒B: 🏃‍♂️ ──▶ 😴💤 (進入睡眠等待)
+        消耗CPU: ░░░░░░░░░░░░
+
+適用場景：
+短等待 (&lt; 10μs): Spinlock ✅
+長等待 (&gt; 10μs): Mutex ✅
+</code></pre>
+<p><strong>程式碼範例:</strong></p>
+<pre><code class="language-c">#include &lt;pthread.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+pthread_spinlock_t spinlock;
+int shared_data = 0;
+
+void* fast_operation(void* arg) {
+    for (int i = 0; i &lt; 1000; i++) {
+        pthread_spin_lock(&amp;spinlock);
+        // 很快完成的操作
+        shared_data++;
+        pthread_spin_unlock(&amp;spinlock);
+    }
+    return NULL;
+}
+
+int main() {
+    pthread_t threads[4];
+    
+    pthread_spin_init(&amp;spinlock, PTHREAD_PROCESS_PRIVATE);
+    
+    // 創建4個執行緒
+    for (int i = 0; i &lt; 4; i++) {
+        pthread_create(&amp;threads[i], NULL, fast_operation, NULL);
+    }
+    
+    // 等待所有執行緒完成
+    for (int i = 0; i &lt; 4; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    
+    printf("Final shared_data: %d\n", shared_data);
+    pthread_spin_destroy(&amp;spinlock);
+    return 0;
+}
+</code></pre>
+<hr />
+<h3 id="4-read-write-lock-讀寫鎖-"><a class="header" href="#4-read-write-lock-讀寫鎖-">4. Read-Write Lock (讀寫鎖) 📖</a></h3>
+<p><strong>白話解釋</strong>: 像圖書館規則，很多人可以同時看書（讀），但只能一個人寫字（寫）<br />
+<strong>用途</strong>: 允許多個讀者同時存取，但寫者獨佔<br />
+<strong>使用時機</strong>: 讀取頻繁但寫入較少的場景</p>
+<pre><code>Read-Write Lock 狀態圖：
+
+讀取模式 📖:
+資料: [📚] ← 👀👀👀👀 (多個讀者同時看)
+等待: 📝💤 (寫者等待)
+
+寫入模式 📝:
+資料: [📚] ← ✍️ (只有一個寫者)
+等待: 👀💤 👀💤 📝💤 (所有其他人等待)
+
+性能比較：
+傳統Mutex: R-R-R-W-R-R (序列執行)
+ReadWrite:  RRR──W─RR  (讀取並行)
+</code></pre>
+<p><strong>程式碼範例:</strong></p>
+<pre><code class="language-c">#include &lt;pthread.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+
+pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
+int shared_data = 0;
+
+void* reader(void* arg) {
+    int id = *(int*)arg;
+    pthread_rwlock_rdlock(&amp;rwlock);
+    printf("Reader %d: Reading data: %d\n", id, shared_data);
+    usleep(100000);  // 模擬讀取時間
+    pthread_rwlock_unlock(&amp;rwlock);
+    return NULL;
+}
+
+void* writer(void* arg) {
+    int id = *(int*)arg;
+    pthread_rwlock_wrlock(&amp;rwlock);
+    shared_data++;
+    printf("Writer %d: Updated data to: %d\n", id, shared_data);
+    usleep(200000);  // 模擬寫入時間
+    pthread_rwlock_unlock(&amp;rwlock);
+    return NULL;
+}
+
+int main() {
+    pthread_t readers[5], writers[2];
+    int reader_ids[5], writer_ids[2];
+    
+    // 創建多個讀者
+    for (int i = 0; i &lt; 5; i++) {
+        reader_ids[i] = i + 1;
+        pthread_create(&amp;readers[i], NULL, reader, &amp;reader_ids[i]);
+    }
+    
+    // 創建少數寫者
+    for (int i = 0; i &lt; 2; i++) {
+        writer_ids[i] = i + 1;
+        pthread_create(&amp;writers[i], NULL, writer, &amp;writer_ids[i]);
+    }
+    
+    // 等待所有執行緒完成
+    for (int i = 0; i &lt; 5; i++) {
+        pthread_join(readers[i], NULL);
+    }
+    for (int i = 0; i &lt; 2; i++) {
+        pthread_join(writers[i], NULL);
+    }
+    
+    pthread_rwlock_destroy(&amp;rwlock);
+    return 0;
+}
+</code></pre>
+<hr />
+<h3 id="5-condition-variable-條件變數-"><a class="header" href="#5-condition-variable-條件變數-">5. Condition Variable (條件變數) 🚌</a></h3>
+<p><strong>白話解釋</strong>: 像等公車的站牌，只有當公車來了（條件滿足）才上車，否則就一直等<br />
+<strong>用途</strong>: 讓執行緒等待特定條件成立<br />
+<strong>使用時機</strong>: 生產者-消費者模式，或需要等待某個狀態改變</p>
+<pre><code>Condition Variable 工作流程：
+
+生產者-消費者模式：
+生產者: 🏭 ──▶ [緩衝區] ──▶ 📢 通知消費者
+消費者: 👤💤 ──▶ 🔔收到通知 ──▶ 👤🏃‍♂️ 開始工作
+
+等待流程：
+1. 獲取鎖    🔒
+2. 檢查條件  ❓ (while循環)
+3. 如果不滿足 😴 wait() 
+4. 收到信號  🔔 signal()
+5. 重新檢查  ❓ 
+6. 執行工作  ⚙️
+7. 釋放鎖    🔓
+</code></pre>
+<p><strong>程式碼範例:</strong></p>
+<pre><code class="language-c">#include &lt;pthread.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t condition = PTHREAD_COND_INITIALIZER;
+int ready = 0;
+
+void* waiter(void* arg) {
+    int id = *(int*)arg;
+    pthread_mutex_lock(&amp;mutex);
+    printf("Waiter %d: Waiting for condition...\n", id);
+    while (!ready) {
+        pthread_cond_wait(&amp;condition, &amp;mutex);
+    }
+    printf("Waiter %d: Condition met!\n", id);
+    pthread_mutex_unlock(&amp;mutex);
+    return NULL;
+}
+
+void* signaler(void* arg) {
+    sleep(2);
+    pthread_mutex_lock(&amp;mutex);
+    printf("Signaler: Setting ready flag\n");
+    ready = 1;
+    pthread_cond_broadcast(&amp;condition);  // 喚醒所有等待者
+    pthread_mutex_unlock(&amp;mutex);
+    return NULL;
+}
+
+int main() {
+    pthread_t waiters[3], sig;
+    int waiter_ids[3];
+    
+    // 創建等待者執行緒
+    for (int i = 0; i &lt; 3; i++) {
+        waiter_ids[i] = i + 1;
+        pthread_create(&amp;waiters[i], NULL, waiter, &amp;waiter_ids[i]);
+    }
+    
+    // 創建信號執行緒
+    pthread_create(&amp;sig, NULL, signaler, NULL);
+    
+    // 等待所有執行緒完成
+    for (int i = 0; i &lt; 3; i++) {
+        pthread_join(waiters[i], NULL);
+    }
+    pthread_join(sig, NULL);
+    
+    pthread_mutex_destroy(&amp;mutex);
+    pthread_cond_destroy(&amp;condition);
+    return 0;
+}
+</code></pre>
+<hr />
+<h2 id="c-鎖機制-"><a class="header" href="#c-鎖機制-">C++ 鎖機制 ⚡</a></h2>
+<h3 id="1-stdmutex-"><a class="header" href="#1-stdmutex-">1. std::mutex 🔐</a></h3>
+<p><strong>白話解釋</strong>: 標準版的廁所門鎖，C++ 內建的互斥鎖<br />
+<strong>用途</strong>: C++ 標準的互斥鎖<br />
+<strong>使用時機</strong>: 基本的互斥存取控制</p>
+<pre><code>RAII 自動管理示意圖：
+
+手動管理 ❌:
+mtx.lock();     🔒
+// 工作...      ⚙️
+mtx.unlock();   🔓  ← 容易忘記！
+
+RAII管理 ✅:
+{
+  lock_guard&lt;mutex&gt; lock(mtx);  🔒自動鎖定
+  // 工作...                   ⚙️
+}  ← 🔓自動解鎖 (離開作用域)
+</code></pre>
+<p><strong>程式碼範例:</strong></p>
+<pre><code class="language-cpp">#include &lt;mutex&gt;
+#include &lt;thread&gt;
+#include &lt;iostream&gt;
+
+std::mutex mtx;
+int counter = 0;
+
+void increment() {
+    std::lock_guard&lt;std::mutex&gt; lock(mtx);  // RAII 自動解鎖
+    counter++;
+    std::cout &lt;&lt; "Counter: " &lt;&lt; counter &lt;&lt; std::endl;
+}
+
+int main() {
+    std::thread t1(increment);
+    std::thread t2(increment);
+    t1.join();
+    t2.join();
+    return 0;
+}
+</code></pre>
+<hr />
+<h3 id="2-stdrecursive_mutex-"><a class="header" href="#2-stdrecursive_mutex-">2. std::recursive_mutex 🔄</a></h3>
+<p><strong>白話解釋</strong>: 像有記憶的門鎖，記得是誰鎖的，同一個人可以重複進入<br />
+<strong>用途</strong>: 可重複鎖定的互斥鎖<br />
+<strong>使用時機</strong>: 同一執行緒可能需要多次獲得鎖</p>
+<pre><code>Recursive Mutex 遞迴示意圖：
+
+執行緒A 獲得鎖計數：
+func1() { 
+  lock(rmtx); 🔒 計數=1
+  func2();    
+}
+func2() { 
+  lock(rmtx); 🔒 計數=2 ← 同一執行緒可以再鎖
+  // 工作
+  unlock();   🔓 計數=1
+}
+unlock();     🔓 計數=0 ← 完全釋放
+
+一般mutex會死鎖 ❌:
+Thread A: 🔒 → 🔒 → 💀 (死鎖)
+</code></pre>
+<p><strong>程式碼範例:</strong></p>
+<pre><code class="language-cpp">#include &lt;mutex&gt;
+#include &lt;thread&gt;
+
+std::recursive_mutex rmtx;
+
+void recursive_function(int n) {
+    std::lock_guard&lt;std::recursive_mutex&gt; lock(rmtx);
+    std::cout &lt;&lt; "Level: " &lt;&lt; n &lt;&lt; std::endl;
+    if (n &gt; 0) {
+        recursive_function(n - 1);  // 同一執行緒再次獲得鎖
+    }
+}
+</code></pre>
+<hr />
+<h3 id="3-stdshared_mutex-c17-"><a class="header" href="#3-stdshared_mutex-c17-">3. std::shared_mutex (C++17) 📚</a></h3>
+<p><strong>白話解釋</strong>: 進階版圖書館規則，多人可以同時看書，但寫字時要清場<br />
+<strong>用途</strong>: 讀寫鎖的 C++ 實現<br />
+<strong>使用時機</strong>: 多讀少寫的場景</p>
+<pre><code>Shared Mutex 模式對比：
+
+shared_lock (讀取模式) 📖:
+Reader1: 👀 ──▶ [Data] ◀── 👀 Reader2
+Reader3: 👀 ──▶ [Data] ◀── 👀 Reader4
+Writer:  ✍️💤 (等待所有讀者完成)
+
+unique_lock (寫入模式) ✍️:
+Writer:  ✍️ ──▶ [Data] 
+Reader1: 👀💤 (等待)
+Reader2: 👀💤 (等待)
+
+性能提升圖：
+讀寫比例:  90% 讀 / 10% 寫
+Mutex:     ████████████████ (100% 序列)
+SharedMtx: ████░░░░████░░░░ (40% 序列) ← 效能提升!
+</code></pre>
+<p><strong>程式碼範例:</strong></p>
+<pre><code class="language-cpp">#include &lt;shared_mutex&gt;
+#include &lt;thread&gt;
+#include &lt;vector&gt;
+
+std::shared_mutex sh_mtx;
+std::vector&lt;int&gt; data = {1, 2, 3, 4, 5};
+
+void reader() {
+    std::shared_lock&lt;std::shared_mutex&gt; lock(sh_mtx);
+    for (int val : data) {
+        std::cout &lt;&lt; val &lt;&lt; " ";
+    }
+    std::cout &lt;&lt; std::endl;
+}
+
+void writer() {
+    std::unique_lock&lt;std::shared_mutex&gt; lock(sh_mtx);
+    data.push_back(data.size() + 1);
+    std::cout &lt;&lt; "Added element\n";
+}
+</code></pre>
+<hr />
+<h3 id="4-stdcondition_variable-"><a class="header" href="#4-stdcondition_variable-">4. std::condition_variable 📡</a></h3>
+<p><strong>白話解釋</strong>: C++ 版的公車站牌，可以設定複雜的等車條件<br />
+<strong>用途</strong>: C++ 的條件變數<br />
+<strong>使用時機</strong>: 執行緒間的同步通訊</p>
+<pre><code>Producer-Consumer 圖解：
+
+Buffer: [   |   |   ] (空的)
+Producer: 🏭 ──▶ 📦 ──▶ [📦 |   |   ] ──▶ 📢 notify()
+Consumer: 👤😴 ──▶ 🔔收到 ──▶ [   |   |   ] ──▶ 📦處理
+
+等待條件邏輯：
+wait(lock, []{ return !buffer.empty(); });
+     ↓
+while (!buffer.empty()) {  ← 自動轉換為while循環
+    // 避免虛假喚醒
+}
+
+狀態轉換：
+Consumer: 😴 (wait) → 🔔 (notify) → 👀 (check) → ⚙️ (work)
+</code></pre>
+<p><strong>程式碼範例:</strong></p>
+<pre><code class="language-cpp">#include &lt;condition_variable&gt;
+#include &lt;mutex&gt;
+#include &lt;queue&gt;
+#include &lt;thread&gt;
+
+std::mutex mtx;
+std::condition_variable cv;
+std::queue&lt;int&gt; buffer;
+
+void producer() {
+    for (int i = 0; i &lt; 5; ++i) {
+        std::unique_lock&lt;std::mutex&gt; lock(mtx);
+        buffer.push(i);
+        std::cout &lt;&lt; "Produced: " &lt;&lt; i &lt;&lt; std::endl;
+        cv.notify_one();
+    }
+}
+
+void consumer() {
+    for (int i = 0; i &lt; 5; ++i) {
+        std::unique_lock&lt;std::mutex&gt; lock(mtx);
+        cv.wait(lock, []{ return !buffer.empty(); });
+        int item = buffer.front();
+        buffer.pop();
+        std::cout &lt;&lt; "Consumed: " &lt;&lt; item &lt;&lt; std::endl;
+    }
+}
+</code></pre>
+<hr />
+<h3 id="5-stdatomic-"><a class="header" href="#5-stdatomic-">5. std::atomic ⚛️</a></h3>
+<p><strong>白話解釋</strong>: 像原子彈一樣，動作不可分割，要嘛全做完，要嘛不做<br />
+<strong>用途</strong>: 原子操作，無鎖編程<br />
+<strong>使用時機</strong>: 簡單的數值操作，避免鎖的開銷</p>
+<pre><code>Atomic vs Mutex 性能對比：
+
+非原子操作問題 ❌:
+Thread1: 讀取(5) → +1 → 寫入(6)
+Thread2:   讀取(5) → +1 → 寫入(6) ← 丟失更新!
+結果: 6 (錯誤，應該是7)
+
+原子操作 ✅:
+Thread1: atomic++ → 6
+Thread2: atomic++ → 7 ← 正確!
+
+性能圖表：
+操作類型:     Atomic    Mutex     
+延遲:        ████      ████████  
+CPU使用:     ████      ██████    
+程式碼複雜度: ███       ██████    
+</code></pre>
+<p><strong>🔥 基本原子操作範例:</strong></p>
+<pre><code class="language-cpp">#include &lt;atomic&gt;
+#include &lt;thread&gt;
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+
+// 1. 基本計數器 - 最常用
+std::atomic&lt;int&gt; counter(0);
+
+void basic_increment() {
+    for (int i = 0; i &lt; 1000; ++i) {
+        counter++;        // 原子遞增
+        // counter.fetch_add(1);  // 等同於上面
+    }
+}
+
+// 2. 比較並交換 (CAS) - 高級操作
+std::atomic&lt;int&gt; value(10);
+
+bool try_update(int expected, int new_val) {
+    // 如果 value == expected，則設為 new_val，返回 true
+    // 否則 expected 被更新為實際值，返回 false
+    return value.compare_exchange_weak(expected, new_val);
+}
+
+// 3. 原子交換
+std::atomic&lt;int&gt; shared_data(100);
+
+int atomic_swap_example() {
+    int old_value = shared_data.exchange(200);  // 設為200，返回舊值100
+    return old_value;
+}
+
+int main() {
+    // 基本測試
+    std::vector&lt;std::thread&gt; threads;
+    
+    // 啟動10個執行緒同時遞增
+    for (int i = 0; i &lt; 10; ++i) {
+        threads.emplace_back(basic_increment);
+    }
+    
+    for (auto&amp; t : threads) {
+        t.join();
+    }
+    
+    std::cout &lt;&lt; "最終計數: " &lt;&lt; counter &lt;&lt; std::endl;  // 應該是10000
+    
+    // CAS 範例
+    int expected = 10;
+    if (try_update(expected, 42)) {
+        std::cout &lt;&lt; "成功更新為 42" &lt;&lt; std::endl;
+    } else {
+        std::cout &lt;&lt; "更新失敗，當前值: " &lt;&lt; expected &lt;&lt; std::endl;
+    }
+    
+    return 0;
+}
+</code></pre>
+<p><strong>🚀 實際應用範例 - 無鎖佇列:</strong></p>
+<pre><code class="language-cpp">#include &lt;atomic&gt;
+#include &lt;memory&gt;
+
+template&lt;typename T&gt;
+class LockFreeQueue {
+private:
+    struct Node {
+        std::atomic&lt;T*&gt; data{nullptr};
+        std::atomic&lt;Node*&gt; next{nullptr};
+    };
+    
+    std::atomic&lt;Node*&gt; head{new Node};
+    std::atomic&lt;Node*&gt; tail{head.load()};
+
+public:
+    ~LockFreeQueue() {
+        // 清理所有節點
+        while (Node* head_node = head.load()) {
+            head.store(head_node-&gt;next.load());
+            T* data = head_node-&gt;data.load();
+            if (data) delete data;
+            delete head_node;
+        }
+    }
+    
+    void enqueue(T item) {
+        Node* new_node = new Node;
+        T* data = new T(std::move(item));
+        
+        Node* prev_tail = tail.exchange(new_node);
+        prev_tail-&gt;data.store(data);
+        prev_tail-&gt;next.store(new_node);
+    }
+    
+    bool dequeue(T&amp; result) {
+        Node* head_node = head.load();
+        Node* next = head_node-&gt;next.load();
+        
+        if (next == nullptr) {
+            return false;  // 佇列為空
+        }
+        
+        T* data = next-&gt;data.exchange(nullptr);
+        if (data == nullptr) {
+            return false;  // 其他執行緒已取走
+        }
+        
+        result = *data;
+        delete data;
+        
+        // 更安全的 head 更新
+        if (head.compare_exchange_weak(head_node, next)) {
+            delete head_node;
+        }
+        return true;
+    }
+};
+
+// 使用範例
+LockFreeQueue&lt;int&gt; queue;
+
+void producer() {
+    for (int i = 0; i &lt; 100; ++i) {
+        queue.enqueue(i);
+    }
+}
+
+void consumer() {
+    int value;
+    for (int i = 0; i &lt; 50; ++i) {
+        while (!queue.dequeue(value)) {
+            std::this_thread::yield();  // 等待數據
+        }
+        std::cout &lt;&lt; "取得: " &lt;&lt; value &lt;&lt; std::endl;
+    }
+}
+</code></pre>
+<p><strong>⚡ 原子操作的記憶體順序:</strong></p>
+<pre><code class="language-cpp">#include &lt;atomic&gt;
+
+std::atomic&lt;bool&gt; ready{false};
+std::atomic&lt;int&gt; data{0};
+
+// 1. 順序一致性 (預設，最安全但較慢)
+void sequential_consistency() {
+    data.store(42);                    // 預設 memory_order_seq_cst
+    ready.store(true);                 // 預設 memory_order_seq_cst
+}
+
+// 2. 釋放-獲取語義 (較快，常用)
+void release_acquire() {
+    data.store(42, std::memory_order_relaxed);    // 資料寫入
+    ready.store(true, std::memory_order_release); // 發布信號
+    
+    // 另一個執行緒
+    if (ready.load(std::memory_order_acquire)) {  // 獲取信號
+        int value = data.load(std::memory_order_relaxed); // 讀取資料
+        std::cout &lt;&lt; "讀到: " &lt;&lt; value &lt;&lt; std::endl;
+    }
+}
+
+// 3. 鬆散記憶體順序 (最快，僅保證原子性)
+std::atomic&lt;int&gt; relaxed_counter{0};
+
+void relaxed_operations() {
+    // 只保證這個操作是原子的，不保證與其他記憶體操作的順序
+    relaxed_counter.fetch_add(1, std::memory_order_relaxed);
+}
+</code></pre>
+<p><strong>🚫 為什麼 Atomic 不能處理複雜同步？</strong></p>
+<h4 id="1-原子性限制---只能保證單一操作"><a class="header" href="#1-原子性限制---只能保證單一操作">1. <strong>原子性限制 - 只能保證單一操作</strong></a></h4>
+<pre><code class="language-cpp">// ❌ 這不是原子的！多個步驟無法合併
+std::atomic&lt;int&gt; balance{1000};
+
+void withdraw(int amount) {
+    // 這是兩個獨立的原子操作，中間可能被打斷！
+    if (balance.load() &gt;= amount) {    // 步驟1: 檢查餘額
+        balance -= amount;             // 步驟2: 扣除金額
+    }
+    // 問題：在步驟1和2之間，其他執行緒可能修改balance！
+}
+
+// 正確做法：需要用 mutex 保護整個操作
+std::mutex mtx;
+int balance = 1000;
+
+void withdraw_safe(int amount) {
+    std::lock_guard&lt;std::mutex&gt; lock(mtx);
+    if (balance &gt;= amount) {           // 整個if-block是原子的
+        balance -= amount;
+    }
+}
+</code></pre>
+<h4 id="2-競爭條件-race-condition-圖解"><a class="header" href="#2-競爭條件-race-condition-圖解">2. <strong>競爭條件 (Race Condition) 圖解</strong></a></h4>
+<pre><code>時間軸問題：
+T1: 執行緒A 檢查 balance(1000) &gt;= 800  ✅
+T2: 執行緒B 檢查 balance(1000) &gt;= 500  ✅  
+T3: 執行緒A 扣除 balance = 200         😱
+T4: 執行緒B 扣除 balance = -300        💀 負數！
+
+Atomic 只能保證：
+- balance.load() 是原子的       ✅
+- balance -= amount 是原子的    ✅
+- 但兩個操作之間沒有連續性！     ❌
+
+可視化：
+Thread A: [檢查] ────gap────▶ [扣除]
+Thread B:    [檢查] ──gap──▶ [扣除]  ← 在gap中插入！
+</code></pre>
+<h4 id="3-aba-問題---atomic-的經典陷阱"><a class="header" href="#3-aba-問題---atomic-的經典陷阱">3. <strong>ABA 問題 - Atomic 的經典陷阱</strong></a></h4>
+<pre><code class="language-cpp">// ABA問題示例
+std::atomic&lt;Node*&gt; head;
+
+bool problematic_pop() {
+    Node* old_head = head.load();           // A: 讀到節點A
+    if (!old_head) return false;
+    
+    Node* new_head = old_head-&gt;next;
+    
+    // 😱 危險間隙：其他執行緒可能：
+    // 1. pop了A節點  
+    // 2. pop了B節點
+    // 3. push了新的A節點（記憶體位址相同！）
+    
+    // 這個CAS會成功，但new_head可能指向已刪除的記憶體！
+    return head.compare_exchange_weak(old_head, new_head);  // A又回來了！
+}
+
+// 解決方案：使用版本計數或hazard pointer
+struct VersionedPointer {
+    Node* ptr;
+    uint64_t version;
+};
+std::atomic&lt;VersionedPointer&gt; versioned_head;
+</code></pre>
+<h4 id="4-複雜資料結構的問題"><a class="header" href="#4-複雜資料結構的問題">4. <strong>複雜資料結構的問題</strong></a></h4>
+<pre><code class="language-cpp">// ❌ Vector 的 push_back 為什麼不能用 atomic？
+class BadAtomicVector {
+    std::atomic&lt;size_t&gt; size_{0};
+    std::atomic&lt;int*&gt; data_{nullptr};
+    std::atomic&lt;size_t&gt; capacity_{0};
+    
+public:
+    void push_back(int value) {
+        // 這需要多個步驟，無法原子化：
+        // 1. 檢查容量
+        // 2. 可能需要重新分配記憶體  
+        // 3. 複製舊資料到新位置
+        // 4. 新增元素
+        // 5. 更新大小
+        // 每一步都可能被其他執行緒打斷！
+    }
+};
+
+// ✅ 正確做法：整個操作用 mutex 保護
+class SafeVector {
+    std::vector&lt;int&gt; data_;
+    std::mutex mtx_;
+    
+public:
+    void push_back(int value) {
+        std::lock_guard&lt;std::mutex&gt; lock(mtx_);
+        data_.push_back(value);  // 整個操作是原子的
+    }
+};
+</code></pre>
+<h4 id="5-等待條件的問題"><a class="header" href="#5-等待條件的問題">5. <strong>等待條件的問題</strong></a></h4>
+<pre><code class="language-cpp">#include &lt;atomic&gt;
+#include &lt;iostream&gt;
+
+// ❌ 用 atomic 實現等待是低效的
+std::atomic&lt;bool&gt; ready{false};
+std::atomic&lt;int&gt; data{0};
+
+void busy_wait_consumer() {
+    // 這會100%佔用CPU！
+    while (!ready.load()) {
+        // 空轉等待 - 浪費CPU
+    }
+    std::cout &lt;&lt; "Processed data: " &lt;&lt; data.load() &lt;&lt; std::endl;
+}
+
+// ✅ 正確做法：用 condition_variable
+std::mutex mtx;
+std::condition_variable cv;
+bool ready = false;
+int data = 0;
+
+void efficient_consumer() {
+    std::unique_lock&lt;std::mutex&gt; lock(mtx);
+    cv.wait(lock, []{ return ready; });  // CPU休眠等待
+    std::cout &lt;&lt; "Efficiently processed data: " &lt;&lt; data &lt;&lt; std::endl;
+}
+</code></pre>
+<h4 id="6-記憶體順序的複雜性"><a class="header" href="#6-記憶體順序的複雜性">6. <strong>記憶體順序的複雜性</strong></a></h4>
+<pre><code class="language-cpp">// 在複雜場景中，記憶體順序很難控制正確
+std::atomic&lt;int&gt; x{0}, y{0};
+std::atomic&lt;bool&gt; flag1{false}, flag2{false};
+
+// Thread 1
+void complex_publish() {
+    x.store(1, std::memory_order_relaxed);
+    y.store(1, std::memory_order_relaxed);  
+    flag1.store(true, std::memory_order_release);
+    
+    if (flag2.load(std::memory_order_acquire)) {
+        // 複雜的依賴關係...
+    }
+}
+
+// Thread 2  
+void complex_subscribe() {
+    flag2.store(true, std::memory_order_release);
+    
+    if (flag1.load(std::memory_order_acquire)) {
+        // x和y的值可能不是預期的！
+        // 記憶體順序在複雜場景中很難推理
+    }
+}
+
+// 用mutex更簡單且安全：
+std::mutex mtx;
+int x = 0, y = 0;
+bool flag1 = false, flag2 = false;
+
+void simple_and_safe() {
+    std::lock_guard&lt;std::mutex&gt; lock(mtx);
+    // 所有操作都有明確的順序保證
+    x = 1;
+    y = 1;  
+    flag1 = true;
+}
+</code></pre>
+<h4 id="-總結atomic-的邊界"><a class="header" href="#-總結atomic-的邊界">🎯 <strong>總結：Atomic 的邊界</strong></a></h4>
+<pre><code>Atomic 適合的場景 ✅:
+┌─────────────────────────┐
+│ • 簡單計數器             │
+│ • 狀態標誌 (bool)        │  
+│ • 單一指標更新           │
+│ • 統計資料累積           │
+│ • 無鎖資料結構的基礎操作  │
+└─────────────────────────┘
+
+Atomic 不適合的場景 ❌:
+┌─────────────────────────┐
+│ • 複合條件判斷           │
+│ • 多步驟業務邏輯         │
+│ • 複雜資料結構操作       │
+│ • 需要等待特定條件       │
+│ • 多個變數的一致性更新   │
+│ • 錯誤處理和回滾         │
+└─────────────────────────┘
+
+記住：Atomic = 原子性，但不等於事務性！
+複雜同步需要更高層次的同步原語。
+</code></pre>
+<hr />
+<h3 id="6-stdunique_lock-vs-stdlock_guard-"><a class="header" href="#6-stdunique_lock-vs-stdlock_guard-">6. std::unique_lock vs std::lock_guard 🔧</a></h3>
+<p><strong>白話解釋</strong>:</p>
+<ul>
+<li><strong>lock_guard</strong>: 像自動門，進去就自動鎖，出來就自動開</li>
+<li><strong>unique_lock</strong>: 像手動門，可以自己控制什麼時候鎖、什麼時候開</li>
+</ul>
+<pre><code>功能對比圖：
+
+lock_guard 🚪 (自動門):
+{
+  lock_guard&lt;mutex&gt; lg(mtx);  🔒自動鎖
+  // 工作                    ⚙️
+  // 無法手動控制             ❌
+} 🔓自動解鎖
+
+unique_lock 🎛️ (手動門):
+{
+  unique_lock&lt;mutex&gt; ul(mtx);   🔒自動鎖
+  // 工作                      ⚙️
+  ul.unlock();                 🔓手動解鎖
+  // 其他工作 (不需要鎖)        ⚙️
+  ul.lock();                   🔒再次鎖定
+} 🔓自動解鎖
+
+使用場景：
+簡單保護     → lock_guard  ✅
+需要手動控制  → unique_lock ✅
+與條件變數配合 → unique_lock ✅ (必須)
+</code></pre>
+<p><strong>lock_guard</strong>: 簡單的 RAII 鎖包裝器<br />
+<strong>unique_lock</strong>: 更靈活，支援延遲鎖定、手動解鎖等</p>
+<pre><code class="language-cpp">#include &lt;mutex&gt;
+#include &lt;thread&gt;
+#include &lt;iostream&gt;
+#include &lt;chrono&gt;
+
+std::mutex mtx;
+int shared_data = 0;
+
+void use_lock_guard() {
+    std::lock_guard&lt;std::mutex&gt; lock(mtx);
+    shared_data++;
+    std::cout &lt;&lt; "lock_guard: " &lt;&lt; shared_data &lt;&lt; std::endl;
+    // 自動在作用域結束時解鎖
+}
+
+void use_unique_lock() {
+    std::unique_lock&lt;std::mutex&gt; lock(mtx);
+    shared_data++;
+    std::cout &lt;&lt; "unique_lock (locked): " &lt;&lt; shared_data &lt;&lt; std::endl;
+    
+    // 可以手動解鎖
+    lock.unlock();
+    
+    // 做其他事情 (不需要鎖)
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    
+    lock.lock();  // 再次鎖定
+    shared_data++;
+    std::cout &lt;&lt; "unique_lock (re-locked): " &lt;&lt; shared_data &lt;&lt; std::endl;
+}
+
+int main() {
+    std::thread t1(use_lock_guard);
+    std::thread t2(use_unique_lock);
+    
+    t1.join();
+    t2.join();
+    
+    return 0;
+}
+</code></pre>
+<hr />
+<h2 id="-鎖的選擇指南"><a class="header" href="#-鎖的選擇指南">🎯 鎖的選擇指南</a></h2>
+<h3 id="白話選擇邏輯"><a class="header" href="#白話選擇邏輯">白話選擇邏輯</a></h3>
+<ol>
+<li><strong>計數器簡單操作</strong> → 用 <code>atomic</code>（像計算機按鍵）</li>
+<li><strong>保護共享資料</strong> → 用 <code>mutex</code>（像門鎖）</li>
+<li><strong>很多人讀，少數人寫</strong> → 用 <code>shared_mutex</code>（像圖書館）</li>
+<li><strong>等待時間很短</strong> → 用 <code>spinlock</code>（像敲門等待）</li>
+<li><strong>需要等待條件</strong> → 用 <code>condition_variable</code>（像等公車）</li>
+<li><strong>控制人數</strong> → 用 <code>semaphore</code>（像停車場管理）</li>
+</ol>
+<h3 id="-效能比較圖-從快到慢"><a class="header" href="#-效能比較圖-從快到慢">📊 效能比較圖 (從快到慢)</a></h3>
+<pre><code>性能排行榜：
+🥇 atomic       ████████████████ (無鎖最快)
+🥈 spinlock     ████████████░░░░ (短等待)
+🥉 mutex        ████████░░░░░░░░ (標準選擇)
+4️⃣ shared_mutex ██████░░░░░░░░░░ (讀寫場景)
+5️⃣ semaphore    ████░░░░░░░░░░░░ (資源控制)
+
+等待時間對選擇的影響：
+⏱️ &lt; 1μs   → atomic     🔥
+⏱️ &lt; 10μs  → spinlock   🌀  
+⏱️ &lt; 100μs → mutex      🔒
+⏱️ &gt; 100μs → condition  🚌
+</code></pre>
+<h3 id="-使用時機總結"><a class="header" href="#-使用時機總結">📋 使用時機總結</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>鎖類型</th><th>圖示</th><th>白話比喻</th><th>使用時機</th><th>優點</th><th>缺點</th></tr></thead><tbody>
+<tr><td>Mutex</td><td>🔒</td><td>廁所門鎖</td><td>基本互斥存取</td><td>簡單易用</td><td>可能造成執行緒阻塞</td></tr>
+<tr><td>Spinlock</td><td>🌀</td><td>敲門等待</td><td>短時間等待</td><td>低延遲</td><td>CPU 佔用高</td></tr>
+<tr><td>Read-Write Lock</td><td>📖</td><td>圖書館規則</td><td>多讀少寫</td><td>提高讀取併發</td><td>寫入時阻塞所有讀取</td></tr>
+<tr><td>Semaphore</td><td>🚗</td><td>停車場管理</td><td>資源計數控制</td><td>靈活控制併發數</td><td>較複雜</td></tr>
+<tr><td>Condition Variable</td><td>🚌</td><td>等公車</td><td>條件等待</td><td>高效的執行緒通訊</td><td>需要配合 mutex 使用</td></tr>
+<tr><td>Atomic</td><td>⚛️</td><td>原子彈操作</td><td>簡單數值操作</td><td>無鎖高效能</td><td>僅適用於簡單操作</td></tr>
+</tbody></table>
+</div>
+<h3 id="-死鎖預防圖解"><a class="header" href="#-死鎖預防圖解">🛠️ 死鎖預防圖解</a></h3>
+<pre><code>死鎖場景 💀:
+Thread A: 🔒Lock1 ──▶ 等待Lock2 ──▶ 💀
+Thread B: 🔒Lock2 ──▶ 等待Lock1 ──▶ 💀
+
+預防方法 ✅:
+1. 統一順序: 都先Lock1再Lock2
+   Thread A: 🔒Lock1 → 🔒Lock2 ✅
+   Thread B: 🔒Lock1 → 🔒Lock2 ✅
+
+2. 超時機制: 
+   Thread A: 🔒Lock1 → ⏰等待Lock2 → 🔓放棄 ✅
+
+3. 避免嵌套:
+   Single Lock: 🔒 → Work → 🔓 ✅
+</code></pre>
+<h3 id="-最佳實踐"><a class="header" href="#-最佳實踐">💡 最佳實踐</a></h3>
+<ol>
+<li><strong>優先考慮無鎖設計</strong> (std::atomic) - 像用計算機而不是算盤 🧮→💻</li>
+<li><strong>鎖的粒度要適中</strong> - 不要鎖整棟樓🏢❌，也不要每個抽屜都上鎖🗄️❌</li>
+<li><strong>避免死鎖</strong> - 就像開車要遵守交通規則🚦，不要互相堵住</li>
+<li><strong>使用 RAII</strong> - 像自動門🚪一樣，進出自動管理</li>
+<li><strong>考慮讀寫分離</strong> - 像圖書館分開讀書區📖和寫字區✍️</li>
+<li><strong>短時間臨界區用 spinlock</strong> - 像快速過馬路🚶‍♂️不用等紅綠燈</li>
+<li><strong>長時間等待用 condition_variable</strong> - 像坐下來等公車🪑🚌而不是一直站著</li>
+</ol>
+<h3 id="-學習路徑建議"><a class="header" href="#-學習路徑建議">🎓 學習路徑建議</a></h3>
+<pre><code>初學者路線 🌱:
+atomic → mutex → lock_guard → condition_variable
+
+進階路線 🚀:
+shared_mutex → spinlock → 無鎖程式設計
+
+專家路線 🎯:
+記憶體順序 → 自訂同步原語 → 高效能最佳化
+</code></pre>
+<hr />
+<h2 id="-總結"><a class="header" href="#-總結">🔚 總結</a></h2>
+<p>這份指南涵蓋了從 Linux 系統鎖到 C++ 標準庫的完整鎖機制，每種鎖都有其適用場景。記住這個核心原則：</p>
+<blockquote>
+<p><strong>選擇合適的工具解決對應的問題，簡單場景用簡單工具，複雜場景用複雜工具</strong> 🎯</p>
+</blockquote>
+<p>無論您是初學者還是經驗豐富的開發者，掌握這些同步機制都將幫助您寫出更安全、更高效的多執行緒程式！</p>
+<hr />
+<h2 id="-完整範例程式"><a class="header" href="#-完整範例程式">📁 完整範例程式</a></h2>
+<p>本指南的所有程式碼範例都可以在 <code>locks_examples/</code> 目錄中找到完整的可編譯版本：</p>
+<h3 id="-快速開始"><a class="header" href="#-快速開始">🔧 快速開始</a></h3>
+<pre><code class="language-bash">cd locks_examples/
+make          # 編譯所有範例
+make test     # 編譯並測試所有範例
+make help     # 查看詳細說明
+</code></pre>
+<h3 id="-範例列表"><a class="header" href="#-範例列表">📋 範例列表</a></h3>
+<ul>
+<li><strong>Linux C 範例</strong>: <code>01_pthread_mutex.c</code> 到 <code>05_condition_variable.c</code></li>
+<li><strong>C++ 範例</strong>: <code>06_std_mutex.cpp</code> 到 <code>12_lock_comparison.cpp</code></li>
+</ul>
+<p>每個範例都包含：</p>
+<ul>
+<li>✅ 完整的可編譯程式碼</li>
+<li>✅ 詳細的註解說明</li>
+<li>✅ 實際運行結果展示</li>
+<li>✅ 錯誤處理機制</li>
+</ul>
+<p>更多詳細資訊請參考 <code>locks_examples/README.md</code>。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../c++/cpp-move-semantics-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../c++/interview.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../c++/cpp-move-semantics-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../c++/interview.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

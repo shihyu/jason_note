@@ -1,0 +1,225 @@
+C++标准库中，类型库是其子库之一。这个库定义了std::size\_t、std::nullptr\_t和std::byte等类型，运行时类型标识支持std::type\_info等类型，以及类型特征的集合。类型特征有两类:
+
+\begin{itemize}
+\item
+类型特征能够在编译时查询类型的属性。
+
+\item
+能够在编译时执行类型转换的类型特征(添加或删除const限定符，或从类型中添加或删除指针或引用)，这些类型特征也称为元功能。
+\end{itemize}
+
+来自第二类的一个类型特征是std::enable\_if，这用于启用SFINAE并从函数的重载集中删除候选。一个可能的实现如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+template<bool B, typename T = void>
+struct enable_if {};
+
+template<typename T>
+struct enable_if<true, T> { using type = T; };
+\end{lstlisting}
+
+有一个主模板，有两个模板参数，一个布尔型非类型模板和一个默认参数为void的类型参数。主模板是一个空类，非类型模板参数值也有偏特化。这定义了一个称为type的成员类型，它是模板参数T的别名模板。
+
+enable\_if元函数用于布尔表达式，这个布尔表达式求值为true时，定义了一个名为type的成员类型。若布尔表达式为false，则不定义此成员类型。来看看它是如何工作的。
+
+还记得本章开头理解和定义类型特征一节中的例子吗?例子中，有一些类提供了一个写入方法，将内容写入输出流，以及为了同样的目的重载了操作符<{}<的类。在那一节中，我们定义了一个名为uses\_write的类型特征，并编写了一个serialize函数模板，该模板允许以统一的方式序列化这两种类型的对象(widget和gadget)。然而，实现相当复杂。使用enable\_if，可以以一种简单的方式实现该函数。一个可能的实现如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T,
+		  typename std::enable_if<
+			uses_write_v<T>>::type* = nullptr>
+void serialize(std::ostream& os, T const& value)
+{
+	value.write(os);
+}
+
+template <typename T,
+		  typename std::enable_if<
+			!uses_write_v<T>>::type*=nullptr>
+void serialize(std::ostream& os, T const& value)
+{
+	os << value;
+}
+\end{lstlisting}
+
+这个实现中有两个重载函数模板，有两个模板参数。第一个参数是类型模板参数，称为T。第二个参数是指针类型的匿名非类型模板参数，其默认值是nullptr。只有当uses\_write\_v变量的值为true时，才使用enable\_if定义成为type的成员。因此，对于具有成员函数write的类，第一次重载替换成功，但第二次重载替换失败，因为typename * = nullptr不是有效参数。对于操作符<{}<重载的类，情况则相反。
+
+enable\_if元函数可以在以下几种情况下使用:
+
+\begin{itemize}
+\item
+定义具有默认参数的模板参数
+
+\item
+定义具有默认参数的函数参数
+
+\item
+指定函数的返回类型
+\end{itemize}
+
+出于这个原因，所以在前面提供serialize重载实现只是一种可能。类似的使用enable\_if来定义一个带有默认参数的函数参数，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T>
+void serialize(
+	std::ostream& os, T const& value,
+	typename std::enable_if<
+				uses_write_v<T>>::type* = nullptr)
+{
+	value.write(os);
+}
+
+template <typename T>
+void serialize(
+	std::ostream& os, T const& value,
+	typename std::enable_if<
+				!uses_write_v<T>>::type* = nullptr)
+{
+	os << value;
+}
+\end{lstlisting}
+
+这里，我们把参数从模板参数列表移到了函数参数列表。没有其他变化，用法相同，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+widget w{ 1, "one" };
+gadget g{ 2, "two" };
+
+serialize(std::cout, w);
+serialize(std::cout, g);
+\end{lstlisting}
+
+第三种选择是使用enable\_if来包装函数的返回类型，实现略有不同(默认参数对于返回类型没有意义):
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T>
+typename std::enable_if<uses_write_v<T>>::type serialize(
+	std::ostream& os, T const& value)
+{
+	value.write(os);
+}
+
+template <typename T>
+typename std::enable_if<!uses_write_v<T>>::type serialize(
+	std::ostream& os, T const& value)
+{
+	os << value;
+}
+\end{lstlisting}
+
+这个实现中，若uses\_write\_v<T>为true，则定义返回类型。否则，替换失败，SFINAE。
+
+尽管在所有这些示例中，enable\_if类型特征都用于在函数模板的重载解析期间启用SFINAE，但此类型特征也可用于限制类模板的实例化。下面的例子中，有一个叫做integral\_wrapper的类，只进行了整型类型实例化，还有一个叫做float\_wrapper的类，只被浮点型类型实例化:
+
+\begin{lstlisting}[style=styleCXX]
+template <
+	typename T,
+	typename=typenamestd::enable_if_t<
+						 std::is_integral_v<T>>>
+struct integral_wrapper
+{
+	T value;
+};
+
+template <
+	typename T,
+	typename=typename std::enable_if_t<
+						 std::is_floating_point_v<T>>>
+struct floating_wrapper
+{
+	T value;
+};
+\end{lstlisting}
+
+这两个类模板都有两个类型模板参数。第一个称为T，但第二个匿名，有一个默认参数。根据布尔表达式的值，这个参数的值是否在enable\_if类型特征的帮助下定义。
+
+这个实现中，可以看到:
+
+\begin{itemize}
+\item
+别名模板std::enable\_if\_t，这是访问std::enable\_if<B, T>::type成员类型的方法。其定义如下:
+
+\begin{lstlisting}[style=styleCXX]
+template <bool B, typename T = void>
+using enable_if_t = typename enable_if<B,T>::type;
+\end{lstlisting}
+
+\item
+两个变量模板std::is\_integral\_v和std::is\_floating\_point\_v是访问数据成员的方法，std::is\_integral<T>::value和std::is\_floating\_point<T>::value。std::is\_integral和std::is\_float\_point类是标准类型特征，分别检查类型是整型还是浮点型。
+\end{itemize}
+
+前面展示的两个wrapper类模板可以按如下方式使用:
+
+\begin{lstlisting}[style=styleCXX]
+integral_wrapper w1{ 42 }; // OK
+integral_wrapper w2{ 42.0 }; // error
+integral_wrapper w3{ "42" }; // error
+
+floating_wrapper w4{ 42 }; // error
+floating_wrapper w5{ 42.0 }; // OK
+floating_wrapper w6{ "42" }; // error
+\end{lstlisting}
+
+其中只有两个实例化可以工作：w1，integral\_wrapper是用int类型实例化的；w5，float\_wrapper是用double类型实例化的。所有其他选项都会让编译器报错。
+
+需要指出的是，此代码示例仅适用于C++20中提供的integral\_wrapper和float\_wrapper的定义。对于标准的以前版本，因为编译器无法推导模板参数，即使是w1和w5的定义也会产生编译器错误。为了使其工作，必须更改类模板以包括一个构造函数，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+template <
+	typename T,
+	typename=typenamestd::enable_if_t<
+						 std::is_integral_v<T>>>
+struct integral_wrapper
+{
+	T value;
+	
+	integral_wrapper(T v) : value(v) {}
+};
+
+template <
+	typename T,
+	typename=typename std::enable_if_t<
+						 std::is_floating_point_v<T>>>
+struct floating_wrapper
+{
+	T value;
+	
+	floating_wrapper(T v) : value(v) {}
+};
+\end{lstlisting}
+
+虽然enable\_if有助于通过更简单、更可读的代码实现SFINAE，但它仍然复杂。幸运的是，C++17中有一个更好的选择——constexpr if。接下来让我们来探索一下这个替代方案。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

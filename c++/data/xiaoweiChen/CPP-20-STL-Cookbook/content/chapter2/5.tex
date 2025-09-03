@@ -1,0 +1,206 @@
+
+当模板函数或类模板构造函数(C++17起)的实参类型足够清楚，无需使用模板实参，编译器就能理解时，就会进行模板实参推导。这个功能有一定的规则，但主要规则是很直观的。
+
+\subsubsection{How to do it…}
+
+通常，当使用具有明确兼容参数的模板时，模板参数推断会自动发生。让我们看一些例子。
+
+\begin{itemize}
+\item 
+函数模板中，参数推断通常是这样:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+const char * f(const T a) {
+	return typeid(T).name();
+}
+int main() {
+	cout << format("T is {}\n", f(47));
+	cout << format("T is {}\n", f(47L));
+	cout << format("T is {}\n", f(47.0));
+	cout << format("T is {}\n", f("47"));
+	cout << format("T is {}\n", f("47"s));
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+T is int
+T is long
+T is double
+T is char const *
+T is class std::basic_string<char...
+\end{tcblisting}
+
+因为类型很容易识别，所以没有理由在函数调用中指定f<int>(47)这样的模板形参。编译器可以从实参中推导出<int>类型。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black,title=Note]
+上面的输出显示了有意义的类型名，大多数编译器都会使用简写，比如i表示int, PKc表示const char *，等等。
+\end{tcolorbox}
+
+\item 
+这同样适用于多个模板参数:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T1, typename T2>
+string f(const T1 a, const T2 b) {
+	return format("{} {}", typeid(T1).name(),
+	typeid(T2).name());
+}
+
+int main() {
+	cout << format("T1 T2: {}\n", f(47, 47L));
+	cout << format("T1 T2: {}\n", f(47L, 47.0));
+	cout << format("T1 T2: {}\n", f(47.0, "47"));
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+T1 T2: int long
+T1 T2: long double
+T1 T2: double char const *
+\end{tcblisting}
+
+这里编译器同时推导出了T1和T2的类型。
+
+\item 
+注意，类型必须与模板兼容。例如，不能从字面量获取类型:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+const char * f(const T& a) {
+	return typeid(T).name();
+}
+int main() {
+	int x{47};
+	f(47); // this will not compile
+	f(x); // but this will
+}
+\end{lstlisting}
+
+\item 
+C++17起，可以对类使用模板参数推导:
+
+\begin{lstlisting}[style=styleCXX]
+pair p(47, 47.0); // deduces to pair<int, double>
+tuple t(9, 17, 2.5); // deduces to tuple<int, int, double>
+\end{lstlisting}
+
+这消除了对std::make\_pair()和std::make\_tuple()的需求，现在可以直接初始化这些类，无需显式的模板参数。std::make\_*工厂函数则保持向后兼容性可用。
+\end{itemize}
+
+\subsubsection{How it works…}
+
+我们定义一个类，这样就可以了解它是如何工作的:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T1, typename T2, typename T3>
+class Thing {
+	T1 v1{};
+	T2 v2{};
+	T3 v3{};
+	public:
+	explicit Thing(T1 p1, T2 p2, T3 p3)
+	: v1{p1}, v2{p2}, v3{p3} {}
+	string print() {
+		return format("{}, {}, {}\n",
+			typeid(v1).name(),
+			typeid(v2).name(),
+			typeid(v3).name()
+		);
+	}
+};
+\end{lstlisting}
+
+这是一个具有三种类型和三个相应数据成员的模板类。有一个print()函数，该函数返回一个带有三个类型名称的格式化字符串。
+
+若没有模板参数推导，则需要实例化一个这种类型的对象:
+
+\begin{lstlisting}[style=styleCXX]
+Things<int, double, string> thing1{1, 47.0, "three" }
+\end{lstlisting}
+
+现在可以这样做:
+
+\begin{lstlisting}[style=styleCXX]
+Things thing1{1, 47.0, "three" }
+\end{lstlisting}
+
+既简单又不易出错。
+
+当在thing1对象上使用print()函数时，得到了这样的结果:
+
+\begin{lstlisting}[style=styleCXX]
+cout << thing1.print();
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+int, double, char const *
+\end{tcblisting}
+
+STL包含了一些这样的辅助函数，比如make\_pair()和make\_tuple()等。这些代码现在已经过时了，但是为了与旧代码兼容，会保留这些代码。
+
+\subsubsection{There's more…}
+
+考虑带有参数包的构造函数:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename T>
+class Sum {
+	T v{};
+public:
+	template <typename... Ts>
+	Sum(Ts&& ... values) : v{ (values + ...) } {}
+	const T& value() const { return v; }
+};
+\end{lstlisting}
+
+注意构造函数中的折叠表达式(values + …)。这是C++17的特性，可将操作符应用于一个参数包的所有成员。本例中，将v初始化为参数包的和。
+
+该类的构造函数接受任意数量的形参，其中每个形参可以是不同的类。可以这样调用:
+
+\begin{lstlisting}[style=styleCXX]
+Sum s1 { 1u, 2.0, 3, 4.0f }; // unsigned, double, int,
+							 // float
+Sum s2 { "abc"s, "def" }; // std::sring, c-string
+\end{lstlisting}
+
+当然，这无法编译。模板实参推导不能为所有这些不同的形参找到一个公共类型，编译器将会报出一个错误消息:
+
+\begin{tcblisting}{commandshell={}}
+cannot deduce template arguments for 'Sum'
+\end{tcblisting}
+
+可以用模板推导指南来解决这个问题。推导指南是一种辅助模式，用于协助编译器进行复杂的推导。下面是构造函数的指南:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename... Ts>
+Sum(Ts&& ... ts) -> Sum<std::common_type_t<Ts...>>;
+\end{lstlisting}
+
+这告诉编译器使用std::common\_type\_t的特征，试图为包中的所有参数找到一个公共类型。现在，参数推导工作了，可以看到确切的类型:
+
+\begin{lstlisting}[style=styleCXX]
+Sum s1 { 1u, 2.0, 3, 4.0f }; // unsigned, double, int,
+							 // float
+Sum s2 { "abc"s, "def" }; // std::sring, c-string
+
+auto v1 = s1.value();
+auto v2 = s2.value();
+cout << format("s1 is {} {}, s2 is {} {}",
+		typeid(v1).name(), v1, typeid(v2).name(), v2);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+s1 is double 10, s2 is class std::string abcdef
+\end{tcblisting}
+
+
+

@@ -1,0 +1,402 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>QEMU GDB RISC-V64 Kernel - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h2 id="risc-v-linux-kernel-debug-環境搭建"><a class="header" href="#risc-v-linux-kernel-debug-環境搭建">RISC-V Linux kernel debug 環境搭建</a></h2>
+<p>https://blog.csdn.net/m0_43422086/article/details/125276723</p>
+<h1 id="一目的"><a class="header" href="#一目的">一、目的</a></h1>
+<p>搭建qemu-gdb risc-v64 linux kernel的調試環境。</p>
+<h1 id="二準備工作"><a class="header" href="#二準備工作">二、準備工作</a></h1>
+<p>​    Build Ninja 和riscv-toolchain</p>
+<p>​    首先安裝必要的庫(這是編譯riscv toolchain必須安裝的庫文件)</p>
+<pre><code class="language-bash">sudo apt update 
+sudo apt upgrade 
+sudo apt install \
+    git \
+    autoconf \
+    automake \
+    autotools-dev \
+    ninja-build \
+    build-essential \
+    libmpc-dev \
+    libmpfr-dev \
+    libgmp-dev \
+    libglib2.0-dev \
+    libpixman-1-dev \
+    libncurses5-dev \
+    libtool \
+    libexpat-dev \
+    zlib1g-dev \
+    curl \
+    gawk \
+    bison \
+    flex \
+    texinfo \
+    gperf \
+    patchutils \
+    bc
+
+
+mkdir qemu-gdb-risc-v64 &amp;&amp; qemu-gdb-risc-v64
+</code></pre>
+<h2 id="①build-ninja"><a class="header" href="#①build-ninja">①Build Ninja</a></h2>
+<pre><code class="language-bash">git clone https://github.com/ninja-build/ninja.git
+cd ninja
+cmake -Bbuild-cmake
+cmake --build build-cmake
+</code></pre>
+<p>然後在.bashrc中添加ninja/build-cmake目錄</p>
+<p>編輯.bashrc如下：</p>
+<pre><code class="language-bash">export PATH=$PATH:/home/kali/Desktop/riscv-debug/ninja/build-cmake
+</code></pre>
+<h2 id="②build-riscv-gnu-compiler-toolchain-and-debug-gdb"><a class="header" href="#②build-riscv-gnu-compiler-toolchain-and-debug-gdb">②Build riscv-gnu-compiler toolchain and debug gdb</a></h2>
+<pre><code class="language-bash">wget https://static.dev.sifive.com/dev-tools/freedom-tools/v2020.12/riscv64-unknown-elf-toolchain-10.2.0-2020.12.8-x86_64-linux-ubuntu14.tar.gz
+tar -xzvf riscv64-unknown-elf-toolchain-10.2.0-2020.12.8-x86_64-linux-ubuntu14.tar.gz
+mv riscv64-unknown-elf-toolchain-10.2.0-2020.12.8-x86_64-linux-ubuntu14  riscv64-unknown-elf-toolchain
+</code></pre>
+<p>接著編輯~/.bashrc,加入下面的環境變量：</p>
+<pre><code class="language-bash">export PATH=$PATH:/home/kali/Desktop/riscv-debug/riscv64-unknown-elf-toolchain/bin
+</code></pre>
+<h2 id="③命令行安裝gcc-riscv64-linux-gnu-"><a class="header" href="#③命令行安裝gcc-riscv64-linux-gnu-">③命令行安裝gcc-riscv64-linux-gnu-</a></h2>
+<pre><code class="language-bash">sudo apt install binutils-riscv64-linux-gnu 
+sudo apt install gcc-riscv64-linux-gnu
+</code></pre>
+<p>OR</p>
+<p>自己下載工具鏈原始碼進行編譯容易配錯選項，我們使用編譯好的工具鏈即可。
+網址：https://toolchains.bootlin.com
+這個網站提供了一些已經編譯好的工具鏈，我們從中下載即可。
+arch選擇riscv64-lp64d，libc選擇glibc，然後點選下載。
+stable是穩定版，bleeding-edge是最新的，可根據需要選擇，這裡我們選擇bleeding-edge。</p>
+<pre><code class="language-bash">export PATH=xxxxxxxxxxxxxxxxxxxx/toolchain/riscv64-lp64d--glibc--bleeding-edge-2022.08-1/bin:$PATH
+</code></pre>
+<h1 id="三build-qemu"><a class="header" href="#三build-qemu">三、Build Qemu</a></h1>
+<pre><code class="language-bash">git clone https://gitlab.com/qemu-project/qemu.git
+cd qemu
+git submodule init
+git submodule update --recursive
+mkdir build &amp;&amp; cd build
+../configure --prefix=/home/shihyu/.mybin/qemu
+make
+
+
+
+linux-user/ioctls.h:188:1: error: ‘SNDCTL_DSP_MAPINBUF’ undeclared here (not in a function)
+linux-user/ioctls.h:189:1: error: ‘SNDCTL_DSP_MAPOUTBUF’ undeclared here (not in a function)
+linux-user/ioctls.h:244:1: error: ‘SOUND_MIXER_ACCESS’ undeclared here (not in a function)
+
+
+Replace this line :
+#include &lt;linux/soundcard.h&gt;
+by :
+#include &lt;linux/soundcard.h.oss3&gt;
+in the linux-user/syscall.c file.
+</code></pre>
+<h1 id="四build-opensbi"><a class="header" href="#四build-opensbi">四、Build opensbi</a></h1>
+<pre><code class="language-bash">git clone https://github.com/riscv-software-src/opensbi.git
+cd opensbi/
+make CROSS_COMPILE=riscv64-linux-gnu- PLATFORM=generic
+</code></pre>
+<h1 id="五build-busybox"><a class="header" href="#五build-busybox">五、Build Busybox</a></h1>
+<pre><code class="language-bash">wget https://busybox.net/downloads/busybox-1.35.0.tar.bz2
+tar -jxvf busybox-1.35.0.tar.bz2
+cd busybox-1.35.0/
+make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- defconfig
+make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- menuconfig
+vim .config 
+</code></pre>
+<p>在.config中添加這句：</p>
+<pre><code class="language-bash">CONFIG_STATIC=y
+</code></pre>
+<p>添加完成</p>
+<pre><code class="language-bash">make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- -j $(nproc)
+make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- install
+cd _install 
+mkdir proc sys dev etc etc/init.d
+touch etc/init.d/rcS
+vim etc/init.d/rcS
+</code></pre>
+<p>後保存回到busybox-1.35.0目錄</p>
+<p>在rcS中添加以下內容：</p>
+<pre><code class="language-bash">#!bin/sh 
+mount -t proc none /proc 
+mount -t sysfs none /sys 
+/sbin/mdev -s
+</code></pre>
+<p>添加後保存</p>
+<p>接著執行下面兩條指令，這兩條指令需要root權限：</p>
+<pre><code class="language-bash">sudo mknod dev/console c 5 1 
+sudo mknod dev/ram b 1 0
+</code></pre>
+<p>給rcS文件設置可執行屬性：</p>
+<pre><code class="language-bash">chmod 777 etc/init.d/rcS
+find -print0 | cpio -0oH newc | gzip -9 &gt; ../rootfs.img 
+</code></pre>
+<p>到此busybox操作完成。</p>
+<h1 id="六build-linux-kernel"><a class="header" href="#六build-linux-kernel">六、Build Linux Kernel</a></h1>
+<pre><code class="language-bash">wget https://mirrors.edge.kernel.org/pub/linux/kernel/v5.x/linux-5.9.tar.xz
+tar -xvf linux-5.9.tar.xz
+cd linux-5.9
+</code></pre>
+<p>在內核Makefile的KBUILD_CFLAGS上添加-g選項，然後再執行下面命令：</p>
+<pre><code class="language-bash">make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- defconfig 
+make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- -j $(nproc)
+</code></pre>
+<p>以上步驟完成後使用gdb調試qemu啟動linux kernel，qemu命令行如下：</p>
+<pre><code class="language-bash">qemu-system-riscv64 \
+        -nographic -machine virt \
+        -bios  opensbi/build/platform/generic/firmware/fw_dynamic.bin \
+        -kernel linux-5.9/arch/riscv/boot/Image \
+        -initrd busybox-1.35.0/rootfs.img  \
+        -append "root=/dev/ram rdinit=/sbin/init nokaslr" \
+        -S \
+        -s
+</code></pre>
+<p>nokaslr 的核心參數是停用隨機分配 kernel 運作位址的功能</p>
+<p>開啟另一個終端，進入剛剛的linux kernel 目錄（該目錄下有vmlinux文件），使用下面命令啟動gdb：</p>
+<pre><code class="language-bash">riscv64-unknown-elf-gdb vmlinux -ex 'target remote localhost:1234'
+</code></pre>
+<pre><code class="language-sh">(gdb) b start_kernel 
+Breakpoint 1 at 0xffffffe00000272e
+(gdb) continue
+Continuing.
+Breakpoint 1, 0xffffffe00000272e in start_kernel ()
+</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../gdb/rust-gdb.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../gdb/go-rust-gdb-debug.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../gdb/rust-gdb.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../gdb/go-rust-gdb-debug.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

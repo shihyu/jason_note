@@ -1,0 +1,92 @@
+在經歷了不必要的計算和低效的內存使用之後，低效的編碼、不充分利用大部分可用計算資源代碼的下一個問題，可能就是不能很好地流水線化代碼。我們已經在第3章中看到了CPU流水線的重要性，還瞭解了流水線最糟糕的幹擾因素通常是條件操作，特別是硬件分支預測器無法猜測的操作。 
+
+但優化條件代碼以實現更好的流水是C++最困難的優化之一。只有當分析器顯示出較差的分支預測時，才應該進行此操作。然而，錯誤預測的分支的數量並不一定要很大才會認為是“差”的:好的程序通常會有少於0.1\%的錯誤預測分支。1\%的預測誤差率是相當大的。如果不檢查編譯器輸出(機器碼)，也很難預測源代碼的優化效果。
+
+如果分析器顯示了一個預測不好的條件操作，下一步就是確定哪個條件預測錯了。例如:
+
+\begin{lstlisting}[style=styleCXX]
+if (a[i] || b[i] || c[i]) { … do something … }
+\end{lstlisting}
+
+即使整體結果可預測，也可能產生一個或多個預測不佳的分支。這與C++中布爾邏輯的定義有關。操作符\texttt{||}和\texttt{\&\&}可以短路:表達式從左到右求值，直到結果已知。如果\texttt{a[i]}為true，則代碼就不管數組元素\texttt{b[i]}和\texttt{c[i]}了。有時，這是必要的。實現的邏輯可能不存在這些元素，但布爾表達式會無緣無故地引入不必要的分支。前面的\texttt{if()}語句需要3個條件操作。而在下面的代碼中:
+
+\begin{lstlisting}[style=styleCXX]
+if (a[i] + b[i] + c[i]) { … do something … }
+\end{lstlisting}
+
+如果值\texttt{a}、\texttt{b}和\texttt{c}非負，但需要單個條件操作，則與最上一個示例相同。再次強調，這不是那種應該先做的優化，除非有測試確認這裡需要優化。
+
+看一下這個函數:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{05\_branch.C}
+\begin{lstlisting}[style=styleCXX]
+void f2(bool b, unsigned long x, unsigned long& s) {
+	if (b) s += x;
+}
+\end{lstlisting}
+
+如果\texttt{b}值不可預測，則效率非常低。需要更好的表現，只是一個改變:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{05\_branch.C}
+\begin{lstlisting}[style=styleCXX]
+void f2(bool b, unsigned long x, unsigned long& s) {
+	s += b*x;
+}
+\end{lstlisting}
+
+這種改進可以通過一個簡單的基準測試來確定:原始的、有條件的、實現與無分支的實現:
+
+\begin{tcblisting}{commandshell={}}
+BM_conditional   176.304M items/s
+BM_branchless     498.89M items/s
+\end{tcblisting}
+
+如您所見，無分支實現比有條件的快3倍。
+
+重要的是，不要在這種類型的優化上走極端。這種優化必須由測試驅動，原因如下:
+
+\begin{itemize}
+\item
+分支預測器相當複雜，對它們能處理和不能處理的直覺大概率是錯誤的。
+
+\item
+編譯器優化常常會改變代碼，因此，如果不測量或檢查機器碼，即使我們知道會對分支進行預測，猜測的結果可能是錯的。
+
+\item
+即使分支錯誤地預測，性能影響也會變化，因此在沒有測試的情況下沒法進行確定。
+\end{itemize}
+
+例如，手動優化這段代碼幾乎沒什麼用:
+
+\begin{lstlisting}[style=styleCXX]
+int f(int x) { return (x > 0) ? x : 0; }
+\end{lstlisting}
+
+這看起來像條件代碼，若\texttt{x}的符號是隨機的，則不可預測。然而，分析器很可能不會在這裡顯示預測錯誤的分支，原因是大多數編譯器不會使用條件跳轉來實現這一行。在x86上，一些編譯器將使用CMOVE指令，它執行一個條件移動。根據條件，將值從兩個源寄存器之一移動到目標寄存器。這條指令的條件性質是良性的，條件代碼的問題是CPU事先不知道接下來執行哪條指令。在有條件的移動實現中，指令序列完全線性，順序是預先確定的，所以不需要猜測。 
+
+另一個不太可能從無分支優化中受益的例子是條件函數調用:
+
+\begin{lstlisting}[style=styleCXX]
+if (condition) f1(… args …) else f2(… args …);
+\end{lstlisting}
+
+無分支實現可以使用函數指針數組:
+
+\begin{lstlisting}[style=styleCXX]
+using func_ptr = int(*)(… params …);
+static const func_ptr f[2] = { &f1, &f2 };
+(*f[condition])(… args …);
+\end{lstlisting}
+
+如果函數最初是內聯的，那麼用間接函數調用替換會影響性能。否則，這個更改可能沒有任何作用。在編譯期間跳轉到另一個地址未知的函數，其效果類似於錯誤地預測分支，所以這段代碼會使CPU刷新流水線。 
+
+優化分支預測需要很多技巧。性能結果可能有改進，也可能沒改進(或者只是浪費了一些時間)，所以每一步都要有性能測試進行指導。
+
+我們現在已經瞭解了許多C++程序中潛在的低效率情況，以及改進它們的方法。最後，我們會給出了一些優化代碼的指南。
+
+
+

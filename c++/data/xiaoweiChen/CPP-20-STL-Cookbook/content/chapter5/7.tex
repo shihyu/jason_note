@@ -1,0 +1,92 @@
+
+此示例将lambda包装在函数中，以创建用于算法谓词的自定义连接。
+
+\subsubsection{How to do it…}
+
+copy\_if()算法需要带有一个参数的谓词。在这个示例中，我们将从其他三个lambda创建一个谓词lambda:
+
+\begin{itemize}
+\item 
+首先，编写combine()函数。这个函数返回一个用于copy\_if()算法的lambda:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename F, typename A, typename B>
+auto combine(F binary_func, A a, B b) {
+	return [=](auto param) {
+		return binary_func(a(param), b(param));
+	};
+}
+\end{lstlisting}
+
+combine()函数接受三个函数参数——一个二元连接符和两个谓词——并返回一个lambda，该lambda调用带有两个谓词的连接符。
+
+\item 
+main()函数中，创建了用于combine()的lambda:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	auto begins_with = [](const string &s){
+		return s.find("a") == 0;
+	};
+	auto ends_with = [](const string &s){
+		return s.rfind("b") == s.length() - 1;
+	};
+	auto bool_and = [](const auto& l, const auto& r){
+		return l && r;
+	};
+\end{lstlisting}
+
+begin\_with和ends\_with是简单的过滤器谓词，用于分别查找以'a'开头和以'b'结尾的字符串。bool\_and可对两个参数进行与操作。
+
+\item 
+现在，可以使用combine()调用copy\_if算法:
+
+\begin{lstlisting}[style=styleCXX]
+std::copy_if(istream_iterator<string>{cin}, {},
+			ostream_iterator<string>{cout, " "},
+			combine(bool_and, begins_with,
+				ends_with));
+cout << '\n';
+\end{lstlisting}
+
+combine()函数返回一个lambda，该lambda将两个谓词与连接词组合在一起。
+
+输出如下所示:
+
+\begin{tcblisting}{commandshell={}}
+$ echo aabb bbaa foo bar abazb | ./conjunction
+aabb abazb
+\end{tcblisting}
+\end{itemize}
+
+\subsubsection{How it works…}
+
+std::copy\_if()算法需要一个带有一个形参的谓词函数，但连接需要两个形参，每个形参都需要一个参数。我们用一个函数来解决这个问题，该函数返回一个专门用于此上下文的lambda:
+
+\begin{lstlisting}[style=styleCXX]
+template <typename F, typename A, typename B>
+auto combine(F binary_func, A a, B b) {
+	return [=](auto param) {
+		return binary_func(a(param), b(param));
+	};
+}
+\end{lstlisting}
+
+combine()函数从三个形参创建一个lambda，每个形参都是一个函数。返回的lambda接受谓词函数所需的一个参数。现在可以用combine()函数调用copy\_if():
+
+\begin{lstlisting}[style=styleCXX]
+std::copy_if(istream_iterator<string>{cin}, {},
+			ostream_iterator<string>{cout, " "},
+			combine(bool_and, begins_with, ends_with));
+\end{lstlisting}
+
+这将组合lambda传递给算法，以便其在该上下文中进行操作。
+
+
+
+
+
+
+
+
+

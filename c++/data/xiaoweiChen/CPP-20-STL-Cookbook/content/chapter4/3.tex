@@ -1,0 +1,168 @@
+
+本节示例描述了一个简单的类，其生成一个可迭代范围，适合与基于范围的for循环一起使用。其思想是创建一个序列生成器，从开始值迭代到结束值。
+
+为了完成这个任务，我们需要一个迭代器类，以及对象接口类。
+
+\subsubsection{How to do it…}
+
+这个示例有两个主要部分:主接口、Seq和迭代器类。
+
+\begin{itemize}
+\item 
+首先，定义Seq类，只需要实现begin()和end()成员函数:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class Seq {
+	T start_{};
+	T end_{};
+public:
+	Seq(T start, T end) : start_{start}, end_{end} {}
+	iterator<T> begin() const {
+		return iterator{start_};
+	}
+	iterator<T> end() const { return iterator{end_}; }
+};
+\end{lstlisting}
+
+构造函数设置start\_和end\_变量，用于构造begin()和end()迭代器。成员函数begin()和end()返回迭代器对象。
+
+\item 
+迭代器类通常定义在容器类的公共部分中，称为成员类或嵌套类。我们将在Seq构造函数后面插入它:
+
+\begin{lstlisting}[style=styleCXX]
+public:
+	Seq(T start, T end) : start_{ start }, end_{ end } {}
+	class iterator {
+		T value_{};
+		public:
+		explicit iterator(T position = 0)
+		: value_{position} {}
+		T operator*() const { return value_; }
+		iterator& operator++() {
+			++value_;
+			return *this;
+		}
+		bool operator!=(const iterator& other) const {
+			return value_ != other.value_;
+		}
+	};
+\end{lstlisting}
+
+迭代器类通常命名为iterator，其类型为Seq<type>::iterator。
+
+迭代器构造函数是限定显式的，以避免隐式转换。
+
+value\_变量由迭代器维护，可以解引用指针返回一个值。
+
+支持基于范围的for循环的最低要求是解引用操作符、前自增操作符和不等比较操作符。
+
+\item 
+现在可以写一个main()函数来测试序列生成器:
+
+\begin{lstlisting}[style=styleCXX]
+int main()
+{
+	Seq<int> r{ 100, 110 };
+	for (auto v : r) {
+		cout << format("{} ", v);
+	}
+	cout << '\n';
+}
+\end{lstlisting}
+
+这将构造一个Seq对象，并打印其序列。
+
+输出如下所示:
+
+\begin{tcblisting}{commandshell={}}
+$ ./seq
+100 101 102 103 104 105 106 107 108 109
+\end{tcblisting}
+
+\end{itemize}
+
+\subsubsection{How it works…}
+
+这个示例的重点是制作一个序列生成器，与基于范围的for循环一起工作。我们首先考虑基于范围的for循环的等效代码:
+
+\begin{lstlisting}[style=styleCXX]
+{
+	auto begin_it{ std::begin(container) };
+	auto end_it{ std::end(container) };
+	for ( ; begin_it != end_it; ++begin_it) {
+		auto v{ *begin_it };
+		cout << v << '\n';
+	}
+}
+\end{lstlisting}
+
+从这段等价的代码中，可以推出使用for循环的要求:
+
+\begin{itemize}
+\item 
+具有begin()和end()迭代器
+
+\item 
+迭代器支持不相等的比较操作符
+
+\item 
+迭代器支持前缀自增运算符
+
+\item 
+迭代器支持解引用操作符
+\end{itemize}
+
+主Seq类接口只有三个公共成员函数:构造函数、begin()和end()迭代器:
+
+\begin{lstlisting}[style=styleCXX]
+Seq(T start, T end) : start_{ start }, end_{ end } {}
+iterator begin() const { return iterator{start_}; }
+iterator end() const { return iterator{end_}; }
+\end{lstlisting}
+
+Seq::iterator类的实现携带了实际的负载:
+
+\begin{lstlisting}[style=styleCXX]
+class iterator {
+	T value_{};
+\end{lstlisting}
+
+这是常见的配置，有效负载只能通过迭代器访问。
+
+这里需要实现三个操作符:
+
+\begin{lstlisting}[style=styleCXX]
+T operator*() const { return value_; }
+iterator& operator++() {
+	++value_;
+	return *this;
+}
+bool operator!=(const iterator& other) const {
+	return value_ != other.value_;
+}
+\end{lstlisting}
+
+就是基于范围的for循环所需的:
+
+\begin{lstlisting}[style=styleCXX]
+Seq<int> r{ 100, 110 };
+for (auto v : r) {
+	cout << format("{} ", v);
+}
+\end{lstlisting}
+
+\subsubsection{There's more…}
+
+通常，会将迭代器定义为容器的成员类，但不是必需的。这允许迭代器类型从属于容器类型:
+
+\begin{lstlisting}[style=styleCXX]
+Seq<int>::iterator it = r.begin();
+\end{lstlisting}
+
+因为auto类型，C++11之后具体类型就不那么重要了，但它仍然是最佳实践。
+
+
+
+
+

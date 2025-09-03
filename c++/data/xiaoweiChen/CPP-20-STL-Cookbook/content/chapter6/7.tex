@@ -1,0 +1,133 @@
+
+C++17中添加了std::clamp()函数，可将标量数值的范围限制在最小值和最大值之间。该函数经过优化，可以使用移动语义，以获得最大的速度和效率。
+
+\subsubsection{How to do it…}
+
+可以使用clamp()在循环中使用容器，或者使用transform()算法来限制容器的值。让我们来看一些例子。
+
+\begin{itemize}
+\item 
+从一个简单的输出容器值的函数开始:
+
+\begin{lstlisting}[style=styleCXX]
+void printc(auto& c, string_view s = "") {
+	if(s.size()) cout << format("{}: ", s);
+	for(auto e : c) cout << format("{:>5} ", e);
+	cout << '\n';
+}
+\end{lstlisting}
+
+注意格式字符串“\{:>5\}”。对于表格视图，这将每个值右对齐到5个空格。
+
+\item 
+在main()函数中，定义一个用于容器的初始化式列表。这允许我们多次使用相同的值:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	auto il = { 0, -12, 2001, 4, 5, -14, 100, 200,
+		30000 };
+	...
+}
+\end{lstlisting}
+
+对于使用clamp()来说，这是一个值的范围。
+
+\item 
+先来定义一些常数作为极值:
+
+\begin{lstlisting}[style=styleCXX]
+constexpr int ilow{0};
+constexpr int ihigh{500};
+\end{lstlisting}
+
+在调用clamp()时使用这些值。
+
+\item 
+现在可以在main()函数中定义一个容器，这里将使用int类型的vector:
+
+\begin{lstlisting}[style=styleCXX]
+vector<int> voi{ il };
+cout << "vector voi before:\n";
+printc(voi);
+\end{lstlisting}
+
+使用初始化器列表中的值，输出如下:
+
+\begin{tcblisting}{commandshell={}}
+vector voi before:
+0 -12 2001 4 5 -14 100 200 30000
+\end{tcblisting}
+
+\item 
+现在可以使用一个带有clamp()的for循环来限制值在0到500之间:
+
+\begin{lstlisting}[style=styleCXX]
+cout << "vector voi after:\n";
+for(auto& e : voi) e = clamp(e, ilow, ihigh);
+printc(voi);
+\end{lstlisting}
+
+这将clamp()函数应用于容器中的每个值，分别使用0和500作为下限和上限，输出是:
+
+\begin{tcblisting}{commandshell={}}
+vector voi before:
+0 -12 2001 4 5 -14 100 200 30000
+vector voi after:
+0 0 500 4 5 0 100 200 500
+\end{tcblisting}
+
+clamp()操作后，负值为0，大于500的值为500。
+
+\item 
+可以用transform()算法做同样的事情，在lambda中使用clamp()。这次使用一个list容器:
+
+\begin{lstlisting}[style=styleCXX]
+cout << "list loi before:\n";
+list<int> loi{ il };
+printc(loi);
+transform(loi.begin(), loi.end(), loi.begin(),
+	[=](auto e){ return clamp(e, ilow, ihigh); });
+cout << "list loi after:\n";
+printc(loi);
+\end{lstlisting}
+
+输出结果与使用for循环的版本相同:
+
+\begin{tcblisting}{commandshell={}}
+list loi before:
+0 -12 2001 4 5 -14 100 200 30000
+list loi after:
+0 0 500 4 5 0 100 200 500
+\end{tcblisting}
+\end{itemize}
+
+\subsubsection{How it works…}
+
+clamp()算法是一个简单的函数:
+
+\begin{lstlisting}[style=styleCXX]
+template<class T>
+constexpr const T& clamp( const T& v, const T& lo,
+		const T& hi ) {
+	return less(v, lo) ? lo : less(hi, v) ? hi : v;
+}
+\end{lstlisting}
+
+若v的值小于lo，则返回lo。若hi小于v，则返回hi。
+
+我们的例子中，可以使用for循环对容器应用clamp():
+
+\begin{lstlisting}[style=styleCXX]
+for(auto& v : voi) v = clamp(v, ilow, ihigh);
+\end{lstlisting}
+
+这里还在lambda中使用了transform()算法和clamp():
+
+\begin{lstlisting}[style=styleCXX]
+transform(loi.begin(), loi.end(), loi.begin(),
+	[=](auto v){ return clamp(v, ilow, ihigh); });
+\end{lstlisting}
+
+示例中，两个版本给出了相同的结果，并且都从GCC编译器生成了类似的代码。编译的大小略有不同(使用for循环的版本更小，正如预期的那样)，性能上的差异可以忽略不计。
+
+我更喜欢for循环，但transform()版本在其他应用中可能更灵活。

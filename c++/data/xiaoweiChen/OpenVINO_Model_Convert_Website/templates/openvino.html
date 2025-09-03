@@ -1,0 +1,380 @@
+{% extends "index.html" %}
+{% block body %}
+<html class="no-js">
+<br>
+<form class="layui-form layui-main" action="" method="post" enctype="multipart/form-data" onsubmit="return checkForm(this);">
+
+  <div class="layui-form-item">
+    <label class="layui-form-label">目标框架</label>
+    <div class="layui-input-block">
+      {% for platform in platforms %}
+        {% if platform.id == 0  %}
+        <input type="radio" name="platform" lay-filter="platform" value="{{platform.name}}" title="{{platform.name}}" checked>
+        {% else %}
+        <input type="radio" name="platform" lay-filter="platform" value="{{platform.name}}" title="{{platform.name}}">
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="layui-form-item">
+    <label class="layui-form-label">原始框架</label>
+    <div class="layui-input-block">
+      {% for framework in frameworks %}
+        {% if framework.name == select_framework  %}
+        <input type="radio" name="framework" lay-filter="framework" value="{{framework.name}}" title="{{framework.name}}" checked>
+        {% else %}
+        <input type="radio" name="framework" lay-filter="framework" value="{{framework.name}}" title="{{framework.name}}">
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  
+  <div class="layui-form-item">
+    <label class="layui-form-label">后缀组合</label>
+      <div class="layui-input-block" id="supported-suffixs"></div>
+  </div>
+  
+  <div name="select-files">
+    {% for framework in frameworks %}
+    {% for suffix_info in framework.suffix_list %}
+    <div id="{{framework.name}}-upload-suffix-{{suffix_info.id}}" style="display:none">
+      <label class="layui-form-label">选择文件</label>
+    {% for suffix in suffix_info.suffix%}
+      <input type="file" name="{{suffix}}" id="{{suffix}}" class="inputfile inputfile-3" data-multiple-caption="{count} files selected" accept="{{suffix}}" multiple />
+      <label for="{{suffix}}"><span>{{suffix}}</span></label>
+    {% endfor %}
+    </div>
+    {% endfor %}
+    {% endfor %}
+  </div>
+  <br>
+  <div class="layui-collapse" lay-accordion="">
+    <div class="layui-colla-item">
+      <h2 class="layui-colla-title">高级选项</h2>
+      <!--div class="layui-colla-content layui-show"-->
+      <div class="layui-colla-content">
+      
+        <div class="layui-form-item">
+          <label class="layui-form-label">输入Batch</label>
+          <div class="layui-input-block">
+            <input type="text" name="batch" lay-verify="batch" autocomplete="off" placeholder="输入大于1的整数，默认为1。(输入非正整形数据和0，均按默认值处理)" class="layui-input">
+          </div>
+        </div>
+      
+        <div class="layui-form-item">
+          <label class="layui-form-label">数据类型</label>
+          <div class="layui-input-block">
+            <input type="radio" name="data_type" value="FP32" title="FP32" >
+            <input type="radio" name="data_type" value="FP16" title="FP16" checked="">
+            <input type="radio" name="data_type" value="INT8" title="INT8" disabled="">
+          </div>
+        </div>
+        
+        <div class="layui-form-item">
+          <label class="layui-form-label">输入尺寸</label>
+          <div class="layui-input-block">
+            <input type="text" name="input_shape" lay-verify="input_shape" autocomplete="off" placeholder="模型输入节点的尺寸。 Caffe模型的顺序为N,C,H,W, TensorFlow模型的顺序为N,H,W,C 默认为模型中的尺寸" class="layui-input">
+          </div>
+        </div>
+        
+        <div class="layui-form-item">
+          <label class="layui-form-label">缩放系数</label>
+          <div class="layui-input-block">
+            <input type="text" name="scale" lay-verify="scale" autocomplete="off" placeholder="单个值，接受浮点或整数输入。" class="layui-input">
+          </div>
+        </div>
+        
+        <!--div class="layui-form-item">
+          <label class="layui-form-label">通道均值</label>
+          <div class="layui-input-block">
+            <input type="text" name="mean_values" lay-verify="mean_values" autocomplete="off" placeholder="多个值(用逗号隔开,对应通道)。逗号隔开的数小于3个时，使用默认值处理，并使用第一个值；多于3时，只会使用前三个。" class="layui-input">
+          </div>
+        </div-->
+        
+        {% if enable_int8 %}
+        <div class="layui-form-item">
+          <label class="layui-form-label">转int8模型</label>
+          <input type="file" name="enable-to-int8" id="enable-to-int8" class="inputfile inputfile-3" data-multiple-caption="{count} files selected" accept=".zip" multiple />
+          <label for="enable-to-int8"><span>选择图片打包zip</span></label>
+        </div>
+        {% endif %}
+        
+        <div class="layui-form-item">
+          <label class="layui-form-label">Resnet优化</label>
+          <div class="layui-input-block">
+            <input type="checkbox" checked="" name="disable_resnet_optimization" lay-skin="switch" lay-text="ON|OFF">
+          </div>
+        </div>
+        
+        <!-- --disable_gfusing和--disable_fusing的状态相同处理 -->
+        <div class="layui-form-item">
+          <label class="layui-form-label">卷积融合</label>
+          <div class="layui-input-block">
+            <input type="checkbox" checked="" name="disable_fusing" lay-skin="switch" lay-filter="switchTest" lay-text="ON|OFF">
+          </div>
+        </div>
+
+ 
+        <div id="caffe-advance-options" style="display:none">
+          <label class="layui-form-label">自定义proto</label>
+          <input type="file" name="custom-caffe-proto" id="custom-caffe-proto" class="inputfile inputfile-3" data-multiple-caption="{count} files selected" accept=".proto" multiple />
+          <label for="custom-caffe-proto"><span>选择文件</span></label>
+        </div>
+        
+        <div id="mxnet-advance-options" style="display:none">
+        
+          <div class="layui-form-item">
+            <label class="layui-form-label" style="text-align: center; margin:0 auto;">开启SSD gluoncv</label>
+            <div class="layui-input-block">
+              <input type="checkbox" name="enable_ssd_gluoncv" lay-skin="switch" lay-filter="switchTest" lay-text="ON|OFF">
+            </div>
+          </div>
+          
+        </div>
+        
+        <div id="Tensorflow-advance-options" style="display:none">
+        
+          <div class="layui-form-item">
+            <label class="layui-form-label">模型类型</label>
+            <div class="layui-input-block">
+              <input type="radio" name="model_type" lay-filter="model_type" value="other" title="other" checked>
+              <input type="radio" name="model_type" lay-filter="model_type" value="faster_rcnn" title="faster_rcnn">
+              <input type="radio" name="model_type" lay-filter="model_type" value="mask_rcnn" title="mask_rcnn">
+              <input type="radio" name="model_type" lay-filter="model_type" value="retinanet" title="retinanet">
+              <input type="radio" name="model_type" lay-filter="model_type" value="rfcn" title="rfcn">
+              <input type="radio" name="model_type" lay-filter="model_type" value="ssd" title="ssd_v1">
+              <input type="radio" name="model_type" lay-filter="model_type" value="ssd_v2" title="ssd_v2">
+              <input type="radio" name="model_type" lay-filter="model_type" value="yolo_v1" title="yolo_v1">
+              <input type="radio" name="model_type" lay-filter="model_type" value="yolo_v1_tiny" title="yolo_v1_tiny">
+              <input type="radio" name="model_type" lay-filter="model_type" value="yolo_v2" title="yolo_v2">
+              <input type="radio" name="model_type" lay-filter="model_type" value="yolo_v2_tiny" title="yolo_v2_tiny">
+              <input type="radio" name="model_type" lay-filter="model_type" value="yolo_v2_tiny_voc" title="yolo_v2_tiny_voc">
+              <input type="radio" name="model_type" lay-filter="model_type" value="yolo_v2_voc" title="yolo_v2_voc">
+              <input type="radio" name="model_type" lay-filter="model_type" value="yolo_v3" title="yolo_v3">
+              <input type="radio" name="model_type" lay-filter="model_type" value="yolo_v3_tiny" title="yolo_v3_tiny">
+              <input type="radio" name="model_type" lay-filter="model_type" value="yolo_v3_voc" title="yolo_v3_voc">
+            </div>
+          </div>
+          
+          <label class="layui-form-label">counts文件</label>
+          <input type="file" name="config-file" id="config-file" class="inputfile inputfile-3" data-multiple-caption="{count} files selected" accept=".config" multiple />
+          <label for="config-file"><span>.config文件</span></label>
+          
+          <div class="layui-form-item">
+            <label class="layui-form-label">自定义操作配置文件</label>
+            <input type="file" name="tensorflow-use-custom-operations-config-file" id="tensorflow-use-custom-operations-config-file" class="inputfile inputfile-3" data-multiple-caption="{count} files selected" accept=".json" multiple />
+            <label for="tensorflow-use-custom-operations-config-file"><span>.json文件</span></label>
+          </div>
+        </div>
+        
+        <div id="kaldi-advance-options" style="display:none">
+          <div class="layui-form-item">
+            <label class="layui-form-label" style="text-align: center; margin:0 auto;">删除输出softmax</label>
+            <div class="layui-input-block">
+              <input type="checkbox" checked="" name="remove_output_softmax" lay-skin="switch" lay-filter="switchTest" lay-text="ON|OFF">
+            </div>
+          </div>
+          
+          <div class="layui-form-item">
+            <label class="layui-form-label" style="text-align: center; margin:0 auto;">删除Memory层</label>
+            <div class="layui-input-block">
+              <input type="checkbox" name="remove_memory" lay-skin="switch" lay-filter="switchTest" lay-text="ON|OFF">
+            </div>
+          </div>
+          
+          <div class="layui-form-item">
+            <label class="layui-form-label">counts文件</label>
+            <input type="file" name="counts-file" id="counts-file" class="inputfile inputfile-3" data-multiple-caption="{count} files selected" accept=".counts" multiple />
+            <label for="counts-file"><span>.counts文件</span></label>
+          </div>
+        </div>
+        
+        <div id="onnx-advance-options" style="display:none">
+          
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="layui-form-item file-box">
+    <br/><br/>
+    <label class="layui-form-label" id="boot_convert">
+    <input type="submit" name="submit" class="layui-btn layui-btn-normal layui-btn-radius" value="开始转换" />
+    </label>
+    
+    <label class="layui-form-label" id="reset_html">
+    <input type="button" class="layui-btn layui-btn-normal layui-btn-radius" value="重置页面" onclick="resetForm(this.form);" />
+    </label>
+    <br/>
+    <div id="convert-status" class="layui-inline" style="color:red;font-size:20px">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    {% if category =='error'%}
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ message }}
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    </div>
+  </div>
+  
+  <div class="layui-form-item file-box">
+ 
+  </div>
+
+  <fieldset class="layui-elem-field layui-field-title"></fieldset>
+  完成下载后，需要点击"重置页面"按钮对页面进行重置。
+  <br/>
+  <br/>
+  如模型转换有问题，请将转换时的错误信息和模型文件发给开发或维护人员。<br/><br/>
+  <div id="convert-error-message" class="layui-inline">
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    {% if category =='error_message'%}
+    {% for line in message %}
+      {{ line }}<br/>
+    {% endfor%}
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+  </div>
+</form>
+
+</html>
+  
+<script>
+
+function checkForm(form)
+{
+  document.getElementById("boot_convert").innerHTML = 
+    '<input type="submit" name="submit" class="layui-btn layui-btn-normal layui-btn-radius layui-btn-disabled" disabled="disabled" value="转换中..." />';
+  return true;
+}
+
+function resetForm(form) // Reset button clicked
+{
+  location.replace(location.href);
+}
+
+function displayDIV(id){
+  function $(id)
+  {
+    return document.getElementById(id);
+  }
+  
+  var display = $(id).style.display;
+  $(id).style.display='';
+}
+
+function hideDIV(id){
+  function $(id)
+  {
+    return document.getElementById(id);
+  }
+  
+  var display = $(id).style.display;
+  $(id).style.display='none'; // 隐藏
+}
+
+function hideAllSuffix(){
+  {% for framework in frameworks %}
+  {% for suffix_info in framework.suffix_list %}
+  hideDIV('{{framework.name}}-upload-suffix-{{suffix_info.id}}');
+  {% endfor %}
+  {% endfor %}
+}
+
+function hideAdvanceOptions(){
+  {% for framework in frameworks %}
+  hideDIV('{{framework.name}}-advance-options');
+  {% endfor %}
+}
+
+function getInfo(name){
+  var  obj = document.getElementsByName(name);
+  for(var i in obj){
+    if(obj[i].checked){
+      return obj[i];
+    }
+  }
+}
+
+function showSupportSuffix(){
+
+  var framework = getInfo("framework").title;
+  
+  hideAllSuffix();
+  hideAdvanceOptions();
+  
+  {% for framework in frameworks %}
+  {% for suffix_info in framework.suffix_list %}
+  if (framework == '{{framework.name}}'){
+    var html = '<form id="supported-suffixs-group">';
+    
+    displayDIV('{{framework.name}}-upload-suffix-0'); // display default one
+    displayDIV('{{framework.name}}-advance-options');
+
+    {% for suffix_info in framework.suffix_list %}
+    
+    {% if suffix_info.id == 0 %}
+    html += '<input type="radio" name="suffix" lay-filter="suffix" value="{{framework.name}}-upload-suffix-{{suffix_info.id}}" title="{{suffix_info.suffix_group}}" checked>';
+    {% else %}
+    html += '<input type="radio" name="suffix" lay-filter="suffix" value="{{framework.name}}-upload-suffix-{{suffix_info.id}}" title="{{suffix_info.suffix_group}}">';
+    {% endif %}
+    {% endfor %}
+    html += '</form>';
+    document.getElementById("supported-suffixs").innerHTML = html;
+    return;
+  }
+  {% endfor %}
+  {% endfor %}
+  return;
+}
+
+function showNeedUploadFiles(){
+  var value = getInfo("suffix").value;
+  
+  hideAllSuffix();
+  displayDIV(value);
+}
+
+layui.use(['code', 'element', "jquery","layer","form"], function(){
+  
+  var $ = layui.$,layer = layui.layer,form = layui.form;
+  
+  //var element = layui.element();
+  
+  showSupportSuffix();
+
+  form.on('radio(framework)', function(data){
+    showSupportSuffix();
+    $("#convert-status").hide("slow")
+    $("#convert-error-message").hide("slow")
+    form.render();
+  }); 
+  
+  form.on('radio(suffix)', function(data){
+    showNeedUploadFiles();
+    $("#convert-status").hide("slow")
+    $("#convert-error-message").hide("slow")
+    form.render();
+  });
+  
+  //监听折叠
+  //element.on('collapse(test)', function(data){
+  //  layer.msg('展开状态：'+ data.show);
+  //});
+  
+  //更新全部
+  form.render();
+});
+</script>
+
+{% endblock %}

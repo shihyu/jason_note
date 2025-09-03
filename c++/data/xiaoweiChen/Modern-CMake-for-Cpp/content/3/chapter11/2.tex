@@ -1,0 +1,128 @@
+如何使项目A的目标对项目B可用?通常使用find\_package()指令，但这需要创建一个包并将其安装到系统上。这种方法没问题，但需要一些工作量。有时，只需要一种非常快速的方法来构建一个项目，并使其目标可用于其他项目。
+
+可以通过包含A的主列表文件来节省一些时间:已经包含了所有的目标定义，还可能包含许多其他东西:全局配置、需求、带有副作用的CMake指令、附加依赖项，以及在B中不想要的目标(例如单元测试)。所以，不要这样做。最好是通过提供项目B可以使用include()包含的目标导出文件来进行:
+
+\begin{lstlisting}[style=styleCMake]
+cmake_minimum_required(VERSION 3.20.0)
+project(B)
+include(/path/to/project-A/ProjectATargets.cmake)
+\end{lstlisting}
+
+这样做将为A的所有目标提供定义(如add\_library()和add\_executable()等指令)，并设置正确的属性。
+
+当然，不需要手动编写这样的文件——不是非常DRY的方法。CMake可以用export()指令生成这些文件，该指令具有以下签名:
+
+\begin{lstlisting}[style=styleCMake]
+export(TARGETS [target1 [target2 [...]]]
+	[NAMESPACE <namespace>] [APPEND] FILE <path>
+	[EXPORT_LINK_INTERFACE_LIBRARIES])
+\end{lstlisting}
+
+必须在TARGET关键字之后提供想要导出的所有目标，并在FILE之后提供目标文件名。其他参数可选:
+
+\begin{itemize}
+\item 
+建议使用NAMESPACE作为提示，说明目标已从其他项目导入。
+
+\item 
+APPEND告诉CMake，不应该在写入之前擦除文件的内容。
+
+\item 
+EXPORT\_LINK\_INTERFACE\_LIBRARIES将导出目标链接依赖项(包括导入的和配置特定的变量)。
+\end{itemize}
+
+用示例Calc库来看看它的作用，其提供了两个简单的方法:
+
+\begin{lstlisting}[style=styleCXX]
+// chapter-11/01-export/src/include/calc/calc.h
+
+#pragma once
+int Sum(int a, int b);
+int Multiply(int a, int b);
+\end{lstlisting}
+
+我们这样声明其目标:
+
+\begin{lstlisting}[style=styleCMake]
+# chapter-11/01-export/src/CMakeLists.txt
+
+add_library(calc STATIC calc.cpp)
+target_include_directories(calc INTERFACE include)
+\end{lstlisting}
+
+然后，用export(TARGETS)指令生成导出文件:
+
+\begin{lstlisting}[style=styleCMake]
+# chapter-11/01-export/CMakeLists.txt (fragment)
+
+cmake_minimum_required(VERSION 3.20.0)
+project(ExportCalcCXX)
+add_subdirectory(src bin)
+set(EXPORT_DIR "${CMAKE_CURRENT_BINARY_DIR}/cmake")
+export(TARGETS calc
+	FILE "${EXPORT_DIR}/CalcTargets.cmake"
+	NAMESPACE Calc::
+)
+...
+\end{lstlisting}
+
+可以看到EXPORT\_DIR变量设置为构建树的cmake子目录(根据.cmake文件的约定)。导出目标声明文件CalcTargets.cmake，对于包含此文件的项目，有一个可见的calc::calc目标calc。
+
+注意，这个导出文件还不是一个包，这个文件中的所有路径都是绝对的，并且硬编码到构建树中，所以它们不可重定位。
+
+export()指令也有一个简短的版本:
+
+\begin{lstlisting}[style=styleCMake]
+export(EXPORT <export> [NAMESPACE <namespace>] [FILE
+	<path>])
+\end{lstlisting}
+
+但需要<export>名称，而不是导出目标的列表。这样的<export>实例是由install(targets)定义的目标的命名列表。这里有一个例子，展示了这种简版在实践中如何使用:
+
+\begin{lstlisting}[style=styleCMake]
+# chapter-11/01-export/CMakeLists.txt (continued)
+
+...
+install(TARGETS calc EXPORT CalcTargets)
+export(EXPORT CalcTargets
+	FILE "${EXPORT_DIR}/CalcTargets2.cmake"
+	NAMESPACE Calc::
+)
+\end{lstlisting}
+
+现在，export()和install()指令之间共享一个目标列表。
+
+两种生成导出文件的方法将产生相同的结果，将包含一些样板代码和几行定义目标的代码。将/tmp/b设置为构建树路径:
+
+\begin{lstlisting}[style=styleCMake]
+# /tmp/b/cmake/CalcTargets.cmake (fragment)
+
+# Create imported target Calc::calc
+add_library(Calc::calc STATIC IMPORTED)
+set_target_properties(Calc::calc PROPERTIES
+	INTERFACE_INCLUDE_DIRECTORIES
+	"/root/examples/chapter11/01-export/src/include"
+)
+# Import target "Calc::calc" for configuration ""
+set_property(TARGET Calc::calc APPEND PROPERTY
+	IMPORTED_CONFIGURATIONS NOCONFIG
+)
+set_target_properties(Calc::calc PROPERTIES
+	IMPORTED_LINK_INTERFACE_LANGUAGES_NOCONFIG "CXX"
+	IMPORTED_LOCATION_NOCONFIG "/tmp/b/libcalc.a"
+)
+\end{lstlisting}
+
+通常，我们不会编辑这个文件，甚至不会打开它，这里想突出显示这个生成文件中的硬编码路径。在当前的形式中，包不可重定位。若想改变这一点，需要先克服一些困难。我们将在下一节中探讨这为什么很重要。
+
+
+
+
+
+
+
+
+
+
+
+

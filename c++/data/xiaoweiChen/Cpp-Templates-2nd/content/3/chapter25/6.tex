@@ -1,0 +1,143 @@
+原则上，可以定义operator[]来访问元组的元素。然而，与std::vector不同，元组的元素类型可以有不同，因此元组的operator[]必须是一个模板，其结果类型根据元素的索引不同而不同。这要求每个索引具有不同的类型，因此可以使用索引的类型来确定元素类型。
+
+在第24.3节中介绍的类模板CTValue，可以在类型中编码数字索引，可以用其将operator[]定义为Tuple的成员:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T, T Index>
+auto& operator[](CTValue<T, Index>) {
+	return get<Index>(*this);
+}
+\end{lstlisting}
+
+这里，在CTValue参数的类型中传递索引值来进行相应的get<>()调用。
+
+可以这样使用这个类:
+
+\begin{lstlisting}[style=styleCXX]
+auto t = makeTuple(0, ’1’, 2.2f, std::string{"hello"});
+auto a = t[CTValue<unsigned, 2>{}];
+auto b = t[CTValue<unsigned, 3>{}];
+\end{lstlisting}
+
+a和b将由Tuple t中的第三和第四个值的类型和值初始化。
+
+为了更方便地使用常量索引，可以使用constexpr实现字面操作符，从后缀为\_c的文字直接计算编译时的数字:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{tuples/literals.hpp}
+\begin{lstlisting}[style=styleCXX]
+#include "ctvalue.hpp"
+#include <cassert>
+#include <cstddef>
+// convert single char to corresponding int value at compile time:
+constexpr int toInt(char c) {
+	// hexadecimal letters:
+	if (c >= ’A’ && c <= ’F’) {
+		return static_cast<int>(c) - static_cast<int>(’A’) + 10;
+	}
+	if (c >= ’a’ && c <= ’f’) {
+		return static_cast<int>(c) - static_cast<int>(’a’) + 10;
+	}
+	// other (disable ’.’ for floating-point literals):
+	assert(c >= ’0’ && c <= ’9’);
+	return static_cast<int>(c) - static_cast<int>(’0’);
+}
+
+// parse array of chars to corresponding int value at compile time:
+template<std::size_t N>
+constexpr int parseInt(char const (&arr)[N]) {
+	int base = 10; // to handle base (default: decimal)
+	int offset = 0; // to skip prefixes like 0x
+	if (N > 2 && arr[0] == ’0’) {
+		switch (arr[1]) {
+			case ’x’: // prefix 0x or 0X, so hexadecimal
+			case ’X’:
+				base = 16;
+				offset = 2;
+				break;
+			case ’b’: // prefix 0b or 0B (since C++14), so binary
+			case ’B’:
+				base = 2;
+				offset = 2;
+				break;
+			default: // prefix 0, so octal
+				base = 8;
+				offset = 1;
+				break;
+		}
+	}
+	// iterate over all digits and compute resulting value:
+	int value = 0;
+	int multiplier = 1;
+	for (std::size_t i = 0; i < N - offset; ++i) {
+		if (arr[N-1-i] != ’\’’) { // ignore separating single quotes (e.g. in 1’000)
+			value += toInt(arr[N-1-i]) * multiplier;
+			multiplier *= base;
+		}
+	}
+	return value;
+}
+
+// literal operator: parse integral literals with suffix _c as sequence of chars:
+template<char... cs>
+constexpr auto operator"" _c() {
+	return CTValue<int, parseInt<sizeof...(cs)>({cs...})>{};
+}
+\end{lstlisting}
+
+对于数字字面值，可以使用字面值操作符来推导出字面值的每个字符作为模板参数(详细信息请参阅第15.5.1节)。可以将字符传递给constexpr辅助函数parseInt()，该函数在编译时计算字符序列的值，并将其生成为CTValue。例如:
+
+\begin{itemize}
+\item 
+42\_c生成CTValue<int,42>
+
+\item 
+0x815\_c生成CTValue<int,2069>
+
+\item 
+0b1111'1111\_c生成CTValue<int,255>
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}C++14开始，就支持二进制字面值的前缀0b和分隔数字的单引号字符。
+\end{tcolorbox}
+\end{itemize}
+
+解析器不处理浮点字面值，断言会导致编译时错误，这是一个不能在编译时上下文中使用的运行时特性。
+
+现在，就可以这样使用元组了:
+
+\begin{lstlisting}[style=styleCXX]
+auto t = makeTuple(0, ’1’, 2.2f, std::string{"hello"});
+auto c = t[2_c];
+auto d = t[3_c];
+\end{lstlisting}
+
+Boost.Hana(参见[boostana]，适合对类型和值进行计算的元编程库)就使用了这种方法。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

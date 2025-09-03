@@ -1,0 +1,749 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Rust 擁有權 vs 借用：生命週期問題指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="rust-擁有權-vs-借用生命週期問題指南-"><a class="header" href="#rust-擁有權-vs-借用生命週期問題指南-">Rust 擁有權 vs 借用：生命週期問題指南 🦀</a></h1>
+<h2 id="-核心答案只有借用才有生命週期問題"><a class="header" href="#-核心答案只有借用才有生命週期問題">🔍 核心答案：只有借用才有生命週期問題！</a></h2>
+<p><strong>簡單來說</strong>：</p>
+<ul>
+<li>✅ <strong>擁有權</strong>：我的東西，沒有生命週期問題</li>
+<li>⚠️ <strong>借用</strong>：別人的東西，需要生命週期保護</li>
+</ul>
+<h2 id="-對比表格"><a class="header" href="#-對比表格">📊 對比表格</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>類型</th><th>是否需要生命週期</th><th>範例</th><th>說明</th></tr></thead><tbody>
+<tr><td><strong>擁有類型</strong></td><td>❌ 不需要</td><td><code>String</code>, <code>Vec&lt;T&gt;</code>, <code>u32</code></td><td>我的東西，隨便用</td></tr>
+<tr><td><strong>借用類型</strong></td><td>✅ 需要</td><td><code>&amp;str</code>, <code>&amp;Vec&lt;T&gt;</code>, <code>&amp;u32</code></td><td>別人的東西，要小心</td></tr>
+</tbody></table>
+</div>
+<h2 id="-為什麼只有借用需要生命週期"><a class="header" href="#-為什麼只有借用需要生命週期">💡 為什麼只有借用需要生命週期？</a></h2>
+<h3 id="-擁有權的本質"><a class="header" href="#-擁有權的本質">🏠 擁有權的本質</a></h3>
+<ul>
+<li><strong>擁有</strong> = 我控制這塊記憶體</li>
+<li>我可以決定什麼時候釋放</li>
+<li>不會有懸空指標問題</li>
+</ul>
+<h3 id="-借用的本質"><a class="header" href="#-借用的本質">📞 借用的本質</a></h3>
+<ul>
+<li><strong>借用</strong> = 指向別人記憶體的指標</li>
+<li>如果原主人消失了，指標就變成「懸空指標」💥</li>
+<li>生命週期確保原主人活得夠久</li>
+</ul>
+<h2 id="-擁有權沒有生命週期問題"><a class="header" href="#-擁有權沒有生命週期問題">✅ 擁有權：沒有生命週期問題</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Person {
+    name: String,    // 擁有 String，沒有生命週期標註
+    age: u32,       // 擁有 u32，沒有生命週期標註
+}
+
+fn create_person() -&gt; Person {
+    Person {
+        name: "小明".to_string(),  // 創建新的 String
+        age: 25,
+    }
+    // 返回擁有權，完全沒問題！✅
+}
+
+// 更多擁有權例子
+struct Config {
+    host: String,        // 擁有
+    port: u16,          // 擁有
+    users: Vec&lt;String&gt;, // 擁有
+    settings: HashMap&lt;String, String&gt;, // 擁有
+}
+
+impl Config {
+    fn new(host: String, port: u16) -&gt; Self {
+        Config {
+            host,
+            port,
+            users: Vec::new(),
+            settings: HashMap::new(),
+        }
+    }
+    
+    // 所有方法都不需要生命週期標註
+    fn get_host(&amp;self) -&gt; &amp;str {
+        &amp;self.host
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="-借用需要生命週期標註"><a class="header" href="#-借用需要生命週期標註">⚠️ 借用：需要生命週期標註</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct PersonRef&lt;'a&gt; {
+    name: &amp;'a str,   // 借用，需要 'a
+    age: u32,        // 擁有，不需要 'a
+}
+
+// 這樣會編譯失敗！❌
+fn create_person_ref() -&gt; PersonRef {
+    let name = "小明".to_string();
+    PersonRef {
+        name: &amp;name,  // 錯誤！name 會被銷毀
+        age: 25,
+    }
+}
+
+// 正確的借用用法 ✅
+fn use_borrowed_data() {
+    let name = "小明";  // 字串字面量，生命週期很長
+    let person = PersonRef {
+        name: &amp;name,    // 可以借用
+        age: 25,
+    };
+    println!("{} is {} years old", person.name, person.age);
+    // name 活得比 person 久，所以安全
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="-實際範例對比"><a class="header" href="#-實際範例對比">🎯 實際範例對比</a></h2>
+<h3 id="方案-a全用擁有權推薦給初學者"><a class="header" href="#方案-a全用擁有權推薦給初學者">方案 A：全用擁有權（推薦給初學者）</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct DatabaseConfig {
+    host: String,           // 擁有
+    username: String,       // 擁有
+    password: String,       // 擁有
+    database_name: String,  // 擁有
+}
+
+struct Application {
+    name: String,           // 擁有
+    version: String,        // 擁有
+    config: DatabaseConfig, // 擁有
+}
+
+impl Application {
+    fn new(name: String, version: String, config: DatabaseConfig) -&gt; Self {
+        Application { name, version, config }
+    }
+    
+    // 完全沒有生命週期問題！
+    fn get_connection_string(&amp;self) -&gt; String {
+        format!("{}@{}/{}", 
+                self.config.username, 
+                self.config.host, 
+                self.config.database_name)
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="方案-b混合借用需要處理生命週期"><a class="header" href="#方案-b混合借用需要處理生命週期">方案 B：混合借用（需要處理生命週期）</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct DatabaseConfigRef&lt;'a&gt; {
+    host: &amp;'a str,           // 借用 - 需要 'a
+    username: &amp;'a str,       // 借用 - 需要 'a
+    password: &amp;'a str,       // 借用 - 需要 'a
+    database_name: &amp;'a str,  // 借用 - 需要 'a
+}
+
+struct ApplicationRef&lt;'a&gt; {
+    name: &amp;'a str,                    // 借用 - 需要 'a
+    version: &amp;'a str,                 // 借用 - 需要 'a
+    config: &amp;'a DatabaseConfigRef&lt;'a&gt;, // 借用 - 需要 'a
+}
+
+impl&lt;'a&gt; ApplicationRef&lt;'a&gt; {
+    fn new(name: &amp;'a str, version: &amp;'a str, config: &amp;'a DatabaseConfigRef&lt;'a&gt;) -&gt; Self {
+        ApplicationRef { name, version, config }
+    }
+    
+    // 返回的字串也需要生命週期標註
+    fn get_connection_string(&amp;self) -&gt; String {
+        format!("{}@{}/{}", 
+                self.config.username, 
+                self.config.host, 
+                self.config.database_name)
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="-什麼時候該用借用"><a class="header" href="#-什麼時候該用借用">🚀 什麼時候該用借用？</a></h2>
+<h3 id="-適合借用的情況"><a class="header" href="#-適合借用的情況">✅ 適合借用的情況</a></h3>
+<ol>
+<li><strong>短期使用</strong>：函數參數傳遞</li>
+<li><strong>避免複製</strong>：大型資料結構</li>
+<li><strong>效能優化</strong>：避免不必要的記憶體分配</li>
+</ol>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 函數參數借用 - 很常見且安全
+fn print_info(name: &amp;str, age: u32) {
+    println!("{} is {} years old", name, age);
+}
+
+// 處理大型資料時借用
+fn process_large_data(data: &amp;Vec&lt;u8&gt;) -&gt; usize {
+    data.len()  // 只是讀取，不需要擁有
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-不適合借用的情況"><a class="header" href="#-不適合借用的情況">❌ 不適合借用的情況</a></h3>
+<ol>
+<li><strong>長期存儲</strong>：結構體字段</li>
+<li><strong>返回值</strong>：從函數返回</li>
+<li><strong>複雜的所有權關係</strong></li>
+</ol>
+<h2 id="-特殊情況借用進借用出需要生命週期"><a class="header" href="#-特殊情況借用進借用出需要生命週期">🚨 特殊情況：借用進借用出（需要生命週期）</a></h2>
+<h3 id="核心概念借用進也有借用出--需要生命週期-"><a class="header" href="#核心概念借用進也有借用出--需要生命週期-">核心概念：借用進也有借用出 → 需要生命週期 🚨</a></h3>
+<p>當函數<strong>接收引用參數</strong>（借用進）並且<strong>返回引用</strong>（借用出）時，編譯器需要知道返回的引用能活多久。</p>
+<h3 id="-不寫生命週期會編譯失敗的情況"><a class="header" href="#-不寫生命週期會編譯失敗的情況">❌ 不寫生命週期會編譯失敗的情況</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 這樣寫會編譯錯誤！
+fn longest(x: &amp;str, y: &amp;str) -&gt; &amp;str {
+    if x.len() &gt; y.len() {
+        x
+    } else {
+        y
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>編譯器錯誤訊息</strong>：</p>
+<pre><code>error[E0106]: missing lifetime specifier
+ --&gt; src/lib.rs:1:37
+  |
+1 | fn longest(x: &amp;str, y: &amp;str) -&gt; &amp;str {
+  |               ----     ----     ^ expected named lifetime parameter
+  |
+  = help: this function's return type contains a borrowed value, 
+          but the signature does not say whether it is borrowed from `x` or `y`
+</code></pre>
+<h3 id="-編譯器的困惑"><a class="header" href="#-編譯器的困惑">🤔 編譯器的困惑</a></h3>
+<p>編譯器不知道：</p>
+<ul>
+<li>返回的 <code>&amp;str</code> 是來自 <code>x</code> 還是 <code>y</code>？</li>
+<li>如果來自 <code>x</code>，那 <code>x</code> 要活多久？</li>
+<li>如果來自 <code>y</code>，那 <code>y</code> 要活多久？</li>
+<li>我該如何檢查生命週期安全？😵</li>
+</ul>
+<h3 id="-正確的寫法"><a class="header" href="#-正確的寫法">✅ 正確的寫法</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn longest&lt;'a&gt;(x: &amp;'a str, y: &amp;'a str) -&gt; &amp;'a str {
+    if x.len() &gt; y.len() {
+        x
+    } else {
+        y
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>編譯器現在理解了</strong>：</p>
+<ul>
+<li><code>x</code> 和 <code>y</code> 都有相同的生命週期 <code>'a</code></li>
+<li>返回值也是 <code>'a</code> 生命週期</li>
+<li>返回的引用不會比 <code>x</code> 或 <code>y</code> 活得更久 ✅</li>
+</ul>
+<h3 id="-更多借用進借用出的範例"><a class="header" href="#-更多借用進借用出的範例">📚 更多借用進借用出的範例</a></h3>
+<h4 id="1-返回引用的一部分"><a class="header" href="#1-返回引用的一部分">1. 返回引用的一部分</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ 編譯錯誤（實際上這個可以省略，因為只有一個輸入引用）
+fn first_word(s: &amp;str) -&gt; &amp;str {
+    let bytes = s.as_bytes();
+    
+    for (i, &amp;item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &amp;s[0..i];  // 返回 s 的一部分
+        }
+    }
+    
+    &amp;s[..]
+}
+
+// ✅ 正確（其實因為生命週期省略規則，上面的寫法也對）
+fn first_word&lt;'a&gt;(s: &amp;'a str) -&gt; &amp;'a str {
+    let bytes = s.as_bytes();
+    
+    for (i, &amp;item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &amp;s[0..i];
+        }
+    }
+    
+    &amp;s[..]
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="2-多個輸入引用返回其中一個"><a class="header" href="#2-多個輸入引用返回其中一個">2. 多個輸入引用，返回其中一個</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ 編譯錯誤：不知道返回哪個引用
+fn pick_one(first: &amp;str, second: &amp;str, use_first: bool) -&gt; &amp;str {
+    if use_first {
+        first
+    } else {
+        second
+    }
+}
+
+// ✅ 正確版本
+fn pick_one&lt;'a&gt;(first: &amp;'a str, second: &amp;'a str, use_first: bool) -&gt; &amp;'a str {
+    if use_first {
+        first
+    } else {
+        second
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="3-不同生命週期的例子"><a class="header" href="#3-不同生命週期的例子">3. 不同生命週期的例子</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 兩個參數可能有不同的生命週期，但返回值綁定到其中一個
+fn choose_first&lt;'a, 'b&gt;(x: &amp;'a str, _y: &amp;'b str) -&gt; &amp;'a str {
+    x  // 總是返回第一個，所以返回值生命週期只跟 'a 有關
+}
+
+// 返回值生命週期必須和至少一個輸入參數相關
+fn get_longer&lt;'a, 'b&gt;(x: &amp;'a str, y: &amp;'b str) -&gt; &amp;'a str 
+where 
+    'b: 'a  // 'b 的生命週期至少要和 'a 一樣長
+{
+    if x.len() &gt; y.len() {
+        x
+    } else {
+        // 這裡實際上有問題，因為 y 的生命週期是 'b
+        // 但我們說返回 'a，所以需要 'b: 'a 約束
+        x  // 為了編譯通過，還是返回 x
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-結構體方法中的借用進借用出"><a class="header" href="#-結構體方法中的借用進借用出">🏗️ 結構體方法中的借用進借用出</a></h3>
+<pre><pre class="playground"><code class="language-rust">// 結構體儲存引用，需要生命週期
+struct Book&lt;'a&gt; {
+    title: &amp;'a str,
+    author: &amp;'a str,
+}
+
+impl&lt;'a&gt; Book&lt;'a&gt; {
+    // 方法返回內部的引用（借用進借用出）
+    fn get_title(&amp;self) -&gt; &amp;'a str {
+        self.title
+    }
+    
+    // 這個也需要，因為 self 是借用，返回也是借用
+    fn get_author(&amp;self) -&gt; &amp;'a str {
+        self.author
+    }
+}
+
+// 更複雜的實際應用範例：字串處理器
+struct TextProcessor&lt;'a&gt; {
+    content: &amp;'a str,
+}
+
+impl&lt;'a&gt; TextProcessor&lt;'a&gt; {
+    // 借用進（self）借用出（返回值）
+    fn find_word(&amp;self, word: &amp;str) -&gt; Option&lt;&amp;'a str&gt; {
+        let start = self.content.find(word)?;
+        let end = start + word.len();
+        Some(&amp;self.content[start..end])
+    }
+    
+    // 借用進借用出：返回內容的一部分
+    fn get_lines(&amp;self) -&gt; Vec&lt;&amp;'a str&gt; {
+        self.content.lines().collect()
+    }
+    
+    // 借用進借用出：返回第一行
+    fn first_line(&amp;self) -&gt; &amp;'a str {
+        self.content.lines().next().unwrap_or("")
+    }
+}
+
+fn main() {
+    let text = String::from("Hello World\nThis is Rust\nLifetime example");
+    let processor = TextProcessor { content: &amp;text };
+    
+    // 查找單詞
+    if let Some(word) = processor.find_word("Rust") {
+        println!("找到: {}", word);
+    }
+    
+    // 取得所有行
+    let lines = processor.get_lines();
+    for (i, line) in lines.iter().enumerate() {
+        println!("第 {} 行: {}", i + 1, line);
+    }
+    
+    // 取得第一行
+    println!("第一行: {}", processor.first_line());
+}</code></pre></pre>
+<h3 id="-實際使用範例"><a class="header" href="#-實際使用範例">🎯 實際使用範例</a></h3>
+<pre><pre class="playground"><code class="language-rust">fn main() {
+    let string1 = "long string is long";
+    
+    {
+        let string2 = "xyz";
+        let result = longest(string1, string2);
+        println!("The longest string is {}", result);
+        // result 在這裡還可以使用，因為 string1 和 string2 都還活著
+    }
+    // string2 死了，但沒關係，我們已經用完 result 了
+}</code></pre></pre>
+<h3 id="-不想寫生命週期的替代方案"><a class="header" href="#-不想寫生命週期的替代方案">💡 不想寫生命週期的替代方案</a></h3>
+<h4 id="方案-1返回擁有權"><a class="header" href="#方案-1返回擁有權">方案 1：返回擁有權</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn longest_owned(x: &amp;str, y: &amp;str) -&gt; String {
+    if x.len() &gt; y.len() {
+        x.to_string()  // 創建新的 String
+    } else {
+        y.to_string()  // 創建新的 String
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="方案-2返回索引或布林值"><a class="header" href="#方案-2返回索引或布林值">方案 2：返回索引或布林值</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn longest_index(x: &amp;str, y: &amp;str) -&gt; bool {
+    x.len() &gt; y.len()  // 返回 true 表示 x 比較長
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="方案-3使用靜態字串"><a class="header" href="#方案-3使用靜態字串">方案 3：使用靜態字串</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn longest_static() -&gt; &amp;'static str {
+    "這是一個靜態字串"  // 'static 生命週期，活到程式結束
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="-完整對比需要-vs-不需要生命週期"><a class="header" href="#-完整對比需要-vs-不需要生命週期">🎯 完整對比：需要 vs 不需要生命週期</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ 不需要生命週期：沒有返回引用
+fn print_string(s: &amp;str) {
+    println!("{}", s);
+}
+
+// ✅ 不需要生命週期：返回擁有所有權的值
+fn make_uppercase(s: &amp;str) -&gt; String {
+    s.to_uppercase()
+}
+
+// ❌ 需要生命週期：借用進 + 借用出
+fn get_part(s: &amp;str) -&gt; &amp;str {
+    &amp;s[0..5]
+}
+
+// ✅ 正確版本
+fn get_part&lt;'a&gt;(s: &amp;'a str) -&gt; &amp;'a str {
+    &amp;s[0..5]
+}
+
+// ❌ 需要生命週期：多個借用進 + 借用出
+fn combine_refs(x: &amp;str, y: &amp;str) -&gt; &amp;str {
+    if x.len() &gt; 0 { x } else { y }
+}
+
+// ✅ 正確版本
+fn combine_refs&lt;'a&gt;(x: &amp;'a str, y: &amp;'a str) -&gt; &amp;'a str {
+    if x.len() &gt; 0 { x } else { y }
+}
+
+// ✅ 不需要生命週期：返回引用但有明確的生命週期（如 'static）
+fn get_static() -&gt; &amp;'static str {
+    "hello"  // 字串字面量是 'static
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="-記憶口訣"><a class="header" href="#-記憶口訣">🧠 記憶口訣</a></h2>
+<h3 id="判斷是否需要生命週期-"><a class="header" href="#判斷是否需要生命週期-">判斷是否需要生命週期 🚨</a></h3>
+<h4 id="需要生命週期的情況"><a class="header" href="#需要生命週期的情況">需要生命週期的情況</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 1. 借用進 + 借用出
+fn func(x: &amp;str) -&gt; &amp;str { x }
+
+// 2. 多個借用進 + 借用出（不確定返回哪個）
+fn func(x: &amp;str, y: &amp;str) -&gt; &amp;str { x }
+
+// 3. 結構體存儲引用
+struct S&lt;'a&gt; { field: &amp;'a str }
+
+// 4. impl 塊中方法返回引用
+impl&lt;'a&gt; S&lt;'a&gt; {
+    fn get(&amp;self) -&gt; &amp;'a str { self.field }
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="不需要生命週期的情況"><a class="header" href="#不需要生命週期的情況">不需要生命週期的情況</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 1. 只借用進，沒有借用出
+fn func(x: &amp;str) { }
+
+// 2. 返回擁有所有權的值
+fn func(x: &amp;str) -&gt; String { x.to_string() }
+
+// 3. 沒有引用參與
+fn func(x: String) -&gt; String { x }
+
+// 4. 返回引用但有明確的生命週期（如 'static）
+fn func() -&gt; &amp;'static str { "hello" }
+<span class="boring">}</span></code></pre></pre>
+<h3 id="簡單判斷法"><a class="header" href="#簡單判斷法">簡單判斷法</a></h3>
+<ul>
+<li><strong>如果是 <code>&amp;</code> 開頭</strong> → 可能需要生命週期 ⏰</li>
+<li><strong>如果沒有 <code>&amp;</code></strong> → 不需要生命週期 ✅</li>
+<li><strong>函數簽名有借用進也有借用出</strong> → 一定需要生命週期 🚨</li>
+</ul>
+<h3 id="核心口訣"><a class="header" href="#核心口訣">核心口訣</a></h3>
+<p><strong>「借進借出，生命週期要有」</strong></p>
+<ul>
+<li>有 <code>&amp;</code> 進來，有 <code>&amp;</code> 出去 → 需要 <code>'a</code></li>
+<li>只進不出，或出的不是引用 → 不需要 <code>'a</code></li>
+</ul>
+<h3 id="實用建議"><a class="header" href="#實用建議">實用建議</a></h3>
+<ol>
+<li><strong>初學者策略</strong>：多用擁有權，少用借用</li>
+<li><strong>進階優化</strong>：理解後再使用借用提升效能</li>
+<li><strong>記住原則</strong>：編譯器是你的朋友，會阻止記憶體錯誤</li>
+<li><strong>函數設計</strong>：如果可能，優先返回擁有權而不是借用</li>
+</ol>
+<h2 id="-總結"><a class="header" href="#-總結">📝 總結</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>概念</th><th>特徵</th><th>生命週期</th><th>使用場景</th></tr></thead><tbody>
+<tr><td><strong>擁有權</strong></td><td>我的東西，完全控制</td><td>❌ 不需要</td><td>結構體字段、返回值、長期存儲</td></tr>
+<tr><td><strong>借用</strong></td><td>別人的東西，臨時使用</td><td>✅ 需要</td><td>函數參數、短期操作、效能優化</td></tr>
+</tbody></table>
+</div>
+<p><strong>核心理解</strong>：</p>
+<ul>
+<li>🏠 擁有權 = 房子是我的，我決定什麼時候拆</li>
+<li>📞 借用 = 借朋友的房子，朋友搬家前我就得搬出來</li>
+</ul>
+<p><strong>實用原則</strong>：
+生命週期只是 Rust 確保「借用安全」的機制。如果你都用擁有權，就完全不用擔心生命週期問題！</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../rust/rust_module_system_markdown.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../rust/rust_ownership_guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../rust/rust_module_system_markdown.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../rust/rust_ownership_guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,303 @@
+
+参数包还可以出现在其他地方，例如表达式、类模板、using声明，甚至推导策略。第12.4.2节有一个完整的列表。
+
+\subsubsubsection{4.4.1\hspace{0.2cm}表达式}
+
+不仅仅是转发所有参数，可以使用它们进行计算。也就是，可以使用参数包中的参数进行计算。
+
+例如，下面的函数将参数包args的每个参数都加倍，并将每个加倍的参数传递给print():
+
+\begin{lstlisting}[style=styleCXX]
+template<typename... T>
+void printDoubled (T const&... args)
+{
+	print (args + args...);
+}
+\end{lstlisting}
+
+例如，
+
+\begin{lstlisting}[style=styleCXX]
+printDoubled(7.5, std::string("hello"), std::complex<float>(4,2));
+\end{lstlisting}
+
+该函数具有以下效果(除了构造函数的副作用):
+
+\begin{lstlisting}[style=styleCXX]
+print(7.5 + 7.5,
+	std::string("hello") + std::string("hello"),
+	std::complex<float>(4,2) + std::complex<float>(4,2));
+\end{lstlisting}
+
+如果想给每个参数加1，请注意省略号中的点不能直接跟在数字后面:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename... T>
+void addOne (T const&... args)
+{
+	print (args + 1...); // ERROR: 1... is a literal with too many decimal points
+	print (args + 1 ...); // OK
+	print ((args + 1)...); // OK
+}
+\end{lstlisting}
+
+编译时表达式可以以同样的方式包含模板参数包。例如，下面的函数模板返回所有参数的类型是否相同:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T1, typename... TN>
+constexpr bool isHomogeneous (T1, TN...)
+{
+	return (std::is_same<T1,TN>::value && ...); // since C++17
+}
+\end{lstlisting}
+
+这是折叠表达式的一种应用(参见第4.2节)
+
+\begin{lstlisting}[style=styleCXX]
+isHomogeneous(43, -1, "hello")
+\end{lstlisting}
+
+返回值的表达式展开为
+
+\begin{lstlisting}[style=styleCXX]
+std::is_same<int,int>::value && std::is_same<int,char const*>::value
+\end{lstlisting}
+
+结果是false
+
+\begin{lstlisting}[style=styleCXX]
+isHomogeneous("hello", " ", "world", "!")
+\end{lstlisting}
+
+会产生true，因为传递的参数都推导为char const*(因为调用参数按值传递，所以参数类型衰变)。
+
+\subsubsubsection{4.4.2\hspace{0.2cm}索引}
+
+下面的函数使用可变索引列表来访问传递给第一个参数的对应元素:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename C, typename... Idx>
+void printElems (C const& coll, Idx... idx)
+{
+	print (coll[idx]...);
+}
+\end{lstlisting}
+
+当使用
+
+\begin{lstlisting}[style=styleCXX]
+std::vector<std::string> coll = {"good", "times", "say", "bye"};
+printElems(coll,2,0,3);
+\end{lstlisting}
+
+则调用
+
+\begin{tcblisting}{commandshell={}}
+print (coll[2], coll[0], coll[3]);
+\end{tcblisting}
+
+还可以将非类型模板参数声明为参数包。例如:
+
+\begin{lstlisting}[style=styleCXX]
+template<std::size_t... Idx, typename C>
+void printIdx (C const& coll)
+{
+	print(coll[Idx]...);
+}
+\end{lstlisting}
+
+也可以使用
+
+\begin{lstlisting}[style=styleCXX]
+std::vector<std::string> coll = {"good", "times", "say", "bye"};
+printIdx<2,0,3>(coll);
+\end{lstlisting}
+
+这与前面的例子有相同的效果。
+
+\subsubsubsection{4.4.3\hspace{0.2cm}类模板}
+
+可变参数模板也可以是类模板，其中任意数量的模板参数指定了相应成员的类型:
+
+\begin{lstlisting}[style=styleCXX]
+emplate<typename... Elements>
+class Tuple;
+
+Tuple<int, std::string, char> t; // t can hold integer, string, and character
+\end{lstlisting}
+
+这将在第25章中讨论。
+
+另一个例子是能够指定对象可能的类型:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename... Types>
+class Variant;
+
+Variant<int, std::string, char> v; // v can hold integer, string, or character
+\end{lstlisting}
+
+这将在第26章中讨论。
+
+也可以定义类，作为类型来表示一组索引:
+
+\begin{lstlisting}[style=styleCXX]
+// type for arbitrary number of indices:
+template<std::size_t...>
+struct Indices {
+};
+\end{lstlisting}
+
+可以用来定义函数，该函数在编译时对给定索引使用get<>()访问std::array或std::tuple的元素调用print():
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T, std::size_t... Idx>
+void printByIdx(T t, Indices<Idx...>)
+{
+	print(std::get<Idx>(t)...);
+}
+\end{lstlisting}
+
+该模板的使用方法如下:
+
+\begin{lstlisting}[style=styleCXX]
+std::array<std::string, 5> arr = {"Hello", "my", "new", "!", "World"};
+printByIdx(arr, Indices<0, 4, 3>());
+\end{lstlisting}
+
+或者这样:
+
+\begin{lstlisting}[style=styleCXX]
+auto t = std::make_tuple(12, "monkeys", 2.0);
+printByIdx(t, Indices<0, 1, 2>());
+\end{lstlisting}
+
+这只元编程的开始，在第8.1节和第23章中会更加详细的讨论元编程。
+
+\subsubsubsection{4.4.4\hspace{0.2cm}推导策略}
+
+推导策略(参见第2.9节)也可以应用于可变参数。例如，C++标准库定义了以下std::arrays的推导策略:
+
+\begin{lstlisting}[style=styleCXX]
+namespace std {
+	template<typename T, typename... U> array(T, U...)
+	-> array<enable_if_t<(is_same_v<T, U> && ...), T>,
+		(1 + sizeof...(U))>;
+}
+\end{lstlisting}
+
+初始化，
+
+\begin{lstlisting}[style=styleCXX]
+std::array a{42,45,77};
+\end{lstlisting}
+
+策略中推导出元素类型的T，以及各种U...类型转换为后续元素的类型。因此，元素总数为1 + sizeof...(U):
+
+\begin{lstlisting}[style=styleCXX]
+std::array<int, 3> a{42,45,77};
+\end{lstlisting}
+
+第一个数组参数的std::enable\_if<>表达式是一个折叠表达式(4.4.1节中引入的isHomogeneous())展开为:
+
+\begin{lstlisting}[style=styleCXX]
+is_same_v<T, U1> && is_same_v<T, U2> && is_same_v<T, U3> ...
+\end{lstlisting}
+
+若结果不为true(即并非所有元素类型都相同)，则丢弃推导策略，从而整体推导失败。标准库需要所有元素具有相同的类型时，推导策略才能成功执行。
+
+\subsubsubsection{4.4.5\hspace{0.2cm}基类和using}
+
+看看下面的例子:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/varusing.cpp}
+\begin{lstlisting}[style=styleCXX]
+#include <string>
+#include <unordered_set>
+
+class Customer
+{
+	private:
+	std::string name;
+	public:
+	Customer(std::string const& n) : name(n) { }
+	std::string getName() const { return name; }
+};
+
+struct CustomerEq {
+	bool operator() (Customer const& c1, Customer const& c2) const {
+		return c1.getName() == c2.getName();
+	}
+};
+
+struct CustomerHash {
+	std::size_t operator() (Customer const& c) const {
+		return std::hash<std::string>()(c.getName());
+	}
+};
+
+// define class that combines operator() for variadic base classes:
+template<typename... Bases>
+struct Overloader : Bases...
+{
+	using Bases::operator()...; // OK since C++17
+};
+
+int main()
+{
+	// combine hasher and equality for customers in one type:
+	using CustomerOP = Overloader<CustomerHash,CustomerEq>;
+	
+	std::unordered_set<Customer,CustomerHash,CustomerEq> coll1;
+	std::unordered_set<Customer,CustomerOP,CustomerOP> coll2;
+	...
+}
+\end{lstlisting}
+
+首先定义了一个类Customer和一些独立的函数对象，用于计算哈希值和比较Customer对象。
+
+\begin{lstlisting}[style=styleCXX]
+template<typename... Bases>
+struct Overloader : Bases...
+{
+	using Bases::operator()...; // OK since C++17
+};
+\end{lstlisting}
+
+可以定义一个派生自可变数量基类的类，该类从每个基类引入函数操作符的声明。
+
+\begin{lstlisting}[style=styleCXX]
+using CustomerOP = Overloader<CustomerHash,CustomerEq>;
+\end{lstlisting}
+
+使用这个特性从CustomerHash和CustomerEq派生CustomerOP，并在派生类中启用函数操作符的实现。
+
+参见第26.4节了解该技术的另一种应用场景。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

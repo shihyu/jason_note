@@ -1,0 +1,84 @@
+最后，并不是所有设备都支持USM的特性。如果希望程序可以在不同的设备上移植，不应该假设所有的USM功能都可用。USM的特性可以查询，这些查询可以分为两类:指针查询和设备功能查询。图6-9显示了每种方法的简单使用方法。\par
+
+USM中的指针查询需要回答两个问题。第一个问题是“这个指针指向哪种USM分配类型?”get\_pointer\_type函数接受一个指针和DPC++上下文，并返回一个usm::alloc类型的结果，可以有四种可能的值:host、device、shared或unknown。第二个问题是“这个USM指针分配给了什么设备?”可以向函数get\_pointer\_device传递一个指针和一个上下文，并获得一个设备对象。这主要用于设备或共享USM内存，对主机内存没什么意义。\par
+
+USM提供的第二种查询，关系到设备的性能。USM扩展了可以通过在设备对象上调用get\_info来查询的设备信息描述符列表。这些查询可用于测试设备支持哪种USM分配类型。此外，可以查询设备上的共享内训是否按照本章前面描述的方式进行了限制。完整的查询列表如图6-10所示。第12章中，会更详细地了解查询机制。\par
+
+\hspace*{\fill} \par %插入空行
+图6-9 查询USM指针和设备
+\begin{lstlisting}[caption={}]
+constexpr int N = 42;
+
+template <typename T> void foo(T data, id<1> i) { data[i] = N; }
+
+queue Q;
+auto dev = Q.get_device();
+auto ctxt = Q.get_context();
+bool usm_shared = dev.get_info<dinfo::usm_shared_allocations>();
+bool usm_device = dev.get_info<dinfo::usm_device_allocations>();
+bool use_USM = usm_shared || usm_device;
+
+if (use_USM) {
+	int *data;
+	if (usm_shared)
+		data = malloc_shared<int>(N, Q);
+	else /* use device allocations */
+		data = malloc_device<int>(N, Q);
+		
+	std::cout << "Using USM with "
+			<< ((get_pointer_type(data, ctxt) == usm::alloc::shared)
+			? "shared"
+			: "device")
+			<< " allocations on "
+			<< get_pointer_device(data, ctxt).get_info<dinfo::name>()
+			<< "\n";
+			
+	Q.parallel_for(N, [=](id<1> i) { foo(data, i); });
+	Q.wait();
+	free(data, Q);
+} else /* use buffers */ {
+	buffer<int, 1> data{range{N}};
+	Q.submit([&](handler &h) {
+		accessor a(data, h);
+		h.parallel_for(N, [=](id<1> i) {
+			foo(a, i); });
+	});
+	Q.wait();
+}
+\end{lstlisting}
+
+\hspace*{\fill} \par %插入空行
+图6-10 USM设备信息描述符
+\begin{table}[H]
+	\begin{tabular}{|l|l|p{6cm}|}
+		\hline
+		设备描述符                                  & 类型 & 描述                                                                                   \\ \hline
+		info::device::usm\_device\_allocations             & bool & 如果该设备支持设备分配，则返回true                                       \\ \hline
+		info::device::usm\_host\_allocations               & bool & 如果设备可以访问主机分配，则返回true                                       \\ \hline
+		info::device::usm\_shared\_allocations             & bool & 如果该设备支持共享分配，则返回true                                       \\ \hline
+		info::device::usm\_restricted\_shared\_allocations & bool & 如果共享分配受本章描述的限制约束，则返回true \\ \hline
+	\end{tabular}
+\end{table}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

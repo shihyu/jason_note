@@ -1,0 +1,447 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>變數的所有權與借出變數 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="變數的所有權與借出變數-move-borrow--ownership"><a class="header" href="#變數的所有權與借出變數-move-borrow--ownership">變數的所有權與借出變數 Move, Borrow &amp; Ownership</a></h1>
+<p>這篇與下一篇要介紹 Rust 中可說是最複雜，卻也是最重要的一個觀念，變數的所有權 (ownership) ，在 Rust 中每個變數都有其所屬的範圍 (scope) ，在變數的有效的範圍中，可以選擇將變數「借 (borrow)」給其它的 scope ，也可以將所有權整個轉移 (move) 出去，送給別人喔，當然，送出去的東西如果別人不還你的話是拿不回來的，但借出去的就只是暫時的給別人使用而已。</p>
+<h2 id="move"><a class="header" href="#move">Move</a></h2>
+<pre><pre class="playground"><code class="language-rust">fn main() {
+    let message = String::from("Hello");
+    {
+        message;
+    }
+    println!("{}", message);
+}</code></pre></pre>
+<pre><pre class="playground"><code class="language-rust">fn greet(message: String) {
+    println!("{}", message);
+}
+
+fn main() {
+    let message = String::from("Hello");
+    greet(message);
+    println!("{}", message);
+}</code></pre></pre>
+<p>猜看看上面的兩段程式碼的執行結果是什麼，猜到了嗎，答案都是無法編譯，編譯器會出現：</p>
+<pre><code class="language-plain">error[E0382]: use of moved value: `message`
+</code></pre>
+<p>意思是使用了已經送給別人的變數，在 Rust 中一個程式碼的區塊， 也就是由 <code>{</code> 與 <code>}</code> 包圍的區域都是一個 scope ，這也包含了函式、迴圈的括號等等，只要你把變數傳給了其它區塊，都會把變數送出去，所以在上面的範例中， <code>message</code> 這個變數已經送出去，並且在接下來的 <code>println!</code> 無法使用了，另外在底下的情況也會送出變數：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let a = String::from("a");
+let b = a;
+println!("{}", a); // 這邊也同樣不能編譯
+<span class="boring">}</span></code></pre></pre>
+<blockquote>
+<p>或許你已經注意到了，這邊使用的都是 <code>String::from</code> ，都是在建立字串，如果把上面的例子都換成數字的話，你會發現不會出現任何錯誤，而能順利的執行，因為數字可以 <strong>複製</strong> ，字串不能複製嗎？也可以，只是字串的大小並不固定，有可能是很長的一篇文章，也有可能是一個空字串， Rust 並不允許在沒有明確的說要複製的情況下複製這種不知道會花費多少成本的型態，如果要改寫上面的範例，複製一個字串的話，可以使用 <code>clone</code>：</p>
+</blockquote>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let a = String::from("a");
+let b = a.clone();
+println!("{}", a);
+<span class="boring">}</span></code></pre></pre>
+<blockquote>
+<p>數字的大小則是固定的，於是在發生把變數送出去的情況時， Rust 會使用複製一份的方式給別人，所以就變成了兩個人都擁有，不會發生錯誤的情況。</p>
+<blockquote>
+<p>如果你想知道哪個型態可以被複製，可以參考文件的 <a href="https://doc.rust-lang.org/stable/std/marker/trait.Copy.html"><code>std::marker::Copy</code></a> ，你會在底下看到如 <code>impl Copy for i32</code> 這就代表 <code>i32</code> 可以被複製</p>
+</blockquote>
+</blockquote>
+<p>拿走的東西主動的還回去也是可以的：</p>
+<pre><pre class="playground"><code class="language-rust">// 我要拿走整個 message 變數
+fn greet(message: String) -&gt; String {
+    println!("{}", message);
+    message // 之後再還回去
+}
+
+fn main() {
+    let message = String::from("Hello");
+
+    // 這邊變數被拿走了，但是又還了回來，於是我們需要一個變數代表它
+    // 當然你也可以使用同樣的名稱 message
+    let msg = greet(message);
+
+    println!("{}", msg); // 又拿回來了，於是可以使用
+}</code></pre></pre>
+<h2 id="borrow"><a class="header" href="#borrow">Borrow</a></h2>
+<p>Rust 中把出借變數直接稱為 borrow ， Rust 中使用在變數前面加一個 <code>&amp;</code> 來代表出借變數，borrow 的用途是當你不想把變數送出去時，你就可以把你的變數 <strong>借</strong> 出去，但還有個前提是對方要 <strong>願意跟你借</strong> ，底下是個借出變數給函式的範例：</p>
+<pre><pre class="playground"><code class="language-rust">// 這邊在 String 的前面加上了 &amp; 代表我可以跟別人用借的
+fn greet(message: &amp;String) {
+  println!("{}", message);
+}
+
+fn main() {
+  let message = String::from("Hello");
+  greet(&amp;message); // 這邊加上了 &amp; 來表示借出去
+  println!("{}", message); // 借出去的東西只是暫時給別人而已，自己還可以使用
+}</code></pre></pre>
+<pre><pre class="playground"><code class="language-rust">// 這邊沒有加上 &amp; 代表我想要整個拿走
+fn greet(message: String) {
+  println!("{}", message);
+}
+
+fn main() {
+  let message = String::from("Hello");
+  // greet(&amp;message); // 這邊就算加上了 &amp; 也沒辦法把變數用借的借出去
+  greet(message); // 一定要整個給它
+  // println!("{}", message); // 因為被整個拿走了，所以這邊已經沒辦法使用了
+}</code></pre></pre>
+<p>Rust 預設借給別人的東西別人必須原封不動的還回來，也就是借出去的變數是沒辦法被修改的，如果你想允許別人修改的話，你就必須使用 <code>&amp;mut</code> 對方也必須明確的使用 <code>&amp;mut</code> 來代表我要借到一個可以修改的變數：</p>
+<pre><pre class="playground"><code class="language-rust">fn combine_string(target: &amp;mut String, source: &amp;String) {
+  // push_str 會把傳進去的字串接到字串的後面
+  target.push_str(source);
+}
+
+fn main() {
+  // 這邊一定要加 mut ，因為這個變數會被修改，就算不是你自己改的也一樣
+  let mut message = String::from("Hello, ");
+  let world = String::from("World");
+  // 借給 combine_string 一個可以改的變數 message ，與一個不能改的 world
+  combine_string(&amp;mut message, &amp;world);
+  println!("{}", message); // 這邊就會印出 Hello, World
+}</code></pre></pre>
+<blockquote>
+<p>還記得前一篇的猜數字裡有 <code>stdin().read_line(&amp;mut input)</code> 嗎？</p>
+</blockquote>
+<h2 id="borrow-的規則"><a class="header" href="#borrow-的規則">Borrow 的規則</a></h2>
+<p>Rust 的出借變數是有其規則在的：</p>
+<ol>
+<li>所有的變數一次都只能用可以修改的方式 (<code>&amp;mut</code>) 出借一次</li>
+</ol>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut n = 42;
+let a = &amp;mut n;
+let b = &amp;mut n; // 這裡用可以修改的方式總共借出去兩次了，這是不可以的
+<span class="boring">}</span></code></pre></pre>
+<ol>
+<li>可以無限的用唯讀的方式借出去</li>
+</ol>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let n = 42;
+let a = &amp;n;
+let b = &amp;n;
+<span class="boring">}</span></code></pre></pre>
+<ol>
+<li>一旦用可以修改的方式 (<code>&amp;mut</code>) 出借，那你就不能用任何其它的方式存取變數了</li>
+</ol>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut n = 42;
+{
+  let a = &amp;mut n;
+  // println!("{}", n); // 你不可以使用原本的 n
+  // let b = &amp;n; // 你也不可以再用任何方式借走 n
+}
+println!("{}", n); // 我們離開了 a 借走 n 的範圍了，於是 n 又可以用了
+<span class="boring">}</span></code></pre></pre>
+<ol>
+<li>一旦你用唯讀的方式借出了變數，你就不可以修改變數</li>
+</ol>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut n = 42;
+{
+  let a = &amp;n;
+  // n = 123; // 又不可以了，有夠煩的(X
+}
+n = 123; // 這邊才可以修改
+<span class="boring">}</span></code></pre></pre>
+<blockquote>
+<p>這些規則是用來確保多執行緒時不會有資料競爭用的，也就是同時有兩個人修改了同一個變數，於是一次只允許有一個變數的擁有者能修改變數的值，同時一但借出了變數就不能隨意修改，因為別人不一定會知道變數被修改了。雖然有點麻煩 (也真的很麻煩) ，但往好處想，變數不再會被隨意的修改了。</p>
+</blockquote>
+<p>有點可惜的是目前的 <code>borrow checker</code> ，也就是檢查，並執行上面這些規則的功能，它並不是很完善，比如：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut array = [123, 456];
+let a = &amp;mut array[0];
+let b = &amp;mut array[1];
+<span class="boring">}</span></code></pre></pre>
+<p>兩個變數分別借走了不相干的兩個部份，但這沒辦法通過檢查，不過這在 Rust 2018 將會有所改善，敬請期待。</p>
+<blockquote>
+<p>Q： Rust 2018 是什麼？
+A： 在今年的年底 Rust 將要推出 2018 年版，版本號會是 1.30 ，將會有不少的改進以及部份的語法的變更。
+Q： 什麼！那我現在學的這些東西到年底就都沒辦法用了？
+A： 放心好了，大部份的是功能的增強與新的語法，只有一小部份的修改，之後會有一篇來討論這些修改，與看看有哪些新功能。
+Q： 那我不想更新可以嗎？
+A： 可以，你可以設定使用現在的語法版本，也就是 Rust 2015 版。
+Q： 那我要怎麼設定？
+A： 這個之後再說。</p>
+</blockquote>
+<h2 id="string--str-array--slice"><a class="header" href="#string--str-array--slice">String &amp; str, Array &amp; Slice</a></h2>
+<p>我們之前應該有提到過 Rust 有兩種字串 <code>String</code> 與 <code>str</code> ，可是一直沒有詳細說明這兩個的差別，這邊我們要提到 Rust 的一個東西「切片 (slice)」，切片可以理解為一次出借如陣列或字串這類的連續的資料型態的一部份：</p>
+<blockquote>
+<p>如果你有寫過 Python 你可能知道 Python 的切片 <code>array[1:3]</code> ，只是這邊把 <code>:</code> 換成了 <code>..</code> 而已。</p>
+</blockquote>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut array = [0, 1, 2, 3, 4, 5];
+{ // 建立一個區塊，不然我們等下沒辦法使用原本的 array
+  let slice: &amp;mut [i32] = &amp;mut array[1..3]; // 這邊一次的借走了 array 的第 2 跟第 3 個元素
+
+  // 然後我們修改了切片的第 1 個元素，對應到原本的 array 則是第二個元素
+  slice[0] = 42;
+
+  println!("{:?}", slice); // 會印出 [42, 2]
+}
+println!("{:?}", array); // 印出 [0, 42, 2, 3, 4, 5]
+<span class="boring">}</span></code></pre></pre>
+<blockquote>
+<p>Rust 的切片會知道自己借走了多少長度的東西，而且跟原本的變數 <strong>會共用同一塊空間</strong> ，建立切片是不會複製任何資料的。</p>
+</blockquote>
+<p>你可以看到這邊的印出來的結果很明顯的修改了原本的資料，同時很重要的一點，切片 <strong>只能有 borrow 的型態</strong> ，因為切片的本質就是出借資料，切片能把資料出借一小段，而使用者可以把這段資料當成像陣列一樣使用。</p>
+<blockquote>
+<p><code>{:?}</code> 是把資料以 debug 的方式印出來，內建的型態不一定能直接印出來，但大部份都能用這種方式印出來，如果不能使用 <code>{}</code> 印出來時 <code>{:?}</code> 通常能派上用場。</p>
+</blockquote>
+<p>上面的 <code>slice</code> 的型態是 <code>&amp;mut [i32]</code> ，這就是切片型態的寫法，一般如果需要借走一個陣列都會使用切片型態，這樣可以給予使用者更大的彈性，比如決定要不要把整個陣列都借出去，或是隻借出一部份。</p>
+<p>那終於可以來講 <code>str</code> 了， <code>str</code> 事實上就是字串的切片，而 <code>String</code> 則是一個可以在執行時改變大小的字串：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 直接使用雙引號 (") 的字串都是字串的切片，它們都被 Rust 放在某個地方並且借給使用者使用而已
+let hello: &amp;str = "Hello";
+// 建立一個 String
+let string: String = String::from(hello);
+// 借走字串的一部份，產生一個字串切片
+let part_of_string: &amp;str = &amp;string[1..3];
+<span class="boring">}</span></code></pre></pre>
+<p>同樣的 <code>str</code> 也只能有 borrow 的型態。</p>
+<p>下一篇要來介紹一下 borrow 的存活時間 (lifetime) 同樣也是重要觀念，這兩篇都是在講觀念可能比較無聊，不過接下來我們就會繼續介紹程式的語法了。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../rust/30天深入淺出Rust系列/rust_30_day.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../rust/30天深入淺出Rust系列/Lifetime.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../rust/30天深入淺出Rust系列/rust_30_day.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../rust/30天深入淺出Rust系列/Lifetime.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../../ace.js"></script>
+        <script src="../../mode-rust.js"></script>
+        <script src="../../editor.js"></script>
+        <script src="../../theme-dawn.js"></script>
+        <script src="../../theme-tomorrow_night.js"></script>
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../../mermaid.min.js"></script>
+        <script src="../../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,195 @@
+
+使用类型特征时，必须包含头文件<type\_traits>:
+
+\begin{lstlisting}[style=styleCXX]
+#include <type_traits>
+\end{lstlisting}
+
+然后，该用法取决于特征是否产生类型或值:
+
+\begin{itemize}
+\item 
+对于产生类型的特征，使用如下方式访问该类型:
+\begin{lstlisting}[style=styleCXX]
+typename std::trait<...>::type
+std::trait_t<...> // since C++14
+\end{lstlisting}
+
+\item 
+对于产生值的特征，可以通过如下方式访问该值:
+\begin{lstlisting}[style=styleCXX]
+std::trait<...>::value
+std::trait<...>() // implicit conversion to its type
+std::trait_v<...> // since C++17
+\end{lstlisting}
+\end{itemize}
+
+例如:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{utils/traits1.cpp}
+\begin{lstlisting}[style=styleCXX]
+#include <type_traits>
+#include <iostream>
+
+int main()
+{
+	int i = 42;
+	std::add_const<int>::type c = i; // c is int const
+	std::add_const_t<int> c14 = i; // since C++14
+	static_assert(std::is_const<decltype(c)>::value, "c should be const");
+	
+	std::cout << std::boolalpha;
+	std::cout << std::is_same<decltype(c), int const>::value // true
+			<< ’\n’;
+	std::cout << std::is_same_v<decltype(c), int const> // since C++17
+			<< ’\n’;
+	if (std::is_same<decltype(c), int const>{}) { // implicit conversion to bool
+		std::cout << "same \n";
+	}
+}
+\end{lstlisting}
+
+参见第2.8节，了解traits的\_t版本的定义方式。关于特征的\_v版本的定义方式，请参见5.6节。
+
+\subsubsubsection{D.1.1\hspace{0.2cm}std::integral\_constant和std::bool\_constant}
+
+所有产生值的标准类型特征都派生自辅助类模板实例std::integral\_constant:
+
+\begin{lstlisting}[style=styleCXX]
+namespace std {
+	template<typename T, T val>
+	struct integral_constant {
+		static constexpr T value = val; // value of the trait
+		using value_type = T; // type of the value
+		using type = integral_constant<T,val>;
+		constexpr operator value_type() const noexcept {
+			return value;
+		}
+		constexpr value_type operator() () const noexcept { // since C++14
+			return value;
+		}
+	};
+}
+\end{lstlisting}
+
+就是说:
+
+\begin{itemize}
+\item 
+可以使用value\_type成员来查询结果的类型。由于产生值的许多特征是谓词，value\_type通常是bool。
+
+\item 
+特征类型的对象具有隐式类型转换，转换为类型特征产生值的类型。
+
+\item 
+C++14(以及以后的版本)中，类型特征的对象也可为函数对象(函子)，其中“函数调用”会产生值。
+
+\item 
+类型成员只生成底层integral\_constant实例。
+\end{itemize}
+
+若特征产生布尔值，也可以这样
+
+\begin{lstlisting}[style=styleCXX]
+	namespace std {
+		template<bool B>
+		using bool_constant = integral_constant<bool, B>; // since C++17
+		using true_type = bool_constant<true>;
+		using false_type = bool_constant<false>;
+	}
+\end{lstlisting}
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}C++17前，该标准不包括别名模板bool\_constant<>。std::true\_type和std::false\_type在C++11和C++14中确实存在，但分别指定为integral\_constant<bool,true>和integral\_constant<bool,false>。
+\end{tcolorbox}
+
+以便这些布尔特征在特定属性适用时继承std::true\_type，否则继承std::false\_type，所以它们对应的值成员等于true和false。为结果值设置不同的类型true和false，可以基于类型特征的结果进行标签调度(参见第19.3.3节和第20.2节)。
+
+例如:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{utils/traits2.cpp}
+\begin{lstlisting}[style=styleCXX]
+#include <type_traits>
+#include <iostream>
+
+int main()
+{
+	using namespace std;
+	cout << boolalpha;
+	
+	using MyType = int;
+	cout << is_const<MyType>::value << ’\n’; // prints false
+	
+	using VT = is_const<MyType>::value_type; // bool
+	using T = is_const<MyType>::type; // integral_constant<bool, false>
+	cout << is_same<VT,bool>::value << ’\n’; // prints true
+	cout << is_same<T, integral_constant<bool, false>>::value
+		<< ’\n’; // prints true
+	cout << is_same<T, bool_constant<false>>::value
+		<< ’\n’; // prints true (not valid	
+				// prior to C++17)
+				
+	auto ic = is_const<MyType>(); // object of trait type
+	cout << is_same<decltype(ic), is_const<int>>::value << ’\n’; // true
+	cout << ic() << ’\n’; // function call (prints false)
+	
+	static constexpr auto mytypeIsConst = is_const<MyType>{};
+	if constexpr(mytypeIsConst) { // compile-time check since C++17 => false
+		... // discarded statement
+	}
+	static_assert(!std::is_const<MyType>{}, "MyType should not be const");
+}
+\end{lstlisting}
+
+各种元编程上下文中，具有不同的非布尔integral\_constant特化类型。参见第24.3节对类似类型CTValue的讨论，以及第25.6节对元组元素访问的使用。
+
+\subsubsubsection{D.1.2\hspace{0.2cm}使用特征}
+
+使用性格特征时需要注意以下几点:
+
+\begin{itemize}
+\item 
+类型特征应用于类型，但decltype允许测试表达式、变量和函数的属性，decltype只在变量或函数的命名没有附加括号的情况下才会产生类型;对于任何其他表达式，生成的类型也反映表达式的类型类别。例如:
+
+\begin{lstlisting}[style=styleCXX]
+void foo (std::string&& s)
+{
+	// check the type of s:
+	std::is_lvalue_reference<decltype(s)>::value // false
+	std::is_rvalue_reference<decltype(s)>::value // true, as declared
+	// check the value category of s used as expression:
+	std::is_lvalue_reference<decltype((s))>::value // true, s used as lvalue
+	std::is_rvalue_reference<decltype((s))>::value // false
+}
+\end{lstlisting}
+
+详见第15.10.2节。
+
+\item 
+对于菜鸟开发者来说，有些特征可能具有反直觉的行为。参见第11.2.1节中的示例。
+
+\item 
+有些特征是有要求或前提条件，违反这些前提条件会导致未定义行为。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}C++标准委员会考虑了C++17的提议，要求违反类型特征的前提条件会导致编译时错误。然而，因为一些类型特征目前的需求比严格的必要条件更强(比如总是需要完整的类型)，所以这个改变推迟了。
+\end{tcolorbox}
+
+参见第11.2.1节中的一些示例。
+
+\item 
+许多特征需要完整的类型(参见第10.3.1节)。为了能够在不完整类型中使用，有时可以引入模板来延迟计算(详见第11.5节)。
+
+\item 
+有时逻辑操作符\&\&、||和!不能用于定义基于其他类型特征的新类型特征。此外，处理可能失败的特征可能会有问题，至少会有一些缺陷。出于这个原因，我们提供了一些特殊的特性，能够在逻辑上组合布尔特性。参见第D.6部分了解详细信息。
+
+\item 
+尽管标准别名模板(以\_t或\_v结尾)，但也有缺点，并在某些元编程上下文中不可用。详见第19.7.3节。
+\end{itemize}
+
+
+

@@ -1,0 +1,121 @@
+我们的新目标位于llvm/lib/Target/M88k目录中，需要集成到构建系统中。为了简化开发，我们将其作为实验目标添加到llvm/CMakeLists.txt文件中。将现有的空字符串替换为目标的名称:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+set(LLVM\underline{~}EXPERIMENTAL\underline{~}TARGETS\underline{~}TO\underline{~}BUILD "M88k" … )
+\end{tcolorbox}
+
+我们还需要提供llvm/lib/Target/M88k/CMakeLists.txt来构建目标。除了列出目标的C++文件外，还定义了从目标描述生成源文件的方法。\par
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, title=从目标描述生成所有类型的源码]
+llvm-tblgen工具的不同运行方式，会生成C++代码的不同部分。但是，建议将所有部件的生成添加到CMakeLists.txt文件中。这样做的原因是能提供了更好的检查，例如：如果您在指令编码方面犯了错误，那么这只会在反汇编程序生成代码期间捕获。因此，即使不打算支持反汇编程序，仍值得为其生成源码。	
+\end{tcolorbox}
+
+该文件如下所示:\par
+
+\begin{enumerate}
+\item 首先，定义一个名为M88k的新LLVM组件:
+\begin{tcolorbox}[colback=white,colframe=black]
+add\underline{~}llvm\underline{~}component\underline{~}group(M88k)
+\end{tcolorbox}
+
+\item 接下来，命名目标描述文件，添加语句以使用TableGen生成各种源片段，并为其定义一个公共目标:
+\begin{tcolorbox}[colback=white,colframe=black]
+set(LLVM\underline{~}TARGET\underline{~}DEFINITIONS M88k.tdtablegen(LLVM \\
+M88kGenAsmMatcher.inc -gen-asm-matcher) \\
+tablegen(LLVM M88kGenAsmWriter.inc -gen-asm-writer) \\
+tablegen(LLVM M88kGenCallingConv.inc -gen-callingconv) \\
+tablegen(LLVM M88kGenDAGISel.inc -gen-dag-isel) \\
+tablegen(LLVM M88kGenDisassemblerTables.inc \\
+\hspace*{8cm}-gen-disassembler) \\
+tablegen(LLVM M88kGenInstrInfo.inc -gen-instr-info) \\
+tablegen(LLVM M88kGenMCCodeEmitter.inc -gen-emitter) \\
+tablegen(LLVM M88kGenRegisterInfo.inc -gen-register-info) \\
+tablegen(LLVM M88kGenSubtargetInfo.inc -gen-subtarget) \\
+add\underline{~}public\underline{~}tablegen\underline{~}target(M88kCommonTableGen)
+\end{tcolorbox}
+
+\item 必须列出新组件的所有源文件:
+\begin{tcolorbox}[colback=white,colframe=black]
+add\underline{~}llvm\underline{~}target(M88kCodeGen \\
+\hspace*{0.5cm}M88kAsmPrinter.cpp M88kFrameLowering.cpp \\
+\hspace*{0.5cm}M88kISelDAGToDAG.cpp M88kISelLowering.cpp \\
+\hspace*{0.5cm}M88kRegisterInfo.cpp M88kSubtarget.cpp \\
+\hspace*{0.5cm}M88kTargetMachine.cpp )
+\end{tcolorbox}
+
+\item 最后，在构建中包含包含MC和反汇编类的目录:
+\begin{tcolorbox}[colback=white,colframe=black]
+add\underline{~}subdirectory(MCTargetDesc) \\
+add\underline{~}subdirectory(Disassembler)
+\end{tcolorbox}
+
+\end{enumerate}
+
+现在我们准备用新的后端目标编译LLVM。在构建目录下，可以运行如下代码:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+\$ ninja
+\end{tcolorbox}
+
+这将检测更改的CMakeLists.txt文件，再次运行配置步骤，并编译新的后端。要检查是否一切正常，可以运行以下命令:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+\$ bin/llc –version
+\end{tcolorbox}
+
+注册目标的输出:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+m88k   \hspace{2cm} - M88k
+\end{tcolorbox}
+
+噢耶!我们完成了后端实现。下面LLVM IR中的f1函数在函数的两个参数之间执行一个按位的AND操作并返回结果。将其保存成example.ll文件:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+target triple = "m88k-openbsd" \\
+define i32 @f1(i32 \%a, i32 \%b) \{ \\
+\hspace*{0.5cm}\%res = and i32 \%a, \%b \\
+\hspace*{0.5cm}ret i32 \%res \\
+\}
+\end{tcolorbox}
+
+运行llc工具，在控制台上查看生成的汇编文本:\par
+
+\begin{tcolorbox}[colback=white,colframe=black]
+\$ llc < example.ll \\
+\hspace*{1cm}.text \\
+\hspace*{1cm}.file \hspace{0.8cm}"<stdin>" \\
+\hspace*{1cm}.globl \hspace{0.5cm}f1 \hspace{6cm} \# \verb|--| Begin \\
+function f1 \\
+\hspace*{1cm}.align \hspace{0.5cm} 3 \\
+\hspace*{1cm}.type\hspace{0.8cm}f1,@function \\
+f1: \hspace{8cm} \# @f1 \\
+\hspace*{1cm}.cfi\underline{~}startproc \\
+\# \%bb.0: \\
+\hspace*{1cm}and \%r2, \%r2, \%r3 \\
+\hspace*{1cm}jmp \%r1 \\
+.Lfunc\underline{~}end0: \\
+\hspace*{1cm}.size\hspace{1cm}f1, .Lfunc\underline{~}end0-f1 \\
+\hspace*{1cm}.cfi\underline{~}endproc \\
+\hspace*{8.8cm}\# -- End function \\
+\hspace*{1cm}.section\hspace{1cm}".note.GNU-stack","",@progbits
+\end{tcolorbox}
+
+输出是有效的GNU语法。对于f1函数，将生成和和jmp指令。参数在\%r2和\%r3寄存器中传递，这两个寄存器在and指令中使用。结果存储在\%r2寄存器中，该寄存器也是返回32位值的寄存器。函数的返回通过分支到\%r1寄存器中的hold地址实现，该地址也与ABI匹配。一切看起来都很好!\par
+
+学习了本章中的内容，现在可以实现自己的LLVM后端。对于许多相对简单的CPU，如：数字信号处理器(DSP)，只需要实现这些功能就够用了。当然，M88k CPU体系结构的实现还不支持该体系架构的所有特性，例如：浮点寄存器。不过，现在已经了解了LLVM后端开发中所有重要概念，有了这些知识，您将能够添加任何缺失的部分!\par
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

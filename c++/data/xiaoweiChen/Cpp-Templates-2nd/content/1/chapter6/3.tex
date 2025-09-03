@@ -1,0 +1,110 @@
+从C++11开始，标准库提供了辅助模板std::enable\_if<>，以在特定的编译时条件下忽略函数模板。
+
+例如，函数模板foo<>()有如下定义:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+typename std::enable_if<(sizeof(T) > 4)>::type
+foo() {
+}
+\end{lstlisting}
+
+如果sizeof(T) > 4生成false，则忽略foo<>()的定义。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}不要忘记将条件放入圆括号中，否则条件中的>将视为模板参数列表的结束。
+\end{tcolorbox}
+
+如果sizeof(T) > 4的结果为true，则函数模板实例展开为
+
+\begin{lstlisting}[style=styleCXX]
+void foo() {
+}
+\end{lstlisting}
+
+也就是说，std::enable\_if<>是一种类型特征，计算作为其(第一个)模板参数传递的给定编译时表达式:
+
+\begin{itemize}
+\item 
+若表达式结果为true，其类型成员类型将产生一个类型:
+
+\begin{itemize}
+\item[-]
+若没有传递第二个模板参数，则该类型为void。
+	
+\item[-]
+否则，该类型就是第二个模板参数类型。
+\end{itemize}
+
+\item 
+若表达式结果为false，则没有定义成员类型。由于名为SFINAE的模板特性(替换失败不为过)(请参阅8.4节)，这将忽略使用enable\_if表达式的函数模板。
+\end{itemize}
+
+对于自C++14产生类型的类型特征，有一个对应的别名模板std::enable\_if\_t<>，允许跳过typename和::type(请参阅第2.8节了解详细信息)。因此，从C++14起就使用
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+std::enable_if_t<(sizeof(T) > 4)>
+foo() {
+}
+\end{lstlisting}
+
+若第二个参数传递至enable\_if<>或enable\_if\_t<>:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+std::enable_if_t<(sizeof(T) > 4), T>
+foo() {
+	return T();
+}
+\end{lstlisting}
+
+如果表达式为true，则enable\_if构造展开为第二个参数。因此，若MyType是传递或推导为T的具体类型，其大小大于4，则效果为
+
+\begin{lstlisting}[style=styleCXX]
+MyType foo();
+\end{lstlisting}
+
+在声明中间使用enable\_if表达式非常笨拙。由于这个原因，使用std::enable\_if<>的常见方法是使用带有默认值的函数模板参数: 
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T,
+		typename = std::enable_if_t<(sizeof(T) > 4)>>
+void foo() {
+}
+\end{lstlisting}
+
+其会扩展为
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T,
+		typename = void>
+void foo() {
+}
+\end{lstlisting}
+
+当sizeof(T) > 4时。
+
+若感觉还是太笨拙，并且想让需求/约束更明确，可以使用别名模板为它命名:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+using EnableIfSizeGreater4 = std::enable_if_t<(sizeof(T) > 4)>;
+
+template<typename T,
+	typename = EnableIfSizeGreater4<T>>
+void foo() {
+}
+\end{lstlisting}
+
+请参阅第20.3节，以了解如何实现std::enable\_if。
+
+
+
+
+
+
+
+
+
+

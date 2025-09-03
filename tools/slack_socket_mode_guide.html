@@ -1,0 +1,536 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Slack Socket Mode 完整設定指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="slack-socket-mode-完整設定指南"><a class="header" href="#slack-socket-mode-完整設定指南">Slack Socket Mode 完整設定指南</a></h1>
+<h2 id="-目標"><a class="header" href="#-目標">🎯 目標</a></h2>
+<p>使用 Python 監控 Slack 頻道訊息</p>
+<h2 id="-前置作業"><a class="header" href="#-前置作業">📋 前置作業</a></h2>
+<h3 id="1-建立-slack-app"><a class="header" href="#1-建立-slack-app">1. 建立 Slack App</a></h3>
+<ol>
+<li>前往 <a href="https://api.slack.com/apps">Slack API 網站</a></li>
+<li>點擊 <strong>"Create New App"</strong></li>
+<li>選擇建立方式：
+<ul>
+<li><strong>From scratch</strong>: 從零開始建立（需手動設定）</li>
+<li><strong>From an app manifest</strong>: 使用預設檔案（推薦快速設定）</li>
+</ul>
+</li>
+</ol>
+<h4 id="如果選擇-from-an-app-manifest使用以下設定"><a class="header" href="#如果選擇-from-an-app-manifest使用以下設定">如果選擇 From an app manifest，使用以下設定：</a></h4>
+<pre><code class="language-yaml">display_information:
+  name: Message Monitor
+description:
+  Simple message monitoring bot
+features:
+  bot_user:
+    display_name: Monitor Bot
+oauth_config:
+  scopes:
+    bot:
+      - channels:history
+      - channels:read
+      - chat:write
+settings:
+  event_subscriptions:
+    bot_events:
+      - message.channels
+  interactivity:
+    is_enabled: false
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+  token_rotation_enabled: false
+</code></pre>
+<h3 id="2-設定權限-如果選擇-from-scratch"><a class="header" href="#2-設定權限-如果選擇-from-scratch">2. 設定權限 (如果選擇 From scratch)</a></h3>
+<ol>
+<li>左側選單 → <strong>"OAuth &amp; Permissions"</strong></li>
+<li>在 <strong>"Bot Token Scopes"</strong> 添加：
+<ul>
+<li><code>channels:history</code> - 讀取頻道歷史</li>
+<li><code>channels:read</code> - 讀取頻道資訊</li>
+<li><code>chat:write</code> - 發送訊息</li>
+</ul>
+</li>
+<li>點擊 <strong>"Install to Workspace"</strong></li>
+<li>授權後取得 <strong>Bot User OAuth Token</strong> (xoxb-開頭)</li>
+</ol>
+<h3 id="3-啟用-socket-mode"><a class="header" href="#3-啟用-socket-mode">3. 啟用 Socket Mode</a></h3>
+<ol>
+<li>左側選單 → <strong>"Socket Mode"</strong></li>
+<li>開啟 <strong>"Enable Socket Mode"</strong></li>
+<li>建立 App-Level Token：
+<ul>
+<li>輸入 Token 名稱</li>
+<li>勾選 <code>connections:write</code> scope</li>
+<li>點擊 <strong>"Generate"</strong></li>
+</ul>
+</li>
+<li>取得 <strong>App-Level Token</strong> (xapp-開頭)</li>
+</ol>
+<h3 id="4-設定事件訂閱-如果選擇-from-scratch"><a class="header" href="#4-設定事件訂閱-如果選擇-from-scratch">4. 設定事件訂閱 (如果選擇 From scratch)</a></h3>
+<ol>
+<li>左側選單 → <strong>"Event Subscriptions"</strong></li>
+<li>開啟 <strong>"Enable Events"</strong></li>
+<li>在 <strong>"Subscribe to bot events"</strong> 添加：
+<ul>
+<li><code>message.channels</code> - 頻道訊息事件</li>
+</ul>
+</li>
+</ol>
+<h2 id="-python-程式設定"><a class="header" href="#-python-程式設定">🔧 Python 程式設定</a></h2>
+<h3 id="1-安裝必要套件"><a class="header" href="#1-安裝必要套件">1. 安裝必要套件</a></h3>
+<pre><code class="language-bash">pip install slack-bolt
+</code></pre>
+<h3 id="2-基本監控程式碼"><a class="header" href="#2-基本監控程式碼">2. 基本監控程式碼</a></h3>
+<pre><code class="language-python">from slack_bolt import App
+from slack_bolt.adapter.socket_mode import SocketModeHandler
+
+# 替換成你的 tokens
+SLACK_BOT_TOKEN = "xoxb-你的-bot-token"
+SLACK_APP_TOKEN = "xapp-你的-app-token"
+
+# 初始化 Slack App
+app = App(token=SLACK_BOT_TOKEN)
+
+# 監聽所有頻道訊息
+@app.message("")
+def handle_message(message, say):
+    user = message.get('user', '未知使用者')
+    text = message.get('text', '')
+    channel = message.get('channel', '')
+    
+    print(f"頻道: {channel}")
+    print(f"使用者: {user}")
+    print(f"訊息: {text}")
+    print("-" * 50)
+
+# 啟動應用程式
+if __name__ == "__main__":
+    print("🚀 開始監控 Slack 頻道訊息...")
+    print("按 Ctrl+C 停止程式")
+    
+    handler = SocketModeHandler(app, SLACK_APP_TOKEN)
+    handler.start()
+</code></pre>
+<h3 id="3-除錯版本程式碼"><a class="header" href="#3-除錯版本程式碼">3. 除錯版本程式碼</a></h3>
+<pre><code class="language-python">from slack_bolt import App
+from slack_bolt.adapter.socket_mode import SocketModeHandler
+import logging
+
+# 啟用詳細日誌
+logging.basicConfig(level=logging.DEBUG)
+
+# 你的 tokens
+SLACK_BOT_TOKEN = "xoxb-你的-bot-token"
+SLACK_APP_TOKEN = "xapp-你的-app-token"
+
+# 初始化 Slack App
+app = App(token=SLACK_BOT_TOKEN)
+
+# 監聽所有事件來除錯
+@app.event("message")
+def handle_message_event(event, say, logger):
+    logger.info(f"收到事件: {event}")
+    
+    # 避免處理 bot 自己的訊息
+    if event.get('bot_id') or event.get('subtype'):
+        print(f"⏭️  忽略 bot 訊息或特殊訊息: {event.get('subtype', 'bot_message')}")
+        return
+    
+    user = event.get('user', '未知使用者')
+    text = event.get('text', '')
+    channel = event.get('channel', '')
+    
+    print(f"✅ 收到訊息！")
+    print(f"頻道: {channel}")
+    print(f"使用者: {user}")
+    print(f"訊息: {text}")
+    print(f"時間戳: {event.get('ts', '')}")
+    print("-" * 50)
+
+# 監聽連接狀態
+@app.event("hello")
+def handle_hello(event, logger):
+    logger.info("Socket Mode 連接成功！")
+    print("🎉 成功連接到 Slack！")
+
+# 監聽錯誤
+@app.error
+def custom_error_handler(error, body, logger):
+    logger.exception(f"錯誤: {error}")
+    print(f"❌ 發生錯誤: {error}")
+
+# 測試連接
+def test_connection():
+    try:
+        response = app.client.api_test()
+        if response["ok"]:
+            print("✅ API 連接正常")
+        else:
+            print("❌ API 連接失敗")
+    except Exception as e:
+        print(f"❌ API 測試失敗: {e}")
+
+if __name__ == "__main__":
+    print("🚀 開始監控 Slack 頻道訊息...")
+    print("🔧 除錯模式啟用")
+    
+    # 測試連接
+    test_connection()
+    
+    # 啟動 Socket Mode
+    try:
+        handler = SocketModeHandler(app, SLACK_APP_TOKEN)
+        print("⚡ Socket Mode Handler 啟動中...")
+        handler.start()
+    except Exception as e:
+        print(f"❌ 啟動失敗: {e}")
+</code></pre>
+<h2 id="-執行和測試"><a class="header" href="#-執行和測試">🏃‍♂️ 執行和測試</a></h2>
+<h3 id="1-取得必要的-tokens"><a class="header" href="#1-取得必要的-tokens">1. 取得必要的 Tokens</a></h3>
+<h4 id="bot-token-位置"><a class="header" href="#bot-token-位置">Bot Token 位置：</a></h4>
+<ul>
+<li>路徑：<strong>OAuth &amp; Permissions</strong> → <strong>"OAuth Tokens for Your Workspace"</strong></li>
+<li>格式：<code>xoxb-</code> 開頭</li>
+<li>用途：API 呼叫</li>
+</ul>
+<h4 id="app-token-位置"><a class="header" href="#app-token-位置">App Token 位置：</a></h4>
+<ul>
+<li>路徑：<strong>Socket Mode</strong> → <strong>App-Level Tokens</strong></li>
+<li>格式：<code>xapp-</code> 開頭</li>
+<li>用途：Socket Mode 連接</li>
+</ul>
+<h3 id="2-邀請-bot-到頻道"><a class="header" href="#2-邀請-bot-到頻道">2. 邀請 Bot 到頻道</a></h3>
+<p><strong>重要：Bot 必須被邀請到頻道才能監控！</strong></p>
+<p>在目標頻道中輸入：</p>
+<pre><code>/invite @你的bot名稱
+</code></pre>
+<p>或透過頻道設定手動加入 Bot。</p>
+<h3 id="3-執行程式"><a class="header" href="#3-執行程式">3. 執行程式</a></h3>
+<pre><code class="language-bash">python your_script.py
+</code></pre>
+<h3 id="4-測試驗證"><a class="header" href="#4-測試驗證">4. 測試驗證</a></h3>
+<ol>
+<li>確認看到 "🎉 成功連接到 Slack！"</li>
+<li>在已邀請 Bot 的頻道發送訊息</li>
+<li>觀察終端機是否有輸出</li>
+</ol>
+<h2 id="-監控範圍說明"><a class="header" href="#-監控範圍說明">🔍 監控範圍說明</a></h2>
+<h3 id="-會監控到的訊息"><a class="header" href="#-會監控到的訊息">✅ 會監控到的訊息：</a></h3>
+<ul>
+<li><strong>公開頻道</strong>中的訊息（Bot 已加入）</li>
+<li><strong>私人頻道</strong>中的訊息（Bot 已被邀請）</li>
+<li><strong>直接提及 Bot</strong> 的訊息</li>
+</ul>
+<h3 id="-不會監控到的訊息"><a class="header" href="#-不會監控到的訊息">❌ 不會監控到的訊息：</a></h3>
+<ul>
+<li><strong>私人訊息</strong>（除非直接傳給 Bot）</li>
+<li>Bot <strong>未加入</strong>的頻道</li>
+<li>Bot <strong>沒有權限</strong>的頻道</li>
+</ul>
+<h2 id="-進階設定"><a class="header" href="#-進階設定">🎛️ 進階設定</a></h2>
+<h3 id="監控特定頻道"><a class="header" href="#監控特定頻道">監控特定頻道</a></h3>
+<pre><code class="language-python">TARGET_CHANNEL = "C1234567890"  # 替換成你的頻道 ID
+
+@app.message("")
+def handle_message(message, say):
+    channel = message.get('channel', '')
+    
+    if channel == TARGET_CHANNEL:
+        # 只處理特定頻道的訊息
+        user = message.get('user', '未知使用者')
+        text = message.get('text', '')
+        print(f"✅ 目標頻道訊息！")
+        print(f"頻道: {channel}")
+        print(f"使用者: {user}")
+        print(f"訊息: {text}")
+</code></pre>
+<h3 id="取得頻道-id"><a class="header" href="#取得頻道-id">取得頻道 ID</a></h3>
+<ol>
+<li>在 Slack 中右鍵點擊頻道名稱</li>
+<li>選擇「複製連結」</li>
+<li>連結中的 <code>/C123456789/</code> 就是頻道 ID</li>
+</ol>
+<h3 id="環境變數設定推薦"><a class="header" href="#環境變數設定推薦">環境變數設定（推薦）</a></h3>
+<p>建立 <code>.env</code> 檔案：</p>
+<pre><code class="language-bash">SLACK_BOT_TOKEN=xoxb-your-bot-token-here
+SLACK_APP_TOKEN=xapp-your-app-token-here
+</code></pre>
+<p>安裝套件：</p>
+<pre><code class="language-bash">pip install python-dotenv
+</code></pre>
+<p>程式碼修改：</p>
+<pre><code class="language-python">import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")
+SLACK_APP_TOKEN = os.environ.get("SLACK_APP_TOKEN")
+</code></pre>
+<h2 id="-常見問題排除"><a class="header" href="#-常見問題排除">🚨 常見問題排除</a></h2>
+<h3 id="1-程式執行但收不到訊息"><a class="header" href="#1-程式執行但收不到訊息">1. 程式執行但收不到訊息</a></h3>
+<ul>
+<li>✅ 確認 Bot 已被邀請到頻道</li>
+<li>✅ 檢查 OAuth Scopes 權限</li>
+<li>✅ 確認 Event Subscriptions 設定正確</li>
+<li>✅ 檢查 Socket Mode 已啟用</li>
+</ul>
+<h3 id="2-連接失敗"><a class="header" href="#2-連接失敗">2. 連接失敗</a></h3>
+<ul>
+<li>✅ 確認 Tokens 正確</li>
+<li>✅ 檢查網路連接</li>
+<li>✅ 確認 App 已安裝到工作區</li>
+</ul>
+<h3 id="3-檢查-bot-是否在頻道中"><a class="header" href="#3-檢查-bot-是否在頻道中">3. 檢查 Bot 是否在頻道中</a></h3>
+<p>在頻道輸入：</p>
+<pre><code>/who
+</code></pre>
+<p>應該會看到 Bot 在成員列表中。</p>
+<h2 id="-注意事項"><a class="header" href="#-注意事項">📝 注意事項</a></h2>
+<ul>
+<li>Socket Mode 適合開發和測試</li>
+<li>生產環境建議使用 HTTP 模式</li>
+<li>妥善保管 Tokens，不要提交到版本控制</li>
+<li>Bot 需要適當的權限才能監控訊息</li>
+<li>避免在程式中處理 Bot 自己發送的訊息</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tools/claude_code_experience.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../tools/duckdns-setup-guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tools/claude_code_experience.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../tools/duckdns-setup-guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,206 @@
+EnableIf本质是只在模板参数满足某些特定条件时，启用特化或偏特化模板。advanceIter()算法有效的形式是检查迭代器参数类别是否可转换为std::random\_access\_iterator\_tag，从而算法可用于各种随机访问迭代器。
+
+若把这个概念发挥到极致，模板对其模板参数执行的每个操作都编码为EnableIf条件的一部分，会怎么样呢?模板实例化永远不会失败，因为不提供所需操作的模板参数推导将失败(通过EnableIf)，而不是允许实例化继续进行。我们将这种模板称为“实例化安全”模板，并在这里介绍这种模板的实现。
+
+我们从一个非常基本的模板min()开始，计算两个值的最小值。通常会这样实现一个模板:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+T const& min(T const& x, T const& y)
+{
+	if (y < x) {
+		return y;
+	}
+	return x;
+}
+\end{lstlisting}
+
+该模板要求类型T具有能够使用小于操作符比较两个T值(特别是两个T const左值)，然后隐式地将比较结果转换为bool，以便在if语句中使用。检查小于操作符，并计算结果类型的特征类似于在第19.4.4节讨论的SFINAE友好的PlusResultT特征，但为了方便起见，在这里先展示一下LessResultT特征:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typeoverload/lessresult.hpp}
+\begin{lstlisting}[style=styleCXX]
+#include <utility> // for declval()
+#include <type_traits> // for true_type and false_type
+
+template<typename T1, typename T2>
+class HasLess {
+	template<typename T> struct Identity;
+	template<typename U1, typename U2> static std::true_type
+		test(Identity<decltype(std::declval<U1>() < std::declval<U2>())>*);
+	template<typename U1, typename U2> static std::false_type
+		test(...);
+	public:
+	static constexpr bool value = decltype(test<T1, T2>(nullptr))::value;
+};
+
+template<typename T1, typename T2, bool HasLess>
+class LessResultImpl {
+	public:
+	using Type = decltype(std::declval<T1>() < std::declval<T2>());
+};
+
+template<typename T1, typename T2>
+class LessResultImpl<T1, T2, false> {
+};
+
+template<typename T1, typename T2>
+class LessResultT
+: public LessResultImpl<T1, T2, HasLess<T1, T2>::value> {
+};
+
+template<typename T1, typename T2>
+using LessResult = typename LessResultT<T1, T2>::Type;
+\end{lstlisting}
+
+这个特征可以和IsConvertible特征组合在一起，使min()实例化安全:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typeoverload/min2.hpp}
+\begin{lstlisting}[style=styleCXX]
+#include "isconvertible.hpp"
+#include "lessresult.hpp"
+
+template<typename T>
+EnableIf<IsConvertible<LessResult<T const&, T const&>, bool>,
+		T const&>
+min(T const& x, T const& y)
+{
+	if (y < x) {
+		return y;
+	}
+	return x;
+}
+\end{lstlisting}
+
+尝试使用不同类型的小于操作符(或完全忽略操作符)来调用这个min()函数:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typeoverload/min.cpp}
+\begin{lstlisting}[style=styleCXX]
+#include "min.hpp"
+
+struct X1 { };
+bool operator< (X1 const&, X1 const&) { return true; }
+
+struct X2 { };
+bool operator<(X2, X2) { return true; }
+
+struct X3 { };
+bool operator<(X3&, X3&) { return true; }
+
+struct X4 { };
+struct BoolConvertible {
+	operator bool() const { return true; } // implicit conversion to bool
+};
+
+struct X5 { };
+BoolConvertible operator< (X5 const&, X5 const&)
+{
+	return BoolConvertible();
+}
+
+struct NotBoolConvertible { // no conversion to bool
+};
+
+struct X6 { };
+NotBoolConvertible operator< (X6 const&, X6 const&)
+{
+	return NotBoolConvertible();
+}
+
+struct BoolLike {
+	explicit operator bool() const { return true; } // explicit conversion to bool
+};
+struct X7 { };
+BoolLike operator< (X7 const&, X7 const&) { return BoolLike(); }
+
+int main()
+{
+	min(X1(), X1()); // X1 can be passed to min()
+	min(X2(), X2()); // X2 can be passed to min()
+	min(X3(), X3()); // ERROR: X3 cannot be passed to min()
+	min(X4(), X4()); // ERROR: X4 cannot be passed to min()
+	min(X5(), X5()); // X5 can be passed to min()
+	min(X6(), X6()); // ERROR: X6 cannot be passed to min()
+	min(X7(), X7()); // UNEXPECTED ERROR: X7 cannot be passed to min()
+}
+\end{lstlisting}
+
+编译时虽然对X3、X4、X6和X7的4个不同min()调用存在错误，但这些错误并不来自min()的主体。相反，而是抱怨没有合适的min()函数，因为SFINAE已经取消了匹配的选项。Clang会输出以下诊断信息:
+
+\begin{tcblisting}{commandshell={}}
+min.cpp:41:3: error: no matching function for call to ’min’
+min(X3(), X3()); // ERROR: X3 cannot be passed to min
+^~~
+./min.hpp:8:1: note: candidate template ignored: substitution failure
+[with T = X3]: no type named ’Type’ in
+’LessResultT<const X3 &, const X3 &>’
+min(T const& x, T const& y)
+\end{tcblisting}
+
+因此，EnableIf只允许实例化那些满足模板要求的模板参数(X1, X2，和X5)，所以从min()函数体中不会得到错误。此外，若有一些可能适用于这些类型的min()的其他重载，重载解析可以选择其中一个。
+
+示例中的最后一个类型X7，演示了实现实例化安全模板的一些微妙之处。特别是，若将X7传递给非实例化安全的min()，则实例化成功。因为BoolLike不能隐式转换为bool，所以实例化安全的min()不能使用。这里的区别特别微妙:显式转换为bool可以在某些上下文中隐式使用，包括控制流语句的布尔条件(if、while、for和do)、内置的!、\&\&和||操作符以及三元操作符。这些上下文中，值可以转换为bool。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}C++11引入了到bool的上下文转换概念，以及显式转换操作符。它们取代了“安全bool”的习惯用法([KarlssonSafeBool])，这通常涉及到(隐式)用户定义的数据指针转换。使用指向数据的指针的原因是可以将其视为bool值，而不需要其他多余的转换，例如bool作为算术操作的一部分可以提升为int。BoolConvertible() + 5(不幸的是)是定义良好的代码。
+\end{tcolorbox}
+
+然而，我们坚持使用一般的、隐式的bool转换，结果导致实例化安全模板过度约束;指定的需求(在EnableIf中)比实际需求(模板需要正确实例化的东西)更强。另一方面，若完全忘记了转换到bool的要求，min()模板就会约束不足，会允许一些可能导致实例化失败的模板参数参与实例化(例如X6)。
+
+为了修复实例化安全的min()，需要特征来确定类型T是否在上下文中可转换为bool。控制流语句对定义特征没有帮助，因为语句不能在SFINAE中出现(逻辑操作也不能)，所以可以为任意类型重载逻辑操作。三元操作符是一个表达式，并且没有重载，因此可以使用它来测试类型是否在上下文条件下可以转换为bool类型:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typeoverload/iscontextualbool.hpp}
+\begin{lstlisting}[style=styleCXX]
+#include <utility> // for declval()
+#include <type_traits> // for true_type and false_type
+
+template<typename T>
+class IsContextualBoolT {
+	private:
+	template<typename T> struct Identity;
+	template<typename U> static std::true_type
+		test(Identity<decltype(declval<U>()? 0 : 1)>*);
+	template<typename U> static std::false_type
+		test(...);
+	public:
+	static constexpr bool value = decltype(test<T>(nullptr))::value;
+};
+
+template<typename T>
+constexpr bool IsContextualBool = IsContextualBoolT<T>::value;
+\end{lstlisting}
+
+有了这个新特征，可以在EnableIf中提供一个实例化安全的min()，其包含正确的需求集:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typeoverload/min3.hpp}
+\begin{lstlisting}[style=styleCXX]
+#include "iscontextualbool.hpp"
+#include "lessresult.hpp"
+
+template<typename T>
+EnableIf<IsContextualBool<LessResult<T const&, T const&>>,
+		T const&>
+min(T const& x, T const& y)
+{
+	if (y < x) {
+		return y;
+	}
+	return x;
+}
+\end{lstlisting}
+
+这里用于使min()实例化安全的技术，可以扩展为描述非简单模板的需求，方法是将各种需求检查组合到描述某些类型类的特征中，比如前向迭代器，并在EnableIf中组合这些特征。这样做有两个好处，一是可以更好地重载行为，二是可以消除编译器在嵌套模板实例化中深入输出错误时，产生新的错误。另一方面，提供的错误消息往往缺乏关于哪个特定操作失败的特性。此外，正如用min()所展示的那样，准确地确定和编码模板的需求，可能是一项令人生畏的任务。我们将在28.2节中探讨利用这些特性进行调试的方法。
+
+
+
+
+

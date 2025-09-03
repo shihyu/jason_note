@@ -1,0 +1,511 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>jemalloc - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h2 id="jemalloc源碼分析之分析工具"><a class="header" href="#jemalloc源碼分析之分析工具">jemalloc源碼分析之分析工具</a></h2>
+<h3 id="簡介"><a class="header" href="#簡介">簡介</a></h3>
+<p>jemalloc同malloc一樣, 是一種內存管理的實現.</p>
+<p>如果使用gcc編譯軟件, 默認使用的是glic實現的ptmalloc算法. 而同樣的算法有google的C++實現tcmalloc算法, 而今天我們分析的是facebook使用C語言實現的jemalloc算法.</p>
+<p>tcmalloc同jemalloc一樣都是對多線程多核友好的分配算法, 被各種語言借鑑來實現自身的內存管理.</p>
+<h3 id="實現原理"><a class="header" href="#實現原理">實現原理</a></h3>
+<p>如果使用C語言進行內存分配, 我們會調用malloc函數, 而jemalloc就是通過malloc的hook機制實現的.</p>
+<p><a href="http://stackoverflow.com/questions/262439/create-a-wrapper-function-for-malloc-and-free-in-c">如何實現自定義的malloc函數</a> 這篇文章有介紹如何覆蓋或重寫默認的malloc函數.</p>
+<p><a href="http://www.gnu.org/savannah-checkouts/gnu/libc/manual/html_node/Hooks-for-Malloc.html">GNU基於hook機制實現自定義的的malloc函數</a>, 具體就是通過覆蓋__malloc_hook 函數指標來實現的.</p>
+<p>在jemalloc中我們能找到類似的代碼:</p>
+<p>jemalloc.c:1830</p>
+<pre><code class="language-c">/*
+ * Begin non-standard override functions.
+ */
+
+#ifdef JEMALLOC_OVERRIDE_MEMALIGN
+JEMALLOC_EXPORT JEMALLOC_ALLOCATOR JEMALLOC_RESTRICT_RETURN
+void JEMALLOC_NOTHROW*
+JEMALLOC_ATTR(malloc)
+je_memalign(size_t alignment, size_t size)
+{
+    void* ret JEMALLOC_CC_SILENCE_INIT(NULL);
+
+    if (unlikely(imemalign(&amp;ret, alignment, size, 1) != 0)) {
+        ret = NULL;
+    }
+
+    return (ret);
+}
+#endif
+
+#ifdef JEMALLOC_OVERRIDE_VALLOC
+JEMALLOC_EXPORT JEMALLOC_ALLOCATOR JEMALLOC_RESTRICT_RETURN
+void JEMALLOC_NOTHROW*
+JEMALLOC_ATTR(malloc)
+je_valloc(size_t size)
+{
+    void* ret JEMALLOC_CC_SILENCE_INIT(NULL);
+
+    if (unlikely(imemalign(&amp;ret, PAGE, size, 1) != 0)) {
+        ret = NULL;
+    }
+
+    return (ret);
+}
+#endif
+
+/*
+ * is_malloc(je_malloc) is some macro magic to detect if jemalloc_defs.h has
+ * #define je_malloc malloc
+ */
+#define malloc_is_malloc 1
+#define is_malloc_(a) malloc_is_ ## a
+#define is_malloc(a) is_malloc_(a)
+
+#if ((is_malloc(je_malloc) == 1) &amp;&amp; defined(JEMALLOC_GLIBC_MALLOC_HOOK))
+/*
+ * glibc provides the RTLD_DEEPBIND flag for dlopen which can make it possible
+ * to inconsistently reference libc's malloc(3)-compatible functions
+ * (https://bugzilla.mozilla.org/show_bug.cgi?id=493541).
+ *
+ * These definitions interpose hooks in glibc.  The functions are actually
+ * passed an extra argument for the caller return address, which will be
+ * ignored.
+ */
+JEMALLOC_EXPORT void (*__free_hook)(void* ptr) = je_free;
+JEMALLOC_EXPORT void* (*__malloc_hook)(size_t size) = je_malloc;
+JEMALLOC_EXPORT void* (*__realloc_hook)(void* ptr, size_t size) = je_realloc;
+# ifdef JEMALLOC_GLIBC_MEMALIGN_HOOK
+JEMALLOC_EXPORT void* (*__memalign_hook)(size_t alignment, size_t size) =
+    je_memalign;
+# endif
+#endif
+
+/*
+ * End non-standard override functions.
+ */
+</code></pre>
+<p>如果我們在自己的函數調用malloc就會被je_malloc攔截. 例如下面的例子:</p>
+<pre><code class="language-c">int main()
+{
+    void* ptr = malloc(10);
+    free(ptr);
+    return 0;
+}
+</code></pre>
+<p>整個過程是</p>
+<pre><code>-&gt; main
+-&gt; malloc -&gt; je_malloc(mmap等系統調用分配內存) -&gt; malloc結束
+-&gt; free -&gt; jeje_free(munmap等系統調用釋放內存) -&gt; free結束
+-&gt; main結束
+</code></pre>
+<p>上面是當我們程序調用malloc函數時執行的過程, 實際上在jemalloc載入的時候, 就已經進行了一些初始化操作.</p>
+<p>具體是在jemalloc_constructor函數.</p>
+<p>jemalloc.c:2576</p>
+<pre><code class="language-c">#ifndef JEMALLOC_JET
+JEMALLOC_ATTR(constructor)
+static void
+jemalloc_constructor(void)
+{
+
+    malloc_init();
+}
+#endif
+
+jemalloc_macros.h.in:67
+#  define JEMALLOC_ATTR(s) __attribute__((s))
+</code></pre>
+<p>通過這篇文章 <a href="http://stackoverflow.com/questions/1681145/how-to-initialize-a-shared-library-on-linux">如何在共享庫載入時進行初始化操作</a> 知道這是gcc的一個特性.</p>
+<p>後面我們將結合"call graph"調用圖分別分析這兩個過程.</p>
+<h3 id="開始調試"><a class="header" href="#開始調試">開始調試</a></h3>
+<p>這節主要介紹下載編譯jemalloc, 編寫測試代碼, 使用callgrind生成調用圖, 使用gdb調試jemalloc.</p>
+<p>jemalloc當前託管在github上</p>
+<pre><code>git clone git@github.com:jemalloc/jemalloc.git
+./autogen.sh
+./configure --enable-debug
+make dist
+make
+make install
+</code></pre>
+<p>然後使用ide添加jemalloc項目, 主要作用是方便查看源代碼, 在gdb中查看源代碼實在不太方便, 而且gdb-tui雖然提供了可視化界面, 但是偶爾會出現花屏的情況.</p>
+<p>這中間可能因為doc文檔找不到的原因安裝失敗, 根據<a href="https://github.com/jemalloc/jemalloc/issues/231">issue231</a>, 將最後兩步換成</p>
+<pre><code>make &amp;&amp; make install_bin install_include install_lib
+</code></pre>
+<p>即可.</p>
+<p>然後編寫我們的調試代碼:</p>
+<p>a.c文件:</p>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;malloc.h&gt;
+
+int func_long_name_a();
+int func_long_name_b();
+int func_long_name_c();
+
+int func_long_name_a()
+{
+    printf("func_long_name_a called\n");
+    func_long_name_b();
+    return 0;
+}
+
+int func_long_name_b()
+{
+    printf("func_long_name_b called\n");
+    func_long_name_c();
+    return 0;
+}
+
+int func_long_name_c()
+{
+    printf("func_long_name_c called\n");
+    int sizeArr[] = {1, 4095, 4096, 8192, 8193, 4 * 1024 * 1024, 10 * 1024 * 1024};
+    int i;
+
+    for (i = 0; i &lt; 7; ++i) {
+        void* p = malloc(sizeArr[i]);
+        free(p);
+    }
+
+    return 0;
+}
+
+int main(int argc, char** argv)
+{
+    printf("main called\n");
+    func_long_name_a();
+    func_long_name_c();
+    printf("main exit\n");
+    return 0;
+}
+</code></pre>
+<p>然後編寫一個腳本來實現編譯及調用圖的生成</p>
+<p>gen.sh文件</p>
+<pre><code class="language-shell">#!/bin/bash
+
+JEMALLOC_PATH=/home/shihyu/github/jemalloc
+gcc -g -ljemalloc -o a -I${JEMALLOC_PATH}/include -L${JEMALLOC_PATH}/lib a.c
+valgrind --tool=callgrind ./a
+gprof2dot -f callgrind -n 0 callgrind.out.* | dot -Tsvg -o a.svg
+date=`date '+%Y%m%d%H%i%s'`
+mv a.svg "$(date '+%Y-%m-%d_%H:%M:%S').svg"
+#rm -f callgrind.out.* .DS_Store a a.out
+rm -f callgrind.out.* .DS_Store a.out
+echo
+ls -al .
+</code></pre>
+<p>中間需要安裝一些特別的軟件, 比如valgrind, gprof2dot, dot等, 這些都可以在網上找到相應的安裝方法.</p>
+<p>最後生成我們的<a href="https://yaoguais.github.io/images/jemalloc_call_graph.svg">jemalloc_call_graph.svg</a>調用圖文件.</p>
+<p>在gen.sh中我們並沒有刪除可執行文件"a", 下面我就使用gdb來調試該文件.</p>
+<pre><code class="language-gdb"># gdb a
+# b jemalloc_constructor
+# b src/jemalloc.c:1443
+# b src/jemalloc.c:1811
+# r
+</code></pre>
+<p>其中jemalloc_constructor是jemalloc共享庫載入時的入口.</p>
+<p>src/jemalloc.c:1443是je_malloc函數實現的地方.</p>
+<p>src/jemalloc.c:1811是je_free函數實現的地方.</p>
+<p>可根據自己的jemalloc版本找到兩個函數的行數做出調整.</p>
+<p>執行r後, gdb就停在了jemalloc_constructor函數處.</p>
+<p>關於gdb的使用, 也很多, 這裡也有<a href="http://mingxinglai.com/cn/2013/07/gdbtui/">關於gdb可視化界面gdb-tui的使用</a>.</p>
+<p>其中在tui模式和傳統模式切換的快捷鍵是ctrl+x接ctrl+a.</p>
+<h3 id="總結"><a class="header" href="#總結">總結</a></h3>
+<p>這篇文章主要介紹瞭如何調試jemalloc, 是分析jemalloc的準備工作, 也是分析其他開源c程序的普遍方法.</p>
+<p>首先使用valgrind+dot打印函數調用圖, 找到函數執行的流程. 然後分析基礎的數據結構與其附屬的操作, 快速明白各種變量會有怎樣的轉換. 最後順著調用圖, 分析各個函數的實現, 以及各種結構體之間的關系. 至此, 所有的源代碼幾乎查看完畢, 一個軟件也分析完畢.</p>
+<hr />
+<h2 id="使用jemalloc來對cc程序進行內存管理"><a class="header" href="#使用jemalloc來對cc程序進行內存管理">使用jemalloc來對c，c++程序進行內存管理</a></h2>
+<pre><code class="language-sh">git clone https://github.com/jemalloc/jemalloc
+
+cd jemalloc
+
+注意：這一步確定要把jemalloc的函數編譯成哪種形式，比如下面的配置就會把分配內存的函數編譯成je_malloc的形式，把calloc編譯成je_calloc等等。這樣就不會和系統的libc的分配函數malloc沖突，因為若不指定該選項默認編譯的分配函數是malloc。
+
+ ./configure --enable-debug --with-jemalloc-prefix=je_
+
+make -j8
+</code></pre>
+<h2 id="使用jemalloc"><a class="header" href="#使用jemalloc">使用jemalloc</a></h2>
+<pre><code class="language-sh">mkdir jem_test
+</code></pre>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;jemalloc/jemalloc.h&gt;
+//define to jemalloc
+#define malloc(size) je_malloc(size)
+#define calloc(count,size) je_calloc(count,size)
+#define realloc(ptr,size) je_realloc(ptr,size)
+#define free(ptr) je_free(ptr)
+
+int main(void)
+{
+    char* pcon;
+
+    pcon = malloc(10 * sizeof(char));
+
+    if (!pcon) {
+        fprintf(stderr, "malloc failed!\n");
+    }
+
+    if (pcon != NULL) {
+        free(pcon);
+        pcon = NULL;
+    }
+
+    fprintf(stderr, "main end!\n");
+    return 0;
+}
+</code></pre>
+<pre><code class="language-makefile">CC=gcc
+CFLAGS=-Wall -g
+INCLUDES=-I /home/shihyu/github/jemalloc/include
+ALLOC_DEP=/home/shihyu/github/jemalloc/lib/libjemalloc.a
+ALLOC_LINK=$(ALLOC_DEP) -lpthread -ldl
+
+dtest: dtest.o
+	$(CC) $(INCLUDES) $(CFLAGS) -o dtest dtest.o $(ALLOC_LINK)
+
+dtest.o: dtest.c $(ALLOC_DEP)
+	$(CC) -c $(INCLUDES) $(CFLAGS) dtest.c
+
+clean:
+	rm -f dtest dtest.o
+</code></pre>
+<pre><code class="language-sh">cgdb dtest 
+b je_malloc
+r
+</code></pre>
+<p>http://www.web-lovers.com/c-jemalloc-address-problem.html</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../gdb/gdb_commands.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../gdb/graphs.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../gdb/gdb_commands.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../gdb/graphs.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

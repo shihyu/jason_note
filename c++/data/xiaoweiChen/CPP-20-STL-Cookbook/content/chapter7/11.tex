@@ -1,0 +1,239 @@
+
+string类是basic\_string类的别名，签名为:
+
+\begin{lstlisting}[style=styleCXX]
+class basic_string<char, std::char_traits<char>>;
+\end{lstlisting}
+
+第一个模板参数提供字符类型。第二个模板形参提供一个字符特征类，为指定的字符类型提供基本的字符和字符串操作。我们通常使用的是char\_traits<char>类。
+
+我们可以通过提供自己的自定义字符特征类，来修改字符串的行为。
+
+\subsubsection{How to do it…}
+
+在这个示例中，将创建一个字符特征类，用于basic\_string，其可以进行忽略大小的比较:
+
+\begin{itemize}
+\item 
+首先，需要一个函数将字符转换为通用大小写。这里使用小写字母，大写的也可以，这是一个随意的选择:
+
+\begin{lstlisting}[style=styleCXX]
+constexpr char char_lower(const char& c) {
+	if(c >= 'A' && c <= 'Z') return c + ('a' - 'A');
+	else return c;
+}
+\end{lstlisting}
+
+这个函数必须是constexpr(对于C++20及更高版本)，所以现有的std::tolower()函数在这里不能工作。
+
+\item 
+我们的特征类称为ci\_traits(ci代表大小写无关)，继承自std::char\_traits<char>:
+
+\begin{lstlisting}[style=styleCXX]
+class ci_traits : public std::char_traits<char> {
+	public:
+	...
+};
+\end{lstlisting}
+
+继承允许重载需要的函数。
+
+\item 
+比较函数在小于时称为lt()，在等于时称为eq():
+
+\begin{lstlisting}[style=styleCXX]
+static constexpr bool lt(char_type a, char_type b)
+noexcept {
+	return char_lower(a) < char_lower(b);
+}
+static constexpr bool eq(char_type a, char_type b)
+noexcept {
+	return char_lower(a) == char_lower(b);
+}
+\end{lstlisting}
+
+注意，这里比较了字符的小写版本。
+
+\item 
+还有一个compare()函数，用于比较两个c字符串。大于则返回+1，小于则返回-1，等于则返回0。还可以使用三向比较操作符<=>:
+
+\begin{lstlisting}[style=styleCXX]
+static constexpr int compare(const char_type* s1,
+const char_type* s2, size_t count) {
+	for(size_t i{0}; i < count; ++i) {
+		auto diff{ char_lower(s1[i]) <=>
+			char_lower(s2[i]) };
+		if(diff > 0) return 1;
+		if(diff < 0) return -1;
+	}
+	return 0;
+}
+\end{lstlisting}
+
+\item 
+最后，需要实现一个find()函数。这将返回一个指向已找到字符的第一个实例的指针，若未找到则返回nullptr:
+
+\begin{lstlisting}[style=styleCXX]
+static constexpr const char_type* find(const char_type*
+p, size_t count, const char_type& ch) {
+	const char_type find_c{ char_lower(ch) };
+	for(size_t i{0}; i < count; ++i) {
+		if(find_c == char_lower(p[i])) return p + i;
+	}
+	return nullptr;
+}
+\end{lstlisting}
+
+\item 
+现在有了一个ci\_traits类，可以为我们的字符串类定义一个别名:
+
+\begin{lstlisting}[style=styleCXX]
+using ci_string = std::basic_string<char, ci_traits>;
+\end{lstlisting}
+
+\item 
+main()函数中，定义了一个字符串和一个ci\_string:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	string s{"Foo Bar Baz"};
+	ci_string ci_s{"Foo Bar Baz"};
+	...
+\end{lstlisting}
+
+\item 
+想用cout打印它们，但现在还不行:
+
+\begin{lstlisting}[style=styleCXX]
+cout << "string: " << s << '\n';
+cout << "ci_string: " << ci_s << '\n';
+\end{lstlisting}
+
+首先，需要重载操作符<{}<:
+
+\begin{lstlisting}[style=styleCXX]
+std::ostream& operator<<(std::ostream& os,
+const ci_string& str) {
+	return os << str.c_str();
+}
+\end{lstlisting}
+
+现在，会得到这样的输出:
+
+\begin{tcblisting}{commandshell={}}
+string: Foo Bar Baz
+ci_string: Foo Bar Baz
+\end{tcblisting}
+
+\item 
+比较两个具有不同情况的ci\_string对象:
+
+\begin{lstlisting}[style=styleCXX]
+ci_string compare1{"CoMpArE StRiNg"};
+ci_string compare2{"compare string"};
+if (compare1 == compare2) {
+	cout << format("Match! {} == {}\n", compare1,
+	compare2);
+} else {
+	cout << format("no match {} != {}\n", compare1,
+	compare2);
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+Match! CoMpArE StRiNg == compare string
+\end{tcblisting}
+
+比较和预期的一样。
+
+\item 
+在ci\_s对象上使用find()函数，搜索小写的b并找到大写的B:
+
+\begin{lstlisting}[style=styleCXX]
+size_t found = ci_s.find('b');
+cout << format("found: pos {} char {}\n", found,
+ci_s[found]);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+found: pos 4 char B
+\end{tcblisting}
+\end{itemize}
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black,title=Note]
+注意format()函数不需要特化，这是用fmt.dev参考实现测试的，不能与MSVC的format()预览版一起工作，即使是特化也不行。希望在未来的版本中可以修复这个问题。
+\end{tcolorbox}
+
+\subsubsection{How it works…}
+
+这个配方的工作方式是将字符串类的模板特化中的std::char\_traits类替换为我们的ci\_traits类。basic\_string类使用特征类，来实现其基本的特定于字符的函数，比如：比较和搜索。当用我们自己的类来代替它时，可以改变这些基本行为。
+
+\subsubsection{There's more…}
+
+也可以重写assign()和copy()成员函数来创建一个存储小写字符的类:
+
+\begin{lstlisting}[style=styleCXX]
+class lc_traits : public std::char_traits<char> {
+	public:
+	static constexpr void assign( char_type& r, const
+	char_type& a )
+	noexcept {
+		r = char_lower(a);
+	}
+	static constexpr char_type* assign( char_type* p,
+	std::size_t count, char_type a ) {
+		for(size_t i{}; i < count; ++i) p[i] =
+		char_lower(a);
+		return p;
+	}
+	static constexpr char_type* copy(char_type* dest,
+		const char_type* src, size_t count) {
+		for(size_t i{0}; i < count; ++i) {
+			dest[i] = char_lower(src[i]);
+		}
+		return dest;
+	}
+};
+\end{lstlisting}
+
+现在，可以创建一个lc\_string别名，对象存储小写字符:
+
+\begin{lstlisting}[style=styleCXX]
+using lc_string = std::basic_string<char, lc_traits>;
+...
+lc_string lc_s{"Foo Bar Baz"};
+cout << "lc_string: " << lc_s << '\n';
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+lc_string: foo bar baz
+\end{tcblisting}
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black,title=Note]
+这些方法在GCC和Clang上可以正常工作，但在MSVC预览版上则不行。我希望在未来的版本中可以修复这个问题。
+\end{tcolorbox}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,406 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Async vs Multithread I/O - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="async-單線程-vs-多線程為什麼-io-操作時-async-更快"><a class="header" href="#async-單線程-vs-多線程為什麼-io-操作時-async-更快">Async 單線程 vs 多線程：為什麼 IO 操作時 Async 更快？</a></h1>
+<h2 id="核心概念開銷差異"><a class="header" href="#核心概念開銷差異">核心概念：開銷差異</a></h2>
+<h3 id="線程開銷"><a class="header" href="#線程開銷">線程開銷</a></h3>
+<ul>
+<li><strong>創建成本</strong>：每個線程需要 1-8MB 記憶體</li>
+<li><strong>切換成本</strong>：OS 級別的 context switch（微秒級）</li>
+<li><strong>數量限制</strong>：系統通常難以支撐超過 1000 個線程</li>
+<li><strong>同步開銷</strong>：需要鎖、信號量等機制</li>
+</ul>
+<h3 id="async-協程開銷"><a class="header" href="#async-協程開銷">Async 協程開銷</a></h3>
+<ul>
+<li><strong>創建成本</strong>：每個協程僅需約 1KB 記憶體</li>
+<li><strong>切換成本</strong>：用戶態切換（奈秒級）</li>
+<li><strong>數量限制</strong>：輕鬆處理 10000+ 併發</li>
+<li><strong>同步開銷</strong>：單線程無需同步機制</li>
+</ul>
+<h2 id="為什麼單線程能處理併發"><a class="header" href="#為什麼單線程能處理併發">為什麼單線程能處理併發？</a></h2>
+<h3 id="阻塞-vs-非阻塞-io-運作原理"><a class="header" href="#阻塞-vs-非阻塞-io-運作原理">阻塞 vs 非阻塞 IO 運作原理</a></h3>
+<p><strong>多線程（阻塞 IO）</strong></p>
+<pre><code>線程1: 發起請求A → [等待1秒，線程被阻塞] → 處理結果
+線程2: 發起請求B → [等待1秒，線程被阻塞] → 處理結果
+結果: 需要 2 個線程才能並行處理
+</code></pre>
+<p><strong>Async（非阻塞 IO）</strong></p>
+<pre><code>單線程: 
+  0ms: 發起請求A → 註冊回調 → 繼續執行
+  1ms: 發起請求B → 註冊回調 → 繼續執行
+  2ms: 發起請求C → 註冊回調 → 繼續執行
+  ...
+  1000ms: 請求A完成 → 執行回調
+  1001ms: 請求B完成 → 執行回調
+  1002ms: 請求C完成 → 執行回調
+結果: 單線程處理多個並發請求
+</code></pre>
+<h2 id="event-loop-工作原理"><a class="header" href="#event-loop-工作原理">Event Loop 工作原理</a></h2>
+<h3 id="事件循環執行流程"><a class="header" href="#事件循環執行流程">事件循環執行流程</a></h3>
+<ol>
+<li><strong>檢查任務隊列</strong>：是否有待執行的回調</li>
+<li><strong>執行同步代碼</strong>：處理當前任務</li>
+<li><strong>發起 IO 操作</strong>：註冊回調，不等待結果</li>
+<li><strong>讓出控制權</strong>：切換到下一個任務</li>
+<li><strong>IO 完成通知</strong>：系統通知 IO 操作完成</li>
+<li><strong>執行回調</strong>：處理 IO 結果</li>
+</ol>
+<h3 id="視覺化時間軸"><a class="header" href="#視覺化時間軸">視覺化時間軸</a></h3>
+<pre><code>時間    事件
+----    ----
+0ms     Task A 開始 → 發起 IO → 註冊回調 → 讓出控制
+1ms     Task B 開始 → 發起 IO → 註冊回調 → 讓出控制  
+2ms     Task C 開始 → 發起 IO → 註冊回調 → 讓出控制
+3ms     Event Loop 檢查就緒的 IO
+...
+100ms   Task A 的 IO 完成 → 執行回調
+101ms   Task B 的 IO 完成 → 執行回調
+102ms   Task C 的 IO 完成 → 執行回調
+
+整個過程只用一個線程！
+</code></pre>
+<h2 id="性能比較數據"><a class="header" href="#性能比較數據">性能比較數據</a></h2>
+<h3 id="資源使用對比1000-個併發-io-操作"><a class="header" href="#資源使用對比1000-個併發-io-操作">資源使用對比（1000 個併發 IO 操作）</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>指標</th><th>多線程</th><th>Async 單線程</th><th>差異</th></tr></thead><tbody>
+<tr><td><strong>記憶體使用</strong></td><td>~100MB</td><td>~1MB</td><td>100x</td></tr>
+<tr><td><strong>創建時間</strong></td><td>~50ms</td><td>~1ms</td><td>50x</td></tr>
+<tr><td><strong>Context Switch</strong></td><td>OS 級別（微秒）</td><td>用戶態（奈秒）</td><td>1000x</td></tr>
+<tr><td><strong>最大併發數</strong></td><td>&lt;1000</td><td>&gt;10000</td><td>10x</td></tr>
+</tbody></table>
+</div>
+<h3 id="實際測試結果"><a class="header" href="#實際測試結果">實際測試結果</a></h3>
+<p><strong>100 個併發請求測試</strong></p>
+<ul>
+<li>多線程（10 個線程）：0.52 秒</li>
+<li>Async（單線程）：0.12 秒</li>
+<li><strong>Async 快 4.3x</strong></li>
+</ul>
+<p><strong>檔案 IO 測試（100 個檔案）</strong></p>
+<ul>
+<li>線程池（10 線程）：0.083 秒</li>
+<li>Async（單線程）：0.021 秒</li>
+<li><strong>Async 快 3.9x</strong></li>
+</ul>
+<h2 id="適用場景分析"><a class="header" href="#適用場景分析">適用場景分析</a></h2>
+<h3 id="多線程適合"><a class="header" href="#多線程適合">多線程適合</a></h3>
+<ul>
+<li><strong>CPU 密集型任務</strong>：需要真正的並行計算</li>
+<li><strong>阻塞式 API</strong>：必須使用阻塞 IO 的舊版 API</li>
+<li><strong>簡單並發</strong>：少量並發任務（&lt;100）</li>
+</ul>
+<h3 id="async-適合"><a class="header" href="#async-適合">Async 適合</a></h3>
+<ul>
+<li><strong>IO 密集型任務</strong>：網路請求、檔案讀寫、資料庫查詢</li>
+<li><strong>高併發場景</strong>：需要處理數千個同時連接</li>
+<li><strong>即時應用</strong>：WebSocket、聊天伺服器、推送服務</li>
+<li><strong>微服務架構</strong>：API 閘道、反向代理</li>
+</ul>
+<h2 id="關鍵洞察"><a class="header" href="#關鍵洞察">關鍵洞察</a></h2>
+<h3 id="1-io-等待不需要-cpu"><a class="header" href="#1-io-等待不需要-cpu">1. IO 等待不需要 CPU</a></h3>
+<p>IO 操作主要是等待（網路延遲、磁碟讀寫），期間 CPU 是空閒的，不需要多個線程來等待。</p>
+<h3 id="2-事件驅動更高效"><a class="header" href="#2-事件驅動更高效">2. 事件驅動更高效</a></h3>
+<p>單線程 + 事件循環避免了線程創建和切換的開銷，讓 CPU 專注於實際的處理工作。</p>
+<h3 id="3-c10k-問題的解決方案"><a class="header" href="#3-c10k-問題的解決方案">3. C10K 問題的解決方案</a></h3>
+<p>Async 模型是解決 C10K（同時處理萬級連接）問題的主要方案，傳統線程模型無法擴展到這個規模。</p>
+<h3 id="4-記憶體效率"><a class="header" href="#4-記憶體效率">4. 記憶體效率</a></h3>
+<p>1000 個協程使用的記憶體 &lt; 10 個線程的記憶體使用，這對於高併發伺服器至關重要。</p>
+<h2 id="實際應用案例"><a class="header" href="#實際應用案例">實際應用案例</a></h2>
+<h3 id="成功案例"><a class="header" href="#成功案例">成功案例</a></h3>
+<ul>
+<li><strong>Node.js</strong>：單線程事件循環，處理高併發 Web 應用</li>
+<li><strong>Nginx</strong>：事件驅動架構，高性能 Web 伺服器</li>
+<li><strong>Redis</strong>：單線程模型，高性能快取資料庫</li>
+<li><strong>Python asyncio</strong>：異步框架，用於高併發網路應用</li>
+</ul>
+<h3 id="程式碼範例"><a class="header" href="#程式碼範例">程式碼範例</a></h3>
+<p><strong>Python Async 範例</strong></p>
+<pre><code class="language-python">import asyncio
+import aiohttp
+
+async def fetch_data(session, url):
+    async with session.get(url) as response:
+        return await response.json()
+
+async def main():
+    urls = [f"https://api.example.com/data/{i}" for i in range(100)]
+    
+    async with aiohttp.ClientSession() as session:
+        # 單線程同時處理 100 個請求
+        results = await asyncio.gather(
+            *[fetch_data(session, url) for url in urls]
+        )
+    
+    return results
+
+# 執行
+results = asyncio.run(main())
+</code></pre>
+<p><strong>多線程範例（對比）</strong></p>
+<pre><code class="language-python">import requests
+from concurrent.futures import ThreadPoolExecutor
+
+def fetch_data(url):
+    response = requests.get(url)
+    return response.json()
+
+def main():
+    urls = [f"https://api.example.com/data/{i}" for i in range(100)]
+    
+    # 需要創建線程池
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        results = list(executor.map(fetch_data, urls))
+    
+    return results
+
+# 執行
+results = main()
+</code></pre>
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<p>Async 單線程在 IO 密集型操作上優於多線程的原因：</p>
+<ol>
+<li><strong>更少的開銷</strong>：無需創建和管理多個線程</li>
+<li><strong>更高的效率</strong>：避免 OS 級別的 context switch</li>
+<li><strong>更好的擴展性</strong>：可處理更多併發連接</li>
+<li><strong>更簡單的程式模型</strong>：無需處理線程同步問題</li>
+</ol>
+<p>這解釋了為什麼現代高性能網路應用普遍採用異步事件驅動架構，而不是傳統的多線程模型。選擇正確的併發模型對應用性能有決定性影響！</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../python/async-performance-complete-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../python/complete-async-benchmark.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../python/async-performance-complete-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../python/complete-async-benchmark.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

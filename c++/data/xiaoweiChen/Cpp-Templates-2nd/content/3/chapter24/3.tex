@@ -1,0 +1,187 @@
+
+类型列表提供了使用一组丰富的算法和操作描述，以及一系列操作类型的能力。其在处理编译时可以处理一组值，例如：多维数组的边界或另一个类型列表的索引。
+
+有几种方法可以生成编译时值的类型列表。一种简单的方法包括定义一个CTValue类模板(编译时值命名)，在一个类型列表中表示特定类型的值:
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}标准库定义了std::integral\_constant模板，它是CTValue的加强版本。
+\end{tcolorbox}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typelist/ctvalue.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename T, T Value>
+struct CTValue
+{
+	static constexpr T value = Value;
+};
+\end{lstlisting}
+
+使用CTValue模板，可以表示一个包含前几个素数的整数值的类型列表:
+
+\begin{lstlisting}[style=styleCXX]
+using Primes = Typelist<CTValue<int, 2>, CTValue<int, 3>,
+						CTValue<int, 5>, CTValue<int, 7>,
+						CTValue<int, 11>>;
+\end{lstlisting}
+
+通过这种表示，可以对值的类型列表执行数值计算，例如：计算这些质数的乘积。
+
+首先，MultiplyT模板接受两个相同类型的编译时值，并生成一个相同类型的新的编译时值，将输入值相乘:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typelist/multiply.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename T, typename U>
+struct MultiplyT;
+
+template<typename T, T Value1, T Value2>
+struct MultiplyT<CTValue<T, Value1>, CTValue<T, Value2>> {
+	public:
+	using Type = CTValue<T, Value1 * Value2>;
+};
+
+template<typename T, typename U>
+using Multiply = typename MultiplyT<T, U>::Type;
+\end{lstlisting}
+
+然后，通过使用MultiplyT，下面的表达式得到所有质数的乘积:
+
+\begin{lstlisting}[style=styleCXX]
+Accumulate<Primes, MultiplyT, CTValue<int, 1>>::value
+\end{lstlisting}
+
+不过，类型列表和CTValue的这种用法相当繁琐，特别是对于所有值都相同类型的情况。可以通过引入一个别名模板CTTypelist进行优化。提供了一个同类的值列表，描述为CTValues的类型列表:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typelist/cttypelist.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename T, T... Values>
+using CTTypelist = Typelist<CTValue<T, Values>...>;
+\end{lstlisting}
+
+现在可以使用CTTypelist编写一个等效的(但更简洁的)质数定义:
+
+\begin{lstlisting}[style=styleCXX]
+using Primes = CTTypelist<int, 2, 3, 5, 7, 11>;
+\end{lstlisting}
+
+这种方法的唯一缺点是别名模板只是别名，因此错误消息可能最终会打印CTValueTypes的底层类型列表。为了解决这个问题，可以创建一个全新的类型列表类Valuelist，可以存储值:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typelist/valuelist.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename T, T... Values>
+struct Valuelist {
+};
+
+template<typename T, T... Values>
+struct IsEmpty<Valuelist<T, Values...>> {
+	static constexpr bool value = sizeof...(Values) == 0;
+};
+
+template<typename T, T Head, T... Tail>
+struct FrontT<Valuelist<T, Head, Tail...>> {
+	using Type = CTValue<T, Head>;
+	static constexpr T value = Head;
+};
+
+template<typename T, T Head, T... Tail>
+struct PopFrontT<Valuelist<T, Head, Tail...>> {
+	using Type = Valuelist<T, Tail...>;
+};
+
+template<typename T, T... Values, T New>
+struct PushFrontT<Valuelist<T, Values...>, CTValue<T, New>> {
+	using Type = Valuelist<T, New, Values...>;
+};
+
+template<typename T, T... Values, T New>
+struct PushBackT<Valuelist<T, Values...>, CTValue<T, New>> {
+	using Type = Valuelist<T, Values..., New>;
+};
+\end{lstlisting}
+
+通过提供IsEmpty，FrontT，PopFrontT和PushFrontT，已经使Valuelist成为好用的类型列表，并且可以在本章定义的算法中使用。PushBackT作为一种算法特化提供，以减少编译时此操作的成本。例如，Valuelist可以与之前定义的InsertionSort算法一起使用:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typelist/valuelisttest.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename T, typename U>
+struct GreaterThanT;
+
+template<typename T, T First, T Second>
+struct GreaterThanT<CTValue<T, First>, CTValue<T, Second>> {
+	static constexpr bool value = First > Second;
+};
+void valuelisttest()
+{
+	using Integers = Valuelist<int, 6, 2, 4, 9, 5, 2, 1, 7>;
+	
+	using SortedIntegers = InsertionSort<Integers, GreaterThanT>;
+	
+	static_assert(std::is_same_v<SortedIntegers,
+								Valuelist<int, 9, 7, 6, 5, 4, 2, 2, 1>>,
+				"insertion sort failed");
+}
+\end{lstlisting}
+
+可以通过使用字面符操作符来初始化CTValue，
+
+\begin{lstlisting}[style=styleCXX]
+auto a = 42_c; // initializes a as CTValue<int,42>
+\end{lstlisting}
+
+参阅第25.6节了解详细信息。
+
+\subsubsubsection{24.3.1\hspace{0.2cm}可推导的非类型参数}
+
+C++17中，CTValue可以通过使用单个可推导的非类型形参(用auto)进行改进:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typelist/ctvalue17.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<auto Value>
+struct CTValue
+{
+	static constexpr auto value = Value;
+};
+\end{lstlisting}
+
+这就省去了每次使用CTValue时指定类型的需要:
+
+\begin{lstlisting}[style=styleCXX]
+using Primes = Typelist<CTValue<2>, CTValue<3>, CTValue<5>,
+						CTValue<7>, CTValue<11>>;
+\end{lstlisting}
+
+C++17的值列表也可以这样，但结果不一定更好。如15.10.1节所述，带有推导类型的非类型参数包允许每个参数的类型不同:
+
+\begin{lstlisting}[style=styleCXX]
+template<auto... Values>
+class Valuelist { };
+
+int x;
+using MyValueList = Valuelist<1, ’a’, true, &x>;
+\end{lstlisting}
+
+虽然这样的异构值列表可能有用，但与前面要求所有元素都具有相同类型的值列表不同。虽然可以要求所有元素都具有相同的类型(在15.10.1节中也讨论了这一点)，但空的Valuelist<>肯定没有已知的元素类型。
+
+
+
+
+
+
+
+
+
+
+
+
+

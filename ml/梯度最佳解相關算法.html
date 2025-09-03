@@ -1,0 +1,327 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>梯度最佳解相關算法 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="梯度最佳解相關算法gradient-descent-optimization-algorithms"><a class="header" href="#梯度最佳解相關算法gradient-descent-optimization-algorithms">梯度最佳解相關算法(gradient descent optimization algorithms)</a></h1>
+<p>https://chih-sheng-huang821.medium.com/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92-%E5%9F%BA%E7%A4%8E%E6%95%B8%E5%AD%B8-%E4%B8%89-%E6%A2%AF%E5%BA%A6%E6%9C%80%E4%BD%B3%E8%A7%A3%E7%9B%B8%E9%97%9C%E7%AE%97%E6%B3%95-gradient-descent-optimization-algorithms-b61ed1478bd7</p>
+<p>在神經網路中，不論是哪種網路，最後都是在找層和層之間的關係(參數，也就是層和層之間的權重)，而找參數的過程就稱為學習，所以神經網路的目的就是不斷的更新參數，去最小化損失函數的值，然後找到最佳解。</p>
+<p>梯度下降法(gradient descent，GD)是一種不斷去<strong>更新參數</strong>找解的方法，前一篇文章「<a href="https://medium.com/@chih.sheng.huang821/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92-%E5%9F%BA%E7%A4%8E%E6%95%B8%E5%AD%B8-%E4%BA%8C-%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D%E6%B3%95-gradient-descent-406e1fd001f">機器學習-基礎數學(二):梯度下降法(gradient descent)</a>」已經介紹，這邊複習一下，公式如下</p>
+<p><img src="images/1*zgcke0uQx87GAhCwTsIGag.png" alt="img" /></p>
+<p>這邊的<em>t</em>是第幾次更新參數，γ是學習率(Learning rate)。 找「解」的時候公式是往梯度的反方向更新，但一次要更新多少，就是由學習率來控制的。</p>
+<h1 id="隨機梯度下降法stochastic-gradient-descent-sgd"><a class="header" href="#隨機梯度下降法stochastic-gradient-descent-sgd"><strong>隨機梯度下降法(Stochastic gradient descent, SGD)</strong></a></h1>
+<p>我們一般看深度學習的介紹，最常看到的最佳化名稱稱為「<strong>隨機梯度下降法(Stochastic gradient descent, SGD)</strong>」(這篇我為了縮短篇幅，Mini-batch SGD我把它歸納到SGD內)，我們簡單說一下這個跟GD差在哪邊。</p>
+<p>在更新參數的時候
+GD我們是一次用全部訓練集的數據去計算損失函數的梯度就更新一次參數。
+SGD就是一次跑一個樣本或是小批次(mini-batch)樣本然後算出一次梯度或是小批次梯度的平均後就更新一次，那這個樣本或是小批次的樣本是隨機抽取的，所以才會稱為<strong>隨機</strong>梯度下降法。</p>
+<blockquote>
+<p>Note: 如果有跑過open source API的都會知道需要設定batch size這件事，這件事就是在設定小批次的樣本數。後續方法幾乎都用mini-batch方式作學習。</p>
+</blockquote>
+<h2 id="sgd缺點"><a class="header" href="#sgd缺點">SGD缺點</a></h2>
+<p>SGD一定有一些缺點，才會有後續的演進，在當下的問題如果學習率太大，容易造成參數更新呈現鋸齒狀的更新，這是很沒有效率的路徑。</p>
+<p>我這邊舉個例子來說<strong>不同學習率</strong>對找解這件事情，參數的變化方式</p>
+<p><img src="images/1*SB01coLBr3HN2si7op7fXw.png" alt="img" /></p>
+<p>下圖是<em>x</em>1和<em>x</em>2和f(<em>x</em>1,<em>x</em>2)算出來的結果，右圖是x軸和y軸是<em>x</em>1和<em>x</em>2，z軸是f(<em>x</em>1,<em>x</em>2)的值；左圖x軸和y軸是<em>x</em>1和<em>x</em>2，上面的線是等高線。
+為了說明後面找「解」更新時是往最小走，所以我畫出下右圖，可以明顯發現這是一個類似碗公的形狀，「解」在正中間。所以我們只看「解」的變化(下左圖)，不看f(x1,x2)值。</p>
+<p><img src="images/1*qfZPaPjDVBTxwh71jp51NQ.png" alt="img" /></p>
+<p>左圖是x軸是x1，y軸是x2，等高線是f(x1,x2)反應出來值的大小，所以越中間f(x1,x2)值越小。右圖就是左圖的立體版，x軸是x1，y軸是x2，z軸是f(x1,x2)。</p>
+<p>這邊我還是用SGD的方式找解
+initial從[<em>x</em>1,<em>x</em>2]=[-8,5]開始去跑
+學習率設定0.9，為了區隔和後續算法的差異，我設的大一點。</p>
+<p><img src="images/1*7fckmsDnnxFyGkG5K_oOkg.gif" alt="img" /></p>
+<p>學習率設定0.9</p>
+<p>這個例子就是我剛提到的「在當下的問題如果學習率太大，容易造成參數更新呈現鋸齒狀的更新」。</p>
+<p>這邊我將學習率設定為0.5，這樣看起來就可以更快更直接走向最佳解。</p>
+<p><img src="images/1*HkyjYUukM-Qny8cJsd9z6w.gif" alt="img" /></p>
+<p>學習率設定0.5</p>
+<p>所以當gradient太大(這邊我在圖用gradient norm表示gradient的大小)的時候，如果學習率過大，這時候很容易讓找解的時候一步跨的太大，第一雖然有可能還是往最佳解走，但會發生在最後幾步跳不進最佳解內，這邊我用學習率等於1來呈現什麼叫跳不進最佳解。</p>
+<p><img src="images/1*ogL5WUU6dMyaJWLPBeq0Mg.gif" alt="img" /></p>
+<p>學習率設定1</p>
+<p>由上結果可以得知最好的找解方式是可以在不同學習的時間點用不同的學習率，當然還有考慮不同的方向。</p>
+<h1 id="momentum"><a class="header" href="#momentum"><strong>Momentum</strong></a></h1>
+<p><img src="images/1*ZoRXwJ3xXxwxXPtKPAsRHg.png" alt="img" /></p>
+<p>這邊的<em>t</em>是第幾次更新參數，γ是學習率(Learning rate)，<em>m</em>是momentum項(一般設定為0.9)，主要是用在計算參數更新方向前會考慮前一次參數更新的方向(<em>v</em>(<em>t</em>-1))，如果當下梯度方向和歷史參數更新的方向一致，則會增強這個方向的梯度，若當下梯度方向和歷史參數更新的方向不一致，則梯度會衰退。然後每一次對梯度作方向微調。這樣可以增加學習上的穩定性(梯度不更新太快)，這樣可以學習的更快，並且有擺脫局部最佳解的能力。</p>
+<p>這個現象就像是丟一顆球到碗裡，球會在碗內左右振盪，隨著阻力的慢慢趨向最低點，如下圖</p>
+<p><img src="images/1*aegmV5iw2BAQjuZ0V9UK2A.gif" alt="img" /></p>
+<p>雖然此例子SGD跑的比momentum快，但可以發現在複雜一點後momentum會比SGD好。</p>
+<p>比如「<a href="https://medium.com/@chih.sheng.huang821/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92-%E5%9F%BA%E7%A4%8E%E6%95%B8%E5%AD%B8-%E4%BA%8C-%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D%E6%B3%95-gradient-descent-406e1fd001f">機器學習-基礎數學(二):梯度下降法(gradient descent)</a>」內的例子。</p>
+<p><img src="https://miro.medium.com/v2/1*E82CWULL7J2qNy-8ab6ZyA.png" alt="img" /></p>
+<p>之前的例子GD的學習率設定0.00001，GD會掉到local minimum，但momentum則會跳出。</p>
+<p><img src="images/1*eEH0Km8qSArLMLo_lStYOw.gif" alt="img" /></p>
+<p>學習率0.00001</p>
+<h1 id="adagrad"><a class="header" href="#adagrad"><strong>Adagrad</strong></a></h1>
+<p>SGD和momentum在更新參數時，都是用同一個學習率(<em>γ</em>)，Adagrad算法則是在學習過程中對學習率不斷的調整，這種技巧叫做「學習率衰減(Learning rate decay)」。通常在神經網路學習，一開始會用大的學習率，接著在變小的學習率，從上述例子可以發現，大的學習率可以較快走到最佳值或是跳出局部極值，但越後面到要找到極值就需要小的學習率。</p>
+<p>Adagrad則是針對每個參數客製化的值，所以Ada這個字跟是Adaptive的簡寫，這邊假設 g_t,i為第<em>t</em>次第<em>i</em>個參數的梯度，</p>
+<p><img src="images/1*4k0dtvNrlR8geMOoSvzoYg.png" alt="img" /></p>
+<p>SGD更新就是</p>
+<p><img src="images/1*GENwJDRrUs6EROcYimq4-w.png" alt="img" /></p>
+<p>Adagrad則是</p>
+<p><img src="images/1*db1qSL5OkwvF1uUm_rWexg.png" alt="img" /></p>
+<p>ε是平滑項，主要避免分母為0的問題，一般設定為1e-7。Gt這邊定義是一個對角矩陣，對角線每一個元素是相對應每一個參數梯度的平方和。這邊很有趣，一般文章都寫說分母是the sum of the squares of the gradients, i.e. θ<em>i</em> up to time step <em>t</em>，然後就沒有其他說明瞭。</p>
+<p>其實G(t)的算法如下，假設*<em><em>x***是</em>d</em>維度的參數:</p>
+<p><img src="images/1*h2FOBrQ3wjtB-v1vXdileA.png" alt="img" /></p>
+<p>所以是一開始第一次到第t次的梯度平方和。</p>
+<p>這邊舉個例子來說明Adagrad是怎麼計算的，這邊的ε我先設為0，公式比較不亂</p>
+<p><img src="images/1*BvFyLsDAxbvKlp2Xme0gbQ.png" alt="img" /></p>
+<p>如果iteration (t)次數越大，如果Gradient平方和(分母)越大，會讓學習率越來越小，這樣學習率就可以達到隨著時間減少的目的，在接近目標函數的最小值時就不會向上圖例在解的左右跳來跳去。但當Gradient平方和(分母)越小，學習率會越大。但因為每個參數的學習率會不一樣，所以在學習過程中就比較不會卡在Saddle point (最後有圖例)。</p>
+<p>Adagrad缺點是在訓練中後段時，有可能因為分母累積越來越大(因為是從第1次梯度到第t次梯度的和)導致梯度趨近於0，如果有設定early stop的，會使得訓練提前結束。</p>
+<h1 id="rmsprop"><a class="header" href="#rmsprop"><strong>RMSProp</strong></a></h1>
+<p>RMSprop是Geoff Hinton 提出未發表的方法，和Adagrad一樣是自適應的方法，但Adagrad的分母是從第1次梯度到第t次梯度的和，所以和可能過大，兒RMSprop則是算對應的平均值，因此可以緩解Adagrad學習率下降過快的問題。</p>
+<p><img src="images/1*kw_KP5SmJljmVfWTq-mD9g.png" alt="img" /></p>
+<p>E[]在統計上就是取期望值，所以是取g_i²的期望值，白話說就是他的平均數。<em>ρ</em>是過去t-1時間的梯度平均數的權重，一般建議設成0.9。</p>
+<h1 id="adam"><a class="header" href="#adam"><strong>Adam</strong></a></h1>
+<p>Adam全名Adaptive Moment Estimation。剛剛介紹的Momentum是「計算參數更新方向前會考慮前一次參數更新的方向」， RMSprop則是「在學習率上依據梯度的大小對學習率進行加強或是衰減」。</p>
+<blockquote>
+<p>Adam則是兩者合併加強版本(Momentum+RMSprop+各自做偏差的修正)。</p>
+</blockquote>
+<p><img src="images/1*pbeOXh7RxHxSuxsCJ7Scxw.png" alt="img" /></p>
+<p><em><em><em>m*<strong>t和</strong></em>v*<strong>t分別是梯度的一階動差函數和二階動差函數(非去中心化)。因為</strong></em>m*<strong>t和</strong></em>v***t初始設定是全為0的向量，Adam的作者發現算法偏量很容易區近於0，因此他們提出修正項，去消除這些偏量，細節: <a href="https://arxiv.org/pdf/1412.6980.pdf">ADAM: A METHOD FOR STOCHASTIC OPTIMIZATION</a>(equ. 4)。</p>
+<p><img src="images/1*HJno7bXcWBZiA9pwx4YDVw.png" alt="img" /></p>
+<p>Adam更新的準則:</p>
+<p><img src="images/1*5Z7mbk4pZ3l2sL7tUIvPbg.png" alt="img" /></p>
+<p>作者有建議預設值<em>β</em>1=0.9, <em>β</em>2=0.999, ε=10^(-8)。</p>
+<p>這邊舉一個例子將所有算法都去執行一遍，如下圖:</p>
+<p><img src="images/1*ASMp9LccG2y7T1ZOeqY57w.png" alt="img" /></p>
+<p>目標函數</p>
+<p><img src="images/1*4sDhJfYY77FXWUBrrWJ9Jg.gif" alt="img" /></p>
+<p>Reference:
+神人大作: http://ruder.io/optimizing-gradient-descent/index.html#adam
+ADAM: https://arxiv.org/abs/1412.6980</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../ml/梯度下降法_gradient_descent.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../ml/基於DEAP庫的Python進化演算法從入門到入土.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../ml/梯度下降法_gradient_descent.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../ml/基於DEAP庫的Python進化演算法從入門到入土.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

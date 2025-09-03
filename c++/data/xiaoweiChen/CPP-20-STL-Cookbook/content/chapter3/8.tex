@@ -1,0 +1,179 @@
+
+map是存储键值对的关联容器，容器是按键排序的。键必须是唯一的，并且是const限定的，所以不能更改。
+
+例如，若填充一个map并试图更改键，在编译时会得到一个错误:
+
+\begin{lstlisting}[style=styleCXX]
+map<int, string> mymap {
+	{1, "foo"}, {2, "bar"}, {3, "baz"}
+};
+auto it = mymap.begin();
+it->first = 47;
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+error: assignment of read-only member ...
+5 | it->first = 47;
+   |  ~~~~~~~~~~^~~~
+\end{tcblisting}
+
+若需要重新排序map容器，可以通过使用extract()方法交换键来实现。C++17中，extract()是map类，及其派生类中的成员函数。
+
+它允许从序列中提取map元素，而不涉及有效负载。当提取出来时，键就不再是const限定的，并且可以修改。
+
+\subsubsection{How to do it…}
+
+本例中，我们将定义一个表示比赛中的选手的map。在比赛过程中的某个时刻，顺序发生了变化，需要修改map的键值。
+
+\begin{itemize}
+\item 
+先从定义map类型的别名开始:
+
+\begin{lstlisting}[style=styleCXX]
+using Racermap = map<unsigned int, string>;
+\end{lstlisting}
+
+\item 
+编写一个函数来打印map:
+
+\begin{lstlisting}[style=styleCXX]
+void printm(const Racermap &m)
+{
+	cout << "Rank:\n";
+	for (const auto& [rank, racer] : m) {
+		cout << format("{}:{}\n", rank, racer);
+	}
+}
+\end{lstlisting}
+
+可以随时将map传递给这个函数，以打印出参赛者的当前排名。
+
+\item 
+main()函数中，定义了一个具有赛车初始状态的map:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	Racermap racers {
+		{1, "Mario"}, {2, "Luigi"}, {3, "Bowser"},
+		{4, "Peach"}, {5, "Donkey Kong Jr"}
+	};
+	printm(racers);
+	node_swap(racers, 3, 5);
+	printm(racers);
+}
+\end{lstlisting}
+
+键是int型，表示赛车的级别，值是赛车手名字的字符串。
+
+然后，使用printm()来打印当前排名。node\_swap()将交换两个赛车手的键，然后再次输出。
+
+\item 
+在某个时刻，一名选手落后了，而另一名选手则趁机提升了排名。node\_swap()函数将交换两个赛车手的排名:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename M, typename K>
+bool node_swap(M & m, K k1, K k2) {
+	auto node1{ m.extract(k1) };
+	auto node2{ m.extract(k2) };
+	if(node1.empty() || node2.empty()) {
+		return false;
+	}
+	swap(node1.key(), node2.key());
+	m.insert(move(node1));
+	m.insert(move(node2));
+	return true;
+}
+\end{lstlisting}
+
+这个函数使用map.extract()方法从映射中提取指定的元素。这些提取出来的元素称为节点。
+
+节点是一个从C++17出现的新概念，可以在不涉及元素本身的情况下从map类型结构中提取元素。解除节点链接，返回节点句柄。提取后，节点句柄通过节点的key()函数提供对键的可写访问。然后，可以交换键并插入到map中，无需复制或操作有效负载。
+
+\item 
+当我们运行这段代码时，得到了节点交换前后map的输出:
+
+\begin{tcblisting}{commandshell={}}
+Rank:
+1:Mario
+2:Luigi
+3:Bowser
+4:Peach
+5:Donkey Kong Jr
+Rank:
+1:Mario
+2:Luigi
+3:Donkey Kong Jr
+4:Peach
+5:Bowser
+\end{tcblisting}
+\end{itemize}
+
+这都是通过extract()方法和新的node\_handle类实现的。让我们仔细了解一下它是如何工作的。
+
+\subsubsection{How it works…}
+
+该技术使用extract()函数，该函数返回一个node\_handle对象，node\_handle是节点的句柄，由关联元素及其相关结构组成。extract函数在将节点保留在原处的同时将其解除关联，并返回一个node\_handle对象。这样做的效果是从关联容器中删除节点，而不涉及数据本身。node\_handle允许访问已解除关联的节点。
+
+node\_handle有一个成员函数key()，返回一个对节点键的可写引用。这就可以在键与容器解关联时，对键值进行修改。
+
+\subsubsection{There's more…}
+
+使用extract()和node\_handle时，有几个重点:
+
+\begin{itemize}
+\item 
+若没有找到键，extract()函数返回一个空节点句柄。可以用empty()函数测试节点句柄是否为空:
+
+\begin{lstlisting}[style=styleCXX]
+auto node{ mapthing.extract(key) };
+if(node.empty()) {
+	// node handle is empty
+}
+\end{lstlisting}
+
+\item 
+extract()有两个重载:
+
+\begin{lstlisting}[style=styleCXX]
+node_type extract(const key_type& x);
+node_type extract(const_iterator position);
+\end{lstlisting}
+
+我们使用了第一种形式，通过传递键，使用迭代器。
+
+\item 
+不能使用字面量引用，因此像extract(1)这样的调用会因段错误而使程序崩溃。
+
+\item 
+键插入映射时必须保持唯一。
+
+例如，若将一个键更改为映射中已经存在的值:
+
+\begin{lstlisting}[style=styleCXX]
+auto node_x{ racers.extract(racers.begin()) };
+node_x.key() = 5; // 5 is Donkey Kong Jr
+auto status = racers.insert(move(node_x));
+if(!status.inserted) {
+	cout << format("insert failed, dup key: {}",
+		status.position->second);
+	exit(1);
+}
+\end{lstlisting}
+
+插入失败，会得到错误信息:
+
+\begin{tcblisting}{commandshell={}}
+insert failed, dup key: Donkey Kong Jr
+\end{tcblisting}
+
+本例中，将begin()迭代器传递给extract()。然后，为键值分配了一个已经在使用的值(5, Donkey Kong Jr)。插入失败和结果status.inserted为false。status.position是指向已找到键的迭代器。在if()中，我使用format()来打印找到的键值。
+\end{itemize}
+
+
+
+
+
+
+

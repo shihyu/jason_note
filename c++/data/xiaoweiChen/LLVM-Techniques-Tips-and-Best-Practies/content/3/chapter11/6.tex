@@ -1,0 +1,108 @@
+
+在LLVM的代码库中，经常可以看到这样的编码模式:如果出现问题，API希望返回结果或错误。LLVM试图通过创建在单个对象中多重处理结果和错误的工具类(它们是\texttt{Expected}和\texttt{ErrorOr}类)，使这种模式更易于使用。
+
+\subsubsubsection{11.6.1\hspace{0.2cm}Expected类}
+
+\texttt{Expect}类自带一个\texttt{Success}结果，或一个
+错误——例如，LLVM中的JSON库使用它来表示解析传入字符串的结果:
+
+\begin{lstlisting}[style=styleCXX]
+#include "llvm/Support/JSON.h"
+using namespace llvm;
+…
+// `InputStr` has the type of `StringRef`
+Expected<json::Value> JsonOrErr = json::parse(InputStr);
+if (JsonOrErr) {
+	// Success!
+	json::Value &Json = *JsonOrErr;
+	…
+} else {
+	// Something goes wrong…
+	Error Err = JsonOrErr.takeError();
+	// Start to handle `Err`…
+}
+\end{lstlisting}
+
+前面的\texttt{JsonOrErr}类的类型是\texttt{Expected<json::Value>}。这意味着这个\texttt{Expected变}量要么带了一个\texttt{json::Value}类型的\texttt{Success}结果，要么带了一个错误，这个错误由\texttt{Error}类表示。
+
+与\texttt{Error}类相同，每个\texttt{Expected}实例都需要检查。如果它表示错误，这个\texttt{Error}实例也需要处理。为了检查期望值实例的状态，我们还可以将其转换为布尔类型。然而，与\texttt{Error}不同的是，如果一个\texttt{Expected}实例包含一个\texttt{Success}结果，在转换为布尔值后将为真。
+
+如果\texttt{Expected}实例表示\texttt{Success}结果，则可以使用\texttt{*}操作符、\texttt{->}操作符或\texttt{get}方法获取结果。要不，可以在处理\texttt{Error}实例之前使用\texttt{takeError}方法来检索错误(使用在前一节中学习到的技能)。
+
+或者，如果确定预期实例处于\texttt{Error}状态，可以通过使用\texttt{errorIsA}方法来确定底层的错误类型，而无需检索底层的\texttt{Error}实例，例如：下面的代码检查错误是否是一个\texttt{FileNotFoundError}实例(我们在前一节中创建的):
+
+\begin{lstlisting}[style=styleCXX]
+if (JsonOrErr) {
+	// Success!
+	…
+} else {
+	// Something goes wrong…
+	if (JsonOrErr.errorIsA<FileNotFoundError>()) {
+		…
+	}
+}
+\end{lstlisting}
+
+这些是使用个\texttt{Expected}变量的技巧。要创建一个\texttt{Expected}实例，最常见的方法是使用\texttt{Expected}的隐式类型转换:
+
+\begin{lstlisting}[style=styleCXX]
+Expected<std::string> readFile(StringRef FileName) {
+	if (openFile(FileName)) {
+		std::string Content;
+		// Reading the file…
+		return Content;
+	} else
+		return make_error<FileNotFoundError>(FileName);
+}
+\end{lstlisting}
+
+上面的代码表明，在出现错误的情况下，我们可以简单地返回一个\texttt{Error}实例，该实例将隐式地转换为表示该错误的\texttt{Expect}实例。类似地，如果一切都很顺利，那么\texttt{Success}结果(本例中是\texttt{std::string}类型变量\texttt{Content})也将隐式地转换为具有\texttt{Success}状态的\texttt{Expect}实例。
+
+现在，我们已经了解了如何使用\texttt{Expected}类了。本节的最后一部分将展示如何使用它的兄弟类:\texttt{ErrorOr}。
+
+\subsubsubsection{11.6.2\hspace{0.2cm}ErrorOr类}
+
+\texttt{ErrorOr}类使用的方式与\texttt{Expected}类几乎相同——要么是一个\texttt{Success}结果，要么是一个错误。与\texttt{Expected}类不同，\texttt{ErrorOr}使用\texttt{std::error\_code}来表示错误。下面是使用\texttt{MemoryBuffer} API读取\texttt{foo.txt}，并将其内容存储到\texttt{MemoryBuffer}对象的例子:
+
+\begin{lstlisting}[style=styleCXX]
+#include "llvm/Support/MemoryBuffer.h"
+…
+ErrorOr<std::unique_ptr<MemoryBuffer>> ErrOrBuffer
+= MemoryBuffer::getFile("foo.txt");
+if (ErrOrBuffer) {
+	// Success!
+	std::unique_ptr<MemoryBuffer> &MB = *ErrOrBuffer;
+} else {
+	// Something goes wrong…
+	std::error_code EC = ErrOrBuffer.getError();
+	…
+}
+\end{lstlisting}
+
+上面的代码显示了类似的结构，\texttt{Expect}的示例代码中:\texttt{std::unique\_ptr<memorybuffer>}实例是这里的成功结果类型。我们也可以在检查\texttt{ErrOrBuffer}的状态后，使用\texttt{*}操作符对其进行检索。
+
+唯一的区别是，如果\texttt{ErrOrBuffer}处于\texttt{Error}状态，则错误由\texttt{std::error\_code}实例表示，而不是\texttt{Error}。开发人员没有必要去处理\texttt{std::error\_code}实例——换句话说，他们可以忽略这个错误，这可能会增加其他开发人员在代码中犯错的机会。尽管如此，使用\texttt{ErrorOr}类可以让开发者与C++标准库API有更好的互动，因为它们中很多都使用\texttt{std::error\_code}来表示错误。关于如何使用\texttt{std::error\_code}的详细信息，可以参考C++的文档。
+
+最后，为了创建\texttt{ErrorOr}实例，我们使用了与\texttt{Expect}类利用隐式转换相同的技巧:
+
+\begin{lstlisting}[style=styleCXX]
+#include <system_error>
+ErrorOr<std::string> readFile(StringRef FileName) {
+	if (openFile(FileName)) {
+		std::string Content;
+		// Reading the file…
+		return Content;
+	} else
+		return std::errc::no_such_file_or_directory;
+}
+\end{lstlisting}
+
+\texttt{std::errc::no\_such\_file\_or\_directory}对象是\texttt{system\_error}头文件中预定义的\texttt{std:: error\_code}对象。
+
+本节中，我们了解了如何使用LLVM提供的错误处理工具，这些工具是对未处理的错误施加严格规则的\texttt{Error}类，以及\texttt{Expected}和\texttt{ErrorOr}类，它们为我们提供了一种简便的方法，将程序结果和错误状态以多路复用的方式放在了单个对象中。在使用LLVM进行开发时，这些工具可以帮助我们编写富有表现力，且健壮的错误处理代码。
+
+
+
+
+
+

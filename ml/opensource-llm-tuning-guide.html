@@ -1,0 +1,610 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>開源 LLM 微調完整指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="開源-llm-調校完整指南"><a class="header" href="#開源-llm-調校完整指南">開源 LLM 調校完整指南</a></h1>
+<h2 id="-目錄"><a class="header" href="#-目錄">📚 目錄</a></h2>
+<ol>
+<li><a href="#%E4%B8%BB%E6%B5%81%E9%96%8B%E6%BA%90%E6%A8%A1%E5%9E%8B">主流開源模型</a></li>
+<li><a href="#%E8%AA%BF%E6%A0%A1%E6%96%B9%E6%B3%95%E8%A9%B3%E8%A7%A3">調校方法詳解</a></li>
+<li><a href="#%E5%B7%A5%E5%85%B7%E8%88%87%E6%A1%86%E6%9E%B6">工具與框架</a></li>
+<li><a href="#%E5%AF%A6%E6%88%B0%E6%A1%88%E4%BE%8B">實戰案例</a></li>
+<li><a href="#%E6%9C%80%E4%BD%B3%E5%AF%A6%E8%B8%90">最佳實踐</a></li>
+</ol>
+<h2 id="主流開源模型"><a class="header" href="#主流開源模型">主流開源模型</a></h2>
+<h3 id="-頂級模型系列"><a class="header" href="#-頂級模型系列">🔥 頂級模型系列</a></h3>
+<h4 id="meta-llama-系列"><a class="header" href="#meta-llama-系列">Meta Llama 系列</a></h4>
+<ul>
+<li><strong>Llama 3.1</strong> (8B, 70B, 405B)
+<ul>
+<li>支援 128K context</li>
+<li>多語言能力強</li>
+<li>適合：通用對話、程式碼生成、推理任務</li>
+</ul>
+</li>
+</ul>
+<h4 id="mistral-系列"><a class="header" href="#mistral-系列">Mistral 系列</a></h4>
+<ul>
+<li><strong>Mistral 7B / Mixtral 8x7B</strong>
+<ul>
+<li>效能/參數比極高</li>
+<li>32K context window</li>
+<li>適合：高效推論、邊緣部署</li>
+</ul>
+</li>
+</ul>
+<h4 id="qwen-系列阿里"><a class="header" href="#qwen-系列阿里">Qwen 系列（阿里）</a></h4>
+<ul>
+<li><strong>Qwen2.5</strong> (0.5B-72B)
+<ul>
+<li>中文能力頂尖</li>
+<li>支援 128K context</li>
+<li>適合：中文應用、多模態任務</li>
+</ul>
+</li>
+</ul>
+<h4 id="deepseek-系列"><a class="header" href="#deepseek-系列">DeepSeek 系列</a></h4>
+<ul>
+<li><strong>DeepSeek-V3</strong>
+<ul>
+<li>MoE 架構，671B 總參數</li>
+<li>極強推理能力</li>
+<li>適合：數學、程式碼、複雜推理</li>
+</ul>
+</li>
+</ul>
+<h3 id="-特化模型"><a class="header" href="#-特化模型">🎯 特化模型</a></h3>
+<h4 id="程式碼特化"><a class="header" href="#程式碼特化">程式碼特化</a></h4>
+<ul>
+<li><strong>CodeLlama</strong> - Meta 的程式碼模型</li>
+<li><strong>DeepSeek-Coder</strong> - 程式碼生成專精</li>
+<li><strong>StarCoder2</strong> - BigCode 專案</li>
+<li><strong>CodeQwen</strong> - 阿里程式碼模型</li>
+</ul>
+<h4 id="數學推理"><a class="header" href="#數學推理">數學推理</a></h4>
+<ul>
+<li><strong>WizardMath</strong> - 數學增強版</li>
+<li><strong>MetaMath</strong> - 數學推理優化</li>
+<li><strong>MAmmoTH</strong> - 數學問題解決</li>
+</ul>
+<h4 id="角色扮演創作"><a class="header" href="#角色扮演創作">角色扮演/創作</a></h4>
+<ul>
+<li><strong>Yi-34B</strong> - 創意寫作能力強</li>
+<li><strong>Nous-Hermes</strong> - 指令遵循優秀</li>
+<li><strong>OpenChat</strong> - 對話優化</li>
+</ul>
+<h2 id="調校方法詳解"><a class="header" href="#調校方法詳解">調校方法詳解</a></h2>
+<h3 id="1-提示工程-prompt-engineering"><a class="header" href="#1-提示工程-prompt-engineering">1. 提示工程 (Prompt Engineering)</a></h3>
+<h4 id="基礎技巧"><a class="header" href="#基礎技巧">基礎技巧</a></h4>
+<pre><code class="language-python"># System Prompt 設定
+system_prompt = """
+你是一位專業的技術顧問，擅長解釋複雜概念。
+請用簡潔清晰的方式回答，並提供實例。
+"""
+
+# Few-shot Learning
+few_shot_examples = """
+問題：什麼是 API？
+答案：API 是程式之間溝通的介面，像餐廳菜單一樣，
+讓你知道可以點什麼菜（呼叫什麼功能）。
+
+問題：{user_question}
+答案：
+"""
+
+# Chain-of-Thought
+cot_prompt = """
+讓我們一步步思考這個問題：
+1. 首先分析問題的核心需求
+2. 列出可能的解決方案
+3. 評估每個方案的優缺點
+4. 給出最佳建議
+"""
+</code></pre>
+<h4 id="進階技巧"><a class="header" href="#進階技巧">進階技巧</a></h4>
+<ul>
+<li><strong>Self-Consistency</strong> - 多次生成後投票</li>
+<li><strong>Tree-of-Thoughts</strong> - 探索多個思考路徑</li>
+<li><strong>ReAct</strong> - 推理與行動交替</li>
+<li><strong>Constitutional AI</strong> - 自我批評與改進</li>
+</ul>
+<h3 id="2-微調技術-fine-tuning"><a class="header" href="#2-微調技術-fine-tuning">2. 微調技術 (Fine-tuning)</a></h3>
+<h4 id="全參數微調"><a class="header" href="#全參數微調">全參數微調</a></h4>
+<pre><code class="language-bash"># 使用 transformers 進行全參數微調
+python train.py \
+    --model_name "meta-llama/Llama-3-8b" \
+    --dataset "custom_dataset" \
+    --learning_rate 2e-5 \
+    --num_epochs 3 \
+    --batch_size 4
+</code></pre>
+<h4 id="lora-low-rank-adaptation"><a class="header" href="#lora-low-rank-adaptation">LoRA (Low-Rank Adaptation)</a></h4>
+<pre><code class="language-python"># LoRA 配置範例
+lora_config = LoraConfig(
+    r=16,                # rank
+    lora_alpha=32,       # scaling
+    target_modules=["q_proj", "v_proj"],
+    lora_dropout=0.1,
+)
+
+# 優點：
+# - 只需訓練 0.1-1% 參數
+# - 可切換多個 LoRA adapter
+# - 訓練速度快 10-100 倍
+</code></pre>
+<h4 id="qlora-quantized-lora"><a class="header" href="#qlora-quantized-lora">QLoRA (Quantized LoRA)</a></h4>
+<pre><code class="language-python"># 4-bit 量化 + LoRA
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_compute_dtype=torch.float16,
+    bnb_4bit_quant_type="nf4",
+)
+
+# 優點：
+# - 記憶體需求降低 75%
+# - 單張 3090 可微調 65B 模型
+</code></pre>
+<h3 id="3-rag-檢索增強生成"><a class="header" href="#3-rag-檢索增強生成">3. RAG (檢索增強生成)</a></h3>
+<h4 id="基礎-rag-架構"><a class="header" href="#基礎-rag-架構">基礎 RAG 架構</a></h4>
+<pre><code class="language-python"># 1. 文檔切分與向量化
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=500,
+    chunk_overlap=50
+)
+
+# 2. 建立向量資料庫
+from chromadb import Client
+vectordb = Client()
+collection = vectordb.create_collection("knowledge_base")
+
+# 3. 檢索與生成
+def rag_query(question):
+    # 檢索相關文檔
+    docs = collection.query(question, n_results=5)
+    # 組合 context
+    context = "\n".join(docs)
+    # 生成答案
+    prompt = f"根據以下資訊回答問題：\n{context}\n問題：{question}"
+    return llm.generate(prompt)
+</code></pre>
+<h4 id="進階-rag-技術"><a class="header" href="#進階-rag-技術">進階 RAG 技術</a></h4>
+<ul>
+<li><strong>Hybrid Search</strong> - 結合向量與關鍵字檢索</li>
+<li><strong>Re-ranking</strong> - 二次排序提升準確度</li>
+<li><strong>Query Expansion</strong> - 查詢擴展</li>
+<li><strong>Contextual Compression</strong> - 上下文壓縮</li>
+</ul>
+<h3 id="4-推論優化"><a class="header" href="#4-推論優化">4. 推論優化</a></h3>
+<h4 id="量化技術"><a class="header" href="#量化技術">量化技術</a></h4>
+<pre><code class="language-python"># INT8 量化
+model = AutoModelForCausalLM.from_pretrained(
+    "model_name",
+    load_in_8bit=True,
+    device_map="auto"
+)
+
+# GPTQ 4-bit 量化
+model = AutoGPTQForCausalLM.from_quantized(
+    "model_name-gptq-4bit",
+    use_safetensors=True,
+)
+
+# AWQ 量化
+model = AutoAWQForCausalLM.from_quantized(
+    "model_name-awq",
+    fuse_layers=True,
+)
+</code></pre>
+<h4 id="推論加速"><a class="header" href="#推論加速">推論加速</a></h4>
+<ul>
+<li><strong>vLLM</strong> - PagedAttention 優化</li>
+<li><strong>TensorRT-LLM</strong> - NVIDIA GPU 優化</li>
+<li><strong>llama.cpp</strong> - CPU/Metal 優化</li>
+<li><strong>ExLlamaV2</strong> - 極致量化推論</li>
+</ul>
+<h2 id="工具與框架"><a class="header" href="#工具與框架">工具與框架</a></h2>
+<h3 id="訓練框架"><a class="header" href="#訓練框架">訓練框架</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>框架</th><th>特點</th><th>適用場景</th></tr></thead><tbody>
+<tr><td><strong>Axolotl</strong></td><td>配置簡單、支援多種微調方法</td><td>快速實驗</td></tr>
+<tr><td><strong>LLaMA-Factory</strong></td><td>中文友好、GUI 介面</td><td>新手入門</td></tr>
+<tr><td><strong>TRL (Transformers RL)</strong></td><td>HuggingFace 官方、RLHF 支援</td><td>生產部署</td></tr>
+<tr><td><strong>Unsloth</strong></td><td>速度快 2-5 倍、記憶體優化</td><td>資源受限</td></tr>
+<tr><td><strong>LitGPT</strong></td><td>Lightning 生態、模組化設計</td><td>研究開發</td></tr>
+</tbody></table>
+</div>
+<h3 id="部署工具"><a class="header" href="#部署工具">部署工具</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>工具</th><th>優勢</th><th>支援模型</th></tr></thead><tbody>
+<tr><td><strong>Ollama</strong></td><td>一鍵部署、本地運行</td><td>主流開源模型</td></tr>
+<tr><td><strong>Text Generation Inference</strong></td><td>HuggingFace 官方、生產級</td><td>所有 HF 模型</td></tr>
+<tr><td><strong>LocalAI</strong></td><td>OpenAI API 相容</td><td>多種模型</td></tr>
+<tr><td><strong>FastChat</strong></td><td>多模型支援、WebUI</td><td>主流模型</td></tr>
+</tbody></table>
+</div>
+<h2 id="實戰案例"><a class="header" href="#實戰案例">實戰案例</a></h2>
+<h3 id="案例-1客服機器人"><a class="header" href="#案例-1客服機器人">案例 1：客服機器人</a></h3>
+<pre><code class="language-python"># 步驟 1: 準備客服對話資料
+dataset = load_dataset("customer_service_logs")
+
+# 步驟 2: LoRA 微調
+model = AutoModelForCausalLM.from_pretrained("Qwen2.5-7B")
+peft_model = get_peft_model(model, lora_config)
+trainer = SFTTrainer(
+    model=peft_model,
+    train_dataset=dataset,
+    dataset_text_field="conversations",
+)
+
+# 步驟 3: 建立產品知識 RAG
+product_docs = load_documents("product_manuals/")
+vectorstore = FAISS.from_documents(product_docs)
+
+# 步驟 4: 部署整合系統
+def customer_service_bot(query):
+    # RAG 檢索
+    context = vectorstore.similarity_search(query)
+    # 生成回應
+    response = peft_model.generate(
+        prompt=format_prompt(query, context)
+    )
+    return response
+</code></pre>
+<h3 id="案例-2程式碼助手"><a class="header" href="#案例-2程式碼助手">案例 2：程式碼助手</a></h3>
+<pre><code class="language-python"># 使用 DeepSeek-Coder + 公司程式碼庫
+# 1. 收集公司程式碼與文檔
+code_dataset = collect_company_code()
+
+# 2. 微調程式碼模型
+base_model = "deepseek-coder-6.7b"
+fine_tune_on_company_style(base_model, code_dataset)
+
+# 3. 整合 IDE
+vscode_extension = create_copilot_extension(fine_tuned_model)
+</code></pre>
+<h3 id="案例-3領域專家系統"><a class="header" href="#案例-3領域專家系統">案例 3：領域專家系統</a></h3>
+<pre><code class="language-python"># 醫療領域為例
+# 1. 收集醫學文獻
+medical_papers = crawl_pubmed()
+
+# 2. 持續預訓練
+continue_pretrain("Llama-3-8B", medical_papers)
+
+# 3. 指令微調
+medical_qa = load_dataset("medical_qa")
+instruction_tuning(model, medical_qa)
+
+# 4. 加入安全防護
+add_safety_guardrails(model, medical_guidelines)
+</code></pre>
+<h2 id="最佳實踐"><a class="header" href="#最佳實踐">最佳實踐</a></h2>
+<h3 id="-do---建議做法"><a class="header" href="#-do---建議做法">✅ DO - 建議做法</a></h3>
+<ol>
+<li>
+<p><strong>資料品質優先</strong></p>
+<ul>
+<li>高品質資料 &gt; 大量資料</li>
+<li>清理與去重很重要</li>
+<li>保持資料多樣性</li>
+</ul>
+</li>
+<li>
+<p><strong>漸進式優化</strong></p>
+<ul>
+<li>先 Prompt → 再 RAG → 最後微調</li>
+<li>從小模型開始測試</li>
+<li>建立評估基準</li>
+</ul>
+</li>
+<li>
+<p><strong>混合方案</strong></p>
+<ul>
+<li>RAG + 微調結合使用</li>
+<li>多個 LoRA 按需切換</li>
+<li>大小模型協作</li>
+</ul>
+</li>
+<li>
+<p><strong>監控與評估</strong></p>
+<ul>
+<li>建立評估資料集</li>
+<li>追蹤關鍵指標</li>
+<li>A/B 測試驗證</li>
+</ul>
+</li>
+</ol>
+<h3 id="-dont---避免踩坑"><a class="header" href="#-dont---避免踩坑">❌ DON'T - 避免踩坑</a></h3>
+<ol>
+<li>
+<p><strong>過度微調</strong></p>
+<ul>
+<li>避免 catastrophic forgetting</li>
+<li>不要用太小的資料集</li>
+<li>保留模型通用能力</li>
+</ul>
+</li>
+<li>
+<p><strong>忽視成本</strong></p>
+<ul>
+<li>計算訓練 vs 推論成本</li>
+<li>考慮維護複雜度</li>
+<li>評估 ROI</li>
+</ul>
+</li>
+<li>
+<p><strong>安全問題</strong></p>
+<ul>
+<li>不要忽視有害輸出</li>
+<li>注意隱私資料洩露</li>
+<li>建立內容過濾機制</li>
+</ul>
+</li>
+</ol>
+<h2 id="資源連結"><a class="header" href="#資源連結">資源連結</a></h2>
+<h3 id="-學習資源"><a class="header" href="#-學習資源">📖 學習資源</a></h3>
+<ul>
+<li><a href="https://huggingface.co/course">HuggingFace 課程</a></li>
+<li><a href="https://docs.cohere.com/docs/llmu">LLM University by Cohere</a></li>
+<li><a href="https://course.fast.ai/">Fast.ai Practical Deep Learning</a></li>
+</ul>
+<h3 id="-實用工具"><a class="header" href="#-實用工具">🛠️ 實用工具</a></h3>
+<ul>
+<li><a href="https://langchain.com/">LangChain</a> - LLM 應用框架</li>
+<li><a href="https://www.llamaindex.ai/">LlamaIndex</a> - RAG 專門框架</li>
+<li><a href="https://wandb.ai/">Weights &amp; Biases</a> - 實驗追蹤</li>
+</ul>
+<h3 id="-社群資源"><a class="header" href="#-社群資源">💬 社群資源</a></h3>
+<ul>
+<li><a href="https://reddit.com/r/LocalLLaMA">LocalLLaMA Reddit</a></li>
+<li><a href="https://discord.gg/huggingface">HuggingFace Discord</a></li>
+<li><a href="https://www.facebook.com/groups/llm.tw">LLM 台灣社群</a></li>
+</ul>
+<hr />
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<p>開源 LLM 的調校是一門藝術也是科學。關鍵在於：</p>
+<ol>
+<li><strong>理解需求</strong> - 明確知道要解決什麼問題</li>
+<li><strong>選對方法</strong> - 不同場景用不同技術</li>
+<li><strong>持續迭代</strong> - 基於資料和回饋不斷改進</li>
+<li><strong>平衡取捨</strong> - 在效果、成本、速度間找平衡</li>
+</ol>
+<p>記住：最貴的模型不一定最好，最適合的才是最好的！</p>
+<p><em>最後更新：2025年1月</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../ml/ollama-ubuntu-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../ml/pytorch.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../ml/ollama-ubuntu-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../ml/pytorch.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

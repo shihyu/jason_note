@@ -1,0 +1,129 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    namespace "com.nonpolynomial.intiface_central"
+    compileSdkVersion 36
+    ndkVersion "27.0.12077973"
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+        coreLibraryDesugaringEnabled = true
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    defaultConfig {
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        applicationId "com.nonpolynomial.intiface_central"
+        // You can update the following values to match your application needs.
+        // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-build-configuration.
+        minSdkVersion 27
+        targetSdkVersion flutter.targetSdkVersion
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+    }
+
+    signingConfigs {
+       release {
+           keyAlias keystoreProperties['keyAlias']
+           keyPassword keystoreProperties['keyPassword']
+           storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+           storePassword keystoreProperties['storePassword']
+       }
+    }
+    buildTypes {
+        release {
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
+            signingConfig signingConfigs.release
+            // signingConfig signingConfigs.debug
+
+            shrinkResources true
+            minifyEnabled true
+
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+        }
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {
+    implementation(name: 'droidplug', version: '+', ext: 'aar')
+    // For AGP 7.4+
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
+    // For AGP 7.3
+    // coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.2.3")
+    // For AGP 4.0 to 7.2
+    // coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.9")
+}
+
+[
+    new Tuple2('Debug', ''),
+    new Tuple2('Profile', '--release'),
+    new Tuple2('Release', '--release')
+].each {
+    def taskPostfix = it.first
+    def profileMode = it.second
+    tasks.whenTaskAdded { task ->
+        if (task.name == "javaPreCompile$taskPostfix") {
+            task.dependsOn "cargoBuild$taskPostfix"
+        }
+    }
+    tasks.register("cargoBuild$taskPostfix", Exec) {
+        // Until https://github.com/bbqsrc/cargo-ndk/pull/13 is merged,
+        // this workaround is necessary.
+
+        // Add this line if you want to run this in the simulator
+        //  -t x86_64 -t x86 \
+        def ndk_command = """cargo ndk \
+            -t armeabi-v7a -t arm64-v8a \
+            -o ../android/app/src/main/jniLibs build $profileMode"""
+
+        workingDir "../../intiface-engine-flutter-bridge"
+        // environment "ANDROID_NDK_HOME", "$ANDROID_NDK"
+        if (org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.currentOperatingSystem.isWindows()) {
+            commandLine 'cmd', '/C', ndk_command
+        } else {
+            commandLine 'sh', '-c', ndk_command
+        }
+    }
+}

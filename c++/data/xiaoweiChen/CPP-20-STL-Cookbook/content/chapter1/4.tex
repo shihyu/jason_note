@@ -1,0 +1,86 @@
+
+比较不同类型的整数，可能并不总是生成预期的结果。例如:
+
+\begin{lstlisting}[style=styleCXX]
+int x{ -3 };
+unsigned y{ 7 };
+if(x < y) puts("true");
+else puts("false");
+\end{lstlisting}
+
+可能希望此代码输出true，-3通常小于7，但代码也会输出false。
+
+问题是x是有符号的y是无符号的，标准化的行为是将有符号类型转换为无符号类型进行比较。这似乎违反直觉，不能可靠地将无符号值转换为相同大小的有符号值，因为有符号整数使用2的补数表示(使用最高位作为符号)。给定相同大小的整数，最大有符号值是无符号值的一半。使用这个例子，若整数是32位，-3(有符号)变成FFFF FFFD(十六进制)，或者4,294,967,293(无符号十进制)，所以不小于7。
+
+尝试比较有符号整数值和无符号整数值时，一些编译器可能会发出警告，但大多数编译器不会。
+
+C++20标准在<utility>头文件中包含了一组整数安全的比较函数。
+
+\subsubsection{How to do it…}
+
+新的整数比较函数可以在<utility>头文件找到。每个函数都有两个参数，分别对应于运算符的左边和右边。
+
+\begin{lstlisting}[style=styleCXX]
+#include <utility>
+int main() {
+	int x{ -3 };
+	unsigned y{ 7 };
+	if(cmp_less(x, y)) puts("true");
+	else puts("false");
+}
+\end{lstlisting}
+
+cmp\_less()函数给出了我们所期望的结果。-3小于7，程序现在输出true。
+
+<utility>头文件提供了完整的整数比较函数。假设有x和y值，可以得到这些比较的结果:
+
+\begin{lstlisting}[style=styleCXX]
+cmp_equal(x, y) // x == y is false
+cmp_not_equal(x, y) // x != y is true
+cmp_less(x, y) // x < y is true
+cmp_less_equal(x, y) // x <= y is true
+cmp_greater(x, y) // x > y is false
+cmp_greater_equal(x, y) // x >= y is false
+\end{lstlisting}
+
+\subsubsection{How it works…}
+
+下面是C++20标准中cmp\_less()函数的示例实现，可以了解它是如何工作的:
+
+\begin{lstlisting}[style=styleCXX]
+template< class T, class U >
+constexpr bool cmp_less( T t, U u ) noexcept
+{
+	using UT = make_unsigned_t<T>;
+	using UU = make_unsigned_t<U>;
+	if constexpr (is_signed_v<T> == is_signed_v<U>)
+		return t < u;
+	else if constexpr (is_signed_v<T>)
+		return t < 0 ? true : UT(t) < u;
+	else
+		return u < 0 ? false : t < UU(u);
+}
+\end{lstlisting}
+
+UT和UU别名声明为make\_unsigned\_t，这是C++17引入的一种辅助类型。其允许有符号类型到无符号类型的安全转换。
+
+函数首先测试两个参数是有符号的，还是无符号的。然后，返回一个简单的比较。
+
+然后，测试两边是否有符号。若该带符号值小于零，则可以返回true或false而不执行比较。否则，将有符号值转换为无符号值进行比较。
+
+相同的逻辑也适用于其他比较函数。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

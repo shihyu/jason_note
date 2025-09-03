@@ -1,0 +1,142 @@
+
+std::invoke()只是标准库为实现泛型库提供的有用实用程序的一个例子。接下来，将看看其他一些重要的特性。
+
+\subsubsubsection{11.2.1\hspace{0.2cm}类型特征}
+
+标准库提供了各种类型特征工具，允许计算和修改类型。支持泛型，即代码必须适应实例化类型的功能或对其作出反应。例如:
+
+\begin{lstlisting}[style=styleCXX]
+#include <type_traits>
+template<typename T>
+class C
+{
+	// ensure that T is not void (ignoring const or volatile):
+	static_assert(!std::is_same_v<std::remove_cv_t<T>,void>,
+					"invalid instantiation of class C for void type");
+public:
+	template<typename V>
+	void f(V&& v) {
+		if constexpr(std::is_reference_v<T>) {
+			... // special code if T is a reference type
+		}
+		if constexpr(std::is_convertible_v<std::decay_t<V>,T>) {
+			... // special code if V is convertible to T
+		}
+		if constexpr(std::has_virtual_destructor_v<V>) {
+			... // special code if V has virtual destructor
+		}
+	}
+};
+\end{lstlisting}
+
+正如这个例子所示，通过检查某些条件，可以在不同的模板实现之间进行选择。这里，使用编译时if特性，从C++17开始就可用了(请参阅8.5节)，但也可以使用std::enable\_if、偏特化或SFINAE来启用或禁用助手模板(请参阅第8章的详细信息)。
+
+必须特别小心地使用类型特征:其行为可能与(菜鸟期)开发者所期望有所不同。例如:
+
+\begin{lstlisting}[style=styleCXX]
+std::remove_const_t<int const&> // yields int const&
+\end{lstlisting}
+
+这里，因为引用不是const(尽管不能修改)，所以调用没有效果，并生成传递类型。
+
+因此，删除引用和const的顺序很重要:
+
+\begin{lstlisting}[style=styleCXX]
+std::remove_const_t<std::remove_reference_t<int const&>> // int
+std::remove_reference_t<std::remove_const_t<int const&>> // int const
+\end{lstlisting}
+
+相反，可以只调用
+
+\begin{lstlisting}[style=styleCXX]
+std::decay_t<int const&> // yields int
+\end{lstlisting}
+
+但也可以将数组和函数转换为相应的指针类型。有一些情况下，类型特征是有限制的，不满足这些条件会导致未定义行为。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}有人建议C++17，要求违反类型特征的前提条件必须导致编译时错误。然而，因为一些类型特征有过度约束的条件，例如总是需要完整的类型，这种建议还未完全付诸于行动。
+\end{tcolorbox}
+
+例如：
+
+\begin{lstlisting}[style=styleCXX]
+make_unsigned_t<int> // unsigned int
+make_unsigned_t<int const&> // undefined behavior (hopefully error)
+\end{lstlisting}
+
+有时结果可能会令人惊讶。例如:
+
+\begin{lstlisting}[style=styleCXX]
+add_rvalue_reference_t<int> // int&&
+add_rvalue_reference_t<int const> // int const&&
+add_rvalue_reference_t<int const&> // int const& (lvalue-ref remains lvalue-ref)
+\end{lstlisting}
+
+这里可能期望add\_rvalue\_reference总是进行右值引用，但是C++的引用折叠规则(参见第15.6.1节)导致左值引用和右值引用的组合产生左值引用。
+
+另一个例子：
+
+\begin{lstlisting}[style=styleCXX]
+is_copy_assignable_v<int> // yields true (generally, you can assign an int to an int)
+is_assignable_v<int,int> // yields false (can’t call 42 = 42)
+\end{lstlisting}
+
+is\_copy\_assignable只是检查是否可以给另一个int赋值(检查lvalues的操作)，is\_assignable将值类别(参见附录B)考虑进去(这里检查是否可以给prvalue赋值)。也就是说，第一个表达式等价于
+
+\begin{lstlisting}[style=styleCXX]
+is_assignable_v<int&,int&> // yields true
+\end{lstlisting}
+
+出于同样的原因:
+
+\begin{lstlisting}[style=styleCXX]
+is_swappable_v<int> // yields true (assuming lvalues)
+is_swappable_with_v<int&,int&> // yields true (equivalent to the previous check)
+is_swappable_with_v<int,int> // yields false (taking value category into account)
+\end{lstlisting}
+
+请仔细注意类型特征的准确定义，附录D中详细描述了标准的情况。
+
+\subsubsubsection{11.2.2\hspace{0.2cm}std::addressof()}
+
+std::addressof<>()函数模板生成对象或函数的实际地址。即使对象类型有重载操作符\&，也能工作。尽管后者很少使用，但可能会发生(例如，在智能指针中)。因此，如果需要任意类型对象的地址，建议使用addressof():
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+void f (T&& x)
+{
+	auto p = &x; // might fail with overloaded operator &
+	auto q = std::addressof(x); // works even with overloaded operator &
+	...
+}
+\end{lstlisting}
+
+\subsubsubsection{11.2.3\hspace{0.2cm}std::declval()}
+
+std::declval<>()函数模板可以用作特定类型的对象引用的占位符。该函数没有定义，因此不能调用(也不创建对象)。因此，只能用于未求值的操作数(decltype和sizeof构造的操作数)。因此，与其尝试创建一个对象，可以假设有一个相应类型的对象。
+
+例如，下面的声明从传递的模板参数T1和T2推导出默认返回类型RT:
+
+\noindent
+\textit{basics/maxdefaultdeclval.hpp}
+\begin{lstlisting}[style=styleCXX]
+#include <utility>
+template<typename T1, typename T2,
+		 typename RT = std::decay_t<decltype(true ? std::declval<T1>()
+												  : std::declval<T2>())>>
+RT max (T1 a, T2 b)
+{
+	return b < a ? a : b;
+}
+\end{lstlisting}
+
+为了避免必须调用T1和T2的(默认)构造函数才能在表达式中调用三元操作符来初始化RT，这里使用std::declval来“使用”对应类型的对象。不过，这只可能在decltype未求值的上下文中实现。
+
+不要忘记使用std::decay<>类型来确保默认的返回类型不是一个引用，因为std::declval()本身会产生右值引用。否则，像max(1,2)这样的调用将得到一个int\&\&的返回类型。详见19.3.4节。
+
+
+
+
+
+

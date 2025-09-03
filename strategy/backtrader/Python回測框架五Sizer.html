@@ -1,0 +1,453 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Python 回測框架（五）Sizer - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="python-回測框架五sizer"><a class="header" href="#python-回測框架五sizer">Python 回測框架（五）Sizer</a></h1>
+<p>出處：https://stockbuzzai.wordpress.com/2019/07/23/python-%e5%9b%9e%e6%b8%ac%e6%a1%86%e6%9e%b6%ef%bc%88%e4%ba%94%ef%bc%89sizer/</p>
+<p>在上一篇 <a href="https://stockbuzzai.wordpress.com/2019/07/15/python-%E5%9B%9E%E6%B8%AC%E6%A1%86%E6%9E%B6%EF%BC%88%E5%9B%9B%EF%BC%89crossover-%E5%92%8C-signal/"><strong>Python 回測框架（四）CrossOver 和 Signal</strong></a> 中，我們談到了如何使用CrossOver 和 Signal 來買賣商品。但是我們又遇到了一個問題，我們無法控制買賣的商品數量。在一般交易中，我們可能會根據當前的狀況來買賣不同的數量的商品，因此我們在這一篇文章要介紹的就是 Backtrader 中負責控制買賣商品數量的工具 Sizer。</p>
+<p>首先我們先回看下面這段程式碼：</p>
+<pre><code class="language-python">from datetime import datetime
+import backtrader
+  
+class SmaCross(backtrader.SignalStrategy):
+    def __init__(self):
+        sma10 = backtrader.ind.SMA(period=10)
+        sma30 = backtrader.ind.SMA(period=30)
+        crossover = backtrader.ind.CrossOver(sma10, sma30)
+        self.signal_add(backtrader.SIGNAL_LONG, crossover)
+  
+cerebro = backtrader.Cerebro()
+data = backtrader.feeds.YahooFinanceData(dataname='MSFT',
+                                         fromdate=datetime(2011, 1, 1),
+                                         todate=datetime(2012, 12, 31))
+  
+cerebro.adddata(data)
+cerebro.addstrategy(SmaCross)
+cerebro.addsizer(backtrader.sizers.SizerFix, stake=10)
+cerebro.run()
+cerebro.plot() 
+</code></pre>
+<p>這一段程式碼幾乎跟 <a href="https://stockbuzzai.wordpress.com/2019/07/15/python-%E5%9B%9E%E6%B8%AC%E6%A1%86%E6%9E%B6%EF%BC%88%E5%9B%9B%EF%BC%89crossover-%E5%92%8C-signal/"><strong>Python 回測框架（四）CrossOver 和 Signal</strong></a> 中的程式碼一樣，但是我們多了一行程式碼：</p>
+<pre><code class="language-python">cerebro.addsizer(backtrader.sizers.SizerFix, stake=10) 
+</code></pre>
+<p>這裡我們設定了一個 Sizer，這個 Sizer 每次買賣固定的數量，一次是 10 股。下列是設定不同的 stake 的值的時候所產生的結果。</p>
+<p><img src="../images/michael_5-1.png" alt="img" />stake = 1</p>
+<p>stake=1 的時候，產生的結果跟 <a href="https://stockbuzzai.wordpress.com/2019/07/15/python-%E5%9B%9E%E6%B8%AC%E6%A1%86%E6%9E%B6%EF%BC%88%E5%9B%9B%EF%BC%89crossover-%E5%92%8C-signal/"><strong>Python 回測框架（四）CrossOver 和 Signal</strong></a> 中是相同的。</p>
+<p><img src="../images/michael_5-2.png" alt="img" />stake = 10</p>
+<p>stake=10 的時候，我們發現每次購買股票資金明顯花費的比較多。</p>
+<p><img src="../images/michael_5-3.png" alt="img" />stake = 100</p>
+<p>stake=100 的時候，我們發現每次購買的的數量確實更多了，所花費的資金也更多。</p>
+<p>另外，在 Backtrader 之中，主要分成兩種 sizer。一種 sizer 屬於預設的 sizer，在系統中如果沒有其他的 sizer，就使用這個 sizer。在之前的程式碼就是使用預設 sizer 的範例。</p>
+<p>另一種 sizer 是跟隨著 strategy 的，這種 sizer 只處理對應的 strategy 的買賣。設定strategy 的 sizer 有二種方法，一種是透過 cerebro 的 addsizer_byidx 來設定，如以下範例：</p>
+<pre><code class="language-python">idx = cerebro.addstrategy(SmaCross)
+cerebro.addsizer_byidx(idx, backtrader.sizers.SizerFix, stake=100) 
+</code></pre>
+<p>其中 idx 是 cerebro 在新增 strategy 的時候所回傳 idx 值，以此當參數來新增 sizer。</p>
+<p>第二種方式是透過 strategy 的 setsizer 來設定 sizer，程式碼如下：</p>
+<pre><code class="language-python">self.setsizer(backtrader.sizers.SizerFix(stake=100))
+</code></pre>
+<h3 id="如何自訂-sizer"><a class="header" href="#如何自訂-sizer"><strong>如何自訂 sizer</strong></a></h3>
+<p>要撰寫自訂的 sizer，需要繼承 backtrader.Sizer 這個物件，然後覆寫 _getsizing 這個函式，以下是範例：</p>
+<pre><code class="language-python">class AllSizer(backtrader.Sizer):
+    def _getsizing(self, comminfo, cash, data, isbuy):
+        if isbuy:
+            return math.floor(cash/data.high)
+        else:
+            return self.broker.getposition(data) 
+</code></pre>
+<p>AllSizer 是一個直接將資金買入商品的 sizer，其中 comminfo 代表手續費的相關資訊，cash 代表目前持有的現金，data 代表目前這檔商品，isbuy 代表這是買入還是賣出的請求。在買入的部分，我們利用持有現金除上當天最高價計算買入的股票數。賣出的時候則是把所有持倉都賣出。</p>
+<p>以下是完整的程式碼和執行的結果：</p>
+<pre><code class="language-python">from datetime import datetime
+import yfinance as yf
+import backtrader
+import math
+
+
+class AllSizer(backtrader.Sizer):
+    def _getsizing(self, comminfo, cash, data, isbuy):
+        if isbuy:
+            return math.floor(cash / data.high)
+        else:
+            return self.broker.getposition(data)
+
+
+class SmaCross(backtrader.SignalStrategy):
+    def __init__(self):
+        sma10 = backtrader.ind.SMA(period=10)
+        sma30 = backtrader.ind.SMA(period=30)
+        crossover = backtrader.ind.CrossOver(sma10, sma30)
+        self.signal_add(backtrader.SIGNAL_LONG, crossover)
+
+        self.setsizer(AllSizer())
+
+
+cerebro = backtrader.Cerebro()
+# data = backtrader.feeds.PandasData(dataname=yf.download('TSLA', '2018-01-01', '2023-01-01'))
+data = backtrader.feeds.PandasData(
+    dataname=yf.download("MSFT", "2011-01-01", "2023-01-01")
+)
+
+# data = backtrader.feeds.YahooFinanceData(
+#    dataname="MSFT", fromdate=datetime(2011, 1, 1), todate=datetime(2012, 12, 31)
+# )
+
+cerebro.adddata(data)
+idx = cerebro.addstrategy(SmaCross)
+cerebro.run()
+# pip install matplotlib==3.2.2
+cerebro.plot()
+</code></pre>
+<p><img src="../images/michael_5-4.png" alt="img" /></p>
+<p>有了 sizer，我們就可以把計算買賣商品數量的邏輯獨立，讓我們在撰寫回測程式的時候更方便且更有彈性。</p>
+<h2 id="backtrader---sizer"><a class="header" href="#backtrader---sizer">Backtrader - sizer</a></h2>
+<p>出處：https://ithelp.ithome.com.tw/articles/10279754</p>
+<p>之前有介紹過，如果我們下單除了股價以外，還有一個很重要的因素就是要買幾股，有些時候，我們的策略可能會需要不同的買入數量，Backtrader 也有一個物件 sizer 可以提供相關的彈性，如果預設的沒有合適的，也可以自訂義一個，以下先介紹內建的一些 sizer</p>
+<h3 id="fixedsize"><a class="header" href="#fixedsize">FixedSize</a></h3>
+<p>顧名思義就是固定的數量
+參數：</p>
+<ul>
+<li>stake { default 1 }: 固定數量的股數</li>
+<li>tranches { default 1 }: 只執行 stake 的幾分之一
+<em>最後的數量 = stake / tranches</em></li>
+</ul>
+<pre><code class="language-python">cerebro.addsizer(bt.sizers.SizerFix, stake = 1000)
+</code></pre>
+<h3 id="fixedreverser"><a class="header" href="#fixedreverser">FixedReverser</a></h3>
+<p>一樣是固定數量，只是在賣的時候，會賣出 2 倍的庫存，也就是把正的庫存賣成負的庫存
+參數：</p>
+<ul>
+<li>stake { default 1 } 固定的股數</li>
+</ul>
+<pre><code class="language-python">cerebro.addsizer(bt.sizers.FixedRevert, stake = 1000)
+</code></pre>
+<h3 id="percentsizer"><a class="header" href="#percentsizer">PercentSizer</a></h3>
+<p>使用一定比例的帳戶餘額去買進
+參數：</p>
+<ul>
+<li>percents { default 20 }: 20%</li>
+</ul>
+<pre><code class="language-python">cerebro.addsizer(bt.sizers.PercentSizer, percents = 80)
+</code></pre>
+<h3 id="allinsizer"><a class="header" href="#allinsizer">AllInSizer</a></h3>
+<p>基本上和 PercentSizer 一樣，只是預設是 100% 的帳戶餘額去買進股票，另一個差別就是 All in 聽起來比較霸氣。
+<em>這裡有一個要注意的是，AllIn 是以當天的收盤價去算要買的股數，可是在執行買入的時候，是隔天的開盤價，所以隔天是漲的話，就會造成餘額不足，買入失敗喔</em></p>
+<pre><code class="language-python">cerebro.addsizer(bt.sizers.AllInSizer)
+</code></pre>
+<h3 id="其它"><a class="header" href="#其它">其它</a></h3>
+<p>PercentSizerInt, AllInSizerInt，這兩個看說明是說在回傳數量的時候會轉成整數，不過我真正去執行的結果，兩個都是一樣的，所以暫時看不出差別</p>
+<h3 id="自訂義-sizer"><a class="header" href="#自訂義-sizer">自訂義 sizer</a></h3>
+<p>要自訂義 sizer 也很簡單</p>
+<ul>
+<li>訂義一個 sizer 的 class 繼承 backtrader.Sizer
+繼承後可以使用 self.strategy 和 self.broker 來取得相關資料
+<ul>
+<li>取得庫存 self.strategy.getposition(data)</li>
+<li>取得目前淨值 self.broker.getvalue() (或是 self.stratgy.broker.getvalue())</li>
+</ul>
+</li>
+<li>覆寫 _getsizing(self, comminfo, cash, data, isbuy)
+<ul>
+<li>comminfo: 手續費相關資訊</li>
+<li>cash：目前帳戶餘額</li>
+<li>data: 目前的操作(買入/賣出)資料</li>
+<li>isbuy: 是否為買入(True)</li>
+</ul>
+</li>
+</ul>
+<p>例如：改寫 percent 變成可以買的最大的張數 ( 1000 股 )</p>
+<pre><code class="language-python">import backtrader as bt
+import math
+class PercentBoardSizer(bt.Sizer):
+    params = (
+        ('percents', 20),
+    )
+
+    def _getsizing(self, comminfo, cash, data, isbuy):
+        position = self.broker.getposition(data)
+        if not position:
+            size = cash / data.close[0] * (self.p.percents / 100)
+            
+            if size &lt; 1000:
+                # 小於 1000 股，就不買
+                size = 0
+            else:
+                size = math.floor(size / 1000) * 1000
+        else:
+            size = position.size
+
+        size = int(size)
+        
+        return size
+
+class AllInBoardSizer(PercentBoardSizer):
+    params = (
+        ('percents', 100),
+    )
+</code></pre>
+<h3 id="使用方法"><a class="header" href="#使用方法">使用方法</a></h3>
+<ul>
+<li>
+<p>在 strategy 中：</p>
+<ul>
+<li>def setsizer(self, sizer): 可以取得已經初始化的 sizer</li>
+<li>def getsizer(self): 回傳目前使用的 sizer</li>
+<li>sizer 屬性可以直接進行 get/set (前幾天的範例就是使用這個)</li>
+</ul>
+</li>
+<li>
+<p>使用 cerebro：
+<em>目前看來，如果 strategy 和 cerebro 都有設定的話，會以 cerebro 為主</em>，cerebro 有兩個方法可以設定</p>
+<ul>
+<li>addsizer(sizerClass, *args, **kwargs): 指定所有的 strategy 使用的 sizer</li>
+<li>addsizer_byidx(idx, sizerClass, *args, **kwargs): 根據不同的 strategy inx 來使用不同的 sizer
+ex:</li>
+</ul>
+<pre><code class="language-python">cerebro = bt.Cerebro()
+# 預設的 sizer
+cerebro.addsizer(bt.sizers.SizerFix, stake = 1000)
+
+# 這樣就可以針對不同的 strategy 來設定不同的 sizer
+idx = cerebro.addstrategy(TestStrategy)
+cerebro.addsizer_byidx(idx, bt.sizers.SizerFix, stake = 5)
+</code></pre>
+</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../strategy/backtrader/Python回測框架四CrossOver和Signal.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../strategy/backtrader/Python回測框架六Analyzers.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../strategy/backtrader/Python回測框架四CrossOver和Signal.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../strategy/backtrader/Python回測框架六Analyzers.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../../ace.js"></script>
+        <script src="../../mode-rust.js"></script>
+        <script src="../../editor.js"></script>
+        <script src="../../theme-dawn.js"></script>
+        <script src="../../theme-tomorrow_night.js"></script>
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../../mermaid.min.js"></script>
+        <script src="../../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,44 @@
+import jqdata
+from jqlib.technical_analysis import *
+
+def initialize(context):
+    # 定义一个全局变量, 保存要操作的螺纹钢主力合约对应的具体合约
+    g.security = get_dominant_future('RB')
+    # 设定上证指数作为基准
+    set_benchmark('000001.XSHG')
+    # 开启动态复权模式(真实价格)
+    set_option('use_real_price', True)
+    # 设定账户为期货账户
+set_subportfolios([SubPortfolioConfig(cash=context.portfolio.starting_cash, type='futures')])
+    # 期货类每笔交易时的手续费是：买入时万分之0.23,卖出时万分之0.23,平今仓为万分之23
+    set_order_cost(OrderCost(open_commission=0.000023, close_commission=0.000023,close_today_commission=0.0023), type='futures')
+    # 设定保证金比例
+    set_option('futures_margin_rate', 0.15)
+    # 设置期货交易的滑点
+    set_slippage(StepRelatedSlippage(2))
+
+
+def handle_data(context, data):
+    #获取初始化中要操作的螺纹钢主力合约
+    security = g.security
+    # 获取螺纹钢期货近5个交易日的收盘价
+    close_data = attribute_history(security, 5, '1d', ['close'])
+    #利用mean()函数计算出近5个交易日的平均收盘价
+    MA5 = close_data['close'].mean()
+    #取得上一时间点螺纹钢期货的价格
+    current_price = close_data['close'][-1]
+    # 取得当前的现金
+    cash = context.portfolio.cash
+    # 如果上一时间点价格高出五天平均价10%, 则买入1手期货
+    if current_price > 1.01 * MA5 and context.portfolio.cash >0 :
+        #调用期货按手数下单函数， 买入1手期货合约
+        order(security, 1, side='long')
+        # 记录这次买入
+        log.info("买入期货 %s" % (security))
+    # 如果上一时间点价格低于五天平均价, 则空仓卖出
+    elif current_price < 0.99 * MA5 and context.portfolio.positions[security].closeable_amount > 0:
+        # 全部卖出，即持有仓位为0
+        order_target(security, 0, side='long')
+        # 记录这次卖出
+        log.info("卖出期货 %s" % (security))
+

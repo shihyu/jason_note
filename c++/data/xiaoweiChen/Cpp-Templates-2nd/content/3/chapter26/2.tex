@@ -1,0 +1,169 @@
+
+既然有了变量存储问题的解决方案，就可以设计Variant类型了。与Tuple类型一样，可以使用继承来为Types列表提供每个类型的行为。与Tuple不同的是，这些基类不会存储。每个基类都使用21.2节中讨论的奇异递归模板模式(CRTP)，通过派生最多的类型访问共享变量。
+
+下面定义的类模板VariantChoice提供了在变量的活动值为(或将为)T类型时，对缓冲区进行操作所需的操作:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{variant/variantchoice.hpp}
+\begin{lstlisting}[style=styleCXX]
+#include "findindexof.hpp"
+template<typename T, typename... Types>
+class VariantChoice {
+	using Derived = Variant<Types...>;
+	Derived& getDerived() { return *static_cast<Derived*>(this); }
+	Derived const& getDerived() const {
+		return *static_cast<Derived const*>(this);
+	}
+	protected:
+	// compute the discriminator to be used for this type
+	constexpr static unsigned Discriminator =
+		FindIndexOfT<Typelist<Types...>, T>::value + 1;
+	public:
+	VariantChoice() { }
+	VariantChoice(T const& value); // see variantchoiceinit.hpp
+	VariantChoice(T&& value); // see variantchoiceinit.hpp
+	bool destroy(); // see variantchoicedestroy.hpp
+	Derived& operator= (T const& value); // see variantchoiceassign.hpp
+	Derived& operator= (T&& value); // see variantchoiceassign.hpp
+};
+\end{lstlisting}
+
+模板参数包Types将包含变体中的所有类型，其可以形成Derived类型(用于CRTP)，从而提供向下转换操作getDerived()。类型的第二个有趣用法是，在类型列表中查找特定类型T的位置，可以通过元函数FindIndexOfT完成:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{variant/findindexof.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename List, typename T, unsigned N = 0,
+		bool Empty = IsEmpty<List>::value>
+struct FindIndexOfT;
+
+// recursive case:
+template<typename List, typename T, unsigned N>
+struct FindIndexOfT<List, T, N, false>
+: public IfThenElse<std::is_same<Front<List>, T>::value,
+					std::integral_constant<unsigned, N>,
+					FindIndexOfT<PopFront<List>, T, N+1>>
+{
+};
+
+// basis case:
+template<typename List, typename T, unsigned N>
+struct FindIndexOfT<List, T, N, true>
+{
+};
+\end{lstlisting}
+
+该指标值用于计算T对应的辨别器的值;稍后我们将返回特定的判别值。
+
+Variant的框架如下，表明了Variant、VariantStorage和VariantChoice之间的关系:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{variant/variant-skel.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename... Types>
+class Variant
+	: private VariantStorage<Types...>,
+	private VariantChoice<Types, Types...>...
+{
+	template<typename T, typename... OtherTypes>
+		friend class VariantChoice; // enable CRTP
+	...
+};
+\end{lstlisting}
+
+每个Variant都有一个单独的、共享的VariantStorage基类。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}基类是私有的，不是公共接口的一部分。友元模板需要VariantChoice中的asDerived()函数，才能向下转换到Variant。
+\end{tcolorbox}
+
+还有一些VariantChoice基类，是由以下嵌套的包扩展产生的(参见第12.4.4节):
+
+\begin{lstlisting}[style=styleCXX]
+VariantChoice<Types, Types...>...
+\end{lstlisting}
+
+实例中，有两个展开:外层展开，通过展开对类型的第一个引用，为类型中的每个类型T生成VariantChoice基类；内部展开，展开了第二次出现的Types，另外还将Types中的所有类型传递给每个VariantChoice基类。
+
+\begin{lstlisting}[style=styleCXX]
+Variant<int, double, std::string>
+\end{lstlisting}
+
+会产生下面一组VariantChoice基类:
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}通过类型T来区分给定Variant的VariantChoice基类的效果是，可以防止类型重复。Variant<double, int, double>将产生编译时错误，指出类不能直接继承同一基类(在本例中，VariantChoice<double, double, int, double>会出现两个编译错误)。
+\end{tcolorbox}
+
+\begin{lstlisting}[style=styleCXX]
+VariantChoice<int, int, double, std::string>,
+VariantChoice<double, int, double, std::string>,
+VariantChoice<std::string, int, double, std::string>
+\end{lstlisting}
+
+这三个基类的辨别器值将分别为1、2和3。当变量存储的discriminator成员与特定VariantChoice基类的discriminator匹配时，该基类负责管理动态值。
+
+标识值0是为Variant不包含值的情况保留，这是一种奇怪的状态，只有在赋值期间，抛出异常时才能观察到。对Variant的讨论中，将小心处理为0的辨别值(并在适当的时候进行设置)，我们将这种情况的讨论留到第26.4.3节。
+
+Variant的完整定义如下所示，下面几节将描述Variant每个成员的实现。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{variant/variant.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename... Types>
+class Variant
+: private VariantStorage<Types...>,
+  private VariantChoice<Types, Types...>...
+{
+	template<typename T, typename... OtherTypes>
+	friend class VariantChoice;
+	
+	public:
+	template<typename T> bool is() const; // see variantis.hpp
+	template<typename T> T& get() &; // see variantget.hpp
+	template<typename T> T const& get() const&; // see variantget.hpp
+	template<typename T> T&& get() &&; // see variantget.hpp
+	
+	// see variantvisit.hpp:
+	template<typename R = ComputedResultType, typename Visitor>
+		VisitResult<R, Visitor, Types&...> visit(Visitor&& vis) &;
+	template<typename R = ComputedResultType, typename Visitor>
+		VisitResult<R, Visitor, Types const&...> visit(Visitor&& vis) const&;
+	template<typename R = ComputedResultType, typename Visitor>
+		VisitResult<R, Visitor, Types&&...> visit(Visitor&& vis) &&;
+	
+	using VariantChoice<Types, Types...>::VariantChoice...;
+	Variant(); // see variantdefaultctor.hpp
+	Variant(Variant const& source); // see variantcopyctor.hpp
+	Variant(Variant&& source); // see variantmovector.hpp
+	template<typename... SourceTypes>
+		Variant(Variant<SourceTypes...> const& source); // variantcopyctortmpl.hpp
+	template<typename... SourceTypes>
+		Variant(Variant<SourceTypes...>&& source);
+	
+	using VariantChoice<Types, Types...>::operator=...;
+	Variant& operator= (Variant const& source); // see variantcopyassign.hpp
+	Variant& operator= (Variant&& source);
+	template<typename... SourceTypes>
+		Variant& operator= (Variant<SourceTypes...> const& source);
+	template<typename... SourceTypes>
+		Variant& operator= (Variant<SourceTypes...>&& source);
+	
+	bool empty() const;
+	
+	~Variant() { destroy(); }
+	void destroy(); // see variantdestroy.hpp
+};
+\end{lstlisting}
+
+
+
+
+
+
+
+

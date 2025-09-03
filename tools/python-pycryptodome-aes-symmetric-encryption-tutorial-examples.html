@@ -1,0 +1,548 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>實作 AES 對稱式加密 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="python-以-pycryptodome-實作-aes-對稱式加密方法教學與範例"><a class="header" href="#python-以-pycryptodome-實作-aes-對稱式加密方法教學與範例">Python 以 PyCryptodome 實作 AES 對稱式加密方法教學與範例</a></h1>
+<p>出處：</p>
+<p>https://officeguide.cc/python-pycryptodome-aes-symmetric-encryption-tutorial-examples/</p>
+<p>以下將介紹如何在 Python 中安裝並使用 <code>PyCryptodome</code> 模組，以 AES 加密方法對資料進行加密與解密。</p>
+<h2 id="安裝-pycryptodome-模組"><a class="header" href="#安裝-pycryptodome-模組">安裝 <code>PyCryptodome</code> 模組</a></h2>
+<p>使用 pip 安裝 Python 的 <code>PyCryptodome</code> 模組：</p>
+<pre><code># 安裝 PyCryptodome 模組
+sudo pip3 install pycryptodome
+</code></pre>
+<p>這種安裝方式會讓 <code>PyCryptodome</code> 安裝在 <code>Crypto</code> 套件路徑之下，取代舊的 <code>PyCrypto</code> 模組，這兩個模組會互相干擾，所以不可以同時安裝。</p>
+<p>測試 <code>PyCryptodome</code> 模組是否可以正常運作：</p>
+<pre><code># 測試 PyCryptodome 模組
+python3 -m Crypto.SelfTest
+</code></pre>
+<p>如果不希望影響到舊的 <code>PyCrypto</code> 模組，也可以選擇以獨立模組的方式安裝，將 <code>PyCryptodome</code> 模組安裝至 <code>Cryptodome</code> 套件路徑之下：</p>
+<pre><code># 安裝 PyCryptodome 模組
+sudo pip3 install pycryptodomex
+
+# 測試 PyCryptodome 模組
+python -m Cryptodome.SelfTest
+</code></pre>
+<h2 id="產生隨機金鑰"><a class="header" href="#產生隨機金鑰">產生隨機金鑰</a></h2>
+<p>AES 加密方式的區塊長度固定為 128 位元，而金鑰長度則可以是 128、192 或 256 位元，在用 AES 進行資料加密之前，亦須先建立一組金鑰，最簡單的方式就是以隨機的方式產生金鑰。</p>
+<pre><code>from Crypto.Random import get_random_bytes
+
+# 產生 256 位元隨機金鑰（32 位元組 = 256 位元）
+key = get_random_bytes(32)
+print(key)
+b'l\n\xe8\x7f#\xec{\xf9\x8a4\xb8hye\xe9V\\\xfb\x01\x08\x854\x89\xc9\xfc\x80\xa2S\x920@}'
+</code></pre>
+<h2 id="以密碼產生金鑰"><a class="header" href="#以密碼產生金鑰">以密碼產生金鑰</a></h2>
+<p>如果希望使用一般的密碼來對資料進行加密與解密，可以根據密碼與一串固定的 salt 字串，產生對應的金鑰。</p>
+<p>首先以亂數方式產生一串隨機的資料作為固定的 salt：</p>
+<pre><code># 產生 salt
+print(get_random_bytes(32))
+b'\xd0\x18\xa7QM\xd6\x9b\xebxu\xe4\xed\xa8\x83\xf6\xa3/\x01\x9c\x9e\x86n\xda;\x10EdD\xf7\x932\xcc'
+</code></pre>
+<p>為了方便起見，可以將這串 salt 直接寫在程式當中，搭配自己的密碼即可產生金鑰：</p>
+<pre><code>from Crypto.Protocol.KDF import PBKDF2
+
+# 固定的 salt
+salt = b'\xd0\x18\xa7QM\xd6\x9b\xebxu\xe4\xed\xa8\x83\xf6\xa3/\x01\x9c\x9e\x86n\xda;\x10EdD\xf7\x932\xcc'
+
+# 密碼
+password = 'my#password'
+
+# 根據密碼與 salt 產生金鑰
+key = PBKDF2(password, salt, dkLen=32)
+</code></pre>
+<h2 id="儲存金鑰"><a class="header" href="#儲存金鑰">儲存金鑰</a></h2>
+<p>實務上我們通常會將產生的金鑰儲存在檔案中，方便後續的加密與解密使用：</p>
+<pre><code># 金鑰儲存位置
+keyPath = "my_key.bin"
+
+# 儲存金鑰
+with open(keyPath, "wb") as f:
+    f.write(key)
+
+# 讀取金鑰
+with open(keyPath, "rb") as f:
+    keyFromFile = f.read()
+
+# 檢查金鑰儲存
+assert key == keyFromFile, '金鑰不符'
+</code></pre>
+<h2 id="aes-cbc-加密模式"><a class="header" href="#aes-cbc-加密模式">AES CBC 加密模式</a></h2>
+<p>以下是使用 AES 的 CBC 模式對資料進行加密的範例，以 CBC 模式加密時需要先對資料進行 padding 處理，再進行加密。</p>
+<pre><code>from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad
+
+# 輸出的加密檔案名稱
+outputFile = 'encrypted.bin'
+
+# 要加密的資料（必須為 bytes）
+data = b'My secret data.'
+
+# 以金鑰搭配 CBC 模式建立 cipher 物件
+cipher = AES.new(key, AES.MODE_CBC)
+
+# 將輸入資料加上 padding 後進行加密
+cipheredData = cipher.encrypt(pad(data, AES.block_size))
+
+# 將初始向量與密文寫入檔案
+with open(outputFile, "wb") as f:
+    f.write(cipher.iv)
+    f.write(cipheredData)
+</code></pre>
+<p>以下則是 CBC 模式的解密方式：</p>
+<pre><code>from Crypto.Cipher import AES
+from Crypto.Util.Padding import unpad
+
+# 輸入的加密檔案名稱
+inputFile = 'encrypted.bin'
+
+# 從檔案讀取初始向量與密文
+with open(inputFile, "rb") as f:
+    iv = f.read(16)         # 讀取 16 位元組的初始向量
+    cipheredData = f.read() # 讀取其餘的密文
+
+# 以金鑰搭配 CBC 模式與初始向量建立 cipher 物件
+cipher = AES.new(key, AES.MODE_CBC, iv=iv)
+
+# 解密後進行 unpadding
+originalData = unpad(cipher.decrypt(cipheredData), AES.block_size)
+
+# 輸出解密後的資料
+print(originalData)
+b'My secret data.'
+</code></pre>
+<h2 id="aes-cfb-加密模式"><a class="header" href="#aes-cfb-加密模式">AES CFB 加密模式</a></h2>
+<p>AES 的 CFB 模式跟 CBC 模式很類似，不過資料在加密之前不需要經過 padding 處理。</p>
+<pre><code>from Crypto.Cipher import AES
+
+# 輸出的加密檔案名稱
+outputFile = 'encrypted.bin'
+
+# 要加密的資料（必須為 bytes）
+data = b'My secret data.'
+
+# 以金鑰搭配 CFB 模式建立 cipher 物件
+cipher = AES.new(key, AES.MODE_CFB)
+
+# 將輸入資料進行加密
+cipheredData = cipher.encrypt(data)
+
+# 將初始向量與密文寫入檔案
+with open(outputFile, "wb") as f:
+    f.write(cipher.iv)
+    f.write(cipheredData)
+</code></pre>
+<p>以下則是 CFB 模式的解密方式：</p>
+<pre><code>from Crypto.Cipher import AES
+
+# 輸入的加密檔案名稱
+inputFile = 'encrypted.bin'
+
+# 從檔案讀取初始向量與密文
+with open(inputFile, "rb") as f:
+    iv = f.read(16)         # 讀取 16 位元組的初始向量
+    cipheredData = f.read() # 讀取其餘的密文
+
+# 以金鑰搭配 CFB 模式與初始向量建立 cipher 物件
+cipher = AES.new(key, AES.MODE_CFB, iv=iv)
+
+# 解密資料
+originalData = cipher.decrypt(cipheredData)
+
+# 輸出解密後的資料
+print(originalData)
+b'My secret data.'
+</code></pre>
+<h2 id="aes-eax-加密模式"><a class="header" href="#aes-eax-加密模式">AES EAX 加密模式</a></h2>
+<p>AES 的 EAX 加密模式會產生 nonce 與 tag，這兩項必須連同密文一起儲存起來。</p>
+<pre><code>from Crypto.Cipher import AES
+
+# 輸出的加密檔案名稱
+outputFile = 'encrypted.bin'
+
+# 要加密的資料（必須為 bytes）
+data = b'My secret data.'
+
+# 以金鑰搭配 EAX 模式建立 cipher 物件
+cipher = AES.new(key, AES.MODE_EAX)
+
+# 將輸入資料進行加密
+cipheredData, tag = cipher.encrypt_and_digest(data)
+
+# 將 nonce、tag 與密文寫入檔案
+with open(outputFile, "wb") as f:
+    f.write(cipher.nonce)
+    f.write(tag)
+    f.write(cipheredData)
+</code></pre>
+<p>以下則是 EAX 模式的解密方式：</p>
+<pre><code>from Crypto.Cipher import AES
+
+# 輸入的加密檔案名稱
+inputFile = 'encrypted.bin'
+
+# 從檔案讀取初始向量與密文
+with open(inputFile, "rb") as f:
+    nonce = f.read(16)      # 讀取 16 位元組的 nonce
+    tag = f.read(16)        # 讀取 16 位元組的 tag
+    cipheredData = f.read() # 讀取其餘的密文
+
+# 以金鑰搭配 EAX 模式與 nonce 建立 cipher 物件
+cipher = AES.new(key, AES.MODE_EAX, nonce)
+
+# 解密並驗證資料
+originalData = cipher.decrypt_and_verify(cipheredData, tag)
+
+# 輸出解密後的資料
+print(originalData)
+b'My secret data.'
+</code></pre>
+<h2 id="base64-編碼與-json-儲存格式"><a class="header" href="#base64-編碼與-json-儲存格式">Base64 編碼與 JSON 儲存格式</a></h2>
+<p>如果要將密文等資料儲存至資料庫或是進行網路傳輸，可以考慮將資料經過 base64 編碼之後，放在一個 JSON 檔案中，以下是一個簡單的範例。</p>
+<pre><code>import json
+from base64 import b64encode, b64decode
+
+# 要儲存的原始資料
+ciphertext = b'...'
+iv = b'...'
+
+# 建立字典結構
+outputJSON = {
+    'ciphertext': b64encode(ciphertext).decode('utf-8'),
+    'iv': b64encode(iv).decode('utf-8')
+}
+
+# 儲存為 JSON 檔案
+with open('encrypted.json', 'w') as f:
+    json.dump(outputJSON, f)
+
+# 讀取 JSON 檔案
+with open('encrypted.json') as f:
+    inputJSON = json.load(f)
+
+# 取用資料
+ciphertext = b64decode(inputJSON['ciphertext'].encode('utf-8'))
+iv = b64decode(inputJSON['iv'].encode('utf-8'))
+</code></pre>
+<p>參考資料：<a href="https://pycryptodome.readthedocs.io/en/latest/src/examples.html">PyCryptodome</a>、<a href="https://nitratine.net/blog/post/python-encryption-and-decryption-with-pycryptodome/">Nitratine</a>、<a href="https://nitratine.net/blog/post/python-gcm-encryption-tutorial/">Nitratine</a></p>
+<hr />
+<pre><code class="language-python">from base64 import b64encode, b64decode
+from Crypto.Cipher import AES
+from Crypto.Protocol.KDF import PBKDF2
+import json
+
+
+class AESCrypt:
+    # 固定的 salt
+    salt = b"\xd0\x18\xa7QM\xd6\x9b\xebxu\xe4\xed\xa8\x83\xf6\xa3/\x01\x9c\x9e\x86n\xda;\x10EdD\xf7\x932\xcc"
+
+    def __init__(self, password):
+        """
+        建立 AESCrypt 實例
+        """
+        self.password = password
+        # 根據密碼與 salt 產生金鑰
+        self.key = self.generate_key()
+
+    def generate_key(self):
+        """
+        根據密碼與 salt 生成 PBKDF2 金鑰
+        """
+        key = PBKDF2(self.password, AESCrypt.salt, 32)
+        return key
+
+    def encrypt(self, data):
+        """
+        使用 AES 加密資料
+        """
+        # 建立加密器
+        cipher = AES.new(self.key, AES.MODE_CTR)
+
+        # 將資料加密
+        ciphertext = cipher.encrypt(data)
+
+        # 回傳加密後的資料與 nonce
+        return (b64encode(ciphertext), b64encode(cipher.nonce))
+
+    def decrypt(self, data):
+        """
+        使用 AES 解密資料
+        """
+        # 將傳入的資料解析為密文與 nonce
+        ciphertext, nonce = b64decode(data[0]), b64decode(data[1])
+
+        # 建立解密器
+        cipher = AES.new(self.key, AES.MODE_CTR, nonce=nonce)
+
+        # 解密資料並回傳
+        return cipher.decrypt(ciphertext)
+
+if __name__ == "__main__":
+    # 創建 AESCrypt 實例
+    aes = AESCrypt("my#password")
+
+    # 需要加密的資料
+    data = {"id": 12345, "name": "Alice", "age": 30}
+
+    # 編碼為 JSON 格式
+    data_json = json.dumps(data)
+
+    # 加密
+    encrypted_data = aes.encrypt(data_json.encode("utf-8"))
+
+    # 將加密後的資料寫入文件
+    with open("data.dat", "wb") as f:
+        f.write(encrypted_data[0])
+        f.write(b"\n")
+        f.write(encrypted_data[1])
+
+    # 從文件中讀取加密資料
+    with open("data.dat", "rb") as f:
+        encrypted_data = (f.readline().strip(), f.readline().strip())
+
+    # 解密
+    decrypted_data = aes.decrypt(encrypted_data)
+
+    # 將解密後的資料反序列化為 Python 對象
+    data_decrypt = json.loads(decrypted_data.decode("utf-8"))
+    print(data_decrypt, type(data_decrypt))
+</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tools/network.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../tools/pocketbase-guide-markdown.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tools/network.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../tools/pocketbase-guide-markdown.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,282 @@
+
+本节中是一个全功能连续/随机访问迭代器的例子，这是容器最完整的迭代器类型。随机访问迭代器包括所有其他类型的容器迭代器的所有特性，以及它的随机访问功能。
+
+虽然在本章中包含一个完整的迭代器很重要，但这个示例的代码超过700行，比本书中的其他示例要大一些。我将在这里介绍代码的基本组件。请在此处查看完整的源代码\url{https://github.com/PacktPublishing/CPP-20-STL-Cookbook/blob/main/ chap04/container-iterator.cpp}。
+
+
+\subsubsection{How to do it…}
+
+迭代器需要一个容器。我们将使用一个简单的数组，并将其称为Container。迭代器类嵌套在Container类中。
+
+所有这些设计会与STL容器的接口一致。
+
+\begin{itemize}
+\item 
+容器定义为模板类，private部分只有两个元素:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class Container {
+	std::unique_ptr<T[]> c_{};
+	size_t n_elements_{};
+\end{lstlisting}
+
+我们为数据使用unique\_pointer，让智能指针管理内存。这减少了对~Container()析构函数的需求。n\_elements\_变量保留了容器的大小。
+
+\item 
+public部分中，有构造函数:
+
+\begin{lstlisting}[style=styleCXX]
+Container(initializer_list<T> l) : n_elements_{l.size()}
+{
+	c_ = std::make_unique<T[]>(n_elements_);
+	size_t index{0};
+	for(T e : l) {
+		c_[index++] = e;
+	}
+}
+\end{lstlisting}
+
+第一个构造函数使用initializer\_list为容器传递元素。使用make\_unique来分配空间，并用基于范围的for循环填充容器。
+
+\item 
+还有一个构造函数，分配空间但不填充元素:
+
+\begin{lstlisting}[style=styleCXX]
+Container(size_t sz) : n_elements_{sz} {
+	c_ = std::make_unique<T[]>(n_elements_);
+}
+\end{lstlisting}
+
+make\_unique()函数的作用是为element构造空对象。
+
+\item 
+函数的作用是:返回元素的个数:
+
+\begin{lstlisting}[style=styleCXX]
+size_t size() const {
+	return n_elements_;
+}
+\end{lstlisting}
+
+\item 
+operator[]()函数，返回一个索引元素:
+
+\begin{lstlisting}[style=styleCXX]
+const T& operator[](const size_t index) const {
+	return c_[index];
+}
+\end{lstlisting}
+
+\item 
+at()函数，对索引元素进行边界检查:
+
+\begin{lstlisting}[style=styleCXX]
+T& at(const size_t index) const {
+	if(index > n_elements_ - 1) {
+		throw std::out_of_range(
+			"Container::at(): index out of range"
+		);
+	}
+	return c_[index];
+}
+\end{lstlisting}
+
+这与STL的用法一致，at()函数是首选。
+
+\item 
+begin()和end()函数使用容器数据的地址调用迭代器构造函数。
+
+\begin{lstlisting}[style=styleCXX]
+iterator begin() const { return iterator(c_.get()); }
+iterator end() const {
+	return iterator(c_.get() + n_elements_);
+}
+\end{lstlisting}
+
+unique\_ptr::get()函数从智能指针返回地址。
+
+\item 
+迭代器类作为公共成员嵌套在Container类中。
+
+\begin{lstlisting}[style=styleCXX]
+class iterator {
+	T* ptr_;
+\end{lstlisting}
+
+迭代器类有一个私有成员，在Container类的begin()和end()方法中初始化的指针。
+
+\item 
+迭代器构造函数接受一个指向容器数据的指针。
+
+\begin{lstlisting}[style=styleCXX]
+iterator(T* ptr = nullptr) : ptr_{ptr} {}
+\end{lstlisting}
+
+因为标准需要一个默认构造函数，所以这里有一个默认值。
+\end{itemize}
+
+\noindent
+\textbf{运算符重载}
+
+此迭代器为以下操作符提供操作符重载:前缀++，后缀++，前缀--，后缀--，[]，默认比较<=>(C++20)， ==， *， ->， +，非成员+，数字-，对象-，+=和-=。我们将在这里介绍几个值得注意的重载，具体请参阅这些重载的源代码。
+
+\begin{itemize}
+\item 
+C++20默认的比较运算符<=>提供了全套比较运算符的功能，除了==运算符:
+
+\begin{lstlisting}[style=styleCXX]
+const auto operator<=>(const iterator& o) const {
+	return ptr_ <=> o.ptr_;
+}
+\end{lstlisting}
+
+这是C++20的特性，所以需要支持C++20的编译器和库。
+
+\item 
+有两个+操作符重载，支持it + n和n + it操作。
+
+\begin{lstlisting}[style=styleCXX]
+iterator operator+(const size_t n) const {
+	return iterator(ptr_ + n);
+}
+// non-member operator (n + it)
+friend const iterator operator+(
+		const size_t n, const iterator& o) {
+	return iterator(o.ptr_ + n);
+}
+\end{lstlisting}
+
+友元声明是一种特殊情况。在模板类成员函数中使用时，相当于一个非成员函数。这允许在类上下文中定义非成员函数。
+
+\item 
+运算符也有两个重载，需要同时支持数值操作数和迭代器操作数。
+
+\begin{lstlisting}[style=styleCXX]
+const iterator operator-(const size_t n) {
+	return iterator(ptr_ - n);
+}
+const size_t operator-(const iterator& o) {
+	return ptr_ - o.ptr_;
+}
+\end{lstlisting}
+
+这允许it - n和it - it运算。不需要非成员函数，因为(n -)并不是有效的操作。
+
+\end{itemize}
+
+
+\noindent
+\textbf{验证}
+
+C++20规范§23.3.4.13要求一个有效的随机访问迭代器有一组特定的操作和结果，我在源代码中写了一个unit\_tests()函数来验证这些需求。
+
+main()函数创建一个Container对象并执行一些简单的验证函数。
+
+\begin{itemize}
+\item 
+首先，创建一个Container<string>对象x，其中包含10个值。
+
+\begin{lstlisting}[style=styleCXX]
+Container<string> x{"one", "two", "three", "four",
+	"five",
+		"six", "seven", "eight", "nine", "ten" };
+cout << format("Container x size: {}\n", x.size());
+\end{lstlisting}
+
+输出给出了元素的数量:
+
+\begin{tcblisting}{commandshell={}}
+Container x size: 10
+\end{tcblisting}
+
+\item 
+用一个基于范围的for循环来显示容器的元素:
+
+\begin{lstlisting}[style=styleCXX]
+puts("Container x:");
+for(auto e : x) {
+	cout << format("{} ", e);
+}
+cout << '\n';
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+Container x:
+one two three four five six seven eight nine ten
+\end{tcblisting}
+
+\item 
+接下来，测试几个直接访问的方法:
+
+\begin{lstlisting}[style=styleCXX]
+puts("direct access elements:");
+cout << format("element at(5): {}\n", x.at(5));
+cout << format("element [5]: {}\n", x[5]);
+cout << format("element begin + 5: {}\n",
+	*(x.begin() + 5));
+cout << format("element 5 + begin: {}\n",
+	*(5 + x.begin()));
+cout << format("element begin += 5: {}\n",
+	*(x.begin() += 5));
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+direct access elements:
+element at(5): six
+element [5]: six
+element begin + 5: six
+element 5 + begin: six
+element begin += 5: six
+\end{tcblisting}
+
+\item 
+用ranges::views管道和views::reverse来测试容器:
+
+\begin{lstlisting}[style=styleCXX]
+puts("views pipe reverse:");
+auto result = x | views::reverse;
+for(auto v : result) cout << format("{} ", v);
+cout << '\n';
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+views pipe reverse:
+ten nine eight seven six five four three two one
+\end{tcblisting}
+
+\item 
+最后，创建一个包含10个未初始化元素的Container对象y:
+
+\begin{lstlisting}[style=styleCXX]
+Container<string> y(x.size());
+cout << format("Container y size: {}\n", y.size());
+for(auto e : y) {
+	cout << format("[{}] ", e);
+}
+cout << '\n';
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+Container y size: 10
+[] [] [] [] [] [] [] [] [] []
+\end{tcblisting}
+
+\end{itemize}
+
+\subsubsection{How it works…}
+
+尽管有很多代码，但这个迭代器并不比一个较小的迭代器复杂。大多数代码都在操作符重载中，每个重载通常只有一两行代码。
+
+容器本身由智能指针管理。这是因为它是一个“平面”数组，所以不需要展开或压缩。
+
+当然，STL提供了一个std::array类，以及其他更复杂的数据结构。不过，揭开一个迭代器类的神秘面纱，还是挺有趣的。
+

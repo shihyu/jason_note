@@ -1,0 +1,818 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Python Async 效能完整指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="python-異步程式設計完整效能指南"><a class="header" href="#python-異步程式設計完整效能指南">Python 異步程式設計完整效能指南</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ol>
+<li><a href="#%E7%82%BA%E4%BB%80%E9%BA%BC-async-%E5%B0%8D%E7%B0%A1%E5%96%AE%E4%BB%BB%E5%8B%99%E6%9B%B4%E5%BF%AB">為什麼 Async 對簡單任務更快</a></li>
+<li><a href="#%E7%B4%94-async-%E5%AF%A6%E4%BD%9C%E7%AF%84%E4%BE%8B">純 Async 實作範例</a></li>
+<li><a href="#%E6%95%88%E8%83%BD%E6%B8%AC%E8%A9%A6%E7%A8%8B%E5%BC%8F%E7%A2%BC">效能測試程式碼</a></li>
+<li><a href="#%E6%95%88%E8%83%BD%E6%AF%94%E8%BC%83%E5%88%86%E6%9E%90">效能比較分析</a></li>
+<li><a href="#%E5%AF%A6%E9%9A%9B%E6%87%89%E7%94%A8%E5%BB%BA%E8%AD%B0">實際應用建議</a></li>
+</ol>
+<h2 id="為什麼-async-對簡單任務更快"><a class="header" href="#為什麼-async-對簡單任務更快">為什麼 Async 對簡單任務更快</a></h2>
+<h3 id="開銷比較"><a class="header" href="#開銷比較">開銷比較</a></h3>
+<pre><code class="language-python"># 線程開銷：每個線程約 1-8MB 記憶體
+# 協程開銷：每個協程約 1-3KB 記憶體
+
+# 線程切換：需要 OS 層級的上下文切換
+# 協程切換：在用戶空間切換，極快
+</code></pre>
+<h3 id="關鍵差異"><a class="header" href="#關鍵差異">關鍵差異</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>線程 (Threading)</th><th>協程 (Async)</th></tr></thead><tbody>
+<tr><td>記憶體開銷</td><td>1-8 MB/線程</td><td>1-3 KB/協程</td></tr>
+<tr><td>上下文切換</td><td>OS 層級 (慢)</td><td>用戶空間 (快)</td></tr>
+<tr><td>並發數量上限</td><td>數百～數千</td><td>數萬～數十萬</td></tr>
+<tr><td>GIL 影響</td><td>受限制</td><td>不受影響</td></tr>
+<tr><td>適用場景</td><td>CPU 密集型</td><td>I/O 密集型</td></tr>
+</tbody></table>
+</div>
+<h2 id="純-async-實作範例"><a class="header" href="#純-async-實作範例">純 Async 實作範例</a></h2>
+<h3 id="1-最簡潔高效的實作"><a class="header" href="#1-最簡潔高效的實作">1. 最簡潔高效的實作</a></h3>
+<pre><code class="language-python">import asyncio
+import aiohttp
+import time
+from typing import List, Tuple
+
+class AsyncOrderSystem:
+    def __init__(self, api_url: str, api_key: str):
+        self.api_url = api_url
+        self.api_key = api_key
+        self.session = None
+        
+    async def __aenter__(self):
+        """使用 async context manager 管理 session"""
+        timeout = aiohttp.ClientTimeout(total=30, connect=5)
+        connector = aiohttp.TCPConnector(
+            limit=100,  # 總連接數
+            limit_per_host=50,  # 每個 host 的連接數
+            ttl_dns_cache=300
+        )
+        self.session = aiohttp.ClientSession(
+            connector=connector,
+            timeout=timeout
+        )
+        return self
+    
+    async def __aexit__(self, *args):
+        await self.session.close()
+        
+    async def place_order(self, symbol: str, price: str) -&gt; dict:
+        """單筆非阻塞下單"""
+        order_data = {
+            "symbol": symbol,
+            "price": price,
+            "quantity": 20,
+            "side": "BUY",
+            "type": "LIMIT"
+        }
+        
+        try:
+            async with self.session.post(
+                f"{self.api_url}/orders",
+                json=order_data,
+                headers={"Authorization": f"Bearer {self.api_key}"}
+            ) as response:
+                return {
+                    "success": response.status == 200,
+                    "symbol": symbol,
+                    "data": await response.json()
+                }
+        except Exception as e:
+            return {
+                "success": False,
+                "symbol": symbol,
+                "error": str(e)
+            }
+    
+    async def batch_orders(self, orders: List[Tuple[str, str]], batch_size: int = 50):
+        """批次下單 - 極簡版"""
+        results = []
+        
+        for i in range(0, len(orders), batch_size):
+            batch = orders[i:i + batch_size]
+            # 創建並發任務
+            tasks = [self.place_order(symbol, price) for symbol, price in batch]
+            # 等待所有任務完成
+            batch_results = await asyncio.gather(*tasks)
+            results.extend(batch_results)
+            
+            # 批次間短暫延遲
+            if i + batch_size &lt; len(orders):
+                await asyncio.sleep(0.1)
+        
+        return results
+
+# 使用方式
+async def main():
+    orders = [("2330", "590"), ("2881", "66")] * 25  # 50筆訂單
+    
+    async with AsyncOrderSystem("https://api.broker.com", "your_key") as system:
+        start = time.time()
+        results = await system.batch_orders(orders)
+        elapsed = time.time() - start
+        
+        successful = sum(1 for r in results if r["success"])
+        print(f"完成 {len(results)} 筆，成功 {successful} 筆")
+        print(f"耗時: {elapsed:.2f} 秒")
+        print(f"平均每筆: {elapsed/len(results)*1000:.1f} ms")
+
+# 執行
+asyncio.run(main())
+</code></pre>
+<h3 id="2-進階版本---含速率限制"><a class="header" href="#2-進階版本---含速率限制">2. 進階版本 - 含速率限制</a></h3>
+<pre><code class="language-python">import asyncio
+from asyncio import Semaphore
+import time
+from typing import List, Optional
+
+class RateLimitedAsyncOrders:
+    def __init__(self, sdk, account, max_concurrent: int = 30, rate_limit: int = 100):
+        self.sdk = sdk
+        self.account = account
+        self.semaphore = Semaphore(max_concurrent)  # 並發控制
+        self.rate_limiter = self._create_rate_limiter(rate_limit)
+        
+    def _create_rate_limiter(self, max_per_second: int):
+        """創建速率限制器"""
+        class RateLimiter:
+            def __init__(self, rate):
+                self.rate = rate
+                self.allowance = rate
+                self.last_check = time.monotonic()
+                
+            async def acquire(self):
+                current = time.monotonic()
+                time_passed = current - self.last_check
+                self.last_check = current
+                self.allowance += time_passed * self.rate
+                
+                if self.allowance &gt; self.rate:
+                    self.allowance = self.rate
+                    
+                if self.allowance &lt; 1:
+                    sleep_time = (1 - self.allowance) / self.rate
+                    await asyncio.sleep(sleep_time)
+                    self.allowance = 0
+                else:
+                    self.allowance -= 1
+                    
+        return RateLimiter(max_per_second)
+    
+    async def place_order_async(self, symbol: str, price: str) -&gt; dict:
+        """非同步下單（模擬 SDK 的異步版本）"""
+        async with self.semaphore:  # 控制並發數
+            await self.rate_limiter.acquire()  # 速率限制
+            
+            # 如果 SDK 支援 async
+            # return await self.sdk.stock.place_order_async(...)
+            
+            # 如果 SDK 只支援同步，使用 run_in_executor
+            loop = asyncio.get_event_loop()
+            order = self._create_order(symbol, price)
+            
+            result = await loop.run_in_executor(
+                None,  # 使用默認 executor
+                self.sdk.stock.place_order,
+                self.account,
+                order,
+                True  # 非阻塞
+            )
+            return {"symbol": symbol, "result": result}
+    
+    def _create_order(self, symbol: str, price: str):
+        """創建訂單物件"""
+        return Order(
+            buy_sell=BSAction.Buy,
+            symbol=symbol,
+            price=price,
+            quantity=20,
+            market_type=MarketType.Common,
+            price_type=PriceType.Limit,
+            time_in_force=TimeInForce.ROD,
+            order_type=OrderType.Stock
+        )
+    
+    async def execute_batch(self, orders: List[tuple]) -&gt; List[dict]:
+        """執行批次下單"""
+        tasks = [
+            self.place_order_async(symbol, price) 
+            for symbol, price in orders
+        ]
+        
+        # 使用 as_completed 來即時處理結果
+        results = []
+        for coro in asyncio.as_completed(tasks):
+            result = await coro
+            results.append(result)
+            print(f"完成: {result['symbol']}")
+            
+        return results
+</code></pre>
+<h2 id="效能測試程式碼"><a class="header" href="#效能測試程式碼">效能測試程式碼</a></h2>
+<h3 id="完整的效能比較測試"><a class="header" href="#完整的效能比較測試">完整的效能比較測試</a></h3>
+<pre><code class="language-python">import asyncio
+import threading
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+import time
+import sys
+import psutil
+import os
+from typing import List, Dict
+import statistics
+
+# 取得當前進程
+process = psutil.Process(os.getpid())
+
+def get_resource_usage():
+    """取得當前資源使用情況"""
+    return {
+        'memory_mb': process.memory_info().rss / 1024 / 1024,
+        'cpu_percent': process.cpu_percent(),
+        'threads': process.num_threads()
+    }
+
+# 模擬 API 調用
+async def simulate_api_call_async(delay=0.1):
+    """模擬異步 API 調用"""
+    await asyncio.sleep(delay)  # 模擬網路延遲
+    return "success"
+
+def simulate_api_call_sync(delay=0.1):
+    """模擬同步 API 調用"""
+    time.sleep(delay)  # 模擬網路延遲
+    return "success"
+
+# 1. Pure Async 方式
+async def test_pure_async(n=50, delay=0.1):
+    """純異步方式測試"""
+    start_resources = get_resource_usage()
+    start = time.perf_counter()
+    
+    tasks = [simulate_api_call_async(delay) for _ in range(n)]
+    results = await asyncio.gather(*tasks)
+    
+    elapsed = time.perf_counter() - start
+    end_resources = get_resource_usage()
+    
+    return {
+        'time': elapsed,
+        'memory_delta': end_resources['memory_mb'] - start_resources['memory_mb'],
+        'threads_used': end_resources['threads'],
+        'results': len(results)
+    }
+
+# 2. ThreadPoolExecutor 方式
+def test_threadpool(n=50, delay=0.1, max_workers=10):
+    """線程池方式測試"""
+    start_resources = get_resource_usage()
+    start = time.perf_counter()
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(simulate_api_call_sync, delay) for _ in range(n)]
+        results = [f.result() for f in futures]
+    
+    elapsed = time.perf_counter() - start
+    end_resources = get_resource_usage()
+    
+    return {
+        'time': elapsed,
+        'memory_delta': end_resources['memory_mb'] - start_resources['memory_mb'],
+        'threads_used': end_resources['threads'],
+        'results': len(results)
+    }
+
+# 3. 多線程方式
+def test_threading(n=50, delay=0.1):
+    """多線程方式測試"""
+    start_resources = get_resource_usage()
+    start = time.perf_counter()
+    
+    threads = []
+    results = []
+    
+    def worker():
+        results.append(simulate_api_call_sync(delay))
+    
+    for _ in range(n):
+        t = threading.Thread(target=worker)
+        threads.append(t)
+        t.start()
+    
+    for t in threads:
+        t.join()
+    
+    elapsed = time.perf_counter() - start
+    end_resources = get_resource_usage()
+    
+    return {
+        'time': elapsed,
+        'memory_delta': end_resources['memory_mb'] - start_resources['memory_mb'],
+        'threads_used': end_resources['threads'],
+        'results': len(results)
+    }
+
+# 4. 限制並發的多線程
+def test_threading_limited(n=50, delay=0.1, max_concurrent=10):
+    """限制並發數的多線程方式"""
+    start_resources = get_resource_usage()
+    start = time.perf_counter()
+    
+    semaphore = threading.Semaphore(max_concurrent)
+    threads = []
+    results = []
+    
+    def worker():
+        with semaphore:
+            results.append(simulate_api_call_sync(delay))
+    
+    for _ in range(n):
+        t = threading.Thread(target=worker)
+        threads.append(t)
+        t.start()
+    
+    for t in threads:
+        t.join()
+    
+    elapsed = time.perf_counter() - start
+    end_resources = get_resource_usage()
+    
+    return {
+        'time': elapsed,
+        'memory_delta': end_resources['memory_mb'] - start_resources['memory_mb'],
+        'threads_used': end_resources['threads'],
+        'results': len(results)
+    }
+
+# 5. Async with Semaphore (限制並發)
+async def test_async_with_semaphore(n=50, delay=0.1, max_concurrent=10):
+    """使用信號量限制並發的異步方式"""
+    start_resources = get_resource_usage()
+    start = time.perf_counter()
+    
+    semaphore = asyncio.Semaphore(max_concurrent)
+    
+    async def limited_call():
+        async with semaphore:
+            return await simulate_api_call_async(delay)
+    
+    tasks = [limited_call() for _ in range(n)]
+    results = await asyncio.gather(*tasks)
+    
+    elapsed = time.perf_counter() - start
+    end_resources = get_resource_usage()
+    
+    return {
+        'time': elapsed,
+        'memory_delta': end_resources['memory_mb'] - start_resources['memory_mb'],
+        'threads_used': end_resources['threads'],
+        'results': len(results)
+    }
+</code></pre>
+<h2 id="效能比較分析"><a class="header" href="#效能比較分析">效能比較分析</a></h2>
+<h3 id="測試結果總結"><a class="header" href="#測試結果總結">測試結果總結</a></h3>
+<h4 id="50-個併發請求的典型結果"><a class="header" href="#50-個併發請求的典型結果">50 個併發請求的典型結果</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>方法</th><th>平均時間</th><th>記憶體變化</th><th>線程數</th><th>相對效能</th></tr></thead><tbody>
+<tr><td><strong>Pure Async</strong></td><td>0.105s</td><td>0.5MB</td><td>3</td><td>1.0x (基準)</td></tr>
+<tr><td>Async + Semaphore</td><td>0.502s</td><td>0.3MB</td><td>3</td><td>4.8x</td></tr>
+<tr><td>ThreadPool</td><td>0.504s</td><td>2.1MB</td><td>13</td><td>4.8x</td></tr>
+<tr><td>Threading (Limited)</td><td>0.503s</td><td>1.8MB</td><td>13</td><td>4.8x</td></tr>
+<tr><td>Threading (Unlimited)</td><td>0.108s</td><td>4.2MB</td><td>53</td><td>1.0x</td></tr>
+</tbody></table>
+</div>
+<h3 id="不同場景的效能對比"><a class="header" href="#不同場景的效能對比">不同場景的效能對比</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>場景</th><th>最佳選擇</th><th>次佳選擇</th><th>原因</th></tr></thead><tbody>
+<tr><td>高並發 API 調用</td><td>Pure Async</td><td>Async + Executor</td><td>最低資源消耗</td></tr>
+<tr><td>混合 I/O + CPU</td><td>ThreadPool</td><td>Multiprocessing</td><td>平衡性能</td></tr>
+<tr><td>簡單批次處理</td><td>ThreadPool</td><td>Threading Limited</td><td>程式碼簡潔</td></tr>
+<tr><td>極高並發 (&gt;1000)</td><td>Pure Async</td><td>-</td><td>唯一可行方案</td></tr>
+<tr><td>CPU 密集型</td><td>Multiprocessing</td><td>ThreadPool</td><td>真正並行</td></tr>
+</tbody></table>
+</div>
+<h3 id="效能組合比較表"><a class="header" href="#效能組合比較表">效能組合比較表</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>方案</th><th>I/O 密集型</th><th>CPU 密集型</th><th>記憶體使用</th><th>複雜度</th><th>適用場景</th></tr></thead><tbody>
+<tr><td><strong>async + non-blocking API</strong></td><td>⭐⭐⭐⭐⭐</td><td>⭐</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐</td><td><strong>最佳選擇</strong></td></tr>
+<tr><td><strong>async + run_in_executor</strong></td><td>⭐⭐⭐⭐</td><td>⭐⭐</td><td>⭐⭐⭐</td><td>⭐⭐⭐</td><td>混合 blocking API</td></tr>
+<tr><td><strong>ThreadPoolExecutor</strong></td><td>⭐⭐⭐</td><td>⭐⭐⭐</td><td>⭐⭐⭐</td><td>⭐⭐</td><td>簡單平行處理</td></tr>
+<tr><td><strong>MultiProcessing</strong></td><td>⭐⭐</td><td>⭐⭐⭐⭐⭐</td><td>⭐</td><td>⭐⭐⭐⭐</td><td>CPU 密集型任務</td></tr>
+<tr><td><strong>單執行緒同步</strong></td><td>⭐</td><td>⭐</td><td>⭐⭐⭐⭐⭐</td><td>⭐</td><td>簡單小型任務</td></tr>
+</tbody></table>
+</div>
+<h2 id="實際應用建議"><a class="header" href="#實際應用建議">實際應用建議</a></h2>
+<h3 id="1-pure-async-最佳實踐"><a class="header" href="#1-pure-async-最佳實踐">1. Pure Async 最佳實踐</a></h3>
+<pre><code class="language-python"># 最佳組合：async + non-blocking API
+async def optimal_batch_processing():
+    """最佳化的批次處理範例"""
+    
+    # 1. 使用連接池
+    connector = aiohttp.TCPConnector(
+        limit=100,
+        limit_per_host=30,
+        ttl_dns_cache=300
+    )
+    
+    # 2. 設置超時
+    timeout = aiohttp.ClientTimeout(total=30)
+    
+    # 3. 使用 session
+    async with aiohttp.ClientSession(
+        connector=connector,
+        timeout=timeout
+    ) as session:
+        # 4. 批次處理
+        tasks = []
+        for data in batch_data:
+            task = process_single(session, data)
+            tasks.append(task)
+        
+        # 5. 收集結果
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # 6. 錯誤處理
+        successful = [r for r in results if not isinstance(r, Exception)]
+        failed = [r for r in results if isinstance(r, Exception)]
+        
+    return successful, failed
+</code></pre>
+<h3 id="2-選擇決策樹"><a class="header" href="#2-選擇決策樹">2. 選擇決策樹</a></h3>
+<pre><code>問題：選擇哪種並發方案？
+
+1. API 是否支援 async？
+   ├─ 是 → Pure Async (最佳)
+   └─ 否 → 繼續判斷
+   
+2. 是否需要與其他 async 程式碼整合？
+   ├─ 是 → async + run_in_executor
+   └─ 否 → 繼續判斷
+   
+3. 任務是否 CPU 密集型？
+   ├─ 是 → MultiProcessing
+   └─ 否 → ThreadPoolExecutor
+</code></pre>
+<h3 id="3-效能調優建議"><a class="header" href="#3-效能調優建議">3. 效能調優建議</a></h3>
+<h4 id="a-連接池優化"><a class="header" href="#a-連接池優化">A. 連接池優化</a></h4>
+<pre><code class="language-python"># 根據目標服務器調整
+connector = aiohttp.TCPConnector(
+    limit=100,  # 總連接數
+    limit_per_host=30,  # 單主機連接數
+    ttl_dns_cache=300,  # DNS 緩存時間
+    enable_cleanup_closed=True  # 自動清理關閉的連接
+)
+</code></pre>
+<h4 id="b-並發控制"><a class="header" href="#b-並發控制">B. 並發控制</a></h4>
+<pre><code class="language-python"># 使用 Semaphore 控制並發
+sem = asyncio.Semaphore(50)
+
+async def controlled_request(session, url):
+    async with sem:
+        async with session.get(url) as response:
+            return await response.text()
+</code></pre>
+<h4 id="c-批次處理策略"><a class="header" href="#c-批次處理策略">C. 批次處理策略</a></h4>
+<pre><code class="language-python">async def smart_batch_processing(items, batch_size=50):
+    """智能批次處理"""
+    for i in range(0, len(items), batch_size):
+        batch = items[i:i + batch_size]
+        
+        # 並發處理批次
+        results = await asyncio.gather(
+            *[process_item(item) for item in batch],
+            return_exceptions=True
+        )
+        
+        # 錯誤重試
+        failed = [item for item, result in zip(batch, results) 
+                 if isinstance(result, Exception)]
+        
+        if failed:
+            # 重試失敗的項目
+            retry_results = await retry_failed(failed)
+        
+        # 批次間延遲，避免過載
+        if i + batch_size &lt; len(items):
+            await asyncio.sleep(0.1)
+</code></pre>
+<h3 id="4-實際測試範例"><a class="header" href="#4-實際測試範例">4. 實際測試範例</a></h3>
+<pre><code class="language-python">import time
+import asyncio
+import aiohttp
+import requests
+import concurrent.futures
+from multiprocessing import Pool
+
+# 測試 1000 個 API 呼叫
+urls = [f"https://httpbin.org/delay/0.1"] * 100
+
+# 方案 1: async + non-blocking
+async def test_async_nonblocking():
+    async with aiohttp.ClientSession() as session:
+        tasks = [session.get(url) for url in urls]
+        await asyncio.gather(*tasks)
+
+# 方案 2: async + blocking API
+async def test_async_blocking():
+    loop = asyncio.get_event_loop()
+    tasks = [loop.run_in_executor(None, requests.get, url) for url in urls]
+    await asyncio.gather(*tasks)
+
+# 方案 3: 執行緒池
+def test_threadpool():
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        list(executor.map(requests.get, urls))
+</code></pre>
+<h3 id="5-效能數據-實測概略"><a class="header" href="#5-效能數據-實測概略">5. 效能數據 (實測概略)</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>方案</th><th>100 個請求耗時</th><th>記憶體使用</th><th>執行緒數</th></tr></thead><tbody>
+<tr><td>async + aiohttp</td><td><strong>~1.2 秒</strong></td><td>~50MB</td><td>1</td></tr>
+<tr><td>async + executor</td><td>~2.0 秒</td><td>~80MB</td><td>10+</td></tr>
+<tr><td>ThreadPoolExecutor</td><td>~2.5 秒</td><td>~100MB</td><td>10+</td></tr>
+<tr><td>同步循環</td><td>~15 秒</td><td>~30MB</td><td>1</td></tr>
+</tbody></table>
+</div>
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<h3 id="關鍵要點"><a class="header" href="#關鍵要點">關鍵要點</a></h3>
+<ol>
+<li>
+<p><strong>Pure Async 是 I/O 密集型任務的最佳選擇</strong></p>
+<ul>
+<li>速度最快（沒有線程切換開銷）</li>
+<li>資源最省（協程比線程輕量 1000 倍）</li>
+<li>程式碼簡潔（async/await 語法清晰）</li>
+<li>擴展性好（可輕鬆處理數千個並發）</li>
+</ul>
+</li>
+<li>
+<p><strong>run_in_executor 是折衷方案</strong></p>
+<ul>
+<li>當 SDK 不支援 async 時的最佳選擇</li>
+<li>可與異步生態系統整合</li>
+<li>效能略低於 pure async，但遠好於順序執行</li>
+</ul>
+</li>
+<li>
+<p><strong>選擇建議</strong></p>
+<ul>
+<li><strong>最佳組合</strong>：async + non-blocking API（高併發 I/O 場景的王者）</li>
+<li><strong>實用組合</strong>：async + run_in_executor（被 blocking API 綁架時的最佳解法）</li>
+<li><strong>簡單組合</strong>：ThreadPoolExecutor（程式碼最簡潔，適合快速原型開發）</li>
+<li><strong>特殊用途</strong>：MultiProcessing（CPU 密集型任務專用）</li>
+</ul>
+</li>
+<li>
+<p><strong>效能優化重點</strong></p>
+<ul>
+<li>使用連接池複用連接</li>
+<li>適當控制並發數量</li>
+<li>實施批次處理策略</li>
+<li>加入錯誤處理和重試機制</li>
+</ul>
+</li>
+</ol>
+<h3 id="結論"><a class="header" href="#結論">結論</a></h3>
+<p>對於簡單的 API 下單任務，<strong>Pure Async 確實會更快</strong>！關鍵是要根據具體需求選擇合適的方案：</p>
+<ul>
+<li>如果 API 支援異步 → 使用 Pure Async</li>
+<li>如果只有同步 SDK → 使用 async + run_in_executor</li>
+<li>如果需要簡單實作 → 使用 ThreadPoolExecutor</li>
+<li>如果是 CPU 密集型 → 使用 MultiProcessing</li>
+</ul>
+<p>記住：<strong>選擇正確的工具比優化錯誤的方案更重要！</strong></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../python/fast_trading_comparison.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../python/async-vs-multithread-io.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../python/fast_trading_comparison.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../python/async-vs-multithread-io.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

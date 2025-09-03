@@ -1,0 +1,387 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Rust Unsafe 底層分析與最佳化技術 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="rust-unsafe-關鍵字與底層程式設計分析"><a class="header" href="#rust-unsafe-關鍵字與底層程式設計分析">Rust unsafe 關鍵字與底層程式設計分析</a></h1>
+<h2 id="核心問題rust-沒有-unsafe-關鍵字是寫不了底層代碼的"><a class="header" href="#核心問題rust-沒有-unsafe-關鍵字是寫不了底層代碼的">核心問題：「Rust 沒有 unsafe 關鍵字是寫不了底層代碼的」？</a></h2>
+<h3 id="這個說法的正確性分析"><a class="header" href="#這個說法的正確性分析">這個說法的正確性分析</a></h3>
+<h4 id="-部分正確的地方"><a class="header" href="#-部分正確的地方">✅ 部分正確的地方</a></h4>
+<p>確實，很多底層操作在 Rust 中需要 <code>unsafe</code>：</p>
+<ul>
+<li><strong>直接操作原始指標</strong> - 解引用原始指標必須在 unsafe 區塊中</li>
+<li><strong>呼叫外部 C 函式庫</strong> - FFI (Foreign Function Interface) 需要 unsafe</li>
+<li><strong>實作某些底層資料結構</strong> - 如自訂的 LinkedList、內存分配器等</li>
+<li><strong>直接操作硬體</strong> - 如嵌入式系統中的記憶體映射 I/O</li>
+<li><strong>某些效能優化</strong> - 跳過邊界檢查等</li>
+</ul>
+<h4 id="-但這說法過於絕對"><a class="header" href="#-但這說法過於絕對">❌ 但這說法過於絕對</a></h4>
+<ol>
+<li>
+<p><strong>很多底層代碼可以用 safe Rust 寫</strong>：</p>
+<ul>
+<li>網路程式設計</li>
+<li>檔案系統操作</li>
+<li>多執行緒程式設計（使用標準庫）</li>
+<li>大部分的系統程式設計任務</li>
+</ul>
+</li>
+<li>
+<p><strong>unsafe 是必要但最小化的工具</strong>：</p>
+<ul>
+<li>Rust 的設計理念是將 unsafe 限制在最小範圍</li>
+<li>通常只在最核心的部分使用 unsafe，然後包裝成安全的 API</li>
+<li>許多「底層」函式庫只在很小的部分使用 unsafe</li>
+</ul>
+</li>
+<li>
+<p><strong>實際例子</strong>：</p>
+<ul>
+<li>Linux kernel 的 Rust 程式碼確實需要 unsafe，但大部分邏輯仍是 safe 的</li>
+<li>Tokio 這樣的非同步執行時，核心有 unsafe，但使用者程式碼幾乎都是 safe 的</li>
+</ul>
+</li>
+</ol>
+<h3 id="更準確的說法"><a class="header" href="#更準確的說法">更準確的說法</a></h3>
+<blockquote>
+<p>「某些特定的底層操作在 Rust 中確實需要 unsafe，但 Rust 的設計目標是盡可能用 safe 程式碼完成大部分工作，只在真正必要時才使用 unsafe。」</p>
+</blockquote>
+<hr />
+<h2 id="cc-能做但-rust-不能做的事"><a class="header" href="#cc-能做但-rust-不能做的事">C/C++ 能做但 Rust 不能做的事？</a></h2>
+<h3 id="理論層面幾乎沒有"><a class="header" href="#理論層面幾乎沒有">理論層面：幾乎沒有</a></h3>
+<p><strong>關鍵點</strong>：Rust 的 <code>unsafe</code> 基本上給了你 C 的所有能力：</p>
+<ul>
+<li>原始指標操作</li>
+<li>任意記憶體讀寫</li>
+<li>內聯組語</li>
+<li>呼叫任何 C ABI 的函式</li>
+</ul>
+<p>因此理論上，任何 C 能做的底層操作，Rust + unsafe 都能做。</p>
+<h3 id="實務上的差異和限制"><a class="header" href="#實務上的差異和限制">實務上的差異和限制</a></h3>
+<h4 id="1-某些未定義行為的技巧"><a class="header" href="#1-某些未定義行為的技巧">1. 某些未定義行為的「技巧」</a></h4>
+<pre><code class="language-c">// C 中某些程式設計師依賴的 UB 技巧
+union type_punning {
+    float f;
+    uint32_t i;
+};
+// 在某些編譯器上"能用"但技術上是 UB
+</code></pre>
+<p>Rust 即使在 unsafe 中也會更嚴格地禁止某些 UB。</p>
+<h4 id="2-編譯器特定的擴展"><a class="header" href="#2-編譯器特定的擴展">2. 編譯器特定的擴展</a></h4>
+<pre><code class="language-c">// GCC 的 computed goto (標籤作為值)
+void* labels[] = {&amp;&amp;label1, &amp;&amp;label2};
+goto *labels[i];
+label1:
+    // ...
+</code></pre>
+<p>Rust 不支援這類非標準擴展。</p>
+<h4 id="3-某些極端的記憶體佈局控制"><a class="header" href="#3-某些極端的記憶體佈局控制">3. 某些極端的記憶體佈局控制</a></h4>
+<pre><code class="language-c">// C 中的 flexible array member
+struct packet {
+    int header;
+    char data[];  // C99 的 FAM
+};
+</code></pre>
+<p>Rust 需要用不同方式（DST 或 unsafe 技巧）來達成。</p>
+<h4 id="4-變長陣列-vla"><a class="header" href="#4-變長陣列-vla">4. 變長陣列 (VLA)</a></h4>
+<pre><code class="language-c">void func(int n) {
+    int arr[n];  // 執行時決定大小的堆疊陣列
+}
+</code></pre>
+<p>Rust 故意不支援 VLA（認為不安全），需要用 <code>Vec</code> 或 <code>alloca</code> 的 unsafe 包裝。</p>
+<h4 id="5-某些嵌入式即時系統的模式"><a class="header" href="#5-某些嵌入式即時系統的模式">5. 某些嵌入式/即時系統的模式</a></h4>
+<pre><code class="language-c">// 直接在中斷處理程式中做複雜操作
+// 某些 RTOS 特定的堆疊切換技巧
+</code></pre>
+<p>雖然 Rust 能做，但可能需要更多 unsafe 包裝。</p>
+<hr />
+<h2 id="這些限制大多是特性不是缺陷"><a class="header" href="#這些限制大多是特性不是缺陷">這些「限制」大多是特性，不是缺陷</a></h2>
+<h3 id="rust-的設計哲學"><a class="header" href="#rust-的設計哲學">Rust 的設計哲學</a></h3>
+<ol>
+<li><strong>明確標記危險操作</strong> - unsafe 區塊讓危險代碼顯而易見</li>
+<li><strong>禁止未定義行為</strong> - 即使在 unsafe 中也盡量防止 UB</li>
+<li><strong>提供安全的替代方案</strong> - 如用 <code>Vec</code> 代替 VLA</li>
+</ol>
+<h3 id="實際成功案例"><a class="header" href="#實際成功案例">實際成功案例</a></h3>
+<ul>
+<li><strong>Linux Kernel</strong> - 正在整合 Rust，證明了 Rust 能做核心開發</li>
+<li><strong>嵌入式開發</strong> - Rust 在 ARM Cortex-M 等平台很成功</li>
+<li><strong>作業系統</strong> - Redox OS 完全用 Rust 寫成</li>
+<li><strong>遊戲引擎</strong> - Bevy 等專案證明了高效能圖形程式設計可行</li>
+</ul>
+<hr />
+<h2 id="真正的權衡"><a class="header" href="#真正的權衡">真正的權衡</a></h2>
+<h3 id="開發體驗差異"><a class="header" href="#開發體驗差異">開發體驗差異</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>層面</th><th>C/C++</th><th>Rust</th></tr></thead><tbody>
+<tr><td>安全性預設</td><td>預設 unsafe</td><td>預設 safe</td></tr>
+<tr><td>開發速度</td><td>簡單直接但容易出錯</td><td>unsafe 部分需要更多思考</td></tr>
+<tr><td>錯誤發現</td><td>執行時才發現</td><td>編譯時就能抓出大部分錯誤</td></tr>
+</tbody></table>
+</div>
+<h3 id="生態系統成熟度"><a class="header" href="#生態系統成熟度">生態系統成熟度</a></h3>
+<ul>
+<li>某些特定領域（如某些 MCU）C 的工具鏈更成熟</li>
+<li>某些專有系統可能只提供 C/C++ SDK</li>
+<li>但 Rust 生態系統正在快速成長</li>
+</ul>
+<h3 id="學習曲線"><a class="header" href="#學習曲線">學習曲線</a></h3>
+<ul>
+<li>寫等效的 unsafe Rust 可能需要更深入理解記憶體模型</li>
+<li>但這種理解最終會產生更安全的代碼</li>
+<li>長期來看，維護成本通常更低</li>
+</ul>
+<hr />
+<h2 id="結論"><a class="header" href="#結論">結論</a></h2>
+<h3 id="技術層面"><a class="header" href="#技術層面">技術層面</a></h3>
+<p><strong>沒有</strong> C/C++ 能做而 Rust + unsafe 絕對做不到的事。</p>
+<h3 id="實務層面"><a class="header" href="#實務層面">實務層面</a></h3>
+<p>某些場景下 C/C++ 可能更方便，但這通常是生態系統或慣例問題，而非語言能力的根本限制。</p>
+<h3 id="核心觀點"><a class="header" href="#核心觀點">核心觀點</a></h3>
+<p>Rust 的 <code>unsafe</code> 不是限制，而是一種<strong>精確控制</strong>的工具：</p>
+<ul>
+<li>它讓你能做所有底層操作</li>
+<li>同時清楚標記風險所在</li>
+<li>將危險操作最小化並封裝</li>
+</ul>
+<h3 id="最終答案"><a class="header" href="#最終答案">最終答案</a></h3>
+<blockquote>
+<p>「Rust 沒有 unsafe 關鍵字是寫不了底層代碼的」這個說法有其道理，但更準確的理解是：unsafe 是 Rust 提供的一個強大工具，讓開發者能在需要時進行底層操作，同時保持代碼其他部分的安全性。這正是 Rust 的優勢所在。</p>
+</blockquote>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../rust/rust_trace_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../rust/第一部分_基礎部分_量化語境下的Rust編程基礎.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../rust/rust_trace_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../rust/第一部分_基礎部分_量化語境下的Rust編程基礎.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

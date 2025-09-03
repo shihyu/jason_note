@@ -1,0 +1,165 @@
+
+std::sample()算法获取值序列的随机样本，并用该样本填充目标容器。其对于分析更大的数据集很有用，其中随机样本可用来代表整个数据。
+
+样本集允许近似一个大数据集的特征，而不需要分析整个数据集。这提供了效率与准确性的交换，在许多情况下是一种公平的交换。
+
+\subsubsection{How to do it…}
+
+这个示例中，我们将使用一个具有标准正态分布的200,000个随机整数数组。我们将对几百个值进行采样，以创建每个值频率的直方图。
+
+\begin{itemize}
+\item 
+我们将从一个简单的函数开始，从一个double型返回一个四舍五入的int型。标准库缺少这样一个函数，我们稍后会创建它:
+
+\begin{lstlisting}[style=styleCXX]
+int iround(const double& d) {
+	return static_cast<int>(std::round(d));
+}
+\end{lstlisting}
+
+标准库提供了几个版本的std::round()，包括一个返回长int的版本。但我们需要一个int，这是一个简单的解决方案，可以避免编译器关于缩小转换的警告，同时隐藏难看的static\_cast。
+
+\item 
+main()函数中，可从一些有用的常量开始:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	constexpr size_t n_data{ 200000 };
+	constexpr size_t n_samples{ 500 };
+	constexpr int mean{ 0 };
+	constexpr size_t dev{ 3 };
+	...
+}
+\end{lstlisting}
+
+我们有n\_data和n\_samples的值，分别用于数据和样本容器的大小。也有均值和dev的值，随机值正态分布的均值和标准差参数。
+
+\item 
+现在，设置随机数生成器和分布对象，用于初始化源数据集:
+
+\begin{lstlisting}[style=styleCXX]
+std::random_device rd;
+std::mt19937 rng(rd());
+std::normal_distribution<> dist{ mean, dev };
+\end{lstlisting}
+
+random\_device对象提供对硬件随机数生成器的访问。mt19937类是Mersenne Twister随机数算法的实现，这是一种高质量的算法，在我们所使用的这种大小的数据集的大多数系统上都能很好地执行。正态分布类提供了均值附近的随机数分布，并提供了标准差。
+
+\item 
+现在可以用n\_data个数的随机int值填充一个数组:
+
+\begin{lstlisting}[style=styleCXX]
+array<int, n_data> v{};
+for(auto& e : v) e = iround(dist(rng));
+\end{lstlisting}
+
+数组容器的大小固定，因此模板参数包含一个size\_t值，表示要分配的元素数量。这里使用for()循环填充数组。
+
+rng对象是硬件随机数生成器，其可传递给normal\_distribution对象的dist()，然后传递给round()，我们的整数舍入函数。
+
+\item 
+此时，就有一个包含200,000个数据点的数组。这有很多要分析的，我们将使用sample()算法取500个值的样本:
+
+\begin{lstlisting}[style=styleCXX]
+array<int, n_samples> samples{};
+sample(data.begin(), data.end(), samples.begin(),
+	n_samples, rng);
+\end{lstlisting}
+
+我们定义另一个数组对象来保存样本，这个的大小是n\_samples。然后，使用sample()算法用n\_samples随机数据点填充数组。
+
+\item 
+我们创建一个直方图来分析样本。map结构是完美的，可以很容易地映射每个值的频率:
+
+\begin{lstlisting}[style=styleCXX]
+std::map<int, size_t> hist{};
+for (const int i : samples) ++hist[i];
+\end{lstlisting}
+
+for()循环从样本容器中获取每个值，并将其用作map中的键。增量表达式++hist[i]计算样本集中每个值出现的次数。
+
+\item 
+我们使用C++20的format()函数打印出直方图:
+
+\begin{lstlisting}[style=styleCXX]
+constexpr size_t scale{ 3 };
+cout << format("{:>3} {:>5} {:<}/{}\n",
+	"n", "count", "graph", scale);
+for (const auto& [value, count] : hist) {
+	cout << format("{:>3} ({:>3}) {}\n",
+		value, count, string(count / scale, '*'));
+}
+\end{lstlisting}
+
+format()说明符看起来像\{:>3\}为一定数量的字符腾出空间。尖括号指定左对齐或右对齐。
+
+string(count, char)构造函数创建一个字符串，其中一个字符重复指定的次数，在本例中是n个星号字符*，其中n是count/scale，即直方图中某个值的频率，除以缩放常数。
+
+输出如下所示:
+
+\begin{tcblisting}{commandshell={}}
+$ ./sample
+n count graph/3
+-9 ( 2)
+-7 ( 5) *
+-6 ( 9) ***
+-5 ( 22) *******
+-4 ( 24) ********
+-3 ( 46) ***************
+-2 ( 54) ******************
+-1 ( 59) *******************
+ 0 ( 73) ************************
+ 1 ( 66) **********************
+ 2 ( 44) **************
+ 3 ( 34) ***********
+ 4 ( 26) ********
+ 5 ( 18) ******
+ 6 ( 9) ***
+ 7 ( 5) *
+ 8 ( 3) *
+ 9 ( 1)
+\end{tcblisting}
+
+这是直方图的一个很好的图形表示。第一个数字是值，第二个数字是值的频率，星号是频率的直观表示，其中每个星号代表样本集中出现的规模(3)次。
+
+每次运行代码时输出都会有所不同。
+\end{itemize}
+
+\subsubsection{How it works…}
+
+std::sample()函数的作用是:从源容器中的随机位置选择特定数量的元素，并将其复制到目标容器中。
+
+sample()的签名是这样的:
+
+\begin{lstlisting}[style=styleCXX]
+OutIter sample(SourceIter, SourceIter, OutIter,
+	SampleSize, RandNumGen&&);
+\end{lstlisting}
+
+前两个参数是包含完整数据集的容器上的begin()和end()迭代器。第三个参数是用于示例目标的迭代器。第四个参数是样本大小，最后一个参数是随机数生成器函数。
+
+sample()算法采用均匀分布，因此每个数据点的采样概率相同。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

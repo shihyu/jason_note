@@ -1,0 +1,602 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>wasm-objdump 分析指南：深入 WASM 檔案與 Buttplug 依賴解析 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="wasm-objdump-分析指南深入-wasm-檔案與-buttplug-依賴解析"><a class="header" href="#wasm-objdump-分析指南深入-wasm-檔案與-buttplug-依賴解析">wasm-objdump 分析指南：深入 WASM 檔案與 Buttplug 依賴解析</a></h1>
+<h2 id="-核心問題解答"><a class="header" href="#-核心問題解答">🎯 核心問題解答</a></h2>
+<p><strong>問題</strong>：<code>buttplug_server_bg.wasm</code> 會包含 <code>dependencies</code> 中的 <code>buttplug</code> 函數嗎？</p>
+<p><strong>答案</strong>：<strong>會的！</strong> 但不是全部，只包含實際使用到的函數。</p>
+<hr />
+<h2 id="-包含機制說明"><a class="header" href="#-包含機制說明">🔍 包含機制說明</a></h2>
+<h3 id="-會被包含的-buttplug-函數"><a class="header" href="#-會被包含的-buttplug-函數">✅ 會被包含的 Buttplug 函數</a></h3>
+<ul>
+<li>你的程式碼<strong>直接調用</strong>的函數</li>
+<li>被調用函數所<strong>依賴</strong>的函數</li>
+<li>Rust 編譯器<strong>無法消除</strong>的函數</li>
+</ul>
+<h3 id="-不會被包含的-buttplug-函數"><a class="header" href="#-不會被包含的-buttplug-函數">❌ 不會被包含的 Buttplug 函數</a></h3>
+<ul>
+<li>你沒有使用的函數（Dead Code Elimination）</li>
+<li><code>default-features = false</code> 排除的功能</li>
+<li>非 <code>wasm</code> feature 的功能</li>
+</ul>
+<hr />
+<h2 id="-根據程式碼分析實際包含內容"><a class="header" href="#-根據程式碼分析實際包含內容">📊 根據程式碼分析實際包含內容</a></h2>
+<h3 id="從-librs-分析"><a class="header" href="#從-librs-分析">從 <code>lib.rs</code> 分析</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 這些 Buttplug 函數會被包含在 WASM 中：
+use buttplug::{
+  core::message::{ButtplugCurrentSpecServerMessage, serializer::vec_to_protocol_json},  // ✅
+  server::ButtplugServer,  // ✅
+  util::async_manager,     // ✅
+  server::ButtplugServerBuilder,  // ✅
+  core::message::{BUTTPLUG_CURRENT_MESSAGE_SPEC_VERSION, serializer::{...}}  // ✅
+};
+
+// 實際調用的函數：
+vec_to_protocol_json()                    // ✅ 會包含
+ButtplugServerBuilder::default()          // ✅ 會包含
+builder.finish()                          // ✅ 會包含
+server.event_stream()                     // ✅ 會包含
+server.parse_message()                    // ✅ 會包含
+ButtplugServerJSONSerializer::default()   // ✅ 會包含
+async_manager::spawn()                    // ✅ 會包含
+<span class="boring">}</span></code></pre></pre>
+<h3 id="從-webbluetooth_managerrs-分析"><a class="header" href="#從-webbluetooth_managerrs-分析">從 <code>webbluetooth_manager.rs</code> 分析</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 這些也會被包含：
+use buttplug::{
+  server::device::hardware::communication::*,  // ✅ 使用到的部分
+  util::device_configuration::create_test_dcm, // ✅ 會包含
+};
+
+// 實際調用：
+create_test_dcm(false)                           // ✅ 會包含
+config_manager.protocol_device_configurations() // ✅ 會包含
+HardwareCommunicationManagerEvent::DeviceFound  // ✅ 會包含
+<span class="boring">}</span></code></pre></pre>
+<h3 id="從-webbluetooth_hardwarers-分析"><a class="header" href="#從-webbluetooth_hardwarers-分析">從 <code>webbluetooth_hardware.rs</code> 分析</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 實作的 Buttplug traits 和使用的類型：
+impl HardwareConnector for WebBluetoothHardwareConnector     // ✅ trait 實作
+impl HardwareSpecializer for WebBluetoothHardwareSpecializer // ✅ trait 實作  
+impl HardwareInternal for WebBluetoothHardware               // ✅ trait 實作
+
+// 調用的函數：
+BluetoothLESpecifier::new_from_device()    // ✅ 會包含
+Hardware::new()                            // ✅ 會包含
+HardwareReading::new()                     // ✅ 會包含
+HardwareEvent::Disconnected()             // ✅ 會包含
+HardwareEvent::Notification()             // ✅ 會包含
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="-wasm-檔案組成估算"><a class="header" href="#-wasm-檔案組成估算">📈 WASM 檔案組成估算</a></h2>
+<pre><code>buttplug_server_bg.wasm (假設 2-5 MB)
+├── 你的程式碼 (~5-10%)
+├── Buttplug 核心功能 (~40-60%)
+│   ├── 訊息序列化/反序列化
+│   ├── 伺服器邏輯
+│   ├── 設備管理
+│   └── 藍牙通訊
+├── 第三方依賴 (~20-30%)
+│   ├── serde (序列化)
+│   ├── tokio (異步運行時)
+│   ├── futures (Future trait)
+│   └── 其他...
+├── Rust 標準庫 (~10-20%)
+└── wasm-bindgen 綁定 (~5-10%)
+</code></pre>
+<hr />
+<h2 id="-重要提醒優化等級對分析的影響"><a class="header" href="#-重要提醒優化等級對分析的影響">🚨 重要提醒：優化等級對分析的影響</a></h2>
+<h3 id="-關鍵注意事項"><a class="header" href="#-關鍵注意事項">⚠️ 關鍵注意事項</a></h3>
+<p><strong>WASM 分析的成功關鍵在於使用正確的建置模式！</strong></p>
+<pre><code class="language-bash"># ✅ 正確：用於分析和除錯
+wasm-pack build --dev --target web
+
+# ❌ 錯誤：用於分析時會找不到函數
+wasm-pack build --release --target web
+</code></pre>
+<p><strong>為什麼這很重要？</strong></p>
+<ul>
+<li><code>--dev</code> 模式：保留所有函數名稱和符號，類似 GCC <code>-O0</code></li>
+<li><code>--release</code> 模式：大量優化、內聯、移除未使用函數，類似 GCC <code>-O3</code></li>
+</ul>
+<h3 id="-建置模式比較"><a class="header" href="#-建置模式比較">📊 建置模式比較</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>建置模式</th><th>函數可見性</th><th>檔案大小</th><th>適用場景</th></tr></thead><tbody>
+<tr><td><code>--dev</code></td><td>🟢 幾乎所有函數可見</td><td>🔴 大 (8-15MB)</td><td>分析、除錯、學習</td></tr>
+<tr><td><code>--release</code></td><td>🔴 大量函數被優化掉</td><td>🟢 小 (2-5MB)</td><td>生產部署</td></tr>
+</tbody></table>
+</div>
+<h3 id="-安裝-wasm-objdump"><a class="header" href="#-安裝-wasm-objdump">🔧 安裝 wasm-objdump</a></h3>
+<h4 id="macos"><a class="header" href="#macos">macOS</a></h4>
+<pre><code class="language-bash">brew install wabt
+</code></pre>
+<h4 id="ubuntudebian"><a class="header" href="#ubuntudebian">Ubuntu/Debian</a></h4>
+<pre><code class="language-bash">sudo apt update
+sudo apt install wabt
+</code></pre>
+<h4 id="windows"><a class="header" href="#windows">Windows</a></h4>
+<pre><code class="language-bash"># 使用 Chocolatey
+choco install wabt
+
+# 使用 Scoop
+scoop install wabt
+</code></pre>
+<h4 id="從源碼編譯"><a class="header" href="#從源碼編譯">從源碼編譯</a></h4>
+<pre><code class="language-bash">git clone --recursive https://github.com/WebAssembly/wabt
+cd wabt
+mkdir build &amp;&amp; cd build
+cmake ..
+cmake --build .
+
+# 將編譯出的工具加入 PATH
+export PATH=$PWD:$PATH
+</code></pre>
+<h4 id="驗證安裝"><a class="header" href="#驗證安裝">驗證安裝</a></h4>
+<pre><code class="language-bash">wasm-objdump --version
+# 應該顯示：wasm-objdump 1.x.x
+</code></pre>
+<hr />
+<h2 id="-實際驗證方法"><a class="header" href="#-實際驗證方法">🔍 實際驗證方法</a></h2>
+<h3 id="-第一步使用正確的建置模式"><a class="header" href="#-第一步使用正確的建置模式">⚡ 第一步：使用正確的建置模式</a></h3>
+<pre><code class="language-bash"># 🎯 關鍵步驟：必須使用 --dev 模式進行分析
+wasm-pack build --dev --target web --out-dir pkg-debug
+</code></pre>
+<h3 id="1-查看包含的-buttplug-相關函數"><a class="header" href="#1-查看包含的-buttplug-相關函數">1. 查看包含的 Buttplug 相關函數</a></h3>
+<pre><code class="language-bash"># 查看所有包含 buttplug 的符號
+strings pkg-debug/buttplug_server_bg.wasm | grep -i buttplug
+
+# 查看反組譯中的 buttplug 函數
+wasm-objdump -d pkg-debug/buttplug_server_bg.wasm | grep -i buttplug
+
+# 查看 WAT 格式中的 buttplug 函數
+wasm2wat pkg-debug/buttplug_server_bg.wasm | grep -i buttplug
+</code></pre>
+<h3 id="2-分析函數大小和依賴"><a class="header" href="#2-分析函數大小和依賴">2. 分析函數大小和依賴</a></h3>
+<pre><code class="language-bash"># 安裝並使用 twiggy 分析
+cargo install twiggy
+
+# 查看最大的函數（可能包含 buttplug 函數）
+twiggy top pkg-debug/buttplug_server_bg.wasm
+
+# 查看包含 buttplug 的函數
+twiggy top pkg-debug/buttplug_server_bg.wasm | grep -i buttplug
+
+# 查看特定函數的依賴
+twiggy dominators pkg-debug/buttplug_server_bg.wasm | grep -i buttplug
+</code></pre>
+<h3 id="3-完整分析指令集"><a class="header" href="#3-完整分析指令集">3. 完整分析指令集</a></h3>
+<pre><code class="language-bash"># 🎯 重要：確保使用 --dev 建置的版本進行分析
+
+# 1. 查看字串中的 Buttplug 相關內容
+strings pkg-debug/buttplug_server_bg.wasm | grep -E "(buttplug|Buttplug)" | sort
+
+# 2. 查看反組譯中的函數名稱
+wasm-objdump -d pkg-debug/buttplug_server_bg.wasm | grep -E "func.*buttplug" 
+
+# 3. 轉換為 WAT 格式查看
+wasm2wat pkg-debug/buttplug_server_bg.wasm -o temp.wat
+grep -E "(buttplug|Buttplug)" temp.wat
+
+# 4. 使用 twiggy 分析大小
+twiggy top pkg-debug/buttplug_server_bg.wasm | head -20
+
+# 5. 查看匯出/匯入函數
+wasm-objdump -x pkg-debug/buttplug_server_bg.wasm | grep -A 20 "Export\["
+wasm-objdump -x pkg-debug/buttplug_server_bg.wasm | grep -A 50 "Import\["
+</code></pre>
+<h3 id="-對比release-模式的差異"><a class="header" href="#-對比release-模式的差異">⚠️ 對比：Release 模式的差異</a></h3>
+<pre><code class="language-bash"># 建立 release 版本對比
+wasm-pack build --release --target web --out-dir pkg-release
+
+# 比較函數數量差異
+echo "Debug 版本函數數量："
+wasm-objdump -x pkg-debug/buttplug_server_bg.wasm | grep -c "func\["
+
+echo "Release 版本函數數量："
+wasm-objdump -x pkg-release/buttplug_server_bg.wasm | grep -c "func\["
+
+# 比較 Buttplug 相關字串
+echo "Debug 版本 Buttplug 字串："
+strings pkg-debug/buttplug_server_bg.wasm | grep -c buttplug
+
+echo "Release 版本 Buttplug 字串："
+strings pkg-release/buttplug_server_bg.wasm | grep -c buttplug
+
+# 比較檔案大小
+ls -lh pkg-*/buttplug_server_bg.wasm
+</code></pre>
+<p><strong>預期差異</strong>：</p>
+<pre><code>Debug 版本函數數量：2847
+Release 版本函數數量：634
+
+Debug 版本 Buttplug 字串：156  
+Release 版本 Buttplug 字串：23
+
+-rw-r--r-- 1 user user  12M pkg-debug/buttplug_server_bg.wasm
+-rw-r--r-- 1 user user 2.5M pkg-release/buttplug_server_bg.wasm
+</code></pre>
+<hr />
+<h2 id="-預期分析結果"><a class="header" href="#-預期分析結果">📋 預期分析結果</a></h2>
+<h3 id="strings-輸出可能包含"><a class="header" href="#strings-輸出可能包含">strings 輸出可能包含：</a></h3>
+<pre><code>ButtplugServer
+ButtplugServerBuilder  
+ButtplugCurrentSpecServerMessage
+ButtplugDeviceError
+buttplug::server::
+buttplug::core::message::
+WebBluetoothCommunicationManager
+HardwareCommunicationManager
+HardwareConnector
+</code></pre>
+<h3 id="twiggy-輸出可能顯示"><a class="header" href="#twiggy-輸出可能顯示">twiggy 輸出可能顯示：</a></h3>
+<pre><code> Shallow Bytes │ Shallow % │ Item
+───────────────┼───────────┼────────────────────────────────────
+        45,231 │     2.84% │ buttplug::server::ButtplugServer::new
+        32,156 │     2.02% │ buttplug::core::message::serializer::vec_to_protocol_json
+        28,945 │     1.82% │ buttplug::util::async_manager::spawn
+        25,678 │     1.61% │ buttplug::server::device::hardware::communication
+        22,341 │     1.40% │ buttplug::core::message::ButtplugCurrentSpecServerMessage
+</code></pre>
+<h3 id="wasm-objdump-匯出函數"><a class="header" href="#wasm-objdump-匯出函數">wasm-objdump 匯出函數：</a></h3>
+<pre><code>Export[7]:
+ - memory[0] -&gt; "memory"
+ - func[142] &lt;buttplug_create_embedded_wasm_server&gt; -&gt; "buttplug_create_embedded_wasm_server"
+ - func[143] &lt;buttplug_free_embedded_wasm_server&gt; -&gt; "buttplug_free_embedded_wasm_server"
+ - func[144] &lt;buttplug_client_send_json_message&gt; -&gt; "buttplug_client_send_json_message"
+ - func[145] &lt;buttplug_activate_env_logger&gt; -&gt; "buttplug_activate_env_logger"
+ - func[146] &lt;__wbindgen_malloc&gt; -&gt; "__wbindgen_malloc"
+ - func[147] &lt;__wbindgen_free&gt; -&gt; "__wbindgen_free"
+</code></pre>
+<hr />
+<h2 id="-wasm-檔案大小優化"><a class="header" href="#-wasm-檔案大小優化">⚡ WASM 檔案大小優化</a></h2>
+<h3 id="如果想減少-wasm-檔案大小"><a class="header" href="#如果想減少-wasm-檔案大小">如果想減少 WASM 檔案大小：</a></h3>
+<h4 id="1-啟用-lto-link-time-optimization"><a class="header" href="#1-啟用-lto-link-time-optimization">1. 啟用 LTO (Link Time Optimization)</a></h4>
+<pre><code class="language-toml"># Cargo.toml
+[profile.release]
+lto = true              # 連結時間優化
+opt-level = "z"         # 優化檔案大小
+codegen-units = 1       # 單一編譯單元
+panic = "abort"         # 減少 panic 處理代碼
+strip = true            # 移除符號資訊
+</code></pre>
+<h4 id="2-使用輕量級記憶體分配器"><a class="header" href="#2-使用輕量級記憶體分配器">2. 使用輕量級記憶體分配器</a></h4>
+<pre><code class="language-toml">[dependencies]
+wee_alloc = "0.4.5"
+</code></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 在 lib.rs 中
+#[cfg(feature = "wee_alloc")]
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+<span class="boring">}</span></code></pre></pre>
+<h4 id="3-精確控制功能"><a class="header" href="#3-精確控制功能">3. 精確控制功能</a></h4>
+<pre><code class="language-toml">[dependencies]
+buttplug = { 
+  version = "7.1.13", 
+  default-features = false,  # 關閉預設功能
+  features = ["wasm"],       # 只啟用需要的功能
+}
+
+# 其他依賴也可以類似處理
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+tokio = { version = "1.0", default-features = false, features = ["sync", "macros"] }
+</code></pre>
+<h4 id="4-建置時優化"><a class="header" href="#4-建置時優化">4. 建置時優化</a></h4>
+<pre><code class="language-bash"># 使用最佳化建置
+wasm-pack build --release --target web
+
+# 進一步壓縮（可選）
+wasm-opt -Oz -o buttplug_server_bg_optimized.wasm buttplug_server_bg.wasm
+</code></pre>
+<hr />
+<h2 id="-總結"><a class="header" href="#-總結">🎯 總結</a></h2>
+<h3 id="-分析-wasm-的黃金法則"><a class="header" href="#-分析-wasm-的黃金法則">🚨 分析 WASM 的黃金法則</a></h3>
+<pre><code class="language-bash"># ✅ 正確的分析流程
+wasm-pack build --dev --target web    # 必須使用 --dev 模式
+wasm-objdump -d buttplug_server_bg.wasm    # 才能看到完整函數
+</code></pre>
+<h3 id="包含的主要-buttplug-功能"><a class="header" href="#包含的主要-buttplug-功能">包含的主要 Buttplug 功能：</a></h3>
+<ol>
+<li>
+<p><strong>伺服器管理</strong></p>
+<ul>
+<li><code>ButtplugServer</code> 建立和管理</li>
+<li><code>ButtplugServerBuilder</code> 建構器</li>
+</ul>
+</li>
+<li>
+<p><strong>訊息處理</strong></p>
+<ul>
+<li>訊息序列化/反序列化</li>
+<li>JSON 協定處理</li>
+<li>訊息版本管理</li>
+</ul>
+</li>
+<li>
+<p><strong>設備通訊</strong></p>
+<ul>
+<li>硬體抽象層介面</li>
+<li>藍牙通訊管理</li>
+<li>設備發現和連接</li>
+</ul>
+</li>
+<li>
+<p><strong>異步運行時</strong></p>
+<ul>
+<li><code>async_manager</code> 任務調度</li>
+<li>事件流處理</li>
+</ul>
+</li>
+<li>
+<p><strong>錯誤處理</strong></p>
+<ul>
+<li><code>ButtplugDeviceError</code> 和相關錯誤類型</li>
+</ul>
+</li>
+</ol>
+<h3 id="不包含的功能"><a class="header" href="#不包含的功能">不包含的功能：</a></h3>
+<ul>
+<li>非 WebAssembly 平台的功能</li>
+<li>未使用的設備協定</li>
+<li>除錯和測試專用功能</li>
+<li><code>default-features = false</code> 排除的功能</li>
+</ul>
+<h3 id="-工具安裝快速參考"><a class="header" href="#-工具安裝快速參考">🔧 工具安裝快速參考</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>工具</th><th>安裝指令</th><th>用途</th></tr></thead><tbody>
+<tr><td><strong>wasm-objdump</strong></td><td><code>brew install wabt</code> (macOS)<br/><code>sudo apt install wabt</code> (Ubuntu)</td><td>反組譯 WASM</td></tr>
+<tr><td><strong>twiggy</strong></td><td><code>cargo install twiggy</code></td><td>分析程式碼大小</td></tr>
+<tr><td><strong>wasm2wat</strong></td><td>包含在 WABT 中</td><td>轉換為文字格式</td></tr>
+</tbody></table>
+</div>
+<h3 id="-關鍵提醒"><a class="header" href="#-關鍵提醒">⚠️ 關鍵提醒</a></h3>
+<p><strong>記住</strong>：</p>
+<ul>
+<li>📊 <strong>分析時</strong>：使用 <code>wasm-pack build --dev</code></li>
+<li>🚀 <strong>部署時</strong>：使用 <code>wasm-pack build --release</code></li>
+<li>🔍 <strong>找不到函數</strong>：檢查是否用了 <code>--dev</code> 模式</li>
+</ul>
+<p><strong>最終結果</strong>：你的 <code>buttplug_server_bg.wasm</code> 檔案會是一個精簡但功能完整的 Buttplug 服務器實作，包含所有必要的核心功能來處理藍牙設備控制。但只有在使用 <code>--dev</code> 模式建置時，才能清楚看到所有函數的結構和組成！</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../web/buttplug_function_calls.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../web/wasm-objdump-guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../web/buttplug_function_calls.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../web/wasm-objdump-guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

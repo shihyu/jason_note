@@ -1,0 +1,685 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Understanding eBPF - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="ebpf-完整解析指南"><a class="header" href="#ebpf-完整解析指南">eBPF 完整解析指南</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ul>
+<li><a href="#%E4%BB%80%E9%BA%BC%E6%98%AF-ebpf">什麼是 eBPF？</a></li>
+<li><a href="#%E7%82%BA%E4%BB%80%E9%BA%BC-ebpf-%E9%80%99%E9%BA%BC%E5%8F%97%E6%AD%A1%E8%BF%8E">為什麼 eBPF 這麼受歡迎？</a></li>
+<li><a href="#ebpf-%E7%9A%84%E6%87%89%E7%94%A8%E9%A0%98%E5%9F%9F">eBPF 的應用領域</a></li>
+<li><a href="#%E8%AA%9E%E8%A8%80%E5%B1%A4%E6%AC%A1%E6%9E%B6%E6%A7%8B">語言層次架構</a></li>
+<li><a href="#kernel-ebpf-vs-user-space-%E7%A8%8B%E5%BC%8F">Kernel eBPF vs User Space 程式</a></li>
+<li><a href="#%E5%AF%A6%E9%9A%9B%E9%81%8B%E4%BD%9C%E6%B5%81%E7%A8%8B">實際運作流程</a></li>
+<li><a href="#%E7%82%BA%E4%BB%80%E9%BA%BC%E8%A6%81%E9%80%99%E6%A8%A3%E8%A8%AD%E8%A8%88">為什麼要這樣設計？</a></li>
+</ul>
+<h2 id="什麼是-ebpf"><a class="header" href="#什麼是-ebpf">什麼是 eBPF？</a></h2>
+<p>eBPF (Extended Berkeley Packet Filter) 是 Linux 內核的一個革命性功能，可以想像成**「內核的安全插件系統」**。</p>
+<h3 id="傳統方式-vs-ebpf"><a class="header" href="#傳統方式-vs-ebpf">傳統方式 vs eBPF</a></h3>
+<p><strong>傳統修改內核行為：</strong></p>
+<ol>
+<li>修改內核原始碼</li>
+<li>重新編譯內核</li>
+<li>重新啟動系統</li>
+<li>祈禱不會當機</li>
+</ol>
+<p><strong>使用 eBPF：</strong></p>
+<ul>
+<li>✅ 在系統運行時動態載入程式</li>
+<li>✅ 不需要重啟</li>
+<li>✅ 有驗證器保證安全</li>
+<li>✅ 不會讓系統崩潰</li>
+</ul>
+<blockquote>
+<p>💡 <strong>簡單比喻</strong>：如果 Linux 內核是電腦的「大腦」，eBPF 就像是可以安全植入大腦的「小助手程式」，能在最底層觀察和修改系統行為。</p>
+</blockquote>
+<h2 id="為什麼-ebpf-這麼受歡迎"><a class="header" href="#為什麼-ebpf-這麼受歡迎">為什麼 eBPF 這麼受歡迎？</a></h2>
+<p>eBPF 能在內核層（最底層）工作，因此具有極高的效率和強大的功能。</p>
+<h3 id="主要優勢"><a class="header" href="#主要優勢">主要優勢</a></h3>
+<ol>
+<li><strong>超高效能</strong>：在內核層處理，避免資料複製</li>
+<li><strong>安全性</strong>：有驗證器確保不會搞壞系統</li>
+<li><strong>即時性</strong>：不用重啟就能載入新功能</li>
+<li><strong>可程式化</strong>：能依需求客製化行為</li>
+</ol>
+<h3 id="採用企業"><a class="header" href="#採用企業">採用企業</a></h3>
+<p>Netflix、Facebook、Google、Cloudflare 等大型企業都在使用 eBPF 解決各種問題。</p>
+<h2 id="ebpf-的應用領域"><a class="header" href="#ebpf-的應用領域">eBPF 的應用領域</a></h2>
+<h3 id="1-網路處理最熱門"><a class="header" href="#1-網路處理最熱門">1. 網路處理（最熱門）</a></h3>
+<h4 id="防火牆ddos-防護"><a class="header" href="#防火牆ddos-防護">防火牆/DDoS 防護</a></h4>
+<pre><code class="language-c">// 在網路卡收到封包的瞬間就能決定要不要丟掉
+int firewall(struct xdp_md *ctx) {
+    struct iphdr *ip = parse_ip_header(ctx);
+    if (ip-&gt;saddr == BLOCKED_IP) {
+        return XDP_DROP;  // 直接丟掉，超快！
+    }
+    return XDP_PASS;
+}
+</code></pre>
+<h4 id="負載平衡"><a class="header" href="#負載平衡">負載平衡</a></h4>
+<ul>
+<li>Facebook 的 <strong>Katran</strong></li>
+<li>Cloudflare 的負載平衡器</li>
+<li>每秒處理數百萬個請求</li>
+</ul>
+<h4 id="容器網路"><a class="header" href="#容器網路">容器網路</a></h4>
+<ul>
+<li><strong>Cilium</strong>：Kubernetes 網路管理</li>
+<li>比傳統 iptables 快很多</li>
+</ul>
+<h3 id="2-系統監控和追蹤"><a class="header" href="#2-系統監控和追蹤">2. 系統監控和追蹤</a></h3>
+<h4 id="效能分析"><a class="header" href="#效能分析">效能分析</a></h4>
+<pre><code class="language-c">// 追蹤函式執行時間
+int measure_function(struct pt_regs *ctx) {
+    u64 timestamp = bpf_ktime_get_ns();
+    bpf_map_update(&amp;start_times, &amp;pid, &amp;timestamp);
+    return 0;
+}
+</code></pre>
+<h4 id="安全監控"><a class="header" href="#安全監控">安全監控</a></h4>
+<ul>
+<li><strong>Falco</strong>：雲原生運行時安全</li>
+<li><strong>Tracee</strong>：運行時安全和取證工具</li>
+<li>即時偵測可疑行為</li>
+</ul>
+<h3 id="3-可觀測性"><a class="header" href="#3-可觀測性">3. 可觀測性</a></h3>
+<ul>
+<li><strong>Pixie</strong>：Kubernetes 可觀測性</li>
+<li><strong>Hubble</strong>：網路和安全可觀測性</li>
+<li>不需要改程式碼就能收集指標</li>
+</ul>
+<h2 id="語言層次架構"><a class="header" href="#語言層次架構">語言層次架構</a></h2>
+<h3 id="三層架構圖"><a class="header" href="#三層架構圖">三層架構圖</a></h3>
+<pre><code>┌─────────────────────────────────────────┐
+│         第三層：User Space               │
+│   控制程式（Python/Go/Rust/C++等）        │
+│   - 載入 eBPF 程式                       │
+│   - 讀取收集的資料                        │
+│   - 顯示結果給使用者                      │
+└─────────────────────────────────────────┘
+                    ↓ 
+              系統呼叫 bpf()
+                    ↓
+═══════════════════════════════════════════
+┌─────────────────────────────────────────┐
+│         第二層：eBPF 程式                │
+│   用 C/Rust 寫的程式                     │
+│   - 在內核中執行                         │
+│   - 收集資料、過濾、決策                  │
+└─────────────────────────────────────────┘
+                    ↓
+              編譯（LLVM/Clang）
+                    ↓
+┌─────────────────────────────────────────┐
+│         第一層：eBPF 字節碼              │
+│   類似組合語言的低階指令                  │
+│   內核只認識這個                         │
+└─────────────────────────────────────────┘
+</code></pre>
+<h3 id="各語言的角色"><a class="header" href="#各語言的角色">各語言的角色</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>語言</th><th>可以寫 Kernel eBPF</th><th>可以寫 User Space 控制程式</th><th>說明</th></tr></thead><tbody>
+<tr><td><strong>C</strong></td><td>✅</td><td>✅</td><td>最原生的方式</td></tr>
+<tr><td><strong>Rust</strong></td><td>✅ (via Aya)</td><td>✅</td><td>新興選擇，更安全</td></tr>
+<tr><td><strong>Go</strong></td><td>❌</td><td>✅</td><td>只能控制，不能進 kernel</td></tr>
+<tr><td><strong>Python</strong></td><td>❌</td><td>✅</td><td>透過 BCC 控制</td></tr>
+<tr><td><strong>JavaScript</strong></td><td>❌</td><td>✅</td><td>可以控制但少見</td></tr>
+<tr><td><strong>Java</strong></td><td>❌</td><td>✅</td><td>可以控制但少見</td></tr>
+</tbody></table>
+</div>
+<h2 id="kernel-ebpf-vs-user-space-程式"><a class="header" href="#kernel-ebpf-vs-user-space-程式">Kernel eBPF vs User Space 程式</a></h2>
+<p>這是兩個<strong>完全不同</strong>的程式！</p>
+<h3 id="完整範例檔案監控工具"><a class="header" href="#完整範例檔案監控工具">完整範例：檔案監控工具</a></h3>
+<h4 id="part-1-kernel-ebpf-程式c-語言"><a class="header" href="#part-1-kernel-ebpf-程式c-語言">Part 1: Kernel eBPF 程式（C 語言）</a></h4>
+<pre><code class="language-c">// trace_open.c - 在 kernel 裡執行
+#include &lt;linux/bpf.h&gt;
+#include &lt;linux/ptrace.h&gt;
+
+// 定義共享的 Map
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __uint(max_entries, 1024);
+    __type(key, u32);
+    __type(value, u64);
+} open_count SEC(".maps");
+
+// 當有程式呼叫 open() 時觸發
+SEC("kprobe/sys_open")
+int trace_open(struct pt_regs *ctx) {
+    u32 pid = bpf_get_current_pid_tgid() &gt;&gt; 32;
+    u64 *count, init_val = 1;
+    
+    count = bpf_map_lookup_elem(&amp;open_count, &amp;pid);
+    if (count) {
+        (*count)++;
+    } else {
+        bpf_map_update_elem(&amp;open_count, &amp;pid, &amp;init_val, BPF_ANY);
+    }
+    
+    return 0;
+}
+</code></pre>
+<h4 id="part-2-user-space-控制程式多種語言"><a class="header" href="#part-2-user-space-控制程式多種語言">Part 2: User Space 控制程式（多種語言）</a></h4>
+<p><strong>Python 版本：</strong></p>
+<pre><code class="language-python">#!/usr/bin/env python3
+# monitor.py - 在使用者空間執行
+from bcc import BPF
+import time
+
+# 載入 eBPF 程式到 kernel
+b = BPF(src_file="trace_open.c")
+
+print("監控檔案開啟中... Ctrl+C 結束")
+
+while True:
+    time.sleep(1)
+    
+    # 從 kernel 的 map 讀取資料
+    open_count = b["open_count"]
+    
+    print("\n=== 檔案開啟統計 ===")
+    for pid, count in open_count.items():
+        print(f"PID {pid.value}: 開啟了 {count.value} 次檔案")
+    
+    open_count.clear()
+</code></pre>
+<p><strong>Go 版本：</strong></p>
+<pre><code class="language-go">// monitor.go - 在使用者空間執行
+package main
+
+import (
+    "fmt"
+    "time"
+    "github.com/cilium/ebpf"
+)
+
+func main() {
+    // 載入編譯好的 eBPF 程式
+    spec, _ := ebpf.LoadCollectionSpec("trace_open.o")
+    coll, _ := ebpf.NewCollection(spec)
+    
+    // 取得 map 的參考
+    openCount := coll.Maps["open_count"]
+    
+    for {
+        time.Sleep(1 * time.Second)
+        
+        var pid uint32
+        var count uint64
+        iter := openCount.Iterate()
+        
+        fmt.Println("\n=== 檔案開啟統計 ===")
+        for iter.Next(&amp;pid, &amp;count) {
+            fmt.Printf("PID %d: 開啟了 %d 次檔案\n", pid, count)
+        }
+    }
+}
+</code></pre>
+<h3 id="關鍵差異比較"><a class="header" href="#關鍵差異比較">關鍵差異比較</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th><strong>Kernel eBPF 程式</strong></th><th><strong>User Space 控制程式</strong></th></tr></thead><tbody>
+<tr><td><strong>執行位置</strong></td><td>Kernel 內部</td><td>一般使用者空間</td></tr>
+<tr><td><strong>語言選擇</strong></td><td>只能 C/Rust</td><td>任何語言</td></tr>
+<tr><td><strong>功能</strong></td><td>收集資料、過濾、決策</td><td>載入、管理、顯示</td></tr>
+<tr><td><strong>限制</strong></td><td>超嚴格（見下方）</td><td>一般程式，無特殊限制</td></tr>
+<tr><td><strong>大小</strong></td><td>很小（KB 等級）</td><td>可以很大</td></tr>
+<tr><td><strong>權限</strong></td><td>需要 root 或 CAP_BPF</td><td>載入時需要權限</td></tr>
+</tbody></table>
+</div>
+<h3 id="kernel-ebpf-程式的限制"><a class="header" href="#kernel-ebpf-程式的限制">Kernel eBPF 程式的限制</a></h3>
+<p>⚠️ <strong>重要限制：</strong></p>
+<ul>
+<li>❌ 不能有無限迴圈</li>
+<li>❌ 不能動態分配記憶體</li>
+<li>❌ 不能呼叫任意函式</li>
+<li>❌ 程式大小有限制（最大 1MB）</li>
+<li>❌ 必須在有限步驟內結束</li>
+<li>✅ 只能用特定的 BPF 輔助函式</li>
+</ul>
+<h2 id="實際運作流程"><a class="header" href="#實際運作流程">實際運作流程</a></h2>
+<pre class="mermaid">graph TD
+    A[User Space 程式啟動] --&gt; B[載入 eBPF 字節碼到 kernel]
+    B --&gt; C[Kernel 驗證器檢查安全性]
+    C --&gt; D{驗證通過?}
+    D --&gt;|是| E[eBPF 程式開始在 kernel 執行]
+    D --&gt;|否| F[拒絕載入]
+    E --&gt; G[事件發生&lt;br/&gt;如: 開檔案、收到封包]
+    G --&gt; H[eBPF 程式被觸發]
+    H --&gt; I[在 kernel 收集/處理資料]
+    I --&gt; J[存到 BPF Map]
+    J --&gt; K[User Space 程式讀取 Map]
+    K --&gt; L[處理並顯示資料]
+</pre>
+<h2 id="為什麼要這樣設計"><a class="header" href="#為什麼要這樣設計">為什麼要這樣設計？</a></h2>
+<h3 id="1-安全性考量"><a class="header" href="#1-安全性考量">1. 安全性考量</a></h3>
+<ul>
+<li>Kernel 崩潰 = 整個系統掛掉</li>
+<li>必須嚴格限制能在 kernel 執行的程式碼</li>
+<li>驗證器確保 eBPF 程式絕對安全</li>
+</ul>
+<h3 id="2-效能考量"><a class="header" href="#2-效能考量">2. 效能考量</a></h3>
+<ul>
+<li>Kernel 程式必須極快</li>
+<li>不能有 GC 暫停</li>
+<li>不能有動態記憶體分配</li>
+</ul>
+<h3 id="3-分工明確"><a class="header" href="#3-分工明確">3. 分工明確</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>元件</th><th>職責</th><th>比喻</th></tr></thead><tbody>
+<tr><td><strong>Kernel eBPF</strong></td><td>快速、即時的資料收集</td><td>現場的間諜</td></tr>
+<tr><td><strong>User Space</strong></td><td>資料分析、視覺化、儲存</td><td>指揮中心</td></tr>
+</tbody></table>
+</div>
+<h2 id="主要框架和工具"><a class="header" href="#主要框架和工具">主要框架和工具</a></h2>
+<h3 id="bcc-bpf-compiler-collection"><a class="header" href="#bcc-bpf-compiler-collection">BCC (BPF Compiler Collection)</a></h3>
+<p>最流行的框架，支援 Python 和 C：</p>
+<pre><code class="language-python">from bcc import BPF
+
+# 混合 Python 和 C
+b = BPF(text="""
+    int hello(void *ctx) {
+        bpf_trace_printk("Hello World\\n");
+        return 0;
+    }
+""")
+</code></pre>
+<h3 id="libbpf"><a class="header" href="#libbpf">libbpf</a></h3>
+<p>原生 C 函式庫，最接近底層：</p>
+<pre><code class="language-c">struct bpf_object *obj;
+obj = bpf_object__open("program.o");
+bpf_object__load(obj);
+</code></pre>
+<h3 id="aya-rust"><a class="header" href="#aya-rust">Aya (Rust)</a></h3>
+<p>純 Rust 實現，型別安全：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use aya::{Bpf, programs::KProbe};
+
+let mut bpf = Bpf::load_file("program.o")?;
+let program: &amp;mut KProbe = bpf.program_mut("trace_open")?;
+program.attach("sys_open", 0)?;
+<span class="boring">}</span></code></pre></pre>
+<h2 id="bcc-vs-co-re-框架詳細比較"><a class="header" href="#bcc-vs-co-re-框架詳細比較">BCC vs CO-RE 框架詳細比較</a></h2>
+<p>這是一個很好的問題！讓我解釋一下 BCC 和這些 CO-RE 框架之間的主要差異：</p>
+<h3 id="bcc-確實是框架但有重要區別"><a class="header" href="#bcc-確實是框架但有重要區別">BCC 確實是框架，但有重要區別</a></h3>
+<h4 id="bcc-bpf-compiler-collection-1"><a class="header" href="#bcc-bpf-compiler-collection-1"><strong>BCC (BPF Compiler Collection)</strong></a></h4>
+<p>BCC 是一個 eBPF 開發框架，但它採用的是<strong>執行時編譯</strong>模式：</p>
+<p><strong>特點：</strong></p>
+<ul>
+<li><strong>執行時編譯</strong>：在目標機器上即時編譯 eBPF 程式</li>
+<li><strong>需要核心標頭檔</strong>：必須在目標系統上安裝 kernel headers</li>
+<li><strong>依賴較重</strong>：需要 LLVM/Clang 工具鏈（通常超過 100MB）</li>
+<li><strong>Python/C++ 前端</strong>：主要透過 Python 撰寫控制邏輯</li>
+<li><strong>便於快速原型開發</strong>：程式碼簡單，適合學習和實驗</li>
+</ul>
+<p><strong>BCC 的工作流程：</strong></p>
+<pre><code>開發機器                     目標機器
+   │                           │
+   └──── Python/C 程式 ────────┤
+                               │
+                               ├─&gt; 載入時編譯 eBPF 程式
+                               ├─&gt; 需要 kernel headers
+                               ├─&gt; 需要 LLVM/Clang
+                               └─&gt; 執行
+</code></pre>
+<h4 id="co-re-框架libbpf-等"><a class="header" href="#co-re-框架libbpf-等"><strong>CO-RE 框架（libbpf 等）</strong></a></h4>
+<p>CO-RE（Compile Once, Run Everywhere）是一種新的開發模式：</p>
+<p><strong>特點：</strong></p>
+<ul>
+<li><strong>預編譯</strong>：開發時編譯一次，產生可攜式的二進位檔案</li>
+<li><strong>無需核心標頭檔</strong>：執行時不需要 kernel headers</li>
+<li><strong>輕量級部署</strong>：只需要很小的執行時函式庫（幾 MB）</li>
+<li><strong>BTF 依賴</strong>：利用核心的 BTF（BPF Type Format）資訊實現可攜性</li>
+<li><strong>生產環境友善</strong>：適合大規模部署</li>
+</ul>
+<p><strong>CO-RE 的工作流程：</strong></p>
+<pre><code>開發機器                     目標機器
+   │                           │
+   ├─&gt; 編譯 eBPF 程式          │
+   ├─&gt; 產生 .o 檔案            │
+   └──── 二進位檔案 ──────────┤
+                               │
+                               ├─&gt; 直接載入
+                               ├─&gt; 使用 BTF 重定位
+                               ├─&gt; 只需小型 libbpf
+                               └─&gt; 執行
+</code></pre>
+<h3 id="主要差異對比"><a class="header" href="#主要差異對比">主要差異對比</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>BCC</th><th>CO-RE (libbpf等)</th></tr></thead><tbody>
+<tr><td><strong>編譯時機</strong></td><td>執行時編譯</td><td>開發時預編譯</td></tr>
+<tr><td><strong>部署依賴</strong></td><td>需要 kernel headers + LLVM</td><td>只需小型執行時函式庫</td></tr>
+<tr><td><strong>可攜性</strong></td><td>差（依賴目標系統環境）</td><td>好（一次編譯，到處執行）</td></tr>
+<tr><td><strong>啟動速度</strong></td><td>慢（需要編譯）</td><td>快（直接載入）</td></tr>
+<tr><td><strong>資源佔用</strong></td><td>大（100MB+）</td><td>小（幾MB）</td></tr>
+<tr><td><strong>生產部署</strong></td><td>不理想</td><td>理想</td></tr>
+<tr><td><strong>開發難度</strong></td><td>簡單</td><td>相對複雜</td></tr>
+<tr><td><strong>核心版本要求</strong></td><td>較低（3.15+）</td><td>較高（5.2+ 建議）</td></tr>
+</tbody></table>
+</div>
+<h3 id="實際程式碼比較"><a class="header" href="#實際程式碼比較">實際程式碼比較</a></h3>
+<p><strong>BCC 範例：</strong></p>
+<pre><code class="language-python">from bcc import BPF
+
+# eBPF 程式直接嵌入 Python 字串中
+prog = """
+int trace_open(struct pt_regs *ctx) {
+    bpf_trace_printk("File opened\\n");
+    return 0;
+}
+"""
+
+# 執行時編譯
+b = BPF(text=prog)
+b.attach_kprobe(event="sys_open", fn_name="trace_open")
+</code></pre>
+<p><strong>CO-RE (libbpf) 範例：</strong></p>
+<pre><code class="language-c">// trace_open.bpf.c - 預先編譯
+#include &lt;vmlinux.h&gt;
+#include &lt;bpf/bpf_helpers.h&gt;
+
+SEC("kprobe/sys_open")
+int trace_open(struct pt_regs *ctx) {
+    bpf_printk("File opened\n");
+    return 0;
+}
+
+// 編譯命令：
+// clang -O2 -target bpf -c trace_open.bpf.c -o trace_open.bpf.o
+</code></pre>
+<pre><code class="language-c">// loader.c - 載入程式
+#include &lt;bpf/libbpf.h&gt;
+
+int main() {
+    struct bpf_object *obj;
+    
+    // 直接載入預編譯的 .o 檔案
+    obj = bpf_object__open_file("trace_open.bpf.o", NULL);
+    bpf_object__load(obj);
+    // ...
+}
+</code></pre>
+<h3 id="各框架的定位"><a class="header" href="#各框架的定位">各框架的定位</a></h3>
+<ul>
+<li><strong>libbpf</strong>：官方 C 函式庫，CO-RE 的基礎</li>
+<li><strong>Cilium/ebpf</strong>：Go 語言的 CO-RE 框架</li>
+<li><strong>libbpf-rs</strong>：Rust 語言的 libbpf 綁定</li>
+<li><strong>eunomia-bpf</strong>：簡化的 eBPF 開發框架，支援多語言</li>
+<li><strong>Aya</strong>：純 Rust 實現，支援 CO-RE</li>
+</ul>
+<h3 id="選擇建議"><a class="header" href="#選擇建議">選擇建議</a></h3>
+<p><strong>使用 BCC 的場景：</strong></p>
+<ul>
+<li>🎓 學習和實驗 eBPF</li>
+<li>🔧 快速原型開發</li>
+<li>🐛 開發環境中的調試工具</li>
+<li>📊 一次性的系統分析任務</li>
+</ul>
+<p><strong>使用 CO-RE 的場景：</strong></p>
+<ul>
+<li>🏭 生產環境部署</li>
+<li>📦 容器/雲原生環境</li>
+<li>🔒 安全產品開發</li>
+<li>📱 嵌入式系統</li>
+<li>🚀 需要快速啟動的場景</li>
+</ul>
+<h3 id="遷移路徑"><a class="header" href="#遷移路徑">遷移路徑</a></h3>
+<p>如果你已經使用 BCC，想要遷移到 CO-RE：</p>
+<ol>
+<li><strong>評估核心版本</strong>：確保目標系統支援 BTF（5.2+）</li>
+<li><strong>選擇框架</strong>：根據你的語言偏好選擇 libbpf/Cilium/Aya</li>
+<li><strong>重寫 eBPF 程式</strong>：將 BCC 的內嵌 C 程式碼獨立出來</li>
+<li><strong>調整載入邏輯</strong>：使用新框架的 API 載入預編譯程式</li>
+<li><strong>測試可攜性</strong>：在不同核心版本上測試</li>
+</ol>
+<p>簡單來說，BCC 像是「直譯式語言」，而 CO-RE 像是「編譯式語言」。兩者都是框架，但設計理念和使用場景有很大差異。選擇哪個取決於你的具體需求：如果是學習或快速實驗，BCC 是很好的起點；如果是生產部署，CO-RE 是更好的選擇。</p>
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<p>eBPF 是一項革命性的技術，它讓我們能夠：</p>
+<ol>
+<li><strong>安全地</strong>擴展內核功能</li>
+<li><strong>高效地</strong>處理網路和系統事件</li>
+<li><strong>靈活地</strong>觀察和修改系統行為</li>
+</ol>
+<p>透過嚴格的限制和驗證機制，eBPF 在提供強大功能的同時保證了系統安全性，這就是為什麼它成為現代 Linux 系統中不可或缺的技術。</p>
+<hr />
+<p>📚 <strong>延伸閱讀：</strong></p>
+<ul>
+<li><a href="https://ebpf.io/">ebpf.io</a> - eBPF 官方網站</li>
+<li><a href="http://docs.cilium.io/en/latest/bpf/">Cilium BPF Reference Guide</a> - 深入的 eBPF 文檔</li>
+<li><a href="https://www.brendangregg.com/ebpf.html">Brendan Gregg's eBPF Page</a> - 效能分析大師的 eBPF 資源</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../linux_system/ebpf-complete-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../kernel/what-is-ebpf.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../linux_system/ebpf-complete-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../kernel/what-is-ebpf.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

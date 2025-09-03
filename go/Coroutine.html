@@ -1,0 +1,303 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>行程、執行緒、協程，傻傻分得清楚！ - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="程序進程執行緒線程協程傻傻分得清楚"><a class="header" href="#程序進程執行緒線程協程傻傻分得清楚">程序(進程)、執行緒(線程)、協程，傻傻分得清楚！</a></h1>
+<p>要成為一個優秀的軟體工程師，進程（process）、線程（thread）是一定要搞懂與掌握的知識點，不僅是因為它們是電腦科學根本的知識，更是因為懂得在適當的時機善用它們，可以增進程式的執行效率，也就是提升效能。</p>
+<h2 id="程式-program"><a class="header" href="#程式-program">程式 Program</a></h2>
+<p>在瞭解進程與線程之前，得先談談 program 這個東西，其實所謂的 program 就是工程師撰寫的程式碼的集合，例如 Line、 Chrome 就個別是 program，而他們的特點是<strong>還沒有被執行</strong>，因此也就還沒有被載入至記憶體中，而是存放在<a href="https://zh.wikipedia.org/wiki/%E6%AC%A1%E7%B4%9A%E5%84%B2%E5%AD%98%E8%A3%9D%E7%BD%AE">次級儲存裝置</a>中。</p>
+<h2 id="進程-process"><a class="header" href="#進程-process">進程 Process</a></h2>
+<p><strong>Process 進程則是指被執行且載入記憶體的 program</strong>**。**Process 也是 OS 分配資源的最小單位，可以從 OS 得到如 CPU Time、Memory…等資源，意思是這個 process 在運行時會消耗多少 CPU 與記憶體。文章一開始放了一張 MacOS 活動監視器的截圖，相信不管是使用哪種作業系統的讀者都有看過類似的介面，而監視器中列出的是你的電腦正在執行的應用程式，而它們其實就是一個個 process，可以從圖片中看出每一個 process 消耗的 CPU、CPU 時間與每個 process 的獨立 ID (PID)。</p>
+<h2 id="進程的優缺點與小結"><a class="header" href="#進程的優缺點與小結">進程的優缺點與小結</a></h2>
+<ul>
+<li>優點：每個進程有自己獨立的系統資源分配空間，不同進程之間的資源不共享，因此不需要特別對進程做互斥存取的處理。</li>
+<li>缺點：建立進程以及進程的上下文切換（Context Switch）都較消耗資源，進程間若有通訊的需求也較為複雜。</li>
+</ul>
+<p>小結：程式 (Program)是寫好尚未執行的 code，程式被執行後才會變成進程 (Process)。</p>
+<h2 id="線程-thread"><a class="header" href="#線程-thread">線程 Thread</a></h2>
+<p>線程可以想像成存在於 process 裡面，而一個進程裡至少會有一個線程，前面有說 process 是 OS 分配資源的最小單位，而 thread 則是作業系統能夠進行運算排程的最小單位，也就是說實際執行任務的並不是進程，而是進程中的線程，一個進程有可能有多個線程，其中多個線程可以共用進程的系統資源，可以把進程比喻為一個工廠，線程則是工廠裡面的工人，負責任務的實際執行。</p>
+<h2 id="multiprocessing-多進程--multithreading-多線程"><a class="header" href="#multiprocessing-多進程--multithreading-多線程">MultiProcessing 多進程 &amp; MultiThreading 多線程</a></h2>
+<p>這兩個概念我想繼續利用工廠與工人的比喻會比較好理解與記憶。</p>
+<p>Multiprocessing 好比建立許多工廠（通常會取 CPU 的數量），每個工廠中會分配ㄧ名員工(thread)執行工作，因此優勢在於同一時間內可以完成較多的事。</p>
+<p>Multithreading 則是將許多員工聚集到同一個工廠內，它的優勢則是<strong>有機會讓相同的工作在比較短的時間內完成。</strong></p>
+<h2 id="多線程的-race-condition"><a class="header" href="#多線程的-race-condition">多線程的 Race Condition</a></h2>
+<p>剛剛有提到在多執行緒中 (Multithreading)，不同 thread 是可以共享資源的，而若兩個 thread 若同時存取或改變全域變數，可能會發生同步 (Synchronization) 問題。若執行緒之間互搶資源，則可能產生死結 (Deadlock)，因此使用多線程時必須特別注意避免這些狀況發生。</p>
+<h2 id="concurrent--parallel-並發與並行"><a class="header" href="#concurrent--parallel-並發與並行">Concurrent &amp; Parallel 並發與並行</a></h2>
+<p><img src="images/1_7GZrAWoGc_nZtuvHIJ9w-w.jpeg" alt="" /></p>
+<p>這兩個是許多人容易誤解的概念，然而透過上面的圖就可以一目瞭然，Parallel 並行是利用多個 CPU 達到同時並行處理任務的需求（也就是同一個時間點有許多任務在同時執行），Concurrent 則是許多任務在爭搶同一個 CPU 的資源，因此一個時間點只會有一個任務正在執行，只是因為切換非常快，使用者通常不會感覺到任務實際上一直在切換。</p>
+<h2 id="協程-coroutine"><a class="header" href="#協程-coroutine">協程 Coroutine</a></h2>
+<p>大部分的文章討論的都是 process 與 thread 的概念，直到最近在學 golang，碰到了 goroutine，才知道原來還有 coroutine 協程的存在。</p>
+<p><img src="images/1_lddypV9b9Iy5lYseCY2fPA.png" alt="" /></p>
+<p>先講重點</p>
+<blockquote>
+<p>協程是一種使用者態的輕量級執行緒，協程的排程完全由使用者控制。</p>
+</blockquote>
+<p>可以想像進程中有線程，而線程中則又有協程。*<strong>而協程的調度完全由用戶控制*</strong>，協程也會有自己的 registers、context、stack 等等，並且由協程的調度器來控制目前由哪個協程執行，哪個協程要被 block 。process 及 thread 的調度，是由 CPU 內核去進行調度，而協程卻不ㄧ樣，OS 甚至不知道協程的存在，如果 coroutine 被卡住，則會在用戶端直接切換另外一個 coroutine 給此 thread 繼續執行，這樣其他 coroutine 就不會被block住，讓資源能夠有效的被利用，藉此實現 Concurrent 的概念。</p>
+<p>相較於建立一個線程需要花費 MB 等級的記憶體，建立一個協程可以壓到 KB 等級，協程間的切換也絕對快於線程間的切換。</p>
+<p>如果有興趣，真的非常推薦去學<a href="https://gobyexample.com/goroutines"> Go 語言的 goroutine</a>，相信你也會被它的強大給深深吸引的。</p>
+<h2 id="小結"><a class="header" href="#小結">小結</a></h2>
+<p>透過這篇文章快速帶過進程、線程、協程的概念，然而實際上要使用多進程、多線程開發時要考慮的因素真的很多，一不小心可能會造成上面提過的 race condition 或是性能不升反降的囧境，因此在使用上仍須經過謹慎考慮與效能驗證囉！</p>
+<h2 id="補充名詞對照"><a class="header" href="#補充名詞對照">補充：名詞對照</a></h2>
+<p>其實本篇文章所提及的進程與線程都是對岸的用語，為了避免讀者誤解，下面整理了一些臺灣與對岸的名詞對照表：</p>
+<p>process:</p>
+<ul>
+<li>臺灣：程序、處理程序</li>
+<li>對岸：進程</li>
+</ul>
+<p>thread:</p>
+<ul>
+<li>臺灣：執行緒</li>
+<li>對岸：線程</li>
+</ul>
+<p>concurrent:</p>
+<ul>
+<li>臺灣：並行</li>
+<li>大陸：並發</li>
+</ul>
+<p>parallel:</p>
+<ul>
+<li>臺灣：平行</li>
+<li>大陸：並行</li>
+</ul>
+<p>可以看到兩個地區對並行的定義是不一樣的，因此建議讀者已英文記比較不會搞混喔～</p>
+<h2 id="出處"><a class="header" href="#出處">出處</a></h2>
+<p>https://oldmo860617.medium.com/%E9%80%B2%E7%A8%8B-%E7%B7%9A%E7%A8%8B-%E5%8D%94%E7%A8%8B-%E5%82%BB%E5%82%BB%E5%88%86%E5%BE%97%E6%B8%85%E6%A5%9A-a09b95bd68dd</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../go/trace.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../go/goroutine-and-channel.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../go/trace.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../go/goroutine-and-channel.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

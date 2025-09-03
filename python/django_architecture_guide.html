@@ -1,0 +1,828 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Django 架構與專案結構完整指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="django-架構與專案結構完整指南"><a class="header" href="#django-架構與專案結構完整指南">Django 架構與專案結構完整指南</a></h1>
+<blockquote>
+<p>本指南以白話方式介紹 Django 的系統架構與專案結構，幫助初學者快速掌握 Django 的運作原理和開發實務。</p>
+</blockquote>
+<h2 id="-django-系統架構總覽"><a class="header" href="#-django-系統架構總覽">🏗️ Django 系統架構總覽</a></h2>
+<p>Django 採用 MTV (Model-Template-View) 架構模式，實際上是 MVC 模式的變體：</p>
+<pre><code>┌─────────────────────────────────────────┐
+│             Web Browser                 │  ← 使用者介面
+│  • HTML/CSS/JavaScript                  │
+│  • HTTP Request/Response                │
+└─────────────────────────────────────────┘
+                     ↕️
+┌─────────────────────────────────────────┐
+│            Web Server                   │  ← 網頁伺服器層
+│  • Apache/Nginx/Gunicorn               │
+│  • Static File Serving                 │
+│  • Load Balancing                      │
+└─────────────────────────────────────────┘
+                     ↕️
+┌─────────────────────────────────────────┐
+│           Django Framework              │  ← Django 框架層
+│  ┌─────────────────────────────────────┐ │
+│  │        URL Dispatcher               │ │  ← URLs 路由
+│  └─────────────────────────────────────┘ │
+│                     ↓                   │
+│  ┌─────────────────────────────────────┐ │
+│  │           Views                     │ │  ← 控制邏輯
+│  │  • Function-based Views             │ │
+│  │  • Class-based Views                │ │
+│  │  • Business Logic                   │ │
+│  └─────────────────────────────────────┘ │
+│           ↙️                    ↘️        │
+│  ┌─────────────────┐  ┌─────────────────┐ │
+│  │     Models      │  │    Templates    │ │
+│  │  • ORM          │  │  • HTML + DTL   │ │  ← 資料層 &amp; 呈現層
+│  │  • Database     │  │  • Jinja2       │ │
+│  │  • Validation   │  │  • Static Files │ │
+│  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────┘
+                     ↕️
+┌─────────────────────────────────────────┐
+│              Database                   │  ← 資料庫層
+│  • PostgreSQL/MySQL/SQLite             │
+│  • Redis (快取/Session)                 │
+│  • Elasticsearch (搜尋)                │
+└─────────────────────────────────────────┘
+</code></pre>
+<h3 id="mtv-架構詳解"><a class="header" href="#mtv-架構詳解">MTV 架構詳解</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>層級</th><th>全名</th><th>職責</th><th>對應 MVC</th><th>開發者接觸度</th></tr></thead><tbody>
+<tr><td><strong>Model</strong></td><td>資料模型</td><td>資料結構定義、ORM、驗證</td><td>Model</td><td>⭐⭐⭐⭐⭐ 高頻使用</td></tr>
+<tr><td><strong>Template</strong></td><td>模板系統</td><td>HTML 生成、資料呈現</td><td>View</td><td>⭐⭐⭐⭐ 經常使用</td></tr>
+<tr><td><strong>View</strong></td><td>視圖邏輯</td><td>業務邏輯、請求處理</td><td>Controller</td><td>⭐⭐⭐⭐⭐ 高頻使用</td></tr>
+<tr><td><strong>URL</strong></td><td>路由配置</td><td>URL 映射、請求分發</td><td>Router</td><td>⭐⭐⭐ 常用</td></tr>
+</tbody></table>
+</div>
+<h2 id="-django-專案結構深度解析"><a class="header" href="#-django-專案結構深度解析">📁 Django 專案結構深度解析</a></h2>
+<h3 id="標準專案目錄結構"><a class="header" href="#標準專案目錄結構">標準專案目錄結構</a></h3>
+<pre><code>my_django_project/
+├── 🚀 manage.py                    # Django 管理指令入口
+├── 📁 my_django_project/           # 主專案設定資料夾
+│   ├── __init__.py
+│   ├── 🔧 settings.py              # 專案設定檔
+│   │   ├── base.py                 # 基礎設定
+│   │   ├── development.py          # 開發環境設定
+│   │   ├── production.py           # 正式環境設定
+│   │   └── testing.py              # 測試環境設定
+│   ├── 🌐 urls.py                  # 主 URL 配置
+│   ├── 📡 wsgi.py                  # WSGI 部署設定
+│   └── ⚡ asgi.py                  # ASGI 部署設定 (非同步)
+├── 📱 apps/                        # Django 應用程式資料夾
+│   ├── accounts/                   # 使用者帳戶模組
+│   │   ├── __init__.py
+│   │   ├── 🏷️ models.py            # 資料模型
+│   │   ├── 👀 views.py             # 視圖邏輯
+│   │   ├── 🎨 templates/           # HTML 模板
+│   │   │   └── accounts/
+│   │   │       ├── login.html
+│   │   │       └── profile.html
+│   │   ├── 📝 forms.py             # 表單定義
+│   │   ├── 🔗 urls.py              # URL 路由
+│   │   ├── 👑 admin.py             # 後台管理
+│   │   ├── 📱 apps.py              # App 配置
+│   │   ├── 🧪 tests.py             # 測試程式
+│   │   ├── 🔧 utils.py             # 工具函數
+│   │   ├── 🎯 serializers.py       # API 序列化 (DRF)
+│   │   └── 📊 migrations/          # 資料庫遷移檔
+│   ├── blog/                       # 部落格模組
+│   ├── products/                   # 商品模組
+│   └── orders/                     # 訂單模組
+├── 🎨 static/                      # 靜態檔案
+│   ├── css/
+│   │   ├── base.css
+│   │   └── app.css
+│   ├── js/
+│   │   ├── main.js
+│   │   └── utils.js
+│   ├── images/
+│   └── fonts/
+├── 📂 media/                       # 使用者上傳檔案
+│   ├── uploads/
+│   └── avatars/
+├── 🧪 tests/                       # 專案層級測試
+│   ├── __init__.py
+│   ├── test_settings.py
+│   ├── unit/
+│   ├── integration/
+│   └── fixtures/
+├── 📚 docs/                        # 專案文件
+│   ├── README.md
+│   ├── API.md
+│   └── deployment.md
+├── 🔧 requirements/                # 依賴套件管理
+│   ├── base.txt                    # 基礎套件
+│   ├── development.txt             # 開發環境套件
+│   ├── production.txt              # 正式環境套件
+│   └── testing.txt                 # 測試環境套件
+├── 🐳 docker/                      # Docker 相關檔案
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   └── nginx.conf
+├── 📋 .env                         # 環境變數 (不可提交)
+├── 📋 .env.example                 # 環境變數範例
+├── 🚫 .gitignore                   # Git 忽略檔案
+└── 📄 README.md                    # 專案說明文件
+</code></pre>
+<h3 id="核心檔案與資料夾說明"><a class="header" href="#核心檔案與資料夾說明">核心檔案與資料夾說明</a></h3>
+<h4 id="-settingspy---專案配置核心"><a class="header" href="#-settingspy---專案配置核心">🔧 <code>settings.py</code> - 專案配置核心</a></h4>
+<pre><code class="language-python"># settings/base.py - 基礎設定
+import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# 安全性設定
+SECRET_KEY = os.environ.get('SECRET_KEY')
+DEBUG = False
+ALLOWED_HOSTS = []
+
+# Django 應用程式
+DJANGO_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+]
+
+THIRD_PARTY_APPS = [
+    'rest_framework',
+    'django_extensions',
+    'crispy_forms',
+]
+
+LOCAL_APPS = [
+    'apps.accounts',
+    'apps.blog',
+    'apps.products',
+]
+
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+
+# 資料庫設定
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
+    }
+}
+
+# 國際化
+LANGUAGE_CODE = 'zh-hant'
+TIME_ZONE = 'Asia/Taipei'
+USE_I18N = True
+USE_TZ = True
+</code></pre>
+<h4 id="-django-app-結構詳解"><a class="header" href="#-django-app-結構詳解">📱 Django App 結構詳解</a></h4>
+<pre><code class="language-python"># models.py - 資料模型
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+
+class CustomUser(AbstractUser):
+    email = models.EmailField(unique=True)
+    birth_date = models.DateField(null=True, blank=True)
+    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
+    
+    class Meta:
+        db_table = 'users'
+        verbose_name = '使用者'
+        verbose_name_plural = '使用者'
+
+# views.py - 視圖邏輯
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+
+def home(request):
+    context = {'title': '首頁'}
+    return render(request, 'home.html', context)
+
+@login_required
+def profile(request):
+    if request.method == 'POST':
+        # 處理表單提交
+        pass
+    return render(request, 'accounts/profile.html')
+
+# urls.py - URL 路由
+from django.urls import path
+from . import views
+
+app_name = 'accounts'
+urlpatterns = [
+    path('', views.home, name='home'),
+    path('profile/', views.profile, name='profile'),
+    path('login/', views.login_view, name='login'),
+]
+</code></pre>
+<h2 id="-開發工作流程"><a class="header" href="#-開發工作流程">🚀 開發工作流程</a></h2>
+<h3 id="1-專案建立與設定"><a class="header" href="#1-專案建立與設定">1. 專案建立與設定</a></h3>
+<pre><code class="language-bash"># 安裝 Django
+pip install django
+
+# 建立專案
+django-admin startproject my_project
+cd my_project
+
+# 建立虛擬環境
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# 或
+venv\Scripts\activate     # Windows
+
+# 安裝依賴
+pip install -r requirements/development.txt
+</code></pre>
+<h3 id="2-建立-django-app"><a class="header" href="#2-建立-django-app">2. 建立 Django App</a></h3>
+<pre><code class="language-bash"># 建立新的應用程式
+python manage.py startapp blog
+
+# 或建立在 apps 資料夾中
+mkdir apps
+python manage.py startapp blog apps/blog
+</code></pre>
+<h3 id="3-資料庫操作"><a class="header" href="#3-資料庫操作">3. 資料庫操作</a></h3>
+<pre><code class="language-bash"># 建立遷移檔
+python manage.py makemigrations
+
+# 檢視 SQL 語句
+python manage.py sqlmigrate blog 0001
+
+# 執行遷移
+python manage.py migrate
+
+# 建立超級使用者
+python manage.py createsuperuser
+</code></pre>
+<h3 id="4-開發除錯"><a class="header" href="#4-開發除錯">4. 開發除錯</a></h3>
+<pre><code class="language-bash"># 啟動開發伺服器
+python manage.py runserver
+
+# 指定 IP 和 Port
+python manage.py runserver 0.0.0.0:8000
+
+# Django Shell
+python manage.py shell
+
+# 收集靜態檔案
+python manage.py collectstatic
+</code></pre>
+<h3 id="5-測試與品質檢查"><a class="header" href="#5-測試與品質檢查">5. 測試與品質檢查</a></h3>
+<pre><code class="language-bash"># 執行測試
+python manage.py test
+
+# 執行特定 App 測試
+python manage.py test apps.blog
+
+# 程式碼覆蓋率
+coverage run --source='.' manage.py test
+coverage report
+coverage html
+
+# 程式碼風格檢查
+flake8 .
+black .
+isort .
+</code></pre>
+<h2 id="-django-請求處理流程"><a class="header" href="#-django-請求處理流程">🔄 Django 請求處理流程</a></h2>
+<pre><code>瀏覽器發送 HTTP 請求
+         ↓
+    Web Server (Nginx/Apache)
+         ↓
+    WSGI Server (Gunicorn/uWSGI)
+         ↓
+┌──── Django Framework ────┐
+│                          │
+│  1. URL Dispatcher       │ ← urls.py 路由匹配
+│         ↓               │
+│  2. Middleware          │ ← 請求預處理
+│         ↓               │
+│  3. View Function       │ ← views.py 處理邏輯
+│    ↙️        ↘️         │
+│ Model      Template     │ ← 資料處理 &amp; 渲染
+│    ↘️        ↙️         │
+│  4. HTTP Response       │ ← 回應生成
+│         ↓               │
+│  5. Middleware          │ ← 回應後處理
+└──────────────────────────┘
+         ↓
+    回傳給瀏覽器
+</code></pre>
+<h3 id="請求處理詳解"><a class="header" href="#請求處理詳解">請求處理詳解</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>階段</th><th>處理內容</th><th>涉及檔案</th><th>說明</th></tr></thead><tbody>
+<tr><td><strong>URL 路由</strong></td><td>解析 URL 路徑</td><td><code>urls.py</code></td><td>將 URL 映射到對應的 View</td></tr>
+<tr><td><strong>中介軟體</strong></td><td>請求預處理</td><td><code>settings.py</code></td><td>認證、CORS、快取等</td></tr>
+<tr><td><strong>視圖處理</strong></td><td>業務邏輯執行</td><td><code>views.py</code></td><td>處理請求資料、調用 Model</td></tr>
+<tr><td><strong>模型操作</strong></td><td>資料庫互動</td><td><code>models.py</code></td><td>ORM 查詢、資料驗證</td></tr>
+<tr><td><strong>模板渲染</strong></td><td>生成 HTML</td><td><code>templates/</code></td><td>結合資料與樣板</td></tr>
+<tr><td><strong>回應生成</strong></td><td>建立 HTTP 回應</td><td><code>views.py</code></td><td>JSON、HTML、檔案下載等</td></tr>
+</tbody></table>
+</div>
+<h2 id="-django-核心組件深入"><a class="header" href="#-django-核心組件深入">🎯 Django 核心組件深入</a></h2>
+<h3 id="1-orm-object-relational-mapping"><a class="header" href="#1-orm-object-relational-mapping">1. ORM (Object-Relational Mapping)</a></h3>
+<pre><code class="language-python"># 模型定義
+class Post(models.Model):
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    tags = models.ManyToManyField('Tag', blank=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['author', 'created_at']),
+        ]
+
+# 查詢操作
+# 基本查詢
+posts = Post.objects.all()
+post = Post.objects.get(id=1)
+posts = Post.objects.filter(author__username='john')
+
+# 複雜查詢
+from django.db.models import Q, F, Count
+posts = Post.objects.filter(
+    Q(title__icontains='django') | Q(content__icontains='django')
+).annotate(
+    comment_count=Count('comments')
+).select_related('author').prefetch_related('tags')
+</code></pre>
+<h3 id="2-django-admin-客製化"><a class="header" href="#2-django-admin-客製化">2. Django Admin 客製化</a></h3>
+<pre><code class="language-python"># admin.py
+from django.contrib import admin
+from .models import Post, Tag
+
+@admin.register(Post)
+class PostAdmin(admin.ModelAdmin):
+    list_display = ['title', 'author', 'created_at', 'is_published']
+    list_filter = ['created_at', 'author', 'tags']
+    search_fields = ['title', 'content']
+    date_hierarchy = 'created_at'
+    ordering = ['-created_at']
+    
+    fieldsets = (
+        (None, {
+            'fields': ('title', 'content', 'author')
+        }),
+        ('進階選項', {
+            'classes': ('collapse',),
+            'fields': ('tags', 'is_published'),
+        }),
+    )
+</code></pre>
+<h3 id="3-django-rest-framework"><a class="header" href="#3-django-rest-framework">3. Django REST Framework</a></h3>
+<pre><code class="language-python"># serializers.py
+from rest_framework import serializers
+from .models import Post
+
+class PostSerializer(serializers.ModelSerializer):
+    author_name = serializers.CharField(source='author.username', read_only=True)
+    
+    class Meta:
+        model = Post
+        fields = ['id', 'title', 'content', 'author_name', 'created_at']
+
+# views.py (API)
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+class PostViewSet(ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    
+    @action(detail=True, methods=['post'])
+    def toggle_like(self, request, pk=None):
+        post = self.get_object()
+        # 點讚邏輯
+        return Response({'status': 'success'})
+</code></pre>
+<h2 id="-開發最佳實務"><a class="header" href="#-開發最佳實務">🔧 開發最佳實務</a></h2>
+<h3 id="專案結構組織"><a class="header" href="#專案結構組織">專案結構組織</a></h3>
+<ul>
+<li><strong>應用程式模組化</strong>：按功能領域分割 App</li>
+<li><strong>設定檔分環境</strong>：開發、測試、正式環境分離</li>
+<li><strong>敏感資料外部化</strong>：使用環境變數</li>
+<li><strong>遵循 Django 命名慣例</strong>：models.py、views.py 等</li>
+</ul>
+<h3 id="效能最佳化"><a class="header" href="#效能最佳化">效能最佳化</a></h3>
+<pre><code class="language-python"># 資料庫查詢最佳化
+# ❌ N+1 查詢問題
+for post in Post.objects.all():
+    print(post.author.username)  # 每次都查詢資料庫
+
+# ✅ 使用 select_related
+for post in Post.objects.select_related('author'):
+    print(post.author.username)  # 一次查詢完成
+
+# ✅ 使用 prefetch_related (多對多)
+posts = Post.objects.prefetch_related('tags').all()
+
+# 快取使用
+from django.core.cache import cache
+from django.views.decorators.cache import cache_page
+
+@cache_page(60 * 15)  # 15 分鐘快取
+def expensive_view(request):
+    # 耗時操作
+    data = cache.get('expensive_data')
+    if not data:
+        data = expensive_calculation()
+        cache.set('expensive_data', data, 3600)
+    return render(request, 'template.html', {'data': data})
+</code></pre>
+<h3 id="安全性考量"><a class="header" href="#安全性考量">安全性考量</a></h3>
+<pre><code class="language-python"># settings.py 安全設定
+SECURE_SSL_REDIRECT = True
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+
+# 防範 SQL 注入 - 使用 ORM
+# ❌ 危險做法
+User.objects.extra(where=[f"username = '{username}'"])
+
+# ✅ 安全做法
+User.objects.filter(username=username)
+
+# 防範 XSS - 模板自動跳脫
+&lt;!-- Django 模板會自動跳脫 --&gt;
+&lt;p&gt;{{ user_input }}&lt;/p&gt;
+
+&lt;!-- 如需原始 HTML --&gt;
+&lt;p&gt;{{ user_input|safe }}&lt;/p&gt;
+</code></pre>
+<h2 id="-開發工具與生態系"><a class="header" href="#-開發工具與生態系">🛠️ 開發工具與生態系</a></h2>
+<h3 id="必備套件"><a class="header" href="#必備套件">必備套件</a></h3>
+<pre><code class="language-txt"># requirements/base.txt
+Django&gt;=4.2,&lt;5.0
+psycopg2-binary&gt;=2.9.0  # PostgreSQL
+Pillow&gt;=9.0.0           # 圖片處理
+django-environ&gt;=0.9.0   # 環境變數管理
+
+# requirements/development.txt
+-r base.txt
+django-debug-toolbar&gt;=4.0
+django-extensions&gt;=3.2
+ipython&gt;=8.0
+black&gt;=22.0
+flake8&gt;=5.0
+pytest-django&gt;=4.5
+factory-boy&gt;=3.2        # 測試資料生成
+</code></pre>
+<h3 id="推薦工具"><a class="header" href="#推薦工具">推薦工具</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>工具</th><th>用途</th><th>安裝指令</th></tr></thead><tbody>
+<tr><td><strong>Django Debug Toolbar</strong></td><td>開發除錯</td><td><code>pip install django-debug-toolbar</code></td></tr>
+<tr><td><strong>Django Extensions</strong></td><td>管理指令擴充</td><td><code>pip install django-extensions</code></td></tr>
+<tr><td><strong>Celery</strong></td><td>非同步任務</td><td><code>pip install celery redis</code></td></tr>
+<tr><td><strong>Django REST Framework</strong></td><td>API 開發</td><td><code>pip install djangorestframework</code></td></tr>
+<tr><td><strong>Django Crispy Forms</strong></td><td>表單美化</td><td><code>pip install django-crispy-forms</code></td></tr>
+<tr><td><strong>Whitenoise</strong></td><td>靜態檔案服務</td><td><code>pip install whitenoise</code></td></tr>
+<tr><td><strong>Sentry</strong></td><td>錯誤監控</td><td><code>pip install sentry-sdk</code></td></tr>
+</tbody></table>
+</div>
+<h3 id="ide-與編輯器"><a class="header" href="#ide-與編輯器">IDE 與編輯器</a></h3>
+<ul>
+<li><strong>PyCharm Professional</strong> (Django 專案支援完整)</li>
+<li><strong>VS Code</strong> + Python 擴充套件</li>
+<li><strong>Sublime Text</strong> + Anaconda 套件</li>
+</ul>
+<h2 id="-部署與維運"><a class="header" href="#-部署與維運">🚀 部署與維運</a></h2>
+<h3 id="部署流程"><a class="header" href="#部署流程">部署流程</a></h3>
+<pre><code class="language-bash"># 1. 準備正式環境
+pip install -r requirements/production.txt
+
+# 2. 環境變數設定
+export DJANGO_SETTINGS_MODULE=my_project.settings.production
+export SECRET_KEY="your-secret-key"
+export DEBUG=False
+
+# 3. 資料庫遷移
+python manage.py migrate
+
+# 4. 收集靜態檔案
+python manage.py collectstatic --noinput
+
+# 5. 啟動 Gunicorn
+gunicorn --bind 0.0.0.0:8000 my_project.wsgi:application
+</code></pre>
+<h3 id="docker-部署"><a class="header" href="#docker-部署">Docker 部署</a></h3>
+<pre><code class="language-dockerfile"># Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY requirements/ requirements/
+RUN pip install -r requirements/production.txt
+
+COPY . .
+RUN python manage.py collectstatic --noinput
+
+EXPOSE 8000
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "my_project.wsgi:application"]
+</code></pre>
+<pre><code class="language-yaml"># docker-compose.yml
+version: '3.8'
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=False
+      - DATABASE_URL=postgresql://user:pass@db:5432/mydb
+    depends_on:
+      - db
+      - redis
+  
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  
+  redis:
+    image: redis:7-alpine
+
+volumes:
+  postgres_data:
+</code></pre>
+<h2 id="-延伸學習資源"><a class="header" href="#-延伸學習資源">📚 延伸學習資源</a></h2>
+<h3 id="官方資源"><a class="header" href="#官方資源">官方資源</a></h3>
+<ul>
+<li><a href="https://docs.djangoproject.com/">Django 官方文件</a></li>
+<li><a href="https://www.django-rest-framework.org/">Django REST Framework</a></li>
+<li><a href="https://djangopackages.org/">Django Packages</a> - 套件搜尋</li>
+</ul>
+<h3 id="社群資源"><a class="header" href="#社群資源">社群資源</a></h3>
+<ul>
+<li><a href="https://tutorial.djangogirls.org/">Django Girls Tutorial</a></li>
+<li><a href="https://www.feldroy.com/books/two-scoops-of-django-3-x">Two Scoops of Django</a> - 最佳實務書籍</li>
+<li><a href="https://django-chinese-doc.readthedocs.io/">Django 中文社群</a></li>
+</ul>
+<h3 id="進階主題"><a class="header" href="#進階主題">進階主題</a></h3>
+<ul>
+<li><strong>Django Channels</strong> - WebSocket 支援</li>
+<li><strong>Django Q</strong> - 分散式任務佇列</li>
+<li><strong>Django CMS</strong> - 內容管理系統</li>
+<li><strong>Django GraphQL</strong> - GraphQL API</li>
+<li><strong>Django Ninja</strong> - 快速 API 開發</li>
+</ul>
+<hr />
+<p>🎉 <strong>恭喜！</strong> 你現在對 Django 的架構和開發流程有了完整的理解。開始建構你的 Web 應用程式吧！</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../python/python_locks_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../python/nginx_django_ssl_guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../python/python_locks_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../python/nginx_django_ssl_guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,333 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>梯度下降法 gradient descent - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="梯度下降法gradient-descent"><a class="header" href="#梯度下降法gradient-descent">梯度下降法(gradient descent)</a></h1>
+<p>https://chih-sheng-huang821.medium.com/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92-%E5%9F%BA%E7%A4%8E%E6%95%B8%E5%AD%B8-%E4%BA%8C-%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D%E6%B3%95-gradient-descent-406e1fd001f</p>
+<p>微積分找極值方式:</p>
+<p>一般微積分說將要找極大值或極小值的式子做微分等於0找解，找到的不是極大值，就是極小值，是極大還是極小就看二階微分帶入找出來的解，看結果是大於0，還是小於0。</p>
+<p>這邊舉個範例</p>
+<p><img src="images/1*phk6yUULlWuub2EsFNX6Qw.png" alt="img" /></p>
+<p>微分很簡單</p>
+<p><img src="images/1*p5hZPjcr5j_BdFZEgwh6-A.png" alt="img" /></p>
+<p>微分等於0</p>
+<p><img src="images/1*3M9cY-HoWK84xUoXP6Ybjw.png" alt="img" /></p>
+<p>二階微分</p>
+<p><img src="images/1*fo5vuij88sB-595BSGkLQg.png" alt="img" /></p>
+<p>所以剛剛的式子找到的極值是極小值，當<em>x</em>=5，有極小值-24。</p>
+<p>這個範例是可以找的到唯一解的式子，但在<strong>實際應用根本不可能向微積分考試這麼理想一定找得到唯一解</strong>，這時候就必須要靠找近似解的方式去逼近極值，也就是這篇要說的梯度下降法(gradient descent)。</p>
+<h1 id="梯度下降法gradient-descent-1"><a class="header" href="#梯度下降法gradient-descent-1">梯度下降法(gradient descent)</a></h1>
+<p>梯度下降法(gradient descent)是最佳化理論裡面的一個一階找最佳解的一種方法，主要是希望用梯度下降法找到函數(剛剛舉例的式子)的局部最小值，因為梯度的方向是走向局部最大的方向，所以在梯度下降法中是往梯度的反方向走。</p>
+<p>這邊我們先大概說一下梯度， 要算一個函數<em>f</em>(<em>x</em>)的梯度有一個前提，就是這個函數要是任意可微分函數，這也是深度學習為什麼都要找可微分函數出來當激活函數(activation function)。</p>
+<p>一維度的純量<em>x</em>的梯度，通常用<em>f'</em>(<em>x</em>)表示。
+多維度的向量***x***的梯度，通常用∇<em>f</em>(*<strong>x*</strong>)表示。</p>
+<blockquote>
+<p>白話一點，一維度的純量<em>x</em>的梯度就是算<em>f</em>(<em>x</em>)對<em>x</em>的微分，多維度的向量<em><em><em>x***的梯度就是算</em>f</em>(<em><strong>x*</strong>)對</em></em>*x***所有元素的偏微分</p>
+</blockquote>
+<p>一維度的容易理解，上面也有範例。多維度的梯度，一般公式寫的是</p>
+<p><img src="images/1*ySkxwxuRSZ8bWqUm3bp3-Q.png" alt="img" /></p>
+<p>這邊可能有人看不懂，我舉一個實際的例子</p>
+<p>假設我們的***x***有兩個維度的參數，梯度就分別需要對不同維度的參數做偏微分</p>
+<p><img src="images/1*kPVvP0czBbIA9vZ6rBT6dg.png" alt="img" /></p>
+<p><strong>多維度的範例1:</strong></p>
+<p><img src="images/1*6Zmb1wh7IKoWcNbak19ubQ.png" alt="img" /></p>
+<p><strong>多維度的範例2:</strong></p>
+<p><img src="images/1*N9jrA8m7wkczNbVX13nleg.png" alt="img" /></p>
+<p>從一開始的純量的微分到多維度的梯度，大家應該知道梯度怎麼算了。</p>
+<h2 id="那算出來的梯度跟梯度下降法有什麼關係"><a class="header" href="#那算出來的梯度跟梯度下降法有什麼關係">那算出來的梯度跟梯度下降法有什麼關係?</a></h2>
+<p>在機器學習，通常有一個損失函數(loss function或稱為cost function，在最佳化理論我們會稱為目標函數objection function)，我們通常是希望這個函數越小越好(也就是找極小值)，這邊可以參考<a href="https://medium.com/@chih.sheng.huang821/%E7%B7%9A%E6%80%A7%E5%9B%9E%E6%AD%B8-linear-regression-3a271a7453e">回歸分析</a>或是<a href="https://medium.com/@chih.sheng.huang821/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92-%E7%A5%9E%E7%B6%93%E7%B6%B2%E8%B7%AF-%E5%A4%9A%E5%B1%A4%E6%84%9F%E7%9F%A5%E6%A9%9F-multilayer-perceptron-mlp-%E5%90%AB%E8%A9%B3%E7%B4%B0%E6%8E%A8%E5%B0%8E-ee4f3d5d1b41">MLP</a>描述的目標函數。
+雖然回歸有唯一解，但我在回歸最後面有寫到，因為回歸有算反矩陣等，計算複雜度相對梯度下降法來的複雜，而且也有可以因為矩陣奇異，反矩陣推估錯誤，導致模型估計錯誤，所以用梯度下降法來做應該比較合適。</p>
+<p><strong>梯度下降法是一種不斷去更新參數(這邊參數用</strong>***x***<strong>表示)找「解」的方法</strong>，所以一定要先隨機產生一組初始參數的「解」，然後根據這組隨機產生的「解」開始算此「解」的梯度方向大小，然後將這個「解」去減去梯度方向，很饒舌，公式如下:</p>
+<p><img src="images/1*cGNuS-tDLAdY_P9fcia7qQ.png" alt="img" /></p>
+<p>這邊的t是第幾次更新參數，γ是學習率(Learning rate)。
+梯度的方向我們知道了，但找「解」的時候公式是往梯度的方向更新，一次要更新多少，就是由學習率來控制的，後面會有範例說這個學習率影響的程度。</p>
+<h2 id="範例1"><a class="header" href="#範例1">範例1</a></h2>
+<p>我這邊用下面這個函數(雖然它有唯一解)當例子來做梯度下降法，多維度基本上差不多</p>
+<p><img src="images/1*4Lyw_bUByHDuFTAIMl8IHg.png" alt="img" /></p>
+<p>此例子基本上學習率可以不用太小，就可以很快就找到解，我後面有跑不同學習率看幾次可以跑到近似解。</p>
+<p><img src="images/1*WYEjI4VaAHWv0JEqnyf3QA.png" alt="img" /></p>
+<p>f(x)=x²-10x+1</p>
+<p>Note: 我這邊列出切線和法線公式，主要是我範例用的圖有畫出這兩條線。</p>
+<p><img src="images/1*Qm6tVOo_MJbwFtDJb1hMCQ.png" alt="img" /></p>
+<p>剛有提到我們需要先設定一個初始化的「解」，此例我設定x(0)=20(故意跟最佳值有差距)</p>
+<blockquote>
+<p>紅色的點是每一次更新找到的解</p>
+<p>紅色線是法線，藍色線是切線，法線和切線這兩條線是垂直的，但因為x軸和y軸scale不一樣，所以看不出來它是垂直的。</p>
+</blockquote>
+<p><img src="images/1*PyXvVaaz4OSA_J6VdXlAJw.gif" alt="img" /></p>
+<p>學習率是0.01</p>
+<p><img src="images/1*HoYoC5wDbhGwoQsl7yWDhw.gif" alt="img" /></p>
+<p>學習率是0.1</p>
+<p><img src="images/1*-36NUUMhBq7J1rL8agmEgw.gif" alt="img" /></p>
+<p>學習率是0.9</p>
+<p><img src="images/1*StvoG20bZY6rAbVKGcxWnw.gif" alt="img" /></p>
+<p>學習率是1</p>
+<p>由上圖我們可以發現學習率對找解影響很大，學習率太低，需要更新很多次才能到最佳解，學習率太高，有可能會造成梯度走不進去局部極值(但也可以擺脫局部極值的問題，等等有範例)。這邊尤其是當學習率是1的時候，基本上梯度下降法根本走不到局部極小值，一直在左右對跳，所以最佳化理論有很多衍生的方式或更先進的方式去解決這些問題(這邊先不介紹)。</p>
+<h2 id="範例2"><a class="header" href="#範例2">範例2</a></h2>
+<p>我設計一個有局部極小值和全域極小值的函數，到四次方，但我是亂打的，所以<em>x</em>=10，函數的值就超大的。</p>
+<p><img src="images/1*E82CWULL7J2qNy-8ab6ZyA.png" alt="img" /></p>
+<p>我們需要先設定一個初始化的「解」，此例我設定x(0)=-20(故意跟最佳值有差距)</p>
+<p><img src="images/1*QkG6kdDJ1p6M62sdUX6brQ.gif" alt="img" /></p>
+<p>學習率是0.00001</p>
+<p>所以這個學習率太小，初始值不好，解就會掉到局部極小值。</p>
+<p><img src="images/1*gt1aMVhydotP2I7urp-Z0A.gif" alt="img" /></p>
+<p>學習率是0.0004</p>
+<p>這個學習率(0.0004)對此例子來說，雖然步伐夠大跳出了局部極值，但到全域極值時，因為步伐太大，所以走不到最好的值。</p>
+<p><img src="images/1*yDhjLYUAX8l-yrVC1thDOA.gif" alt="img" /></p>
+<p>學習率是0.0003</p>
+<p>這個學習率(0.0003)對此例子來說就夠了，可以走到全域極值。</p>
+<h2 id="補充說明沒有極值的狀況"><a class="header" href="#補充說明沒有極值的狀況">補充說明沒有極值的狀況</a></h2>
+<p>雖然說微分可以找極值，但很多函數既無最大值，也無最小值，因為函數的長像彎彎曲曲很多次，有局部極值或鞍部，所以一次維分等於0求得的可能是極值，也可以是相對極值。</p>
+<p>上面舉的某一個例子，就發生這種情況</p>
+<p><img src="images/1*KpbAyEz4ISnYlx4nLwAEvg.png" alt="img" /></p>
+<p>這個方程式可以找到極值「解」讓<em>f</em>(<em>x</em>)最小(<em>f</em>(<em>x</em>)=16)，但這個值真的是最小嗎?
+我找個點隨便帶入</p>
+<p><img src="images/1*RBk8s9zQ4X4fBTJKJ7O7Og.png" alt="img" /></p>
+<blockquote>
+<p>這個值比微分的最佳解還要小，所以可以得知微分等於0找到的不一定是最佳解，所以用梯度下降法，可以找到更好的解。</p>
+</blockquote>
+<p>下圖我將上式子畫出來它的坐標跟微分解還有梯度法如何讓解更新。</p>
+<p><img src="images/1*ohVPiStlsbMP0XL1_X-fkQ.gif" alt="img" /></p>
+<p>紅色點是微分解，藍色點是梯度法不斷更新找解(學習率設定在0.01，主要是為了讓解跑慢一點，動畫才好看)。</p>
+<p>這邊我只跑100次，因為解在無窮大的地方，但可以看到loss值不斷在減少中。</p>
+<p>當然還有很多手法(比如牛頓法， momentum或是Adam)可以避免上述問題，或是讓解找的更快，但此篇文章只在說明，梯度下降法是什麼，跟它怎麼運作的，未來有時間可以在將這些補上。</p>
+<p>坦白說這篇內容雖然很好寫，但作圖很花時間和腦力的，喜歡這篇的可以多拍幾下手給個獎勵吧。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../ml/簡單解釋梯度下降法.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../ml/梯度最佳解相關算法.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../ml/簡單解釋梯度下降法.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../ml/梯度最佳解相關算法.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

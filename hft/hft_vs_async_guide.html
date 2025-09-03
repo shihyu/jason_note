@@ -1,0 +1,737 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>HFT vs Async 性能完整對比指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="高頻交易-vs-異步編程完整指南"><a class="header" href="#高頻交易-vs-異步編程完整指南">高頻交易 vs 異步編程完整指南</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ol>
+<li><a href="#%E7%95%B0%E6%AD%A5%E7%B7%A8%E7%A8%8B%E5%9F%BA%E7%A4%8E">異步編程基礎</a></li>
+<li><a href="#%E4%B8%A6%E8%A1%8C%E8%99%95%E7%90%86%E8%88%87%E9%80%A3%E7%B7%9A%E5%88%86%E6%95%A3">並行處理與連線分散</a></li>
+<li><a href="#%E9%AB%98%E9%A0%BB%E4%BA%A4%E6%98%93%E7%9A%84%E7%9C%9F%E7%9B%B8">高頻交易的真相</a></li>
+<li><a href="#%E6%8A%80%E8%A1%93%E9%81%B8%E6%93%87%E6%B1%BA%E7%AD%96">技術選擇決策</a></li>
+<li><a href="#%E5%AF%A6%E6%88%B0%E6%A1%88%E4%BE%8B">實戰案例</a></li>
+</ol>
+<hr />
+<h2 id="異步編程基礎"><a class="header" href="#異步編程基礎">異步編程基礎</a></h2>
+<h3 id="async-與多執行緒的區別"><a class="header" href="#async-與多執行緒的區別">async 與多執行緒的區別</a></h3>
+<h4 id="傳統多執行緒問題"><a class="header" href="#傳統多執行緒問題">傳統多執行緒問題</a></h4>
+<pre><code class="language-python">import threading
+import requests
+
+def blocking_api_call(url):
+    return requests.get(url)  # 阻塞執行緒
+
+# 問題：每個執行緒消耗 8MB 記憶體
+threads = []
+for url in urls:
+    t = threading.Thread(target=blocking_api_call, args=(url,))
+    threads.append(t)
+    t.start()
+</code></pre>
+<h4 id="async-解決方案"><a class="header" href="#async-解決方案">async 解決方案</a></h4>
+<pre><code class="language-python">import asyncio
+import aiohttp
+
+async def non_blocking_api_call(session, url):
+    async with session.get(url) as response:
+        return await response.text()
+
+# 單執行緒處理大量併發
+async def main():
+    async with aiohttp.ClientSession() as session:
+        tasks = [non_blocking_api_call(session, url) for url in urls]
+        results = await asyncio.gather(*tasks)
+</code></pre>
+<h3 id="何時使用-async"><a class="header" href="#何時使用-async">何時使用 async？</a></h3>
+<h4 id="-適合-async-的場景"><a class="header" href="#-適合-async-的場景">✅ 適合 async 的場景</a></h4>
+<ul>
+<li><strong>I/O 密集型任務</strong>：網路請求、檔案讀寫、資料庫查詢</li>
+<li><strong>大量併發連線</strong>：需要同時處理數百至數千個連線</li>
+<li><strong>延遲容忍度高</strong>：毫秒到秒級的延遲可接受</li>
+</ul>
+<h4 id="-不適合-async-的場景"><a class="header" href="#-不適合-async-的場景">❌ 不適合 async 的場景</a></h4>
+<ul>
+<li><strong>CPU 密集型任務</strong>：數學運算、影像處理</li>
+<li><strong>極低延遲要求</strong>：微秒級響應需求</li>
+<li><strong>簡單序列處理</strong>：單一任務流程</li>
+</ul>
+<hr />
+<h2 id="並行處理與連線分散"><a class="header" href="#並行處理與連線分散">並行處理與連線分散</a></h2>
+<h3 id="連線池原理"><a class="header" href="#連線池原理">連線池原理</a></h3>
+<h4 id="問題單一連線的瓶頸"><a class="header" href="#問題單一連線的瓶頸">問題：單一連線的瓶頸</a></h4>
+<pre><code>傳統方式每次請求：
+請求1: TCP握手(100ms) + 請求(50ms) + 回應(50ms) = 200ms
+請求2: TCP握手(100ms) + 請求(50ms) + 回應(50ms) = 200ms
+總計: 400ms
+</code></pre>
+<h4 id="解決方案連線池"><a class="header" href="#解決方案連線池">解決方案：連線池</a></h4>
+<pre><code>連線池方式：
+請求1: TCP握手(100ms) + 請求(50ms) + 回應(50ms) = 200ms  
+請求2: 重用連線 + 請求(50ms) + 回應(50ms) = 100ms
+總計: 300ms，節省 25%
+</code></pre>
+<h3 id="aiohttp-連線配置"><a class="header" href="#aiohttp-連線配置">aiohttp 連線配置</a></h3>
+<pre><code class="language-python">import aiohttp
+import asyncio
+
+# 高效能連線配置
+connector = aiohttp.TCPConnector(
+    limit=200,              # 全域連線池大小
+    limit_per_host=50,      # 每個 host 最多 50 條連線
+    keepalive_timeout=60,   # 連線保持時間
+    force_close=False,      # 保持連線重用
+    enable_cleanup_closed=True,
+    ssl=False              # 內部 API 可關閉 SSL
+)
+
+async with aiohttp.ClientSession(connector=connector) as session:
+    # aiohttp 自動分散請求到 50 條連線
+    tasks = [session.get(url) for url in urls]  # 1000 個請求
+    results = await asyncio.gather(*tasks)
+</code></pre>
+<h3 id="連線分散策略"><a class="header" href="#連線分散策略">連線分散策略</a></h3>
+<h4 id="單一-session-多連線推薦"><a class="header" href="#單一-session-多連線推薦">單一 Session 多連線（推薦）</a></h4>
+<pre><code class="language-python">async def single_session_multiple_connections():
+    connector = aiohttp.TCPConnector(limit_per_host=50)
+    
+    async with aiohttp.ClientSession(connector=connector) as session:
+        # aiohttp 內建負載均衡，自動分散到 50 條連線
+        tasks = [session.get(url) for url in urls]
+        results = await asyncio.gather(*tasks)
+</code></pre>
+<h4 id="多-session-手動分散特殊需求"><a class="header" href="#多-session-手動分散特殊需求">多 Session 手動分散（特殊需求）</a></h4>
+<pre><code class="language-python">async def multiple_sessions_approach():
+    sessions = []
+    for i in range(5):
+        connector = aiohttp.TCPConnector(limit_per_host=10)
+        sessions.append(aiohttp.ClientSession(connector=connector))
+    
+    tasks = []
+    for i, url in enumerate(urls):
+        session_idx = i % len(sessions)
+        tasks.append(sessions[session_idx].get(url))
+    
+    results = await asyncio.gather(*tasks)
+</code></pre>
+<h3 id="效能比較表"><a class="header" href="#效能比較表">效能比較表</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>方案</th><th>I/O 密集型</th><th>CPU 密集型</th><th>記憶體使用</th><th>複雜度</th><th>適用場景</th></tr></thead><tbody>
+<tr><td><strong>async + non-blocking API</strong></td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐</td><td><strong>最佳選擇</strong></td></tr>
+<tr><td><strong>async + run_in_executor</strong></td><td>⭐⭐⭐⭐</td><td>⭐⭐</td><td>⭐⭐⭐</td><td>⭐⭐⭐⭐</td><td>混合 blocking API</td></tr>
+<tr><td><strong>ThreadPoolExecutor</strong></td><td>⭐⭐⭐⭐</td><td>⭐⭐</td><td>⭐⭐⭐</td><td>⭐⭐</td><td>簡單平行處理</td></tr>
+<tr><td><strong>MultiProcessing</strong></td><td>⭐⭐⭐</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐</td><td>⭐⭐</td><td>CPU 密集型任務</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="高頻交易的真相"><a class="header" href="#高頻交易的真相">高頻交易的真相</a></h2>
+<h3 id="高頻交易-vs-大量下單"><a class="header" href="#高頻交易-vs-大量下單">高頻交易 vs 大量下單</a></h3>
+<h4 id="高頻交易hft--追求極致速度"><a class="header" href="#高頻交易hft--追求極致速度">高頻交易（HFT）- 追求極致速度</a></h4>
+<pre><code class="language-cpp">// 市場造市策略
+void market_making_strategy() {
+    while(trading_active) {
+        auto tick = get_market_tick();           // &lt; 1μs
+        
+        if(spread_too_wide(tick)) {
+            cancel_old_quotes();                 // &lt; 1μs
+            send_new_quotes();                   // &lt; 1μs
+        }
+        // 整個循環必須 &lt; 5μs
+    }
+}
+</code></pre>
+<p><strong>特色：</strong></p>
+<ul>
+<li>📈 少量交易，極快速度</li>
+<li>⚡ 微秒級反應時間</li>
+<li>🎯 搶奪價差、套利機會</li>
+</ul>
+<h4 id="大量下單---追求執行數量"><a class="header" href="#大量下單---追求執行數量">大量下單 - 追求執行數量</a></h4>
+<pre><code class="language-python"># 機構投資批量交易
+async def institutional_bulk_trading():
+    total_shares = 10_000_000  # 1000萬股
+    
+    # 分散執行，避免衝擊市價
+    for batch in chunk_orders(orders, 50):
+        await asyncio.gather(*[send_order(order) for order in batch])
+        await asyncio.sleep(1)  # 延遲可接受
+</code></pre>
+<p><strong>特色：</strong></p>
+<ul>
+<li>📊 大量交易，適度速度</li>
+<li>⏱️ 秒級/分鐘級延遲</li>
+<li>💰 成本控制優先</li>
+</ul>
+<h3 id="為什麼高頻交易不用-async"><a class="header" href="#為什麼高頻交易不用-async">為什麼高頻交易不用 async？</a></h3>
+<h4 id="1-極低延遲需求"><a class="header" href="#1-極低延遲需求">1. 極低延遲需求</a></h4>
+<pre><code class="language-cpp">// 高頻交易的時間要求
+Order order;
+order.symbol = "AAPL";
+market_gateway.send_order(order);  // 必須 &lt; 1 微秒
+
+// async 的問題
+async auto process_tick() {
+    auto tick = co_await get_tick();    // 可能 0.5μs，也可能 50μs
+    co_await send_order();              // 執行時機不可控
+}
+</code></pre>
+<h4 id="2-確定性延遲"><a class="header" href="#2-確定性延遲">2. 確定性延遲</a></h4>
+<pre><code class="language-cpp">// 高頻交易要求：每次都是相同的低延遲
+while(true) {
+    auto tick = market_feed.get_next_tick();  // 固定 0.5μs
+    strategy.process(tick);                   // 固定 1.2μs  
+    if(should_trade) {
+        gateway.send_order(order);            // 固定 0.8μs
+    }
+}
+// 總計：2.5μs，每次都一樣
+</code></pre>
+<h4 id="3-協程切換開銷"><a class="header" href="#3-協程切換開銷">3. 協程切換開銷</a></h4>
+<pre><code class="language-cpp">// async 的隱藏成本
+auto process_market_data() -&gt; task&lt;void&gt; {
+    auto data = co_await get_market_data();     // 切換開銷 ~100ns
+    auto signal = co_await calculate_signal();  // 切換開銷 ~100ns
+    co_await send_order();                      // 切換開銷 ~100ns
+}
+// 總開銷：300ns，在高頻交易中是巨大的
+
+// 直接版本
+void process_market_data_direct() {
+    auto data = market_feed.get_immediate();    // 0ns 切換
+    auto signal = strategy.calculate_now(data); // 0ns 切換  
+    gateway.send_now(order);                    // 0ns 切換
+}
+</code></pre>
+<h3 id="高頻交易的-cpu-busy-策略"><a class="header" href="#高頻交易的-cpu-busy-策略">高頻交易的 CPU Busy 策略</a></h3>
+<h4 id="為什麼要讓-cpu-100-忙碌"><a class="header" href="#為什麼要讓-cpu-100-忙碌">為什麼要讓 CPU 100% 忙碌？</a></h4>
+<p><strong>1. 零切換延遲</strong></p>
+<pre><code class="language-cpp">// 非 busy 方式：有切換開銷
+poll(fd, &amp;events, 1, timeout);  // 系統調用 ~1000ns
+// CPU 可能被調度給其他程式，喚醒需要 ~5000ns
+
+// busy 方式：無切換開銷  
+while(true) {
+    if(*shared_memory_ptr != last_value) {  // 直接記憶體檢查 ~10ns
+        process_tick();                     // 立即處理 ~100ns
+    }
+}
+</code></pre>
+<p><strong>2. CPU 快取保持熱態</strong></p>
+<pre><code class="language-cpp">class HFTEngine {
+    alignas(64) volatile uint64_t market_data[1000];  // L1 cache
+    alignas(64) Strategy strategy;                    // 熱態快取
+    
+public:
+    void run() {
+        // CPU 100% 專注在這個迴圈
+        while(trading_active) {
+            // 所有資料都在 L1 cache，超快存取
+            auto tick = market_data[read_idx];
+            strategy.calculate_immediate(tick);
+        }
+    }
+};
+</code></pre>
+<h4 id="實際-busy-waiting-技巧"><a class="header" href="#實際-busy-waiting-技巧">實際 Busy Waiting 技巧</a></h4>
+<p><strong>1. 輪詢（Polling）</strong></p>
+<pre><code class="language-cpp">class UltraLowLatencyNIC {
+public:
+    void busy_poll_packets() {
+        while(true) {
+            auto* packet = (Packet*)rx_ring_buffer[rx_head];
+            
+            if(packet-&gt;status == PACKET_READY) {
+                process_market_data(packet);
+                rx_head = (rx_head + 1) % RING_SIZE;
+            }
+            // 不 sleep，保持 CPU 100%
+        }
+    }
+};
+</code></pre>
+<p><strong>2. 無鎖資料結構</strong></p>
+<pre><code class="language-cpp">template&lt;typename T&gt;
+class LockFreeQueue {
+private:
+    alignas(64) std::atomic&lt;uint64_t&gt; head{0};
+    alignas(64) std::atomic&lt;uint64_t&gt; tail{0};
+    alignas(64) T buffer[SIZE];
+    
+public:
+    bool try_push(const T&amp; item) {
+        // 忙等待直到有空間，不阻塞
+        uint64_t current_tail = tail.load(std::memory_order_relaxed);
+        // ... 無鎖操作
+        return true;
+    }
+};
+</code></pre>
+<p><strong>3. CPU 親和性設定</strong></p>
+<pre><code class="language-cpp">void setup_cpu_isolation() {
+    // 綁定到專用核心
+    cpu_set_t cpuset;
+    CPU_ZERO(&amp;cpuset);
+    CPU_SET(2, &amp;cpuset);
+    pthread_setaffinity_np(pthread_self(), sizeof(cpuset), &amp;cpuset);
+    
+    // 設定最高優先級
+    struct sched_param param;
+    param.sched_priority = 99;
+    pthread_setschedparam(pthread_self(), SCHED_FIFO, &amp;param);
+}
+</code></pre>
+<h4 id="硬體層面優化"><a class="header" href="#硬體層面優化">硬體層面優化</a></h4>
+<p><strong>DPDK（繞過 kernel）</strong></p>
+<pre><code class="language-cpp">void dpdk_busy_poll() {
+    while(trading_active) {
+        // 直接從網卡 DMA 記憶體讀取
+        struct rte_mbuf* packets[BURST_SIZE];
+        uint16_t nb_rx = rte_eth_rx_burst(port_id, 0, packets, BURST_SIZE);
+        
+        for(int i = 0; i &lt; nb_rx; i++) {
+            process_packet_immediate(packets[i]);
+        }
+        // CPU 始終 100%，不讓給任何其他程式
+    }
+}
+</code></pre>
+<p><strong>系統配置</strong></p>
+<pre><code class="language-bash"># 核心隔離
+GRUB_CMDLINE_LINUX="isolcpus=2,3 nohz_full=2,3 rcu_nocbs=2,3"
+
+# CPU 調節器
+echo performance &gt; /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor
+</code></pre>
+<hr />
+<h2 id="技術選擇決策"><a class="header" href="#技術選擇決策">技術選擇決策</a></h2>
+<h3 id="決策樹"><a class="header" href="#決策樹">決策樹</a></h3>
+<pre><code>是否為 I/O 密集型？
+├─ 是
+│  ├─ 延遲要求 &lt; 10μs？
+│  │  ├─ 是 → C++ 同步 + busy waiting
+│  │  └─ 否 → async + aiohttp
+│  └─ 大量並行需求？
+│     ├─ 是 → async + connector
+│     └─ 否 → 簡單同步
+└─ 否（CPU 密集型）
+   ├─ 需要並行？
+   │  ├─ 是 → multiprocessing
+   │  └─ 否 → 單執行緒
+   └─ 極致性能？ → C++ + SIMD
+</code></pre>
+<h3 id="場景對應表"><a class="header" href="#場景對應表">場景對應表</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>場景</th><th>技術選擇</th><th>原因</th><th>延遲</th></tr></thead><tbody>
+<tr><td><strong>高頻交易</strong></td><td>C++ 同步 + busy waiting</td><td>確定性延遲、CPU 專用</td><td>&lt; 10μs</td></tr>
+<tr><td><strong>大量 API 請求</strong></td><td>async + aiohttp</td><td>I/O 密集、高併發</td><td>&lt; 100ms</td></tr>
+<tr><td><strong>機構批量下單</strong></td><td>async + connector</td><td>大量 I/O、成本控制</td><td>&lt; 1s</td></tr>
+<tr><td><strong>數據分析</strong></td><td>multiprocessing</td><td>CPU 密集、可並行</td><td>不重要</td></tr>
+<tr><td><strong>簡單腳本</strong></td><td>requests</td><td>簡單易用</td><td>&lt; 10s</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="實戰案例"><a class="header" href="#實戰案例">實戰案例</a></h2>
+<h3 id="案例1券商批量下單系統"><a class="header" href="#案例1券商批量下單系統">案例1：券商批量下單系統</a></h3>
+<h4 id="需求分析"><a class="header" href="#需求分析">需求分析</a></h4>
+<ul>
+<li>開盤時快速下單 100+ 筆訂單</li>
+<li>延遲容忍度：秒級</li>
+<li>主要瓶頸：網路 I/O</li>
+</ul>
+<h4 id="技術選擇async--aiohttp"><a class="header" href="#技術選擇async--aiohttp">技術選擇：async + aiohttp</a></h4>
+<pre><code class="language-python">class AsyncFubonTrader:
+    def __init__(self, max_workers=50):
+        self.executor = ThreadPoolExecutor(max_workers=max_workers)
+        self.connector = aiohttp.TCPConnector(
+            limit=100,
+            limit_per_host=20,
+            keepalive_timeout=60
+        )
+    
+    async def batch_buy_stock(self, symbol, batch_count, quantity_per_batch):
+        def _batch_order():
+            orders = [create_order(...) for i in range(batch_count)]
+            return self.sdk.stock.batch_place_order(self.account, orders)
+        
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(self.executor, _batch_order)
+        return result
+</code></pre>
+<h4 id="開盤搶單優化"><a class="header" href="#開盤搶單優化">開盤搶單優化</a></h4>
+<pre><code class="language-python">class OpeningRushTrader:
+    async def ultra_fast_batch_send(self, chunk_size=10, delay_ms=50):
+        # 分批發送避免壓垮系統
+        chunks = [orders[i:i + chunk_size] for i in range(0, len(orders), chunk_size)]
+        
+        tasks = []
+        for i, chunk in enumerate(chunks):
+            task = self.send_chunk(chunk, i+1)
+            tasks.append(task)
+            
+            # 小延遲避免過載
+            if delay_ms &gt; 0 and i &lt; len(chunks) - 1:
+                await asyncio.sleep(delay_ms / 1000)
+        
+        results = await asyncio.gather(*tasks)
+        return results
+</code></pre>
+<h3 id="案例2市場數據處理對比"><a class="header" href="#案例2市場數據處理對比">案例2：市場數據處理對比</a></h3>
+<h4 id="高頻交易版本"><a class="header" href="#高頻交易版本">高頻交易版本</a></h4>
+<pre><code class="language-cpp">// 專業交易公司的做法
+class MarketDataProcessor {
+    void run() {
+        // 綁定專用 CPU 核心
+        bind_to_cpu(2);
+        
+        while(trading_active) {
+            // 忙等待市場數據
+            auto tick = get_tick_immediate();
+            
+            if(arbitrage_opportunity(tick)) {
+                send_order_immediate();  // &lt; 1μs
+            }
+        }
+    }
+};
+</code></pre>
+<h4 id="一般交易系統版本"><a class="header" href="#一般交易系統版本">一般交易系統版本</a></h4>
+<pre><code class="language-python"># 個人/小機構的做法
+async def market_data_processor():
+    async with aiohttp.ClientSession() as session:
+        while True:
+            # 查詢市場數據
+            tick = await get_market_tick(session)
+            
+            # 分析機會（可等待）
+            if await analyze_opportunity(tick):
+                await send_order(session, order)
+            
+            await asyncio.sleep(0.1)  # 100ms 間隔可接受
+</code></pre>
+<h3 id="案例3時間比較系統"><a class="header" href="#案例3時間比較系統">案例3：時間比較系統</a></h3>
+<h4 id="實時延遲監控"><a class="header" href="#實時延遲監控">實時延遲監控</a></h4>
+<pre><code class="language-python">def _print_time_comparison(self, order_history, query_time):
+    for i, order in enumerate(order_history, 1):
+        last_time_str = getattr(order, 'last_time', None)
+        if last_time_str:
+            # 計算延遲
+            order_time = datetime.strptime(f"{today} {last_time_str}", "%Y-%m-%d %H:%M:%S.%f")
+            time_diff = query_time - order_time
+            diff_ms = abs(time_diff.total_seconds() * 1000)
+            
+            # 延遲分級
+            status = "🟢 即時" if diff_ms &lt; 1000 else \
+                    "🟡 延遲" if diff_ms &lt; 5000 else \
+                    "🔴 嚴重延遲"
+            
+            print(f"委託時間: {last_time_str}")
+            print(f"本地時間: {query_time.strftime('%H:%M:%S.%f')[:-3]}")
+            print(f"時間差異: {diff_ms:.1f}ms {status}")
+</code></pre>
+<h3 id="案例4多策略並行下單"><a class="header" href="#案例4多策略並行下單">案例4：多策略並行下單</a></h3>
+<pre><code class="language-python">async def execute_multiple_strategies(self, strategies: Dict[str, List[OrderBatch]]):
+    async def execute_strategy(name, order_batches):
+        self.prepare_orders(order_batches)
+        results = await self.ultra_fast_batch_send(chunk_size=3, delay_ms=5)
+        return name, results
+    
+    # 所有策略並行執行
+    tasks = [
+        execute_strategy(name, batches) 
+        for name, batches in strategies.items()
+    ]
+    
+    strategy_results = await asyncio.gather(*tasks)
+    return strategy_results
+</code></pre>
+<hr />
+<h2 id="總結與建議"><a class="header" href="#總結與建議">總結與建議</a></h2>
+<h3 id="核心原則"><a class="header" href="#核心原則">核心原則</a></h3>
+<ol>
+<li>
+<p><strong>明確需求</strong></p>
+<ul>
+<li>延遲要求：微秒級 → C++，毫秒級 → async</li>
+<li>吞吐量需求：大量 I/O → async，CPU 密集 → multiprocessing</li>
+<li>確定性要求：高 → 同步，低 → async</li>
+</ul>
+</li>
+<li>
+<p><strong>技術選型</strong></p>
+<ul>
+<li>高頻交易：C++ + busy waiting + 專用硬體</li>
+<li>大量下單：async + aiohttp + connector</li>
+<li>數據處理：根據 I/O vs CPU 比例選擇</li>
+</ul>
+</li>
+<li>
+<p><strong>效能優化</strong></p>
+<ul>
+<li>連線池配置：根據目標服務器調整</li>
+<li>批次大小：平衡延遲與吞吐量</li>
+<li>錯誤處理：避免單點故障影響整體性能</li>
+</ul>
+</li>
+</ol>
+<h3 id="最佳實踐"><a class="header" href="#最佳實踐">最佳實踐</a></h3>
+<pre><code class="language-python"># 券商交易系統推薦配置
+connector = aiohttp.TCPConnector(
+    limit=200,                    # 總連線數
+    limit_per_host=50,           # 單券商連線數
+    keepalive_timeout=300,       # 保持連線
+    force_close=False,
+    tcp_keepalive=True
+)
+
+# 執行緒池配置
+max_workers = min(50, (len(orders) // 10) + 5)
+
+# 批次策略
+chunk_size = 5                   # 每批 5 筆訂單
+delay_ms = 10                    # 批次間 10ms 延遲
+</code></pre>
+<h3 id="未來發展趨向"><a class="header" href="#未來發展趨向">未來發展趨向</a></h3>
+<ol>
+<li><strong>硬體加速</strong>：FPGA、GPU 在金融交易中的應用</li>
+<li><strong>邊緣計算</strong>：接近交易所的部署策略</li>
+<li><strong>機器學習</strong>：實時決策與風險控制</li>
+<li><strong>量子通訊</strong>：未來的超低延遲通訊技術</li>
+</ol>
+<hr />
+<p><strong>記住：選擇正確的技術比優化錯誤的技術更重要！</strong></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../hft/rust-cpp-api-integration.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../hft/api-trading-performance-guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../hft/rust-cpp-api-integration.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../hft/api-trading-performance-guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

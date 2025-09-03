@@ -1,0 +1,420 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Concurrent Futures - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="concurrentfutures-平行任務處理"><a class="header" href="#concurrentfutures-平行任務處理">concurrent.futures 平行任務處理</a></h1>
+<p>出處: https://steam.oxxostudio.tw/category/python/library/concurrent-futures.html</p>
+<p>Python 在執行時，通常是採用同步的任務處理模式 ( 一個處理完成後才會接下去處理第二個 )，然而 Python 的標準函式「concurrent.futures」，提供了平行任務處理 ( 非同步 ) 的功能，能夠同時處理多個任務，這篇教學會介紹 concurrent.futures 的用法。</p>
+<blockquote>
+<p>本篇使用的 Python 版本為 3.7.12，<em>所有範例可使用 <a href="https://colab.research.google.com/notebooks/welcome.ipynb?hl=zh_tw">Google Colab</a> 實作</em>，不用安裝任何軟體 ( 參考：<a href="https://steam.oxxostudio.tw/category/python/info/online-editor.html">使用 Google Colab</a> )</p>
+</blockquote>
+<h2 id="同步與非同步"><a class="header" href="#同步與非同步">同步與非同步</a></h2>
+<p>同步和非同步的常見說法是：「<em>同步模式下，每個任務必須按照順序執行，後面的任務必須等待前面的任務執行完成，在非同步模式下，後面的任務不用等前面的，各自執行各自的任務</em>」，也可以想像成「<em>同一個步道 vs 不同步道</em>」，透過步道的方式，會更容易明白同步和非同步。( 因為有時會將同步與非同步的中文字面意思，想成「一起走」或「不要一起走」，很容易搞錯 )</p>
+<blockquote>
+<ul>
+<li><em>同步：「同一個步道」，只能依序排隊前進</em>。</li>
+<li><em>非同步：「不 ( 非 ) 同步道」，可以各走各的</em>。</li>
+</ul>
+</blockquote>
+<p><img src="images/concurrent-futures-01.webp" alt="" /></p>
+<h2 id="thread-和-process"><a class="header" href="#thread-和-process">Thread 和 Process</a></h2>
+<p>concurrent.futures 提供了 <em>ThreadPoolExecutor</em> 和 <em>ProcessPoolExecutor</em> 兩種可以平行處理任務的實作方法，ThreadPoolExecutor 是針對 Thread ( 執行緒 )，ProcessPoolExecutor 是針對 Process ( 程序 )，下方是 Thread 和 Process 的簡單差異說明：</p>
+<div class="table-wrapper"><table><thead><tr><th>英文</th><th>中文</th><th>說明</th></tr></thead><tbody>
+<tr><td>Thread</td><td>執行緒</td><td>程式執行任務的基本單位。</td></tr>
+<tr><td>Process</td><td>程序</td><td>啟動應用程式時產生的執行實體，需要一定的 CPU 與記憶體資源，Process 由一到多個 Thread 組成，同一個 Process 裡的 Thread 可以共用記憶體資源。</td></tr>
+</tbody></table>
+</div>
+<h2 id="import-concurrentfutures"><a class="header" href="#import-concurrentfutures">import concurrent.futures</a></h2>
+<p>要使用 concurrent.futures 必須先 import concurrent.futures 模組，或使用 from 的方式，單獨 import 特定的類型。</p>
+<blockquote>
+<p>更多資訊可以參考 Python 官方文件：<a href="https://docs.python.org/zh-tw/3/library/concurrent.futures.html">concurrent.futures 啟動平行任務</a></p>
+</blockquote>
+<pre><code class="language-py">import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor
+</code></pre>
+<h2 id="threadpoolexecutor"><a class="header" href="#threadpoolexecutor">ThreadPoolExecutor</a></h2>
+<p><em>ThreadPoolExecutor 會透過 Thread 的方式建立多個 Executors ( 執行器 ) ，執行並處理多個任務 ( tasks )</em>，ThreadPoolExecutor 有四個參數，最常用的為 max_workers：</p>
+<div class="table-wrapper"><table><thead><tr><th>參數</th><th>說明</th></tr></thead><tbody>
+<tr><td><em>max_workers</em></td><td>Thread 的數量，預設 5 ( CPU number * 5，每個 CPU 可以處理 5 個 Thread)，數量越多，運行速度會越快，如果設定小於等於 0 會發生錯誤。</td></tr>
+<tr><td><em>thread_name_prefix</em></td><td>Thread 的名稱，預設 ''。</td></tr>
+<tr><td><em>initializer</em></td><td>每個 Thread 啟動時調用的可調用對象，預設 None。</td></tr>
+<tr><td><em>initargs</em></td><td>傳遞給初始化程序的參數，使用 tuple，預設 ()。</td></tr>
+</tbody></table>
+</div>
+<p>使用 ThreadPoolExecutor 後，就能使用 Executors 的相關方法：</p>
+<div class="table-wrapper"><table><thead><tr><th>方法</th><th>參數</th><th>說明</th></tr></thead><tbody>
+<tr><td><em>submit</em></td><td>fn, *args, **kwargs</td><td>執行某個函式。</td></tr>
+<tr><td><em>map</em></td><td>func, *iterables</td><td>使用 map 的方式，使用某個函式執行可迭代的內容。</td></tr>
+<tr><td><em>shutdown</em></td><td>wait</td><td>完成執行後回傳信號，釋放正在使用的任何資源，wait 預設 True 會在所有對象完成後才回傳信號，wait 設定 False 則會在執行後立刻回傳。</td></tr>
+</tbody></table>
+</div>
+<p>舉例來說，下方的程式碼執行後，會按照順序 ( 同步 ) 顯示出數字，前一個任務尚未處理完，就不會執行後續的工作。</p>
+<pre><code class="language-py">import time
+def test(n):
+    for i in range(n):
+        print(i, end=' ')
+        time.sleep(0.2)
+
+test(2)
+test(3)
+test(4)
+
+# 0 1 0 1 2 0 1 2 3
+</code></pre>
+<p>如果改成 ThreadPoolExecutor 的方式，就會發現三個函式就會一起進行 ( 如果執行的函式大於 5，可再設定 max_workers 的數值 )。</p>
+<pre><code class="language-py">import time
+from concurrent.futures import ThreadPoolExecutor
+
+def test(n):
+    for i in range(n):
+        print(i, end=' ')
+        time.sleep(0.2)
+
+executor = ThreadPoolExecutor()  # 設定一個執行 Thread 的啟動器
+
+a = executor.submit(test, 2)     # 啟動第一個 test 函式
+b = executor.submit(test, 3)     # 啟動第二個 test 函式
+c = executor.submit(test, 4)     # 啟動第三個 test 函式
+executor.shutdown()              # 關閉啟動器 ( 如果沒有使用，則啟動器會處在鎖住的狀態而無法繼續 )
+
+# 0 0 0 1 1 1 2 2 3
+</code></pre>
+<p>上述的做法，可以改用 <em>with...as</em> 的方式 ( 有點類似 <a href="https://steam.oxxostudio.tw/category/python/basic/builtin-open.html#a5">open 的 with</a> )。</p>
+<pre><code class="language-py">import time
+from concurrent.futures import ThreadPoolExecutor
+
+def test(n):
+    for i in range(n):
+        print(i, end=' ')
+        time.sleep(0.2)
+
+with ThreadPoolExecutor() as executor:    # 改用 with...as
+    executor.submit(test, 2)
+    executor.submit(test ,3)
+    executor.submit(test, 4)
+
+# 0 0 0 1 1 1 2 2 3
+</code></pre>
+<p>上述的範例，也可以改用 <em>map</em> 的做法：</p>
+<pre><code class="language-py">import time
+from concurrent.futures import ThreadPoolExecutor
+
+def test(n):
+    for i in range(n):
+        print(i, end=' ')
+        time.sleep(0.2)
+
+with ThreadPoolExecutor() as executor:
+    executor.map(test, [2,3,4])
+
+# 0 0 0 1 1 1 2 2 3
+</code></pre>
+<h2 id="輸入文字停止函式執行"><a class="header" href="#輸入文字停止函式執行">輸入文字，停止函式執行</a></h2>
+<p>透過平行任務處理的方法，就能輕鬆做到「輸入文字，停止正在執行的函式」，以下方的例子而言，<em>run 是一個具有「無窮迴圈」的函式，如果不使用平行任務處理，在 run 後方的程式都無法運作 ( 會被無窮迴圈卡住 )，而 keyin 是一個具有「input」指令的函式，如果不使用平行任務處理，在 keyin 後方的程式也無法運作 ( 會被 input 卡住 )</em>，因此如果使用 concurrent.futures，就能讓兩個函式同時運行，搭配全域變數的做法，就能在輸入特定指令時，停止另外函式的運作。</p>
+<pre><code class="language-py">import time
+from concurrent.futures import ThreadPoolExecutor
+
+a = True               # 定義 a 為 True
+
+def run():
+    global a           # 定義 a 是全域變數
+    while a:           # 如果 a 為 True
+        print(123)     # 不斷顯示 123
+        time.sleep(1)  # 每隔一秒
+
+def keyin():
+    global a           # 定義 a 是全域變數
+    if input() == 'a':
+        a = False      # 如果輸入的是 a，就讓 a 為 False，停止 run 函式中的迴圈
+
+executor = ThreadPoolExecutor()
+e1 = executor.submit(run)
+e2 = executor.submit(keyin)
+executor.shutdown()
+</code></pre>
+<h2 id="processpoolexecutor"><a class="header" href="#processpoolexecutor">ProcessPoolExecutor</a></h2>
+<p><em>ProcessPoolExecutor 會透過 Process 的方式建立多個 Executors ( 執行器 )，執行並處理多個程序</em>，ProcessPoolExecutor 有四個參數，最常用的為 max_workers：</p>
+<div class="table-wrapper"><table><thead><tr><th>參數</th><th>說明</th></tr></thead><tbody>
+<tr><td><em>max_workers</em></td><td>Process 的數量，預設為機器的 CPU 數量，如果 max_workers 小於等於 0 或大於等於 61 會發生錯誤。</td></tr>
+<tr><td><em>thread_name_prefix</em></td><td>Thread 的名稱，預設 ''。</td></tr>
+<tr><td><em>initializer</em></td><td>每個 Thread 啟動時調用的可調用對象，預設 None。</td></tr>
+<tr><td><em>initargs</em></td><td>傳遞給初始化程序的參數，使用 tuple，預設 ()。</td></tr>
+</tbody></table>
+</div>
+<p>使用 ProcessPoolExecutor 後，就能使用 Executors 的相關方法：</p>
+<div class="table-wrapper"><table><thead><tr><th>方法</th><th>參數</th><th>說明</th></tr></thead><tbody>
+<tr><td><em>submit</em></td><td>fn, *args, **kwargs</td><td>執行某個函式。</td></tr>
+<tr><td><em>map</em></td><td>func, *iterables</td><td>使用 map 的方式，使用某個函式執行可迭代的內容。</td></tr>
+<tr><td><em>shutdown</em></td><td>wait</td><td>完成執行後回傳信號，釋放正在使用的任何資源，wait 預設 True 會在所有對象完成後才回傳信號，wait 設定 False 則會在執行後立刻回傳。</td></tr>
+</tbody></table>
+</div>
+<p>ProcessPoolExecutor 的用法基本上和 ThreadPoolExecutor 很像，但 ProcessPoolExecutor 主要會用做處理比較需要運算的程式，ThreadPoolExecutor 會使用於等待輸入和輸出 ( I/O ) 的程式，兩者執行後也會有些差別，ProcessPoolExecutor 執行後最後是顯示運算結果，而 ThreadPoolExecutor 則是顯示過程。</p>
+<pre><code class="language-py">import time
+from concurrent.futures import ProcessPoolExecutor
+
+def test(n):
+    for i in range(n):
+        print(i, end=' ')
+        time.sleep(0.2)
+    print()
+
+with ProcessPoolExecutor() as executor:
+    executor.map(test, [4,5,6])
+</code></pre>
+<p><img src="https://steam.oxxostudio.tw/webp/python/library/concurrent-futures-02.gif" alt="Python 教學 - concurrent.futures 平行任務處理" /></p>
+<p>如果是使用 ThreadPoolExecutor 則會如下圖的結果：</p>
+<p><img src="https://steam.oxxostudio.tw/webp/python/library/concurrent-futures-03.gif" alt="Python 教學 - concurrent.futures 平行任務處理" /></p>
+<p>此外，Python 3.5 之後 map() 方法多了 chunksize 參數可以使用，該參數只對 ProcessPoolExecutor 有效，可以提升處理大量可迭代物件的執行效能，chunksize 預設 1，數值越大效能越好 ( 以電腦本身 CPU 的效能為主 )。</p>
+<pre><code class="language-py">import time
+from concurrent.futures import ProcessPoolExecutor
+
+def test(n):
+    for i in range(n):
+        print(i, end=' ')
+        time.sleep(0.2)
+    print()
+
+with ProcessPoolExecutor() as executor:
+    executor.map(test, [4,5,6], chunksize=5)  # 設定 chunksize
+</code></pre>
+<h2 id="小結"><a class="header" href="#小結">小結</a></h2>
+<p>Python 的 concurrent.futures 內建函式庫是一個相當方便的函式庫，不僅可以讓原本同步的執行變成非同步，大幅減少工作時間，用法上也比使用 multiprocessing、threading、asyncio 容易得多，是相當推薦的內建函式庫。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../python/bloomrpc.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../python/schedule.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../python/bloomrpc.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../python/schedule.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

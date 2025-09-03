@@ -1,0 +1,889 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Linker and Loader Guide - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="linker-與-loader-完整指南"><a class="header" href="#linker-與-loader-完整指南">Linker 與 Loader 完整指南</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ol>
+<li><a href="#%E6%A6%82%E8%BF%B0">概述</a></li>
+<li><a href="#%E7%A8%8B%E5%BC%8F%E7%B7%A8%E8%AD%AF%E5%88%B0%E5%9F%B7%E8%A1%8C%E7%9A%84%E6%B5%81%E7%A8%8B">程式編譯到執行的流程</a></li>
+<li><a href="#linker%E9%80%A3%E7%B5%90%E5%99%A8%E8%A9%B3%E8%A7%A3">Linker（連結器）詳解</a></li>
+<li><a href="#loader%E8%BC%89%E5%85%A5%E5%99%A8%E8%A9%B3%E8%A7%A3">Loader（載入器）詳解</a></li>
+<li><a href="#%E8%88%87%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80%E7%9A%84%E9%97%9C%E4%BF%82">與程式語言的關係</a></li>
+<li><a href="#%E5%AF%A6%E4%BD%9C%E7%AF%84%E4%BE%8B">實作範例</a>
+<ul>
+<li><a href="#c-%E8%AA%9E%E8%A8%80%E7%AF%84%E4%BE%8B">C 語言範例</a></li>
+<li><a href="#c-%E7%AF%84%E4%BE%8B">C++ 範例</a></li>
+<li><a href="#rust-%E7%AF%84%E4%BE%8B">Rust 範例</a></li>
+</ul>
+</li>
+<li><a href="#%E5%B8%B8%E8%A6%8B%E5%95%8F%E9%A1%8C%E8%88%87%E9%99%A4%E9%8C%AF">常見問題與除錯</a></li>
+<li><a href="#%E5%AF%A6%E9%9A%9B%E5%BD%B1%E9%9F%BF%E8%88%87%E6%95%88%E8%83%BD%E8%80%83%E9%87%8F">實際影響與效能考量</a></li>
+</ol>
+<h2 id="概述"><a class="header" href="#概述">概述</a></h2>
+<p>Linker 和 Loader 是程式從原始碼到執行的關鍵環節。它們在編譯式語言中扮演著重要角色，負責將分散的程式碼模組組合成可執行的程式。</p>
+<h2 id="程式編譯到執行的流程"><a class="header" href="#程式編譯到執行的流程">程式編譯到執行的流程</a></h2>
+<pre><code>┌─────────────┐
+│  原始碼.c   │
+└──────┬──────┘
+       │ 編譯器 (Compiler)
+       ▼
+┌─────────────┐
+│ 組合語言.s  │
+└──────┬──────┘
+       │ 組譯器 (Assembler)
+       ▼
+┌─────────────┐
+│  目的檔.o   │
+└──────┬──────┘
+       │ 連結器 (Linker)
+       ▼
+┌─────────────┐
+│ 可執行檔.exe│
+└──────┬──────┘
+       │ 載入器 (Loader)
+       ▼
+┌─────────────┐
+│ 記憶體執行  │
+└─────────────┘
+</code></pre>
+<h3 id="各階段說明"><a class="header" href="#各階段說明">各階段說明</a></h3>
+<ol>
+<li><strong>原始碼 (Source Code)</strong>：開發者用高階語言撰寫的程式碼</li>
+<li><strong>編譯器 (Compiler)</strong>：將原始碼轉換成組合語言或直接產生目的碼</li>
+<li><strong>組譯器 (Assembler)</strong>：將組合語言轉換成機器碼（目的檔）</li>
+<li><strong>連結器 (Linker)</strong>：將多個目的檔和函式庫結合成可執行檔</li>
+<li><strong>載入器 (Loader)</strong>：將可執行檔載入記憶體並開始執行</li>
+</ol>
+<h2 id="linker連結器詳解"><a class="header" href="#linker連結器詳解">Linker（連結器）詳解</a></h2>
+<h3 id="主要功能"><a class="header" href="#主要功能">主要功能</a></h3>
+<p>連結器負責將多個目的檔（.o 或 .obj）和函式庫結合成一個可執行檔。</p>
+<h4 id="1-符號解析-symbol-resolution"><a class="header" href="#1-符號解析-symbol-resolution">1. 符號解析 (Symbol Resolution)</a></h4>
+<p>當程式中呼叫外部函式或變數時，連結器會找到這些符號的實際定義位置。</p>
+<h4 id="2-位址重定位-relocation"><a class="header" href="#2-位址重定位-relocation">2. 位址重定位 (Relocation)</a></h4>
+<p>決定程式碼和資料在記憶體中的最終位置，並調整所有的位址參考。</p>
+<h4 id="3-處理外部參考-external-references"><a class="header" href="#3-處理外部參考-external-references">3. 處理外部參考 (External References)</a></h4>
+<p>解決不同檔案之間的函式呼叫和變數參考。</p>
+<h3 id="連結類型"><a class="header" href="#連結類型">連結類型</a></h3>
+<ul>
+<li>
+<p><strong>靜態連結</strong>：將所有需要的程式碼都複製到可執行檔中</p>
+<ul>
+<li>優點：獨立執行，不需外部函式庫</li>
+<li>缺點：檔案較大，記憶體使用較多</li>
+</ul>
+</li>
+<li>
+<p><strong>動態連結</strong>：執行時才載入共享函式庫</p>
+<ul>
+<li>優點：檔案較小，函式庫可共享</li>
+<li>缺點：需要確保系統有正確的函式庫版本</li>
+</ul>
+</li>
+</ul>
+<h2 id="loader載入器詳解"><a class="header" href="#loader載入器詳解">Loader（載入器）詳解</a></h2>
+<h3 id="主要功能-1"><a class="header" href="#主要功能-1">主要功能</a></h3>
+<p>載入器是作業系統的一部分，負責將程式載入記憶體並準備執行環境。</p>
+<h4 id="1-分配記憶體"><a class="header" href="#1-分配記憶體">1. 分配記憶體</a></h4>
+<p>為程式的程式碼段、資料段、堆疊和堆積分配適當的記憶體空間。</p>
+<h4 id="2-載入程式"><a class="header" href="#2-載入程式">2. 載入程式</a></h4>
+<p>將可執行檔從硬碟讀入分配好的記憶體區域。</p>
+<h4 id="3-動態連結"><a class="header" href="#3-動態連結">3. 動態連結</a></h4>
+<p>處理動態函式庫（.dll、.so、.dylib）的載入和連結。</p>
+<h4 id="4-初始化執行環境"><a class="header" href="#4-初始化執行環境">4. 初始化執行環境</a></h4>
+<p>設定程式計數器、堆疊指標等暫存器，準備程式執行。</p>
+<h2 id="與程式語言的關係"><a class="header" href="#與程式語言的關係">與程式語言的關係</a></h2>
+<p>不同程式語言對 linker 和 loader 的依賴程度不同：</p>
+<h3 id="編譯式語言ccrust"><a class="header" href="#編譯式語言ccrust">編譯式語言（C、C++、Rust）</a></h3>
+<p>完全依賴 linker 和 loader。你寫的程式必須經過連結才能產生可執行檔，必須經過載入才能執行。</p>
+<h3 id="直譯式語言pythonjavascript"><a class="header" href="#直譯式語言pythonjavascript">直譯式語言（Python、JavaScript）</a></h3>
+<p>看似不需要 linker，但實際上：</p>
+<ul>
+<li>直譯器本身是經過連結的程式</li>
+<li>在載入外部模組時也有類似連結的過程</li>
+<li>Python 的 <code>import</code> 和 JavaScript 的 <code>require/import</code> 都涉及動態載入</li>
+</ul>
+<h3 id="jit-編譯語言javac"><a class="header" href="#jit-編譯語言javac">JIT 編譯語言（Java、C#）</a></h3>
+<p>有自己的載入和連結機制：</p>
+<ul>
+<li>Java 的類別載入器（Class Loader）會在執行時期動態載入和連結類別</li>
+<li>.NET 的 Assembly 載入機制處理組件的動態載入</li>
+<li>這些語言的虛擬機器（JVM、CLR）本身也是經過傳統連結的程式</li>
+</ul>
+<h2 id="實作範例"><a class="header" href="#實作範例">實作範例</a></h2>
+<h3 id="c-語言範例"><a class="header" href="#c-語言範例">C 語言範例</a></h3>
+<p>讓我們用一個簡單的多檔案 C 程式來示範 linker 的工作。</p>
+<p><strong>math_utils.h</strong></p>
+<pre><code class="language-c">#ifndef MATH_UTILS_H
+#define MATH_UTILS_H
+
+// 函式宣告
+int add(int a, int b);
+int multiply(int a, int b);
+
+// 全域變數宣告
+extern int global_counter;
+
+#endif
+</code></pre>
+<p><strong>math_utils.c</strong></p>
+<pre><code class="language-c">#include "math_utils.h"
+
+// 全域變數定義
+int global_counter = 0;
+
+// 函式實作
+int add(int a, int b) {
+    global_counter++;
+    return a + b;
+}
+
+int multiply(int a, int b) {
+    global_counter++;
+    return a * b;
+}
+</code></pre>
+<p><strong>main.c</strong></p>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include "math_utils.h"
+
+// 外部變數宣告
+extern int global_counter;
+
+int main() {
+    int x = 10, y = 20;
+    
+    printf("加法: %d + %d = %d\n", x, y, add(x, y));
+    printf("乘法: %d * %d = %d\n", x, y, multiply(x, y));
+    printf("函式呼叫次數: %d\n", global_counter);
+    
+    return 0;
+}
+</code></pre>
+<p><strong>編譯與連結過程</strong></p>
+<pre><code class="language-bash"># 步驟 1: 編譯成目的檔（不連結）
+gcc -c main.c -o main.o
+gcc -c math_utils.c -o math_utils.o
+
+# 步驟 2: 連結成可執行檔
+gcc main.o math_utils.o -o program
+
+# 或者一步完成
+gcc main.c math_utils.c -o program
+
+# 執行程式
+./program
+</code></pre>
+<p><strong>查看符號表</strong></p>
+<pre><code class="language-bash"># 查看目的檔的符號
+nm main.o
+# U 表示未定義（需要連結）
+# T 表示定義在文字段（程式碼）
+# D 表示定義在資料段
+
+# 查看連結後的符號
+nm program
+</code></pre>
+<h3 id="c-範例"><a class="header" href="#c-範例">C++ 範例</a></h3>
+<p>C++ 的連結過程涉及更複雜的符號管理，包括名稱修飾（name mangling）。</p>
+<p><strong>calculator.hpp</strong></p>
+<pre><code class="language-cpp">#ifndef CALCULATOR_HPP
+#define CALCULATOR_HPP
+
+#include &lt;string&gt;
+
+class Calculator {
+private:
+    static int instance_count;  // 靜態成員
+    std::string name;
+    
+public:
+    Calculator(const std::string&amp; calc_name);
+    ~Calculator();
+    
+    // 內聯函式（定義在標頭檔）
+    inline int quick_add(int a, int b) {
+        return a + b;
+    }
+    
+    // 一般成員函式（定義在 .cpp）
+    double divide(double a, double b);
+    
+    // 靜態成員函式
+    static int get_instance_count();
+    
+    // 模板函式（必須在標頭檔）
+    template&lt;typename T&gt;
+    T square(T value) {
+        return value * value;
+    }
+};
+
+// 模板類別（完全在標頭檔定義）
+template&lt;typename T&gt;
+class Storage {
+private:
+    T value;
+public:
+    Storage(T val) : value(val) {}
+    T get() const { return value; }
+};
+
+#endif
+</code></pre>
+<p><strong>calculator.cpp</strong></p>
+<pre><code class="language-cpp">#include "calculator.hpp"
+#include &lt;iostream&gt;
+#include &lt;stdexcept&gt;
+
+// 靜態成員初始化（連結時需要）
+int Calculator::instance_count = 0;
+
+Calculator::Calculator(const std::string&amp; calc_name) : name(calc_name) {
+    instance_count++;
+    std::cout &lt;&lt; "建立 Calculator: " &lt;&lt; name &lt;&lt; std::endl;
+}
+
+Calculator::~Calculator() {
+    instance_count--;
+    std::cout &lt;&lt; "銷毀 Calculator: " &lt;&lt; name &lt;&lt; std::endl;
+}
+
+double Calculator::divide(double a, double b) {
+    if (b == 0) {
+        throw std::runtime_error("除以零錯誤");
+    }
+    return a / b;
+}
+
+int Calculator::get_instance_count() {
+    return instance_count;
+}
+</code></pre>
+<p><strong>main.cpp</strong></p>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include "calculator.hpp"
+
+// 使用外部函式庫
+#include &lt;cmath&gt;  // 會連結數學函式庫
+
+int main() {
+    try {
+        // 建立物件
+        Calculator calc1("科學計算機");
+        Calculator calc2("工程計算機");
+        
+        // 使用內聯函式
+        std::cout &lt;&lt; "5 + 3 = " &lt;&lt; calc1.quick_add(5, 3) &lt;&lt; std::endl;
+        
+        // 使用一般成員函式
+        std::cout &lt;&lt; "10 / 2 = " &lt;&lt; calc1.divide(10, 2) &lt;&lt; std::endl;
+        
+        // 使用模板函式
+        std::cout &lt;&lt; "7 的平方 = " &lt;&lt; calc1.square(7) &lt;&lt; std::endl;
+        std::cout &lt;&lt; "3.14 的平方 = " &lt;&lt; calc1.square(3.14) &lt;&lt; std::endl;
+        
+        // 使用靜態成員函式
+        std::cout &lt;&lt; "Calculator 實例數: " 
+                  &lt;&lt; Calculator::get_instance_count() &lt;&lt; std::endl;
+        
+        // 使用模板類別
+        Storage&lt;int&gt; int_storage(42);
+        Storage&lt;std::string&gt; string_storage("Hello");
+        
+        std::cout &lt;&lt; "整數儲存: " &lt;&lt; int_storage.get() &lt;&lt; std::endl;
+        std::cout &lt;&lt; "字串儲存: " &lt;&lt; string_storage.get() &lt;&lt; std::endl;
+        
+        // 使用數學函式庫
+        std::cout &lt;&lt; "sqrt(16) = " &lt;&lt; sqrt(16) &lt;&lt; std::endl;
+        
+    } catch (const std::exception&amp; e) {
+        std::cerr &lt;&lt; "錯誤: " &lt;&lt; e.what() &lt;&lt; std::endl;
+    }
+    
+    return 0;
+}
+</code></pre>
+<p><strong>編譯與連結</strong></p>
+<pre><code class="language-bash"># 分開編譯
+g++ -c main.cpp -o main.o
+g++ -c calculator.cpp -o calculator.o
+
+# 連結（包含標準函式庫和數學函式庫）
+g++ main.o calculator.o -o calculator_app -lm
+
+# 或一步完成
+g++ main.cpp calculator.cpp -o calculator_app -lm
+
+# 查看 C++ 的名稱修飾
+nm calculator.o | c++filt
+
+# 產生動態函式庫
+g++ -shared -fPIC calculator.cpp -o libcalculator.so
+
+# 使用動態函式庫連結
+g++ main.cpp -L. -lcalculator -o calculator_app
+</code></pre>
+<h3 id="rust-範例"><a class="header" href="#rust-範例">Rust 範例</a></h3>
+<p>Rust 使用 cargo 管理編譯和連結過程，但底層仍然使用 linker。</p>
+<p><strong>建立專案結構</strong></p>
+<pre><code class="language-bash">cargo new linker_demo --bin
+cd linker_demo
+</code></pre>
+<p><strong>src/math_ops.rs</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 模組定義
+pub mod math_ops {
+    // 靜態變數（類似 C 的全域變數）
+    static mut OPERATION_COUNT: i32 = 0;
+    
+    // 公開結構
+    pub struct Calculator {
+        name: String,
+    }
+    
+    impl Calculator {
+        // 關聯函式（類似靜態方法）
+        pub fn new(name: &amp;str) -&gt; Self {
+            Calculator {
+                name: name.to_string(),
+            }
+        }
+        
+        // 方法
+        pub fn add(&amp;self, a: i32, b: i32) -&gt; i32 {
+            unsafe {
+                OPERATION_COUNT += 1;
+            }
+            println!("{}：執行加法", self.name);
+            a + b
+        }
+        
+        pub fn multiply(&amp;self, a: i32, b: i32) -&gt; i32 {
+            unsafe {
+                OPERATION_COUNT += 1;
+            }
+            println!("{}：執行乘法", self.name);
+            a * b
+        }
+        
+        // 取得操作次數
+        pub fn get_operation_count() -&gt; i32 {
+            unsafe { OPERATION_COUNT }
+        }
+    }
+    
+    // 泛型函式（類似 C++ 模板）
+    pub fn square&lt;T&gt;(value: T) -&gt; T
+    where
+        T: std::ops::Mul&lt;Output = T&gt; + Copy,
+    {
+        value * value
+    }
+}
+
+// 單元測試（會在測試時連結）
+#[cfg(test)]
+mod tests {
+    use super::math_ops::*;
+    
+    #[test]
+    fn test_calculator() {
+        let calc = Calculator::new("測試計算機");
+        assert_eq!(calc.add(2, 3), 5);
+        assert_eq!(calc.multiply(4, 5), 20);
+    }
+    
+    #[test]
+    fn test_square() {
+        assert_eq!(square(5), 25);
+        assert_eq!(square(3.0), 9.0);
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>src/lib.rs</strong> (如果要建立函式庫)</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 宣告模組
+pub mod math_ops;
+
+// 重新匯出
+pub use math_ops::math_ops::Calculator;
+
+// C 介面（用於與 C 程式連結）
+#[no_mangle]
+pub extern "C" fn rust_add(a: i32, b: i32) -&gt; i32 {
+    a + b
+}
+
+#[no_mangle]
+pub extern "C" fn rust_multiply(a: i32, b: i32) -&gt; i32 {
+    a * b
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>src/main.rs</strong></p>
+<pre><pre class="playground"><code class="language-rust">// 引入模組
+mod math_ops;
+use math_ops::math_ops::{Calculator, square};
+
+// 使用外部 crate（會在連結時處理）
+use std::collections::HashMap;
+
+fn main() {
+    println!("=== Rust Linker 示範 ===\n");
+    
+    // 建立計算機實例
+    let calc1 = Calculator::new("計算機1");
+    let calc2 = Calculator::new("計算機2");
+    
+    // 執行運算
+    let x = 10;
+    let y = 20;
+    
+    println!("結果：{} + {} = {}", x, y, calc1.add(x, y));
+    println!("結果：{} * {} = {}", x, y, calc2.multiply(x, y));
+    
+    // 使用泛型函式
+    println!("\n平方運算：");
+    println!("整數 7 的平方 = {}", square(7));
+    println!("浮點數 3.14 的平方 = {}", square(3.14));
+    
+    // 顯示操作次數
+    println!("\n總操作次數：{}", Calculator::get_operation_count());
+    
+    // 使用標準函式庫（已連結）
+    let mut map = HashMap::new();
+    map.insert("加法結果", calc1.add(5, 3));
+    map.insert("乘法結果", calc2.multiply(4, 6));
+    
+    println!("\n結果集合：");
+    for (key, value) in &amp;map {
+        println!("  {} = {}", key, value);
+    }
+    
+    // 使用條件編譯
+    #[cfg(debug_assertions)]
+    println!("\n[偵錯模式]");
+    
+    #[cfg(not(debug_assertions))]
+    println!("\n[發布模式]");
+}</code></pre></pre>
+<p><strong>Cargo.toml</strong> (套件配置)</p>
+<pre><code class="language-toml">[package]
+name = "linker_demo"
+version = "0.1.0"
+edition = "2021"
+
+# 相依套件（會在連結時處理）
+[dependencies]
+
+# 建構腳本（可選）
+[build-dependencies]
+
+# 函式庫設定
+[lib]
+name = "linker_demo"
+crate-type = ["rlib", "cdylib", "staticlib"]
+
+# 執行檔設定
+[[bin]]
+name = "linker_demo"
+path = "src/main.rs"
+
+# 優化設定會影響連結
+[profile.release]
+lto = true  # Link Time Optimization
+</code></pre>
+<p><strong>編譯與連結命令</strong></p>
+<pre><code class="language-bash"># 使用 cargo（自動處理連結）
+cargo build          # 偵錯版本
+cargo build --release  # 發布版本
+
+# 查看編譯詳細資訊
+cargo build -v
+
+# 直接使用 rustc
+rustc src/main.rs  # 單檔案編譯
+
+# 分開編譯（產生 rlib）
+rustc --crate-type=lib src/lib.rs
+rustc -L . src/main.rs --extern linker_demo=liblinker_demo.rlib
+
+# 產生靜態函式庫
+rustc --crate-type=staticlib src/lib.rs -o liblinker_demo.a
+
+# 產生動態函式庫
+rustc --crate-type=cdylib src/lib.rs -o liblinker_demo.so
+
+# 查看符號
+nm target/debug/linker_demo
+
+# 查看連結的動態函式庫
+ldd target/debug/linker_demo
+</code></pre>
+<h2 id="常見問題與除錯"><a class="header" href="#常見問題與除錯">常見問題與除錯</a></h2>
+<h3 id="1-未定義符號錯誤-undefined-symbol"><a class="header" href="#1-未定義符號錯誤-undefined-symbol">1. 未定義符號錯誤 (Undefined Symbol)</a></h3>
+<p><strong>C/C++ 錯誤訊息：</strong></p>
+<pre><code>undefined reference to `function_name'
+</code></pre>
+<p>這就是 linker 在告訴你找不到某個函式或變數的定義。</p>
+<p><strong>原因與解決：</strong></p>
+<ul>
+<li>忘記連結某個目的檔：確保所有 .o 檔都包含在連結命令中</li>
+<li>函式宣告與定義不符：檢查函式簽名是否一致</li>
+<li>C++ 名稱修飾問題：使用 <code>extern "C"</code> 處理 C/C++ 混合編譯</li>
+</ul>
+<h3 id="2-多重定義錯誤-multiple-definition"><a class="header" href="#2-多重定義錯誤-multiple-definition">2. 多重定義錯誤 (Multiple Definition)</a></h3>
+<p><strong>錯誤訊息：</strong></p>
+<pre><code>multiple definition of `variable_name'
+</code></pre>
+<p><strong>原因與解決：</strong></p>
+<ul>
+<li>在標頭檔定義變數：改用 <code>extern</code> 宣告，在 .c/.cpp 檔定義</li>
+<li>忘記使用 include guards：加入 <code>#ifndef</code> 保護</li>
+<li>內聯函式問題：確保內聯函式定義在標頭檔</li>
+</ul>
+<h3 id="3-動態函式庫找不到"><a class="header" href="#3-動態函式庫找不到">3. 動態函式庫找不到</a></h3>
+<p><strong>執行時錯誤：</strong></p>
+<pre><code>error while loading shared libraries: libxxx.so: cannot open shared object file
+</code></pre>
+<p><strong>解決方法：</strong></p>
+<pre><code class="language-bash"># 設定函式庫路徑
+export LD_LIBRARY_PATH=/path/to/library:$LD_LIBRARY_PATH
+
+# 或安裝到系統路徑
+sudo cp libxxx.so /usr/local/lib/
+sudo ldconfig
+</code></pre>
+<h3 id="4-rust-特定問題"><a class="header" href="#4-rust-特定問題">4. Rust 特定問題</a></h3>
+<p><strong>連結器找不到：</strong></p>
+<pre><code>error: linker `cc` not found
+</code></pre>
+<p><strong>解決：</strong></p>
+<pre><code class="language-bash"># Ubuntu/Debian
+sudo apt-get install build-essential
+
+# macOS
+xcode-select --install
+
+# Windows
+# 安裝 Visual Studio Build Tools
+</code></pre>
+<h3 id="5-檢查工具"><a class="header" href="#5-檢查工具">5. 檢查工具</a></h3>
+<p><strong>Linux/macOS：</strong></p>
+<pre><code class="language-bash"># 查看符號表
+nm binary_file
+
+# 查看動態連結
+ldd binary_file  # Linux
+otool -L binary_file  # macOS
+
+# 查看段資訊
+objdump -h binary_file
+
+# 追蹤動態連結
+strace ./program  # Linux
+dtrace  # macOS
+</code></pre>
+<p><strong>跨平台：</strong></p>
+<pre><code class="language-bash"># Rust 工具
+cargo tree  # 查看相依關係
+cargo rustc -- --print link-args  # 查看連結參數
+</code></pre>
+<h2 id="實際影響與效能考量"><a class="header" href="#實際影響與效能考量">實際影響與效能考量</a></h2>
+<p>了解 linker 和 loader 對程式設計很重要，因為它們會影響：</p>
+<h3 id="程式效能"><a class="header" href="#程式效能">程式效能</a></h3>
+<p>靜態連結 vs 動態連結的選擇會直接影響程式的啟動速度和執行效能。</p>
+<h3 id="檔案大小"><a class="header" href="#檔案大小">檔案大小</a></h3>
+<ul>
+<li>靜態連結會讓執行檔變大（包含所有需要的程式碼）</li>
+<li>動態連結的執行檔較小（函式庫程式碼分離）</li>
+</ul>
+<h3 id="相依性管理"><a class="header" href="#相依性管理">相依性管理</a></h3>
+<ul>
+<li>靜態連結：無外部相依性，部署簡單</li>
+<li>動態連結：需要確保系統有正確版本的函式庫</li>
+</ul>
+<h3 id="除錯能力"><a class="header" href="#除錯能力">除錯能力</a></h3>
+<p>連結錯誤是常見的編譯問題，了解連結過程有助於快速定位和解決問題。</p>
+<h3 id="靜態連結-vs-動態連結比較"><a class="header" href="#靜態連結-vs-動態連結比較">靜態連結 vs 動態連結比較</a></h3>
+<p><strong>靜態連結：</strong></p>
+<ul>
+<li>✅ 載入速度快</li>
+<li>✅ 無相依性問題</li>
+<li>❌ 執行檔較大</li>
+<li>❌ 記憶體使用較多（無法共享）</li>
+</ul>
+<p><strong>動態連結：</strong></p>
+<ul>
+<li>✅ 執行檔較小</li>
+<li>✅ 記憶體可共享</li>
+<li>✅ 可獨立更新函式庫</li>
+<li>❌ 載入速度較慢</li>
+<li>❌ 可能有版本相容問題</li>
+</ul>
+<h3 id="連結時期優化-link-time-optimization-lto"><a class="header" href="#連結時期優化-link-time-optimization-lto">連結時期優化 (Link Time Optimization, LTO)</a></h3>
+<p><strong>C/C++：</strong></p>
+<pre><code class="language-bash">gcc -flto -O3 *.c -o program
+</code></pre>
+<p><strong>Rust：</strong></p>
+<pre><code class="language-toml">[profile.release]
+lto = true  # 或 "thin" 或 "fat"
+</code></pre>
+<p>LTO 可以進行跨模組優化，提升效能但會增加編譯時間。</p>
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<p>Linker 和 Loader 是程式語言實作的重要部分，它們讓高階語言寫的程式能夠在實際硬體上執行：</p>
+<ol>
+<li><strong>Linker</strong> 在編譯時期將分散的程式碼組合成可執行檔</li>
+<li><strong>Loader</strong> 在執行時期將程式載入記憶體並建立執行環境</li>
+<li>不同語言有不同的連結策略，但核心概念相同</li>
+<li>即使你平常不直接接觸它們，了解它們的運作原理對理解程式的編譯和執行過程很有幫助</li>
+</ol>
+<p>掌握這些概念後，你將能更好地：</p>
+<ul>
+<li>理解編譯錯誤訊息（如 "undefined reference"）</li>
+<li>優化程式結構和效能</li>
+<li>處理函式庫相依性問題</li>
+<li>設計模組化的程式架構</li>
+<li>做出明智的技術決策（靜態 vs 動態連結）</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../kernel/linux_kernel.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../ssh/ssh.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../kernel/linux_kernel.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../ssh/ssh.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

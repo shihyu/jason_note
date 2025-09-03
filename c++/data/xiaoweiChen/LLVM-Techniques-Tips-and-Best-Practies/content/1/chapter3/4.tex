@@ -1,0 +1,153 @@
+
+在前几节中，了解了如何在LLVM中执行回归测试，研究了\texttt{ShTest}的测试格式(\texttt{config.
+test\_format\_format = lit.formats.ShTest(…)line)}，它以shell脚本的方式运行端到端测试。例如，在验证结果时，\texttt{ShTest}格式提供了更多的灵活性，因为它可以使用\texttt{FileCheck}工具。
+
+本节将介绍另一种测试格式:\textbf{TestSuite}。TestSuite格式是\texttt{llvm-test-suite}的一部分，是为LLVM测试和基准测试创建的测试套件和基准测试的集合。与\texttt{ShTest}类似，这种LIT格式也用来运行端到端测试。当开发人员想要集成现有基于可执行的测试套件或基准代码库时，TestSuite会使这种工作完成的更加轻松。例如，若想使用著名的\textbf{SPEC基准}作为测试套件，那么需要做的就是添加一个构建描述和期望的纯文本输出。当测试逻辑不能用\textit{文本测试脚本}表达时，这也可以用(正如在前面几节中了解的那样）。
+
+本节中，将了解如何将一个现有的测试套件或基准代码库导入到llvm-test-suite项目中。
+
+\subsubsubsection{3.4.1\hspace{0.2cm}准备示例项目}
+
+首先，请按照本章开头的说明来构建\texttt{llvm-test-suite。}
+
+本节的其余部分将使用名为\textit{GeoDistance}的伪测试套件项目，并使用\texttt{C++}和Makefile构建一个命令行工具\texttt{geo-distance}，该工具计算由输入文件提供的每对经纬度的距离，并所有路径的距离总和。
+
+其有以下文件夹结构:
+
+\begin{tcolorbox}[colback=white,colframe=black]
+\tt
+GeoDistance \\
+\hspace*{0.5cm}|\_\_\_ helper.cpp \\
+\hspace*{0.5cm}|\_\_\_ main.cpp \\
+\hspace*{0.5cm}|\_\_\_ sample\_input.txt \\
+\hspace*{0.5cm}|\_\_\_Makefile 
+\end{tcolorbox}
+
+\texttt{Makefile}长这样：
+
+\begin{lstlisting}[style=styleJavaScript]
+FLAGS := -DSMALL_INPUT -ffast-math
+EXE := geo-distance
+OBJS := helper.o main.o
+
+%.o: %.cpp
+	$(CXX) $(FLAGS) -c $^
+$(EXE): $(OBJS)
+	$(CXX) $(FLAGS) $< -o $@
+\end{lstlisting}
+
+运行\texttt{geo-distance}命令行工具:
+
+\begin{tcblisting}{commandshell={}}
+$ geo-distance ./sample_input.txt
+\end{tcblisting}
+
+将总距离(浮点)输出到标准输出:
+
+\begin{tcblisting}{commandshell={}}
+$ geo-distance ./sample_input.txt
+94.873467
+\end{tcblisting}
+
+这里对浮点精度要求是小数点后三位(0.001)。
+
+\subsubsubsection{3.4.2\hspace{0.2cm}将代码导入llvm-test-suite}
+
+通常，只需要做两件事就可以将现有的测试套件或基准导入到\texttt{llvm-test-suite}中:
+
+\begin{itemize}
+\item 使用CMake作为构建系统
+\item 编写验证规则
+\end{itemize}
+
+使用CMake作为构建系统时，项目文件夹需要放在\texttt{llvm-test-suite}源代码树中的\\MultiSource/Applications子目录下，再更新相应地CMakeLists.txt:
+
+\begin{lstlisting}[style=styleCMake]
+# Inside MultiSource/Applications/CMakeLists.txt
+…
+add_subdirectory(GeoDistance)
+\end{lstlisting}
+
+要从Makefile迁移到CMakeLists.txt，但不需要使用CMake指令\texttt{add\_executable}重写它，LLV你提供了一些好用的函数和宏:
+
+\begin{lstlisting}[style=styleCMake]
+# Inside MultiSource/Applications/GeoDistance/CMakeLists.txt
+# (Unfinished)
+llvm_multisource(geo-distance)
+llvm_test_data(geo-distance sample_input.txt)
+\end{lstlisting}
+
+这里有一些新的CMake指令。\texttt{llvm\_multisource}和\texttt{llvm\_singlesource}，分别从多个或单个源文件添加一个新的可执行构建目标，其内部实现是基于\texttt{add\_executable}，但正如前面的代码所示，可以选择将源文件列表置为空，这意味用当前目录中的所有\texttt{C/C++}源文件作为输入。
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, fonttitle=\bfseries,title=Note]
+\hspace*{0.7cm}如果有多个源文件，但使用的是\texttt{llvm\_singlesource}，那么每个源文件将视为一个独立的可执行文件。
+\end{tcolorbox}
+
+\texttt{llvm\_test\_data}将在运行时使用的资源/数据文件复制到适当的工作目录中。本例中，要复制的对象是\texttt{sample\_input.txt}文件。
+
+现在框架已经完成设置，可以使用以下代码配置编译标志了:
+
+\begin{lstlisting}[style=styleCMake]
+# Inside MultiSource/Applications/GeoDistance/CMakeLists.txt
+# (Continue)
+list(APPEND CPPFLAGS -DSMALL_INPUT)
+list(APPEND CFLAGS -ffast-math)
+
+llvm_multisource(geo-distance)
+llvm_test_data(geo-distance sample_input.txt)
+\end{lstlisting}
+
+最后，TestSuite需要知道如何运行测试，以及如何验证结果:
+
+\begin{lstlisting}[style=styleCMake]
+# Inside MultiSource/Applications/GeoDistance/CMakeLists.txt
+# (Continue)
+…
+set(RUN_OPTIONS sample_input.txt)
+set(FP_TOLERANCE 0.001)
+llvm_multisource(geo-distance)
+…
+\end{lstlisting}
+
+CMake变量\texttt{RUN\_OPTIONS}非常简单——为测试可执行文件提供了命令行选项。
+
+对于验证部分，默认情况下，TestSuite将使用一个增强版的\texttt{diff}以\texttt{.reference\_output}结尾的文件内容，与\texttt{stdout}的输出和退出码进行比较。
+
+我们的例子中，预期内容和退出码在 GeoDistance/geo-distance.reference\_output中:
+
+\begin{lstlisting}[style=styleCMake]
+94.873
+exit 0
+\end{lstlisting}
+
+聪明的读者可能会发现这里的预期答案与本节开始时的输出略有不同(94.873467)，这是因为比较工具允许您指定所需的浮点精度，该精度由 CMake变量\texttt{FP\_TOLERANCE}控制。
+
+本节中，我们学习了如何利用\texttt{llvm-test-suite}项目，及其TestSuite框架来测试来自现有代码库，或无法使用文本脚本表达测试逻辑的可执行文件。这将帮助您更有效地使用LIT测试不同类型的项目。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

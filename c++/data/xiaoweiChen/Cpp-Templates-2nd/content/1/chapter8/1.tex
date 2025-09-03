@@ -1,0 +1,129 @@
+模板在编译时实例化(与动态语言相反，动态语言在运行时处理泛型)。C++模板的一些特性可以与实例化过程结合，成为一种递归“编程语言”。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}Erwin Unruh通过在编译时计算素数，成为第一个发现编译时计算的人。详见第23.7节。
+\end{tcolorbox}
+
+因此，模板可以用来“计算”。第23章将详细介绍所有功能，这里只是举一个简单的例子。
+
+下面的代码，在编译时找出给定的数字是否为素数:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{basics/isprime.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<unsigned p, unsigned d> // p: number to check, d: current divisor
+struct DoIsPrime {
+	static constexpr bool value = (p%d != 0) && DoIsPrime<p,d-1>::value;
+};
+
+template<unsigned p> // end recursion if divisor is 2
+struct DoIsPrime<p,2> {
+	static constexpr bool value = (p%2 != 0);
+};
+
+template<unsigned p> // primary template
+struct IsPrime {
+	// start recursion with divisor from p/2:
+	static constexpr bool value = DoIsPrime<p,p/2>::value;
+};
+
+// special cases (to avoid endless recursion with template instantiation):
+template<>
+struct IsPrime<0> { static constexpr bool value = false; };
+template<>
+struct IsPrime<1> { static constexpr bool value = false; };
+template<>
+struct IsPrime<2> { static constexpr bool value = true; };
+template<>
+struct IsPrime<3> { static constexpr bool value = true; };
+\end{lstlisting}
+
+IsPrime<>模板返回成员值，无论传递的模板参数p是否是一个素数。为了实现，实例化DoIsPrime<>，其递归地展开为一个表达式，检查p/2和2之间的每个除数d是否能整除p。
+
+例如，表达式为
+
+\begin{lstlisting}[style=styleCXX]
+IsPrime<9>::value
+\end{lstlisting}
+
+扩展为
+
+\begin{lstlisting}[style=styleCXX]
+DoIsPrime<9,4>::value
+\end{lstlisting}
+
+继续扩展
+
+\begin{lstlisting}[style=styleCXX]
+9%4!=0 && DoIsPrime<9,3>::value
+\end{lstlisting}
+
+继续扩展
+
+\begin{lstlisting}[style=styleCXX]
+9%4!=0 && 9%3!=0 && DoIsPrime<9,2>::value
+\end{lstlisting}
+
+继续扩展
+
+\begin{lstlisting}[style=styleCXX]
+9%4!=0 && 9%3!=0 && 9%2!=0
+\end{lstlisting}
+
+计算结果为false，因为9\%3是0。
+
+正如这个实例链所示:
+
+\begin{itemize}
+\item 
+使用递归展开DoIsPrime<>来遍历从p/2到2的所有除数，以确定这些除数是否能整除给定整数。
+
+\item 
+当d等于2时，DoIsPrime<>的偏特化作为结束递归。
+\end{itemize}
+
+注意，所有这些都在编译时完成。也就是说,
+
+\begin{lstlisting}[style=styleCXX]
+IsPrime<9>::value
+\end{lstlisting}
+
+在编译时展开为false。
+
+模板语法可以说是笨拙的，但类似的代码自C++98(或更早)就一直有效，并且可以提高运行库的效率。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}C++11前，通常将值成员声明为枚举数常量，而不是静态数据成员，以避免静态数据成员需要在类外定义(参见第23.6节了解详细信息)。例如:
+\begin{lstlisting}[style=styleCXX]
+enum f value = (p%d != 0) && DoIsPrime<p,d-1>::value g;
+\end{lstlisting}
+\end{tcolorbox}
+
+详见第23章。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

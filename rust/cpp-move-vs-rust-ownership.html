@@ -1,0 +1,839 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>C++ Move 語義 vs Rust 所有權系統的核心差異 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <p>// C++ Move 語義 vs Rust 所有權系統 深度對比
+// =============================================</p>
+<p>/*
+核心差異總結：</p>
+<p>C++ Move:</p>
+<ul>
+<li>運行時優化機制</li>
+<li>可選的，編譯器決定</li>
+<li>移動後對象仍存在但處於"已移動"狀態</li>
+<li>可能意外訪問已移動對象</li>
+<li>需要程序員理解和正確使用</li>
+</ul>
+<p>Rust Ownership:</p>
+<ul>
+<li>編譯時強制的內存安全機制</li>
+<li>必須的，編譯器強制執行</li>
+<li>移動後原變量不可再訪問</li>
+<li>編譯器防止任何誤用</li>
+<li>自動處理，零運行時開銷
+*/</li>
+</ul>
+<p>// ============================================
+// 1. 基本概念對比
+// ============================================</p>
+<p>/* C++ Move 語義示例:</p>
+<p>#include <iostream>
+#include <vector>
+#include <string>
+#include <utility></p>
+<p>class Resource {
+private:
+std::vector<int> data;
+std::string name;</p>
+<p>public:
+// 構造函數
+Resource(const std::string&amp; n) : name(n) {
+data.resize(1000, 42);
+std::cout &lt;&lt; "資源 " &lt;&lt; name &lt;&lt; " 創建\n";
+}</p>
+<pre><code>// 複製構造函數
+Resource(const Resource&amp; other) : data(other.data), name(other.name + "_copy") {
+    std::cout &lt;&lt; "資源 " &lt;&lt; name &lt;&lt; " 被複製\n";
+}
+
+// 移動構造函數
+Resource(Resource&amp;&amp; other) noexcept 
+    : data(std::move(other.data)), name(std::move(other.name)) {
+    std::cout &lt;&lt; "資源 " &lt;&lt; name &lt;&lt; " 被移動\n";
+    // other 仍然存在，但資源已被"偷走"
+}
+
+// 複製賦值
+Resource&amp; operator=(const Resource&amp; other) {
+    if (this != &amp;other) {
+        data = other.data;
+        name = other.name + "_assigned";
+        std::cout &lt;&lt; "資源 " &lt;&lt; name &lt;&lt; " 被賦值複製\n";
+    }
+    return *this;
+}
+
+// 移動賦值
+Resource&amp; operator=(Resource&amp;&amp; other) noexcept {
+    if (this != &amp;other) {
+        data = std::move(other.data);
+        name = std::move(other.name);
+        std::cout &lt;&lt; "資源 " &lt;&lt; name &lt;&lt; " 被賦值移動\n";
+    }
+    return *this;
+}
+
+~Resource() {
+    std::cout &lt;&lt; "資源 " &lt;&lt; name &lt;&lt; " 被銷毀\n";
+}
+
+void use_resource() {
+    std::cout &lt;&lt; "使用資源 " &lt;&lt; name &lt;&lt; " (大小: " &lt;&lt; data.size() &lt;&lt; ")\n";
+}
+</code></pre>
+<p>};</p>
+<p>void cpp_move_examples() {
+std::cout &lt;&lt; "=== C++ Move 語義 ===\n";</p>
+<pre><code>// 1. 基本移動
+Resource r1("original");
+Resource r2 = std::move(r1);  // 移動構造
+
+// 危險：r1 仍然存在但已被移動，訪問可能導致未定義行為
+// r1.use_resource();  // 可能崩潰或產生錯誤結果
+
+r2.use_resource();  // 安全
+
+// 2. 函數參數移動
+auto create_resource = []() -&gt; Resource {
+    return Resource("temp");  // 自動移動（RVO可能跳過）
+};
+
+Resource r3 = create_resource();  // 移動或複製
+
+// 3. 容器中的移動
+std::vector&lt;Resource&gt; resources;
+resources.push_back(std::move(r2));  // 移動到容器中
+// r2 現在處於已移動狀態
+
+// 4. 錯誤：意外使用已移動對象
+// r2.use_resource();  // 未定義行為！
+</code></pre>
+<p>}</p>
+<p>int main() {
+cpp_move_examples();
+return 0;
+}</p>
+<p>*/</p>
+<p>// Rust 所有權系統 - 相同功能的安全實現
+use std::fmt;</p>
+<p>#[derive(Debug)]
+struct Resource {
+data: Vec<i32>,
+name: String,
+}</p>
+<p>impl Resource {
+fn new(name: &amp;str) -&gt; Self {
+println!("資源 {} 創建", name);
+Resource {
+data: vec![42; 1000],
+name: name.to_string(),
+}
+}</p>
+<pre><code>fn use_resource(&amp;self) {
+    println!("使用資源 {} (大小: {})", self.name, self.data.len());
+}
+
+fn use_resource_mut(&amp;mut self) {
+    self.data.push(99);
+    println!("修改資源 {} (新大小: {})", self.name, self.data.len());
+}
+</code></pre>
+<p>}</p>
+<p>impl Drop for Resource {
+fn drop(&amp;mut self) {
+println!("資源 {} 被銷毀", self.name);
+}
+}</p>
+<p>impl Clone for Resource {
+fn clone(&amp;self) -&gt; Self {
+println!("資源 {} 被克隆", self.name);
+Resource {
+data: self.data.clone(),
+name: format!("{}_clone", self.name),
+}
+}
+}</p>
+<p>fn rust_ownership_examples() {
+println!("=== Rust 所有權系統 ===");</p>
+<pre><code>// 1. 基本移動（所有權轉移）
+let r1 = Resource::new("original");
+let r2 = r1;  // 所有權移動，r1 不再可用
+
+// 編譯錯誤：r1 已被移動
+// r1.use_resource();  // 編譯錯誤！
+
+r2.use_resource();  // 安全
+
+// 2. 函數參數所有權轉移
+fn take_ownership(resource: Resource) {
+    resource.use_resource();
+    // resource 在函數結束時被銷毀
+}
+
+fn borrow_resource(resource: &amp;Resource) {
+    resource.use_resource();
+    // 只是借用，不獲取所有權
+}
+
+fn borrow_mut_resource(resource: &amp;mut Resource) {
+    resource.use_resource_mut();
+    // 可變借用，可以修改但不獲取所有權
+}
+
+let r3 = Resource::new("for_function");
+
+// 選項1：轉移所有權
+// take_ownership(r3);  // r3 被移動，不再可用
+
+// 選項2：借用（推薦）
+borrow_resource(&amp;r3);  // r3 仍然可用
+
+// 選項3：可變借用
+let mut r4 = Resource::new("mutable");
+borrow_mut_resource(&amp;mut r4);
+r4.use_resource();  // 仍然可用
+
+// 3. 容器中的所有權
+let mut resources = Vec::new();
+let r5 = Resource::new("for_vector");
+resources.push(r5);  // r5 被移動到 vector 中
+// r5 不再可用
+
+// 訪問 vector 中的資源
+if let Some(resource) = resources.get(0) {
+    resource.use_resource();
+}
+
+// 4. 所有權恢復
+let recovered = resources.pop().unwrap();  // 從 vector 中取回所有權
+recovered.use_resource();
+</code></pre>
+<p>}</p>
+<p>// ============================================
+// 2. 深度對比：複雜場景
+// ============================================</p>
+<p>/* C++ 複雜移動場景的問題:</p>
+<p>class ComplexResource {
+std::unique_ptr&lt;int[]&gt; buffer;
+size_t size;
+std::string id;</p>
+<p>public:
+ComplexResource(const std::string&amp; identifier, size_t s)
+: buffer(std::make_unique&lt;int[]&gt;(s)), size(s), id(identifier) {}</p>
+<pre><code>// 移動構造後，原對象狀態不一致
+ComplexResource(ComplexResource&amp;&amp; other) noexcept
+    : buffer(std::move(other.buffer)), size(other.size), id(std::move(other.id)) {
+    // 問題：other.size 仍然保留原值，但 other.buffer 為 null
+    // 這可能導致不一致狀態
+}
+
+void process() {
+    if (buffer) {  // 必須檢查，因為可能已被移動
+        for (size_t i = 0; i &lt; size; ++i) {
+            buffer[i] = i;
+        }
+    } else {
+        // 已被移動的對象被意外使用
+        std::cout &lt;&lt; "錯誤：嘗試使用已移動的資源\n";
+    }
+}
+
+size_t get_size() const { return size; }  // 可能返回錯誤信息
+</code></pre>
+<p>};</p>
+<p>void problematic_move_usage() {
+ComplexResource cr1("test", 100);
+ComplexResource cr2 = std::move(cr1);</p>
+<pre><code>// 危險：cr1 處於部分移動狀態
+std::cout &lt;&lt; "cr1 size: " &lt;&lt; cr1.get_size() &lt;&lt; "\n";  // 仍然返回 100
+cr1.process();  // 但實際上 buffer 是 null！
+</code></pre>
+<p>}</p>
+<p>*/</p>
+<p>// Rust 等價實現 - 編譯時安全
+struct ComplexResource {
+buffer: Vec<i32>,  // 自動管理內存
+id: String,
+}</p>
+<p>impl ComplexResource {
+fn new(identifier: &amp;str, size: usize) -&gt; Self {
+ComplexResource {
+buffer: vec![0; size],
+id: identifier.to_string(),
+}
+}</p>
+<pre><code>fn process(&amp;mut self) {
+    for (i, item) in self.buffer.iter_mut().enumerate() {
+        *item = i as i32;
+    }
+    println!("處理完成：{} 個元素", self.buffer.len());
+}
+
+fn get_size(&amp;self) -&gt; usize {
+    self.buffer.len()
+}
+
+fn get_id(&amp;self) -&gt; &amp;str {
+    &amp;self.id
+}
+</code></pre>
+<p>}</p>
+<p>fn safe_ownership_usage() {
+let mut cr1 = ComplexResource::new("test", 100);
+let cr2 = cr1;  // 完整移動，cr1 完全不可用</p>
+<pre><code>// 編譯錯誤：無法訪問已移動的變量
+// println!("cr1 size: {}", cr1.get_size());  // 編譯錯誤！
+// cr1.process();  // 編譯錯誤！
+
+println!("cr2 size: {}", cr2.get_size());  // 安全
+// cr2.process();  // 需要可變引用
+</code></pre>
+<p>}</p>
+<p>// ============================================
+// 3. 性能對比
+// ============================================</p>
+<p>fn performance_comparison() {
+use std::time::Instant;</p>
+<pre><code>println!("\n=== 性能對比 ===");
+
+// 測試大量所有權轉移
+let start = Instant::now();
+
+let mut resources = Vec::new();
+for i in 0..10000 {
+    let resource = Resource::new(&amp;format!("resource_{}", i));
+    resources.push(resource);  // 移動，零成本
+}
+
+// 處理所有資源
+for resource in &amp;resources {
+    resource.use_resource();
+}
+
+let duration = start.elapsed();
+println!("Rust 所有權轉移耗時: {:?}", duration);
+
+// 測試借用性能
+let start = Instant::now();
+
+fn process_by_reference(resources: &amp;[Resource]) {
+    for resource in resources {
+        resource.use_resource();
+    }
+}
+
+process_by_reference(&amp;resources);
+
+let duration = start.elapsed();
+println!("Rust 借用處理耗時: {:?}", duration);
+</code></pre>
+<p>}</p>
+<p>// ============================================
+// 4. 錯誤處理和安全性
+// ============================================</p>
+<p>/* C++ 移動相關的常見錯誤:</p>
+<p>void common_cpp_move_errors() {
+// 錯誤1：使用已移動對象
+std::vector<int> v1 = {1, 2, 3, 4, 5};
+std::vector<int> v2 = std::move(v1);
+std::cout &lt;&lt; v1.size() &lt;&lt; std::endl;  // 可能是0，但不保證</p>
+<pre><code>// 錯誤2：移動後再次移動
+std::string s1 = "hello";
+std::string s2 = std::move(s1);
+std::string s3 = std::move(s1);  // 移動空字符串
+
+// 錯誤3：在條件語句中移動
+std::vector&lt;int&gt; data = {1, 2, 3};
+if (some_condition) {
+    process(std::move(data));
+}
+// 如果條件為假，data 仍然可用，但如果為真則不可用
+data.push_back(4);  // 可能錯誤
+
+// 錯誤4：返回本地變量的移動
+auto create_vector = []() {
+    std::vector&lt;int&gt; local = {1, 2, 3};
+    return std::move(local);  // 不必要，反而可能阻止RVO
+};
+</code></pre>
+<p>}</p>
+<p>*/</p>
+<p>// Rust 編譯時防止這些錯誤
+fn rust_compile_time_safety() {
+println!("\n=== Rust 編譯時安全檢查 ===");</p>
+<pre><code>// 1. 防止使用已移動變量
+let v1 = vec![1, 2, 3, 4, 5];
+let v2 = v1;  // v1 被移動
+// println!("{}", v1.len());  // 編譯錯誤！
+println!("v2 長度: {}", v2.len());  // 安全
+
+// 2. 防止重複移動
+let s1 = String::from("hello");
+let s2 = s1;  // s1 被移動
+// let s3 = s1;  // 編譯錯誤！
+println!("s2: {}", s2);
+
+// 3. 條件移動的安全處理
+let data = vec![1, 2, 3];
+let some_condition = true;
+
+let processed_data = if some_condition {
+    // 移動到函數中處理
+    process_data(data)
+} else {
+    // 如果不處理，保持原樣
+    data
+};
+
+// processed_data 總是可用的
+println!("處理後數據長度: {}", processed_data.len());
+
+// 4. 返回值優化是自動的
+fn create_vector() -&gt; Vec&lt;i32&gt; {
+    let local = vec![1, 2, 3];
+    local  // 自動移動，無需顯式 move
+}
+
+let result = create_vector();
+println!("創建的向量: {:?}", result);
+</code></pre>
+<p>}</p>
+<p>fn process_data(mut data: Vec<i32>) -&gt; Vec<i32> {
+data.push(4);
+data
+}</p>
+<p>// ============================================
+// 5. 高級所有權模式
+// ============================================</p>
+<p>// 智能指針和共享所有權
+use std::rc::Rc;
+use std::cell::RefCell;
+use std::sync::{Arc, Mutex};</p>
+<p>fn advanced_ownership_patterns() {
+println!("\n=== 高級所有權模式 ===");</p>
+<pre><code>// 1. 引用計數共享所有權 (單線程)
+{
+    let shared_data = Rc::new(vec![1, 2, 3, 4, 5]);
+    let reference1 = Rc::clone(&amp;shared_data);
+    let reference2 = Rc::clone(&amp;shared_data);
+    
+    println!("引用計數: {}", Rc::strong_count(&amp;shared_data));
+    println!("共享數據: {:?}", shared_data);
+    
+    // 所有引用離開作用域時，數據自動釋放
+}
+
+// 2. 內部可變性
+{
+    let data = Rc::new(RefCell::new(vec![1, 2, 3]));
+    let ref1 = Rc::clone(&amp;data);
+    let ref2 = Rc::clone(&amp;data);
+    
+    // 通過任何引用都可以修改
+    ref1.borrow_mut().push(4);
+    ref2.borrow_mut().push(5);
+    
+    println!("修改後的數據: {:?}", data.borrow());
+}
+
+// 3. 線程安全的共享所有權
+{
+    let shared_counter = Arc::new(Mutex::new(0));
+    let mut handles = vec![];
+    
+    for _ in 0..3 {
+        let counter = Arc::clone(&amp;shared_counter);
+        let handle = std::thread::spawn(move || {
+            let mut num = counter.lock().unwrap();
+            *num += 1;
+        });
+        handles.push(handle);
+    }
+    
+    for handle in handles {
+        handle.join().unwrap();
+    }
+    
+    println!("最終計數: {}", *shared_counter.lock().unwrap());
+}
+</code></pre>
+<p>}</p>
+<p>// ============================================
+// 6. 生命週期和借用
+// ============================================</p>
+<p>// 生命週期參數確保引用有效性
+fn lifetime_examples() {
+println!("\n=== 生命週期示例 ===");</p>
+<pre><code>// 1. 基本生命週期
+fn longest&lt;'a&gt;(x: &amp;'a str, y: &amp;'a str) -&gt; &amp;'a str {
+    if x.len() &gt; y.len() {
+        x
+    } else {
+        y
+    }
+}
+
+let string1 = String::from("long string");
+let string2 = "short";
+let result = longest(&amp;string1, string2);
+println!("最長的字符串: {}", result);
+
+// 2. 結構體中的生命週期
+#[derive(Debug)]
+struct ImportantExcerpt&lt;'a&gt; {
+    part: &amp;'a str,
+}
+
+let novel = String::from("Call me Ishmael. Some years ago...");
+let first_sentence = novel.split('.').next().expect("Could not find a '.'");
+let excerpt = ImportantExcerpt {
+    part: first_sentence,
+};
+println!("摘錄: {:?}", excerpt);
+
+// 3. 複雜借用場景
+fn demonstrate_borrowing() {
+    let mut data = vec![1, 2, 3, 4, 5];
+    
+    // 不可變借用
+    let sum: i32 = data.iter().sum();
+    println!("總和: {}", sum);
+    
+    // 可變借用
+    data.push(6);
+    println!("添加元素後: {:?}", data);
+    
+    // 同時存在多個不可變借用
+    let first = &amp;data[0];
+    let last = &amp;data[data.len() - 1];
+    println!("第一個: {}, 最後一個: {}", first, last);
+    
+    // 但不能同時存在可變和不可變借用
+    // let mut_ref = &amp;mut data;  // 編譯錯誤！
+}
+
+demonstrate_borrowing();
+</code></pre>
+<p>}</p>
+<p>// ============================================
+// 主函數和測試
+// ============================================</p>
+<p>fn main() {
+println!("🔄 C++ Move vs Rust Ownership 深度對比");
+println!("======================================");</p>
+<pre><code>rust_ownership_examples();
+safe_ownership_usage();
+performance_comparison();
+rust_compile_time_safety();
+advanced_ownership_patterns();
+lifetime_examples();
+
+println!("\n📊 總結對比:");
+println!("=============");
+
+println!("C++ Move語義:");
+println!("  ✅ 性能優化，減少不必要的複製");
+println!("  ❌ 運行時概念，可能誤用已移動對象");
+println!("  ❌ 需要程序員手動管理移動語義");
+println!("  ❌ 移動後對象狀態可能不一致");
+
+println!("\nRust 所有權系統:");
+println!("  ✅ 編譯時保證內存安全");
+println!("  ✅ 零運行時開銷");
+println!("  ✅ 自動管理，無需手動干預");
+println!("  ✅ 移動後原變量完全不可訪問");
+println!("  ✅ 借用檢查器防止數據競爭");
+
+println!("\n🎯 關鍵區別:");
+println!("  • C++ Move: 優化機制，可選使用");
+println!("  • Rust Ownership: 安全機制，強制執行");
+println!("  • C++ 側重性能，Rust 側重安全");
+println!("  • C++ 運行時檢查，Rust 編譯時檢查");
+</code></pre>
+<p>}</p>
+<p>#[cfg(test)]
+mod tests {
+use super::*;</p>
+<pre><code>#[test]
+fn test_ownership_transfer() {
+    let resource = Resource::new("test");
+    let moved_resource = resource;
+    
+    // 確保移動後可以正常使用
+    moved_resource.use_resource();
+    
+    // 以下會編譯失敗，證明所有權已轉移
+    // resource.use_resource();
+}
+
+#[test]
+fn test_borrowing() {
+    let resource = Resource::new("test");
+    
+    // 多次借用應該都可以工作
+    fn use_resource_ref(r: &amp;Resource) {
+        r.use_resource();
+    }
+    
+    use_resource_ref(&amp;resource);
+    use_resource_ref(&amp;resource);
+    
+    // 原始變量仍然可用
+    resource.use_resource();
+}
+
+#[test]
+fn test_mutable_borrowing() {
+    let mut resource = Resource::new("test");
+    
+    // 可變借用
+    fn modify_resource(r: &amp;mut Resource) {
+        r.use_resource_mut();
+    }
+    
+    modify_resource(&amp;mut resource);
+    
+    // 借用結束後仍可使用
+    resource.use_resource();
+}
+</code></pre>
+<p>}</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../rust/cpp_vs_rust_comparison.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../rust/Rust-RESTful-API-完整開發指南.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../rust/cpp_vs_rust_comparison.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../rust/Rust-RESTful-API-完整開發指南.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

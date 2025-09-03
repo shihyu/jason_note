@@ -1,0 +1,228 @@
+
+结构化绑定可以很容易地将值解压缩到单独的变量中，从而提高代码的可读性。
+
+使用结构化绑定，可以直接将成员值分配给变量:
+
+\begin{lstlisting}[style=styleCXX]
+things_pair<int,int> { 47, 9 };
+auto [this, that] = things_pair;
+cout << format("{} {}\n", this, that);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+47 9
+\end{tcblisting}
+
+\subsubsection{How to do it…}
+
+\begin{itemize}
+\item 
+结构化绑定使用pair、tuple、array和struct。C++20起，还会包括位域。下面的例子使用了C数组:
+
+\begin{lstlisting}[style=styleCXX]
+int nums[] { 1, 2, 3, 4, 5 };
+auto [ a, b, c, d, e ] = nums;
+cout << format("{} {} {} {} {}\n", a, b, c, d, e);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+1 2 3 4 5
+\end{tcblisting}
+
+因为结构化绑定使用自动类型推断，所以类型必须是auto。各个变量的名称都在方括号内，[a, b, c, d, e]。
+
+这个例子中，int型c数组nums包含五个值。使用结构化绑定将这五个值赋给变量(a、b、c、d和e)。
+
+\item 
+这也适用于STL数组对象:
+
+\begin{lstlisting}[style=styleCXX]
+array<int,5> nums { 1, 2, 3, 4, 5 };
+auto [ a, b, c, d, e ] = nums;
+cout << format("{} {} {} {} {}\n", a, b, c, d, e);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+1 2 3 4 5
+\end{tcblisting}
+
+\item 
+或者将它与tuple一起使用:
+
+\begin{lstlisting}[style=styleCXX]
+tuple<int, double, string> nums{ 1, 2.7, "three" };
+auto [ a, b, c ] = nums;
+cout << format("{} {} {}\n", a, b, c);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+1 2.7 three
+\end{tcblisting}
+
+\item 
+将它与结构体一起使用时，将按照定义的顺序接受变量:
+
+\begin{lstlisting}[style=styleCXX]
+struct Things { int i{}; double d{}; string s{}; };
+Things nums{ 1, 2.7, "three" };
+auto [ a, b, c ] = nums;
+cout << format("{} {} {}\n", a, b, c);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+1 2.7 three
+\end{tcblisting}
+
+\item 
+可以使用带有结构化绑定的引用，可以修改绑定容器中的值，同时避免数据复制:
+
+\begin{lstlisting}[style=styleCXX]
+array<int,5> nums { 1, 2, 3, 4, 5 };
+auto& [ a, b, c, d, e ] = nums;
+cout << format("{} {}\n", nums[2], c);
+c = 47;
+cout << format("{} {}\n", nums[2], c);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+3 3
+47 47
+\end{tcblisting}
+
+因为变量绑定为引用，所以可以给c赋一个值，这也会改变数组中的值(nums[2])。
+
+\item 
+可以声明数组const来避免值的改变:
+
+\begin{lstlisting}[style=styleCXX]
+const array<int,5> nums { 1, 2, 3, 4, 5 };
+auto& [ a, b, c, d, e ] = nums;
+c = 47; // this is now an error
+\end{lstlisting}
+
+或者可以声明为const绑定来达到同样的效果，同时允许在其他地方更改数组，从而避免复制数据:
+
+\begin{lstlisting}[style=styleCXX]
+array<int,5> nums { 1, 2, 3, 4, 5 };
+const auto& [ a, b, c, d, e ] = nums;
+c = 47; // this is also an error
+\end{lstlisting}
+
+\end{itemize}
+
+\subsubsection{How it works…}
+
+结构化绑定使用auto类型推断将结构解压缩到变量中。其独立地确定每个值的类型，并为每个变量分配相应的类型。
+
+\begin{itemize}
+\item 
+因为结构化绑定使用auto类型推断，所以不能为绑定指定类型，必须使用auto。若使用一个类型进行绑定，会得到相应的错误信息:
+
+\begin{lstlisting}[style=styleCXX]
+array<int,5> nums { 1, 2, 3, 4, 5 };
+int [ a, b, c, d, e ] = nums;
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+error: structured binding declaration cannot have type 'int'
+note: type must be cv-qualified 'auto' or reference to
+cv-qualified 'auto'
+\end{tcblisting}
+
+当我尝试使用int与结构化绑定一起使用，上面就是来自GCC的报错。
+
+\item 
+对于函数的返回类型，通常使用结构化绑定:
+
+\begin{lstlisting}[style=styleCXX]
+struct div_result {
+	long quo;
+	long rem;
+};
+
+div_result int_div(const long & num, const long & denom)
+{
+	struct div_result r{};
+	r.quo = num / denom;
+	r.rem = num % denom;
+	return r;
+}
+
+int main() {
+	auto [quo, rem] = int_div(47, 5);
+	cout << format("quotient: {}, remainder {}\n",
+		quo, rem);
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+quotient: 9, remainder 2
+\end{tcblisting}
+
+\item 
+因为map容器类为每个元素返回一个pair，所以使用结构化绑定来检索键/值对就很方便:
+
+\begin{lstlisting}[style=styleCXX]
+map<string, uint64_t> inhabitants {
+	{ "humans", 7000000000 },
+	{ "pokemon", 17863376 },
+	{ "klingons", 24246291 },
+	{ "cats", 1086881528 }
+};
+
+// I like commas
+string make_commas(const uint64_t num) {
+	string s{ std::to_string(num) };
+	for(int l = s.length() - 3; l > 0; l -= 3) {
+		s.insert(l, ",");
+	}
+	return s;
+}
+
+int main() {
+	for(const auto & [creature, pop] : inhabitants) {
+		cout << format("there are {} {}\n",
+		make_commas(pop), creature);
+	}
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+there are 1,086,881,528 cats
+there are 7,000,000,000 humans
+there are 24,246,291 klingons
+there are 17,863,376 pokemon
+\end{tcblisting}
+
+使用结构化绑定来解包结构可以使代码更清晰、更容易维护。
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+

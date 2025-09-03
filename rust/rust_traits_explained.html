@@ -1,0 +1,802 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Rust Traits 白話解釋：與 C++ 的比較 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="rust-traits-白話解釋與-c-的比較"><a class="header" href="#rust-traits-白話解釋與-c-的比較">Rust Traits 白話解釋：與 C++ 的比較</a></h1>
+<h2 id="什麼是-trait"><a class="header" href="#什麼是-trait">什麼是 Trait？</a></h2>
+<p><strong>Trait 就像是一個「能力證書」或「技能清單」</strong>。</p>
+<p>想像一下：</p>
+<ul>
+<li>你去考駕照，駕照就是一個 trait，它證明你有「開車」的能力</li>
+<li>不管你開的是轎車、卡車還是機車，只要有駕照，就代表你具備了「開車」這個技能</li>
+<li>不同的車輛類型都可以「實作」這個「開車」的 trait</li>
+</ul>
+<h2 id="基本範例飛行能力"><a class="header" href="#基本範例飛行能力">基本範例：飛行能力</a></h2>
+<h3 id="rust-版本"><a class="header" href="#rust-版本">Rust 版本</a></h3>
+<pre><pre class="playground"><code class="language-rust">// 定義一個 trait（能力清單）
+trait CanFly {
+    fn fly(&amp;self);
+}
+
+// 不同的東西都可以實作這個 trait
+struct Bird;
+struct Airplane;
+struct Superman;
+
+// 鳥類實作飛行能力
+impl CanFly for Bird {
+    fn fly(&amp;self) {
+        println!("用翅膀飛翔！");
+    }
+}
+
+// 飛機實作飛行能力
+impl CanFly for Airplane {
+    fn fly(&amp;self) {
+        println!("用引擎和機翼飛行！");
+    }
+}
+
+// 超人實作飛行能力
+impl CanFly for Superman {
+    fn fly(&amp;self) {
+        println!("用超能力飛行！");
+    }
+}
+
+// 使用這個 trait
+fn make_it_fly(thing: &amp;dyn CanFly) {
+    thing.fly(); // 不管是什麼東西，只要會飛就行
+}
+
+fn main() {
+    let bird = Bird;
+    let airplane = Airplane;
+    let superman = Superman;
+    
+    make_it_fly(&amp;bird);      // 用翅膀飛翔！
+    make_it_fly(&amp;airplane);  // 用引擎和機翼飛行！
+    make_it_fly(&amp;superman);  // 用超能力飛行！
+}</code></pre></pre>
+<h3 id="c-對應版本"><a class="header" href="#c-對應版本">C++ 對應版本</a></h3>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;memory&gt;
+
+// C++ 版本 - 抽象類別（相當於 trait）
+class CanFly {
+public:
+    virtual void fly() = 0;  // 純虛函數
+    virtual ~CanFly() = default;
+};
+
+class Bird : public CanFly {
+public:
+    void fly() override {
+        std::cout &lt;&lt; "用翅膀飛翔！" &lt;&lt; std::endl;
+    }
+};
+
+class Airplane : public CanFly {
+public:
+    void fly() override {
+        std::cout &lt;&lt; "用引擎和機翼飛行！" &lt;&lt; std::endl;
+    }
+};
+
+class Superman : public CanFly {
+public:
+    void fly() override {
+        std::cout &lt;&lt; "用超能力飛行！" &lt;&lt; std::endl;
+    }
+};
+
+// 使用多型
+void makeItFly(CanFly* thing) {
+    thing-&gt;fly();
+}
+
+int main() {
+    auto bird = std::make_unique&lt;Bird&gt;();
+    auto airplane = std::make_unique&lt;Airplane&gt;();
+    auto superman = std::make_unique&lt;Superman&gt;();
+    
+    makeItFly(bird.get());      // 用翅膀飛翔！
+    makeItFly(airplane.get());  // 用引擎和機翼飛行！
+    makeItFly(superman.get());  // 用超能力飛行！
+    
+    return 0;
+}
+</code></pre>
+<h2 id="rust-與-c-的對應關係"><a class="header" href="#rust-與-c-的對應關係">Rust 與 C++ 的對應關係</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Rust</th><th>C++</th><th>說明</th></tr></thead><tbody>
+<tr><td><code>trait</code></td><td><code>interface</code> (抽象類別)</td><td>定義一組方法簽章</td></tr>
+<tr><td><code>impl Trait for Type</code></td><td><code>class Type : public Interface</code></td><td>實作介面</td></tr>
+<tr><td><code>&amp;dyn Trait</code></td><td><code>Interface*</code></td><td>多型的使用方式</td></tr>
+<tr><td><code>impl</code> 區塊</td><td><code>override</code> 方法</td><td>實作具體功能</td></tr>
+</tbody></table>
+</div>
+<h2 id="主要差異"><a class="header" href="#主要差異">主要差異</a></h2>
+<h3 id="1-語法差異"><a class="header" href="#1-語法差異">1. 語法差異</a></h3>
+<ul>
+<li><strong>Rust</strong>: <code>trait</code> + <code>impl</code> 分離定義</li>
+<li><strong>C++</strong>: <code>class</code> + 繼承一起定義</li>
+</ul>
+<h3 id="2-實作方式"><a class="header" href="#2-實作方式">2. 實作方式</a></h3>
+<p><strong>Rust 可以為已存在的型別「後加」trait</strong>：</p>
+<pre><pre class="playground"><code class="language-rust">// Rust 可以這樣做
+impl CanFly for i32 {  // 為內建型別 i32 加上飛行能力
+    fn fly(&amp;self) {
+        println!("數字 {} 神奇地飛起來了！", self);
+    }
+}
+
+fn main() {
+    let number = 42;
+    number.fly(); // 數字 42 神奇地飛起來了！
+}</code></pre></pre>
+<p><strong>C++ 不能為內建型別後加介面</strong>：</p>
+<pre><code class="language-cpp">// C++ 不能這樣做
+// 你不能為內建的 int 類型後加介面
+// int 必須在定義時就決定要繼承哪些類別
+</code></pre>
+<h3 id="3-記憶體管理"><a class="header" href="#3-記憶體管理">3. 記憶體管理</a></h3>
+<ul>
+<li><strong>Rust</strong>: <code>&amp;dyn Trait</code> 是借用，自動管理記憶體</li>
+<li><strong>C++</strong>: <code>Interface*</code> 需要手動管理記憶體或使用智慧指標</li>
+</ul>
+<h3 id="4-多重能力"><a class="header" href="#4-多重能力">4. 多重能力</a></h3>
+<p><strong>Rust 支援多個 trait</strong>：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait CanWalk {
+    fn walk(&amp;self);
+}
+
+trait CanSwim {
+    fn swim(&amp;self);
+}
+
+// 可以同時實作多個 trait
+impl CanWalk for Duck { /* ... */ }
+impl CanSwim for Duck { /* ... */ }
+impl CanFly for Duck { /* ... */ }
+<span class="boring">}</span></code></pre></pre>
+<p><strong>C++ 多重繼承</strong>：</p>
+<pre><code class="language-cpp">class Duck : public CanWalk, public CanSwim, public CanFly {
+    // 需要實作所有純虛函數
+};
+</code></pre>
+<h2 id="實際例子動物園管理系統"><a class="header" href="#實際例子動物園管理系統">實際例子：動物園管理系統</a></h2>
+<h3 id="rust-版本-1"><a class="header" href="#rust-版本-1">Rust 版本</a></h3>
+<pre><pre class="playground"><code class="language-rust">// 定義各種能力
+trait CanWalk {
+    fn walk(&amp;self);
+    fn walk_speed(&amp;self) -&gt; u32;
+}
+
+trait CanSwim {
+    fn swim(&amp;self);
+    fn swim_speed(&amp;self) -&gt; u32;
+}
+
+trait CanFly {
+    fn fly(&amp;self);
+    fn fly_speed(&amp;self) -&gt; u32;
+}
+
+// 鴨子：會走、會游、會飛
+struct Duck {
+    name: String,
+}
+
+impl CanWalk for Duck {
+    fn walk(&amp;self) {
+        println!("鴨子 {} 用腳走路", self.name);
+    }
+    
+    fn walk_speed(&amp;self) -&gt; u32 { 5 }
+}
+
+impl CanSwim for Duck {
+    fn swim(&amp;self) {
+        println!("鴨子 {} 在水中游泳", self.name);
+    }
+    
+    fn swim_speed(&amp;self) -&gt; u32 { 10 }
+}
+
+impl CanFly for Duck {
+    fn fly(&amp;self) {
+        println!("鴨子 {} 拍翅膀飛行", self.name);
+    }
+    
+    fn fly_speed(&amp;self) -&gt; u32 { 20 }
+}
+
+// 魚：只會游泳
+struct Fish {
+    name: String,
+}
+
+impl CanSwim for Fish {
+    fn swim(&amp;self) {
+        println!("魚 {} 在水中游泳", self.name);
+    }
+    
+    fn swim_speed(&amp;self) -&gt; u32 { 15 }
+}
+
+// 鳥：會走和飛
+struct Eagle {
+    name: String,
+}
+
+impl CanWalk for Eagle {
+    fn walk(&amp;self) {
+        println!("老鷹 {} 用爪子走路", self.name);
+    }
+    
+    fn walk_speed(&amp;self) -&gt; u32 { 3 }
+}
+
+impl CanFly for Eagle {
+    fn fly(&amp;self) {
+        println!("老鷹 {} 展翅翱翔", self.name);
+    }
+    
+    fn fly_speed(&amp;self) -&gt; u32 { 50 }
+}
+
+// 使用函數
+fn swimming_competition(swimmers: Vec&lt;&amp;dyn CanSwim&gt;) {
+    println!("=== 游泳比賽開始 ===");
+    for swimmer in swimmers {
+        swimmer.swim();
+        println!("速度: {} km/h", swimmer.swim_speed());
+    }
+}
+
+fn flying_show(flyers: Vec&lt;&amp;dyn CanFly&gt;) {
+    println!("=== 飛行表演開始 ===");
+    for flyer in flyers {
+        flyer.fly();
+        println!("速度: {} km/h", flyer.fly_speed());
+    }
+}
+
+fn walking_parade(walkers: Vec&lt;&amp;dyn CanWalk&gt;) {
+    println!("=== 行走遊行開始 ===");
+    for walker in walkers {
+        walker.walk();
+        println!("速度: {} km/h", walker.walk_speed());
+    }
+}
+
+fn main() {
+    let duck = Duck { name: "唐老鴨".to_string() };
+    let fish = Fish { name: "尼莫".to_string() };
+    let eagle = Eagle { name: "老鷹".to_string() };
+    
+    // 游泳比賽：鴨子和魚都可以參加
+    swimming_competition(vec![&amp;duck, &amp;fish]);
+    println!();
+    
+    // 飛行表演：鴨子和老鷹都可以參加
+    flying_show(vec![&amp;duck, &amp;eagle]);
+    println!();
+    
+    // 行走遊行：鴨子和老鷹都可以參加
+    walking_parade(vec![&amp;duck, &amp;eagle]);
+}</code></pre></pre>
+<h3 id="c-對應版本-1"><a class="header" href="#c-對應版本-1">C++ 對應版本</a></h3>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;memory&gt;
+#include &lt;string&gt;
+
+// 抽象介面
+class CanWalk {
+public:
+    virtual void walk() = 0;
+    virtual int walk_speed() = 0;
+    virtual ~CanWalk() = default;
+};
+
+class CanSwim {
+public:
+    virtual void swim() = 0;
+    virtual int swim_speed() = 0;
+    virtual ~CanSwim() = default;
+};
+
+class CanFly {
+public:
+    virtual void fly() = 0;
+    virtual int fly_speed() = 0;
+    virtual ~CanFly() = default;
+};
+
+// 鴨子：多重繼承
+class Duck : public CanWalk, public CanSwim, public CanFly {
+private:
+    std::string name;
+    
+public:
+    Duck(const std::string&amp; n) : name(n) {}
+    
+    void walk() override {
+        std::cout &lt;&lt; "鴨子 " &lt;&lt; name &lt;&lt; " 用腳走路" &lt;&lt; std::endl;
+    }
+    
+    int walk_speed() override { return 5; }
+    
+    void swim() override {
+        std::cout &lt;&lt; "鴨子 " &lt;&lt; name &lt;&lt; " 在水中游泳" &lt;&lt; std::endl;
+    }
+    
+    int swim_speed() override { return 10; }
+    
+    void fly() override {
+        std::cout &lt;&lt; "鴨子 " &lt;&lt; name &lt;&lt; " 拍翅膀飛行" &lt;&lt; std::endl;
+    }
+    
+    int fly_speed() override { return 20; }
+};
+
+// 魚：只繼承游泳
+class Fish : public CanSwim {
+private:
+    std::string name;
+    
+public:
+    Fish(const std::string&amp; n) : name(n) {}
+    
+    void swim() override {
+        std::cout &lt;&lt; "魚 " &lt;&lt; name &lt;&lt; " 在水中游泳" &lt;&lt; std::endl;
+    }
+    
+    int swim_speed() override { return 15; }
+};
+
+// 老鷹：繼承走路和飛行
+class Eagle : public CanWalk, public CanFly {
+private:
+    std::string name;
+    
+public:
+    Eagle(const std::string&amp; n) : name(n) {}
+    
+    void walk() override {
+        std::cout &lt;&lt; "老鷹 " &lt;&lt; name &lt;&lt; " 用爪子走路" &lt;&lt; std::endl;
+    }
+    
+    int walk_speed() override { return 3; }
+    
+    void fly() override {
+        std::cout &lt;&lt; "老鷹 " &lt;&lt; name &lt;&lt; " 展翅翱翔" &lt;&lt; std::endl;
+    }
+    
+    int fly_speed() override { return 50; }
+};
+
+// 使用函數
+void swimming_competition(const std::vector&lt;CanSwim*&gt;&amp; swimmers) {
+    std::cout &lt;&lt; "=== 游泳比賽開始 ===" &lt;&lt; std::endl;
+    for (auto swimmer : swimmers) {
+        swimmer-&gt;swim();
+        std::cout &lt;&lt; "速度: " &lt;&lt; swimmer-&gt;swim_speed() &lt;&lt; " km/h" &lt;&lt; std::endl;
+    }
+}
+
+void flying_show(const std::vector&lt;CanFly*&gt;&amp; flyers) {
+    std::cout &lt;&lt; "=== 飛行表演開始 ===" &lt;&lt; std::endl;
+    for (auto flyer : flyers) {
+        flyer-&gt;fly();
+        std::cout &lt;&lt; "速度: " &lt;&lt; flyer-&gt;fly_speed() &lt;&lt; " km/h" &lt;&lt; std::endl;
+    }
+}
+
+void walking_parade(const std::vector&lt;CanWalk*&gt;&amp; walkers) {
+    std::cout &lt;&lt; "=== 行走遊行開始 ===" &lt;&lt; std::endl;
+    for (auto walker : walkers) {
+        walker-&gt;walk();
+        std::cout &lt;&lt; "速度: " &lt;&lt; walker-&gt;walk_speed() &lt;&lt; " km/h" &lt;&lt; std::endl;
+    }
+}
+
+int main() {
+    auto duck = std::make_unique&lt;Duck&gt;("唐老鴨");
+    auto fish = std::make_unique&lt;Fish&gt;("尼莫");
+    auto eagle = std::make_unique&lt;Eagle&gt;("老鷹");
+    
+    // 游泳比賽
+    swimming_competition({duck.get(), fish.get()});
+    std::cout &lt;&lt; std::endl;
+    
+    // 飛行表演
+    flying_show({duck.get(), eagle.get()});
+    std::cout &lt;&lt; std::endl;
+    
+    // 行走遊行
+    walking_parade({duck.get(), eagle.get()});
+    
+    return 0;
+}
+</code></pre>
+<h2 id="常用的-rust-traits"><a class="header" href="#常用的-rust-traits">常用的 Rust Traits</a></h2>
+<h3 id="標準庫-traits"><a class="header" href="#標準庫-traits">標準庫 Traits</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Debug - 用於 {:?} 格式化
+#[derive(Debug)]
+struct Point { x: i32, y: i32 }
+
+// Clone - 用於 .clone() 方法
+#[derive(Clone)]
+struct Data { value: String }
+
+// PartialEq - 用於 == 比較
+#[derive(PartialEq)]
+struct Id(u32);
+
+// Display - 用於 {} 格式化
+use std::fmt;
+
+impl fmt::Display for Point {
+    fn fmt(&amp;self, f: &amp;mut fmt::Formatter) -&gt; fmt::Result {
+        write!(f, "({}, {})", self.x, self.y)
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="自訂-traits"><a class="header" href="#自訂-traits">自訂 Traits</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 定義計算面積的能力
+trait Area {
+    fn area(&amp;self) -&gt; f64;
+}
+
+struct Circle {
+    radius: f64,
+}
+
+struct Rectangle {
+    width: f64,
+    height: f64,
+}
+
+impl Area for Circle {
+    fn area(&amp;self) -&gt; f64 {
+        std::f64::consts::PI * self.radius * self.radius
+    }
+}
+
+impl Area for Rectangle {
+    fn area(&amp;self) -&gt; f64 {
+        self.width * self.height
+    }
+}
+
+// 使用 trait
+fn print_area&lt;T: Area&gt;(shape: &amp;T) {
+    println!("面積: {}", shape.area());
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="進階特性"><a class="header" href="#進階特性">進階特性</a></h2>
+<h3 id="trait-bounds特徵約束"><a class="header" href="#trait-bounds特徵約束">Trait Bounds（特徵約束）</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 限制泛型必須實作特定 trait
+fn compare_and_print&lt;T: PartialEq + Debug&gt;(a: &amp;T, b: &amp;T) {
+    if a == b {
+        println!("{:?} 等於 {:?}", a, b);
+    } else {
+        println!("{:?} 不等於 {:?}", a, b);
+    }
+}
+
+// 或者使用 where 子句
+fn process_data&lt;T&gt;(data: &amp;T) 
+where 
+    T: Clone + Debug + PartialEq,
+{
+    let cloned = data.clone();
+    println!("原始: {:?}", data);
+    println!("複製: {:?}", cloned);
+    println!("相等: {}", data == &amp;cloned);
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="預設實作"><a class="header" href="#預設實作">預設實作</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait Greet {
+    fn name(&amp;self) -&gt; &amp;str;
+    
+    // 預設實作
+    fn greet(&amp;self) {
+        println!("Hello, {}!", self.name());
+    }
+    
+    // 可以被覆寫的預設實作
+    fn goodbye(&amp;self) {
+        println!("Goodbye, {}!", self.name());
+    }
+}
+
+struct Person {
+    name: String,
+}
+
+impl Greet for Person {
+    fn name(&amp;self) -&gt; &amp;str {
+        &amp;self.name
+    }
+    
+    // 可以選擇覆寫預設實作
+    fn goodbye(&amp;self) {
+        println!("See you later, {}!", self.name());
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<h3 id="rust-trait-的核心概念"><a class="header" href="#rust-trait-的核心概念">Rust Trait 的核心概念</a></h3>
+<ul>
+<li><strong>像是技能證書</strong>：定義「能做什麼」</li>
+<li><strong>可以後加</strong>：為已存在的型別加上新能力</li>
+<li><strong>組合式設計</strong>：一個型別可以有多種能力</li>
+<li><strong>類型安全</strong>：編譯時就確保型別有對應的能力</li>
+</ul>
+<h3 id="與-c-的主要差異"><a class="header" href="#與-c-的主要差異">與 C++ 的主要差異</a></h3>
+<ul>
+<li><strong>Rust 更靈活</strong>：可以為任何型別後加 trait</li>
+<li><strong>C++ 更傳統</strong>：繼承式設計，必須在定義時決定</li>
+<li><strong>Rust 記憶體更安全</strong>：自動管理記憶體，無需手動釋放</li>
+<li><strong>C++ 效能更直接</strong>：虛函數表調用，但需要小心記憶體管理</li>
+</ul>
+<h3 id="使用建議"><a class="header" href="#使用建議">使用建議</a></h3>
+<ol>
+<li><strong>優先使用 derive</strong>：對於常用的 trait，儘量使用 <code>#[derive(...)]</code></li>
+<li><strong>組合勝於繼承</strong>：使用多個小 trait 組合，而不是大的 trait</li>
+<li><strong>為外部型別添加能力</strong>：利用 trait 的靈活性為第三方型別加功能</li>
+<li><strong>善用 trait bounds</strong>：在泛型中使用 trait 約束來確保型別安全</li>
+</ol>
+<p>Trait 是 Rust 的核心特性，讓程式碼更模組化、更易於維護，同時保持高效能和型別安全！</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../rust/rust-derive-traits-comparison.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../rust/rust_trait_impl_markdown.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../rust/rust-derive-traits-comparison.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../rust/rust_trait_impl_markdown.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,924 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Goroutine vs C++/Rust 協程完整對比指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="goroutine-vs-crust-協程完整對比指南"><a class="header" href="#goroutine-vs-crust-協程完整對比指南">Goroutine vs C++/Rust 協程完整對比指南</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ol>
+<li><a href="#%E6%A6%82%E8%BF%B0">概述</a></li>
+<li><a href="#golang-goroutine">Golang Goroutine</a></li>
+<li><a href="#c-%E5%8D%94%E7%A8%8B%E5%AF%A6%E7%8F%BE">C++ 協程實現</a></li>
+<li><a href="#rust-asyncawait-%E5%AF%A6%E7%8F%BE">Rust async/await 實現</a></li>
+<li><a href="#%E8%A9%B3%E7%B4%B0%E5%B0%8D%E6%AF%94%E5%88%86%E6%9E%90">詳細對比分析</a></li>
+<li><a href="#%E6%80%A7%E8%83%BD%E8%88%87%E7%89%B9%E6%80%A7%E5%B0%8D%E6%AF%94">性能與特性對比</a></li>
+<li><a href="#%E5%AD%B8%E7%BF%92%E6%9B%B2%E7%B7%9A%E8%88%87%E9%81%A9%E7%94%A8%E5%A0%B4%E6%99%AF">學習曲線與適用場景</a></li>
+<li><a href="#%E7%B8%BD%E7%B5%90%E8%88%87%E5%BB%BA%E8%AD%B0">總結與建議</a></li>
+</ol>
+<h2 id="概述"><a class="header" href="#概述">概述</a></h2>
+<p>協程（Coroutines）是一種輕量級的並發執行單元，相比傳統線程具有更低的創建和切換成本。本文比較三種主流語言的協程實現方案。</p>
+<h2 id="golang-goroutine"><a class="header" href="#golang-goroutine">Golang Goroutine</a></h2>
+<h3 id="基本語法"><a class="header" href="#基本語法">基本語法</a></h3>
+<pre><code class="language-go">// 最簡單的 goroutine
+go myFunction()
+
+// 匿名函數
+go func() {
+    fmt.Println("Hello from goroutine!")
+}()
+</code></pre>
+<h3 id="完整範例"><a class="header" href="#完整範例">完整範例</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+func worker(id int, jobs &lt;-chan int, results chan&lt;- int, wg *sync.WaitGroup) {
+    defer wg.Done()
+    for job := range jobs {
+        fmt.Printf("Worker %d processing job %d\n", id, job)
+        time.Sleep(100 * time.Millisecond) // 模擬工作
+        results &lt;- job * 2
+    }
+}
+
+func main() {
+    const numWorkers = 3
+    const numJobs = 9
+    
+    jobs := make(chan int, numJobs)
+    results := make(chan int, numJobs)
+    
+    var wg sync.WaitGroup
+    
+    // 啟動 goroutine workers
+    for i := 1; i &lt;= numWorkers; i++ {
+        wg.Add(1)
+        go worker(i, jobs, results, &amp;wg) // 這裡就是 goroutine!
+    }
+    
+    // 發送工作
+    for i := 1; i &lt;= numJobs; i++ {
+        jobs &lt;- i
+    }
+    close(jobs)
+    
+    // 等待完成並收集結果
+    go func() {
+        wg.Wait()
+        close(results)
+    }()
+    
+    // 收集結果
+    fmt.Println("Results:")
+    for result := range results {
+        fmt.Printf("Result: %d\n", result)
+    }
+}
+</code></pre>
+<h3 id="goroutine-特點"><a class="header" href="#goroutine-特點">Goroutine 特點</a></h3>
+<ul>
+<li>✅ 語法極其簡潔：只需 <code>go</code> 關鍵字</li>
+<li>✅ 內建 Channel 通信機制</li>
+<li>✅ 自動垃圾回收</li>
+<li>✅ 內建調度器 (M:N 模型)</li>
+<li>✅ 豐富的並發原語 (sync.Mutex, sync.WaitGroup 等)</li>
+</ul>
+<h2 id="c-協程實現"><a class="header" href="#c-協程實現">C++ 協程實現</a></h2>
+<h3 id="c20-協程基礎"><a class="header" href="#c20-協程基礎">C++20 協程基礎</a></h3>
+<pre><code class="language-cpp">#include &lt;coroutine&gt;
+#include &lt;iostream&gt;
+
+// 簡單的 Task 協程實現
+struct Task {
+    struct promise_type {
+        Task get_return_object() {
+            return Task{std::coroutine_handle&lt;promise_type&gt;::from_promise(*this)};
+        }
+        std::suspend_never initial_suspend() { return {}; }
+        std::suspend_never final_suspend() noexcept { return {}; }
+        void return_void() {}
+        void unhandled_exception() {}
+    };
+    
+    std::coroutine_handle&lt;promise_type&gt; coro;
+    
+    Task(std::coroutine_handle&lt;promise_type&gt; h) : coro(h) {}
+    ~Task() { if (coro) coro.destroy(); }
+    
+    // 移動語義
+    Task(Task&amp;&amp; other) noexcept : coro(std::exchange(other.coro, {})) {}
+    Task&amp; operator=(Task&amp;&amp; other) noexcept {
+        if (this != &amp;other) {
+            if (coro) coro.destroy();
+            coro = std::exchange(other.coro, {});
+        }
+        return *this;
+    }
+    
+    Task(const Task&amp;) = delete;
+    Task&amp; operator=(const Task&amp;) = delete;
+};
+</code></pre>
+<h3 id="完整協程調度器實現"><a class="header" href="#完整協程調度器實現">完整協程調度器實現</a></h3>
+<pre><code class="language-cpp">#include &lt;coroutine&gt;
+#include &lt;iostream&gt;
+#include &lt;thread&gt;
+#include &lt;vector&gt;
+#include &lt;queue&gt;
+#include &lt;mutex&gt;
+#include &lt;condition_variable&gt;
+#include &lt;future&gt;
+
+// 簡單的協程調度器
+class SimpleScheduler {
+private:
+    std::queue&lt;std::function&lt;void()&gt;&gt; tasks;
+    std::mutex mutex;
+    std::condition_variable cv;
+    std::vector&lt;std::thread&gt; workers;
+    bool stopping = false;
+
+public:
+    SimpleScheduler(int numThreads = std::thread::hardware_concurrency()) {
+        for (int i = 0; i &lt; numThreads; ++i) {
+            workers.emplace_back([this] { workerLoop(); });
+        }
+    }
+    
+    ~SimpleScheduler() {
+        {
+            std::lock_guard&lt;std::mutex&gt; lock(mutex);
+            stopping = true;
+        }
+        cv.notify_all();
+        for (auto&amp; worker : workers) {
+            worker.join();
+        }
+    }
+    
+    void schedule(std::function&lt;void()&gt; task) {
+        {
+            std::lock_guard&lt;std::mutex&gt; lock(mutex);
+            tasks.push(std::move(task));
+        }
+        cv.notify_one();
+    }
+
+private:
+    void workerLoop() {
+        while (true) {
+            std::function&lt;void()&gt; task;
+            {
+                std::unique_lock&lt;std::mutex&gt; lock(mutex);
+                cv.wait(lock, [this] { return stopping || !tasks.empty(); });
+                
+                if (stopping &amp;&amp; tasks.empty()) return;
+                
+                task = std::move(tasks.front());
+                tasks.pop();
+            }
+            task();
+        }
+    }
+};
+
+// 全域調度器
+SimpleScheduler scheduler;
+
+// 模擬 goroutine 的 "go" 功能
+template&lt;typename F&gt;
+void go(F&amp;&amp; func) {
+    scheduler.schedule(std::forward&lt;F&gt;(func));
+}
+
+// 協程版本的 worker
+Task worker(int id, std::queue&lt;int&gt;&amp; jobs, std::vector&lt;int&gt;&amp; results, 
+           std::mutex&amp; jobsMutex, std::mutex&amp; resultsMutex) {
+    while (true) {
+        int job = -1;
+        {
+            std::lock_guard&lt;std::mutex&gt; lock(jobsMutex);
+            if (jobs.empty()) break;
+            job = jobs.front();
+            jobs.pop();
+        }
+        
+        std::cout &lt;&lt; "Worker " &lt;&lt; id &lt;&lt; " processing job " &lt;&lt; job &lt;&lt; std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        
+        {
+            std::lock_guard&lt;std::mutex&gt; lock(resultsMutex);
+            results.push_back(job * 2);
+        }
+        
+        co_await std::suspend_always{}; // 讓出控制權
+    }
+}
+
+int main() {
+    const int numWorkers = 3;
+    const int numJobs = 9;
+    
+    std::queue&lt;int&gt; jobs;
+    std::vector&lt;int&gt; results;
+    std::mutex jobsMutex, resultsMutex;
+    
+    // 準備工作
+    for (int i = 1; i &lt;= numJobs; ++i) {
+        jobs.push(i);
+    }
+    
+    // 啟動協程 workers (類似 goroutine)
+    std::vector&lt;Task&gt; tasks;
+    for (int i = 1; i &lt;= numWorkers; ++i) {
+        tasks.emplace_back(worker(i, jobs, results, jobsMutex, resultsMutex));
+    }
+    
+    // 等待一段時間讓協程執行
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    
+    std::cout &lt;&lt; "Results:" &lt;&lt; std::endl;
+    for (int result : results) {
+        std::cout &lt;&lt; "Result: " &lt;&lt; result &lt;&lt; std::endl;
+    }
+    
+    return 0;
+}
+</code></pre>
+<h3 id="c-協程特點"><a class="header" href="#c-協程特點">C++ 協程特點</a></h3>
+<ul>
+<li>✅ 零成本抽象，性能極佳</li>
+<li>✅ 完全控制記憶體管理</li>
+<li>✅ 可自定義調度策略</li>
+<li>❌ 語法複雜，需要大量样板代碼</li>
+<li>❌ 需要手動實現調度器和通信機制</li>
+<li>❌ 學習曲線陡峭</li>
+</ul>
+<h2 id="rust-asyncawait-實現"><a class="header" href="#rust-asyncawait-實現">Rust async/await 實現</a></h2>
+<h3 id="基本語法-1"><a class="header" href="#基本語法-1">基本語法</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 定義異步函數
+async fn my_async_function() {
+    println!("Hello from async function!");
+}
+
+// 啟動異步任務
+tokio::spawn(my_async_function());
+<span class="boring">}</span></code></pre></pre>
+<h3 id="完整範例-1"><a class="header" href="#完整範例-1">完整範例</a></h3>
+<pre><pre class="playground"><code class="language-rust">use tokio::sync::mpsc;
+use tokio::time::{sleep, Duration};
+use std::sync::Arc;
+use tokio::sync::Mutex;
+
+// 異步 worker 函數 (類似 goroutine)
+async fn worker(
+    id: usize,
+    mut jobs_rx: mpsc::Receiver&lt;i32&gt;,
+    results_tx: mpsc::Sender&lt;i32&gt;
+) {
+    while let Some(job) = jobs_rx.recv().await {
+        println!("Worker {} processing job {}", id, job);
+        sleep(Duration::from_millis(100)).await; // 模擬工作
+        
+        if let Err(_) = results_tx.send(job * 2).await {
+            println!("Failed to send result");
+            break;
+        }
+    }
+    println!("Worker {} finished", id);
+}
+
+// 更簡潔的版本 - 使用 tokio::spawn (最接近 goroutine)
+async fn simple_worker(id: usize, job: i32) -&gt; i32 {
+    println!("Worker {} processing job {}", id, job);
+    sleep(Duration::from_millis(100)).await;
+    job * 2
+}
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    const NUM_WORKERS: usize = 3;
+    const NUM_JOBS: i32 = 9;
+    
+    println!("=== 方法一：使用 Channel (類似 Go) ===");
+    
+    let (jobs_tx, jobs_rx) = mpsc::channel(NUM_JOBS as usize);
+    let (results_tx, mut results_rx) = mpsc::channel(NUM_JOBS as usize);
+    
+    // 分發 jobs 接收器給每個 worker
+    let jobs_rx = Arc::new(Mutex::new(jobs_rx));
+    
+    // 啟動 worker 任務 (類似 goroutine)
+    let mut handles = vec![];
+    for i in 1..=NUM_WORKERS {
+        let jobs_rx_clone = Arc::clone(&amp;jobs_rx);
+        let results_tx_clone = results_tx.clone();
+        
+        let handle = tokio::spawn(async move {
+            let mut jobs_rx = jobs_rx_clone.lock().await;
+            while let Some(job) = jobs_rx.recv().await {
+                drop(jobs_rx); // 釋放鎖
+                println!("Worker {} processing job {}", i, job);
+                sleep(Duration::from_millis(100)).await;
+                
+                if let Err(_) = results_tx_clone.send(job * 2).await {
+                    break;
+                }
+                jobs_rx = jobs_rx_clone.lock().await; // 重新獲取鎖
+            }
+        });
+        handles.push(handle);
+    }
+    
+    // 發送工作
+    for job in 1..=NUM_JOBS {
+        jobs_tx.send(job).await?;
+    }
+    drop(jobs_tx); // 關閉發送端
+    
+    // 等待所有 worker 完成
+    for handle in handles {
+        let _ = handle.await;
+    }
+    drop(results_tx); // 關閉結果發送端
+    
+    // 收集結果
+    println!("Results:");
+    while let Some(result) = results_rx.recv().await {
+        println!("Result: {}", result);
+    }
+    
+    println!("\n=== 方法二：直接 spawn (最接近 Go goroutine) ===");
+    
+    // 更簡潔的方法 - 直接 spawn 任務
+    let mut tasks = vec![];
+    for job in 1..=NUM_JOBS {
+        let worker_id = ((job - 1) % NUM_WORKERS as i32) + 1;
+        // tokio::spawn 就像 Go 的 "go" 關鍵字!
+        let task = tokio::spawn(simple_worker(worker_id as usize, job));
+        tasks.push(task);
+    }
+    
+    // 等待所有任務完成並收集結果
+    println!("Results:");
+    for task in tasks {
+        match task.await {
+            Ok(result) =&gt; println!("Result: {}", result),
+            Err(e) =&gt; println!("Task failed: {}", e),
+        }
+    }
+    
+    println!("\n=== 方法三：使用 join! macro 並行執行 ===");
+    
+    // 使用 tokio::join! 並行執行多個異步函數
+    let (r1, r2, r3) = tokio::join!(
+        simple_worker(1, 10),
+        simple_worker(2, 20), 
+        simple_worker(3, 30)
+    );
+    
+    println!("Parallel results: {}, {}, {}", r1, r2, r3);
+    
+    Ok(())
+}</code></pre></pre>
+<h3 id="cargotoml-配置"><a class="header" href="#cargotoml-配置">Cargo.toml 配置</a></h3>
+<pre><code class="language-toml">[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+</code></pre>
+<h3 id="rust-async-特點"><a class="header" href="#rust-async-特點">Rust async 特點</a></h3>
+<ul>
+<li>✅ 零成本抽象</li>
+<li>✅ 編譯時記憶體安全保證</li>
+<li>✅ 豐富的 async 生態系統</li>
+<li>✅ 優秀的錯誤處理 (Result&lt;T, E&gt;)</li>
+<li>❌ 需要學習 ownership 和 borrowing</li>
+<li>❌ 需要異步 runtime (tokio)</li>
+</ul>
+<h2 id="詳細對比分析"><a class="header" href="#詳細對比分析">詳細對比分析</a></h2>
+<h3 id="啟動協程的方式對比"><a class="header" href="#啟動協程的方式對比">啟動協程的方式對比</a></h3>
+<h4 id="golang"><a class="header" href="#golang">Golang</a></h4>
+<pre><code class="language-go">// 最簡潔 - 只需一個關鍵字
+go myFunction()
+go func() { 
+    // 匿名函數
+}()
+</code></pre>
+<h4 id="c20"><a class="header" href="#c20">C++20</a></h4>
+<pre><code class="language-cpp">// 需要手動調度
+scheduler.schedule([]() { myFunction(); });
+
+// 或使用協程 (複雜)
+auto task = myCoroutine();
+// 需要手動管理生命周期
+</code></pre>
+<h4 id="rust"><a class="header" href="#rust">Rust</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 需要 runtime，但語法清晰
+tokio::spawn(async { 
+    my_function().await 
+});
+
+// 或等待完成
+let result = my_async_function().await;
+<span class="boring">}</span></code></pre></pre>
+<h3 id="通信機制對比"><a class="header" href="#通信機制對比">通信機制對比</a></h3>
+<h4 id="golang-channels"><a class="header" href="#golang-channels">Golang Channels</a></h4>
+<pre><code class="language-go">// 創建 channel
+ch := make(chan int, 10)
+
+// 發送和接收
+ch &lt;- 42        // 發送
+value := &lt;-ch   // 接收
+
+// 關閉 channel
+close(ch)
+
+// 範圍遍歷
+for v := range ch {
+    fmt.Println(v)
+}
+</code></pre>
+<h4 id="c-手動實現"><a class="header" href="#c-手動實現">C++ (手動實現)</a></h4>
+<pre><code class="language-cpp">// 需要自己實現或使用第三方庫
+#include &lt;queue&gt;
+#include &lt;mutex&gt;
+#include &lt;condition_variable&gt;
+
+template&lt;typename T&gt;
+class Channel {
+private:
+    std::queue&lt;T&gt; queue;
+    std::mutex mutex;
+    std::condition_variable cv;
+    bool closed = false;
+
+public:
+    void send(T item) {
+        std::lock_guard&lt;std::mutex&gt; lock(mutex);
+        if (!closed) {
+            queue.push(item);
+            cv.notify_one();
+        }
+    }
+    
+    bool recv(T&amp; item) {
+        std::unique_lock&lt;std::mutex&gt; lock(mutex);
+        cv.wait(lock, [this] { return !queue.empty() || closed; });
+        
+        if (queue.empty()) return false;
+        
+        item = queue.front();
+        queue.pop();
+        return true;
+    }
+    
+    void close() {
+        std::lock_guard&lt;std::mutex&gt; lock(mutex);
+        closed = true;
+        cv.notify_all();
+    }
+};
+</code></pre>
+<h4 id="rust-channels"><a class="header" href="#rust-channels">Rust Channels</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use tokio::sync::mpsc;
+
+// 創建 channel
+let (tx, mut rx) = mpsc::channel(10);
+
+// 發送和接收
+tx.send(42).await?;           // 發送
+let value = rx.recv().await;  // 接收
+
+// 遍歷接收
+while let Some(value) = rx.recv().await {
+    println!("{}", value);
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="錯誤處理對比"><a class="header" href="#錯誤處理對比">錯誤處理對比</a></h3>
+<h4 id="golang-1"><a class="header" href="#golang-1">Golang</a></h4>
+<pre><code class="language-go">result, err := someOperation()
+if err != nil {
+    log.Printf("Error: %v", err)
+    return err
+}
+// 使用 result
+</code></pre>
+<h4 id="c"><a class="header" href="#c">C++</a></h4>
+<pre><code class="language-cpp">try {
+    auto result = someOperation();
+    // 使用 result
+} catch (const std::exception&amp; e) {
+    std::cerr &lt;&lt; "Error: " &lt;&lt; e.what() &lt;&lt; std::endl;
+    // 處理錯誤
+}
+</code></pre>
+<h4 id="rust-1"><a class="header" href="#rust-1">Rust</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 使用 Result&lt;T, E&gt;
+match some_operation().await {
+    Ok(result) =&gt; {
+        // 使用 result
+    },
+    Err(e) =&gt; {
+        eprintln!("Error: {}", e);
+        // 處理錯誤
+    }
+}
+
+// 或使用 ? 操作符 (更簡潔)
+let result = some_operation().await?;
+<span class="boring">}</span></code></pre></pre>
+<h2 id="性能與特性對比"><a class="header" href="#性能與特性對比">性能與特性對比</a></h2>
+<h3 id="核心特性對比表"><a class="header" href="#核心特性對比表">核心特性對比表</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>Go Goroutine</th><th>C++20 Coroutines</th><th>Rust async/await</th></tr></thead><tbody>
+<tr><td><strong>語法簡潔度</strong></td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐</td><td>⭐⭐⭐⭐</td></tr>
+<tr><td><strong>原生支持</strong></td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐</td><td>⭐⭐⭐⭐⭐</td></tr>
+<tr><td><strong>運行時性能</strong></td><td>⭐⭐⭐⭐</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐⭐⭐</td></tr>
+<tr><td><strong>記憶體安全</strong></td><td>⭐⭐⭐</td><td>⭐</td><td>⭐⭐⭐⭐⭐</td></tr>
+<tr><td><strong>編譯時檢查</strong></td><td>⭐⭐</td><td>⭐⭐⭐</td><td>⭐⭐⭐⭐⭐</td></tr>
+<tr><td><strong>生態系統</strong></td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐</td><td>⭐⭐⭐⭐</td></tr>
+<tr><td><strong>學習曲線</strong></td><td>⭐⭐⭐⭐⭐</td><td>⭐</td><td>⭐⭐⭐</td></tr>
+<tr><td><strong>開發速度</strong></td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐</td><td>⭐⭐⭐⭐</td></tr>
+</tbody></table>
+</div>
+<h3 id="性能基準測試-概估"><a class="header" href="#性能基準測試-概估">性能基準測試 (概估)</a></h3>
+<pre><code>協程創建成本:
+Go:    ~2-4 KB 記憶體, ~200ns 創建時間
+C++:   ~100 bytes, ~50ns (不包含調度器開銷)
+Rust:  ~100 bytes, ~50ns (tokio 調度開銷另計)
+
+上下文切換成本:
+Go:    ~200ns (包含調度器開銷)
+C++:   ~50ns (純協程切換)
+Rust:  ~100ns (tokio 調度器)
+
+記憶體使用:
+Go:    GC 開銷 + 較大的 stack 初始大小
+C++:   完全手動控制，最小開銷
+Rust:  零成本抽象，接近 C++ 性能
+</code></pre>
+<h2 id="學習曲線與適用場景"><a class="header" href="#學習曲線與適用場景">學習曲線與適用場景</a></h2>
+<h3 id="學習難度排序"><a class="header" href="#學習難度排序">學習難度排序</a></h3>
+<pre><code>簡單 → 困難:
+
+1. Go Goroutine     ⭐⭐ (1-2週)
+   - 語法簡單直觀
+   - 豐富的文檔和教程
+   - 內建併發原語
+
+2. Rust async       ⭐⭐⭐ (1-2個月)
+   - 需要理解 ownership/borrowing
+   - async/await 概念較直觀
+   - 優秀的編譯器錯誤提示
+
+3. C++ Coroutines   ⭐⭐⭐⭐⭐ (3-6個月)
+   - 複雜的模板元程式設計
+   - 需要深入理解 C++ 語言特性
+   - 大量样板代碼
+</code></pre>
+<h3 id="適用場景建議"><a class="header" href="#適用場景建議">適用場景建議</a></h3>
+<h4 id="選擇-go-goroutine-當"><a class="header" href="#選擇-go-goroutine-當">選擇 Go Goroutine 當:</a></h4>
+<ul>
+<li>✅ <strong>快速原型開發</strong>: 語法簡潔，開發效率高</li>
+<li>✅ <strong>網路服務</strong>: 內建高效的網路 I/O</li>
+<li>✅ <strong>微服務架構</strong>: 豐富的生態系統</li>
+<li>✅ <strong>團隊協作</strong>: 學習曲線平緩</li>
+<li>✅ <strong>併發密集應用</strong>: 原生併發支持</li>
+</ul>
+<p><strong>適合項目</strong>:</p>
+<ul>
+<li>Web API 服務</li>
+<li>分佈式系統</li>
+<li>網路爬蟲</li>
+<li>即時通信系統</li>
+</ul>
+<h4 id="選擇-c-coroutines-當"><a class="header" href="#選擇-c-coroutines-當">選擇 C++ Coroutines 當:</a></h4>
+<ul>
+<li>✅ <strong>極致性能</strong>: 需要最佳運行時性能</li>
+<li>✅ <strong>系統級編程</strong>: 操作系統、驅動程序</li>
+<li>✅ <strong>嵌入式開發</strong>: 資源受限環境</li>
+<li>✅ <strong>遊戲引擎</strong>: 低延遲、高吞吐量</li>
+<li>✅ <strong>現有 C++ 項目</strong>: 需要集成到現有代碼</li>
+</ul>
+<p><strong>適合項目</strong>:</p>
+<ul>
+<li>高頻交易系統</li>
+<li>遊戲引擎</li>
+<li>數據庫引擎</li>
+<li>網路協議棧</li>
+</ul>
+<h4 id="選擇-rust-async-當"><a class="header" href="#選擇-rust-async-當">選擇 Rust async 當:</a></h4>
+<ul>
+<li>✅ <strong>系統級安全</strong>: 需要記憶體安全保證</li>
+<li>✅ <strong>高性能服務</strong>: 零成本抽象</li>
+<li>✅ <strong>長期維護</strong>: 編譯時錯誤檢查</li>
+<li>✅ <strong>併發安全</strong>: 編譯時防止資料競爭</li>
+<li>✅ <strong>WebAssembly</strong>: 優秀的 WASM 支持</li>
+</ul>
+<p><strong>適合項目</strong>:</p>
+<ul>
+<li>網路代理/負載均衡器</li>
+<li>區塊鏈節點</li>
+<li>高性能計算</li>
+<li>安全關鍵應用</li>
+</ul>
+<h2 id="總結與建議"><a class="header" href="#總結與建議">總結與建議</a></h2>
+<h3 id="快速決策指南"><a class="header" href="#快速決策指南">快速決策指南</a></h3>
+<pre class="mermaid">flowchart TD
+    A[需要協程] --&gt; B{現有技術棧?}
+    B --&gt; |Go| C[使用 Goroutine]
+    B --&gt; |C++| D[使用 C++20 Coroutines]
+    B --&gt; |Rust| E[使用 async/await]
+    B --&gt; |新項目| F{主要需求?}
+    
+    F --&gt; |快速開發| C
+    F --&gt; |極致性能| D
+    F --&gt; |安全+性能| E
+    
+    C --&gt; G[✅ 最佳選擇&lt;br/&gt;開發效率高]
+    D --&gt; H[⚠️ 複雜但高效&lt;br/&gt;適合專家]
+    E --&gt; I[✅ 平衡選擇&lt;br/&gt;安全且快速]
+</pre>
+<h3 id="最終建議"><a class="header" href="#最終建議">最終建議</a></h3>
+<ol>
+<li>
+<p><strong>初學者 / 快速開發</strong>: 選擇 <strong>Go Goroutine</strong></p>
+<ul>
+<li>最容易學習和使用</li>
+<li>豐富的社區和文檔</li>
+<li>足夠好的性能</li>
+</ul>
+</li>
+<li>
+<p><strong>系統程序員 / 性能專家</strong>: 選擇 <strong>C++ Coroutines</strong></p>
+<ul>
+<li>最佳性能</li>
+<li>完全控制</li>
+<li>適合底層系統開發</li>
+</ul>
+</li>
+<li>
+<p><strong>追求平衡</strong>: 選擇 <strong>Rust async/await</strong></p>
+<ul>
+<li>優秀的性能和安全性</li>
+<li>現代語言特性</li>
+<li>適合長期項目</li>
+</ul>
+</li>
+</ol>
+<h3 id="生態系統成熟度"><a class="header" href="#生態系統成熟度">生態系統成熟度</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>語言</th><th>標準庫支持</th><th>第三方庫</th><th>工具鏈</th><th>社區活躍度</th></tr></thead><tbody>
+<tr><td><strong>Go</strong></td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐⭐⭐</td></tr>
+<tr><td><strong>C++</strong></td><td>⭐⭐⭐</td><td>⭐⭐</td><td>⭐⭐⭐⭐</td><td>⭐⭐⭐</td></tr>
+<tr><td><strong>Rust</strong></td><td>⭐⭐⭐⭐</td><td>⭐⭐⭐⭐</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐⭐</td></tr>
+</tbody></table>
+</div>
+<p><strong>結論</strong>: 對於大多數應用場景，<strong>Go 的 Goroutine 仍然是最佳選擇</strong>，因為其無與倫比的簡潔性和完整的生態系統。只有在特定需求（如極致性能或記憶體安全）時，才需要考慮其他選項。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../go/golang_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../go/interface.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../go/golang_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../go/interface.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

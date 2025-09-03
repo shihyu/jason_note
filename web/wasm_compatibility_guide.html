@@ -1,0 +1,651 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>WebAssembly 相容性與載入器完整指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="webassembly-相容性與載入器完整指南"><a class="header" href="#webassembly-相容性與載入器完整指南">WebAssembly 相容性與載入器完整指南</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ul>
+<li><a href="#wasm-%E7%B7%A8%E8%AD%AF%E7%94%A2%E7%89%A9">WASM 編譯產物</a></li>
+<li><a href="#%E8%AA%BF%E8%A9%A6%E6%96%B9%E6%B3%95">調試方法</a></li>
+<li><a href="#wasm-%E8%BC%89%E5%85%A5%E5%99%A8">WASM 載入器</a></li>
+<li><a href="#%E8%BC%89%E5%85%A5%E5%A4%B1%E6%95%97%E5%8E%9F%E5%9B%A0">載入失敗原因</a></li>
+<li><a href="#wasm-%E7%9B%B8%E5%AE%B9%E6%80%A7%E7%AD%96%E7%95%A5">WASM 相容性策略</a></li>
+<li><a href="#%E8%BC%89%E5%85%A5%E5%99%A8%E7%94%9F%E6%85%8B%E7%B3%BB%E7%B5%B1">載入器生態系統</a></li>
+</ul>
+<h2 id="wasm-編譯產物"><a class="header" href="#wasm-編譯產物">WASM 編譯產物</a></h2>
+<p>WASM 編譯會產生：</p>
+<ul>
+<li><strong>.wasm</strong> 文件：二進制格式的 WebAssembly 模塊</li>
+<li><strong>.wat</strong> 文件：文本格式（WebAssembly Text Format），可讀的 S-表達式格式</li>
+</ul>
+<h2 id="調試方法"><a class="header" href="#調試方法">調試方法</a></h2>
+<h3 id="1-log-調試"><a class="header" href="#1-log-調試">1. Log 調試</a></h3>
+<pre><code class="language-javascript">// 在 WASM 模塊中導出調試函數
+Module.exports.debug_log = (value) =&gt; {
+    console.log('WASM debug:', value);
+};
+
+// 在 C/C++ 源碼中
+extern void debug_log(int value);
+void my_function() {
+    debug_log(42); // 輸出調試信息
+}
+</code></pre>
+<h3 id="2-瀏覽器開發者工具"><a class="header" href="#2-瀏覽器開發者工具">2. 瀏覽器開發者工具</a></h3>
+<p>現代瀏覽器支持 WASM 調試：</p>
+<ul>
+<li>Chrome/Edge DevTools 可以直接調試 WASM</li>
+<li>設置斷點、查看變量</li>
+<li>支持源碼映射（source maps）</li>
+</ul>
+<h3 id="3-gdb-調試有限支持"><a class="header" href="#3-gdb-調試有限支持">3. GDB 調試（有限支持）</a></h3>
+<pre><code class="language-bash"># 使用 wasmer 等運行時
+wasmer run --debug module.wasm
+
+# 或使用 wasmtime
+wasmtime --debug module.wasm
+</code></pre>
+<h3 id="4-專門的-wasm-調試工具"><a class="header" href="#4-專門的-wasm-調試工具">4. 專門的 WASM 調試工具</a></h3>
+<ul>
+<li><strong>wasmtime</strong> 運行時支持調試</li>
+<li><strong>wasm-pack</strong> 提供調試輔助</li>
+<li><strong>wasm-bindgen</strong> 生成的綁定代碼便於調試</li>
+</ul>
+<h2 id="wasm-載入器"><a class="header" href="#wasm-載入器">WASM 載入器</a></h2>
+<p>WASM 載入器負責載入和實例化 WebAssembly 模塊：</p>
+<h3 id="1-瀏覽器環境"><a class="header" href="#1-瀏覽器環境">1. 瀏覽器環境</a></h3>
+<pre><code class="language-javascript">// 使用 WebAssembly API
+async function loadWasm() {
+    const response = await fetch('module.wasm');
+    const bytes = await response.arrayBuffer();
+    const module = await WebAssembly.compile(bytes);
+    const instance = await WebAssembly.instantiate(module);
+    return instance.exports;
+}
+
+// 或者直接
+WebAssembly.instantiateStreaming(fetch('module.wasm'))
+    .then(result =&gt; {
+        // 使用 result.instance.exports
+    });
+</code></pre>
+<h3 id="2-nodejs-環境"><a class="header" href="#2-nodejs-環境">2. Node.js 環境</a></h3>
+<pre><code class="language-javascript">const fs = require('fs');
+const wasmBuffer = fs.readFileSync('module.wasm');
+WebAssembly.instantiate(wasmBuffer).then(result =&gt; {
+    const exports = result.instance.exports;
+});
+</code></pre>
+<h3 id="3-載入過程"><a class="header" href="#3-載入過程">3. 載入過程</a></h3>
+<ol>
+<li><strong>獲取</strong> .wasm 文件</li>
+<li><strong>編譯</strong> 字節碼為機器碼</li>
+<li><strong>實例化</strong> 創建模塊實例</li>
+<li><strong>綁定</strong> 導入/導出函數</li>
+<li><strong>執行</strong> 調用 WASM 函數</li>
+</ol>
+<h2 id="載入失敗原因"><a class="header" href="#載入失敗原因">載入失敗原因</a></h2>
+<blockquote>
+<p><strong>重要：</strong> 能編譯出 WASM 不代表就能成功載入！</p>
+</blockquote>
+<h3 id="1-導入依賴問題"><a class="header" href="#1-導入依賴問題">1. 導入依賴問題</a></h3>
+<pre><code class="language-javascript">// WASM 模塊期望的導入
+const importObject = {
+    env: {
+        memory: new WebAssembly.Memory({ initial: 256 }),
+        table: new WebAssembly.Table({ initial: 0, element: 'anyfunc' }),
+        __memory_base: 0,
+        __table_base: 0,
+        abort: () =&gt; { throw new Error('abort called'); }
+    }
+};
+
+// 如果缺少必要的導入，載入會失敗
+WebAssembly.instantiate(wasmBytes, importObject);
+</code></pre>
+<h3 id="2-記憶體限制"><a class="header" href="#2-記憶體限制">2. 記憶體限制</a></h3>
+<pre><code class="language-javascript">// WASM 模塊要求的記憶體超過限制
+const importObject = {
+    env: {
+        memory: new WebAssembly.Memory({ 
+            initial: 1000,  // 如果太大會失敗
+            maximum: 2000 
+        })
+    }
+};
+</code></pre>
+<h3 id="3-平台兼容性"><a class="header" href="#3-平台兼容性">3. 平台兼容性</a></h3>
+<pre><code class="language-bash"># 編譯時指定了特定的 CPU 特性
+emcc -msse4.1 source.c -o output.wasm  # 老舊瀏覽器不支持
+
+# 或使用了實驗性功能
+emcc -matomics -mbulk-memory source.c -o output.wasm
+</code></pre>
+<h3 id="4-驗證失敗"><a class="header" href="#4-驗證失敗">4. 驗證失敗</a></h3>
+<pre><code class="language-wast">;; 無效的 WASM 字節碼
+(module
+  (func $invalid
+    i32.const 42
+    i64.add  ;; 型別不匹配！i32 + i64
+  )
+)
+</code></pre>
+<h3 id="5-安全策略限制"><a class="header" href="#5-安全策略限制">5. 安全策略限制</a></h3>
+<pre><code class="language-javascript">// CSP (Content Security Policy) 可能阻止 WASM
+// HTTP header: Content-Security-Policy: script-src 'self'
+
+// 某些環境禁用 WebAssembly
+if (typeof WebAssembly === 'undefined') {
+    console.error('WebAssembly not supported');
+}
+</code></pre>
+<h2 id="除錯載入問題的方法"><a class="header" href="#除錯載入問題的方法">除錯載入問題的方法</a></h2>
+<h3 id="1-檢查導入需求"><a class="header" href="#1-檢查導入需求">1. 檢查導入需求</a></h3>
+<pre><code class="language-bash"># 查看 WASM 模塊需要的導入
+wasm-objdump -x module.wasm
+
+# 或使用 wabt 工具
+wasm2wat module.wasm | grep import
+</code></pre>
+<h3 id="2-驗證-wasm-檔案"><a class="header" href="#2-驗證-wasm-檔案">2. 驗證 WASM 檔案</a></h3>
+<pre><code class="language-bash"># 檢查 WASM 格式是否正確
+wasm-validate module.wasm
+
+# 反組譯查看內容
+wasm2wat module.wasm -o module.wat
+</code></pre>
+<h3 id="3-逐步載入測試"><a class="header" href="#3-逐步載入測試">3. 逐步載入測試</a></h3>
+<pre><code class="language-javascript">async function debugWasmLoad(wasmPath) {
+    try {
+        // 1. 檢查檔案是否存在
+        const response = await fetch(wasmPath);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch: ${response.status}`);
+        }
+        
+        // 2. 檢查編譯
+        const bytes = await response.arrayBuffer();
+        console.log('WASM size:', bytes.byteLength);
+        
+        const module = await WebAssembly.compile(bytes);
+        console.log('Compilation successful');
+        
+        // 3. 檢查導入需求
+        const imports = WebAssembly.Module.imports(module);
+        console.log('Required imports:', imports);
+        
+        // 4. 提供基本導入
+        const importObject = {
+            env: {
+                memory: new WebAssembly.Memory({ initial: 256 }),
+                // ... 其他必要的導入
+            }
+        };
+        
+        // 5. 實例化
+        const instance = await WebAssembly.instantiate(module, importObject);
+        console.log('Instantiation successful');
+        
+        return instance;
+        
+    } catch (error) {
+        console.error('WASM load failed:', error);
+        throw error;
+    }
+}
+</code></pre>
+<h3 id="4-常見錯誤模式"><a class="header" href="#4-常見錯誤模式">4. 常見錯誤模式</a></h3>
+<pre><code class="language-javascript">// TypeError: import object field 'xxx' is not a Function
+// → 缺少必要的函數導入
+
+// RangeError: Maximum memory size exceeded
+// → 記憶體需求超過限制
+
+// CompileError: WebAssembly.compile(): invalid magic word
+// → WASM 檔案損壞或格式錯誤
+
+// LinkError: import object field 'memory' is not a Memory
+// → 記憶體物件類型錯誤
+</code></pre>
+<h2 id="wasm-相容性策略"><a class="header" href="#wasm-相容性策略">WASM 相容性策略</a></h2>
+<h3 id="1-使用保守的編譯選項"><a class="header" href="#1-使用保守的編譯選項">1. 使用保守的編譯選項</a></h3>
+<pre><code class="language-bash"># 高相容性編譯（避免新功能）
+emcc source.c -o output.wasm \
+  -s WASM=1 \
+  -s STANDALONE_WASM=1 \
+  -s EXPORTED_FUNCTIONS='["_main"]' \
+  --no-entry
+
+# 避免這些可能有相容性問題的選項
+# -matomics（多執行緒）
+# -msimd128（SIMD）
+# -mbulk-memory（批量記憶體操作）
+# -mmutable-globals（可變全域變數）
+</code></pre>
+<h3 id="2-最小化外部依賴"><a class="header" href="#2-最小化外部依賴">2. 最小化外部依賴</a></h3>
+<pre><code class="language-c">// 避免複雜的 libc 功能
+#include &lt;stdint.h&gt;  // ✓ 基本型別
+// #include &lt;stdio.h&gt;   // ✗ 可能需要額外導入
+
+// 自己實現簡單功能而不依賴標準庫
+int my_strlen(const char* str) {
+    int len = 0;
+    while (str[len]) len++;
+    return len;
+}
+</code></pre>
+<h3 id="3-檢查功能支援"><a class="header" href="#3-檢查功能支援">3. 檢查功能支援</a></h3>
+<pre><code class="language-javascript">// 檢查瀏覽器支援
+function checkWasmSupport() {
+    return typeof WebAssembly === 'object' &amp;&amp;
+           typeof WebAssembly.instantiate === 'function';
+}
+
+// 檢查特定功能
+async function checkWasmFeatures() {
+    const features = {
+        basic: typeof WebAssembly !== 'undefined',
+        streaming: typeof WebAssembly.instantiateStreaming !== 'undefined',
+        threads: typeof SharedArrayBuffer !== 'undefined',
+        simd: false // 需要更複雜的檢測
+    };
+    
+    // 檢測 SIMD 支援
+    try {
+        await WebAssembly.compile(new Uint8Array([
+            0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00,
+            // SIMD 測試字節碼...
+        ]));
+        features.simd = true;
+    } catch (e) {
+        features.simd = false;
+    }
+    
+    return features;
+}
+</code></pre>
+<h2 id="載入器生態系統"><a class="header" href="#載入器生態系統">載入器生態系統</a></h2>
+<h3 id="1-瀏覽器原生載入器"><a class="header" href="#1-瀏覽器原生載入器">1. 瀏覽器原生載入器</a></h3>
+<pre><code class="language-javascript">// 最基本、相容性最好
+async function loadWasmNative(url) {
+    const response = await fetch(url);
+    const bytes = await response.arrayBuffer();
+    const result = await WebAssembly.instantiate(bytes);
+    return result.instance;
+}
+</code></pre>
+<h3 id="2-框架整合載入器"><a class="header" href="#2-框架整合載入器">2. 框架整合載入器</a></h3>
+<h4 id="emscripten-生成的載入器"><a class="header" href="#emscripten-生成的載入器">Emscripten 生成的載入器</a></h4>
+<pre><code class="language-javascript">// Emscripten 自動生成
+Module = {
+    onRuntimeInitialized: function() {
+        // WASM 載入完成
+        console.log('Emscripten module ready');
+    }
+};
+</code></pre>
+<h4 id="wasm-pack-rust"><a class="header" href="#wasm-pack-rust">wasm-pack (Rust)</a></h4>
+<pre><code class="language-javascript">// wasm-pack 生成的 JavaScript 綁定
+import init, { greet } from './pkg/my_wasm.js';
+
+async function run() {
+    await init();  // 載入 WASM
+    greet('World');
+}
+</code></pre>
+<h4 id="assemblyscript"><a class="header" href="#assemblyscript">AssemblyScript</a></h4>
+<pre><code class="language-javascript">// AssemblyScript 載入器
+import { instantiate } from "@assemblyscript/loader";
+
+instantiate(fetch("module.wasm")).then(module =&gt; {
+    module.exports.add(1, 2);
+});
+</code></pre>
+<h3 id="3-運行時載入器"><a class="header" href="#3-運行時載入器">3. 運行時載入器</a></h3>
+<h4 id="nodejs-環境"><a class="header" href="#nodejs-環境">Node.js 環境</a></h4>
+<pre><code class="language-javascript">const fs = require('fs');
+
+// 同步載入
+const wasmBuffer = fs.readFileSync('module.wasm');
+const wasmModule = new WebAssembly.Module(wasmBuffer);
+const wasmInstance = new WebAssembly.Instance(wasmModule);
+
+// 異步載入
+async function loadWasmNode(path) {
+    const wasmBuffer = await fs.promises.readFile(path);
+    return await WebAssembly.instantiate(wasmBuffer);
+}
+</code></pre>
+<h4 id="deno"><a class="header" href="#deno">Deno</a></h4>
+<pre><code class="language-javascript">const wasmCode = await Deno.readFile("./module.wasm");
+const wasmModule = new WebAssembly.Module(wasmCode);
+const wasmInstance = new WebAssembly.Instance(wasmModule);
+</code></pre>
+<h3 id="4-獨立運行時"><a class="header" href="#4-獨立運行時">4. 獨立運行時</a></h3>
+<h4 id="wasmtime"><a class="header" href="#wasmtime">Wasmtime</a></h4>
+<pre><code class="language-bash"># 命令行執行
+wasmtime module.wasm
+
+# 或嵌入到應用程式
+wasmtime = Wasmtime::Engine.new
+module = wasmtime.module_from_file('module.wasm')
+</code></pre>
+<h4 id="wasmer"><a class="header" href="#wasmer">Wasmer</a></h4>
+<pre><code class="language-bash"># 直接執行
+wasmer run module.wasm
+
+# 或編譯為原生執行檔
+wasmer compile module.wasm -o native_binary
+</code></pre>
+<h2 id="通用載入器模式"><a class="header" href="#通用載入器模式">通用載入器模式</a></h2>
+<pre><code class="language-javascript">// 統一的載入器介面
+class UniversalWasmLoader {
+    async load(wasmPath, importObject = {}) {
+        // 環境檢測
+        if (typeof WebAssembly === 'undefined') {
+            throw new Error('WebAssembly not supported');
+        }
+        
+        // 預設導入物件
+        const defaultImports = {
+            env: {
+                memory: new WebAssembly.Memory({ initial: 256 }),
+                table: new WebAssembly.Table({ initial: 0, element: 'anyfunc' }),
+                __memory_base: 0,
+                __table_base: 0,
+                abort: () =&gt; { throw new Error('abort'); }
+            }
+        };
+        
+        const mergedImports = this.mergeImports(defaultImports, importObject);
+        
+        try {
+            // 嘗試串流載入（較新瀏覽器）
+            if (typeof WebAssembly.instantiateStreaming !== 'undefined') {
+                const result = await WebAssembly.instantiateStreaming(
+                    fetch(wasmPath), 
+                    mergedImports
+                );
+                return result.instance;
+            }
+        } catch (e) {
+            console.warn('Streaming failed, falling back to fetch');
+        }
+        
+        // 降級到傳統載入
+        const response = await fetch(wasmPath);
+        const bytes = await response.arrayBuffer();
+        const result = await WebAssembly.instantiate(bytes, mergedImports);
+        return result.instance;
+    }
+    
+    mergeImports(defaults, custom) {
+        // 深度合併導入物件
+        return { ...defaults, ...custom };
+    }
+}
+</code></pre>
+<h2 id="常見載入器類型總結"><a class="header" href="#常見載入器類型總結">常見載入器類型總結</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>載入器類型</th><th>適用場景</th><th>相容性</th><th>複雜度</th></tr></thead><tbody>
+<tr><td>瀏覽器原生 API</td><td>基本使用</td><td>最高</td><td>低</td></tr>
+<tr><td>Emscripten</td><td>C/C++ 項目</td><td>高</td><td>中</td></tr>
+<tr><td>wasm-pack</td><td>Rust 項目</td><td>高</td><td>中</td></tr>
+<tr><td>AssemblyScript</td><td>TypeScript 項目</td><td>高</td><td>低</td></tr>
+<tr><td>Node.js 原生</td><td>伺服器端</td><td>高</td><td>低</td></tr>
+<tr><td>Wasmtime/Wasmer</td><td>獨立應用</td><td>中</td><td>高</td></tr>
+</tbody></table>
+</div>
+<h2 id="最佳實踐總結"><a class="header" href="#最佳實踐總結">最佳實踐總結</a></h2>
+<h3 id="相容性方面"><a class="header" href="#相容性方面">相容性方面：</a></h3>
+<ul>
+<li>使用保守編譯選項</li>
+<li>最小化依賴</li>
+<li>避免實驗性功能</li>
+<li>提供降級方案</li>
+</ul>
+<h3 id="載入器選擇"><a class="header" href="#載入器選擇">載入器選擇：</a></h3>
+<ul>
+<li><strong>新項目</strong>：建議先用瀏覽器原生 WebAssembly API</li>
+<li><strong>特殊需求</strong>：再考慮特定框架的載入器</li>
+<li><strong>生產環境</strong>：使用經過驗證的載入器組合</li>
+</ul>
+<p>載入器本質上是連接 WASM 模塊與宿主環境（瀏覽器、Node.js 等）的橋樑，處理記憶體管理、函數調用和數據轉換。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../web/wasm-objdump-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../web/wasm-optimized-build-testing.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../web/wasm-objdump-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../web/wasm-optimized-build-testing.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,241 @@
+USM可以以各种不同的方式分配内存，以满足不同的需求。在更详细地讨论所有方法之前，应该了解一下USM分配与C++分配的区别。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{需要知道什么?}
+
+普通的C++程序可以以多种方式分配内存:new、malloc或分配器。不管使用哪种语法，内存分配最终都由主机操作系统中的系统分配器执行。当在C++中分配内存时，唯一需要考虑的是“需要多少内存?”和“可以分配多少内存?”但是，USM需要更多的信息才能进行分配。\par
+
+首先，USM分配需要指定分配类型:device、host或shared。为了获得该分配所需的行为，使用正确的分配类型非常重要。每个USM必须指定一个上下文对象来进行分配，上下文表示可以在对应的设备上执行内核。可以把上下文看作是运行时存储设备状态的容器。大多数DPC++程序中，开发者可能不直接与上下文交互，而只是传递上下文。\par
+
+不能保证USM分配可以跨不同的上下文使用——所有USM的分配、队列和内核共享同一个上下文对象。通常，可以从队列中获得上下文。设备分配还要求指定在哪个设备上分配内存，因为我们不想过度分配设备的内存(除非设备能够支持这一点——本章后续会对数据迁移时进行更多的讨论)。USM分配例程可以通过添加参数来区别于C++原生的方式。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{多重样式}
+
+想用单一的选项来取悦每个人是不可能的，就像有些人喜欢咖啡而不是茶，或者喜欢emacs而不是vi一样。USM支持选择的多样性，并提供了几种不同类型的分配接口：C风格、C++风格和C++分配器风格。将逐个讨论，并指出相同点和不同点。\par
+
+\hspace*{\fill} \par %插入空行
+\textbf{C风格的分配方式}
+
+第一种类型的分配函数(图6-2中列出，在随后的图6-6和6-7中中使用): malloc函数中的内存分配，函数需要返回一个void *指针(模仿C语言)。同时，必须指定要分配的总字节数，当要分配N个类型为X的对象，就必须要求总字节数为N * sizeof(X)。返回的指针为void *类型，必须将其转换为指向X类型的指针。这种方式非常简单，但由于需要进行大小计算和类型转换，因此会让代码看起来很冗长。\par
+
+可以进一步将这种分配方式分为两类:命名函数和单函数。这两种方式的区别在于我们如何指定所需的USM分配类型。对于命名函数(malloc\_device、malloc\_host和malloc\_shared)，USM分配的类型编码在函数名中，单函数malloc要求将USM分配的类型指定为一个参数。具体要使用哪种方式，还是要取决于我们的偏好。\par
+
+这里先要提及的概念是内存对齐。malloc的每个版本都有aligned\_alloc对应项。malloc函数返回与设备默认对齐的内存，它将返回一个合法的指针和一个有效的对齐方式。但在某些情况下，我们可能更喜欢手动指定对齐的方式，使用aligned\_alloc变量指定所需的对齐方式。如果指定的方式非法，不要期望程序能正常工作!原则上的是2的幂次方。值得注意的是，在许多设备上，分配是最大对齐的，以对应硬件的特性。因此，我们可能要求分配为4字节、8字节、16字节或32字节对齐，但在实际可能会看到更大字节的对齐。\par
+
+\hspace*{\fill} \par %插入空行
+图6-2 C风格的USM分配函数
+\begin{lstlisting}[caption={}]
+// Named Functions
+void *malloc_device(size_t size, const device &dev, const context &ctxt);
+void *malloc_device(size_t size, const queue &q);
+void *aligned_alloc_device(size_t alignment, size_t size,
+					const device &dev, const context &ctxt);
+
+void *aligned_alloc_device(size_t alignment, size_t size, const queue &q);
+
+void *malloc_host(size_t size, const context &ctxt);
+void *malloc_host(size_t size, const queue &q);
+void *aligned_alloc_host(size_t alignment, size_t size, const context
+&ctxt);
+void *aligned_alloc_host(size_t alignment, size_t size, const queue &q);
+
+void *malloc_shared(size_t size, const device &dev, const context &ctxt);
+void *malloc_shared(size_t size, const queue &q);
+void *aligned_alloc_shared(size_t alignment, size_t size,
+							const device &dev, const context &ctxt);
+void *aligned_alloc_shared(size_t alignment, size_t size, const queue &q);
+
+// Single Function
+void *malloc(size_t size, const device &dev, const context &ctxt,
+			 usm::alloc kind);
+void *malloc(size_t size, const queue &q, usm::alloc kind);
+void *aligned_alloc(size_t alignment, size_t size,
+					const device &dev, const context &ctxt,
+					usm::alloc kind);
+void *aligned_alloc(size_t alignment, size_t size, const queue &q,
+					usm::alloc kind);
+\end{lstlisting}
+
+\hspace*{\fill} \par %插入空行
+\textbf{C++风格的分配方式}
+
+下一个USM分配函数(在图6-3中列出)与第一个非常相似。我们再次拥有分配例程的命名和单函数版本，以及默认和用户指定的对齐版本。不同之处在于，现在的函数是C++模板化函数，它分配类型为T的Count对象并返回类型为T *的指针。可以利用现代C++进行简化，不再需要以字节为单位手动计算分配的总大小，或者将返回的指针强制转换为适当的类型。这也会让代码更紧凑、不容易出错。然而，与C++中的new不同，malloc风格的接口并不为分配的对象调用构造函数——只是分配了足够的字节来适配该类型。\par
+
+对于使用USM编写的代码来说，这种分配方式是很好的起点。对于大量使用C或C++ malloc的现有C++代码来说，C的方式是很好的起点，我们将在此基础上增加USM的使用。\par
+
+\hspace*{\fill} \par %插入空行
+图6-3 C++风格的USM分配函数
+\begin{lstlisting}[caption={}]
+// Named Functions
+template <typename T>
+T *malloc_device(size_t Count, const device &Dev, const context &Ctxt); 
+template <typename T> 
+T *malloc_device(size_t Count, const queue &Q); 
+template <typename T>
+T *aligned_alloc_device(size_t Alignment, size_t Count, const device &Dev,
+						const context &Ctxt); 
+
+template <typename T>
+T *aligned_alloc_device(size_t Alignment, size_t Count, const queue &Q); 
+
+template <typename T> T *malloc_host(size_t Count, const context &Ctxt);
+template <typename T> T *malloc_host(size_t Count, const queue &Q);
+template <typename T>
+T *aligned_alloc_host(size_t Alignment, size_t Count, const context &Ctxt);
+template <typename T>
+T *aligned_alloc_host(size_t Alignment, size_t Count, const queue &Q);、
+
+template <typename T>
+T *malloc_shared(size_t Count, const device &Dev, const context &Ctxt);
+template <typename T> T *malloc_shared(size_t Count, const queue &Q);
+template <typename T>
+T *aligned_alloc_shared(size_t Alignment, size_t Count, const device &Dev,
+						const context &Ctxt);				
+template <typename T>
+T *aligned_alloc_shared(size_t Alignment, size_t Count, const queue &Q);
+
+// Single Function
+template <typename T>
+T *malloc(size_t Count, const device &Dev, const context &Ctxt,
+			usm::alloc Kind);
+template <typename T> T *malloc(size_t Count, const queue &Q, usm::alloc
+Kind);
+template <typename T>
+T *aligned_alloc(size_t Alignment, size_t Count, const device &Dev,
+				const context &Ctxt, usm::alloc Kind);
+template <typename T>
+T *aligned_alloc(size_t Alignment, size_t Count, const queue &Q,
+				usm::alloc Kind);
+\end{lstlisting}
+
+\hspace*{\fill} \par %插入空行
+\textbf{C++分配器}
+
+USM分配的最后一种风格(图6-4)使用了现代C++，这种风格基于C++的allocator接口，该接口定义了直接或间接地在容器(如std::vector)中执行内存分配的对象。如果代码大量使用容器对象，可以向用户隐藏内存分配和回收的细节，简化代码减少出现bug的机会，所以这种分配器风格最为实用。\par
+
+\hspace*{\fill} \par %插入空行
+图6-4 C++分配器风格的USM分配函数
+\begin{lstlisting}[caption={}]
+template <class T, usm::alloc AllocKind, size_t Alignment = 0>
+class usm_allocator {
+public:
+	using value_type = T;
+	template <typename U> struct rebind {
+		typedef usm_allocator<U, AllocKind, Alignment> other;
+	};
+
+	usm_allocator() noexcept = delete;
+	usm_allocator(const context &Ctxt, const device &Dev) noexcept;
+	usm_allocator(const queue &Q) noexcept;
+	usm_allocator(const usm_allocator &Other) noexcept;
+	template <class U> 
+		usm_allocator(usm_allocator<U, AllocKind, Alignment> const &) noexcept;
+		
+	T *allocate(size_t NumberOfElements); 
+	void deallocate(T *Ptr, size_t Size); 
+	
+	template <
+		usm::alloc AllocT = AllocKind,
+		typename std::enable_if<AllocT != usm::alloc::device, int>::type = 0,
+		class U, class... ArgTs>
+	void construct(U *Ptr, ArgTs &&... Args); 
+	
+	template <
+		usm::alloc AllocT = AllocKind,
+		typename std::enable_if<AllocT == usm::alloc::device, int>::type = 0,
+		class U, class... ArgTs>
+	void construct(U *Ptr, ArgTs &&... Args); 
+	
+	template <
+		usm::alloc AllocT = AllocKind,
+		typename std::enable_if<AllocT != usm::alloc::device, int>::type = 0>
+	void destroy(T *Ptr);
+	
+	template <
+		usm::alloc AllocT = AllocKind,
+		typename std::enable_if<AllocT == usm::alloc::device, int>::type = 0>
+	void destroy(T *Ptr);
+};
+\end{lstlisting}
+
+\hspace*{\fill} \par %插入空行
+\textbf{释放内存}
+
+无论分配什么，最终都必须释放。USM定义了一个方法来释放malloc或aligned\_malloc函数分配的内存。这个方法还将分配内存的上下文作为一个参数(可以用队列替换上下文)。如果内存是用C++的allocator对象分配，也应该使用该对象来释放内存。\par
+
+\hspace*{\fill} \par %插入空行
+图6-5 三种配置方式
+\begin{lstlisting}[caption={}]
+constexpr int N = 42;
+
+queue Q;
+
+// Allocate N floats
+
+// C-style
+float *f1 = static_cast<float*>(malloc_shared(N*sizeof(float),Q));
+
+// C++-style
+float *f2 = malloc_shared<float>(N, Q);
+
+// C++-allocator-style
+usm_allocator<float, usm::alloc::shared> alloc(Q);
+float *f3 = alloc.allocate(N);
+
+// Free our allocations
+free(f1, Q.get_context());
+free(f2, Q);
+alloc.deallocate(f3, N);
+\end{lstlisting}
+
+\hspace*{\fill} \par %插入空行
+\textbf{内存分配示例}
+
+图6-5中，展示了如何使用三种方式进行分配，我们分配N个单精度浮点数作为共享分配内存。第一个分配f1使用C风格的void *返回malloc例程。对于这种分配，我们显式地传递从队列中获得的设备和上下文。\par
+
+必须将结果强制转换为float*类型。第二个分配f2做了同样的事情，但是使用了C++风格的malloc模板。因为我们将元素的类型float传递给分配示例，所以只需要指定分配多少个float即可，而不需要对结果进行强制转换。还可以使用队列，而不是设备和上下文的形式，完成一段非常简单和紧凑的代码。第三个分配f3使用了USM C++的allocator类，实例化了allocator对象，然后使用该对象执行分配。最后，展示了如何正确地释放分配的内存。\par
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

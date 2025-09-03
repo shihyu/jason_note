@@ -1,0 +1,521 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>如何高效地儲存並操作超大規模 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="c-資料結構設計如何高效地儲存並操作超大規模的-key-value"><a class="header" href="#c-資料結構設計如何高效地儲存並操作超大規模的-key-value">C++ 資料結構設計：如何高效地儲存並操作超大規模的 &lt;KEY, VALUE&gt;</a></h1>
+<p>在搜、廣、推場景中，Embedding 層有海量的稀疏參數（以 &lt;key, value&gt; 的形式儲存在參數伺服器上），規模可達千億等級。其中，key 的類型是 uint64_t，value 的類型是 float 類型的陣列，而且這個陣列的長度對於不同的模型是可變的。那麼，如何設計這樣一個儲存結構並能實現最高效地增、刪、改、查呢？</p>
+<h2 id="方案-1"><a class="header" href="#方案-1">方案 1：</a></h2>
+<p><strong>純 map 實現，log(n) 的複雜度</strong></p>
+<ul>
+<li>優點：實現簡單，直接呼叫 stl 庫或者第三方 hash_map 即可</li>
+<li>缺點：大量的記憶體申請、釋放操作，而且會產生大量的記憶體碎片，開銷非常大</li>
+</ul>
+<h2 id="方案2"><a class="header" href="#方案2">方案2：</a></h2>
+<p><strong>標準的 hash 表，分桶（bucket），每個桶裡使用鏈表</strong></p>
+<p>優點：實現相對簡單</p>
+<p>缺點：查詢的時候，定位到具體的桶 id 之後，還需要遍歷鏈表</p>
+<p><img src="images/v2-1b446cf5d3a6d8d6b49dd8f7896dab01_720w.webp" alt="img" /></p>
+<h2 id="方案3"><a class="header" href="#方案3">方案3：</a></h2>
+<p><strong>和方案2基本差不多，區別是桶裡的鏈表用 map 實現</strong></p>
+<p>優點：查詢的速度比方案 2 快</p>
+<p>缺點：記憶體分配和釋放及記憶體碎片的問題還是沒得到解決</p>
+<h2 id="終極方案"><a class="header" href="#終極方案">終極方案：</a></h2>
+<p><strong>在方案 3 的基礎上，加上動態記憶體技術（見下圖）。簡單來說，就是每次申請固定個數（比如 64）的節點記憶體（鏈表形式），每個節點的記憶體大小是 sizeof(VALUE)，分別用兩個指針表示空閒鏈表（綠色部分，表示可用）和佔用鏈表（紅色部分，已使用）</strong></p>
+<p>優點：增、刪、改、查速度都得到大大提升</p>
+<p><img src="images/v2-4ca379bceacc209f59b027c70dc35c4c_720w.webp" alt="img" /></p>
+<h2 id="實現參見-paddle-開放原始碼"><a class="header" href="#實現參見-paddle-開放原始碼">實現（參見 Paddle 開放原始碼）：</a></h2>
+<h3 id="1-記憶體分配器"><a class="header" href="#1-記憶體分配器">1. 記憶體分配器</a></h3>
+<pre><code class="language-cpp">template &lt;class T&gt;
+class ChunkAllocator {
+   public:
+    explicit ChunkAllocator(size_t chunk_size = 64) {
+        CHECK(sizeof(Node) == std::max(sizeof(void*), sizeof(T)));
+        _chunk_size = chunk_size;
+        _chunks = NULL;
+        _free_nodes = NULL;
+        _counter = 0;
+    }
+    ChunkAllocator(const ChunkAllocator&amp;) = delete;
+    ~ChunkAllocator() {
+        while (_chunks != NULL) {
+            Chunk* x = _chunks;
+            _chunks = _chunks-&gt;next;
+            free(x);
+        }
+    }
+    template &lt;class... ARGS&gt;
+    T* acquire(ARGS&amp;&amp;... args) {
+        if (_free_nodes == NULL) {
+            create_new_chunk();
+        }
+
+        T* x = (T*)(void*)_free_nodes;  // NOLINT
+        _free_nodes = _free_nodes-&gt;next;
+        new (x) T(std::forward&lt;ARGS&gt;(args)...);
+        _counter++;
+        return x;
+    }
+    void release(T* x) {
+        x-&gt;~T();
+        Node* node = (Node*)(void*)x;  // NOLINT
+        node-&gt;next = _free_nodes;
+        _free_nodes = node;
+        _counter--;
+    }
+    size_t size() const { return _counter; }
+
+   private:
+    struct alignas(T) Node {
+        union {
+            Node* next;
+            char data[sizeof(T)];
+        };
+    };
+    struct Chunk {
+        Chunk* next;
+        Node nodes[];
+    };
+
+    size_t _chunk_size;  // how many elements in one chunk
+    Chunk* _chunks;      // a list
+    Node* _free_nodes;   // a list
+    size_t _counter;     // how many elements are acquired
+
+    void create_new_chunk() {
+        Chunk* chunk;
+        posix_memalign(reinterpret_cast&lt;void**&gt;(&amp;chunk),
+                       std::max&lt;size_t&gt;(sizeof(void*), alignof(Chunk)),
+                       sizeof(Chunk) + sizeof(Node) * _chunk_size);
+        chunk-&gt;next = _chunks;
+        _chunks = chunk;
+
+        for (size_t i = 0; i &lt; _chunk_size; i++) {
+            Node* node = &amp;chunk-&gt;nodes[i];
+            node-&gt;next = _free_nodes;
+            _free_nodes = node;
+        }
+    }
+};
+</code></pre>
+<h3 id="2-sparsetableshard"><a class="header" href="#2-sparsetableshard">2. SparseTableShard</a></h3>
+<pre><code class="language-cpp">#include &lt;mct/hash-map.hpp&gt;
+
+template &lt;class KEY, class VALUE&gt;
+struct alignas(64) SparseTableShard {
+   public:
+    typedef typename mct::closed_hash_map&lt;KEY, mct::Pointer, std::hash&lt;KEY&gt;&gt;
+        map_type;
+    struct iterator {
+        typename map_type::iterator it;
+        size_t bucket;
+        map_type* buckets;
+        friend bool operator==(const iterator&amp; a, const iterator&amp; b) {
+            return a.it == b.it;
+        }
+        friend bool operator!=(const iterator&amp; a, const iterator&amp; b) {
+            return a.it != b.it;
+        }
+        const KEY&amp; key() const { return it-&gt;first; }
+        VALUE&amp; value() const { return *(VALUE*)(void*)it-&gt;second; }  // NOLINT
+        VALUE* value_ptr() const {
+            return (VALUE*)(void*)it-&gt;second;
+        }  // NOLINT
+        iterator&amp; operator++() {
+            ++it;
+
+            while (it == buckets[bucket].end() &amp;&amp;
+                   bucket + 1 &lt; CTR_SPARSE_SHARD_BUCKET_NUM) {
+                it = buckets[++bucket].begin();
+            }
+
+            return *this;
+        }
+        iterator operator++(int) {
+            iterator ret = *this;
+            ++*this;
+            return ret;
+        }
+    };
+    struct local_iterator {
+        typename map_type::iterator it;
+        friend bool operator==(const local_iterator&amp; a,
+                               const local_iterator&amp; b) {
+            return a.it == b.it;
+        }
+        friend bool operator!=(const local_iterator&amp; a,
+                               const local_iterator&amp; b) {
+            return a.it != b.it;
+        }
+        const KEY&amp; key() const { return it-&gt;first; }
+        VALUE&amp; value() const { return *(VALUE*)(void*)it-&gt;second; }  // NOLINT
+        local_iterator&amp; operator++() {
+            ++it;
+            return *this;
+        }
+        local_iterator operator++(int) { return {it++}; }
+    };
+
+    ~SparseTableShard() { clear(); }
+    bool empty() { return _alloc.size() == 0; }
+    size_t size() { return _alloc.size(); }
+    void set_max_load_factor(float x) {
+        for (size_t bucket = 0; bucket &lt; CTR_SPARSE_SHARD_BUCKET_NUM;
+             bucket++) {
+            _buckets[bucket].max_load_factor(x);
+        }
+    }
+    size_t bucket_count() { return CTR_SPARSE_SHARD_BUCKET_NUM; }
+    size_t bucket_size(size_t bucket) { return _buckets[bucket].size(); }
+    void clear() {
+        for (size_t bucket = 0; bucket &lt; CTR_SPARSE_SHARD_BUCKET_NUM;
+             bucket++) {
+            map_type&amp; data = _buckets[bucket];
+            for (auto it = data.begin(); it != data.end(); ++it) {
+                _alloc.release((VALUE*)(void*)it-&gt;second);  // NOLINT
+            }
+            data.clear();
+        }
+    }
+    iterator begin() {
+        auto it = _buckets[0].begin();
+        size_t bucket = 0;
+        while (it == _buckets[bucket].end() &amp;&amp;
+               bucket + 1 &lt; CTR_SPARSE_SHARD_BUCKET_NUM) {
+            it = _buckets[++bucket].begin();
+        }
+        return {it, bucket, _buckets};
+    }
+    iterator end() {
+        return {_buckets[CTR_SPARSE_SHARD_BUCKET_NUM - 1].end(),
+                CTR_SPARSE_SHARD_BUCKET_NUM - 1, _buckets};
+    }
+    local_iterator begin(size_t bucket) { return {_buckets[bucket].begin()}; }
+    local_iterator end(size_t bucket) { return {_buckets[bucket].end()}; }
+    iterator find(const KEY&amp; key) {
+        size_t hash = _hasher(key);
+        size_t bucket = compute_bucket(hash);
+        auto it = _buckets[bucket].find_with_hash(key, hash);
+        if (it == _buckets[bucket].end()) {
+            return end();
+        }
+        return {it, bucket, _buckets};
+    }
+    VALUE&amp; operator[](const KEY&amp; key) { return emplace(key).first.value(); }
+    std::pair&lt;iterator, bool&gt; insert(const KEY&amp; key, const VALUE&amp; val) {
+        return emplace(key, val);
+    }
+    std::pair&lt;iterator, bool&gt; insert(const KEY&amp; key, VALUE&amp;&amp; val) {
+        return emplace(key, std::move(val));
+    }
+    template &lt;class... ARGS&gt;
+    std::pair&lt;iterator, bool&gt; emplace(const KEY&amp; key, ARGS&amp;&amp;... args) {
+        size_t hash = _hasher(key);
+        size_t bucket = compute_bucket(hash);
+        auto res = _buckets[bucket].insert_with_hash({key, NULL}, hash);
+
+        if (res.second) {
+            res.first-&gt;second = _alloc.acquire(std::forward&lt;ARGS&gt;(args)...);
+        }
+
+        return {{res.first, bucket, _buckets}, res.second};
+    }
+    iterator erase(iterator it) {
+        _alloc.release((VALUE*)(void*)it.it-&gt;second);  // NOLINT
+        size_t bucket = it.bucket;
+        auto it2 = _buckets[bucket].erase(it.it);
+        while (it2 == _buckets[bucket].end() &amp;&amp;
+               bucket + 1 &lt; CTR_SPARSE_SHARD_BUCKET_NUM) {
+            it2 = _buckets[++bucket].begin();
+        }
+        return {it2, bucket, _buckets};
+    }
+    void quick_erase(iterator it) {
+        _alloc.release((VALUE*)(void*)it.it-&gt;second);  // NOLINT
+        _buckets[it.bucket].quick_erase(it.it);
+    }
+    local_iterator erase(size_t bucket, local_iterator it) {
+        _alloc.release((VALUE*)(void*)it.it-&gt;second);  // NOLINT
+        return {_buckets[bucket].erase(it.it)};
+    }
+    void quick_erase(size_t bucket, local_iterator it) {
+        _alloc.release((VALUE*)(void*)it.it-&gt;second);  // NOLINT
+        _buckets[bucket].quick_erase(it.it);
+    }
+    size_t erase(const KEY&amp; key) {
+        auto it = find(key);
+        if (it == end()) {
+            return 0;
+        }
+        quick_erase(it);
+        return 1;
+    }
+    size_t compute_bucket(size_t hash) {
+        if (CTR_SPARSE_SHARD_BUCKET_NUM == 1) {
+            return 0;
+        } else {
+            return hash &gt;&gt;
+                   (sizeof(size_t) * 8 - CTR_SPARSE_SHARD_BUCKET_NUM_BITS);
+        }
+    }
+
+   private:
+    map_type _buckets[CTR_SPARSE_SHARD_BUCKET_NUM];
+    ChunkAllocator&lt;VALUE&gt; _alloc;
+    std::hash&lt;KEY&gt; _hasher;
+};
+</code></pre>
+<h3 id="3-使用示例"><a class="header" href="#3-使用示例">3. 使用示例</a></h3>
+<pre><code class="language-cpp">class FixedFeatureValue {
+   public:
+    FixedFeatureValue() {}
+    ~FixedFeatureValue() {}
+    float* data() { return _data.data(); }
+    size_t size() { return _data.size(); }
+    void resize(size_t size) { _data.resize(size); }
+    void shrink_to_fit() { _data.shrink_to_fit(); }
+
+   private:
+    std::vector&lt;float&gt; _data;
+};
+
+typedef SparseTableShard&lt;uint64_t, FixedFeatureValue&gt; shard_type;
+</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../c++/高性能程式設計實戰.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../c++/UC_CAPITAL.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../c++/高性能程式設計實戰.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../c++/UC_CAPITAL.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

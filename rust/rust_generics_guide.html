@@ -1,0 +1,3750 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Rust 泛型完整指南：從簡單到進階 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="rust-泛型完整指南從簡單到進階"><a class="header" href="#rust-泛型完整指南從簡單到進階">Rust 泛型完整指南：從簡單到進階</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ol>
+<li><a href="#1-%E5%9F%BA%E7%A4%8E%E6%B3%9B%E5%9E%8B">基礎泛型</a></li>
+<li><a href="#2-%E6%B3%9B%E5%9E%8B%E5%87%BD%E6%95%B8">泛型函數</a></li>
+<li><a href="#3-%E6%B3%9B%E5%9E%8B%E7%B5%90%E6%A7%8B%E9%AB%94">泛型結構體</a></li>
+<li><a href="#4-%E6%B3%9B%E5%9E%8B%E6%9E%9A%E8%88%89">泛型枚舉</a></li>
+<li><a href="#5-trait-%E7%B4%84%E6%9D%9F%E8%A9%B3%E8%A7%A3">Trait 約束詳解</a></li>
+<li><a href="#6-%E5%B8%B8%E7%94%A8-trait-%E5%AE%8C%E6%95%B4%E8%AA%AA%E6%98%8E">常用 Trait 完整說明</a></li>
+<li><a href="#7-%E7%94%9F%E5%91%BD%E9%80%B1%E6%9C%9F%E6%B3%9B%E5%9E%8B">生命週期泛型</a></li>
+<li><a href="#8-%E9%97%9C%E8%81%AF%E9%A1%9E%E5%9E%8B">關聯類型</a></li>
+<li><a href="#9-%E9%AB%98%E9%9A%8E-trait-%E7%B4%84%E6%9D%9F">高階 Trait 約束</a></li>
+<li><a href="#10-%E6%B3%9B%E5%9E%8B%E5%B8%B8%E6%95%B8">泛型常數</a></li>
+<li><a href="#11-%E9%80%B2%E9%9A%8E%E6%87%89%E7%94%A8">進階應用</a></li>
+</ol>
+<hr />
+<h2 id="1-基礎泛型"><a class="header" href="#1-基礎泛型">1. 基礎泛型</a></h2>
+<h3 id="11-最簡單的泛型函數"><a class="header" href="#11-最簡單的泛型函數">1.1 最簡單的泛型函數</a></h3>
+<pre><pre class="playground"><code class="language-rust">// 基本泛型函數
+fn identity&lt;T&gt;(x: T) -&gt; T {
+    x
+}
+
+fn main() {
+    let number = identity(42);       // T = i32
+    let text = identity("hello");    // T = &amp;str
+    let boolean = identity(true);    // T = bool
+    
+    println!("{}, {}, {}", number, text, boolean);
+}</code></pre></pre>
+<h3 id="12-多個泛型參數"><a class="header" href="#12-多個泛型參數">1.2 多個泛型參數</a></h3>
+<pre><pre class="playground"><code class="language-rust">fn pair&lt;T, U&gt;(first: T, second: U) -&gt; (T, U) {
+    (first, second)
+}
+
+fn main() {
+    let p1 = pair(1, "hello");        // (i32, &amp;str)
+    let p2 = pair(true, 3.14);        // (bool, f64)
+    let p3 = pair("world", 42);       // (&amp;str, i32)
+    
+    println!("{:?}, {:?}, {:?}", p1, p2, p3);
+}</code></pre></pre>
+<h2 id="2-泛型函數"><a class="header" href="#2-泛型函數">2. 泛型函數</a></h2>
+<h3 id="21-基本-trait-約束"><a class="header" href="#21-基本-trait-約束">2.1 基本 Trait 約束</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::fmt::Display;
+
+// 單一 trait 約束
+fn print_it&lt;T: Display&gt;(item: T) {
+    println!("{}", item);
+}
+
+// 多個 trait 約束
+fn compare_and_print&lt;T: PartialEq + Display&gt;(a: T, b: T) {
+    if a == b {
+        println!("{} equals {}", a, b);
+    } else {
+        println!("{} not equals {}", a, b);
+    }
+}
+
+fn main() {
+    print_it(42);
+    print_it("hello");
+    
+    compare_and_print(5, 5);
+    compare_and_print("rust", "go");
+}</code></pre></pre>
+<h3 id="22-where-子句"><a class="header" href="#22-where-子句">2.2 where 子句</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::fmt::{Display, Debug};
+use std::clone::Clone;
+
+// 使用 where 讓函數簽名更清晰
+fn complex_function&lt;T, U, V&gt;(t: T, u: U, v: V) -&gt; String
+where
+    T: Display + Clone,
+    U: Clone + Debug,
+    V: Display,
+{
+    format!("t: {}, u: {:?}, v: {}", t, u, v)
+}
+
+// 等價的內聯語法（較難讀）
+fn complex_function_inline&lt;T: Display + Clone, U: Clone + std::fmt::Debug, V: Display&gt;(
+    t: T, u: U, v: V
+) -&gt; String {
+    format!("t: {}, u: {:?}, v: {}", t, u, v)
+}
+
+fn main() {
+    let result1 = complex_function("hello", vec![1, 2, 3], 42);
+    println!("{}", result1);
+    
+    let result2 = complex_function_inline("world", vec!["a", "b"], 3.14);
+    println!("{}", result2);
+}</code></pre></pre>
+<h3 id="23-泛型方法"><a class="header" href="#23-泛型方法">2.3 泛型方法</a></h3>
+<pre><pre class="playground"><code class="language-rust">struct Container&lt;T&gt; {
+    value: T,
+}
+
+impl&lt;T&gt; Container&lt;T&gt; {
+    fn new(value: T) -&gt; Self {
+        Container { value }
+    }
+    
+    fn get(&amp;self) -&gt; &amp;T {
+        &amp;self.value
+    }
+    
+    // 泛型方法
+    fn map&lt;U, F&gt;(self, f: F) -&gt; Container&lt;U&gt;
+    where
+        F: FnOnce(T) -&gt; U,
+    {
+        Container { value: f(self.value) }
+    }
+}
+
+fn main() {
+    let container = Container::new(42);
+    let string_container = container.map(|x| x.to_string());
+    println!("{}", string_container.get()); // "42"
+}</code></pre></pre>
+<h2 id="3-泛型結構體"><a class="header" href="#3-泛型結構體">3. 泛型結構體</a></h2>
+<h3 id="31-基本泛型結構體"><a class="header" href="#31-基本泛型結構體">3.1 基本泛型結構體</a></h3>
+<pre><pre class="playground"><code class="language-rust">// 單一泛型參數
+struct Point&lt;T&gt; {
+    x: T,
+    y: T,
+}
+
+// 多個泛型參數
+struct Rectangle&lt;T, U&gt; {
+    width: T,
+    height: U,
+}
+
+impl&lt;T&gt; Point&lt;T&gt; {
+    fn new(x: T, y: T) -&gt; Self {
+        Point { x, y }
+    }
+}
+
+impl&lt;T: Copy&gt; Point&lt;T&gt; {
+    fn x(&amp;self) -&gt; T {
+        self.x
+    }
+}
+
+fn main() {
+    let int_point = Point::new(1, 2);
+    let float_point = Point::new(1.0, 2.0);
+    let rect = Rectangle { width: 10, height: 20.5 };
+    
+    println!("Point: ({}, {})", int_point.x, int_point.y);
+    println!("Rectangle: {} x {}", rect.width, rect.height);
+}</code></pre></pre>
+<h3 id="32-部分特化實現"><a class="header" href="#32-部分特化實現">3.2 部分特化實現</a></h3>
+<pre><pre class="playground"><code class="language-rust">struct Container&lt;T&gt; {
+    value: T,
+}
+
+// 為所有類型實現
+impl&lt;T&gt; Container&lt;T&gt; {
+    fn new(value: T) -&gt; Self {
+        Container { value }
+    }
+}
+
+// 只為 String 類型特化實現
+impl Container&lt;String&gt; {
+    fn len(&amp;self) -&gt; usize {
+        self.value.len()
+    }
+    
+    fn is_empty(&amp;self) -&gt; bool {
+        self.value.is_empty()
+    }
+}
+
+fn main() {
+    let string_container = Container::new(String::from("hello"));
+    let int_container = Container::new(42);
+    
+    println!("String length: {}", string_container.len());
+    // int_container.len(); // 編譯錯誤：i32 沒有 len 方法
+}</code></pre></pre>
+<h2 id="4-泛型枚舉"><a class="header" href="#4-泛型枚舉">4. 泛型枚舉</a></h2>
+<h3 id="41-標準庫範例"><a class="header" href="#41-標準庫範例">4.1 標準庫範例</a></h3>
+<pre><pre class="playground"><code class="language-rust">// Option&lt;T&gt; - 標準庫中的泛型枚舉
+enum MyOption&lt;T&gt; {
+    Some(T),
+    None,
+}
+
+// Result&lt;T, E&gt; - 錯誤處理的泛型枚舉
+enum MyResult&lt;T, E&gt; {
+    Ok(T),
+    Err(E),
+}
+
+impl&lt;T&gt; MyOption&lt;T&gt; {
+    fn is_some(&amp;self) -&gt; bool {
+        match self {
+            MyOption::Some(_) =&gt; true,
+            MyOption::None =&gt; false,
+        }
+    }
+    
+    fn unwrap(self) -&gt; T {
+        match self {
+            MyOption::Some(value) =&gt; value,
+            MyOption::None =&gt; panic!("called unwrap on None"),
+        }
+    }
+}
+
+fn main() {
+    let some_number = MyOption::Some(42);
+    let no_number: MyOption&lt;i32&gt; = MyOption::None;
+    
+    println!("Has value: {}", some_number.is_some());
+    println!("Value: {}", some_number.unwrap());
+}</code></pre></pre>
+<h3 id="42-自定義泛型枚舉"><a class="header" href="#42-自定義泛型枚舉">4.2 自定義泛型枚舉</a></h3>
+<pre><pre class="playground"><code class="language-rust">#[derive(Debug)]
+enum Either&lt;L, R&gt; {
+    Left(L),
+    Right(R),
+}
+
+impl&lt;L, R&gt; Either&lt;L, R&gt; {
+    fn is_left(&amp;self) -&gt; bool {
+        matches!(self, Either::Left(_))
+    }
+    
+    fn is_right(&amp;self) -&gt; bool {
+        matches!(self, Either::Right(_))
+    }
+    
+    fn map_left&lt;T, F&gt;(self, f: F) -&gt; Either&lt;T, R&gt;
+    where
+        F: FnOnce(L) -&gt; T,
+    {
+        match self {
+            Either::Left(l) =&gt; Either::Left(f(l)),
+            Either::Right(r) =&gt; Either::Right(r),
+        }
+    }
+}
+
+fn main() {
+    let left: Either&lt;i32, String&gt; = Either::Left(42);
+    let right: Either&lt;i32, String&gt; = Either::Right("hello".to_string());
+    
+    let mapped = left.map_left(|x| x * 2);
+    println!("{:?}", mapped); // Left(84)
+}</code></pre></pre>
+<h2 id="5-trait-約束詳解"><a class="header" href="#5-trait-約束詳解">5. Trait 約束詳解</a></h2>
+<h3 id="51-基本約束語法"><a class="header" href="#51-基本約束語法">5.1 基本約束語法</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::fmt::{Display, Debug};
+
+// 內聯約束語法
+fn function1&lt;T: Display + Debug&gt;(item: T) {
+    println!("Display: {}", item);
+    println!("Debug: {:?}", item);
+}
+
+// where 子句語法（推薦用於複雜約束）
+fn function2&lt;T&gt;(item: T)
+where
+    T: Display + Debug + Clone,
+{
+    println!("Display: {}", item);
+    println!("Debug: {:?}", item);
+    let cloned = item.clone();
+}
+
+// impl Trait 語法（參數）
+fn function3(item: impl Display + Debug) {
+    println!("Display: {}", item);
+    println!("Debug: {:?}", item);
+}
+
+// impl Trait 語法（返回值）
+fn function4() -&gt; impl Display + Debug {
+    42 // 返回實現了 Display + Debug 的類型
+}
+
+fn main() {
+    function1("Hello world!");
+    function2(42);
+    function3(true);
+    let result = function4();
+    println!("function4 result: {}", result);
+}</code></pre></pre>
+<h3 id="52-條件實現-conditional-implementation"><a class="header" href="#52-條件實現-conditional-implementation">5.2 條件實現 (Conditional Implementation)</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::fmt::Display;
+
+struct Wrapper&lt;T&gt; {
+    value: T,
+}
+
+impl&lt;T&gt; Wrapper&lt;T&gt; {
+    fn new(value: T) -&gt; Self {
+        Wrapper { value }
+    }
+}
+
+// 只有當 T 實現了 Display 時，才實現這個方法
+impl&lt;T: Display&gt; Wrapper&lt;T&gt; {
+    fn print(&amp;self) {
+        println!("Value: {}", self.value);
+    }
+}
+
+// 只有當 T 實現了 Clone 時，才實現這個方法
+impl&lt;T: Clone&gt; Wrapper&lt;T&gt; {
+    fn duplicate(&amp;self) -&gt; Self {
+        Wrapper {
+            value: self.value.clone(),
+        }
+    }
+}
+
+// 當 T 同時實現 Display 和 Clone 時
+impl&lt;T: Display + Clone&gt; Wrapper&lt;T&gt; {
+    fn print_and_duplicate(&amp;self) -&gt; Self {
+        self.print();
+        self.duplicate()
+    }
+}
+
+fn main() {
+    let wrapper = Wrapper::new("hello");
+    wrapper.print(); // 可以呼叫，因為 &amp;str 實現了 Display
+    
+    let cloned = wrapper.duplicate(); // 可以呼叫，因為 &amp;str 實現了 Clone
+    cloned.print();
+    
+    let wrapper2 = wrapper.print_and_duplicate(); // 兩個 trait 都有
+}</code></pre></pre>
+<h2 id="6-常用-trait-完整說明"><a class="header" href="#6-常用-trait-完整說明">6. 常用 Trait 完整說明</a></h2>
+<h3 id="61-格式化-traits"><a class="header" href="#61-格式化-traits">6.1 格式化 Traits</a></h3>
+<h4 id="display---用戶友好的格式化"><a class="header" href="#display---用戶友好的格式化">Display - 用戶友好的格式化</a></h4>
+<pre><pre class="playground"><code class="language-rust">use std::fmt::{self, Display};
+
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+impl Display for Point {
+    fn fmt(&amp;self, f: &amp;mut fmt::Formatter&lt;'_&gt;) -&gt; fmt::Result {
+        write!(f, "({}, {})", self.x, self.y)
+    }
+}
+
+// 泛型函數中使用 Display
+fn print_nicely&lt;T: Display&gt;(item: T) {
+    println!("Nice format: {}", item); // 使用 {} 格式化
+}
+
+fn main() {
+    let point = Point { x: 10, y: 20 };
+    print_nicely(point);           // Nice format: (10, 20)
+    print_nicely("hello");         // Nice format: hello
+    print_nicely(42);              // Nice format: 42
+}</code></pre></pre>
+<h4 id="debug---開發者友好的格式化"><a class="header" href="#debug---開發者友好的格式化">Debug - 開發者友好的格式化</a></h4>
+<pre><pre class="playground"><code class="language-rust">use std::fmt::{self, Debug};
+
+// 手動實現 Debug
+struct CustomStruct {
+    name: String,
+    value: i32,
+}
+
+impl Debug for CustomStruct {
+    fn fmt(&amp;self, f: &amp;mut fmt::Formatter&lt;'_&gt;) -&gt; fmt::Result {
+        f.debug_struct("CustomStruct")
+            .field("name", &amp;self.name)
+            .field("value", &amp;self.value)
+            .finish()
+    }
+}
+
+// 自動衍生 Debug
+#[derive(Debug)]
+struct AutoStruct {
+    data: Vec&lt;i32&gt;,
+}
+
+// 泛型函數中使用 Debug
+fn debug_print&lt;T: Debug&gt;(item: T) {
+    println!("Debug format: {:?}", item); // 使用 {:?} 格式化
+    println!("Pretty debug: {:#?}", item); // 使用 {:#?} 美化格式
+}
+
+fn main() {
+    let custom = CustomStruct {
+        name: "test".to_string(),
+        value: 42,
+    };
+    
+    let auto = AutoStruct {
+        data: vec![1, 2, 3],
+    };
+    
+    debug_print(custom);
+    debug_print(auto);
+    debug_print(vec![1, 2, 3]);
+}</code></pre></pre>
+<h3 id="62-複製和移動-traits"><a class="header" href="#62-複製和移動-traits">6.2 複製和移動 Traits</a></h3>
+<h4 id="copy---隱式複製"><a class="header" href="#copy---隱式複製">Copy - 隱式複製</a></h4>
+<pre><pre class="playground"><code class="language-rust">use std::fmt::Debug;
+
+// Copy trait 只能應用於簡單類型
+#[derive(Copy, Clone, Debug)]
+struct SimplePoint {
+    x: i32,
+    y: i32,
+}
+
+// 包含非 Copy 類型的結構體不能實現 Copy
+#[derive(Clone, Debug)]
+struct ComplexPoint {
+    x: i32,
+    y: i32,
+    name: String, // String 不是 Copy
+}
+
+fn takes_copy&lt;T: Copy + Debug&gt;(item: T) {
+    println!("Original: {:?}", item);
+    let copy = item; // 隱式複製
+    println!("Copy: {:?}", copy);
+    println!("Original still available: {:?}", item); // 原值仍可用
+}
+
+fn takes_clone&lt;T: Clone + Debug&gt;(item: T) {
+    println!("Original: {:?}", item);
+    let cloned = item.clone(); // 明確複製
+    println!("Cloned: {:?}", cloned);
+    // item 在這裡被移動了，不能再使用
+}
+
+fn main() {
+    let simple = SimplePoint { x: 1, y: 2 };
+    let complex = ComplexPoint { 
+        x: 1, 
+        y: 2, 
+        name: "point".to_string() 
+    };
+    
+    takes_copy(simple);  // 可以傳入 Copy 類型
+    takes_copy(42);      // 基本類型都是 Copy
+    
+    takes_clone(complex); // 需要明確 clone
+    takes_clone(simple);  // Copy 類型也可以 clone
+}</code></pre></pre>
+<h4 id="clone---明確複製"><a class="header" href="#clone---明確複製">Clone - 明確複製</a></h4>
+<pre><pre class="playground"><code class="language-rust">use std::collections::HashMap;
+use std::fmt::Debug;
+
+#[derive(Clone, Debug)]
+struct ExpensiveStruct {
+    data: HashMap&lt;String, Vec&lt;i32&gt;&gt;,
+    cache: Vec&lt;String&gt;,
+}
+
+impl ExpensiveStruct {
+    fn new() -&gt; Self {
+        let mut data = HashMap::new();
+        data.insert("key1".to_string(), vec![1, 2, 3]);
+        data.insert("key2".to_string(), vec![4, 5, 6]);
+        
+        ExpensiveStruct {
+            data,
+            cache: vec!["cached_value".to_string()],
+        }
+    }
+}
+
+// 需要深度複製的泛型函數
+fn deep_copy_and_modify&lt;T: Clone + Debug&gt;(mut item: T) -&gt; T {
+    let backup = item.clone(); // 創建備份
+    println!("Backup created: {:?}", backup);
+    item // 返回修改後的項目
+}
+
+fn main() {
+    let expensive = ExpensiveStruct::new();
+    let modified = deep_copy_and_modify(expensive);
+    println!("Modified: {:?}", modified);
+}</code></pre></pre>
+<h3 id="63-比較-traits"><a class="header" href="#63-比較-traits">6.3 比較 Traits</a></h3>
+<h4 id="partialeq---部分相等比較"><a class="header" href="#partialeq---部分相等比較">PartialEq - 部分相等比較</a></h4>
+<pre><pre class="playground"><code class="language-rust">use std::collections::HashMap;
+use std::fmt::Debug;
+
+#[derive(Debug)]
+struct Person {
+    name: String,
+    age: u32,
+    metadata: HashMap&lt;String, String&gt;,
+}
+
+// 自定義相等比較 - 只比較 name 和 age
+impl PartialEq for Person {
+    fn eq(&amp;self, other: &amp;Self) -&gt; bool {
+        self.name == other.name &amp;&amp; self.age == other.age
+        // 故意忽略 metadata
+    }
+}
+
+// 泛型函數使用 PartialEq
+fn are_equal&lt;T: PartialEq + Debug&gt;(a: &amp;T, b: &amp;T) -&gt; bool {
+    println!("Comparing: {:?} == {:?}", a, b);
+    a == b
+}
+
+fn find_item&lt;T: PartialEq + Debug&gt;(items: &amp;[T], target: &amp;T) -&gt; Option&lt;usize&gt; {
+    for (index, item) in items.iter().enumerate() {
+        if item == target {
+            return Some(index);
+        }
+    }
+    None
+}
+
+fn main() {
+    let person1 = Person {
+        name: "Alice".to_string(),
+        age: 30,
+        metadata: {
+            let mut map = HashMap::new();
+            map.insert("city".to_string(), "New York".to_string());
+            map
+        },
+    };
+    
+    let person2 = Person {
+        name: "Alice".to_string(),
+        age: 30,
+        metadata: {
+            let mut map = HashMap::new();
+            map.insert("city".to_string(), "Boston".to_string()); // 不同的 metadata
+            map
+        },
+    };
+    
+    println!("Are equal: {}", are_equal(&amp;person1, &amp;person2)); // true（忽略 metadata）
+    
+    let numbers = vec![1, 2, 3, 4, 5];
+    if let Some(index) = find_item(&amp;numbers, &amp;3) {
+        println!("Found 3 at index: {}", index);
+    }
+}</code></pre></pre>
+<h4 id="eq---完全相等"><a class="header" href="#eq---完全相等">Eq - 完全相等</a></h4>
+<pre><pre class="playground"><code class="language-rust">use std::collections::HashSet;
+use std::fmt::Debug;
+
+// Eq 是 PartialEq 的子 trait，保證反身性 (a == a 總是 true)
+#[derive(PartialEq, Eq, Debug, Hash)]
+struct Id(u32);
+
+// 只有實現 Eq 的類型才能用作 HashMap/HashSet 的鍵
+fn unique_items&lt;T: Eq + std::hash::Hash + Debug&gt;(items: Vec&lt;T&gt;) -&gt; HashSet&lt;T&gt; {
+    items.into_iter().collect()
+}
+
+fn main() {
+    let ids = vec![Id(1), Id(2), Id(1), Id(3), Id(2)];
+    let unique = unique_items(ids);
+    println!("Unique IDs: {:?}", unique); // {Id(1), Id(2), Id(3)}
+}</code></pre></pre>
+<h4 id="partialord-和-ord---排序比較"><a class="header" href="#partialord-和-ord---排序比較">PartialOrd 和 Ord - 排序比較</a></h4>
+<pre><pre class="playground"><code class="language-rust">use std::cmp::{PartialOrd, Ord, Ordering};
+use std::fmt::Debug;
+
+#[derive(Debug, PartialEq, Eq)]
+struct Score {
+    value: u32,
+    name: String,
+}
+
+// 實現 PartialOrd
+impl PartialOrd for Score {
+    fn partial_cmp(&amp;self, other: &amp;Self) -&gt; Option&lt;Ordering&gt; {
+        Some(self.cmp(other))
+    }
+}
+
+// 實現 Ord（完全排序）
+impl Ord for Score {
+    fn cmp(&amp;self, other: &amp;Self) -&gt; Ordering {
+        // 先按分數排序，再按名字排序
+        self.value.cmp(&amp;other.value)
+            .then_with(|| self.name.cmp(&amp;other.name))
+    }
+}
+
+// 需要排序的泛型函數
+fn sort_items&lt;T: Ord + Debug&gt;(mut items: Vec&lt;T&gt;) -&gt; Vec&lt;T&gt; {
+    items.sort();
+    println!("Sorted items: {:?}", items);
+    items
+}
+
+fn find_max&lt;T: Ord + Debug + Clone&gt;(items: &amp;[T]) -&gt; Option&lt;T&gt; {
+    items.iter().max().cloned()
+}
+
+fn main() {
+    let mut scores = vec![
+        Score { value: 100, name: "Alice".to_string() },
+        Score { value: 85, name: "Bob".to_string() },
+        Score { value: 100, name: "Charlie".to_string() },
+        Score { value: 92, name: "Diana".to_string() },
+    ];
+    
+    let sorted = sort_items(scores.clone());
+    
+    if let Some(max_score) = find_max(&amp;scores) {
+        println!("Highest score: {:?}", max_score);
+    }
+}</code></pre></pre>
+<h3 id="64-併發-traits"><a class="header" href="#64-併發-traits">6.4 併發 Traits</a></h3>
+<h4 id="send---線程間傳輸"><a class="header" href="#send---線程間傳輸">Send - 線程間傳輸</a></h4>
+<pre><pre class="playground"><code class="language-rust">use std::thread;
+use std::sync::Arc;
+
+// Send trait 標記類型可以在線程間安全傳輸
+// 大多數類型自動實現 Send，除了 Rc&lt;T&gt; 等
+
+struct SafeData {
+    value: i32,
+}
+
+// 自動實現 Send，因為 i32 是 Send
+
+struct UnsafeData {
+    ptr: *const i32, // 原始指針不是 Send
+}
+
+// UnsafeData 不會自動實現 Send
+
+// 需要 Send 的泛型函數
+fn process_in_thread&lt;T: Send + 'static&gt;(data: T) -&gt; thread::JoinHandle&lt;T&gt; {
+    thread::spawn(move || {
+        // 在新線程中處理數據
+        println!("Processing in thread: {:?}", thread::current().id());
+        data
+    })
+}
+
+fn parallel_map&lt;T, U, F&gt;(items: Vec&lt;T&gt;, f: F) -&gt; Vec&lt;U&gt;
+where
+    T: Send + 'static,
+    U: Send + 'static,
+    F: Fn(T) -&gt; U + Send + Sync + 'static,
+{
+    let f = Arc::new(f);
+    let mut handles = vec![];
+    
+    for item in items {
+        let f_clone = Arc::clone(&amp;f);
+        let handle = thread::spawn(move || f_clone(item));
+        handles.push(handle);
+    }
+    
+    handles.into_iter()
+        .map(|handle| handle.join().unwrap())
+        .collect()
+}
+
+fn main() {
+    let safe_data = SafeData { value: 42 };
+    
+    // 可以傳輸到其他線程
+    let handle = process_in_thread(safe_data);
+    let result = handle.join().unwrap();
+    println!("Result: {}", result.value);
+    
+    // 並行處理
+    let numbers = vec![1, 2, 3, 4, 5];
+    let doubled = parallel_map(numbers, |x| x * 2);
+    println!("Doubled: {:?}", doubled);
+}</code></pre></pre>
+<h4 id="sync---線程間共享"><a class="header" href="#sync---線程間共享">Sync - 線程間共享</a></h4>
+<pre><pre class="playground"><code class="language-rust">use std::sync::{Arc, Mutex};
+use std::thread;
+
+// Sync trait 標記類型可以在多線程間安全共享引用
+// 如果 T: Sync，那麼 &amp;T 是 Send 的
+
+struct Counter {
+    value: Mutex&lt;i32&gt;,
+}
+
+impl Counter {
+    fn new() -&gt; Self {
+        Counter {
+            value: Mutex::new(0),
+        }
+    }
+    
+    fn increment(&amp;self) {
+        let mut value = self.value.lock().unwrap();
+        *value += 1;
+    }
+    
+    fn get(&amp;self) -&gt; i32 {
+        *self.value.lock().unwrap()
+    }
+}
+
+// Counter 自動實現 Sync，因為 Mutex&lt;i32&gt; 是 Sync
+
+// 需要 Sync 的泛型函數
+fn share_across_threads&lt;T: Sync + Send + 'static&gt;(data: Arc&lt;T&gt;) {
+    let mut handles = vec![];
+    
+    for i in 0..3 {
+        let data_clone = Arc::clone(&amp;data);
+        let handle = thread::spawn(move || {
+            println!("Thread {} accessing shared data", i);
+            // 可以安全地共享 &amp;T
+        });
+        handles.push(handle);
+    }
+    
+    for handle in handles {
+        handle.join().unwrap();
+    }
+}
+
+fn concurrent_operation&lt;T, F&gt;(data: Arc&lt;T&gt;, operation: F)
+where
+    T: Sync + Send + 'static,
+    F: Fn(&amp;T) + Send + Sync + 'static,
+{
+    let operation = Arc::new(operation);
+    let mut handles = vec![];
+    
+    for _ in 0..3 {
+        let data_clone = Arc::clone(&amp;data);
+        let op_clone = Arc::clone(&amp;operation);
+        
+        let handle = thread::spawn(move || {
+            op_clone(&amp;*data_clone);
+        });
+        handles.push(handle);
+    }
+    
+    for handle in handles {
+        handle.join().unwrap();
+    }
+}
+
+fn main() {
+    let counter = Arc::new(Counter::new());
+    
+    share_across_threads(Arc::clone(&amp;counter));
+    
+    concurrent_operation(counter, |counter| {
+        counter.increment();
+        println!("Counter value: {}", counter.get());
+    });
+}</code></pre></pre>
+<h3 id="65-生命週期約束"><a class="header" href="#65-生命週期約束">6.5 生命週期約束</a></h3>
+<h4 id="static---靜態生命週期"><a class="header" href="#static---靜態生命週期">'static - 靜態生命週期</a></h4>
+<pre><pre class="playground"><code class="language-rust">// 'static 表示數據在整個程序運行期間都有效
+
+// 字符串字面量具有 'static 生命週期
+fn get_static_string() -&gt; &amp;'static str {
+    "This string lives for the entire program"
+}
+
+// 泛型函數要求 'static 生命週期
+fn store_for_later&lt;T: 'static + Send + Clone&gt;(data: T) -&gt; Box&lt;dyn Fn() -&gt; T + Send&gt; {
+    Box::new(move || data.clone())
+}
+
+fn spawn_with_data&lt;T: Send + 'static&gt;(data: T) -&gt; std::thread::JoinHandle&lt;T&gt; {
+    std::thread::spawn(move || {
+        println!("Processing data in thread");
+        data
+    })
+}
+
+// 結構體與 'static 約束
+struct Container&lt;T: 'static&gt; {
+    data: T,
+}
+
+impl&lt;T: 'static&gt; Container&lt;T&gt; {
+    fn new(data: T) -&gt; Self {
+        Container { data }
+    }
+    
+    fn into_boxed(self) -&gt; Box&lt;T&gt; {
+        Box::new(self.data)
+    }
+}
+
+fn main() {
+    // 靜態字符串
+    let static_str = get_static_string();
+    println!("{}", static_str);
+    
+    // 擁有的數據（自動滿足 'static）
+    let owned_string = String::from("owned data");
+    let stored = store_for_later(owned_string);
+    println!("{}", stored());
+    
+    // 在線程中使用
+    let number = 42;
+    let handle = spawn_with_data(number);
+    let result = handle.join().unwrap();
+    println!("Thread result: {}", result);
+    
+    // 容器
+    let container = Container::new(vec![1, 2, 3]);
+    let boxed = container.into_boxed();
+    println!("Boxed data: {:?}", boxed);
+}</code></pre></pre>
+<h3 id="66-複雜約束組合"><a class="header" href="#66-複雜約束組合">6.6 複雜約束組合</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::fmt::{Debug, Display};
+use std::thread;
+use std::sync::Arc;
+
+// 複雜的多重約束
+fn complex_operation&lt;T&gt;(data: T) -&gt; String
+where
+    T: Display +           // 可以友好顯示
+       Debug +             // 可以調試顯示  
+       Clone +             // 可以複製
+       Send +              // 可以跨線程傳輸
+       Sync +              // 可以跨線程共享
+       'static +           // 具有靜態生命週期
+       PartialEq +         // 可以比較相等
+       PartialOrd,         // 可以比較大小
+{
+    println!("Display: {}", data);
+    println!("Debug: {:?}", data);
+    
+    let cloned = data.clone();
+    println!("Cloned: {:?}", cloned);
+    
+    // 在新線程中處理
+    let data_arc = Arc::new(data);
+    let handle = thread::spawn({
+        let data_clone = Arc::clone(&amp;data_arc);
+        move || {
+            format!("Processed: {:?}", *data_clone)
+        }
+    });
+    
+    handle.join().unwrap()
+}
+
+// 條件約束 - 只有滿足條件才有某些方法
+struct Processor&lt;T&gt; {
+    data: T,
+}
+
+impl&lt;T&gt; Processor&lt;T&gt; {
+    fn new(data: T) -&gt; Self {
+        Processor { data }
+    }
+}
+
+// 只有 Display 時才能打印
+impl&lt;T: Display&gt; Processor&lt;T&gt; {
+    fn print(&amp;self) {
+        println!("Data: {}", self.data);
+    }
+}
+
+// 只有 Clone 時才能複製
+impl&lt;T: Clone&gt; Processor&lt;T&gt; {
+    fn duplicate(&amp;self) -&gt; Self {
+        Processor {
+            data: self.data.clone(),
+        }
+    }
+}
+
+// 同時有 Display 和 Clone 時的特殊方法
+impl&lt;T: Display + Clone&gt; Processor&lt;T&gt; {
+    fn print_and_duplicate(&amp;self) -&gt; Self {
+        self.print();
+        self.duplicate()
+    }
+}
+
+// 並發處理約束
+impl&lt;T: Send + Sync + 'static + Clone&gt; Processor&lt;T&gt; {
+    fn process_concurrently(&amp;self) -&gt; Vec&lt;T&gt; {
+        let mut handles = vec![];
+        
+        for _ in 0..3 {
+            let data = self.data.clone();
+            let handle = thread::spawn(move || {
+                // 模擬處理
+                thread::sleep(std::time::Duration::from_millis(100));
+                data
+            });
+            handles.push(handle);
+        }
+        
+        handles.into_iter()
+            .map(|h| h.join().unwrap())
+            .collect()
+    }
+}
+
+fn main() {
+    // 滿足所有約束的類型
+    let result = complex_operation(42i32);
+    println!("Complex result: {}", result);
+    
+    // 條件實現範例
+    let processor = Processor::new("hello world");
+    
+    processor.print();                    // 有 Display
+    let duplicated = processor.duplicate(); // 有 Clone  
+    let combined = processor.print_and_duplicate(); // 兩者都有
+    
+    // 並發處理
+    let concurrent_results = processor.process_concurrently();
+    println!("Concurrent results: {:?}", concurrent_results);
+}</code></pre></pre>
+<h3 id="67-實際應用場景"><a class="header" href="#67-實際應用場景">6.7 實際應用場景</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::collections::HashMap;
+use std::hash::Hash;
+use std::fmt::Debug;
+
+// 泛型緩存系統
+struct Cache&lt;K, V&gt;
+where
+    K: Eq + Hash + Clone + Debug,
+    V: Clone + Debug,
+{
+    data: HashMap&lt;K, V&gt;,
+    max_size: usize,
+}
+
+impl&lt;K, V&gt; Cache&lt;K, V&gt;
+where
+    K: Eq + Hash + Clone + Debug,
+    V: Clone + Debug,
+{
+    fn new(max_size: usize) -&gt; Self {
+        Cache {
+            data: HashMap::new(),
+            max_size,
+        }
+    }
+    
+    fn get(&amp;self, key: &amp;K) -&gt; Option&lt;&amp;V&gt; {
+        println!("Getting key: {:?}", key);
+        self.data.get(key)
+    }
+    
+    fn insert(&amp;mut self, key: K, value: V) {
+        if self.data.len() &gt;= self.max_size {
+            // 簡單的 LRU：移除第一個元素
+            if let Some(first_key) = self.data.keys().next().cloned() {
+                self.data.remove(&amp;first_key);
+                println!("Evicted key: {:?}", first_key);
+            }
+        }
+        
+        println!("Inserting key: {:?}, value: {:?}", key, value);
+        self.data.insert(key, value);
+    }
+}
+
+// 序列化約束
+trait Serialize {
+    fn serialize(&amp;self) -&gt; String;
+}
+
+trait Deserialize: Sized {
+    fn deserialize(data: &amp;str) -&gt; Option&lt;Self&gt;;
+}
+
+// 需要序列化的泛型存儲
+struct PersistentStore&lt;T&gt;
+where
+    T: Serialize + Deserialize + Debug,
+{
+    items: Vec&lt;T&gt;,
+}
+
+impl&lt;T&gt; PersistentStore&lt;T&gt;
+where
+    T: Serialize + Deserialize + Debug,
+{
+    fn new() -&gt; Self {
+        PersistentStore { items: Vec::new() }
+    }
+    
+    fn add(&amp;mut self, item: T) {
+        println!("Adding item: {:?}", item);
+        self.items.push(item);
+    }
+    
+    fn save_to_string(&amp;self) -&gt; String {
+        self.items
+            .iter()
+            .map(|item| item.serialize())
+            .collect::&lt;Vec&lt;_&gt;&gt;()
+            .join("\n")
+    }
+    
+    fn load_from_string(&amp;mut self, data: &amp;str) {
+        self.items.clear();
+        for line in data.lines() {
+            if let Some(item) = T::deserialize(line) {
+                self.items.push(item);
+            }
+        }
+    }
+}
+
+// 實現序列化 trait
+#[derive(Debug, Clone)]
+struct Person {
+    name: String,
+    age: u32,
+}
+
+impl Serialize for Person {
+    fn serialize(&amp;self) -&gt; String {
+        format!("{}:{}", self.name, self.age)
+    }
+}
+
+impl Deserialize for Person {
+    fn deserialize(data: &amp;str) -&gt; Option&lt;Self&gt; {
+        let parts: Vec&lt;&amp;str&gt; = data.split(':').collect();
+        if parts.len() == 2 {
+            if let Ok(age) = parts[1].parse::&lt;u32&gt;() {
+                return Some(Person {
+                    name: parts[0].to_string(),
+                    age,
+                });
+            }
+        }
+        None
+    }
+}
+
+fn main() {
+    // 緩存使用
+    let mut cache: Cache&lt;String, i32&gt; = Cache::new(2);
+    cache.insert("key1".to_string(), 42);
+    cache.insert("key2".to_string(), 100);
+    cache.insert("key3".to_string(), 200); // 會導致 key1 被移除
+    
+    if let Some(value) = cache.get(&amp;"key2".to_string()) {
+        println!("Found value: {}", value);
+    }
+    
+    // 持久化存儲
+    let mut store: PersistentStore&lt;Person&gt; = PersistentStore::new();
+    store.add(Person { name: "Alice".to_string(), age: 30 });
+    store.add(Person { name: "Bob".to_string(), age: 25 });
+    
+    let serialized = store.save_to_string();
+    println!("Serialized data:\n{}", serialized);
+    
+    let mut new_store = PersistentStore::new();
+    new_store.load_from_string(&amp;serialized);
+    println!("Loaded {} items", new_store.items.len());
+}</code></pre></pre>
+<h2 id="7-生命週期泛型"><a class="header" href="#7-生命週期泛型">7. 生命週期泛型</a></h2>
+<h3 id="71-基本生命週期"><a class="header" href="#71-基本生命週期">7.1 基本生命週期</a></h3>
+<pre><pre class="playground"><code class="language-rust">// 生命週期參數
+fn longest&lt;'a&gt;(x: &amp;'a str, y: &amp;'a str) -&gt; &amp;'a str {
+    if x.len() &gt; y.len() {
+        x
+    } else {
+        y
+    }
+}
+
+// 結構體中的生命週期
+struct ImportantExcerpt&lt;'a&gt; {
+    part: &amp;'a str,
+}
+
+impl&lt;'a&gt; ImportantExcerpt&lt;'a&gt; {
+    fn level(&amp;self) -&gt; i32 {
+        3
+    }
+    
+    // 生命週期省略規則
+    fn announce_and_return_part(&amp;self, announcement: &amp;str) -&gt; &amp;str {
+        println!("Attention please: {}", announcement);
+        self.part
+    }
+}
+
+fn main() {
+    let string1 = String::from("abcd");
+    let string2 = "xyz";
+    
+    let result = longest(string1.as_str(), string2);
+    println!("The longest string is {}", result);
+    
+    let novel = String::from("Call me Ishmael. Some years ago...");
+    let first_sentence = novel.split('.').next().expect("Could not find a '.'");
+    let i = ImportantExcerpt {
+        part: first_sentence,
+    };
+}</code></pre></pre>
+<h3 id="72-複雜生命週期約束"><a class="header" href="#72-複雜生命週期約束">7.2 複雜生命週期約束</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::fmt::Display;
+
+// 多個生命週期參數
+struct DoubleRef&lt;'a, 'b&gt; {
+    first: &amp;'a str,
+    second: &amp;'b str,
+}
+
+impl&lt;'a, 'b&gt; DoubleRef&lt;'a, 'b&gt; {
+    fn new(first: &amp;'a str, second: &amp;'b str) -&gt; Self {
+        DoubleRef { first, second }
+    }
+    
+    // 返回較短的生命週期
+    fn get_first(&amp;self) -&gt; &amp;'a str {
+        self.first
+    }
+    
+    fn get_second(&amp;self) -&gt; &amp;'b str {
+        self.second
+    }
+}
+
+// 生命週期 + 泛型 + trait 約束
+fn print_with_lifetime&lt;'a, T&gt;(item: &amp;'a T, prefix: &amp;'a str) -&gt; &amp;'a str
+where
+    T: Display + 'a,
+{
+    println!("{}: {}", prefix, item);
+    prefix
+}
+
+// 高階生命週期約束 (Higher-Rank Trait Bounds)
+fn apply_to_strings&lt;F&gt;(f: F) -&gt; String
+where
+    F: for&lt;'a&gt; Fn(&amp;'a str) -&gt; &amp;'a str,
+{
+    let s1 = "hello";
+    let s2 = "world";
+    format!("{} {}", f(s1), f(s2))
+}
+
+// 生命週期子類型
+fn longer_lifetime&lt;'long: 'short, 'short&gt;(
+    long: &amp;'long str,
+    short: &amp;'short str,
+) -&gt; &amp;'short str {
+    // 'long 至少和 'short 一樣長
+    if long.len() &gt; short.len() { 
+        long // 可以將較長生命週期轉換為較短的
+    } else { 
+        short 
+    }
+}
+
+fn main() {
+    let first = String::from("first string");
+    let second = String::from("second string");
+    
+    let double_ref = DoubleRef::new(&amp;first, &amp;second);
+    println!("First: {}", double_ref.get_first());
+    println!("Second: {}", double_ref.get_second());
+    
+    let number = 42;
+    let prefix = print_with_lifetime(&amp;number, "Number");
+    println!("Returned prefix: {}", prefix);
+    
+    let result = apply_to_strings(|s| s);
+    println!("Applied result: {}", result);
+    
+    let long_lived = "long lived string";
+    {
+        let short_lived = String::from("short");
+        let result = longer_lifetime(long_lived, &amp;short_lived);
+        println!("Result: {}", result);
+    }
+}</code></pre></pre>
+<h3 id="73-靜態生命週期與所有權"><a class="header" href="#73-靜態生命週期與所有權">7.3 靜態生命週期與所有權</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::thread;
+
+// 'static 生命週期的各種用法
+fn get_static_str() -&gt; &amp;'static str {
+    "This is a static string"
+}
+
+// 要求 'static 的泛型函數
+fn spawn_thread&lt;T: Send + 'static&gt;(data: T) -&gt; thread::JoinHandle&lt;T&gt; {
+    thread::spawn(move || {
+        println!("Processing data in thread");
+        data
+    })
+}
+
+// 可選的 'static 約束
+fn maybe_static&lt;T: 'static&gt;(data: T) -&gt; Box&lt;T&gt; {
+    Box::new(data)
+}
+
+// 條件生命週期約束
+struct Container&lt;T&gt; 
+where 
+    T: 'static,  // T 必須是 'static
+{
+    data: T,
+}
+
+impl&lt;T: 'static&gt; Container&lt;T&gt; {
+    fn new(data: T) -&gt; Self {
+        Container { data }
+    }
+    
+    fn into_static(self) -&gt; &amp;'static T {
+        // 這實際上是不安全的，僅作示例
+        // 在實際代碼中不要這樣做
+        Box::leak(Box::new(self.data))
+    }
+}
+
+// 生命週期與 trait 對象
+trait Drawable {
+    fn draw(&amp;self);
+}
+
+struct Circle {
+    radius: f64,
+}
+
+impl Drawable for Circle {
+    fn draw(&amp;self) {
+        println!("Drawing circle with radius {}", self.radius);
+    }
+}
+
+// 不同生命週期的 trait 對象
+fn draw_all&lt;'a&gt;(drawables: Vec&lt;&amp;'a dyn Drawable&gt;) {
+    for drawable in drawables {
+        drawable.draw();
+    }
+}
+
+fn draw_all_static(drawables: Vec&lt;Box&lt;dyn Drawable + 'static&gt;&gt;) {
+    for drawable in drawables {
+        drawable.draw();
+    }
+}
+
+fn main() {
+    // 靜態字符串
+    let static_str = get_static_str();
+    println!("{}", static_str);
+    
+    // 擁有數據在線程中
+    let owned_data = String::from("owned");
+    let handle = spawn_thread(owned_data);
+    let result = handle.join().unwrap();
+    println!("Thread result: {}", result);
+    
+    // 容器與 'static
+    let container = Container::new(42);
+    // let static_ref = container.into_static(); // 危險操作
+    
+    // trait 對象
+    let circle = Circle { radius: 5.0 };
+    draw_all(vec![&amp;circle]);
+    
+    let boxed_circle = Box::new(Circle { radius: 10.0 });
+    draw_all_static(vec![boxed_circle]);
+}</code></pre></pre>
+<h2 id="8-關聯類型"><a class="header" href="#8-關聯類型">8. 關聯類型</a></h2>
+<h3 id="81-基本關聯類型"><a class="header" href="#81-基本關聯類型">8.1 基本關聯類型</a></h3>
+<pre><pre class="playground"><code class="language-rust">// 使用關聯類型的 trait
+trait Iterator {
+    type Item;
+    
+    fn next(&amp;mut self) -&gt; Option&lt;Self::Item&gt;;
+}
+
+trait Collect&lt;T&gt; {
+    fn collect(self) -&gt; T;
+}
+
+// 實現 Iterator trait
+struct Counter {
+    current: u32,
+    max: u32,
+}
+
+impl Counter {
+    fn new(max: u32) -&gt; Counter {
+        Counter { current: 0, max }
+    }
+}
+
+impl Iterator for Counter {
+    type Item = u32;
+    
+    fn next(&amp;mut self) -&gt; Option&lt;Self::Item&gt; {
+        if self.current &lt; self.max {
+            let current = self.current;
+            self.current += 1;
+            Some(current)
+        } else {
+            None
+        }
+    }
+}
+
+// 複雜的關聯類型
+trait Graph {
+    type Node;
+    type Edge;
+    
+    fn nodes(&amp;self) -&gt; Vec&lt;Self::Node&gt;;
+    fn edges(&amp;self) -&gt; Vec&lt;Self::Edge&gt;;
+    fn add_edge(&amp;mut self, from: Self::Node, to: Self::Node) -&gt; Self::Edge;
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct NodeId(usize);
+
+#[derive(Debug, Clone)]
+struct Edge {
+    from: NodeId,
+    to: NodeId,
+    weight: i32,
+}
+
+struct SimpleGraph {
+    nodes: Vec&lt;NodeId&gt;,
+    edges: Vec&lt;Edge&gt;,
+    next_id: usize,
+}
+
+impl SimpleGraph {
+    fn new() -&gt; Self {
+        SimpleGraph {
+            nodes: Vec::new(),
+            edges: Vec::new(),
+            next_id: 0,
+        }
+    }
+    
+    fn add_node(&amp;mut self) -&gt; NodeId {
+        let id = NodeId(self.next_id);
+        self.next_id += 1;
+        self.nodes.push(id);
+        id
+    }
+}
+
+impl Graph for SimpleGraph {
+    type Node = NodeId;
+    type Edge = Edge;
+    
+    fn nodes(&amp;self) -&gt; Vec&lt;Self::Node&gt; {
+        self.nodes.clone()
+    }
+    
+    fn edges(&amp;self) -&gt; Vec&lt;Self::Edge&gt; {
+        self.edges.clone()
+    }
+    
+    fn add_edge(&amp;mut self, from: Self::Node, to: Self::Node) -&gt; Self::Edge {
+        let edge = Edge {
+            from,
+            to,
+            weight: 1, // 預設權重
+        };
+        self.edges.push(edge.clone());
+        edge
+    }
+}
+
+fn main() {
+    let mut counter = Counter::new(3);
+    
+    while let Some(value) = counter.next() {
+        println!("{}", value);
+    }
+    
+    let mut graph = SimpleGraph::new();
+    let node1 = graph.add_node();
+    let node2 = graph.add_node();
+    let edge = graph.add_edge(node1, node2);
+    
+    println!("Nodes: {:?}", graph.nodes());
+    println!("Edges: {:?}", graph.edges());
+}</code></pre></pre>
+<h3 id="82-關聯類型-vs-泛型比較"><a class="header" href="#82-關聯類型-vs-泛型比較">8.2 關聯類型 vs 泛型比較</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::fmt::Debug;
+
+// 使用泛型 - 允許多種實現
+trait GenericTrait&lt;T&gt; {
+    fn process(&amp;self, item: T) -&gt; T;
+}
+
+// 使用關聯類型 - 每個類型只有一種實現
+trait AssociatedTrait {
+    type Input;
+    type Output;
+    
+    fn process(&amp;self, input: Self::Input) -&gt; Self::Output;
+}
+
+struct Processor;
+
+// 可以為同一個類型實現不同的泛型版本
+impl GenericTrait&lt;i32&gt; for Processor {
+    fn process(&amp;self, item: i32) -&gt; i32 {
+        item * 2
+    }
+}
+
+impl GenericTrait&lt;String&gt; for Processor {
+    fn process(&amp;self, item: String) -&gt; String {
+        format!("Processed: {}", item)
+    }
+}
+
+impl GenericTrait&lt;f64&gt; for Processor {
+    fn process(&amp;self, item: f64) -&gt; f64 {
+        item * 3.14
+    }
+}
+
+// 但關聯類型只能有一個實現
+impl AssociatedTrait for Processor {
+    type Input = String;
+    type Output = usize;
+    
+    fn process(&amp;self, input: Self::Input) -&gt; Self::Output {
+        input.len()
+    }
+}
+
+// 使用關聯類型的泛型函數
+fn use_associated_trait&lt;T: AssociatedTrait&gt;(
+    processor: &amp;T,
+    input: T::Input,
+) -&gt; T::Output {
+    processor.process(input)
+}
+
+// 關聯類型的約束
+trait Parser {
+    type Item;
+    type Error: Debug;
+    
+    fn parse(&amp;self, input: &amp;str) -&gt; Result&lt;Self::Item, Self::Error&gt;;
+}
+
+#[derive(Debug)]
+struct ParseError(String);
+
+struct NumberParser;
+
+impl Parser for NumberParser {
+    type Item = i32;
+    type Error = ParseError;
+    
+    fn parse(&amp;self, input: &amp;str) -&gt; Result&lt;Self::Item, Self::Error&gt; {
+        input.parse().map_err(|_| ParseError(format!("Invalid number: {}", input)))
+    }
+}
+
+// 泛型函數使用解析器
+fn parse_and_double&lt;P: Parser&lt;Item = i32&gt;&gt;(
+    parser: &amp;P,
+    input: &amp;str,
+) -&gt; Result&lt;i32, P::Error&gt; {
+    parser.parse(input).map(|n| n * 2)
+}
+
+fn main() {
+    let processor = Processor;
+    
+    // 泛型版本需要明確指定類型
+    let result1: i32 = processor.process(10);
+    let result2: String = processor.process("hello".to_string());
+    let result3: f64 = processor.process(2.0);
+    
+    println!("Generic results: {}, {}, {}", result1, result2, result3);
+    
+    // 關聯類型版本類型自動推斷
+    let result4 = use_associated_trait(&amp;processor, "world".to_string());
+    println!("Associated result: {}", result4);
+    
+    // 解析器範例
+    let parser = NumberParser;
+    match parse_and_double(&amp;parser, "21") {
+        Ok(result) =&gt; println!("Parsed and doubled: {}", result),
+        Err(e) =&gt; println!("Parse error: {:?}", e),
+    }
+}</code></pre></pre>
+<h3 id="83-投影與高階關聯類型"><a class="header" href="#83-投影與高階關聯類型">8.3 投影與高階關聯類型</a></h3>
+<pre><pre class="playground"><code class="language-rust">// 關聯類型投影
+trait Functor {
+    type Wrapped&lt;T&gt;;
+    
+    fn map&lt;T, U, F&gt;(input: Self::Wrapped&lt;T&gt;, f: F) -&gt; Self::Wrapped&lt;U&gt;
+    where
+        F: Fn(T) -&gt; U;
+}
+
+// Option 作為 Functor
+struct OptionFunctor;
+
+impl Functor for OptionFunctor {
+    type Wrapped&lt;T&gt; = Option&lt;T&gt;;
+    
+    fn map&lt;T, U, F&gt;(input: Self::Wrapped&lt;T&gt;, f: F) -&gt; Self::Wrapped&lt;U&gt;
+    where
+        F: Fn(T) -&gt; U,
+    {
+        input.map(f)
+    }
+}
+
+// Vec 作為 Functor
+struct VecFunctor;
+
+impl Functor for VecFunctor {
+    type Wrapped&lt;T&gt; = Vec&lt;T&gt;;
+    
+    fn map&lt;T, U, F&gt;(input: Self::Wrapped&lt;T&gt;, f: F) -&gt; Self::Wrapped&lt;U&gt;
+    where
+        F: Fn(T) -&gt; U,
+    {
+        input.into_iter().map(f).collect()
+    }
+}
+
+// 使用 Functor
+fn double_functor&lt;F: Functor&gt;(input: F::Wrapped&lt;i32&gt;) -&gt; F::Wrapped&lt;i32&gt; {
+    F::map(input, |x| x * 2)
+}
+
+// 關聯類型家族
+trait Collection {
+    type Item;
+    type Iter&lt;'a&gt;: Iterator&lt;Item = &amp;'a Self::Item&gt; where Self: 'a;
+    
+    fn iter(&amp;self) -&gt; Self::Iter&lt;'_&gt;;
+    fn len(&amp;self) -&gt; usize;
+    fn is_empty(&amp;self) -&gt; bool {
+        self.len() == 0
+    }
+}
+
+impl&lt;T&gt; Collection for Vec&lt;T&gt; {
+    type Item = T;
+    type Iter&lt;'a&gt; = std::slice::Iter&lt;'a, T&gt; where T: 'a;
+    
+    fn iter(&amp;self) -&gt; Self::Iter&lt;'_&gt; {
+        self.as_slice().iter()
+    }
+    
+    fn len(&amp;self) -&gt; usize {
+        Vec::len(self)
+    }
+}
+
+use std::collections::HashMap;
+use std::hash::Hash;
+
+impl&lt;K: Hash + Eq, V&gt; Collection for HashMap&lt;K, V&gt; {
+    type Item = (K, V);
+    type Iter&lt;'a&gt; = std::collections::hash_map::Iter&lt;'a, K, V&gt; where K: 'a, V: 'a;
+    
+    fn iter(&amp;self) -&gt; Self::Iter&lt;'_&gt; {
+        HashMap::iter(self)
+    }
+    
+    fn len(&amp;self) -&gt; usize {
+        HashMap::len(self)
+    }
+}
+
+fn print_collection&lt;C: Collection&gt;(collection: &amp;C) 
+where
+    for&lt;'a&gt; &amp;'a C::Item: Debug,
+{
+    println!("Collection has {} items:", collection.len());
+    for item in collection.iter() {
+        println!("  {:?}", item);
+    }
+}
+
+fn main() {
+    // Functor 範例
+    let option_input = Some(21);
+    let option_result = double_functor::&lt;OptionFunctor&gt;(option_input);
+    println!("Option result: {:?}", option_result);
+    
+    let vec_input = vec![1, 2, 3];
+    let vec_result = double_functor::&lt;VecFunctor&gt;(vec_input);
+    println!("Vec result: {:?}", vec_result);
+    
+    // Collection 範例
+    let numbers = vec![1, 2, 3, 4, 5];
+    print_collection(&amp;numbers);
+    
+    let mut map = HashMap::new();
+    map.insert("a", 1);
+    map.insert("b", 2);
+    print_collection(&amp;map);
+}</code></pre></pre>
+<h2 id="9-高階-trait-約束"><a class="header" href="#9-高階-trait-約束">9. 高階 Trait 約束</a></h2>
+<h3 id="91-higher-rank-trait-bounds-hrtb"><a class="header" href="#91-higher-rank-trait-bounds-hrtb">9.1 Higher-Rank Trait Bounds (HRTB)</a></h3>
+<pre><pre class="playground"><code class="language-rust">// for&lt;'a&gt; 語法 - 對所有生命週期都成立
+fn apply_to_all&lt;F&gt;(f: F)
+where
+    F: for&lt;'a&gt; Fn(&amp;'a str) -&gt; &amp;'a str,
+{
+    let s1 = "hello";
+    let s2 = "world";
+    
+    println!("{}", f(s1));
+    println!("{}", f(s2));
+}
+
+fn identity(s: &amp;str) -&gt; &amp;str {
+    s
+}
+
+// 更複雜的 HRTB
+fn process_strings&lt;F, R&gt;(f: F) -&gt; Vec&lt;R&gt;
+where
+    F: for&lt;'a&gt; Fn(&amp;'a str) -&gt; R,
+    R: Clone,
+{
+    let strings = vec!["hello", "world", "rust"];
+    strings.iter().map(|&amp;s| f(s)).collect()
+}
+
+// HRTB 與閉包
+fn with_callback&lt;F&gt;(callback: F)
+where
+    F: for&lt;'r&gt; Fn(&amp;'r str) -&gt; String,
+{
+    let data = vec!["first", "second", "third"];
+    for item in data {
+        let result = callback(item);
+        println!("Processed: {}", result);
+    }
+}
+
+// HRTB 與 trait 對象
+trait Processor {
+    fn process&lt;'a&gt;(&amp;self, input: &amp;'a str) -&gt; &amp;'a str;
+}
+
+struct UpperCaseProcessor;
+
+impl Processor for UpperCaseProcessor {
+    fn process&lt;'a&gt;(&amp;self, input: &amp;'a str) -&gt; &amp;'a str {
+        // 實際上這很難實現，因為我們需要返回新的字符串
+        // 這裡僅作示例
+        input
+    }
+}
+
+fn use_processor&lt;P&gt;(processor: P)
+where
+    P: for&lt;'a&gt; Fn(&amp;'a str) -&gt; &amp;'a str,
+{
+    let test_strings = vec!["hello", "world"];
+    for s in test_strings {
+        println!("{}", processor(s));
+    }
+}
+
+fn main() {
+    apply_to_all(identity);
+    apply_to_all(|s| s);
+    
+    let lengths = process_strings(|s| s.len());
+    println!("Lengths: {:?}", lengths);
+    
+    let uppercase = process_strings(|s| s.to_uppercase());
+    println!("Uppercase: {:?}", uppercase);
+    
+    with_callback(|s| format!("Processed: {}", s));
+    
+    use_processor(|s| s);
+}</code></pre></pre>
+<h3 id="92-複雜的泛型約束組合"><a class="header" href="#92-複雜的泛型約束組合">9.2 複雜的泛型約束組合</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::fmt::{Debug, Display};
+use std::ops::{Add, Mul};
+use std::cmp::PartialOrd;
+
+// 數學運算的複雜約束
+fn mathematical_operation&lt;T&gt;(a: T, b: T, c: T) -&gt; T
+where
+    T: Add&lt;Output = T&gt; +        // 支持加法
+       Mul&lt;Output = T&gt; +        // 支持乘法
+       PartialOrd +             // 支持比較
+       Copy +                   // 可複製
+       Display +                // 可顯示
+       Debug +                  // 可調試
+       Default,                 // 有默認值
+{
+    println!("Input: a={}, b={}, c={}", a, b, c);
+    
+    let result = if a &gt; b {
+        a * c + T::default()
+    } else {
+        b * c + a
+    };
+    
+    println!("Result: {} (debug: {:?})", result, result);
+    result
+}
+
+// 集合操作的約束
+use std::collections::HashSet;
+use std::hash::Hash;
+
+fn set_operations&lt;T&gt;(items1: Vec&lt;T&gt;, items2: Vec&lt;T&gt;) -&gt; (HashSet&lt;T&gt;, HashSet&lt;T&gt;)
+where
+    T: Eq + Hash + Clone + Debug,
+{
+    let set1: HashSet&lt;T&gt; = items1.into_iter().collect();
+    let set2: HashSet&lt;T&gt; = items2.into_iter().collect();
+    
+    let intersection: HashSet&lt;T&gt; = set1.intersection(&amp;set2).cloned().collect();
+    let union: HashSet&lt;T&gt; = set1.union(&amp;set2).cloned().collect();
+    
+    println!("Intersection: {:?}", intersection);
+    println!("Union: {:?}", union);
+    
+    (intersection, union)
+}
+
+// 條件約束與關聯類型
+trait Container {
+    type Item;
+    
+    fn items(&amp;self) -&gt; &amp;[Self::Item];
+}
+
+fn process_container&lt;C&gt;(container: &amp;C)
+where
+    C: Container,
+    C::Item: Display + Clone + PartialEq,
+{
+    let items = container.items();
+    println!("Container has {} items:", items.len());
+    
+    for (i, item) in items.iter().enumerate() {
+        println!("  [{}]: {}", i, item);
+    }
+    
+    // 找到第一個重複的項目
+    for i in 0..items.len() {
+        for j in (i + 1)..items.len() {
+            if items[i] == items[j] {
+                println!("Found duplicate: {} at positions {} and {}", items[i], i, j);
+                return;
+            }
+        }
+    }
+    println!("No duplicates found");
+}
+
+struct NumberContainer {
+    numbers: Vec&lt;i32&gt;,
+}
+
+impl Container for NumberContainer {
+    type Item = i32;
+    
+    fn items(&amp;self) -&gt; &amp;[Self::Item] {
+        &amp;self.numbers
+    }
+}
+
+// 異步約束 (需要 async runtime)
+use std::future::Future;
+use std::pin::Pin;
+
+trait AsyncProcessor {
+    type Output;
+    
+    fn process_async(&amp;self) -&gt; Pin&lt;Box&lt;dyn Future&lt;Output = Self::Output&gt; + Send + '_&gt;&gt;;
+}
+
+// 使用異步處理器
+async fn use_async_processor&lt;P&gt;(processor: P) -&gt; P::Output
+where
+    P: AsyncProcessor,
+    P::Output: Debug,
+{
+    let result = processor.process_async().await;
+    println!("Async result: {:?}", result);
+    result
+}
+
+// 函數指針與約束
+fn higher_order_function&lt;F, T, U&gt;(f: F, input: T) -&gt; U
+where
+    F: Fn(T) -&gt; U + Send + Sync + 'static,
+    T: Send + 'static,
+    U: Send + 'static + Debug,
+{
+    let result = f(input);
+    println!("Higher order result: {:?}", result);
+    result
+}
+
+// 遞歸約束
+trait RecursiveDisplay {
+    fn recursive_display(&amp;self, depth: usize);
+}
+
+impl&lt;T: Display&gt; RecursiveDisplay for Vec&lt;T&gt; {
+    fn recursive_display(&amp;self, depth: usize) {
+        let indent = "  ".repeat(depth);
+        println!("{}Vec with {} items:", indent, self.len());
+        for item in self {
+            println!("{}  {}", indent, item);
+        }
+    }
+}
+
+impl&lt;T: RecursiveDisplay&gt; RecursiveDisplay for Option&lt;T&gt; {
+    fn recursive_display(&amp;self, depth: usize) {
+        let indent = "  ".repeat(depth);
+        match self {
+            Some(value) =&gt; {
+                println!("{}Some:", indent);
+                value.recursive_display(depth + 1);
+            }
+            None =&gt; println!("{}None", indent),
+        }
+    }
+}
+
+fn print_recursive&lt;T: RecursiveDisplay&gt;(item: &amp;T) {
+    item.recursive_display(0);
+}
+
+fn main() {
+    // 數學運算
+    let result = mathematical_operation(5, 10, 2);
+    println!("Math result: {}", result);
+    
+    let float_result = mathematical_operation(3.14, 2.71, 1.41);
+    println!("Float result: {}", float_result);
+    
+    // 集合操作
+    let set1 = vec![1, 2, 3, 4];
+    let set2 = vec![3, 4, 5, 6];
+    let (intersection, union) = set_operations(set1, set2);
+    
+    // 容器處理
+    let container = NumberContainer {
+        numbers: vec![1, 2, 3, 2, 4],
+    };
+    process_container(&amp;container);
+    
+    // 高階函數
+    let squared = higher_order_function(|x: i32| x * x, 5);
+    
+    // 遞歸顯示
+    let nested = Some(vec![1, 2, 3]);
+    print_recursive(&amp;nested);
+    
+    let nested_vec = vec![Some(vec![1, 2]), None, Some(vec![3, 4, 5])];
+    for item in &amp;nested_vec {
+        print_recursive(item);
+    }
+}</code></pre></pre>
+<h2 id="10-泛型常數"><a class="header" href="#10-泛型常數">10. 泛型常數</a></h2>
+<h3 id="101-const-泛型-rust-151"><a class="header" href="#101-const-泛型-rust-151">10.1 Const 泛型 (Rust 1.51+)</a></h3>
+<pre><pre class="playground"><code class="language-rust">// 泛型常數參數
+struct Array&lt;T, const N: usize&gt; {
+    data: [T; N],
+}
+
+impl&lt;T, const N: usize&gt; Array&lt;T, N&gt; {
+    fn new(data: [T; N]) -&gt; Self {
+        Array { data }
+    }
+    
+    fn len(&amp;self) -&gt; usize {
+        N
+    }
+    
+    fn get(&amp;self, index: usize) -&gt; Option&lt;&amp;T&gt; {
+        self.data.get(index)
+    }
+    
+    // 常數泛型的運算
+    fn split_half(&amp;self) -&gt; (&amp;[T], &amp;[T]) 
+    where
+        T: Debug,
+    {
+        self.data.split_at(N / 2)
+    }
+    
+    // 轉換到不同大小的陣列
+    fn resize&lt;const M: usize&gt;(&amp;self) -&gt; Option&lt;Array&lt;T, M&gt;&gt;
+    where
+        T: Clone + Default,
+    {
+        if M &gt; N {
+            return None; // 不能擴大
+        }
+        
+        let mut new_data = [T::default(); M];
+        for i in 0..M {
+            for j in 0..P {
+                let mut sum = T::default();
+                for k in 0..N {
+                    sum = sum + self.data[i][k] * other.data[k][j];
+                }
+                result.data[i][j] = sum;
+            }
+        }
+        result
+    }
+}
+
+// 編譯時大小檢查
+fn safe_array_access&lt;T, const N: usize&gt;(arr: &amp;Array&lt;T, N&gt;, index: usize) -&gt; Option&lt;&amp;T&gt;
+where
+    T: Debug,
+{
+    if index &lt; N {
+        arr.get(index)
+    } else {
+        println!("Index {} is out of bounds for array of size {}", index, N);
+        None
+    }
+}
+
+// 泛型常數與 trait
+trait FixedSizeCollection&lt;T, const N: usize&gt; {
+    fn as_array(&amp;self) -&gt; &amp;[T; N];
+    fn size() -&gt; usize {
+        N
+    }
+}
+
+impl&lt;T, const N: usize&gt; FixedSizeCollection&lt;T, N&gt; for Array&lt;T, N&gt; {
+    fn as_array(&amp;self) -&gt; &amp;[T; N] {
+        &amp;self.data
+    }
+}
+
+// 常數表達式
+const fn factorial(n: usize) -&gt; usize {
+    if n &lt;= 1 {
+        1
+    } else {
+        n * factorial(n - 1)
+    }
+}
+
+struct FactorialArray&lt;T, const N: usize&gt; {
+    data: [T; factorial(N)],
+}
+
+impl&lt;T: Default + Copy, const N: usize&gt; FactorialArray&lt;T, N&gt; {
+    fn new() -&gt; Self {
+        FactorialArray {
+            data: [T::default(); factorial(N)],
+        }
+    }
+    
+    fn factorial_size() -&gt; usize {
+        factorial(N)
+    }
+}
+
+fn main() {
+    let arr1 = Array::new([1, 2, 3, 4, 5]);
+    let arr2 = Array::new(["a", "b", "c"]);
+    
+    println!("Length: {}", arr1.len());
+    println!("First element: {:?}", arr1.get(0));
+    
+    let (first_half, second_half) = arr1.split_half();
+    println!("First half: {:?}", first_half);
+    println!("Second half: {:?}", second_half);
+    
+    // 調整大小
+    if let Some(smaller) = arr1.resize::&lt;3&gt;() {
+        println!("Resized array: {:?}", smaller.data);
+    }
+    
+    process_array([1, 2, 3]);
+    process_array(["hello", "world"]);
+    
+    // 矩陣運算
+    let mut matrix1 = Matrix::&lt;i32, 2, 3&gt;::new();
+    matrix1.set(0, 0, 1).unwrap();
+    matrix1.set(0, 1, 2).unwrap();
+    matrix1.set(0, 2, 3).unwrap();
+    matrix1.set(1, 0, 4).unwrap();
+    matrix1.set(1, 1, 5).unwrap();
+    matrix1.set(1, 2, 6).unwrap();
+    
+    println!("Matrix 1: {:?}", matrix1);
+    
+    let transposed = matrix1.transpose();
+    println!("Transposed: {:?}", transposed);
+    
+    // 矩陣乘法
+    let matrix2 = Matrix::from_array([[1, 2], [3, 4], [5, 6]]);
+    let product = matrix1.multiply(&amp;matrix2);
+    println!("Product: {:?}", product);
+    
+    // 階乘陣列
+    let fact_arr = FactorialArray::&lt;i32, 3&gt;::new();
+    println!("Factorial array size: {}", fact_arr.factorial_size()); // 6
+    
+    // 安全存取
+    safe_array_access(&amp;arr1, 2);
+    safe_array_access(&amp;arr1, 10);
+}</code></pre></pre>
+<h3 id="102-類型級別運算"><a class="header" href="#102-類型級別運算">10.2 類型級別運算</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::marker::PhantomData;
+
+// 類型級別的數字
+struct Zero;
+struct Succ&lt;N&gt;(PhantomData&lt;N&gt;);
+
+type One = Succ&lt;Zero&gt;;
+type Two = Succ&lt;One&gt;;
+type Three = Succ&lt;Two&gt;;
+type Four = Succ&lt;Three&gt;;
+type Five = Succ&lt;Four&gt;;
+
+// 編譯時長度計算
+trait Length {
+    const LENGTH: usize;
+}
+
+impl Length for Zero {
+    const LENGTH: usize = 0;
+}
+
+impl&lt;N: Length&gt; Length for Succ&lt;N&gt; {
+    const LENGTH: usize = N::LENGTH + 1;
+}
+
+// 編譯時保證的向量長度
+struct Vec&lt;T, N&gt; {
+    data: std::vec::Vec&lt;T&gt;,
+    _phantom: PhantomData&lt;N&gt;,
+}
+
+impl&lt;T, N: Length&gt; Vec&lt;T, N&gt; {
+    fn new() -&gt; Self {
+        Vec {
+            data: std::vec::Vec::with_capacity(N::LENGTH),
+            _phantom: PhantomData,
+        }
+    }
+    
+    fn push(mut self, item: T) -&gt; Vec&lt;T, Succ&lt;N&gt;&gt; {
+        self.data.push(item);
+        Vec {
+            data: self.data,
+            _phantom: PhantomData,
+        }
+    }
+    
+    fn len(&amp;self) -&gt; usize {
+        N::LENGTH
+    }
+    
+    fn get(&amp;self, index: usize) -&gt; Option&lt;&amp;T&gt; {
+        self.data.get(index)
+    }
+}
+
+// 只有非空向量才能 pop
+impl&lt;T, N&gt; Vec&lt;T, Succ&lt;N&gt;&gt; {
+    fn pop(mut self) -&gt; (T, Vec&lt;T, N&gt;) {
+        let item = self.data.pop().expect("Vector should not be empty");
+        (item, Vec {
+            data: self.data,
+            _phantom: PhantomData,
+        })
+    }
+    
+    fn head(&amp;self) -&gt; &amp;T {
+        &amp;self.data[0]
+    }
+}
+
+// 類型級別的布林值
+struct True;
+struct False;
+
+trait Bool {
+    const VALUE: bool;
+}
+
+impl Bool for True {
+    const VALUE: bool = true;
+}
+
+impl Bool for False {
+    const VALUE: bool = false;
+}
+
+// 條件類型
+trait If&lt;Condition&gt; {
+    type Output;
+}
+
+struct IfImpl&lt;Then, Else&gt; {
+    _phantom: PhantomData&lt;(Then, Else)&gt;,
+}
+
+impl&lt;Then, Else&gt; If&lt;True&gt; for IfImpl&lt;Then, Else&gt; {
+    type Output = Then;
+}
+
+impl&lt;Then, Else&gt; If&lt;False&gt; for IfImpl&lt;Then, Else&gt; {
+    type Output = Else;
+}
+
+// 類型級別比較
+trait Equal&lt;Other&gt; {
+    type Output: Bool;
+}
+
+impl Equal&lt;Zero&gt; for Zero {
+    type Output = True;
+}
+
+impl&lt;N&gt; Equal&lt;Zero&gt; for Succ&lt;N&gt; {
+    type Output = False;
+}
+
+impl&lt;N&gt; Equal&lt;Succ&lt;N&gt;&gt; for Zero {
+    type Output = False;
+}
+
+impl&lt;N, M&gt; Equal&lt;Succ&lt;M&gt;&gt; for Succ&lt;N&gt;
+where
+    N: Equal&lt;M&gt;,
+{
+    type Output = N::Output;
+}
+
+// 類型級別加法
+trait Add&lt;Other&gt; {
+    type Output;
+}
+
+impl&lt;N&gt; Add&lt;N&gt; for Zero {
+    type Output = N;
+}
+
+impl&lt;N, M&gt; Add&lt;M&gt; for Succ&lt;N&gt;
+where
+    N: Add&lt;M&gt;,
+{
+    type Output = Succ&lt;N::Output&gt;;
+}
+
+// 使用類型級別運算的向量連接
+impl&lt;T, N, M&gt; Vec&lt;T, N&gt;
+where
+    N: Add&lt;M&gt;,
+{
+    fn concat&lt;L: Length&gt;(self, other: Vec&lt;T, M&gt;) -&gt; Vec&lt;T, N::Output&gt;
+    where
+        M: Length,
+        N::Output: Length,
+    {
+        let mut combined_data = self.data;
+        combined_data.extend(other.data);
+        Vec {
+            data: combined_data,
+            _phantom: PhantomData,
+        }
+    }
+}
+
+// 證明類型
+struct Proof&lt;Statement&gt;(PhantomData&lt;Statement&gt;);
+
+impl&lt;Statement&gt; Proof&lt;Statement&gt; {
+    fn new() -&gt; Self {
+        Proof(PhantomData)
+    }
+}
+
+// 只有當兩個類型相等時才能創建證明
+impl&lt;T&gt; Proof&lt;(T, T)&gt;
+where
+    T: Equal&lt;T, Output = True&gt;,
+{
+    fn reflexivity() -&gt; Self {
+        Proof(PhantomData)
+    }
+}
+
+fn main() {
+    // 類型安全的向量操作
+    let vec = Vec::&lt;i32, Zero&gt;::new()
+        .push(1)
+        .push(2)
+        .push(3);
+    
+    println!("Vector length: {}", vec.len()); // 3
+    
+    let (head, tail) = vec.pop();
+    println!("Head: {}, tail length: {}", head, tail.len()); // 3, 2
+    
+    let (second, tail2) = tail.pop();
+    println!("Second: {}, tail2 length: {}", second, tail2.len()); // 2, 1
+    
+    // 向量連接
+    let vec1 = Vec::&lt;&amp;str, Zero&gt;::new().push("hello");
+    let vec2 = Vec::&lt;&amp;str, Zero&gt;::new().push("world").push("!");
+    
+    let combined = vec1.concat(vec2);
+    println!("Combined length: {}", combined.len()); // 3
+    
+    // 類型級別計算驗證
+    assert_eq!(Zero::LENGTH, 0);
+    assert_eq!(One::LENGTH, 1);
+    assert_eq!(Two::LENGTH, 2);
+    assert_eq!(Three::LENGTH, 3);
+    
+    // 編譯時證明
+    let _proof = Proof::&lt;(Zero, Zero)&gt;::reflexivity();
+    // let _invalid = Proof::&lt;(Zero, One)&gt;::reflexivity(); // 編譯錯誤
+}</code></pre></pre>
+<h2 id="11-進階應用"><a class="header" href="#11-進階應用">11. 進階應用</a></h2>
+<h3 id="111-泛型建造者模式與類型狀態機"><a class="header" href="#111-泛型建造者模式與類型狀態機">11.1 泛型建造者模式與類型狀態機</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::marker::PhantomData;
+
+// 狀態標記
+struct Uninitialized;
+struct HasName;
+struct HasAge;
+struct Complete;
+
+// 建造者結構
+struct PersonBuilder&lt;State = Uninitialized&gt; {
+    name: Option&lt;String&gt;,
+    age: Option&lt;u32&gt;,
+    email: Option&lt;String&gt;,
+    _state: PhantomData&lt;State&gt;,
+}
+
+impl PersonBuilder&lt;Uninitialized&gt; {
+    fn new() -&gt; Self {
+        PersonBuilder {
+            name: None,
+            age: None,
+            email: None,
+            _state: PhantomData,
+        }
+    }
+}
+
+impl&lt;State&gt; PersonBuilder&lt;State&gt; {
+    fn set_email(mut self, email: String) -&gt; Self {
+        self.email = Some(email);
+        self
+    }
+}
+
+impl PersonBuilder&lt;Uninitialized&gt; {
+    fn set_name(mut self, name: String) -&gt; PersonBuilder&lt;HasName&gt; {
+        self.name = Some(name);
+        PersonBuilder {
+            name: self.name,
+            age: self.age,
+            email: self.email,
+            _state: PhantomData,
+        }
+    }
+}
+
+impl PersonBuilder&lt;HasName&gt; {
+    fn set_age(mut self, age: u32) -&gt; PersonBuilder&lt;Complete&gt; {
+        self.age = Some(age);
+        PersonBuilder {
+            name: self.name,
+            age: self.age,
+            email: self.email,
+            _state: PhantomData,
+        }
+    }
+}
+
+#[derive(Debug)]
+struct Person {
+    name: String,
+    age: u32,
+    email: Option&lt;String&gt;,
+}
+
+impl PersonBuilder&lt;Complete&gt; {
+    fn build(self) -&gt; Person {
+        Person {
+            name: self.name.unwrap(),
+            age: self.age.unwrap(),
+            email: self.email,
+        }
+    }
+    
+    fn reset(self) -&gt; PersonBuilder&lt;Uninitialized&gt; {
+        PersonBuilder::new()
+    }
+}
+
+// 更複雜的狀態機：文檔處理器
+#[derive(Debug)]
+struct Draft;
+#[derive(Debug)]
+struct Review;
+#[derive(Debug)]
+struct Published;
+
+struct Document&lt;State&gt; {
+    title: String,
+    content: String,
+    author: String,
+    _state: PhantomData&lt;State&gt;,
+}
+
+impl Document&lt;Draft&gt; {
+    fn new(title: String, author: String) -&gt; Self {
+        Document {
+            title,
+            content: String::new(),
+            author,
+            _state: PhantomData,
+        }
+    }
+    
+    fn write_content(mut self, content: String) -&gt; Self {
+        self.content = content;
+        self
+    }
+    
+    fn submit_for_review(self) -&gt; Document&lt;Review&gt; {
+        println!("Document '{}' submitted for review", self.title);
+        Document {
+            title: self.title,
+            content: self.content,
+            author: self.author,
+            _state: PhantomData,
+        }
+    }
+}
+
+impl Document&lt;Review&gt; {
+    fn approve(self) -&gt; Document&lt;Published&gt; {
+        println!("Document '{}' approved for publication", self.title);
+        Document {
+            title: self.title,
+            content: self.content,
+            author: self.author,
+            _state: PhantomData,
+        }
+    }
+    
+    fn reject(self) -&gt; Document&lt;Draft&gt; {
+        println!("Document '{}' rejected, back to draft", self.title);
+        Document {
+            title: self.title,
+            content: self.content,
+            author: self.author,
+            _state: PhantomData,
+        }
+    }
+    
+    fn request_changes(mut self, feedback: String) -&gt; Document&lt;Draft&gt; {
+        println!("Changes requested for '{}': {}", self.title, feedback);
+        self.content.push_str(&amp;format!("\n[FEEDBACK: {}]", feedback));
+        Document {
+            title: self.title,
+            content: self.content,
+            author: self.author,
+            _state: PhantomData,
+        }
+    }
+}
+
+impl Document&lt;Published&gt; {
+    fn get_published_content(&amp;self) -&gt; &amp;str {
+        &amp;self.content
+    }
+    
+    fn retract(self) -&gt; Document&lt;Draft&gt; {
+        println!("Document '{}' retracted", self.title);
+        Document {
+            title: self.title,
+            content: self.content,
+            author: self.author,
+            _state: PhantomData,
+        }
+    }
+}
+
+// 泛型狀態機 trait
+trait StateMachine {
+    type State;
+    type Input;
+    type Output;
+    
+    fn transition(self, input: Self::Input) -&gt; Self::Output;
+}
+
+fn main() {
+    // 建造者模式範例
+    let person = PersonBuilder::new()
+        .set_name("Alice".to_string())
+        .set_age(30)
+        .set_email("alice@example.com".to_string())
+        .build();
+    
+    println!("Built person: {:?}", person);
+    
+    // 這會編譯錯誤，因為沒有設置必要的字段
+    // let invalid = PersonBuilder::new().build();
+    
+    // 文檔狀態機範例
+    let doc = Document::new(
+        "Rust Generics Guide".to_string(),
+        "Rust Developer".to_string(),
+    )
+    .write_content("This is a comprehensive guide to Rust generics...".to_string())
+    .submit_for_review()
+    .request_changes("Please add more examples".to_string())
+    .write_content("Updated content with more examples...".to_string())
+    .submit_for_review()
+    .approve();
+    
+    println!("Published content: {}", doc.get_published_content());
+}</code></pre></pre>
+<h3 id="112-gadts-generalized-algebraic-data-types-模擬"><a class="header" href="#112-gadts-generalized-algebraic-data-types-模擬">11.2 GADTs (Generalized Algebraic Data Types) 模擬</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::marker::PhantomData;
+
+// 類型級別的標記
+struct IntType;
+struct StringType;
+struct BoolType;
+struct FloatType;
+
+// 泛型表達式類型
+enum Expr&lt;T&gt; {
+    IntLit(i32, PhantomData&lt;T&gt;),
+    StringLit(String, PhantomData&lt;T&gt;),
+    BoolLit(bool, PhantomData&lt;T&gt;),
+    FloatLit(f64, PhantomData&lt;T&gt;),
+    Add(Box&lt;Expr&lt;IntType&gt;&gt;, Box&lt;Expr&lt;IntType&gt;&gt;, PhantomData&lt;T&gt;),
+    Concat(Box&lt;Expr&lt;StringType&gt;&gt;, Box&lt;Expr&lt;StringType&gt;&gt;, PhantomData&lt;T&gt;),
+    Equal(Box&lt;dyn EqualExpr&gt;, Box&lt;dyn EqualExpr&gt;, PhantomData&lt;T&gt;),
+    If(Box&lt;Expr&lt;BoolType&gt;&gt;, Box&lt;dyn AnyExpr&gt;, Box&lt;dyn AnyExpr&gt;, PhantomData&lt;T&gt;),
+}
+
+// 支持相等比較的表達式
+trait EqualExpr {
+    fn eval_equal(&amp;self) -&gt; Box&lt;dyn std::any::Any&gt;;
+    fn type_name(&amp;self) -&gt; &amp;'static str;
+}
+
+// 任意類型的表達式
+trait AnyExpr {
+    fn eval_any(&amp;self) -&gt; Box&lt;dyn std::any::Any&gt;;
+    fn type_name(&amp;self) -&gt; &amp;'static str;
+}
+
+impl Expr&lt;IntType&gt; {
+    fn int_lit(value: i32) -&gt; Self {
+        Expr::IntLit(value, PhantomData)
+    }
+    
+    fn add(left: Expr&lt;IntType&gt;, right: Expr&lt;IntType&gt;) -&gt; Self {
+        Expr::Add(Box::new(left), Box::new(right), PhantomData)
+    }
+}
+
+impl Expr&lt;StringType&gt; {
+    fn string_lit(value: String) -&gt; Self {
+        Expr::StringLit(value, PhantomData)
+    }
+    
+    fn concat(left: Expr&lt;StringType&gt;, right: Expr&lt;StringType&gt;) -&gt; Self {
+        Expr::Concat(Box::new(left), Box::new(right), PhantomData)
+    }
+}
+
+impl Expr&lt;BoolType&gt; {
+    fn bool_lit(value: bool) -&gt; Self {
+        Expr::BoolLit(value, PhantomData)
+    }
+    
+    fn equal&lt;T: 'static&gt;(left: Expr&lt;T&gt;, right: Expr&lt;T&gt;) -&gt; Self 
+    where
+        Expr&lt;T&gt;: EqualExpr,
+    {
+        Expr::Equal(Box::new(left), Box::new(right), PhantomData)
+    }
+}
+
+impl Expr&lt;FloatType&gt; {
+    fn float_lit(value: f64) -&gt; Self {
+        Expr::FloatLit(value, PhantomData)
+    }
+}
+
+// 求值 trait
+trait Eval&lt;T&gt; {
+    type Output;
+    fn eval(self) -&gt; Self::Output;
+}
+
+impl Eval&lt;IntType&gt; for Expr&lt;IntType&gt; {
+    type Output = i32;
+    
+    fn eval(self) -&gt; i32 {
+        match self {
+            Expr::IntLit(n, _) =&gt; n,
+            Expr::Add(left, right, _) =&gt; left.eval() + right.eval(),
+            _ =&gt; unreachable!(),
+        }
+    }
+}
+
+impl Eval&lt;StringType&gt; for Expr&lt;StringType&gt; {
+    type Output = String;
+    
+    fn eval(self) -&gt; String {
+        match self {
+            Expr::StringLit(s, _) =&gt; s,
+            Expr::Concat(left, right, _) =&gt; {
+                format!("{}{}", left.eval(), right.eval())
+            },
+            _ =&gt; unreachable!(),
+        }
+    }
+}
+
+impl Eval&lt;BoolType&gt; for Expr&lt;BoolType&gt; {
+    type Output = bool;
+    
+    fn eval(self) -&gt; bool {
+        match self {
+            Expr::BoolLit(b, _) =&gt; b,
+            Expr::Equal(left, right, _) =&gt; {
+                let left_val = left.eval_equal();
+                let right_val = right.eval_equal();
+                // 簡化的相等比較
+                format!("{:?}", left_val) == format!("{:?}", right_val)
+            },
+            _ =&gt; unreachable!(),
+        }
+    }
+}
+
+impl Eval&lt;FloatType&gt; for Expr&lt;FloatType&gt; {
+    type Output = f64;
+    
+    fn eval(self) -&gt; f64 {
+        match self {
+            Expr::FloatLit(f, _) =&gt; f,
+            _ =&gt; unreachable!(),
+        }
+    }
+}
+
+// 實現 trait 以支持異構比較
+impl EqualExpr for Expr&lt;IntType&gt; {
+    fn eval_equal(&amp;self) -&gt; Box&lt;dyn std::any::Any&gt; {
+        Box::new(self.clone().eval())
+    }
+    
+    fn type_name(&amp;self) -&gt; &amp;'static str {
+        "IntType"
+    }
+}
+
+impl Clone for Expr&lt;IntType&gt; {
+    fn clone(&amp;self) -&gt; Self {
+        match self {
+            Expr::IntLit(n, _) =&gt; Expr::IntLit(*n, PhantomData),
+            Expr::Add(left, right, _) =&gt; {
+                Expr::Add(left.clone(), right.clone(), PhantomData)
+            },
+            _ =&gt; unreachable!(),
+        }
+    }
+}
+
+// 編譯時類型檢查的 DSL
+macro_rules! expr {
+    ($value:literal) =&gt; {
+        {
+            match $value {
+                val if val.is_integer() =&gt; Expr::int_lit(val as i32),
+                val if val.is_float() =&gt; Expr::float_lit(val as f64),
+                val if val.is_string() =&gt; Expr::string_lit(val.to_string()),
+                val if val.is_bool() =&gt; Expr::bool_lit(val),
+            }
+        }
+    };
+}
+
+// 類型安全的表達式組合子
+struct ExprBuilder;
+
+impl ExprBuilder {
+    fn int(value: i32) -&gt; Expr&lt;IntType&gt; {
+        Expr::int_lit(value)
+    }
+    
+    fn string(value: &amp;str) -&gt; Expr&lt;StringType&gt; {
+        Expr::string_lit(value.to_string())
+    }
+    
+    fn bool(value: bool) -&gt; Expr&lt;BoolType&gt; {
+        Expr::bool_lit(value)
+    }
+    
+    fn add(left: Expr&lt;IntType&gt;, right: Expr&lt;IntType&gt;) -&gt; Expr&lt;IntType&gt; {
+        Expr::add(left, right)
+    }
+    
+    fn concat(left: Expr&lt;StringType&gt;, right: Expr&lt;StringType&gt;) -&gt; Expr&lt;StringType&gt; {
+        Expr::concat(left, right)
+    }
+}
+
+fn main() {
+    // 類型安全的表達式構建和求值
+    let int_expr = ExprBuilder::add(
+        ExprBuilder::int(10),
+        ExprBuilder::int(20)
+    );
+    
+    let string_expr = ExprBuilder::concat(
+        ExprBuilder::string("Hello, "),
+        ExprBuilder::string("World!")
+    );
+    
+    println!("Int result: {}", int_expr.eval());
+    println!("String result: {}", string_expr.eval());
+    
+    // 這會編譯錯誤，因為類型不匹配
+    // let invalid = ExprBuilder::add(
+    //     ExprBuilder::int(1), 
+    //     ExprBuilder::string("hello")
+    // );
+    
+    let bool_expr = ExprBuilder::bool(true);
+    println!("Bool result: {}", bool_expr.eval());
+}</code></pre></pre>
+<h3 id="113-類型級別編程與異構集合"><a class="header" href="#113-類型級別編程與異構集合">11.3 類型級別編程與異構集合</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::any::{Any, TypeId};
+use std::collections::HashMap;
+use std::marker::PhantomData;
+
+// 類型安全的異構映射
+struct TypeMap {
+    data: HashMap&lt;TypeId, Box&lt;dyn Any&gt;&gt;,
+}
+
+impl TypeMap {
+    fn new() -&gt; Self {
+        TypeMap {
+            data: HashMap::new(),
+        }
+    }
+    
+    fn insert&lt;T: 'static&gt;(&amp;mut self, value: T) -&gt; Option&lt;T&gt; {
+        let type_id = TypeId::of::&lt;T&gt;();
+        self.data
+            .insert(type_id, Box::new(value))
+            .and_then(|old| old.downcast().ok().map(|boxed| *boxed))
+    }
+    
+    fn get&lt;T: 'static&gt;(&amp;self) -&gt; Option&lt;&amp;T&gt; {
+        let type_id = TypeId::of::&lt;T&gt;();
+        self.data
+            .get(&amp;type_id)
+            .and_then(|boxed| boxed.downcast_ref::&lt;T&gt;())
+    }
+    
+    fn get_mut&lt;T: 'static&gt;(&amp;mut self) -&gt; Option&lt;&amp;mut T&gt; {
+        let type_id = TypeId::of::&lt;T&gt;();
+        self.data
+            .get_mut(&amp;type_id)
+            .and_then(|boxed| boxed.downcast_mut::&lt;T&gt;())
+    }
+    
+    fn remove&lt;T: 'static&gt;(&amp;mut self) -&gt; Option&lt;T&gt; {
+        let type_id = TypeId::of::&lt;T&gt;();
+        self.data
+            .remove(&amp;type_id)
+            .and_then(|boxed| boxed.downcast().ok().map(|boxed| *boxed))
+    }
+    
+    fn contains&lt;T: 'static&gt;(&amp;self) -&gt; bool {
+        self.data.contains_key(&amp;TypeId::of::&lt;T&gt;())
+    }
+}
+
+// 異構列表 (HList)
+struct HNil;
+
+struct HCons&lt;Head, Tail&gt; {
+    head: Head,
+    tail: Tail,
+}
+
+// HList 構建宏
+macro_rules! hlist {
+    () =&gt; { HNil };
+    ($head:expr) =&gt; { HCons { head: $head, tail: HNil } };
+    ($head:expr, $($tail:expr),+) =&gt; {
+        HCons { head: $head, tail: hlist!($($tail),+) }
+    };
+}
+
+// HList 操作 trait
+trait HListOps {
+    type Length;
+    
+    fn length(&amp;self) -&gt; usize;
+}
+
+impl HListOps for HNil {
+    type Length = Zero;
+    
+    fn length(&amp;self) -&gt; usize {
+        0
+    }
+}
+
+impl&lt;Head, Tail: HListOps&gt; HListOps for HCons&lt;Head, Tail&gt; {
+    type Length = Succ&lt;Tail::Length&gt;;
+    
+    fn length(&amp;self) -&gt; usize {
+        1 + self.tail.length()
+    }
+}
+
+// HList 索引訪問
+trait Get&lt;Index&gt; {
+    type Output;
+    
+    fn get(&amp;self) -&gt; &amp;Self::Output;
+}
+
+// 獲取第一個元素
+impl&lt;Head, Tail&gt; Get&lt;Zero&gt; for HCons&lt;Head, Tail&gt; {
+    type Output = Head;
+    
+    fn get(&amp;self) -&gt; &amp;Self::Output {
+        &amp;self.head
+    }
+}
+
+// 遞歸獲取後續元素
+impl&lt;Head, Tail, Index&gt; Get&lt;Succ&lt;Index&gt;&gt; for HCons&lt;Head, Tail&gt;
+where
+    Tail: Get&lt;Index&gt;,
+{
+    type Output = Tail::Output;
+    
+    fn get(&amp;self) -&gt; &amp;Self::Output {
+        self.tail.get()
+    }
+}
+
+// 異構映射操作
+trait HMap&lt;F&gt; {
+    type Output;
+    
+    fn map(self, f: F) -&gt; Self::Output;
+}
+
+impl&lt;F&gt; HMap&lt;F&gt; for HNil {
+    type Output = HNil;
+    
+    fn map(self, _f: F) -&gt; Self::Output {
+        HNil
+    }
+}
+
+impl&lt;Head, Tail, F&gt; HMap&lt;F&gt; for HCons&lt;Head, Tail&gt;
+where
+    F: Fn(Head) -&gt; Head + Clone,
+    Tail: HMap&lt;F&gt;,
+{
+    type Output = HCons&lt;Head, Tail::Output&gt;;
+    
+    fn map(self, f: F) -&gt; Self::Output {
+        HCons {
+            head: f(self.head),
+            tail: self.tail.map(f.clone()),
+        }
+    }
+}
+
+// 動態分發的異構容器
+trait Component: Any + std::fmt::Debug {
+    fn as_any(&amp;self) -&gt; &amp;dyn Any;
+    fn as_any_mut(&amp;mut self) -&gt; &amp;mut dyn Any;
+}
+
+impl&lt;T: Any + std::fmt::Debug&gt; Component for T {
+    fn as_any(&amp;self) -&gt; &amp;dyn Any {
+        self
+    }
+    
+    fn as_any_mut(&amp;mut self) -&gt; &amp;mut dyn Any {
+        self
+    }
+}
+
+struct Entity {
+    components: HashMap&lt;TypeId, Box&lt;dyn Component&gt;&gt;,
+}
+
+impl Entity {
+    fn new() -&gt; Self {
+        Entity {
+            components: HashMap::new(),
+        }
+    }
+    
+    fn add_component&lt;T: Component + 'static&gt;(&amp;mut self, component: T) {
+        self.components.insert(TypeId::of::&lt;T&gt;(), Box::new(component));
+    }
+    
+    fn get_component&lt;T: Component + 'static&gt;(&amp;self) -&gt; Option&lt;&amp;T&gt; {
+        self.components
+            .get(&amp;TypeId::of::&lt;T&gt;())
+            .and_then(|component| component.as_any().downcast_ref::&lt;T&gt;())
+    }
+    
+    fn get_component_mut&lt;T: Component + 'static&gt;(&amp;mut self) -&gt; Option&lt;&amp;mut T&gt; {
+        self.components
+            .get_mut(&amp;TypeId::of::&lt;T&gt;())
+            .and_then(|component| component.as_any_mut().downcast_mut::&lt;T&gt;())
+    }
+    
+    fn has_component&lt;T: Component + 'static&gt;(&amp;self) -&gt; bool {
+        self.components.contains_key(&amp;TypeId::of::&lt;T&gt;())
+    }
+}
+
+// 示例組件
+#[derive(Debug)]
+struct Position { x: f32, y: f32 }
+
+#[derive(Debug)]
+struct Velocity { dx: f32, dy: f32 }
+
+#[derive(Debug)]
+struct Health { current: u32, max: u32 }
+
+// 類型級別的數字（重用之前的定義）
+struct Zero;
+struct Succ&lt;N&gt;(PhantomData&lt;N&gt;);
+
+fn main() {
+    // TypeMap 範例
+    let mut type_map = TypeMap::new();
+    
+    type_map.insert(42i32);
+    type_map.insert("hello".to_string());
+    type_map.insert(true);
+    type_map.insert(3.14f64);
+    
+    println!("i32: {:?}", type_map.get::&lt;i32&gt;());new_data[i] = self.data[i].clone();
+        }
+        Some(Array::new(new_data))
+    }
+}
+
+// 泛型常數在函數中
+fn process_array&lt;T: Debug, const N: usize&gt;(arr: [T; N])
+where
+    T: std::fmt::Debug,
+{
+    println!("Array length: {}", N);
+    for (i, item) in arr.iter().enumerate() {
+        println!("[{}]: {:?}", i, item);
+    }
+}
+
+// 矩陣運算與常數泛型
+#[derive(Debug, Clone)]
+struct Matrix&lt;T, const ROWS: usize, const COLS: usize&gt; {
+    data: [[T; COLS]; ROWS],
+}
+
+impl&lt;T, const ROWS: usize, const COLS: usize&gt; Matrix&lt;T, ROWS, COLS&gt; 
+where
+    T: Copy + Default + Debug,
+{
+    fn new() -&gt; Self {
+        Matrix {
+            data: [[T::default(); COLS]; ROWS],
+        }
+    }
+    
+    fn from_array(data: [[T; COLS]; ROWS]) -&gt; Self {
+        Matrix { data }
+    }
+    
+    fn get(&amp;self, row: usize, col: usize) -&gt; Option&lt;&amp;T&gt; {
+        self.data.get(row)?.get(col)
+    }
+    
+    fn set(&amp;mut self, row: usize, col: usize, value: T) -&gt; Result&lt;(), &amp;'static str&gt; {
+        if row &gt;= ROWS || col &gt;= COLS {
+            return Err("Index out of bounds");
+        }
+        self.data[row][col] = value;
+        Ok(())
+    }
+    
+    // 矩陣轉置 (只對方陣有效)
+    fn transpose(&amp;self) -&gt; Matrix&lt;T, COLS, ROWS&gt; {
+        let mut result = Matrix::&lt;T, COLS, ROWS&gt;::new();
+        for i in 0..ROWS {
+            for j in 0..COLS {
+                result.data[j][i] = self.data[i][j];
+            }
+        }
+        result
+    }
+}
+
+// 矩陣乘法（編譯時檢查維度）
+impl&lt;T, const M: usize, const N: usize, const P: usize&gt; Matrix&lt;T, M, N&gt;
+where
+    T: Copy + Default + std::ops::Add&lt;Output = T&gt; + std::ops::Mul&lt;Output = T&gt;,
+{
+    fn multiply(&amp;self, other: &amp;Matrix&lt;T, N, P&gt;) -&gt; Matrix&lt;T, M, P&gt; {
+        let mut result = Matrix::&lt;T, M, P&gt;::new();
+        
+        for i in 0..M {
+            
+
+# 6. 生命週期泛型
+
+## 6.1 基本生命週期
+
+```rust
+// 生命週期參數
+fn longest&lt;'a&gt;(x: &amp;'a str, y: &amp;'a str) -&gt; &amp;'a str {
+    if x.len() &gt; y.len() {
+        x
+    } else {
+        y
+    }
+}
+
+// 結構體中的生命週期
+struct ImportantExcerpt&lt;'a&gt; {
+    part: &amp;'a str,
+}
+
+impl&lt;'a&gt; ImportantExcerpt&lt;'a&gt; {
+    fn level(&amp;self) -&gt; i32 {
+        3
+    }
+    
+    // 生命週期省略規則
+    fn announce_and_return_part(&amp;self, announcement: &amp;str) -&gt; &amp;str {
+        println!("Attention please: {}", announcement);
+        self.part
+    }
+}
+
+fn main() {
+    let string1 = String::from("abcd");
+    let string2 = "xyz";
+    
+    let result = longest(string1.as_str(), string2);
+    println!("The longest string is {}", result);
+    
+    let novel = String::from("Call me Ishmael. Some years ago...");
+    let first_sentence = novel.split('.').next().expect("Could not find a '.'");
+    let i = ImportantExcerpt {
+        part: first_sentence,
+    };
+}</code></pre></pre>
+<h3 id="62-靜態生命週期"><a class="header" href="#62-靜態生命週期">6.2 靜態生命週期</a></h3>
+<pre><pre class="playground"><code class="language-rust">// 'static 生命週期
+fn get_static_str() -&gt; &amp;'static str {
+    "This is a static string"
+}
+
+struct StaticHolder {
+    value: &amp;'static str,
+}
+
+// 泛型 + 生命週期 + trait 約束
+fn print_with_lifetime&lt;'a, T&gt;(item: &amp;'a T)
+where
+    T: std::fmt::Display + 'a,
+{
+    println!("{}", item);
+}
+
+fn main() {
+    let s = get_static_str();
+    let holder = StaticHolder { value: s };
+    
+    print_with_lifetime(&amp;42);
+    print_with_lifetime(&amp;"hello");
+}</code></pre></pre>
+<h2 id="7-關聯類型"><a class="header" href="#7-關聯類型">7. 關聯類型</a></h2>
+<h3 id="71-基本關聯類型"><a class="header" href="#71-基本關聯類型">7.1 基本關聯類型</a></h3>
+<pre><pre class="playground"><code class="language-rust">// 使用關聯類型的 trait
+trait Iterator {
+    type Item;
+    
+    fn next(&amp;mut self) -&gt; Option&lt;Self::Item&gt;;
+}
+
+trait Collect&lt;T&gt; {
+    fn collect(self) -&gt; T;
+}
+
+// 實現 Iterator trait
+struct Counter {
+    current: u32,
+    max: u32,
+}
+
+impl Counter {
+    fn new(max: u32) -&gt; Counter {
+        Counter { current: 0, max }
+    }
+}
+
+impl Iterator for Counter {
+    type Item = u32;
+    
+    fn next(&amp;mut self) -&gt; Option&lt;Self::Item&gt; {
+        if self.current &lt; self.max {
+            let current = self.current;
+            self.current += 1;
+            Some(current)
+        } else {
+            None
+        }
+    }
+}
+
+fn main() {
+    let mut counter = Counter::new(3);
+    
+    while let Some(value) = counter.next() {
+        println!("{}", value);
+    }
+}</code></pre></pre>
+<h3 id="72-關聯類型-vs-泛型"><a class="header" href="#72-關聯類型-vs-泛型">7.2 關聯類型 vs 泛型</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::fmt::Debug;
+
+// 使用泛型 - 允許多種實現
+trait GenericTrait&lt;T&gt; {
+    fn process(&amp;self, item: T) -&gt; T;
+}
+
+// 使用關聯類型 - 每個類型只有一種實現
+trait AssociatedTrait {
+    type Output;
+    
+    fn process(&amp;self) -&gt; Self::Output;
+}
+
+struct Processor;
+
+// 可以為同一個類型實現不同的泛型版本
+impl GenericTrait&lt;i32&gt; for Processor {
+    fn process(&amp;self, item: i32) -&gt; i32 {
+        item * 2
+    }
+}
+
+impl GenericTrait&lt;String&gt; for Processor {
+    fn process(&amp;self, item: String) -&gt; String {
+        format!("Processed: {}", item)
+    }
+}
+
+// 但關聯類型只能有一個實現
+impl AssociatedTrait for Processor {
+    type Output = String;
+    
+    fn process(&amp;self) -&gt; Self::Output {
+        "Default processing".to_string()
+    }
+}
+
+fn main() {
+    let processor = Processor;
+    
+    // 泛型版本需要明確指定類型
+    let result1: i32 = processor.process(10);
+    let result2: String = processor.process("hello".to_string());
+    
+    // 關聯類型版本類型自動推斷
+    let result3 = processor.process();
+    
+    println!("{}, {}, {}", result1, result2, result3);
+}</code></pre></pre>
+<h2 id="8-高階-trait-約束"><a class="header" href="#8-高階-trait-約束">8. 高階 Trait 約束</a></h2>
+<h3 id="81-higher-rank-trait-bounds-hrtb"><a class="header" href="#81-higher-rank-trait-bounds-hrtb">8.1 Higher-Rank Trait Bounds (HRTB)</a></h3>
+<pre><pre class="playground"><code class="language-rust">// for&lt;'a&gt; 語法 - 對所有生命週期都成立
+fn apply_to_all&lt;F&gt;(f: F)
+where
+    F: for&lt;'a&gt; Fn(&amp;'a str) -&gt; &amp;'a str,
+{
+    let s1 = "hello";
+    let s2 = "world";
+    
+    println!("{}", f(s1));
+    println!("{}", f(s2));
+}
+
+fn identity(s: &amp;str) -&gt; &amp;str {
+    s
+}
+
+fn main() {
+    apply_to_all(identity);
+    apply_to_all(|s| s);
+}</code></pre></pre>
+<h3 id="82-複雜的-trait-約束"><a class="header" href="#82-複雜的-trait-約束">8.2 複雜的 Trait 約束</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::fmt::{Debug, Display};
+use std::ops::Add;
+
+// 複雜的泛型約束
+fn complex_operation&lt;T, U, V&gt;(a: T, b: U) -&gt; V
+where
+    T: Display + Debug + Clone + Send + 'static,
+    U: Into&lt;V&gt; + Copy,
+    V: Add&lt;V, Output = V&gt; + Default + Debug,
+{
+    println!("Processing: {} (debug: {:?})", a, a);
+    let converted: V = b.into();
+    let default_val = V::default();
+    let result = converted + default_val;
+    println!("Result: {:?}", result);
+    result
+}
+
+// 使用 impl Trait 簡化
+fn simple_operation(value: impl Display + Debug + Clone) -&gt; impl Debug {
+    println!("Value: {} ({:?})", value, value);
+    format!("Processed: {}", value)
+}
+
+fn main() {
+    let result: i32 = complex_operation("hello".to_string(), 42u8);
+    let simple = simple_operation("world");
+    
+    println!("Complex result: {:?}", result);
+    println!("Simple result: {:?}", simple);
+}</code></pre></pre>
+<h2 id="9-泛型常數"><a class="header" href="#9-泛型常數">9. 泛型常數</a></h2>
+<h3 id="91-const-泛型-rust-151"><a class="header" href="#91-const-泛型-rust-151">9.1 Const 泛型 (Rust 1.51+)</a></h3>
+<pre><pre class="playground"><code class="language-rust">// 泛型常數參數
+struct Array&lt;T, const N: usize&gt; {
+    data: [T; N],
+}
+
+impl&lt;T, const N: usize&gt; Array&lt;T, N&gt; {
+    fn new(data: [T; N]) -&gt; Self {
+        Array { data }
+    }
+    
+    fn len(&amp;self) -&gt; usize {
+        N
+    }
+    
+    fn get(&amp;self, index: usize) -&gt; Option&lt;&amp;T&gt; {
+        self.data.get(index)
+    }
+}
+
+// 泛型常數在函數中
+fn process_array&lt;T: Debug, const N: usize&gt;(arr: [T; N])
+where
+    T: std::fmt::Debug,
+{
+    println!("Array length: {}", N);
+    for (i, item) in arr.iter().enumerate() {
+        println!("[{}]: {:?}", i, item);
+    }
+}
+
+fn main() {
+    let arr1 = Array::new([1, 2, 3, 4, 5]);
+    let arr2 = Array::new(["a", "b", "c"]);
+    
+    println!("Length: {}", arr1.len());
+    println!("First element: {:?}", arr1.get(0));
+    
+    process_array([1, 2, 3]);
+    process_array(["hello", "world"]);
+}</code></pre></pre>
+<h3 id="92-類型級別運算"><a class="header" href="#92-類型級別運算">9.2 類型級別運算</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::marker::PhantomData;
+
+// 類型級別的數字
+struct Zero;
+struct Succ&lt;N&gt;(PhantomData&lt;N&gt;);
+
+type One = Succ&lt;Zero&gt;;
+type Two = Succ&lt;One&gt;;
+type Three = Succ&lt;Two&gt;;
+
+// 編譯時保證的向量長度
+struct Vec&lt;T, N&gt; {
+    data: std::vec::Vec&lt;T&gt;,
+    _phantom: PhantomData&lt;N&gt;,
+}
+
+trait Length {
+    const LENGTH: usize;
+}
+
+impl Length for Zero {
+    const LENGTH: usize = 0;
+}
+
+impl&lt;N: Length&gt; Length for Succ&lt;N&gt; {
+    const LENGTH: usize = N::LENGTH + 1;
+}
+
+impl&lt;T, N: Length&gt; Vec&lt;T, N&gt; {
+    fn new() -&gt; Self {
+        Vec {
+            data: std::vec::Vec::with_capacity(N::LENGTH),
+            _phantom: PhantomData,
+        }
+    }
+    
+    fn push(mut self, item: T) -&gt; Vec&lt;T, Succ&lt;N&gt;&gt; {
+        self.data.push(item);
+        Vec {
+            data: self.data,
+            _phantom: PhantomData,
+        }
+    }
+    
+    fn len(&amp;self) -&gt; usize {
+        N::LENGTH
+    }
+}
+
+fn main() {
+    let vec = Vec::&lt;i32, Zero&gt;::new()
+        .push(1)
+        .push(2)
+        .push(3);
+    
+    println!("Vector length: {}", vec.len()); // 3
+}</code></pre></pre>
+<h2 id="10-進階應用"><a class="header" href="#10-進階應用">10. 進階應用</a></h2>
+<h3 id="101-泛型建造者模式"><a class="header" href="#101-泛型建造者模式">10.1 泛型建造者模式</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::marker::PhantomData;
+
+// 類型狀態機
+struct Uninitialized;
+struct Initialized;
+
+struct Builder&lt;T, State = Uninitialized&gt; {
+    value: Option&lt;T&gt;,
+    _state: PhantomData&lt;State&gt;,
+}
+
+impl&lt;T&gt; Builder&lt;T, Uninitialized&gt; {
+    fn new() -&gt; Self {
+        Builder {
+            value: None,
+            _state: PhantomData,
+        }
+    }
+    
+    fn set_value(self, value: T) -&gt; Builder&lt;T, Initialized&gt; {
+        Builder {
+            value: Some(value),
+            _state: PhantomData,
+        }
+    }
+}
+
+impl&lt;T&gt; Builder&lt;T, Initialized&gt; {
+    fn build(self) -&gt; T {
+        self.value.unwrap()
+    }
+    
+    fn reset(self) -&gt; Builder&lt;T, Uninitialized&gt; {
+        Builder {
+            value: None,
+            _state: PhantomData,
+        }
+    }
+}
+
+fn main() {
+    let value = Builder::new()
+        .set_value("Hello, World!")
+        .build();
+    
+    println!("{}", value);
+    
+    // 這會編譯錯誤，因為沒有設置值就嘗試建造
+    // let invalid = Builder::&lt;String&gt;::new().build();
+}</code></pre></pre>
+<h3 id="102-gadts-generalized-algebraic-data-types-模擬"><a class="header" href="#102-gadts-generalized-algebraic-data-types-模擬">10.2 GADTs (Generalized Algebraic Data Types) 模擬</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::marker::PhantomData;
+
+// 類型級別的標記
+struct IntType;
+struct StringType;
+struct BoolType;
+
+// 泛型表達式類型
+enum Expr&lt;T&gt; {
+    IntLit(i32, PhantomData&lt;T&gt;),
+    StringLit(String, PhantomData&lt;T&gt;),
+    BoolLit(bool, PhantomData&lt;T&gt;),
+    Add(Box&lt;Expr&lt;IntType&gt;&gt;, Box&lt;Expr&lt;IntType&gt;&gt;, PhantomData&lt;T&gt;),
+    Concat(Box&lt;Expr&lt;StringType&gt;&gt;, Box&lt;Expr&lt;StringType&gt;&gt;, PhantomData&lt;T&gt;),
+}
+
+impl Expr&lt;IntType&gt; {
+    fn int_lit(value: i32) -&gt; Self {
+        Expr::IntLit(value, PhantomData)
+    }
+    
+    fn add(left: Expr&lt;IntType&gt;, right: Expr&lt;IntType&gt;) -&gt; Self {
+        Expr::Add(Box::new(left), Box::new(right), PhantomData)
+    }
+}
+
+impl Expr&lt;StringType&gt; {
+    fn string_lit(value: String) -&gt; Self {
+        Expr::StringLit(value, PhantomData)
+    }
+    
+    fn concat(left: Expr&lt;StringType&gt;, right: Expr&lt;StringType&gt;) -&gt; Self {
+        Expr::Concat(Box::new(left), Box::new(right), PhantomData)
+    }
+}
+
+impl Expr&lt;BoolType&gt; {
+    fn bool_lit(value: bool) -&gt; Self {
+        Expr::BoolLit(value, PhantomData)
+    }
+}
+
+// 求值函數
+trait Eval&lt;T&gt; {
+    type Output;
+    fn eval(self) -&gt; Self::Output;
+}
+
+impl Eval&lt;IntType&gt; for Expr&lt;IntType&gt; {
+    type Output = i32;
+    
+    fn eval(self) -&gt; i32 {
+        match self {
+            Expr::IntLit(n, _) =&gt; n,
+            Expr::Add(left, right, _) =&gt; left.eval() + right.eval(),
+            _ =&gt; unreachable!(),
+        }
+    }
+}
+
+impl Eval&lt;StringType&gt; for Expr&lt;StringType&gt; {
+    type Output = String;
+    
+    fn eval(self) -&gt; String {
+        match self {
+            Expr::StringLit(s, _) =&gt; s,
+            Expr::Concat(left, right, _) =&gt; {
+                format!("{}{}", left.eval(), right.eval())
+            },
+            _ =&gt; unreachable!(),
+        }
+    }
+}
+
+fn main() {
+    // 類型安全的表達式
+    let int_expr = Expr::add(
+        Expr::int_lit(10),
+        Expr::int_lit(20)
+    );
+    
+    let string_expr = Expr::concat(
+        Expr::string_lit("Hello, ".to_string()),
+        Expr::string_lit("World!".to_string())
+    );
+    
+    println!("Int result: {}", int_expr.eval());
+    println!("String result: {}", string_expr.eval());
+    
+    // 這會編譯錯誤，因為類型不匹配
+    // let invalid = Expr::add(Expr::int_lit(1), Expr::string_lit("hello".to_string()));
+}</code></pre></pre>
+<h3 id="103-異構集合"><a class="header" href="#103-異構集合">10.3 異構集合</a></h3>
+<pre><pre class="playground"><code class="language-rust">use std::any::{Any, TypeId};
+use std::collections::HashMap;
+
+// 類型安全的異構映射
+struct TypeMap {
+    data: HashMap&lt;TypeId, Box&lt;dyn Any&gt;&gt;,
+}
+
+impl TypeMap {
+    fn new() -&gt; Self {
+        TypeMap {
+            data: HashMap::new(),
+        }
+    }
+    
+    fn insert&lt;T: 'static&gt;(&amp;mut self, value: T) {
+        self.data.insert(TypeId::of::&lt;T&gt;(), Box::new(value));
+    }
+    
+    fn get&lt;T: 'static&gt;(&amp;self) -&gt; Option&lt;&amp;T&gt; {
+        self.data.get(&amp;TypeId::of::&lt;T&gt;())
+            .and_then(|boxed| boxed.downcast_ref::&lt;T&gt;())
+    }
+    
+    fn get_mut&lt;T: 'static&gt;(&amp;mut self) -&gt; Option&lt;&amp;mut T&gt; {
+        self.data.get_mut(&amp;TypeId::of::&lt;T&gt;())
+            .and_then(|boxed| boxed.downcast_mut::&lt;T&gt;())
+    }
+}
+
+fn main() {
+    let mut type_map = TypeMap::new();
+    
+    // 插入不同類型的值
+    type_map.insert(42i32);
+    type_map.insert("hello".to_string());
+    type_map.insert(true);
+    type_map.insert(3.14f64);
+    
+    // 類型安全的檢索
+    if let Some(int_val) = type_map.get::&lt;i32&gt;() {
+        println!("i32: {}", int_val);
+    }
+    
+    if let Some(string_val) = type_map.get::&lt;String&gt;() {
+        println!("String: {}", string_val);
+    }
+    
+    // 修改值
+    if let Some(bool_val) = type_map.get_mut::&lt;bool&gt;() {
+        *bool_val = false;
+        println!("Modified bool: {}", bool_val);
+    }
+}</code></pre></pre>
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<p>Rust 的泛型系統非常強大，支援：</p>
+<ol>
+<li><strong>基礎泛型</strong>：類型參數化</li>
+<li><strong>Trait 約束</strong>：限制泛型類型的能力</li>
+<li><strong>生命週期</strong>：記憶體安全保證</li>
+<li><strong>關聯類型</strong>：更清晰的 API 設計</li>
+<li><strong>常數泛型</strong>：編譯時常數參數</li>
+<li><strong>高階約束</strong>：複雜的類型關係</li>
+<li><strong>類型狀態機</strong>：編譯時狀態驗證</li>
+<li><strong>零成本抽象</strong>：運行時無開銷</li>
+</ol>
+<p>這些特性讓 Rust 能夠在保證記憶體安全的同時，提供高度的抽象和表達能力。掌握泛型是成為 Rust 高手的關鍵技能之一。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../rust/rust_locks_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../rust/rust-keywords-guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../rust/rust_locks_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../rust/rust-keywords-guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

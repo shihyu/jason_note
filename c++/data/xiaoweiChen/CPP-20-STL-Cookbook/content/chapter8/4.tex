@@ -1,0 +1,265 @@
+
+C++17中引入的std::variant类可以保存不同的值，每次一个，其中每个值必须适合相同的分配内存空间。对于保存可供在单个上下文中使用的替代类型非常有用。
+
+\subsubsection{与union的区别}
+
+variant类是一个带标记的联合，其与原始union结构的不同之处在于，一次只能有一种类型起作用。
+
+原始union类型继承自C，是一种结构，在这种结构中，相同的数据可以作为不同的类型访问。例如:
+
+\begin{lstlisting}[style=styleCXX]
+union ipv4 {
+	struct {
+		uint8_t a; uint8_t b; uint8_t c; uint8_t d;
+	}quad;
+	uint32_t int32;
+} addr;
+addr.int32 = 0x2A05A8C0;
+cout << format("ip addr dotted quad: {}.{}.{}.{}\n",
+	addr.quad.a, addr.quad.b, addr.quad.c, addr.quad.d);
+cout << format("ip addr int32 (LE): {:08X}\n", addr.int32);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+ip addr dotted quad: 192.168.5.42
+ip addr int32 (LE): 2A05A8C0
+\end{tcblisting}
+
+这个例子中，union有两个成员，类型是struct和uint32\_t，其中struct有四个uint8\_t成员。这为我们提供了相同32位内存空间的两种不同视角，可以将相同的ipv4地址视为一个32位无符号整数(Little Endian或LE)或四个8位无符号整数。这提供了在系统级别的位多态。
+
+variant不是这样的。variant类是一个带标记的union，其中每个数据都带有其类型的标记。若将一个值存储为uint32\_t，只能以uint32\_t的形式访问。这使得variant类型安全，但并不是union的替代品。
+
+\subsubsection{How to do it…}
+
+示例中，将展示std::variant的使用方式。
+
+\begin{itemize}
+\item 
+我们将从一个简单的类开始，先来保存一个Animal:
+
+\begin{lstlisting}[style=styleCXX]
+class Animal {
+	string_view _name{};
+	string_view _sound{};
+	Animal();
+public:
+	Animal(string_view n, string_view s)
+	: _name{ n }, _sound{ s } {}
+	void speak() const {
+		cout << format("{} says {}\n", _name, _sound);
+	}
+	void sound(string_view s) {
+		_sound = s;
+	}
+}
+\end{lstlisting}
+
+动物的名字和动物发出的声音被传递到构造函数中。
+
+\item 
+不同的物种类继承自Animal:
+
+\begin{lstlisting}[style=styleCXX]
+class Cat : public Animal {
+	public:
+	Cat(string_view n) : Animal(n, "meow") {}
+};
+class Dog : public Animal {
+	public:
+	Dog(string_view n) : Animal(n, "arf!") {}
+};
+class Wookie : public Animal {
+	public:
+	Wookie(string_view n) : Animal(n, "grrraarrgghh!") {}
+};
+\end{lstlisting}
+
+这些类中的每一个都通过调用父构造函数，来为其物种类设置声音。
+
+\item 
+现在，可以在别名中定义变量类型:
+
+\begin{lstlisting}[style=styleCXX]
+using v_animal = std::variant<Cat, Dog, Wookie>;
+\end{lstlisting}
+
+这个变体可以容纳任何类型，猫，狗或伍基。
+
+\item 
+在main()中，使用v\_animal别名作为类型创建了一个列表:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	list<v_animal> pets{
+		Cat{"Hobbes"}, Dog{"Fido"}, Cat{"Max"},
+		Wookie{"Chewie"}
+	};
+	...
+\end{lstlisting}
+
+列表中的每个元素都是变量定义中包含的类型。
+
+\item 
+variant类提供了几种访问元素的不同方法，先来看看visit()。
+
+visit()调用带有当前包含在变体中的对象的函子。首先，定义一个接受宠物的函子:
+
+\begin{lstlisting}[style=styleCXX]
+struct animal_speaks {
+	void operator()(const Dog& d) const { d.speak(); }
+	void operator()(const Cat& c) const { c.speak(); }
+	void operator()(const Wookie& w) const {
+		w.speak(); }
+};
+\end{lstlisting}
+
+这是一个简单的函子类，每个Animal子类都有重载。使用visit()调用它，并使用列表的每个元素:
+
+\begin{lstlisting}[style=styleCXX]
+for (const v_animal& a : pets) {
+	visit(animal_speaks{}, a);
+}
+\end{lstlisting}
+
+会得到这样的输出:
+
+\begin{tcblisting}{commandshell={}}
+Hobbes says meow
+Fido says arf!
+Max says meow
+Chewie says grrraarrgghh!
+\end{tcblisting}
+
+\item 
+variant类还提供了一个index()方法:
+
+\begin{lstlisting}[style=styleCXX]
+for(const v_animal &a : pets) {
+	auto idx{ a.index() };
+	if(idx == 0) get<Cat>(a).speak();
+	if(idx == 1) get<Dog>(a).speak();
+	if(idx == 2) get<Wookie>(a).speak();
+}
+\end{lstlisting}
+
+可以得到这样的输出:
+
+\begin{tcblisting}{commandshell={}}
+Hobbes says meow
+Fido says arf!
+Max says meow
+Chewie says grrraarrgghh!
+\end{tcblisting}
+
+每个变量对象都根据模板参数中声明类型的顺序建立索引。av\_animal类型定义为std::variant<Cat, Dog, Wookie>，这些类型的索引顺序为0 - 2。
+
+\item 
+get\_if<T>()函数的作用是:根据类型测试给定元素:
+
+\begin{lstlisting}[style=styleCXX]
+for (const v_animal& a : pets) {
+	if(const auto c{ get_if<Cat>(&a) }; c) {
+		c->speak();
+	} else if(const auto d{ get_if<Dog>(&a) }; d) {
+		d->speak();
+	} else if(const auto w{ get_if<Wookie>(&a) }; w) {
+		w->speak();
+	}
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+Hobbes says meow
+Fido says arf!
+Max says meow
+Chewie says grrraarrgghh!
+\end{tcblisting}
+
+get\_if<T>()函数的作用是:若元素类型与T匹配，则返回一个指针;否则，返回nullptr。
+
+\item 
+最后，hold\_alternative <T>()函数返回true或false。可以使用this来测试一个类型是否对应一个元素，而不返回该元素:
+
+\begin{lstlisting}[style=styleCXX]
+size_t n_cats{}, n_dogs{}, n_wookies{};
+for(const v_animal& a : pets) {
+	if(holds_alternative<Cat>(a)) ++n_cats;
+	if(holds_alternative<Dog>(a)) ++n_dogs;
+	if(holds_alternative<Wookie>(a)) ++n_wookies;
+}
+cout << format("there are {} cat(s), "
+				"{} dog(s), "
+				"and {} wookie(s)\n",
+				n_cats, n_dogs, n_wookies);
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+there are 2 cat(s), 1 dog(s), and 1 wookie(s)
+\end{tcblisting}
+\end{itemize}
+
+\subsubsection{How it works…}
+
+std::variant类是一个单对象容器。variant<X, Y, Z>实例的类型，必须是X, Y或Z对象类型的其中之一，并可以同时保存当前对象的值和类型。
+
+index()方法告诉我们当前对象的类型:
+
+\begin{lstlisting}[style=styleCXX]
+if(v.index() == 0) // if variant is type X
+\end{lstlisting}
+
+holds\_alternative<T>()非成员函数如果T是当前对象的类型，则返回true:
+
+\begin{lstlisting}[style=styleCXX]
+if(holds_alternative<X>(v)) // if current variant obj is type X
+\end{lstlisting}
+
+可以使用get()非成员函数检索当前对象:
+
+\begin{lstlisting}[style=styleCXX]
+auto o{ get<X>(v) }; // current variant obj must be type X
+\end{lstlisting}
+
+可以将类型和检索测试与get\_if()非成员函数结合起来:
+
+\begin{lstlisting}[style=styleCXX]
+auto* p{ get_if<X>(v) }; // nullptr if current obj not type X
+\end{lstlisting}
+
+visit()非成员函数使用一个可调用对象，将当前变量对象作为其唯一形参:
+
+\begin{lstlisting}[style=styleCXX]
+visit(f, v); // calls f(v) with current variant obj
+\end{lstlisting}
+
+visit()函数是在不测试对象类型的情况下，检索对象的唯一方法。结合一个可以处理每种类型的函子，就非常灵活了:
+
+\begin{lstlisting}[style=styleCXX]
+struct animal_speaks {
+	void operator()(const Dog& d) const { d.speak(); }
+	void operator()(const Cat& c) const { c.speak(); }
+	void operator()(const Wookie& v) const { v.speak(); }
+};
+main() {
+	for (const v_animal& a : pets) {
+		visit(animal_speaks{}, a);
+	}
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+Hobbes says meow
+Fido says arf!
+Max says meow
+Chewie says grrraarrgghh!
+\end{tcblisting}
+
+

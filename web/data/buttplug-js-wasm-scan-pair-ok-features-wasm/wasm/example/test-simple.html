@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Simple WASM Test</title>
+</head>
+<body>
+    <h2>簡單 WASM 測試</h2>
+    <button id="test-btn">測試 WASM 載入</button>
+    <div id="output" style="border:1px solid #ccc; padding:10px; margin:10px 0; height:300px; overflow-y:scroll; font-family:monospace; font-size:12px"></div>
+
+    <script type="module">
+        function log(msg) {
+            const output = document.getElementById('output');
+            const p = document.createElement('p');
+            p.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            output.appendChild(p);
+            console.log(msg);
+        }
+
+        async function testWasm() {
+            try {
+                log("開始載入 WASM 模組...");
+                
+                // 直接載入 WASM 模組
+                const wasmModule = await import("@wasm");
+                log("WASM 模組載入成功");
+                log(`模組內容: ${Object.keys(wasmModule)}`);
+                
+                // 測試 ButtplugWasmClientConnector
+                if (wasmModule.ButtplugWasmClientConnector) {
+                    log("找到 ButtplugWasmClientConnector");
+                    
+                    // 測試靜態方法
+                    try {
+                        log("測試靜態方法...");
+                        const connector = new wasmModule.ButtplugWasmClientConnector();
+                        log("連接器建立成功");
+                    } catch (e) {
+                        log(`連接器建立失敗: ${e.message}`);
+                    }
+                } else {
+                    log("未找到 ButtplugWasmClientConnector");
+                }
+
+            } catch (error) {
+                log(`錯誤: ${error.message}`);
+                log(`堆棧: ${error.stack}`);
+            }
+        }
+
+        document.getElementById('test-btn').onclick = testWasm;
+        log("頁面載入完成");
+    </script>
+</body>
+</html>

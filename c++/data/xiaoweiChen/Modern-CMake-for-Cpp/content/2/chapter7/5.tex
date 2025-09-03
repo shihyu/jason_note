@@ -1,0 +1,215 @@
+
+许多项目以Git作为版本控制系统。假设我们的项目和外部库都在使用它，是否有某种Git魔法可以将这些存储库链接在一起呢?能否构建库的特定(或最新)版本作为构建项目的一步?如果是这样，如何操作?
+
+\subsubsubsection{7.5.1\hspace{0.2cm}通过Git子模块提供外部库}
+
+可能的解决方案是使用Git内置的机制，称为Git子模块。子模块允许项目存储库使用其他Git存储库，而无需将引用的文件添加到项目存储库中。工作原理类似于软链接——指向特定的分支或在外部存储库中提交(需要显式地更新)。要向存储库中添加一个子模块(并克隆它的存储库)，执行以下命令:
+
+\begin{tcblisting}{commandshell={}}
+git submodule add <repository-url>
+\end{tcblisting}
+
+若提取的存储库已经有子模块，需要初始化它们:
+
+\begin{tcblisting}{commandshell={}}
+git submodule update --init -- <local-path-to-submodule>
+\end{tcblisting}
+
+这是在解决方案中利用第三方代码的一种通用机制。这种方式的一个小缺点是，当用户用根项目克隆存储库时，不会自动提取子模块。需要显式使用init/pull命令，也可以用CMake解决。首先，看看如何在代码中使用新创建的子模块。
+
+对于本例，我决定编写一个小程序，从YAML文件读取一个名称并在欢迎消息中打印出来。YAML是一种很棒的、简单的格式，用于存储人类可读的配置，但机器解析相当复杂。我找到了一个由Jesse Beder(和当时92个其他贡献者)编写的整洁的小项目，解决了这个问题，名为yaml-cpp\url{https://github.com/jbeder/yaml-cpp})。
+
+这个例子相当简单。这是一个打印Welcome <name>消息的欢迎程序。name的默认值是Guest，可以在YAML配置文件中指定不同的名称:
+
+\begin{lstlisting}[style=styleCMake]
+# chapter07/05-git-submodule-manual/main.cpp
+
+#include <string>
+#include <iostream>
+#include "yaml-cpp/yaml.h"
+
+using namespace std;
+int main() {
+	string name = "Guest";
+	YAML::Node config = YAML::LoadFile("config.yaml");
+	if (config["name"])
+		name = config["name"].as<string>();
+	
+	cout << "Welcome " << name << endl;
+	return 0;
+}
+\end{lstlisting}
+
+本例的配置文件只有一行:
+
+\begin{lstlisting}[style=styleCMake]
+# chapter07/05-git-submodule-manual/config.yaml
+
+name: Rafal
+\end{lstlisting}
+
+main.cpp包含“yaml-cpp/yaml.h”头文件，这需要克隆yaml-cpp项目并构建。创建一个extern目录来存储所有第三方依赖项(参见3.2.2节的建议)，并添加一个子模块Git，引用这个库的仓库:
+
+\begin{tcblisting}{commandshell={}}
+$ mkdir extern
+$ cd extern
+$ git submodule add https://github.com/jbeder/yaml-cpp.git
+Cloning into 'chapter07/01-git-submodule-manual/extern/yamlcpp'...
+remote: Enumerating objects: 8134, done.
+remote: Total 8134 (delta 0), reused 0 (delta 0), pack-reused
+8134
+Receiving objects: 100% (8134/8134), 3.86 MiB | 3.24 MiB/s, done.
+Resolving deltas: 100% (5307/5307), done.
+\end{tcblisting}
+
+Git已经克隆了存储库，现在可以将它作为一个依赖项添加到我们的项目中，并让CMake负责构建:
+
+\begin{lstlisting}[style=styleCMake]
+# chapter07/05-git-submodule-manual/CMakeLists.txt
+
+cmake_minimum_required(VERSION 3.20.0)
+project(GitSubmoduleManual CXX)
+
+add_executable(welcome main.cpp)
+configure_file(config.yaml config.yaml COPYONLY)
+
+add_subdirectory(extern/yaml-cpp)
+target_link_libraries(welcome PRIVATE yaml-cpp)
+\end{lstlisting}
+
+这里分解一下CMake的指令:
+
+\begin{itemize}
+\item 
+设置项目并添加welcome可执行文件。
+
+\item 
+接下来，使用configure\_file，但实际上不进行配置。通过COPYONLY关键字，只需复制config.yaml到构建树中，以便可执行程序可以在运行时中找到它。
+
+\item 
+添加yaml-cpp存储库的子目录。CMake将它作为项目的一部分，递归地执行任何嵌套的CMakeLists.txt文件。
+
+\item 
+将库提供的yaml-cpp目标与welcome目标链接起来。
+\end{itemize}
+
+yaml-cpp的作者遵循了第3章中的实践，并将公共头文件存储在一个单独的目录中——<project-name>/include/<project-name>。这允许库的使用者(如main.cpp)包含“yaml-cpp/yaml.h”，这样的命名实践对于查找头文件非常有用——可以立即知道是哪个库提供了这个头文件。
+
+这并不复杂，但并不理想——用户必须在克隆存储库之后手动初始化添加的子模块。更糟糕的是，没有考虑到用户可能已经在其系统中安装了这个库，所以这个依赖的下载和构建可能是多余的。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{自动初始化Git子模块}
+
+对开发人员来说，为用户提供简洁的体验并不总是件痛苦的事。若一个库提供了一个包配置文件，可以要求find\_package()在已安装的库中搜索。如前所述，CMake将首先检查是否有合适的查找模块，若没有，将查找配置文件。
+
+我们已经知道，若<lib\_name>\_FOUND变量设置为1，代表库找到了，可以直接使用它。还可以在没有找到库时采取行动，并提供方便的解决方案，改善用户体验:回到获取子模块并从源代码构建库。新克隆的存储库不会自动下载和初始化嵌套子模块看起来并不是那么糟糕，不是吗?
+
+让对前面的例子进行扩展:
+
+\begin{lstlisting}[style=styleCMake]
+# chapter07/06-git-submodule-auto/CMakeLists.txt
+
+cmake_minimum_required(VERSION 3.20.0)
+project(GitSubmoduleAuto CXX)
+
+add_executable(welcome main.cpp)
+configure_file(config.yaml config.yaml COPYONLY)
+################################################
+find_package(yaml-cpp QUIET)
+if (NOT yaml-cpp_FOUND)
+	message("yaml-cpp not found, initializing git submodule")
+	execute_process(
+		COMMAND git submodule update --init -- extern/yaml-cpp
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	)
+	add_subdirectory(extern/yaml-cpp)
+endif()
+################################################
+target_link_libraries(welcome PRIVATE yaml-cpp)
+\end{lstlisting}
+
+我们添加了\#中显示的行:
+
+\begin{itemize}
+\item 
+尝试找到yaml-cpp并使用它。
+
+\item 
+如果不存在，将打印一个简短的诊断消息并使用execute\_process()指令初始化子模块。这可以有效地从引用的存储库中克隆文件。
+
+\item 
+最后，使用add\_subdirectory()使用源代码构建依赖项。
+\end{itemize}
+
+简单明了！这也适用于不是用CMake构建的库——可以遵循git子模块的例子，再次调用execute\_process()，以同样的方式启动外部构建工具。
+
+不幸的是，若使用并发版本系统(CVS)、Subversion (SVN)、Mercurial或其他将代码交付给用户的工具，这种方法就会失效。若不能依赖Git子模块，还有什么替代方法?
+
+\subsubsubsection{7.5.2\hspace{0.2cm}不使用Git的项目克隆依赖项}
+
+若正在使用另一种VCS或在存档中提供源码，那么可能很难依赖Git子模块为存储库引入外部依赖项。构建代码的环境可能已经安装了Git，并且可以执行git clone命令。
+
+让我们看看该怎么做:
+
+\begin{lstlisting}[style=styleCMake]
+# chapter07/07-git-clone/CMakeLists.txt
+
+cmake_minimum_required(VERSION 3.20.0)
+project(GitClone CXX)
+
+add_executable(welcome main.cpp)
+configure_file(config.yaml config.yaml COPYONLY)
+
+find_package(yaml-cpp QUIET)
+if (NOT yaml-cpp_FOUND)
+	message("yaml-cpp not found, cloning git repository")
+################################################
+	find_package(Git)
+	if (NOT Git_FOUND)
+		message(FATAL_ERROR "Git not found, can't initialize!")
+	endif ()
+	execute_process(
+		COMMAND ${GIT_EXECUTABLE} clone
+		https://github.com/jbeder/yaml-cpp.git
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern
+	)
+################################################
+	add_subdirectory(extern/yaml-cpp)
+endif()
+target_link_libraries(welcome PRIVATE yaml-cpp)
+\end{lstlisting}
+
+同样，\#中的行是YAML项目中的新部分。发生了什么:
+
+\begin{itemize}
+\item 
+首先通过FindGit查找模块检查Git是否可用。
+
+\item 
+若不可用，就会陷入困境。将发出FATAL\_ERROR，并希望用户知道下一步要做什么。
+
+\item 
+否则，将使用find\_package()设置的GIT\_EXECUTABLE变量调用execute\_process()，并克隆我们感兴趣的存储库。
+\end{itemize}
+
+Git对于有一定经验的开发人员特别有吸引力，非常适合不包含对相同存储库的嵌套引用的较小项目。但若是这样，将发现可能需要多次克隆和构建同一个项目。若依赖项项目根本不使用Git，则需要另一种解决方案。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

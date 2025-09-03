@@ -1,0 +1,385 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>搭建 gRPC 服務 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="教你用python搭建grpc服務"><a class="header" href="#教你用python搭建grpc服務">教你用Python搭建gRPC服務</a></h1>
+<h2 id="前言"><a class="header" href="#前言">前言</a></h2>
+<p>前陣子剛好有個要使用 gRPC 的機會，同事看了一下官網的 Tutorial 覺得一時之間有點迷路，所以就寫了一份比較簡單的 gRPC Tutorial for Python，應該可以讓需要的人更快入門。</p>
+<h2 id="protocol-buffers-簡介"><a class="header" href="#protocol-buffers-簡介">protocol buffers 簡介</a></h2>
+<p>在介紹 gRPC 之前先來講講 <a href="https://developers.google.com/protocol-buffers/">protocol buffers</a>。我們在不同 service 之間做訊息溝通的時候，最常使用的也許是透過 json 來做傳遞，不過在使用 json 上面可能會遇到以下幾個問題：</p>
+<ol>
+<li>json 的 serialize/de-serialize 速度太慢</li>
+<li>透過 json 傳資料的結構不夠清楚，得靠 API 文件搞定</li>
+<li>用 json 傳資料的 size 太大</li>
+</ol>
+<p><a href="https://developers.google.com/protocol-buffers/">protocol buffers</a> 便是 Google 為瞭解決以上問題而生，它可以透過一個 <code>.proto</code> 檔案，在各語言生出相對應的檔案使用。目前<a href="https://github.com/google/protobuf">支援的程式語言很多</a>，有 Python、golang、js、java 等等。</p>
+<h2 id="grpc-簡介"><a class="header" href="#grpc-簡介">grpc 簡介</a></h2>
+<p>有了 <a href="https://developers.google.com/protocol-buffers/">protocol buffers</a> 之後，google 更進一步的推出了 gRPC。透過 gRPC，我們可以在 <code>.proto</code> 檔案當中也一併定義好 service，讓遠端使用的 client 可以如同呼叫本地的 library 一樣使用，不用再自己處理 routing 、連線等等的問題。</p>
+<p><img src="images/1_ZVirmBhtvTcIPYSqo9gXAA.png" alt="img" /></p>
+<p>上圖是從 <a href="https://grpc.io/">gRPC 官網</a>上面截下來的圖，可以看到 gRPC Server 是由 <code>C++</code> 撰寫，client 則分別是 Java 以及 Ruby，Server 跟 Client 端則是透過 <a href="https://developers.google.com/protocol-buffers/">protocol buffers</a> 來做傳遞。</p>
+<h2 id="開發-grpc-流程"><a class="header" href="#開發-grpc-流程">開發 gRPC 流程</a></h2>
+<p>接下來讓我們來用 Python 開發一個最簡單的 gRPC service。分別有以下四個部分：</p>
+<ol>
+<li>環境安裝 – 最基本的套件安裝</li>
+<li><code>.proto</code> 檔案 – 定義 <a href="https://developers.google.com/protocol-buffers/">protocol buffers</a> 還有 service</li>
+<li>Server – server 的 code</li>
+<li>Client – client 呼叫 server 的 code</li>
+</ol>
+<p>最後完成的程式碼會放在 https://github.com/daikeren/gprc_tutorial</p>
+<h3 id="環境安裝以及設定"><a class="header" href="#環境安裝以及設定">環境安裝以及設定</a></h3>
+<p>首先我們要安裝相對應的套件，這邊我們用 <a href="https://docs.pipenv.org/">pipenv</a> 來作為環境管理工具。輸入以下指令安裝 grpcio 以及 grpcio-tools。</p>
+<pre><code class="language-bash">pipenv install grpcio grpcio-tools
+</code></pre>
+<p>接著，我們先來定義我們 service 的功能，我們這邊為了 demo，我們這個 service 做的事情很簡單，只是將傳遞進來的 name 前面加上 “Hello” 再回傳回去。這邊當然是可以改成任何我們想要 Python Function。</p>
+<pre><code class="language-python"># hello.py
+def hello(name):
+    return f"Hello {name}"
+</code></pre>
+<h3 id="proto-檔案"><a class="header" href="#proto-檔案"><code>.proto</code> 檔案</a></h3>
+<p>接下來，我們創建一個 <code>hello.proto</code> 檔案，裡面描述了我們要使用的 message 以及 service</p>
+<pre><code class="language-python">syntax = "proto3";
+
+message HelloRequest {
+    string value = 1;
+}
+
+message HelloResponse {
+    string value = 1;
+}
+
+service Hello {
+    rpc Hello(HelloRequest) returns (HelloResponse) {}
+}
+</code></pre>
+<p>這邊的 message 代表了我們要跟 gRPC 傳遞的參數、型別，service 則是敘述了 service name 以及傳入、傳回的參數。之後我們會透過 <code>gprc_tools</code> 來讀取 <code>.proto</code> 檔案產生相對應的 Python class。這邊可以看到我們定義的 message 以及 service 如下：</p>
+<ul>
+<li>message: 這邊定義了兩種 message，分別是 <code>HelloRequest</code> 以及 <code>HelloResponse</code>，裡面都只有一個叫做 <code>value</code> 的欄位，形態是 <code>string</code></li>
+<li>service: 這邊定義了一個 service，裡面只有一個叫做 Hello 的 rpc 傳入值是 <code>HelloRequest</code>，傳回值則是 <code>HelloResponse</code></li>
+</ul>
+<p>接下來，我們輸入以下指令為 Python 產生 gRPC 的 class</p>
+<pre><code class="language-bash">pipenv run python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. hello.proto
+</code></pre>
+<p>你會看到多出了兩個檔案</p>
+<ul>
+<li><code>hello_pb2.py</code>: 定義了相對應的 message class</li>
+<li><code>hello_pb2_grpc.py</code>: 定義了相對應的 service class</li>
+</ul>
+<h3 id="server"><a class="header" href="#server">Server</a></h3>
+<p>有了 <code>hello_pb2.py</code> 以及 <code>hello_pb2_grpc.py</code>，我們就可以開始實作我們的 gRPC server，詳細的程式碼如下：</p>
+<pre><code class="language-python"># server.py
+from concurrent import futures
+import time
+
+import grpc 
+import hello_pb2
+import hello_pb2_grpc
+
+import hello
+
+# 創建一個 HelloServicer，要繼承自 hello_pb2_grpc.HelloServicer
+class HelloServicer(hello_pb2_grpc.HelloServicer):
+
+# 由於我們 service 定義了 Hello 這個 rpc，所以要實作 Hello 這個 method
+    def Hello(self, request, context):
+
+# response 是個 HelloResponse 形態的 message
+        response = hello_pb2.HelloResponse()
+        response.value = hello.hello(request.value)
+        return response
+
+
+def serve():
+# 創建一個 gRPC server
+	server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+
+# 利用 add_HelloServicer_to_server 這個 method 把上面定義的 HelloServicer 加到 server 當中
+	hello_pb2_grpc.add_HelloServicer_to_server(HelloServicer(), server)
+
+# 讓 server 跑在 port 50051 中
+	server.add_insecure_port('[::]:50051')
+	server.start()
+	try:
+		while True:
+			time.sleep(86400)
+	except KeyboardInterrupt:
+		server.stop(0)
+
+
+if __name__ == '__main__':
+	serve()
+</code></pre>
+<p>接著我們可以輸入以下指令啟動 gRPC server</p>
+<pre><code class="language-bash">pipenv run python server.py
+</code></pre>
+<h3 id="client"><a class="header" href="#client">Client</a></h3>
+<p>client side 的 code 很單純，就是建立一個 channel 連線到 gRPC server，再用 stub 來呼叫。</p>
+<pre><code class="language-python"># client.py 
+
+import grpc
+
+import hello_pb2
+import hello_pb2_grpc
+
+# 連接到 localhost:50051
+channel = grpc.insecure_channel('localhost:50051')
+
+# 創建一個 stub (gRPC client)
+stub = hello_pb2_grpc.HelloStub(channel)
+
+# 創建一個 HelloRequest 丟到 stub 去
+request = hello_pb2.HelloRequest(value="World")
+
+# 呼叫 Hello service，回傳 HelloResponse
+response = stub.Hello(request)
+
+print(response.value)
+</code></pre>
+<p>因為我們已經在 localhost 跑起來 server 了，執行以下的 client 程式碼：</p>
+<pre><code class="language-bash">pipenv run python client.py
+Hello World
+</code></pre>
+<h2 id="小結"><a class="header" href="#小結">小結</a></h2>
+<p>看到這邊應該可以理解一個簡單的 gRPC 該怎麼實作，相信以這為基礎應該可以很容易擴展出未來更多的 gRPC 應用。</p>
+<h2 id="參考"><a class="header" href="#參考">參考</a></h2>
+<ul>
+<li>https://www.icoding.co/2020/07/grpc-tutorial-for-python</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../python/Poetry完全入門指南.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../python/python_debugger.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../python/Poetry完全入門指南.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../python/python_debugger.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

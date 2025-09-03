@@ -1,0 +1,48 @@
+在第1章中，讨论了源代码内构建，以及如何建议始终将构建路径指定为源代码外的。这不仅可以具有更干净的构建树和更简单的.gitignore文件，而且还减少了不小心覆盖或删除源码文件的可能。
+
+在网上搜索解决方案时，可能会发现StackOverflow中有相同的问题:\url{https://stackoverflow.com/q/1208681/6659218}。作者注意到，无论做什么，CMake似乎仍然会创建一个CMakeFiles/目录和一个CMakeCache.txt文件。一些答案建议使用无文档变量，确保用户不能在源目录中写入:
+
+\begin{lstlisting}[style=styleCMake]
+# add this options before PROJECT keyword
+set(CMAKE_DISABLE_SOURCE_CHANGES ON)
+set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+\end{lstlisting}
+
+我想说，在使用任何软件的无文档特性时都要谨慎，因为它们可能会在没有警告的情况下消失。CMake 3.20中设置上述变量会终止构建并产生一个相当难看的错误:
+
+\begin{tcblisting}{commandshell={}}
+CMake Error at /opt/cmake/share/cmake-3.20/Modules/
+CMakeDetermineSystem.cmake:203 (file):
+  file attempted to write a file:
+  /root/examples/chapter03/09-in-source/CMakeFiles/CMakeOutput.
+log into a source directory.
+\end{tcblisting}
+
+然而，它仍然创建了上述文件!因此，建议是使用一个更老的——但得到充分支持的——机制:
+
+\begin{lstlisting}[style=styleCMake]
+# chapter03/09-in-source/CMakeLists.txt
+
+cmake_minimum_required(VERSION 3.20.0)
+project(NoInSource CXX)
+if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
+	message(FATAL_ERROR "In-source builds are not allowed")
+endif()
+message("Build successful!")
+\end{lstlisting}
+
+若Kitware (CMake背后的公司)决定正式支持CMAKE\_DISABLE\_SOURCE\_CHANGES或CMAKE\_DISABLE\_IN\_SOURCE\_BUILD，那么可以切换到那种解决方案。
+
+
+
+
+
+
+
+
+
+
+
+
+
+

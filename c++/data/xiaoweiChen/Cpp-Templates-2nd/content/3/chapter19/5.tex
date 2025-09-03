@@ -1,0 +1,129 @@
+由于细节原因，基于SFINAE特征的一般方法在实践中可能会变得复杂。可以通过定义特征来说明这一点，该特征可以确定类型是否可以转换——若期望是某个基类或其派生类。IsConvertibleT特征决定是否可以将传递的第一个类型转换为传递的第二个类型:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{traits/isconvertible.hpp}
+\begin{lstlisting}[style=styleCXX]
+#include <type_traits> // for true_type and false_type
+#include <utility> // for declval
+
+template<typename FROM, typename TO>
+struct IsConvertibleHelper {
+	private:
+	// test() trying to call the helper aux(TO) for a FROM passed as F:
+		static void aux(TO);
+	template<typename F, typename,
+	typename = decltype(aux(std::declval<F>()))>
+		static std::true_type test(void*);
+	// test() fallback:
+	template<typename, typename>
+		static std::false_type test(...);
+	public:
+	using Type = decltype(test<FROM>(nullptr));
+};
+
+template<typename FROM, typename TO>
+struct IsConvertibleT : IsConvertibleHelper<FROM, TO>::Type {
+};
+
+template<typename FROM, typename TO>
+using IsConvertible = typename IsConvertibleT<FROM, TO>::Type;
+
+template<typename FROM, typename TO>
+constexpr bool isConvertible = IsConvertibleT<FROM, TO>::value;
+\end{lstlisting}
+
+使用函数重载的方法，如第19.4.1节。在辅助类内部，声明了两个名为test()的重载函数模板，其具有不同的返回类型，并为结果特征的基类声明了一个Type成员:
+
+\begin{lstlisting}[style=styleCXX]
+template<...> static std::true_type test(void*);
+template<...> static std::false_type test(...);
+...
+using Type = decltype(test<FROM>(nullptr));
+...
+template<typename FROM, typename TO>
+struct IsConvertibleT : IsConvertibleHelper<FROM, TO>::Type {
+};
+\end{lstlisting}
+
+与往常一样，第一个test()重载设计在检查成功时匹配，而第二个重载会回退。因此，目标是使第一个test()重载在当类型FROM转换为类型TO时有效。为了实现这一点，再次给出test的第一个声明，一个虚拟的(未命名的)模板参数初始化使用了构造，当转换有效时该构造才有效。这个模板参数不能推导，也不会提供显式的模板参数。因此，参数将进行替换，若替换失败，将丢弃test()的声明。
+
+下面的操作无效:
+
+\begin{lstlisting}[style=styleCXX]
+static void aux(TO);
+template<typename = decltype(aux(std::declval<FROM>()))>
+	static char test(void*);
+\end{lstlisting}
+
+当解析成员函数模时，FROM和TO是确定的，因此一对转换无效的类型(例如，double*和int*)将在调用test()前立即触发错误(因此在SFINAE之外)。
+
+因此，引入F作为一个特定的成员函数模板参数
+
+\begin{lstlisting}[style=styleCXX]
+static void aux(TO);
+template<typename F, typename = decltype(aux(std::declval<F>()))>
+	static char test(void*);
+\end{lstlisting}
+
+并在调用test()时显式地提供FROM类型作为模板参数，该参数出现在value的初始化中:
+
+\begin{lstlisting}[style=styleCXX]
+static constexpr bool value
+	= isSame<decltype(test<FROM>(nullptr)), char>;
+\end{lstlisting}
+
+不使用构造函数，如何使用std::declval来生成一个值？若该值可转换为TO，则对aux()的调用有效，并且test()的声明匹配。否则，SFINAE将失败，并且只匹配回退声明。
+
+因此，可以这样使用该特征:
+
+\begin{lstlisting}[style=styleCXX]
+IsConvertibleT<int, int>::value // yields true
+IsConvertibleT<int, std::string>::value // yields false
+IsConvertibleT<char const*, std::string>::value // yields true
+IsConvertibleT<std::string, char const*>::value // yields false
+\end{lstlisting}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{处理特殊情况}
+
+IsConvertibleT还未正确处理的三种情况:
+
+\begin{enumerate}
+\item
+向数组类型的转换应该生成false，但aux()声明中的TO类型参数会衰变为指针类型，因此对某些FROM类型为true。
+
+\item
+函数类型的转换应该生成false，但就像数组一样，实现只将它们视为衰变类型。
+
+\item
+转换为(const/volatile限定的)void类型应该生成true。因为参数类型不能是void类型(而且aux()是用这样参数参声明的)，所以上面的实现没有成功实例化TO是void类型的情况。
+\end{enumerate}
+
+对于所有这些情况，需要额外的偏特化。为每一种可能的const和volatile限定符组合添加这样的特化其实很难。不过，可以向辅助类模板添加额外的模板参数，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename FROM, typename TO, bool = IsVoidT<TO>::value
+								|| IsArrayT<TO>::value
+								|| IsFunctionT<TO>::value>
+struct IsConvertibleHelper {
+	using Type = std::integral_constant<bool,
+	IsVoidT<TO>::value
+	&& IsVoidT<FROM>::value>;
+};
+
+template<typename FROM, typename TO>
+struct IsConvertibleHelper<FROM,TO,false> {
+	... // previous implementation of IsConvertibleHelper here
+};
+\end{lstlisting}
+
+尔模板参数，对所有这些特殊情况使用主辅助特征的实现。若转换为数组或函数(因为IsVoidT<TO>是假的)，或者FROM是void而TO不是，则生成false\_type；对于两个void类型，将生成true\_type。其他情况都为第三个参数产生false参数，因此采用偏特化，这与已经讨论过的实现相对应。
+
+请参阅19.8.2节和19.8.3节来讨论如何实现IsArrayT。
+
+C++标准库提供了相应的类型特征std::is\_convertible<>，在第D.3.3节中有描述。
+
+
+

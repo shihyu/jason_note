@@ -1,0 +1,520 @@
+
+上一节中，我们了解了如何在Clang中为驱动添加自定义标志，并了解了驱动如何将它们转换为前端接受的标志。本节中，我们将讨论工具链——驱动内部的一个重要模块，它能帮助驱动程序适应不同的平台。
+
+记得在本章的第一部分，在图8.1中展示了驱动和工具链之间的关系:驱动程序可以根据目标平台选择合适的工具链，然后利用其基本信息做以下事情:
+
+\begin{enumerate}
+\item LExecute生成目标代码所需的正确的汇编器、链接器或任何工具。
+
+\item 向编译器、汇编器或链接器传递特定于平台的标志。
+\end{enumerate}
+
+这些信息对于构建源代码至关重要，因为每个平台可能都有自己独特的特征，比如：系统库路径和受支持的汇编/链接器变体。没有它们，甚至无法生成正确的可执行文件或库。
+
+本节希望帮助大家了解如何在将来为定制平台创建Clang工具链。Clang中的工具链框架足够强大，可以适应各种各样的用例，例如：可以创建一个类似于Linux上传统编译器的工具链——包括使用GNU AS进行组装和使用GNU LD进行链接——而不需要对默认库路径或编译器标志进行多次定制。另一方面，可以使用一个怪异的工具链，它甚至不使用Clang来编译源代码，而是使用一个专有的汇编器和带有不常见命令行标志的链接器。本节将尝试使用一个示例来演示最常见的用例，同时又能展示该框架的灵活性。
+
+这一部分的组织如下:将从我们将要从事的项目的概述开始。在此之后，我们将把项目工作负载分解为三个部分——添加定制编译器选项、设置定制汇编器和设置定制链接器——然后将它们放在一起，结束本节。
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, fonttitle=\bfseries,title=系统需求]	
+\hspace*{0.7cm}作为另一个友好的提示，下面的项目只能在Linux系统上工作。请确保已安装OpenSSL。
+\end{tcolorbox}
+
+\subsubsubsection{8.4.1\hspace{0.2cm}项目概述}
+
+我们将创建一个名为\textbf{Zipline}的工具链，它使用Clang(前端和后端)来进行普通的编译，但在汇编阶段使用\textbf{Base64}编码生成的汇编代码，并在链接阶段将这些Base64编码的文件打包成\textbf{ZIP文件}(或\texttt{.tarbell}文件)。
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black, fonttitle=\bfseries,title=Base64]	
+\hspace*{0.7cm}Base64是一种编码方案，通常用于将二进制文件转换为纯文本。它可以很容易地在不支持二进制格式的上下文中传输(例如，HTTP报头)。还可以将Base64应用于普通文本文件，就像我们的例子一样。
+\end{tcolorbox}
+
+这个工具链在生产环境中基本上是无用的。它只是一个演示，模拟开发人员在为定制平台创建新工具链时可能遇到的常见情况。
+
+这个工具链是通过自定义驱动标志\texttt{-ziplin}/\texttt{-\,-zipline}来启用。当提供该标志时，编译器会隐式地将\texttt{my\_include}文件夹添加到你的主目录中，作为搜索头文件路径，例如：上一节中，添加自定义驱动标志，我们的自定义\texttt{-fuse-simple-log}标志将隐式地在输入源代码中包含一个头文件\texttt{simple\_log.h}:
+
+\begin{tcblisting}{commandshell={}}
+$ ls
+main.cc simple_log.h
+$ clang++ -fuse-simple-log -fsyntax-only main.cc
+$ # OK
+\end{tcblisting}
+
+然而，如果\texttt{simple\_log.h}不在当前目录中，就像前面的代码片段中那样，我们需要通过另一个标志指定它的路径:
+
+\begin{tcblisting}{commandshell={}}
+$ ls .
+# No simple_log.h in current folder
+main.cc
+$ clang++ -fuse-simple-log=/path/to/simple_log.h -fsyntax-only
+main.cc
+$ # OK
+\end{tcblisting}
+
+在Zipline的帮助下，可以把\texttt{simple\_log.h}放在\texttt{/home/<user name>/my\_include}中，这样编译器就能找到它了:
+
+\begin{tcblisting}{commandshell={}}
+$ ls .
+# No simple_log.h in current folder
+main.cc
+$ ls ~/my_include
+simple_log.h
+$ clang++ -zipline -fuse-simple-log -fsyntax-only main.cc
+$ # OK
+\end{tcblisting}
+
+Zipline的第二个特性是，\texttt{clang}可执行文件将源代码编译成由Base64在\texttt{-c}标志下编码的汇编代码，该汇编代码将汇编文件(来自编译器)编译成一个目标文件。下面是命令示例:
+
+\begin{tcblisting}{commandshell={}}
+$ clang -zipline -c test.c
+$ file test.o
+test.o: ASCII text # Not (binary) object file anymore
+$ cat test.o
+CS50ZXh0CgkuZmlsZQkidGVzdC5jYyIKCS
+5nbG9ibAlfWjNmb29pCgkucDJhbGln
+
+bgk0LCAweDkwCgkudHlwZQlfWjNmb29p
+LEBmdW5jdGlvbgpfWjNmb29pOgoJLmNm
+
+… # Base64 encoded contents
+$
+\end{tcblisting}
+
+前面的\texttt{file}命令显示生成的文件\texttt{test.o}，从之前使用\texttt{clang}开始，就不再是二进制格式的对象文件。这个文件的内容就是编译器后端生成的汇编代码(Base64编码)版本。
+
+最后，Zipline用一个定制阶段替换了原来的链接阶段，这个定制阶段将前面提到的Base64编码的程序集文件打包并压缩到一个\texttt{.zip}文件中。下面是一个例子:
+
+\begin{tcblisting}{commandshell={}}
+$ clang -zipline test.c -o test.zip
+$ file test.zip
+test.zip: Zip archive, at least v2.0 to extract
+$
+\end{tcblisting}
+
+如果解压\texttt{test.zip}，将发现这些解压的文件是Case64编码的程序集文件。
+
+或者，我们可以使用Linux的\texttt{tar}和\texttt{gzip}工具将它们打包并压缩到Zipline中:
+
+\begin{tcblisting}{commandshell={}}
+$ clang -zipline -fuse-ld=tar test.c -o test.tar.gz
+$ file test.tar.gz
+test.tar.gz: gzip compressed data, from Unix, original size…
+$
+\end{tcblisting}
+
+通过使用现有的\texttt{-fuse-ld=<链接器名称>}标志，我们可以在自定义链接阶段选择使用\texttt{zip}、\texttt{tar}或\texttt{gzip}。
+
+下一节中，我们将为这个工具链创建框架代码，并展示如何向头文件搜索路径添加额外的文件夹路径。
+
+\subsubsubsection{8.4.2\hspace{0.2cm}创建工具链并添加自定义的包含路径}
+
+本节中，我们将为Zipline工具链创建框架，并展示如何在Zipline的编译阶段添加一个额外的包含文件夹路径——更确切地说，一个额外的\textbf{系统包含路径}。具体步骤如下:
+
+\begin{enumerate}
+\item 在添加工具链实现之前，不要忘记使用自定义驱动标志\texttt{-zipline}/\texttt{-\,-zipline}来启用工具链。使用我们在前一节学到的技能，添加自定义驱动标志来完成。在\texttt{clang/include/clang/Dri\\ver/Options.td}里面，我们将增加以下行:
+
+\begin{lstlisting}[style=styleJavaScript]
+// zipline toolchain
+def zipline : Flag<["-", "--"], "zipline">,
+Flags<[NoXarchOption]>;
+\end{lstlisting}
+
+同样，\texttt{Flag}说明这是一个布尔标志，而\texttt{NoXarchOption}说明这个标志是驱动唯一的。我们将很快使用这个驱动标志。
+
+\item Clang中的工具链由\texttt{clang::driver::ToolChain}类表示。Clang支持的每个工具链都是从它派生出来的，源文件在\texttt{clang/lib/Driver/ToolChains}文件夹下。我们将在那里创建两个新文件:\texttt{Zipline.h}和\texttt{Zipline.cpp}。
+
+\item 对于\texttt{Zipline.h}，先添加以下框架代码:
+
+\begin{lstlisting}[style=styleCXX]
+namespace clang {
+namespace driver {
+namespace toolchains {
+struct LLVM_LIBRARY_VISIBILITY ZiplineToolChain
+: public Generic_ELF {
+	ZiplineToolChain(const Driver &D, const llvm::Triple
+	&Triple, const llvm::opt::ArgList &Args)
+	: Generic_ELF(D, Triple, Args) {}
+	~ZiplineToolChain() override {}
+	// Disable the integrated assembler
+	bool IsIntegratedAssemblerDefault() const override
+	{ return false; }
+	bool useIntegratedAs() const override { return false; }
+	void
+	AddClangSystemIncludeArgs(const llvm::opt::ArgList
+	&DriverArgs, llvm::opt::ArgStringList &CC1Args)
+	const override;
+protected:
+	Tool *buildAssembler() const override;
+	Tool *buildLinker() const override;
+};
+} // end namespace toolchains
+} // end namespace driver
+} // end namespace clang
+\end{lstlisting}
+
+我们在这里创建的\texttt{ZiplineToolChain}类，是从\texttt{Generic\_ELF}派生而来，\texttt{Generic\_ELF}是\texttt{ToolChain}的子类，专门用于使用ELF作为其执行格式的系统——包括Linux。除了父类之外，还有三个重要的方法，我们将在本节或后面的章节中实现:\texttt{AddClangSystemIncludeArgs}、\texttt{buildAssembler}和\texttt{buildLinker}。
+
+\item \texttt{buildAssembler}和\texttt{buildLinker方}法生成的\texttt{Tool}实例分别表示要在汇编和链接阶段运行的命令或程序(我们将在下面几节中介绍它们)。现在，我们将实现\texttt{AddClangSystemIncludeArgs}方法。在\texttt{Zipline.cpp}中，我们将添加相应实现:
+
+\begin{lstlisting}[style=styleCXX]
+void ZiplineToolChain::AddClangSystemIncludeArgs(
+                       const ArgList &DriverArgs,
+                       ArgStringList &CC1Args) const {
+	using namespace llvm;
+	SmallString<16> CustomIncludePath;
+	sys::fs::expand_tilde("~/my_include",
+	                      CustomIncludePath);
+	addSystemInclude(DriverArgs,
+	                 CC1Args, CustomIncludePath.c_str());
+}
+\end{lstlisting}
+
+我们在这里做的唯一一件事是使用\texttt{addSystemInclude}函数与位于主目录中的\texttt{my\_include}文件夹的路径。由于每个用户的主目录不同，我们使用\texttt{sys::fs::expand\_tilde}助手函数将\texttt{~/my\_include}(其中\texttt{~}表示Linux和Unix系统中的主目录)扩展到绝对路径中。另一方面，\texttt{addSystemInclude}函数可以将“\texttt{-internalisystem}”“\texttt{/path/to/my\_include}”标志添加到前端标志的列表中。\texttt{-internal-issystem}标志用于指定系统头文件的文件夹，包括标准库头文件和平台特定的头文件。
+
+\item 最后，当Zipline工具链看到新创建的\texttt{-zipline}/\texttt{-\,-zipline}驱动标志时，需要我们教会驱动使用Zipline工具链。我们需要修改\texttt{clang/lib/Driver/Driver.cpp}中的 \texttt{Driver::getTool\\Chain}方法。\texttt{Driver::getToolChain}方法包含一个巨大的开关盒，用于根据目标操作系统和硬件架构选择不同的工具链(具体的情况，请浏览处理Linux系统的代码)。我们将在这里添加一个额外的分支条件:
+
+\begin{lstlisting}[style=styleCXX]
+const ToolChain
+&Driver::getToolChain(const ArgList &Args,
+const llvm::Triple &Target) const {
+	…
+	switch (Target.getOS()) {
+		case llvm::Triple::Linux:
+		…
+		  else if (Args.hasArg(options::OPT_zipline))
+		    TC = std::make_unique<toolchains::ZiplineToolChain>
+		    (*this, Target, Args);
+		…
+		  break;
+		case …
+		case …
+	}
+}
+\end{lstlisting}
+
+额外的\texttt{else-if}语句基本上是说，如果目标操作系统是Linux，那么当指定\texttt{-zipline}/\texttt{-\,-zip\\line}时，我们将使用Zipline。
+
+\end{enumerate}
+
+这样，您就添加了Zipline的框架，并成功地告诉驱动程序在给定自定义驱动程序标志时使用Zipline。除此之外，还了解了如何向头文件搜索路径添加额外的系统库文件夹。
+
+下一节中，我们将创建一个自定义汇编阶段，并将其连接到我们创建的工具链中。
+
+\subsubsubsection{8.4.3\hspace{0.2cm}创建自定义汇编阶段}
+
+正如在项目概述中提到的，我们不是在Zipline的汇编阶段将汇编代码转换为目标文件，而是调用一个程序来将Clang生成的汇编文件转换为Base64编码的对应版本。在深入其实现之前，先了解一下工具链中的每个阶段是如何表示的。
+
+上一节中，我们了解到Clang中的工具链是由\texttt{Toolchain}类表示。每个工具链实例负责告知驱动在每个编译阶段运行什么工具——即编译、汇编和链接。这个信息封装在\texttt{clang::driver::Tool}类型中。上一节中\texttt{buildAssembler}和\texttt{buildLinker}，它们返回工具类型的对象，分别描述要执行的动作和在汇编和链接阶段运行的工具。本节中，将展示如何实现\texttt{buildAssembler}返回的\texttt{Tool}对象。就让我们开始吧！
+
+\begin{enumerate}
+\item 回到\texttt{Zipline.h}。我们在\texttt{clang::driver::tools::zipline}名称空间中添加了一个类\texttt{Assembler}:
+
+\begin{lstlisting}[style=styleCXX]
+namespace clang {
+namespace driver {
+namespace tools {
+namespace zipline {
+	struct LLVM_LIBRARY_VISIBILITY Assembler : public Tool {
+		Assembler(const ToolChain &TC)
+		  : Tool("zipeline::toBase64", "toBase64", TC) {}
+		bool hasIntegratedCPP() const override { return false;
+		}
+	void ConstructJob(Compilation &C, const JobAction &JA,
+	const InputInfo &Output,
+	const InputInfoList &Inputs,
+	const llvm::opt::ArgList &TCArgs,
+	const char *LinkingOutput) const
+	override;
+};
+} // end namespace zipline
+} // end namespace tools
+
+namespace toolchains {
+struct LLVM_LIBRARY_VISIBILITY ZiplineToolChain … {
+…
+};
+} // end namespace toolchains
+} // end namespace driver
+} // end namespace clang
+\end{lstlisting}
+
+这里需要注意，因为新创建的\texttt{Assembler}在\texttt{clang::driver::tools::zipline}名称空间中，而我们在上一节创建的\texttt{ZiplineToolChain}位于\texttt{clang::driver::toochains}中。
+
+我们将把调用Base64编码工具的逻辑放在\texttt{Assembler::ConstructJob}方法中。
+
+\item 我们将在\texttt{Zipline.cpp}中，实现\texttt{Assembler::ConstructJob}:
+
+\begin{lstlisting}[style=styleCXX]
+void
+tools::zipline::Assembler::ConstructJob(Compilation &C,
+							const JobAction &JA,
+							const InputInfo &Output,
+							const InputInfoList &Inputs,
+							const ArgList &Args,
+							const char *LinkingOutput)
+							const {
+	ArgStringList CmdArgs;
+	const InputInfo &II = Inputs[0];
+	
+	std::string Exec =
+	  Args.MakeArgString(getToolChain().
+	    GetProgramPath("openssl"));
+	
+	// opeenssl base64 arguments
+	CmdArgs.push_back("base64");
+	CmdArgs.push_back("-in");
+	CmdArgs.push_back(II.getFilename());
+	CmdArgs.push_back("-out");
+	CmdArgs.push_back(Output.getFilename());
+	
+	C.addCommand(
+	  std::make_unique<Command>(
+	  		 JA, *this, ResponseFileSupport::None(),
+	         Args.MakeArgString(Exec), CmdArgs,
+             Inputs, Output));
+}
+\end{lstlisting}
+
+我们使用OpenSSL来做Base64编码，运行的命令如下:
+
+\begin{tcblisting}{commandshell={}}
+$ openssl base64 -in <input file> -out <output file>
+\end{tcblisting}
+
+\texttt{ConstructJob}方法的工作是构建\textit{程序调用}来运行前面的命令，是由\texttt{C.addCommand(…)}函数调用\texttt{ConstructJob}实现的。传递给\texttt{addCommand}要调用的\texttt{Command}实例，表示在汇编阶段要运行的具体命令。它包含必要的信息，比如：可执行文件的路径(\texttt{Exec}变量)，及其参数(\texttt{CmdArgs}变量)。
+
+对于\texttt{Exec}变量，工具链提供了一个工具，即\texttt{GetProgramPath}函数，用于解析可执行文件的绝对路径。
+
+另一方面，我们为\texttt{openssl}(\texttt{CmdArgs}变量)构建参数的方式，类似于在添加自定义驱动标志时所做的事情:将驱动标志(\texttt{Args}参数)和输入/输出文件信息(\texttt{Output}和\texttt{Inputs}参数)转换为一组新的命令行参数，并存储在\texttt{CmdArgs}中。
+
+\item 最后，通过实现\texttt{ZiplineToolChain::buildAssembler}，将这个\texttt{Assembler}类与\texttt{Zipline\\ToolChain}连接起来:
+
+\begin{lstlisting}[style=styleCXX]
+Tool *ZiplineToolChain::buildAssembler() const {
+	return new tools::zipline::Assembler(*this);
+}
+\end{lstlisting}
+
+\end{enumerate}
+
+这些是我们需要完成的步骤，该工具实例中需要在Zipline工具链链接阶段运行的命令。
+
+\subsubsubsection{8.4.4\hspace{0.2cm}创建自定义链接阶段}
+
+现在我们已经完成了汇编阶段，是时候进入下一个阶段了——连接阶段。我们将使用与前一节相同的方法，创建一个自定义的工具类来表示链接器。
+
+\begin{enumerate}
+\item 在\texttt{Zipline.h}中，创建一个从\texttt{Tool}派生的\texttt{Linker}类:
+
+\begin{lstlisting}[style=styleCXX]
+namespace zipline {
+struct LLVM_LIBRARY_VISIBILITY Assembler : public Tool {
+	…
+};
+
+struct LLVM_LIBRARY_VISIBILITY Linker : public Tool {
+	Linker(const ToolChain &TC)
+	  : Tool("zipeline::zipper", "zipper", TC) {}
+	  
+	bool hasIntegratedCPP() const override { return false;
+}
+
+	bool isLinkJob() const override { return true; }
+	
+	void ConstructJob(Compilation &C, const JobAction &JA,
+						const InputInfo &Output,
+						const InputInfoList &Inputs,
+						const llvm::opt::ArgList &TCArgs,
+						const char *LinkingOutput) const
+						override;
+private:
+	void buildZipArgs(const JobAction&, const InputInfo&,
+						const InputInfoList&,
+						const llvm::opt::ArgList&,
+						llvm::opt::ArgStringList&) const;
+						
+	void buildTarArgs(const JobAction&,
+						const InputInfo&,
+						const InputInfoList&,
+						const llvm::opt::ArgList&,
+						llvm::opt::ArgStringList&) const;
+};
+} // end namespace zipline
+\end{lstlisting}
+
+在这个\texttt{Linker}类中，还需要实现\texttt{ConstructJob}方法，从而来告诉驱动在链接阶段要执行什么。与\texttt{Assembler}不同的是，由于需要同时支持\texttt{zip}和\texttt{tar + gzip}的打包/压缩方案，我们将添加两个额外的方法\texttt{buildZipArgs}和\texttt{buildTarArgs}，来处理每个参数的构建。
+
+\item 我们在\texttt{Zipline.cpp}中，将首先关注\texttt{Linker::ConstructJob}的实现:
+
+\begin{lstlisting}[style=styleCXX]
+void
+tools::zipline::Linker::ConstructJob(Compilation &C,
+const JobAction &JA,
+const InputInfo &Output,
+const InputInfoList &Inputs,
+const ArgList &Args,
+const char *LinkingOutput) const
+{
+	ArgStringList CmdArgs;
+	std::string Compressor = "zip";
+	if (Arg *A = Args.getLastArg(options::OPT_fuse_ld_EQ))
+	  Compressor = A->getValue();
+	std::string Exec = Args.MakeArgString(
+	     getToolChain().GetProgramPath(Compressor.c_str()));
+	
+	if (Compressor == "zip")
+  	  buildZipArgs(JA, Output, Inputs, Args, CmdArgs);
+	if (Compressor == "tar" || Compressor == "gzip")
+	  buildTarArgs(JA, Output, Inputs, Args, CmdArgs);
+	else
+	  llvm_unreachable("Unsupported compressor name");
+	
+	C.addCommand(
+	  std::make_unique<Command>(
+	    JA, *this, ResponseFileSupport::None(),
+	    Args.MakeArgString(Exec),
+	    CmdArgs, Inputs, Output));
+}
+\end{lstlisting}
+
+在这个自定义链接阶段，我们希望使用\texttt{zip}或\texttt{tar}命令(取决于用户指定的\texttt{-fuse-ld}标志)来打包自定义\texttt{Assembler}生成的(Base64编码的)文件。
+
+稍后将解释\texttt{zip}和\texttt{tar}的命令格式。前面的代码中，可以看到这里做的事情与\texttt{Assembler::ConstructJob}类似。\texttt{Exec}变量携带\texttt{zip}或\texttt{tar}可执行文件的绝对路径。\texttt{CmdArgs}变量，由\texttt{buildZipArgs}或\texttt{buildTarArgs}填充，稍后将对此进行解释，它保存了工具的命令行参数(\texttt{zip}或\texttt{tar})。
+
+与\texttt{Assembler::ConstructJob}的最大区别是，要执行的命令可以由用户提供的\texttt{-fuse-ld}指定。因此，我们使用在添加自定义驱动标志部分中学到的技能，来读取驱动程序标志，并设置执行命令。
+
+\item 如果用户决定将文件打包为ZIP文件(这是默认方案，或者可以通过\texttt{-fuse-ld=zip}显式指定)，将运行以下命令:
+
+\begin{tcblisting}{commandshell={}}
+$ zip <output zip file> <input file 1> <input file 2>…
+\end{tcblisting}
+
+因此，我们将构建\texttt{Linker::buildZipArgs}方法，它为前面的命令构造一个参数列表，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+void
+tools::zipline::Linker::buildZipArgs(const JobAction &JA,
+										const InputInfo &Output,
+										const InputInfoList &Inputs,
+										const ArgList &Args,
+										ArgStringList &CmdArgs) const {
+	// output file
+	CmdArgs.push_back(Output.getFilename());
+	// input files
+	AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs,
+	JA);
+}
+\end{lstlisting}
+
+\texttt{buildZipArgs}的\texttt{CmdArgs}参数将是输出结果的地方。因为链接器可能一次接受多个输入，我们仍然使用相同的方法来获取输出文件名(通过\texttt{Output.getfilename()})。这里使用另一个辅助函数\texttt{AddLinkerInputs}，将所有的输入文件名添加到\texttt{CmdArgs}中。
+
+\item 如果用户决定使用\texttt{tar + gzip}的打包方案(使用\texttt{-fuseld=tar}或\texttt{-fuse-ld=gzip})，我们将运行以下命令:
+
+\begin{tcblisting}{commandshell={}}
+$ tar -czf <output tar.gz file> <input file 1> <input file 2>…
+\end{tcblisting}
+
+因此，我们将构建\texttt{Linker::buildTarArgs}方法，它为前面的命令构造一个参数列表，如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+void
+tools::zipline::Linker::buildTarArgs(const JobAction &JA,
+										const InputInfo &Output,
+										const InputInfoList &Inputs,
+										const ArgList &Args,
+										ArgStringList &CmdArgs)
+										const {
+	// arguments and output file
+	CmdArgs.push_back("-czf");
+	CmdArgs.push_back(Output.getFilename());
+	// input files
+	AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs,
+	 JA);
+}
+\end{lstlisting}
+
+与\texttt{buildZipArgs}一样，我们通过\texttt{Output.
+getFilename()}获取输出文件名，并使用\texttt{AddLinkerInput}将所有的输入文件名添加到\texttt{CmdArgs}中。
+
+\item 最后，连接到\texttt{ZiplineToolChain}:
+
+\begin{lstlisting}[style=styleCXX]
+Tool *ZiplineToolChain::buildLinker() const {
+	return new tools::zipline::Linker(*this);
+}
+\end{lstlisting}
+
+\end{enumerate}
+
+这就是我们为Zipline工具链，实现自定义链接阶段的所有步骤。
+
+既然已经为Zipline工具链创建了必要的组件，那么当用户选择这个工具链时，就可以执行我们的定制特性了——对源文件进行编码并将它们打包成一个存档文件。下一节中，我们将了解如何验证这些功能。
+
+\subsubsubsection{8.4.5\hspace{0.2cm}验证自定义工具链}
+
+为了测试本章中实现的功能，我们可以运行项目概述中描述的示例命令，或者可以再次使用\texttt{-\#\#\#}驱动标志转储所有预期的编译器、汇编器和链接器的命令细节。
+
+目前为止，我们已经知道\texttt{-\#\#\#}标志将显示所有被驱动程序翻译的前端标志。实际上，它还会显示计划运行的汇编器和链接器命令。我们使用以下命令:
+
+\begin{tcblisting}{commandshell={}}
+$ clang -### -zipline -c test.c
+\end{tcblisting}
+
+因为\texttt{-c}标志试图在Clang生成的汇编文件上运行汇编程序，所以在Zipline中的自定义汇编器(即Base64编码器)将触发。因此，将看到类似如下的输出:
+
+\begin{tcblisting}{commandshell={}}
+$ clang -### -zipline -c test.c
+"/path/to/clang" "-cc1" …
+"/usr/bin/openssl" "base64" "-in" "/tmp/test_ae4f5b.s" "-out"
+"test.o"
+$
+\end{tcblisting}
+
+以\texttt{/path/to/clang -cc1}开头的行包含了在前面遇到的前端标志。下面一行是汇编器调用的命令，在我们的例子中是运行openssl来执行Base64编码。
+
+奇怪的\texttt{/tmp/test\_ae4f5b.S}文件名是由驱动创建的临时文件，用于存放编译器生成的汇编代码。
+
+使用相同的技巧，可以验证我们的定制链接器阶段，如下所示:
+
+\begin{tcblisting}{commandshell={}}
+$ clang -### -zipline test.c -o test.zip
+"/path/to/clang" "-cc1" …
+"/usr/bin/openssl" "base64" "-in" "/tmp/test_ae4f5b.s" "-out"
+"/tmp/test_ae4f5b.o"
+"/usr/bin/zip" "test.zip" "/tmp/test_ae4f5b.o"
+$
+\end{tcblisting}
+
+由于\texttt{-o}标志在前面的命令中使用，Clang将由\texttt{test.c}构建一个完整的可执行文件，包括汇编器和链接器。因此，由于\texttt{zip}命令是从上一个汇编阶段获取的结果(\texttt{/tmp/test\_ae4f5b.o}文件)。所以，这里可以添加\texttt{加-fuse-ld=tar}标志，从而使用\texttt{zip}对\texttt{tar}命令进行替换。
+
+本节中，展示了如何为Clang的驱动程序创建一个工具链。这是在定制或新平台上支持Clang的关键技能。还了解了Clang的工具链框架非常灵活，可以处理目标平台的各种任务。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

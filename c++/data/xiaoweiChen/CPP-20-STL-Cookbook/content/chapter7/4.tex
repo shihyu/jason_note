@@ -1,0 +1,302 @@
+
+C++中，有几种方法可以连接字符串。本节中，我们将研究三个最常见的:字符串类operator+()、字符串类append()函数和ostringstream类operator<{}<()。C++20中新增了format()函数。
+
+\subsubsection{How to do it…}
+
+本示例中，将研究连接字符串的方法。然后，考虑不同的用例，执行一些基准测试。
+
+\begin{itemize}
+\item 
+从两个std::string对象开始:
+
+\begin{lstlisting}[style=styleCXX]
+string a{ "a" };
+string b{ "b" };
+\end{lstlisting}
+
+string对象是由字面C-string构造的。
+
+C-string构造函数生成字面值字符串的副本，并使用本地副本作为字符串对象的底层数据。
+
+\item 
+现在，构造一个新的空字符串对象，并用分隔符和换行符连接a和b:
+
+\begin{lstlisting}[style=styleCXX]
+string x{};
+x += a + ", " + b + "\n";
+cout << x;
+\end{lstlisting}
+
+这里，使用字符串对象的+=和+操作符来连接a和b字符串，以及字面字符串“，”和“\verb|\|n”。结果字符串包含连接在一起的元素:
+
+\begin{tcblisting}{commandshell={}}
+a, b
+\end{tcblisting}
+
+\item 
+可以使用string对象的append()成员函数:
+
+\begin{lstlisting}[style=styleCXX]
+string x{};
+x.append(a);
+x.append(", ");
+x.append(b);
+x.append("\n");
+cout << x;
+\end{lstlisting}
+
+结果相同:
+
+\begin{tcblisting}{commandshell={}}
+a, b
+\end{tcblisting}
+
+\item 
+或者，可以构造一个ostringstream对象，使用流接口:
+
+\begin{lstlisting}[style=styleCXX]
+ostringstream x{};
+x << a << ", " << b << "\n";
+cout << x.str();
+\end{lstlisting}
+
+得到了相同的结果:
+
+\begin{tcblisting}{commandshell={}}
+a, b
+\end{tcblisting}
+
+\item 
+也可以使用C++20的format()函数:
+
+\begin{lstlisting}[style=styleCXX]
+string x{};
+x = format("{}, {}\n", a, b);
+cout << x;
+\end{lstlisting}
+
+还是相同的结果:
+
+\begin{tcblisting}{commandshell={}}
+a, b
+\end{tcblisting}
+
+\end{itemize}
+
+\subsubsection{How it works…}
+
+string对象有两种不同的方法用于连接字符串:加法操作符和append()成员函数。
+
+append()成员函数的作用是:将数据添加到字符串对象的数据末尾，必须分配和管理内存来完成这个任务。
+
+加法操作符使用operator+()重载构造一个包含新旧数据的新字符串对象，并返回新对象。
+
+ostringstream对象的工作方式类似于ostream，但将其输出存储为字符串使用。
+
+C++20的format()函数使用带有可变参数的格式字符串，并返回一个新构造的字符串对象。
+
+\subsubsection{There's more…}
+
+如何决定哪种连接策略适合自己的代码?可以从一些基准测试开始。
+
+\noindent
+\textbf{基准测试}
+
+我在Debian Linux上使用GCC 11执行了这些测试:
+
+\begin{itemize}
+\item 
+首先，使用<chrono>库创建一个计时器函数:
+
+\begin{lstlisting}[style=styleCXX]
+using std::chrono::high_resolution_clock;
+using std::chrono::duration;
+
+void timer(string(*f)()) {
+	auto t1 = high_resolution_clock::now();
+	string s{ f() };
+	auto t2 = high_resolution_clock::now();
+	duration<double, std::milli> ms = t2 - t1;
+	cout << s;
+	cout << format("duration: {} ms\n", ms.count());
+}
+\end{lstlisting}
+
+timer函数调用传递给它的函数，标记函数调用前后的时间，并使用cout显示耗时。
+
+\item 
+现在，使用append()成员函数创建了一个连接字符串的函数:
+
+\begin{lstlisting}[style=styleCXX]
+string append_string() {
+	cout << "append_string\n";
+	string a{ "a" };
+	string b{ "b" };
+	long n{0};
+	while(++n) {
+		string x{};
+		x.append(a);
+		x.append(", ");
+		x.append(b);
+		x.append("\n");
+		if(n >= 10000000) return x;
+	}
+	return "error\n";
+}
+\end{lstlisting}
+
+为了进行基准测试，该函数将重复连接1000万次。使用timer()从main()调用这个函数:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	timer(append_string);
+}
+\end{lstlisting}
+
+得到这样的输出:
+
+\begin{tcblisting}{commandshell={}}
+append_string
+a, b
+duration: 425.361643 ms
+\end{tcblisting}
+
+所以，在这个系统上，连接字符串在大约425毫秒内运行了1000万次。
+
+\item 
+现在，用加法操作符重载创建相同的函数:
+
+\begin{lstlisting}[style=styleCXX]
+string concat_string() {
+	cout << "concat_string\n";
+	string a{ "a" };
+	string b{ "b" };
+	long n{0};
+	while(++n) {
+		string x{};
+		x += a + ", " + b + "\n";
+		if(n >= 10000000) return x;
+	}
+	return "error\n";
+}
+\end{lstlisting}
+
+基准测试输出:
+
+\begin{tcblisting}{commandshell={}}
+concat_string
+a, b
+duration: 659.957702 ms
+\end{tcblisting}
+
+这个版本在大约660毫秒内执行了1000万次。
+
+\item 
+现在，让用ostringstream试试:
+
+\begin{lstlisting}[style=styleCXX]
+string concat_ostringstream() {
+	cout << "ostringstream\n";
+	string a { "a" };
+	string b { "b" };
+	long n{0};
+	while(++n) {
+		ostringstream x{};
+		x << a << ", " << b << "\n";
+		if(n >= 10000000) return x.str();
+	}
+	return "error\n";
+}
+\end{lstlisting}
+
+基准测试输出:
+
+\begin{tcblisting}{commandshell={}}
+ostringstream
+a, b
+duration: 3462.020587 ms
+\end{tcblisting}
+
+这个版本在3.5秒内运行了1000万次迭代。
+
+\item 
+下面是format()版本:
+
+\begin{lstlisting}[style=styleCXX]
+string concat_format() {
+	cout << "append_format\n";
+	string a{ "a" };
+	string b{ "b" };
+	long n{0};
+	while(++n) {
+		string x{};
+		x = format("{}, {}\n", a, b);
+		if(n >= 10000000) return x;
+	}
+	return "error\n";
+}
+\end{lstlisting}
+
+基准测试输出:
+
+\begin{tcblisting}{commandshell={}}
+append_format
+a, b
+duration: 782.800547 ms
+\end{tcblisting}
+
+format()版本在大约783毫秒内运行了1000万次迭代。
+
+\item 
+结果总结:
+
+% Please add the following required packages to your document preamble:
+% \usepackage[table,xcdraw]{xcolor}
+% If you use beamer only pass "xcolor=table" option, i.e. \documentclass[xcolor=table]{beamer}
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|}
+	\hline
+	\rowcolor[HTML]{9B9B9B} 
+	{\color[HTML]{FFFFFF} 连接方式} & {\color[HTML]{FFFFFF} 基准(毫秒)} \\ \hline
+	append()      & 425 ms   \\ \hline
+	operator+()   & 660 ms   \\ \hline
+	format()      & 783 ms   \\ \hline
+	ostringstream & 3,462 ms \\ \hline
+\end{tabular}
+
+\hspace*{\fill} \\ %插入空行
+连接字符串的性能比较
+\end{table}
+
+\end{itemize}
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{为什么会出现性能差异?}
+
+可以从这些基准测试中看到，ostringstream版本比基于字符串的版本花费的时间长很多倍。
+
+append()方法比加法运算符略快，需要分配内存，但不构造新对象。由于重复进行，所以内部可能有一些优化。
+
+加法操作符重载可能调用append()方法，所以会比append()方法还要慢。
+
+format()版本创建了一个新的字符串对象，但没有iostream的开销。
+
+ostringstream操作符<{}<重载为每个操作创建一个新的ostream对象。考虑到流对象的复杂性，以及对流状态的管理，这使得它比基于字符串其他版本都要慢得多。
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textbf{如何选择?}
+
+其中会涉及到一些个人偏好的因素。操作符重载(+或<{}<)可以很方便，若不考虑性能的话。
+
+与string方法相比，ostringstream类有一个明显的优势:针对每种不同的类型，有相应的<{}<操作符，因此能够在不同类型调用相同代码的情况下进行操作。
+
+format()函数提供了相同的类型安全和自定义选项，并且比ostringstream类快得多。
+
+string对象的加法操作符重载快速、易于使用、易于读取，但比append()慢了一点点。
+
+append()版本是最快的，但需要为每个项使用单独的函数。
+
+通常，我更喜欢format()函数或字符串对象的加法运算符。若性能很重要，我会使用append()。我将在需要ostringstream独特特性，且性能不是问题的地方使用它。

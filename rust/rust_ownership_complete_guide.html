@@ -1,0 +1,843 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Rust 所有權完整指南 - 從基礎到精通 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="rust-所有權完整指南---從基礎到精通-"><a class="header" href="#rust-所有權完整指南---從基礎到精通-">Rust 所有權完整指南 - 從基礎到精通 🦀</a></h1>
+<h2 id="-核心概念速覽"><a class="header" href="#-核心概念速覽">🎯 核心概念速覽</a></h2>
+<p><strong>最重要的理解</strong>：</p>
+<ul>
+<li>✅ <strong>擁有權 (Ownership)</strong>：我的東西，沒有生命週期問題</li>
+<li>⚠️ <strong>借用 (Borrowing)</strong>：別人的東西，需要生命週期保護</li>
+<li>📊 <strong>記憶體管理</strong>：Stack vs Heap 決定了不同的行為</li>
+<li>🔄 <strong>資料複製</strong>：Copy vs Clone 的關鍵差異</li>
+</ul>
+<hr />
+<h2 id="-第一部分記憶體基礎---stack-vs-heap"><a class="header" href="#-第一部分記憶體基礎---stack-vs-heap">📚 第一部分：記憶體基礎 - Stack vs Heap</a></h2>
+<h3 id="-stack堆疊--快速且簡單"><a class="header" href="#-stack堆疊--快速且簡單">🏗️ Stack（堆疊）- 快速且簡單</a></h3>
+<p><strong>特徵</strong>：</p>
+<ul>
+<li>速度快，像疊盤子一樣 LIFO（後進先出）</li>
+<li>大小在編譯時就知道</li>
+<li>自動管理，不需要手動清理</li>
+<li><strong>沒有 ownership 問題！</strong></li>
+</ul>
+<p><strong>存放內容</strong>：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 這些都存在 Stack 上
+let age: i32 = 25;           // 4 bytes，固定大小
+let height: f64 = 175.5;     // 8 bytes，固定大小
+let is_student: bool = true; // 1 byte，固定大小
+let coordinates: (i32, i32) = (10, 20); // 8 bytes，固定大小
+
+// 這些是 Stack 上的「指標」，指向 Heap 的資料
+let name: String = String::from("小明");  // String 本身在 Stack，內容在 Heap
+let numbers: Vec&lt;i32&gt; = vec![1, 2, 3];   // Vec 本身在 Stack，內容在 Heap
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-heap堆積--靈活但複雜"><a class="header" href="#-heap堆積--靈活但複雜">🏠 Heap（堆積）- 靈活但複雜</a></h3>
+<p><strong>特徵</strong>：</p>
+<ul>
+<li>較慢，需要記憶體分配器尋找空間</li>
+<li>大小可以在執行時改變</li>
+<li>需要手動管理（Rust 幫你做）</li>
+<li><strong>這裡才有 ownership 問題！</strong></li>
+</ul>
+<p><strong>存放內容</strong>：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// String 的資料存在 Heap
+let mut message = String::from("Hello");
+message.push_str(" World");  // 可以動態增長
+
+// Vec 的資料存在 Heap  
+let mut numbers = Vec::new();
+numbers.push(1);  // 可以動態添加元素
+numbers.push(2);
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-記憶體布局視覺化"><a class="header" href="#-記憶體布局視覺化">🧠 記憶體布局視覺化</a></h3>
+<pre><code>Stack                    Heap
+┌─────────────┐         ┌──────────────────┐
+│ age: 25     │         │                  │
+├─────────────┤         │  "Hello World"   │ ← message 指向這裡
+│ message: ●──┼────────→│  (11 bytes)      │
+├─────────────┤         │                  │
+│ numbers: ●──┼────────→│  [1, 2, 3]       │
+└─────────────┘         │  (12 bytes)      │
+                        └──────────────────┘
+</code></pre>
+<hr />
+<h2 id="-第二部分copy-vs-clone---資料複製的兩種方式"><a class="header" href="#-第二部分copy-vs-clone---資料複製的兩種方式">🎭 第二部分：Copy vs Clone - 資料複製的兩種方式</a></h2>
+<h3 id="-copy-trait---像影印身分證"><a class="header" href="#-copy-trait---像影印身分證">📋 Copy Trait - 像影印身分證</a></h3>
+<p><strong>什麼是 Copy</strong>：</p>
+<ul>
+<li>在 Stack 上的簡單位元複製</li>
+<li>非常快速，像影印一樣</li>
+<li><strong>自動發生，不需要手動呼叫</strong></li>
+<li><strong>原始變數仍然有效</strong></li>
+</ul>
+<p><strong>哪些類型實作了 Copy</strong>：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 基本數值類型 - 都實作了 Copy
+let x: i32 = 5;
+let y = x;  // 自動 copy，x 仍然可用
+println!("x = {}, y = {}", x, y);  // ✅ 都可以用
+
+// 其他 Copy 類型
+let a: u32 = 10;
+let b: f64 = 3.14;
+let c: bool = true;
+let d: char = '🦀';
+let e: (i32, i32) = (1, 2);  // 如果元素都是 Copy，tuple 也是 Copy
+
+// 陣列（如果元素是 Copy）
+let arr1: [i32; 3] = [1, 2, 3];
+let arr2 = arr1;  // Copy
+println!("{:?} {:?}", arr1, arr2);  // ✅ 都可以用
+<span class="boring">}</span></code></pre></pre>
+<p><strong>為什麼這些類型可以 Copy</strong>：</p>
+<ul>
+<li>它們的大小固定且已知</li>
+<li>都存在 Stack 上</li>
+<li>複製成本很低</li>
+<li>沒有指向 Heap 的指標</li>
+</ul>
+<h3 id="-clone-trait---蓋一間一模一樣的房子"><a class="header" href="#-clone-trait---蓋一間一模一樣的房子">🖨️ Clone Trait - 蓋一間一模一樣的房子</a></h3>
+<p><strong>什麼是 Clone</strong>：</p>
+<ul>
+<li>深度複製，包括 Heap 上的資料</li>
+<li>可能很耗時和記憶體</li>
+<li><strong>需要手動呼叫 <code>.clone()</code></strong></li>
+<li>創建完全獨立的副本</li>
+</ul>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// String 需要 Clone（因為資料在 Heap）
+let s1 = String::from("Hello");
+let s2 = s1.clone();  // 手動 clone
+println!("s1 = {}, s2 = {}", s1, s2);  // ✅ 都可以用
+
+// Vec 需要 Clone
+let v1 = vec![1, 2, 3];
+let v2 = v1.clone();  // 複製整個向量和所有元素
+println!("v1 = {:?}, v2 = {:?}", v1, v2);  // ✅ 都可以用
+
+// 複雜結構的 Clone
+#[derive(Clone)]
+struct Person {
+    name: String,
+    age: i32,
+}
+
+let person1 = Person {
+    name: String::from("小明"),
+    age: 25,
+};
+let person2 = person1.clone();  // 深度複製所有字段
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-copy-vs-clone-對比表"><a class="header" href="#-copy-vs-clone-對比表">⚖️ Copy vs Clone 對比表</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>特徵</th><th>Copy</th><th>Clone</th></tr></thead><tbody>
+<tr><td><strong>觸發方式</strong></td><td>自動（賦值時）</td><td>手動（<code>.clone()</code>）</td></tr>
+<tr><td><strong>速度</strong></td><td>非常快</td><td>可能較慢</td></tr>
+<tr><td><strong>記憶體</strong></td><td>只複製 Stack</td><td>可能複製 Heap</td></tr>
+<tr><td><strong>原變數</strong></td><td>仍然有效</td><td>仍然有效</td></tr>
+<tr><td><strong>適用類型</strong></td><td>簡單類型</td><td>所有實作 Clone 的類型</td></tr>
+<tr><td><strong>成本</strong></td><td>幾乎為零</td><td>取決於資料大小</td></tr>
+</tbody></table>
+</div>
+<h3 id="-實際例子何時用-copy-vs-clone"><a class="header" href="#-實際例子何時用-copy-vs-clone">🔍 實際例子：何時用 Copy vs Clone</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn copy_example() {
+    let x = 42;
+    let y = x;  // Copy 自動發生
+    
+    println!("x: {}, y: {}", x, y);  // 兩個都能用
+    // 沒有性能問題，因為只是複製了 4 bytes
+}
+
+fn clone_example() {
+    let big_string = "A".repeat(1_000_000);  // 100萬個字元
+    let another_string = big_string.clone();  // 手動 clone
+    
+    // 這會複製 1MB 的資料！考慮是否真的需要
+    println!("Original length: {}", big_string.len());
+    println!("Clone length: {}", another_string.len());
+}
+
+fn better_approach() {
+    let big_string = "A".repeat(1_000_000);
+    let string_ref = &amp;big_string;  // 借用，不複製
+    
+    // 只是借用，沒有複製成本
+    println!("Length: {}", string_ref.len());
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="-第三部分ownership-系統詳解"><a class="header" href="#-第三部分ownership-系統詳解">🏠 第三部分：Ownership 系統詳解</a></h2>
+<h3 id="-基本規則用房子比喻"><a class="header" href="#-基本規則用房子比喻">📜 基本規則（用房子比喻）</a></h3>
+<ol>
+<li><strong>每個值都有一個所有者</strong> - 每間房子都有房主</li>
+<li><strong>同時只能有一個所有者</strong> - 一間房子只能有一個房主</li>
+<li><strong>所有者離開時，值被銷毀</strong> - 房主搬走，房子拆除</li>
+</ol>
+<h3 id="-重要ownership-只發生在-heap-資料"><a class="header" href="#-重要ownership-只發生在-heap-資料">🚨 重要：Ownership 只發生在 Heap 資料！</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Stack 資料 - 沒有 ownership 問題
+let x = 5;
+let y = x;  // Copy，兩個都有效
+println!("{} {}", x, y);  // ✅ 完全沒問題
+
+// Heap 資料 - 有 ownership 問題
+let s1 = String::from("hello");
+let s2 = s1;  // Move！s1 失效
+// println!("{}", s1);  // ❌ 編譯錯誤！s1 已經無效
+println!("{}", s2);     // ✅ s2 有效
+<span class="boring">}</span></code></pre></pre>
+<p><strong>為什麼只有 Heap 資料有 ownership 問題？</strong></p>
+<ol>
+<li>
+<p><strong>Stack 資料</strong>：</p>
+<ul>
+<li>大小固定，複製成本低</li>
+<li>自動管理，作用域結束就清理</li>
+<li>可以安全地複製多份</li>
+</ul>
+</li>
+<li>
+<p><strong>Heap 資料</strong>：</p>
+<ul>
+<li>大小可變，複製成本高</li>
+<li>需要明確的清理策略</li>
+<li>多個指標指向同一塊記憶體會造成問題</li>
+</ul>
+</li>
+</ol>
+<h3 id="-move轉移所有權"><a class="header" href="#-move轉移所有權">📦 Move：轉移所有權</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn move_example() {
+    let house = String::from("豪華別墅");  // house 是房主
+    let new_owner = house;               // 房契轉移給 new_owner
+    
+    // println!("{}", house);  // ❌ house 已經不是房主了
+    println!("{}", new_owner); // ✅ new_owner 現在是房主
+    
+    // 函數調用也會 move
+    take_ownership(new_owner);  // new_owner 的所有權轉移到函數內
+    // println!("{}", new_owner);  // ❌ new_owner 已經無效
+}
+
+fn take_ownership(some_string: String) {
+    println!("{}", some_string);
+}  // some_string 在這裡被銷毀
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="-第四部分借用-borrowing-與生命週期"><a class="header" href="#-第四部分借用-borrowing-與生命週期">🔗 第四部分：借用 (Borrowing) 與生命週期</a></h2>
+<h3 id="-核心概念只有借用才有生命週期問題"><a class="header" href="#-核心概念只有借用才有生命週期問題">🎯 核心概念：只有借用才有生命週期問題！</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>類型</th><th>生命週期</th><th>範例</th><th>說明</th></tr></thead><tbody>
+<tr><td><strong>擁有類型</strong></td><td>❌ 不需要</td><td><code>String</code>, <code>Vec&lt;T&gt;</code>, <code>i32</code></td><td>我的東西，隨便用</td></tr>
+<tr><td><strong>借用類型</strong></td><td>✅ 需要</td><td><code>&amp;str</code>, <code>&amp;Vec&lt;T&gt;</code>, <code>&amp;i32</code></td><td>別人的東西，要小心</td></tr>
+</tbody></table>
+</div>
+<h3 id="-不可變借用借來看看"><a class="header" href="#-不可變借用借來看看">🔍 不可變借用：借來看看</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn immutable_borrow() {
+    let book = String::from("Rust 程式設計");
+    let page_count = count_pages(&amp;book);  // 借用去數頁數
+    
+    println!("《{}》有 {} 頁", book, page_count);  // ✅ book 還在
+}
+
+fn count_pages(book_ref: &amp;String) -&gt; usize {
+    book_ref.len()  // 只是看看，不修改
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-可變借用借來修改"><a class="header" href="#-可變借用借來修改">✏️ 可變借用：借來修改</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn mutable_borrow() {
+    let mut note = String::from("今天學 Rust");
+    add_comment(&amp;mut note);  // 可變借用
+    
+    println!("{}", note);    // ✅ note 被修改了
+}
+
+fn add_comment(note_ref: &amp;mut String) {
+    note_ref.push_str("，很有趣！");
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-借用規則"><a class="header" href="#-借用規則">🚨 借用規則</a></h3>
+<ol>
+<li><strong>可以有多個不可變借用</strong></li>
+<li><strong>只能有一個可變借用</strong></li>
+<li><strong>可變借用期間，不能有其他借用</strong></li>
+</ol>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn borrowing_rules() {
+    let mut data = String::from("資料");
+    
+    // ✅ 多個不可變借用 OK
+    let r1 = &amp;data;
+    let r2 = &amp;data;
+    println!("{} 和 {}", r1, r2);
+    
+    // ✅ 可變借用（在不可變借用結束後）
+    let r3 = &amp;mut data;
+    r3.push_str("更新");
+    println!("{}", r3);
+    
+    // ❌ 這樣會錯誤：同時有可變和不可變借用
+    // let r4 = &amp;data;
+    // let r5 = &amp;mut data;  // 錯誤！
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="-第五部分生命週期詳解"><a class="header" href="#-第五部分生命週期詳解">⚠️ 第五部分：生命週期詳解</a></h2>
+<h3 id="-什麼時候需要生命週期標註"><a class="header" href="#-什麼時候需要生命週期標註">🤔 什麼時候需要生命週期標註？</a></h3>
+<p><strong>函數接收引用並返回引用</strong> → 必須寫生命週期標註！</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ 編譯錯誤：缺少生命週期標註
+fn longest(x: &amp;str, y: &amp;str) -&gt; &amp;str {
+    if x.len() &gt; y.len() { x } else { y }
+}
+
+// ✅ 正確：明確生命週期關係
+fn longest&lt;'a&gt;(x: &amp;'a str, y: &amp;'a str) -&gt; &amp;'a str {
+    if x.len() &gt; y.len() { x } else { y }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-編譯器的困惑"><a class="header" href="#-編譯器的困惑">🧠 編譯器的困惑</a></h3>
+<p>編譯器需要知道：</p>
+<ul>
+<li>返回的引用來自哪個參數？</li>
+<li>這個引用能活多久？</li>
+<li>如何確保不會產生懸空指標？</li>
+</ul>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn lifetime_example() {
+    let string1 = "long string is long";
+    
+    {
+        let string2 = "xyz";
+        let result = longest(string1, string2);
+        println!("最長的是：{}", result);
+        // result 在這裡還能用，因為兩個輸入都還活著
+    }
+    // string2 死了，但沒關係，我們已經用完 result
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-避免生命週期的方法"><a class="header" href="#-避免生命週期的方法">💡 避免生命週期的方法</a></h3>
+<h4 id="方案-1返回擁有權"><a class="header" href="#方案-1返回擁有權">方案 1：返回擁有權</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn longest_owned(x: &amp;str, y: &amp;str) -&gt; String {
+    if x.len() &gt; y.len() {
+        x.to_string()  // 創建新的 String
+    } else {
+        y.to_string()
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="方案-2返回其他資訊"><a class="header" href="#方案-2返回其他資訊">方案 2：返回其他資訊</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn is_first_longer(x: &amp;str, y: &amp;str) -&gt; bool {
+    x.len() &gt; y.len()
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="-第六部分結構體中的選擇"><a class="header" href="#-第六部分結構體中的選擇">📋 第六部分：結構體中的選擇</a></h2>
+<h3 id="-方案-a全用擁有權推薦新手"><a class="header" href="#-方案-a全用擁有權推薦新手">✅ 方案 A：全用擁有權（推薦新手）</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Person {
+    name: String,        // 擁有
+    email: String,       // 擁有
+    age: u32,           // 擁有（Copy 類型）
+}
+
+impl Person {
+    fn new(name: String, email: String, age: u32) -&gt; Self {
+        Person { name, email, age }
+    }
+    
+    // 完全沒有生命週期問題！
+    fn introduction(&amp;self) -&gt; String {
+        format!("我是 {}，{}歲，email: {}", 
+                self.name, self.age, self.email)
+    }
+}
+
+fn owned_example() {
+    let person = Person::new(
+        "小明".to_string(),
+        "ming@example.com".to_string(),
+        25
+    );
+    
+    println!("{}", person.introduction());
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-方案-b使用借用需要生命週期"><a class="header" href="#-方案-b使用借用需要生命週期">⚠️ 方案 B：使用借用（需要生命週期）</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct PersonRef&lt;'a&gt; {
+    name: &amp;'a str,       // 借用 - 需要 'a
+    email: &amp;'a str,      // 借用 - 需要 'a  
+    age: u32,           // 擁有 - 不需要 'a
+}
+
+impl&lt;'a&gt; PersonRef&lt;'a&gt; {
+    fn new(name: &amp;'a str, email: &amp;'a str, age: u32) -&gt; Self {
+        PersonRef { name, email, age }
+    }
+    
+    fn introduction(&amp;self) -&gt; String {
+        format!("我是 {}，{}歲，email: {}", 
+                self.name, self.age, self.email)
+    }
+}
+
+fn borrowed_example() {
+    let name = "小華";
+    let email = "hua@example.com";
+    
+    let person = PersonRef::new(name, email, 30);
+    println!("{}", person.introduction());
+    // name 和 email 必須比 person 活得更久
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="-第七部分實用指南"><a class="header" href="#-第七部分實用指南">🎯 第七部分：實用指南</a></h2>
+<h3 id="-什麼時候用借用"><a class="header" href="#-什麼時候用借用">🚀 什麼時候用借用？</a></h3>
+<p><strong>✅ 適合借用的情況</strong>：</p>
+<ol>
+<li><strong>函數參數</strong> - 避免不必要的所有權轉移</li>
+<li><strong>大型資料</strong> - 避免昂貴的複製</li>
+<li><strong>短期使用</strong> - 臨時操作</li>
+</ol>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 函數參數借用
+fn print_info(name: &amp;str, age: u32) {
+    println!("{} 今年 {} 歲", name, age);
+}
+
+// 處理大型資料
+fn analyze_data(data: &amp;Vec&lt;u8&gt;) -&gt; usize {
+    data.len()  // 只需要讀取，不需要擁有
+}
+
+// 字串切片
+fn get_first_word(text: &amp;str) -&gt; &amp;str {
+    match text.find(' ') {
+        Some(index) =&gt; &amp;text[..index],
+        None =&gt; text,
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>❌ 不適合借用的情況</strong>：</p>
+<ol>
+<li><strong>結構體字段</strong> - 複雜的生命週期管理</li>
+<li><strong>返回值</strong> - 避免懸空引用</li>
+<li><strong>長期存儲</strong> - 所有權更清晰</li>
+</ol>
+<h3 id="-記憶口訣與決策樹"><a class="header" href="#-記憶口訣與決策樹">🧠 記憶口訣與決策樹</a></h3>
+<h4 id="生命週期決策樹"><a class="header" href="#生命週期決策樹">生命週期決策樹</a></h4>
+<pre><code>是否需要寫生命週期標註？
+├─ 有 `&amp;` 符號嗎？
+│  ├─ 沒有 → ❌ 不需要
+│  └─ 有 → 繼續判斷
+│      ├─ 函數接收引用並返回引用？
+│      │  ├─ 是 → ✅ 需要生命週期標註
+│      │  └─ 否 → ❌ 不需要
+│      └─ 結構體存儲引用？
+│         └─ 是 → ✅ 需要生命週期標註
+</code></pre>
+<h4 id="記憶口訣"><a class="header" href="#記憶口訣">記憶口訣</a></h4>
+<ul>
+<li><strong>Stack 資料 Copy，Heap 資料 Move</strong></li>
+<li><strong>擁有權在 Heap，Copy 在 Stack</strong></li>
+<li><strong>借用要歸還，生命週期保安全</strong></li>
+<li><strong>函數進出都是引用，生命週期必須標</strong></li>
+</ul>
+<h3 id="-實用範例配置管理"><a class="header" href="#-實用範例配置管理">🎨 實用範例：配置管理</a></h3>
+<pre><pre class="playground"><code class="language-rust">// 推薦：全擁有權版本
+#[derive(Debug, Clone)]
+struct Config {
+    database_url: String,
+    api_key: String,
+    max_connections: u32,
+    debug_mode: bool,
+}
+
+impl Config {
+    fn from_env() -&gt; Self {
+        Config {
+            database_url: std::env::var("DATABASE_URL")
+                .unwrap_or_else(|_| "localhost:5432".to_string()),
+            api_key: std::env::var("API_KEY")
+                .unwrap_or_else(|_| "default_key".to_string()),
+            max_connections: 10,
+            debug_mode: false,
+        }
+    }
+    
+    fn connection_string(&amp;self) -&gt; String {
+        format!("{}?max_conn={}", self.database_url, self.max_connections)
+    }
+}
+
+// 使用
+fn main() {
+    let config = Config::from_env();
+    println!("設定：{:?}", config);
+    println!("連接字串：{}", config.connection_string());
+    
+    // 可以輕鬆複製配置
+    let backup_config = config.clone();
+    println!("備份設定：{:?}", backup_config);
+}</code></pre></pre>
+<hr />
+<h2 id="-第八部分性能考慮"><a class="header" href="#-第八部分性能考慮">📊 第八部分：性能考慮</a></h2>
+<h3 id="-性能對比"><a class="header" href="#-性能對比">⚡ 性能對比</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>操作</th><th>Stack</th><th>Heap</th><th>說明</th></tr></thead><tbody>
+<tr><td><strong>分配</strong></td><td>極快</td><td>較慢</td><td>Stack 只需移動指標</td></tr>
+<tr><td><strong>存取</strong></td><td>極快</td><td>較慢</td><td>Stack 有更好的局部性</td></tr>
+<tr><td><strong>複製</strong></td><td>快</td><td>慢</td><td>Stack 是簡單的記憶體複製</td></tr>
+<tr><td><strong>清理</strong></td><td>自動</td><td>自動</td><td>Rust 的 RAII 系統</td></tr>
+</tbody></table>
+</div>
+<h3 id="-優化建議"><a class="header" href="#-優化建議">🔧 優化建議</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ 不必要的分配
+fn bad_example() -&gt; String {
+    let mut result = String::new();
+    for i in 0..1000 {
+        result = format!("{}{}", result, i);  // 每次都重新分配！
+    }
+    result
+}
+
+// ✅ 更好的方法
+fn good_example() -&gt; String {
+    let mut result = String::with_capacity(4000);  // 預分配容量
+    for i in 0..1000 {
+        result.push_str(&amp;i.to_string());
+    }
+    result
+}
+
+// ✅ 最佳方法（如果可能的話）
+fn best_example(buffer: &amp;mut String) {
+    buffer.clear();
+    for i in 0..1000 {
+        buffer.push_str(&amp;i.to_string());
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="-總結掌握-rust-所有權的關鍵"><a class="header" href="#-總結掌握-rust-所有權的關鍵">🏆 總結：掌握 Rust 所有權的關鍵</a></h2>
+<h3 id="-核心理解框架"><a class="header" href="#-核心理解框架">🎯 核心理解框架</a></h3>
+<ol>
+<li>
+<p><strong>記憶體模型</strong>：</p>
+<ul>
+<li>Stack = 快速 + 自動管理 + Copy</li>
+<li>Heap = 靈活 + 手動管理 + Move</li>
+</ul>
+</li>
+<li>
+<p><strong>所有權規則</strong>：</p>
+<ul>
+<li>只有 Heap 資料有所有權問題</li>
+<li>Stack 資料自動 Copy，沒有所有權轉移</li>
+</ul>
+</li>
+<li>
+<p><strong>借用系統</strong>：</p>
+<ul>
+<li>不可變借用：隨意多個</li>
+<li>可變借用：獨佔一個</li>
+<li>生命週期確保安全</li>
+</ul>
+</li>
+<li>
+<p><strong>生命週期標註</strong>：</p>
+<ul>
+<li>只在必要時使用</li>
+<li>函數輸入輸出都是引用時需要</li>
+<li>結構體存儲引用時需要</li>
+</ul>
+</li>
+</ol>
+<h3 id="-實踐建議"><a class="header" href="#-實踐建議">🚀 實踐建議</a></h3>
+<p><strong>初學者策略</strong>：</p>
+<ol>
+<li>優先使用擁有權類型（String, Vec, etc.）</li>
+<li>函數參數使用借用（&amp;str, &amp;[T], etc.）</li>
+<li>避免在結構體中存儲引用</li>
+<li>理解 Copy vs Clone 的差異</li>
+</ol>
+<p><strong>進階優化</strong>：</p>
+<ol>
+<li>合理使用借用減少複製</li>
+<li>理解生命週期標註的時機</li>
+<li>選擇合適的資料結構</li>
+<li>考慮性能影響</li>
+</ol>
+<p><strong>記憶要點</strong>：</p>
+<ul>
+<li>🏠 <strong>擁有權</strong> = 房子是我的，我控制何時拆除</li>
+<li>📞 <strong>借用</strong> = 朋友借房子，朋友搬家前要還回來</li>
+<li>📋 <strong>Copy</strong> = 像影印身分證，簡單快速</li>
+<li>🖨️ <strong>Clone</strong> = 蓋一間一樣的房子，費時費力</li>
+<li>🧠 <strong>生命週期</strong> = 確保借用安全的編譯時檢查</li>
+</ul>
+<p>Rust 的所有權系統看似複雜，但掌握這些核心概念後，你就能寫出既安全又高效的程式碼！🎉</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../rust/rust_ownership_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../rust/rust_memory_guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../rust/rust_ownership_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../rust/rust_memory_guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

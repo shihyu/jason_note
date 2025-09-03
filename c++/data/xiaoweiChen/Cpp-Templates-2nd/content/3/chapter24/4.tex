@@ -1,0 +1,92 @@
+包扩展(在第12.4.1节中有详细描述)是一种机制，可将类型列表迭代的工作转移给编译器。因为需要对列表中的每个元素应用相同的操作(进行包扩展)，这里可以使用在第24.2.5节中开发的Transform算法。这为类型列表的Transform提供了一个特化算法(通过偏特化):
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typelist/variadictransform.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename... Elements, template<typename T> class MetaFun>
+class TransformT<Typelist<Elements...>, MetaFun, false>
+{
+	public:
+	using Type = Typelist<typename MetaFun<Elements>::Type...>;
+};
+\end{lstlisting}
+
+这个实现将类型列表元素捕获到一个参数包elements中，使用模式typename MetaFun<Elements>::Type进行包扩展，将元功能应用到Elements中的每个类型，并形成一个类型列表。因为它不需要递归，所以这个实现更简单，并且以一种相当直接的方式使用语言特性。因为只需要实例化Transform模板的一个实例，所以需要更少的模板实例化。该算法仍然需要线性数量的MetaFun实例化，这些实例化是算法的基础。
+
+其他算法间接受益于使用包扩展，在第24.2.4节中描述的反向算法需要线性数量的PushBack实例化。在那一节中描述的类型列表PushBack的包扩展形式(需要单个实例化)，Reverse是线性的。然而，描述的Reverse更一般的递归实现本身在实例化数量上是线性的，使Reverse的复杂度与数量成平方关系(2次方)!
+
+选择给定索引列表中的元素以生成新的类型列表时，可以使用Pack扩展。Select元函数接受一个类型列表和一个包含该类型列表索引的值列表，然后生成一个包含由值列表指定元素的新类型列表:
+
+\hspace*{\fill} \\ %插入空行
+\noindent
+\textit{typelist/select.hpp}
+\begin{lstlisting}[style=styleCXX]
+template<typename Types, typename Indices>
+class SelectT;
+
+template<typename Types, unsigned... Indices>
+class SelectT<Types, Valuelist<unsigned, Indices...>>
+{
+	public:
+	using Type = Typelist<NthElement<Types, Indices>...>;
+};
+
+template<typename Types, typename Indices>
+using Select = typename SelectT<Types, Indices>::Type;
+\end{lstlisting}
+
+索引在参数包Indices中捕获，该参数包扩展以生成索引到给定类型列表的一系列NthElement类型，并在新参数列表中捕获结果。下面的例子说明了如何使用Select来反转输入列表:
+
+\begin{lstlisting}[style=styleCXX]
+using SignedIntegralTypes =
+	Typelist<signed char, short, int, long, long long>;
+
+using ReversedSignedIntegralTypes =
+	Select<SignedIntegralTypes, Valuelist<unsigned, 4, 3, 2, 1, 0>>;
+	// produces Typelist<long long, long, int, short, signed char>
+\end{lstlisting}
+
+包含另一个列表索引的非类型类型列表，称为索引列表(或索引序列)，允许简化或消除递归计算。索引列表在25.3.4节有详细的描述。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

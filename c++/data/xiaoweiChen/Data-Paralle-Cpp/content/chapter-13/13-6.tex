@@ -1,0 +1,298 @@
+本节中，我们将深入讨论一个主题，其会给SYCL的新用户带来困惑，以及新SYCL开发人员会遇到(以我们的经验)的第一个bug。\par
+
+简单地说，当从主机内存分配(例如，数组或向量)创建缓冲区时，主机不能直接访问。缓冲区的整个生命周期内，缓冲区拥有在构造时传入的主机内存。很少有机制允许在缓冲区还存在时访问主机内存(例如，缓冲区互斥)，但是这些高级特性对调试早期bug没有帮助。\par
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black]
+如果使用主机内存构造缓冲区，不能直接访问主机内存，直到缓冲区销毁!当缓冲区处于活动状态时，其会占有相应内存。
+\end{tcolorbox}
+
+当主机程序访问主机内存，而缓冲区仍然拥有该内存时，会出现一个错误，因为不知道缓冲区的类型。如果数据是错误的，不要感到惊讶。如第3章和第8章所述，SYCL是围绕异步任务图构建的。尝试使用任务图操作输出数据之前，需要确保已经到达了同步点，并使数据对主机可用。缓冲区销毁和主机访问器的创建都会触发同步。\par
+
+图13-6展示了代码的模式，通过关闭定义缓冲区的作用域来销毁缓冲区。通过销毁缓冲区，可以给缓冲区构造函数的主机内存，从而可以安全地读取内核结果。\par
+
+\hspace*{\fill} \par %插入空行
+图13-6 从主机内存创建通用模式的缓冲区
+\begin{lstlisting}[caption={}]
+constexpr size_t N = 1024;
+
+// Set up queue on any available device
+queue q;
+
+// Create host containers to initialize on the host
+std::vector<int> in_vec(N), out_vec(N);
+
+// Initialize input and output vectors
+for (int i=0; i < N; i++) in_vec[i] = i;
+std::fill(out_vec.begin(), out_vec.end(), 0);
+
+// Nuance: Create new scope so that we can easily cause
+// buffers to go out of scope and be destroyed
+{
+	
+	// Create buffers using host allocations (vector in this case)
+	buffer in_buf{in_vec}, out_buf{out_vec};
+	
+	// Submit the kernel to the queue
+	q.submit([&](handler& h) {
+		accessor in{in_buf, h};
+		accessor out{out_buf, h};
+		
+		h.parallel_for(range{N}, [=](id<1> idx) {
+			out[idx] = in[idx];
+		});
+	});
+
+	// Close the scope that buffer is alive within! Causes
+	// buffer destruction which will wait until the kernels
+	// writing to buffers have completed, and will copy the
+	// data from written buffers back to host allocations (our
+	// std::vectors in this case). After the buffer destructor
+	// runs, caused by this closing of scope, then it is safe
+	// to access the original in_vec and out_vec again!
+}
+
+// Check that all outputs match expected value
+// WARNING: The buffer destructor must have run for us to safely
+// use in_vec and out_vec again in our host code. While the buffer
+// is alive it owns those allocations, and they are not safe for us
+// to use! At the least they will contain values that are not up to
+// date. This code is safe and correct because the closing of scope
+// above has caused the buffer to be destroyed before this point
+// where we use the vectors again.
+for (int i=0; i<N; i++) 
+	std::cout << "out_vec[" << i << "]=" << out_vec[i] << "\n";
+\end{lstlisting}
+
+将缓冲区与现有主机内存关联有两个常见的原因，如图13-6所示:\par
+
+\begin{enumerate}
+	\item 简化缓冲区的初始化。可以从已经初始化的主机内存(或应用程序的其他部分)中构造缓冲区。
+	\item 减少输入的字符，因为用“\}”关闭作用域比创建缓冲区的host\_accessor更简洁(更容易出错)。
+\end{enumerate}
+
+如果使用主机内存转储或验证内核的输出值，需要将缓冲区分配放入作用域(或其他作用域)中，这样就可以控制缓冲区的销毁了。然后，必须确保访问主机内存，在获得内核输出之前销毁缓冲区。图13-6显展了这方面的正确实现，而图13-7展示了一个错误实现，即仍在缓冲区活动时访问输出。\par
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black]
+高级用户可能更喜欢使用缓冲区销毁，将结果数据从内核返回到主机内存分配内存中。对于大多数用户，特别是新手开发者，建议使用作用域内的主机访问器。
+\end{tcolorbox}
+
+\hspace*{\fill} \par %插入空行
+图13-7 常见错误:缓冲区生命周期内直接从主机分配内存中读取数据
+\begin{lstlisting}[caption={}]
+constexpr size_t N = 1024;
+
+// Set up queue on any available device
+queue q;
+
+// Create host containers to initialize on the host
+std::vector<int> in_vec(N), out_vec(N);
+
+// Initialize input and output vectors
+for (int i=0; i < N; i++) in_vec[i] = i;
+std::fill(out_vec.begin(), out_vec.end(), 0);
+
+// Create buffers using host allocations (vector in this case)
+buffer in_buf{in_vec}, out_buf{out_vec};
+
+// Submit the kernel to the queue
+q.submit([&](handler& h) {
+	accessor in{in_buf, h};
+	accessor out{out_buf, h};
+	
+	h.parallel_for(range{N}, [=](id<1> idx) {
+		out[idx] = in[idx];
+	});
+});
+
+// BUG!!! We're using the host allocation out_vec, but the buffer out_buf
+// is still alive and owns that allocation! We will probably see the
+// initialiation value (zeros) printed out, since the kernel probably
+// hasn't even run yet, and the buffer has no reason to have copied
+// any output back to the host even if the kernel has run.
+for (int i=0; i<N; i++)
+	std::cout << "out_vec[" << i << "]=" << out_vec[i] << "\n";
+\end{lstlisting}
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black]
+请使用主机访问器，而不是直接访问内存，特别是在开始时。
+\end{tcolorbox}
+
+为了避免这些错误，建议在开始使用SYCL和DPC++时使用主机访问器，而不是直接访问内存。主机访问器提供了对来自主机的缓冲区的访问。当构造完成时，就可以保证之前对缓冲区的任何写入(例如，创建host\_accessor之前提交的内核)都已经执行并且可见。本书混合使用了这两种风格(即，主机访问器和传递给缓冲区构造函数的主机分配)，以便熟悉这两种风格。开始时，使用主机访问器不容易出错。图13-8展示了如何使用主机访问器从内核读取输出，而不破坏缓冲区。\par
+
+\hspace*{\fill} \par %插入空行
+图13-8 建议:使用主机访问器读取内核结果
+\begin{lstlisting}[caption={}]
+constexpr size_t N = 1024;
+
+// Set up queue on any available device
+queue q;
+
+// Create host containers to initialize on the host
+std::vector<int> in_vec(N), out_vec(N);
+
+// Initialize input and output vectors
+for (int i=0; i < N; i++) in_vec[i] = i;
+std::fill(out_vec.begin(), out_vec.end(), 0
+);
+// Create buffers using host allocations (vector in this case)
+buffer in_buf{in_vec}, out_buf{out_vec};
+
+// Submit the kernel to the queue
+q.submit([&](handler& h) {
+	accessor in{in_buf, h};
+	accessor out{out_buf, h};
+	
+	h.parallel_for(range{N}, [=](id<1> idx) {
+		out[idx] = in[idx];
+	});
+});
+
+// Check that all outputs match expected value
+// Use host accessor! Buffer is still in scope / alive
+host_accessor A{out_buf};
+
+for (int i=0; i<N; i++) std::cout << "A[" << i << "]=" << A[i] << "\n";
+\end{lstlisting}
+
+只要缓冲区没销毁，就可以使用主机访问器，例如：在缓冲区生命周期的两端，用于初始化缓冲区内容和从内核读取结果，如图13-9所示。\par
+
+\hspace*{\fill} \par %插入空行
+图13-9 建议:使用主机访问器进行缓冲区初始化和读取结果
+\begin{lstlisting}[caption={}]
+constexpr size_t N = 1024;
+
+// Set up queue on any available device
+queue q;
+
+// Create buffers of size N
+buffer<int> in_buf{N}, out_buf{N};
+
+// Use host accessors to initialize the data
+{ // CRITICAL: Begin scope for host_accessor lifetime!
+	host_accessor in_acc{ in_buf }, out_acc{ out_buf };
+	for (int i=0; i < N; i++) {
+		in_acc[i] = i;
+		out_acc[i] = 0;
+	}
+} // CRITICAL: Close scope to make host accessors go out of scope!
+
+// Submit the kernel to the queue
+q.submit([&](handler& h) {
+	accessor in{in_buf, h};
+	accessor out{out_buf, h};
+	
+	h.parallel_for(range{N}, [=](id<1> idx) {
+		out[idx] = in[idx];
+	});
+});
+
+// Check that all outputs match expected value
+// Use host accessor! Buffer is still in scope / alive
+host_accessor A{out_buf};
+
+for (int i=0; i<N; i++) std::cout << "A[" << i << "]=" << A[i] << "\n";
+\end{lstlisting}
+
+最后要提到的是，主机访问器有时会在应用程序中引发错误，因为它们也有生命周期。当缓冲区的host\_accessor在生命周期中，运行时将不允许任何设备使用该缓冲区!运行时不会分析主程序来确定什么时候可以访问主机访问器，所以主机程序访问缓冲区的唯一方法是运行host\_accessor析构函数。如图13-10所示，如果主程序正在等待内核运行(例如，queue::wait()或获取另一个主机访问器)，如果DPC++运行时正在等待之前的主机访问器销毁，在销毁之后才能操作使用缓冲区的内核，这可能会导致应用程序挂起等待。\par
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black]
+使用主机访问器时，请确保内核或其他主机访问器不再需要解锁缓冲区时销毁它们。
+\end{tcolorbox}
+
+\hspace*{\fill} \par %插入空行
+图13-10 host\_accessors使用不当是会挂起程序
+\begin{lstlisting}[caption={}]
+constexpr size_t N = 1024;
+
+// Set up queue on any available device
+queue q;
+
+// Create buffers using host allocations (vector in this case)
+buffer<int> in_buf{N}, out_buf{N};
+
+// Use host accessors to initialize the data
+host_accessor in_acc{ in_buf }, out_acc{ out_buf };
+for (int i=0; i < N; i++) {
+	in_acc[i] = i;
+	out_acc[i] = 0;
+}
+
+// BUG: Host accessors in_acc and out_acc are still alive!
+// Later q.submits will never start on a device, because the
+// runtime doesn't know that we've finished accessing the
+// buffers via the host accessors. The device kernels
+// can't launch until the host finishes updating the buffers,
+// since the host gained access first (before the queue submissions).
+// This program will appear to hang! Use a debugger in that case.
+
+// Submit the kernel to the queue
+q.submit([&](handler& h) {
+	accessor in{in_buf, h};
+	accessor out{out_buf, h};
+	
+	h.parallel_for(range{N}, [=](id<1> idx) {
+		out[idx] = in[idx];
+	});
+});
+
+std::cout <<
+	"This program will deadlock here!!! Our host_accessors used\n"
+	" for data initialization are still in scope, so the runtime won't\n"
+	" allow our kernel to start executing on the device (the host could\n"
+	" still be initializing the data that is used by the kernel). "
+	" The next line\n of code is acquiring a host accessor for"
+	" the output, which will wait for\n the kernel to run first. "
+	" Since in_acc and out_acc have not been\n"
+	" destructed, the kernel is not safe for the runtime to run, "
+	" and we deadlock.\n";
+	
+// Check that all outputs match expected value
+// Use host accessor! Buffer is still in scope / alive
+host_accessor A{out_buf};
+
+for (int i=0; i<N; i++) std::cout << "A[" << i << "]=" << A[i] << "\n";
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

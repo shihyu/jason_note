@@ -1,0 +1,125 @@
+第2章中，讨论了C++14中引入的泛型Lambda，以及C++20中引入的Lambda模板。对至少一个参数使用auto说明符的Lambda称为泛型Lambda。编译器生成的函数对象，将具有模板化的调用操作符。这里有一个例子:
+
+\begin{lstlisting}[style=styleCXX]
+auto lsum = [](auto a, auto b) {return a + b; };
+\end{lstlisting}
+
+C++20标准将此特性推广到所有函数，可以在函数参数列表中使用auto。这具有将函数转换为模板函数的效果:
+
+\begin{lstlisting}[style=styleCXX]
+auto add(auto a, auto b)
+{
+	return a + b;
+}
+\end{lstlisting}
+
+这是一个函数，接受两个参数并返回和(或者更准确地说，是对两个值应用operator+的结果)。使用auto作为函数参数的函数称为缩写函数模板，是函数模板的简写语法。上述函数的等效模板如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T, typename U>
+auto add(T a, U b)
+{
+	return a + b;
+}
+\end{lstlisting}
+
+可以像调用模板函数一样调用这个函数，编译器将通过用实际类型替换模板参数的方式，生成适当的实例化。考虑以下的调用方式:
+
+\begin{lstlisting}[style=styleCXX]
+add(4, 2); // returns 6
+add(4.0, 2); // returns 6.0
+\end{lstlisting}
+
+可以用cppinsights.io网站检查编译器生成的代码，以添加基于这两个调用的缩写函数模板。生成以下特化:
+
+\begin{lstlisting}[style=styleCXX]
+template<>
+int add<int, int>(int a, int b)
+{
+	return a + b;
+}
+
+template<>
+double add<double, int>(double a, int b)
+{
+	return a + static_cast<double>(b);
+}
+\end{lstlisting}
+
+由于缩写函数模板只不过是具有简化语法的常规函数模板，这样的函数可以由用户显式特化:
+
+\begin{lstlisting}[style=styleCXX]
+template<>
+auto add(char const* a, char const* b)
+{
+	return std::string(a) + std::string(b);
+}
+\end{lstlisting}
+
+这是char const*类型的全特化。这种特化能够调用add("4"，"2")，尽管结果是一个std::string值。
+
+这类简化的函数模板称为无约束函数模板，模板参数没有限制，但可以用概念为它们的参数提供约束。使用概念的简短函数模板称为约束函数模板。下面，会看到一个add函数约束整型的例子:
+
+\begin{lstlisting}[style=styleCXX]
+auto add(std::integral auto a, std::integral auto b)
+{
+	return a + b;
+}
+\end{lstlisting}
+
+若再次考虑前面看到的相同调用，第一个将会成功，但第二个将会产生编译器错误，因为没有重载接受double和int值:
+
+\begin{lstlisting}[style=styleCXX]
+add(4, 2); // OK
+add(4.2, 0); // error
+\end{lstlisting}
+
+约束auto也可以用于可变参数缩写函数模板。示例如下所示:
+
+\begin{lstlisting}[style=styleCXX]
+auto add(std::integral auto ... args)
+{
+	return (args + ...);
+}
+\end{lstlisting}
+
+最后，受约束的auto也可以用于通用的Lambda。若希望本节开头所示的泛型Lambda仅用于整型，可以按以下方式对其进行约束:
+
+\begin{lstlisting}[style=styleCXX]
+auto lsum = [](std::integral auto a, std::integral auto b)
+{
+	return a + b;
+};
+\end{lstlisting}
+
+随着本节的结束，我们已经了解了C++20中与概念和约束相关的语言特性。接下来要讨论的是标准库提供的概念集。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

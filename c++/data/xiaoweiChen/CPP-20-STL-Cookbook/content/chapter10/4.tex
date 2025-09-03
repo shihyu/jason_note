@@ -1,0 +1,452 @@
+
+
+文件系统库提供了一个directory\_entry类，其中包含关于给定路径的目录相关信息，可以使用它来创建有用的目录列表。
+
+\subsubsection{How to do it…}
+
+在这个示例中，使用directory\_entry类中的信息创建目录列表:
+
+\begin{itemize}
+\item 
+从显示路径对象的命名空间别名和格式化特化开始:
+
+\begin{lstlisting}[style=styleCXX]
+namespace fs = std::filesystem;
+template<>
+struct std::formatter<fs::path>:
+std::formatter<std::string> {
+	template<typename FormatContext>
+	auto format(const fs::path& p, FormatContext& ctx) {
+		return format_to(ctx.out(), "{}", p.string());
+	}
+};
+\end{lstlisting}
+
+\item 
+directory\_iterator类可以方便地列出目录:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	constexpr const char* fn{ "." };
+	const fs::path fp{fn};
+	for(const auto& de : fs::directory_iterator{fp}) {
+		cout << format("{} ", de.path().filename());
+	}
+	cout << '\n';
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+chrono Makefile include chrono.cpp working formatter
+testdir formatter.cpp working.cpp
+\end{tcblisting}
+
+\item 
+可以添加命令行选项来实现这个功能，比如Unix的ls:
+
+\begin{lstlisting}[style=styleCXX]
+int main(const int argc, const char** argv) {
+	fs::path fp{ argc > 1 ? argv[1] : "." };
+	if(!fs::exists(fp)) {
+		const auto cmdname {
+			fs::path{argv[0]}.filename() };
+		cout << format("{}: {} does not exist\n",
+			cmdname, fp);
+		return 1;
+	}
+	if(is_directory(fp)) {
+		for(const auto& de :
+		fs::directory_iterator{fp}) {
+			cout << format("{} ",
+			de.path().filename());
+		}
+	} else {
+		cout << format("{} ", fp.filename());
+	}
+	cout << '\n';
+}
+\end{lstlisting}
+
+若有命令行参数，可以用它来创建一个path对象。否则，需要使用"."表示当前目录。
+
+我们使用if\_exists()检查路径是否存在。若不存在，则打印错误消息并退出。错误信息包括来自argv[0]的cmdname。
+
+接下来，我们检查is\_directory()。若有一个目录，可对每个条目循环使用directory\_iterator。directory\_iterator遍历directory\_entry对象。de.path().filename()会从每个directory\_entry对象获取路径和文件名。
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+$ ./working
+chrono Makefile include chrono.cpp working formatter
+testdir formatter.cpp working.cpp
+$ ./working working.cpp
+working.cpp
+$ ./working foo.bar
+working: foo.bar does not exist
+\end{tcblisting}
+
+\item 
+若要对输出进行排序，可以将directory\_entry对象存储在可排序容器中。
+
+文件的顶部，为fs::directory\_entry创建一个别名:
+
+\begin{lstlisting}[style=styleCXX]
+using de = fs::directory_entry;
+\end{lstlisting}
+
+在main()的顶部，声明了一个de的vector:
+
+\begin{lstlisting}[style=styleCXX]
+vector<de> entries{};
+\end{lstlisting}
+
+在is\_directory()块中，我们加载vector对它排序，并进行显示:
+
+\begin{lstlisting}[style=styleCXX]
+if(is_directory(fp)) {
+	for(const auto& de : fs::directory_iterator{fp}) {
+		entries.emplace_back(de);
+	}
+	std::sort(entries.begin(), entries.end());
+	for(const auto& e : entries) {
+		cout << format("{} ", e.path().filename());
+	}
+} else { ...
+\end{lstlisting}
+
+现在输出已排序vector:
+
+\begin{tcblisting}{commandshell={}}
+Makefile chrono chrono.cpp formatter formatter.cpp
+include testdir working working.cpp
+\end{tcblisting}
+
+注意，Makefile首先排序，显然是无序的。这是因为大写字母在小写字母之前按ASCII顺序排序。
+
+\item 
+若想要一个不区分大小写的排序，需要一个忽略大小写的比较函数。首先，需要一个函数返回小写字母的字符串:
+
+\begin{lstlisting}[style=styleCXX]
+string strlower(string s) {
+	auto char_lower = [](const char& c) -> char {
+		if(c >= 'A' && c <= 'Z') return c + ('a' - 'A');
+		else return c;
+	};
+	std::transform(s.begin(), s.end(), s.begin(),
+		char_lower);
+	return s;
+}
+\end{lstlisting}
+
+现在，需要一个函数来比较两个directory\_entry对象，使用strlower():
+
+\begin{lstlisting}[style=styleCXX]
+bool dircmp_lc(const de& lhs, const de& rhs) {
+	const auto lhstr{ lhs.path().string() };
+	const auto rhstr{ rhs.path().string() };
+	return strlower(lhstr) < strlower(rhstr);
+}
+\end{lstlisting}
+
+现在可以在排序中使用dircmp\_lc():
+
+\begin{lstlisting}[style=styleCXX]
+std::sort(entries.begin(), entries.end(), dircmp_lc);
+\end{lstlisting}
+
+输出现在排序，并忽略大小写:
+
+\begin{tcblisting}{commandshell={}}
+chrono chrono.cpp formatter formatter.cpp include
+Makefile testdir working working.cpp
+\end{tcblisting}
+
+\item 
+现在，有了一个简单的目录清单程序。
+
+从文件系统库中可以获得更多信息。来创建一个print\_dir()函数来收集更多信息，并将其格式化为Unix的ls风格:
+
+\begin{lstlisting}[style=styleCXX]
+void print_dir(const de& dir) {
+	using fs::perms;
+	const auto fpath{ dir.path() };
+	const auto fstat{ dir.symlink_status() };
+	const auto fperm{ fstat.permissions() };
+	const uintmax_t fsize{
+		is_regular_file(fstat) ? file_size(fpath) : 0 };
+	const auto fn{ fpath.filename() };
+	
+	string suffix{};
+	if(is_directory(fstat)) suffix = "/";
+	else if((fperm & perms::owner_exec) != perms::none) {
+		suffix = "*";
+	}
+	cout << format("{}{}\n", fn, suffix);
+}
+\end{lstlisting}
+
+print\_dir()函数接受一个directory\_entry参数。然后，从directory\_entry对象中检索一些有用的对象:
+
+\begin{itemize}
+\item 
+dir.path()返回一个path对象
+
+\item 
+dir.symlink\_status()返回一个file\_status对象，无符号链接。
+
+\item 
+fstat.permissions()返回一个perms对象.
+
+\item 
+ssize是文件的大小，fn是文件名字符串。使用的时候，再仔细地研究吧。
+\end{itemize}
+
+Unix ls使用文件名后面的尾随字符来表示目录或可执行文件。使用is\_directory()测试fstat对象，以查看文件是否是目录，并在文件名后面添加/。同样，可以用fperm对象测试文件是否可执行。
+
+在sort()之后的for循环中调用print\_dir():
+
+\begin{lstlisting}[style=styleCXX]
+std::sort(entries.begin(), entries.end(), dircmp_lc);
+for(const auto& e : entries) {
+	print_dir(e);
+}
+\end{lstlisting}
+
+现在输出是这样的:
+
+\begin{tcblisting}{commandshell={}}
+chrono*
+chrono.cpp
+formatter*
+formatter.cpp
+include*
+Makefile
+testdir/
+working*
+working.cpp
+\end{tcblisting}
+
+\item 
+注意include*，这实际上是一个符号链接。可以通过链接来正确地标记它，以获得目标路径:
+
+\begin{lstlisting}[style=styleCXX]
+string suffix{};
+if(is_symlink(fstat)) {
+	suffix = " -> ";
+	suffix += fs::read_symlink(fpath).string();
+}
+else if(is_directory(fstat)) suffix = "/";
+else if((fperm & perms::owner_exec) != perms::none)
+suffix = "*";
+\end{lstlisting}
+
+read\_symlink()函数的作用是:返回一个路径对象。我们获取返回路径对象的string()表示形式，并将其添加到输出的尾部:
+
+\begin{tcblisting}{commandshell={}}
+chrono*
+chrono.cpp
+formatter*
+formatter.cpp
+include -> /Users/billw/include
+Makefile
+testdir/
+working*
+working.cpp
+\end{tcblisting}
+
+\item 
+Unix ls命令还包含一串字符来表示文件的权限位。它看起来像这样:drwxr-xr-x。
+
+第一个字符表示文件的类型，例如:d表示目录，l表示符号链接，-表示普通文件。
+
+type\_char()函数返回相应的字符:
+
+\begin{lstlisting}[style=styleCXX]
+char type_char(const fs::file_status& fstat) {
+		 if(is_symlink(fstat)) return 'l';
+	else if(is_directory(fstat)) return 'd';
+	else if(is_character_file(fstat)) return 'c';
+	else if(is_block_file(fstat)) return 'b';
+	else if(is_fifo(fstat)) return 'p';
+	else if(is_socket(fstat)) return 's';
+	else if(is_other(fstat)) return 'o';
+	else if(is_regular_file(fstat)) return '-';
+	return '?';
+}
+\end{lstlisting}
+
+剩下的字符串是三元组。每个三元组以rwx的形式包含读、写和执行权限位的位置。若一个位没有设置，其字符将使用-替换。三组权限分别对应三个三元组:owner、group和other。
+
+\begin{lstlisting}[style=styleCXX]
+string rwx(const fs::perms& p) {
+	using fs::perms;
+	auto bit2char = [&p](perms bit, char c) {
+		return (p & bit) == perms::none ? '-' : c;
+	};
+	return { bit2char(perms::owner_read, 'r'),
+		bit2char(perms::owner_write, 'w'),
+		bit2char(perms::owner_exec, 'x'),
+		bit2char(perms::group_read, 'r'),
+		bit2char(perms::group_write, 'w'),
+		bit2char(perms::group_exec, 'x'),
+		bit2char(perms::others_read, 'r'),
+		bit2char(perms::others_write, 'w'),
+		bit2char(perms::others_exec, 'x') };
+}
+\end{lstlisting}
+
+perms对象表示POSIX权限位图，但它不一定以位的形式实现。每个条目必须与perms::none值进行比较。我们的函数满足了这个要求。
+
+我们将这个定义添加到print\_dir()函数的顶部:
+
+\begin{lstlisting}[style=styleCXX]
+const auto permstr{ type_char(fstat) + rwx(fperm) };
+\end{lstlisting}
+
+更新format()字符串:
+
+\begin{lstlisting}[style=styleCXX]
+cout << format("{} {}{}\n", permstr, fn, suffix);
+\end{lstlisting}
+
+得到这样的输出:
+
+\begin{tcblisting}{commandshell={}}
+-rwxr-xr-x chrono*
+-rw-r--r-- chrono.cpp
+-rwxr-xr-x formatter*
+-rw-r--r-- formatter.cpp
+lrwxr-xr-x include -> /Users/billw/include
+-rw-r--r-- Makefile
+drwxr-xr-x testdir/
+-rwxr-xr-x working*
+-rw-r--r-- working.cpp
+\end{tcblisting}
+
+\item 
+现在，让我们添加一定长度的字符串。fsize值来自file\_size()函数，该函数返回std::uintmax\_t类型，这表示目标系统上的最大自然整数大小。uintmax\_t并不总是与size\_t相同，并不总是可以转换。值得注意的是，uintmax\_t在Windows上是32位，而size\_t是64位:
+
+\begin{lstlisting}[style=styleCXX]
+string size_string(const uintmax_t fsize) {
+	constexpr const uintmax_t kilo{ 1024 };
+	constexpr const uintmax_t mega{ kilo * kilo };
+	constexpr const uintmax_t giga{ mega * kilo };
+	string s;
+	if(fsize >= giga ) return
+		format("{}{}", (fsize + giga / 2) / giga, 'G');
+	else if (fsize >= mega) return
+		format("{}{}", (fsize + mega / 2) / mega, 'M');
+	else if (fsize >= kilo) return
+		format("{}{}", (fsize + kilo / 2) / kilo, 'K');
+	else return format("{}B", fsize);
+}
+\end{lstlisting}
+
+这个函数中，我选择使用1024作为1K，因为这似乎是Linux和BSD Unix上的默认值。在生产环境中，这可能是一个命令行选项。
+
+在main()中更新format()字符串:
+
+\begin{lstlisting}[style=styleCXX]
+cout << format("{} {:>6} {}{}\n",
+	permstr, size_string(fsize), fn, suffix);
+\end{lstlisting}
+
+现在，可以得到这样的输出:
+
+\begin{tcblisting}{commandshell={}}
+-rwxr-xr-x 284K chrono*
+-rw-r--r--   2K chrono.cpp
+-rwxr-xr-x 178K formatter*
+-rw-r--r-- 906B formatter.cpp
+lrwxr-xr-x   0B include -> /Users/billw/include
+-rw-r--r-- 642B Makefile
+drwxr-xr-x   0B testdir/
+-rwxr-xr-x 197K working*
+-rw-r--r--   5K working.cpp
+\end{tcblisting}
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black,title=Note]
+该程序是为POSIX系统设计的，例如Linux和macOS。可以在Windows系统上运行，但Windows权限系统与POSIX系统不同。所以，在Windows上，权限位总是显示完全设置。
+\end{tcolorbox}
+
+\end{itemize}
+
+\subsubsection{How it works…}
+
+文件系统库通过其directory\_entry和相关类携带了一组丰富的信息。在这个示例中使用的主要类包括:
+
+\begin{itemize}
+\item 
+path类根据目标系统的规则表示文件系统路径。path对象由字符串或另一个路径构造，不需要表示现有的路径，甚至不需要表示可能的路径。path字符串可解析为多个部分，包括根名称、根目录和可选的一系列文件名和目录分隔符。
+
+\item 
+directory\_entry类包含一个path对象作为成员，还可以存储其他属性，包括硬链接计数、状态、符号链接、文件大小和最后写入时间。
+
+\item 
+file\_status类携带有关文件类型和权限的信息。perms对象可以是file\_status的成员，表示文件的权限结构。
+\end{itemize}
+
+有两个函数用于从file\_status中检索perms对象。status()函数和symlink\_status()函数都返回一个perms对象，区别在于如何处理符号链接。status()函数将跟随符号链接并返回目标文件中的perms。symlink\_status()将返回符号链接本身的perms。
+
+\subsubsection{There's more…}
+
+我原本打算在目录列表中包括每个文件的最后写入时间。
+
+directory\_entry类有一个成员函数last\_write\_time()，它返回一个file\_time\_type对象，表示最后一次写入文件的时间戳。
+
+但在编写本文时，可用的实现缺乏将file\_time\_type对象转换为标准chrono::sys\_time的可移植方法。
+
+现在，这里有一个可以在GCC上工作的解决方案:
+
+\begin{lstlisting}[style=styleCXX]
+string time_string(const fs::directory_entry& dir) {
+	using std::chrono::file_clock;
+	auto file_time{ dir.last_write_time() };
+	return format("{:%F %T}",
+		file_clock::to_sys(dir.last_write_time()));
+}
+\end{lstlisting}
+
+建议用户代码使用std::chrono::clock\_cast，而非file::clock::to\_sys来转换时钟之间的时间点。目前的可用实现中，都没有用于此目的的std::chrono::clock\_cast特化。
+
+使用这个time\_string()函数，可以将时间添加到print\_dir():
+
+\begin{lstlisting}[style=styleCXX]
+const string timestr{ time_string(dir) };
+\end{lstlisting}
+
+然后，可以改变format()字符串:
+
+\begin{lstlisting}[style=styleCXX]
+cout << format("{} {:>6} {} {}{}\n",
+	permstr, sizestr, timestr, fn, suffix);
+\end{lstlisting}
+
+并得到这样的输出:
+
+\begin{tcblisting}{commandshell={}}
+-rwxr-xr-x 248K 2022-03-09 09:39:49 chrono*
+-rw-r--r--   2K 2022-03-09 09:33:56 chrono.cpp
+-rwxr-xr-x 178K 2022-03-09 09:39:49 formatter*
+-rw-r--r-- 906B 2022-03-09 09:33:56 formatter.cpp
+lrwxrwxrwx   0B 2022-02-04 11:39:53 include -> /home/billw/
+include
+-rw-r--r-- 642B 2022-03-09 14:08:37 Makefile
+drwxr-xr-x   0B 2022-03-09 10:38:39 testdir/
+-rwxr-xr-x 197K 2022-03-12 17:13:46 working*
+-rw-r--r--   5K 2022-03-12 17:13:40 working.cpp
+\end{tcblisting}
+
+这适用于Debian的GCC-11，但不要指望它很容易的就能在其他系统上工作。
+
+
+
+
+
+
+
+
+
+

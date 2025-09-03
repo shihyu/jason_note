@@ -1,0 +1,1546 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Ollama Ubuntu 安裝與使用指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="ollama-在-ubuntu-2404-完整使用指南"><a class="header" href="#ollama-在-ubuntu-2404-完整使用指南">Ollama 在 Ubuntu 24.04 完整使用指南</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ul>
+<li><a href="#%E5%BF%AB%E9%80%9F%E9%96%8B%E5%A7%8B">快速開始</a></li>
+<li><a href="#%E5%AE%89%E8%A3%9D">安裝</a></li>
+<li><a href="#%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C">基本操作</a></li>
+<li><a href="#%E7%B0%A1%E5%96%AE%E7%AF%84%E4%BE%8B">簡單範例</a></li>
+<li><a href="#%E5%B8%B8%E7%94%A8%E6%A8%A1%E5%9E%8B%E6%8E%A8%E8%96%A6">常用模型推薦</a></li>
+<li><a href="#%E5%AF%A6%E7%94%A8%E6%8A%80%E5%B7%A7">實用技巧</a></li>
+<li><a href="#web-ui-%E8%A8%AD%E5%AE%9A">Web UI 設定</a></li>
+<li><a href="#%E6%95%85%E9%9A%9C%E6%8E%92%E9%99%A4">故障排除</a></li>
+<li><a href="#%E9%80%B2%E9%9A%8E%E8%A8%AD%E5%AE%9A">進階設定</a></li>
+<li><a href="#api-%E5%8F%83%E8%80%83">API 參考</a></li>
+</ul>
+<h2 id="快速開始"><a class="header" href="#快速開始">快速開始</a></h2>
+<pre><code class="language-bash"># 一鍵安裝
+curl -fsSL https://ollama.com/install.sh | sh
+
+# 執行第一個模型
+ollama run tinyllama
+
+# 輸入問題開始對話
+&gt;&gt;&gt; 你好，請自我介紹
+</code></pre>
+<h2 id="安裝"><a class="header" href="#安裝">安裝</a></h2>
+<h3 id="系統需求"><a class="header" href="#系統需求">系統需求</a></h3>
+<ul>
+<li>Ubuntu 24.04 LTS</li>
+<li>最少 4GB RAM（建議 8GB 以上）</li>
+<li>10GB 可用硬碟空間</li>
+<li>(選用) NVIDIA GPU with CUDA 11.8+</li>
+</ul>
+<h3 id="安裝方法"><a class="header" href="#安裝方法">安裝方法</a></h3>
+<h4 id="方法-1官方腳本推薦"><a class="header" href="#方法-1官方腳本推薦">方法 1：官方腳本（推薦）</a></h4>
+<pre><code class="language-bash">curl -fsSL https://ollama.com/install.sh | sh
+</code></pre>
+<h4 id="方法-2手動安裝"><a class="header" href="#方法-2手動安裝">方法 2：手動安裝</a></h4>
+<pre><code class="language-bash"># 下載二進位檔案
+wget https://github.com/ollama/ollama/releases/latest/download/ollama-linux-amd64
+
+# 賦予執行權限
+chmod +x ollama-linux-amd64
+
+# 移動到系統路徑
+sudo mv ollama-linux-amd64 /usr/local/bin/ollama
+
+# 建立服務檔案
+sudo useradd -r -s /bin/false -m -d /usr/share/ollama ollama
+</code></pre>
+<h3 id="驗證安裝"><a class="header" href="#驗證安裝">驗證安裝</a></h3>
+<pre><code class="language-bash"># 檢查版本
+ollama --version
+
+# 檢查服務狀態
+sudo systemctl status ollama
+</code></pre>
+<h2 id="基本操作"><a class="header" href="#基本操作">基本操作</a></h2>
+<h3 id="服務管理"><a class="header" href="#服務管理">服務管理</a></h3>
+<pre><code class="language-bash"># 檢查服務狀態
+sudo systemctl status ollama
+
+# 啟動服務
+sudo systemctl start ollama
+
+# 停止服務
+sudo systemctl stop ollama
+
+# 重啟服務
+sudo systemctl restart ollama
+
+# 設定開機自動啟動
+sudo systemctl enable ollama
+
+# 檢視服務日誌
+journalctl -u ollama -f
+</code></pre>
+<h3 id="模型管理"><a class="header" href="#模型管理">模型管理</a></h3>
+<pre><code class="language-bash"># 下載並執行模型
+ollama run llama3.2:3b
+
+# 只下載模型不執行
+ollama pull llama3.2:3b
+
+# 列出已安裝的模型
+ollama list
+
+# 顯示模型資訊
+ollama show llama3.2:3b
+
+# 刪除模型
+ollama rm llama3.2:3b
+
+# 複製模型（用於自訂）
+ollama cp llama3.2:3b my-custom-model
+</code></pre>
+<h2 id="簡單範例"><a class="header" href="#簡單範例">簡單範例</a></h2>
+<h3 id="範例-1命令列對話"><a class="header" href="#範例-1命令列對話">範例 1：命令列對話</a></h3>
+<pre><code class="language-bash"># 互動式對話
+ollama run llama3.2:3b
+
+&gt;&gt;&gt; 解釋什麼是容器技術？
+&gt;&gt;&gt; 用 Python 寫一個快速排序
+&gt;&gt;&gt; /bye
+</code></pre>
+<h3 id="範例-2一次性問答"><a class="header" href="#範例-2一次性問答">範例 2：一次性問答</a></h3>
+<pre><code class="language-bash"># 單次問答（不進入互動模式）
+echo "什麼是 RESTful API？" | ollama run llama3.2:3b
+
+# 或使用參數方式
+ollama run llama3.2:3b "列出 5 個 Git 常用指令"
+</code></pre>
+<h3 id="範例-3使用-curl-呼叫-api"><a class="header" href="#範例-3使用-curl-呼叫-api">範例 3：使用 cURL 呼叫 API</a></h3>
+<pre><code class="language-bash"># 基本 API 呼叫
+curl http://localhost:11434/api/generate -d '{
+  "model": "llama3.2:3b",
+  "prompt": "解釋什麼是微服務架構",
+  "stream": false
+}'
+
+# 串流回應
+curl http://localhost:11434/api/generate -d '{
+  "model": "llama3.2:3b",
+  "prompt": "寫一個 Python Flask 範例",
+  "stream": true
+}'
+</code></pre>
+<h3 id="範例-4python-整合腳本"><a class="header" href="#範例-4python-整合腳本">範例 4：Python 整合腳本</a></h3>
+<pre><code class="language-python">#!/usr/bin/env python3
+"""
+Ollama Python 整合範例
+安裝: pip install requests
+"""
+
+import requests
+import json
+
+class OllamaClient:
+    def __init__(self, base_url="http://localhost:11434"):
+        self.base_url = base_url
+    
+    def generate(self, prompt, model="llama3.2:3b", stream=False):
+        """生成回應"""
+        url = f"{self.base_url}/api/generate"
+        data = {
+            "model": model,
+            "prompt": prompt,
+            "stream": stream
+        }
+        
+        if not stream:
+            response = requests.post(url, json=data)
+            if response.status_code == 200:
+                return response.json()['response']
+        else:
+            response = requests.post(url, json=data, stream=True)
+            for line in response.iter_lines():
+                if line:
+                    chunk = json.loads(line)
+                    yield chunk['response']
+    
+    def chat(self, messages, model="llama3.2:3b"):
+        """聊天介面"""
+        url = f"{self.base_url}/api/chat"
+        data = {
+            "model": model,
+            "messages": messages,
+            "stream": False
+        }
+        
+        response = requests.post(url, json=data)
+        if response.status_code == 200:
+            return response.json()['message']['content']
+    
+    def list_models(self):
+        """列出可用模型"""
+        url = f"{self.base_url}/api/tags"
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.json()['models']
+
+# 使用範例
+if __name__ == "__main__":
+    client = OllamaClient()
+    
+    # 簡單生成
+    print("=== 簡單生成 ===")
+    result = client.generate("用 Python 寫一個費氏數列")
+    print(result)
+    
+    # 串流生成
+    print("\n=== 串流生成 ===")
+    for chunk in client.generate("解釋 Docker 的優點", stream=True):
+        print(chunk, end='', flush=True)
+    print()
+    
+    # 聊天模式
+    print("\n=== 聊天模式 ===")
+    messages = [
+        {"role": "user", "content": "你是誰？"},
+        {"role": "assistant", "content": "我是一個 AI 助手。"},
+        {"role": "user", "content": "你能做什麼？"}
+    ]
+    response = client.chat(messages)
+    print(response)
+    
+    # 列出模型
+    print("\n=== 可用模型 ===")
+    models = client.list_models()
+    for model in models:
+        print(f"- {model['name']} ({model['size']/1e9:.1f}GB)")
+</code></pre>
+<h3 id="範例-5bash-聊天機器人腳本"><a class="header" href="#範例-5bash-聊天機器人腳本">範例 5：Bash 聊天機器人腳本</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# 儲存為 ollama-chat.sh
+# 使用: chmod +x ollama-chat.sh &amp;&amp; ./ollama-chat.sh
+
+# 設定
+MODEL="${1:-llama3.2:3b}"
+HISTORY_FILE="$HOME/.ollama_chat_history"
+
+# 顏色設定
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# 函數：顯示標題
+show_header() {
+    clear
+    echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║       Ollama 聊天機器人 v1.0          ║${NC}"
+    echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
+    echo -e "${YELLOW}模型: $MODEL${NC}"
+    echo -e "${GREEN}指令: /help, /clear, /model, /save, /quit${NC}"
+    echo ""
+}
+
+# 函數：處理命令
+handle_command() {
+    case $1 in
+        /help)
+            echo -e "${GREEN}可用指令：${NC}"
+            echo "  /help   - 顯示幫助"
+            echo "  /clear  - 清除螢幕"
+            echo "  /model  - 切換模型"
+            echo "  /save   - 儲存對話"
+            echo "  /quit   - 離開程式"
+            ;;
+        /clear)
+            show_header
+            ;;
+        /model)
+            echo -e "${YELLOW}可用模型：${NC}"
+            ollama list
+            read -p "輸入模型名稱: " new_model
+            if [ ! -z "$new_model" ]; then
+                MODEL=$new_model
+                echo -e "${GREEN}已切換到 $MODEL${NC}"
+            fi
+            ;;
+        /save)
+            echo "$conversation" &gt; "$HISTORY_FILE"
+            echo -e "${GREEN}對話已儲存到 $HISTORY_FILE${NC}"
+            ;;
+        /quit|/exit|/bye)
+            echo -e "${BLUE}再見！${NC}"
+            exit 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+    return 0
+}
+
+# 主程式
+show_header
+conversation=""
+
+while true; do
+    # 讀取使用者輸入
+    echo -ne "${GREEN}👤 你: ${NC}"
+    read -r input
+    
+    # 檢查是否為命令
+    if [[ $input == /* ]]; then
+        handle_command "$input"
+        continue
+    fi
+    
+    # 新增到對話記錄
+    conversation="$conversation\n👤: $input"
+    
+    # 取得 AI 回應
+    echo -ne "${BLUE}🤖 AI: ${NC}"
+    response=$(echo "$input" | ollama run $MODEL 2&gt;/dev/null)
+    echo "$response"
+    
+    # 新增到對話記錄
+    conversation="$conversation\n🤖: $response"
+    echo ""
+done
+</code></pre>
+<h3 id="範例-6nodejs-整合"><a class="header" href="#範例-6nodejs-整合">範例 6：Node.js 整合</a></h3>
+<pre><code class="language-javascript">// ollama-client.js
+// 安裝: npm install axios
+
+const axios = require('axios');
+
+class OllamaClient {
+    constructor(baseURL = 'http://localhost:11434') {
+        this.baseURL = baseURL;
+    }
+
+    async generate(prompt, model = 'llama3.2:3b') {
+        try {
+            const response = await axios.post(`${this.baseURL}/api/generate`, {
+                model: model,
+                prompt: prompt,
+                stream: false
+            });
+            return response.data.response;
+        } catch (error) {
+            console.error('Error:', error.message);
+            return null;
+        }
+    }
+
+    async *generateStream(prompt, model = 'llama3.2:3b') {
+        try {
+            const response = await axios.post(`${this.baseURL}/api/generate`, {
+                model: model,
+                prompt: prompt,
+                stream: true
+            }, {
+                responseType: 'stream'
+            });
+
+            for await (const chunk of response.data) {
+                const lines = chunk.toString().split('\n').filter(Boolean);
+                for (const line of lines) {
+                    const data = JSON.parse(line);
+                    yield data.response;
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error.message);
+        }
+    }
+}
+
+// 使用範例
+async function main() {
+    const client = new OllamaClient();
+    
+    // 一般生成
+    console.log('=== 一般生成 ===');
+    const response = await client.generate('什麼是 Node.js？');
+    console.log(response);
+    
+    // 串流生成
+    console.log('\n=== 串流生成 ===');
+    for await (const chunk of client.generateStream('列出 JavaScript 的特點')) {
+        process.stdout.write(chunk);
+    }
+    console.log();
+}
+
+main();
+</code></pre>
+<h2 id="常用模型推薦"><a class="header" href="#常用模型推薦">常用模型推薦</a></h2>
+<h3 id="-輕量級模型-ram--4gb"><a class="header" href="#-輕量級模型-ram--4gb">🎯 輕量級模型 (RAM &lt; 4GB)</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>模型名稱</th><th>參數大小</th><th>記憶體需求</th><th>特點</th><th>安裝指令</th></tr></thead><tbody>
+<tr><td>TinyLlama</td><td>1.1B</td><td>~2GB</td><td>超快速回應</td><td><code>ollama run tinyllama</code></td></tr>
+<tr><td>Phi-3 Mini</td><td>3.8B</td><td>~3GB</td><td>微軟出品，效能佳</td><td><code>ollama run phi3:mini</code></td></tr>
+<tr><td>Qwen 0.5B</td><td>0.5B</td><td>~1GB</td><td>中文支援良好</td><td><code>ollama run qwen:0.5b</code></td></tr>
+<tr><td>Gemma 2B</td><td>2B</td><td>~2.5GB</td><td>Google 模型</td><td><code>ollama run gemma:2b</code></td></tr>
+</tbody></table>
+</div>
+<h3 id="-中型模型-ram-8-16gb"><a class="header" href="#-中型模型-ram-8-16gb">💪 中型模型 (RAM 8-16GB)</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>模型名稱</th><th>參數大小</th><th>記憶體需求</th><th>特點</th><th>安裝指令</th></tr></thead><tbody>
+<tr><td>Llama 3.2</td><td>3B</td><td>~5GB</td><td>Meta 最新，平衡選擇</td><td><code>ollama run llama3.2:3b</code></td></tr>
+<tr><td>Mistral</td><td>7B</td><td>~8GB</td><td>法國團隊，品質優秀</td><td><code>ollama run mistral</code></td></tr>
+<tr><td>Gemma 2</td><td>9B</td><td>~10GB</td><td>Google 大型模型</td><td><code>ollama run gemma2:9b</code></td></tr>
+<tr><td>Vicuna</td><td>7B</td><td>~8GB</td><td>對話能力強</td><td><code>ollama run vicuna</code></td></tr>
+</tbody></table>
+</div>
+<h3 id="-程式碼專用模型"><a class="header" href="#-程式碼專用模型">👨‍💻 程式碼專用模型</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>模型名稱</th><th>參數大小</th><th>記憶體需求</th><th>特點</th><th>安裝指令</th></tr></thead><tbody>
+<tr><td>CodeLlama</td><td>7B</td><td>~8GB</td><td>Meta 程式碼模型</td><td><code>ollama run codellama</code></td></tr>
+<tr><td>DeepSeek Coder</td><td>1.3B</td><td>~2GB</td><td>輕量級程式碼</td><td><code>ollama run deepseek-coder:1.3b</code></td></tr>
+<tr><td>Starcoder2</td><td>3B</td><td>~4GB</td><td>多語言程式碼</td><td><code>ollama run starcoder2:3b</code></td></tr>
+<tr><td>CodeGemma</td><td>7B</td><td>~8GB</td><td>Google 程式碼模型</td><td><code>ollama run codegemma</code></td></tr>
+</tbody></table>
+</div>
+<h3 id="-中文優化模型"><a class="header" href="#-中文優化模型">🌏 中文優化模型</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>模型名稱</th><th>參數大小</th><th>記憶體需求</th><th>特點</th><th>安裝指令</th></tr></thead><tbody>
+<tr><td>Qwen</td><td>1.8B</td><td>~3GB</td><td>阿里通義千問</td><td><code>ollama run qwen</code></td></tr>
+<tr><td>Yi</td><td>6B</td><td>~7GB</td><td>零一萬物</td><td><code>ollama run yi</code></td></tr>
+<tr><td>ChatGLM3</td><td>6B</td><td>~7GB</td><td>清華智譜</td><td><code>ollama run chatglm3</code></td></tr>
+</tbody></table>
+</div>
+<h2 id="實用技巧"><a class="header" href="#實用技巧">實用技巧</a></h2>
+<h3 id="效能優化"><a class="header" href="#效能優化">效能優化</a></h3>
+<h4 id="1-gpu-加速設定"><a class="header" href="#1-gpu-加速設定">1. GPU 加速設定</a></h4>
+<pre><code class="language-bash"># 檢查 GPU 支援
+nvidia-smi
+
+# 設定使用特定 GPU
+export CUDA_VISIBLE_DEVICES=0
+
+# 使用多個 GPU
+export CUDA_VISIBLE_DEVICES=0,1
+</code></pre>
+<h4 id="2-記憶體優化"><a class="header" href="#2-記憶體優化">2. 記憶體優化</a></h4>
+<pre><code class="language-bash"># 使用量子化版本（降低記憶體使用）
+ollama run llama3.2:3b-q4_0  # 4-bit 量子化
+ollama run llama3.2:3b-q5_0  # 5-bit 量子化
+ollama run llama3.2:3b-q8_0  # 8-bit 量子化
+
+# 限制上下文長度
+ollama run llama3.2:3b --num-ctx 2048
+</code></pre>
+<h4 id="3-cpu-優化"><a class="header" href="#3-cpu-優化">3. CPU 優化</a></h4>
+<pre><code class="language-bash"># 設定並行數
+export OLLAMA_NUM_PARALLEL=2
+
+# 設定執行緒數
+export OLLAMA_NUM_THREAD=4
+</code></pre>
+<h3 id="批次處理"><a class="header" href="#批次處理">批次處理</a></h3>
+<h4 id="批次問答腳本"><a class="header" href="#批次問答腳本">批次問答腳本</a></h4>
+<pre><code class="language-bash">#!/bin/bash
+# batch-query.sh
+
+# 問題列表檔案
+QUESTIONS_FILE="questions.txt"
+OUTPUT_FILE="answers.md"
+MODEL="llama3.2:3b"
+
+# 清空輸出檔案
+&gt; "$OUTPUT_FILE"
+
+# 逐行讀取問題並處理
+while IFS= read -r question; do
+    echo "處理: $question"
+    echo "## $question" &gt;&gt; "$OUTPUT_FILE"
+    echo "" &gt;&gt; "$OUTPUT_FILE"
+    
+    answer=$(echo "$question" | ollama run $MODEL)
+    echo "$answer" &gt;&gt; "$OUTPUT_FILE"
+    echo "" &gt;&gt; "$OUTPUT_FILE"
+    echo "---" &gt;&gt; "$OUTPUT_FILE"
+    echo "" &gt;&gt; "$OUTPUT_FILE"
+done &lt; "$QUESTIONS_FILE"
+
+echo "完成！結果已儲存到 $OUTPUT_FILE"
+</code></pre>
+<h3 id="整合到-vs-code"><a class="header" href="#整合到-vs-code">整合到 VS Code</a></h3>
+<h4 id="1-安裝-continue-擴充套件"><a class="header" href="#1-安裝-continue-擴充套件">1. 安裝 Continue 擴充套件</a></h4>
+<pre><code class="language-bash"># 在 VS Code 中
+# 1. 開啟延伸模組 (Ctrl+Shift+X)
+# 2. 搜尋 "Continue"
+# 3. 安裝
+</code></pre>
+<h4 id="2-設定-continue"><a class="header" href="#2-設定-continue">2. 設定 Continue</a></h4>
+<pre><code class="language-json">{
+  "models": [
+    {
+      "title": "Ollama",
+      "provider": "ollama",
+      "model": "codellama:7b",
+      "apiBase": "http://localhost:11434"
+    }
+  ]
+}
+</code></pre>
+<h3 id="建立別名快捷"><a class="header" href="#建立別名快捷">建立別名快捷</a></h3>
+<pre><code class="language-bash"># 加入到 ~/.bashrc 或 ~/.zshrc
+
+# 快速啟動對話
+alias chat='ollama run llama3.2:3b'
+
+# 程式碼助手
+alias code-ai='ollama run codellama:7b'
+
+# 快速翻譯
+translate() {
+    echo "Translate to Chinese: $1" | ollama run llama3.2:3b
+}
+
+# 程式碼解釋
+explain() {
+    echo "Explain this code: $(cat $1)" | ollama run codellama:7b
+}
+
+# 快速摘要
+summarize() {
+    echo "Summarize: $(cat $1)" | ollama run llama3.2:3b
+}
+</code></pre>
+<h2 id="web-ui-設定"><a class="header" href="#web-ui-設定">Web UI 設定</a></h2>
+<h3 id="選項-1open-webui推薦"><a class="header" href="#選項-1open-webui推薦">選項 1：Open WebUI（推薦）</a></h3>
+<h4 id="docker-安裝"><a class="header" href="#docker-安裝">Docker 安裝</a></h4>
+<pre><code class="language-bash"># 拉取並執行
+docker run -d \
+  -p 3000:8080 \
+  --add-host=host.docker.internal:host-gateway \
+  -v open-webui:/app/backend/data \
+  -e OLLAMA_BASE_URL=http://host.docker.internal:11434 \
+  --name open-webui \
+  --restart always \
+  ghcr.io/open-webui/open-webui:main
+
+# 檢查狀態
+docker ps | grep open-webui
+
+# 檢視日誌
+docker logs -f open-webui
+</code></pre>
+<h4 id="docker-compose-安裝"><a class="header" href="#docker-compose-安裝">Docker Compose 安裝</a></h4>
+<pre><code class="language-yaml"># docker-compose.yml
+version: '3.8'
+
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    ports:
+      - "3000:8080"
+    volumes:
+      - open-webui:/app/backend/data
+    environment:
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: always
+
+volumes:
+  open-webui:
+</code></pre>
+<pre><code class="language-bash"># 啟動
+docker-compose up -d
+
+# 訪問 http://localhost:3000
+</code></pre>
+<h3 id="選項-2ollama-ui"><a class="header" href="#選項-2ollama-ui">選項 2：Ollama UI</a></h3>
+<pre><code class="language-bash"># 克隆專案
+git clone https://github.com/ollama-ui/ollama-ui
+cd ollama-ui
+
+# 安裝依賴
+npm install
+
+# 建立環境設定
+cp .env.example .env
+echo "OLLAMA_HOST=http://localhost:11434" &gt;&gt; .env
+
+# 啟動開發伺服器
+npm run dev
+
+# 建置生產版本
+npm run build
+npm start
+</code></pre>
+<h3 id="選項-3簡單-html-介面"><a class="header" href="#選項-3簡單-html-介面">選項 3：簡單 HTML 介面</a></h3>
+<pre><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html lang="zh-TW"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;Ollama Chat&lt;/title&gt;
+    &lt;style&gt;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: #4a5568;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .chat-box {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f7fafc;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 70%;
+        }
+        .user-message {
+            background: #4299e1;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        .ai-message {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+        .input-area {
+            display: flex;
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+        }
+        #messageInput {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+        }
+        #messageInput:focus {
+            border-color: #4299e1;
+        }
+        #sendButton {
+            margin-left: 10px;
+            padding: 10px 30px;
+            background: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        #sendButton:hover {
+            background: #3182ce;
+        }
+        #sendButton:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+        }
+        .model-selector {
+            padding: 10px 20px;
+            background: #edf2f7;
+        }
+        select {
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid #cbd5e0;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4299e1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class="container"&gt;
+        &lt;div class="header"&gt;
+            &lt;h1&gt;🤖 Ollama Chat&lt;/h1&gt;
+        &lt;/div&gt;
+        
+        &lt;div class="model-selector"&gt;
+            &lt;label for="modelSelect"&gt;模型：&lt;/label&gt;
+            &lt;select id="modelSelect"&gt;
+                &lt;option value="llama3.2:3b"&gt;Llama 3.2 (3B)&lt;/option&gt;
+                &lt;option value="tinyllama"&gt;TinyLlama&lt;/option&gt;
+                &lt;option value="codellama:7b"&gt;CodeLlama&lt;/option&gt;
+                &lt;option value="mistral"&gt;Mistral&lt;/option&gt;
+            &lt;/select&gt;
+        &lt;/div&gt;
+        
+        &lt;div class="chat-box" id="chatBox"&gt;&lt;/div&gt;
+        
+        &lt;div class="input-area"&gt;
+            &lt;input type="text" id="messageInput" placeholder="輸入訊息..." /&gt;
+            &lt;button id="sendButton"&gt;發送&lt;/button&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;script&gt;
+        const chatBox = document.getElementById('chatBox');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const modelSelect = document.getElementById('modelSelect');
+        
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // 顯示使用者訊息
+            addMessage(message, 'user');
+            messageInput.value = '';
+            
+            // 禁用輸入
+            sendButton.disabled = true;
+            messageInput.disabled = true;
+            
+            // 顯示載入中
+            const loadingId = 'loading-' + Date.now();
+            addMessage('&lt;div class="loading"&gt;&lt;/div&gt;', 'ai', loadingId);
+            
+            try {
+                const response = await fetch('http://localhost:11434/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: modelSelect.value,
+                        prompt: message,
+                        stream: false
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // 移除載入動畫
+                document.getElementById(loadingId).remove();
+                
+                // 顯示 AI 回應
+                addMessage(data.response, 'ai');
+                
+            } catch (error) {
+                document.getElementById(loadingId).remove();
+                addMessage('錯誤：無法連接到 Ollama 服務', 'ai');
+            }
+            
+            // 重新啟用輸入
+            sendButton.disabled = false;
+            messageInput.disabled = false;
+            messageInput.focus();
+        }
+        
+        function addMessage(content, sender, id = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            if (id) messageDiv.id = id;
+            messageDiv.innerHTML = content;
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+        
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) =&gt; {
+            if (e.key === 'Enter' &amp;&amp; !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        // 初始訊息
+        addMessage('你好！我是 Ollama AI 助手，有什麼可以幫助你的嗎？', 'ai');
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<h2 id="故障排除"><a class="header" href="#故障排除">故障排除</a></h2>
+<h3 id="常見問題與解決方案"><a class="header" href="#常見問題與解決方案">常見問題與解決方案</a></h3>
+<h4 id="1-服務無法啟動"><a class="header" href="#1-服務無法啟動">1. 服務無法啟動</a></h4>
+<pre><code class="language-bash"># 檢查錯誤日誌
+journalctl -u ollama -n 50
+
+# 常見原因：埠號被佔用
+sudo lsof -i :11434
+
+# 解決方案：更改埠號
+OLLAMA_HOST=0.0.0.0:8080 ollama serve
+</code></pre>
+<h4 id="2-gpu-不被識別"><a class="header" href="#2-gpu-不被識別">2. GPU 不被識別</a></h4>
+<pre><code class="language-bash"># 檢查 NVIDIA 驅動
+nvidia-smi
+
+# 安裝 CUDA 工具包
+sudo apt update
+sudo apt install nvidia-cuda-toolkit
+
+# 檢查 CUDA 版本
+nvcc --version
+
+# 重啟 Ollama
+sudo systemctl restart ollama
+</code></pre>
+<h4 id="3-記憶體不足錯誤"><a class="header" href="#3-記憶體不足錯誤">3. 記憶體不足錯誤</a></h4>
+<pre><code class="language-bash"># 解決方案 1：使用更小的模型
+ollama run tinyllama
+
+# 解決方案 2：使用量子化版本
+ollama run llama3.2:3b-q4_0
+
+# 解決方案 3：限制上下文長度
+ollama run llama3.2:3b --num-ctx 1024
+
+# 解決方案 4：清理未使用的模型
+ollama list
+ollama rm unused-model
+</code></pre>
+<h4 id="4-模型下載失敗"><a class="header" href="#4-模型下載失敗">4. 模型下載失敗</a></h4>
+<pre><code class="language-bash"># 檢查網路連線
+ping ollama.com
+
+# 使用代理
+export HTTP_PROXY=http://proxy:port
+export HTTPS_PROXY=http://proxy:port
+
+# 重試下載
+ollama pull llama3.2:3b
+
+# 手動下載模型檔案
+wget https://ollama.com/library/llama3.2/blobs/sha256:xxxxx
+</code></pre>
+<h4 id="5-api-連線被拒絕"><a class="header" href="#5-api-連線被拒絕">5. API 連線被拒絕</a></h4>
+<pre><code class="language-bash"># 檢查服務狀態
+sudo systemctl status ollama
+
+# 允許外部連線
+OLLAMA_HOST=0.0.0.0:11434 ollama serve
+
+# 防火牆設定
+sudo ufw allow 11434/tcp
+</code></pre>
+<h3 id="效能調優"><a class="header" href="#效能調優">效能調優</a></h3>
+<h4 id="系統層級優化"><a class="header" href="#系統層級優化">系統層級優化</a></h4>
+<pre><code class="language-bash"># 增加檔案描述符限制
+ulimit -n 65536
+
+# 調整 swap 使用
+sudo sysctl vm.swappiness=10
+
+# 設定 CPU 調控器
+sudo cpupower frequency-set -g performance
+</code></pre>
+<h4 id="ollama-特定優化"><a class="header" href="#ollama-特定優化">Ollama 特定優化</a></h4>
+<pre><code class="language-bash"># 環境變數設定
+export OLLAMA_NUM_PARALLEL=4     # 並行請求數
+export OLLAMA_NUM_GPU=1          # GPU 數量
+export OLLAMA_MAX_LOADED_MODELS=2 # 最大載入模型數
+export OLLAMA_KEEP_ALIVE=5m      # 模型保持載入時間
+</code></pre>
+<h2 id="進階設定"><a class="header" href="#進階設定">進階設定</a></h2>
+<h3 id="自訂模型-modelfile"><a class="header" href="#自訂模型-modelfile">自訂模型 (Modelfile)</a></h3>
+<h4 id="基本-modelfile"><a class="header" href="#基本-modelfile">基本 Modelfile</a></h4>
+<pre><code class="language-dockerfile"># Modelfile
+FROM llama3.2:3b
+
+# 設定參數
+PARAMETER temperature 0.8
+PARAMETER top_k 40
+PARAMETER top_p 0.9
+PARAMETER repeat_penalty 1.1
+PARAMETER num_ctx 4096
+
+# 設定系統提示
+SYSTEM """
+你是一個專業的技術顧問，專門協助解決程式設計和系統架構問題。
+請用繁體中文回答，並提供詳細的解釋和範例。
+"""
+
+# 設定訊息模板
+TEMPLATE """
+{{ if .System }}System: {{ .System }}{{ end }}
+{{ if .Prompt }}User: {{ .Prompt }}{{ end }}
+Assistant: {{ .Response }}
+"""
+</code></pre>
+<h4 id="建立和使用自訂模型"><a class="header" href="#建立和使用自訂模型">建立和使用自訂模型</a></h4>
+<pre><code class="language-bash"># 建立模型
+ollama create my-assistant -f ./Modelfile
+
+# 使用自訂模型
+ollama run my-assistant
+
+# 分享模型
+ollama push username/my-assistant
+</code></pre>
+<h4 id="進階-modelfile-範例"><a class="header" href="#進階-modelfile-範例">進階 Modelfile 範例</a></h4>
+<pre><code class="language-dockerfile"># 程式碼助手模型
+FROM codellama:7b
+
+PARAMETER temperature 0.3  # 降低隨機性
+PARAMETER num_predict 2000 # 最大生成長度
+
+SYSTEM """
+You are an expert programmer. Follow these rules:
+1. Always provide working code examples
+2. Include comments explaining complex parts
+3. Consider edge cases and error handling
+4. Suggest best practices and optimizations
+5. Use the most appropriate programming patterns
+"""
+
+# 加入範例對話
+MESSAGE user "Write a function to reverse a string"
+MESSAGE assistant """Here's a function to reverse a string in Python:
+
+```python
+def reverse_string(s):
+    \"\"\"
+    Reverse a string using Python's slicing feature.
+    
+    Args:
+        s (str): The string to reverse
+    
+    Returns:
+        str: The reversed string
+    \"\"\"
+    return s[::-1]
+
+# Example usage
+print(reverse_string("hello"))  # Output: "olleh"
+</code></pre>
+<p>"""</p>
+<pre><code>
+### 多模型管理
+
+#### 模型切換腳本
+```python
+#!/usr/bin/env python3
+"""
+Ollama 模型管理器
+"""
+
+import subprocess
+import json
+import sys
+
+class ModelManager:
+    def __init__(self):
+        self.models = self.get_installed_models()
+    
+    def get_installed_models(self):
+        """取得已安裝的模型列表"""
+        try:
+            result = subprocess.run(
+                ['ollama', 'list'], 
+                capture_output=True, 
+                text=True
+            )
+            # 解析輸出
+            lines = result.stdout.strip().split('\n')[1:]  # 跳過標題
+            models = []
+            for line in lines:
+                if line:
+                    parts = line.split()
+                    models.append({
+                        'name': parts[0],
+                        'size': parts[1] if len(parts) &gt; 1 else 'N/A'
+                    })
+            return models
+        except Exception as e:
+            print(f"錯誤: {e}")
+            return []
+    
+    def list_models(self):
+        """列出所有模型"""
+        print("\n已安裝的模型:")
+        print("-" * 40)
+        for i, model in enumerate(self.models, 1):
+            print(f"{i}. {model['name']} ({model['size']})")
+    
+    def run_model(self, model_name):
+        """執行指定模型"""
+        print(f"\n啟動模型: {model_name}")
+        subprocess.run(['ollama', 'run', model_name])
+    
+    def pull_model(self, model_name):
+        """下載新模型"""
+        print(f"\n下載模型: {model_name}")
+        subprocess.run(['ollama', 'pull', model_name])
+    
+    def delete_model(self, model_name):
+        """刪除模型"""
+        confirm = input(f"確定要刪除 {model_name}? (y/n): ")
+        if confirm.lower() == 'y':
+            subprocess.run(['ollama', 'rm', model_name])
+            print(f"已刪除 {model_name}")
+
+def main():
+    manager = ModelManager()
+    
+    while True:
+        print("\n" + "="*40)
+        print("Ollama 模型管理器")
+        print("="*40)
+        print("1. 列出模型")
+        print("2. 執行模型")
+        print("3. 下載新模型")
+        print("4. 刪除模型")
+        print("5. 離開")
+        
+        choice = input("\n選擇操作 (1-5): ")
+        
+        if choice == '1':
+            manager.list_models()
+        
+        elif choice == '2':
+            manager.list_models()
+            model_idx = input("\n選擇模型編號: ")
+            try:
+                idx = int(model_idx) - 1
+                if 0 &lt;= idx &lt; len(manager.models):
+                    manager.run_model(manager.models[idx]['name'])
+            except (ValueError, IndexError):
+                print("無效的選擇")
+        
+        elif choice == '3':
+            model_name = input("輸入模型名稱 (如 llama3.2:3b): ")
+            manager.pull_model(model_name)
+            manager.models = manager.get_installed_models()
+        
+        elif choice == '4':
+            manager.list_models()
+            model_idx = input("\n選擇要刪除的模型編號: ")
+            try:
+                idx = int(model_idx) - 1
+                if 0 &lt;= idx &lt; len(manager.models):
+                    manager.delete_model(manager.models[idx]['name'])
+                    manager.models = manager.get_installed_models()
+            except (ValueError, IndexError):
+                print("無效的選擇")
+        
+        elif choice == '5':
+            print("再見！")
+            break
+        
+        else:
+            print("無效的選擇")
+
+if __name__ == "__main__":
+    main()
+</code></pre>
+<h2 id="api-參考"><a class="header" href="#api-參考">API 參考</a></h2>
+<h3 id="核心-api-端點"><a class="header" href="#核心-api-端點">核心 API 端點</a></h3>
+<h4 id="1-生成文字-apigenerate"><a class="header" href="#1-生成文字-apigenerate">1. 生成文字 <code>/api/generate</code></a></h4>
+<pre><code class="language-bash"># 請求
+curl -X POST http://localhost:11434/api/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "llama3.2:3b",
+    "prompt": "Why is the sky blue?",
+    "stream": false,
+    "options": {
+      "temperature": 0.7,
+      "top_p": 0.9,
+      "top_k": 40
+    }
+  }'
+
+# 回應
+{
+  "model": "llama3.2:3b",
+  "created_at": "2024-01-01T00:00:00.000Z",
+  "response": "The sky appears blue because...",
+  "done": true,
+  "context": [1, 2, 3],
+  "total_duration": 5000000000,
+  "load_duration": 1000000000,
+  "prompt_eval_duration": 1000000000,
+  "eval_duration": 3000000000,
+  "eval_count": 100
+}
+</code></pre>
+<h4 id="2-聊天介面-apichat"><a class="header" href="#2-聊天介面-apichat">2. 聊天介面 <code>/api/chat</code></a></h4>
+<pre><code class="language-bash"># 請求
+curl -X POST http://localhost:11434/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "llama3.2:3b",
+    "messages": [
+      {"role": "system", "content": "You are a helpful assistant."},
+      {"role": "user", "content": "Hello!"},
+      {"role": "assistant", "content": "Hi! How can I help you?"},
+      {"role": "user", "content": "Tell me a joke"}
+    ],
+    "stream": false
+  }'
+</code></pre>
+<h4 id="3-模型管理"><a class="header" href="#3-模型管理">3. 模型管理</a></h4>
+<h5 id="列出模型-apitags"><a class="header" href="#列出模型-apitags">列出模型 <code>/api/tags</code></a></h5>
+<pre><code class="language-bash">curl http://localhost:11434/api/tags
+
+# 回應
+{
+  "models": [
+    {
+      "name": "llama3.2:3b",
+      "modified_at": "2024-01-01T00:00:00.000Z",
+      "size": 3825819519,
+      "digest": "sha256:xxx"
+    }
+  ]
+}
+</code></pre>
+<h5 id="顯示模型資訊-apishow"><a class="header" href="#顯示模型資訊-apishow">顯示模型資訊 <code>/api/show</code></a></h5>
+<pre><code class="language-bash">curl -X POST http://localhost:11434/api/show \
+  -d '{"name": "llama3.2:3b"}'
+</code></pre>
+<h5 id="複製模型-apicopy"><a class="header" href="#複製模型-apicopy">複製模型 <code>/api/copy</code></a></h5>
+<pre><code class="language-bash">curl -X POST http://localhost:11434/api/copy \
+  -d '{
+    "source": "llama3.2:3b",
+    "destination": "my-model"
+  }'
+</code></pre>
+<h5 id="刪除模型-apidelete"><a class="header" href="#刪除模型-apidelete">刪除模型 <code>/api/delete</code></a></h5>
+<pre><code class="language-bash">curl -X DELETE http://localhost:11434/api/delete \
+  -d '{"name": "llama3.2:3b"}'
+</code></pre>
+<h5 id="拉取模型-apipull"><a class="header" href="#拉取模型-apipull">拉取模型 <code>/api/pull</code></a></h5>
+<pre><code class="language-bash">curl -X POST http://localhost:11434/api/pull \
+  -d '{"name": "llama3.2:3b"}'
+</code></pre>
+<h5 id="推送模型-apipush"><a class="header" href="#推送模型-apipush">推送模型 <code>/api/push</code></a></h5>
+<pre><code class="language-bash">curl -X POST http://localhost:11434/api/push \
+  -d '{"name": "username/my-model"}'
+</code></pre>
+<h4 id="4-嵌入向量-apiembeddings"><a class="header" href="#4-嵌入向量-apiembeddings">4. 嵌入向量 <code>/api/embeddings</code></a></h4>
+<pre><code class="language-bash">curl -X POST http://localhost:11434/api/embeddings \
+  -d '{
+    "model": "llama3.2:3b",
+    "prompt": "Hello world"
+  }'
+
+# 回應
+{
+  "embedding": [0.1, 0.2, 0.3, ...]
+}
+</code></pre>
+<h3 id="參數說明"><a class="header" href="#參數說明">參數說明</a></h3>
+<h4 id="生成參數-options"><a class="header" href="#生成參數-options">生成參數 (options)</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>參數</th><th>類型</th><th>預設值</th><th>說明</th></tr></thead><tbody>
+<tr><td>temperature</td><td>float</td><td>0.8</td><td>控制隨機性 (0-2)</td></tr>
+<tr><td>top_k</td><td>int</td><td>40</td><td>限制詞彙選擇數量</td></tr>
+<tr><td>top_p</td><td>float</td><td>0.9</td><td>累積機率閾值</td></tr>
+<tr><td>repeat_penalty</td><td>float</td><td>1.1</td><td>重複懲罰</td></tr>
+<tr><td>seed</td><td>int</td><td>0</td><td>隨機種子</td></tr>
+<tr><td>num_predict</td><td>int</td><td>128</td><td>最大生成長度</td></tr>
+<tr><td>num_ctx</td><td>int</td><td>2048</td><td>上下文視窗大小</td></tr>
+<tr><td>stop</td><td>[]string</td><td>[]</td><td>停止序列</td></tr>
+</tbody></table>
+</div>
+<h3 id="sdk-整合"><a class="header" href="#sdk-整合">SDK 整合</a></h3>
+<h4 id="python-ollama-python"><a class="header" href="#python-ollama-python">Python (ollama-python)</a></h4>
+<pre><code class="language-bash">pip install ollama
+</code></pre>
+<pre><code class="language-python">import ollama
+
+# 生成
+response = ollama.generate(model='llama3.2:3b', prompt='Why is the sky blue?')
+print(response['response'])
+
+# 聊天
+messages = [
+    {'role': 'user', 'content': 'Why is the sky blue?'}
+]
+response = ollama.chat(model='llama3.2:3b', messages=messages)
+print(response['message']['content'])
+
+# 串流
+for chunk in ollama.generate(model='llama3.2:3b', prompt='Tell me a story', stream=True):
+    print(chunk['response'], end='', flush=True)
+</code></pre>
+<h4 id="javascripttypescript"><a class="header" href="#javascripttypescript">JavaScript/TypeScript</a></h4>
+<pre><code class="language-bash">npm install ollama
+</code></pre>
+<pre><code class="language-javascript">import ollama from 'ollama'
+
+// 生成
+const response = await ollama.generate({
+  model: 'llama3.2:3b',
+  prompt: 'Why is the sky blue?'
+})
+console.log(response.response)
+
+// 聊天
+const message = await ollama.chat({
+  model: 'llama3.2:3b',
+  messages: [{ role: 'user', content: 'Why is the sky blue?' }],
+})
+console.log(message.message.content)
+
+// 串流
+const stream = await ollama.generate({
+  model: 'llama3.2:3b',
+  prompt: 'Tell me a story',
+  stream: true,
+})
+for await (const chunk of stream) {
+  process.stdout.write(chunk.response)
+}
+</code></pre>
+<h2 id="最佳實踐"><a class="header" href="#最佳實踐">最佳實踐</a></h2>
+<h3 id="1-安全性設定"><a class="header" href="#1-安全性設定">1. 安全性設定</a></h3>
+<pre><code class="language-bash"># 限制本地存取
+OLLAMA_HOST=127.0.0.1:11434 ollama serve
+
+# 使用 nginx 反向代理
+server {
+    listen 443 ssl;
+    server_name your-domain.com;
+    
+    ssl_certificate /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
+    
+    location /api/ {
+        proxy_pass http://localhost:11434/api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+</code></pre>
+<h3 id="2-監控和日誌"><a class="header" href="#2-監控和日誌">2. 監控和日誌</a></h3>
+<pre><code class="language-bash"># 即時監控
+watch -n 1 'nvidia-smi; echo ""; ollama list'
+
+# 日誌分析
+journalctl -u ollama --since "1 hour ago" | grep ERROR
+
+# 效能監控腳本
+#!/bin/bash
+while true; do
+    echo "$(date): $(ollama list | wc -l) models loaded"
+    nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader
+    sleep 5
+done
+</code></pre>
+<h3 id="3-備份和還原"><a class="header" href="#3-備份和還原">3. 備份和還原</a></h3>
+<pre><code class="language-bash"># 備份模型
+tar -czf ollama-models-backup.tar.gz ~/.ollama/models
+
+# 還原模型
+tar -xzf ollama-models-backup.tar.gz -C ~/
+
+# 備份設定
+cp -r ~/.ollama ollama-config-backup
+</code></pre>
+<h2 id="資源連結"><a class="header" href="#資源連結">資源連結</a></h2>
+<h3 id="官方資源"><a class="header" href="#官方資源">官方資源</a></h3>
+<ul>
+<li><a href="https://ollama.com">Ollama 官方網站</a></li>
+<li><a href="https://github.com/ollama/ollama">Ollama GitHub</a></li>
+<li><a href="https://ollama.com/library">模型庫</a></li>
+<li><a href="https://github.com/ollama/ollama/blob/main/docs/api.md">API 文件</a></li>
+<li><a href="https://github.com/ollama/ollama/blob/main/docs/modelfile.md">Modelfile 文件</a></li>
+</ul>
+<h3 id="社群資源"><a class="header" href="#社群資源">社群資源</a></h3>
+<ul>
+<li><a href="https://discord.gg/ollama">Ollama Discord</a></li>
+<li><a href="https://www.reddit.com/r/LocalLLaMA/">Reddit r/LocalLLaMA</a></li>
+<li><a href="https://huggingface.co/models">Hugging Face Models</a></li>
+</ul>
+<h3 id="相關工具"><a class="header" href="#相關工具">相關工具</a></h3>
+<ul>
+<li><a href="https://github.com/open-webui/open-webui">Open WebUI</a></li>
+<li><a href="https://continue.dev/">Continue (VS Code)</a></li>
+<li><a href="https://langchain.com/">LangChain</a></li>
+<li><a href="https://www.llamaindex.ai/">LlamaIndex</a></li>
+</ul>
+<h3 id="學習資源"><a class="header" href="#學習資源">學習資源</a></h3>
+<ul>
+<li><a href="https://www.youtube.com/results?search_query=ollama+tutorial">Ollama 教學影片</a></li>
+<li><a href="https://www.deeplearning.ai/">LLM 課程</a></li>
+<li><a href="https://www.promptingguide.ai/">Prompt Engineering Guide</a></li>
+</ul>
+<hr />
+<h2 id="更新日誌"><a class="header" href="#更新日誌">更新日誌</a></h2>
+<ul>
+<li><strong>2024.01</strong>: 初始版本</li>
+<li><strong>2024.02</strong>: 新增 Web UI 設定</li>
+<li><strong>2024.03</strong>: 新增進階設定和 API 參考</li>
+<li><strong>2024.04</strong>: 新增故障排除和最佳實踐</li>
+</ul>
+<hr />
+<p>💡 <strong>小提示</strong>:</p>
+<ul>
+<li>開始使用時先嘗試較小的模型（如 TinyLlama）</li>
+<li>定期更新 Ollama 以獲得最新功能和效能改進</li>
+<li>加入社群獲得支援和分享經驗</li>
+</ul>
+<p>📝 <strong>授權</strong>: MIT License</p>
+<p>🤝 <strong>貢獻</strong>: 歡迎提交 Issue 和 Pull Request！</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../ml/ollama_guide_markdown.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../ml/opensource-llm-tuning-guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../ml/ollama_guide_markdown.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../ml/opensource-llm-tuning-guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

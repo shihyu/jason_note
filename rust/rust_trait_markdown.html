@@ -1,0 +1,991 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Rust Trait 詳細指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="rust-trait-系統完整指南"><a class="header" href="#rust-trait-系統完整指南">Rust Trait 系統完整指南</a></h1>
+<h2 id="-什麼是-trait"><a class="header" href="#-什麼是-trait">🎯 什麼是 Trait？</a></h2>
+<p><strong>Trait = 能力清單 = 技能規格書</strong></p>
+<p>就像職業證照的考試大綱，規定你要會哪些技能，但不管你怎麼實現。</p>
+<h2 id="-基本概念對照表"><a class="header" href="#-基本概念對照表">📋 基本概念對照表</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>概念</th><th>白話解釋</th><th>程式語法</th><th>生活比喻</th></tr></thead><tbody>
+<tr><td><strong>struct</strong></td><td>創造物體</td><td><code>struct 汽車 { ... }</code></td><td>造一台機器人</td></tr>
+<tr><td><strong>trait</strong></td><td>定義能力</td><td><code>trait 交通工具 { ... }</code></td><td>制定技能考試大綱</td></tr>
+<tr><td><strong>impl trait</strong></td><td>教授技能</td><td><code>impl 交通工具 for 汽車</code></td><td>教機器人學技能</td></tr>
+<tr><td><strong>多型使用</strong></td><td>同名異事</td><td><code>fn 駕駛(工具: &amp;dyn 交通工具)</code></td><td>不同機器人用不同方式做同件事</td></tr>
+</tbody></table>
+</div>
+<h2 id="-完整實作步驟"><a class="header" href="#-完整實作步驟">🔧 完整實作步驟</a></h2>
+<h3 id="1-定義-trait制定規格"><a class="header" href="#1-定義-trait制定規格">1️⃣ 定義 Trait（制定規格）</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait 交通工具 {
+    // 必須實現的方法
+    fn 啟動(&amp;self);
+    fn 停止(&amp;self);
+    fn 加速(&amp;self);
+    
+    // 可選實現的方法（有預設實現）
+    fn 狀態報告(&amp;self) {
+        println!("交通工具運行正常");
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>重點：</strong></p>
+<ul>
+<li>定義了「交通工具」應該具備的能力</li>
+<li>有些方法<strong>必須</strong>實現（沒有預設實現）</li>
+<li>有些方法<strong>可選</strong>實現（有預設實現，可覆寫）</li>
+</ul>
+<h3 id="2-定義-struct創造物體"><a class="header" href="#2-定義-struct創造物體">2️⃣ 定義 Struct（創造物體）</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct 汽車 {
+    品牌: String,
+    燃料: i32,
+}
+
+struct 飛機 {
+    型號: String,
+    高度: i32,
+}
+
+struct 船隻 {
+    名稱: String,
+    速度: i32,
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>重點：</strong></p>
+<ul>
+<li>每個 struct 都是不同的「物體」</li>
+<li>有各自的屬性和特色</li>
+<li>此時還<strong>沒有任何能力</strong></li>
+</ul>
+<h3 id="3-實現-trait教授技能"><a class="header" href="#3-實現-trait教授技能">3️⃣ 實現 Trait（教授技能）</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl 交通工具 for 汽車 {
+    fn 啟動(&amp;self) {
+        println!("🚗 {} 引擎點火！", self.品牌);
+    }
+    
+    fn 停止(&amp;self) {
+        println!("🚗 {} 踩煞車停車", self.品牌);
+    }
+    
+    fn 加速(&amp;self) {
+        println!("🚗 {} 踩油門加速", self.品牌);
+    }
+}
+
+impl 交通工具 for 飛機 {
+    fn 啟動(&amp;self) {
+        println!("✈️ {} 開始暖機！", self.型號);
+    }
+    
+    fn 停止(&amp;self) {
+        println!("✈️ {} 著陸停機", self.型號);
+    }
+    
+    fn 加速(&amp;self) {
+        println!("✈️ {} 推力增強", self.型號);
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>重點：</strong></p>
+<ul>
+<li><strong>同名異事</strong>：同樣叫<code>啟動()</code>，但汽車和飛機做法完全不同</li>
+<li>每個類型都必須實現 trait 要求的所有方法</li>
+<li>可以覆寫預設實現</li>
+</ul>
+<h3 id="4-多型使用發揮威力"><a class="header" href="#4-多型使用發揮威力">4️⃣ 多型使用（發揮威力）</a></h3>
+<pre><pre class="playground"><code class="language-rust">// 通用函數：不管什麼交通工具都能操作
+fn 駕駛交通工具(工具: &amp;dyn 交通工具) {
+    工具.啟動();    // 不知道是汽車還飛機，但都會啟動
+    工具.加速();    // 行為會因類型不同而不同
+    工具.停止();    // 這就是多型的威力！
+}
+
+fn main() {
+    let 我的車 = 汽車 { 品牌: "Toyota".to_string(), 燃料: 75 };
+    let 客機 = 飛機 { 型號: "波音747".to_string(), 高度: 10000 };
+    
+    // 同一個函數，不同的行為
+    駕駛交通工具(&amp;我的車);  // 輸出汽車的行為
+    駕駛交通工具(&amp;客機);   // 輸出飛機的行為
+}</code></pre></pre>
+<h2 id="-多型的威力展現"><a class="header" href="#-多型的威力展現">🎪 多型的威力展現</a></h2>
+<h3 id="批次處理不同類型"><a class="header" href="#批次處理不同類型">批次處理不同類型</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn 批次駕駛(工具列表: Vec&lt;&amp;dyn 交通工具&gt;) {
+    for 工具 in 工具列表 {
+        駕駛交通工具(工具);
+    }
+}
+
+// 使用
+let 交通工具列表: Vec&lt;&amp;dyn 交通工具&gt; = vec![&amp;我的車, &amp;客機, &amp;船隻];
+批次駕駛(交通工具列表);
+<span class="boring">}</span></code></pre></pre>
+<p><strong>神奇之處：</strong></p>
+<ul>
+<li>一個 Vec 裝不同類型的物體</li>
+<li>一個函數處理所有類型</li>
+<li>執行時才決定要呼叫哪個實現</li>
+</ul>
+<h2 id="-與其他語言比較"><a class="header" href="#-與其他語言比較">🔍 與其他語言比較</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>語言</th><th>類似概念</th><th>語法</th></tr></thead><tbody>
+<tr><td><strong>Java</strong></td><td>Interface</td><td><code>class Car implements Vehicle</code></td></tr>
+<tr><td><strong>C#</strong></td><td>Interface</td><td><code>class Car : IVehicle</code></td></tr>
+<tr><td><strong>C++</strong></td><td>純虛擬函數/概念</td><td><code>class Car : public Vehicle</code></td></tr>
+<tr><td><strong>Go</strong></td><td>Interface</td><td>隱式實現</td></tr>
+<tr><td><strong>Rust</strong></td><td>Trait</td><td><code>impl Vehicle for Car</code></td></tr>
+</tbody></table>
+</div>
+<h2 id="-對-c-開發者的重要提醒"><a class="header" href="#-對-c-開發者的重要提醒">🚨 對 C++ 開發者的重要提醒</a></h2>
+<h3 id="-與-c-虛擬函數的關鍵差異"><a class="header" href="#-與-c-虛擬函數的關鍵差異">💡 與 C++ 虛擬函數的關鍵差異</a></h3>
+<h4 id="c-的做法"><a class="header" href="#c-的做法">C++ 的做法：</a></h4>
+<pre><code class="language-cpp">class Vehicle {
+public:
+    virtual void start() = 0;  // 純虛擬函數
+    virtual void stop() = 0;
+    virtual ~Vehicle() = default;
+};
+
+class Car : public Vehicle {  // 繼承 + 實現
+    void start() override { 
+        cout &lt;&lt; "Engine starts" &lt;&lt; endl; 
+    }
+    void stop() override { 
+        cout &lt;&lt; "Brake applied" &lt;&lt; endl; 
+    }
+};
+</code></pre>
+<h4 id="rust-的做法"><a class="header" href="#rust-的做法">Rust 的做法：</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait Vehicle {
+    fn start(&amp;self);
+    fn stop(&amp;self);
+}
+
+struct Car { brand: String }
+
+impl Vehicle for Car {  // 組合 + 實現
+    fn start(&amp;self) {
+        println!("Engine starts");
+    }
+    fn stop(&amp;self) {
+        println!("Brake applied");
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-核心差異對比"><a class="header" href="#-核心差異對比">🎯 核心差異對比</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>C++</th><th>Rust</th></tr></thead><tbody>
+<tr><td><strong>繼承方式</strong></td><td>類別繼承（is-a）</td><td>能力實現（can-do）</td></tr>
+<tr><td><strong>記憶體佈局</strong></td><td>有 vtable 指標</td><td>零額外開銷</td></tr>
+<tr><td><strong>多重繼承</strong></td><td>支援但複雜</td><td>多個 trait 簡單實現</td></tr>
+<tr><td><strong>實現時機</strong></td><td>類別定義時決定</td><td>可後續為任何類型實現</td></tr>
+<tr><td><strong>孤兒規則</strong></td><td>無</td><td>防止衝突的嚴格規則</td></tr>
+</tbody></table>
+</div>
+<h3 id="-常見混淆點"><a class="header" href="#-常見混淆點">⚠️ 常見混淆點</a></h3>
+<h4 id="1-繼承-vs-組合思維"><a class="header" href="#1-繼承-vs-組合思維">1. <strong>繼承 vs 組合思維</strong></a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ C++ 思維（錯誤）：想要"繼承"
+// struct Car: Vehicle { ... }  // Rust 沒有類別繼承！
+
+// ✅ Rust 思維（正確）：為類型"實現能力"
+impl Vehicle for Car { ... }
+<span class="boring">}</span></code></pre></pre>
+<h4 id="2-this-vs-self"><a class="header" href="#2-this-vs-self">2. <strong>this vs self</strong></a></h4>
+<pre><code class="language-cpp">// C++ 中的 this 指標（隱含）
+class Car {
+    void start() { this-&gt;engine.start(); }  // this 可省略
+};
+</code></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Rust 中的 &amp;self 參數（明確）
+impl Vehicle for Car {
+    fn start(&amp;self) {  // 必須明確寫出 &amp;self
+        self.engine.start();
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="3-虛擬函數的效能差異"><a class="header" href="#3-虛擬函數的效能差異">3. <strong>虛擬函數的效能差異</strong></a></h4>
+<pre><code class="language-cpp">// C++ 虛擬函數呼叫（執行時查表）
+Vehicle* v = new Car();
+v-&gt;start();  // 透過 vtable 查找，有額外開銷
+</code></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Rust 靜態分派（編譯時決定）
+fn drive&lt;T: Vehicle&gt;(v: &amp;T) {
+    v.start();  // 編譯時就知道要呼叫哪個實現，零開銷！
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="-rust-trait-的獨特優勢"><a class="header" href="#-rust-trait-的獨特優勢">✨ Rust Trait 的獨特優勢</a></h2>
+<h3 id="1-靜態分派-vs-動態分派"><a class="header" href="#1-靜態分派-vs-動態分派">1. 靜態分派 vs 動態分派</a></h3>
+<h4 id="-靜態分派static-dispatch--rust-預設"><a class="header" href="#-靜態分派static-dispatch--rust-預設">🚀 靜態分派（Static Dispatch）- Rust 預設</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 泛型約束：編譯時就知道具體類型
+fn drive_static&lt;T: Vehicle&gt;(vehicle: &amp;T) {
+    vehicle.start();  // 零開銷！編譯器直接內聯
+}
+
+// 使用時
+let car = Car { brand: "Toyota".to_string() };
+drive_static(&amp;car);  // 編譯器生成 drive_static_for_Car 函數
+<span class="boring">}</span></code></pre></pre>
+<p><strong>優點：</strong></p>
+<ul>
+<li>🏃 執行速度快，零 vtable 開銷</li>
+<li>⚡ 編譯器可以內聯優化</li>
+<li>🎯 在編譯時就確定所有呼叫</li>
+</ul>
+<p><strong>缺點：</strong></p>
+<ul>
+<li>📈 程式碼膨脹（為每種類型生成一份程式碼）</li>
+<li>📦 無法存放不同類型在同一個容器中</li>
+</ul>
+<h4 id="-動態分派dynamic-dispatch--需明確指定"><a class="header" href="#-動態分派dynamic-dispatch--需明確指定">🐌 動態分派（Dynamic Dispatch）- 需明確指定</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 使用 dyn 關鍵字
+fn drive_dynamic(vehicle: &amp;dyn Vehicle) {
+    vehicle.start();  // 執行時查表決定呼叫哪個函數
+}
+
+// 存放不同類型
+let vehicles: Vec&lt;Box&lt;dyn Vehicle&gt;&gt; = vec![
+    Box::new(Car { brand: "Toyota".to_string() }),
+    Box::new(Plane { model: "Boeing".to_string() }),
+];
+<span class="boring">}</span></code></pre></pre>
+<p><strong>優點：</strong></p>
+<ul>
+<li>🎯 可以混合不同類型</li>
+<li>📦 程式碼大小較小</li>
+<li>🔄 執行時決定行為</li>
+</ul>
+<p><strong>缺點：</strong></p>
+<ul>
+<li>🐢 有 vtable 查找開銷</li>
+<li>❌ 編譯器較難優化</li>
+<li>💾 額外的記憶體使用</li>
+</ul>
+<h4 id="-c-開發者對比"><a class="header" href="#-c-開發者對比">🎯 C++ 開發者對比</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>C++</th><th>Rust 靜態分派</th><th>Rust 動態分派</th></tr></thead><tbody>
+<tr><td><strong>語法</strong></td><td><code>template&lt;class T&gt;</code></td><td><code>fn func&lt;T: Trait&gt;</code></td><td><code>fn func(&amp;dyn Trait)</code></td></tr>
+<tr><td><strong>性能</strong></td><td>快（但需手動優化）</td><td>非常快</td><td>類似 C++ 虛擬函數</td></tr>
+<tr><td><strong>預設行為</strong></td><td>靜態（template）</td><td>靜態</td><td>需明確指定</td></tr>
+<tr><td><strong>型別檢查</strong></td><td>編譯時</td><td>編譯時</td><td>編譯時界面，執行時實現</td></tr>
+</tbody></table>
+</div>
+<h3 id="2-孤兒規則-orphan-rule---重要安全機制"><a class="header" href="#2-孤兒規則-orphan-rule---重要安全機制">2. 孤兒規則 (Orphan Rule) - 重要安全機制</a></h3>
+<h4 id="-什麼是孤兒規則"><a class="header" href="#-什麼是孤兒規則">🛡️ 什麼是孤兒規則？</a></h4>
+<p>Rust 規定：<strong>只能在以下情況下實現 trait</strong>：</p>
+<ol>
+<li><strong>你擁有 trait</strong>：你定義的 trait 可以為任何類型實現</li>
+<li><strong>你擁有類型</strong>：你定義的類型可以實現任何 trait</li>
+<li><strong>至少擁有其中一個</strong>：不能為別人的類型實現別人的 trait</li>
+</ol>
+<h4 id="-合法的實現"><a class="header" href="#-合法的實現">✅ 合法的實現</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 1. 你的 trait + 你的類型 ✅
+trait MyTrait { fn my_method(&amp;self); }
+struct MyStruct;
+impl MyTrait for MyStruct { ... }
+
+// 2. 你的 trait + 標準庫類型 ✅
+impl MyTrait for String { ... }
+
+// 3. 標準庫 trait + 你的類型 ✅
+impl Display for MyStruct { ... }
+
+// 4. 你的 trait + 泛型包裝 ✅
+impl MyTrait for Vec&lt;MyStruct&gt; { ... }
+<span class="boring">}</span></code></pre></pre>
+<h4 id="-不合法的實現"><a class="header" href="#-不合法的實現">❌ 不合法的實現</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ 別人的 trait + 別人的類型
+impl Display for String { ... }  // 編譯錯誤！
+// 你既不擁有 Display 也不擁有 String
+<span class="boring">}</span></code></pre></pre>
+<h4 id="-為什麼需要孤兒規則"><a class="header" href="#-為什麼需要孤兒規則">🤔 為什麼需要孤兒規則？</a></h4>
+<p>想像一下沒有孤兒規則的情況：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 在 crate A 中
+impl Display for i32 { ... }
+
+// 在 crate B 中  
+impl Display for i32 { ... }
+
+// 當你同時使用 A 和 B 時...
+let num = 42;
+println!("{}", num);  // 應該用哪個實現？衝突！
+<span class="boring">}</span></code></pre></pre>
+<h4 id="-c-開發者對比-1"><a class="header" href="#-c-開發者對比-1">🎯 C++ 開發者對比</a></h4>
+<pre><code class="language-cpp">// C++ 沒有孤兒規則，可能導致：
+
+// 在 library_a.h
+template&lt;&gt; 
+void to_string&lt;int&gt;(int value) { ... }  // 實現 A
+
+// 在 library_b.h
+template&lt;&gt;
+void to_string&lt;int&gt;(int value) { ... }  // 實現 B
+
+// 連結時可能衝突或行為不確定
+</code></pre>
+<h4 id="-解決方案newtype-模式"><a class="header" href="#-解決方案newtype-模式">🔧 解決方案：newtype 模式</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 如果真的需要為外部類型實現外部 trait
+struct MyString(String);  // 包裝類型
+
+impl Display for MyString {  // 現在合法了！
+    fn fmt(&amp;self, f: &amp;mut Formatter) -&gt; Result {
+        write!(f, "My: {}", self.0)
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="3-多重實現"><a class="header" href="#3-多重實現">3. 多重實現</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 一個類型可以實現多個 trait
+impl 交通工具 for 汽車 { ... }
+impl 載客工具 for 汽車 { ... }
+impl 貨運工具 for 汽車 { ... }
+<span class="boring">}</span></code></pre></pre>
+<h2 id="-學習重點總結"><a class="header" href="#-學習重點總結">🎓 學習重點總結</a></h2>
+<h3 id="核心概念"><a class="header" href="#核心概念">核心概念</a></h3>
+<ol>
+<li><strong>struct</strong> = 創造物體 🏗️</li>
+<li><strong>trait</strong> = 定義能力規格 📋</li>
+<li><strong>impl trait for struct</strong> = 賦予物體能力 🎓</li>
+<li><strong>多型使用</strong> = 同名異事，統一操作 ⚡</li>
+</ol>
+<h3 id="記憶口訣"><a class="header" href="#記憶口訣">記憶口訣</a></h3>
+<blockquote>
+<p><strong>"先造物，定規格，教技能，用多型"</strong></p>
+</blockquote>
+<h3 id="實用建議"><a class="header" href="#實用建議">實用建議</a></h3>
+<ul>
+<li>優先定義 trait，再設計 struct</li>
+<li>保持 trait 方法簡潔明確</li>
+<li>善用預設實現減少重複程式碼</li>
+<li>用 <code>&amp;dyn Trait</code> 實現多型</li>
+</ul>
+<h2 id="-泛型約束-trait-bounds---實際應用"><a class="header" href="#-泛型約束-trait-bounds---實際應用">🔧 泛型約束 (Trait Bounds) - 實際應用</a></h2>
+<h3 id="-什麼是泛型約束"><a class="header" href="#-什麼是泛型約束">💡 什麼是泛型約束？</a></h3>
+<p>限制泛型參數必須實現特定 trait，確保類型安全和功能完整。</p>
+<h4 id="-c-開發者對比-2"><a class="header" href="#-c-開發者對比-2">🎯 C++ 開發者對比</a></h4>
+<pre><code class="language-cpp">// C++ Concepts (C++20)
+template&lt;typename T&gt;
+concept Drawable = requires(T t) {
+    t.draw();
+};
+
+template&lt;Drawable T&gt;
+void render(T obj) {
+    obj.draw();
+}
+</code></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Rust Trait Bounds
+fn render&lt;T: Draw&gt;(obj: T) {
+    obj.draw();
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-常用約束語法"><a class="header" href="#-常用約束語法">📋 常用約束語法</a></h3>
+<h4 id="1-單一約束"><a class="header" href="#1-單一約束">1. <strong>單一約束</strong></a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn process&lt;T: Clone&gt;(data: T) -&gt; T {
+    data.clone()
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="2-多重約束"><a class="header" href="#2-多重約束">2. <strong>多重約束</strong></a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 方法一：+ 語法
+fn debug_and_clone&lt;T: Debug + Clone&gt;(item: &amp;T) -&gt; T {
+    println!("{:?}", item);
+    item.clone()
+}
+
+// 方法二：where 子句（更清晰）
+fn complex_function&lt;T, U&gt;(a: T, b: U) -&gt; String
+where
+    T: Debug + Clone + Send,
+    U: Display + Hash,
+{
+    format!("{:?} and {}", a, b)
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="3-返回值約束"><a class="header" href="#3-返回值約束">3. <strong>返回值約束</strong></a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 返回實現特定 trait 的類型
+fn create_iterator() -&gt; impl Iterator&lt;Item = i32&gt; {
+    vec![1, 2, 3].into_iter()
+}
+
+// 多個約束
+fn create_debug_clone() -&gt; impl Debug + Clone {
+    String::from("hello")
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-實際應用範例"><a class="header" href="#-實際應用範例">🚀 實際應用範例</a></h3>
+<h4 id="範例-1泛用排序函數"><a class="header" href="#範例-1泛用排序函數">範例 1：泛用排序函數</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::cmp::Ordering;
+
+fn sort_items&lt;T&gt;(mut items: Vec&lt;T&gt;) -&gt; Vec&lt;T&gt;
+where
+    T: Ord,  // 必須可以比較大小
+{
+    items.sort();
+    items
+}
+
+// 使用
+let numbers = vec![3, 1, 4, 1, 5];
+let sorted = sort_items(numbers);  // Vec&lt;i32&gt;
+
+let strings = vec!["banana", "apple", "cherry"];
+let sorted = sort_items(strings);  // Vec&lt;&amp;str&gt;
+<span class="boring">}</span></code></pre></pre>
+<h4 id="範例-2泛用容器操作"><a class="header" href="#範例-2泛用容器操作">範例 2：泛用容器操作</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn print_collection&lt;T, I&gt;(items: I)
+where
+    I: IntoIterator&lt;Item = T&gt;,
+    T: Display,
+{
+    for item in items {
+        println!("{}", item);
+    }
+}
+
+// 可以用於多種容器
+print_collection(vec![1, 2, 3]);           // Vec
+print_collection([4, 5, 6]);               // 陣列
+print_collection(std::collections::HashSet::from([7, 8, 9])); // HashSet
+<span class="boring">}</span></code></pre></pre>
+<h4 id="範例-3序列化系統"><a class="header" href="#範例-3序列化系統">範例 3：序列化系統</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait Serialize {
+    fn serialize(&amp;self) -&gt; String;
+}
+
+trait Deserialize {
+    fn deserialize(data: &amp;str) -&gt; Self;
+}
+
+// 泛用的儲存和讀取系統
+fn save_to_file&lt;T: Serialize&gt;(obj: &amp;T, filename: &amp;str) -&gt; std::io::Result&lt;()&gt; {
+    std::fs::write(filename, obj.serialize())
+}
+
+fn load_from_file&lt;T: Deserialize&gt;(filename: &amp;str) -&gt; std::io::Result&lt;T&gt; {
+    let data = std::fs::read_to_string(filename)?;
+    Ok(T::deserialize(&amp;data))
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-關聯類型-vs-泛型約束"><a class="header" href="#-關聯類型-vs-泛型約束">🎭 關聯類型 vs 泛型約束</a></h3>
+<h4 id="泛型約束一對多關係"><a class="header" href="#泛型約束一對多關係">泛型約束：一對多關係</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait Convert&lt;T&gt; {
+    fn convert(&amp;self) -&gt; T;
+}
+
+// 一個類型可以實現多個轉換
+impl Convert&lt;String&gt; for i32 { ... }
+impl Convert&lt;f64&gt; for i32 { ... }
+<span class="boring">}</span></code></pre></pre>
+<h4 id="關聯類型一對一關係"><a class="header" href="#關聯類型一對一關係">關聯類型：一對一關係</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait Iterator {
+    type Item;  // 關聯類型
+    
+    fn next(&amp;mut self) -&gt; Option&lt;Self::Item&gt;;
+}
+
+// 每個迭代器只能有一種 Item 類型
+impl Iterator for MyIterator {
+    type Item = String;
+    ...
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-最佳實踐"><a class="header" href="#-最佳實踐">🏆 最佳實踐</a></h3>
+<h4 id="1-選擇合適的約束方式"><a class="header" href="#1-選擇合適的約束方式">1. <strong>選擇合適的約束方式</strong></a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 簡單約束用內聯
+fn simple&lt;T: Clone&gt;(x: T) -&gt; T { x.clone() }
+
+// 複雜約束用 where
+fn complex&lt;T, U, V&gt;(a: T, b: U, c: V) 
+where
+    T: Debug + Clone + Send + Sync,
+    U: Display + Hash + Eq,
+    V: Iterator&lt;Item = T&gt;,
+{
+    // ...
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="2-使用-impl-trait-簡化返回類型"><a class="header" href="#2-使用-impl-trait-簡化返回類型">2. <strong>使用 impl Trait 簡化返回類型</strong></a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 而不是
+fn create_iter() -&gt; std::vec::IntoIter&lt;i32&gt; { ... }
+
+// 使用
+fn create_iter() -&gt; impl Iterator&lt;Item = i32&gt; { ... }
+<span class="boring">}</span></code></pre></pre>
+<h2 id="-零成本抽象-zero-cost-abstraction-實作原理"><a class="header" href="#-零成本抽象-zero-cost-abstraction-實作原理">⚡ 零成本抽象 (Zero-Cost Abstraction) 實作原理</a></h2>
+<h3 id="-什麼是零成本抽象"><a class="header" href="#-什麼是零成本抽象">💡 什麼是零成本抽象？</a></h3>
+<blockquote>
+<p><strong>"What you don't use, you don't pay for. And what you do use, you couldn't hand code any better."</strong> - Bjarne Stroustrup</p>
+</blockquote>
+<p>Rust 的 trait 系統實現了真正的零成本抽象：使用抽象不會增加執行時開銷。</p>
+<h3 id="-編譯器如何實現零成本"><a class="header" href="#-編譯器如何實現零成本">🔍 編譯器如何實現零成本？</a></h3>
+<h4 id="1-單態化-monomorphization"><a class="header" href="#1-單態化-monomorphization">1. <strong>單態化 (Monomorphization)</strong></a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn process&lt;T: Display&gt;(item: T) {
+    println!("{}", item);
+}
+
+// 使用時
+process(42);           // i32
+process("hello");      // &amp;str
+process(3.14);         // f64
+<span class="boring">}</span></code></pre></pre>
+<p>編譯器實際生成：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 編譯器生成的程式碼（概念）
+fn process_i32(item: i32) {
+    println!("{}", item);
+}
+
+fn process_str(item: &amp;str) {
+    println!("{}", item);
+}
+
+fn process_f64(item: f64) {
+    println!("{}", item);
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="2-內聯優化"><a class="header" href="#2-內聯優化">2. <strong>內聯優化</strong></a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait Calculator {
+    fn add(&amp;self, a: i32, b: i32) -&gt; i32;
+}
+
+struct SimpleCalc;
+
+impl Calculator for SimpleCalc {
+    #[inline]  // 提示編譯器內聯
+    fn add(&amp;self, a: i32, b: i32) -&gt; i32 {
+        a + b
+    }
+}
+
+// 使用
+let calc = SimpleCalc;
+let result = calc.add(5, 3);  // 編譯後可能直接變成 8
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-性能對比"><a class="header" href="#-性能對比">🎯 性能對比</a></h3>
+<h4 id="c-虛擬函數有開銷"><a class="header" href="#c-虛擬函數有開銷">C++ 虛擬函數（有開銷）</a></h4>
+<pre><code class="language-cpp">class Shape {
+public:
+    virtual void draw() = 0;  // vtable 查找
+};
+
+class Circle : public Shape {
+public:
+    void draw() override { /* ... */ }
+};
+
+void render(Shape* shape) {
+    shape-&gt;draw();  // 執行時查表，約 5-10 個 CPU 週期
+}
+</code></pre>
+<h4 id="rust-靜態分派零開銷"><a class="header" href="#rust-靜態分派零開銷">Rust 靜態分派（零開銷）</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait Shape {
+    fn draw(&amp;self);
+}
+
+struct Circle;
+
+impl Shape for Circle {
+    fn draw(&amp;self) { /* ... */ }
+}
+
+fn render&lt;T: Shape&gt;(shape: &amp;T) {
+    shape.draw();  // 編譯時就決定，直接呼叫，0 個額外週期
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="性能測試結果示例"><a class="header" href="#性能測試結果示例">性能測試結果示例</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 基準測試結果（僅供參考）
+// 靜態分派：1.2 ns per iteration
+// 動態分派：2.8 ns per iteration  
+// C++ 虛擬函數：2.5 ns per iteration
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-實際優化策略"><a class="header" href="#-實際優化策略">🚀 實際優化策略</a></h3>
+<h4 id="1-選擇合適的分派方式"><a class="header" href="#1-選擇合適的分派方式">1. <strong>選擇合適的分派方式</strong></a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 高性能路徑：使用靜態分派
+fn hot_path&lt;T: Processor&gt;(data: &amp;[u8], processor: &amp;T) -&gt; Vec&lt;u8&gt; {
+    processor.process(data)  // 零開銷
+}
+
+// 靈活性路徑：使用動態分派  
+fn flexible_path(data: &amp;[u8], processor: &amp;dyn Processor) -&gt; Vec&lt;u8&gt; {
+    processor.process(data)  // 小量開銷，但更靈活
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="2-編譯器優化標記"><a class="header" href="#2-編譯器優化標記">2. <strong>編譯器優化標記</strong></a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Display for MyStruct {
+    #[inline(always)]  // 強制內聯
+    fn fmt(&amp;self, f: &amp;mut Formatter) -&gt; Result {
+        write!(f, "{}", self.value)
+    }
+}
+
+// 或者
+#[inline(never)]  // 禁止內聯（減少程式碼大小）
+fn large_function(&amp;self) { ... }
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-深入理解assembly-層面"><a class="header" href="#-深入理解assembly-層面">🔬 深入理解：Assembly 層面</a></h3>
+<h4 id="rust-靜態分派生成的組合語言"><a class="header" href="#rust-靜態分派生成的組合語言">Rust 靜態分派生成的組合語言</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn add_numbers&lt;T: Add&lt;Output = T&gt;&gt;(a: T, b: T) -&gt; T {
+    a + b
+}
+
+// 對於 i32，編譯器可能生成：
+// add_numbers_i32:
+//     add eax, edx    ; 單一指令
+//     ret
+<span class="boring">}</span></code></pre></pre>
+<h4 id="動態分派生成的組合語言"><a class="header" href="#動態分派生成的組合語言">動態分派生成的組合語言</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn add_dynamic(a: &amp;dyn Add&lt;i32, Output = i32&gt;, b: i32) -&gt; i32 {
+    a.add(b)
+}
+
+// 生成較複雜的程式碼：
+// add_dynamic:
+//     mov rax, [rdi + 8]  ; 載入 vtable 指標
+//     mov rax, [rax]      ; 載入函數指標
+//     jmp rax            ; 跳轉到函數
+<span class="boring">}</span></code></pre></pre>
+<h3 id="-最佳實踐建議"><a class="header" href="#-最佳實踐建議">🏆 最佳實踐建議</a></h3>
+<h4 id="1-預設使用靜態分派"><a class="header" href="#1-預設使用靜態分派">1. <strong>預設使用靜態分派</strong></a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 優先選擇
+fn process&lt;T: MyTrait&gt;(item: T) { ... }
+
+// 而非
+fn process(item: &amp;dyn MyTrait) { ... }
+<span class="boring">}</span></code></pre></pre>
+<h4 id="2-在需要時使用動態分派"><a class="header" href="#2-在需要時使用動態分派">2. <strong>在需要時使用動態分派</strong></a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 當需要異質容器時
+let processors: Vec&lt;Box&lt;dyn Processor&gt;&gt; = vec![
+    Box::new(ImageProcessor),
+    Box::new(AudioProcessor),
+    Box::new(TextProcessor),
+];
+<span class="boring">}</span></code></pre></pre>
+<h4 id="3-使用-profile-guided-optimization"><a class="header" href="#3-使用-profile-guided-optimization">3. <strong>使用 profile-guided optimization</strong></a></h4>
+<pre><code class="language-toml"># Cargo.toml
+[profile.release]
+lto = true           # 連結時間優化
+codegen-units = 1    # 更好的優化
+panic = "abort"      # 移除 panic 處理開銷
+</code></pre>
+<h3 id="-總結為什麼-rust-比-c-更好"><a class="header" href="#-總結為什麼-rust-比-c-更好">🎯 總結：為什麼 Rust 比 C++ 更好？</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>C++</th><th>Rust</th></tr></thead><tbody>
+<tr><td><strong>預設行為</strong></td><td>虛擬函數有開銷</td><td>靜態分派零開銷</td></tr>
+<tr><td><strong>優化控制</strong></td><td>需手動調整</td><td>編譯器自動優化</td></tr>
+<tr><td><strong>安全性</strong></td><td>容易出錯</td><td>編譯時保證</td></tr>
+<tr><td><strong>抽象成本</strong></td><td>經常有隱藏成本</td><td>真正零成本</td></tr>
+</tbody></table>
+</div>
+<h2 id="-下一步學習"><a class="header" href="#-下一步學習">🚀 下一步學習</a></h2>
+<ul>
+<li><strong>Associated Types</strong>: 關聯類型深入</li>
+<li><strong>Trait Objects</strong>: 動態分派進階</li>
+<li><strong>Derive Macros</strong>: 自動實現常用 trait</li>
+<li><strong>Higher-Rank Trait Bounds</strong>: 高階 trait 約束</li>
+<li><strong>Const Generics</strong>: 常數泛型</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../rust/rust_trait_impl_markdown.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../rust/rust_cpp_comparison_md.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../rust/rust_trait_impl_markdown.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../rust/rust_cpp_comparison_md.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

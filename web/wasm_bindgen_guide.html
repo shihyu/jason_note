@@ -1,0 +1,427 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>wasm_bindgen 作用整理 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="wasm_bindgen-作用整理"><a class="header" href="#wasm_bindgen-作用整理">wasm_bindgen 作用整理</a></h1>
+<h2 id="概述"><a class="header" href="#概述">概述</a></h2>
+<p><code>wasm_bindgen</code> 是 Rust 生態系統中用於簡化 WebAssembly 和 JavaScript 互操作的工具，它<strong>不決定代碼是否編譯成 WASM</strong>，而是負責<strong>生成綁定代碼</strong>讓兩種語言能夠互相調用。</p>
+<h2 id="主要作用"><a class="header" href="#主要作用">主要作用</a></h2>
+<h3 id="1--javascript-函數綁定到-rust"><a class="header" href="#1--javascript-函數綁定到-rust">1. 🔗 JavaScript 函數綁定到 Rust</a></h3>
+<p>允許 Rust 代碼調用 JavaScript 函數和 Web API。</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[wasm_bindgen]
+extern "C" {
+    // 綁定 console.log
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &amp;str);
+    
+    // 綁定 alert
+    fn alert(s: &amp;str);
+    
+    // 綁定自定義 JavaScript 函數
+    #[wasm_bindgen(js_namespace = myModule)]
+    fn custom_function(x: i32) -&gt; i32;
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="2--rust-函數導出到-javascript"><a class="header" href="#2--rust-函數導出到-javascript">2. 🚀 Rust 函數導出到 JavaScript</a></h3>
+<p>讓 JavaScript 能夠調用 Rust 函數。</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[wasm_bindgen]
+pub fn add(a: i32, b: i32) -&gt; i32 {
+    a + b
+}
+
+#[wasm_bindgen]
+pub fn greet(name: &amp;str) -&gt; String {
+    format!("Hello, {}!", name)
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="3--結構體和類型綁定"><a class="header" href="#3--結構體和類型綁定">3. 📦 結構體和類型綁定</a></h3>
+<p>支持複雜數據類型的雙向傳遞。</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[wasm_bindgen]
+pub struct Person {
+    name: String,
+    age: u32,
+}
+
+#[wasm_bindgen]
+impl Person {
+    #[wasm_bindgen(constructor)]
+    pub fn new(name: String, age: u32) -&gt; Person {
+        Person { name, age }
+    }
+    
+    #[wasm_bindgen(getter)]
+    pub fn name(&amp;self) -&gt; String {
+        self.name.clone()
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="4--web-api-綁定"><a class="header" href="#4--web-api-綁定">4. 🌐 Web API 綁定</a></h3>
+<p>直接使用瀏覽器 API。</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[wasm_bindgen]
+extern "C" {
+    type Document;
+    type Element;
+    
+    #[wasm_bindgen(js_namespace = document)]
+    fn getElementById(id: &amp;str) -&gt; Element;
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="編譯行為對比"><a class="header" href="#編譯行為對比">編譯行為對比</a></h2>
+<h3 id="-有-wasm_bindgen-標記"><a class="header" href="#-有-wasm_bindgen-標記">✅ 有 <code>#[wasm_bindgen]</code> 標記</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[wasm_bindgen]
+pub fn public_function() -&gt; i32 {
+    42
+}
+<span class="boring">}</span></code></pre></pre>
+<ul>
+<li>✅ 編譯到 WASM 中</li>
+<li>✅ <strong>暴露給 JavaScript 調用</strong></li>
+<li>✅ 生成 JavaScript 綁定代碼</li>
+<li>✅ 包含在 TypeScript 定義中</li>
+</ul>
+<h3 id="-沒有-wasm_bindgen-標記"><a class="header" href="#-沒有-wasm_bindgen-標記">🔒 沒有 <code>#[wasm_bindgen]</code> 標記</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn internal_helper() -&gt; i32 {  // 沒有 #[wasm_bindgen]
+    123
+}
+
+pub fn another_internal() -&gt; String {  // 即使是 pub，沒有標記也不暴露
+    "internal".to_string()
+}
+<span class="boring">}</span></code></pre></pre>
+<ul>
+<li>✅ <strong>仍然會被編譯成 WASM</strong></li>
+<li>❌ <strong>不會暴露給 JavaScript</strong></li>
+<li>❌ JavaScript 無法直接調用</li>
+<li>✅ <strong>只能在 Rust 內部使用</strong></li>
+<li>✅ 可以被其他 Rust 函數調用</li>
+</ul>
+<h3 id="-混合使用示例"><a class="header" href="#-混合使用示例">📝 混合使用示例</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 內部輔助函數 - 不暴露給 JS
+fn calculate_internal(x: i32, y: i32) -&gt; i32 {
+    x * x + y * y
+}
+
+// 暴露給 JS 的公共 API
+#[wasm_bindgen]
+pub fn calculate_distance(x: i32, y: i32) -&gt; f64 {
+    let sum = calculate_internal(x, y);  // 調用內部函數
+    (sum as f64).sqrt()
+}
+<span class="boring">}</span></code></pre></pre>
+<p>在這個例子中：</p>
+<ul>
+<li><code>calculate_internal</code> 編譯到 WASM 但 JS 訪問不到</li>
+<li><code>calculate_distance</code> 可以從 JS 調用，內部使用 <code>calculate_internal</code></li>
+</ul>
+<h2 id="生成的產物"><a class="header" href="#生成的產物">生成的產物</a></h2>
+<p><code>wasm_bindgen</code> 會生成以下文件：</p>
+<ul>
+<li><strong><code>.wasm</code></strong> - 實際的 WebAssembly 二進制文件</li>
+<li><strong><code>_bg.js</code></strong> - JavaScript 膠水代碼</li>
+<li><strong><code>.d.ts</code></strong> - TypeScript 類型定義</li>
+<li><strong><code>.js</code></strong> - ES6 模塊包裝器</li>
+</ul>
+<h2 id="重要概念澄清"><a class="header" href="#重要概念澄清">重要概念澄清</a></h2>
+<h3 id="-正確理解"><a class="header" href="#-正確理解">✅ 正確理解</a></h3>
+<ul>
+<li><strong>所有 Rust 代碼都會編譯成 WASM</strong></li>
+<li><code>#[wasm_bindgen]</code> 標記需要 JS 互操作的部分</li>
+<li>沒有標記的函數仍在 WASM 中，但 JS 無法訪問</li>
+<li>生成必要的綁定代碼和類型定義</li>
+</ul>
+<h3 id="-常見誤解"><a class="header" href="#-常見誤解">❌ 常見誤解</a></h3>
+<ul>
+<li><del><code>#[wasm_bindgen]</code> 決定是否編譯成 WASM</del></li>
+<li><del>沒標記的函數不會被編譯</del></li>
+<li><del>只有標記的代碼才在最終的 WASM 中</del></li>
+</ul>
+<h2 id="使用場景"><a class="header" href="#使用場景">使用場景</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>場景</th><th>是否需要 <code>#[wasm_bindgen]</code></th><th>編譯結果</th><th>JS 可訪問</th></tr></thead><tbody>
+<tr><td>內部 Rust 函數</td><td>❌</td><td>✅ 編譯到 WASM</td><td>❌</td></tr>
+<tr><td>導出給 JS 的函數</td><td>✅</td><td>✅ 編譯到 WASM</td><td>✅</td></tr>
+<tr><td>調用 JS/Web API</td><td>✅</td><td>✅ 編譯到 WASM</td><td>N/A</td></tr>
+<tr><td>結構體暴露給 JS</td><td>✅</td><td>✅ 編譯到 WASM</td><td>✅</td></tr>
+<tr><td>純 Rust 邏輯處理</td><td>❌</td><td>✅ 編譯到 WASM</td><td>❌</td></tr>
+</tbody></table>
+</div>
+<h2 id="配置選項"><a class="header" href="#配置選項">配置選項</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 命名空間綁定
+#[wasm_bindgen(js_namespace = console)]
+
+// 自定義 JS 名稱
+#[wasm_bindgen(js_name = customName)]
+
+// 構造函數
+#[wasm_bindgen(constructor)]
+
+// getter/setter
+#[wasm_bindgen(getter, setter)]
+
+// 靜態方法
+#[wasm_bindgen(static_method_of = ClassName)]
+<span class="boring">}</span></code></pre></pre>
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<p><code>wasm_bindgen</code> 是 Rust WebAssembly 開發的核心工具，主要負責：</p>
+<ul>
+<li>🔄 <strong>雙向綁定</strong> - Rust ↔ JavaScript</li>
+<li>📝 <strong>代碼生成</strong> - 自動生成膠水代碼</li>
+<li>🎯 <strong>類型安全</strong> - 提供 TypeScript 定義</li>
+<li>🌐 <strong>Web 整合</strong> - 簡化瀏覽器 API 使用</li>
+<li>🔒 <strong>訪問控制</strong> - 決定哪些函數暴露給 JavaScript</li>
+</ul>
+<p><strong>關鍵要點</strong>：所有 Rust 代碼都會編譯成 WASM，<code>#[wasm_bindgen]</code> 只是決定 JavaScript 能否訪問這些函數。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../web/buttplug_wasm_flow.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../web/buttplug_function_calls.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../web/buttplug_wasm_flow.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../web/buttplug_function_calls.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

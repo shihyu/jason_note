@@ -1,0 +1,462 @@
+
+重载函数模板的能力，结合部分排序规则来选择“最佳”匹配的函数模板，可以添加更多特化的模板，调优代码以提高效率，但类模板和变量模板不能重载。不过，可以选择了另一种机制来支持类模板的定制:显式特化，一种全特化的语言特性。提供了一个模板的实现，可以完全替换模板参数:没有保留模板参数。类模板、函数模板和变量模板可以全特化。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}别名模板是唯一不能通过全特化或偏特化进行特化的模板。为了使模板别名的模板参数推导透明化，这个限制是必要的。参见第15.11节。
+\end{tcolorbox}
+
+在类定义体之外定义的类模板成员(即成员函数、嵌套类、静态数据成员和成员枚举类型)也可以这样做。
+
+后面的一节中，将描述偏特化。这类似于全特化，不完全替换模板参数，而是在模板的替代实现中保留了一些参数。全特化和偏特化在源码中都是显式的，这就是为什么在讨论中避免使用显式特化这个术语。全特化和偏特化都不会引入全新的模板或模板实例，这些构造为已经在泛型(或非特化)模板中隐式声明实例提供了显式定义。这是一个相对重要的概念，也是与重载模板的关键性区别。
+
+\subsubsubsection{16.3.1\hspace{0.2cm}类模板全特化}
+
+通过三个标记的序列引入了全特化:template、<和>。
+
+\begin{tcolorbox}[colback=webgreen!5!white,colframe=webgreen!75!black]
+\hspace*{0.75cm}声明完整的函数模板特化也需要相同的前缀。C++早期设计不包括这个前缀，但是成员模板的添加需要额外的语法来消除复杂的特化歧义。
+\end{tcolorbox}
+
+此外，类名后面跟着声明特化的模板参数:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class S {
+	public:
+	void info() {
+		std::cout << "generic (S<T>::info())\n";
+	}
+};
+
+template<>
+class S<void> {
+	public:
+	void msg() {
+		std::cout << "fully specialized (S<void>::msg())\n";
+	}
+};
+\end{lstlisting}
+
+全特化的实现不需要与泛型定义相关:这允许拥有不同名称的成员函数(info和msg)。其与泛型定义的关联，仅决定类模板的名称。
+
+指定的模板实参列表必须与模板形参列表对应，为模板类型参数指定非类型值无效。但对于带有默认模板实参的形参，模板实参可选:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class Types {
+	public:
+	using I = int;
+};
+
+template<typename T, typename U = typename Types<T>::I>
+class S; // #1
+template<>
+class S<void> { // #2
+	public:
+	void f();
+};
+
+template<> class S<char, char>; // #3
+
+template<> class S<char, 0>; // ERROR: 0 cannot substitute U
+
+int main()
+{
+	S<int>* pi; // OK: uses #1 , no definition needed
+	S<int> e1; // ERROR: uses #1 , but no definition available
+	S<void>* pv; // OK: uses #2
+	S<void,int> sv; // OK: uses #2 , definition available
+	S<void,char> e2; // ERROR: uses #1 , but no definition available
+	S<char,char> e3; // ERROR: uses #3 , but no definition available
+}
+
+template<>
+class S<char, char> { // definition for #3
+};
+\end{lstlisting}
+
+正如这个示例，全特化(和模板)的声明不一定是定义。当声明全特化时，对给定的模板参数集从不使用泛型定义。因此，若需要定义但没有提供，程序就会出错。对于类模板特化，有时“前置声明”类型很有用，可以构造相互依赖的类型。全特化声明与普通类声明相同(不是模板声明)，区别是语法和声明必须与模板声明相匹配。因为不是模板声明，所以完整类模板特化的成员可以使用普通的类外成员定义语法来定义(换句话说，不能指定template<>的前缀):
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class S;
+template<> class S<char**> {
+	public:
+	void print() const;
+};
+
+// the following definition cannot be preceded by template<>
+void S<char**>::print() const
+{
+	std::cout << "pointer to pointer to char\n";
+}
+\end{lstlisting}
+
+更复杂的例子可能会强化这一概念:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class Outside {
+	public:
+	template<typename U>
+	class Inside {
+	};
+};
+
+template<>
+class Outside<void> {
+	// there is no special connection between the following nested class
+	// and the one defined in the generic template
+	template<typename U>
+	class Inside {
+		private:
+		static int count;
+	};
+};
+
+// the following definition cannot be preceded by template<>
+template<typename U>
+int Outside<void>::Inside<U>::count = 1;
+\end{lstlisting}
+
+全特化是对某个泛型模板实例化的替代，在同一程序中不能同时存在一个模板的显式版本和生成版本。若在同一个文件中使用，编译器会报错:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class Invalid {
+};
+
+Invalid<double> x1; // causes the instantiation of Invalid<double>
+
+template<>
+class Invalid<double>; // ERROR: Invalid<double> already instantiated
+\end{lstlisting}
+
+若使用发生在不同的翻译单元中，问题可能就不那么容易发现了。下面是一个错误的C++示例，其由两个文件组成，并在许多实现上进行编译和链接:
+
+\begin{lstlisting}[style=styleCXX]
+// Translation unit 1:
+template<typename T>
+class Danger {
+	public:
+	enum { max = 10 };
+};
+
+char buffer[Danger<void>::max]; // uses generic value
+
+extern void clear(char*);
+
+int main()
+{
+	clear(buffer);
+}
+
+// Translation unit 2:
+template<typename T>
+class Danger;
+
+template<>
+class Danger<void> {
+	public:
+	enum { max = 100 };
+};
+
+void clear(char* buf)
+{
+	// mismatch in array bound:
+	for (int k = 0; k<Danger<void>::max; ++k) {
+		buf[k] = ’\0’;
+	}
+}
+\end{lstlisting}
+
+这个示例只是为了说明问题，必须注意确保特化的声明对泛型模板的所有使用者可见，特化的声明通常应该跟在模板头文件的声明之后。当通用实现来自外部源时(这样对应的头文件就不会修改)，这并不一定实用，但创建包含通用模板和随后的特化声明的头文件可以这样做，以避免一些难以找到的错误。通常，最好避免使用来自外部源的模板特化，除非明确标记是为此目的而设计的。
+
+\subsubsubsection{16.3.2\hspace{0.2cm}函数模板全特化}
+
+(显式的)全函数模板特化背后的语法和原则与全类模板特化的语法和原则相似，但是重载和参数推导会发挥作用。
+
+当特化模板可以通过参数推导(使用声明中提供的参数类型)和部分排序确定时，全特化声明可以省略显式的模板参数。例如:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+int f(T) // #1
+{
+	return 1;
+}
+
+template<typename T>
+int f(T*) // #2
+{
+	return 2;
+}
+
+template<> int f(int) // OK: specialization of #1
+{
+	return 3;
+}
+
+template<> int f(int*) // OK: specialization of #2
+{
+	return 4;
+}
+\end{lstlisting}
+
+一个完整的函数模板特化只提供了一个替代定义，而没有提供替代声明。因此，签名(包括返回类型)必须完全匹配:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T> auto foo();
+
+template<> int foo<int>() { return 42; }  // ERROR
+
+template<> auto foo<int>() { return 42; } // OK
+\end{lstlisting}
+
+完整函数模板特化不能包含默认参数值。然而，为特化模板指定默认参数仍然适用于显式特化:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+int f(T, T x = 42)
+{
+	return x;
+}
+
+template<> int f(int, int = 35) // ERROR
+{
+	return 0;
+}
+\end{lstlisting}
+
+(因为全特化提供了替代定义，而不是替代声明。调用函数模板时，调用完全基于函数模板进行解析。)
+
+全特化在许多方面与普通声明(更确切地说，是普通的声明)相似。特别是，这里没有声明模板，在程序中只出现了一个非内联全函数模板特化的定义。但要确保全特化的声明遵循模板规则，以避免使用从通用模板生成的函数。因此，模板g()和一个全特化的声明通常在两个文件中定义，如下所示:
+
+\begin{itemize}
+\item 
+接口文件包含主要模板和偏特化的定义，但只声明全特化版本:
+
+\begin{lstlisting}[style=styleCXX]
+#ifndef TEMPLATE_G_HPP
+#define TEMPLATE_G_HPP
+
+// template definition should appear in header file:
+template<typename T>
+int g(T, T x = 42)
+{
+	return x;
+}
+
+// specialization declaration inhibits instantiations of the template;
+// definition should not appear here to avoid multiple definition errors
+template<> int g(int, int y);
+
+#endif // TEMPLATE_G_HPP
+\end{lstlisting}
+
+\item 
+对应的实现文件对全特化函数进行了定义:
+
+\begin{lstlisting}[style=styleCXX]
+#include "template_g.hpp"
+template<> int g(int, int y)
+{
+	return y/2;
+}
+\end{lstlisting}
+\end{itemize}
+
+特化也可以内联，其定义可以(应该)放在头文件中。
+
+\subsubsubsection{16.3.3\hspace{0.2cm}变量模板全特化}
+
+变量模板也可以全特化，语法很直观:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T> constexpr std::size_t SZ = sizeof(T);
+
+template<> constexpr std::size_t SZ<void> = 0;
+\end{lstlisting}
+
+显然，特化可以提供与模板产生的初始化式不同的初始化式。有趣的是，变量模板特化并不要求其类型与特化模板匹配:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T> typename T::iterator null_iterator;
+
+template<> BitIterator null_iterator<std::bitset<100>>;
+// BitIterator doesn’t match T::iterator, and that is fine
+\end{lstlisting}
+
+\subsubsubsection{16.3.4\hspace{0.2cm}成员模板全特化}
+
+不仅是成员模板，普通的静态数据成员和类模板的成员函数也可以全特化。该语法要求每个外围类模板都使用template<>。若要特化成员模板，必须添加template<>来表示特化。假设有以下声明:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class Outer { // #1
+	public:
+	template<typename U>
+	class Inner { // #2
+		private:
+		static int count; // #3
+	};
+	static int code; // #4
+	void print() const { // #5
+		std::cout << "generic";
+	}
+};
+
+template<typename T>
+int Outer<T>::code = 6; // #6
+
+template<typename T> template<typename U>
+int Outer<T>::Inner<U>::count = 7; // #7
+
+template<>
+class Outer<bool> { // #8
+	public:
+	template<typename U>
+	class Inner { // #9
+		private:
+		static int count; // #10
+	};
+	void print() const { // #11
+	}
+};
+\end{lstlisting}
+
+普通成员代码在泛型外部模板\#1的点\#4和点\#5的print()有单独的外围类模板，因此需要template<>来为特定的模板参数进行全特化:
+
+\begin{lstlisting}[style=styleCXX]
+template<>
+int Outer<void>::code = 12;
+
+template<>
+void Outer<void>::print() const
+{
+	std::cout << "Outer<void>";
+}
+\end{lstlisting}
+
+对于类Outer<void>，这些定义在点\#4和点\#5的泛型上使用，但是类Outer<void>的其他成员在点\#1的模板中生成。声明之后，为Outer<void>提供的显式特化将不再有效。
+
+与函数模板全特化一样，需要一种方法来声明类模板普通成员的特化，而不需要指定定义(避免多个定义)。虽然C++中不允许对成员函数和普通类的静态数据成员进行非定义的类外声明，但在特化类模板成员时可以使用。前面的定义可以在这里声明
+
+\begin{lstlisting}[style=styleCXX]
+template<>
+int Outer<void>::code;
+
+template<>
+void Outer<void>::print() const;
+\end{lstlisting}
+
+细心的读者可能会指出，Outer<void>::code的全特化的非定义声明看起来与用默认构造函数初始化的定义完全相同，但这样的声明总是解释为非定义声明。对于只能使用默认构造函数初始化的类型中，静态数据成员的全特化必须求助于初始化列表语法:
+
+\begin{lstlisting}[style=styleCXX]
+class DefaultInitOnly {
+	public:
+	DefaultInitOnly() = default;
+	DefaultInitOnly(DefaultInitOnly const&) = delete;
+};
+
+template<typename T>
+class Statics {
+	private:
+	static T sm;
+};
+\end{lstlisting}
+
+以下是声明:
+
+\begin{lstlisting}[style=styleCXX]
+template<>
+DefaultInitOnly Statics<DefaultInitOnly>::sm;
+\end{lstlisting}
+
+下面是调用默认构造函数的定义:
+
+\begin{lstlisting}[style=styleCXX]
+template<>
+DefaultInitOnly Statics<DefaultInitOnly>::sm{};
+\end{lstlisting}
+
+C++11前，不能这样。因此，这种特化不能使用默认初始化式。通常，会复制默认值的初始化式:
+
+\begin{lstlisting}[style=styleCXX]
+template<>
+DefaultInitOnly Statics<DefaultInitOnly>::sm = DefaultInitOnly();
+\end{lstlisting}
+
+但对于我们的示例来说，这是不行的，因为复制构造函数删除了。但C++17引入了强制复制省略规则，这使得这种替代方法有效，因为不再涉及复制构造函数调用。
+
+成员模板Outer<T>::Inner也可以为给定的模板参数特化，而不影响Outer<T>特定实例化其他成员，可以为其特化成员模板。同样，因为是一个封闭的模板，所以需要一个template<>。这将产生如下代码
+
+\begin{lstlisting}[style=styleCXX]
+template<>
+template<typename X>
+class Outer<wchar_t>::Inner {
+	public:
+	static long count; // member type changed
+};
+
+template<>
+	template<typename X>
+	long Outer<wchar_t>::Inner<X>::count;
+\end{lstlisting}
+
+模板Outer<T>::Inner也可以全特化，但只适用于Outer<T>的特定实例。现在需要两个template<>:一个为外围类，另一个为全特化(内部)模板:
+
+\begin{lstlisting}[style=styleCXX]
+template<>
+	template<>
+	class Outer<char>::Inner<wchar_t> {
+		public:
+		enum { count = 1 };
+	};
+
+// the following is not valid C++:
+// template<> cannot follow a template parameter list
+template<typename X>
+template<> class Outer<X>::Inner<void>; // ERROR
+\end{lstlisting}
+
+将其与Outer<bool>的成员模板的特化进行对比。因为后者已经全特化了，不是封闭的模板，所以只需要一个template<>:
+
+\begin{lstlisting}[style=styleCXX]
+template<>
+class Outer<bool>::Inner<wchar_t> {
+	public:
+	enum { count = 2 };
+};
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

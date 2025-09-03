@@ -1,0 +1,1609 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Linux 效能檢測工具完整指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="linux-效能檢測工具完整指南"><a class="header" href="#linux-效能檢測工具完整指南">Linux 效能檢測工具完整指南</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ul>
+<li><a href="#cpu-%E8%88%87-context-switch-%E7%9B%A3%E6%8E%A7">CPU 與 Context Switch 監控</a></li>
+<li><a href="#%E8%A8%98%E6%86%B6%E9%AB%94%E7%9B%A3%E6%8E%A7">記憶體監控</a></li>
+<li><a href="#io-%E8%88%87%E7%A3%81%E7%A2%9F%E7%9B%A3%E6%8E%A7">I/O 與磁碟監控</a></li>
+<li><a href="#%E7%B6%B2%E8%B7%AF%E7%9B%A3%E6%8E%A7">網路監控</a></li>
+<li><a href="#%E9%80%B2%E7%A8%8B%E7%9B%A3%E6%8E%A7">進程監控</a></li>
+<li><a href="#%E7%B3%BB%E7%B5%B1%E8%BF%BD%E8%B9%A4%E5%B7%A5%E5%85%B7">系統追蹤工具</a></li>
+<li><a href="#%E6%95%88%E8%83%BD%E5%88%86%E6%9E%90%E6%A1%86%E6%9E%B6">效能分析框架</a></li>
+<li><a href="#%E5%AE%B9%E5%99%A8%E7%9B%A3%E6%8E%A7">容器監控</a></li>
+<li><a href="#gpu-%E7%9B%A3%E6%8E%A7">GPU 監控</a></li>
+<li><a href="#%E9%9B%BB%E6%BA%90%E8%88%87%E6%BA%AB%E5%BA%A6%E7%9B%A3%E6%8E%A7">電源與溫度監控</a></li>
+<li><a href="#%E6%A0%B8%E5%BF%83%E7%9B%A3%E6%8E%A7">核心監控</a></li>
+<li><a href="#%E6%87%89%E7%94%A8%E5%B1%A4%E7%9B%A3%E6%8E%A7">應用層監控</a></li>
+<li><a href="#%E7%B6%9C%E5%90%88%E7%9B%A3%E6%8E%A7%E5%A5%97%E4%BB%B6">綜合監控套件</a></li>
+<li><a href="#%E6%95%88%E8%83%BD%E6%B8%AC%E8%A9%A6%E8%88%87%E5%9F%BA%E6%BA%96%E5%B7%A5%E5%85%B7">效能測試與基準工具</a></li>
+<li><a href="#%E5%AF%A6%E7%94%A8%E8%A8%BA%E6%96%B7%E8%85%B3%E6%9C%AC">實用診斷腳本</a></li>
+</ul>
+<hr />
+<h2 id="cpu-與-context-switch-監控"><a class="header" href="#cpu-與-context-switch-監控">CPU 與 Context Switch 監控</a></h2>
+<h3 id="vmstat---虛擬記憶體統計"><a class="header" href="#vmstat---虛擬記憶體統計">vmstat - 虛擬記憶體統計</a></h3>
+<pre><code class="language-bash"># 每秒更新，顯示 5 次
+vmstat 1 5
+
+# 顯示活躍和非活躍記憶體
+vmstat -a 1 5
+
+# 顯示 slab 快取資訊
+vmstat -m
+
+# 顯示磁碟統計
+vmstat -d
+
+# 重要欄位說明：
+# r: 執行佇列中的進程數
+# b: 阻塞的進程數
+# cs: 每秒 context switches
+# in: 每秒中斷數
+# us: 用戶空間 CPU 使用率
+# sy: 系統空間 CPU 使用率
+</code></pre>
+<h3 id="pidstat---進程統計"><a class="header" href="#pidstat---進程統計">pidstat - 進程統計</a></h3>
+<pre><code class="language-bash"># Context switch 監控
+pidstat -w 1 5
+
+# CPU 使用率
+pidstat -u 1 5
+
+# I/O 統計
+pidstat -d 1 5
+
+# 記憶體統計
+pidstat -r 1 5
+
+# 特定進程的所有統計
+pidstat -p 1234 -urd 1
+
+# 監控線程
+pidstat -t -p 1234 1
+</code></pre>
+<h3 id="mpstat---多處理器統計"><a class="header" href="#mpstat---多處理器統計">mpstat - 多處理器統計</a></h3>
+<pre><code class="language-bash"># 所有 CPU 統計
+mpstat -P ALL 1 5
+
+# 特定 CPU
+mpstat -P 0,1 1 5
+
+# 顯示中斷統計
+mpstat -I ALL 1 5
+</code></pre>
+<h3 id="turbostat---cpu-頻率和電源狀態"><a class="header" href="#turbostat---cpu-頻率和電源狀態">turbostat - CPU 頻率和電源狀態</a></h3>
+<pre><code class="language-bash"># 顯示 CPU 頻率、C-state、溫度
+sudo turbostat
+
+# 間隔 1 秒
+sudo turbostat --interval 1
+
+# 簡化輸出
+sudo turbostat --quiet
+</code></pre>
+<h3 id="cpupower---cpu-電源管理"><a class="header" href="#cpupower---cpu-電源管理">cpupower - CPU 電源管理</a></h3>
+<pre><code class="language-bash"># 顯示 CPU 頻率資訊
+cpupower frequency-info
+
+# 監控 CPU 頻率
+cpupower monitor
+
+# 設定效能模式
+sudo cpupower frequency-set -g performance
+</code></pre>
+<h3 id="numastat---numa-統計"><a class="header" href="#numastat---numa-統計">numastat - NUMA 統計</a></h3>
+<pre><code class="language-bash"># NUMA 記憶體統計
+numastat
+
+# 特定進程 NUMA 統計
+numastat -p 1234
+
+# 詳細模式
+numastat -v
+</code></pre>
+<hr />
+<h2 id="記憶體監控"><a class="header" href="#記憶體監控">記憶體監控</a></h2>
+<h3 id="free---記憶體使用"><a class="header" href="#free---記憶體使用">free - 記憶體使用</a></h3>
+<pre><code class="language-bash"># 人類可讀格式
+free -h
+
+# 顯示總計
+free -t
+
+# 持續監控
+watch -n 1 free -h
+
+# 寬格式輸出
+free -w
+</code></pre>
+<h3 id="smem---記憶體報告工具"><a class="header" href="#smem---記憶體報告工具">smem - 記憶體報告工具</a></h3>
+<pre><code class="language-bash"># 按 RSS 排序
+smem -s rss -r
+
+# 按比例排序
+smem -s pss -r
+
+# 顯示總計
+smem -t
+
+# 產生圖表
+smem --pie name -s pss
+</code></pre>
+<h3 id="slabtop---slab-快取監控"><a class="header" href="#slabtop---slab-快取監控">slabtop - Slab 快取監控</a></h3>
+<pre><code class="language-bash"># 即時 slab 快取監控
+sudo slabtop
+
+# 排序選項
+# a: 活躍對象數
+# b: 每個 slab 的對象數
+# c: 快取大小
+</code></pre>
+<h3 id="pmap---進程記憶體映射"><a class="header" href="#pmap---進程記憶體映射">pmap - 進程記憶體映射</a></h3>
+<pre><code class="language-bash"># 基本映射
+pmap 1234
+
+# 擴展格式
+pmap -x 1234
+
+# 顯示裝置格式
+pmap -d 1234
+
+# 完整詳細資訊
+pmap -XX 1234
+</code></pre>
+<h3 id="vmtouch---檔案系統快取控制"><a class="header" href="#vmtouch---檔案系統快取控制">vmtouch - 檔案系統快取控制</a></h3>
+<pre><code class="language-bash"># 檢查檔案在快取中的狀態
+vmtouch /path/to/file
+
+# 將檔案載入快取
+vmtouch -t /path/to/file
+
+# 從快取移除
+vmtouch -e /path/to/file
+</code></pre>
+<h3 id="pcstat---頁面快取統計"><a class="header" href="#pcstat---頁面快取統計">pcstat - 頁面快取統計</a></h3>
+<pre><code class="language-bash"># 檢查檔案的頁面快取狀態
+pcstat /var/log/syslog
+
+# 多個檔案
+pcstat -json *.log
+</code></pre>
+<hr />
+<h2 id="io-與磁碟監控"><a class="header" href="#io-與磁碟監控">I/O 與磁碟監控</a></h2>
+<h3 id="iostat---io-統計"><a class="header" href="#iostat---io-統計">iostat - I/O 統計</a></h3>
+<pre><code class="language-bash"># 擴展統計
+iostat -x 1
+
+# 只顯示裝置
+iostat -d 1
+
+# 顯示分區統計
+iostat -p ALL 1
+
+# NFS 統計
+iostat -n 1
+
+# 人類可讀格式
+iostat -h 1
+</code></pre>
+<h3 id="iotop---io-使用率監控"><a class="header" href="#iotop---io-使用率監控">iotop - I/O 使用率監控</a></h3>
+<pre><code class="language-bash"># 基本監控
+sudo iotop
+
+# 只顯示有 I/O 的進程
+sudo iotop -o
+
+# 累積模式
+sudo iotop -a
+
+# 批次模式
+sudo iotop -b -n 5 -d 1
+</code></pre>
+<h3 id="biosnoop---區塊-io-追蹤"><a class="header" href="#biosnoop---區塊-io-追蹤">biosnoop - 區塊 I/O 追蹤</a></h3>
+<pre><code class="language-bash"># 追蹤區塊 I/O (需要 bcc-tools)
+sudo biosnoop
+
+# 包含時間戳
+sudo biosnoop -t
+</code></pre>
+<h3 id="blktrace---區塊層追蹤"><a class="header" href="#blktrace---區塊層追蹤">blktrace - 區塊層追蹤</a></h3>
+<pre><code class="language-bash"># 開始追蹤
+sudo blktrace -d /dev/sda -o trace
+
+# 停止並分析
+sudo blkparse trace.* | less
+
+# 產生報告
+sudo btt -i trace.* -o report
+</code></pre>
+<h3 id="ioping---io-延遲測試"><a class="header" href="#ioping---io-延遲測試">ioping - I/O 延遲測試</a></h3>
+<pre><code class="language-bash"># 測試目錄 I/O 延遲
+ioping -c 10 .
+
+# 測試裝置
+sudo ioping -c 10 /dev/sda
+
+# 順序讀取測試
+ioping -RL /dev/sda
+</code></pre>
+<h3 id="hdparm---硬碟參數設定"><a class="header" href="#hdparm---硬碟參數設定">hdparm - 硬碟參數設定</a></h3>
+<pre><code class="language-bash"># 測試讀取速度
+sudo hdparm -t /dev/sda
+
+# 測試快取讀取速度
+sudo hdparm -T /dev/sda
+
+# 顯示硬碟資訊
+sudo hdparm -I /dev/sda
+</code></pre>
+<h3 id="fatrace---檔案存取追蹤"><a class="header" href="#fatrace---檔案存取追蹤">fatrace - 檔案存取追蹤</a></h3>
+<pre><code class="language-bash"># 監控所有檔案存取
+sudo fatrace
+
+# 特定掛載點
+sudo fatrace /home
+
+# 包含時間戳
+sudo fatrace -t
+</code></pre>
+<hr />
+<h2 id="網路監控"><a class="header" href="#網路監控">網路監控</a></h2>
+<h3 id="ss---socket-統計"><a class="header" href="#ss---socket-統計">ss - Socket 統計</a></h3>
+<pre><code class="language-bash"># TCP 連線
+ss -tan
+
+# 監聽 ports
+ss -tln
+
+# 顯示進程
+ss -tulpn
+
+# 顯示計時器資訊
+ss -o
+
+# 顯示記憶體使用
+ss -m
+
+# 統計摘要
+ss -s
+</code></pre>
+<h3 id="netstat---網路統計"><a class="header" href="#netstat---網路統計">netstat - 網路統計</a></h3>
+<pre><code class="language-bash"># 所有連線
+netstat -a
+
+# 路由表
+netstat -r
+
+# 介面統計
+netstat -i
+
+# 持續監控
+netstat -c
+
+# 群組成員
+netstat -g
+</code></pre>
+<h3 id="iftop---即時流量監控"><a class="header" href="#iftop---即時流量監控">iftop - 即時流量監控</a></h3>
+<pre><code class="language-bash"># 基本監控
+sudo iftop
+
+# 指定介面
+sudo iftop -i eth0
+
+# 不解析 DNS
+sudo iftop -n
+
+# 顯示 port
+sudo iftop -P
+</code></pre>
+<h3 id="nethogs---按進程分組的網路流量"><a class="header" href="#nethogs---按進程分組的網路流量">nethogs - 按進程分組的網路流量</a></h3>
+<pre><code class="language-bash"># 基本監控
+sudo nethogs
+
+# 指定介面
+sudo nethogs eth0
+
+# 追蹤模式
+sudo nethogs -t
+</code></pre>
+<h3 id="tcpdump---封包擷取"><a class="header" href="#tcpdump---封包擷取">tcpdump - 封包擷取</a></h3>
+<pre><code class="language-bash"># 基本擷取
+sudo tcpdump -i any
+
+# 寫入檔案
+sudo tcpdump -w capture.pcap
+
+# 讀取檔案
+sudo tcpdump -r capture.pcap
+
+# 詳細輸出
+sudo tcpdump -vvv
+
+# 過濾器範例
+sudo tcpdump 'tcp port 80'
+sudo tcpdump 'host 192.168.1.1'
+</code></pre>
+<h3 id="nload---網路負載監控"><a class="header" href="#nload---網路負載監控">nload - 網路負載監控</a></h3>
+<pre><code class="language-bash"># 基本監控
+nload
+
+# 指定介面
+nload eth0
+
+# 設定更新間隔
+nload -t 500
+</code></pre>
+<h3 id="bmon---頻寬監控"><a class="header" href="#bmon---頻寬監控">bmon - 頻寬監控</a></h3>
+<pre><code class="language-bash"># 互動式介面
+bmon
+
+# 指定介面
+bmon -p eth0
+
+# HTML 輸出
+bmon -o html:path=/tmp/bmon.html
+</code></pre>
+<h3 id="vnstat---網路流量統計"><a class="header" href="#vnstat---網路流量統計">vnstat - 網路流量統計</a></h3>
+<pre><code class="language-bash"># 顯示統計
+vnstat
+
+# 即時監控
+vnstat -l
+
+# 每日統計
+vnstat -d
+
+# 每月統計
+vnstat -m
+</code></pre>
+<h3 id="iptraf-ng---ip-流量監控"><a class="header" href="#iptraf-ng---ip-流量監控">iptraf-ng - IP 流量監控</a></h3>
+<pre><code class="language-bash"># 互動式介面
+sudo iptraf-ng
+
+# 監控所有介面
+sudo iptraf-ng -i all
+
+# 產生日誌
+sudo iptraf-ng -L logfile
+</code></pre>
+<h3 id="nicstat---網路介面統計"><a class="header" href="#nicstat---網路介面統計">nicstat - 網路介面統計</a></h3>
+<pre><code class="language-bash"># 基本統計
+nicstat 1
+
+# 擴展統計
+nicstat -x 1
+
+# TCP 統計
+nicstat -t 1
+</code></pre>
+<hr />
+<h2 id="進程監控"><a class="header" href="#進程監控">進程監控</a></h2>
+<h3 id="ps---進程狀態"><a class="header" href="#ps---進程狀態">ps - 進程狀態</a></h3>
+<pre><code class="language-bash"># 標準格式
+ps aux
+
+# 樹狀顯示
+ps auxf
+pstree -p
+
+# 自訂欄位
+ps -eo pid,tid,class,rtprio,ni,pri,psr,pcpu,pmem,comm
+
+# 按記憶體排序
+ps aux --sort=-rss
+
+# 顯示線程
+ps -eLf
+
+# 顯示安全性內容
+ps auxZ
+</code></pre>
+<h3 id="tophtop---即時監控"><a class="header" href="#tophtop---即時監控">top/htop - 即時監控</a></h3>
+<pre><code class="language-bash"># top 進階用法
+top -H           # 顯示線程
+top -c           # 顯示完整命令
+top -p 1234,5678 # 監控特定 PID
+
+# htop (更友善)
+htop
+htop -u username # 特定用戶
+htop -p 1234     # 特定進程
+</code></pre>
+<h3 id="atop---進階系統監控"><a class="header" href="#atop---進階系統監控">atop - 進階系統監控</a></h3>
+<pre><code class="language-bash"># 即時監控
+atop
+
+# 記錄模式 (每 10 秒)
+atop -w /var/log/atop.log 10
+
+# 讀取記錄
+atop -r /var/log/atop.log
+
+# 特定時間
+atop -r /var/log/atop.log -b 10:00
+</code></pre>
+<h3 id="glances---跨平台監控"><a class="header" href="#glances---跨平台監控">glances - 跨平台監控</a></h3>
+<pre><code class="language-bash"># 基本監控
+glances
+
+# Web 模式
+glances -w
+
+# 匯出到 CSV
+glances --export csv --export-csv-file /tmp/glances.csv
+
+# 客戶端/伺服器模式
+glances -s  # 伺服器
+glances -c hostname  # 客戶端
+</code></pre>
+<h3 id="lsof---開啟檔案列表"><a class="header" href="#lsof---開啟檔案列表">lsof - 開啟檔案列表</a></h3>
+<pre><code class="language-bash"># 特定進程
+lsof -p 1234
+
+# 特定用戶
+lsof -u username
+
+# 網路連線
+lsof -i
+lsof -i :80
+lsof -i TCP
+
+# 特定檔案
+lsof /var/log/syslog
+
+# 特定目錄
+lsof +D /var/log/
+</code></pre>
+<h3 id="fuser---檔案使用者"><a class="header" href="#fuser---檔案使用者">fuser - 檔案使用者</a></h3>
+<pre><code class="language-bash"># 查看誰在使用檔案
+fuser /var/log/syslog
+
+# 查看誰在使用 port
+fuser -n tcp 80
+
+# 終止使用檔案的進程
+fuser -k /path/to/file
+</code></pre>
+<h3 id="pgreppkill---進程搜尋終止"><a class="header" href="#pgreppkill---進程搜尋終止">pgrep/pkill - 進程搜尋/終止</a></h3>
+<pre><code class="language-bash"># 搜尋進程
+pgrep -l nginx
+pgrep -u username
+
+# 終止進程
+pkill nginx
+pkill -u username
+
+# 傳送訊號
+pkill -USR1 nginx
+</code></pre>
+<hr />
+<h2 id="系統追蹤工具"><a class="header" href="#系統追蹤工具">系統追蹤工具</a></h2>
+<h3 id="strace---系統呼叫追蹤"><a class="header" href="#strace---系統呼叫追蹤">strace - 系統呼叫追蹤</a></h3>
+<pre><code class="language-bash"># 追蹤進程
+strace -p 1234
+
+# 追蹤並統計
+strace -c -p 1234
+
+# 追蹤特定系統呼叫
+strace -e open,read,write ls
+
+# 追蹤網路相關
+strace -e trace=network nc
+
+# 輸出到檔案
+strace -o output.txt ls
+
+# 時間戳
+strace -t ls
+strace -tt ls  # 微秒
+</code></pre>
+<h3 id="ltrace---函式庫呼叫追蹤"><a class="header" href="#ltrace---函式庫呼叫追蹤">ltrace - 函式庫呼叫追蹤</a></h3>
+<pre><code class="language-bash"># 追蹤函式庫呼叫
+ltrace ls
+
+# 追蹤特定函式
+ltrace -e malloc+free ls
+
+# 統計模式
+ltrace -c ls
+
+# 追蹤系統呼叫
+ltrace -S ls
+</code></pre>
+<h3 id="ftrace---核心函式追蹤"><a class="header" href="#ftrace---核心函式追蹤">ftrace - 核心函式追蹤</a></h3>
+<pre><code class="language-bash"># 啟用追蹤
+echo function &gt; /sys/kernel/debug/tracing/current_tracer
+
+# 開始追蹤
+echo 1 &gt; /sys/kernel/debug/tracing/tracing_on
+
+# 讀取追蹤
+cat /sys/kernel/debug/tracing/trace
+
+# 追蹤特定函式
+echo do_fork &gt; /sys/kernel/debug/tracing/set_ftrace_filter
+</code></pre>
+<h3 id="systemtap---動態追蹤"><a class="header" href="#systemtap---動態追蹤">SystemTap - 動態追蹤</a></h3>
+<pre><code class="language-bash"># 簡單範例
+sudo stap -e 'probe kernel.function("do_fork") { printf("Fork!\n") }'
+
+# Context switch 追蹤
+sudo stap -e 'probe scheduler.ctxswitch { 
+    printf("%s(%d) -&gt; %s(%d)\n", 
+           prev_task_name, prev_tid, 
+           next_task_name, next_tid) 
+}'
+
+# 系統呼叫計數
+sudo stap -e 'global syscalls; 
+              probe syscall.* { syscalls[name]++ } 
+              probe end { foreach(s in syscalls-) 
+                          printf("%s: %d\n", s, syscalls[s]) }'
+</code></pre>
+<h3 id="ebpfbpftrace---進階追蹤"><a class="header" href="#ebpfbpftrace---進階追蹤">eBPF/bpftrace - 進階追蹤</a></h3>
+<pre><code class="language-bash"># Context switch 計數
+sudo bpftrace -e 'tracepoint:sched:sched_switch { @[comm] = count(); }'
+
+# 系統呼叫延遲
+sudo bpftrace -e 'tracepoint:raw_syscalls:sys_enter { @start[tid] = nsecs; }
+                   tracepoint:raw_syscalls:sys_exit /@start[tid]/ { 
+                       @ns = hist(nsecs - @start[tid]); delete(@start[tid]); }'
+
+# TCP 連線追蹤
+sudo bpftrace -e 'tracepoint:tcp:tcp_destroy_sock { printf("%s\n", comm); }'
+
+# 檔案開啟追蹤
+sudo bpftrace -e 'tracepoint:syscalls:sys_enter_open { printf("%s: %s\n", comm, str(args-&gt;filename)); }'
+</code></pre>
+<h3 id="bcc-tools---ebpf-工具集"><a class="header" href="#bcc-tools---ebpf-工具集">BCC Tools - eBPF 工具集</a></h3>
+<pre><code class="language-bash"># execsnoop - 追蹤新進程
+sudo execsnoop
+
+# opensnoop - 追蹤檔案開啟
+sudo opensnoop
+
+# tcpconnect - TCP 連線追蹤
+sudo tcpconnect
+
+# tcpaccept - TCP 接受追蹤
+sudo tcpaccept
+
+# biolatency - 區塊 I/O 延遲
+sudo biolatency
+
+# cachestat - 快取統計
+sudo cachestat
+
+# runqlat - CPU 執行佇列延遲
+sudo runqlat
+
+# profile - CPU 剖析
+sudo profile
+</code></pre>
+<hr />
+<h2 id="效能分析框架"><a class="header" href="#效能分析框架">效能分析框架</a></h2>
+<h3 id="perf---linux-效能分析"><a class="header" href="#perf---linux-效能分析">perf - Linux 效能分析</a></h3>
+<pre><code class="language-bash"># 系統整體統計
+sudo perf stat -a sleep 5
+
+# 特定事件統計
+sudo perf stat -e cycles,instructions,cache-misses ls
+
+# Context switch 統計
+sudo perf stat -e context-switches,cpu-migrations sleep 5
+
+# 記錄效能資料
+sudo perf record -a sleep 5
+sudo perf report
+
+# 即時監控
+sudo perf top
+
+# 火焰圖資料收集
+sudo perf record -F 99 -a -g sleep 30
+sudo perf script &gt; out.perf
+
+# 鎖定分析
+sudo perf lock record sleep 5
+sudo perf lock report
+
+# 排程延遲分析
+sudo perf sched record sleep 5
+sudo perf sched latency
+
+# 追蹤點列表
+sudo perf list
+</code></pre>
+<h3 id="flamegraph---火焰圖"><a class="header" href="#flamegraph---火焰圖">Flamegraph - 火焰圖</a></h3>
+<pre><code class="language-bash"># 安裝
+git clone https://github.com/brendangregg/FlameGraph
+
+# 產生火焰圖
+sudo perf record -F 99 -a -g sleep 30
+sudo perf script | ./FlameGraph/stackcollapse-perf.pl | ./FlameGraph/flamegraph.pl &gt; flame.svg
+
+# Java 火焰圖
+sudo perf record -F 99 -a -g -p `pgrep java` sleep 30
+sudo perf script | ./FlameGraph/stackcollapse-perf.pl | ./FlameGraph/flamegraph.pl --color=java &gt; java_flame.svg
+</code></pre>
+<h3 id="intel-vtune---intel-cpu-分析"><a class="header" href="#intel-vtune---intel-cpu-分析">Intel VTune - Intel CPU 分析</a></h3>
+<pre><code class="language-bash"># 收集資料
+vtune -collect hotspots ./application
+
+# 硬體事件
+vtune -collect advanced-hotspots ./application
+
+# 記憶體存取分析
+vtune -collect memory-access ./application
+</code></pre>
+<h3 id="amd-uprof---amd-cpu-分析"><a class="header" href="#amd-uprof---amd-cpu-分析">AMD uProf - AMD CPU 分析</a></h3>
+<pre><code class="language-bash"># CPU 剖析
+AMDuProfCLI collect --config tbp ./application
+
+# 功耗分析
+AMDuProfCLI collect --config power ./application
+</code></pre>
+<hr />
+<h2 id="容器監控"><a class="header" href="#容器監控">容器監控</a></h2>
+<h3 id="docker-stats---docker-統計"><a class="header" href="#docker-stats---docker-統計">docker stats - Docker 統計</a></h3>
+<pre><code class="language-bash"># 所有容器統計
+docker stats
+
+# 特定容器
+docker stats container_name
+
+# 不持續更新
+docker stats --no-stream
+
+# 格式化輸出
+docker stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+</code></pre>
+<h3 id="ctop---容器-top"><a class="header" href="#ctop---容器-top">ctop - 容器 top</a></h3>
+<pre><code class="language-bash"># 互動式監控
+ctop
+
+# 只顯示執行中的容器
+ctop -a
+</code></pre>
+<h3 id="cadvisor---容器顧問"><a class="header" href="#cadvisor---容器顧問">cAdvisor - 容器顧問</a></h3>
+<pre><code class="language-bash"># 執行 cAdvisor
+docker run -d \
+  --volume=/:/rootfs:ro \
+  --volume=/var/run:/var/run:ro \
+  --volume=/sys:/sys:ro \
+  --volume=/var/lib/docker/:/var/lib/docker:ro \
+  --publish=8080:8080 \
+  --name=cadvisor \
+  google/cadvisor:latest
+</code></pre>
+<h3 id="kubectl-top---kubernetes-監控"><a class="header" href="#kubectl-top---kubernetes-監控">kubectl top - Kubernetes 監控</a></h3>
+<pre><code class="language-bash"># Pod 資源使用
+kubectl top pods
+
+# Node 資源使用
+kubectl top nodes
+
+# 特定 namespace
+kubectl top pods -n namespace
+</code></pre>
+<hr />
+<h2 id="gpu-監控"><a class="header" href="#gpu-監控">GPU 監控</a></h2>
+<h3 id="nvidia-smi---nvidia-gpu-監控"><a class="header" href="#nvidia-smi---nvidia-gpu-監控">nvidia-smi - NVIDIA GPU 監控</a></h3>
+<pre><code class="language-bash"># 基本資訊
+nvidia-smi
+
+# 持續監控
+nvidia-smi -l 1
+
+# 查詢特定資訊
+nvidia-smi --query-gpu=name,temperature.gpu,utilization.gpu,utilization.memory --format=csv
+
+# 進程資訊
+nvidia-smi pmon
+</code></pre>
+<h3 id="nvtop---nvidia-gpu-top"><a class="header" href="#nvtop---nvidia-gpu-top">nvtop - NVIDIA GPU top</a></h3>
+<pre><code class="language-bash"># 互動式監控
+nvtop
+
+# 指定 GPU
+nvtop -g 0
+</code></pre>
+<h3 id="radeontop---amd-gpu-監控"><a class="header" href="#radeontop---amd-gpu-監控">radeontop - AMD GPU 監控</a></h3>
+<pre><code class="language-bash"># 基本監控
+radeontop
+
+# 指定 GPU
+radeontop -b 1
+</code></pre>
+<h3 id="intel_gpu_top---intel-gpu-監控"><a class="header" href="#intel_gpu_top---intel-gpu-監控">intel_gpu_top - Intel GPU 監控</a></h3>
+<pre><code class="language-bash"># 需要 root 權限
+sudo intel_gpu_top
+</code></pre>
+<hr />
+<h2 id="電源與溫度監控"><a class="header" href="#電源與溫度監控">電源與溫度監控</a></h2>
+<h3 id="powertop---電源消耗分析"><a class="header" href="#powertop---電源消耗分析">powertop - 電源消耗分析</a></h3>
+<pre><code class="language-bash"># 互動式模式
+sudo powertop
+
+# 產生 HTML 報告
+sudo powertop --html=report.html
+
+# 自動調整
+sudo powertop --auto-tune
+</code></pre>
+<h3 id="sensors---硬體感測器監控"><a class="header" href="#sensors---硬體感測器監控">sensors - 硬體感測器監控</a></h3>
+<pre><code class="language-bash"># 顯示所有感測器
+sensors
+
+# 持續監控
+watch -n 1 sensors
+
+# JSON 輸出
+sensors -j
+</code></pre>
+<h3 id="s-tui---終端-ui-壓力測試和監控"><a class="header" href="#s-tui---終端-ui-壓力測試和監控">s-tui - 終端 UI 壓力測試和監控</a></h3>
+<pre><code class="language-bash"># 基本監控
+s-tui
+
+# 包含壓力測試
+s-tui -s
+</code></pre>
+<h3 id="i7z---intel-core-cpu-監控"><a class="header" href="#i7z---intel-core-cpu-監控">i7z - Intel Core CPU 監控</a></h3>
+<pre><code class="language-bash"># 即時監控
+sudo i7z
+
+# 日誌模式
+sudo i7z -l
+</code></pre>
+<hr />
+<h2 id="核心監控"><a class="header" href="#核心監控">核心監控</a></h2>
+<h3 id="dmesg---核心訊息"><a class="header" href="#dmesg---核心訊息">dmesg - 核心訊息</a></h3>
+<pre><code class="language-bash"># 顯示核心訊息
+dmesg
+
+# 持續監控
+dmesg -w
+
+# 人類可讀時間戳
+dmesg -T
+
+# 只顯示錯誤
+dmesg -l err
+
+# 清除緩衝區
+sudo dmesg -C
+</code></pre>
+<h3 id="sysctl---核心參數"><a class="header" href="#sysctl---核心參數">sysctl - 核心參數</a></h3>
+<pre><code class="language-bash"># 顯示所有參數
+sysctl -a
+
+# 特定參數
+sysctl kernel.threads-max
+
+# 設定參數
+sudo sysctl -w kernel.threads-max=100000
+
+# 從檔案載入
+sudo sysctl -p /etc/sysctl.conf
+</code></pre>
+<h3 id="proc-和-sys-檔案系統"><a class="header" href="#proc-和-sys-檔案系統">/proc 和 /sys 檔案系統</a></h3>
+<pre><code class="language-bash"># CPU 資訊
+cat /proc/cpuinfo
+
+# 記憶體資訊
+cat /proc/meminfo
+
+# 系統負載
+cat /proc/loadavg
+
+# 中斷統計
+cat /proc/interrupts
+
+# Context switch 統計
+cat /proc/stat | grep ctxt
+
+# 特定進程資訊
+cat /proc/[PID]/status
+cat /proc/[PID]/stat
+cat /proc/[PID]/io
+
+# 網路統計
+cat /proc/net/dev
+cat /proc/net/tcp
+</code></pre>
+<h3 id="kmon---核心模組監控"><a class="header" href="#kmon---核心模組監控">kmon - 核心模組監控</a></h3>
+<pre><code class="language-bash"># 互動式核心活動監控
+sudo kmon
+</code></pre>
+<hr />
+<h2 id="應用層監控"><a class="header" href="#應用層監控">應用層監控</a></h2>
+<h3 id="jstat---java-統計"><a class="header" href="#jstat---java-統計">jstat - Java 統計</a></h3>
+<pre><code class="language-bash"># GC 統計
+jstat -gc PID 1000
+
+# 類別載入統計
+jstat -class PID
+
+# JIT 編譯統計
+jstat -compiler PID
+</code></pre>
+<h3 id="mysqltuner---mysql-調校"><a class="header" href="#mysqltuner---mysql-調校">mysqltuner - MySQL 調校</a></h3>
+<pre><code class="language-bash"># 分析 MySQL
+mysqltuner.pl
+
+# 遠端伺服器
+mysqltuner.pl --host targethost --user admin --pass password
+</code></pre>
+<h3 id="pgbadger---postgresql-日誌分析"><a class="header" href="#pgbadger---postgresql-日誌分析">pgbadger - PostgreSQL 日誌分析</a></h3>
+<pre><code class="language-bash"># 分析日誌
+pgbadger /var/log/postgresql/postgresql.log
+
+# 產生 HTML 報告
+pgbadger -o report.html postgresql.log
+</code></pre>
+<h3 id="apachetop---apache-即時監控"><a class="header" href="#apachetop---apache-即時監控">apachetop - Apache 即時監控</a></h3>
+<pre><code class="language-bash"># 監控存取日誌
+apachetop /var/log/apache2/access.log
+
+# 指定更新間隔
+apachetop -d 1 /var/log/apache2/access.log
+</code></pre>
+<h3 id="ngxtop---nginx-即時監控"><a class="header" href="#ngxtop---nginx-即時監控">ngxtop - Nginx 即時監控</a></h3>
+<pre><code class="language-bash"># 基本監控
+ngxtop
+
+# 特定日誌
+ngxtop -l /var/log/nginx/access.log
+
+# 按狀態碼分組
+ngxtop -g status
+</code></pre>
+<hr />
+<h2 id="綜合監控套件"><a class="header" href="#綜合監控套件">綜合監控套件</a></h2>
+<h3 id="sar---系統活動報告"><a class="header" href="#sar---系統活動報告">sar - 系統活動報告</a></h3>
+<pre><code class="language-bash"># CPU 使用率
+sar -u 1 5
+
+# 記憶體使用
+sar -r 1 5
+
+# I/O 統計
+sar -b 1 5
+
+# 網路統計
+sar -n DEV 1 5
+
+# Context switch
+sar -w 1 5
+
+# 執行佇列
+sar -q 1 5
+
+# 歷史資料
+sar -f /var/log/sysstat/sa01
+</code></pre>
+<h3 id="dstat---系統資源統計"><a class="header" href="#dstat---系統資源統計">dstat - 系統資源統計</a></h3>
+<pre><code class="language-bash"># 預設輸出
+dstat
+
+# 完整輸出
+dstat -a
+
+# 包含 top CPU 和 I/O 進程
+dstat -a --top-cpu --top-io
+
+# 自訂輸出
+dstat -tcmdrn
+
+# Context switch 和中斷
+dstat --sys
+
+# 輸出到 CSV
+dstat --output dstat.csv
+</code></pre>
+<h3 id="collectl---系統收集工具"><a class="header" href="#collectl---系統收集工具">collectl - 系統收集工具</a></h3>
+<pre><code class="language-bash"># 基本監控
+collectl
+
+# 詳細模式
+collectl -scdmnst
+
+# 記錄模式
+collectl -f /var/log/collectl
+
+# 播放記錄
+collectl -p /var/log/collectl
+</code></pre>
+<h3 id="nmon---系統監控"><a class="header" href="#nmon---系統監控">nmon - 系統監控</a></h3>
+<pre><code class="language-bash"># 互動式模式
+nmon
+
+# 資料收集模式
+nmon -f -s 10 -c 60
+
+# 分析器
+nmon_analyser nmon_output.nmon
+</code></pre>
+<h3 id="sysstat-套件"><a class="header" href="#sysstat-套件">sysstat 套件</a></h3>
+<pre><code class="language-bash"># 安裝完整套件
+sudo apt-get install sysstat
+
+# 包含工具：
+# - sar
+# - iostat
+# - mpstat
+# - pidstat
+# - sadf (資料格式轉換)
+</code></pre>
+<hr />
+<h2 id="效能測試與基準工具"><a class="header" href="#效能測試與基準工具">效能測試與基準工具</a></h2>
+<h3 id="stressstress-ng---系統壓力測試"><a class="header" href="#stressstress-ng---系統壓力測試">stress/stress-ng - 系統壓力測試</a></h3>
+<pre><code class="language-bash"># CPU 壓力
+stress --cpu 4 --timeout 60s
+
+# 記憶體壓力
+stress --vm 2 --vm-bytes 1G --timeout 60s
+
+# I/O 壓力
+stress --io 4 --timeout 60s
+
+# stress-ng 進階功能
+stress-ng --cpu 4 --cpu-method matrixprod --metrics --timeout 60s
+
+# 所有壓力測試
+stress-ng --all 1 --timeout 60s
+</code></pre>
+<h3 id="sysbench---系統基準測試"><a class="header" href="#sysbench---系統基準測試">sysbench - 系統基準測試</a></h3>
+<pre><code class="language-bash"># CPU 測試
+sysbench cpu --threads=4 run
+
+# 記憶體測試
+sysbench memory --memory-total-size=10G run
+
+# 檔案 I/O 測試
+sysbench fileio --file-test-mode=seqwr prepare
+sysbench fileio --file-test-mode=seqwr run
+sysbench fileio cleanup
+
+# MySQL 測試
+sysbench oltp_read_write --mysql-host=localhost --mysql-user=root prepare
+sysbench oltp_read_write --mysql-host=localhost --mysql-user=root run
+</code></pre>
+<h3 id="fio---彈性-io-測試"><a class="header" href="#fio---彈性-io-測試">fio - 彈性 I/O 測試</a></h3>
+<pre><code class="language-bash"># 順序讀取測試
+fio --name=seqread --rw=read --size=1G --numjobs=1
+
+# 隨機寫入測試
+fio --name=randwrite --rw=randwrite --size=1G --numjobs=4
+
+# 混合讀寫測試
+fio --name=randrw --rw=randrw --size=1G --rwmixread=70
+</code></pre>
+<h3 id="iperf3---網路效能測試"><a class="header" href="#iperf3---網路效能測試">iperf3 - 網路效能測試</a></h3>
+<pre><code class="language-bash"># 伺服器模式
+iperf3 -s
+
+# 客戶端測試
+iperf3 -c server_ip
+
+# UDP 測試
+iperf3 -c server_ip -u
+
+# 反向測試
+iperf3 -c server_ip -R
+</code></pre>
+<h3 id="phoronix-test-suite---綜合測試套件"><a class="header" href="#phoronix-test-suite---綜合測試套件">phoronix-test-suite - 綜合測試套件</a></h3>
+<pre><code class="language-bash"># 列出可用測試
+phoronix-test-suite list-available-tests
+
+# 執行測試
+phoronix-test-suite run pts/compress-7zip
+
+# 批次測試
+phoronix-test-suite batch-benchmark pts/cpu
+</code></pre>
+<h3 id="unixbench---unix-基準測試"><a class="header" href="#unixbench---unix-基準測試">unixbench - Unix 基準測試</a></h3>
+<pre><code class="language-bash"># 執行完整測試
+./Run
+
+# 特定測試
+./Run dhry2 whetstone
+</code></pre>
+<hr />
+<h2 id="實用診斷腳本"><a class="header" href="#實用診斷腳本">實用診斷腳本</a></h2>
+<h3 id="快速系統健康檢查"><a class="header" href="#快速系統健康檢查">快速系統健康檢查</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# system_health.sh
+
+echo "===== System Health Check ====="
+echo ""
+echo "=== CPU Usage ==="
+mpstat 1 2 | tail -n 1
+
+echo ""
+echo "=== Memory Usage ==="
+free -h
+
+echo ""
+echo "=== Disk Usage ==="
+df -h | grep -E '^/dev/'
+
+echo ""
+echo "=== Load Average ==="
+uptime
+
+echo ""
+echo "=== Context Switches ==="
+vmstat 1 2 | tail -n 1 | awk '{print "CS/sec: "$12}'
+
+echo ""
+echo "=== Top 5 CPU Processes ==="
+ps aux --sort=-%cpu | head -6
+
+echo ""
+echo "=== Top 5 Memory Processes ==="
+ps aux --sort=-%mem | head -6
+</code></pre>
+<h3 id="context-switch-監控腳本"><a class="header" href="#context-switch-監控腳本">Context Switch 監控腳本</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# context_switch_monitor.sh
+
+INTERVAL=1
+COUNT=10
+
+echo "Monitoring context switches for $COUNT seconds..."
+echo "Time          | Total CS | CS/sec | Vol CS | Invol CS"
+echo "--------------------------------------------------------"
+
+PREV_CS=$(cat /proc/stat | grep ctxt | awk '{print $2}')
+PREV_TIME=$(date +%s)
+
+for i in $(seq 1 $COUNT); do
+    sleep $INTERVAL
+    
+    CURR_CS=$(cat /proc/stat | grep ctxt | awk '{print $2}')
+    CURR_TIME=$(date +%s)
+    
+    CS_DIFF=$((CURR_CS - PREV_CS))
+    TIME_DIFF=$((CURR_TIME - PREV_TIME))
+    CS_PER_SEC=$((CS_DIFF / TIME_DIFF))
+    
+    # Get voluntary and involuntary context switches for init process (PID 1)
+    VOL_CS=$(cat /proc/1/status | grep voluntary_ctxt | awk '{print $2}')
+    INVOL_CS=$(cat /proc/1/status | grep nonvoluntary_ctxt | awk '{print $2}')
+    
+    echo "$(date +%T) | $CURR_CS | $CS_PER_SEC | $VOL_CS | $INVOL_CS"
+    
+    PREV_CS=$CURR_CS
+    PREV_TIME=$CURR_TIME
+done
+</code></pre>
+<h3 id="效能瓶頸診斷腳本"><a class="header" href="#效能瓶頸診斷腳本">效能瓶頸診斷腳本</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# bottleneck_finder.sh
+
+echo "===== Performance Bottleneck Analysis ====="
+echo ""
+
+# CPU Check
+echo "=== CPU Analysis ==="
+CPU_USAGE=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
+echo "CPU Usage: $CPU_USAGE%"
+
+if (( $(echo "$CPU_USAGE &gt; 80" | bc -l) )); then
+    echo "⚠️  High CPU usage detected!"
+    echo "Top CPU consumers:"
+    ps aux --sort=-%cpu | head -4
+fi
+
+echo ""
+
+# Memory Check
+echo "=== Memory Analysis ==="
+MEM_USAGE=$(free | grep Mem | awk '{print ($3/$2) * 100.0}')
+echo "Memory Usage: ${MEM_USAGE}%"
+
+if (( $(echo "$MEM_USAGE &gt; 90" | bc -l) )); then
+    echo "⚠️  High memory usage detected!"
+    echo "Top memory consumers:"
+    ps aux --sort=-%mem | head -4
+fi
+
+echo ""
+
+# I/O Check
+echo "=== I/O Analysis ==="
+iostat -x 1 2 | grep -A1 avg-cpu | tail -n 1
+
+IOWAIT=$(iostat -x 1 2 | grep -A1 avg-cpu | tail -n 1 | awk '{print $4}')
+if (( $(echo "$IOWAIT &gt; 30" | bc -l) )); then
+    echo "⚠️  High I/O wait detected!"
+    echo "Processes with high I/O:"
+    iotop -b -n 1 | head -10
+fi
+
+echo ""
+
+# Network Check
+echo "=== Network Analysis ==="
+for INTERFACE in $(ls /sys/class/net/ | grep -v lo); do
+    RX=$(cat /sys/class/net/$INTERFACE/statistics/rx_bytes)
+    TX=$(cat /sys/class/net/$INTERFACE/statistics/tx_bytes)
+    sleep 1
+    RX2=$(cat /sys/class/net/$INTERFACE/statistics/rx_bytes)
+    TX2=$(cat /sys/class/net/$INTERFACE/statistics/tx_bytes)
+    
+    RX_RATE=$((($RX2 - $RX) / 1024))
+    TX_RATE=$((($TX2 - $TX) / 1024))
+    
+    echo "$INTERFACE: RX: ${RX_RATE}KB/s TX: ${TX_RATE}KB/s"
+done
+</code></pre>
+<h3 id="進程追蹤腳本"><a class="header" href="#進程追蹤腳本">進程追蹤腳本</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# process_tracker.sh
+
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 &lt;process_name or PID&gt;"
+    exit 1
+fi
+
+PROCESS=$1
+
+# Check if input is PID or process name
+if [[ $PROCESS =~ ^[0-9]+$ ]]; then
+    PID=$PROCESS
+else
+    PID=$(pgrep -f $PROCESS | head -1)
+    if [ -z "$PID" ]; then
+        echo "Process not found!"
+        exit 1
+    fi
+fi
+
+echo "Tracking PID: $PID"
+echo "======================================"
+
+while true; do
+    if ! kill -0 $PID 2&gt;/dev/null; then
+        echo "Process terminated!"
+        break
+    fi
+    
+    clear
+    echo "=== Process Information for PID $PID ==="
+    echo "Time: $(date +%T)"
+    echo ""
+    
+    # Basic info
+    ps -p $PID -o pid,ppid,user,%cpu,%mem,vsz,rss,comm
+    
+    echo ""
+    echo "=== Resource Usage ==="
+    cat /proc/$PID/status | grep -E "VmSize|VmRSS|Threads|voluntary_ctxt|nonvoluntary_ctxt"
+    
+    echo ""
+    echo "=== I/O Statistics ==="
+    cat /proc/$PID/io 2&gt;/dev/null || echo "I/O stats not available"
+    
+    echo ""
+    echo "=== Open Files ==="
+    lsof -p $PID 2&gt;/dev/null | wc -l | xargs echo "Total open files:"
+    
+    echo ""
+    echo "=== Network Connections ==="
+    ss -tunap | grep "pid=$PID" | wc -l | xargs echo "Total connections:"
+    
+    sleep 2
+done
+</code></pre>
+<h3 id="系統報告產生器"><a class="header" href="#系統報告產生器">系統報告產生器</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# system_report.sh
+
+REPORT_FILE="system_report_$(date +%Y%m%d_%H%M%S).txt"
+
+{
+    echo "System Performance Report"
+    echo "Generated: $(date)"
+    echo "Hostname: $(hostname)"
+    echo "Kernel: $(uname -r)"
+    echo ""
+    
+    echo "===== Hardware Information ====="
+    echo "CPU: $(lscpu | grep 'Model name' | cut -d':' -f2 | xargs)"
+    echo "Cores: $(nproc)"
+    echo "Memory: $(free -h | grep Mem | awk '{print $2}')"
+    echo ""
+    
+    echo "===== Resource Usage ====="
+    echo "--- CPU ---"
+    mpstat | tail -2
+    echo ""
+    
+    echo "--- Memory ---"
+    free -h
+    echo ""
+    
+    echo "--- Disk ---"
+    df -h
+    echo ""
+    
+    echo "===== Top Processes ====="
+    echo "--- By CPU ---"
+    ps aux --sort=-%cpu | head -10
+    echo ""
+    
+    echo "--- By Memory ---"
+    ps aux --sort=-%mem | head -10
+    echo ""
+    
+    echo "===== Network Statistics ====="
+    ss -s
+    echo ""
+    
+    echo "===== System Load ====="
+    uptime
+    echo ""
+    sar -q | tail -5
+    echo ""
+    
+    echo "===== Recent System Messages ====="
+    dmesg | tail -20
+    
+} &gt; "$REPORT_FILE"
+
+echo "Report saved to: $REPORT_FILE"
+</code></pre>
+<hr />
+<h2 id="快速參考命令組合"><a class="header" href="#快速參考命令組合">快速參考命令組合</a></h2>
+<h3 id="找出最消耗資源的進程"><a class="header" href="#找出最消耗資源的進程">找出最消耗資源的進程</a></h3>
+<pre><code class="language-bash"># CPU 消耗最高的進程
+ps aux --sort=-%cpu | head -10
+
+# 記憶體消耗最高的進程
+ps aux --sort=-%mem | head -10
+
+# I/O 消耗最高的進程
+iotop -b -n 1 | head -10
+
+# 網路流量最高的進程
+nethogs -t -c 2
+</code></pre>
+<h3 id="context-switch-分析"><a class="header" href="#context-switch-分析">Context Switch 分析</a></h3>
+<pre><code class="language-bash"># 系統總 context switch
+vmstat 1 5 | awk '{print $12}'
+
+# 每個 CPU 的 context switch
+mpstat -P ALL 1 5
+
+# 進程的 context switch
+pidstat -w 1 5
+
+# 高 context switch 進程
+pidstat -w 1 1 | sort -k4 -rn | head
+</code></pre>
+<h3 id="即時監控儀表板"><a class="header" href="#即時監控儀表板">即時監控儀表板</a></h3>
+<pre><code class="language-bash"># 使用 tmux 分割畫面
+tmux new-session \; \
+  split-window -h \; \
+  split-window -v \; \
+  split-window -v \; \
+  send-keys 'htop' C-m \; \
+  select-pane -t 0 \; \
+  send-keys 'iostat -x 1' C-m \; \
+  select-pane -t 2 \; \
+  send-keys 'iftop' C-m \; \
+  select-pane -t 3 \; \
+  send-keys 'vmstat 1' C-m
+</code></pre>
+<h3 id="效能基準測試套件"><a class="header" href="#效能基準測試套件">效能基準測試套件</a></h3>
+<pre><code class="language-bash"># 快速 CPU 測試
+sysbench cpu --threads=$(nproc) --time=10 run
+
+# 快速記憶體測試
+sysbench memory --memory-total-size=1G run
+
+# 快速磁碟測試
+dd if=/dev/zero of=testfile bs=1G count=1 oflag=direct
+
+# 快速網路測試
+iperf3 -c iperf.he.net -t 10
+</code></pre>
+<hr />
+<h2 id="工具安裝指南"><a class="header" href="#工具安裝指南">工具安裝指南</a></h2>
+<h3 id="ubuntudebian"><a class="header" href="#ubuntudebian">Ubuntu/Debian</a></h3>
+<pre><code class="language-bash"># 基礎工具
+sudo apt-get update
+sudo apt-get install -y sysstat htop iotop iftop nethogs dstat
+
+# 進階工具
+sudo apt-get install -y perf-tools-unstable linux-tools-common linux-tools-generic
+sudo apt-get install -y bpfcc-tools systemtap
+
+# 效能測試工具
+sudo apt-get install -y stress-ng sysbench fio iperf3
+</code></pre>
+<h3 id="rhelcentosfedora"><a class="header" href="#rhelcentosfedora">RHEL/CentOS/Fedora</a></h3>
+<pre><code class="language-bash"># 基礎工具
+sudo yum install -y sysstat htop iotop iftop nethogs dstat
+
+# 進階工具
+sudo yum install -y perf systemtap bcc-tools
+
+# 效能測試工具
+sudo yum install -y stress-ng sysbench fio iperf3
+</code></pre>
+<h3 id="arch-linux"><a class="header" href="#arch-linux">Arch Linux</a></h3>
+<pre><code class="language-bash"># 基礎工具
+sudo pacman -S sysstat htop iotop iftop nethogs dstat
+
+# 進階工具
+sudo pacman -S perf bpf bcc-tools
+
+# 效能測試工具
+sudo pacman -S stress-ng sysbench fio iperf3
+</code></pre>
+<hr />
+<h2 id="最佳實踐建議"><a class="header" href="#最佳實踐建議">最佳實踐建議</a></h2>
+<ol>
+<li><strong>建立基準線</strong>: 在系統正常運作時收集效能數據作為基準</li>
+<li><strong>定期監控</strong>: 設定自動化監控和警報系統</li>
+<li><strong>多工具驗證</strong>: 使用多個工具交叉驗證問題</li>
+<li><strong>保存歷史數據</strong>: 使用 sar、atop 等工具保存歷史數據供分析</li>
+<li><strong>關注趨勢</strong>: 不只看絕對值，更要關注變化趨勢</li>
+<li><strong>瞭解工作負載</strong>: 不同應用有不同的效能特徵</li>
+<li><strong>測試環境</strong>: 在測試環境先驗證效能優化措施</li>
+<li><strong>文件記錄</strong>: 記錄所有效能問題和解決方案</li>
+</ol>
+<hr />
+<h2 id="參考資源"><a class="header" href="#參考資源">參考資源</a></h2>
+<ul>
+<li><a href="http://www.brendangregg.com/linuxperf.html">Brendan Gregg's Performance Tools</a></li>
+<li><a href="https://www.kernel.org/doc/html/latest/admin-guide/perf/">Linux Performance Documentation</a></li>
+<li><a href="http://www.brendangregg.com/bpf-performance-tools-book.html">BPF Performance Tools Book</a></li>
+<li><a href="http://www.brendangregg.com/systems-performance-2nd-edition-book.html">Systems Performance Book</a></li>
+<li><a href="https://www.oreilly.com/library/view/linux-system-programming/9781449339531/">Linux System Programming</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../linux_system/systems-performance-tools-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../linux_system/ebpf-complete-guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../linux_system/systems-performance-tools-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../linux_system/ebpf-complete-guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

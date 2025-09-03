@@ -1,0 +1,271 @@
+
+std::async()异步运行一个目标函数，并返回一个携带目标函数返回值的std::future对象。通过这种方式，async()的操作很像std::thread，但允许函数有返回值。
+
+通过几个例子来了解一下std::async()的使用。
+
+\subsubsection{How to do it…}
+
+在其最简单的形式中，std::async()函数执行与std::thread相同的任务，不需要调用join()或detach()，同时还允许通过std::future对象返回值。
+
+这个示例中，将使用一个函数来计算一个范围内质数的数量。可以使用chrono::steady\_clock为每个线程的进行计时。
+
+\begin{itemize}
+\item 
+先从别名开始:
+
+\begin{lstlisting}[style=styleCXX]
+using launch = std::launch;
+using secs = std::chrono::duration<double>;
+\end{lstlisting}
+
+std::launch有启动策略常量，用于async()调用。secs别名是一个持续时间类，用于为质数计算计时。
+
+\item 
+我们的目标函数计算范围内的质数。这本质上是一种通过占用一些时钟周期，来理解执行策略的方法:
+
+\begin{lstlisting}[style=styleCXX]
+struct prime_time {
+	secs dur{};
+	uint64_t count{};
+};
+prime_time count_primes(const uint64_t& max) {
+	prime_time ret{};
+	constexpr auto isprime = [](const uint64_t& n) {
+		for(uint64_t i{ 2 }; i < n / 2; ++i) {
+			if(n % i == 0) return false;
+		}
+		return true;
+	};
+	uint64_t start{ 2 };
+	uint64_t end{ max };
+	auto t1 = steady_clock::now();
+	for(uint64_t i{ start }; i <= end ; ++i) {
+		if(isprime(i)) ++ret.count;
+	}
+	ret.dur = steady_clock::now() - t1;
+	return ret;
+}
+\end{lstlisting}
+
+prime\_time结构用于返回值，可用于duration和count，这样就可以计算循环本身的时间。若一个值是质数，isprime返回true。我们使用steady\_clock，来计算质数计数循环的持续时间。
+
+\item 
+在main()中，调用函数并报告其运行时间:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	constexpr uint64_t MAX_PRIME{ 0x1FFFF };
+	auto pt = count_primes(MAX_PRIME);
+	cout << format("primes: {} {:.3}\n", pt.count,
+		pt.dur);
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+primes: 12252 1.88008s
+\end{tcblisting}
+
+\item 
+现在，可以用std::async()异步运行count\_primes():
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	constexpr uint64_t MAX_PRIME{ 0x1FFFF };
+	auto primes1 = async(count_primes, MAX_PRIME);
+	auto pt = primes1.get();
+	cout << format("primes: {} {:.3}\n", pt.count,
+		pt.dur);
+}
+\end{lstlisting}
+
+这里，使用count\_primes函数和MAX\_PRIME参数调用async()，这count\_primes函数放在后台运行。
+
+async()返回std::future对象，该对象携带异步操作的返回值。future对象的get()是阻塞式的，会等到异步函数完成，获取该函数的返回对象。
+
+这与没有async()时运行的时间几乎相同:
+
+\begin{tcblisting}{commandshell={}}
+primes: 12252 1.97245s
+\end{tcblisting}
+
+\item 
+async()函数可选地将执行策略标志作为其第一个参数:
+
+\begin{tcblisting}{commandshell={}}
+auto primes1 = async(launch::async, count_primes, MAX_
+PRIME);
+\end{tcblisting}
+
+选择是异步或延迟的，这些标志位于std::launch命名空间中。
+
+async标志启用异步操作，deferred标志启用延迟计算。这些标志是位映设的，可以与按位或|操作符组合使用。
+
+默认情况下，这两个位都要设置，就和async|deferred一样。
+
+\item 
+可以使用async()同时运行函数的几个实例:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	constexpr uint64_t MAX_PRIME{ 0x1FFFF };
+	list<std::future<prime_time>> swarm;
+	cout << "start parallel primes\n";
+	auto t1{ steady_clock::now() };
+	for(size_t i{}; i < 15; ++i) {
+		swarm.emplace_back(
+		async(launch::async, count_primes,
+		MAX_PRIME)
+		);
+	}
+	for(auto& f : swarm) {
+		static size_t i{};
+		auto pt = f.get();
+		cout << format("primes({:02}): {} {:.5}\n",
+		++i, pt.count, pt.dur);
+	}
+	secs dur_total{ steady_clock::now() - t1 };
+	cout << format("total duration: {:.5}s\n",
+		dur_total.count());
+}
+\end{lstlisting}
+
+我们知道async返回一个future对象。因此，可以通过将未来对象存储在容器中来运行15个线程。以下是我运行在Windows设备(6核i7)上的输出:
+
+\begin{tcblisting}{commandshell={}}
+start parallel primes
+primes(01): 12252 4.1696s
+primes(02): 12252 3.7754s
+primes(03): 12252 3.78089s
+primes(04): 12252 3.72149s
+primes(05): 12252 3.72006s
+primes(06): 12252 4.1306s
+primes(07): 12252 4.26015s
+primes(08): 12252 3.77283s
+primes(09): 12252 3.77176s
+primes(10): 12252 3.72038s
+primes(11): 12252 3.72416s
+primes(12): 12252 4.18738s
+primes(13): 12252 4.07128s
+primes(14): 12252 2.1967s
+primes(15): 12252 2.22414s
+total duration: 5.9461s
+\end{tcblisting}
+
+尽管，6核i7不能在不同的核中运行所有进程，但仍然可以在6秒内完成15个实例。
+
+看起来它在4秒内完成了前13个线程，然后再花2秒完成最后2个线程。这似乎利用了Intel的超线程技术，该技术允许在某些情况下在一个核心中运行2个线程。
+
+当在12核Xeon上运行相同的代码时，会得到这样的结果:
+
+\begin{tcblisting}{commandshell={}}
+start parallel primes
+primes(01): 12252 0.96221s
+primes(02): 12252 0.97346s
+primes(03): 12252 0.92189s
+primes(04): 12252 0.97499s
+primes(05): 12252 0.98135s
+primes(06): 12252 0.93426s
+primes(07): 12252 0.90294s
+primes(08): 12252 0.96307s
+primes(09): 12252 0.95015s
+primes(10): 12252 0.94255s
+primes(11): 12252 0.94971s
+primes(12): 12252 0.95639s
+primes(13): 12252 0.95938s
+primes(14): 12252 0.92115s
+primes(15): 12252 0.94122s
+total duration: 0.98166s
+\end{tcblisting}
+
+12核的至强处理器可以在一秒钟内完成全部15个进程的任务。
+
+\end{itemize}
+
+\subsubsection{How it works…}
+
+理解std::async的关键在于其对std::promise和std::future的使用。
+
+promise类允许线程存储一个对象，以后可以由future对象进行异步检索。
+
+例如，有这样一个函数:
+
+\begin{lstlisting}[style=styleCXX]
+void f() {
+	cout << "this is f()\n";
+}
+\end{lstlisting}
+
+可以用std::thread运行:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	std::thread t1(f);
+	t1.join();
+	cout << "end of main()\n";
+}
+\end{lstlisting}
+
+这对于没有返回值的简单函数来说很好。当想从f()返回一个值时，可以使用promise和future。
+
+在main()线程中设置了promise和future对象:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	std::promise<int> value_promise;
+	std::future<int> value_future =
+		value_promise.get_future();
+	std::thread t1(f, std::move(value_promise));
+	t1.detach();
+	cout << format("value is {}\n", value_future.get());
+	cout << "end of main()\n";
+}
+\end{lstlisting}
+
+然后，将promise对象传递给函数:
+
+\begin{lstlisting}[style=styleCXX]
+void f(std::promise<int> value) {
+	cout << "this is f()\n";
+	value.set_value(47);
+}
+\end{lstlisting}
+
+promise对象不能复制，因此需要使用std::move将其传递给函数。
+
+promise对象充当到future对象的桥梁，其允许在值可用的前提下，对其进行检索。
+
+std::async()只是一个辅助函数，用于简化promise和future对象的创建。可以这样使用async():
+
+\begin{lstlisting}[style=styleCXX]
+int f() {
+	cout << "this is f()\n";
+	return 47;
+}
+
+int main() {
+	auto value_future = std::async(f);
+	cout << format("value is {}\n", value_future.get());
+	cout << "end of main()\n";
+}
+\end{lstlisting}
+
+这就是async()的值。在很多情况下，promise与future的组合使用起来更容易。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

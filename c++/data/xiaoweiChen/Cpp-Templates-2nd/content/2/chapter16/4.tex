@@ -1,0 +1,170 @@
+
+模板全特化很有用，但有时会希望为一组模板参数特化类模板或变量模板，而不是只特化一组特定的模板参数。例如，有一个链表的类模板:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class List { // #1
+	public:
+	...
+	void append(T const&);
+	inline std::size_t length() const;
+	...
+};
+\end{lstlisting}
+
+使用此模板的大型项目可以实例化多种类型成员。对于未内联展开的成员函数(例如：List<T>::append())，可能会导致代码的大幅度增长。从底层来看，List<int*>::append()和List<void*>::append()的代码相同。我们希望指定所有指针List共享一个实现。虽然不能用C++来表达，可以指定不同的模板定义实例化来实现:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T>
+class List<T*> { // #2
+	private:
+	List<void*> impl;
+	...
+	public:
+	...
+	inline void append(T* p) {
+		impl.append(p);
+	}
+	inline std::size_t length() const {
+		return impl.length();
+	}
+	...
+};
+\end{lstlisting}
+
+此上下文中，位于\#1的原始模板称为主模板，而后的定义称为偏特化(因为使用此模板定义的模板参数仅部分指定)。描述偏特化的语法是模板参数列表声明(template<…>)和一组在类模板名称上显式指定的模板参数(示例中是<T*>)的组合。
+
+我们的代码有一个问题，因为List<void*>递归地包含了同一个List<void*>类型的成员。为了打破这个循环，可以在之前的偏特化前使用全特化:
+
+\begin{lstlisting}[style=styleCXX]
+template<>
+class List<void*> { // #3
+	...
+	void append (void* p);
+	inline std::size_t length() const;
+	...
+};
+\end{lstlisting}
+
+因为全特化比偏特化更匹配，所以可行。因此，指针List的所有成员函数都会转发(通过容易内联的函数)到List<void*>。这是对抗代码膨胀(C++模板经常被诟病)的有效方法。
+
+偏特化声明的形参和实参列表存在一些限制。其中一些如下:
+
+\begin{enumerate}
+\item 
+偏特化的实参必须在类型(类型、非类型或模板)上与主模板的相应形参匹配。
+
+\item 
+偏特化的形参列表不能有默认实参，取而代之的是主类模板的默认实参。
+
+\item 
+偏特化的非类型参数应该是非依赖值或普通非类型模板参数。不能是更复杂的依赖表达式，如2*N(其中N是模板参数)。
+
+\item 
+偏特化的模板实参列表不应与主模板的形参列表相同(忽略重命名)
+
+\item 
+若其中一个模板参数是包扩展，这个包必须放在模板参数列表的最后。
+\end{enumerate}
+
+下面的例子说明了这些限制:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename T, int I = 3>
+class S; // primary template
+
+template<typename T>
+class S<int, T>; // ERROR: parameter kind mismatch
+
+template<typename T = int>
+class S<T, 10>; // ERROR: no default arguments
+
+template<int I>
+class S<int, I*2>; // ERROR: no nontype expressions
+
+template<typename U, int K>
+class S<U, K>; // ERROR: no significant difference from primary template
+
+template<typename... Ts>
+class Tuple;
+
+template<typename Tail, typename... Ts>
+class Tuple<Ts..., Tail>; // ERROR: pack expansion not at the end
+
+template<typename Tail, typename... Ts>
+class Tuple<Tuple<Ts...>, Tail>; // OK: pack expansion is at the end of a
+								// nested template argument list
+\end{lstlisting}
+
+每个偏特化都与主模板相关联。使用模板时，总是要查找主模板，但随后参数也要与相关特化的参数进行匹配(使用模板推导指引，如第15章所述)，以确定选择哪个模板实现。就像函数模板参数推导一样，SFINAE原则在这里也适用:当试图匹配偏特化时，若形成了无效构造，则放弃该特化，并检查另一个候选是否可用。若没有找到匹配的特化，则选择主模板。若找到多个匹配的特化，则选择最特化的那个;若没有最特化的，则会出现歧义性错误。
+
+最后，类模板偏特化有可能比主模板拥有更多或更少的参数。考虑泛型模板List，再次在点\#1声明。已经讨论了如何优化指针列表的情况，但这里可能希望对某些指向成员的指针类型进行同样的优化。下面的代码实现了指向成员指针的指针:
+
+\begin{lstlisting}[style=styleCXX]
+// partial specialization for any pointer-to-void* member
+template<typename C>
+class List<void* C::*> { // #4
+	public:
+	using ElementType = void* C::*;
+	...
+	void append(ElementType pm);
+	inline std::size_t length() const;
+	...
+};
+
+// partial specialization for any pointer-to-member-pointer type except
+// pointer-to-void* member, which is handled earlier
+// (note that this partial specialization has two template parameters,
+// whereas the primary template only has one parameter)
+// this specialization makes use of the prior one to achieve the
+// desired optimization
+template<typename T, typename C>
+class List<T* C::*> { // #5
+	private:
+	List<void* C::*> impl;
+	...
+	public:
+	using ElementType = T* C::*;
+	...
+	inline void append(ElementType pm) {
+		impl.append(static_cast<void* C::*>(pm));
+	}
+	inline std::size_t length() const {
+		return impl.length();
+	}
+	...
+};
+\end{lstlisting}
+
+除了对模板参数的数量外，在\#4定义的实现是一个偏特化(对于简单的指针情况，是一个全特化)，所有其他定义都会使用\#5点的声明转发。然而，\#4的特化比\#5更特化;因此，不应出现歧义。
+
+而且，显式编写的模板参数数量，甚至可能与主模板中的模板参数数量不同。这既可以在有默认模板参数的确情况下发生，也可以使用可变参数模板:
+
+\begin{lstlisting}[style=styleCXX]
+template<typename... Elements>
+class Tuple; // primary template
+
+template<typename T1>
+class Tuple<T>; // one-element tuple
+
+template<typename T1, typename T2, typename... Rest>
+class Tuple<T1, T2, Rest...>; // tuple with two or more elements
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

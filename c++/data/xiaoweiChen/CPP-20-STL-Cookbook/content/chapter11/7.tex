@@ -1,0 +1,446 @@
+
+在我的职业生涯中，使用过很多编程语言。学习一门新语言时，我喜欢做一个项目，让我接触到语言的细微差别。numwords类是我为此目的最喜欢的练习之一。多年来，我用数十种语言编写过它，包括多次用C和C++进行练习。
+
+numwords是一个用单词拼写数字的类，可以用于银行和会计应用。使用起来像这样:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	bw::numword nw{};
+	uint64_t n;
+	nw = 3; bw::print("n is {}, {}\n", nw.getnum(), nw);
+	nw = 47; bw::print("n is {}, {}\n", nw.getnum(), nw);
+	n = 100073; bw::print("n is {}, {}\n", n,
+		bw::numword{n});
+	n = 1000000001; bw::print("n is {}, {}\n", n,
+		bw::numword{n});
+	n = 123000000000; bw::print("n is {}, {}\n", n,
+		bw::numword{n});
+	n = 1474142398007; bw::print("n is {}, {}\n", n,
+		nw.words(n));
+	n = 999999999999999999; bw::print("n is {}, {}\n", n,
+		nw.words(n));
+	n = 1000000000000000000; bw::print("n is {}, {}\n", n,
+		nw.words(n));
+}
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+n is 3, three
+n is 47, forty-seven
+n is 100073, one hundred thousand seventy-three
+n is 1000000001, one billion one
+n is 123000000000, one hundred twenty-three billion
+n is 1474142398007, one trillion four hundred seventy-four
+billion one hundred forty-two million three hundred ninetyeight thousand seven
+n is 999999999999999999, nine hundred ninety-nine quadrillion
+nine hundred ninety-nine trillion nine hundred ninety-nine
+billion nine hundred ninety-nine million nine hundred ninetynine thousand nine hundred ninety-nine
+n is 1000000000000000000, error
+\end{tcblisting}
+
+\subsubsection{How to do it…}
+
+这个示例起源于创建“生产就绪”的代码练习。因此，由三个不同的文件组成:
+
+\begin{itemize}
+\item 
+numword.h是numwords类的头/接口文件。
+
+\item 
+numword.cpp是numwords类的实现文件。
+
+\item 
+numword-test.cpp是用于测试数字词类的应用程序文件。
+\end{itemize}
+
+这个类本身大约有180行代码。我们在这里只讨论重点代码段，读者们可以在这里找到完整的源代码，\url{https://github.com/PacktPublishing/CPP-20STL-Cookbook/tree/main/chap11/numword}。
+
+\begin{itemize}
+\item 
+numword.h文件中，将类放在bw命名空间中，并以一些using语句开始:
+
+\begin{lstlisting}[style=styleCXX]
+namespace bw {
+	using std::string;
+	using std::string_view;
+	using numnum = uint64_t;
+	using bufstr = std::unique_ptr<string>;
+\end{lstlisting}
+
+整个代码中使用string和string\_view对象。
+
+uint64\_t是我们的主要整数类型，因为这个类称为numword，所以我喜欢将numnum作为整数类型。
+
+\_bufstr是主要的输出缓冲区，一个包装在unique\_ptr中的字符串，遵从RAII的内存管理。
+
+\item 
+也有一些用于不同目的的常量:
+
+\begin{lstlisting}[style=styleCXX]
+constexpr numnum maxnum = 999'999'999'999'999'999;
+constexpr int zero_i{ 0 };
+constexpr int five_i{ 5 };
+constexpr numnum zero{ 0 };
+constexpr numnum ten{ 10 };
+constexpr numnum twenty{ 20 };
+constexpr numnum hundred{ 100 };
+constexpr numnum thousand{ 1000 };
+\end{lstlisting}
+
+maxnum常数对于大多数目的应该是足够的，其余部分用于避免在代码中使用文字。
+
+\item 
+主要的数据结构是string\_view对象的constexpr数组，表示输出中使用的单词。因为其提供了最小开销的封装，所以string\_view类非常适合这些常量:
+
+\begin{lstlisting}[style=styleCXX]
+constexpr string_view errnum{ "error" };
+constexpr string_view _singles[] {
+	"zero", "one", "two", "three", "four", "five",
+	"six", "seven", "eight", "nine"
+};
+constexpr string_view _teens[] {
+	"ten", "eleven", "twelve", "thirteen", "fourteen",
+	"fifteen", "sixteen", "seventeen", "eighteen",
+	"nineteen"
+};
+constexpr string_view _tens[] {
+	errnum, errnum, "twenty", "thirty", "forty",
+	"fifty", "sixty", "seventy", "eighty", "ninety",
+};
+constexpr string_view _hundred_string = "hundred";
+constexpr string_view _powers[] {
+	errnum, "thousand", "million", "billion",
+	"trillion", "quadrillion"
+};
+\end{lstlisting}
+
+这些单词可以分成几个部分，在将数字转换成单词时很有用。许多语言使用类似的分解，所以这个结构应该很适用于语言翻译。
+
+\item 
+numword类有几个私有成员:
+
+\begin{lstlisting}[style=styleCXX]
+class numword {
+	bufstr _buf{ std::make_unique<string>(string{}) };
+	numnum _num{};
+	bool _hyphen_flag{ false };
+\end{lstlisting}
+
+\begin{itemize}
+\item 
+\_buf是输出字符串缓冲区，内存由unique\_ptr管理。
+
+\item 
+\_num保存当前数值。
+
+\item 
+\_hyphen\_flag在翻译过程中，用于在单词之间插入连字符，而不是空格字符。
+\end{itemize}
+
+\item 
+这些私有方法用于操作输出缓冲区。
+
+\begin{lstlisting}[style=styleCXX]
+void clearbuf();
+size_t bufsize();
+void appendbuf(const string& s);
+void appendbuf(const string_view& s);
+void appendbuf(const char c);
+void appendspace();
+\end{lstlisting}
+
+还有一个pow\_i()私有方法用于计算$x^y$:
+
+\begin{lstlisting}[style=styleCXX]
+numnum pow_i(const numnum n, const numnum p);
+\end{lstlisting}
+
+pow\_i()用于区分字输出的数字值的各个部分。
+
+\item 
+公共接口包括构造函数和调用words()方法的各种方法，该方法完成将numnum转换为单词字符串的工作:
+
+\begin{lstlisting}[style=styleCXX]
+numword(const numnum& num = 0) : _num(num) {}
+numword(const numword& nw) : _num(nw.getnum()) {}
+const char * version() const { return _version; }
+void setnum(const numnum& num) { _num = num; }
+numnum getnum() const { return _num; }
+numnum operator= (const numnum& num);
+const string& words();
+const string& words(const numnum& num);
+const string& operator() (const numnum& num) {
+	return words(num); };
+\end{lstlisting}
+
+\item 
+实现文件numword.cpp中，大部分工作在words()成员函数中处理:
+
+\begin{lstlisting}[style=styleCXX]
+const string& numword::words( const numnum& num ) {
+	numnum n{ num };
+	clearbuf();
+	if(n > maxnum) {
+		appendbuf(errnum);
+		return *_buf;
+	}
+	if (n == 0) {
+		appendbuf(_singles[n]);
+		return *_buf;
+	}
+	// powers of 1000
+	if (n >= thousand) {
+		for(int i{ five_i }; i > zero_i; --i) {
+			numnum power{ pow_i(thousand, i) };
+			numnum _n{ ( n - ( n % power ) ) / power };
+			if (_n) {
+				int index = i;
+				numword _nw{ _n };
+				appendbuf(_nw.words());
+				appendbuf(_powers[index]);
+				n -= _n * power;
+			}
+		}
+	}
+	// hundreds
+	if (n >= hundred && n < thousand) {
+		numnum _n{ ( n - ( n % hundred ) ) / hundred };
+		numword _nw{ _n };
+		appendbuf(_nw.words());
+		appendbuf(_hundred_string);
+		n -= _n * hundred;
+	}
+	// tens
+	if (n >= twenty && n < hundred) {
+		numnum _n{ ( n - ( n % ten ) ) / ten };
+		appendbuf(_tens[_n]);
+		n -= _n * ten;
+		_hyphen_flag = true;
+	}
+	// teens
+	if (n >= ten && n < twenty) {
+		appendbuf(_teens[n - ten]);
+		n = zero;
+	}
+	// singles
+	if (n > zero && n < ten) {
+		appendbuf(_singles[n]);
+	}
+	return *_buf;
+}
+\end{lstlisting}
+
+该函数的每个部分以10的次幂的模量剥离数字的一部分，在千万的情况下递归，并从string\_view常量数组中追加字符串。
+
+\item 
+appendbuf()有三个重载。一个添加字符串:
+
+\begin{lstlisting}[style=styleCXX]
+void numword::appendbuf(const string& s) {
+	appendspace();
+	_buf->append(s);
+}
+\end{lstlisting}
+
+另一个添加string\_view:
+
+\begin{lstlisting}[style=styleCXX]
+void numword::appendbuf(const string_view& s) {
+	appendspace();
+	_buf->append(s.data());
+}
+\end{lstlisting}
+
+第三个添加单个字符:
+
+\begin{lstlisting}[style=styleCXX]
+void numword::appendbuf(const char c) {
+	_buf->append(1, c);
+}
+\end{lstlisting}
+
+appendspace()方法根据上下文附加一个空格字符或连字符:
+
+\begin{lstlisting}[style=styleCXX]
+void numword::appendspace() {
+	if(bufsize()) {
+		appendbuf( _hyphen_flag ? _hyphen : _space);
+		_hyphen_flag = false;
+	}
+}
+\end{lstlisting}
+
+\item 
+numword-test.cpp文件是bw::numword的测试环境，包括格式化特化:
+
+\begin{lstlisting}[style=styleCXX]
+template<>
+struct std::formatter<bw::numword>:
+std::formatter<unsigned> {
+	template<typename FormatContext>
+	auto format(const bw::numword& nw,
+	FormatContext& ctx) {
+		bw::numword _nw{nw};
+		return format_to(ctx.out(), "{}",
+		nw.words());
+	}
+};
+\end{lstlisting}
+
+可以直接将bw::numword对象传递给format()。
+
+\item 
+还有一个print()函数，绕过cout和iostream，直接将格式化输出发送到stdout:
+
+\begin{lstlisting}[style=styleCXX]
+namespace bw {
+	template<typename... Args> constexpr void print(
+	const std::string_view str_fmt, Args&&...
+	args) {
+		fputs(std::vformat(str_fmt,
+		std::make_format_args(args...)).c_str(),
+		stdout);
+	}
+};
+\end{lstlisting}
+
+这就可以使用print("\{\}\verb|\|n"， nw)，而不是通过cout管道。C++23标准中会有这样一个函数。
+
+\item 
+main()中，声明了一个bw::numword对象和用于测试的uint64\_t:
+
+\begin{lstlisting}[style=styleCXX]
+int main() {
+	bw::numword nw{};
+	uint64_t n{};
+	
+	bw::print("n is {}, {}\n", nw.getnum(), nw);
+	...
+\end{lstlisting}
+
+numword对象初始化为0，从print()语句中得到如下输出:
+
+\begin{tcblisting}{commandshell={}}
+n is 0, zero
+\end{tcblisting}
+
+\item 
+我们测试了多种调用numword的方法:
+
+\begin{lstlisting}[style=styleCXX]
+nw = 3; bw::print("n is {}, {}\n", nw.getnum(), nw);
+nw = 47; bw::print("n is {}, {}\n", nw.getnum(), nw);
+...
+n = 100073; bw::print("n is {}, {}\n", n,
+bw::numword{n});
+n = 1000000001; bw::print("n is {}, {}\n", n,
+bw::numword{n});
+...
+n = 474142398123; bw::print("n is {}, {}\n", n, nw(n));
+n = 1474142398007; bw::print("n is {}, {}\n", n, nw(n));
+...
+n = 999999999999999999; bw::print("n is {}, {}\n", n,
+nw(n));
+n = 1000000000000000000; bw::print("n is {}, {}\n", n,
+nw(n));
+\end{lstlisting}
+
+输出为:
+
+\begin{tcblisting}{commandshell={}}
+n is 3, three
+n is 47, forty-seven
+...
+n is 100073, one hundred thousand seventy-three
+n is 1000000001, one billion one
+...
+n is 474142398123, four hundred seventy-four billion
+one hundred forty-two million three hundred ninety-eight
+thousand one hundred twenty-three
+n is 1474142398007, one trillion four hundred seventyfour billion one hundred forty-two million three hundred
+ninety-eight thousand seven
+...
+n is 999999999999999999, nine hundred ninety-nine
+quadrillion nine hundred ninety-nine trillion nine
+hundred ninety-nine billion nine hundred ninety-nine
+million nine hundred ninety-nine thousand nine hundred
+ninety-nine
+n is 1000000000000000000, error
+\end{tcblisting}
+\end{itemize}
+
+\subsubsection{How it works…}
+
+这个类主要是由数据结构驱动的。通过将string\_view对象组织为数组，可以轻松地将标量值转换为相应的单词:
+
+\begin{lstlisting}[style=styleCXX]
+appendbuf(_tens[_n]); // e.g., _tens[5] = "fifty"
+\end{lstlisting}
+
+剩下的就是数学问题了:
+
+\begin{lstlisting}[style=styleCXX]
+numnum power{ pow_i(thousand, i) };
+numnum _n{ ( n - ( n % power ) ) / power };
+if (_n) {
+	int index = i;
+	numword _nw{ _n };
+	appendbuf(_nw.words());
+	appendbuf(_powers[index]);
+	n -= _n * power;
+}
+\end{lstlisting}
+
+\subsubsection{There's more…}
+
+我还有一个程序，使用numwords类以文字形式展示时间。其输出如下所示:
+
+\begin{tcblisting}{commandshell={}}
+$ ./saytime
+three past five
+\end{tcblisting}
+
+测试模式下，输出如下所示:
+
+\begin{tcblisting}{commandshell={}}
+$ ./saytime test
+00:00 midnight
+00:01 one past midnight
+11:00 eleven o'clock
+12:00 noon
+13:00 one o'clock
+12:29 twenty-nine past noon
+12:30 half past noon
+12:31 twenty-nine til one
+12:15 quarter past noon
+12:30 half past noon
+12:45 quarter til one
+11:59 one til noon
+23:15 quarter past eleven
+23:59 one til midnight
+12:59 one til one
+13:59 one til two
+01:60 OOR
+24:00 OOR
+\end{tcblisting}
+
+我把其的实现留给读者们，作为本书最后的家庭作业。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

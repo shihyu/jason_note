@@ -1,0 +1,344 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>簡單解釋梯度下降法 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="簡單解釋梯度下降法-gradient-descent"><a class="header" href="#簡單解釋梯度下降法-gradient-descent">簡單解釋梯度下降法 (Gradient Descent)</a></h1>
+<p>https://medium.com/@arlen.mg.lu/%E6%B7%B1%E5%BA%A6%E5%AD%B8%E7%BF%92%E8%AC%9B%E4%B8%AD%E6%96%87-gradient-descent-b2a658815c72</p>
+<p>首先，以下的圖先對李宏毅大師致敬</p>
+<p>李宏毅大師已經有對Gradient Descent有詳盡的解釋:<a href="https://www.youtube.com/watch?v=fegAeph9UaA&amp;index=3&amp;list=PLJV_el3uVTsPy9oCRY30oBPNLCo89yu49">影片連結</a></p>
+<p><img src="images/1*GJnhRJgKhhZiezuRCQdCHg.png" alt="img" /></p>
+<p>如果上述的圖跟李宏毅大師的連結已經有深度理解的人，那就可以不用繼續往下看了，這篇的目的是理解為什麼微分出來的梯度可以幫助找到更小的損失函數，並透過實例的方式來幫助理解 (其實就是給脫離微積分很久的同學看，花哈哈哈)。</p>
+<blockquote>
+<p><strong>正篇開始</strong></p>
+</blockquote>
+<p><strong>Gradient Descent</strong> 是深度學習為了找尋接近目標點的一種方法，它是透過一步步慢慢靠近目標的方式，最終找到一個極近似目標的函數。</p>
+<p>首先，我們先假設有以下三個點，這三個點是本篇的目標範例，我們想請深度學習程式來找一個函數接近以下三個點。但一開始，程式不是學過數學的人類，並不知道有什麼演算法可以找到一個接近這三個點的函數。</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:862/1*0BSQ48RQRZYD5Kf8Qgl09A.png" alt="img" /></p>
+<p>三個目標點</p>
+<p>於是，程式會先隨機產一條函數，假設是y = 3x + 1好了，取名為<strong>函數i(<strong>實際上在深度學習中有很多初始化函數的方式</strong>)。</strong></p>
+<p><img src="https://miro.medium.com/v2/resize:fit:1148/1*bFdRbhUj8rG4DCuEBMb0CQ.png" alt="img" /></p>
+<p>函數i: y = 3x + 1</p>
+<p>好，接下來，我們要怎麼知道<strong>函數i</strong>有沒有接近<strong>三個目標點</strong>呢?</p>
+<p>很簡單，把<strong>三個目標點</strong>的<strong>X值</strong>輸入到<strong>函數i</strong>就會產生<strong>函數i</strong>的<strong>Y值</strong>，對吧?</p>
+<p>我們試著輸入X值到<strong>函數i</strong>後，就會像是如下藍色的點。</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:1148/1*SG4kLayK-y6Vf1rAauy0Og.png" alt="img" /></p>
+<p>看起來<strong>函數i</strong>沒有一個點跟目標點一樣，所以<strong>函數i</strong>似乎不盡理想，要找一個下一個函數才行。可是，<strong>函數i</strong>是隨機產生的，要繼續瞎子摸象的來產生函數嗎? 我們應該有更聰明的辦法~!</p>
+<p>函數i的結果應該能幫助我們猜測下一個函數吧?</p>
+<p>我們先來看看<strong>函數i</strong>的產出跟三個目標點到底差多遠?</p>
+<p><img src="images/1*bmhzTSkvkx1iVYjklJ2BjA.png" alt="img" /></p>
+<p><strong>函數i</strong> 對每個目標點的距離，差值後取平方是為了保證成為正數</p>
+<p>所以<strong>函數i</strong>跟目標點一共差了<strong>11</strong>的距離，嗯… 那麼也就是說…</p>
+<p>我們只要試著一步一步把11的距離縮短了就好吧?</p>
+<p>根據這個想法，我們來看看<strong>總距離</strong>跟<strong>某目標點距離</strong>怎麼算的。</p>
+<p><strong>總距離 = (每個目標點的Y值 - 函數i對應每個目標點X值的輸出值)²</strong></p>
+<p><strong>某目標點距離</strong> = <strong>(某目標點的Y值 - 函數i對應某目標點X值的輸出值)²</strong></p>
+<p><strong>總距離以及某目標點距離</strong>的計算方法是我們假設的一個公式，是為了我們方便理解什麼叫做<strong>距離</strong>的公式，然而，這個假設的公式也是一個函數，這其實就是所謂的<strong>損失函數L。<strong>距離目標點越近(數值越小)，就表示該函數越靠近</strong>三個目標點</strong>，也就是<strong>損失</strong>越少，如果有一個函數可以完全符合三個目標點，那這樣<strong>損失函數得到的結果就應該是 0</strong>。</p>
+<p>根據上述，我們將<strong>函數i</strong>的帶入<strong>損失函數L</strong></p>
+<p><strong>損失函數L= (y - (3x + 1))² = (y - 3x -1)²</strong></p>
+<p>那損失函數L的組成是什麼呢?</p>
+<p><img src="images/1*C025W30_1WeSAcVBfZaohA.png" alt="img" /></p>
+<p>損失函數L的組成</p>
+<p>我們可以觀察到，損失函數L的組成，是來自兩個部分。</p>
+<ol>
+<li>猜的</li>
+<li>目標點的資料</li>
+</ol>
+<p><strong>猜的</strong>部分是想更改的目標，我們就是期望改了它，可以讓損失函數更靠近0，盡可能的損失越少越好。為了能將變數進行替換，我們將<strong>猜的</strong>部分換成代數，將<strong>3</strong>替換成<strong>w</strong>，<strong>1</strong>替換成<strong>b</strong>，所以就變成如下 :</p>
+<p><img src="images/1*Kalv9PTRds9lfJuJOwaBDg.png" alt="img" /></p>
+<p>損失函數L將3替換成w，1替換成b</p>
+<p>L = (y - wx - b)² ， 這就是我們要處理的損失函數。w跟b會一直變，所以損失函數L也會一直變，但是，<strong>目標點是不變的</strong>。我們可以試著只帶入一個點，只讓一個點的損失變少，看看這樣會有什麼效果?</p>
+<p>我們用目標點 (x = -1 , y = -3)帶入損失函數L</p>
+<p>得到損失函數L(x = -3, y = -1) = (-3 +w - b)²</p>
+<p>換句話說，只要讓 w - b 接近3得到 -3 + 3 = 0，</p>
+<p>那這不就是我們對x = -3, y = -1的目標嗎。</p>
+<p><strong>結論A: 損失函數L可以幫助我們找到接近目標的新函數。</strong></p>
+<p>不過就算這麼說 ，w 跟 b有無限種組合，而且 w - b 接近3只是滿足 x = -3, y = -1的這點，也不一定能滿足 x = 0, y = 0或是x = 1, y = 1的組合。</p>
+<p>那該怎麼做呢? 函數已經有了，我們該怎麼找到建議值呢?</p>
+<p><strong>偉大的數學告訴我們，要找到數值是怎麼移動的，我們可以做微分!</strong></p>
+<p>微分的意義在於</p>
+<p><strong>微分某變數後產生的函數</strong>，可以<strong>指出原函數</strong>在<strong>每點的變化。</strong></p>
+<p>讓我們來看點例子，以函數 <strong>y = x³ + x² + x</strong> 為範例</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:942/1*LMRwFLi9t_SLdKTp10Sh5Q.png" alt="img" /></p>
+<p>範例函數:<strong>y = x³ + x² + x</strong></p>
+<p>接著我們把y = x³ + x² + x <strong>對x作微分，<strong>會得到函數</strong>y’</strong></p>
+<p><strong>y’ = 3x + 2x + 1</strong></p>
+<p>好，那我們帶入幾個點來看看數值是怎麼移動的</p>
+<p><strong>當x = 1， y=3，y’= 6</strong></p>
+<p><strong>當x = 0， y=0，y’= 1</strong></p>
+<p><strong>當x = -1， y=-1，y’= -1</strong></p>
+<p><strong>當x = -2， y=-6，y’= -6</strong></p>
+<p><img src="images/1*3oqMIf8Ge65_k073vZmyWA.png" alt="img" /></p>
+<p>也就是說當x為正數時，y會越來越大，x為負數時，y會越來越小。</p>
+<p>x = 0的時候，y’= 1，是一個正數，代表接下來的y是會往正數移動，的確x從0增長到1的時候，y也從0增長到3，y是有越來越大的傾向。</p>
+<p>x = -1的時候，y’= -1，是一個負數，代表接下來的y是會往負數移動，的確x從-1增長到-2的時候，y也從-1增長到-6，y是有越來越小的傾向。</p>
+<p>因此，我們就得到了<strong>數值移動的方向</strong>的判定方法: <strong>將x帶入微分後的函數y’，得到的數值如果是正，表示y是往正數移動，得到的數值如果是負，表示y是往負數移動。</strong></p>
+<p>通常，我們會將帶入x後的y’產生的數值，稱之為<strong>梯度。</strong></p>
+<p><strong>結論B : 數值移動的方向是可以從梯度判定的。</strong></p>
+<p>回到正題，讓我們回來處理損失函數L(x = -3, y = -1) = (-3 + w - b)²</p>
+<p>最終的目的是希望 (-3 +w - b)²越來越小，但是L有兩個變數，w跟b。所以需要分別對w跟b做微分，來得知w跟b怎麼移動才會讓(-3 +w - b)²越來越小。</p>
+<p>展開(-3 + w - b)² = 9 - 6w + 6b - 2wb + w² + b²</p>
+<p>對w取微分後得到函數L'w = -6 - 2b+ 2w</p>
+<p>L’w 可以告訴我們變數w是怎麼移動L函數的</p>
+<p>將w = 3, b = 1帶入L’w = -6 - 2b+ 2w= -6 - 2 + 6 = -2，這表示<strong>w在(w = 3, b = 1)時，梯度為-2，在此點，w越往負數方向移動</strong>，<strong>損失函數會越小</strong>。</p>
+<p>對b取微分後得到函數L’b : 6 - 2w + 2b</p>
+<p>L’b 可以告訴我們變數b是怎麼移動L函數的</p>
+<p>將w = 3, b = 1帶入L’b = 6 - 2w + 2b = 6 - 6 + 2 = 2，這表示<strong>b在(w = 3, b = 1)時，梯度為2，在此點，b越往正數方向移動</strong>，<strong>損失函數會越大</strong>。</p>
+<p>當知道方向後，我們就知道該如何調整數值。</p>
+<p>w在3之後，是越減少越會讓損失函數L減少，但我們不能無窮盡的減下去，剛好就好，所以對w應該要增加，與L’w產生的梯度相反。b在1之後，是越增加越會讓損失函數L變大，所以對b要減少數值，與L’b產生的梯度相反。</p>
+<p><strong>結論C</strong> : <strong>損失函數L移動的方向剛好跟梯度的方向相反。</strong></p>
+<p><strong>可是，該把w變多大，該把b變多小呢?</strong></p>
+<p>其實這是沒有答案的，因為就是不知道要修正到多少才是對的，我們還是需要一個可調整的參數來搭配，這個數值叫<strong>學習率</strong>，它的意義在於動態調整移動的步伐，我們用小寫<em>l</em>來代替，先把<em>l</em>設定成0.5。</p>
+<p>接著，開始嘗試找下一個函數，這邊取名函數j</p>
+<p>因為函數j跟函數i會有關係，所以我們會用函數i的w以及b與其在(w=3, b=1)梯度來做計算，更新的方式如下:</p>
+<p>函數j的w = 函數i的w <strong>減去</strong> 學習率 * 函數i的w=3在L(x = -3, y = -1)的梯度</p>
+<p>函數j的b = 函數i的b <strong>減去</strong> 學習率 * 函數i的b=1在L(x = -3, y = -1)的梯度</p>
+<p>注意: 這邊的<strong>減去</strong>，是來自於<strong>結論C (損失函數L移動的方向剛好跟梯度的方向相反)</strong></p>
+<p>函數j的w = 3 - (0.5) *(-2) = 4</p>
+<p>函數j的b= 1 - (0.5) *(2) = 0</p>
+<p>所以函數j : y = 4x + 0 = 4x</p>
+<p>我們實際把函數j代入每一點看看與目標點的距離</p>
+<p><img src="images/1*b_HeN3GDzzZZEYdU8I73fQ.png" alt="img" /></p>
+<p>函數j 對每個目標點的距離</p>
+<p>可以看到<strong>函數j</strong> 比<strong>函數i</strong> 更靠近三個目標點了，這整個架構就是**Gradient Descent。**實際上，程式會不斷的更動損失函數或者學習率，用各種理論企圖找到一個最接近目標點的函數，還有很多技巧跟實作方式，沒有我寫的那麼的簡單，但為了易於理解整個概念，而有了這篇文章的誕生，感謝收看。</p>
+<p><strong>結論A: 損失函數L可以幫助我們找到接近目標的新函數。</strong></p>
+<p><strong>結論B : 數值移動的方向是可以從梯度判定的。</strong></p>
+<p><strong>結論C</strong> : <strong>損失函數L移動的方向剛好跟梯度的方向相反。</strong></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../ml/初探基因演算法.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../ml/梯度下降法_gradient_descent.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../ml/初探基因演算法.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../ml/梯度下降法_gradient_descent.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,895 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>DuckDNS + Let&#x27;s Encrypt 一鍵安裝指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="duckdns--lets-encrypt-一鍵安裝指南"><a class="header" href="#duckdns--lets-encrypt-一鍵安裝指南">DuckDNS + Let's Encrypt 一鍵安裝指南</a></h1>
+<h2 id="-簡介"><a class="header" href="#-簡介">📖 簡介</a></h2>
+<p>這個指南提供一個完整的自動化腳本，幫你快速設定：</p>
+<ul>
+<li><strong>DuckDNS</strong> 免費動態 DNS 服務</li>
+<li><strong>Let's Encrypt</strong> 免費 SSL 憑證</li>
+<li><strong>Nginx</strong> 網頁伺服器配置</li>
+<li><strong>自動化更新</strong> IP 和 SSL 憑證</li>
+</ul>
+<p>完成後你將擁有一個完全免費、安全的 HTTPS 網站！</p>
+<hr />
+<h2 id="-功能特色"><a class="header" href="#-功能特色">🚀 功能特色</a></h2>
+<h3 id="-自動化安裝"><a class="header" href="#-自動化安裝">✅ 自動化安裝</a></h3>
+<ul>
+<li>一鍵安裝所有必要套件</li>
+<li>自動配置所有服務</li>
+<li>智能錯誤檢測和處理</li>
+</ul>
+<h3 id="-duckdns-設定"><a class="header" href="#-duckdns-設定">✅ DuckDNS 設定</a></h3>
+<ul>
+<li>自動創建更新腳本</li>
+<li>每 5 分鐘自動更新 IP</li>
+<li>詳細的運行日誌</li>
+</ul>
+<h3 id="-ssl-憑證管理"><a class="header" href="#-ssl-憑證管理">✅ SSL 憑證管理</a></h3>
+<ul>
+<li>自動申請 Let's Encrypt 憑證</li>
+<li>90 天到期前自動更新</li>
+<li>完整的 HTTPS 重定向</li>
+</ul>
+<h3 id="-nginx-配置"><a class="header" href="#-nginx-配置">✅ Nginx 配置</a></h3>
+<ul>
+<li>最佳化的安全設定</li>
+<li>美觀的預設首頁</li>
+<li>準備好的反向代理配置</li>
+</ul>
+<hr />
+<h2 id="-前置準備"><a class="header" href="#-前置準備">📋 前置準備</a></h2>
+<h3 id="1-duckdns-帳戶設定"><a class="header" href="#1-duckdns-帳戶設定">1. DuckDNS 帳戶設定</a></h3>
+<pre><code class="language-bash"># 1. 前往 https://www.duckdns.org
+# 2. 使用 GitHub/Google 帳戶登入
+# 3. 創建一個子網域，例如：myserver
+# 4. 記下你的 Token（類似：a7c4d0ad-114e-40ef-ba1d-d217904a50f2）
+</code></pre>
+<h3 id="2-伺服器需求"><a class="header" href="#2-伺服器需求">2. 伺服器需求</a></h3>
+<ul>
+<li><strong>作業系統</strong>：Ubuntu 18.04+ 或 Debian 9+</li>
+<li><strong>權限</strong>：sudo 或 root 存取權限</li>
+<li><strong>網路</strong>：可連接外網的伺服器</li>
+<li><strong>端口</strong>：80 和 443 端口對外開放</li>
+</ul>
+<hr />
+<h2 id="-一鍵安裝腳本"><a class="header" href="#-一鍵安裝腳本">🛠️ 一鍵安裝腳本</a></h2>
+<h3 id="創建安裝腳本"><a class="header" href="#創建安裝腳本">創建安裝腳本</a></h3>
+<p>創建檔案 <code>setup_duckdns_ssl.sh</code>：</p>
+<pre><code class="language-bash">#!/bin/bash
+
+# DuckDNS + Let's Encrypt 自動化安裝腳本
+# 使用方法: sudo bash setup_duckdns_ssl.sh
+
+set -e
+
+# 顏色定義
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# 輸出函數
+print_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# 檢查是否為 root 用戶
+check_root() {
+    if [[ $EUID -ne 0 ]]; then
+        print_error "此腳本需要 root 權限運行"
+        print_info "請使用: sudo bash $0"
+        exit 1
+    fi
+}
+
+# 獲取用戶輸入
+get_user_input() {
+    print_info "=== DuckDNS + Let's Encrypt 設定 ==="
+    echo
+    
+    # DuckDNS 設定
+    read -p "請輸入你的 DuckDNS 子網域名稱 (不含 .duckdns.org): " DUCKDNS_DOMAIN
+    if [[ -z "$DUCKDNS_DOMAIN" ]]; then
+        print_error "網域名稱不能為空"
+        exit 1
+    fi
+    
+    read -p "請輸入你的 DuckDNS Token: " DUCKDNS_TOKEN
+    if [[ -z "$DUCKDNS_TOKEN" ]]; then
+        print_error "Token 不能為空"
+        exit 1
+    fi
+    
+    # 用戶設定
+    read -p "請輸入要運行 DuckDNS 更新的用戶名稱 (預設: $SUDO_USER): " DUCK_USER
+    DUCK_USER=${DUCK_USER:-$SUDO_USER}
+    if [[ -z "$DUCK_USER" ]]; then
+        print_error "用戶名稱不能為空"
+        exit 1
+    fi
+    
+    # 確認設定
+    echo
+    print_info "=== 設定確認 ==="
+    echo "網域: ${DUCKDNS_DOMAIN}.duckdns.org"
+    echo "Token: ${DUCKDNS_TOKEN:0:8}..."
+    echo "用戶: $DUCK_USER"
+    echo
+    read -p "確認以上設定正確嗎? (y/N): " confirm
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        print_warning "安裝已取消"
+        exit 0
+    fi
+}
+
+# 安裝必要套件
+install_packages() {
+    print_info "更新套件列表並安裝必要工具..."
+    
+    apt update
+    apt install -y curl cron certbot python3-certbot-nginx nginx
+    
+    print_success "套件安裝完成"
+}
+
+# 設定 DuckDNS
+setup_duckdns() {
+    print_info "設定 DuckDNS..."
+    
+    # 取得用戶家目錄
+    USER_HOME=$(eval echo ~$DUCK_USER)
+    DUCKDNS_DIR="$USER_HOME/duckdns"
+    
+    # 創建目錄
+    mkdir -p "$DUCKDNS_DIR"
+    
+    # 創建更新腳本
+    cat &gt; "$DUCKDNS_DIR/duck.sh" &lt;&lt; EOF
+#!/bin/bash
+# DuckDNS 自動更新腳本
+# 由 setup_duckdns_ssl.sh 自動生成
+
+DOMAIN="$DUCKDNS_DOMAIN"
+TOKEN="$DUCKDNS_TOKEN"
+LOG_FILE="\$HOME/duckdns/duck.log"
+
+# 記錄時間
+echo "\$(date): 開始更新 DuckDNS IP" &gt;&gt; "\$LOG_FILE"
+
+# 更新 IP
+curl -s "https://www.duckdns.org/update?domains=\$DOMAIN&amp;token=\$TOKEN" -o "\$LOG_FILE.tmp"
+
+# 檢查結果
+if grep -q "OK" "\$LOG_FILE.tmp"; then
+    echo "\$(date): IP 更新成功" &gt;&gt; "\$LOG_FILE"
+else
+    echo "\$(date): IP 更新失敗" &gt;&gt; "\$LOG_FILE"
+    cat "\$LOG_FILE.tmp" &gt;&gt; "\$LOG_FILE"
+fi
+
+rm -f "\$LOG_FILE.tmp"
+EOF
+    
+    # 設定權限
+    chmod +x "$DUCKDNS_DIR/duck.sh"
+    chown -R $DUCK_USER:$DUCK_USER "$DUCKDNS_DIR"
+    
+    # 執行一次測試
+    print_info "測試 DuckDNS 更新..."
+    sudo -u $DUCK_USER "$DUCKDNS_DIR/duck.sh"
+    
+    if grep -q "OK" "$DUCKDNS_DIR/duck.log"; then
+        print_success "DuckDNS 設定成功"
+    else
+        print_error "DuckDNS 測試失敗，請檢查 Token 和網域名稱"
+        cat "$DUCKDNS_DIR/duck.log"
+        exit 1
+    fi
+}
+
+# 設定 crontab
+setup_crontab() {
+    print_info "設定 DuckDNS 自動更新 (每5分鐘)..."
+    
+    USER_HOME=$(eval echo ~$DUCK_USER)
+    CRON_CMD="*/5 * * * * $USER_HOME/duckdns/duck.sh"
+    
+    # 檢查是否已存在相同的 cron job
+    if sudo -u $DUCK_USER crontab -l 2&gt;/dev/null | grep -q "duck.sh"; then
+        print_warning "DuckDNS cron job 已存在，跳過設定"
+    else
+        # 添加 cron job
+        (sudo -u $DUCK_USER crontab -l 2&gt;/dev/null; echo "$CRON_CMD") | sudo -u $DUCK_USER crontab -
+        print_success "DuckDNS 自動更新已設定"
+    fi
+}
+
+# 等待 DNS 傳播
+wait_dns_propagation() {
+    print_info "等待 DNS 記錄傳播..."
+    FULL_DOMAIN="${DUCKDNS_DOMAIN}.duckdns.org"
+    
+    for i in {1..12}; do
+        if nslookup "$FULL_DOMAIN" &gt; /dev/null 2&gt;&amp;1; then
+            print_success "DNS 記錄已生效"
+            return 0
+        fi
+        print_info "等待 DNS 傳播... ($i/12)"
+        sleep 10
+    done
+    
+    print_warning "DNS 傳播可能需要更長時間，繼續進行 SSL 設定"
+}
+
+# 基本 Nginx 設定
+setup_nginx_basic() {
+    print_info "設定基本 Nginx 配置..."
+    
+    FULL_DOMAIN="${DUCKDNS_DOMAIN}.duckdns.org"
+    NGINX_CONF="/etc/nginx/sites-available/$DUCKDNS_DOMAIN"
+    
+    # 創建基本配置（HTTP only，為了 Let's Encrypt 驗證）
+    cat &gt; "$NGINX_CONF" &lt;&lt; EOF
+server {
+    listen 80;
+    server_name $FULL_DOMAIN;
+    
+    # Let's Encrypt 驗證路徑
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+    
+    # 臨時首頁
+    location / {
+        root /var/www/html;
+        index index.html;
+    }
+}
+EOF
+    
+    # 創建簡單的首頁
+    cat &gt; "/var/www/html/index.html" &lt;&lt; EOF
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;$FULL_DOMAIN&lt;/title&gt;
+    &lt;style&gt;
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 100px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .success { color: #28a745; }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class="container"&gt;
+        &lt;h1 class="success"&gt;🎉 網站設定成功！&lt;/h1&gt;
+        &lt;p&gt;你的網域 &lt;strong&gt;$FULL_DOMAIN&lt;/strong&gt; 已經可以正常訪問了。&lt;/p&gt;
+        &lt;p&gt;SSL 憑證正在設定中...&lt;/p&gt;
+        &lt;hr&gt;
+        &lt;p&gt;&lt;small&gt;Powered by DuckDNS + Let's Encrypt&lt;/small&gt;&lt;/p&gt;
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+EOF
+    
+    # 啟用網站
+    ln -sf "$NGINX_CONF" "/etc/nginx/sites-enabled/"
+    
+    # 移除預設網站
+    rm -f /etc/nginx/sites-enabled/default
+    
+    # 測試配置
+    nginx -t
+    systemctl reload nginx
+    
+    print_success "基本 Nginx 配置完成"
+}
+
+# 申請 Let's Encrypt SSL 憑證
+setup_ssl() {
+    print_info "申請 Let's Encrypt SSL 憑證..."
+    
+    FULL_DOMAIN="${DUCKDNS_DOMAIN}.duckdns.org"
+    EMAIL="admin@${FULL_DOMAIN}"
+    
+    # 申請憑證
+    certbot --nginx \
+        --non-interactive \
+        --agree-tos \
+        --email "$EMAIL" \
+        --domains "$FULL_DOMAIN" \
+        --redirect
+    
+    if [[ $? -eq 0 ]]; then
+        print_success "SSL 憑證申請成功"
+    else
+        print_error "SSL 憑證申請失敗"
+        return 1
+    fi
+}
+
+# 設定 SSL 自動更新
+setup_ssl_auto_renewal() {
+    print_info "設定 SSL 憑證自動更新..."
+    
+    # 檢查是否已有自動更新設定
+    if crontab -l 2&gt;/dev/null | grep -q "certbot renew"; then
+        print_warning "SSL 自動更新已設定，跳過"
+    else
+        # 添加自動更新 cron job (每天凌晨3點檢查)
+        (crontab -l 2&gt;/dev/null; echo "0 3 * * * /usr/bin/certbot renew --quiet --nginx") | crontab -
+        print_success "SSL 自動更新已設定"
+    fi
+}
+
+# 最終檢查和優化
+final_optimization() {
+    print_info "進行最終優化..."
+    
+    FULL_DOMAIN="${DUCKDNS_DOMAIN}.duckdns.org"
+    
+    # 更新首頁，移除 "SSL 設定中" 訊息
+    cat &gt; "/var/www/html/index.html" &lt;&lt; EOF
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;$FULL_DOMAIN&lt;/title&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;style&gt;
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            text-align: center; 
+            margin: 0;
+            padding: 50px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: rgba(255,255,255,0.1);
+            padding: 40px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .success { color: #4CAF50; }
+        .badge { 
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin: 10px 5px;
+        }
+        .info { 
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class="container"&gt;
+        &lt;h1&gt;🎉 恭喜！網站設定完成&lt;/h1&gt;
+        &lt;div class="badge"&gt;✅ HTTPS 已啟用&lt;/div&gt;
+        &lt;div class="badge"&gt;🔒 SSL 憑證有效&lt;/div&gt;
+        &lt;div class="badge"&gt;🔄 自動更新&lt;/div&gt;
+        
+        &lt;div class="info"&gt;
+            &lt;h3&gt;網站資訊&lt;/h3&gt;
+            &lt;p&gt;&lt;strong&gt;網域:&lt;/strong&gt; $FULL_DOMAIN&lt;/p&gt;
+            &lt;p&gt;&lt;strong&gt;服務:&lt;/strong&gt; DuckDNS + Let's Encrypt&lt;/p&gt;
+            &lt;p&gt;&lt;strong&gt;狀態:&lt;/strong&gt; &lt;span class="success"&gt;運行正常&lt;/span&gt;&lt;/p&gt;
+        &lt;/div&gt;
+        
+        &lt;p&gt;你的網站現在已經:&lt;/p&gt;
+        &lt;ul style="text-align: left; display: inline-block;"&gt;
+            &lt;li&gt;✅ 支援 HTTPS 安全連線&lt;/li&gt;
+            &lt;li&gt;✅ SSL 憑證自動更新&lt;/li&gt;
+            &lt;li&gt;✅ DuckDNS IP 自動同步&lt;/li&gt;
+            &lt;li&gt;✅ 準備好部署你的應用&lt;/li&gt;
+        &lt;/ul&gt;
+        
+        &lt;hr style="margin: 30px 0; border: 1px solid rgba(255,255,255,0.3);"&gt;
+        &lt;p&gt;&lt;small&gt;Generated by DuckDNS + Let's Encrypt Auto Setup Script&lt;/small&gt;&lt;/p&gt;
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+EOF
+    
+    # 檢查服務狀態
+    systemctl enable nginx
+    systemctl enable cron
+    
+    print_success "最終優化完成"
+}
+
+# 顯示完成資訊
+show_completion_info() {
+    FULL_DOMAIN="${DUCKDNS_DOMAIN}.duckdns.org"
+    USER_HOME=$(eval echo ~$DUCK_USER)
+    
+    echo
+    print_success "=== 安裝完成！ ==="
+    echo
+    echo "📋 安裝摘要:"
+    echo "  🌐 網域: https://$FULL_DOMAIN"
+    echo "  🔒 SSL: Let's Encrypt (90天自動更新)"
+    echo "  🔄 DuckDNS: 每5分鐘自動更新IP"
+    echo "  👤 運行用戶: $DUCK_USER"
+    echo
+    echo "📁 重要檔案位置:"
+    echo "  DuckDNS 腳本: $USER_HOME/duckdns/duck.sh"
+    echo "  DuckDNS 日誌: $USER_HOME/duckdns/duck.log"
+    echo "  Nginx 配置: /etc/nginx/sites-available/$DUCKDNS_DOMAIN"
+    echo "  SSL 憑證: /etc/letsencrypt/live/$FULL_DOMAIN/"
+    echo
+    echo "🔧 常用管理指令:"
+    echo "  查看 DuckDNS 日誌: tail -f $USER_HOME/duckdns/duck.log"
+    echo "  手動更新 DuckDNS: $USER_HOME/duckdns/duck.sh"
+    echo "  檢查 SSL 憑證: certbot certificates"
+    echo "  手動更新 SSL: sudo certbot renew"
+    echo "  重啟 Nginx: sudo systemctl restart nginx"
+    echo
+    echo "📅 自動化任務:"
+    echo "  DuckDNS 更新: 每5分鐘"
+    echo "  SSL 憑證更新: 每天凌晨3點檢查"
+    echo
+    print_info "現在可以訪問 https://$FULL_DOMAIN 測試你的網站！"
+    echo
+}
+
+# 主要執行流程
+main() {
+    clear
+    print_info "DuckDNS + Let's Encrypt 自動化安裝腳本"
+    print_info "此腳本將幫你設定免費的動態DNS和SSL憑證"
+    echo
+    
+    check_root
+    get_user_input
+    
+    print_info "開始安裝..."
+    install_packages
+    setup_duckdns
+    setup_crontab
+    wait_dns_propagation
+    setup_nginx_basic
+    setup_ssl
+    setup_ssl_auto_renewal
+    final_optimization
+    
+    show_completion_info
+}
+
+# 執行主程式
+main "$@"
+</code></pre>
+<hr />
+<h2 id="-使用步驟"><a class="header" href="#-使用步驟">📱 使用步驟</a></h2>
+<h3 id="1-下載並準備腳本"><a class="header" href="#1-下載並準備腳本">1. 下載並準備腳本</a></h3>
+<pre><code class="language-bash"># 創建腳本檔案
+nano setup_duckdns_ssl.sh
+
+# 複製上面的腳本內容到檔案中
+# 儲存並退出編輯器
+
+# 給予執行權限
+chmod +x setup_duckdns_ssl.sh
+</code></pre>
+<h3 id="2-執行安裝"><a class="header" href="#2-執行安裝">2. 執行安裝</a></h3>
+<pre><code class="language-bash"># 使用 sudo 執行腳本
+sudo bash setup_duckdns_ssl.sh
+</code></pre>
+<h3 id="3-輸入設定資訊"><a class="header" href="#3-輸入設定資訊">3. 輸入設定資訊</a></h3>
+<p>腳本會依序詢問：</p>
+<ul>
+<li><strong>DuckDNS 子網域名稱</strong>：例如 <code>myserver</code>（不要包含 <code>.duckdns.org</code>）</li>
+<li><strong>DuckDNS Token</strong>：從你的 DuckDNS 帳戶頁面複製</li>
+<li><strong>運行用戶</strong>：通常按 Enter 使用預設即可</li>
+</ul>
+<h3 id="4-確認設定並等待完成"><a class="header" href="#4-確認設定並等待完成">4. 確認設定並等待完成</a></h3>
+<ul>
+<li>腳本會顯示設定摘要供你確認</li>
+<li>確認後會自動安裝和配置所有服務</li>
+<li>整個過程大約需要 5-10 分鐘</li>
+</ul>
+<hr />
+<h2 id="-完成後的結果"><a class="header" href="#-完成後的結果">🎯 完成後的結果</a></h2>
+<h3 id="-你將擁有"><a class="header" href="#-你將擁有">✅ 你將擁有</a></h3>
+<ul>
+<li><strong>安全的 HTTPS 網站</strong>：<code>https://yourname.duckdns.org</code></li>
+<li><strong>自動 IP 更新</strong>：每 5 分鐘檢查並更新 IP 地址</li>
+<li><strong>自動 SSL 更新</strong>：憑證到期前自動更新</li>
+<li><strong>美觀的首頁</strong>：展示安裝成功和系統狀態</li>
+</ul>
+<h3 id="-重要檔案位置"><a class="header" href="#-重要檔案位置">📁 重要檔案位置</a></h3>
+<pre><code>~/duckdns/duck.sh              # DuckDNS 更新腳本
+~/duckdns/duck.log             # 更新日誌檔案
+/etc/nginx/sites-available/    # Nginx 網站配置
+/etc/letsencrypt/live/         # SSL 憑證儲存位置
+/var/www/html/index.html       # 網站首頁
+</code></pre>
+<hr />
+<h2 id="-日常管理指令"><a class="header" href="#-日常管理指令">🔧 日常管理指令</a></h2>
+<h3 id="duckdns-管理"><a class="header" href="#duckdns-管理">DuckDNS 管理</a></h3>
+<pre><code class="language-bash"># 查看更新日誌
+tail -f ~/duckdns/duck.log
+
+# 手動執行更新
+~/duckdns/duck.sh
+
+# 查看 cron 任務
+crontab -l
+</code></pre>
+<h3 id="ssl-憑證管理"><a class="header" href="#ssl-憑證管理">SSL 憑證管理</a></h3>
+<pre><code class="language-bash"># 檢查憑證狀態
+sudo certbot certificates
+
+# 手動更新憑證
+sudo certbot renew
+
+# 測試自動更新
+sudo certbot renew --dry-run
+</code></pre>
+<h3 id="nginx-管理"><a class="header" href="#nginx-管理">Nginx 管理</a></h3>
+<pre><code class="language-bash"># 檢查配置語法
+sudo nginx -t
+
+# 重新載入配置
+sudo systemctl reload nginx
+
+# 重啟 Nginx
+sudo systemctl restart nginx
+
+# 查看狀態
+sudo systemctl status nginx
+</code></pre>
+<hr />
+<h2 id="-部署你的應用"><a class="header" href="#-部署你的應用">🚀 部署你的應用</a></h2>
+<p>安裝完成後，你可以將 Django 應用部署到這個環境：</p>
+<h3 id="修改-nginx-配置"><a class="header" href="#修改-nginx-配置">修改 Nginx 配置</a></h3>
+<pre><code class="language-bash"># 編輯 Nginx 配置
+sudo nano /etc/nginx/sites-available/yourname
+
+# 添加反向代理到你的 Django 應用
+location / {
+    proxy_pass http://127.0.0.1:8000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+
+# 重新載入配置
+sudo systemctl reload nginx
+</code></pre>
+<h3 id="django-設定"><a class="header" href="#django-設定">Django 設定</a></h3>
+<pre><code class="language-python"># settings.py
+ALLOWED_HOSTS = ['yourname.duckdns.org']
+SECURE_SSL_REDIRECT = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+</code></pre>
+<hr />
+<h2 id="-安全性和最佳實踐"><a class="header" href="#-安全性和最佳實踐">🛡️ 安全性和最佳實踐</a></h2>
+<h3 id="自動化任務檢查"><a class="header" href="#自動化任務檢查">自動化任務檢查</a></h3>
+<pre><code class="language-bash"># DuckDNS 更新：每5分鐘
+*/5 * * * * /home/user/duckdns/duck.sh
+
+# SSL 更新：每天凌晨3點
+0 3 * * * /usr/bin/certbot renew --quiet --nginx
+</code></pre>
+<h3 id="防火牆設定"><a class="header" href="#防火牆設定">防火牆設定</a></h3>
+<pre><code class="language-bash"># 開放必要端口
+sudo ufw allow 22    # SSH
+sudo ufw allow 80    # HTTP
+sudo ufw allow 443   # HTTPS
+sudo ufw enable
+</code></pre>
+<h3 id="監控和備份"><a class="header" href="#監控和備份">監控和備份</a></h3>
+<pre><code class="language-bash"># 設定日誌輪轉
+sudo nano /etc/logrotate.d/duckdns
+
+# 內容：
+/home/*/duckdns/duck.log {
+    weekly
+    rotate 4
+    compress
+    delaycompress
+    missingok
+    notifempty
+}
+</code></pre>
+<hr />
+<h2 id="-故障排除"><a class="header" href="#-故障排除">🔍 故障排除</a></h2>
+<h3 id="常見問題"><a class="header" href="#常見問題">常見問題</a></h3>
+<p><strong>1. DuckDNS 更新失敗</strong></p>
+<pre><code class="language-bash"># 檢查日誌
+cat ~/duckdns/duck.log
+
+# 確認 Token 和網域名稱正確
+# 手動測試更新
+curl "https://www.duckdns.org/update?domains=yourname&amp;token=yourtoken"
+</code></pre>
+<p><strong>2. SSL 憑證申請失敗</strong></p>
+<pre><code class="language-bash"># 檢查 DNS 解析
+nslookup yourname.duckdns.org
+
+# 確認防火牆開放 80 端口
+sudo ufw status
+
+# 手動申請憑證
+sudo certbot --nginx -d yourname.duckdns.org
+</code></pre>
+<p><strong>3. Nginx 配置錯誤</strong></p>
+<pre><code class="language-bash"># 測試配置
+sudo nginx -t
+
+# 查看錯誤日誌
+sudo tail -f /var/log/nginx/error.log
+</code></pre>
+<hr />
+<h2 id="-支援和社群"><a class="header" href="#-支援和社群">📞 支援和社群</a></h2>
+<ul>
+<li><strong>DuckDNS 官網</strong>：https://www.duckdns.org</li>
+<li><strong>Let's Encrypt 文檔</strong>：https://letsencrypt.org/docs/</li>
+<li><strong>Nginx 官方文檔</strong>：https://nginx.org/en/docs/</li>
+</ul>
+<p>這個一鍵安裝腳本讓你能在幾分鐘內擁有一個完全免費、安全且自動化的 HTTPS 網站！</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tools/free_dns_ssl_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../tools/buttplug_python_setup.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tools/free_dns_ssl_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../tools/buttplug_python_setup.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

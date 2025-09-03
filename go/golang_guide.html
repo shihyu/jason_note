@@ -1,0 +1,941 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Go 語言完整特性與常見誤解指南 (Python/C++ 開發者版) - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="go-語言完整特性與常見誤解指南-pythonc-開發者版"><a class="header" href="#go-語言完整特性與常見誤解指南-pythonc-開發者版">Go 語言完整特性與常見誤解指南 (Python/C++ 開發者版)</a></h1>
+<h2 id="-go-語言核心特性"><a class="header" href="#-go-語言核心特性">🎯 Go 語言核心特性</a></h2>
+<h3 id="1-併發模型---csp-communicating-sequential-processes"><a class="header" href="#1-併發模型---csp-communicating-sequential-processes">1. <strong>併發模型 - CSP (Communicating Sequential Processes)</strong></a></h3>
+<pre><code class="language-go">// Go - 用 channel 通信
+ch := make(chan int)
+go func() {
+    ch &lt;- 42  // 發送數據
+}()
+result := &lt;-ch  // 接收數據
+</code></pre>
+<pre><code class="language-python"># Python - 需要額外的同步機制
+import queue, threading
+q = queue.Queue()
+def worker():
+    q.put(42)
+threading.Thread(target=worker).start()
+result = q.get()
+</code></pre>
+<pre><code class="language-cpp">// C++ - 需要手動管理同步
+#include &lt;future&gt;
+auto future = std::async([]() { return 42; });
+int result = future.get();
+</code></pre>
+<h3 id="2-垃圾回收-vs-手動記憶體管理"><a class="header" href="#2-垃圾回收-vs-手動記憶體管理">2. <strong>垃圾回收 vs 手動記憶體管理</strong></a></h3>
+<pre><code class="language-go">// Go - 自動垃圾回收
+slice := make([]int, 1000)  // 自動回收
+</code></pre>
+<pre><code class="language-cpp">// C++ - 手動管理
+std::vector&lt;int&gt; vec(1000);  // RAII
+// 或
+int* arr = new int[1000];    // 需要 delete[]
+</code></pre>
+<pre><code class="language-python"># Python - 引用計數 + 循環垃圾回收
+lst = [0] * 1000  # 自動回收
+</code></pre>
+<h3 id="3-靜態型別--型別推導"><a class="header" href="#3-靜態型別--型別推導">3. <strong>靜態型別 + 型別推導</strong></a></h3>
+<pre><code class="language-go">// Go - 編譯時檢查，但語法簡潔
+var name string = "John"
+age := 25  // 型別推導
+
+func process(data []string) error {  // 明確的錯誤處理
+    // ...
+    return nil
+}
+</code></pre>
+<h2 id="-常見誤解與正確理解"><a class="header" href="#-常見誤解與正確理解">❌ 常見誤解與正確理解</a></h2>
+<h3 id="誤解-1-go-比較簡單功能不強"><a class="header" href="#誤解-1-go-比較簡單功能不強"><strong>誤解 1: "Go 比較簡單，功能不強"</strong></a></h3>
+<p><strong>✅ 正確:</strong></p>
+<ul>
+<li>Go 是<strong>刻意簡化語法</strong>，但功能完整</li>
+<li>標準庫非常豐富 (網路、JSON、HTTP、密碼學等)</li>
+<li>適合大型專案，Google、Docker、Kubernetes 都用 Go</li>
+</ul>
+<pre><code class="language-go">// Go 的簡潔不等於功能弱
+http.HandleFunc("/", handler)
+log.Fatal(http.ListenAndServe(":8080", nil))
+// 3 行就是完整的 HTTP 伺服器！
+</code></pre>
+<h3 id="誤解-2-沒有泛型就不好用"><a class="header" href="#誤解-2-沒有泛型就不好用"><strong>誤解 2: "沒有泛型就不好用"</strong></a></h3>
+<p><strong>✅ Go 1.18+ 已支援泛型:</strong></p>
+<pre><code class="language-go">func Map[T, R any](slice []T, fn func(T) R) []R {
+    result := make([]R, len(slice))
+    for i, v := range slice {
+        result[i] = fn(v)
+    }
+    return result
+}
+
+// 使用
+nums := []int{1, 2, 3}
+strs := Map(nums, func(x int) string { return fmt.Sprintf("%d", x) })
+</code></pre>
+<h3 id="誤解-3-沒有-while-迴圈很奇怪"><a class="header" href="#誤解-3-沒有-while-迴圈很奇怪"><strong>誤解 3: "沒有 while 迴圈很奇怪"</strong></a></h3>
+<p><strong>✅ for 迴圈就夠了:</strong></p>
+<pre><code class="language-go">// 傳統 while 的所有用法
+for condition {        // while condition
+    // ...
+}
+
+for {                 // while true (無限迴圈)
+    // ...
+}
+
+for i := 0; i &lt; 10; i++ {  // 標準 for
+    // ...
+}
+
+for i, v := range slice {  // foreach
+    // ...
+}
+</code></pre>
+<h3 id="誤解-4-錯誤處理太冗長"><a class="header" href="#誤解-4-錯誤處理太冗長"><strong>誤解 4: "錯誤處理太冗長"</strong></a></h3>
+<p><strong>對比其他語言:</strong></p>
+<pre><code class="language-python"># Python - 異常可能被忽略
+try:
+    result = risky_operation()
+except Exception:
+    pass  # 靜默忽略錯誤！
+</code></pre>
+<pre><code class="language-cpp">// C++ - 異常或錯誤碼，容易忽略
+auto result = risky_operation();  // 可能拋出異常
+// 或
+int error_code = risky_operation();  // 容易忘記檢查
+</code></pre>
+<pre><code class="language-go">// Go - 強制檢查錯誤
+result, err := riskyOperation()
+if err != nil {
+    return fmt.Errorf("operation failed: %w", err)  // 必須處理
+}
+</code></pre>
+<p><strong>Go 的優勢:</strong> 錯誤處理明確，不會被意外忽略</p>
+<h3 id="誤解-5-go-的-interface-很奇怪"><a class="header" href="#誤解-5-go-的-interface-很奇怪"><strong>誤解 5: "Go 的 interface{} 很奇怪"</strong></a></h3>
+<p><strong>✅ 類似 Python 的 object 或 C++ 的 void</strong>*</p>
+<pre><code class="language-python"># Python
+def process(data):  # 接受任何類型
+    return str(data)
+</code></pre>
+<pre><code class="language-cpp">// C++
+template&lt;typename T&gt;
+void process(T data) {  // 模板
+    // ...
+}
+</code></pre>
+<pre><code class="language-go">// Go - interface{} 現在是 any
+func process(data any) string {
+    return fmt.Sprintf("%v", data)
+}
+</code></pre>
+<h2 id="-go-相對於-pythonc-的優勢"><a class="header" href="#-go-相對於-pythonc-的優勢">🚀 Go 相對於 Python/C++ 的優勢</a></h2>
+<h3 id="相對於-python"><a class="header" href="#相對於-python"><strong>相對於 Python:</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>Python</th><th>Go</th></tr></thead><tbody>
+<tr><td>執行速度</td><td>解釋執行，較慢</td><td>編譯執行，快很多</td></tr>
+<tr><td>併發</td><td>GIL 限制真正並行</td><td>真正的並行處理</td></tr>
+<tr><td>部署</td><td>需要解釋器環境</td><td>單一可執行檔</td></tr>
+<tr><td>型別安全</td><td>運行時錯誤</td><td>編譯時檢查</td></tr>
+</tbody></table>
+</div>
+<h3 id="相對於-c"><a class="header" href="#相對於-c"><strong>相對於 C++:</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>C++</th><th>Go</th></tr></thead><tbody>
+<tr><td>開發速度</td><td>複雜，學習曲線陡</td><td>簡單，快速上手</td></tr>
+<tr><td>記憶體管理</td><td>手動管理，易出錯</td><td>自動垃圾回收</td></tr>
+<tr><td>編譯速度</td><td>慢 (特別是模板)</td><td>非常快</td></tr>
+<tr><td>併發</td><td>複雜的執行緒管理</td><td>簡單的 goroutine</td></tr>
+</tbody></table>
+</div>
+<h2 id="-實際效能比較"><a class="header" href="#-實際效能比較">📊 實際效能比較</a></h2>
+<h3 id="簡單-http-伺服器-1000-併發"><a class="header" href="#簡單-http-伺服器-1000-併發"><strong>簡單 HTTP 伺服器 (1000 併發)</strong></a></h3>
+<pre><code>語言        記憶體使用    啟動時間    開發時間
+Python      ~100MB       &lt;1s        30分鐘
+C++         ~20MB        &lt;1s        2小時  
+Go          ~15MB        &lt;1s        15分鐘
+</code></pre>
+<h2 id="-語言設計哲學"><a class="header" href="#-語言設計哲學">🏗️ 語言設計哲學</a></h2>
+<h3 id="簡潔性-simplicity"><a class="header" href="#簡潔性-simplicity"><strong>簡潔性 (Simplicity)</strong></a></h3>
+<ul>
+<li><strong>語法極簡</strong>: 只有 25 個關鍵字 (Python 35+, Java 50+)</li>
+<li><strong>無繼承</strong>: 用組合 (composition) 取代繼承</li>
+<li><strong>統一風格</strong>: <code>gofmt</code> 強制統一代碼格式</li>
+</ul>
+<pre><code class="language-go">// Go 的簡潔語法
+type User struct {
+    Name string
+    Age  int
+}
+
+func (u User) Greet() string {
+    return "Hello, " + u.Name
+}
+</code></pre>
+<h3 id="明確性-explicitness"><a class="header" href="#明確性-explicitness"><strong>明確性 (Explicitness)</strong></a></h3>
+<pre><code class="language-go">// 沒有隱式轉換
+var i int = 42
+var f float64 = float64(i)  // 必須明確轉換
+
+// 錯誤處理明確
+result, err := someOperation()
+if err != nil {
+    return err  // 必須處理錯誤
+}
+</code></pre>
+<h2 id="-核心語言特性"><a class="header" href="#-核心語言特性">🚀 核心語言特性</a></h2>
+<h3 id="1-強大的型別系統"><a class="header" href="#1-強大的型別系統">1. <strong>強大的型別系統</strong></a></h3>
+<h4 id="靜態型別--型別推導"><a class="header" href="#靜態型別--型別推導"><strong>靜態型別 + 型別推導</strong></a></h4>
+<pre><code class="language-go">var name string = "John"    // 明確宣告
+age := 25                   // 型別推導 (int)
+users := []User{}           // 推導為 []User
+</code></pre>
+<h4 id="結構體-struct-組合"><a class="header" href="#結構體-struct-組合"><strong>結構體 (Struct) 組合</strong></a></h4>
+<pre><code class="language-go">type Address struct {
+    City, Country string
+}
+
+type Person struct {
+    Name string
+    Address  // 嵌入式結構體 (匿名字段)
+}
+
+p := Person{Name: "Alice"}
+p.City = "Taipei"  // 可直接存取嵌入的字段
+</code></pre>
+<h4 id="介面-interface-系統"><a class="header" href="#介面-interface-系統"><strong>介面 (Interface) 系統</strong></a></h4>
+<pre><code class="language-go">// 隱式實現 - 不需要顯式聲明 implements
+type Writer interface {
+    Write([]byte) (int, error)
+}
+
+type FileWriter struct{}
+func (f FileWriter) Write(data []byte) (int, error) {
+    // FileWriter 自動實現了 Writer 介面
+    return len(data), nil
+}
+</code></pre>
+<h3 id="2-記憶體管理"><a class="header" href="#2-記憶體管理">2. <strong>記憶體管理</strong></a></h3>
+<h4 id="垃圾回收-garbage-collection"><a class="header" href="#垃圾回收-garbage-collection"><strong>垃圾回收 (Garbage Collection)</strong></a></h4>
+<pre><code class="language-go">// 自動記憶體管理，無需手動 free
+func createLargeSlice() []int {
+    return make([]int, 1000000)  // 函數結束後自動回收
+}
+</code></pre>
+<h4 id="指標但無指標運算"><a class="header" href="#指標但無指標運算"><strong>指標但無指標運算</strong></a></h4>
+<pre><code class="language-go">x := 42
+p := &amp;x      // 取址
+fmt.Println(*p)  // 解引用
+
+// 但不能做 p++, p+1 等運算 (更安全)
+</code></pre>
+<h3 id="3-併發原語"><a class="header" href="#3-併發原語">3. <strong>併發原語</strong></a></h3>
+<h4 id="goroutines---輕量級協程"><a class="header" href="#goroutines---輕量級協程"><strong>Goroutines - 輕量級協程</strong></a></h4>
+<pre><code class="language-go">// 創建成本極低，可創建百萬個
+go func() {
+    fmt.Println("Running in goroutine")
+}()
+
+// 帶參數的 goroutine
+for i := 0; i &lt; 10; i++ {
+    go func(id int) {
+        fmt.Printf("Worker %d\n", id)
+    }(i)
+}
+</code></pre>
+<h4 id="channels---通信機制"><a class="header" href="#channels---通信機制"><strong>Channels - 通信機制</strong></a></h4>
+<pre><code class="language-go">// 無緩衝 channel (同步)
+ch := make(chan string)
+go func() { ch &lt;- "hello" }()
+msg := &lt;-ch
+
+// 有緩衝 channel (非同步)
+buffered := make(chan int, 3)
+buffered &lt;- 1
+buffered &lt;- 2
+buffered &lt;- 3
+
+// Select 語句 (類似 switch，但用於 channel)
+select {
+case msg1 := &lt;-ch1:
+    fmt.Println("Received from ch1:", msg1)
+case msg2 := &lt;-ch2:
+    fmt.Println("Received from ch2:", msg2)
+case &lt;-time.After(1 * time.Second):
+    fmt.Println("Timeout")
+}
+</code></pre>
+<h3 id="4-錯誤處理機制"><a class="header" href="#4-錯誤處理機制">4. <strong>錯誤處理機制</strong></a></h3>
+<h4 id="多返回值--error-介面"><a class="header" href="#多返回值--error-介面"><strong>多返回值 + Error 介面</strong></a></h4>
+<pre><code class="language-go">func divide(a, b float64) (float64, error) {
+    if b == 0 {
+        return 0, fmt.Errorf("division by zero")
+    }
+    return a / b, nil
+}
+
+// 使用
+result, err := divide(10, 0)
+if err != nil {
+    log.Fatal(err)
+}
+</code></pre>
+<h4 id="錯誤包裝-error-wrapping"><a class="header" href="#錯誤包裝-error-wrapping"><strong>錯誤包裝 (Error Wrapping)</strong></a></h4>
+<pre><code class="language-go">func processFile(filename string) error {
+    file, err := os.Open(filename)
+    if err != nil {
+        return fmt.Errorf("failed to open file %s: %w", filename, err)
+    }
+    defer file.Close()
+    // ...
+}
+</code></pre>
+<h3 id="5-包系統-package-system"><a class="header" href="#5-包系統-package-system">5. <strong>包系統 (Package System)</strong></a></h3>
+<h4 id="簡潔的模組管理"><a class="header" href="#簡潔的模組管理"><strong>簡潔的模組管理</strong></a></h4>
+<pre><code class="language-go">// go.mod
+module myproject
+
+go 1.21
+
+require (
+    github.com/gin-gonic/gin v1.9.1
+    github.com/stretchr/testify v1.8.4
+)
+</code></pre>
+<h4 id="可見性控制"><a class="header" href="#可見性控制"><strong>可見性控制</strong></a></h4>
+<pre><code class="language-go">package mypackage
+
+// 公開函數 (首字母大寫)
+func PublicFunction() {}
+
+// 私有函數 (首字母小寫)
+func privateFunction() {}
+
+type User struct {
+    Name    string  // 公開字段
+    age     int     // 私有字段
+}
+</code></pre>
+<h3 id="6-內建資料結構"><a class="header" href="#6-內建資料結構">6. <strong>內建資料結構</strong></a></h3>
+<h4 id="切片-slice---動態陣列"><a class="header" href="#切片-slice---動態陣列"><strong>切片 (Slice) - 動態陣列</strong></a></h4>
+<pre><code class="language-go">// 創建方式
+var s1 []int                    // nil slice
+s2 := []int{1, 2, 3}           // 字面量
+s3 := make([]int, 5)           // 長度 5，容量 5
+s4 := make([]int, 3, 10)       // 長度 3，容量 10
+
+// 常用操作
+s2 = append(s2, 4, 5)          // 追加元素
+sub := s2[1:3]                 // 切片操作
+</code></pre>
+<h4 id="映射-map---雜湊表"><a class="header" href="#映射-map---雜湊表"><strong>映射 (Map) - 雜湊表</strong></a></h4>
+<pre><code class="language-go">// 創建
+m1 := make(map[string]int)
+m2 := map[string]int{
+    "apple":  5,
+    "banana": 3,
+}
+
+// 檢查存在性
+value, exists := m2["orange"]
+if !exists {
+    fmt.Println("Key not found")
+}
+
+// 刪除
+delete(m2, "apple")
+</code></pre>
+<h3 id="7-控制結構"><a class="header" href="#7-控制結構">7. <strong>控制結構</strong></a></h3>
+<h4 id="統一的-for-迴圈"><a class="header" href="#統一的-for-迴圈"><strong>統一的 for 迴圈</strong></a></h4>
+<pre><code class="language-go">// 傳統計數迴圈
+for i := 0; i &lt; 10; i++ {
+    fmt.Println(i)
+}
+
+// while 風格
+for condition {
+    // ...
+}
+
+// 無限迴圈
+for {
+    // ...
+}
+
+// range 迭代
+for index, value := range slice {
+    fmt.Printf("%d: %v\n", index, value)
+}
+
+// 只要值
+for _, value := range slice {
+    fmt.Println(value)
+}
+</code></pre>
+<h4 id="switch-語句"><a class="header" href="#switch-語句"><strong>Switch 語句</strong></a></h4>
+<pre><code class="language-go">// 不需要 break，自動跳出
+switch day {
+case "Monday":
+    fmt.Println("Start of work week")
+case "Friday":
+    fmt.Println("TGIF!")
+default:
+    fmt.Println("Regular day")
+}
+
+// Type switch
+switch v := someInterface.(type) {
+case int:
+    fmt.Printf("Integer: %d\n", v)
+case string:
+    fmt.Printf("String: %s\n", v)
+}
+</code></pre>
+<h3 id="8-函數特性"><a class="header" href="#8-函數特性">8. <strong>函數特性</strong></a></h3>
+<h4 id="函數是一等公民"><a class="header" href="#函數是一等公民"><strong>函數是一等公民</strong></a></h4>
+<pre><code class="language-go">// 函數變數
+var operation func(int, int) int
+operation = func(a, b int) int { return a + b }
+
+// 高階函數
+func apply(fn func(int) int, value int) int {
+    return fn(value)
+}
+
+result := apply(func(x int) int { return x * 2 }, 5)
+</code></pre>
+<h4 id="defer-語句"><a class="header" href="#defer-語句"><strong>Defer 語句</strong></a></h4>
+<pre><code class="language-go">func processFile() error {
+    file, err := os.Open("data.txt")
+    if err != nil {
+        return err
+    }
+    defer file.Close()  // 函數結束時執行，確保資源釋放
+    
+    // 使用 file...
+    return nil
+}
+</code></pre>
+<h3 id="9-反射-reflection"><a class="header" href="#9-反射-reflection">9. <strong>反射 (Reflection)</strong></a></h3>
+<pre><code class="language-go">import "reflect"
+
+func printInfo(v interface{}) {
+    rv := reflect.ValueOf(v)
+    rt := reflect.TypeOf(v)
+    
+    fmt.Printf("Type: %s, Value: %v\n", rt, rv)
+    
+    if rv.Kind() == reflect.Struct {
+        for i := 0; i &lt; rv.NumField(); i++ {
+            fmt.Printf("Field %s: %v\n", 
+                rt.Field(i).Name, rv.Field(i))
+        }
+    }
+}
+</code></pre>
+<h3 id="10-泛型-go-118"><a class="header" href="#10-泛型-go-118">10. <strong>泛型 (Go 1.18+)</strong></a></h3>
+<pre><code class="language-go">// 泛型函數
+func Max[T comparable](a, b T) T {
+    if a &gt; b {
+        return a
+    }
+    return b
+}
+
+// 泛型型別
+type Stack[T any] struct {
+    items []T
+}
+
+func (s *Stack[T]) Push(item T) {
+    s.items = append(s.items, item)
+}
+
+func (s *Stack[T]) Pop() T {
+    if len(s.items) == 0 {
+        var zero T
+        return zero
+    }
+    item := s.items[len(s.items)-1]
+    s.items = s.items[:len(s.items)-1]
+    return item
+}
+</code></pre>
+<h2 id="-工具鏈特性"><a class="header" href="#-工具鏈特性">🛠️ 工具鏈特性</a></h2>
+<h3 id="內建工具"><a class="header" href="#內建工具"><strong>內建工具</strong></a></h3>
+<pre><code class="language-bash">go build     # 編譯
+go run       # 執行
+go test      # 測試
+go fmt       # 格式化
+go mod       # 模組管理
+go doc       # 文檔
+go vet       # 靜態分析
+</code></pre>
+<h3 id="測試支援"><a class="header" href="#測試支援"><strong>測試支援</strong></a></h3>
+<pre><code class="language-go">func TestAdd(t *testing.T) {
+    result := Add(2, 3)
+    if result != 5 {
+        t.Errorf("Expected 5, got %d", result)
+    }
+}
+
+// 基準測試
+func BenchmarkAdd(b *testing.B) {
+    for i := 0; i &lt; b.N; i++ {
+        Add(2, 3)
+    }
+}
+</code></pre>
+<h2 id="-何時選擇-go"><a class="header" href="#-何時選擇-go">🎯 何時選擇 Go？</a></h2>
+<h3 id="-適合的場景"><a class="header" href="#-適合的場景"><strong>✅ 適合的場景:</strong></a></h3>
+<ul>
+<li><strong>微服務架構</strong> (輕量、快速部署)</li>
+<li><strong>網路服務</strong> (高併發 I/O)</li>
+<li><strong>CLI 工具</strong> (單一執行檔、跨平台)</li>
+<li><strong>容器化應用</strong> (Docker、K8s 生態)</li>
+<li><strong>API 伺服器</strong> (簡潔的 HTTP 處理)</li>
+</ul>
+<h3 id="-不太適合"><a class="header" href="#-不太適合"><strong>❌ 不太適合:</strong></a></h3>
+<ul>
+<li><strong>機器學習</strong> (Python 生態系更成熟)</li>
+<li><strong>系統程式</strong> (C++ 更適合底層操作)</li>
+<li><strong>遊戲引擎</strong> (C++ 效能更極致)</li>
+<li><strong>桌面 GUI</strong> (選擇有限)</li>
+</ul>
+<h2 id="-go-的設計取捨"><a class="header" href="#-go-的設計取捨">🎯 Go 的設計取捨</a></h2>
+<h3 id="有什麼"><a class="header" href="#有什麼"><strong>有什麼:</strong></a></h3>
+<ul>
+<li>✅ 快速編譯</li>
+<li>✅ 高效併發</li>
+<li>✅ 簡潔語法</li>
+<li>✅ 豐富標準庫</li>
+<li>✅ 跨平台部署</li>
+</ul>
+<h3 id="沒什麼"><a class="header" href="#沒什麼"><strong>沒什麼:</strong></a></h3>
+<ul>
+<li>❌ 複雜的繼承體系</li>
+<li>❌ 函數重載</li>
+<li>❌ 運算子重載</li>
+<li>❌ 動態載入</li>
+<li>❌ 指標運算</li>
+</ul>
+<h2 id="-thread-vs-goroutine-卡車比喻詳解"><a class="header" href="#-thread-vs-goroutine-卡車比喻詳解">🚗 Thread vs Goroutine 卡車比喻詳解</a></h2>
+<h3 id="傳統-thread-模式一任務一卡車"><a class="header" href="#傳統-thread-模式一任務一卡車"><strong>傳統 Thread 模式：一任務一卡車</strong></a></h3>
+<h4 id="cpython-threading"><a class="header" href="#cpython-threading"><strong>C++/Python Threading</strong></a></h4>
+<pre><code>任務1 → 🚚 (卡車1)
+任務2 → 🚚 (卡車2)  
+任務3 → 🚚 (卡車3)
+...
+任務10000 → 🚚 (卡車10000)
+</code></pre>
+<p><strong>問題:</strong></p>
+<ul>
+<li><strong>買卡車很貴</strong> (每個 thread 需要 8MB 記憶體)</li>
+<li><strong>養卡車很貴</strong> (OS 需要管理所有卡車)</li>
+<li><strong>路會塞車</strong> (太多 thread 互相搶 CPU)</li>
+<li><strong>停車場不夠</strong> (系統資源限制)</li>
+</ul>
+<h4 id="實際例子"><a class="header" href="#實際例子"><strong>實際例子:</strong></a></h4>
+<pre><code class="language-python"># Python - 10000 個任務，需要 10000 個卡車
+import threading
+for i in range(10000):
+    threading.Thread(target=deliver_package, args=(i,)).start()
+# 結果：系統可能崩潰！
+</code></pre>
+<h3 id="go-的-goroutine-模式共享卡車運輸"><a class="header" href="#go-的-goroutine-模式共享卡車運輸"><strong>Go 的 Goroutine 模式：共享卡車運輸</strong></a></h3>
+<h4 id="智慧物流系統"><a class="header" href="#智慧物流系統"><strong>智慧物流系統</strong></a></h4>
+<pre><code>貨物1, 貨物2, 貨物3... 貨物10000 (輕量級包裹)
+         ↓
+    調度中心 (Go Scheduler)
+         ↓
+   🚚 🚚 🚚 🚚 (只有4輛卡車，對應4個CPU核心)
+</code></pre>
+<p><strong>運作方式:</strong></p>
+<ol>
+<li><strong>調度中心很聰明</strong> - 知道每輛卡車在哪，載什麼貨</li>
+<li><strong>卡車不停運轉</strong> - 送完一批立刻回來載下一批</li>
+<li><strong>貨物很輕</strong> - 每個包裹只有幾 KB</li>
+<li><strong>彈性調度</strong> - 如果卡車1塞車，貨物可以轉給卡車2</li>
+</ol>
+<h4 id="實際例子-1"><a class="header" href="#實際例子-1"><strong>實際例子:</strong></a></h4>
+<pre><code class="language-go">// Go - 10000 個任務，只用 4 輛卡車
+for i := 0; i &lt; 10000; i++ {
+    go deliverPackage(i)  // 10000 個輕量級"包裹"
+}
+// 結果：順暢運行！
+</code></pre>
+<h3 id="-卡車司機的一天"><a class="header" href="#-卡車司機的一天"><strong>📦 卡車司機的一天</strong></a></h3>
+<h4 id="傳統-thread-世界"><a class="header" href="#傳統-thread-世界"><strong>傳統 Thread 世界:</strong></a></h4>
+<pre><code>早上: 老闆說有 1000 個包裹要送
+老闆: 好！雇 1000 個司機，買 1000 輛卡車！
+結果: 
+- 💰 破產 (成本太高)
+- 🚦 大塞車 (太多卡車)
+- 😵 司機累死 (context switch 開銷)
+</code></pre>
+<h4 id="go-goroutine-世界"><a class="header" href="#go-goroutine-世界"><strong>Go Goroutine 世界:</strong></a></h4>
+<pre><code>早上: 老闆說有 1000 個包裹要送
+調度中心: 我們有 4 個超厲害司機，4 輛卡車就夠了！
+
+司機1: 送完包裹1-50，立刻載包裹51-100
+司機2: 送完包裹101-150，立刻載包裹151-200
+司機3: 如果司機1塞車，我幫他載一些包裹
+司機4: 如果有司機去吃飯，我頂替他
+
+結果:
+- 💰 成本低 (只要4個司機)
+- 🚗 路很順 (卡車數量適中)
+- 😊 效率高 (智慧調度)
+</code></pre>
+<h3 id="-當包裹需要等待時"><a class="header" href="#-當包裹需要等待時"><strong>🔄 當包裹需要等待時</strong></a></h3>
+<h4 id="傳統-thread"><a class="header" href="#傳統-thread"><strong>傳統 Thread:</strong></a></h4>
+<pre><code>司機開卡車到客戶家
+客戶: "等一下，我在洗澡，10分鐘後收包裹"
+司機: "好吧..." (整輛卡車和司機都在那邊乾等)
+💸 浪費資源：卡車停在那，司機也不能做別的事
+</code></pre>
+<h4 id="go-goroutine"><a class="header" href="#go-goroutine"><strong>Go Goroutine:</strong></a></h4>
+<pre><code>司機開卡車到客戶家
+客戶: "等一下，我在洗澡，10分鐘後收包裹"
+調度中心: "司機你先回來！卡車給別人用，10分鐘後再派人去"
+司機: 回到公司，開始送其他包裹
+10分鐘後: 調度中心派任何一個空閒司機去收件
+
+💡 資源最大化：卡車從不閒置，司機總是在工作
+</code></pre>
+<h3 id="-成本對比表"><a class="header" href="#-成本對比表"><strong>📊 成本對比表</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th>項目</th><th>Thread (傳統)</th><th>Goroutine (Go)</th></tr></thead><tbody>
+<tr><td>🚚 卡車成本</td><td>8MB/輛</td><td>2KB/個包裹</td></tr>
+<tr><td>👷 司機薪水</td><td>高 (OS 管理)</td><td>低 (Go 管理)</td></tr>
+<tr><td>🏗️ 基礎建設</td><td>需要大停車場</td><td>小倉庫就夠</td></tr>
+<tr><td>🚦 交通管制</td><td>OS 內核管制</td><td>用戶態調度</td></tr>
+<tr><td>📈 擴展性</td><td>千輛卡車就塞車</td><td>百萬個包裹沒問題</td></tr>
+</tbody></table>
+</div>
+<h3 id="-關鍵領悟"><a class="header" href="#-關鍵領悟"><strong>💡 關鍵領悟</strong></a></h3>
+<p><strong>Thread 思維 (舊模式):</strong></p>
+<ul>
+<li>"我需要處理 1000 個任務 → 我需要 1000 個工人"</li>
+<li>一對一的重量級資源分配</li>
+</ul>
+<p><strong>Goroutine 思維 (新模式):</strong></p>
+<ul>
+<li>"我需要處理 1000 個任務 → 我需要聰明的調度系統"</li>
+<li>多對少的輕量級任務調度</li>
+</ul>
+<h3 id="-實際開發體驗"><a class="header" href="#-實際開發體驗"><strong>🎯 實際開發體驗</strong></a></h3>
+<pre><code class="language-go">// 在 Go 裡，你可以這樣寫而不用擔心：
+for i := 0; i &lt; 1000000; i++ {
+    go func(id int) {
+        // 處理任務
+        fmt.Printf("Task %d completed\n", id)
+    }(i)
+}
+// 一百萬個 goroutine？沒問題！
+</code></pre>
+<pre><code class="language-python"># 在 Python 裡，你絕對不敢這樣寫：
+import threading
+for i in range(1000000):
+    threading.Thread(target=task, args=(i,)).start()
+# 系統會掛掉！
+</code></pre>
+<p><strong>結論:</strong> Go 讓你能用<strong>寫玩具程式的心態</strong>來寫<strong>生產級的高併發應用</strong>！</p>
+<h2 id="-context-switch-詳解"><a class="header" href="#-context-switch-詳解">🔧 Context Switch 詳解</a></h2>
+<h3 id="兩種-context-switch"><a class="header" href="#兩種-context-switch"><strong>兩種 Context Switch:</strong></a></h3>
+<h4 id="thread-context-switch-輕量級"><a class="header" href="#thread-context-switch-輕量級"><strong>Thread Context Switch (輕量級)</strong></a></h4>
+<p><strong>同一個 Process 內的 Thread 切換</strong></p>
+<pre><code>Process A
+├── Thread 1 (執行中) ← 切換到 → Thread 2  
+├── Thread 2
+└── Thread 3
+</code></pre>
+<p><strong>需要保存/恢復:</strong></p>
+<ul>
+<li>CPU 暫存器</li>
+<li>程式計數器 (PC)</li>
+<li>棧指標 (Stack Pointer)</li>
+</ul>
+<h4 id="process-context-switch-重量級"><a class="header" href="#process-context-switch-重量級"><strong>Process Context Switch (重量級)</strong></a></h4>
+<p><strong>不同 Process 間的切換</strong></p>
+<pre><code>Process A (執行中) ← 切換到 → Process B
+</code></pre>
+<p><strong>需要保存/恢復:</strong></p>
+<ul>
+<li>✅ CPU 暫存器</li>
+<li>✅ 程式計數器</li>
+<li>✅ 棧指標</li>
+<li>✅ <strong>記憶體映射表</strong></li>
+<li>✅ <strong>頁表</strong></li>
+<li>✅ <strong>檔案描述符表</strong></li>
+</ul>
+<h3 id="成本比較-x86-64"><a class="header" href="#成本比較-x86-64"><strong>成本比較 (x86-64):</strong></a></h3>
+<pre><code>Thread Context Switch:    ~1-5 微秒
+Process Context Switch:   ~5-20 微秒
+Goroutine 切換:          ~0.1-0.3 微秒 (用戶態)
+</code></pre>
+<h2 id="-學習建議"><a class="header" href="#-學習建議">💡 學習建議</a></h2>
+<h3 id="給-pythonc-開發者"><a class="header" href="#給-pythonc-開發者"><strong>給 Python/C++ 開發者:</strong></a></h3>
+<h4 id="從-python-轉-go"><a class="header" href="#從-python-轉-go"><strong>從 Python 轉 Go:</strong></a></h4>
+<ol>
+<li><strong>型別宣告</strong> 需要適應，但 IDE 會幫很多忙</li>
+<li><strong>錯誤處理</strong> 比 try/except 更明確</li>
+<li><strong>效能提升</strong> 會讓你驚艷</li>
+</ol>
+<h4 id="從-c-轉-go"><a class="header" href="#從-c-轉-go"><strong>從 C++ 轉 Go:</strong></a></h4>
+<ol>
+<li><strong>放下控制慾</strong> - 相信 GC 和 Go runtime</li>
+<li><strong>擁抱簡單</strong> - 不需要複雜的設計模式</li>
+<li><strong>享受快速編譯</strong> - 告別漫長的 make</li>
+</ol>
+<h3 id="學習路徑"><a class="header" href="#學習路徑"><strong>學習路徑:</strong></a></h3>
+<p><strong>第一步:</strong> 寫個簡單的 HTTP API<br />
+<strong>第二步:</strong> 嘗試 goroutine 和 channel<br />
+<strong>第三步:</strong> 學習 interface 的威力<br />
+<strong>最終目標:</strong> 體會「少即是多」的設計哲學</p>
+<h2 id="-重要提醒"><a class="header" href="#-重要提醒">🎯 重要提醒</a></h2>
+<p><strong>記住核心差異:</strong></p>
+<ul>
+<li><strong>Goroutine ≠ 更好的 thread</strong>，而是<strong>任務抽象</strong></li>
+<li><strong>真正的並行</strong> 仍然靠底層的 OS threads</li>
+<li><strong>Go 的魔法</strong> 在調度器，不在 goroutine 本身</li>
+<li><strong>適合 I/O 密集</strong> 場景，CPU 密集仍受核心數限制</li>
+</ul>
+<p>Go 不是要取代所有語言，而是在<strong>開發效率</strong>和<strong>執行效能</strong>之間找到最佳平衡點！</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../go/go_mysql_deadlock_debug.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../go/goroutine_complete_guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../go/go_mysql_deadlock_debug.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../go/goroutine_complete_guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,997 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Python Profiling 完整指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="python-效能分析完整指南從-cprofile-到-py-spy"><a class="header" href="#python-效能分析完整指南從-cprofile-到-py-spy">Python 效能分析完整指南：從 cProfile 到 py-spy</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ol>
+<li><a href="#%E6%A6%82%E8%BF%B0">概述</a></li>
+<li><a href="#%E7%92%B0%E5%A2%83%E8%A8%AD%E7%BD%AE">環境設置</a></li>
+<li><a href="#cprofile-%E6%A8%A1%E7%B5%84%E8%A9%B3%E8%A7%A3">cProfile 模組詳解</a></li>
+<li><a href="#py-spy-%E9%80%B2%E9%9A%8E%E5%88%86%E6%9E%90">py-spy 進階分析</a></li>
+<li><a href="#%E5%AF%A6%E6%88%B0%E7%AF%84%E4%BE%8B%E9%9B%86">實戰範例集</a></li>
+<li><a href="#%E6%95%88%E8%83%BD%E5%84%AA%E5%8C%96%E6%9C%80%E4%BD%B3%E5%AF%A6%E8%B8%90">效能優化最佳實踐</a></li>
+<li><a href="#%E5%B8%B8%E8%A6%8B%E5%95%8F%E9%A1%8C%E8%88%87%E8%A7%A3%E6%B1%BA%E6%96%B9%E6%A1%88">常見問題與解決方案</a></li>
+</ol>
+<h2 id="概述"><a class="header" href="#概述">概述</a></h2>
+<p>Python 雖然執行效率相較於 Go、C 等編譯語言較慢，但其易用性和豐富的生態系統大幅提升了開發效率。在處理效能問題時，正確的分析工具和方法能幫助我們找出真正的瓶頸。</p>
+<h3 id="為什麼需要效能分析"><a class="header" href="#為什麼需要效能分析">為什麼需要效能分析？</a></h3>
+<ul>
+<li>找出程式中的效能瓶頸</li>
+<li>驗證優化效果</li>
+<li>理解程式執行流程</li>
+<li>發現隱藏的效率問題</li>
+</ul>
+<h2 id="環境設置"><a class="header" href="#環境設置">環境設置</a></h2>
+<h3 id="安裝必要套件"><a class="header" href="#安裝必要套件">安裝必要套件</a></h3>
+<pre><code class="language-bash"># 基礎套件
+pip install pandas numpy
+pip install snakeviz  # cProfile 視覺化工具
+pip install py-spy     # 進階效能分析工具
+
+# 選用套件
+pip install memory_profiler  # 記憶體分析
+pip install line_profiler    # 逐行分析
+pip install guppy3          # 堆積分析
+</code></pre>
+<h3 id="準備測試資料"><a class="header" href="#準備測試資料">準備測試資料</a></h3>
+<pre><code class="language-python"># 生成測試資料集
+import pandas as pd
+import numpy as np
+
+# 建立大型資料集用於測試
+def create_test_data(rows=1000000):
+    data = {
+        'id': range(rows),
+        'value': np.random.randn(rows),
+        'category': np.random.choice(['A', 'B', 'C', 'D'], rows),
+        'timestamp': pd.date_range('2024-01-01', periods=rows, freq='1min')
+    }
+    df = pd.DataFrame(data)
+    df.to_csv('test_data.csv', index=False)
+    return df
+</code></pre>
+<h2 id="cprofile-模組詳解"><a class="header" href="#cprofile-模組詳解">cProfile 模組詳解</a></h2>
+<h3 id="基本使用方法"><a class="header" href="#基本使用方法">基本使用方法</a></h3>
+<h4 id="1-命令列使用"><a class="header" href="#1-命令列使用">1. 命令列使用</a></h4>
+<pre><code class="language-bash"># 基本分析
+python -m cProfile script.py
+
+# 按累積時間排序
+python -m cProfile -s cumulative script.py
+
+# 輸出到檔案
+python -m cProfile -o profile.stats script.py
+
+# 限制輸出行數
+python -m cProfile -s cumulative script.py | head -20
+</code></pre>
+<h4 id="2-程式內使用"><a class="header" href="#2-程式內使用">2. 程式內使用</a></h4>
+<pre><code class="language-python">import cProfile
+import pstats
+from pstats import SortKey
+
+def profile_function(func):
+    """裝飾器：分析單一函數"""
+    def wrapper(*args, **kwargs):
+        profiler = cProfile.Profile()
+        profiler.enable()
+        result = func(*args, **kwargs)
+        profiler.disable()
+        
+        stats = pstats.Stats(profiler)
+        stats.sort_stats(SortKey.CUMULATIVE)
+        stats.print_stats(10)  # 顯示前 10 個最耗時的函數
+        return result
+    return wrapper
+
+@profile_function
+def my_slow_function():
+    # 你的程式碼
+    pass
+</code></pre>
+<h3 id="報表欄位解釋"><a class="header" href="#報表欄位解釋">報表欄位解釋</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>欄位</th><th>說明</th><th>重要性</th></tr></thead><tbody>
+<tr><td>ncalls</td><td>函數呼叫次數</td><td>高頻呼叫可能是瓶頸</td></tr>
+<tr><td>tottime</td><td>函數本身執行時間（不含子函數）</td><td>找出直接耗時的函數</td></tr>
+<tr><td>percall</td><td>tottime/ncalls</td><td>單次呼叫平均時間</td></tr>
+<tr><td>cumtime</td><td>函數總執行時間（含子函數）</td><td>整體耗時評估</td></tr>
+<tr><td>filename:lineno(function)</td><td>函數位置</td><td>定位問題</td></tr>
+</tbody></table>
+</div>
+<h3 id="視覺化分析---snakeviz"><a class="header" href="#視覺化分析---snakeviz">視覺化分析 - SnakeViz</a></h3>
+<pre><code class="language-bash"># 生成分析檔案
+python -m cProfile -o profile.stats your_script.py
+
+# 使用 SnakeViz 視覺化
+snakeviz profile.stats
+
+# 或者在 Jupyter Notebook 中使用
+%load_ext snakeviz
+%snakeviz your_function()
+</code></pre>
+<h3 id="進階範例資料處理效能分析"><a class="header" href="#進階範例資料處理效能分析">進階範例：資料處理效能分析</a></h3>
+<pre><code class="language-python">import cProfile
+import pstats
+import pandas as pd
+import numpy as np
+from io import StringIO
+
+class DataProcessor:
+    def __init__(self, filename):
+        self.filename = filename
+        self.data = None
+        
+    def load_data(self):
+        """載入資料 - 可能的瓶頸點"""
+        self.data = pd.read_csv(self.filename)
+        
+    def process_data(self):
+        """處理資料 - 多個潛在效能問題"""
+        # 問題 1：使用 iterrows（很慢）
+        results = []
+        for idx, row in self.data.iterrows():
+            if row['value'] &gt; 0:
+                results.append(row['id'] * 2)
+        
+        # 問題 2：重複計算
+        for i in range(len(self.data)):
+            self.data.loc[i, 'sqrt_value'] = np.sqrt(abs(self.data.loc[i, 'value']))
+        
+        # 問題 3：低效的字串操作
+        self.data['category_upper'] = self.data['category'].apply(lambda x: x.upper())
+        
+        return results
+    
+    def optimize_process_data(self):
+        """優化後的資料處理"""
+        # 優化 1：向量化操作取代迴圈
+        mask = self.data['value'] &gt; 0
+        results = (self.data.loc[mask, 'id'] * 2).tolist()
+        
+        # 優化 2：向量化計算
+        self.data['sqrt_value'] = np.sqrt(np.abs(self.data['value']))
+        
+        # 優化 3：使用內建方法
+        self.data['category_upper'] = self.data['category'].str.upper()
+        
+        return results
+
+def compare_performance():
+    """比較優化前後的效能"""
+    processor = DataProcessor('test_data.csv')
+    processor.load_data()
+    
+    # 分析原始版本
+    print("=== 原始版本效能分析 ===")
+    profiler1 = cProfile.Profile()
+    profiler1.enable()
+    processor.process_data()
+    profiler1.disable()
+    
+    s1 = StringIO()
+    ps1 = pstats.Stats(profiler1, stream=s1).sort_stats('cumulative')
+    ps1.print_stats(10)
+    print(s1.getvalue())
+    
+    # 分析優化版本
+    print("\n=== 優化版本效能分析 ===")
+    profiler2 = cProfile.Profile()
+    profiler2.enable()
+    processor.optimize_process_data()
+    profiler2.disable()
+    
+    s2 = StringIO()
+    ps2 = pstats.Stats(profiler2, stream=s2).sort_stats('cumulative')
+    ps2.print_stats(10)
+    print(s2.getvalue())
+</code></pre>
+<h2 id="py-spy-進階分析"><a class="header" href="#py-spy-進階分析">py-spy 進階分析</a></h2>
+<h3 id="安裝與基本使用"><a class="header" href="#安裝與基本使用">安裝與基本使用</a></h3>
+<pre><code class="language-bash"># 安裝
+pip install py-spy
+
+# macOS 可能需要 sudo
+sudo pip install py-spy
+</code></pre>
+<h3 id="主要功能"><a class="header" href="#主要功能">主要功能</a></h3>
+<h4 id="1-record---生成火焰圖"><a class="header" href="#1-record---生成火焰圖">1. Record - 生成火焰圖</a></h4>
+<pre><code class="language-bash"># 基本記錄
+py-spy record -o profile.svg -- python your_script.py
+
+# 設定採樣率（預設 100Hz）
+py-spy record -r 200 -o profile.svg -- python your_script.py
+
+# 記錄執行中的程序
+py-spy record -o profile.svg -p PID
+
+# 包含原生擴展
+py-spy record --native -o profile.svg -- python your_script.py
+</code></pre>
+<h4 id="2-top---即時監控"><a class="header" href="#2-top---即時監控">2. Top - 即時監控</a></h4>
+<pre><code class="language-bash"># 即時顯示最耗時的函數
+py-spy top -- python your_script.py
+
+# 監控執行中的程序
+py-spy top -p PID
+</code></pre>
+<h4 id="3-dump---取得呼叫堆疊"><a class="header" href="#3-dump---取得呼叫堆疊">3. Dump - 取得呼叫堆疊</a></h4>
+<pre><code class="language-bash"># 取得當前呼叫堆疊
+py-spy dump -p PID
+</code></pre>
+<h3 id="實際範例web-應用效能分析"><a class="header" href="#實際範例web-應用效能分析">實際範例：Web 應用效能分析</a></h3>
+<pre><code class="language-python"># app.py - Flask 應用範例
+from flask import Flask, jsonify
+import time
+import random
+import pandas as pd
+
+app = Flask(__name__)
+
+def slow_database_query():
+    """模擬慢速資料庫查詢"""
+    time.sleep(random.uniform(0.1, 0.3))
+    return pd.DataFrame({
+        'id': range(1000),
+        'value': [random.random() for _ in range(1000)]
+    })
+
+def complex_calculation(df):
+    """複雜計算"""
+    result = 0
+    for _, row in df.iterrows():  # 效能問題：使用 iterrows
+        result += row['value'] ** 2
+    return result
+
+@app.route('/api/data')
+def get_data():
+    # 取得資料
+    df = slow_database_query()
+    
+    # 處理資料
+    result = complex_calculation(df)
+    
+    return jsonify({
+        'result': result,
+        'count': len(df)
+    })
+
+if __name__ == '__main__':
+    app.run(debug=False)
+</code></pre>
+<p>分析方法：</p>
+<pre><code class="language-bash"># 啟動應用並分析
+py-spy record -o web_profile.svg -- python app.py &amp;
+
+# 使用 ab 或 wrk 進行壓力測試
+ab -n 100 -c 10 http://localhost:5000/api/data
+
+# 或使用 Python 腳本測試
+python -c "
+import requests
+import concurrent.futures
+
+def make_request():
+    return requests.get('http://localhost:5000/api/data')
+
+with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    futures = [executor.submit(make_request) for _ in range(100)]
+    concurrent.futures.wait(futures)
+"
+</code></pre>
+<h3 id="多執行緒多處理程序分析"><a class="header" href="#多執行緒多處理程序分析">多執行緒/多處理程序分析</a></h3>
+<pre><code class="language-python"># multiprocessing_example.py
+import multiprocessing
+import time
+import numpy as np
+
+def cpu_intensive_task(n):
+    """CPU 密集型任務"""
+    result = 0
+    for i in range(n):
+        result += np.sqrt(i) * np.sin(i)
+    return result
+
+def io_intensive_task(n):
+    """I/O 密集型任務"""
+    time.sleep(0.1)
+    with open(f'temp_{n}.txt', 'w') as f:
+        f.write('x' * 1000000)
+    time.sleep(0.1)
+    
+def run_parallel():
+    """平行處理範例"""
+    with multiprocessing.Pool(processes=4) as pool:
+        # CPU 密集型任務
+        cpu_results = pool.map(cpu_intensive_task, [1000000] * 4)
+        
+        # I/O 密集型任務
+        io_results = pool.map(io_intensive_task, range(4))
+    
+    return cpu_results
+
+if __name__ == '__main__':
+    results = run_parallel()
+    print(f"Results: {results}")
+</code></pre>
+<p>分析指令：</p>
+<pre><code class="language-bash"># 分析多處理程序（包含子程序）
+py-spy record -s -o multiprocess.svg -- python multiprocessing_example.py
+</code></pre>
+<h2 id="實戰範例集"><a class="header" href="#實戰範例集">實戰範例集</a></h2>
+<h3 id="範例-1dataframe-操作優化"><a class="header" href="#範例-1dataframe-操作優化">範例 1：DataFrame 操作優化</a></h3>
+<pre><code class="language-python">import pandas as pd
+import numpy as np
+import time
+
+def measure_time(func):
+    """計時裝飾器"""
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        print(f"{func.__name__} 耗時: {end - start:.4f} 秒")
+        return result
+    return wrapper
+
+class DataFrameOptimization:
+    def __init__(self, size=1000000):
+        self.df = pd.DataFrame({
+            'A': np.random.randn(size),
+            'B': np.random.randn(size),
+            'C': np.random.choice(['X', 'Y', 'Z'], size),
+            'D': np.random.randint(0, 100, size)
+        })
+    
+    @measure_time
+    def slow_method(self):
+        """低效方法：逐行處理"""
+        results = []
+        for idx, row in self.df.iterrows():
+            if row['A'] &gt; 0 and row['B'] &lt; 0:
+                results.append(row['D'] * 2)
+        return results
+    
+    @measure_time
+    def medium_method(self):
+        """中等效率：使用 apply"""
+        def process_row(row):
+            if row['A'] &gt; 0 and row['B'] &lt; 0:
+                return row['D'] * 2
+            return None
+        
+        results = self.df.apply(process_row, axis=1)
+        return results.dropna().tolist()
+    
+    @measure_time
+    def fast_method(self):
+        """高效方法：向量化操作"""
+        mask = (self.df['A'] &gt; 0) &amp; (self.df['B'] &lt; 0)
+        results = (self.df.loc[mask, 'D'] * 2).tolist()
+        return results
+    
+    @measure_time
+    def numpy_method(self):
+        """最快方法：使用 NumPy"""
+        a_values = self.df['A'].values
+        b_values = self.df['B'].values
+        d_values = self.df['D'].values
+        
+        mask = (a_values &gt; 0) &amp; (b_values &lt; 0)
+        results = (d_values[mask] * 2).tolist()
+        return results
+
+# 執行比較
+optimizer = DataFrameOptimization(size=100000)
+print("=== DataFrame 操作效能比較 ===")
+# optimizer.slow_method()  # 太慢，可能跳過
+optimizer.medium_method()
+optimizer.fast_method()
+optimizer.numpy_method()
+</code></pre>
+<h3 id="範例-2記憶體分析"><a class="header" href="#範例-2記憶體分析">範例 2：記憶體分析</a></h3>
+<pre><code class="language-python">from memory_profiler import profile
+import numpy as np
+import pandas as pd
+
+@profile
+def memory_intensive_function():
+    """記憶體密集型函數"""
+    # 階段 1：建立大型列表
+    big_list = [i for i in range(1000000)]
+    
+    # 階段 2：轉換為 NumPy 陣列
+    np_array = np.array(big_list)
+    
+    # 階段 3：建立 DataFrame
+    df = pd.DataFrame({
+        'col1': np_array,
+        'col2': np_array * 2,
+        'col3': np_array ** 2
+    })
+    
+    # 階段 4：資料處理
+    result = df.groupby(df['col1'] % 100).agg({
+        'col2': 'sum',
+        'col3': 'mean'
+    })
+    
+    return result
+
+# 執行記憶體分析
+# python -m memory_profiler your_script.py
+</code></pre>
+<h3 id="範例-3快取優化"><a class="header" href="#範例-3快取優化">範例 3：快取優化</a></h3>
+<pre><code class="language-python">import functools
+import time
+
+def measure_cache_performance():
+    """測試快取效能影響"""
+    
+    # 無快取版本
+    def fibonacci_no_cache(n):
+        if n &lt;= 1:
+            return n
+        return fibonacci_no_cache(n-1) + fibonacci_no_cache(n-2)
+    
+    # 有快取版本
+    @functools.lru_cache(maxsize=128)
+    def fibonacci_with_cache(n):
+        if n &lt;= 1:
+            return n
+        return fibonacci_with_cache(n-1) + fibonacci_with_cache(n-2)
+    
+    # 測試
+    n = 35
+    
+    start = time.time()
+    result1 = fibonacci_no_cache(n)
+    time_no_cache = time.time() - start
+    
+    start = time.time()
+    result2 = fibonacci_with_cache(n)
+    time_with_cache = time.time() - start
+    
+    print(f"無快取: {time_no_cache:.4f} 秒")
+    print(f"有快取: {time_with_cache:.4f} 秒")
+    print(f"加速比: {time_no_cache/time_with_cache:.2f}x")
+    
+    # 查看快取資訊
+    print(f"快取資訊: {fibonacci_with_cache.cache_info()}")
+</code></pre>
+<h2 id="效能優化最佳實踐"><a class="header" href="#效能優化最佳實踐">效能優化最佳實踐</a></h2>
+<h3 id="1-常見效能陷阱與解決方案"><a class="header" href="#1-常見效能陷阱與解決方案">1. 常見效能陷阱與解決方案</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>問題</th><th>解決方案</th><th>效能提升</th></tr></thead><tbody>
+<tr><td>DataFrame.iterrows()</td><td>使用向量化操作或 itertuples()</td><td>10-100x</td></tr>
+<tr><td>頻繁的列表 append</td><td>使用列表推導式或預先分配</td><td>2-5x</td></tr>
+<tr><td>重複計算</td><td>使用快取（lru_cache）</td><td>視情況</td></tr>
+<tr><td>字串串接在迴圈中</td><td>使用 join() 或 StringIO</td><td>5-20x</td></tr>
+<tr><td>全域變數查找</td><td>使用局部變數</td><td>1.5-2x</td></tr>
+<tr><td>使用 + 合併列表</td><td>使用 extend()</td><td>2-3x</td></tr>
+</tbody></table>
+</div>
+<h3 id="2-優化策略優先順序"><a class="header" href="#2-優化策略優先順序">2. 優化策略優先順序</a></h3>
+<ol>
+<li><strong>演算法優化</strong>：O(n²) → O(n log n)</li>
+<li><strong>資料結構選擇</strong>：list vs set vs dict</li>
+<li><strong>向量化操作</strong>：NumPy/Pandas 向量化</li>
+<li><strong>並行處理</strong>：multiprocessing/threading</li>
+<li><strong>快取機制</strong>：記憶化、結果快取</li>
+<li><strong>延遲載入</strong>：生成器、惰性求值</li>
+<li><strong>編譯優化</strong>：Cython、Numba</li>
+</ol>
+<h3 id="3-程式碼優化範例"><a class="header" href="#3-程式碼優化範例">3. 程式碼優化範例</a></h3>
+<pre><code class="language-python"># ❌ 差的做法
+def bad_practices():
+    # 1. 字串串接
+    result = ""
+    for i in range(10000):
+        result += str(i)
+    
+    # 2. 重複計算
+    data = []
+    for i in range(1000):
+        data.append(len([x for x in range(1000) if x % 2 == 0]))
+    
+    # 3. 不必要的函數呼叫
+    for i in range(len(my_list)):
+        process(my_list[i])
+
+# ✅ 好的做法
+def good_practices():
+    # 1. 使用 join
+    result = ''.join(str(i) for i in range(10000))
+    
+    # 2. 預先計算
+    even_count = len([x for x in range(1000) if x % 2 == 0])
+    data = [even_count] * 1000
+    
+    # 3. 直接迭代
+    for item in my_list:
+        process(item)
+</code></pre>
+<h2 id="常見問題與解決方案"><a class="header" href="#常見問題與解決方案">常見問題與解決方案</a></h2>
+<h3 id="q1-cprofile-顯示太多無關資訊怎麼辦"><a class="header" href="#q1-cprofile-顯示太多無關資訊怎麼辦">Q1: cProfile 顯示太多無關資訊怎麼辦？</a></h3>
+<pre><code class="language-python">import cProfile
+import pstats
+import re
+
+def profile_specific_module(script_name, module_filter='your_module'):
+    """只分析特定模組"""
+    profiler = cProfile.Profile()
+    profiler.enable()
+    
+    # 執行你的程式碼
+    exec(open(script_name).read())
+    
+    profiler.disable()
+    
+    # 過濾結果
+    stats = pstats.Stats(profiler)
+    stats.sort_stats('cumulative')
+    
+    # 只顯示特定模組的結果
+    stats.print_stats(module_filter)
+</code></pre>
+<h3 id="q2-如何分析記憶體洩漏"><a class="header" href="#q2-如何分析記憶體洩漏">Q2: 如何分析記憶體洩漏？</a></h3>
+<pre><code class="language-python">import tracemalloc
+import gc
+
+def find_memory_leaks():
+    """追蹤記憶體使用"""
+    tracemalloc.start()
+    
+    # 執行可能有記憶體洩漏的程式碼
+    snapshot1 = tracemalloc.take_snapshot()
+    
+    # ... 執行程式碼 ...
+    
+    snapshot2 = tracemalloc.take_snapshot()
+    
+    # 比較差異
+    top_stats = snapshot2.compare_to(snapshot1, 'lineno')
+    
+    print("[ Top 10 記憶體增長 ]")
+    for stat in top_stats[:10]:
+        print(stat)
+    
+    # 強制垃圾回收
+    gc.collect()
+</code></pre>
+<h3 id="q3-如何選擇合適的分析工具"><a class="header" href="#q3-如何選擇合適的分析工具">Q3: 如何選擇合適的分析工具？</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>情況</th><th>建議工具</th><th>原因</th></tr></thead><tbody>
+<tr><td>初步分析</td><td>cProfile</td><td>內建、簡單、快速</td></tr>
+<tr><td>詳細分析</td><td>py-spy</td><td>逐行分析、視覺化好</td></tr>
+<tr><td>記憶體問題</td><td>memory_profiler</td><td>專門針對記憶體</td></tr>
+<tr><td>生產環境</td><td>py-spy</td><td>可附加到執行中程序</td></tr>
+<tr><td>特定函數</td><td>line_profiler</td><td>逐行時間分析</td></tr>
+<tr><td>C 擴展</td><td>py-spy --native</td><td>支援原生程式碼</td></tr>
+</tbody></table>
+</div>
+<h3 id="q4-優化後如何驗證效果"><a class="header" href="#q4-優化後如何驗證效果">Q4: 優化後如何驗證效果？</a></h3>
+<pre><code class="language-python">import timeit
+import statistics
+
+def benchmark_comparison():
+    """基準測試比較"""
+    
+    # 設定測試
+    setup_code = """
+import numpy as np
+data = np.random.randn(10000)
+    """
+    
+    # 原始版本
+    original_code = """
+result = []
+for x in data:
+    if x &gt; 0:
+        result.append(x * 2)
+    """
+    
+    # 優化版本
+    optimized_code = """
+result = data[data &gt; 0] * 2
+    """
+    
+    # 執行基準測試
+    n_runs = 1000
+    
+    original_times = timeit.repeat(
+        original_code, 
+        setup=setup_code, 
+        repeat=5, 
+        number=n_runs
+    )
+    
+    optimized_times = timeit.repeat(
+        optimized_code, 
+        setup=setup_code, 
+        repeat=5, 
+        number=n_runs
+    )
+    
+    # 統計分析
+    print(f"原始版本:")
+    print(f"  平均: {statistics.mean(original_times):.6f} 秒")
+    print(f"  標準差: {statistics.stdev(original_times):.6f} 秒")
+    
+    print(f"優化版本:")
+    print(f"  平均: {statistics.mean(optimized_times):.6f} 秒")
+    print(f"  標準差: {statistics.stdev(optimized_times):.6f} 秒")
+    
+    speedup = statistics.mean(original_times) / statistics.mean(optimized_times)
+    print(f"加速比: {speedup:.2f}x")
+</code></pre>
+<h2 id="進階技巧"><a class="header" href="#進階技巧">進階技巧</a></h2>
+<h3 id="1-自訂-profiler"><a class="header" href="#1-自訂-profiler">1. 自訂 Profiler</a></h3>
+<pre><code class="language-python">import sys
+import functools
+import time
+from collections import defaultdict
+
+class CustomProfiler:
+    """自訂效能分析器"""
+    def __init__(self):
+        self.stats = defaultdict(lambda: {'calls': 0, 'total_time': 0})
+        
+    def profile(self, func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            start = time.perf_counter()
+            result = func(*args, **kwargs)
+            elapsed = time.perf_counter() - start
+            
+            # 記錄統計
+            func_name = f"{func.__module__}.{func.__name__}"
+            self.stats[func_name]['calls'] += 1
+            self.stats[func_name]['total_time'] += elapsed
+            
+            return result
+        return wrapper
+    
+    def print_stats(self):
+        """列印統計結果"""
+        print(f"{'Function':&lt;50} {'Calls':&lt;10} {'Total Time':&lt;15} {'Avg Time':&lt;15}")
+        print("-" * 90)
+        
+        for func_name, stats in sorted(
+            self.stats.items(), 
+            key=lambda x: x[1]['total_time'], 
+            reverse=True
+        ):
+            avg_time = stats['total_time'] / stats['calls']
+            print(f"{func_name:&lt;50} {stats['calls']:&lt;10} "
+                  f"{stats['total_time']:&lt;15.6f} {avg_time:&lt;15.6f}")
+
+# 使用範例
+profiler = CustomProfiler()
+
+@profiler.profile
+def example_function():
+    time.sleep(0.1)
+    return "done"
+
+# 執行後列印統計
+profiler.print_stats()
+</code></pre>
+<h3 id="2-持續效能監控"><a class="header" href="#2-持續效能監控">2. 持續效能監控</a></h3>
+<pre><code class="language-python">import psutil
+import time
+import threading
+
+class PerformanceMonitor:
+    """即時效能監控"""
+    def __init__(self, interval=1):
+        self.interval = interval
+        self.monitoring = False
+        self.stats = []
+        
+    def start(self):
+        """開始監控"""
+        self.monitoring = True
+        thread = threading.Thread(target=self._monitor)
+        thread.daemon = True
+        thread.start()
+        
+    def _monitor(self):
+        """監控迴圈"""
+        process = psutil.Process()
+        
+        while self.monitoring:
+            stats = {
+                'timestamp': time.time(),
+                'cpu_percent': process.cpu_percent(),
+                'memory_mb': process.memory_info().rss / 1024 / 1024,
+                'num_threads': process.num_threads(),
+            }
+            self.stats.append(stats)
+            time.sleep(self.interval)
+    
+    def stop(self):
+        """停止監控"""
+        self.monitoring = False
+        
+    def get_summary(self):
+        """取得摘要"""
+        if not self.stats:
+            return "No data collected"
+        
+        cpu_values = [s['cpu_percent'] for s in self.stats]
+        mem_values = [s['memory_mb'] for s in self.stats]
+        
+        return {
+            'avg_cpu': sum(cpu_values) / len(cpu_values),
+            'max_cpu': max(cpu_values),
+            'avg_memory_mb': sum(mem_values) / len(mem_values),
+            'max_memory_mb': max(mem_values),
+        }
+
+# 使用範例
+monitor = PerformanceMonitor()
+monitor.start()
+
+# 執行你的程式碼
+time.sleep(5)
+
+monitor.stop()
+print(monitor.get_summary())
+</code></pre>
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<p>效能分析是 Python 開發中的重要技能。掌握 cProfile 和 py-spy 等工具，結合正確的優化策略，能夠顯著提升程式效能。記住以下要點：</p>
+<ol>
+<li><strong>先測量，後優化</strong>：不要憑感覺優化，要基於數據</li>
+<li><strong>找出真正的瓶頸</strong>：通常 20% 的程式碼消耗 80% 的時間</li>
+<li><strong>選擇合適的工具</strong>：不同情況使用不同的分析工具</li>
+<li><strong>持續監控</strong>：建立效能基準，追蹤優化效果</li>
+<li><strong>平衡可讀性與效能</strong>：不要為了微小的效能提升犧牲程式碼品質</li>
+</ol>
+<h2 id="參考資源"><a class="header" href="#參考資源">參考資源</a></h2>
+<ul>
+<li><a href="https://docs.python.org/3/library/profile.html">Python 官方 Profile 文件</a></li>
+<li><a href="https://github.com/benfred/py-spy">py-spy GitHub</a></li>
+<li><a href="https://jiffyclub.github.io/snakeviz/">SnakeViz 文件</a></li>
+<li><a href="https://github.com/pythonprofilers/memory_profiler">Memory Profiler</a></li>
+<li><a href="https://github.com/pyutils/line_profiler">Line Profiler</a></li>
+<li><a href="https://wiki.python.org/moin/PythonSpeed/PerformanceTips">Python Performance Tips</a></li>
+<li><a href="https://numpy.org/doc/stable/user/c-info.python-as-glue.html">NumPy Optimization</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../python/shioaji.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../python/python_locks_guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../python/shioaji.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../python/python_locks_guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

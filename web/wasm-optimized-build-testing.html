@@ -1,0 +1,467 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>WASM 最佳化編譯測試 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="測試優化後的-wasm-文件完整指南"><a class="header" href="#測試優化後的-wasm-文件完整指南">測試優化後的 WASM 文件完整指南</a></h1>
+<h2 id="1-環境準備"><a class="header" href="#1-環境準備">1. 環境準備</a></h2>
+<h3 id="安裝必要工具"><a class="header" href="#安裝必要工具">安裝必要工具</a></h3>
+<pre><code class="language-bash"># 安裝 wasm-pack
+curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+# 安裝 wasm-opt (Binaryen)
+# Ubuntu/Debian
+sudo apt install binaryen
+# macOS
+brew install binaryen
+# Windows
+scoop install binaryen
+
+# 添加 WASM 目標
+rustup target add wasm32-unknown-unknown
+</code></pre>
+<hr />
+<h2 id="2-rust-項目設置"><a class="header" href="#2-rust-項目設置">2. Rust 項目設置</a></h2>
+<h3 id="cargotoml-配置"><a class="header" href="#cargotoml-配置">Cargo.toml 配置</a></h3>
+<pre><code class="language-toml">[package]
+name = "my-wasm-project"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+js-sys = "0.3"
+
+[dependencies.web-sys]
+version = "0.3"
+features = ["console", "Performance"]
+
+[profile.release]
+lto = true
+opt-level = 3
+codegen-units = 1
+</code></pre>
+<h3 id="帶日誌的-rust-源碼-srclibrs"><a class="header" href="#帶日誌的-rust-源碼-srclibrs">帶日誌的 Rust 源碼 (src/lib.rs)</a></h3>
+<pre><pre class="playground"><code class="language-rust">use wasm_bindgen::prelude::*;
+
+// 導入 console API
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console)] fn log(s: &amp;str);
+    #[wasm_bindgen(js_namespace = console)] fn error(s: &amp;str);
+    #[wasm_bindgen(js_namespace = console)] fn warn(s: &amp;str);
+    #[wasm_bindgen(js_namespace = console)] fn info(s: &amp;str);
+    #[wasm_bindgen(js_namespace = console, js_name = time)] fn console_time(s: &amp;str);
+    #[wasm_bindgen(js_namespace = console, js_name = timeEnd)] fn console_time_end(s: &amp;str);
+}
+
+// 日誌宏
+macro_rules! console_log { ($($t:tt)*) =&gt; (log(&amp;format!("[WASM LOG] {}", format_args!($($t)*)))) }
+macro_rules! console_error { ($($t:tt)*) =&gt; (error(&amp;format!("[WASM ERROR] {}", format_args!($($t)*)))) }
+macro_rules! console_warn { ($($t:tt)*) =&gt; (warn(&amp;format!("[WASM WARN] {}", format_args!($($t)*)))) }
+macro_rules! console_info { ($($t:tt)*) =&gt; (info(&amp;format!("[WASM INFO] {}", format_args!($($t)*)))) }
+
+// 初始化函數
+#[wasm_bindgen(start)]
+pub fn main() {
+    console_log!("WASM 模組已載入，版本: optimized");
+}
+
+// 基本測試函數
+#[wasm_bindgen]
+pub fn test_basic_math(a: i32, b: i32) -&gt; i32 {
+    console_log!("執行基本數學運算: {} + {}", a, b);
+    let result = a + b;
+    console_log!("結果: {}", result);
+    result
+}</code></pre></pre>
+<p>👉 其餘函數包含 <strong>字符串處理</strong>、<strong>重計算</strong>、<strong>數組處理</strong>、<strong>錯誤處理</strong>、<strong>性能基準測試</strong>、<strong>內存信息</strong>，完整程式碼已在原始內容中。</p>
+<hr />
+<h2 id="3-編譯和優化"><a class="header" href="#3-編譯和優化">3. 編譯和優化</a></h2>
+<h3 id="自動化構建腳本-build_and_optimizesh"><a class="header" href="#自動化構建腳本-build_and_optimizesh">自動化構建腳本 (build_and_optimize.sh)</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+echo "=== 開始 Rust WASM 編譯流程 ==="
+
+# 清理舊文件
+rm -rf pkg/
+rm -f *.wasm
+
+# 編譯 WASM
+echo "步驟 1: 編譯 Rust 到 WASM..."
+wasm-pack build --target web --out-dir pkg --release
+if [ $? -ne 0 ]; then
+  echo "❌ 編譯失敗"
+  exit 1
+fi
+echo "✅ 編譯成功"
+
+# 獲取原始文件大小
+ORIGINAL_SIZE=$(wc -c &lt; pkg/*_bg.wasm)
+echo "原始 WASM 大小: $ORIGINAL_SIZE bytes"
+
+# 優化 WASM
+echo "步驟 2: 優化 WASM 文件..."
+wasm-opt -Oz --enable-bulk-memory --enable-sign-ext \
+  -o pkg/optimized.wasm pkg/*_bg.wasm
+if [ $? -ne 0 ]; then
+  echo "❌ 優化失敗"
+  exit 1
+fi
+
+# 獲取優化後文件大小
+OPTIMIZED_SIZE=$(wc -c &lt; pkg/optimized.wasm)
+REDUCTION=$((ORIGINAL_SIZE - OPTIMIZED_SIZE))
+PERCENTAGE=$(echo "scale=2; $REDUCTION * 100 / $ORIGINAL_SIZE" | bc)
+
+echo "✅ 優化完成"
+echo "優化後大小: $OPTIMIZED_SIZE bytes"
+echo "減少: $REDUCTION bytes ($PERCENTAGE%)"
+
+# 生成測試報告
+echo "步驟 3: 生成文件信息..."
+echo "=== WASM 文件信息 ===" &gt; wasm_info.txt
+echo "編譯時間: $(date)" &gt;&gt; wasm_info.txt
+echo "原始大小: $ORIGINAL_SIZE bytes" &gt;&gt; wasm_info.txt
+echo "優化大小: $OPTIMIZED_SIZE bytes" &gt;&gt; wasm_info.txt
+echo "壓縮率: $PERCENTAGE%" &gt;&gt; wasm_info.txt
+
+echo "✅ 構建完成！"
+</code></pre>
+<h3 id="常用優化命令選項"><a class="header" href="#常用優化命令選項">常用優化命令選項</a></h3>
+<pre><code class="language-bash"># 基本優化
+wasm-opt -O3 -o optimized.wasm original.wasm
+
+# 最小化大小
+wasm-opt -Oz -o optimized.wasm original.wasm
+
+# 速度優化
+wasm-opt -O4 -o optimized.wasm original.wasm
+
+# 詳細輸出
+wasm-opt -Oz --enable-bulk-memory --enable-sign-ext \
+  -o optimized.wasm original.wasm -v
+</code></pre>
+<hr />
+<h2 id="4-javascript-測試代碼"><a class="header" href="#4-javascript-測試代碼">4. JavaScript 測試代碼</a></h2>
+<ul>
+<li><strong>完整版測試</strong> → [test.js]</li>
+<li><strong>簡化測試</strong> (simple_test.js)：</li>
+</ul>
+<pre><code class="language-javascript">import init, { test_basic_math, get_memory_info } from './pkg/my_wasm_project.js';
+
+async function simpleTest() {
+  console.log('開始簡單測試...');
+  try {
+    await init('./pkg/optimized.wasm');
+    console.log('✅ WASM 載入成功');
+
+    const mathResult = test_basic_math(10, 20);
+    console.log(`數學測試結果: ${mathResult}`);
+
+    const memInfo = get_memory_info();
+    console.log(`內存信息: ${memInfo}`);
+
+    console.log('✅ 所有測試通過');
+  } catch (error) {
+    console.error('❌ 測試失敗:', error);
+  }
+}
+simpleTest();
+</code></pre>
+<hr />
+<h2 id="5-運行和測試"><a class="header" href="#5-運行和測試">5. 運行和測試</a></h2>
+<h3 id="執行構建"><a class="header" href="#執行構建">執行構建</a></h3>
+<pre><code class="language-bash">chmod +x build_and_optimize.sh
+./build_and_optimize.sh
+</code></pre>
+<h3 id="啟動服務器"><a class="header" href="#啟動服務器">啟動服務器</a></h3>
+<pre><code class="language-bash"># 方法 1: Python
+python3 -m http.server 8080
+
+# 方法 2: Node.js
+npx serve . -p 8080
+
+# 方法 3: Rust
+cargo install basic-http-server
+basic-http-server . -a 0.0.0.0:8080
+</code></pre>
+<h3 id="瀏覽器測試"><a class="header" href="#瀏覽器測試">瀏覽器測試</a></h3>
+<pre><code class="language-javascript">import('./test.js').then(testModule =&gt; {
+  testModule.testBasicMath();
+  testModule.runAllTests();
+  console.log(testModule.logger.getLogs());
+  console.log(testModule.monitor.getMetrics());
+});
+</code></pre>
+<hr />
+<h2 id="6-調試和分析工具"><a class="header" href="#6-調試和分析工具">6. 調試和分析工具</a></h2>
+<h3 id="wasm-文件分析命令"><a class="header" href="#wasm-文件分析命令">WASM 文件分析命令</a></h3>
+<pre><code class="language-bash">wasm-objdump -h optimized.wasm     # 文件結構
+wasm-objdump -j Export optimized.wasm  # 導出函數
+wasm-objdump -j Import optimized.wasm  # 導入函數
+wasm2wat optimized.wasm -o optimized.wat # 轉 wat
+wasm-validate optimized.wasm       # 驗證完整性
+wasm-objdump -x optimized.wasm     # 詳細信息
+wasm-objdump -j Function optimized.wasm # 函數簽名
+</code></pre>
+<h3 id="性能分析腳本-perf_analysisjs"><a class="header" href="#性能分析腳本-perf_analysisjs">性能分析腳本 (perf_analysis.js)</a></h3>
+<p>（可進行函數多次迭代測量，輸出 min/max/mean/95p/99p）</p>
+<hr />
+<h2 id="7-常見問題排查"><a class="header" href="#7-常見問題排查">7. 常見問題排查</a></h2>
+<h3 id="編譯問題"><a class="header" href="#編譯問題">編譯問題</a></h3>
+<pre><code class="language-bash">rustc --version
+wasm-pack --version
+cargo clean
+wasm-pack build --target web --release
+cargo check
+</code></pre>
+<h3 id="優化問題"><a class="header" href="#優化問題">優化問題</a></h3>
+<pre><code class="language-bash">wasm-opt --version
+ls -la pkg/*_bg.wasm
+wasm-opt -O1 -o test1.wasm pkg/*_bg.wasm
+wasm-opt -O2 -o test2.wasm pkg/*_bg.wasm
+wasm-opt -O3 -o test3.wasm pkg/*_bg.wasm
+wasm-opt -Oz -o test4.wasm pkg/*_bg.wasm
+ls -la test*.wasm
+</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../web/wasm_compatibility_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../web/cloud-performance-pitfalls.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../web/wasm_compatibility_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../web/cloud-performance-pitfalls.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
