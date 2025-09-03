@@ -127,6 +127,7 @@
     - [Rust Crate 依賴與 API 設計完整指南](rust/rust_crate_guide.md)
     - [Rust 標準函式庫範例](rust/rust-stdlib-examples.md)
     - [Rust 程式追蹤與分析完整指南](rust/rust_trace_guide.md)
+    - [Rust Unsafe 底層分析與最佳化技術](rust/rust-unsafe-analysis.md)
     - [第一部分：基礎部分 - 量化語境下的Rust編程基礎](rust/第一部分_基礎部分_量化語境下的Rust編程基礎.md)
     - [第二部分：進階部分 - 量化實戰](rust/第二部分_進階部分_量化實戰.md)
 - [Go](go/go.md)
