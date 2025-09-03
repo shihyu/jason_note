@@ -49,6 +49,7 @@
     - [Cross Compiler 與 LLVM vs GCC 完整解析](tools/cross-compiler-llvm-gcc-guide.md)
     - [程式分析與效能工具完整指南](tools/cpp-analysis-tools.md)
     - [C++/Rust 函數追蹤技術指南](tools/function-tracing-cpp-rust.md)
+    - [Flamegraph 效能分析指南](tools/flamegraph-guide.md)
     - [🎯 完整的 Solana Token 出入金系統指南](tools/solana_token_guide.md)
     - [Bitwarden CLI 完整使用指南](tools/bitwarden_cli_guide.md)
 
