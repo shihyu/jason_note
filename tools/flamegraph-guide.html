@@ -1,0 +1,1303 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Flamegraph 效能分析指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="flamegraph-火焰圖完整指南"><a class="header" href="#flamegraph-火焰圖完整指南">Flamegraph 火焰圖完整指南</a></h1>
+<h2 id="一什麼是-flamegraph"><a class="header" href="#一什麼是-flamegraph">一、什麼是 Flamegraph？</a></h2>
+<h3 id="11-基本概念"><a class="header" href="#11-基本概念">1.1 基本概念</a></h3>
+<p>Flamegraph（火焰圖）是一種性能分析的視覺化工具，由 Brendan Gregg 發明。它能夠快速識別程式中最耗費 CPU 時間的代碼路徑。</p>
+<pre><code>     ┌─────────────────────────────────┐  ← 寬度 = CPU 時間佔比
+     │         function_d()             │
+     ├──────────┬──────────────────────┤
+     │function_c│    function_e()       │  ← 每層 = 調用棧深度
+     ├──────────┴──────────┬───────────┤
+     │    function_b()      │function_f │
+     ├──────────────────────┴───────────┤
+     │           function_a()           │  ← 底部 = 程式入口
+     └─────────────────────────────────┘
+</code></pre>
+<h3 id="12-視覺化原理"><a class="header" href="#12-視覺化原理">1.2 視覺化原理</a></h3>
+<ul>
+<li><strong>X 軸（寬度）</strong>：表示採樣數量（CPU 時間佔比）</li>
+<li><strong>Y 軸（高度）</strong>：表示調用棧深度</li>
+<li><strong>顏色</strong>：通常用來區分不同類型的函數（系統/用戶/庫函數）</li>
+<li><strong>火焰形狀</strong>：因為越往上函數越少，看起來像火焰</li>
+</ul>
+<hr />
+<h2 id="二flamegraph-類型"><a class="header" href="#二flamegraph-類型">二、Flamegraph 類型</a></h2>
+<h3 id="21-cpu-火焰圖"><a class="header" href="#21-cpu-火焰圖">2.1 CPU 火焰圖</a></h3>
+<p>最常見的類型，顯示 CPU 時間消耗</p>
+<pre><code class="language-bash"># 採集 CPU 性能數據
+perf record -F 99 -p &lt;PID&gt; -g -- sleep 60
+perf script &gt; out.perf
+</code></pre>
+<h3 id="22-memory-火焰圖"><a class="header" href="#22-memory-火焰圖">2.2 Memory 火焰圖</a></h3>
+<p>顯示記憶體分配的調用棧</p>
+<pre><code class="language-bash"># 使用 brendangregg/FlameGraph 工具
+perf record -e malloc -g -p &lt;PID&gt; -- sleep 60
+</code></pre>
+<h3 id="23-off-cpu-火焰圖"><a class="header" href="#23-off-cpu-火焰圖">2.3 Off-CPU 火焰圖</a></h3>
+<p>顯示程式阻塞（非 CPU 執行）的時間</p>
+<pre><code class="language-bash"># 追蹤 off-CPU 時間
+bpftrace -e 'tracepoint:sched:sched_switch { @[kstack, ustack, comm] = sum(nsecs); }'
+</code></pre>
+<h3 id="24-differential-火焰圖"><a class="header" href="#24-differential-火焰圖">2.4 Differential 火焰圖</a></h3>
+<p>比較兩個版本的性能差異</p>
+<pre><code class="language-bash"># 紅色表示增加的時間，藍色表示減少的時間
+flamegraph.pl --title="Diff" --colors=java diff.folded &gt; diff.svg
+</code></pre>
+<hr />
+<h2 id="三安裝與使用"><a class="header" href="#三安裝與使用">三、安裝與使用</a></h2>
+<h3 id="31-安裝-flamegraph-工具"><a class="header" href="#31-安裝-flamegraph-工具">3.1 安裝 FlameGraph 工具</a></h3>
+<pre><code class="language-bash"># Clone Brendan Gregg 的官方倉庫
+git clone https://github.com/brendangregg/FlameGraph.git
+cd FlameGraph
+
+# 添加到 PATH（可選）
+export PATH=$PATH:$(pwd)
+</code></pre>
+<h3 id="32-基本使用流程"><a class="header" href="#32-基本使用流程">3.2 基本使用流程</a></h3>
+<pre><code class="language-bash"># 步驟 1: 收集性能數據
+perf record -F 99 -p $(pgrep myapp) -g -- sleep 30
+
+# 步驟 2: 生成性能報告
+perf script &gt; out.perf
+
+# 步驟 3: 摺疊調用棧
+./stackcollapse-perf.pl out.perf &gt; out.folded
+
+# 步驟 4: 生成火焰圖
+./flamegraph.pl out.folded &gt; flamegraph.svg
+
+# 步驟 5: 在瀏覽器中查看
+firefox flamegraph.svg
+</code></pre>
+<hr />
+<h2 id="四高頻交易場景應用"><a class="header" href="#四高頻交易場景應用">四、高頻交易場景應用</a></h2>
+<h3 id="41-延遲分析範例"><a class="header" href="#41-延遲分析範例">4.1 延遲分析範例</a></h3>
+<pre><code class="language-cpp">// 範例：高頻交易系統的關鍵路徑
+class TradingEngine {
+public:
+    void processMarketData(const MarketData&amp; data) {
+        // 標記性能追蹤點
+        TRACE_ENTER("processMarketData");
+        
+        parseData(data);           // 10% CPU
+        updateOrderBook(data);      // 15% CPU
+        calculateSignals();         // 45% CPU ← 火焰圖會顯示這是熱點
+        executeStrategy();          // 20% CPU
+        sendOrders();              // 10% CPU
+        
+        TRACE_EXIT("processMarketData");
+    }
+};
+</code></pre>
+<h3 id="42-採集腳本"><a class="header" href="#42-採集腳本">4.2 採集腳本</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# hft_flamegraph.sh - 高頻交易系統火焰圖生成腳本
+
+PID=$(pgrep trading_engine)
+DURATION=60
+OUTPUT_DIR="./flamegraphs"
+
+mkdir -p $OUTPUT_DIR
+
+# CPU 火焰圖
+echo "Collecting CPU samples..."
+perf record -F 999 -p $PID -g -o $OUTPUT_DIR/perf.data -- sleep $DURATION
+perf script -i $OUTPUT_DIR/perf.data &gt; $OUTPUT_DIR/out.perf
+./stackcollapse-perf.pl $OUTPUT_DIR/out.perf &gt; $OUTPUT_DIR/out.folded
+./flamegraph.pl --title="HFT CPU Flamegraph" \
+                --subtitle="Sample rate: 999 Hz" \
+                --width=1800 \
+                $OUTPUT_DIR/out.folded &gt; $OUTPUT_DIR/cpu_flame.svg
+
+echo "Flamegraph saved to $OUTPUT_DIR/cpu_flame.svg"
+</code></pre>
+<h3 id="43-延遲熱點識別"><a class="header" href="#43-延遲熱點識別">4.3 延遲熱點識別</a></h3>
+<pre><code class="language-python"># 分析火焰圖數據，找出延遲熱點
+def analyze_flamegraph_data(folded_file):
+    """
+    解析 folded 格式的火焰圖數據
+    格式: stack;frame1;frame2;frame3 count
+    """
+    hotspots = {}
+    total_samples = 0
+    
+    with open(folded_file, 'r') as f:
+        for line in f:
+            stack, count = line.rsplit(' ', 1)
+            count = int(count)
+            total_samples += count
+            
+            # 提取每個函數的採樣數
+            for func in stack.split(';'):
+                hotspots[func] = hotspots.get(func, 0) + count
+    
+    # 計算百分比並排序
+    sorted_hotspots = sorted(
+        [(func, count, count/total_samples*100) 
+         for func, count in hotspots.items()],
+        key=lambda x: x[1],
+        reverse=True
+    )
+    
+    print("Top 10 CPU Hotspots:")
+    for func, count, percentage in sorted_hotspots[:10]:
+        print(f"{percentage:6.2f}% - {func}")
+</code></pre>
+<hr />
+<h2 id="五進階技巧"><a class="header" href="#五進階技巧">五、進階技巧</a></h2>
+<h3 id="51-自定義顏色方案"><a class="header" href="#51-自定義顏色方案">5.1 自定義顏色方案</a></h3>
+<pre><code class="language-perl"># 修改 flamegraph.pl 的顏色配置
+my %palette = (
+    "hot" =&gt; "rgb(255,0,0)",      # 熱點函數 - 紅色
+    "kernel" =&gt; "rgb(255,128,0)",  # 核心函數 - 橘色  
+    "jit" =&gt; "rgb(255,255,0)",     # JIT 代碼 - 黃色
+    "user" =&gt; "rgb(0,255,0)",      # 用戶代碼 - 綠色
+);
+</code></pre>
+<h3 id="52-過濾和聚焦"><a class="header" href="#52-過濾和聚焦">5.2 過濾和聚焦</a></h3>
+<pre><code class="language-bash"># 只顯示包含特定函數的調用棧
+grep processOrder out.folded | ./flamegraph.pl &gt; order_processing.svg
+
+# 排除某些函數
+grep -v idle out.folded | ./flamegraph.pl &gt; no_idle.svg
+
+# 聚焦特定模組
+./flamegraph.pl --title="Strategy Module" \
+                --minwidth=0.5 \
+                --grep="strategy" \
+                out.folded &gt; strategy_focus.svg
+</code></pre>
+<h3 id="53-即時火焰圖"><a class="header" href="#53-即時火焰圖">5.3 即時火焰圖</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# 即時生成火焰圖（每 10 秒更新）
+
+while true; do
+    perf record -F 99 -p $PID -g -o perf.data -- sleep 10
+    perf script -i perf.data | \
+        ./stackcollapse-perf.pl | \
+        ./flamegraph.pl --title="Real-time $(date +%T)" &gt; realtime.svg
+    
+    # 更新網頁顯示
+    mv realtime.svg /var/www/html/flamegraph.svg
+done
+</code></pre>
+<h3 id="54-與-bpf-結合"><a class="header" href="#54-與-bpf-結合">5.4 與 BPF 結合</a></h3>
+<pre><code class="language-python">#!/usr/bin/python
+# 使用 BPF 生成更精確的火焰圖
+
+from bcc import BPF
+import time
+
+# BPF 程式
+bpf_text = """
+#include &lt;uapi/linux/ptrace.h&gt;
+
+BPF_STACK_TRACE(stack_traces, 10240);
+BPF_HASH(counts, u32);
+
+int do_trace(struct pt_regs *ctx) {
+    u32 pid = bpf_get_current_pid_tgid() &gt;&gt; 32;
+    
+    // 只追蹤特定 PID
+    if (pid != TARGET_PID)
+        return 0;
+    
+    u32 stackid = stack_traces.get_stackid(ctx, BPF_F_USER_STACK);
+    counts.increment(stackid);
+    
+    return 0;
+}
+"""
+
+# 編譯並載入 BPF
+b = BPF(text=bpf_text.replace('TARGET_PID', str(target_pid)))
+b.attach_perf_event(ev_type=PerfType.SOFTWARE,
+                    ev_config=PerfSWConfig.CPU_CLOCK,
+                    fn_name="do_trace",
+                    sample_freq=99)
+
+# 收集數據
+time.sleep(60)
+
+# 生成火焰圖數據
+for k, v in b["counts"].items():
+    stack = b["stack_traces"].lookup(k)
+    # 處理並輸出調用棧...
+</code></pre>
+<hr />
+<h2 id="六優化建議"><a class="header" href="#六優化建議">六、優化建議</a></h2>
+<h3 id="61-採樣頻率選擇"><a class="header" href="#61-採樣頻率選擇">6.1 採樣頻率選擇</a></h3>
+<pre><code class="language-yaml">採樣頻率建議:
+  日常分析: 99 Hz    # 避免與常見定時器頻率共振
+  詳細分析: 999 Hz   # 更高精度，但開銷較大
+  生產環境: 49 Hz    # 最小化性能影響
+  
+計算公式:
+  樣本數 = 採樣頻率 × 採集時間
+  建議最少 1000 個樣本以獲得有意義的結果
+</code></pre>
+<h3 id="62-降低採集開銷"><a class="header" href="#62-降低採集開銷">6.2 降低採集開銷</a></h3>
+<pre><code class="language-bash"># 使用 Intel PT (Processor Trace) - 硬體級追蹤
+perf record -e intel_pt// -p $PID -- sleep 10
+
+# 只採集特定事件
+perf record -e cycles:u -p $PID -- sleep 10  # 只採集用戶空間
+
+# 使用 LBR (Last Branch Record)
+perf record --call-graph lbr -p $PID -- sleep 10
+</code></pre>
+<h3 id="63-高頻交易系統特別優化"><a class="header" href="#63-高頻交易系統特別優化">6.3 高頻交易系統特別優化</a></h3>
+<pre><code class="language-cpp">// 在關鍵路徑添加採樣點
+class PerformanceTracer {
+public:
+    // 使用編譯時開關，生產環境可完全移除
+    #ifdef ENABLE_TRACING
+    #define TRACE_POINT(name) tracer.mark(name)
+    #else
+    #define TRACE_POINT(name) ((void)0)
+    #endif
+    
+    void mark(const char* point) {
+        // 寫入低延遲的環形緩衝區
+        // 避免系統調用
+        ring_buffer.write(rdtsc(), point);
+    }
+};
+
+// 使用範例
+void processOrder(Order&amp; order) {
+    TRACE_POINT("order_received");
+    validateOrder(order);
+    
+    TRACE_POINT("risk_check_start");
+    if (!riskCheck(order)) return;
+    
+    TRACE_POINT("send_to_exchange");
+    exchange.send(order);
+}
+</code></pre>
+<hr />
+<h2 id="七常見問題解析"><a class="header" href="#七常見問題解析">七、常見問題解析</a></h2>
+<h3 id="71-為什麼火焰圖是平的"><a class="header" href="#71-為什麼火焰圖是平的">7.1 為什麼火焰圖是平的？</a></h3>
+<pre><code class="language-yaml">可能原因:
+  1. 採樣頻率太低: 增加到 999 Hz
+  2. 程式太簡單: 沒有深度調用棧
+  3. 內聯優化: 編譯器內聯了函數
+  4. 符號資訊缺失: 需要 -g 編譯選項
+  
+解決方案:
+  - 使用 -fno-omit-frame-pointer 編譯
+  - 確保有調試符號
+  - 增加採樣時間
+</code></pre>
+<h3 id="72-火焰圖太複雜看不懂"><a class="header" href="#72-火焰圖太複雜看不懂">7.2 火焰圖太複雜看不懂</a></h3>
+<pre><code class="language-bash"># 簡化技巧
+# 1. 按模組過濾
+grep -E "strategy|trading" out.folded | ./flamegraph.pl &gt; simplified.svg
+
+# 2. 設定最小寬度閾值
+./flamegraph.pl --minwidth=1 out.folded &gt; cleaner.svg
+
+# 3. 限制棧深度
+awk -F';' 'NF&lt;=10' out.folded | ./flamegraph.pl &gt; shallow.svg
+</code></pre>
+<h3 id="73-如何比較優化前後"><a class="header" href="#73-如何比較優化前後">7.3 如何比較優化前後？</a></h3>
+<pre><code class="language-bash"># 生成差異火焰圖
+# 1. 收集優化前數據
+perf record -o before.data -p $PID -g -- sleep 60
+perf script -i before.data | ./stackcollapse-perf.pl &gt; before.folded
+
+# 2. 部署優化後收集
+perf record -o after.data -p $PID -g -- sleep 60
+perf script -i after.data | ./stackcollapse-perf.pl &gt; after.folded
+
+# 3. 生成差異圖
+./difffolded.pl before.folded after.folded | \
+    ./flamegraph.pl --title="Optimization Diff" --colors=java &gt; diff.svg
+</code></pre>
+<hr />
+<h2 id="八實戰案例"><a class="header" href="#八實戰案例">八、實戰案例</a></h2>
+<h3 id="81-發現記憶體分配熱點"><a class="header" href="#81-發現記憶體分配熱點">8.1 發現記憶體分配熱點</a></h3>
+<pre><code class="language-cpp">// 問題代碼 - 火焰圖顯示 malloc 佔 30% CPU
+void processTickData(const Tick&amp; tick) {
+    // 每次都分配新 vector - 性能問題！
+    std::vector&lt;double&gt; prices;  
+    prices.push_back(tick.bid);
+    prices.push_back(tick.ask);
+    calculate(prices);
+}
+
+// 優化後 - 重用記憶體
+class TickProcessor {
+    std::vector&lt;double&gt; prices_buffer;  // 預分配
+public:
+    void processTickData(const Tick&amp; tick) {
+        prices_buffer.clear();  // 只清空，不釋放
+        prices_buffer.push_back(tick.bid);
+        prices_buffer.push_back(tick.ask);
+        calculate(prices_buffer);
+    }
+};
+</code></pre>
+<h3 id="82-識別鎖競爭"><a class="header" href="#82-識別鎖競爭">8.2 識別鎖競爭</a></h3>
+<pre><code class="language-bash"># Off-CPU 火焰圖能顯示鎖等待時間
+# 如果看到大量 futex_wait，表示鎖競爭嚴重
+
+# 採集 off-CPU 數據
+bpftrace -e '
+tracepoint:sched:sched_switch {
+    if (args-&gt;prev_state == TASK_INTERRUPTIBLE) {
+        @lock_wait[kstack] = sum(nsecs);
+    }
+}'
+</code></pre>
+<hr />
+<h2 id="九整合到-cicd"><a class="header" href="#九整合到-cicd">九、整合到 CI/CD</a></h2>
+<h3 id="91-自動性能回歸測試"><a class="header" href="#91-自動性能回歸測試">9.1 自動性能回歸測試</a></h3>
+<pre><code class="language-yaml"># .github/workflows/performance.yml
+name: Performance Regression Test
+
+on: [push, pull_request]
+
+jobs:
+  perf-test:
+    steps:
+      - name: Run Performance Test
+        run: |
+          ./run_load_test.sh
+          perf record -F 99 -g ./trading_engine_test
+          
+      - name: Generate Flamegraph
+        run: |
+          perf script | ./stackcollapse-perf.pl &gt; out.folded
+          ./flamegraph.pl out.folded &gt; flamegraph.svg
+          
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: flamegraph
+          path: flamegraph.svg
+          
+      - name: Check Performance Regression
+        run: |
+          python check_performance.py --baseline main.folded \
+                                     --current out.folded \
+                                     --threshold 5
+</code></pre>
+<h3 id="92-性能儀表板整合"><a class="header" href="#92-性能儀表板整合">9.2 性能儀表板整合</a></h3>
+<pre><code class="language-javascript">// 將火焰圖嵌入 Grafana
+const FlameGraphPanel = {
+  type: 'html',
+  targets: [{
+    format: 'table',
+    rawSql: `
+      SELECT 
+        timestamp,
+        flamegraph_url
+      FROM performance_tests
+      ORDER BY timestamp DESC
+      LIMIT 1
+    `
+  }],
+  content: '&lt;iframe src="{{flamegraph_url}}" width="100%" height="600"/&gt;'
+};
+</code></pre>
+<hr />
+<h2 id="十簡單程式範例"><a class="header" href="#十簡單程式範例">十、簡單程式範例</a></h2>
+<h3 id="101-cpu-密集型程式範例"><a class="header" href="#101-cpu-密集型程式範例">10.1 CPU 密集型程式範例</a></h3>
+<pre><code class="language-cpp">// cpu_intensive.cpp - 用來練習生成 CPU 火焰圖
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;cmath&gt;
+#include &lt;chrono&gt;
+
+// 故意寫效率差的質數判斷（教學用）
+bool is_prime_slow(int n) {
+    if (n &lt;= 1) return false;
+    for (int i = 2; i &lt; n; i++) {  // 故意不優化到 sqrt(n)
+        if (n % i == 0) return false;
+    }
+    return true;
+}
+
+// 稍微優化的版本
+bool is_prime_better(int n) {
+    if (n &lt;= 1) return false;
+    if (n &lt;= 3) return true;
+    if (n % 2 == 0 || n % 3 == 0) return false;
+    
+    for (int i = 5; i * i &lt;= n; i += 6) {
+        if (n % i == 0 || n % (i + 2) == 0)
+            return false;
+    }
+    return true;
+}
+
+// 計算費波那契數列（遞迴版本 - 效率差）
+long fibonacci_recursive(int n) {
+    if (n &lt;= 1) return n;
+    return fibonacci_recursive(n - 1) + fibonacci_recursive(n - 2);
+}
+
+// 矩陣運算（會顯示在火焰圖中）
+void matrix_multiply(std::vector&lt;std::vector&lt;int&gt;&gt;&amp; A,
+                     std::vector&lt;std::vector&lt;int&gt;&gt;&amp; B,
+                     std::vector&lt;std::vector&lt;int&gt;&gt;&amp; C) {
+    int n = A.size();
+    for (int i = 0; i &lt; n; i++) {
+        for (int j = 0; j &lt; n; j++) {
+            C[i][j] = 0;
+            for (int k = 0; k &lt; n; k++) {
+                C[i][j] += A[i][k] * B[k][j];
+            }
+        }
+    }
+}
+
+int main() {
+    std::cout &lt;&lt; "Starting CPU intensive tasks...\n";
+    
+    // 任務 1: 找質數（預期佔 40% CPU）
+    std::cout &lt;&lt; "Task 1: Finding primes...\n";
+    int prime_count = 0;
+    for (int i = 1; i &lt;= 50000; i++) {
+        if (is_prime_slow(i)) prime_count++;
+    }
+    std::cout &lt;&lt; "Found " &lt;&lt; prime_count &lt;&lt; " primes\n";
+    
+    // 任務 2: 費波那契（預期佔 30% CPU）
+    std::cout &lt;&lt; "Task 2: Computing Fibonacci...\n";
+    for (int i = 1; i &lt;= 35; i++) {
+        fibonacci_recursive(i);
+    }
+    
+    // 任務 3: 矩陣運算（預期佔 30% CPU）
+    std::cout &lt;&lt; "Task 3: Matrix multiplication...\n";
+    int size = 200;
+    std::vector&lt;std::vector&lt;int&gt;&gt; A(size, std::vector&lt;int&gt;(size, 1));
+    std::vector&lt;std::vector&lt;int&gt;&gt; B(size, std::vector&lt;int&gt;(size, 2));
+    std::vector&lt;std::vector&lt;int&gt;&gt; C(size, std::vector&lt;int&gt;(size, 0));
+    
+    for (int i = 0; i &lt; 10; i++) {
+        matrix_multiply(A, B, C);
+    }
+    
+    std::cout &lt;&lt; "All tasks completed!\n";
+    return 0;
+}
+</code></pre>
+<p><strong>編譯和生成火焰圖：</strong></p>
+<pre><code class="language-bash"># 編譯（保留符號資訊和框架指標）
+g++ -g -O2 -fno-omit-frame-pointer cpu_intensive.cpp -o cpu_intensive
+
+# 執行並收集性能數據
+./cpu_intensive &amp;
+PID=$!
+sleep 1  # 等程式開始
+perf record -F 99 -p $PID -g -- sleep 10
+
+# 生成火焰圖
+perf script | ./stackcollapse-perf.pl | ./flamegraph.pl &gt; cpu_intensive.svg
+
+# 預期結果：
+# - is_prime_slow() 佔約 40% 寬度
+# - fibonacci_recursive() 佔約 30% 寬度（且調用棧很深）
+# - matrix_multiply() 佔約 30% 寬度
+</code></pre>
+<h3 id="102-記憶體分配範例"><a class="header" href="#102-記憶體分配範例">10.2 記憶體分配範例</a></h3>
+<pre><code class="language-cpp">// memory_allocation.cpp - 用來練習生成 Memory 火焰圖
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;list&gt;
+#include &lt;memory&gt;
+#include &lt;cstring&gt;
+
+// 問題 1：頻繁的小記憶體分配
+void frequent_small_allocations() {
+    for (int i = 0; i &lt; 100000; i++) {
+        // 每次都 new 一個小物件（反面教材）
+        int* p = new int(i);
+        // 做一些計算
+        *p = *p * 2;
+        delete p;
+    }
+}
+
+// 問題 2：vector 不當使用導致多次重新分配
+void vector_reallocation_problem() {
+    std::vector&lt;int&gt; vec;
+    // 沒有 reserve，導致多次重新分配
+    for (int i = 0; i &lt; 100000; i++) {
+        vec.push_back(i);  // 可能觸發重新分配
+    }
+}
+
+// 問題 3：字串拼接的記憶體問題
+void string_concatenation_problem() {
+    std::string result;
+    for (int i = 0; i &lt; 10000; i++) {
+        // 每次 += 可能導致重新分配
+        result += "Hello World ";
+    }
+}
+
+// 優化版本：使用物件池
+class ObjectPool {
+    std::vector&lt;int*&gt; pool;
+    std::vector&lt;int*&gt; available;
+    
+public:
+    ObjectPool(size_t size) {
+        for (size_t i = 0; i &lt; size; i++) {
+            int* obj = new int(0);
+            pool.push_back(obj);
+            available.push_back(obj);
+        }
+    }
+    
+    int* acquire() {
+        if (available.empty()) {
+            return new int(0);
+        }
+        int* obj = available.back();
+        available.pop_back();
+        return obj;
+    }
+    
+    void release(int* obj) {
+        available.push_back(obj);
+    }
+    
+    ~ObjectPool() {
+        for (auto* obj : pool) {
+            delete obj;
+        }
+    }
+};
+
+void optimized_with_pool() {
+    ObjectPool pool(1000);
+    
+    for (int i = 0; i &lt; 100000; i++) {
+        int* p = pool.acquire();
+        *p = i * 2;
+        pool.release(p);
+    }
+}
+
+int main() {
+    std::cout &lt;&lt; "Starting memory allocation tests...\n";
+    
+    // 執行有問題的版本
+    std::cout &lt;&lt; "Running problematic versions...\n";
+    frequent_small_allocations();
+    vector_reallocation_problem();
+    string_concatenation_problem();
+    
+    // 執行優化版本
+    std::cout &lt;&lt; "Running optimized version...\n";
+    optimized_with_pool();
+    
+    std::cout &lt;&lt; "Completed!\n";
+    return 0;
+}
+</code></pre>
+<p><strong>追蹤記憶體分配：</strong></p>
+<pre><code class="language-bash"># 使用 heaptrack（更適合記憶體分析）
+heaptrack ./memory_allocation
+heaptrack --analyze heaptrack.memory_allocation.*.gz
+
+# 或使用 perf
+perf record -e kmem:kmalloc -g ./memory_allocation
+perf script | ./stackcollapse-perf.pl | ./flamegraph.pl &gt; memory.svg
+</code></pre>
+<h3 id="103-多執行緒與鎖競爭範例"><a class="header" href="#103-多執行緒與鎖競爭範例">10.3 多執行緒與鎖競爭範例</a></h3>
+<pre><code class="language-cpp">// lock_contention.cpp - 用來練習生成 Off-CPU 火焰圖
+#include &lt;iostream&gt;
+#include &lt;thread&gt;
+#include &lt;mutex&gt;
+#include &lt;vector&gt;
+#include &lt;atomic&gt;
+#include &lt;chrono&gt;
+
+std::mutex global_mutex;
+std::atomic&lt;long&gt; shared_counter(0);
+
+// 問題：過度使用全域鎖
+void bad_locking_thread(int thread_id) {
+    for (int i = 0; i &lt; 100000; i++) {
+        // 鎖的粒度太大
+        std::lock_guard&lt;std::mutex&gt; lock(global_mutex);
+        
+        // 在鎖裡面做太多事情
+        int local_computation = 0;
+        for (int j = 0; j &lt; 100; j++) {
+            local_computation += j * thread_id;
+        }
+        shared_counter += local_computation;
+    }
+}
+
+// 優化：減少鎖的粒度
+void better_locking_thread(int thread_id) {
+    for (int i = 0; i &lt; 100000; i++) {
+        // 先在鎖外面計算
+        int local_computation = 0;
+        for (int j = 0; j &lt; 100; j++) {
+            local_computation += j * thread_id;
+        }
+        
+        // 只在必要時加鎖
+        std::lock_guard&lt;std::mutex&gt; lock(global_mutex);
+        shared_counter += local_computation;
+    }
+}
+
+// 最優：使用原子操作
+void atomic_thread(int thread_id) {
+    for (int i = 0; i &lt; 100000; i++) {
+        int local_computation = 0;
+        for (int j = 0; j &lt; 100; j++) {
+            local_computation += j * thread_id;
+        }
+        
+        // 使用原子操作代替鎖
+        shared_counter.fetch_add(local_computation, std::memory_order_relaxed);
+    }
+}
+
+int main(int argc, char* argv[]) {
+    const int num_threads = 8;
+    std::vector&lt;std::thread&gt; threads;
+    
+    std::string mode = (argc &gt; 1) ? argv[1] : "bad";
+    
+    auto start = std::chrono::high_resolution_clock::now();
+    
+    if (mode == "bad") {
+        std::cout &lt;&lt; "Running with bad locking...\n";
+        for (int i = 0; i &lt; num_threads; i++) {
+            threads.emplace_back(bad_locking_thread, i);
+        }
+    } else if (mode == "better") {
+        std::cout &lt;&lt; "Running with better locking...\n";
+        for (int i = 0; i &lt; num_threads; i++) {
+            threads.emplace_back(better_locking_thread, i);
+        }
+    } else {
+        std::cout &lt;&lt; "Running with atomic operations...\n";
+        for (int i = 0; i &lt; num_threads; i++) {
+            threads.emplace_back(atomic_thread, i);
+        }
+    }
+    
+    for (auto&amp; t : threads) {
+        t.join();
+    }
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(end - start);
+    
+    std::cout &lt;&lt; "Result: " &lt;&lt; shared_counter &lt;&lt; std::endl;
+    std::cout &lt;&lt; "Time: " &lt;&lt; duration.count() &lt;&lt; " ms" &lt;&lt; std::endl;
+    
+    return 0;
+}
+</code></pre>
+<p><strong>生成 Off-CPU 火焰圖查看鎖等待：</strong></p>
+<pre><code class="language-bash"># 編譯
+g++ -g -O2 -pthread -fno-omit-frame-pointer lock_contention.cpp -o lock_contention
+
+# 使用 bpftrace 追蹤 off-CPU 時間
+sudo bpftrace -e '
+tracepoint:sched:sched_switch {
+    @start[tid] = nsecs;
+}
+
+tracepoint:sched:sched_switch {
+    $duration = nsecs - @start[tid];
+    @offcpu[kstack, ustack, comm] = sum($duration);
+    delete(@start[tid]);
+}
+
+END {
+    clear(@start);
+}' &gt; offcpu.txt
+
+# 運行三種模式比較
+./lock_contention bad    # 會看到大量 mutex 等待
+./lock_contention better # mutex 等待減少
+./lock_contention atomic # 幾乎沒有等待
+</code></pre>
+<h3 id="104-高頻交易模擬範例"><a class="header" href="#104-高頻交易模擬範例">10.4 高頻交易模擬範例</a></h3>
+<pre><code class="language-cpp">// hft_simulation.cpp - 模擬高頻交易系統的關鍵路徑
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;deque&gt;
+#include &lt;algorithm&gt;
+#include &lt;random&gt;
+#include &lt;chrono&gt;
+#include &lt;cstring&gt;
+
+struct MarketData {
+    double bid;
+    double ask;
+    long timestamp;
+    int volume;
+};
+
+struct Order {
+    enum Type { BUY, SELL };
+    Type type;
+    double price;
+    int quantity;
+    long timestamp;
+};
+
+class OrderBook {
+private:
+    std::deque&lt;Order&gt; bids;
+    std::deque&lt;Order&gt; asks;
+    
+public:
+    // 這個函數會在火焰圖中顯示為熱點
+    void update(const MarketData&amp; data) {
+        // 模擬訂單簿更新（簡化版）
+        Order bid_order = {Order::BUY, data.bid, data.volume, data.timestamp};
+        Order ask_order = {Order::SELL, data.ask, data.volume, data.timestamp};
+        
+        // 插入排序（實際系統會用更高效的資料結構）
+        bids.push_back(bid_order);
+        std::sort(bids.begin(), bids.end(), 
+                  [](const Order&amp; a, const Order&amp; b) { 
+                      return a.price &gt; b.price; 
+                  });
+        
+        asks.push_back(ask_order);
+        std::sort(asks.begin(), asks.end(),
+                  [](const Order&amp; a, const Order&amp; b) { 
+                      return a.price &lt; b.price; 
+                  });
+        
+        // 限制深度
+        if (bids.size() &gt; 100) bids.resize(100);
+        if (asks.size() &gt; 100) asks.resize(100);
+    }
+    
+    double get_mid_price() const {
+        if (bids.empty() || asks.empty()) return 0;
+        return (bids.front().price + asks.front().price) / 2.0;
+    }
+};
+
+class TradingStrategy {
+private:
+    std::vector&lt;double&gt; price_history;
+    const size_t window_size = 20;
+    
+public:
+    // 簡單的均值回歸策略（會佔用 CPU）
+    Order* generate_signal(const OrderBook&amp; book) {
+        double mid_price = book.get_mid_price();
+        price_history.push_back(mid_price);
+        
+        if (price_history.size() &lt; window_size) {
+            return nullptr;
+        }
+        
+        // 計算移動平均（這裡會顯示在火焰圖中）
+        double sum = 0;
+        for (size_t i = price_history.size() - window_size; 
+             i &lt; price_history.size(); i++) {
+            sum += price_history[i];
+        }
+        double ma = sum / window_size;
+        
+        // 計算標準差（另一個熱點）
+        double variance = 0;
+        for (size_t i = price_history.size() - window_size; 
+             i &lt; price_history.size(); i++) {
+            double diff = price_history[i] - ma;
+            variance += diff * diff;
+        }
+        double std_dev = std::sqrt(variance / window_size);
+        
+        // 簡單的交易信號
+        if (mid_price &lt; ma - 2 * std_dev) {
+            return new Order{Order::BUY, mid_price, 100, 0};
+        } else if (mid_price &gt; ma + 2 * std_dev) {
+            return new Order{Order::SELL, mid_price, 100, 0};
+        }
+        
+        return nullptr;
+    }
+};
+
+class RiskManager {
+private:
+    double max_position = 10000;
+    double current_position = 0;
+    double max_loss = -1000;
+    double current_pnl = 0;
+    
+public:
+    // 風控檢查（關鍵路徑，需要極快）
+    bool check_order(const Order* order) {
+        if (!order) return true;
+        
+        // 檢查持倉限制
+        double position_change = (order-&gt;type == Order::BUY) ? 
+                                order-&gt;quantity : -order-&gt;quantity;
+        
+        if (std::abs(current_position + position_change) &gt; max_position) {
+            return false;
+        }
+        
+        // 檢查損失限制
+        if (current_pnl &lt; max_loss) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    void update_position(const Order* order) {
+        if (!order) return;
+        
+        double position_change = (order-&gt;type == Order::BUY) ? 
+                                order-&gt;quantity : -order-&gt;quantity;
+        current_position += position_change;
+    }
+};
+
+// 主要的交易循環
+void trading_loop(int num_ticks) {
+    OrderBook book;
+    TradingStrategy strategy;
+    RiskManager risk;
+    
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution&lt;&gt; price_dist(99.0, 101.0);
+    std::uniform_int_distribution&lt;&gt; volume_dist(100, 1000);
+    
+    auto start = std::chrono::high_resolution_clock::now();
+    
+    for (int i = 0; i &lt; num_ticks; i++) {
+        // 生成模擬市場數據
+        MarketData data;
+        data.bid = price_dist(gen);
+        data.ask = data.bid + 0.01;
+        data.volume = volume_dist(gen);
+        data.timestamp = std::chrono::duration_cast&lt;std::chrono::microseconds&gt;(
+            std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        
+        // 關鍵路徑開始 &gt;&gt;&gt;
+        
+        // 1. 更新訂單簿（預期 30% CPU）
+        book.update(data);
+        
+        // 2. 生成交易信號（預期 40% CPU）
+        Order* signal = strategy.generate_signal(book);
+        
+        // 3. 風控檢查（預期 10% CPU）
+        if (risk.check_order(signal)) {
+            // 4. 發送訂單（預期 20% CPU）
+            risk.update_position(signal);
+            // 實際系統這裡會發送到交易所
+        }
+        
+        delete signal;
+        
+        // &lt;&lt;&lt; 關鍵路徑結束
+    }
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast&lt;std::chrono::microseconds&gt;(end - start);
+    
+    double latency_per_tick = static_cast&lt;double&gt;(duration.count()) / num_ticks;
+    std::cout &lt;&lt; "Processed " &lt;&lt; num_ticks &lt;&lt; " ticks\n";
+    std::cout &lt;&lt; "Average latency: " &lt;&lt; latency_per_tick &lt;&lt; " microseconds/tick\n";
+}
+
+int main() {
+    std::cout &lt;&lt; "Starting HFT simulation...\n";
+    
+    // 預熱
+    trading_loop(1000);
+    
+    // 主要測試
+    std::cout &lt;&lt; "Running main test...\n";
+    trading_loop(1000000);
+    
+    return 0;
+}
+</code></pre>
+<p><strong>生成高頻交易系統的火焰圖：</strong></p>
+<pre><code class="language-bash"># 編譯（開啟優化但保留調試資訊）
+g++ -g -O3 -march=native -fno-omit-frame-pointer hft_simulation.cpp -o hft_sim
+
+# 運行並收集數據
+./hft_sim &amp;
+PID=$!
+
+# 等待程式進入主循環
+sleep 2
+
+# 收集 30 秒的性能數據（高採樣率）
+sudo perf record -F 999 -p $PID -g -- sleep 30
+
+# 生成火焰圖
+sudo perf script | ./stackcollapse-perf.pl | \
+    ./flamegraph.pl --title="HFT System Flame Graph" \
+                    --subtitle="1000 Hz sampling" \
+                    --width=1800 &gt; hft_flame.svg
+
+# 預期在火焰圖中看到：
+# - OrderBook::update() 約 30% 寬度
+# - TradingStrategy::generate_signal() 約 40% 寬度
+#   - 其中計算移動平均和標準差是主要熱點
+# - RiskManager::check_order() 約 10% 寬度
+# - 其他（包括記憶體操作等）約 20% 寬度
+</code></pre>
+<h3 id="105-生成對比火焰圖的腳本"><a class="header" href="#105-生成對比火焰圖的腳本">10.5 生成對比火焰圖的腳本</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# compare_performance.sh - 對比優化前後的性能
+
+# 顏色定義
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+echo -e "${GREEN}Performance Comparison Script${NC}"
+
+# 編譯兩個版本
+echo "Compiling baseline version..."
+g++ -g -O2 -fno-omit-frame-pointer -DBASELINE cpu_intensive.cpp -o baseline
+
+echo "Compiling optimized version..."
+g++ -g -O3 -march=native -fno-omit-frame-pointer cpu_intensive.cpp -o optimized
+
+# 收集基準版本數據
+echo -e "${RED}Collecting baseline performance data...${NC}"
+./baseline &amp;
+PID=$!
+sleep 1
+perf record -F 99 -p $PID -g -o baseline.data -- sleep 10
+wait $PID
+
+# 收集優化版本數據
+echo -e "${GREEN}Collecting optimized performance data...${NC}"
+./optimized &amp;
+PID=$!
+sleep 1
+perf record -F 99 -p $PID -g -o optimized.data -- sleep 10
+wait $PID
+
+# 生成火焰圖
+echo "Generating flame graphs..."
+perf script -i baseline.data | ./stackcollapse-perf.pl &gt; baseline.folded
+perf script -i optimized.data | ./stackcollapse-perf.pl &gt; optimized.folded
+
+# 生成單獨的火焰圖
+./flamegraph.pl baseline.folded &gt; baseline.svg
+./flamegraph.pl optimized.folded &gt; optimized.svg
+
+# 生成對比火焰圖
+./difffolded.pl baseline.folded optimized.folded | \
+    ./flamegraph.pl --title="Optimization Comparison" \
+                    --subtitle="Red = Slower, Blue = Faster" \
+                    --colors=java &gt; diff.svg
+
+echo "Generated files:"
+echo "  - baseline.svg (baseline performance)"
+echo "  - optimized.svg (optimized performance)"
+echo "  - diff.svg (performance difference)"
+
+# 簡單的性能統計
+echo -e "\n${GREEN}Performance Summary:${NC}"
+echo -n "Baseline samples: "
+awk '{sum+=$NF} END {print sum}' baseline.folded
+echo -n "Optimized samples: "
+awk '{sum+=$NF} END {print sum}' optimized.folded
+
+# 找出最大的改進
+echo -e "\n${GREEN}Top improvements:${NC}"
+./difffolded.pl baseline.folded optimized.folded | \
+    sort -t' ' -k2 -nr | head -5
+</code></pre>
+<p>這些範例程式涵蓋了：</p>
+<ul>
+<li><strong>CPU 密集型</strong>：質數計算、遞迴、矩陣運算</li>
+<li><strong>記憶體問題</strong>：頻繁分配、vector 重分配、物件池優化</li>
+<li><strong>多執行緒</strong>：鎖競爭、原子操作優化</li>
+<li><strong>高頻交易模擬</strong>：完整的交易路徑</li>
+<li><strong>自動化對比</strong>：優化前後的性能比較腳本</li>
+</ul>
+<p>每個範例都有詳細的編譯和執行指令，以及預期在火焰圖中看到的結果。</p>
+<h2 id="十一總結與最佳實踐"><a class="header" href="#十一總結與最佳實踐">十一、總結與最佳實踐</a></h2>
+<h3 id="關鍵要點"><a class="header" href="#關鍵要點">關鍵要點</a></h3>
+<ol>
+<li><strong>火焰圖是性能優化的 X 光片</strong> - 能快速定位熱點</li>
+<li><strong>寬度比高度重要</strong> - 寬的函數才是優化目標</li>
+<li><strong>不同類型解決不同問題</strong> - CPU/Memory/Off-CPU 各有用途</li>
+<li><strong>採樣要有代表性</strong> - 確保覆蓋典型工作負載</li>
+<li><strong>結合其他工具使用</strong> - perf、BPF、VTune 等</li>
+</ol>
+<h3 id="高頻交易場景注意事項"><a class="header" href="#高頻交易場景注意事項">高頻交易場景注意事項</a></h3>
+<ul>
+<li>使用硬體時間戳（TSC）提高精度</li>
+<li>區分熱路徑和冷路徑的優化優先級</li>
+<li>關注尾延遲（P99.9）而非平均值</li>
+<li>定期生成火焰圖，追蹤性能變化趨勢</li>
+<li>在測試環境模擬生產負載</li>
+</ul>
+<h3 id="進一步學習資源"><a class="header" href="#進一步學習資源">進一步學習資源</a></h3>
+<ul>
+<li><a href="http://www.brendangregg.com/flamegraphs.html">Brendan Gregg's Blog</a></li>
+<li><a href="http://www.brendangregg.com/perf.html">Linux Perf Examples</a></li>
+<li><a href="https://github.com/iovisor/bcc">BPF Performance Tools</a></li>
+<li><a href="https://software.intel.com/content/www/us/en/develop/tools/vtune-profiler.html">Intel VTune Profiler</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tools/function-tracing-cpp-rust.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../tools/solana_token_guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tools/function-tracing-cpp-rust.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../tools/solana_token_guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
