@@ -1,37 +1,37 @@
-# API Performance Testing Suite
+# API 效能測試套件
 
-This project compares the performance of three different async HTTP clients (Python, C++, Rust) connecting to a Rust-based API server.
+本專案比較三種不同的非同步 HTTP 客戶端（Python、C++、Rust）連接到基於 Rust 的 API 伺服器的效能表現。
 
-## Project Structure
+## 專案結構
 
 ```
 test_api_server/
-├── rust-api-server/    # Rust API server using Axum
-├── rust-client/        # Rust async client using reqwest + tokio
-├── python_client.py    # Python async client using aiohttp
-├── cpp_client.cpp      # C++ async client using libcurl
-├── CMakeLists.txt      # C++ build configuration
-└── run_benchmark.sh    # Automated benchmark script
+├── rust-api-server/    # 使用 Axum 的 Rust API 伺服器
+├── rust-client/        # 使用 reqwest + tokio 的 Rust 非同步客戶端
+├── python_client.py    # 使用 aiohttp 的 Python 非同步客戶端
+├── cpp_client.cpp      # 使用 libcurl 的 C++ 非同步客戶端
+├── CMakeLists.txt      # C++ 建構設定
+└── run_benchmark.sh    # 自動化基準測試腳本
 ```
 
-## Features
+## 功能特色
 
-- **Rust API Server**: High-performance async server built with Axum and Tokio
-- **Three Client Implementations**:
-  - Python with aiohttp (async/await)
-  - C++ with libcurl and std::async
-  - Rust with reqwest and tokio
-- **Latency Tracking**: Measures network round-trip time and server processing time
-- **Performance Metrics**: Throughput, latency percentiles (P50, P90, P95, P99)
+- **Rust API 伺服器**：使用 Axum 和 Tokio 建構的高效能非同步伺服器
+- **三種客戶端實作**：
+  - Python 使用 aiohttp (async/await)
+  - C++ 使用 libcurl 和 std::async
+  - Rust 使用 reqwest 和 tokio
+- **延遲追蹤**：測量網路往返時間和伺服器處理時間
+- **效能指標**：吞吐量、延遲百分位數（P50、P90、P95、P99）
 
-## Prerequisites
+## 系統需求
 
-### System Requirements
-- Linux/macOS (tested on Ubuntu 20.04+)
-- 4+ CPU cores recommended
-- 8GB+ RAM recommended
+### 系統需求
+- Linux/macOS（已在 Ubuntu 20.04+ 上測試）
+- 建議 4 個以上 CPU 核心
+- 建議 8GB 以上記憶體
 
-### Software Dependencies
+### 軟體相依套件
 
 #### Rust
 ```bash
@@ -52,47 +52,47 @@ sudo apt-get install build-essential cmake libcurl4-openssl-dev
 brew install cmake curl
 ```
 
-## Quick Start
+## 快速開始
 
-### 1. Start the API Server
+### 1. 啟動 API 伺服器
 ```bash
 cd rust-api-server
 cargo run --release
 ```
-The server will start on `http://localhost:8080`
+伺服器將在 `http://localhost:8080` 上啟動
 
-### 2. Run Individual Clients
+### 2. 執行個別客戶端
 
-#### Python Client
+#### Python 客戶端
 ```bash
 python3 python_client.py --orders 1000 --connections 100 --warmup 100
 ```
 
-#### C++ Client
+#### C++ 客戶端
 ```bash
 mkdir build && cd build
 cmake .. && make
 ./cpp_client 1000 100 100
 ```
 
-#### Rust Client
+#### Rust 客戶端
 ```bash
 cd rust-client
 cargo run --release -- --orders 1000 --connections 100 --warmup 100
 ```
 
-### 3. Run Automated Benchmark
+### 3. 執行自動化基準測試
 ```bash
 chmod +x run_benchmark.sh
 ./run_benchmark.sh
 ```
 
-## API Endpoints
+## API 端點
 
 ### POST /order
-Submit a trading order with timestamp tracking.
+提交帶有時間戳記追蹤的交易訂單。
 
-Request:
+請求：
 ```json
 {
   "order_id": "ORDER_001",
@@ -104,7 +104,7 @@ Request:
 }
 ```
 
-Response:
+回應：
 ```json
 {
   "order_id": "ORDER_001",
@@ -116,9 +116,9 @@ Response:
 ```
 
 ### GET /stats
-Get server performance statistics.
+取得伺服器效能統計資料。
 
-Response:
+回應：
 ```json
 {
   "total_orders": 5000,
@@ -127,57 +127,57 @@ Response:
 }
 ```
 
-## Performance Metrics Explained
+## 效能指標說明
 
-- **Round-trip Latency**: Total time from client request to response
-- **Server Latency**: Time difference between client and server timestamps
-- **Throughput**: Orders processed per second
-- **Percentiles**: P50 (median), P90, P95, P99 latency distribution
+- **往返延遲**：從客戶端請求到回應的總時間
+- **伺服器延遲**：客戶端和伺服器時間戳記之間的時間差
+- **吞吐量**：每秒處理的訂單數
+- **百分位數**：P50（中位數）、P90、P95、P99 延遲分佈
 
-## Tuning Parameters
+## 調校參數
 
-### Client Configuration
-- `--orders`: Total number of orders to send
-- `--connections`: Number of concurrent connections
-- `--warmup`: Number of warmup orders (not counted in stats)
+### 客戶端設定
+- `--orders`：要傳送的訂單總數
+- `--connections`：並行連線數
+- `--warmup`：暖身訂單數（不計入統計）
 
-### Server Configuration
-Edit `rust-api-server/src/main.rs` to adjust:
-- Port number (default: 8080)
-- Logging level
-- CORS settings
+### 伺服器設定
+編輯 `rust-api-server/src/main.rs` 來調整：
+- 連接埠號（預設：8080）
+- 日誌層級
+- CORS 設定
 
-## Expected Results
+## 預期結果
 
-Typical performance on a modern system (Intel i7, 16GB RAM):
+在現代系統上的典型效能（Intel i7、16GB RAM）：
 
-| Client | Throughput (orders/sec) | P50 Latency (ms) | P99 Latency (ms) |
-|--------|-------------------------|------------------|------------------|
-| Rust   | 15,000-20,000          | 5-10             | 20-30            |
-| Python | 5,000-8,000            | 15-25            | 50-80            |
-| C++    | 10,000-15,000          | 8-15             | 30-50            |
+| 客戶端 | 吞吐量 (訂單/秒) | P50 延遲 (毫秒) | P99 延遲 (毫秒) |
+|--------|-----------------|----------------|----------------|
+| Rust   | 15,000-20,000   | 5-10           | 20-30          |
+| Python | 5,000-8,000     | 15-25          | 50-80          |
+| C++    | 10,000-15,000   | 8-15           | 30-50          |
 
-*Results vary based on system specifications and load*
+*結果會因系統規格和負載而異*
 
-## Troubleshooting
+## 疑難排解
 
-### Server won't start
-- Check if port 8080 is already in use: `lsof -i :8080`
-- Kill existing process: `kill -9 <PID>`
+### 伺服器無法啟動
+- 檢查連接埠 8080 是否已被使用：`lsof -i :8080`
+- 終止現有程序：`kill -9 <PID>`
 
-### C++ client compilation errors
-- Ensure libcurl-dev is installed
-- Check CMake version: `cmake --version` (need 3.10+)
+### C++ 客戶端編譯錯誤
+- 確保已安裝 libcurl-dev
+- 檢查 CMake 版本：`cmake --version`（需要 3.10+）
 
-### Python client errors
-- Install aiohttp: `pip install aiohttp`
-- Check Python version: `python3 --version` (need 3.7+)
+### Python 客戶端錯誤
+- 安裝 aiohttp：`pip install aiohttp`
+- 檢查 Python 版本：`python3 --version`（需要 3.7+）
 
-### Low performance
-- Run server in release mode: `cargo run --release`
-- Increase file descriptor limits: `ulimit -n 65536`
-- Check CPU governor: `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor`
+### 效能低落
+- 以 release 模式執行伺服器：`cargo run --release`
+- 增加檔案描述符限制：`ulimit -n 65536`
+- 檢查 CPU 調速器：`cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor`
 
-## License
+## 授權
 
 MIT
