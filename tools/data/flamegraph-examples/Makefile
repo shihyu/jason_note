@@ -121,19 +121,28 @@ flamegraph-cpu: cpu_intensive install-flamegraph
 	@echo "正在生成 CPU 火焰圖..."
 	@mkdir -p flamegraphs
 	@echo "注意：需要 perf 工具，可能需要 sudo 權限"
-	@# 啟動程式並在背景執行
-	@./cpu_intensive & PID=$$!; \
-	sleep 1; \
-	# 使用 perf 收集效能數據（採樣頻率 99Hz，持續 5 秒）
-	perf record -F 99 -p $$PID -g -o flamegraphs/cpu.data -- sleep 5 2>/dev/null || \
-		(echo "需要 sudo 權限執行 perf" && sudo perf record -F 99 -p $$PID -g -o flamegraphs/cpu.data -- sleep 5); \
-	wait $$PID; \
-	# 將 perf 數據轉換為火焰圖格式
-	perf script -i flamegraphs/cpu.data 2>/dev/null | \
+	@# 使用循環執行程式多次，確保有足夠的時間收集數據
+	@(for i in 1 2 3 4 5; do ./cpu_intensive; done) & PID=$$!; \
+	sleep 0.5; \
+	echo "開始收集效能數據 (PID: $$PID)..."; \
+	echo "2lraroai" | sudo -S /usr/lib/linux-tools-6.8.0-79/perf record -F 99 -p $$PID -g -o flamegraphs/cpu.data -- sleep 10 2>&1 | grep -v "WARNING\|You may" || true; \
+	kill $$PID 2>/dev/null || true; \
+	wait $$PID 2>/dev/null || true; \
+	echo "2lraroai" | sudo -S chown $$(whoami):$$(whoami) flamegraphs/cpu.data 2>/dev/null; \
+	if [ ! -f flamegraphs/cpu.data ] || [ ! -s flamegraphs/cpu.data ]; then \
+		echo "錯誤：perf 數據收集失敗"; \
+		exit 1; \
+	fi; \
+	echo "轉換 perf 數據..."; \
+	/usr/lib/linux-tools-6.8.0-79/perf script -i flamegraphs/cpu.data | \
 		./FlameGraph/stackcollapse-perf.pl > flamegraphs/cpu.folded; \
-	# 生成 SVG 火焰圖
+	if [ ! -s flamegraphs/cpu.folded ]; then \
+		echo "錯誤：堆疊數據轉換失敗"; \
+		exit 1; \
+	fi; \
+	echo "生成 SVG 火焰圖..."; \
 	./FlameGraph/flamegraph.pl \
-		--title="CPU 密集型程式火焰圖" \
+		--title="CPU Intensive Program Flamegraph" \
 		--width=1400 \
 		flamegraphs/cpu.folded > flamegraphs/cpu.svg
 	@echo "✓ 火焰圖已儲存至 flamegraphs/cpu.svg"
