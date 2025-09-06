@@ -117,7 +117,9 @@ async fn place_order(
     Json(order): Json<OrderRequest>,
 ) -> Result<Json<OrderResponse>, StatusCode> {
     let server_timestamp = Utc::now();
-    let latency_ms = (server_timestamp - order.client_timestamp).num_milliseconds() as f64;
+    let latency_ms = (server_timestamp - order.client_timestamp).num_microseconds()
+        .map(|us| us as f64 / 1000.0)
+        .unwrap_or(0.0);
     
     let mut count = state.order_count.lock().await;
     *count += 1;
