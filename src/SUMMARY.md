@@ -302,6 +302,7 @@
 
 ## Quantitative Trading
 - [Strategy](strategy/bollmaker.md)
+    - [工作效率與投資策略指南](strategy/productivity_investment_guide.md)
     - [造市](strategy/造市/market_market.md)
     - [臺指](strategy/tw_futures.md)
     - [套利](strategy/arbitrage.md)
@@ -360,6 +361,7 @@
     - [投資投機的觀念與心得分享](strategy/投資投機的觀念與心得分享.md)
     - [Finlab](strategy/finlab.md)
     - [韭菜的自我修養核心要點](strategy/韭菜的自我修養核心要點.md)
+    - [會計師「低價存股術」核心技巧總覽](strategy/會計師「低價存股術」核心技巧總覽.md)
     - [新世代是怎麼被收割的?](strategy/新世代收割術-經濟結構分析.md)
     - [FinLab 搭配 Phaibus 避險](strategy/finlab_phaibus_guide.md)
     - [Backtrader](strategy/backtrader/basis.md)
