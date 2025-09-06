@@ -14,6 +14,52 @@
 using json = nlohmann::json;
 using namespace std::chrono;
 
+enum class BSAction {
+    Buy,
+    Sell
+};
+
+enum class MarketType {
+    Common,
+    Warrant,
+    OddLot,
+    Daytime,
+    FixedPrice,
+    PlaceFirst
+};
+
+enum class PriceType {
+    Limit,
+    Market,
+    LimitUp,
+    LimitDown,
+    Range
+};
+
+enum class TimeInForce {
+    ROD,
+    IOC,
+    FOK
+};
+
+enum class OrderType {
+    Stock,
+    Futures,
+    Option
+};
+
+struct Order {
+    BSAction buy_sell;
+    int symbol;
+    double price;
+    int quantity;
+    MarketType market_type;
+    PriceType price_type;
+    TimeInForce time_in_force;
+    OrderType order_type;
+    std::string user_def;
+};
+
 class AsyncOrderClient {
 private:
     std::string base_url;
@@ -36,6 +82,51 @@ private:
         ss << std::put_time(std::gmtime(&time_t), "%Y-%m-%dT%H:%M:%S");
         ss << '.' << std::setfill('0') << std::setw(3) << ms.count() << 'Z';
         return ss.str();
+    }
+    
+    std::string enum_to_string(BSAction action) {
+        return action == BSAction::Buy ? "buy" : "sell";
+    }
+    
+    std::string enum_to_string(MarketType type) {
+        switch (type) {
+            case MarketType::Common: return "common";
+            case MarketType::Warrant: return "warrant";
+            case MarketType::OddLot: return "odd_lot";
+            case MarketType::Daytime: return "daytime";
+            case MarketType::FixedPrice: return "fixed_price";
+            case MarketType::PlaceFirst: return "place_first";
+            default: return "common";
+        }
+    }
+    
+    std::string enum_to_string(PriceType type) {
+        switch (type) {
+            case PriceType::Limit: return "limit";
+            case PriceType::Market: return "market";
+            case PriceType::LimitUp: return "limit_up";
+            case PriceType::LimitDown: return "limit_down";
+            case PriceType::Range: return "range";
+            default: return "limit";
+        }
+    }
+    
+    std::string enum_to_string(TimeInForce tif) {
+        switch (tif) {
+            case TimeInForce::ROD: return "rod";
+            case TimeInForce::IOC: return "ioc";
+            case TimeInForce::FOK: return "fok";
+            default: return "rod";
+        }
+    }
+    
+    std::string enum_to_string(OrderType type) {
+        switch (type) {
+            case OrderType::Stock: return "stock";
+            case OrderType::Futures: return "futures";
+            case OrderType::Option: return "option";
+            default: return "stock";
+        }
     }
     
 public:
@@ -64,9 +155,7 @@ public:
         std::string error;
     };
     
-    OrderResult place_order_sync(int order_id, const std::string& symbol = "BTCUSDT", 
-                                 int quantity = 1, double price = 50000.0, 
-                                 const std::string& side = "BUY") {
+    OrderResult place_order_sync(int order_id, const Order& order) {
         CURL* curl = curl_easy_init();
         OrderResult result{false, 0, 0, "", ""};
         
@@ -76,13 +165,20 @@ public:
         }
         
         json order_data = {
-            {"order_id", "CPP_" + std::to_string(order_id)},
-            {"symbol", symbol},
-            {"quantity", quantity},
-            {"price", price},
-            {"side", side},
+            {"buy_sell", enum_to_string(order.buy_sell)},
+            {"symbol", order.symbol},
+            {"price", order.price},
+            {"quantity", order.quantity},
+            {"market_type", enum_to_string(order.market_type)},
+            {"price_type", enum_to_string(order.price_type)},
+            {"time_in_force", enum_to_string(order.time_in_force)},
+            {"order_type", enum_to_string(order.order_type)},
             {"client_timestamp", get_iso_timestamp()}
         };
+        
+        if (!order.user_def.empty()) {
+            order_data["user_def"] = order.user_def;
+        }
         
         std::string json_str = order_data.dump();
         std::string response_str;
@@ -130,7 +226,7 @@ public:
         return result;
     }
     
-    std::vector<OrderResult> batch_orders(int num_orders) {
+    std::vector<OrderResult> batch_orders(int num_orders, const Order& demo_order) {
         std::vector<std::future<OrderResult>> futures;
         std::vector<OrderResult> results;
         
@@ -138,7 +234,7 @@ public:
         for (int i = 0; i < num_orders; ++i) {
             futures.push_back(
                 std::async(std::launch::async, 
-                          [this, i]() { return place_order_sync(i); })
+                          [this, i, demo_order]() { return place_order_sync(i, demo_order); })
             );
             
             // Limit concurrent connections
@@ -219,15 +315,32 @@ void run_test(int num_orders = 1000, int num_connections = 100, int warmup = 100
     std::cout << "C++ Async Client - Starting test with " << num_orders << " orders\n";
     std::cout << "Using " << num_connections << " concurrent connections\n";
     
+    // Create demo Taiwan stock order
+    Order demo_order = {
+        BSAction::Buy,
+        2881,           // symbol
+        66.0,           // price
+        2000,           // quantity
+        MarketType::Common,
+        PriceType::Limit,
+        TimeInForce::ROD,
+        OrderType::Stock,
+        "From_CPP"      // user_def
+    };
+    
+    std::cout << "Testing with Taiwan Stock Order: Symbol=" << demo_order.symbol 
+              << " Price=NT$" << demo_order.price 
+              << " Qty=" << demo_order.quantity << "\n";
+    
     if (warmup > 0) {
         std::cout << "\nWarming up with " << warmup << " orders...\n";
-        client.batch_orders(warmup);
+        client.batch_orders(warmup, demo_order);
     }
     
     std::cout << "\nSending " << num_orders << " orders...\n";
     
     auto start_time = steady_clock::now();
-    auto results = client.batch_orders(num_orders);
+    auto results = client.batch_orders(num_orders, demo_order);
     auto end_time = steady_clock::now();
     
     auto duration = duration_cast<milliseconds>(end_time - start_time);

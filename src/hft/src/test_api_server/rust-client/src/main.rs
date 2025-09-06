@@ -3,24 +3,79 @@ use clap::Parser;
 use futures::stream::{self, StreamExt};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use statrs::statistics::{Data, OrderStatistics, Statistics, Min, Max, Distribution};
+use statrs::statistics::{Data, OrderStatistics};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum BSAction {
+    Buy,
+    Sell,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum MarketType {
+    Common,
+    Warrant,
+    OddLot,
+    Daytime,
+    FixedPrice,
+    PlaceFirst,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum PriceType {
+    Limit,
+    Market,
+    LimitUp,
+    LimitDown,
+    Range,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+enum TimeInForce {
+    #[serde(rename = "rod")]
+    ROD,
+    #[serde(rename = "ioc")]
+    IOC,
+    #[serde(rename = "fok")]
+    FOK,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum OrderType {
+    Stock,
+    Futures,
+    Option,
+}
+
 #[derive(Debug, Serialize)]
 struct OrderRequest {
-    order_id: String,
-    symbol: String,
-    quantity: i32,
+    buy_sell: BSAction,
+    symbol: i32,
     price: f64,
-    side: String,
+    quantity: i32,
+    market_type: MarketType,
+    price_type: PriceType,
+    time_in_force: TimeInForce,
+    order_type: OrderType,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    user_def: Option<String>,
     client_timestamp: DateTime<Utc>,
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct OrderResponse {
-    order_id: String,
+    symbol: i32,
+    buy_sell: String,
+    quantity: i32,
+    price: f64,
     status: String,
     client_timestamp: DateTime<Utc>,
     server_timestamp: DateTime<Utc>,
@@ -50,13 +105,17 @@ impl AsyncOrderClient {
         }
     }
 
-    async fn place_order(&self, order_id: usize) -> Result<OrderResult, Box<dyn std::error::Error>> {
+    async fn place_order(&self, _order_id: usize, demo_order: &Order) -> Result<OrderResult, Box<dyn std::error::Error>> {
         let order_data = OrderRequest {
-            order_id: format!("RUST_{}", order_id),
-            symbol: "BTCUSDT".to_string(),
-            quantity: 1,
-            price: 50000.0,
-            side: "BUY".to_string(),
+            buy_sell: demo_order.buy_sell.clone(),
+            symbol: demo_order.symbol,
+            price: demo_order.price,
+            quantity: demo_order.quantity,
+            market_type: demo_order.market_type.clone(),
+            price_type: demo_order.price_type.clone(),
+            time_in_force: demo_order.time_in_force.clone(),
+            order_type: demo_order.order_type.clone(),
+            user_def: demo_order.user_def.clone(),
             client_timestamp: Utc::now(),
         };
 
@@ -96,11 +155,12 @@ impl AsyncOrderClient {
         }
     }
 
-    async fn batch_orders(&self, num_orders: usize, concurrent: usize) -> Vec<OrderResult> {
+    async fn batch_orders(&self, num_orders: usize, concurrent: usize, demo_order: &Order) -> Vec<OrderResult> {
         let futures = (0..num_orders).map(|i| {
             let client = self.clone();
+            let order = demo_order.clone();
             async move {
-                match client.place_order(i).await {
+                match client.place_order(i, &order).await {
                     Ok(result) => result,
                     Err(e) => OrderResult {
                         success: false,
@@ -156,12 +216,26 @@ impl AsyncOrderClient {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 struct OrderResult {
     success: bool,
     round_trip_ms: f64,
     server_latency_ms: f64,
     response: Option<OrderResponse>,
     error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct Order {
+    buy_sell: BSAction,
+    symbol: i32,
+    price: f64,
+    quantity: i32,
+    market_type: MarketType,
+    price_type: PriceType,
+    time_in_force: TimeInForce,
+    order_type: OrderType,
+    user_def: Option<String>,
 }
 
 #[derive(Parser, Debug)]
@@ -182,10 +256,26 @@ async fn run_test(num_orders: usize, num_connections: usize, warmup: usize) {
 
     println!("Rust Async Client - Starting test with {} orders", num_orders);
     println!("Using {} concurrent connections", num_connections);
+    
+    // Create demo Taiwan stock order
+    let demo_order = Order {
+        buy_sell: BSAction::Buy,
+        symbol: 2881,
+        price: 66.0,
+        quantity: 2000,
+        market_type: MarketType::Common,
+        price_type: PriceType::Limit,
+        time_in_force: TimeInForce::ROD,
+        order_type: OrderType::Stock,
+        user_def: Some("From_Rust".to_string()),
+    };
+    
+    println!("Testing with Taiwan Stock Order: Symbol={} Price=NT${} Qty={}", 
+             demo_order.symbol, demo_order.price, demo_order.quantity);
 
     if warmup > 0 {
         println!("\nWarming up with {} orders...", warmup);
-        client.batch_orders(warmup, num_connections).await;
+        client.batch_orders(warmup, num_connections, &demo_order).await;
         // Clear warmup latencies
         client.latencies.lock().await.clear();
     }
@@ -193,7 +283,7 @@ async fn run_test(num_orders: usize, num_connections: usize, warmup: usize) {
     println!("\nSending {} orders...", num_orders);
     let start_time = Instant::now();
 
-    let results = client.batch_orders(num_orders, num_connections).await;
+    let results = client.batch_orders(num_orders, num_connections, &demo_order).await;
 
     let end_time = Instant::now();
     let total_time = end_time.duration_since(start_time).as_secs_f64();

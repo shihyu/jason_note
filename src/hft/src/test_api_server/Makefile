@@ -1,4 +1,4 @@
-.PHONY: all build server test clean
+.PHONY: all build server test clean kill-port
 
 all: build
 
@@ -13,7 +13,12 @@ build:
 	@echo "Checking Python dependencies..."
 	@pip install -q aiohttp tabulate
 
-server:
+kill-port:
+	@echo "Killing processes on port 8080..."
+	@lsof -ti:8080 | xargs -r kill -9 2>/dev/null || true
+	@echo "Port 8080 is now free"
+
+server: kill-port
 	@echo "Starting API server on port 8080..."
 	@cd rust-api-server && cargo run --release
 
@@ -32,8 +37,9 @@ clean:
 
 help:
 	@echo "Available commands:"
-	@echo "  make build  - Build all components"
-	@echo "  make server - Start API server"
-	@echo "  make test   - Run performance tests"
-	@echo "  make clean  - Remove all build files"
-	@echo "  make help   - Show this help"
+	@echo "  make build     - Build all components"
+	@echo "  make server    - Start API server (kills existing process on port 8080)"
+	@echo "  make kill-port - Kill processes using port 8080"
+	@echo "  make test      - Run performance tests"
+	@echo "  make clean     - Remove all build files"
+	@echo "  make help      - Show this help"

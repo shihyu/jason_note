@@ -5,6 +5,52 @@ import time
 from datetime import datetime, timezone
 import statistics
 import argparse
+from enum import Enum
+from typing import Optional
+
+class BSAction(Enum):
+    Buy = "buy"
+    Sell = "sell"
+
+class MarketType(Enum):
+    Common = "common"
+    Warrant = "warrant"
+    OddLot = "odd_lot"
+    Daytime = "daytime"
+    FixedPrice = "fixed_price"
+    PlaceFirst = "place_first"
+
+class PriceType(Enum):
+    Limit = "limit"
+    Market = "market"
+    LimitUp = "limit_up"
+    LimitDown = "limit_down"
+    Range = "range"
+
+class TimeInForce(Enum):
+    ROD = "rod"
+    IOC = "ioc"
+    FOK = "fok"
+
+class OrderType(Enum):
+    Stock = "stock"
+    Futures = "futures"
+    Option = "option"
+
+class Order:
+    def __init__(self, buy_sell: BSAction, symbol: int, price: float, quantity: int,
+                 market_type: MarketType, price_type: PriceType, 
+                 time_in_force: TimeInForce, order_type: OrderType,
+                 user_def: Optional[str] = None):
+        self.buy_sell = buy_sell
+        self.symbol = symbol
+        self.price = price
+        self.quantity = quantity
+        self.market_type = market_type
+        self.price_type = price_type
+        self.time_in_force = time_in_force
+        self.order_type = order_type
+        self.user_def = user_def
 
 class AsyncOrderClient:
     def __init__(self, base_url="http://localhost:8080", num_connections=100):
@@ -34,15 +80,34 @@ class AsyncOrderClient:
         if self.connector:
             await self.connector.close()
     
-    async def place_order(self, order_id, symbol="BTCUSDT", quantity=1, price=50000.0, side="BUY"):
+    async def place_order(self, order_id, order: Order = None):
+        if order is None:
+            order = Order(
+                buy_sell=BSAction.Buy,
+                symbol=2881,
+                price=66,
+                quantity=2000,
+                market_type=MarketType.Common,
+                price_type=PriceType.Limit,
+                time_in_force=TimeInForce.ROD,
+                order_type=OrderType.Stock,
+                user_def="From_Py"
+            )
+        
         order_data = {
-            "order_id": f"PY_{order_id}",
-            "symbol": symbol,
-            "quantity": quantity,
-            "price": price,
-            "side": side,
+            "buy_sell": order.buy_sell.value,
+            "symbol": order.symbol,
+            "price": order.price,
+            "quantity": order.quantity,
+            "market_type": order.market_type.value,
+            "price_type": order.price_type.value,
+            "time_in_force": order.time_in_force.value,
+            "order_type": order.order_type.value,
             "client_timestamp": datetime.now(timezone.utc).isoformat()
         }
+        
+        if order.user_def:
+            order_data["user_def"] = order.user_def
         
         try:
             start_time = time.perf_counter()
@@ -69,10 +134,10 @@ class AsyncOrderClient:
                 "error": str(e)
             }
     
-    async def batch_orders(self, num_orders):
+    async def batch_orders(self, num_orders, demo_order: Order = None):
         tasks = []
         for i in range(num_orders):
-            task = self.place_order(i)
+            task = self.place_order(i, demo_order)
             tasks.append(task)
         
         results = await asyncio.gather(*tasks)
@@ -101,15 +166,29 @@ async def run_test(num_orders=1000, num_connections=100, warmup=100):
         print(f"Python Async Client - Starting test with {num_orders} orders")
         print(f"Using {num_connections} concurrent connections")
         
+        demo_order = Order(
+            buy_sell=BSAction.Buy,
+            symbol=2881,
+            price=66,
+            quantity=2000,
+            market_type=MarketType.Common,
+            price_type=PriceType.Limit,
+            time_in_force=TimeInForce.ROD,
+            order_type=OrderType.Stock,
+            user_def="From_Py"
+        )
+        
+        print(f"Testing with Taiwan Stock Order: Symbol={demo_order.symbol} Price=NT${demo_order.price} Qty={demo_order.quantity}")
+        
         if warmup > 0:
             print(f"\nWarming up with {warmup} orders...")
-            await client.batch_orders(warmup)
+            await client.batch_orders(warmup, demo_order)
             client.latencies.clear()
         
         print(f"\nSending {num_orders} orders...")
         start_time = time.perf_counter()
         
-        results = await client.batch_orders(num_orders)
+        results = await client.batch_orders(num_orders, demo_order)
         
         end_time = time.perf_counter()
         total_time = end_time - start_time
