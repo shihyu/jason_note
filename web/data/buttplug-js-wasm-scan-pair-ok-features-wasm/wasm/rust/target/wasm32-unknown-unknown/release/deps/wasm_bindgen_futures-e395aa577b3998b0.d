@@ -1,0 +1,9 @@
+/home/shihyu/github/jason_note/src/web/data/buttplug-js-wasm-scan-pair-ok-features-wasm/wasm/rust/target/wasm32-unknown-unknown/release/deps/libwasm_bindgen_futures-e395aa577b3998b0.rmeta: /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-futures-0.4.41/src/lib.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-futures-0.4.41/src/queue.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-futures-0.4.41/src/task/singlethread.rs
+
+/home/shihyu/github/jason_note/src/web/data/buttplug-js-wasm-scan-pair-ok-features-wasm/wasm/rust/target/wasm32-unknown-unknown/release/deps/libwasm_bindgen_futures-e395aa577b3998b0.rlib: /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-futures-0.4.41/src/lib.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-futures-0.4.41/src/queue.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-futures-0.4.41/src/task/singlethread.rs
+
+/home/shihyu/github/jason_note/src/web/data/buttplug-js-wasm-scan-pair-ok-features-wasm/wasm/rust/target/wasm32-unknown-unknown/release/deps/wasm_bindgen_futures-e395aa577b3998b0.d: /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-futures-0.4.41/src/lib.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-futures-0.4.41/src/queue.rs /home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-futures-0.4.41/src/task/singlethread.rs
+
+/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-futures-0.4.41/src/lib.rs:
+/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-futures-0.4.41/src/queue.rs:
+/home/shihyu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-futures-0.4.41/src/task/singlethread.rs:
