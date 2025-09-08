@@ -15,18 +15,91 @@ use tracing::{info, Level};
 use tracing_subscriber;
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum BSAction {
+    Buy,
+    Sell,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum MarketType {
+    Common,
+    Warrant,
+    OddLot,
+    Daytime,
+    FixedPrice,
+    PlaceFirst,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum PriceType {
+    Limit,
+    Market,
+    LimitUp,
+    LimitDown,
+    Range,
+}
+
+#[derive(Debug, Deserialize)]
+enum TimeInForce {
+    #[serde(rename = "rod")]
+    ROD,
+    #[serde(rename = "ioc")]
+    IOC,
+    #[serde(rename = "fok")]
+    FOK,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum OrderType {
+    Stock,
+    Futures,
+    Option,
+}
+
+#[derive(Debug, Deserialize)]
 struct OrderRequest {
-    order_id: String,
-    symbol: String,
-    quantity: i32,
+    buy_sell: BSAction,
+    symbol: i32,
     price: f64,
-    side: String,
+    quantity: i32,
+    market_type: MarketType,
+    price_type: PriceType,
+    time_in_force: TimeInForce,
+    order_type: OrderType,
+    #[serde(default)]
+    user_def: Option<String>,
     client_timestamp: DateTime<Utc>,
+}
+
+#[allow(dead_code)]
+impl OrderRequest {
+    fn market_type(&self) -> &MarketType {
+        &self.market_type
+    }
+    
+    fn price_type(&self) -> &PriceType {
+        &self.price_type
+    }
+    
+    fn time_in_force(&self) -> &TimeInForce {
+        &self.time_in_force
+    }
+    
+    fn user_def(&self) -> Option<&String> {
+        self.user_def.as_ref()
+    }
 }
 
 #[derive(Debug, Serialize)]
 struct OrderResponse {
-    order_id: String,
+    symbol: i32,
+    buy_sell: String,
+    quantity: i32,
+    price: f64,
     status: String,
     client_timestamp: DateTime<Utc>,
     server_timestamp: DateTime<Utc>,
@@ -44,24 +117,35 @@ async fn place_order(
     Json(order): Json<OrderRequest>,
 ) -> Result<Json<OrderResponse>, StatusCode> {
     let server_timestamp = Utc::now();
-    let latency_ms = (server_timestamp - order.client_timestamp).num_milliseconds() as f64;
+    let latency_ms = (server_timestamp - order.client_timestamp).num_microseconds()
+        .map(|us| us as f64 / 1000.0)
+        .unwrap_or(0.0);
     
     let mut count = state.order_count.lock().await;
     *count += 1;
     let current_count = *count;
     
+    let buy_sell_str = match order.buy_sell {
+        BSAction::Buy => "BUY",
+        BSAction::Sell => "SELL",
+    };
+    
     info!(
-        "Order #{}: {} {} {} @ {} | Latency: {:.2}ms",
+        "Order #{}: {} {} shares of {} @ NT${} | Type: {:?} | Latency: {:.2}ms",
         current_count,
-        order.side,
+        buy_sell_str,
         order.quantity,
         order.symbol,
         order.price,
+        order.order_type,
         latency_ms
     );
     
     let response = OrderResponse {
-        order_id: order.order_id,
+        symbol: order.symbol,
+        buy_sell: buy_sell_str.to_string(),
+        quantity: order.quantity,
+        price: order.price,
         status: "ACCEPTED".to_string(),
         client_timestamp: order.client_timestamp,
         server_timestamp,
