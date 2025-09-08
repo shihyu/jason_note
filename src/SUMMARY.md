@@ -366,6 +366,7 @@
     - [會計師「低價存股術」核心技巧總覽](strategy/會計師「低價存股術」核心技巧總覽.md)
     - [新世代是怎麼被收割的?](strategy/新世代收割術-經濟結構分析.md)
     - [FinLab 搭配 Phaibus 避險](strategy/finlab_phaibus_guide.md)
+    - [周爺交易策略分享](strategy/zhou_trading_strategies.md)
     - [Backtrader](strategy/backtrader/basis.md)
         - [Python 回測框架一 Backtrader 介紹](strategy/backtrader/Python回測框架一Backtrader介紹.md)
         - [Python 回測框架（二）定期定額投資](strategy/backtrader/Python回測框架二定期定額投資.md)
