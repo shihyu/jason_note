@@ -6,10 +6,8 @@
 - [搜尋工具](#搜尋工具)
 - [資料庫](#資料庫)
 - [DevOps & 部署](#devops--部署)
-- [雲端服務](#雲端服務)
 - [專案管理](#專案管理)
 - [開發輔助](#開發輔助)
-- [特殊用途](#特殊用途)
 - [管理指令](#管理指令)
 - [快速安裝腳本](#快速安裝腳本)
 - [推薦組合](#推薦組合)
@@ -26,7 +24,7 @@ claude mcp add <名稱> <執行指令> <參數...>
 claude mcp add --transport http <名稱> <URL>
 
 # 範例
-claude mcp add git npx -y @modelcontextprotocol/server-git
+claude mcp add git npx --yes @cyanheads/git-mcp-server
 claude mcp add --transport http grep https://mcp.grep.app
 ```
 
@@ -37,37 +35,33 @@ claude mcp add --transport http grep https://mcp.grep.app
 ### 檔案系統操作
 ```bash
 # 必須指定允許存取的目錄
-claude mcp add filesystem npx -y @modelcontextprotocol/server-filesystem ~/projects
+claude mcp add filesystem npx --yes @modelcontextprotocol/server-filesystem ~/projects
 
 # 多個目錄
-claude mcp add filesystem npx -y @modelcontextprotocol/server-filesystem ~/projects ~/documents
+claude mcp add filesystem npx --yes @modelcontextprotocol/server-filesystem ~/projects ~/documents
 ```
 
 ### Git 版本控制
 ```bash
-claude mcp add git npx -y @modelcontextprotocol/server-git
+# 使用第三方套件
+claude mcp add git npx --yes @cyanheads/git-mcp-server
 ```
 
 ### GitHub API
 ```bash
 # 需要先設定 GitHub Personal Access Token
 export GITHUB_TOKEN="ghp_your_token_here"
-claude mcp add github npx -y @modelcontextprotocol/server-github
-```
-
-### 網頁內容擷取
-```bash
-claude mcp add fetch npx -y @modelcontextprotocol/server-fetch
+claude mcp add github npx --yes @modelcontextprotocol/server-github
 ```
 
 ### 記憶體/持久化儲存
 ```bash
-claude mcp add memory npx -y @modelcontextprotocol/server-memory
+claude mcp add memory npx --yes @modelcontextprotocol/server-memory
 ```
 
-### Shell 指令執行
+### Sequential Thinking
 ```bash
-claude mcp add shell npx -y @fridayai/mcp-shell
+claude mcp add thinking npx --yes @modelcontextprotocol/server-sequential-thinking
 ```
 
 ---
@@ -78,32 +72,6 @@ claude mcp add shell npx -y @fridayai/mcp-shell
 ```bash
 # HTTP 版本（推薦）
 claude mcp add --transport http grep https://mcp.grep.app
-
-# stdio 版本
-npm install -g @ai-tools-all/grep_app_mcp
-claude mcp add grep_stdio grep_app_mcp
-```
-
-### Google 搜尋
-```bash
-claude mcp add google npx -y @kevincobain2000/mcp-google-search
-```
-
-### Stack Overflow
-```bash
-claude mcp add stackoverflow npx -y @bilalmirza/mcp-stackoverflow
-```
-
-### npm 套件搜尋
-```bash
-claude mcp add npm-tools npx -y @fridayai/mcp-npm-tools
-```
-
-### GitHub 專門搜尋
-```bash
-# 需要 GitHub Token
-export GITHUB_TOKEN="your-token"
-claude mcp add github-search npx -y @kevincobain2000/mcp-github-search
 ```
 
 ---
@@ -114,31 +82,7 @@ claude mcp add github-search npx -y @kevincobain2000/mcp-github-search
 ```bash
 # 需要設定資料庫連線字串
 export DATABASE_URL="postgresql://username:password@localhost:5432/database_name"
-claude mcp add postgres npx -y @modelcontextprotocol/server-postgres
-```
-
-### SQLite
-```bash
-# 指定資料庫檔案路徑
-claude mcp add sqlite npx -y @modelcontextprotocol/server-sqlite ~/mydatabase.db
-```
-
-### MySQL
-```bash
-export MYSQL_URL="mysql://user:password@localhost:3306/database"
-claude mcp add mysql npx -y @kevincobain2000/mcp-mysql
-```
-
-### MongoDB
-```bash
-export MONGODB_URI="mongodb://localhost:27017/mydb"
-claude mcp add mongodb npx -y @kevincobain2000/mcp-mongodb
-```
-
-### Redis
-```bash
-export REDIS_URL="redis://localhost:6379"
-claude mcp add redis npx -y @kevincobain2000/mcp-redis
+claude mcp add postgres npx --yes @henkey/postgres-mcp-server
 ```
 
 ---
@@ -147,226 +91,61 @@ claude mcp add redis npx -y @kevincobain2000/mcp-redis
 
 ### Docker
 ```bash
-claude mcp add docker npx -y @joshuamlee2020/mcp-docker
-```
-
-### Kubernetes
-```bash
-# 需要 kubectl 設定
-claude mcp add kubernetes npx -y @mbusigin/mcp-kubernetes
-```
-
-### Terraform
-```bash
-claude mcp add terraform npx -y terraform-mcp-server
+claude mcp add docker npx --yes mcp-server-docker
 ```
 
 ### Vercel
 ```bash
-# 需要 Vercel Token
 export VERCEL_TOKEN="your-vercel-token"
-claude mcp add vercel npx -y @sgrove/mcp-vercel
-```
-
-### Netlify
-```bash
-export NETLIFY_TOKEN="your-netlify-token"
-claude mcp add netlify npx -y @kevincobain2000/mcp-netlify
+claude mcp add vercel npx --yes @sgrove/mcp-vercel
 ```
 
 ### Cloudflare
 ```bash
 export CLOUDFLARE_API_TOKEN="your-token"
-claude mcp add cloudflare npx -y @cloudflare/mcp-server-cloudflare
-```
-
-### Heroku
-```bash
-export HEROKU_API_KEY="your-api-key"
-claude mcp add heroku npx -y @kevincobain2000/mcp-heroku
-```
-
----
-
-## 雲端服務
-
-### AWS
-```bash
-# 需要 AWS 認證設定
-export AWS_ACCESS_KEY_ID="your-key"
-export AWS_SECRET_ACCESS_KEY="your-secret"
-claude mcp add aws npx -y @kevincobain2000/mcp-aws
-```
-
-### Google Cloud Platform
-```bash
-# 需要 GCP 認證
-export GOOGLE_APPLICATION_CREDENTIALS="path/to/credentials.json"
-claude mcp add gcp npx -y @kevincobain2000/mcp-gcp
-```
-
-### Azure
-```bash
-export AZURE_SUBSCRIPTION_ID="your-subscription-id"
-claude mcp add azure npx -y @kevincobain2000/mcp-azure
-```
-
-### Supabase
-```bash
-export SUPABASE_URL="your-project-url"
-export SUPABASE_KEY="your-anon-key"
-claude mcp add supabase npx -y @kevincobain2000/mcp-supabase
-```
-
-### Firebase
-```bash
-export FIREBASE_PROJECT_ID="your-project-id"
-claude mcp add firebase npx -y @kevincobain2000/mcp-firebase
+claude mcp add cloudflare npx --yes @cloudflare/mcp-server-cloudflare
 ```
 
 ---
 
 ## 專案管理
 
-### Jira
-```bash
-export JIRA_HOST="yourcompany.atlassian.net"
-export JIRA_EMAIL="your-email@company.com"
-export JIRA_API_TOKEN="your-api-token"
-claude mcp add jira npx -y @kevincobain2000/mcp-jira
-```
-
-### Linear
-```bash
-export LINEAR_API_KEY="your-linear-api-key"
-claude mcp add linear npx -y linear-mcp
-```
-
 ### Notion
 ```bash
 export NOTION_TOKEN="your-notion-integration-token"
-claude mcp add notion npx -y @kevincobain2000/mcp-notion
+claude mcp add notion npx --yes @notionhq/notion-mcp-server
 ```
 
 ### Slack
 ```bash
 export SLACK_BOT_TOKEN="xoxb-your-token"
-claude mcp add slack npx -y @modelcontextprotocol/server-slack
+claude mcp add slack npx --yes @modelcontextprotocol/server-slack
 ```
 
-### Discord
+### Sentry
 ```bash
-export DISCORD_TOKEN="your-bot-token"
-claude mcp add discord npx -y @kevincobain2000/mcp-discord
-```
-
-### Asana
-```bash
-export ASANA_TOKEN="your-personal-access-token"
-claude mcp add asana npx -y @kevincobain2000/mcp-asana
+claude mcp add sentry npx --yes @sentry/mcp-server
 ```
 
 ---
 
 ## 開發輔助
 
-### 程式碼格式化
+### Playwright
 ```bash
-# Prettier
-claude mcp add prettier npx -y @kevincobain2000/mcp-prettier
+# 選項 1: ExecuteAutomation 版本
+claude mcp add playwright npx --yes @executeautomation/playwright-mcp-server
 
-# ESLint
-claude mcp add eslint npx -y @kevincobain2000/mcp-eslint
+# 選項 2: 官方 Playwright MCP
+claude mcp add playwright npx --yes @playwright/mcp
 
-# Black (Python)
-claude mcp add black npx -y @kevincobain2000/mcp-black
+# 選項 3: Better Playwright MCP
+claude mcp add playwright npx --yes better-playwright-mcp
 ```
-
-### 程式語言工具
-```bash
-# Python
-claude mcp add python npx -y @kevincobain2000/mcp-python
-
-# Node.js
-claude mcp add nodejs npx -y @kevincobain2000/mcp-nodejs
-
-# TypeScript
-claude mcp add typescript npx -y @kevincobain2000/mcp-typescript
-
-# Rust
-claude mcp add rust npx -y @kevincobain2000/mcp-rust
-
-# Go
-claude mcp add golang npx -y @kevincobain2000/mcp-golang
-```
-
-### 測試工具
-```bash
-# Playwright
-claude mcp add playwright npx -y @executeautomation/playwright-mcp-server
-
-# Jest
-claude mcp add jest npx -y @kevincobain2000/mcp-jest
-
-# Cypress
-claude mcp add cypress npx -y @kevincobain2000/mcp-cypress
-```
-
----
-
-## 特殊用途
 
 ### 瀏覽器自動化
 ```bash
-claude mcp add browser npx -y @modelcontextprotocol/server-browser
-```
-
-### 文件處理
-```bash
-# PDF
-claude mcp add pdf npx -y @kevincobain2000/mcp-pdf
-
-# Excel
-claude mcp add excel npx -y @kevincobain2000/mcp-excel
-
-# Word
-claude mcp add word npx -y @kevincobain2000/mcp-word
-```
-
-### 多媒體處理
-```bash
-# 圖片處理
-claude mcp add image npx -y @kevincobain2000/mcp-image
-
-# 影片處理
-claude mcp add video npx -y @kevincobain2000/mcp-video
-
-# 音訊處理
-claude mcp add audio npx -y @kevincobain2000/mcp-audio
-```
-
-### 通訊工具
-```bash
-# Email
-claude mcp add email npx -y @kevincobain2000/mcp-email
-
-# SMS
-claude mcp add sms npx -y @kevincobain2000/mcp-sms
-
-# WhatsApp
-claude mcp add whatsapp npx -y @kevincobain2000/mcp-whatsapp
-```
-
-### 其他工具
-```bash
-# Calendar
-claude mcp add calendar npx -y @kevincobain2000/mcp-calendar
-
-# Weather
-claude mcp add weather npx -y @kevincobain2000/mcp-weather
-
-# Translation
-claude mcp add translate npx -y @kevincobain2000/mcp-translate
+claude mcp add browser npx --yes @agent-infra/mcp-server-browser
 ```
 
 ---
@@ -413,167 +192,51 @@ cat ~/.claude/config.json
 echo "Installing basic MCP servers..."
 
 # 核心工具
-claude mcp add filesystem npx -y @modelcontextprotocol/server-filesystem ~/projects
-claude mcp add git npx -y @modelcontextprotocol/server-git
-claude mcp add fetch npx -y @modelcontextprotocol/server-fetch
-claude mcp add memory npx -y @modelcontextprotocol/server-memory
-claude mcp add shell npx -y @fridayai/mcp-shell
+claude mcp add filesystem npx --yes @modelcontextprotocol/server-filesystem ~/projects
+claude mcp add memory npx --yes @modelcontextprotocol/server-memory
+
+# Git
+claude mcp add git npx --yes @cyanheads/git-mcp-server
 
 # 搜尋工具
 claude mcp add --transport http grep https://mcp.grep.app
+
+# GitHub（如果有 token）
+if [ -n "$GITHUB_TOKEN" ]; then
+    claude mcp add github npx --yes @modelcontextprotocol/server-github
+else
+    echo "Skipping GitHub MCP - set GITHUB_TOKEN first"
+fi
+
+# Playwright
+claude mcp add playwright npx --yes @executeautomation/playwright-mcp-server
 
 echo "Basic setup complete!"
 claude mcp list
 ```
 
-### 完整開發環境
+### 驗證套件存在性腳本
 ```bash
 #!/bin/bash
-# full-setup.sh
+# verify-package.sh
 
-echo "Installing all MCP servers..."
+# 使用前先驗證套件是否存在
+verify_npm_package() {
+    local package=$1
+    npm view "$package" > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo "✅ $package exists"
+        return 0
+    else
+        echo "❌ $package does not exist"
+        return 1
+    fi
+}
 
-# 基礎工具
-claude mcp add filesystem npx -y @modelcontextprotocol/server-filesystem ~/projects
-claude mcp add git npx -y @modelcontextprotocol/server-git
-claude mcp add fetch npx -y @modelcontextprotocol/server-fetch
-claude mcp add memory npx -y @modelcontextprotocol/server-memory
-claude mcp add shell npx -y @fridayai/mcp-shell
-
-# 搜尋
-claude mcp add --transport http grep https://mcp.grep.app
-claude mcp add npm-tools npx -y @fridayai/mcp-npm-tools
-
-# 開發輔助
-claude mcp add prettier npx -y @kevincobain2000/mcp-prettier
-claude mcp add eslint npx -y @kevincobain2000/mcp-eslint
-
-# GitHub (如果有 token)
-if [ -n "$GITHUB_TOKEN" ]; then
-    claude mcp add github npx -y @modelcontextprotocol/server-github
-else
-    echo "Skipping GitHub MCP - set GITHUB_TOKEN first"
-fi
-
-# 資料庫 (如果有設定)
-if [ -n "$DATABASE_URL" ]; then
-    claude mcp add postgres npx -y @modelcontextprotocol/server-postgres
-else
-    echo "Skipping PostgreSQL MCP - set DATABASE_URL first"
-fi
-
-# Docker
-claude mcp add docker npx -y @joshuamlee2020/mcp-docker
-
-echo "Full setup complete!"
-claude mcp list
-```
-
-### 系統程式開發環境
-```bash
-#!/bin/bash
-# system-dev-setup.sh
-
-echo "Installing System Programming MCP servers..."
-
-# 核心工具
-claude mcp add filesystem npx -y @modelcontextprotocol/server-filesystem ~/projects ~/kernel ~/src
-claude mcp add git npx -y @modelcontextprotocol/server-git
-claude mcp add shell npx -y @fridayai/mcp-shell
-
-# 搜尋工具
-claude mcp add --transport http grep https://mcp.grep.app
-claude mcp add ripgrep npx -y @modelcontextprotocol/server-ripgrep
-claude mcp add ast-grep npx -y @ast-grep/mcp-server
-
-# 編譯工具
-claude mcp add make npx -y @kevincobain2000/mcp-make
-claude mcp add cmake npx -y @kevincobain2000/mcp-cmake
-claude mcp add gcc npx -y @kevincobain2000/mcp-gcc
-claude mcp add clang npx -y @kevincobain2000/mcp-clang
-
-# 除錯工具
-claude mcp add gdb npx -y @kevincobain2000/mcp-gdb
-claude mcp add valgrind npx -y @kevincobain2000/mcp-valgrind
-claude mcp add perf npx -y @kevincobain2000/mcp-perf
-
-# 系統分析
-claude mcp add strace npx -y @kevincobain2000/mcp-strace
-claude mcp add ltrace npx -y @kevincobain2000/mcp-ltrace
-claude mcp add objdump npx -y @kevincobain2000/mcp-objdump
-
-# 文件
-claude mcp add man npx -y @kevincobain2000/mcp-man
-
-echo "System programming setup complete!"
-claude mcp list
-```
-
-### Rust 開發環境
-```bash
-#!/bin/bash
-# rust-setup.sh
-
-echo "Installing Rust development MCP servers..."
-
-# 基礎工具
-claude mcp add filesystem npx -y @modelcontextprotocol/server-filesystem ~/rust-projects
-claude mcp add git npx -y @modelcontextprotocol/server-git
-claude mcp add shell npx -y @fridayai/mcp-shell
-
-# Rust 專用
-claude mcp add cargo npx -y @kevincobain2000/mcp-cargo
-claude mcp add rust-analyzer npx -y @kevincobain2000/mcp-rust-analyzer
-claude mcp add clippy npx -y @kevincobain2000/mcp-clippy
-claude mcp add rustfmt npx -y @kevincobain2000/mcp-rustfmt
-claude mcp add crates npx -y @kevincobain2000/mcp-crates
-
-# 搜尋
-claude mcp add --transport http grep https://mcp.grep.app
-claude mcp add ripgrep npx -y @modelcontextprotocol/server-ripgrep
-
-# 除錯
-claude mcp add gdb npx -y @kevincobain2000/mcp-gdb
-claude mcp add lldb npx -y @kevincobain2000/mcp-lldb
-
-echo "Rust development setup complete!"
-claude mcp list
-```
-
-### Linux Kernel 開發環境
-```bash
-#!/bin/bash
-# kernel-setup.sh
-
-echo "Installing Linux Kernel development MCP servers..."
-
-# 基礎工具
-claude mcp add filesystem npx -y @modelcontextprotocol/server-filesystem ~/kernel ~/linux-stable
-claude mcp add git npx -y @modelcontextprotocol/server-git
-claude mcp add shell npx -y @fridayai/mcp-shell
-
-# Kernel 建構
-claude mcp add kbuild npx -y @kevincobain2000/mcp-kbuild
-claude mcp add kconfig npx -y @kevincobain2000/mcp-kconfig
-claude mcp add make npx -y @kevincobain2000/mcp-make
-
-# Device Tree
-claude mcp add dtc npx -y @kevincobain2000/mcp-dtc
-
-# 除錯與測試
-claude mcp add qemu npx -y @kevincobain2000/mcp-qemu
-claude mcp add gdb npx -y @kevincobain2000/mcp-gdb
-
-# 系統追蹤
-claude mcp add strace npx -y @kevincobain2000/mcp-strace
-claude mcp add perf npx -y @kevincobain2000/mcp-perf
-
-# 文件
-claude mcp add kernel-doc npx -y @kevincobain2000/mcp-kernel-doc
-claude mcp add man npx -y @kevincobain2000/mcp-man
-
-echo "Kernel development setup complete!"
-claude mcp list
+# 測試套件
+verify_npm_package "@modelcontextprotocol/server-filesystem"
+verify_npm_package "@cyanheads/git-mcp-server"
+verify_npm_package "@executeautomation/playwright-mcp-server"
 ```
 
 ---
@@ -583,85 +246,53 @@ claude mcp list
 ### 🎨 前端開發者
 ```bash
 # 必備
-claude mcp add filesystem npx -y @modelcontextprotocol/server-filesystem ~/projects
-claude mcp add git npx -y @modelcontextprotocol/server-git
+claude mcp add filesystem npx --yes @modelcontextprotocol/server-filesystem ~/projects
+claude mcp add git npx --yes @cyanheads/git-mcp-server
 claude mcp add --transport http grep https://mcp.grep.app
-claude mcp add npm-tools npx -y @fridayai/mcp-npm-tools
-
-# 格式化與檢查
-claude mcp add prettier npx -y @kevincobain2000/mcp-prettier
-claude mcp add eslint npx -y @kevincobain2000/mcp-eslint
 
 # 部署
-claude mcp add vercel npx -y @sgrove/mcp-vercel
-claude mcp add netlify npx -y @kevincobain2000/mcp-netlify
+claude mcp add vercel npx --yes @sgrove/mcp-vercel
 
 # 測試
-claude mcp add playwright npx -y @executeautomation/playwright-mcp-server
+claude mcp add playwright npx --yes @executeautomation/playwright-mcp-server
 ```
 
 ### 🔧 後端開發者
 ```bash
 # 必備
-claude mcp add filesystem npx -y @modelcontextprotocol/server-filesystem ~/projects
-claude mcp add git npx -y @modelcontextprotocol/server-git
+claude mcp add filesystem npx --yes @modelcontextprotocol/server-filesystem ~/projects
+claude mcp add git npx --yes @cyanheads/git-mcp-server
 claude mcp add --transport http grep https://mcp.grep.app
 
-# 資料庫
-claude mcp add postgres npx -y @modelcontextprotocol/server-postgres
-claude mcp add redis npx -y @kevincobain2000/mcp-redis
+# 資料庫（如果有設定）
+if [ -n "$DATABASE_URL" ]; then
+    claude mcp add postgres npx --yes @henkey/postgres-mcp-server
+fi
 
 # DevOps
-claude mcp add docker npx -y @joshuamlee2020/mcp-docker
-claude mcp add kubernetes npx -y @mbusigin/mcp-kubernetes
-
-# 雲端
-claude mcp add aws npx -y @kevincobain2000/mcp-aws
+claude mcp add docker npx --yes mcp-server-docker
 ```
 
 ### 🚀 全端開發者
 ```bash
-# 使用完整安裝腳本 (full-setup.sh)
-# 包含前端 + 後端所有工具
-```
+# 基礎工具
+claude mcp add filesystem npx --yes @modelcontextprotocol/server-filesystem ~/projects
+claude mcp add git npx --yes @cyanheads/git-mcp-server
+claude mcp add memory npx --yes @modelcontextprotocol/server-memory
+claude mcp add --transport http grep https://mcp.grep.app
 
-### 📱 Mobile 開發者
-```bash
-# 基礎
-claude mcp add filesystem npx -y @modelcontextprotocol/server-filesystem ~/projects
-claude mcp add git npx -y @modelcontextprotocol/server-git
+# GitHub
+if [ -n "$GITHUB_TOKEN" ]; then
+    claude mcp add github npx --yes @modelcontextprotocol/server-github
+fi
 
-# React Native
-claude mcp add react-native npx -y @kevincobain2000/mcp-react-native
+# 開發輔助
+claude mcp add playwright npx --yes @executeautomation/playwright-mcp-server
+claude mcp add browser npx --yes @agent-infra/mcp-server-browser
 
-# Firebase
-claude mcp add firebase npx -y @kevincobain2000/mcp-firebase
-
-# 測試
-claude mcp add jest npx -y @kevincobain2000/mcp-jest
-```
-
-### 🤖 DevOps 工程師
-```bash
-# 基礎
-claude mcp add filesystem npx -y @modelcontextprotocol/server-filesystem ~/projects
-claude mcp add git npx -y @modelcontextprotocol/server-git
-claude mcp add shell npx -y @fridayai/mcp-shell
-
-# 容器與編排
-claude mcp add docker npx -y @joshuamlee2020/mcp-docker
-claude mcp add kubernetes npx -y @mbusigin/mcp-kubernetes
-
-# IaC
-claude mcp add terraform npx -y terraform-mcp-server
-
-# 雲端平台
-claude mcp add aws npx -y @kevincobain2000/mcp-aws
-claude mcp add gcp npx -y @kevincobain2000/mcp-gcp
-claude mcp add azure npx -y @kevincobain2000/mcp-azure
-
-# 監控
-claude mcp add prometheus npx -y @kevincobain2000/mcp-prometheus
+# 部署
+claude mcp add docker npx --yes mcp-server-docker
+claude mcp add vercel npx --yes @sgrove/mcp-vercel
 ```
 
 ---
@@ -678,7 +309,17 @@ claude "用 grep 搜尋 React hooks 範例"
 claude "用 filesystem 列出 ~/projects 的檔案"
 ```
 
-### 2. 環境變數設定
+### 2. 驗證套件存在
+```bash
+# 在安裝前先驗證
+npm search "套件名稱"
+npm view @套件名稱
+
+# 測試執行
+npx --yes @套件名稱 --version
+```
+
+### 3. 環境變數設定
 ```bash
 # 在 ~/.bashrc 或 ~/.zshrc 加入
 export GITHUB_TOKEN="your-token"
@@ -689,7 +330,7 @@ export VERCEL_TOKEN="..."
 source ~/.bashrc
 ```
 
-### 3. 別名設定
+### 4. 別名設定
 ```bash
 # 加速常用指令
 alias cc="claude"
@@ -698,18 +339,21 @@ alias ccode="claude code"
 alias cmcp="claude mcp"
 ```
 
-### 4. 批次操作
-```bash
-# 移除所有 MCP
-claude mcp list | grep -v "Checking" | awk '{print $1}' | sed 's/://' | xargs -I {} claude mcp remove {}
-
-# 重新安裝所有 MCP
-./full-setup.sh
-```
-
 ---
 
 ## 常見問題
+
+### Q: 如何確認套件是否存在？
+```bash
+# 方法 1: npm search
+npm search @modelcontextprotocol
+
+# 方法 2: npm view
+npm view @套件名稱
+
+# 方法 3: 直接測試
+npx --yes @套件名稱 --help
+```
 
 ### Q: MCP 連線失敗怎麼辦？
 ```bash
@@ -730,7 +374,7 @@ env | grep TOKEN
 claude mcp remove <名稱>
 
 # 安裝新版本
-claude mcp add <名稱> npx -y @latest-version
+claude mcp add <名稱> npx --yes @latest-version
 ```
 
 ### Q: 設定檔在哪裡？
@@ -746,10 +390,34 @@ find ~ -name "config.json" -path "*/claude*" 2>/dev/null
 
 ---
 
+## 確認可用的套件列表
+
+### 官方套件 (@modelcontextprotocol)
+- @modelcontextprotocol/server-filesystem
+- @modelcontextprotocol/server-memory
+- @modelcontextprotocol/server-github
+- @modelcontextprotocol/server-sequential-thinking
+- @modelcontextprotocol/server-slack
+
+### 第三方套件
+- @cyanheads/git-mcp-server
+- @henkey/postgres-mcp-server
+- @executeautomation/playwright-mcp-server
+- @playwright/mcp
+- better-playwright-mcp
+- @notionhq/notion-mcp-server
+- @sentry/mcp-server
+- @cloudflare/mcp-server-cloudflare
+- @sgrove/mcp-vercel
+- @agent-infra/mcp-server-browser
+- mcp-server-docker
+
+---
+
 ## 更新紀錄
 
+- 2025-01-27: 移除所有不存在的套件，保留經過驗證的可用套件
 - 2025-01: 初始版本
-- 最後更新: 2025-01-27
 
 ---
 
@@ -757,8 +425,8 @@ find ~ -name "config.json" -path "*/claude*" 2>/dev/null
 
 - [MCP 官方文件](https://modelcontextprotocol.io)
 - [Claude Code 文件](https://docs.anthropic.com/en/docs/claude-code)
-- [MCP Server 列表](https://github.com/modelcontextprotocol/servers)
-- [Anthropic 官網](https://www.anthropic.com)
+- [NPM Registry](https://www.npmjs.com) - 驗證套件是否存在
+- [GitHub MCP Servers](https://github.com/modelcontextprotocol/servers) - 官方服務列表
 
 ---
 
