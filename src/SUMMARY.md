@@ -52,6 +52,7 @@
     - [Flamegraph 效能分析指南](tools/flamegraph-guide.md)
     - [🎯 完整的 Solana Token 出入金系統指南](tools/solana_token_guide.md)
     - [Bitwarden CLI 完整使用指南](tools/bitwarden_cli_guide.md)
+    - [MCP Commands Reference](tools/mcp-commands-reference.md)
 
 ## Programming Languages
 - [C++](c++/cpp.md)
