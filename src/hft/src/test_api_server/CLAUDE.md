@@ -4,7 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-這是一個 API 效能測試套件，用於比較三種不同程式語言實作的非同步 HTTP 客戶端（Python、C++、Rust）連接到 Rust API 伺服器的效能表現。專案包含一個高效能的 Rust API 伺服器和三個客戶端實作，用於測試交易系統的延遲和吞吐量。
+這是一個 API 效能測試套件，用於比較四種不同程式語言實作的非同步 HTTP 客戶端（Python、C、C++、Rust）連接到 Rust API 伺服器的效能表現。專案包含一個高效能的 Rust API 伺服器和四個客戶端實作，用於測試交易系統的延遲和吞吐量。
+
+## Quick Start
+
+```bash
+# 1. Start the server
+cd rust-api-server && cargo run --release &
+
+# 2. Run a quick test with Python client
+python3 python_client.py --orders 100 --connections 10 --warmup 10
+
+# 3. Run full benchmark suite
+./run_benchmark.sh
+```
 
 ## Architecture
 
@@ -17,12 +30,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Client Implementations**:
   - `python_client.py`: aiohttp 非同步客戶端
-  - `cpp_client.cpp`: libcurl + std::async 客戶端  
+  - `c-client/c_client.c`: libcurl + pthread 多執行緒客戶端
+  - `cpp-client/cpp_client.cpp`: libcurl + std::async 客戶端  
   - `rust-client/`: reqwest + tokio 非同步客戶端
 
 - **Performance Tools**:
   - `run_benchmark.sh`: 自動化基準測試腳本
   - `compare_performance.py`: 效能比較工具
+
+## Prerequisites
+
+### Required Dependencies
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install -y build-essential cmake libcurl4-openssl-dev python3-pip
+
+# macOS
+brew install cmake curl
+
+# Install Rust (all platforms)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# Python dependencies
+pip install aiohttp tabulate
+```
 
 ## Build and Run Commands
 
@@ -45,15 +77,35 @@ pip install aiohttp
 python3 python_client.py --orders 1000 --connections 100 --warmup 100
 ```
 
-### C++ Client
+### C Client
 ```bash
 # 建構
+cd c-client
+make
+
+# 執行
+./c_client 1000 100 100  # orders connections warmup
+
+# 快速測試
+make test
+```
+
+### C++ Client
+```bash
+# 建構 (使用 Makefile)
+cd cpp-client
+make
+
+# 或使用 CMake
 mkdir -p build && cd build
 cmake ..
 make -j$(nproc)
 
 # 執行
-./build/cpp_client 1000 100 100  # orders connections warmup
+./cpp_client 1000 100 100  # orders connections warmup
+
+# 快速測試
+make test
 ```
 
 ### Rust Client
@@ -84,8 +136,11 @@ python3 -m pytest python_client.py -v
 cd rust-api-server && cargo test
 cd rust-client && cargo test
 
-# C++ 測試（透過執行檔）
-./build/cpp_client 10 1 0  # 小規模快速測試
+# C 測試
+cd c-client && make test
+
+# C++ 測試
+cd cpp-client && make test
 ```
 
 ### 效能比較測試
@@ -106,9 +161,14 @@ test_api_server/
 │   ├── src/
 │   │   └── main.rs      # 客戶端主程式
 │   └── Cargo.toml       # Rust 依賴設定
+├── c-client/            # C 客戶端
+│   ├── c_client.c       # C 客戶端主程式
+│   └── Makefile         # C 建構設定
+├── cpp-client/          # C++ 客戶端
+│   ├── cpp_client.cpp   # C++ 客戶端主程式
+│   ├── Makefile         # C++ 建構設定
+│   └── CMakeLists.txt   # CMake 建構設定
 ├── python_client.py     # Python 客戶端
-├── cpp_client.cpp       # C++ 客戶端
-├── CMakeLists.txt       # C++ 建構設定
 ├── run_benchmark.sh     # 自動化測試腳本
 └── compare_performance.py # 效能比較工具
 ```
@@ -120,9 +180,41 @@ test_api_server/
 - 計算客戶端到伺服器的延遲
 - 回傳處理狀態和時間戳記
 
+**Request Format:**
+```json
+{
+  "order_id": "ORDER_001",
+  "symbol": "BTCUSDT",
+  "quantity": 1,
+  "price": 50000.0,
+  "side": "BUY",
+  "client_timestamp": "2024-01-01T10:00:00.000Z"
+}
+```
+
+**Response Format:**
+```json
+{
+  "order_id": "ORDER_001",
+  "status": "ACCEPTED",
+  "client_timestamp": "2024-01-01T10:00:00.000Z",
+  "server_timestamp": "2024-01-01T10:00:00.010Z",
+  "latency_ms": 10.0
+}
+```
+
 ### GET /stats  
 - 取得伺服器統計資料
 - 顯示總訂單數和吞吐量
+
+**Response Format:**
+```json
+{
+  "total_orders": 5000,
+  "elapsed_seconds": 5.23,
+  "orders_per_second": 956.02
+}
+```
 
 ## Performance Tuning
 
@@ -171,6 +263,23 @@ iotop # I/O 活動
 
 ## Common Tasks
 
+### 建構所有客戶端
+```bash
+# 一次建構所有客戶端
+cd c-client && make && cd ..
+cd cpp-client && make && cd ..
+cd rust-client && cargo build --release && cd ..
+```
+
+### 清理建構產物
+```bash
+# 清理所有建構產物
+cd c-client && make clean && cd ..
+cd cpp-client && make clean && cd ..
+cd rust-client && cargo clean && cd ..
+cd rust-api-server && cargo clean && cd ..
+```
+
 ### 修改伺服器埠號
 編輯 `rust-api-server/src/main.rs` 中的：
 ```rust
@@ -179,10 +288,19 @@ let addr = SocketAddr::from(([127, 0, 0, 1], 8080));  // 修改 8080
 
 ### 調整客戶端超時設定
 - Python: 修改 `python_client.py` 中的 `timeout` 參數
-- C++: 調整 `cpp_client.cpp` 中的 `CURLOPT_TIMEOUT`
+- C: 調整 `c-client/c_client.c` 中的 `CURLOPT_TIMEOUT`
+- C++: 調整 `cpp-client/cpp_client.cpp` 中的 `CURLOPT_TIMEOUT`
 - Rust: 修改 `rust-client/src/main.rs` 中的 `timeout` 設定
 
 ### 新增效能指標
 1. 在客戶端收集新指標
 2. 更新輸出格式以包含新指標
 3. 修改 `compare_performance.py` 以解析新指標
+
+## Troubleshooting
+
+### 常見問題
+- **Port already in use**: 使用 `lsof -i :8080` 檢查並 `kill -9 <PID>` 終止佔用程序
+- **Too many open files**: 執行 `ulimit -n 65536` 增加檔案描述符限制
+- **libcurl not found**: 安裝 `libcurl4-openssl-dev` (Ubuntu) 或 `curl` (macOS)
+- **Performance issues**: 確保使用 release 模式編譯 (`--release` for Rust, `-O3` for C/C++)
