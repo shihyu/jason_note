@@ -161,21 +161,48 @@ run_latency_test() {
     # C 延遲測試
     echo "C 延遲測試:"
     if [ -f "hft_c_example/hft_trading" ]; then
-        ./hft_c_example/hft_trading 5 2>&1 | grep -E "latency|Average|orders|Statistics" | tee -a $RESULT_FILE
+        c_output=$(./hft_c_example/hft_trading 5 2>&1)
+        c_latency=$(echo "$c_output" | grep "^Average latency:" | head -1)
+        c_orders=$(echo "$c_output" | grep "^Total orders processed:" | head -1)
+        
+        if [ -n "$c_latency" ]; then
+            echo "$c_latency" | tee -a $RESULT_FILE
+        fi
+        if [ -n "$c_orders" ]; then
+            echo "$c_orders" | tee -a $RESULT_FILE
+        fi
     fi
     echo ""
     
     # C++ 延遲測試
     echo "C++ 延遲測試:"
     if [ -f "hft_cpp_example/hft_trading" ]; then
-        ./hft_cpp_example/hft_trading 5 2>&1 | grep -E "latency|Average|P50|P95|P99" | tee -a $RESULT_FILE
+        cpp_output=$(./hft_cpp_example/hft_trading 5 2>&1)
+        cpp_latency=$(echo "$cpp_output" | grep "^Average latency:" | head -1)
+        cpp_orders=$(echo "$cpp_output" | grep "^Total orders processed:" | head -1)
+        
+        if [ -n "$cpp_latency" ]; then
+            echo "$cpp_latency" | tee -a $RESULT_FILE
+        fi
+        if [ -n "$cpp_orders" ]; then
+            echo "$cpp_orders" | tee -a $RESULT_FILE
+        fi
     fi
     echo ""
     
     # Rust 延遲測試
     echo "Rust 延遲測試:"
     if [ -f "hft_rust_example/target/release/hft_rust_example" ]; then
-        ./hft_rust_example/target/release/hft_rust_example 5 2>&1 | grep -E "latency|Average|P50|P95|P99" | tee -a $RESULT_FILE
+        rust_output=$(./hft_rust_example/target/release/hft_rust_example 5 2>&1)
+        rust_latency=$(echo "$rust_output" | grep "^Average latency:" | head -1)
+        rust_orders=$(echo "$rust_output" | grep "^Total orders processed:" | head -1)
+        
+        if [ -n "$rust_latency" ]; then
+            echo "$rust_latency" | tee -a $RESULT_FILE
+        fi
+        if [ -n "$rust_orders" ]; then
+            echo "$rust_orders" | tee -a $RESULT_FILE
+        fi
     fi
     echo "" >> $RESULT_FILE
     echo ""
@@ -983,17 +1010,30 @@ generate_report() {
     echo "-------------"
     
     if [ -f "$RESULT_FILE" ]; then
-        # 提取關鍵數據
+        # 1. 延遲測試結果
         echo "1. 延遲測試結果:"
-        grep -A 2 "1. 延遲測試" $RESULT_FILE | tail -2
+        echo "   C 延遲: $(grep "^Average latency:" $RESULT_FILE | head -1 | awk '{print $3, $4}')"
+        echo "   C++ 延遲: $(grep "^Average latency:" $RESULT_FILE | head -2 | tail -1 | awk '{print $3, $4}')"
+        echo "   Rust 延遲: $(grep "^Average latency:" $RESULT_FILE | head -3 | tail -1 | awk '{print $3, $4}')"
         
         echo ""
         echo "2. 吞吐量峰值:"
-        grep "orders/sec" $RESULT_FILE | sort -t: -k2 -n | tail -2
+        # 找出每個語言的最高吞吐量
+        c_max=$(grep "^C: .* orders/sec" $RESULT_FILE | awk '{print $2}' | sort -n | tail -1)
+        cpp_max=$(grep "^C++: .* orders/sec" $RESULT_FILE | awk '{print $2}' | sort -n | tail -1)
+        rust_max=$(grep "^Rust: .* orders/sec" $RESULT_FILE | awk '{print $2}' | sort -n | tail -1)
+        
+        [ -n "$c_max" ] && echo "   C: $c_max orders/sec"
+        [ -n "$cpp_max" ] && echo "   C++: $cpp_max orders/sec"
+        [ -n "$rust_max" ] && echo "   Rust: $rust_max orders/sec"
         
         echo ""
         echo "3. 記憶體使用:"
-        grep "RSS:" $RESULT_FILE
+        grep "RSS:" $RESULT_FILE | head -3 | sed 's/^/   /'
+        
+        echo ""
+        echo "4. 並發測試總訂單:"
+        grep "並發總訂單:" $RESULT_FILE | sed 's/^/   /'
         
         echo ""
         echo "測試完成時間: $(date)"
