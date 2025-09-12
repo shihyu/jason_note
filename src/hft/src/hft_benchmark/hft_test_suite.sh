@@ -39,6 +39,85 @@ check_tools() {
     echo ""
 }
 
+# 編譯程式
+compile_programs() {
+    echo -e "${BLUE}[編譯] 編譯測試程式...${NC}"
+    local compiled=false
+    
+    # 編譯 C++ 程式 (在 hft_cpp_example 目錄)
+    if [ -d "hft_cpp_example" ]; then
+        echo "編譯 C++ 程式..."
+        cd hft_cpp_example
+        
+        # 檢查是否需要編譯
+        if [ ! -f "hft_trading" ] || [ "hft_trading.cpp" -nt "hft_trading" ] || [ "Makefile" -nt "hft_trading" ]; then
+            echo "  執行 make..."
+            if make clean && make; then
+                echo -e "  ${GREEN}C++ 程式編譯成功${NC}"
+                compiled=true
+            else
+                echo -e "  ${RED}C++ 程式編譯失敗${NC}"
+            fi
+        else
+            echo -e "  ${GREEN}C++ 程式已是最新版本${NC}"
+        fi
+        cd ..
+    else
+        echo -e "${YELLOW}警告: 找不到 hft_cpp_example 目錄${NC}"
+    fi
+    echo ""
+    
+    # 編譯 Rust 程式 (在 hft_rust_example 目錄)
+    if [ -d "hft_rust_example" ] && [ -f "hft_rust_example/Cargo.toml" ]; then
+        echo "編譯 Rust 程式..."
+        cd hft_rust_example
+        
+        # 檢查是否需要編譯
+        if [ ! -f "target/release/hft_rust_example" ] || [ "src/main.rs" -nt "target/release/hft_rust_example" ] || [ "Cargo.toml" -nt "target/release/hft_rust_example" ]; then
+            echo "  執行 cargo build --release..."
+            if cargo build --release; then
+                echo -e "  ${GREEN}Rust 程式編譯成功${NC}"
+                compiled=true
+            else
+                echo -e "  ${RED}Rust 程式編譯失敗${NC}"
+            fi
+        else
+            echo -e "  ${GREEN}Rust 程式已是最新版本${NC}"
+        fi
+        cd ..
+    else
+        echo -e "${YELLOW}提示: 未找到 Rust 專案目錄${NC}"
+    fi
+    echo ""
+    
+    # 檢查編譯結果
+    local cpp_ready=false
+    local rust_ready=false
+    
+    if [ -f "hft_cpp_example/hft_trading" ]; then
+        cpp_ready=true
+    fi
+    
+    if [ -f "hft_rust_example/target/release/hft_rust_example" ]; then
+        rust_ready=true
+    fi
+    
+    if [ "$cpp_ready" = false ] && [ "$rust_ready" = false ]; then
+        echo -e "${RED}錯誤: 沒有可用的測試程式，請檢查編譯錯誤${NC}"
+        echo "退出測試..."
+        exit 1
+    fi
+    
+    echo -e "${GREEN}[編譯] 編譯完成${NC}"
+    if [ "$cpp_ready" = true ]; then
+        echo -e "  ${GREEN}✓ C++ 程式就緒${NC}"
+    fi
+    if [ "$rust_ready" = true ]; then
+        echo -e "  ${GREEN}✓ Rust 程式就緒${NC}"
+    fi
+    echo ""
+}
+
 # 1. 延遲測試 (Latency Test)
 run_latency_test() {
     echo -e "${GREEN}========== 1. 延遲測試 (Latency Test) ==========${NC}"
@@ -51,9 +130,7 @@ run_latency_test() {
     # C++ 延遲測試
     echo "C++ 延遲測試:"
     if [ -f "hft_cpp_example/hft_trading" ]; then
-        cd hft_cpp_example
-        ./hft_trading 5 2>&1 | grep -E "latency|Average|P50|P95|P99" | tee -a ../$RESULT_FILE
-        cd ..
+        ./hft_cpp_example/hft_trading 5 2>&1 | grep -E "latency|Average|P50|P95|P99" | tee -a $RESULT_FILE
     fi
     echo ""
     
@@ -83,10 +160,8 @@ run_throughput_test() {
         # C++ 測試
         echo -n "C++ 吞吐量: "
         if [ -f "hft_cpp_example/hft_trading" ]; then
-            cd hft_cpp_example
             # 不使用 timeout，讓程式自然結束
-            output=$(./hft_trading $load 2>&1 | grep "Total orders processed" | awk '{print $4}')
-            cd ..
+            output=$(./hft_cpp_example/hft_trading $load 2>&1 | grep "Total orders processed" | awk '{print $4}')
             if [ -n "$output" ]; then
                 throughput=$((output / load))
             else
@@ -492,6 +567,7 @@ show_menu() {
 # 主程式
 main() {
     check_tools
+    compile_programs  # 在執行測試前先編譯程式
     
     if [ "$1" == "--all" ] || [ "$1" == "-a" ]; then
         echo "執行所有測試..."
