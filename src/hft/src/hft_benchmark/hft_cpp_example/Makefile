@@ -17,7 +17,7 @@ debug: CXXFLAGS = -std=c++17 -g -O0 -Wall -Wextra -pthread
 debug: $(TARGETS)
 
 clean:
-	rm -f $(TARGETS)
+	rm -f $(TARGETS) test_output.txt
 
 run: hft_trading
 	./hft_trading 30
