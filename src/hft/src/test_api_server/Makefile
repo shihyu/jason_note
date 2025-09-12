@@ -7,6 +7,8 @@ build:
 	@cd rust-api-server && cargo build --release
 	@echo "Building Rust client..."
 	@cd rust-client && cargo build --release
+	@echo "Building C client..."
+	@cd c-client && make
 	@echo "Building C++ client..."
 	@cd cpp-client && make
 	@echo "Checking Python dependencies..."
@@ -29,6 +31,7 @@ test: build
 
 clean:
 	@echo "Cleaning build files..."
+	@cd c-client && make clean
 	@cd cpp-client && make clean
 	@cd rust-api-server && cargo clean
 	@cd rust-client && cargo clean

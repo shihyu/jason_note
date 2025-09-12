@@ -46,6 +46,10 @@ build_clients() {
     echo -e "${BLUE}Building Rust Client...${NC}"
     (cd rust-client && cargo build --release)
     
+    # Build C client
+    echo -e "${BLUE}Building C Client...${NC}"
+    (cd c-client && make)
+    
     # Build C++ client
     echo -e "${BLUE}Building C++ Client...${NC}"
     (cd cpp-client && make)
@@ -103,6 +107,10 @@ main() {
     # Run Python benchmark
     run_benchmark "Python (aiohttp)" \
         "python3 python_client.py --orders $NUM_ORDERS --connections $NUM_CONNECTIONS --warmup $WARMUP"
+    
+    # Run C benchmark
+    run_benchmark "C (libcurl + pthread)" \
+        "./c-client/c_client $NUM_ORDERS $NUM_CONNECTIONS $WARMUP"
     
     # Run C++ benchmark
     run_benchmark "C++ (libcurl + async)" \

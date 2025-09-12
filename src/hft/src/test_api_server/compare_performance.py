@@ -100,6 +100,16 @@ def main():
         python_results['client'] = 'Python (aiohttp)'
         results.append(python_results)
     
+    # C client
+    print("\n" + "=" * 40)
+    print("Testing C Client (libcurl)")
+    print("=" * 40)
+    c_cmd = f"./c-client/c_client {NUM_ORDERS} {NUM_CONNECTIONS} {WARMUP}"
+    c_results = run_test("C", c_cmd, NUM_TESTS)
+    if c_results:
+        c_results['client'] = 'C (libcurl)'
+        results.append(c_results)
+    
     # C++ client
     print("\n" + "=" * 40)
     print("Testing C++ Client (libcurl)")
