@@ -1,0 +1,52 @@
+#!/bin/sh
+
+# Guider Launcher
+#
+# Copyright (c) 2016-2025 Peace Lee <iipeace5@gmail.com>
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 2 of the License, or (at your option)
+# any later version.
+
+# export CMDLINE for Guider #
+CMDLINE=$0
+export CMDLINE
+
+# check PYTHON variable #
+if [ $PYTHON ]; then
+    exec $PYTHON -m guider "$@"
+fi
+
+# define PYTHON variable #
+PYTHON=""
+
+# check python binaries #
+for cmd in python3 python python2
+do
+    # check a python binary #
+    R=$(which $cmd 2> /dev/null)
+    if [ $? -ne "0" ]; then
+        continue;
+    fi
+
+    # set available python list #
+    PYTHON="$PYTHON$cmd "
+
+    # check guider module #
+    R=$($cmd -m guider)
+    if [ $? -ne "0" ]; then
+        continue;
+    fi
+
+    # launch Guider #
+    exec $cmd -m guider "$@"
+done
+
+# print error message #
+if [ -z "$PYTHON" ]; then
+    echo "[Error] failed to find python"
+else
+    echo "[Error] failed to find Guider module in $PYTHON"
+fi
+exit 1
