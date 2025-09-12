@@ -83,8 +83,15 @@ run_throughput_test() {
         # C++ 測試
         echo -n "C++ 吞吐量: "
         if [ -f "hft_cpp_example/hft_trading" ]; then
-            output=$(timeout $load ./hft_cpp_example/hft_trading $load 2>&1 | grep "Total orders processed" | awk '{print $4}')
-            throughput=$((output / load))
+            cd hft_cpp_example
+            # 不使用 timeout，讓程式自然結束
+            output=$(./hft_trading $load 2>&1 | grep "Total orders processed" | awk '{print $4}')
+            cd ..
+            if [ -n "$output" ]; then
+                throughput=$((output / load))
+            else
+                throughput=0
+            fi
             echo "$throughput orders/sec"
             echo "C++: $throughput orders/sec" >> $RESULT_FILE
         fi
@@ -92,8 +99,13 @@ run_throughput_test() {
         # Rust 測試
         echo -n "Rust 吞吐量: "
         if [ -f "hft_rust_example/target/release/hft_rust_example" ]; then
-            output=$(timeout $load ./hft_rust_example/target/release/hft_rust_example $load 2>&1 | grep "Total orders processed" | awk '{print $4}')
-            throughput=$((output / load))
+            # 不使用 timeout，讓程式自然結束
+            output=$(./hft_rust_example/target/release/hft_rust_example $load 2>&1 | grep "Total orders processed" | awk '{print $4}')
+            if [ -n "$output" ]; then
+                throughput=$((output / load))
+            else
+                throughput=0
+            fi
             echo "$throughput orders/sec"
             echo "Rust: $throughput orders/sec" >> $RESULT_FILE
         fi

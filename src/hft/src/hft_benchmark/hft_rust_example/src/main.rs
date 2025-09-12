@@ -167,6 +167,9 @@ impl HFTEngine {
                         );
                     }
                 }
+            } else {
+                // Sleep for a short time to avoid busy waiting
+                thread::sleep(Duration::from_micros(1));
             }
         }
     }
@@ -187,6 +190,9 @@ impl HFTEngine {
                 if executed_orders % 1000 == 0 {
                     println!("Executed {} orders", executed_orders);
                 }
+            } else {
+                // Sleep for a short time to avoid busy waiting
+                thread::sleep(Duration::from_micros(1));
             }
         }
     }
