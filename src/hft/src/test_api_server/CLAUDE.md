@@ -15,8 +15,7 @@ cd rust-api-server && cargo run --release &
 # 2. Run a quick test with Python client
 python3 python_client.py --orders 100 --connections 10 --warmup 10
 
-# 3. Run full benchmark suite
-./run_benchmark.sh
+# 3. Run each client individually for benchmarking
 ```
 
 ## Architecture
@@ -35,7 +34,6 @@ python3 python_client.py --orders 100 --connections 10 --warmup 10
   - `rust-client/`: reqwest + tokio 非同步客戶端
 
 - **Performance Tools**:
-  - `run_benchmark.sh`: 自動化基準測試腳本
   - `compare_performance.py`: 效能比較工具
 
 ## Prerequisites
@@ -118,12 +116,6 @@ cargo run --release -- --orders 1000 --connections 100 --warmup 100
 cargo run -- --orders 100 --connections 10 --warmup 10
 ```
 
-### Automated Benchmark
-```bash
-# 執行完整基準測試（會自動建構所有客戶端）
-chmod +x run_benchmark.sh
-./run_benchmark.sh
-```
 
 ## Testing Commands
 
@@ -169,7 +161,6 @@ test_api_server/
 │   ├── Makefile         # C++ 建構設定
 │   └── CMakeLists.txt   # CMake 建構設定
 ├── python_client.py     # Python 客戶端
-├── run_benchmark.sh     # 自動化測試腳本
 └── compare_performance.py # 效能比較工具
 ```
 
