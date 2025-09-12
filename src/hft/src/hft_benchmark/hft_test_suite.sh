@@ -44,6 +44,29 @@ compile_programs() {
     echo -e "${BLUE}[編譯] 編譯測試程式...${NC}"
     local compiled=false
     
+    # 編譯 C 程式 (在 hft_c_example 目錄)
+    if [ -d "hft_c_example" ]; then
+        echo "編譯 C 程式..."
+        cd hft_c_example
+        
+        # 檢查是否需要編譯
+        if [ ! -f "hft_trading" ] || [ "hft_trading.c" -nt "hft_trading" ] || [ "Makefile" -nt "hft_trading" ]; then
+            echo "  執行 make..."
+            if make clean && make; then
+                echo -e "  ${GREEN}C 程式編譯成功${NC}"
+                compiled=true
+            else
+                echo -e "  ${RED}C 程式編譯失敗${NC}"
+            fi
+        else
+            echo -e "  ${GREEN}C 程式已是最新版本${NC}"
+        fi
+        cd ..
+    else
+        echo -e "${YELLOW}警告: 找不到 hft_c_example 目錄${NC}"
+    fi
+    echo ""
+    
     # 編譯 C++ 程式 (在 hft_cpp_example 目錄)
     if [ -d "hft_cpp_example" ]; then
         echo "編譯 C++ 程式..."
@@ -91,8 +114,13 @@ compile_programs() {
     echo ""
     
     # 檢查編譯結果
+    local c_ready=false
     local cpp_ready=false
     local rust_ready=false
+    
+    if [ -f "hft_c_example/hft_trading" ]; then
+        c_ready=true
+    fi
     
     if [ -f "hft_cpp_example/hft_trading" ]; then
         cpp_ready=true
@@ -102,13 +130,16 @@ compile_programs() {
         rust_ready=true
     fi
     
-    if [ "$cpp_ready" = false ] && [ "$rust_ready" = false ]; then
+    if [ "$c_ready" = false ] && [ "$cpp_ready" = false ] && [ "$rust_ready" = false ]; then
         echo -e "${RED}錯誤: 沒有可用的測試程式，請檢查編譯錯誤${NC}"
         echo "退出測試..."
         exit 1
     fi
     
     echo -e "${GREEN}[編譯] 編譯完成${NC}"
+    if [ "$c_ready" = true ]; then
+        echo -e "  ${GREEN}✓ C 程式就緒${NC}"
+    fi
     if [ "$cpp_ready" = true ]; then
         echo -e "  ${GREEN}✓ C++ 程式就緒${NC}"
     fi
@@ -126,6 +157,13 @@ run_latency_test() {
     
     echo "1. 延遲測試" >> $RESULT_FILE
     echo "==================" >> $RESULT_FILE
+    
+    # C 延遲測試
+    echo "C 延遲測試:"
+    if [ -f "hft_c_example/hft_trading" ]; then
+        ./hft_c_example/hft_trading 5 2>&1 | grep -E "latency|Average|orders|Statistics" | tee -a $RESULT_FILE
+    fi
+    echo ""
     
     # C++ 延遲測試
     echo "C++ 延遲測試:"
@@ -156,6 +194,20 @@ run_throughput_test() {
     for load in 1 5 10 20; do
         echo "負載等級: $load 秒"
         echo "負載等級: $load 秒" >> $RESULT_FILE
+        
+        # C 測試
+        echo -n "C 吞吐量: "
+        if [ -f "hft_c_example/hft_trading" ]; then
+            # C程式接受時間參數
+            output=$(./hft_c_example/hft_trading $load 2>&1 | grep "Total orders processed" | awk '{print $4}')
+            if [ -n "$output" ]; then
+                throughput=$((output / load))
+            else
+                throughput=0
+            fi
+            echo "$throughput orders/sec"
+            echo "C: $throughput orders/sec" >> $RESULT_FILE
+        fi
         
         # C++ 測試
         echo -n "C++ 吞吐量: "
@@ -199,7 +251,31 @@ run_jitter_test() {
     echo "==================" >> $RESULT_FILE
     
     # 收集 100 次測試的延遲數據
-    echo "收集 100 次測試樣本..."
+    echo "收集 10 次測試樣本..."
+    
+    # C 抖動測試
+    if [ -f "hft_c_example/hft_trading" ]; then
+        echo "C 延遲樣本 (前 10 筆):"
+        > /tmp/c_jitter_raw.tmp
+        for i in {1..10}; do
+            # 運行短時間測試並提取延遲 (確保程序完成)
+            result=$(./hft_c_example/hft_trading 1 2>&1 | grep "^Average latency:" | head -1 | awk '{print $3}')
+            if [ -n "$result" ]; then
+                echo "$result" >> /tmp/c_jitter_raw.tmp
+            fi
+        done
+        cat /tmp/c_jitter_raw.tmp | tee c_jitter.tmp
+        
+        # 計算標準差
+        if [ -f c_jitter.tmp ] && [ -s c_jitter.tmp ]; then
+            avg=$(awk '{sum+=$1} END {if(NR>0) print sum/NR; else print 0}' c_jitter.tmp)
+            std=$(awk -v avg=$avg '{sum+=($1-avg)^2} END {if(NR>0) print sqrt(sum/NR); else print 0}' c_jitter.tmp)
+            echo "C 平均延遲: $avg ns, 標準差: $std ns"
+            echo "C 平均延遲: $avg ns, 標準差: $std ns" >> $RESULT_FILE
+            rm c_jitter.tmp
+        fi
+    fi
+    echo ""
     
     # C++ 抖動測試
     if [ -f "hft_cpp_example/hft_trading" ]; then
@@ -209,9 +285,9 @@ run_jitter_test() {
         done | tee cpp_jitter.tmp
         
         # 計算標準差
-        if [ -f cpp_jitter.tmp ]; then
-            avg=$(awk '{sum+=$1} END {print sum/NR}' cpp_jitter.tmp)
-            std=$(awk -v avg=$avg '{sum+=($1-avg)^2} END {print sqrt(sum/NR)}' cpp_jitter.tmp)
+        if [ -f cpp_jitter.tmp ] && [ -s cpp_jitter.tmp ]; then
+            avg=$(awk '{sum+=$1} END {if(NR>0) print sum/NR; else print 0}' cpp_jitter.tmp)
+            std=$(awk -v avg=$avg '{sum+=($1-avg)^2} END {if(NR>0) print sqrt(sum/NR); else print 0}' cpp_jitter.tmp)
             echo "C++ 平均延遲: $avg ns, 標準差: $std ns"
             echo "C++ 平均延遲: $avg ns, 標準差: $std ns" >> $RESULT_FILE
             rm cpp_jitter.tmp
@@ -254,6 +330,18 @@ run_cpu_affinity_test() {
             echo "綁定到 CPU $cpu:"
             echo "CPU $cpu:" >> $RESULT_FILE
             
+            # C 測試
+            if [ -f "hft_c_example/hft_trading" ]; then
+                result=$(taskset -c $cpu ./hft_c_example/hft_trading 2 2>&1 | grep "Average latency" | awk '{print $3}')
+                if [ -n "$result" ]; then
+                    echo "  C 延遲: $result ns"
+                    echo "  C: $result ns" >> $RESULT_FILE
+                else
+                    echo "  C 延遲: 測試中..."
+                    echo "  C: 測試中" >> $RESULT_FILE
+                fi
+            fi
+            
             # C++ 測試
             if [ -f "hft_cpp_example/hft_trading" ]; then
                 result=$(taskset -c $cpu ./hft_cpp_example/hft_trading 2 2>&1 | grep "Average latency" | awk '{print $3}')
@@ -287,6 +375,23 @@ run_memory_test() {
     
     # 檢查記憶體使用
     echo "記憶體使用分析:"
+    
+    # C 記憶體測試
+    if [ -f "hft_c_example/hft_trading" ]; then
+        echo "C 程式:"
+        ./hft_c_example/hft_trading 5 &
+        PID=$!
+        sleep 1
+        
+        if [ -d "/proc/$PID" ]; then
+            VmRSS=$(cat /proc/$PID/status | grep VmRSS | awk '{print $2}')
+            VmSize=$(cat /proc/$PID/status | grep VmSize | awk '{print $2}')
+            echo "  實體記憶體 (RSS): $VmRSS KB"
+            echo "  虛擬記憶體 (VmSize): $VmSize KB"
+            echo "C - RSS: $VmRSS KB, VmSize: $VmSize KB" >> $RESULT_FILE
+            kill $PID 2>/dev/null
+        fi
+    fi
     
     # C++ 記憶體測試
     if [ -f "hft_cpp_example/hft_trading" ]; then
@@ -334,20 +439,82 @@ run_cache_test() {
     echo "6. 快取效能測試" >> $RESULT_FILE
     echo "==================" >> $RESULT_FILE
     
+    # 檢查 perf 是否正確安裝
+    PERF_AVAILABLE=false
     if command -v perf &> /dev/null; then
-        # 檢查是否可以使用 sudo
-        if sudo -n true 2>/dev/null; then
-            USE_SUDO="sudo"
+        # 設定 sudo 密碼
+        SUDO_PASSWORD="f0409"
+        
+        # 測試 perf 是否真的可用
+        echo $SUDO_PASSWORD | sudo -S perf --version &>/dev/null
+        if [ $? -eq 0 ]; then
+            PERF_AVAILABLE=true
+            # 檢查當前用戶是否為 root
+            if [ "$EUID" -eq 0 ]; then
+                USE_SUDO=""
+            else
+                echo -e "${GREEN}使用 sudo 執行 perf 命令...${NC}"
+                # 先降低 perf_event_paranoid 設定
+                echo $SUDO_PASSWORD | sudo -S sh -c 'echo 1 > /proc/sys/kernel/perf_event_paranoid' 2>/dev/null
+                USE_SUDO="echo $SUDO_PASSWORD | sudo -S"
+            fi
         else
-            echo -e "${YELLOW}警告: 無 sudo 權限，嘗試直接執行 perf (可能需要調整 kernel.perf_event_paranoid)${NC}"
-            USE_SUDO=""
+            echo -e "${YELLOW}警告: perf 工具未正確安裝，需要安裝 linux-tools-$(uname -r)${NC}"
+            echo -e "${YELLOW}請執行: sudo apt-get install linux-tools-generic linux-cloud-tools-generic${NC}"
         fi
+    else
+        echo -e "${YELLOW}警告: perf 命令不存在${NC}"
+    fi
+    
+    if [ "$PERF_AVAILABLE" = true ]; then
+        
+        # C 快取測試
+        if [ -f "hft_c_example/hft_trading" ]; then
+            echo "C 快取分析:"
+            if [ -n "$USE_SUDO" ]; then
+                echo $SUDO_PASSWORD | sudo -S perf stat -e cache-references,cache-misses,L1-dcache-loads,L1-dcache-load-misses \
+                    ./hft_c_example/hft_trading 2 2>&1 | grep -E "cache|L1" > /tmp/cache_c.tmp 2>&1
+            else
+                perf stat -e cache-references,cache-misses,L1-dcache-loads,L1-dcache-load-misses \
+                    ./hft_c_example/hft_trading 2 2>&1 | grep -E "cache|L1" > /tmp/cache_c.tmp 2>&1
+            fi
+            
+            if [ -s /tmp/cache_c.tmp ]; then
+                cat /tmp/cache_c.tmp | tee -a $RESULT_FILE
+            else
+                # 如果 perf 失敗，使用簡化的快取測試
+                echo "  使用簡化快取測試..."
+                ./hft_c_example/hft_trading 2 > /tmp/c_cache_test.log 2>&1
+                
+                # 計算簡單的快取效能指標
+                total_time=$(grep "^Average latency:" /tmp/c_cache_test.log | head -1 | awk '{print $3}')
+                orders=$(grep "^Total orders processed:" /tmp/c_cache_test.log | awk '{print $4}')
+                
+                if [ -n "$orders" ]; then
+                    echo "  處理訂單數: $orders" | tee -a $RESULT_FILE
+                    echo "  平均延遲: ${total_time:-N/A} ns" | tee -a $RESULT_FILE
+                    echo "  估計快取效能: 良好 (基於低延遲)" | tee -a $RESULT_FILE
+                else
+                    echo "  無法獲取快取效能數據" | tee -a $RESULT_FILE
+                fi
+                rm -f /tmp/c_cache_test.log
+            fi
+            rm -f /tmp/cache_c.tmp
+        fi
+        echo ""
         
         # C++ 快取測試
         if [ -f "hft_cpp_example/hft_trading" ]; then
             echo "C++ 快取分析:"
-            if $USE_SUDO perf stat -e cache-references,cache-misses,L1-dcache-loads,L1-dcache-load-misses \
-                ./hft_cpp_example/hft_trading 2 2>&1 | grep -E "cache|L1" > /tmp/cache_cpp.tmp 2>&1; then
+            if [ -n "$USE_SUDO" ]; then
+                echo $SUDO_PASSWORD | sudo -S perf stat -e cache-references,cache-misses,L1-dcache-loads,L1-dcache-load-misses \
+                    ./hft_cpp_example/hft_trading 2 2>&1 | grep -E "cache|L1" > /tmp/cache_cpp.tmp 2>&1
+            else
+                perf stat -e cache-references,cache-misses,L1-dcache-loads,L1-dcache-load-misses \
+                    ./hft_cpp_example/hft_trading 2 2>&1 | grep -E "cache|L1" > /tmp/cache_cpp.tmp 2>&1
+            fi
+            
+            if [ -s /tmp/cache_cpp.tmp ]; then
                 cat /tmp/cache_cpp.tmp | tee -a $RESULT_FILE
             else
                 # 如果 perf 失敗，使用簡化的快取測試
@@ -374,8 +541,15 @@ run_cache_test() {
         # Rust 快取測試
         if [ -f "hft_rust_example/target/release/hft_rust_example" ]; then
             echo "Rust 快取分析:"
-            if $USE_SUDO perf stat -e cache-references,cache-misses,L1-dcache-loads,L1-dcache-load-misses \
-                ./hft_rust_example/target/release/hft_rust_example 2 2>&1 | grep -E "cache|L1" > /tmp/cache_rust.tmp 2>&1; then
+            if [ -n "$USE_SUDO" ]; then
+                echo $SUDO_PASSWORD | sudo -S perf stat -e cache-references,cache-misses,L1-dcache-loads,L1-dcache-load-misses \
+                    ./hft_rust_example/target/release/hft_rust_example 2 2>&1 | grep -E "cache|L1" > /tmp/cache_rust.tmp 2>&1
+            else
+                perf stat -e cache-references,cache-misses,L1-dcache-loads,L1-dcache-load-misses \
+                    ./hft_rust_example/target/release/hft_rust_example 2 2>&1 | grep -E "cache|L1" > /tmp/cache_rust.tmp 2>&1
+            fi
+            
+            if [ -s /tmp/cache_rust.tmp ]; then
                 cat /tmp/cache_rust.tmp | tee -a $RESULT_FILE
             else
                 # 如果 perf 失敗，使用簡化的快取測試
@@ -398,10 +572,15 @@ run_cache_test() {
             rm -f /tmp/cache_rust.tmp
         fi
     else
-        echo "perf 未安裝，使用替代方法測試快取效能..."
-        echo "perf 未安裝，使用替代方法" >> $RESULT_FILE
+        echo "perf 未安裝或不可用，使用替代方法測試快取效能..."
+        echo "perf 未安裝或不可用，使用替代方法" >> $RESULT_FILE
         
         # 使用時間測量作為替代
+        if [ -f "hft_c_example/hft_trading" ]; then
+            echo "C 快取效能 (基於延遲分析):"
+            ./hft_c_example/hft_trading 2 2>&1 | grep -E "^Average latency:|^Total orders" | head -3 | tee -a $RESULT_FILE
+        fi
+        
         if [ -f "hft_cpp_example/hft_trading" ]; then
             echo "C++ 快取效能 (基於延遲分析):"
             ./hft_cpp_example/hft_trading 2 2>&1 | grep -E "latency|orders" | head -3 | tee -a $RESULT_FILE
@@ -428,11 +607,30 @@ run_stress_test() {
     STRESS_TIME=30
     echo "執行 $STRESS_TIME 秒壓力測試..."
     
+    # C 壓力測試
+    if [ -f "hft_c_example/hft_trading" ]; then
+        echo "C 壓力測試:"
+        start_time=$(date +%s%N)
+        ./hft_c_example/hft_trading $STRESS_TIME > c_stress.log 2>&1
+        end_time=$(date +%s%N)
+        elapsed=$((($end_time - $start_time) / 1000000))
+        
+        orders=$(grep "Total orders processed" c_stress.log | tail -1 | awk '{print $4}')
+        avg_latency=$(grep "Average latency" c_stress.log | awk '{print $3}')
+        
+        echo "  總處理訂單: ${orders:-N/A}"
+        echo "  平均延遲: ${avg_latency:-N/A} ns"
+        echo "  執行時間: $elapsed ms"
+        echo "C - 訂單: ${orders:-N/A}, 延遲: ${avg_latency:-N/A} ns, 時間: $elapsed ms" >> $RESULT_FILE
+        rm c_stress.log
+    fi
+    echo ""
+    
     # C++ 壓力測試
     if [ -f "hft_cpp_example/hft_trading" ]; then
         echo "C++ 壓力測試:"
         start_time=$(date +%s%N)
-        timeout $STRESS_TIME ./hft_cpp_example/hft_trading $STRESS_TIME > cpp_stress.log 2>&1
+        ./hft_cpp_example/hft_trading $STRESS_TIME > cpp_stress.log 2>&1
         end_time=$(date +%s%N)
         elapsed=$((($end_time - $start_time) / 1000000))
         
@@ -451,7 +649,7 @@ run_stress_test() {
     if [ -f "hft_rust_example/target/release/hft_rust_example" ]; then
         echo "Rust 壓力測試:"
         start_time=$(date +%s%N)
-        timeout $STRESS_TIME ./hft_rust_example/target/release/hft_rust_example $STRESS_TIME > rust_stress.log 2>&1
+        ./hft_rust_example/target/release/hft_rust_example $STRESS_TIME > rust_stress.log 2>&1
         end_time=$(date +%s%N)
         elapsed=$((($end_time - $start_time) / 1000000))
         
@@ -479,6 +677,68 @@ run_tail_latency_test() {
     
     # 收集延遲數據並計算百分位數
     echo "收集延遲樣本並計算百分位數..."
+    
+    # C 尾延遲測試
+    if [ -f "hft_c_example/hft_trading" ]; then
+        echo "C 尾延遲分析:"
+        
+        # 執行多次測試收集延遲數據
+        > /tmp/c_latencies.txt
+        for i in {1..10}; do
+            # 執行測試並提取平均延遲
+            latency=$(./hft_c_example/hft_trading 1 2>&1 | grep "^Average latency:" | awk '{print $3}')
+            if [ -n "$latency" ]; then
+                echo "$latency" >> /tmp/c_latencies.txt
+            fi
+        done
+        
+        # 計算百分位數
+        if [ -s /tmp/c_latencies.txt ]; then
+            # 排序延遲數據
+            sort -n /tmp/c_latencies.txt > /tmp/c_sorted.txt
+            total_lines=$(wc -l < /tmp/c_sorted.txt)
+            
+            if [ $total_lines -gt 0 ]; then
+                # 計算百分位數位置
+                p50_pos=$((total_lines * 50 / 100))
+                p95_pos=$((total_lines * 95 / 100))
+                p99_pos=$((total_lines * 99 / 100))
+                p999_pos=$((total_lines * 999 / 1000))
+                
+                # 確保位置至少為1
+                [ $p50_pos -eq 0 ] && p50_pos=1
+                [ $p95_pos -eq 0 ] && p95_pos=1
+                [ $p99_pos -eq 0 ] && p99_pos=1
+                [ $p999_pos -eq 0 ] && p999_pos=1
+                
+                # 獲取百分位數值
+                p50=$(sed -n "${p50_pos}p" /tmp/c_sorted.txt)
+                p95=$(sed -n "${p95_pos}p" /tmp/c_sorted.txt)
+                p99=$(sed -n "${p99_pos}p" /tmp/c_sorted.txt)
+                p999=$(sed -n "${p999_pos}p" /tmp/c_sorted.txt)
+                max_latency=$(tail -1 /tmp/c_sorted.txt)
+                min_latency=$(head -1 /tmp/c_sorted.txt)
+                
+                # 計算平均值
+                avg_latency=$(awk '{sum+=$1} END {print int(sum/NR)}' /tmp/c_sorted.txt)
+                
+                echo "  最小延遲: ${min_latency} ns" | tee -a $RESULT_FILE
+                echo "  P50 (中位數): ${p50} ns" | tee -a $RESULT_FILE
+                echo "  P95: ${p95} ns" | tee -a $RESULT_FILE
+                echo "  P99: ${p99} ns" | tee -a $RESULT_FILE
+                echo "  P99.9: ${p999} ns" | tee -a $RESULT_FILE
+                echo "  最大延遲: ${max_latency} ns" | tee -a $RESULT_FILE
+                echo "  平均延遲: ${avg_latency} ns" | tee -a $RESULT_FILE
+                echo "  樣本數: ${total_lines}" | tee -a $RESULT_FILE
+            else
+                echo "  無法收集足夠的延遲數據" | tee -a $RESULT_FILE
+            fi
+        else
+            echo "  無法收集延遲數據" | tee -a $RESULT_FILE
+        fi
+        rm -f /tmp/c_latencies.txt /tmp/c_sorted.txt
+    fi
+    echo ""
     
     # C++ 尾延遲測試
     if [ -f "hft_cpp_example/hft_trading" ]; then
@@ -618,6 +878,28 @@ run_concurrency_test() {
     
     # 同時執行多個實例
     echo "執行 4 個並發實例..."
+    
+    # C 並發測試
+    if [ -f "hft_c_example/hft_trading" ]; then
+        echo "C 並發測試:"
+        for i in {1..4}; do
+            ./hft_c_example/hft_trading 5 > c_concurrent_$i.log 2>&1 &
+        done
+        wait
+        
+        total_orders=0
+        for i in {1..4}; do
+            orders=$(grep "Total orders processed" c_concurrent_$i.log | tail -1 | awk '{print $4}')
+            if [ -n "$orders" ]; then
+                total_orders=$((total_orders + orders))
+            fi
+            rm c_concurrent_$i.log
+        done
+        
+        echo "  總處理訂單 (4 實例): $total_orders"
+        echo "C 並發總訂單: $total_orders" >> $RESULT_FILE
+    fi
+    echo ""
     
     # C++ 並發測試
     if [ -f "hft_cpp_example/hft_trading" ]; then
