@@ -114,10 +114,11 @@ public:
             
             order_buffer.push(buy_order);
             order_buffer.push(sell_order);
+            
+            // Add latency for both orders (since we generated 2 orders)
+            auto end_time = get_timestamp();
+            total_latency_ns.fetch_add((end_time - start_time) * 2);
         }
-        
-        auto end_time = get_timestamp();
-        total_latency_ns.fetch_add(end_time - start_time);
     }
     
     // Market data feed simulator

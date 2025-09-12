@@ -165,10 +165,11 @@ void process_market_data(HFTEngine* engine, const MarketData* data) {
         
         ring_buffer_push(engine->order_buffer, &buy_order);
         ring_buffer_push(engine->order_buffer, &sell_order);
+        
+        // Add latency for both orders (since we generated 2 orders)
+        uint64_t latency = get_timestamp_ns() - start_time;
+        atomic_fetch_add(&engine->total_latency_ns, latency * 2);
     }
-    
-    uint64_t latency = get_timestamp_ns() - start_time;
-    atomic_fetch_add(&engine->total_latency_ns, latency);
 }
 
 // Market data generator thread
@@ -200,10 +201,8 @@ void* market_data_generator(void* arg) {
         ring_buffer_push(engine->market_buffer, &data);
         count++;
         
-        // Throttle to simulate realistic market data rate
-        if (count % 1000 == 0) {
-            usleep(1);
-        }
+        // Throttle to simulate realistic market data rate (10000 msgs/sec)
+        usleep(100);  // Sleep 100 microseconds per message, same as C++ and Rust
     }
     
     return NULL;

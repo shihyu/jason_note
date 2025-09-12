@@ -99,10 +99,11 @@ impl HFTEngine {
             self.order_buffer.push(buy_order).ok();
             self.order_buffer.push(sell_order).ok();
             self.processed_orders.fetch_add(1, Ordering::Relaxed);
+            
+            // Add latency for both orders (since we generated 2 orders)
+            let end_time = Self::get_timestamp();
+            self.total_latency_ns.fetch_add((end_time - start_time) * 2, Ordering::Relaxed);
         }
-        
-        let end_time = Self::get_timestamp();
-        self.total_latency_ns.fetch_add(end_time - start_time, Ordering::Relaxed);
     }
 
     fn market_data_generator(
