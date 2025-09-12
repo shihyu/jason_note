@@ -104,7 +104,7 @@ def main():
     print("\n" + "=" * 40)
     print("Testing C++ Client (libcurl)")
     print("=" * 40)
-    cpp_cmd = f"./build/cpp_client {NUM_ORDERS} {NUM_CONNECTIONS} {WARMUP}"
+    cpp_cmd = f"./cpp-client/cpp_client {NUM_ORDERS} {NUM_CONNECTIONS} {WARMUP}"
     cpp_results = run_test("C++", cpp_cmd, NUM_TESTS)
     if cpp_results:
         cpp_results['client'] = 'C++ (libcurl)'

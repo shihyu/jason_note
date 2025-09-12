@@ -9,9 +9,8 @@
 #include <cmath>
 #include <iomanip>
 #include <curl/curl.h>
-#include <nlohmann/json.hpp>
+#include <sstream>
 
-using json = nlohmann::json;
 using namespace std::chrono;
 
 enum class BSAction {
@@ -164,23 +163,25 @@ public:
             return result;
         }
         
-        json order_data = {
-            {"buy_sell", enum_to_string(order.buy_sell)},
-            {"symbol", order.symbol},
-            {"price", order.price},
-            {"quantity", order.quantity},
-            {"market_type", enum_to_string(order.market_type)},
-            {"price_type", enum_to_string(order.price_type)},
-            {"time_in_force", enum_to_string(order.time_in_force)},
-            {"order_type", enum_to_string(order.order_type)},
-            {"client_timestamp", get_iso_timestamp()}
-        };
+        // Build JSON string manually
+        std::stringstream json_stream;
+        json_stream << "{";
+        json_stream << "\"buy_sell\":\"" << enum_to_string(order.buy_sell) << "\",";
+        json_stream << "\"symbol\":" << order.symbol << ",";  // symbol is integer, not string
+        json_stream << "\"price\":" << order.price << ",";
+        json_stream << "\"quantity\":" << order.quantity << ",";
+        json_stream << "\"market_type\":\"" << enum_to_string(order.market_type) << "\",";
+        json_stream << "\"price_type\":\"" << enum_to_string(order.price_type) << "\",";
+        json_stream << "\"time_in_force\":\"" << enum_to_string(order.time_in_force) << "\",";
+        json_stream << "\"order_type\":\"" << enum_to_string(order.order_type) << "\",";
+        json_stream << "\"client_timestamp\":\"" << get_iso_timestamp() << "\"";
         
         if (!order.user_def.empty()) {
-            order_data["user_def"] = order.user_def;
+            json_stream << ",\"user_def\":\"" << order.user_def << "\"";
         }
         
-        std::string json_str = order_data.dump();
+        json_stream << "}";
+        std::string json_str = json_stream.str();
         std::string response_str;
         
         auto start_time = steady_clock::now();
@@ -209,11 +210,19 @@ public:
                 result.success = true;
                 result.response = response_str;
                 
-                try {
-                    json response_json = json::parse(response_str);
-                    result.server_latency_ms = response_json.value("latency_ms", 0.0);
-                } catch (...) {
-                    // JSON parse error
+                // Simple JSON parsing for latency_ms
+                size_t pos = response_str.find("\"latency_ms\":");
+                if (pos != std::string::npos) {
+                    pos += 13; // Skip "latency_ms":
+                    size_t end = response_str.find_first_of(",}", pos);
+                    if (end != std::string::npos) {
+                        std::string latency_str = response_str.substr(pos, end - pos);
+                        try {
+                            result.server_latency_ms = std::stod(latency_str);
+                        } catch (...) {
+                            // Parse error, keep default value
+                        }
+                    }
                 }
             }
         } else {

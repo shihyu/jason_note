@@ -48,10 +48,7 @@ build_clients() {
     
     # Build C++ client
     echo -e "${BLUE}Building C++ Client...${NC}"
-    if [ ! -d "build" ]; then
-        mkdir build
-    fi
-    (cd build && cmake .. && make -j$(nproc))
+    (cd cpp-client && make)
     
     echo -e "${GREEN}All clients built successfully!${NC}"
     echo
@@ -109,7 +106,7 @@ main() {
     
     # Run C++ benchmark
     run_benchmark "C++ (libcurl + async)" \
-        "./build/cpp_client $NUM_ORDERS $NUM_CONNECTIONS $WARMUP"
+        "./cpp-client/cpp_client $NUM_ORDERS $NUM_CONNECTIONS $WARMUP"
     
     # Run Rust benchmark
     run_benchmark "Rust (reqwest + tokio)" \
