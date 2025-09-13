@@ -7,9 +7,10 @@ build:
 	@cd rust-api-server && cargo build --release
 	@echo "Building Rust client..."
 	@cd rust-client && cargo build --release
+	@echo "Building C client..."
+	@cd c-client && make
 	@echo "Building C++ client..."
-	@mkdir -p build
-	@cd build && cmake .. && make -j
+	@cd cpp-client && make
 	@echo "Checking Python dependencies..."
 	@pip install -q aiohttp tabulate
 
@@ -30,7 +31,8 @@ test: build
 
 clean:
 	@echo "Cleaning build files..."
-	@rm -rf build
+	@cd c-client && make clean
+	@cd cpp-client && make clean
 	@cd rust-api-server && cargo clean
 	@cd rust-client && cargo clean
 	@echo "Clean complete"
