@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>C++ - Jason Notes</title>
+        <title>PaddleOCR 使用指南 - Jason Notes</title>
 
 
         <!-- Custom HTML head -->
@@ -178,79 +178,186 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="c"><a class="header" href="#c">C++</a></h1>
+                        <h1 id="paddleocr-安裝指南與使用範例"><a class="header" href="#paddleocr-安裝指南與使用範例">PaddleOCR 安裝指南與使用範例</a></h1>
+<h2 id="系統需求"><a class="header" href="#系統需求">系統需求</a></h2>
 <ul>
-<li>
-<p><a href="https://github.com/0voice/cpp_new_features">含C++ 11 / 14 / 17 / 20 / 23 新特性</a></p>
+<li>Python 3.7+ (建議使用 3.8-3.11)</li>
+<li>pip 套件管理工具</li>
+</ul>
+<h2 id="安裝步驟"><a class="header" href="#安裝步驟">安裝步驟</a></h2>
+<h3 id="1-安裝-paddlepaddle-核心框架"><a class="header" href="#1-安裝-paddlepaddle-核心框架">1. 安裝 PaddlePaddle 核心框架</a></h3>
+<pre><code class="language-bash"># CPU 版本
+pip install paddlepaddle
+
+# GPU 版本 (需要 CUDA 11.2)
+pip install paddlepaddle-gpu
+</code></pre>
+<h3 id="2-安裝-paddleocr"><a class="header" href="#2-安裝-paddleocr">2. 安裝 PaddleOCR</a></h3>
+<pre><code class="language-bash">pip install paddleocr
+</code></pre>
+<h3 id="3-安裝額外依賴選用"><a class="header" href="#3-安裝額外依賴選用">3. 安裝額外依賴（選用）</a></h3>
+<pre><code class="language-bash"># 如需處理 PDF
+pip install pypdf2
+
+# 如需更好的圖片處理
+pip install pillow opencv-python
+</code></pre>
+<h2 id="使用範例"><a class="header" href="#使用範例">使用範例</a></h2>
+<h3 id="基本-ocr-識別"><a class="header" href="#基本-ocr-識別">基本 OCR 識別</a></h3>
+<pre><code class="language-python">from paddleocr import PaddleOCR
+
+# 初始化 PaddleOCR
+ocr = PaddleOCR(
+    use_angle_cls=True,  # 使用角度分類
+    lang='ch'            # 語言：'ch'(中文), 'en'(英文), 'japan'(日文)
+)
+
+# 執行 OCR
+result = ocr.ocr('your_image.jpg')
+
+# 顯示結果
+for line in result[0]:
+    print(f"文字: {line[1][0]}, 信心度: {line[1][1]:.2f}")
+</code></pre>
+<h3 id="進階設定範例"><a class="header" href="#進階設定範例">進階設定範例</a></h3>
+<pre><code class="language-python">from paddleocr import PaddleOCR
+
+# 進階配置
+ocr = PaddleOCR(
+    use_angle_cls=True,           # 使用文字角度分類
+    lang='ch',                     # 語言設定
+    det_model_dir='./det_model',   # 自訂偵測模型路徑
+    rec_model_dir='./rec_model',   # 自訂識別模型路徑
+    use_gpu=False,                 # 是否使用 GPU
+    show_log=False                 # 是否顯示日誌
+)
+
+# 批次處理多張圖片
+image_list = ['image1.jpg', 'image2.jpg', 'image3.jpg']
+for img_path in image_list:
+    result = ocr.ocr(img_path)
+    print(f"\n{img_path} 的識別結果:")
+    for line in result[0]:
+        print(f"  {line[1][0]}")
+</code></pre>
+<h3 id="網路圖片-ocr"><a class="header" href="#網路圖片-ocr">網路圖片 OCR</a></h3>
+<pre><code class="language-python">from paddleocr import PaddleOCR
+
+ocr = PaddleOCR(
+    use_doc_orientation_classify=False,
+    use_doc_unwarping=False,
+    use_textline_orientation=False
+)
+
+# 使用網路圖片
+url = "https://example.com/image.png"
+result = ocr.predict(input=url)
+
+# 儲存結果
+for res in result:
+    res.print()                    # 印出結果
+    res.save_to_img("output")      # 儲存視覺化圖片
+    res.save_to_json("output")     # 儲存 JSON 格式結果
+</code></pre>
+<h3 id="表格識別"><a class="header" href="#表格識別">表格識別</a></h3>
+<pre><code class="language-python">from paddleocr import PPStructure
+
+# 初始化表格識別
+table_engine = PPStructure(show_log=False)
+
+# 識別表格
+result = table_engine('table_image.jpg')
+
+# 處理結果
+for line in result:
+    if line['type'] == 'table':
+        # 表格內容在 line['res'] 中
+        print("找到表格")
+        print(line['res'])
+</code></pre>
+<h2 id="常見問題"><a class="header" href="#常見問題">常見問題</a></h2>
+<h3 id="1-modulenotfounderror-no-module-named-paddle"><a class="header" href="#1-modulenotfounderror-no-module-named-paddle">1. ModuleNotFoundError: No module named 'paddle'</a></h3>
+<p><strong>解決方案</strong>: 先安裝 paddlepaddle</p>
+<pre><code class="language-bash">pip install paddlepaddle
+</code></pre>
+<h3 id="2-模型自動下載失敗"><a class="header" href="#2-模型自動下載失敗">2. 模型自動下載失敗</a></h3>
+<p><strong>解決方案</strong>: 手動下載模型並指定路徑</p>
+<pre><code class="language-python">ocr = PaddleOCR(
+    det_model_dir='./models/det',
+    rec_model_dir='./models/rec'
+)
+</code></pre>
+<h3 id="3-gpu-相關錯誤"><a class="header" href="#3-gpu-相關錯誤">3. GPU 相關錯誤</a></h3>
+<p><strong>解決方案</strong>: 改用 CPU 模式</p>
+<pre><code class="language-python">ocr = PaddleOCR(use_gpu=False)
+</code></pre>
+<h3 id="4-記憶體不足"><a class="header" href="#4-記憶體不足">4. 記憶體不足</a></h3>
+<p><strong>解決方案</strong>: 降低圖片解析度或分批處理</p>
+<pre><code class="language-python">ocr = PaddleOCR(
+    det_limit_side_len=960,  # 限制圖片最大邊長
+    det_limit_type='max'
+)
+</code></pre>
+<h2 id="支援的語言"><a class="header" href="#支援的語言">支援的語言</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>語言代碼</th><th>語言</th><th>說明</th></tr></thead><tbody>
+<tr><td>ch</td><td>中文簡繁體</td><td>預設，支援簡體和繁體</td></tr>
+<tr><td>en</td><td>英文</td><td>純英文文檔</td></tr>
+<tr><td>japan</td><td>日文</td><td>日文文檔</td></tr>
+<tr><td>korean</td><td>韓文</td><td>韓文文檔</td></tr>
+<tr><td>french</td><td>法文</td><td>法文文檔</td></tr>
+<tr><td>german</td><td>德文</td><td>德文文檔</td></tr>
+<tr><td>latin</td><td>拉丁文</td><td>支援拉丁字母的多種語言</td></tr>
+</tbody></table>
+</div>
+<h2 id="輸出格式說明"><a class="header" href="#輸出格式說明">輸出格式說明</a></h2>
+<h3 id="ocr-結果格式"><a class="header" href="#ocr-結果格式">OCR 結果格式</a></h3>
+<pre><code class="language-python">[
+    [
+        [[x1, y1], [x2, y2], [x3, y3], [x4, y4]],  # 文字框座標
+        ('識別的文字', 0.95)                         # 文字內容和信心度
+    ],
+    ...
+]
+</code></pre>
+<h3 id="json-輸出格式"><a class="header" href="#json-輸出格式">JSON 輸出格式</a></h3>
+<pre><code class="language-json">{
+    "res": {
+        "rec_texts": ["文字1", "文字2"],
+        "rec_scores": [0.98, 0.97],
+        "dt_polys": [[[x1,y1], [x2,y2], [x3,y3], [x4,y4]], ...],
+        "rec_boxes": [[x_min, y_min, x_max, y_max], ...]
+    }
+}
+</code></pre>
+<h2 id="效能優化建議"><a class="header" href="#效能優化建議">效能優化建議</a></h2>
+<ol>
+<li><strong>批次處理</strong>: 一次處理多張圖片比逐張處理更有效率</li>
+<li><strong>調整圖片大小</strong>: 過大的圖片會影響處理速度</li>
+<li><strong>使用 GPU</strong>: 如有 NVIDIA GPU，使用 GPU 版本可大幅提升速度</li>
+<li><strong>關閉不需要的功能</strong>: 如不需要角度分類，設定 <code>use_angle_cls=False</code></li>
+<li><strong>模型選擇</strong>:
+<ul>
+<li>快速版: <code>PP-OCRv4_mobile</code></li>
+<li>精確版: <code>PP-OCRv4_server</code></li>
+</ul>
 </li>
-<li>
-<p><a href="https://c-cpp.com/cpp">C/C++參考手冊</a></p>
-</li>
-<li>
-<p><a href="https://github.com/parallel101">高性能並行編程與優化</a></p>
-</li>
-<li>
-<p><a href="https://en.cppreference.com/w/">C++ 官方文檔</a></p>
-</li>
-<li>
-<p><a href="https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md">C++ 核心開發規範</a></p>
-</li>
-<li>
-<p><a href="https://github.com/kelthuzadx/EffectiveModernCppChinese/blob/master/4.SmartPointers/item22.md">Effective Mordern C++ 中文版</a></p>
-</li>
-<li>
-<p><a href="https://github.com/jiayaozhang/OpenVDB_and_TBB">熱心觀眾整理的學習資料</a></p>
-</li>
-<li>
-<p><a href="https://learncpp-cn.github.io/">LearnCpp 中文版</a></p>
-</li>
-<li>
-<p><a href="http://faculty.cs.niu.edu/~winans/notes/patmc.pdf">Performance Analysis and Tuning on Modern CPUs</a></p>
-</li>
-<li>
-<p><a href="https://www.bookstack.cn/read/Cpp_Concurrency_In_Action/README.md">C++ 併發編程實戰</a></p>
-</li>
-<li>
-<p><a href="http://csapp.cs.cmu.edu/">深入理解計算機原理 (CSAPP)</a></p>
-</li>
-<li>
-<p><a href="https://www.bilibili.com/video/av48153629/">並行體系結構與編程 (CMU 15-418)</a></p>
-</li>
-<li>
-<p><a href="https://www.inf.ed.ac.uk/teaching/courses/ppls/TBBtutorial.pdf">因特爾 TBB 編程指南</a></p>
-</li>
-<li>
-<p><a href="https://www.bookstack.cn/read/CMake-Cookbook/README.md">CMake “菜譜”</a></p>
-</li>
-<li>
-<p><a href="https://cmake.org/cmake/help/latest/">CMake 官方文檔</a></p>
-</li>
-<li>
-<p><a href="https://git-scm.com/doc">Git 官方文檔</a></p>
-</li>
-<li>
-<p><a href="https://docs.github.com/en">GitHub 官方文檔</a></p>
-</li>
-<li>
-<p><a href="https://www.zhihu.com/people/AlbertRen/posts">助教老師知乎</a></p>
-</li>
-<li>
-<p><a href="https://cppinsights.io/">實用網站 CppInsights 解構 C++ 語法糖</a></p>
-</li>
-<li>
-<p><a href="http://godbolt.org/">實用網站 GodBolt 查看不同編譯器生成的彙編</a></p>
-</li>
+</ol>
+<h2 id="參考連結"><a class="header" href="#參考連結">參考連結</a></h2>
+<ul>
+<li><a href="https://github.com/PaddlePaddle/PaddleOCR">PaddleOCR GitHub</a></li>
+<li><a href="https://paddlepaddle.github.io/PaddleOCR/">官方文檔</a></li>
+<li><a href="https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/doc/doc_ch/models_list.md">模型庫</a></li>
 </ul>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../tools/paddleocr_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../tools/ffi_examples.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../c++/benchmark.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../c++/cpp.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -260,11 +367,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../tools/paddleocr_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../tools/ffi_examples.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../c++/benchmark.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../c++/cpp.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
