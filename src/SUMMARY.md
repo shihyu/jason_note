@@ -54,6 +54,7 @@
     - [Bitwarden CLI 完整使用指南](tools/bitwarden_cli_guide.md)
     - [MCP Commands Reference](tools/mcp-commands-reference.md)
     - [FFI Examples](tools/ffi_examples.md)
+    - [PaddleOCR 使用指南](tools/paddleocr_guide.md)
 
 ## Programming Languages
 - [C++](c++/cpp.md)
