@@ -55,6 +55,7 @@
     - [MCP Commands Reference](tools/mcp-commands-reference.md)
     - [FFI Examples](tools/ffi_examples.md)
     - [PaddleOCR 使用指南](tools/paddleocr_guide.md)
+    - [Guider Sudo Setup](tools/guider_sudo_setup.md)
 
 ## Programming Languages
 - [C++](c++/cpp.md)
