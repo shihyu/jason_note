@@ -405,6 +405,8 @@
     - [API 交易性能優化完整指南](hft/api-trading-performance-guide.md)
     - [高頻交易系統優化指南](hft/hft-system-optimization.md)
     - [網路優化完整指南](hft/network-optimization-guide.md)
+    - [DPDK Port 測試完整指南](hft/dpdk-port-test-guide.md)
+    - [QEMU DPDK 測試完整指南](tools/qemu-dpdk-test-guide.md)
 
 ## Others
 - [Design Patterns](dp/dp.md)
