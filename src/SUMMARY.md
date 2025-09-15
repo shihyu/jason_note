@@ -407,6 +407,7 @@
     - [網路優化完整指南](hft/network-optimization-guide.md)
     - [DPDK Port 測試完整指南](hft/dpdk-port-test-guide.md)
     - [QEMU DPDK 測試完整指南](tools/qemu-dpdk-test-guide.md)
+    - [DPDK 高性能網路框架介紹](hft/dpdk-introduction.md)
 
 ## Others
 - [Design Patterns](dp/dp.md)
