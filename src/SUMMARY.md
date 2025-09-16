@@ -247,6 +247,7 @@
     - [Linux 效能檢測工具完整指南](linux_system/linux-performance-tools.md)
     - [eBPF 完整指南](linux_system/ebpf-complete-guide.md)
     - [Understanding eBPF](linux_system/understanding-ebpf.md)
+    - [Linux 二進位分析工具完整指南](linux_system/linux-binary-tools-guide.md)
 - [Linux Kernel](kernel/linux_kernel.md)
     - [What is eBPF](kernel/what-is-ebpf.md)
     - [Linker and Loader Guide](kernel/linker-loader-guide.md)
