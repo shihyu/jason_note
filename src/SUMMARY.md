@@ -56,6 +56,7 @@
     - [FFI Examples](tools/ffi_examples.md)
     - [PaddleOCR 使用指南](tools/paddleocr_guide.md)
     - [Guider Sudo Setup](tools/guider_sudo_setup.md)
+    - [Thinking Protocol 中文指南](tools/thinking-protocol-zh-tw.md)
 
 ## Programming Languages
 - [C++](c++/cpp.md)
