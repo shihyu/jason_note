@@ -37,7 +37,7 @@ EOF
 
     # 複製必要的庫文件
     mkdir -p /tmp/dpdk_test/lib
-    cp build/lib/*.so* /tmp/dpdk_test/lib/
+    cp -L build/lib/*.so* /tmp/dpdk_test/lib/ 2>/dev/null || true
 
     # 打包 initramfs
     (cd /tmp/dpdk_test && find . | cpio -o -H newc | gzip > /tmp/dpdk_initrd.gz)

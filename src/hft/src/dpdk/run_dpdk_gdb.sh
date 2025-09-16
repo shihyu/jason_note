@@ -2,7 +2,7 @@
 
 # DPDK + GDB 調試腳本（最簡潔版本）
 
-DPDK_LIB_PATH="/home/shihyu/github/dpdk/build/lib"
+DPDK_LIB_PATH="build/lib"
 
 echo "========================================="
 echo "       DPDK + GDB Debug Environment"
