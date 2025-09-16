@@ -1,0 +1,744 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>GDB 調試完全指南 - Rust/C++ 專用 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="gdb-調試完全指南---rustc-專用"><a class="header" href="#gdb-調試完全指南---rustc-專用">GDB 調試完全指南 - Rust/C++ 專用</a></h1>
+<h2 id="-概述"><a class="header" href="#-概述">📋 概述</a></h2>
+<p>本指南提供完整的 GDB 調試技術說明，適用於 Rust 和 C++ 程式的深度調試。包含從基礎指令到進階原理的全面介紹。</p>
+<h2 id="-調試腳本範例"><a class="header" href="#-調試腳本範例">🎯 調試腳本範例</a></h2>
+<p>以下是常見的調試腳本模式：</p>
+<div class="table-wrapper"><table><thead><tr><th>腳本類型</th><th>用途</th><th>使用場景</th></tr></thead><tbody>
+<tr><td><code>list_functions.sh</code></td><td>列出特定函數符號</td><td>調試前偵察，了解可用函數</td></tr>
+<tr><td><code>gdb_minimal.sh</code></td><td>精簡調試，只載入核心庫</td><td>快速測試特定功能</td></tr>
+<tr><td><code>gdb_full.sh</code></td><td>全面調試，設置所有模組斷點</td><td>深度分析程式執行流程</td></tr>
+<tr><td><code>gdb_attach.sh</code></td><td>附加到運行中的進程</td><td>調試已運行的程式</td></tr>
+</tbody></table>
+</div>
+<h2 id="-快速開始"><a class="header" href="#-快速開始">🚀 快速開始</a></h2>
+<h3 id="1-查看可用函數"><a class="header" href="#1-查看可用函數">1. 查看可用函數</a></h3>
+<pre><code class="language-bash"># 使用 nm 查看函數符號
+nm lib.so | grep "T " | grep "function_pattern"
+
+# 或使用腳本
+./list_functions.sh
+cat functions.txt | grep connect  # 查看特定函數
+</code></pre>
+<h3 id="2-選擇調試模式"><a class="header" href="#2-選擇調試模式">2. 選擇調試模式</a></h3>
+<h4 id="輕量級調試"><a class="header" href="#輕量級調試">輕量級調試</a></h4>
+<pre><code class="language-bash">gdb ./program -ex "set auto-solib-add off" -ex "run"
+</code></pre>
+<ul>
+<li>✅ 啟動快速</li>
+<li>✅ 專注核心邏輯</li>
+<li>❌ 某些功能可能受限</li>
+</ul>
+<h4 id="全面調試"><a class="header" href="#全面調試">全面調試</a></h4>
+<pre><code class="language-bash">gdb ./program -ex "set breakpoint pending on" -ex "rbreak .*pattern.*" -ex "run"
+</code></pre>
+<ul>
+<li>✅ 完整斷點覆蓋</li>
+<li>✅ 所有模組追蹤</li>
+<li>❌ 啟動較慢</li>
+</ul>
+<h4 id="運行時調試"><a class="header" href="#運行時調試">運行時調試</a></h4>
+<pre><code class="language-bash"># 附加到運行中的進程
+gdb -p $(pgrep program_name)
+# 或
+gdb -p PID
+</code></pre>
+<ul>
+<li>✅ 不中斷運行狀態</li>
+<li>✅ 保持應用上下文</li>
+<li>❌ 需要適當權限</li>
+</ul>
+<h2 id="-核心-gdb-指令說明"><a class="header" href="#-核心-gdb-指令說明">🔧 核心 GDB 指令說明</a></h2>
+<h3 id="基本設定指令"><a class="header" href="#基本設定指令">基本設定指令</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>指令</th><th>作用</th><th>原因</th></tr></thead><tbody>
+<tr><td><code>set pagination off</code></td><td>關閉分頁顯示</td><td>避免大量輸出時需要手動按 Enter</td></tr>
+<tr><td><code>set breakpoint pending on</code></td><td>允許延遲斷點</td><td>可在未載入的函式庫中預設斷點</td></tr>
+<tr><td><code>set auto-solib-add off</code></td><td>關閉自動載入函式庫</td><td>手動控制載入，提高效率</td></tr>
+<tr><td><code>set print pretty on</code></td><td>美化輸出格式</td><td>更易讀的結構體顯示</td></tr>
+<tr><td><code>set confirm off</code></td><td>關閉確認提示</td><td>自動化執行不需確認</td></tr>
+</tbody></table>
+</div>
+<h3 id="斷點設置指令"><a class="header" href="#斷點設置指令">斷點設置指令</a></h3>
+<h4 id="break-vs-rbreak"><a class="header" href="#break-vs-rbreak"><code>break</code> vs <code>rbreak</code></a></h4>
+<ul>
+<li>
+<p><strong><code>break function_name</code></strong>: 設置單一斷點</p>
+<pre><code class="language-gdb">break main
+break MyClass::myMethod
+break file.cpp:123
+</code></pre>
+</li>
+<li>
+<p><strong><code>rbreak pattern</code></strong>: 正則表達式批量設置</p>
+<pre><code class="language-gdb">rbreak .*::processData.*      # 所有 processData 相關函數
+rbreak ^handle_.*              # 所有 handle_ 開頭的函數
+rbreak .*Service::.*           # Service 類的所有方法
+</code></pre>
+</li>
+</ul>
+<h3 id="函式庫載入指令"><a class="header" href="#函式庫載入指令">函式庫載入指令</a></h3>
+<pre><code class="language-gdb"># 載入所有函式庫
+sharedlibrary
+
+# 載入特定函式庫
+sharedlibrary libexample
+
+# 查看已載入的函式庫
+info sharedlibrary
+</code></pre>
+<h3 id="函式庫載入與斷點設置順序"><a class="header" href="#函式庫載入與斷點設置順序">函式庫載入與斷點設置順序</a></h3>
+<h4 id="順序比較"><a class="header" href="#順序比較">順序比較</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>順序</th><th>指令流程</th><th>優點</th><th>缺點</th><th>適用場景</th></tr></thead><tbody>
+<tr><td><strong>先斷點後載入</strong></td><td>1. <code>set breakpoint pending on</code><br>2. <code>break function</code><br>3. <code>sharedlibrary</code></td><td>• 可批量設置<br>• 適合自動化</td><td>• 需要 pending 設定<br>• 符號錯誤不易發現</td><td>腳本自動化</td></tr>
+<tr><td><strong>先載入後斷點</strong></td><td>1. <code>sharedlibrary</code><br>2. <code>break function</code></td><td>• 立即驗證符號<br>• 支援 TAB 補全</td><td>• 需等待載入完成</td><td>互動式調試</td></tr>
+</tbody></table>
+</div>
+<h4 id="最佳實踐"><a class="header" href="#最佳實踐">最佳實踐</a></h4>
+<pre><code class="language-gdb"># 推薦順序
+set breakpoint pending on          # 1. 允許延遲斷點
+sharedlibrary libexample.so        # 2. 載入函式庫
+info sharedlibrary                 # 3. 驗證載入
+rbreak .*MyNamespace::.*           # 4. 設置斷點
+info breakpoints                   # 5. 確認狀態
+</code></pre>
+<h2 id="-gdb-與程式碼對應機制"><a class="header" href="#-gdb-與程式碼對應機制">🔍 GDB 與程式碼對應機制</a></h2>
+<h3 id="核心原理架構"><a class="header" href="#核心原理架構">核心原理架構</a></h3>
+<pre><code>源碼(.rs) → 編譯器(rustc) → 二進制文件(.so/.exe)
+                ↓
+        生成調試信息(DWARF)
+                ↓
+    GDB 讀取調試信息 → 映射到源碼
+</code></pre>
+<h3 id="調試信息組成"><a class="header" href="#調試信息組成">調試信息組成</a></h3>
+<h4 id="1-符號表-symbol-table"><a class="header" href="#1-符號表-symbol-table">1. 符號表 (Symbol Table)</a></h4>
+<pre><code class="language-bash"># 查看符號表
+$ nm libexample.so
+
+0000000000123456 T _Z10initServerv        # T = Text段(函數)
+0000000000123789 D global_config          # D = Data段(變數)
+0000000000234567 T _ZN7MyClass6methodEv   # T = 類方法
+</code></pre>
+<p><strong>符號類型說明</strong>：</p>
+<ul>
+<li><strong>T</strong>: Text (code) segment - 函數實現</li>
+<li><strong>U</strong>: Undefined - 外部引用</li>
+<li><strong>D</strong>: Data segment - 全局變數</li>
+<li><strong>B</strong>: BSS segment - 未初始化數據</li>
+</ul>
+<h4 id="2-dwarf-調試信息"><a class="header" href="#2-dwarf-調試信息">2. DWARF 調試信息</a></h4>
+<pre><code class="language-bash"># 查看 DWARF 信息
+$ objdump --dwarf=info libexample.so
+$ readelf --debug-dump=info libexample.so
+</code></pre>
+<p><strong>DWARF 包含</strong>：</p>
+<ul>
+<li>源檔案路徑與行號對應表</li>
+<li>變數類型與位置信息</li>
+<li>函數參數與局部變數</li>
+<li>內聯函數展開信息</li>
+</ul>
+<h3 id="gdb-映射工作流程"><a class="header" href="#gdb-映射工作流程">GDB 映射工作流程</a></h3>
+<h4 id="步驟-1-地址解析"><a class="header" href="#步驟-1-地址解析">步驟 1: 地址解析</a></h4>
+<pre><code class="language-gdb">(gdb) break MyClass::processData
+# GDB 動作：
+# 1. 查找符號表
+# 2. 找到 MyClass::processData = 0x7ffff7abc123
+# 3. 在該地址設置 INT3 斷點指令
+</code></pre>
+<h4 id="步驟-2-行號映射表"><a class="header" href="#步驟-2-行號映射表">步驟 2: 行號映射表</a></h4>
+<pre><code>記憶體地址          源碼位置
+0x7ffff7abc123  →  src/server.rs:42
+0x7ffff7abc127  →  src/server.rs:43
+0x7ffff7abc12b  →  src/server.rs:44
+</code></pre>
+<h4 id="步驟-3-實際對應過程"><a class="header" href="#步驟-3-實際對應過程">步驟 3: 實際對應過程</a></h4>
+<pre><code class="language-gdb"># 程式執行到斷點
+Program received signal SIGTRAP
+# GDB 處理流程：
+# 1. CPU 執行到 0x7ffff7abc123
+# 2. 觸發 INT3 陷阱
+# 3. GDB 查詢 DWARF：0x7ffff7abc123 → server.rs:42
+# 4. 讀取 /path/to/server.rs 第 42 行
+# 5. 顯示源碼位置
+</code></pre>
+<h3 id="編譯時調試信息生成"><a class="header" href="#編譯時調試信息生成">編譯時調試信息生成</a></h3>
+<h4 id="rust-編譯選項"><a class="header" href="#rust-編譯選項">Rust 編譯選項</a></h4>
+<pre><code class="language-bash"># Debug 模式（完整調試信息）
+cargo build
+# 等同於: rustc -g -C opt-level=0 -C debuginfo=2
+
+# Release 模式 + 調試信息
+cargo build --release
+# Cargo.toml 配置：
+[profile.release]
+debug = true  # 或 debug = 2
+</code></pre>
+<h4 id="調試信息層級"><a class="header" href="#調試信息層級">調試信息層級</a></h4>
+<pre><code class="language-toml"># Cargo.toml
+[profile.dev]
+debug = 2       # 完整調試信息（預設）
+debug = 1       # 只有行號信息
+debug = 0       # 無調試信息
+</code></pre>
+<h3 id="dwarf-格式詳解"><a class="header" href="#dwarf-格式詳解">DWARF 格式詳解</a></h3>
+<h4 id="die-debugging-information-entry-結構"><a class="header" href="#die-debugging-information-entry-結構">DIE (Debugging Information Entry) 結構</a></h4>
+<pre><code>DW_TAG_compile_unit
+├── DW_AT_name: "main.cpp"
+├── DW_AT_comp_dir: "/home/user/project/src"
+└── DW_TAG_subprogram
+    ├── DW_AT_name: "processData"
+    ├── DW_AT_low_pc: 0x7ffff7abc123    # 函數起始地址
+    ├── DW_AT_high_pc: 0x7ffff7abc456   # 函數結束地址
+    ├── DW_AT_decl_file: 1              # 檔案索引
+    └── DW_AT_decl_line: 42             # 源碼行號
+</code></pre>
+<h3 id="name-mangling-符號修飾"><a class="header" href="#name-mangling-符號修飾">Name Mangling (符號修飾)</a></h3>
+<h4 id="c-命名轉換"><a class="header" href="#c-命名轉換">C++ 命名轉換</a></h4>
+<pre><code class="language-cpp">// C++ 源碼
+class MyClass {
+    void processData(int value);
+};
+
+// 編譯後符號（Mangled）
+_ZN7MyClass11processDataEi
+
+// 解碼後（Demangled）
+MyClass::processData(int)
+</code></pre>
+<h4 id="rust-命名轉換"><a class="header" href="#rust-命名轉換">Rust 命名轉換</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Rust 源碼
+impl DataProcessor {
+    pub fn process(&amp;self) -&gt; Result&lt;()&gt; { }
+}
+
+// 編譯後符號（Mangled）
+_ZN13DataProcessor7process17h8a3f5d2c1b9e7046E
+
+// 解碼後（Demangled）
+DataProcessor::process
+<span class="boring">}</span></code></pre></pre>
+<h4 id="gdb-解碼方式"><a class="header" href="#gdb-解碼方式">GDB 解碼方式</a></h4>
+<pre><code class="language-gdb"># 自動解碼
+(gdb) info functions connect
+ButtplugClient::connect()
+
+# 手動解碼工具
+$ c++filt _ZN14ButtplugClient7connect17h8a3f5d2c1b9e7046E
+$ rustfilt _ZN14ButtplugClient7connect17h8a3f5d2c1b9e7046E
+</code></pre>
+<h3 id="實際查看調試信息"><a class="header" href="#實際查看調試信息">實際查看調試信息</a></h3>
+<pre><code class="language-bash"># 1. 檢查是否有調試信息
+$ file libexample.so
+# 輸出: with debug_info, not stripped
+
+# 2. 查看調試段大小
+$ size -A libexample.so | grep debug
+.debug_info    123456   # DWARF 信息
+.debug_line    45678    # 行號映射
+.debug_str     12345    # 調試字串
+
+# 3. 查看行號映射
+$ objdump -d -l libexample.so
+
+# 4. 查看符號詳情
+$ readelf -s libexample.so | grep MyClass
+$ nm -C libexample.so | grep processData  # -C 自動 demangle
+</code></pre>
+<h3 id="gdb-深層命令"><a class="header" href="#gdb-深層命令">GDB 深層命令</a></h3>
+<pre><code class="language-gdb"># 查看符號來源
+(gdb) info symbol 0x7ffff7abc123
+MyClass::processData(int) in section .text
+
+# 查看地址對應行號
+(gdb) info line *0x7ffff7abc123
+Line 42 of "server.rs" starts at 0x7ffff7abc123
+
+# 查看源碼搜索路徑
+(gdb) show directories
+
+# 設置源碼路徑映射
+(gdb) set substitute-path /original/path /current/path
+
+# 查看 DWARF 原始信息
+(gdb) maintenance info sections .debug_*
+
+# 查看載入的符號檔案
+(gdb) info sources
+</code></pre>
+<h3 id="調試信息最佳化影響"><a class="header" href="#調試信息最佳化影響">調試信息最佳化影響</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>編譯模式</th><th>二進制大小</th><th>調試體驗</th><th>執行速度</th><th>變數可見性</th></tr></thead><tbody>
+<tr><td>Debug</td><td>100MB</td><td>極佳</td><td>慢</td><td>完整</td></tr>
+<tr><td>Release</td><td>20MB</td><td>差</td><td>快</td><td>多數 optimized out</td></tr>
+<tr><td>Release+debug</td><td>80MB</td><td>良好</td><td>快</td><td>部分可見</td></tr>
+<tr><td>Release+split-debuginfo</td><td>20MB+60MB</td><td>良好</td><td>快</td><td>部分可見</td></tr>
+</tbody></table>
+</div>
+<h3 id="常見調試信息問題"><a class="header" href="#常見調試信息問題">常見調試信息問題</a></h3>
+<h4 id="問題no-debugging-symbols-found"><a class="header" href="#問題no-debugging-symbols-found">問題：No debugging symbols found</a></h4>
+<pre><code class="language-bash"># 解決方案
+cargo clean
+cargo build  # 確保有調試信息
+</code></pre>
+<h4 id="問題源碼路徑不匹配"><a class="header" href="#問題源碼路徑不匹配">問題：源碼路徑不匹配</a></h4>
+<pre><code class="language-gdb"># 設置源碼搜索路徑
+(gdb) directory /new/source/path
+(gdb) set substitute-path /build/path /actual/path
+</code></pre>
+<h4 id="問題optimized-out-變數"><a class="header" href="#問題optimized-out-變數">問題：Optimized out 變數</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 防止優化的方法
+#[inline(never)]
+fn function() { }
+
+// 或使用 black_box
+use std::hint::black_box;
+let x = black_box(42);
+<span class="boring">}</span></code></pre></pre>
+<h2 id="-調試工作流程"><a class="header" href="#-調試工作流程">📊 調試工作流程</a></h2>
+<pre class="mermaid">graph TD
+    A[開始調試] --&gt; B[分析符號表]
+    B --&gt; C[確認調試信息]
+    C --&gt; D{選擇調試策略}
+
+    D --&gt;|快速測試| E[精簡載入模式]
+    E --&gt; F[設置特定斷點]
+
+    D --&gt;|全面分析| G[完整調試模式]
+    G --&gt; H[自動設置所有斷點]
+
+    D --&gt;|運行時問題| I[附加調試模式]
+    I --&gt; J[附加到 PID]
+
+    F --&gt; K[運行和調試]
+    H --&gt; K
+    J --&gt; K
+
+    K --&gt; L[分析問題]
+    L --&gt; M[修復代碼]
+</pre>
+<h2 id="-實用調試技巧"><a class="header" href="#-實用調試技巧">💡 實用調試技巧</a></h2>
+<h3 id="1-斷點管理"><a class="header" href="#1-斷點管理">1. 斷點管理</a></h3>
+<pre><code class="language-gdb">info breakpoints          # 列出所有斷點
+disable 1-5              # 暫時禁用斷點 1 到 5
+enable 3                 # 啟用斷點 3
+delete 10                # 刪除斷點 10
+clear function_name      # 清除函數上的斷點
+</code></pre>
+<h3 id="2-執行控制"><a class="header" href="#2-執行控制">2. 執行控制</a></h3>
+<pre><code class="language-gdb">run                      # 開始執行
+continue (c)             # 繼續執行
+step (s)                 # 單步執行（進入函數）
+next (n)                 # 單步執行（不進入函數）
+finish                   # 執行到當前函數返回
+until 123               # 執行到第 123 行
+</code></pre>
+<h3 id="3-檢查程式狀態"><a class="header" href="#3-檢查程式狀態">3. 檢查程式狀態</a></h3>
+<pre><code class="language-gdb">backtrace (bt)          # 查看調用堆疊
+frame 2                 # 切換到堆疊第 2 層
+info locals             # 查看局部變數
+info args               # 查看函數參數
+print variable_name     # 打印變數值
+print *pointer         # 打印指針內容
+x/10x $rsp             # 查看堆疊記憶體（16進制）
+</code></pre>
+<h3 id="4-rust-特有調試"><a class="header" href="#4-rust-特有調試">4. Rust 特有調試</a></h3>
+<pre><code class="language-gdb"># 設置 Rust 語言模式
+set language rust
+
+# 查看 Result 類型
+print result
+
+# 查看 Option 類型
+print option_value
+
+# 查看字符串
+print string_variable
+
+# 查看 Vec
+print vector_name
+print vector_name.len
+print vector_name.buf.ptr
+</code></pre>
+<h2 id="-常見問題解決"><a class="header" href="#-常見問題解決">🛠️ 常見問題解決</a></h2>
+<h3 id="問題-1-找不到符號"><a class="header" href="#問題-1-找不到符號">問題 1: 找不到符號</a></h3>
+<p><strong>症狀</strong>: <code>No symbol "function_name" in current context</code></p>
+<p><strong>解決方案</strong>:</p>
+<ol>
+<li>確認函式庫已載入: <code>info sharedlibrary</code></li>
+<li>手動載入: <code>sharedlibrary libname</code></li>
+<li>檢查符號表: <code>nm lib.so | grep function_name</code></li>
+</ol>
+<h3 id="問題-2-斷點未觸發"><a class="header" href="#問題-2-斷點未觸發">問題 2: 斷點未觸發</a></h3>
+<p><strong>症狀</strong>: 程式執行但斷點沒有停止</p>
+<p><strong>解決方案</strong>:</p>
+<ol>
+<li>檢查斷點狀態: <code>info breakpoints</code></li>
+<li>確認函數被調用: 添加日誌輸出</li>
+<li>使用 <code>rbreak</code> 設置更廣泛的斷點</li>
+</ol>
+<h3 id="問題-3-無法查看變數"><a class="header" href="#問題-3-無法查看變數">問題 3: 無法查看變數</a></h3>
+<p><strong>症狀</strong>: <code>optimized out</code> 訊息</p>
+<p><strong>解決方案</strong>:</p>
+<ol>
+<li>使用 debug 版本編譯: <code>cargo build</code> (不加 --release)</li>
+<li>降低優化等級: 在 Cargo.toml 設置 <code>opt-level = 0</code></li>
+</ol>
+<h2 id="-進階技巧"><a class="header" href="#-進階技巧">📚 進階技巧</a></h2>
+<h3 id="腳本範例"><a class="header" href="#腳本範例">腳本範例</a></h3>
+<h4 id="列出函數符號腳本-list_functionssh"><a class="header" href="#列出函數符號腳本-list_functionssh">列出函數符號腳本 (list_functions.sh)</a></h4>
+<pre><code class="language-bash">#!/bin/bash
+LIBRARY=${1:-"lib/libexample.so"}
+PATTERN=${2:-".*"}
+
+echo "Extracting function symbols from $LIBRARY..."
+nm -C "$LIBRARY" | grep " T " | grep -E "$PATTERN" | awk '{print $3}' &gt; functions.txt
+echo "Found $(wc -l &lt; functions.txt) functions"
+</code></pre>
+<h4 id="精簡調試腳本-gdb_minimalsh"><a class="header" href="#精簡調試腳本-gdb_minimalsh">精簡調試腳本 (gdb_minimal.sh)</a></h4>
+<pre><code class="language-bash">#!/bin/bash
+cat &gt; /tmp/gdb_commands &lt;&lt; 'EOF'
+set pagination off
+set breakpoint pending on
+set auto-solib-add off
+file ./program
+sharedlibrary libexample
+break main
+run
+EOF
+
+gdb -x /tmp/gdb_commands
+</code></pre>
+<h4 id="附加調試腳本-gdb_attachsh"><a class="header" href="#附加調試腳本-gdb_attachsh">附加調試腳本 (gdb_attach.sh)</a></h4>
+<pre><code class="language-bash">#!/bin/bash
+PROGRAM_NAME=${1:-"program"}
+PID=$(pgrep -f "$PROGRAM_NAME" | head -1)
+
+if [ -z "$PID" ]; then
+    echo "Process not found: $PROGRAM_NAME"
+    exit 1
+fi
+
+echo "Attaching to PID: $PID"
+gdb -p "$PID"
+</code></pre>
+<h3 id="條件斷點"><a class="header" href="#條件斷點">條件斷點</a></h3>
+<pre><code class="language-gdb"># 只在特定條件下中斷
+break function_name if variable == 42
+condition 5 counter &gt; 100  # 為斷點 5 添加條件
+</code></pre>
+<h3 id="觀察點"><a class="header" href="#觀察點">觀察點</a></h3>
+<pre><code class="language-gdb"># 當變數改變時中斷
+watch variable_name
+rwatch variable_name     # 讀取時中斷
+awatch variable_name     # 讀寫時中斷
+</code></pre>
+<h3 id="自動化調試"><a class="header" href="#自動化調試">自動化調試</a></h3>
+<pre><code class="language-gdb"># 定義命令序列
+define print_state
+  print variable1
+  print variable2
+  backtrace 3
+end
+
+# 斷點觸發時自動執行
+commands 1
+  print_state
+  continue
+end
+</code></pre>
+<h3 id="日誌記錄"><a class="header" href="#日誌記錄">日誌記錄</a></h3>
+<pre><code class="language-gdb"># 開啟日誌
+set logging on
+set logging file debug.log
+
+# 設置日誌等級
+set logging overwrite on
+set logging redirect on
+</code></pre>
+<h2 id="-相關資源"><a class="header" href="#-相關資源">🔗 相關資源</a></h2>
+<ul>
+<li><a href="https://www.gnu.org/software/gdb/documentation/">GDB 官方文檔</a></li>
+<li><a href="https://rust-lang.github.io/rustup/debugging.html">Rust GDB 調試指南</a></li>
+<li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb/">GNU Debugger Documentation</a></li>
+</ul>
+<h2 id="-備註"><a class="header" href="#-備註">📝 備註</a></h2>
+<ul>
+<li>需要調試符號的二進制文件（非 stripped）</li>
+<li>某些功能可能需要 root 權限（如 ptrace）</li>
+<li>C++ 程式建議使用 <code>-g -O0</code> 編譯選項</li>
+<li>Rust 程式建議使用 <code>cargo build</code> (debug mode)</li>
+<li>可使用 <code>gdb-dashboard</code> 或 <code>gef</code> 增強調試體驗</li>
+</ul>
+<h2 id="-編譯建議"><a class="header" href="#-編譯建議">🔨 編譯建議</a></h2>
+<h3 id="c-編譯選項"><a class="header" href="#c-編譯選項">C++ 編譯選項</a></h3>
+<pre><code class="language-bash"># Debug 版本
+g++ -g -O0 -fno-omit-frame-pointer main.cpp
+
+# Release with debug info
+g++ -g -O2 main.cpp
+</code></pre>
+<h3 id="rust-編譯選項-1"><a class="header" href="#rust-編譯選項-1">Rust 編譯選項</a></h3>
+<pre><code class="language-bash"># Debug 版本
+cargo build
+
+# Release with debug info
+cargo build --release
+# Cargo.toml:
+# [profile.release]
+# debug = true
+</code></pre>
+<h3 id="cmake-配置"><a class="header" href="#cmake-配置">CMake 配置</a></h3>
+<pre><code class="language-cmake"># Debug 版本
+set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+
+# Release with debug
+set(CMAKE_BUILD_TYPE RelWithDebInfo)
+</code></pre>
+<hr />
+<p>最後更新: 2025-09-17</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../gdb/gdb_ex_complete_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../vim/vim.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../gdb/gdb_ex_complete_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../vim/vim.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
