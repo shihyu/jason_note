@@ -408,6 +408,7 @@
     - [DPDK Port 測試完整指南](hft/dpdk-port-test-guide.md)
     - [QEMU DPDK 測試完整指南](tools/qemu-dpdk-test-guide.md)
     - [DPDK 高性能網路框架介紹](hft/dpdk-introduction.md)
+    - [DPDK QEMU GDB 調試指南](hft/DPDK_QEMU_GDB_Guide.md)
 
 ## Others
 - [Design Patterns](dp/dp.md)
