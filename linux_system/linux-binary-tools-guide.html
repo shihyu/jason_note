@@ -487,6 +487,61 @@ gprof -b program gmon.out         # 簡潔輸出
 gprof -p program gmon.out         # 平面檔案
 gprof -q program gmon.out         # 調用圖
 </code></pre>
+<h3 id="7-addr2line---地址到源碼映射"><a class="header" href="#7-addr2line---地址到源碼映射">7. addr2line - 地址到源碼映射</a></h3>
+<pre><code class="language-bash"># 基本用法
+addr2line -e executable address
+
+# 常用選項
+-e file      # 指定可執行文件
+-f           # 顯示函數名
+-s           # 顯示簡短文件名（去掉路徑）
+-C           # Demangle C++ 符號
+-p           # 優雅輸出格式
+-i           # 顯示內聯函數
+-a           # 顯示地址
+-j section   # 指定節區
+
+# 實例用法
+# 1. 單個地址查詢
+addr2line -e program 0x400534
+
+# 2. 多個地址查詢
+addr2line -e program 0x400534 0x400550 0x400570
+
+# 3. 從管道接收地址
+echo "0x400534" | addr2line -e program
+
+# 4. 顯示函數名和源碼位置
+addr2line -fe program 0x400534
+
+# 5. C++ 符號 demangle
+addr2line -Cfe program 0x400534
+
+# 6. 優雅格式輸出
+addr2line -pfe program 0x400534
+
+# 實戰範例：解析段錯誤
+# 從 dmesg 或 coredump 獲取地址
+dmesg | grep segfault
+# program[1234]: segfault at 0 ip 00000000004005b4 sp 00007ffd12345678
+
+# 解析崩潰地址
+addr2line -Cfpe program 0x4005b4
+
+# 從 backtrace 解析多個地址
+cat backtrace.txt | while read addr; do
+    addr2line -Cfpe program "$addr"
+done
+
+# 結合 objdump 使用
+objdump -d program | grep "call" | awk '{print $1}' | sed 's/://' | \
+    xargs addr2line -fe program
+
+# 從 core dump 提取地址
+gdb -q -batch -ex "bt" -ex "quit" program core | \
+    grep -oE '0x[0-9a-f]+' | \
+    xargs addr2line -Cfpe program
+</code></pre>
 <h2 id="安全分析工具"><a class="header" href="#安全分析工具">安全分析工具</a></h2>
 <h3 id="1-checksec---安全機制檢查"><a class="header" href="#1-checksec---安全機制檢查">1. checksec - 安全機制檢查</a></h3>
 <pre><code class="language-bash"># 安裝
