@@ -178,10 +178,129 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="gdb--ex-自動化除錯完整實戰指南"><a class="header" href="#gdb--ex-自動化除錯完整實戰指南">GDB -ex 自動化除錯完整實戰指南</a></h1>
-<h2 id="核心概念"><a class="header" href="#核心概念">核心概念</a></h2>
+                        <h1 id="gdb-自動化除錯完整指南"><a class="header" href="#gdb-自動化除錯完整指南">GDB 自動化除錯完整指南</a></h1>
+<h2 id="第一部分gdb-命令行參數指南"><a class="header" href="#第一部分gdb-命令行參數指南">第一部分：GDB 命令行參數指南</a></h2>
+<h3 id="快速參考"><a class="header" href="#快速參考">快速參考</a></h3>
+<h4 id="基本用法"><a class="header" href="#基本用法">基本用法</a></h4>
+<pre><code class="language-bash">gdb [選項] [程式檔案] [核心檔案或進程ID]
+</code></pre>
+<h2 id="四種執行腳本的方法"><a class="header" href="#四種執行腳本的方法">四種執行腳本的方法</a></h2>
+<h3 id="方法-1使用--x-參數"><a class="header" href="#方法-1使用--x-參數">方法 1：使用 <code>-x</code> 參數</a></h3>
+<pre><code class="language-bash">gdb -x script.gdb ./program
+</code></pre>
+<p><strong>範例：</strong></p>
+<pre><code class="language-bash"># 創建腳本檔案 debug.gdb
+echo "break main
+run
+continue" &gt; debug.gdb
+
+# 執行
+gdb -x debug.gdb ./myapp
+</code></pre>
+<h3 id="方法-2使用---command-參數"><a class="header" href="#方法-2使用---command-參數">方法 2：使用 <code>--command</code> 參數</a></h3>
+<pre><code class="language-bash">gdb --command=script.gdb ./program
+</code></pre>
+<p><strong>範例：</strong></p>
+<pre><code class="language-bash"># 與方法 1 相同效果
+gdb --command=debug.gdb ./myapp
+</code></pre>
+<h3 id="方法-3使用--ex-執行命令"><a class="header" href="#方法-3使用--ex-執行命令">方法 3：使用 <code>-ex</code> 執行命令</a></h3>
+<pre><code class="language-bash">gdb ./program -ex "source script.gdb"
+</code></pre>
+<p><strong>範例：</strong></p>
+<pre><code class="language-bash"># 執行多個命令
+gdb ./myapp \
+  -ex "break main" \
+  -ex "break func1" \
+  -ex "run arg1 arg2" \
+  -ex "continue"
+
+# 載入腳本並執行
+gdb ./myapp -ex "source debug.gdb" -ex "run"
+</code></pre>
+<h3 id="方法-4批次模式--batch"><a class="header" href="#方法-4批次模式--batch">方法 4：批次模式 <code>-batch</code></a></h3>
+<pre><code class="language-bash">gdb -batch -x script.gdb ./program
+</code></pre>
+<p><strong>範例：</strong></p>
+<pre><code class="language-bash"># 創建自動化測試腳本 test.gdb
+cat &gt; test.gdb &lt;&lt; 'EOF'
+break main
+run
+print variable1
+backtrace
+quit
+EOF
+
+# 批次執行（執行完自動退出）
+gdb -batch -x test.gdb ./myapp &gt; test_output.txt
+</code></pre>
+<h2 id="方法對比"><a class="header" href="#方法對比">方法對比</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th><code>-x</code> / <code>--command</code></th><th><code>-ex</code></th><th><code>-batch</code></th></tr></thead><tbody>
+<tr><td><strong>互動模式</strong></td><td>✓</td><td>✓</td><td>✗</td></tr>
+<tr><td><strong>執行後停留</strong></td><td>✓</td><td>✓</td><td>✗</td></tr>
+<tr><td><strong>多命令支援</strong></td><td>腳本內</td><td>多個 -ex</td><td>腳本內</td></tr>
+<tr><td><strong>自動化</strong></td><td>✗</td><td>✗</td><td>✓</td></tr>
+<tr><td><strong>顯示提示符</strong></td><td>✓</td><td>✓</td><td>✗</td></tr>
+</tbody></table>
+</div>
+<h2 id="實用範例"><a class="header" href="#實用範例">實用範例</a></h2>
+<h3 id="1-rust-程式除錯"><a class="header" href="#1-rust-程式除錯">1. Rust 程式除錯</a></h3>
+<pre><code class="language-bash"># 創建 Rust 除錯腳本
+cat &gt; rust_debug.gdb &lt;&lt; 'EOF'
+set print pretty on
+set print array on
+break panic_impl
+break rust_panic
+run
+EOF
+
+# 執行
+gdb -x rust_debug.gdb ./target/debug/myapp
+</code></pre>
+<h3 id="2-自動化測試"><a class="header" href="#2-自動化測試">2. 自動化測試</a></h3>
+<pre><code class="language-bash"># 批次測試，輸出到檔案
+gdb -batch -x test_suite.gdb ./app 2&gt;&amp;1 | tee test_results.log
+
+# CI/CD 中使用
+gdb -batch -ex "run" -ex "bt" -ex "quit" ./app core.dump
+</code></pre>
+<h3 id="3-快速除錯會話"><a class="header" href="#3-快速除錯會話">3. 快速除錯會話</a></h3>
+<pre><code class="language-bash"># 設定斷點並執行
+gdb ./app -ex "b main" -ex "r" -ex "n" -ex "p argc"
+
+# 附加到執行中的進程
+gdb -p 1234 -ex "bt" -ex "info threads"
+</code></pre>
+<h3 id="4-載入多個設定"><a class="header" href="#4-載入多個設定">4. 載入多個設定</a></h3>
+<pre><code class="language-bash"># 載入符號和設定
+gdb ./app \
+  -ex "set sysroot /path/to/sysroot" \
+  -ex "set solib-search-path /path/to/libs" \
+  -ex "source ~/.gdbinit.local" \
+  -ex "run"
+</code></pre>
+<h2 id="其他實用參數"><a class="header" href="#其他實用參數">其他實用參數</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>參數</th><th>說明</th><th>範例</th></tr></thead><tbody>
+<tr><td><code>-q</code> / <code>--quiet</code></td><td>安靜模式（不顯示版權信息）</td><td><code>gdb -q ./app</code></td></tr>
+<tr><td><code>-p PID</code></td><td>附加到進程</td><td><code>gdb -p 1234</code></td></tr>
+<tr><td><code>-c core</code></td><td>載入核心轉儲</td><td><code>gdb ./app -c core.dump</code></td></tr>
+<tr><td><code>-d dir</code></td><td>新增原始碼目錄</td><td><code>gdb -d /src/path ./app</code></td></tr>
+<tr><td><code>--args</code></td><td>傳遞參數給程式</td><td><code>gdb --args ./app arg1 arg2</code></td></tr>
+<tr><td><code>-tui</code></td><td>啟用文字介面</td><td><code>gdb -tui ./app</code></td></tr>
+</tbody></table>
+</div>
+<h2 id="建議使用場景"><a class="header" href="#建議使用場景">建議使用場景</a></h2>
+<ul>
+<li><strong>互動除錯</strong>：使用方法 1 (<code>-x</code>) 或方法 3 (<code>-ex</code>)</li>
+<li><strong>自動化測試</strong>：使用方法 4 (<code>-batch</code>)</li>
+<li><strong>快速命令</strong>：使用方法 3 (<code>-ex</code>)</li>
+<li><strong>複雜腳本</strong>：使用方法 1 (<code>-x</code>) 配合腳本檔案</li>
+</ul>
+<hr />
+<h2 id="第二部分gdb--ex-自動化實戰"><a class="header" href="#第二部分gdb--ex-自動化實戰">第二部分：GDB -ex 自動化實戰</a></h2>
+<h3 id="核心概念"><a class="header" href="#核心概念">核心概念</a></h3>
 <p><code>gdb -ex</code> 的核心優勢是<strong>自動化</strong>和<strong>腳本化</strong>！最實用的技巧包括：</p>
-<h2 id="-最常用的組合"><a class="header" href="#-最常用的組合">🚀 最常用的組合</a></h2>
+<h3 id="-最常用的組合"><a class="header" href="#-最常用的組合">🚀 最常用的組合</a></h3>
 <pre><code class="language-bash"># 1. 快速崩潰分析（最實用！）
 gdb -batch -ex "run" -ex "bt" -ex "quit" ./program
 
@@ -194,7 +313,7 @@ gdb -batch -ex "info functions" -ex "info variables" ./program &gt; symbols.txt
 # 4. CI/CD 整合測試
 gdb -batch -ex "run &lt; test.txt" -ex "quit" ./program || exit 1
 </code></pre>
-<h2 id="-進階技巧"><a class="header" href="#-進階技巧">💡 進階技巧</a></h2>
+<h3 id="-進階技巧"><a class="header" href="#-進階技巧">💡 進階技巧</a></h3>
 <pre><code class="language-bash"># 監控執行中的程式
 gdb -batch -ex "attach $(pidof server)" -ex "bt" -ex "detach"
 
