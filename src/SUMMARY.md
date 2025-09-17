@@ -233,6 +233,7 @@
     - [GDB 函數調用軌跡分析與流程圖生成完整指南](gdb/gdb-function-trace-to-flowchart-guide.md)
     - [GDB EX 完整指南](gdb/gdb_ex_complete_guide.md)
     - [GDB 調試完全指南 - Rust/C++ 專用](gdb/GDB_DEBUG_GUIDE.md)
+    - [GDB 分析 .so/.a 檔案完整指南](gdb/gdb-so-analysis-guide.md)
 - [Vim](vim/vim.md)
     - [Copilot](vim/copilot.md)
     - [Tabnine](vim/tabnine.md)
