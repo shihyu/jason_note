@@ -1,9 +1,162 @@
-# GDB -ex 自動化除錯完整實戰指南
+# GDB 自動化除錯完整指南
 
-## 核心概念
+## 第一部分：GDB 命令行參數指南
+
+### 快速參考
+
+#### 基本用法
+```bash
+gdb [選項] [程式檔案] [核心檔案或進程ID]
+```
+
+## 四種執行腳本的方法
+
+### 方法 1：使用 `-x` 參數
+```bash
+gdb -x script.gdb ./program
+```
+
+**範例：**
+```bash
+# 創建腳本檔案 debug.gdb
+echo "break main
+run
+continue" > debug.gdb
+
+# 執行
+gdb -x debug.gdb ./myapp
+```
+
+### 方法 2：使用 `--command` 參數
+```bash
+gdb --command=script.gdb ./program
+```
+
+**範例：**
+```bash
+# 與方法 1 相同效果
+gdb --command=debug.gdb ./myapp
+```
+
+### 方法 3：使用 `-ex` 執行命令
+```bash
+gdb ./program -ex "source script.gdb"
+```
+
+**範例：**
+```bash
+# 執行多個命令
+gdb ./myapp \
+  -ex "break main" \
+  -ex "break func1" \
+  -ex "run arg1 arg2" \
+  -ex "continue"
+
+# 載入腳本並執行
+gdb ./myapp -ex "source debug.gdb" -ex "run"
+```
+
+### 方法 4：批次模式 `-batch`
+```bash
+gdb -batch -x script.gdb ./program
+```
+
+**範例：**
+```bash
+# 創建自動化測試腳本 test.gdb
+cat > test.gdb << 'EOF'
+break main
+run
+print variable1
+backtrace
+quit
+EOF
+
+# 批次執行（執行完自動退出）
+gdb -batch -x test.gdb ./myapp > test_output.txt
+```
+
+## 方法對比
+
+| 特性 | `-x` / `--command` | `-ex` | `-batch` |
+|------|-------------------|--------|----------|
+| **互動模式** | ✓ | ✓ | ✗ |
+| **執行後停留** | ✓ | ✓ | ✗ |
+| **多命令支援** | 腳本內 | 多個 -ex | 腳本內 |
+| **自動化** | ✗ | ✗ | ✓ |
+| **顯示提示符** | ✓ | ✓ | ✗ |
+
+## 實用範例
+
+### 1. Rust 程式除錯
+```bash
+# 創建 Rust 除錯腳本
+cat > rust_debug.gdb << 'EOF'
+set print pretty on
+set print array on
+break panic_impl
+break rust_panic
+run
+EOF
+
+# 執行
+gdb -x rust_debug.gdb ./target/debug/myapp
+```
+
+### 2. 自動化測試
+```bash
+# 批次測試，輸出到檔案
+gdb -batch -x test_suite.gdb ./app 2>&1 | tee test_results.log
+
+# CI/CD 中使用
+gdb -batch -ex "run" -ex "bt" -ex "quit" ./app core.dump
+```
+
+### 3. 快速除錯會話
+```bash
+# 設定斷點並執行
+gdb ./app -ex "b main" -ex "r" -ex "n" -ex "p argc"
+
+# 附加到執行中的進程
+gdb -p 1234 -ex "bt" -ex "info threads"
+```
+
+### 4. 載入多個設定
+```bash
+# 載入符號和設定
+gdb ./app \
+  -ex "set sysroot /path/to/sysroot" \
+  -ex "set solib-search-path /path/to/libs" \
+  -ex "source ~/.gdbinit.local" \
+  -ex "run"
+```
+
+## 其他實用參數
+
+| 參數 | 說明 | 範例 |
+|------|------|------|
+| `-q` / `--quiet` | 安靜模式（不顯示版權信息） | `gdb -q ./app` |
+| `-p PID` | 附加到進程 | `gdb -p 1234` |
+| `-c core` | 載入核心轉儲 | `gdb ./app -c core.dump` |
+| `-d dir` | 新增原始碼目錄 | `gdb -d /src/path ./app` |
+| `--args` | 傳遞參數給程式 | `gdb --args ./app arg1 arg2` |
+| `-tui` | 啟用文字介面 | `gdb -tui ./app` |
+
+## 建議使用場景
+
+- **互動除錯**：使用方法 1 (`-x`) 或方法 3 (`-ex`)
+- **自動化測試**：使用方法 4 (`-batch`)
+- **快速命令**：使用方法 3 (`-ex`)
+- **複雜腳本**：使用方法 1 (`-x`) 配合腳本檔案
+
+---
+
+## 第二部分：GDB -ex 自動化實戰
+
+### 核心概念
 `gdb -ex` 的核心優勢是**自動化**和**腳本化**！最實用的技巧包括：
 
-## 🚀 最常用的組合
+### 🚀 最常用的組合
 
 ```bash
 # 1. 快速崩潰分析（最實用！）
@@ -19,7 +172,7 @@ gdb -batch -ex "info functions" -ex "info variables" ./program > symbols.txt
 gdb -batch -ex "run < test.txt" -ex "quit" ./program || exit 1
 ```
 
-## 💡 進階技巧
+### 💡 進階技巧
 
 ```bash
 # 監控執行中的程式
