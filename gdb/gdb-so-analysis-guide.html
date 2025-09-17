@@ -1,0 +1,761 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>GDB 分析 .so/.a 檔案完整指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="gdb-分析-soa-檔案完整指南"><a class="header" href="#gdb-分析-soa-檔案完整指南">GDB 分析 .so/.a 檔案完整指南</a></h1>
+<h2 id="基礎命令"><a class="header" href="#基礎命令">基礎命令</a></h2>
+<h3 id="1-查看函數符號"><a class="header" href="#1-查看函數符號">1. 查看函數符號</a></h3>
+<pre><code class="language-bash"># 列出所有函數
+gdb lib.so -batch -ex "info functions"
+
+# 過濾特定函數
+gdb lib.so -batch -ex "info functions init"
+
+# 使用正則表達式
+gdb lib.so -batch -ex "info functions ^lib_.*_init$"
+
+# 查看 C++ 函數（包含完整簽名）
+gdb lib.so -batch -ex "info functions" -ex "set print asm-demangle on"
+</code></pre>
+<h3 id="2-查看變數符號"><a class="header" href="#2-查看變數符號">2. 查看變數符號</a></h3>
+<pre><code class="language-bash"># 列出所有全域變數
+gdb lib.so -batch -ex "info variables"
+
+# 過濾特定變數
+gdb lib.so -batch -ex "info variables config"
+
+# 查看靜態變數
+gdb lib.so -batch -ex "info variables ^static_"
+</code></pre>
+<h3 id="3-查看類型定義"><a class="header" href="#3-查看類型定義">3. 查看類型定義</a></h3>
+<pre><code class="language-bash"># 列出所有類型
+gdb lib.so -batch -ex "info types"
+
+# 查看特定類型
+gdb lib.so -batch -ex "info types MyClass"
+
+# 查看 STL 類型
+gdb lib.so -batch -ex "info types std::"
+</code></pre>
+<h2 id="進階分析技巧"><a class="header" href="#進階分析技巧">進階分析技巧</a></h2>
+<h3 id="4-反組譯函數"><a class="header" href="#4-反組譯函數">4. 反組譯函數</a></h3>
+<pre><code class="language-bash"># 反組譯特定函數
+gdb lib.so -batch -ex "disassemble function_name"
+
+# 反組譯地址範圍
+gdb lib.so -batch -ex "disassemble 0x1000,0x1100"
+
+# Intel 語法（更易讀）
+gdb lib.so -batch -ex "set disassembly-flavor intel" -ex "disassemble main"
+
+# 顯示原始碼和組譯混合
+gdb lib.so -batch -ex "disassemble /m function_name"
+</code></pre>
+<h3 id="5-查看段sections資訊"><a class="header" href="#5-查看段sections資訊">5. 查看段（Sections）資訊</a></h3>
+<pre><code class="language-bash"># 列出所有段
+gdb lib.so -batch -ex "maintenance info sections"
+
+# 查看特定段
+gdb lib.so -batch -ex "maintenance info sections .text"
+
+# 查看段的記憶體映射
+gdb lib.so -batch -ex "info files"
+</code></pre>
+<h3 id="6-查看依賴關係"><a class="header" href="#6-查看依賴關係">6. 查看依賴關係</a></h3>
+<pre><code class="language-bash"># 查看動態連結的函式庫
+gdb lib.so -batch -ex "info sharedlibrary"
+
+# 查看 PLT (Procedure Linkage Table)
+gdb lib.so -batch -ex "info functions @plt"
+
+# 查看 GOT (Global Offset Table)
+gdb lib.so -batch -ex "maintenance info sections .got"
+</code></pre>
+<h2 id="符號分析"><a class="header" href="#符號分析">符號分析</a></h2>
+<h3 id="7-符號表操作"><a class="header" href="#7-符號表操作">7. 符號表操作</a></h3>
+<pre><code class="language-bash"># 查看所有符號
+gdb lib.so -batch -ex "info all-symbols"
+
+# 查看特定符號的詳細資訊
+gdb lib.so -batch -ex "info symbol 0x12345678"
+
+# 查看符號的地址
+gdb lib.so -batch -ex "info address function_name"
+
+# 列出原始檔
+gdb lib.so -batch -ex "info sources"
+</code></pre>
+<h3 id="8-c-特定功能"><a class="header" href="#8-c-特定功能">8. C++ 特定功能</a></h3>
+<pre><code class="language-bash"># 查看 C++ 類別
+gdb lib.so -batch -ex "info classes"
+
+# 查看虛擬函數表
+gdb lib.so -batch -ex "info vtbl ClassName"
+
+# 查看 namespace
+gdb lib.so -batch -ex "info namespace"
+
+# Demangle C++ 符號
+gdb lib.so -batch -ex "set print demangle on" -ex "info functions"
+</code></pre>
+<h2 id="記憶體和資料分析"><a class="header" href="#記憶體和資料分析">記憶體和資料分析</a></h2>
+<h3 id="9-檢查資料結構"><a class="header" href="#9-檢查資料結構">9. 檢查資料結構</a></h3>
+<pre><code class="language-bash"># 查看結構體定義
+gdb lib.so -batch -ex "ptype struct MyStruct"
+
+# 查看類別定義
+gdb lib.so -batch -ex "ptype class MyClass"
+
+# 查看枚舉
+gdb lib.so -batch -ex "ptype enum MyEnum"
+
+# 查看 typedef
+gdb lib.so -batch -ex "info types typedef"
+</code></pre>
+<h3 id="10-導出符號資訊"><a class="header" href="#10-導出符號資訊">10. 導出符號資訊</a></h3>
+<pre><code class="language-bash"># 產生符號檔案
+gdb lib.so -batch -ex "maint print symbols symbols.txt"
+
+# 產生部分符號表
+gdb lib.so -batch -ex "maint print psymbols psymbols.txt"
+
+# 產生最小符號表
+gdb lib.so -batch -ex "maint print msymbols msymbols.txt"
+</code></pre>
+<h2 id="實用組合技巧"><a class="header" href="#實用組合技巧">實用組合技巧</a></h2>
+<h3 id="11-分析函數呼叫"><a class="header" href="#11-分析函數呼叫">11. 分析函數呼叫</a></h3>
+<pre><code class="language-bash"># 找出所有呼叫 malloc 的地方
+gdb lib.so -batch -ex "disassemble" | grep -B2 "call.*malloc"
+
+# 列出所有 exported 函數（動態符號）
+gdb lib.so -batch -ex "info functions" | grep -E "^[0-9a-fx]+ +[^&lt;]"
+
+# 統計函數數量
+gdb lib.so -batch -ex "info functions" | grep -c "^0x"
+</code></pre>
+<h3 id="12-安全審計"><a class="header" href="#12-安全審計">12. 安全審計</a></h3>
+<pre><code class="language-bash"># 尋找危險函數
+gdb lib.so -batch -ex "info functions" | grep -E "(strcpy|gets|sprintf|system)"
+
+# 檢查 RELRO (Relocation Read-Only)
+gdb lib.so -batch -ex "info files" | grep -E "(GNU_RELRO|\.got)"
+
+# 檢查 stack canary
+gdb lib.so -batch -ex "info functions" | grep "__stack_chk"
+</code></pre>
+<h2 id="shell-函數範例"><a class="header" href="#shell-函數範例">Shell 函數範例</a></h2>
+<h3 id="基礎版本"><a class="header" href="#基礎版本">基礎版本</a></h3>
+<pre><code class="language-bash"># ~/.bashrc
+soinfo() {
+    local file="$1"
+    local cmd="${2:-functions}"
+    
+    case "$cmd" in
+        func|functions)
+            gdb "$file" -batch -ex "info functions" ;;
+        var|variables)
+            gdb "$file" -batch -ex "info variables" ;;
+        type|types)
+            gdb "$file" -batch -ex "info types" ;;
+        dis|disas)
+            gdb "$file" -batch -ex "disassemble $3" ;;
+        *)
+            echo "Usage: soinfo &lt;file&gt; [func|var|type|dis] [args]"
+            ;;
+    esac
+}
+</code></pre>
+<h3 id="進階版本"><a class="header" href="#進階版本">進階版本</a></h3>
+<pre><code class="language-bash"># ~/.bashrc
+soanalyze() {
+    local file="$1"
+    local analysis="$2"
+    
+    if [[ ! -f "$file" ]]; then
+        echo "File not found: $file"
+        return 1
+    fi
+    
+    case "$analysis" in
+        exports)
+            echo "=== Exported Functions ==="
+            gdb "$file" -batch -ex "info functions" | \
+                grep -E "^0x[0-9a-f]+ +[A-Za-z_]"
+            ;;
+        cpp)
+            echo "=== C++ Symbols ==="
+            gdb "$file" -batch -ex "set print demangle on" \
+                -ex "info functions" | grep -E "::|&lt;|&gt;"
+            ;;
+        security)
+            echo "=== Security Check ==="
+            echo "Dangerous functions:"
+            gdb "$file" -batch -ex "info functions" | \
+                grep -E "(strcpy|gets|sprintf|system)"
+            echo -e "\nStack protection:"
+            gdb "$file" -batch -ex "info functions" | \
+                grep -c "__stack_chk" || echo "No stack canary found"
+            ;;
+        stats)
+            echo "=== Library Statistics ==="
+            echo "Functions: $(gdb "$file" -batch -ex "info functions" | grep -c "^0x")"
+            echo "Variables: $(gdb "$file" -batch -ex "info variables" | grep -c "^0x")"
+            echo "Types: $(gdb "$file" -batch -ex "info types" | grep -c "^File\|^type")"
+            ;;
+        *)
+            echo "Usage: soanalyze &lt;file&gt; [exports|cpp|security|stats]"
+            ;;
+    esac
+}
+</code></pre>
+<h3 id="結合-nm-和-gdb-的智慧函數"><a class="header" href="#結合-nm-和-gdb-的智慧函數">結合 nm 和 GDB 的智慧函數</a></h3>
+<pre><code class="language-bash"># ~/.bashrc
+
+# 快速符號查看（用 nm）
+qsym() {
+    nm -DC "$1" | grep -E " [TDG] " | less
+}
+
+# 詳細分析（用 GDB）
+dsym() {
+    gdb "$1" -batch -ex "info functions" -ex "info variables" | less
+}
+
+# 智慧選擇工具
+sym() {
+    local file="$1"
+    local pattern="$2"
+    
+    if [[ -z "$pattern" ]]; then
+        # 沒有 pattern，用 nm（快）
+        nm -DC "$file"
+    else
+        # 有 pattern，用 GDB（功能強）
+        gdb "$file" -batch -ex "info functions $pattern"
+    fi
+}
+
+# 比較 nm 和 GDB 輸出
+symcompare() {
+    local file="$1"
+    local func="${2:-main}"
+    
+    echo "=== nm output ==="
+    nm -DC "$file" | grep "$func"
+    
+    echo -e "\n=== GDB output ==="
+    gdb "$file" -batch -ex "info functions $func" 2&gt;/dev/null | grep -v "^$"
+}
+
+# 快速分析函式庫（結合使用）
+libanalyze() {
+    local lib="$1"
+    
+    echo "=== Quick Symbol Check (nm) ==="
+    echo "Exported functions: $(nm -D "$lib" 2&gt;/dev/null | grep -c " T ")"
+    echo "Undefined symbols: $(nm -u "$lib" 2&gt;/dev/null | wc -l)"
+    
+    echo -e "\n=== Top 5 Functions (nm) ==="
+    nm -DC "$lib" 2&gt;/dev/null | grep " T " | head -5
+    
+    echo -e "\n=== Detailed Analysis (GDB) ==="
+    # 只對第一個函數做詳細分析
+    local first_func=$(nm -DC "$lib" 2&gt;/dev/null | grep " T " | head -1 | awk '{print $3}')
+    if [[ -n "$first_func" ]]; then
+        echo "Details of $first_func:"
+        gdb "$lib" -batch -ex "info functions ^${first_func}$" 2&gt;/dev/null | grep -v "^$"
+    fi
+}
+</code></pre>
+<h3 id="搜尋函數"><a class="header" href="#搜尋函數">搜尋函數</a></h3>
+<pre><code class="language-bash"># ~/.bashrc
+sofind() {
+    local pattern="$1"
+    shift
+    
+    for file in "$@"; do
+        echo "=== $file ==="
+        gdb "$file" -batch -ex "info functions $pattern" 2&gt;/dev/null | \
+            grep -E "^0x[0-9a-f]+"
+    done
+}
+
+# 使用方式
+# sofind "init" *.so
+</code></pre>
+<h2 id="批次處理技巧"><a class="header" href="#批次處理技巧">批次處理技巧</a></h2>
+<h3 id="13-分析多個檔案"><a class="header" href="#13-分析多個檔案">13. 分析多個檔案</a></h3>
+<pre><code class="language-bash"># 批次檢查所有 .so 的函數
+for lib in *.so; do
+    echo "=== $lib ==="
+    gdb "$lib" -batch -ex "info functions" | head -10
+done
+
+# 找出包含特定函數的函式庫
+for lib in /usr/lib/*.so; do
+    if gdb "$lib" -batch -ex "info functions pthread_create" 2&gt;/dev/null | grep -q pthread_create; then
+        echo "$lib contains pthread_create"
+    fi
+done
+</code></pre>
+<h3 id="14-產生報告"><a class="header" href="#14-產生報告">14. 產生報告</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# analyze_lib.sh
+generate_report() {
+    local lib="$1"
+    local output="${lib%.so}_report.txt"
+    
+    {
+        echo "Library Analysis Report: $lib"
+        echo "Generated: $(date)"
+        echo "================================"
+        
+        echo -e "\n## Functions"
+        gdb "$lib" -batch -ex "info functions" | head -20
+        
+        echo -e "\n## Global Variables"
+        gdb "$lib" -batch -ex "info variables" | head -20
+        
+        echo -e "\n## Dependencies"
+        ldd "$lib"
+        
+        echo -e "\n## Security Features"
+        checksec --file="$lib" 2&gt;/dev/null || echo "checksec not installed"
+        
+    } &gt; "$output"
+    
+    echo "Report saved to: $output"
+}
+</code></pre>
+<h2 id="除錯技巧"><a class="header" href="#除錯技巧">除錯技巧</a></h2>
+<h3 id="15-設定斷點和追蹤"><a class="header" href="#15-設定斷點和追蹤">15. 設定斷點和追蹤</a></h3>
+<pre><code class="language-bash"># 在函式庫載入時設定斷點
+gdb ./main_program -batch \
+    -ex "set breakpoint pending on" \
+    -ex "break lib.so:function_name" \
+    -ex "run" \
+    -ex "backtrace"
+
+# 追蹤函數呼叫
+gdb ./program -batch \
+    -ex "set pagination off" \
+    -ex "break function_name" \
+    -ex "commands" \
+    -ex "silent" \
+    -ex "backtrace 1" \
+    -ex "continue" \
+    -ex "end" \
+    -ex "run"
+</code></pre>
+<h2 id="nm-vs-gdb-詳細比較"><a class="header" href="#nm-vs-gdb-詳細比較">nm vs GDB 詳細比較</a></h2>
+<h3 id="核心差異"><a class="header" href="#核心差異">核心差異</a></h3>
+<pre><code class="language-bash"># nm - 簡單快速的符號查看器
+nm lib.so              # 列出所有符號
+nm -D lib.so           # 只看動態符號
+nm -C lib.so           # Demangle C++ 符號
+
+# GDB - 功能強大的分析器
+gdb lib.so -batch -ex "info functions"     # 不只是符號
+gdb lib.so -batch -ex "disassemble func"   # 還能反組譯
+gdb lib.so -batch -ex "ptype struct"       # 查看資料結構
+</code></pre>
+<h3 id="功能對比表"><a class="header" href="#功能對比表">功能對比表</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>功能</th><th>nm</th><th>GDB</th><th>說明</th></tr></thead><tbody>
+<tr><td><strong>查看符號</strong></td><td>✅ 快速</td><td>✅ 詳細</td><td>nm 更快，GDB 資訊更多</td></tr>
+<tr><td><strong>過濾功能</strong></td><td>需要 grep</td><td>✅ 內建正則</td><td>GDB 可直接過濾</td></tr>
+<tr><td><strong>反組譯</strong></td><td>❌</td><td>✅</td><td>只有 GDB 能反組譯</td></tr>
+<tr><td><strong>查看資料結構</strong></td><td>❌</td><td>✅</td><td>GDB 能顯示 struct/class 定義</td></tr>
+<tr><td><strong>除錯資訊</strong></td><td>部分</td><td>✅ 完整</td><td>GDB 能讀取完整除錯資訊</td></tr>
+<tr><td><strong>執行時分析</strong></td><td>❌</td><td>✅</td><td>GDB 能動態除錯</td></tr>
+<tr><td><strong>速度</strong></td><td>✅ 極快</td><td>較慢</td><td>nm 專門設計用來快速查看</td></tr>
+<tr><td><strong>輸出格式</strong></td><td>簡潔</td><td>詳細</td><td>nm 輸出更適合腳本處理</td></tr>
+</tbody></table>
+</div>
+<h3 id="實際範例比較"><a class="header" href="#實際範例比較">實際範例比較</a></h3>
+<h4 id="查看函數符號"><a class="header" href="#查看函數符號">查看函數符號</a></h4>
+<pre><code class="language-bash"># nm - 簡潔輸出
+$ nm -D lib.so | grep " T "
+0000000000001140 T init_library
+0000000000001260 T process_data
+
+# GDB - 詳細資訊
+$ gdb lib.so -batch -ex "info functions init"
+0x0000000000001140  init_library(int, char**)
+0x0000000000001260  init_config(void)
+</code></pre>
+<h4 id="c-符號處理"><a class="header" href="#c-符號處理">C++ 符號處理</a></h4>
+<pre><code class="language-bash"># nm - 需要 -C 來 demangle
+$ nm lib.so
+00001234 T _ZN7MyClass10myFunctionEv  # 難讀
+
+$ nm -C lib.so  
+00001234 T MyClass::myFunction()      # 易讀
+
+# GDB - 自動處理，還能看參數類型
+$ gdb lib.so -batch -ex "info functions MyClass"
+0x00001234  MyClass::myFunction()
+0x00001456  MyClass::MyClass(int, std::string const&amp;)
+</code></pre>
+<h4 id="符號類型識別"><a class="header" href="#符號類型識別">符號類型識別</a></h4>
+<pre><code class="language-bash"># nm - 用字母表示類型
+$ nm lib.so
+0000000000001140 T init_library    # T = Text (code)
+0000000000004020 D global_var      # D = Data
+0000000000004040 B uninit_var      # B = BSS
+                 U printf           # U = Undefined
+
+# GDB - 分類顯示
+$ gdb lib.so -batch -ex "info functions"   # 只看函數
+$ gdb lib.so -batch -ex "info variables"   # 只看變數
+</code></pre>
+<h3 id="nm-符號類型代碼表"><a class="header" href="#nm-符號類型代碼表">nm 符號類型代碼表</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>代碼</th><th>意義</th><th>說明</th></tr></thead><tbody>
+<tr><td><strong>T/t</strong></td><td>Text (code)</td><td>程式碼段的符號 (大寫=全域，小寫=局部)</td></tr>
+<tr><td><strong>D/d</strong></td><td>Data</td><td>已初始化資料段</td></tr>
+<tr><td><strong>B/b</strong></td><td>BSS</td><td>未初始化資料段</td></tr>
+<tr><td><strong>R/r</strong></td><td>Read-only</td><td>唯讀資料段</td></tr>
+<tr><td><strong>W/w</strong></td><td>Weak</td><td>弱符號</td></tr>
+<tr><td><strong>U</strong></td><td>Undefined</td><td>未定義符號（需要外部連結）</td></tr>
+<tr><td><strong>A</strong></td><td>Absolute</td><td>絕對符號</td></tr>
+<tr><td><strong>C</strong></td><td>Common</td><td>共同符號</td></tr>
+<tr><td><strong>N</strong></td><td>Debug</td><td>除錯符號</td></tr>
+</tbody></table>
+</div>
+<h3 id="效能比較"><a class="header" href="#效能比較">效能比較</a></h3>
+<pre><code class="language-bash"># 測試大型函式庫 (如 libc.so)
+$ time nm -D /lib/x86_64-linux-gnu/libc.so.6 &gt; /dev/null
+real    0m0.012s
+
+$ time gdb /lib/x86_64-linux-gnu/libc.so.6 -batch -ex "info functions" &gt; /dev/null  
+real    0m0.283s
+
+# nm 快約 20 倍！
+</code></pre>
+<h3 id="什麼時候用哪個"><a class="header" href="#什麼時候用哪個">什麼時候用哪個？</a></h3>
+<h4 id="使用-nm-的場景"><a class="header" href="#使用-nm-的場景">使用 nm 的場景</a></h4>
+<pre><code class="language-bash"># 1. 快速檢查符號是否存在
+nm -D lib.so | grep function_name
+
+# 2. 批量處理多個檔案
+for lib in *.so; do
+    nm -D "$lib" | grep -q "init" &amp;&amp; echo "$lib has init"
+done
+
+# 3. 產生符號列表
+nm -D lib.so &gt; symbols.txt
+
+# 4. 檢查未定義符號
+nm -u lib.so
+
+# 5. 腳本自動化
+nm lib.so | awk '$2=="T" {print $3}' | sort
+</code></pre>
+<h4 id="使用-gdb-的場景"><a class="header" href="#使用-gdb-的場景">使用 GDB 的場景</a></h4>
+<pre><code class="language-bash"># 1. 需要看函數參數和返回類型
+gdb lib.so -batch -ex "info functions process"
+
+# 2. 查看資料結構定義
+gdb lib.so -batch -ex "ptype struct config_data"
+
+# 3. 反組譯分析
+gdb lib.so -batch -ex "disassemble critical_function"
+
+# 4. 複雜的正則過濾
+gdb lib.so -batch -ex "info functions ^lib_.*_init$"
+
+# 5. 需要除錯資訊
+gdb lib.so -batch -ex "info sources"
+</code></pre>
+<h2 id="其他相關工具比較"><a class="header" href="#其他相關工具比較">其他相關工具比較</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>工具</th><th>優點</th><th>使用場景</th><th>速度</th></tr></thead><tbody>
+<tr><td><code>nm</code></td><td>快速、簡單</td><td>快速查看符號</td><td>⚡ 極快</td></tr>
+<tr><td><code>objdump</code></td><td>功能全面</td><td>查看段、反組譯</td><td>🚀 快</td></tr>
+<tr><td><code>readelf</code></td><td>ELF 格式專用</td><td>詳細 ELF 分析</td><td>🚀 快</td></tr>
+<tr><td><code>ldd</code></td><td>依賴關係</td><td>查看動態連結</td><td>⚡ 極快</td></tr>
+<tr><td><code>strings</code></td><td>提取字串</td><td>查找硬編碼字串</td><td>⚡ 極快</td></tr>
+<tr><td><code>gdb</code></td><td>最強大</td><td>深度分析、除錯</td><td>🐢 較慢</td></tr>
+</tbody></table>
+</div>
+<h2 id="常見問題解決"><a class="header" href="#常見問題解決">常見問題解決</a></h2>
+<h3 id="符號被剝離stripped"><a class="header" href="#符號被剝離stripped">符號被剝離（stripped）</a></h3>
+<pre><code class="language-bash"># 檢查是否被剝離
+file lib.so
+
+# 嘗試從除錯符號包載入
+gdb lib.so -batch -ex "symbol-file lib.so.debug" -ex "info functions"
+</code></pre>
+<h3 id="檢查-3264-位元"><a class="header" href="#檢查-3264-位元">檢查 32/64 位元</a></h3>
+<pre><code class="language-bash">gdb lib.so -batch -ex "show architecture"
+</code></pre>
+<h3 id="查看編譯器優化等級"><a class="header" href="#查看編譯器優化等級">查看編譯器優化等級</a></h3>
+<pre><code class="language-bash"># 通過反組譯推測
+gdb lib.so -batch -ex "disassemble main" | grep -E "(nop|lea.*\[.*\+0\])"
+</code></pre>
+<h2 id="快速決策指南"><a class="header" href="#快速決策指南">快速決策指南</a></h2>
+<h3 id="選擇工具的決策樹"><a class="header" href="#選擇工具的決策樹">選擇工具的決策樹</a></h3>
+<pre><code>需要分析 .so/.a 檔案？
+├── 只要看符號名稱？ → 用 nm
+├── 需要看函數參數？ → 用 GDB
+├── 需要反組譯？ → 用 GDB 或 objdump
+├── 需要看資料結構？ → 用 GDB
+├── 批量處理多檔案？ → 用 nm + 腳本
+└── 深度除錯分析？ → 用 GDB
+</code></pre>
+<h3 id="總結比較"><a class="header" href="#總結比較">總結比較</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>需求</th><th>最佳工具</th><th>指令範例</th></tr></thead><tbody>
+<tr><td><strong>快速查看符號</strong></td><td>nm</td><td><code>nm -DC lib.so | grep func</code></td></tr>
+<tr><td><strong>檢查未定義符號</strong></td><td>nm</td><td><code>nm -u lib.so</code></td></tr>
+<tr><td><strong>查看函數簽名</strong></td><td>GDB</td><td><code>gdb lib.so -batch -ex "info functions"</code></td></tr>
+<tr><td><strong>反組譯函數</strong></td><td>GDB</td><td><code>gdb lib.so -batch -ex "disas func"</code></td></tr>
+<tr><td><strong>查看結構定義</strong></td><td>GDB</td><td><code>gdb lib.so -batch -ex "ptype struct"</code></td></tr>
+<tr><td><strong>批量檢查</strong></td><td>nm</td><td><code>for f in *.so; do nm -D $f; done</code></td></tr>
+<tr><td><strong>C++ 符號</strong></td><td>兩者皆可</td><td><code>nm -C</code> 或 GDB 自動處理</td></tr>
+<tr><td><strong>效能優先</strong></td><td>nm</td><td>nm 比 GDB 快 20+ 倍</td></tr>
+<tr><td><strong>資訊完整</strong></td><td>GDB</td><td>GDB 提供最詳細資訊</td></tr>
+</tbody></table>
+</div>
+<h3 id="一句話總結"><a class="header" href="#一句話總結">一句話總結</a></h3>
+<ul>
+<li><strong>nm</strong> = 瑞士刀（輕巧快速，適合日常查看）</li>
+<li><strong>GDB</strong> = 工具箱（功能齊全，適合深度分析）</li>
+<li><strong>最佳實踐</strong> = 先用 nm 快速篩選，再用 GDB 深入分析</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../gdb/GDB_DEBUG_GUIDE.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../vim/vim.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../gdb/GDB_DEBUG_GUIDE.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../vim/vim.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
