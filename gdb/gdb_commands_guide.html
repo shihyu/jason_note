@@ -1,0 +1,1127 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>GDB Commands 和腳本語法完整指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="gdb-commands-和腳本語法完整指南"><a class="header" href="#gdb-commands-和腳本語法完整指南">GDB Commands 和腳本語法完整指南</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ul>
+<li><a href="#commands-%E5%9F%BA%E6%9C%AC%E8%AA%9E%E6%B3%95">Commands 基本語法</a></li>
+<li><a href="#%E5%B8%B8%E7%94%A8-commands-%E7%AF%84%E4%BE%8B">常用 Commands 範例</a></li>
+<li><a href="#%E6%A2%9D%E4%BB%B6%E6%8E%A7%E5%88%B6%E8%AA%9E%E6%B3%95">條件控制語法</a></li>
+<li><a href="#%E5%BE%AA%E7%92%B0%E6%8E%A7%E5%88%B6%E8%AA%9E%E6%B3%95">循環控制語法</a></li>
+<li><a href="#%E8%87%AA%E5%AE%9A%E7%BE%A9%E5%87%BD%E6%95%B8-define">自定義函數 (define)</a></li>
+<li><a href="#gdb-%E8%85%B3%E6%9C%AC%E6%AA%94%E6%A1%88">GDB 腳本檔案</a></li>
+<li><a href="#%E9%80%B2%E9%9A%8E%E6%87%89%E7%94%A8%E7%AF%84%E4%BE%8B">進階應用範例</a></li>
+</ul>
+<h2 id="commands-基本語法"><a class="header" href="#commands-基本語法">Commands 基本語法</a></h2>
+<h3 id="1-基本結構"><a class="header" href="#1-基本結構">1. 基本結構</a></h3>
+<pre><code class="language-gdb">(gdb) commands [斷點編號]
+Type commands for breakpoint(s) N, one per line.
+End with a line saying just "end".
+&gt; 命令1
+&gt; 命令2
+&gt; 命令3
+&gt; end
+</code></pre>
+<h3 id="2-語法規則"><a class="header" href="#2-語法規則">2. 語法規則</a></h3>
+<ul>
+<li><code>commands</code> 後可接斷點編號，若省略則套用到最近設定的斷點</li>
+<li>每個命令佔一行</li>
+<li>必須以 <code>end</code> 結束命令序列</li>
+<li>支援所有 GDB 命令和自定義函數</li>
+</ul>
+<h2 id="continue-指令的重要性"><a class="header" href="#continue-指令的重要性">Continue 指令的重要性</a></h2>
+<h3 id="為什麼需要-continue"><a class="header" href="#為什麼需要-continue">為什麼需要 continue？</a></h3>
+<p>在 <code>commands</code> 區塊中，<code>continue</code> 指令決定了程式是否會在斷點處停止：</p>
+<ul>
+<li><strong>沒有 continue</strong>：程式執行完 commands 後會停在斷點處，等待手動輸入</li>
+<li><strong>有 continue</strong>：程式執行完 commands 後自動繼續執行</li>
+</ul>
+<h3 id="continue-的執行流程比較"><a class="header" href="#continue-的執行流程比較">Continue 的執行流程比較</a></h3>
+<h4 id="1-沒有-continue會停止"><a class="header" href="#1-沒有-continue會停止">1. 沒有 continue（會停止）</a></h4>
+<pre><code class="language-gdb">(gdb) break main
+(gdb) commands 1
+&gt; printf "Hit breakpoint\n"
+&gt; print x
+&gt; end  # 沒有 continue，程式會停在這裡
+</code></pre>
+<p>結果：需要手動輸入 <code>continue</code> 或 <code>next</code> 才能繼續</p>
+<h4 id="2-有-continue自動繼續"><a class="header" href="#2-有-continue自動繼續">2. 有 continue（自動繼續）</a></h4>
+<pre><code class="language-gdb">(gdb) break main  
+(gdb) commands 1
+&gt; printf "Hit breakpoint\n"
+&gt; print x
+&gt; continue  # 自動繼續執行，不會停下來
+&gt; end
+</code></pre>
+<p>結果：程式自動繼續執行，適合記錄和監控</p>
+<h3 id="continue-的位置策略"><a class="header" href="#continue-的位置策略">Continue 的位置策略</a></h3>
+<h4 id="在結尾最常見"><a class="header" href="#在結尾最常見">在結尾（最常見）</a></h4>
+<pre><code class="language-gdb">(gdb) commands
+&gt; print x
+&gt; print y
+&gt; continue  # 執行完所有命令後繼續
+&gt; end
+</code></pre>
+<h4 id="在條件中選擇性繼續"><a class="header" href="#在條件中選擇性繼續">在條件中（選擇性繼續）</a></h4>
+<pre><code class="language-gdb">(gdb) commands
+&gt; if (x == 0)
+&gt;   continue  # 滿足條件時直接繼續，跳過後面的命令
+&gt; end
+&gt; # x != 0 時才會執行以下命令
+&gt; print "x is not zero"
+&gt; print x
+&gt; # 這裡故意不加 continue，會停下來
+&gt; end
+</code></pre>
+<h4 id="混合使用智能停止"><a class="header" href="#混合使用智能停止">混合使用（智能停止）</a></h4>
+<pre><code class="language-gdb">(gdb) commands
+&gt; silent
+&gt; printf "Function called with: %d\n", param
+&gt; if (param &gt; 0 &amp;&amp; param &lt; 100)
+&gt;   # 正常範圍，繼續執行
+&gt;   continue
+&gt; end
+&gt; # 異常值，停下來調試
+&gt; printf "Abnormal parameter: %d\n", param
+&gt; backtrace
+&gt; # 不加 continue，需要手動檢查
+&gt; end
+</code></pre>
+<h2 id="常用-commands-範例"><a class="header" href="#常用-commands-範例">常用 Commands 範例</a></h2>
+<h3 id="1-基本輸出和繼續執行"><a class="header" href="#1-基本輸出和繼續執行">1. 基本輸出和繼續執行</a></h3>
+<pre><code class="language-gdb">(gdb) break main
+Breakpoint 1 at 0x1150: file test.cpp, line 10.
+
+(gdb) commands 1
+&gt; printf "Program started at main()\n"
+&gt; print argc
+&gt; print argv[0]
+&gt; continue  # 記錄後自動繼續
+&gt; end
+</code></pre>
+<h3 id="2-記錄變數值不中斷執行"><a class="header" href="#2-記錄變數值不中斷執行">2. 記錄變數值（不中斷執行）</a></h3>
+<pre><code class="language-gdb">(gdb) break loop_function
+Breakpoint 2 at 0x1234: file test.cpp, line 25.
+
+(gdb) commands 2
+&gt; silent  # 抑制預設訊息
+&gt; printf "i = %d, sum = %d\n", i, sum
+&gt; continue  # 必須加 continue，否則迴圈會卡住
+&gt; end
+</code></pre>
+<h3 id="3-調試模式需要停止檢查"><a class="header" href="#3-調試模式需要停止檢查">3. 調試模式（需要停止檢查）</a></h3>
+<pre><code class="language-gdb">(gdb) break error_handler
+Breakpoint 3 at 0x1300: file test.cpp, line 40.
+
+(gdb) commands 3
+&gt; echo === Error Occurred ===\n
+&gt; print error_code
+&gt; print error_message
+&gt; backtrace
+&gt; info locals
+&gt; # 故意不加 continue，需要手動檢查錯誤
+&gt; end
+</code></pre>
+<h3 id="4-性能分析高頻斷點必須用-continue"><a class="header" href="#4-性能分析高頻斷點必須用-continue">4. 性能分析（高頻斷點必須用 continue）</a></h3>
+<pre><code class="language-gdb">(gdb) break frequently_called_function
+Breakpoint 4 at 0x1400: file test.cpp, line 55.
+
+(gdb) commands 4
+&gt; silent
+&gt; set $call_count = $call_count + 1
+&gt; if ($call_count % 10000 == 0)
+&gt;   printf "Function called %d times\n", $call_count
+&gt; end
+&gt; continue  # 高頻函數必須自動繼續，否則程式無法正常運行
+&gt; end
+</code></pre>
+<h3 id="5-條件式停止智能調試"><a class="header" href="#5-條件式停止智能調試">5. 條件式停止（智能調試）</a></h3>
+<pre><code class="language-gdb">(gdb) break process_data
+Breakpoint 5 at 0x1500: file test.cpp, line 70.
+
+(gdb) commands 5
+&gt; silent
+&gt; if (data_size &lt; 1000)
+&gt;   # 小數據，不需要調試
+&gt;   continue
+&gt; end
+&gt; # 大數據，需要檢查
+&gt; printf "Processing large data: size=%d\n", data_size
+&gt; print data_ptr
+&gt; info locals
+&gt; # 不加 continue，讓開發者決定如何處理
+&gt; end
+</code></pre>
+<p><strong>註：<code>silent</code> 可以抑制斷點觸發的預設訊息</strong></p>
+<h3 id="3-條件式輸出"><a class="header" href="#3-條件式輸出">3. 條件式輸出</a></h3>
+<pre><code class="language-gdb">(gdb) break process_data
+Breakpoint 3 at 0x1300: file test.cpp, line 40.
+
+(gdb) commands 3
+&gt; silent
+&gt; if (value &gt; 100)
+&gt;   printf "Warning: value = %d exceeds limit!\n", value
+&gt;   backtrace
+&gt; end
+&gt; continue  # 記錄後繼續執行
+&gt; end
+</code></pre>
+<h3 id="4-收集資料到檔案背景記錄"><a class="header" href="#4-收集資料到檔案背景記錄">4. 收集資料到檔案（背景記錄）</a></h3>
+<pre><code class="language-gdb">(gdb) break calculate
+Breakpoint 4 at 0x1400: file test.cpp, line 55.
+
+(gdb) commands 4
+&gt; silent
+&gt; set logging file debug.log
+&gt; set logging on
+&gt; printf "Time: %d, Result: %f\n", timestamp, result
+&gt; set logging off
+&gt; continue  # 記錄後自動繼續，不中斷程式
+&gt; end
+</code></pre>
+<h3 id="5-複雜的調試序列需要停止"><a class="header" href="#5-複雜的調試序列需要停止">5. 複雜的調試序列（需要停止）</a></h3>
+<pre><code class="language-gdb">(gdb) break error_handler
+Breakpoint 5 at 0x1500: file test.cpp, line 70.
+
+(gdb) commands 5
+&gt; echo === Error occurred ===\n
+&gt; backtrace full
+&gt; info locals
+&gt; info args
+&gt; up
+&gt; info locals
+&gt; down
+&gt; if (error_code == -1)
+&gt;   print *error_struct
+&gt;   x/10x error_buffer
+&gt; end
+&gt; # 注意：這裡沒有 continue，因為錯誤需要手動檢查
+&gt; end
+</code></pre>
+<h2 id="條件控制語法"><a class="header" href="#條件控制語法">條件控制語法</a></h2>
+<h3 id="1-if-else-結構"><a class="header" href="#1-if-else-結構">1. if-else 結構</a></h3>
+<pre><code class="language-gdb">(gdb) commands 6
+&gt; if (ptr != 0)
+&gt;   print *ptr
+&gt;   printf "Pointer value: 0x%x\n", ptr
+&gt; else
+&gt;   echo Pointer is NULL\n
+&gt; end
+&gt; continue
+&gt; end
+</code></pre>
+<h3 id="2-巢狀條件"><a class="header" href="#2-巢狀條件">2. 巢狀條件</a></h3>
+<pre><code class="language-gdb">(gdb) commands 7
+&gt; if (status == 1)
+&gt;   echo Status: Running\n
+&gt;   if (counter &gt; 10)
+&gt;     echo Counter overflow!\n
+&gt;     set counter = 0
+&gt;   end
+&gt; else
+&gt;   if (status == 0)
+&gt;     echo Status: Stopped\n
+&gt;   else
+&gt;     echo Status: Unknown\n
+&gt;   end
+&gt; end
+&gt; continue
+&gt; end
+</code></pre>
+<h3 id="3-多重條件檢查"><a class="header" href="#3-多重條件檢查">3. 多重條件檢查</a></h3>
+<pre><code class="language-gdb">(gdb) commands 8
+&gt; silent
+&gt; set $flag = 0
+&gt; if (x &gt; 0 &amp;&amp; y &gt; 0)
+&gt;   set $flag = 1
+&gt;   echo First quadrant\n
+&gt; end
+&gt; if (x &lt; 0 &amp;&amp; y &gt; 0)
+&gt;   set $flag = 2
+&gt;   echo Second quadrant\n
+&gt; end
+&gt; if ($flag == 0)
+&gt;   echo Origin or axis\n
+&gt; end
+&gt; continue
+&gt; end
+</code></pre>
+<h2 id="循環控制語法"><a class="header" href="#循環控制語法">循環控制語法</a></h2>
+<h3 id="1-while-循環"><a class="header" href="#1-while-循環">1. while 循環</a></h3>
+<pre><code class="language-gdb">(gdb) commands 9
+&gt; set $i = 0
+&gt; while ($i &lt; 10)
+&gt;   printf "array[%d] = %d\n", $i, array[$i]
+&gt;   set $i = $i + 1
+&gt; end
+&gt; continue
+&gt; end
+</code></pre>
+<h3 id="2-遍歷鏈表"><a class="header" href="#2-遍歷鏈表">2. 遍歷鏈表</a></h3>
+<pre><code class="language-gdb">(gdb) commands 10
+&gt; set $node = head
+&gt; set $count = 0
+&gt; while ($node != 0)
+&gt;   printf "Node %d: value = %d\n", $count, $node-&gt;value
+&gt;   set $node = $node-&gt;next
+&gt;   set $count = $count + 1
+&gt;   if ($count &gt; 100)
+&gt;     echo Warning: Possible infinite loop!\n
+&gt;     loop_break
+&gt;   end
+&gt; end
+&gt; printf "Total nodes: %d\n", $count
+&gt; continue
+&gt; end
+</code></pre>
+<h3 id="3-記憶體掃描"><a class="header" href="#3-記憶體掃描">3. 記憶體掃描</a></h3>
+<pre><code class="language-gdb">(gdb) commands 11
+&gt; set $addr = buffer
+&gt; set $end = buffer + size
+&gt; while ($addr &lt; $end)
+&gt;   if (*(char*)$addr == 0)
+&gt;     printf "Found null at 0x%x\n", $addr
+&gt;     loop_break
+&gt;   end
+&gt;   set $addr = $addr + 1
+&gt; end
+&gt; continue
+&gt; end
+</code></pre>
+<h2 id="自定義函數-define"><a class="header" href="#自定義函數-define">自定義函數 (define)</a></h2>
+<h3 id="1-基本函數定義"><a class="header" href="#1-基本函數定義">1. 基本函數定義</a></h3>
+<pre><code class="language-gdb">(gdb) define print_array
+Type commands for definition of "print_array".
+End with a line saying just "end".
+&gt; set $i = 0
+&gt; while ($i &lt; $arg1)
+&gt;   printf "array[%d] = %d\n", $i, array[$i]
+&gt;   set $i = $i + 1
+&gt; end
+&gt; end
+
+# 使用方式
+(gdb) print_array 5
+</code></pre>
+<h3 id="2-帶參數的函數"><a class="header" href="#2-帶參數的函數">2. 帶參數的函數</a></h3>
+<pre><code class="language-gdb">(gdb) define examine_pointer
+&gt; if ($arg0 != 0)
+&gt;   printf "Pointer: 0x%x\n", $arg0
+&gt;   printf "Value: %d\n", *$arg0
+&gt;   x/4x $arg0
+&gt; else
+&gt;   echo Null pointer!\n
+&gt; end
+&gt; end
+
+# 使用方式
+(gdb) examine_pointer ptr
+</code></pre>
+<h3 id="3-複雜的調試函數"><a class="header" href="#3-複雜的調試函數">3. 複雜的調試函數</a></h3>
+<pre><code class="language-gdb">(gdb) define debug_struct
+&gt; echo === Structure Debug Info ===\n
+&gt; print $arg0
+&gt; print *$arg0
+&gt; printf "Size: %d bytes\n", sizeof(*$arg0)
+&gt; if ($arg0-&gt;next != 0)
+&gt;   echo Has next element\n
+&gt;   print $arg0-&gt;next
+&gt; end
+&gt; if ($argc &gt; 1)
+&gt;   if ($arg1 == 1)
+&gt;     echo Detailed mode\n
+&gt;     x/20x $arg0
+&gt;   end
+&gt; end
+&gt; end
+
+# 使用方式
+(gdb) debug_struct my_struct
+(gdb) debug_struct my_struct 1  # 詳細模式
+</code></pre>
+<h3 id="4-遞迴函數"><a class="header" href="#4-遞迴函數">4. 遞迴函數</a></h3>
+<pre><code class="language-gdb">(gdb) define print_tree
+&gt; if ($arg0 != 0)
+&gt;   printf "Node value: %d\n", $arg0-&gt;value
+&gt;   if ($arg0-&gt;left != 0)
+&gt;     echo Left: 
+&gt;     print_tree $arg0-&gt;left
+&gt;   end
+&gt;   if ($arg0-&gt;right != 0)
+&gt;     echo Right: 
+&gt;     print_tree $arg0-&gt;right
+&gt;   end
+&gt; end
+&gt; end
+</code></pre>
+<h2 id="gdb-腳本檔案"><a class="header" href="#gdb-腳本檔案">GDB 腳本檔案</a></h2>
+<h3 id="1-基本腳本結構"><a class="header" href="#1-基本腳本結構">1. 基本腳本結構</a></h3>
+<p><strong>debug_script.gdb:</strong></p>
+<pre><code class="language-gdb"># GDB 調試腳本
+# 使用方式: gdb -x debug_script.gdb ./program
+
+# 設定環境
+set pagination off
+set logging file debug.log
+set logging on
+
+# 定義輔助函數
+define print_status
+  echo === Program Status ===\n
+  info registers
+  info frame
+  backtrace 3
+end
+
+# 設定斷點
+break main
+commands
+  silent
+  echo Program started\n
+  continue
+end
+
+break error_function
+commands
+  echo Error detected!\n
+  print_status
+  print error_code
+  continue
+end
+
+# 設定 watchpoint
+watch global_counter
+commands
+  silent
+  printf "Counter changed to: %d\n", global_counter
+  continue
+end
+
+# 執行程式
+run
+
+# 程式結束後的清理
+echo Program finished\n
+set logging off
+quit
+</code></pre>
+<h3 id="2-批次處理腳本"><a class="header" href="#2-批次處理腳本">2. 批次處理腳本</a></h3>
+<p><strong>batch_debug.gdb:</strong></p>
+<pre><code class="language-gdb"># 批次處理多個核心轉儲檔案
+set pagination off
+set confirm off
+
+define analyze_core
+  echo ========================================\n
+  printf "Analyzing: %s\n", $arg0
+  echo ========================================\n
+  
+  core $arg0
+  
+  echo === Backtrace ===\n
+  backtrace
+  
+  echo === Registers ===\n
+  info registers
+  
+  echo === Local Variables ===\n
+  info locals
+  
+  echo === Memory Map ===\n
+  info proc mappings
+  
+  echo \n\n
+end
+
+# 分析多個 core 檔案
+analyze_core core.1234
+analyze_core core.5678
+analyze_core core.9012
+
+quit
+</code></pre>
+<h3 id="3-自動化測試腳本"><a class="header" href="#3-自動化測試腳本">3. 自動化測試腳本</a></h3>
+<p><strong>auto_test.gdb:</strong></p>
+<pre><code class="language-gdb"># 自動化測試腳本
+set pagination off
+set breakpoint pending on
+
+# 測試計數器
+set $test_passed = 0
+set $test_failed = 0
+
+# 定義測試函數
+define test_function
+  printf "Testing: %s\n", $arg0
+  
+  # 設定斷點並執行
+  tbreak $arg0
+  continue
+  
+  # 檢查結果
+  if ($arg1 == $return_value)
+    printf "  PASSED: return value = %d\n", $return_value
+    set $test_passed = $test_passed + 1
+  else
+    printf "  FAILED: expected %d, got %d\n", $arg1, $return_value
+    set $test_failed = $test_failed + 1
+  end
+end
+
+# 開始測試
+run
+
+# 執行測試案例
+test_function add_numbers 30
+test_function subtract_numbers 10
+test_function multiply_numbers 200
+
+# 顯示測試結果
+echo =============================\n
+printf "Tests Passed: %d\n", $test_passed
+printf "Tests Failed: %d\n", $test_failed
+echo =============================\n
+
+quit
+</code></pre>
+<h2 id="進階應用範例"><a class="header" href="#進階應用範例">進階應用範例</a></h2>
+<h3 id="1-效能分析腳本"><a class="header" href="#1-效能分析腳本">1. 效能分析腳本</a></h3>
+<pre><code class="language-gdb"># 效能分析
+define profile_function
+  set $start_time = clock()
+  finish
+  set $end_time = clock()
+  printf "Execution time: %f seconds\n", ($end_time - $start_time) / 1000000.0
+end
+
+(gdb) break slow_function
+(gdb) commands
+&gt; profile_function
+&gt; continue
+&gt; end
+</code></pre>
+<h3 id="2-記憶體洩漏偵測"><a class="header" href="#2-記憶體洩漏偵測">2. 記憶體洩漏偵測</a></h3>
+<pre><code class="language-gdb"># 記憶體配置追蹤
+set $malloc_count = 0
+set $free_count = 0
+
+break malloc
+commands
+  silent
+  set $malloc_count = $malloc_count + 1
+  printf "malloc #%d: size=%d\n", $malloc_count, $rdi
+  backtrace 2
+  continue
+end
+
+break free
+commands
+  silent
+  set $free_count = $free_count + 1
+  printf "free #%d: ptr=0x%x\n", $free_count, $rdi
+  continue
+end
+
+define memory_report
+  printf "Allocations: %d\n", $malloc_count
+  printf "Deallocations: %d\n", $free_count
+  printf "Potential leaks: %d\n", $malloc_count - $free_count
+end
+</code></pre>
+<h3 id="3-多執行緒調試"><a class="header" href="#3-多執行緒調試">3. 多執行緒調試</a></h3>
+<pre><code class="language-gdb"># 執行緒監控
+define thread_info
+  echo === Thread Information ===\n
+  info threads
+  thread apply all backtrace 2
+end
+
+define switch_and_examine
+  thread $arg0
+  echo Current thread:\n
+  backtrace
+  info locals
+end
+
+# 設定執行緒相關斷點
+break critical_section
+commands
+  silent
+  printf "Thread %d entered critical section\n", $_thread
+  if ($_thread != 1)
+    echo Warning: Non-main thread in critical section!\n
+    thread_info
+  end
+  continue
+end
+</code></pre>
+<h3 id="4-狀態機調試"><a class="header" href="#4-狀態機調試">4. 狀態機調試</a></h3>
+<pre><code class="language-gdb"># 狀態機追蹤
+set $state_history = {}
+set $state_count = 0
+
+define track_state
+  set $state_history[$state_count] = current_state
+  set $state_count = $state_count + 1
+  
+  if (current_state == STATE_ERROR)
+    echo ERROR STATE REACHED!\n
+    print_state_history
+    backtrace full
+  end
+end
+
+define print_state_history
+  echo === State History ===\n
+  set $i = 0
+  while ($i &lt; $state_count)
+    printf "Step %d: State %d\n", $i, $state_history[$i]
+    set $i = $i + 1
+  end
+end
+
+break state_machine_update
+commands
+  silent
+  track_state
+  continue
+end
+</code></pre>
+<h3 id="5-自動錯誤恢復"><a class="header" href="#5-自動錯誤恢復">5. 自動錯誤恢復</a></h3>
+<pre><code class="language-gdb"># 錯誤處理和恢復
+define handle_segfault
+  echo Segmentation fault detected!\n
+  backtrace
+  
+  # 嘗試恢復
+  if ($pc == dangerous_function)
+    echo Skipping dangerous function\n
+    finish
+    set $rax = 0  # 設定返回值
+    continue
+  else
+    echo Unable to recover\n
+  end
+end
+
+catch signal SIGSEGV
+commands
+  handle_segfault
+end
+</code></pre>
+<h2 id="實用技巧和最佳實踐"><a class="header" href="#實用技巧和最佳實踐">實用技巧和最佳實踐</a></h2>
+<h3 id="1-變數使用技巧"><a class="header" href="#1-變數使用技巧">1. 變數使用技巧</a></h3>
+<pre><code class="language-gdb"># GDB 便利變數
+(gdb) set $counter = 0
+(gdb) commands 12
+&gt; set $counter = $counter + 1
+&gt; if ($counter % 100 == 0)
+&gt;   printf "Hit count: %d\n", $counter
+&gt; end
+&gt; continue
+&gt; end
+
+# 使用暫存器
+(gdb) commands 13
+&gt; if ($rax == 0)
+&gt;   echo Function returned NULL\n
+&gt; end
+&gt; continue
+&gt; end
+</code></pre>
+<h3 id="2-輸出格式化"><a class="header" href="#2-輸出格式化">2. 輸出格式化</a></h3>
+<pre><code class="language-gdb"># 各種輸出格式
+(gdb) commands 14
+&gt; # 十六進制
+&gt; printf "Hex: 0x%x\n", value
+&gt; # 十進制
+&gt; printf "Dec: %d\n", value
+&gt; # 字串
+&gt; printf "String: %s\n", string_ptr
+&gt; # 浮點數
+&gt; printf "Float: %.2f\n", float_value
+&gt; # 字元
+&gt; printf "Char: %c\n", char_value
+&gt; # 指標
+&gt; printf "Pointer: %p\n", ptr
+&gt; continue
+&gt; end
+</code></pre>
+<h3 id="3-條件斷點優化"><a class="header" href="#3-條件斷點優化">3. 條件斷點優化</a></h3>
+<pre><code class="language-gdb"># 使用 commands 代替條件斷點以提高效能
+(gdb) break hot_function
+(gdb) commands
+&gt; silent
+&gt; if (counter != target_value)
+&gt;   continue
+&gt; end
+&gt; # 只在條件滿足時執行以下命令
+&gt; echo Target reached!\n
+&gt; print counter
+&gt; backtrace
+&gt; end
+</code></pre>
+<h3 id="4-錯誤處理"><a class="header" href="#4-錯誤處理">4. 錯誤處理</a></h3>
+<pre><code class="language-gdb"># 安全的指標存取
+(gdb) commands 15
+&gt; if (ptr != 0)
+&gt;   if (ptr &gt;= 0x1000 &amp;&amp; ptr &lt; 0x7fffffffffff)
+&gt;     print *ptr
+&gt;   else
+&gt;     printf "Invalid pointer: 0x%x\n", ptr
+&gt;   end
+&gt; else
+&gt;   echo Null pointer\n
+&gt; end
+&gt; continue
+&gt; end
+</code></pre>
+<h3 id="5-日誌記錄"><a class="header" href="#5-日誌記錄">5. 日誌記錄</a></h3>
+<pre><code class="language-gdb"># 完整的日誌系統
+define log_init
+  set logging file $arg0
+  set logging overwrite on
+  set logging on
+  printf "=== Debug session started at %s ===\n", $_gdb_timestamp
+end
+
+define log_message
+  printf "[%s] %s\n", $_gdb_timestamp, $arg0
+end
+
+define log_close
+  printf "=== Debug session ended at %s ===\n", $_gdb_timestamp
+  set logging off
+end
+
+# 使用方式
+(gdb) log_init "debug_session.log"
+(gdb) commands 16
+&gt; log_message "Breakpoint hit"
+&gt; continue
+&gt; end
+(gdb) log_close
+</code></pre>
+<h2 id="實用應用場景範例"><a class="header" href="#實用應用場景範例">實用應用場景範例</a></h2>
+<h3 id="場景-1記錄型斷點需要-continue"><a class="header" href="#場景-1記錄型斷點需要-continue">場景 1：記錄型斷點（需要 continue）</a></h3>
+<p>用於收集資訊但不想中斷程式執行：</p>
+<pre><code class="language-gdb"># 統計函數呼叫頻率
+(gdb) break hot_function
+(gdb) commands
+&gt; silent
+&gt; set $counter = $counter + 1
+&gt; if ($counter % 1000 == 0)
+&gt;   printf "Called %d times\n", $counter
+&gt; end
+&gt; continue  # 必須要 continue，否則程式會卡住
+&gt; end
+
+# 追蹤記憶體配置
+(gdb) break malloc
+(gdb) commands
+&gt; silent
+&gt; printf "malloc: size=%d, caller=%p\n", $rdi, *(void**)$rsp
+&gt; continue  # 自動繼續，不中斷程式
+&gt; end
+</code></pre>
+<h3 id="場景-2調試型斷點不要-continue"><a class="header" href="#場景-2調試型斷點不要-continue">場景 2：調試型斷點（不要 continue）</a></h3>
+<p>需要停下來檢查和分析：</p>
+<pre><code class="language-gdb"># 錯誤處理 - 需要手動檢查
+(gdb) break error_handler
+(gdb) commands
+&gt; echo === ERROR DETECTED ===\n
+&gt; print error_code
+&gt; print error_message
+&gt; backtrace
+&gt; info locals
+&gt; # 故意不加 continue，需要人工介入
+&gt; end
+
+# 關鍵函數 - 需要逐步調試
+(gdb) break critical_function
+(gdb) commands
+&gt; echo Entering critical section\n
+&gt; print input_param
+&gt; info registers
+&gt; # 不加 continue，需要單步執行檢查
+&gt; end
+</code></pre>
+<h3 id="場景-3混合型斷點選擇性-continue"><a class="header" href="#場景-3混合型斷點選擇性-continue">場景 3：混合型斷點（選擇性 continue）</a></h3>
+<p>根據條件決定是否停止：</p>
+<pre><code class="language-gdb"># 只在異常情況下停止
+(gdb) break validate_data
+(gdb) commands
+&gt; silent
+&gt; if (data_valid == 1)
+&gt;   # 資料正常，繼續執行
+&gt;   continue
+&gt; end
+&gt; # 資料異常，停下來調試
+&gt; printf "Invalid data detected!\n"
+&gt; print data_valid
+&gt; print data_buffer
+&gt; backtrace
+&gt; # 異常時不加 continue，需要檢查
+&gt; end
+
+# 效能監控 - 只在慢速時停止
+(gdb) break function_end
+(gdb) commands
+&gt; silent
+&gt; set $duration = $end_time - $start_time
+&gt; printf "Duration: %d ms\n", $duration
+&gt; if ($duration &lt; 100)
+&gt;   # 效能正常，繼續
+&gt;   continue
+&gt; end
+&gt; # 效能異常，停下來分析
+&gt; echo Performance issue detected!\n
+&gt; print $duration
+&gt; info locals
+&gt; # 不加 continue，需要分析原因
+&gt; end
+</code></pre>
+<h3 id="場景-4自動化測試都需要-continue"><a class="header" href="#場景-4自動化測試都需要-continue">場景 4：自動化測試（都需要 continue）</a></h3>
+<p>完全自動化執行：</p>
+<pre><code class="language-gdb"># 自動化回歸測試
+(gdb) break test_function
+(gdb) commands
+&gt; silent
+&gt; # 檢查測試結果
+&gt; if ($return_value == expected_value)
+&gt;   set $test_passed = $test_passed + 1
+&gt;   printf "Test PASSED: %s\n", test_name
+&gt; else
+&gt;   set $test_failed = $test_failed + 1
+&gt;   printf "Test FAILED: %s (expected %d, got %d)\n", \
+&gt;          test_name, expected_value, $return_value
+&gt; end
+&gt; continue  # 自動執行下一個測試
+&gt; end
+</code></pre>
+<h2 id="常見問題和解決方案"><a class="header" href="#常見問題和解決方案">常見問題和解決方案</a></h2>
+<h3 id="q1-commands-中的變數作用域"><a class="header" href="#q1-commands-中的變數作用域">Q1: commands 中的變數作用域？</a></h3>
+<p>GDB 變數（<code>$var</code>）是全域的，可在所有 commands 間共享。C/C++ 變數則依據當前 frame。</p>
+<h3 id="q2-如何中斷無限循環"><a class="header" href="#q2-如何中斷無限循環">Q2: 如何中斷無限循環？</a></h3>
+<p>使用 <code>loop_break</code> 指令：</p>
+<pre><code class="language-gdb">while (condition)
+  # commands
+  if (exit_condition)
+    loop_break
+  end
+end
+</code></pre>
+<h3 id="q3-如何在-commands-中呼叫-shell-命令"><a class="header" href="#q3-如何在-commands-中呼叫-shell-命令">Q3: 如何在 commands 中呼叫 shell 命令？</a></h3>
+<pre><code class="language-gdb">(gdb) commands 17
+&gt; shell date &gt;&gt; debug.log
+&gt; shell echo "Breakpoint hit" &gt;&gt; debug.log
+&gt; continue
+&gt; end
+</code></pre>
+<h3 id="q4-如何讓-commands-不輸出訊息"><a class="header" href="#q4-如何讓-commands-不輸出訊息">Q4: 如何讓 commands 不輸出訊息？</a></h3>
+<p>使用 <code>silent</code> 指令：</p>
+<pre><code class="language-gdb">(gdb) commands 18
+&gt; silent
+&gt; # 你的命令
+&gt; continue
+&gt; end
+</code></pre>
+<h3 id="q5-如何在-commands-中設定新斷點"><a class="header" href="#q5-如何在-commands-中設定新斷點">Q5: 如何在 commands 中設定新斷點？</a></h3>
+<pre><code class="language-gdb">(gdb) commands 19
+&gt; if (error_detected)
+&gt;   break error_handler
+&gt; end
+&gt; continue
+&gt; end
+</code></pre>
+<h2 id="continue-使用決策指南"><a class="header" href="#continue-使用決策指南">Continue 使用決策指南</a></h2>
+<h3 id="快速判斷規則"><a class="header" href="#快速判斷規則">快速判斷規則</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>情況</th><th>是否加 continue</th><th>原因</th></tr></thead><tbody>
+<tr><td>記錄日誌</td><td>✅ 是</td><td>不應中斷程式執行</td></tr>
+<tr><td>統計計數</td><td>✅ 是</td><td>需要持續收集資料</td></tr>
+<tr><td>效能分析</td><td>✅ 是</td><td>不能影響程式效能</td></tr>
+<tr><td>錯誤處理</td><td>❌ 否</td><td>需要手動檢查和處理</td></tr>
+<tr><td>調試關鍵邏輯</td><td>❌ 否</td><td>需要逐步執行</td></tr>
+<tr><td>條件監控</td><td>🔄 視情況</td><td>正常時繼續，異常時停止</td></tr>
+<tr><td>自動化測試</td><td>✅ 是</td><td>需要自動完成所有測試</td></tr>
+<tr><td>死鎖檢測</td><td>❌ 否</td><td>需要立即分析</td></tr>
+</tbody></table>
+</div>
+<h3 id="continue-的最佳實踐"><a class="header" href="#continue-的最佳實踐">Continue 的最佳實踐</a></h3>
+<pre><code class="language-gdb"># ✅ 好的做法：高頻斷點使用 continue
+(gdb) break malloc
+(gdb) commands
+&gt; silent
+&gt; set $malloc_count = $malloc_count + 1
+&gt; continue  # 避免程式卡住
+&gt; end
+
+# ❌ 錯誤做法：錯誤處理使用 continue
+(gdb) break segfault_handler
+(gdb) commands
+&gt; print error_info
+&gt; continue  # 錯誤！應該停下來調試
+&gt; end
+
+# ✅ 好的做法：智能判斷
+(gdb) break process_request
+(gdb) commands
+&gt; silent
+&gt; if (status == SUCCESS)
+&gt;   continue  # 成功案例自動繼續
+&gt; end
+&gt; # 失敗案例停下來分析
+&gt; print status
+&gt; print error_reason
+&gt; end
+</code></pre>
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<p>GDB 的 commands 和腳本功能提供了強大的自動化調試能力：</p>
+<ol>
+<li><strong>基本 commands</strong> - 自動執行命令序列</li>
+<li><strong>條件和循環</strong> - 實現複雜的邏輯控制</li>
+<li><strong>自定義函數</strong> - 創建可重用的調試工具</li>
+<li><strong>腳本檔案</strong> - 批次處理和自動化測試</li>
+<li><strong>進階應用</strong> - 效能分析、記憶體追蹤、多執行緒調試</li>
+</ol>
+<p>透過熟練掌握這些功能，可以大幅提升調試效率，實現自動化測試和問題診斷。記住 <code>end</code> 關鍵字是結束命令序列的必要標記。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../gdb/gdb_commands.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../gdb/jemalloc.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../gdb/gdb_commands.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../gdb/jemalloc.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
