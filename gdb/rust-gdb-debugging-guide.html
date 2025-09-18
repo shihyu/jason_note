@@ -1,0 +1,470 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>GDB 調試機制與程式碼行號對應原理 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="rust-gdb-調試機制與程式碼行號對應原理"><a class="header" href="#rust-gdb-調試機制與程式碼行號對應原理">Rust GDB 調試機制與程式碼行號對應原理</a></h1>
+<h2 id="概述"><a class="header" href="#概述">概述</a></h2>
+<p>本文檔說明 <code>rust-gdb -x rust_debug_solution.gdb ./intiface_central</code> 命令如何建立調試器與源代碼行號之間的映射關係。</p>
+<h2 id="一核心組件"><a class="header" href="#一核心組件">一、核心組件</a></h2>
+<h3 id="11-調試符號-debug-symbols"><a class="header" href="#11-調試符號-debug-symbols">1.1 調試符號 (Debug Symbols)</a></h3>
+<p>當編譯 Rust 程式時加入 <code>-g</code> 參數，編譯器會在二進制檔案中嵌入 DWARF 調試信息：</p>
+<pre><code class="language-bash"># 檢查二進制檔案的調試信息
+$ file intiface_central
+intiface_central: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV),
+                  with debug_info, not stripped
+</code></pre>
+<h3 id="12-dwarf-調試段"><a class="header" href="#12-dwarf-調試段">1.2 DWARF 調試段</a></h3>
+<p>二進制檔案包含以下關鍵調試段：</p>
+<div class="table-wrapper"><table><thead><tr><th>段名稱</th><th>功能說明</th></tr></thead><tbody>
+<tr><td><code>.debug_info</code></td><td>儲存變量、函數、類型等元數據</td></tr>
+<tr><td><code>.debug_line</code></td><td><strong>行號映射表</strong> - 機器碼地址到源碼行的映射</td></tr>
+<tr><td><code>.debug_str</code></td><td>調試字串（檔案路徑、函數名等）</td></tr>
+<tr><td><code>.debug_abbrev</code></td><td>調試信息縮寫表</td></tr>
+<tr><td><code>.debug_addr</code></td><td>地址表</td></tr>
+<tr><td><code>.symtab</code></td><td>符號表</td></tr>
+</tbody></table>
+</div>
+<h2 id="二行號映射機制"><a class="header" href="#二行號映射機制">二、行號映射機制</a></h2>
+<h3 id="21-映射流程圖"><a class="header" href="#21-映射流程圖">2.1 映射流程圖</a></h3>
+<pre><code>┌─────────────────┐
+│ 執行中的程式碼   │
+│ (機器碼地址)     │
+│ 0x7fff12345678  │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  DWARF 調試信息  │
+│  (.debug_line)  │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  源碼位置        │
+│ server.rs:100   │
+└─────────────────┘
+</code></pre>
+<h3 id="22-gdb-查詢過程"><a class="header" href="#22-gdb-查詢過程">2.2 GDB 查詢過程</a></h3>
+<ol>
+<li>
+<p><strong>獲取當前執行位置</strong></p>
+<ul>
+<li>GDB 讀取指令指標暫存器 (RIP/PC)</li>
+<li>取得當前執行的機器碼地址</li>
+</ul>
+</li>
+<li>
+<p><strong>查詢調試信息</strong></p>
+<ul>
+<li>在 <code>.debug_line</code> 段中查找地址對應的源碼位置</li>
+<li>解析 DWARF 格式的行號表</li>
+</ul>
+</li>
+<li>
+<p><strong>返回映射結果</strong></p>
+<ul>
+<li>源檔案完整路徑</li>
+<li>行號</li>
+<li>函數名（從 <code>.debug_info</code> 獲取）</li>
+</ul>
+</li>
+</ol>
+<h2 id="三gdb-腳本實現細節"><a class="header" href="#三gdb-腳本實現細節">三、GDB 腳本實現細節</a></h2>
+<h3 id="31-python-腳本獲取行號"><a class="header" href="#31-python-腳本獲取行號">3.1 Python 腳本獲取行號</a></h3>
+<pre><code class="language-python"># rust_debug_solution.gdb 第 32-60 行
+frame = gdb.selected_frame()    # 取得當前堆疊幀
+sal = frame.find_sal()          # SAL = Source And Line
+
+if sal.symtab:
+    filename = sal.symtab.filename  # 源檔案路徑
+    line = sal.line                 # 行號
+else:
+    filename = "unknown"
+    line = "?"
+</code></pre>
+<h3 id="32-斷點設置方式"><a class="header" href="#32-斷點設置方式">3.2 斷點設置方式</a></h3>
+<h4 id="方式-1函數名斷點"><a class="header" href="#方式-1函數名斷點">方式 1：函數名斷點</a></h4>
+<pre><code class="language-gdb">break buttplug::server::server::ButtplugServer::new
+</code></pre>
+<ul>
+<li>GDB 在符號表中查找函數入口地址</li>
+<li>自動解析 Rust 的 mangled 名稱</li>
+</ul>
+<h4 id="方式-2檔案行號斷點"><a class="header" href="#方式-2檔案行號斷點">方式 2：檔案行號斷點</a></h4>
+<pre><code class="language-gdb">break /home/shihyu/gdb-intiface-central-buttplug/buttplug/buttplug/src/server/server.rs:100
+</code></pre>
+<ul>
+<li>直接指定源檔案路徑和行號</li>
+<li>GDB 通過 <code>.debug_line</code> 找到對應的機器碼地址</li>
+</ul>
+<h4 id="方式-3正則表達式斷點"><a class="header" href="#方式-3正則表達式斷點">方式 3：正則表達式斷點</a></h4>
+<pre><code class="language-gdb">rbreak buttplug::server::.*::new
+</code></pre>
+<ul>
+<li>匹配所有符合模式的函數</li>
+<li>批量設置斷點</li>
+</ul>
+<h2 id="四執行時顯示機制"><a class="header" href="#四執行時顯示機制">四、執行時顯示機制</a></h2>
+<h3 id="41-自定義顯示函數"><a class="header" href="#41-自定義顯示函數">4.1 自定義顯示函數</a></h3>
+<p>腳本定義了 <code>show_full_location</code> 函數來格式化顯示位置信息：</p>
+<pre><code>┌────────────────────────────────────────────────────────────────────
+│ 📍 /path/to/server.rs:100
+│ 🔧 in function: ButtplugServer::new
+│ 📦 arguments: self=0x7fff1234, config=0x7fff5678
+│ 📄 Source:
+│    98:     impl ButtplugServer {
+│    99:         pub fn new(config: ServerConfig) -&gt; Self {
+│ → 100:             let server = Self {
+│   101:                 config,
+│   102:                 clients: Vec::new(),
+└────────────────────────────────────────────────────────────────────
+</code></pre>
+<h3 id="42-源碼顯示"><a class="header" href="#42-源碼顯示">4.2 源碼顯示</a></h3>
+<p>通過 <code>list</code> 命令（第 78 行）顯示當前位置的源碼：</p>
+<ul>
+<li>GDB 使用調試信息中的檔案路徑</li>
+<li>讀取並顯示源檔案內容</li>
+<li>標記當前執行行</li>
+</ul>
+<h2 id="五動態庫處理"><a class="header" href="#五動態庫處理">五、動態庫處理</a></h2>
+<h3 id="51-延遲載入處理"><a class="header" href="#51-延遲載入處理">5.1 延遲載入處理</a></h3>
+<pre><code class="language-gdb"># 第 87-88 行
+catch load libintiface_engine_flutter_bridge.so
+commands 1
+    # 庫載入後才設置斷點
+    break buttplug::server::server::ButtplugServer::new
+    ...
+end
+</code></pre>
+<p>動態庫的符號在運行時載入，因此需要：</p>
+<ol>
+<li>使用 <code>catch load</code> 等待庫載入</li>
+<li>載入後再設置斷點</li>
+<li>使用 <code>set solib-search-path ./lib</code> 指定庫搜尋路徑</li>
+</ol>
+<h2 id="六rust-特定處理"><a class="header" href="#六rust-特定處理">六、Rust 特定處理</a></h2>
+<h3 id="61-符號解析"><a class="header" href="#61-符號解析">6.1 符號解析</a></h3>
+<pre><code class="language-gdb">set print asm-demangle on    # 解析組合語言符號
+set print demangle on        # 解析 mangled 名稱
+set language rust            # 設置語言為 Rust
+</code></pre>
+<h3 id="62-名稱簡化"><a class="header" href="#62-名稱簡化">6.2 名稱簡化</a></h3>
+<p>Python 腳本簡化 Rust 函數名顯示：</p>
+<pre><code class="language-python">if "::" in func_name:
+    parts = func_name.split("::")
+    if len(parts) &gt; 2:
+        func_name = "::".join(parts[-2:])  # 只顯示最後兩個部分
+</code></pre>
+<p>將 <code>buttplug::server::server::ButtplugServer::new</code> 簡化為 <code>ButtplugServer::new</code></p>
+<h2 id="七實際工作流程"><a class="header" href="#七實際工作流程">七、實際工作流程</a></h2>
+<ol>
+<li>
+<p><strong>啟動調試器</strong></p>
+<pre><code class="language-bash">rust-gdb -x rust_debug_solution.gdb ./intiface_central
+</code></pre>
+</li>
+<li>
+<p><strong>載入腳本</strong></p>
+<ul>
+<li>GDB 執行 <code>rust_debug_solution.gdb</code> 中的命令</li>
+<li>設置環境變量和配置</li>
+</ul>
+</li>
+<li>
+<p><strong>程式啟動</strong></p>
+<ul>
+<li><code>start</code> 命令開始執行程式</li>
+<li>停在 main 函數入口</li>
+</ul>
+</li>
+<li>
+<p><strong>動態設置斷點</strong></p>
+<ul>
+<li>等待動態庫載入</li>
+<li>根據符號表設置斷點</li>
+<li>配置斷點命令</li>
+</ul>
+</li>
+<li>
+<p><strong>執行與追蹤</strong></p>
+<ul>
+<li>程式執行到斷點時暫停</li>
+<li>顯示完整位置信息</li>
+<li>記錄到日誌檔案</li>
+</ul>
+</li>
+<li>
+<p><strong>行號對應</strong></p>
+<ul>
+<li>每次停止時通過 DWARF 信息查詢</li>
+<li>即時顯示源碼位置</li>
+<li>提供上下文信息</li>
+</ul>
+</li>
+</ol>
+<h2 id="八疑難排解"><a class="header" href="#八疑難排解">八、疑難排解</a></h2>
+<h3 id="81-無法顯示行號"><a class="header" href="#81-無法顯示行號">8.1 無法顯示行號</a></h3>
+<ul>
+<li>確認編譯時包含 <code>-g</code> 參數</li>
+<li>檢查二進制檔案：<code>file &lt;binary&gt;</code></li>
+<li>驗證調試段：<code>readelf -S &lt;binary&gt; | grep debug</code></li>
+</ul>
+<h3 id="82-源碼路徑不正確"><a class="header" href="#82-源碼路徑不正確">8.2 源碼路徑不正確</a></h3>
+<ul>
+<li>使用絕對路徑設置斷點</li>
+<li>設置源碼搜尋路徑：<code>set substitute-path &lt;from&gt; &lt;to&gt;</code></li>
+</ul>
+<h3 id="83-動態庫符號缺失"><a class="header" href="#83-動態庫符號缺失">8.3 動態庫符號缺失</a></h3>
+<ul>
+<li>確保 <code>.so</code> 檔案包含調試信息</li>
+<li>正確設置 <code>solib-search-path</code></li>
+<li>使用 <code>info sharedlibrary</code> 檢查載入狀態</li>
+</ul>
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<p>rust-gdb 通過 DWARF 調試信息建立機器碼地址與源碼行號的映射關係。這個機制依賴於：</p>
+<ol>
+<li>編譯時保留的調試符號</li>
+<li>GDB 的 DWARF 解析器</li>
+<li>運行時的動態查詢</li>
+<li>Python 腳本的增強顯示</li>
+</ol>
+<p>整個系統協同工作，實現了從二進制執行到源碼級調試的完整追蹤。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../gdb/rust-gdb.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../gdb/qemu-gdb-risc-v64.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../gdb/rust-gdb.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../gdb/qemu-gdb-risc-v64.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
