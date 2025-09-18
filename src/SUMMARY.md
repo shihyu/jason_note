@@ -235,6 +235,7 @@
     - [GDB EX 完整指南](gdb/gdb_ex_complete_guide.md)
     - [GDB 調試完全指南 - Rust/C++ 專用](gdb/GDB_DEBUG_GUIDE.md)
     - [GDB 分析 .so/.a 檔案完整指南](gdb/gdb-so-analysis-guide.md)
+    - [GDB Watchpoints 完整指南](gdb/gdb_watchpoints_guide.md)
 - [Vim](vim/vim.md)
     - [Copilot](vim/copilot.md)
     - [Tabnine](vim/tabnine.md)
