@@ -228,6 +228,7 @@
     - [jemalloc](gdb/jemalloc.md)
     - [Graphs](gdb/graphs.md)
     - [Rust GDB](gdb/rust-gdb.md)
+    - [GDB 調試機制與程式碼行號對應原理](gdb/rust-gdb-debugging-guide.md)
     - [QEMU GDB RISC-V64 Kernel](gdb/qemu-gdb-risc-v64.md)
     - [使用 GDB 追蹤 Go/Rust 程式碼](gdb/go-rust-gdb-debug.md)
     - [GDB 函數調用軌跡分析與流程圖生成完整指南](gdb/gdb-function-trace-to-flowchart-guide.md)
