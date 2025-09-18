@@ -1,0 +1,822 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>GDB Watchpoints 完整指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="gdb-watchpoints-和-catchpoints-完整指南"><a class="header" href="#gdb-watchpoints-和-catchpoints-完整指南">GDB Watchpoints 和 Catchpoints 完整指南</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ul>
+<li><a href="#%E6%A6%82%E8%BF%B0">概述</a></li>
+<li><a href="#%E6%8C%87%E4%BB%A4%E7%B8%BD%E8%A6%BD">指令總覽</a></li>
+<li><a href="#%E7%AF%84%E4%BE%8B%E7%A8%8B%E5%BC%8F">範例程式</a></li>
+<li><a href="#watchpoints-%E8%A9%B3%E7%B4%B0%E7%AF%84%E4%BE%8B">Watchpoints 詳細範例</a></li>
+<li><a href="#catchpoints-%E8%A9%B3%E7%B4%B0%E7%AF%84%E4%BE%8B">Catchpoints 詳細範例</a></li>
+<li><a href="#%E9%80%B2%E9%9A%8E%E6%8A%80%E5%B7%A7">進階技巧</a></li>
+<li><a href="#%E5%B8%B8%E8%A6%8B%E5%95%8F%E9%A1%8C">常見問題</a></li>
+</ul>
+<h2 id="概述"><a class="header" href="#概述">概述</a></h2>
+<p>GDB 提供了強大的監控機制，讓開發者能夠在特定條件下暫停程式執行：</p>
+<ul>
+<li><strong>Watchpoints</strong>: 監控變數或記憶體位置的存取</li>
+<li><strong>Catchpoints</strong>: 捕捉系統事件和例外</li>
+</ul>
+<h2 id="指令總覽"><a class="header" href="#指令總覽">指令總覽</a></h2>
+<h3 id="watchpoint-相關指令"><a class="header" href="#watchpoint-相關指令">Watchpoint 相關指令</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>指令</th><th>功能</th><th>語法範例</th></tr></thead><tbody>
+<tr><td><code>watch</code></td><td>當值被修改時中斷</td><td><code>watch variable</code></td></tr>
+<tr><td><code>rwatch</code></td><td>當值被讀取時中斷</td><td><code>rwatch variable</code></td></tr>
+<tr><td><code>awatch</code></td><td>當值被讀取或修改時中斷</td><td><code>awatch variable</code></td></tr>
+<tr><td><code>info watchpoints</code></td><td>顯示所有 watchpoint</td><td><code>info watchpoints</code></td></tr>
+</tbody></table>
+</div>
+<h3 id="catchpoint-相關指令"><a class="header" href="#catchpoint-相關指令">Catchpoint 相關指令</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>指令</th><th>功能</th><th>語法範例</th></tr></thead><tbody>
+<tr><td><code>catch throw</code></td><td>捕捉 C++ 例外拋出</td><td><code>catch throw</code></td></tr>
+<tr><td><code>catch catch</code></td><td>捕捉 C++ 例外被接住</td><td><code>catch catch</code></td></tr>
+<tr><td><code>catch exec</code></td><td>捕捉 exec 系統呼叫</td><td><code>catch exec</code></td></tr>
+<tr><td><code>catch fork</code></td><td>捕捉 fork 系統呼叫</td><td><code>catch fork</code></td></tr>
+<tr><td><code>catch syscall</code></td><td>捕捉特定系統呼叫</td><td><code>catch syscall open</code></td></tr>
+<tr><td><code>catch signal</code></td><td>捕捉信號</td><td><code>catch signal SIGINT</code></td></tr>
+<tr><td><code>catch load</code></td><td>捕捉動態函式庫載入</td><td><code>catch load</code></td></tr>
+<tr><td><code>catch unload</code></td><td>捕捉動態函式庫卸載</td><td><code>catch unload</code></td></tr>
+</tbody></table>
+</div>
+<h3 id="其他相關指令"><a class="header" href="#其他相關指令">其他相關指令</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>指令</th><th>功能</th><th>語法範例</th></tr></thead><tbody>
+<tr><td><code>break</code> / <code>b</code></td><td>設定一般斷點</td><td><code>break main.c:10</code></td></tr>
+<tr><td><code>tbreak</code></td><td>設定暫時斷點</td><td><code>tbreak function_name</code></td></tr>
+<tr><td><code>condition</code></td><td>為斷點添加條件</td><td><code>condition 1 x &gt; 5</code></td></tr>
+<tr><td><code>commands</code></td><td>設定斷點觸發時的命令</td><td><code>commands 1</code></td></tr>
+<tr><td><code>delete</code></td><td>刪除斷點</td><td><code>delete 1</code></td></tr>
+<tr><td><code>disable</code></td><td>停用斷點</td><td><code>disable 2</code></td></tr>
+<tr><td><code>enable</code></td><td>啟用斷點</td><td><code>enable 2</code></td></tr>
+<tr><td><code>info breakpoints</code></td><td>顯示所有斷點</td><td><code>info breakpoints</code></td></tr>
+</tbody></table>
+</div>
+<h2 id="範例程式"><a class="header" href="#範例程式">範例程式</a></h2>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;stdexcept&gt;
+#include &lt;cstring&gt;
+
+// 全域變數用於 watch 示範
+int global_counter = 0;
+char buffer[100];
+
+// 類別用於示範例外處理
+class Calculator {
+private:
+    int result;
+    
+public:
+    Calculator() : result(0) {}
+    
+    int divide(int a, int b) {
+        if (b == 0) {
+            throw std::runtime_error("Division by zero!");
+        }
+        result = a / b;
+        return result;
+    }
+    
+    int getResult() const {
+        return result;
+    }
+    
+    void setResult(int val) {
+        result = val;
+    }
+};
+
+// 函數用於修改全域變數
+void modify_counter() {
+    global_counter++;  // 寫入操作
+    std::cout &lt;&lt; "Counter modified to: " &lt;&lt; global_counter &lt;&lt; std::endl;
+}
+
+void read_counter() {
+    int temp = global_counter;  // 讀取操作
+    std::cout &lt;&lt; "Counter read, value is: " &lt;&lt; temp &lt;&lt; std::endl;
+}
+
+void access_counter() {
+    global_counter *= 2;  // 讀取並寫入
+    std::cout &lt;&lt; "Counter accessed and doubled: " &lt;&lt; global_counter &lt;&lt; std::endl;
+}
+
+int main() {
+    std::cout &lt;&lt; "=== GDB Watch and Catch Demo ===" &lt;&lt; std::endl;
+    
+    // Part 1: Watchpoint 示範
+    std::cout &lt;&lt; "\n--- Part 1: Watchpoint Demo ---" &lt;&lt; std::endl;
+    
+    global_counter = 10;
+    std::cout &lt;&lt; "Initial counter: " &lt;&lt; global_counter &lt;&lt; std::endl;
+    
+    modify_counter();  // 會觸發 watch
+    read_counter();    // 會觸發 rwatch
+    access_counter();  // 會觸發 awatch
+    
+    // 字串操作
+    strcpy(buffer, "Hello");
+    std::cout &lt;&lt; "Buffer: " &lt;&lt; buffer &lt;&lt; std::endl;
+    strcat(buffer, " World");
+    std::cout &lt;&lt; "Buffer after concat: " &lt;&lt; buffer &lt;&lt; std::endl;
+    
+    // Part 2: Catch 示範 - 例外處理
+    std::cout &lt;&lt; "\n--- Part 2: Exception Catch Demo ---" &lt;&lt; std::endl;
+    
+    Calculator calc;
+    
+    try {
+        std::cout &lt;&lt; "10 / 2 = " &lt;&lt; calc.divide(10, 2) &lt;&lt; std::endl;
+        std::cout &lt;&lt; "20 / 5 = " &lt;&lt; calc.divide(20, 5) &lt;&lt; std::endl;
+        std::cout &lt;&lt; "Attempting 15 / 0..." &lt;&lt; std::endl;
+        std::cout &lt;&lt; "15 / 0 = " &lt;&lt; calc.divide(15, 0) &lt;&lt; std::endl;  // 會拋出例外
+    }
+    catch (const std::runtime_error&amp; e) {
+        std::cout &lt;&lt; "Caught exception: " &lt;&lt; e.what() &lt;&lt; std::endl;
+    }
+    
+    // Part 3: 動態記憶體配置 (可用於 catch syscall)
+    std::cout &lt;&lt; "\n--- Part 3: Dynamic Memory ---" &lt;&lt; std::endl;
+    
+    int* arr = new int[5];
+    for (int i = 0; i &lt; 5; i++) {
+        arr[i] = i * 10;
+        std::cout &lt;&lt; "arr[" &lt;&lt; i &lt;&lt; "] = " &lt;&lt; arr[i] &lt;&lt; std::endl;
+    }
+    delete[] arr;
+    
+    std::cout &lt;&lt; "\nProgram completed!" &lt;&lt; std::endl;
+    return 0;
+}
+</code></pre>
+<h3 id="編譯指令"><a class="header" href="#編譯指令">編譯指令</a></h3>
+<pre><code class="language-bash"># 使用 -g 編譯以包含除錯資訊
+g++ -g -o test test.cpp
+</code></pre>
+<h2 id="watchpoints-詳細範例"><a class="header" href="#watchpoints-詳細範例">Watchpoints 詳細範例</a></h2>
+<h3 id="1-watch---監控變數寫入"><a class="header" href="#1-watch---監控變數寫入">1. Watch - 監控變數寫入</a></h3>
+<pre><code class="language-bash">$ gdb ./test
+(gdb) break main
+Breakpoint 1 at 0x1234: file test.cpp, line 49.
+
+(gdb) run
+Starting program: ./test
+Breakpoint 1, main () at test.cpp:49
+
+# 設定 watch - 當 global_counter 被修改時中斷
+(gdb) watch global_counter
+Hardware watchpoint 2: global_counter
+
+(gdb) continue
+Continuing.
+=== GDB Watch and Catch Demo ===
+
+--- Part 1: Watchpoint Demo ---
+
+Hardware watchpoint 2: global_counter
+
+Old value = 0
+New value = 10
+main () at test.cpp:54
+54	    std::cout &lt;&lt; "Initial counter: " &lt;&lt; global_counter &lt;&lt; std::endl;
+
+(gdb) continue
+Continuing.
+Initial counter: 10
+
+Hardware watchpoint 2: global_counter
+
+Old value = 10
+New value = 11
+modify_counter () at test.cpp:35
+35	    std::cout &lt;&lt; "Counter modified to: " &lt;&lt; global_counter &lt;&lt; std::endl;
+</code></pre>
+<h3 id="2-rwatch---監控變數讀取"><a class="header" href="#2-rwatch---監控變數讀取">2. RWatch - 監控變數讀取</a></h3>
+<pre><code class="language-bash"># 重新開始並設定 rwatch
+(gdb) delete  # 刪除所有斷點
+Delete all breakpoints? (y or n) y
+
+(gdb) break main
+Breakpoint 1 at 0x1234: file test.cpp, line 49.
+
+(gdb) run
+Starting program: ./test
+Breakpoint 1, main () at test.cpp:49
+
+# 前進到適當位置
+(gdb) next
+(gdb) next
+
+# 設定 rwatch - 當 global_counter 被讀取時中斷
+(gdb) rwatch global_counter
+Hardware read watchpoint 3: global_counter
+
+(gdb) continue
+Continuing.
+
+Hardware read watchpoint 3: global_counter
+
+Value = 11
+read_counter () at test.cpp:39
+39	    int temp = global_counter;  // 讀取操作
+
+(gdb) backtrace
+#0  read_counter () at test.cpp:39
+#1  0x0000123456 in main () at test.cpp:57
+
+(gdb) print global_counter
+$1 = 11
+</code></pre>
+<h3 id="3-awatch---監控變數讀取或寫入"><a class="header" href="#3-awatch---監控變數讀取或寫入">3. AWatch - 監控變數讀取或寫入</a></h3>
+<pre><code class="language-bash"># 設定 awatch - 當 global_counter 被讀取或寫入時都中斷
+(gdb) delete
+Delete all breakpoints? (y or n) y
+
+(gdb) break main
+Breakpoint 1 at 0x1234: file test.cpp, line 49.
+
+(gdb) run
+Starting program: ./test
+Breakpoint 1, main () at test.cpp:49
+
+(gdb) awatch global_counter
+Hardware access (read/write) watchpoint 4: global_counter
+
+(gdb) continue
+Continuing.
+
+Hardware access (read/write) watchpoint 4: global_counter
+
+Value = 0
+main () at test.cpp:53
+53	    global_counter = 10;
+
+(gdb) continue
+Continuing.
+
+Hardware access (read/write) watchpoint 4: global_counter
+
+Old value = 0
+New value = 10
+main () at test.cpp:54
+
+# 會在每次讀取或寫入時都中斷
+</code></pre>
+<h3 id="4-監控陣列元素"><a class="header" href="#4-監控陣列元素">4. 監控陣列元素</a></h3>
+<pre><code class="language-bash"># 監控特定陣列元素
+(gdb) watch buffer[5]
+Hardware watchpoint 5: buffer[5]
+
+# 監控整個陣列的前 10 個元素
+(gdb) watch *buffer@10
+Hardware watchpoint 6: *buffer@10
+
+# 監控特定記憶體位址
+(gdb) print &amp;global_counter
+$2 = (int *) 0x555555558040
+
+(gdb) watch *(int*)0x555555558040
+Hardware watchpoint 7: *(int*)0x555555558040
+</code></pre>
+<h2 id="catchpoints-詳細範例"><a class="header" href="#catchpoints-詳細範例">Catchpoints 詳細範例</a></h2>
+<h3 id="1-catch-throw---捕捉例外拋出"><a class="header" href="#1-catch-throw---捕捉例外拋出">1. Catch Throw - 捕捉例外拋出</a></h3>
+<pre><code class="language-bash">(gdb) delete
+Delete all breakpoints? (y or n) y
+
+# 設定捕捉例外拋出
+(gdb) catch throw
+Catchpoint 1 (throw)
+
+(gdb) run
+Starting program: ./test
+
+# 執行到例外拋出處
+=== GDB Watch and Catch Demo ===
+--- Part 1: Watchpoint Demo ---
+...
+--- Part 2: Exception Catch Demo ---
+10 / 2 = 5
+20 / 5 = 4
+Attempting 15 / 0...
+
+Catchpoint 1 (exception thrown), 0x00007ffff7abc123 in __cxa_throw ()
+   from /usr/lib/x86_64-linux-gnu/libstdc++.so.6
+
+(gdb) backtrace
+#0  __cxa_throw () from /usr/lib/x86_64-linux-gnu/libstdc++.so.6
+#1  0x0000555555555234 in Calculator::divide (this=0x7fffffffe3d0, a=15, b=0) 
+    at test.cpp:19
+#2  0x0000555555555456 in main () at test.cpp:77
+
+# 檢查拋出例外的位置
+(gdb) frame 1
+#1  0x0000555555555234 in Calculator::divide (this=0x7fffffffe3d0, a=15, b=0) 
+    at test.cpp:19
+19	            throw std::runtime_error("Division by zero!");
+
+(gdb) print a
+$3 = 15
+(gdb) print b
+$4 = 0
+</code></pre>
+<h3 id="2-catch-catch---捕捉例外被接住"><a class="header" href="#2-catch-catch---捕捉例外被接住">2. Catch Catch - 捕捉例外被接住</a></h3>
+<pre><code class="language-bash"># 同時設定捕捉例外拋出和接住
+(gdb) catch throw
+Catchpoint 1 (throw)
+
+(gdb) catch catch
+Catchpoint 2 (catch)
+
+(gdb) run
+Starting program: ./test
+
+# 第一次中斷：例外被拋出
+Catchpoint 1 (exception thrown), ...
+
+(gdb) continue
+Continuing.
+
+# 第二次中斷：例外被接住
+Catchpoint 2 (exception caught), 0x00007ffff7abc456 in __cxa_begin_catch ()
+   from /usr/lib/x86_64-linux-gnu/libstdc++.so.6
+
+(gdb) backtrace
+#0  __cxa_begin_catch () from /usr/lib/x86_64-linux-gnu/libstdc++.so.6
+#1  0x0000555555555678 in main () at test.cpp:79
+
+(gdb) frame 1
+#1  0x0000555555555678 in main () at test.cpp:79
+79	    catch (const std::runtime_error&amp; e) {
+
+(gdb) continue
+Continuing.
+Caught exception: Division by zero!
+</code></pre>
+<h3 id="3-catch-syscall---捕捉系統呼叫"><a class="header" href="#3-catch-syscall---捕捉系統呼叫">3. Catch Syscall - 捕捉系統呼叫</a></h3>
+<pre><code class="language-bash"># 捕捉記憶體相關系統呼叫
+(gdb) catch syscall mmap
+Catchpoint 3 (syscall 'mmap' [9])
+
+(gdb) catch syscall munmap
+Catchpoint 4 (syscall 'munmap' [11])
+
+# 捕捉所有系統呼叫
+(gdb) catch syscall
+Catchpoint 5 (any syscall)
+
+# 捕捉特定系統呼叫群組
+(gdb) catch syscall open close read write
+Catchpoint 6 (syscalls 'open' [2] 'close' [3] 'read' [0] 'write' [1])
+
+(gdb) run
+Starting program: ./test
+
+# 當呼叫 new (內部使用 mmap) 時
+Catchpoint 3 (call to syscall mmap), 0x00007ffff7abc789 in mmap64 ()
+   from /lib/x86_64-linux-gnu/libc.so.6
+
+(gdb) backtrace
+#0  mmap64 () from /lib/x86_64-linux-gnu/libc.so.6
+#1  0x00007ffff7def123 in operator new[] () 
+    from /usr/lib/x86_64-linux-gnu/libstdc++.so.6
+#2  0x0000555555555890 in main () at test.cpp:87
+</code></pre>
+<h3 id="4-catch-fork---捕捉程序建立"><a class="header" href="#4-catch-fork---捕捉程序建立">4. Catch Fork - 捕捉程序建立</a></h3>
+<pre><code class="language-bash"># 捕捉 fork 系統呼叫
+(gdb) catch fork
+Catchpoint 7 (fork)
+
+(gdb) catch vfork
+Catchpoint 8 (vfork)
+
+(gdb) catch exec
+Catchpoint 9 (exec)
+
+# 當程式 fork 時會中斷
+(gdb) run
+Starting program: ./test_fork
+
+Catchpoint 7 (forked process 12345), 0x00007ffff7abc123 in fork ()
+   from /lib/x86_64-linux-gnu/libc.so.6
+
+(gdb) info inferiors
+  Num  Description       Executable        
+* 1    process 12344     /home/user/test_fork
+  2    process 12345     /home/user/test_fork
+
+# 可以切換到子程序
+(gdb) inferior 2
+[Switching to inferior 2 [process 12345]]
+</code></pre>
+<h2 id="進階技巧"><a class="header" href="#進階技巧">進階技巧</a></h2>
+<h3 id="1-組合使用多個監控點"><a class="header" href="#1-組合使用多個監控點">1. 組合使用多個監控點</a></h3>
+<pre><code class="language-bash"># 同時設定多個監控點
+(gdb) watch global_counter
+Hardware watchpoint 1: global_counter
+
+(gdb) catch throw
+Catchpoint 2 (throw)
+
+(gdb) break Calculator::divide if b==0
+Breakpoint 3 at 0x555555555234: file test.cpp, line 17.
+
+# 為斷點 3 添加自動執行命令
+(gdb) commands 3
+Type commands for breakpoint(s) 3, one per line.
+End with a line saying just "end".
+&gt; printf "Warning: Dividing by zero!\n"
+&gt; backtrace 2
+&gt; continue
+&gt; end
+</code></pre>
+<h3 id="2-條件式-watchpoint"><a class="header" href="#2-條件式-watchpoint">2. 條件式 Watchpoint</a></h3>
+<pre><code class="language-bash"># 只在特定條件下觸發 watchpoint
+(gdb) watch global_counter if global_counter &gt; 10
+Hardware watchpoint 4: global_counter
+
+# 監控表達式
+(gdb) watch (global_counter + 5) * 2
+Hardware watchpoint 5: (global_counter + 5) * 2
+</code></pre>
+<h3 id="3-管理監控點"><a class="header" href="#3-管理監控點">3. 管理監控點</a></h3>
+<pre><code class="language-bash"># 顯示所有斷點和監控點
+(gdb) info breakpoints
+Num     Type           Disp Enb Address            What
+1       hw watchpoint  keep y                      global_counter
+2       catchpoint     keep y                      exception throw
+3       breakpoint     keep y   0x0000555555555234 in Calculator::divide(int, int) 
+                                                   at test.cpp:17
+        stop only if b==0
+
+# 顯示只有 watchpoints
+(gdb) info watchpoints
+Num     Type           Disp Enb Address    What
+1       hw watchpoint  keep y              global_counter
+
+# 停用特定監控點
+(gdb) disable 1
+
+# 啟用特定監控點
+(gdb) enable 1
+
+# 刪除特定監控點
+(gdb) delete 2
+
+# 刪除所有監控點
+(gdb) delete
+Delete all breakpoints? (y or n) y
+</code></pre>
+<h3 id="4-記憶體監控技巧"><a class="header" href="#4-記憶體監控技巧">4. 記憶體監控技巧</a></h3>
+<pre><code class="language-bash"># 監控結構體成員
+(gdb) watch calc.result
+
+# 監控指標指向的值
+(gdb) watch *ptr
+
+# 監控特定大小的記憶體區域
+(gdb) watch -l *(char *)buffer@10
+
+# 使用硬體斷點
+(gdb) hbreak *0x555555555234
+
+# 監控記憶體範圍
+(gdb) watch $rsp
+(gdb) watch *(int *)($rsp + 8)
+</code></pre>
+<h2 id="常見問題"><a class="header" href="#常見問題">常見問題</a></h2>
+<h3 id="q1-為什麼-watchpoint-顯示-hardware-watchpoint"><a class="header" href="#q1-為什麼-watchpoint-顯示-hardware-watchpoint">Q1: 為什麼 watchpoint 顯示 "Hardware watchpoint"？</a></h3>
+<p>GDB 優先使用硬體 watchpoint（由 CPU 支援），因為效能較好。如果硬體資源不足，會使用軟體 watchpoint。</p>
+<h3 id="q2-可以設定多少個-watchpoint"><a class="header" href="#q2-可以設定多少個-watchpoint">Q2: 可以設定多少個 watchpoint？</a></h3>
+<p>硬體 watchpoint 數量受 CPU 限制（通常為 4 個）。軟體 watchpoint 沒有數量限制，但會顯著降低執行速度。</p>
+<h3 id="q3-如何監控動態配置的記憶體"><a class="header" href="#q3-如何監控動態配置的記憶體">Q3: 如何監控動態配置的記憶體？</a></h3>
+<pre><code class="language-bash"># 先執行到 new/malloc 之後
+(gdb) print arr
+$1 = (int *) 0x555555559eb0
+
+# 然後設定 watchpoint
+(gdb) watch *arr
+(gdb) watch arr[3]
+</code></pre>
+<h3 id="q4-watchpoint-和-breakpoint-的差異"><a class="header" href="#q4-watchpoint-和-breakpoint-的差異">Q4: Watchpoint 和 Breakpoint 的差異？</a></h3>
+<ul>
+<li><strong>Breakpoint</strong>: 在特定程式碼位置中斷</li>
+<li><strong>Watchpoint</strong>: 在資料變化時中斷，不限定程式碼位置</li>
+</ul>
+<h3 id="q5-如何調試多執行緒程式的-watchpoint"><a class="header" href="#q5-如何調試多執行緒程式的-watchpoint">Q5: 如何調試多執行緒程式的 watchpoint？</a></h3>
+<pre><code class="language-bash"># 設定所有執行緒都會觸發
+(gdb) watch global_var
+
+# 只在特定執行緒觸發
+(gdb) watch global_var thread 2
+
+# 顯示執行緒資訊
+(gdb) info threads
+</code></pre>
+<h3 id="q6-catchpoint-支援哪些事件"><a class="header" href="#q6-catchpoint-支援哪些事件">Q6: Catchpoint 支援哪些事件？</a></h3>
+<ul>
+<li>C++ 例外：<code>throw</code>, <code>catch</code>, <code>rethrow</code></li>
+<li>系統呼叫：<code>syscall</code>, <code>fork</code>, <code>vfork</code>, <code>exec</code></li>
+<li>動態載入：<code>load</code>, <code>unload</code></li>
+<li>信號：<code>signal</code></li>
+<li>Ada 例外：<code>exception</code>, <code>handlers</code>, <code>assert</code></li>
+</ul>
+<h2 id="實用範例腳本"><a class="header" href="#實用範例腳本">實用範例腳本</a></h2>
+<h3 id="自動化調試腳本"><a class="header" href="#自動化調試腳本">自動化調試腳本</a></h3>
+<pre><code class="language-bash"># debug_script.gdb
+# 使用方式: gdb -x debug_script.gdb ./test
+
+# 設定初始斷點
+break main
+
+# 執行程式
+run
+
+# 設定監控點
+watch global_counter
+catch throw
+
+# 設定條件斷點
+break Calculator::divide if b==0
+commands
+  printf "Division by zero detected!\n"
+  printf "a = %d, b = %d\n", a, b
+  backtrace
+  continue
+end
+
+# 繼續執行
+continue
+</code></pre>
+<p>執行腳本：</p>
+<pre><code class="language-bash">gdb -x debug_script.gdb ./test
+</code></pre>
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<p>GDB 的 watchpoint 和 catchpoint 功能提供了強大的調試能力：</p>
+<ol>
+<li>
+<p><strong>Watchpoint</strong> 適合追蹤資料問題</p>
+<ul>
+<li><code>watch</code>: 追蹤意外的資料修改</li>
+<li><code>rwatch</code>: 找出誰在讀取資料</li>
+<li><code>awatch</code>: 完整監控資料存取</li>
+</ul>
+</li>
+<li>
+<p><strong>Catchpoint</strong> 適合追蹤系統事件</p>
+<ul>
+<li>例外處理調試</li>
+<li>系統呼叫分析</li>
+<li>程序管理追蹤</li>
+</ul>
+</li>
+<li>
+<p><strong>最佳實踐</strong></p>
+<ul>
+<li>優先使用硬體 watchpoint</li>
+<li>適當組合不同類型的監控點</li>
+<li>使用腳本自動化重複的調試任務</li>
+<li>善用條件和命令增強監控點功能</li>
+</ul>
+</li>
+</ol>
+<p>透過熟練掌握這些工具，可以大幅提升調試效率，快速定位並解決程式問題。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../gdb/gdb-so-analysis-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../vim/vim.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../gdb/gdb-so-analysis-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../vim/vim.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
