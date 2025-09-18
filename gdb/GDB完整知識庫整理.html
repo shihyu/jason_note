@@ -1,0 +1,701 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>GDB完整知識庫整理 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="gdb-完整知識庫整理"><a class="header" href="#gdb-完整知識庫整理">GDB 完整知識庫整理</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ul>
+<li><a href="#%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86gdb-%E5%9F%BA%E7%A4%8E%E8%88%87%E5%AE%89%E8%A3%9D">第一部分：GDB 基礎與安裝</a></li>
+<li><a href="#%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86gdb-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4">第二部分：GDB 常用指令</a></li>
+<li><a href="#%E7%AC%AC%E4%B8%89%E9%83%A8%E5%88%86gdb-%E7%A8%8B%E5%BC%8F%E8%BF%BD%E8%B9%A4%E8%88%87%E8%AA%BF%E8%A9%A6">第三部分：GDB 程式追蹤與調試</a></li>
+<li><a href="#%E7%AC%AC%E5%9B%9B%E9%83%A8%E5%88%86gdb-%E8%87%AA%E5%8B%95%E5%8C%96%E8%88%87%E8%85%B3%E6%9C%AC">第四部分：GDB 自動化與腳本</a></li>
+<li><a href="#%E7%AC%AC%E4%BA%94%E9%83%A8%E5%88%86%E7%89%B9%E5%AE%9A%E8%AA%9E%E8%A8%80%E8%AA%BF%E8%A9%A6">第五部分：特定語言調試</a></li>
+<li><a href="#%E7%AC%AC%E5%85%AD%E9%83%A8%E5%88%86%E9%80%B2%E9%9A%8E%E5%8A%9F%E8%83%BD">第六部分：進階功能</a></li>
+<li><a href="#%E7%AC%AC%E4%B8%83%E9%83%A8%E5%88%86%E7%89%B9%E6%AE%8A%E5%B9%B3%E5%8F%B0%E8%AA%BF%E8%A9%A6">第七部分：特殊平台調試</a></li>
+<li><a href="#%E7%AC%AC%E5%85%AB%E9%83%A8%E5%88%86%E5%AF%A6%E7%94%A8%E5%B7%A5%E5%85%B7%E8%88%87%E5%B0%88%E6%A1%88">第八部分：實用工具與專案</a></li>
+</ul>
+<hr />
+<h2 id="第一部分gdb-基礎與安裝"><a class="header" href="#第一部分gdb-基礎與安裝">第一部分：GDB 基礎與安裝</a></h2>
+<h3 id="gdb-編譯與安裝"><a class="header" href="#gdb-編譯與安裝">GDB 編譯與安裝</a></h3>
+<h4 id="基本編譯步驟"><a class="header" href="#基本編譯步驟">基本編譯步驟</a></h4>
+<pre><code class="language-sh">sudo apt-get install libgmp-dev libmpfr-dev
+
+git clone https://github.com/bminor/binutils-gdb
+
+../configure --enable-targets=all \
+--prefix=/home/shihyu/.mybin/gdb
+
+make -j8 &amp;&amp; make install
+</code></pre>
+<h4 id="編譯-gdb-79-with-python-支援"><a class="header" href="#編譯-gdb-79-with-python-支援">編譯 GDB 7.9 with Python 支援</a></h4>
+<pre><code class="language-sh">sudo apt-get install texinfo libncurses-dev libreadline-dev python-dev
+
+# 修改 gdb/remote.c 解決 'g' packet reply is too long 問題
+# 屏蔽 process_g_packet 函數中的錯誤檢查並添加動態調整程式碼
+
+# 使用 Anaconda Python
+export LDFLAGS="-Wl,-rpath,/home/shihyu/anaconda3/lib -L/home/shihyu/anaconda3/lib"
+
+../configure --enable-targets=all \
+             --enable-64-bit-bfd  \
+             --with-python=python3.7 \
+             --with-system-readline \
+             --prefix=/home/shihyu/.mybin/gdb8.3_python3
+
+make &amp;&amp; make install
+</code></pre>
+<hr />
+<h2 id="第二部分gdb-常用指令"><a class="header" href="#第二部分gdb-常用指令">第二部分：GDB 常用指令</a></h2>
+<h3 id="記憶體檢視指令-examine"><a class="header" href="#記憶體檢視指令-examine">記憶體檢視指令 (examine)</a></h3>
+<p>格式：<code>x /nfu &lt;address&gt;</code></p>
+<p>參數說明：</p>
+<ul>
+<li><strong>n</strong>：要顯示的內存單元個數</li>
+<li><strong>f</strong>：顯示格式
+<ul>
+<li>x：十六進制</li>
+<li>d：十進制</li>
+<li>u：無符號十進制</li>
+<li>o：八進制</li>
+<li>t：二進制</li>
+<li>a：地址格式</li>
+<li>i：指令格式</li>
+<li>c：字符格式</li>
+<li>f：浮點數格式</li>
+</ul>
+</li>
+<li><strong>u</strong>：單元長度
+<ul>
+<li>b：單字節</li>
+<li>h：雙字節</li>
+<li>w：四字節</li>
+<li>g：八字節</li>
+</ul>
+</li>
+</ul>
+<h3 id="基本調試指令"><a class="header" href="#基本調試指令">基本調試指令</a></h3>
+<h4 id="斷點設置"><a class="header" href="#斷點設置">斷點設置</a></h4>
+<pre><code class="language-gdb">break main              # 在 main 函數設置斷點
+break file.c:100       # 在指定檔案的行號設置斷點
+break function_name    # 在函數入口設置斷點
+info breakpoints       # 查看所有斷點
+delete 1               # 刪除斷點編號 1
+</code></pre>
+<h4 id="執行控制"><a class="header" href="#執行控制">執行控制</a></h4>
+<pre><code class="language-gdb">run                    # 開始執行程式
+continue              # 繼續執行
+step                  # 單步執行（進入函數）
+next                  # 單步執行（不進入函數）
+finish                # 執行到當前函數返回
+</code></pre>
+<h4 id="變數與記憶體檢視"><a class="header" href="#變數與記憶體檢視">變數與記憶體檢視</a></h4>
+<pre><code class="language-gdb">print variable        # 打印變數值
+print *pointer       # 打印指標指向的值
+info locals          # 查看局部變數
+info args           # 查看函數參數
+display variable    # 每次停止時顯示變數
+</code></pre>
+<h4 id="堆疊操作"><a class="header" href="#堆疊操作">堆疊操作</a></h4>
+<pre><code class="language-gdb">backtrace           # 顯示函數調用堆疊
+frame n             # 切換到第 n 個堆疊框架
+up                  # 向上移動堆疊框架
+down                # 向下移動堆疊框架
+</code></pre>
+<h3 id="gdb-dashboard-與增強工具"><a class="header" href="#gdb-dashboard-與增強工具">GDB Dashboard 與增強工具</a></h3>
+<ul>
+<li><strong>GDB Dashboard</strong>：https://github.com/cyrus-and/gdb-dashboard</li>
+<li><strong>Gdbinit for OS X/iOS</strong>：https://github.com/gdbinit/Gdbinit</li>
+<li><strong>dotgdb</strong>：https://github.com/dholm/dotgdb</li>
+</ul>
+<hr />
+<h2 id="第三部分gdb-程式追蹤與調試"><a class="header" href="#第三部分gdb-程式追蹤與調試">第三部分：GDB 程式追蹤與調試</a></h2>
+<h3 id="方法一基本-gdb-命令追蹤"><a class="header" href="#方法一基本-gdb-命令追蹤">方法一：基本 GDB 命令追蹤</a></h3>
+<pre><code class="language-bash"># 編譯程式（加入除錯資訊）
+gcc -g -o demo demo.c
+
+# 啟動 GDB 並設定記錄
+gdb ./demo
+
+(gdb) set logging enabled on
+(gdb) set logging file basic_trace.txt
+(gdb) set trace-commands on
+
+# 設置斷點
+(gdb) break main
+(gdb) break calculate
+
+# 設定自動命令
+(gdb) commands 1-2
+&gt; silent
+&gt; printf "=== Function: "
+&gt; where 1
+&gt; info args
+&gt; info locals
+&gt; continue
+&gt; end
+
+# 執行程式
+(gdb) run
+</code></pre>
+<h3 id="方法二使用-python-腳本自動追蹤"><a class="header" href="#方法二使用-python-腳本自動追蹤">方法二：使用 Python 腳本自動追蹤</a></h3>
+<pre><code class="language-bash"># 啟動 GDB 並載入腳本
+gdb ./demo
+(gdb) source trace.py
+(gdb) trace-start
+(gdb) run
+(gdb) trace-stop
+</code></pre>
+<h3 id="方法三記錄重播功能"><a class="header" href="#方法三記錄重播功能">方法三：記錄/重播功能</a></h3>
+<pre><code class="language-bash">gdb ./demo
+(gdb) start
+(gdb) record              # 開啟記錄
+(gdb) continue
+(gdb) reverse-continue    # 反向執行
+(gdb) reverse-step       # 反向單步
+(gdb) info record        # 查看記錄資訊
+</code></pre>
+<h3 id="watchpoint-使用指南"><a class="header" href="#watchpoint-使用指南">Watchpoint 使用指南</a></h3>
+<h4 id="基本語法"><a class="header" href="#基本語法">基本語法</a></h4>
+<pre><code class="language-gdb">watch &lt;expression&gt;         # 當表達式值改變時中斷
+rwatch &lt;expression&gt;       # 當表達式被讀取時中斷
+awatch &lt;expression&gt;       # 當表達式被讀或寫時中斷
+</code></pre>
+<h4 id="實際範例"><a class="header" href="#實際範例">實際範例</a></h4>
+<pre><code class="language-gdb">watch counter             # 監控變數 counter
+watch ptr-&gt;value         # 監控結構體成員
+watch array[5]           # 監控陣列元素
+watch *(int*)0x12345678  # 監控特定記憶體地址
+</code></pre>
+<hr />
+<h2 id="第四部分gdb-自動化與腳本"><a class="header" href="#第四部分gdb-自動化與腳本">第四部分：GDB 自動化與腳本</a></h2>
+<h3 id="gdb-命令行參數"><a class="header" href="#gdb-命令行參數">GDB 命令行參數</a></h3>
+<h4 id="四種執行腳本的方法"><a class="header" href="#四種執行腳本的方法">四種執行腳本的方法</a></h4>
+<ol>
+<li><strong>使用 <code>-x</code> 參數</strong></li>
+</ol>
+<pre><code class="language-bash">gdb -x script.gdb ./program
+</code></pre>
+<ol start="2">
+<li><strong>使用 <code>--command</code> 參數</strong></li>
+</ol>
+<pre><code class="language-bash">gdb --command=script.gdb ./program
+</code></pre>
+<ol start="3">
+<li><strong>使用 <code>-ex</code> 執行單個命令</strong></li>
+</ol>
+<pre><code class="language-bash">gdb -ex "break main" -ex "run" ./program
+</code></pre>
+<ol start="4">
+<li><strong>使用 <code>--eval-command</code></strong></li>
+</ol>
+<pre><code class="language-bash">gdb --eval-command="break main" --eval-command="run" ./program
+</code></pre>
+<h3 id="commands-腳本語法"><a class="header" href="#commands-腳本語法">Commands 腳本語法</a></h3>
+<h4 id="基本結構"><a class="header" href="#基本結構">基本結構</a></h4>
+<pre><code class="language-gdb">commands [breakpoint-number]
+  silent                  # 不顯示斷點訊息
+  # 你的命令
+  printf "Variable: %d\n", variable
+  continue               # 自動繼續執行
+end
+</code></pre>
+<h4 id="進階範例"><a class="header" href="#進階範例">進階範例</a></h4>
+<pre><code class="language-gdb"># 追蹤函數調用
+define trace_function
+  commands $arg0
+    silent
+    printf "[%s] called with args: ", $arg1
+    info args
+    continue
+  end
+end
+</code></pre>
+<h3 id="函數調用追蹤與流程圖生成"><a class="header" href="#函數調用追蹤與流程圖生成">函數調用追蹤與流程圖生成</a></h3>
+<h4 id="創建追蹤腳本"><a class="header" href="#創建追蹤腳本">創建追蹤腳本</a></h4>
+<pre><code class="language-gdb"># trace.gdb
+set pagination off
+set logging file trace.log
+set logging on
+
+define hook-stop
+  where 1
+  info args
+end
+
+break function1
+break function2
+commands 1-2
+  silent
+  continue
+end
+
+run
+</code></pre>
+<h4 id="生成調用圖"><a class="header" href="#生成調用圖">生成調用圖</a></h4>
+<pre><code class="language-python"># 解析追蹤日誌生成 DOT 格式
+def parse_trace_to_dot(trace_file):
+    with open(trace_file) as f:
+        lines = f.readlines()
+    # 處理邏輯...
+    generate_dot_file(calls)
+</code></pre>
+<hr />
+<h2 id="第五部分特定語言調試"><a class="header" href="#第五部分特定語言調試">第五部分：特定語言調試</a></h2>
+<h3 id="rust-調試"><a class="header" href="#rust-調試">Rust 調試</a></h3>
+<h4 id="編譯與調試"><a class="header" href="#編譯與調試">編譯與調試</a></h4>
+<pre><code class="language-bash"># 編譯 Rust 程式（包含除錯資訊）
+rustc -C debuginfo=2 test.rs
+
+# 或使用 cargo
+cargo build --debug
+</code></pre>
+<h4 id="rust-gdb-特殊命令"><a class="header" href="#rust-gdb-特殊命令">Rust GDB 特殊命令</a></h4>
+<pre><code class="language-gdb"># 打印 Rust 字串
+print string_var
+
+# 查看 Vec 內容
+print vec_var.buf.ptr.pointer
+
+# 查看 Option 類型
+print option_var
+</code></pre>
+<h4 id="rust-調試範例"><a class="header" href="#rust-調試範例">Rust 調試範例</a></h4>
+<pre><pre class="playground"><code class="language-rust">trait Printable {
+    fn print(&amp;self);
+}
+
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+impl Printable for Point {
+    fn print(&amp;self) {
+        println!("({}, {})", self.x, self.y);
+    }
+}
+
+fn main() {
+    let list = vec![Point { x: 1, y: 2 }, Point { x: 3, y: 4 }];
+    // 設置斷點調試
+}</code></pre></pre>
+<h3 id="go-語言調試"><a class="header" href="#go-語言調試">Go 語言調試</a></h3>
+<h4 id="go-程式編譯"><a class="header" href="#go-程式編譯">Go 程式編譯</a></h4>
+<pre><code class="language-bash"># 關閉優化，保留除錯資訊
+go build -gcflags="-N -l" main.go
+</code></pre>
+<h4 id="go-gdb-命令"><a class="header" href="#go-gdb-命令">Go GDB 命令</a></h4>
+<pre><code class="language-gdb"># 查看 goroutine
+info goroutines
+
+# 切換 goroutine
+goroutine 2 bt
+
+# 打印 Go 字串
+print string_var
+</code></pre>
+<h4 id="go-測試範例"><a class="header" href="#go-測試範例">Go 測試範例</a></h4>
+<pre><code class="language-go">package main
+
+import "fmt"
+
+func add(a, b int) int {
+    result := a + b
+    fmt.Printf("Adding %d + %d = %d\n", a, b, result)
+    return result
+}
+
+func main() {
+    fmt.Println("=== Go GDB Debug Test ===")
+    result := add(5, 3)
+    fmt.Printf("Result: %d\n", result)
+}
+</code></pre>
+<hr />
+<h2 id="第六部分進階功能"><a class="header" href="#第六部分進階功能">第六部分：進階功能</a></h2>
+<h3 id="動態庫分析-so-檔案"><a class="header" href="#動態庫分析-so-檔案">動態庫分析 (.so 檔案)</a></h3>
+<h4 id="查看動態庫資訊"><a class="header" href="#查看動態庫資訊">查看動態庫資訊</a></h4>
+<pre><code class="language-gdb">info sharedlibrary        # 列出載入的動態庫
+sharedlibrary libname    # 載入符號資訊
+</code></pre>
+<h4 id="設置動態庫斷點"><a class="header" href="#設置動態庫斷點">設置動態庫斷點</a></h4>
+<pre><code class="language-gdb"># 在動態庫函數設置斷點
+break libname.so:function_name
+
+# 設置延遲斷點
+set breakpoint pending on
+break function_in_so
+</code></pre>
+<h3 id="jemalloc-記憶體調試"><a class="header" href="#jemalloc-記憶體調試">JeMalloc 記憶體調試</a></h3>
+<h4 id="編譯時啟用-jemalloc"><a class="header" href="#編譯時啟用-jemalloc">編譯時啟用 JeMalloc</a></h4>
+<pre><code class="language-bash">gcc -g -o app app.c -ljemalloc
+</code></pre>
+<h4 id="gdb-中分析-jemalloc"><a class="header" href="#gdb-中分析-jemalloc">GDB 中分析 JeMalloc</a></h4>
+<pre><code class="language-gdb"># 查看記憶體統計
+call je_malloc_stats_print(NULL, NULL, NULL)
+
+# 設置環境變數
+set environment MALLOC_CONF=stats_print:true
+</code></pre>
+<h3 id="圖形化調用關係"><a class="header" href="#圖形化調用關係">圖形化調用關係</a></h3>
+<h4 id="生成調用圖工具"><a class="header" href="#生成調用圖工具">生成調用圖工具</a></h4>
+<ul>
+<li>使用 <code>gdb_graphs</code> 專案生成可視化調用圖</li>
+<li>輸出 DOT 格式，可用 Graphviz 渲染</li>
+</ul>
+<pre><code class="language-bash"># 生成調用追蹤
+gdb -x trace_calls.gdb ./program
+
+# 轉換為圖形
+python parse_trace.py trace.log &gt; calls.dot
+dot -Tpng calls.dot -o calls.png
+</code></pre>
+<hr />
+<h2 id="第七部分特殊平台調試"><a class="header" href="#第七部分特殊平台調試">第七部分：特殊平台調試</a></h2>
+<h3 id="qemu--gdb-調試-risc-v-linux-kernel"><a class="header" href="#qemu--gdb-調試-risc-v-linux-kernel">QEMU + GDB 調試 RISC-V Linux Kernel</a></h3>
+<h4 id="環境準備"><a class="header" href="#環境準備">環境準備</a></h4>
+<pre><code class="language-bash"># 安裝必要套件
+sudo apt install \
+    git \
+    autoconf \
+    automake \
+    autotools-dev \
+    ninja-build \
+    build-essential \
+    libmpc-dev \
+    libmpfr-dev \
+    libgmp-dev \
+    libglib2.0-dev \
+    libpixman-1-dev
+</code></pre>
+<h4 id="編譯-risc-v-工具鏈"><a class="header" href="#編譯-risc-v-工具鏈">編譯 RISC-V 工具鏈</a></h4>
+<pre><code class="language-bash">git clone https://github.com/riscv/riscv-gnu-toolchain
+cd riscv-gnu-toolchain
+./configure --prefix=/opt/riscv
+make linux
+</code></pre>
+<h4 id="qemu-調試-kernel"><a class="header" href="#qemu-調試-kernel">QEMU 調試 Kernel</a></h4>
+<pre><code class="language-bash"># 啟動 QEMU（等待 GDB 連接）
+qemu-system-riscv64 \
+    -machine virt \
+    -kernel linux/arch/riscv/boot/Image \
+    -s -S
+
+# 另一終端啟動 GDB
+riscv64-linux-gnu-gdb vmlinux
+(gdb) target remote :1234
+(gdb) break start_kernel
+(gdb) continue
+</code></pre>
+<hr />
+<h2 id="第八部分實用工具與專案"><a class="header" href="#第八部分實用工具與專案">第八部分：實用工具與專案</a></h2>
+<h3 id="gdb-tracer-工具"><a class="header" href="#gdb-tracer-工具">GDB Tracer 工具</a></h3>
+<p>位於 <code>src/gdb-tracer/</code> 的追蹤工具，支援：</p>
+<ul>
+<li>自動函數調用追蹤</li>
+<li>生成執行流程報告</li>
+<li>支援 Rust 程式調試</li>
+</ul>
+<h3 id="gdb-trace-python-工具"><a class="header" href="#gdb-trace-python-工具">GDB Trace Python 工具</a></h3>
+<p>位於 <code>src/gdb_trace_python_src/</code> 的 Python 增強工具：</p>
+<ul>
+<li>自動化追蹤腳本</li>
+<li>日誌解析與分析</li>
+<li>調用關係視覺化</li>
+</ul>
+<h3 id="可點擊調用圖生成器"><a class="header" href="#可點擊調用圖生成器">可點擊調用圖生成器</a></h3>
+<p>位於 <code>src/GDB_GenerateClickbleCallGraph-/</code> 的工具：</p>
+<ul>
+<li>生成互動式 HTML 調用圖</li>
+<li>支援函數跳轉導航</li>
+<li>程式碼覆蓋率分析</li>
+</ul>
+<h3 id="rust-gdb-範例專案"><a class="header" href="#rust-gdb-範例專案">Rust GDB 範例專案</a></h3>
+<p>位於 <code>src/rust-gdb-example/</code> 的完整範例：</p>
+<ul>
+<li>Rust 程式調試最佳實踐</li>
+<li>常見問題與解決方案</li>
+<li>性能分析範例</li>
+</ul>
+<hr />
+<h2 id="附錄快速參考卡"><a class="header" href="#附錄快速參考卡">附錄：快速參考卡</a></h2>
+<h3 id="最常用命令速查"><a class="header" href="#最常用命令速查">最常用命令速查</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>命令</th><th>簡寫</th><th>說明</th></tr></thead><tbody>
+<tr><td>break</td><td>b</td><td>設置斷點</td></tr>
+<tr><td>run</td><td>r</td><td>執行程式</td></tr>
+<tr><td>continue</td><td>c</td><td>繼續執行</td></tr>
+<tr><td>next</td><td>n</td><td>單步執行（跳過函數）</td></tr>
+<tr><td>step</td><td>s</td><td>單步執行（進入函數）</td></tr>
+<tr><td>print</td><td>p</td><td>打印變數</td></tr>
+<tr><td>backtrace</td><td>bt</td><td>顯示調用堆疊</td></tr>
+<tr><td>quit</td><td>q</td><td>退出 GDB</td></tr>
+<tr><td>info</td><td>i</td><td>顯示資訊</td></tr>
+<tr><td>list</td><td>l</td><td>顯示原始碼</td></tr>
+</tbody></table>
+</div>
+<h3 id="環境設定建議"><a class="header" href="#環境設定建議">環境設定建議</a></h3>
+<pre><code class="language-bash"># ~/.gdbinit 設定檔
+set history save on
+set history size 1000
+set print pretty on
+set print array on
+set print array-indexes on
+set pagination off
+</code></pre>
+<h3 id="調試技巧總結"><a class="header" href="#調試技巧總結">調試技巧總結</a></h3>
+<ol>
+<li><strong>使用條件斷點</strong>：<code>break file.c:100 if variable == 5</code></li>
+<li><strong>自動化重複任務</strong>：使用 commands 和 define</li>
+<li><strong>保存調試會話</strong>：<code>save breakpoints file.bp</code></li>
+<li><strong>遠端調試</strong>：<code>target remote hostname:port</code></li>
+<li><strong>核心轉儲分析</strong>：<code>gdb program core.dump</code></li>
+</ol>
+<hr />
+<h2 id="參考資源"><a class="header" href="#參考資源">參考資源</a></h2>
+<ul>
+<li><a href="https://www.gnu.org/software/gdb/documentation/">GDB 官方文檔</a></li>
+<li><a href="https://github.com/cyrus-and/gdb-dashboard">GDB Dashboard</a></li>
+<li><a href="https://github.com/zupzup/rust-gdb-example">Rust GDB 範例</a></li>
+<li><a href="https://blog.csdn.net/m0_43422086/article/details/125276723">RISC-V 調試指南</a></li>
+</ul>
+<hr />
+<p><em>本文檔整理自 GDB 相關知識庫，涵蓋基礎到進階的完整調試技術。</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../gdb/gdb_watchpoints_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../vim/vim.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../gdb/gdb_watchpoints_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../vim/vim.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
