@@ -109,6 +109,18 @@ def write_data_files(results_data):
                     f.write(" 0 0")
             f.write("\n")
 
+    # Write summary statistics for table
+    with open('performance_data/summary_stats.dat', 'w') as f:
+        f.write("# Client Throughput(req/s) AvgLatency(ms) P50(ms) P95(ms) P99(ms)\n")
+        for client_data in results_data:
+            client = client_data['client']
+            avg = client_data['average']
+            f.write(f'"{client}" {avg.get("throughput", 0):.0f} '
+                   f'{avg.get("avg_latency", 0):.2f} '
+                   f'{avg.get("p50", 0):.2f} '
+                   f'{avg.get("p95", 0):.2f} '
+                   f'{avg.get("p99", 0):.2f}\n')
+
 def generate_plots():
     """Generate plots using gnuplot"""
     print("\nGenerating performance plots with gnuplot...")

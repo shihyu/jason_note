@@ -136,24 +136,39 @@ plot 'performance_data/time_series.dat' using 1:2 with linespoints \
      '' using 1:5 with linespoints \
      title "C Latency" axes x1y2 lc rgb "#FFC000" pt 5 ps 1.5 dt 2
 
-# 8. Performance Summary Table (as image)
+# 8. Performance Summary Table (as bar chart)
 set output 'performance_plots/summary_table.png'
 set title 'Performance Summary Statistics' font 'Arial,16'
-unset xlabel
-unset ylabel
-unset y2label
-unset y2tics
-unset xtics
-unset ytics
-unset grid
-unset key
-set xrange [0:1]
-set yrange [0:1]
+set xlabel 'Client Implementation' font 'Arial,14'
+set ylabel 'Value' font 'Arial,14'
+set y2label 'Latency (ms)' font 'Arial,14'
+set style data histogram
+set style histogram clustered gap 1
+set style fill solid 0.8 border -1
+set boxwidth 0.15
+set xtic rotate by -45 scale 0
+set ytics nomirror
+set y2tics
+set grid y
+set key top left font 'Arial,10'
+set yrange [0:*]
+set y2range [0:*]
 
-# Create a simple comparison chart with values
-set label 1 "Performance data saved in performance_data/" at screen 0.5,0.5 center font 'Arial,14'
-set label 2 "Run 'compare_performance.py' to generate fresh data" at screen 0.5,0.4 center font 'Arial,12'
-plot -1 notitle
+# Check if summary_stats.dat exists
+file_exists = system("[ -f 'performance_data/summary_stats.dat' ] && echo 1 || echo 0") + 0
+if (file_exists) {
+    plot 'performance_data/summary_stats.dat' using 2:xtic(1) title 'Throughput (req/s)' axes x1y1 lc rgb "#4472C4" with boxes, \
+         '' using 3 title 'Avg Latency (ms)' axes x1y2 lc rgb "#ED7D31" with boxes, \
+         '' using 4 title 'P50 (ms)' axes x1y2 lc rgb "#70AD47" with boxes, \
+         '' using 5 title 'P95 (ms)' axes x1y2 lc rgb "#FFC000" with boxes, \
+         '' using 6 title 'P99 (ms)' axes x1y2 lc rgb "#C55A11" with boxes
+} else {
+    set label 1 "No summary data available" at screen 0.5,0.5 center font 'Arial,14'
+    set label 2 "Run 'compare_performance.py' to generate data" at screen 0.5,0.4 center font 'Arial,12'
+    plot -1 notitle
+    unset label 1
+    unset label 2
+}
 
 # Clean up
 unset label 1

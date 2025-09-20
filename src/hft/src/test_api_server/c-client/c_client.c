@@ -44,6 +44,8 @@ typedef struct {
     Order* order;
     OrderResult* results;
     const char* base_url;
+    double* thread_latencies;  // Thread-local latency storage
+    int thread_success_count;  // Thread-local success counter
 } ThreadData;
 
 // Global metrics
@@ -143,6 +145,11 @@ OrderResult send_order(const char* base_url, Order* order) {
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
+
+    // Performance optimizations
+    curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);  // Disable Nagle's algorithm
+    curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L);  // Enable TCP keepalive
+    curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);  // Use HTTP/1.1
     
     res = curl_easy_perform(curl);
     
@@ -174,18 +181,16 @@ OrderResult send_order(const char* base_url, Order* order) {
 // Worker thread function
 void* worker_thread(void* arg) {
     ThreadData* data = (ThreadData*)arg;
-    
+    data->thread_success_count = 0;
+
     for (int i = data->start_order; i < data->end_order; i++) {
         OrderResult result = send_order(data->base_url, data->order);
-        
-        pthread_mutex_lock(&metrics_mutex);
+
         if (result.success) {
-            latencies[successful_orders++] = result.latency_ms;
+            data->thread_latencies[data->thread_success_count++] = result.latency_ms;
         }
-        total_orders++;
-        pthread_mutex_unlock(&metrics_mutex);
     }
-    
+
     return NULL;
 }
 
@@ -327,15 +332,29 @@ int main(int argc, char* argv[]) {
         }
         thread_data[i].order = &order;
         thread_data[i].base_url = base_url;
-        
+
+        // Allocate thread-local latency storage
+        int thread_orders = thread_data[i].end_order - thread_data[i].start_order;
+        thread_data[i].thread_latencies = malloc(thread_orders * sizeof(double));
+        thread_data[i].thread_success_count = 0;
+
         current_order = thread_data[i].end_order;
-        
+
         pthread_create(&threads[i], NULL, worker_thread, &thread_data[i]);
     }
-    
-    // Wait for all threads to complete
+
+    // Wait for all threads to complete and merge results
     for (int i = 0; i < num_connections; i++) {
         pthread_join(threads[i], NULL);
+
+        // Merge thread-local latencies into global array without lock
+        for (int j = 0; j < thread_data[i].thread_success_count; j++) {
+            latencies[successful_orders++] = thread_data[i].thread_latencies[j];
+        }
+        total_orders += (thread_data[i].end_order - thread_data[i].start_order);
+
+        // Free thread-local storage
+        free(thread_data[i].thread_latencies);
     }
     
     double end_time = get_time_ms();
