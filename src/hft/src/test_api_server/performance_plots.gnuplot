@@ -147,11 +147,13 @@ unset xtics
 unset ytics
 unset grid
 unset key
+set xrange [0:1]
+set yrange [0:1]
 
 # Create a simple comparison chart with values
 set label 1 "Performance data saved in performance_data/" at screen 0.5,0.5 center font 'Arial,14'
 set label 2 "Run 'compare_performance.py' to generate fresh data" at screen 0.5,0.4 center font 'Arial,12'
-plot NaN
+plot -1 notitle
 
 # Clean up
 unset label 1

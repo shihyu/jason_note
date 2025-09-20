@@ -135,12 +135,20 @@ class AsyncOrderClient:
             }
     
     async def batch_orders(self, num_orders, demo_order: Order = None):
-        tasks = []
-        for i in range(num_orders):
-            task = self.place_order(i, demo_order)
-            tasks.append(task)
-        
-        results = await asyncio.gather(*tasks)
+        # Process orders in batches to avoid creating too many concurrent tasks
+        batch_size = self.num_connections * 2  # Batch size based on connection pool
+        results = []
+
+        for batch_start in range(0, num_orders, batch_size):
+            batch_end = min(batch_start + batch_size, num_orders)
+            tasks = []
+            for i in range(batch_start, batch_end):
+                task = self.place_order(i, demo_order)
+                tasks.append(task)
+
+            batch_results = await asyncio.gather(*tasks)
+            results.extend(batch_results)
+
         return results
     
     def print_stats(self):
