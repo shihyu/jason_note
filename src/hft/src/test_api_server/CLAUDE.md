@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-這是一個 API 效能測試套件，用於比較四種不同程式語言實作的非同步 HTTP 客戶端（Python、C、C++、Rust）連接到 Rust API 伺服器的效能表現。專案包含一個高效能的 Rust API 伺服器和四個客戶端實作，用於測試交易系統的延遲和吞吐量。
+這是一個 API 效能測試套件，用於比較五種不同程式語言實作的非同步 HTTP 客戶端（Python、C、C++、Rust、Go）連接到 Rust API 伺服器的效能表現。專案包含一個高效能的 Rust API 伺服器和五個客戶端實作，用於測試交易系統的延遲和吞吐量。
 
 ## Quick Start
 
@@ -30,8 +30,9 @@ python3 python_client.py --orders 100 --connections 10 --warmup 10
 - **Client Implementations**:
   - `python_client.py`: aiohttp 非同步客戶端
   - `c-client/c_client.c`: libcurl + pthread 多執行緒客戶端
-  - `cpp-client/cpp_client.cpp`: libcurl + std::async 客戶端  
+  - `cpp-client/cpp_client.cpp`: libcurl + std::async 客戶端
   - `rust-client/`: reqwest + tokio 非同步客戶端
+  - `go-client/go_client.go`: Go net/http 標準庫客戶端
 
 - **Performance Tools**:
   - `compare_performance.py`: 效能比較工具
@@ -42,13 +43,19 @@ python3 python_client.py --orders 100 --connections 10 --warmup 10
 ```bash
 # Ubuntu/Debian
 sudo apt-get update
-sudo apt-get install -y build-essential cmake libcurl4-openssl-dev python3-pip
+sudo apt-get install -y build-essential cmake libcurl4-openssl-dev python3-pip golang
 
 # macOS
-brew install cmake curl
+brew install cmake curl go
 
 # Install Rust (all platforms)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# Install Go (if not installed via package manager)
+# Download from https://go.dev/dl/ or use:
+wget https://go.dev/dl/go1.21.6.linux-amd64.tar.gz
+sudo tar -C /usr/local -xzf go1.21.6.linux-amd64.tar.gz
+export PATH=$PATH:/usr/local/go/bin
 
 # Python dependencies
 pip install aiohttp tabulate
@@ -116,6 +123,22 @@ cargo run --release -- --orders 1000 --connections 100 --warmup 100
 cargo run -- --orders 100 --connections 10 --warmup 10
 ```
 
+### Go Client
+```bash
+# 建構
+cd go-client
+go build -o go_client go_client.go
+
+# 或使用 Makefile
+make
+
+# 執行
+./go_client --orders 1000 --connections 100 --warmup 100
+
+# 快速測試
+make test
+```
+
 
 ## Testing Commands
 
@@ -160,6 +183,10 @@ test_api_server/
 │   ├── cpp_client.cpp   # C++ 客戶端主程式
 │   ├── Makefile         # C++ 建構設定
 │   └── CMakeLists.txt   # CMake 建構設定
+├── go-client/           # Go 客戶端
+│   ├── go_client.go     # Go 客戶端主程式
+│   ├── go.mod          # Go 模組定義
+│   └── Makefile        # Go 建構設定
 ├── python_client.py     # Python 客戶端
 └── compare_performance.py # 效能比較工具
 ```
@@ -260,6 +287,7 @@ iotop # I/O 活動
 cd c-client && make && cd ..
 cd cpp-client && make && cd ..
 cd rust-client && cargo build --release && cd ..
+cd go-client && go build -o go_client go_client.go && cd ..
 ```
 
 ### 清理建構產物
@@ -268,6 +296,7 @@ cd rust-client && cargo build --release && cd ..
 cd c-client && make clean && cd ..
 cd cpp-client && make clean && cd ..
 cd rust-client && cargo clean && cd ..
+cd go-client && make clean && cd ..
 cd rust-api-server && cargo clean && cd ..
 ```
 
@@ -282,6 +311,7 @@ let addr = SocketAddr::from(([127, 0, 0, 1], 8080));  // 修改 8080
 - C: 調整 `c-client/c_client.c` 中的 `CURLOPT_TIMEOUT`
 - C++: 調整 `cpp-client/cpp_client.cpp` 中的 `CURLOPT_TIMEOUT`
 - Rust: 修改 `rust-client/src/main.rs` 中的 `timeout` 設定
+- Go: 修改 `go-client/go_client.go` 中的 `http.Client` 的 `Timeout` 設定
 
 ### 新增效能指標
 1. 在客戶端收集新指標

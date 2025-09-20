@@ -35,13 +35,38 @@ def run_test(client_name, command, num_tests=3):
                 metrics['max_latency'] = float(line.split()[2])
             elif 'Avg latency:' in line:
                 metrics['avg_latency'] = float(line.split()[2])
-            elif 'P50:' in line:
+            elif 'Average:' in line and 'ms' in line:
+                # Go client format: "Average: 0.118"
+                metrics['avg_latency'] = float(line.split()[1])
+            elif 'Min:' in line and 'ms' not in line.split()[0]:
+                # Go client format: "Min: 0.062"
+                metrics['min_latency'] = float(line.split()[1])
+            elif 'Max:' in line and 'ms' not in line.split()[0]:
+                # Go client format: "Max: 0.190"
+                metrics['max_latency'] = float(line.split()[1])
+            elif 'Latency P50:' in line:
+                # Go client format: "Latency P50: 0.118 ms"
+                metrics['p50'] = float(line.split()[2])
+            elif 'P50:' in line and 'Latency' not in line:
+                # Go client format in stats section: "P50: 0.118"
                 metrics['p50'] = float(line.split()[1])
-            elif 'P90:' in line:
+            elif 'Latency P90:' in line:
+                # Go client format: "Latency P90: 0.145 ms"
+                metrics['p90'] = float(line.split()[2])
+            elif 'P90:' in line and 'Latency' not in line:
+                # Go client format in stats section: "P90: 0.145"
                 metrics['p90'] = float(line.split()[1])
-            elif 'P95:' in line:
+            elif 'Latency P95:' in line:
+                # Go client format: "Latency P95: 0.153 ms"
+                metrics['p95'] = float(line.split()[2])
+            elif 'P95:' in line and 'Latency' not in line:
+                # Go client format in stats section: "P95: 0.153"
                 metrics['p95'] = float(line.split()[1])
-            elif 'P99:' in line:
+            elif 'Latency P99:' in line:
+                # Go client format: "Latency P99: 0.181 ms"
+                metrics['p99'] = float(line.split()[2])
+            elif 'P99:' in line and 'Latency' not in line:
+                # Go client format in stats section: "P99: 0.181"
                 metrics['p99'] = float(line.split()[1])
 
         if metrics:
@@ -220,7 +245,18 @@ def main():
         rust_results['average']['client'] = 'Rust (reqwest)'
         results.append(rust_results['average'])
         results_data.append({'client': 'Rust (reqwest)', 'average': rust_results['average'], 'all_runs': rust_results['all_runs']})
-    
+
+    # Go client
+    print("\n" + "=" * 40)
+    print("Testing Go Client (net/http)")
+    print("=" * 40)
+    go_cmd = f"./go-client/go_client --orders {NUM_ORDERS} --connections {NUM_CONNECTIONS} --warmup {WARMUP}"
+    go_results = run_test("Go", go_cmd, NUM_TESTS)
+    if go_results:
+        go_results['average']['client'] = 'Go (net/http)'
+        results.append(go_results['average'])
+        results_data.append({'client': 'Go (net/http)', 'average': go_results['average'], 'all_runs': go_results['all_runs']})
+
     # Display comparison table
     if results:
         print("\n" + "=" * 80)
