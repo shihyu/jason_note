@@ -24,17 +24,17 @@ Perf 支援多種事件的取樣，包括硬體事件 (Hardware events)，如 cp
 
 ### 取樣測量
 取樣測量的基本概念就是透過記錄下來的樣本回推程式的真實狀況。以下圖為例，假設上方的長條圖是各個函式的執行時間，下方的五邊型是取樣記錄。圖中，分別以 1 Hz 與 2 Hz 的頻率取樣。我們可從樣本的比例，大約知道 25% 的時間是花費在橘色函式，75% 的時間是花費在藍色函式。
-![image](https://hackmd.io/_uploads/BkRog4wYJg.png)
+![image](images/BkRog4wYJg.png)
 取樣測量最大的優點就是**測量過程的額外負擔可透過取樣頻率調整**。使用者可選用適當的取樣頻率，降低觀察者效應的影響，進而減少測量誤差。如果想要測量的事件數量超過一定的數量級，又沒有外部裝置能記錄事件，通常就只能採用取樣測量。
 
 取樣測量的準確度主要受二個因素影響：**樣本的代表性**與**樣本的數量**。
 
 樣本的代表性可再分為二個層面：樣本是否均勻的分散在總體執行時間、取樣頻率是否會剛好和觀察對象本身的週期同調（Lockstep）。關於前者，Linux 核心的預設行為就是儘可能均勻地取樣，所以使用者不用太擔心。後者則能透過指定不同的目標頻率來減少發生的機會。常用的頻率是 97、997、9973 等質數。
-![image](https://hackmd.io/_uploads/H1Pc6mwtke.png)
+![image](images/H1Pc6mwtke.png)
 從樣本數量來看，取樣頻率頻率的高低也會影響精準度。一般而言，取樣頻率要比「重要事件的發生頻率」還高才能從樣本觀察到這個重要事件。然而取樣率越高，額外負擔也越高，觀察者效應也越顯著，所以我們必須選定一個適當的頻率。
 
 以下圖為例，假設第 1 列 (Real Events) 是所有發生過的事件。第 2 列是頻率為 1 Hz 的樣本。第 3 列是頻率為 4 Hz 的樣本，其中空心圈代表該時段沒有樣本。如果只看第 2 列，我們會誤以為事件均勻地分部於橘色與藍色函式。然而，第 3 列告訴我們橘色函式產生的事件並不多。大多數的事件是藍色函式產生的。
-![image](https://hackmd.io/_uploads/Syg3amDKye.png)
+![image](images/Syg3amDKye.png)
 另外，受限於實作，`perf_events` 的取樣頻率的上限大約是 10,000 Hz（數量級）。這個數值可透過 `/proc/sys/kernel/perf_event_max_sample_rate` 修改。但是如果 Linux 核心在取樣過程中發現整個系統無法支撐指定的取樣頻率，Linux 核心會自動降低取樣頻率。
 
 取樣測量也有它的缺點。其中一個是取樣測量通常以執行時間作為母體。所以比較不容易觀察到輸入輸出或同步造成的效能問題。其二是取樣測量的基本理論是以統計樣本次數回推真實的行為，我們難以從樣本回推真實各種事件的順序。如果效能問題和事件發生的順序有關，取樣測量比較沒有辦法告訴我們問題的來源。雖然有上述問題，取樣測量還是很好的效能測量方法。它的低額外負擔和可指定取樣頻率還是讓它成為效能測量的首選。
@@ -45,18 +45,18 @@ Perf 支援多種事件的取樣，包括硬體事件 (Hardware events)，如 cp
 因為一般的手機或桌上型電腦 CPU 的時脈大約是 1.8-2.3 GHz，事件發生的頻率可能也是以 GHz 為單位，所以 CPU 內建的 PMU 通常是若干個[效能計數器](https://en.wikipedia.org/wiki/Hardware_performance_counter)（Performance Counter）取樣指定事件。在開始測量效能前，使用者（或作業系統）可為每個效能計數器設定一個週期（Period）。在測量過程中，每當指定事件發生時，效能計數器就會減 1。當效能計數器減到 0 的時候，效能計數器就會觸發中斷，然後作業系統的中斷處理程序就會記錄當時的狀況。
 
 雖然從硬體設計的角度來看，以週期取樣比較容易實作，然而對於使用者而言，將取樣點平均分散在整個程式的執行時間是較常使用的取樣方式。以下圖的極端例子舉例，如果週期固定是 4，只有第 1 個時間間隔會有樣本。比較理想的方式是將取樣點分散在 4 個時間間隔。
-![image](https://hackmd.io/_uploads/S12Aa7PKyx.png)
+![image](images/S12Aa7PKyx.png)
 `perf_events` 可讓使用者以一個目標頻率（Frequency）取樣指定事件，實作原理是讓 Linux 核心自動地調整週期。如果上個時間間隔內有太多事件樣本，則提高週期；反之，如果上個時間間隔內的事件樣本過少，則減少週期。以下圖為例，假設以 1 Hz 為目標頻率，`perf_events` 可能會先假設週期為 3，並在第 1 個時間間隔取得一個樣本。然而在第 2 秒結束時，`perf_events` 會發現它錯過一個樣本，因此將週期下調為 1。下調週期後，第 3 與 4 時間間隔就能順利取得樣本。
-![image](https://hackmd.io/_uploads/HyCFi5Lq1e.png)
+![image](images/HyCFi5Lq1e.png)
 
 在物理學的用語中，一個波的週期（每次需要多少秒）和頻率（每秒需要多少次）互為倒數，不過在 `perf_events` 這套工具內，它們分別指稱不同的東西：
 * **週期**指的是從「開始」到「記錄樣本」之間，事件的發生次數。
 * **目標頻率**指的是 `perf_events` 每秒應該要剛好取得多少樣本。
 
 週期與目標頻率的關係如下圖所示。灰色為所有發生過的事件。黑色為記錄到的事件樣本（共 4 個）。因為目標頻率為 4 Hz，所以 `perf_events` 每 0.25 秒可設定不同的週期。下圖的週期依序為 4 個、3 個、1 個、2 個事件。
-![image](https://hackmd.io/_uploads/BJzx0XPKkg.png)
+![image](images/BJzx0XPKkg.png)
 另外，效能計數器的統計次數有時候會落在「觸發事件的指令」的後方。稍後的例子中，有些 L1 Data Cache Miss 會被記錄在 `add` 與 `cmp` 二個只使用暫存器的指令上。這個現象在 Intel 技術文件中被稱為 `Skid`（滑行）。以開車類比，就像是踩下煞車後，車子還會滑行一小段距離。這是因為高速 CPU 通常都有比較多層的 Pipeline、一道指令通常會再拆分為多個 Micro-Ops（微指令）、再加上 Out-of-Order Execution （亂序執行）會先執行準備就緒的 Micro-Ops，CPU 要準確地追蹤「觸發事件的指令」要花費不少成本（下圖為示意圖），因此部分事件會被記錄在稍後的指令。使用者在解讀事件數量的時候，務必要考慮 Skid 現象。
-![image](https://hackmd.io/_uploads/r1gbC7wKJx.png)
+![image](images/r1gbC7wKJx.png)
 最後，效能計數器的數量是有限的。部分效能計數器有時會有指定用途，使得通用效能計數器（General-purpose Performance Counter）又更少了。如果同時測量過多的事件種類，Linux 會以分時多工的方式共用同一個效能計數器。因為這會稍微影響精確度，所以應盡可能減少非必要的事件種類。
 
 ### 準備工作
@@ -97,10 +97,10 @@ WARNING: perf not found for kernel 4.18.0-25
 ```
 
 若在未切換到 root 的情況下，執行 `perf top` 命令，可能會遇到以下錯誤畫面：
-![image](https://hackmd.io/_uploads/rJ2dyRAF1e.png)
+![image](images/rJ2dyRAF1e.png)
 
 或者：
-![image](https://hackmd.io/_uploads/H1MFy0CF1x.png)
+![image](images/H1MFy0CF1x.png)
 
 這是因為 `kernel.perf_event_paranoid` 用來決定在沒有 root 權限的情況下 (即一般使用者)，你可使用 Perf 取得哪些事件資料 (event data)。該參數的預設值為 `1`，可用以下命令查看目前的權限設定：
 ```shell
@@ -144,7 +144,7 @@ $ sudo sh -c "echo 0 > /proc/sys/kernel/kptr_restrict"
 提升效能最有效的方式之一是利用平行化（Parallelism）。微處理器的設計中大量提高平行程度，例如管線化 (pipeline)、超純量 (superscalar) 和亂序執行 (out-of-order execution)。
 
 管線化是指將指令處理過程分成多個步驟，例如從記憶體取指令（fetch）、執行運算（execute）、將結果輸出到匯流排（bus）等，分別由不同的硬體單元負責。在三級管線化的情況下，微處理器可以在一個時鐘週期內同時處理三條指令，分別處於管線化的不同階段，如下圖：
-![image](https://hackmd.io/_uploads/HkYyumJ5yx.png)
+![image](images/HkYyumJ5yx.png)
 
 超純量架構則進一步提升效能，允許一個時鐘週期內觸發（issue）多條指令。例如，Intel Pentium 微處理器內部有二個執行單元，可同時處理兩條指令，這被稱為 dual-issue。
 
@@ -227,7 +227,7 @@ $ perf top -p $pid
 ```
 
 應該會得到類似下面的結果：
-![image](https://hackmd.io/_uploads/HJez9Qy5Jg.png)
+![image](images/HJez9Qy5Jg.png)
 
 預設的 performance event 是 "cycles"，所以這條命令可分析出消耗 CPU 週期最多的部份，結果顯示函式 `compute_pi_baseline()` 佔了近 99.9％，符合預期，此函式是程式中的「熱點」。
 
@@ -365,13 +365,13 @@ $ sudo perf report -g graph,0.5,caller
 ```
 
 根據實驗環境的不同，此實驗在 Intel i7 (13 代) 上進行，此處理器有 P-Core 與 E-Core 兩種核，因此會看到以下這個畫面，其中 `cpu_core` 是主要執行任務的 P-Core 的種類，因此選擇 `cpu_core/cycles/` 後按下 「Enter」：
-![image](https://hackmd.io/_uploads/HJ98R7vKye.png)
+![image](images/HJ98R7vKye.png)
 
 接著會看到以下畫面：
-![image](https://hackmd.io/_uploads/H14D07PYye.png)
+![image](images/H14D07PYye.png)
 
 看到 `mult` 函式花去最多時間後，將游標以「向下鍵」移至 `mult`，按下按鍵 a，接著會顯示以下畫面：
-![image](https://hackmd.io/_uploads/SJmORXDF1e.png)
+![image](images/SJmORXDF1e.png)
 
 因為 `imul` （與之後的幾道指令）花的時間特別久。`imul` 的 (%rax) 運算元會把矩陣 b 的資料搬進 CPU。因此可以懷疑資料無法即時送給 CPU，但是現在還沒有足夠的證據，所以接著使用 `perf list` 尋找合適的事件種類。
 
@@ -445,13 +445,13 @@ $ sudo perf report -g graph,0.5,caller
 
 因為同時測量了 3 個事件種類，這次 `perf report` 要先選擇事件種類（以「向上下鍵」移動和「Enter 鍵」選擇）：
 
-![image](https://hackmd.io/_uploads/H1gyyNDFyg.png)
+![image](images/H1gyyNDFyg.png)
 
 接著，將游標以「向下鍵」移至 mult，按下按鍵 a：
-![image](https://hackmd.io/_uploads/H1BkJVPtye.png)
+![image](images/H1BkJVPtye.png)
 
 再按下 t 將左側的數字從 Percent 切換成 Period，也就是 L1 Data Cache Miss 數量的估計值：
-![image](https://hackmd.io/_uploads/HkKy1NDtyl.png)
+![image](images/HkKy1NDtyl.png)
 
 從畫面上可以看到可以算在 `b[k][j]` 上的 Cache Miss 有 `imul`、`add` 和 `cmp` 指令。三者加總為 5,234,653,990。如果將這個數值除以迴圈迭代次數 5 * 1024 * 1024 * 1024，可以推得 97.50% 的 b[k][j] 都會產生 L1 Data Cache Load Miss。換句話說，L1 Data Cache 完全沒有發揮效用。
 
@@ -1137,7 +1137,7 @@ $ sudo perf report \
 $ sudo perf report --tui -i callgraph.fp.perf.data
 ```
 
-![image](https://hackmd.io/_uploads/H1JdcIoY1x.png)
+![image](images/H1JdcIoY1x.png)
 
 有時候 `--stdio` 會有比較完整的資訊，下圖是 `--stdio` 的執行輸出：
 ```shell
@@ -1415,7 +1415,7 @@ $ sudo perf report -i callgraph.fp.perf.data --stdio \
 ### Flame Graph
 Flame Graph（火焰圖）是 Caller-based Call Graph 的變型。它是由 Brendan Gregg 開發並發揚光大。他的同事開發了[d3-flame-graph](https://github.com/spiermar/d3-flame-graph)，使用JavaScript的D3版本有更多的互動性。Flame Graph 的橫軸是事件數量百分比，縱軸是呼叫堆疊。每個函式呼叫都會依照 Stack Trace 數量百分比繪製橫向長條。最下面是各個 Stack Trace 第一個呼叫者，最上面是各個 Stack Trace 最後一個被呼叫者。有同樣前綴的 Stack Trace 都會被整理在一起。因為 Flame Graph 直接產生 SVG 向量圖，所以使用者可以迅速看出佔比最高的 Stack Trace。若函式名稱比較長，使用者也可以將滑鼠游標指向各個長條圖，其代表的函式名稱會顯示在右下方：
 
-![flamegraph](https://hackmd.io/_uploads/HJsJxFjtkg.svg)
+![flamegraph](images/flamegraph.svg)
 
 
 #### 實際操作
