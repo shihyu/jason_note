@@ -56,6 +56,7 @@
     - [FFI Examples](tools/ffi_examples.md)
     - [PaddleOCR 使用指南](tools/paddleocr_guide.md)
     - [Guider Sudo Setup](tools/guider_sudo_setup.md)
+    - [Guider Setup Guide](tools/guider-setup-guide.md)
     - [Thinking Protocol 中文指南](tools/thinking-protocol-zh-tw.md)
     - [MCP Setup Guide](tools/mcp-setup-guide.md)
 
