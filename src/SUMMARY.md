@@ -214,6 +214,7 @@
 
 ## Web Development
 - [Web 開發資源](web/README.md)
+    - [Node.js 完整開發指南](web/nodejs-guide.md)
     - [WebAssembly (WASM) 完整開發指南](web/webassembly_complete_guide.md)
     - [Buttplug WASM 開發流程](web/buttplug_wasm_flow.md)
     - [wasm_bindgen 作用整理](web/wasm_bindgen_guide.md)
