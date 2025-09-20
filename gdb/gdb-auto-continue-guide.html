@@ -1,0 +1,634 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>GDB Auto Continue Guide - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="gdb-script-斷點打印後自動繼續的技巧解析"><a class="header" href="#gdb-script-斷點打印後自動繼續的技巧解析">GDB Script 斷點打印後自動繼續的技巧解析</a></h1>
+<h2 id="-核心技巧"><a class="header" href="#-核心技巧">🎯 核心技巧</a></h2>
+<p>這個腳本實現「斷點命中→打印訊息→自動繼續」的關鍵技巧在於：</p>
+<h3 id="1-斷點命令配置-breakpoint-commands"><a class="header" href="#1-斷點命令配置-breakpoint-commands">1. <strong>斷點命令配置 (Breakpoint Commands)</strong></a></h3>
+<pre><code class="language-python"># 關鍵代碼在這裡
+def configure_breakpoints():
+    for bp in gdb.breakpoints():
+        if bp.number &gt; 1:
+            # 這行是核心！為每個斷點設置自動執行的命令
+            bp.commands = "silent\nshow_full_location\ncontinue"
+            # 或簡化版本
+            # bp.commands = "continue"
+</code></pre>
+<h2 id="-技術原理詳解"><a class="header" href="#-技術原理詳解">📖 技術原理詳解</a></h2>
+<h3 id="斷點命令的執行流程"><a class="header" href="#斷點命令的執行流程">斷點命令的執行流程</a></h3>
+<p>當斷點被命中時，GDB 會：</p>
+<ol>
+<li><strong>暫停程式執行</strong></li>
+<li><strong>執行預設的命令序列</strong></li>
+<li><strong>根據命令決定下一步動作</strong></li>
+</ol>
+<pre><code class="language-gdb"># 命令序列解析
+silent              # 1. 抑制預設的斷點命中訊息
+show_full_location  # 2. 執行自定義函數，打印調試資訊
+continue           # 3. 自動繼續執行程式
+</code></pre>
+<h3 id="關鍵命令說明"><a class="header" href="#關鍵命令說明">關鍵命令說明</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>命令</th><th>作用</th><th>效果</th></tr></thead><tbody>
+<tr><td><code>silent</code></td><td>靜默模式</td><td>不顯示「Breakpoint X hit」訊息</td></tr>
+<tr><td><code>continue</code></td><td>繼續執行</td><td>程式自動繼續，不等待用戶輸入</td></tr>
+<tr><td>自定義函數</td><td>執行特定操作</td><td>在繼續前執行任何需要的動作</td></tr>
+</tbody></table>
+</div>
+<h2 id="-實現方式比較"><a class="header" href="#-實現方式比較">🔧 實現方式比較</a></h2>
+<h3 id="方式一使用-gdb-commands傳統方式"><a class="header" href="#方式一使用-gdb-commands傳統方式">方式一：使用 GDB Commands（傳統方式）</a></h3>
+<pre><code class="language-gdb"># 為特定斷點設置命令
+break main
+commands 2  # 2 是斷點編號
+  silent
+  printf "Hit main function\n"
+  backtrace 1
+  continue
+end
+</code></pre>
+<h3 id="方式二使用-python-api腳本採用的方式"><a class="header" href="#方式二使用-python-api腳本採用的方式">方式二：使用 Python API（腳本採用的方式）</a></h3>
+<pre><code class="language-python">import gdb
+
+# 更靈活的方式
+for bp in gdb.breakpoints():
+    bp.commands = """
+        silent
+        python print(f"⚡ Hit: {gdb.selected_frame().name()}")
+        continue
+    """
+</code></pre>
+<h3 id="方式三定義斷點類進階方式"><a class="header" href="#方式三定義斷點類進階方式">方式三：定義斷點類（進階方式）</a></h3>
+<pre><code class="language-python">class AutoContinueBreakpoint(gdb.Breakpoint):
+    def __init__(self, spec):
+        super().__init__(spec, gdb.BP_BREAKPOINT)
+        
+    def stop(self):
+        # 返回 False 表示不停止，自動繼續
+        frame = gdb.selected_frame()
+        print(f"📍 Passing through: {frame.name()}")
+        return False  # 這是關鍵！False = 繼續執行
+</code></pre>
+<h2 id="-核心技巧總結"><a class="header" href="#-核心技巧總結">💡 核心技巧總結</a></h2>
+<h3 id="1-批量配置的優勢"><a class="header" href="#1-批量配置的優勢">1. <strong>批量配置的優勢</strong></a></h3>
+<pre><code class="language-python"># 腳本的聰明之處：一次配置所有斷點
+configured_count = 0
+for bp in gdb.breakpoints():
+    if bp.number &gt; 1:  # 跳過 catchpoint
+        bp.commands = "continue"
+        configured_count += 1
+</code></pre>
+<h3 id="2-動態載入時機"><a class="header" href="#2-動態載入時機">2. <strong>動態載入時機</strong></a></h3>
+<pre><code class="language-gdb"># 等待動態庫載入後才設置斷點
+catch load libintiface_engine_flutter_bridge.so
+commands 1
+    source breakpoints.txt  # 載入斷點
+    python configure_breakpoints()  # 批量配置
+    continue
+end
+</code></pre>
+<h2 id="-實用範例"><a class="header" href="#-實用範例">🎨 實用範例</a></h2>
+<h3 id="簡單的追蹤腳本"><a class="header" href="#簡單的追蹤腳本">簡單的追蹤腳本</a></h3>
+<pre><code class="language-gdb"># trace.gdb - 最簡追蹤腳本
+define setup_trace
+    # 設置斷點
+    break process_message
+    break handle_error
+    
+    # 配置自動繼續
+    python
+for bp in gdb.breakpoints():
+    bp.commands = """
+        silent
+        echo ===
+        where 1
+        continue
+    """
+    end
+end
+
+# 使用
+setup_trace
+run
+</code></pre>
+<h3 id="帶條件的智能斷點"><a class="header" href="#帶條件的智能斷點">帶條件的智能斷點</a></h3>
+<pre><code class="language-python">class ConditionalTracer(gdb.Breakpoint):
+    def __init__(self, spec, condition_func):
+        super().__init__(spec)
+        self.condition_func = condition_func
+        
+    def stop(self):
+        # 根據條件決定是否打印
+        if self.condition_func():
+            print(f"⚠️ Condition met at {self.location}")
+            # 可以選擇停止或繼續
+            return False  # 打印後繼續
+        return False  # 直接繼續
+
+# 使用範例
+def check_error():
+    # 檢查是否有錯誤
+    return gdb.parse_and_eval("error_code") != 0
+
+bp = ConditionalTracer("process_data", check_error)
+</code></pre>
+<h3 id="計數型斷點"><a class="header" href="#計數型斷點">計數型斷點</a></h3>
+<pre><code class="language-python">class CountingBreakpoint(gdb.Breakpoint):
+    def __init__(self, spec, threshold=10):
+        super().__init__(spec)
+        self.count = 0
+        self.threshold = threshold
+        
+    def stop(self):
+        self.count += 1
+        if self.count % self.threshold == 0:
+            print(f"📊 {self.location} hit {self.count} times")
+        return False  # 永遠不停止
+
+# 每10次打印一次統計
+bp = CountingBreakpoint("hot_function", 10)
+</code></pre>
+<h2 id="-效能考量"><a class="header" href="#-效能考量">⚡ 效能考量</a></h2>
+<h3 id="斷點開銷比較"><a class="header" href="#斷點開銷比較">斷點開銷比較</a></h3>
+<pre><code class="language-python"># 最小開銷版本
+bp.commands = "continue"
+
+# 中等開銷版本
+bp.commands = """
+    silent
+    printf "."
+    continue
+"""
+
+# 高開銷版本
+bp.commands = """
+    silent
+    python complex_analysis()
+    backtrace
+    info locals
+    continue
+"""
+</code></pre>
+<h3 id="選擇性追蹤優化"><a class="header" href="#選擇性追蹤優化">選擇性追蹤優化</a></h3>
+<pre><code class="language-python">class OptimizedTracer(gdb.Breakpoint):
+    def __init__(self, spec):
+        super().__init__(spec)
+        self.sample_rate = 100  # 每100次採樣一次
+        self.counter = 0
+        
+    def stop(self):
+        self.counter += 1
+        if self.counter % self.sample_rate == 0:
+            self.detailed_analysis()
+        return False
+    
+    def detailed_analysis(self):
+        # 只在採樣時執行昂貴操作
+        frame = gdb.selected_frame()
+        print(f"📈 Sample #{self.counter}: {frame.name()}")
+</code></pre>
+<h2 id="-進階調試技巧"><a class="header" href="#-進階調試技巧">🛠️ 進階調試技巧</a></h2>
+<h3 id="1-動態開關追蹤"><a class="header" href="#1-動態開關追蹤">1. 動態開關追蹤</a></h3>
+<pre><code class="language-python"># 全局控制
+class TraceControl:
+    enabled = True
+    verbose = False
+    filters = []
+
+class SmartBreakpoint(gdb.Breakpoint):
+    def stop(self):
+        if not TraceControl.enabled:
+            return False
+            
+        frame_name = gdb.selected_frame().name()
+        
+        # 應用過濾器
+        if TraceControl.filters:
+            if not any(f in frame_name for f in TraceControl.filters):
+                return False
+        
+        # 詳細或簡單輸出
+        if TraceControl.verbose:
+            self.detailed_trace()
+        else:
+            print(".", end="", flush=True)
+            
+        return False
+
+# 運行時控制
+(gdb) python TraceControl.enabled = False
+(gdb) python TraceControl.filters = ["engine", "core"]
+(gdb) python TraceControl.verbose = True
+</code></pre>
+<h3 id="2-時間戳追蹤"><a class="header" href="#2-時間戳追蹤">2. 時間戳追蹤</a></h3>
+<pre><code class="language-python">import time
+
+class TimedBreakpoint(gdb.Breakpoint):
+    def __init__(self, spec):
+        super().__init__(spec)
+        self.last_hit = None
+        
+    def stop(self):
+        now = time.time()
+        if self.last_hit:
+            delta = now - self.last_hit
+            if delta &gt; 0.1:  # 只記錄超過100ms的間隔
+                print(f"⏱️ {self.location}: {delta:.3f}s since last hit")
+        self.last_hit = now
+        return False
+</code></pre>
+<h3 id="3-堆疊深度追蹤"><a class="header" href="#3-堆疊深度追蹤">3. 堆疊深度追蹤</a></h3>
+<pre><code class="language-python">class StackDepthTracer(gdb.Breakpoint):
+    def __init__(self, spec):
+        super().__init__(spec)
+        self.max_depth = 0
+        
+    def stop(self):
+        depth = len(gdb.newest_frame().older())
+        if depth &gt; self.max_depth:
+            self.max_depth = depth
+            print(f"📏 New max stack depth: {depth} at {self.location}")
+        return False
+</code></pre>
+<h2 id="-完整工作流程圖"><a class="header" href="#-完整工作流程圖">📊 完整工作流程圖</a></h2>
+<pre><code>程式啟動
+    ↓
+動態庫載入檢測 (catch load)
+    ↓
+觸發載入事件
+    ↓
+執行載入命令序列
+    ├─→ 載入斷點檔案 (source breakpoints.txt)
+    ├─→ 批量配置斷點 (Python configure_breakpoints)
+    └─→ 繼續執行 (continue)
+         ↓
+    ┌────────┐
+    │ 程式   │
+    │ 執行   │←──────┐
+    └────────┘       │
+         ↓           │
+    遇到斷點         │
+         ↓           │
+    GDB 暫停         │
+         ↓           │
+    執行 bp.commands │
+         ├─→ silent  │
+         ├─→ 自定義  │
+         └─→ continue┘
+</code></pre>
+<h2 id="-除錯斷點命令"><a class="header" href="#-除錯斷點命令">🔍 除錯斷點命令</a></h2>
+<h3 id="測試單一斷點"><a class="header" href="#測試單一斷點">測試單一斷點</a></h3>
+<pre><code class="language-gdb"># 手動測試
+(gdb) break test_function
+Breakpoint 2 at 0x4005c0: file test.c, line 10.
+
+(gdb) commands 2
+Type commands for breakpoint(s) 2, one per line.
+End with a line saying just "end".
+&gt; silent
+&gt; printf "Test: hit breakpoint\n"
+&gt; continue
+&gt; end
+
+(gdb) run
+Test: hit breakpoint
+[程式繼續執行...]
+</code></pre>
+<h3 id="檢查斷點配置"><a class="header" href="#檢查斷點配置">檢查斷點配置</a></h3>
+<pre><code class="language-python"># 顯示所有斷點的命令
+python
+for bp in gdb.breakpoints():
+    print(f"Breakpoint {bp.number}:")
+    print(f"  Location: {bp.location}")
+    print(f"  Commands: {bp.commands}")
+    print(f"  Enabled: {bp.enabled}")
+end
+</code></pre>
+<h2 id="-最佳實踐"><a class="header" href="#-最佳實踐">🎓 最佳實踐</a></h2>
+<h3 id="1-分層追蹤策略"><a class="header" href="#1-分層追蹤策略">1. <strong>分層追蹤策略</strong></a></h3>
+<pre><code class="language-python"># 不同層級的追蹤
+class LayeredTracer:
+    CRITICAL = 1
+    INFO = 2
+    DEBUG = 3
+    
+    level = INFO
+    
+    @classmethod
+    def trace(cls, level, message):
+        if level &lt;= cls.level:
+            print(message)
+
+class SmartBreakpoint(gdb.Breakpoint):
+    def __init__(self, spec, level=LayeredTracer.INFO):
+        super().__init__(spec)
+        self.level = level
+        
+    def stop(self):
+        LayeredTracer.trace(
+            self.level,
+            f"[{self.level}] {self.location}"
+        )
+        return False
+</code></pre>
+<h3 id="2-錯誤恢復機制"><a class="header" href="#2-錯誤恢復機制">2. <strong>錯誤恢復機制</strong></a></h3>
+<pre><code class="language-python">class SafeBreakpoint(gdb.Breakpoint):
+    def stop(self):
+        try:
+            # 執行可能出錯的操作
+            self.analyze()
+        except Exception as e:
+            print(f"❌ Error in breakpoint: {e}")
+        finally:
+            # 確保程式繼續執行
+            return False
+</code></pre>
+<h3 id="3-資源管理"><a class="header" href="#3-資源管理">3. <strong>資源管理</strong></a></h3>
+<pre><code class="language-python">class ResourceAwareBreakpoint(gdb.Breakpoint):
+    def __init__(self, spec, max_logs=1000):
+        super().__init__(spec)
+        self.logs = []
+        self.max_logs = max_logs
+        
+    def stop(self):
+        # 防止記憶體無限增長
+        if len(self.logs) &gt;= self.max_logs:
+            self.logs.pop(0)
+        
+        self.logs.append({
+            'time': time.time(),
+            'frame': gdb.selected_frame().name()
+        })
+        
+        return False
+</code></pre>
+<h2 id="-輸出到檔案"><a class="header" href="#-輸出到檔案">💾 輸出到檔案</a></h2>
+<pre><code class="language-python">class FileTracer(gdb.Breakpoint):
+    def __init__(self, spec, filename="/tmp/trace.log"):
+        super().__init__(spec)
+        self.file = open(filename, "a")
+        
+    def stop(self):
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        frame = gdb.selected_frame()
+        self.file.write(f"{timestamp} - {frame.name()}\n")
+        self.file.flush()  # 確保即時寫入
+        return False
+        
+    def __del__(self):
+        if hasattr(self, 'file'):
+            self.file.close()
+</code></pre>
+<h2 id="-相關資源"><a class="header" href="#-相關資源">📚 相關資源</a></h2>
+<ul>
+<li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb/Python-API.html">GDB Python API 文檔</a></li>
+<li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb/Break-Commands.html">GDB 斷點命令文檔</a></li>
+<li><a href="https://interrupt.memfault.com/blog/advanced-gdb">高級 GDB 腳本技術</a></li>
+</ul>
+<h2 id="-關鍵要點總結"><a class="header" href="#-關鍵要點總結">🎯 關鍵要點總結</a></h2>
+<ol>
+<li><strong>核心機制</strong>：使用 <code>bp.commands = "continue"</code> 實現自動繼續</li>
+<li><strong>靈活性</strong>：Python API 提供比傳統 GDB 命令更強大的控制</li>
+<li><strong>效能</strong>：注意斷點命令的開銷，高頻斷點使用簡單命令</li>
+<li><strong>可靠性</strong>：使用異常處理確保調試不影響程式執行</li>
+<li><strong>可擴展</strong>：透過類繼承和組合實現複雜的追蹤邏輯</li>
+</ol>
+<p>這個技巧將 GDB 從互動式調試器轉變為強大的自動化追蹤和分析工具！</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../gdb/GDB完整知識庫整理.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../vim/vim.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../gdb/GDB完整知識庫整理.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../vim/vim.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
