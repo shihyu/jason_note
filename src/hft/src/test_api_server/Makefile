@@ -32,21 +32,42 @@ build-rust-server:
 # Start the server in background
 server: build-rust-server
 	@echo "Starting API server..."
-	@pkill -f "rust-api-server" 2>/dev/null || true
-	@cd rust-api-server && ./target/release/rust-api-server > ../server.log 2>&1 &
-	@sleep 2
-	@if curl -s http://localhost:8080/stats > /dev/null; then \
+	@# Kill any existing server processes
+	@-pkill -f rust-api-server 2>/dev/null
+	@sleep 1
+	@# Start new server instance
+	@echo "Starting new server instance..."
+	@cd rust-api-server && nohup ./target/release/rust-api-server > ../server.log 2>&1 & echo $$! > ../server.pid
+	@sleep 3
+	@# Verify server started
+	@if curl -s http://localhost:8080/stats > /dev/null 2>&1; then \
 		echo "✓ Server started successfully"; \
 	else \
-		echo "✗ Failed to start server"; \
+		echo "✗ Failed to start server. Check server.log for details"; \
+		tail -10 server.log 2>/dev/null || echo "No log file found"; \
 		exit 1; \
 	fi
 
 # Stop the server
 stop-server:
 	@echo "Stopping API server..."
-	@pkill -f "rust-api-server" 2>/dev/null || true
-	@echo "✓ Server stopped"
+	@if [ -f server.pid ]; then \
+		PID=$$(cat server.pid); \
+		if kill -0 $$PID 2>/dev/null; then \
+			kill $$PID; \
+			echo "✓ Server stopped (PID: $$PID)"; \
+		else \
+			echo "Server not running (stale PID file)"; \
+		fi; \
+		rm -f server.pid; \
+	else \
+		if pgrep -f "rust-api-server" > /dev/null 2>&1; then \
+			pkill -f "rust-api-server"; \
+			echo "✓ Server processes terminated"; \
+		else \
+			echo "No server processes found"; \
+		fi; \
+	fi
 
 # Run performance comparison and generate plots
 plot: build server
@@ -103,6 +124,7 @@ clean-plots:
 clean-logs:
 	@echo "Cleaning log files..."
 	@rm -f server.log
+	@rm -f server.pid
 	@rm -f *.log
 	@echo "✓ Log files cleaned"
 
