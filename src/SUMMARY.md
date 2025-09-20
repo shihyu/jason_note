@@ -63,6 +63,7 @@
 ## Programming Languages
 - [C++](c++/cpp.md)
     - [Benchmark](c++/benchmark.md)
+    - [Google Benchmark 指南](c++/google_benchmark_guide.md)
     - [乘以 0.01 和除以 100 哪個快](c++/乘以0.01和除以100哪個快.md)
     - [Smart Pointer](c++/smart_pointer.md)
     - [L&R Value](c++/l&rvalue.md)
@@ -420,6 +421,7 @@
     - [QEMU DPDK 測試完整指南](tools/qemu-dpdk-test-guide.md)
     - [DPDK 高性能網路框架介紹](hft/dpdk-introduction.md)
     - [DPDK QEMU GDB 調試指南](hft/DPDK_QEMU_GDB_Guide.md)
+    - [C_CLIENT_THREAD_POOL_OPTIMIZATION_TC](hft/C_CLIENT_THREAD_POOL_OPTIMIZATION_TC.md)
 
 ## Others
 - [Design Patterns](dp/dp.md)
