@@ -10,17 +10,16 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use parking_lot::Mutex;
 use bytes::Bytes;
-use crossbeam::channel::{bounded, Sender, Receiver};
 use core_affinity;
 use libc::{mlock, mmap, munmap, MAP_ANON, MAP_FAILED, MAP_HUGETLB, MAP_PRIVATE, PROT_READ, PROT_WRITE};
 use std::ptr;
 use std::alloc::{alloc, dealloc, Layout};
 use std::mem;
-use std::pin::Pin;
 
 // HFT Memory Optimization Utilities
 
 /// Allocate memory with huge pages for better TLB efficiency
+#[allow(dead_code)]
 unsafe fn allocate_huge_page(size: usize) -> Option<*mut u8> {
     let ptr = mmap(
         ptr::null_mut(),
@@ -47,6 +46,7 @@ unsafe fn allocate_huge_page(size: usize) -> Option<*mut u8> {
 }
 
 /// Allocate locked memory (no swapping)
+#[allow(dead_code)]
 unsafe fn allocate_locked_memory(size: usize) -> Option<*mut u8> {
     let layout = Layout::from_size_align(size, mem::align_of::<u64>()).ok()?;
     let ptr = alloc(layout);
@@ -163,10 +163,15 @@ struct Order {
 }
 
 struct OrderResult {
+    #[allow(dead_code)]
     success: bool,
+    #[allow(dead_code)]
     round_trip_ms: f64,
+    #[allow(dead_code)]
     server_latency_ms: f64,
+    #[allow(dead_code)]
     response: Option<OrderResponse>,
+    #[allow(dead_code)]
     error: Option<String>,
 }
 
@@ -393,7 +398,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Try to increase memory lock limits (requires appropriate permissions)
     unsafe {
-        let mut rlim = libc::rlimit {
+        let rlim = libc::rlimit {
             rlim_cur: libc::RLIM_INFINITY,
             rlim_max: libc::RLIM_INFINITY,
         };
