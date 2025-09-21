@@ -6,6 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 這是一個 API 效能測試套件，用於比較五種不同程式語言實作的非同步 HTTP 客戶端（Python、C、C++、Rust、Go）連接到 Rust API 伺服器的效能表現。專案包含一個高效能的 Rust API 伺服器和五個客戶端實作，用於測試交易系統的延遲和吞吐量。
 
+### Performance Focus
+此專案專注於高頻交易(HFT)系統的低延遲優化，目標是將延遲控制在微秒級別。C 客戶端已經過線程池優化，從原始的 pthread-per-connection 模式改為固定大小線程池，P99 延遲從 23.65ms 降至 0.70ms。
+
 ## Quick Start
 
 ```bash
@@ -156,12 +159,21 @@ cd c-client && make test
 
 # C++ 測試
 cd cpp-client && make test
+
+# Go 測試
+cd go-client && go test
 ```
 
 ### 效能比較測試
 ```bash
-# 執行效能比較腳本
+# 執行完整效能比較（包含圖表生成）
 python3 compare_performance.py
+
+# 快速測試（較少訂單數）
+python3 quick_test.py
+
+# 檢查伺服器運行狀態
+curl http://localhost:8080/stats | python3 -m json.tool
 ```
 
 ## Project Structure
@@ -198,14 +210,18 @@ test_api_server/
 - 計算客戶端到伺服器的延遲
 - 回傳處理狀態和時間戳記
 
-**Request Format:**
+**Request Format (Updated for HFT):**
 ```json
 {
-  "order_id": "ORDER_001",
-  "symbol": "BTCUSDT",
-  "quantity": 1,
-  "price": 50000.0,
-  "side": "BUY",
+  "buy_sell": "buy",
+  "symbol": 2330,
+  "price": 100.0,
+  "quantity": 1000,
+  "market_type": "common",
+  "price_type": "limit",
+  "time_in_force": "rod",
+  "order_type": "stock",
+  "user_def": "custom_field",
   "client_timestamp": "2024-01-01T10:00:00.000Z"
 }
 ```
@@ -213,8 +229,9 @@ test_api_server/
 **Response Format:**
 ```json
 {
-  "order_id": "ORDER_001",
-  "status": "ACCEPTED",
+  "symbol": 2330,
+  "buy_sell": "buy",
+  "status": "SUCCESS",
   "client_timestamp": "2024-01-01T10:00:00.000Z",
   "server_timestamp": "2024-01-01T10:00:00.010Z",
   "latency_ms": 10.0
@@ -246,7 +263,20 @@ cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 
 # 設定為高效能模式
 sudo cpupower frequency-set -g performance
+
+# 關閉透明大頁（減少延遲抖動）
+sudo sh -c 'echo never > /sys/kernel/mm/transparent_hugepage/enabled'
+
+# CPU 隔離（用於極低延遲測試）
+# 編輯 /etc/default/grub 並添加：
+# isolcpus=8-15 nohz_full=8-15 rcu_nocbs=8-15
 ```
+
+### HFT 系統優化重點
+- **核心隔離**：將關鍵執行緒綁定到專用 CPU 核心
+- **NUMA 優化**：確保記憶體分配在本地節點
+- **記憶體鎖定**：使用 mlock 防止換頁
+- **中斷處理**：將網路中斷重定向到非關鍵核心
 
 ### 客戶端參數
 - `--orders`: 總訂單數
@@ -259,12 +289,18 @@ sudo cpupower frequency-set -g performance
 - 所有客戶端都使用非同步 I/O 以達到最佳效能
 - 時間戳記使用 ISO 8601 格式確保跨語言相容性
 - Release 模式編譯對效能至關重要（Rust 和 C++）
+- C 客戶端使用固定大小線程池（最多 20 個工作線程）避免過度的上下文切換
 
 ### 效能指標
 - **吞吐量**：每秒處理的訂單數
 - **延遲百分位數**：P50、P90、P95、P99
 - **往返時間**：完整的請求-回應時間
 - **伺服器處理時間**：基於時間戳記差異計算
+
+### 已知優化
+- **C 客戶端線程池**：從 pthread-per-connection 改為固定線程池，P99 延遲降低 97%
+- **連接池**：所有客戶端實現連接複用以減少建立連接開銷
+- **批量處理**：支援批量發送訂單以提高吞吐量
 
 ### 除錯
 ```bash
@@ -283,11 +319,13 @@ iotop # I/O 活動
 
 ### 建構所有客戶端
 ```bash
-# 一次建構所有客戶端
-cd c-client && make && cd ..
-cd cpp-client && make && cd ..
-cd rust-client && cargo build --release && cd ..
-cd go-client && go build -o go_client go_client.go && cd ..
+# 一次建構所有客戶端（使用平行建構）
+make -j$(nproc) -C c-client &
+make -j$(nproc) -C cpp-client &
+(cd rust-client && cargo build --release) &
+(cd go-client && go build -o go_client go_client.go) &
+wait
+echo "All clients built successfully"
 ```
 
 ### 清理建構產物
@@ -325,3 +363,48 @@ let addr = SocketAddr::from(([127, 0, 0, 1], 8080));  // 修改 8080
 - **Too many open files**: 執行 `ulimit -n 65536` 增加檔案描述符限制
 - **libcurl not found**: 安裝 `libcurl4-openssl-dev` (Ubuntu) 或 `curl` (macOS)
 - **Performance issues**: 確保使用 release 模式編譯 (`--release` for Rust, `-O3` for C/C++)
+- **High P99 latency with C client**: 確認線程池實作已啟用（檢查 MAX_THREADS 設定）
+- **Server not responding**: 檢查伺服器是否在執行 `ps aux | grep rust-api-server`
+
+## Performance Benchmarking Best Practices
+
+### 測試前準備
+```bash
+# 1. 確保系統處於穩定狀態
+sudo systemctl stop snapd  # 停止非必要服務
+sudo systemctl stop bluetooth
+
+# 2. 設定 CPU 效能模式
+for i in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+  echo performance | sudo tee $i
+done
+
+# 3. 清理系統快取（可選）
+sync && echo 3 | sudo tee /proc/sys/vm/drop_caches
+```
+
+### 標準測試配置
+- **小型測試**：100 orders, 10 connections（用於快速驗證）
+- **中型測試**：1000 orders, 50 connections（用於開發測試）
+- **大型測試**：10000 orders, 100 connections（用於效能基準）
+- **壓力測試**：50000 orders, 200 connections（用於極限測試）
+
+### 關鍵效能指標解讀
+- **P50 < 0.5ms**：良好的中位數延遲
+- **P99 < 2ms**：可接受的尾部延遲
+- **P99.9 < 10ms**：極端情況下的延遲上限
+- **Throughput > 10K req/s**：基本的吞吐量要求
+
+## HFT-Specific Documentation
+
+### 相關文檔
+- `hft_cpp.md`：詳細的 HFT 系統優化指南（中文）
+- `C_CLIENT_THREAD_POOL_OPTIMIZATION.md`：C 客戶端線程池優化案例研究
+- `C_CLIENT_THREAD_POOL_OPTIMIZATION_TC.md`：線程池優化技術細節
+
+### 深度優化參考
+如需進行更深入的 HFT 優化，請參考 `hft_cpp.md` 文檔中的以下章節：
+- 核心隔離技術
+- NUMA 記憶體優化
+- 缺頁中斷優化
+- 快取優化策略
