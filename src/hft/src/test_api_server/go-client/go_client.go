@@ -1,4 +1,4 @@
-// HFT-optimized Go client
+// Optimized Go client - simplified for better performance
 package main
 
 import (
@@ -14,10 +14,7 @@ import (
 	"sort"
 	"sync"
 	"sync/atomic"
-	"syscall"
 	"time"
-
-	"golang.org/x/sys/unix"
 )
 
 // OrderRequest structure
@@ -44,13 +41,6 @@ type OrderResponse struct {
 	LatencyMs       float64 `json:"latency_ms"`
 }
 
-// Task represents a work unit
-type Task struct {
-	OrderID int
-	Order   *OrderRequest
-	Result  chan float64
-}
-
 // HFTClient structure
 type HFTClient struct {
 	client       *http.Client
@@ -59,22 +49,12 @@ type HFTClient struct {
 	errorCount   atomic.Int64
 	latencies    []float64
 	latenciesMu  sync.Mutex
-	workerPool   chan chan *Task
-	taskQueue    chan *Task
+	semaphore    chan struct{}
 }
 
 // NewHFTClient creates an optimized client
-func NewHFTClient(serverURL string, maxConnections int, numWorkers int) *HFTClient {
-	// Set CPU affinity
-	setCPUAffinity(0)
-
-	// Optimize GC for low latency
-	debug.SetGCPercent(100)
-
-	// Lock memory
-	unix.Mlockall(unix.MCL_CURRENT | unix.MCL_FUTURE)
-
-	// Create transport with HFT optimizations
+func NewHFTClient(serverURL string, maxConnections int) *HFTClient {
+	// Create transport with optimized settings
 	transport := &http.Transport{
 		MaxIdleConns:        maxConnections * 2,
 		MaxConnsPerHost:     maxConnections,
@@ -87,103 +67,65 @@ func NewHFTClient(serverURL string, maxConnections int, numWorkers int) *HFTClie
 			KeepAlive: 30 * time.Second,
 			DualStack: false,
 		}).DialContext,
+		DisableKeepAlives: false,
+		TLSHandshakeTimeout: 5 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		ResponseHeaderTimeout: 5 * time.Second,
+		WriteBufferSize: 65536,
+		ReadBufferSize:  65536,
 	}
 
 	client := &HFTClient{
 		client: &http.Client{
 			Transport: transport,
-			Timeout:   30 * time.Second,
+			Timeout:   10 * time.Second,
 		},
-		serverURL:  serverURL,
-		latencies:  make([]float64, 0, 50000),
-		workerPool: make(chan chan *Task, numWorkers),
-		taskQueue:  make(chan *Task, 10000),
+		serverURL: serverURL,
+		latencies: make([]float64, 0, 50000),
+		semaphore: make(chan struct{}, maxConnections),
 	}
-
-	// Start worker goroutines
-	for i := 0; i < numWorkers; i++ {
-		worker := NewWorker(i, client)
-		worker.Start()
-	}
-
-	// Start dispatcher
-	go client.dispatch()
 
 	return client
 }
 
-// Worker represents a worker goroutine
-type Worker struct {
-	ID       int
-	client   *HFTClient
-	taskChan chan *Task
-	quit     chan bool
-}
+// submitOrder submits a single order
+func (c *HFTClient) submitOrder(orderID int, wg *sync.WaitGroup) {
+	defer wg.Done()
 
-// NewWorker creates a new worker
-func NewWorker(id int, client *HFTClient) *Worker {
-	return &Worker{
-		ID:       id,
-		client:   client,
-		taskChan: make(chan *Task),
-		quit:     make(chan bool),
+	// Acquire semaphore
+	c.semaphore <- struct{}{}
+	defer func() { <-c.semaphore }()
+
+	order := &OrderRequest{
+		BuySell:         "buy",
+		Symbol:          2881,
+		Price:           66.0,
+		Quantity:        2000,
+		MarketType:      "common",
+		PriceType:       "limit",
+		TimeInForce:     "rod",
+		OrderType:       "stock",
+		ClientTimestamp: time.Now().UTC().Format(time.RFC3339Nano),
 	}
-}
-
-// Start begins processing tasks
-func (w *Worker) Start() {
-	go func() {
-		// Set CPU affinity for this worker
-		setCPUAffinity(w.ID % runtime.NumCPU())
-
-		// Lock OS thread to prevent goroutine migration
-		runtime.LockOSThread()
-		defer runtime.UnlockOSThread()
-
-		for {
-			// Register worker as available
-			w.client.workerPool <- w.taskChan
-
-			select {
-			case task := <-w.taskChan:
-				w.processOrder(task)
-			case <-w.quit:
-				return
-			}
-		}
-	}()
-}
-
-// processOrder handles a single order
-func (w *Worker) processOrder(task *Task) {
-	// Update timestamp
-	task.Order.ClientTimestamp = time.Now().UTC().Format(time.RFC3339Nano)
 
 	// Encode JSON
-	jsonData, err := json.Marshal(task.Order)
+	jsonData, err := json.Marshal(order)
 	if err != nil {
-		w.client.errorCount.Add(1)
-		task.Result <- -1
+		c.errorCount.Add(1)
 		return
 	}
 
 	startTime := time.Now()
 
-	// Create request
-	req, err := http.NewRequest("POST", w.client.serverURL+"/order", bytes.NewBuffer(jsonData))
-	if err != nil {
-		w.client.errorCount.Add(1)
-		task.Result <- -1
-		return
-	}
+	// Create and send request
+	resp, err := c.client.Post(
+		c.serverURL+"/order",
+		"application/json",
+		bytes.NewBuffer(jsonData),
+	)
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Connection", "keep-alive")
-
-	resp, err := w.client.client.Do(req)
 	if err != nil {
-		w.client.errorCount.Add(1)
-		task.Result <- -1
+		c.errorCount.Add(1)
 		return
 	}
 	defer resp.Body.Close()
@@ -192,46 +134,11 @@ func (w *Worker) processOrder(task *Task) {
 	roundTripTime := endTime.Sub(startTime).Seconds() * 1000
 
 	if resp.StatusCode == http.StatusOK {
-		w.client.successCount.Add(1)
-		w.client.recordLatency(roundTripTime)
-		task.Result <- roundTripTime
+		c.successCount.Add(1)
+		c.recordLatency(roundTripTime)
 	} else {
-		w.client.errorCount.Add(1)
-		task.Result <- -1
+		c.errorCount.Add(1)
 	}
-}
-
-// dispatch distributes tasks to workers
-func (c *HFTClient) dispatch() {
-	for task := range c.taskQueue {
-		// Get next available worker
-		worker := <-c.workerPool
-		// Send task to worker
-		worker <- task
-	}
-}
-
-// submitOrder submits an order using the worker pool
-func (c *HFTClient) submitOrder(orderID int) <-chan float64 {
-	task := &Task{
-		OrderID: orderID,
-		Order: &OrderRequest{
-			BuySell:     "buy",
-			Symbol:      2881,
-			Price:       66.0,
-			Quantity:    2000,
-			MarketType:  "common",
-			PriceType:   "limit",
-			TimeInForce: "rod",
-			OrderType:   "stock",
-		},
-		Result: make(chan float64, 1),
-	}
-
-	// Submit to queue
-	c.taskQueue <- task
-
-	return task.Result
 }
 
 // recordLatency records a latency measurement
@@ -243,28 +150,21 @@ func (c *HFTClient) recordLatency(latency float64) {
 
 // runTest executes the performance test
 func (c *HFTClient) runTest(totalOrders, maxConcurrent, warmupOrders int) {
-	fmt.Printf("Starting HFT-optimized test with %d total orders, %d concurrent connections, %d warmup orders\n",
+	fmt.Printf("Starting optimized test with %d total orders, %d concurrent connections, %d warmup orders\n",
 		totalOrders, maxConcurrent, warmupOrders)
-
-	// Force GC before test
-	runtime.GC()
-	runtime.Gosched()
 
 	// Warmup phase
 	if warmupOrders > 0 {
 		fmt.Printf("Warming up with %d orders...\n", warmupOrders)
-		results := make([]<-chan float64, warmupOrders)
+		var warmupWg sync.WaitGroup
+		warmupWg.Add(warmupOrders)
 
 		for i := 0; i < warmupOrders; i++ {
-			results[i] = c.submitOrder(i)
+			go c.submitOrder(i, &warmupWg)
 		}
+		warmupWg.Wait()
 
-		// Wait for warmup to complete
-		for _, result := range results {
-			<-result
-		}
-
-		// Reset stats
+		// Reset stats after warmup
 		c.successCount.Store(0)
 		c.errorCount.Store(0)
 		c.latenciesMu.Lock()
@@ -274,18 +174,18 @@ func (c *HFTClient) runTest(totalOrders, maxConcurrent, warmupOrders int) {
 
 	// Main test phase
 	fmt.Println("Starting main test...")
+	var wg sync.WaitGroup
+	wg.Add(totalOrders)
+
 	startTime := time.Now()
 
-	// Submit all orders
-	results := make([]<-chan float64, totalOrders)
+	// Submit all orders using goroutines
 	for i := 0; i < totalOrders; i++ {
-		results[i] = c.submitOrder(warmupOrders + i)
+		go c.submitOrder(warmupOrders+i, &wg)
 	}
 
 	// Wait for all orders to complete
-	for _, result := range results {
-		<-result
-	}
+	wg.Wait()
 
 	endTime := time.Now()
 	totalTime := endTime.Sub(startTime).Seconds()
@@ -298,8 +198,8 @@ func (c *HFTClient) printStats(totalTime float64, totalOrders int) {
 	success := c.successCount.Load()
 	errors := c.errorCount.Load()
 
-	fmt.Printf("\n=== Go Client HFT Optimized ===\n")
-	fmt.Printf("Features: CPU affinity, Memory locking, Worker pool\n")
+	fmt.Printf("\n=== Go Client Optimized ===\n")
+	fmt.Printf("Features: Native goroutines, Connection pooling\n")
 	fmt.Printf("Total orders: %d\n", totalOrders)
 	fmt.Printf("Successful: %d\n", success)
 	fmt.Printf("Errors: %d\n", errors)
@@ -370,31 +270,12 @@ func percentile(sorted []float64, p float64) float64 {
 	return lowerValue + weight*(upperValue-lowerValue)
 }
 
-// setCPUAffinity sets the CPU affinity for the current thread
-func setCPUAffinity(cpuID int) {
-	var cpuSet unix.CPUSet
-	cpuSet.Zero()
-	cpuSet.Set(cpuID)
-
-	// Get current thread ID
-	tid := syscall.Gettid()
-
-	// Set CPU affinity
-	err := unix.SchedSetaffinity(tid, &cpuSet)
-	if err != nil {
-		// Silently ignore errors (may not have permission)
-		return
-	}
-}
-
-// setRealtimePriority attempts to set real-time scheduling priority
 func main() {
 	var (
 		orders      = flag.Int("orders", 1000, "Total number of orders")
 		connections = flag.Int("connections", 100, "Number of concurrent connections")
 		warmup      = flag.Int("warmup", 100, "Number of warmup orders")
 		serverURL   = flag.String("server", "http://127.0.0.1:8080", "Server URL")
-		workers     = flag.Int("workers", 0, "Number of worker goroutines (0 = auto)")
 	)
 	flag.Parse()
 
@@ -405,25 +286,13 @@ func main() {
 		fmt.Sscanf(flag.Arg(2), "%d", warmup)
 	}
 
-	// Auto-detect worker count
-	numWorkers := *workers
-	if numWorkers == 0 {
-		numWorkers = runtime.NumCPU() * 2
-		if numWorkers > *connections {
-			numWorkers = *connections
-		}
-	}
+	fmt.Printf("Go Optimized Client\n")
+	fmt.Printf("CPU cores: %d, GOMAXPROCS: %d\n", runtime.NumCPU(), runtime.GOMAXPROCS(0))
 
-	fmt.Printf("Go HFT Optimized Client\n")
-	fmt.Printf("CPU cores: %d, Worker threads: %d\n", runtime.NumCPU(), numWorkers)
+	// Optimize GC for lower latency
+	debug.SetGCPercent(100)
+	debug.SetMemoryLimit(2 << 30) // 2GB memory limit
 
-	// Set GOMAXPROCS to use all CPUs
-	runtime.GOMAXPROCS(runtime.NumCPU())
-
-
-	// Optimize GC
-	debug.SetGCPercent(50) // More aggressive GC for lower latency
-
-	client := NewHFTClient(*serverURL, *connections, numWorkers)
+	client := NewHFTClient(*serverURL, *connections)
 	client.runTest(*orders, *connections, *warmup)
 }
