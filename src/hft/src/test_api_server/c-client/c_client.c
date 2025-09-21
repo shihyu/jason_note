@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,10 +8,15 @@
 #include <sys/time.h>
 #include <math.h>
 #include <unistd.h>
+#include <stdatomic.h>
+#include <stdbool.h>
+#include <sched.h>
 
 #define MAX_ORDERS 10000
 #define MAX_RESPONSE_SIZE 4096
 #define MAX_WORKERS 20  // Maximum thread pool size
+#define RING_BUFFER_SIZE 2048
+#define OBJECT_POOL_SIZE 4096
 
 // Order struct
 typedef struct {
@@ -25,11 +31,18 @@ typedef struct {
     char* user_def;
 } Order;
 
-// Response struct
+// Response struct with pre-allocated buffer
 typedef struct {
     char data[MAX_RESPONSE_SIZE];
     size_t size;
 } Response;
+
+// Lock-free ring buffer implementation
+typedef struct {
+    void* buffer[RING_BUFFER_SIZE];
+    atomic_size_t head;
+    atomic_size_t tail;
+} RingBuffer;
 
 // Order result struct
 typedef struct {
@@ -37,30 +50,102 @@ typedef struct {
     int success;
 } OrderResult;
 
-// Task for thread pool
+// Task for thread pool with pre-allocated buffers
 typedef struct Task {
     int order_id;
     Order* order;
     OrderResult* result;
-    struct Task* next;
+    char json_buffer[1024]; // Pre-allocated JSON buffer
+    Response response;      // Pre-allocated response buffer
 } Task;
 
-// Thread pool structure
+// Object pool for tasks
+typedef struct {
+    Task pool[OBJECT_POOL_SIZE];
+    atomic_int available[OBJECT_POOL_SIZE];
+    atomic_size_t next_alloc;
+} TaskPool;
+
+// Thread pool structure with lock-free queue
 typedef struct {
     pthread_t* threads;
     int num_threads;
-    Task* task_queue;
-    Task* queue_tail;
-    pthread_mutex_t queue_mutex;
-    pthread_cond_t queue_cond;
-    int shutdown;
+    RingBuffer* queue;
+    atomic_bool shutdown;
     const char* base_url;
+    TaskPool* task_pool;
+    CURL** curl_handles;     // Pre-initialized CURL handles
+    struct curl_slist** headers; // Pre-created headers
 } ThreadPool;
 
 // Global metrics
 double latencies[MAX_ORDERS];
-int total_orders = 0;
-int successful_orders = 0;
+atomic_int total_orders = 0;
+atomic_int successful_orders = 0;
+
+// Initialize ring buffer
+RingBuffer* ring_buffer_create() {
+    RingBuffer* rb = malloc(sizeof(RingBuffer));
+    atomic_init(&rb->head, 0);
+    atomic_init(&rb->tail, 0);
+    memset(rb->buffer, 0, sizeof(rb->buffer));
+    return rb;
+}
+
+// Lock-free enqueue
+bool ring_buffer_enqueue(RingBuffer* rb, void* item) {
+    size_t head = atomic_load(&rb->head);
+    size_t next_head = (head + 1) % RING_BUFFER_SIZE;
+
+    if (next_head == atomic_load(&rb->tail)) {
+        return false; // Buffer full
+    }
+
+    rb->buffer[head] = item;
+    atomic_store(&rb->head, next_head);
+    return true;
+}
+
+// Lock-free dequeue
+void* ring_buffer_dequeue(RingBuffer* rb) {
+    size_t tail = atomic_load(&rb->tail);
+
+    if (tail == atomic_load(&rb->head)) {
+        return NULL; // Buffer empty
+    }
+
+    void* item = rb->buffer[tail];
+    atomic_store(&rb->tail, (tail + 1) % RING_BUFFER_SIZE);
+    return item;
+}
+
+// Initialize task pool
+TaskPool* task_pool_create() {
+    TaskPool* pool = malloc(sizeof(TaskPool));
+    for (int i = 0; i < OBJECT_POOL_SIZE; i++) {
+        atomic_init(&pool->available[i], 1);
+    }
+    atomic_init(&pool->next_alloc, 0);
+    return pool;
+}
+
+// Allocate task from pool
+Task* task_pool_alloc(TaskPool* pool) {
+    for (int attempts = 0; attempts < OBJECT_POOL_SIZE; attempts++) {
+        size_t idx = atomic_fetch_add(&pool->next_alloc, 1) % OBJECT_POOL_SIZE;
+        int expected = 1;
+        if (atomic_compare_exchange_strong(&pool->available[idx], &expected, 0)) {
+            return &pool->pool[idx];
+        }
+    }
+    return NULL; // Pool exhausted
+}
+
+// Release task back to pool
+void task_pool_free(TaskPool* pool, Task* task) {
+    size_t idx = ((char*)task - (char*)pool->pool) / sizeof(Task);
+    atomic_store(&pool->available[idx], 1);
+}
 
 // Get current time in milliseconds
 double get_time_ms() {
@@ -95,24 +180,21 @@ size_t write_callback(void* contents, size_t size, size_t nmemb, void* userp) {
     return total_size;
 }
 
-// Send single order
-OrderResult send_order(const char* base_url, Order* order) {
-    CURL* curl;
-    CURLcode res;
+// Send single order with pre-allocated resources
+OrderResult send_order_optimized(CURL* curl, struct curl_slist* headers,
+                                const char* base_url, Order* order,
+                                char* json_buffer, Response* response) {
     OrderResult result = {0.0, 0};
-    Response response = {{0}, 0};
 
-    curl = curl_easy_init();
-    if (!curl) {
-        return result;
-    }
+    // Reset response buffer
+    response->size = 0;
+    response->data[0] = 0;
 
-    // Build JSON payload
-    char json_payload[1024];
+    // Build JSON payload in pre-allocated buffer
     char timestamp[64];
     get_iso_timestamp(timestamp, sizeof(timestamp));
 
-    snprintf(json_payload, sizeof(json_payload),
+    snprintf(json_buffer, 1024,
         "{\"buy_sell\":\"%s\",\"symbol\":%d,\"price\":%.2f,\"quantity\":%d,"
         "\"market_type\":\"%s\",\"price_type\":\"%s\",\"time_in_force\":\"%s\","
         "\"order_type\":\"%s\",\"client_timestamp\":\"%s\"%s%s%s}",
@@ -128,26 +210,15 @@ OrderResult send_order(const char* base_url, Order* order) {
     char url[256];
     snprintf(url, sizeof(url), "%s/order", base_url);
 
-    // Set up CURL options
-    struct curl_slist* headers = NULL;
-    headers = curl_slist_append(headers, "Content-Type: application/json");
-
     double start_time = get_time_ms();
 
+    // Reuse CURL handle with updated fields
     curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_POST, 1L);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_payload);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_buffer);
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
 
-    // Performance optimizations
-    curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
-    curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L);
-    curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-
-    res = curl_easy_perform(curl);
+    CURLcode res = curl_easy_perform(curl);
 
     double end_time = get_time_ms();
     double round_trip_ms = end_time - start_time;
@@ -162,51 +233,56 @@ OrderResult send_order(const char* base_url, Order* order) {
         }
     }
 
-    curl_slist_free_all(headers);
-    curl_easy_cleanup(curl);
-
     return result;
 }
 
-// Worker thread function for thread pool
+// Worker thread function with CPU affinity
 void* worker_thread(void* arg) {
     ThreadPool* pool = (ThreadPool*)arg;
 
-    while (1) {
-        pthread_mutex_lock(&pool->queue_mutex);
+    // Get thread ID for indexing pre-allocated resources
+    static atomic_int thread_counter = 0;
+    int thread_id = atomic_fetch_add(&thread_counter, 1);
 
-        // Wait for task or shutdown signal
-        while (pool->task_queue == NULL && !pool->shutdown) {
-            pthread_cond_wait(&pool->queue_cond, &pool->queue_mutex);
-        }
+    // Set CPU affinity
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(thread_id % sysconf(_SC_NPROCESSORS_ONLN), &cpuset);
+    pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
 
-        if (pool->shutdown) {
-            pthread_mutex_unlock(&pool->queue_mutex);
-            break;
-        }
+    // Get pre-allocated CURL handle and headers for this thread
+    CURL* curl = pool->curl_handles[thread_id];
+    struct curl_slist* headers = pool->headers[thread_id];
 
-        // Get task from queue
-        Task* task = pool->task_queue;
+    while (!atomic_load(&pool->shutdown)) {
+        Task* task = (Task*)ring_buffer_dequeue(pool->queue);
+
         if (task != NULL) {
-            pool->task_queue = task->next;
-            if (pool->task_queue == NULL) {
-                pool->queue_tail = NULL;
+            // Process with pre-allocated resources
+            *task->result = send_order_optimized(curl, headers, pool->base_url,
+                                                task->order, task->json_buffer,
+                                                &task->response);
+
+            // Return task to pool
+            task_pool_free(pool->task_pool, task);
+
+            // Update metrics
+            if (task->result->success) {
+                int idx = atomic_fetch_add(&successful_orders, 1);
+                if (idx < MAX_ORDERS) {
+                    latencies[idx] = task->result->latency_ms;
+                }
             }
-        }
-
-        pthread_mutex_unlock(&pool->queue_mutex);
-
-        if (task != NULL) {
-            // Process the task
-            *task->result = send_order(pool->base_url, task->order);
-            free(task);
+            atomic_fetch_add(&total_orders, 1);
+        } else {
+            usleep(100); // Brief sleep when queue is empty
         }
     }
 
     return NULL;
 }
 
-// Create thread pool
+// Create optimized thread pool
 ThreadPool* thread_pool_create(int num_threads, const char* base_url) {
     if (num_threads > MAX_WORKERS) {
         num_threads = MAX_WORKERS;
@@ -215,13 +291,32 @@ ThreadPool* thread_pool_create(int num_threads, const char* base_url) {
     ThreadPool* pool = malloc(sizeof(ThreadPool));
     pool->threads = malloc(num_threads * sizeof(pthread_t));
     pool->num_threads = num_threads;
-    pool->task_queue = NULL;
-    pool->queue_tail = NULL;
-    pool->shutdown = 0;
+    pool->queue = ring_buffer_create();
+    atomic_init(&pool->shutdown, false);
     pool->base_url = base_url;
+    pool->task_pool = task_pool_create();
 
-    pthread_mutex_init(&pool->queue_mutex, NULL);
-    pthread_cond_init(&pool->queue_cond, NULL);
+    // Pre-initialize CURL handles and headers
+    pool->curl_handles = malloc(num_threads * sizeof(CURL*));
+    pool->headers = malloc(num_threads * sizeof(struct curl_slist*));
+
+    for (int i = 0; i < num_threads; i++) {
+        pool->curl_handles[i] = curl_easy_init();
+
+        // Set persistent CURL options
+        curl_easy_setopt(pool->curl_handles[i], CURLOPT_POST, 1L);
+        curl_easy_setopt(pool->curl_handles[i], CURLOPT_WRITEFUNCTION, write_callback);
+        curl_easy_setopt(pool->curl_handles[i], CURLOPT_TIMEOUT, 30L);
+        curl_easy_setopt(pool->curl_handles[i], CURLOPT_TCP_NODELAY, 1L);
+        curl_easy_setopt(pool->curl_handles[i], CURLOPT_TCP_KEEPALIVE, 1L);
+        curl_easy_setopt(pool->curl_handles[i], CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        curl_easy_setopt(pool->curl_handles[i], CURLOPT_FRESH_CONNECT, 0L);
+        curl_easy_setopt(pool->curl_handles[i], CURLOPT_FORBID_REUSE, 0L);
+
+        // Pre-create headers
+        pool->headers[i] = curl_slist_append(NULL, "Content-Type: application/json");
+        pool->headers[i] = curl_slist_append(pool->headers[i], "Connection: keep-alive");
+    }
 
     // Create worker threads
     for (int i = 0; i < num_threads; i++) {
@@ -231,57 +326,51 @@ ThreadPool* thread_pool_create(int num_threads, const char* base_url) {
     return pool;
 }
 
-// Add task to thread pool
+// Add task to thread pool using lock-free queue
 void thread_pool_add_task(ThreadPool* pool, int order_id, Order* order, OrderResult* result) {
-    Task* task = malloc(sizeof(Task));
+    Task* task = task_pool_alloc(pool->task_pool);
+    if (task == NULL) {
+        // Fallback: wait and retry
+        while ((task = task_pool_alloc(pool->task_pool)) == NULL) {
+            usleep(100);
+        }
+    }
+
     task->order_id = order_id;
     task->order = order;
     task->result = result;
-    task->next = NULL;
 
-    pthread_mutex_lock(&pool->queue_mutex);
-
-    if (pool->queue_tail == NULL) {
-        pool->task_queue = task;
-        pool->queue_tail = task;
-    } else {
-        pool->queue_tail->next = task;
-        pool->queue_tail = task;
+    // Add to lock-free queue
+    while (!ring_buffer_enqueue(pool->queue, task)) {
+        usleep(100); // Queue full, wait briefly
     }
-
-    pthread_cond_signal(&pool->queue_cond);
-    pthread_mutex_unlock(&pool->queue_mutex);
 }
 
 // Wait for all tasks to complete
 void thread_pool_wait(ThreadPool* pool) {
-    while (1) {
-        pthread_mutex_lock(&pool->queue_mutex);
-        int empty = (pool->task_queue == NULL);
-        pthread_mutex_unlock(&pool->queue_mutex);
-
-        if (empty) {
-            break;
-        }
-
-        usleep(1000);  // Sleep 1ms
+    while (atomic_load(&total_orders) < pool->num_threads) {
+        usleep(1000);
     }
 }
 
 // Destroy thread pool
 void thread_pool_destroy(ThreadPool* pool) {
-    pthread_mutex_lock(&pool->queue_mutex);
-    pool->shutdown = 1;
-    pthread_cond_broadcast(&pool->queue_cond);
-    pthread_mutex_unlock(&pool->queue_mutex);
+    atomic_store(&pool->shutdown, true);
 
     for (int i = 0; i < pool->num_threads; i++) {
         pthread_join(pool->threads[i], NULL);
     }
 
-    pthread_mutex_destroy(&pool->queue_mutex);
-    pthread_cond_destroy(&pool->queue_cond);
+    // Cleanup CURL handles and headers
+    for (int i = 0; i < pool->num_threads; i++) {
+        curl_easy_cleanup(pool->curl_handles[i]);
+        curl_slist_free_all(pool->headers[i]);
+    }
 
+    free(pool->curl_handles);
+    free(pool->headers);
+    free(pool->queue);
+    free(pool->task_pool);
     free(pool->threads);
     free(pool);
 }
@@ -311,47 +400,49 @@ double calculate_percentile(double* sorted_array, int size, double percentile) {
 
 // Print statistics
 void print_stats(double elapsed_seconds, int num_orders) {
-    if (successful_orders == 0) {
+    int success_count = atomic_load(&successful_orders);
+
+    if (success_count == 0) {
         printf("No successful orders to analyze\n");
         return;
     }
 
     // Sort latencies for percentile calculation
-    qsort(latencies, successful_orders, sizeof(double), compare_double);
+    qsort(latencies, success_count, sizeof(double), compare_double);
 
-    printf("\n=== C Client Performance Stats ===\n");
-    printf("Total orders: %d\n", successful_orders);
+    printf("\n=== C Client Performance Stats (Optimized) ===\n");
+    printf("Total orders: %d\n", success_count);
 
     double min = latencies[0];
-    double max = latencies[successful_orders - 1];
+    double max = latencies[success_count - 1];
 
     double sum = 0;
-    for (int i = 0; i < successful_orders; i++) {
+    for (int i = 0; i < success_count; i++) {
         sum += latencies[i];
     }
-    double avg = sum / successful_orders;
+    double avg = sum / success_count;
 
     // Calculate standard deviation (sample std dev for better accuracy)
     double variance = 0;
     double std_dev = 0;
-    if (successful_orders > 1) {
-        for (int i = 0; i < successful_orders; i++) {
+    if (success_count > 1) {
+        for (int i = 0; i < success_count; i++) {
             variance += (latencies[i] - avg) * (latencies[i] - avg);
         }
-        std_dev = sqrt(variance / (successful_orders - 1));
+        std_dev = sqrt(variance / (success_count - 1));
     }
 
     printf("Min latency: %.2f ms\n", min);
     printf("Max latency: %.2f ms\n", max);
     printf("Avg latency: %.2f ms\n", avg);
-    printf("Median latency: %.2f ms\n", calculate_percentile(latencies, successful_orders, 50));
+    printf("Median latency: %.2f ms\n", calculate_percentile(latencies, success_count, 50));
     printf("Std dev: %.2f ms\n", std_dev);
 
     // Calculate percentiles
-    printf("P50: %.2f ms\n", calculate_percentile(latencies, successful_orders, 50));
-    printf("P90: %.2f ms\n", calculate_percentile(latencies, successful_orders, 90));
-    printf("P95: %.2f ms\n", calculate_percentile(latencies, successful_orders, 95));
-    printf("P99: %.2f ms\n", calculate_percentile(latencies, successful_orders, 99));
+    printf("P50: %.2f ms\n", calculate_percentile(latencies, success_count, 50));
+    printf("P90: %.2f ms\n", calculate_percentile(latencies, success_count, 90));
+    printf("P95: %.2f ms\n", calculate_percentile(latencies, success_count, 95));
+    printf("P99: %.2f ms\n", calculate_percentile(latencies, success_count, 99));
 }
 
 int main(int argc, char* argv[]) {
@@ -370,6 +461,7 @@ int main(int argc, char* argv[]) {
 
     const char* base_url = "http://localhost:8080";
 
+    printf("C Client (Optimized) - Lock-free queue, memory pool, CPU affinity\n");
     printf("Using %d concurrent connections\n", num_connections);
 
     // Initialize CURL globally
@@ -402,12 +494,22 @@ int main(int argc, char* argv[]) {
         printf("\nWarming up with %d orders...\n", warmup);
         OrderResult* warmup_results = malloc(warmup * sizeof(OrderResult));
 
+        atomic_store(&total_orders, 0);
+        atomic_store(&successful_orders, 0);
+
         for (int i = 0; i < warmup; i++) {
             thread_pool_add_task(pool, i, &order, &warmup_results[i]);
         }
 
-        thread_pool_wait(pool);
+        while (atomic_load(&total_orders) < warmup) {
+            usleep(1000);
+        }
+
         free(warmup_results);
+
+        // Reset counters after warmup
+        atomic_store(&total_orders, 0);
+        atomic_store(&successful_orders, 0);
     }
 
     printf("\nSending %d orders...\n", num_orders);
@@ -423,21 +525,18 @@ int main(int argc, char* argv[]) {
     }
 
     // Wait for all tasks to complete
-    thread_pool_wait(pool);
+    while (atomic_load(&total_orders) < num_orders) {
+        usleep(1000);
+    }
 
     double end_time = get_time_ms();
     double elapsed_seconds = (end_time - start_time) / 1000.0;
 
-    // Collect results
-    for (int i = 0; i < num_orders; i++) {
-        if (results[i].success) {
-            latencies[successful_orders++] = results[i].latency_ms;
-        }
-        total_orders++;
-    }
+    int final_total = atomic_load(&total_orders);
+    int final_successful = atomic_load(&successful_orders);
 
     printf("\nCompleted in %.2f seconds\n", elapsed_seconds);
-    printf("Successful: %d, Failed: %d\n", successful_orders, total_orders - successful_orders);
+    printf("Successful: %d, Failed: %d\n", final_successful, final_total - final_successful);
 
     if (elapsed_seconds > 0) {
         double throughput = num_orders / elapsed_seconds;

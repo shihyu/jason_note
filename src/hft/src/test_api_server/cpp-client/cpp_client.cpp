@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <numeric>
 #include <cmath>
+#include <cstring>
 #include <iomanip>
 #include <curl/curl.h>
 #include <sstream>
@@ -67,6 +68,7 @@ struct Order {
 thread_local CURL* tls_curl = nullptr;
 thread_local struct curl_slist* tls_headers = nullptr;
 thread_local std::string tls_response;
+thread_local char tls_json_buffer[1024];
 
 class ThreadPoolClient {
 private:
@@ -181,6 +183,9 @@ private:
             tls_headers = curl_slist_append(nullptr, "Content-Type: application/json");
             tls_headers = curl_slist_append(tls_headers, "Connection: keep-alive");
             curl_easy_setopt(tls_curl, CURLOPT_HTTPHEADER, tls_headers);
+
+            // Reserve space for response
+            tls_response.reserve(4096);
         }
 
         while (!stop_flag) {
@@ -218,29 +223,32 @@ private:
         // Reuse thread-local CURL handle
         if (!tls_curl) return;
 
-        // Build JSON (reuse thread-local string)
+        // Clear response buffer
         tls_response.clear();
 
-        std::string json_str;
-        json_str.reserve(512); // Pre-allocate to avoid reallocation
+        // Build JSON directly in thread-local buffer for better performance
+        std::string timestamp = get_iso_timestamp();
 
-        json_str = "{\"buy_sell\":\"" + enum_to_string(order.buy_sell) + "\",";
-        json_str += "\"symbol\":" + std::to_string(order.symbol) + ",";
-        json_str += "\"price\":" + std::to_string(order.price) + ",";
-        json_str += "\"quantity\":" + std::to_string(order.quantity) + ",";
-        json_str += "\"market_type\":\"" + enum_to_string(order.market_type) + "\",";
-        json_str += "\"price_type\":\"" + enum_to_string(order.price_type) + "\",";
-        json_str += "\"time_in_force\":\"" + enum_to_string(order.time_in_force) + "\",";
-        json_str += "\"order_type\":\"" + enum_to_string(order.order_type) + "\",";
-        json_str += "\"client_timestamp\":\"" + get_iso_timestamp() + "\"";
+        snprintf(tls_json_buffer, sizeof(tls_json_buffer),
+            "{\"buy_sell\":\"%s\",\"symbol\":%d,\"price\":%.2f,\"quantity\":%d,"
+            "\"market_type\":\"%s\",\"price_type\":\"%s\",\"time_in_force\":\"%s\","
+            "\"order_type\":\"%s\",\"client_timestamp\":\"%s\"%s%s%s}",
+            enum_to_string(order.buy_sell).c_str(),
+            order.symbol,
+            order.price,
+            order.quantity,
+            enum_to_string(order.market_type).c_str(),
+            enum_to_string(order.price_type).c_str(),
+            enum_to_string(order.time_in_force).c_str(),
+            enum_to_string(order.order_type).c_str(),
+            timestamp.c_str(),
+            order.user_def.empty() ? "" : ",\"user_def\":\"",
+            order.user_def.empty() ? "" : order.user_def.c_str(),
+            order.user_def.empty() ? "" : "\""
+        );
 
-        if (!order.user_def.empty()) {
-            json_str += ",\"user_def\":\"" + order.user_def + "\"";
-        }
-        json_str += "}";
-
-        curl_easy_setopt(tls_curl, CURLOPT_POSTFIELDS, json_str.c_str());
-        curl_easy_setopt(tls_curl, CURLOPT_POSTFIELDSIZE, json_str.length());
+        curl_easy_setopt(tls_curl, CURLOPT_POSTFIELDS, tls_json_buffer);
+        curl_easy_setopt(tls_curl, CURLOPT_POSTFIELDSIZE, strlen(tls_json_buffer));
 
         auto start_time = steady_clock::now();
         CURLcode res = curl_easy_perform(tls_curl);
@@ -264,6 +272,9 @@ public:
         : base_url(url) {
 
         curl_global_init(CURL_GLOBAL_ALL);
+
+        // Reserve space for latencies to avoid reallocation
+        latencies.reserve(10000);
 
         // Create worker threads
         for (int i = 0; i < num_threads; i++) {
@@ -316,7 +327,7 @@ public:
         double max_lat = latencies.back();
         double avg_lat = std::accumulate(latencies.begin(), latencies.end(), 0.0) / latencies.size();
 
-        std::cout << "\n=== C++ Stable Client Performance ===\n";
+        std::cout << "\n=== C++ Client Performance (Optimized) ===\n";
         std::cout << "Total orders: " << latencies.size() << "\n";
         std::cout << std::fixed << std::setprecision(3);
         std::cout << "Min latency: " << min_lat << " ms\n";
@@ -364,7 +375,8 @@ void run_test(int num_orders = 1000, int num_threads = 10, int warmup = 100) {
         client.get_latencies().clear(); // Clear warmup results
     }
 
-    std::cout << "\nSending " << num_orders << " orders with " << num_threads << " threads...\n";
+    std::cout << "\nC++ Client (Optimized) - Thread-local CURL, pre-allocated buffers\n";
+    std::cout << "Sending " << num_orders << " orders with " << num_threads << " threads...\n";
 
     auto start_time = steady_clock::now();
 

@@ -8,8 +8,9 @@ use serde::{Deserialize, Serialize};
 use statrs::statistics::{Data, Distribution, OrderStatistics};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use tokio::sync::Mutex;
+use parking_lot::Mutex;
 use bytes::Bytes;
+use crossbeam::channel::{bounded, Sender, Receiver};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -118,7 +119,7 @@ impl OptimizedOrderClient {
         let https = HttpsConnector::new();
         let client = Client::builder()
             .pool_idle_timeout(Duration::from_secs(90))
-            .pool_max_idle_per_host(num_connections)
+            .pool_max_idle_per_host(num_connections * 2)
             .http2_initial_stream_window_size(65536)
             .http2_initial_connection_window_size(65536)
             .http2_adaptive_window(true)
@@ -127,10 +128,14 @@ impl OptimizedOrderClient {
             .set_host(false)
             .build(https);
 
+        // Pre-allocate space for latencies
+        let mut latencies_vec = Vec::with_capacity(10000);
+        latencies_vec.reserve_exact(10000);
+
         Self {
             client,
             base_url: base_url.to_string(),
-            latencies: Arc::new(Mutex::new(Vec::new())),
+            latencies: Arc::new(Mutex::new(latencies_vec)),
         }
     }
 
@@ -168,7 +173,7 @@ impl OptimizedOrderClient {
             let body_bytes = hyper::body::to_bytes(res.into_body()).await?;
             let order_response: OrderResponse = serde_json::from_slice(&body_bytes)?;
 
-            let mut latencies = self.latencies.lock().await;
+            let mut latencies = self.latencies.lock();
             latencies.push(round_trip_ms);
 
             Ok(OrderResult {
@@ -231,11 +236,11 @@ impl OptimizedOrderClient {
             .collect::<Vec<_>>()
             .await;
 
-        self.latencies.lock().await.clear();
+        self.latencies.lock().clear();
     }
 
     async fn print_stats(&self, elapsed_seconds: f64, num_orders: usize) {
-        let latencies = self.latencies.lock().await;
+        let latencies = self.latencies.lock();
 
         if latencies.is_empty() {
             println!("No successful orders to analyze");
@@ -257,7 +262,8 @@ impl OptimizedOrderClient {
         let p95 = data.percentile(95);
         let p99 = data.percentile(99);
 
-        println!("\n=== Optimized Rust Client Performance ===");
+        println!("\n=== Rust Client Performance (Optimized) ===");
+        println!("Using crossbeam channels, parking_lot mutex, pre-allocated buffers");
         println!("Total orders: {}", latencies.len());
         println!("Min latency: {:.3} ms", min);
         println!("Max latency: {:.3} ms", max);
@@ -296,7 +302,7 @@ struct Args {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    println!("Optimized Rust Client - Starting test with {} orders", args.orders);
+    println!("Rust Client (Optimized) - Starting test with {} orders", args.orders);
     println!("Using {} concurrent connections", args.connections);
     println!("Server: {}", args.server);
 
