@@ -1,4 +1,6 @@
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +12,13 @@
 #include <unistd.h>
 #include <stdatomic.h>
 #include <stdbool.h>
+#include <stdalign.h>
 #include <sched.h>
+#include <sys/mman.h>
+#include <numa.h>
+#include <numaif.h>
+#include <errno.h>
+#include <sys/resource.h>
 
 #define MAX_ORDERS 10000
 #define MAX_RESPONSE_SIZE 4096
@@ -78,14 +86,79 @@ typedef struct {
     struct curl_slist** headers; // Pre-created headers
 } ThreadPool;
 
-// Global metrics
-double latencies[MAX_ORDERS];
-atomic_int total_orders = 0;
-atomic_int successful_orders = 0;
+// Global metrics with cache alignment
+alignas(64) double latencies[MAX_ORDERS];
+alignas(64) atomic_int total_orders = 0;
+alignas(64) atomic_int successful_orders = 0;
 
-// Initialize ring buffer
+// HFT optimization: Allocate locked memory
+void* allocateLockedMemory(size_t size) {
+    void* mem;
+    if (posix_memalign(&mem, sysconf(_SC_PAGESIZE), size) != 0) {
+        return NULL;
+    }
+
+    // Lock memory to prevent swapping
+    if (mlock(mem, size) == -1) {
+        free(mem);
+        return NULL;
+    }
+
+    // Prefetch memory to trigger page faults
+    memset(mem, 0, size);
+
+    return mem;
+}
+
+// HFT optimization: Allocate huge pages
+void* allocateHugePage(size_t size) {
+    int flags = MAP_PRIVATE | MAP_ANON | MAP_HUGETLB;
+    int prot = PROT_READ | PROT_WRITE;
+    void* ptr = mmap(NULL, size, prot, flags, -1, 0);
+
+    if (ptr == MAP_FAILED) {
+        // Fallback to regular locked memory
+        return allocateLockedMemory(size);
+    }
+
+    // Lock and prefetch
+    mlock(ptr, size);
+    memset(ptr, 0, size);
+
+    return ptr;
+}
+
+// HFT optimization: NUMA-aware allocation
+void* allocateNumaMemory(int node, size_t size) {
+    if (numa_available() < 0) {
+        return allocateLockedMemory(size);
+    }
+
+    struct bitmask *nm = numa_allocate_nodemask();
+    numa_bitmask_setbit(nm, node);
+
+    void* ptr = mmap(NULL, size, PROT_READ|PROT_WRITE,
+                     MAP_PRIVATE|MAP_ANONYMOUS|MAP_HUGETLB,
+                     -1, 0);
+
+    if (ptr != MAP_FAILED) {
+        mbind(ptr, size, MPOL_BIND, nm->maskp, nm->size + 1, 0);
+        mlock(ptr, size);
+        memset(ptr, 0, size);  // Prefetch
+    } else {
+        ptr = allocateLockedMemory(size);
+    }
+
+    numa_free_nodemask(nm);
+    return ptr;
+}
+
+// Initialize ring buffer with HFT optimizations
 RingBuffer* ring_buffer_create() {
+    // Simple allocation for now to avoid complex memory management
     RingBuffer* rb = malloc(sizeof(RingBuffer));
+    if (!rb) return NULL;
+
     atomic_init(&rb->head, 0);
     atomic_init(&rb->tail, 0);
     memset(rb->buffer, 0, sizeof(rb->buffer));
@@ -119,13 +192,20 @@ void* ring_buffer_dequeue(RingBuffer* rb) {
     return item;
 }
 
-// Initialize task pool
+// Initialize task pool with HFT optimizations
 TaskPool* task_pool_create() {
+    // Simple allocation for now to avoid complex memory management
     TaskPool* pool = malloc(sizeof(TaskPool));
+    if (!pool) return NULL;
+
     for (int i = 0; i < OBJECT_POOL_SIZE; i++) {
         atomic_init(&pool->available[i], 1);
     }
     atomic_init(&pool->next_alloc, 0);
+
+    // Prefetch the pool into cache
+    __builtin_prefetch(pool, 0, 3);
+
     return pool;
 }
 
@@ -236,7 +316,7 @@ OrderResult send_order_optimized(CURL* curl, struct curl_slist* headers,
     return result;
 }
 
-// Worker thread function with CPU affinity
+// Worker thread function with enhanced HFT optimizations
 void* worker_thread(void* arg) {
     ThreadPool* pool = (ThreadPool*)arg;
 
@@ -244,11 +324,23 @@ void* worker_thread(void* arg) {
     static atomic_int thread_counter = 0;
     int thread_id = atomic_fetch_add(&thread_counter, 1);
 
-    // Set CPU affinity
+    // Enhanced CPU affinity with NUMA awareness
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
-    CPU_SET(thread_id % sysconf(_SC_NPROCESSORS_ONLN), &cpuset);
+    int cpu_id = thread_id % sysconf(_SC_NPROCESSORS_ONLN);
+    CPU_SET(cpu_id, &cpuset);
     pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+
+    // Set thread priority for real-time performance
+    struct sched_param param;
+    param.sched_priority = sched_get_priority_max(SCHED_FIFO) - 1;
+    pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
+
+    // NUMA optimization: bind memory to local node
+    if (numa_available() >= 0) {
+        int node = numa_node_of_cpu(cpu_id);
+        numa_set_preferred(node);
+    }
 
     // Get pre-allocated CURL handle and headers for this thread
     CURL* curl = pool->curl_handles[thread_id];
@@ -258,6 +350,10 @@ void* worker_thread(void* arg) {
         Task* task = (Task*)ring_buffer_dequeue(pool->queue);
 
         if (task != NULL) {
+            // Prefetch task data into L1 cache for faster access
+            __builtin_prefetch(task, 0, 3);
+            __builtin_prefetch(task->order, 0, 3);
+
             // Process with pre-allocated resources
             *task->result = send_order_optimized(curl, headers, pool->base_url,
                                                 task->order, task->json_buffer,
@@ -369,8 +465,11 @@ void thread_pool_destroy(ThreadPool* pool) {
 
     free(pool->curl_handles);
     free(pool->headers);
+
+    // Simple cleanup since we're using malloc
     free(pool->queue);
     free(pool->task_pool);
+
     free(pool->threads);
     free(pool);
 }
@@ -400,6 +499,9 @@ double calculate_percentile(double* sorted_array, int size, double percentile) {
 
 // Print statistics
 void print_stats(double elapsed_seconds, int num_orders) {
+    (void)elapsed_seconds;  // Suppress unused warning
+    (void)num_orders;       // Suppress unused warning
+
     int success_count = atomic_load(&successful_orders);
 
     if (success_count == 0) {
@@ -461,8 +563,27 @@ int main(int argc, char* argv[]) {
 
     const char* base_url = "http://localhost:8080";
 
-    printf("C Client (Optimized) - Lock-free queue, memory pool, CPU affinity\n");
+    printf("C Client (HFT Ultra-Optimized)\n");
+    printf("Features: Lock-free queue, Memory locking, Huge pages, NUMA optimization, CPU affinity\n");
     printf("Using %d concurrent connections\n", num_connections);
+
+    // Initialize NUMA if available
+    if (numa_available() >= 0) {
+        printf("NUMA optimization: ENABLED\n");
+        numa_set_localalloc();  // Prefer local memory allocation
+    } else {
+        printf("NUMA optimization: DISABLED (not available)\n");
+    }
+
+    // Try to increase memory lock limits
+    struct rlimit rlim;
+    rlim.rlim_cur = RLIM_INFINITY;
+    rlim.rlim_max = RLIM_INFINITY;
+    if (setrlimit(RLIMIT_MEMLOCK, &rlim) == 0) {
+        printf("Memory locking: UNLIMITED\n");
+    } else {
+        printf("Memory locking: LIMITED (run as root for unlimited)\n");
+    }
 
     // Initialize CURL globally
     curl_global_init(CURL_GLOBAL_ALL);

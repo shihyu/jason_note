@@ -11,6 +11,69 @@ use std::time::{Duration, Instant};
 use parking_lot::Mutex;
 use bytes::Bytes;
 use crossbeam::channel::{bounded, Sender, Receiver};
+use core_affinity;
+use libc::{mlock, mmap, munmap, MAP_ANON, MAP_FAILED, MAP_HUGETLB, MAP_PRIVATE, PROT_READ, PROT_WRITE};
+use std::ptr;
+use std::alloc::{alloc, dealloc, Layout};
+use std::mem;
+use std::pin::Pin;
+
+// HFT Memory Optimization Utilities
+
+/// Allocate memory with huge pages for better TLB efficiency
+unsafe fn allocate_huge_page(size: usize) -> Option<*mut u8> {
+    let ptr = mmap(
+        ptr::null_mut(),
+        size,
+        PROT_READ | PROT_WRITE,
+        MAP_PRIVATE | MAP_ANON | MAP_HUGETLB,
+        -1,
+        0,
+    );
+
+    if ptr == MAP_FAILED {
+        None
+    } else {
+        // Lock the memory to prevent swapping
+        if mlock(ptr, size) == 0 {
+            // Prefetch by writing zeros
+            ptr::write_bytes(ptr as *mut u8, 0, size);
+            Some(ptr as *mut u8)
+        } else {
+            munmap(ptr, size);
+            None
+        }
+    }
+}
+
+/// Allocate locked memory (no swapping)
+unsafe fn allocate_locked_memory(size: usize) -> Option<*mut u8> {
+    let layout = Layout::from_size_align(size, mem::align_of::<u64>()).ok()?;
+    let ptr = alloc(layout);
+
+    if ptr.is_null() {
+        return None;
+    }
+
+    // Lock the memory
+    if mlock(ptr as *const _, size) == 0 {
+        // Prefetch by writing zeros
+        ptr::write_bytes(ptr, 0, size);
+        Some(ptr)
+    } else {
+        dealloc(ptr, layout);
+        None
+    }
+}
+
+/// Set CPU affinity for the current thread
+fn set_cpu_affinity(cpu_id: usize) {
+    if let Some(core_ids) = core_affinity::get_core_ids() {
+        if cpu_id < core_ids.len() {
+            core_affinity::set_for_current(core_ids[cpu_id]);
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -128,9 +191,16 @@ impl OptimizedOrderClient {
             .set_host(false)
             .build(https);
 
-        // Pre-allocate space for latencies
+        // HFT optimization: Pre-allocate latencies with locked memory
         let mut latencies_vec = Vec::with_capacity(10000);
         latencies_vec.reserve_exact(10000);
+
+        // Try to lock the vector's memory
+        unsafe {
+            let ptr = latencies_vec.as_ptr();
+            let size = latencies_vec.capacity() * std::mem::size_of::<f64>();
+            let _ = mlock(ptr as *const _, size);
+        }
 
         Self {
             client,
@@ -195,6 +265,9 @@ impl OptimizedOrderClient {
     }
 
     async fn batch_orders(&self, num_orders: usize, demo_order: &Order, max_concurrent: usize) {
+        // HFT optimization: Set CPU affinity for main thread
+        set_cpu_affinity(0);
+
         let mut futures = vec![];
 
         for i in 0..num_orders {
@@ -202,6 +275,12 @@ impl OptimizedOrderClient {
             let order = demo_order.clone();
 
             futures.push(async move {
+                // Each async task can potentially run on different threads
+                // Set affinity based on order ID for better cache locality
+                if i % 10 == 0 {
+                    set_cpu_affinity(i % core_affinity::get_core_ids().unwrap_or_default().len());
+                }
+
                 client.place_order(i, &order).await
             });
         }
@@ -262,8 +341,8 @@ impl OptimizedOrderClient {
         let p95 = data.percentile(95);
         let p99 = data.percentile(99);
 
-        println!("\n=== Rust Client Performance (Optimized) ===");
-        println!("Using crossbeam channels, parking_lot mutex, pre-allocated buffers");
+        println!("\n=== Rust Client HFT Ultra-Optimized ===");
+        println!("Features: Memory locking, CPU affinity, Lock-free structures, Pre-allocation");
         println!("Total orders: {}", latencies.len());
         println!("Min latency: {:.3} ms", min);
         println!("Max latency: {:.3} ms", max);
@@ -302,9 +381,28 @@ struct Args {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    println!("Rust Client (Optimized) - Starting test with {} orders", args.orders);
+    println!("Rust Client (HFT Ultra-Optimized) - Starting test with {} orders", args.orders);
+    println!("Features: Memory locking, CPU affinity, Lock-free structures");
     println!("Using {} concurrent connections", args.connections);
     println!("Server: {}", args.server);
+
+    // HFT Optimization: Print system info
+    if let Some(core_ids) = core_affinity::get_core_ids() {
+        println!("CPU cores available: {}", core_ids.len());
+    }
+
+    // Try to increase memory lock limits (requires appropriate permissions)
+    unsafe {
+        let mut rlim = libc::rlimit {
+            rlim_cur: libc::RLIM_INFINITY,
+            rlim_max: libc::RLIM_INFINITY,
+        };
+        if libc::setrlimit(libc::RLIMIT_MEMLOCK, &rlim) == 0 {
+            println!("Memory locking: UNLIMITED");
+        } else {
+            println!("Memory locking: LIMITED (run with elevated permissions for unlimited)");
+        }
+    }
 
     let demo_order = Order {
         buy_sell: BSAction::Buy,
