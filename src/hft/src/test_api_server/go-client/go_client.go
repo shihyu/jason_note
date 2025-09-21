@@ -1,5 +1,4 @@
-// HFT-optimized Go client with advanced optimizations
-// Features: CPU affinity, memory pre-allocation, optimized GC, lock-free structures
+// HFT-optimized Go client
 package main
 
 import (
@@ -17,100 +16,76 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
-	"unsafe"
 
 	"golang.org/x/sys/unix"
 )
 
-// Cache line size for padding
-const CacheLineSize = 64
-
-// CachePadded wraps a value with cache line padding
-type CachePadded struct {
-	Value int64
-	_     [CacheLineSize - 8]byte // int64 is 8 bytes
-}
-
-// OrderRequest with optimized field ordering (largest to smallest)
+// OrderRequest structure
 type OrderRequest struct {
-	Price           float64 `json:"price"`
-	ClientTimestamp string  `json:"client_timestamp"`
 	BuySell         string  `json:"buy_sell"`
+	Symbol          int     `json:"symbol"`
+	Price           float64 `json:"price"`
+	Quantity        int     `json:"quantity"`
 	MarketType      string  `json:"market_type"`
 	PriceType       string  `json:"price_type"`
 	TimeInForce     string  `json:"time_in_force"`
 	OrderType       string  `json:"order_type"`
-	UserDef         string  `json:"user_def,omitempty"`
-	Symbol          int     `json:"symbol"`
-	Quantity        int     `json:"quantity"`
+	ClientTimestamp string  `json:"client_timestamp"`
 }
 
 type OrderResponse struct {
-	LatencyMs       float64 `json:"latency_ms"`
-	Price           float64 `json:"price"`
-	ServerTimestamp string  `json:"server_timestamp"`
-	ClientTimestamp string  `json:"client_timestamp"`
-	BuySell         string  `json:"buy_sell"`
-	Status          string  `json:"status"`
 	Symbol          int     `json:"symbol"`
+	BuySell         string  `json:"buy_sell"`
 	Quantity        int     `json:"quantity"`
+	Price           float64 `json:"price"`
+	Status          string  `json:"status"`
+	ClientTimestamp string  `json:"client_timestamp"`
+	ServerTimestamp string  `json:"server_timestamp"`
+	LatencyMs       float64 `json:"latency_ms"`
 }
 
-// Task represents a work unit with pre-allocated buffers
+// Task represents a work unit
 type Task struct {
-	OrderID       int
-	Order         *OrderRequest
-	JSONBuffer    []byte
-	Result        chan float64
-	ResponseBytes []byte
+	OrderID int
+	Order   *OrderRequest
+	Result  chan float64
 }
 
-// Lock-free task pool using sync.Pool
-var taskPool = sync.Pool{
-	New: func() interface{} {
-		return &Task{
-			JSONBuffer:    make([]byte, 0, 1024),
-			Result:        make(chan float64, 1),
-			ResponseBytes: make([]byte, 0, 4096),
-		}
-	},
-}
-
-// HFTClient with optimizations
+// HFTClient structure
 type HFTClient struct {
-	client          *http.Client
-	serverURL       string
-	successCount    atomic.Int64
-	errorCount      atomic.Int64
-	latencies       []float64
-	latenciesMu     sync.Mutex
-	workerPool      chan chan *Task
-	taskQueue       chan *Task
-	bufferPool      *sync.Pool
-	preAllocatedReq []*OrderRequest
+	client       *http.Client
+	serverURL    string
+	successCount atomic.Int64
+	errorCount   atomic.Int64
+	latencies    []float64
+	latenciesMu  sync.Mutex
+	workerPool   chan chan *Task
+	taskQueue    chan *Task
 }
 
 // NewHFTClient creates an optimized client
 func NewHFTClient(serverURL string, maxConnections int, numWorkers int) *HFTClient {
-	// Set CPU affinity for main thread
+	// Set CPU affinity
 	setCPUAffinity(0)
 
 	// Optimize GC for low latency
-	debug.SetGCPercent(100)        // Default is 100, lower = more frequent GC
-	debug.SetMemoryLimit(1 << 30)  // 1GB memory limit
+	debug.SetGCPercent(100)
 
-	// Create custom transport with optimized settings
+	// Lock memory
+	unix.Mlockall(unix.MCL_CURRENT | unix.MCL_FUTURE)
+
+	// Create transport with HFT optimizations
 	transport := &http.Transport{
 		MaxIdleConns:        maxConnections * 2,
 		MaxConnsPerHost:     maxConnections,
 		MaxIdleConnsPerHost: maxConnections,
 		IdleConnTimeout:     90 * time.Second,
 		DisableCompression:  true,
-		ForceAttemptHTTP2:   false, // Disable HTTP/2 for lower latency
+		ForceAttemptHTTP2:   false,
 		DialContext: (&net.Dialer{
 			Timeout:   5 * time.Second,
 			KeepAlive: 30 * time.Second,
-			DualStack: false, // Disable IPv6 for simplicity
+			DualStack: false,
 		}).DialContext,
 	}
 
@@ -120,30 +95,9 @@ func NewHFTClient(serverURL string, maxConnections int, numWorkers int) *HFTClie
 			Timeout:   30 * time.Second,
 		},
 		serverURL:  serverURL,
-		latencies:  make([]float64, 0, 10000),
+		latencies:  make([]float64, 0, 50000),
 		workerPool: make(chan chan *Task, numWorkers),
 		taskQueue:  make(chan *Task, 10000),
-		bufferPool: &sync.Pool{
-			New: func() interface{} {
-				return make([]byte, 4096)
-			},
-		},
-	}
-
-	// Pre-allocate order requests
-	client.preAllocatedReq = make([]*OrderRequest, 10000)
-	for i := range client.preAllocatedReq {
-		client.preAllocatedReq[i] = &OrderRequest{
-			BuySell:     "buy",
-			Symbol:      2881,
-			Price:       66.0,
-			Quantity:    2000,
-			MarketType:  "common",
-			PriceType:   "limit",
-			TimeInForce: "rod",
-			OrderType:   "stock",
-			UserDef:     fmt.Sprintf("GO_HFT_%06d", i),
-		}
 	}
 
 	// Start worker goroutines
@@ -160,34 +114,19 @@ func NewHFTClient(serverURL string, maxConnections int, numWorkers int) *HFTClie
 
 // Worker represents a worker goroutine
 type Worker struct {
-	ID         int
-	client     *HFTClient
-	taskChan   chan *Task
-	quit       chan bool
-	httpClient *http.Client
+	ID       int
+	client   *HFTClient
+	taskChan chan *Task
+	quit     chan bool
 }
 
 // NewWorker creates a new worker
 func NewWorker(id int, client *HFTClient) *Worker {
-	// Create dedicated HTTP client for this worker
-	transport := &http.Transport{
-		MaxIdleConns:        10,
-		MaxConnsPerHost:     10,
-		MaxIdleConnsPerHost: 10,
-		IdleConnTimeout:     90 * time.Second,
-		DisableCompression:  true,
-		ForceAttemptHTTP2:   false,
-	}
-
 	return &Worker{
 		ID:       id,
 		client:   client,
 		taskChan: make(chan *Task),
 		quit:     make(chan bool),
-		httpClient: &http.Client{
-			Transport: transport,
-			Timeout:   30 * time.Second,
-		},
 	}
 }
 
@@ -215,21 +154,14 @@ func (w *Worker) Start() {
 	}()
 }
 
-// processOrder handles a single order with optimizations
+// processOrder handles a single order
 func (w *Worker) processOrder(task *Task) {
-	defer func() {
-		// Return task to pool
-		taskPool.Put(task)
-	}()
-
 	// Update timestamp
 	task.Order.ClientTimestamp = time.Now().UTC().Format(time.RFC3339Nano)
 
-	// Reuse buffer for JSON encoding
-	task.JSONBuffer = task.JSONBuffer[:0]
-	jsonBuf := bytes.NewBuffer(task.JSONBuffer)
-	encoder := json.NewEncoder(jsonBuf)
-	if err := encoder.Encode(task.Order); err != nil {
+	// Encode JSON
+	jsonData, err := json.Marshal(task.Order)
+	if err != nil {
 		w.client.errorCount.Add(1)
 		task.Result <- -1
 		return
@@ -237,8 +169,8 @@ func (w *Worker) processOrder(task *Task) {
 
 	startTime := time.Now()
 
-	// Create request with pre-allocated buffer
-	req, err := http.NewRequest("POST", w.client.serverURL+"/order", jsonBuf)
+	// Create request
+	req, err := http.NewRequest("POST", w.client.serverURL+"/order", bytes.NewBuffer(jsonData))
 	if err != nil {
 		w.client.errorCount.Add(1)
 		task.Result <- -1
@@ -248,7 +180,7 @@ func (w *Worker) processOrder(task *Task) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Connection", "keep-alive")
 
-	resp, err := w.httpClient.Do(req)
+	resp, err := w.client.client.Do(req)
 	if err != nil {
 		w.client.errorCount.Add(1)
 		task.Result <- -1
@@ -281,15 +213,9 @@ func (c *HFTClient) dispatch() {
 
 // submitOrder submits an order using the worker pool
 func (c *HFTClient) submitOrder(orderID int) <-chan float64 {
-	// Get task from pool
-	task := taskPool.Get().(*Task)
-	task.OrderID = orderID
-
-	// Use pre-allocated order if available
-	if orderID < len(c.preAllocatedReq) {
-		task.Order = c.preAllocatedReq[orderID]
-	} else {
-		task.Order = &OrderRequest{
+	task := &Task{
+		OrderID: orderID,
+		Order: &OrderRequest{
 			BuySell:     "buy",
 			Symbol:      2881,
 			Price:       66.0,
@@ -298,8 +224,8 @@ func (c *HFTClient) submitOrder(orderID int) <-chan float64 {
 			PriceType:   "limit",
 			TimeInForce: "rod",
 			OrderType:   "stock",
-			UserDef:     fmt.Sprintf("GO_HFT_%06d", orderID),
-		}
+		},
+		Result: make(chan float64, 1),
 	}
 
 	// Submit to queue
@@ -372,8 +298,8 @@ func (c *HFTClient) printStats(totalTime float64, totalOrders int) {
 	success := c.successCount.Load()
 	errors := c.errorCount.Load()
 
-	fmt.Printf("\n=== HFT-Optimized Go Client Results ===\n")
-	fmt.Printf("Features: CPU affinity, Memory locking, Huge pages, NUMA, Worker pool, Lock-free\n")
+	fmt.Printf("\n=== Go Client HFT Optimized ===\n")
+	fmt.Printf("Features: CPU affinity, Memory locking, Worker pool\n")
 	fmt.Printf("Total orders: %d\n", totalOrders)
 	fmt.Printf("Successful: %d\n", success)
 	fmt.Printf("Errors: %d\n", errors)
@@ -462,54 +388,6 @@ func setCPUAffinity(cpuID int) {
 }
 
 // setRealtimePriority attempts to set real-time scheduling priority
-func setRealtimePriority() {
-	// Try to set SCHED_FIFO with priority 1 (lowest real-time priority)
-	// This requires root privileges
-	pid := syscall.Getpid()
-	attr := unix.SchedAttr{
-		Size:     uint32(unsafe.Sizeof(unix.SchedAttr{})),
-		Policy:   unix.SCHED_FIFO,
-		Priority: 1,
-	}
-	err := unix.SchedSetAttr(pid, &attr, 0)
-	if err == nil {
-		fmt.Println("Real-time priority: SCHED_FIFO")
-	}
-}
-
-// Memory locking functions
-func lockMemory() {
-	// Try to lock all current and future memory pages
-	err := unix.Mlockall(unix.MCL_CURRENT | unix.MCL_FUTURE)
-	if err == nil {
-		fmt.Println("Memory locking: ENABLED")
-	} else {
-		fmt.Println("Memory locking: DISABLED (requires root)")
-	}
-}
-
-// Enable huge pages (requires kernel support)
-func enableHugePages() {
-	// Try to advise kernel to use huge pages for heap
-	// This is a best-effort optimization
-	err := unix.Madvise(make([]byte, 1<<20), unix.MADV_HUGEPAGE)
-	if err == nil {
-		fmt.Println("Huge pages: ENABLED")
-	} else {
-		fmt.Println("Huge pages: DISABLED")
-	}
-}
-
-// NUMA optimization - bind to specific NUMA node
-func setNumaAffinity(node int) {
-	// NUMA optimization would require CGO and libnuma
-	// For pure Go, we can at least set CPU affinity to CPUs on the desired NUMA node
-	// This is a simplified implementation
-	fmt.Printf("NUMA optimization: Binding to node %d (simplified)\n", node)
-	// In practice, you would determine which CPUs belong to the NUMA node
-	// and bind to those CPUs
-}
-
 func main() {
 	var (
 		orders      = flag.Int("orders", 1000, "Total number of orders")
@@ -517,7 +395,6 @@ func main() {
 		warmup      = flag.Int("warmup", 100, "Number of warmup orders")
 		serverURL   = flag.String("server", "http://127.0.0.1:8080", "Server URL")
 		workers     = flag.Int("workers", 0, "Number of worker goroutines (0 = auto)")
-		numaNode    = flag.Int("numa", 0, "NUMA node to bind to")
 	)
 	flag.Parse()
 
@@ -537,18 +414,12 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Go HFT-Optimized Client (Full HFT)\n")
-	fmt.Printf("Features: CPU affinity, Memory locking, Huge pages, NUMA, Lock-free\n")
+	fmt.Printf("Go HFT Optimized Client\n")
 	fmt.Printf("CPU cores: %d, Worker threads: %d\n", runtime.NumCPU(), numWorkers)
 
 	// Set GOMAXPROCS to use all CPUs
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	// HFT optimizations
-	lockMemory()         // Lock memory to prevent swapping
-	enableHugePages()    // Enable huge pages for TLB efficiency
-	setNumaAffinity(*numaNode) // Bind to NUMA node
-	setRealtimePriority() // Try to set real-time priority
 
 	// Optimize GC
 	debug.SetGCPercent(50) // More aggressive GC for lower latency

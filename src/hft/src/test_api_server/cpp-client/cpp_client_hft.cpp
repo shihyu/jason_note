@@ -1,8 +1,5 @@
-// HFT Ultra-optimized C++ client with complete optimizations
-// Features: Memory locking, Huge pages, NUMA, CPU affinity, Lock-free, Cache alignment
-#ifndef _GNU_SOURCE
+// HFT-optimized C++ client
 #define _GNU_SOURCE
-#endif
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -12,98 +9,47 @@
 #include <pthread.h>
 #include <sys/time.h>
 #include <sys/mman.h>
-#include <sys/resource.h>
 #include <unistd.h>
 #include <atomic>
 #include <algorithm>
-#include <new>
-#include <numa.h>
-#include <numaif.h>
-#include <errno.h>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
 #include <sched.h>
-#include <immintrin.h>  // For prefetch instructions
 
-#define MAX_ORDERS 10000
+#define MAX_ORDERS 50000
 #define MAX_WORKERS 20
-#define CACHE_LINE_SIZE 64
-#define RING_BUFFER_SIZE 4096
 
-// Cache-aligned atomic counter
-struct alignas(CACHE_LINE_SIZE) AlignedCounter {
-    std::atomic<size_t> value{0};
-    char padding[CACHE_LINE_SIZE - sizeof(std::atomic<size_t>)];
-};
-
-// Lock-free MPMC ring buffer with cache alignment
+// Simple concurrent queue with mutex
 template<typename T>
-class alignas(CACHE_LINE_SIZE) LockFreeRingBuffer {
+class ConcurrentQueue {
 private:
-    static constexpr size_t BUFFER_SIZE = RING_BUFFER_SIZE;
-
-    struct alignas(CACHE_LINE_SIZE) Slot {
-        std::atomic<T> data;
-        std::atomic<size_t> sequence;
-        char padding[CACHE_LINE_SIZE - sizeof(std::atomic<T>) - sizeof(std::atomic<size_t>)];
-    };
-
-    alignas(CACHE_LINE_SIZE) Slot buffer[BUFFER_SIZE];
-    alignas(CACHE_LINE_SIZE) AlignedCounter head;
-    alignas(CACHE_LINE_SIZE) AlignedCounter tail;
+    std::queue<T> queue;
+    mutable std::mutex mutex;
+    std::condition_variable cv;
 
 public:
-    LockFreeRingBuffer() {
-        for (size_t i = 0; i < BUFFER_SIZE; ++i) {
-            buffer[i].sequence.store(i, std::memory_order_relaxed);
-        }
+    void push(T item) {
+        std::lock_guard<std::mutex> lock(mutex);
+        queue.push(item);
+        cv.notify_one();
     }
 
-    bool enqueue(T item) {
-        size_t current_tail = tail.value.load(std::memory_order_relaxed);
-
-        for (;;) {
-            Slot& slot = buffer[current_tail % BUFFER_SIZE];
-            size_t seq = slot.sequence.load(std::memory_order_acquire);
-
-            if (seq == current_tail) {
-                if (tail.value.compare_exchange_weak(current_tail, current_tail + 1,
-                                                     std::memory_order_relaxed)) {
-                    slot.data.store(item, std::memory_order_relaxed);
-                    slot.sequence.store(current_tail + 1, std::memory_order_release);
-                    return true;
-                }
-            } else if (seq < current_tail) {
-                return false;  // Queue is full
-            } else {
-                current_tail = tail.value.load(std::memory_order_relaxed);
-            }
+    bool pop(T& item) {
+        std::unique_lock<std::mutex> lock(mutex);
+        cv.wait_for(lock, std::chrono::microseconds(100),
+                    [this] { return !queue.empty(); });
+        if (queue.empty()) {
+            return false;
         }
-    }
-
-    bool dequeue(T& item) {
-        size_t current_head = head.value.load(std::memory_order_relaxed);
-
-        for (;;) {
-            Slot& slot = buffer[current_head % BUFFER_SIZE];
-            size_t seq = slot.sequence.load(std::memory_order_acquire);
-
-            if (seq == current_head + 1) {
-                if (head.value.compare_exchange_weak(current_head, current_head + 1,
-                                                     std::memory_order_relaxed)) {
-                    item = slot.data.load(std::memory_order_relaxed);
-                    slot.sequence.store(current_head + BUFFER_SIZE, std::memory_order_release);
-                    return true;
-                }
-            } else if (seq < current_head + 1) {
-                return false;  // Queue is empty
-            } else {
-                current_head = head.value.load(std::memory_order_relaxed);
-            }
-        }
+        item = queue.front();
+        queue.pop();
+        return true;
     }
 };
 
-// Cache-aligned order structure
-struct alignas(CACHE_LINE_SIZE) Order {
+// Core data structures
+struct Order {
     const char* buy_sell;
     int symbol;
     double price;
@@ -112,137 +58,41 @@ struct alignas(CACHE_LINE_SIZE) Order {
     const char* price_type;
     const char* time_in_force;
     const char* order_type;
-    const char* user_def;
 };
 
-// Cache-aligned result structure
-struct alignas(CACHE_LINE_SIZE) OrderResult {
+struct OrderResult {
     double latency_ms;
     int success;
 };
 
-// Cache-aligned task structure
-struct alignas(CACHE_LINE_SIZE) Task {
+struct Task {
     int order_id;
     const Order* order;
     OrderResult* result;
-    char json_buffer[1024];
-    char response_buffer[4096];
-    size_t response_size;
 };
 
-// Memory management utilities
-class HFTMemoryManager {
-private:
-    static void* locked_memory;
-    static size_t locked_size;
 
-public:
-    // Allocate locked memory (prevent swapping)
-    static void* allocateLockedMemory(size_t size) {
-        void* mem;
-        if (posix_memalign(&mem, sysconf(_SC_PAGESIZE), size) != 0) {
-            return nullptr;
-        }
-
-        // Lock memory to prevent swapping
-        if (mlock(mem, size) == -1) {
-            free(mem);
-            return nullptr;
-        }
-
-        // Prefetch memory to trigger page faults
-        memset(mem, 0, size);
-        return mem;
-    }
-
-    // Allocate huge pages for better TLB efficiency
-    static void* allocateHugePage(size_t size) {
-        void* ptr = mmap(nullptr, size,
-                        PROT_READ | PROT_WRITE,
-                        MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB,
-                        -1, 0);
-
-        if (ptr == MAP_FAILED) {
-            // Fallback to regular locked memory
-            return allocateLockedMemory(size);
-        }
-
-        // Lock and prefetch
-        mlock(ptr, size);
-        memset(ptr, 0, size);
-        return ptr;
-    }
-
-    // NUMA-aware allocation
-    static void* allocateNumaMemory(int node, size_t size) {
-        if (numa_available() < 0) {
-            return allocateLockedMemory(size);
-        }
-
-        struct bitmask *nm = numa_allocate_nodemask();
-        numa_bitmask_setbit(nm, node);
-
-        void* ptr = mmap(nullptr, size,
-                        PROT_READ | PROT_WRITE,
-                        MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB,
-                        -1, 0);
-
-        if (ptr != MAP_FAILED) {
-            mbind(ptr, size, MPOL_BIND, nm->maskp, nm->size + 1, 0);
-            mlock(ptr, size);
-            memset(ptr, 0, size);  // Prefetch
-        } else {
-            ptr = allocateLockedMemory(size);
-        }
-
-        numa_free_nodemask(nm);
-        return ptr;
-    }
-
-    static void freeMemory(void* ptr, size_t size) {
-        munlock(ptr, size);
-        munmap(ptr, size);
-    }
-};
-
-void* HFTMemoryManager::locked_memory = nullptr;
-size_t HFTMemoryManager::locked_size = 0;
-
-// Ultra-optimized client with complete HFT features
-class UltraHFTClient {
+// HFT-optimized client
+class HFTClient {
 private:
     const char* base_url;
-    LockFreeRingBuffer<Task*> task_queue;
+    ConcurrentQueue<Task*> task_queue;
     pthread_t* threads;
     int num_threads;
     std::atomic<bool> shutdown{false};
 
-    // Pre-allocated CURL handles per thread
+    // Pre-allocated CURL handles
     CURL** curl_handles;
     struct curl_slist** headers;
 
-    // Cache-aligned metrics
-    alignas(CACHE_LINE_SIZE) double* latencies;
-    alignas(CACHE_LINE_SIZE) std::atomic<int> total_orders{0};
-    alignas(CACHE_LINE_SIZE) std::atomic<int> successful_orders{0};
-
-    // Task pool with NUMA awareness
-    Task* task_pool;
-    std::atomic<bool>* task_available;
-    size_t pool_size;
+    // Metrics
+    double* latencies;
+    std::atomic<int> total_orders{0};
+    std::atomic<int> successful_orders{0};
 
     static size_t write_callback(void* contents, size_t size, size_t nmemb, void* userp) {
-        Task* task = static_cast<Task*>(userp);
-        size_t total_size = size * nmemb;
-
-        if (task->response_size + total_size < 4096) {
-            memcpy(task->response_buffer + task->response_size, contents, total_size);
-            task->response_size += total_size;
-            task->response_buffer[task->response_size] = 0;
-        }
-
-        return total_size;
+        (void)userp; // We don't process response for performance
+        return size * nmemb;
     }
 
     static double get_time_ms() {
@@ -262,56 +112,37 @@ private:
         snprintf(buffer + len, size - len, ".%03dZ", (int)(tv.tv_usec / 1000));
     }
 
-    void process_order_optimized(CURL* curl, struct curl_slist* hdrs, Task* task) {
-        // Prefetch task data into L1 cache
-        __builtin_prefetch(task, 0, 3);
-        __builtin_prefetch(task->order, 0, 3);
-
-        // Reset response buffer
-        task->response_size = 0;
-        task->response_buffer[0] = 0;
-
-        // Build JSON directly in pre-allocated buffer - no allocations
+    void process_order(CURL* curl, struct curl_slist* hdrs, Task* task) {
+        char json_buffer[512];
         char timestamp[64];
+        char url[256];
+
         get_iso_timestamp(timestamp, sizeof(timestamp));
 
-        int json_len = snprintf(task->json_buffer, sizeof(task->json_buffer),
+        snprintf(json_buffer, sizeof(json_buffer),
             "{\"buy_sell\":\"%s\",\"symbol\":%d,\"price\":%.2f,\"quantity\":%d,"
             "\"market_type\":\"%s\",\"price_type\":\"%s\",\"time_in_force\":\"%s\","
-            "\"order_type\":\"%s\",\"client_timestamp\":\"%s\"%s%s%s}",
+            "\"order_type\":\"%s\",\"client_timestamp\":\"%s\"}",
             task->order->buy_sell, task->order->symbol,
             task->order->price, task->order->quantity,
             task->order->market_type, task->order->price_type,
             task->order->time_in_force, task->order->order_type,
-            timestamp,
-            task->order->user_def ? ",\"user_def\":\"" : "",
-            task->order->user_def ? task->order->user_def : "",
-            task->order->user_def ? "\"" : ""
-        );
+            timestamp);
 
-        // Build URL - stack allocated
-        char url[256];
         snprintf(url, sizeof(url), "%s/order", base_url);
 
-        double start_time = get_time_ms();
+        double start = get_time_ms();
 
-        // Reuse CURL handle - no allocations
         curl_easy_setopt(curl, CURLOPT_URL, url);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, task->json_buffer);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, json_len);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_buffer);
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, hdrs);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, task);
 
-        CURLcode res = curl_easy_perform(curl);
+        if (curl_easy_perform(curl) == CURLE_OK) {
+            long code;
+            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
 
-        double end_time = get_time_ms();
-
-        if (res == CURLE_OK) {
-            long response_code;
-            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-
-            if (response_code == 200) {
-                task->result->latency_ms = end_time - start_time;
+            if (code == 200) {
+                task->result->latency_ms = get_time_ms() - start;
                 task->result->success = 1;
 
                 int idx = successful_orders.fetch_add(1);
@@ -329,154 +160,78 @@ private:
     }
 
     static void* worker_thread(void* arg) {
-        UltraHFTClient* client = static_cast<UltraHFTClient*>(arg);
+        HFTClient* client = static_cast<HFTClient*>(arg);
 
-        // Get thread ID
         static std::atomic<int> thread_counter{0};
         int thread_id = thread_counter.fetch_add(1);
 
-        // Set CPU affinity with physical core isolation
+        // CPU affinity for performance
         cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
-        int cpu_id = thread_id % sysconf(_SC_NPROCESSORS_ONLN);
-        CPU_SET(cpu_id, &cpuset);
+        CPU_SET(thread_id % sysconf(_SC_NPROCESSORS_ONLN), &cpuset);
         pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
 
-        // Set real-time scheduling priority
-        struct sched_param param;
-        param.sched_priority = sched_get_priority_max(SCHED_FIFO) - 1;
-        pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
-
-        // NUMA optimization: bind memory to local node
-        if (numa_available() >= 0) {
-            int node = numa_node_of_cpu(cpu_id);
-            numa_set_preferred(node);
-        }
-
-        // Get pre-allocated CURL handle
         CURL* curl = client->curl_handles[thread_id];
         struct curl_slist* headers = client->headers[thread_id];
 
-        while (!client->shutdown.load(std::memory_order_acquire)) {
+        while (!client->shutdown.load()) {
             Task* task = nullptr;
-
-            if (client->task_queue.dequeue(task)) {
-                client->process_order_optimized(curl, headers, task);
-
-                // Return task to pool
-                int task_idx = task - client->task_pool;
-                client->task_available[task_idx].store(true, std::memory_order_release);
-            } else {
-                // CPU-friendly pause
-                _mm_pause();
+            if (client->task_queue.pop(task)) {
+                client->process_order(curl, headers, task);
             }
         }
 
-        return nullptr;
-    }
-
-    Task* allocate_task() {
-        for (size_t i = 0; i < pool_size; i++) {
-            bool expected = true;
-            if (task_available[i].compare_exchange_weak(expected, false,
-                                                        std::memory_order_acquire)) {
-                return &task_pool[i];
-            }
-        }
         return nullptr;
     }
 
 public:
-    UltraHFTClient(const char* url, int thread_count)
+    HFTClient(const char* url, int thread_count)
         : base_url(url), num_threads(thread_count) {
 
         if (num_threads > MAX_WORKERS) {
             num_threads = MAX_WORKERS;
         }
 
-        // Initialize NUMA if available
-        if (numa_available() >= 0) {
-            printf("NUMA optimization: ENABLED\n");
-            numa_set_localalloc();
-        } else {
-            printf("NUMA optimization: DISABLED\n");
-        }
+        // Lock memory for HFT
+        mlockall(MCL_CURRENT | MCL_FUTURE);
 
-        // Try to increase memory lock limits
-        struct rlimit rlim;
-        rlim.rlim_cur = RLIM_INFINITY;
-        rlim.rlim_max = RLIM_INFINITY;
-        if (setrlimit(RLIMIT_MEMLOCK, &rlim) == 0) {
-            printf("Memory locking: UNLIMITED\n");
-        } else {
-            printf("Memory locking: LIMITED (run as root for unlimited)\n");
-        }
-
-        // Allocate threads
         threads = new pthread_t[num_threads];
+        latencies = new double[MAX_ORDERS]();
 
-        // Pre-allocate latencies array
-        latencies = new double[MAX_ORDERS];
-        memset(latencies, 0, MAX_ORDERS * sizeof(double));
-
-        // Initialize task pool
-        pool_size = RING_BUFFER_SIZE;
-        task_pool = new Task[pool_size];
-        memset(task_pool, 0, pool_size * sizeof(Task));
-
-        task_available = new std::atomic<bool>[pool_size];
-        for (size_t i = 0; i < pool_size; i++) {
-            task_available[i].store(true, std::memory_order_relaxed);
-        }
-
-        // Initialize CURL globally
         curl_global_init(CURL_GLOBAL_ALL);
 
-        // Pre-initialize all CURL handles and headers
+        // Initialize CURL handles with HFT optimizations
         curl_handles = new CURL*[num_threads];
         headers = new struct curl_slist*[num_threads];
 
         for (int i = 0; i < num_threads; i++) {
             curl_handles[i] = curl_easy_init();
 
-            // Set persistent CURL options
+            // HFT optimizations
             curl_easy_setopt(curl_handles[i], CURLOPT_POST, 1L);
             curl_easy_setopt(curl_handles[i], CURLOPT_WRITEFUNCTION, write_callback);
             curl_easy_setopt(curl_handles[i], CURLOPT_TIMEOUT, 30L);
-
-            // Performance optimizations
             curl_easy_setopt(curl_handles[i], CURLOPT_TCP_NODELAY, 1L);
             curl_easy_setopt(curl_handles[i], CURLOPT_TCP_KEEPALIVE, 1L);
             curl_easy_setopt(curl_handles[i], CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-            curl_easy_setopt(curl_handles[i], CURLOPT_FRESH_CONNECT, 0L);
             curl_easy_setopt(curl_handles[i], CURLOPT_FORBID_REUSE, 0L);
 
-            // Pre-create headers
             headers[i] = curl_slist_append(nullptr, "Content-Type: application/json");
             headers[i] = curl_slist_append(headers[i], "Connection: keep-alive");
         }
 
-        // Create worker threads
         for (int i = 0; i < num_threads; i++) {
-            pthread_attr_t attr;
-            pthread_attr_init(&attr);
-
-            // Set stack size to reduce memory overhead
-            pthread_attr_setstacksize(&attr, 256 * 1024);  // 256KB stack
-
-            pthread_create(&threads[i], &attr, worker_thread, this);
-            pthread_attr_destroy(&attr);
+            pthread_create(&threads[i], nullptr, worker_thread, this);
         }
     }
 
-    ~UltraHFTClient() {
-        shutdown.store(true, std::memory_order_release);
+    ~HFTClient() {
+        shutdown.store(true);
 
         for (int i = 0; i < num_threads; i++) {
             pthread_join(threads[i], nullptr);
         }
 
-        // Cleanup CURL resources
         for (int i = 0; i < num_threads; i++) {
             curl_easy_cleanup(curl_handles[i]);
             curl_slist_free_all(headers[i]);
@@ -484,36 +239,19 @@ public:
 
         delete[] curl_handles;
         delete[] headers;
-        delete[] task_available;
-
-        // Free threads
         delete[] threads;
-
-        // Free allocated memory
         delete[] latencies;
-        delete[] task_pool;
 
         curl_global_cleanup();
     }
 
     void submit_order(Task* task) {
-        // Spin-wait with exponential backoff
-        int backoff = 1;
-        while (!task_queue.enqueue(task)) {
-            for (int i = 0; i < backoff; i++) {
-                _mm_pause();
-            }
-            backoff = std::min(backoff * 2, 256);
-        }
-    }
-
-    Task* get_task() {
-        return allocate_task();
+        task_queue.push(task);
     }
 
     void wait_completion(int expected) {
-        while (total_orders.load(std::memory_order_acquire) < expected) {
-            _mm_pause();
+        while (total_orders.load() < expected) {
+            usleep(1000);
         }
     }
 
@@ -592,47 +330,33 @@ int main(int argc, char* argv[]) {
     if (argc > 2) num_threads = atoi(argv[2]);
     if (argc > 3) warmup = atoi(argv[3]);
 
-    printf("C++ HFT Ultra-Optimized Client\n");
-    printf("Features: Complete HFT optimization stack\n");
-    printf("Using %d threads with CPU affinity and RT scheduling\n", num_threads);
+    printf("C++ HFT Optimized Client\n");
+    printf("Using %d threads\n", num_threads);
 
-    // Static order
-    Order order;
-    order.buy_sell = "buy";
-    order.symbol = 2881;
-    order.price = 66.0;
-    order.quantity = 2000;
-    order.market_type = "common";
-    order.price_type = "limit";
-    order.time_in_force = "rod";
-    order.order_type = "stock";
-    order.user_def = "CPP_HFT";
+    Order order = {
+        .buy_sell = "buy",
+        .symbol = 2881,
+        .price = 66.0,
+        .quantity = 2000,
+        .market_type = "common",
+        .price_type = "limit",
+        .time_in_force = "rod",
+        .order_type = "stock"
+    };
 
-    UltraHFTClient client("http://localhost:8080", num_threads);
+    HFTClient client("http://localhost:8080", num_threads);
 
-    // Pre-allocate all tasks and results
     int max_size = std::max(warmup, num_orders);
-    Task* tasks = new Task[max_size];
-    OrderResult* results = new OrderResult[max_size];
-    memset(tasks, 0, max_size * sizeof(Task));
-    memset(results, 0, max_size * sizeof(OrderResult));
+    Task* tasks = new Task[max_size]();
+    OrderResult* results = new OrderResult[max_size]();
 
-    // Warmup phase
+    // Warmup
     if (warmup > 0) {
         printf("\nWarming up with %d orders...\n", warmup);
 
         for (int i = 0; i < warmup; i++) {
-            Task* task = client.get_task();
-            while (!task) {
-                _mm_pause();
-                task = client.get_task();
-            }
-
-            task->order_id = i;
-            task->order = &order;
-            task->result = &results[i];
-
-            client.submit_order(task);
+            tasks[i] = {i, &order, &results[i]};
+            client.submit_order(&tasks[i]);
         }
 
         client.wait_completion(warmup);
@@ -641,32 +365,20 @@ int main(int argc, char* argv[]) {
 
     printf("\nSending %d orders...\n", num_orders);
 
-    double start_time = UltraHFTClient::get_current_time();
+    double start = HFTClient::get_current_time();
 
-    // Submit all orders
     for (int i = 0; i < num_orders; i++) {
-        Task* task = client.get_task();
-        while (!task) {
-            _mm_pause();
-            task = client.get_task();
-        }
-
-        task->order_id = i;
-        task->order = &order;
-        task->result = &results[i];
-
-        client.submit_order(task);
+        tasks[i] = {i, &order, &results[i]};
+        client.submit_order(&tasks[i]);
     }
 
     client.wait_completion(num_orders);
 
-    double end_time = UltraHFTClient::get_current_time();
-    double elapsed_seconds = (end_time - start_time) / 1000.0;
+    double elapsed_seconds = (HFTClient::get_current_time() - start) / 1000.0;
 
     printf("\nCompleted in %.2f seconds\n", elapsed_seconds);
     client.print_stats(elapsed_seconds);
 
-    // Cleanup
     delete[] tasks;
     delete[] results;
 

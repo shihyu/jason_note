@@ -12,159 +12,10 @@ use std::time::{Duration, Instant};
 use parking_lot::Mutex;
 use bytes::Bytes;
 use core_affinity;
-use libc::{mlock, mmap, munmap, MAP_ANON, MAP_FAILED, MAP_HUGETLB, MAP_PRIVATE, PROT_READ, PROT_WRITE};
-use libc::{sched_setscheduler, sched_param, SCHED_FIFO};
-use std::ptr;
-use std::alloc::{alloc, dealloc, Layout};
-use std::mem;
-use crossbeam::channel::{bounded, Sender};
-use std::thread;
+use libc::{mlock, mlockall, MCL_CURRENT, MCL_FUTURE};
 
-// Cache line size for padding
-const CACHE_LINE_SIZE: usize = 64;
 
-// HFT Memory Optimization Utilities
-
-/// Set real-time scheduling priority
-#[allow(dead_code)]
-unsafe fn set_realtime_priority() {
-    let param = sched_param {
-        sched_priority: 99,
-    };
-    sched_setscheduler(0, SCHED_FIFO, &param);
-}
-
-/// Cache-aligned atomic counter
-#[repr(C, align(64))]
-struct CacheAlignedCounter {
-    value: AtomicUsize,
-    _padding: [u8; CACHE_LINE_SIZE - std::mem::size_of::<AtomicUsize>()],
-}
-
-impl CacheAlignedCounter {
-    fn new() -> Self {
-        Self {
-            value: AtomicUsize::new(0),
-            _padding: [0; CACHE_LINE_SIZE - std::mem::size_of::<AtomicUsize>()],
-        }
-    }
-
-    fn increment(&self) -> usize {
-        self.value.fetch_add(1, Ordering::Relaxed)
-    }
-
-    fn get(&self) -> usize {
-        self.value.load(Ordering::Relaxed)
-    }
-}
-
-/// Lock-free ring buffer for order tasks
-struct LockFreeRingBuffer<T> {
-    buffer: Vec<Option<T>>,
-    head: CacheAlignedCounter,
-    tail: CacheAlignedCounter,
-    capacity: usize,
-}
-
-impl<T> LockFreeRingBuffer<T> {
-    fn new(capacity: usize) -> Self {
-        let mut buffer = Vec::with_capacity(capacity);
-        for _ in 0..capacity {
-            buffer.push(None);
-        }
-        Self {
-            buffer,
-            head: CacheAlignedCounter::new(),
-            tail: CacheAlignedCounter::new(),
-            capacity,
-        }
-    }
-
-    fn push(&mut self, item: T) -> bool {
-        let tail = self.tail.get() % self.capacity;
-        let head = self.head.get() % self.capacity;
-
-        if (tail + 1) % self.capacity == head {
-            return false; // Buffer full
-        }
-
-        self.buffer[tail] = Some(item);
-        self.tail.increment();
-        true
-    }
-
-    fn pop(&mut self) -> Option<T> {
-        let head = self.head.get() % self.capacity;
-        let tail = self.tail.get() % self.capacity;
-
-        if head == tail {
-            return None; // Buffer empty
-        }
-
-        let item = self.buffer[head].take();
-        self.head.increment();
-        item
-    }
-}
-
-/// NUMA-aware memory allocation (placeholder for Linux-specific implementation)
-#[cfg(target_os = "linux")]
-#[allow(dead_code)]
-unsafe fn numa_alloc_onnode(size: usize, _node: i32) -> Option<*mut u8> {
-    // In a real implementation, this would use libnuma
-    // For now, fall back to regular allocation
-    allocate_locked_memory(size)
-}
-
-/// Allocate memory with huge pages for better TLB efficiency
-#[allow(dead_code)]
-unsafe fn allocate_huge_page(size: usize) -> Option<*mut u8> {
-    let ptr = mmap(
-        ptr::null_mut(),
-        size,
-        PROT_READ | PROT_WRITE,
-        MAP_PRIVATE | MAP_ANON | MAP_HUGETLB,
-        -1,
-        0,
-    );
-
-    if ptr == MAP_FAILED {
-        None
-    } else {
-        // Lock the memory to prevent swapping
-        if mlock(ptr, size) == 0 {
-            // Prefetch by writing zeros
-            ptr::write_bytes(ptr as *mut u8, 0, size);
-            Some(ptr as *mut u8)
-        } else {
-            munmap(ptr, size);
-            None
-        }
-    }
-}
-
-/// Allocate locked memory (no swapping)
-#[allow(dead_code)]
-unsafe fn allocate_locked_memory(size: usize) -> Option<*mut u8> {
-    let layout = Layout::from_size_align(size, mem::align_of::<u64>()).ok()?;
-    let ptr = alloc(layout);
-
-    if ptr.is_null() {
-        return None;
-    }
-
-    // Lock the memory
-    if mlock(ptr as *const _, size) == 0 {
-        // Prefetch by writing zeros
-        ptr::write_bytes(ptr, 0, size);
-        Some(ptr)
-    } else {
-        dealloc(ptr, layout);
-        None
-    }
-}
-
-/// Set CPU affinity for the current thread
+// Set CPU affinity for the current thread
 fn set_cpu_affinity(cpu_id: usize) {
     if let Some(core_ids) = core_affinity::get_core_ids() {
         if cpu_id < core_ids.len() {
@@ -273,61 +124,14 @@ struct OrderResult {
     error: Option<String>,
 }
 
-/// Worker thread pool for HFT
-struct WorkerPool {
-    workers: Vec<thread::JoinHandle<()>>,
-    sender: Sender<Box<dyn FnOnce() + Send + 'static>>,
-}
-
-impl WorkerPool {
-    fn new(num_workers: usize) -> Self {
-        let (sender, receiver): (Sender<Box<dyn FnOnce() + Send + 'static>>, _) = bounded(1000);
-        let receiver = Arc::new(Mutex::new(receiver));
-
-        let mut workers = Vec::with_capacity(num_workers);
-
-        for id in 0..num_workers {
-            let receiver = Arc::clone(&receiver);
-
-            let handle = thread::spawn(move || {
-                // Set CPU affinity for this worker
-                set_cpu_affinity(id % core_affinity::get_core_ids().unwrap_or_default().len());
-
-                // Try to set real-time priority
-                unsafe {
-                    let _ = set_realtime_priority();
-                }
-
-                loop {
-                    let message = receiver.lock().recv();
-                    match message {
-                        Ok(job) => job(),
-                        Err(_) => break,
-                    }
-                }
-            });
-
-            workers.push(handle);
-        }
-
-        Self { workers, sender }
-    }
-
-    fn execute<F>(&self, f: F)
-    where
-        F: FnOnce() + Send + 'static,
-    {
-        let _ = self.sender.send(Box::new(f));
-    }
-}
 
 #[derive(Clone)]
 struct OptimizedOrderClient {
     client: Client<HttpsConnector<HttpConnector>>,
     base_url: String,
     latencies: Arc<Mutex<Vec<f64>>>,
-    success_count: Arc<CacheAlignedCounter>,
-    error_count: Arc<CacheAlignedCounter>,
+    success_count: Arc<AtomicUsize>,
+    error_count: Arc<AtomicUsize>,
 }
 
 impl OptimizedOrderClient {
@@ -344,23 +148,15 @@ impl OptimizedOrderClient {
             .set_host(false)
             .build(https);
 
-        // HFT optimization: Pre-allocate latencies with locked memory
-        let mut latencies_vec = Vec::with_capacity(10000);
-        latencies_vec.reserve_exact(10000);
-
-        // Try to lock the vector's memory
-        unsafe {
-            let ptr = latencies_vec.as_ptr();
-            let size = latencies_vec.capacity() * std::mem::size_of::<f64>();
-            let _ = mlock(ptr as *const _, size);
-        }
+        // Pre-allocate latencies vector
+        let latencies_vec = Vec::with_capacity(50000);
 
         Self {
             client,
             base_url: base_url.to_string(),
             latencies: Arc::new(Mutex::new(latencies_vec)),
-            success_count: Arc::new(CacheAlignedCounter::new()),
-            error_count: Arc::new(CacheAlignedCounter::new()),
+            success_count: Arc::new(AtomicUsize::new(0)),
+            error_count: Arc::new(AtomicUsize::new(0)),
         }
     }
 
@@ -401,7 +197,7 @@ impl OptimizedOrderClient {
             let mut latencies = self.latencies.lock();
             latencies.push(round_trip_ms);
 
-            self.success_count.increment();
+            self.success_count.fetch_add(1, Ordering::Relaxed);
 
             Ok(OrderResult {
                 success: true,
@@ -411,7 +207,7 @@ impl OptimizedOrderClient {
                 error: None,
             })
         } else {
-            self.error_count.increment();
+            self.error_count.fetch_add(1, Ordering::Relaxed);
 
             Ok(OrderResult {
                 success: false,
@@ -424,7 +220,7 @@ impl OptimizedOrderClient {
     }
 
     async fn batch_orders(&self, num_orders: usize, demo_order: &Order, max_concurrent: usize) {
-        // HFT optimization: Set CPU affinity for main thread
+        // Set CPU affinity for main thread
         set_cpu_affinity(0);
 
         let mut futures = vec![];
@@ -434,12 +230,6 @@ impl OptimizedOrderClient {
             let order = demo_order.clone();
 
             futures.push(async move {
-                // Each async task can potentially run on different threads
-                // Set affinity based on order ID for better cache locality
-                if i % 10 == 0 {
-                    set_cpu_affinity(i % core_affinity::get_core_ids().unwrap_or_default().len());
-                }
-
                 client.place_order(i, &order).await
             });
         }
@@ -500,8 +290,8 @@ impl OptimizedOrderClient {
         let p95 = data.percentile(95);
         let p99 = data.percentile(99);
 
-        println!("\n=== Rust Client HFT Ultra-Optimized ===");
-        println!("Features: Memory locking, CPU affinity, Lock-free structures, Pre-allocation");
+        println!("\n=== Rust Client HFT Optimized ===");
+        println!("Features: Memory locking, CPU affinity, Pre-allocation");
         println!("Total orders: {}", latencies.len());
         println!("Min latency: {:.3} ms", min);
         println!("Max latency: {:.3} ms", max);
@@ -540,27 +330,13 @@ struct Args {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    println!("Rust Client (HFT Ultra-Optimized) - Starting test with {} orders", args.orders);
-    println!("Features: Memory locking, CPU affinity, Lock-free structures");
+    println!("Rust Client (HFT Optimized)");
     println!("Using {} concurrent connections", args.connections);
     println!("Server: {}", args.server);
 
-    // HFT Optimization: Print system info
-    if let Some(core_ids) = core_affinity::get_core_ids() {
-        println!("CPU cores available: {}", core_ids.len());
-    }
-
-    // Try to increase memory lock limits (requires appropriate permissions)
+    // Lock memory for HFT
     unsafe {
-        let rlim = libc::rlimit {
-            rlim_cur: libc::RLIM_INFINITY,
-            rlim_max: libc::RLIM_INFINITY,
-        };
-        if libc::setrlimit(libc::RLIMIT_MEMLOCK, &rlim) == 0 {
-            println!("Memory locking: UNLIMITED");
-        } else {
-            println!("Memory locking: LIMITED (run with elevated permissions for unlimited)");
-        }
+        mlockall(MCL_CURRENT | MCL_FUTURE);
     }
 
     let demo_order = Order {
@@ -572,7 +348,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         price_type: PriceType::Limit,
         time_in_force: TimeInForce::ROD,
         order_type: OrderType::Stock,
-        user_def: Some("RUST_OPT".to_string()),
+        user_def: None,
     };
 
     let client = OptimizedOrderClient::new(&args.server, args.connections);
