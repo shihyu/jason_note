@@ -145,11 +145,48 @@ func (c *HFTClient) runTest(totalOrders, maxConcurrent, warmupOrders int) {
 	fmt.Printf("Starting optimized test with %d total orders, %d concurrent connections, %d warmup orders\n",
 		totalOrders, maxConcurrent, warmupOrders)
 
-	// Create worker pool
-	orderChan := make(chan int, totalOrders+warmupOrders)
+	// Warmup phase - use separate execution to ensure completion
+	if warmupOrders > 0 {
+		fmt.Printf("Warming up with %d orders...\n", warmupOrders)
+
+		// Create warmup channel and workers
+		warmupChan := make(chan int, warmupOrders)
+		var warmupWg sync.WaitGroup
+
+		// Start warmup workers
+		for i := 0; i < maxConcurrent; i++ {
+			warmupWg.Add(1)
+			go func() {
+				defer warmupWg.Done()
+				for orderID := range warmupChan {
+					c.submitOrder(orderID)
+				}
+			}()
+		}
+
+		// Submit warmup orders
+		for i := 0; i < warmupOrders; i++ {
+			warmupChan <- i
+		}
+		close(warmupChan)
+
+		// Wait for warmup to complete
+		warmupWg.Wait()
+
+		// Reset stats after warmup
+		c.successCount.Store(0)
+		c.errorCount.Store(0)
+		c.latenciesMu.Lock()
+		c.latencies = c.latencies[:0]
+		c.latenciesMu.Unlock()
+	}
+
+	// Main test phase - create fresh worker pool
+	fmt.Println("Starting main test...")
+	orderChan := make(chan int, totalOrders)
 	var wg sync.WaitGroup
 
-	// Start workers
+	// Start workers for main test
 	for i := 0; i < maxConcurrent; i++ {
 		wg.Add(1)
 		go func() {
@@ -160,25 +197,6 @@ func (c *HFTClient) runTest(totalOrders, maxConcurrent, warmupOrders int) {
 		}()
 	}
 
-	// Warmup phase
-	if warmupOrders > 0 {
-		fmt.Printf("Warming up with %d orders...\n", warmupOrders)
-		for i := 0; i < warmupOrders; i++ {
-			orderChan <- i
-		}
-		// Wait for warmup to complete
-		time.Sleep(time.Millisecond * 100)
-
-		// Reset stats after warmup
-		c.successCount.Store(0)
-		c.errorCount.Store(0)
-		c.latenciesMu.Lock()
-		c.latencies = c.latencies[:0]
-		c.latenciesMu.Unlock()
-	}
-
-	// Main test phase
-	fmt.Println("Starting main test...")
 	startTime := time.Now()
 
 	// Submit all orders to channel
