@@ -15,7 +15,8 @@
 
 #define MAX_ORDERS 50000
 #define MAX_RESPONSE_SIZE 1024
-#define MAX_WORKERS 20
+#define MAX_WORKERS 128  // Upper limit for worker threads
+#define DEFAULT_WORKER_MULTIPLIER 1.5  // Default: CPU cores * 1.5
 
 // Core data structures
 typedef struct {
@@ -57,6 +58,41 @@ typedef struct {
 double latencies[MAX_ORDERS];
 atomic_int total_orders = 0;
 atomic_int successful_orders = 0;
+
+// Get optimal worker thread count based on CPU cores
+int get_optimal_workers(int requested_connections, int specified_workers) {
+    long cpu_cores = sysconf(_SC_NPROCESSORS_ONLN);
+    if (cpu_cores < 1) cpu_cores = 4; // Fallback to 4 if detection fails
+
+    int workers;
+
+    if (specified_workers > 0) {
+        // User specified worker count
+        workers = specified_workers;
+        if (workers > MAX_WORKERS) {
+            printf("Warning: Requested %d workers exceeds max limit of %d\n", workers, MAX_WORKERS);
+            workers = MAX_WORKERS;
+        }
+        printf("Using user-specified %d worker threads\n", workers);
+    } else {
+        // Calculate optimal workers: CPU cores * multiplier
+        int optimal = (int)(cpu_cores * DEFAULT_WORKER_MULTIPLIER);
+
+        // Use minimum of requested connections and optimal
+        workers = (requested_connections < optimal) ? requested_connections : optimal;
+
+        // Ensure within bounds
+        if (workers < 1) workers = 1;
+        if (workers > MAX_WORKERS) workers = MAX_WORKERS;
+
+        printf("Auto-detecting optimal worker count...\n");
+        printf("CPU cores detected: %ld\n", cpu_cores);
+        printf("Optimal workers calculated: %d (cores * %.1f)\n", optimal, DEFAULT_WORKER_MULTIPLIER);
+        printf("Using %d worker threads\n", workers);
+    }
+
+    return workers;
+}
 
 // Get current time in milliseconds
 double get_time_ms() {
@@ -309,13 +345,19 @@ void print_stats(double elapsed_seconds, int num_orders) {
 
 int main(int argc, char* argv[]) {
     if (argc < 4) {
-        printf("Usage: %s <num_orders> <num_connections> <warmup_orders>\n", argv[0]);
+        printf("Usage: %s <num_orders> <num_connections> <warmup_orders> [num_workers]\n", argv[0]);
+        printf("  num_orders:      Number of orders to send\n");
+        printf("  num_connections: Number of concurrent connections\n");
+        printf("  warmup_orders:   Number of warmup orders\n");
+        printf("  num_workers:     (Optional) Number of worker threads\n");
+        printf("                   If not specified, auto-detect based on CPU cores\n");
         return 1;
     }
 
     int num_orders = atoi(argv[1]);
     int num_connections = atoi(argv[2]);
     int warmup = atoi(argv[3]);
+    int num_workers = (argc >= 5) ? atoi(argv[4]) : 0;  // 0 means auto-detect
 
     if (num_orders > MAX_ORDERS) num_orders = MAX_ORDERS;
 
@@ -340,7 +382,7 @@ int main(int argc, char* argv[]) {
     strcpy(order.time_in_force, "rod");
     strcpy(order.order_type, "stock");
 
-    int pool_size = (num_connections > MAX_WORKERS) ? MAX_WORKERS : num_connections;
+    int pool_size = get_optimal_workers(num_connections, num_workers);
     ThreadPool* pool = thread_pool_create(pool_size, base_url, num_orders + warmup + 100);
 
     // Warmup
