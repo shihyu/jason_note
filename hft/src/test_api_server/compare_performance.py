@@ -3,25 +3,27 @@
 import subprocess
 import time
 import sys
+import json
+import os
 from tabulate import tabulate
 
 def run_test(client_name, command, num_tests=3):
     """Run performance test multiple times and collect stats"""
     results = []
-    
+
     for i in range(num_tests):
         print(f"Running {client_name} test {i+1}/{num_tests}...")
-        
+
         # Clear server stats first
-        subprocess.run(["curl", "-s", "http://localhost:8080/stats"], 
+        subprocess.run(["curl", "-s", "http://localhost:8080/stats"],
                       capture_output=True)
-        
+
         # Run the client test
         result = subprocess.run(command, shell=True, capture_output=True, text=True)
-        
+
         # Parse output for metrics
         output = result.stdout
-        
+
         # Extract metrics from output
         metrics = {}
         for line in output.split('\n'):
@@ -33,27 +35,137 @@ def run_test(client_name, command, num_tests=3):
                 metrics['max_latency'] = float(line.split()[2])
             elif 'Avg latency:' in line:
                 metrics['avg_latency'] = float(line.split()[2])
-            elif 'P50:' in line:
+            elif 'Average:' in line and 'ms' in line:
+                # Go client format: "Average: 0.118"
+                metrics['avg_latency'] = float(line.split()[1])
+            elif 'Min:' in line and 'ms' not in line.split()[0]:
+                # Go client format: "Min: 0.062"
+                metrics['min_latency'] = float(line.split()[1])
+            elif 'Max:' in line and 'ms' not in line.split()[0]:
+                # Go client format: "Max: 0.190"
+                metrics['max_latency'] = float(line.split()[1])
+            elif 'Latency P50:' in line:
+                # Go client format: "Latency P50: 0.118 ms"
+                metrics['p50'] = float(line.split()[2])
+            elif 'P50:' in line and 'Latency' not in line:
+                # Go client format in stats section: "P50: 0.118"
                 metrics['p50'] = float(line.split()[1])
-            elif 'P90:' in line:
+            elif 'Latency P90:' in line:
+                # Go client format: "Latency P90: 0.145 ms"
+                metrics['p90'] = float(line.split()[2])
+            elif 'P90:' in line and 'Latency' not in line:
+                # Go client format in stats section: "P90: 0.145"
                 metrics['p90'] = float(line.split()[1])
-            elif 'P95:' in line:
+            elif 'Latency P95:' in line:
+                # Go client format: "Latency P95: 0.153 ms"
+                metrics['p95'] = float(line.split()[2])
+            elif 'P95:' in line and 'Latency' not in line:
+                # Go client format in stats section: "P95: 0.153"
                 metrics['p95'] = float(line.split()[1])
-            elif 'P99:' in line:
+            elif 'Latency P99:' in line:
+                # Go client format: "Latency P99: 0.181 ms"
+                metrics['p99'] = float(line.split()[2])
+            elif 'P99:' in line and 'Latency' not in line:
+                # Go client format in stats section: "P99: 0.181"
                 metrics['p99'] = float(line.split()[1])
-        
+
         if metrics:
             results.append(metrics)
-        
+
         time.sleep(2)  # Wait between tests
-    
+
     # Calculate averages
     if results:
         avg_metrics = {}
         for key in results[0].keys():
             avg_metrics[key] = sum(r.get(key, 0) for r in results) / len(results)
-        return avg_metrics
+        return {'average': avg_metrics, 'all_runs': results}
     return None
+
+def write_data_files(results_data):
+    """Write data files for gnuplot"""
+    # Create performance_data directory if it doesn't exist
+    os.makedirs('performance_data', exist_ok=True)
+
+    # Write throughput data
+    with open('performance_data/throughput.dat', 'w') as f:
+        f.write("# Client Throughput(req/s) StdDev\n")
+        for client_data in results_data:
+            client = client_data['client']
+            runs = client_data['all_runs']
+            throughputs = [r.get('throughput', 0) for r in runs]
+            avg = sum(throughputs) / len(throughputs) if throughputs else 0
+            std = (sum([(x - avg) ** 2 for x in throughputs]) / len(throughputs)) ** 0.5 if throughputs else 0
+            f.write(f'"{client}" {avg:.2f} {std:.2f}\n')
+
+    # Write latency percentiles data
+    with open('performance_data/latency_percentiles.dat', 'w') as f:
+        f.write("# Client P50 P90 P95 P99\n")
+        for client_data in results_data:
+            client = client_data['client']
+            avg = client_data['average']
+            f.write(f'"{client}" {avg.get("p50", 0):.2f} {avg.get("p90", 0):.2f} '
+                   f'{avg.get("p95", 0):.2f} {avg.get("p99", 0):.2f}\n')
+
+    # Write latency comparison data
+    with open('performance_data/latency_comparison.dat', 'w') as f:
+        f.write("# Client Min Avg Max\n")
+        for client_data in results_data:
+            client = client_data['client']
+            avg = client_data['average']
+            f.write(f'"{client}" {avg.get("min_latency", 0):.2f} '
+                   f'{avg.get("avg_latency", 0):.2f} {avg.get("max_latency", 0):.2f}\n')
+
+    # Write run-by-run data for time series
+    with open('performance_data/time_series.dat', 'w') as f:
+        f.write("# Run")
+        for client_data in results_data:
+            f.write(f' {client_data["client"]}_Throughput {client_data["client"]}_Latency')
+        f.write("\n")
+
+        max_runs = max(len(cd['all_runs']) for cd in results_data)
+        for i in range(max_runs):
+            f.write(f"{i+1}")
+            for client_data in results_data:
+                runs = client_data['all_runs']
+                if i < len(runs):
+                    f.write(f" {runs[i].get('throughput', 0):.2f} {runs[i].get('avg_latency', 0):.2f}")
+                else:
+                    f.write(" 0 0")
+            f.write("\n")
+
+    # Write summary statistics for table
+    with open('performance_data/summary_stats.dat', 'w') as f:
+        f.write("# Client Throughput(req/s) AvgLatency(ms) P50(ms) P95(ms) P99(ms)\n")
+        for client_data in results_data:
+            client = client_data['client']
+            avg = client_data['average']
+            f.write(f'"{client}" {avg.get("throughput", 0):.0f} '
+                   f'{avg.get("avg_latency", 0):.2f} '
+                   f'{avg.get("p50", 0):.2f} '
+                   f'{avg.get("p95", 0):.2f} '
+                   f'{avg.get("p99", 0):.2f}\n')
+
+def generate_plots():
+    """Generate plots using gnuplot"""
+    print("\nGenerating performance plots with gnuplot...")
+
+    # Check if gnuplot is installed
+    try:
+        subprocess.run(["gnuplot", "--version"], capture_output=True, check=True)
+    except:
+        print("Warning: gnuplot not found. Skipping plot generation.")
+        print("Install with: sudo apt-get install gnuplot (Ubuntu) or brew install gnuplot (macOS)")
+        return
+
+    # Run gnuplot scripts
+    try:
+        subprocess.run(["gnuplot", "performance_plots.gnuplot"], check=True)
+        print("Plots generated successfully in performance_plots/ directory")
+    except subprocess.CalledProcessError:
+        print("Warning: Failed to generate plots")
+    except FileNotFoundError:
+        print("Warning: performance_plots.gnuplot not found")
 
 def main():
     print("=" * 80)
@@ -88,6 +200,7 @@ def main():
     
     # Run tests for each client
     results = []
+    results_data = []  # For storing detailed results
     
     # Python client
     print("\n" + "=" * 40)
@@ -96,8 +209,9 @@ def main():
     python_cmd = f"python3 python_client.py --orders {NUM_ORDERS} --connections {NUM_CONNECTIONS} --warmup {WARMUP}"
     python_results = run_test("Python", python_cmd, NUM_TESTS)
     if python_results:
-        python_results['client'] = 'Python (aiohttp)'
-        results.append(python_results)
+        python_results['average']['client'] = 'Python (aiohttp)'
+        results.append(python_results['average'])
+        results_data.append({'client': 'Python (aiohttp)', 'average': python_results['average'], 'all_runs': python_results['all_runs']})
     
     # C client
     print("\n" + "=" * 40)
@@ -106,8 +220,9 @@ def main():
     c_cmd = f"./c-client/c_client {NUM_ORDERS} {NUM_CONNECTIONS} {WARMUP}"
     c_results = run_test("C", c_cmd, NUM_TESTS)
     if c_results:
-        c_results['client'] = 'C (libcurl)'
-        results.append(c_results)
+        c_results['average']['client'] = 'C (libcurl)'
+        results.append(c_results['average'])
+        results_data.append({'client': 'C (libcurl)', 'average': c_results['average'], 'all_runs': c_results['all_runs']})
     
     # C++ client
     print("\n" + "=" * 40)
@@ -116,8 +231,9 @@ def main():
     cpp_cmd = f"./cpp-client/cpp_client {NUM_ORDERS} {NUM_CONNECTIONS} {WARMUP}"
     cpp_results = run_test("C++", cpp_cmd, NUM_TESTS)
     if cpp_results:
-        cpp_results['client'] = 'C++ (libcurl)'
-        results.append(cpp_results)
+        cpp_results['average']['client'] = 'C++ (libcurl)'
+        results.append(cpp_results['average'])
+        results_data.append({'client': 'C++ (libcurl)', 'average': cpp_results['average'], 'all_runs': cpp_results['all_runs']})
     
     # Rust client
     print("\n" + "=" * 40)
@@ -126,9 +242,21 @@ def main():
     rust_cmd = f"./rust-client/target/release/rust-client --orders {NUM_ORDERS} --connections {NUM_CONNECTIONS} --warmup {WARMUP}"
     rust_results = run_test("Rust", rust_cmd, NUM_TESTS)
     if rust_results:
-        rust_results['client'] = 'Rust (reqwest)'
-        results.append(rust_results)
-    
+        rust_results['average']['client'] = 'Rust (reqwest)'
+        results.append(rust_results['average'])
+        results_data.append({'client': 'Rust (reqwest)', 'average': rust_results['average'], 'all_runs': rust_results['all_runs']})
+
+    # Go client
+    print("\n" + "=" * 40)
+    print("Testing Go Client (net/http)")
+    print("=" * 40)
+    go_cmd = f"./go-client/go_client --orders {NUM_ORDERS} --connections {NUM_CONNECTIONS} --warmup {WARMUP}"
+    go_results = run_test("Go", go_cmd, NUM_TESTS)
+    if go_results:
+        go_results['average']['client'] = 'Go (net/http)'
+        results.append(go_results['average'])
+        results_data.append({'client': 'Go (net/http)', 'average': go_results['average'], 'all_runs': go_results['all_runs']})
+
     # Display comparison table
     if results:
         print("\n" + "=" * 80)
@@ -184,7 +312,12 @@ def main():
                 latency_ratio = r.get('avg_latency', 1) / best.get('avg_latency', 1)
                 print(f"  {best['client']} is {perf_ratio:.1f}x faster than {r['client']}")
                 print(f"  {r['client']} has {latency_ratio:.1f}x higher latency than {best['client']}")
-    
+
+        # Write data files and generate plots
+        if results_data:
+            write_data_files(results_data)
+            generate_plots()
+
     print("\n" + "=" * 80)
     print("Test completed!")
     print("=" * 80)
