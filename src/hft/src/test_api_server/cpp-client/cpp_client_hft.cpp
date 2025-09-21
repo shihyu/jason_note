@@ -415,20 +415,14 @@ public:
         // Allocate threads
         threads = new pthread_t[num_threads];
 
-        // Pre-allocate latencies array with locked memory
-        size_t latencies_size = MAX_ORDERS * sizeof(double);
-        latencies = static_cast<double*>(HFTMemoryManager::allocateLockedMemory(latencies_size));
-        if (!latencies) {
-            latencies = new double[MAX_ORDERS];
-        }
+        // Pre-allocate latencies array
+        latencies = new double[MAX_ORDERS];
+        memset(latencies, 0, MAX_ORDERS * sizeof(double));
 
-        // Initialize task pool with NUMA awareness
+        // Initialize task pool
         pool_size = RING_BUFFER_SIZE;
-        size_t task_pool_size = pool_size * sizeof(Task);
-        task_pool = static_cast<Task*>(HFTMemoryManager::allocateNumaMemory(0, task_pool_size));
-        if (!task_pool) {
-            task_pool = new Task[pool_size];
-        }
+        task_pool = new Task[pool_size];
+        memset(task_pool, 0, pool_size * sizeof(Task));
 
         task_available = new std::atomic<bool>[pool_size];
         for (size_t i = 0; i < pool_size; i++) {
@@ -495,13 +489,9 @@ public:
         // Free threads
         delete[] threads;
 
-        if (latencies != nullptr) {
-            HFTMemoryManager::freeMemory(latencies, MAX_ORDERS * sizeof(double));
-        }
-
-        if (task_pool != nullptr) {
-            HFTMemoryManager::freeMemory(task_pool, pool_size * sizeof(Task));
-        }
+        // Free allocated memory
+        delete[] latencies;
+        delete[] task_pool;
 
         curl_global_cleanup();
     }
@@ -620,19 +610,12 @@ int main(int argc, char* argv[]) {
 
     UltraHFTClient client("http://localhost:8080", num_threads);
 
-    // Pre-allocate all tasks and results with locked memory
-    size_t tasks_size = std::max(warmup, num_orders) * sizeof(Task);
-    Task* tasks = static_cast<Task*>(HFTMemoryManager::allocateLockedMemory(tasks_size));
-    if (!tasks) {
-        tasks = new Task[std::max(warmup, num_orders)];
-    }
-
-    size_t results_size = std::max(warmup, num_orders) * sizeof(OrderResult);
-    OrderResult* results = static_cast<OrderResult*>(
-        HFTMemoryManager::allocateLockedMemory(results_size));
-    if (!results) {
-        results = new OrderResult[std::max(warmup, num_orders)];
-    }
+    // Pre-allocate all tasks and results
+    int max_size = std::max(warmup, num_orders);
+    Task* tasks = new Task[max_size];
+    OrderResult* results = new OrderResult[max_size];
+    memset(tasks, 0, max_size * sizeof(Task));
+    memset(results, 0, max_size * sizeof(OrderResult));
 
     // Warmup phase
     if (warmup > 0) {
@@ -684,12 +667,8 @@ int main(int argc, char* argv[]) {
     client.print_stats(elapsed_seconds);
 
     // Cleanup
-    if (tasks) {
-        HFTMemoryManager::freeMemory(tasks, tasks_size);
-    }
-    if (results) {
-        HFTMemoryManager::freeMemory(results, results_size);
-    }
+    delete[] tasks;
+    delete[] results;
 
     return 0;
 }

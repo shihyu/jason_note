@@ -7,16 +7,114 @@ use hyper_tls::HttpsConnector;
 use serde::{Deserialize, Serialize};
 use statrs::statistics::{Data, Distribution, OrderStatistics};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 use parking_lot::Mutex;
 use bytes::Bytes;
 use core_affinity;
 use libc::{mlock, mmap, munmap, MAP_ANON, MAP_FAILED, MAP_HUGETLB, MAP_PRIVATE, PROT_READ, PROT_WRITE};
+use libc::{sched_setscheduler, sched_param, SCHED_FIFO};
 use std::ptr;
 use std::alloc::{alloc, dealloc, Layout};
 use std::mem;
+use crossbeam::channel::{bounded, Sender};
+use std::thread;
+
+// Cache line size for padding
+const CACHE_LINE_SIZE: usize = 64;
 
 // HFT Memory Optimization Utilities
+
+/// Set real-time scheduling priority
+#[allow(dead_code)]
+unsafe fn set_realtime_priority() {
+    let param = sched_param {
+        sched_priority: 99,
+    };
+    sched_setscheduler(0, SCHED_FIFO, &param);
+}
+
+/// Cache-aligned atomic counter
+#[repr(C, align(64))]
+struct CacheAlignedCounter {
+    value: AtomicUsize,
+    _padding: [u8; CACHE_LINE_SIZE - std::mem::size_of::<AtomicUsize>()],
+}
+
+impl CacheAlignedCounter {
+    fn new() -> Self {
+        Self {
+            value: AtomicUsize::new(0),
+            _padding: [0; CACHE_LINE_SIZE - std::mem::size_of::<AtomicUsize>()],
+        }
+    }
+
+    fn increment(&self) -> usize {
+        self.value.fetch_add(1, Ordering::Relaxed)
+    }
+
+    fn get(&self) -> usize {
+        self.value.load(Ordering::Relaxed)
+    }
+}
+
+/// Lock-free ring buffer for order tasks
+struct LockFreeRingBuffer<T> {
+    buffer: Vec<Option<T>>,
+    head: CacheAlignedCounter,
+    tail: CacheAlignedCounter,
+    capacity: usize,
+}
+
+impl<T> LockFreeRingBuffer<T> {
+    fn new(capacity: usize) -> Self {
+        let mut buffer = Vec::with_capacity(capacity);
+        for _ in 0..capacity {
+            buffer.push(None);
+        }
+        Self {
+            buffer,
+            head: CacheAlignedCounter::new(),
+            tail: CacheAlignedCounter::new(),
+            capacity,
+        }
+    }
+
+    fn push(&mut self, item: T) -> bool {
+        let tail = self.tail.get() % self.capacity;
+        let head = self.head.get() % self.capacity;
+
+        if (tail + 1) % self.capacity == head {
+            return false; // Buffer full
+        }
+
+        self.buffer[tail] = Some(item);
+        self.tail.increment();
+        true
+    }
+
+    fn pop(&mut self) -> Option<T> {
+        let head = self.head.get() % self.capacity;
+        let tail = self.tail.get() % self.capacity;
+
+        if head == tail {
+            return None; // Buffer empty
+        }
+
+        let item = self.buffer[head].take();
+        self.head.increment();
+        item
+    }
+}
+
+/// NUMA-aware memory allocation (placeholder for Linux-specific implementation)
+#[cfg(target_os = "linux")]
+#[allow(dead_code)]
+unsafe fn numa_alloc_onnode(size: usize, _node: i32) -> Option<*mut u8> {
+    // In a real implementation, this would use libnuma
+    // For now, fall back to regular allocation
+    allocate_locked_memory(size)
+}
 
 /// Allocate memory with huge pages for better TLB efficiency
 #[allow(dead_code)]
@@ -175,11 +273,61 @@ struct OrderResult {
     error: Option<String>,
 }
 
+/// Worker thread pool for HFT
+struct WorkerPool {
+    workers: Vec<thread::JoinHandle<()>>,
+    sender: Sender<Box<dyn FnOnce() + Send + 'static>>,
+}
+
+impl WorkerPool {
+    fn new(num_workers: usize) -> Self {
+        let (sender, receiver): (Sender<Box<dyn FnOnce() + Send + 'static>>, _) = bounded(1000);
+        let receiver = Arc::new(Mutex::new(receiver));
+
+        let mut workers = Vec::with_capacity(num_workers);
+
+        for id in 0..num_workers {
+            let receiver = Arc::clone(&receiver);
+
+            let handle = thread::spawn(move || {
+                // Set CPU affinity for this worker
+                set_cpu_affinity(id % core_affinity::get_core_ids().unwrap_or_default().len());
+
+                // Try to set real-time priority
+                unsafe {
+                    let _ = set_realtime_priority();
+                }
+
+                loop {
+                    let message = receiver.lock().recv();
+                    match message {
+                        Ok(job) => job(),
+                        Err(_) => break,
+                    }
+                }
+            });
+
+            workers.push(handle);
+        }
+
+        Self { workers, sender }
+    }
+
+    fn execute<F>(&self, f: F)
+    where
+        F: FnOnce() + Send + 'static,
+    {
+        let _ = self.sender.send(Box::new(f));
+    }
+}
+
 #[derive(Clone)]
 struct OptimizedOrderClient {
     client: Client<HttpsConnector<HttpConnector>>,
     base_url: String,
     latencies: Arc<Mutex<Vec<f64>>>,
+    success_count: Arc<CacheAlignedCounter>,
+    error_count: Arc<CacheAlignedCounter>,
 }
 
 impl OptimizedOrderClient {
@@ -211,6 +359,8 @@ impl OptimizedOrderClient {
             client,
             base_url: base_url.to_string(),
             latencies: Arc::new(Mutex::new(latencies_vec)),
+            success_count: Arc::new(CacheAlignedCounter::new()),
+            error_count: Arc::new(CacheAlignedCounter::new()),
         }
     }
 
@@ -251,6 +401,8 @@ impl OptimizedOrderClient {
             let mut latencies = self.latencies.lock();
             latencies.push(round_trip_ms);
 
+            self.success_count.increment();
+
             Ok(OrderResult {
                 success: true,
                 round_trip_ms,
@@ -259,6 +411,8 @@ impl OptimizedOrderClient {
                 error: None,
             })
         } else {
+            self.error_count.increment();
+
             Ok(OrderResult {
                 success: false,
                 round_trip_ms,

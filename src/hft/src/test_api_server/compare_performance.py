@@ -265,25 +265,16 @@ def main():
         results.append(c_results['average'])
         results_data.append({'client': 'C (libcurl)', 'average': c_results['average'], 'all_runs': c_results['all_runs']})
     
-    # C++ client
-    print("\n" + "=" * 40)
-    print("Testing C++ Client (libcurl)")
-    print("=" * 40)
-    cpp_cmd = f"./cpp-client/cpp_client {NUM_ORDERS} {NUM_CONNECTIONS} {WARMUP}"
-    cpp_results = run_test("C++", cpp_cmd, NUM_TESTS)
-    if cpp_results:
-        cpp_results['average']['client'] = 'C++ (libcurl)'
-        results.append(cpp_results['average'])
-        results_data.append({'client': 'C++ (libcurl)', 'average': cpp_results['average'], 'all_runs': cpp_results['all_runs']})
+    # Skip regular C++ client, use only HFT optimized version
 
-    # C++ HFT client
+    # C++ HFT client (optimized version)
     print("\n" + "=" * 40)
-    print("Testing C++ HFT Client (Optimized)")
+    print("Testing C++ Client (HFT Optimized)")
     print("=" * 40)
     cpp_hft_cmd = f"./cpp-client/cpp_client_hft {NUM_ORDERS} {NUM_CONNECTIONS} {WARMUP}"
     cpp_hft_results = run_test("C++ HFT", cpp_hft_cmd, NUM_TESTS)
     if cpp_hft_results:
-        cpp_hft_results['average']['client'] = 'C++ HFT (Optimized)'
+        cpp_hft_results['average']['client'] = 'C++ (HFT Optimized)'
         results.append(cpp_hft_results['average'])
         results_data.append({'client': 'C++ HFT (Optimized)', 'average': cpp_hft_results['average'], 'all_runs': cpp_hft_results['all_runs']})
 
