@@ -275,7 +275,18 @@ def main():
         cpp_results['average']['client'] = 'C++ (libcurl)'
         results.append(cpp_results['average'])
         results_data.append({'client': 'C++ (libcurl)', 'average': cpp_results['average'], 'all_runs': cpp_results['all_runs']})
-    
+
+    # C++ HFT client
+    print("\n" + "=" * 40)
+    print("Testing C++ HFT Client (Optimized)")
+    print("=" * 40)
+    cpp_hft_cmd = f"./cpp-client/cpp_client_hft {NUM_ORDERS} {NUM_CONNECTIONS} {WARMUP}"
+    cpp_hft_results = run_test("C++ HFT", cpp_hft_cmd, NUM_TESTS)
+    if cpp_hft_results:
+        cpp_hft_results['average']['client'] = 'C++ HFT (Optimized)'
+        results.append(cpp_hft_results['average'])
+        results_data.append({'client': 'C++ HFT (Optimized)', 'average': cpp_hft_results['average'], 'all_runs': cpp_hft_results['all_runs']})
+
     # Rust client
     print("\n" + "=" * 40)
     print("Testing Rust Client (reqwest)")
