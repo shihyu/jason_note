@@ -1,641 +1,695 @@
-#include <iostream>
-#include <string>
-#include <vector>
-#include <deque>
-#include <chrono>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-#include <algorithm>
-#include <numeric>
-#include <cmath>
+// HFT Ultra-optimized C++ client with complete optimizations
+// Features: Memory locking, Huge pages, NUMA, CPU affinity, Lock-free, Cache alignment
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
-#include <iomanip>
+#include <ctime>
+#include <cmath>
 #include <curl/curl.h>
-#include <atomic>
-#include <sched.h>
+#include <pthread.h>
+#include <sys/time.h>
 #include <sys/mman.h>
-#include <numa.h>
-#include <immintrin.h>
-#include <x86intrin.h>
+#include <sys/resource.h>
 #include <unistd.h>
+#include <atomic>
+#include <algorithm>
+#include <new>
+#include <numa.h>
+#include <numaif.h>
+#include <errno.h>
+#include <sched.h>
+#include <immintrin.h>  // For prefetch instructions
 
-using namespace std::chrono;
+#define MAX_ORDERS 10000
+#define MAX_WORKERS 20
+#define CACHE_LINE_SIZE 64
+#define RING_BUFFER_SIZE 4096
 
-// CPU Core configuration
-constexpr int TRADING_CORE_START = 8;  // Start of isolated cores for trading
-constexpr int TRADING_CORE_END = 15;   // End of isolated cores
-constexpr int NUMA_NODE = 0;           // NUMA node to bind to
-
-// Memory configuration
-constexpr size_t CACHE_LINE_SIZE = 64;
-constexpr size_t HUGEPAGE_SIZE = 2 * 1024 * 1024; // 2MB
-constexpr size_t MEMORY_POOL_SIZE = 16 * 1024 * 1024; // 16MB
-
-enum class BSAction {
-    Buy,
-    Sell
+// Cache-aligned atomic counter
+struct alignas(CACHE_LINE_SIZE) AlignedCounter {
+    std::atomic<size_t> value{0};
+    char padding[CACHE_LINE_SIZE - sizeof(std::atomic<size_t>)];
 };
 
-enum class MarketType {
-    Common,
-    Warrant,
-    OddLot,
-    Daytime,
-    FixedPrice,
-    PlaceFirst
+// Lock-free MPMC ring buffer with cache alignment
+template<typename T>
+class alignas(CACHE_LINE_SIZE) LockFreeRingBuffer {
+private:
+    static constexpr size_t BUFFER_SIZE = RING_BUFFER_SIZE;
+
+    struct alignas(CACHE_LINE_SIZE) Slot {
+        std::atomic<T> data;
+        std::atomic<size_t> sequence;
+        char padding[CACHE_LINE_SIZE - sizeof(std::atomic<T>) - sizeof(std::atomic<size_t>)];
+    };
+
+    alignas(CACHE_LINE_SIZE) Slot buffer[BUFFER_SIZE];
+    alignas(CACHE_LINE_SIZE) AlignedCounter head;
+    alignas(CACHE_LINE_SIZE) AlignedCounter tail;
+
+public:
+    LockFreeRingBuffer() {
+        for (size_t i = 0; i < BUFFER_SIZE; ++i) {
+            buffer[i].sequence.store(i, std::memory_order_relaxed);
+        }
+    }
+
+    bool enqueue(T item) {
+        size_t current_tail = tail.value.load(std::memory_order_relaxed);
+
+        for (;;) {
+            Slot& slot = buffer[current_tail % BUFFER_SIZE];
+            size_t seq = slot.sequence.load(std::memory_order_acquire);
+
+            if (seq == current_tail) {
+                if (tail.value.compare_exchange_weak(current_tail, current_tail + 1,
+                                                     std::memory_order_relaxed)) {
+                    slot.data.store(item, std::memory_order_relaxed);
+                    slot.sequence.store(current_tail + 1, std::memory_order_release);
+                    return true;
+                }
+            } else if (seq < current_tail) {
+                return false;  // Queue is full
+            } else {
+                current_tail = tail.value.load(std::memory_order_relaxed);
+            }
+        }
+    }
+
+    bool dequeue(T& item) {
+        size_t current_head = head.value.load(std::memory_order_relaxed);
+
+        for (;;) {
+            Slot& slot = buffer[current_head % BUFFER_SIZE];
+            size_t seq = slot.sequence.load(std::memory_order_acquire);
+
+            if (seq == current_head + 1) {
+                if (head.value.compare_exchange_weak(current_head, current_head + 1,
+                                                     std::memory_order_relaxed)) {
+                    item = slot.data.load(std::memory_order_relaxed);
+                    slot.sequence.store(current_head + BUFFER_SIZE, std::memory_order_release);
+                    return true;
+                }
+            } else if (seq < current_head + 1) {
+                return false;  // Queue is empty
+            } else {
+                current_head = head.value.load(std::memory_order_relaxed);
+            }
+        }
+    }
 };
 
-enum class PriceType {
-    Limit,
-    Market,
-    LimitUp,
-    LimitDown,
-    Range
-};
-
-enum class TimeInForce {
-    ROD,
-    IOC,
-    FOK
-};
-
-enum class OrderType {
-    Stock,
-    Futures,
-    Option
-};
-
-// Cache-line aligned order structure to prevent false sharing
+// Cache-aligned order structure
 struct alignas(CACHE_LINE_SIZE) Order {
-    BSAction buy_sell;
+    const char* buy_sell;
     int symbol;
     double price;
     int quantity;
-    MarketType market_type;
-    PriceType price_type;
-    TimeInForce time_in_force;
-    OrderType order_type;
-    char user_def[32];  // Fixed size for better memory layout
-    char padding[8];    // Ensure cache line alignment
+    const char* market_type;
+    const char* price_type;
+    const char* time_in_force;
+    const char* order_type;
+    const char* user_def;
 };
 
-// Cache-line aligned statistics per thread
-struct alignas(CACHE_LINE_SIZE) ThreadStats {
-    std::atomic<uint64_t> processed{0};
-    std::atomic<uint64_t> errors{0};
-    double* latencies;           // Pre-allocated array
-    size_t latency_count{0};
-    size_t latency_capacity;
-    char padding[CACHE_LINE_SIZE - 40]; // Padding to fill cache line
+// Cache-aligned result structure
+struct alignas(CACHE_LINE_SIZE) OrderResult {
+    double latency_ms;
+    int success;
 };
 
-// Memory allocator for hugepage and locked memory
-class HFTMemoryAllocator {
+// Cache-aligned task structure
+struct alignas(CACHE_LINE_SIZE) Task {
+    int order_id;
+    const Order* order;
+    OrderResult* result;
+    char json_buffer[1024];
+    char response_buffer[4096];
+    size_t response_size;
+};
+
+// Memory management utilities
+class HFTMemoryManager {
 private:
-    void* memory_pool;
-    size_t pool_size;
-    size_t allocated;
-    std::mutex alloc_mutex;
+    static void* locked_memory;
+    static size_t locked_size;
 
 public:
-    HFTMemoryAllocator(size_t size = MEMORY_POOL_SIZE) : pool_size(size), allocated(0) {
-        // Allocate hugepage memory
-        int flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB;
-        int prot = PROT_READ | PROT_WRITE;
-        memory_pool = mmap(nullptr, pool_size, prot, flags, -1, 0);
-
-        if (memory_pool == MAP_FAILED) {
-            // Fallback to regular pages
-            memory_pool = mmap(nullptr, pool_size, prot, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-            if (memory_pool == MAP_FAILED) {
-                throw std::runtime_error("Failed to allocate memory pool");
-            }
-        }
-
-        // Lock memory to prevent swapping
-        if (mlock(memory_pool, pool_size) != 0) {
-            std::cerr << "Warning: Failed to lock memory (requires CAP_IPC_LOCK or root)\n";
-        }
-
-        // Prefault pages by touching them
-        memset(memory_pool, 0, pool_size);
-    }
-
-    ~HFTMemoryAllocator() {
-        if (memory_pool != MAP_FAILED) {
-            munlock(memory_pool, pool_size);
-            munmap(memory_pool, pool_size);
-        }
-    }
-
-    void* allocate(size_t size, size_t alignment = CACHE_LINE_SIZE) {
-        std::lock_guard<std::mutex> lock(alloc_mutex);
-
-        // Align the allocation
-        size_t aligned_size = (size + alignment - 1) & ~(alignment - 1);
-        size_t aligned_offset = (allocated + alignment - 1) & ~(alignment - 1);
-
-        if (aligned_offset + aligned_size > pool_size) {
+    // Allocate locked memory (prevent swapping)
+    static void* allocateLockedMemory(size_t size) {
+        void* mem;
+        if (posix_memalign(&mem, sysconf(_SC_PAGESIZE), size) != 0) {
             return nullptr;
         }
 
-        void* ptr = static_cast<char*>(memory_pool) + aligned_offset;
-        allocated = aligned_offset + aligned_size;
+        // Lock memory to prevent swapping
+        if (mlock(mem, size) == -1) {
+            free(mem);
+            return nullptr;
+        }
+
+        // Prefetch memory to trigger page faults
+        memset(mem, 0, size);
+        return mem;
+    }
+
+    // Allocate huge pages for better TLB efficiency
+    static void* allocateHugePage(size_t size) {
+        void* ptr = mmap(nullptr, size,
+                        PROT_READ | PROT_WRITE,
+                        MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB,
+                        -1, 0);
+
+        if (ptr == MAP_FAILED) {
+            // Fallback to regular locked memory
+            return allocateLockedMemory(size);
+        }
+
+        // Lock and prefetch
+        mlock(ptr, size);
+        memset(ptr, 0, size);
         return ptr;
+    }
+
+    // NUMA-aware allocation
+    static void* allocateNumaMemory(int node, size_t size) {
+        if (numa_available() < 0) {
+            return allocateLockedMemory(size);
+        }
+
+        struct bitmask *nm = numa_allocate_nodemask();
+        numa_bitmask_setbit(nm, node);
+
+        void* ptr = mmap(nullptr, size,
+                        PROT_READ | PROT_WRITE,
+                        MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB,
+                        -1, 0);
+
+        if (ptr != MAP_FAILED) {
+            mbind(ptr, size, MPOL_BIND, nm->maskp, nm->size + 1, 0);
+            mlock(ptr, size);
+            memset(ptr, 0, size);  // Prefetch
+        } else {
+            ptr = allocateLockedMemory(size);
+        }
+
+        numa_free_nodemask(nm);
+        return ptr;
+    }
+
+    static void freeMemory(void* ptr, size_t size) {
+        munlock(ptr, size);
+        munmap(ptr, size);
     }
 };
 
-// Thread-local resources with CPU affinity
-thread_local CURL* tls_curl = nullptr;
-thread_local struct curl_slist* tls_headers = nullptr;
-thread_local char* tls_response_buffer = nullptr;
-thread_local char* tls_json_buffer = nullptr;
-thread_local int tls_cpu_id = -1;
+void* HFTMemoryManager::locked_memory = nullptr;
+size_t HFTMemoryManager::locked_size = 0;
 
-class HFTThreadPoolClient {
+// Ultra-optimized client with complete HFT features
+class UltraHFTClient {
 private:
-    std::string base_url;
-    std::vector<ThreadStats*> thread_stats;
-    std::vector<std::thread> thread_pool;
-    std::deque<std::pair<int, Order*>> work_queue;
-    std::mutex queue_mutex;
-    std::condition_variable cv;
-    std::atomic<bool> stop_flag{false};
-    std::atomic<int> active_workers{0};
-    HFTMemoryAllocator allocator;
+    const char* base_url;
+    LockFreeRingBuffer<Task*> task_queue;
+    pthread_t* threads;
     int num_threads;
+    std::atomic<bool> shutdown{false};
 
-    // Pre-allocated order pool
-    Order* order_pool;
-    std::atomic<size_t> order_index{0};
+    // Pre-allocated CURL handles per thread
+    CURL** curl_handles;
+    struct curl_slist** headers;
 
-    static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
-        // Direct copy to pre-allocated buffer
-        char* buffer = static_cast<char*>(userp);
+    // Cache-aligned metrics
+    alignas(CACHE_LINE_SIZE) double* latencies;
+    alignas(CACHE_LINE_SIZE) std::atomic<int> total_orders{0};
+    alignas(CACHE_LINE_SIZE) std::atomic<int> successful_orders{0};
+
+    // Task pool with NUMA awareness
+    Task* task_pool;
+    std::atomic<bool>* task_available;
+    size_t pool_size;
+
+    static size_t write_callback(void* contents, size_t size, size_t nmemb, void* userp) {
+        Task* task = static_cast<Task*>(userp);
         size_t total_size = size * nmemb;
-        if (total_size > 4096) total_size = 4096; // Prevent overflow
-        memcpy(buffer, contents, total_size);
-        buffer[total_size] = '\0';
-        return size * nmemb;
+
+        if (task->response_size + total_size < 4096) {
+            memcpy(task->response_buffer + task->response_size, contents, total_size);
+            task->response_size += total_size;
+            task->response_buffer[task->response_size] = 0;
+        }
+
+        return total_size;
     }
 
-    // High-precision timestamp using RDTSC
-    inline uint64_t rdtsc() {
-        return __rdtsc();
+    static double get_time_ms() {
+        struct timeval tv;
+        gettimeofday(&tv, nullptr);
+        return tv.tv_sec * 1000.0 + tv.tv_usec / 1000.0;
     }
 
-    std::string get_iso_timestamp() {
-        auto now = system_clock::now();
-        auto time_t = system_clock::to_time_t(now);
-        auto us = duration_cast<microseconds>(now.time_since_epoch()) % 1000000;
+    static void get_iso_timestamp(char* buffer, size_t size) {
+        struct timeval tv;
+        gettimeofday(&tv, nullptr);
 
-        char buffer[64];
-        struct tm tm_info;
-        gmtime_r(&time_t, &tm_info);
-        strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", &tm_info);
+        struct tm* tm_info = gmtime(&tv.tv_sec);
+        strftime(buffer, size, "%Y-%m-%dT%H:%M:%S", tm_info);
 
-        char final_buffer[128];
-        snprintf(final_buffer, sizeof(final_buffer), "%s.%06ldZ", buffer, us.count());
-
-        return std::string(final_buffer);
+        size_t len = strlen(buffer);
+        snprintf(buffer + len, size - len, ".%03dZ", (int)(tv.tv_usec / 1000));
     }
 
-    constexpr const char* enum_to_string(BSAction action) {
-        return action == BSAction::Buy ? "buy" : "sell";
-    }
+    void process_order_optimized(CURL* curl, struct curl_slist* hdrs, Task* task) {
+        // Prefetch task data into L1 cache
+        __builtin_prefetch(task, 0, 3);
+        __builtin_prefetch(task->order, 0, 3);
 
-    constexpr const char* enum_to_string(MarketType type) {
-        switch (type) {
-            case MarketType::Common: return "common";
-            case MarketType::Warrant: return "warrant";
-            case MarketType::OddLot: return "odd_lot";
-            case MarketType::Daytime: return "daytime";
-            case MarketType::FixedPrice: return "fixed_price";
-            case MarketType::PlaceFirst: return "place_first";
-            default: return "common";
-        }
-    }
+        // Reset response buffer
+        task->response_size = 0;
+        task->response_buffer[0] = 0;
 
-    constexpr const char* enum_to_string(PriceType type) {
-        switch (type) {
-            case PriceType::Limit: return "limit";
-            case PriceType::Market: return "market";
-            case PriceType::LimitUp: return "limit_up";
-            case PriceType::LimitDown: return "limit_down";
-            case PriceType::Range: return "range";
-            default: return "limit";
-        }
-    }
+        // Build JSON directly in pre-allocated buffer - no allocations
+        char timestamp[64];
+        get_iso_timestamp(timestamp, sizeof(timestamp));
 
-    constexpr const char* enum_to_string(TimeInForce tif) {
-        switch (tif) {
-            case TimeInForce::ROD: return "rod";
-            case TimeInForce::IOC: return "ioc";
-            case TimeInForce::FOK: return "fok";
-            default: return "rod";
-        }
-    }
-
-    constexpr const char* enum_to_string(OrderType type) {
-        switch (type) {
-            case OrderType::Stock: return "stock";
-            case OrderType::Futures: return "futures";
-            case OrderType::Option: return "option";
-            default: return "stock";
-        }
-    }
-
-    void pin_thread_to_cpu(int cpu_id) {
-        cpu_set_t cpuset;
-        CPU_ZERO(&cpuset);
-        CPU_SET(cpu_id, &cpuset);
-
-        if (pthread_setaffinity_np(pthread_self(), sizeof(cpuset), &cpuset) != 0) {
-            std::cerr << "Warning: Failed to set CPU affinity for CPU " << cpu_id << "\n";
-        }
-
-        // Set real-time scheduling priority (requires CAP_SYS_NICE or root)
-        struct sched_param param;
-        param.sched_priority = sched_get_priority_max(SCHED_FIFO);
-        if (pthread_setschedparam(pthread_self(), SCHED_FIFO, &param) != 0) {
-            // Try with lower priority
-            param.sched_priority = 1;
-            pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
-        }
-    }
-
-    void worker_thread(int thread_id) {
-        // Pin to specific CPU core
-        int cpu_id = TRADING_CORE_START + (thread_id % (TRADING_CORE_END - TRADING_CORE_START + 1));
-        pin_thread_to_cpu(cpu_id);
-        tls_cpu_id = cpu_id;
-
-        // Set NUMA memory policy
-        if (numa_available() >= 0) {
-            numa_set_localalloc();
-            numa_run_on_node(NUMA_NODE);
-        }
-
-        // Allocate thread-local buffers from locked memory pool
-        tls_response_buffer = static_cast<char*>(allocator.allocate(4096));
-        tls_json_buffer = static_cast<char*>(allocator.allocate(2048));
-
-        if (!tls_response_buffer || !tls_json_buffer) {
-            std::cerr << "Failed to allocate thread-local buffers\n";
-            return;
-        }
-
-        // Initialize thread-local CURL handle
-        tls_curl = curl_easy_init();
-        if (!tls_curl) return;
-
-        // Set persistent options
-        std::string url = base_url + "/order";
-        curl_easy_setopt(tls_curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(tls_curl, CURLOPT_POST, 1L);
-        curl_easy_setopt(tls_curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(tls_curl, CURLOPT_WRITEDATA, tls_response_buffer);
-
-        // Aggressive performance optimizations
-        curl_easy_setopt(tls_curl, CURLOPT_TCP_NODELAY, 1L);
-        curl_easy_setopt(tls_curl, CURLOPT_TCP_KEEPALIVE, 1L);
-        curl_easy_setopt(tls_curl, CURLOPT_TCP_KEEPIDLE, 60L);
-        curl_easy_setopt(tls_curl, CURLOPT_TCP_KEEPINTVL, 30L);
-        curl_easy_setopt(tls_curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-        curl_easy_setopt(tls_curl, CURLOPT_FRESH_CONNECT, 0L);
-        curl_easy_setopt(tls_curl, CURLOPT_FORBID_REUSE, 0L);
-        curl_easy_setopt(tls_curl, CURLOPT_TIMEOUT_MS, 5000L);
-        curl_easy_setopt(tls_curl, CURLOPT_CONNECTTIMEOUT_MS, 1000L);
-
-        // Disable unnecessary features
-        curl_easy_setopt(tls_curl, CURLOPT_SSL_VERIFYPEER, 0L);
-        curl_easy_setopt(tls_curl, CURLOPT_SSL_VERIFYHOST, 0L);
-        curl_easy_setopt(tls_curl, CURLOPT_FOLLOWLOCATION, 0L);
-        curl_easy_setopt(tls_curl, CURLOPT_NOSIGNAL, 1L);
-
-        // Pre-create headers
-        tls_headers = curl_slist_append(nullptr, "Content-Type: application/json");
-        tls_headers = curl_slist_append(tls_headers, "Connection: keep-alive");
-        tls_headers = curl_slist_append(tls_headers, "Expect:");  // Disable 100-continue
-        curl_easy_setopt(tls_curl, CURLOPT_HTTPHEADER, tls_headers);
-
-        ThreadStats* stats = thread_stats[thread_id];
-
-        while (!stop_flag.load(std::memory_order_acquire)) {
-            std::pair<int, Order*> work;
-
-            {
-                std::unique_lock<std::mutex> lock(queue_mutex);
-                cv.wait_for(lock, std::chrono::microseconds(100),
-                           [this] { return !work_queue.empty() || stop_flag.load(std::memory_order_acquire); });
-
-                if (stop_flag.load(std::memory_order_acquire)) break;
-                if (work_queue.empty()) continue;
-
-                work = work_queue.front();
-                work_queue.pop_front();
-                active_workers.fetch_add(1, std::memory_order_acq_rel);
-            }
-
-            // Process with minimal latency
-            process_order(work.first, work.second, stats);
-            active_workers.fetch_sub(1, std::memory_order_acq_rel);
-        }
-
-        // Cleanup
-        if (tls_headers) {
-            curl_slist_free_all(tls_headers);
-            tls_headers = nullptr;
-        }
-        if (tls_curl) {
-            curl_easy_cleanup(tls_curl);
-            tls_curl = nullptr;
-        }
-    }
-
-    void process_order(int order_id, const Order* order, ThreadStats* stats) {
-        if (!tls_curl || !order) return;
-
-        // Clear response buffer
-        memset(tls_response_buffer, 0, 128); // Only clear what we need
-
-        // Build JSON with minimal allocations
-        std::string timestamp = get_iso_timestamp();
-
-        int json_len = snprintf(tls_json_buffer, 2048,
+        int json_len = snprintf(task->json_buffer, sizeof(task->json_buffer),
             "{\"buy_sell\":\"%s\",\"symbol\":%d,\"price\":%.2f,\"quantity\":%d,"
             "\"market_type\":\"%s\",\"price_type\":\"%s\",\"time_in_force\":\"%s\","
             "\"order_type\":\"%s\",\"client_timestamp\":\"%s\"%s%s%s}",
-            enum_to_string(order->buy_sell),
-            order->symbol,
-            order->price,
-            order->quantity,
-            enum_to_string(order->market_type),
-            enum_to_string(order->price_type),
-            enum_to_string(order->time_in_force),
-            enum_to_string(order->order_type),
-            timestamp.c_str(),
-            strlen(order->user_def) > 0 ? ",\"user_def\":\"" : "",
-            strlen(order->user_def) > 0 ? order->user_def : "",
-            strlen(order->user_def) > 0 ? "\"" : ""
+            task->order->buy_sell, task->order->symbol,
+            task->order->price, task->order->quantity,
+            task->order->market_type, task->order->price_type,
+            task->order->time_in_force, task->order->order_type,
+            timestamp,
+            task->order->user_def ? ",\"user_def\":\"" : "",
+            task->order->user_def ? task->order->user_def : "",
+            task->order->user_def ? "\"" : ""
         );
 
-        curl_easy_setopt(tls_curl, CURLOPT_POSTFIELDS, tls_json_buffer);
-        curl_easy_setopt(tls_curl, CURLOPT_POSTFIELDSIZE, json_len);
+        // Build URL - stack allocated
+        char url[256];
+        snprintf(url, sizeof(url), "%s/order", base_url);
 
-        // Use RDTSC for ultra-low overhead timing
-        uint64_t start_tsc = rdtsc();
-        auto start_time = high_resolution_clock::now();
+        double start_time = get_time_ms();
 
-        CURLcode res = curl_easy_perform(tls_curl);
+        // Reuse CURL handle - no allocations
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, task->json_buffer);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, json_len);
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, hdrs);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, task);
 
-        auto end_time = high_resolution_clock::now();
-        uint64_t end_tsc = rdtsc();
+        CURLcode res = curl_easy_perform(curl);
+
+        double end_time = get_time_ms();
 
         if (res == CURLE_OK) {
-            long http_code = 0;
-            curl_easy_getinfo(tls_curl, CURLINFO_RESPONSE_CODE, &http_code);
+            long response_code;
+            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
 
-            if (http_code == 200) {
-                double latency = duration<double, std::milli>(end_time - start_time).count();
+            if (response_code == 200) {
+                task->result->latency_ms = end_time - start_time;
+                task->result->success = 1;
 
-                // Store latency without lock
-                if (stats->latency_count < stats->latency_capacity) {
-                    stats->latencies[stats->latency_count++] = latency;
+                int idx = successful_orders.fetch_add(1);
+                if (idx < MAX_ORDERS) {
+                    latencies[idx] = task->result->latency_ms;
                 }
-                stats->processed.fetch_add(1, std::memory_order_relaxed);
             } else {
-                stats->errors.fetch_add(1, std::memory_order_relaxed);
+                task->result->success = 0;
             }
         } else {
-            stats->errors.fetch_add(1, std::memory_order_relaxed);
+            task->result->success = 0;
         }
+
+        total_orders.fetch_add(1);
+    }
+
+    static void* worker_thread(void* arg) {
+        UltraHFTClient* client = static_cast<UltraHFTClient*>(arg);
+
+        // Get thread ID
+        static std::atomic<int> thread_counter{0};
+        int thread_id = thread_counter.fetch_add(1);
+
+        // Set CPU affinity with physical core isolation
+        cpu_set_t cpuset;
+        CPU_ZERO(&cpuset);
+        int cpu_id = thread_id % sysconf(_SC_NPROCESSORS_ONLN);
+        CPU_SET(cpu_id, &cpuset);
+        pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+
+        // Set real-time scheduling priority
+        struct sched_param param;
+        param.sched_priority = sched_get_priority_max(SCHED_FIFO) - 1;
+        pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
+
+        // NUMA optimization: bind memory to local node
+        if (numa_available() >= 0) {
+            int node = numa_node_of_cpu(cpu_id);
+            numa_set_preferred(node);
+        }
+
+        // Get pre-allocated CURL handle
+        CURL* curl = client->curl_handles[thread_id];
+        struct curl_slist* headers = client->headers[thread_id];
+
+        while (!client->shutdown.load(std::memory_order_acquire)) {
+            Task* task = nullptr;
+
+            if (client->task_queue.dequeue(task)) {
+                client->process_order_optimized(curl, headers, task);
+
+                // Return task to pool
+                int task_idx = task - client->task_pool;
+                client->task_available[task_idx].store(true, std::memory_order_release);
+            } else {
+                // CPU-friendly pause
+                _mm_pause();
+            }
+        }
+
+        return nullptr;
+    }
+
+    Task* allocate_task() {
+        for (size_t i = 0; i < pool_size; i++) {
+            bool expected = true;
+            if (task_available[i].compare_exchange_weak(expected, false,
+                                                        std::memory_order_acquire)) {
+                return &task_pool[i];
+            }
+        }
+        return nullptr;
     }
 
 public:
-    HFTThreadPoolClient(const std::string& url = "http://localhost:8080", int threads = 8)
-        : base_url(url), num_threads(threads), allocator(MEMORY_POOL_SIZE) {
+    UltraHFTClient(const char* url, int thread_count)
+        : base_url(url), num_threads(thread_count) {
 
-        curl_global_init(CURL_GLOBAL_ALL);
-
-        // Pre-allocate order pool
-        order_pool = static_cast<Order*>(allocator.allocate(sizeof(Order) * 100000));
-        if (!order_pool) {
-            throw std::runtime_error("Failed to allocate order pool");
+        if (num_threads > MAX_WORKERS) {
+            num_threads = MAX_WORKERS;
         }
 
-        // Initialize thread statistics
-        thread_stats.reserve(num_threads);
+        // Initialize NUMA if available
+        if (numa_available() >= 0) {
+            printf("NUMA optimization: ENABLED\n");
+            numa_set_localalloc();
+        } else {
+            printf("NUMA optimization: DISABLED\n");
+        }
+
+        // Try to increase memory lock limits
+        struct rlimit rlim;
+        rlim.rlim_cur = RLIM_INFINITY;
+        rlim.rlim_max = RLIM_INFINITY;
+        if (setrlimit(RLIMIT_MEMLOCK, &rlim) == 0) {
+            printf("Memory locking: UNLIMITED\n");
+        } else {
+            printf("Memory locking: LIMITED (run as root for unlimited)\n");
+        }
+
+        // Allocate threads
+        threads = new pthread_t[num_threads];
+
+        // Pre-allocate latencies array with locked memory
+        size_t latencies_size = MAX_ORDERS * sizeof(double);
+        latencies = static_cast<double*>(HFTMemoryManager::allocateLockedMemory(latencies_size));
+        if (!latencies) {
+            latencies = new double[MAX_ORDERS];
+        }
+
+        // Initialize task pool with NUMA awareness
+        pool_size = RING_BUFFER_SIZE;
+        size_t task_pool_size = pool_size * sizeof(Task);
+        task_pool = static_cast<Task*>(HFTMemoryManager::allocateNumaMemory(0, task_pool_size));
+        if (!task_pool) {
+            task_pool = new Task[pool_size];
+        }
+
+        task_available = new std::atomic<bool>[pool_size];
+        for (size_t i = 0; i < pool_size; i++) {
+            task_available[i].store(true, std::memory_order_relaxed);
+        }
+
+        // Initialize CURL globally
+        curl_global_init(CURL_GLOBAL_ALL);
+
+        // Pre-initialize all CURL handles and headers
+        curl_handles = new CURL*[num_threads];
+        headers = new struct curl_slist*[num_threads];
+
         for (int i = 0; i < num_threads; i++) {
-            ThreadStats* stats = static_cast<ThreadStats*>(allocator.allocate(sizeof(ThreadStats)));
-            if (!stats) {
-                throw std::runtime_error("Failed to allocate thread stats");
-            }
-            new (stats) ThreadStats();  // Placement new
-            stats->latency_capacity = 10000;
-            stats->latencies = static_cast<double*>(allocator.allocate(sizeof(double) * stats->latency_capacity));
-            thread_stats.push_back(stats);
+            curl_handles[i] = curl_easy_init();
+
+            // Set persistent CURL options
+            curl_easy_setopt(curl_handles[i], CURLOPT_POST, 1L);
+            curl_easy_setopt(curl_handles[i], CURLOPT_WRITEFUNCTION, write_callback);
+            curl_easy_setopt(curl_handles[i], CURLOPT_TIMEOUT, 30L);
+
+            // Performance optimizations
+            curl_easy_setopt(curl_handles[i], CURLOPT_TCP_NODELAY, 1L);
+            curl_easy_setopt(curl_handles[i], CURLOPT_TCP_KEEPALIVE, 1L);
+            curl_easy_setopt(curl_handles[i], CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+            curl_easy_setopt(curl_handles[i], CURLOPT_FRESH_CONNECT, 0L);
+            curl_easy_setopt(curl_handles[i], CURLOPT_FORBID_REUSE, 0L);
+
+            // Pre-create headers
+            headers[i] = curl_slist_append(nullptr, "Content-Type: application/json");
+            headers[i] = curl_slist_append(headers[i], "Connection: keep-alive");
         }
 
         // Create worker threads
         for (int i = 0; i < num_threads; i++) {
-            thread_pool.emplace_back(&HFTThreadPoolClient::worker_thread, this, i);
-        }
+            pthread_attr_t attr;
+            pthread_attr_init(&attr);
 
-        // Wait for threads to initialize
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            // Set stack size to reduce memory overhead
+            pthread_attr_setstacksize(&attr, 256 * 1024);  // 256KB stack
+
+            pthread_create(&threads[i], &attr, worker_thread, this);
+            pthread_attr_destroy(&attr);
+        }
     }
 
-    ~HFTThreadPoolClient() {
-        stop_flag.store(true, std::memory_order_release);
-        cv.notify_all();
+    ~UltraHFTClient() {
+        shutdown.store(true, std::memory_order_release);
 
-        for (auto& t : thread_pool) {
-            if (t.joinable()) {
-                t.join();
-            }
+        for (int i = 0; i < num_threads; i++) {
+            pthread_join(threads[i], nullptr);
+        }
+
+        // Cleanup CURL resources
+        for (int i = 0; i < num_threads; i++) {
+            curl_easy_cleanup(curl_handles[i]);
+            curl_slist_free_all(headers[i]);
+        }
+
+        delete[] curl_handles;
+        delete[] headers;
+        delete[] task_available;
+
+        // Free threads
+        delete[] threads;
+
+        if (latencies != nullptr) {
+            HFTMemoryManager::freeMemory(latencies, MAX_ORDERS * sizeof(double));
+        }
+
+        if (task_pool != nullptr) {
+            HFTMemoryManager::freeMemory(task_pool, pool_size * sizeof(Task));
         }
 
         curl_global_cleanup();
     }
 
-    void submit_order(int order_id, const Order& order) {
-        // Copy to pre-allocated pool
-        size_t idx = order_index.fetch_add(1, std::memory_order_relaxed) % 100000;
-        Order* pool_order = &order_pool[idx];
-        *pool_order = order;
-
-        {
-            std::lock_guard<std::mutex> lock(queue_mutex);
-            work_queue.emplace_back(order_id, pool_order);
-        }
-        cv.notify_one();
-    }
-
-    void wait_completion() {
-        while (true) {
-            {
-                std::lock_guard<std::mutex> lock(queue_mutex);
-                if (work_queue.empty() && active_workers.load(std::memory_order_acquire) == 0) {
-                    break;
-                }
+    void submit_order(Task* task) {
+        // Spin-wait with exponential backoff
+        int backoff = 1;
+        while (!task_queue.enqueue(task)) {
+            for (int i = 0; i < backoff; i++) {
+                _mm_pause();
             }
-            std::this_thread::yield();  // Better than sleep for low latency
+            backoff = std::min(backoff * 2, 256);
         }
     }
 
-    void print_stats() {
-        // Aggregate all thread statistics
-        std::vector<double> all_latencies;
-        uint64_t total_processed = 0;
-        uint64_t total_errors = 0;
+    Task* get_task() {
+        return allocate_task();
+    }
 
-        for (auto* stats : thread_stats) {
-            total_processed += stats->processed.load(std::memory_order_relaxed);
-            total_errors += stats->errors.load(std::memory_order_relaxed);
-
-            for (size_t i = 0; i < stats->latency_count; i++) {
-                all_latencies.push_back(stats->latencies[i]);
-            }
+    void wait_completion(int expected) {
+        while (total_orders.load(std::memory_order_acquire) < expected) {
+            _mm_pause();
         }
+    }
 
-        if (all_latencies.empty()) {
-            std::cout << "No successful orders to analyze\n";
-            std::cout << "Total errors: " << total_errors << "\n";
+    void print_stats(double elapsed_seconds) {
+        int success_count = successful_orders.load();
+
+        if (success_count == 0) {
+            printf("No successful orders to analyze\n");
             return;
         }
 
-        // Use SIMD for fast sorting if available
-        std::sort(all_latencies.begin(), all_latencies.end());
+        // Sort latencies
+        std::sort(latencies, latencies + success_count);
 
-        double min_lat = all_latencies.front();
-        double max_lat = all_latencies.back();
-
-        // SIMD-accelerated sum calculation
+        double min = latencies[0];
+        double max = latencies[success_count - 1];
         double sum = 0;
-        size_t i = 0;
 
-        // Process 4 doubles at a time using AVX
-        for (; i + 3 < all_latencies.size(); i += 4) {
-            __m256d vec = _mm256_loadu_pd(&all_latencies[i]);
-            __m256d sum_vec = _mm256_hadd_pd(vec, vec);
-            sum += sum_vec[0] + sum_vec[2];
+        for (int i = 0; i < success_count; i++) {
+            sum += latencies[i];
         }
+        double avg = sum / success_count;
 
-        // Process remaining elements
-        for (; i < all_latencies.size(); i++) {
-            sum += all_latencies[i];
+        // Calculate standard deviation
+        double variance = 0;
+        for (int i = 0; i < success_count; i++) {
+            variance += (latencies[i] - avg) * (latencies[i] - avg);
         }
+        double std_dev = sqrt(variance / (success_count - 1));
 
-        double avg_lat = sum / all_latencies.size();
+        // Calculate percentiles with linear interpolation
+        auto percentile = [this, success_count](double p) {
+            double rank = (p / 100.0) * (success_count - 1);
+            int lower = (int)rank;
+            int upper = lower + 1;
 
-        std::cout << "\n=== HFT C++ Client Performance ===\n";
-        std::cout << "CPU Cores: " << TRADING_CORE_START << "-" << TRADING_CORE_END << " (isolated)\n";
-        std::cout << "NUMA Node: " << NUMA_NODE << "\n";
-        std::cout << "Memory: Locked hugepages with prefaulting\n";
-        std::cout << "Total orders: " << total_processed << "\n";
-        std::cout << "Total errors: " << total_errors << "\n";
-        std::cout << std::fixed << std::setprecision(3);
-        std::cout << "Min latency: " << min_lat << " ms\n";
-        std::cout << "Max latency: " << max_lat << " ms\n";
-        std::cout << "Avg latency: " << avg_lat << " ms\n";
+            if (upper >= success_count) {
+                return latencies[success_count - 1];
+            }
 
-        // Calculate percentiles
-        auto percentile = [&all_latencies](int p) {
-            size_t index = (all_latencies.size() * p) / 100;
-            if (index >= all_latencies.size()) index = all_latencies.size() - 1;
-            return all_latencies[index];
+            double weight = rank - lower;
+            return latencies[lower] * (1 - weight) + latencies[upper] * weight;
         };
 
-        std::cout << "P50: " << percentile(50) << " ms\n";
-        std::cout << "P90: " << percentile(90) << " ms\n";
-        std::cout << "P95: " << percentile(95) << " ms\n";
-        std::cout << "P99: " << percentile(99) << " ms\n";
+        printf("\n=== C++ HFT Ultra-Optimized Performance ===\n");
+        printf("Features: Memory locking, Huge pages, NUMA, CPU affinity, Lock-free, RT scheduling\n");
+        printf("Total orders: %d\n", success_count);
+        printf("Min latency: %.3f ms\n", min);
+        printf("Max latency: %.3f ms\n", max);
+        printf("Avg latency: %.3f ms\n", avg);
+        printf("Std dev: %.3f ms\n", std_dev);
+        printf("P50: %.3f ms\n", percentile(50));
+        printf("P90: %.3f ms\n", percentile(90));
+        printf("P95: %.3f ms\n", percentile(95));
+        printf("P99: %.3f ms\n", percentile(99));
+        printf("P99.9: %.3f ms\n", percentile(99.9));
+        printf("Throughput: %.2f orders/sec\n", success_count / elapsed_seconds);
+    }
 
-        // Calculate jitter (standard deviation)
-        double variance = 0;
-        for (const auto& lat : all_latencies) {
-            variance += (lat - avg_lat) * (lat - avg_lat);
-        }
-        double stddev = std::sqrt(variance / all_latencies.size());
-        std::cout << "Jitter (StdDev): " << stddev << " ms\n";
+    void reset_stats() {
+        total_orders.store(0);
+        successful_orders.store(0);
+    }
+
+    static double get_current_time() {
+        return get_time_ms();
     }
 };
 
-void run_test(int num_orders = 1000, int num_threads = 8, int warmup = 100) {
-    Order demo_order = {};
-    demo_order.buy_sell = BSAction::Buy;
-    demo_order.symbol = 2881;
-    demo_order.price = 66.0;
-    demo_order.quantity = 2000;
-    demo_order.market_type = MarketType::Common;
-    demo_order.price_type = PriceType::Limit;
-    demo_order.time_in_force = TimeInForce::ROD;
-    demo_order.order_type = OrderType::Stock;
-    strncpy(demo_order.user_def, "HFT_CPP", sizeof(demo_order.user_def) - 1);
-
-    // Use fewer threads for HFT (one per isolated core)
-    int hft_threads = std::min(num_threads, TRADING_CORE_END - TRADING_CORE_START + 1);
-
-    HFTThreadPoolClient client("http://localhost:8080", hft_threads);
-
-    // Warmup phase - critical for HFT
-    if (warmup > 0) {
-        std::cout << "Warming up with " << warmup << " orders...\n";
-        for (int i = 0; i < warmup; i++) {
-            client.submit_order(i, demo_order);
-        }
-        client.wait_completion();
-        // Note: We don't clear warmup results in HFT version to get full picture
-    }
-
-    std::cout << "\nHFT C++ Client - Core isolation, NUMA optimization, locked memory\n";
-    std::cout << "Sending " << num_orders << " orders with " << hft_threads << " threads...\n";
-
-    auto start_time = high_resolution_clock::now();
-
-    // Submit orders in batches to reduce lock contention
-    const int batch_size = 100;
-    for (int i = 0; i < num_orders; i += batch_size) {
-        int batch_end = std::min(i + batch_size, num_orders);
-        for (int j = i; j < batch_end; j++) {
-            client.submit_order(j, demo_order);
-        }
-        // Small yield to prevent queue overflow
-        if ((i / batch_size) % 10 == 0) {
-            std::this_thread::yield();
-        }
-    }
-
-    client.wait_completion();
-
-    auto end_time = high_resolution_clock::now();
-    double total_time = duration<double>(end_time - start_time).count();
-
-    std::cout << "\nCompleted in " << std::fixed << std::setprecision(2)
-              << total_time << " seconds\n";
-    std::cout << "Throughput: " << (num_orders / total_time) << " orders/sec\n";
-
-    client.print_stats();
-}
-
 int main(int argc, char* argv[]) {
     int num_orders = 1000;
-    int num_threads = 8;  // Default to fewer threads for HFT
+    int num_threads = 50;
     int warmup = 100;
 
-    if (argc > 1) num_orders = std::stoi(argv[1]);
-    if (argc > 2) num_threads = std::stoi(argv[2]);
-    if (argc > 3) warmup = std::stoi(argv[3]);
+    if (argc > 1) num_orders = atoi(argv[1]);
+    if (argc > 2) num_threads = atoi(argv[2]);
+    if (argc > 3) warmup = atoi(argv[3]);
 
-    // Check if running with appropriate privileges
-    if (geteuid() != 0) {
-        std::cout << "Note: Running without root privileges. Some optimizations may be limited.\n";
-        std::cout << "For best performance, run with: sudo ./cpp_client_hft\n\n";
+    printf("C++ HFT Ultra-Optimized Client\n");
+    printf("Features: Complete HFT optimization stack\n");
+    printf("Using %d threads with CPU affinity and RT scheduling\n", num_threads);
+
+    // Static order
+    Order order;
+    order.buy_sell = "buy";
+    order.symbol = 2881;
+    order.price = 66.0;
+    order.quantity = 2000;
+    order.market_type = "common";
+    order.price_type = "limit";
+    order.time_in_force = "rod";
+    order.order_type = "stock";
+    order.user_def = "CPP_HFT";
+
+    UltraHFTClient client("http://localhost:8080", num_threads);
+
+    // Pre-allocate all tasks and results with locked memory
+    size_t tasks_size = std::max(warmup, num_orders) * sizeof(Task);
+    Task* tasks = static_cast<Task*>(HFTMemoryManager::allocateLockedMemory(tasks_size));
+    if (!tasks) {
+        tasks = new Task[std::max(warmup, num_orders)];
     }
 
-    run_test(num_orders, num_threads, warmup);
+    size_t results_size = std::max(warmup, num_orders) * sizeof(OrderResult);
+    OrderResult* results = static_cast<OrderResult*>(
+        HFTMemoryManager::allocateLockedMemory(results_size));
+    if (!results) {
+        results = new OrderResult[std::max(warmup, num_orders)];
+    }
+
+    // Warmup phase
+    if (warmup > 0) {
+        printf("\nWarming up with %d orders...\n", warmup);
+
+        for (int i = 0; i < warmup; i++) {
+            Task* task = client.get_task();
+            while (!task) {
+                _mm_pause();
+                task = client.get_task();
+            }
+
+            task->order_id = i;
+            task->order = &order;
+            task->result = &results[i];
+
+            client.submit_order(task);
+        }
+
+        client.wait_completion(warmup);
+        client.reset_stats();
+    }
+
+    printf("\nSending %d orders...\n", num_orders);
+
+    double start_time = UltraHFTClient::get_current_time();
+
+    // Submit all orders
+    for (int i = 0; i < num_orders; i++) {
+        Task* task = client.get_task();
+        while (!task) {
+            _mm_pause();
+            task = client.get_task();
+        }
+
+        task->order_id = i;
+        task->order = &order;
+        task->result = &results[i];
+
+        client.submit_order(task);
+    }
+
+    client.wait_completion(num_orders);
+
+    double end_time = UltraHFTClient::get_current_time();
+    double elapsed_seconds = (end_time - start_time) / 1000.0;
+
+    printf("\nCompleted in %.2f seconds\n", elapsed_seconds);
+    client.print_stats(elapsed_seconds);
+
+    // Cleanup
+    if (tasks) {
+        HFTMemoryManager::freeMemory(tasks, tasks_size);
+    }
+    if (results) {
+        HFTMemoryManager::freeMemory(results, results_size);
+    }
 
     return 0;
 }
