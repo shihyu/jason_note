@@ -69,16 +69,17 @@ set ylabel 'Throughput (req/s)' font 'Arial,14' textcolor rgb "#4472C4"
 set y2label 'Average Latency (ms)' font 'Arial,14' textcolor rgb "#ED7D31"
 set y2tics
 set ytics nomirror
-set style data histogram
-set style histogram clustered gap 2
 set style fill solid 0.8 border -1
-set boxwidth 0.4
+set boxwidth 0.35
 set xtic rotate by -45 scale 0
 set key top left
 set key font 'Arial,11'
+set yrange [0:*]
+set y2range [0:*]
 
-plot 'performance_data/throughput.dat' using 2:xtic(1) title 'Throughput' axes x1y1 lc rgb "#4472C4" with boxes, \
-     'performance_data/latency_comparison.dat' using 3 title 'Avg Latency' axes x1y2 lc rgb "#ED7D31" with boxes
+# Use explicit positions to avoid histogram clustering issues
+plot 'performance_data/throughput.dat' using ($0-0.2):2:xtic(1) title 'Throughput' axes x1y1 lc rgb "#4472C4" with boxes, \
+     'performance_data/latency_comparison.dat' using ($0+0.2):3 title 'Avg Latency' axes x1y2 lc rgb "#ED7D31" with boxes
 
 # 5. Performance Summary Comparison
 set output 'performance_plots/performance_summary.png'

@@ -163,11 +163,16 @@ class AsyncOrderClient:
                 print(f"Std dev: {statistics.stdev(self.latencies):.2f} ms")
             
             percentiles = [50, 90, 95, 99]
+            sorted_latencies = sorted(self.latencies)
             for p in percentiles:
                 if len(self.latencies) >= 100 or (p <= 95 and len(self.latencies) >= 20):
-                    sorted_latencies = sorted(self.latencies)
-                    index = int(len(sorted_latencies) * p / 100)
-                    print(f"P{p}: {sorted_latencies[min(index, len(sorted_latencies)-1)]:.2f} ms")
+                    # Use linear interpolation for percentile calculation
+                    rank = p / 100 * (len(sorted_latencies) - 1)
+                    lower_index = int(rank)
+                    upper_index = min(lower_index + 1, len(sorted_latencies) - 1)
+                    weight = rank - lower_index
+                    percentile_value = sorted_latencies[lower_index] * (1 - weight) + sorted_latencies[upper_index] * weight
+                    print(f"P{p}: {percentile_value:.2f} ms")
 
 async def run_test(num_orders=1000, num_connections=100, warmup=100):
     async with AsyncOrderClient(num_connections=num_connections) as client:

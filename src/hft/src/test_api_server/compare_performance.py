@@ -24,50 +24,85 @@ def run_test(client_name, command, num_tests=3):
         # Parse output for metrics
         output = result.stdout
 
-        # Extract metrics from output
+        # Extract metrics from output with improved error handling
         metrics = {}
         for line in output.split('\n'):
-            if 'Throughput:' in line:
-                metrics['throughput'] = float(line.split()[1])
-            elif 'Min latency:' in line:
-                metrics['min_latency'] = float(line.split()[2])
-            elif 'Max latency:' in line:
-                metrics['max_latency'] = float(line.split()[2])
-            elif 'Avg latency:' in line:
-                metrics['avg_latency'] = float(line.split()[2])
-            elif 'Average:' in line and 'Latency Statistics' not in line:
-                # Go client format: "Average: 0.118"
-                metrics['avg_latency'] = float(line.split()[1])
-            elif 'Min:' in line and 'ms' not in line.split()[0]:
-                # Go client format: "Min: 0.062"
-                metrics['min_latency'] = float(line.split()[1])
-            elif 'Max:' in line and 'ms' not in line.split()[0]:
-                # Go client format: "Max: 0.190"
-                metrics['max_latency'] = float(line.split()[1])
-            elif 'Latency P50:' in line:
-                # Go client format: "Latency P50: 0.118 ms"
-                metrics['p50'] = float(line.split()[2])
-            elif 'P50:' in line and 'Latency' not in line:
-                # Go client format in stats section: "P50: 0.118"
-                metrics['p50'] = float(line.split()[1])
-            elif 'Latency P90:' in line:
-                # Go client format: "Latency P90: 0.145 ms"
-                metrics['p90'] = float(line.split()[2])
-            elif 'P90:' in line and 'Latency' not in line:
-                # Go client format in stats section: "P90: 0.145"
-                metrics['p90'] = float(line.split()[1])
-            elif 'Latency P95:' in line:
-                # Go client format: "Latency P95: 0.153 ms"
-                metrics['p95'] = float(line.split()[2])
-            elif 'P95:' in line and 'Latency' not in line:
-                # Go client format in stats section: "P95: 0.153"
-                metrics['p95'] = float(line.split()[1])
-            elif 'Latency P99:' in line:
-                # Go client format: "Latency P99: 0.181 ms"
-                metrics['p99'] = float(line.split()[2])
-            elif 'P99:' in line and 'Latency' not in line:
-                # Go client format in stats section: "P99: 0.181"
-                metrics['p99'] = float(line.split()[1])
+            try:
+                # Normalize line for easier parsing
+                line_lower = line.lower()
+                parts = line.split()
+
+                if 'throughput:' in line_lower and len(parts) >= 2:
+                    # Try to extract number from second position
+                    for part in parts[1:]:
+                        try:
+                            metrics['throughput'] = float(part)
+                            break
+                        except ValueError:
+                            continue
+
+                elif 'min latency:' in line_lower or ('min:' in line_lower and 'latency' in output.lower()):
+                    # Extract min latency - try different positions
+                    for part in parts[1:]:
+                        try:
+                            val = float(part)
+                            if val > 0:  # Sanity check
+                                metrics['min_latency'] = val
+                                break
+                        except ValueError:
+                            continue
+
+                elif 'max latency:' in line_lower or ('max:' in line_lower and 'latency' in output.lower()):
+                    # Extract max latency
+                    for part in parts[1:]:
+                        try:
+                            val = float(part)
+                            if val > 0:
+                                metrics['max_latency'] = val
+                                break
+                        except ValueError:
+                            continue
+
+                elif 'avg latency:' in line_lower:
+                    # Extract average latency from "Avg latency: X.XX ms" format
+                    for part in parts[2:]:  # Start from index 2 for "Avg latency:"
+                        try:
+                            val = float(part)
+                            if val > 0:
+                                metrics['avg_latency'] = val
+                                break
+                        except ValueError:
+                            continue
+                elif 'average:' in line_lower and 'latency' in output.lower():
+                    # Extract from Go format "Average: X.XXX"
+                    for part in parts[1:]:  # Start from index 1 for "Average:"
+                        try:
+                            val = float(part)
+                            if val > 0:
+                                metrics['avg_latency'] = val
+                                break
+                        except ValueError:
+                            continue
+
+                # Percentile extraction with flexible matching
+                for percentile in [50, 90, 95, 99]:
+                    p_key = f'p{percentile}'
+                    p_patterns = [f'p{percentile}:', f'latency p{percentile}:']
+
+                    for pattern in p_patterns:
+                        if pattern in line_lower and p_key not in metrics:
+                            for part in parts[1:]:
+                                try:
+                                    val = float(part)
+                                    if val > 0:
+                                        metrics[p_key] = val
+                                        break
+                                except ValueError:
+                                    continue
+
+            except Exception as e:
+                # Log parsing error but continue
+                print(f"Warning: Error parsing line '{line}': {e}", file=sys.stderr)
 
         if metrics:
             results.append(metrics)
@@ -95,7 +130,13 @@ def write_data_files(results_data):
             runs = client_data['all_runs']
             throughputs = [r.get('throughput', 0) for r in runs]
             avg = sum(throughputs) / len(throughputs) if throughputs else 0
-            std = (sum([(x - avg) ** 2 for x in throughputs]) / len(throughputs)) ** 0.5 if throughputs else 0
+            # Use sample standard deviation for small sample sizes
+            if len(throughputs) > 1:
+                std = (sum([(x - avg) ** 2 for x in throughputs]) / (len(throughputs) - 1)) ** 0.5
+            elif len(throughputs) == 1:
+                std = 0
+            else:
+                std = 0
             f.write(f'"{client}" {avg:.2f} {std:.2f}\n')
 
     # Write latency percentiles data

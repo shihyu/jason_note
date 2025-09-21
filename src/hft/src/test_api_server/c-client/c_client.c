@@ -292,11 +292,21 @@ int compare_double(const void* a, const void* b) {
     return (diff > 0) - (diff < 0);
 }
 
-// Calculate percentile
+// Calculate percentile with linear interpolation
 double calculate_percentile(double* sorted_array, int size, double percentile) {
     if (size == 0) return 0;
-    int index = (int)((percentile / 100.0) * (size - 1));
-    return sorted_array[index];
+    if (size == 1) return sorted_array[0];
+
+    double rank = (percentile / 100.0) * (size - 1);
+    int lower_index = (int)rank;
+    int upper_index = lower_index + 1;
+
+    if (upper_index >= size) {
+        return sorted_array[size - 1];
+    }
+
+    double weight = rank - lower_index;
+    return sorted_array[lower_index] * (1 - weight) + sorted_array[upper_index] * weight;
 }
 
 // Print statistics
@@ -321,12 +331,15 @@ void print_stats(double elapsed_seconds, int num_orders) {
     }
     double avg = sum / successful_orders;
 
-    // Calculate standard deviation
+    // Calculate standard deviation (sample std dev for better accuracy)
     double variance = 0;
-    for (int i = 0; i < successful_orders; i++) {
-        variance += (latencies[i] - avg) * (latencies[i] - avg);
+    double std_dev = 0;
+    if (successful_orders > 1) {
+        for (int i = 0; i < successful_orders; i++) {
+            variance += (latencies[i] - avg) * (latencies[i] - avg);
+        }
+        std_dev = sqrt(variance / (successful_orders - 1));
     }
-    double std_dev = sqrt(variance / successful_orders);
 
     printf("Min latency: %.2f ms\n", min);
     printf("Max latency: %.2f ms\n", max);
