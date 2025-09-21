@@ -9,6 +9,7 @@ build:
 	@echo "Building all clients..."
 	@cd c-client && make -s
 	@cd cpp-client && make -s
+	@cd go-client && go build -o go_client go_client.go
 	@cd rust-client && cargo build --release --quiet
 	@cd rust-api-server && cargo build --release --quiet
 	@echo "✓ Build complete"
@@ -32,6 +33,7 @@ clean:
 	@echo "Cleaning..."
 	@if [ -d "c-client" ]; then cd c-client && make clean -s 2>/dev/null || true; fi
 	@if [ -d "cpp-client" ]; then cd cpp-client && make clean -s 2>/dev/null || true; fi
+	@if [ -d "go-client" ]; then cd go-client && make clean -s 2>/dev/null || true; fi
 	@if [ -d "rust-client" ]; then cd rust-client && cargo clean --quiet 2>/dev/null || true; fi
 	@if [ -d "rust-api-server" ]; then cd rust-api-server && cargo clean --quiet 2>/dev/null || true; fi
 	@rm -rf performance_data/ performance_plots/
