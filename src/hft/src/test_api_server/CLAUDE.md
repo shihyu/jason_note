@@ -18,7 +18,10 @@ cd rust-api-server && cargo run --release &
 # 2. Run a quick test with Python client
 python3 python_client.py --orders 100 --connections 10 --warmup 10
 
-# 3. Run each client individually for benchmarking
+# 3. Run complete performance comparison (builds all clients and generates plots)
+make plot
+
+# 4. Run individual clients for specific testing
 ```
 
 ## Architecture
@@ -319,7 +322,10 @@ iotop # I/O 活動
 
 ### 建構所有客戶端
 ```bash
-# 一次建構所有客戶端（使用平行建構）
+# 一次建構所有客戶端
+make build
+
+# 或手動建構（使用平行建構）
 make -j$(nproc) -C c-client &
 make -j$(nproc) -C cpp-client &
 (cd rust-client && cargo build --release) &
@@ -331,6 +337,9 @@ echo "All clients built successfully"
 ### 清理建構產物
 ```bash
 # 清理所有建構產物
+make clean
+
+# 或手動清理
 cd c-client && make clean && cd ..
 cd cpp-client && make clean && cd ..
 cd rust-client && cargo clean && cd ..
@@ -408,3 +417,89 @@ sync && echo 3 | sudo tee /proc/sys/vm/drop_caches
 - NUMA 記憶體優化
 - 缺頁中斷優化
 - 快取優化策略
+
+## Important Commands Summary
+
+### Complete Performance Test Workflow
+```bash
+# Full automated test with plots
+make plot  # Builds all, starts server, runs tests, generates plots, stops server
+
+# Manual step-by-step
+make build                    # Build all clients
+cd rust-api-server && cargo run --release &  # Start server
+python3 compare_performance.py  # Run comparison tests
+python3 quick_test.py         # Quick test with smaller dataset
+kill $(lsof -ti:8080)         # Stop server
+```
+
+### Individual Client Testing
+```bash
+# C Client
+cd c-client && make test  # Quick test
+./c_client 1000 100 100    # Full test: orders connections warmup
+
+# C++ Client
+cd cpp-client && make test
+./cpp_client_hft 1000 100 100
+
+# Rust Client
+cd rust-client && cargo test
+cargo run --release -- --orders 1000 --connections 100 --warmup 100
+
+# Go Client
+cd go-client && make test
+./go_client --orders 1000 --connections 100 --warmup 100
+
+# Python Client
+python3 python_client.py --orders 1000 --connections 100 --warmup 100
+```
+
+### Linting and Type Checking
+```bash
+# Rust projects
+cd rust-api-server && cargo clippy -- -D warnings && cargo fmt --check
+cd rust-client && cargo clippy -- -D warnings && cargo fmt --check
+
+# Go
+cd go-client && go fmt ./... && go vet ./...
+
+# C/C++ (if cppcheck is installed)
+cppcheck --enable=all c-client/c_client.c
+cppcheck --enable=all --language=c++ cpp-client/cpp_client_hft.cpp
+
+# Python (if pylint/black installed)
+pylint python_client.py compare_performance.py
+black --check *.py
+```
+
+## Architecture Deep Dive
+
+### Cross-Language Performance Testing Pattern
+The project follows a consistent pattern across all client implementations:
+1. **Connection Pool Management**: All clients maintain a pool of persistent HTTP connections
+2. **Timestamp Tracking**: ISO 8601 format timestamps for cross-language compatibility
+3. **Warmup Phase**: Initial requests excluded from statistics to ensure steady state
+4. **Percentile Calculation**: Consistent latency percentile reporting (P50, P90, P95, P99)
+
+### Critical Performance Paths
+- **Server**: Axum's async handlers with shared state via Arc<Mutex<>>
+- **C Client**: Thread pool with work queue pattern, NUMA-aware memory allocation
+- **C++ Client**: std::async with futures, AVX2 optimizations for data processing
+- **Rust Client**: Tokio runtime with connection pooling via reqwest
+- **Go Client**: Goroutine pool with channel-based work distribution
+- **Python Client**: aiohttp with asyncio event loop
+
+### Build Optimization Flags
+- **C/C++**: `-O3 -march=native -mtune=native` for maximum CPU-specific optimizations
+- **Rust**: `--release` mode enables all optimizations including LTO
+- **Go**: `CGO_ENABLED=0` for static binary, `-ldflags="-s -w"` for size reduction
+
+## Known Issues and Gotchas
+
+- **NUMA Libraries**: C/C++ clients require libnuma-dev for optimal performance
+- **File Descriptor Limits**: High connection counts require `ulimit -n 65536`
+- **CPU Governor**: Must be set to 'performance' for consistent benchmarking
+- **Server Warmup**: First few requests after server start may show higher latency
+- **Go Client Garbage Collection**: May cause latency spikes; consider GOGC tuning
+- **Python GIL**: Despite async I/O, Python client may bottleneck on CPU-bound operations
