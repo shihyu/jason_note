@@ -33,7 +33,7 @@ clean:
 	@echo "Cleaning..."
 	@if [ -d "c-client" ]; then cd c-client && make clean -s 2>/dev/null || true; fi
 	@if [ -d "cpp-client" ]; then cd cpp-client && make clean -s 2>/dev/null || true; fi
-	@if [ -d "go-client" ]; then cd go-client && make clean -s 2>/dev/null || true; fi
+	@if [ -d "cpp_client_hft" ]; then cd cpp_client_hft && make clean -s 2>/dev/null || true; fi
 	@if [ -d "rust-client" ]; then cd rust-client && cargo clean --quiet 2>/dev/null || true; fi
 	@if [ -d "rust-api-server" ]; then cd rust-api-server && cargo clean --quiet 2>/dev/null || true; fi
 	@rm -rf performance_data/ performance_plots/
