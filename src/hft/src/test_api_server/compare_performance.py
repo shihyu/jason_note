@@ -35,7 +35,7 @@ def run_test(client_name, command, num_tests=3):
                 metrics['max_latency'] = float(line.split()[2])
             elif 'Avg latency:' in line:
                 metrics['avg_latency'] = float(line.split()[2])
-            elif 'Average:' in line and 'ms' in line:
+            elif 'Average:' in line and 'Latency Statistics' not in line:
                 # Go client format: "Average: 0.118"
                 metrics['avg_latency'] = float(line.split()[1])
             elif 'Min:' in line and 'ms' not in line.split()[0]:

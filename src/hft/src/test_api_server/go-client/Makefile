@@ -8,17 +8,20 @@ BINARY := go_client
 
 # Build flags
 GOFLAGS := -ldflags="-s -w"
+# Compiler optimizations
+GCFLAGS := -gcflags="-N -l"  # Disable optimizations for debug
+GCFLAGS_OPT := -gcflags="all=-N=0 -l=0"  # Enable optimizations
 
 # Default target
 all: build
 
-# Build the binary
+# Build the binary (with optimizations for fair comparison)
 build:
-	$(GO) build $(GOFLAGS) -o $(BINARY) go_client.go
+	GOARCH=amd64 GOOS=linux CGO_ENABLED=0 $(GO) build -a $(GOFLAGS) -o $(BINARY) go_client.go
 
-# Build with optimization
+# Build with maximum optimization
 release:
-	CGO_ENABLED=0 $(GO) build $(GOFLAGS) -o $(BINARY) go_client.go
+	GOARCH=amd64 GOOS=linux CGO_ENABLED=0 $(GO) build -a $(GOFLAGS) -o $(BINARY) go_client.go
 
 # Run tests with default parameters
 test: build

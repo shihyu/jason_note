@@ -9,7 +9,7 @@ build:
 	@echo "Building all clients..."
 	@cd c-client && make -s
 	@cd cpp-client && make -s
-	@cd go-client && go build -o go_client go_client.go
+	@cd go-client && GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build -a -ldflags="-s -w" -o go_client go_client.go
 	@cd rust-client && cargo build --release --quiet
 	@cd rust-api-server && cargo build --release --quiet
 	@echo "✓ Build complete"

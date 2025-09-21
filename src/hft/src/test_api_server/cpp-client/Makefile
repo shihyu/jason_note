@@ -1,6 +1,6 @@
 # Makefile for C++ API Client
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -O3 -pthread
+CXXFLAGS = -std=c++17 -Wall -Wextra -O3 -march=native -mtune=native -pthread -DNDEBUG
 LDFLAGS = -lcurl -pthread
 
 # Target executable
