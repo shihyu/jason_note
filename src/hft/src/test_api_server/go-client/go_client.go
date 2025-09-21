@@ -49,7 +49,6 @@ type HFTClient struct {
 	errorCount   atomic.Int64
 	latencies    []float64
 	latenciesMu  sync.Mutex
-	semaphore    chan struct{}
 }
 
 // NewHFTClient creates an optimized client
@@ -82,20 +81,13 @@ func NewHFTClient(serverURL string, maxConnections int) *HFTClient {
 		},
 		serverURL: serverURL,
 		latencies: make([]float64, 0, 50000),
-		semaphore: make(chan struct{}, maxConnections),
 	}
 
 	return client
 }
 
 // submitOrder submits a single order
-func (c *HFTClient) submitOrder(orderID int, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	// Acquire semaphore
-	c.semaphore <- struct{}{}
-	defer func() { <-c.semaphore }()
-
+func (c *HFTClient) submitOrder(orderID int) {
 	order := &OrderRequest{
 		BuySell:         "buy",
 		Symbol:          2881,
@@ -148,21 +140,34 @@ func (c *HFTClient) recordLatency(latency float64) {
 	c.latenciesMu.Unlock()
 }
 
-// runTest executes the performance test
+// runTest executes the performance test with worker pool pattern
 func (c *HFTClient) runTest(totalOrders, maxConcurrent, warmupOrders int) {
 	fmt.Printf("Starting optimized test with %d total orders, %d concurrent connections, %d warmup orders\n",
 		totalOrders, maxConcurrent, warmupOrders)
 
+	// Create worker pool
+	orderChan := make(chan int, totalOrders+warmupOrders)
+	var wg sync.WaitGroup
+
+	// Start workers
+	for i := 0; i < maxConcurrent; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for orderID := range orderChan {
+				c.submitOrder(orderID)
+			}
+		}()
+	}
+
 	// Warmup phase
 	if warmupOrders > 0 {
 		fmt.Printf("Warming up with %d orders...\n", warmupOrders)
-		var warmupWg sync.WaitGroup
-		warmupWg.Add(warmupOrders)
-
 		for i := 0; i < warmupOrders; i++ {
-			go c.submitOrder(i, &warmupWg)
+			orderChan <- i
 		}
-		warmupWg.Wait()
+		// Wait for warmup to complete
+		time.Sleep(time.Millisecond * 100)
 
 		// Reset stats after warmup
 		c.successCount.Store(0)
@@ -174,17 +179,15 @@ func (c *HFTClient) runTest(totalOrders, maxConcurrent, warmupOrders int) {
 
 	// Main test phase
 	fmt.Println("Starting main test...")
-	var wg sync.WaitGroup
-	wg.Add(totalOrders)
-
 	startTime := time.Now()
 
-	// Submit all orders using goroutines
+	// Submit all orders to channel
 	for i := 0; i < totalOrders; i++ {
-		go c.submitOrder(warmupOrders+i, &wg)
+		orderChan <- warmupOrders + i
 	}
 
-	// Wait for all orders to complete
+	// Close channel and wait for workers to finish
+	close(orderChan)
 	wg.Wait()
 
 	endTime := time.Now()
