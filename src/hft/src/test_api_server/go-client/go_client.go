@@ -73,9 +73,9 @@ func NewClient(serverURL string, maxConnections int) *Client {
 func (c *Client) sendOrder(orderID int) (float64, error) {
 	order := OrderRequest{
 		BuySell:         "buy",
-		Symbol:          2330, // 使用股票代碼數字，例如 2330 為台積電
-		Price:           50000.0,
-		Quantity:        1,
+		Symbol:          2881, // 統一使用相同股票代碼
+		Price:           66.0,
+		Quantity:        2000,
 		MarketType:      "common",
 		PriceType:       "limit",
 		TimeInForce:     "rod",
