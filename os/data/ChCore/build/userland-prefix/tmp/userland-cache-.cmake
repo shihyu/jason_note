@@ -1,0 +1,12 @@
+
+set(CHCORE_CROSS_COMPILE "aarch64-linux-gnu-" CACHE STRING "Initial cache" FORCE)
+set(CHCORE_PLAT "raspi3" CACHE STRING "Initial cache" FORCE)
+set(CHCORE_VERBOSE_BUILD "OFF" CACHE BOOL "Initial cache" FORCE)
+set(CHCORE_ROOT_PROGRAM "procm.srv" CACHE STRING "Initial cache" FORCE)
+set(CHCORE_KERNEL_DEBUG "OFF" CACHE BOOL "Initial cache" FORCE)
+set(CHCORE_KERNEL_TEST "ON" CACHE BOOL "Initial cache" FORCE)
+set(CHCORE_LAB3_TEST "OFF" CACHE BOOL "Initial cache" FORCE)
+set(CHCORE_USER_DEBUG "OFF" CACHE BOOL "Initial cache" FORCE)
+set(CHCORE_SHELL_TEST "OFF" CACHE BOOL "Initial cache" FORCE)
+set(CHCORE_TMPFS_TEST "OFF" CACHE BOOL "Initial cache" FORCE)
+set(CHCORE_FSM_TEST "OFF" CACHE BOOL "Initial cache" FORCE)
