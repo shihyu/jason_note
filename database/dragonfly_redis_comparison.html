@@ -247,22 +247,719 @@ sudo systemctl start redis-server
 </code></pre>
 <h2 id="python-測試環境設置"><a class="header" href="#python-測試環境設置">Python 測試環境設置</a></h2>
 <h3 id="安裝必要套件"><a class="header" href="#安裝必要套件">安裝必要套件</a></h3>
-<pre><code class="language-bash">pip install redis pytest pytest-asyncio aioredis hiredis
+<pre><code class="language-bash">pip install redis pytest pytest-asyncio aioredis hiredis redis-py-cluster
 </code></pre>
-<h3 id="基本連接測試"><a class="header" href="#基本連接測試">基本連接測試</a></h3>
+<h3 id="dragonflydb-python-範例"><a class="header" href="#dragonflydb-python-範例">DragonflyDB Python 範例</a></h3>
+<h4 id="1-基本連接與操作"><a class="header" href="#1-基本連接與操作">1. 基本連接與操作</a></h4>
 <pre><code class="language-python">import redis
+import time
 
-# 連接到 DragonflyDB 或 Redis（使用相同的客戶端）
-client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+# 連接到 DragonflyDB（與 Redis 客戶端相同）
+client = redis.Redis(
+    host='localhost',
+    port=6379,
+    decode_responses=True,
+    socket_keepalive=True,
+    socket_keepalive_options={
+        1: 1,  # TCP_KEEPIDLE
+        2: 1,  # TCP_KEEPINTVL
+        3: 5,  # TCP_KEEPCNT
+    }
+)
 
 # 測試連接
-response = client.ping()
-print(f"連接狀態: {response}")
+try:
+    response = client.ping()
+    print(f"✅ DragonflyDB 連接成功: {response}")
 
-# 基本操作
-client.set("test_key", "Hello World!")
-value = client.get("test_key")
-print(f"測試值: {value}")
+    # 取得伺服器資訊
+    info = client.info()
+    print(f"伺服器版本: {info.get('server', {}).get('dragonfly_version', 'Unknown')}")
+    print(f"使用記憶體: {info.get('memory', {}).get('used_memory_human', 'Unknown')}")
+except redis.ConnectionError:
+    print("❌ 無法連接到 DragonflyDB")
+</code></pre>
+<h4 id="2-字串操作範例"><a class="header" href="#2-字串操作範例">2. 字串操作範例</a></h4>
+<pre><code class="language-python">import redis
+from datetime import timedelta
+
+client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+
+# 基本字串操作
+client.set("user:1:name", "Alice")
+client.set("user:1:email", "alice@example.com")
+
+# 設定過期時間
+client.setex("session:abc123", timedelta(hours=2), "user_data")
+client.expire("user:1:name", timedelta(days=30))
+
+# 批量設定
+client.mset({
+    "product:1:name": "筆記型電腦",
+    "product:1:price": "25000",
+    "product:1:stock": "50"
+})
+
+# 批量取得
+values = client.mget(["product:1:name", "product:1:price", "product:1:stock"])
+print(f"產品資訊: {values}")
+
+# 原子操作
+client.incr("page:views")
+client.incrby("product:1:stock", -1)  # 減少庫存
+new_stock = client.get("product:1:stock")
+print(f"更新後庫存: {new_stock}")
+
+# 條件設定
+client.setnx("lock:resource", "1")  # 只在不存在時設定
+</code></pre>
+<h4 id="3-列表操作範例"><a class="header" href="#3-列表操作範例">3. 列表操作範例</a></h4>
+<pre><code class="language-python">import redis
+
+client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+
+# 任務佇列範例
+def add_task(task):
+    client.lpush("task:queue", task)
+    print(f"新增任務: {task}")
+
+def get_task():
+    task = client.rpop("task:queue")
+    return task
+
+# 新增任務
+add_task("send_email:user123")
+add_task("process_payment:order456")
+add_task("generate_report:monthly")
+
+# 處理任務
+while True:
+    task = get_task()
+    if task:
+        print(f"處理任務: {task}")
+    else:
+        print("沒有待處理任務")
+        break
+
+# 最近活動記錄
+client.lpush("user:1:activities", "登入系統")
+client.lpush("user:1:activities", "查看訂單")
+client.lpush("user:1:activities", "修改個人資料")
+client.ltrim("user:1:activities", 0, 99)  # 只保留最近100筆
+
+# 取得最近活動
+recent_activities = client.lrange("user:1:activities", 0, 4)
+print(f"最近5筆活動: {recent_activities}")
+</code></pre>
+<h4 id="4-集合操作範例"><a class="header" href="#4-集合操作範例">4. 集合操作範例</a></h4>
+<pre><code class="language-python">import redis
+
+client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+
+# 標籤系統
+client.sadd("post:1:tags", "Python", "DragonflyDB", "教學")
+client.sadd("post:2:tags", "Python", "Redis", "快取")
+client.sadd("post:3:tags", "JavaScript", "Node.js", "教學")
+
+# 找出共同標籤
+common_tags = client.sinter("post:1:tags", "post:2:tags")
+print(f"文章1和2的共同標籤: {common_tags}")
+
+# 使用者興趣
+client.sadd("user:alice:interests", "Python", "資料庫", "機器學習")
+client.sadd("user:bob:interests", "Python", "網頁開發", "資料庫")
+
+# 推薦系統 - 找出共同興趣
+shared_interests = client.sinter("user:alice:interests", "user:bob:interests")
+print(f"Alice 和 Bob 的共同興趣: {shared_interests}")
+
+# 隨機抽獎
+client.sadd("lottery:participants", "user1", "user2", "user3", "user4", "user5")
+winner = client.srandmember("lottery:participants")
+print(f"中獎者: {winner}")
+</code></pre>
+<h4 id="5-有序集合操作範例"><a class="header" href="#5-有序集合操作範例">5. 有序集合操作範例</a></h4>
+<pre><code class="language-python">import redis
+import time
+
+client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+
+# 排行榜系統
+def update_score(user_id, score):
+    client.zadd("leaderboard:global", {user_id: score})
+
+def get_top_players(count=10):
+    return client.zrevrange("leaderboard:global", 0, count-1, withscores=True)
+
+def get_user_rank(user_id):
+    rank = client.zrevrank("leaderboard:global", user_id)
+    return rank + 1 if rank is not None else None
+
+# 更新分數
+update_score("player:alice", 1500)
+update_score("player:bob", 2100)
+update_score("player:charlie", 1800)
+update_score("player:david", 2500)
+update_score("player:eve", 1200)
+
+# 取得排行榜
+top_players = get_top_players(3)
+print("🏆 排行榜前三名:")
+for i, (player, score) in enumerate(top_players, 1):
+    print(f"  {i}. {player}: {score:.0f} 分")
+
+# 查詢排名
+alice_rank = get_user_rank("player:alice")
+print(f"\nAlice 的排名: 第 {alice_rank} 名")
+
+# 時間序列資料
+timestamp = int(time.time())
+client.zadd("events:timeline", {
+    f"event:{timestamp}:login": timestamp,
+    f"event:{timestamp+10}:purchase": timestamp + 10,
+    f"event:{timestamp+20}:logout": timestamp + 20
+})
+
+# 查詢時間範圍內的事件
+recent_events = client.zrangebyscore(
+    "events:timeline",
+    timestamp,
+    timestamp + 30,
+    withscores=True
+)
+print(f"\n最近30秒的事件: {recent_events}")
+</code></pre>
+<h4 id="6-雜湊操作範例"><a class="header" href="#6-雜湊操作範例">6. 雜湊操作範例</a></h4>
+<pre><code class="language-python">import redis
+
+client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+
+# 使用者資料管理
+def create_user(user_id, user_data):
+    client.hset(f"user:{user_id}", mapping=user_data)
+
+def get_user(user_id):
+    return client.hgetall(f"user:{user_id}")
+
+def update_user_field(user_id, field, value):
+    client.hset(f"user:{user_id}", field, value)
+
+# 建立使用者
+create_user("1001", {
+    "username": "alice_wang",
+    "email": "alice@example.com",
+    "age": "28",
+    "city": "台北",
+    "created_at": "2024-01-15"
+})
+
+# 取得使用者資料
+user_data = get_user("1001")
+print(f"使用者資料: {user_data}")
+
+# 更新特定欄位
+update_user_field("1001", "city", "高雄")
+update_user_field("1001", "last_login", "2024-01-20")
+
+# 檢查欄位是否存在
+exists = client.hexists("user:1001", "email")
+print(f"Email 欄位存在: {exists}")
+
+# 增加數值欄位
+client.hincrby("user:1001", "login_count", 1)
+
+# 購物車系統
+def add_to_cart(user_id, product_id, quantity):
+    client.hincrby(f"cart:{user_id}", product_id, quantity)
+
+def get_cart(user_id):
+    return client.hgetall(f"cart:{user_id}")
+
+def remove_from_cart(user_id, product_id):
+    client.hdel(f"cart:{user_id}", product_id)
+
+# 購物車操作
+add_to_cart("user:1001", "product:laptop", 1)
+add_to_cart("user:1001", "product:mouse", 2)
+add_to_cart("user:1001", "product:keyboard", 1)
+
+cart = get_cart("user:1001")
+print(f"\n購物車內容: {cart}")
+</code></pre>
+<h4 id="7-pipeline-批次操作範例"><a class="header" href="#7-pipeline-批次操作範例">7. Pipeline 批次操作範例</a></h4>
+<pre><code class="language-python">import redis
+import time
+
+client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+
+# 使用 Pipeline 提升效能
+def batch_insert_with_pipeline(count=10000):
+    start_time = time.time()
+
+    pipe = client.pipeline()
+    for i in range(count):
+        pipe.set(f"key:{i}", f"value:{i}")
+        if i % 100 == 0:  # 每100個命令執行一次
+            pipe.execute()
+            pipe = client.pipeline()
+
+    pipe.execute()  # 執行剩餘的命令
+
+    elapsed = time.time() - start_time
+    print(f"Pipeline 插入 {count} 筆資料耗時: {elapsed:.2f} 秒")
+    print(f"平均每秒: {count/elapsed:.0f} ops")
+
+# 不使用 Pipeline 的對照組
+def batch_insert_without_pipeline(count=1000):
+    start_time = time.time()
+
+    for i in range(count):
+        client.set(f"test:{i}", f"value:{i}")
+
+    elapsed = time.time() - start_time
+    print(f"一般插入 {count} 筆資料耗時: {elapsed:.2f} 秒")
+    print(f"平均每秒: {count/elapsed:.0f} ops")
+
+# 測試效能差異
+print("效能比較:")
+batch_insert_without_pipeline(1000)
+batch_insert_with_pipeline(10000)
+
+# 事務性 Pipeline
+def transfer_points(from_user, to_user, points):
+    pipe = client.pipeline()
+    pipe.watch(f"user:{from_user}:points")
+
+    current_points = int(client.get(f"user:{from_user}:points") or 0)
+    if current_points &gt;= points:
+        pipe.multi()
+        pipe.decrby(f"user:{from_user}:points", points)
+        pipe.incrby(f"user:{to_user}:points", points)
+        result = pipe.execute()
+        return True
+    else:
+        pipe.reset()
+        return False
+</code></pre>
+<h4 id="8-pubsub-發布訂閱範例"><a class="header" href="#8-pubsub-發布訂閱範例">8. Pub/Sub 發布訂閱範例</a></h4>
+<pre><code class="language-python">import redis
+import threading
+import time
+
+# 發布者
+def publisher():
+    pub_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+    time.sleep(1)  # 等待訂閱者準備好
+
+    messages = [
+        {"channel": "news", "message": "突發新聞：DragonflyDB 效能測試結果出爐"},
+        {"channel": "news", "message": "科技新聞：Python 3.13 正式發布"},
+        {"channel": "chat:room1", "message": "Alice: 大家好！"},
+        {"channel": "chat:room1", "message": "Bob: 嗨，Alice！"},
+    ]
+
+    for msg in messages:
+        pub_client.publish(msg["channel"], msg["message"])
+        print(f"📢 發布到 {msg['channel']}: {msg['message']}")
+        time.sleep(0.5)
+
+# 訂閱者
+def subscriber():
+    sub_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+    pubsub = sub_client.pubsub()
+
+    # 訂閱頻道
+    pubsub.subscribe('news', 'chat:room1')
+
+    # 接收訊息
+    for message in pubsub.listen():
+        if message['type'] == 'message':
+            print(f"📨 收到 [{message['channel']}]: {message['data']}")
+
+# 執行發布訂閱範例
+if __name__ == "__main__":
+    # 啟動訂閱者執行緒
+    sub_thread = threading.Thread(target=subscriber)
+    sub_thread.daemon = True
+    sub_thread.start()
+
+    # 啟動發布者
+    publisher()
+
+    time.sleep(2)  # 等待所有訊息處理完成
+</code></pre>
+<h4 id="9-非同步操作範例"><a class="header" href="#9-非同步操作範例">9. 非同步操作範例</a></h4>
+<pre><code class="language-python">import asyncio
+import aioredis
+
+async def async_operations():
+    # 建立非同步連接
+    redis = await aioredis.create_redis_pool(
+        'redis://localhost:6379',
+        encoding='utf-8'
+    )
+
+    try:
+        # 非同步設定值
+        await redis.set('async:key1', 'value1')
+        await redis.set('async:key2', 'value2')
+
+        # 非同步批量操作
+        tasks = []
+        for i in range(100):
+            task = redis.set(f'async:batch:{i}', f'value:{i}')
+            tasks.append(task)
+
+        # 等待所有操作完成
+        await asyncio.gather(*tasks)
+
+        # 非同步取值
+        value = await redis.get('async:key1')
+        print(f"非同步取得的值: {value}")
+
+        # 非同步 Pipeline
+        pipe = redis.pipeline()
+        pipe.incr('async:counter')
+        pipe.incr('async:counter')
+        pipe.incr('async:counter')
+        results = await pipe.execute()
+        print(f"Pipeline 結果: {results}")
+
+    finally:
+        redis.close()
+        await redis.wait_closed()
+
+# 執行非同步操作
+# asyncio.run(async_operations())
+</code></pre>
+<h4 id="10-連接池管理範例"><a class="header" href="#10-連接池管理範例">10. 連接池管理範例</a></h4>
+<pre><code class="language-python">import redis
+from redis import ConnectionPool
+from contextlib import contextmanager
+
+# 建立全域連接池
+pool = ConnectionPool(
+    host='localhost',
+    port=6379,
+    decode_responses=True,
+    max_connections=50,
+    socket_connect_timeout=5,
+    socket_timeout=5,
+    retry_on_timeout=True,
+    health_check_interval=30
+)
+
+# 連接管理器
+@contextmanager
+def get_redis_connection():
+    client = redis.Redis(connection_pool=pool)
+    try:
+        yield client
+    finally:
+        # 連接會自動返回池中
+        pass
+
+# 使用連接池
+def perform_operations():
+    with get_redis_connection() as client:
+        # 執行操作
+        client.set("pool:test", "value")
+        value = client.get("pool:test")
+        print(f"使用連接池取得: {value}")
+
+# 監控連接池狀態
+def check_pool_status():
+    with get_redis_connection() as client:
+        pool_stats = {
+            "created_connections": pool.connection_kwargs,
+            "max_connections": pool.max_connections,
+            "encoding": pool.encoder.encoding
+        }
+        print(f"連接池狀態: {pool_stats}")
+
+perform_operations()
+check_pool_status()
+</code></pre>
+<h4 id="11-錯誤處理與重試機制"><a class="header" href="#11-錯誤處理與重試機制">11. 錯誤處理與重試機制</a></h4>
+<pre><code class="language-python">import redis
+from redis.exceptions import ConnectionError, TimeoutError, RedisError
+import time
+from functools import wraps
+
+def retry_on_failure(max_retries=3, delay=1):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            retries = 0
+            while retries &lt; max_retries:
+                try:
+                    return func(*args, **kwargs)
+                except (ConnectionError, TimeoutError) as e:
+                    retries += 1
+                    if retries &gt;= max_retries:
+                        print(f"❌ 操作失敗，已重試 {max_retries} 次")
+                        raise
+                    print(f"⚠️ 連接錯誤，{delay}秒後重試... (第{retries}次)")
+                    time.sleep(delay)
+                except RedisError as e:
+                    print(f"❌ Redis 錯誤: {e}")
+                    raise
+            return None
+        return wrapper
+    return decorator
+
+@retry_on_failure(max_retries=3, delay=2)
+def safe_redis_operation():
+    client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+
+    # 測試連接
+    client.ping()
+
+    # 執行操作
+    result = client.set("safe:key", "value", ex=3600)
+    return result
+
+# 使用安全操作
+try:
+    result = safe_redis_operation()
+    if result:
+        print("✅ 操作成功")
+except Exception as e:
+    print(f"❌ 最終失敗: {e}")
+</code></pre>
+<h4 id="12-效能監控範例"><a class="header" href="#12-效能監控範例">12. 效能監控範例</a></h4>
+<pre><code class="language-python">import redis
+import time
+from datetime import datetime
+
+class DragonflyDBMonitor:
+    def __init__(self, host='localhost', port=6379):
+        self.client = redis.Redis(host=host, port=port, decode_responses=True)
+
+    def get_metrics(self):
+        """取得 DragonflyDB 效能指標"""
+        info = self.client.info()
+
+        metrics = {
+            'timestamp': datetime.now().isoformat(),
+            'clients': {
+                'connected': info.get('clients', {}).get('connected_clients', 0),
+                'blocked': info.get('clients', {}).get('blocked_clients', 0)
+            },
+            'memory': {
+                'used': info.get('memory', {}).get('used_memory_human', 'N/A'),
+                'peak': info.get('memory', {}).get('used_memory_peak_human', 'N/A'),
+                'rss': info.get('memory', {}).get('used_memory_rss_human', 'N/A')
+            },
+            'stats': {
+                'total_commands': info.get('stats', {}).get('total_commands_processed', 0),
+                'ops_per_sec': info.get('stats', {}).get('instantaneous_ops_per_sec', 0),
+                'total_connections': info.get('stats', {}).get('total_connections_received', 0),
+                'rejected_connections': info.get('stats', {}).get('rejected_connections', 0)
+            },
+            'cpu': {
+                'used_cpu_sys': info.get('cpu', {}).get('used_cpu_sys', 0),
+                'used_cpu_user': info.get('cpu', {}).get('used_cpu_user', 0)
+            }
+        }
+
+        return metrics
+
+    def benchmark_operations(self, iterations=10000):
+        """執行基準測試"""
+        results = {}
+
+        # SET 操作測試
+        start = time.time()
+        for i in range(iterations):
+            self.client.set(f'bench:key:{i}', f'value:{i}')
+        set_time = time.time() - start
+        results['set_ops_per_sec'] = iterations / set_time
+
+        # GET 操作測試
+        start = time.time()
+        for i in range(iterations):
+            self.client.get(f'bench:key:{i}')
+        get_time = time.time() - start
+        results['get_ops_per_sec'] = iterations / get_time
+
+        # Pipeline 測試
+        start = time.time()
+        pipe = self.client.pipeline()
+        for i in range(iterations):
+            pipe.set(f'pipe:key:{i}', f'value:{i}')
+        pipe.execute()
+        pipe_time = time.time() - start
+        results['pipeline_ops_per_sec'] = iterations / pipe_time
+
+        # 清理測試資料
+        for i in range(iterations):
+            self.client.delete(f'bench:key:{i}', f'pipe:key:{i}')
+
+        return results
+
+    def print_report(self):
+        """列印效能報告"""
+        print("=" * 60)
+        print("DragonflyDB 效能監控報告")
+        print("=" * 60)
+
+        metrics = self.get_metrics()
+
+        print(f"\n📊 連接狀態:")
+        print(f"  • 活躍連接: {metrics['clients']['connected']}")
+        print(f"  • 阻塞連接: {metrics['clients']['blocked']}")
+
+        print(f"\n💾 記憶體使用:")
+        print(f"  • 當前使用: {metrics['memory']['used']}")
+        print(f"  • 尖峰使用: {metrics['memory']['peak']}")
+        print(f"  • RSS: {metrics['memory']['rss']}")
+
+        print(f"\n⚡ 效能指標:")
+        print(f"  • 總處理命令: {metrics['stats']['total_commands']:,}")
+        print(f"  • 當前 OPS: {metrics['stats']['ops_per_sec']:,}")
+
+        print(f"\n🧪 基準測試結果:")
+        bench_results = self.benchmark_operations(1000)
+        print(f"  • SET 效能: {bench_results['set_ops_per_sec']:.0f} ops/sec")
+        print(f"  • GET 效能: {bench_results['get_ops_per_sec']:.0f} ops/sec")
+        print(f"  • Pipeline 效能: {bench_results['pipeline_ops_per_sec']:.0f} ops/sec")
+
+        print("=" * 60)
+
+# 執行監控
+if __name__ == "__main__":
+    monitor = DragonflyDBMonitor()
+    monitor.print_report()
+</code></pre>
+<h3 id="完整應用範例即時排行榜系統"><a class="header" href="#完整應用範例即時排行榜系統">完整應用範例：即時排行榜系統</a></h3>
+<pre><code class="language-python">import redis
+import random
+import time
+from datetime import datetime, timedelta
+
+class GameLeaderboard:
+    """遊戲排行榜系統 - 使用 DragonflyDB"""
+
+    def __init__(self, host='localhost', port=6379):
+        self.client = redis.Redis(host=host, port=port, decode_responses=True)
+        self.leaderboard_key = "game:leaderboard:global"
+        self.weekly_key = f"game:leaderboard:week:{datetime.now().strftime('%Y-%W')}"
+        self.daily_key = f"game:leaderboard:day:{datetime.now().strftime('%Y-%m-%d')}"
+
+    def update_score(self, player_id, score):
+        """更新玩家分數"""
+        pipe = self.client.pipeline()
+
+        # 更新多個排行榜
+        pipe.zadd(self.leaderboard_key, {player_id: score})
+        pipe.zadd(self.weekly_key, {player_id: score})
+        pipe.zadd(self.daily_key, {player_id: score})
+
+        # 記錄玩家最高分
+        pipe.hset(f"player:{player_id}", "high_score", score)
+        pipe.hset(f"player:{player_id}", "last_played", datetime.now().isoformat())
+
+        pipe.execute()
+
+    def get_leaderboard(self, board_type='global', limit=10):
+        """取得排行榜"""
+        key_map = {
+            'global': self.leaderboard_key,
+            'weekly': self.weekly_key,
+            'daily': self.daily_key
+        }
+
+        key = key_map.get(board_type, self.leaderboard_key)
+        return self.client.zrevrange(key, 0, limit-1, withscores=True)
+
+    def get_player_rank(self, player_id, board_type='global'):
+        """取得玩家排名"""
+        key_map = {
+            'global': self.leaderboard_key,
+            'weekly': self.weekly_key,
+            'daily': self.daily_key
+        }
+
+        key = key_map.get(board_type, self.leaderboard_key)
+        rank = self.client.zrevrank(key, player_id)
+        score = self.client.zscore(key, player_id)
+
+        return {
+            'rank': rank + 1 if rank is not None else None,
+            'score': score
+        }
+
+    def get_nearby_players(self, player_id, distance=2):
+        """取得附近排名的玩家"""
+        rank = self.client.zrevrank(self.leaderboard_key, player_id)
+        if rank is None:
+            return []
+
+        start = max(0, rank - distance)
+        end = rank + distance
+
+        return self.client.zrevrange(
+            self.leaderboard_key,
+            start,
+            end,
+            withscores=True
+        )
+
+    def simulate_game(self, num_players=100, num_rounds=10):
+        """模擬遊戲進行"""
+        print("🎮 開始遊戲模擬...")
+
+        # 建立玩家
+        players = [f"player_{i:03d}" for i in range(num_players)]
+
+        # 模擬多輪遊戲
+        for round_num in range(num_rounds):
+            print(f"\n第 {round_num + 1} 輪:")
+
+            # 隨機選擇玩家並更新分數
+            active_players = random.sample(players, k=random.randint(10, 30))
+            for player in active_players:
+                score = random.randint(100, 10000)
+                self.update_score(player, score)
+
+            # 顯示當前前5名
+            top_5 = self.get_leaderboard(limit=5)
+            print("  目前排行榜前5名:")
+            for i, (player, score) in enumerate(top_5, 1):
+                print(f"    {i}. {player}: {score:.0f}分")
+
+            time.sleep(0.5)
+
+        # 顯示最終結果
+        print("\n" + "="*50)
+        print("🏆 最終排行榜")
+        print("="*50)
+
+        # 全球排行榜
+        print("\n📊 全球排行榜前10名:")
+        global_top = self.get_leaderboard('global', limit=10)
+        for i, (player, score) in enumerate(global_top, 1):
+            print(f"  {i:2d}. {player}: {score:.0f}分")
+
+        # 查詢特定玩家
+        sample_player = random.choice(players)
+        player_stats = self.get_player_rank(sample_player)
+        print(f"\n👤 {sample_player} 的排名:")
+        print(f"  • 全球排名: 第 {player_stats['rank']} 名")
+        print(f"  • 分數: {player_stats['score']:.0f}")
+
+        # 顯示附近玩家
+        nearby = self.get_nearby_players(sample_player, distance=2)
+        print(f"\n📍 {sample_player} 附近的玩家:")
+        for player, score in nearby:
+            marker = " ← (你)" if player == sample_player else ""
+            print(f"  • {player}: {score:.0f}分{marker}")
+
+# 執行範例
+if __name__ == "__main__":
+    leaderboard = GameLeaderboard()
+    leaderboard.simulate_game(num_players=50, num_rounds=5)
 </code></pre>
 <h2 id="redis-vs-dragonflydb-詳細比較"><a class="header" href="#redis-vs-dragonflydb-詳細比較">Redis vs DragonflyDB 詳細比較</a></h2>
 <h3 id="架構差異"><a class="header" href="#架構差異">架構差異</a></h3>
