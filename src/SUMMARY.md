@@ -272,6 +272,7 @@
 - [Database](database/database.md)
     - [Redis](database/redis.md)
     - [Redis Hash](database/hash.md)
+    - [Dragonfly vs Redis 效能比較](database/dragonfly_redis_comparison.md)
     - [ClickHouse](database/clickhouse.md)
     - [Dolphin](database/dolphin.md)
     - [SQLite](database/sqlite.md)
