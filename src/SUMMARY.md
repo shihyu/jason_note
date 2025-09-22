@@ -300,6 +300,7 @@
 
 ## Machine Learning
 - [ML](ml/ml.md)
+    - [AI 模型訓練完整指南：從零開始到實戰](ml/ai-training-guide.md)
     - [AI 生態系統完整白話指南](ml/ai_ecosystem_guide.md)
     - [AI 語音與影像辨識技術指南](ml/ai-recognition-guide.md)
     - [Ollama 本地大型語言模型管理平台完整指南](ml/ollama_guide_markdown.md)
