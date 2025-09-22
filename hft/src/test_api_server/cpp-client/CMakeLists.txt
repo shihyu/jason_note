@@ -18,19 +18,31 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(nlohmann_json)
 
 # Create executable
-add_executable(cpp_client cpp_client.cpp)
+add_executable(cpp_client_hft cpp_client_hft.cpp)
+
+# Check for NUMA library
+find_library(NUMA_LIB numa)
 
 # Link libraries
-target_link_libraries(cpp_client 
-    ${CURL_LIBRARIES}
-    Threads::Threads
-    nlohmann_json::nlohmann_json
-)
+if(NUMA_LIB)
+    target_link_libraries(cpp_client_hft
+        ${CURL_LIBRARIES}
+        Threads::Threads
+        nlohmann_json::nlohmann_json
+        ${NUMA_LIB}
+    )
+else()
+    target_link_libraries(cpp_client_hft
+        ${CURL_LIBRARIES}
+        Threads::Threads
+        nlohmann_json::nlohmann_json
+    )
+endif()
 
 # Include directories
-target_include_directories(cpp_client PRIVATE ${CURL_INCLUDE_DIRS})
+target_include_directories(cpp_client_hft PRIVATE ${CURL_INCLUDE_DIRS})
 
 # Compiler flags for optimization
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    target_compile_options(cpp_client PRIVATE -O3 -march=native)
+    target_compile_options(cpp_client_hft PRIVATE -O3 -march=native -mavx2 -mtune=native)
 endif()

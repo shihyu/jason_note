@@ -1,9 +1,9 @@
 # Makefile for C API Client
 CC = gcc
-CFLAGS = -Wall -Wextra -O3 -pthread -std=c11 -D_GNU_SOURCE
-LDFLAGS = -lcurl -pthread -lm
+CFLAGS = -Wall -Wextra -O3 -march=native -mtune=native -pthread -std=c11 -D_GNU_SOURCE -DNDEBUG
+LDFLAGS = -lcurl -pthread -lm -lnuma -lrt
 
-# Target executable
+# Target executables
 TARGET = c_client
 
 # Source files

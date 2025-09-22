@@ -1,16 +1,20 @@
 # Simple Makefile for API Performance Test
 .PHONY: all build run plot clean help
 
+# Suppress warnings
+MAKEFLAGS += --no-print-directory
+
 # Default target
 all: build
 
 # Build all clients
 build:
 	@echo "Building all clients..."
-	@cd c-client && make -s
-	@cd cpp-client && make -s
-	@cd rust-client && cargo build --release --quiet
-	@cd rust-api-server && cargo build --release --quiet
+	@cd c-client && $(MAKE) -s 2>/dev/null
+	@cd cpp-client && $(MAKE) -s 2>/dev/null
+	@cd go-client && GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build -a -ldflags="-s -w" -o go_client go_client.go 2>/dev/null
+	@cd rust-client && cargo build --release --quiet 2>/dev/null
+	@cd rust-api-server && cargo build --release --quiet 2>/dev/null
 	@echo "✓ Build complete"
 
 # Run performance test (alias for plot)
@@ -30,13 +34,14 @@ plot: build
 # Clean everything
 clean:
 	@echo "Cleaning..."
-	@if [ -d "c-client" ]; then cd c-client && make clean -s 2>/dev/null || true; fi
-	@if [ -d "cpp-client" ]; then cd cpp-client && make clean -s 2>/dev/null || true; fi
+	@if [ -d "c-client" ]; then cd c-client && $(MAKE) clean -s 2>/dev/null || true; fi
+	@if [ -d "cpp-client" ]; then cd cpp-client && $(MAKE) clean -s 2>/dev/null || true; fi
+	@if [ -d "go-client" ]; then cd go-client && $(MAKE) clean -s 2>/dev/null || true; fi
 	@if [ -d "rust-client" ]; then cd rust-client && cargo clean --quiet 2>/dev/null || true; fi
 	@if [ -d "rust-api-server" ]; then cd rust-api-server && cargo clean --quiet 2>/dev/null || true; fi
 	@rm -rf performance_data/ performance_plots/
 	@if [ -f server.pid ]; then kill `cat server.pid` 2>/dev/null || true; fi
-	@rm -f server.log server.pid
+	@rm -f server.log server.pid nohup.out
 	@echo "✓ Cleaned"
 
 # Help

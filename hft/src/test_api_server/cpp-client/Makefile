@@ -1,54 +1,50 @@
 # Makefile for C++ API Client
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -O3 -pthread
+CXXFLAGS = -std=c++17 -Wall -Wextra -O3 -march=native -mtune=native -pthread -DNDEBUG
 LDFLAGS = -lcurl -pthread
+HFT_LDFLAGS = -lcurl -pthread -lnuma
 
 # Target executable
-TARGET = cpp_client
-
-# Source files
-SOURCES = cpp_client.cpp
-
-# Object files
-OBJECTS = $(SOURCES:.cpp=.o)
+TARGETS = cpp_client_hft
 
 # Default target
-all: $(TARGET)
+all: $(TARGETS)
 
-# Build the executable
-$(TARGET): $(OBJECTS)
-	$(CXX) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
-
-# Compile source files to object files
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+# Build the HFT client with AVX2 and NUMA support
+cpp_client_hft: cpp_client_hft.cpp
+	$(CXX) $(CXXFLAGS) -mavx2 $< -o $@ $(HFT_LDFLAGS)
 
 # Clean build artifacts
 clean:
-	rm -f $(OBJECTS) $(TARGET)
-
-# Run the client with default parameters
-run: $(TARGET)
-	./$(TARGET) 1000 100 100
+	rm -f $(TARGETS) *.o
 
 # Run a quick test
-test: $(TARGET)
-	@echo "Running quick test with 10 orders..."
-	./$(TARGET) 10 1 0
-	@echo "Test completed successfully!"
+test: $(TARGETS)
+	@echo "=== Testing HFT C++ Client ==="
+	./cpp_client_hft 100 8 10
+
+# Run performance test
+performance: $(TARGETS)
+	@echo "=== Running Performance Test ==="
+	@echo ""
+	@echo ">>> HFT version (with OS optimizations):"
+	./cpp_client_hft 1000 8 100
 
 # Debug build
 debug: CXXFLAGS += -g -DDEBUG
-debug: clean $(TARGET)
+debug: clean $(TARGETS)
 
 # Help target
 help:
 	@echo "Available targets:"
-	@echo "  make         - Build the C++ client"
-	@echo "  make clean   - Remove build artifacts"
-	@echo "  make run     - Build and run with default parameters (1000 orders)"
-	@echo "  make test    - Build and run a quick test (10 orders)"
-	@echo "  make debug   - Build with debug symbols"
-	@echo "  make help    - Show this help message"
+	@echo "  make                      - Build HFT client"
+	@echo "  make clean                - Remove build artifacts"
+	@echo "  make test                 - Run a quick test"
+	@echo "  make performance          - Run performance test"
+	@echo "  make debug                - Build with debug symbols"
+	@echo "  make help                 - Show this help message"
+	@echo ""
+	@echo "Individual target:"
+	@echo "  make cpp_client_hft       - Build HFT client with all optimizations"
 
-.PHONY: all clean run test debug help
+.PHONY: all clean test performance debug help
