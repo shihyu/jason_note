@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8-alpine
+    container_name: clickhouse-server
+    hostname: clickhouse-server
+
+    # 使用橋接網路而非 host 模式，便於測試環境
+    ports:
+      - "8123:8123"  # HTTP interface
+      - "9000:9000"  # Native client
+      - "9009:9009"  # Interserver HTTP
+
+    # 環境變數
+    environment:
+      # 初始資料庫設置
+      CLICKHOUSE_DB: market_data
+      CLICKHOUSE_USER: trader
+      CLICKHOUSE_PASSWORD: SecurePass123!
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+      # 效能相關 - 測試環境調整為較小值
+      CLICKHOUSE_MAX_MEMORY_USAGE: 2000000000  # 2GB for testing
+      CLICKHOUSE_MAX_MEMORY_USAGE_FOR_USER: 2000000000
+
+    # 資源限制 - 測試環境適用
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+    # 掛載設定
+    volumes:
+      # 資料目錄
+      - ./data:/var/lib/clickhouse
+      # 日誌目錄
+      - ./logs:/var/log/clickhouse-server
+      # 自定義配置
+      - ./config:/etc/clickhouse-server/config.d:ro
+      # 備份目錄
+      - ./backup:/backups
+
+    # 系統限制優化
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+      memlock:
+        soft: -1
+        hard: -1
+      nproc:
+        soft: 131072
+        hard: 131072
+
+    # 健康檢查
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--host", "localhost", "--query", "SELECT 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+    # 自動重啟
+    restart: unless-stopped
+
+    # 日誌設置
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+networks:
+  default:
+    name: clickhouse-network
