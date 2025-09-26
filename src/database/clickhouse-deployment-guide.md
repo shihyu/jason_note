@@ -37,8 +37,8 @@ sudo apt-get upgrade -y
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
-# 安裝 Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+# 安裝 Docker Compose (注意：需要指定版本，不要用 latest)
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.30.3/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 
 # 將當前用戶加入 docker 群組
@@ -66,7 +66,7 @@ sudo chown -R $USER:$USER /data/clickhouse
 ### 3. 創建優化的 docker-compose.yml
 ```yaml
 # ~/clickhouse-docker/docker-compose.yml
-version: '3.8'
+# 注意：version 屬性在新版 Docker Compose 中已棄用，可以省略
 
 services:
   clickhouse:
@@ -74,8 +74,11 @@ services:
     container_name: clickhouse-server
     hostname: clickhouse-server
     
-    # 效能優化：使用 host 網路模式
-    network_mode: host
+    # 網路配置（生產環境可考慮 host 模式，測試環境建議用橋接）
+    ports:
+      - "8123:8123"  # HTTP interface
+      - "9000:9000"  # Native client
+      - "9009:9009"  # Interserver HTTP
     
     # 環境變數
     environment:
@@ -191,31 +194,35 @@ services:
 </clickhouse>
 ```
 
-#### 效能優化配置
+#### 效能優化配置（選用，預設配置通常已足夠）
 ```xml
 <!-- ~/clickhouse-docker/config/performance.xml -->
+<!-- 警告：自定義配置容易出錯，建議先使用預設配置測試 -->
 <?xml version="1.0"?>
 <clickhouse>
-    <!-- 查詢效能優化 -->
-    <max_threads>8</max_threads>
-    <max_memory_usage>10000000000</max_memory_usage>
-    <max_memory_usage_for_user>10000000000</max_memory_usage_for_user>
-    <max_bytes_before_external_group_by>5000000000</max_bytes_before_external_group_by>
-    
     <!-- 網路優化 -->
     <max_concurrent_queries>100</max_concurrent_queries>
     <max_connections>4096</max_connections>
-    
+
     <!-- 背景任務優化 -->
     <background_pool_size>16</background_pool_size>
     <background_schedule_pool_size>16</background_schedule_pool_size>
-    
+
     <!-- MergeTree 優化 -->
     <merge_tree>
         <max_suspicious_broken_parts>5</max_suspicious_broken_parts>
         <max_parts_in_total>100000</max_parts_in_total>
-        <max_bytes_to_merge_at_max_space_in_pool>161061273600</max_bytes_to_merge_at_max_space_in_pool>
     </merge_tree>
+
+    <!-- User profiles 設定（user-level 設定必須放在 profiles 區塊） -->
+    <profiles>
+        <default>
+            <max_threads>8</max_threads>
+            <max_memory_usage>10000000000</max_memory_usage>
+            <max_memory_usage_for_user>10000000000</max_memory_usage_for_user>
+            <max_bytes_before_external_group_by>5000000000</max_bytes_before_external_group_by>
+        </default>
+    </profiles>
 </clickhouse>
 ```
 
@@ -435,7 +442,24 @@ crontab -e
 
 ## 測試範例
 
-### 7. 啟動服務
+### 7. 使用 Makefile 管理（推薦）
+
+創建 Makefile 簡化操作：
+```makefile
+# 快速開始
+make quick-start   # 一鍵安裝並啟動
+
+# 日常操作
+make up           # 啟動服務
+make down         # 停止服務
+make status       # 查看狀態
+make shell        # 進入 CLI
+make backup       # 執行備份
+make restore      # 還原備份
+make reset        # 完全重置
+```
+
+手動操作：
 ```bash
 cd ~/clickhouse-docker
 docker-compose up -d
@@ -447,7 +471,7 @@ docker logs clickhouse-server --tail 50
 
 ### 8. 創建測試表並導入數據
 
-#### 創建市場數據表
+#### 創建基本表結構
 ```sql
 # 連接到 ClickHouse
 docker exec -it clickhouse-server clickhouse-client --user trader --password SecurePass123!
@@ -456,21 +480,20 @@ docker exec -it clickhouse-server clickhouse-client --user trader --password Sec
 CREATE DATABASE IF NOT EXISTS market_data;
 USE market_data;
 
--- 創建優化的 tick 數據表
+-- 創建 tick 數據表（簡化版，避免複雜編碼問題）
 CREATE TABLE market_ticks (
-    ts DateTime64(3) CODEC(DoubleDelta, LZ4),
-    symbol LowCardinality(String),
-    close Decimal32(2) CODEC(Gorilla, LZ4),
-    volume UInt32 CODEC(T64, LZ4),
-    bid_price Decimal32(2) CODEC(Gorilla, LZ4),
-    bid_volume UInt32 CODEC(T64, LZ4),
-    ask_price Decimal32(2) CODEC(Gorilla, LZ4),
-    ask_volume UInt32 CODEC(T64, LZ4),
+    ts DateTime64(3),
+    symbol String,
+    close Decimal32(2),
+    volume UInt32,
+    bid_price Decimal32(2),
+    bid_volume UInt32,
+    ask_price Decimal32(2),
+    ask_volume UInt32,
     tick_type UInt8
 ) ENGINE = MergeTree()
 PARTITION BY toYYYYMM(ts)
-ORDER BY (symbol, ts)
-SETTINGS index_granularity = 8192;
+ORDER BY (symbol, ts);
 
 -- 查看表結構
 DESCRIBE TABLE market_ticks;
@@ -542,18 +565,18 @@ WHERE database = 'market_data' AND table = 'market_ticks';
 
 #### 效能測試
 ```sql
--- 插入大量測試數據
-INSERT INTO market_ticks 
-SELECT 
-    now() - randUniform(0, 86400) as ts,
-    arrayElement(['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'NVDA'], randUniform(1, 5)) as symbol,
-    1000 + randNormal(0, 50) as close,
-    randUniform(1, 1000) as volume,
-    1000 + randNormal(-5, 45) as bid_price,
-    randUniform(1, 500) as bid_volume,
-    1000 + randNormal(5, 55) as ask_price,
-    randUniform(1, 500) as ask_volume,
-    randUniform(1, 3) as tick_type
+-- 插入大量測試數據（使用 rand() 函數避免類型問題）
+INSERT INTO market_ticks
+SELECT
+    now() - toIntervalSecond(toUInt32(rand() % 86400)) as ts,
+    arrayElement(['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'NVDA'], (rand() % 5) + 1) as symbol,
+    1000 + (rand() % 100) as close,
+    toUInt32((rand() % 1000) + 1) as volume,
+    1000 + (rand() % 100) - 50 as bid_price,
+    toUInt32((rand() % 500) + 1) as bid_volume,
+    1000 + (rand() % 100) as ask_price,
+    toUInt32((rand() % 500) + 1) as ask_volume,
+    toUInt8((rand() % 3) + 1) as tick_type
 FROM numbers(1000000);
 
 -- 測試查詢效能
@@ -692,6 +715,55 @@ EXPLAIN SELECT * FROM market_ticks WHERE symbol = 'AAPL';
 ALTER TABLE market_ticks ADD INDEX idx_symbol (symbol) TYPE minmax GRANULARITY 4;
 ```
 
+## 優化表設計（適用於大量 Tick 數據）
+
+### 創建優化的表結構
+```sql
+-- 主要 tick 數據表（優化版）
+CREATE TABLE tick_data_optimized (
+    timestamp DateTime64(3) CODEC(DoubleDelta),
+    symbol LowCardinality(String),
+    exchange LowCardinality(String),
+    price Decimal64(4),
+    volume UInt64 CODEC(T64),
+    side Enum8('buy' = 1, 'sell' = 2),
+    bid_price Decimal64(4),
+    ask_price Decimal64(4),
+    bid_volume UInt32 CODEC(T64),
+    ask_volume UInt32 CODEC(T64)
+) ENGINE = MergeTree()
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (symbol, timestamp)
+PRIMARY KEY (symbol, timestamp)
+TTL toDateTime(timestamp) + INTERVAL 90 DAY
+SETTINGS index_granularity = 8192;
+
+-- 添加索引
+ALTER TABLE tick_data_optimized
+    ADD INDEX idx_price price TYPE minmax GRANULARITY 4,
+    ADD INDEX idx_symbol symbol TYPE bloom_filter(0.01) GRANULARITY 1;
+```
+
+### 創建物化視圖（預聚合）
+```sql
+-- 1分鐘K線物化視圖
+CREATE MATERIALIZED VIEW tick_1min_mv
+ENGINE = AggregatingMergeTree()
+PARTITION BY toYYYYMM(minute)
+ORDER BY (symbol, minute)
+AS SELECT
+    symbol,
+    toStartOfMinute(timestamp) as minute,
+    argMinState(price, timestamp) as open,
+    maxState(price) as high,
+    minState(price) as low,
+    argMaxState(price, timestamp) as close,
+    sumState(toUInt64(volume)) as volume,
+    countState() as tick_count
+FROM tick_data_optimized
+GROUP BY symbol, minute;
+```
+
 ## 效能調優建議
 
 1. **使用 SSD/NVMe** - I/O 是最大瓶頸
@@ -699,6 +771,9 @@ ALTER TABLE market_ticks ADD INDEX idx_symbol (symbol) TYPE minmax GRANULARITY 4
 3. **批量插入** - 單筆插入效能差，建議批量 10000+ 筆
 4. **定期 OPTIMIZE** - 每週執行一次 OPTIMIZE TABLE
 5. **監控記憶體** - ClickHouse 是記憶體密集型資料庫
+6. **使用物化視圖** - 預聚合常用查詢，大幅提升效能
+7. **選擇正確的編碼** - DoubleDelta 用於時間戳，T64 用於整數
+8. **使用 LowCardinality** - 對重複值多的字串欄位
 
 ## 安全建議
 
@@ -708,6 +783,38 @@ ALTER TABLE market_ticks ADD INDEX idx_symbol (symbol) TYPE minmax GRANULARITY 4
 4. **監控日誌** - 定期檢查異常存取
 5. **更新版本** - 關注安全更新
 
+## 重要注意事項
+
+### 實測發現的問題與解決方案
+
+1. **Docker Compose 安裝**
+   - 使用具體版本號而非 `latest`，避免下載失敗
+   - Ubuntu 24.04 可能沒有 docker-compose-plugin 套件
+
+2. **配置檔問題**
+   - user-level 設定（如 max_threads）必須放在 `<profiles>` 區塊中
+   - 複雜的壓縮編碼（如 Gorilla + LZ4）可能導致錯誤
+   - 建議先使用預設配置，確認運行正常後再優化
+
+3. **隨機函數使用**
+   - 使用 `rand()` 而非 `randUniform()` 或 `randNormal()`
+   - 注意類型轉換（使用 toUInt32、toUInt8 等）
+
+4. **網路模式**
+   - 測試環境建議使用橋接模式配置端口
+   - 生產環境可考慮 host 模式以獲得更好效能
+
+5. **備份配置**
+   - 原生備份需要額外配置 `backups.allowed_disk` 參數
+   - 物理備份可以正常運作
+   - 還原功能建議使用 ClickHouse 原生 BACKUP/RESTORE 命令
+
+6. **優化表設計注意事項**
+   - Gorilla 編碼不適用於 Decimal 類型
+   - TTL 使用 DateTime64 需要轉換為 DateTime
+   - 物化視圖使用 State 函數聚合，查詢時用 Merge 函數
+   - bloom_filter 索引對字串查詢效能提升顯著
+
 ## 支援資源
 
 - [官方文檔](https://clickhouse.com/docs)
@@ -715,8 +822,21 @@ ALTER TABLE market_ticks ADD INDEX idx_symbol (symbol) TYPE minmax GRANULARITY 4
 - [GitHub Issues](https://github.com/ClickHouse/ClickHouse/issues)
 - [社群論壇](https://clickhouse.com/community)
 
+## 實測驗證項目
+
+經過完整測試驗證的功能：
+- ✅ Docker Compose 部署
+- ✅ Makefile 自動化管理
+- ✅ 基本表建立與查詢
+- ✅ 優化表結構（tick_data_optimized）
+- ✅ 物化視圖（1分鐘、5分鐘K線）
+- ✅ 索引優化（bloom_filter、minmax）
+- ✅ 備份功能
+- ⚠️ 還原功能（需要改進）
+
 ---
 
-**最後更新**: 2025-09-26  
-**版本**: ClickHouse 24.8  
+**最後更新**: 2025-09-27
+**版本**: ClickHouse 24.8
 **作者**: DevOps Team
+**實測驗證**: 2025-09-27 成功部署於 Ubuntu 環境，包含優化表設計
