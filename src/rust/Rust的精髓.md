@@ -46,4 +46,4 @@ https://mp.weixin.qq.com/s?__biz=Mzg4MTYyNDU4Nw==&mid=2247483686&idx=1&sn=4e078a
 
 由於rust特立獨行的底層遊戲規則，不管程式執行了多久，邏輯上看來，不管對象內部有多少子元素，列表還是字典，永遠只有一個root（擁有它), 再加上我們將要說到的`使用權`的限制，Rust的堆疊變數總是非常幹淨清楚(`給你了，你就是owner`), 你不會有類似c++中`三方庫函數返回了一個指針, 我應該free?`的疑問.（如下圖)
 
-![圖片](/media/shihyu/ssd/github/jaimages/640-4)
+![圖片](images/640-4)

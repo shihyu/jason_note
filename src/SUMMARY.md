@@ -277,6 +277,7 @@
     - [Dolphin](database/dolphin.md)
     - [SQLite](database/sqlite.md)
     - [MySQL Ubuntu 安裝與使用指南](database/mysql_ubuntu_guide.md)
+    - [ClickHouse 部署指南](database/clickhouse-deployment-guide.md)
 - [MQ](mq/kafka.md)
     - [Kafka 的通俗總結](mq/kafka-python.md)
 
