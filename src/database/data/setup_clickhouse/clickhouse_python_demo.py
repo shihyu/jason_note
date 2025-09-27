@@ -125,6 +125,37 @@ class ClickHouseDemo:
             print(f"❌ 插入測試資料失敗: {e}")
             return False
 
+    def print_csv_format(self, table_name='market_ticks_demo'):
+        """讀取資料庫並以 CSV 格式打印"""
+        try:
+            # 查詢所有資料，按時間排序
+            result = self.client.execute(f"""
+                SELECT
+                    ts,
+                    symbol,
+                    close,
+                    volume,
+                    bid_price,
+                    bid_volume,
+                    ask_price,
+                    ask_volume,
+                    tick_type
+                FROM {table_name}
+                ORDER BY ts
+            """)
+
+            # 打印 CSV 標題
+            print("ts,symbol,close,volume,bid_price,bid_volume,ask_price,ask_volume,tick_type")
+
+            # 打印每一行資料
+            for row in result:
+                # 格式化時間戳，保留毫秒
+                ts_str = row[0].strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+                print(f"{ts_str},{row[1]},{row[2]},{row[3]},{row[4]},{row[5]},{row[6]},{row[7]},{row[8]}")
+
+        except Exception as e:
+            print(f"❌ 讀取失敗: {e}")
+
     def query_examples(self, table_name='market_ticks_demo'):
         """各種查詢範例"""
         print("\n" + "="*60)
@@ -263,6 +294,12 @@ def main():
     # 讀取 CSV 並插入（如果沒有 CSV 會自動產生測試資料）
     if not demo.read_csv_and_insert():
         sys.exit(1)
+
+    # 打印 CSV 格式的資料（與 test_data.csv 相同格式）
+    print("\n" + "="*60)
+    print("📄 資料庫內容（CSV 格式）")
+    print("="*60)
+    demo.print_csv_format()
 
     # 執行查詢範例
     demo.query_examples()
