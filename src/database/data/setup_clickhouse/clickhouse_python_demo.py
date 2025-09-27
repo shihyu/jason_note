@@ -156,6 +156,52 @@ class ClickHouseDemo:
         except Exception as e:
             print(f"❌ 讀取失敗: {e}")
 
+    def get_dataframe_with_markdown(self, table_name='market_ticks_demo'):
+        """讀取資料庫內容到 DataFrame 並以 Markdown 格式顯示"""
+        try:
+            # 查詢所有資料，按時間排序
+            result = self.client.execute(f"""
+                SELECT
+                    ts,
+                    symbol,
+                    close,
+                    volume,
+                    bid_price,
+                    bid_volume,
+                    ask_price,
+                    ask_volume,
+                    tick_type
+                FROM {table_name}
+                ORDER BY ts
+            """, with_column_types=True)
+
+            # 取得資料和欄位名稱
+            data = result[0]
+            columns = [col[0] for col in result[1]]
+
+            # 建立 DataFrame
+            df = pd.DataFrame(data, columns=columns)
+
+            # 格式化時間戳欄位，保留毫秒
+            df['ts'] = pd.to_datetime(df['ts']).dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]
+
+            # 打印 Markdown 格式表格
+            print("\n📊 資料庫內容 (Markdown 表格):")
+            print(df.to_markdown(index=False))
+
+            # 也顯示 DataFrame 資訊
+            print(f"\n📈 DataFrame 資訊:")
+            print(f"   總筆數: {len(df)} 筆")
+            print(f"   欄位數: {len(df.columns)} 欄")
+            print(f"   股票: {df['symbol'].unique().tolist()}")
+            print(f"   時間範圍: {df['ts'].iloc[0]} ~ {df['ts'].iloc[-1]}")
+
+            return df
+
+        except Exception as e:
+            print(f"❌ 讀取失敗: {e}")
+            return None
+
     def query_examples(self, table_name='market_ticks_demo'):
         """各種查詢範例"""
         print("\n" + "="*60)
@@ -300,6 +346,12 @@ def main():
     print("📄 資料庫內容（CSV 格式）")
     print("="*60)
     demo.print_csv_format()
+
+    # 將資料庫內容存放到 DataFrame 並使用 to_markdown 顯示
+    print("\n" + "="*60)
+    print("📊 使用 DataFrame 和 Markdown 顯示")
+    print("="*60)
+    df = demo.get_dataframe_with_markdown()
 
     # 執行查詢範例
     demo.query_examples()
