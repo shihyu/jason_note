@@ -265,13 +265,13 @@ def main():
         sys.exit(1)
 
     # 執行查詢範例
-    demo.query_examples()
+    emo.query_examples()
 
     # 進階查詢
     demo.advanced_queries()
 
     # 匯出資料
-    df = demo.export_to_csv()
+    demo.export_to_csv()
 
     # 關閉連接
     demo.close()
