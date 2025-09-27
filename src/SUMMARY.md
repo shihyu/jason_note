@@ -60,6 +60,7 @@
     - [Thinking Protocol 中文指南](tools/thinking-protocol-zh-tw.md)
     - [MCP Setup Guide](tools/mcp-setup-guide.md)
     - [開源授權指南](tools/open_source_licenses_guide.md)
+    - [LLVM 編譯器架構與語言效能深度解析](tools/llvm_guide.md)
 
 ## Programming Languages
 - [C++](c++/cpp.md)
