@@ -187,7 +187,7 @@ class ClickHouseDemo:
 
             # 打印 Markdown 格式表格
             print("\n📊 資料庫內容 (Markdown 表格):")
-            print(df.to_markdown(index=False))
+            print(df.to_markdown(floatfmt=".2f", tablefmt="heavy_grid"))
 
             # 也顯示 DataFrame 資訊
             print(f"\n📈 DataFrame 資訊:")
