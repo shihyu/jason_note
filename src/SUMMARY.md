@@ -296,6 +296,7 @@
     - [QEMU 上運行 RISC-V Linux](riscv/qemu_riscv_linux.md)
     - [QEMU GDB](riscv/qemi_gdb.md)
     - [QEMU GDB Lab](riscv/qemu_gdb_lab.md)
+    - [FPGA Guide](riscv/fpga_guide.md)
 - [CentOS](centos/centos.md)
     - [TQDB 安裝紀錄](centos/tqdb_setup.md)
 
