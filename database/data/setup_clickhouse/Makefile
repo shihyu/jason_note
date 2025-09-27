@@ -1,7 +1,7 @@
 # ClickHouse Docker Makefile
 # 使用方式: make [command]
 
-.PHONY: help install up down restart status logs shell db backup restore clean reset test monitor
+.PHONY: help install up down restart status logs shell db backup restore clean reset test monitor docker-rmv
 
 # 預設目標 - 顯示說明
 help:
@@ -19,6 +19,7 @@ help:
 	@echo "  make backup    - 執行備份"
 	@echo "  make restore   - 還原備份"
 	@echo "  make monitor   - 執行監控"
+	@echo "  make docker-rmv - 移除 Docker volumes"
 	@echo "  make clean     - 停止並清理所有資料（危險！）"
 	@echo "  make reset     - 清理並重新部署（完全重置）"
 
@@ -153,6 +154,21 @@ restore:
 # 監控
 monitor:
 	@bash scripts/monitor.sh
+
+# 移除 Docker volumes
+docker-rmv:
+	@echo "⚠️  警告: 這將移除所有 ClickHouse Docker volumes！"
+	@read -p "確定要移除 volumes 嗎? (yes/no): " CONFIRM; \
+	if [ "$$CONFIRM" = "yes" ]; then \
+		echo "停止服務..."; \
+		docker-compose down 2>/dev/null || true; \
+		echo "移除 volumes..."; \
+		docker-compose down -v 2>/dev/null || true; \
+		docker volume prune -f 2>/dev/null || true; \
+		echo "✅ Docker volumes 已移除"; \
+	else \
+		echo "取消操作"; \
+	fi
 
 # 清理所有資料（危險操作）
 clean:
