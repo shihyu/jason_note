@@ -81,6 +81,7 @@
     - [Interview](c++/interview.md)
     - [C++ HFT 開發完整指南](c++/cpp_hft_guide.md)
     - [為什麼選擇 C++ 開發 HFT](c++/why_cpp_for_hft.md)
+    - [Zig vs C 比較指南](c++/zig-c-comparison.md)
 - [Rust](rust/rust.md)
     - [Rust 筆記](rust/note.md)
     - [Rust 基本教學](rust/basic.md)
