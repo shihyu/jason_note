@@ -265,7 +265,7 @@ def main():
         sys.exit(1)
 
     # 執行查詢範例
-    emo.query_examples()
+    demo.query_examples()
 
     # 進階查詢
     demo.advanced_queries()
