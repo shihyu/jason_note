@@ -283,6 +283,9 @@
 - [MQ](mq/kafka.md)
     - [Kafka 的通俗總結](mq/kafka-python.md)
 
+## Embedded Systems
+- [Embedded Systems](embedded_systems/embedded_systems.md)
+
 ## Mobile & Platform
 - [Android](android/android.md)
     - [SDK Install](android/install_sdk.md)
