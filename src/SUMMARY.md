@@ -288,6 +288,7 @@
     - [FPGA vs MCU 比較指南](embedded_systems/fpga_vs_mcu_comparison.md)
     - [Ubuntu FPGA 開發指南](embedded_systems/ubuntu-fpga-guide.md)
     - [Verilator 完整開發指南](embedded_systems/verilator_complete_guide.md)
+    - [HFT FPGA 模擬實作指南](embedded_systems/hft_fpga_simulation.md)
 
 ## Mobile & Platform
 - [Android](android/android.md)
