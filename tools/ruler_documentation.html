@@ -235,6 +235,72 @@
 <li>備份與回復機制</li>
 <li>安全的實驗環境</li>
 </ul>
+<h2 id="ruler-的運作原理"><a class="header" href="#ruler-的運作原理">Ruler 的運作原理</a></h2>
+<h3 id="規則檔案的標準化輸出"><a class="header" href="#規則檔案的標準化輸出">規則檔案的標準化輸出</a></h3>
+<p>當你執行 <code>ruler apply</code> 時，ruler 會：</p>
+<ol>
+<li><strong>讀取</strong> <code>.ruler/</code> 目錄下的所有規則檔案</li>
+<li><strong>自動生成</strong>每個 AI 工具專屬的配置檔案</li>
+<li><strong>寫入</strong>到各 AI 工具預期的位置</li>
+</ol>
+<pre><code class="language-bash"># 執行 ruler apply 後的檔案生成流程
+.ruler/AGENTS.md  ──────┐
+.ruler/coding_style.md  ├──&gt; 自動轉換並生成
+.ruler/api_rules.md     │
+                        ↓
+├── CLAUDE.md                    # Claude Code 會讀取這個
+├── .cursor/rules/ruler_cursor_instructions.mdc  # Cursor 會讀取這個
+├── .github/copilot-instructions.md  # GitHub Copilot 會讀取這個
+└── .clinerules                  # Cline 會讀取這個
+</code></pre>
+<h3 id="ai-工具的內建機制"><a class="header" href="#ai-工具的內建機制">AI 工具的內建機制</a></h3>
+<p>每個 AI 工具都有自己的<strong>規則檔案約定</strong>：</p>
+<div class="table-wrapper"><table><thead><tr><th>AI 工具</th><th>預期的規則檔案位置</th><th>工具如何發現規則</th></tr></thead><tbody>
+<tr><td><strong>Claude Code</strong></td><td><code>CLAUDE.md</code> (根目錄)</td><td>Claude Code 啟動時自動掃描專案根目錄尋找 <code>CLAUDE.md</code></td></tr>
+<tr><td><strong>Cursor</strong></td><td><code>.cursor/rules/*.mdc</code></td><td>Cursor IDE 會自動載入 <code>.cursor/rules/</code> 目錄下的所有 <code>.mdc</code> 檔案</td></tr>
+<tr><td><strong>GitHub Copilot</strong></td><td><code>.github/copilot-instructions.md</code></td><td>Copilot 擴充功能會自動讀取這個路徑</td></tr>
+<tr><td><strong>Windsurf</strong></td><td><code>.windsurf/rules/*.md</code></td><td>Windsurf 會掃描其專屬目錄</td></tr>
+<tr><td><strong>Cline</strong></td><td><code>.clinerules</code></td><td>Cline 會在專案根目錄尋找這個檔案</td></tr>
+<tr><td><strong>Aider</strong></td><td><code>AGENTS.md</code>, <code>.aider.conf.yml</code></td><td>Aider 會讀取這兩個配置檔案</td></tr>
+</tbody></table>
+</div>
+<h3 id="運作流程圖"><a class="header" href="#運作流程圖">運作流程圖</a></h3>
+<pre><code>開發者編寫規則 → ruler apply → 生成各工具配置 → AI 工具自動載入
+     ↓                ↓              ↓                ↓
+.ruler/AGENTS.md   處理與轉換    CLAUDE.md等      即時生效
+</code></pre>
+<h3 id="為什麼-ai-工具會遵守這些規則"><a class="header" href="#為什麼-ai-工具會遵守這些規則">為什麼 AI 工具會遵守這些規則？</a></h3>
+<ol>
+<li>
+<p><strong>約定優於配置 (Convention over Configuration)</strong></p>
+<ul>
+<li>每個 AI 工具都有預定義的檔案路徑</li>
+<li>它們會自動尋找並載入這些檔案</li>
+</ul>
+</li>
+<li>
+<p><strong>自動發現機制</strong></p>
+<ul>
+<li>AI 工具在啟動或每次互動時會掃描特定位置</li>
+<li>發現規則檔案後自動載入並應用</li>
+</ul>
+</li>
+<li>
+<p><strong>即時生效</strong></p>
+<ul>
+<li>大多數工具在每次互動時重新讀取規則</li>
+<li>某些工具可能需要重新啟動才能載入新規則</li>
+</ul>
+</li>
+</ol>
+<h3 id="mcp-model-context-protocol-的角色"><a class="header" href="#mcp-model-context-protocol-的角色">MCP (Model Context Protocol) 的角色</a></h3>
+<p>MCP 檔案提供額外的上下文配置，定義 AI 工具可以訪問的外部服務和資源：</p>
+<ul>
+<li><strong><code>.mcp.json</code></strong> - Claude Code 的 MCP 伺服器配置</li>
+<li><strong><code>.cursor/mcp.json</code></strong> - Cursor 的 MCP 伺服器配置</li>
+<li><strong><code>.vscode/mcp.json</code></strong> - GitHub Copilot 的 MCP 配置</li>
+</ul>
+<p>這些配置允許 AI 工具訪問檔案系統、Git 倉庫、資料庫等外部資源。</p>
 <h2 id="快速開始"><a class="header" href="#快速開始">快速開始</a></h2>
 <h3 id="安裝"><a class="header" href="#安裝">安裝</a></h3>
 <pre><code class="language-bash"># 全域安裝（推薦用於 CLI）
