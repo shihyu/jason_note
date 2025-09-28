@@ -249,6 +249,7 @@
     - [GDB Watchpoints 完整指南](gdb/gdb_watchpoints_guide.md)
     - [GDB完整知識庫整理](gdb/GDB完整知識庫整理.md)
     - [GDB Auto Continue Guide](gdb/gdb-auto-continue-guide.md)
+    - [Program Trace Guide](gdb/program_trace_guide.md)
 - [Vim](vim/vim.md)
     - [Copilot](vim/copilot.md)
     - [Tabnine](vim/tabnine.md)
