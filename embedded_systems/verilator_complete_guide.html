@@ -1,0 +1,783 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Verilator 完整開發指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="verilator-完整編譯與使用指南"><a class="header" href="#verilator-完整編譯與使用指南">Verilator 完整編譯與使用指南</a></h1>
+<h2 id="一從源碼編譯-verilator"><a class="header" href="#一從源碼編譯-verilator">一、從源碼編譯 Verilator</a></h2>
+<h3 id="11-安裝編譯依賴"><a class="header" href="#11-安裝編譯依賴">1.1 安裝編譯依賴</a></h3>
+<pre><code class="language-bash"># 更新套件列表
+sudo apt update
+
+# 安裝必要依賴
+sudo apt-get install git help2man perl python3 make autoconf g++ flex bison ccache
+sudo apt-get install libgoogle-perftools-dev numactl perl-doc
+sudo apt-get install libfl2 libfl-dev
+sudo apt-get install zlib1g zlib1g-dev
+
+# 安裝 GTKWave 波形檢視器
+sudo apt-get install gtkwave
+</code></pre>
+<h3 id="12-編譯-verilator"><a class="header" href="#12-編譯-verilator">1.2 編譯 Verilator</a></h3>
+<pre><code class="language-bash"># 克隆 Verilator 儲存庫
+git clone https://github.com/verilator/verilator
+cd verilator
+
+# 切換到穩定版本（可選）
+git checkout stable
+
+# 生成配置腳本
+autoconf
+
+# 配置安裝路徑（安裝到使用者目錄，不需要 sudo）
+./configure --prefix=$HOME/.mybin/verilator
+
+# 編譯（使用所有 CPU 核心）
+make -j$(nproc)
+
+# 安裝（不需要 sudo）
+make install
+
+# 驗證安裝
+$HOME/.mybin/verilator/bin/verilator --version
+</code></pre>
+<h3 id="13-設定環境變數"><a class="header" href="#13-設定環境變數">1.3 設定環境變數</a></h3>
+<pre><code class="language-bash"># 編輯 ~/.bashrc 或 ~/.zshrc
+nano ~/.bashrc
+
+# 加入以下內容
+export VERILATOR_ROOT=$HOME/.mybin/verilator/share/verilator
+export PATH=$HOME/.mybin/verilator/bin:$PATH
+
+# 重新載入設定
+source ~/.bashrc
+
+# 驗證環境變數
+echo $VERILATOR_ROOT
+which verilator
+</code></pre>
+<h2 id="二創建測試專案"><a class="header" href="#二創建測試專案">二、創建測試專案</a></h2>
+<h3 id="21-建立專案目錄"><a class="header" href="#21-建立專案目錄">2.1 建立專案目錄</a></h3>
+<pre><code class="language-bash">mkdir ~/verilator_demo
+cd ~/verilator_demo
+</code></pre>
+<h3 id="22-創建-verilog-設計檔案-counterv"><a class="header" href="#22-創建-verilog-設計檔案-counterv">2.2 創建 Verilog 設計檔案 (counter.v)</a></h3>
+<pre><code class="language-verilog">// counter.v - 8-bit 計數器模組
+module counter (
+    input wire clk,
+    input wire rst,
+    output reg [7:0] count
+);
+
+    always @(posedge clk) begin
+        if (rst)
+            count &lt;= 8'd0;
+        else
+            count &lt;= count + 1;
+    end
+
+endmodule
+</code></pre>
+<h3 id="23-創建-c-測試平台-tb_countercpp"><a class="header" href="#23-創建-c-測試平台-tb_countercpp">2.3 創建 C++ 測試平台 (tb_counter.cpp)</a></h3>
+<pre><code class="language-cpp">// tb_counter.cpp - Verilator 測試平台
+#include &lt;verilated.h&gt;
+#include &lt;verilated_vcd_c.h&gt;
+#include "Vcounter.h"
+#include &lt;iostream&gt;
+
+int main(int argc, char** argv) {
+    // 初始化 Verilator
+    Verilated::commandArgs(argc, argv);
+    
+    // 創建 DUT (Design Under Test)
+    Vcounter* dut = new Vcounter;
+    
+    // 設置波形追蹤
+    Verilated::traceEverOn(true);
+    VerilatedVcdC* tfp = new VerilatedVcdC;
+    dut-&gt;trace(tfp, 99);
+    tfp-&gt;open("counter.vcd");
+    
+    // 初始化信號
+    dut-&gt;clk = 0;
+    dut-&gt;rst = 1;
+    
+    // 模擬時間
+    vluint64_t sim_time = 0;
+    
+    // 運行模擬
+    while (sim_time &lt; 100) {
+        // 時鐘切換
+        dut-&gt;clk = !dut-&gt;clk;
+        
+        // 在時間 10 釋放 reset
+        if (sim_time == 10) {
+            dut-&gt;rst = 0;
+        }
+        
+        // 評估模型
+        dut-&gt;eval();
+        
+        // 記錄波形
+        tfp-&gt;dump(sim_time);
+        
+        // 顯示輸出（僅在時鐘正緣且非 reset 時）
+        if (dut-&gt;clk &amp;&amp; !dut-&gt;rst) {
+            std::cout &lt;&lt; "Time: " &lt;&lt; sim_time 
+                      &lt;&lt; " Count: " &lt;&lt; (int)dut-&gt;count &lt;&lt; std::endl;
+        }
+        
+        sim_time++;
+    }
+    
+    // 關閉波形檔案
+    tfp-&gt;close();
+    
+    // 清理記憶體
+    delete tfp;
+    delete dut;
+    
+    std::cout &lt;&lt; "Simulation completed!" &lt;&lt; std::endl;
+    
+    return 0;
+}
+</code></pre>
+<h3 id="24-創建-makefile"><a class="header" href="#24-創建-makefile">2.4 創建 Makefile</a></h3>
+<pre><code class="language-makefile"># Makefile - 自動化編譯腳本
+
+# Verilator 設定
+VERILATOR = verilator
+VERILATOR_ROOT ?= $(HOME)/.mybin/verilator/share/verilator
+
+# 編譯器設定
+CXX = g++
+CXXFLAGS = -Wall -I$(VERILATOR_ROOT)/include -I./obj_dir
+LDFLAGS = 
+
+# Verilator 標誌
+VFLAGS = --cc --trace --exe --build
+
+# 檔案設定
+TOP_MODULE = counter
+VERILOG_SOURCES = counter.v
+CPP_SOURCES = tb_counter.cpp
+TARGET = sim_counter
+
+# 預設目標
+all: run
+
+# 使用 Verilator 編譯（自動方式）
+compile:
+	@echo "=== Compiling with Verilator ==="
+	$(VERILATOR) $(VFLAGS) \
+		--top-module $(TOP_MODULE) \
+		$(VERILOG_SOURCES) \
+		$(CPP_SOURCES) \
+		-o $(TARGET)
+
+# 手動編譯方式（如果自動編譯失敗）
+manual-compile:
+	@echo "=== Manual compilation ==="
+	# 步驟 1: 生成 C++ 檔案
+	$(VERILATOR) --cc --trace $(VERILOG_SOURCES)
+	# 步驟 2: 編譯所有 C++ 檔案
+	$(CXX) $(CXXFLAGS) -o obj_dir/$(TARGET) \
+		$(CPP_SOURCES) \
+		obj_dir/V$(TOP_MODULE)__ALL.cpp \
+		$(VERILATOR_ROOT)/include/verilated.cpp \
+		$(VERILATOR_ROOT)/include/verilated_vcd_c.cpp
+
+# 運行模擬
+run: compile
+	@echo "=== Running simulation ==="
+	./obj_dir/$(TARGET)
+	@echo "=== Simulation complete ==="
+
+# 運行並查看波形
+wave: run
+	@echo "=== Opening waveform in GTKWave ==="
+	gtkwave counter.vcd &amp;
+
+# 覆蓋率分析
+coverage:
+	@echo "=== Running coverage analysis ==="
+	$(VERILATOR) --cc --trace --coverage --exe --build \
+		--top-module $(TOP_MODULE) \
+		$(VERILOG_SOURCES) \
+		$(CPP_SOURCES) \
+		-o $(TARGET)_cov
+	./obj_dir/$(TARGET)_cov
+	verilator_coverage --annotate coverage_report coverage.dat
+
+# 效能分析
+profile:
+	@echo "=== Running performance profiling ==="
+	$(VERILATOR) --cc --trace --prof-cfunc --exe --build \
+		--top-module $(TOP_MODULE) \
+		$(VERILOG_SOURCES) \
+		$(CPP_SOURCES) \
+		-o $(TARGET)_prof
+	./obj_dir/$(TARGET)_prof
+	verilator_profcfunc profiling.dat &gt; profile_report.txt
+	@echo "Profile report saved to profile_report.txt"
+
+# 生成甘特圖
+gantt:
+	@echo "=== Generating Gantt chart ==="
+	$(VERILATOR) --cc --trace --prof-threads --exe --build \
+		--top-module $(TOP_MODULE) \
+		$(VERILOG_SOURCES) \
+		$(CPP_SOURCES) \
+		-o $(TARGET)_gantt
+	./obj_dir/$(TARGET)_gantt
+	verilator_gantt profile_threads.dat &gt; gantt.html
+	@echo "Gantt chart saved to gantt.html"
+
+# 清理生成的檔案
+clean:
+	rm -rf obj_dir *.vcd *.dat *.html *.txt coverage_report
+
+# 深度清理（包括所有生成檔案）
+distclean: clean
+	rm -rf *.log *.dump
+
+# 顯示幫助
+help:
+	@echo "Verilator Demo Makefile Commands:"
+	@echo "  make compile  - Compile the design"
+	@echo "  make run      - Compile and run simulation"
+	@echo "  make wave     - Run and view waveform in GTKWave"
+	@echo "  make coverage - Run code coverage analysis"
+	@echo "  make profile  - Run performance profiling"
+	@echo "  make gantt    - Generate Gantt chart"
+	@echo "  make clean    - Clean generated files"
+	@echo "  make help     - Show this help message"
+
+.PHONY: all compile manual-compile run wave coverage profile gantt clean distclean help
+</code></pre>
+<h3 id="25-創建測試腳本-testsh"><a class="header" href="#25-創建測試腳本-testsh">2.5 創建測試腳本 (test.sh)</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+
+# test.sh - 自動化測試腳本
+
+echo "======================================"
+echo "     Verilator Test Suite"
+echo "======================================"
+
+# 顏色定義
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# 測試函數
+test_command() {
+    local cmd=$1
+    local desc=$2
+    echo -n "Testing: $desc... "
+    if $cmd &gt; /dev/null 2&gt;&amp;1; then
+        echo -e "${GREEN}✓ PASSED${NC}"
+        return 0
+    else
+        echo -e "${RED}✗ FAILED${NC}"
+        return 1
+    fi
+}
+
+# 0. 清理環境
+echo -e "${YELLOW}[0/6] Cleaning environment${NC}"
+make clean
+
+# 1. 檢查 Verilator 安裝
+echo -e "${YELLOW}[1/6] Checking Verilator installation${NC}"
+if ! command -v verilator &amp;&gt; /dev/null; then
+    echo -e "${RED}Verilator not found in PATH${NC}"
+    exit 1
+fi
+echo "Verilator version: $(verilator --version)"
+echo "Verilator path: $(which verilator)"
+
+# 2. 檢查環境變數
+echo -e "${YELLOW}[2/6] Checking environment variables${NC}"
+if [ -z "$VERILATOR_ROOT" ]; then
+    echo -e "${YELLOW}Warning: VERILATOR_ROOT not set${NC}"
+    export VERILATOR_ROOT=$HOME/.mybin/verilator/share/verilator
+    echo "Using default: $VERILATOR_ROOT"
+fi
+echo "VERILATOR_ROOT: $VERILATOR_ROOT"
+
+# 3. 編譯測試
+echo -e "${YELLOW}[3/6] Compilation test${NC}"
+test_command "make compile" "Verilator compilation"
+
+# 4. 模擬測試
+echo -e "${YELLOW}[4/6] Simulation test${NC}"
+test_command "make run" "Running simulation"
+
+# 5. 檢查輸出檔案
+echo -e "${YELLOW}[5/6] Checking output files${NC}"
+if [ -f "counter.vcd" ]; then
+    echo -e "${GREEN}✓ VCD file generated${NC}"
+    ls -lh counter.vcd
+else
+    echo -e "${RED}✗ VCD file not found${NC}"
+fi
+
+# 6. 檢查 GTKWave（可選）
+echo -e "${YELLOW}[6/6] Checking GTKWave (optional)${NC}"
+if command -v gtkwave &amp;&gt; /dev/null; then
+    echo -e "${GREEN}✓ GTKWave installed${NC}"
+    echo "GTKWave path: $(which gtkwave)"
+else
+    echo -e "${YELLOW}⚠ GTKWave not installed (optional for waveform viewing)${NC}"
+fi
+
+echo "======================================"
+echo -e "${GREEN}All tests completed!${NC}"
+echo "======================================"
+</code></pre>
+<h2 id="三使用說明"><a class="header" href="#三使用說明">三、使用說明</a></h2>
+<h3 id="31-基本使用流程"><a class="header" href="#31-基本使用流程">3.1 基本使用流程</a></h3>
+<pre><code class="language-bash"># 1. 進入專案目錄
+cd ~/verilator_demo
+
+# 2. 給測試腳本執行權限
+chmod +x test.sh
+
+# 3. 運行完整測試
+./test.sh
+
+# 4. 編譯並運行模擬
+make run
+
+# 5. 查看波形
+make wave
+</code></pre>
+<h3 id="32-各工具詳細用法"><a class="header" href="#32-各工具詳細用法">3.2 各工具詳細用法</a></h3>
+<h4 id="verilator---主要編譯器"><a class="header" href="#verilator---主要編譯器">verilator - 主要編譯器</a></h4>
+<pre><code class="language-bash"># 基本編譯
+verilator --cc counter.v
+
+# 生成可執行檔
+verilator --cc --exe --build counter.v tb_counter.cpp
+
+# 啟用波形追蹤
+verilator --cc --trace --exe --build counter.v tb_counter.cpp
+</code></pre>
+<h4 id="verilator_bin_dbg---除錯版本"><a class="header" href="#verilator_bin_dbg---除錯版本">verilator_bin_dbg - 除錯版本</a></h4>
+<pre><code class="language-bash"># 用於除錯，提供更多診斷資訊
+verilator_bin_dbg --cc --debug counter.v
+</code></pre>
+<h4 id="verilator_coverage---覆蓋率分析"><a class="header" href="#verilator_coverage---覆蓋率分析">verilator_coverage - 覆蓋率分析</a></h4>
+<pre><code class="language-bash"># 生成覆蓋率資料
+verilator --coverage --cc --exe --build counter.v tb_counter.cpp
+./obj_dir/Vcounter
+
+# 生成報告
+verilator_coverage --annotate coverage_report coverage.dat
+</code></pre>
+<h4 id="verilator_profcfunc---效能分析"><a class="header" href="#verilator_profcfunc---效能分析">verilator_profcfunc - 效能分析</a></h4>
+<pre><code class="language-bash"># 生成效能資料
+verilator --prof-cfunc --cc --exe --build counter.v tb_counter.cpp
+./obj_dir/Vcounter
+
+# 分析結果
+verilator_profcfunc profiling.dat &gt; profile.txt
+</code></pre>
+<h4 id="verilator_gantt---甘特圖生成"><a class="header" href="#verilator_gantt---甘特圖生成">verilator_gantt - 甘特圖生成</a></h4>
+<pre><code class="language-bash"># 生成執行時間軸
+verilator --prof-threads --cc --exe --build counter.v tb_counter.cpp
+./obj_dir/Vcounter
+verilator_gantt profile_threads.dat &gt; gantt.html
+</code></pre>
+<h4 id="gtkwave---波形檢視器"><a class="header" href="#gtkwave---波形檢視器">gtkwave - 波形檢視器</a></h4>
+<pre><code class="language-bash"># 查看 VCD 波形檔案
+gtkwave counter.vcd
+
+# 使用特定的配置檔
+gtkwave counter.vcd -a signals.gtkw
+</code></pre>
+<h2 id="四進階功能"><a class="header" href="#四進階功能">四、進階功能</a></h2>
+<h3 id="41-多檔案專案"><a class="header" href="#41-多檔案專案">4.1 多檔案專案</a></h3>
+<pre><code class="language-makefile"># 多個 Verilog 檔案
+VERILOG_SOURCES = top.v module1.v module2.v
+
+# 編譯命令
+compile-multi:
+	$(VERILATOR) $(VFLAGS) \
+		--top-module top \
+		$(VERILOG_SOURCES) \
+		tb_top.cpp
+</code></pre>
+<h3 id="42-systemverilog-支援"><a class="header" href="#42-systemverilog-支援">4.2 SystemVerilog 支援</a></h3>
+<pre><code class="language-bash"># 編譯 SystemVerilog
+verilator --cc --sv design.sv
+</code></pre>
+<h3 id="43-優化選項"><a class="header" href="#43-優化選項">4.3 優化選項</a></h3>
+<pre><code class="language-makefile"># 速度優化
+VFLAGS += -O3 --x-assign fast --x-initial fast
+
+# 大型設計優化
+VFLAGS += --output-split 5000 --output-split-cfuncs 500
+</code></pre>
+<h2 id="五疑難排解"><a class="header" href="#五疑難排解">五、疑難排解</a></h2>
+<h3 id="51-常見問題與解決方案"><a class="header" href="#51-常見問題與解決方案">5.1 常見問題與解決方案</a></h3>
+<h4 id="問題找不到-verilatedh"><a class="header" href="#問題找不到-verilatedh">問題：找不到 verilated.h</a></h4>
+<pre><code class="language-bash"># 解決方案：確認 VERILATOR_ROOT 設定正確
+export VERILATOR_ROOT=$HOME/.mybin/verilator/share/verilator
+echo $VERILATOR_ROOT
+
+# 檢查檔案是否存在
+ls -la $VERILATOR_ROOT/include/verilated.h
+</code></pre>
+<h4 id="問題編譯錯誤-undefined-reference"><a class="header" href="#問題編譯錯誤-undefined-reference">問題：編譯錯誤 undefined reference</a></h4>
+<pre><code class="language-bash"># 解決方案：手動連結所有必要檔案
+g++ -I$VERILATOR_ROOT/include \
+    tb_counter.cpp \
+    obj_dir/Vcounter__ALL.cpp \
+    $VERILATOR_ROOT/include/verilated.cpp \
+    $VERILATOR_ROOT/include/verilated_vcd_c.cpp \
+    -o simulation
+</code></pre>
+<h4 id="問題vcd-檔案過大"><a class="header" href="#問題vcd-檔案過大">問題：VCD 檔案過大</a></h4>
+<pre><code class="language-cpp">// 解決方案：限制追蹤深度或時間範圍
+// 在 C++ 中控制追蹤
+if (sim_time &gt;= 1000 &amp;&amp; sim_time &lt;= 2000) {
+    tfp-&gt;dump(sim_time);
+}
+</code></pre>
+<h3 id="52-效能優化建議"><a class="header" href="#52-效能優化建議">5.2 效能優化建議</a></h3>
+<ol>
+<li>使用 <code>-O3</code> 編譯優化</li>
+<li>減少不必要的信號追蹤</li>
+<li>使用 <code>--threads</code> 啟用多執行緒</li>
+<li>分割大型設計 <code>--output-split</code></li>
+</ol>
+<h2 id="六完整專案結構"><a class="header" href="#六完整專案結構">六、完整專案結構</a></h2>
+<h3 id="61-verilator-安裝目錄結構"><a class="header" href="#61-verilator-安裝目錄結構">6.1 Verilator 安裝目錄結構</a></h3>
+<pre><code>$HOME/.mybin/verilator/
+├── bin/                        # 執行檔目錄
+│   ├── verilator              # 主要編譯器
+│   ├── verilator_bin          # 優化版本
+│   ├── verilator_bin_dbg      # 除錯版本
+│   ├── verilator_coverage     # 覆蓋率分析工具
+│   ├── verilator_coverage_bin_dbg  # 覆蓋率除錯版
+│   ├── verilator_gantt        # 甘特圖生成器
+│   └── verilator_profcfunc   # 效能分析工具
+└── share/
+    ├── man/                   # 手冊頁面
+    │   └── man1/
+    │       ├── verilator.1
+    │       ├── verilator_coverage.1
+    │       ├── verilator_gantt.1
+    │       └── verilator_profcfunc.1
+    ├── pkgconfig/
+    │   └── verilator.pc      # pkg-config 設定檔
+    └── verilator/
+        ├── bin/              # 內部執行檔
+        │   ├── verilator_ccache_report
+        │   ├── verilator_includer
+        │   └── ...
+        ├── examples/         # 範例專案
+        │   ├── make_hello_c/      # C 語言範例
+        │   ├── make_hello_sc/     # SystemC 範例
+        │   ├── make_tracing_c/    # 波形追蹤範例
+        │   ├── make_protect_lib/  # 函式庫保護範例
+        │   ├── cmake_*/           # CMake 範例
+        │   └── json_py/           # Python 工具範例
+        ├── include/          # 標頭檔目錄
+        │   ├── verilated.h         # 主要標頭檔
+        │   ├── verilated.cpp       # 主要實作
+        │   ├── verilated_vcd_c.h  # VCD 追蹤標頭
+        │   ├── verilated_vcd_c.cpp
+        │   ├── verilated_fst_c.h  # FST 追蹤標頭
+        │   ├── verilated_threads.h # 多執行緒支援
+        │   ├── verilated_cov.h    # 覆蓋率支援
+        │   ├── verilated.mk        # Makefile 模板
+        │   ├── gtkwave/            # GTKWave FST 支援
+        │   │   ├── fstapi.h
+        │   │   ├── fstapi.c
+        │   │   └── ...
+        │   └── vltstd/             # 標準介面
+        │       ├── svdpi.h        # SystemVerilog DPI
+        │       ├── vpi_user.h     # VPI 介面
+        │       └── ...
+        ├── verilator-config.cmake  # CMake 設定
+        └── verilator-config-version.cmake
+</code></pre>
+<h3 id="62-使用者專案目錄結構"><a class="header" href="#62-使用者專案目錄結構">6.2 使用者專案目錄結構</a></h3>
+<pre><code>$HOME/verilator_demo/
+├── counter.v               # Verilog 設計檔案
+├── tb_counter.cpp          # C++ 測試平台
+├── Makefile               # 自動化編譯腳本
+├── test.sh                # 測試腳本
+├── obj_dir/               # Verilator 生成的檔案（自動生成）
+│   ├── Vcounter.h         # 生成的標頭檔
+│   ├── Vcounter.cpp       # 生成的實作檔
+│   ├── Vcounter__ALL.cpp  # 所有模組合併檔
+│   ├── Vcounter.mk        # 生成的 Makefile
+│   └── sim_counter        # 編譯後的執行檔
+├── counter.vcd            # VCD 波形檔案（運行後生成）
+├── coverage.dat           # 覆蓋率資料（可選）
+├── profile_report.txt     # 效能分析報告（可選）
+├── gantt.html            # 甘特圖（可選）
+└── coverage_report/       # 覆蓋率報告目錄（可選）
+    └── ...
+</code></pre>
+<h2 id="七快速參考卡"><a class="header" href="#七快速參考卡">七、快速參考卡</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>命令</th><th>功能</th></tr></thead><tbody>
+<tr><td><code>make compile</code></td><td>只編譯不運行</td></tr>
+<tr><td><code>make run</code></td><td>編譯並運行模擬</td></tr>
+<tr><td><code>make wave</code></td><td>運行並開啟波形檢視器</td></tr>
+<tr><td><code>make coverage</code></td><td>程式碼覆蓋率分析</td></tr>
+<tr><td><code>make profile</code></td><td>效能分析</td></tr>
+<tr><td><code>make gantt</code></td><td>生成執行甘特圖</td></tr>
+<tr><td><code>make clean</code></td><td>清理生成檔案</td></tr>
+<tr><td><code>make help</code></td><td>顯示幫助資訊</td></tr>
+</tbody></table>
+</div>
+<hr />
+<p><strong>注意事項：</strong></p>
+<ul>
+<li>確保所有路徑與你的實際安裝位置相符</li>
+<li>首次使用前執行 <code>./test.sh</code> 確認環境設定正確</li>
+<li>波形檔案可能很大，適時清理舊檔案</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../embedded_systems/ubuntu-fpga-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../android/android.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../embedded_systems/ubuntu-fpga-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../android/android.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
