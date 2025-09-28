@@ -1,9 +1,5 @@
 # FPGA 高頻交易模擬測試範例
 
-> **實測驗證**: 本範例已在 Ubuntu 系統上使用 Verilator 5.040 實際測試通過
-> **測試目錄**: `/home/shihyu/github/jason_note/src/embedded_systems/src/hft_fpga_simulation`
-> **最後更新**: 2025-09-28
-
 ## 1. 簡單的訂單匹配引擎 (Verilog)
 
 ### order_matcher.v - 基本訂單匹配邏輯
