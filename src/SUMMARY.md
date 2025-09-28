@@ -286,6 +286,7 @@
 ## Embedded Systems
 - [Embedded Systems](embedded_systems/embedded_systems.md)
     - [FPGA vs MCU 比較指南](embedded_systems/fpga_vs_mcu_comparison.md)
+    - [Ubuntu FPGA 開發指南](embedded_systems/ubuntu-fpga-guide.md)
 
 ## Mobile & Platform
 - [Android](android/android.md)
