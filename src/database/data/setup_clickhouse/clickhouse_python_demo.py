@@ -9,26 +9,43 @@ import numpy as np
 from datetime import datetime, timedelta
 from clickhouse_driver import Client
 import sys
+import time
 
 class ClickHouseDemo:
     def __init__(self, host='localhost', port=9000, user='trader', password='SecurePass123!', database='market_data'):
         """初始化 ClickHouse 連接"""
-        self.client = Client(
-            host=host,
-            port=port,
-            user=user,
-            password=password,
-            database=database
-        )
-        print(f"✅ 連接到 ClickHouse {host}:{port}/{database}")
+        max_retries = 3
+        retry_delay = 2
+
+        for attempt in range(max_retries):
+            try:
+                self.client = Client(
+                    host=host,
+                    port=port,
+                    user=user,
+                    password=password,
+                    database=database,
+                    settings={'use_numpy': False}  # 避免 numpy 相關問題
+                )
+                # 測試連線
+                self.client.execute('SELECT 1')
+                print(f"✅ 連接到 ClickHouse {host}:{port}/{database}")
+                return
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    print(f"⚠️  連線失敗，{retry_delay}秒後重試... (嘗試 {attempt + 1}/{max_retries})")
+                    time.sleep(retry_delay)
+                else:
+                    print(f"❌ 無法連接到 ClickHouse: {e}")
+                    raise
 
     def create_table(self, table_name='market_ticks_demo'):
-        """建立測試表"""
+        """建立測試表（使用 ReplacingMergeTree 支援去重）"""
         try:
             # 刪除舊表
             self.client.execute(f"DROP TABLE IF EXISTS {table_name}")
 
-            # 建立新表
+            # 建立新表（使用 ReplacingMergeTree）
             query = f"""
             CREATE TABLE {table_name} (
                 ts DateTime64(3),
@@ -39,13 +56,14 @@ class ClickHouseDemo:
                 bid_volume UInt32,
                 ask_price Decimal64(2),
                 ask_volume UInt32,
-                tick_type UInt8
-            ) ENGINE = MergeTree()
+                tick_type UInt8,
+                _version UInt64 DEFAULT toUnixTimestamp64Milli(now64(3))
+            ) ENGINE = ReplacingMergeTree(_version)
             PARTITION BY toYYYYMM(ts)
             ORDER BY (symbol, ts)
             """
             self.client.execute(query)
-            print(f"✅ 建立表 {table_name}")
+            print(f"✅ 建立表 {table_name} (使用 ReplacingMergeTree 自動去重)")
             return True
         except Exception as e:
             print(f"❌ 建立表失敗: {e}")
@@ -61,7 +79,7 @@ class ClickHouseDemo:
             # 轉換時間格式
             df['ts'] = pd.to_datetime(df['ts'])
 
-            # 準備資料
+            # 準備資料（不包含 _version，讓它使用預設值）
             data = []
             for _, row in df.iterrows():
                 data.append((
@@ -76,8 +94,8 @@ class ClickHouseDemo:
                     int(row['tick_type'])
                 ))
 
-            # 批次插入
-            self.client.execute(f'INSERT INTO {table_name} VALUES', data)
+            # 批次插入（指定欄位名稱）
+            self.client.execute(f'INSERT INTO {table_name} (ts, symbol, close, volume, bid_price, bid_volume, ask_price, ask_volume, tick_type) VALUES', data)
             print(f"✅ 成功插入 {len(data)} 筆資料到 {table_name}")
             return True
 
@@ -117,7 +135,8 @@ class ClickHouseDemo:
                     np.random.randint(1, 4)
                 ))
 
-            self.client.execute(f'INSERT INTO {table_name} VALUES', data)
+            # 指定欄位名稱插入
+            self.client.execute(f'INSERT INTO {table_name} (ts, symbol, close, volume, bid_price, bid_volume, ask_price, ask_volume, tick_type) VALUES', data)
             print(f"✅ 插入 {len(data)} 筆測試資料")
             return True
 
@@ -276,6 +295,88 @@ class ClickHouseDemo:
             print(f"❌ 匯出失敗: {e}")
             return None
 
+    def test_deduplication(self, table_name='market_ticks_demo'):
+        """測試去重功能"""
+        print("\n" + "="*60)
+        print("🔍 測試 ReplacingMergeTree 去重功能")
+        print("="*60)
+
+        try:
+            # 插入重複資料進行測試
+            test_data = []
+            base_time = datetime.now()
+
+            # 原始資料
+            for i in range(3):
+                test_data.append((
+                    base_time,
+                    'TEST_DUP',
+                    100.0 + i,
+                    1000 + i*100,
+                    99.0 + i,
+                    100,
+                    101.0 + i,
+                    100,
+                    1
+                ))
+
+            # 插入原始資料
+            self.client.execute(f'INSERT INTO {table_name} (ts, symbol, close, volume, bid_price, bid_volume, ask_price, ask_volume, tick_type) VALUES', test_data)
+            print(f"✅ 插入 {len(test_data)} 筆原始資料")
+
+            # 插入重複資料（相同的 ts 和 symbol）
+            duplicate_data = []
+            for i in range(3):
+                duplicate_data.append((
+                    base_time,  # 相同時間
+                    'TEST_DUP',  # 相同股票
+                    200.0 + i,  # 不同價格
+                    2000 + i*100,
+                    199.0 + i,
+                    200,
+                    201.0 + i,
+                    200,
+                    2
+                ))
+
+            self.client.execute(f'INSERT INTO {table_name} (ts, symbol, close, volume, bid_price, bid_volume, ask_price, ask_volume, tick_type) VALUES', duplicate_data)
+            print(f"✅ 插入 {len(duplicate_data)} 筆重複資料（相同 ts 和 symbol）")
+
+            # 查看去重前的資料
+            result_before = self.client.execute(f"SELECT count(*) FROM {table_name} WHERE symbol = 'TEST_DUP'")
+            print(f"\n去重前: {result_before[0][0]} 筆")
+
+            # 執行優化以觸發去重
+            self.client.execute(f"OPTIMIZE TABLE {table_name} FINAL")
+            print("✅ 執行 OPTIMIZE TABLE FINAL 觸發去重")
+
+            # 查看去重後的資料（使用 FINAL）
+            result_after = self.client.execute(f"SELECT count(*) FROM {table_name} FINAL WHERE symbol = 'TEST_DUP'")
+            print(f"去重後: {result_after[0][0]} 筆")
+
+            # 顯示去重效果
+            dedup_count = result_before[0][0] - result_after[0][0]
+            dedup_rate = (dedup_count / result_before[0][0]) * 100 if result_before[0][0] > 0 else 0
+            print(f"\n📊 去重效果:")
+            print(f"  移除了 {dedup_count} 筆重複資料")
+            print(f"  去重率: {dedup_rate:.1f}%")
+
+            # 顯示保留的資料
+            final_data = self.client.execute(f"""
+                SELECT ts, symbol, close, volume
+                FROM {table_name} FINAL
+                WHERE symbol = 'TEST_DUP'
+                ORDER BY ts, close
+            """)
+
+            if final_data:
+                print(f"\n保留的資料（最新版本）:")
+                for row in final_data:
+                    print(f"  {row[0]} | {row[1]} | 價格: {row[2]} | 數量: {row[3]}")
+
+        except Exception as e:
+            print(f"❌ 去重測試失敗: {e}")
+
     def advanced_queries(self, table_name='market_ticks_demo'):
         """進階查詢範例"""
         print("\n" + "="*60)
@@ -289,7 +390,7 @@ class ClickHouseDemo:
                     toStartOfMinute(ts) as minute,
                     count(*) as tick_count,
                     round(avg(toFloat64(close)), 2) as avg_price
-                FROM {table_name}
+                FROM {table_name} FINAL
                 GROUP BY minute
                 ORDER BY minute DESC
                 LIMIT 10
@@ -306,7 +407,7 @@ class ClickHouseDemo:
                     symbol,
                     round(avg(toFloat64(ask_price) - toFloat64(bid_price)), 2) as avg_spread,
                     round(max(toFloat64(ask_price) - toFloat64(bid_price)), 2) as max_spread
-                FROM {table_name}
+                FROM {table_name} FINAL
                 GROUP BY symbol
                 ORDER BY avg_spread DESC
             """)
@@ -330,44 +431,52 @@ def main():
     print("🚀 ClickHouse Python 完整範例")
     print("="*60)
 
-    # 建立連接
-    demo = ClickHouseDemo()
+    try:
+        # 建立連接
+        demo = ClickHouseDemo()
 
-    # 建立表
-    if not demo.create_table():
+        # 建立表
+        if not demo.create_table():
+            sys.exit(1)
+
+        # 讀取 CSV 並插入（如果沒有 CSV 會自動產生測試資料）
+        if not demo.read_csv_and_insert():
+            sys.exit(1)
+
+        # 測試去重功能
+        demo.test_deduplication()
+
+        # 打印 CSV 格式的資料（與 test_data.csv 相同格式）
+        print("\n" + "="*60)
+        print("📄 資料庫內容（CSV 格式）")
+        print("="*60)
+        demo.print_csv_format()
+
+        # 將資料庫內容存放到 DataFrame 並使用 to_markdown 顯示
+        print("\n" + "="*60)
+        print("📊 使用 DataFrame 和 Markdown 顯示")
+        print("="*60)
+        df = demo.get_dataframe_with_markdown()
+
+        # 執行查詢範例
+        demo.query_examples()
+
+        # 進階查詢
+        demo.advanced_queries()
+
+        # 匯出資料
+        demo.export_to_csv()
+
+        # 關閉連接
+        demo.close()
+
+        print("\n" + "="*60)
+        print("✅ 範例執行完成！")
+        print("="*60)
+
+    except Exception as e:
+        print(f"\n❌ 程式執行失敗: {e}")
         sys.exit(1)
-
-    # 讀取 CSV 並插入（如果沒有 CSV 會自動產生測試資料）
-    if not demo.read_csv_and_insert():
-        sys.exit(1)
-
-    # 打印 CSV 格式的資料（與 test_data.csv 相同格式）
-    print("\n" + "="*60)
-    print("📄 資料庫內容（CSV 格式）")
-    print("="*60)
-    demo.print_csv_format()
-
-    # 將資料庫內容存放到 DataFrame 並使用 to_markdown 顯示
-    print("\n" + "="*60)
-    print("📊 使用 DataFrame 和 Markdown 顯示")
-    print("="*60)
-    df = demo.get_dataframe_with_markdown()
-
-    # 執行查詢範例
-    demo.query_examples()
-
-    # 進階查詢
-    demo.advanced_queries()
-
-    # 匯出資料
-    demo.export_to_csv()
-
-    # 關閉連接
-    demo.close()
-
-    print("\n" + "="*60)
-    print("✅ 範例執行完成！")
-    print("="*60)
 
 if __name__ == "__main__":
     main()

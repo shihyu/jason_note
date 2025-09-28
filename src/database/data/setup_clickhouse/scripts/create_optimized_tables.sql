@@ -1,7 +1,7 @@
 -- ClickHouse 優化表設計 for Tick Data
 -- 適用於處理幾百GB的金融交易數據
 
--- 1. 創建主要 tick 數據表（優化版）
+-- 1. 創建主要 tick 數據表（優化版 - 使用 ReplacingMergeTree 自動去重）
 CREATE TABLE IF NOT EXISTS tick_data_optimized (
     -- 時間戳使用 DateTime64 提供毫秒精度
     timestamp DateTime64(3) CODEC(DoubleDelta),
@@ -21,22 +21,25 @@ CREATE TABLE IF NOT EXISTS tick_data_optimized (
     bid_price Decimal64(4),
     ask_price Decimal64(4),
     bid_volume UInt32 CODEC(T64),
-    ask_volume UInt32 CODEC(T64)
+    ask_volume UInt32 CODEC(T64),
 
-) ENGINE = MergeTree()
+    -- 版本欄位用於 ReplacingMergeTree（選用，預設使用插入時間）
+    _version UInt64 DEFAULT toUnixTimestamp64Milli(now64(3))
+
+) ENGINE = ReplacingMergeTree(_version)  -- 使用 ReplacingMergeTree 自動去重
 PARTITION BY toYYYYMM(timestamp)  -- 按月分區
-ORDER BY (symbol, timestamp)      -- 優化按symbol查詢
+ORDER BY (symbol, timestamp)      -- 以 symbol 和 timestamp 作為去重鍵
 PRIMARY KEY (symbol, timestamp)
 TTL toDateTime(timestamp) + INTERVAL 90 DAY   -- 90天後自動清理
 SETTINGS
     index_granularity = 8192;
 
--- 2. 添加索引優化查詢性能
+-- 2. 添加索引優化查詢性能（如果不存在）
 ALTER TABLE tick_data_optimized
-    ADD INDEX idx_price price TYPE minmax GRANULARITY 4;
+    ADD INDEX IF NOT EXISTS idx_price price TYPE minmax GRANULARITY 4;
 
 ALTER TABLE tick_data_optimized
-    ADD INDEX idx_symbol symbol TYPE bloom_filter(0.01) GRANULARITY 1;
+    ADD INDEX IF NOT EXISTS idx_symbol symbol TYPE bloom_filter(0.01) GRANULARITY 1;
 
 -- 3. 創建1分鐘K線物化視圖（預聚合）
 CREATE MATERIALIZED VIEW IF NOT EXISTS tick_1min_mv
@@ -90,16 +93,17 @@ FROM tick_data_optimized
 GROUP BY symbol, date;
 
 -- 6. 創建投影優化特定查詢
-ALTER TABLE tick_data_optimized ADD PROJECTION symbol_daily_projection
-(
-    SELECT
-        symbol,
-        toDate(timestamp) as date,
-        avg(price) as avg_price,
-        sum(volume) as total_volume,
-        count() as tick_count
-    GROUP BY symbol, date
-);
+-- 注意：ReplacingMergeTree 對投影支援有限，暫時停用
+-- ALTER TABLE tick_data_optimized ADD PROJECTION symbol_daily_projection
+-- (
+--     SELECT
+--         symbol,
+--         toDate(timestamp) as date,
+--         avg(price) as avg_price,
+--         sum(volume) as total_volume,
+--         count() as tick_count
+--     GROUP BY symbol, date
+-- );
 
 -- 7. 創建分散式表（如果使用集群）
 -- CREATE TABLE tick_data_distributed AS tick_data_optimized
@@ -137,10 +141,10 @@ ALTER TABLE tick_data_optimized ADD PROJECTION symbol_daily_projection
 
 -- 10. 維護指令
 
--- 優化表（定期執行）
+-- 優化表（定期執行）- 對 ReplacingMergeTree 特別重要，會觸發去重
 -- OPTIMIZE TABLE tick_data_optimized FINAL;
 
--- 更新投影
+-- 更新投影（ReplacingMergeTree 不支援）
 -- ALTER TABLE tick_data_optimized MATERIALIZE PROJECTION symbol_daily_projection;
 
 -- 查看分區狀態
