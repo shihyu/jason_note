@@ -78,8 +78,7 @@ ________________________________________________________
 ![MCU與FPGA比較圖3](images/comparison_3.png)
 
 
-
-
+出處：https://hackmd.io/@metal35x/BJamZmpVL
  
     
       
