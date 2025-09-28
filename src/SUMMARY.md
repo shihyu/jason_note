@@ -289,6 +289,7 @@
     - [Ubuntu FPGA 開發指南](embedded_systems/ubuntu-fpga-guide.md)
     - [Verilator 完整開發指南](embedded_systems/verilator_complete_guide.md)
     - [HFT FPGA 模擬實作指南](embedded_systems/hft_fpga_simulation.md)
+    - [Sipeed Tang Primer 25K & Milk-V Duo S Ubuntu 開發環境指南](embedded_systems/ubuntu_dev_boards_guide.md)
 
 ## Mobile & Platform
 - [Android](android/android.md)
