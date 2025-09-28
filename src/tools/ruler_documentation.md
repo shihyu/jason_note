@@ -57,6 +57,73 @@ Ruler 透過以下機制解決這些問題：
 - 備份與回復機制
 - 安全的實驗環境
 
+## Ruler 的運作原理
+
+### 規則檔案的標準化輸出
+
+當你執行 `ruler apply` 時，ruler 會：
+
+1. **讀取** `.ruler/` 目錄下的所有規則檔案
+2. **自動生成**每個 AI 工具專屬的配置檔案
+3. **寫入**到各 AI 工具預期的位置
+
+```bash
+# 執行 ruler apply 後的檔案生成流程
+.ruler/AGENTS.md  ──────┐
+.ruler/coding_style.md  ├──> 自動轉換並生成
+.ruler/api_rules.md     │
+                        ↓
+├── CLAUDE.md                    # Claude Code 會讀取這個
+├── .cursor/rules/ruler_cursor_instructions.mdc  # Cursor 會讀取這個
+├── .github/copilot-instructions.md  # GitHub Copilot 會讀取這個
+└── .clinerules                  # Cline 會讀取這個
+```
+
+### AI 工具的內建機制
+
+每個 AI 工具都有自己的**規則檔案約定**：
+
+| AI 工具 | 預期的規則檔案位置 | 工具如何發現規則 |
+|---------|-------------------|-----------------|
+| **Claude Code** | `CLAUDE.md` (根目錄) | Claude Code 啟動時自動掃描專案根目錄尋找 `CLAUDE.md` |
+| **Cursor** | `.cursor/rules/*.mdc` | Cursor IDE 會自動載入 `.cursor/rules/` 目錄下的所有 `.mdc` 檔案 |
+| **GitHub Copilot** | `.github/copilot-instructions.md` | Copilot 擴充功能會自動讀取這個路徑 |
+| **Windsurf** | `.windsurf/rules/*.md` | Windsurf 會掃描其專屬目錄 |
+| **Cline** | `.clinerules` | Cline 會在專案根目錄尋找這個檔案 |
+| **Aider** | `AGENTS.md`, `.aider.conf.yml` | Aider 會讀取這兩個配置檔案 |
+
+### 運作流程圖
+
+```
+開發者編寫規則 → ruler apply → 生成各工具配置 → AI 工具自動載入
+     ↓                ↓              ↓                ↓
+.ruler/AGENTS.md   處理與轉換    CLAUDE.md等      即時生效
+```
+
+### 為什麼 AI 工具會遵守這些規則？
+
+1. **約定優於配置 (Convention over Configuration)**
+   - 每個 AI 工具都有預定義的檔案路徑
+   - 它們會自動尋找並載入這些檔案
+
+2. **自動發現機制**
+   - AI 工具在啟動或每次互動時會掃描特定位置
+   - 發現規則檔案後自動載入並應用
+
+3. **即時生效**
+   - 大多數工具在每次互動時重新讀取規則
+   - 某些工具可能需要重新啟動才能載入新規則
+
+### MCP (Model Context Protocol) 的角色
+
+MCP 檔案提供額外的上下文配置，定義 AI 工具可以訪問的外部服務和資源：
+
+- **`.mcp.json`** - Claude Code 的 MCP 伺服器配置
+- **`.cursor/mcp.json`** - Cursor 的 MCP 伺服器配置
+- **`.vscode/mcp.json`** - GitHub Copilot 的 MCP 配置
+
+這些配置允許 AI 工具訪問檔案系統、Git 倉庫、資料庫等外部資源。
+
 ## 快速開始
 
 ### 安裝
