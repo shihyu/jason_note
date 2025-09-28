@@ -66,17 +66,31 @@ pip3 install --user \
 sudo apt install verilator
 
 # 方法二：從源碼編譯最新版（推薦）
+# 安裝必要依賴
 sudo apt-get install git perl python3 make autoconf g++ flex bison ccache
 sudo apt-get install libgoogle-perftools-dev numactl perl-doc
 sudo apt-get install libfl2 libfl-dev zlibc zlib1g zlib1g-dev
+sudo apt-get install help2man  # 生成 man pages 所需
 
+# 克隆並編譯
 git clone https://github.com/verilator/verilator
 cd verilator
 git checkout stable
-autoconf
+
+# 配置安裝路徑（選擇其一）
+# 選項 1: 安裝到系統目錄
 ./configure --prefix=/usr/local
+
+# 選項 2: 安裝到自定義目錄（不需要 sudo）
+./configure --prefix=$HOME/.mybin/verilator
+# 記得將 $HOME/.mybin/verilator/bin 加入 PATH
+
+# 編譯和安裝
 make -j$(nproc)
-sudo make install
+make install  # 如果是系統目錄則需要 sudo make install
+
+# 驗證安裝
+verilator --version
 ```
 
 ### 3. GTKWave (波形檢視器)
