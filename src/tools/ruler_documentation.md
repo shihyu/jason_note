@@ -76,6 +76,7 @@ Ruler 透過以下機制解決這些問題：
 ├── CLAUDE.md                    # Claude Code 會讀取這個
 ├── .cursor/rules/ruler_cursor_instructions.mdc  # Cursor 會讀取這個
 ├── .github/copilot-instructions.md  # GitHub Copilot 會讀取這個
+├── .codex/rules.md              # Codex 會讀取這個
 └── .clinerules                  # Cline 會讀取這個
 ```
 
@@ -91,6 +92,7 @@ Ruler 透過以下機制解決這些問題：
 | **Windsurf** | `.windsurf/rules/*.md` | Windsurf 會掃描其專屬目錄 |
 | **Cline** | `.clinerules` | Cline 會在專案根目錄尋找這個檔案 |
 | **Aider** | `AGENTS.md`, `.aider.conf.yml` | Aider 會讀取這兩個配置檔案 |
+| **Codex** | `.codex/rules.md` | Codex 會在專案中掃描 `.codex/` 目錄下的規則檔案 |
 
 ### 運作流程圖
 
@@ -156,7 +158,7 @@ ruler init --global
 ruler apply
 
 # 只套用到特定代理工具
-ruler apply --agents copilot,claude
+ruler apply --agents copilot,claude,codex
 
 # 使用巢狀規則載入
 ruler apply --nested
@@ -209,7 +211,7 @@ project/
 
 ```toml
 # 預設執行的代理工具
-default_agents = ["copilot", "claude", "aider"]
+default_agents = ["copilot", "claude", "aider", "codex"]
 
 # 全域 MCP 伺服器配置
 [mcp]
@@ -241,6 +243,11 @@ output_path = "CLAUDE.md"
 [agents.cursor]
 enabled = true
 output_path = ".cursor/rules/ruler_cursor_instructions.mdc"
+
+[agents.codex]
+enabled = true
+output_path = ".codex/rules.md"
+mcp_config_path = ".codex/mcp.json"
 ```
 
 ### MCP 伺服器配置
@@ -270,6 +277,94 @@ Authorization = "Bearer token"
 
 ## 進階功能
 
+### Codex 整合配置
+
+#### Codex 特定設定
+
+Codex 是一個先進的 AI 編程助手，支援深度程式碼理解和生成。透過 Ruler 可以為 Codex 配置特定的規則和 MCP 伺服器。
+
+##### 基本 Codex 配置 (.ruler/codex_config.md)
+
+```markdown
+# Codex 開發規範
+
+## 程式碼生成原則
+- 優先生成可測試和可維護的程式碼
+- 遵循 SOLID 原則
+- 使用適當的設計模式
+- 生成程式碼時包含必要的註解
+
+## 效能優化
+- 避免不必要的記憶體分配
+- 使用適當的資料結構
+- 考慮時間和空間複雜度
+
+## API 設計
+- 保持介面簡潔明瞭
+- 提供清晰的錯誤訊息
+- 實作適當的驗證邏輯
+```
+
+##### Codex MCP 伺服器配置
+
+在 `ruler.toml` 中加入 Codex 特定的 MCP 伺服器：
+
+```toml
+[agents.codex]
+enabled = true
+output_path = ".codex/rules.md"
+mcp_config_path = ".codex/mcp.json"
+# Codex 特定選項
+use_context_aware_generation = true
+max_context_length = 8000
+include_test_generation = true
+
+[mcp_servers.codex_analyzer]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-code-analyzer"]
+# Codex 專用的程式碼分析伺服器
+
+[mcp_servers.codex_linter]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-eslint", "--config", ".eslintrc.json"]
+# 整合 linter 以確保生成的程式碼品質
+```
+
+##### Codex 巢狀規則範例
+
+```bash
+# 為不同模組建立 Codex 特定規則
+mkdir -p backend/.codex
+cat > backend/.codex/backend_rules.md << 'EOF'
+# 後端 Codex 規範
+
+## 資料庫互動
+- 使用 ORM 而非原生 SQL
+- 實作交易處理
+- 加入適當的索引提示
+
+## API 端點生成
+- 自動生成 OpenAPI 文檔
+- 包含請求驗證邏輯
+- 實作錯誤處理中介軟體
+EOF
+
+mkdir -p frontend/.codex
+cat > frontend/.codex/frontend_rules.md << 'EOF'
+# 前端 Codex 規範
+
+## 組件生成
+- 生成 TypeScript 類型定義
+- 包含 Props 驗證
+- 實作無障礙功能 (a11y)
+
+## 狀態管理
+- 使用 Context API 或 Redux
+- 避免 prop drilling
+- 實作適當的 memorization
+EOF
+```
+
 ### 回復機制
 
 ```bash
@@ -298,6 +393,7 @@ node_modules/
 # START Ruler Generated Files
 .aider.conf.yml
 .clinerules
+.codex/rules.md
 .cursor/rules/ruler_cursor_instructions.mdc
 .github/copilot-instructions.md
 .windsurf/rules/ruler_windsurf_instructions.md
@@ -474,6 +570,7 @@ ruler apply --nested --verbose
 | Aider | `AGENTS.md`, `.aider.conf.yml` | `.mcp.json` |
 | Amazon Q CLI | `.amazonq/rules/ruler_q_rules.md` | `.amazonq/mcp.json` |
 | Zed | `AGENTS.md` | `.zed/settings.json` |
+| Codex | `.codex/rules.md` | `.codex/mcp.json` |
 
 ## 結論
 
