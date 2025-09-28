@@ -179,6 +179,11 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="verilator-完整編譯與使用指南"><a class="header" href="#verilator-完整編譯與使用指南">Verilator 完整編譯與使用指南</a></h1>
+<blockquote>
+<p><strong>實測驗證</strong>: 本指南所有範例已在 Ubuntu 系統上實際測試通過
+<strong>測試目錄</strong>: <code>/home/shihyu/github/jason_note/src/embedded_systems/src/test_verilator</code>
+<strong>最後更新</strong>: 2025-09-28</p>
+</blockquote>
 <h2 id="一從源碼編譯-verilator"><a class="header" href="#一從源碼編譯-verilator">一、從源碼編譯 Verilator</a></h2>
 <h3 id="11-安裝編譯依賴"><a class="header" href="#11-安裝編譯依賴">1.1 安裝編譯依賴</a></h3>
 <pre><code class="language-bash"># 更新套件列表
@@ -317,7 +322,63 @@ int main(int argc, char** argv) {
     return 0;
 }
 </code></pre>
-<h3 id="24-創建-makefile"><a class="header" href="#24-創建-makefile">2.4 創建 Makefile</a></h3>
+<h3 id="24-創建-makefile-簡化版"><a class="header" href="#24-創建-makefile-簡化版">2.4 創建 Makefile (簡化版)</a></h3>
+<pre><code class="language-makefile"># 簡單的 Verilator Makefile
+
+# Verilator 命令
+VERILATOR = verilator
+
+# 編譯器
+CXX = g++
+
+# 頂層模組名稱
+TOP = counter
+
+# 源檔案
+VERILOG_SOURCES = counter.v
+CPP_SOURCES = tb_counter.cpp
+
+# 預設目標
+all: run
+
+# 編譯 Verilog 並生成 C++ 檔案
+verilate:
+	@echo "=== Verilating $(TOP).v ==="
+	$(VERILATOR) --cc --trace --exe --build \
+		$(VERILOG_SOURCES) \
+		$(CPP_SOURCES) \
+		--top-module $(TOP) \
+		-o sim
+
+# 運行模擬
+run: verilate
+	@echo "=== Running simulation ==="
+	./obj_dir/sim
+	@echo "=== Simulation complete ==="
+	@echo "=== Generated counter.vcd for waveform viewing ==="
+
+# 查看波形
+wave: run
+	@echo "=== Opening waveform in GTKWave ==="
+	gtkwave counter.vcd &amp;
+
+# 清理生成的檔案
+clean:
+	rm -rf obj_dir *.vcd
+
+# 幫助資訊
+help:
+	@echo "Simple Verilator Makefile"
+	@echo "Commands:"
+	@echo "  make        - Compile and run simulation"
+	@echo "  make run    - Same as make"
+	@echo "  make wave   - Run simulation and view waveform"
+	@echo "  make clean  - Clean all generated files"
+	@echo "  make help   - Show this help message"
+
+.PHONY: all verilate run wave clean help
+</code></pre>
+<h3 id="241-創建完整版-makefile-進階功能"><a class="header" href="#241-創建完整版-makefile-進階功能">2.4.1 創建完整版 Makefile (進階功能)</a></h3>
 <pre><code class="language-makefile"># Makefile - 自動化編譯腳本
 
 # Verilator 設定
@@ -327,7 +388,7 @@ VERILATOR_ROOT ?= $(HOME)/.mybin/verilator/share/verilator
 # 編譯器設定
 CXX = g++
 CXXFLAGS = -Wall -I$(VERILATOR_ROOT)/include -I./obj_dir
-LDFLAGS = 
+LDFLAGS =
 
 # Verilator 標誌
 VFLAGS = --cc --trace --exe --build
@@ -718,6 +779,65 @@ if (sim_time &gt;= 1000 &amp;&amp; sim_time &lt;= 2000) {
 <li>首次使用前執行 <code>./test.sh</code> 確認環境設定正確</li>
 <li>波形檔案可能很大，適時清理舊檔案</li>
 </ul>
+<h2 id="八實際測試驗證"><a class="header" href="#八實際測試驗證">八、實際測試驗證</a></h2>
+<h3 id="81-測試環境"><a class="header" href="#81-測試環境">8.1 測試環境</a></h3>
+<ul>
+<li><strong>系統</strong>: Ubuntu Linux</li>
+<li><strong>Verilator 版本</strong>: 5.040</li>
+<li><strong>測試目錄</strong>: <code>/home/shihyu/github/jason_note/src/embedded_systems/src/test_verilator</code></li>
+</ul>
+<h3 id="82-實測結果"><a class="header" href="#82-實測結果">8.2 實測結果</a></h3>
+<pre><code class="language-bash">$ ./test.sh
+======================================
+     Verilator Test Suite
+======================================
+[0/5] Cleaning environment
+[1/5] Checking Verilator installation
+Verilator version: Verilator 5.040 2025-08-30
+Verilator path: /home/shihyu/.mybin/verilator/bin/verilator
+[2/5] Checking environment variables
+VERILATOR_ROOT: /home/shihyu/.mybin/verilator/share/verilator
+[3/5] Compilation test
+Testing: Verilator compilation... ✓ PASSED
+[4/5] Simulation test
+Testing: Running simulation... ✓ PASSED
+[5/5] Checking output files
+✓ VCD file generated
+-rw-r--r-- 1.6K counter.vcd
+======================================
+All tests completed!
+======================================
+</code></pre>
+<h3 id="83-模擬輸出範例"><a class="header" href="#83-模擬輸出範例">8.3 模擬輸出範例</a></h3>
+<pre><code>Time: 10 Count: 1
+Time: 12 Count: 2
+Time: 14 Count: 3
+...
+Time: 96 Count: 44
+Time: 98 Count: 45
+Simulation completed!
+</code></pre>
+<h3 id="84-快速開始指令"><a class="header" href="#84-快速開始指令">8.4 快速開始指令</a></h3>
+<pre><code class="language-bash"># 1. 克隆或建立專案目錄
+mkdir ~/verilator_demo &amp;&amp; cd ~/verilator_demo
+
+# 2. 複製本指南的範例檔案
+# counter.v, tb_counter.cpp, Makefile, test.sh
+
+# 3. 設定環境變數（如果尚未設定）
+export PATH=$HOME/.mybin/verilator/bin:$PATH
+export VERILATOR_ROOT=$HOME/.mybin/verilator/share/verilator
+
+# 4. 執行測試
+chmod +x test.sh
+./test.sh
+
+# 5. 運行模擬
+make run
+
+# 6. 查看波形（需要 GTKWave）
+make wave
+</code></pre>
 
                     </main>
 
@@ -727,7 +847,7 @@ if (sim_time &gt;= 1000 &amp;&amp; sim_time &lt;= 2000) {
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../android/android.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../embedded_systems/hft_fpga_simulation.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -741,7 +861,7 @@ if (sim_time &gt;= 1000 &amp;&amp; sim_time &lt;= 2000) {
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../android/android.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../embedded_systems/hft_fpga_simulation.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
