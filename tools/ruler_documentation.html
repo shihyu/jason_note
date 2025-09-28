@@ -251,6 +251,7 @@
 ├── CLAUDE.md                    # Claude Code 會讀取這個
 ├── .cursor/rules/ruler_cursor_instructions.mdc  # Cursor 會讀取這個
 ├── .github/copilot-instructions.md  # GitHub Copilot 會讀取這個
+├── .codex/rules.md              # Codex 會讀取這個
 └── .clinerules                  # Cline 會讀取這個
 </code></pre>
 <h3 id="ai-工具的內建機制"><a class="header" href="#ai-工具的內建機制">AI 工具的內建機制</a></h3>
@@ -262,6 +263,7 @@
 <tr><td><strong>Windsurf</strong></td><td><code>.windsurf/rules/*.md</code></td><td>Windsurf 會掃描其專屬目錄</td></tr>
 <tr><td><strong>Cline</strong></td><td><code>.clinerules</code></td><td>Cline 會在專案根目錄尋找這個檔案</td></tr>
 <tr><td><strong>Aider</strong></td><td><code>AGENTS.md</code>, <code>.aider.conf.yml</code></td><td>Aider 會讀取這兩個配置檔案</td></tr>
+<tr><td><strong>Codex</strong></td><td><code>.codex/rules.md</code></td><td>Codex 會在專案中掃描 <code>.codex/</code> 目錄下的規則檔案</td></tr>
 </tbody></table>
 </div>
 <h3 id="運作流程圖"><a class="header" href="#運作流程圖">運作流程圖</a></h3>
@@ -324,7 +326,7 @@ ruler init --global
 ruler apply
 
 # 只套用到特定代理工具
-ruler apply --agents copilot,claude
+ruler apply --agents copilot,claude,codex
 
 # 使用巢狀規則載入
 ruler apply --nested
@@ -365,7 +367,7 @@ ruler apply --dry-run
 <h2 id="配置詳解"><a class="header" href="#配置詳解">配置詳解</a></h2>
 <h3 id="rulertoml-配置檔案"><a class="header" href="#rulertoml-配置檔案">ruler.toml 配置檔案</a></h3>
 <pre><code class="language-toml"># 預設執行的代理工具
-default_agents = ["copilot", "claude", "aider"]
+default_agents = ["copilot", "claude", "aider", "codex"]
 
 # 全域 MCP 伺服器配置
 [mcp]
@@ -397,6 +399,11 @@ output_path = "CLAUDE.md"
 [agents.cursor]
 enabled = true
 output_path = ".cursor/rules/ruler_cursor_instructions.mdc"
+
+[agents.codex]
+enabled = true
+output_path = ".codex/rules.md"
+mcp_config_path = ".codex/mcp.json"
 </code></pre>
 <h3 id="mcp-伺服器配置"><a class="header" href="#mcp-伺服器配置">MCP 伺服器配置</a></h3>
 <h4 id="本地stdio-伺服器"><a class="header" href="#本地stdio-伺服器">本地/stdio 伺服器</a></h4>
@@ -417,6 +424,81 @@ Authorization = "Bearer token"
 "X-API-Version" = "v1"
 </code></pre>
 <h2 id="進階功能"><a class="header" href="#進階功能">進階功能</a></h2>
+<h3 id="codex-整合配置"><a class="header" href="#codex-整合配置">Codex 整合配置</a></h3>
+<h4 id="codex-特定設定"><a class="header" href="#codex-特定設定">Codex 特定設定</a></h4>
+<p>Codex 是一個先進的 AI 編程助手，支援深度程式碼理解和生成。透過 Ruler 可以為 Codex 配置特定的規則和 MCP 伺服器。</p>
+<h5 id="基本-codex-配置-rulercodex_configmd"><a class="header" href="#基本-codex-配置-rulercodex_configmd">基本 Codex 配置 (.ruler/codex_config.md)</a></h5>
+<pre><code class="language-markdown"># Codex 開發規範
+
+## 程式碼生成原則
+- 優先生成可測試和可維護的程式碼
+- 遵循 SOLID 原則
+- 使用適當的設計模式
+- 生成程式碼時包含必要的註解
+
+## 效能優化
+- 避免不必要的記憶體分配
+- 使用適當的資料結構
+- 考慮時間和空間複雜度
+
+## API 設計
+- 保持介面簡潔明瞭
+- 提供清晰的錯誤訊息
+- 實作適當的驗證邏輯
+</code></pre>
+<h5 id="codex-mcp-伺服器配置"><a class="header" href="#codex-mcp-伺服器配置">Codex MCP 伺服器配置</a></h5>
+<p>在 <code>ruler.toml</code> 中加入 Codex 特定的 MCP 伺服器：</p>
+<pre><code class="language-toml">[agents.codex]
+enabled = true
+output_path = ".codex/rules.md"
+mcp_config_path = ".codex/mcp.json"
+# Codex 特定選項
+use_context_aware_generation = true
+max_context_length = 8000
+include_test_generation = true
+
+[mcp_servers.codex_analyzer]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-code-analyzer"]
+# Codex 專用的程式碼分析伺服器
+
+[mcp_servers.codex_linter]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-eslint", "--config", ".eslintrc.json"]
+# 整合 linter 以確保生成的程式碼品質
+</code></pre>
+<h5 id="codex-巢狀規則範例"><a class="header" href="#codex-巢狀規則範例">Codex 巢狀規則範例</a></h5>
+<pre><code class="language-bash"># 為不同模組建立 Codex 特定規則
+mkdir -p backend/.codex
+cat &gt; backend/.codex/backend_rules.md &lt;&lt; 'EOF'
+# 後端 Codex 規範
+
+## 資料庫互動
+- 使用 ORM 而非原生 SQL
+- 實作交易處理
+- 加入適當的索引提示
+
+## API 端點生成
+- 自動生成 OpenAPI 文檔
+- 包含請求驗證邏輯
+- 實作錯誤處理中介軟體
+EOF
+
+mkdir -p frontend/.codex
+cat &gt; frontend/.codex/frontend_rules.md &lt;&lt; 'EOF'
+# 前端 Codex 規範
+
+## 組件生成
+- 生成 TypeScript 類型定義
+- 包含 Props 驗證
+- 實作無障礙功能 (a11y)
+
+## 狀態管理
+- 使用 Context API 或 Redux
+- 避免 prop drilling
+- 實作適當的 memorization
+EOF
+</code></pre>
 <h3 id="回復機制"><a class="header" href="#回復機制">回復機制</a></h3>
 <pre><code class="language-bash"># 回復所有 ruler 變更
 ruler revert
@@ -439,6 +521,7 @@ node_modules/
 # START Ruler Generated Files
 .aider.conf.yml
 .clinerules
+.codex/rules.md
 .cursor/rules/ruler_cursor_instructions.mdc
 .github/copilot-instructions.md
 .windsurf/rules/ruler_windsurf_instructions.md
@@ -587,6 +670,7 @@ ruler apply --nested --verbose
 <tr><td>Aider</td><td><code>AGENTS.md</code>, <code>.aider.conf.yml</code></td><td><code>.mcp.json</code></td></tr>
 <tr><td>Amazon Q CLI</td><td><code>.amazonq/rules/ruler_q_rules.md</code></td><td><code>.amazonq/mcp.json</code></td></tr>
 <tr><td>Zed</td><td><code>AGENTS.md</code></td><td><code>.zed/settings.json</code></td></tr>
+<tr><td>Codex</td><td><code>.codex/rules.md</code></td><td><code>.codex/mcp.json</code></td></tr>
 </tbody></table>
 </div>
 <h2 id="結論"><a class="header" href="#結論">結論</a></h2>
