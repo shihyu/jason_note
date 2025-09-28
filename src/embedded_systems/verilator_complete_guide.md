@@ -1,5 +1,9 @@
 # Verilator 完整編譯與使用指南
 
+> **實測驗證**: 本指南所有範例已在 Ubuntu 系統上實際測試通過
+> **測試目錄**: `/home/shihyu/github/jason_note/src/embedded_systems/src/test_verilator`
+> **最後更新**: 2025-09-28
+
 ## 一、從源碼編譯 Verilator
 
 ### 1.1 安裝編譯依賴
@@ -152,7 +156,65 @@ int main(int argc, char** argv) {
 }
 ```
 
-### 2.4 創建 Makefile
+### 2.4 創建 Makefile (簡化版)
+```makefile
+# 簡單的 Verilator Makefile
+
+# Verilator 命令
+VERILATOR = verilator
+
+# 編譯器
+CXX = g++
+
+# 頂層模組名稱
+TOP = counter
+
+# 源檔案
+VERILOG_SOURCES = counter.v
+CPP_SOURCES = tb_counter.cpp
+
+# 預設目標
+all: run
+
+# 編譯 Verilog 並生成 C++ 檔案
+verilate:
+	@echo "=== Verilating $(TOP).v ==="
+	$(VERILATOR) --cc --trace --exe --build \
+		$(VERILOG_SOURCES) \
+		$(CPP_SOURCES) \
+		--top-module $(TOP) \
+		-o sim
+
+# 運行模擬
+run: verilate
+	@echo "=== Running simulation ==="
+	./obj_dir/sim
+	@echo "=== Simulation complete ==="
+	@echo "=== Generated counter.vcd for waveform viewing ==="
+
+# 查看波形
+wave: run
+	@echo "=== Opening waveform in GTKWave ==="
+	gtkwave counter.vcd &
+
+# 清理生成的檔案
+clean:
+	rm -rf obj_dir *.vcd
+
+# 幫助資訊
+help:
+	@echo "Simple Verilator Makefile"
+	@echo "Commands:"
+	@echo "  make        - Compile and run simulation"
+	@echo "  make run    - Same as make"
+	@echo "  make wave   - Run simulation and view waveform"
+	@echo "  make clean  - Clean all generated files"
+	@echo "  make help   - Show this help message"
+
+.PHONY: all verilate run wave clean help
+```
+
+### 2.4.1 創建完整版 Makefile (進階功能)
 ```makefile
 # Makefile - 自動化編譯腳本
 
@@ -163,7 +225,7 @@ VERILATOR_ROOT ?= $(HOME)/.mybin/verilator/share/verilator
 # 編譯器設定
 CXX = g++
 CXXFLAGS = -Wall -I$(VERILATOR_ROOT)/include -I./obj_dir
-LDFLAGS = 
+LDFLAGS =
 
 # Verilator 標誌
 VFLAGS = --cc --trace --exe --build
@@ -592,3 +654,68 @@ $HOME/verilator_demo/
 - 確保所有路徑與你的實際安裝位置相符
 - 首次使用前執行 `./test.sh` 確認環境設定正確
 - 波形檔案可能很大，適時清理舊檔案
+
+## 八、實際測試驗證
+
+### 8.1 測試環境
+- **系統**: Ubuntu Linux
+- **Verilator 版本**: 5.040
+- **測試目錄**: `/home/shihyu/github/jason_note/src/embedded_systems/src/test_verilator`
+
+### 8.2 實測結果
+```bash
+$ ./test.sh
+======================================
+     Verilator Test Suite
+======================================
+[0/5] Cleaning environment
+[1/5] Checking Verilator installation
+Verilator version: Verilator 5.040 2025-08-30
+Verilator path: /home/shihyu/.mybin/verilator/bin/verilator
+[2/5] Checking environment variables
+VERILATOR_ROOT: /home/shihyu/.mybin/verilator/share/verilator
+[3/5] Compilation test
+Testing: Verilator compilation... ✓ PASSED
+[4/5] Simulation test
+Testing: Running simulation... ✓ PASSED
+[5/5] Checking output files
+✓ VCD file generated
+-rw-r--r-- 1.6K counter.vcd
+======================================
+All tests completed!
+======================================
+```
+
+### 8.3 模擬輸出範例
+```
+Time: 10 Count: 1
+Time: 12 Count: 2
+Time: 14 Count: 3
+...
+Time: 96 Count: 44
+Time: 98 Count: 45
+Simulation completed!
+```
+
+### 8.4 快速開始指令
+```bash
+# 1. 克隆或建立專案目錄
+mkdir ~/verilator_demo && cd ~/verilator_demo
+
+# 2. 複製本指南的範例檔案
+# counter.v, tb_counter.cpp, Makefile, test.sh
+
+# 3. 設定環境變數（如果尚未設定）
+export PATH=$HOME/.mybin/verilator/bin:$PATH
+export VERILATOR_ROOT=$HOME/.mybin/verilator/share/verilator
+
+# 4. 執行測試
+chmod +x test.sh
+./test.sh
+
+# 5. 運行模擬
+make run
+
+# 6. 查看波形（需要 GTKWave）
+make wave
+```
