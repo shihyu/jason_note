@@ -341,6 +341,7 @@
 ## Quantitative Trading
 - [Strategy](strategy/bollmaker.md)
     - [工作效率與投資策略指南](strategy/productivity_investment_guide.md)
+    - [美國經濟指標與金融市場關係全解析](strategy/us_economy_financial_relationships.md)
     - [造市](strategy/造市/market_market.md)
     - [臺指](strategy/tw_futures.md)
     - [套利](strategy/arbitrage.md)
