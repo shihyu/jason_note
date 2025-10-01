@@ -57,6 +57,7 @@
     - [PaddleOCR 使用指南](tools/paddleocr_guide.md)
     - [Guider Setup Guide](tools/guider-setup-guide.md)
     - [Guider Commands Guide](linux_system/guider_commands_guide.md)
+    - [Gemini CLI 安裝與使用指南](tools/gemini-cli-guide.md)
     - [Thinking Protocol 中文指南](tools/thinking-protocol-zh-tw.md)
     - [MCP Setup Guide](tools/mcp-setup-guide.md)
     - [開源授權指南](tools/open_source_licenses_guide.md)
