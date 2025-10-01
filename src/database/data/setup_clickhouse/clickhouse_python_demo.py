@@ -10,10 +10,27 @@ from datetime import datetime, timedelta
 from clickhouse_driver import Client
 import sys
 import time
+import requests
 
 class ClickHouseDemo:
     def __init__(self, host='localhost', port=9000, user='trader', password='SecurePass123!', database='market_data'):
         """初始化 ClickHouse 連接"""
+        # 檢測本機對外 IP
+        try:
+            response = requests.get('https://api.ipify.org?format=text', timeout=5)
+            public_ip = response.text.strip()
+            print(f"🌐 本機對外 IP: {public_ip}")
+
+            # 如果對外 IP 是 219.68.168.47，表示本機就是目標機器，使用 localhost
+            if public_ip == '219.68.168.47':
+                host = 'localhost'
+                print(f"✅ 本機即目標機器，使用 localhost 連接")
+            else:
+                host = '219.68.168.47'
+                print(f"✅ 遠端連接，使用 219.68.168.47")
+        except Exception as e:
+            print(f"⚠️  無法取得對外 IP ({e})，使用預設 host: {host}")
+
         max_retries = 3
         retry_delay = 2
 
