@@ -27,17 +27,11 @@ print_warning() {
 # 檢查是否為 root 或使用 sudo
 check_sudo() {
     if [ "$EUID" -ne 0 ]; then
-        # 檢查是否設定了 SUDO_PASSWORD 環境變數
-        if [ -n "$SUDO_PASSWORD" ]; then
-            print_message "使用 SUDO_PASSWORD 環境變數執行..."
-            echo "$SUDO_PASSWORD" | sudo -S bash "$0" "$@"
-            exit $?
-        else
-            # 提示使用者輸入密碼
-            print_message "需要 sudo 權限，請輸入密碼："
-            sudo bash "$0" "$@"
-            exit $?
-        fi
+        print_error "此腳本需要以 root 權限執行"
+        print_message "請使用以下方式之一執行："
+        echo "  1. sudo ./ubuntu-docker-install.sh"
+        echo "  2. sudo bash ubuntu-docker-install.sh"
+        exit 1
     fi
 }
 
@@ -89,24 +83,46 @@ install_prerequisites() {
 # 新增 Docker 官方 GPG 金鑰
 add_docker_gpg_key() {
     print_message "新增 Docker 官方 GPG 金鑰..."
-    
+
     # 建立 keyrings 目錄（如果不存在）
     install -m 0755 -d /etc/apt/keyrings
-    
-    # 下載並新增 GPG 金鑰
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+    # 移除舊的 GPG 金鑰（如果存在）
+    rm -f /etc/apt/keyrings/docker.gpg 2>/dev/null || true
+
+    # 下載並新增 GPG 金鑰（使用新的方式）
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+        gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+    # 確保權限正確
     chmod a+r /etc/apt/keyrings/docker.gpg
+
+    if [ ! -f /etc/apt/keyrings/docker.gpg ]; then
+        print_error "無法新增 Docker GPG 金鑰"
+        exit 1
+    fi
 }
 
 # 設定 Docker 儲存庫
 setup_docker_repository() {
     print_message "設定 Docker 儲存庫..."
-    
+
+    local CODENAME=$(lsb_release -cs)
+
+    # Ubuntu 24.04 (noble) 可能需要使用 jammy 的儲存庫
+    # 檢查 Docker 是否支援當前版本
+    if ! curl -fsSL "https://download.docker.com/linux/ubuntu/dists/${CODENAME}/Release" &>/dev/null; then
+        print_warning "Docker 可能尚未正式支援 ${CODENAME}，嘗試使用 jammy 儲存庫"
+        CODENAME="jammy"
+    fi
+
     # 新增 Docker 儲存庫
     echo \
     "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-    $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-    
+    ${CODENAME} stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    print_message "使用儲存庫: ${CODENAME}"
+
     # 更新套件索引
     apt-get update
 }
@@ -256,7 +272,7 @@ main() {
 }
 
 # 錯誤處理
-trap 'print_error "安裝過程中發生錯誤！"; exit 1' ERR
+trap 'LAST_COMMAND=$BASH_COMMAND; print_error "安裝過程中發生錯誤！最後執行的命令: $LAST_COMMAND"; exit 1' ERR
 
 # 執行主函數
 main "$@"
