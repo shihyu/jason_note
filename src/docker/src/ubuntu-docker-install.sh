@@ -114,10 +114,10 @@ setup_docker_repository() {
 # 安裝 Docker Engine
 install_docker() {
     print_message "安裝 Docker Engine..."
-    
+
     # 安裝最新版本的 Docker
     apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-    
+
     print_message "Docker 安裝完成！"
 }
 
@@ -181,11 +181,11 @@ EOF
 # 驗證安裝
 verify_installation() {
     print_message "驗證 Docker 安裝..."
-    
+
     # 檢查 Docker 版本
     echo -e "\n${GREEN}Docker 版本資訊:${NC}"
     docker version
-    
+
     # 執行測試容器
     print_message "執行 hello-world 測試容器..."
     if docker run --rm hello-world; then
