@@ -103,6 +103,7 @@
     - [Easy Rust](rust/easy_rust.md)
     - [Rust 新手](rust/rust_easy.md)
     - [Rust 模組結構](rust/module.md)
+    - [Rust 模組系統完全指南](rust/rust_module_guide.md)
     - [Rust 與記憶體](rust/rust_memory.md)
     - [Rust vs C++ 語法](rust/rust_vs_cpp.md)
     - [Rust 檔案格式](rust/rust_file_format.md)
