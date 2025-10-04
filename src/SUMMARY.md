@@ -410,6 +410,7 @@
     - [台股處置股與注意股：條件分析與交易策略全解析](strategy/台股處置股與注意股：條件分析與交易策略全解析.md)
     - [抄底王策略全解析：台股投資人的逆勢操作完整攻略](strategy/抄底王策略全解析：台股投資人的逆勢操作完整攻略.md)
     - [程式設計師延壽指南](strategy/程式設計師延壽指南.md)
+    - [台股其他AI受惠股票與股價前10高完整分析](strategy/Taiwan-AI-Stocks-Extended-Analysis.md)
     - [Backtrader](strategy/backtrader/basis.md)
         - [Python 回測框架一 Backtrader 介紹](strategy/backtrader/Python回測框架一Backtrader介紹.md)
         - [Python 回測框架（二）定期定額投資](strategy/backtrader/Python回測框架二定期定額投資.md)
