@@ -430,7 +430,7 @@
 - [CryptoTrade](cryptotrade/cryptotrade.md)
     - [Binance](cryptotrade/binance/binance.md)
     - [如何將 OCO 訂單發送到 Binance](cryptotrade/binance/oco.md)
-    - [加密貨幣套利策略完整指南](strategy/crypto_arbitrage_guide.md)
+    - [加密貨幣套利策略完整指南](cryptotrade/crypto_arbitrage_guide.md)
 
 ## High Frequency Trading
 - [高頻交易概念](hft/hft.md)
