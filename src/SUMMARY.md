@@ -261,6 +261,7 @@
     - [Perf](linux_system/perf.md)
     - [Build Lib](linux_system/自製Lib.md)
     - [Performance](linux_system/performance.md)
+    - [Makefile 編譯參數說明](linux_system/makefile-params-guide.md)
     - [Linux Process、Thread 與系統概念完整指南](linux_system/linux-process-thread-guide.md)
     - [Linux Kernel Debug](linux_system/linux-kernel-debug.md)
     - [Systems Performance Tools Guide](linux_system/systems-performance-tools-guide.md)
@@ -342,6 +343,7 @@
 
 ## Quantitative Trading
 - [Strategy](strategy/bollmaker.md)
+    - [AI 主觀交易研究流程模板](strategy/AI_Discretionary_Trading_Workflow.md)
     - [投資策略與複利增長完整指南](strategy/投資策略與複利增長完整指南.md)
     - [工作效率與投資策略指南](strategy/productivity_investment_guide.md)
     - [美國經濟指標與金融市場關係全解析](strategy/us_economy_financial_relationships.md)
