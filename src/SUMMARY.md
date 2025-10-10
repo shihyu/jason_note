@@ -261,7 +261,7 @@
     - [Perf](linux_system/perf.md)
     - [Build Lib](linux_system/自製Lib.md)
     - [Performance](linux_system/performance.md)
-    - [Makefile 編譯參數說明](linux_system/makefile-params-guide.md)
+    - [Makefile 編譯參數說明](tools/makefile-params-guide.md)
     - [Linux Process、Thread 與系統概念完整指南](linux_system/linux-process-thread-guide.md)
     - [Linux Kernel Debug](linux_system/linux-kernel-debug.md)
     - [Systems Performance Tools Guide](linux_system/systems-performance-tools-guide.md)
