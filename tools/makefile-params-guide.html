@@ -297,6 +297,73 @@ RPATH = -Wl,-rpath,../build/bin                                  # 執行期路�
 <li>大型專案通常會分開編譯和連結，以節省重新編譯時間</li>
 <li>RPATH 的設定讓程式可以找到動態函式庫，避免執行時找不到 .so 檔的問題</li>
 </ul>
+<hr />
+<h2 id="查看連結資訊的工具"><a class="header" href="#查看連結資訊的工具">查看連結資訊的工具</a></h2>
+<h3 id="1-ldd---最簡單直觀"><a class="header" href="#1-ldd---最簡單直觀">1. ldd - 最簡單直觀</a></h3>
+<p>查看程式執行時會載入哪些動態函式庫：</p>
+<pre><code class="language-bash">ldd test_4_so
+</code></pre>
+<p>輸出範例：</p>
+<pre><code>libllama.so =&gt; ../build/bin/libllama.so (0x00007f...)
+libggml.so =&gt; ../build/bin/libggml.so (0x00007f...)
+libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007f...)
+</code></pre>
+<h3 id="2-readelf--d---查看動態段最詳細"><a class="header" href="#2-readelf--d---查看動態段最詳細">2. readelf -d - 查看動態段（最詳細）</a></h3>
+<pre><code class="language-bash">readelf -d test_4_so
+</code></pre>
+<p>可以看到：</p>
+<ul>
+<li><strong>NEEDED</strong>: 連結了哪些函式庫（<code>-l</code> 參數的結果）</li>
+<li><strong>RPATH/RUNPATH</strong>: 執行期搜尋路徑（<code>-Wl,-rpath</code> 的結果）</li>
+<li><strong>SONAME</strong>: 函式庫的名稱</li>
+</ul>
+<p>輸出範例：</p>
+<pre><code>Dynamic section at offset 0x2d40 contains 28 entries:
+  Tag        Type           Name/Value
+ 0x0000001d (RUNPATH)       Library runpath: [../build/bin]
+ 0x00000001 (NEEDED)        Shared library: [libllama.so]
+ 0x00000001 (NEEDED)        Shared library: [libggml.so]
+ 0x00000001 (NEEDED)        Shared library: [libc.so.6]
+</code></pre>
+<h3 id="3-objdump--p---查看程式標頭"><a class="header" href="#3-objdump--p---查看程式標頭">3. objdump -p - 查看程式標頭</a></h3>
+<pre><code class="language-bash">objdump -p test_4_so | grep -E "NEEDED|RPATH|RUNPATH"
+</code></pre>
+<p>類似 readelf，但輸出格式不同</p>
+<h3 id="4-nm---查看符號表"><a class="header" href="#4-nm---查看符號表">4. nm - 查看符號表</a></h3>
+<pre><code class="language-bash">nm -D test_4_so    # 查看動態符號
+nm test_4_so       # 查看所有符號
+</code></pre>
+<p>用途：查看函式庫中定義了哪些函數/變數，但<strong>不顯示 rpath 或 NEEDED</strong></p>
+<hr />
+<h2 id="工具對照表"><a class="header" href="#工具對照表">工具對照表</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>資訊</th><th>最佳工具</th><th>指令</th></tr></thead><tbody>
+<tr><td><strong>連結了哪些函式庫</strong> (<code>-l</code>)</td><td><code>ldd</code> 或 <code>readelf -d</code></td><td><code>ldd test_4_so</code></td></tr>
+<tr><td><strong>RPATH 路徑</strong> (<code>-Wl,-rpath</code>)</td><td><code>readelf -d</code></td><td><code>readelf -d test_4_so | grep RPATH</code></td></tr>
+<tr><td><strong>函式庫搜尋路徑</strong> (<code>-L</code>)</td><td>❌ 無法查看</td><td>編譯期資訊，不會存在執行檔中</td></tr>
+<tr><td><strong>符號/函數名稱</strong></td><td><code>nm</code></td><td><code>nm -D libllama.so</code></td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="實用指令範例"><a class="header" href="#實用指令範例">實用指令範例</a></h2>
+<pre><code class="language-bash"># 快速查看所有動態連結資訊
+readelf -d test_4_so
+
+# 只看 RPATH/RUNPATH
+readelf -d test_4_so | grep -E "RPATH|RUNPATH"
+
+# 只看連結的函式庫
+readelf -d test_4_so | grep NEEDED
+
+# 查看實際載入路徑
+ldd test_4_so
+
+# 查看 libllama.so 提供了哪些符號
+nm -D ../build/bin/libllama.so | grep " T "  # T = 已定義的函數
+
+# 查看未定義的符號（需要從其他函式庫載入）
+nm -D test_4_so | grep " U "  # U = 未定義的符號
+</code></pre>
+<p><strong>重要提醒</strong>: <code>-L</code> 的路徑只在編譯時使用，不會記錄在執行檔中。只有 RPATH/RUNPATH 會被寫入執行檔！</p>
 
                     </main>
 
