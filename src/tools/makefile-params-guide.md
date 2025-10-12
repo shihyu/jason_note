@@ -118,3 +118,93 @@ gcc -o test_4_so test_4_so.o -L../build/bin \
 - 一步完成編譯比較方便，適合小型專案
 - 大型專案通常會分開編譯和連結，以節省重新編譯時間
 - RPATH 的設定讓程式可以找到動態函式庫，避免執行時找不到 .so 檔的問題
+
+---
+
+## 查看連結資訊的工具
+
+### 1. ldd - 最簡單直觀
+查看程式執行時會載入哪些動態函式庫：
+
+```bash
+ldd test_4_so
+```
+
+輸出範例：
+```
+libllama.so => ../build/bin/libllama.so (0x00007f...)
+libggml.so => ../build/bin/libggml.so (0x00007f...)
+libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f...)
+```
+
+### 2. readelf -d - 查看動態段（最詳細）
+```bash
+readelf -d test_4_so
+```
+
+可以看到：
+- **NEEDED**: 連結了哪些函式庫（`-l` 參數的結果）
+- **RPATH/RUNPATH**: 執行期搜尋路徑（`-Wl,-rpath` 的結果）
+- **SONAME**: 函式庫的名稱
+
+輸出範例：
+```
+Dynamic section at offset 0x2d40 contains 28 entries:
+  Tag        Type           Name/Value
+ 0x0000001d (RUNPATH)       Library runpath: [../build/bin]
+ 0x00000001 (NEEDED)        Shared library: [libllama.so]
+ 0x00000001 (NEEDED)        Shared library: [libggml.so]
+ 0x00000001 (NEEDED)        Shared library: [libc.so.6]
+```
+
+### 3. objdump -p - 查看程式標頭
+```bash
+objdump -p test_4_so | grep -E "NEEDED|RPATH|RUNPATH"
+```
+
+類似 readelf，但輸出格式不同
+
+### 4. nm - 查看符號表
+```bash
+nm -D test_4_so    # 查看動態符號
+nm test_4_so       # 查看所有符號
+```
+
+用途：查看函式庫中定義了哪些函數/變數，但**不顯示 rpath 或 NEEDED**
+
+---
+
+## 工具對照表
+
+| 資訊 | 最佳工具 | 指令 |
+|------|---------|------|
+| **連結了哪些函式庫** (`-l`) | `ldd` 或 `readelf -d` | `ldd test_4_so` |
+| **RPATH 路徑** (`-Wl,-rpath`) | `readelf -d` | `readelf -d test_4_so \| grep RPATH` |
+| **函式庫搜尋路徑** (`-L`) | ❌ 無法查看 | 編譯期資訊，不會存在執行檔中 |
+| **符號/函數名稱** | `nm` | `nm -D libllama.so` |
+
+---
+
+## 實用指令範例
+
+```bash
+# 快速查看所有動態連結資訊
+readelf -d test_4_so
+
+# 只看 RPATH/RUNPATH
+readelf -d test_4_so | grep -E "RPATH|RUNPATH"
+
+# 只看連結的函式庫
+readelf -d test_4_so | grep NEEDED
+
+# 查看實際載入路徑
+ldd test_4_so
+
+# 查看 libllama.so 提供了哪些符號
+nm -D ../build/bin/libllama.so | grep " T "  # T = 已定義的函數
+
+# 查看未定義的符號（需要從其他函式庫載入）
+nm -D test_4_so | grep " U "  # U = 未定義的符號
+```
+
+**重要提醒**: `-L` 的路徑只在編譯時使用，不會記錄在執行檔中。只有 RPATH/RUNPATH 會被寫入執行檔！
