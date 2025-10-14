@@ -343,6 +343,7 @@
 
 ## Quantitative Trading
 - [Strategy](strategy/bollmaker.md)
+    - [股票期貨交易策略筆記](strategy/trading_strategy.md)
     - [AI 主觀交易研究流程模板](strategy/AI_Discretionary_Trading_Workflow.md)
     - [投資策略與複利增長完整指南](strategy/投資策略與複利增長完整指南.md)
     - [工作效率與投資策略指南](strategy/productivity_investment_guide.md)
