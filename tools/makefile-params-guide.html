@@ -364,6 +364,236 @@ nm -D ../build/bin/libllama.so | grep " T "  # T = 已定義的函數
 nm -D test_4_so | grep " U "  # U = 未定義的符號
 </code></pre>
 <p><strong>重要提醒</strong>: <code>-L</code> 的路徑只在編譯時使用，不會記錄在執行檔中。只有 RPATH/RUNPATH 會被寫入執行檔！</p>
+<hr />
+<h2 id="完整測試範例"><a class="header" href="#完整測試範例">完整測試範例</a></h2>
+<p>以下是一個完整的測試專案，幫助你驗證所有編譯參數和工具的使用。</p>
+<h3 id="建立測試專案腳本"><a class="header" href="#建立測試專案腳本">建立測試專案腳本</a></h3>
+<p>將以下內容儲存為 <code>setup_test.sh</code>：</p>
+<pre><code class="language-bash">#!/bin/bash
+# 建立測試專案結構
+
+echo "=== 建立測試專案 ==="
+mkdir -p test_makefile/{lib,include,src,build}
+cd test_makefile
+
+# 1. 建立標頭檔
+cat &gt; include/mylib.h &lt;&lt; 'EOF'
+#ifndef MYLIB_H
+#define MYLIB_H
+
+void hello_from_lib(const char* name);
+int add_numbers(int a, int b);
+
+#endif
+EOF
+
+# 2. 建立函式庫原始碼
+cat &gt; lib/mylib.c &lt;&lt; 'EOF'
+#include &lt;stdio.h&gt;
+#include "mylib.h"
+
+void hello_from_lib(const char* name) {
+    printf("Hello %s from mylib!\n", name);
+}
+
+int add_numbers(int a, int b) {
+    return a + b;
+}
+EOF
+
+# 3. 建立主程式
+cat &gt; src/main.c &lt;&lt; 'EOF'
+#include &lt;stdio.h&gt;
+#include "mylib.h"
+
+int main() {
+    printf("=== Testing Library Functions ===\n");
+    hello_from_lib("User");
+    
+    int result = add_numbers(10, 20);
+    printf("10 + 20 = %d\n", result);
+    
+    return 0;
+}
+EOF
+
+# 4. 建立 Makefile
+cat &gt; Makefile &lt;&lt; 'EOF'
+CC = gcc
+CFLAGS = -g -Wall -fPIC
+INCLUDE = -Iinclude
+LDFLAGS = -Lbuild -lmylib
+RPATH = -Wl,-rpath,./build
+
+all: build/libmylib.so build/main
+
+# 編譯動態函式庫
+build/libmylib.so: lib/mylib.c
+	@echo "=== 編譯動態函式庫 ==="
+	$(CC) $(CFLAGS) -shared -o $@ $&lt; $(INCLUDE)
+
+# 編譯主程式
+build/main: src/main.c build/libmylib.so
+	@echo "=== 編譯主程式 ==="
+	$(CC) $(CFLAGS) -o $@ $&lt; $(INCLUDE) $(LDFLAGS) $(RPATH)
+
+clean:
+	rm -rf build/*
+
+test: all
+	@echo ""
+	@echo "=== 執行程式 ==="
+	./build/main
+
+inspect: all
+	@echo ""
+	@echo "=========================================="
+	@echo "1. 使用 ldd 查看依賴的函式庫"
+	@echo "=========================================="
+	ldd build/main
+	@echo ""
+	@echo "=========================================="
+	@echo "2. 使用 readelf 查看 NEEDED 和 RPATH"
+	@echo "=========================================="
+	readelf -d build/main | grep -E "NEEDED|RPATH|RUNPATH"
+	@echo ""
+	@echo "=========================================="
+	@echo "3. 使用 nm 查看函式庫的符號"
+	@echo "=========================================="
+	@echo "已定義的函數 (T):"
+	nm -D build/libmylib.so | grep " T "
+	@echo ""
+	@echo "=========================================="
+	@echo "4. 使用 nm 查看主程式未定義的符號 (需要從函式庫載入)"
+	@echo "=========================================="
+	nm -D build/main | grep " U " | grep -E "hello|add"
+	@echo ""
+	@echo "=========================================="
+	@echo "5. 使用 objdump 查看動態段"
+	@echo "=========================================="
+	objdump -p build/main | grep -E "NEEDED|RPATH|RUNPATH"
+
+.PHONY: all clean test inspect
+EOF
+
+# 5. 建立測試腳本
+cat &gt; test_all.sh &lt;&lt; 'EOF'
+#!/bin/bash
+
+echo "======================================"
+echo "開始完整測試流程"
+echo "======================================"
+
+# 清理並編譯
+echo ""
+echo "&gt;&gt;&gt; Step 1: 清理舊檔案"
+make clean
+
+echo ""
+echo "&gt;&gt;&gt; Step 2: 編譯專案"
+make all
+
+echo ""
+echo "&gt;&gt;&gt; Step 3: 執行程式測試"
+make test
+
+echo ""
+echo "&gt;&gt;&gt; Step 4: 檢查連結資訊"
+make inspect
+
+echo ""
+echo "======================================"
+echo "測試完成！"
+echo "======================================"
+EOF
+
+chmod +x test_all.sh
+
+echo ""
+echo "✅ 測試專案建立完成！"
+echo ""
+echo "📁 專案結構："
+echo "test_makefile/"
+echo "├── include/mylib.h      (標頭檔)"
+echo "├── lib/mylib.c          (函式庫原始碼)"
+echo "├── src/main.c           (主程式)"
+echo "├── build/               (輸出目錄)"
+echo "├── Makefile             (建構檔)"
+echo "└── test_all.sh          (測試腳本)"
+echo ""
+echo "🚀 執行測試："
+echo "   cd test_makefile"
+echo "   ./test_all.sh"
+echo ""
+echo "或分步執行："
+echo "   make all       # 編譯"
+echo "   make test      # 執行"
+echo "   make inspect   # 檢查連結資訊"
+echo "   make clean     # 清理"
+</code></pre>
+<h3 id="使用方式"><a class="header" href="#使用方式">使用方式</a></h3>
+<pre><code class="language-bash"># 1. 儲存並執行建立腳本
+chmod +x setup_test.sh
+./setup_test.sh
+
+# 2. 進入測試目錄
+cd test_makefile
+
+# 3. 執行完整測試
+./test_all.sh
+</code></pre>
+<h3 id="測試專案包含內容"><a class="header" href="#測試專案包含內容">測試專案包含內容</a></h3>
+<ul>
+<li><strong>自製動態函式庫</strong> (<code>libmylib.so</code>)：包含兩個簡單函數</li>
+<li><strong>主程式</strong> (<code>main</code>)：使用該函式庫</li>
+<li><strong>完整 Makefile</strong>：展示所有編譯參數的使用</li>
+<li><strong>測試腳本</strong>：自動執行並檢查所有工具輸出</li>
+</ul>
+<h3 id="預期輸出"><a class="header" href="#預期輸出">預期輸出</a></h3>
+<p>執行 <code>./test_all.sh</code> 後你會看到：</p>
+<ol>
+<li><strong>編譯過程</strong>：展示 <code>-I</code>、<code>-L</code>、<code>-l</code>、<code>-Wl,-rpath</code> 的實際使用</li>
+<li><strong>程式執行</strong>：驗證函式庫正確連結
+<pre><code>=== Testing Library Functions ===
+Hello User from mylib!
+10 + 20 = 30
+</code></pre>
+</li>
+<li><strong>ldd 輸出</strong>：顯示載入的動態函式庫路徑</li>
+<li><strong>readelf 輸出</strong>：顯示 RPATH 和 NEEDED 資訊</li>
+<li><strong>nm 輸出</strong>：顯示符號表中的函數</li>
+<li><strong>objdump 輸出</strong>：另一種查看方式</li>
+</ol>
+<h3 id="實驗建議"><a class="header" href="#實驗建議">實驗建議</a></h3>
+<pre><code class="language-bash"># 實驗 1: 移除 RPATH 看看會發生什麼
+# 在 Makefile 中註解掉 RPATH 這行，重新編譯
+# 執行時會找不到 libmylib.so
+
+# 實驗 2: 比較不同工具的輸出
+ldd build/main                    # 最直觀
+readelf -d build/main             # 最詳細
+objdump -p build/main             # 另一種格式
+nm -D build/libmylib.so           # 查看符號
+
+# 實驗 3: 查看特定資訊
+readelf -d build/main | grep RPATH      # 只看 RPATH
+readelf -d build/main | grep NEEDED     # 只看依賴
+nm -D build/libmylib.so | grep " T "    # 只看已定義函數
+</code></pre>
+<h3 id="專案結構說明"><a class="header" href="#專案結構說明">專案結構說明</a></h3>
+<pre><code>test_makefile/
+├── include/
+│   └── mylib.h           # 標頭檔 (對應 -I 參數)
+├── lib/
+│   └── mylib.c           # 函式庫原始碼
+├── src/
+│   └── main.c            # 主程式原始碼
+├── build/                # 輸出目錄 (對應 -L 和 -rpath)
+│   ├── libmylib.so       # 編譯出的動態函式庫
+│   └── main              # 編譯出的執行檔
+├── Makefile              # 建構腳本
+└── test_all.sh           # 測試腳本
+</code></pre>
 
                     </main>
 
