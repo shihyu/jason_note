@@ -70,7 +70,7 @@
   * [print! 宏](io/output.md)
   * [文件輸入輸出](io/file-io.md)「tennix」
 * [宏系統](macro/macro.md)「tennix」
-* [堆、棧與Box](heap-stack/heap-stack.md)「tennix」
+* [heap、stack與Box](heap-stack/heap-stack.md)「tennix」
 * [幾種智能指針](rcarc/preface.md)「daogangtang」
   * [Rc, Arc](rcarc/rcarc.md)
   * [Mutex, RwLock](rcarc/mutex.md)
@@ -106,7 +106,7 @@
 * [Any與反射](any/any.md)「wayslog」
 * [安全](safe/safety.md)「daogangtang」
 * [常用數據結構實現](data-structure/preface.md)「Naupio」
-  * [棧結構](data-structure/stack.md)
+  * [stack結構](data-structure/stack.md)
   * [隊列](data-structure/queue.md)
   * [二叉樹](data-structure/binary_tree.md)
   * [優先隊列](data-structure/priority_queue.md)

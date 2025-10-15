@@ -55,7 +55,7 @@ impl List {
         match *self {
             Cons(head, ref tail) => {
                 // `format!` 和 `print!` 很像
-                // 但是返回一個堆上的字符串去替代打印到控制檯
+                // 但是返回一個heap上的字符串去替代打印到控制檯
                 format!("{}, {}", head, tail.stringify())
             },
             Nil => {
