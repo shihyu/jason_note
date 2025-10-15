@@ -365,6 +365,7 @@
         - [買股 3 心法](strategy/phcebus/買股3心法.md)
     - [選擇權](strategy/Option/option.md)
         - [Option Note](strategy/Option/option_note.md)
+        - [加密貨幣與選擇權風險管理完整整理](strategy/options_0206_event.md)
     - [VectorBT](strategy/vectorbt.md)
     - [Orderbook](strategy/orderbook.md)
     - [選股條件](strategy/選股條件.md)
