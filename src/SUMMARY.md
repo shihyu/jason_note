@@ -163,6 +163,7 @@
     - [Returning Pointer from a Function in Go](go/returning-pointer-from-a-function-in-go.md)
     - [GC 全面解析](go/golang-memory-management.md)
     - [Goroutine 與 GMP 原理全面分析](go/golang-goroutine.md)
+    - [Go 語言 CPU、GMP 模型與多程式執行完整指南](go/go-cpu-gmp-guide.md)
     - [OO](go/oo.md)
     - [sync.Mutex 和 sync.RWMutex](go/mutex-rwmutex.md)
     - [Go 並行機制完整指南](go/go_concurrency_guide.md)
