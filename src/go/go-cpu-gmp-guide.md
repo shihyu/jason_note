@@ -26,8 +26,23 @@ runtime.NumCPU()        // 返回 16
 ```
 
 **歷史變化：**
-- **Go 1.5 之前**：預設只有 1 個 P（需要手動設置）
+- **Go 1.5 之前**：預設只有 1 個 P（需要手動設置)
 - **Go 1.5 之後**：預設使用所有 CPU 核心
+
+**驗證範例：**
+```go
+package main
+
+import (
+    "fmt"
+    "runtime"
+)
+
+func main() {
+    fmt.Printf("CPU 核心數: %d\n", runtime.NumCPU())
+    fmt.Printf("GOMAXPROCS (預設使用): %d\n", runtime.GOMAXPROCS(0))
+}
+```
 
 ### 1.2 手動設置 GOMAXPROCS
 
