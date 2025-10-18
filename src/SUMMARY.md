@@ -442,6 +442,7 @@
 
 ## High Frequency Trading
 - [高頻交易概念](hft/hft.md)
+    - [高頻交易系統的語言分層與選擇](hft/hft_language_layers.md)
     - [高頻交易 C++ 開發指南](hft/hft-cpp-guide.md)
     - [Rust 高頻交易開發指南](hft/rust-hft-guide.md)
     - [HugePage、I/O 與 Threading 最佳化指南](hft/hugepages-io-threading-guide.md)
