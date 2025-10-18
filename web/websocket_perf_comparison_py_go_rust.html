@@ -729,6 +729,58 @@ CPU 使用: 0.21% (輕度輪詢)
 </tbody></table>
 </div>
 <hr />
+<h4 id="5-os-內核如何喚醒-go-程式-"><a class="header" href="#5-os-內核如何喚醒-go-程式-">5. OS 內核如何喚醒 Go 程式？ 🔔</a></h4>
+<p>很多人疑惑：<strong>Go 的 CPU 使用率 0%,程式不是「死了」嗎？數據來了怎麼知道？</strong></p>
+<p>答案是:<strong>OS 內核負責喚醒</strong>！</p>
+<h5 id="完整流程-"><a class="header" href="#完整流程-">完整流程 ⚙️</a></h5>
+<pre><code>1️⃣ Goroutine 等待 I/O
+   └─&gt; Go runtime 呼叫 epoll_wait() / kqueue()
+   └─&gt; OS 線程進入 SLEEP 狀態 (不佔 CPU)
+
+2️⃣ 事件發生 (網路封包到達)
+   └─&gt; 網卡產生 **硬體中斷**
+   └─&gt; OS 內核處理中斷
+   └─&gt; 內核發現有 goroutine 在等這個 socket
+
+3️⃣ 內核主動喚醒
+   └─&gt; epoll_wait() 返回
+   └─&gt; OS 線程變成 RUNNABLE
+   └─&gt; Go scheduler 恢復 goroutine 執行
+</code></pre>
+<hr />
+<h5 id="關鍵技術-"><a class="header" href="#關鍵技術-">關鍵技術 🔑</a></h5>
+<div class="table-wrapper"><table><thead><tr><th>機制</th><th>Linux</th><th>macOS/BSD</th><th>Windows</th></tr></thead><tbody>
+<tr><td><strong>I/O 多路複用</strong></td><td><code>epoll</code></td><td><code>kqueue</code></td><td><code>IOCP</code></td></tr>
+<tr><td><strong>內核喚醒</strong></td><td>✅</td><td>✅</td><td>✅</td></tr>
+<tr><td><strong>零 CPU 成本</strong></td><td>✅</td><td>✅</td><td>✅</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h5 id="為什麼不會錯過事件-"><a class="header" href="#為什麼不會錯過事件-">為什麼不會錯過事件？ ✨</a></h5>
+<pre><code class="language-go">// 簡化的概念
+fd := socket.FileDescriptor()
+epoll.Add(fd)  // 告訴內核：這個 socket 有事就叫醒我
+
+// 線程休眠,但內核在監視
+events := epoll.Wait()  // ← 在這裡 CPU = 0%
+
+// 封包到達 → 內核喚醒 → 程式繼續
+handleEvent(events)
+</code></pre>
+<p>內核會<strong>持續監視</strong>所有註冊的 file descriptor,當事件發生時用<strong>硬體中斷</strong>叫醒程式。</p>
+<hr />
+<h5 id="rust-的輪詢對比-"><a class="header" href="#rust-的輪詢對比-">Rust 的輪詢對比 🆚</a></h5>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Rust (部分實現) 會定期檢查
+loop {
+    if has_event() { break; }  // ← 這裡消耗 0.21% CPU
+    // 極短暫的 sleep,但仍在「轉」
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Go 是完全交給 OS,Rust 是自己保持警覺！</strong></p>
+<p>這就是為什麼 Go 能達到真正的 0% CPU 🎯</p>
+<hr />
 <h2 id="-實戰場景分析"><a class="header" href="#-實戰場景分析">🎮 實戰場景分析</a></h2>
 <h3 id="場景-1-高頻交易-hft"><a class="header" href="#場景-1-高頻交易-hft">場景 1: 高頻交易 (HFT)</a></h3>
 <h4 id="需求分析"><a class="header" href="#需求分析">需求分析</a></h4>
