@@ -612,6 +612,76 @@ CPU 使用: 0.21% (輕度輪詢)
 
 ---
 
+#### 5. OS 內核如何喚醒 Go 程式？ 🔔
+
+很多人疑惑：**Go 的 CPU 使用率 0%,程式不是「死了」嗎？數據來了怎麼知道？**
+
+答案是:**OS 內核負責喚醒**！
+
+##### 完整流程 ⚙️
+
+```
+1️⃣ Goroutine 等待 I/O
+   └─> Go runtime 呼叫 epoll_wait() / kqueue()
+   └─> OS 線程進入 SLEEP 狀態 (不佔 CPU)
+
+2️⃣ 事件發生 (網路封包到達)
+   └─> 網卡產生 **硬體中斷**
+   └─> OS 內核處理中斷
+   └─> 內核發現有 goroutine 在等這個 socket
+
+3️⃣ 內核主動喚醒
+   └─> epoll_wait() 返回
+   └─> OS 線程變成 RUNNABLE
+   └─> Go scheduler 恢復 goroutine 執行
+```
+
+---
+
+##### 關鍵技術 🔑
+
+| 機制 | Linux | macOS/BSD | Windows |
+|------|-------|-----------|---------|
+| **I/O 多路複用** | `epoll` | `kqueue` | `IOCP` |
+| **內核喚醒** | ✅ | ✅ | ✅ |
+| **零 CPU 成本** | ✅ | ✅ | ✅ |
+
+---
+
+##### 為什麼不會錯過事件？ ✨
+
+```go
+// 簡化的概念
+fd := socket.FileDescriptor()
+epoll.Add(fd)  // 告訴內核：這個 socket 有事就叫醒我
+
+// 線程休眠,但內核在監視
+events := epoll.Wait()  // ← 在這裡 CPU = 0%
+
+// 封包到達 → 內核喚醒 → 程式繼續
+handleEvent(events)
+```
+
+內核會**持續監視**所有註冊的 file descriptor,當事件發生時用**硬體中斷**叫醒程式。
+
+---
+
+##### Rust 的輪詢對比 🆚
+
+```rust
+// Rust (部分實現) 會定期檢查
+loop {
+    if has_event() { break; }  // ← 這裡消耗 0.21% CPU
+    // 極短暫的 sleep,但仍在「轉」
+}
+```
+
+**Go 是完全交給 OS,Rust 是自己保持警覺！**
+
+這就是為什麼 Go 能達到真正的 0% CPU 🎯
+
+---
+
 ## 🎮 實戰場景分析
 
 ### 場景 1: 高頻交易 (HFT)
