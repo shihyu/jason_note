@@ -84,8 +84,6 @@
     - [Interview](c++/interview.md)
     - [C++ HFT 開發完整指南](c++/cpp_hft_guide.md)
     - [為什麼選擇 C++ 開發 HFT](c++/why_cpp_for_hft.md)
-    - [Zig vs C 比較指南](c++/zig-c-comparison.md)
-    - [Zig vs C 語言完整比較指南](c++/zig_vs_c_guide.md)
 - [Rust](rust/rust.md)
     - [Rust 筆記](rust/note.md)
     - [Rust 基本教學](rust/basic.md)
@@ -221,6 +219,9 @@
     - [Vue](html/vue.md)
 - [Mojo](mojo/mojo.md)
     - [Mojo 爬蟲完整指南](mojo/mojo_crawler_guide.md)
+- [Zig](zig/zig.md)
+    - [為什麼 Zig 編譯器程式碼那麼小？](zig/zig_compiler_size.md)
+    - [Zig vs C 語言完整比較指南](zig/zig_vs_c_complete_guide.md)
 
 ## Web Development
 - [Web 開發資源](web/README.md)
