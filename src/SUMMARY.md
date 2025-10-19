@@ -242,6 +242,7 @@
     - [常用指令](gdb/常用指令.md)
     - [GDB 程式流程追蹤 - 完整使用指南](gdb/gdb_commands.md)
     - [GDB Commands 和腳本語法完整指南](gdb/gdb_commands_guide.md)
+    - [GDB 除錯技巧完整指南](gdb/gdb-tips-complete.md)
     - [jemalloc](gdb/jemalloc.md)
     - [Graphs](gdb/graphs.md)
     - [Rust GDB](gdb/rust-gdb.md)
