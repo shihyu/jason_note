@@ -1,0 +1,807 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Zig 開發環境完整指南 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="zig-開發環境完整指南"><a class="header" href="#zig-開發環境完整指南">Zig 開發環境完整指南</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ul>
+<li><a href="#1-%E5%AE%89%E8%A3%9D-zig">1. 安裝 Zig</a></li>
+<li><a href="#2-%E7%B7%A8%E8%BC%AF%E5%99%A8%E9%85%8D%E7%BD%AE">2. 編輯器配置</a></li>
+<li><a href="#3-%E5%B0%88%E6%A1%88%E7%B5%90%E6%A7%8B">3. 專案結構</a></li>
+<li><a href="#4-%E5%BB%BA%E7%BD%AE%E7%B3%BB%E7%B5%B1">4. 建置系統</a></li>
+<li><a href="#5-%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4">5. 常用命令</a></li>
+<li><a href="#6-%E5%AF%A6%E7%94%A8%E5%B7%A5%E5%85%B7">6. 實用工具</a></li>
+<li><a href="#7-%E5%AD%B8%E7%BF%92%E8%B3%87%E6%BA%90">7. 學習資源</a></li>
+<li><a href="#8-%E5%BF%AB%E9%80%9F%E9%96%8B%E5%A7%8B">8. 快速開始</a></li>
+</ul>
+<hr />
+<h2 id="1-安裝-zig"><a class="header" href="#1-安裝-zig">1. 安裝 Zig</a></h2>
+<h3 id="方法一官網下載推薦"><a class="header" href="#方法一官網下載推薦">方法一：官網下載（推薦）</a></h3>
+<p>訪問 https://ziglang.org/download/</p>
+<pre><code class="language-bash"># 下載並解壓（以 Linux 為例）
+wget https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz
+tar xf zig-linux-x86_64-0.13.0.tar.xz
+
+# 移動到工具目錄
+mv zig-linux-x86_64-0.13.0 ~/.mybin/zig-0.13.0
+
+# 加入 PATH（在 .bashrc 或 .zshrc）
+export PATH="$HOME/.mybin/zig-0.13.0:$PATH"
+
+# 重新載入
+source ~/.bashrc
+</code></pre>
+<h3 id="方法二套件管理器"><a class="header" href="#方法二套件管理器">方法二：套件管理器</a></h3>
+<pre><code class="language-bash"># Ubuntu/Debian (snap)
+sudo snap install zig --classic --beta
+
+# macOS (Homebrew)
+brew install zig
+
+# Arch Linux
+sudo pacman -S zig
+</code></pre>
+<h3 id="方法三使用-zigup版本管理器"><a class="header" href="#方法三使用-zigup版本管理器">方法三：使用 zigup（版本管理器）</a></h3>
+<pre><code class="language-bash"># 安裝 zigup
+curl https://github.com/marler8997/zigup/releases/latest/download/zigup-$(uname -m)-linux -o zigup
+chmod +x zigup
+sudo mv zigup /usr/local/bin/
+
+# 使用 zigup 安裝不同版本
+zigup 0.13.0          # 穩定版
+zigup master          # 最新開發版
+zigup 0.16.0-dev      # 特定開發版本
+</code></pre>
+<h3 id="驗證安裝"><a class="header" href="#驗證安裝">驗證安裝</a></h3>
+<pre><code class="language-bash">zig version
+zig zen  # 顯示 Zig 的設計哲學
+</code></pre>
+<h3 id="版本選擇建議"><a class="header" href="#版本選擇建議">版本選擇建議</a></h3>
+<ul>
+<li><strong>0.13.0</strong>：最新穩定版，推薦用於生產環境</li>
+<li><strong>0.16.0-dev</strong>：開發版本，API 可能變動，適合體驗新功能</li>
+<li><strong>master</strong>：最新主線，每日更新</li>
+</ul>
+<hr />
+<h2 id="2-編輯器配置"><a class="header" href="#2-編輯器配置">2. 編輯器配置</a></h2>
+<h3 id="neovim-配置"><a class="header" href="#neovim-配置">Neovim 配置</a></h3>
+<h4 id="安裝-zlszig-language-server"><a class="header" href="#安裝-zlszig-language-server">安裝 ZLS（Zig Language Server）</a></h4>
+<pre><code class="language-bash"># 方法一：從源碼編譯
+git clone https://github.com/zigtools/zls
+cd zls
+zig build -Doptimize=ReleaseSafe
+# 二進制文件在 zig-out/bin/zls
+
+# 方法二：下載預編譯版本
+# 訪問 https://github.com/zigtools/zls/releases
+</code></pre>
+<h4 id="neovim-插件配置使用-lazynvim"><a class="header" href="#neovim-插件配置使用-lazynvim">Neovim 插件配置（使用 lazy.nvim）</a></h4>
+<pre><code class="language-lua">-- plugins/zig.lua
+
+return {
+    -- Zig 語法高亮
+    {
+        'ziglang/zig.vim',
+        ft = 'zig',
+    },
+
+    -- LSP 配置
+    {
+        'neovim/nvim-lspconfig',
+        config = function()
+            local lspconfig = require('lspconfig')
+            
+            -- Zig LSP 配置
+            lspconfig.zls.setup({
+                cmd = { vim.fn.expand('~/.local/bin/zls') },  -- 替換成你的 zls 路徑
+                filetypes = { 'zig', 'zir' },
+                root_dir = lspconfig.util.root_pattern('build.zig', '.git'),
+                settings = {
+                    zls = {
+                        enable_snippets = true,
+                        enable_ast_check_diagnostics = true,
+                        enable_autofix = true,
+                        enable_import_embedfile_argument_completions = true,
+                    }
+                }
+            })
+        end
+    },
+
+    -- 自動補全（可選）
+    {
+        'hrsh7th/nvim-cmp',
+        dependencies = {
+            'hrsh7th/cmp-nvim-lsp',
+            'L3MON4D3/LuaSnip',
+        },
+    }
+}
+</code></pre>
+<h4 id="zig-專用快捷鍵配置"><a class="header" href="#zig-專用快捷鍵配置">Zig 專用快捷鍵配置</a></h4>
+<pre><code class="language-lua">-- 檔案類型偵測
+vim.filetype.add({
+    extension = {
+        zig = 'zig',
+        zir = 'zir',
+        zon = 'zon',
+    }
+})
+
+-- Zig 快捷鍵
+local keymap = vim.keymap.set
+
+-- 格式化
+keymap('n', '&lt;leader&gt;zf', ':!zig fmt %&lt;CR&gt;', { desc = 'Format Zig file' })
+
+-- 測試
+keymap('n', '&lt;leader&gt;zt', ':!zig test %&lt;CR&gt;', { desc = 'Test Zig file' })
+
+-- AST 檢查
+keymap('n', '&lt;leader&gt;za', ':!zig ast-check %&lt;CR&gt;', { desc = 'AST check' })
+</code></pre>
+<h4 id="編譯和執行配置"><a class="header" href="#編譯和執行配置">編譯和執行配置</a></h4>
+<pre><code class="language-lua">-- 在你現有的編譯函數中加入
+vim.cmd([[
+function! Compile_gcc()
+    if &amp;filetype=="c"
+        set autochdir
+        execute "w"
+        execute "!gcc -Wall -pedantic -g -O0 -std=gnu99 % -o %:r -lm -pthread"
+    elseif &amp;filetype=="cpp"
+        set autochdir
+        execute "w"
+        execute "!g++ -Wall -Wextra -g -std=c++17 -pthread % -o %:r"
+    elseif &amp;filetype=="rust"
+        set autochdir
+        execute "w"
+        execute "!rustc -C debuginfo=2 --edition 2024 %:r.rs"
+    elseif &amp;filetype=="zig"
+        set autochdir
+        execute "w"
+        execute "!zig build-exe %"
+    endif
+endfunction
+]])
+
+vim.cmd([[
+function! Run_gcc()
+    if &amp;filetype=="c" || &amp;filetype=="cpp" || &amp;filetype=="rust" || &amp;filetype=="zig"
+        set autochdir
+        execute "! ./%:r"
+    elseif &amp;filetype=="python"
+        set autochdir
+        execute "w !python"
+    endif
+endfunction
+]])
+
+keymap('n', '&lt;C-x&gt;&lt;C-x&gt;', ':call Compile_gcc()&lt;CR&gt;')
+keymap('n', '&lt;C-r&gt;&lt;C-r&gt;', ':call Run_gcc()&lt;CR&gt;')
+</code></pre>
+<h3 id="vs-code"><a class="header" href="#vs-code">VS Code</a></h3>
+<p>安裝擴充套件：</p>
+<ul>
+<li><strong>Zig Language</strong>（官方）</li>
+<li>會自動下載和配置 zls</li>
+</ul>
+<h3 id="其他編輯器"><a class="header" href="#其他編輯器">其他編輯器</a></h3>
+<ul>
+<li><strong>Emacs</strong>: <code>zig-mode</code></li>
+<li><strong>Sublime Text</strong>: Zig 語法支援</li>
+<li><strong>Vim</strong>: <code>ziglang/zig.vim</code></li>
+</ul>
+<hr />
+<h2 id="3-專案結構"><a class="header" href="#3-專案結構">3. 專案結構</a></h2>
+<h3 id="單檔案程式"><a class="header" href="#單檔案程式">單檔案程式</a></h3>
+<pre><code>hello.zig
+</code></pre>
+<p>直接編譯執行：</p>
+<pre><code class="language-bash">zig run hello.zig
+# 或
+zig build-exe hello.zig
+./hello
+</code></pre>
+<h3 id="標準專案結構使用-zig-init"><a class="header" href="#標準專案結構使用-zig-init">標準專案結構（使用 zig init）</a></h3>
+<pre><code>my-project/
+├── build.zig          # 建置腳本
+├── build.zig.zon      # 依賴管理（Zig 0.11+）
+├── src/
+│   ├── main.zig       # 主程式入口
+│   └── root.zig       # 函式庫根模組
+└── zig-out/           # 輸出目錄（自動生成）
+    └── bin/
+</code></pre>
+<h3 id="初始化專案"><a class="header" href="#初始化專案">初始化專案</a></h3>
+<pre><code class="language-bash"># 建立專案目錄
+mkdir my-project &amp;&amp; cd my-project
+
+# 初始化（Zig 0.11+ 只有一個命令）
+zig init
+
+# 建置並執行
+zig build run
+
+# 執行測試
+zig build test
+</code></pre>
+<h3 id="複雜專案結構範例"><a class="header" href="#複雜專案結構範例">複雜專案結構範例</a></h3>
+<pre><code>my-project/
+├── build.zig
+├── build.zig.zon
+├── src/
+│   ├── main.zig
+│   ├── lib/
+│   │   ├── parser.zig
+│   │   └── utils.zig
+│   └── tests/
+│       └── parser_test.zig
+├── examples/
+│   └── demo.zig
+└── README.md
+</code></pre>
+<hr />
+<h2 id="4-建置系統"><a class="header" href="#4-建置系統">4. 建置系統</a></h2>
+<h3 id="基本-buildzig-範例"><a class="header" href="#基本-buildzig-範例">基本 build.zig 範例</a></h3>
+<pre><code class="language-zig">const std = @import("std");
+
+pub fn build(b: *std.Build) void {
+    const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
+
+    // 建立執行檔
+    const exe = b.addExecutable(.{
+        .name = "my-app",
+        .root_source_file = b.path("src/main.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    b.installArtifact(exe);
+
+    // 執行命令
+    const run_cmd = b.addRunArtifact(exe);
+    run_cmd.step.dependOn(b.getInstallStep());
+
+    const run_step = b.step("run", "Run the app");
+    run_step.dependOn(&amp;run_cmd.step);
+
+    // 測試
+    const unit_tests = b.addTest(.{
+        .root_source_file = b.path("src/main.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const test_step = b.step("test", "Run unit tests");
+    test_step.dependOn(&amp;b.addRunArtifact(unit_tests).step);
+}
+</code></pre>
+<h3 id="常用建置命令"><a class="header" href="#常用建置命令">常用建置命令</a></h3>
+<pre><code class="language-bash"># 建置專案（預設 Debug 模式）
+zig build
+
+# 執行
+zig build run
+
+# 執行測試
+zig build test
+
+# 清理建置檔案
+rm -rf zig-cache zig-out
+
+# 指定優化等級
+zig build -Doptimize=Debug         # 除錯模式（預設）
+zig build -Doptimize=ReleaseFast   # 速度優先
+zig build -Doptimize=ReleaseSmall  # 大小優先
+zig build -Doptimize=ReleaseSafe   # 安全檢查 + 優化
+
+# 交叉編譯
+zig build -Dtarget=x86_64-windows
+zig build -Dtarget=x86_64-macos
+zig build -Dtarget=aarch64-linux
+zig build -Dtarget=wasm32-wasi
+
+# 查看所有可用的建置選項
+zig build --help
+</code></pre>
+<hr />
+<h2 id="5-常用命令"><a class="header" href="#5-常用命令">5. 常用命令</a></h2>
+<h3 id="編譯相關"><a class="header" href="#編譯相關">編譯相關</a></h3>
+<pre><code class="language-bash"># 編譯成執行檔
+zig build-exe main.zig
+
+# 編譯成靜態函式庫
+zig build-lib mylib.zig
+
+# 編譯成動態函式庫
+zig build-lib mylib.zig -dynamic
+
+# 編譯成物件檔
+zig build-obj mycode.zig
+
+# 直接執行（編譯並執行）
+zig run main.zig
+
+# 執行並傳入參數
+zig run main.zig -- arg1 arg2
+</code></pre>
+<h3 id="測試相關"><a class="header" href="#測試相關">測試相關</a></h3>
+<pre><code class="language-bash"># 執行測試
+zig test main.zig
+
+# 執行專案測試
+zig build test
+
+# 執行單一測試（使用過濾器）
+zig test main.zig --test-filter "test_name"
+</code></pre>
+<h3 id="格式化和檢查"><a class="header" href="#格式化和檢查">格式化和檢查</a></h3>
+<pre><code class="language-bash"># 格式化單一檔案
+zig fmt main.zig
+
+# 格式化整個目錄
+zig fmt src/
+
+# 格式化並檢查（不修改檔案）
+zig fmt --check src/
+
+# AST 語法檢查（不編譯）
+zig ast-check main.zig
+</code></pre>
+<h3 id="其他工具"><a class="header" href="#其他工具">其他工具</a></h3>
+<pre><code class="language-bash"># 顯示 Zig 的設計哲學
+zig zen
+
+# 翻譯 C 程式碼到 Zig
+zig translate-c file.c &gt; file.zig
+
+# 編譯 C 程式（使用 Zig 作為 C 編譯器）
+zig cc -o output main.c
+
+# 編譯 C++ 程式
+zig c++ -o output main.cpp
+
+# 查看標準庫文件
+zig std
+
+# 查看完整幫助
+zig --help
+</code></pre>
+<hr />
+<h2 id="6-實用工具"><a class="header" href="#6-實用工具">6. 實用工具</a></h2>
+<h3 id="除錯工具"><a class="header" href="#除錯工具">除錯工具</a></h3>
+<pre><code class="language-bash"># 使用 GDB
+gdb ./zig-out/bin/my-app
+
+# 使用 LLDB
+lldb ./zig-out/bin/my-app
+
+# Valgrind（記憶體檢查）
+valgrind ./zig-out/bin/my-app
+
+# 使用 Zig 內建的 AddressSanitizer
+zig build -Doptimize=Debug -fsanitize=address
+</code></pre>
+<h3 id="效能分析"><a class="header" href="#效能分析">效能分析</a></h3>
+<pre><code class="language-bash"># 使用 perf
+perf record ./zig-out/bin/my-app
+perf report
+
+# 使用 time
+time ./zig-out/bin/my-app
+
+# Zig 內建 benchmark
+zig test --test-cmd-bin src/benchmark.zig
+</code></pre>
+<h3 id="交叉編譯目標查詢"><a class="header" href="#交叉編譯目標查詢">交叉編譯目標查詢</a></h3>
+<pre><code class="language-bash"># 查看所有支援的目標平台
+zig targets
+
+# 輸出 JSON 格式
+zig targets | jq
+</code></pre>
+<hr />
+<h2 id="7-學習資源"><a class="header" href="#7-學習資源">7. 學習資源</a></h2>
+<h3 id="官方資源"><a class="header" href="#官方資源">官方資源</a></h3>
+<ul>
+<li><strong>官網</strong>: https://ziglang.org/</li>
+<li><strong>語言參考</strong>: https://ziglang.org/documentation/master/</li>
+<li><strong>標準庫文件</strong>: https://ziglang.org/documentation/master/std/</li>
+<li><strong>GitHub</strong>: https://github.com/ziglang/zig</li>
+</ul>
+<h3 id="學習教材"><a class="header" href="#學習教材">學習教材</a></h3>
+<ul>
+<li>
+<p><strong>Ziglings</strong>: https://github.com/ratfactor/ziglings<br />
+互動式練習，類似 Rustlings</p>
+</li>
+<li>
+<p><strong>Zig Learn</strong>: https://ziglearn.org/<br />
+完整的學習指南</p>
+</li>
+<li>
+<p><strong>Zig Guide</strong>: https://zig.guide/<br />
+社群維護的指南</p>
+</li>
+<li>
+<p><strong>Zig by Example</strong>: https://zig-by-example.com/<br />
+實例學習</p>
+</li>
+</ul>
+<h3 id="進階資源"><a class="header" href="#進階資源">進階資源</a></h3>
+<ul>
+<li><strong>Zig 標準庫原始碼</strong>: 閱讀 <code>~/.mybin/zig-x.x.x/lib/std/</code></li>
+<li><strong>Awesome Zig</strong>: https://github.com/nrdmn/awesome-zig<br />
+精選的 Zig 資源列表</li>
+</ul>
+<h3 id="社群"><a class="header" href="#社群">社群</a></h3>
+<ul>
+<li><strong>Discord</strong>: https://discord.gg/zig</li>
+<li><strong>Reddit</strong>: r/Zig</li>
+<li><strong>Forum</strong>: https://ziggit.dev/</li>
+<li><strong>中文社群</strong>: 搜尋 "Zig 中文社區"</li>
+</ul>
+<hr />
+<h2 id="8-快速開始"><a class="header" href="#8-快速開始">8. 快速開始</a></h2>
+<h3 id="hello-world"><a class="header" href="#hello-world">Hello World</a></h3>
+<h4 id="方法一單檔案適合-zig-011-015"><a class="header" href="#方法一單檔案適合-zig-011-015">方法一：單檔案（適合 Zig 0.11-0.15）</a></h4>
+<pre><code class="language-zig">const std = @import("std");
+
+pub fn main() !void {
+    const stdout = std.io.getStdOut().writer();
+    try stdout.print("Hello, World!\n", .{});
+}
+</code></pre>
+<pre><code class="language-bash">zig run hello.zig
+</code></pre>
+<h4 id="方法二單檔案適合-zig-016-開發版"><a class="header" href="#方法二單檔案適合-zig-016-開發版">方法二：單檔案（適合 Zig 0.16+ 開發版）</a></h4>
+<pre><code class="language-zig">const std = @import("std");
+
+pub fn main() void {
+    std.debug.print("Hello, World!\n", .{});
+}
+</code></pre>
+<pre><code class="language-bash">zig run hello.zig
+</code></pre>
+<h4 id="方法三完整專案"><a class="header" href="#方法三完整專案">方法三：完整專案</a></h4>
+<pre><code class="language-bash"># 1. 建立專案
+mkdir hello-zig &amp;&amp; cd hello-zig
+
+# 2. 初始化
+zig init
+
+# 3. 編輯 src/main.zig
+cat &gt; src/main.zig &lt;&lt; 'EOF'
+const std = @import("std");
+
+pub fn main() !void {
+    const stdout = std.io.getStdOut().writer();
+    try stdout.print("Hello, Zig!\n", .{});
+}
+EOF
+
+# 4. 建置並執行
+zig build run
+</code></pre>
+<h3 id="基本語法範例"><a class="header" href="#基本語法範例">基本語法範例</a></h3>
+<pre><code class="language-zig">const std = @import("std");
+
+// 常數
+const PI: f32 = 3.14159;
+
+// 函數
+fn add(a: i32, b: i32) i32 {
+    return a + b;
+}
+
+// 錯誤處理
+fn divide(a: f32, b: f32) !f32 {
+    if (b == 0) return error.DivisionByZero;
+    return a / b;
+}
+
+// 測試
+test "basic math" {
+    try std.testing.expectEqual(@as(i32, 5), add(2, 3));
+}
+
+pub fn main() !void {
+    const result = try divide(10, 2);
+    std.debug.print("Result: {d}\n", .{result});
+}
+</code></pre>
+<h3 id="執行測試"><a class="header" href="#執行測試">執行測試</a></h3>
+<pre><code class="language-bash">zig test example.zig
+</code></pre>
+<hr />
+<h2 id="附錄版本差異說明"><a class="header" href="#附錄版本差異說明">附錄：版本差異說明</a></h2>
+<h3 id="zig-0130穩定版vs-zig-0160-dev開發版"><a class="header" href="#zig-0130穩定版vs-zig-0160-dev開發版">Zig 0.13.0（穩定版）vs Zig 0.16.0-dev（開發版）</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>功能</th><th>0.13.0</th><th>0.16.0-dev</th></tr></thead><tbody>
+<tr><td>標準輸出</td><td><code>std.io.getStdOut()</code></td><td><code>std.io.getStdOut()</code> 或 <code>std.debug.print()</code></td></tr>
+<tr><td>專案初始化</td><td><code>zig init</code></td><td><code>zig init</code></td></tr>
+<tr><td>建置檔案</td><td><code>b.path()</code></td><td><code>b.path()</code></td></tr>
+<tr><td>API 穩定性</td><td>✅ 穩定</td><td>⚠️ 可能變動</td></tr>
+</tbody></table>
+</div>
+<p><strong>建議</strong>：</p>
+<ul>
+<li>生產環境使用 <strong>0.13.0</strong> 穩定版</li>
+<li>學習和實驗可以使用開發版體驗新特性</li>
+<li>使用 <code>zigup</code> 管理多個版本</li>
+</ul>
+<hr />
+<h2 id="常見問題"><a class="header" href="#常見問題">常見問題</a></h2>
+<h3 id="q-編譯錯誤-std-has-no-member-named-io"><a class="header" href="#q-編譯錯誤-std-has-no-member-named-io">Q: 編譯錯誤 "std has no member named 'io'"</a></h3>
+<p>A: 這通常出現在 Zig 0.16+ 開發版。使用 <code>std.debug.print()</code> 代替 <code>std.io.getStdOut()</code>。</p>
+<h3 id="q-如何選擇優化等級"><a class="header" href="#q-如何選擇優化等級">Q: 如何選擇優化等級？</a></h3>
+<p>A:</p>
+<ul>
+<li><strong>Debug</strong>: 開發時使用，包含完整除錯資訊</li>
+<li><strong>ReleaseSafe</strong>: 生產環境，保留安全檢查</li>
+<li><strong>ReleaseFast</strong>: 需要最高效能時</li>
+<li><strong>ReleaseSmall</strong>: 需要最小二進制大小時</li>
+</ul>
+<h3 id="q-如何管理依賴"><a class="header" href="#q-如何管理依賴">Q: 如何管理依賴？</a></h3>
+<p>A: 使用 <code>build.zig.zon</code> 檔案（Zig 0.11+）。範例：</p>
+<pre><code class="language-zig">.{
+    .name = "my-project",
+    .version = "0.1.0",
+    .dependencies = .{
+        .@"some-package" = .{
+            .url = "https://github.com/user/package/archive/tag.tar.gz",
+            .hash = "...",
+        },
+    },
+}
+</code></pre>
+<hr />
+<h2 id="結語"><a class="header" href="#結語">結語</a></h2>
+<p>Zig 是一個現代、高效的系統程式語言，適合用於：</p>
+<ul>
+<li>系統程式開發</li>
+<li>嵌入式開發</li>
+<li>遊戲開發</li>
+<li>作為更好的 C/C++ 替代方案</li>
+</ul>
+<p>開始你的 Zig 之旅吧！🚀</p>
+<p><strong>最後更新</strong>: 2025-10-20</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../zig/zig.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../zig/zig_compiler_size.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../zig/zig.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../zig/zig_compiler_size.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
