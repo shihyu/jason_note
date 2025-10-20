@@ -220,6 +220,7 @@
 - [Mojo](mojo/mojo.md)
     - [Mojo 爬蟲完整指南](mojo/mojo_crawler_guide.md)
 - [Zig](zig/zig.md)
+    - [Zig 開發環境完整指南](zig/zig_dev_guide.md)
     - [為什麼 Zig 編譯器程式碼那麼小？](zig/zig_compiler_size.md)
     - [Zig vs C 語言完整比較指南](zig/zig_vs_c_complete_guide.md)
 
