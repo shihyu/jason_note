@@ -175,6 +175,7 @@
     - [LiveKit](go/LiveKit.md)
 - [Python](python/python.md)
     - [Poetry 完全入門指南](python/Poetry完全入門指南.md)
+    - [UV 和 UVX 指令完整指南](python/uv-uvx-cheatsheet.md)
     - [搭建 gRPC 服務](python/搭建gRPC服務.md)
     - [Python Debugger](python/python_debugger.md)
     - [Python Decorator](python/decorator.md)
