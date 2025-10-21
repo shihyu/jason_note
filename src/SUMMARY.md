@@ -223,11 +223,13 @@
     - [Zig 開發環境完整指南](zig/zig_dev_guide.md)
     - [為什麼 Zig 編譯器程式碼那麼小？](zig/zig_compiler_size.md)
     - [Zig vs C 語言完整比較指南](zig/zig_vs_c_complete_guide.md)
+    - [Zig vs Rust vs Go 深度比較](zig/zig-rust-go-comparison.md)
 
 ## Web Development
 - [Web 開發資源](web/README.md)
     - [Node.js 完整開發指南](web/nodejs-guide.md)
     - [WebSocket 效能終極對決完整報告](web/websocket_perf_comparison_py_go_rust.md)
+    - [WebAssembly](web/webassembly.md)
     - [WebAssembly (WASM) 完整開發指南](web/webassembly_complete_guide.md)
     - [Buttplug WASM 開發流程](web/buttplug_wasm_flow.md)
     - [wasm_bindgen 作用整理](web/wasm_bindgen_guide.md)
