@@ -1,0 +1,498 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>現代程式語言的靜態連結策略分析 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="現代程式語言的靜態連結策略分析"><a class="header" href="#現代程式語言的靜態連結策略分析">現代程式語言的靜態連結策略分析</a></h1>
+<h2 id="為什麼-rustziggo-編譯出來的執行檔比-cc-大"><a class="header" href="#為什麼-rustziggo-編譯出來的執行檔比-cc-大">為什麼 Rust、Zig、Go 編譯出來的執行檔比 C/C++ 大？</a></h2>
+<p>簡單答案：<strong>預設靜態連結 (Static Linking)</strong></p>
+<h2 id="各語言的編譯策略比較"><a class="header" href="#各語言的編譯策略比較">各語言的編譯策略比較</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>語言</th><th>預設行為</th><th>執行檔大小 (Hello World)</th><th>特點</th></tr></thead><tbody>
+<tr><td><strong>C/C++</strong></td><td>動態連結</td><td>~16 KB</td><td>依賴系統函式庫</td></tr>
+<tr><td><strong>Go</strong></td><td>完全靜態</td><td>~1-2 MB</td><td>包含 runtime、GC</td></tr>
+<tr><td><strong>Rust</strong></td><td>靜態連結 std</td><td>~300-400 KB</td><td>包含 panic handler</td></tr>
+<tr><td><strong>Zig</strong></td><td>靜態連結</td><td>~10-50 KB</td><td>更精簡的 std</td></tr>
+</tbody></table>
+</div>
+<h2 id="靜態連結的主要原因"><a class="header" href="#靜態連結的主要原因">靜態連結的主要原因</a></h2>
+<h3 id="1-內建-runtime-功能"><a class="header" href="#1-內建-runtime-功能">1. 內建 Runtime 功能</a></h3>
+<p>Rust 和 Zig 的執行檔會包含：</p>
+<ul>
+<li>Panic/錯誤處理機制</li>
+<li>Stack unwinding</li>
+<li>格式化輸出功能</li>
+<li>記憶體分配器</li>
+</ul>
+<p>即使是簡單的 Hello World 也會帶入這些功能。</p>
+<h3 id="2-標準函式庫的差異"><a class="header" href="#2-標準函式庫的差異">2. 標準函式庫的差異</a></h3>
+<pre><code class="language-bash"># C (動態連結 glibc)
+gcc hello.c -o hello    # ~16 KB
+
+# Rust (靜態連結 libstd)
+cargo build --release   # ~300-400 KB
+
+# Go (包含完整 runtime)
+go build hello.go       # ~1-2 MB
+</code></pre>
+<h3 id="3-部署需求的改變"><a class="header" href="#3-部署需求的改變">3. 部署需求的改變</a></h3>
+<p>傳統方式（動態連結）：</p>
+<pre><code class="language-bash">./myapp
+# 需要系統有：
+# - libc.so.6
+# - libstdc++.so.6
+# - libpthread.so.0
+# ...
+</code></pre>
+<p>現代方式（靜態連結）：</p>
+<pre><code class="language-bash">./myapp  # 單一檔案，直接執行 ✅
+</code></pre>
+<h2 id="為什麼選擇靜態連結作為預設"><a class="header" href="#為什麼選擇靜態連結作為預設">為什麼選擇靜態連結作為預設？</a></h2>
+<h3 id="1-部署極度簡化"><a class="header" href="#1-部署極度簡化">1. 部署極度簡化</a></h3>
+<pre><code class="language-bash"># 單一執行檔，複製即可
+scp myapp user@server:/usr/local/bin/
+
+# 不用擔心：
+# ❌ 目標系統缺少 libstdc++
+# ❌ glibc 版本不相容  
+# ❌ 動態函式庫路徑問題
+# ❌ Linux 發行版差異
+</code></pre>
+<h3 id="2-容器化時代的完美選擇"><a class="header" href="#2-容器化時代的完美選擇">2. 容器化時代的完美選擇</a></h3>
+<pre><code class="language-dockerfile"># Go/Rust 可以用空映像檔
+FROM scratch
+COPY myapp /
+CMD ["/myapp"]
+# 最終 Docker image 只有幾 MB！
+
+# C++ 需要基礎映像檔
+FROM ubuntu:22.04
+RUN apt-get install -y libstdc++6 ...
+COPY myapp /
+# image 大了 100+ MB
+</code></pre>
+<h3 id="3-避免依賴地獄"><a class="header" href="#3-避免依賴地獄">3. 避免依賴地獄</a></h3>
+<p>動態連結的痛點：</p>
+<ul>
+<li>不同 Linux 發行版的 glibc 版本衝突</li>
+<li>Windows DLL Hell</li>
+<li>macOS 系統更新破壞相容性</li>
+<li>版本管理複雜</li>
+</ul>
+<h3 id="4-語言設計哲學"><a class="header" href="#4-語言設計哲學">4. 語言設計哲學</a></h3>
+<ul>
+<li><strong>Go</strong>: "Build once, run anywhere" - 極致的部署簡化</li>
+<li><strong>Rust</strong>: 零成本抽象 + 可預測行為</li>
+<li><strong>Zig</strong>: 完全控制，minimal runtime</li>
+</ul>
+<h2 id="優缺點分析"><a class="header" href="#優缺點分析">優缺點分析</a></h2>
+<h3 id="-優點"><a class="header" href="#-優點">✅ 優點</a></h3>
+<h4 id="1-部署超級簡單"><a class="header" href="#1-部署超級簡單">1. 部署超級簡單</a></h4>
+<pre><code class="language-bash"># 只需一個檔案
+./myapp  ✅
+
+# vs C++ 需要確認依賴
+ldd myapp
+# libstdc++.so.6 =&gt; not found ❌
+</code></pre>
+<h4 id="2-跨平台編譯容易"><a class="header" href="#2-跨平台編譯容易">2. 跨平台編譯容易</a></h4>
+<pre><code class="language-bash"># Go 交叉編譯
+GOOS=linux GOARCH=amd64 go build      # Linux
+GOOS=windows GOARCH=amd64 go build    # Windows  
+GOOS=darwin GOARCH=arm64 go build     # macOS M1
+
+# Rust 交叉編譯
+cargo build --target x86_64-unknown-linux-musl
+</code></pre>
+<h4 id="3-版本管理清晰"><a class="header" href="#3-版本管理清晰">3. 版本管理清晰</a></h4>
+<ul>
+<li>不會因系統更新 libstdc++ 導致程式壞掉</li>
+<li>每個執行檔自帶所需函式庫版本</li>
+<li>行為可預測、可重現</li>
+</ul>
+<h4 id="4-安全隔離"><a class="header" href="#4-安全隔離">4. 安全隔離</a></h4>
+<ul>
+<li>避免惡意程式替換系統共享函式庫</li>
+<li>執行環境完全可控</li>
+</ul>
+<h3 id="-缺點"><a class="header" href="#-缺點">❌ 缺點</a></h3>
+<h4 id="1-執行檔巨大"><a class="header" href="#1-執行檔巨大">1. 執行檔巨大</a></h4>
+<p>實際案例：</p>
+<pre><code class="language-bash">du -h myapp
+
+# Go:     2.1 MB (Hello World)
+# Rust:   400 KB
+# C:      16 KB
+</code></pre>
+<p>多個程式時的差異：</p>
+<pre><code>10 個 Go 程式    = 20 MB
+10 個 C 程式     = 160 KB + 共享的 libc (~2 MB)
+10 個 Rust 程式  = 4 MB
+</code></pre>
+<h4 id="2-記憶體使用增加"><a class="header" href="#2-記憶體使用增加">2. 記憶體使用增加</a></h4>
+<p>動態連結的優勢：</p>
+<pre><code>Process A ──┐
+            ├──→ [libc.so] (記憶體只載入一份)
+Process B ──┘
+</code></pre>
+<p>靜態連結的情況：</p>
+<pre><code>Process A → [內建 libc] (2 MB)
+Process B → [內建 libc] (2 MB)  # 重複載入！
+</code></pre>
+<h4 id="3-安全性更新麻煩"><a class="header" href="#3-安全性更新麻煩">3. 安全性更新麻煩</a></h4>
+<p>動態連結：</p>
+<pre><code class="language-bash"># 修一次函式庫，所有程式受益
+apt-get update libc6
+# 所有使用 libc 的程式自動更新 ✅
+</code></pre>
+<p>靜態連結：</p>
+<pre><code class="language-bash"># 每個程式都要重新編譯部署
+./app1  # 包含舊版 OpenSSL (CVE-2024-xxxx) ⚠️
+./app2  # 包含舊版 OpenSSL (CVE-2024-xxxx) ⚠️
+./app3  # 包含舊版 OpenSSL (CVE-2024-xxxx) ⚠️
+# 需要分別重新編譯和部署
+</code></pre>
+<h4 id="4-編譯時間較長"><a class="header" href="#4-編譯時間較長">4. 編譯時間較長</a></h4>
+<ul>
+<li>需要連結整個標準函式庫</li>
+<li>LTO (Link Time Optimization) 很慢</li>
+<li>不過 Go 編譯速度仍然很快</li>
+</ul>
+<h2 id="減少執行檔大小的方法"><a class="header" href="#減少執行檔大小的方法">減少執行檔大小的方法</a></h2>
+<h3 id="rust-優化"><a class="header" href="#rust-優化">Rust 優化</a></h3>
+<p>在 <code>Cargo.toml</code> 中：</p>
+<pre><code class="language-toml">[profile.release]
+opt-level = "z"       # 優化體積而非速度
+lto = true            # Link Time Optimization
+codegen-units = 1     # 單一編譯單元，更好優化
+strip = true          # 自動移除符號表
+panic = "abort"       # 不使用 unwinding，減少代碼
+</code></pre>
+<p>使用 no_std（極致精簡）：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span>#![no_std]
+#![no_main]
+<span class="boring">fn main() {
+</span>// 完全不用標準函式庫，可到幾 KB
+<span class="boring">}</span></code></pre></pre>
+<p>手動 strip：</p>
+<pre><code class="language-bash">cargo build --release
+strip target/release/myapp
+# 可再減少 ~100 KB
+</code></pre>
+<h3 id="go-優化"><a class="header" href="#go-優化">Go 優化</a></h3>
+<pre><code class="language-bash"># 使用 UPX 壓縮（可能影響啟動速度）
+go build -ldflags="-s -w" myapp
+upx --best myapp
+
+# -s: 移除符號表
+# -w: 移除 DWARF 除錯資訊
+</code></pre>
+<h3 id="zig-優化"><a class="header" href="#zig-優化">Zig 優化</a></h3>
+<p>Zig 預設就很小，進一步優化：</p>
+<pre><code class="language-bash">zig build-exe -O ReleaseSmall main.zig
+</code></pre>
+<h2 id="go-的特殊之處"><a class="header" href="#go-的特殊之處">Go 的特殊之處</a></h2>
+<p>Go 更激進的原因：</p>
+<pre><code>Go 執行檔包含：
+├── 你的代碼
+├── 標準函式庫
+├── 垃圾回收器 (GC)
+├── Goroutine 排程器
+├── 完整的 runtime
+└── 連 C runtime 都不依賴！
+</code></pre>
+<p>優勢：</p>
+<ul>
+<li>編譯超快（即使靜態連結）</li>
+<li>部署體驗極佳</li>
+<li>天生適合微服務架構</li>
+<li>單一執行檔包含一切</li>
+</ul>
+<h2 id="實際選擇建議"><a class="header" href="#實際選擇建議">實際選擇建議</a></h2>
+<h3 id="適合靜態連結的場景-gorustzig"><a class="header" href="#適合靜態連結的場景-gorustzig">適合靜態連結的場景 (Go/Rust/Zig)</a></h3>
+<p>✅ 雲端部署、容器化應用<br />
+✅ 微服務架構<br />
+✅ CLI 工具（如 kubectl, cargo）<br />
+✅ 嵌入式系統<br />
+✅ 需要分發給用戶的軟體<br />
+✅ DevOps 工具<br />
+✅ 無伺服器 (Serverless) 函數</p>
+<h3 id="適合動態連結的場景-cc"><a class="header" href="#適合動態連結的場景-cc">適合動態連結的場景 (C/C++)</a></h3>
+<p>✅ 系統程式（桌面應用）<br />
+✅ 記憶體極度受限環境<br />
+✅ 大量小程式共存（如系統工具）<br />
+✅ 需要快速安全性更新的場景<br />
+✅ 傳統企業環境<br />
+✅ 與系統深度整合的程式</p>
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<p>現代語言（Go、Rust、Zig）選擇靜態連結是<strong>以空間換便利性</strong>的策略：</p>
+<div class="table-wrapper"><table><thead><tr><th>犧牲</th><th>換取</th></tr></thead><tbody>
+<tr><td>磁碟空間 (幾 MB)</td><td>部署極度簡化</td></tr>
+<tr><td>記憶體 (重複載入)</td><td>無依賴問題</td></tr>
+<tr><td>更新較麻煩</td><td>版本完全可控</td></tr>
+<tr><td>編譯時間</td><td>執行環境可預測</td></tr>
+</tbody></table>
+</div>
+<h3 id="時代背景的改變"><a class="header" href="#時代背景的改變">時代背景的改變</a></h3>
+<p><strong>過去 (1990s-2000s)</strong></p>
+<ul>
+<li>磁碟空間貴（MB 級）</li>
+<li>記憶體貴（幾十 MB）</li>
+<li>工程師時間便宜</li>
+<li>👉 動態連結省資源</li>
+</ul>
+<p><strong>現在 (2020s)</strong></p>
+<ul>
+<li>磁碟空間便宜（TB 級）</li>
+<li>記憶體便宜（GB 級）</li>
+<li>工程師時間很貴</li>
+<li>雲端/容器化普及</li>
+<li>👉 靜態連結省時間、減少問題</li>
+</ul>
+<p>在雲端時代，<strong>開發和部署效率</strong> &gt; <strong>幾 MB 的空間</strong>，這就是為什麼現代語言都選擇預設靜態連結！</p>
+<hr />
+<h2 id="參考資料"><a class="header" href="#參考資料">參考資料</a></h2>
+<ul>
+<li><a href="https://github.com/johnthagen/min-sized-rust">Rust Binary Size Optimization</a></li>
+<li><a href="https://golang.org/doc/faq#Why_is_my_trivial_program_such_a_large_binary">Go Executable Size</a></li>
+<li><a href="https://ziglang.org/documentation/master/">Zig Documentation</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Static_library">Static vs Dynamic Linking</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../linux_system/api_vs_abi_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../kernel/linux_kernel.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../linux_system/api_vs_abi_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../kernel/linux_kernel.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

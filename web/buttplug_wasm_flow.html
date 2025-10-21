@@ -266,44 +266,44 @@ match JsFuture::from(nav.bluetooth().unwrap().request_device(&amp;options)).awai
 <li>回傳響應</li>
 </ul>
 <h2 id="主要流程圖"><a class="header" href="#主要流程圖">主要流程圖</a></h2>
-<pre class="mermaid">graph TD
-    A[&quot;JavaScript 呼叫&lt;br/&gt;buttplug_create_embedded_wasm_server&lt;br/&gt;lib.rs&quot;] --&gt; B[&quot;建立 ButtplugServer&lt;br/&gt;設定 WebBluetoothCommunicationManagerBuilder&lt;br/&gt;webbluetooth_manager.rs&quot;]
+<pre><code class="language-mermaid">graph TD
+    A["JavaScript 呼叫&lt;br/&gt;buttplug_create_embedded_wasm_server&lt;br/&gt;lib.rs"] --&gt; B["建立 ButtplugServer&lt;br/&gt;設定 WebBluetoothCommunicationManagerBuilder&lt;br/&gt;webbluetooth_manager.rs"]
     
-    B --&gt; C[&quot;JavaScript 發送 StartScanning 訊息&lt;br/&gt;lib.rs: buttplug_client_send_json_message&quot;]
+    B --&gt; C["JavaScript 發送 StartScanning 訊息&lt;br/&gt;lib.rs: buttplug_client_send_json_message"]
     
-    C --&gt; D[&quot;WebBluetoothCommunicationManager::start_scanning&lt;br/&gt;webbluetooth_manager.rs&quot;]
+    C --&gt; D["WebBluetoothCommunicationManager::start_scanning&lt;br/&gt;webbluetooth_manager.rs"]
     
-    D --&gt; E[&quot;檢查瀏覽器 Web Bluetooth 支援&quot;]
-    E --&gt;|支援| F[&quot;建立設備過濾器&lt;br/&gt;包含設備名稱和服務 UUID&quot;]
-    E --&gt;|不支援| G[&quot;錯誤：不支援 WebBluetooth&quot;]
+    D --&gt; E["檢查瀏覽器 Web Bluetooth 支援"]
+    E --&gt;|支援| F["建立設備過濾器&lt;br/&gt;包含設備名稱和服務 UUID"]
+    E --&gt;|不支援| G["錯誤：不支援 WebBluetooth"]
     
-    F --&gt; H[&quot;呼叫 navigator.bluetooth.requestDevice&lt;br/&gt;彈出設備選擇對話框&quot;]
+    F --&gt; H["呼叫 navigator.bluetooth.requestDevice&lt;br/&gt;彈出設備選擇對話框"]
     
-    H --&gt; I[&quot;使用者選擇藍牙設備&quot;]
-    I --&gt; J[&quot;建立 WebBluetoothHardwareConnector&lt;br/&gt;webbluetooth_hardware.rs&quot;]
+    H --&gt; I["使用者選擇藍牙設備"]
+    I --&gt; J["建立 WebBluetoothHardwareConnector&lt;br/&gt;webbluetooth_hardware.rs"]
     
-    J --&gt; K[&quot;發送 DeviceFound 事件&quot;]
-    K --&gt; L[&quot;自動觸發設備連接&lt;br/&gt;WebBluetoothHardwareConnector::connect&lt;br/&gt;webbluetooth_hardware.rs&quot;]
+    J --&gt; K["發送 DeviceFound 事件"]
+    K --&gt; L["自動觸發設備連接&lt;br/&gt;WebBluetoothHardwareConnector::connect&lt;br/&gt;webbluetooth_hardware.rs"]
     
-    L --&gt; M[&quot;WebBluetoothHardwareSpecializer::specialize&lt;br/&gt;webbluetooth_hardware.rs&quot;]
+    L --&gt; M["WebBluetoothHardwareSpecializer::specialize&lt;br/&gt;webbluetooth_hardware.rs"]
     
-    M --&gt; N[&quot;建立 GATT 連接&lt;br/&gt;device.gatt().connect()&quot;]
-    N --&gt; O[&quot;枚舉服務和特徵值&lt;br/&gt;根據協定規格配置&quot;]
-    O --&gt; P[&quot;設定斷線事件處理器&quot;]
-    P --&gt; Q[&quot;啟動設備事件循環&lt;br/&gt;run_webbluetooth_loop&lt;br/&gt;webbluetooth_hardware.rs&quot;]
+    M --&gt; N["建立 GATT 連接&lt;br/&gt;device.gatt().connect()"]
+    N --&gt; O["枚舉服務和特徵值&lt;br/&gt;根據協定規格配置"]
+    O --&gt; P["設定斷線事件處理器"]
+    P --&gt; Q["啟動設備事件循環&lt;br/&gt;run_webbluetooth_loop&lt;br/&gt;webbluetooth_hardware.rs"]
     
-    Q --&gt; R[&quot;設備準備就緒&lt;br/&gt;等待控制指令&quot;]
+    Q --&gt; R["設備準備就緒&lt;br/&gt;等待控制指令"]
     
-    R --&gt; S[&quot;JavaScript 發送振動指令&lt;br/&gt;buttplug_client_send_json_message&lt;br/&gt;lib.rs&quot;]
+    R --&gt; S["JavaScript 發送振動指令&lt;br/&gt;buttplug_client_send_json_message&lt;br/&gt;lib.rs"]
     
-    S --&gt; T[&quot;解析 JSON 訊息&lt;br/&gt;轉換為 Buttplug 協定&quot;]
-    T --&gt; U[&quot;WebBluetoothDeviceCommand::Write&lt;br/&gt;webbluetooth_hardware.rs&quot;]
+    S --&gt; T["解析 JSON 訊息&lt;br/&gt;轉換為 Buttplug 協定"]
+    T --&gt; U["WebBluetoothDeviceCommand::Write&lt;br/&gt;webbluetooth_hardware.rs"]
     
-    U --&gt; V[&quot;透過藍牙特徵值寫入資料&lt;br/&gt;chr.write_value_with_u8_array&quot;]
-    V --&gt; W[&quot;設備執行振動&quot;]
+    U --&gt; V["透過藍牙特徵值寫入資料&lt;br/&gt;chr.write_value_with_u8_array"]
+    V --&gt; W["設備執行振動"]
     
-    W --&gt; X[&quot;設備回傳狀態&lt;br/&gt;透過 Notification 或 Read&quot;]
-    X --&gt; Y[&quot;回傳響應給 JavaScript&quot;]
+    W --&gt; X["設備回傳狀態&lt;br/&gt;透過 Notification 或 Read"]
+    X --&gt; Y["回傳響應給 JavaScript"]
     
     style A fill:#e1f5fe
     style B fill:#f3e5f5
@@ -311,15 +311,15 @@ match JsFuture::from(nav.bluetooth().unwrap().request_device(&amp;options)).awai
     style M fill:#fff3e0
     style Q fill:#fce4ec
     style S fill:#e1f5fe
-</pre>
+</code></pre>
 <h2 id="詳細時序圖"><a class="header" href="#詳細時序圖">詳細時序圖</a></h2>
-<pre class="mermaid">sequenceDiagram
+<pre><code class="language-mermaid">sequenceDiagram
     participant JS as JavaScript
     participant LIB as lib.rs
     participant MGR as webbluetooth_manager.rs
     participant HW as webbluetooth_hardware.rs
-    participant Browser as &quot;瀏覽器 Web Bluetooth API&quot;
-    participant Device as &quot;藍牙設備&quot;
+    participant Browser as "瀏覽器 Web Bluetooth API"
+    participant Device as "藍牙設備"
 
     Note over JS,Device: 1. 初始化階段
     JS-&gt;&gt;LIB: buttplug_create_embedded_wasm_server(callback)
@@ -328,7 +328,7 @@ match JsFuture::from(nav.bluetooth().unwrap().request_device(&amp;options)).awai
     LIB--&gt;&gt;JS: 回傳伺服器指標
 
     Note over JS,Device: 2. 掃描和連接階段
-    JS-&gt;&gt;LIB: buttplug_client_send_json_message(&quot;StartScanning&quot;)
+    JS-&gt;&gt;LIB: buttplug_client_send_json_message("StartScanning")
     LIB-&gt;&gt;MGR: start_scanning()
     MGR-&gt;&gt;Browser: navigator.bluetooth.requestDevice()
     Browser-&gt;&gt;JS: 彈出設備選擇對話框
@@ -353,7 +353,7 @@ match JsFuture::from(nav.bluetooth().unwrap().request_device(&amp;options)).awai
     LIB--&gt;&gt;JS: 設備連接完成
 
     Note over JS,Device: 4. 控制階段
-    JS-&gt;&gt;LIB: buttplug_client_send_json_message(&quot;VibrateCmd&quot;)
+    JS-&gt;&gt;LIB: buttplug_client_send_json_message("VibrateCmd")
     LIB-&gt;&gt;HW: WebBluetoothDeviceCommand::Write
     HW-&gt;&gt;Browser: chr.write_value_with_u8_array()
     Browser-&gt;&gt;Device: 藍牙資料傳輸
@@ -368,7 +368,7 @@ match JsFuture::from(nav.bluetooth().unwrap().request_device(&amp;options)).awai
     Browser-&gt;&gt;HW: oncharacteristicvaluechanged
     HW-&gt;&gt;LIB: HardwareEvent::Notification
     LIB-&gt;&gt;JS: 回調通知
-</pre>
+</code></pre>
 <h2 id="關鍵檔案功能說明"><a class="header" href="#關鍵檔案功能說明">關鍵檔案功能說明</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>檔案</th><th>主要功能</th></tr></thead><tbody>
 <tr><td><strong>📁 lib.rs</strong></td><td>WASM 介面層，處理 JavaScript 與 Rust 之間的通訊</td></tr>
