@@ -264,6 +264,147 @@ async function load(module, imports) {
 
 ---
 
+### 🔗 `.cargo/config` 與 `build.js` 的關係與優先權
+
+**問題：兩者都有指定 WASM 編譯目標,以哪個為主？**
+
+**答案：`.cargo/config` 為主要配置來源**
+
+#### 優先權判斷
+
+**`.cargo/config` (Cargo 配置檔)**
+```toml
+[build]
+target = "wasm32-unknown-unknown"
+```
+
+**作用：**
+- 設定 Cargo 的**預設編譯目標**為 wasm32
+- 這是 **Cargo 的官方配置機制**
+- 會自動應用到所有在此專案下執行的 `cargo build` 指令
+- 不需要每次手動指定 `--target` 參數
+
+**影響範圍：**
+- 專案層級的配置
+- 所有團隊成員共享相同設定
+- 確保編譯一致性
+
+---
+
+**`build.js` (建構腳本)**
+```javascript
+s.exec('cargo build --release')
+```
+
+**作用：**
+- 執行編譯腳本
+- 這裡的 `cargo build --release` **會自動繼承** `.cargo/config` 中定義的 target
+- **等效於**：`cargo build --release --target wasm32-unknown-unknown`
+
+**依賴關係：**
+- `build.js` 依賴 `.cargo/config` 的設定
+- 如果沒有 `.cargo/config`，則需要在 `build.js` 中明確指定 `--target`
+
+---
+
+#### 協同工作流程
+
+```
+步驟 1: Cargo 讀取配置
+    ↓
+.cargo/config 定義：
+target = "wasm32-unknown-unknown"
+    ↓
+步驟 2: build.js 執行編譯
+    ↓
+cargo build --release
+    ↓
+步驟 3: Cargo 應用配置
+    ↓
+實際執行：
+cargo build --release --target wasm32-unknown-unknown
+    ↓
+產生 WASM 檔案
+```
+
+---
+
+#### 優先權規則
+
+如果兩者設定衝突（例如 build.js 明確指定不同的 target），則以**命令列參數優先**：
+
+```javascript
+// build.js 中明確指定 target (會覆蓋 .cargo/config)
+s.exec('cargo build --release --target x86_64-unknown-linux-gnu')
+```
+
+**優先權順序（高 → 低）：**
+1. 命令列參數 (`--target` 明確指定)
+2. `.cargo/config` 配置檔
+3. Cargo 預設行為
+
+---
+
+#### 最佳實踐
+
+**推薦做法：**
+```toml
+# .cargo/config - 定義預設 target
+[build]
+target = "wasm32-unknown-unknown"
+```
+
+```javascript
+// build.js - 簡潔的腳本，繼承配置
+s.exec('cargo build --release')
+```
+
+**優點：**
+- ✅ 配置集中管理（在 `.cargo/config`）
+- ✅ 建置腳本簡潔（不需重複指定參數）
+- ✅ 團隊成員設定一致
+- ✅ 易於維護
+
+**避免：**
+```javascript
+// ❌ 不推薦：在 build.js 中重複指定 target
+s.exec('cargo build --release --target wasm32-unknown-unknown')
+// 這會造成配置分散，難以維護
+```
+
+---
+
+#### 修改編譯目標的正確方式
+
+**如果要修改編譯目標，應該優先修改 `.cargo/config`：**
+
+```toml
+# .cargo/config
+[build]
+target = "wasm32-wasi"  # 改成其他 WASM target
+```
+
+**而不是修改 build.js：**
+```javascript
+// ❌ 不建議這樣做
+s.exec('cargo build --release --target wasm32-wasi')
+```
+
+---
+
+#### 驗證當前配置
+
+```bash
+# 查看實際使用的編譯目標
+cargo build --release --verbose
+
+# 輸出會顯示：
+# Compiling wasm-demo v0.1.0 (/path/to/project)
+# Running `rustc ... --target wasm32-unknown-unknown ...`
+```
+
+---
+
 ### 5️⃣ `index.js`（JavaScript 入口）
 ```javascript
 const wasm = import('./wasm_demo')   // ← 非同步載入 WASM 模組（返回 Promise）
