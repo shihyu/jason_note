@@ -72,6 +72,57 @@
 
 「uv 是由 Astral 團隊使用 Rust 開發的極速 Python 套件與專案管理工具」，速度比傳統工具（如 pip 和 virtualenv）快 10-100 倍。它整合了套件安裝、虛擬環境管理和 Python 版本控制於一體。
 
+## uv vs Anaconda：為什麼選擇 uv？
+
+對大多數 Python 開發場景來說，**有了 uv 就可以不需要 Anaconda**！
+
+### ✅ uv 可以取代 Anaconda 的功能
+
+1. **套件管理** - uv 可以安裝所有 PyPI 上的套件
+2. **Python 版本管理** - `uv python install 3.x`
+3. **虛擬環境** - `uv venv` 或專案自動管理
+4. **速度** - 比 conda 快 10-100 倍
+5. **輕量** - 不會占用大量硬碟空間
+
+### 📊 何時仍可能需要 Anaconda
+
+只有在少數特殊情況下：
+
+1. **特定的 conda 專屬套件** - 某些科學計算套件只有 conda 版本
+2. **非 Python 依賴** - conda 可以管理 C/C++ 庫等系統級依賴
+3. **遺留專案** - 團隊已經深度使用 conda 生態系統
+4. **特殊編譯版本** - 某些預編譯的二進位套件（但現在 PyPI 上也越來越完整）
+
+### 實際建議
+
+**對一般開發者（推薦 uv）**：
+```bash
+# 安裝 uv（非常輕量）
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 建立專案
+uv init myproject
+cd myproject
+
+# 安裝常用數據科學套件
+uv add pandas numpy matplotlib scikit-learn
+```
+
+**數據科學工作（也可用 uv）**：
+```bash
+# 這些套件在 PyPI 上都有，uv 可以安裝
+uv add pandas numpy scipy matplotlib seaborn jupyter
+uv add scikit-learn tensorflow pytorch
+```
+
+### 總結
+
+- 🎯 **90% 的情況**：uv 就夠了，更快、更輕、更現代
+- 📦 **特殊需求**：才需要考慮 Anaconda/Miniconda
+- 💡 **建議**：新專案優先使用 uv，遇到問題再考慮 conda
+
+**個人推薦：直接用 uv，它是 Python 工具鏈的未來趨勢！**
+
 ---
 
 ## 常見使用情境
