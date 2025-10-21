@@ -3,11 +3,17 @@ use crate::parser::parse;
 
 /// 計算機狀態結構
 pub struct Calculator {
-    expression: String,        // 當前表達式
+    expression: String,       // 當前表達式
     display: String,          // 顯示內容
     memory: Option<f64>,      // 記憶值
     error: Option<String>,    // 錯誤訊息
     last_result: Option<f64>, // 上次計算結果
+}
+
+impl Default for Calculator {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Calculator {
@@ -72,9 +78,12 @@ impl Calculator {
 
     /// 執行計算
     pub fn calculate(&mut self) {
-        // 將當前顯示加入表達式
-        if !self.display.is_empty() && self.display != "0" {
-            self.expression.push_str(&self.display);
+        // 將當前顯示加入表達式（包括 "0"）
+        if !self.display.is_empty() {
+            // 只有在 display 不是初始的 "0" 狀態，或者 expression 不為空時才加入
+            if self.display != "0" || !self.expression.is_empty() {
+                self.expression.push_str(&self.display);
+            }
         }
 
         if self.expression.is_empty() {
@@ -172,7 +181,10 @@ fn format_result(value: f64) -> String {
         // 限制小數位數
         let formatted = format!("{:.10}", value);
         // 移除尾部的零
-        formatted.trim_end_matches('0').trim_end_matches('.').to_string()
+        formatted
+            .trim_end_matches('0')
+            .trim_end_matches('.')
+            .to_string()
     }
 }
 
@@ -197,4 +209,3 @@ mod tests {
         assert_eq!(calc.get_display(), "5");
     }
 }
-

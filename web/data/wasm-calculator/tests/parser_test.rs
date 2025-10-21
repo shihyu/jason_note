@@ -2,7 +2,7 @@
 
 #[cfg(test)]
 mod tests {
-    use wasm_calculator::parser::{tokenize, parse, Token};
+    use wasm_calculator::parser::{parse, tokenize, Token};
 
     #[test]
     fn test_tokenize_numbers() {

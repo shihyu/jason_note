@@ -138,10 +138,57 @@ mod tests {
         calc.input("/");
         calc.input("0");
         calc.calculate();
-        println!("Has error: {}", calc.has_error());
-        println!("Error message: '{}'", calc.get_error());
-        println!("Display: '{}'", calc.get_display());
         assert!(calc.has_error());
-        assert!(calc.get_error().contains("Division by zero") || calc.get_display().contains("Division by zero"));
+        assert!(
+            calc.get_error().contains("Division by zero")
+                || calc.get_display().contains("Division by zero")
+        );
+    }
+
+    // 記憶功能測試
+    #[test]
+    fn test_memory_clear() {
+        let mut calc = Calculator::new();
+        calc.input("5");
+        calc.memory_add();
+        assert!(calc.has_memory());
+        calc.memory_clear();
+        assert!(!calc.has_memory());
+    }
+
+    #[test]
+    fn test_memory_add() {
+        let mut calc = Calculator::new();
+        calc.input("5");
+        calc.memory_add();
+        calc.clear();
+        calc.input("3");
+        calc.memory_add();
+        calc.memory_recall();
+        assert_eq!(calc.get_display(), "8");
+    }
+
+    #[test]
+    fn test_memory_subtract() {
+        let mut calc = Calculator::new();
+        calc.input("1");
+        calc.input("0");
+        calc.memory_add();
+        calc.clear();
+        calc.input("3");
+        calc.memory_subtract();
+        calc.memory_recall();
+        assert_eq!(calc.get_display(), "7");
+    }
+
+    #[test]
+    fn test_memory_recall() {
+        let mut calc = Calculator::new();
+        calc.input("4");
+        calc.input("2");
+        calc.memory_add();
+        calc.clear_all();
+        calc.memory_recall();
+        assert_eq!(calc.get_display(), "42");
     }
 }
