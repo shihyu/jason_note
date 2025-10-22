@@ -113,6 +113,7 @@ fn create_button(document: &Document, parent: &Element, text: &str) -> Result<()
 /// 處理按鈕點擊
 #[wasm_bindgen]
 pub fn handle_button(input: &str) {
+    // 先處理計算邏輯
     CALCULATOR.with(|calc| {
         let mut calc = calc.borrow_mut();
 
@@ -126,9 +127,10 @@ pub fn handle_button(input: &str) {
             "M-" => calc.memory_subtract(),
             _ => calc.input(input),
         }
+    }); // 釋放 borrow_mut
 
-        update_display();
-    });
+    // 然後更新顯示
+    update_display();
 }
 
 /// 更新顯示
