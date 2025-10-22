@@ -352,6 +352,7 @@
     - [Roboflow](ml/Roboflow.md)
 - [CV](cv/cv.md)
     - [Supervision 電腦視覺套件完整指南](cv/supervision.md)
+    - [串流應用與相關技術總覽](cv/streaming-technologies-overview.md)
 
 ## Quantitative Trading
 - [Strategy](strategy/bollmaker.md)
