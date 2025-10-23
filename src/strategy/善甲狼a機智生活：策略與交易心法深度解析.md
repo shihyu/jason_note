@@ -17,7 +17,7 @@
 
 善甲狼a機智生活常見交易標的與工具分布（主觀視覺化）
 
-![善甲狼a機智生活常見交易標的與工具分布（主觀視覺化）](https://ppl-ai-code-interpreter-files.s3.amazonaws.com/web/direct-files/1b5a2355e3030aae2e5dae7de999b18c/13b5f9d2-7363-48ad-b800-2f14d710acdb/f04ba1ac.png)
+![善甲狼a機智生活常見交易標的與工具分布（主觀視覺化）](images/善甲狼a_交易標的分布.png)
 
 善甲狼a機智生活常見交易標的與工具分布（主觀視覺化）
 
@@ -41,7 +41,7 @@
 
 善甲狼a機智生活交易心法與執行重點視覺化
 
-![善甲狼a機智生活交易心法與執行重點視覺化](https://ppl-ai-code-interpreter-files.s3.amazonaws.com/web/direct-files/1b5a2355e3030aae2e5dae7de999b18c/18d08e30-c3b2-4f7d-82a5-01266b38877a/90b0038b.png)
+![善甲狼a機智生活交易心法與執行重點視覺化](images/善甲狼a_交易心法視覺化.png)
 
 善甲狼a機智生活交易心法與執行重點視覺化
 
