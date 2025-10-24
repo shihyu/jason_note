@@ -7,6 +7,7 @@
 - [WebAssembly 應用](#webassembly-應用)
 - [Python 快速驗證](#python-快速驗證)
 - [完整測試腳本](#完整測試腳本)
+- [中文 TTS 工具](#中文-tts-工具) ⭐
 - [常見問題](#常見問題)
 - [更多資源](#更多資源)
 
@@ -544,6 +545,107 @@ if __name__ == "__main__":
 
 ---
 
+## 中文 TTS 工具
+
+### 簡介
+
+專案提供了易用的中文文字轉語音工具，支援自動模型偵測和多種使用方式。
+
+### 下載中文模型
+
+```bash
+# 推薦：中文單說話人模型 (huayan)
+wget https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-zh_CN-huayan-medium.tar.bz2
+tar -xjf vits-piper-zh_CN-huayan-medium.tar.bz2
+
+# 或：中文多說話人模型 (aishell3，支援 66 個不同聲音)
+wget https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-zh-aishell3.tar.bz2
+tar -xjf vits-zh-aishell3.tar.bz2
+```
+
+### 使用方式
+
+#### 方法 1: 命令行模式（推薦）
+
+```bash
+# 基本使用
+python src/sherpa_onnx/text_to_speech_cn.py -t "你好世界" -o hello.wav
+
+# 調整語速
+python src/sherpa_onnx/text_to_speech_cn.py -t "快速朗讀" -o fast.wav -s 1.5
+
+# 慢速朗讀
+python src/sherpa_onnx/text_to_speech_cn.py -t "慢速朗讀" -o slow.wav -s 0.8
+```
+
+#### 方法 2: 從檔案讀取
+
+```bash
+# 將歌詞或長文本存入檔案
+echo "本來應該從從容容遊刃有餘" > lyrics.txt
+
+# 轉換為語音
+python src/sherpa_onnx/text_to_speech_cn.py -f lyrics.txt -o song.wav
+```
+
+#### 方法 3: 互動模式
+
+```bash
+# 啟動互動式介面
+python src/sherpa_onnx/text_to_speech_cn.py
+
+# 按提示輸入：
+# 1. 文字內容
+# 2. 輸出檔案名稱
+# 3. 語速設定
+# 4. 說話人選擇（僅 aishell3 模型）
+```
+
+#### 方法 4: 多說話人模型（aishell3）
+
+```bash
+# 使用不同的說話人 (0-65)
+python src/sherpa_onnx/text_to_speech_cn.py -t "測試不同聲音" -o voice1.wav --speaker 0
+python src/sherpa_onnx/text_to_speech_cn.py -t "測試不同聲音" -o voice2.wav --speaker 10
+python src/sherpa_onnx/text_to_speech_cn.py -t "測試不同聲音" -o voice3.wav --speaker 30
+```
+
+### 完整參數說明
+
+```bash
+python src/sherpa_onnx/text_to_speech_cn.py --help
+
+參數:
+  -t, --text TEXT        要轉換的中文文字內容
+  -f, --file FILE        從檔案讀取中文文字內容
+  -o, --output FILE      輸出檔案名稱 (預設: output.wav)
+  -s, --speed SPEED      語速 (0.5-2.0，預設: 1.0)
+  -m, --model MODEL      指定模型 (aishell3 或 huayan)
+  --speaker ID           說話人 ID (僅 aishell3 有效，0-65，預設: 0)
+```
+
+### 功能特色
+
+- ✅ **自動模型偵測**：無需手動指定，自動找到可用的中文模型
+- ✅ **多種輸入方式**：命令行、檔案、互動式
+- ✅ **語速調整**：支援 0.5-2.0 倍速調整
+- ✅ **多說話人**：aishell3 模型支援 66 種不同聲音
+- ✅ **完全離線**：無需網路連線
+- ✅ **高品質**：清晰自然的中文發音
+
+### 工具檔案位置
+
+```
+src/sherpa_onnx/
+├── text_to_speech_cn.py        # 中文 TTS 工具 ⭐
+├── text_to_speech.py           # 英文 TTS 工具
+├── simple_tts_example.py       # 簡單範例
+├── correct_tts_example.py      # 正確 API 範例
+└── test_tts_validation.py      # 完整測試腳本
+```
+
+---
+
 ## 快速開始總結
 
 ### 1. 安裝
@@ -556,12 +658,22 @@ pip install sherpa-onnx numpy
 python src/sherpa_onnx/simple_tts_example.py
 ```
 
-### 3. 完整測試
+### 3. 中文 TTS 工具（推薦）⭐
+```bash
+# 先下載中文模型
+wget https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-zh_CN-huayan-medium.tar.bz2
+tar -xjf vits-piper-zh_CN-huayan-medium.tar.bz2
+
+# 使用中文 TTS
+python src/sherpa_onnx/text_to_speech_cn.py -t "你好世界" -o hello.wav
+```
+
+### 4. 完整測試
 ```bash
 python src/sherpa_onnx/test_tts_validation.py
 ```
 
-### 4. 線上體驗（無需安裝）
+### 5. 線上體驗（無需安裝）
 訪問 Hugging Face Spaces 直接在瀏覽器中試用。
 
 ---
