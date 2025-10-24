@@ -148,57 +148,104 @@ pip install sherpa-onnx numpy
 
 ---
 
-## 方案一：最簡單的 TTS 測試（推薦）
+## 方案一：使用 VITS 模型的 TTS 測試（推薦）
 
-只需 **5 行程式碼**！
+### 步驟 1: 下載模型
 
-### 程式碼：`simple_tts_test.py`
+sherpa-onnx 需要手動下載模型文件（不會自動下載）。
+
+```bash
+# 下載 VITS 模型
+wget https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-lessac-medium.tar.bz2
+
+# 解壓縮
+tar -xjf vits-piper-en_US-lessac-medium.tar.bz2
+```
+
+### 步驟 2: 程式碼：`src/sherpa_onnx/simple_tts_example.py`
 
 ```python
 #!/usr/bin/env python3
-"""最簡單的 sherpa-onnx TTS 測試"""
+"""sherpa-onnx TTS 測試範例"""
 
-from sherpa_onnx import OfflineTts
+import sherpa_onnx
 
-print("正在載入模型（第一次會下載，請稍候）...")
-tts = OfflineTts.from_pretrained(model='vits-piper-en_US-lessac-medium')
+print("正在配置模型...")
+
+# 配置 TTS 模型
+tts_config = sherpa_onnx.OfflineTtsConfig(
+    model=sherpa_onnx.OfflineTtsModelConfig(
+        vits=sherpa_onnx.OfflineTtsVitsModelConfig(
+            model="vits-piper-en_US-lessac-medium/en_US-lessac-medium.onnx",
+            lexicon="",
+            data_dir="vits-piper-en_US-lessac-medium/espeak-ng-data",
+            tokens="vits-piper-en_US-lessac-medium/tokens.txt",
+        ),
+        provider="cpu",
+        debug=False,
+        num_threads=1,
+    ),
+    rule_fsts="",
+    max_num_sentences=1,
+)
+
+# 驗證配置
+if not tts_config.validate():
+    raise ValueError("配置驗證失敗！請檢查模型路徑")
+
+print("正在載入模型...")
+tts = sherpa_onnx.OfflineTts(tts_config)
 
 print("正在生成語音...")
-audio = tts.generate("Hello! This is sherpa o n n x speaking.", speed=1.0)
+audio = tts.generate("Hello! This is sherpa o n n x speaking.", sid=0, speed=1.0)
 
-audio.save("hello.wav")
+# 儲存為 WAV 檔案
+sherpa_onnx.write_wave("hello.wav", audio.samples, audio.sample_rate)
+
 print("✓ 完成！語音已儲存到 hello.wav")
+print(f"  採樣率: {audio.sample_rate} Hz")
+print(f"  長度: {len(audio.samples)/audio.sample_rate:.2f} 秒")
 ```
 
 ### 執行
 
 ```bash
-python simple_tts_test.py
+python src/sherpa_onnx/simple_tts_example.py
 ```
 
 ### 預期結果
 
-- 第一次執行：下載模型（約 100-200 MB），需要 2-5 分鐘
-- 生成 `hello.wav` 檔案
+- 生成 `hello.wav` 檔案（約 2-3 秒的語音）
+- 採樣率：22050 Hz
 - 用任何播放器播放該檔案，應該能聽到英文語音
 
 ---
 
 ## 方案二：語音識別測試
 
-### 程式碼：`simple_asr_test.py`
+**注意**：ASR（語音識別）需要額外下載和配置模型，不支持自動下載。
+
+詳細的 ASR 配置請參考官方文檔：https://k2-fsa.github.io/sherpa/onnx/pretrained_models/index.html
+
+### 簡化範例：使用 from_transducer
 
 ```python
 #!/usr/bin/env python3
-"""簡單的語音識別測試"""
+"""簡單的語音識別測試（需要先下載模型）"""
 
 from sherpa_onnx import OnlineRecognizer
 import wave
 import numpy as np
 
-print("正在載入模型（支援中英文）...")
-recognizer = OnlineRecognizer.from_pretrained(
-    'csukuangfj/sherpa-onnx-streaming-zipformer-bilingual-zh-en-2023-02-20'
+# 注意：這個範例假設你已經下載了對應的模型文件
+# 下載說明：https://k2-fsa.github.io/sherpa/onnx/pretrained_models/online-transducer/index.html
+
+print("正在載入模型...")
+recognizer = OnlineRecognizer.from_transducer(
+    encoder="模型路徑/encoder.onnx",
+    decoder="模型路徑/decoder.onnx",
+    joiner="模型路徑/joiner.onnx",
+    tokens="模型路徑/tokens.txt",
 )
 
 # 讀取音頻檔案（需要準備一個 WAV 檔案）
@@ -241,7 +288,7 @@ wget https://github.com/k2-fsa/sherpa-onnx/raw/master/sherpa-onnx/python/tests/t
 
 ## 完整測試腳本
 
-### 程式碼：`test_sherpa_onnx.py`
+### 程式碼：`src/sherpa_onnx/test_tts_validation.py`
 
 ```python
 #!/usr/bin/env python3
@@ -258,86 +305,87 @@ import numpy as np
 def test_tts():
     """測試文字轉語音"""
     print("\n=== 測試文字轉語音（TTS）===")
-    
+
     try:
-        from sherpa_onnx import OfflineTts
-        
-        tts = OfflineTts.from_pretrained(
-            model='vits-piper-en_US-lessac-medium',
-            rule_fsts='',
-            max_num_sentences=1
+        import sherpa_onnx
+
+        # 配置 TTS 模型
+        tts_config = sherpa_onnx.OfflineTtsConfig(
+            model=sherpa_onnx.OfflineTtsModelConfig(
+                vits=sherpa_onnx.OfflineTtsVitsModelConfig(
+                    model="vits-piper-en_US-lessac-medium/en_US-lessac-medium.onnx",
+                    lexicon="",
+                    data_dir="vits-piper-en_US-lessac-medium/espeak-ng-data",
+                    tokens="vits-piper-en_US-lessac-medium/tokens.txt",
+                ),
+                provider="cpu",
+                debug=False,
+                num_threads=1,
+            ),
+            rule_fsts="",
+            max_num_sentences=1,
         )
-        
+
+        if not tts_config.validate():
+            raise ValueError("配置驗證失敗")
+
+        tts = sherpa_onnx.OfflineTts(tts_config)
+
         text = "Hello! This is a test of sherpa-onnx text to speech."
         print(f"正在生成語音: {text}")
-        
-        audio = tts.generate(text, speed=1.0, speaker_id=0)
-        
+
+        audio = tts.generate(text, sid=0, speed=1.0)
+
         output_file = "output_tts.wav"
-        sample_rate = audio.sample_rate
-        samples = audio.samples
-        samples_int16 = (samples * 32767).astype(np.int16)
-        
-        with wave.open(output_file, 'w') as wf:
-            wf.setnchannels(1)
-            wf.setsampwidth(2)
-            wf.setframerate(sample_rate)
-            wf.writeframes(samples_int16.tobytes())
-        
+        sherpa_onnx.write_wave(output_file, audio.samples, audio.sample_rate)
+
         print(f"✓ 成功生成語音檔案: {output_file}")
-        print(f"  採樣率: {sample_rate} Hz")
-        print(f"  長度: {len(samples)/sample_rate:.2f} 秒")
-        
+        print(f"  採樣率: {audio.sample_rate} Hz")
+        print(f"  長度: {len(audio.samples)/audio.sample_rate:.2f} 秒")
+
         return output_file
-        
+
     except Exception as e:
         print(f"✗ TTS 測試失敗: {e}")
         return None
 
 
-def test_asr(audio_file=None):
-    """測試語音識別"""
-    print("\n=== 測試語音識別（ASR）===")
-    
+def test_audio_file_info(audio_file):
+    """顯示音頻檔案資訊"""
+    print("\n=== 音頻檔案資訊 ===")
+
     try:
-        from sherpa_onnx import OnlineRecognizer
-        
-        recognizer = OnlineRecognizer.from_pretrained(
-            model='csukuangfj/sherpa-onnx-streaming-zipformer-bilingual-zh-en-2023-02-20'
-        )
-        
-        if audio_file and os.path.exists(audio_file):
-            print(f"正在識別音頻: {audio_file}")
-            
-            with wave.open(audio_file, 'rb') as wf:
-                sample_rate = wf.getframerate()
-                num_channels = wf.getnchannels()
-                audio_data = wf.readframes(wf.getnframes())
-                samples = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768.0
-                
-                if num_channels == 2:
-                    samples = samples.reshape(-1, 2).mean(axis=1)
-            
-            stream = recognizer.create_stream()
-            stream.accept_waveform(sample_rate, samples)
-            
-            while recognizer.is_ready(stream):
-                recognizer.decode_stream(stream)
-            
-            result = recognizer.get_result(stream)
-            print(f"✓ 識別結果: {result}")
-        else:
-            print("ℹ 未提供音頻檔案，跳過 ASR 測試")
-        
+        if not os.path.exists(audio_file):
+            print(f"✗ 檔案不存在: {audio_file}")
+            return
+
+        file_size = os.path.getsize(audio_file)
+        print(f"檔案: {audio_file}")
+        print(f"大小: {file_size / 1024:.2f} KB")
+
+        with wave.open(audio_file, 'rb') as wf:
+            channels = wf.getnchannels()
+            sample_width = wf.getsampwidth()
+            framerate = wf.getframerate()
+            n_frames = wf.getnframes()
+            duration = n_frames / framerate
+
+            print(f"採樣率: {framerate} Hz")
+            print(f"聲道數: {channels}")
+            print(f"位元深度: {sample_width * 8} bit")
+            print(f"長度: {duration:.2f} 秒")
+
+        print("✓ 音頻檔案驗證通過")
+
     except Exception as e:
-        print(f"✗ ASR 測試失敗: {e}")
+        print(f"✗ 讀取音頻檔案失敗: {e}")
 
 
 def main():
     print("=" * 60)
-    print("sherpa-onnx Python 完整測試")
+    print("sherpa-onnx TTS 測試")
     print("=" * 60)
-    
+
     try:
         import sherpa_onnx
         print(f"✓ sherpa-onnx 已安裝 (版本: {sherpa_onnx.__version__})")
@@ -345,14 +393,14 @@ def main():
         print("✗ sherpa-onnx 未安裝")
         print("\n請執行: pip install sherpa-onnx")
         sys.exit(1)
-    
+
     # 測試 TTS
     tts_output = test_tts()
-    
-    # 測試 ASR
+
+    # 顯示音頻檔案資訊
     if tts_output:
-        test_asr(tts_output)
-    
+        test_audio_file_info(tts_output)
+
     print("\n" + "=" * 60)
     print("測試完成！")
     print("=" * 60)
@@ -505,12 +553,12 @@ pip install sherpa-onnx numpy
 
 ### 2. 最簡單測試（TTS）
 ```bash
-python simple_tts_test.py
+python src/sherpa_onnx/simple_tts_example.py
 ```
 
 ### 3. 完整測試
 ```bash
-python test_sherpa_onnx.py
+python src/sherpa_onnx/test_tts_validation.py
 ```
 
 ### 4. 線上體驗（無需安裝）
