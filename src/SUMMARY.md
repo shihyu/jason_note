@@ -329,7 +329,16 @@
 
 ## Speech Technology
 - [語音技術介紹與資源](speech_tech/speech-tech-overview.md)
-- [sherpa-onnx 完整指南](speech_tech/sherpa-onnx-完整指南.md)
+    - [sherpa-onnx 完整指南](speech_tech/sherpa-onnx-完整指南.md)
+        - [什麼是 sherpa-onnx](speech_tech/sherpa-onnx-完整指南.md#什麼是-sherpa-onnx)
+        - [主要功能](speech_tech/sherpa-onnx-完整指南.md#主要功能)
+        - [支援平台](speech_tech/sherpa-onnx-完整指南.md#支援平台)
+        - [WebAssembly 應用](speech_tech/sherpa-onnx-完整指南.md#webassembly-應用)
+        - [Python 快速驗證](speech_tech/sherpa-onnx-完整指南.md#python-快速驗證)
+        - [完整測試腳本](speech_tech/sherpa-onnx-完整指南.md#完整測試腳本)
+        - [常見問題](speech_tech/sherpa-onnx-完整指南.md#常見問題)
+        - [實際應用案例](speech_tech/sherpa-onnx-完整指南.md#實際應用案例)
+        - [更多資源](speech_tech/sherpa-onnx-完整指南.md#更多資源)
 
 ## Machine Learning
 - [ML](ml/ml.md)
