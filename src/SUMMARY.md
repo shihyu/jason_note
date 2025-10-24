@@ -327,6 +327,10 @@
 - [CentOS](centos/centos.md)
     - [TQDB 安裝紀錄](centos/tqdb_setup.md)
 
+## Speech Technology
+- [語音技術介紹與資源](speech_tech/speech-tech-overview.md)
+- [sherpa-onnx 完整指南](speech_tech/sherpa-onnx-完整指南.md)
+
 ## Machine Learning
 - [ML](ml/ml.md)
     - [AI 模型訓練完整指南：從零開始到實戰](ml/ai-training-guide.md)
