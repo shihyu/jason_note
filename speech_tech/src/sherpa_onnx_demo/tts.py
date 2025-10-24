@@ -9,7 +9,13 @@ import wave
 import numpy as np
 from pathlib import Path
 from typing import Dict, Optional
-from sherpa_onnx import OfflineTts
+from sherpa_onnx import (
+    OfflineTts,
+    OfflineTtsConfig,
+    OfflineTtsModelConfig,
+    OfflineTtsVitsModelConfig
+)
+from .utils import download_tts_model, TTS_MODELS
 
 
 class TextToSpeech:
@@ -34,11 +40,36 @@ class TextToSpeech:
             print(f"正在載入 TTS 模型: {self.model_name}")
             print("（首次執行需要下載模型，請稍候...）")
 
-            self.tts_engine = OfflineTts.from_pretrained(
-                model=self.model_name,
-                rule_fsts='',
+            # 下載模型
+            model_dir = download_tts_model(self.model_name)
+            model_info = TTS_MODELS[self.model_name]
+
+            # 設定 VITS 模型配置
+            vits_config = OfflineTtsVitsModelConfig(
+                model=str(model_dir / model_info['model_file']),
+                lexicon="",
+                tokens=str(model_dir / model_info['tokens']),
+                data_dir=str(model_dir / model_info['data_dir']),
+                dict_dir=""
+            )
+
+            # 設定模型配置
+            model_config = OfflineTtsModelConfig(
+                vits=vits_config,
+                num_threads=2,
+                debug=False,
+                provider="cpu"
+            )
+
+            # 設定 TTS 配置
+            tts_config = OfflineTtsConfig(
+                model=model_config,
+                rule_fsts="",
                 max_num_sentences=1
             )
+
+            # 創建 TTS 引擎
+            self.tts_engine = OfflineTts(tts_config)
 
             print("✓ 模型載入完成")
 
@@ -50,7 +81,7 @@ class TextToSpeech:
         text: str,
         output_path: str,
         speed: float = 1.0,
-        speaker_id: int = 0
+        sid: int = 0
     ) -> Dict:
         """
         生成語音檔案
@@ -59,7 +90,7 @@ class TextToSpeech:
             text: 要轉換的文字內容
             output_path: 輸出 WAV 檔案路徑
             speed: 語速倍率（1.0 為正常速度，<1.0 較慢，>1.0 較快）
-            speaker_id: 說話人 ID（某些模型支援多個說話人）
+            sid: 說話人 ID（某些模型支援多個說話人）
 
         Returns:
             字典包含:
@@ -81,13 +112,17 @@ class TextToSpeech:
             print(f"正在生成語音: {text[:50]}...")
             audio = self.tts_engine.generate(
                 text,
-                speed=speed,
-                speaker_id=speaker_id
+                sid=sid,
+                speed=speed
             )
 
             # 取得音頻資訊
             sample_rate = audio.sample_rate
             samples = audio.samples
+
+            # 轉換為 numpy array（如果還不是）
+            if not isinstance(samples, np.ndarray):
+                samples = np.array(samples, dtype=np.float32)
 
             # 轉換為 int16 格式
             samples_int16 = self._convert_to_int16(samples)
