@@ -4,6 +4,7 @@
 help:  ## 顯示此說明訊息
 	@echo "sherpa_onnx 工具 - 可用目標："
 	@echo ""
+	@echo "  make lyrics           - 生成歌詞語音檔案 ⭐"
 	@echo "  make test-simple      - 測試基本 TTS 範例"
 	@echo "  make test-cn          - 測試中文 TTS 工具"
 	@echo "  make test-en          - 測試英文 TTS 工具"
@@ -12,9 +13,18 @@ help:  ## 顯示此說明訊息
 	@echo "  make clean            - 清理產生的檔案"
 	@echo ""
 	@echo "使用範例："
+	@echo "  make lyrics           # 生成歌詞語音"
 	@echo "  make test-cn          # 測試中文語音合成"
 	@echo "  make test-all         # 執行所有測試"
 	@echo "  make clean            # 清理測試檔案"
+
+.PHONY: lyrics
+lyrics:  ## 生成歌詞語音檔案
+	@echo "正在生成歌詞語音..."
+	@cd ../.. && python src/sherpa_onnx/text_to_speech_cn.py \
+		-t "本來應該從從容容遊刃有餘現在是匆匆忙忙連滾帶爬睜眼說瞎話， 你在哽咽什麽啦你在哭什麽哭啊，沒出息" \
+		-o 歌詞.wav
+	@echo "✓ 歌詞語音已生成！檔案: 歌詞.wav"
 
 .PHONY: test-simple
 test-simple:  ## 測試基本 TTS 範例
@@ -56,5 +66,6 @@ clean:  ## 清理產生的檔案
 	@echo "正在清理產生的檔案..."
 	@cd ../.. && rm -f test_cn_output.wav test_en_output.wav
 	@cd ../.. && rm -f hello.wav welcome.wav output.wav
+	@cd ../.. && rm -f 歌詞.wav
 	@cd ../.. && rm -rf src/sherpa_onnx/__pycache__
 	@echo "✓ 清理完成"
