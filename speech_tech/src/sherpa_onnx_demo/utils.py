@@ -219,7 +219,60 @@ def download_audio(url: str, output_path: Optional[Path] = None) -> Path:
         下載的音頻檔案路徑
     """
     if output_path is None:
-        filename = url.split('/')[-1]
+        filename = url.split('/')[-1].split('?')[0]  # 移除 URL 參數
+        if not filename:
+            filename = "downloaded_audio.wav"
         output_path = get_cache_dir() / 'audio' / filename
 
     return download_file(url, output_path, desc="下載音頻檔案")
+
+
+def convert_audio_format(
+    input_path: Path,
+    output_path: Optional[Path] = None,
+    target_rate: int = 16000,
+    target_channels: int = 1
+) -> Path:
+    """
+    轉換音頻格式
+
+    Args:
+        input_path: 輸入音頻路徑
+        output_path: 輸出路徑（可選）
+        target_rate: 目標採樣率
+        target_channels: 目標聲道數
+
+    Returns:
+        轉換後的音頻路徑
+    """
+    import wave
+
+    if output_path is None:
+        output_path = input_path.parent / f"{input_path.stem}_converted.wav"
+
+    with wave.open(str(input_path), 'rb') as wf:
+        params = wf.getparams()
+        frames = wf.readframes(params.nframes)
+
+    # 讀取音頻數據
+    samples = np.frombuffer(frames, dtype=np.int16)
+
+    # 處理聲道
+    if params.nchannels == 2 and target_channels == 1:
+        # 雙聲道轉單聲道
+        samples = samples.reshape(-1, 2).mean(axis=1).astype(np.int16)
+    elif params.nchannels == 1 and target_channels == 2:
+        # 單聲道轉雙聲道
+        samples = np.column_stack((samples, samples)).flatten()
+
+    # TODO: 採樣率轉換（目前假設已經是目標採樣率）
+    # 如需要，可使用 scipy.signal.resample
+
+    # 寫入新檔案
+    with wave.open(str(output_path), 'wb') as wf:
+        wf.setnchannels(target_channels)
+        wf.setsampwidth(2)  # 16-bit
+        wf.setframerate(target_rate)
+        wf.writeframes(samples.tobytes())
+
+    return output_path

@@ -187,6 +187,7 @@
 <li><a href="#webassembly-%E6%87%89%E7%94%A8">WebAssembly 應用</a></li>
 <li><a href="#python-%E5%BF%AB%E9%80%9F%E9%A9%97%E8%AD%89">Python 快速驗證</a></li>
 <li><a href="#%E5%AE%8C%E6%95%B4%E6%B8%AC%E8%A9%A6%E8%85%B3%E6%9C%AC">完整測試腳本</a></li>
+<li><a href="#%E4%B8%AD%E6%96%87-tts-%E5%B7%A5%E5%85%B7">中文 TTS 工具</a> ⭐</li>
 <li><a href="#%E5%B8%B8%E8%A6%8B%E5%95%8F%E9%A1%8C">常見問題</a></li>
 <li><a href="#%E6%9B%B4%E5%A4%9A%E8%B3%87%E6%BA%90">更多資源</a></li>
 </ul>
@@ -332,45 +333,87 @@
 <pre><code class="language-bash">pip install sherpa-onnx numpy
 </code></pre>
 <hr />
-<h2 id="方案一最簡單的-tts-測試推薦"><a class="header" href="#方案一最簡單的-tts-測試推薦">方案一：最簡單的 TTS 測試（推薦）</a></h2>
-<p>只需 <strong>5 行程式碼</strong>！</p>
-<h3 id="程式碼simple_tts_testpy"><a class="header" href="#程式碼simple_tts_testpy">程式碼：<code>simple_tts_test.py</code></a></h3>
+<h2 id="方案一使用-vits-模型的-tts-測試推薦"><a class="header" href="#方案一使用-vits-模型的-tts-測試推薦">方案一：使用 VITS 模型的 TTS 測試（推薦）</a></h2>
+<h3 id="步驟-1-下載模型"><a class="header" href="#步驟-1-下載模型">步驟 1: 下載模型</a></h3>
+<p>sherpa-onnx 需要手動下載模型文件（不會自動下載）。</p>
+<pre><code class="language-bash"># 下載 VITS 模型
+wget https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-lessac-medium.tar.bz2
+
+# 解壓縮
+tar -xjf vits-piper-en_US-lessac-medium.tar.bz2
+</code></pre>
+<h3 id="步驟-2-程式碼srcsherpa_onnxsimple_tts_examplepy"><a class="header" href="#步驟-2-程式碼srcsherpa_onnxsimple_tts_examplepy">步驟 2: 程式碼：<code>src/sherpa_onnx/simple_tts_example.py</code></a></h3>
 <pre><code class="language-python">#!/usr/bin/env python3
-"""最簡單的 sherpa-onnx TTS 測試"""
+"""sherpa-onnx TTS 測試範例"""
 
-from sherpa_onnx import OfflineTts
+import sherpa_onnx
 
-print("正在載入模型（第一次會下載，請稍候）...")
-tts = OfflineTts.from_pretrained(model='vits-piper-en_US-lessac-medium')
+print("正在配置模型...")
+
+# 配置 TTS 模型
+tts_config = sherpa_onnx.OfflineTtsConfig(
+    model=sherpa_onnx.OfflineTtsModelConfig(
+        vits=sherpa_onnx.OfflineTtsVitsModelConfig(
+            model="vits-piper-en_US-lessac-medium/en_US-lessac-medium.onnx",
+            lexicon="",
+            data_dir="vits-piper-en_US-lessac-medium/espeak-ng-data",
+            tokens="vits-piper-en_US-lessac-medium/tokens.txt",
+        ),
+        provider="cpu",
+        debug=False,
+        num_threads=1,
+    ),
+    rule_fsts="",
+    max_num_sentences=1,
+)
+
+# 驗證配置
+if not tts_config.validate():
+    raise ValueError("配置驗證失敗！請檢查模型路徑")
+
+print("正在載入模型...")
+tts = sherpa_onnx.OfflineTts(tts_config)
 
 print("正在生成語音...")
-audio = tts.generate("Hello! This is sherpa o n n x speaking.", speed=1.0)
+audio = tts.generate("Hello! This is sherpa o n n x speaking.", sid=0, speed=1.0)
 
-audio.save("hello.wav")
+# 儲存為 WAV 檔案
+sherpa_onnx.write_wave("hello.wav", audio.samples, audio.sample_rate)
+
 print("✓ 完成！語音已儲存到 hello.wav")
+print(f"  採樣率: {audio.sample_rate} Hz")
+print(f"  長度: {len(audio.samples)/audio.sample_rate:.2f} 秒")
 </code></pre>
 <h3 id="執行"><a class="header" href="#執行">執行</a></h3>
-<pre><code class="language-bash">python simple_tts_test.py
+<pre><code class="language-bash">python src/sherpa_onnx/simple_tts_example.py
 </code></pre>
 <h3 id="預期結果"><a class="header" href="#預期結果">預期結果</a></h3>
 <ul>
-<li>第一次執行：下載模型（約 100-200 MB），需要 2-5 分鐘</li>
-<li>生成 <code>hello.wav</code> 檔案</li>
+<li>生成 <code>hello.wav</code> 檔案（約 2-3 秒的語音）</li>
+<li>採樣率：22050 Hz</li>
 <li>用任何播放器播放該檔案，應該能聽到英文語音</li>
 </ul>
 <hr />
 <h2 id="方案二語音識別測試"><a class="header" href="#方案二語音識別測試">方案二：語音識別測試</a></h2>
-<h3 id="程式碼simple_asr_testpy"><a class="header" href="#程式碼simple_asr_testpy">程式碼：<code>simple_asr_test.py</code></a></h3>
+<p><strong>注意</strong>：ASR（語音識別）需要額外下載和配置模型，不支持自動下載。</p>
+<p>詳細的 ASR 配置請參考官方文檔：https://k2-fsa.github.io/sherpa/onnx/pretrained_models/index.html</p>
+<h3 id="簡化範例使用-from_transducer"><a class="header" href="#簡化範例使用-from_transducer">簡化範例：使用 from_transducer</a></h3>
 <pre><code class="language-python">#!/usr/bin/env python3
-"""簡單的語音識別測試"""
+"""簡單的語音識別測試（需要先下載模型）"""
 
 from sherpa_onnx import OnlineRecognizer
 import wave
 import numpy as np
 
-print("正在載入模型（支援中英文）...")
-recognizer = OnlineRecognizer.from_pretrained(
-    'csukuangfj/sherpa-onnx-streaming-zipformer-bilingual-zh-en-2023-02-20'
+# 注意：這個範例假設你已經下載了對應的模型文件
+# 下載說明：https://k2-fsa.github.io/sherpa/onnx/pretrained_models/online-transducer/index.html
+
+print("正在載入模型...")
+recognizer = OnlineRecognizer.from_transducer(
+    encoder="模型路徑/encoder.onnx",
+    decoder="模型路徑/decoder.onnx",
+    joiner="模型路徑/joiner.onnx",
+    tokens="模型路徑/tokens.txt",
 )
 
 # 讀取音頻檔案（需要準備一個 WAV 檔案）
@@ -406,7 +449,7 @@ wget https://github.com/k2-fsa/sherpa-onnx/raw/master/sherpa-onnx/python/tests/t
 </code></pre>
 <hr />
 <h2 id="完整測試腳本"><a class="header" href="#完整測試腳本">完整測試腳本</a></h2>
-<h3 id="程式碼test_sherpa_onnxpy"><a class="header" href="#程式碼test_sherpa_onnxpy">程式碼：<code>test_sherpa_onnx.py</code></a></h3>
+<h3 id="程式碼srcsherpa_onnxtest_tts_validationpy"><a class="header" href="#程式碼srcsherpa_onnxtest_tts_validationpy">程式碼：<code>src/sherpa_onnx/test_tts_validation.py</code></a></h3>
 <pre><code class="language-python">#!/usr/bin/env python3
 """
 sherpa-onnx 完整測試腳本
@@ -421,86 +464,87 @@ import numpy as np
 def test_tts():
     """測試文字轉語音"""
     print("\n=== 測試文字轉語音（TTS）===")
-    
+
     try:
-        from sherpa_onnx import OfflineTts
-        
-        tts = OfflineTts.from_pretrained(
-            model='vits-piper-en_US-lessac-medium',
-            rule_fsts='',
-            max_num_sentences=1
+        import sherpa_onnx
+
+        # 配置 TTS 模型
+        tts_config = sherpa_onnx.OfflineTtsConfig(
+            model=sherpa_onnx.OfflineTtsModelConfig(
+                vits=sherpa_onnx.OfflineTtsVitsModelConfig(
+                    model="vits-piper-en_US-lessac-medium/en_US-lessac-medium.onnx",
+                    lexicon="",
+                    data_dir="vits-piper-en_US-lessac-medium/espeak-ng-data",
+                    tokens="vits-piper-en_US-lessac-medium/tokens.txt",
+                ),
+                provider="cpu",
+                debug=False,
+                num_threads=1,
+            ),
+            rule_fsts="",
+            max_num_sentences=1,
         )
-        
+
+        if not tts_config.validate():
+            raise ValueError("配置驗證失敗")
+
+        tts = sherpa_onnx.OfflineTts(tts_config)
+
         text = "Hello! This is a test of sherpa-onnx text to speech."
         print(f"正在生成語音: {text}")
-        
-        audio = tts.generate(text, speed=1.0, speaker_id=0)
-        
+
+        audio = tts.generate(text, sid=0, speed=1.0)
+
         output_file = "output_tts.wav"
-        sample_rate = audio.sample_rate
-        samples = audio.samples
-        samples_int16 = (samples * 32767).astype(np.int16)
-        
-        with wave.open(output_file, 'w') as wf:
-            wf.setnchannels(1)
-            wf.setsampwidth(2)
-            wf.setframerate(sample_rate)
-            wf.writeframes(samples_int16.tobytes())
-        
+        sherpa_onnx.write_wave(output_file, audio.samples, audio.sample_rate)
+
         print(f"✓ 成功生成語音檔案: {output_file}")
-        print(f"  採樣率: {sample_rate} Hz")
-        print(f"  長度: {len(samples)/sample_rate:.2f} 秒")
-        
+        print(f"  採樣率: {audio.sample_rate} Hz")
+        print(f"  長度: {len(audio.samples)/audio.sample_rate:.2f} 秒")
+
         return output_file
-        
+
     except Exception as e:
         print(f"✗ TTS 測試失敗: {e}")
         return None
 
 
-def test_asr(audio_file=None):
-    """測試語音識別"""
-    print("\n=== 測試語音識別（ASR）===")
-    
+def test_audio_file_info(audio_file):
+    """顯示音頻檔案資訊"""
+    print("\n=== 音頻檔案資訊 ===")
+
     try:
-        from sherpa_onnx import OnlineRecognizer
-        
-        recognizer = OnlineRecognizer.from_pretrained(
-            model='csukuangfj/sherpa-onnx-streaming-zipformer-bilingual-zh-en-2023-02-20'
-        )
-        
-        if audio_file and os.path.exists(audio_file):
-            print(f"正在識別音頻: {audio_file}")
-            
-            with wave.open(audio_file, 'rb') as wf:
-                sample_rate = wf.getframerate()
-                num_channels = wf.getnchannels()
-                audio_data = wf.readframes(wf.getnframes())
-                samples = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768.0
-                
-                if num_channels == 2:
-                    samples = samples.reshape(-1, 2).mean(axis=1)
-            
-            stream = recognizer.create_stream()
-            stream.accept_waveform(sample_rate, samples)
-            
-            while recognizer.is_ready(stream):
-                recognizer.decode_stream(stream)
-            
-            result = recognizer.get_result(stream)
-            print(f"✓ 識別結果: {result}")
-        else:
-            print("ℹ 未提供音頻檔案，跳過 ASR 測試")
-        
+        if not os.path.exists(audio_file):
+            print(f"✗ 檔案不存在: {audio_file}")
+            return
+
+        file_size = os.path.getsize(audio_file)
+        print(f"檔案: {audio_file}")
+        print(f"大小: {file_size / 1024:.2f} KB")
+
+        with wave.open(audio_file, 'rb') as wf:
+            channels = wf.getnchannels()
+            sample_width = wf.getsampwidth()
+            framerate = wf.getframerate()
+            n_frames = wf.getnframes()
+            duration = n_frames / framerate
+
+            print(f"採樣率: {framerate} Hz")
+            print(f"聲道數: {channels}")
+            print(f"位元深度: {sample_width * 8} bit")
+            print(f"長度: {duration:.2f} 秒")
+
+        print("✓ 音頻檔案驗證通過")
+
     except Exception as e:
-        print(f"✗ ASR 測試失敗: {e}")
+        print(f"✗ 讀取音頻檔案失敗: {e}")
 
 
 def main():
     print("=" * 60)
-    print("sherpa-onnx Python 完整測試")
+    print("sherpa-onnx TTS 測試")
     print("=" * 60)
-    
+
     try:
         import sherpa_onnx
         print(f"✓ sherpa-onnx 已安裝 (版本: {sherpa_onnx.__version__})")
@@ -508,14 +552,14 @@ def main():
         print("✗ sherpa-onnx 未安裝")
         print("\n請執行: pip install sherpa-onnx")
         sys.exit(1)
-    
+
     # 測試 TTS
     tts_output = test_tts()
-    
-    # 測試 ASR
+
+    # 顯示音頻檔案資訊
     if tts_output:
-        test_asr(tts_output)
-    
+        test_audio_file_info(tts_output)
+
     print("\n" + "=" * 60)
     print("測試完成！")
     print("=" * 60)
@@ -664,17 +708,100 @@ if __name__ == "__main__":
 <li><strong>ONNX Runtime</strong>: https://onnxruntime.ai/</li>
 </ul>
 <hr />
+<h2 id="中文-tts-工具"><a class="header" href="#中文-tts-工具">中文 TTS 工具</a></h2>
+<h3 id="簡介"><a class="header" href="#簡介">簡介</a></h3>
+<p>專案提供了易用的中文文字轉語音工具，支援自動模型偵測和多種使用方式。</p>
+<h3 id="下載中文模型"><a class="header" href="#下載中文模型">下載中文模型</a></h3>
+<pre><code class="language-bash"># 推薦：中文單說話人模型 (huayan)
+wget https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-zh_CN-huayan-medium.tar.bz2
+tar -xjf vits-piper-zh_CN-huayan-medium.tar.bz2
+
+# 或：中文多說話人模型 (aishell3，支援 66 個不同聲音)
+wget https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-zh-aishell3.tar.bz2
+tar -xjf vits-zh-aishell3.tar.bz2
+</code></pre>
+<h3 id="使用方式"><a class="header" href="#使用方式">使用方式</a></h3>
+<h4 id="方法-1-命令行模式推薦"><a class="header" href="#方法-1-命令行模式推薦">方法 1: 命令行模式（推薦）</a></h4>
+<pre><code class="language-bash"># 基本使用
+python src/sherpa_onnx/text_to_speech_cn.py -t "你好世界" -o hello.wav
+
+# 調整語速
+python src/sherpa_onnx/text_to_speech_cn.py -t "快速朗讀" -o fast.wav -s 1.5
+
+# 慢速朗讀
+python src/sherpa_onnx/text_to_speech_cn.py -t "慢速朗讀" -o slow.wav -s 0.8
+</code></pre>
+<h4 id="方法-2-從檔案讀取"><a class="header" href="#方法-2-從檔案讀取">方法 2: 從檔案讀取</a></h4>
+<pre><code class="language-bash"># 將歌詞或長文本存入檔案
+echo "本來應該從從容容遊刃有餘" &gt; lyrics.txt
+
+# 轉換為語音
+python src/sherpa_onnx/text_to_speech_cn.py -f lyrics.txt -o song.wav
+</code></pre>
+<h4 id="方法-3-互動模式"><a class="header" href="#方法-3-互動模式">方法 3: 互動模式</a></h4>
+<pre><code class="language-bash"># 啟動互動式介面
+python src/sherpa_onnx/text_to_speech_cn.py
+
+# 按提示輸入：
+# 1. 文字內容
+# 2. 輸出檔案名稱
+# 3. 語速設定
+# 4. 說話人選擇（僅 aishell3 模型）
+</code></pre>
+<h4 id="方法-4-多說話人模型aishell3"><a class="header" href="#方法-4-多說話人模型aishell3">方法 4: 多說話人模型（aishell3）</a></h4>
+<pre><code class="language-bash"># 使用不同的說話人 (0-65)
+python src/sherpa_onnx/text_to_speech_cn.py -t "測試不同聲音" -o voice1.wav --speaker 0
+python src/sherpa_onnx/text_to_speech_cn.py -t "測試不同聲音" -o voice2.wav --speaker 10
+python src/sherpa_onnx/text_to_speech_cn.py -t "測試不同聲音" -o voice3.wav --speaker 30
+</code></pre>
+<h3 id="完整參數說明"><a class="header" href="#完整參數說明">完整參數說明</a></h3>
+<pre><code class="language-bash">python src/sherpa_onnx/text_to_speech_cn.py --help
+
+參數:
+  -t, --text TEXT        要轉換的中文文字內容
+  -f, --file FILE        從檔案讀取中文文字內容
+  -o, --output FILE      輸出檔案名稱 (預設: output.wav)
+  -s, --speed SPEED      語速 (0.5-2.0，預設: 1.0)
+  -m, --model MODEL      指定模型 (aishell3 或 huayan)
+  --speaker ID           說話人 ID (僅 aishell3 有效，0-65，預設: 0)
+</code></pre>
+<h3 id="功能特色"><a class="header" href="#功能特色">功能特色</a></h3>
+<ul>
+<li>✅ <strong>自動模型偵測</strong>：無需手動指定，自動找到可用的中文模型</li>
+<li>✅ <strong>多種輸入方式</strong>：命令行、檔案、互動式</li>
+<li>✅ <strong>語速調整</strong>：支援 0.5-2.0 倍速調整</li>
+<li>✅ <strong>多說話人</strong>：aishell3 模型支援 66 種不同聲音</li>
+<li>✅ <strong>完全離線</strong>：無需網路連線</li>
+<li>✅ <strong>高品質</strong>：清晰自然的中文發音</li>
+</ul>
+<h3 id="工具檔案位置"><a class="header" href="#工具檔案位置">工具檔案位置</a></h3>
+<pre><code>src/sherpa_onnx/
+├── text_to_speech_cn.py        # 中文 TTS 工具 ⭐
+├── text_to_speech.py           # 英文 TTS 工具
+├── simple_tts_example.py       # 簡單範例
+├── correct_tts_example.py      # 正確 API 範例
+└── test_tts_validation.py      # 完整測試腳本
+</code></pre>
+<hr />
 <h2 id="快速開始總結"><a class="header" href="#快速開始總結">快速開始總結</a></h2>
 <h3 id="1-安裝"><a class="header" href="#1-安裝">1. 安裝</a></h3>
 <pre><code class="language-bash">pip install sherpa-onnx numpy
 </code></pre>
 <h3 id="2-最簡單測試tts"><a class="header" href="#2-最簡單測試tts">2. 最簡單測試（TTS）</a></h3>
-<pre><code class="language-bash">python simple_tts_test.py
+<pre><code class="language-bash">python src/sherpa_onnx/simple_tts_example.py
 </code></pre>
-<h3 id="3-完整測試"><a class="header" href="#3-完整測試">3. 完整測試</a></h3>
-<pre><code class="language-bash">python test_sherpa_onnx.py
+<h3 id="3-中文-tts-工具推薦"><a class="header" href="#3-中文-tts-工具推薦">3. 中文 TTS 工具（推薦）⭐</a></h3>
+<pre><code class="language-bash"># 先下載中文模型
+wget https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-zh_CN-huayan-medium.tar.bz2
+tar -xjf vits-piper-zh_CN-huayan-medium.tar.bz2
+
+# 使用中文 TTS
+python src/sherpa_onnx/text_to_speech_cn.py -t "你好世界" -o hello.wav
 </code></pre>
-<h3 id="4-線上體驗無需安裝"><a class="header" href="#4-線上體驗無需安裝">4. 線上體驗（無需安裝）</a></h3>
+<h3 id="4-完整測試"><a class="header" href="#4-完整測試">4. 完整測試</a></h3>
+<pre><code class="language-bash">python src/sherpa_onnx/test_tts_validation.py
+</code></pre>
+<h3 id="5-線上體驗無需安裝"><a class="header" href="#5-線上體驗無需安裝">5. 線上體驗（無需安裝）</a></h3>
 <p>訪問 Hugging Face Spaces 直接在瀏覽器中試用。</p>
 <hr />
 <h2 id="結語"><a class="header" href="#結語">結語</a></h2>
