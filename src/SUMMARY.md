@@ -36,6 +36,7 @@
     - [Claude Code 完整自動化開發指南](tools/claude_code_complete_guide.md)
     - [Claude Code 最佳實踐指南](tools/claude_code_best_practices.md)
     - [Claude Code 使用後感受](tools/claude_code_experience.md)
+    - [GitHub Spec Kit - SDD 規格驅動開發](tools/github-spec-kit-sdd.md)
     - [Slack Socket Mode 完整設定指南](tools/slack_socket_mode_guide.md)
     - [DuckDNS 註冊與自動更新 IP 教學](tools/duckdns-setup-guide.md)
     - [免費 DNS 與 SSL 完整指南](tools/free_dns_ssl_guide.md)
