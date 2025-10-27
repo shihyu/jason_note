@@ -368,6 +368,7 @@
 - [Strategy](strategy/bollmaker.md)
     - [股票期貨交易策略筆記](strategy/trading_strategy.md)
     - [AI 主觀交易研究流程模板](strategy/AI_Discretionary_Trading_Workflow.md)
+    - [對敲保命錦囊](strategy/對敲保命錦囊.md)
     - [台股與美股歷史股災完整統計報告](strategy/台股與美股歷史股災完整統計報告.md)
     - [投資策略與複利增長完整指南](strategy/投資策略與複利增長完整指南.md)
     - [工程師勳仔40歲前退休計畫：指數節稅多元收益投資法詳解](strategy/工程師勳仔40歲前退休計畫：指數節稅多元收益投資法詳解.md)
