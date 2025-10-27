@@ -2,6 +2,14 @@
 手機圖片辨識模組
 使用 MobileCLIP 提取圖片特徵並進行相似度比對
 """
+import os
+import warnings
+
+# 抑制警告訊息
+warnings.filterwarnings('ignore', category=FutureWarning)
+warnings.filterwarnings('ignore', category=UserWarning)
+os.environ['CUDA_VISIBLE_DEVICES'] = ''  # 明確指定不使用 CUDA
+
 import numpy as np
 import torch
 import mobileclip
