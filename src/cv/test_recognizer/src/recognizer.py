@@ -237,6 +237,8 @@ class PhoneRecognizer:
 
 def main():
     """主程式入口"""
+    import time
+
     parser = argparse.ArgumentParser(description="手機圖片辨識程式")
     parser.add_argument(
         "--image",
@@ -249,6 +251,11 @@ def main():
         action="store_true",
         help="顯示詳細資訊"
     )
+    parser.add_argument(
+        "--benchmark",
+        action="store_true",
+        help="顯示效能統計"
+    )
 
     args = parser.parse_args()
 
@@ -256,6 +263,8 @@ def main():
     if not Path(args.image).exists():
         print(f"錯誤: 圖片不存在: {args.image}")
         return
+
+    total_start = time.time()
 
     print("=" * 60)
     print("手機圖片辨識系統")
@@ -266,10 +275,15 @@ def main():
 
     # 載入模型
     print("\n[1/4] 載入 MobileCLIP 模型...")
+    t1 = time.time()
     recognizer.load_model()
+    t1_elapsed = time.time() - t1
+    if args.benchmark:
+        print(f"      ⏱️  模型載入時間: {t1_elapsed*1000:.0f} ms")
 
     # 載入手機資料庫
     print("\n[2/4] 載入手機資料庫...")
+    t2 = time.time()
     from database import PhoneDatabase
 
     db = PhoneDatabase()
@@ -281,9 +295,13 @@ def main():
         return
 
     print(f"✓ 載入 {db.get_phone_count()} 支手機資料")
+    t2_elapsed = time.time() - t2
+    if args.benchmark:
+        print(f"      ⏱️  資料庫載入時間: {t2_elapsed*1000:.0f} ms")
 
     # 建立手機資料庫（提取或載入特徵）
     print("\n[3/4] 準備手機特徵資料庫...")
+    t3 = time.time()
     phone_database = {}
     project_root = Path(__file__).parent.parent
 
@@ -316,10 +334,17 @@ def main():
         }
 
     print(f"✓ 準備完成，共 {len(phone_database)} 支手機可供比對")
+    t3_elapsed = time.time() - t3
+    if args.benchmark:
+        print(f"      ⏱️  特徵準備時間: {t3_elapsed*1000:.0f} ms")
 
     # 辨識圖片
     print("\n[4/4] 辨識手機圖片...")
+    t4 = time.time()
     result = recognizer.recognize(args.image, phone_database, verbose=args.verbose)
+    t4_elapsed = time.time() - t4
+    if args.benchmark:
+        print(f"      ⏱️  圖片辨識時間: {t4_elapsed*1000:.0f} ms")
 
     # 顯示結果
     print("\n" + "=" * 60)
@@ -349,6 +374,20 @@ def main():
         print("  • 圖片品質不佳或角度不正確")
         print("  • 手機型號不在資料庫中")
         print("  • 相似度低於閾值（0.5）")
+        print("=" * 60)
+
+    # 效能統計
+    if args.benchmark:
+        total_elapsed = time.time() - total_start
+        print("\n" + "=" * 60)
+        print("⏱️  效能統計")
+        print("=" * 60)
+        print(f"模型載入：{t1_elapsed*1000:>8.0f} ms  ({t1_elapsed/total_elapsed*100:>5.1f}%)")
+        print(f"資料庫載入：{t2_elapsed*1000:>6.0f} ms  ({t2_elapsed/total_elapsed*100:>5.1f}%)")
+        print(f"特徵準備：{t3_elapsed*1000:>7.0f} ms  ({t3_elapsed/total_elapsed*100:>5.1f}%)")
+        print(f"圖片辨識：{t4_elapsed*1000:>7.0f} ms  ({t4_elapsed/total_elapsed*100:>5.1f}%)")
+        print("-" * 60)
+        print(f"總時間：{total_elapsed*1000:>9.0f} ms  (100.0%)")
         print("=" * 60)
 
 
