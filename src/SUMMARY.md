@@ -363,6 +363,8 @@
     - [MobileCLIP Android 完整部署指南](cv/MobileCLIP_Android_部署指南.md)
     - [MobileCLIP 完整使用指南](cv/mobileclip-complete-guide.md)
     - [MobileCLIP 與深度學習框架的關係](cv/mobileclip-frameworks-comparison.md)
+    - [影像處理易混淆概念](cv/影像處理易混淆概念.md)
+    - [影像處理：頻率域的直覺理解](cv/頻率域直覺理解.md)
 
 ## Quantitative Trading
 - [Strategy](strategy/bollmaker.md)
