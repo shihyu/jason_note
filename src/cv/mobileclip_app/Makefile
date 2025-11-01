@@ -31,22 +31,22 @@ install:  ## 安裝所有依賴
 
 .PHONY: download-model
 download-model:  ## 下載 MobileCLIP-S2 模型
-	@mkdir -p ../ml-mobileclip/checkpoints
-	@if [ ! -f ../ml-mobileclip/checkpoints/mobileclip_s2.pt ]; then \
+	@mkdir -p ml-mobileclip/checkpoints
+	@if [ ! -f ml-mobileclip/checkpoints/mobileclip_s2.pt ]; then \
 		echo "下載 MobileCLIP-S2 PyTorch 模型..."; \
 		wget https://docs-assets.developer.apple.com/ml-research/datasets/mobileclip/mobileclip_s2.pt \
-		     -P ../ml-mobileclip/checkpoints; \
+		     -P ml-mobileclip/checkpoints; \
 		echo "✅ 模型下載完成"; \
 	else \
 		echo "✅ 模型已存在"; \
 	fi
 
 .PHONY: convert-model
-convert-model: download-model  ## 轉換模型為 ONNX
-	@echo "轉換 PyTorch 模型為 ONNX..."
+convert-model: download-model  ## 轉換模型為 TFLite
+	@echo "轉換 PyTorch 模型為 TFLite..."
 	@mkdir -p flutter_app/assets/models
-	cd model_conversion && python convert_to_onnx.py
-	@echo "✅ 模型轉換完成: flutter_app/assets/models/mobileclip_s2.onnx"
+	cd model_conversion && python convert_to_tflite.py
+	@echo "✅ 模型轉換完成: flutter_app/assets/models/mobileclip_s2.tflite"
 
 .PHONY: verify-model
 verify-model:  ## 驗證 ONNX 模型

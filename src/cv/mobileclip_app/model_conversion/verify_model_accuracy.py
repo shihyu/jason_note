@@ -10,7 +10,7 @@ import sys
 import os
 
 # Add parent directory to path to import mobileclip
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../ml-mobileclip'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../ml-mobileclip'))
 
 import torch
 import mobileclip
@@ -196,7 +196,7 @@ def main():
 
     # Paths
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    pytorch_model_path = os.path.join(script_dir, '../../ml-mobileclip/checkpoints/mobileclip_s2.pt')
+    pytorch_model_path = os.path.join(script_dir, '../ml-mobileclip/checkpoints/mobileclip_s2.pt')
     onnx_model_path = os.path.join(script_dir, '../flutter_app/assets/models/mobileclip_s2.onnx')
 
     # Check if models exist

@@ -9,7 +9,7 @@ import sys
 import os
 
 # Add parent directory to path to import mobileclip
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../ml-mobileclip'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../ml-mobileclip'))
 
 import torch
 import mobileclip
@@ -70,7 +70,7 @@ def convert_to_onnx(image_encoder, output_path, input_size=256):
         dummy_input,                      # Model input (or a tuple for multiple inputs)
         output_path,                      # Where to save the model
         export_params=True,               # Store the trained parameter weights
-        opset_version=17,                 # ONNX opset version (17 for better compatibility)
+        opset_version=14,                 # ONNX opset version 14 → IR version 8 (compatible with onnxruntime Flutter)
         do_constant_folding=True,         # Optimize constant folding
         input_names=['input'],            # Input name
         output_names=['output'],          # Output name
