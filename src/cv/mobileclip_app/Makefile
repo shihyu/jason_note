@@ -10,7 +10,8 @@ help:  ## 顯示此說明訊息
 	@echo "  make test            - 執行所有測試"
 	@echo "  make build           - 建置 Flutter app (APK)"
 	@echo "  make run             - 啟動 Flutter app (開發模式)"
-	@echo "  make clean           - 清理建置產物和臨時檔案"
+	@echo "  make clean           - 清理建置產物和臨時檔案 (保留模型)"
+	@echo "  make clean-all       - 清理所有檔案 (包含模型)"
 
 .PHONY: install
 install:  ## 安裝所有依賴
@@ -100,15 +101,22 @@ run:  ## 啟動 Flutter app (開發模式)
 	cd flutter_app && flutter run
 
 .PHONY: clean
-clean:  ## 清理建置產物
+clean:  ## 清理建置產物 (保留模型檔案)
 	@echo "清理 Python cache..."
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
 	@echo "清理 Flutter build..."
 	if [ -d flutter_app ]; then cd flutter_app && flutter clean; fi
-	@echo "清理測試產生的檔案..."
+	@echo "清理測試和 log 檔案..."
 	rm -rf tests/*.log tests/tmp_* model_conversion/*.log
+	find flutter_app -maxdepth 1 -name "*.log" -delete 2>/dev/null || true
+	@echo "清理備份檔案..."
+	find . -name "*.bak" -delete 2>/dev/null || true
+	@echo "✅ 清理完成 (模型檔案已保留)"
+
+.PHONY: clean-all
+clean-all: clean  ## 清理所有檔案 (包含模型)
 	@echo "清理模型檔案..."
 	rm -f flutter_app/assets/models/mobileclip_s2.onnx
-	@echo "✅ 清理完成"
+	@echo "✅ 完全清理完成"
