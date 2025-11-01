@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:flutter_onnxruntime/flutter_onnxruntime.dart';
 import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
 import 'log_service.dart';
 
 /// MobileCLIP Service - 負責 ONNX 模型載入與推論
@@ -43,8 +45,24 @@ class MobileCLIPService {
       // 建立 ONNX Runtime 實例
       _ort = OnnxRuntime();
 
-      // 從 assets 載入模型
-      _session = await _ort!.createSessionFromAsset(_modelPath);
+      // 從 assets 複製模型到 app 的文件目錄
+      // 這樣可以避免 ONNX Runtime 在 cache 目錄找 .data 檔案
+      final appDir = await getApplicationDocumentsDirectory();
+      final modelFile = File('${appDir.path}/mobileclip_s2.onnx');
+
+      // 只有當模型檔案不存在時才複製
+      if (!await modelFile.exists()) {
+        log.info('複製模型檔案到 app 文件目錄...');
+        final modelBytes = await rootBundle.load(_modelPath);
+        final modelData = modelBytes.buffer.asUint8List();
+        await modelFile.writeAsBytes(modelData, flush: true);
+        log.info('模型檔案大小: ${(modelData.length / 1024 / 1024).toStringAsFixed(2)} MB');
+      } else {
+        log.info('使用現有的模型檔案');
+      }
+
+      // 從文件路徑載入模型
+      _session = await _ort!.createSession(modelFile.path);
 
       _isInitialized = true;
       log.info('✅ MobileCLIP Service 初始化成功 (使用 ONNX Runtime 1.22.0)');
