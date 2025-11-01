@@ -34,7 +34,7 @@ class MobileCLIPService {
   ///
   /// 必須在使用前呼叫此方法載入模型
   Future<void> initialize() async {
-    if (_isInitialized) {
+    if (_isInitialized && _session != null && _ort != null) {
       log.info('MobileCLIP Service 已經初始化');
       return;
     }
@@ -42,8 +42,8 @@ class MobileCLIPService {
     try {
       log.info('載入 MobileCLIP-S2 ONNX 模型...');
 
-      // 建立 ONNX Runtime 實例
-      _ort = OnnxRuntime();
+      // 只在第一次初始化時建立 ONNX Runtime 實例
+      _ort ??= OnnxRuntime();
 
       // 從 assets 複製模型到 app 的文件目錄
       // 這樣可以避免 ONNX Runtime 在 cache 目錄找 .data 檔案
