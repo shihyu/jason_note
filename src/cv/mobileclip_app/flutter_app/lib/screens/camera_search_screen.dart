@@ -94,7 +94,7 @@ class _CameraSearchScreenState extends State<CameraSearchScreen> {
       // 3. 搜尋最相似的商品
       final match = await _vectorService.findMostSimilarProduct(
         queryVector: featureVector,
-        threshold: 0.5, // 相似度閾值 50%
+        threshold: 0.9, // 相似度閾值 90%
       );
 
       setState(() {
@@ -102,7 +102,7 @@ class _CameraSearchScreenState extends State<CameraSearchScreen> {
         _isProcessing = false;
 
         if (match == null) {
-          _errorMessage = '找不到相似的商品\n(相似度低於 50%)';
+          _errorMessage = '找不到相似的商品\n(相似度低於 90%)';
         }
       });
     } catch (e) {
@@ -422,9 +422,9 @@ class _CameraSearchScreenState extends State<CameraSearchScreen> {
 
   /// 根據相似度取得顏色
   Color _getSimilarityColor(double similarity) {
-    if (similarity >= 0.8) return Colors.green;
-    if (similarity >= 0.6) return Colors.orange;
-    return Colors.red;
+    if (similarity >= 0.9) return Colors.green;      // 90% 以上：綠色
+    if (similarity >= 0.85) return Colors.orange;    // 85-90%：橘色
+    return Colors.red;                                // 85% 以下：紅色
   }
 
   @override
