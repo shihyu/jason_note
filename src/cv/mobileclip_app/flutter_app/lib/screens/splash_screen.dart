@@ -139,7 +139,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
     final clipService = MobileCLIPService();
     await clipService.initialize();
-    clipService.dispose();
+    // 不要釋放 MobileCLIP Service，因為它是 Singleton
+    // clipService.dispose();
 
     setState(() {
       _statusMessage = '初始化完成';
