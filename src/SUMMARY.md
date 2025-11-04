@@ -310,6 +310,10 @@
     - [HFT FPGA 模擬實作指南](embedded_systems/hft_fpga_simulation.md)
     - [Sipeed Tang Primer 25K & Milk-V Duo S Ubuntu 開發環境指南](embedded_systems/ubuntu_dev_boards_guide.md)
 
+## CPU Architecture
+- [CPU 架構技術](cpu_architecture/cpu_architecture.md)
+    - [ARM NEON 完整指南](cpu_architecture/ARM_NEON_完整指南.md)
+
 ## Mobile & Platform
 - [Android](android/android.md)
     - [SDK Install](android/install_sdk.md)
