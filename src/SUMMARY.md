@@ -480,6 +480,7 @@
     - [如何將 OCO 訂單發送到 Binance](cryptotrade/binance/oco.md)
     - [加密貨幣套利策略完整指南](cryptotrade/crypto_arbitrage_guide.md)
     - [DeFi 巨鯨持倉分析](cryptotrade/defi_whale_analysis.md)
+    - [Pionex 抄底止盈完整指南](cryptotrade/Pionex-grid-guide.md)
 
 ## High Frequency Trading
 - [高頻交易概念](hft/hft.md)
