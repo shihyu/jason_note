@@ -289,6 +289,10 @@
 - [SSH](ssh/ssh.md)
 - [Network](network/socket.md)
 
+## Software Engineering
+- [Software Engineering](software_engineering/software_engineering.md)
+    - [迭代思維與人才優勢](software_engineering/迭代思維與人才優勢.md)
+
 ## Data & Services
 - [Database](database/database.md)
     - [Redis](database/redis.md)
