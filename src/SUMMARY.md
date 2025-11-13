@@ -376,6 +376,10 @@
     - [AR 眼鏡辨別詐騙技術指南](cv/AR眼鏡辨別詐騙.md)
     - [AR 眼鏡面相分析技術方案](cv/AR眼鏡面相分析技術方案.md)
 
+## Blockchain Technology
+- [區塊鏈技術與錢包架構](blockchain/blockchain_tech.md)
+    - [區塊鏈錢包完整知識體系](blockchain/blockchain-wallet-complete-guide.md)
+
 ## Quantitative Trading
 - [Strategy](strategy/bollmaker.md)
     - [股票期貨交易策略筆記](strategy/trading_strategy.md)
