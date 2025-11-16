@@ -230,6 +230,7 @@
 - [Node.js](nodejs/nodejs.md)
     - [Node.js vs JavaScript vs TypeScript 比較](nodejs/comparison.md)
     - [Node.js I/O 並發範例](nodejs/nodejs-io-concurrent-examples.md)
+    - [Web 語言特性比較：JavaScript/TypeScript vs Go](nodejs/web-languages-comparison.md)
 
 ## Web Development
 - [Web 開發資源](web/README.md)
