@@ -229,6 +229,7 @@
     - [Zig vs Rust vs Go 深度比較](zig/zig-rust-go-comparison.md)
 - [Node.js](nodejs/nodejs.md)
     - [Node.js vs JavaScript vs TypeScript 比較](nodejs/comparison.md)
+    - [Node.js I/O 並發範例](nodejs/nodejs-io-concurrent-examples.md)
 
 ## Web Development
 - [Web 開發資源](web/README.md)
