@@ -227,6 +227,8 @@
     - [為什麼 Zig 編譯器程式碼那麼小？](zig/zig_compiler_size.md)
     - [Zig vs C 語言完整比較指南](zig/zig_vs_c_complete_guide.md)
     - [Zig vs Rust vs Go 深度比較](zig/zig-rust-go-comparison.md)
+- [Node.js](nodejs/nodejs.md)
+    - [Node.js vs JavaScript vs TypeScript 比較](nodejs/comparison.md)
 
 ## Web Development
 - [Web 開發資源](web/README.md)
