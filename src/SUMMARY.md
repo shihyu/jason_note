@@ -380,6 +380,7 @@
     - [AR 眼鏡辨別詐騙技術指南](cv/AR眼鏡辨別詐騙.md)
     - [AR 眼鏡面相分析技術方案](cv/AR眼鏡面相分析技術方案.md)
     - [深度感知技術與裝置完整整理](cv/depth-sensing-guide.md)
+    - [雙目立體視覺基線選擇指南](cv/stereo_baseline_selection.md)
 
 ## Blockchain Technology
 - [區塊鏈技術與錢包架構](blockchain/blockchain_tech.md)
