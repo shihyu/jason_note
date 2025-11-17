@@ -379,6 +379,7 @@
     - [影像處理:頻率域的直覺理解](cv/頻率域直覺理解.md)
     - [AR 眼鏡辨別詐騙技術指南](cv/AR眼鏡辨別詐騙.md)
     - [AR 眼鏡面相分析技術方案](cv/AR眼鏡面相分析技術方案.md)
+    - [深度感知技術與裝置完整整理](cv/depth-sensing-guide.md)
 
 ## Blockchain Technology
 - [區塊鏈技術與錢包架構](blockchain/blockchain_tech.md)
