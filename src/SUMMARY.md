@@ -347,6 +347,7 @@
 
 ## Machine Learning
 - [ML](ml/ml.md)
+    - [LLM 使用原理 - 重點整理與補充說明](ml/02_LLM使用原理_重點整理.md)
     - [AI 模型訓練完整指南：從零開始到實戰](ml/ai-training-guide.md)
     - [AI 生態系統完整白話指南](ml/ai_ecosystem_guide.md)
     - [AI 語音與影像辨識技術指南](ml/ai-recognition-guide.md)
