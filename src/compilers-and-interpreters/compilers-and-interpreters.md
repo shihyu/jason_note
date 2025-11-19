@@ -55,6 +55,48 @@ seL4 微內核作業系統的測試專案，強調形式化驗證和可靠性。
 - 最小化 TCB（信任計算基）
 - 用於嵌入式和即時系統
 
+### Crafting Interpreters（中文翻譯）
+一本免費且優秀的編譯器和直譯器入門書籍，提供詳細的實踐指導。
+
+**主要內容：**
+- 詞彙分析與語法分析的完整實現
+- AST 建構和遞迴下降解析
+- 變數作用域和環境管理
+- 函數定義與調用機制
+- 控制流和迴圈實現
+- 物件導向語言特性
+
+**學習價值：**
+- 從零開始實現 Lox 語言編譯器
+- 理解直譯器工作原理
+- 代碼實例清晰易懂
+- 適合初學者入門
+
+**資源連結：**
+- [Crafting Interpreters 繁體中文版](https://shihyu.github.io/crafting_interpreters_zh_tw/)
+- [官方英文版](https://craftinginterpreters.com/)
+
+### SICP 計算機程式的構造和解釋（Python 版本）
+經典的計算機科學教材，以 Python 重新編寫，強調程式設計基礎概念。
+
+**主要內容：**
+- 程式語言的設計與實現
+- 過程抽象 (Procedural Abstraction)
+- 資料抽象 (Data Abstraction)
+- 元程式設計 (Metaprogramming)
+- 編譯器設計基礎
+- 虛擬機和求值器實現
+
+**學習價值：**
+- 深入理解編程語言的本質
+- 從直譯器和編譯器角度思考問題
+- 強調抽象層次和模組化設計
+- 培養系統思維能力
+
+**資源連結：**
+- [SICP Python 繁體中文版](https://shihyu.github.io/sicp-py-zh-tw/)
+- [官方英文版](https://composingprograms.com/)
+
 ## 編譯器與直譯器核心概念
 
 ### 編譯器的角色
@@ -231,7 +273,17 @@ JIT 編譯器（運行時編譯）
 - [seL4 Official](https://sel4.systems/)
 
 ### 編譯器學習資源
-- [Crafting Interpreters - 免費線上書](https://craftinginterpreters.com/)
+
+#### 入門階段
+- **[Crafting Interpreters 繁體中文版](https://shihyu.github.io/crafting_interpreters_zh_tw/)** - 免費線上書，詳細講解詞彙分析、語法分析、AST 和直譯器實現
+  - 包含 Lox 語言的完整實現（Java 版和 C 版）
+  - 適合初學者，代碼實例豐富
+
+- **[SICP Python 繁體中文版](https://shihyu.github.io/sicp-py-zh-tw/)** - 經典計算機科學教材，強調抽象和系統思維
+  - 涵蓋編譯器和直譯器的理論基礎
+  - 適合深入理解語言設計原理
+
+#### 進階學習
 - [Engineering a Compiler](https://www.elsevier.com/books/engineering-a-compiler/cooper/978-0-12-815412-0)
 - [LLVM 官方文件](https://llvm.org/docs/)
 - [Compiler Explorer](https://godbolt.org/) - 線上編譯器探索工具
