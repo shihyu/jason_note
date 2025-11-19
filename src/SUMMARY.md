@@ -8,6 +8,8 @@
     - [GCP SSH](ubuntu/gcp.md)
     - [Wine](ubuntu/wine.md)
     - [Ubuntu 藍牙設備設定指南](ubuntu/ubuntu_bluetooth_setup.md)
+- [操作系統學習筆記](os/os.md)
+    - [xv6 操作系統分析與實踐](os/xv6_analysis.md)
 - [Docker](docker/docker_helloworld.md)
     - [Docker Basic Tutorial](docker/docker.md)
     - [Simple Example](docker/example.md)
