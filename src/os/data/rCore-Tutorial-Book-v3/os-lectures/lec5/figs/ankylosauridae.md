@@ -7,7 +7,7 @@ excalidraw-plugin: parsed
 
 
 # Text Elements
-头甲龙 
+頭甲龍 
 ankylosauridae ^iCa2byJb
 
 
@@ -46,15 +46,15 @@ ankylosauridae ^iCa2byJb
 			"boundElements": null,
 			"updated": 1646873012595,
 			"link": null,
-			"text": "头甲龙 \nankylosauridae",
-			"rawText": "头甲龙 \nankylosauridae",
+			"text": "頭甲龍 \nankylosauridae",
+			"rawText": "頭甲龍 \nankylosauridae",
 			"fontSize": 28,
 			"fontFamily": 4,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"baseline": 55,
 			"containerId": null,
-			"originalText": "头甲龙 \nankylosauridae"
+			"originalText": "頭甲龍 \nankylosauridae"
 		},
 		{
 			"id": "BfAnWX3Ei-RHXG2epX_SX",

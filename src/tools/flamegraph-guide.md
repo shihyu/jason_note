@@ -471,7 +471,7 @@ jobs:
                                      --threshold 5
 ```
 
-### 9.2 性能儀表板整合
+### 9.2 性能儀錶板整合
 
 ```javascript
 // 將火焰圖嵌入 Grafana

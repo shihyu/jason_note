@@ -34,7 +34,7 @@ Google Play 商店中可用的替代應用：
 
 #### 3. 開源函式庫
 - Record3D 提供**開源的 C++ 和 Python 函式庫**
-- 跨平台支援: Windows、Mac、Linux
+- 跨平臺支援: Windows、Mac、Linux
 - 開發者可研究如何與支援深度相機的 Android 裝置結合使用
 
 ---
@@ -45,7 +45,7 @@ Google Play 商店中可用的替代應用：
 
 #### SDK 本身
 - **librealsense 函式庫是開源的**
-- 允許使用者在各種平台上編譯、修改和部署
+- 允許使用者在各種平臺上編譯、修改和部署
 - 提供 API 存取相機的原始資料流（深度、色彩、紅外線影像）
 
 #### 核心演算法
@@ -74,7 +74,7 @@ Google Play 商店中可用的替代應用：
 | **Apple TrueDepth**   | 結構光             | Face ID、近距離掃描        | 閉源                      | 是 (iPhone/iPad 前置相機)       |
 | **Apple LiDAR**       | 飛時測距 (ToF)     | AR、環境掃描           | 閉源 (透過 Apple API 使用)     | 是 (iPhone Pro/iPad Pro 後置)  |
 | **Microsoft Azure Kinect DK** | 飛時測距 (ToF)     | 研究、醫療、開發          | SDK 開源                   | 是 (Azure Kinect 硬體)          |
-| **Orbbec (奧比中光)**    | ToF / 結構光         | 工業、機器人             | SDK 開源 (支援多平台)          | 是 (Orbbec 相機)               |
+| **Orbbec (奧比中光)**    | ToF / 結構光         | 工業、機器人             | SDK 開源 (支援多平臺)          | 是 (Orbbec 相機)               |
 | **Stereolabs ZED**    | 被動立體視覺          | AR/VR、機器人導航          | SDK 閉源，但提供免費 API      | 是 (ZED 相機)                 |
 | **Luxonis OAK-D**     | 立體視覺 + AI       | 嵌入式 AI、機器人          | SDK 開源 (DepthAI)           | 是 (OAK-D 相機)               |
 
@@ -182,7 +182,7 @@ Google Play 商店中可用的替代應用：
   - 相對不受環境光源影響（儘管極低光需要輔助照明）
   - 能處理較大的視野 (FoV)
 - **彈性與擴展性**:
-  - USB 外接設備，輕鬆連接各種電腦和開發平台
+  - USB 外接設備，輕鬆連接各種電腦和開發平臺
   - 透過開源 SDK 進行高度客製化
   - 支援多感應器同步
 
@@ -193,7 +193,7 @@ Google Play 商店中可用的替代應用：
 | **近距離 (15-40cm) 3D 掃描/人臉識別** | TrueDepth | 專為此範圍設計，光點密度極高，精確度出色             |
 | **中/遠距離 (1m+) 環境感知/機器人導航** | RealSense | 設計用於較遠距離和較大視野，性能穩定，應用場景廣泛           |
 | **便攜性與整合性**             | TrueDepth | 內建於行動裝置，方便隨身攜帶                            |
-| **開發彈性與跨平台支援**          | RealSense | USB 外接，支援多種作業系統和開源函式庫                    |
+| **開發彈性與跨平臺支援**          | RealSense | USB 外接，支援多種作業系統和開源函式庫                    |
 
 ---
 
@@ -214,8 +214,8 @@ Google Play 商店中可用的替代應用：
 - **優勢**: Intel RealSense 和 Azure Kinect 的主要競爭對手
 - **Femto Bolt/Mega**: 繼承 Azure Kinect 的技術，採用 ToF 原理，提供類似甚至更佳的性能
 - **被視為**: Azure Kinect 的直接替代品
-- **生態**: 支援多種平台和開發生態系
-- **SDK**: 開源 (支援多平台)
+- **生態**: 支援多種平臺和開發生態系
+- **SDK**: 開源 (支援多平臺)
 
 #### Stereolabs ZED 系列
 - **技術**: 被動式立體視覺 (Stereo Vision)
@@ -261,7 +261,7 @@ Google Play 商店中可用的替代應用：
 大多數優良深度感知解決方案提供**開源或免費使用的 SDK**，方便開發者自由使用與修改：
 - Intel RealSense: librealsense (開源)
 - Microsoft Azure Kinect: Azure Kinect SDK (開源)
-- Orbbec: 官方 SDK (開源，多平台)
+- Orbbec: 官方 SDK (開源，多平臺)
 - Luxonis OAK-D: DepthAI (開源)
 
 ### 閉源核心演算法

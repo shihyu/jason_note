@@ -405,7 +405,7 @@ def extract_emails(text: String) -> PythonObject:
     return re.findall(pattern, text)
 
 def extract_phone_numbers(text: String) -> PythonObject:
-    """提取電話號碼（台灣格式）"""
+    """提取電話號碼（臺灣格式）"""
     let re = Python.import_module("re")
     let patterns = [
         r'09\d{8}',           # 手機號碼

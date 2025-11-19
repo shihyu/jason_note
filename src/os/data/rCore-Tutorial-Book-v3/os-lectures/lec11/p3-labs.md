@@ -11,13 +11,13 @@ backgroundColor: white
 <!-- theme: gaia -->
 <!-- _class: lead -->
 
-# 第十一讲 线程与协程
-## 第三节 支持线程/协程的OS(TCOS)
+# 第十一講 線程與協程
+## 第三節 支持線程/協程的OS(TCOS)
 
 <br>
 <br>
 
-向勇 陈渝 李国良 
+向勇 陳渝 李國良 
 
 2022年秋季
 <!-- https://blog.aloni.org/posts/a-stack-less-rust-coroutine-100-loc/
@@ -30,57 +30,57 @@ https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/
 
 https://tian-deng.github.io/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/ -->
 ---
-### 实践：TCOS
-- **进化目标**
-- 总体思路
-- 历史背景
-- 实践步骤
-- 软件架构
-- 相关硬件
-- 程序设计
+### 實踐：TCOS
+- **進化目標**
+- 總體思路
+- 歷史背景
+- 實踐步驟
+- 軟件架構
+- 相關硬件
+- 程序設計
 
 ![bg right:65% 100%](figs/thread-coroutine-os-detail.png)
 
 
 ---
-### 实践：TCOS -- 以往目标
-提高性能、简化开发、加强安全、支持数据持久保存、支持应用的灵活性，支持进程间交互
-- IPC OS：进程间交互
-- Filesystem OS：支持数据持久保存
-- Process OS: 增强进程管理和资源管理
-- Address Space OS: 隔离APP访问的内存地址空间
-- multiprog & time-sharing OS: 让APP共享CPU资源
-- BatchOS: 让APP与OS隔离，加强系统安全，提高执行效率
-- LibOS: 让APP与HW隔离，简化应用访问硬件的难度和复杂性
+### 實踐：TCOS -- 以往目標
+提高性能、簡化開發、加強安全、支持數據持久保存、支持應用的靈活性，支持進程間交互
+- IPC OS：進程間交互
+- Filesystem OS：支持數據持久保存
+- Process OS: 增強進程管理和資源管理
+- Address Space OS: 隔離APP訪問的內存地址空間
+- multiprog & time-sharing OS: 讓APP共享CPU資源
+- BatchOS: 讓APP與OS隔離，加強系統安全，提高執行效率
+- LibOS: 讓APP與HW隔離，簡化應用訪問硬件的難度和複雜性
 
 ---
-### 实践：TCOS -- 进化目标
-提高执行效率，支持线程和协程
-- 在进程内实现多个控制流（线程/协程）的执行
-- 在用户态或内核态管理多个控制流（线程/协程）
+### 實踐：TCOS -- 進化目標
+提高執行效率，支持線程和協程
+- 在進程內實現多個控制流（線程/協程）的執行
+- 在用戶態或內核態管理多個控制流（線程/協程）
 
 
 ---
-### 实践：TCOS 
-### 同学的进化目标
-- 理解基于任务（Task）的进程/线程/协程抽象
-- 理解进程/线程/协程的实现与运行机制
-- 会写支持线程/协程的OS
+### 實踐：TCOS 
+### 同學的進化目標
+- 理解基於任務（Task）的進程/線程/協程抽象
+- 理解進程/線程/協程的實現與運行機制
+- 會寫支持線程/協程的OS
 
 
-<!-- 达科塔盗龙Dakotaraptor是一种生存于距今6700万-6500万年前白垩纪晚期的兽脚类驰龙科恐龙，它主打的并不是霸王龙的力量路线，而是利用自己修 长的后肢来提高敏捷度和奔跑速度。它全身几乎都长满了羽毛，可能会滑翔或者其他接近飞行行为的行动模式。 -->
+<!-- 達科塔盜龍Dakotaraptor是一種生存於距今6700萬-6500萬年前白堊紀晚期的獸腳類馳龍科恐龍，它主打的並不是霸王龍的力量路線，而是利用自己修 長的後肢來提高敏捷度和奔跑速度。它全身幾乎都長滿了羽毛，可能會滑翔或者其他接近飛行行為的行動模式。 -->
 
 ![bg right 80%](figs/dakotaraptor.png)
 
 ---
-### 实践：TCOS
-- 进化目标
-- **总体思路**
-    - **用户态管理的用户线程**
-- 历史背景
-- 实践步骤
-- 软件架构
-- 程序设计
+### 實踐：TCOS
+- 進化目標
+- **總體思路**
+    - **用戶態管理的用戶線程**
+- 歷史背景
+- 實踐步驟
+- 軟件架構
+- 程序設計
 
 ![bg right:70% 100%](figs/task-abstracts.png)
 
@@ -88,30 +88,30 @@ https://tian-deng.github.io/posts/translation/rust/green_threads_explained_in_20
 
 ---
 
-### 总体思路 
-- 如何管理协程/线程/进程？
-   - 任务上下文
-   - **用户态管理**
-   - 内核态管理 
+### 總體思路 
+- 如何管理協程/線程/進程？
+   - 任務上下文
+   - **用戶態管理**
+   - 內核態管理 
 ![bg right:65% 100%](figs/task-abstracts.png)
 
 
 ---
-### 总体思路 
-- 如何管理协程/线程/进程？
-   - 任务上下文
-   - **用户态管理**
-   - 内核态管理 
+### 總體思路 
+- 如何管理協程/線程/進程？
+   - 任務上下文
+   - **用戶態管理**
+   - 內核態管理 
 ![bg right:65% 100%](figs/thread-coroutine-os-detail.png)
 
 
 ---
-### 总体思路 
-**用户态管理的用户线程**
-   - 用户态管理线程的任务控制块
-      - 与 Lec4中的任务控制块类似
-      - 由用户态的Runtime管理
-  - 任务控制块
+### 總體思路 
+**用戶態管理的用戶線程**
+   - 用戶態管理線程的任務控制塊
+      - 與 Lec4中的任務控制塊類似
+      - 由用戶態的Runtime管理
+  - 任務控制塊
 ```
 struct Task {
     id: usize,
@@ -123,20 +123,20 @@ struct Task {
 ![bg right:40% 100%](figs/task-abstracts.png)
 
 ---
-### 实践步骤
+### 實踐步驟
 ```
 git clone https://github.com/rcore-os/rCore-Tutorial-v3.git
 cd rCore-Tutorial-v3
 git checkout ch8
 ```
-包含一个应用程序
+包含一個應用程序
 ```
 user/src/bin/
 ├──  stackful_coroutine.rs
 ```
 ---
-### 实践步骤
-执行这个应用程序
+### 實踐步驟
+執行這個應用程序
 ```
 Rust user shell
 >> stackful_coroutine
@@ -154,31 +154,31 @@ task: 4 counter: 0
 ```
 
 ---
-### 程序设计
-简单的用户态管理多线程应用 `stackful_coroutine.rs`
+### 程序設計
+簡單的用戶態管理多線程應用 `stackful_coroutine.rs`
 ```rust
 pub fn main()  {
-    let mut runtime = Runtime::new(); //创建线程管理子系统
-    runtime.init();  // 初始化线程管理子系统
-    runtime.spawn(|| {  //创建一个用户态线程
+    let mut runtime = Runtime::new(); //創建線程管理子系統
+    runtime.init();  // 初始化線程管理子系統
+    runtime.spawn(|| {  //創建一個用戶態線程
         println!("TASK  1 STARTING");
         let id = 1;
         for i in 0..4 {
             println!("task: {} counter: {}", id, i);
-            yield_task();  //主动让出处理器
+            yield_task();  //主動讓出處理器
         }
         println!("TASK 1 FINISHED");
-    }); //... 继续创建第2~4个用户态线程
-    runtime.run(); //调度执行各个线程
+    }); //... 繼續創建第2~4個用戶態線程
+    runtime.run(); //調度執行各個線程
 }
 ```
 
 
 ---
-### 程序设计
-用户态管理的线程结构与执行状态
+### 程序設計
+用戶態管理的線程結構與執行狀態
 ```rust
-struct Task { //线程控制块
+struct Task { //線程控制塊
     id: usize,
     stack: Vec<u8>,
     ctx: TaskContext,
@@ -186,7 +186,7 @@ struct Task { //线程控制块
 }
 ```
 ```rust
-pub struct TaskContext { //线程上下文
+pub struct TaskContext { //線程上下文
     x1: u64,  //ra: return addres 
     x2: u64,  //sp
     ...,  //s[0..11] 寄存器
@@ -196,10 +196,10 @@ pub struct TaskContext { //线程上下文
 
 
 ---
-### 程序设计
-用户态管理的线程结构与执行状态
+### 程序設計
+用戶態管理的線程結構與執行狀態
 ```rust
-struct Task { //线程控制块
+struct Task { //線程控制塊
     id: usize,
     stack: Vec<u8>,
     ctx: TaskContext,
@@ -207,7 +207,7 @@ struct Task { //线程控制块
 }
 ```
 ```rust
-enum State { //线程状态
+enum State { //線程狀態
     Available,
     Running,
     Ready,
@@ -216,52 +216,52 @@ enum State { //线程状态
 
 
 ---
-### 程序设计
-**用户态线程管理运行时初始化**
-Runtime::new() 主要有三个步骤：
-- 1. 设置主线程：初始化应用主线程控制块（TID为 0 ），并设置其状态为 Running；
-- 2. 设置调度队列：初始化线程控制块向量(线程调度队列)，加入应用主线程控制块和空闲线程控制块，为后续的线程运行做好准备；
-- 3. 设置当前运行线程id：设置Runtime 结构变量中的 current 值为0， 表示当前正在运行的线程是应用主线程。
+### 程序設計
+**用戶態線程管理運行時初始化**
+Runtime::new() 主要有三個步驟：
+- 1. 設置主線程：初始化應用主線程控制塊（TID為 0 ），並設置其狀態為 Running；
+- 2. 設置調度隊列：初始化線程控制塊向量(線程調度隊列)，加入應用主線程控制塊和空閒線程控制塊，為後續的線程運行做好準備；
+- 3. 設置當前運行線程id：設置Runtime 結構變量中的 current 值為0， 表示當前正在運行的線程是應用主線程。
 
 ---
-### 程序设计
-**用户态线程管理运行时初始化**
-Runtime::init() 的主要工作是把Rutime结构变量的地址赋值给全局可变变量`RUNTIME`。这样在多线程应用在后续执行中会根据`RUNTIME`找到Runtime结构变量。
+### 程序設計
+**用戶態線程管理運行時初始化**
+Runtime::init() 的主要工作是把Rutime結構變量的地址賦值給全局可變變量`RUNTIME`。這樣在多線程應用在後續執行中會根據`RUNTIME`找到Runtime結構變量。
 
-在应用的 main() 函数中，首先会依次调用上述两个函数（new和init），完成线程管理运行时的初始化过程。这样正在运行的TID为 0 的主线程就可代表线程运行时进行后续创建线程等一系列工作。
+在應用的 main() 函數中，首先會依次調用上述兩個函數（new和init），完成線程管理運行時的初始化過程。這樣正在運行的TID為 0 的主線程就可代表線程運行時進行後續創建線程等一系列工作。
 
 
 ---
-### 程序设计
-**用户态管理的线程创建** 
+### 程序設計
+**用戶態管理的線程創建** 
 ```rust
-    pub fn spawn(&mut self, f: fn()) { // f函数是线程入口
+    pub fn spawn(&mut self, f: fn()) { // f函數是線程入口
         let available = self  
-            .tasks.iter_mut()  //遍历队列中的任务
-            .find(|t| t.state == State::Available) //查找可用的任务
+            .tasks.iter_mut()  //遍歷隊列中的任務
+            .find(|t| t.state == State::Available) //查找可用的任務
             .expect("no available task.");
         let size = available.stack.len();
         unsafe {
             let s_ptr = available.stack.as_mut_ptr().offset(size as isize);
-            let s_ptr = (s_ptr as usize & !7) as *mut u8; // 栈按8字节对齐
+            let s_ptr = (s_ptr as usize & !7) as *mut u8; // 棧按8字節對齊
             available.ctx.x1 = guard as u64;  //ctx.x1  is old return address
             available.ctx.nx1 = f as u64;     //ctx.nx2 is new return address
             available.ctx.x2 = s_ptr.offset(-32) as u64; //cxt.x2 is sp
         }
-        available.state = State::Ready; //设置任务为就绪态
+        available.state = State::Ready; //設置任務為就緒態
     }
 }
 ```
 
 ---
-### 程序设计
-**用户态管理的线程创建** 
+### 程序設計
+**用戶態管理的線程創建** 
 
-- 在线程向量中查找一个状态为 Available 的空闲线程控制块
-- 初始化该空闲线程的线程控制块的线程上下文
-    -  `x1`寄存器：老的返回地址 -- `guard`函数地址
-    -  `nx1`寄存器：新的返回地址 -- 输入参数 `f` 函数地址
-    -  `x2` 寄存器：新的栈地址 --  available.stack+size
+- 在線程向量中查找一個狀態為 Available 的空閒線程控制塊
+- 初始化該空閒線程的線程控制塊的線程上下文
+    -  `x1`寄存器：老的返回地址 -- `guard`函數地址
+    -  `nx1`寄存器：新的返回地址 -- 輸入參數 `f` 函數地址
+    -  `x2` 寄存器：新的棧地址 --  available.stack+size
 ---
 ```rust
 fn guard() {
@@ -277,20 +277,20 @@ fn t_return(&mut self) {
     }
 }
 ```
-`guard`函数意味着我们传入的`f`函数（线程的主体）已经返回，这意味着我们的线程已完成运行其任务，因此我们取消引用我们的运行时并调用t_return()。
+`guard`函數意味著我們傳入的`f`函數（線程的主體）已經返回，這意味著我們的線程已完成運行其任務，因此我們取消引用我們的運行時並調用t_return()。
 
 ---
-### 程序设计
-**用户态管理的线程切换** 
-当应用要切换线程时，会调用 yield_task 函数，通过 runtime.t_yield 函数来完成具体的切换过程。runtime.t_yield 这个函数主要完成的功能：
-- 在线程向量中查找一个状态为 Ready 的线程控制块
-- 把当前运行的线程的状态改为`Ready`，把新就绪线程的状态改为`Running`，把 runtime 的 current 设置为新就绪线程控制块的id
-- 调用函数 switch ，完成两个线程的栈和上下文的切换；
+### 程序設計
+**用戶態管理的線程切換** 
+當應用要切換線程時，會調用 yield_task 函數，通過 runtime.t_yield 函數來完成具體的切換過程。runtime.t_yield 這個函數主要完成的功能：
+- 在線程向量中查找一個狀態為 Ready 的線程控制塊
+- 把當前運行的線程的狀態改為`Ready`，把新就緒線程的狀態改為`Running`，把 runtime 的 current 設置為新就緒線程控制塊的id
+- 調用函數 switch ，完成兩個線程的棧和上下文的切換；
 
 
 ---
-### 程序设计
-**用户态管理的线程切换** 
+### 程序設計
+**用戶態管理的線程切換** 
 ```rust
 fn t_yield(&mut self) -> bool {
         ...
@@ -307,15 +307,15 @@ fn t_yield(&mut self) -> bool {
 
 
 ---
-### 程序设计
-**用户态管理的线程切换** 
+### 程序設計
+**用戶態管理的線程切換** 
  switch 主要完成的工作：
-- 完成当前指令指针(PC)的切换；
-- 完成栈指针的切换；
-- 完成通用寄存器集合的切换；
+- 完成當前指令指針(PC)的切換；
+- 完成棧指針的切換；
+- 完成通用寄存器集合的切換；
 ---
-### 程序设计
-**用户态管理的线程切换** 
+### 程序設計
+**用戶態管理的線程切換** 
  switch 主要完成的工作：
 ```
 unsafe fn switch(old: *mut TaskContext, new: *const TaskContext)  {
@@ -333,8 +333,8 @@ unsafe fn switch(old: *mut TaskContext, new: *const TaskContext)  {
 
 
 ---
-### 程序设计
-**用户态管理的线程执行&调度** 
+### 程序設計
+**用戶態管理的線程執行&調度** 
 ```rust
     pub fn run(&mut self){
         while self.t_yield() {} 
@@ -345,14 +345,14 @@ unsafe fn switch(old: *mut TaskContext, new: *const TaskContext)  {
 
 
 ---
-### 实践：TCOS
-- 进化目标
-- **总体思路**
-    - **内核态管理的用户线程**
-- 历史背景
-- 实践步骤
-- 软件架构
-- 程序设计
+### 實踐：TCOS
+- 進化目標
+- **總體思路**
+    - **內核態管理的用戶線程**
+- 歷史背景
+- 實踐步驟
+- 軟件架構
+- 程序設計
 
 
 ![bg right:70% 100%](figs/task-abstracts.png)
@@ -361,30 +361,30 @@ unsafe fn switch(old: *mut TaskContext, new: *const TaskContext)  {
 
 ---
 
-### 总体思路 
-- 如何管理协程/线程/进程？
-   - 任务上下文
-   - 用户态管理
-   - **内核态管理**
+### 總體思路 
+- 如何管理協程/線程/進程？
+   - 任務上下文
+   - 用戶態管理
+   - **內核態管理**
 
 ![bg right:65% 100%](figs/task-abstracts.png)
 
 
 ---
-### 总体思路 
-- 如何管理协程/线程/进程？
-   - 任务上下文
-   - 用户态管理
-   - **内核态管理** 
+### 總體思路 
+- 如何管理協程/線程/進程？
+   - 任務上下文
+   - 用戶態管理
+   - **內核態管理** 
 ![bg right:65% 100%](figs/thread-coroutine-os-detail.png)
 
 
 ---
-### 总体思路 
-**内核态管理的用户线程**
-   - 内核态管理的用户线程的任务控制块
-      - 与 Lec7中的任务控制块类似
-      - 重构：进程中有多个代表线程的任务控制块
+### 總體思路 
+**內核態管理的用戶線程**
+   - 內核態管理的用戶線程的任務控制塊
+      - 與 Lec7中的任務控制塊類似
+      - 重構：進程中有多個代表線程的任務控制塊
 ```
 pub struct ProcessControlBlockInner {
     pub tasks: Vec<Option<Arc<TaskControlBlock>>>,
@@ -396,21 +396,21 @@ pub struct ProcessControlBlockInner {
 
 
 ---
-### 实践步骤
+### 實踐步驟
 ```
 git clone https://github.com/rcore-os/rCore-Tutorial-v3.git
 cd rCore-Tutorial-v3
 git checkout ch8
 ```
-包含几个与内核态管理的用户线程相关的应用程序
+包含幾個與內核態管理的用戶線程相關的應用程序
 ```
 user/src/bin/
 ├──  threads.rs
 ├──  threads_arg.rs
 ```
 ---
-### 实践步骤
-执行threads_arg这个应用程序
+### 實踐步驟
+執行threads_arg這個應用程序
 ```
 Rust user shell
 >> threads_arg
@@ -423,107 +423,107 @@ main thread exited.
 ```
 
 ---
-### 程序设计
-简单的内核态管理多线程应用 `threads_arg.rs`
+### 程序設計
+簡單的內核態管理多線程應用 `threads_arg.rs`
 ```rust
-fn thread_print(arg: *const Argument) -> ! { //线程的函数主体
+fn thread_print(arg: *const Argument) -> ! { //線程的函數主體
     ...
     exit(arg.rc)
 }
 pub fn main() -> i32 {
     let mut v = Vec::new();
     for arg in args.iter() {
-        v.push(thread_create( thread_print, arg ));  //创建线程
+        v.push(thread_create( thread_print, arg ));  //創建線程
     ...
     for tid in v.iter() {
-        let exit_code = waittid(*tid as usize); //等待线程结束
+        let exit_code = waittid(*tid as usize); //等待線程結束
     ...
 }
 ```
 
 
 ---
-### 程序设计 -- 系统调用
-在一个进程的运行过程中，进程可以创建多个属于这个进程的线程，每个线程有自己的线程标识符（TID，Thread Identifier）。系统调用 thread_create 的原型如下：
+### 程序設計 -- 系統調用
+在一個進程的運行過程中，進程可以創建多個屬於這個進程的線程，每個線程有自己的線程標識符（TID，Thread Identifier）。系統調用 thread_create 的原型如下：
 ```rust
-/// 功能：当前进程创建一个新的线程
-/// 参数：entry 表示线程的入口函数地址
-/// 参数：arg：表示线程的一个参数
+/// 功能：當前進程創建一個新的線程
+/// 參數：entry 表示線程的入口函數地址
+/// 參數：arg：表示線程的一個參數
 pub fn sys_thread_create(entry: usize, arg: usize) -> isize
 ```
-- 创建线程不需要建立新的地址空间
-- 属于同一进程中的线程之间没有父子关系
+- 創建線程不需要建立新的地址空間
+- 屬於同一進程中的線程之間沒有父子關係
 
 
 ---
-### 程序设计 -- 系统调用
-当一个线程执行完代表它的功能后，会通过 exit 系统调用退出。需要通过该线程需要进程/主线程调用 waittid 来回收其资源，这样整个线程才能被彻底销毁。系统调用 waittid 的原型如下：
+### 程序設計 -- 系統調用
+當一個線程執行完代表它的功能後，會通過 exit 系統調用退出。需要通過該線程需要進程/主線程調用 waittid 來回收其資源，這樣整個線程才能被徹底銷燬。系統調用 waittid 的原型如下：
 ```rust
-/// 参数：tid表示线程id
-/// 返回值：如果线程不存在，返回-1；如果线程还没退出，返回-2；其他情况下，返回结束线程的退出码
+/// 參數：tid表示線程id
+/// 返回值：如果線程不存在，返回-1；如果線程還沒退出，返回-2；其他情況下，返回結束線程的退出碼
 pub fn sys_waittid(tid: usize) -> i32
 ```
-- 进程/主线程要负责通过 waittid 来等待它创建出来的线程（不是主线程）结束并回收它们在内核中的资源
-- 如果进程/主线程先调用了 exit 系统调用来退出，那么整个进程（包括所属的所有线程）都会退出
+- 進程/主線程要負責通過 waittid 來等待它創建出來的線程（不是主線程）結束並回收它們在內核中的資源
+- 如果進程/主線程先調用了 exit 系統調用來退出，那麼整個進程（包括所屬的所有線程）都會退出
 
 
 ---
-### 程序设计 -- 系统调用
-在引入了线程机制后，进程相关的重要系统调用：fork 、 exec 、 waitpid 虽然在接口上没有变化，但在它要完成的功能上需要有一定的扩展。
-- 把以前进程中与处理器执行相关的部分拆分到线程中
-- 通过 fork 创建进程其实也意味着要单独建立一个主线程来使用处理器，并为以后创建新的线程建立相应的线程控制块向量
-- 相对而言， exec 和 waitpid 这两个系统调用要做的改动比较小，还是按照与之前进程的处理方式来进行
-- 总体上看，进程相关的这三个系统调用还是保持了已有的进程操作的语义，并没有由于引入了线程，而带来大的变化
+### 程序設計 -- 系統調用
+在引入了線程機制後，進程相關的重要系統調用：fork 、 exec 、 waitpid 雖然在接口上沒有變化，但在它要完成的功能上需要有一定的擴展。
+- 把以前進程中與處理器執行相關的部分拆分到線程中
+- 通過 fork 創建進程其實也意味著要單獨建立一個主線程來使用處理器，併為以後創建新的線程建立相應的線程控制塊向量
+- 相對而言， exec 和 waitpid 這兩個系統調用要做的改動比較小，還是按照與之前進程的處理方式來進行
+- 總體上看，進程相關的這三個系統調用還是保持了已有的進程操作的語義，並沒有由於引入了線程，而帶來大的變化
 
 
 ---
-### 程序设计 -- 系统调用
+### 程序設計 -- 系統調用
 
-问题：“被fork的子进程是否要复制父进程的多个线程？”
+問題：“被fork的子進程是否要複製父進程的多個線程？”
 
-选择A：要复制多个线程；选择B：不复制，只复制当前执行fork的这个线程；选择C：不支持多线程进程执行fork这种情况
+選擇A：要複製多個線程；選擇B：不復制，只複製當前執行fork的這個線程；選擇C：不支持多線程進程執行fork這種情況
 
-目前的rcore tutorial ，选择了C，简化了应用的使用场景，即在使用fork和create_thread（以及基于线程的信号量，条件变量等）是不会同时出现的。所以如果有fork，假定是这个应用是单线程的进程，所以只拷贝了这个单线程的结构。这种简化设计虽然是一种鸵鸟做法，但也避免了一些允许fork和create_thread共存而导致的比较复杂的情况：...
+目前的rcore tutorial ，選擇了C，簡化了應用的使用場景，即在使用fork和create_thread（以及基於線程的信號量，條件變量等）是不會同時出現的。所以如果有fork，假定是這個應用是單線程的進程，所以只拷貝了這個單線程的結構。這種簡化設計雖然是一種鴕鳥做法，但也避免了一些允許fork和create_thread共存而導致的比較複雜的情況：...
 
 ---
-### 程序设计 -- 系统调用
+### 程序設計 -- 系統調用
 
-问题：“被fork的子进程是否要复制父进程的多个线程？”
+問題：“被fork的子進程是否要複製父進程的多個線程？”
 
 比如：
 
-在fork前，有三个线程Main thread， thread A, thread B, 且Thread A拿到一个lock，在临界区中执行；Thread B正在写一个文件。如果Main thread执行fork，如采用A选择，会出现子进程的Thread B和 父进程的Thread B都在写一个文件的情况。如采用B选择，则子进程中只有Main Thread，当它想得到ThreadA的那个lock时，这个lock是得不到的（因为ThreadA 在子进程中不存在，没法释放锁），会陷入到持续忙等中。
+在fork前，有三個線程Main thread， thread A, thread B, 且Thread A拿到一個lock，在臨界區中執行；Thread B正在寫一個文件。如果Main thread執行fork，如採用A選擇，會出現子進程的Thread B和 父進程的Thread B都在寫一個文件的情況。如採用B選擇，則子進程中只有Main Thread，當它想得到ThreadA的那個lock時，這個lock是得不到的（因為ThreadA 在子進程中不存在，沒法釋放鎖），會陷入到持續忙等中。
 
 ---
-### 程序设计 -- 核心数据结构
-为了在现有进程管理的基础上实现线程管理，需要改进一些数据结构包含的内容及接口。基本思路就是把进程中与处理器相关的部分分拆出来，形成线程相关的部分：
-- 任务控制块 TaskControlBlock ：表示线程的核心数据结构
-- 任务管理器 TaskManager ：管理线程集合的核心数据结构
-- 处理器管理结构 Processor ：用于线程调度，维护线程的处理器状态
+### 程序設計 -- 核心數據結構
+為了在現有進程管理的基礎上實現線程管理，需要改進一些數據結構包含的內容及接口。基本思路就是把進程中與處理器相關的部分分拆出來，形成線程相關的部分：
+- 任務控制塊 TaskControlBlock ：表示線程的核心數據結構
+- 任務管理器 TaskManager ：管理線程集合的核心數據結構
+- 處理器管理結構 Processor ：用於線程調度，維護線程的處理器狀態
 
 
 ---
-### 程序设计 -- 核心数据结构
-线程控制块
+### 程序設計 -- 核心數據結構
+線程控制塊
 ```rust
 pub struct TaskControlBlock {
-    pub process: Weak<ProcessControlBlock>, //线程所属的进程控制块
-    pub kstack: KernelStack,//任务（线程）的内核栈
+    pub process: Weak<ProcessControlBlock>, //線程所屬的進程控制塊
+    pub kstack: KernelStack,//任務（線程）的內核棧
     inner: UPSafeCell<TaskControlBlockInner>,
 }
 pub struct TaskControlBlockInner {
-    pub res: Option<TaskUserRes>,  //任务（线程）用户态资源
+    pub res: Option<TaskUserRes>,  //任務（線程）用戶態資源
     pub trap_cx_ppn: PhysPageNum,//trap上下文地址
-    pub task_cx: TaskContext,//任务（线程）上下文
-    pub task_status: TaskStatus,//任务（线程）状态
-    pub exit_code: Option<i32>,//任务（线程）退出码
+    pub task_cx: TaskContext,//任務（線程）上下文
+    pub task_status: TaskStatus,//任務（線程）狀態
+    pub exit_code: Option<i32>,//任務（線程）退出碼
 }
 ```
 
 
 ---
-### 程序设计 -- 核心数据结构
-进程控制块
+### 程序設計 -- 核心數據結構
+進程控制塊
 ```rust
 pub struct ProcessControlBlock {
     pub pid: PidHandle,
@@ -535,22 +535,22 @@ pub struct ProcessControlBlockInner {
     ...
 }
 ```
- RecycleAllocator是PidAllocator的升级版，即一个相对通用的资源分配器，可用于分配进程标识符（PID）和线程的内核栈（KernelStack）。
+ RecycleAllocator是PidAllocator的升級版，即一個相對通用的資源分配器，可用於分配進程標識符（PID）和線程的內核棧（KernelStack）。
 
  
 ---
-### 程序设计 -- 管理机制
-线程创建
-当一个进程执行中发出系统调用 sys_thread_create 后，操作系统就需要在当前进程的基础上创建一个线程，即在线程控制块中初始化各个成员变量，建立好进程和线程的关系等，关键要素包括：
-- 线程的用户态栈：确保在用户态的线程能正常执行函数调用
-- 线程的内核态栈：确保线程陷入内核后能正常执行函数调用
-- 线程的跳板页：确保线程能正确的进行用户态<–>内核态切换
-- 线程上下文：即线程用到的寄存器信息，用于线程切换
+### 程序設計 -- 管理機制
+線程創建
+當一個進程執行中發出系統調用 sys_thread_create 後，操作系統就需要在當前進程的基礎上創建一個線程，即在線程控制塊中初始化各個成員變量，建立好進程和線程的關係等，關鍵要素包括：
+- 線程的用戶態棧：確保在用戶態的線程能正常執行函數調用
+- 線程的內核態棧：確保線程陷入內核後能正常執行函數調用
+- 線程的跳板頁：確保線程能正確的進行用戶態<–>內核態切換
+- 線程上下文：即線程用到的寄存器信息，用於線程切換
 
 
 ---
-### 程序设计 -- 管理机制
-线程创建
+### 程序設計 -- 管理機制
+線程創建
 ```rust
 pub fn sys_thread_create(entry: usize, arg: usize) -> isize {
     // create a new thread
@@ -568,26 +568,26 @@ pub fn sys_thread_create(entry: usize, arg: usize) -> isize {
 ```
 
 ---
-### 程序设计 -- 管理机制
-线程退出
-- 当一个非主线程的其他线程发出 sys_exit 系统调用时，内核会调用 exit_current_and_run_next 函数退出当前线程并切换到下一个线程，但不会导致其所属进程的退出。
-- 当主线程 即进程发出这个系统调用，当内核收到这个系统调用后，会回收整个进程（这包括了其管理的所有线程）资源，并退出。
+### 程序設計 -- 管理機制
+線程退出
+- 當一個非主線程的其他線程發出 sys_exit 系統調用時，內核會調用 exit_current_and_run_next 函數退出當前線程並切換到下一個線程，但不會導致其所屬進程的退出。
+- 當主線程 即進程發出這個系統調用，當內核收到這個系統調用後，會回收整個進程（這包括了其管理的所有線程）資源，並退出。
 
 
 ---
-### 程序设计 -- 管理机制
-线程退出
+### 程序設計 -- 管理機制
+線程退出
 ```rust
 pub fn sys_exit(exit_code: i32) -> ! {
     exit_current_and_run_next(exit_code); ...
 pub fn exit_current_and_run_next(exit_code: i32) { 
     let task = take_current_task().unwrap();
     let mut task_inner = task.inner_exclusive_access();   
-    drop(task_inner); //释放线程资源
-    drop(task);  //释放线程控制块
+    drop(task_inner); //釋放線程資源
+    drop(task);  //釋放線程控制塊
      if tid == 0 {
-        // 释放当前进程的所有线程资源
-        // 释放当前进程的资源
+        // 釋放當前進程的所有線程資源
+        // 釋放當前進程的資源
 ...
 ```
 
@@ -595,13 +595,13 @@ pub fn exit_current_and_run_next(exit_code: i32) {
 
 
 ---
-### 程序设计 -- 管理机制
-等待线程结束
-- 如果找到 tid 对应的线程，则尝试收集该线程的退出码 exit_tid ，否则返回错误（退出线程不存在）。
-- 如果退出码存在(意味该线程确实退出了)，则清空进程中对应此线程的线程控制块（至此，线程所占资源算是全部清空了），否则返回错误（线程还没退出）。
+### 程序設計 -- 管理機制
+等待線程結束
+- 如果找到 tid 對應的線程，則嘗試收集該線程的退出碼 exit_tid ，否則返回錯誤（退出線程不存在）。
+- 如果退出碼存在(意味該線程確實退出了)，則清空進程中對應此線程的線程控制塊（至此，線程所佔資源算是全部清空了），否則返回錯誤（線程還沒退出）。
 
 ---
-### 程序设计 -- 管理机制
+### 程序設計 -- 管理機制
 ```rust
 pub fn sys_waittid(tid: usize) -> i32 {
     ...
@@ -621,17 +621,17 @@ pub fn sys_waittid(tid: usize) -> i32 {
 ```
 
 ---
-### 程序设计 -- 管理机制
-线程执行中的特权级切换和调度切换
+### 程序設計 -- 管理機制
+線程執行中的特權級切換和調度切換
 
-- 线程执行中的特权级切换与第四讲中介绍的任务切换的设计与实现是一致的
-- 线程执行中的调度切换过程与第七讲中介绍的进程调度机制是一致的
+- 線程執行中的特權級切換與第四講中介紹的任務切換的設計與實現是一致的
+- 線程執行中的調度切換過程與第七講中介紹的進程調度機制是一致的
 
 
 ---
-### 小结
-- 用户态管理的用户线程
-- 内核态管理的用户线程
-- 能写达科塔盗龙OS
+### 小結
+- 用戶態管理的用戶線程
+- 內核態管理的用戶線程
+- 能寫達科塔盜龍OS
 
 ![bg right 70%](figs/dakotaraptor.png)

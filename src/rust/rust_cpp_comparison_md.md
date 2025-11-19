@@ -497,7 +497,7 @@ let r2 = &x;        // 可以有多個不可變借用
 - Rust 的借用檢查器防止數據競爭
 - 同一時間只能有一個可變借用，或多個不可變借用
 
-##### 2.1.3 生命周期
+##### 2.1.3 生命週期
 
 **C++（常見錯誤）:**
 ```cpp
@@ -511,11 +511,11 @@ int* dangerous_function() {
 ```rust
 fn dangerous_function() -> &i32 {
     let local = 42;
-    &local  // 編譯錯誤！生命周期不匹配
+    &local  // 編譯錯誤！生命週期不匹配
 }
 ```
 
-**正確的生命周期:**
+**正確的生命週期:**
 ```rust
 fn longest<'a>(s1: &'a str, s2: &'a str) -> &'a str {
     if s1.len() > s2.len() {
@@ -1155,10 +1155,10 @@ error[E0382]: borrow of moved value: `s`
 - 不像某些語言會突然改變，讓舊程式無法編譯
 - **好處**：投資在 Rust 上比較安全
 
-### 6. 跨平台
+### 6. 跨平臺
 
 ```rust
-// 同樣的程式碼可以跨平台編譯
+// 同樣的程式碼可以跨平臺編譯
 cargo build --target x86_64-pc-windows-gnu     # Windows
 cargo build --target x86_64-apple-darwin       # macOS  
 cargo build --target x86_64-unknown-linux-gnu  # Linux
@@ -1166,7 +1166,7 @@ cargo build --target x86_64-unknown-linux-gnu  # Linux
 
 **白話解釋：**
 - 一次寫，到處跑
-- 不用為每個平台重寫程式
+- 不用為每個平臺重寫程式
 - **好處**：省時省力
 
 ---

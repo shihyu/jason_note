@@ -15,7 +15,7 @@
 * 程式語法、資料結構效能 (map vs unordered\_map, memcpy vs move)。
 * 系統延遲：syscall 開銷、context switch。
 * socket 傳輸延遲。
-* tick-in → order-out 的端對端延遲分布。
+* tick-in → order-out 的端對端延遲分佈。
 
 ### ❌ 無法完全模擬的
 

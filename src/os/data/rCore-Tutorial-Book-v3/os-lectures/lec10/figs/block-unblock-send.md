@@ -9,21 +9,21 @@ excalidraw-plugin: parsed
 # Text Elements
 read   ^zGTUWAnH
 
-阻塞的系统调用 ^a0Dc1OKW
+阻塞的系統調用 ^a0Dc1OKW
 
-进程 ^0ap7wW0n
+進程 ^0ap7wW0n
 
-数据没有准备好 ^cWcqysFZ
+數據沒有準備好 ^cWcqysFZ
 
-进程 ^ZkKt6IX5
+進程 ^ZkKt6IX5
 
-准备好数据，
-并从内核拷贝
-到进程地址空间 ^bZw9Iu0t
+準備好數據，
+並從內核拷貝
+到進程地址空間 ^bZw9Iu0t
 
-从磁盘读数据 ^0J18Fg8S
+從磁盤讀數據 ^0J18Fg8S
 
-拷贝完成 ^YmW4QCyn
+拷貝完成 ^YmW4QCyn
 
 返回 ^UFSoqBVB
 
@@ -32,26 +32,26 @@ read   ^zGTUWAnH
 的
 IPC ^CreljTA6
 
-时
-间 ^BWDhbxNp
+時
+間 ^BWDhbxNp
 
 read   ^ePcYwY2a
 
-非阻塞的系统调用 ^jadOTOXy
+非阻塞的系統調用 ^jadOTOXy
 
-进程 ^OWqAIH1T
+進程 ^OWqAIH1T
 
-数据没有准备好 ^PGMMw7Xn
+數據沒有準備好 ^PGMMw7Xn
 
-进程 ^MH61ZlaY
+進程 ^MH61ZlaY
 
-准备好数据，
-并从内核拷贝
-到进程地址空间 ^3JDFTgCw
+準備好數據，
+並從內核拷貝
+到進程地址空間 ^3JDFTgCw
 
-从磁盘读数据 ^3Kcb9tOZ
+從磁盤讀數據 ^3Kcb9tOZ
 
-拷贝完成 ^GHnuORvC
+拷貝完成 ^GHnuORvC
 
 非
 阻
@@ -59,14 +59,14 @@ read   ^ePcYwY2a
 的
 IPC ^6KlVLckc
 
-时
-间 ^a2xFvoMz
+時
+間 ^a2xFvoMz
 
 返回 ^LU8NQXEY
 
-通知进程read操作完成 ^LkNLfNj1
+通知進程read操作完成 ^LkNLfNj1
 
-进程
+進程
 做其
 它的
 事情 ^mZ5kEitf
@@ -198,13 +198,13 @@ IPC ^6KlVLckc
 			"link": null,
 			"fontSize": 23.63636363636363,
 			"fontFamily": 4,
-			"text": "阻塞的系统调用",
-			"rawText": "阻塞的系统调用",
+			"text": "阻塞的系統調用",
+			"rawText": "阻塞的系統調用",
 			"baseline": 22,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "阻塞的系统调用"
+			"originalText": "阻塞的系統調用"
 		},
 		{
 			"type": "text",
@@ -239,13 +239,13 @@ IPC ^6KlVLckc
 			"link": null,
 			"fontSize": 35.58441162109372,
 			"fontFamily": 4,
-			"text": "进程",
-			"rawText": "进程",
+			"text": "進程",
+			"rawText": "進程",
 			"baseline": 32,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程"
+			"originalText": "進程"
 		},
 		{
 			"type": "text",
@@ -284,13 +284,13 @@ IPC ^6KlVLckc
 			"link": null,
 			"fontSize": 27.12430483335023,
 			"fontFamily": 4,
-			"text": "数据没有准备好",
-			"rawText": "数据没有准备好",
+			"text": "數據沒有準備好",
+			"rawText": "數據沒有準備好",
 			"baseline": 25,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "数据没有准备好"
+			"originalText": "數據沒有準備好"
 		},
 		{
 			"type": "text",
@@ -325,13 +325,13 @@ IPC ^6KlVLckc
 			"link": null,
 			"fontSize": 35.58441162109372,
 			"fontFamily": 4,
-			"text": "进程",
-			"rawText": "进程",
+			"text": "進程",
+			"rawText": "進程",
 			"baseline": 32,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程"
+			"originalText": "進程"
 		},
 		{
 			"type": "arrow",
@@ -420,13 +420,13 @@ IPC ^6KlVLckc
 			"link": null,
 			"fontSize": 23.34064190204327,
 			"fontFamily": 4,
-			"text": "准备好数据，\n并从内核拷贝\n到进程地址空间",
-			"rawText": "准备好数据，\n并从内核拷贝\n到进程地址空间",
+			"text": "準備好數據，\n並從內核拷貝\n到進程地址空間",
+			"rawText": "準備好數據，\n並從內核拷貝\n到進程地址空間",
 			"baseline": 70,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "准备好数据，\n并从内核拷贝\n到进程地址空间"
+			"originalText": "準備好數據，\n並從內核拷貝\n到進程地址空間"
 		},
 		{
 			"type": "text",
@@ -465,13 +465,13 @@ IPC ^6KlVLckc
 			"link": null,
 			"fontSize": 27.792164195667617,
 			"fontFamily": 4,
-			"text": "从磁盘读数据",
-			"rawText": "从磁盘读数据",
+			"text": "從磁盤讀數據",
+			"rawText": "從磁盤讀數據",
 			"baseline": 25,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "从磁盘读数据"
+			"originalText": "從磁盤讀數據"
 		},
 		{
 			"type": "arrow",
@@ -606,13 +606,13 @@ IPC ^6KlVLckc
 			"link": null,
 			"fontSize": 23.116787997159097,
 			"fontFamily": 4,
-			"text": "拷贝完成",
-			"rawText": "拷贝完成",
+			"text": "拷貝完成",
+			"rawText": "拷貝完成",
 			"baseline": 21,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "拷贝完成"
+			"originalText": "拷貝完成"
 		},
 		{
 			"type": "arrow",
@@ -819,13 +819,13 @@ IPC ^6KlVLckc
 			"link": null,
 			"fontSize": 39.9335568450218,
 			"fontFamily": 4,
-			"text": "时\n间",
-			"rawText": "时\n间",
+			"text": "時\n間",
+			"rawText": "時\n間",
 			"baseline": 81,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "时\n间"
+			"originalText": "時\n間"
 		},
 		{
 			"type": "text",
@@ -940,13 +940,13 @@ IPC ^6KlVLckc
 			"link": null,
 			"fontSize": 23.63636363636363,
 			"fontFamily": 4,
-			"text": "非阻塞的系统调用",
-			"rawText": "非阻塞的系统调用",
+			"text": "非阻塞的系統調用",
+			"rawText": "非阻塞的系統調用",
 			"baseline": 22,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "非阻塞的系统调用"
+			"originalText": "非阻塞的系統調用"
 		},
 		{
 			"type": "text",
@@ -979,13 +979,13 @@ IPC ^6KlVLckc
 			"link": null,
 			"fontSize": 35.58441162109372,
 			"fontFamily": 4,
-			"text": "进程",
-			"rawText": "进程",
+			"text": "進程",
+			"rawText": "進程",
 			"baseline": 32,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程"
+			"originalText": "進程"
 		},
 		{
 			"type": "text",
@@ -1022,13 +1022,13 @@ IPC ^6KlVLckc
 			"link": null,
 			"fontSize": 27.12430483335023,
 			"fontFamily": 4,
-			"text": "数据没有准备好",
-			"rawText": "数据没有准备好",
+			"text": "數據沒有準備好",
+			"rawText": "數據沒有準備好",
 			"baseline": 25,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "数据没有准备好"
+			"originalText": "數據沒有準備好"
 		},
 		{
 			"type": "text",
@@ -1061,13 +1061,13 @@ IPC ^6KlVLckc
 			"link": null,
 			"fontSize": 35.58441162109372,
 			"fontFamily": 4,
-			"text": "进程",
-			"rawText": "进程",
+			"text": "進程",
+			"rawText": "進程",
 			"baseline": 32,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程"
+			"originalText": "進程"
 		},
 		{
 			"type": "arrow",
@@ -1152,13 +1152,13 @@ IPC ^6KlVLckc
 			"link": null,
 			"fontSize": 23.34064190204327,
 			"fontFamily": 4,
-			"text": "准备好数据，\n并从内核拷贝\n到进程地址空间",
-			"rawText": "准备好数据，\n并从内核拷贝\n到进程地址空间",
+			"text": "準備好數據，\n並從內核拷貝\n到進程地址空間",
+			"rawText": "準備好數據，\n並從內核拷貝\n到進程地址空間",
 			"baseline": 70,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "准备好数据，\n并从内核拷贝\n到进程地址空间"
+			"originalText": "準備好數據，\n並從內核拷貝\n到進程地址空間"
 		},
 		{
 			"type": "text",
@@ -1195,13 +1195,13 @@ IPC ^6KlVLckc
 			"link": null,
 			"fontSize": 27.792164195667617,
 			"fontFamily": 4,
-			"text": "从磁盘读数据",
-			"rawText": "从磁盘读数据",
+			"text": "從磁盤讀數據",
+			"rawText": "從磁盤讀數據",
 			"baseline": 25,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "从磁盘读数据"
+			"originalText": "從磁盤讀數據"
 		},
 		{
 			"type": "arrow",
@@ -1334,13 +1334,13 @@ IPC ^6KlVLckc
 			"link": null,
 			"fontSize": 23.116787997159097,
 			"fontFamily": 4,
-			"text": "拷贝完成",
-			"rawText": "拷贝完成",
+			"text": "拷貝完成",
+			"rawText": "拷貝完成",
 			"baseline": 21,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "拷贝完成"
+			"originalText": "拷貝完成"
 		},
 		{
 			"type": "arrow",
@@ -1486,13 +1486,13 @@ IPC ^6KlVLckc
 			"link": null,
 			"fontSize": 28.857262237029133,
 			"fontFamily": 4,
-			"text": "时\n间",
-			"rawText": "时\n间",
+			"text": "時\n間",
+			"rawText": "時\n間",
 			"baseline": 57,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "时\n间"
+			"originalText": "時\n間"
 		},
 		{
 			"type": "text",
@@ -1601,15 +1601,15 @@ IPC ^6KlVLckc
 			"boundElements": null,
 			"updated": 1651714626984,
 			"link": null,
-			"text": "通知进程read操作完成",
-			"rawText": "通知进程read操作完成",
+			"text": "通知進程read操作完成",
+			"rawText": "通知進程read操作完成",
 			"fontSize": 27.630171342329554,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 25,
 			"containerId": null,
-			"originalText": "通知进程read操作完成"
+			"originalText": "通知進程read操作完成"
 		},
 		{
 			"type": "text",
@@ -1642,13 +1642,13 @@ IPC ^6KlVLckc
 			"link": null,
 			"fontSize": 27.82689209737172,
 			"fontFamily": 4,
-			"text": "进程\n做其\n它的\n事情",
-			"rawText": "进程\n做其\n它的\n事情",
+			"text": "進程\n做其\n它的\n事情",
+			"rawText": "進程\n做其\n它的\n事情",
 			"baseline": 115.427490234375,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程\n做其\n它的\n事情"
+			"originalText": "進程\n做其\n它的\n事情"
 		}
 	],
 	"appState": {

@@ -20,7 +20,7 @@
 - **高頻率**：每秒可執行數千到數萬筆交易
 - **小利潤**：單筆交易利潤極小，依靠大量交易累積獲利
 - **短持倉時間**：持倉時間從毫秒到幾分鐘不等
-- **自動化**：完全由電腦程式執行，無人工干預
+- **自動化**：完全由電腦程式執行，無人工幹預
 
 ### HFT 系統架構
 
@@ -130,7 +130,7 @@
 ### 書籍推薦
 - "Algorithmic Trading: Winning Strategies and Their Rationale" - Ernest P. Chan
 - "High-Frequency Trading: A Practical Guide to Algorithmic Strategies and Trading Systems" - Irene Aldridge
-- "Flash Boys" - Michael Lewis（了解 HFT 產業）
+- "Flash Boys" - Michael Lewis（瞭解 HFT 產業）
 
 ### 技術資源
 - [Mechanical Sympathy](https://mechanical-sympathy.blogspot.com/) - 低延遲系統設計
@@ -144,7 +144,7 @@
 
 ## ⚠️ 注意事項
 
-1. **法規遵循**：了解並遵守當地金融法規
+1. **法規遵循**：瞭解並遵守當地金融法規
 2. **資金需求**：HFT 需要大量資金投入（硬體、軟體、資料、託管等）
 3. **競爭激烈**：市場上有許多專業團隊，競爭非常激烈
 4. **技術門檻高**：需要跨領域知識（金融、程式、網路、硬體）

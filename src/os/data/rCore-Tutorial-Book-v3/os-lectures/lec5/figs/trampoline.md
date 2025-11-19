@@ -7,25 +7,25 @@ excalidraw-plugin: parsed
 
 
 # Text Elements
-代码段 ^rxfM0O5e
+代碼段 ^rxfM0O5e
 
-数据段 ^amFrmF4n
+數據段 ^amFrmF4n
 
-用户栈 ^ujORRazY
+用戶棧 ^ujORRazY
 
-用户堆 ^IwDFUMIj
+用戶堆 ^IwDFUMIj
 
-代码段 ^xAhO2tAW
+代碼段 ^xAhO2tAW
 
-数据段 ^ArK1nEVm
+數據段 ^ArK1nEVm
 
-用户栈 ^Bj3vHWbb
+用戶棧 ^Bj3vHWbb
 
-用户堆 ^8JgQcGp4
+用戶堆 ^8JgQcGp4
 
 跳板 ^FzGILdgi
 
-内核栈 ^D548w4Bl
+內核棧 ^D548w4Bl
 
 跳板 ^bxoUonPs
 
@@ -35,9 +35,9 @@ TrapContext ^vKSYG39Y
 
 TrapContext ^NvyCxzrz
 
-app1内核栈 ^xh9wsQt0
+app1內核棧 ^xh9wsQt0
 
-app1内核栈 ^GKVOTeGB
+app1內核棧 ^GKVOTeGB
 
 APP1 ^8J9Kxax1
 
@@ -50,33 +50,33 @@ trap.S:: __alltraps/__restore ^TGrbvLer
 - Reg X[0--31]
 - CSR sstatus
 - CSR sepc
-- 内核页表的起始物理地址
-- app的内核栈栈顶的虚拟地址
-- trap handler 入口点的虚拟地址 ^WLZF3pxq
+- 內核頁表的起始物理地址
+- app的內核棧棧頂的虛擬地址
+- trap handler 入口點的虛擬地址 ^WLZF3pxq
 
 物理地址 ^tLBUPKdw
 
-虚拟地址 ^I3nYxiJF
+虛擬地址 ^I3nYxiJF
 
-虚拟地址 ^h4h1OHm7
+虛擬地址 ^h4h1OHm7
 
-虚拟地址 ^xgOHUXi4
+虛擬地址 ^xgOHUXi4
 
 sscratch ^o38WxAMS
 
-APP的TrapContext的基址（虚拟地址） ^jnoi8aK1
+APP的TrapContext的基址（虛擬地址） ^jnoi8aK1
 
 TaskCxt1 ^kLZ6yKYm
 
 TaskCxt2 ^k6YQ9jAW
 
-- app内核栈的栈底地址
-- __switch 函数返回地址
-- 被调用者保存的寄存器S[0-11] ^cKzj1J9h
+- app內核棧的棧底地址
+- __switch 函數返回地址
+- 被調用者保存的寄存器S[0-11] ^cKzj1J9h
 
-APP1页表 ^RNjVcpKy
+APP1頁表 ^RNjVcpKy
 
-APP2页表 ^NksCpXAQ
+APP2頁表 ^NksCpXAQ
 
 %%
 # Drawing
@@ -212,13 +212,13 @@ APP2页表 ^NksCpXAQ
 			"link": null,
 			"fontSize": 26.464923796106557,
 			"fontFamily": 4,
-			"text": "代码段",
-			"rawText": "代码段",
+			"text": "代碼段",
+			"rawText": "代碼段",
 			"baseline": 24,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "代码段"
+			"originalText": "代碼段"
 		},
 		{
 			"type": "rectangle",
@@ -271,13 +271,13 @@ APP2页表 ^NksCpXAQ
 			"link": null,
 			"fontSize": 26.464923796106557,
 			"fontFamily": 4,
-			"text": "数据段",
-			"rawText": "数据段",
+			"text": "數據段",
+			"rawText": "數據段",
 			"baseline": 24,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "数据段"
+			"originalText": "數據段"
 		},
 		{
 			"type": "rectangle",
@@ -330,13 +330,13 @@ APP2页表 ^NksCpXAQ
 			"link": null,
 			"fontSize": 26.464923796106557,
 			"fontFamily": 4,
-			"text": "用户栈",
-			"rawText": "用户栈",
+			"text": "用戶棧",
+			"rawText": "用戶棧",
 			"baseline": 24,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "用户栈"
+			"originalText": "用戶棧"
 		},
 		{
 			"type": "rectangle",
@@ -389,13 +389,13 @@ APP2页表 ^NksCpXAQ
 			"link": null,
 			"fontSize": 26.464923796106557,
 			"fontFamily": 4,
-			"text": "用户堆",
-			"rawText": "用户堆",
+			"text": "用戶堆",
+			"rawText": "用戶堆",
 			"baseline": 24,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "用户堆"
+			"originalText": "用戶堆"
 		},
 		{
 			"type": "rectangle",
@@ -473,13 +473,13 @@ APP2页表 ^NksCpXAQ
 			"link": null,
 			"fontSize": 26.464923796106557,
 			"fontFamily": 4,
-			"text": "代码段",
-			"rawText": "代码段",
+			"text": "代碼段",
+			"rawText": "代碼段",
 			"baseline": 24,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "代码段"
+			"originalText": "代碼段"
 		},
 		{
 			"type": "rectangle",
@@ -532,13 +532,13 @@ APP2页表 ^NksCpXAQ
 			"link": null,
 			"fontSize": 26.464923796106557,
 			"fontFamily": 4,
-			"text": "数据段",
-			"rawText": "数据段",
+			"text": "數據段",
+			"rawText": "數據段",
 			"baseline": 24,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "数据段"
+			"originalText": "數據段"
 		},
 		{
 			"type": "rectangle",
@@ -591,13 +591,13 @@ APP2页表 ^NksCpXAQ
 			"link": null,
 			"fontSize": 26.464923796106557,
 			"fontFamily": 4,
-			"text": "用户栈",
-			"rawText": "用户栈",
+			"text": "用戶棧",
+			"rawText": "用戶棧",
 			"baseline": 24,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "用户栈"
+			"originalText": "用戶棧"
 		},
 		{
 			"type": "rectangle",
@@ -650,13 +650,13 @@ APP2页表 ^NksCpXAQ
 			"link": null,
 			"fontSize": 26.464923796106557,
 			"fontFamily": 4,
-			"text": "用户堆",
-			"rawText": "用户堆",
+			"text": "用戶堆",
+			"rawText": "用戶堆",
 			"baseline": 24,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "用户堆"
+			"originalText": "用戶堆"
 		},
 		{
 			"type": "rectangle",
@@ -768,13 +768,13 @@ APP2页表 ^NksCpXAQ
 			"link": null,
 			"fontSize": 26.464923796106557,
 			"fontFamily": 4,
-			"text": "内核栈",
-			"rawText": "内核栈",
+			"text": "內核棧",
+			"rawText": "內核棧",
 			"baseline": 24,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "内核栈"
+			"originalText": "內核棧"
 		},
 		{
 			"type": "rectangle",
@@ -1468,13 +1468,13 @@ APP2页表 ^NksCpXAQ
 			"link": null,
 			"fontSize": 26.464923796106557,
 			"fontFamily": 4,
-			"text": "app1内核栈",
-			"rawText": "app1内核栈",
+			"text": "app1內核棧",
+			"rawText": "app1內核棧",
 			"baseline": 24,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "app1内核栈"
+			"originalText": "app1內核棧"
 		},
 		{
 			"type": "rectangle",
@@ -1532,13 +1532,13 @@ APP2页表 ^NksCpXAQ
 			"link": null,
 			"fontSize": 26.464923796106557,
 			"fontFamily": 4,
-			"text": "app1内核栈",
-			"rawText": "app1内核栈",
+			"text": "app1內核棧",
+			"rawText": "app1內核棧",
 			"baseline": 24,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "app1内核栈"
+			"originalText": "app1內核棧"
 		},
 		{
 			"type": "line",
@@ -1916,13 +1916,13 @@ APP2页表 ^NksCpXAQ
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "- Reg X[0--31]\n- CSR sstatus\n- CSR sepc\n- 内核页表的起始物理地址\n- app的内核栈栈顶的虚拟地址\n- trap handler 入口点的虚拟地址",
-			"rawText": "- Reg X[0--31]\n- CSR sstatus\n- CSR sepc\n- 内核页表的起始物理地址\n- app的内核栈栈顶的虚拟地址\n- trap handler 入口点的虚拟地址",
+			"text": "- Reg X[0--31]\n- CSR sstatus\n- CSR sepc\n- 內核頁表的起始物理地址\n- app的內核棧棧頂的虛擬地址\n- trap handler 入口點的虛擬地址",
+			"rawText": "- Reg X[0--31]\n- CSR sstatus\n- CSR sepc\n- 內核頁表的起始物理地址\n- app的內核棧棧頂的虛擬地址\n- trap handler 入口點的虛擬地址",
 			"baseline": 126,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "- Reg X[0--31]\n- CSR sstatus\n- CSR sepc\n- 内核页表的起始物理地址\n- app的内核栈栈顶的虚拟地址\n- trap handler 入口点的虚拟地址"
+			"originalText": "- Reg X[0--31]\n- CSR sstatus\n- CSR sepc\n- 內核頁表的起始物理地址\n- app的內核棧棧頂的虛擬地址\n- trap handler 入口點的虛擬地址"
 		},
 		{
 			"type": "rectangle",
@@ -2110,13 +2110,13 @@ APP2页表 ^NksCpXAQ
 			"link": null,
 			"fontSize": 27.381076098763362,
 			"fontFamily": 4,
-			"text": "虚拟地址",
-			"rawText": "虚拟地址",
+			"text": "虛擬地址",
+			"rawText": "虛擬地址",
 			"baseline": 25,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "虚拟地址"
+			"originalText": "虛擬地址"
 		},
 		{
 			"type": "line",
@@ -2184,13 +2184,13 @@ APP2页表 ^NksCpXAQ
 			"link": null,
 			"fontSize": 27.381076098763362,
 			"fontFamily": 4,
-			"text": "虚拟地址",
-			"rawText": "虚拟地址",
+			"text": "虛擬地址",
+			"rawText": "虛擬地址",
 			"baseline": 25,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "虚拟地址"
+			"originalText": "虛擬地址"
 		},
 		{
 			"type": "text",
@@ -2218,13 +2218,13 @@ APP2页表 ^NksCpXAQ
 			"link": null,
 			"fontSize": 27.381076098763362,
 			"fontFamily": 4,
-			"text": "虚拟地址",
-			"rawText": "虚拟地址",
+			"text": "虛擬地址",
+			"rawText": "虛擬地址",
 			"baseline": 25,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "虚拟地址"
+			"originalText": "虛擬地址"
 		},
 		{
 			"type": "rectangle",
@@ -2360,13 +2360,13 @@ APP2页表 ^NksCpXAQ
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "APP的TrapContext的基址（虚拟地址）",
-			"rawText": "APP的TrapContext的基址（虚拟地址）",
+			"text": "APP的TrapContext的基址（虛擬地址）",
+			"rawText": "APP的TrapContext的基址（虛擬地址）",
 			"baseline": 17,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "APP的TrapContext的基址（虚拟地址）"
+			"originalText": "APP的TrapContext的基址（虛擬地址）"
 		},
 		{
 			"type": "rectangle",
@@ -2512,13 +2512,13 @@ APP2页表 ^NksCpXAQ
 			"link": null,
 			"fontSize": 27.354027808129366,
 			"fontFamily": 4,
-			"text": "- app内核栈的栈底地址\n- __switch 函数返回地址\n- 被调用者保存的寄存器S[0-11]",
-			"rawText": "- app内核栈的栈底地址\n- __switch 函数返回地址\n- 被调用者保存的寄存器S[0-11]",
+			"text": "- app內核棧的棧底地址\n- __switch 函數返回地址\n- 被調用者保存的寄存器S[0-11]",
+			"rawText": "- app內核棧的棧底地址\n- __switch 函數返回地址\n- 被調用者保存的寄存器S[0-11]",
 			"baseline": 85,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "- app内核栈的栈底地址\n- __switch 函数返回地址\n- 被调用者保存的寄存器S[0-11]"
+			"originalText": "- app內核棧的棧底地址\n- __switch 函數返回地址\n- 被調用者保存的寄存器S[0-11]"
 		},
 		{
 			"type": "rectangle",
@@ -2699,15 +2699,15 @@ APP2页表 ^NksCpXAQ
 			"boundElements": null,
 			"updated": 1647592940086,
 			"link": null,
-			"text": "APP1页表",
-			"rawText": "APP1页表",
+			"text": "APP1頁表",
+			"rawText": "APP1頁表",
 			"fontSize": 27.86601989535382,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 25,
 			"containerId": null,
-			"originalText": "APP1页表"
+			"originalText": "APP1頁表"
 		},
 		{
 			"type": "rectangle",
@@ -2760,13 +2760,13 @@ APP2页表 ^NksCpXAQ
 			"link": null,
 			"fontSize": 27.86601989535382,
 			"fontFamily": 4,
-			"text": "APP2页表",
-			"rawText": "APP2页表",
+			"text": "APP2頁表",
+			"rawText": "APP2頁表",
 			"baseline": 25,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "APP2页表"
+			"originalText": "APP2頁表"
 		},
 		{
 			"id": "z4F1SovOJ8cioyezuL4Ug",

@@ -111,7 +111,7 @@ gtkwave --version
 # 安裝 Yosys (綜合工具)
 sudo apt install yosys
 
-# 安裝 nextpnr-ecp5 (布局布線)
+# 安裝 nextpnr-ecp5 (佈局布線)
 sudo apt install nextpnr-ecp5
 
 # 安裝 prjtrellis (位流生成)
@@ -330,7 +330,7 @@ fusesoc run --target=colorlight_i5 servant
 ### 開源專案
 - [LiteX Framework](https://github.com/enjoy-digital/litex)
 - [Yosys 綜合工具](https://github.com/YosysHQ/yosys)
-- [nextpnr 布局布線](https://github.com/YosysHQ/nextpnr)
+- [nextpnr 佈局布線](https://github.com/YosysHQ/nextpnr)
 - [OpenFPGALoader](https://github.com/trabucayre/openFPGALoader)
 
 ### ColorLight 改裝資源
@@ -477,7 +477,7 @@ Plug 'vim-airline/vim-airline-themes'
 " 程式碼標籤
 Plug 'preservim/tagbar'
 
-" 多游標
+" 多遊標
 Plug 'terryma/vim-multiple-cursors'
 
 call plug#end()

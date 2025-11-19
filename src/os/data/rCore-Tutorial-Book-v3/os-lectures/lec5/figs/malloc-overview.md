@@ -11,13 +11,13 @@ Malloc ^1tWLvaWg
 
 Free ^45rcWcGf
 
-分配/申请 ^E82xNBBF
+分配/申請 ^E82xNBBF
 
-释放/归还 ^Zr75TIHH
+釋放/歸還 ^Zr75TIHH
 
-内存池 ^Xe6daegJ
+內存池 ^Xe6daegJ
 
-运行的程序 ^96X6dVDK
+運行的程序 ^96X6dVDK
 
 %%
 # Drawing
@@ -693,13 +693,13 @@ Free ^45rcWcGf
 			"link": null,
 			"fontSize": 41.16926457331731,
 			"fontFamily": 4,
-			"text": "分配/申请",
-			"rawText": "分配/申请",
+			"text": "分配/申請",
+			"rawText": "分配/申請",
 			"baseline": 37,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "分配/申请"
+			"originalText": "分配/申請"
 		},
 		{
 			"type": "text",
@@ -727,13 +727,13 @@ Free ^45rcWcGf
 			"link": null,
 			"fontSize": 42.64616511418267,
 			"fontFamily": 4,
-			"text": "释放/归还",
-			"rawText": "释放/归还",
+			"text": "釋放/歸還",
+			"rawText": "釋放/歸還",
 			"baseline": 39,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "释放/归还"
+			"originalText": "釋放/歸還"
 		},
 		{
 			"type": "text",
@@ -761,13 +761,13 @@ Free ^45rcWcGf
 			"link": null,
 			"fontSize": 63.323082557091325,
 			"fontFamily": 4,
-			"text": "内存池",
-			"rawText": "内存池",
+			"text": "內存池",
+			"rawText": "內存池",
 			"baseline": 57,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "内存池"
+			"originalText": "內存池"
 		},
 		{
 			"type": "text",
@@ -795,13 +795,13 @@ Free ^45rcWcGf
 			"link": null,
 			"fontSize": 63.323082557091325,
 			"fontFamily": 4,
-			"text": "运行的程序",
-			"rawText": "运行的程序",
+			"text": "運行的程序",
+			"rawText": "運行的程序",
 			"baseline": 57,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "运行的程序"
+			"originalText": "運行的程序"
 		}
 	],
 	"appState": {

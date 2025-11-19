@@ -118,7 +118,7 @@ bash debug_example.sh
 ```
 主程式: src/tools/cmdzip.c 或 src/tools/cmdunzip.c
 核心庫: src/zip.c, src/miniz.c
-平台相依: src/unixutils.c (Linux) 或 src/winutils.c (Windows)
+平臺相依: src/unixutils.c (Linux) 或 src/winutils.c (Windows)
 ```
 
 ### 關鍵函數追蹤點

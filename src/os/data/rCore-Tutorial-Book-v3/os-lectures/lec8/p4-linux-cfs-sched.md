@@ -11,84 +11,84 @@ backgroundColor: white
 <!-- theme: gaia -->
 <!-- _class: lead -->
 
-# 第八讲 多处理器调度
+# 第八講 多處理器調度
 
-## 第四节 Linux CFS 调度
-完全公平调度(CFS, Completely Fair Scheduler)
+## 第四節 Linux CFS 調度
+完全公平調度(CFS, Completely Fair Scheduler)
 
 <br>
 <br>
 
-向勇 陈渝 李国良 
+向勇 陳渝 李國良 
 
 2022年秋季
 
 ---
 
-**提纲**
+**提綱**
 
 ### 1. CFS的原理
-2. CFS 的实现
+2. CFS 的實現
 
 ---
 
 #### CFS的背景
-<!-- 万字长文，锤它！揭秘Linux进程调度器 https://www.eet-china.com/mp/a111242.html -->
-- O(1)和O(n)都将CPU资源划分为时间片
-    - 采用固定额度分配机制，每个调度周期的进程可用时间片是确定的
-    - 调度周期结束被重新分配
-- O(1)调度器本质上是MLFQ算法的思想
-    - 不足：O(1)调度器对进程交互性的响应不及时
+<!-- 萬字長文，錘它！揭秘Linux進程調度器 https://www.eet-china.com/mp/a111242.html -->
+- O(1)和O(n)都將CPU資源劃分為時間片
+    - 採用固定額度分配機制，每個調度週期的進程可用時間片是確定的
+    - 調度週期結束被重新分配
+- O(1)調度器本質上是MLFQ算法的思想
+    - 不足：O(1)調度器對進程交互性的響應不及時
 - 需求
-    - 根据进程的运行状况判断它属于IO密集型还是CPU密集型，再做优先级奖励和惩罚
-    - 这种推测本身存在误差，场景越复杂判断难度越大
+    - 根據進程的運行狀況判斷它屬於IO密集型還是CPU密集型，再做優先級獎勵和懲罰
+    - 這種推測本身存在誤差，場景越複雜判斷難度越大
 
 
 ---
 #### CFS的背景
 
-匈牙利人Ingo Molnar所提出和实现CFS调度算法
-- 他也是O(1)调度算法的提出者
+匈牙利人Ingo Molnar所提出和實現CFS調度算法
+- 他也是O(1)調度算法的提出者
 
 ![bg right:40% 100%](figs/ingo-molnar.png) 
 
 ---
 #### CFS 的思路
-<!-- - CFS 不计算优先级，而是通过计算进程消耗的 CPU 时间（标准化以后的虚拟 CPU 时间）来确定谁来调度。从而到达所谓的公平性。 -->
-- 摒弃固定时间片分配，采用**动态时间片分配**
-- 每次调度中进程可占用的时间与进程总数、总CPU时间、进程权重等均有关系，每个调度周期的值都可能会不一样
-- 每个进程都有一个nice值, 表示其静态优先级
+<!-- - CFS 不計算優先級，而是通過計算進程消耗的 CPU 時間（標準化以後的虛擬 CPU 時間）來確定誰來調度。從而到達所謂的公平性。 -->
+- 摒棄固定時間片分配，採用**動態時間片分配**
+- 每次調度中進程可佔用的時間與進程總數、總CPU時間、進程權重等均有關係，每個調度週期的值都可能會不一樣
+- 每個進程都有一個nice值, 表示其靜態優先級
 
 ![bg right 90%](figs/prio-to-weight.png) 
 
 ---
 #### CFS 的思路
-- **把 CPU 视为资源**，并记录下每一个进程对该资源使用的情况
-    - 在调度时，调度器总是选择消耗资源最少的进程来运行（**公平分配**）
-- 由于一些进程的工作会比其他进程更重要，这种绝对的公平有时也是一种不公平
-    - **按照权重来分配 CPU 资源**
+- **把 CPU 視為資源**，並記錄下每一個進程對該資源使用的情況
+    - 在調度時，調度器總是選擇消耗資源最少的進程來運行（**公平分配**）
+- 由於一些進程的工作會比其他進程更重要，這種絕對的公平有時也是一種不公平
+    - **按照權重來分配 CPU 資源**
 ![bg right:47% 90%](figs/prio-to-weight.png) 
 
 ---
-#### CFS 的进程运行时间动态分配
-- 根据各个进程的优先级权重分配运行时间
-    - 进程权重越大, 分到的运行时间越多
-`分配给进程的运行时间 = 调度周期 * 进程权重 / 所有进程权重总和`
-- 调度周期
-    - 将所处于 TASK_RUNNING 态进程都调度一遍的时间
+#### CFS 的進程運行時間動態分配
+- 根據各個進程的優先級權重分配運行時間
+    - 進程權重越大, 分到的運行時間越多
+`分配給進程的運行時間 = 調度週期 * 進程權重 / 所有進程權重總和`
+- 調度週期
+    - 將所處於 TASK_RUNNING 態進程都調度一遍的時間
 
 <!-- ![bg right:40% 100%](figs/prio-to-weight.png)  -->
 
 
 ---
 <!-- CFS（Completely Fair Scheduler） https://www.jianshu.com/p/1da5cfd5cee4 -->
-#### CFS 的相对公平性
-- 系统中两个进程 A，B，权重分别为 1， 2，调度周期设为 30ms，
-- A 的 CPU 时间为：30ms * (1/(1+2)) = 10ms
-- B 的 CPU 时间为：30ms * (2/(1+2)) = 20ms
-- 在这 30ms 中 A 将运行 10ms，B 将运行 20ms
+#### CFS 的相對公平性
+- 系統中兩個進程 A，B，權重分別為 1， 2，調度週期設為 30ms，
+- A 的 CPU 時間為：30ms * (1/(1+2)) = 10ms
+- B 的 CPU 時間為：30ms * (2/(1+2)) = 20ms
+- 在這 30ms 中 A 將運行 10ms，B 將運行 20ms
 
-它们的运行时间并不一样。 公平怎么体现呢？
+它們的運行時間並不一樣。 公平怎麼體現呢？
 
 <!-- ![bg right 100%](figs/rbtree.png)  -->
 
@@ -96,56 +96,56 @@ backgroundColor: white
 
 ---
 
-#### CFS 的虚拟时间vruntime
+#### CFS 的虛擬時間vruntime
 
-* virtual runtime(vruntime)：记录着进程已经运行的时间
-    * vruntime是根据进程的权重将运行时间放大或者缩小一个比例。
-`vruntime = 实际运行时间 * 1024 / 进程权重`
-    * 1024是nice为0的进程的权重，代码中是NICE_0_LOAD
-    * 所有进程都以nice为0的进程的权重1024作为基准，计算自己的vruntime增加速度
+* virtual runtime(vruntime)：記錄著進程已經運行的時間
+    * vruntime是根據進程的權重將運行時間放大或者縮小一個比例。
+`vruntime = 實際運行時間 * 1024 / 進程權重`
+    * 1024是nice為0的進程的權重，代碼中是NICE_0_LOAD
+    * 所有進程都以nice為0的進程的權重1024作為基準，計算自己的vruntime增加速度
 
 ---
 
-#### CFS 的虚拟时间vruntime
+#### CFS 的虛擬時間vruntime
 
-以上面A和B两个进程为例，B的权重是A的2倍，那么B的vruntime增加速度只有A的一半。
+以上面A和B兩個進程為例，B的權重是A的2倍，那麼B的vruntime增加速度只有A的一半。
 ```
-vruntime = (调度周期 * 进程权重 / 所有进程总权重) * 1024 / 进程权重
-         = 调度周期 * 1024 / 所有进程总权重
+vruntime = (調度週期 * 進程權重 / 所有進程總權重) * 1024 / 進程權重
+         = 調度週期 * 1024 / 所有進程總權重
 ```
-虽然进程的权重不同，但是它们的 vruntime增长速度应该是一样的 ，与权重无关。
+雖然進程的權重不同，但是它們的 vruntime增長速度應該是一樣的 ，與權重無關。
 
-<!-- O(n)、O(1)和CFS调度器  http://www.wowotech.net/process_management/scheduler-history.html 
+<!-- O(n)、O(1)和CFS調度器  http://www.wowotech.net/process_management/scheduler-history.html 
 
-Virtual runtime ＝ （physical runtime） X （nice value 0的权重）/进程的权重
+Virtual runtime ＝ （physical runtime） X （nice value 0的權重）/進程的權重
 
-通过上面的公式，我们构造了一个虚拟的世界。二维的（load weight，physical runtime）物理世界变成了一维的virtual runtime的虚拟世界。在这个虚拟的世界中，各个进程的vruntime可以比较大小，以便确定其在红黑树中的位置，而CFS调度器的公平也就是维护虚拟世界vruntime的公平，即各个进程的vruntime是相等的。
+通過上面的公式，我們構造了一個虛擬的世界。二維的（load weight，physical runtime）物理世界變成了一維的virtual runtime的虛擬世界。在這個虛擬的世界中，各個進程的vruntime可以比較大小，以便確定其在紅黑樹中的位置，而CFS調度器的公平也就是維護虛擬世界vruntime的公平，即各個進程的vruntime是相等的。
 
 -->
 
 ---
-#### CFS 的虚拟时间计算
+#### CFS 的虛擬時間計算
 
-所有进程的vruntime增长速度宏观上看应该是同时推进的，就可以用这个vruntime来选择运行的进程。
+所有進程的vruntime增長速度宏觀上看應該是同時推進的，就可以用這個vruntime來選擇運行的進程。
 
-* 进程的vruntime值较小说明它以前占用cpu的时间较短，受到了“不公平”对待，因此下一个运行进程就是它。
-* 这样既能公平选择进程，又能保证高优先级进程获得较多的运行时间。
+* 進程的vruntime值較小說明它以前佔用cpu的時間較短，受到了“不公平”對待，因此下一個運行進程就是它。
+* 這樣既能公平選擇進程，又能保證高優先級進程獲得較多的運行時間。
 
 
 
 
 
 ---
-#### CFS 的虚拟时间计算示例
+#### CFS 的虛擬時間計算示例
 
-CFS让每个调度实体（进程或进程组）的vruntime互相追赶，而每个调度实体的vruntime增加速度不同，权重越大的增加的越慢，这样就能获得更多的cpu执行时间。
+CFS讓每個調度實體（進程或進程組）的vruntime互相追趕，而每個調度實體的vruntime增加速度不同，權重越大的增加的越慢，這樣就能獲得更多的cpu執行時間。
 
-     A每周期6时间片，B每周期3时间片，C每周期2时间片
+     A每週期6時間片，B每週期3時間片，C每週期2時間片
      vruntime：
      A:   0  6  6  6  6  6  6  12 12 12 12 12 12
      B:   0  0  3  3  3  6  6  6  9  9  9  12 12
      C:   0  0  0  2  4  4  6  6  6  8  10 10 12
-     调度：   A  B  C  C  B  C  A  B  C  C   B  C
+     調度：   A  B  C  C  B  C  A  B  C  C   B  C
 
 
 <!-- ![bg right 100%](figs/rbtree.png)  -->
@@ -153,101 +153,101 @@ CFS让每个调度实体（进程或进程组）的vruntime互相追赶，而每
 
 ---
 
-**提纲**
+**提綱**
 
 1. CFS的原理
-### 2. CFS 的实现
+### 2. CFS 的實現
 
 ---
 
-#### 红黑树：CFS中进程vruntime数据结构
-- Linux 采用了红黑树记录下每一个进程的 vruntime
-    - 在多核系统中，每个核一棵红黑树
-    - 调度时，从红黑树中选取vruntime最小的进程出来运行
+#### 紅黑樹：CFS中進程vruntime數據結構
+- Linux 採用了紅黑樹記錄下每一個進程的 vruntime
+    - 在多核系統中，每個核一棵紅黑樹
+    - 調度時，從紅黑樹中選取vruntime最小的進程出來運行
 ![bg right:53% 90%](figs/rbtree.png) 
 
 ---
 
-#### CFS 的进程权重
-- 权重由 nice 值确定，权重跟进程 nice 值一一对应
-    - nice值越大，权重越低
-- 通过全局数组 prio_to_weight 来转换
+#### CFS 的進程權重
+- 權重由 nice 值確定，權重跟進程 nice 值一一對應
+    - nice值越大，權重越低
+- 通過全局數組 prio_to_weight 來轉換
 ![bg right:48% 90%](figs/prio-to-weight.png) 
 
 
 ---
 
-#### CFS中新创建进程的 vruntime如何设置？
+#### CFS中新創建進程的 vruntime如何設置？
 
-- 如果新进程的 vruntime 初值为 0 的话，比老进程的值小很多，那么它在相当长的时间内都会保持抢占 CPU 的优势，老进程就要饿死了，这显然是不公平的。
+- 如果新進程的 vruntime 初值為 0 的話，比老進程的值小很多，那麼它在相當長的時間內都會保持搶佔 CPU 的優勢，老進程就要餓死了，這顯然是不公平的。
 ![bg right:46%  90%](figs/rbtree.png) 
 
 ---
 
-#### CFS中新创建进程的 vruntime设置
+#### CFS中新創建進程的 vruntime設置
 
-- 每个 CPU 的运行队列 cfs_rq 都维护一个**min_vruntime 字段**
-    - 记录该运行队列中所有进程的 vruntime 最小值
-- 新进程的初始vruntime 值设置为它所在运行队列的min_vruntime
-    - 与老进程保持在合理的差距范围内
+- 每個 CPU 的運行隊列 cfs_rq 都維護一個**min_vruntime 字段**
+    - 記錄該運行隊列中所有進程的 vruntime 最小值
+- 新進程的初始vruntime 值設置為它所在運行隊列的min_vruntime
+    - 與老進程保持在合理的差距範圍內
 ![bg right:41% 90%](figs/rbtree.png) 
 
 ---
 
-#### CFS中休眠进程的 vruntime 一直保持不变吗？
+#### CFS中休眠進程的 vruntime 一直保持不變嗎？
 
-如果休眠进程的 vruntime 保持不变，而其他运行进程的 vruntime 一直在推进，那么等到休眠进程终于唤醒的时候，它的 vruntime 比别人小很多，会使它获得长时间抢占 CPU 的优势，其他进程就要饿死了。
+如果休眠進程的 vruntime 保持不變，而其他運行進程的 vruntime 一直在推進，那麼等到休眠進程終於喚醒的時候，它的 vruntime 比別人小很多，會使它獲得長時間搶佔 CPU 的優勢，其他進程就要餓死了。
 ![bg right:47% 100%](figs/rbtree.png) 
 
 
 ---
 
-#### CFS中休眠进程的vruntime
+#### CFS中休眠進程的vruntime
 
-- 在休眠进程被唤醒时重新设置 vruntime 值，以 min_vruntime 值为基础，给予一定的补偿，但不能补偿太多。
+- 在休眠進程被喚醒時重新設置 vruntime 值，以 min_vruntime 值為基礎，給予一定的補償，但不能補償太多。
 ![bg right:45% 90%](figs/rbtree.png) 
 
 
 ---
 
-#### CFS中休眠进程在唤醒时会立刻抢占 CPU 吗？
+#### CFS中休眠進程在喚醒時會立刻搶佔 CPU 嗎？
 
-- 休眠进程在醒来的时候有能力**抢占** CPU 是大概率事件，这也是 CFS 调度算法的本意，即保证交互式进程的响应速度，**交互式进程**等待用户输入会频繁休眠。
+- 休眠進程在醒來的時候有能力**搶佔** CPU 是大概率事件，這也是 CFS 調度算法的本意，即保證交互式進程的響應速度，**交互式進程**等待用戶輸入會頻繁休眠。
 ![bg right:55% 100%](figs/rbtree.png) 
 
 ---
 
-#### CFS中休眠进程在唤醒时会立刻抢占 CPU 吗？
+#### CFS中休眠進程在喚醒時會立刻搶佔 CPU 嗎？
 
-- **主动休眠的进程**同样也会在唤醒时获得补偿，这类进程往往并不要求快速响应，它们同样也会在每次唤醒并抢占，这有可能会导致其它更重要的应用进程被抢占，有损整体性能。
-- sched_features 的 WAKEUP_PREEMPT 位表示禁用唤醒抢占特性，刚唤醒的进程**不立即抢占**运行中的进程，而是要等到运行进程用完时间片之后
+- **主動休眠的進程**同樣也會在喚醒時獲得補償，這類進程往往並不要求快速響應，它們同樣也會在每次喚醒並搶佔，這有可能會導致其它更重要的應用進程被搶佔，有損整體性能。
+- sched_features 的 WAKEUP_PREEMPT 位表示禁用喚醒搶佔特性，剛喚醒的進程**不立即搶佔**運行中的進程，而是要等到運行進程用完時間片之後
 
 ![bg right:35% 100%](figs/rbtree.png) 
 
 
 ---
 
-#### CFS中的进程在 CPU 间迁移时 vruntime 会不会变？
-- 在多 CPU 的系统上，不同的 CPU 的负载不一样，有的 CPU 更忙一些，而每个 CPU 都有自己的运行队列，每个队列中的进程的vruntime 也走得**有快有慢**，每个CPU运行队列的 min_vruntime 值，都会有不同
+#### CFS中的進程在 CPU 間遷移時 vruntime 會不會變？
+- 在多 CPU 的系統上，不同的 CPU 的負載不一樣，有的 CPU 更忙一些，而每個 CPU 都有自己的運行隊列，每個隊列中的進程的vruntime 也走得**有快有慢**，每個CPU運行隊列的 min_vruntime 值，都會有不同
 ![bg right:48% 90%](figs/smp-min-vruntime.png) 
 
 
 
 ---
 
-#### CFS中的进程迁移
+#### CFS中的進程遷移
 
-- 当进程从一个 CPU 的运行队列中**出来时**，它的 vruntime 要**减去**队列的 min_vruntime 值；
-- 当进程**加入**另一个 CPU 的运行队列时，它的vruntime 要**加上**该队列的 min_vruntime 值。
+- 當進程從一個 CPU 的運行隊列中**出來時**，它的 vruntime 要**減去**隊列的 min_vruntime 值；
+- 當進程**加入**另一個 CPU 的運行隊列時，它的vruntime 要**加上**該隊列的 min_vruntime 值。
 
 ![bg right:45% 90%](figs/smp-min-vruntime.png) 
 
 ---
-#### CFS的vruntime 溢出问题
+#### CFS的vruntime 溢出問題
 
-- vruntime 的类型 usigned long
-- 进程的虚拟时间是一个递增的正值，因此它不会是负数，但是它有它的上限，就是unsigned long 所能表示的最大值
-- 如果溢出了，那么它就会从 0 开始回滚，如果这样的话，结果会怎样？
+- vruntime 的類型 usigned long
+- 進程的虛擬時間是一個遞增的正值，因此它不會是負數，但是它有它的上限，就是unsigned long 所能表示的最大值
+- 如果溢出了，那麼它就會從 0 開始回滾，如果這樣的話，結果會怎樣？
 
 ![bg right:48% 100%](figs/rbtree.png) 
 
@@ -258,25 +258,25 @@ CFS让每个调度实体（进程或进程组）的vruntime互相追赶，而每
 unsigned char a = 251;
 unsigned char b = 254;
 b += 5;
-//b溢出，导致a > b，应该b = a + 8
-//怎么做到真正的结果呢？改为以下：
+//b溢出，導致a > b，應該b = a + 8
+//怎麼做到真正的結果呢？改為以下：
 unsigned char a = 251;
 unsigned char b = 254;
 b += 5;
 signed char c = a - 250, 
 signed char d = b - 250;
-//到此判断 c 和 d 的大小
+//到此判斷 c 和 d 的大小
 ```
 ![bg right:54% 90%](figs/rbtree.png) 
 
 ---
 
-#### Linux调度器的[模块化](http://www.wowotech.net/process_management/scheduler-history.html)
+#### Linux調度器的[模塊化](http://www.wowotech.net/process_management/scheduler-history.html)
 
 ![w:850](figs/Linux-scheduler-module.png)
 
 ---
-### 参考文献
+### 參考文獻
 -  https://www.eet-china.com/mp/a111242.html
 -  https://www.jianshu.com/p/1da5cfd5cee4
 -  https://developer.ibm.com/tutorials/l-completely-fair-scheduler/
@@ -284,13 +284,13 @@ signed char d = b - 250;
 
 ---
 
-### 课程实验三 进程及进程管理
+### 課程實驗三 進程及進程管理
 
-* 第五章：进程及进程管理 -> chapter5练习 -> 
+* 第五章：進程及進程管理 -> chapter5練習 -> 
     * [rCore](https://learningos.github.io/rCore-Tutorial-Guide-2022A/chapter5/4exercise.html)
     * [uCore](https://learningos.github.io/uCore-Tutorial-Guide-2022A/chapter5/4exercise.html)
-* 实验任务
-    * spawn 系统调用
-    * stride 调度算法
-* 实验提交要求
-    * 任务布置后的第11天（2022年11月13日）；
+* 實驗任務
+    * spawn 系統調用
+    * stride 調度算法
+* 實驗提交要求
+    * 任務佈置後的第11天（2022年11月13日）；

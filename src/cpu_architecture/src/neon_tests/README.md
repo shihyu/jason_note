@@ -115,7 +115,7 @@ make clean
 - **架構**: `-march=armv8-a+simd`
 - **TLS 對齊**: `-Wl,-z,max-page-size=16384` (Android 15 要求)
 
-## 目標平台
+## 目標平臺
 
 - **裝置**: 小米 23049PCD8G
 - **系統**: Android 15 (API 35)

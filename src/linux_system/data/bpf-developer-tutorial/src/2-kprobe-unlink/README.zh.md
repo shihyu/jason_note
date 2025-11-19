@@ -1,35 +1,35 @@
-# eBPF 入门开发实践教程二：在 eBPF 中使用 kprobe 监测捕获 unlink 系统调用
+# eBPF 入門開發實踐教程二：在 eBPF 中使用 kprobe 監測捕獲 unlink 系統調用
 
-eBPF (Extended Berkeley Packet Filter) 是 Linux 内核上的一个强大的网络和性能分析工具。它允许开发者在内核运行时动态加载、更新和运行用户定义的代码。
+eBPF (Extended Berkeley Packet Filter) 是 Linux 內核上的一個強大的網絡和性能分析工具。它允許開發者在內核運行時動態加載、更新和運行用戶定義的代碼。
 
-本文是 eBPF 入门开发实践教程的第二篇，在 eBPF 中使用 kprobe 捕获 unlink 系统调用。本文会先讲解关于 kprobes 的基本概念和技术背景，然后介绍如何在 eBPF 中使用 kprobe 捕获 unlink 系统调用。
+本文是 eBPF 入門開發實踐教程的第二篇，在 eBPF 中使用 kprobe 捕獲 unlink 系統調用。本文會先講解關於 kprobes 的基本概念和技術背景，然後介紹如何在 eBPF 中使用 kprobe 捕獲 unlink 系統調用。
 
-## kprobes 技术背景
+## kprobes 技術背景
 
-开发人员在内核或者模块的调试过程中，往往会需要要知道其中的一些函数有无被调用、何时被调用、执行是否正确以及函数的入参和返回值是什么等等。比较简单的做法是在内核代码对应的函数中添加日志打印信息，但这种方式往往需要重新编译内核或模块，重新启动设备之类的，操作较为复杂甚至可能会破坏原有的代码执行过程。
+開發人員在內核或者模塊的調試過程中，往往會需要要知道其中的一些函數有無被調用、何時被調用、執行是否正確以及函數的入參和返回值是什麼等等。比較簡單的做法是在內核代碼對應的函數中添加日誌打印信息，但這種方式往往需要重新編譯內核或模塊，重新啟動設備之類的，操作較為複雜甚至可能會破壞原有的代碼執行過程。
 
-而利用 kprobes 技术，用户可以定义自己的回调函数，然后在内核或者模块中几乎所有的函数中（有些函数是不可探测的，例如kprobes自身的相关实现函数，后文会有详细说明）动态地插入探测点，当内核执行流程执行到指定的探测函数时，会调用该回调函数，用户即可收集所需的信息了，同时内核最后还会回到原本的正常执行流程。如果用户已经收集足够的信息，不再需要继续探测，则同样可以动态地移除探测点。因此 kprobes 技术具有对内核执行流程影响小和操作方便的优点。
+而利用 kprobes 技術，用戶可以定義自己的回調函數，然後在內核或者模塊中幾乎所有的函數中（有些函數是不可探測的，例如kprobes自身的相關實現函數，後文會有詳細說明）動態地插入探測點，當內核執行流程執行到指定的探測函數時，會調用該回調函數，用戶即可收集所需的信息了，同時內核最後還會回到原本的正常執行流程。如果用戶已經收集足夠的信息，不再需要繼續探測，則同樣可以動態地移除探測點。因此 kprobes 技術具有對內核執行流程影響小和操作方便的優點。
 
-kprobes 技术包括的3种探测手段分别时 kprobe、jprobe 和 kretprobe。首先 kprobe 是最基本的探测方式，是实现后两种的基础，它可以在任意的位置放置探测点（就连函数内部的某条指令处也可以），它提供了探测点的调用前、调用后和内存访问出错3种回调方式，分别是 `pre_handler`、`post_handler` 和 `fault_handler`，其中 `pre_handler` 函数将在被探测指令被执行前回调，`post_handler` 会在被探测指令执行完毕后回调（注意不是被探测函数），`fault_handler` 会在内存访问出错时被调用；jprobe 基于 kprobe 实现，它用于获取被探测函数的入参值；最后 kretprobe 从名字中就可以看出其用途了，它同样基于 kprobe 实现，用于获取被探测函数的返回值。
+kprobes 技術包括的3種探測手段分別時 kprobe、jprobe 和 kretprobe。首先 kprobe 是最基本的探測方式，是實現後兩種的基礎，它可以在任意的位置放置探測點（就連函數內部的某條指令處也可以），它提供了探測點的調用前、調用後和內存訪問出錯3種回調方式，分別是 `pre_handler`、`post_handler` 和 `fault_handler`，其中 `pre_handler` 函數將在被探測指令被執行前回調，`post_handler` 會在被探測指令執行完畢後回調（注意不是被探測函數），`fault_handler` 會在內存訪問出錯時被調用；jprobe 基於 kprobe 實現，它用於獲取被探測函數的入參值；最後 kretprobe 從名字中就可以看出其用途了，它同樣基於 kprobe 實現，用於獲取被探測函數的返回值。
 
-kprobes 的技术原理并不仅仅包含纯软件的实现方案，它也需要硬件架构提供支持。其中涉及硬件架构相关的是 CPU 的异常处理和单步调试技术，前者用于让程序的执行流程陷入到用户注册的回调函数中去，而后者则用于单步执行被探测点指令，因此并不是所有的架构均支持 kprobes。目前 kprobes 技术已经支持多种架构，包括 i386、x86_64、ppc64、ia64、sparc64、arm、ppc 和 mips（有些架构实现可能并不完全，具体可参考内核的 Documentation/kprobes.txt）。
+kprobes 的技術原理並不僅僅包含純軟件的實現方案，它也需要硬件架構提供支持。其中涉及硬件架構相關的是 CPU 的異常處理和單步調試技術，前者用於讓程序的執行流程陷入到用戶註冊的回調函數中去，而後者則用於單步執行被探測點指令，因此並不是所有的架構均支持 kprobes。目前 kprobes 技術已經支持多種架構，包括 i386、x86_64、ppc64、ia64、sparc64、arm、ppc 和 mips（有些架構實現可能並不完全，具體可參考內核的 Documentation/kprobes.txt）。
 
-kprobes 的特点与使用限制：
+kprobes 的特點與使用限制：
 
-1. kprobes 允许在同一个被探测位置注册多个 kprobe，但是目前 jprobe 却不可以；同时也不允许以其他的 jprobe 回调函数和 kprobe 的 `post_handler` 回调函数作为被探测点。
-2. 一般情况下，可以探测内核中的任何函数，包括中断处理函数。不过在 kernel/kprobes.c 和 arch/*/kernel/kprobes.c 程序中用于实现 kprobes 自身的函数是不允许被探测的，另外还有`do_page_fault` 和 `notifier_call_chain`；
-3. 如果以一个内联函数为探测点，则 kprobes 可能无法保证对该函数的所有实例都注册探测点。由于 gcc 可能会自动将某些函数优化为内联函数，因此可能无法达到用户预期的探测效果；
-4. 一个探测点的回调函数可能会修改被探测函数的运行上下文，例如通过修改内核的数据结构或者保存与`struct pt_regs`结构体中的触发探测器之前寄存器信息。因此 kprobes 可以被用来安装 bug 修复代码或者注入故障测试代码；
-5. kprobes 会避免在处理探测点函数时再次调用另一个探测点的回调函数，例如在`printk()`函数上注册了探测点，而在它的回调函数中可能会再次调用`printk`函数，此时将不再触发`printk`探测点的回调，仅仅是增加了`kprobe`结构体中`nmissed`字段的数值；
-6. 在 kprobes 的注册和注销过程中不会使用 mutex 锁和动态的申请内存；
-7. kprobes 回调函数的运行期间是关闭内核抢占的，同时也可能在关闭中断的情况下执行，具体要视CPU架构而定。因此不论在何种情况下，在回调函数中不要调用会放弃 CPU 的函数（如信号量、mutex 锁等）；
-8. kretprobe 通过替换返回地址为预定义的 trampoline 的地址来实现，因此栈回溯和 gcc 内嵌函数`__builtin_return_address()`调用将返回 trampoline 的地址而不是真正的被探测函数的返回地址；
-9. 如果一个函数的调用次数和返回次数不相等，则在类似这样的函数上注册 kretprobe 将可能不会达到预期的效果，例如`do_exit()`函数会存在问题，而`do_execve()`函数和`do_fork()`函数不会；
-10. 当在进入和退出一个函数时，如果 CPU 运行在非当前任务所有的栈上，那么往该函数上注册 kretprobe 可能会导致不可预料的后果，因此，kprobes 不支持在 X86_64 的结构下为`__switch_to()`函数注册 kretprobe，将直接返回`-EINVAL`。
+1. kprobes 允許在同一個被探測位置註冊多個 kprobe，但是目前 jprobe 卻不可以；同時也不允許以其他的 jprobe 回調函數和 kprobe 的 `post_handler` 回調函數作為被探測點。
+2. 一般情況下，可以探測內核中的任何函數，包括中斷處理函數。不過在 kernel/kprobes.c 和 arch/*/kernel/kprobes.c 程序中用於實現 kprobes 自身的函數是不允許被探測的，另外還有`do_page_fault` 和 `notifier_call_chain`；
+3. 如果以一個內聯函數為探測點，則 kprobes 可能無法保證對該函數的所有實例都註冊探測點。由於 gcc 可能會自動將某些函數優化為內聯函數，因此可能無法達到用戶預期的探測效果；
+4. 一個探測點的回調函數可能會修改被探測函數的運行上下文，例如通過修改內核的數據結構或者保存與`struct pt_regs`結構體中的觸發探測器之前寄存器信息。因此 kprobes 可以被用來安裝 bug 修復代碼或者注入故障測試代碼；
+5. kprobes 會避免在處理探測點函數時再次調用另一個探測點的回調函數，例如在`printk()`函數上註冊了探測點，而在它的回調函數中可能會再次調用`printk`函數，此時將不再觸發`printk`探測點的回調，僅僅是增加了`kprobe`結構體中`nmissed`字段的數值；
+6. 在 kprobes 的註冊和註銷過程中不會使用 mutex 鎖和動態的申請內存；
+7. kprobes 回調函數的運行期間是關閉內核搶佔的，同時也可能在關閉中斷的情況下執行，具體要視CPU架構而定。因此不論在何種情況下，在回調函數中不要調用會放棄 CPU 的函數（如信號量、mutex 鎖等）；
+8. kretprobe 通過替換返回地址為預定義的 trampoline 的地址來實現，因此棧回溯和 gcc 內嵌函數`__builtin_return_address()`調用將返回 trampoline 的地址而不是真正的被探測函數的返回地址；
+9. 如果一個函數的調用次數和返回次數不相等，則在類似這樣的函數上註冊 kretprobe 將可能不會達到預期的效果，例如`do_exit()`函數會存在問題，而`do_execve()`函數和`do_fork()`函數不會；
+10. 當在進入和退出一個函數時，如果 CPU 運行在非當前任務所有的棧上，那麼往該函數上註冊 kretprobe 可能會導致不可預料的後果，因此，kprobes 不支持在 X86_64 的結構下為`__switch_to()`函數註冊 kretprobe，將直接返回`-EINVAL`。
 
 ## kprobe 示例
 
-完整代码如下：
+完整代碼如下：
 
 ```c
 #include "vmlinux.h"
@@ -62,9 +62,9 @@ int BPF_KRETPROBE(do_unlinkat_exit, long ret)
 }
 ```
 
-这段代码是一个简单的 eBPF 程序，用于监测和捕获在 Linux 内核中执行的 unlink 系统调用。unlink 系统调用的功能是删除一个文件，这个 eBPF 程序通过使用 kprobe（内核探针）在`do_unlinkat`函数的入口和退出处放置钩子，实现对该系统调用的跟踪。
+這段代碼是一個簡單的 eBPF 程序，用於監測和捕獲在 Linux 內核中執行的 unlink 系統調用。unlink 系統調用的功能是刪除一個文件，這個 eBPF 程序通過使用 kprobe（內核探針）在`do_unlinkat`函數的入口和退出處放置鉤子，實現對該系統調用的跟蹤。
 
-首先，我们导入必要的头文件，如 vmlinux.h，bpf_helpers.h，bpf_tracing.h 和 bpf_core_read.h。接着，我们定义许可证，以允许程序在内核中运行。
+首先，我們導入必要的頭文件，如 vmlinux.h，bpf_helpers.h，bpf_tracing.h 和 bpf_core_read.h。接著，我們定義許可證，以允許程序在內核中運行。
 
 ```c
 #include "vmlinux.h"
@@ -75,7 +75,7 @@ int BPF_KRETPROBE(do_unlinkat_exit, long ret)
 char LICENSE[] SEC("license") = "Dual BSD/GPL";
 ```
 
-接下来，我们定义一个名为`BPF_KPROBE(do_unlinkat)`的 kprobe，当进入`do_unlinkat`函数时，它会被触发。该函数接受两个参数：`dfd`（文件描述符）和`name`（文件名结构体指针）。在这个 kprobe 中，我们获取当前进程的 PID（进程标识符），然后读取文件名。最后，我们使用`bpf_printk`函数在内核日志中打印 PID 和文件名。
+接下來，我們定義一個名為`BPF_KPROBE(do_unlinkat)`的 kprobe，當進入`do_unlinkat`函數時，它會被觸發。該函數接受兩個參數：`dfd`（文件描述符）和`name`（文件名結構體指針）。在這個 kprobe 中，我們獲取當前進程的 PID（進程標識符），然後讀取文件名。最後，我們使用`bpf_printk`函數在內核日誌中打印 PID 和文件名。
 
 ```c
 SEC("kprobe/do_unlinkat")
@@ -91,7 +91,7 @@ int BPF_KPROBE(do_unlinkat, int dfd, struct filename *name)
 }
 ```
 
-接下来，我们定义一个名为`BPF_KRETPROBE(do_unlinkat_exit)`的 kretprobe，当从`do_unlinkat`函数退出时，它会被触发。这个 kretprobe 的目的是捕获函数的返回值（ret）。我们再次获取当前进程的 PID，并使用`bpf_printk`函数在内核日志中打印 PID 和返回值。
+接下來，我們定義一個名為`BPF_KRETPROBE(do_unlinkat_exit)`的 kretprobe，當從`do_unlinkat`函數退出時，它會被觸發。這個 kretprobe 的目的是捕獲函數的返回值（ret）。我們再次獲取當前進程的 PID，並使用`bpf_printk`函數在內核日誌中打印 PID 和返回值。
 
 ```c
 SEC("kretprobe/do_unlinkat")
@@ -105,9 +105,9 @@ int BPF_KRETPROBE(do_unlinkat_exit, long ret)
 }
 ```
 
-eunomia-bpf 是一个结合 Wasm 的开源 eBPF 动态加载运行时和开发工具链，它的目的是简化 eBPF 程序的开发、构建、分发、运行。可以参考 <https://github.com/eunomia-bpf/eunomia-bpf> 下载和安装 ecc 编译工具链和 ecli 运行时。
+eunomia-bpf 是一個結合 Wasm 的開源 eBPF 動態加載運行時和開發工具鏈，它的目的是簡化 eBPF 程序的開發、構建、分發、運行。可以參考 <https://github.com/eunomia-bpf/eunomia-bpf> 下載和安裝 ecc 編譯工具鏈和 ecli 運行時。
 
-要编译这个程序，请使用 ecc 工具：
+要編譯這個程序，請使用 ecc 工具：
 
 ```console
 $ ecc kprobe-link.bpf.c
@@ -115,13 +115,13 @@ Compiling bpf object...
 Packing ebpf object and config into package.json...
 ```
 
-然后运行：
+然後運行：
 
 ```console
 sudo ecli run package.json
 ```
 
-在另外一个窗口中：
+在另外一個窗口中：
 
 ```shell
 touch test1
@@ -130,7 +130,7 @@ touch test2
 rm test2
 ```
 
-在 /sys/kernel/debug/tracing/trace_pipe 文件中，应该能看到类似下面的 kprobe 演示输出：
+在 /sys/kernel/debug/tracing/trace_pipe 文件中，應該能看到類似下面的 kprobe 演示輸出：
 
 ```shell
 $ sudo cat /sys/kernel/debug/tracing/trace_pipe
@@ -140,10 +140,10 @@ $ sudo cat /sys/kernel/debug/tracing/trace_pipe
               rm-9346    [005] d..4  4710.951895: bpf_trace_printk: KPROBE EXIT: ret = 0
 ```
 
-## 总结
+## 總結
 
-通过本文的示例，我们学习了如何使用 eBPF 的 kprobe 和 kretprobe 捕获 unlink 系统调用。更多的例子和详细的开发指南，请参考 eunomia-bpf 的官方文档：<https://github.com/eunomia-bpf/eunomia-bpf>
+通過本文的示例，我們學習瞭如何使用 eBPF 的 kprobe 和 kretprobe 捕獲 unlink 系統調用。更多的例子和詳細的開發指南，請參考 eunomia-bpf 的官方文檔：<https://github.com/eunomia-bpf/eunomia-bpf>
 
-本文是 eBPF 入门开发实践教程的第二篇。下一篇文章将介绍如何在 eBPF 中使用 fentry 监测捕获 unlink 系统调用。
+本文是 eBPF 入門開發實踐教程的第二篇。下一篇文章將介紹如何在 eBPF 中使用 fentry 監測捕獲 unlink 系統調用。
 
-如果您希望学习更多关于 eBPF 的知识和实践，可以访问我们的教程代码仓库 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或网站 <https://eunomia.dev/zh/tutorials/> 以获取更多示例和完整的教程。
+如果您希望學習更多關於 eBPF 的知識和實踐，可以訪問我們的教程代碼倉庫 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或網站 <https://eunomia.dev/zh/tutorials/> 以獲取更多示例和完整的教程。

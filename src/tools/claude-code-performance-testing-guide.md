@@ -43,7 +43,7 @@ claude code "
 分析我的專案並建立測試基礎設施：
 
 1. **專案掃描**：
-   - 掃描 package.json/requirements.txt 了解技術棧
+   - 掃描 package.json/requirements.txt 瞭解技術棧
    - 找出所有 API 路由和端點
    - 識別資料庫配置和連線
    - 檢查現有測試文件
@@ -58,7 +58,7 @@ claude code "
    - 整合 Prometheus + Grafana
    - 設置應用效能監控 (APM)
    - 配置日誌聚合
-   - 建立效能儀表板
+   - 建立效能儀錶板
 
 輸出詳細的設置步驟和配置文件。
 "
@@ -199,7 +199,7 @@ claude code "
 
 2. **報告和可視化**：
    - 效能趨勢圖表
-   - 測試結果儀表板
+   - 測試結果儀錶板
    - 自動化測試報告
    - Slack/Email 通知整合
 

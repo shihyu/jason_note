@@ -122,7 +122,7 @@ const importObject = {
 };
 ```
 
-### 3. 平台兼容性
+### 3. 平臺兼容性
 ```bash
 # 編譯時指定了特定的 CPU 特性
 emcc -msse4.1 source.c -o output.wasm  # 老舊瀏覽器不支持

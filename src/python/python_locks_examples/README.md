@@ -93,7 +93,7 @@ python basic_locks/04_semaphore.py
 ## 🎯 學習路徑
 
 ### 初學者路徑
-1. `01_threading_lock.py` - 了解基本概念
+1. `01_threading_lock.py` - 瞭解基本概念
 2. `02_decorator_lock.py` - 學習實用模式
 3. `04_semaphore.py` - 理解資源控制
 4. `06_event.py` - 掌握事件通訊

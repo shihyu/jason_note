@@ -67,7 +67,7 @@ Kernel 層級的 GDB 除錯
 # 設定 kernel 參數
 kgdboc=ttyS0,115200 kgdbwait
 
-# 在另一台機器上
+# 在另一臺機器上
 gdb vmlinux
 (gdb) target remote /dev/ttyS0
 (gdb) break sys_open

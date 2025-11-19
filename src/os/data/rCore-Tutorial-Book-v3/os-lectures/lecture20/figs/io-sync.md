@@ -7,32 +7,32 @@ excalidraw-plugin: parsed
 
 
 # Text Elements
-进程阻塞于
-sys_read系统调用 ^civJ0kAx
+進程阻塞於
+sys_read系統調用 ^civJ0kAx
 
-进程 ^BCJVH8ZY
+進程 ^BCJVH8ZY
 
 sys_read ^1YqUYTPI
 
-系统调用 ^Lm01RAUs
+系統調用 ^Lm01RAUs
 
 OS kernel ^vhIkgWjV
 
-数据没准备好 ^zFS35GNs
+數據沒準備好 ^zFS35GNs
 
-等待磁盘数据 ^4l1N0fGM
+等待磁盤數據 ^4l1N0fGM
 
-数据准备好
-复制数据 ^UTvK4Os9
+數據準備好
+複製數據 ^UTvK4Os9
 
-复制完成 ^fUTFDj0v
+複製完成 ^fUTFDj0v
 
-系统调用成功 ^Peq5q6BO
+系統調用成功 ^Peq5q6BO
 
-进程继续执行 ^SC6hOMAr
+進程繼續執行 ^SC6hOMAr
 
-将数据从内核空间
-复制到进程用户空间 ^55xRyF4q
+將數據從內核空間
+複製到進程用戶空間 ^55xRyF4q
 
 
 # Embedded files
@@ -133,15 +133,15 @@ OS kernel ^vhIkgWjV
 			"boundElements": null,
 			"updated": 1672481527400,
 			"link": null,
-			"text": "进程阻塞于\nsys_read系统调用",
-			"rawText": "进程阻塞于\nsys_read系统调用",
+			"text": "進程阻塞於\nsys_read系統調用",
+			"rawText": "進程阻塞於\nsys_read系統調用",
 			"fontSize": 20,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 40,
 			"containerId": null,
-			"originalText": "进程阻塞于\nsys_read系统调用"
+			"originalText": "進程阻塞於\nsys_read系統調用"
 		},
 		{
 			"id": "BCJVH8ZY",
@@ -167,15 +167,15 @@ OS kernel ^vhIkgWjV
 			"boundElements": null,
 			"updated": 1672481527400,
 			"link": null,
-			"text": "进程",
-			"rawText": "进程",
+			"text": "進程",
+			"rawText": "進程",
 			"fontSize": 20,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 18,
 			"containerId": null,
-			"originalText": "进程"
+			"originalText": "進程"
 		},
 		{
 			"type": "text",
@@ -288,15 +288,15 @@ OS kernel ^vhIkgWjV
 			],
 			"updated": 1672481527400,
 			"link": null,
-			"text": "系统调用",
-			"rawText": "系统调用",
+			"text": "系統調用",
+			"rawText": "系統調用",
 			"fontSize": 20,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 18,
 			"containerId": null,
-			"originalText": "系统调用"
+			"originalText": "系統調用"
 		},
 		{
 			"type": "text",
@@ -365,15 +365,15 @@ OS kernel ^vhIkgWjV
 			],
 			"updated": 1672481527400,
 			"link": null,
-			"text": "数据没准备好",
-			"rawText": "数据没准备好",
+			"text": "數據沒準備好",
+			"rawText": "數據沒準備好",
 			"fontSize": 20,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 18,
 			"containerId": null,
-			"originalText": "数据没准备好"
+			"originalText": "數據沒準備好"
 		},
 		{
 			"id": "4l1N0fGM",
@@ -399,15 +399,15 @@ OS kernel ^vhIkgWjV
 			"boundElements": null,
 			"updated": 1672481527400,
 			"link": null,
-			"text": "等待磁盘数据",
-			"rawText": "等待磁盘数据",
+			"text": "等待磁盤數據",
+			"rawText": "等待磁盤數據",
 			"fontSize": 20,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 18,
 			"containerId": null,
-			"originalText": "等待磁盘数据"
+			"originalText": "等待磁盤數據"
 		},
 		{
 			"id": "ZHHkb5epjMdos1tRpHtiq",
@@ -486,15 +486,15 @@ OS kernel ^vhIkgWjV
 			],
 			"updated": 1672481527400,
 			"link": null,
-			"text": "数据准备好\n复制数据",
-			"rawText": "数据准备好\n复制数据",
+			"text": "數據準備好\n複製數據",
+			"rawText": "數據準備好\n複製數據",
 			"fontSize": 20,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 40,
 			"containerId": null,
-			"originalText": "数据准备好\n复制数据"
+			"originalText": "數據準備好\n複製數據"
 		},
 		{
 			"type": "arrow",
@@ -569,15 +569,15 @@ OS kernel ^vhIkgWjV
 			],
 			"updated": 1672481527400,
 			"link": null,
-			"text": "复制完成",
-			"rawText": "复制完成",
+			"text": "複製完成",
+			"rawText": "複製完成",
 			"fontSize": 20,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 18,
 			"containerId": null,
-			"originalText": "复制完成"
+			"originalText": "複製完成"
 		},
 		{
 			"id": "Peq5q6BO",
@@ -603,15 +603,15 @@ OS kernel ^vhIkgWjV
 			"boundElements": null,
 			"updated": 1672481527400,
 			"link": null,
-			"text": "系统调用成功",
-			"rawText": "系统调用成功",
+			"text": "系統調用成功",
+			"rawText": "系統調用成功",
 			"fontSize": 20,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 18,
 			"containerId": null,
-			"originalText": "系统调用成功"
+			"originalText": "系統調用成功"
 		},
 		{
 			"id": "T-Fje2WKVwSizg-69ozMZ",
@@ -686,15 +686,15 @@ OS kernel ^vhIkgWjV
 			],
 			"updated": 1672481527400,
 			"link": null,
-			"text": "进程继续执行",
-			"rawText": "进程继续执行",
+			"text": "進程繼續執行",
+			"rawText": "進程繼續執行",
 			"fontSize": 20,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 18,
 			"containerId": null,
-			"originalText": "进程继续执行"
+			"originalText": "進程繼續執行"
 		},
 		{
 			"type": "image",
@@ -753,13 +753,13 @@ OS kernel ^vhIkgWjV
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "将数据从内核空间\n复制到进程用户空间",
-			"rawText": "将数据从内核空间\n复制到进程用户空间",
+			"text": "將數據從內核空間\n複製到進程用戶空間",
+			"rawText": "將數據從內核空間\n複製到進程用戶空間",
 			"baseline": 40,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "将数据从内核空间\n复制到进程用户空间"
+			"originalText": "將數據從內核空間\n複製到進程用戶空間"
 		}
 	],
 	"appState": {

@@ -11,13 +11,13 @@ backgroundColor: white
 <!-- theme: gaia -->
 <!-- _class: lead -->
 
-# 第二讲 实践与实验介绍
-## 第四节 实践：裸机程序 -- LibOS
+# 第二講 實踐與實驗介紹
+## 第四節 實踐：裸機程序 -- LibOS
 
 <br>
 <br>
 
-向勇 陈渝 李国良 
+向勇 陳渝 李國良 
 
 <br>
 <br>
@@ -25,35 +25,35 @@ backgroundColor: white
 2022年秋季
 
 ---
-提纲
+提綱
 
-### 1. 实验目标和思路
-2. 实验要求
-3. 实践步骤
-4. 代码结构
-5. 内存布局
-6. 基于 GDB 验证启动流程
-7. 函数调用
+### 1. 實驗目標和思路
+2. 實驗要求
+3. 實踐步驟
+4. 代碼結構
+5. 內存佈局
+6. 基於 GDB 驗證啟動流程
+7. 函數調用
 8. LibOS初始化
-9. SBI调用
+9. SBI調用
 
 ---
 
-#### LibOS的实验目标
+#### LibOS的實驗目標
 
-裸机程序（Bare Metal Program ）：与操作系统无关的OS类型的程序
+裸機程序（Bare Metal Program ）：與操作系統無關的OS類型的程序
 
-- 建立应用程序的执行环境
-  - 让应用与硬件隔离
-  - 简化应用访问硬件的难度和复杂性
-- **执行环境(Execution Environment)**：负责给在其上执行的软件提供相应的功能与资源的多层次**软硬件系统** 
+- 建立應用程序的執行環境
+  - 讓應用與硬件隔離
+  - 簡化應用訪問硬件的難度和複雜性
+- **執行環境(Execution Environment)**：負責給在其上執行的軟件提供相應的功能與資源的多層次**軟硬件系統** 
  
 ![bg right:35% 100%](figs/os-as-lib.png)
 
 
 ---
-#### LibOS历史背景
-1949-1951 年，英国 J. Lyons and Co. 公司（连锁餐厅和食品制造集团公司）开创性地引入并使用剑桥大学的 EDSAC 计算机，联合设计实现了 LEO I ‘Lyons Electronic Office’ 软硬件系统
+#### LibOS歷史背景
+1949-1951 年，英國 J. Lyons and Co. 公司（連鎖餐廳和食品製造集團公司）開創性地引入並使用劍橋大學的 EDSAC 計算機，聯合設計實現了 LEO I ‘Lyons Electronic Office’ 軟硬件系統
 
 
 ![bg right:50% 70%](figs/LEO_III_computer_circuit_board.jpg)
@@ -61,103 +61,103 @@ backgroundColor: white
 
 
 ---
-#### LibOS历史背景 -- 子程序
+#### LibOS歷史背景 -- 子程序
 
-- 参与 EDSAC 项目的 David Wheeler 发明了**子程序**的概念 – Wheeler Jump 
-- 在有了便捷有效的子程序概念和子程序调用机制后，软件开发人员在EDSAC和后续的LEO计算机上开发了大量的系统**子程序库**，形成了最早的操作系统原型。
+- 參與 EDSAC 項目的 David Wheeler 發明了**子程序**的概念 – Wheeler Jump 
+- 在有了便捷有效的子程序概念和子程序調用機制後，軟件開發人員在EDSAC和後續的LEO計算機上開發了大量的系統**子程序庫**，形成了最早的操作系統原型。
 
 ![bg right:50% 70%](figs/LEO_III_computer_circuit_board.jpg)
 
 
 ---
 
-#### LibOS总体思路
-- 编译：通过设置编译器支持编译裸机程序
-- 构造：建立裸机程序的栈和SBI服务请求接口
-- 运行：OS的起始地址和执行环境初始化
+#### LibOS總體思路
+- 編譯：通過設置編譯器支持編譯裸機程序
+- 構造：建立裸機程序的棧和SBI服務請求接口
+- 運行：OS的起始地址和執行環境初始化
 
 ![bg right:50% 100%](figs/os-as-lib.png)
 
 
 
 ---
-提纲
+提綱
 
-1. 实验目标和思路
-### 2. 实验要求
-3. 实践步骤
-4. 代码结构
-5. 内存布局
-6. 基于 GDB 验证启动流程
-7. 函数调用
+1. 實驗目標和思路
+### 2. 實驗要求
+3. 實踐步驟
+4. 代碼結構
+5. 內存佈局
+6. 基於 GDB 驗證啟動流程
+7. 函數調用
 8. LibOS初始化
-9. SBI调用
+9. SBI調用
 
 ---
-#### 理解LibOS的执行过程
-- 会编写/编译/运行裸机程序
-- 懂基于裸机程序的函数调用
-- 能看懂汇编代码伪代码
-- 能看懂内嵌汇编代码
-- 初步理解SBI调用
+#### 理解LibOS的執行過程
+- 會編寫/編譯/運行裸機程序
+- 懂基於裸機程序的函數調用
+- 能看懂彙編代碼偽代碼
+- 能看懂內嵌彙編代碼
+- 初步理解SBI調用
 ![bg right:50% 90%](figs/os-as-lib.png)
 ---
 #### 掌握基本概念
-- **会写三叶虫操作系统了！**
+- **會寫三葉蟲操作系統了！**
   - ABI是啥？
   - SBI是啥？ 
   - Supervisor Binary Interface？ 
 ![bg right:50% 90%](figs/trilobita.png)
 
-注：三叶虫Trilobita是寒武纪最有代表性的远古动物
+注：三葉蟲Trilobita是寒武紀最有代表性的遠古動物
 
 ---
-#### 分析执行细节
+#### 分析執行細節
 
-- **在机器级层面理解函数**
+- **在機器級層面理解函數**
   - 寄存器（registers）
-  - 函数调用/返回(call/return)
-  - 函数进入/离开(enter/exit)
-  - 函数序言/收尾(prologue/epilogue)
+  - 函數調用/返回(call/return)
+  - 函數進入/離開(enter/exit)
+  - 函數序言/收尾(prologue/epilogue)
 
 ![bg right:50% 90%](figs/trilobita.png)
 
 ---
 
-#### OS不总是软件的最底层
+#### OS不總是軟件的最底層
   - 天外有天
   - Why？
 
 ![bg right:50% 90%](figs/trilobita.png)
 
 ---
-提纲
+提綱
 
-1. 实验目标和思路
-2. 实验要求
-### 3. 实践步骤
-4. 代码结构
-5. 内存布局
-6. 基于 GDB 验证启动流程
-7. 函数调用
+1. 實驗目標和思路
+2. 實驗要求
+### 3. 實踐步驟
+4. 代碼結構
+5. 內存佈局
+6. 基於 GDB 驗證啟動流程
+7. 函數調用
 8. LibOS初始化
-9. SBI调用
+9. SBI調用
 
 ---
 
-#### 实践步骤
-- 建好开发与实验环境
-- 移出标准库依赖
-- 支持函数调用
-- 基于SBI服务完成输出与关机
+#### 實踐步驟
+- 建好開發與實驗環境
+- 移出標準庫依賴
+- 支持函數調用
+- 基於SBI服務完成輸出與關機
 
-**理解运行程序的内存空间和栈**
+**理解運行程序的內存空間和棧**
 
 ![bg right:50% 100%](figs/os-as-lib.png)
 
 ---
 
-#### 操作步骤
+#### 操作步驟
 ```
 git clone https://github.com/rcore-os/rCore-Tutorial-v3.git
 cd rCore-Tutorial-v3
@@ -169,7 +169,7 @@ make run
 
 ---
 
-#### 执行结果
+#### 執行結果
 ```
 [RustSBI output]
 Hello, world!
@@ -181,86 +181,86 @@ boot_stack [0x80203000, 0x80213000)
 Panicked at src/main.rs:46 Shutdown machine!
 ```
 
-除了显示 Hello, world! 之外还有一些额外的信息，最后关机。
+除了顯示 Hello, world! 之外還有一些額外的信息，最後關機。
 
 ---
-提纲
+提綱
 
-1. 实验目标和思路
-2. 实验要求
-3. 实践步骤
-### 4. 代码结构
-5. 内存布局
-6. 基于 GDB 验证启动流程
-7. 函数调用
+1. 實驗目標和思路
+2. 實驗要求
+3. 實踐步驟
+### 4. 代碼結構
+5. 內存佈局
+6. 基於 GDB 驗證啟動流程
+7. 函數調用
 8. LibOS初始化
-9. SBI调用
+9. SBI調用
 
 ![bg right:55% 100%](figs/lib-os-detail.png)
 
 ---
-#### LibOS代码结构
+#### LibOS代碼結構
 ```
 ./os/src
 Rust        4 Files   119 Lines
 Assembly    1 Files    11 Lines
 
-├── bootloader(内核依赖的运行在 M 特权级的 SBI 实现，本项目中我们使用 RustSBI)
-│   ├── rustsbi-k210.bin(可运行在 k210 真实硬件平台上的预编译二进制版本)
-│   └── rustsbi-qemu.bin(可运行在 qemu 虚拟机上的预编译二进制版本)
+├── bootloader(內核依賴的運行在 M 特權級的 SBI 實現，本項目中我們使用 RustSBI)
+│   ├── rustsbi-k210.bin(可運行在 k210 真實硬件平臺上的預編譯二進制版本)
+│   └── rustsbi-qemu.bin(可運行在 qemu 虛擬機上的預編譯二進制版本)
 ```
 
 ---
-#### LibOS代码结构
+#### LibOS代碼結構
 ```
-├── os(我们的内核实现放在 os 目录下)
-│   ├── Cargo.toml(内核实现的一些配置文件)
+├── os(我們的內核實現放在 os 目錄下)
+│   ├── Cargo.toml(內核實現的一些配置文件)
 │   ├── Makefile
-│   └── src(所有内核的源代码放在 os/src 目录下)
-│       ├── console.rs(将打印字符的 SBI 接口进一步封装实现更加强大的格式化输出)
-│       ├── entry.asm(设置内核执行环境的的一段汇编代码)
-│       ├── lang_items.rs(需要我们提供给 Rust 编译器的一些语义项，目前包含内核 panic 时的处理逻辑)
-│       ├── linker-qemu.ld(控制内核内存布局的链接脚本以使内核运行在 qemu 虚拟机上)
-│       ├── main.rs(内核主函数)
-│       └── sbi.rs(调用底层 SBI 实现提供的 SBI 接口)
+│   └── src(所有內核的源代碼放在 os/src 目錄下)
+│       ├── console.rs(將打印字符的 SBI 接口進一步封裝實現更加強大的格式化輸出)
+│       ├── entry.asm(設置內核執行環境的的一段彙編代碼)
+│       ├── lang_items.rs(需要我們提供給 Rust 編譯器的一些語義項，目前包含內核 panic 時的處理邏輯)
+│       ├── linker-qemu.ld(控制內核內存佈局的鏈接腳本以使內核運行在 qemu 虛擬機上)
+│       ├── main.rs(內核主函數)
+│       └── sbi.rs(調用底層 SBI 實現提供的 SBI 接口)
 ```
 
 
 <!-- https://blog.51cto.com/onebig/2551726
-(深入理解计算机系统) bss段，data段、text段、堆(heap)和栈(stack) -->
+(深入理解計算機系統) bss段，data段、text段、堆(heap)和棧(stack) -->
 
 
 ---
-提纲
+提綱
 
-1. 实验目标和思路
-2. 实验要求
-3. 实践步骤
-4. 代码结构
-### 5. 内存布局
-6. 基于 GDB 验证启动流程
-7. 函数调用
+1. 實驗目標和思路
+2. 實驗要求
+3. 實踐步驟
+4. 代碼結構
+### 5. 內存佈局
+6. 基於 GDB 驗證啟動流程
+7. 函數調用
 8. LibOS初始化
-9. SBI调用
+9. SBI調用
 
 ---
-#### App/OS内存布局
+#### App/OS內存佈局
 ![bg w:1000](figs/memlayout.png)
 
 ---
 #### bss段
 
-- bss段（bss segment）通常是指用来存放程序中**未初始化的全局变量**的一块内存区域
-- bss是英文Block Started by Symbol的简称
-- bss段属于**静态内存分配**
+- bss段（bss segment）通常是指用來存放程序中**未初始化的全局變量**的一塊內存區域
+- bss是英文Block Started by Symbol的簡稱
+- bss段屬於**靜態內存分配**
 ![bg right:55% 130%](figs/memlayout.png)
 
 
 ---
 #### data段
 
-- 数据段（data segment）通常是指用来存放程序中**已初始化的全局变量**的一块内存区域
-- 数据段属于**静态内存分配**
+- 數據段（data segment）通常是指用來存放程序中**已初始化的全局變量**的一塊內存區域
+- 數據段屬於**靜態內存分配**
 ![bg right:50% 130%](figs/memlayout.png)
 
 
@@ -268,9 +268,9 @@ Assembly    1 Files    11 Lines
 ---
 #### text段
 
-- 代码段（code segment/text segment）是指存放**执行代码**的内存区域
-- 这部分区域的大小确定，通常属于**只读**
-- 在代码段中，也有可能包含一些**只读的常数变量**
+- 代碼段（code segment/text segment）是指存放**執行代碼**的內存區域
+- 這部分區域的大小確定，通常屬於**只讀**
+- 在代碼段中，也有可能包含一些**只讀的常數變量**
 ![bg right:50% 130%](figs/memlayout.png)
 
 
@@ -278,18 +278,18 @@ Assembly    1 Files    11 Lines
 ---
 #### 堆（heap）
 
-- 堆是用于**动态分配**的内存段，可动态扩张或缩减
-- 程序调用**malloc**等函数新分配的内存被动态添加到堆上
-- 调用**free**等函数释放的内存从堆中被剔除
+- 堆是用於**動態分配**的內存段，可動態擴張或縮減
+- 程序調用**malloc**等函數新分配的內存被動態添加到堆上
+- 調用**free**等函數釋放的內存從堆中被剔除
 ![bg right:50% 130%](figs/memlayout.png)
 
 
 ---
-#### 栈(stack)
+#### 棧(stack)
 
-- 栈又称堆栈，是用户存放程序临时创建的**局部变量**
-- 函数被调用时，其**参数**和函数的**返回值**也会放到栈中
-- 由于栈的**先进后出**特点，所以栈特别方便用来保存/恢复当前执行状态
+- 棧又稱堆棧，是用戶存放程序臨時創建的**局部變量**
+- 函數被調用時，其**參數**和函數的**返回值**也會放到棧中
+- 由於棧的**先進後出**特點，所以棧特別方便用來保存/恢復當前執行狀態
 
 
 
@@ -297,11 +297,11 @@ Assembly    1 Files    11 Lines
 
 
 ---
-#### 栈(stack)
+#### 棧(stack)
 
-可以把堆栈看成一个**寄存和交换临时数据**的内存区
+可以把堆棧看成一個**寄存和交換臨時數據**的內存區
 
-OS编程与应用编程的一个显著区别是，OS编程需要理解**栈上的物理内存结构**和**机器级内容**。
+OS編程與應用編程的一個顯著區別是，OS編程需要理解**棧上的物理內存結構**和**機器級內容**。
 
 ![bg right:50% 130%](figs/memlayout.png)
 
@@ -309,7 +309,7 @@ OS编程与应用编程的一个显著区别是，OS编程需要理解**栈上�
 
 ---
 
-#### 链接时的内存布局定制
+#### 鏈接時的內存佈局定製
 ```
 # os/src/linker-qemu.ld
 OUTPUT_ARCH(riscv)
@@ -328,7 +328,7 @@ SECTIONS
 ![bg right:50% 130%](figs/memlayout.png)
 
 ---
-#### 链接时的内存布局定制
+#### 鏈接時的內存佈局定製
 ```
     .bss : {
         *(.bss.stack)
@@ -338,7 +338,7 @@ SECTIONS
 ```
 
 BSS：Block Started by Symbol
-SBSS：small bss，近数据
+SBSS：small bss，近數據
 
 
 ![bg right:50% 130%](figs/memlayout.png)
@@ -347,13 +347,13 @@ SBSS：small bss，近数据
 
 ---
 
-#### 生成内核二进制镜像
+#### 生成內核二進制鏡像
 
 ![bg w:950](figs/load-into-qemu.png)
 
 ---
 
-#### 生成内核二进制镜像
+#### 生成內核二進制鏡像
 
 ```
 rust-objcopy --strip-all \
@@ -362,21 +362,21 @@ target/riscv64gc-unknown-none-elf/release/os \
 ```
 
 ---
-提纲
+提綱
 
-1. 实验目标和思路
-2. 实验要求
-3. 实践步骤
-4. 代码结构
-5. 内存布局
-### 6. 基于 GDB 验证启动流程
-7. 函数调用
+1. 實驗目標和思路
+2. 實驗要求
+3. 實踐步驟
+4. 代碼結構
+5. 內存佈局
+### 6. 基於 GDB 驗證啟動流程
+7. 函數調用
 8. LibOS初始化
-9. SBI调用
+9. SBI調用
 
 ---
 
-#### 基于 GDB 验证启动流程
+#### 基於 GDB 驗證啟動流程
 ```
 qemu-system-riscv64 \
     -machine virt \
@@ -397,84 +397,84 @@ riscv64-unknown-elf-gdb \
 
 
 ---
-提纲
+提綱
 
-1. 实验目标和思路
-2. 实验要求
-3. 实践步骤
-4. 代码结构
-5. 内存布局
-6. 基于 GDB 验证启动流程
-### 7. 函数调用
+1. 實驗目標和思路
+2. 實驗要求
+3. 實踐步驟
+4. 代碼結構
+5. 內存佈局
+6. 基於 GDB 驗證啟動流程
+### 7. 函數調用
 8. LibOS初始化
-9. SBI调用
+9. SBI調用
 
 ---
-#### 编译原理对函数调用的支持
+#### 編譯原理對函數調用的支持
 
-* 编译原理课 -- [实现函数调用编译支持](https://decaf-lang.github.io/minidecaf-tutorial/docs/step9/example.html)
-* [快速入门RISC-V汇编的文档](https://github.com/riscv-non-isa/riscv-asm-manual/blob/master/riscv-asm.md)
+* 編譯原理課 -- [實現函數調用編譯支持](https://decaf-lang.github.io/minidecaf-tutorial/docs/step9/example.html)
+* [快速入門RISC-V彙編的文檔](https://github.com/riscv-non-isa/riscv-asm-manual/blob/master/riscv-asm.md)
 
 ![bg right:60% 90%](figs/function-call.png)
 
 
 ---
-#### call/return伪指令
+#### call/return偽指令
 
-伪指令            | 基本指令    | 含义   | 
+偽指令            | 基本指令    | 含義   | 
 :----------------|:-----------|:----------|
-ret      | jalr x0, x1, 0       | 函数返回
-call offset   | auipc x6, offset[31:12]; jalr x1, x6, offset[11:0]     | 函数调用
+ret      | jalr x0, x1, 0       | 函數返回
+call offset   | auipc x6, offset[31:12]; jalr x1, x6, offset[11:0]     | 函數調用
 
-auipc(add upper immediate to pc)被用来构建 PC 相对的地址，使用的是 U 型立即数。 auipc 以低 12 位补 0，高 20 位是 U 型立即数的方式形成 32 位偏移量，然后和 PC 相加，最后把结果保存在寄存器 x1。
+auipc(add upper immediate to pc)被用來構建 PC 相對的地址，使用的是 U 型立即數。 auipc 以低 12 位補 0，高 20 位是 U 型立即數的方式形成 32 位偏移量，然後和 PC 相加，最後把結果保存在寄存器 x1。
 
 ---
 
-#### 函数调用跳转指令
+#### 函數調用跳轉指令
 ![w:1000](figs/fun-call-in-rv.png)
 
-伪指令 ret 翻译为 jalr x0, 0(x1)，含义为跳转到寄存器 ra(即x1)保存的地址。
-*[快速入门RISC-V汇编的文档](https://github.com/riscv-non-isa/riscv-asm-manual/blob/master/riscv-asm.md)*
+偽指令 ret 翻譯為 jalr x0, 0(x1)，含義為跳轉到寄存器 ra(即x1)保存的地址。
+*[快速入門RISC-V彙編的文檔](https://github.com/riscv-non-isa/riscv-asm-manual/blob/master/riscv-asm.md)*
 
 
 ---
-#### call/return伪指令
-伪指令            | 基本指令    | 含义   | 
+#### call/return偽指令
+偽指令            | 基本指令    | 含義   | 
 :----------------|:-----------|:----------|
-ret      | jalr x0, x1, 0       | 函数返回
-call offset   | auipc x6, offset[31:12]; jalr x1, x6, offset[11:0]     | 函数调用
+ret      | jalr x0, x1, 0       | 函數返回
+call offset   | auipc x6, offset[31:12]; jalr x1, x6, offset[11:0]     | 函數調用
 
-函数调用核心机制
-- 在函数调用时，通过 call 伪指令保存返回地址并实现跳转；
-- 在函数返回时，通过 ret 伪指令回到跳转之前的下一条指令继续执行
+函數調用核心機制
+- 在函數調用時，通過 call 偽指令保存返回地址並實現跳轉；
+- 在函數返回時，通過 ret 偽指令回到跳轉之前的下一條指令繼續執行
 
-
----
-#### 函数调用约定
-
-函数调用约定 (Calling Convention) 约定在某个指令集架构上，某种编程语言的函数调用如何实现。它包括了以下内容：
-
-- 函数的输入参数和返回值如何传递；
-- 函数调用上下文中调用者/被调用者保存寄存器的划分；
-- 其他的在函数调用流程中对于寄存器的使用方法。
 
 ---
+#### 函數調用約定
 
-#### RISC-V函数调用约定：调用参数和返回值传递
+函數調用約定 (Calling Convention) 約定在某個指令集架構上，某種編程語言的函數調用如何實現。它包括了以下內容：
+
+- 函數的輸入參數和返回值如何傳遞；
+- 函數調用上下文中調用者/被調用者保存寄存器的劃分；
+- 其他的在函數調用流程中對於寄存器的使用方法。
+
+---
+
+#### RISC-V函數調用約定：調用參數和返回值傳遞
 ![w:1200](figs/rv-call-regs.png)
-- RISC-V32:如果返回值64bit，则用a0~a1来放置
-- RISC-V64:如果返回值64bit，则用a0来放置
+- RISC-V32:如果返回值64bit，則用a0~a1來放置
+- RISC-V64:如果返回值64bit，則用a0來放置
 
 
 ---
 
-#### RISC-V函数调用约定：栈帧
+#### RISC-V函數調用約定：棧幀
 ![w:1000](figs/call-stack.png)
 
 ---
-#### RISC-V函数调用约定：栈帧
+#### RISC-V函數調用約定：棧幀
 
-**栈帧（Stack Frames）**
+**棧幀（Stack Frames）**
 ```
 return address *
 previous fp
@@ -493,11 +493,11 @@ local variables
 
 ---
 
-#### RISC-V函数调用约定：栈帧
-- 堆栈帧可能有不同的大小和内容,但总体结构是类似的
-- 每个堆栈帧始于这个函数的**返回值**和**前一个函数的fp值**
-- sp 寄存器总是指向当前堆栈框架的**底部**
-- fp 寄存器总是指向当前堆栈框架的**顶部** 
+#### RISC-V函數調用約定：棧幀
+- 堆棧幀可能有不同的大小和內容,但總體結構是類似的
+- 每個堆棧幀始於這個函數的**返回值**和**前一個函數的fp值**
+- sp 寄存器總是指向當前堆棧框架的**底部**
+- fp 寄存器總是指向當前堆棧框架的**頂部** 
 
 ![bg right:50% 180%](figs/stack-frame.png)
 
@@ -505,8 +505,8 @@ local variables
 
 ---
 
-#### RISC-V函数调用约定：ret指令
-- 当 ret 指令执行,下面的伪代码实现调整堆栈指针和PC:
+#### RISC-V函數調用約定：ret指令
+- 當 ret 指令執行,下面的偽代碼實現調整堆棧指針和PC:
 ```
 pc = return address
 sp = fp + ENTRY_SIZE
@@ -516,8 +516,8 @@ fp = previous fp
 
 ---
 
-#### RISC-V函数调用约定：函数结构
-函数结构组成：``prologue``,``body part`` 和``epilogue``
+#### RISC-V函數調用約定：函數結構
+函數結構組成：``prologue``,``body part`` 和``epilogue``
 ```
 .global sum_then_double
 sum_then_double:
@@ -534,9 +534,9 @@ sum_then_double:
 ```
 
 ---
-#### RISC-V函数调用约定：函数结构
+#### RISC-V函數調用約定：函數結構
 
-函数结构组成：``prologue``,``body part`` 和``epilogue``
+函數結構組成：``prologue``,``body part`` 和``epilogue``
 ```
 .global sum_then_double
 sum_then_double:		
@@ -547,7 +547,7 @@ sum_then_double:
 	
 	ret
 ```
-Q:上述代码的执行与前一页的代码执行相比有何不同？
+Q:上述代碼的執行與前一頁的代碼執行相比有何不同？
 
 <!-- https://blog.csdn.net/zoomdy/article/details/79354502 RISC-V Assembly Programmer's Manual 
 https://shakti.org.in/docs/risc-v-asm-manual.pdf 
@@ -557,23 +557,23 @@ https://github.com/riscv-non-isa/riscv-asm-manual/blob/master/riscv-asm.md
 
 
 ---
-提纲
+提綱
 
-1. 实验目标和思路
-2. 实验要求
-3. 实践步骤
-4. 代码结构
-5. 内存布局
-6. 基于 GDB 验证启动流程
-7. 函数调用
+1. 實驗目標和思路
+2. 實驗要求
+3. 實踐步驟
+4. 代碼結構
+5. 內存佈局
+6. 基於 GDB 驗證啟動流程
+7. 函數調用
 ### 8. LibOS初始化
-9. SBI调用
+9. SBI調用
 
 ---
 
-#### 分配并使用启动栈
+#### 分配並使用啟動棧
 
-分配并使用启动栈  *[快速入门RISC-V汇编的文档](https://github.com/riscv-non-isa/riscv-asm-manual/blob/master/riscv-asm.md)*
+分配並使用啟動棧  *[快速入門RISC-V彙編的文檔](https://github.com/riscv-non-isa/riscv-asm-manual/blob/master/riscv-asm.md)*
 ```
 # os/src/entry.asm
     .section .text.entry
@@ -591,7 +591,7 @@ boot_stack_top:
 ```
 
 ---
-#### 分配并使用启动栈
+#### 分配並使用啟動棧
 ```
 # os/src/linker-qemu.ld
 .bss : {
@@ -602,39 +602,39 @@ boot_stack_top:
 }
 ebss = .;
 ```
-在链接脚本 linker.ld 中 .bss.stack 段最终会被汇集到 .bss 段中
-.bss 段一般放置需要被初始化为零的数据
+在鏈接腳本 linker.ld 中 .bss.stack 段最終會被彙集到 .bss 段中
+.bss 段一般放置需要被初始化為零的數據
 
 
 ---
-#### 控制权转交：ASM --> Rust/C
+#### 控制權轉交：ASM --> Rust/C
 
-将控制权转交给 Rust 代码，该入口点在 main.rs 中的``rust_main``函数
+將控制權轉交給 Rust 代碼，該入口點在 main.rs 中的``rust_main``函數
 ```rust
 // os/src/main.rs  
 pub fn rust_main() -> ! {
     loop {}
 }
 ```
-- ``fn`` 关键字：函数； ``pub`` 关键字：对外可见，公共的
-- ``loop`` 关键字：循环  
+- ``fn`` 關鍵字：函數； ``pub`` 關鍵字：對外可見，公共的
+- ``loop`` 關鍵字：循環  
 
 
 
 ---
 #### 清空bss段
 
-清空bss段(未初始化数据段)
+清空bss段(未初始化數據段)
 ```Rust
 pub fn rust_main() -> ! {
-    clear_bss(); //调用清空bss的函数clear_bss()
+    clear_bss(); //調用清空bss的函數clear_bss()
 }
 fn clear_bss() {
     extern "C" {
         fn sbss(); //bss段的起始地址
-        fn ebss(); //bss段的结束地址
+        fn ebss(); //bss段的結束地址
     }
-    //对[sbss..ebss]这段内存空间清零
+    //對[sbss..ebss]這段內存空間清零
     (sbss as usize..ebss as usize).for_each(|a| {
         unsafe { (a as *mut u8).write_volatile(0) }
     });
@@ -643,32 +643,32 @@ fn clear_bss() {
 
 
 ---
-提纲
+提綱
 
-1. 实验目标和思路
-2. 实验要求
-3. 实践步骤
-4. 代码结构
-5. 内存布局
-6. 基于 GDB 验证启动流程
-7. 函数调用
+1. 實驗目標和思路
+2. 實驗要求
+3. 實踐步驟
+4. 代碼結構
+5. 內存佈局
+6. 基於 GDB 驗證啟動流程
+7. 函數調用
 8. LibOS初始化
-### 9. SBI调用
+### 9. SBI調用
 
 ---
 
-#### SBI服务接口
+#### SBI服務接口
 在屏幕上打印 Hello world! 
-* SBI服务接口
+* SBI服務接口
     - Supervisor Binary Interface
-    - 更底层的软件给操作系统提供的服务
+    - 更底層的軟件給操作系統提供的服務
 * RustSBI
-    - 实现基本的SBI服务
-    - 遵循SBI调用约定
+    - 實現基本的SBI服務
+    - 遵循SBI調用約定
 ![bg right:55% 90%](figs/rv-privil-arch.png)
 ---
 
-#### SBI服务编号
+#### SBI服務編號
 ```rust
 // os/src/sbi.rs
 const SBI_SET_TIMER: usize = 0;
@@ -681,42 +681,42 @@ const SBI_REMOTE_SFENCE_VMA: usize = 6;
 const SBI_REMOTE_SFENCE_VMA_ASID: usize = 7;
 const SBI_SHUTDOWN: usize = 8;
 ```
-- ``usize`` 机器字大小的无符号整型
+- ``usize`` 機器字大小的無符號整型
 ---
-#### 汇编级SBI调用
+#### 彙編級SBI調用
 
 ```rust
 // os/src/sbi.rs
-#[inline(always)] //总是把函数展开
+#[inline(always)] //總是把函數展開
 fn sbi_call(which: usize, arg0: usize, arg1: usize, arg2: usize) -> usize {
-    let mut ret; //可修改的变量ret
+    let mut ret; //可修改的變量ret
     unsafe {
-        asm!(//内嵌汇编
-            "ecall", //切换到更高特权级的机器指令
-            inlateout("x10") arg0 => ret, //SBI参数0&返回值
-            in("x11") arg1,  //SBI参数1
-            in("x12") arg2,  //SBI参数2
-            in("x17") which, //SBI编号
+        asm!(//內嵌彙編
+            "ecall", //切換到更高特權級的機器指令
+            inlateout("x10") arg0 => ret, //SBI參數0&返回值
+            in("x11") arg1,  //SBI參數1
+            in("x12") arg2,  //SBI參數2
+            in("x17") which, //SBI編號
         );
     }
     ret //返回ret值
 }
 ```
 ---
-#### SBI调用：输出字符
+#### SBI調用：輸出字符
 
-在屏幕上输出一个字符
+在屏幕上輸出一個字符
 ```rust
 // os/src/sbi.rs
 pub fn console_putchar(c: usize) {
     sbi_call(SBI_CONSOLE_PUTCHAR, c, 0, 0);
 }
 ```
-实现格式化输出
-- 编写基于 console_putchar 的 println! 宏
+實現格式化輸出
+- 編寫基於 console_putchar 的 println! 宏
 
 ---
-#### SBI调用：关机
+#### SBI調用：關機
 ```rust
 // os/src/sbi.rs
 pub fn shutdown() -> ! {
@@ -724,29 +724,29 @@ pub fn shutdown() -> ! {
     panic!("It should shutdown!");
 }
 ```
-- ``panic!``和``println!``是一个宏（类似C的宏），``!``是宏的标志
+- ``panic!``和``println!``是一個宏（類似C的宏），``!``是宏的標誌
 ---
-#### 优雅地处理错误panic
+#### 優雅地處理錯誤panic
 ```rust
 #[panic_handler]
-fn panic(info: &PanicInfo) -> ! { //PnaicInfo是结构类型
-    if let Some(location) = info.location() { //出错位置存在否？
+fn panic(info: &PanicInfo) -> ! { //PnaicInfo是結構類型
+    if let Some(location) = info.location() { //出錯位置存在否？
         println!(
             "Panicked at {}:{} {}",
-            location.file(), //出错的文件名
-            location.line(), //出错的文件中的行数
-            info.message().unwrap() //出错信息
+            location.file(), //出錯的文件名
+            location.line(), //出錯的文件中的行數
+            info.message().unwrap() //出錯信息
         );
     } else {
         println!("Panicked: {}", info.message().unwrap());
     }
-    shutdown() //关机
+    shutdown() //關機
 }
 ```
 
 ---
 #### LibOS完整功能
-优雅地处理错误panic
+優雅地處理錯誤panic
 ```rust
 pub fn rust_main() -> ! {
     clear_bss();
@@ -754,7 +754,7 @@ pub fn rust_main() -> ! {
     panic!("Shutdown machine!");
 }
 ```
-运行结果
+運行結果
 ```
 [RustSBI output]
 Hello, world!
@@ -762,8 +762,8 @@ Panicked at src/main.rs:26 Shutdown machine!
 ```
 
 ---
-### 小结
-- 构造各种OS的实践中需要掌握的知识点（原理&实现）
-- 理解Compiler/OS/Machine的相互关联关系
-- 知道从机器启动到应用程序打印出字符串的过程
-- 能写Trilobita OS
+### 小結
+- 構造各種OS的實踐中需要掌握的知識點（原理&實現）
+- 理解Compiler/OS/Machine的相互關聯關係
+- 知道從機器啟動到應用程序打印出字符串的過程
+- 能寫Trilobita OS

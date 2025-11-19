@@ -256,7 +256,7 @@ void benchmark(const std::string& name, Func f, size_t iterations) {
 
 2. **資料特性**
    - 資料量大小
-   - 鍵值分布
+   - 鍵值分佈
    - 是否需要排序
 
 3. **記憶體考慮**

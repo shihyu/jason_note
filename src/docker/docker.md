@@ -208,7 +208,7 @@ docker compose down --rmi all --volumes
 
 # Docker 教學
 
-***docker*實際上,就是一個系統聯合幾個元件一直在欺騙一個處理程序,主要依靠了三個幫凶namespace,*chroot,cgroup*** 
+***docker*實際上,就是一個系統聯合幾個元件一直在欺騙一個處理程序,主要依靠了三個幫兇namespace,*chroot,cgroup*** 
 
 Containers as a Service ( CaaS ) - 容器如同服務
 Docker 是一個開源專案，出現於 2013 年初，最初是 Dotcloud 公司內部的 Side-Project。
@@ -848,7 +848,7 @@ pipx install <application_name>
 pip install <package_name> --break-system-packages
 ```
 
-這種方式應謹慎使用，只適合那些了解其風險的用戶。
+這種方式應謹慎使用，只適合那些瞭解其風險的用戶。
 
 #### 建議
 建議使用虛擬環境 (`venv`) 或 `pipx`，這樣可以避免破壞系統環境，同時也能滿足你對 Python 軟體包的安裝需求。

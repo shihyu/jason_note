@@ -363,7 +363,7 @@ make all
 ### Q2: 測試結果不穩定？
 
 ```bash
-# 1. 關閉其他程式減少干擾
+# 1. 關閉其他程式減少幹擾
 # 2. 使用 CPU 親和性
 taskset -c 0 ./bin/basic_latency
 

@@ -1,68 +1,68 @@
-# eBPF 与机器学习可观测：追踪 CUDA GPU 操作
+# eBPF 與機器學習可觀測：追蹤 CUDA GPU 操作
 
-你是否曾经想知道CUDA应用程序在运行时底层发生了什么？GPU操作由于发生在具有独立内存空间的设备上，因此调试和性能分析变得极为困难。在本教程中，我们将构建一个强大的基于eBPF的追踪工具，让你实时查看CUDA API调用。
+你是否曾經想知道CUDA應用程序在運行時底層發生了什麼？GPU操作由於發生在具有獨立內存空間的設備上，因此調試和性能分析變得極為困難。在本教程中，我們將構建一個強大的基於eBPF的追蹤工具，讓你實時查看CUDA API調用。
 
-## CUDA和GPU追踪简介
+## CUDA和GPU追蹤簡介
 
-CUDA（Compute Unified Device Architecture，计算统一设备架构）是NVIDIA的并行计算平台和编程模型，使开发者能够利用NVIDIA GPU进行通用计算。当你运行CUDA应用程序时，后台会发生以下步骤：
+CUDA（Compute Unified Device Architecture，計算統一設備架構）是NVIDIA的並行計算平臺和編程模型，使開發者能夠利用NVIDIA GPU進行通用計算。當你運行CUDA應用程序時，後臺會發生以下步驟：
 
-1. 主机（CPU）在设备（GPU）上分配内存
-2. 数据从主机内存传输到设备内存
-3. GPU内核（函数）被启动以处理数据
-4. 结果从设备传回主机
-5. 设备内存被释放
+1. 主機（CPU）在設備（GPU）上分配內存
+2. 數據從主機內存傳輸到設備內存
+3. GPU內核（函數）被啟動以處理數據
+4. 結果從設備傳回主機
+5. 設備內存被釋放
 
-每个操作都涉及CUDA API调用，如`cudaMalloc`、`cudaMemcpy`和`cudaLaunchKernel`。追踪这些调用可以提供宝贵的调试和性能优化信息，但这并不简单。GPU操作是异步的，传统调试工具通常无法访问GPU内部。
+每個操作都涉及CUDA API調用，如`cudaMalloc`、`cudaMemcpy`和`cudaLaunchKernel`。追蹤這些調用可以提供寶貴的調試和性能優化信息，但這並不簡單。GPU操作是異步的，傳統調試工具通常無法訪問GPU內部。
 
-这时eBPF就派上用场了！通过使用uprobes，我们可以在用户空间CUDA运行库（`libcudart.so`）中拦截CUDA API调用，在它们到达GPU之前。这使我们能够了解：
+這時eBPF就派上用場了！通過使用uprobes，我們可以在用戶空間CUDA運行庫（`libcudart.so`）中攔截CUDA API調用，在它們到達GPU之前。這使我們能夠了解：
 
-- 内存分配大小和模式
-- 数据传输方向和大小
-- 内核启动参数
-- 错误代码和失败原因
-- 操作的时间信息
+- 內存分配大小和模式
+- 數據傳輸方向和大小
+- 內核啟動參數
+- 錯誤代碼和失敗原因
+- 操作的時間信息
 
-本教程主要关注CPU侧的CUDA API调用，对于细粒度的GPU操作追踪，你可以参考[eGPU](https://dl.acm.org/doi/10.1145/3723851.3726984)论文和[bpftime](https://github.com/eunomia-bpf/bpftime)项目。
+本教程主要關注CPU側的CUDA API調用，對於細粒度的GPU操作追蹤，你可以參考[eGPU](https://dl.acm.org/doi/10.1145/3723851.3726984)論文和[bpftime](https://github.com/eunomia-bpf/bpftime)項目。
 
-## eBPF技术背景与GPU追踪的挑战
+## eBPF技術背景與GPU追蹤的挑戰
 
-eBPF（Extended Berkeley Packet Filter）最初是为网络数据包过滤而设计的，但现在已经发展成为一个强大的内核编程框架，使开发人员能够在内核空间运行用户定义的程序，而无需修改内核源代码或加载内核模块。eBPF的安全性通过静态分析和运行时验证器来保证，这使得它能够在生产环境中安全地运行。
+eBPF（Extended Berkeley Packet Filter）最初是為網絡數據包過濾而設計的，但現在已經發展成為一個強大的內核編程框架，使開發人員能夠在內核空間運行用戶定義的程序，而無需修改內核源代碼或加載內核模塊。eBPF的安全性通過靜態分析和運行時驗證器來保證，這使得它能夠在生產環境中安全地運行。
 
-传统的系统追踪方法往往存在显著的性能开销和功能限制。例如，使用strace等工具追踪系统调用会导致每个被追踪的系统调用产生数倍的性能损失，因为它需要在内核空间和用户空间之间频繁切换。相比之下，eBPF程序直接在内核空间执行，可以就地处理事件，只在必要时才将汇总或过滤后的数据传递给用户空间，从而大大减少了上下文切换的开销。
+傳統的系統追蹤方法往往存在顯著的性能開銷和功能限制。例如，使用strace等工具追蹤系統調用會導致每個被追蹤的系統調用產生數倍的性能損失，因為它需要在內核空間和用戶空間之間頻繁切換。相比之下，eBPF程序直接在內核空間執行，可以就地處理事件，只在必要時才將彙總或過濾後的數據傳遞給用戶空間，從而大大減少了上下文切換的開銷。
 
-GPU追踪面临着独特的挑战。现代GPU是高度并行的处理器，包含数千个小型计算核心，这些核心可以同时执行数万个线程。GPU具有自己的内存层次结构，包括全局内存、共享内存、常数内存和纹理内存，这些内存的访问模式对性能有着巨大影响。更复杂的是，GPU操作通常是异步的，这意味着当CPU启动一个GPU操作后，它可以继续执行其他任务，而无需等待GPU操作完成。另外，CUDA编程模型的异步特性使得调试变得特别困难。当一个内核函数在GPU上执行时，CPU无法直接观察到GPU的内部状态。错误可能在GPU上发生，但直到后续的同步操作（如cudaDeviceSynchronize或cudaStreamSynchronize）时才被检测到，这使得错误源的定位变得困难。此外，GPU内存错误（如数组越界访问）可能导致静默的数据损坏，而不是立即的程序崩溃，这进一步增加了调试的复杂性。
+GPU追蹤面臨著獨特的挑戰。現代GPU是高度並行的處理器，包含數千個小型計算核心，這些核心可以同時執行數萬個線程。GPU具有自己的內存層次結構，包括全局內存、共享內存、常數內存和紋理內存，這些內存的訪問模式對性能有著巨大影響。更復雜的是，GPU操作通常是異步的，這意味著當CPU啟動一個GPU操作後，它可以繼續執行其他任務，而無需等待GPU操作完成。另外，CUDA編程模型的異步特性使得調試變得特別困難。當一個內核函數在GPU上執行時，CPU無法直接觀察到GPU的內部狀態。錯誤可能在GPU上發生，但直到後續的同步操作（如cudaDeviceSynchronize或cudaStreamSynchronize）時才被檢測到，這使得錯誤源的定位變得困難。此外，GPU內存錯誤（如數組越界訪問）可能導致靜默的數據損壞，而不是立即的程序崩潰，這進一步增加了調試的複雜性。
 
-## 我们追踪的关键CUDA函数
+## 我們追蹤的關鍵CUDA函數
 
-我们的追踪工具监控几个关键CUDA函数，这些函数代表GPU计算中的主要操作。了解这些函数有助于解释追踪结果并诊断CUDA应用程序中的问题：
+我們的追蹤工具監控幾個關鍵CUDA函數，這些函數代表GPU計算中的主要操作。瞭解這些函數有助於解釋追蹤結果並診斷CUDA應用程序中的問題：
 
-### 内存管理
+### 內存管理
 
-- **`cudaMalloc`**：在GPU设备上分配内存。通过追踪这个函数，我们可以看到请求了多少内存、何时请求以及是否成功。内存分配失败是CUDA应用程序中常见的问题来源。
+- **`cudaMalloc`**：在GPU設備上分配內存。通過追蹤這個函數，我們可以看到請求了多少內存、何時請求以及是否成功。內存分配失敗是CUDA應用程序中常見的問題來源。
   ```c
   cudaError_t cudaMalloc(void** devPtr, size_t size);
   ```
 
-- **`cudaFree`**：释放先前在GPU上分配的内存。追踪这个函数有助于识别内存泄漏（分配的内存从未被释放）和双重释放错误。
+- **`cudaFree`**：釋放先前在GPU上分配的內存。追蹤這個函數有助於識別內存洩漏（分配的內存從未被釋放）和雙重釋放錯誤。
   ```c
   cudaError_t cudaFree(void* devPtr);
   ```
 
-### 数据传输
+### 數據傳輸
 
-- **`cudaMemcpy`**：在主机（CPU）和设备（GPU）内存之间，或在设备内存的不同位置之间复制数据。方向参数（`kind`）告诉我们数据是流向GPU、来自GPU还是在GPU内部移动。
+- **`cudaMemcpy`**：在主機（CPU）和設備（GPU）內存之間，或在設備內存的不同位置之間複製數據。方向參數（`kind`）告訴我們數據是流向GPU、來自GPU還是在GPU內部移動。
   ```c
   cudaError_t cudaMemcpy(void* dst, const void* src, size_t count, cudaMemcpyKind kind);
   ```
   
-  `kind`参数可以是：
-  - `cudaMemcpyHostToDevice` (1)：从CPU复制到GPU
-  - `cudaMemcpyDeviceToHost` (2)：从GPU复制到CPU
-  - `cudaMemcpyDeviceToDevice` (3)：在GPU内存内复制
+  `kind`參數可以是：
+  - `cudaMemcpyHostToDevice` (1)：從CPU複製到GPU
+  - `cudaMemcpyDeviceToHost` (2)：從GPU複製到CPU
+  - `cudaMemcpyDeviceToDevice` (3)：在GPU內存內複製
 
-### 内核执行
+### 內核執行
 
-- **`cudaLaunchKernel`**：启动GPU内核（函数）在设备上运行。这是真正的并行计算发生的地方。追踪这个函数显示内核何时启动以及是否成功。
+- **`cudaLaunchKernel`**：啟動GPU內核（函數）在設備上運行。這是真正的並行計算發生的地方。追蹤這個函數顯示內核何時啟動以及是否成功。
   ```c
   cudaError_t cudaLaunchKernel(const void* func, dim3 gridDim, dim3 blockDim, 
                               void** args, size_t sharedMem, cudaStream_t stream);
@@ -70,64 +70,64 @@ GPU追踪面临着独特的挑战。现代GPU是高度并行的处理器，包�
 
 ### 流和同步
 
-CUDA使用流来管理并发和异步操作：
+CUDA使用流來管理併發和異步操作：
 
-- **`cudaStreamCreate`**：创建一个新的流，用于按顺序执行操作，但可能与其他流并发。
+- **`cudaStreamCreate`**：創建一個新的流，用於按順序執行操作，但可能與其他流併發。
   ```c
   cudaError_t cudaStreamCreate(cudaStream_t* pStream);
   ```
 
-- **`cudaStreamSynchronize`**：等待流中的所有操作完成。这是一个关键的同步点，可以揭示性能瓶颈。
+- **`cudaStreamSynchronize`**：等待流中的所有操作完成。這是一個關鍵的同步點，可以揭示性能瓶頸。
   ```c
   cudaError_t cudaStreamSynchronize(cudaStream_t stream);
   ```
 
 ### 事件
 
-CUDA事件用于计时和同步：
+CUDA事件用於計時和同步：
 
-- **`cudaEventCreate`**：创建一个事件对象，用于计时操作。
+- **`cudaEventCreate`**：創建一個事件對象，用於計時操作。
   ```c
   cudaError_t cudaEventCreate(cudaEvent_t* event);
   ```
 
-- **`cudaEventRecord`**：在流中记录一个事件，可用于计时或同步。
+- **`cudaEventRecord`**：在流中記錄一個事件，可用於計時或同步。
   ```c
   cudaError_t cudaEventRecord(cudaEvent_t event, cudaStream_t stream);
   ```
 
-- **`cudaEventSynchronize`**：等待事件完成，这是另一个同步点。
+- **`cudaEventSynchronize`**：等待事件完成，這是另一個同步點。
   ```c
   cudaError_t cudaEventSynchronize(cudaEvent_t event);
   ```
 
-### 设备管理
+### 設備管理
 
-- **`cudaGetDevice`**：获取当前使用的设备。
+- **`cudaGetDevice`**：獲取當前使用的設備。
   ```c
   cudaError_t cudaGetDevice(int* device);
   ```
 
-- **`cudaSetDevice`**：设置用于GPU执行的设备。
+- **`cudaSetDevice`**：設置用於GPU執行的設備。
   ```c
   cudaError_t cudaSetDevice(int device);
   ```
 
-通过追踪这些函数，我们可以全面了解GPU操作的生命周期，从设备选择和内存分配到数据传输、内核执行和同步。这使我们能够识别瓶颈、诊断错误并了解CUDA应用程序的行为。
+通過追蹤這些函數，我們可以全面瞭解GPU操作的生命週期，從設備選擇和內存分配到數據傳輸、內核執行和同步。這使我們能夠識別瓶頸、診斷錯誤並瞭解CUDA應用程序的行為。
 
-## 架构概述
+## 架構概述
 
-我们的CUDA事件追踪器由三个主要组件组成：
+我們的CUDA事件追蹤器由三個主要組件組成：
 
-1. **头文件（`cuda_events.h`）**：定义内核空间和用户空间之间通信的数据结构
-2. **eBPF程序（`cuda_events.bpf.c`）**：使用uprobes实现对CUDA函数的内核侧钩子
-3. **用户空间应用程序（`cuda_events.c`）**：加载eBPF程序，处理事件并向用户显示
+1. **頭文件（`cuda_events.h`）**：定義內核空間和用戶空間之間通信的數據結構
+2. **eBPF程序（`cuda_events.bpf.c`）**：使用uprobes實現對CUDA函數的內核側鉤子
+3. **用戶空間應用程序（`cuda_events.c`）**：加載eBPF程序，處理事件並向用戶顯示
 
-该工具使用eBPF uprobes附加到CUDA运行库中的CUDA API函数。当调用CUDA函数时，eBPF程序捕获参数和结果，并通过环形缓冲区将它们发送到用户空间。
+該工具使用eBPF uprobes附加到CUDA運行庫中的CUDA API函數。當調用CUDA函數時，eBPF程序捕獲參數和結果，並通過環形緩衝區將它們發送到用戶空間。
 
-## 关键数据结构
+## 關鍵數據結構
 
-我们追踪器的核心数据结构是在`cuda_events.h`中定义的`struct event`：
+我們追蹤器的核心數據結構是在`cuda_events.h`中定義的`struct event`：
 
 ```c
 struct event {
@@ -152,9 +152,9 @@ struct event {
 };
 ```
 
-这个结构设计用于高效捕获不同类型的CUDA操作信息。`union`是一种巧妙的节省空间技术，因为每个事件一次只需要一种类型的数据。例如，内存分配事件需要存储大小，而释放事件需要存储指针。
+這個結構設計用於高效捕獲不同類型的CUDA操作信息。`union`是一種巧妙的節省空間技術，因為每個事件一次只需要一種類型的數據。例如，內存分配事件需要存儲大小，而釋放事件需要存儲指針。
 
-`cuda_event_type`枚举帮助我们对不同的CUDA操作进行分类：
+`cuda_event_type`枚舉幫助我們對不同的CUDA操作進行分類：
 
 ```c
 enum cuda_event_type {
@@ -172,13 +172,13 @@ enum cuda_event_type {
 };
 ```
 
-这个枚举涵盖了我们要追踪的主要CUDA操作，从内存管理到内核启动和同步。
+這個枚舉涵蓋了我們要追蹤的主要CUDA操作，從內存管理到內核啟動和同步。
 
-## eBPF程序实现
+## eBPF程序實現
 
-让我们深入了解钩入CUDA函数的eBPF程序（`cuda_events.bpf.c`）。完整代码可在仓库中找到，以下是关键部分：
+讓我們深入瞭解鉤入CUDA函數的eBPF程序（`cuda_events.bpf.c`）。完整代碼可在倉庫中找到，以下是關鍵部分：
 
-首先，我们创建一个环形缓冲区与用户空间通信：
+首先，我們創建一個環形緩衝區與用戶空間通信：
 
 ```c
 struct {
@@ -187,9 +187,9 @@ struct {
 } rb SEC(".maps");
 ```
 
-环形缓冲区是我们追踪器的关键组件。它充当一个高性能队列，eBPF程序可以在其中提交事件，用户空间应用程序可以检索它们。我们设置了256KB的大小来处理事件突发而不丢失数据。
+環形緩衝區是我們追蹤器的關鍵組件。它充當一個高性能隊列，eBPF程序可以在其中提交事件，用戶空間應用程序可以檢索它們。我們設置了256KB的大小來處理事件突發而不丟失數據。
 
-对于每种CUDA操作，我们实现了一个辅助函数来收集相关数据。让我们看看`submit_malloc_event`函数为例：
+對於每種CUDA操作，我們實現了一個輔助函數來收集相關數據。讓我們看看`submit_malloc_event`函數為例：
 
 ```c
 static inline int submit_malloc_event(size_t size, bool is_return, int ret_val) {
@@ -214,9 +214,9 @@ static inline int submit_malloc_event(size_t size, bool is_return, int ret_val) 
 }
 ```
 
-这个函数首先在环形缓冲区中为我们的事件保留空间。然后它填充进程ID和名称等常见字段。对于malloc事件，我们存储请求的大小（在函数入口）或返回值（在函数退出时）。最后，我们将事件提交到环形缓冲区。
+這個函數首先在環形緩衝區中為我們的事件保留空間。然後它填充進程ID和名稱等常見字段。對於malloc事件，我們存儲請求的大小（在函數入口）或返回值（在函數退出時）。最後，我們將事件提交到環形緩衝區。
 
-实际的探针使用SEC注释附加到CUDA函数。对于cudaMalloc，我们有：
+實際的探針使用SEC註釋附加到CUDA函數。對於cudaMalloc，我們有：
 
 ```c
 SEC("uprobe")
@@ -230,9 +230,9 @@ int BPF_KRETPROBE(cuda_malloc_exit, int ret) {
 }
 ```
 
-第一个函数在进入`cudaMalloc`时调用，捕获请求的大小。第二个在`cudaMalloc`返回时调用，捕获错误代码。这个模式对我们要追踪的每个CUDA函数都会重复。
+第一個函數在進入`cudaMalloc`時調用，捕獲請求的大小。第二個在`cudaMalloc`返回時調用，捕獲錯誤代碼。這個模式對我們要追蹤的每個CUDA函數都會重複。
 
-一个有趣的例子是`cudaMemcpy`，它在主机和设备之间传输数据：
+一個有趣的例子是`cudaMemcpy`，它在主機和設備之間傳輸數據：
 
 ```c
 SEC("uprobe")
@@ -241,13 +241,13 @@ int BPF_KPROBE(cuda_memcpy_enter, void *dst, const void *src, size_t size, int k
 }
 ```
 
-在这里，我们不仅捕获了大小，还捕获了"kind"参数，它指示传输的方向（主机到设备、设备到主机或设备到设备）。这为我们提供了关于数据移动模式的宝贵信息。
+在這裡，我們不僅捕獲了大小，還捕獲了"kind"參數，它指示傳輸的方向（主機到設備、設備到主機或設備到設備）。這為我們提供了關於數據移動模式的寶貴信息。
 
-## 用户空间应用程序详情
+## 用戶空間應用程序詳情
 
-用户空间应用程序（`cuda_events.c`）负责加载eBPF程序，处理来自环形缓冲区的事件，并以用户友好的格式显示它们。
+用戶空間應用程序（`cuda_events.c`）負責加載eBPF程序，處理來自環形緩衝區的事件，並以用戶友好的格式顯示它們。
 
-首先，程序解析命令行参数以配置其行为：
+首先，程序解析命令行參數以配置其行為：
 
 ```c
 static struct env {
@@ -264,9 +264,9 @@ static struct env {
 };
 ```
 
-这个结构存储配置选项，如是否打印时间戳或包含返回探针。默认值提供了一个合理的起点。
+這個結構存儲配置選項，如是否打印時間戳或包含返回探針。默認值提供了一個合理的起點。
 
-程序使用`libbpf`加载并附加eBPF程序到CUDA函数：
+程序使用`libbpf`加載並附加eBPF程序到CUDA函數：
 
 ```c
 int attach_cuda_func(struct cuda_events_bpf *skel, const char *lib_path, 
@@ -287,9 +287,9 @@ int attach_cuda_func(struct cuda_events_bpf *skel, const char *lib_path,
 }
 ```
 
-这个函数接受一个函数名（如"cudaMalloc"）和相应的入口和退出eBPF程序。然后它将这些程序作为uprobes附加到指定的库。
+這個函數接受一個函數名（如"cudaMalloc"）和相應的入口和退出eBPF程序。然後它將這些程序作為uprobes附加到指定的庫。
 
-最重要的函数之一是`handle_event`，它处理来自环形缓冲区的事件：
+最重要的函數之一是`handle_event`，它處理來自環形緩衝區的事件：
 
 ```c
 static int handle_event(void *ctx, void *data, size_t data_sz) {
@@ -323,9 +323,9 @@ static int handle_event(void *ctx, void *data, size_t data_sz) {
 }
 ```
 
-此函数格式化并显示事件信息，包括时间戳、进程详情、事件类型以及特定参数或返回值。
+此函數格式化並顯示事件信息，包括時間戳、進程詳情、事件類型以及特定參數或返回值。
 
-`get_event_details`函数将原始事件数据转换为人类可读的形式：
+`get_event_details`函數將原始事件數據轉換為人類可讀的形式：
 
 ```c
 static void get_event_details(const struct event *e, char *details, size_t len) {
@@ -342,9 +342,9 @@ static void get_event_details(const struct event *e, char *details, size_t len) 
 }
 ```
 
-这个函数对每种事件类型都有不同的处理方式。例如，malloc事件在入口显示请求的大小，在退出时显示错误代码。
+這個函數對每種事件類型都有不同的處理方式。例如，malloc事件在入口顯示請求的大小，在退出時顯示錯誤代碼。
 
-主事件循环非常简单：
+主事件循環非常簡單：
 
 ```c
 while (!exiting) {
@@ -353,13 +353,13 @@ while (!exiting) {
 }
 ```
 
-这会轮询环形缓冲区的事件，对每个事件调用`handle_event`。100ms超时确保程序对信号（如Ctrl+C）保持响应。
+這會輪詢環形緩衝區的事件，對每個事件調用`handle_event`。100ms超時確保程序對信號（如Ctrl+C）保持響應。
 
-## CUDA错误处理和报告
+## CUDA錯誤處理和報告
 
-我们追踪器的一个重要方面是将CUDA错误代码转换为人类可读的消息。CUDA有100多种不同的错误代码，从简单的"内存不足"到复杂的"不支持的PTX版本"。
+我們追蹤器的一個重要方面是將CUDA錯誤代碼轉換為人類可讀的消息。CUDA有100多種不同的錯誤代碼，從簡單的"內存不足"到複雜的"不支持的PTX版本"。
 
-我们的工具包括一个全面的`cuda_error_str`函数，将这些数字代码映射到字符串描述：
+我們的工具包括一個全面的`cuda_error_str`函數，將這些數字代碼映射到字符串描述：
 
 ```c
 static const char *cuda_error_str(int error) {
@@ -373,45 +373,45 @@ static const char *cuda_error_str(int error) {
 }
 ```
 
-这使输出对调试更有用。不是看到"错误2"，而是看到"OutOfMemory"，这立即告诉你出了什么问题。
+這使輸出對調試更有用。不是看到"錯誤2"，而是看到"OutOfMemory"，這立即告訴你出了什麼問題。
 
-## 编译和执行
+## 編譯和執行
 
-使用提供的Makefile构建追踪器非常简单：
+使用提供的Makefile構建追蹤器非常簡單：
 
 ```bash
-# 构建追踪器和示例
+# 構建追蹤器和示例
 make
 ```
 
-这将创建两个二进制文件：
-- `cuda_events`：基于eBPF的CUDA追踪工具
-- `basic02`：一个简单的CUDA示例应用程序
+這將創建兩個二進制文件：
+- `cuda_events`：基於eBPF的CUDA追蹤工具
+- `basic02`：一個簡單的CUDA示例應用程序
 
-构建系统足够智能，可以使用`nvidia-smi`检测你的GPU架构，并使用适当的标志编译CUDA代码。
+構建系統足夠智能，可以使用`nvidia-smi`檢測你的GPU架構，並使用適當的標誌編譯CUDA代碼。
 
-运行追踪器同样简单：
+運行追蹤器同樣簡單：
 
 ```bash
-# 启动追踪工具
+# 啟動追蹤工具
 sudo ./cuda_events -p ./basic02
 
-# 在另一个终端运行CUDA示例
+# 在另一個終端運行CUDA示例
 ./basic02
 ```
 
-你还可以通过PID追踪特定进程：
+你還可以通過PID追蹤特定進程：
 
 ```bash
-# 运行CUDA示例
+# 運行CUDA示例
 ./basic02 &
 PID=$!
 
-# 使用PID过滤启动追踪工具
+# 使用PID過濾啟動追蹤工具
 sudo ./cuda_events -p ./basic02 -d $PID
 ```
 
-示例输出显示了每个CUDA操作的详细信息：
+示例輸出顯示了每個CUDA操作的詳細信息：
 
 ```
 Using CUDA library: ./basic02
@@ -432,16 +432,16 @@ TIME     PROCESS          PID     EVENT                 TYPE    DETAILS
 17:35:41 basic02          12345   cudaFree             [EXIT]  returned=Success
 ```
 
-这个输出显示了CUDA应用程序的典型流程：
-1. 在设备上分配内存
-2. 从主机复制数据到设备（kind=1）
-3. 启动内核处理数据
-4. 从设备复制结果回主机（kind=2）
-5. 释放设备内存
+這個輸出顯示了CUDA應用程序的典型流程：
+1. 在設備上分配內存
+2. 從主機複製數據到設備（kind=1）
+3. 啟動內核處理數據
+4. 從設備複製結果回主機（kind=2）
+5. 釋放設備內存
 
-## 基准测试
+## 基準測試
 
-我们还提供了一个基准测试工具来测试追踪器的性能和CUDA API调用的延迟。
+我們還提供了一個基準測試工具來測試追蹤器的性能和CUDA API調用的延遲。
 
 ```bash
 make
@@ -449,7 +449,7 @@ sudo ./cuda_events -p ./bench
 ./bench
 ```
 
-当没有追踪时，结果如下：
+當沒有追蹤時，結果如下：
 
 ```
 Data size: 1048576 bytes (1024 KB)
@@ -464,7 +464,7 @@ cudaMemcpyD2H:        393.55 µs
 cudaFree:               0.00 µs
 ```
 
-当附加追踪器时，结果如下：
+當附加追蹤器時，結果如下：
 
 ```
 Data size: 1048576 bytes (1024 KB)
@@ -479,37 +479,37 @@ cudaMemcpyD2H:        383.66 µs
 cudaFree:               0.00 µs
 ```
 
-追踪器为每个CUDA API调用增加了约2微秒的开销，这对大多数情况来说是可以忽略不计的。为了进一步减少开销，你可以尝试使用[bpftime](https://github.com/eunomia-bpf/bpftime)用户空间运行时来优化eBPF程序。
+追蹤器為每個CUDA API調用增加了約2微秒的開銷，這對大多數情況來說是可以忽略不計的。為了進一步減少開銷，你可以嘗試使用[bpftime](https://github.com/eunomia-bpf/bpftime)用戶空間運行時來優化eBPF程序。
 
-## 命令行选项
+## 命令行選項
 
-`cuda_events`工具支持以下选项：
+`cuda_events`工具支持以下選項：
 
-- `-v`：启用详细调试输出
-- `-t`：不打印时间戳
-- `-r`：不显示函数返回（只显示函数入口）
-- `-p PATH`：指定CUDA运行库或应用程序的路径
-- `-d PID`：仅追踪指定的进程ID
+- `-v`：啟用詳細調試輸出
+- `-t`：不打印時間戳
+- `-r`：不顯示函數返回（只顯示函數入口）
+- `-p PATH`：指定CUDA運行庫或應用程序的路徑
+- `-d PID`：僅追蹤指定的進程ID
 
 ## 下一步
 
-一旦你熟悉了这个基本的CUDA追踪工具，你可以扩展它来：
+一旦你熟悉了這個基本的CUDA追蹤工具，你可以擴展它來：
 
-1. 添加对更多CUDA API函数的支持
-2. 添加时间信息以分析性能瓶颈
-3. 实现相关操作之间的关联（例如，匹配malloc和free）
-4. 创建CUDA操作的可视化，便于分析
-5. 添加对其他GPU框架（如OpenCL或ROCm）的支持
+1. 添加對更多CUDA API函數的支持
+2. 添加時間信息以分析性能瓶頸
+3. 實現相關操作之間的關聯（例如，匹配malloc和free）
+4. 創建CUDA操作的可視化，便於分析
+5. 添加對其他GPU框架（如OpenCL或ROCm）的支持
 
-更多关于CUDA追踪工具的细节，请查看我们的教程仓库：[https://github.com/eunomia-bpf/basic-cuda-tutorial](https://github.com/eunomia-bpf/basic-cuda-tutorial)
+更多關於CUDA追蹤工具的細節，請查看我們的教程倉庫：[https://github.com/eunomia-bpf/basic-cuda-tutorial](https://github.com/eunomia-bpf/basic-cuda-tutorial)
 
-这个教程的代码在[https://github.com/eunomia-bpf/bpf-developer-tutorial/tree/main/src/47-cuda-events](https://github.com/eunomia-bpf/bpf-developer-tutorial/tree/main/src/47-cuda-events)
+這個教程的代碼在[https://github.com/eunomia-bpf/bpf-developer-tutorial/tree/main/src/47-cuda-events](https://github.com/eunomia-bpf/bpf-developer-tutorial/tree/main/src/47-cuda-events)
 
-## 参考资料
+## 參考資料
 
-- CUDA编程指南：[https://docs.nvidia.com/cuda/cuda-c-programming-guide/](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)
-- NVIDIA CUDA运行时API：[https://docs.nvidia.com/cuda/cuda-runtime-api/](https://docs.nvidia.com/cuda/cuda-runtime-api/)
-- libbpf文档：[https://libbpf.readthedocs.io/](https://libbpf.readthedocs.io/)
-- Linux uprobes文档：[https://www.kernel.org/doc/Documentation/trace/uprobetracer.txt](https://www.kernel.org/doc/Documentation/trace/uprobetracer.txt)
+- CUDA編程指南：[https://docs.nvidia.com/cuda/cuda-c-programming-guide/](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)
+- NVIDIA CUDA運行時API：[https://docs.nvidia.com/cuda/cuda-runtime-api/](https://docs.nvidia.com/cuda/cuda-runtime-api/)
+- libbpf文檔：[https://libbpf.readthedocs.io/](https://libbpf.readthedocs.io/)
+- Linux uprobes文檔：[https://www.kernel.org/doc/Documentation/trace/uprobetracer.txt](https://www.kernel.org/doc/Documentation/trace/uprobetracer.txt)
 
-如果你想深入了解eBPF，请查看我们的教程仓库：[https://github.com/eunomia-bpf/bpf-developer-tutorial](https://github.com/eunomia-bpf/bpf-developer-tutorial) 或访问我们的网站：[https://eunomia.dev/tutorials/](https://eunomia.dev/tutorials/)。
+如果你想深入瞭解eBPF，請查看我們的教程倉庫：[https://github.com/eunomia-bpf/bpf-developer-tutorial](https://github.com/eunomia-bpf/bpf-developer-tutorial) 或訪問我們的網站：[https://eunomia.dev/tutorials/](https://eunomia.dev/tutorials/)。

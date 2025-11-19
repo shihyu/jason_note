@@ -134,7 +134,7 @@ test_sel4/
 
 ## 技術細節
 
-- **平台**: x86_64
+- **平臺**: x86_64
 - **構建系統**: CMake + Ninja
 - **QEMU 版本**: 8.2.2+
 - **GDB 連線**: localhost:1234
@@ -199,7 +199,7 @@ A: 使用 `-nographic` 模式，所有輸出都在終端中。
 ### Q: 如何修改構建選項？
 
 A: 編輯 Makefile 中的變數：
-- `PLATFORM` - 目標平台
+- `PLATFORM` - 目標平臺
 - `SIMULATION` - 模擬模式
 - `BUILD_TYPE` - 構建類型 (Debug/Release)
 

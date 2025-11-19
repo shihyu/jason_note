@@ -25,7 +25,7 @@ APP ^HMaHuPKN
 
 Lib ^NGcXkrUr
 
-系统调用 ^K8tulimU
+系統調用 ^K8tulimU
 
 U-Mode ^fkBzzDPD
 
@@ -917,13 +917,13 @@ Heap Alloc ^L3bOK9GY
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "系统调用",
-			"rawText": "系统调用",
+			"text": "系統調用",
+			"rawText": "系統調用",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "系统调用"
+			"originalText": "系統調用"
 		},
 		{
 			"type": "line",

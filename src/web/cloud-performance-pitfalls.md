@@ -292,10 +292,10 @@ aws ec2 describe-instance-attribute --instance-id i-xxx --attribute ebsOptimized
 記住：**花錢要花在刀口上**。與其盲目升級 VM 規格，不如先花幾塊美金配置適合的 Storage，效能可能立即提升數十倍。
 
 ### 關鍵要點
-1. **了解限制**：詳讀雲端服務商的 Limits and Quotas 文件
+1. **瞭解限制**：詳讀雲端服務商的 Limits and Quotas 文件
 2. **正確監控**：不只看 CPU/Memory，更要關注 IO、網路、連線數
 3. **資源隔離**：IO 密集型服務需要獨立資源
-4. **成本意識**：了解隱藏成本，避免預算超支
+4. **成本意識**：瞭解隱藏成本，避免預算超支
 5. **持續優化**：效能優化是持續的過程，不是一次性任務
 
 ---

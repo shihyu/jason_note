@@ -169,7 +169,7 @@ https://github.com/github/spec-kit/issues/467
 
 - 人類在 SDD 模式下，**review 文件變得更重要**，spec-kit 每個 Step 產生的文件都需要專業人員 review，確保是你想要的。
 
-- 最後 Coding 這麼簡單的事，就交給 AI 吧，人類就只要負責喝酒吃餅干，然後最後跟 AI 說，Good job。
+- 最後 Coding 這麼簡單的事，就交給 AI 吧，人類就只要負責喝酒吃餅幹，然後最後跟 AI 說，Good job。
 
 ## 不要再相信 "不需要程式背景，也可以開發出百萬級應用程式"
 

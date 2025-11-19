@@ -574,7 +574,7 @@ TypeError: Cannot read property 'map' of undefined at line 42
 
 **專案二：電商數據分析**
 - Jupyter notebook 重構
-- 轉換為互動式儀表板
+- 轉換為互動式儀錶板
 - 數據視覺化優化
 
 **專案三：Web 應用開發**
@@ -584,7 +584,7 @@ TypeError: Cannot read property 'map' of undefined at line 42
 
 ### 吳恩達的 AI 民主化願景
 
-> "AI 教育應該是大眾化、通識化，而不是只屬於少數精英"
+> "AI 教育應該是大眾化、通識化，而不是隻屬於少數精英"
 
 這門課程體現了吳恩達的核心理念：
 - **普及化學習**：讓任何人都能掌握 AI 工具

@@ -11,19 +11,19 @@ backgroundColor: white
 <!-- theme: gaia -->
 <!-- _class: lead -->
 
-## 第五讲 地址空间-物理内存管理
+## 第五講 地址空間-物理內存管理
 
-### 第0节 回顾
-- 给应用提供"好"的服务
-   - 提高性能、简化开发、加强安全
-   - 应用的执行环境持续进化
-   - 操作系统功能持续增强
+### 第0節 回顧
+- 給應用提供"好"的服務
+   - 提高性能、簡化開發、加強安全
+   - 應用的執行環境持續進化
+   - 操作系統功能持續增強
 ---
-### 回顾
-- lec1: 试试UNIX/Linux 
+### 回顧
+- lec1: 試試UNIX/Linux 
 
-  - "系统调用"
-  - 例子，用C语言，来自UNIX（例如Linux、macOS、FreeBSD）。
+  - "系統調用"
+  - 例子，用C語言，來自UNIX（例如Linux、macOS、FreeBSD）。
 
             fd = open("out", 1);
             write(fd, "hello\n", 6);
@@ -31,27 +31,27 @@ backgroundColor: white
 
 
 ---
-### 回顾
-- lec2: 写裸机程序：LibOS             
-  - 软硬件启动，函数调用，SBI调用
+### 回顧
+- lec2: 寫裸機程序：LibOS             
+  - 軟硬件啟動，函數調用，SBI調用
 ![w:600](lec2/figs/os-as-lib.png)
 
 
 
 ---
-### 回顾
-- lec3: 写 Batch OS  
-  - 特权级: U-Mode, S-Mode
-  - 特权级切换，陷入上下文
-  - 编译多应用+OS的镜像
-  - 加载并执行应用
+### 回顧
+- lec3: 寫 Batch OS  
+  - 特權級: U-Mode, S-Mode
+  - 特權級切換，陷入上下文
+  - 編譯多應用+OS的鏡像
+  - 加載並執行應用
 ![bg right 100%](lec3/figs/batch-os-detail.png)
 
 
 ---
-### 回顾
-- lec4-1: 写 MultiProg OS  
-   - 任务的概念与设计实现
-   - 理解协作/抢占式调度
-   -  陷入上下文+任务上下文 
+### 回顧
+- lec4-1: 寫 MultiProg OS  
+   - 任務的概念與設計實現
+   - 理解協作/搶佔式調度
+   -  陷入上下文+任務上下文 
 ![bg right 100%](lec4/figs/multiprog-os-detail.png) 

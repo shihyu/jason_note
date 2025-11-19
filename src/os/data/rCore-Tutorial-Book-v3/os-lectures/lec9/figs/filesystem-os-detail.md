@@ -13,8 +13,8 @@ APP ^HMaHuPKN
 
 Lib ^NGcXkrUr
 
-新的文件相关
-系统调用 ^K8tulimU
+新的文件相關
+系統調用 ^K8tulimU
 
 APP ^xMrLT2y7
 
@@ -157,8 +157,8 @@ DiskInode ^r2OffYKI
 
 EasyFS ^NfrZEFxE
 
-文件系统
-管理层 ^hNcoSWP2
+文件系統
+管理層 ^hNcoSWP2
 
 OSInode ^4rBhU5VQ
 
@@ -170,20 +170,20 @@ file data ^ZmJTEG9S
 
 EasyFS ^gJcyNJJF
 
-进程 ^wflwaLD1
+進程 ^wflwaLD1
 
 文件 ^8KwRVXU9
 
-地址空间 ^ZGaDcVRe
+地址空間 ^ZGaDcVRe
 
-异常控制流 ^ffTm6gZp
+異常控制流 ^ffTm6gZp
 
-进程相关
-系统调用 ^ALhKQjLD
+進程相關
+系統調用 ^ALhKQjLD
 
 SBI service ^C9PcQbif
 
-应用程序执行环境 ^6rhB9CxW
+應用程序執行環境 ^6rhB9CxW
 
 %%
 # Drawing
@@ -744,13 +744,13 @@ SBI service ^C9PcQbif
 			"link": null,
 			"fontSize": 15.67090164987665,
 			"fontFamily": 4,
-			"text": "新的文件相关\n系统调用",
-			"rawText": "新的文件相关\n系统调用",
+			"text": "新的文件相關\n系統調用",
+			"rawText": "新的文件相關\n系統調用",
 			"baseline": 31,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "新的文件相关\n系统调用"
+			"originalText": "新的文件相關\n系統調用"
 		},
 		{
 			"type": "rectangle",
@@ -4720,13 +4720,13 @@ SBI service ^C9PcQbif
 			"link": null,
 			"fontSize": 12.766293174342085,
 			"fontFamily": 4,
-			"text": "文件系统\n管理层",
-			"rawText": "文件系统\n管理层",
+			"text": "文件系統\n管理層",
+			"rawText": "文件系統\n管理層",
 			"baseline": 26,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "文件系统\n管理层"
+			"originalText": "文件系統\n管理層"
 		},
 		{
 			"type": "text",
@@ -5760,13 +5760,13 @@ SBI service ^C9PcQbif
 			"link": null,
 			"fontSize": 21.115100428628388,
 			"fontFamily": 4,
-			"text": "进程",
-			"rawText": "进程",
+			"text": "進程",
+			"rawText": "進程",
 			"baseline": 19,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程"
+			"originalText": "進程"
 		},
 		{
 			"type": "text",
@@ -5853,13 +5853,13 @@ SBI service ^C9PcQbif
 			"link": null,
 			"fontSize": 16,
 			"fontFamily": 4,
-			"text": "地址空间",
-			"rawText": "地址空间",
+			"text": "地址空間",
+			"rawText": "地址空間",
 			"baseline": 15,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "地址空间"
+			"originalText": "地址空間"
 		},
 		{
 			"type": "rectangle",
@@ -5912,13 +5912,13 @@ SBI service ^C9PcQbif
 			"link": null,
 			"fontSize": 14.154434772143784,
 			"fontFamily": 4,
-			"text": "异常控制流",
-			"rawText": "异常控制流",
+			"text": "異常控制流",
+			"rawText": "異常控制流",
 			"baseline": 13,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "异常控制流"
+			"originalText": "異常控制流"
 		},
 		{
 			"type": "text",
@@ -5951,13 +5951,13 @@ SBI service ^C9PcQbif
 			"link": null,
 			"fontSize": 15.67090164987665,
 			"fontFamily": 4,
-			"text": "进程相关\n系统调用",
-			"rawText": "进程相关\n系统调用",
+			"text": "進程相關\n系統調用",
+			"rawText": "進程相關\n系統調用",
 			"baseline": 31,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程相关\n系统调用"
+			"originalText": "進程相關\n系統調用"
 		},
 		{
 			"type": "line",
@@ -6059,13 +6059,13 @@ SBI service ^C9PcQbif
 			"link": null,
 			"fontSize": 22.888565470729365,
 			"fontFamily": 4,
-			"text": "应用程序执行环境",
-			"rawText": "应用程序执行环境",
+			"text": "應用程序執行環境",
+			"rawText": "應用程序執行環境",
 			"baseline": 21,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "应用程序执行环境"
+			"originalText": "應用程序執行環境"
 		}
 	],
 	"appState": {

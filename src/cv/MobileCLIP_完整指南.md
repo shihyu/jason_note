@@ -35,7 +35,7 @@ MobileCLIP 是 Apple 開發的**輕量級圖像-文字配對模型**，專門為
 | **速度** | 比 OpenAI CLIP 快 2.3-4.8 倍 |
 | **體積** | 參數量 50-150M（比標準 CLIP 小 2-3 倍）|
 | **精準度** | ImageNet 零樣本準確率達 77.2% |
-| **平台** | 支援 iOS、Android、Python |
+| **平臺** | 支援 iOS、Android、Python |
 
 ### 1.3 實際應用場景
 
@@ -1529,7 +1529,7 @@ benchmark_search_speed(engine, num_queries=100)
 | B | 86.3M | 42.4M | 128.7M | 10.4ms | 3.3ms | 76.8% |
 | B-LT | 86.3M | 42.4M | 128.7M | 10.4ms | 3.3ms | 77.2% |
 
-*延遲測試平台：iPhone 12 Pro Max*
+*延遲測試平臺：iPhone 12 Pro Max*
 
 ---
 

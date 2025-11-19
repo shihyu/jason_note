@@ -7,7 +7,7 @@ excalidraw-plugin: parsed
 
 
 # Text Elements
-伤齿龙 ^rgP02voM
+傷齒龍 ^rgP02voM
 
 
 # Embedded files
@@ -76,15 +76,15 @@ excalidraw-plugin: parsed
 			"boundElements": null,
 			"updated": 1647700056899,
 			"link": null,
-			"text": "伤齿龙",
-			"rawText": "伤齿龙",
+			"text": "傷齒龍",
+			"rawText": "傷齒龍",
 			"fontSize": 37.5271329012784,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 34.27984619140625,
 			"containerId": null,
-			"originalText": "伤齿龙"
+			"originalText": "傷齒龍"
 		}
 	],
 	"appState": {

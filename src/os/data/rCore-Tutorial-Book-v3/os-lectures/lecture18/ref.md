@@ -1,4 +1,4 @@
-## 第十八讲 文件系统实例
+## 第十八講 文件系統實例
 
 [v1](https://github.com/LearningOS/os-lectures/blob/355c18947ee357239ca441d69dd26c83896abb9b/lecture18/ref.md)
 [v2]
@@ -78,7 +78,7 @@ Below shows all of the folder entries for the file **Thequi~1.fox**, which has a
 ![FAT-filename](figs/FAT-filename.png)
 
 ### 18.2 ext4 fs
-- Log-structured File System介绍 https://zhuanlan.zhihu.com/p/41358013
+- Log-structured File System介紹 https://zhuanlan.zhihu.com/p/41358013
 - http://pages.cs.wisc.edu/~remzi/OSTEP/file-journaling.pdf
 - http://pages.cs.wisc.edu/~remzi/OSTEP/file-lfs.pdf
 - https://pdos.csail.mit.edu/6.828/2018/lec/l-crash.txt
@@ -86,12 +86,12 @@ Below shows all of the folder entries for the file **Thequi~1.fox**, which has a
 - https://pdos.csail.mit.edu/6.828/2018/homework/xv6-new-log.html
 - https://pdos.csail.mit.edu/6.828/2018/readings/journal-design.pdf
 - The design and Implementation of a Log-Structured File System https://people.eecs.berkeley.edu/~brewer/cs262/LFS.pdf CN  https://blog.csdn.net/flymu0808/article/details/40892675 https://blog.csdn.net/dongkun152/article/details/77994811
-- 深入理解 ext4 等 Linux 文件系统 https://zhuanlan.zhihu.com/p/44267768
+- 深入理解 ext4 等 Linux 文件系統 https://zhuanlan.zhihu.com/p/44267768
 - ext4 slide https://compas.cs.stonybrook.edu/~nhonarmand/courses/fa14/cse506.2/slides/ext4.pdf
-- ext2/ext3/ext4简介（PPT）http://itindex.net/detail/8288-ext2-ext3-ext4
-- 【转】深入理解 ext4 等 Linux 文件系统（ Understanding Linux filesystems : ext4 and beyond ）https://ccie.lol/knowledge-base/linux-file-system-ext4/
+- ext2/ext3/ext4簡介（PPT）http://itindex.net/detail/8288-ext2-ext3-ext4
+- 【轉】深入理解 ext4 等 Linux 文件系統（ Understanding Linux filesystems : ext4 and beyond ）https://ccie.lol/knowledge-base/linux-file-system-ext4/
 - An introduction to Linux's EXT4 filesystem https://opensource.com/article/17/5/introduction-ext4-filesystem
-- 干货！大话EXT4文件系统完整版 https://cloud.tencent.com/developer/article/1551286
+- 乾貨！大話EXT4文件系統完整版 https://cloud.tencent.com/developer/article/1551286
 - https://compas.cs.stonybrook.edu/~nhonarmand/courses/fa14/cse506.2/slides/ext4.pdf
 - http://www.linux-kongress.org/2009/slides/ext4+btrfs_jan_kara.pdf
 - https://ext4.wiki.kernel.org/index.php/Publications
@@ -521,13 +521,13 @@ https://zhuanlan.zhihu.com/p/28155582
 Google File System
 
 https://zhuanlan.zhihu.com/p/50825652
-小白带你学习google三篇论文————Google File System
+小白帶你學習google三篇論文————Google File System
 
 https://zhuanlan.zhihu.com/p/20673524
-硅谷之路9：深入浅出理解GFS
+硅谷之路9：深入淺出理解GFS
 
 https://zhuanlan.zhihu.com/p/33944479
-Google File System 论文详析
+Google File System 論文詳析
 
 https://zhuanlan.zhihu.com/p/104427782
 [Paper Reading]2003-The Google File System

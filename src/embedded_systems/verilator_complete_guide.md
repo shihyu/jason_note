@@ -90,9 +90,9 @@ module counter (
 endmodule
 ```
 
-### 2.3 創建 C++ 測試平台 (tb_counter.cpp)
+### 2.3 創建 C++ 測試平臺 (tb_counter.cpp)
 ```cpp
-// tb_counter.cpp - Verilator 測試平台
+// tb_counter.cpp - Verilator 測試平臺
 #include <verilated.h>
 #include <verilated_vcd_c.h>
 #include "Vcounter.h"
@@ -618,7 +618,7 @@ $HOME/.mybin/verilator/
 ```
 $HOME/verilator_demo/
 ├── counter.v               # Verilog 設計檔案
-├── tb_counter.cpp          # C++ 測試平台
+├── tb_counter.cpp          # C++ 測試平臺
 ├── Makefile               # 自動化編譯腳本
 ├── test.sh                # 測試腳本
 ├── obj_dir/               # Verilator 生成的檔案（自動生成）

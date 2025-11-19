@@ -469,7 +469,7 @@ zig test --test-cmd-bin src/benchmark.zig
 ### 交叉編譯目標查詢
 
 ```bash
-# 查看所有支援的目標平台
+# 查看所有支援的目標平臺
 zig targets
 
 # 輸出 JSON 格式

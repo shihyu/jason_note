@@ -48,7 +48,7 @@ crontab -e
 */5 * * * * echo url="https://www.duckdns.org/update?domains=gamegame&token=xxxxxxxxxxxxxxxxxxxxxxxxx&ip=" | curl -k -o ~/duckdns/duck.log -K -
 ```
 
-> 儲存後即可每 5 分鐘更新一次 IP，讓你的子網域自動指向你目前的公网 IP。
+> 儲存後即可每 5 分鐘更新一次 IP，讓你的子網域自動指向你目前的公網 IP。
 
 ---
 

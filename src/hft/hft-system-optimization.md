@@ -448,7 +448,7 @@ private:
     
 public:
     OptimizedCounters(size_t n) : num_counters(n) {
-        // 確保每個計數器獨占快取行
+        // 確保每個計數器獨佔快取行
         counters = new (std::align_val_t(64)) Counter[n];
     }
     
@@ -707,7 +707,7 @@ public:
 | 問題 | 可能原因 | 診斷方法 | 解決方案 |
 |-----|---------|---------|---------|
 | 延遲尖峰 | CPU調度 | `trace-cmd` | CPU隔離 |
-| 延遲不穩定 | 中斷干擾 | `/proc/interrupts` | 中斷親和性 |
+| 延遲不穩定 | 中斷幹擾 | `/proc/interrupts` | 中斷親和性 |
 | 記憶體慢 | NUMA跨節點 | `numastat` | NUMA綁定 |
 | 快取未命中高 | 偽共享 | `perf c2c` | 資料對齊 |
 | 網路延遲 | 核心協定棧 | `tcpdump` | DPDK/XDP |

@@ -2,7 +2,7 @@
 
 ## 本章重點
 
-深入了解編譯器優化技術，包括優化等級、編譯器提示、Profile-Guided Optimization (PGO) 等。
+深入瞭解編譯器優化技術，包括優化等級、編譯器提示、Profile-Guided Optimization (PGO) 等。
 
 ## 編譯器優化等級
 
@@ -283,7 +283,7 @@ constexpr int fib10 = Fibonacci<10>::value;  // 編譯時計算
    - 每個程式不同
    - 使用基準測試驗證
 
-5. **了解目標架構**
+5. **瞭解目標架構**
    - 使用 -march=native
    - 考慮部署環境
 

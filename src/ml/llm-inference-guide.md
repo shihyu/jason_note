@@ -7,7 +7,7 @@
 #### 優勢
 - **極致的效率優化**：純 C/C++ 實現，無需 Python 依賴
 - **低記憶體需求**：支援 4-bit、5-bit、8-bit 量化
-- **跨平台支援**：Windows、Linux、macOS、Android、iOS
+- **跨平臺支援**：Windows、Linux、macOS、Android、iOS
 - **CPU 優化**：特別適合在沒有 GPU 的環境運行
 - **輕量級**：編譯後的執行檔很小，部署簡單
 
@@ -43,7 +43,7 @@
 - **適用場景**：消費級 GPU 運行大模型
 
 #### 6. MLC-LLM
-- **優勢**：跨平台（包括瀏覽器 WebGPU）、編譯優化
+- **優勢**：跨平臺（包括瀏覽器 WebGPU）、編譯優化
 - **劣勢**：設置較複雜、社群相對較小
 - **適用場景**：邊緣設備、瀏覽器部署
 
@@ -89,7 +89,7 @@
 #### 3. Intel Neural Compressor / OpenVINO
 - **優勢**：在 Intel CPU 上可能有 20-40% 效能提升
 - **限制**：主要針對 Intel 硬體優化
-- **使用場景**：Intel 平台專屬優化
+- **使用場景**：Intel 平臺專屬優化
 
 ### CPU 效能比較（Llama2-13B 4-bit）
 ```
@@ -100,7 +100,7 @@ OpenVINO (Intel):    35-40 tokens/秒 (Intel CPU)
 ONNX Runtime:        22-28 tokens/秒
 ```
 
-### 特殊硬體平台的最佳選擇
+### 特殊硬體平臺的最佳選擇
 
 #### Apple Silicon (M1/M2/M3)
 - **MLX** (Apple 官方)：可能有 30-50% 效能優勢
@@ -111,7 +111,7 @@ ONNX Runtime:        22-28 tokens/秒
 - **NCNN** (騰訊)：在某些 Android 設備上更快
 
 ### 結論
-綜合考慮效能、穩定性、易用性，llama.cpp 仍是 CPU 推理的最佳選擇，但特定硬體平台可能有更優選擇。
+綜合考慮效能、穩定性、易用性，llama.cpp 仍是 CPU 推理的最佳選擇，但特定硬體平臺可能有更優選擇。
 
 ---
 

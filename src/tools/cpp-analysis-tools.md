@@ -34,7 +34,7 @@ clang++ -fsanitize=address -g program.cpp
 clang++ -fsanitize=memory -fPIE -pie -g program.cpp
 ```
 
-#### Dr. Memory (跨平台)
+#### Dr. Memory (跨平臺)
 ```bash
 drmemory -- ./program
 ```

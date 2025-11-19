@@ -1,31 +1,31 @@
-## 第十七讲 文件系统扩展
+## 第十七講 文件系統擴展
 
-* [v1](https://github.com/LearningOS/os-lectures/blob/ded5de1d168c7ed7bbf6845129a1455ccdaac432/lecture17/ref.md)：2020年的第十七讲大纲
-* [v2](https://github.com/LearningOS/os-lectures/blob/ab62be1d45ca15ee6aeab1ec049e99b1ec6ae1ae/lecture17/ref.md)：2021年第十七讲大纲第一稿
-* [v3](https://github.com/LearningOS/os-lectures/blob/aa2d7a17df4e07bb0aa2bb20f23d8c016b2329e6/lecture17/ref.md)：加了插图的大纲
-* [v4](https://github.com/LearningOS/os-lectures/blob/9e472285b6e67b39c25d316cc1207d19925b403f/lecture17/ref.md)：生成LaTeX前的大纲
+* [v1](https://github.com/LearningOS/os-lectures/blob/ded5de1d168c7ed7bbf6845129a1455ccdaac432/lecture17/ref.md)：2020年的第十七講大綱
+* [v2](https://github.com/LearningOS/os-lectures/blob/ab62be1d45ca15ee6aeab1ec049e99b1ec6ae1ae/lecture17/ref.md)：2021年第十七講大綱第一稿
+* [v3](https://github.com/LearningOS/os-lectures/blob/aa2d7a17df4e07bb0aa2bb20f23d8c016b2329e6/lecture17/ref.md)：加了插圖的大綱
+* [v4](https://github.com/LearningOS/os-lectures/blob/9e472285b6e67b39c25d316cc1207d19925b403f/lecture17/ref.md)：生成LaTeX前的大綱
 
-### 17.1 目录与文件别名
+### 17.1 目錄與文件別名
 
-回顾：文件、文件组织、rCore的文件系统
+回顧：文件、文件組織、rCore的文件系統
 
-  [PPT讲义](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture21?action=AttachFile&do=get&target=21-1.pptx)   
+  [PPT講義](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture21?action=AttachFile&do=get&target=21-1.pptx)   
 
-### 17.2 空闲空间管理
+### 17.2 空閒空間管理
 
-  [空闲空间管理](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture21?action=AttachFile&do=get&target=21-5.pptx)
+  [空閒空間管理](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture21?action=AttachFile&do=get&target=21-5.pptx)
 
-### 17.3 文件缓存
+### 17.3 文件緩存
 
-文件缓存和打开文件： [PPT讲义](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture21?action=AttachFile&do=get&target=21-3.pptx)   
+文件緩存和打開文件： [PPT講義](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture21?action=AttachFile&do=get&target=21-3.pptx)   
 
 ### 17.4 VFS
 
-VFS（共享，缓存）：
+VFS（共享，緩存）：
 
-[The virtual file system (VFS)](www.cs.uni.edu/~diesburg/courses/dd/notes/VFS.pptx)：这里是一个55页的幻灯片，主要介绍VFS的接口；
+[The virtual file system (VFS)](www.cs.uni.edu/~diesburg/courses/dd/notes/VFS.pptx)：這裡是一個55頁的幻燈片，主要介紹VFS的接口；
 
-[Virtual File System](https://www.cs.unc.edu/~porter/courses/cse506/s16/slides/vfs.pdf)：这也是一个关于VFS的课程幻灯片；
+[Virtual File System](https://www.cs.unc.edu/~porter/courses/cse506/s16/slides/vfs.pdf)：這也是一個關於VFS的課程幻燈片；
 
 #### Overview
 
@@ -184,9 +184,9 @@ cat /proc/sys/net/ipv4/ip_forward
 
 ##### [procfs, sysfs, debugfs in Linux](https://www.cnblogs.com/qiuheng/p/5761877.html)
 
- * procfs 历史最早，最初就是用来跟内核交互的唯一方式，用来获取处理器、内存、设备驱动、进程等各种信息。
- * sysfs 跟 kobject 框架紧密联系，而 kobject 是为设备驱动模型而存在的，所以 sysfs 是为设备驱动服务的。
- * debugfs 从名字来看就是为debug而生，所以更加灵活。
+ * procfs 歷史最早，最初就是用來跟內核交互的唯一方式，用來獲取處理器、內存、設備驅動、進程等各種信息。
+ * sysfs 跟 kobject 框架緊密聯繫，而 kobject 是為設備驅動模型而存在的，所以 sysfs 是為設備驅動服務的。
+ * debugfs 從名字來看就是為debug而生，所以更加靈活。
 
 ### 17.6 Using the Linux Tracing Infrastructure
 

@@ -119,10 +119,10 @@ Rust 故意不支援 VLA（認為不安全），需要用 `Vec` 或 `alloca` 的
 
 ### 實際成功案例
 
-- **Linux Kernel** - 正在整合 Rust，證明了 Rust 能做核心開發
-- **嵌入式開發** - Rust 在 ARM Cortex-M 等平台很成功
+- **Linux Kernel** - 正在整合 Rust，證明瞭 Rust 能做核心開發
+- **嵌入式開發** - Rust 在 ARM Cortex-M 等平臺很成功
 - **作業系統** - Redox OS 完全用 Rust 寫成
-- **遊戲引擎** - Bevy 等專案證明了高效能圖形程式設計可行
+- **遊戲引擎** - Bevy 等專案證明瞭高效能圖形程式設計可行
 
 ---
 

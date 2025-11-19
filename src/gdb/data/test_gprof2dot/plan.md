@@ -364,7 +364,7 @@ stap -e 'probe process("./test_program").function("*") {
 sudo dtrace -n 'pid$target::*:entry { printf("%s\n", probefunc); }' -c ./test_program
 ```
 
-3. **Intel Pin** (跨平台)
+3. **Intel Pin** (跨平臺)
 ```bash
 # 下載 Intel Pin
 wget https://software.intel.com/content/dam/develop/external/us/en/documents/downloads/pin-3.28-98749-g6643ecee5-gcc-linux.tar.gz

@@ -19,7 +19,7 @@ APP ^HMaHuPKN
 
 Lib ^NGcXkrUr
 
-新的系统调用 ^K8tulimU
+新的系統調用 ^K8tulimU
 
 U-Mode ^fkBzzDPD
 
@@ -732,13 +732,13 @@ request ^sFfFeAdn
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "新的系统调用",
-			"rawText": "新的系统调用",
+			"text": "新的系統調用",
+			"rawText": "新的系統調用",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "新的系统调用"
+			"originalText": "新的系統調用"
 		},
 		{
 			"type": "line",

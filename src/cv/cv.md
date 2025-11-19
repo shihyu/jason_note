@@ -34,10 +34,10 @@
 - **YOLOv8/YOLOv5** - Ultralytics YOLO 系列
 
 ### 資料標註工具
-- **Roboflow** - 線上資料標註和管理平台
+- **Roboflow** - 線上資料標註和管理平臺
 - **LabelImg** - 物件偵測標註工具
-- **CVAT** - Intel 開源標註平台
-- **Supervisely** - 企業級標註平台
+- **CVAT** - Intel 開源標註平臺
+- **Supervisely** - 企業級標註平臺
 
 ## 🎯 應用領域
 
@@ -106,7 +106,7 @@
 ### 2. 進階階段 (2-3個月)
 - 學習深度學習基礎
 - 使用預訓練模型進行推論
-- 了解常見的 CV 任務和評估指標
+- 瞭解常見的 CV 任務和評估指標
 - 嘗試 fine-tuning 預訓練模型
 
 ### 3. 專精階段 (3-6個月)
@@ -127,7 +127,7 @@
 - [Stack Overflow CV 標籤](https://stackoverflow.com/questions/tagged/computer-vision)
 - [OpenCV 官方論壇](https://forum.opencv.org/)
 
-### 比賽平台
+### 比賽平臺
 - [Kaggle](https://www.kaggle.com/competitions?searchQuery=computer+vision) - CV 競賽
 - [DrivenData](https://www.drivendata.org/) - 社會公益 AI 競賽
 - [Zindi](https://zindi.africa/) - 非洲地區 AI 競賽

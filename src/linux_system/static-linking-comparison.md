@@ -114,7 +114,7 @@ ldd myapp
 # libstdc++.so.6 => not found ❌
 ```
 
-#### 2. 跨平台編譯容易
+#### 2. 跨平臺編譯容易
 ```bash
 # Go 交叉編譯
 GOOS=linux GOARCH=amd64 go build      # Linux

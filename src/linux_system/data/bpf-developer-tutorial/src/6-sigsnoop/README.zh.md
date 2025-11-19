@@ -1,12 +1,12 @@
-# eBPF 入门开发实践教程六：捕获进程发送信号的系统调用集合，使用 hash map 保存状态
+# eBPF 入門開發實踐教程六：捕獲進程發送信號的系統調用集合，使用 hash map 保存狀態
 
-eBPF (Extended Berkeley Packet Filter) 是 Linux 内核上的一个强大的网络和性能分析工具，它允许开发者在内核运行时动态加载、更新和运行用户定义的代码。
+eBPF (Extended Berkeley Packet Filter) 是 Linux 內核上的一個強大的網絡和性能分析工具，它允許開發者在內核運行時動態加載、更新和運行用戶定義的代碼。
 
-本文是 eBPF 入门开发实践教程的第六篇，主要介绍如何实现一个 eBPF 工具，捕获进程发送信号的系统调用集合，使用 hash map 保存状态。
+本文是 eBPF 入門開發實踐教程的第六篇，主要介紹如何實現一個 eBPF 工具，捕獲進程發送信號的系統調用集合，使用 hash map 保存狀態。
 
 ## sigsnoop
 
-示例代码如下：
+示例代碼如下：
 
 ```c
 #include <vmlinux.h>
@@ -87,15 +87,15 @@ int kill_exit(struct trace_event_raw_sys_exit *ctx)
 char LICENSE[] SEC("license") = "Dual BSD/GPL";
 ```
 
-上面的代码定义了一个 eBPF 程序，用于捕获进程发送信号的系统调用，包括 kill、tkill 和 tgkill。它通过使用 tracepoint 来捕获系统调用的进入和退出事件，并在这些事件发生时执行指定的探针函数，例如 probe_entry 和 probe_exit。
+上面的代碼定義了一個 eBPF 程序，用於捕獲進程發送信號的系統調用，包括 kill、tkill 和 tgkill。它通過使用 tracepoint 來捕獲系統調用的進入和退出事件，並在這些事件發生時執行指定的探針函數，例如 probe_entry 和 probe_exit。
 
-在探针函数中，我们使用 bpf_map 存储捕获的事件信息，包括发送信号的进程 ID、接收信号的进程 ID、信号值和进程的可执行文件名称。在系统调用退出时，我们将获取存储在 bpf_map 中的事件信息，并使用 bpf_printk 打印进程 ID、进程名称、发送的信号和系统调用的返回值。
+在探針函數中，我們使用 bpf_map 存儲捕獲的事件信息，包括髮送信號的進程 ID、接收信號的進程 ID、信號值和進程的可執行文件名稱。在系統調用退出時，我們將獲取存儲在 bpf_map 中的事件信息，並使用 bpf_printk 打印進程 ID、進程名稱、發送的信號和系統調用的返回值。
 
-最后，我们还需要使用 SEC 宏来定义探针，并指定要捕获的系统调用的名称，以及要执行的探针函数。
+最後，我們還需要使用 SEC 宏來定義探針，並指定要捕獲的系統調用的名稱，以及要執行的探針函數。
 
-eunomia-bpf 是一个结合 Wasm 的开源 eBPF 动态加载运行时和开发工具链，它的目的是简化 eBPF 程序的开发、构建、分发、运行。可以参考 <https://github.com/eunomia-bpf/eunomia-bpf> 下载和安装 ecc 编译工具链和 ecli 运行时。我们使用 eunomia-bpf 编译运行这个例子。
+eunomia-bpf 是一個結合 Wasm 的開源 eBPF 動態加載運行時和開發工具鏈，它的目的是簡化 eBPF 程序的開發、構建、分發、運行。可以參考 <https://github.com/eunomia-bpf/eunomia-bpf> 下載和安裝 ecc 編譯工具鏈和 ecli 運行時。我們使用 eunomia-bpf 編譯運行這個例子。
 
-编译运行上述代码：
+編譯運行上述代碼：
 
 ```shell
 docker run -it -v `pwd`/:/src/ ghcr.io/eunomia-bpf/ecc-`uname -m`:latest
@@ -112,7 +112,7 @@ $ sudo ecli run package.json
 Runing eBPF program...
 ```
 
-运行这段程序后，可以通过查看 /sys/kernel/debug/tracing/trace_pipe 文件来查看 eBPF 程序的输出：
+運行這段程序後，可以通過查看 /sys/kernel/debug/tracing/trace_pipe 文件來查看 eBPF 程序的輸出：
 
 ```console
 $ sudo cat /sys/kernel/debug/tracing/trace_pipe
@@ -122,9 +122,9 @@ $ sudo cat /sys/kernel/debug/tracing/trace_pipe
      systemd-journal-363     [000] d...1   672.563870: bpf_trace_printk: to PID 1527, ret = -3
 ```
 
-## 总结
+## 總結
 
-本文主要介绍如何实现一个 eBPF 工具，捕获进程发送信号的系统调用集合，使用 hash map 保存状态。使用 hash map 需要定义一个结构体：
+本文主要介紹如何實現一個 eBPF 工具，捕獲進程發送信號的系統調用集合，使用 hash map 保存狀態。使用 hash map 需要定義一個結構體：
 
 ```c
 struct {
@@ -135,8 +135,8 @@ struct {
 } values SEC(".maps");
 ```
 
-并使用一些对应的 API 进行访问，例如 bpf_map_lookup_elem、bpf_map_update_elem、bpf_map_delete_elem 等。
+並使用一些對應的 API 進行訪問，例如 bpf_map_lookup_elem、bpf_map_update_elem、bpf_map_delete_elem 等。
 
-更多的例子和详细的开发指南，请参考 eunomia-bpf 的官方文档：<https://github.com/eunomia-bpf/eunomia-bpf>
+更多的例子和詳細的開發指南，請參考 eunomia-bpf 的官方文檔：<https://github.com/eunomia-bpf/eunomia-bpf>
 
-如果您希望学习更多关于 eBPF 的知识和实践，可以访问我们的教程代码仓库 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或网站 <https://eunomia.dev/zh/tutorials/> 以获取更多示例和完整的教程。
+如果您希望學習更多關於 eBPF 的知識和實踐，可以訪問我們的教程代碼倉庫 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或網站 <https://eunomia.dev/zh/tutorials/> 以獲取更多示例和完整的教程。

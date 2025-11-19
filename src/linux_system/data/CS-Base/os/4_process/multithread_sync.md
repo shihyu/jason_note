@@ -39,7 +39,7 @@
 
 ![併發](https://cdn.xiaolincoding.com/gh/xiaolincoder/ImageHost/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E4%BA%92%E6%96%A5%E4%B8%8E%E5%90%8C%E6%AD%A5/3-%E5%B9%B6%E5%8F%91.jpg)
 
-另外，操作系統也為每個進程創建巨大、私有的虛擬內存的假象，這種地址空間的抽象讓每個程序好像擁有自己的內存，而實際上操作系統在背後祕密地讓多個地址空間「複用」物理內存或者磁盤。
+另外，操作系統也為每個進程創建巨大、私有的虛擬內存的假象，這種地址空間的抽象讓每個程序好像擁有自己的內存，而實際上操作系統在背後秘密地讓多個地址空間「複用」物理內存或者磁盤。
 
 ![虛擬內存管理-換入換出](https://cdn.xiaolincoding.com/gh/xiaolincoder/ImageHost/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E4%BA%92%E6%96%A5%E4%B8%8E%E5%90%8C%E6%AD%A5/4-%E5%86%85%E5%AD%98%E4%BA%A4%E6%8D%A2.jpg)
 

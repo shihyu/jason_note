@@ -197,7 +197,7 @@ trait CanFly {
     fn fly_speed(&self) -> u32;
 }
 
-// 鴨子：會走、會游、會飛
+// 鴨子：會走、會遊、會飛
 struct Duck {
     name: String,
 }

@@ -67,7 +67,7 @@ avail-vring ^9vQPVPS5
 
 Descriptor Table ^PWse6TYD
 
-virtqueue总体结构 ^1oqRMYPt
+virtqueue總體結構 ^1oqRMYPt
 
 buf0 ^5l22K9Yv
 
@@ -89,17 +89,17 @@ memory address ^RXtbliQQ
 
 .... ^a3r0nJX2
 
-Driver负责更新 ^I1jK7F69
+Driver負責更新 ^I1jK7F69
 
-Deivce负责更新 ^KvJYzVKO
+Deivce負責更新 ^KvJYzVKO
 
-Deivce负责更新 ^16bvJhMk
+Deivce負責更新 ^16bvJhMk
 
-Driver负责更新 ^bCs1B4dl
+Driver負責更新 ^bCs1B4dl
 
-Driver负责创建virtqueue所在内存空间 ^ehMdxnov
+Driver負責創建virtqueue所在內存空間 ^ehMdxnov
 
-Driver负责申请释放 bufs ^8AsVJx1H
+Driver負責申請釋放 bufs ^8AsVJx1H
 
 %%
 # Drawing
@@ -3382,13 +3382,13 @@ Driver负责申请释放 bufs ^8AsVJx1H
 			"link": null,
 			"fontSize": 48.94310584435095,
 			"fontFamily": 4,
-			"text": "virtqueue总体结构",
-			"rawText": "virtqueue总体结构",
+			"text": "virtqueue總體結構",
+			"rawText": "virtqueue總體結構",
 			"baseline": 44,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "virtqueue总体结构"
+			"originalText": "virtqueue總體結構"
 		},
 		{
 			"type": "arrow",
@@ -4122,15 +4122,15 @@ Driver负责申请释放 bufs ^8AsVJx1H
 			"boundElements": null,
 			"updated": 1672989973522,
 			"link": null,
-			"text": "Driver负责更新",
-			"rawText": "Driver负责更新",
+			"text": "Driver負責更新",
+			"rawText": "Driver負責更新",
 			"fontSize": 36,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 33,
 			"containerId": null,
-			"originalText": "Driver负责更新"
+			"originalText": "Driver負責更新"
 		},
 		{
 			"type": "text",
@@ -4158,13 +4158,13 @@ Driver负责申请释放 bufs ^8AsVJx1H
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "Deivce负责更新",
-			"rawText": "Deivce负责更新",
+			"text": "Deivce負責更新",
+			"rawText": "Deivce負責更新",
 			"baseline": 33,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "Deivce负责更新"
+			"originalText": "Deivce負責更新"
 		},
 		{
 			"type": "text",
@@ -4192,13 +4192,13 @@ Driver负责申请释放 bufs ^8AsVJx1H
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "Deivce负责更新",
-			"rawText": "Deivce负责更新",
+			"text": "Deivce負責更新",
+			"rawText": "Deivce負責更新",
 			"baseline": 33,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "Deivce负责更新"
+			"originalText": "Deivce負責更新"
 		},
 		{
 			"type": "text",
@@ -4231,13 +4231,13 @@ Driver负责申请释放 bufs ^8AsVJx1H
 			"link": null,
 			"fontSize": 32.55203397156761,
 			"fontFamily": 4,
-			"text": "Driver负责更新",
-			"rawText": "Driver负责更新",
+			"text": "Driver負責更新",
+			"rawText": "Driver負責更新",
 			"baseline": 29.26470346919824,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "Driver负责更新"
+			"originalText": "Driver負責更新"
 		},
 		{
 			"id": "ehMdxnov",
@@ -4263,15 +4263,15 @@ Driver负责申请释放 bufs ^8AsVJx1H
 			"boundElements": null,
 			"updated": 1672989973522,
 			"link": null,
-			"text": "Driver负责创建virtqueue所在内存空间",
-			"rawText": "Driver负责创建virtqueue所在内存空间",
+			"text": "Driver負責創建virtqueue所在內存空間",
+			"rawText": "Driver負責創建virtqueue所在內存空間",
 			"fontSize": 36,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 33,
 			"containerId": null,
-			"originalText": "Driver负责创建virtqueue所在内存空间"
+			"originalText": "Driver負責創建virtqueue所在內存空間"
 		},
 		{
 			"type": "text",
@@ -4299,13 +4299,13 @@ Driver负责申请释放 bufs ^8AsVJx1H
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "Driver负责申请释放 bufs",
-			"rawText": "Driver负责申请释放 bufs",
+			"text": "Driver負責申請釋放 bufs",
+			"rawText": "Driver負責申請釋放 bufs",
 			"baseline": 33,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "Driver负责申请释放 bufs"
+			"originalText": "Driver負責申請釋放 bufs"
 		}
 	],
 	"appState": {

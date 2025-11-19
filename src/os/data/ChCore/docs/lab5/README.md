@@ -1,34 +1,34 @@
-# OS-lab5: 多核、多进程、调度与IPC
+# OS-lab5: 多核、多進程、調度與IPC
 
 **id: 519021910861** 
 **name: xuhuidong**
 
-## 目录
+## 目錄
 
-- [目录](#目录)
-- [临时文件系统](#临时文件系统)
+- [目錄](#目錄)
+- [臨時文件系統](#臨時文件系統)
 - [SHELL](#SHELL)
-- [文件系统拓展](#文件系统拓展)
+- [文件系統拓展](#文件系統拓展)
 
 
-## 临时文件系统
+## 臨時文件系統
 
-> 练习题 1：实现位于 `userland/servers/tmpfs/tmpfs.c` 的 `tfs_mknod` 和 `tfs_namex`。
+> 練習題 1：實現位於 `userland/servers/tmpfs/tmpfs.c` 的 `tfs_mknod` 和 `tfs_namex`。
 
-在 `tfs_mknod` 中，首先要判断是否存在同名文件。
+在 `tfs_mknod` 中，首先要判斷是否存在同名文件。
 
 ```C++
 if (tfs_lookup(dir, name, len) != NULL)
 	return -EEXIST;
 ```
 
-然后根据文件类型创建 `inode`。
+然後根據文件類型創建 `inode`。
 
 ```C++
 struct inode* inode = mkdir ? new_dir() : new_reg();
 ```
 
-并且创建新的 `dentry` 并加入到当前目录中。
+並且創建新的 `dentry` 並加入到當前目錄中。
 
 ```C++
 struct dentry* dent = new_dent(inode, name, len);
@@ -36,11 +36,11 @@ init_hlist_node(&dent->node);
 htable_add(*(dir->dentries), dent->name.hash, *dent->node);
 ```
 
-在 `tfs_namex` 中，我们需要遍历文件系统结构来定位某个路径下的文件，具体实现详见 GitLab。
+在 `tfs_namex` 中，我們需要遍歷文件系統結構來定位某個路徑下的文件，具體實現詳見 GitLab。
 
-> 练习题 2：实现位于 `userland/servers/tmpfs/tmpfs.c` 的 `tfs_file_read` 和 `tfs_file_write` 。提示：由于数据块的大小为 PAGE_SIZE，因此读写可能会牵涉到多个页面，读取不能超过文件大小，而写入可能会增加文件大小（也可能需要创建新的数据块）。
+> 練習題 2：實現位於 `userland/servers/tmpfs/tmpfs.c` 的 `tfs_file_read` 和 `tfs_file_write` 。提示：由於數據塊的大小為 PAGE_SIZE，因此讀寫可能會牽涉到多個頁面，讀取不能超過文件大小，而寫入可能會增加文件大小（也可能需要創建新的數據塊）。
 
-在 `tfs_file_read` 中我们需要将每个数据块逐个读取并 `copy` 到 `buff` 中去，注意边界情况，核心代码如下。
+在 `tfs_file_read` 中我們需要將每個數據塊逐個讀取並 `copy` 到 `buff` 中去，注意邊界情況，核心代碼如下。
 
 ```C++
 to_read = MIN(inode->size - offset, size);
@@ -58,21 +58,21 @@ while (to_read > 0) {
 }
 ```
 
-在 `tfs_file_write` 中，和 `tfs_file_read` 差不多，只是这次我们是要将用户输入的数据写入文件，并且还要注意，在文件不够大时需要分配新的数据块，详细代码见 GitLab。
+在 `tfs_file_write` 中，和 `tfs_file_read` 差不多，只是這次我們是要將用戶輸入的數據寫入文件，並且還要注意，在文件不夠大時需要分配新的數據塊，詳細代碼見 GitLab。
 
-> 练习题 3：实现位于 `userland/servers/tmpfs/tmpfs.c` 的 `tfs_load_image` 函数。需要通过之前实现的 tmpfs 函数进行目录和文件的创建，以及数据的读写。
+> 練習題 3：實現位於 `userland/servers/tmpfs/tmpfs.c` 的 `tfs_load_image` 函數。需要通過之前實現的 tmpfs 函數進行目錄和文件的創建，以及數據的讀寫。
 
-我们需要调用之前的创建目录、创建文件以及读写文件的函数，详细代码见 GitLab。
+我們需要調用之前的創建目錄、創建文件以及讀寫文件的函數，詳細代碼見 GitLab。
 
-> 练习题 4：利用 `userland/servers/tmpfs/tmpfs.c` 中已经实现的函数，完成在 `userland/servers/tmpfs/tmpfs_ops.c` 中的 `fs_creat` 、 `tmpfs_unlink` 和 `tmpfs_mkdir` 函数，从而使 `tmpfs_*` 函数可以被 `fs_server_dispatch` 调用以提供系统服务。
+> 練習題 4：利用 `userland/servers/tmpfs/tmpfs.c` 中已經實現的函數，完成在 `userland/servers/tmpfs/tmpfs_ops.c` 中的 `fs_creat` 、 `tmpfs_unlink` 和 `tmpfs_mkdir` 函數，從而使 `tmpfs_*` 函數可以被 `fs_server_dispatch` 調用以提供系統服務。
 
-调用相应接口完成即可，详情代码见 GitLab。
+調用相應接口完成即可，詳情代碼見 GitLab。
 
 ## SHELL
 
-> 练习题 5：实现在 `userland/servers/shell/main.c` 中定义的 `getch` ，该函数会每次从标准输入中获取字符，并实现在 `userland/servers/shell/shell.c` 中的 `readline`，该函数会将按下回车键之前的输入内容存入内存缓冲区。
+> 練習題 5：實現在 `userland/servers/shell/main.c` 中定義的 `getch` ，該函數會每次從標準輸入中獲取字符，並實現在 `userland/servers/shell/shell.c` 中的 `readline`，該函數會將按下回車鍵之前的輸入內容存入內存緩衝區。
 
-在 `getch` 中，我们直接使用 `libchcore/include/libc/stdio.h` 中定义的 I/O 函数即可。
+在 `getch` 中，我們直接使用 `libchcore/include/libc/stdio.h` 中定義的 I/O 函數即可。
 
 ```C++
 char getch()
@@ -82,9 +82,9 @@ char getch()
 }
 ```
 
-在 `readline` 中，我们需要对用户在命令行输入的字符逐个解析，例如当遇到 `\r` 字符时我们需要调用系统函数 `__chcore_sys_putc('\n')` 来输出换行符。
+在 `readline` 中，我們需要對用戶在命令行輸入的字符逐個解析，例如當遇到 `\r` 字符時我們需要調用系統函數 `__chcore_sys_putc('\n')` 來輸出換行符。
 
-而对 `\t` 的设计，主要在于需要进行补全根目录 `/` 下的文件名并输出，所以需要特殊处理：
+而對 `\t` 的設計，主要在於需要進行補全根目錄 `/` 下的文件名並輸出，所以需要特殊處理：
 
 ```C++
 while (true) {
@@ -105,17 +105,17 @@ while (true) {
 }
 ```
 
-> 练习题 6：根据在 `userland/servers/shell/shell.c` 中实现好的 `builtin_cmd` 函数，完成 shell 中内置命令对应 的 `do_*` 函数，需要支持的命令包括 `ls [dir]`、`echo [string]`、`cat [filename]` 和 `top`。
+> 練習題 6：根據在 `userland/servers/shell/shell.c` 中實現好的 `builtin_cmd` 函數，完成 shell 中內置命令對應 的 `do_*` 函數，需要支持的命令包括 `ls [dir]`、`echo [string]`、`cat [filename]` 和 `top`。
 
-1. 我们一个个分别完成，首先看 `ls [dir]`，这条命令会在终端输出 `dir` 目录下所有的条目，即文件名称。
+1. 我們一個個分別完成，首先看 `ls [dir]`，這條命令會在終端輸出 `dir` 目錄下所有的條目，即文件名稱。
 
-主要函数在 `fs_scan(char *path)` 中实现，由于给出的是 `path` 所以我们要自己先分配一个用户空间的 `fd`给他。
+主要函數在 `fs_scan(char *path)` 中實現，由於給出的是 `path` 所以我們要自己先分配一個用戶空間的 `fd`給他。
 
 ```C++
 int fd = alloc_fd();
 ```
 
-然后我们需要构造 IPC 请求。
+然後我們需要構造 IPC 請求。
 
 ```C++
 ipc_msg_t* ipc_msg = ipc_create_msg(fs_ipc_struct_for_shell, sizeof(struct fs_request), 1);
@@ -124,7 +124,7 @@ fr_ptr->req = FS_REQ_OPEN;
 fr_ptr->open.new_fd = fd;
 ```
 
-注意我们需要对路径名进行特殊处理，比如如果路径名为空则默认是根目录 `/`，还有如果路径名第一个字符不是 `/` 则需要添加进去。
+注意我們需要對路徑名進行特殊處理，比如如果路徑名為空則默認是根目錄 `/`，還有如果路徑名第一個字符不是 `/` 則需要添加進去。
 
 ```C++
 if (strlen(path) == 0)
@@ -137,16 +137,16 @@ else if (*path != '/') {
 };
 ```
 
-然后便可以发送 IPC 请求。
+然後便可以發送 IPC 請求。
 
 ```C++
 int ret = ipc_call(fs_ipc_struct_for_shell, ipc_msg);
 ipc_destroy_msg(fs_ipc_struct_for_shell, ipc_msg);
 ```
 
-最后我们可以参考 `demo_getdents` 函数来打印输出每条 `entry`。
+最後我們可以參考 `demo_getdents` 函數來打印輸出每條 `entry`。
 
-2. 我们来看 `echo [string]`，这条命令更加直接，只要把 `string` 打印到终端上即可。
+2. 我們來看 `echo [string]`，這條命令更加直接，只要把 `string` 打印到終端上即可。
 
 ```C++
 int do_echo(char *cmdline)
@@ -158,26 +158,26 @@ int do_echo(char *cmdline)
 };
 ```
 
-3. 然后是 `cat [filename]`，需要我们打印文件内容，我们只需要分别发送 `OPEN`，`READ` 和 `CLOSE` 的 IPC 请求即可。
+3. 然後是 `cat [filename]`，需要我們打印文件內容，我們只需要分別發送 `OPEN`，`READ` 和 `CLOSE` 的 IPC 請求即可。
 
-核心代码在发送接收 `READ` 请求。
+核心代碼在發送接收 `READ` 請求。
 
 ```C++
 memcpy(buf, ipc_get_msg_data(ipc_msg), ret);
 printf("%s", buf);
 ```
 
-> 练习题 7：实现在 `userland/servers/shell/shell.c` 中定义的 `run_cmd`，以通过输入文件名来运行可执行文件，同时补全 `do_complement` 函数并修改 `readline` 函数，以支持按 `tab` 键自动补全根目录 `/` 下的文件名。
+> 練習題 7：實現在 `userland/servers/shell/shell.c` 中定義的 `run_cmd`，以通過輸入文件名來運行可執行文件，同時補全 `do_complement` 函數並修改 `readline` 函數，以支持按 `tab` 鍵自動補全根目錄 `/` 下的文件名。
 
-我们首先对 `cmdline` 进行处理获得正确的 `pathbuf` ，然后调用 `chcore_procm_spawn` 来处理。详情代码见 GitLab。
+我們首先對 `cmdline` 進行處理獲得正確的 `pathbuf` ，然後調用 `chcore_procm_spawn` 來處理。詳情代碼見 GitLab。
 
-## 文件系统拓展
+## 文件系統拓展
 
-> 练习题 8：补全 `userland/apps/lan5` 目录下的 `lab5_stdio.h` 与 `lab5_stdio.c` 文件，以实现 `fopen`，`fwrite`，`fread`，`fclose`，`fscanf`，`fprintf` 六个函数，函数用法应与 libc 中一致。
+> 練習題 8：補全 `userland/apps/lan5` 目錄下的 `lab5_stdio.h` 與 `lab5_stdio.c` 文件，以實現 `fopen`，`fwrite`，`fread`，`fclose`，`fscanf`，`fprintf` 六個函數，函數用法應與 libc 中一致。
 
-`fopen` 是打开文件，我们先发送 `OPEN` 的 IPC 请求尝试打开文件，返回值如果小于 0 则代表文件原先不存在，如果 `mode` 是 `w` 代表可写，就要先调用 `CREAT` 的 IPC 请求创建文件，然后再调用 `OPEN` 的 IPC 请求打开文件。
+`fopen` 是打開文件，我們先發送 `OPEN` 的 IPC 請求嘗試打開文件，返回值如果小於 0 則代表文件原先不存在，如果 `mode` 是 `w` 代表可寫，就要先調用 `CREAT` 的 IPC 請求創建文件，然後再調用 `OPEN` 的 IPC 請求打開文件。
 
-并且我们要构造用户的 `FILE*` 抽象，我的设计如下。
+並且我們要構造用戶的 `FILE*` 抽象，我的設計如下。
 
 ```C++
 typedef struct FILE {
@@ -189,49 +189,49 @@ typedef struct FILE {
 } FILE;
 ```
 
-`fwrite` 是写入文件，同理我们需要先调用 `LSEEK` 的 IPC 请求去设置写入的初始位置，然后再发送 `WRITE` 的 IPC 请求。**这里有点坑，因为其他的 IPC 请求所有的传递内容都在 `fs_request` 结构体中定义好了，唯独 `WRITE` 请求需要将写入的内容附在 `fs_request` 的后面**。
+`fwrite` 是寫入文件，同理我們需要先調用 `LSEEK` 的 IPC 請求去設置寫入的初始位置，然後再發送 `WRITE` 的 IPC 請求。**這裡有點坑，因為其他的 IPC 請求所有的傳遞內容都在 `fs_request` 結構體中定義好了，唯獨 `WRITE` 請求需要將寫入的內容附在 `fs_request` 的後面**。
 
-即我们需要以如下方式将写入内容放入 IPC 请求包中：
+即我們需要以如下方式將寫入內容放入 IPC 請求包中：
 
 ```C++
 memcpy((void *) fr_ptr + sizeof(struct fs_request), src, nmemb);
 ```
 
-因此在创建这个消息的时候我们也要分配大一些的空间。
+因此在創建這個消息的時候我們也要分配大一些的空間。
 
 ```C++
 ipc_msg = ipc_create_msg(tmpfs_ipc_struct, sizeof(struct fs_request) + nmemb + 1, 1);
 ```
 
-**我能理解这么做是因为用户写入的内容大小未知，有可能很大，所以不能在 `fs_request` 中提前创建 `char wbuf[BUFLEN]` 来存，但我建议如果能在 `fs_request` 的 `write` 区域中加入 `char* wbuf` 会不会更好呢？ 这样就可以动态分配空间而且也易于理解，但我不确定 IPC 通信时的请求包会不会因为地址不连续而找不到写入的内容。以上仅是个人看法。**
+**我能理解這麼做是因為用戶寫入的內容大小未知，有可能很大，所以不能在 `fs_request` 中提前創建 `char wbuf[BUFLEN]` 來存，但我建議如果能在 `fs_request` 的 `write` 區域中加入 `char* wbuf` 會不會更好呢？ 這樣就可以動態分配空間而且也易於理解，但我不確定 IPC 通信時的請求包會不會因為地址不連續而找不到寫入的內容。以上僅是個人看法。**
 
-`fread` 是读取文件内容，需要注意的是需要先发送 `LSEEK` 的 IPC 请求去设置读取的初始位置，然后再发送 `READ` 的 IPC 请求，并且将返回的文件内容 `copy` 到 `buff` 中，别忘了将 `FILE` 抽象中的 `offset` 增加相应的大小。
+`fread` 是讀取文件內容，需要注意的是需要先發送 `LSEEK` 的 IPC 請求去設置讀取的初始位置，然後再發送 `READ` 的 IPC 請求，並且將返回的文件內容 `copy` 到 `buff` 中，別忘了將 `FILE` 抽象中的 `offset` 增加相應的大小。
 
 ```C++
 memcpy(destv, ipc_get_msg_data(ipc_msg), ret);
 f->offset += ret;
 ```
 
-`fclose` 是关闭文件，别忘了将 `FILE` 抽象中的 `refcnt` 减一。
+`fclose` 是關閉文件，別忘了將 `FILE` 抽象中的 `refcnt` 減一。
 
 ```C++
 if (--f->refcnt == 0)
 	free(f);
 ```
 
-`fscanf` 是格式化读取文件内容，比如我先定义格式 `"%s %d"` 则代表我要从文件中读取一个字符串和一个整数。这个地方的实现可以参考我们上学期编译原理的 `va_arg` 的实验，原理就是对格式进行解析，遇到 `%s` 就去文件里读个字符串出来，遇到了 `%d` 就去文件里读个整数出来。
+`fscanf` 是格式化讀取文件內容，比如我先定義格式 `"%s %d"` 則代表我要從文件中讀取一個字符串和一個整數。這個地方的實現可以參考我們上學期編譯原理的 `va_arg` 的實驗，原理就是對格式進行解析，遇到 `%s` 就去文件裡讀個字符串出來，遇到了 `%d` 就去文件裡讀個整數出來。
 
-`fprintf` 是格式化写入文件内容，这个和 `fscanf` 大同小异，只需要先把格式化的字符串中的 `%s` 和 `%d` 替换成对应的参数的值，然后再调用 `fwrite` 函数将该字符串写入文件中去。
+`fprintf` 是格式化寫入文件內容，這個和 `fscanf` 大同小異，只需要先把格式化的字符串中的 `%s` 和 `%d` 替換成對應的參數的值，然後再調用 `fwrite` 函數將該字符串寫入文件中去。
 
-> 练习题 9：FSM 需要两种不同的文件系统才能体现其特点，本实验提供了一个 fakefs 用于模拟部分文件系统的接口，测试代码会默认将 tmpfs 挂载到路径 `/`，并将 fakefs 挂载在到路径 `/fakefs`。本练习需要实现 `userland/server/fsm/main.c` 中空缺的部分，使得用户程序将文件系统请求发送给 FSM 后，FSM 根据访问路径
+> 練習題 9：FSM 需要兩種不同的文件系統才能體現其特點，本實驗提供了一個 fakefs 用於模擬部分文件系統的接口，測試代碼會默認將 tmpfs 掛載到路徑 `/`，並將 fakefs 掛載在到路徑 `/fakefs`。本練習需要實現 `userland/server/fsm/main.c` 中空缺的部分，使得用戶程序將文件系統請求發送給 FSM 後，FSM 根據訪問路徑
 
-我们需要在 `fsm_server_disptach` 中补全这个转发 IPC 请求的逻辑，注意这是两个 IPC 不能复用，因此我们需要重新构造 IPC 请求发送给对应的文件系统，详情代码见 GitLab。
+我們需要在 `fsm_server_disptach` 中補全這個轉發 IPC 請求的邏輯，注意這是兩個 IPC 不能複用，因此我們需要重新構造 IPC 請求發送給對應的文件系統，詳情代碼見 GitLab。
 
-> 练习题 10：为减少文件操作过程中 IPC 次数，可以对 FSM 的转发机制进行简化。本练习需要完成 `libchcore/src/fs/fsm.c` 中空缺的部分，使得 `fsm_read_file` 和 `fsm_write_file` 函数先利用 `ID` 为 `FS_REQ_GET_FS_CAP` 的请求通过 FSM 处理文件路径并获取对应文件系统的 Capability，然后直接对相应文件系统发送文件操作请求。
+> 練習題 10：為減少文件操作過程中 IPC 次數，可以對 FSM 的轉發機制進行簡化。本練習需要完成 `libchcore/src/fs/fsm.c` 中空缺的部分，使得 `fsm_read_file` 和 `fsm_write_file` 函數先利用 `ID` 為 `FS_REQ_GET_FS_CAP` 的請求通過 FSM 處理文件路徑並獲取對應文件系統的 Capability，然後直接對相應文件系統發送文件操作請求。
 
-这里的关键在于我们要先调用 `FS_REQ_GET_FS_CAP` 的 IPC 请求获取对应文件系统的 Capability ，然后再向对应的文件系统依次发送 `OPEN`，`WRITE/READ` 和 `CLOSE` 请求即可。详情代码见 GitLab。
+這裡的關鍵在於我們要先調用 `FS_REQ_GET_FS_CAP` 的 IPC 請求獲取對應文件系統的 Capability ，然後再向對應的文件系統依次發送 `OPEN`，`WRITE/READ` 和 `CLOSE` 請求即可。詳情代碼見 GitLab。
 
-最终，我完成了这个 Lab 并获得了满分。
+最終，我完成了這個 Lab 並獲得了滿分。
 
 ![grade](./grade.png)
 

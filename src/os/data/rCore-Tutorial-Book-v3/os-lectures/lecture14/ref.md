@@ -1,4 +1,4 @@
-## 第十四讲 信号量与管程
+## 第十四講 信號量與管程
 
 [v1](https://github.com/LearningOS/os-lectures/blob/b054e185e1fceeace368bb5dc255ea06ab1235b5/lecture14/ref.md)
 
@@ -30,7 +30,7 @@ Once: Used for thread-safe, one-time initialization of a global variable.
 
 RwLock: Provides a mutual exclusion mechanism which allows multiple readers at the same time, while allowing only one writer at a time. In some cases, this can be more efficient than a mutex.
 
-#### Rc：单线程引用计数
+#### Rc：單線程引用計數
 
 https://doc.rust-lang.org/rust-by-example/std/rc.html
 Rc(Reference Counting)
@@ -140,7 +140,7 @@ pub fn fetch_min(&self, val: usize, order: Ordering) -> usize
 pub fn as_mut_ptr(&self) -> *mut usize
 ```
 
-#### Barrier(内存屏障)
+#### Barrier(內存屏障)
 
 https://doc.rust-lang.org/std/sync/struct.Barrier.html
 Struct std::sync::Barrier
@@ -165,7 +165,7 @@ pub fn wait(&self) -> BarrierWaitResult
 
 https://doc.rust-lang.org/std/sync/struct.Barrier.html
 
-有一个例子可演示；
+有一個例子可演示；
 
 ![demo-barrier](figs/demo-barrier.png)
 
@@ -174,7 +174,7 @@ pub fn wait(&self) -> BarrierWaitResult
 
 lock = self.cvar.wait(lock).unwrap();
 
-#### Condvar(条件变量)
+#### Condvar(條件變量)
 
 https://doc.rust-lang.org/std/sync/struct.Condvar.html
 Struct std::sync::Condvar
@@ -236,16 +236,16 @@ while !*started {
 }
 }
 ```
-#### Mutex(互斥信号量)
+#### Mutex(互斥信號量)
 
 https://doc.rust-lang.org/std/sync/struct.Mutex.html
 Struct std::sync::Mutex
 A mutual exclusion primitive useful for protecting shared data
 
-这里有mutex的例子和实现描述；
+這裡有mutex的例子和實現描述；
 
 https://doc.rust-lang.org/src/std/sync/mutex.rs.html#111
-struct Mutex的实现
+struct Mutex的實現
 
 
 
@@ -272,7 +272,7 @@ pub fn into_inner(self) -> LockResult<T>
 pub fn get_mut(&mut self) -> LockResult<&mut T>
 ```
 
-#### RwLock(读写锁)
+#### RwLock(讀寫鎖)
 
 https://doc.rust-lang.org/std/sync/struct.RwLock.html
 Struct std::sync::RwLock

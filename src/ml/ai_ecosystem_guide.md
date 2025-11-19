@@ -90,15 +90,15 @@
 | **Plotly** | 互動式圖表 | 網頁展示 |
 | **Streamlit** | 快速建網頁應用 | Demo製作 |
 
-## 🌐 雲端平台比較
+## 🌐 雲端平臺比較
 
-| 平台 | 公司 | 白話特色 | 收費方式 | 免費額度 |
+| 平臺 | 公司 | 白話特色 | 收費方式 | 免費額度 |
 |------|------|----------|----------|----------|
 | **Google Colab** | Google | 免費GPU，Jupyter筆記本 | 免費+Pro | 每日GPU限制 |
-| **Kaggle Kernels** | Google | 競賽平台，免費GPU | 完全免費 | 週30小時GPU |
+| **Kaggle Kernels** | Google | 競賽平臺，免費GPU | 完全免費 | 週30小時GPU |
 | **AWS SageMaker** | Amazon | 企業級，功能最全 | 按使用計費 | 新用戶優惠 |
 | **Azure ML** | Microsoft | Office整合好 | 按使用計費 | 新用戶優惠 |
-| **Hugging Face Spaces** | HF | 模型分享平台 | 免費+付費 | 免費CPU額度 |
+| **Hugging Face Spaces** | HF | 模型分享平臺 | 免費+付費 | 免費CPU額度 |
 
 ## 🎯 特殊應用領域
 

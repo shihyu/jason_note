@@ -8,7 +8,7 @@ cd changedetection.io
 docker compose up -d
 ````
 
-這會啟動一個本機服務，使用 Docker 建立網站監控後台。
+這會啟動一個本機服務，使用 Docker 建立網站監控後臺。
 
 ---
 

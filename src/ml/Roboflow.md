@@ -6,19 +6,19 @@ https://medium.com/@andy6804tw/%E5%BF%AB%E9%80%9F%E4%B8%8A%E6%89%8Byolo-%E5%88%A
 
 
 
-在訓練人工智慧模型時，我們通常會選擇在自己的電腦或工作站上進行。然而，許多人可能會嘗試利用雲端運算工具，例如 Colab 進行訓練。但是使用過 Colab 的人都知道，訓練過程可能會變得複雜且不易管理，且檔案分散難以整理。因此，在本文中我們將介紹如何利用 [Ultralytics HUB](https://www.ultralytics.com/hub) 來協助我們進行模型訓練和管理。我們將透過數據管理平台 [Roboflow](https://roboflow.com/)，將資料匯入 Ultralytics HUB，並連動 Colab 進行模型訓練。同時 Ultralytics HUB 平台提供了視覺化圖表，方便我們觀察和分析訓練過程中的各項指標。
+在訓練人工智慧模型時，我們通常會選擇在自己的電腦或工作站上進行。然而，許多人可能會嘗試利用雲端運算工具，例如 Colab 進行訓練。但是使用過 Colab 的人都知道，訓練過程可能會變得複雜且不易管理，且檔案分散難以整理。因此，在本文中我們將介紹如何利用 [Ultralytics HUB](https://www.ultralytics.com/hub) 來協助我們進行模型訓練和管理。我們將透過數據管理平臺 [Roboflow](https://roboflow.com/)，將資料匯入 Ultralytics HUB，並連動 Colab 進行模型訓練。同時 Ultralytics HUB 平臺提供了視覺化圖表，方便我們觀察和分析訓練過程中的各項指標。
 
 ![img](images/1*jXJMknYY-mGT69GGj_GJ_g.png)
 
-# Roboflow 線上數據管理平台
+# Roboflow 線上數據管理平臺
 
-Roboflow 是一個專門管理影像數據的平台，目標是幫助使用者更有效地管理和處理圖像數據。它的主要功能包括數據標註、數據清理、數據轉換和數據管理。使用者可以透過 Roboflow 快速標註圖像，進行數據增強和轉換，並輕鬆地將準備好的數據集用於模型訓練。除了數據管理之外，Roboflow 平台還提供了許多不同用戶所公開的資料集。這些資料集涵蓋了各種不同的主題和應用領域，包括物件偵測、影像分割和分類等。使用者可以透過 Roboflow 平台輕鬆地瀏覽這些資料集，找到符合自己需求的資料，並加速他們的研究和開發過程。
+Roboflow 是一個專門管理影像數據的平臺，目標是幫助使用者更有效地管理和處理圖像數據。它的主要功能包括數據標註、數據清理、數據轉換和數據管理。使用者可以透過 Roboflow 快速標註圖像，進行數據增強和轉換，並輕鬆地將準備好的數據集用於模型訓練。除了數據管理之外，Roboflow 平臺還提供了許多不同用戶所公開的資料集。這些資料集涵蓋了各種不同的主題和應用領域，包括物件偵測、影像分割和分類等。使用者可以透過 Roboflow 平臺輕鬆地瀏覽這些資料集，找到符合自己需求的資料，並加速他們的研究和開發過程。
 
 ![img](images/1*MLGhfWHkeMUpowXqkhWV7g.png)
 
 **數據集功能：**
 
-- 數據導入與導出：Roboflow支持多種數據導入和導出選項，包括CSV、COCO、Pascal VOC、YOLO、TensorFlow等。這使得從其他平台導入數據到Roboflow變得輕鬆，或導出數據以供其他工具和框架使用。
+- 數據導入與導出：Roboflow支持多種數據導入和導出選項，包括CSV、COCO、Pascal VOC、YOLO、TensorFlow等。這使得從其他平臺導入數據到Roboflow變得輕鬆，或導出數據以供其他工具和框架使用。
 - 數據集管理：Roboflow讓管理數據集變得輕鬆，具有版本控制、數據驗證和數據過濾等功能。還可以合併數據集、刪除重複數據等。
 - 數據增強：Roboflow包含各種數據增強技術，幫助提高模型的準確性。可以對圖像添加噪聲、模糊、裁剪、旋轉、翻轉等技術。
 
@@ -32,7 +32,7 @@ Roboflow 是一個專門管理影像數據的平台，目標是幫助使用者�
 
 ![img](images/1*9wfx67wYcJSb7w9fKHe1AQ.png)
 
-Roboflow 平台的使用非常直觀且易於上手。以下是使用 Roboflow 平台的基本步驟：
+Roboflow 平臺的使用非常直觀且易於上手。以下是使用 Roboflow 平臺的基本步驟：
 
 - 註冊帳號
 - 建立新專案
@@ -40,7 +40,7 @@ Roboflow 平台的使用非常直觀且易於上手。以下是使用 Roboflow �
 - 標記數據
 - 導出數據集
 
-完成註冊後，請登入 [Roboflow](https://roboflow.com/)。首先，平台會要求建立一個 Workspace，然後選擇使用免費版本的 Public Plan 方案。
+完成註冊後，請登入 [Roboflow](https://roboflow.com/)。首先，平臺會要求建立一個 Workspace，然後選擇使用免費版本的 Public Plan 方案。
 
 ![img](images/1*C732wqazCJDtFqIIoIrk0A.png)
 
@@ -48,11 +48,11 @@ Roboflow 平台的使用非常直觀且易於上手。以下是使用 Roboflow �
 
 ![img](images/1*i6qGsbAhdqUg3uso5rb4og.png)
 
-該平台提供了四種專案類型，分別是物件檢測（Object Detection）、分類（Classification）、實例分割（Instance Segmentation）和特徵點檢測（Keypoint Detection）。在這裡，我們選擇第一個物件檢測專案。
+該平臺提供了四種專案類型，分別是物件檢測（Object Detection）、分類（Classification）、實例分割（Instance Segmentation）和特徵點檢測（Keypoint Detection）。在這裡，我們選擇第一個物件檢測專案。
 
 ![img](images/1*DOsq43JcJ_3Zl2SAm981kQ.png)
 
-在左側工具列提供了許多數據管理選項，包括標籤的命名管理、影像上傳、指派影像標註任務、資料集匯出管理。最後 Roboflow 還提供了強大的視覺化工具和分析功能，幫助使用者了解數據集的特徵和統計訊息，使更好地維護資料品質。首先我們先將手上的資料集上傳到該專案中，上傳成功後點選 `Save and Continue` 按鈕。
+在左側工具列提供了許多數據管理選項，包括標籤的命名管理、影像上傳、指派影像標註任務、資料集匯出管理。最後 Roboflow 還提供了強大的視覺化工具和分析功能，幫助使用者瞭解數據集的特徵和統計訊息，使更好地維護資料品質。首先我們先將手上的資料集上傳到該專案中，上傳成功後點選 `Save and Continue` 按鈕。
 
 ![img](images/1*OuZ5mFpC3v2SXOLh0Wro5A.png)
 
@@ -100,7 +100,7 @@ Roboflow 平台的使用非常直觀且易於上手。以下是使用 Roboflow �
 
 # [快速上手YOLO：利用 Roboflow 和 Ultralytics HUB 完成模型訓練與管理(下)](https://medium.com/p/37acd110a8a0/edit)
 
-在上一篇教學中我們已經透過數據管理平台 Roboflow 為資料集進行標籤管理。並整理好訓練用的訓練集與測試集。資料整理好之後，最後一步是透過 Roboflow 匯出資料集至 Ultralytics HUB。在匯入之前記得先註冊好 [Ultralytics HUB](https://hub.ultralytics.com/) 會員並登入。另外也可以從 [Roboflow Universe](https://roboflow.com/universe) 上找尋社群提供的免費公開資料集。
+在上一篇教學中我們已經透過數據管理平臺 Roboflow 為資料集進行標籤管理。並整理好訓練用的訓練集與測試集。資料整理好之後，最後一步是透過 Roboflow 匯出資料集至 Ultralytics HUB。在匯入之前記得先註冊好 [Ultralytics HUB](https://hub.ultralytics.com/) 會員並登入。另外也可以從 [Roboflow Universe](https://roboflow.com/universe) 上找尋社群提供的免費公開資料集。
 
 > 上一篇 [快速上手YOLO：利用 Roboflow 和 Ultralytics HUB 完成模型訓練與管理(上)](https://medium.com/@andy6804tw/快速上手yolo-利用-roboflow-和-ultralytics-hub-完成模型訓練與管理-上-37acd110a8a0)
 
@@ -114,11 +114,11 @@ Roboflow 平台的使用非常直觀且易於上手。以下是使用 Roboflow �
 
 ![img](images/1*3supqqRsqUwh6Bvt-eJt2w.png)
 
-Ultralytics HUB 提供了廣泛的 YOLO 系列模型訓練平台，讓用戶可以輕鬆地訓練多種不同版本的YOLO（You Only Look Once）物件偵測模型。此平台不僅提供了豐富的訓練資源，還提供預訓練模型，使得用戶能夠更快速地開始物件偵測任務，大幅縮短了模型開發和部署的時間。Ultralytics 公司發布了 Yolov5 和 Yolov8，雖然未發表論文對技術上說明。但是這一套 No Code 系統大幅降低了對物件辨識任務的上手難度。我們可以在該平台選擇 YOLOv5 或 YOLOv8 不同大小的模型架構，並且選擇是否要使用預訓練模型。此外進階設定還能動態調整模型的超參數。
+Ultralytics HUB 提供了廣泛的 YOLO 系列模型訓練平臺，讓用戶可以輕鬆地訓練多種不同版本的YOLO（You Only Look Once）物件偵測模型。此平臺不僅提供了豐富的訓練資源，還提供預訓練模型，使得用戶能夠更快速地開始物件偵測任務，大幅縮短了模型開發和部署的時間。Ultralytics 公司發布了 Yolov5 和 Yolov8，雖然未發表論文對技術上說明。但是這一套 No Code 系統大幅降低了對物件辨識任務的上手難度。我們可以在該平臺選擇 YOLOv5 或 YOLOv8 不同大小的模型架構，並且選擇是否要使用預訓練模型。此外進階設定還能動態調整模型的超參數。
 
 ![img](images/1*ClPESaTynXuRacPkXDzTaA.png)
 
-模型選擇好之後依據平台指示將上面三行程式碼貼到下方提供的 Colab 專案內執行即可。
+模型選擇好之後依據平臺指示將上面三行程式碼貼到下方提供的 Colab 專案內執行即可。
 
 ![img](images/1*YsD16nz23-x4mZo2X8AIhw.png)
 
@@ -130,14 +130,14 @@ Ultralytics HUB 提供了廣泛的 YOLO 系列模型訓練平台，讓用戶可�
 
 ![img](images/1*hod44MoOjQvBTc4hT3eauw.png)
 
-模型訓練完成後可以直接在平台上進行線上的預覽(Preview)推論，驗證模型訓練的成果。可以使用圖片上傳方式亦或是開啟電腦視訊鏡頭進行物件偵測。此外部署(Deploy)功能可以直接將模型打包匯出，例如 ONNX 格式。
+模型訓練完成後可以直接在平臺上進行線上的預覽(Preview)推論，驗證模型訓練的成果。可以使用圖片上傳方式亦或是開啟電腦視訊鏡頭進行物件偵測。此外部署(Deploy)功能可以直接將模型打包匯出，例如 ONNX 格式。
 
 ![img](images/1*G7gQJuHI3F8zUFjLe4ZbfA.png)
 
-另外平台也提供了 Ultralytics Cloud API 方法，使用者可以透過 Python 呼叫已訓練好的模型並透過 HTTP Request POST 協議進行圖片上傳並回傳辨識結果。
+另外平臺也提供了 Ultralytics Cloud API 方法，使用者可以透過 Python 呼叫已訓練好的模型並透過 HTTP Request POST 協議進行圖片上傳並回傳辨識結果。
 
 ![img](images/1*N_9imiQ7rmXZcPe1_OOkig.png)
 
-還記得 Roboflow 這個平台嗎？雖然他的 No Code 模型訓練服務要錢，但是他有免費提供自己訓練好的模型上傳至它們平台。並且依樣提供雲端API服務進行推論。有興趣的讀者可以期待下篇文章，教各位如何訓練 2024 最新的 Yolov9 並透過 Roboflow 管理模型。
+還記得 Roboflow 這個平臺嗎？雖然他的 No Code 模型訓練服務要錢，但是他有免費提供自己訓練好的模型上傳至它們平臺。並且依樣提供雲端API服務進行推論。有興趣的讀者可以期待下篇文章，教各位如何訓練 2024 最新的 Yolov9 並透過 Roboflow 管理模型。
 
 ![img](images/1*nUrYaDiCH5dkqkYzS7Ixag.png)

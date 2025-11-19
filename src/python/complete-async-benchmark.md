@@ -17,7 +17,7 @@
 - **Round Trip Time (RTT)**: Client 發送請求到收到回應的總時間
 - **Server Latency**: Server 收到請求時間 - Client 發送時間
 - **Throughput**: 每秒處理的請求數 (RPS)
-- **P50/P95/P99 延遲**: 延遲分布的百分位數
+- **P50/P95/P99 延遲**: 延遲分佈的百分位數
 
 ### 測試參數
 - 總請求數: 1000-10000
@@ -1126,7 +1126,7 @@ ab -n 10000 -c 100 -p order.json -T application/json \
 2. **連線被拒絕**
    - 檢查 server 是否啟動
    - 檢查防火牆設定
-   - 確認 port 沒被占用
+   - 確認 port 沒被佔用
 
 3. **高延遲**
    - 檢查 CPU 使用率

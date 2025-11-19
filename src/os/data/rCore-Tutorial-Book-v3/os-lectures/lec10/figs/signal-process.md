@@ -7,40 +7,40 @@ excalidraw-plugin: parsed
 
 
 # Text Elements
-kill(信号值) ^EgdrzoZT
+kill(信號值) ^EgdrzoZT
 
-进程A ^ycIqCppZ
+進程A ^ycIqCppZ
 
-进程B ^nNeD3iRe
+進程B ^nNeD3iRe
 
 signal_handler ^RI99OW42
 
-内核 ^CoZHPu7o
+內核 ^CoZHPu7o
 
 硬件 ^ZOdCNOXa
 
-外设中断 ^WVEqptx7
+外設中斷 ^WVEqptx7
 
-忽略/转发/产生信号 OR 杀死进程 ^CLT6RDPK
+忽略/轉發/產生信號 OR 殺死進程 ^CLT6RDPK
 
-s信号 ^4FXrw53J
+s信號 ^4FXrw53J
 
-s信号 ^Oo1ers8x
+s信號 ^Oo1ers8x
 
-(1) 进程B通过sigaction建立signal_handler，
-     并可通过sigprocmask屏蔽某些信号;
-(2) 进程A通过kill发送信号,内核先收到信号;
-(3) 内核跳转到进程B的signal_handler执行;
-(4) signal_handler返回前执行sigreturn,完成
-     清除栈帧,恢复到被打断处继续执行。 ^MK7bIbBt
+(1) 進程B通過sigaction建立signal_handler，
+     並可通過sigprocmask屏蔽某些信號;
+(2) 進程A通過kill發送信號,內核先收到信號;
+(3) 內核跳轉到進程B的signal_handler執行;
+(4) signal_handler返回前執行sigreturn,完成
+     清除棧幀,恢復到被打斷處繼續執行。 ^MK7bIbBt
 
-信号处理流程 ^SCkCwxYD
+信號處理流程 ^SCkCwxYD
 
 (2) ^17ky1H68
 
 (1) ^KJM6x1aN
 
-被打断的正常执行处 ^M6Hk45jD
+被打斷的正常執行處 ^M6Hk45jD
 
 (4) ^cfz5if8E
 
@@ -135,13 +135,13 @@ s信号 ^Oo1ers8x
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "kill(信号值)",
-			"rawText": "kill(信号值)",
+			"text": "kill(信號值)",
+			"rawText": "kill(信號值)",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "kill(信号值)"
+			"originalText": "kill(信號值)"
 		},
 		{
 			"type": "text",
@@ -169,13 +169,13 @@ s信号 ^Oo1ers8x
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "进程A",
-			"rawText": "进程A",
+			"text": "進程A",
+			"rawText": "進程A",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程A"
+			"originalText": "進程A"
 		},
 		{
 			"type": "rectangle",
@@ -271,13 +271,13 @@ s信号 ^Oo1ers8x
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "进程B",
-			"rawText": "进程B",
+			"text": "進程B",
+			"rawText": "進程B",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程B"
+			"originalText": "進程B"
 		},
 		{
 			"type": "text",
@@ -364,13 +364,13 @@ s信号 ^Oo1ers8x
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "内核",
-			"rawText": "内核",
+			"text": "內核",
+			"rawText": "內核",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "内核"
+			"originalText": "內核"
 		},
 		{
 			"type": "rectangle",
@@ -595,13 +595,13 @@ s信号 ^Oo1ers8x
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "外设中断",
-			"rawText": "外设中断",
+			"text": "外設中斷",
+			"rawText": "外設中斷",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "外设中断"
+			"originalText": "外設中斷"
 		},
 		{
 			"type": "rectangle",
@@ -683,13 +683,13 @@ s信号 ^Oo1ers8x
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "忽略/转发/产生信号 \nOR 杀死进程",
-			"rawText": "忽略/转发/产生信号 OR 杀死进程",
+			"text": "忽略/轉發/產生信號 \nOR 殺死進程",
+			"rawText": "忽略/轉發/產生信號 OR 殺死進程",
 			"baseline": 40,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "g-stbP-toqm34mE2_7kK1",
-			"originalText": "忽略/转发/产生信号 OR 杀死进程"
+			"originalText": "忽略/轉發/產生信號 OR 殺死進程"
 		},
 		{
 			"type": "arrow",
@@ -821,13 +821,13 @@ s信号 ^Oo1ers8x
 			"link": null,
 			"fontSize": 16,
 			"fontFamily": 4,
-			"text": "s信号",
-			"rawText": "s信号",
+			"text": "s信號",
+			"rawText": "s信號",
 			"baseline": 15,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "s信号"
+			"originalText": "s信號"
 		},
 		{
 			"type": "text",
@@ -860,13 +860,13 @@ s信号 ^Oo1ers8x
 			"link": null,
 			"fontSize": 17.466662597656246,
 			"fontFamily": 4,
-			"text": "s信号",
-			"rawText": "s信号",
+			"text": "s信號",
+			"rawText": "s信號",
 			"baseline": 16,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "s信号"
+			"originalText": "s信號"
 		},
 		{
 			"type": "text",
@@ -894,13 +894,13 @@ s信号 ^Oo1ers8x
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "(1) 进程B通过sigaction建立signal_handler，\n     并可通过sigprocmask屏蔽某些信号;\n(2) 进程A通过kill发送信号,内核先收到信号;\n(3) 内核跳转到进程B的signal_handler执行;\n(4) signal_handler返回前执行sigreturn,完成\n     清除栈帧,恢复到被打断处继续执行。",
-			"rawText": "(1) 进程B通过sigaction建立signal_handler，\n     并可通过sigprocmask屏蔽某些信号;\n(2) 进程A通过kill发送信号,内核先收到信号;\n(3) 内核跳转到进程B的signal_handler执行;\n(4) signal_handler返回前执行sigreturn,完成\n     清除栈帧,恢复到被打断处继续执行。",
+			"text": "(1) 進程B通過sigaction建立signal_handler，\n     並可通過sigprocmask屏蔽某些信號;\n(2) 進程A通過kill發送信號,內核先收到信號;\n(3) 內核跳轉到進程B的signal_handler執行;\n(4) signal_handler返回前執行sigreturn,完成\n     清除棧幀,恢復到被打斷處繼續執行。",
+			"rawText": "(1) 進程B通過sigaction建立signal_handler，\n     並可通過sigprocmask屏蔽某些信號;\n(2) 進程A通過kill發送信號,內核先收到信號;\n(3) 內核跳轉到進程B的signal_handler執行;\n(4) signal_handler返回前執行sigreturn,完成\n     清除棧幀,恢復到被打斷處繼續執行。",
 			"baseline": 128,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "(1) 进程B通过sigaction建立signal_handler，\n     并可通过sigprocmask屏蔽某些信号;\n(2) 进程A通过kill发送信号,内核先收到信号;\n(3) 内核跳转到进程B的signal_handler执行;\n(4) signal_handler返回前执行sigreturn,完成\n     清除栈帧,恢复到被打断处继续执行。"
+			"originalText": "(1) 進程B通過sigaction建立signal_handler，\n     並可通過sigprocmask屏蔽某些信號;\n(2) 進程A通過kill發送信號,內核先收到信號;\n(3) 內核跳轉到進程B的signal_handler執行;\n(4) signal_handler返回前執行sigreturn,完成\n     清除棧幀,恢復到被打斷處繼續執行。"
 		},
 		{
 			"type": "rectangle",
@@ -953,13 +953,13 @@ s信号 ^Oo1ers8x
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "信号处理流程",
-			"rawText": "信号处理流程",
+			"text": "信號處理流程",
+			"rawText": "信號處理流程",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "信号处理流程"
+			"originalText": "信號處理流程"
 		},
 		{
 			"type": "arrow",
@@ -1146,13 +1146,13 @@ s信号 ^Oo1ers8x
 			"link": null,
 			"fontSize": 13.490191291360302,
 			"fontFamily": 4,
-			"text": "被打断的正常执行处",
-			"rawText": "被打断的正常执行处",
+			"text": "被打斷的正常執行處",
+			"rawText": "被打斷的正常執行處",
 			"baseline": 12,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "被打断的正常执行处"
+			"originalText": "被打斷的正常執行處"
 		},
 		{
 			"type": "text",

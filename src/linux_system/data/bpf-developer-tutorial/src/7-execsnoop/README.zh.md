@@ -1,18 +1,18 @@
-# eBPF 入门实践教程七：捕获进程执行事件，通过 perf event array 向用户态打印输出
+# eBPF 入門實踐教程七：捕獲進程執行事件，通過 perf event array 向用戶態打印輸出
 
-eBPF (Extended Berkeley Packet Filter) 是 Linux 内核上的一个强大的网络和性能分析工具，它允许开发者在内核运行时动态加载、更新和运行用户定义的代码。
+eBPF (Extended Berkeley Packet Filter) 是 Linux 內核上的一個強大的網絡和性能分析工具，它允許開發者在內核運行時動態加載、更新和運行用戶定義的代碼。
 
-本文是 eBPF 入门开发实践教程的第七篇，主要介绍如何捕获 Linux 内核中进程执行的事件，并且通过 perf event array 向用户态命令行打印输出，不需要再通过查看 /sys/kernel/debug/tracing/trace_pipe 文件来查看 eBPF 程序的输出。通过 perf event array 向用户态发送信息之后，可以进行复杂的数据处理和分析。
+本文是 eBPF 入門開發實踐教程的第七篇，主要介紹如何捕獲 Linux 內核中進程執行的事件，並且通過 perf event array 向用戶態命令行打印輸出，不需要再通過查看 /sys/kernel/debug/tracing/trace_pipe 文件來查看 eBPF 程序的輸出。通過 perf event array 向用戶態發送信息之後，可以進行復雜的數據處理和分析。
 
 ## perf buffer
 
-eBPF 提供了两个环形缓冲区，可以用来将信息从 eBPF 程序传输到用户区控制器。第一个是perf环形缓冲区，，它至少从内核v4.15开始就存在了。第二个是后来引入的 BPF 环形缓冲区。本文只考虑perf环形缓冲区。
+eBPF 提供了兩個環形緩衝區，可以用來將信息從 eBPF 程序傳輸到用戶區控制器。第一個是perf環形緩衝區，，它至少從內核v4.15開始就存在了。第二個是後來引入的 BPF 環形緩衝區。本文只考慮perf環形緩衝區。
 
 ## execsnoop
 
-通过 perf event array 向用户态命令行打印输出，需要编写一个头文件，一个 C 源文件。示例代码如下：
+通過 perf event array 向用戶態命令行打印輸出，需要編寫一個頭文件，一個 C 源文件。示例代碼如下：
 
-头文件：execsnoop.h
+頭文件：execsnoop.h
 
 ```c
 #ifndef __EXECSNOOP_H
@@ -72,27 +72,27 @@ int tracepoint__syscalls__sys_enter_execve(struct trace_event_raw_sys_enter* ctx
 char LICENSE[] SEC("license") = "GPL";
 ```
 
-这段代码定义了个 eBPF 程序，用于捕获进程执行 execve 系统调用的入口。
+這段代碼定義了個 eBPF 程序，用於捕獲進程執行 execve 系統調用的入口。
 
-在入口程序中，我们首先获取了当前进程的进程 ID 和用户 ID，然后通过 bpf_get_current_task 函数获取了当前进程的 task_struct 结构体，并通过 bpf_probe_read_str 函数读取了进程名称。最后，我们通过 bpf_perf_event_output 函数将进程执行事件输出到 perf buffer。
+在入口程序中，我們首先獲取了當前進程的進程 ID 和用戶 ID，然後通過 bpf_get_current_task 函數獲取了當前進程的 task_struct 結構體，並通過 bpf_probe_read_str 函數讀取了進程名稱。最後，我們通過 bpf_perf_event_output 函數將進程執行事件輸出到 perf buffer。
 
-使用这段代码，我们就可以捕获 Linux 内核中进程执行的事件, 并分析进程的执行情况。
+使用這段代碼，我們就可以捕獲 Linux 內核中進程執行的事件, 並分析進程的執行情況。
 
-eunomia-bpf 是一个结合 Wasm 的开源 eBPF 动态加载运行时和开发工具链，它的目的是简化 eBPF 程序的开发、构建、分发、运行。可以参考 <https://github.com/eunomia-bpf/eunomia-bpf> 下载和安装 ecc 编译工具链和 ecli 运行时。我们使用 eunomia-bpf 编译运行这个例子。
+eunomia-bpf 是一個結合 Wasm 的開源 eBPF 動態加載運行時和開發工具鏈，它的目的是簡化 eBPF 程序的開發、構建、分發、運行。可以參考 <https://github.com/eunomia-bpf/eunomia-bpf> 下載和安裝 ecc 編譯工具鏈和 ecli 運行時。我們使用 eunomia-bpf 編譯運行這個例子。
 
-使用容器编译：
+使用容器編譯：
 
 ```shell
 docker run -it -v `pwd`/:/src/ ghcr.io/eunomia-bpf/ecc-`uname -m`:latest
 ```
 
-或者使用 ecc 编译：
+或者使用 ecc 編譯：
 
 ```shell
 ecc execsnoop.bpf.c execsnoop.h
 ```
 
-运行
+運行
 
 ```console
 $ sudo ./ecli run package.json 
@@ -106,9 +106,9 @@ TIME     PID     PPID    UID     COMM
 21:28:30  40753  40752   1000    cpuUsage.sh
 ```
 
-## 总结
+## 總結
 
-本文介绍了如何捕获 Linux 内核中进程执行的事件，并且通过 perf event array 向用户态命令行打印输出，通过 perf event array 向用户态发送信息之后，可以进行复杂的数据处理和分析。在 libbpf 对应的内核态代码中，定义这样一个结构体和对应的头文件：
+本文介紹瞭如何捕獲 Linux 內核中進程執行的事件，並且通過 perf event array 向用戶態命令行打印輸出，通過 perf event array 向用戶態發送信息之後，可以進行復雜的數據處理和分析。在 libbpf 對應的內核態代碼中，定義這樣一個結構體和對應的頭文件：
 
 ```c
 struct {
@@ -118,8 +118,8 @@ struct {
 } events SEC(".maps");
 ```
 
-就可以往用户态直接发送信息。
+就可以往用戶態直接發送信息。
 
-更多的例子和详细的开发指南，请参考 eunomia-bpf 的官方文档：<https://github.com/eunomia-bpf/eunomia-bpf>
+更多的例子和詳細的開發指南，請參考 eunomia-bpf 的官方文檔：<https://github.com/eunomia-bpf/eunomia-bpf>
 
-如果您希望学习更多关于 eBPF 的知识和实践，可以访问我们的教程代码仓库 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或网站 <https://eunomia.dev/zh/tutorials/> 以获取更多示例和完整的教程。
+如果您希望學習更多關於 eBPF 的知識和實踐，可以訪問我們的教程代碼倉庫 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或網站 <https://eunomia.dev/zh/tutorials/> 以獲取更多示例和完整的教程。

@@ -1,22 +1,22 @@
-# eBPF 开发实践：使用 eBPF 修改系统调用参数
+# eBPF 開發實踐：使用 eBPF 修改系統調用參數
 
-eBPF（扩展的伯克利数据包过滤器）是 Linux 内核中的一个强大功能，可以在无需更改内核源代码或重启内核的情况下，运行、加载和更新用户定义的代码。这种功能让 eBPF 在网络和系统性能分析、数据包过滤、安全策略等方面有了广泛的应用。
+eBPF（擴展的伯克利數據包過濾器）是 Linux 內核中的一個強大功能，可以在無需更改內核源代碼或重啟內核的情況下，運行、加載和更新用戶定義的代碼。這種功能讓 eBPF 在網絡和系統性能分析、數據包過濾、安全策略等方面有了廣泛的應用。
 
-本教程介绍了如何使用 eBPF 修改正在进行的系统调用参数。这种技术可以用作安全审计、系统监视、或甚至恶意行为。然而需要特别注意，篡改系统调用参数可能对系统的稳定性和安全性带来负面影响，因此必须谨慎使用。实现这个功能需要使用到 eBPF 的 `bpf_probe_write_user` 功能，它可以修改用户空间的内存，因此能用来修改系统调用参数，在内核读取用户空间内存之前，将其修改为我们想要的值。
+本教程介紹瞭如何使用 eBPF 修改正在進行的系統調用參數。這種技術可以用作安全審計、系統監視、或甚至惡意行為。然而需要特別注意，篡改系統調用參數可能對系統的穩定性和安全性帶來負面影響，因此必須謹慎使用。實現這個功能需要使用到 eBPF 的 `bpf_probe_write_user` 功能，它可以修改用戶空間的內存，因此能用來修改系統調用參數，在內核讀取用戶空間內存之前，將其修改為我們想要的值。
 
-本文的完整代码可以在 <https://github.com/eunomia-bpf/bpf-developer-tutorial/tree/main/src/34-syscall/> 找到。
+本文的完整代碼可以在 <https://github.com/eunomia-bpf/bpf-developer-tutorial/tree/main/src/34-syscall/> 找到。
 
-## 修改 open 系统调用的文件名
+## 修改 open 系統調用的文件名
 
-此功能用于修改 `openat` 系统调用的参数，让它打开一个不同的文件。这个功能可能可以用于：
+此功能用於修改 `openat` 系統調用的參數，讓它打開一個不同的文件。這個功能可能可以用於：
 
-1. **文件访问审计**：在对法律合规性和数据安全性有严格要求的环境中，审计员可能需要记录所有对敏感文件的访问行为。通过修改 `openat` 系统调用参数，可以将所有尝试访问某个敏感文件的行为重定向到一个备份文件或者日志文件。
-2. **安全沙盒**：在开发早期阶段，可能希望监控应用程序尝试打开的文件。通过更改 `openat` 调用，可以让应用在一个安全的沙盒环境中运行，所有文件操作都被重定向到一个隔离的文件系统路径。
-3. **敏感数据保护**：对于存储有敏感信息的文件，例如配置文件中包含有数据库密码，一个基于 eBPF 的系统可以将这些调用重定向到一个加密的或暂存的位置，以增强数据安全性。
+1. **文件訪問審計**：在對法律合規性和數據安全性有嚴格要求的環境中，審計員可能需要記錄所有對敏感文件的訪問行為。通過修改 `openat` 系統調用參數，可以將所有嘗試訪問某個敏感文件的行為重定向到一個備份文件或者日誌文件。
+2. **安全沙盒**：在開發早期階段，可能希望監控應用程序嘗試打開的文件。通過更改 `openat` 調用，可以讓應用在一個安全的沙盒環境中運行，所有文件操作都被重定向到一個隔離的文件系統路徑。
+3. **敏感數據保護**：對於存儲有敏感信息的文件，例如配置文件中包含有數據庫密碼，一個基於 eBPF 的系統可以將這些調用重定向到一個加密的或暫存的位置，以增強數據安全性。
 
-如果该技术被恶意软件利用，攻击者可以重定向文件操作，导致数据泄漏或者破坏数据完整性。例如，程序写入日志文件时，攻击者可能将数据重定向到控制的文件中，干扰审计跟踪。
+如果該技術被惡意軟件利用，攻擊者可以重定向文件操作，導致數據洩漏或者破壞數據完整性。例如，程序寫入日誌文件時，攻擊者可能將數據重定向到控制的文件中，干擾審計跟蹤。
 
-内核态代码（部分，完整内容请参考 Github bpf-developer-tutorial）：
+內核態代碼（部分，完整內容請參考 Github bpf-developer-tutorial）：
 
 ```c
 SEC("tracepoint/syscalls/sys_enter_openat")
@@ -42,22 +42,22 @@ int tracepoint__syscalls__sys_enter_openat(struct trace_event_raw_sys_enter *ctx
 }
 ```
 
-分析内核态代码：
+分析內核態代碼：
 
-- `bpf_get_current_pid_tgid()` 获取当前进程ID。
-- 如果指定了 `target_pid` 并且不匹配当前进程ID，函数直接返回。
-- 我们创建一个 `args_t` 结构来存储文件名和标志。
-- 使用 `bpf_probe_write_user` 修改用户空间内存中的文件名为 "hijacked"。
+- `bpf_get_current_pid_tgid()` 獲取當前進程ID。
+- 如果指定了 `target_pid` 並且不匹配當前進程ID，函數直接返回。
+- 我們創建一個 `args_t` 結構來存儲文件名和標誌。
+- 使用 `bpf_probe_write_user` 修改用戶空間內存中的文件名為 "hijacked"。
 
-eunomia-bpf 是一个开源的 eBPF 动态加载运行时和开发工具链，它的目的是简化 eBPF 程序的开发、构建、分发、运行。可以参考 <https://github.com/eunomia-bpf/eunomia-bpf> 或 <https://eunomia.dev/tutorials/1-helloworld/> 下载和安装 ecc 编译工具链和 ecli 运行时。我们使用 eunomia-bpf 编译运行这个例子。
+eunomia-bpf 是一個開源的 eBPF 動態加載運行時和開發工具鏈，它的目的是簡化 eBPF 程序的開發、構建、分發、運行。可以參考 <https://github.com/eunomia-bpf/eunomia-bpf> 或 <https://eunomia.dev/tutorials/1-helloworld/> 下載和安裝 ecc 編譯工具鏈和 ecli 運行時。我們使用 eunomia-bpf 編譯運行這個例子。
 
-编译：
+編譯：
 
 ```bash
 ./ecc open_modify.bpf.c open_modify.h
 ```
 
-使用 make 构建一个简单的 victim 程序，用来测试：
+使用 make 構建一個簡單的 victim 程序，用來測試：
 
 ```c
 int main()
@@ -88,7 +88,7 @@ int main()
 }
 ```
 
-测试代码编译并运行:
+測試代碼編譯並運行:
 
 ```sh
 $ ./victim
@@ -98,13 +98,13 @@ Closing test.txt...
 test.txt closed
 ```
 
-可以使用以下命令指定应修改其 `openat` 系统调用参数的目标进程ID：
+可以使用以下命令指定應修改其 `openat` 系統調用參數的目標進程ID：
 
 ```bash
 sudo ./ecli run package.json --rewrite --target_pid=$(pidof victim)
 ```
 
-然后就会发现输出变成了 world，可以看到我们原先想要打开 "my_test.txt" 文件，但是实际上被劫持打开了 hijacked 文件：
+然後就會發現輸出變成了 world，可以看到我們原先想要打開 "my_test.txt" 文件，但是實際上被劫持打開了 hijacked 文件：
 
 ```console
 test.txt opened, fd=3
@@ -121,11 +121,11 @@ test.txt opened, fd=3
 read 5 bytes: world
 ```
 
-包含测试用例的完整代码可以在 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 找到。
+包含測試用例的完整代碼可以在 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 找到。
 
-## 修改 bash execve 的进程名称
+## 修改 bash execve 的進程名稱
 
-这段功能用于当 `execve` 系统调用进行时修改执行程序名称。在一些审计或监控场景，这可能用于记录特定进程的行为或修改其行为。然而，此类篡改可能会造成混淆，使得用户或管理员难以确定系统实际执行的程序是什么。最严重的风险是，如果恶意用户能够控制 eBPF 程序，他们可以将合法的系统命令重定向到恶意软件，造成严重的安全威胁。
+這段功能用於當 `execve` 系統調用進行時修改執行程序名稱。在一些審計或監控場景，這可能用於記錄特定進程的行為或修改其行為。然而，此類篡改可能會造成混淆，使得用戶或管理員難以確定系統實際執行的程序是什麼。最嚴重的風險是，如果惡意用戶能夠控制 eBPF 程序，他們可以將合法的系統命令重定向到惡意軟件，造成嚴重的安全威脅。
 
 ```c
 SEC("tp/syscalls/sys_enter_execve")
@@ -180,22 +180,22 @@ int handle_execve_enter(struct trace_event_raw_sys_enter *ctx)
 }
 ```
 
-分析内核态代码：
+分析內核態代碼：
 
-- 执行 `bpf_get_current_pid_tgid` 获取当前进程ID和线程组ID。
-- 如果设置了 `target_ppid`，代码会检查当前进程的父进程ID是否匹配。
-- 读取第一个 `execve` 参数到 `prog_name`，这通常是将要执行的程序的路径。
-- 通过 `bpf_probe_write_user` 重写这个参数，使得系统实际执行的是一个不同的程序。
+- 執行 `bpf_get_current_pid_tgid` 獲取當前進程ID和線程組ID。
+- 如果設置了 `target_ppid`，代碼會檢查當前進程的父進程ID是否匹配。
+- 讀取第一個 `execve` 參數到 `prog_name`，這通常是將要執行的程序的路徑。
+- 通過 `bpf_probe_write_user` 重寫這個參數，使得系統實際執行的是一個不同的程序。
 
-这种做法的风险在于它可以被用于劫持软件的行为，导致系统运行恶意代码。同样也可以使用 ecc 和 ecli 编译运行：
+這種做法的風險在於它可以被用於劫持軟件的行為，導致系統運行惡意代碼。同樣也可以使用 ecc 和 ecli 編譯運行：
 
 ```bash
 ./ecc exechijack.bpf.c exechijack.h
 sudo ./ecli run package.json
 ```
 
-## 总结
+## 總結
 
-eBPF 提供了强大的能力来实现对正在运行的系统进行实时监控和干预。在合适的监管和安全策略配合下，这可以带来诸多好处，如安全增强、性能优化和运维便利。然而，这项技术的使用必须非常小心，因为错误的操作或滥用可能会对系统的正常运作造成破坏或者引发严重的安全事件。实践中，应确保只有授权用户和程序能够部署和管理 eBPF 程序，并且应当在隔离的测试环境中验证这些eBPF程序的行为，在充分理解其影响后才能将其应用到生产环境中。
+eBPF 提供了強大的能力來實現對正在運行的系統進行實時監控和干預。在合適的監管和安全策略配合下，這可以帶來諸多好處，如安全增強、性能優化和運維便利。然而，這項技術的使用必須非常小心，因為錯誤的操作或濫用可能會對系統的正常運作造成破壞或者引發嚴重的安全事件。實踐中，應確保只有授權用戶和程序能夠部署和管理 eBPF 程序，並且應當在隔離的測試環境中驗證這些eBPF程序的行為，在充分理解其影響後才能將其應用到生產環境中。
 
-您还可以访问我们的教程代码仓库 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或网站 <https://eunomia.dev/zh/tutorials/> 以获取更多示例和完整的教程。
+您還可以訪問我們的教程代碼倉庫 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或網站 <https://eunomia.dev/zh/tutorials/> 以獲取更多示例和完整的教程。

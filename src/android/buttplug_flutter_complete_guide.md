@@ -7,7 +7,7 @@
 4. [硬體支援情況](#硬體支援情況)
 5. [各家產品 BT 命令位置](#各家產品-bt-命令位置)
 6. [APK/IPA 打包說明](#apkipa-打包說明)
-7. [平台特定注意事項](#平台特定注意事項)
+7. [平臺特定注意事項](#平臺特定注意事項)
 8. [實作範例](#實作範例)
 9. [最佳實踐建議](#最佳實踐建議)
 
@@ -36,7 +36,7 @@ Buttplug 是一個開源的親密硬體控制標準和軟體專案，支援性�
 - **實作語言**: Rust 核心，提供 C#、JS、Dart 等綁定
 - **支援品牌**: Lovense、Kiiroo、The Handy、WeVibe、OSR-2/SR-6 等
 - **連接方式**: Bluetooth LE、USB、HID、Serial
-- **跨平台**: Desktop、Mobile、Web
+- **跨平臺**: Desktop、Mobile、Web
 - **開源協議**: BSD 3-Clause
 
 ---
@@ -65,9 +65,9 @@ Buttplug 是一個開源的親密硬體控制標準和軟體專案，支援性�
   ```
 
 #### intiface/intiface-central (前端應用)
-- **功能**: 跨平台前端應用程式
+- **功能**: 跨平臺前端應用程式
 - **技術**: Flutter + Rust 混合開發
-- **平台**: Windows、macOS、Linux、Android、iOS
+- **平臺**: Windows、macOS、Linux、Android、iOS
 - **發佈**: 各大應用商店均有上架
 
 ---
@@ -97,7 +97,7 @@ dependencies:
 #### 特點
 - **純 Dart 實現**: 無需 FFI，無需外部依賴
 - **協議支援**: 實現 Buttplug Message Spec v3
-- **跨平台**: 支援所有 Flutter 平台
+- **跨平臺**: 支援所有 Flutter 平臺
 - **輕量級**: 不包含硬體協議實現
 
 #### 基本使用
@@ -195,7 +195,7 @@ Intiface Central 轉換為設備特定命令:
   ```
 
 #### 3. 藍牙底層支援
-- **函式庫**: `btleplug` (跨平台藍牙 LE 庫)
+- **函式庫**: `btleplug` (跨平臺藍牙 LE 庫)
 - **位置**: `https://github.com/deviceplug/btleplug`
 
 ### 設備配置範例
@@ -224,7 +224,7 @@ lovense:
          ↓
     協議處理模組 (lovense.rs, kiiroo.rs, etc.)
          ↓
-    btleplug (跨平台藍牙庫)
+    btleplug (跨平臺藍牙庫)
          ↓ 
     實際藍牙設備
 ```
@@ -299,7 +299,7 @@ Intiface Central iOS App (App Store)
 
 ---
 
-## 平台特定注意事項
+## 平臺特定注意事項
 
 ### Android
 
@@ -656,7 +656,7 @@ class _DeviceCardState extends State<DeviceCard> {
 - ✅ **開發簡單**: 純 Dart 實現，無需 Rust 知識
 - ✅ **維護容易**: 硬體支援由官方維護
 - ✅ **檔案小**: 應用程式保持輕量
-- ✅ **跨平台**: Android/iOS 統一體驗
+- ✅ **跨平臺**: Android/iOS 統一體驗
 - ✅ **穩定可靠**: 經過大量用戶驗證
 
 ### 注意事項

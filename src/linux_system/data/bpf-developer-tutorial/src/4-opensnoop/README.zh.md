@@ -1,16 +1,16 @@
-# eBPF 入门开发实践教程四：在 eBPF 中捕获进程打开文件的系统调用集合，使用全局变量过滤进程 pid
+# eBPF 入門開發實踐教程四：在 eBPF 中捕獲進程打開文件的系統調用集合，使用全局變量過濾進程 pid
 
-eBPF（Extended Berkeley Packet Filter）是一种内核执行环境，它可以让用户在内核中运行一些安全的、高效的程序。它通常用于网络过滤、性能分析、安全监控等场景。eBPF 之所以强大，是因为它能够在内核运行时捕获和修改数据包或者系统调用，从而实现对操作系统行为的监控和调整。
+eBPF（Extended Berkeley Packet Filter）是一種內核執行環境，它可以讓用戶在內核中運行一些安全的、高效的程序。它通常用於網絡過濾、性能分析、安全監控等場景。eBPF 之所以強大，是因為它能夠在內核運行時捕獲和修改數據包或者系統調用，從而實現對操作系統行為的監控和調整。
 
-本文是 eBPF 入门开发实践教程的第四篇，主要介绍如何捕获进程打开文件的系统调用集合，并使用全局变量在 eBPF 中过滤进程 pid。
+本文是 eBPF 入門開發實踐教程的第四篇，主要介紹如何捕獲進程打開文件的系統調用集合，並使用全局變量在 eBPF 中過濾進程 pid。
 
-在 Linux 系统中，进程与文件之间的交互是通过系统调用来实现的。系统调用是用户态程序与内核态程序之间的接口，它们允许用户态程序请求内核执行特定操作。在本教程中，我们关注的是 sys_openat 系统调用，它用于打开文件。
+在 Linux 系統中，進程與文件之間的交互是通過系統調用來實現的。系統調用是用戶態程序與內核態程序之間的接口，它們允許用戶態程序請求內核執行特定操作。在本教程中，我們關注的是 sys_openat 系統調用，它用於打開文件。
 
-当进程打开一个文件时，它会向内核发出 sys_openat 系统调用，并传递相关参数（例如文件路径、打开模式等）。内核会处理这个请求，并返回一个文件描述符（file descriptor），这个描述符将在后续的文件操作中用作引用。通过捕获 sys_openat 系统调用，我们可以了解进程在什么时候以及如何打开文件。
+當進程打開一個文件時，它會向內核發出 sys_openat 系統調用，並傳遞相關參數（例如文件路徑、打開模式等）。內核會處理這個請求，並返回一個文件描述符（file descriptor），這個描述符將在後續的文件操作中用作引用。通過捕獲 sys_openat 系統調用，我們可以瞭解進程在什麼時候以及如何打開文件。
 
-## 在 eBPF 中捕获进程打开文件的系统调用集合
+## 在 eBPF 中捕獲進程打開文件的系統調用集合
 
-首先，我们需要编写一段 eBPF 程序来捕获进程打开文件的系统调用，具体实现如下：
+首先，我們需要編寫一段 eBPF 程序來捕獲進程打開文件的系統調用，具體實現如下：
 
 ```c
 #include <vmlinux.h>
@@ -36,22 +36,22 @@ int tracepoint__syscalls__sys_enter_openat(struct trace_event_raw_sys_enter* ctx
 char LICENSE[] SEC("license") = "GPL";
 ```
 
-这段 eBPF 程序实现了：
+這段 eBPF 程序實現了：
 
-1. 引入头文件：<vmlinux.h> 包含了内核数据结构的定义，<bpf/bpf_helpers.h> 包含了 eBPF 程序所需的辅助函数。
-2. 定义全局变量 `pid_target`，用于过滤指定进程 ID。这里设为 0 表示捕获所有进程的 sys_openat 调用。
-3. 使用 `SEC` 宏定义一个 eBPF 程序，关联到 tracepoint "tracepoint/syscalls/sys_enter_openat"。这个 tracepoint 会在进程发起 `sys_openat` 系统调用时触发。
-4. 实现 eBPF 程序 `tracepoint__syscalls__sys_enter_openat`，它接收一个类型为 `struct trace_event_raw_sys_enter` 的参数 `ctx`。这个结构体包含了关于系统调用的信息。
-5. 使用 `bpf_get_current_pid_tgid()` 函数获取当前进程的 PID 和 TID（线程 ID）。由于我们只关心 PID，所以将其值右移 32 位赋值给 `u32` 类型的变量 `pid`。
-6. 检查 `pid_target` 变量是否与当前进程的 pid 相等。如果 `pid_target` 不为 0 且与当前进程的 pid 不相等，则返回 `false`，不对该进程的 `sys_openat` 调用进行捕获。
-7. 使用 `bpf_printk()` 函数打印捕获到的进程 ID 和 `sys_openat` 调用的相关信息。这些信息可以在用户空间通过 BPF 工具查看。
-8. 将程序许可证设置为 "GPL"，这是运行 eBPF 程序的必要条件。
+1. 引入頭文件：<vmlinux.h> 包含了內核數據結構的定義，<bpf/bpf_helpers.h> 包含了 eBPF 程序所需的輔助函數。
+2. 定義全局變量 `pid_target`，用於過濾指定進程 ID。這裡設為 0 表示捕獲所有進程的 sys_openat 調用。
+3. 使用 `SEC` 宏定義一個 eBPF 程序，關聯到 tracepoint "tracepoint/syscalls/sys_enter_openat"。這個 tracepoint 會在進程發起 `sys_openat` 系統調用時觸發。
+4. 實現 eBPF 程序 `tracepoint__syscalls__sys_enter_openat`，它接收一個類型為 `struct trace_event_raw_sys_enter` 的參數 `ctx`。這個結構體包含了關於系統調用的信息。
+5. 使用 `bpf_get_current_pid_tgid()` 函數獲取當前進程的 PID 和 TID（線程 ID）。由於我們只關心 PID，所以將其值右移 32 位賦值給 `u32` 類型的變量 `pid`。
+6. 檢查 `pid_target` 變量是否與當前進程的 pid 相等。如果 `pid_target` 不為 0 且與當前進程的 pid 不相等，則返回 `false`，不對該進程的 `sys_openat` 調用進行捕獲。
+7. 使用 `bpf_printk()` 函數打印捕獲到的進程 ID 和 `sys_openat` 調用的相關信息。這些信息可以在用戶空間通過 BPF 工具查看。
+8. 將程序許可證設置為 "GPL"，這是運行 eBPF 程序的必要條件。
 
-这个 eBPF 程序可以通过 libbpf 或 eunomia-bpf 等工具加载到内核并执行。它将捕获指定进程（或所有进程）的 sys_openat 系统调用，并在用户空间输出相关信息。
+這個 eBPF 程序可以通過 libbpf 或 eunomia-bpf 等工具加載到內核並執行。它將捕獲指定進程（或所有進程）的 sys_openat 系統調用，並在用戶空間輸出相關信息。
 
-eunomia-bpf 是一个结合 Wasm 的开源 eBPF 动态加载运行时和开发工具链，它的目的是简化 eBPF 程序的开发、构建、分发、运行。可以参考 <https://github.com/eunomia-bpf/eunomia-bpf> 下载和安装 ecc 编译工具链和 ecli 运行时。我们使用 eunomia-bpf 编译运行这个例子。完整代码请查看 <https://github.com/eunomia-bpf/bpf-developer-tutorial/tree/main/src/4-opensnoop> 。
+eunomia-bpf 是一個結合 Wasm 的開源 eBPF 動態加載運行時和開發工具鏈，它的目的是簡化 eBPF 程序的開發、構建、分發、運行。可以參考 <https://github.com/eunomia-bpf/eunomia-bpf> 下載和安裝 ecc 編譯工具鏈和 ecli 運行時。我們使用 eunomia-bpf 編譯運行這個例子。完整代碼請查看 <https://github.com/eunomia-bpf/bpf-developer-tutorial/tree/main/src/4-opensnoop> 。
 
-编译运行上述代码：
+編譯運行上述代碼：
 
 ```console
 $ ecc opensnoop.bpf.c
@@ -61,7 +61,7 @@ $ sudo ecli run package.json
 Runing eBPF program...
 ```
 
-运行这段程序后，可以通过查看 `/sys/kernel/debug/tracing/trace_pipe` 文件来查看 eBPF 程序的输出：
+運行這段程序後，可以通過查看 `/sys/kernel/debug/tracing/trace_pipe` 文件來查看 eBPF 程序的輸出：
 
 ```console
 $ sudo cat /sys/kernel/debug/tracing/trace_pipe
@@ -69,17 +69,17 @@ $ sudo cat /sys/kernel/debug/tracing/trace_pipe
            <...>-3840345 [010] d... 3220702.158000: bpf_trace_printk: Process ID: 3840345 enter sys openat
 ```
 
-此时，我们已经能够捕获进程打开文件的系统调用了。
+此時，我們已經能夠捕獲進程打開文件的系統調用了。
 
-## 使用全局变量在 eBPF 中过滤进程 pid
+## 使用全局變量在 eBPF 中過濾進程 pid
 
-全局变量在 eBPF 程序中充当一种数据共享机制，它们允许用户态程序与 eBPF 程序之间进行数据交互。这在过滤特定条件或修改 eBPF 程序行为时非常有用。这种设计使得用户态程序能够在运行时动态地控制 eBPF 程序的行为。
+全局變量在 eBPF 程序中充當一種數據共享機制，它們允許用戶態程序與 eBPF 程序之間進行數據交互。這在過濾特定條件或修改 eBPF 程序行為時非常有用。這種設計使得用戶態程序能夠在運行時動態地控制 eBPF 程序的行為。
 
-在我们的例子中，全局变量 `pid_target` 用于过滤进程 PID。用户态程序可以设置此变量的值，以便在 eBPF 程序中只捕获与指定 PID 相关的 `sys_openat` 系统调用。
+在我們的例子中，全局變量 `pid_target` 用於過濾進程 PID。用戶態程序可以設置此變量的值，以便在 eBPF 程序中只捕獲與指定 PID 相關的 `sys_openat` 系統調用。
 
-使用全局变量的原理是，全局变量在 eBPF 程序的数据段（data section）中定义并存储。当 eBPF 程序加载到内核并执行时，这些全局变量会保持在内核中，可以通过 BPF 系统调用进行访问。用户态程序可以使用 BPF 系统调用中的某些特性，如 `bpf_obj_get_info_by_fd` 和 `bpf_obj_get_info`，获取 eBPF 对象的信息，包括全局变量的位置和值。
+使用全局變量的原理是，全局變量在 eBPF 程序的數據段（data section）中定義並存儲。當 eBPF 程序加載到內核並執行時，這些全局變量會保持在內核中，可以通過 BPF 系統調用進行訪問。用戶態程序可以使用 BPF 系統調用中的某些特性，如 `bpf_obj_get_info_by_fd` 和 `bpf_obj_get_info`，獲取 eBPF 對象的信息，包括全局變量的位置和值。
 
-可以通过执行 ecli -h 命令来查看 opensnoop 的帮助信息：
+可以通過執行 ecli -h 命令來查看 opensnoop 的幫助信息：
 
 ```console
 $ ecli package.json -h
@@ -97,14 +97,14 @@ Built with eunomia-bpf framework.
 See https://github.com/eunomia-bpf/eunomia-bpf for more information.
 ```
 
-可以通过 `--pid_target` 选项来指定要捕获的进程的 pid，例如：
+可以通過 `--pid_target` 選項來指定要捕獲的進程的 pid，例如：
 
 ```console
 $ sudo ./ecli run package.json --pid_target 618
 Runing eBPF program...
 ```
 
-运行这段程序后，可以通过查看 `/sys/kernel/debug/tracing/trace_pipe` 文件来查看 eBPF 程序的输出：
+運行這段程序後，可以通過查看 `/sys/kernel/debug/tracing/trace_pipe` 文件來查看 eBPF 程序的輸出：
 
 ```console
 $ sudo cat /sys/kernel/debug/tracing/trace_pipe
@@ -112,12 +112,12 @@ $ sudo cat /sys/kernel/debug/tracing/trace_pipe
            <...>-3840345 [010] d... 3220702.158000: bpf_trace_printk: Process ID: 618 enter sys openat
 ```
 
-## 总结
+## 總結
 
-本文介绍了如何使用 eBPF 程序来捕获进程打开文件的系统调用。在 eBPF 程序中，我们可以通过定义 `tracepoint__syscalls__sys_enter_open` 和 `tracepoint__syscalls__sys_enter_openat` 函数并使用 `SEC` 宏把它们附加到 sys_enter_open 和 sys_enter_openat 两个 tracepoint 来捕获进程打开文件的系统调用。我们可以使用 `bpf_get_current_pid_tgid` 函数获取调用 open 或 openat 系统调用的进程 ID，并使用 `bpf_printk` 函数在内核日志中打印出来。在 eBPF 程序中，我们还可以通过定义一个全局变量 `pid_target` 来指定要捕获的进程的 pid，从而过滤输出，只输出指定的进程的信息。
+本文介紹瞭如何使用 eBPF 程序來捕獲進程打開文件的系統調用。在 eBPF 程序中，我們可以通過定義 `tracepoint__syscalls__sys_enter_open` 和 `tracepoint__syscalls__sys_enter_openat` 函數並使用 `SEC` 宏把它們附加到 sys_enter_open 和 sys_enter_openat 兩個 tracepoint 來捕獲進程打開文件的系統調用。我們可以使用 `bpf_get_current_pid_tgid` 函數獲取調用 open 或 openat 系統調用的進程 ID，並使用 `bpf_printk` 函數在內核日誌中打印出來。在 eBPF 程序中，我們還可以通過定義一個全局變量 `pid_target` 來指定要捕獲的進程的 pid，從而過濾輸出，只輸出指定的進程的信息。
 
-通过学习本教程，您应该对如何在 eBPF 中捕获和过滤特定进程的系统调用有了更深入的了解。这种方法在系统监控、性能分析和安全审计等场景中具有广泛的应用。
+通過學習本教程，您應該對如何在 eBPF 中捕獲和過濾特定進程的系統調用有了更深入的瞭解。這種方法在系統監控、性能分析和安全審計等場景中具有廣泛的應用。
 
-更多的例子和详细的开发指南，请参考 eunomia-bpf 的官方文档：<https://github.com/eunomia-bpf/eunomia-bpf>
+更多的例子和詳細的開發指南，請參考 eunomia-bpf 的官方文檔：<https://github.com/eunomia-bpf/eunomia-bpf>
 
-如果您希望学习更多关于 eBPF 的知识和实践，可以访问我们的教程代码仓库 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或网站 <https://eunomia.dev/zh/tutorials/> 以获取更多示例和完整的教程。
+如果您希望學習更多關於 eBPF 的知識和實踐，可以訪問我們的教程代碼倉庫 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或網站 <https://eunomia.dev/zh/tutorials/> 以獲取更多示例和完整的教程。

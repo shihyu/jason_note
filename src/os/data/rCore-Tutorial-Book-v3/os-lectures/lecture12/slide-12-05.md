@@ -1,7 +1,7 @@
 ## BFS算法
-### 幻灯片
+### 幻燈片
 
-#### BFS数据结构
+#### BFS數據結構
 https://www.cs.unm.edu/~eschulte/classes/cs587/data/bfs-v-cfs_groves-knockel-schulte.pdf
 BFS vs.CFS Scheduler Comparison
 
@@ -9,74 +9,74 @@ P7: Figure4: BFS data structure
 
 ![bfs-struct](figs/bfs-struct.png)
 
-在多处理机情况的单就绪队列（双向链表）选择，增加了队列互斥访问的开销，但减少了负载均衡算法开销。
+在多處理機情況的單就緒隊列（雙向鏈表）選擇，增加了隊列互斥訪問的開銷，但減少了負載均衡算法開銷。
 
 #### BFS工作原理
 
 http://vellvisher.github.io/papers_reports/doc/BFS_FreeBSD.pdf
 Analysis of the BFS Scheduler in FreeBSD
 
-BFS调度算法是一种时间片轮转算法的变种。
+BFS調度算法是一種時間片輪轉算法的變種。
 
-##### 单就绪队列
+##### 單就緒隊列
 
-1. 所有CPU共享一个双向链表结构的单就绪队列；
-2. 所有线程按优先级排队；
-3. 相同优先级的每个线程有一个时间片长度和虚拟最长等待时间；
+1. 所有CPU共享一個雙向鏈表結構的單就緒隊列；
+2. 所有線程按優先級排隊；
+3. 相同優先級的每個線程有一個時間片長度和虛擬最長等待時間；
 
-##### 时间片大小选择
+##### 時間片大小選擇
 
-由算法参数指定，可在1ms到1000ms间选择，缺省设置为6ms；
+由算法參數指定，可在1ms到1000ms間選擇，缺省設置為6ms；
 
-##### 虚拟截止时间（Virtual Deadline）
+##### 虛擬截止時間（Virtual Deadline）
 
- 1. 它是一个关于就绪队列中线程等待CPU最长时间的排序，并不是真实的截止时间；
- 2. 为了让线程在上次运行的CPU上运行，不同CPU对线程的虚拟截止时间加一个权重；
-  3. 线程时间片用完时，重新计算虚拟截止时间；
-  4. 事件等待结束时，虚拟截止时间保持不变，以抢先相同优先级的就绪线程；
+ 1. 它是一個關於就緒隊列中線程等待CPU最長時間的排序，並不是真實的截止時間；
+ 2. 為了讓線程在上次運行的CPU上運行，不同CPU對線程的虛擬截止時間加一個權重；
+  3. 線程時間片用完時，重新計算虛擬截止時間；
+  4. 事件等待結束時，虛擬截止時間保持不變，以搶先相同優先級的就緒線程；
 
-##### 线程优先级
+##### 線程優先級
 
-BFS有103个优先级，其中100个静态的实时优先级，3个普通优级SCHEDISO (isochronous)、SCHEDNORMAL和SCHEDIDLEPRIO (idle priority scheduling)；
+BFS有103個優先級，其中100個靜態的實時優先級，3個普通優級SCHEDISO (isochronous)、SCHEDNORMAL和SCHEDIDLEPRIO (idle priority scheduling)；
 
-##### 相关线程状态置换
+##### 相關線程狀態置換
 
-时间片用完：重新设置虚拟截止时间后，插入就绪队列；
+時間片用完：重新設置虛擬截止時間後，插入就緒隊列；
 
-事件等待结束：虚拟截止时间保持不变，抢先低优先级线程或插入就绪队列；
+事件等待結束：虛擬截止時間保持不變，搶先低優先級線程或插入就緒隊列；
 
-##### 虚拟截止时间计算
+##### 虛擬截止時間計算
 
-依据当前时间、线程优先级和时间片设置计算；
+依據當前時間、線程優先級和時間片設置計算；
 
 offset = jiffies + (prior_atio ∗ rr_interval)
 prioratio increases by 10% for every nice level
 
-虚拟截止时间计算结果： https://wikimili.com/en/Brain_Fuck_Scheduler
+虛擬截止時間計算結果： https://wikimili.com/en/Brain_Fuck_Scheduler
 
-#### BFS与CFS的性能对比(2012)
+#### BFS與CFS的性能對比(2012)
 http://repo-ck.com/bench/cpu_schedulers_compared.pdf
 CPU SCHEDULERS COMPARED
 
-##### 测试用例集
+##### 測試用例集
 
-1. Linux kernel v3.6.2.2的GCC编译
-2. Linux kernel v3.6.2内核源代码树的lrzip压缩
-3. 从720p到360p的MPEG2视频ffmpeg压缩
+1. Linux kernel v3.6.2.2的GCC編譯
+2. Linux kernel v3.6.2內核源代碼樹的lrzip壓縮
+3. 從720p到360p的MPEG2視頻ffmpeg壓縮
 
-##### 测试硬件环境
+##### 測試硬件環境
 
 ![test-machines](figs/test-machines.png)
 
-##### 压缩测试
+##### 壓縮測試
 
 ![compression-test](figs/compression-test.png)
 
-##### 编译测试
+##### 編譯測試
 
 ![make-test](figs/make-test.png)
 
-##### 视频编码测试
+##### 視頻編碼測試
 
 ![video-test](figs/video-test.png)
 
@@ -117,7 +117,7 @@ P7: Figure4: BFS data structure
 BFS has only one system-wide runqueue containing all non-running tasks.
 BFS removes the need for these complicated heuristics and algorithms by using a single system-wide queue to determine the next scheduled task.
 BFS implements an earliest effective virtual deadline first policy and keeps track of the  virtual deadline of each task.
-P7：这一段文字大致描述了BFS的思路：只使用一个队列；所有线程按优先级排队；相同优先级的每个线程有一个时间片长度和虚拟最长等待时间；线程时间片用完时，重新计算时间片长度；线程进入等待状态时，等待时间保持；为了让线程在上次运行的CPU上运行，不同CPU对线程的虚拟截止时间加一个权重；
+P7：這一段文字大致描述了BFS的思路：只使用一個隊列；所有線程按優先級排隊；相同優先級的每個線程有一個時間片長度和虛擬最長等待時間；線程時間片用完時，重新計算時間片長度；線程進入等待狀態時，等待時間保持；為了讓線程在上次運行的CPU上運行，不同CPU對線程的虛擬截止時間加一個權重；
 
 ##### BFS的算法描述
 
@@ -131,7 +131,7 @@ The execution behavior is still a weighted variation of the Round-Robin Schedule
 
 virtual deadline formula
 
-##### 新加坡的项目报告
+##### 新加坡的項目報告
 
 http://vellvisher.github.io/papers_reports/doc/BFS_FreeBSD.pdf
 Analysis of the BFS Scheduler in FreeBSD

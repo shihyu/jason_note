@@ -1,127 +1,127 @@
-# 已有教学素材收集
+# 已有教學素材收集
 
 * [v1](https://github.com/LearningOS/os-lectures/blob/57187673ab9e28379108a50808c53d26ea88f2b2/lecture03/ref.md)
 * [v2](https://github.com/LearningOS/os-lectures/blob/8dc5af59fb5f79fef2d9ee26915863648a3da9af/lecture03/ref.md)
 * v3
 
-## 第3讲 进程与调度
-### 参考
+## 第3講 進程與調度
+### 參考
 
-实验文档-[第二章实现批处理系统](https://rcore-os.github.io/rCore-Tutorial-Book-v3/chapter2/3batch-system.html#id1)
+實驗文檔-[第二章實現批處理系統](https://rcore-os.github.io/rCore-Tutorial-Book-v3/chapter2/3batch-system.html#id1)
 
-[第三章多道程序与分时多任务](https://rcore-os.github.io/rCore-Tutorial-Book-v3/chapter3/index.html)
+[第三章多道程序與分時多任務](https://rcore-os.github.io/rCore-Tutorial-Book-v3/chapter3/index.html)
 
-### 3.1 进程概念
+### 3.1 進程概念
 
-进程的概念（9.1 进程的概念[wiki](https://os.cs.tsinghua.edu.cn/oscourse/OS2020spring/lecture09)、[幻灯片]()）
-进程控制块（9.2 进程控制块：[PPT讲义](http://os.cs.tsinghua.edu.cn/oscourse/OS2018spring/lecture11?action=AttachFile&do=get&target=20180402-11-2-进程控制块.pptx)）
-进程状态（9.3 进程状态：[PPT讲义](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture11?action=AttachFile&do=get&target=11-3-进程状态.pptx)）
-三状态进程模型（9.4 三状态进程模型：[PPT讲义](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture11?action=AttachFile&do=get&target=11-4-三状态进程模型.pptx)）
+進程的概念（9.1 進程的概念[wiki](https://os.cs.tsinghua.edu.cn/oscourse/OS2020spring/lecture09)、[幻燈片]()）
+進程控制塊（9.2 進程控制塊：[PPT講義](http://os.cs.tsinghua.edu.cn/oscourse/OS2018spring/lecture11?action=AttachFile&do=get&target=20180402-11-2-進程控制塊.pptx)）
+進程狀態（9.3 進程狀態：[PPT講義](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture11?action=AttachFile&do=get&target=11-3-進程狀態.pptx)）
+三狀態進程模型（9.4 三狀態進程模型：[PPT講義](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture11?action=AttachFile&do=get&target=11-4-三狀態進程模型.pptx)）
 
-### 3.2 进程调度
+### 3.2 進程調度
 
-处理机调度概念（11.1 处理机调度概念[wiki](https://os.cs.tsinghua.edu.cn/oscourse/OS2020spring/lecture11)、[PPT讲义](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture15?action=AttachFile&do=get&target=15-1.pptx)）
+處理機調度概念（11.1 處理機調度概念[wiki](https://os.cs.tsinghua.edu.cn/oscourse/OS2020spring/lecture11)、[PPT講義](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture15?action=AttachFile&do=get&target=15-1.pptx)）
 
-协作式调度与抢占式调度
- * 协作式调度：主动释放处理器
- * 抢占式调度：通过时钟中断来强制打断一个程序的执行
+協作式調度與搶佔式調度
+ * 協作式調度：主動釋放處理器
+ * 搶佔式調度：通過時鐘中斷來強制打斷一個程序的執行
 
-先来先服务调度算法（11.3 先来先服务：[PPT讲义](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture15?action=AttachFile&do=get&target=15-3.pptx)）
-时间片轮转调度算法（11.4 时间片轮转：[PPT讲义](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture15?action=AttachFile&do=get&target=15-4.pptx)）
+先來先服務調度算法（11.3 先來先服務：[PPT講義](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture15?action=AttachFile&do=get&target=15-3.pptx)）
+時間片輪轉調度算法（11.4 時間片輪轉：[PPT講義](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture15?action=AttachFile&do=get&target=15-4.pptx)）
 
-### 3.3 进程切换与管理（switch/fork/exec/wait/exit）
+### 3.3 進程切換與管理（switch/fork/exec/wait/exit）
 
-进程切换（12.1 进程切换：[wiki](https://os.cs.tsinghua.edu.cn/oscourse/OS2020spring/lecture10)、[PPT讲义](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture12?action=AttachFile&do=get&target=12-1.pptx)）：
+進程切換（12.1 進程切換：[wiki](https://os.cs.tsinghua.edu.cn/oscourse/OS2020spring/lecture10)、[PPT講義](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture12?action=AttachFile&do=get&target=12-1.pptx)）：
 
-* 不同类型的上下文与切换：函数调用与返回；系统调用和返回；进程切换；
-* 切换位置的要求：调用方；用户进程的可选位置；用户态的任意位置，内核的指定位置；
+* 不同類型的上下文與切換：函數調用與返回；系統調用和返回；進程切換；
+* 切換位置的要求：調用方；用戶進程的可選位置；用戶態的任意位置，內核的指定位置；
 
-进程创建（12.2 进程创建：[PPT讲义](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture12?action=AttachFile&do=get&target=12-2.pptx)）
-进程退出（12.4 进程等待与退出：[PPT讲义](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture12?action=AttachFile&do=get&target=12-4.pptx)）
+進程創建（12.2 進程創建：[PPT講義](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture12?action=AttachFile&do=get&target=12-2.pptx)）
+進程退出（12.4 進程等待與退出：[PPT講義](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture12?action=AttachFile&do=get&target=12-4.pptx)）
 
-### 3.4 同步互斥与进程间通信
+### 3.4 同步互斥與進程間通信
 
-进程同步（13.1 背景[wiki](https://os.cs.tsinghua.edu.cn/oscourse/OS2020spring/lecture13)、[幻灯片](os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture17?action=AttachFile&do=get&target=17-1%E8%83%8C%E6%99%AF.pptx)）
+進程同步（13.1 背景[wiki](https://os.cs.tsinghua.edu.cn/oscourse/OS2020spring/lecture13)、[幻燈片](os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture17?action=AttachFile&do=get&target=17-1%E8%83%8C%E6%99%AF.pptx)）
 
-信号量的基本概念（14.1 信号量[wiki](https://os.cs.tsinghua.edu.cn/oscourse/OS2020spring/lecture14)、[幻灯片](https://os.cs.tsinghua.edu.cn/oscourse/OS2020spring/lecture14?action=AttachFile&do=view&target=20200402-18-1.pptx)）
+信號量的基本概念（14.1 信號量[wiki](https://os.cs.tsinghua.edu.cn/oscourse/OS2020spring/lecture14)、[幻燈片](https://os.cs.tsinghua.edu.cn/oscourse/OS2020spring/lecture14?action=AttachFile&do=view&target=20200402-18-1.pptx)）
 
-进程通信（16.1 进程通信概念[wiki](https://os.cs.tsinghua.edu.cn/oscourse/OS2020spring/lecture16)、[幻灯片](os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture20?action=AttachFile&do=get&target=20-5.pptx)）
-管道（16.2 信号和管道[幻灯片](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture20?action=AttachFile&do=get&target=20-6.pptx)）
+進程通信（16.1 進程通信概念[wiki](https://os.cs.tsinghua.edu.cn/oscourse/OS2020spring/lecture16)、[幻燈片](os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture20?action=AttachFile&do=get&target=20-5.pptx)）
+管道（16.2 信號和管道[幻燈片](http://os.cs.tsinghua.edu.cn/oscourse/OS2015/lecture20?action=AttachFile&do=get&target=20-6.pptx)）
 
-### 3.5 教学实验：分时多任务系统
+### 3.5 教學實驗：分時多任務系統
 
-#### 系统调用：中断上下文保存与恢复
+#### 系統調用：中斷上下文保存與恢復
 
-`TrapContext` [结构体](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3-coop/os/src/trap/context.rs#L4)
+`TrapContext` [結構體](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3-coop/os/src/trap/context.rs#L4)
 
-`__alltraps` 的[实现](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3-coop/os/src/trap/trap.S#L12)
+`__alltraps` 的[實現](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3-coop/os/src/trap/trap.S#L12)
 
-上下文恢复的 `__restore` 的[实现](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3-coop/os/src/trap/trap.S#L40)
+上下文恢復的 `__restore` 的[實現](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3-coop/os/src/trap/trap.S#L40)
 
-#### 任务切换：任务上下文(Task Context)
+#### 任務切換：任務上下文(Task Context)
 
 ![task_context](/Users/xyong/github/os-lectures/lecture03/figs/task_context.png)
 
- `TaskContext` [数据结构](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3-coop/os/src/task/context.rs#L2)
+ `TaskContext` [數據結構](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3-coop/os/src/task/context.rs#L2)
 
-#### 进程切换过程
+#### 進程切換過程
 
 ![switch](/Users/xyong/github/os-lectures/lecture03/figs/switch.png)
 
-`__switch` 的[实现](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3-coop/os/src/task/switch.S#L10)
+`__switch` 的[實現](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3-coop/os/src/task/switch.S#L10)
 
-#### 进程切换的实现
+#### 進程切換的實現
 
-如何进入用户态第一次执行应用程序？
+如何進入用戶態第一次執行應用程序？
 
- `run_next_app` [函数](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch2/os/src/batch.rs#L116)
+ `run_next_app` [函數](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch2/os/src/batch.rs#L116)
 
- `app_init_context` [函数](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch2/os/src/trap/context.rs#L12)
+ `app_init_context` [函數](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch2/os/src/trap/context.rs#L12)
 
-#### 多道批处理系统中的程序加载
+#### 多道批處理系統中的程序加載
 
- `load_apps` [函数](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3-coop/os/src/loader.rs#L55)
+ `load_apps` [函數](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3-coop/os/src/loader.rs#L55)
 
-#### 进程管理：任务运行状态
+#### 進程管理：任務運行狀態
 
-简单的进程控制块数据结构和三状态进程模型
+簡單的進程控制塊數據結構和三狀態進程模型
 
 ![fsm-coop](/Users/xyong/github/os-lectures/lecture03/figs/fsm-coop.png)
 
-```TaskStatus```[数据结构](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3-coop/os/src/task/task.rs#L13)
+```TaskStatus```[數據結構](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3-coop/os/src/task/task.rs#L13)
 
-#### 进程管理：任务控制块
+#### 進程管理：任務控制塊
 
-**任务控制块** (Task Control Block)：```TaskControlBlock``` [数据结构](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3-coop/os/src/task/task.rs#L1)
+**任務控制塊** (Task Control Block)：```TaskControlBlock``` [數據結構](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3-coop/os/src/task/task.rs#L1)
 
-#### 协作式调度：主动让出CPU
+#### 協作式調度：主動讓出CPU
 
-主动调用`sys_yield` 来交出 CPU 使用权。
+主動調用`sys_yield` 來交出 CPU 使用權。
 
 ![multiprogramming](/Users/xyong/github/os-lectures/lecture03/figs/multiprogramming.png)
 
 #### sys_yield 和 sys_exit
 
- `sys_yield` [系统调用](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3/user/src/syscall.rs#L27)
+ `sys_yield` [系統調用](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3/user/src/syscall.rs#L27)
 
-```sys_yield```的[实现](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3/os/src/syscall/process.rs#L13)
+```sys_yield```的[實現](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3/os/src/syscall/process.rs#L13)
 
-```sys_exit```的[实现](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3/os/src/syscall/process.rs#L7)
+```sys_exit```的[實現](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3/os/src/syscall/process.rs#L7)
 
-#### 第一次进入用户态
+#### 第一次進入用戶態
 
-多进程下的第一次进入用户态；
+多進程下的第一次進入用戶態；
 
- `init_app_cx` 的[实现](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3/os/src/loader.rs#L82)
+ `init_app_cx` 的[實現](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3/os/src/loader.rs#L82)
 
- `task::run_first_task` 的[实现](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3/os/src/task/mod.rs#L48)
+ `task::run_first_task` 的[實現](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3/os/src/task/mod.rs#L48)
 
-```task::run_next_task```的[实现](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3/os/src/task/mod.rs#L82)
+```task::run_next_task```的[實現](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3/os/src/task/mod.rs#L82)
 
-#### 抢占式调度
+#### 搶佔式調度
 
-`timer` [模块](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3/os/src/timer.rs#L12)
+`timer` [模塊](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3/os/src/timer.rs#L12)
 
-`suspend_current_and_run_next` 的[引用](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3/os/src/trap/mod.rs#L53)和[实现](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3/os/src/task/mod.rs#L119)
+`suspend_current_and_run_next` 的[引用](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3/os/src/trap/mod.rs#L53)和[實現](https://github.com/rcore-os/rCore-Tutorial-v3/blob/ch3/os/src/task/mod.rs#L119)
 
 

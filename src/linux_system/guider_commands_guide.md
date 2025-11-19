@@ -95,7 +95,7 @@ guider top --help
 
 控制類指令用於管理和控制系統進程、資源限制等。
 
-| 指令 | 功能 | 平台支援 | 基本用法 |
+| 指令 | 功能 | 平臺支援 | 基本用法 |
 |------|------|----------|----------|
 | `cgroup` | Cgroup 管理 | Linux/Android | `guider cgroup <PID>` |
 | `freeze` | 凍結線程 | Linux/Android | `guider freeze <TID>` |
@@ -120,7 +120,7 @@ guider top --help
 
 日誌類指令用於收集和分析各種系統日誌。
 
-| 指令 | 功能 | 平台支援 | 基本用法 |
+| 指令 | 功能 | 平臺支援 | 基本用法 |
 |------|------|----------|----------|
 | `logand` | Android 系統日誌 | Android | `guider logand` |
 | `logdlt` | DLT 日誌 | Linux | `guider logdlt` |
@@ -139,7 +139,7 @@ guider top --help
 
 監控類指令提供即時系統監控功能。
 
-| 指令 | 功能 | 平台支援 | 基本用法 | 常用參數 |
+| 指令 | 功能 | 平臺支援 | 基本用法 | 常用參數 |
 |------|------|----------|----------|----------|
 | `andtop` | Android 日誌監控 | Android | `guider andtop` | `-a` 顯示所有 |
 | `atop` | 全面系統監控 | Linux/Android | `guider atop` | `-a` 顯示所有 |
@@ -180,7 +180,7 @@ guider top --help
 
 網路類指令提供網路相關功能。
 
-| 指令 | 功能 | 平台支援 | 基本用法 |
+| 指令 | 功能 | 平臺支援 | 基本用法 |
 |------|------|----------|----------|
 | `cli` | 客戶端 | Linux/Android/MacOS/Windows | `guider cli <IP:PORT>` |
 | `event` | 事件管理 | Linux/Android | `guider event` |
@@ -195,7 +195,7 @@ guider top --help
 
 效能分析指令用於記錄和分析系統效能。
 
-| 指令 | 功能 | 平台支援 | 基本用法 |
+| 指令 | 功能 | 平臺支援 | 基本用法 |
 |------|------|----------|----------|
 | `filerec` | 文件操作記錄 | Linux/Android | `guider filerec -R 10` |
 | `funcrec` | 函數調用記錄 | Linux/Android | `guider funcrec -R 10` |
@@ -212,7 +212,7 @@ guider top --help
 
 測試類指令提供系統壓力測試功能。
 
-| 指令 | 功能 | 平台支援 | 基本用法 |
+| 指令 | 功能 | 平臺支援 | 基本用法 |
 |------|------|----------|----------|
 | `cputest` | CPU 壓力測試 | Linux/Android/MacOS/Windows | `guider cputest <THREADS>` |
 | `helptest` | 幫助測試 | ALL | `guider helptest` |
@@ -224,7 +224,7 @@ guider top --help
 
 追蹤類指令提供系統追蹤功能。
 
-| 指令 | 功能 | 平台支援 | 基本用法 |
+| 指令 | 功能 | 平臺支援 | 基本用法 |
 |------|------|----------|----------|
 | `btrace` | 函數追蹤 | Linux/Android | `guider btrace <FUNCTION>` |
 | `leaktrace` | 洩漏追蹤 | Linux/Android | `guider leaktrace <PID>` |
@@ -239,7 +239,7 @@ guider top --help
 
 工具類指令提供各種實用功能。
 
-| 指令 | 功能 | 平台支援 | 基本用法 |
+| 指令 | 功能 | 平臺支援 | 基本用法 |
 |------|------|----------|----------|
 | `addr2sym` | 地址轉符號 | Linux/Android/MacOS/Windows | `guider addr2sym <ADDR>` |
 | `andcmd` | Android 命令 | Android | `guider andcmd <CMD>` |
@@ -310,7 +310,7 @@ guider top --help
 
 視覺化指令將數據轉換為圖表。
 
-| 指令 | 功能 | 平台支援 | 基本用法 |
+| 指令 | 功能 | 平臺支援 | 基本用法 |
 |------|------|----------|----------|
 | `convert` | 文本轉換 | Linux/MacOS/Windows | `guider convert <FILE>` |
 | `draw` | 繪製系統圖表 | Linux/MacOS/Windows | `guider draw <FILE>` |
@@ -770,7 +770,7 @@ guider drawtime /tmp/data.out_00:01:00
 3. **視覺化輸出**：
    - 默認輸出為 SVG 格式，文件名為 `<basename>_graph.svg`
    - 多次運行會自動備份舊文件為 `_old.svg`
-4. **平台相容性**：不同平台支援的指令不同，請參考指令分類中的平台支援欄位。
+4. **平臺相容性**：不同平臺支援的指令不同，請參考指令分類中的平臺支援欄位。
 5. **資源消耗**：持續監控會消耗系統資源，建議根據需要調整監控間隔和範圍。
 6. **視覺化要求**：視覺化功能需要安裝 matplotlib 和 numpy：
    ```bash
@@ -981,4 +981,4 @@ guider top -q NOCONVSIZE, NOCONVTIME, NOCONVNUM
 
 ---
 
-*本指南基於 Guider 3.9.9_250918 版本編寫，測試於 Ubuntu Linux 6.14.0，不同版本和平台可能有所差異。*
+*本指南基於 Guider 3.9.9_250918 版本編寫，測試於 Ubuntu Linux 6.14.0，不同版本和平臺可能有所差異。*

@@ -11,13 +11,13 @@ backgroundColor: white
 <!-- theme: gaia -->
 <!-- _class: lead -->
 
-# 第二讲 实践与实验介绍
-## 第二节 Compiler与OS
+# 第二講 實踐與實驗介紹
+## 第二節 Compiler與OS
 
 <br>
 <br>
 
-向勇 陈渝 李国良 
+向勇 陳渝 李國良 
 
 <br>
 <br>
@@ -25,72 +25,72 @@ backgroundColor: white
 2022年秋季
 
 ---
-提纲
+提綱
 
-### 1. 硬件环境
-2. 应用程序执行环境
-3. 操作系统执行环境
+### 1. 硬件環境
+2. 應用程序執行環境
+3. 操作系統執行環境
 
 ---
 
-#### 开发的硬件环境
+#### 開發的硬件環境
 ![bg right:67% 85%](figs/x86.png)
 
 ---
 
-#### 目标硬件环境
+#### 目標硬件環境
 ![bg right:70% 85%](figs/rv.png)
 
 ---
-提纲
+提綱
 
-1. 硬件环境
-### 2. 应用程序执行环境
-3. 操作系统执行环境
+1. 硬件環境
+### 2. 應用程序執行環境
+3. 操作系統執行環境
 
 ---
 
-#### 编译器工作
-- 源码-->汇编码
+#### 編譯器工作
+- 源碼-->彙編碼
 ![bg right:55% 100%](figs/app-software-stack.png)
 ---
 
 #### Assembler工作
-- 汇编码 --> 机器码
+- 彙編碼 --> 機器碼
 ![bg right:55% 100%](figs/app-software-stack.png)
 ---
-#### linker（链接器）工作
-- 多个机器码目标文件 --> 单个机器码执行文件
+#### linker（鏈接器）工作
+- 多個機器碼目標文件 --> 單個機器碼執行文件
 ![bg right:55% 100%](figs/app-software-stack.png)
 
 ---
 
 #### OS工作
-- 加载/执行/管理机器码执行文件
+- 加載/執行/管理機器碼執行文件
 ![bg right:50% 100%](figs/app-software-stack.png)
 
 
 ---
-提纲
+提綱
 
-1. 硬件环境
-2. 应用程序执行环境
-### 3. 操作系统执行环境
+1. 硬件環境
+2. 應用程序執行環境
+### 3. 操作系統執行環境
 
 ---
 
-#### 编译器/汇编器/链接器工作
-- 源码 ---> 汇编码 ---> 机器码 --->执行程序
-- Bootloader加载OS执行
+#### 編譯器/彙編器/鏈接器工作
+- 源碼 ---> 彙編碼 ---> 機器碼 --->執行程序
+- Bootloader加載OS執行
 
 ![bg right:50% 100%](figs/os-software-stack.png)
 
 
 ---
 
-#### 可执行文件格式
-三元组
-* CPU 架构/厂商/操作系统
+#### 可執行文件格式
+三元組
+* CPU 架構/廠商/操作系統
 ```
 rustc --print target-list | grep riscv
 riscv32gc-unknown-linux-gnu
@@ -105,23 +105,23 @@ riscv64imac-unknown-none-elf
 
 ---
 
-#### 链接和执行
+#### 鏈接和執行
 
 ![bg 70%](figs/link.png)
 
 ---
-#### 函数库
-- 标准库：依赖操作系统
-  - Rust: std 标准库
+#### 函數庫
+- 標準庫：依賴操作系統
+  - Rust: std 標準庫
   - C：glibc, musl libc 
-- 核心库：与操作系统无关
-  - Rust: core 库
+- 核心庫：與操作系統無關
+  - Rust: core 庫
   - C: Linux/BSD kernel libc
 ![bg right:50% 100%](figs/os-software-stack.png)
 
 ---
-#### 裸机程序
-与操作系统无关的OS类型的程序（Bare Metal program, 裸机程序）
+#### 裸機程序
+與操作系統無關的OS類型的程序（Bare Metal program, 裸機程序）
 ```
 // os/src/main.rs
 #![no_std]
@@ -154,9 +154,9 @@ target/riscv64gc-unknown-none-elf/debug/os: ELF 64-bit LSB executable, UCB RISC-
 ![bg 55%](figs/elf.png)
 
 ---
-#### 文件头信息
+#### 文件頭信息
 
-文件头信息
+文件頭信息
 ```
 rust-readobj -h target/riscv64gc-unknown-none-elf/debug/os
    File: target/riscv64gc-unknown-none-elf/debug/os
@@ -173,25 +173,25 @@ rust-readobj -h target/riscv64gc-unknown-none-elf/debug/os
 ```
 
 ---
-#### 导出汇编程序
+#### 導出彙編程序
 
 
-反汇编导出汇编程序
+反彙編導出彙編程序
 ```
 rust-objdump -S target/riscv64gc-unknown-none-elf/debug/os
    target/riscv64gc-unknown-none-elf/debug/os:       file format elf64-littleriscv
 ```
-代码中移除了 main 函数并将项目设置为 #![no_main] 
- - 没有一个传统意义上的入口点（即程序首条被执行的指令所在的位置）
- - Rust 编译器会生成一个空程序
- - 这是一个**面向操作系统开发**的程序
+代碼中移除了 main 函數並將項目設置為 #![no_main] 
+ - 沒有一個傳統意義上的入口點（即程序首條被執行的指令所在的位置）
+ - Rust 編譯器會生成一個空程序
+ - 這是一個**面向操作系統開發**的程序
 
 ---
-#### App/OS内存布局
-- .text: 数据段
-- .rodata：已初始化数据段，只读的全局数据（常数或者是常量字符串）
-- .data：可修改的全局数据
-- .bss：未初始化数据段
-- 堆 （heap）向高地址增长
-- 栈 （stack）向低地址增长
+#### App/OS內存佈局
+- .text: 數據段
+- .rodata：已初始化數據段，只讀的全局數據（常數或者是常量字符串）
+- .data：可修改的全局數據
+- .bss：未初始化數據段
+- 堆 （heap）向高地址增長
+- 棧 （stack）向低地址增長
 ![bg right:52% 140%](figs/memlayout.png)

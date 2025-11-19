@@ -7,44 +7,44 @@ excalidraw-plugin: parsed
 
 
 # Text Elements
-进程阻塞于select/epoll
-系统调用，等待某个文件
-描述符变为可读 ^civJ0kAx
+進程阻塞於select/epoll
+系統調用，等待某個文件
+描述符變為可讀 ^civJ0kAx
 
-进程 ^BCJVH8ZY
+進程 ^BCJVH8ZY
 
 select/epoll ^1YqUYTPI
 
-系统调用 ^Lm01RAUs
+系統調用 ^Lm01RAUs
 
 OS kernel ^vhIkgWjV
 
-数据没准备好 ^zFS35GNs
+數據沒準備好 ^zFS35GNs
 
-等待磁盘数据 ^4l1N0fGM
+等待磁盤數據 ^4l1N0fGM
 
 
-复制数据 ^UTvK4Os9
+複製數據 ^UTvK4Os9
 
-复制完成 ^fUTFDj0v
+複製完成 ^fUTFDj0v
 
-系统调用成功 ^Peq5q6BO
+系統調用成功 ^Peq5q6BO
 
-进程继续执行 ^SC6hOMAr
+進程繼續執行 ^SC6hOMAr
 
-将数据从内核空间
-复制到进程用户空间 ^55xRyF4q
+將數據從內核空間
+複製到進程用戶空間 ^55xRyF4q
 
-返回文件可读 ^lc2OE96D
+返回文件可讀 ^lc2OE96D
 
-系统调用 ^CX5Tse0r
+系統調用 ^CX5Tse0r
 
 sys_read ^ndKmyRwY
 
-数据准备好 ^Hoo7qA2e
+數據準備好 ^Hoo7qA2e
 
-进程阻塞于sys_read
-系统调用 ^c4kXCDFJ
+進程阻塞於sys_read
+系統調用 ^c4kXCDFJ
 
 
 # Embedded files
@@ -147,13 +147,13 @@ sys_read ^ndKmyRwY
 			"link": null,
 			"fontSize": 20.00000000000001,
 			"fontFamily": 4,
-			"text": "进程阻塞于select/epoll\n系统调用，等待某个文件\n描述符变为可读",
-			"rawText": "进程阻塞于select/epoll\n系统调用，等待某个文件\n描述符变为可读",
+			"text": "進程阻塞於select/epoll\n系統調用，等待某個文件\n描述符變為可讀",
+			"rawText": "進程阻塞於select/epoll\n系統調用，等待某個文件\n描述符變為可讀",
 			"baseline": 62,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程阻塞于select/epoll\n系统调用，等待某个文件\n描述符变为可读"
+			"originalText": "進程阻塞於select/epoll\n系統調用，等待某個文件\n描述符變為可讀"
 		},
 		{
 			"type": "text",
@@ -181,13 +181,13 @@ sys_read ^ndKmyRwY
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "进程",
-			"rawText": "进程",
+			"text": "進程",
+			"rawText": "進程",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程"
+			"originalText": "進程"
 		},
 		{
 			"type": "text",
@@ -302,13 +302,13 @@ sys_read ^ndKmyRwY
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "系统调用",
-			"rawText": "系统调用",
+			"text": "系統調用",
+			"rawText": "系統調用",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "系统调用"
+			"originalText": "系統調用"
 		},
 		{
 			"type": "text",
@@ -379,13 +379,13 @@ sys_read ^ndKmyRwY
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "数据没准备好",
-			"rawText": "数据没准备好",
+			"text": "數據沒準備好",
+			"rawText": "數據沒準備好",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "数据没准备好"
+			"originalText": "數據沒準備好"
 		},
 		{
 			"type": "text",
@@ -413,13 +413,13 @@ sys_read ^ndKmyRwY
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "等待磁盘数据",
-			"rawText": "等待磁盘数据",
+			"text": "等待磁盤數據",
+			"rawText": "等待磁盤數據",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "等待磁盘数据"
+			"originalText": "等待磁盤數據"
 		},
 		{
 			"type": "text",
@@ -452,13 +452,13 @@ sys_read ^ndKmyRwY
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "\n复制数据",
-			"rawText": "\n复制数据",
+			"text": "\n複製數據",
+			"rawText": "\n複製數據",
 			"baseline": 40,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "\n复制数据"
+			"originalText": "\n複製數據"
 		},
 		{
 			"type": "arrow",
@@ -539,13 +539,13 @@ sys_read ^ndKmyRwY
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "复制完成",
-			"rawText": "复制完成",
+			"text": "複製完成",
+			"rawText": "複製完成",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "复制完成"
+			"originalText": "複製完成"
 		},
 		{
 			"type": "text",
@@ -578,13 +578,13 @@ sys_read ^ndKmyRwY
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "系统调用成功",
-			"rawText": "系统调用成功",
+			"text": "系統調用成功",
+			"rawText": "系統調用成功",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "系统调用成功"
+			"originalText": "系統調用成功"
 		},
 		{
 			"type": "arrow",
@@ -665,13 +665,13 @@ sys_read ^ndKmyRwY
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "进程继续执行",
-			"rawText": "进程继续执行",
+			"text": "進程繼續執行",
+			"rawText": "進程繼續執行",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程继续执行"
+			"originalText": "進程繼續執行"
 		},
 		{
 			"type": "image",
@@ -730,13 +730,13 @@ sys_read ^ndKmyRwY
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "将数据从内核空间\n复制到进程用户空间",
-			"rawText": "将数据从内核空间\n复制到进程用户空间",
+			"text": "將數據從內核空間\n複製到進程用戶空間",
+			"rawText": "將數據從內核空間\n複製到進程用戶空間",
 			"baseline": 40,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "将数据从内核空间\n复制到进程用户空间"
+			"originalText": "將數據從內核空間\n複製到進程用戶空間"
 		},
 		{
 			"type": "arrow",
@@ -813,13 +813,13 @@ sys_read ^ndKmyRwY
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "返回文件可读",
-			"rawText": "返回文件可读",
+			"text": "返回文件可讀",
+			"rawText": "返回文件可讀",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "返回文件可读"
+			"originalText": "返回文件可讀"
 		},
 		{
 			"type": "arrow",
@@ -892,13 +892,13 @@ sys_read ^ndKmyRwY
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "系统调用",
-			"rawText": "系统调用",
+			"text": "系統調用",
+			"rawText": "系統調用",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "系统调用"
+			"originalText": "系統調用"
 		},
 		{
 			"type": "text",
@@ -1048,13 +1048,13 @@ sys_read ^ndKmyRwY
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "数据准备好",
-			"rawText": "数据准备好",
+			"text": "數據準備好",
+			"rawText": "數據準備好",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "数据准备好"
+			"originalText": "數據準備好"
 		},
 		{
 			"type": "text",
@@ -1082,13 +1082,13 @@ sys_read ^ndKmyRwY
 			"link": null,
 			"fontSize": 20.00000000000001,
 			"fontFamily": 4,
-			"text": "进程阻塞于sys_read\n系统调用",
-			"rawText": "进程阻塞于sys_read\n系统调用",
+			"text": "進程阻塞於sys_read\n系統調用",
+			"rawText": "進程阻塞於sys_read\n系統調用",
 			"baseline": 40,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程阻塞于sys_read\n系统调用"
+			"originalText": "進程阻塞於sys_read\n系統調用"
 		}
 	],
 	"appState": {

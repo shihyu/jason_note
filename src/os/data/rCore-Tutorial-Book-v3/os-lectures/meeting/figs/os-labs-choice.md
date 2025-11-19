@@ -29,25 +29,25 @@ ARM ^Lg3KzJxy
 
 RISC-V ^XKsMgEMS
 
-自定义指令集 ^yggMIe5W
+自定義指令集 ^yggMIe5W
 
-进程 地址空间  文件 ^6to9wVnK
+進程 地址空間  文件 ^6to9wVnK
 
-文件系统 ^7xRMcVe3
+文件系統 ^7xRMcVe3
 
-特权级 ^T5Ga4kgr
+特權級 ^T5Ga4kgr
 
-中断 ^A56U8d3Y
+中斷 ^A56U8d3Y
 
-异常 ^EuTIE5LR
+異常 ^EuTIE5LR
 
-调度 ^t8XaMgTp
+調度 ^t8XaMgTp
 
-页表 ^npO0Ys7N
+頁表 ^npO0Ys7N
 
 同步互斥 ^IvEzHyBG
 
-虚存 ^Dtv1p8ra
+虛存 ^Dtv1p8ra
 
 
 # Embedded files
@@ -492,13 +492,13 @@ f9f21c5018f2c4df3a67804235f4cc85113a41c3: [[Pasted Image 20220728115054_236.png]
 			"link": null,
 			"fontSize": 48.134202223557686,
 			"fontFamily": 4,
-			"text": "自定义指令集",
-			"rawText": "自定义指令集",
+			"text": "自定義指令集",
+			"rawText": "自定義指令集",
 			"baseline": 43,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "自定义指令集"
+			"originalText": "自定義指令集"
 		},
 		{
 			"type": "text",
@@ -526,13 +526,13 @@ f9f21c5018f2c4df3a67804235f4cc85113a41c3: [[Pasted Image 20220728115054_236.png]
 			"link": null,
 			"fontSize": 44.538849659455146,
 			"fontFamily": 4,
-			"text": "进程 地址空间  文件",
-			"rawText": "进程 地址空间  文件",
+			"text": "進程 地址空間  文件",
+			"rawText": "進程 地址空間  文件",
 			"baseline": 40,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程 地址空间  文件"
+			"originalText": "進程 地址空間  文件"
 		},
 		{
 			"type": "text",
@@ -560,13 +560,13 @@ f9f21c5018f2c4df3a67804235f4cc85113a41c3: [[Pasted Image 20220728115054_236.png]
 			"link": null,
 			"fontSize": 28,
 			"fontFamily": 4,
-			"text": "文件系统",
-			"rawText": "文件系统",
+			"text": "文件系統",
+			"rawText": "文件系統",
 			"baseline": 25,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "文件系统"
+			"originalText": "文件系統"
 		},
 		{
 			"type": "text",
@@ -594,13 +594,13 @@ f9f21c5018f2c4df3a67804235f4cc85113a41c3: [[Pasted Image 20220728115054_236.png]
 			"link": null,
 			"fontSize": 28,
 			"fontFamily": 4,
-			"text": "特权级",
-			"rawText": "特权级",
+			"text": "特權級",
+			"rawText": "特權級",
 			"baseline": 25,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "特权级"
+			"originalText": "特權級"
 		},
 		{
 			"type": "text",
@@ -628,13 +628,13 @@ f9f21c5018f2c4df3a67804235f4cc85113a41c3: [[Pasted Image 20220728115054_236.png]
 			"link": null,
 			"fontSize": 28,
 			"fontFamily": 4,
-			"text": "中断",
-			"rawText": "中断",
+			"text": "中斷",
+			"rawText": "中斷",
 			"baseline": 25,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "中断"
+			"originalText": "中斷"
 		},
 		{
 			"type": "text",
@@ -662,13 +662,13 @@ f9f21c5018f2c4df3a67804235f4cc85113a41c3: [[Pasted Image 20220728115054_236.png]
 			"link": null,
 			"fontSize": 28,
 			"fontFamily": 4,
-			"text": "异常",
-			"rawText": "异常",
+			"text": "異常",
+			"rawText": "異常",
 			"baseline": 25,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "异常"
+			"originalText": "異常"
 		},
 		{
 			"type": "text",
@@ -696,13 +696,13 @@ f9f21c5018f2c4df3a67804235f4cc85113a41c3: [[Pasted Image 20220728115054_236.png]
 			"link": null,
 			"fontSize": 28,
 			"fontFamily": 4,
-			"text": "调度",
-			"rawText": "调度",
+			"text": "調度",
+			"rawText": "調度",
 			"baseline": 25,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "调度"
+			"originalText": "調度"
 		},
 		{
 			"type": "text",
@@ -730,13 +730,13 @@ f9f21c5018f2c4df3a67804235f4cc85113a41c3: [[Pasted Image 20220728115054_236.png]
 			"link": null,
 			"fontSize": 28,
 			"fontFamily": 4,
-			"text": "页表",
-			"rawText": "页表",
+			"text": "頁表",
+			"rawText": "頁表",
 			"baseline": 25,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "页表"
+			"originalText": "頁表"
 		},
 		{
 			"type": "text",
@@ -798,13 +798,13 @@ f9f21c5018f2c4df3a67804235f4cc85113a41c3: [[Pasted Image 20220728115054_236.png]
 			"link": null,
 			"fontSize": 28,
 			"fontFamily": 4,
-			"text": "虚存",
-			"rawText": "虚存",
+			"text": "虛存",
+			"rawText": "虛存",
 			"baseline": 25,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "虚存"
+			"originalText": "虛存"
 		}
 	],
 	"appState": {

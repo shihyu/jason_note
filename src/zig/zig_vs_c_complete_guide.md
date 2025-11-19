@@ -576,10 +576,10 @@ const value = findValue(42) orelse return error.NotFound;
 
 **C 語言：**
 ```c
-// C - 平台相依
+// C - 平臺相依
 int x;        // 可能是 16/32/64 位元
 long y;       // 可能是 32/64 位元
-size_t z;     // 平台相依
+size_t z;     // 平臺相依
 
 // 需要 stdint.h
 int32_t a;
@@ -660,24 +660,24 @@ export fn zigAdd(a: i32, b: i32) i32 {
 }
 ```
 
-### 9. 跨平台編譯
+### 9. 跨平臺編譯
 
 **C 語言：**
 ```bash
-# C - 需要安裝不同平台的工具鏈
+# C - 需要安裝不同平臺的工具鏈
 sudo apt install gcc-mingw-w64  # Windows
 sudo apt install gcc-arm-linux-gnueabihf  # ARM
 ```
 
 **Zig 語言：**
 ```bash
-# Zig - 內建跨平台編譯
+# Zig - 內建跨平臺編譯
 zig build-exe main.zig -target x86_64-windows
 zig build-exe main.zig -target x86_64-linux
 zig build-exe main.zig -target aarch64-macos
 zig build-exe main.zig -target wasm32-freestanding
 
-# 支援超過 30 個目標平台
+# 支援超過 30 個目標平臺
 ```
 
 ### 10. 更安全的預設行為
@@ -1287,7 +1287,7 @@ zig build-exe main.zig
 # 動態連結
 zig build-exe main.zig -dynamic
 
-# 交叉編譯（編譯給其他平台）
+# 交叉編譯（編譯給其他平臺）
 zig build-exe main.zig -target x86_64-windows
 zig build-exe main.zig -target aarch64-linux
 zig build-exe main.zig -target wasm32-wasi
@@ -1397,7 +1397,7 @@ rm -rf zig-cache zig-out
 # 查看 Zig 內建函式
 zig builtin
 
-# 查看支援的目標平台
+# 查看支援的目標平臺
 zig targets
 
 # C 程式碼轉換為 Zig
@@ -1650,7 +1650,7 @@ zig build run
 
 ### C 語言優點
 1. 成熟穩定，生態系統龐大
-2. 幾乎所有平台都支援
+2. 幾乎所有平臺都支援
 3. 大量的函式庫和工具
 4. 豐富的學習資源
 5. 簡單直接的語法
@@ -1699,7 +1699,7 @@ zig build run
 
 ### 適合繼續使用 C 的場景
 - 維護現有的大型 C 程式碼庫
-- 需要最廣泛的平台支援
+- 需要最廣泛的平臺支援
 - 團隊已經熟悉 C
 - 依賴特定的 C 工具鏈
 
@@ -1724,7 +1724,7 @@ zig build run
 - 新專案，想要現代語言特性
 - 需要更好的錯誤處理
 - 重視編譯時安全檢查
-- 需要跨平台編譯
+- 需要跨平臺編譯
 - 想要更好的 C 互操作
 
 ⚠️ **選擇 C：**
@@ -1751,4 +1751,4 @@ zig build run
 
 *Zig 是一個現代化的系統程式語言，旨在解決 C 語言的許多問題，同時保持 C 的簡單性和效能。雖然 Zig 還在發展中，但它提供了許多吸引人的特性，特別是在安全性和開發體驗方面。對於新專案，Zig 是一個值得考慮的選擇；對於現有的 C 專案，可以考慮漸進式地引入 Zig。*
 
-*選擇使用哪種語言應該基於專案需求、團隊經驗和長期維護考量。兩種語言都有其適用的場景，了解它們的差異有助於做出明智的技術決策。*
+*選擇使用哪種語言應該基於專案需求、團隊經驗和長期維護考量。兩種語言都有其適用的場景，瞭解它們的差異有助於做出明智的技術決策。*

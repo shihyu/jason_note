@@ -208,7 +208,7 @@ module market_data_decoder (
 endmodule
 ```
 
-## 2. C++ 測試平台
+## 2. C++ 測試平臺
 
 ### tb_hft_system.cpp - 高頻交易系統測試
 ```cpp
@@ -587,7 +587,7 @@ tfp->dump(sim_time);
 ## 7. 實測結果與驗證
 
 ### 7.1 測試環境
-- **測試平台**: Ubuntu Linux
+- **測試平臺**: Ubuntu Linux
 - **Verilator 版本**: 5.040
 - **測試時間**: 2025-09-28
 
@@ -707,4 +707,4 @@ help:
 ```
 
 ## 總結
-Verilator 適合用於 HFT 系統的功能驗證和演算法開發，但不能替代實際 FPGA 的性能測試。本範例展示了如何使用簡化的 Makefile 和測試平台快速驗證 FPGA 設計。建議將其作為開發流程的一部分，在部署到實際 FPGA 前進行充分的模擬測試。
+Verilator 適合用於 HFT 系統的功能驗證和演算法開發，但不能替代實際 FPGA 的性能測試。本範例展示瞭如何使用簡化的 Makefile 和測試平臺快速驗證 FPGA 設計。建議將其作為開發流程的一部分，在部署到實際 FPGA 前進行充分的模擬測試。

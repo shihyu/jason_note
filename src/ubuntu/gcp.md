@@ -23,7 +23,7 @@ ssh-rsa AAAAB3Nza... autoicash2023
 # 注意：最後的使用者名稱要改成你的 GCP 登入帳號
 ```
 
-## 3. GCP 主控台設定
+## 3. GCP 主控臺設定
 - 前往：Compute Engine > 中繼資料 > SSH 金鑰
 - 點選「編輯」
 - 貼上修改後的公鑰
@@ -64,7 +64,7 @@ EOF'
 # 安裝需要的套件
 sudo apt-get install -y util-linux ntpdate
 
-# 設定台北時區
+# 設定臺北時區
 sudo timedatectl set-timezone Asia/Taipei
 # 或
 sudo ln -sf /usr/share/zoneinfo/Asia/Taipei /etc/localtime

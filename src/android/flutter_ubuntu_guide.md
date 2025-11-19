@@ -124,7 +124,7 @@ emulator -avd flutter_emulator
 如果你想驗證 iOS 程式碼但沒有實體裝置：
 
 ```bash
-# 建立專案時確保包含 iOS 平台
+# 建立專案時確保包含 iOS 平臺
 flutter create --platforms=web,android,ios my_app
 
 # 檢查 iOS 專案結構
@@ -139,13 +139,13 @@ flutter analyze
 - **GitHub Actions**：使用 macOS runner
 - **Bitrise**：支援 Flutter iOS 建構
 
-## 8. 建立多平台 Flutter 專案
+## 8. 建立多平臺 Flutter 專案
 ```bash
 flutter create --platforms=web,android,ios my_demo_app
 cd my_demo_app
 ```
 
-## 9. 驗證所有平台支援
+## 9. 驗證所有平臺支援
 ```bash
 flutter devices
 ```
@@ -222,7 +222,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter 多平台 Demo',
+      title: 'Flutter 多平臺 Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         useMaterial3: true,
@@ -237,19 +237,19 @@ class HomePage extends StatelessWidget {
 
   String get platformInfo {
     if (kIsWeb) {
-      return 'Web 平台';
+      return 'Web 平臺';
     } else if (Platform.isAndroid) {
-      return 'Android 平台';
+      return 'Android 平臺';
     } else if (Platform.isIOS) {
-      return 'iOS 平台';
+      return 'iOS 平臺';
     } else if (Platform.isLinux) {
-      return 'Linux 平台';
+      return 'Linux 平臺';
     } else if (Platform.isWindows) {
-      return 'Windows 平台';
+      return 'Windows 平臺';
     } else if (Platform.isMacOS) {
-      return 'macOS 平台';
+      return 'macOS 平臺';
     } else {
-      return '未知平台';
+      return '未知平臺';
     }
   }
 
@@ -257,7 +257,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Flutter 多平台測試'),
+        title: const Text('Flutter 多平臺測試'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: Center(
@@ -348,7 +348,7 @@ List of devices attached
 2. 連續點擊「版本號碼」7次啟用開發者選項
 3. 回到「設定」→「開發者選項」
 4. 啟用「USB 調試」
-5. 確保使用數據傳輸線（不是只充電的線）
+5. 確保使用數據傳輸線（不是隻充電的線）
 
 #### 步驟 2：安裝 ADB 工具和設置權限
 ```bash
@@ -441,7 +441,7 @@ adb devices
 
 #### Android 設備授權
 重新連接後，Android 設備可能會彈出提示：
-- 「允許 USB 調試嗎？」→ 點擊「確定」並勾選「一律允許這台電腦」
+- 「允許 USB 調試嗎？」→ 點擊「確定」並勾選「一律允許這臺電腦」
 - 「USB 用途」→ 選擇「檔案傳輸/Android Auto」
 
 ### 13.3 使用 Android 模擬器（替代方案）

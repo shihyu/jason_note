@@ -7,21 +7,21 @@ excalidraw-plugin: parsed
 
 
 # Text Elements
-OS管理的内存池 ^Xe6daegJ
+OS管理的內存池 ^Xe6daegJ
 
-准备运行的程序 ^96X6dVDK
+準備運行的程序 ^96X6dVDK
 
-虚拟地址空间 ^z0qow8fs
+虛擬地址空間 ^z0qow8fs
 
-物理地址空间 ^9DxfGfPp
+物理地址空間 ^9DxfGfPp
 
-虚拟地址空间 ^IPUsejmM
+虛擬地址空間 ^IPUsejmM
 
-代码段 ^pIzXV0A7
+代碼段 ^pIzXV0A7
 
-数据段 ^Mv3Qe05x
+數據段 ^Mv3Qe05x
 
-栈 ^VZ4pvg5l
+棧 ^VZ4pvg5l
 
 堆 ^vQ9KSbzm
 
@@ -171,15 +171,15 @@ OS管理的内存池 ^Xe6daegJ
 			"boundElements": null,
 			"updated": 1647576202497,
 			"link": null,
-			"text": "OS管理的内存池",
-			"rawText": "OS管理的内存池",
+			"text": "OS管理的內存池",
+			"rawText": "OS管理的內存池",
 			"fontSize": 49.323484951155194,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 44,
 			"containerId": null,
-			"originalText": "OS管理的内存池"
+			"originalText": "OS管理的內存池"
 		},
 		{
 			"type": "text",
@@ -207,13 +207,13 @@ OS管理的内存池 ^Xe6daegJ
 			"link": null,
 			"fontSize": 53.33972456648639,
 			"fontFamily": 4,
-			"text": "准备运行的程序",
-			"rawText": "准备运行的程序",
+			"text": "準備運行的程序",
+			"rawText": "準備運行的程序",
 			"baseline": 47,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "准备运行的程序"
+			"originalText": "準備運行的程序"
 		},
 		{
 			"id": "yzpfCc4lQYJVp52gXd9A9",
@@ -893,15 +893,15 @@ OS管理的内存池 ^Xe6daegJ
 			"boundElements": null,
 			"updated": 1647576089136,
 			"link": null,
-			"text": "虚拟地址空间",
-			"rawText": "虚拟地址空间",
+			"text": "虛擬地址空間",
+			"rawText": "虛擬地址空間",
 			"fontSize": 32.217503420218904,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 29,
 			"containerId": null,
-			"originalText": "虚拟地址空间"
+			"originalText": "虛擬地址空間"
 		},
 		{
 			"type": "text",
@@ -929,13 +929,13 @@ OS管理的内存池 ^Xe6daegJ
 			"link": null,
 			"fontSize": 32.217503420218904,
 			"fontFamily": 4,
-			"text": "物理地址空间",
-			"rawText": "物理地址空间",
+			"text": "物理地址空間",
+			"rawText": "物理地址空間",
 			"baseline": 29,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "物理地址空间"
+			"originalText": "物理地址空間"
 		},
 		{
 			"type": "text",
@@ -963,13 +963,13 @@ OS管理的内存池 ^Xe6daegJ
 			"link": null,
 			"fontSize": 32.217503420218904,
 			"fontFamily": 4,
-			"text": "虚拟地址空间",
-			"rawText": "虚拟地址空间",
+			"text": "虛擬地址空間",
+			"rawText": "虛擬地址空間",
 			"baseline": 29,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "虚拟地址空间"
+			"originalText": "虛擬地址空間"
 		},
 		{
 			"id": "pIzXV0A7",
@@ -995,15 +995,15 @@ OS管理的内存池 ^Xe6daegJ
 			"boundElements": null,
 			"updated": 1647576089136,
 			"link": null,
-			"text": "代码段",
-			"rawText": "代码段",
+			"text": "代碼段",
+			"rawText": "代碼段",
 			"fontSize": 36,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 33,
 			"containerId": null,
-			"originalText": "代码段"
+			"originalText": "代碼段"
 		},
 		{
 			"id": "Mv3Qe05x",
@@ -1029,15 +1029,15 @@ OS管理的内存池 ^Xe6daegJ
 			"boundElements": null,
 			"updated": 1647576090840,
 			"link": null,
-			"text": "数据段",
-			"rawText": "数据段",
+			"text": "數據段",
+			"rawText": "數據段",
 			"fontSize": 36,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 33,
 			"containerId": null,
-			"originalText": "数据段"
+			"originalText": "數據段"
 		},
 		{
 			"id": "VZ4pvg5l",
@@ -1068,15 +1068,15 @@ OS管理的内存池 ^Xe6daegJ
 			],
 			"updated": 1647576179590,
 			"link": null,
-			"text": "栈",
-			"rawText": "栈",
+			"text": "棧",
+			"rawText": "棧",
 			"fontSize": 36,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 33,
 			"containerId": null,
-			"originalText": "栈"
+			"originalText": "棧"
 		},
 		{
 			"type": "rectangle",

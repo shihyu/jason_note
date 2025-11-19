@@ -1,10 +1,10 @@
-# 使用 eBPF 替换任意程序读取或写入的文本
+# 使用 eBPF 替換任意程序讀取或寫入的文本
 
-完整源代码：<https://github.com/eunomia-bpf/bpf-developer-tutorial/tree/main/src/27-replace> 
+完整源代碼：<https://github.com/eunomia-bpf/bpf-developer-tutorial/tree/main/src/27-replace> 
 
-关于如何安装依赖，请参考：<https://eunomia.dev/tutorials/11-bootstrap/>
+關於如何安裝依賴，請參考：<https://eunomia.dev/tutorials/11-bootstrap/>
 
-编译：
+編譯：
 
 ```bash
 make
@@ -16,25 +16,25 @@ make
 sudo ./replace --filename /path/to/file --input foo --replace bar
 ```
 
-这个程序将文件中所有与 `input` 匹配的文本替换为 `replace` 文本。
-这有很多用途，例如：
+這個程序將文件中所有與 `input` 匹配的文本替換為 `replace` 文本。
+這有很多用途，例如：
 
-隐藏内核模块 `joydev`，避免被如 `lsmod` 这样的工具发现：
+隱藏內核模塊 `joydev`，避免被如 `lsmod` 這樣的工具發現：
 
 ```bash
 ./replace -f /proc/modules -i 'joydev' -r 'cryptd'
 ```
 
-伪造 `eth0` 接口的 MAC 地址：
+偽造 `eth0` 接口的 MAC 地址：
 
 ```bash
 ./replace -f /sys/class/net/eth0/address -i '00:15:5d:01:ca:05' -r '00:00:00:00:00:00'
 ```
 
-恶意软件进行反沙箱检查可能会检查 MAC 地址，寻找是否正在虚拟机或沙箱内运行，而不是在“真实”的机器上运行的迹象。
+惡意軟件進行反沙箱檢查可能會檢查 MAC 地址，尋找是否正在虛擬機或沙箱內運行，而不是在“真實”的機器上運行的跡象。
 
-**注意：** `input` 和 `replace` 的长度必须相同，以避免在文本块的中间添加 NULL 字符。在 bash 提示符下输入换行符，使用 `$'\n'`，例如 `--replace $'text\n'`。
+**注意：** `input` 和 `replace` 的長度必須相同，以避免在文本塊的中間添加 NULL 字符。在 bash 提示符下輸入換行符，使用 `$'\n'`，例如 `--replace $'text\n'`。
 
-## 参考资料
+## 參考資料
 
 - <https://github.com/pathtofile/bad-bpf>

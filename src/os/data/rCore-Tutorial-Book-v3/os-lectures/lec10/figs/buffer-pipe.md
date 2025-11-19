@@ -11,23 +11,23 @@ ProcessA ^nKUxlu95
 
 ProcessB ^RMpyTVQh
 
-有限缓冲区 ^kFqNyeNG
+有限緩衝區 ^kFqNyeNG
 
 ProcessA ^Z5RxU5lj
 
 ProcessB ^kanI9F0d
 
-无限缓冲区 ^eoqss7eH
+無限緩衝區 ^eoqss7eH
 
-   无缓冲区 ^8HIITlU9
+   無緩衝區 ^8HIITlU9
 
 ProcessA ^pjPnjeFj
 
 ProcessB ^964vD5xj
 
-Buffer内存远大于要发送的数据 ^0eh8q0x7
+Buffer內存遠大於要發送的數據 ^0eh8q0x7
 
-Buffer内存小于要发送的数据 ^P9Daa3ho
+Buffer內存小於要發送的數據 ^P9Daa3ho
 
 %%
 # Drawing
@@ -265,13 +265,13 @@ Buffer内存小于要发送的数据 ^P9Daa3ho
 			"link": null,
 			"fontSize": 39.833343505859375,
 			"fontFamily": 4,
-			"text": "有限缓冲区",
-			"rawText": "有限缓冲区",
+			"text": "有限緩衝區",
+			"rawText": "有限緩衝區",
 			"baseline": 37,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "有限缓冲区"
+			"originalText": "有限緩衝區"
 		},
 		{
 			"type": "line",
@@ -435,13 +435,13 @@ Buffer内存小于要发送的数据 ^P9Daa3ho
 			"link": null,
 			"fontSize": 39.833343505859375,
 			"fontFamily": 4,
-			"text": "无限缓冲区",
-			"rawText": "无限缓冲区",
+			"text": "無限緩衝區",
+			"rawText": "無限緩衝區",
 			"baseline": 37,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "无限缓冲区"
+			"originalText": "無限緩衝區"
 		},
 		{
 			"type": "ellipse",
@@ -877,13 +877,13 @@ Buffer内存小于要发送的数据 ^P9Daa3ho
 			"link": null,
 			"fontSize": 39.833343505859375,
 			"fontFamily": 4,
-			"text": "   无缓冲区",
-			"rawText": "   无缓冲区",
+			"text": "   無緩衝區",
+			"rawText": "   無緩衝區",
 			"baseline": 37,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "   无缓冲区"
+			"originalText": "   無緩衝區"
 		},
 		{
 			"type": "rectangle",
@@ -1388,15 +1388,15 @@ Buffer内存小于要发送的数据 ^P9Daa3ho
 			"boundElements": null,
 			"updated": 1651715366953,
 			"link": null,
-			"text": "Buffer内存远大于要发送的数据",
-			"rawText": "Buffer内存远大于要发送的数据",
+			"text": "Buffer內存遠大於要發送的數據",
+			"rawText": "Buffer內存遠大於要發送的數據",
 			"fontSize": 27.152142693014714,
 			"fontFamily": 4,
 			"textAlign": "right",
 			"verticalAlign": "top",
 			"baseline": 25,
 			"containerId": null,
-			"originalText": "Buffer内存远大于要发送的数据"
+			"originalText": "Buffer內存遠大於要發送的數據"
 		},
 		{
 			"type": "text",
@@ -1424,13 +1424,13 @@ Buffer内存小于要发送的数据 ^P9Daa3ho
 			"link": null,
 			"fontSize": 27.152142693014714,
 			"fontFamily": 4,
-			"text": "Buffer内存小于要发送的数据",
-			"rawText": "Buffer内存小于要发送的数据",
+			"text": "Buffer內存小於要發送的數據",
+			"rawText": "Buffer內存小於要發送的數據",
 			"baseline": 25,
 			"textAlign": "right",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "Buffer内存小于要发送的数据"
+			"originalText": "Buffer內存小於要發送的數據"
 		},
 		{
 			"id": "yJb4Ca0Qkqpi-GMCxiUM5",

@@ -9,55 +9,55 @@ excalidraw-plugin: parsed
 # Text Elements
 Qemu ^yUPYY3y4
 
-virtio-blk设备 ^lSDsvBM0
+virtio-blk設備 ^lSDsvBM0
 
-virtio-gpu设备 ^E8gC2VPx
+virtio-gpu設備 ^E8gC2VPx
 
-virtio-net设备 ^xxx38L4U
+virtio-net設備 ^xxx38L4U
 
-应用 ^VGThbgtj
+應用 ^VGThbgtj
 
-应用 ^UtEOie4P
+應用 ^UtEOie4P
 
 文件
-系统 ^jhax2PQN
+系統 ^jhax2PQN
 
-网络子系统 ^OLneLVyT
+網絡子系統 ^OLneLVyT
 
-图形子系统 ^kkqJQsxp
+圖形子系統 ^kkqJQsxp
 
 virtio_blk
-设备驱动 ^Nk4blvbW
+設備驅動 ^Nk4blvbW
 
 virtio_gpu
-设备驱动 ^cThzukNs
+設備驅動 ^cThzukNs
 
 virtio_net
-设备驱动 ^zf0J5N1O
+設備驅動 ^zf0J5N1O
 
-应用 ^IcCZB1O9
+應用 ^IcCZB1O9
 
-应用 ^jQzbQ1Ib
+應用 ^jQzbQ1Ib
 
 virtqueue ^kuKLr9ez
 
-中断通知 ^5gj2hmMQ
+中斷通知 ^5gj2hmMQ
 
-中断通知 ^Z3ZulQQc
+中斷通知 ^Z3ZulQQc
 
-操作系统内核 ^hHUexByE
+操作系統內核 ^hHUexByE
 
-设备状态 ^bRBTA4Kz
+設備狀態 ^bRBTA4Kz
 
-设备配置/特征 ^dHJnOwyw
+設備配置/特徵 ^dHJnOwyw
 
-设备状态 ^ITLr8WGV
+設備狀態 ^ITLr8WGV
 
-设备配置/特征 ^C53P6TRQ
+設備配置/特徵 ^C53P6TRQ
 
-设备状态 ^FQNZTizV
+設備狀態 ^FQNZTizV
 
-设备配置/特征 ^I9JShzCr
+設備配置/特徵 ^I9JShzCr
 
 %%
 # Drawing
@@ -192,15 +192,15 @@ virtqueue ^kuKLr9ez
 			"boundElements": null,
 			"updated": 1672984761063,
 			"link": null,
-			"text": "virtio-blk设备",
-			"rawText": "virtio-blk设备",
+			"text": "virtio-blk設備",
+			"rawText": "virtio-blk設備",
 			"fontSize": 36,
 			"fontFamily": 4,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"baseline": 31,
 			"containerId": "ypkCl74-rg2bNhF1kiHHy",
-			"originalText": "virtio-blk设备"
+			"originalText": "virtio-blk設備"
 		},
 		{
 			"type": "rectangle",
@@ -270,13 +270,13 @@ virtqueue ^kuKLr9ez
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "virtio-gpu设备",
-			"rawText": "virtio-gpu设备",
+			"text": "virtio-gpu設備",
+			"rawText": "virtio-gpu設備",
 			"baseline": 36,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "LfTKkg_BohpV_tFdFdeD9",
-			"originalText": "virtio-gpu设备"
+			"originalText": "virtio-gpu設備"
 		},
 		{
 			"type": "rectangle",
@@ -354,13 +354,13 @@ virtqueue ^kuKLr9ez
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "virtio-net设备",
-			"rawText": "virtio-net设备",
+			"text": "virtio-net設備",
+			"rawText": "virtio-net設備",
 			"baseline": 31,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "FWgi-nNh78DdTIPMWf3nJ",
-			"originalText": "virtio-net设备"
+			"originalText": "virtio-net設備"
 		},
 		{
 			"id": "ZglAe6h2R8jZACn0vi1oe",
@@ -825,15 +825,15 @@ virtqueue ^kuKLr9ez
 			"boundElements": null,
 			"updated": 1672984761063,
 			"link": null,
-			"text": "应用",
-			"rawText": "应用",
+			"text": "應用",
+			"rawText": "應用",
 			"fontSize": 22.838444859028137,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 21,
 			"containerId": null,
-			"originalText": "应用"
+			"originalText": "應用"
 		},
 		{
 			"id": "j-6JNcyUvrkWel3gqi1c6",
@@ -890,13 +890,13 @@ virtqueue ^kuKLr9ez
 			"link": null,
 			"fontSize": 22.838444859028137,
 			"fontFamily": 4,
-			"text": "应用",
-			"rawText": "应用",
+			"text": "應用",
+			"rawText": "應用",
 			"baseline": 21,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "应用"
+			"originalText": "應用"
 		},
 		{
 			"type": "rectangle",
@@ -983,15 +983,15 @@ virtqueue ^kuKLr9ez
 			"boundElements": null,
 			"updated": 1672984907567,
 			"link": null,
-			"text": "文件\n系统",
-			"rawText": "文件\n系统",
+			"text": "文件\n系統",
+			"rawText": "文件\n系統",
 			"fontSize": 20,
 			"fontFamily": 4,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"baseline": 39,
 			"containerId": "fy8HE6nfgC4kLjUYUuEzr",
-			"originalText": "文件\n系统"
+			"originalText": "文件\n系統"
 		},
 		{
 			"type": "rectangle",
@@ -1057,13 +1057,13 @@ virtqueue ^kuKLr9ez
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "网络子\n系统",
-			"rawText": "网络子系统",
+			"text": "網絡子\n系統",
+			"rawText": "網絡子系統",
 			"baseline": 39,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "Hbki9mT-5ugqXOGE4L56Z",
-			"originalText": "网络子系统"
+			"originalText": "網絡子系統"
 		},
 		{
 			"type": "rectangle",
@@ -1129,13 +1129,13 @@ virtqueue ^kuKLr9ez
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "图形子\n系统",
-			"rawText": "图形子系统",
+			"text": "圖形子\n系統",
+			"rawText": "圖形子系統",
 			"baseline": 39,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "KDS_6PEp3R7dxq0ofD3fS",
-			"originalText": "图形子系统"
+			"originalText": "圖形子系統"
 		},
 		{
 			"id": "LydHE-heeENOoUeCEVU1A",
@@ -1207,15 +1207,15 @@ virtqueue ^kuKLr9ez
 			"boundElements": null,
 			"updated": 1672984907574,
 			"link": null,
-			"text": "virtio_blk\n设备驱动",
-			"rawText": "virtio_blk\n设备驱动",
+			"text": "virtio_blk\n設備驅動",
+			"rawText": "virtio_blk\n設備驅動",
 			"fontSize": 20,
 			"fontFamily": 4,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"baseline": 39,
 			"containerId": "LydHE-heeENOoUeCEVU1A",
-			"originalText": "virtio_blk\n设备驱动"
+			"originalText": "virtio_blk\n設備驅動"
 		},
 		{
 			"type": "rectangle",
@@ -1281,13 +1281,13 @@ virtqueue ^kuKLr9ez
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "virtio_gpu\n设备驱动",
-			"rawText": "virtio_gpu\n设备驱动",
+			"text": "virtio_gpu\n設備驅動",
+			"rawText": "virtio_gpu\n設備驅動",
 			"baseline": 39,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "Ab5qnUkeCQzYF7925Am4P",
-			"originalText": "virtio_gpu\n设备驱动"
+			"originalText": "virtio_gpu\n設備驅動"
 		},
 		{
 			"type": "rectangle",
@@ -1353,13 +1353,13 @@ virtqueue ^kuKLr9ez
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "virtio_net\n设备驱动",
-			"rawText": "virtio_net\n设备驱动",
+			"text": "virtio_net\n設備驅動",
+			"rawText": "virtio_net\n設備驅動",
 			"baseline": 39,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "eBQj8WwoN25RpbOS0hb2U",
-			"originalText": "virtio_net\n设备驱动"
+			"originalText": "virtio_net\n設備驅動"
 		},
 		{
 			"type": "text",
@@ -1389,13 +1389,13 @@ virtqueue ^kuKLr9ez
 			"link": null,
 			"fontSize": 22.838444859028137,
 			"fontFamily": 4,
-			"text": "应用",
-			"rawText": "应用",
+			"text": "應用",
+			"rawText": "應用",
 			"baseline": 21,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "应用"
+			"originalText": "應用"
 		},
 		{
 			"type": "rectangle",
@@ -1452,13 +1452,13 @@ virtqueue ^kuKLr9ez
 			"link": null,
 			"fontSize": 22.838444859028137,
 			"fontFamily": 4,
-			"text": "应用",
-			"rawText": "应用",
+			"text": "應用",
+			"rawText": "應用",
 			"baseline": 21,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "应用"
+			"originalText": "應用"
 		},
 		{
 			"type": "rectangle",
@@ -3262,15 +3262,15 @@ virtqueue ^kuKLr9ez
 			"boundElements": null,
 			"updated": 1672984761065,
 			"link": null,
-			"text": "中断通知",
-			"rawText": "中断通知",
+			"text": "中斷通知",
+			"rawText": "中斷通知",
 			"fontSize": 29.821701049804688,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 26,
 			"containerId": null,
-			"originalText": "中断通知"
+			"originalText": "中斷通知"
 		},
 		{
 			"id": "zcD035K0WstjAN9evi5JK",
@@ -3353,13 +3353,13 @@ virtqueue ^kuKLr9ez
 			"link": null,
 			"fontSize": 28.638580322265625,
 			"fontFamily": 4,
-			"text": "中断通知",
-			"rawText": "中断通知",
+			"text": "中斷通知",
+			"rawText": "中斷通知",
 			"baseline": 25,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "中断通知"
+			"originalText": "中斷通知"
 		},
 		{
 			"id": "hHUexByE",
@@ -3385,15 +3385,15 @@ virtqueue ^kuKLr9ez
 			"boundElements": null,
 			"updated": 1672984761065,
 			"link": null,
-			"text": "操作系统内核",
-			"rawText": "操作系统内核",
+			"text": "操作系統內核",
+			"rawText": "操作系統內核",
 			"fontSize": 36,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 31,
 			"containerId": null,
-			"originalText": "操作系统内核"
+			"originalText": "操作系統內核"
 		},
 		{
 			"id": "it8hFO2p7OU9bKb6EKNkk",
@@ -3533,15 +3533,15 @@ virtqueue ^kuKLr9ez
 			],
 			"updated": 1672984761065,
 			"link": null,
-			"text": "设备状态",
-			"rawText": "设备状态",
+			"text": "設備狀態",
+			"rawText": "設備狀態",
 			"fontSize": 20.451075138813003,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 19,
 			"containerId": null,
-			"originalText": "设备状态"
+			"originalText": "設備狀態"
 		},
 		{
 			"type": "text",
@@ -3574,13 +3574,13 @@ virtqueue ^kuKLr9ez
 			"link": null,
 			"fontSize": 19.87114295391996,
 			"fontFamily": 4,
-			"text": "设备配置/特征",
-			"rawText": "设备配置/特征",
+			"text": "設備配置/特徵",
+			"rawText": "設備配置/特徵",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "设备配置/特征"
+			"originalText": "設備配置/特徵"
 		},
 		{
 			"type": "rectangle",
@@ -3668,13 +3668,13 @@ virtqueue ^kuKLr9ez
 			"link": null,
 			"fontSize": 18.579085763303016,
 			"fontFamily": 4,
-			"text": "设备状态",
-			"rawText": "设备状态",
+			"text": "設備狀態",
+			"rawText": "設備狀態",
 			"baseline": 17,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "设备状态"
+			"originalText": "設備狀態"
 		},
 		{
 			"type": "text",
@@ -3702,13 +3702,13 @@ virtqueue ^kuKLr9ez
 			"link": null,
 			"fontSize": 18.052237676985097,
 			"fontFamily": 4,
-			"text": "设备配置/特征",
-			"rawText": "设备配置/特征",
+			"text": "設備配置/特徵",
+			"rawText": "設備配置/特徵",
 			"baseline": 17,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "设备配置/特征"
+			"originalText": "設備配置/特徵"
 		},
 		{
 			"type": "rectangle",
@@ -3808,13 +3808,13 @@ virtqueue ^kuKLr9ez
 			"link": null,
 			"fontSize": 20.451075138813003,
 			"fontFamily": 4,
-			"text": "设备状态",
-			"rawText": "设备状态",
+			"text": "設備狀態",
+			"rawText": "設備狀態",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "设备状态"
+			"originalText": "設備狀態"
 		},
 		{
 			"type": "text",
@@ -3842,13 +3842,13 @@ virtqueue ^kuKLr9ez
 			"link": null,
 			"fontSize": 19.87114295391996,
 			"fontFamily": 4,
-			"text": "设备配置/特征",
-			"rawText": "设备配置/特征",
+			"text": "設備配置/特徵",
+			"rawText": "設備配置/特徵",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "设备配置/特征"
+			"originalText": "設備配置/特徵"
 		},
 		{
 			"type": "rectangle",

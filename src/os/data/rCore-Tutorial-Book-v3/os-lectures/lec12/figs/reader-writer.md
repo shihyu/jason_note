@@ -7,21 +7,21 @@ excalidraw-plugin: parsed
 
 
 # Text Elements
-共享数据 ^M5Mvlb7o
+共享數據 ^M5Mvlb7o
 
-写者 ^GvvOGymZ
+寫者 ^GvvOGymZ
 
-写者 ^qwkQuBXC
+寫者 ^qwkQuBXC
 
-写者 ^h4jlsfjO
+寫者 ^h4jlsfjO
 
-读者 ^TvML18js
+讀者 ^TvML18js
 
-读者 ^Yyu08DmO
+讀者 ^Yyu08DmO
 
-读者 ^ycKAd4c4
+讀者 ^ycKAd4c4
 
-读者 ^qn8Kxpkb
+讀者 ^qn8Kxpkb
 
 %%
 # Drawing
@@ -97,15 +97,15 @@ excalidraw-plugin: parsed
 			"boundElements": null,
 			"updated": 1651798379273,
 			"link": null,
-			"text": "共享数据",
-			"rawText": "共享数据",
+			"text": "共享數據",
+			"rawText": "共享數據",
 			"fontSize": 36,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 32,
 			"containerId": null,
-			"originalText": "共享数据"
+			"originalText": "共享數據"
 		},
 		{
 			"id": "kBu3YQa9axqRVEV1mqBP1",
@@ -165,15 +165,15 @@ excalidraw-plugin: parsed
 			"boundElements": null,
 			"updated": 1651798423331,
 			"link": null,
-			"text": "写者",
-			"rawText": "写者",
+			"text": "寫者",
+			"rawText": "寫者",
 			"fontSize": 36,
 			"fontFamily": 4,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"baseline": 32,
 			"containerId": "kBu3YQa9axqRVEV1mqBP1",
-			"originalText": "写者"
+			"originalText": "寫者"
 		},
 		{
 			"type": "rectangle",
@@ -239,13 +239,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "写者",
-			"rawText": "写者",
+			"text": "寫者",
+			"rawText": "寫者",
 			"baseline": 32,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "n5oPSsmX2E-lthx_78D_l",
-			"originalText": "写者"
+			"originalText": "寫者"
 		},
 		{
 			"type": "rectangle",
@@ -307,13 +307,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "写者",
-			"rawText": "写者",
+			"text": "寫者",
+			"rawText": "寫者",
 			"baseline": 32,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "_ayZrhdiV50-G85rRRhPU",
-			"originalText": "写者"
+			"originalText": "寫者"
 		},
 		{
 			"type": "rectangle",
@@ -375,13 +375,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "读者",
-			"rawText": "读者",
+			"text": "讀者",
+			"rawText": "讀者",
 			"baseline": 32,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "L5ctWDk_Jt0PamiAKxJy5",
-			"originalText": "读者"
+			"originalText": "讀者"
 		},
 		{
 			"type": "rectangle",
@@ -451,13 +451,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "读者",
-			"rawText": "读者",
+			"text": "讀者",
+			"rawText": "讀者",
 			"baseline": 32,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "8O__0UzmpTG8vjD0MyEo7",
-			"originalText": "读者"
+			"originalText": "讀者"
 		},
 		{
 			"type": "rectangle",
@@ -523,13 +523,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "读者",
-			"rawText": "读者",
+			"text": "讀者",
+			"rawText": "讀者",
 			"baseline": 32,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "XsV-NRD4CguSNCf0OkOP7",
-			"originalText": "读者"
+			"originalText": "讀者"
 		},
 		{
 			"type": "rectangle",
@@ -595,13 +595,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "读者",
-			"rawText": "读者",
+			"text": "讀者",
+			"rawText": "讀者",
 			"baseline": 32,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "nPxOoDMrxAL_2uccviU9z",
-			"originalText": "读者"
+			"originalText": "讀者"
 		},
 		{
 			"id": "9WZnXIdz06oEXDaCXdM5h",

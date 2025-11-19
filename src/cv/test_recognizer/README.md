@@ -134,7 +134,7 @@ test_recognizer/
 python src/recognizer.py --image phone.jpg --benchmark
 ```
 
-### 時間分布
+### 時間分佈
 
 ```
 模型載入：  383 ms  (81.7%)  ← 每次都要載入

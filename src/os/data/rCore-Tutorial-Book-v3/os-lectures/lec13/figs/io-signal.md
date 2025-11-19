@@ -7,44 +7,44 @@ excalidraw-plugin: parsed
 
 
 # Text Elements
-进程继续执行 ^civJ0kAx
+進程繼續執行 ^civJ0kAx
 
-进程 ^BCJVH8ZY
+進程 ^BCJVH8ZY
 
 建立SIGIO
-信号处理例程 ^1YqUYTPI
+信號處理例程 ^1YqUYTPI
 
-sigaction系统调用 ^Lm01RAUs
+sigaction系統調用 ^Lm01RAUs
 
 OS kernel ^vhIkgWjV
 
-等待磁盘数据 ^4l1N0fGM
+等待磁盤數據 ^4l1N0fGM
 
 
-复制数据 ^UTvK4Os9
+複製數據 ^UTvK4Os9
 
-复制完成 ^fUTFDj0v
+複製完成 ^fUTFDj0v
 
-系统调用成功 ^Peq5q6BO
+系統調用成功 ^Peq5q6BO
 
-进程继续执行 ^SC6hOMAr
+進程繼續執行 ^SC6hOMAr
 
-将数据从内核空间
-复制到进程用户空间 ^55xRyF4q
+將數據從內核空間
+複製到進程用戶空間 ^55xRyF4q
 
-发出SIGIO信号 ^lc2OE96D
+發出SIGIO信號 ^lc2OE96D
 
-系统调用 ^CX5Tse0r
+系統調用 ^CX5Tse0r
 
-数据准备好 ^Hoo7qA2e
+數據準備好 ^Hoo7qA2e
 
-进程阻塞于
+進程阻塞於
 sys_read
-系统调用 ^c4kXCDFJ
+系統調用 ^c4kXCDFJ
 
-信号处理例程
-收到信号，发出
-sys_read系统调用 ^iuczdHeo
+信號處理例程
+收到信號，發出
+sys_read系統調用 ^iuczdHeo
 
 
 # Embedded files
@@ -147,13 +147,13 @@ sys_read系统调用 ^iuczdHeo
 			"link": null,
 			"fontSize": 20.00000000000001,
 			"fontFamily": 4,
-			"text": "进程继续执行",
-			"rawText": "进程继续执行",
+			"text": "進程繼續執行",
+			"rawText": "進程繼續執行",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程继续执行"
+			"originalText": "進程繼續執行"
 		},
 		{
 			"type": "text",
@@ -181,13 +181,13 @@ sys_read系统调用 ^iuczdHeo
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "进程",
-			"rawText": "进程",
+			"text": "進程",
+			"rawText": "進程",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程"
+			"originalText": "進程"
 		},
 		{
 			"type": "text",
@@ -220,13 +220,13 @@ sys_read系统调用 ^iuczdHeo
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "建立SIGIO\n信号处理例程",
-			"rawText": "建立SIGIO\n信号处理例程",
+			"text": "建立SIGIO\n信號處理例程",
+			"rawText": "建立SIGIO\n信號處理例程",
 			"baseline": 40,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "建立SIGIO\n信号处理例程"
+			"originalText": "建立SIGIO\n信號處理例程"
 		},
 		{
 			"type": "arrow",
@@ -307,13 +307,13 @@ sys_read系统调用 ^iuczdHeo
 			"link": null,
 			"fontSize": 16.064270385011227,
 			"fontFamily": 4,
-			"text": "sigaction系统调用",
-			"rawText": "sigaction系统调用",
+			"text": "sigaction系統調用",
+			"rawText": "sigaction系統調用",
 			"baseline": 15,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "sigaction系统调用"
+			"originalText": "sigaction系統調用"
 		},
 		{
 			"type": "text",
@@ -375,13 +375,13 @@ sys_read系统调用 ^iuczdHeo
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "等待磁盘数据",
-			"rawText": "等待磁盘数据",
+			"text": "等待磁盤數據",
+			"rawText": "等待磁盤數據",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "等待磁盘数据"
+			"originalText": "等待磁盤數據"
 		},
 		{
 			"type": "text",
@@ -414,13 +414,13 @@ sys_read系统调用 ^iuczdHeo
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "\n复制数据",
-			"rawText": "\n复制数据",
+			"text": "\n複製數據",
+			"rawText": "\n複製數據",
 			"baseline": 40,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "\n复制数据"
+			"originalText": "\n複製數據"
 		},
 		{
 			"type": "arrow",
@@ -501,13 +501,13 @@ sys_read系统调用 ^iuczdHeo
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "复制完成",
-			"rawText": "复制完成",
+			"text": "複製完成",
+			"rawText": "複製完成",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "复制完成"
+			"originalText": "複製完成"
 		},
 		{
 			"type": "text",
@@ -540,13 +540,13 @@ sys_read系统调用 ^iuczdHeo
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "系统调用成功",
-			"rawText": "系统调用成功",
+			"text": "系統調用成功",
+			"rawText": "系統調用成功",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "系统调用成功"
+			"originalText": "系統調用成功"
 		},
 		{
 			"type": "arrow",
@@ -627,13 +627,13 @@ sys_read系统调用 ^iuczdHeo
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "进程继续执行",
-			"rawText": "进程继续执行",
+			"text": "進程繼續執行",
+			"rawText": "進程繼續執行",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程继续执行"
+			"originalText": "進程繼續執行"
 		},
 		{
 			"type": "image",
@@ -692,13 +692,13 @@ sys_read系统调用 ^iuczdHeo
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "将数据从内核空间\n复制到进程用户空间",
-			"rawText": "将数据从内核空间\n复制到进程用户空间",
+			"text": "將數據從內核空間\n複製到進程用戶空間",
+			"rawText": "將數據從內核空間\n複製到進程用戶空間",
 			"baseline": 40,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "将数据从内核空间\n复制到进程用户空间"
+			"originalText": "將數據從內核空間\n複製到進程用戶空間"
 		},
 		{
 			"type": "arrow",
@@ -779,13 +779,13 @@ sys_read系统调用 ^iuczdHeo
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "发出SIGIO信号",
-			"rawText": "发出SIGIO信号",
+			"text": "發出SIGIO信號",
+			"rawText": "發出SIGIO信號",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "发出SIGIO信号"
+			"originalText": "發出SIGIO信號"
 		},
 		{
 			"type": "arrow",
@@ -862,13 +862,13 @@ sys_read系统调用 ^iuczdHeo
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "系统调用",
-			"rawText": "系统调用",
+			"text": "系統調用",
+			"rawText": "系統調用",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "系统调用"
+			"originalText": "系統調用"
 		},
 		{
 			"type": "image",
@@ -932,13 +932,13 @@ sys_read系统调用 ^iuczdHeo
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "数据准备好",
-			"rawText": "数据准备好",
+			"text": "數據準備好",
+			"rawText": "數據準備好",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "数据准备好"
+			"originalText": "數據準備好"
 		},
 		{
 			"type": "text",
@@ -966,13 +966,13 @@ sys_read系统调用 ^iuczdHeo
 			"link": null,
 			"fontSize": 20.00000000000001,
 			"fontFamily": 4,
-			"text": "进程阻塞于\nsys_read\n系统调用",
-			"rawText": "进程阻塞于\nsys_read\n系统调用",
+			"text": "進程阻塞於\nsys_read\n系統調用",
+			"rawText": "進程阻塞於\nsys_read\n系統調用",
 			"baseline": 62,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程阻塞于\nsys_read\n系统调用"
+			"originalText": "進程阻塞於\nsys_read\n系統調用"
 		},
 		{
 			"type": "arrow",
@@ -1057,13 +1057,13 @@ sys_read系统调用 ^iuczdHeo
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "信号处理例程\n收到信号，发出\nsys_read系统调用",
-			"rawText": "信号处理例程\n收到信号，发出\nsys_read系统调用",
+			"text": "信號處理例程\n收到信號，發出\nsys_read系統調用",
+			"rawText": "信號處理例程\n收到信號，發出\nsys_read系統調用",
 			"baseline": 62,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "信号处理例程\n收到信号，发出\nsys_read系统调用"
+			"originalText": "信號處理例程\n收到信號，發出\nsys_read系統調用"
 		}
 	],
 	"appState": {

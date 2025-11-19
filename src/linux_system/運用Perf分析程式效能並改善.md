@@ -370,7 +370,7 @@ $ sudo perf report -g graph,0.5,caller
 接著會看到以下畫面：
 ![image](images/H14D07PYye.png)
 
-看到 `mult` 函式花去最多時間後，將游標以「向下鍵」移至 `mult`，按下按鍵 a，接著會顯示以下畫面：
+看到 `mult` 函式花去最多時間後，將遊標以「向下鍵」移至 `mult`，按下按鍵 a，接著會顯示以下畫面：
 ![image](images/SJmORXDF1e.png)
 
 因為 `imul` （與之後的幾道指令）花的時間特別久。`imul` 的 (%rax) 運算元會把矩陣 b 的資料搬進 CPU。因此可以懷疑資料無法即時送給 CPU，但是現在還沒有足夠的證據，所以接著使用 `perf list` 尋找合適的事件種類。
@@ -447,7 +447,7 @@ $ sudo perf report -g graph,0.5,caller
 
 ![image](images/H1gyyNDFyg.png)
 
-接著，將游標以「向下鍵」移至 mult，按下按鍵 a：
+接著，將遊標以「向下鍵」移至 mult，按下按鍵 a：
 ![image](images/H1BkJVPtye.png)
 
 再按下 t 將左側的數字從 Percent 切換成 Period，也就是 L1 Data Cache Miss 數量的估計值：
@@ -1288,7 +1288,7 @@ $ sudo perf report -i callgraph.fp.perf.data --stdio \
                |          hrtimer_interrupt
 ```
 
-因為這些函式比例很低，反而會在視覺上干擾 Call Graph 判讀工作，所以我們通常還是會指定一個門檻值。
+因為這些函式比例很低，反而會在視覺上幹擾 Call Graph 判讀工作，所以我們通常還是會指定一個門檻值。
 
 先前的例子我們都只截取以 `_start` 為起點的 Call Graph。現在我們把目光轉向函式 `B` 與函式 `C` 的 Call Graph：
 
@@ -1413,7 +1413,7 @@ $ sudo perf report -i callgraph.fp.perf.data --stdio \
 
 
 ### Flame Graph
-Flame Graph（火焰圖）是 Caller-based Call Graph 的變型。它是由 Brendan Gregg 開發並發揚光大。他的同事開發了[d3-flame-graph](https://github.com/spiermar/d3-flame-graph)，使用JavaScript的D3版本有更多的互動性。Flame Graph 的橫軸是事件數量百分比，縱軸是呼叫堆疊。每個函式呼叫都會依照 Stack Trace 數量百分比繪製橫向長條。最下面是各個 Stack Trace 第一個呼叫者，最上面是各個 Stack Trace 最後一個被呼叫者。有同樣前綴的 Stack Trace 都會被整理在一起。因為 Flame Graph 直接產生 SVG 向量圖，所以使用者可以迅速看出佔比最高的 Stack Trace。若函式名稱比較長，使用者也可以將滑鼠游標指向各個長條圖，其代表的函式名稱會顯示在右下方：
+Flame Graph（火焰圖）是 Caller-based Call Graph 的變型。它是由 Brendan Gregg 開發並發揚光大。他的同事開發了[d3-flame-graph](https://github.com/spiermar/d3-flame-graph)，使用JavaScript的D3版本有更多的互動性。Flame Graph 的橫軸是事件數量百分比，縱軸是呼叫堆疊。每個函式呼叫都會依照 Stack Trace 數量百分比繪製橫向長條。最下面是各個 Stack Trace 第一個呼叫者，最上面是各個 Stack Trace 最後一個被呼叫者。有同樣前綴的 Stack Trace 都會被整理在一起。因為 Flame Graph 直接產生 SVG 向量圖，所以使用者可以迅速看出佔比最高的 Stack Trace。若函式名稱比較長，使用者也可以將滑鼠遊標指向各個長條圖，其代表的函式名稱會顯示在右下方：
 
 ![flamegraph](images/flamegraph.svg)
 

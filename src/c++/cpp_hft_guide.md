@@ -982,9 +982,9 @@ iotop -p [PID]  # 監控特定進程
 iostat -x 1  # 詳細I/O統計
 iostat -p sda 1  # 監控特定磁盤
 
-# blktrace - 塊設備跟踪
+# blktrace - 塊設備跟蹤
 blktrace -d /dev/sda -o trace
-blkparse trace  # 解析跟踪數據
+blkparse trace  # 解析跟蹤數據
 
 # biolatency - BPF工具，監控I/O延遲分佈
 biolatency-bpfcc

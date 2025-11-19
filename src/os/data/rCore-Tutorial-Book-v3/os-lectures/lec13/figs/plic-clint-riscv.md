@@ -15,11 +15,11 @@ NIC ^Mzuq6M5u
 
 Mouse ^PORU8YKr
 
-PLIC中断源优先级设置 ^2UABCwas
+PLIC中斷源優先級設置 ^2UABCwas
 
-PLIC中断源中断使能设置 ^OTx72ViG
+PLIC中斷源中斷使能設置 ^OTx72ViG
 
-PLIC中断源编号 ^yyMlUo5B
+PLIC中斷源編號 ^yyMlUo5B
 
 PLIC ^7rb7SOgC
 
@@ -557,13 +557,13 @@ External Intr ^TQUkqEg4
 			"link": null,
 			"fontSize": 22.390081232244317,
 			"fontFamily": 4,
-			"text": "PLIC中断源优先级设置",
-			"rawText": "PLIC中断源优先级设置",
+			"text": "PLIC中斷源優先級設置",
+			"rawText": "PLIC中斷源優先級設置",
 			"baseline": 20,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "PLIC中断源优先级设置"
+			"originalText": "PLIC中斷源優先級設置"
 		},
 		{
 			"type": "rectangle",
@@ -616,13 +616,13 @@ External Intr ^TQUkqEg4
 			"link": null,
 			"fontSize": 22.390081232244317,
 			"fontFamily": 4,
-			"text": "PLIC中断源中断使能设置",
-			"rawText": "PLIC中断源中断使能设置",
+			"text": "PLIC中斷源中斷使能設置",
+			"rawText": "PLIC中斷源中斷使能設置",
 			"baseline": 20,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "PLIC中断源中断使能设置"
+			"originalText": "PLIC中斷源中斷使能設置"
 		},
 		{
 			"type": "rectangle",
@@ -680,13 +680,13 @@ External Intr ^TQUkqEg4
 			"link": null,
 			"fontSize": 22.390081232244317,
 			"fontFamily": 4,
-			"text": "PLIC中断源编号",
-			"rawText": "PLIC中断源编号",
+			"text": "PLIC中斷源編號",
+			"rawText": "PLIC中斷源編號",
 			"baseline": 20,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "PLIC中断源编号"
+			"originalText": "PLIC中斷源編號"
 		},
 		{
 			"type": "rectangle",

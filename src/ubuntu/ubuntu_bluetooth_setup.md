@@ -68,7 +68,7 @@ bluetoothctl
 
 2. 搜尋並啟用以下功能：
    - `#enable-web-bluetooth` - 啟用 Web Bluetooth API
-   - `#enable-experimental-web-platform-features` - 啟用實驗性網頁平台功能
+   - `#enable-experimental-web-platform-features` - 啟用實驗性網頁平臺功能
    - `#bluetooth-web-api` - 啟用藍牙網頁 API
 
 3. 重新啟動 Chrome 瀏覽器

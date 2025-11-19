@@ -1,34 +1,34 @@
-# OS-lab4: 多核、多进程、调度与IPC
+# OS-lab4: 多核、多進程、調度與IPC
 
 **id: 519021910861** 
 **name: xuhuidong**
 
-## 目录
+## 目錄
 
-- [目录](#目录)
+- [目錄](#目錄)
 - [第一部分：多核支持](#第一部分：多核支持)
-- [第二部分：调度](#第二部分：调度)
-- [第三部分：进程管理器](#第三部分：进程管理器)
-- [第四部分：进程间通讯](#第四部分：进程间通讯)
-- [第五部分：内核信号量](#第五部分：内核信号量)
+- [第二部分：調度](#第二部分：調度)
+- [第三部分：進程管理器](#第三部分：進程管理器)
+- [第四部分：進程間通訊](#第四部分：進程間通訊)
+- [第五部分：內核信號量](#第五部分：內核信號量)
 
 ## 第一部分：多核支持
 
-> 1. 阅读汇编代码 `kernel/arch/aarch64/boot/raspi3/init/start.S`。说明 Chcore 是如何选定主 CPU，并阻塞其他 CPU 的执行的。
+> 1. 閱讀彙編代碼 `kernel/arch/aarch64/boot/raspi3/init/start.S`。說明 Chcore 是如何選定主 CPU，並阻塞其他 CPU 的執行的。
 
-Chcore 进入 `_start` 函数后 `mrs x8, mpidr_el1` 将当前 cpuid 放在了 `x8` 寄存器中，**并在 `cbz x8, primary` 中通过判断当前 cpuid 是否为 0 来选择主 CPU，即 cpuid 为 0 的 CPU 是主 CPU 并执行 `primary` 处的代码。**
+Chcore 進入 `_start` 函數後 `mrs x8, mpidr_el1` 將當前 cpuid 放在了 `x8` 寄存器中，**並在 `cbz x8, primary` 中通過判斷當前 cpuid 是否為 0 來選擇主 CPU，即 cpuid 為 0 的 CPU 是主 CPU 並執行 `primary` 處的代碼。**
 
-**Chcore 通过控制 `secondary_boot_flag` 数组中其他 CPU 对应元素始终为 0 而让其他 CPU 不断循环等待来阻塞其他 CPU 执行。**具体而言，其他 CPU 在设置好栈后循环等待直至 `secondary_boot_flag[cpuid] != 0` 时才跳转到 `secondary_init_c` 进行初始化。主 CPU 在完成自己的初始化后调用 `enable_smp_cores`，在此设置 `secondary_boot_flag[cpuid] = 1`，让副 CPU 可以继续执行完成初始化。而每个副 CPU 初始化完成后会设置 `cpu_status[cpuid] = cpu_run`，因此只有只有在上个设置好后才可以设置下个副 CPU 的 `secondary_boot_flag[cpuid]`，保证了副 CPU 有序逐个的初始化。
+**Chcore 通過控制 `secondary_boot_flag` 數組中其他 CPU 對應元素始終為 0 而讓其他 CPU 不斷循環等待來阻塞其他 CPU 執行。**具體而言，其他 CPU 在設置好棧後循環等待直至 `secondary_boot_flag[cpuid] != 0` 時才跳轉到 `secondary_init_c` 進行初始化。主 CPU 在完成自己的初始化後調用 `enable_smp_cores`，在此設置 `secondary_boot_flag[cpuid] = 1`，讓副 CPU 可以繼續執行完成初始化。而每個副 CPU 初始化完成後會設置 `cpu_status[cpuid] = cpu_run`，因此只有只有在上個設置好後才可以設置下個副 CPU 的 `secondary_boot_flag[cpuid]`，保證了副 CPU 有序逐個的初始化。
 
-> 2. 阅读汇编代码 `kernel/arch/aarch64/boot/raspi3/init/start.S`，`init_c.c` 以及 `kernel/arch/aarch64/main.c`，解释用于阻塞其他 CPU 核心的 `secondary_boot_flag` 是物理地址还是虚拟地址？是如何传入函数 `enable_smp_cores` 中，又该如何赋值的（考虑虚拟地址/物理地址）？
+> 2. 閱讀彙編代碼 `kernel/arch/aarch64/boot/raspi3/init/start.S`，`init_c.c` 以及 `kernel/arch/aarch64/main.c`，解釋用於阻塞其他 CPU 核心的 `secondary_boot_flag` 是物理地址還是虛擬地址？是如何傳入函數 `enable_smp_cores` 中，又該如何賦值的（考慮虛擬地址/物理地址）？
 
-**`secondary_boot_flag` 是虚拟地址，是通过 `kernel/arch/aarch64/main.c`中 `main` 函数传参传入了物理地址 `boot_flag`，并在 `enable_smp_cores` 函数中通过 `secondary_boot_flag = (long *)phys_to_virt(boot_flag)` 转换成虚拟地址。**
+**`secondary_boot_flag` 是虛擬地址，是通過 `kernel/arch/aarch64/main.c`中 `main` 函數傳參傳入了物理地址 `boot_flag`，並在 `enable_smp_cores` 函數中通過 `secondary_boot_flag = (long *)phys_to_virt(boot_flag)` 轉換成虛擬地址。**
 
-**我们可以将其重新转换成物理地址并赋值，然后再转换回虚拟地址即可**。
+**我們可以將其重新轉換成物理地址並賦值，然後再轉換回虛擬地址即可**。
 
-> 3. 完善主 CPU 激活各个其他CPU的函数：`enable_smp_cores` 和 `kernel/arch/aarch64/main.c` 中的 `secondary_start`。请注意测试代码会要求各个其他 CPU 按序被依次激活。
+> 3. 完善主 CPU 激活各個其他CPU的函數：`enable_smp_cores` 和 `kernel/arch/aarch64/main.c` 中的 `secondary_start`。請注意測試代碼會要求各個其他 CPU 按序被依次激活。
 
-首先设置 flag 为 1，并且让其不停循环等待。
+首先設置 flag 為 1，並且讓其不停循環等待。
 
 ```C++
 for (i = 0; i < PLAT_CPU_NUM; i++) {
@@ -38,13 +38,13 @@ for (i = 0; i < PLAT_CPU_NUM; i++) {
 };
 ```
 
-> 4. 熟悉排号锁的基本算法，并在 `kernel/arch/aarch64/sync/ticket.c` 中完成 `unlock` 和 `is_lock` 的代码。在 `kernel/arch/aarch64/sync/ticket.c` 中实现 `kernel_lock_init`、`lock_kernel` 和 `unlock_kernel`。在适当的位置调用 `lock_kernel`。判断什么时候需要放锁，添加 `unlock_kernel`。
+> 4. 熟悉排號鎖的基本算法，並在 `kernel/arch/aarch64/sync/ticket.c` 中完成 `unlock` 和 `is_lock` 的代碼。在 `kernel/arch/aarch64/sync/ticket.c` 中實現 `kernel_lock_init`、`lock_kernel` 和 `unlock_kernel`。在適當的位置調用 `lock_kernel`。判斷什麼時候需要放鎖，添加 `unlock_kernel`。
 
-根据排号锁的原理，我们在 `unlock` 时将 `owner` 加加，而在判断是否上锁时比较 `owner` 和 `next` 字段的大小即可。
+根據排號鎖的原理，我們在 `unlock` 時將 `owner` 加加，而在判斷是否上鎖時比較 `owner` 和 `next` 字段的大小即可。
 
-对于内核的上锁等一系列操作，都是对排号锁的一个包装，不再赘述。
+對於內核的上鎖等一系列操作，都是對排號鎖的一個包裝，不再贅述。
 
-我们在创建根进程前、其他进程开始调度前以及处理终端等位置需要上大内核锁，而解锁则只需要在处理完异常返回时即可。
+我們在創建根進程前、其他進程開始調度前以及處理終端等位置需要上大內核鎖，而解鎖則只需要在處理完異常返回時即可。
 
 ```C++
 /* kernel/arch/aarch64/main.c */
@@ -107,36 +107,36 @@ BEGIN_FUNC(__eret_to_thread)
 END_FUNC(__eret_to_thread)
 ```
 
-> 5. 在 `el0_syscall` 调用 `lock_kernel` 时，在栈上保存了寄存器的值，这是为了避免调用 `lock_kernel` 时修改这些寄存器，在 `unlock_kernel` 时，是否需要将寄存器的值保存到栈上，试分析其原因。
+> 5. 在 `el0_syscall` 調用 `lock_kernel` 時，在棧上保存了寄存器的值，這是為了避免調用 `lock_kernel` 時修改這些寄存器，在 `unlock_kernel` 時，是否需要將寄存器的值保存到棧上，試分析其原因。
 
 
-不用。因为从排号锁的实现中可以看出，`unlock_kernel` 只需要更改全局变量大内核锁 `big_kernel_lock` 的 `owner` 字段，而这个字段应该是在内存中，因此 `unlock_kernel` 不会改变寄存器中的值，所以也就不需要保护到栈上了。
+不用。因為從排號鎖的實現中可以看出，`unlock_kernel` 只需要更改全局變量大內核鎖 `big_kernel_lock` 的 `owner` 字段，而這個字段應該是在內存中，因此 `unlock_kernel` 不會改變寄存器中的值，所以也就不需要保護到棧上了。
 
-## 第二部分：调度
+## 第二部分：調度
 
-> 6. 为何 `idle_threads` 不会加入到等待队列中？试分析其原因。
+> 6. 為何 `idle_threads` 不會加入到等待隊列中？試分析其原因。
 
-`idle_threads` 是每个 CPU 上的空闲线程，仅仅用在没有线程等待时上去顶替，这样做可以防止 CPU 发现没有能调度的线程卡在内核态，而由于我们现在使用的是分配时间片的轮询策略，因此所有在等待队列中的进程都拥有相同的优先级，如果让 `idle_threads` 进入队列的话，可能会“空转”浪费很多时间，故正常情况下 `idle_threads` 是不需要加入到等待队列中的。
+`idle_threads` 是每個 CPU 上的空閒線程，僅僅用在沒有線程等待時上去頂替，這樣做可以防止 CPU 發現沒有能調度的線程卡在內核態，而由於我們現在使用的是分配時間片的輪詢策略，因此所有在等待隊列中的進程都擁有相同的優先級，如果讓 `idle_threads` 進入隊列的話，可能會“空轉”浪費很多時間，故正常情況下 `idle_threads` 是不需要加入到等待隊列中的。
 
-> 7. 完善 `kernel/sched/policy_rr.c` 中的调度功能。
+> 7. 完善 `kernel/sched/policy_rr.c` 中的調度功能。
 
-在 `rr_sched_enqueue` 中，我们首先需要判断 `thread` 是否为空、状态是否是 `TS_READY` 等条件，然后对其亲和性进行判断并赋予相应的 `cpuid`，记住将 `state` 设置为 `TS_READY` 再加入等待队列中。
+在 `rr_sched_enqueue` 中，我們首先需要判斷 `thread` 是否為空、狀態是否是 `TS_READY` 等條件，然後對其親和性進行判斷並賦予相應的 `cpuid`，記住將 `state` 設置為 `TS_READY` 再加入等待隊列中。
 
-在 `rr_sched_dequeue` 中，我们首先对 `thread` 的参数进行检查，然后使用 `list_del` 函数将其移出等待队列，记住将 `state` 设置为 `TS_INTER`。
+在 `rr_sched_dequeue` 中，我們首先對 `thread` 的參數進行檢查，然後使用 `list_del` 函數將其移出等待隊列，記住將 `state` 設置為 `TS_INTER`。
 
-在 `rr_sched_choose_thread` 中，我们选择等待队列的对首并尝试让其出队，如果出队失败（即队列为空），则返回对应 `cpu` 的空闲进程，否则返回这个出队 `thread`。
+在 `rr_sched_choose_thread` 中，我們選擇等待隊列的對首並嘗試讓其出隊，如果出隊失敗（即隊列為空），則返回對應 `cpu` 的空閒進程，否則返回這個出隊 `thread`。
 
-在 `rr_sched` 中，我们首先对 `thread` 参数进行检查，并将当前进程线程挂起，然后从等待队列中选取下一个线程，并将时间片填满（即填上 `DEFAULT_BUDGET`）再调度。
+在 `rr_sched` 中，我們首先對 `thread` 參數進行檢查，並將當前進程線程掛起，然後從等待隊列中選取下一個線程，並將時間片填滿（即填上 `DEFAULT_BUDGET`）再調度。
 
-具体代码详见 GitLab。
+具體代碼詳見 GitLab。
 
-> 8. 如果异常是从内核态捕获的，CPU 核心不会在 `kernel/arch/aarch64/irq/irq_entry.c` 的 `handle_irq` 中获得大内核锁。但是，有一种特殊情况，即如果空闲线程（以内核态运行）中捕获了错误，则 CPU 核心还应该获取大内核锁。否则，内核可能会被永远阻塞，请思考一下原因。
+> 8. 如果異常是從內核態捕獲的，CPU 核心不會在 `kernel/arch/aarch64/irq/irq_entry.c` 的 `handle_irq` 中獲得大內核鎖。但是，有一種特殊情況，即如果空閒線程（以內核態運行）中捕獲了錯誤，則 CPU 核心還應該獲取大內核鎖。否則，內核可能會被永遠阻塞，請思考一下原因。
 
-我觉得原因可能有两个：1. 因为空闲线程的作用就是为了防止 CPU 发现没有能调度的线程而卡在内核态，所以当空闲线程出现了错误时应该获取大内核锁并由内核去解决错误，如果忽视这个错误很有可能导致空闲线程挂掉，之后 CPU 再次调度时如果发现没有能调度的线程时就会永远阻塞。2. 当一个内核态线程返回到用户态时会释放大内核锁，然而 `idle` 线程并没有拿到过大内核锁，所以如果它捕获了错误，就可能会在没有大内核锁的情况下释放大内核锁，导致整个排号锁以及调度都出错。
+我覺得原因可能有兩個：1. 因為空閒線程的作用就是為了防止 CPU 發現沒有能調度的線程而卡在內核態，所以當空閒線程出現了錯誤時應該獲取大內核鎖並由內核去解決錯誤，如果忽視這個錯誤很有可能導致空閒線程掛掉，之後 CPU 再次調度時如果發現沒有能調度的線程時就會永遠阻塞。2. 當一個內核態線程返回到用戶態時會釋放大內核鎖，然而 `idle` 線程並沒有拿到過大內核鎖，所以如果它捕獲了錯誤，就可能會在沒有大內核鎖的情況下釋放大內核鎖，導致整個排號鎖以及調度都出錯。
 
-> 练习 9：在 `kernel/sched/sched.c` 中实现系统调用 `sys_yield()`，使用户态程序可以启动线程调度。此外，Chcore 还添加了一个新的系统调用 `sys_get_cpu_id`，其将返回当前线程运行的 CPU 的核心 id。请在 `kernel/syscall/syscall.c` 文件中实现该函数。
+> 練習 9：在 `kernel/sched/sched.c` 中實現系統調用 `sys_yield()`，使用戶態程序可以啟動線程調度。此外，Chcore 還添加了一個新的系統調用 `sys_get_cpu_id`，其將返回當前線程運行的 CPU 的核心 id。請在 `kernel/syscall/syscall.c` 文件中實現該函數。
 
-在 `sys_yield` 中我们将当前线程的 `budget` 直接设置为 0，以便之后立刻切换线程。
+在 `sys_yield` 中我們將當前線程的 `budget` 直接設置為 0，以便之後立刻切換線程。
 
 ```C++
 /* kernel/sched/sched.c */
@@ -146,7 +146,7 @@ void sched_handle_timer_irq(void) {
 }
 ```
 
-而系统调用 `sys_get_cpu_id` 则直接通过调用 `smp_get_cpu_id` 函数即可。
+而系統調用 `sys_get_cpu_id` 則直接通過調用 `smp_get_cpu_id` 函數即可。
 
 ```C++
 u32 sys_get_cpu_id() {
@@ -158,38 +158,38 @@ u32 sys_get_cpu_id() {
 }
 ```
 
-> 10. 定时器中断初始化的相关代码已包含在本实验的初始代码中 `timer_init`。请在主CPU以及其他CPU的初始化流程中加⼊对该函数的调⽤。
+> 10. 定時器中斷初始化的相關代碼已包含在本實驗的初始代碼中 `timer_init`。請在主CPU以及其他CPU的初始化流程中加⼊對該函數的調⽤。
 
-在 `main.c` 中对应留出的 `LAB 4 TODO` 的两个位置填上 `timer_init` 即可。
+在 `main.c` 中對應留出的 `LAB 4 TODO` 的兩個位置填上 `timer_init` 即可。
 
-> 11. 在 `kernel/sched/sched.c` 处理时钟中断的函数 `sched_handle_timer_irq` 中添加相应的代码，以便它可以⽀持预算机制。
+> 11. 在 `kernel/sched/sched.c` 處理時鐘中斷的函數 `sched_handle_timer_irq` 中添加相應的代碼，以便它可以⽀持預算機制。
 
-> 12. 在 `kernel/object/thread.c` 中实现 `sys_set_affinity` 和
-`sys_get_affinity`。完善 `kernel/sched/policy_rr.c` 中的调度功能，增加线程的亲和性⽀持（如⼊队时检查亲和度等，请⾃⾏考虑）。
+> 12. 在 `kernel/object/thread.c` 中實現 `sys_set_affinity` 和
+`sys_get_affinity`。完善 `kernel/sched/policy_rr.c` 中的調度功能，增加線程的親和性⽀持（如⼊隊時檢查親和度等，請⾃⾏考慮）。
 
-在之前的调度部分已经实现，不再赘述。
+在之前的調度部分已經實現，不再贅述。
 
-## 第三部分：进程管理器
+## 第三部分：進程管理器
 
-> 13. 在 `userland/servers/procm/launch.c` 中填写 `launch_process` 函数中缺损的代码。
+> 13. 在 `userland/servers/procm/launch.c` 中填寫 `launch_process` 函數中缺損的代碼。
 
-根据提示一步步调用各种函数填入相应代码即可，代码见 GitLab。
+根據提示一步步調用各種函數填入相應代碼即可，代碼見 GitLab。
 
-## 第四部分：进程间通讯
+## 第四部分：進程間通訊
 
-> 14. `libchcore/src/ipc/ipc.c` 与 `kernel/ipc/connection.c` 中实现了⼤多数 IPC 相关的代码，请根据注释完成其余代码。
+> 14. `libchcore/src/ipc/ipc.c` 與 `kernel/ipc/connection.c` 中實現了⼤多數 IPC 相關的代碼，請根據註釋完成其餘代碼。
 
-根据提示一步步调用各种函数填入相应代码即可，代码见 GitLab。
+根據提示一步步調用各種函數填入相應代碼即可，代碼見 GitLab。
 
-注意在给 `client` 的地址中应该根据 `client_id` 不同给出不同地址，否则共享一块地址会导致后续测试出错，这里卡了我一会儿。
+注意在給 `client` 的地址中應該根據 `client_id` 不同給出不同地址，否則共享一塊地址會導致後續測試出錯，這裡卡了我一會兒。
 
-## 第五部分：内核信号量
+## 第五部分：內核信號量
 
-> 15. `ChCore` 在 `kernel/semaphore/semaphore.h` 中定义了内核信号量的结构体，并在 `kernel/semaphore/semaphore.c` 中提供了创建信号量 `init_sem` 与信号量对应 `syscall` 的处理函数。请补⻬ `wait_sem` 操作与 `signal_sem` 操作。
+> 15. `ChCore` 在 `kernel/semaphore/semaphore.h` 中定義了內核信號量的結構體，並在 `kernel/semaphore/semaphore.c` 中提供了創建信號量 `init_sem` 與信號量對應 `syscall` 的處理函數。請補⻬ `wait_sem` 操作與 `signal_sem` 操作。
 
-首先需要了解信号量的概念以及实现。
+首先需要了解信號量的概念以及實現。
 
-在 `wait_sem` 中我们首先判断资源 `sem_count` 是否为 0，如果不为 0 则将 `sem_count` 减一，否则根据 `is_block` 判断是否需要将当前线程加入等待队列。
+在 `wait_sem` 中我們首先判斷資源 `sem_count` 是否為 0，如果不為 0 則將 `sem_count` 減一，否則根據 `is_block` 判斷是否需要將當前線程加入等待隊列。
 
 ```C++
 /* kernel/semaphore/semaphore.c */
@@ -209,7 +209,7 @@ s32 wait_sem(struct semaphore *sem, bool is_block) {
 }
 ```
 
-在 `signal_sem` 中我们则需判断是否有线程在等待资源，如果没有则将 `sem_count` 加一，否则的话唤醒一个线程并将其入队调度。
+在 `signal_sem` 中我們則需判斷是否有線程在等待資源，如果沒有則將 `sem_count` 加一，否則的話喚醒一個線程並將其入隊調度。
 
 ```C++
 s32 signal_sem(struct semaphore *sem){
@@ -226,9 +226,9 @@ s32 signal_sem(struct semaphore *sem){
 }
 ```
 
-> 16. 在 `userland/apps/lab4/prodcons_impl.c` 中实现 `producer` 和 `consumer` 。
+> 16. 在 `userland/apps/lab4/prodcons_impl.c` 中實現 `producer` 和 `consumer` 。
 
-我们创建两个信号量 `empty_slot` 和 `filled_slot`，并且初始化分别为 `BUF_SIZE` 和 0，然后生产者和消费者则分别减少一个增加另外一个即可。
+我們創建兩個信號量 `empty_slot` 和 `filled_slot`，並且初始化分別為 `BUF_SIZE` 和 0，然後生產者和消費者則分別減少一個增加另外一個即可。
 
 ```C++
 /* userland/apps/lab4/prodcons_impl.c */
@@ -266,7 +266,7 @@ void *consumer(void *arg) {
 }
 ```
 
-最终我完成了整个 `lab4`，感谢刘年学长在我遇到 bug 的时候给出的正确指导。
+最終我完成了整個 `lab4`，感謝劉年學長在我遇到 bug 的時候給出的正確指導。
 
 ![grade](./grade.png)
 

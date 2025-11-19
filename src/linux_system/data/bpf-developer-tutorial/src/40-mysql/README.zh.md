@@ -1,82 +1,82 @@
-# 使用 eBPF 跟踪 MySQL 查询
+# 使用 eBPF 跟蹤 MySQL 查詢
 
-MySQL 是全球最广泛使用的关系型数据库管理系统之一。无论您是在运行小型应用程序还是大型企业系统，了解 MySQL 数据库的性能特征都至关重要。特别是了解 SQL 查询的执行时间以及哪些查询占用了最多的时间，有助于诊断性能问题，并优化数据库以提高效率。
+MySQL 是全球最廣泛使用的關係型數據庫管理系統之一。無論您是在運行小型應用程序還是大型企業系統，瞭解 MySQL 數據庫的性能特徵都至關重要。特別是瞭解 SQL 查詢的執行時間以及哪些查詢佔用了最多的時間，有助於診斷性能問題，並優化數據庫以提高效率。
 
-在这种情况下，eBPF（扩展的伯克利包过滤器）可以派上用场。eBPF 是一项强大的技术，它允许您编写程序并在 Linux 内核中运行，帮助您跟踪、监控和分析系统行为的各个方面，包括 MySQL 这类应用程序的性能。在本文中，我们将探讨如何使用 eBPF 跟踪 MySQL 查询，测量其执行时间，并深入了解数据库的性能表现。
+在這種情況下，eBPF（擴展的伯克利包過濾器）可以派上用場。eBPF 是一項強大的技術，它允許您編寫程序並在 Linux 內核中運行，幫助您跟蹤、監控和分析系統行為的各個方面，包括 MySQL 這類應用程序的性能。在本文中，我們將探討如何使用 eBPF 跟蹤 MySQL 查詢，測量其執行時間，並深入瞭解數據庫的性能表現。
 
 ## 背景：MySQL 和 eBPF
 
 ### MySQL
 
-MySQL 是一种关系型数据库管理系统（RDBMS），使用结构化查询语言（SQL）来管理和查询数据。它广泛应用于各种场景，从 Web 应用程序到数据仓库。MySQL 的性能对应用程序的整体性能至关重要，尤其是在处理大数据集或复杂查询时。
+MySQL 是一種關係型數據庫管理系統（RDBMS），使用結構化查詢語言（SQL）來管理和查詢數據。它廣泛應用於各種場景，從 Web 應用程序到數據倉庫。MySQL 的性能對應用程序的整體性能至關重要，尤其是在處理大數據集或複雜查詢時。
 
 ### eBPF
 
-eBPF 是一项允许在 Linux 内核中执行自定义程序的技术，而无需修改内核源代码或加载内核模块。eBPF 最初是为网络数据包过滤而设计的，但现在已经发展为一个多用途的工具，可用于性能监控、安全和调试。eBPF 程序可以附加到各种内核和用户空间事件上，使得我们能够跟踪函数、系统调用等的执行。
+eBPF 是一項允許在 Linux 內核中執行自定義程序的技術，而無需修改內核源代碼或加載內核模塊。eBPF 最初是為網絡數據包過濾而設計的，但現在已經發展為一個多用途的工具，可用於性能監控、安全和調試。eBPF 程序可以附加到各種內核和用戶空間事件上，使得我們能夠跟蹤函數、系統調用等的執行。
 
-使用 eBPF，我们可以跟踪 MySQL 的某些函数，例如负责处理 SQL 查询的 `dispatch_command` 函数。通过跟踪该函数，我们可以捕获查询执行的开始和结束时间，测量延迟，并记录执行的查询。
+使用 eBPF，我們可以跟蹤 MySQL 的某些函數，例如負責處理 SQL 查詢的 `dispatch_command` 函數。通過跟蹤該函數，我們可以捕獲查詢執行的開始和結束時間，測量延遲，並記錄執行的查詢。
 
-##  MySQL 查询
+##  MySQL 查詢
 
-要使用 eBPF 跟踪 MySQL 查询，我们可以编写一个使用 `bpftrace` 的脚本，`bpftrace` 是一种 eBPF 的高级跟踪语言。以下是一个跟踪 MySQL 中 `dispatch_command` 函数的脚本，用于记录执行的查询并测量其执行时间：
+要使用 eBPF 跟蹤 MySQL 查詢，我們可以編寫一個使用 `bpftrace` 的腳本，`bpftrace` 是一種 eBPF 的高級跟蹤語言。以下是一個跟蹤 MySQL 中 `dispatch_command` 函數的腳本，用於記錄執行的查詢並測量其執行時間：
 
 ```bt
 #!/usr/bin/env bpftrace
 
-// 跟踪 MySQL 中的 dispatch_command 函数
+// 跟蹤 MySQL 中的 dispatch_command 函數
 uprobe:/usr/sbin/mysqld:dispatch_command
 {
-    // 将命令执行的开始时间存储在 map 中
+    // 將命令執行的開始時間存儲在 map 中
     @start_times[tid] = nsecs;
     
-    // 打印进程 ID 和命令字符串
+    // 打印進程 ID 和命令字符串
     printf("MySQL command executed by PID %d: ", pid);
     
-    // dispatch_command 的第三个参数是 SQL 查询字符串
+    // dispatch_command 的第三個參數是 SQL 查詢字符串
     printf("%s\n", str(arg3));
 }
 
 uretprobe:/usr/sbin/mysqld:dispatch_command
 {
-    // 从 map 中获取开始时间
+    // 從 map 中獲取開始時間
     $start = @start_times[tid];
     
-    // 计算延迟，以毫秒为单位
+    // 計算延遲，以毫秒為單位
     $delta = (nsecs - $start) / 1000000;
     
-    // 打印延迟
+    // 打印延遲
     printf("Latency: %u ms\n", $delta);
     
-    // 从 map 中删除条目以避免内存泄漏
+    // 從 map 中刪除條目以避免內存洩漏
     delete(@start_times[tid]);
 }
 ```
 
-### 脚本解释
+### 腳本解釋
 
-1. **跟踪 `dispatch_command` 函数**：
-   - 该脚本在 MySQL 中的 `dispatch_command` 函数上附加了一个 `uprobe`。该函数在 MySQL 需要执行 SQL 查询时调用。`Uprobe` 在内核模式 eBPF 运行时中可能会导致较大的性能开销。在这种情况下，您可以考虑使用用户模式 eBPF 运行时，例如 [bpftime](https://github.com/eunomia-bpf/bpftime)。
-   - `uprobe` 捕获函数执行的开始时间并记录正在执行的 SQL 查询。
+1. **跟蹤 `dispatch_command` 函數**：
+   - 該腳本在 MySQL 中的 `dispatch_command` 函數上附加了一個 `uprobe`。該函數在 MySQL 需要執行 SQL 查詢時調用。`Uprobe` 在內核模式 eBPF 運行時中可能會導致較大的性能開銷。在這種情況下，您可以考慮使用用戶模式 eBPF 運行時，例如 [bpftime](https://github.com/eunomia-bpf/bpftime)。
+   - `uprobe` 捕獲函數執行的開始時間並記錄正在執行的 SQL 查詢。
 
-2. **计算和记录延迟**：
-   - 一个相应的 `uretprobe` 附加到 `dispatch_command` 函数。`uretprobe` 在函数返回时触发，允许我们计算查询的总执行时间（延迟）。
-   - 延迟以毫秒为单位计算并打印到控制台。
+2. **計算和記錄延遲**：
+   - 一個相應的 `uretprobe` 附加到 `dispatch_command` 函數。`uretprobe` 在函數返回時觸發，允許我們計算查詢的總執行時間（延遲）。
+   - 延遲以毫秒為單位計算並打印到控制檯。
 
-3. **使用 Map 管理状态**：
-   - 脚本使用一个 BPF map 来存储每个查询的开始时间，并以线程 ID (`tid`) 作为键。这使我们能够匹配每次查询执行的开始和结束时间。
-   - 在计算延迟后，从 map 中删除条目以避免内存泄漏。
+3. **使用 Map 管理狀態**：
+   - 腳本使用一個 BPF map 來存儲每個查詢的開始時間，並以線程 ID (`tid`) 作為鍵。這使我們能夠匹配每次查詢執行的開始和結束時間。
+   - 在計算延遲後，從 map 中刪除條目以避免內存洩漏。
 
-## 运行脚本
+## 運行腳本
 
-要运行此脚本，只需将其保存为文件（例如 `trace_mysql.bt`），然后使用 `bpftrace` 执行它：
+要運行此腳本，只需將其保存為文件（例如 `trace_mysql.bt`），然後使用 `bpftrace` 執行它：
 
 ```bash
 sudo bpftrace trace_mysql.bt
 ```
 
-### 输出示例
+### 輸出示例
 
-脚本运行后，它将打印 MySQL 执行的每个 SQL 查询的信息，包括进程 ID、查询内容以及延迟时间：
+腳本運行後，它將打印 MySQL 執行的每個 SQL 查詢的信息，包括進程 ID、查詢內容以及延遲時間：
 
 ```console
 MySQL command executed by PID 1234: SELECT * FROM users WHERE id = 1;
@@ -87,19 +87,19 @@ MySQL command executed by PID 1234: INSERT INTO orders (user_id, product_id) VAL
 Latency: 42 ms
 ```
 
-这个输出显示了正在执行的 SQL 命令以及每个命令的执行时间，为您提供了关于 MySQL 查询性能的宝贵见解。
+這個輸出顯示了正在執行的 SQL 命令以及每個命令的執行時間，為您提供了關於 MySQL 查詢性能的寶貴見解。
 
-## 跟踪 MySQL 查询可以带来什么收获？
+## 跟蹤 MySQL 查詢可以帶來什麼收穫？
 
-通过使用 eBPF 跟踪 MySQL 查询，您可以获得以下几点收获：
+通過使用 eBPF 跟蹤 MySQL 查詢，您可以獲得以下幾點收穫：
 
-- **识别慢查询**：您可以快速识别哪些 SQL 查询执行时间最长。这对于性能调优以及优化数据库模式或索引策略至关重要。
-- **监控数据库性能**：定期监控查询的延迟，确保您的 MySQL 数据库在不同工作负载下保持最佳性能。
-- **调试和故障排除**：在面对性能问题时，这种跟踪方法可以帮助您准确定位导致延迟的查询，从而更容易调试和解决问题。
-- **容量规划**：通过了解各种查询的延迟，您可以更好地进行容量规划，确保您的 MySQL 数据库能够处理更高的负载或更复杂的查询。
+- **識別慢查詢**：您可以快速識別哪些 SQL 查詢執行時間最長。這對於性能調優以及優化數據庫模式或索引策略至關重要。
+- **監控數據庫性能**：定期監控查詢的延遲，確保您的 MySQL 數據庫在不同工作負載下保持最佳性能。
+- **調試和故障排除**：在面對性能問題時，這種跟蹤方法可以幫助您準確定位導致延遲的查詢，從而更容易調試和解決問題。
+- **容量規劃**：通過了解各種查詢的延遲，您可以更好地進行容量規劃，確保您的 MySQL 數據庫能夠處理更高的負載或更復雜的查詢。
 
-## 结论
+## 結論
 
-eBPF 提供了一种强大的方法来监控和跟踪 MySQL 查询的性能，而无需对系统进行侵入式更改。通过使用 `bpftrace` 这样的工具，您可以实时了解数据库的性能表现，识别潜在的瓶颈，并优化系统以获得更好的性能。
+eBPF 提供了一種強大的方法來監控和跟蹤 MySQL 查詢的性能，而無需對系統進行侵入式更改。通過使用 `bpftrace` 這樣的工具，您可以實時瞭解數據庫的性能表現，識別潛在的瓶頸，並優化系統以獲得更好的性能。
 
-如果您有兴趣了解更多关于 eBPF 的知识，以及如何将其用于监控和优化系统的其他部分，请访问我们的 [https://github.com/eunomia-bpf/bpf-developer-tutorial](https://github.com/eunomia-bpf/bpf-developer-tutorial) 或浏览我们的网站 [https://eunomia.dev/tutorials/](https://eunomia.dev/tutorials/) 获取更多示例和完整的教程。
+如果您有興趣瞭解更多關於 eBPF 的知識，以及如何將其用於監控和優化系統的其他部分，請訪問我們的 [https://github.com/eunomia-bpf/bpf-developer-tutorial](https://github.com/eunomia-bpf/bpf-developer-tutorial) 或瀏覽我們的網站 [https://eunomia.dev/tutorials/](https://eunomia.dev/tutorials/) 獲取更多示例和完整的教程。

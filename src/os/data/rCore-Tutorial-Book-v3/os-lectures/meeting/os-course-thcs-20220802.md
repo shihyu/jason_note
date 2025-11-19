@@ -13,12 +13,12 @@ style: @import url('https://unpkg.com/tailwindcss@^2/dist/utilities.min.css');
 <!-- theme: gaia -->
 <!-- _class: lead -->
 
-# 操作系统课程建设的分析与实践探索
+# 操作系統課程建設的分析與實踐探索
 
 
 <br>
 
-陈渝 向勇  李国良 任炬
+陳渝 向勇  李國良 任炬
 
 <br>
 
@@ -26,269 +26,269 @@ style: @import url('https://unpkg.com/tailwindcss@^2/dist/utilities.min.css');
 
 <br>
 
-人才培养与核心课程建设研讨会  
+人才培養與核心課程建設研討會  
 
 ---
-### 报告内容
-- 背景介绍
-   - 历史
-   - 当前基本情况  
-- 课程建设
-   - 目标+策略
+### 報告內容
+- 背景介紹
+   - 歷史
+   - 當前基本情況  
+- 課程建設
+   - 目標+策略
    - 基本思路
-   - 具体实施
+   - 具體實施
 ---
-### 背景介绍
-清华大学相关院系的操作系统课程
+### 背景介紹
+清華大學相關院系的操作系統課程
 
 ![w:800](./figs/os-course-in-tsinghua.png)
 
 
 ---
-### 背景介绍 -- 历史
+### 背景介紹 -- 歷史
 
-**铁打的课程，流水的老师**
+**鐵打的課程，流水的老師**
 
-时间 | 任课老师 | 教材 | 实验 
+時間 | 任課老師 | 教材 | 實驗 
 ---------|----------|--------- |----------
- 1997前 | 史美林 张尧学 伍尚广 | 计算机操作系统 |  /
- 1998 | 向勇 | 无固定教材 |  Nachos MIPS
- 2008~2017 | 向勇 陈渝 | 无固定教材 |  uCore x86
- 2018~至今 | 向勇 陈渝 李国良 | 无固定教材 |  uCore/rCore RISC-V
+ 1997前 | 史美林 張堯學 伍尚廣 | 計算機操作系統 |  /
+ 1998 | 向勇 | 無固定教材 |  Nachos MIPS
+ 2008~2017 | 向勇 陳渝 | 無固定教材 |  uCore x86
+ 2018~至今 | 向勇 陳渝 李國良 | 無固定教材 |  uCore/rCore RISC-V
 
 
 
 ---
-### 背景介绍 -- 历史
+### 背景介紹 -- 歷史
 
-**铁打的课程，流水的老师**
+**鐵打的課程，流水的老師**
 
 
-- 任课老师：李国良(2021)、任炬(2023)
-- 相关课程：
-   - 大四本科：操作系统专题训练（2008年开始）  
-   - 研究生：高级操作系统（2009开始）
-   - MOOC：学堂在线（2015年开始）
+- 任課老師：李國良(2021)、任炬(2023)
+- 相關課程：
+   - 大四本科：操作系統專題訓練（2008年開始）  
+   - 研究生：高級操作系統（2009開始）
+   - MOOC：學堂在線（2015年開始）
 
 ---
-### 背景介绍 -- 当前基本情况
+### 背景介紹 -- 當前基本情況
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-基本情况
-- 特征：计算机专业课 必修
-- 时间：春季/秋季（48学时）
-- 学分：3学分
-- 教师：向勇 陈渝 李国良 任炬
-- 学生：大三（部分大一/二/四）
-- 有实验内容（不算课时）
-- 无指定教材/有参考教材
+基本情況
+- 特徵：計算機專業課 必修
+- 時間：春季/秋季（48學時）
+- 學分：3學分
+- 教師：向勇 陳渝 李國良 任炬
+- 學生：大三（部分大一/二/四）
+- 有實驗內容（不算課時）
+- 無指定教材/有參考教材
 
 </div>
 <div>
 
-课程目标
-- 掌握OS的基本原理和设计思路
-- 掌握OS机制的实现技术
-- 理解计算机软硬件系统
+課程目標
+- 掌握OS的基本原理和設計思路
+- 掌握OS機制的實現技術
+- 理解計算機軟硬件系統
 
 
-先修课
-- 程序设计+编程语言
-- 数据结构+算法
-- 计算机组成原理+编译原理
+先修課
+- 程序設計+編程語言
+- 數據結構+算法
+- 計算機組成原理+編譯原理
 
 
 </div>
 </div>
 
 ---
-### 背景介绍 -- 当前基本情况
-学生反馈
-- 太难，量太大，不会编程
-- 觉得时间投入太大
-- 部分同学为了学分而学
-- 趣味性不足，缺少及时反馈
-- 碰到问题难以及时获得帮助
-- 就业并不看好
+### 背景介紹 -- 當前基本情況
+學生反饋
+- 太難，量太大，不會編程
+- 覺得時間投入太大
+- 部分同學為了學分而學
+- 趣味性不足，缺少及時反饋
+- 碰到問題難以及時獲得幫助
+- 就業並不看好
  
 
 ![bg right 60%](./figs/study-os.png)
 
 ---
-### 背景介绍 -- 当前基本情况
-参考教材
+### 背景介紹 -- 當前基本情況
+參考教材
 - **Operating Systems: Three Easy Pieces**, Remzi H. Arpaci-Dusseau and Andrea C. Arpaci-Dusseau
 - **Operating system concepts**,Abraham Silberschatz, Peter Baer Galvin,Greg Gagne
 - **Operating Systems: Internals and Design Principles**,William Stallings,
-- [rCore-Tutorial-Book, 清华OS课程教学组](http://rcore-os.cn/rCore-Tutorial-Book-v3/)
+- [rCore-Tutorial-Book, 清華OS課程教學組](http://rcore-os.cn/rCore-Tutorial-Book-v3/)
 ---
-### 背景介绍 -- 当前基本情况 -- 教学大纲
-特点：粗看：**几十年基本不变**
-* 操作系统结构
-* 中断及系统调用
-* 内存管理
-* 进程管理
-* 处理机调度
+### 背景介紹 -- 當前基本情況 -- 教學大綱
+特點：粗看：**幾十年基本不變**
+* 操作系統結構
+* 中斷及系統調用
+* 內存管理
+* 進程管理
+* 處理機調度
 * 同步互斥
-* 文件系统
+* 文件系統
 
 ![bg right 100%](../lec1/figs/ucorearch.png)
 
 ---
-### 背景介绍 -- 当前基本情况 -- 教学内容
-特点：**基本抽象（骨）大致不变，内容与实验（肉）一直在变化**
+### 背景介紹 -- 當前基本情況 -- 教學內容
+特點：**基本抽象（骨）大致不變，內容與實驗（肉）一直在變化**
 
-**骨** -- 基本抽象：进程、地址空间、文件
-**肉** -- 方法技术：调度、页表、文件系统、同步互斥、指令集、配套实验设计...
+**骨** -- 基本抽象：進程、地址空間、文件
+**肉** -- 方法技術：調度、頁表、文件系統、同步互斥、指令集、配套實驗設計...
 
 ![bg right 100%](./figs/os-labs-choice.png)
 
 ---
-### 背景介绍 -- 当前基本情况 -- 教学内容
-特点：**基本（骨）不变，内容（肉）在变化** -- 骨架子大，没太多肉
-- 1995年前，缺少对实际操作系统的分析
-   - 学生感觉像说教类课，把背诵记忆作为主要学习手段
-   - 几乎没有实践：只能说
+### 背景介紹 -- 當前基本情況 -- 教學內容
+特點：**基本（骨）不變，內容（肉）在變化** -- 骨架子大，沒太多肉
+- 1995年前，缺少對實際操作系統的分析
+   - 學生感覺像說教類課，把背誦記憶作為主要學習手段
+   - 幾乎沒有實踐：只能說
 
 ---
-### 背景介绍 -- 当前基本情况 -- 教学内容
-特点：**基本（骨）不变，内容（肉）在变化** -- 骨头撑不起肉
-- 2000~2007年，增加了对实际操作系统（Windows、Linux、Solaris）的分析
-  - 学生感觉是雾里看花，只可远观，不过细品
-  - 远看很漂亮，近看太复杂
-  - 有一些实践：侧重用户态编程或模拟抽象环节下的编程
-  - Nachos实验展示的OS与实际操作系统有间距
-  - 前期准备：C、Java
+### 背景介紹 -- 當前基本情況 -- 教學內容
+特點：**基本（骨）不變，內容（肉）在變化** -- 骨頭撐不起肉
+- 2000~2007年，增加了對實際操作系統（Windows、Linux、Solaris）的分析
+  - 學生感覺是霧裡看花，只可遠觀，不過細品
+  - 遠看很漂亮，近看太複雜
+  - 有一些實踐：側重用戶態編程或模擬抽象環節下的編程
+  - Nachos實驗展示的OS與實際操作系統有間距
+  - 前期準備：C、Java
 
 
 ---
-### 背景介绍 -- 当前基本情况 -- 教学内容
-特点：**基本（骨）不变，内容（肉）在变化** -- 肉太厚
-- 2008年，MIT教授Frans Kaashoek来清华访问，并引入xv6教学操作系统到本科实验；后简化实验，形成uCore教学操作系统。
-- 2008~2015，弱化了对实际操作系统的深入分析，增加了对教学操作系统的分析与实践
-  - 能力强的学生可以比较深入地理解一个实际的小操作系统
-  - **如果**认真完成课程，投入的时间估计是上课时间的2倍以上
-  - 前期准备：x86硬件架构、x86汇编、C语言
+### 背景介紹 -- 當前基本情況 -- 教學內容
+特點：**基本（骨）不變，內容（肉）在變化** -- 肉太厚
+- 2008年，MIT教授Frans Kaashoek來清華訪問，並引入xv6教學操作系統到本科實驗；後簡化實驗，形成uCore教學操作系統。
+- 2008~2015，弱化了對實際操作系統的深入分析，增加了對教學操作系統的分析與實踐
+  - 能力強的學生可以比較深入地理解一個實際的小操作系統
+  - **如果**認真完成課程，投入的時間估計是上課時間的2倍以上
+  - 前期準備：x86硬件架構、x86彙編、C語言
 
 
 
-<!-- 由于难度大，配套课堂教学没有跟上，大部分学生虽然觉得好，但实际掌握起来很困难，任课老师得差评 -->
+<!-- 由於難度大，配套課堂教學沒有跟上，大部分學生雖然覺得好，但實際掌握起來很困難，任課老師得差評 -->
 
 ---
-### 背景介绍 -- 当前基本情况 -- 教学内容
-特点：**基本（骨）不变，内容（肉）在变化** -- 合适的肌肉与脂肪
+### 背景介紹 -- 當前基本情況 -- 教學內容
+特點：**基本（骨）不變，內容（肉）在變化** -- 合適的肌肉與脂肪
 - 2015年，探索代替x86的指令集: MIPS、ARM、OR1200、RISC-V
-- 2017年，选择RISC-V指令集，并逐步调整uCore实验和教学内容
-- 2018年，增加Rust编程语言，并逐步添加rCore实验和教学内容
-- 2021年，设计递增式的教学操作系统集，设计配套支撑的教学内容
-- 2022年，加强从app-->syscall-->kernel的全系统分析
+- 2017年，選擇RISC-V指令集，並逐步調整uCore實驗和教學內容
+- 2018年，增加Rust編程語言，並逐步添加rCore實驗和教學內容
+- 2021年，設計遞增式的教學操作系統集，設計配套支撐的教學內容
+- 2022年，加強從app-->syscall-->kernel的全系統分析
 
 ---
-### 课程建设的目标
-**基本观点**：迭代实践与迭代认识是学好OS的基础
+### 課程建設的目標
+**基本觀點**：迭代實踐與迭代認識是學好OS的基礎
 
-- 硬件简单
-- 软件简洁
-- 循序渐进
-- 理技结合
-- 应用驱动
-- 生物进化
+- 硬件簡單
+- 軟件簡潔
+- 循序漸進
+- 理技結合
+- 應用驅動
+- 生物進化
 
 ![bg right:60% 100%](./figs/build-os-course-goal.png)
 
 ---
-### 课程建设的策略
-让学生通过OS实践来深入地理解OS原理
-- 支持应用  -- OS功能扩展全来自于应用的需求
-- 硬件简单  -- RISC-V 64 支持OS的最小硬件子集
-- 软件简洁  -- 选用Rust语言的抽象能力和高安全设计
-- 循序渐进  -- 随着知识点扩展来扩展OS实践
-- 理技结合  -- 原理的知识点与OS实践内容对应
-- 生物进化  -- 实践逐步形成的多个OS类似生命进化中形成的各种生物
+### 課程建設的策略
+讓學生通過OS實踐來深入地理解OS原理
+- 支持應用  -- OS功能擴展全來自於應用的需求
+- 硬件簡單  -- RISC-V 64 支持OS的最小硬件子集
+- 軟件簡潔  -- 選用Rust語言的抽象能力和高安全設計
+- 循序漸進  -- 隨著知識點擴展來擴展OS實踐
+- 理技結合  -- 原理的知識點與OS實踐內容對應
+- 生物進化  -- 實踐逐步形成的多個OS類似生命進化中形成的各種生物
   
 ---
-### 课程建设的基本思路
-- 理解式学习：编写应用，并通过分析应用与OS的执行过程，掌握OS原理
-  - 几行~几十行的**应用程序**，理解应用需求
-  - 十几个**系统调用**，理解接口
-  - OS的系统调用**实现功能**的流程图，理解OS的设计思路
-  - **动态调试**应用程序-->系统调用-->操作系统内核的**全系统执行**过程，从而理解操作系统的全局
+### 課程建設的基本思路
+- 理解式學習：編寫應用，並通過分析應用與OS的執行過程，掌握OS原理
+  - 幾行~幾十行的**應用程序**，理解應用需求
+  - 十幾個**系統調用**，理解接口
+  - OS的系統調用**實現功能**的流程圖，理解OS的設計思路
+  - **動態調試**應用程序-->系統調用-->操作系統內核的**全系統執行**過程，從而理解操作系統的全局
   
 ---
-### 课程建设的基本思路
-- 构造式学习：深入OS内部实现，参考/基于这些OS，扩展某些相对完整的OS功能
-  - 几行~几十行的**应用程序**，理解应用需求
-  - 十几个**系统调用**，理解接口
-  - OS的系统调用**实现功能**的流程图，理解OS的设计思路
-  - **动态调试**应用程序-->系统调用-->操作系统内核的**全系统执行**过程，从而理解操作系统的全局
-  - 参考已有实现，**扩展/实现**操作系统的新功能/性能优化，从而具备操作系统的设计实现能力，并掌握操作系统
+### 課程建設的基本思路
+- 構造式學習：深入OS內部實現，參考/基於這些OS，擴展某些相對完整的OS功能
+  - 幾行~幾十行的**應用程序**，理解應用需求
+  - 十幾個**系統調用**，理解接口
+  - OS的系統調用**實現功能**的流程圖，理解OS的設計思路
+  - **動態調試**應用程序-->系統調用-->操作系統內核的**全系統執行**過程，從而理解操作系統的全局
+  - 參考已有實現，**擴展/實現**操作系統的新功能/性能優化，從而具備操作系統的設計實現能力，並掌握操作系統
 
 ---
-### 课程建设的具体实施 -- OS设计
+### 課程建設的具體實施 -- OS設計
 
-- 原理与实践结合
-    - 提供十几个由简单到相对复杂功能进化的OS实例
-    - 提供OS的详细设计实现文档、多种测试用例、自动测试环境
-   -  课程上讲的OS原理和概念在实践或实验中基本上有对应
-   -  分析原理和实践有共同点和差异点
-   -  通过原理和实践来深化对操作系统全局与细节的理解
+- 原理與實踐結合
+    - 提供十幾個由簡單到相對複雜功能進化的OS實例
+    - 提供OS的詳細設計實現文檔、多種測試用例、自動測試環境
+   -  課程上講的OS原理和概念在實踐或實驗中基本上有對應
+   -  分析原理和實踐有共同點和差異點
+   -  通過原理和實踐來深化對操作系統全局與細節的理解
 
 ---
-### 课程建设的具体实施 -- OS设计
-**设计实现满足应用APP逐步递增需求的逐步进化的OS**
-操作系统 | 功能      | 系统调用个数 
+### 課程建設的具體實施 -- OS設計
+**設計實現滿足應用APP逐步遞增需求的逐步進化的OS**
+操作系統 | 功能      | 系統調用個數 
 ---------|----------|----------
- LibOS | 让APP与HW隔离，简化应用访问硬件的难度和复杂性 | 0
- BatchOS | 让APP与OS隔离，加强系统安全，提高执行效率 | 2
-multiprogOS | 让APP共享CPU资源 | 3
+ LibOS | 讓APP與HW隔離，簡化應用訪問硬件的難度和複雜性 | 0
+ BatchOS | 讓APP與OS隔離，加強系統安全，提高執行效率 | 2
+multiprogOS | 讓APP共享CPU資源 | 3
 
 
 ---
-### 课程建设的具体实施 -- OS设计
-**设计实现满足应用APP逐步递增需求的逐步进化的OS**
-操作系统 | 功能 | 系统调用个数 
+### 課程建設的具體實施 -- OS設計
+**設計實現滿足應用APP逐步遞增需求的逐步進化的OS**
+操作系統 | 功能 | 系統調用個數 
 ---------|----------|----------
-TimeSharing OS | 让APP共享CPU资源 | 4
-Address Space OS | 隔离APP访问的内存地址空间，加强APP间的安全 | 4
-Process OS | 支持APP动态创建新进程，增强进程管理和资源管理能力 |9
+TimeSharing OS | 讓APP共享CPU資源 | 4
+Address Space OS | 隔離APP訪問的內存地址空間，加強APP間的安全 | 4
+Process OS | 支持APP動態創建新進程，增強進程管理和資源管理能力 |9
 
 
 ---
-### 课程建设的具体实施
-**设计实现满足应用APP逐步递增需求的逐步进化的OS**
-操作系统 | 功能  | 系统调用个数 
+### 課程建設的具體實施
+**設計實現滿足應用APP逐步遞增需求的逐步進化的OS**
+操作系統 | 功能  | 系統調用個數 
 ---------|----------|----------
-Filesystem OS | 支持APP对数据的持久保存 | 11
-IPC OS | 支持多个APP进程间数据交互与事件通知 | 17
-TreadOS | 支持线程APP，简化切换与数据共享  | 18
-SyncMutex OS | 在多线程APP中支持对共享资源的同步互斥访问 | 27
+Filesystem OS | 支持APP對數據的持久保存 | 11
+IPC OS | 支持多個APP進程間數據交互與事件通知 | 17
+TreadOS | 支持線程APP，簡化切換與數據共享  | 18
+SyncMutex OS | 在多線程APP中支持對共享資源的同步互斥訪問 | 27
 
 
-<!-- 1 LibOS: 让APP与HW隔离，简化应用访问硬件的难度和复杂性
-    2 BatchOS： 让APP与OS隔离，加强系统安全，提高执行效率
-    3 multiprog&time-sharing OS: 让APP共享CPU资源
-    4 Address Space OS: 隔离APP访问的内存地址空间，加强APP间的安全
-    5 Process OS: 支持APP动态创建新进程，增强进程管理和资源管理能力
-    6 Filesystem OS：支持APP对数据的持久保存
-    7 IPC OS：支持多个APP进程间数据交互与事件通知 
-    8 Tread&Coroutine OS：支持线程和协程APP，简化切换与数据共享  
-    9 SyncMutex OS：在多线程APP中支持对共享资源的同步互斥访问
-    10 Device OS：提高APP的I/O效率，支持基于外设中断的串口/块设备 -->
+<!-- 1 LibOS: 讓APP與HW隔離，簡化應用訪問硬件的難度和複雜性
+    2 BatchOS： 讓APP與OS隔離，加強系統安全，提高執行效率
+    3 multiprog&time-sharing OS: 讓APP共享CPU資源
+    4 Address Space OS: 隔離APP訪問的內存地址空間，加強APP間的安全
+    5 Process OS: 支持APP動態創建新進程，增強進程管理和資源管理能力
+    6 Filesystem OS：支持APP對數據的持久保存
+    7 IPC OS：支持多個APP進程間數據交互與事件通知 
+    8 Tread&Coroutine OS：支持線程和協程APP，簡化切換與數據共享  
+    9 SyncMutex OS：在多線程APP中支持對共享資源的同步互斥訪問
+    10 Device OS：提高APP的I/O效率，支持基於外設中斷的串口/塊設備 -->
 
 
 ---
-### 课程建设的具体实施 -- OS设计 -- 系统调用
-**30个系统调用**
+### 課程建設的具體實施 -- OS設計 -- 系統調用
+**30個系統調用**
 
-- 进程相关： 13个
-- 文件相关：5个
-- 地址空间相关：2个
-- 同步互斥相关：9个
+- 進程相關： 13個
+- 文件相關：5個
+- 地址空間相關：2個
+- 同步互斥相關：9個
 
 <!-- ---
-### 课程建设的具体实施
-**30个系统调用**
+### 課程建設的具體實施
+**30個系統調用**
 ```rust
 const SYSCALL_DUP: usize = 24;
 const SYSCALL_OPEN: usize = 56;
@@ -301,8 +301,8 @@ const SYSCALL_SLEEP: usize = 101;
 const SYSCALL_YIELD: usize = 124;
 ```
 ---
-### 课程建设的具体实施
-**30个系统调用**
+### 課程建設的具體實施
+**30個系統調用**
 ```rust
 const SYSCALL_KILL: usize = 129;
 const SYSCALL_SIGACTION: usize = 134;
@@ -316,8 +316,8 @@ const SYSCALL_WAITPID: usize = 260;
 ```
 
 ---
-### 课程建设的具体实施
-**30个系统调用**
+### 課程建設的具體實施
+**30個系統調用**
 ```rust
 const SYSCALL_KILL: usize = 129;
 const SYSCALL_SIGACTION: usize = 134;
@@ -333,8 +333,8 @@ const SYSCALL_GETTID: usize = 1001;
 const SYSCALL_WAITTID: usize = 1002;
 ```
 ---
-### 课程建设的具体实施
-**设计实现满足应用APP逐步递增需求的逐步进化的OS**
+### 課程建設的具體實施
+**設計實現滿足應用APP逐步遞增需求的逐步進化的OS**
 ```rust
 const SYSCALL_MUTEX_CREATE: usize = 1010;
 const SYSCALL_MUTEX_LOCK: usize = 1011;
@@ -349,42 +349,42 @@ const SYSCALL_CONDVAR_WAIT: usize = 1032;
 
 
 ---
-###  课程建设的具体实施 -- 课程资源建设
-#### 课程实践内容 -- rCore Tutorial Book v3
--  [课程实践参考书](https://learningos.github.io/rCore-Tutorial-Book-v3/)，[课程实践代码](https://github.com/rcore-os/rCore-Tutorial-v3)，[课程实践代码的API文档](https://learningos.github.io/rCore-Tutorial-v3/)
+###  課程建設的具體實施 -- 課程資源建設
+#### 課程實踐內容 -- rCore Tutorial Book v3
+-  [課程實踐參考書](https://learningos.github.io/rCore-Tutorial-Book-v3/)，[課程實踐代碼](https://github.com/rcore-os/rCore-Tutorial-v3)，[課程實踐代碼的API文檔](https://learningos.github.io/rCore-Tutorial-v3/)
 
-#### 课程实验内容 -- rCore Tutorial Guide 2022 Spring
-- [实验文档](https://github.com/LearningOS/rCore-Tutorial-Guide-2022S/)  , [API文档](https://github.com/LearningOS/rCore-Tutorial-Guide-2022S/) , [实验代码](https://github.com/LearningOS/rCore-Tutorial-Code-2022S)，[测试用例](https://github.com/LearningOS/rCore-Tutorial-Test-2022S) 
+#### 課程實驗內容 -- rCore Tutorial Guide 2022 Spring
+- [實驗文檔](https://github.com/LearningOS/rCore-Tutorial-Guide-2022S/)  , [API文檔](https://github.com/LearningOS/rCore-Tutorial-Guide-2022S/) , [實驗代碼](https://github.com/LearningOS/rCore-Tutorial-Code-2022S)，[測試用例](https://github.com/LearningOS/rCore-Tutorial-Test-2022S) 
 
-#### 课程参考文档 --教材/课件
-- [课程在线Slides](http://learningos.github.io/os-lectures/)，[Operating Systems: Three Easy Pieces](https://pages.cs.wisc.edu/~remzi/OSTEP/)
-- [深入了解计算机系统](https://hansimov.gitbook.io/csapp/)，[RISC-V Reader中文版](http://riscvbook.com/chinese/RISC-V-Reader-Chinese-v2p1.pdf)
+#### 課程參考文檔 --教材/課件
+- [課程在線Slides](http://learningos.github.io/os-lectures/)，[Operating Systems: Three Easy Pieces](https://pages.cs.wisc.edu/~remzi/OSTEP/)
+- [深入瞭解計算機系統](https://hansimov.gitbook.io/csapp/)，[RISC-V Reader中文版](http://riscvbook.com/chinese/RISC-V-Reader-Chinese-v2p1.pdf)
 
 
 ---
-### 课程建设的具体实施 -- 在线学习建设
-- 当前还存在一些需要改进的地方
-  - 学习内容的逐步递进
-    - 进一步细化知识粒度和衔接 
-  - 学习效果的及时反馈
-    - 在线IDE
-    - 在线评测  
-  - 学习问题的及时解答 
-    - 在线答疑
-    - 鼓励机制
+### 課程建設的具體實施 -- 在線學習建設
+- 當前還存在一些需要改進的地方
+  - 學習內容的逐步遞進
+    - 進一步細化知識粒度和銜接 
+  - 學習效果的及時反饋
+    - 在線IDE
+    - 在線評測  
+  - 學習問題的及時解答 
+    - 在線答疑
+    - 鼓勵機制
 
 ![bg right:25% 100%](./figs/online-os.png)
 
 ---
-### 课程建设的具体实施 --  课程设计
-- 课程内容
-  - 48学时，16次课（13讲） 
-- 实践内容
-  - 16~32学时，5次实验
-- 扩展讲解和训练
-  - 最新技术进展
-  - 实验代替考试
-  - 操作系统比赛
+### 課程建設的具體實施 --  課程設計
+- 課程內容
+  - 48學時，16次課（13講） 
+- 實踐內容
+  - 16~32學時，5次實驗
+- 擴展講解和訓練
+  - 最新技術進展
+  - 實驗代替考試
+  - 操作系統比賽
 
 ![bg right:50% 100%](./figs/build-os-course-goal.png)
 
@@ -393,401 +393,401 @@ const SYSCALL_CONDVAR_WAIT: usize = 1032;
 <!-- theme: gaia -->
 <!-- _class: lead -->
 
-# 谢谢！
+# 謝謝！
 
-开源操作系统训练营
+開源操作系統訓練營
 
 https://github.com/LearningOS/rust-based-os-comp2022
 
-一年三期：春季学期、秋季学期、暑假
+一年三期：春季學期、秋季學期、暑假
 
 
 ---
 <!-- theme: gaia -->
 <!-- _class: lead -->
 
-# 备份材料
-- 十三讲的课程内容设计+知识点设计
-- 十一个教学OS的实践设计
-- 五个实验设计
+# 備份材料
+- 十三講的課程內容設計+知識點設計
+- 十一個教學OS的實踐設計
+- 五個實驗設計
 
 ---
-#### 第一讲 操作系统概述
+#### 第一講 操作系統概述
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-- [第一节 课程概述 & 教学安排](../lec1/p1-intro.html)
-- [第二节 什么是操作系统](../lec1/p2-whatisos.html)
-- [第三节 操作系统历史演化](../lec1/p3-oshistory.html)
-- [第四节 操作系统结构](../lec1/p4-osarchitecture.html)
-- [第五节 实践：试试UNIX/Linux](../lec1/p5-tryunix.html)
+- [第一節 課程概述 & 教學安排](../lec1/p1-intro.html)
+- [第二節 什麼是操作系統](../lec1/p2-whatisos.html)
+- [第三節 操作系統歷史演化](../lec1/p3-oshistory.html)
+- [第四節 操作系統結構](../lec1/p4-osarchitecture.html)
+- [第五節 實踐：試試UNIX/Linux](../lec1/p5-tryunix.html)
 
 </div>
 <div>
 
-知识点
-- 操作系统定义、抽象、特征
-- 操作系统历史演化
-- 操作系统的架构
-- 硬件与操作系统的关系与接口
-- 应用与操作系统的关系与接口
-- 实践：Linux/rCore/uCore APP
+知識點
+- 操作系統定義、抽象、特徵
+- 操作系統歷史演化
+- 操作系統的架構
+- 硬件與操作系統的關係與接口
+- 應用與操作系統的關係與接口
+- 實踐：Linux/rCore/uCore APP
 
 </div>
 </div>
 
 ---
-#### 第二讲 实践与实验介绍
+#### 第二講 實踐與實驗介紹
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-- [第一节 实践与实验简要分析](../lec2/p1-labintro.html)
-- [第二节 Compiler与OS](../lec2/p2-compiling.html)
-- [第三节 硬件启动与软件启动](../lec2/p3-boot.html)
-- [第四节 实践：裸机程序 -- LibOS](../lec2/p4-lab1.html)
+- [第一節 實踐與實驗簡要分析](../lec2/p1-labintro.html)
+- [第二節 Compiler與OS](../lec2/p2-compiling.html)
+- [第三節 硬件啟動與軟件啟動](../lec2/p3-boot.html)
+- [第四節 實踐：裸機程序 -- LibOS](../lec2/p4-lab1.html)
 
 </div>
 <div>
 
-知识点
-- 函数调用、栈帧与参数
-- 编译器/硬件与OS的共识
-- 加电后硬件/软件启动过程
-- 程序执行过程、Linux应用编程
+知識點
+- 函數調用、棧幀與參數
+- 編譯器/硬件與OS的共識
+- 加電後硬件/軟件啟動過程
+- 程序執行過程、Linux應用編程
 - RISC-V的SBI
-- 开发环境与执行环境、裸机编程
-- 实践：LibOS操作系统
+- 開發環境與執行環境、裸機編程
+- 實踐：LibOS操作系統
 </div>
 </div>
 
 ---
-#### 第三讲 基于特权级的隔离与批处理
+#### 第三講 基於特權級的隔離與批處理
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-- [第一节 从 OS 角度看计算机系统](../lec3/p1-osviewarch.html)
-- [第二节 从 OS 角度看RISC-V](../lec3/p2-osviewrv.html)
-- [第三节 实践：批处理操作系统](../lec3/p3-batchos.html)
+- [第一節 從 OS 角度看計算機系統](../lec3/p1-osviewarch.html)
+- [第二節 從 OS 角度看RISC-V](../lec3/p2-osviewrv.html)
+- [第三節 實踐：批處理操作系統](../lec3/p3-batchos.html)
 
 </div>
 <div>
 
-知识点
-- 特权级与特权级切换
-- 系统调用、外设中断、软件异常
-- 系统调用设计与实现、执行过程
-- 实践：批处理操作系统
+知識點
+- 特權級與特權級切換
+- 系統調用、外設中斷、軟件異常
+- 系統調用設計與實現、執行過程
+- 實踐：批處理操作系統
 </div>
 <div>
 
 ---
 
-#### 第四讲 多道程序与分时多任务
+#### 第四講 多道程序與分時多任務
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-- [第一节 相关背景与基本概念](../lec4/p1-multiprog.html)
-- [第二节 实践：多道程序与分时多任务操作系统](../lec4/p2-labs.html)
+- [第一節 相關背景與基本概念](../lec4/p1-multiprog.html)
+- [第二節 實踐：多道程序與分時多任務操作系統](../lec4/p2-labs.html)
 
 </div>
 <div>
 
-知识点
-- 上下文、中断、任务、任务/中断上下文、任务/中断上下文切换、任务/中断上下文切换的时机
-- 任务生命周期、任务执行过程
-- 协作式调度、抢占式调度
-- 实践：多道程序操作系统
-- 实践：分时多任务操作系统
+知識點
+- 上下文、中斷、任務、任務/中斷上下文、任務/中斷上下文切換、任務/中斷上下文切換的時機
+- 任務生命週期、任務執行過程
+- 協作式調度、搶佔式調度
+- 實踐：多道程序操作系統
+- 實踐：分時多任務操作系統
 
 </div>
 <div>
 
 ---
 
-#### 第五讲 地址空间-物理内存管理
+#### 第五講 地址空間-物理內存管理
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-- [第一节 地址空间](../lec5/p1-memintro.html)
-- [第二节 内存分配](../lec5/p2-memalloc.html)
-- [第三节 实践：建立地址空间的操作系统](../lec5/p3-labs.html)
+- [第一節 地址空間](../lec5/p1-memintro.html)
+- [第二節 內存分配](../lec5/p2-memalloc.html)
+- [第三節 實踐：建立地址空間的操作系統](../lec5/p3-labs.html)
 
 </div>
 <div>
 
-知识点
+知識點
 
-- 地址空间、内存管理、连续物理内存分配、非连续物理内存分配
-- 物理内存的管理
-- 多级页表的设计与实现
-- 访存异常及其软硬件协同处理过程
-- 实践：基于地址空间的分时多任务操作系统
+- 地址空間、內存管理、連續物理內存分配、非連續物理內存分配
+- 物理內存的管理
+- 多級頁表的設計與實現
+- 訪存異常及其軟硬件協同處理過程
+- 實踐：基於地址空間的分時多任務操作系統
 
 </div>
 <div>
 
 ---
-#### 第六讲  地址空间-虚拟存储管理
+#### 第六講  地址空間-虛擬存儲管理
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-- [第一节  虚拟存储的基本概念](../lec6/p1-vmoverview.html)
-- [第二节 页面置换算法 -- 局部页面置换算法](../lec6/p2-pagereplace-1.html)
-- [第三节 页面置换算法 -- 全局页面置换算法](../lec6/p2-pagereplace-2.html)
+- [第一節  虛擬存儲的基本概念](../lec6/p1-vmoverview.html)
+- [第二節 頁面置換算法 -- 局部頁面置換算法](../lec6/p2-pagereplace-1.html)
+- [第三節 頁面置換算法 -- 全局頁面置換算法](../lec6/p2-pagereplace-2.html)
 
 </div>
 <div>
 
-知识点
-- 局部性原理、虚拟存储基本概念、Page Fault异常、局部页面置换算法、全局页面置换算法、Belady异常
-- 按需分页、Copy On Write、基于页的内存换入换出机制
-- 实践：支持虚存的分时多任务操作系统
+知識點
+- 局部性原理、虛擬存儲基本概念、Page Fault異常、局部頁面置換算法、全局頁面置換算法、Belady異常
+- 按需分頁、Copy On Write、基於頁的內存換入換出機制
+- 實踐：支持虛存的分時多任務操作系統
 
 
 </div>
 <div>
 
 ---
-#### 第七讲  进程管理与单处理器调度
+#### 第七講  進程管理與單處理器調度
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-- [第一节 进程管理](../lec7/p1-process-overview.html)
-- [第二节 单处理器调度](../lec7/p2-sched.html)
-- [第三节 实时管理与调度](../lec7/p3-realtime.html)
-- [第四节 实践：支持进程的操作系统](../lec7/p4-labs.html)
+- [第一節 進程管理](../lec7/p1-process-overview.html)
+- [第二節 單處理器調度](../lec7/p2-sched.html)
+- [第三節 實時管理與調度](../lec7/p3-realtime.html)
+- [第四節 實踐：支持進程的操作系統](../lec7/p4-labs.html)
 
 </div>
 <div>
 
-知识点
-- 进程概念、进程运行状态、进程的管理、基本调度策略/算法
-- 实时任务、实时调度算法、优先级反置问题与解决方法
-- 进程控制块和fork, exec, waitpid, exit系统调用的设计与执行
-- 实践：支持进程的操作系统
+知識點
+- 進程概念、進程運行狀態、進程的管理、基本調度策略/算法
+- 實時任務、實時調度算法、優先級反置問題與解決方法
+- 進程控制塊和fork, exec, waitpid, exit系統調用的設計與執行
+- 實踐：支持進程的操作系統
 
 </div>
 <div>
 
 
 ---
-#### 第八讲  多处理器调度
+#### 第八講  多處理器調度
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-- [第一节 对称多处理与多核架构](../lec8/p1-multiprocessor-overview.html)
-- [第二节 多处理器调度概述](../lec8/p2-multiprocessor-sched-overview.html)
-- [第三节 Linux O(1) 调度](../lec8/p3-linux-O1-sched.html)
-- [第四节 Linux CFS（Completely Fair Schduler） 调度](../lec8/p4-linux-cfs-sched.html)
-- [第五节 Linux/FreeBSD BFS 调度](../lec8/p5-linux-bfs-sched.html)
+- [第一節 對稱多處理與多核架構](../lec8/p1-multiprocessor-overview.html)
+- [第二節 多處理器調度概述](../lec8/p2-multiprocessor-sched-overview.html)
+- [第三節 Linux O(1) 調度](../lec8/p3-linux-O1-sched.html)
+- [第四節 Linux CFS（Completely Fair Schduler） 調度](../lec8/p4-linux-cfs-sched.html)
+- [第五節 Linux/FreeBSD BFS 調度](../lec8/p5-linux-bfs-sched.html)
 
 </div>
 <div>
 
-知识点
-- 多核/SMP/NUMA架构的特征
-- 多处理器调度算法
-- 负载迁移技术
+知識點
+- 多核/SMP/NUMA架構的特徵
+- 多處理器調度算法
+- 負載遷移技術
 
 
 </div>
 <div>
 
 ---
-#### 第九讲  文件系统
+#### 第九講  文件系統
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-- [第一节 文件系统概述](../lec9/p1-fsoverview.html)
-- [第二节 文件系统的设计与实现](../lec9/p2-fsimplement.html)
-- [第三节 支持崩溃一致性的文件系统](../lec9/p3-fsjournal.html)
-- [第四节 支持文件的操作系统](../lec9/p4-fs-lab.html)
+- [第一節 文件系統概述](../lec9/p1-fsoverview.html)
+- [第二節 文件系統的設計與實現](../lec9/p2-fsimplement.html)
+- [第三節 支持崩潰一致性的文件系統](../lec9/p3-fsjournal.html)
+- [第四節 支持文件的操作系統](../lec9/p4-fs-lab.html)
 
 </div>
 <div>
 
-知识点
-- 文件系统基本概念：文件/目录/文件描述符/目录项, 软/硬链接
-- 文件/文件系统设计与实现
-- open/close/read/write系统调用的设计与执行
-- 链式/索引文件结构设计、空闲磁盘块空间管理、缓冲区管理
-- 实践：支持文件的FS操作系统
+知識點
+- 文件系統基本概念：文件/目錄/文件描述符/目錄項, 軟/硬鏈接
+- 文件/文件系統設計與實現
+- open/close/read/write系統調用的設計與執行
+- 鏈式/索引文件結構設計、空閒磁盤塊空間管理、緩衝區管理
+- 實踐：支持文件的FS操作系統
 
 </div>
 <div>
 
 ---
-#### 第十讲  进程间通信
+#### 第十講  進程間通信
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-- [第一节 进程间通信(IPC)概述](../lec10/p1-ipcoverview.html)
-- [第二节 支持IPC的OS](../lec10/p2-ipclabs.html)
+- [第一節 進程間通信(IPC)概述](../lec10/p1-ipcoverview.html)
+- [第二節 支持IPC的OS](../lec10/p2-ipclabs.html)
 
 
 </div>
 <div>
 
-知识点
-- 无名/有名管道、消息队列、共享内存、信号的应用编程与设计实现
-- 支持管道与信号的IPC操作系统
+知識點
+- 無名/有名管道、消息隊列、共享內存、信號的應用編程與設計實現
+- 支持管道與信號的IPC操作系統
 
 
 </div>
 <div>
 
 ---
-#### 第十一讲  线程与协程
+#### 第十一講  線程與協程
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-- [第一节 线程](../lec11/p1-thread.html)
-- [第二节 协程](../lec11/p2-coroutine.html)
-- [第三节 支持线程/协程的OS(TCOS)](../lec11/p3-labs.html)
+- [第一節 線程](../lec11/p1-thread.html)
+- [第二節 協程](../lec11/p2-coroutine.html)
+- [第三節 支持線程/協程的OS(TCOS)](../lec11/p3-labs.html)
 
 </div>
 <div>
 
-知识点
-- 线程、协程的起因与特征
-- 用户态管理的线程设计与实现
-- 内核态管理的线程设计与实现
-- 实践：支持线程的操作系统
+知識點
+- 線程、協程的起因與特徵
+- 用戶態管理的線程設計與實現
+- 內核態管理的線程設計與實現
+- 實踐：支持線程的操作系統
 
 </div>
 <div>
 
 ---
-#### 第十二讲 同步互斥
+#### 第十二講 同步互斥
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-- [第一节 概述](../lec12/p1-syncmutex.html)
-- [第二节 信号量](../lec12/p2-semaphore.html)
-- [第三节 管程与条件变量](../lec12/p3-monitor-cond.html)
-- [第四节 同步互斥实例问题](../lec12/p4-instances.html)
-- [第五节 死锁](../lec12/p5-deadlock.html)
-- [第六节 支持同步互斥的OS(SMOS)](../lec12/p6-labs.html)
+- [第一節 概述](../lec12/p1-syncmutex.html)
+- [第二節 信號量](../lec12/p2-semaphore.html)
+- [第三節 管程與條件變量](../lec12/p3-monitor-cond.html)
+- [第四節 同步互斥實例問題](../lec12/p4-instances.html)
+- [第五節 死鎖](../lec12/p5-deadlock.html)
+- [第六節 支持同步互斥的OS(SMOS)](../lec12/p6-labs.html)
 
 </div>
 <div>
 
-知识点
-- 软件实现的互斥、基于中断的互斥、基于原子指令的互斥
-- 忙等方式与休眠方式的同步互斥
-- 信号量的设计与实现
-- 管程与条件变量的设计与实现
-- 死锁必要条件、死锁安全、银行家算法、死锁检测算法等
-- 实践：支持同步互斥的操作系统
+知識點
+- 軟件實現的互斥、基於中斷的互斥、基於原子指令的互斥
+- 忙等方式與休眠方式的同步互斥
+- 信號量的設計與實現
+- 管程與條件變量的設計與實現
+- 死鎖必要條件、死鎖安全、銀行家算法、死鎖檢測算法等
+- 實踐：支持同步互斥的操作系統
 
 </div>
 <div>
 
 ---
-#### 第十三讲 设备管理
+#### 第十三講 設備管理
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-- [第一节 设备接口](../lec13/p1-devinterface.html)
-- [第二节 磁盘子系统](../lec13/p2-disk.html)
-- [第三节 第三节 支持device的OS（DOS）](../lec13/p3-Labs.html)
+- [第一節 設備接口](../lec13/p1-devinterface.html)
+- [第二節 磁盤子系統](../lec13/p2-disk.html)
+- [第三節 第三節 支持device的OS（DOS）](../lec13/p3-Labs.html)
 
 
 </div>
 <div>
 
-知识点
-- I/O设备分类、I/O传输方式、I/O设备抽象
-- I/O执行模型
-- 串口驱动、块设备驱动
-- 内核态响应中断
-- 实践：支持外设中断的操作系统
+知識點
+- I/O設備分類、I/O傳輸方式、I/O設備抽象
+- I/O執行模型
+- 串口驅動、塊設備驅動
+- 內核態響應中斷
+- 實踐：支持外設中斷的操作系統
 
 </div>
 <div>
 
 ---
-### 实践 1: UNIX/Linux APP 
+### 實踐 1: UNIX/Linux APP 
 
-  - "系统调用"
-  - 例子，用C语言，来自UNIX（例如Linux、macOS、FreeBSD）
+  - "系統調用"
+  - 例子，用C語言，來自UNIX（例如Linux、macOS、FreeBSD）
 
             fd = open("out", 1);
             write(fd, "hello\n", 6);
             pid = fork()
-- 能理解和编写包含操作系统进程/文件等相关的简单命令行Linux程序
+- 能理解和編寫包含操作系統進程/文件等相關的簡單命令行Linux程序
 
 ---
-### 实践 2: 裸机程序：LibOS             
-  - 软硬件启动，栈的建立、函数调用，SBI调用
+### 實踐 2: 裸機程序：LibOS             
+  - 軟硬件啟動，棧的建立、函數調用，SBI調用
 ![w:600](../lec2/figs/os-as-lib.png)
-- 理解RISC-V的特权模式，理解SBI访问，编写裸机程序
+- 理解RISC-V的特權模式，理解SBI訪問，編寫裸機程序
 
 
 ---
-### 实践 3: Batch OS  
-  - 特权级: U-Mode, S-Mode
-  - 特权级切换
+### 實踐 3: Batch OS  
+  - 特權級: U-Mode, S-Mode
+  - 特權級切換
   - 陷入上下文
-  - 编译多应用+OS的镜像
-  - 加载并执行应用
+  - 編譯多應用+OS的鏡像
+  - 加載並執行應用
 
 ![bg right 100%](../lec3/figs/batch-os-detail.png)
 
 
 ---
-### 实践 4-1: MultiProg OS  
-   - 任务的概念
-   - 任务的设计实现
-   - 协作/抢占式调度
-   -  任务上下文 
+### 實踐 4-1: MultiProg OS  
+   - 任務的概念
+   - 任務的設計實現
+   - 協作/搶佔式調度
+   -  任務上下文 
    -  陷入上下文
-   - 切换任务
-   - 切换特权级
+   - 切換任務
+   - 切換特權級
 ![bg right:60% 100%](../lec4/figs/more-task-multiprog-os-detail.png) 
 
 --- 
-### 实践 4-2: TimeSharing OS  
-   - 中断
-   - 中断响应
-   - 协作/抢占式调度
+### 實踐 4-2: TimeSharing OS  
+   - 中斷
+   - 中斷響應
+   - 協作/搶佔式調度
    -  陷入上下文
-   -  任务上下文 
-   - 切换任务
-   - 切换特权级
+   -  任務上下文 
+   - 切換任務
+   - 切換特權級
 ![bg right:60% 100%](../lec4/figs/time-task-multiprog-os-detail.png) 
 
 
 ---
-### 实践 5： AddrSpace OS   
-App/OS内存布局
-- .text: 数据段
-- .data：可修改的全局数据。
-- 未初始化数据段 .bss
-- 堆 （heap）向高地址增长
-- 栈 （stack）向低地址增长
+### 實踐 5： AddrSpace OS   
+App/OS內存佈局
+- .text: 數據段
+- .data：可修改的全局數據。
+- 未初始化數據段 .bss
+- 堆 （heap）向高地址增長
+- 棧 （stack）向低地址增長
 ![bg right 120%](../lec2/figs/memlayout.png)
 
 ---
-### 实践 5： AddrSpace OS  
-- 地址空间
+### 實踐 5： AddrSpace OS  
+- 地址空間
 - 物理地址
-- 页表
+- 頁表
 -  陷入上下文
--  任务上下文 
--  中断响应
+-  任務上下文 
+-  中斷響應
 
 ![bg right:60% 100%](../lec5/figs/addr-space-os-detail.png) 
 
 
 
 ---
-### 实践 5： AddrSpace OS  
-- 应用地址空间
-- 内核地址空间
-- 切换任务
-- 切换特权级
-- 切换页表
+### 實踐 5： AddrSpace OS  
+- 應用地址空間
+- 內核地址空間
+- 切換任務
+- 切換特權級
+- 切換頁表
   
 
 
@@ -795,7 +795,7 @@ App/OS内存布局
 
 
 ---
-### 实践 6：Process OS  
+### 實踐 6：Process OS  
   - Process
     - Trap
     - Task
@@ -806,7 +806,7 @@ App/OS内存布局
 ![bg right:65% 100%](../lec7/figs/process-os-detail.png) 
 
 ---
-### 实践 6：Process OS  
+### 實踐 6：Process OS  
   - fork
   - exec
   - exit
@@ -815,71 +815,71 @@ App/OS内存布局
 ![bg right:70% 100%](../lec7/figs/fork-exec.png) 
 
 ---
-### 实践 6：Process OS   
+### 實踐 6：Process OS   
    - PCB 
 ![bg right:70% 100%](../lec7/figs/process-os-key-structures.png)
 
 ---
-### 实践 7: Filesystem OS  
-- 文件系统层次结构
-- 块设备驱动
-- 块缓冲区
+### 實踐 7: Filesystem OS  
+- 文件系統層次結構
+- 塊設備驅動
+- 塊緩衝區
 - EasyFS
 - Virtual FS
-- 进程的文件描述符表
-- 文件相关系统调用
+- 進程的文件描述符表
+- 文件相關係統調用
 ![bg right:60% 100%](../lec9/figs/fs-intro.png)
 
 
 ---
-### 实践 7: Filesystem OS  
-- 文件系统在操作系统中的位置
+### 實踐 7: Filesystem OS  
+- 文件系統在操作系統中的位置
 ![bg right:70% 100%](../lec9/figs/filesystem-os-detail.png)
 
 ---
-### 实践 7: Filesystem OS  
-- 进程的文件描述符表
-- 文件相关系统调用
+### 實踐 7: Filesystem OS  
+- 進程的文件描述符表
+- 文件相關係統調用
 ![bg right:70% 100%](../lec9/figs/process-os-key-structures-file.png)
 
 
 
 ---
-### 实践 8: IPC OS
-支持进程间通信和异步消息机制
+### 實踐 8: IPC OS
+支持進程間通信和異步消息機制
 - 管道（PIPE）
-- 信号（Signal）
+- 信號（Signal）
 ![bg right:70% 100%](../lec10/figs/ipc-os-detail-2.png)
 
 
 ---
-### 实践 8: IPC OS
-对进程控制块的扩展
-- 管道也是一种文件
+### 實踐 8: IPC OS
+對進程控制塊的擴展
+- 管道也是一種文件
 - 支持I/O重定向
 ![bg right:60% 100%](../lec10/figs/process-os-key-structures-file-ipc.png)
 
 
 
 ---
-### 实践 9: Thread OS
-- 用户态管理的用户态运行的线程
-- 内核态管理的用户态运行的线程
+### 實踐 9: Thread OS
+- 用戶態管理的用戶態運行的線程
+- 內核態管理的用戶態運行的線程
 ![bg right:65% 100%](../lec11/figs/thread-coroutine-os-detail.png)
 
 
 ---
-### 实践 9: Thread OS
-- 协程结构
-- 线程结构
-- 进程结构
+### 實踐 9: Thread OS
+- 協程結構
+- 線程結構
+- 進程結構
 
 ![bg right:60% 100%](../lec11/figs/task-abstracts.png)
 
 
 ---
-### 实践 10: SyncMutex OS
-对进程控制块扩展，支持线程同步互斥访问共享变量
+### 實踐 10: SyncMutex OS
+對進程控制塊擴展，支持線程同步互斥訪問共享變量
 - Mutex
 - Semphore
 - Condvar
@@ -887,8 +887,8 @@ App/OS内存布局
 
 
 ---
-### 实践 10: SyncMutex OS
-对进程控制块扩展，支持线程同步互斥访问共享变量
+### 實踐 10: SyncMutex OS
+對進程控制塊擴展，支持線程同步互斥訪問共享變量
 - Mutex
 - Semphore
 - Condvar
@@ -898,63 +898,63 @@ App/OS内存布局
 
 
 ---
-### 实践 11: Device OS
-支持块设备/串口等外设
-- 内核态中断响应
+### 實踐 11: Device OS
+支持塊設備/串口等外設
+- 內核態中斷響應
 - DMA
-- 轮询
-- 设备<-->内存间数据传输
-- 同步互斥保护
+- 輪詢
+- 設備<-->內存間數據傳輸
+- 同步互斥保護
 
 
 ![bg right:60% 100%](../lec13/figs/os-io-lifetime.png)
 
 
 ---
-### 实验 1 ：获取任务信息
+### 實驗 1 ：獲取任務信息
 
-- 预先学习完成 实践 1--4
+- 預先學習完成 實踐 1--4
 
-#### 内容
+#### 內容
 
-我们的系统已经能够支持多个任务分时轮流运行，我们希望引入一个新的系统调用 sys_task_info 以获取当前任务的信息
-
-
----
-### 实验 2 ：完成mmap和munmap系统调用功能
-
-- 预先学习完成 实践 1--5
-
-#### 内容
-
-- 引入虚存机制后，原来内核的 sys_get_time 和 sys_task_info 函数实现就无效了。请你重写这个函数，恢复其正常功能。
-- mmap 在 Linux 中主要用于在内存中映射文件， 本次实验简化它的功能，仅用于申请内存。请实现 mmap 和 munmap 系统调用
+我們的系統已經能夠支持多個任務分時輪流運行，我們希望引入一個新的系統調用 sys_task_info 以獲取當前任務的信息
 
 
 ---
-### 实验 3 ：完成spawn系统调用功能
+### 實驗 2 ：完成mmap和munmap系統調用功能
 
-- 预先学习完成 实践 1--6
+- 預先學習完成 實踐 1--5
+
+#### 內容
+
+- 引入虛存機制後，原來內核的 sys_get_time 和 sys_task_info 函數實現就無效了。請你重寫這個函數，恢復其正常功能。
+- mmap 在 Linux 中主要用於在內存中映射文件， 本次實驗簡化它的功能，僅用於申請內存。請實現 mmap 和 munmap 系統調用
+
+
+---
+### 實驗 3 ：完成spawn系統調用功能
+
+- 預先學習完成 實踐 1--6
 - 
-#### 内容
+#### 內容
 
-实现一个完全 DIY 的系统调用 spawn，用以创建一个新进程。
+實現一個完全 DIY 的系統調用 spawn，用以創建一個新進程。
 
-
----
-### 实验 4 ：实现文件的硬链接功能
-
-- 预先学习完成 实践 1--7
-
-#### 内容
-
-硬链接要求两个不同的目录项指向同一个文件，在我们的文件系统中也就是两个不同名称目录项指向同一个磁盘块。要求实现三个系统调用 sys_linkat、sys_unlinkat、sys_stat 。
 
 ---
-### 实验 5 ：实现文件的硬链接功能
+### 實驗 4 ：實現文件的硬鏈接功能
 
-- 预先学习完成 实践 1--10
+- 預先學習完成 實踐 1--7
 
-内容
+#### 內容
 
-完成对基于信号量/条件变量的同步互斥多线程程序的死锁检测
+硬鏈接要求兩個不同的目錄項指向同一個文件，在我們的文件系統中也就是兩個不同名稱目錄項指向同一個磁盤塊。要求實現三個系統調用 sys_linkat、sys_unlinkat、sys_stat 。
+
+---
+### 實驗 5 ：實現文件的硬鏈接功能
+
+- 預先學習完成 實踐 1--10
+
+內容
+
+完成對基於信號量/條件變量的同步互斥多線程程序的死鎖檢測

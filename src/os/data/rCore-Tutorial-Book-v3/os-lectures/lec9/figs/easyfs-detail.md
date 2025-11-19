@@ -141,7 +141,7 @@ API ^MyijkPsm
 
 Syscall ^nsa8HgGu
 
-进程对文件的操作函数 ^SIKbuQOJ
+進程對文件的操作函數 ^SIKbuQOJ
 
 pub struct OSInode {
     readable: bool,
@@ -154,30 +154,30 @@ pub struct OSInodeInner {
     inode: Arc<Inode>,
 } ^xvQBkMSy
 
-文件是OSInode(内存中的Inode) ^fsATLANT
+文件是OSInode(內存中的Inode) ^fsATLANT
 
 包含了VFS上的Inode ^l1NEtbox
 
 find
 create ^BgpoIPQx
 
-打开文件是，需要
-找到inode的磁盘位置 ^dklCu97y
+打開文件是，需要
+找到inode的磁盤位置 ^dklCu97y
 
-根据OSInodeInner::offset
-找到数据对应的blk块并
-缓存到blkcache ^LXHiqwsV
+根據OSInodeInner::offset
+找到數據對應的blk塊並
+緩存到blkcache ^LXHiqwsV
 
-blk cache没缓存，
-则blk驱动读取磁盘块 ^LTUJ5l15
+blk cache沒緩存，
+則blk驅動讀取磁盤塊 ^LTUJ5l15
 
-EFS的文件系统结构与操作函数 ^c9O7moIh
+EFS的文件系統結構與操作函數 ^c9O7moIh
 
-VFS上的Inode和操作函数 ^hUeYc3M6
+VFS上的Inode和操作函數 ^hUeYc3M6
 
-EFS文件：DiskInode结构与操作函数 ^VkmQmhH2
+EFS文件：DiskInode結構與操作函數 ^VkmQmhH2
 
-EFS目录项：DirEntry结构与操作函数 ^O76hPAjM
+EFS目錄項：DirEntry結構與操作函數 ^O76hPAjM
 
 SuperBlk ^LQRX0KcL
 
@@ -3705,13 +3705,13 @@ Block Device ^KrEZtTAZ
 			"link": null,
 			"fontSize": 21.437911688112763,
 			"fontFamily": 4,
-			"text": "进程对文件的操作函数",
-			"rawText": "进程对文件的操作函数",
+			"text": "進程對文件的操作函數",
+			"rawText": "進程對文件的操作函數",
 			"baseline": 20,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程对文件的操作函数"
+			"originalText": "進程對文件的操作函數"
 		},
 		{
 			"type": "rectangle",
@@ -3838,13 +3838,13 @@ Block Device ^KrEZtTAZ
 			"link": null,
 			"fontSize": 21.437911688112763,
 			"fontFamily": 4,
-			"text": "文件是OSInode(内存中的Inode)",
-			"rawText": "文件是OSInode(内存中的Inode)",
+			"text": "文件是OSInode(內存中的Inode)",
+			"rawText": "文件是OSInode(內存中的Inode)",
 			"baseline": 20,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "文件是OSInode(内存中的Inode)"
+			"originalText": "文件是OSInode(內存中的Inode)"
 		},
 		{
 			"type": "text",
@@ -4000,13 +4000,13 @@ Block Device ^KrEZtTAZ
 			"link": null,
 			"fontSize": 14.22221447172617,
 			"fontFamily": 4,
-			"text": "打开文件是，需要\n找到inode的磁盘位置",
-			"rawText": "打开文件是，需要\n找到inode的磁盘位置",
+			"text": "打開文件是，需要\n找到inode的磁盤位置",
+			"rawText": "打開文件是，需要\n找到inode的磁盤位置",
 			"baseline": 28,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "打开文件是，需要\n找到inode的磁盘位置"
+			"originalText": "打開文件是，需要\n找到inode的磁盤位置"
 		},
 		{
 			"type": "text",
@@ -4034,13 +4034,13 @@ Block Device ^KrEZtTAZ
 			"link": null,
 			"fontSize": 16,
 			"fontFamily": 4,
-			"text": "根据OSInodeInner::offset\n找到数据对应的blk块并\n缓存到blkcache",
-			"rawText": "根据OSInodeInner::offset\n找到数据对应的blk块并\n缓存到blkcache",
+			"text": "根據OSInodeInner::offset\n找到數據對應的blk塊並\n緩存到blkcache",
+			"rawText": "根據OSInodeInner::offset\n找到數據對應的blk塊並\n緩存到blkcache",
 			"baseline": 50,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "根据OSInodeInner::offset\n找到数据对应的blk块并\n缓存到blkcache"
+			"originalText": "根據OSInodeInner::offset\n找到數據對應的blk塊並\n緩存到blkcache"
 		},
 		{
 			"type": "text",
@@ -4068,13 +4068,13 @@ Block Device ^KrEZtTAZ
 			"link": null,
 			"fontSize": 16,
 			"fontFamily": 4,
-			"text": "blk cache没缓存，\n则blk驱动读取磁盘块",
-			"rawText": "blk cache没缓存，\n则blk驱动读取磁盘块",
+			"text": "blk cache沒緩存，\n則blk驅動讀取磁盤塊",
+			"rawText": "blk cache沒緩存，\n則blk驅動讀取磁盤塊",
 			"baseline": 32,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "blk cache没缓存，\n则blk驱动读取磁盘块"
+			"originalText": "blk cache沒緩存，\n則blk驅動讀取磁盤塊"
 		},
 		{
 			"type": "text",
@@ -4102,13 +4102,13 @@ Block Device ^KrEZtTAZ
 			"link": null,
 			"fontSize": 18.091519224877466,
 			"fontFamily": 4,
-			"text": "EFS的文件系统结构与操作函数",
-			"rawText": "EFS的文件系统结构与操作函数",
+			"text": "EFS的文件系統結構與操作函數",
+			"rawText": "EFS的文件系統結構與操作函數",
 			"baseline": 16,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "EFS的文件系统结构与操作函数"
+			"originalText": "EFS的文件系統結構與操作函數"
 		},
 		{
 			"type": "text",
@@ -4136,13 +4136,13 @@ Block Device ^KrEZtTAZ
 			"link": null,
 			"fontSize": 16,
 			"fontFamily": 4,
-			"text": "VFS上的Inode和操作函数",
-			"rawText": "VFS上的Inode和操作函数",
+			"text": "VFS上的Inode和操作函數",
+			"rawText": "VFS上的Inode和操作函數",
 			"baseline": 15,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "VFS上的Inode和操作函数"
+			"originalText": "VFS上的Inode和操作函數"
 		},
 		{
 			"type": "text",
@@ -4170,13 +4170,13 @@ Block Device ^KrEZtTAZ
 			"link": null,
 			"fontSize": 18.091519224877466,
 			"fontFamily": 4,
-			"text": "EFS文件：DiskInode结构与操作函数",
-			"rawText": "EFS文件：DiskInode结构与操作函数",
+			"text": "EFS文件：DiskInode結構與操作函數",
+			"rawText": "EFS文件：DiskInode結構與操作函數",
 			"baseline": 16,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "EFS文件：DiskInode结构与操作函数"
+			"originalText": "EFS文件：DiskInode結構與操作函數"
 		},
 		{
 			"type": "text",
@@ -4204,13 +4204,13 @@ Block Device ^KrEZtTAZ
 			"link": null,
 			"fontSize": 18.091519224877466,
 			"fontFamily": 4,
-			"text": "EFS目录项：DirEntry结构与操作函数",
-			"rawText": "EFS目录项：DirEntry结构与操作函数",
+			"text": "EFS目錄項：DirEntry結構與操作函數",
+			"rawText": "EFS目錄項：DirEntry結構與操作函數",
 			"baseline": 16,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "EFS目录项：DirEntry结构与操作函数"
+			"originalText": "EFS目錄項：DirEntry結構與操作函數"
 		},
 		{
 			"id": "OLKnymrK8LB4uCqEn9k9g",

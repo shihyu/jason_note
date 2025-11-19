@@ -264,15 +264,15 @@ fn debug_info() {
     // release 模式下什麼都不做
 }
 
-// 平台特定編譯
+// 平臺特定編譯
 #[cfg(target_os = "windows")]
 fn platform_specific() {
-    println!("Windows 平台");
+    println!("Windows 平臺");
 }
 
 #[cfg(target_os = "linux")]
 fn platform_specific() {
-    println!("Linux 平台");
+    println!("Linux 平臺");
 }
 ```
 

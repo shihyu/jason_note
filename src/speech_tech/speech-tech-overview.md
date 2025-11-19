@@ -36,7 +36,7 @@
 
 #### 常見挑戰
 - 口音和方言差異
-- 背景噪音干擾
+- 背景噪音幹擾
 - 多人對話場景
 - 領域專業詞彙
 
@@ -80,11 +80,11 @@
 
 ### 4. 語音增強 (Speech Enhancement)
 
-提升語音品質，去除噪音和干擾。
+提升語音品質，去除噪音和幹擾。
 
 #### 技術
 - **降噪 (Noise Reduction)**
-- **回音消除 (Echo Cancellation)**
+- **迴音消除 (Echo Cancellation)**
 - **語音分離 (Source Separation)**
 - **語音修復 (Speech Restoration)**
 
@@ -171,7 +171,7 @@
 
 #### 1. **sherpa-onnx**
 - 離線語音處理
-- 支援多平台
+- 支援多平臺
 - [詳細指南](sherpa-onnx-完整指南.md)
 
 #### 2. **OpenAI Whisper**
@@ -222,11 +222,11 @@ pip install pydub
 - 功能強大但學習曲線陡峭
 
 #### 2. **ONNX Runtime**
-- 跨平台推理引擎
+- 跨平臺推理引擎
 - sherpa-onnx 的核心
 
 #### 3. **PortAudio**
-- 跨平台音頻 I/O
+- 跨平臺音頻 I/O
 
 ---
 
@@ -335,7 +335,7 @@ pip install pydub
 - **NIST** - 語音評測標準制定
 
 #### 開源社群
-- **Hugging Face** - 模型分享平台
+- **Hugging Face** - 模型分享平臺
 - **Papers with Code** - 論文與程式碼
 - **Reddit r/MachineLearning** - 討論社群
 
@@ -347,7 +347,7 @@ pip install pydub
 
 #### 1. **sherpa-onnx**
 - ⭐ 離線語音處理首選
-- 📦 支援多平台部署
+- 📦 支援多平臺部署
 - [GitHub](https://github.com/k2-fsa/sherpa-onnx)
 
 #### 2. **OpenAI Whisper**

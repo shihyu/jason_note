@@ -790,7 +790,7 @@ fn work_distribution_example() {
 }
 ```
 
-### 跨平台高效能 Channel (crossbeam)
+### 跨平臺高效能 Channel (crossbeam)
 
 ```rust
 // 注意：此範例需要在 Cargo.toml 中添加：crossbeam = "0.8"

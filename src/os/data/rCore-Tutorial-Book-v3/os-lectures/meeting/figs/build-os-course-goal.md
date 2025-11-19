@@ -7,21 +7,21 @@ excalidraw-plugin: parsed
 
 
 # Text Elements
-迭代实践 ^yWe49261
+迭代實踐 ^yWe49261
 
-迭代认识 ^cLt7xIgf
+迭代認識 ^cLt7xIgf
 
-应用需求 ^jpbBZ40h
+應用需求 ^jpbBZ40h
 
-为什么要解决 ^HACJf5SX
+為什麼要解決 ^HACJf5SX
 
-如何解决 ^jwHIYNWJ
+如何解決 ^jwHIYNWJ
 
-能否解决新问题 ^GB9o5HII
+能否解決新問題 ^GB9o5HII
 
-是否适合一类应用需求 ^32MRYbDy
+是否適合一類應用需求 ^32MRYbDy
 
-形成规律 ^bl1So8UK
+形成規律 ^bl1So8UK
 
 
 # Embedded files
@@ -104,13 +104,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 66.42831193648239,
 			"fontFamily": 4,
-			"text": "迭代实践",
-			"rawText": "迭代实践",
+			"text": "迭代實踐",
+			"rawText": "迭代實踐",
 			"baseline": 60,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "迭代实践"
+			"originalText": "迭代實踐"
 		},
 		{
 			"type": "rectangle",
@@ -185,13 +185,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 61.03914586509145,
 			"fontFamily": 4,
-			"text": "迭代认识",
-			"rawText": "迭代认识",
+			"text": "迭代認識",
+			"rawText": "迭代認識",
 			"baseline": 55,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "迭代认识"
+			"originalText": "迭代認識"
 		},
 		{
 			"type": "text",
@@ -219,13 +219,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 29.56024169921873,
 			"fontFamily": 4,
-			"text": "应用需求",
-			"rawText": "应用需求",
+			"text": "應用需求",
+			"rawText": "應用需求",
 			"baseline": 26,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "应用需求"
+			"originalText": "應用需求"
 		},
 		{
 			"type": "text",
@@ -253,13 +253,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 29.56024169921873,
 			"fontFamily": 4,
-			"text": "为什么要解决",
-			"rawText": "为什么要解决",
+			"text": "為什麼要解決",
+			"rawText": "為什麼要解決",
 			"baseline": 26,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "为什么要解决"
+			"originalText": "為什麼要解決"
 		},
 		{
 			"type": "text",
@@ -287,13 +287,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 29.56024169921873,
 			"fontFamily": 4,
-			"text": "如何解决",
-			"rawText": "如何解决",
+			"text": "如何解決",
+			"rawText": "如何解決",
 			"baseline": 26,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "如何解决"
+			"originalText": "如何解決"
 		},
 		{
 			"type": "text",
@@ -321,13 +321,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 29.56024169921873,
 			"fontFamily": 4,
-			"text": "能否解决新问题",
-			"rawText": "能否解决新问题",
+			"text": "能否解決新問題",
+			"rawText": "能否解決新問題",
 			"baseline": 26,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "能否解决新问题"
+			"originalText": "能否解決新問題"
 		},
 		{
 			"type": "text",
@@ -355,13 +355,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 29.56024169921873,
 			"fontFamily": 4,
-			"text": "是否适合一类应用需求",
-			"rawText": "是否适合一类应用需求",
+			"text": "是否適合一類應用需求",
+			"rawText": "是否適合一類應用需求",
 			"baseline": 26,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "是否适合一类应用需求"
+			"originalText": "是否適合一類應用需求"
 		},
 		{
 			"type": "image",
@@ -526,13 +526,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 29.56024169921873,
 			"fontFamily": 4,
-			"text": "形成规律",
-			"rawText": "形成规律",
+			"text": "形成規律",
+			"rawText": "形成規律",
 			"baseline": 26,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "形成规律"
+			"originalText": "形成規律"
 		}
 	],
 	"appState": {

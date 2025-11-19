@@ -1,25 +1,25 @@
-# Linux 内核版本的 BPF 功能
+# Linux 內核版本的 BPF 功能
 
 ## eBPF支持
 
-内核版本 | 提交
+內核版本 | 提交
 --------|------
 3.15 | [`bd4cf0ed331a`](https://github.com/torvalds/linux/commit/bd4cf0ed331a275e9bf5a49e6d0fd55dffc551b8)
 
-## JIT编译
+## JIT編譯
 
-可以使用以下命令获取内核支持的体系结构列表：
+可以使用以下命令獲取內核支持的體系結構列表：
 
 ```sh
 git grep HAVE_EBPF_JIT arch/
 ```
 
-功能 / 体系结构 | 内核版本 | 提交
+功能 / 體系結構 | 內核版本 | 提交
 -----------------|----------|------
 x86\_64                            | 3.16 | [`622582786c9e`](https://github.com/torvalds/linux/commit/622582786c9e041d0bd52bde201787adeab249f8)
 ARM64                              | 3.18 | [`e54bcde3d69d`](https://github.com/torvalds/linux/commit/e54bcde3d69d40023ae77727213d14f920eb264a)
 s390                               | 4.1  | [`054623105728`](https://github.com/torvalds/linux/commit/054623105728b06852f077299e2bf1bf3d5f2b0b)
-JIT机器的常量混淆                 | 4.7  | [`4f3446bb809f`](https://github.com/torvalds/linux/commit/4f3446bb809f20ad56cadf712e6006815ae7a8f9)
+JIT機器的常量混淆                 | 4.7  | [`4f3446bb809f`](https://github.com/torvalds/linux/commit/4f3446bb809f20ad56cadf712e6006815ae7a8f9)
 PowerPC64                          | 4.8  | [`156d0e290e96`](https://github.com/torvalds/linux/commit/156d0e290e969caba25f1851c52417c14d141b24)
 常量混淆 - PowerPC64                | 4.9  | [`b7b7013cac55`](https://github.com/torvalds/linux/commit/b7b7013cac55d794940bd9cb7b7c55c9dececac4)
 Sparc64                            | 4.12 | [`7a12b5031c6b`](https://github.com/torvalds/linux/commit/7a12b5031c6b947cc13918237ae652b536243b76)
@@ -32,105 +32,105 @@ LoongArch                          | 6.1  | [`5dc615520c4d`](https://github.com/
 
 ## 主要特性
 
-其中几个（但不是全部）_主要特性_ 可以转换为 eBPF 程序类型。
-您的内核支持的此类程序类型的列表可以在文件 [`include/uapi/linux/bpf.h`](https://github.com/torvalds/linux/blob/master/include/uapi/linux/bpf.h) 中找到：
+其中幾個（但不是全部）_主要特性_ 可以轉換為 eBPF 程序類型。
+您的內核支持的此類程序類型的列表可以在文件 [`include/uapi/linux/bpf.h`](https://github.com/torvalds/linux/blob/master/include/uapi/linux/bpf.h) 中找到：
 
 ```sh
 git grep -W 'bpf_prog_type {' include/uapi/linux/bpf.h
 ```
 
-特性 | 内核版本 | 提交
+特性 | 內核版本 | 提交
 ----|---------|-----
-`AF_PACKET` (libpcap/tcpdump, `cls_bpf` 分类器, netfilter 的 `xt_bpf`, team 驱动程序的负载均衡模式…) | 3.15 | [`bd4cf0ed331a`](https://github.com/torvalds/linux/commit/bd4cf0ed331a275e9bf5a49e6d0fd55dffc551b8)
-内核助手 | 3.15 | [`bd4cf0ed331a`](https://github.com/torvalds/linux/commit/bd4cf0ed331a275e9bf5a49e6d0fd55dffc551b8)
-`bpf()` 系统调用 | 3.18 | [`99c55f7d47c0`](https://github.com/torvalds/linux/commit/99c55f7d47c0dc6fc64729f37bf435abf43f4c60)
-Maps (_又名_ 表; 详见下文) | 3.18 | [`99c55f7d47c0`](https://github.com/torvalds/linux/commit/99c55f7d47c0dc6fc64729f37bf435abf43f4c60)
+`AF_PACKET` (libpcap/tcpdump, `cls_bpf` 分類器, netfilter 的 `xt_bpf`, team 驅動程序的負載均衡模式…) | 3.15 | [`bd4cf0ed331a`](https://github.com/torvalds/linux/commit/bd4cf0ed331a275e9bf5a49e6d0fd55dffc551b8)
+內核助手 | 3.15 | [`bd4cf0ed331a`](https://github.com/torvalds/linux/commit/bd4cf0ed331a275e9bf5a49e6d0fd55dffc551b8)
+`bpf()` 系統調用 | 3.18 | [`99c55f7d47c0`](https://github.com/torvalds/linux/commit/99c55f7d47c0dc6fc64729f37bf435abf43f4c60)
+Maps (_又名_ 表; 詳見下文) | 3.18 | [`99c55f7d47c0`](https://github.com/torvalds/linux/commit/99c55f7d47c0dc6fc64729f37bf435abf43f4c60)
 BPF 附加到套接字 | 3.19 | [`89aa075832b0`](https://github.com/torvalds/linux/commit/89aa075832b0da4402acebd698d0411dcc82d03e)
 BPF 附加到 `kprobes` | 4.1 | [`2541517c32be`](https://github.com/torvalds/linux/commit/2541517c32be2531e0da59dfd7efc1ce844644f5)
-`cls_bpf` / `act_bpf` 用于 `tc` | 4.1 | [`e2e9b6541dd4`](https://github.com/torvalds/linux/commit/e2e9b6541dd4b31848079da80fe2253daaafb549)
-尾调用 | 4.2 | [`04fd61ab36ec`](https://github.com/torvalds/linux/commit/04fd61ab36ec065e194ab5e74ae34a5240d992bb)非根程序上的套接字 | 4.4 | [`1be7f75d1668`](https://github.com/torvalds/linux/commit/1be7f75d1668d6296b80bf35dcf6762393530afc)
-持久映射和程序（虚拟文件系统） | 4.4 | [`b2197755b263`](https://github.com/torvalds/linux/commit/b2197755b2633e164a439682fb05a9b5ea48f706)
+`cls_bpf` / `act_bpf` 用於 `tc` | 4.1 | [`e2e9b6541dd4`](https://github.com/torvalds/linux/commit/e2e9b6541dd4b31848079da80fe2253daaafb549)
+尾調用 | 4.2 | [`04fd61ab36ec`](https://github.com/torvalds/linux/commit/04fd61ab36ec065e194ab5e74ae34a5240d992bb)非根程序上的套接字 | 4.4 | [`1be7f75d1668`](https://github.com/torvalds/linux/commit/1be7f75d1668d6296b80bf35dcf6762393530afc)
+持久映射和程序（虛擬文件系統） | 4.4 | [`b2197755b263`](https://github.com/torvalds/linux/commit/b2197755b2633e164a439682fb05a9b5ea48f706)
 `tc`的`direct-action`(`da`)模式 | 4.4 | [`045efa82ff56`](https://github.com/torvalds/linux/commit/045efa82ff563cd4e656ca1c2e354fa5bf6bbda4)
 `tc`的`clsact`qdisc | 4.5 | [`1f211a1b929c`](https://github.com/torvalds/linux/commit/1f211a1b929c804100e138c5d3d656992cfd5622)
-BPF连接到跟踪点 | 4.7 | [`98b5c2c65c29`](https://github.com/torvalds/linux/commit/98b5c2c65c2951772a8fc661f50d675e450e8bce)
-直接数据包访问 | 4.7 | [`969bf05eb3ce`](https://github.com/torvalds/linux/commit/969bf05eb3cedd5a8d4b7c346a85c2ede87a6d6d)
-XDP（参见下文）| 4.8 | [`6a773a15a1e8`](https://github.com/torvalds/linux/commit/6a773a15a1e8874e5eccd2f29190c31085912c95)
-BPF连接到性能事件 | 4.9 | [`0515e5999a46`](https://github.com/torvalds/linux/commit/0515e5999a466dfe6e1924f460da599bb6821487)
-`tc`的`cls_bpf`的硬件卸载 | 4.9 | [`332ae8e2f6ec`](https://github.com/torvalds/linux/commit/332ae8e2f6ecda5e50c5c62ed62894963e3a83f5)
-验证器暴露和内部钩子 | 4.9 | [`13a27dfc6697`](https://github.com/torvalds/linux/commit/13a27dfc669724564aafa2699976ee756029fed2)
-BPF连接到 cgroups 用于套接字过滤 | 4.10 | [`0e33661de493`](https://github.com/torvalds/linux/commit/0e33661de493db325435d565a4a722120ae4cbf3)
-轻量级隧道封装 | 4.10 | [`3a0af8fd61f9`](https://github.com/torvalds/linux/commit/3a0af8fd61f90920f6fa04e4f1e9a6a73c1b4fd2)
-**e**BPF对`xt_bpf`模块（iptables）的支持 | 4.10 | [`2c16d6033264`](https://github.com/torvalds/linux/commit/2c16d60332643e90d4fa244f4a706c454b8c7569)
-BPF程序标签 | 4.10 | [`7bd509e311f4`](https://github.com/torvalds/linux/commit/7bd509e311f408f7a5132fcdde2069af65fa05ae)跟踪点以调试BPF | 4.11（在4.18中移除） | [`a67edbf4fb6d`](https://github.com/torvalds/linux/commit/a67edbf4fb6deadcfe57a04a134abed4a5ba3bb5) [`4d220ed0f814`](https://github.com/torvalds/linux/commit/4d220ed0f8140c478ab7b0a14d96821da639b646)
-测试/基准测试BPF程序 | 4.12 | [`1cf1cae963c2`](https://github.com/torvalds/linux/commit/1cf1cae963c2e6032aebe1637e995bc2f5d330f4)
+BPF連接到跟蹤點 | 4.7 | [`98b5c2c65c29`](https://github.com/torvalds/linux/commit/98b5c2c65c2951772a8fc661f50d675e450e8bce)
+直接數據包訪問 | 4.7 | [`969bf05eb3ce`](https://github.com/torvalds/linux/commit/969bf05eb3cedd5a8d4b7c346a85c2ede87a6d6d)
+XDP（參見下文）| 4.8 | [`6a773a15a1e8`](https://github.com/torvalds/linux/commit/6a773a15a1e8874e5eccd2f29190c31085912c95)
+BPF連接到性能事件 | 4.9 | [`0515e5999a46`](https://github.com/torvalds/linux/commit/0515e5999a466dfe6e1924f460da599bb6821487)
+`tc`的`cls_bpf`的硬件卸載 | 4.9 | [`332ae8e2f6ec`](https://github.com/torvalds/linux/commit/332ae8e2f6ecda5e50c5c62ed62894963e3a83f5)
+驗證器暴露和內部鉤子 | 4.9 | [`13a27dfc6697`](https://github.com/torvalds/linux/commit/13a27dfc669724564aafa2699976ee756029fed2)
+BPF連接到 cgroups 用於套接字過濾 | 4.10 | [`0e33661de493`](https://github.com/torvalds/linux/commit/0e33661de493db325435d565a4a722120ae4cbf3)
+輕量級隧道封裝 | 4.10 | [`3a0af8fd61f9`](https://github.com/torvalds/linux/commit/3a0af8fd61f90920f6fa04e4f1e9a6a73c1b4fd2)
+**e**BPF對`xt_bpf`模塊（iptables）的支持 | 4.10 | [`2c16d6033264`](https://github.com/torvalds/linux/commit/2c16d60332643e90d4fa244f4a706c454b8c7569)
+BPF程序標籤 | 4.10 | [`7bd509e311f4`](https://github.com/torvalds/linux/commit/7bd509e311f408f7a5132fcdde2069af65fa05ae)跟蹤點以調試BPF | 4.11（在4.18中移除） | [`a67edbf4fb6d`](https://github.com/torvalds/linux/commit/a67edbf4fb6deadcfe57a04a134abed4a5ba3bb5) [`4d220ed0f814`](https://github.com/torvalds/linux/commit/4d220ed0f8140c478ab7b0a14d96821da639b646)
+測試/基準測試BPF程序 | 4.12 | [`1cf1cae963c2`](https://github.com/torvalds/linux/commit/1cf1cae963c2e6032aebe1637e995bc2f5d330f4)
 BPF程序和映射ID | 4.13 | [`dc4bb0e23561`](https://github.com/torvalds/linux/commit/dc4bb0e2356149aee4cdae061936f3bbdd45595c)
-BPF对`sock_ops`的支持 | 4.13 | [`40304b2a1567`](https://github.com/torvalds/linux/commit/40304b2a1567fecc321f640ee4239556dd0f3ee0)
-BPF对套接字上的skb的支持 | 4.14 | [`b005fd189cec`](https://github.com/torvalds/linux/commit/b005fd189cec9407b700599e1e80e0552446ee79)
-内核源码中的bpftool实用程序 | 4.15 | [`71bb428fe2c1`](https://github.com/torvalds/linux/commit/71bb428fe2c19512ac671d5ee16ef3e73e1b49a8)
-BPF附加到cgroups作为设备控制器 | 4.15 | [`ebc614f68736`](https://github.com/torvalds/linux/commit/ebc614f687369f9df99828572b1d85a7c2de3d92)
-bpf2bpf函数调用 | 4.16 |  [`cc8b0b92a169`](https://github.com/torvalds/linux/commit/cc8b0b92a1699bc32f7fec71daa2bfc90de43a4d)
-BPF用于监视套接字RX/TX数据 | 4.17 | [`4f738adba30a`](https://github.com/torvalds/linux/commit/4f738adba30a7cfc006f605707e7aee847ffefa0)
-BPF附加到原始跟踪点 | 4.17 | [`c4f6699dfcb8`](https://github.com/torvalds/linux/commit/c4f6699dfcb8558d138fe838f741b2c10f416cf9)
-BPF附加到`bind()`系统调用 | 4.17 | [`4fbac77d2d09`](https://github.com/torvalds/linux/commit/4fbac77d2d092b475dda9eea66da674369665427) [`aac3fc320d94`](https://github.com/torvalds/linux/commit/aac3fc320d9404f2665a8b1249dc3170d5fa3caf)
-BPF附加到`connect()`系统调用 | 4.17 | [`d74bad4e74ee`](https://github.com/torvalds/linux/commit/d74bad4e74ee373787a9ae24197c17b7cdc428d5)BPF 类型格式（BTF）| 4.18 | [`69b693f0aefa`](https://github.com/torvalds/linux/commit/69b693f0aefa0ed521e8bd02260523b5ae446ad7)
+BPF對`sock_ops`的支持 | 4.13 | [`40304b2a1567`](https://github.com/torvalds/linux/commit/40304b2a1567fecc321f640ee4239556dd0f3ee0)
+BPF對套接字上的skb的支持 | 4.14 | [`b005fd189cec`](https://github.com/torvalds/linux/commit/b005fd189cec9407b700599e1e80e0552446ee79)
+內核源碼中的bpftool實用程序 | 4.15 | [`71bb428fe2c1`](https://github.com/torvalds/linux/commit/71bb428fe2c19512ac671d5ee16ef3e73e1b49a8)
+BPF附加到cgroups作為設備控制器 | 4.15 | [`ebc614f68736`](https://github.com/torvalds/linux/commit/ebc614f687369f9df99828572b1d85a7c2de3d92)
+bpf2bpf函數調用 | 4.16 |  [`cc8b0b92a169`](https://github.com/torvalds/linux/commit/cc8b0b92a1699bc32f7fec71daa2bfc90de43a4d)
+BPF用於監視套接字RX/TX數據 | 4.17 | [`4f738adba30a`](https://github.com/torvalds/linux/commit/4f738adba30a7cfc006f605707e7aee847ffefa0)
+BPF附加到原始跟蹤點 | 4.17 | [`c4f6699dfcb8`](https://github.com/torvalds/linux/commit/c4f6699dfcb8558d138fe838f741b2c10f416cf9)
+BPF附加到`bind()`系統調用 | 4.17 | [`4fbac77d2d09`](https://github.com/torvalds/linux/commit/4fbac77d2d092b475dda9eea66da674369665427) [`aac3fc320d94`](https://github.com/torvalds/linux/commit/aac3fc320d9404f2665a8b1249dc3170d5fa3caf)
+BPF附加到`connect()`系統調用 | 4.17 | [`d74bad4e74ee`](https://github.com/torvalds/linux/commit/d74bad4e74ee373787a9ae24197c17b7cdc428d5)BPF 類型格式（BTF）| 4.18 | [`69b693f0aefa`](https://github.com/torvalds/linux/commit/69b693f0aefa0ed521e8bd02260523b5ae446ad7)
 AF_XDP | 4.18 | [`fbfc504a24f5`](https://github.com/torvalds/linux/commit/fbfc504a24f53f7ebe128ab55cb5dba634f4ece8)
 bpfilter | 4.18 | [`d2ba09c17a06`](https://github.com/torvalds/linux/commit/d2ba09c17a0647f899d6c20a11bab9e6d3382f07)
 seg6local LWT 的 End.BPF 操作 | 4.18 | [`004d4b274e2a`](https://github.com/torvalds/linux/commit/004d4b274e2a1a895a0e5dc66158b90a7d463d44)
-BPF 附加到 LIRC 设备 | 4.18 | [`f4364dcfc86d`](https://github.com/torvalds/linux/commit/f4364dcfc86df7c1ca47b256eaf6b6d0cdd0d936)
-将映射值传递给映射助手 | 4.18 | [`d71962f3e627`](https://github.com/torvalds/linux/commit/d71962f3e627b5941804036755c844fabfb65ff5)
-BPF 套接字复用端口 | 4.19 | [`2dbb9b9e6df6`](https://github.com/torvalds/linux/commit/2dbb9b9e6df67d444fbe425c7f6014858d337adf)
+BPF 附加到 LIRC 設備 | 4.18 | [`f4364dcfc86d`](https://github.com/torvalds/linux/commit/f4364dcfc86df7c1ca47b256eaf6b6d0cdd0d936)
+將映射值傳遞給映射助手 | 4.18 | [`d71962f3e627`](https://github.com/torvalds/linux/commit/d71962f3e627b5941804036755c844fabfb65ff5)
+BPF 套接字複用端口 | 4.19 | [`2dbb9b9e6df6`](https://github.com/torvalds/linux/commit/2dbb9b9e6df67d444fbe425c7f6014858d337adf)
 BPF 流解剖器 | 4.20 | [`d58e468b1112`](https://github.com/torvalds/linux/commit/d58e468b1112dcd1d5193c0a89ff9f98b5a3e8b9)
 BPF 1M 指令限制 | 5.2 | [`c04c0d2b968a`](https://github.com/torvalds/linux/commit/c04c0d2b968ac45d6ef020316808ef6c82325a82)
-BPF 控制组 sysctl | 5.2 | [`7b146cebe30c`](https://github.com/torvalds/linux/commit/7b146cebe30cb481b0f70d85779da938da818637)
-BPF 原始跟踪点可写 | 5.2 | [`9df1c28bb752`](https://github.com/torvalds/linux/commit/9df1c28bb75217b244257152ab7d788bb2a386d0)
-BPF 有界循环 | 5.3 | [`2589726d12a1`](https://github.com/torvalds/linux/commit/2589726d12a1b12eaaa93c7f1ea64287e383c7a5)
+BPF 控制組 sysctl | 5.2 | [`7b146cebe30c`](https://github.com/torvalds/linux/commit/7b146cebe30cb481b0f70d85779da938da818637)
+BPF 原始跟蹤點可寫 | 5.2 | [`9df1c28bb752`](https://github.com/torvalds/linux/commit/9df1c28bb75217b244257152ab7d788bb2a386d0)
+BPF 有界循環 | 5.3 | [`2589726d12a1`](https://github.com/torvalds/linux/commit/2589726d12a1b12eaaa93c7f1ea64287e383c7a5)
 BPF 跳板 | 5.5 | [`fec56f5890d9`](https://github.com/torvalds/linux/commit/fec56f5890d93fc2ed74166c397dc186b1c25951)
-BPF LSM 钩子 | 5.7 | [`fc611f47f218`](https://github.com/torvalds/linux/commit/fc611f47f2188ade2b48ff6902d5cce8baac0c58) [`641cd7b06c91`](https://github.com/torvalds/linux/commit/641cd7b06c911c5935c34f24850ea18690649917)
-BPF 迭代器 | 5.8 | [`180139dca8b3`](https://github.com/torvalds/linux/commit/180139dca8b38c858027b8360ee10064fdb2fbf7)BPF套接字查找挂钩 | 5.9 | [`e9ddbb7707ff`](https://github.com/torvalds/linux/commit/e9ddbb7707ff5891616240026062b8c1e29864ca)
+BPF LSM 鉤子 | 5.7 | [`fc611f47f218`](https://github.com/torvalds/linux/commit/fc611f47f2188ade2b48ff6902d5cce8baac0c58) [`641cd7b06c91`](https://github.com/torvalds/linux/commit/641cd7b06c911c5935c34f24850ea18690649917)
+BPF 迭代器 | 5.8 | [`180139dca8b3`](https://github.com/torvalds/linux/commit/180139dca8b38c858027b8360ee10064fdb2fbf7)BPF套接字查找掛鉤 | 5.9 | [`e9ddbb7707ff`](https://github.com/torvalds/linux/commit/e9ddbb7707ff5891616240026062b8c1e29864ca)
 可睡眠的BPF程序 | 5.10 | [`1e6c62a88215`](https://github.com/torvalds/linux/commit/1e6c62a8821557720a9b2ea9617359b264f2f67c)
 
-### 程序类型
+### 程序類型
 
-程序类型 | 内核版本 | 提交 | 枚举
+程序類型 | 內核版本 | 提交 | 枚舉
 -------------|----------------|--------|-----
-套接字过滤器          | 3.19 | [`ddd872bc3098`](https://github.com/torvalds/linux/commit/ddd872bc3098f9d9abe1680a6b2013e59e3337f7) | BPF_PROG_TYPE_SOCKET_FILTER
+套接字過濾器          | 3.19 | [`ddd872bc3098`](https://github.com/torvalds/linux/commit/ddd872bc3098f9d9abe1680a6b2013e59e3337f7) | BPF_PROG_TYPE_SOCKET_FILTER
 Kprobe                         | 4.1  | [`2541517c32be`](https://github.com/torvalds/linux/commit/2541517c32be2531e0da59dfd7efc1ce844644f5) | BPF_PROG_TYPE_KPROBE
 流量控制(TC)           | 4.1  | [`96be4325f443`](https://github.com/torvalds/linux/commit/96be4325f443dbbfeb37d2a157675ac0736531a1) | BPF_PROG_TYPE_SCHED_CLS
 流量控制(TC)           | 4.1  | [`94caee8c312d`](https://github.com/torvalds/linux/commit/94caee8c312d96522bcdae88791aaa9ebcd5f22c) | BPF_PROG_TYPE_SCHED_ACT
-跟踪点                     | 4.7  | [`98b5c2c65c29`](https://github.com/torvalds/linux/commit/98b5c2c65c2951772a8fc661f50d675e450e8bce) | BPF_PROG_TYPE_TRACEPOINT
+跟蹤點                     | 4.7  | [`98b5c2c65c29`](https://github.com/torvalds/linux/commit/98b5c2c65c2951772a8fc661f50d675e450e8bce) | BPF_PROG_TYPE_TRACEPOINT
 XDP                            | 4.8  | [`6a773a15a1e8`](https://github.com/torvalds/linux/commit/6a773a15a1e8874e5eccd2f29190c31085912c95) | BPF_PROG_TYPE_XDP
 性能事件                     | 4.9  | [`0515e5999a46`](https://github.com/torvalds/linux/commit/0515e5999a466dfe6e1924f460da599bb6821487) | BPF_PROG_TYPE_PERF_EVENT
-cgroup套接字过滤            | 4.10 | [`0e33661de493`](https://github.com/torvalds/linux/commit/0e33661de493db325435d565a4a722120ae4cbf3) | BPF_PROG_TYPE_CGROUP_SKB
+cgroup套接字過濾            | 4.10 | [`0e33661de493`](https://github.com/torvalds/linux/commit/0e33661de493db325435d565a4a722120ae4cbf3) | BPF_PROG_TYPE_CGROUP_SKB
 cgroup套接字修改          | 4.10 | [`610236587600`](https://github.com/torvalds/linux/commit/61023658760032e97869b07d54be9681d2529e77) | BPF_PROG_TYPE_CGROUP_SOCK
-轻量级隧道(IN)           | 4.10 | [`3a0af8fd61f9`](https://github.com/torvalds/linux/commit/3a0af8fd61f90920f6fa04e4f1e9a6a73c1b4fd2) | BPF_PROG_TYPE_LWT_IN".lightweight tunnel (OUT)       | 4.10 | [`3a0af8fd61f9`](https://github.com/torvalds/linux/commit/3a0af8fd61f90920f6fa04e4f1e9a6a73c1b4fd2) | BPF_PROG_TYPE_LWT_OUT
-轻量级隧道 (OUT)          | 4.10 | [`3a0af8fd61f9`](https://github.com/torvalds/linux/commit/3a0af8fd61f90920f6fa04e4f1e9a6a73c1b4fd2) | BPF_PROG_TYPE_LWT_OUT
+輕量級隧道(IN)           | 4.10 | [`3a0af8fd61f9`](https://github.com/torvalds/linux/commit/3a0af8fd61f90920f6fa04e4f1e9a6a73c1b4fd2) | BPF_PROG_TYPE_LWT_IN".lightweight tunnel (OUT)       | 4.10 | [`3a0af8fd61f9`](https://github.com/torvalds/linux/commit/3a0af8fd61f90920f6fa04e4f1e9a6a73c1b4fd2) | BPF_PROG_TYPE_LWT_OUT
+輕量級隧道 (OUT)          | 4.10 | [`3a0af8fd61f9`](https://github.com/torvalds/linux/commit/3a0af8fd61f90920f6fa04e4f1e9a6a73c1b4fd2) | BPF_PROG_TYPE_LWT_OUT
 
 lightweight tunnel (XMIT)      | 4.10 | [`3a0af8fd61f9`](https://github.com/torvalds/linux/commit/3a0af8fd61f90920f6fa04e4f1e9a6a73c1b4fd2) | BPF_PROG_TYPE_LWT_XMIT
-轻量级隧道 (XMIT)         | 4.10 | [`3a0af8fd61f9`](https://github.com/torvalds/linux/commit/3a0af8fd61f90920f6fa04e4f1e9a6a73c1b4fd2) | BPF_PROG_TYPE_LWT_XMIT
+輕量級隧道 (XMIT)         | 4.10 | [`3a0af8fd61f9`](https://github.com/torvalds/linux/commit/3a0af8fd61f90920f6fa04e4f1e9a6a73c1b4fd2) | BPF_PROG_TYPE_LWT_XMIT
 
 cgroup sock ops (per conn)     | 4.13 | [`40304b2a1567`](https://github.com/torvalds/linux/commit/40304b2a1567fecc321f640ee4239556dd0f3ee0) | BPF_PROG_TYPE_SOCK_OPS
-cgroup sock操作 (每个连接)   | 4.13 | [`40304b2a1567`](https://github.com/torvalds/linux/commit/40304b2a1567fecc321f640ee4239556dd0f3ee0) | BPF_PROG_TYPE_SOCK_OPS
+cgroup sock操作 (每個連接)   | 4.13 | [`40304b2a1567`](https://github.com/torvalds/linux/commit/40304b2a1567fecc321f640ee4239556dd0f3ee0) | BPF_PROG_TYPE_SOCK_OPS
 
 stream parser / stream verdict | 4.14 | [`b005fd189cec`](https://github.com/torvalds/linux/commit/b005fd189cec9407b700599e1e80e0552446ee79) | BPF_PROG_TYPE_SK_SKB
 流分析器 / 流判定     | 4.14 | [`b005fd189cec`](https://github.com/torvalds/linux/commit/b005fd189cec9407b700599e1e80e0552446ee79) | BPF_PROG_TYPE_SK_SKB
 
 cgroup device manager          | 4.15 | [`ebc614f68736`](https://github.com/torvalds/linux/commit/ebc614f687369f9df99828572b1d85a7c2de3d92) | BPF_PROG_TYPE_CGROUP_DEVICE
-cgroup设备管理器          | 4.15 | [`ebc614f68736`](https://github.com/torvalds/linux/commit/ebc614f687369f9df99828572b1d85a7c2de3d92) | BPF_PROG_TYPE_CGROUP_DEVICE
+cgroup設備管理器          | 4.15 | [`ebc614f68736`](https://github.com/torvalds/linux/commit/ebc614f687369f9df99828572b1d85a7c2de3d92) | BPF_PROG_TYPE_CGROUP_DEVICE
 
 socket msg verdict             | 4.17 | [`4f738adba30a`](https://github.com/torvalds/linux/commit/4f738adba30a7cfc006f605707e7aee847ffefa0) | BPF_PROG_TYPE_SK_MSG
 套接字消息判定         | 4.17 | [`4f738adba30a`](https://github.com/torvalds/linux/commit/4f738adba30a7cfc006f605707e7aee847ffefa0) | BPF_PROG_TYPE_SK_MSG
 
 Raw tracepoint                 | 4.17 | [`c4f6699dfcb8`](https://github.com/torvalds/linux/commit/c4f6699dfcb8558d138fe838f741b2c10f416cf9) | BPF_PROG_TYPE_RAW_TRACEPOINT
-裸跟踪点         | 4.17 | [`c4f6699dfcb8`](https://github.com/torvalds/linux/commit/c4f6699dfcb8558d138fe838f741b2c10f416cf9) | BPF_PROG_TYPE_RAW_TRACEPOINT
+裸跟蹤點         | 4.17 | [`c4f6699dfcb8`](https://github.com/torvalds/linux/commit/c4f6699dfcb8558d138fe838f741b2c10f416cf9) | BPF_PROG_TYPE_RAW_TRACEPOINT
 
 socket binding                 | 4.17 | [`4fbac77d2d09`](https://github.com/torvalds/linux/commit/4fbac77d2d092b475dda9eea66da674369665427) | BPF_PROG_TYPE_CGROUP_SOCK_ADDR
-套接字绑定         | 4.17 | [`4fbac77d2d09`](https://github.com/torvalds/linux/commit/4fbac77d2d092b475dda9eea66da674369665427) | BPF_PROG_TYPE_CGROUP_SOCK_ADDR
+套接字綁定         | 4.17 | [`4fbac77d2d09`](https://github.com/torvalds/linux/commit/4fbac77d2d092b475dda9eea66da674369665427) | BPF_PROG_TYPE_CGROUP_SOCK_ADDR
 
 LWT seg6local                  | 4.18 | [`004d4b274e2a`](https://github.com/torvalds/linux/commit/004d4b274e2a1a895a0e5dc66158b90a7d463d44) | BPF_PROG_TYPE_LWT_SEG6LOCAL
-轻量级隧道seg6local          | 4.18 | [`004d4b274e2a`](https://github.com/torvalds/linux/commit/004d4b274e2a1a895a0e5dc66158b90a7d463d44) | BPF_PROG_TYPE_LWT_SEG6LOCAL
+輕量級隧道seg6local          | 4.18 | [`004d4b274e2a`](https://github.com/torvalds/linux/commit/004d4b274e2a1a895a0e5dc66158b90a7d463d44) | BPF_PROG_TYPE_LWT_SEG6LOCAL
 
 lirc devices                   | 4.18 | [`f4364dcfc86d`](https://github.com/torvalds/linux/commit/f4364dcfc86df7c1ca47b256eaf6b6d0cdd0d936) | BPF_PROG_TYPE_LIRC_MODE2
-lirc设备          | 4.18 | [`f4364dcfc86d`](https://github.com/torvalds/linux/commit/f4364dcfc86df7c1ca47b256eaf6b6d0cdd0d936) | BPF_PROG_TYPE_LIRC_MODE2
+lirc設備          | 4.18 | [`f4364dcfc86d`](https://github.com/torvalds/linux/commit/f4364dcfc86df7c1ca47b256eaf6b6d0cdd0d936) | BPF_PROG_TYPE_LIRC_MODE2
 
 lookup SO_REUSEPORT socket     | 4.19 | [`2dbb9b9e6df6`](https://github.com/torvalds/linux/commit/2dbb9b9e6df67d444fbe425c7f6014858d337adf) | BPF_PROG_TYPE_SK_REUSEPORT
 查找SO_REUSEPORT套接字   | 4.19 | [`2dbb9b9e6df6`](https://github.com/torvalds/linux/commit/2dbb9b9e6df67d444fbe425c7f6014858d337adf) | BPF_PROG_TYPE_SK_REUSEPORT
@@ -140,40 +140,40 @@ flow dissector                 | 4.20 | [`d58e468b1112`](https://github.com/torv
 可控 cgroup                  | 5.2  | [`7b146cebe30c`](https://github.com/torvalds/linux/commit/7b146cebe30cb481b0f70d85779da938da818637) | BPF_PROG_TYPE_CGROUP_SYSCTL
 
 writable raw tracepoints       | 5.2  | [`9df1c28bb752`](https://github.com/torvalds/linux/commit/9df1c28bb75217b244257152ab7d788bb2a386d0) | BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE
-可写原始跟踪点       | 5.2  | [`9df1c28bb752`](https://github.com/torvalds/linux/commit/9df1c28bb75217b244257152ab7d788bb2a386d0) | BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE
+可寫原始跟蹤點       | 5.2  | [`9df1c28bb752`](https://github.com/torvalds/linux/commit/9df1c28bb75217b244257152ab7d788bb2a386d0) | BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE
 
 cgroup getsockopt/setsockopt   | 5.3  | [`0d01da6afc54`](https://github.com/torvalds/linux/commit/0d01da6afc5402f60325c5da31b22f7d56689b49) | BPF_PROG_TYPE_CGROUP_SOCKOPT
 cgroup getsockopt/setsockopt   | 5.3  | [`0d01da6afc54`](https://github.com/torvalds/linux/commit/0d01da6afc5402f60325c5da31b22f7d56689b49) | BPF_PROG_TYPE_CGROUP_SOCKOPT
 
 Tracing (BTF/BPF trampoline)   | 5.5  | [`f1b9509c2fb0`](https://github.com/torvalds/linux/commit/f1b9509c2fb0ef4db8d22dac9aef8e856a5d81f6) | BPF_PROG_TYPE_TRACING
-追踪 (BTF/BPF 弹跳)   | 5.5  | [`f1b9509c2fb0`](https://github.com/torvalds/linux/commit/f1b9509c2fb0ef4db8d22dac9aef8e856a5d81f6) | BPF_PROG_TYPE_TRACING
+追蹤 (BTF/BPF 彈跳)   | 5.5  | [`f1b9509c2fb0`](https://github.com/torvalds/linux/commit/f1b9509c2fb0ef4db8d22dac9aef8e856a5d81f6) | BPF_PROG_TYPE_TRACING
 
 struct ops                     | 5.6  | [`27ae7997a661`](https://github.com/torvalds/linux/commit/27ae7997a66174cb8afd6a75b3989f5e0c1b9e5a) | BPF_PROG_TYPE_STRUCT_OPS
-结构操作                     | 5.6  | [`27ae7997a661`](https://github.com/torvalds/linux/commit/27ae7997a66174cb8afd6a75b3989f5e0c1b9e5a) | BPF_PROG_TYPE_STRUCT_OPS
+結構操作                     | 5.6  | [`27ae7997a661`](https://github.com/torvalds/linux/commit/27ae7997a66174cb8afd6a75b3989f5e0c1b9e5a) | BPF_PROG_TYPE_STRUCT_OPS
 
 extensions                     | 5.6  | [`be8704ff07d2`](https://github.com/torvalds/linux/commit/be8704ff07d2374bcc5c675526f95e70c6459683) | BPF_PROG_TYPE_EXT
-扩展                     | 5.6  | [`be8704ff07d2`](https://github.com/torvalds/linux/commit/be8704ff07d2374bcc5c675526f95e70c6459683) | BPF_PROG_TYPE_EXT
+擴展                     | 5.6  | [`be8704ff07d2`](https://github.com/torvalds/linux/commit/be8704ff07d2374bcc5c675526f95e70c6459683) | BPF_PROG_TYPE_EXT
 
 LSM                            | 5.7  | [`fc611f47f218`](https://github.com/torvalds/linux/commit/fc611f47f2188ade2b48ff6902d5cce8baac0c58) | BPF_PROG_TYPE_LSM
-LSM (Linux安全模块)                            | 5.7  | [`fc611f47f218`](https://github.com/torvalds/linux/commit/fc611f47f2188ade2b48ff6902d5cce8baac0c58) | BPF_PROG_TYPE_LSM
+LSM (Linux安全模塊)                            | 5.7  | [`fc611f47f218`](https://github.com/torvalds/linux/commit/fc611f47f2188ade2b48ff6902d5cce8baac0c58) | BPF_PROG_TYPE_LSM
 
 lookup listening socket        | 5.9  | [`e9ddbb7707ff`](https://github.com/torvalds/linux/commit/e9ddbb7707ff5891616240026062b8c1e29864ca) | BPF_PROG_TYPE_SK_LOOKUP
-查询监听套接字        | 5.9  | [`e9ddbb7707ff`](https://github.com/torvalds/linux/commit/e9ddbb7707ff5891616240026062b8c1e29864ca) | BPF_PROG_TYPE_SK_LOOKUP
+查詢監聽套接字        | 5.9  | [`e9ddbb7707ff`](https://github.com/torvalds/linux/commit/e9ddbb7707ff5891616240026062b8c1e29864ca) | BPF_PROG_TYPE_SK_LOOKUP
 
 Allow executing syscalls       | 5.15 | [`79a7f8bdb159`](https://github.com/torvalds/linux/commit/79a7f8bdb159d9914b58740f3d31d602a6e4aca8) | BPF_PROG_TYPE_SYSCALL
-允许执行系统调用       | 5.15 | [`79a7f8bdb159`](https://github.com/torvalds/linux/commit/79a7f8bdb159d9914b58740f3d31d602a6e4aca8) | BPF_PROG_TYPE_SYSCALL
+允許執行系統調用       | 5.15 | [`79a7f8bdb159`](https://github.com/torvalds/linux/commit/79a7f8bdb159d9914b58740f3d31d602a6e4aca8) | BPF_PROG_TYPE_SYSCALL
 
-## Map types (_a.k.a._ 表格, 在 BCC 术语中)
+## Map types (_a.k.a._ 表格, 在 BCC 術語中)
 
-### Map 类型
+### Map 類型
 
-您内核支持的 Map 类型列表可以在文件 [`include/uapi/linux/bpf.h`](https://github.com/torvalds/linux/blob/master/include/uapi/linux/bpf.h) 中找到:
+您內核支持的 Map 類型列表可以在文件 [`include/uapi/linux/bpf.h`](https://github.com/torvalds/linux/blob/master/include/uapi/linux/bpf.h) 中找到:
 
 ```sh
 git grep -W 'bpf_map_type {' include/uapi/linux/bpf.h
 ```
 
-Map 类型 | 内核版本 | 提交 | 枚举
+Map 類型 | 內核版本 | 提交 | 枚舉
 ----------|----------------|--------|------
 哈希                            | 3.19 | [`0f8e4bd8a1fc`](https://github.com/torvalds/linux/commit/0f8e4bd8a1fc8c4185f1630061d0a1f2d197a475) | BPF_MAP_TYPE_HASH".Array                           | 3.19 | [`28fbcfa08d8e`](https://github.com/torvalds/linux/commit/28fbcfa08d8ed7c5a50d41a0433aad222835e8e3) | BPF_MAP_TYPE_ARRAY
 Prog array                      | 4.2  | [`04fd61ab36ec`](https://github.com/torvalds/linux/commit/04fd61ab36ec065e194ab5e74ae34a5240d992bb) | BPF_MAP_TYPE_PROG_ARRAY
@@ -218,16 +218,16 @@ Feature | Kernel version | Commit
 --------|----------------|-------
 Basic operations (lookup, update, delete, `GET_NEXT_KEY`) | 3.18 | [db20fd2b0108](https://github.com/torvalds/linux/commit/db20fd2b01087bdfbe30bce314a198eefedcc42e)
 Pass flags to `UPDATE_ELEM` | 3.19 | [3274f52073d8](https://github.com/torvalds/linux/commit/3274f52073d88b62f3c5ace82ae9d48546232e72)
-Pre-alloc map memory by default | 4.6 | [6c9059817432](https://github.com/torvalds/linux/commit/6c90598174322b8888029e40dd84a4eb01f56afe)传递`NULL`给`GET_NEXT_KEY` | 4.12 | [`8fe45924387b`](https://github.com/torvalds/linux/commit/8fe45924387be6b5c1be59a7eb330790c61d5d10)
-创建: 选择NUMA节点 | 4.14 | [`96eabe7a40aa`](https://github.com/torvalds/linux/commit/96eabe7a40aa17e613cf3db2c742ee8b1fc764d0)
-限制从系统调用方面的访问 | 4.15 | [`6e71b04a8224`](https://github.com/torvalds/linux/commit/6e71b04a82248ccf13a94b85cbc674a9fefe53f5)
-创建: 指定映射名称 | 4.15 | [`ad5b177bd73f`](https://github.com/torvalds/linux/commit/ad5b177bd73f5107d97c36f56395c4281fb6f089)
+Pre-alloc map memory by default | 4.6 | [6c9059817432](https://github.com/torvalds/linux/commit/6c90598174322b8888029e40dd84a4eb01f56afe)傳遞`NULL`給`GET_NEXT_KEY` | 4.12 | [`8fe45924387b`](https://github.com/torvalds/linux/commit/8fe45924387be6b5c1be59a7eb330790c61d5d10)
+創建: 選擇NUMA節點 | 4.14 | [`96eabe7a40aa`](https://github.com/torvalds/linux/commit/96eabe7a40aa17e613cf3db2c742ee8b1fc764d0)
+限制從系統調用方面的訪問 | 4.15 | [`6e71b04a8224`](https://github.com/torvalds/linux/commit/6e71b04a82248ccf13a94b85cbc674a9fefe53f5)
+創建: 指定映射名稱 | 4.15 | [`ad5b177bd73f`](https://github.com/torvalds/linux/commit/ad5b177bd73f5107d97c36f56395c4281fb6f089)
 `LOOKUP_AND_DELETE_ELEM` | 4.20 | [`bd513cd08f10`](https://github.com/torvalds/linux/commit/bd513cd08f10cbe28856f99ae951e86e86803861)
-创建: `BPF_F_ZERO_SEED` | 5.0 | [`96b3b6c9091d`](https://github.com/torvalds/linux/commit/96b3b6c9091d23289721350e32c63cc8749686be)
-查找/更新的`BPF_F_LOCK`标志 | 5.1 | [`96049f3afd50`](https://github.com/torvalds/linux/commit/96049f3afd50fe8db69fa0068cdca822e747b1e4)
-限制从BPF方面的访问 | 5.2 | [`591fe9888d78`](https://github.com/torvalds/linux/commit/591fe9888d7809d9ee5c828020b6c6ae27c37229)
+創建: `BPF_F_ZERO_SEED` | 5.0 | [`96b3b6c9091d`](https://github.com/torvalds/linux/commit/96b3b6c9091d23289721350e32c63cc8749686be)
+查找/更新的`BPF_F_LOCK`標誌 | 5.1 | [`96049f3afd50`](https://github.com/torvalds/linux/commit/96049f3afd50fe8db69fa0068cdca822e747b1e4)
+限制從BPF方面的訪問 | 5.2 | [`591fe9888d78`](https://github.com/torvalds/linux/commit/591fe9888d7809d9ee5c828020b6c6ae27c37229)
 `FREEZE` | 5.2 | [`87df15de441b`](https://github.com/torvalds/linux/commit/87df15de441bd4add7876ef584da8cabdd9a042a)
-数组映射的mmap()支持 | 5.5 | [`fc9702273e2e`](https://github.com/torvalds/linux/commit/fc9702273e2edb90400a34b3be76f7b08fa3344b)
+數組映射的mmap()支持 | 5.5 | [`fc9702273e2e`](https://github.com/torvalds/linux/commit/fc9702273e2edb90400a34b3be76f7b08fa3344b)
 `LOOKUP_BATCH` | 5.6 | [`cb4d03ab499d`](https://github.com/torvalds/linux/commit/cb4d03ab499d4c040f4ab6fd4389d2b49f42b5a5)
 `UPDATE_BATCH`, `DELETE_BATCH` | 5.6 | [`aa2e93b8e58e`](https://github.com/torvalds/linux/commit/aa2e93b8e58e18442edfb2427446732415bc215e)
 `LOOKUP_AND_DELETE_BATCH` | 5.6 | [`057996380a42`](https://github.com/torvalds/linux/commit/057996380a42bb64ccc04383cfa9c0ace4ea11f0)
@@ -235,32 +235,32 @@ Pre-alloc map memory by default | 4.6 | [6c9059817432](https://github.com/torval
 
 ## XDP
 
-您的内核支持XDP程序的驱动程序或组件的近似列表可以用以下命令检索:
+您的內核支持XDP程序的驅動程序或組件的近似列表可以用以下命令檢索:
 ```sh````git grep -l XDP_SETUP_PROG drivers/
 
-功能/驱动 | 内核版本 | 提交
+功能/驅動 | 內核版本 | 提交
 ------------- | ------------ | ------
-XDP核心架构 | 4.8 | [`6a773a15a1e8`](https://github.com/torvalds/linux/commit/6a773a15a1e8874e5eccd2f29190c31085912c95)
-操作：丢弃 | 4.8 | [`6a773a15a1e8`](https://github.com/torvalds/linux/commit/6a773a15a1e8874e5eccd2f29190c31085912c95)
-操作：传递到堆栈 | 4.8 | [`6a773a15a1e8`](https://github.com/torvalds/linux/commit/6a773a15a1e8874e5eccd2f29190c31085912c95)
-直接转发（同一端口） | 4.8 | [`6ce96ca348a9`](https://github.com/torvalds/linux/commit/6ce96ca348a9e949f8c43f4d3e98db367d93cffd)
-直接数据包数据写入 | 4.8 | [`4acf6c0b84c9`](https://github.com/torvalds/linux/commit/4acf6c0b84c91243c705303cd9ff16421914150d)
-Mellanox `mlx4`驱动 | 4.8 | [`47a38e155037`](https://github.com/torvalds/linux/commit/47a38e155037f417c5740e24ccae6482aedf4b68)
-Mellanox `mlx5`驱动 | 4.9 | [`86994156c736`](https://github.com/torvalds/linux/commit/86994156c736978d113e7927455d4eeeb2128b9f)
-Netronome `nfp`驱动 | 4.10 | [`ecd63a0217d5`](https://github.com/torvalds/linux/commit/ecd63a0217d5f1e8a92f7516f5586d1177b95de2)
-QLogic（Cavium）`qed*`驱动 | 4.10 | [`496e05170958`](https://github.com/torvalds/linux/commit/496e051709588f832d7a6a420f44f8642b308a87)
-`virtio_net`驱动 | 4.10 | [`f600b6905015`](https://github.com/torvalds/linux/commit/f600b690501550b94e83e07295d9c8b9c4c39f4e)
-Broadcom `bnxt_en`驱动 | 4.11 | [`c6d30e8391b8`](https://github.com/torvalds/linux/commit/c6d30e8391b85e00eb544e6cf047ee0160ee9938)
-Intel `ixgbe*`驱动 | 4.12 | [`924708081629`](https://github.com/torvalds/linux/commit/9247080816297de4e31abb684939c0e53e3a8a67)
-Cavium `thunderx`驱动 | 4.12 | [`05c773f52b96`](https://github.com/torvalds/linux/commit/05c773f52b96ef3fbc7d9bfa21caadc6247ef7a8)
+XDP核心架構 | 4.8 | [`6a773a15a1e8`](https://github.com/torvalds/linux/commit/6a773a15a1e8874e5eccd2f29190c31085912c95)
+操作：丟棄 | 4.8 | [`6a773a15a1e8`](https://github.com/torvalds/linux/commit/6a773a15a1e8874e5eccd2f29190c31085912c95)
+操作：傳遞到堆棧 | 4.8 | [`6a773a15a1e8`](https://github.com/torvalds/linux/commit/6a773a15a1e8874e5eccd2f29190c31085912c95)
+直接轉發（同一端口） | 4.8 | [`6ce96ca348a9`](https://github.com/torvalds/linux/commit/6ce96ca348a9e949f8c43f4d3e98db367d93cffd)
+直接數據包數據寫入 | 4.8 | [`4acf6c0b84c9`](https://github.com/torvalds/linux/commit/4acf6c0b84c91243c705303cd9ff16421914150d)
+Mellanox `mlx4`驅動 | 4.8 | [`47a38e155037`](https://github.com/torvalds/linux/commit/47a38e155037f417c5740e24ccae6482aedf4b68)
+Mellanox `mlx5`驅動 | 4.9 | [`86994156c736`](https://github.com/torvalds/linux/commit/86994156c736978d113e7927455d4eeeb2128b9f)
+Netronome `nfp`驅動 | 4.10 | [`ecd63a0217d5`](https://github.com/torvalds/linux/commit/ecd63a0217d5f1e8a92f7516f5586d1177b95de2)
+QLogic（Cavium）`qed*`驅動 | 4.10 | [`496e05170958`](https://github.com/torvalds/linux/commit/496e051709588f832d7a6a420f44f8642b308a87)
+`virtio_net`驅動 | 4.10 | [`f600b6905015`](https://github.com/torvalds/linux/commit/f600b690501550b94e83e07295d9c8b9c4c39f4e)
+Broadcom `bnxt_en`驅動 | 4.11 | [`c6d30e8391b8`](https://github.com/torvalds/linux/commit/c6d30e8391b85e00eb544e6cf047ee0160ee9938)
+Intel `ixgbe*`驅動 | 4.12 | [`924708081629`](https://github.com/torvalds/linux/commit/9247080816297de4e31abb684939c0e53e3a8a67)
+Cavium `thunderx`驅動 | 4.12 | [`05c773f52b96`](https://github.com/torvalds/linux/commit/05c773f52b96ef3fbc7d9bfa21caadc6247ef7a8)
 通用XDP | 4.12 | [`b5cdae3291f7`](https://github.com/torvalds/linux/commit/b5cdae3291f7be7a34e75affe4c0ec1f7f328b64)`
 
 **注意：**
-本次翻译仅包括翻译部分，不包括原始文本。## 帮助者
+本次翻譯僅包括翻譯部分，不包括原始文本。## 幫助者
 
-您的内核支持的辅助者列表可在文件中找到。
+您的內核支持的輔助者列表可在文件中找到。
 
-Intel `i40e` 驱动程序 | 4.13 | [`0c8493d90b6b`](https://github.com/torvalds/linux/commit/0c8493d90b6bb0f5c4fe9217db8f7203f24c0f28)
+Intel `i40e` 驅動程序 | 4.13 | [`0c8493d90b6b`](https://github.com/torvalds/linux/commit/0c8493d90b6bb0f5c4fe9217db8f7203f24c0f28)
 
 操作：重定向 | 4.14 | [`6453073987ba`](https://github.com/torvalds/linux/commit/6453073987ba392510ab6c8b657844a9312c67f7)
 
@@ -268,35 +268,35 @@ Intel `i40e` 驱动程序 | 4.13 | [`0c8493d90b6b`](https://github.com/torvalds/
 
 支持 veth | 4.14 | [`d445516966dc`](https://github.com/torvalds/linux/commit/d445516966dcb2924741b13b27738b54df2af01a)
 
-Intel `ixgbevf` 驱动程序 | 4.17 | [`c7aec59657b6`](https://github.com/torvalds/linux/commit/c7aec59657b60f3a29fc7d3274ebefd698879301)
+Intel `ixgbevf` 驅動程序 | 4.17 | [`c7aec59657b6`](https://github.com/torvalds/linux/commit/c7aec59657b60f3a29fc7d3274ebefd698879301)
 
-Freescale `dpaa2` 驱动程序 | 5.0 | [`7e273a8ebdd3`](https://github.com/torvalds/linux/commit/7e273a8ebdd3b83f94eb8b49fc8ee61464f47cc2)
+Freescale `dpaa2` 驅動程序 | 5.0 | [`7e273a8ebdd3`](https://github.com/torvalds/linux/commit/7e273a8ebdd3b83f94eb8b49fc8ee61464f47cc2)
 
-Socionext `netsec` 驱动程序 | 5.3 | [`ba2b232108d3`](https://github.com/torvalds/linux/commit/ba2b232108d3c2951bab02930a00f23b0cffd5af)
+Socionext `netsec` 驅動程序 | 5.3 | [`ba2b232108d3`](https://github.com/torvalds/linux/commit/ba2b232108d3c2951bab02930a00f23b0cffd5af)
 
-TI `cpsw` 驱动程序 | 5.3 | [`9ed4050c0d75`](https://github.com/torvalds/linux/commit/9ed4050c0d75768066a07cf66eef4f8dc9d79b52)
+TI `cpsw` 驅動程序 | 5.3 | [`9ed4050c0d75`](https://github.com/torvalds/linux/commit/9ed4050c0d75768066a07cf66eef4f8dc9d79b52)
 
-Intel `ice` 驱动程序 |5.5| [`efc2214b6047`](https://github.com/torvalds/linux/commit/efc2214b6047b6f5b4ca53151eba62521b9452d6)
+Intel `ice` 驅動程序 |5.5| [`efc2214b6047`](https://github.com/torvalds/linux/commit/efc2214b6047b6f5b4ca53151eba62521b9452d6)
 
-Solarflare `sfc` 驱动程序 | 5.5 | [`eb9a36be7f3e`](https://github.com/torvalds/linux/commit/eb9a36be7f3ec414700af9a616f035eda1f1e63e)
+Solarflare `sfc` 驅動程序 | 5.5 | [`eb9a36be7f3e`](https://github.com/torvalds/linux/commit/eb9a36be7f3ec414700af9a616f035eda1f1e63e)
 
-Marvell `mvneta` 驱动程序 | 5.5 | [`0db51da7a8e9`](https://github.com/torvalds/linux/commit/0db51da7a8e99f0803ec3a8e25c1a66234a219cb)
+Marvell `mvneta` 驅動程序 | 5.5 | [`0db51da7a8e9`](https://github.com/torvalds/linux/commit/0db51da7a8e99f0803ec3a8e25c1a66234a219cb)
 
-Microsoft `hv_netvsc` 驱动程序 | 5.6 | [`351e1581395f`](https://github.com/torvalds/linux/commit/351e1581395fcc7fb952bbd7dda01238f69968fd)
+Microsoft `hv_netvsc` 驅動程序 | 5.6 | [`351e1581395f`](https://github.com/torvalds/linux/commit/351e1581395fcc7fb952bbd7dda01238f69968fd)
 
-Amazon `ena` 驱动程序 | 5.6 | [`838c93dc5449`](https://github.com/torvalds/linux/commit/838c93dc5449e5d6378bae117b0a65a122cf7361)
+Amazon `ena` 驅動程序 | 5.6 | [`838c93dc5449`](https://github.com/torvalds/linux/commit/838c93dc5449e5d6378bae117b0a65a122cf7361)
 
-`xen-netfront` 驱动程序 | 5.9 | [`6c5aa6fc4def`](https://github.com/torvalds/linux/commit/6c5aa6fc4defc2a0977a2c59e4710d50fa1e834c)
+`xen-netfront` 驅動程序 | 5.9 | [`6c5aa6fc4def`](https://github.com/torvalds/linux/commit/6c5aa6fc4defc2a0977a2c59e4710d50fa1e834c)
 
-Intel `gi` 驱动程序 | 5.10 | [`9cbc948b5a20`](https://github.com/torvalds/linux/commit/9cbc948b5a20c9c054d9631099c0426c16da546b)`include/uapi/linux/bpf.h`: [`include/uapi/linux/bpf.h`](https://github.com/torvalds/linux/blob/master/include/uapi/linux/bpf.h):
+Intel `gi` 驅動程序 | 5.10 | [`9cbc948b5a20`](https://github.com/torvalds/linux/commit/9cbc948b5a20c9c054d9631099c0426c16da546b)`include/uapi/linux/bpf.h`: [`include/uapi/linux/bpf.h`](https://github.com/torvalds/linux/blob/master/include/uapi/linux/bpf.h):
 
 ```sh
 git grep ' FN(' include/uapi/linux/bpf.h
 ```
 
-按字母顺序排列
+按字母順序排列
 
-Helper | 内核版本 | 授权许可 | 提交记录 |
+Helper | 內核版本 | 授權許可 | 提交記錄 |
 -------|----------------|---------|--------|
 `BPF_FUNC_bind()` | 4.17 |  | [`d74bad4e74ee`](https://github.com/torvalds/linux/commit/d74bad4e74ee373787a9ae24197c17b7cdc428d5) |
 `BPF_FUNC_bprm_opts_set()` | 5.11 |  | [`3f6719c7b62f`](https://github.com/torvalds/linux/commit/3f6719c7b62f0327c9091e26d0da10e65668229e)
@@ -537,7 +537,7 @@ RPC_FUNC_inode_storage_delete() | 5.10 |  | [8ea636848aca](https://github.com/to
 `BPF_FUNC_sys_close()`| 5.14 |  | [`3abea089246f`](https://github.com/torvalds/linux/commit/3abea089246f76c1517b054ddb5946f3f1dbd2c0)
 `BPF_FUNC_sysctl_get_current_value()`| 5.2 |  | [`1d11b3016cec`](https://github.com/torvalds/linux/commit/1d11b3016cec4ed9770b98e82a61708c8f4926e7)
 `BPF_FUNC_sysctl_get_name()`| 5.2 |  | [`808649fb787d`](https://github.com/torvalds/linux/commit/808649fb787d918a48a360a668ee4ee9023f0c11)".
-格式：只返回翻译后的内容，不包括原文。`BPF_FUNC_sysctl_get_new_value()`&#124; 5.2&#124; &#124; [`4e63acdff864`](https://github.com/torvalds/linux/commit/4e63acdff864654cee0ac5aaeda3913798ee78f6)
+格式：只返回翻譯後的內容，不包括原文。`BPF_FUNC_sysctl_get_new_value()`&#124; 5.2&#124; &#124; [`4e63acdff864`](https://github.com/torvalds/linux/commit/4e63acdff864654cee0ac5aaeda3913798ee78f6)
 `BPF_FUNC_sysctl_set_new_value()`&#124;5.2&#124; &#124; [`4e63acdff864`](https://github.com/torvalds/linux/commit/4e63acdff864654cee0ac5aaeda3913798ee78f6)
 `BPF_FUNC_tail_call()`&#124;4.2&#124; &#124; [`04fd61ab36ec`](https://github.com/torvalds/linux/commit/04fd61ab36ec065e194ab5e74ae34a5240d992bb)
 `BPF_FUNC_task_pt_regs()`&#124;5.15&#124; GPL &#124; [`dd6e10fbd9f`](https://github.com/torvalds/linux/commit/dd6e10fbd9fb86a571d925602c8a24bb4d09a2a7)
@@ -568,32 +568,32 @@ RPC_FUNC_inode_storage_delete() | 5.10 |  | [8ea636848aca](https://github.com/to
 `BPF_FUNC_override_return()` | 4.16 | GPL | [`9802d86585db`](https://github.com/torvalds/linux/commit/9802d86585db91655c7d1929a4f6bbe0952ea88e)
 `BPF_FUNC_sock_ops_cb_flags_set()` | 4.16 |  | [`b13d88072172`](<https://github.com/torvalds/linux/commit/b13d880721729384757f235166068c315326f4a1>)
 
-注：仅GPL兼容的BPF助手需要GPL兼容的许可证。内核所认可的当前GPL兼容许可证有：
+注：僅GPL兼容的BPF助手需要GPL兼容的許可證。內核所認可的當前GPL兼容許可證有：
 
 * GPL
 * GPL v2
-* GPL和其他权利
-* 双BSD/GPL
-* 双MIT/GPL
-* 双MPL/GPL
+* GPL和其他權利
+* 雙BSD/GPL
+* 雙MIT/GPL
+* 雙MPL/GPL
 
-在您的[内核源代码](https://github.com/torvalds/linux/blob/master/include/linux/license.h)中查看GPL兼容许可证的列表。
+在您的[內核源代碼](https://github.com/torvalds/linux/blob/master/include/linux/license.h)中查看GPL兼容許可證的列表。
 
-## 程序类型
+## 程序類型
 
-可以使用以下命令获取程序类型和支持的辅助函数列表：
+可以使用以下命令獲取程序類型和支持的輔助函數列表：
 
 ```sh
 git grep -W 'func_proto(enum bpf_func_id func_id' kernel/ net/ drivers/
 ```
 
-|程序类型| 辅助函数|
+|程序類型| 輔助函數|
 |---------|---------|
-|`BPF_PROG_TYPE_SOCKET_FILTER`|`BPF_FUNC_skb_load_bytes()` <br> `BPF_FUNC_skb_load_bytes_relative()` <br> `BPF_FUNC_get_socket_cookie()` <br> `BPF_FUNC_get_socket_uid()` <br> `BPF_FUNC_perf_event_output()` <br> `基础函数`|
-|`BPF_PROG_TYPE_KPROBE`|`BPF_FUNC_perf_event_output()` <br> `BPF_FUNC_get_stackid()` <br> `BPF_FUNC_get_stack()` <br> `BPF_FUNC_perf_event_read_value()` <br> `BPF_FUNC_override_return()` <br> `跟踪函数`|".| `BPF_PROG_TYPE_SCHED_CLS` <br> `BPF_PROG_TYPE_SCHED_ACT` | `BPF_FUNC_skb_store_bytes()` <br> `BPF_FUNC_skb_load_bytes()` <br> `BPF_FUNC_skb_load_bytes_relative()` <br> `BPF_FUNC_skb_pull_data()` <br> `BPF_FUNC_csum_diff()` <br> `BPF_FUNC_csum_update()` <br> `BPF_FUNC_l3_csum_replace()` <br> `BPF_FUNC_l4_csum_replace()` <br> `BPF_FUNC_clone_redirect()` <br> `BPF_FUNC_get_cgroup_classid()` <br> `BPF_FUNC_skb_vlan_push()` <br> `BPF_FUNC_skb_vlan_pop()` <br> `BPF_FUNC_skb_change_proto()` <br> `BPF_FUNC_skb_change_type()` <br> `BPF_FUNC_skb_adjust_room()` <br> `BPF_FUNC_skb_change_tail()` <br> `BPF_FUNC_skb_get_tunnel_key()` <br> `BPF_FUNC_skb_set_tunnel_key()` <br> `BPF_FUNC_skb_get_tunnel_opt()` <br> `BPF_FUNC_skb_set_tunnel_opt()` <br> `BPF_FUNC_redirect()` <br> `BPF_FUNC_get_route_realm()` <br> `BPF_FUNC_get_hash_recalc()` <br> `BPF_FUNC_set_hash_invalid()` <br> `BPF_FUNC_set_hash()` <br> `BPF_FUNC_perf_event_output()` <br> `BPF_FUNC_get_smp_processor_id()` <br> `BPF_FUNC_skb_under_cgroup()` <br> `BPF_FUNC_get_socket_cookie()` <br> `BPF_FUNC_get_socket_uid()` <br> `BPF_FUNC_fib_lookup()` <br> `BPF_FUNC_skb_get_xfrm_state()` <br> `BPF_FUNC_skb_cgroup_id()` <br> `基础函数` |
-| `BPF_PROG_TYPE_TRACEPOINT` | `BPF_FUNC_perf_event_output()` <br> `BPF_FUNC_get_stackid()` <br> `BPF_FUNC_get_stack()` <br> `BPF_FUNC_d_path()` <br> `跟踪函数` |
-| `BPF_PROG_TYPE_XDP` | `BPF_FUNC_perf_event_output()` <br> `BPF_FUNC_get_smp_processor_id()` <br> `BPF_FUNC_csum_diff()` <br> `BPF_FUNC_xdp_adjust_head()` <br> `BPF_FUNC_xdp_adjust_meta()` <br> `BPF_FUNC_redirect()` <br> `BPF_FUNC_redirect_map()` <br> `BPF_FUNC_xdp_adjust_tail()` <br> `BPF_FUNC_fib_lookup()` <br> `基础函数` |
-| `BPF_PROG_TYPE_PERF_EVENT` | `BPF_FUNC_perf_event_output()` <br> `BPF_FUNC_get_stackid()` <br> `BPF_FUNC_get_stack()` <br> `BPF_FUNC_perf_prog_read_value()` <br> `跟踪函数` |\|`BPF_PROG_TYPE_CGROUP_SKB`|\|[`BPF_FUNC_skb_load_bytes()`]() <br> [`BPF_FUNC_skb_load_bytes_relative()`]() <br> [`BPF_FUNC_get_socket_cookie()`]() <br> [`BPF_FUNC_get_socket_uid()`]() <br> `基本功能`|
+|`BPF_PROG_TYPE_SOCKET_FILTER`|`BPF_FUNC_skb_load_bytes()` <br> `BPF_FUNC_skb_load_bytes_relative()` <br> `BPF_FUNC_get_socket_cookie()` <br> `BPF_FUNC_get_socket_uid()` <br> `BPF_FUNC_perf_event_output()` <br> `基礎函數`|
+|`BPF_PROG_TYPE_KPROBE`|`BPF_FUNC_perf_event_output()` <br> `BPF_FUNC_get_stackid()` <br> `BPF_FUNC_get_stack()` <br> `BPF_FUNC_perf_event_read_value()` <br> `BPF_FUNC_override_return()` <br> `跟蹤函數`|".| `BPF_PROG_TYPE_SCHED_CLS` <br> `BPF_PROG_TYPE_SCHED_ACT` | `BPF_FUNC_skb_store_bytes()` <br> `BPF_FUNC_skb_load_bytes()` <br> `BPF_FUNC_skb_load_bytes_relative()` <br> `BPF_FUNC_skb_pull_data()` <br> `BPF_FUNC_csum_diff()` <br> `BPF_FUNC_csum_update()` <br> `BPF_FUNC_l3_csum_replace()` <br> `BPF_FUNC_l4_csum_replace()` <br> `BPF_FUNC_clone_redirect()` <br> `BPF_FUNC_get_cgroup_classid()` <br> `BPF_FUNC_skb_vlan_push()` <br> `BPF_FUNC_skb_vlan_pop()` <br> `BPF_FUNC_skb_change_proto()` <br> `BPF_FUNC_skb_change_type()` <br> `BPF_FUNC_skb_adjust_room()` <br> `BPF_FUNC_skb_change_tail()` <br> `BPF_FUNC_skb_get_tunnel_key()` <br> `BPF_FUNC_skb_set_tunnel_key()` <br> `BPF_FUNC_skb_get_tunnel_opt()` <br> `BPF_FUNC_skb_set_tunnel_opt()` <br> `BPF_FUNC_redirect()` <br> `BPF_FUNC_get_route_realm()` <br> `BPF_FUNC_get_hash_recalc()` <br> `BPF_FUNC_set_hash_invalid()` <br> `BPF_FUNC_set_hash()` <br> `BPF_FUNC_perf_event_output()` <br> `BPF_FUNC_get_smp_processor_id()` <br> `BPF_FUNC_skb_under_cgroup()` <br> `BPF_FUNC_get_socket_cookie()` <br> `BPF_FUNC_get_socket_uid()` <br> `BPF_FUNC_fib_lookup()` <br> `BPF_FUNC_skb_get_xfrm_state()` <br> `BPF_FUNC_skb_cgroup_id()` <br> `基礎函數` |
+| `BPF_PROG_TYPE_TRACEPOINT` | `BPF_FUNC_perf_event_output()` <br> `BPF_FUNC_get_stackid()` <br> `BPF_FUNC_get_stack()` <br> `BPF_FUNC_d_path()` <br> `跟蹤函數` |
+| `BPF_PROG_TYPE_XDP` | `BPF_FUNC_perf_event_output()` <br> `BPF_FUNC_get_smp_processor_id()` <br> `BPF_FUNC_csum_diff()` <br> `BPF_FUNC_xdp_adjust_head()` <br> `BPF_FUNC_xdp_adjust_meta()` <br> `BPF_FUNC_redirect()` <br> `BPF_FUNC_redirect_map()` <br> `BPF_FUNC_xdp_adjust_tail()` <br> `BPF_FUNC_fib_lookup()` <br> `基礎函數` |
+| `BPF_PROG_TYPE_PERF_EVENT` | `BPF_FUNC_perf_event_output()` <br> `BPF_FUNC_get_stackid()` <br> `BPF_FUNC_get_stack()` <br> `BPF_FUNC_perf_prog_read_value()` <br> `跟蹤函數` |\|`BPF_PROG_TYPE_CGROUP_SKB`|\|[`BPF_FUNC_skb_load_bytes()`]() <br> [`BPF_FUNC_skb_load_bytes_relative()`]() <br> [`BPF_FUNC_get_socket_cookie()`]() <br> [`BPF_FUNC_get_socket_uid()`]() <br> `基本功能`|
 |`BPF_PROG_TYPE_CGROUP_SOCK`|\|[`BPF_FUNC_get_current_uid_gid()`]() <br> `基本功能`|
 |`BPF_PROG_TYPE_LWT_IN`|\|[`BPF_FUNC_lwt_push_encap()`]() <br> `LWT功能` <br> `基本功能`|
 |`BPF_PROG_TYPE_LWT_OUT`| `LWT功能` <br> `基本功能`|
@@ -601,14 +601,14 @@ git grep -W 'func_proto(enum bpf_func_id func_id' kernel/ net/ drivers/
 |`BPF_PROG_TYPE_SOCK_OPS`|\|[`BPF_FUNC_setsockopt()`]() <br> [`BPF_FUNC_getsockopt()`]() <br> [`BPF_FUNC_sock_ops_cb_flags_set()`]() <br> [`BPF_FUNC_sock_map_update()`]() <br> [`BPF_FUNC_sock_hash_update()`]() <br> [`BPF_FUNC_get_socket_cookie()`]() <br> `基本功能`|
 |`BPF_PROG_TYPE_SK_SKB`|\|[`BPF_FUNC_skb_store_bytes()`]() <br> [`BPF_FUNC_skb_load_bytes()`]() <br> [`BPF_FUNC_skb_pull_data()`]() <br> [`BPF_FUNC_skb_change_tail()`]() <br> [`BPF_FUNC_skb_change_head()`]() <br> [`BPF_FUNC_get_socket_cookie()`]() <br> [`BPF_FUNC_get_socket_uid()`]() <br> [`BPF_FUNC_sk_redirect_map()`]() <br> [`BPF_FUNC_sk_redirect_hash()`]() <br> [`BPF_FUNC_sk_lookup_tcp()`]() <br> [`BPF_FUNC_sk_lookup_udp()`]() <br> [`BPF_FUNC_sk_release()`]() <br> `基本功能`|
 |`BPF_PROG_TYPE_CGROUP_DEVICE`| \|[`BPF_FUNC_map_lookup_elem()`]() <br> [`BPF_FUNC_map_update_elem()`]() <br> [`BPF_FUNC_map_delete_elem()`]() <br> [`BPF_FUNC_get_current_uid_gid()`]() <br> [`BPF_FUNC_trace_printk()`]() ||`BPF_PROG_TYPE_SK_MSG`|`BPF_FUNC_msg_redirect_map()` <br> `BPF_FUNC_msg_redirect_hash()` <br> `BPF_FUNC_msg_apply_bytes()` <br> `BPF_FUNC_msg_cork_bytes()` <br> `BPF_FUNC_msg_pull_data()` <br> `BPF_FUNC_msg_push_data()` <br> `BPF_FUNC_msg_pop_data()` <br> `基本功能`|
-|`BPF_PROG_TYPE_RAW_TRACEPOINT`|`BPF_FUNC_perf_event_output()` <br> `BPF_FUNC_get_stackid()` <br> `BPF_FUNC_get_stack()` <br> `BPF_FUNC_skb_output()` <br> `跟踪功能`|
+|`BPF_PROG_TYPE_RAW_TRACEPOINT`|`BPF_FUNC_perf_event_output()` <br> `BPF_FUNC_get_stackid()` <br> `BPF_FUNC_get_stack()` <br> `BPF_FUNC_skb_output()` <br> `跟蹤功能`|
 |`BPF_PROG_TYPE_CGROUP_SOCK_ADDR`|`BPF_FUNC_get_current_uid_gid()` <br> `BPF_FUNC_bind()` <br> `BPF_FUNC_get_socket_cookie()` <br> `基本功能`|
 |`BPF_PROG_TYPE_LWT_SEG6LOCAL`|`BPF_FUNC_lwt_seg6_store_bytes()` <br> `BPF_FUNC_lwt_seg6_action()` <br> `BPF_FUNC_lwt_seg6_adjust_srh()` <br> `LWT功能`|
 |`BPF_PROG_TYPE_LIRC_MODE2`|`BPF_FUNC_rc_repeat()` <br> `BPF_FUNC_rc_keydown()` <br> `BPF_FUNC_rc_pointer_rel()` <br> `BPF_FUNC_map_lookup_elem()` <br> `BPF_FUNC_map_update_elem()` <br> `BPF_FUNC_map_delete_elem()` <br> `BPF_FUNC_ktime_get_ns()` <br> `BPF_FUNC_tail_call()` <br> `BPF_FUNC_get_prandom_u32()` <br> `BPF_FUNC_trace_printk()`|
 |`BPF_PROG_TYPE_SK_REUSEPORT`|`BPF_FUNC_sk_select_reuseport()` <br> `BPF_FUNC_skb_load_bytes()` <br> `BPF_FUNC_load_bytes_relative()` <br> `基本功能`|
 |`BPF_PROG_TYPE_FLOW_DISSECTOR`|`BPF_FUNC_skb_load_bytes()` <br> `基本功能`|
 
-|功能组| 功能|
+|功能組| 功能|
 |------------------|-------|
-|`基本功能`| `BPF_FUNC_map_lookup_elem()` <br> `BPF_FUNC_map_update_elem()` <br> `BPF_FUNC_map_delete_elem()` <br> `BPF_FUNC_map_peek_elem()` <br> `BPF_FUNC_map_pop_elem()` <br> `BPF_FUNC_map_push_elem()` <br> `BPF_FUNC_get_prandom_u32()` <br> `BPF_FUNC_get_smp_processor_id()` <br> `BPF_FUNC_get_numa_node_id()` <br> `BPF_FUNC_tail_call()` <br> `BPF_FUNC_ktime_get_boot_ns()` <br> `BPF_FUNC_ktime_get_ns()` <br> `BPF_FUNC_trace_printk()` <br> `BPF_FUNC_spin_lock()` <br> `BPF_FUNC_spin_unlock()` |"|`跟踪函数`|`BPF_FUNC_map_lookup_elem()` <br> `BPF_FUNC_map_update_elem()` <br> `BPF_FUNC_map_delete_elem()` <br> `BPF_FUNC_probe_read()` <br> `BPF_FUNC_ktime_get_boot_ns()` <br> `BPF_FUNC_ktime_get_ns()` <br> `BPF_FUNC_tail_call()` <br> `BPF_FUNC_get_current_pid_tgid()` <br> `BPF_FUNC_get_current_task()` <br> `BPF_FUNC_get_current_uid_gid()` <br> `BPF_FUNC_get_current_comm()` <br> `BPF_FUNC_trace_printk()` <br> `BPF_FUNC_get_smp_processor_id()` <br> `BPF_FUNC_get_numa_node_id()` <br> `BPF_FUNC_perf_event_read()` <br> `BPF_FUNC_probe_write_user()` <br> `BPF_FUNC_current_task_under_cgroup()` <br> `BPF_FUNC_get_prandom_u32()` <br> `BPF_FUNC_probe_read_str()` <br> `BPF_FUNC_get_current_cgroup_id()` <br> `BPF_FUNC_send_signal()` <br> `BPF_FUNC_probe_read_kernel()` <br> `BPF_FUNC_probe_read_kernel_str()` <br> `BPF_FUNC_probe_read_user()` <br> `BPF_FUNC_probe_read_user_str()` <br> `BPF_FUNC_send_signal_thread()` <br> `BPF_FUNC_get_ns_current_pid_tgid()` <br> `BPF_FUNC_xdp_output()` <br> `BPF_FUNC_get_task_stack()`|
-|`LWT函数`|  `BPF_FUNC_skb_load_bytes()` <br> `BPF_FUNC_skb_pull_data()` <br> `BPF_FUNC_csum_diff()` <br> `BPF_FUNC_get_cgroup_classid()` <br> `BPF_FUNC_get_route_realm()` <br> `BPF_FUNC_get_hash_recalc()` <br> `BPF_FUNC_perf_event_output()` <br> `BPF_FUNC_get_smp_processor_id()` <br> `BPF_FUNC_skb_under_cgroup()`|
+|`基本功能`| `BPF_FUNC_map_lookup_elem()` <br> `BPF_FUNC_map_update_elem()` <br> `BPF_FUNC_map_delete_elem()` <br> `BPF_FUNC_map_peek_elem()` <br> `BPF_FUNC_map_pop_elem()` <br> `BPF_FUNC_map_push_elem()` <br> `BPF_FUNC_get_prandom_u32()` <br> `BPF_FUNC_get_smp_processor_id()` <br> `BPF_FUNC_get_numa_node_id()` <br> `BPF_FUNC_tail_call()` <br> `BPF_FUNC_ktime_get_boot_ns()` <br> `BPF_FUNC_ktime_get_ns()` <br> `BPF_FUNC_trace_printk()` <br> `BPF_FUNC_spin_lock()` <br> `BPF_FUNC_spin_unlock()` |"|`跟蹤函數`|`BPF_FUNC_map_lookup_elem()` <br> `BPF_FUNC_map_update_elem()` <br> `BPF_FUNC_map_delete_elem()` <br> `BPF_FUNC_probe_read()` <br> `BPF_FUNC_ktime_get_boot_ns()` <br> `BPF_FUNC_ktime_get_ns()` <br> `BPF_FUNC_tail_call()` <br> `BPF_FUNC_get_current_pid_tgid()` <br> `BPF_FUNC_get_current_task()` <br> `BPF_FUNC_get_current_uid_gid()` <br> `BPF_FUNC_get_current_comm()` <br> `BPF_FUNC_trace_printk()` <br> `BPF_FUNC_get_smp_processor_id()` <br> `BPF_FUNC_get_numa_node_id()` <br> `BPF_FUNC_perf_event_read()` <br> `BPF_FUNC_probe_write_user()` <br> `BPF_FUNC_current_task_under_cgroup()` <br> `BPF_FUNC_get_prandom_u32()` <br> `BPF_FUNC_probe_read_str()` <br> `BPF_FUNC_get_current_cgroup_id()` <br> `BPF_FUNC_send_signal()` <br> `BPF_FUNC_probe_read_kernel()` <br> `BPF_FUNC_probe_read_kernel_str()` <br> `BPF_FUNC_probe_read_user()` <br> `BPF_FUNC_probe_read_user_str()` <br> `BPF_FUNC_send_signal_thread()` <br> `BPF_FUNC_get_ns_current_pid_tgid()` <br> `BPF_FUNC_xdp_output()` <br> `BPF_FUNC_get_task_stack()`|
+|`LWT函數`|  `BPF_FUNC_skb_load_bytes()` <br> `BPF_FUNC_skb_pull_data()` <br> `BPF_FUNC_csum_diff()` <br> `BPF_FUNC_get_cgroup_classid()` <br> `BPF_FUNC_get_route_realm()` <br> `BPF_FUNC_get_hash_recalc()` <br> `BPF_FUNC_perf_event_output()` <br> `BPF_FUNC_get_smp_processor_id()` <br> `BPF_FUNC_skb_under_cgroup()`|

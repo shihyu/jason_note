@@ -52,7 +52,7 @@ cargo run --example error_handling
 
 ### Mutex (Mutual Exclusion)
 - 確保同一時間只有一個執行緒能存取資料
-- 使用 `.lock()` 獲取獨占存取權
+- 使用 `.lock()` 獲取獨佔存取權
 - 自動在 guard 被丟棄時釋放鎖
 
 ### 毒化機制 (Poisoning)

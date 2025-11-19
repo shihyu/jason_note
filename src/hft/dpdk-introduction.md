@@ -367,7 +367,7 @@ rte_event_enqueue_burst(dev_id, port_id, &ev, 1);
 | 應用類型 | 效能指標 | 數值 |
 |---------|---------|------|
 | L2 轉發 | 吞吐量 | 200 Gbps |
-| L3 路由 | 查表速度 | 100 Mpps |
+| L3 路由 | 查錶速度 | 100 Mpps |
 | IPSec | 加密吞吐量 | 40 Gbps |
 | 負載均衡 | 連線數 | 10M CPS |
 | DPI | 檢測速度 | 20 Gbps |
@@ -395,7 +395,7 @@ rte_event_enqueue_burst(dev_id, port_id, &ev, 1);
 #### 網路設備商
 - **Cisco**: 路由器和交換機
 - **Juniper**: vMX、vSRX
-- **Nokia**: 路由器平台
+- **Nokia**: 路由器平臺
 - **Ericsson**: 5G 解決方案
 
 #### 安全廠商

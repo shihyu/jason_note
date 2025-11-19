@@ -7,11 +7,11 @@ excalidraw-plugin: parsed
 
 
 # Text Elements
-上OS课 ^wx5JqJdz
+上OS課 ^wx5JqJdz
 
 OS ^j7s5121a
 
-考OS课 ^ttMnHSG1
+考OS課 ^ttMnHSG1
 
 
 # Embedded files
@@ -84,13 +84,13 @@ e0a9dbb2d127178de233d404973a09cdc2ff670c: [[Pasted Image 20220728175312_532.png]
 			"link": null,
 			"fontSize": 44.99769867443648,
 			"fontFamily": 4,
-			"text": "上OS课",
-			"rawText": "上OS课",
+			"text": "上OS課",
+			"rawText": "上OS課",
 			"baseline": 40,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "上OS课"
+			"originalText": "上OS課"
 		},
 		{
 			"type": "text",
@@ -152,13 +152,13 @@ e0a9dbb2d127178de233d404973a09cdc2ff670c: [[Pasted Image 20220728175312_532.png]
 			"link": null,
 			"fontSize": 44.99769867443648,
 			"fontFamily": 4,
-			"text": "考OS课",
-			"rawText": "考OS课",
+			"text": "考OS課",
+			"rawText": "考OS課",
 			"baseline": 40,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "考OS课"
+			"originalText": "考OS課"
 		},
 		{
 			"type": "image",

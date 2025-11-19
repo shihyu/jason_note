@@ -11,27 +11,27 @@ Malloc ^1tWLvaWg
 
 Free ^45rcWcGf
 
-分配/申请 ^E82xNBBF
+分配/申請 ^E82xNBBF
 
-释放/归还 ^Zr75TIHH
+釋放/歸還 ^Zr75TIHH
 
-OS管理的管理的内存池 ^Xe6daegJ
+OS管理的管理的內存池 ^Xe6daegJ
 
-运行的程序 ^96X6dVDK
+運行的程序 ^96X6dVDK
 
-Lib库管理的内存池 ^acOGngqn
+Lib庫管理的內存池 ^acOGngqn
 
 sys_sbrk ^9Neufowg
 
 sys_mmap ^QozCjUJy
 
-虚拟地址空间 ^z0qow8fs
+虛擬地址空間 ^z0qow8fs
 
-物理地址空间 ^9DxfGfPp
+物理地址空間 ^9DxfGfPp
 
-虚拟地址空间 ^IPUsejmM
+虛擬地址空間 ^IPUsejmM
 
-系统调用 ^ESOnAkTW
+系統調用 ^ESOnAkTW
 
 %%
 # Drawing
@@ -707,13 +707,13 @@ sys_mmap ^QozCjUJy
 			"link": null,
 			"fontSize": 41.16926457331731,
 			"fontFamily": 4,
-			"text": "分配/申请",
-			"rawText": "分配/申请",
+			"text": "分配/申請",
+			"rawText": "分配/申請",
 			"baseline": 37,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "分配/申请"
+			"originalText": "分配/申請"
 		},
 		{
 			"type": "text",
@@ -741,13 +741,13 @@ sys_mmap ^QozCjUJy
 			"link": null,
 			"fontSize": 42.64616511418267,
 			"fontFamily": 4,
-			"text": "释放/归还",
-			"rawText": "释放/归还",
+			"text": "釋放/歸還",
+			"rawText": "釋放/歸還",
 			"baseline": 39,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "释放/归还"
+			"originalText": "釋放/歸還"
 		},
 		{
 			"type": "text",
@@ -775,13 +775,13 @@ sys_mmap ^QozCjUJy
 			"link": null,
 			"fontSize": 49.323484951155194,
 			"fontFamily": 4,
-			"text": "OS管理的管理的内存池",
-			"rawText": "OS管理的管理的内存池",
+			"text": "OS管理的管理的內存池",
+			"rawText": "OS管理的管理的內存池",
 			"baseline": 44,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "OS管理的管理的内存池"
+			"originalText": "OS管理的管理的內存池"
 		},
 		{
 			"type": "text",
@@ -809,13 +809,13 @@ sys_mmap ^QozCjUJy
 			"link": null,
 			"fontSize": 63.323082557091325,
 			"fontFamily": 4,
-			"text": "运行的程序",
-			"rawText": "运行的程序",
+			"text": "運行的程序",
+			"rawText": "運行的程序",
 			"baseline": 57,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "运行的程序"
+			"originalText": "運行的程序"
 		},
 		{
 			"type": "rectangle",
@@ -942,13 +942,13 @@ sys_mmap ^QozCjUJy
 			"link": null,
 			"fontSize": 49.323484951155194,
 			"fontFamily": 4,
-			"text": "Lib库管理的内存池",
-			"rawText": "Lib库管理的内存池",
+			"text": "Lib庫管理的內存池",
+			"rawText": "Lib庫管理的內存池",
 			"baseline": 44,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "Lib库管理的内存池"
+			"originalText": "Lib庫管理的內存池"
 		},
 		{
 			"type": "rectangle",
@@ -1687,13 +1687,13 @@ sys_mmap ^QozCjUJy
 			"link": null,
 			"fontSize": 32.217503420218904,
 			"fontFamily": 4,
-			"text": "虚拟地址空间",
-			"rawText": "虚拟地址空间",
+			"text": "虛擬地址空間",
+			"rawText": "虛擬地址空間",
 			"baseline": 29,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "虚拟地址空间"
+			"originalText": "虛擬地址空間"
 		},
 		{
 			"type": "text",
@@ -1721,13 +1721,13 @@ sys_mmap ^QozCjUJy
 			"link": null,
 			"fontSize": 32.217503420218904,
 			"fontFamily": 4,
-			"text": "物理地址空间",
-			"rawText": "物理地址空间",
+			"text": "物理地址空間",
+			"rawText": "物理地址空間",
 			"baseline": 29,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "物理地址空间"
+			"originalText": "物理地址空間"
 		},
 		{
 			"type": "text",
@@ -1755,13 +1755,13 @@ sys_mmap ^QozCjUJy
 			"link": null,
 			"fontSize": 32.217503420218904,
 			"fontFamily": 4,
-			"text": "虚拟地址空间",
-			"rawText": "虚拟地址空间",
+			"text": "虛擬地址空間",
+			"rawText": "虛擬地址空間",
 			"baseline": 29,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "虚拟地址空间"
+			"originalText": "虛擬地址空間"
 		},
 		{
 			"type": "text",
@@ -1789,13 +1789,13 @@ sys_mmap ^QozCjUJy
 			"link": null,
 			"fontSize": 22.990346342941816,
 			"fontFamily": 4,
-			"text": "系统调用",
-			"rawText": "系统调用",
+			"text": "系統調用",
+			"rawText": "系統調用",
 			"baseline": 21,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "系统调用"
+			"originalText": "系統調用"
 		}
 	],
 	"appState": {

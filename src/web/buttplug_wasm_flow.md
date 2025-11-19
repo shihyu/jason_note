@@ -226,7 +226,7 @@ sequenceDiagram
 - **異步架構**: 使用 Tokio 的 mpsc 通道在不同組件間傳遞訊息和事件
 - **Web Standards**: 基於 Web Bluetooth API 標準
 - **類型安全**: 透過 Rust 的類型系統確保記憶體安全
-- **跨平台**: 支援所有相容 Web Bluetooth 的瀏覽器
+- **跨平臺**: 支援所有相容 Web Bluetooth 的瀏覽器
 
 ## 錯誤處理
 

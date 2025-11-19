@@ -45,7 +45,7 @@ fn main() {
 
 `Hello World!`
 
-仔細一看，發現這個例子很無厘頭啊，對於習慣了寫python的我來說，確實不習慣。
+仔細一看，發現這個例子很無釐頭啊，對於習慣了寫python的我來說，確實不習慣。
 簡單點看：
 
 `iron::new().http("localhost:3000").unwrap()`

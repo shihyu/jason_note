@@ -9,8 +9,8 @@ excalidraw-plugin: parsed
 # Text Elements
 CPU with MMU ^lzj6pEgD
 
-文件相关
-系统调用 ^K8tulimU
+文件相關
+系統調用 ^K8tulimU
 
 Timer 串口 ^KfVTeCc0
 
@@ -133,8 +133,8 @@ DiskInode ^r2OffYKI
 
 EasyFS ^NfrZEFxE
 
-文件系统
-管理层 ^hNcoSWP2
+文件系統
+管理層 ^hNcoSWP2
 
 OSInode ^4rBhU5VQ
 
@@ -144,29 +144,29 @@ file data ^ZmJTEG9S
 
 EasyFS ^gJcyNJJF
 
-进程 ^wflwaLD1
+進程 ^wflwaLD1
 
 文件 ^8KwRVXU9
 
 地
 址
 空
-间 ^ZGaDcVRe
+間 ^ZGaDcVRe
 
-异常控制流 ^ffTm6gZp
+異常控制流 ^ffTm6gZp
 
-进程相关
-系统调用 ^ALhKQjLD
+進程相關
+系統調用 ^ALhKQjLD
 
 SBI service ^C9PcQbif
 
-应用程序执行环境 ^6rhB9CxW
+應用程序執行環境 ^6rhB9CxW
 
 sys_dup ^9nzpgrJj
 
 sys_pipe ^1wV1Gkyt
 
-新的IPC相关系统调用 ^oe1TPHXx
+新的IPC相關係統調用 ^oe1TPHXx
 
 stdin ^VWnl5Mn7
 
@@ -186,7 +186,7 @@ App-A ^C7YSnRg0
 
 App-B ^wwOyvMwn
 
-kill(信号值) ^PyU6rmEv
+kill(信號值) ^PyU6rmEv
 
 signal_handler ^ieH2tb9z
 
@@ -204,33 +204,33 @@ signals ^Wnn5SmAv
 
 signal_mask ^VcPQZJdB
 
-信号机制 ^6wnrQCta
+信號機制 ^6wnrQCta
 
 exception
 service ^PUOpy3Cu
 
-如果App-C产生异常， ^wL1BP9jy
+如果App-C產生異常， ^wL1BP9jy
 
-应用间通过内核的
-信号机制发signal ^0zUvjCEW
+應用間通過內核的
+信號機制發signal ^0zUvjCEW
 
-内
+內
 核
-给
-应
+給
+應
 用
-发
+發
 signal ^3AiQmfQ9
 
-内
+內
 核
-杀
+殺
 死
-应
+應
 用 ^qrKgqDqZ
 
-应用间通过内核的
-Pipe机制交互数据 ^nR14FetY
+應用間通過內核的
+Pipe機制交互數據 ^nR14FetY
 
 %%
 # Drawing
@@ -647,13 +647,13 @@ Pipe机制交互数据 ^nR14FetY
 			"link": null,
 			"fontSize": 10.447257803293486,
 			"fontFamily": 4,
-			"text": "文件相关\n系统调用",
-			"rawText": "文件相关\n系统调用",
+			"text": "文件相關\n系統調用",
+			"rawText": "文件相關\n系統調用",
 			"baseline": 20,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "文件相关\n系统调用"
+			"originalText": "文件相關\n系統調用"
 		},
 		{
 			"type": "rectangle",
@@ -3779,13 +3779,13 @@ Pipe机制交互数据 ^nR14FetY
 			"link": null,
 			"fontSize": 12.766293174342085,
 			"fontFamily": 4,
-			"text": "文件系统\n管理层",
-			"rawText": "文件系统\n管理层",
+			"text": "文件系統\n管理層",
+			"rawText": "文件系統\n管理層",
 			"baseline": 26,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "文件系统\n管理层"
+			"originalText": "文件系統\n管理層"
 		},
 		{
 			"type": "text",
@@ -4620,13 +4620,13 @@ Pipe机制交互数据 ^nR14FetY
 			"link": null,
 			"fontSize": 21.115100428628388,
 			"fontFamily": 4,
-			"text": "进程",
-			"rawText": "进程",
+			"text": "進程",
+			"rawText": "進程",
 			"baseline": 19,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程"
+			"originalText": "進程"
 		},
 		{
 			"type": "text",
@@ -4688,13 +4688,13 @@ Pipe机制交互数据 ^nR14FetY
 			"link": null,
 			"fontSize": 11.607852711397054,
 			"fontFamily": 4,
-			"text": "地\n址\n空\n间",
-			"rawText": "地\n址\n空\n间",
+			"text": "地\n址\n空\n間",
+			"rawText": "地\n址\n空\n間",
 			"baseline": 49,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "地\n址\n空\n间"
+			"originalText": "地\n址\n空\n間"
 		},
 		{
 			"type": "rectangle",
@@ -4747,13 +4747,13 @@ Pipe机制交互数据 ^nR14FetY
 			"link": null,
 			"fontSize": 9.75081364485154,
 			"fontFamily": 4,
-			"text": "异常控制流",
-			"rawText": "异常控制流",
+			"text": "異常控制流",
+			"rawText": "異常控制流",
 			"baseline": 9,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "异常控制流"
+			"originalText": "異常控制流"
 		},
 		{
 			"type": "text",
@@ -4786,13 +4786,13 @@ Pipe机制交互数据 ^nR14FetY
 			"link": null,
 			"fontSize": 11.690990119749246,
 			"fontFamily": 4,
-			"text": "进程相关\n系统调用",
-			"rawText": "进程相关\n系统调用",
+			"text": "進程相關\n系統調用",
+			"rawText": "進程相關\n系統調用",
 			"baseline": 24,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程相关\n系统调用"
+			"originalText": "進程相關\n系統調用"
 		},
 		{
 			"type": "line",
@@ -4894,13 +4894,13 @@ Pipe机制交互数据 ^nR14FetY
 			"link": null,
 			"fontSize": 22.888565470729365,
 			"fontFamily": 4,
-			"text": "应用程序执行环境",
-			"rawText": "应用程序执行环境",
+			"text": "應用程序執行環境",
+			"rawText": "應用程序執行環境",
 			"baseline": 21,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "应用程序执行环境"
+			"originalText": "應用程序執行環境"
 		},
 		{
 			"type": "rectangle",
@@ -5026,13 +5026,13 @@ Pipe机制交互数据 ^nR14FetY
 			"link": null,
 			"fontSize": 10.447257803293486,
 			"fontFamily": 4,
-			"text": "新的IPC相关系统调用",
-			"rawText": "新的IPC相关系统调用",
+			"text": "新的IPC相關係統調用",
+			"rawText": "新的IPC相關係統調用",
 			"baseline": 9,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "新的IPC相关系统调用"
+			"originalText": "新的IPC相關係統調用"
 		},
 		{
 			"type": "line",
@@ -6261,13 +6261,13 @@ Pipe机制交互数据 ^nR14FetY
 			"link": null,
 			"fontSize": 10.819672131147541,
 			"fontFamily": 4,
-			"text": "kill(信号值)",
-			"rawText": "kill(信号值)",
+			"text": "kill(信號值)",
+			"rawText": "kill(信號值)",
 			"baseline": 10,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "kill(信号值)"
+			"originalText": "kill(信號值)"
 		},
 		{
 			"type": "rectangle",
@@ -7006,15 +7006,15 @@ Pipe机制交互数据 ^nR14FetY
 			"boundElements": null,
 			"updated": 1650895797816,
 			"link": null,
-			"text": "信号机制",
-			"rawText": "信号机制",
+			"text": "信號機制",
+			"rawText": "信號機制",
 			"fontSize": 16,
 			"fontFamily": 4,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"baseline": 15,
 			"containerId": null,
-			"originalText": "信号机制"
+			"originalText": "信號機制"
 		},
 		{
 			"id": "_7zbP0tkpeizWJYVksm4h",
@@ -7241,15 +7241,15 @@ Pipe机制交互数据 ^nR14FetY
 			],
 			"updated": 1650895797816,
 			"link": null,
-			"text": "如果App-C产生异常，",
-			"rawText": "如果App-C产生异常，",
+			"text": "如果App-C產生異常，",
+			"rawText": "如果App-C產生異常，",
 			"fontSize": 12.857008260694391,
 			"fontFamily": 4,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"baseline": 12,
 			"containerId": null,
-			"originalText": "如果App-C产生异常，"
+			"originalText": "如果App-C產生異常，"
 		},
 		{
 			"id": "0zUvjCEW",
@@ -7275,15 +7275,15 @@ Pipe机制交互数据 ^nR14FetY
 			"boundElements": null,
 			"updated": 1650895797817,
 			"link": null,
-			"text": "应用间通过内核的\n信号机制发signal",
-			"rawText": "应用间通过内核的\n信号机制发signal",
+			"text": "應用間通過內核的\n信號機制發signal",
+			"rawText": "應用間通過內核的\n信號機制發signal",
 			"fontSize": 16,
 			"fontFamily": 4,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"baseline": 32,
 			"containerId": null,
-			"originalText": "应用间通过内核的\n信号机制发signal"
+			"originalText": "應用間通過內核的\n信號機制發signal"
 		},
 		{
 			"id": "3AiQmfQ9",
@@ -7309,15 +7309,15 @@ Pipe机制交互数据 ^nR14FetY
 			"boundElements": null,
 			"updated": 1650895797817,
 			"link": null,
-			"text": "内\n核\n给\n应\n用\n发\nsignal",
-			"rawText": "内\n核\n给\n应\n用\n发\nsignal",
+			"text": "內\n核\n給\n應\n用\n發\nsignal",
+			"rawText": "內\n核\n給\n應\n用\n發\nsignal",
 			"fontSize": 11.46005375129132,
 			"fontFamily": 4,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"baseline": 87,
 			"containerId": null,
-			"originalText": "内\n核\n给\n应\n用\n发\nsignal"
+			"originalText": "內\n核\n給\n應\n用\n發\nsignal"
 		},
 		{
 			"id": "qrKgqDqZ",
@@ -7352,15 +7352,15 @@ Pipe机制交互数据 ^nR14FetY
 			],
 			"updated": 1650895797817,
 			"link": null,
-			"text": "内\n核\n杀\n死\n应\n用",
-			"rawText": "内\n核\n杀\n死\n应\n用",
+			"text": "內\n核\n殺\n死\n應\n用",
+			"rawText": "內\n核\n殺\n死\n應\n用",
 			"fontSize": 12.871793306790863,
 			"fontFamily": 4,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"baseline": 86,
 			"containerId": null,
-			"originalText": "内\n核\n杀\n死\n应\n用"
+			"originalText": "內\n核\n殺\n死\n應\n用"
 		},
 		{
 			"id": "kcZpZfILGiR5IVpdnuxOd",
@@ -7436,13 +7436,13 @@ Pipe机制交互数据 ^nR14FetY
 			"link": null,
 			"fontSize": 13.791664123535156,
 			"fontFamily": 4,
-			"text": "应用间通过内核的\nPipe机制交互数据",
-			"rawText": "应用间通过内核的\nPipe机制交互数据",
+			"text": "應用間通過內核的\nPipe機制交互數據",
+			"rawText": "應用間通過內核的\nPipe機制交互數據",
 			"baseline": 28,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "应用间通过内核的\nPipe机制交互数据"
+			"originalText": "應用間通過內核的\nPipe機制交互數據"
 		}
 	],
 	"appState": {

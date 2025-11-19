@@ -19,7 +19,7 @@ WebAssembly (WASM) 是一種低階的類似組語的語言，具有緊湊的二�
 ### 核心特性
 - **安全性**：運行在沙盒環境中
 - **效能**：接近原生代碼的執行速度
-- **可移植性**：跨平台執行
+- **可移植性**：跨平臺執行
 - **語言無關**：支援多種編程語言
 - **Web 標準**：W3C 標準，所有主流瀏覽器支持
 
@@ -244,7 +244,7 @@ pub fn exported_function() -> i32 {
 ### 並非所有程式碼都能轉成 WASM
 
 **主要限制**：
-1. **系統呼叫和平台 API**
+1. **系統呼叫和平臺 API**
 2. **檔案系統操作**
 3. **多執行緒（部分支援）**
 4. **內嵌組合語言**
@@ -304,7 +304,7 @@ fn udp_socket() {
 }
 ```
 
-#### 4. 平台特定程式碼
+#### 4. 平臺特定程式碼
 ```rust
 // ❌ 內嵌組合語言
 #[cfg(target_arch = "x86_64")]
@@ -413,7 +413,7 @@ pub fn apply_echo(samples: &mut [f32], delay_samples: usize, decay: f32) {
 | 資料結構操作 | 檔案 I/O |
 | 演算法實作 | 網路 Socket |
 | 字串/陣列處理 | 多執行緒 |
-| 數學運算 | 平台特定 API |
+| 數學運算 | 平臺特定 API |
 | 遊戲邏輯 | 環境變數存取 |
 | 圖像/音訊處理 | 行程管理 |
 | 加密/壓縮 | 硬體直接存取 |
@@ -497,7 +497,7 @@ pub fn sum_array(numbers: &[i32]) -> i32 {
 ### 2. 編譯命令
 
 ```bash
-# 安裝目標平台
+# 安裝目標平臺
 rustup target add wasm32-unknown-unknown
 
 # 初始化項目
@@ -913,7 +913,7 @@ pub fn safe_divide(a: f64, b: f64) -> Result<f64, JsValue> {
 #[cfg(feature = "console_error_panic_hook")]
 console_error_panic_hook::set_once();
 
-// 日志輸出
+// 日誌輸出
 web_sys::console::log_1(&format!("Debug: {}", value).into());
 ```
 
@@ -1065,7 +1065,7 @@ wasm-pack build --target web --no-default-features --features "wasm,client,seria
 1. **正確選擇使用場景**：CPU 密集型任務
 2. **合理的架構設計**：JS 處理 I/O，WASM 處理運算
 3. **適當的優化策略**：編譯優化、記憶體管理
-4. **跨平台考量**：Web 用 WASM，Native App 用原生庫
+4. **跨平臺考量**：Web 用 WASM，Native App 用原生庫
 5. WASM 適合純計算、不依賴系統資源的程式碼
 6. `#[wasm_bindgen]` 控制匯出，不控制編譯
 7. WASM 和 JavaScript 是協作關係，不是替代關係
@@ -1076,6 +1076,6 @@ wasm-pack build --target web --no-default-features --features "wasm,client,seria
 - 使用 `wasm-pack` 而非 `cargo` 直接編譯
 - 明確管理記憶體生命週期
 - 適當的錯誤處理和邊界檢查
-- 針對目標平台優化編譯設定
+- 針對目標平臺優化編譯設定
 
-記住：技術選型沒有銀彈，要根據具體需求和環境做出最佳選擇。WebAssembly 是強大的工具，但了解其限制和適用場景同樣重要。它不是銀彈，而是現代 Web 開發工具箱中的一個重要組件。
+記住：技術選型沒有銀彈，要根據具體需求和環境做出最佳選擇。WebAssembly 是強大的工具，但瞭解其限制和適用場景同樣重要。它不是銀彈，而是現代 Web 開發工具箱中的一個重要組件。

@@ -67,7 +67,7 @@ pub enum Option<T> {
 }
 ```
 
-Option 裡面包括元素，None 和 Some(T) ，這樣就很輕鬆的描述了 next 指向stack尾的元素的時候，都是在 Option 類型下，方便了功能實現，也方便了錯誤處理。Option 還有很多強大的功能，讀者可以參考下面幾個連接：
+Option 裡麵包括元素，None 和 Some(T) ，這樣就很輕鬆的描述了 next 指向stack尾的元素的時候，都是在 Option 類型下，方便了功能實現，也方便了錯誤處理。Option 還有很多強大的功能，讀者可以參考下面幾個連接：
 
 [Option標準庫文檔](http://doc.rust-lang.org/nightly/std/option/enum.Option.html)
 

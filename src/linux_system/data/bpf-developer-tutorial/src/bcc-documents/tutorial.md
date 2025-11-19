@@ -1,16 +1,16 @@
 # bcc 教程
 
-本教程介绍如何使用[bcc](https://github.com/iovisor/bcc)工具快速解决性能、故障排除和网络问题。如果你想开发新的bcc工具，请参考[tutorial_bcc_python_developer.md](tutorial_bcc_python_developer.md)教程。
+本教程介紹如何使用[bcc](https://github.com/iovisor/bcc)工具快速解決性能、故障排除和網絡問題。如果你想開發新的bcc工具，請參考[tutorial_bcc_python_developer.md](tutorial_bcc_python_developer.md)教程。
 
-本教程假设bcc已经安装好，并且你可以成功运行像execsnoop这样的工具。参见[INSTALL.md](https://github.com/iovisor/bcc/blob/master/INSTALL.md)。这些功能是在Linux 4.x系列中增加的。
+本教程假設bcc已經安裝好，並且你可以成功運行像execsnoop這樣的工具。參見[INSTALL.md](https://github.com/iovisor/bcc/blob/master/INSTALL.md)。這些功能是在Linux 4.x系列中增加的。
 
-## 可观察性
+## 可觀察性
 
-一些快速的收获。
+一些快速的收穫。
 
 ### 0. 使用bcc之前
 
-在使用bcc之前，你应该从Linux基础知识开始。可以参考[Linux Performance Analysis in 60,000 Milliseconds](https://www.brendangregg.com/Articles/Netflix_Linux_Perf_Analysis_60s.pdf)文章，其中介绍了以下命令：
+在使用bcc之前，你應該從Linux基礎知識開始。可以參考[Linux Performance Analysis in 60,000 Milliseconds](https://www.brendangregg.com/Articles/Netflix_Linux_Perf_Analysis_60s.pdf)文章，其中介紹了以下命令：
 
 1. uptime
 1. dmesg | tail
@@ -25,7 +25,7 @@
 
 ### 1. 性能分析
 
-这是一个用于性能调查的通用检查清单，首先有一个列表，然后详细描述：
+這是一個用於性能調查的通用檢查清單，首先有一個列表，然後詳細描述：
 
 1. execsnoop
 1. opensnoop
@@ -39,7 +39,7 @@
 1. runqlat
 1. profile
 
-这些工具可能已经安装在你的系统的/usr/share/bcc/tools目录下，或者你可以从bcc github仓库的/tools目录中运行它们，这些工具使用.py扩展名。浏览50多个可用的工具，获得更多的分析选项。
+這些工具可能已經安裝在你的系統的/usr/share/bcc/tools目錄下，或者你可以從bcc github倉庫的/tools目錄中運行它們，這些工具使用.py擴展名。瀏覽50多個可用的工具，獲得更多的分析選項。
 
 #### 1.1 execsnoop
 
@@ -53,7 +53,7 @@ run              9663     0 ./run
 [...]
 ```
 
-execsnoop对于每个新进程打印一行输出。检查短生命周期的进程。这些进程可能会消耗CPU资源，但不会在大多数周期性运行的进程监控工具中显示出来。它通过跟踪`exec()`来工作，而不是`fork()`，所以它可以捕获许多类型的新进程，但不是所有类型（例如，它不会看到启动工作进程的应用程序，该应用程序没有`exec()`其他任何内容）。
+execsnoop對於每個新進程打印一行輸出。檢查短生命週期的進程。這些進程可能會消耗CPU資源，但不會在大多數週期性運行的進程監控工具中顯示出來。它通過跟蹤`exec()`來工作，而不是`fork()`，所以它可以捕獲許多類型的新進程，但不是所有類型（例如，它不會看到啟動工作進程的應用程序，該應用程序沒有`exec()`其他任何內容）。
 
 更多[例子](https://github.com/iovisor/bcc/tree/master/tools/execsnoop_example.txt)。
 
@@ -74,9 +74,9 @@ PID    COMM               FD ERR PATH
 [...]
 ```
 
-opensnoop每次open() syscall执行时打印一行输出，包括详细信息。
+opensnoop每次open() syscall執行時打印一行輸出，包括詳細信息。
 
-打开的文件可以告诉你很多关于应用程序的工作方式的信息：它们的数据文件、配置文件和日志文件。有时候应用程序可能会表现不正常，当它们不断尝试读取不存在的文件时则会表现得很差。opensnoop能够快速帮助你查看。
+打開的文件可以告訴你很多關於應用程序的工作方式的信息：它們的數據文件、配置文件和日誌文件。有時候應用程序可能會表現不正常，當它們不斷嘗試讀取不存在的文件時則會表現得很差。opensnoop能夠快速幫助你查看。
 
 更多[例子](https://github.com/iovisor/bcc/tree/master/tools/opensnoop_example.txt)。
 
@@ -84,8 +84,8 @@ opensnoop每次open() syscall执行时打印一行输出，包括详细信息。
 
 ```sh
 # ./ext4slower
-追踪超过10毫秒的ext4操作
-时间     进程           进程ID    T 字节数   偏移KB   延迟(ms) 文件名
+追蹤超過10毫秒的ext4操作
+時間     進程           進程ID    T 字節數   偏移KB   延遲(ms) 文件名
 06:35:01 cron           16464  R 1249    0          16.05 common-auth
 06:35:01 cron           16463  R 1249    0          16.04 common-auth
 06:35:01 cron           16465  R 1249    0          16.03 common-auth
@@ -93,9 +93,9 @@ opensnoop每次open() syscall执行时打印一行输出，包括详细信息。
 06:35:01 cron           16464  R 4096    0          10.61 login.defs
 ```
 
-ext4slower跟踪ext4文件系统，并计时常见操作，然后只打印超过阈值的操作。这对于识别或证明一种性能问题非常方便：通过文件系统单独显示较慢的磁盘 I/O。磁盘以异步方式处理 I/O，很难将该层的延迟与应用程序所经历的延迟关联起来。在内核堆栈中更高层的追踪，即在 VFS -> 文件系统接口中，会更接近应用程序遭受的延迟。使用此工具来判断文件系统的延迟是否超过了给定的阈值。
+ext4slower跟蹤ext4文件系統，並計時常見操作，然後只打印超過閾值的操作。這對於識別或證明一種性能問題非常方便：通過文件系統單獨顯示較慢的磁盤 I/O。磁盤以異步方式處理 I/O，很難將該層的延遲與應用程序所經歷的延遲關聯起來。在內核堆棧中更高層的追蹤，即在 VFS -> 文件系統接口中，會更接近應用程序遭受的延遲。使用此工具來判斷文件系統的延遲是否超過了給定的閾值。
 
-在 bcc 中存在其他文件系统的类似工具：btrfsslower、xfsslower 和 zfsslower。还有一个名为 fileslower 的工具，它在 VFS 层工作并跟踪所有内容（尽管会有更高的开销）。
+在 bcc 中存在其他文件系統的類似工具：btrfsslower、xfsslower 和 zfsslower。還有一個名為 fileslower 的工具，它在 VFS 層工作並跟蹤所有內容（儘管會有更高的開銷）。
 
 更多[示例](https://github.com/iovisor/bcc/tree/master/tools/ext4slower_example.txt)。
 
@@ -103,9 +103,9 @@ ext4slower跟踪ext4文件系统，并计时常见操作，然后只打印超过
 
 ```sh
 # ./biolatency
-跟踪块设备的 I/O... 按 Ctrl-C 结束。
+跟蹤塊設備的 I/O... 按 Ctrl-C 結束。
 ^C
-     微秒             : 数量      分布
+     微秒             : 數量      分佈
        0 -> 1        : 0        |                                      |
        2 -> 3        : 0        |                                      |
        4 -> 7        : 0        |                                      |
@@ -124,9 +124,9 @@ ext4slower跟踪ext4文件系统，并计时常见操作，然后只打印超过
    65536 -> 131071   : 2        |*                                     |
 ```
 
-biolatency跟踪磁盘I/O延迟（从设备执行到完成的时间），当工具结束（Ctrl-C，或给定的间隔）时，它会打印延迟的直方图摘要。
+biolatency跟蹤磁盤I/O延遲（從設備執行到完成的時間），當工具結束（Ctrl-C，或給定的間隔）時，它會打印延遲的直方圖摘要。
 
-这对于了解超出iostat等工具提供的平均时间的磁盘I/O延迟非常有用。在分布的末尾将可见I/O延迟的异常值，以及多种模式的分布。
+這對於瞭解超出iostat等工具提供的平均時間的磁盤I/O延遲非常有用。在分佈的末尾將可見I/O延遲的異常值，以及多種模式的分佈。
 
 更多[示例](https://github.com/iovisor/bcc/tree/master/tools/biolatency_example.txt)。
 
@@ -144,9 +144,9 @@ TIME(s)        COMM           PID    DISK    T  SECTOR    BYTES   LAT(ms)
 [...]
 ```
 
-biosnoop为每个磁盘I/O打印一行输出，其中包括延迟（从设备执行到完成的时间）等详细信息。
+biosnoop為每個磁盤I/O打印一行輸出，其中包括延遲（從設備執行到完成的時間）等詳細信息。
 
-这让您可以更详细地研究磁盘I/O，并寻找按时间排序的模式（例如，读取在写入后排队）。请注意，如果您的系统以高速率执行磁盘I/O，则输出将冗长。
+這讓您可以更詳細地研究磁盤I/O，並尋找按時間排序的模式（例如，讀取在寫入後排隊）。請注意，如果您的系統以高速率執行磁盤I/O，則輸出將冗長。
 
 更多[示例](https://github.com/iovisor/bcc/tree/master/tools/biosnoop_example.txt)。
 
@@ -159,15 +159,15 @@ biosnoop为每个磁盘I/O打印一行输出，其中包括延迟（从设备执
     2195      170        8      92.5%       6.8%            1        143
      182       53       56      53.6%       1.3%            1        143
    62480    40960    20480      40.6%      19.8%            1        223"。
-格式：仅返回翻译后的内容，不包括原始文本。```
+格式：僅返回翻譯後的內容，不包括原始文本。```
 7        2        5      22.2%      22.2%            1        223
      348        0        0     100.0%       0.0%            1        223
 [...]
 ```
 
-cachestat 每秒（或每个自定义时间间隔）打印一行摘要，显示文件系统缓存的统计信息。
+cachestat 每秒（或每個自定義時間間隔）打印一行摘要，顯示文件系統緩存的統計信息。
 
-可以用它来识别低缓存命中率和高缺失率，这是性能调优的线索之一。
+可以用它來識別低緩存命中率和高缺失率，這是性能調優的線索之一。
 
 更多 [示例](https://github.com/iovisor/bcc/tree/master/tools/cachestat_example.txt)。
 
@@ -184,9 +184,9 @@ PID    COMM         IP SADDR            DADDR            DPORT
 [...]
 ```
 
-tcpconnect 每个活动的 TCP 连接（例如通过 connect()）打印一行输出，包括源地址和目标地址的详细信息。
+tcpconnect 每個活動的 TCP 連接（例如通過 connect()）打印一行輸出，包括源地址和目標地址的詳細信息。
 
-寻找可能指向应用程序配置问题或入侵者的意外连接。
+尋找可能指向應用程序配置問題或入侵者的意外連接。
 
 更多 [示例](https://github.com/iovisor/bcc/tree/master/tools/tcpconnect_example.txt)。
 
@@ -201,9 +201,9 @@ PID    COMM         IP RADDR            LADDR            LPORT
 [...]
 ```
 
-tcpaccept 每个被动的 TCP 连接（例如通过 accept()）打印一行输出，包括源地址和目标地址的详细信息。
+tcpaccept 每個被動的 TCP 連接（例如通過 accept()）打印一行輸出，包括源地址和目標地址的詳細信息。
 
-寻找可能指向应用程序配置问题或入侵者的意外连接。
+尋找可能指向應用程序配置問題或入侵者的意外連接。
 
 更多 [示例](https://github.com/iovisor/bcc/tree/master/tools/tcpaccept_example.txt)。
 
@@ -211,16 +211,16 @@ tcpaccept 每个被动的 TCP 连接（例如通过 accept()）打印一行输�
 
 ```sh
 # ./tcpretrans".
-```时间 PID IP LADDR:LPORT T> RADDR:RPORT 状态
+```時間 PID IP LADDR:LPORT T> RADDR:RPORT 狀態
 01:55:05 0 4 10.153.223.157:22 R> 69.53.245.40:34619 已建立
 01:55:05 0 4 10.153.223.157:22 R> 69.53.245.40:34619 已建立
 01:55:17 0 4 10.153.223.157:22 R> 69.53.245.40:22957 已建立
 [...]
 ```
 
-tcpretrans为每个TCP重传数据包打印一行输出，其中包括源地址、目的地址以及TCP连接的内核状态。
+tcpretrans為每個TCP重傳數據包打印一行輸出，其中包括源地址、目的地址以及TCP連接的內核狀態。
 
-TCP重传会导致延迟和吞吐量问题。对于已建立的重传，可以查找与网络有关的模式。对于SYN_SENT，可能指向目标内核CPU饱和和内核数据包丢失。
+TCP重傳會導致延遲和吞吐量問題。對於已建立的重傳，可以查找與網絡有關的模式。對於SYN_SENT，可能指向目標內核CPU飽和和內核數據包丟失。
 
 更多[示例](https://github.com/iovisor/bcc/tree/master/tools/tcpretrans_example.txt)。
 
@@ -228,9 +228,9 @@ TCP重传会导致延迟和吞吐量问题。对于已建立的重传，可以�
 
 ```sh
 # ./runqlat
-跟踪运行队列延迟... 按Ctrl-C结束。
+跟蹤運行隊列延遲... 按Ctrl-C結束。
 ^C
-     微秒数               : 计数     分布
+     微秒數               : 計數     分佈
          0 -> 1          : 233      |***********                             |
          2 -> 3          : 742      |************************************    |
          4 -> 7          : 203      |**********                              |
@@ -248,7 +248,7 @@ TCP重传会导致延迟和吞吐量问题。对于已建立的重传，可以�
 32768 -> 65535      : 64       |***                                     |
 ```
 
-这可以帮助量化在CPU饱和期间等待获取CPU的时间损失。
+這可以幫助量化在CPU飽和期間等待獲取CPU的時間損失。
 
 更多[示例](https://github.com/iovisor/bcc/tree/master/tools/runqlat_example.txt)。
 
@@ -256,7 +256,7 @@ TCP重传会导致延迟和吞吐量问题。对于已建立的重传，可以�
 
 ```sh
 # ./profile
-以每秒49次的频率对所有线程进行采样，包括用户和内核栈...按Ctrl-C结束。
+以每秒49次的頻率對所有線程進行採樣，包括用戶和內核棧...按Ctrl-C結束。
 ^C
     00007f31d76c3251 [未知]
     47a2c1e752bf47f7 [未知]
@@ -293,25 +293,25 @@ TCP重传会导致延迟和吞吐量问题。对于已建立的重传，可以�
         75
 ```
 
-profile是一个CPU分析工具，它在定时间隔内采样堆栈跟踪，并打印唯一堆栈跟踪的摘要及其出现次数。
+profile是一個CPU分析工具，它在定時間隔內採樣堆棧跟蹤，並打印唯一堆棧跟蹤的摘要及其出現次數。
 
-使用此工具来了解消耗CPU资源的代码路径。
+使用此工具來了解消耗CPU資源的代碼路徑。
 
 更多[示例](https://github.com/iovisor/bcc/tree/master/tools/profile_example.txt)。
 
-### 2. 使用通用工具进行可观察性
+### 2. 使用通用工具進行可觀察性
 
-除了上述用于性能调整的工具外，下面是一个bcc通用工具的清单，首先是一个列表，然后详细说明：
+除了上述用於性能調整的工具外，下面是一個bcc通用工具的清單，首先是一個列表，然後詳細說明：
 
 1. trace
 1. argdist
-1. funccount这些通用工具可能有助于解决您特定问题的可视化。
+1. funccount這些通用工具可能有助於解決您特定問題的可視化。
 
-#### 2.1. 跟踪
+#### 2.1. 跟蹤
 
 ##### 示例 1
 
-假设您想要跟踪文件所有权更改。有三个系统调用，`chown`、`fchown`和`lchown`，用户可以使用它们来更改文件所有权。相应的系统调用入口是`SyS_[f|l]chown`。可以使用以下命令打印系统调用参数和调用进程的用户ID。您可以使用`id`命令查找特定用户的UID。
+假設您想要跟蹤文件所有權更改。有三個系統調用，`chown`、`fchown`和`lchown`，用戶可以使用它們來更改文件所有權。相應的系統調用入口是`SyS_[f|l]chown`。可以使用以下命令打印系統調用參數和調用進程的用戶ID。您可以使用`id`命令查找特定用戶的UID。
 
 ```sh
 $ trace.py \
@@ -328,19 +328,19 @@ PID    TID    COMM         FUNC             -
 
 ##### 示例 2
 
-假设您想要统计基于bpf的性能监控工具中的非自愿上下文切换（`nvcsw`），而您不知道正确的方法是什么。`/proc/<pid>/status`已经告诉您进程的非自愿上下文切换（`nonvoluntary_ctxt_switches`）的数量，并且您可以使用`trace.py`进行快速实验以验证您的方法。根据内核源代码，`nvcsw`在文件`linux/kernel/sched/core.c`的`__schedule`函数中计数，并满足以下条件：
+假設您想要統計基於bpf的性能監控工具中的非自願上下文切換（`nvcsw`），而您不知道正確的方法是什麼。`/proc/<pid>/status`已經告訴您進程的非自願上下文切換（`nonvoluntary_ctxt_switches`）的數量，並且您可以使用`trace.py`進行快速實驗以驗證您的方法。根據內核源代碼，`nvcsw`在文件`linux/kernel/sched/core.c`的`__schedule`函數中計數，並滿足以下條件：
 
 ```c
 .!(!preempt && prev->state) // 即 preempt || !prev->state
 ```
 
-`__schedule` 函数被标记为 `notrace` ，评估上述条件的最佳位置似乎在函数 `__schedule` 内部的 `sched/sched_switch` 跟踪点中，并且在 `linux/include/trace/events/sched.h` 中定义。`trace.py` 已经将 `args` 设置为跟踪点 `TP_STRUCT__entry` 的指针。函数 `__schedule` 中的上述条件可以表示为
+`__schedule` 函數被標記為 `notrace` ，評估上述條件的最佳位置似乎在函數 `__schedule` 內部的 `sched/sched_switch` 跟蹤點中，並且在 `linux/include/trace/events/sched.h` 中定義。`trace.py` 已經將 `args` 設置為跟蹤點 `TP_STRUCT__entry` 的指針。函數 `__schedule` 中的上述條件可以表示為
 
 ```c
 args->prev_state == TASK_STATE_MAX || args->prev_state == 0
 ```
 
-可以使用以下命令来计算非自愿上下文切换（每个进程或每个进程ID），并与 `/proc/<pid>/status` 或 `/proc/<pid>/task/<task_id>/status` 进行比较，以确保正确性，因为在典型情况下，非自愿上下文切换并不常见。
+可以使用以下命令來計算非自願上下文切換（每個進程或每個進程ID），並與 `/proc/<pid>/status` 或 `/proc/<pid>/task/<task_id>/status` 進行比較，以確保正確性，因為在典型情況下，非自願上下文切換並不常見。
 
 ```sh
 $ trace.py -p 1134138 't:sched:sched_switch (args->prev_state == TASK_STATE_MAX || args->prev_state == 0)'
@@ -357,7 +357,7 @@ PID    TID    COMM         FUNC
 
 ##### 示例 3
 
-此示例与问题 [1231](https://github.com/iovisor/bcc/issues/1231) 和 [1516](https://github.com/iovisor/bcc/issues/1516) 相关，其中在某些情况下，uprobes 完全无法工作。首先，你可以执行以下 `strace`
+此示例與問題 [1231](https://github.com/iovisor/bcc/issues/1231) 和 [1516](https://github.com/iovisor/bcc/issues/1516) 相關，其中在某些情況下，uprobes 完全無法工作。首先，你可以執行以下 `strace`
 
 ```sh
 $ strace trace.py 'r:bash:readline "%s", retval'
@@ -366,13 +366,13 @@ perf_event_open(0x7ffd968212f0, -1, 0, -1, 0x8 /* PERF_FLAG_??? */) = -1 EIO (In
 ...
 ```
 
-`perf_event_open`系统调用返回`-EIO`。在`/kernel/trace`和`/kernel/events`目录中查找与`EIO`相关的内核uprobe代码，函数`uprobe_register`最可疑。让我们找出是否调用了这个函数，如果调用了，返回值是什么。在一个终端中使用以下命令打印出`uprobe_register`的返回值：
+`perf_event_open`系統調用返回`-EIO`。在`/kernel/trace`和`/kernel/events`目錄中查找與`EIO`相關的內核uprobe代碼，函數`uprobe_register`最可疑。讓我們找出是否調用了這個函數，如果調用了，返回值是什麼。在一個終端中使用以下命令打印出`uprobe_register`的返回值：
 
 ```sh
 trace.py 'r::uprobe_register "ret = %d", retval'
 ```
 
-在另一个终端中运行相同的bash uretprobe跟踪示例，您应该得到：
+在另一個終端中運行相同的bash uretprobe跟蹤示例，您應該得到：
 
 ```sh
 $ trace.py 'r::uprobe_register "ret = %d", retval'
@@ -380,14 +380,14 @@ PID    TID    COMM         FUNC             -
 1041401 1041401 python2.7    uprobe_register  ret = -5
 ```
 
-错误代码`-5`是EIO。这证实了函数`uprobe_register`中的以下代码是最可疑的罪魁祸首。
+錯誤代碼`-5`是EIO。這證實了函數`uprobe_register`中的以下代碼是最可疑的罪魁禍首。
 
 ```c
  if (!inode->i_mapping->a_ops->readpage && !shmem_mapping(inode->i_mapping))
         return -EIO;
 ```
 
-`shmem_mapping`函数定义如下：
+`shmem_mapping`函數定義如下：
 
 ```c
 bool shmem_mapping(struct address_space *mapping)
@@ -396,7 +396,7 @@ bool shmem_mapping(struct address_space *mapping)
 }
 ```
 
-为了确认这个理论，使用以下命令找出`inode->i_mapping->a_ops`的值：
+為了確認這個理論，使用以下命令找出`inode->i_mapping->a_ops`的值：
 
 ```sh
 $ trace.py -I 'linux/fs.h' 'p::uprobe_register(struct inode *inode) "a_ops = %llx", inode->i_mapping->a_ops'
@@ -406,7 +406,7 @@ PID    TID    COMM         FUNC             -
 ffffffff81a2adc0 R empty_aops
 ```
 
-内核符号`empty_aops`没有定义`readpage`，因此上述可疑条件为真。进一步检查内核源代码显示，`overlayfs`没有提供自己的`a_ops`，而其他一些文件系统（例如ext4）定义了自己的`a_ops`（例如`ext4_da_aops`），并且`ext4_da_aops`定义了`readpage`。因此，uprobe对于ext4正常工作，但在overlayfs上不正常工作。
+內核符號`empty_aops`沒有定義`readpage`，因此上述可疑條件為真。進一步檢查內核源代碼顯示，`overlayfs`沒有提供自己的`a_ops`，而其他一些文件系統（例如ext4）定義了自己的`a_ops`（例如`ext4_da_aops`），並且`ext4_da_aops`定義了`readpage`。因此，uprobe對於ext4正常工作，但在overlayfs上不正常工作。
 
 更多[示例](https://github.com/iovisor/bcc/tree/master/tools/trace_example.txt)。
 
@@ -416,6 +416,6 @@ ffffffff81a2adc0 R empty_aops
 
 更多[示例](https://github.com/iovisor/bcc/tree/master/tools/funccount_example.txt).
 
-## 网络
+## 網絡
 
 To do.

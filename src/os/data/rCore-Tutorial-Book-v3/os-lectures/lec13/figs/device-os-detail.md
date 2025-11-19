@@ -9,8 +9,8 @@ excalidraw-plugin: parsed
 # Text Elements
 CPU with MMU ^lzj6pEgD
 
-文件相关
-系统调用 ^K8tulimU
+文件相關
+系統調用 ^K8tulimU
 
 PCB ^O9e9OHmC
 
@@ -111,8 +111,8 @@ DiskInode ^r2OffYKI
 
 EasyFS ^NfrZEFxE
 
-文件系统
-管理层 ^hNcoSWP2
+文件系統
+管理層 ^hNcoSWP2
 
 OSInode ^4rBhU5VQ
 
@@ -120,31 +120,31 @@ fd_table ^JPs7O1Sx
 
 file data ^ZmJTEG9S
 
-进程 ^wflwaLD1
+進程 ^wflwaLD1
 
 文件 ^8KwRVXU9
 
 地
 址
 空
-间
+間
 管
 理 ^ZGaDcVRe
 
-异常控制流管理 ^ffTm6gZp
+異常控制流管理 ^ffTm6gZp
 
-进程相关
-系统调用 ^ALhKQjLD
+進程相關
+系統調用 ^ALhKQjLD
 
 SBI service ^C9PcQbif
 
-应用程序执行环境 ^6rhB9CxW
+應用程序執行環境 ^6rhB9CxW
 
 sys_dup ^9nzpgrJj
 
 sys_pipe ^1wV1Gkyt
 
-IPC相关系统调用 ^oe1TPHXx
+IPC相關係統調用 ^oe1TPHXx
 
 stdin ^VWnl5Mn7
 
@@ -162,7 +162,7 @@ signals ^Wnn5SmAv
 
 signal_mask ^VcPQZJdB
 
-信号机制 ^6wnrQCta
+信號機制 ^6wnrQCta
 
 exception
 service ^PUOpy3Cu
@@ -173,7 +173,7 @@ sys_gettid ^qIDBgzTt
 
 sys_waittid ^iQKuKkxP
 
-线程相关系统调用 ^mPLucw34
+線程相關係統調用 ^mPLucw34
 
 thread1 ^OeMCsPvs
 
@@ -181,7 +181,7 @@ thread2 ^j2SF8GsJ
 
 thread3 ^77sfqeZb
 
-进程process ^9PcQ5JrL
+進程process ^9PcQ5JrL
 
 stack2 ^gaJUmcGL
 
@@ -189,7 +189,7 @@ stack3 ^XdiZ2wFs
 
 stack1 ^00O20qAe
 
-全局变量 ^rpz5JRmO
+全局變量 ^rpz5JRmO
 
 heap ^WSCEhY7I
 
@@ -210,7 +210,7 @@ sys_semaphore_[create,up,down] ^RANgaCKY
 
 sys_condvar_[create, signal, wait] ^3olcDLRv
 
-同步互斥相关系统调用 ^hc74Hyyo
+同步互斥相關係統調用 ^hc74Hyyo
 
 wait_
 queue ^Fr4NdBS7
@@ -256,7 +256,7 @@ VirtIOInput Drv ^jCskMsW7
 
 VirtIOBlk Drv ^AiRQlkMq
 
-软件 ^610UTFpZ
+軟件 ^610UTFpZ
 
 硬件 ^Mmnf3XrO
 
@@ -281,7 +281,7 @@ sys_event_get ^uPjitBgY
 
 sys_key_pressed ^qSRrk00m
 
-GUI相关系统调用 ^OQMNy1Sg
+GUI相關係統調用 ^OQMNy1Sg
 
 Virt Macine Conf ^pTZnWugz
 
@@ -295,21 +295,21 @@ Other Services ^dg3skcoo
 
 RustSBI ^JOTin02I
 
-PLIC平台级
-中断控制器 ^88U8XBhT
+PLIC平臺級
+中斷控制器 ^88U8XBhT
 
 Virt Machine 
-硬件参数模型 ^bYszAkED
+硬件參數模型 ^bYszAkED
 
 qemu-system-riscv64 ^mzLFxfby
 
 用
-户
-态 ^ON2LyGBg
+戶
+態 ^ON2LyGBg
 
-内
+內
 核
-态 ^6QJkWKgZ
+態 ^6QJkWKgZ
 
 User Mode ^FkDYFDwr
 
@@ -319,18 +319,18 @@ Mode ^YSCymMUJ
 Macine
 Mode ^vhEoe1zz
 
-独立于
-操作系统
-的软件库 ^g3UCxzn5
+獨立於
+操作系統
+的軟件庫 ^g3UCxzn5
 
-地址空间管理 ^yuuhHvJz
+地址空間管理 ^yuuhHvJz
 
-调
+調
 度
 管
 理 ^VND5UJbx
 
-调度切换 ^6sNPKDlt
+調度切換 ^6sNPKDlt
 
 同步互斥 ^NTVVvKFR
 
@@ -1165,13 +1165,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 11.973184647272257,
 			"fontFamily": 4,
-			"text": "文件相关\n系统调用",
-			"rawText": "文件相关\n系统调用",
+			"text": "文件相關\n系統調用",
+			"rawText": "文件相關\n系統調用",
 			"baseline": 24,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "文件相关\n系统调用"
+			"originalText": "文件相關\n系統調用"
 		},
 		{
 			"type": "rectangle",
@@ -3758,13 +3758,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 12.766293174342085,
 			"fontFamily": 4,
-			"text": "文件系统\n管理层",
-			"rawText": "文件系统\n管理层",
+			"text": "文件系統\n管理層",
+			"rawText": "文件系統\n管理層",
 			"baseline": 26,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "文件系统\n管理层"
+			"originalText": "文件系統\n管理層"
 		},
 		{
 			"type": "text",
@@ -4585,13 +4585,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 21.115100428628388,
 			"fontFamily": 4,
-			"text": "进程",
-			"rawText": "进程",
+			"text": "進程",
+			"rawText": "進程",
 			"baseline": 19,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程"
+			"originalText": "進程"
 		},
 		{
 			"type": "text",
@@ -4653,13 +4653,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 11.607852711397054,
 			"fontFamily": 4,
-			"text": "地\n址\n空\n间\n管\n理",
-			"rawText": "地\n址\n空\n间\n管\n理",
+			"text": "地\n址\n空\n間\n管\n理",
+			"rawText": "地\n址\n空\n間\n管\n理",
 			"baseline": 71,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "地\n址\n空\n间\n管\n理"
+			"originalText": "地\n址\n空\n間\n管\n理"
 		},
 		{
 			"type": "rectangle",
@@ -4712,13 +4712,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 13.246572096673425,
 			"fontFamily": 4,
-			"text": "异常控制流管理",
-			"rawText": "异常控制流管理",
+			"text": "異常控制流管理",
+			"rawText": "異常控制流管理",
 			"baseline": 12,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "异常控制流管理"
+			"originalText": "異常控制流管理"
 		},
 		{
 			"type": "text",
@@ -4751,13 +4751,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 13.69553923876578,
 			"fontFamily": 4,
-			"text": "进程相关\n系统调用",
-			"rawText": "进程相关\n系统调用",
+			"text": "進程相關\n系統調用",
+			"rawText": "進程相關\n系統調用",
 			"baseline": 26,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程相关\n系统调用"
+			"originalText": "進程相關\n系統調用"
 		},
 		{
 			"type": "text",
@@ -4819,13 +4819,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 17.867098875907068,
 			"fontFamily": 4,
-			"text": "应用程序执行环境",
-			"rawText": "应用程序执行环境",
+			"text": "應用程序執行環境",
+			"rawText": "應用程序執行環境",
 			"baseline": 17,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "应用程序执行环境"
+			"originalText": "應用程序執行環境"
 		},
 		{
 			"type": "rectangle",
@@ -4951,13 +4951,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 12.528054714238323,
 			"fontFamily": 4,
-			"text": "IPC相关系统调用",
-			"rawText": "IPC相关系统调用",
+			"text": "IPC相關係統調用",
+			"rawText": "IPC相關係統調用",
 			"baseline": 11,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "IPC相关系统调用"
+			"originalText": "IPC相關係統調用"
 		},
 		{
 			"type": "line",
@@ -5901,13 +5901,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 13.91864013671875,
 			"fontFamily": 4,
-			"text": "信号机制",
-			"rawText": "信号机制",
+			"text": "信號機制",
+			"rawText": "信號機制",
 			"baseline": 12,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "信号机制"
+			"originalText": "信號機制"
 		},
 		{
 			"type": "text",
@@ -6131,13 +6131,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 14.608822641091676,
 			"fontFamily": 4,
-			"text": "线程相关系统调用",
-			"rawText": "线程相关系统调用",
+			"text": "線程相關係統調用",
+			"rawText": "線程相關係統調用",
 			"baseline": 12,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "线程相关系统调用"
+			"originalText": "線程相關係統調用"
 		},
 		{
 			"type": "rectangle",
@@ -6309,13 +6309,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 21.115100428628388,
 			"fontFamily": 4,
-			"text": "进程process",
-			"rawText": "进程process",
+			"text": "進程process",
+			"rawText": "進程process",
 			"baseline": 19,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程process"
+			"originalText": "進程process"
 		},
 		{
 			"type": "rectangle",
@@ -6573,13 +6573,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 16,
 			"fontFamily": 4,
-			"text": "全局\n变量",
-			"rawText": "全局变量",
+			"text": "全局\n變量",
+			"rawText": "全局變量",
 			"baseline": 33,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": "EMOmry26cEigLQtAYpcUv",
-			"originalText": "全局变量"
+			"originalText": "全局變量"
 		},
 		{
 			"type": "rectangle",
@@ -7334,13 +7334,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 13.56143851902174,
 			"fontFamily": 4,
-			"text": "同步互斥相关系统调用",
-			"rawText": "同步互斥相关系统调用",
+			"text": "同步互斥相關係統調用",
+			"rawText": "同步互斥相關係統調用",
 			"baseline": 12,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "同步互斥相关系统调用"
+			"originalText": "同步互斥相關係統調用"
 		},
 		{
 			"type": "rectangle",
@@ -8620,13 +8620,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 29.242675781249996,
 			"fontFamily": 4,
-			"text": "软件",
-			"rawText": "软件",
+			"text": "軟件",
+			"rawText": "軟件",
 			"baseline": 26,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "软件"
+			"originalText": "軟件"
 		},
 		{
 			"type": "text",
@@ -9069,13 +9069,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 13.56143851902174,
 			"fontFamily": 4,
-			"text": "GUI相关系统调用",
-			"rawText": "GUI相关系统调用",
+			"text": "GUI相關係統調用",
+			"rawText": "GUI相關係統調用",
 			"baseline": 12,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "GUI相关系统调用"
+			"originalText": "GUI相關係統調用"
 		},
 		{
 			"type": "arrow",
@@ -9928,13 +9928,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 15.702601825611637,
 			"fontFamily": 4,
-			"text": "PLIC平台级\n中断控制器",
-			"rawText": "PLIC平台级\n中断控制器",
+			"text": "PLIC平臺級\n中斷控制器",
+			"rawText": "PLIC平臺級\n中斷控制器",
 			"baseline": 32,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "PLIC平台级\n中断控制器"
+			"originalText": "PLIC平臺級\n中斷控制器"
 		},
 		{
 			"type": "rectangle",
@@ -9992,13 +9992,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 16,
 			"fontFamily": 4,
-			"text": "Virt Machine \n硬件参数模型",
-			"rawText": "Virt Machine \n硬件参数模型",
+			"text": "Virt Machine \n硬件參數模型",
+			"rawText": "Virt Machine \n硬件參數模型",
 			"baseline": 33,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "Virt Machine \n硬件参数模型"
+			"originalText": "Virt Machine \n硬件參數模型"
 		},
 		{
 			"type": "arrow",
@@ -10156,13 +10156,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 19.299172794117638,
 			"fontFamily": 4,
-			"text": "用\n户\n态",
-			"rawText": "用\n户\n态",
+			"text": "用\n戶\n態",
+			"rawText": "用\n戶\n態",
 			"baseline": 60,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "用\n户\n态"
+			"originalText": "用\n戶\n態"
 		},
 		{
 			"type": "text",
@@ -10190,13 +10190,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 19.299172794117638,
 			"fontFamily": 4,
-			"text": "内\n核\n态",
-			"rawText": "内\n核\n态",
+			"text": "內\n核\n態",
+			"rawText": "內\n核\n態",
 			"baseline": 60,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "内\n核\n态"
+			"originalText": "內\n核\n態"
 		},
 		{
 			"type": "text",
@@ -10356,13 +10356,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 15.617578125,
 			"fontFamily": 4,
-			"text": "独立于\n操作系统\n的软件库",
-			"rawText": "独立于\n操作系统\n的软件库",
+			"text": "獨立於\n操作系統\n的軟件庫",
+			"rawText": "獨立於\n操作系統\n的軟件庫",
 			"baseline": 49,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "独立于\n操作系统\n的软件库"
+			"originalText": "獨立於\n操作系統\n的軟件庫"
 		},
 		{
 			"type": "text",
@@ -10390,13 +10390,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 13.68713756443299,
 			"fontFamily": 4,
-			"text": "地址空间管理",
-			"rawText": "地址空间管理",
+			"text": "地址空間管理",
+			"rawText": "地址空間管理",
 			"baseline": 12,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "地址空间管理"
+			"originalText": "地址空間管理"
 		},
 		{
 			"type": "text",
@@ -10424,13 +10424,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 11.452425570101349,
 			"fontFamily": 4,
-			"text": "调\n度\n管\n理",
-			"rawText": "调\n度\n管\n理",
+			"text": "調\n度\n管\n理",
+			"rawText": "調\n度\n管\n理",
 			"baseline": 47,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "调\n度\n管\n理"
+			"originalText": "調\n度\n管\n理"
 		},
 		{
 			"type": "text",
@@ -10460,13 +10460,13 @@ d8e78ff6697cc640b772d621ac557bf43e9ec3d5: [[Pasted Image 20230117102840_525.png]
 			"link": null,
 			"fontSize": 13.337591177975739,
 			"fontFamily": 4,
-			"text": "调度切换",
-			"rawText": "调度切换",
+			"text": "調度切換",
+			"rawText": "調度切換",
 			"baseline": 12,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "调度切换"
+			"originalText": "調度切換"
 		},
 		{
 			"type": "rectangle",

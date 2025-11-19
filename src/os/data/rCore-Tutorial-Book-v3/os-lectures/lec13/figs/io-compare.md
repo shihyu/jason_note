@@ -9,7 +9,7 @@ excalidraw-plugin: parsed
 # Text Elements
 阻塞I/O ^95AG065Q
 
-发起 ^dwG2yAKg
+發起 ^dwG2yAKg
 
 完成 ^P9DqFK2p
 
@@ -17,37 +17,37 @@ excalidraw-plugin: parsed
 
 非阻塞I/O ^yywMy9Nr
 
-发起 ^FVK5xgBl
+發起 ^FVK5xgBl
 
 完成 ^B2YQhEug
 
 阻塞 ^YwrZSHm4
 
-检查 ^iBgENG8R
+檢查 ^iBgENG8R
 
-检查 ^FTycdGAm
+檢查 ^FTycdGAm
 
-检查 ^NHc79PqT
+檢查 ^NHc79PqT
 
-检查 ^0UeXnWiC
+檢查 ^0UeXnWiC
 
-I/O复用 ^G4eIX5dS
+I/O複用 ^G4eIX5dS
 
-发起 ^Ktj8hzCe
+發起 ^Ktj8hzCe
 
 完成 ^DuDslFFc
 
 阻塞 ^ym08pxlG
 
-检查 ^8cVV1T6E
+檢查 ^8cVV1T6E
 
-就绪 ^IdVnzHUj
+就緒 ^IdVnzHUj
 
 阻塞 ^QOhUPAnq
 
-信号驱动 ^aoeUiVEJ
+信號驅動 ^aoeUiVEJ
 
-发起 ^KQ68G0pp
+發起 ^KQ68G0pp
 
 完成 ^YyTqH3z1
 
@@ -55,19 +55,19 @@ I/O复用 ^G4eIX5dS
 
 阻塞 ^wry4mmoo
 
-异步I/O ^YrK9k6H8
+異步I/O ^YrK9k6H8
 
-发起 ^v10BC8bv
+發起 ^v10BC8bv
 
 通知 ^d06hTZK3
 
 等待
-数据 ^A4ckZhba
+數據 ^A4ckZhba
 
-将数据
-从内核
-拷贝到
-应用程
+將數據
+從內核
+拷貝到
+應用程
 序中 ^xnjDg1Mt
 
 
@@ -205,13 +205,13 @@ I/O复用 ^G4eIX5dS
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "发起",
-			"rawText": "发起",
+			"text": "發起",
+			"rawText": "發起",
 			"baseline": 31,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "发起"
+			"originalText": "發起"
 		},
 		{
 			"type": "text",
@@ -446,13 +446,13 @@ I/O复用 ^G4eIX5dS
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "发起",
-			"rawText": "发起",
+			"text": "發起",
+			"rawText": "發起",
 			"baseline": 31,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "发起"
+			"originalText": "發起"
 		},
 		{
 			"type": "text",
@@ -606,13 +606,13 @@ I/O复用 ^G4eIX5dS
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "检查",
-			"rawText": "检查",
+			"text": "檢查",
+			"rawText": "檢查",
 			"baseline": 31,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "检查"
+			"originalText": "檢查"
 		},
 		{
 			"type": "text",
@@ -640,13 +640,13 @@ I/O复用 ^G4eIX5dS
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "检查",
-			"rawText": "检查",
+			"text": "檢查",
+			"rawText": "檢查",
 			"baseline": 31,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "检查"
+			"originalText": "檢查"
 		},
 		{
 			"type": "text",
@@ -674,13 +674,13 @@ I/O复用 ^G4eIX5dS
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "检查",
-			"rawText": "检查",
+			"text": "檢查",
+			"rawText": "檢查",
 			"baseline": 31,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "检查"
+			"originalText": "檢查"
 		},
 		{
 			"type": "text",
@@ -713,13 +713,13 @@ I/O复用 ^G4eIX5dS
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "检查",
-			"rawText": "检查",
+			"text": "檢查",
+			"rawText": "檢查",
 			"baseline": 31,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "检查"
+			"originalText": "檢查"
 		},
 		{
 			"type": "rectangle",
@@ -806,13 +806,13 @@ I/O复用 ^G4eIX5dS
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "I/O复用",
-			"rawText": "I/O复用",
+			"text": "I/O複用",
+			"rawText": "I/O複用",
 			"baseline": 31,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": "XpZExc_pXa8U_sOGPPgxB",
-			"originalText": "I/O复用"
+			"originalText": "I/O複用"
 		},
 		{
 			"type": "text",
@@ -845,13 +845,13 @@ I/O复用 ^G4eIX5dS
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "发起",
-			"rawText": "发起",
+			"text": "發起",
+			"rawText": "發起",
 			"baseline": 31,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "发起"
+			"originalText": "發起"
 		},
 		{
 			"type": "text",
@@ -1005,13 +1005,13 @@ I/O复用 ^G4eIX5dS
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "检查",
-			"rawText": "检查",
+			"text": "檢查",
+			"rawText": "檢查",
 			"baseline": 31,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "检查"
+			"originalText": "檢查"
 		},
 		{
 			"type": "arrow",
@@ -1092,13 +1092,13 @@ I/O复用 ^G4eIX5dS
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "就绪",
-			"rawText": "就绪",
+			"text": "就緒",
+			"rawText": "就緒",
 			"baseline": 31,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "就绪"
+			"originalText": "就緒"
 		},
 		{
 			"type": "text",
@@ -1228,13 +1228,13 @@ I/O复用 ^G4eIX5dS
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "信号驱动",
-			"rawText": "信号驱动",
+			"text": "信號驅動",
+			"rawText": "信號驅動",
 			"baseline": 31,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": "g48TF0jH3-XbDMnls-xkr",
-			"originalText": "信号驱动"
+			"originalText": "信號驅動"
 		},
 		{
 			"type": "text",
@@ -1267,13 +1267,13 @@ I/O复用 ^G4eIX5dS
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "发起",
-			"rawText": "发起",
+			"text": "發起",
+			"rawText": "發起",
 			"baseline": 31,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "发起"
+			"originalText": "發起"
 		},
 		{
 			"type": "text",
@@ -1524,13 +1524,13 @@ I/O复用 ^G4eIX5dS
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "异步I/O",
-			"rawText": "异步I/O",
+			"text": "異步I/O",
+			"rawText": "異步I/O",
 			"baseline": 31,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": "QqTpKqcFi19lNXOLEkeUj",
-			"originalText": "异步I/O"
+			"originalText": "異步I/O"
 		},
 		{
 			"type": "text",
@@ -1563,13 +1563,13 @@ I/O复用 ^G4eIX5dS
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "发起",
-			"rawText": "发起",
+			"text": "發起",
+			"rawText": "發起",
 			"baseline": 31,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "发起"
+			"originalText": "發起"
 		},
 		{
 			"type": "text",
@@ -1660,15 +1660,15 @@ I/O复用 ^G4eIX5dS
 			"boundElements": null,
 			"updated": 1675044494122,
 			"link": null,
-			"text": "等待\n数据",
-			"rawText": "等待\n数据",
+			"text": "等待\n數據",
+			"rawText": "等待\n數據",
 			"fontSize": 36,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 70,
 			"containerId": null,
-			"originalText": "等待\n数据"
+			"originalText": "等待\n數據"
 		},
 		{
 			"type": "image",
@@ -1725,15 +1725,15 @@ I/O复用 ^G4eIX5dS
 			"boundElements": null,
 			"updated": 1675044588839,
 			"link": null,
-			"text": "将数据\n从内核\n拷贝到\n应用程\n序中",
-			"rawText": "将数据\n从内核\n拷贝到\n应用程\n序中",
+			"text": "將數據\n從內核\n拷貝到\n應用程\n序中",
+			"rawText": "將數據\n從內核\n拷貝到\n應用程\n序中",
 			"fontSize": 36,
 			"fontFamily": 4,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"baseline": 187,
 			"containerId": null,
-			"originalText": "将数据\n从内核\n拷贝到\n应用程\n序中"
+			"originalText": "將數據\n從內核\n拷貝到\n應用程\n序中"
 		}
 	],
 	"appState": {

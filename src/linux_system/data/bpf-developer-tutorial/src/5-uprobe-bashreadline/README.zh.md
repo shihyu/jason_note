@@ -1,24 +1,24 @@
-# eBPF 入门开发实践教程五：在 eBPF 中使用  uprobe 捕获 bash 的 readline 函数调用
+# eBPF 入門開發實踐教程五：在 eBPF 中使用  uprobe 捕獲 bash 的 readline 函數調用
 
-eBPF (Extended Berkeley Packet Filter) 是 Linux 内核上的一个强大的网络和性能分析工具，它允许开发者在内核运行时动态加载、更新和运行用户定义的代码。
+eBPF (Extended Berkeley Packet Filter) 是 Linux 內核上的一個強大的網絡和性能分析工具，它允許開發者在內核運行時動態加載、更新和運行用戶定義的代碼。
 
-本文是 eBPF 入门开发实践教程的第五篇，主要介绍如何使用 uprobe 捕获 bash 的 readline 函数调用。
+本文是 eBPF 入門開發實踐教程的第五篇，主要介紹如何使用 uprobe 捕獲 bash 的 readline 函數調用。
 
-## 什么是uprobe
+## 什麼是uprobe
 
-uprobe是一种用户空间探针，uprobe探针允许在用户空间程序中动态插桩，插桩位置包括：函数入口、特定偏移处，以及函数返回处。当我们定义uprobe时，内核会在附加的指令上创建快速断点指令（x86机器上为int3指令），当程序执行到该指令时，内核将触发事件，程序陷入到内核态，并以回调函数的方式调用探针函数，执行完探针函数再返回到用户态继续执行后序的指令。
+uprobe是一種用戶空間探針，uprobe探針允許在用戶空間程序中動態插樁，插樁位置包括：函數入口、特定偏移處，以及函數返回處。當我們定義uprobe時，內核會在附加的指令上創建快速斷點指令（x86機器上為int3指令），當程序執行到該指令時，內核將觸發事件，程序陷入到內核態，並以回調函數的方式調用探針函數，執行完探針函數再返回到用戶態繼續執行後序的指令。
 
-uprobe基于文件，当一个二进制文件中的一个函数被跟踪时，所有使用到这个文件的进程都会被插桩，包括那些尚未启动的进程，这样就可以在全系统范围内跟踪系统调用。
+uprobe基於文件，當一個二進制文件中的一個函數被跟蹤時，所有使用到這個文件的進程都會被插樁，包括那些尚未啟動的進程，這樣就可以在全系統範圍內跟蹤系統調用。
 
-uprobe适用于在用户态去解析一些内核态探针无法解析的流量，例如http2流量（报文header被编码，内核无法解码），https流量（加密流量，内核无法解密）。具体可以参考 [eBPF 实践教程：使用 uprobe 捕获多种库的 SSL/TLS 明文数据](../30-sslsniff/README.md) 中的例子。
+uprobe適用於在用戶態去解析一些內核態探針無法解析的流量，例如http2流量（報文header被編碼，內核無法解碼），https流量（加密流量，內核無法解密）。具體可以參考 [eBPF 實踐教程：使用 uprobe 捕獲多種庫的 SSL/TLS 明文數據](../30-sslsniff/README.md) 中的例子。
 
-Uprobe 在内核态 eBPF 运行时，也可能产生比较大的性能开销，这时候也可以考虑使用用户态 eBPF 运行时，例如  [bpftime](https://github.com/eunomia-bpf/bpftime)。bpftime 是一个基于 LLVM JIT/AOT 的用户态 eBPF 运行时，它可以在用户态运行 eBPF 程序，和内核态的 eBPF 兼容，避免了内核态和用户态之间的上下文切换，从而提高了 eBPF 程序的执行效率。对于 uprobe 而言，bpftime 的性能开销比 kernel 小一个数量级。
+Uprobe 在內核態 eBPF 運行時，也可能產生比較大的性能開銷，這時候也可以考慮使用用戶態 eBPF 運行時，例如  [bpftime](https://github.com/eunomia-bpf/bpftime)。bpftime 是一個基於 LLVM JIT/AOT 的用戶態 eBPF 運行時，它可以在用戶態運行 eBPF 程序，和內核態的 eBPF 兼容，避免了內核態和用戶態之間的上下文切換，從而提高了 eBPF 程序的執行效率。對於 uprobe 而言，bpftime 的性能開銷比 kernel 小一個數量級。
 
-## 使用 uprobe 捕获 bash 的 readline 函数调用
+## 使用 uprobe 捕獲 bash 的 readline 函數調用
 
-uprobe 是一种用于捕获用户空间函数调用的 eBPF 的探针，我们可以通过它来捕获用户空间程序调用的系统函数。
+uprobe 是一種用於捕獲用戶空間函數調用的 eBPF 的探針，我們可以通過它來捕獲用戶空間程序調用的系統函數。
 
-例如，我们可以使用 uprobe 来捕获 bash 的 readline 函数调用，从而获取用户在 bash 中输入的命令行。示例代码如下：
+例如，我們可以使用 uprobe 來捕獲 bash 的 readline 函數調用，從而獲取用戶在 bash 中輸入的命令行。示例代碼如下：
 
 ```c
 #include <vmlinux.h>
@@ -61,55 +61,55 @@ int BPF_KRETPROBE(printret, const void *ret)
 char LICENSE[] SEC("license") = "GPL";
 ```
 
-这段代码的作用是在 bash 的 readline 函数返回时执行指定的 BPF_KRETPROBE 函数，即 printret 函数。
+這段代碼的作用是在 bash 的 readline 函數返回時執行指定的 BPF_KRETPROBE 函數，即 printret 函數。
 
-在 printret 函数中，我们首先获取了调用 readline 函数的进程的进程名称和进程 ID，然后通过 bpf_probe_read_user_str 函数读取了用户输入的命令行字符串，最后通过 bpf_printk 函数打印出进程 ID、进程名称和输入的命令行字符串。
+在 printret 函數中，我們首先獲取了調用 readline 函數的進程的進程名稱和進程 ID，然後通過 bpf_probe_read_user_str 函數讀取了用戶輸入的命令行字符串，最後通過 bpf_printk 函數打印出進程 ID、進程名稱和輸入的命令行字符串。
 
-除此之外，我们还需要通过 SEC 宏来定义 uprobe 探针，并使用 BPF_KRETPROBE 宏来定义探针函数。
+除此之外，我們還需要通過 SEC 宏來定義 uprobe 探針，並使用 BPF_KRETPROBE 宏來定義探針函數。
 
-在 SEC 宏中，我们需要指定 uprobe 的类型、要捕获的二进制文件的路径和要捕获的函数名称。例如，上面的代码中的 SEC 宏的定义如下：
+在 SEC 宏中，我們需要指定 uprobe 的類型、要捕獲的二進制文件的路徑和要捕獲的函數名稱。例如，上面的代碼中的 SEC 宏的定義如下：
 
 ```c
 SEC("uretprobe//bin/bash:readline")
 ```
 
-这表示我们要捕获的是 /bin/bash 二进制文件中的 readline 函数。
+這表示我們要捕獲的是 /bin/bash 二進制文件中的 readline 函數。
 
-接下来，我们需要使用 BPF_KRETPROBE 宏来定义探针函数，例如：
+接下來，我們需要使用 BPF_KRETPROBE 宏來定義探針函數，例如：
 
 ```c
 BPF_KRETPROBE(printret, const void *ret)
 ```
 
-这里的 printret 是探针函数的名称，const void *ret 是探针函数的参数，它代表被捕获的函数的返回值。
+這裡的 printret 是探針函數的名稱，const void *ret 是探針函數的參數，它代表被捕獲的函數的返回值。
 
-然后，我们使用了 bpf_get_current_comm 函数获取当前任务的名称，并将其存储在 comm 数组中。
+然後，我們使用了 bpf_get_current_comm 函數獲取當前任務的名稱，並將其存儲在 comm 數組中。
 
 ```c
  bpf_get_current_comm(&comm, sizeof(comm));
 ```
 
-使用 bpf_get_current_pid_tgid 函数获取当前进程的 PID，并将其存储在 pid 变量中。
+使用 bpf_get_current_pid_tgid 函數獲取當前進程的 PID，並將其存儲在 pid 變量中。
 
 ```c
  pid = bpf_get_current_pid_tgid() >> 32;
 ```
 
-使用 bpf_probe_read_user_str 函数从用户空间读取 readline 函数的返回值，并将其存储在 str 数组中。
+使用 bpf_probe_read_user_str 函數從用戶空間讀取 readline 函數的返回值，並將其存儲在 str 數組中。
 
 ```c
  bpf_probe_read_user_str(str, sizeof(str), ret);
 ```
 
-最后使用 bpf_printk 函数输出 PID、任务名称和用户输入的字符串。
+最後使用 bpf_printk 函數輸出 PID、任務名稱和用戶輸入的字符串。
 
 ```c
  bpf_printk("PID %d (%s) read: %s ", pid, comm, str);
 ```
 
-eunomia-bpf 是一个结合 Wasm 的开源 eBPF 动态加载运行时和开发工具链，它的目的是简化 eBPF 程序的开发、构建、分发、运行。可以参考 <https://github.com/eunomia-bpf/eunomia-bpf> 下载和安装 ecc 编译工具链和 ecli 运行时。我们使用 eunomia-bpf 编译运行这个例子。
+eunomia-bpf 是一個結合 Wasm 的開源 eBPF 動態加載運行時和開發工具鏈，它的目的是簡化 eBPF 程序的開發、構建、分發、運行。可以參考 <https://github.com/eunomia-bpf/eunomia-bpf> 下載和安裝 ecc 編譯工具鏈和 ecli 運行時。我們使用 eunomia-bpf 編譯運行這個例子。
 
-编译运行上述代码：
+編譯運行上述代碼：
 
 ```console
 $ ecc bashreadline.bpf.c
@@ -119,7 +119,7 @@ $ sudo ecli run package.json
 Runing eBPF program...
 ```
 
-运行这段程序后，可以通过查看 /sys/kernel/debug/tracing/trace_pipe 文件来查看 eBPF 程序的输出：
+運行這段程序後，可以通過查看 /sys/kernel/debug/tracing/trace_pipe 文件來查看 eBPF 程序的輸出：
 
 ```console
 $ sudo cat /sys/kernel/debug/tracing/trace_pipe
@@ -127,12 +127,12 @@ $ sudo cat /sys/kernel/debug/tracing/trace_pipe
             bash-32969   [000] d..31 64002.056951: bpf_trace_printk: PID 32969 (bash) read: fff
 ```
 
-可以看到，我们成功的捕获了 bash 的 readline 函数调用，并获取了用户在 bash 中输入的命令行。
+可以看到，我們成功的捕獲了 bash 的 readline 函數調用，並獲取了用戶在 bash 中輸入的命令行。
 
-## 总结
+## 總結
 
-在上述代码中，我们使用了 SEC 宏来定义了一个 uprobe 探针，它指定了要捕获的用户空间程序 (bin/bash) 和要捕获的函数 (readline)。此外，我们还使用了 BPF_KRETPROBE 宏来定义了一个用于处理 readline 函数返回值的回调函数 (printret)。该函数可以获取到 readline 函数的返回值，并将其打印到内核日志中。通过这样的方式，我们就可以使用 eBPF 来捕获 bash 的 readline 函数调用，并获取用户在 bash 中输入的命令行。
+在上述代碼中，我們使用了 SEC 宏來定義了一個 uprobe 探針，它指定了要捕獲的用戶空間程序 (bin/bash) 和要捕獲的函數 (readline)。此外，我們還使用了 BPF_KRETPROBE 宏來定義了一個用於處理 readline 函數返回值的回調函數 (printret)。該函數可以獲取到 readline 函數的返回值，並將其打印到內核日誌中。通過這樣的方式，我們就可以使用 eBPF 來捕獲 bash 的 readline 函數調用，並獲取用戶在 bash 中輸入的命令行。
 
-更多的例子和详细的开发指南，请参考 eunomia-bpf 的官方文档：<https://github.com/eunomia-bpf/eunomia-bpf>
+更多的例子和詳細的開發指南，請參考 eunomia-bpf 的官方文檔：<https://github.com/eunomia-bpf/eunomia-bpf>
 
-如果您希望学习更多关于 eBPF 的知识和实践，可以访问我们的教程代码仓库 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或网站 <https://eunomia.dev/zh/tutorials/> 以获取更多示例和完整的教程。
+如果您希望學習更多關於 eBPF 的知識和實踐，可以訪問我們的教程代碼倉庫 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或網站 <https://eunomia.dev/zh/tutorials/> 以獲取更多示例和完整的教程。

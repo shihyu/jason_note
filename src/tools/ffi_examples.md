@@ -53,7 +53,7 @@ data/ffi_examples/
 ├── rust_libs/           # Rust 程式
 │   ├── rust_ffi/       # Rust 調用 C 範例
 │   └── rust_lib/       # Rust 函式庫供其他語言調用
-├── Makefile            # 自動化編譯腳本（支援所有平台）
+├── Makefile            # 自動化編譯腳本（支援所有平臺）
 └── README.md           # 詳細說明文件
 ```
 

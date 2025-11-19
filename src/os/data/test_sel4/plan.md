@@ -17,7 +17,7 @@
   - libsel4: C bindings for seL4 ABI
   - CMake 構建系統
   - GDB macros (gdb-macros 檔案)
-  - 各平台配置檔 (configs/)
+  - 各平臺配置檔 (configs/)
 - **構建方式**: CMake-based
 
 ### sel4test 專案
@@ -29,7 +29,7 @@
   - libsel4testsupport: 測試支援函式庫
   - 模擬環境設定 (SIMULATION 參數)
 - **構建方式**: CMake-based,依賴 seL4 kernel
-- **預設平台**: x86_64
+- **預設平臺**: x86_64
 - **支援 QEMU**: 透過 SIMULATION=ON 參數
 
 ## 預期產出
@@ -145,7 +145,7 @@ gdb -ex "target remote :1234" \
 
 ## 備註
 - 本計畫假設在 Linux 環境執行 (已確認: Linux 6.14.0-32-generic)
-- 使用 x86_64 平台,簡化跨平台問題
+- 使用 x86_64 平臺,簡化跨平臺問題
 - 優先使用官方推薦的構建流程,不自行修改 CMake 設定
 
 ---

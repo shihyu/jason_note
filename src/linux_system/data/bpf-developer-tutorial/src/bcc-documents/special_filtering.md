@@ -1,10 +1,10 @@
-# 特殊过滤
+# 特殊過濾
 
-某些工具具有特殊的过滤能力，主要用例是跟踪运行在容器中的进程，但这些机制是通用的，也可以在其他情况下使用。
+某些工具具有特殊的過濾能力，主要用例是跟蹤運行在容器中的進程，但這些機制是通用的，也可以在其他情況下使用。
 
-## 按 cgroups过滤
+## 按 cgroups過濾
 
-某些工具有一个通过引用外部管理的固定的BPF哈希映射来按cgroup过滤的选项。
+某些工具有一個通過引用外部管理的固定的BPF哈希映射來按cgroup過濾的選項。
 
 命令示例：
 
@@ -16,24 +16,24 @@
 # ./tcptracer --cgroupmap /sys/fs/bpf/test01
 ```
 
-上述命令将仅显示属于一个或多个cgroup的进程的结果，这些cgroup的ID由`bpf_get_current_cgroup_id()`返回，并存在固定的BPF哈希映射中。
+上述命令將僅顯示屬於一個或多個cgroup的進程的結果，這些cgroup的ID由`bpf_get_current_cgroup_id()`返回，並存在固定的BPF哈希映射中。
 
-通过以下方式创建BPF哈希映射：
+通過以下方式創建BPF哈希映射：
 
 ```sh
 # bpftool map create /sys/fs/bpf/test01 type hash key 8 value 8 entries 128 \
         name cgroupset flags 0
 ```
 
-要在新cgroup中获取一个shell，可以使用：
+要在新cgroup中獲取一個shell，可以使用：
 
 ```sh
 # systemd-run --pty --unit test bash
 ```
 
-该shell将在cgroup`/sys/fs/cgroup/unified/system.slice/test.service`中运行。
+該shell將在cgroup`/sys/fs/cgroup/unified/system.slice/test.service`中運行。
 
-可以使用`name_to_handle_at()`系统调用来发现cgroup ID。在examples/cgroupid中，您可以找到一个获取cgroup ID的程序示例。
+可以使用`name_to_handle_at()`系統調用來發現cgroup ID。在examples/cgroupid中，您可以找到一個獲取cgroup ID的程序示例。
 
 ```sh
 # cd examples/cgroupid
@@ -50,7 +50,7 @@
  cgroupid cgroupid hex /sys/fs/cgroup/unified/system.slice/test.service
 ```
 
-这将以主机的字节序(hexadecimal string)打印出cgroup ID，例如`77 16 00 00 01 00 00 00`。
+這將以主機的字節序(hexadecimal string)打印出cgroup ID，例如`77 16 00 00 01 00 00 00`。
 
 ```sh
 # FILE=/sys/fs/bpf/test01
@@ -58,32 +58,32 @@
 # bpftool map update pinned $FILE key hex $CGROUPID_HEX value hex 00 00 00 00 00 00 00 00 any
 ```
 
-现在，通过systemd-run启动的shell的cgroup ID已经存在于BPF哈希映射中，bcc工具将显示来自该shell的结果。可以添加和。从BPF哈希映射中删除而不重新启动bcc工具。
+現在，通過systemd-run啟動的shell的cgroup ID已經存在於BPF哈希映射中，bcc工具將顯示來自該shell的結果。可以添加和。從BPF哈希映射中刪除而不重新啟動bcc工具。
 
-这个功能对于将bcc工具集成到外部项目中非常有用。
+這個功能對於將bcc工具集成到外部項目中非常有用。
 
-## 按命名空间选择挂载点进行过滤
+## 按命名空間選擇掛載點進行過濾
 
-BPF哈希映射可以通过以下方式创建：
+BPF哈希映射可以通過以下方式創建：
 
 ```sh
 # bpftool map create /sys/fs/bpf/mnt_ns_set type hash key 8 value 4 entries 128 \
         name mnt_ns_set flags 0
 ```
 
-仅执行`execsnoop`工具，过滤挂载命名空间在`/sys/fs/bpf/mnt_ns_set`中：
+僅執行`execsnoop`工具，過濾掛載命名空間在`/sys/fs/bpf/mnt_ns_set`中：
 
 ```sh
 # tools/execsnoop.py --mntnsmap /sys/fs/bpf/mnt_ns_set
 ```
 
-在新的挂载命名空间中启动一个终端：
+在新的掛載命名空間中啟動一個終端：
 
 ```sh
 # unshare -m bash
 ```
 
-使用上述终端的挂载命名空间ID更新哈希映射：
+使用上述終端的掛載命名空間ID更新哈希映射：
 
 ```sh
 FILE=/sys/fs/bpf/mnt_ns_set
@@ -97,13 +97,13 @@ NS_ID_HEX="$(printf '%016x' $(stat -Lc '%i' /proc/self/ns/mnt) | sed 's/.\{2\}/&
 bpftool map update pinned $FILE key hex $NS_ID_HEX value hex 00 00 00 00 any
 ```
 
-在这个终端中执行命令：
+在這個終端中執行命令：
 
 ```sh
 # ping kinvolk.io
 ```
 
-你会看到在上述你启动的`execsnoop`终端中，这个调用被记录下来：
+你會看到在上述你啟動的`execsnoop`終端中，這個調用被記錄下來：
 
 ```sh
 # tools/execsnoop.py --mntnsmap /sys/fs/bpf/mnt_ns_set

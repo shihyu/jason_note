@@ -1,4 +1,4 @@
-## 第二十一讲 异步编程(Asynchronous Programming)
+## 第二十一講 異步編程(Asynchronous Programming)
 
 [v1](https://github.com/LearningOS/os-lectures/blob/13a92296aa1a93c0fc54b244539a4f21791d52ac/lecture21/ref.md)
 
@@ -12,7 +12,7 @@
 
 - [Futures Explained in 200 Lines of Rust](https://cfsamson.github.io/books-futures-explained/#futures-explained-in-200-lines-of-rust) [repo at github](https://github.com/cfsamson/books-futures-explained)
 - Writing an OS in Rust - [Async/Awai](https://os.phil-opp.com/async-await/)
-- [零成本异步I/O](https://zhuanlan.zhihu.com/p/97574385)
+- [零成本異步I/O](https://zhuanlan.zhihu.com/p/97574385)
 
 ### 21.1 Background
 ref: https://cfsamson.github.io/books-futures-explained/0_background_information.html#some-background-information
@@ -20,7 +20,7 @@ ref: https://cfsamson.github.io/books-futures-explained/0_background_information
 
 #### Multitasking
 
-参考： https://cfsamson.github.io/book-exploring-async-basics/2_async_history.html#non-preemptive-multitasking
+參考： https://cfsamson.github.io/book-exploring-async-basics/2_async_history.html#non-preemptive-multitasking
 
 **Non-Preemptive multitasking**
 - The programmer `yielded` control to the OS
@@ -34,7 +34,7 @@ ref: https://cfsamson.github.io/books-futures-explained/0_background_information
 
 #### User-level Thread
 
-参考： https://stackoverflow.com/questions/15983872/difference-between-user-level-and-kernel-supported-threads
+參考： https://stackoverflow.com/questions/15983872/difference-between-user-level-and-kernel-supported-threads
 
 https://cfsamson.github.io/books-futures-explained/0_background_information.html#green-threads
 
@@ -99,8 +99,8 @@ Example: [Callback based approaches](https://cfsamson.github.io/books-futures-ex
 
 #### Event queue: Epoll, Kqueue and IOCP
 
-参考： https://cfsamson.github.io/book-exploring-async-basics/6_epoll_kqueue_iocp.html#epoll
-https://zhuanlan.zhihu.com/p/39970630 select poll epoll的区别
+參考： https://cfsamson.github.io/book-exploring-async-basics/6_epoll_kqueue_iocp.html#epoll
+https://zhuanlan.zhihu.com/p/39970630 select poll epoll的區別
 
 There are some well-known libraries which implement a cross platform event queue using Epoll, Kqueue and IOCP for Linux, Mac, and Windows, respectively.
 
@@ -115,7 +115,7 @@ There are some well-known libraries which implement a cross platform event queue
 
 #### Epoll
 
-参考： https://zhuanlan.zhihu.com/p/39970630
+參考： https://zhuanlan.zhihu.com/p/39970630
 
 ![epoll](figs/epoll.png)
 
@@ -160,29 +160,29 @@ async function run() {
 
 ### 21.2 Futures in Rust
 
-参考： https://cfsamson.github.io/books-futures-explained/1_futures_in_rust.html#futures-in-rust
-参考： https://github.com/cfsamson/books-futures-explained
-参考： Evernote： 20200402-异步消息调研
+參考： https://cfsamson.github.io/books-futures-explained/1_futures_in_rust.html#futures-in-rust
+參考： https://github.com/cfsamson/books-futures-explained
+參考： Evernote： 20200402-異步消息調研
 
-#### 零成本异步I/O
+#### 零成本異步I/O
 
-参考：
+參考：
 
 - video https://www.youtube.com/watch?v=skos4B5x7qE
 - 中文 https://zhuanlan.zhihu.com/p/97574385
-- async汇总 https://areweasyncyet.rs/
+- async彙總 https://areweasyncyet.rs/
 
-Future的设计目标
+Future的設計目標
 
-- 调用 I/O 时，系统调用会立即返回，然后你可以继续进行其他工作
-- I/O完成时，回到调用该异步 I/O 暂停的那个任务线上
-- **一种通过对异步 I/O 的良好抽象形成的基于库的解决方案**
-  - 它不是语言的一部分，也不是每个程序附带的运行时的一部分，只是可选的并按需使用的库
+- 調用 I/O 時，系統調用會立即返回，然後你可以繼續進行其他工作
+- I/O完成時，回到調用該異步 I/O 暫停的那個任務線上
+- **一種通過對異步 I/O 的良好抽象形成的基於庫的解決方案**
+  - 它不是語言的一部分，也不是每個程序附帶的運行時的一部分，只是可選的並按需使用的庫
 
 **零成本抽象**
 
-- 不给不使用该功能的用户增加成本
-- 使用该功能时，它的速度不会比不使用它的速度慢
+- 不給不使用該功能的用戶增加成本
+- 使用該功能時，它的速度不會比不使用它的速度慢
 
 #### Concept of Future
 
@@ -202,13 +202,13 @@ Three phases in asynchronous task:
    - Wake up to the executor which polled the Future
    - Schedule the future to be polled again and make further progress
 
-#### 基于轮询的 Future的异步执行过程
+#### 基於輪詢的 Future的異步執行過程
 
-- 执行器会轮询 `Future`，直到最终 `Future` 需要执行某种 I/O 
-- 该 `Future` 将被移交给处理 I/O 的反应器，即 `Future` 会等待该特定 I/O 
-- I/O 事件发生时，反应器将使用传递的`Waker` 参数唤醒 `Future` ，传回执行器
-- 循环上述三步，直到最终`future`任务完成（resolved）
-- 任务完成并得出结果时，执行器释放句柄和整个`Future`，整个调用过程就完成了
+- 執行器會輪詢 `Future`，直到最終 `Future` 需要執行某種 I/O 
+- 該 `Future` 將被移交給處理 I/O 的反應器，即 `Future` 會等待該特定 I/O 
+- I/O 事件發生時，反應器將使用傳遞的`Waker` 參數喚醒 `Future` ，傳回執行器
+- 循環上述三步，直到最終`future`任務完成（resolved）
+- 任務完成並得出結果時，執行器釋放句柄和整個`Future`，整個調用過程就完成了
 
 ![future-loop](figs/future-loop.jpg)
 

@@ -1,51 +1,51 @@
-# eBPF 入门实践教程：使用 LSM 进行安全检测防御
+# eBPF 入門實踐教程：使用 LSM 進行安全檢測防禦
 
-eBPF (扩展的伯克利数据包过滤器) 是一项强大的网络和性能分析工具，被广泛应用在 Linux 内核上。eBPF 使得开发者能够动态地加载、更新和运行用户定义的代码，而无需重启内核或更改内核源代码。这个特性使得 eBPF 能够提供极高的灵活性和性能，使其在网络和系统性能分析方面具有广泛的应用。安全方面的 eBPF 应用也是如此，本文将介绍如何使用 eBPF LSM（Linux Security Modules）机制实现一个简单的安全检查程序。
+eBPF (擴展的伯克利數據包過濾器) 是一項強大的網絡和性能分析工具，被廣泛應用在 Linux 內核上。eBPF 使得開發者能夠動態地加載、更新和運行用戶定義的代碼，而無需重啟內核或更改內核源代碼。這個特性使得 eBPF 能夠提供極高的靈活性和性能，使其在網絡和系統性能分析方面具有廣泛的應用。安全方面的 eBPF 應用也是如此，本文將介紹如何使用 eBPF LSM（Linux Security Modules）機制實現一個簡單的安全檢查程序。
 
 ## 背景
 
-LSM 从 Linux 2.6 开始成为官方内核的一个安全框架，基于此的安全实现包括 SELinux 和 AppArmor 等。在 Linux 5.7 引入 BPF LSM 后，系统开发人员已经能够自由地实现函数粒度的安全检查能力，本文就提供了这样一个案例：限制通过 socket connect 函数对特定 IPv4 地址进行访问的 BPF LSM 程序。（可见其控制精度是很高的）
+LSM 從 Linux 2.6 開始成為官方內核的一個安全框架，基於此的安全實現包括 SELinux 和 AppArmor 等。在 Linux 5.7 引入 BPF LSM 後，系統開發人員已經能夠自由地實現函數粒度的安全檢查能力，本文就提供了這樣一個案例：限制通過 socket connect 函數對特定 IPv4 地址進行訪問的 BPF LSM 程序。（可見其控制精度是很高的）
 
 ## LSM 概述
 
-LSM（Linux Security Modules）是 Linux 内核中用于支持各种计算机安全模型的框架。LSM 在 Linux 内核安全相关的关键路径上预置了一批 hook 点，从而实现了内核和安全模块的解耦，使不同的安全模块可以自由地在内核中加载/卸载，无需修改原有的内核代码就可以加入安全检查功能。
+LSM（Linux Security Modules）是 Linux 內核中用於支持各種計算機安全模型的框架。LSM 在 Linux 內核安全相關的關鍵路徑上預置了一批 hook 點，從而實現了內核和安全模塊的解耦，使不同的安全模塊可以自由地在內核中加載/卸載，無需修改原有的內核代碼就可以加入安全檢查功能。
 
-在过去，使用 LSM 主要通过配置已有的安全模块（如 SELinux 和 AppArmor）或编写自己的内核模块；而在 Linux 5.7 引入 BPF LSM 机制后，一切都变得不同了：现在，开发人员可以通过 eBPF 编写自定义的安全策略，并将其动态加载到内核中的 LSM 挂载点，而无需配置或编写内核模块。
+在過去，使用 LSM 主要通過配置已有的安全模塊（如 SELinux 和 AppArmor）或編寫自己的內核模塊；而在 Linux 5.7 引入 BPF LSM 機制後，一切都變得不同了：現在，開發人員可以通過 eBPF 編寫自定義的安全策略，並將其動態加載到內核中的 LSM 掛載點，而無需配置或編寫內核模塊。
 
-现在 LSM 支持的 hook 点包括但不限于：
+現在 LSM 支持的 hook 點包括但不限於：
 
-+ 对文件的打开、创建、删除和移动等；
-+ 文件系统的挂载；
-+ 对 task 和 process 的操作；
-+ 对 socket 的操作（创建、绑定 socket，发送和接收消息等）；
++ 對文件的打開、創建、刪除和移動等；
++ 文件系統的掛載；
++ 對 task 和 process 的操作；
++ 對 socket 的操作（創建、綁定 socket，發送和接收消息等）；
 
-更多 hook 点可以参考 [lsm_hooks.h](https://github.com/torvalds/linux/blob/master/include/linux/lsm_hooks.h)。
+更多 hook 點可以參考 [lsm_hooks.h](https://github.com/torvalds/linux/blob/master/include/linux/lsm_hooks.h)。
 
-## 确认 BPF LSM 是否可用
+## 確認 BPF LSM 是否可用
 
-首先，请确认内核版本高于 5.7。接下来，可以通过
+首先，請確認內核版本高於 5.7。接下來，可以通過
 
 ```console
 $ cat /boot/config-$(uname -r) | grep BPF_LSM
 CONFIG_BPF_LSM=y
 ```
 
-判断是否内核是否支持 BPF LSM。上述条件都满足的情况下，可以通过
+判斷是否內核是否支持 BPF LSM。上述條件都滿足的情況下，可以通過
 
 ```console
 $ cat /sys/kernel/security/lsm
 ndlock,lockdown,yama,integrity,apparmor
 ```
 
-查看输出是否包含 bpf 选项，如果输出不包含（像上面的例子），可以通过修改 `/etc/default/grub`：
+查看輸出是否包含 bpf 選項，如果輸出不包含（像上面的例子），可以通過修改 `/etc/default/grub`：
 
 ```conf
 GRUB_CMDLINE_LINUX="lsm=ndlock,lockdown,yama,integrity,apparmor,bpf"
 ```
 
-并通过 `update-grub2` 命令更新 grub 配置（不同系统的对应命令可能不同），然后重启系统。
+並通過 `update-grub2` 命令更新 grub 配置（不同系統的對應命令可能不同），然後重啟系統。
 
-## 编写 eBPF 程序
+## 編寫 eBPF 程序
 
 ```C
 // lsm-connect.bpf.c
@@ -93,30 +93,30 @@ int BPF_PROG(restrict_connect, struct socket *sock, struct sockaddr *address, in
 
 ```
 
-这是一段 C 实现的 eBPF 内核侧代码，它会阻碍所有试图通过 socket 对 1.1.1.1 的连接操作，其中：
+這是一段 C 實現的 eBPF 內核側代碼，它會阻礙所有試圖通過 socket 對 1.1.1.1 的連接操作，其中：
 
-+ `SEC("lsm/socket_connect")` 宏指出该程序期望的挂载点；
-+ 程序通过 `BPF_PROG` 宏定义（详情可查看 [tools/lib/bpf/bpf_tracing.h](https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/tools/lib/bpf/bpf_tracing.h)）；
++ `SEC("lsm/socket_connect")` 宏指出該程序期望的掛載點；
++ 程序通過 `BPF_PROG` 宏定義（詳情可查看 [tools/lib/bpf/bpf_tracing.h](https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/tools/lib/bpf/bpf_tracing.h)）；
 + `restrict_connect` 是 `BPF_PROG` 宏要求的程序名；
-+ `ret` 是该挂载点上（潜在的）当前函数之前的 LSM 检查程序的返回值；
++ `ret` 是該掛載點上（潛在的）當前函數之前的 LSM 檢查程序的返回值；
 
-整个程序的思路不难理解：
+整個程序的思路不難理解：
 
-+ 首先，若其他安全检查函数返回值不为 0（不通过），则无需检查，直接返回不通过；
-+ 接下来，判断是否为 IPV4 的连接请求，并比较试图连接的地址是否为 1.1.1.1；
-+ 若请求地址为 1.1.1.1 则拒绝连接，否则允许连接；
++ 首先，若其他安全檢查函數返回值不為 0（不通過），則無需檢查，直接返回不通過；
++ 接下來，判斷是否為 IPV4 的連接請求，並比較試圖連接的地址是否為 1.1.1.1；
++ 若請求地址為 1.1.1.1 則拒絕連接，否則允許連接；
 
-在程序运行期间，所有通过 socket 的连接操作都会被输出到 `/sys/kernel/debug/tracing/trace_pipe`。
+在程序運行期間，所有通過 socket 的連接操作都會被輸出到 `/sys/kernel/debug/tracing/trace_pipe`。
 
-## 编译运行
+## 編譯運行
 
-通过容器编译：
+通過容器編譯：
 
 ```console
 docker run -it -v `pwd`/:/src/ ghcr.io/eunomia-bpf/ecc-`uname -m`:latest
 ```
 
-或是通过 `ecc` 编译：
+或是通過 `ecc` 編譯：
 
 ```console
 $ ecc lsm-connect.bpf.c
@@ -124,13 +124,13 @@ Compiling bpf object...
 Packing ebpf object and config into package.json...
 ```
 
-并通过 `ecli` 运行：
+並通過 `ecli` 運行：
 
 ```shell
 sudo ecli run package.json
 ```
 
-接下来，可以打开另一个 terminal，并尝试访问 1.1.1.1：
+接下來，可以打開另一個 terminal，並嘗試訪問 1.1.1.1：
 
 ```console
 $ ping 1.1.1.1
@@ -143,7 +143,7 @@ Connecting to 1.1.1.1:80... failed: Operation not permitted.
 Retrying.
 ```
 
-同时，我们可以查看 `bpf_printk` 的输出：
+同時，我們可以查看 `bpf_printk` 的輸出：
 
 ```console
 $ sudo cat /sys/kernel/debug/tracing/trace_pipe
@@ -155,15 +155,15 @@ $ sudo cat /sys/kernel/debug/tracing/trace_pipe
             wget-7061    [000] d...1  6318.800700: bpf_trace_printk: lsm: blocking 16843009
 ```
 
-完整源代码：<https://github.com/eunomia-bpf/bpf-developer-tutorial/tree/main/src/19-lsm-connect>
+完整源代碼：<https://github.com/eunomia-bpf/bpf-developer-tutorial/tree/main/src/19-lsm-connect>
 
-## 总结
+## 總結
 
-本文介绍了如何使用 BPF LSM 来限制通过 socket 对特定 IPv4 地址的访问。我们可以通过修改 GRUB 配置文件来开启 LSM 的 BPF 挂载点。在 eBPF 程序中，我们通过 `BPF_PROG` 宏定义函数，并通过 `SEC` 宏指定挂载点；在函数实现上，遵循 LSM 安全检查模块中 "cannot override a denial" 的原则，并根据 socket 连接请求的目的地址对该请求进行限制。
+本文介紹瞭如何使用 BPF LSM 來限制通過 socket 對特定 IPv4 地址的訪問。我們可以通過修改 GRUB 配置文件來開啟 LSM 的 BPF 掛載點。在 eBPF 程序中，我們通過 `BPF_PROG` 宏定義函數，並通過 `SEC` 宏指定掛載點；在函數實現上，遵循 LSM 安全檢查模塊中 "cannot override a denial" 的原則，並根據 socket 連接請求的目的地址對該請求進行限制。
 
-如果您希望学习更多关于 eBPF 的知识和实践，可以访问我们的教程代码仓库 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或网站 <https://eunomia.dev/zh/tutorials/> 以获取更多示例和完整的教程。
+如果您希望學習更多關於 eBPF 的知識和實踐，可以訪問我們的教程代碼倉庫 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或網站 <https://eunomia.dev/zh/tutorials/> 以獲取更多示例和完整的教程。
 
-## 参考
+## 參考
 
 + <https://github.com/leodido/demo-cloud-native-ebpf-day>
 + <https://aya-rs.dev/book/programs/lsm/#writing-lsm-bpf-program>

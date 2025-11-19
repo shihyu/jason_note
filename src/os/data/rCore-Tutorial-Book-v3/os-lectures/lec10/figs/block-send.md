@@ -9,21 +9,21 @@ excalidraw-plugin: parsed
 # Text Elements
 read   ^zGTUWAnH
 
-阻塞的系统调用 ^a0Dc1OKW
+阻塞的系統調用 ^a0Dc1OKW
 
-进程 ^0ap7wW0n
+進程 ^0ap7wW0n
 
-数据没有准备好 ^cWcqysFZ
+數據沒有準備好 ^cWcqysFZ
 
-进程 ^ZkKt6IX5
+進程 ^ZkKt6IX5
 
-准备好数据，
-并从内核拷贝
-到进程地址空间 ^bZw9Iu0t
+準備好數據，
+並從內核拷貝
+到進程地址空間 ^bZw9Iu0t
 
-从磁盘读数据 ^0J18Fg8S
+從磁盤讀數據 ^0J18Fg8S
 
-拷贝完成 ^YmW4QCyn
+拷貝完成 ^YmW4QCyn
 
 返回 ^UFSoqBVB
 
@@ -32,8 +32,8 @@ read   ^zGTUWAnH
 的
 IPC ^CreljTA6
 
-时
-间 ^BWDhbxNp
+時
+間 ^BWDhbxNp
 
 %%
 # Drawing
@@ -156,13 +156,13 @@ IPC ^CreljTA6
 			"link": null,
 			"fontSize": 23.63636363636363,
 			"fontFamily": 4,
-			"text": "阻塞的系统调用",
-			"rawText": "阻塞的系统调用",
+			"text": "阻塞的系統調用",
+			"rawText": "阻塞的系統調用",
 			"baseline": 22,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "阻塞的系统调用"
+			"originalText": "阻塞的系統調用"
 		},
 		{
 			"type": "text",
@@ -195,13 +195,13 @@ IPC ^CreljTA6
 			"link": null,
 			"fontSize": 35.58441162109372,
 			"fontFamily": 4,
-			"text": "进程",
-			"rawText": "进程",
+			"text": "進程",
+			"rawText": "進程",
 			"baseline": 32,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程"
+			"originalText": "進程"
 		},
 		{
 			"type": "text",
@@ -238,13 +238,13 @@ IPC ^CreljTA6
 			"link": null,
 			"fontSize": 27.12430483335023,
 			"fontFamily": 4,
-			"text": "数据没有准备好",
-			"rawText": "数据没有准备好",
+			"text": "數據沒有準備好",
+			"rawText": "數據沒有準備好",
 			"baseline": 24,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "数据没有准备好"
+			"originalText": "數據沒有準備好"
 		},
 		{
 			"type": "text",
@@ -277,13 +277,13 @@ IPC ^CreljTA6
 			"link": null,
 			"fontSize": 35.58441162109372,
 			"fontFamily": 4,
-			"text": "进程",
-			"rawText": "进程",
+			"text": "進程",
+			"rawText": "進程",
 			"baseline": 32,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程"
+			"originalText": "進程"
 		},
 		{
 			"type": "arrow",
@@ -368,13 +368,13 @@ IPC ^CreljTA6
 			"link": null,
 			"fontSize": 23.34064190204327,
 			"fontFamily": 4,
-			"text": "准备好数据，\n并从内核拷贝\n到进程地址空间",
-			"rawText": "准备好数据，\n并从内核拷贝\n到进程地址空间",
+			"text": "準備好數據，\n並從內核拷貝\n到進程地址空間",
+			"rawText": "準備好數據，\n並從內核拷貝\n到進程地址空間",
 			"baseline": 72,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "准备好数据，\n并从内核拷贝\n到进程地址空间"
+			"originalText": "準備好數據，\n並從內核拷貝\n到進程地址空間"
 		},
 		{
 			"type": "text",
@@ -411,13 +411,13 @@ IPC ^CreljTA6
 			"link": null,
 			"fontSize": 27.792164195667617,
 			"fontFamily": 4,
-			"text": "从磁盘读数据",
-			"rawText": "从磁盘读数据",
+			"text": "從磁盤讀數據",
+			"rawText": "從磁盤讀數據",
 			"baseline": 25,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "从磁盘读数据"
+			"originalText": "從磁盤讀數據"
 		},
 		{
 			"type": "arrow",
@@ -546,13 +546,13 @@ IPC ^CreljTA6
 			"link": null,
 			"fontSize": 23.116787997159097,
 			"fontFamily": 4,
-			"text": "拷贝完成",
-			"rawText": "拷贝完成",
+			"text": "拷貝完成",
+			"rawText": "拷貝完成",
 			"baseline": 21,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "拷贝完成"
+			"originalText": "拷貝完成"
 		},
 		{
 			"type": "arrow",
@@ -749,13 +749,13 @@ IPC ^CreljTA6
 			"link": null,
 			"fontSize": 39.9335568450218,
 			"fontFamily": 4,
-			"text": "时\n间",
-			"rawText": "时\n间",
+			"text": "時\n間",
+			"rawText": "時\n間",
 			"baseline": 79,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "时\n间"
+			"originalText": "時\n間"
 		}
 	],
 	"appState": {

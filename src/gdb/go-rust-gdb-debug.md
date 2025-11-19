@@ -234,4 +234,4 @@ list file.rs:20             # 顯示指定檔案的指定行
 ### 通用技巧
 - 在關鍵位置添加 `sleep` 或 `pause` 來方便設置斷點
 - 使用 `info locals` 快速查看所有局部變數
-- 善用 `backtrace` 了解函數調用關係
+- 善用 `backtrace` 瞭解函數調用關係

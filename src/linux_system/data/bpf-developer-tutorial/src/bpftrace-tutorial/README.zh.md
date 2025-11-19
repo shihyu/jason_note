@@ -1,20 +1,20 @@
 # bpftrace一行教程
 
-该教程通过12个简单小节帮助你了解bpftrace的使用。每一小节都是一行的命令，你可以尝试运行并立刻看到运行效果。该教程系列用来介绍bpftrace的概念。关于bpftrace的完整参考，见[bpftrace手册](https://github.com/iovisor/bpftrace/blob/master/man/adoc/bpftrace.adoc)。
+該教程通過12個簡單小節幫助你瞭解bpftrace的使用。每一小節都是一行的命令，你可以嘗試運行並立刻看到運行效果。該教程系列用來介紹bpftrace的概念。關於bpftrace的完整參考，見[bpftrace手冊](https://github.com/iovisor/bpftrace/blob/master/man/adoc/bpftrace.adoc)。
 
-该教程贡献者是Brendan Gregg, Netflix (2018), 基于他的FreeBSD DTrace教程系列[DTrace Tutorial](https://wiki.freebsd.org/DTrace/Tutorial)。
+該教程貢獻者是Brendan Gregg, Netflix (2018), 基於他的FreeBSD DTrace教程系列[DTrace Tutorial](https://wiki.freebsd.org/DTrace/Tutorial)。
 
-# 1. 列出所有探针
+# 1. 列出所有探針
 
 ```
 bpftrace -l 'tracepoint:syscalls:sys_enter_*'
 ```
 
-"bpftrace -l" 列出所有探针，并且可以添加搜索项。
+"bpftrace -l" 列出所有探針，並且可以添加搜索項。
 
-- 探针是用于捕获事件数据的检测点。
-- 搜索词支持通配符，如`*`和`?`。
-- "bpftrace -l" 也可以通过管道传递给grep，进行完整的正则表达式搜索。
+- 探針是用於捕獲事件數據的檢測點。
+- 搜索詞支持通配符，如`*`和`?`。
+- "bpftrace -l" 也可以通過管道傳遞給grep，進行完整的正則表達式搜索。
 
 # 2. Hello World
 
@@ -25,12 +25,12 @@ hello world
 ^C
 ```
 
-打印欢迎消息。运行后, 按Ctrl-C结束。
+打印歡迎消息。運行後, 按Ctrl-C結束。
 
-- `BEGIN`是一个特殊的探针，在程序开始时触发探针执行(类似awk的BEGIN)。你可以使用它设置变量和打印消息头。
-- 探针可以关联动作，把动作放到{}中。这个例子中，探针被触发时会调用printf()。
+- `BEGIN`是一個特殊的探針，在程序開始時觸發探針執行(類似awk的BEGIN)。你可以使用它設置變量和打印消息頭。
+- 探針可以關聯動作，把動作放到{}中。這個例子中，探針被觸發時會調用printf()。
 
-# 3. 文件打开
+# 3. 文件打開
 
 ```
 # bpftrace -e 'tracepoint:syscalls:sys_enter_openat { printf("%s %s\n", comm, str(args.filename)); }'
@@ -42,15 +42,15 @@ snmpd /proc/net/if_inet6
 ^C
 ```
 
-这里我们在文件打开的时候打印进程名和文件名。
+這裡我們在文件打開的時候打印進程名和文件名。
 
-- 该命令以`tracepoint:syscalls:sys_enter_openat`开始: 这是tracepoint探针类型(内核静态跟踪)，当进入`openat()`系统调用时执行该探针。相比kprobes探针(内核动态跟踪，在第6节介绍)，我们更加喜欢用tracepoints探针，因为tracepoints有稳定的应用程序编程接口。注意：现代linux系统(glibc >= 2.26)，`open`总是调用`openat`系统调用。
-- `comm`是内建变量，代表当前进程的名字。其它类似的变量还有pid和tid，分别表示进程标识和线程标识。
-- `args`是一个包含所有tracepoint参数的结构。这个结构是由bpftrace根据tracepoint信息自动生成的。这个结构的成员可以通过命令`bpftrace -vl tracepoint:syscalls:sys_enter_openat`找到。
-- `args.filename`用来获取args的成员变量`filename`的值。
-- `str()`用来把字符串指针转换成字符串。
+- 該命令以`tracepoint:syscalls:sys_enter_openat`開始: 這是tracepoint探針類型(內核靜態跟蹤)，當進入`openat()`系統調用時執行該探針。相比kprobes探針(內核動態跟蹤，在第6節介紹)，我們更加喜歡用tracepoints探針，因為tracepoints有穩定的應用程序編程接口。注意：現代linux系統(glibc >= 2.26)，`open`總是調用`openat`系統調用。
+- `comm`是內建變量，代表當前進程的名字。其它類似的變量還有pid和tid，分別表示進程標識和線程標識。
+- `args`是一個包含所有tracepoint參數的結構。這個結構是由bpftrace根據tracepoint信息自動生成的。這個結構的成員可以通過命令`bpftrace -vl tracepoint:syscalls:sys_enter_openat`找到。
+- `args.filename`用來獲取args的成員變量`filename`的值。
+- `str()`用來把字符串指針轉換成字符串。
 
-# 4. 进程级系统调用计数
+# 4. 進程級系統調用計數
 
 ```
 bpftrace -e 'tracepoint:raw_syscalls:sys_enter { @[comm] = count(); }'
@@ -63,15 +63,15 @@ Attaching 1 probe...
 @[sshd]: 125
 ```
 
-按Ctrl-C后打印进程的系统调用计数。
+按Ctrl-C後打印進程的系統調用計數。
 
-- @: 表示一种特殊的变量类型，称为map，可以以不同的方式来存储和描述数据。你可以在@后添加可选的变量名(如@num)，用来增加可读性或者区分不同的map。
-- [] 可选的中括号允许设置map的关键字，比较像关联数组。
-- count(): 这是一个map函数 - 记录被调用次数。因为调用次数根据comm保存在map里，输出结果是进程执行系统调用的次数统计。
+- @: 表示一種特殊的變量類型，稱為map，可以以不同的方式來存儲和描述數據。你可以在@後添加可選的變量名(如@num)，用來增加可讀性或者區分不同的map。
+- [] 可選的中括號允許設置map的關鍵字，比較像關聯數組。
+- count(): 這是一個map函數 - 記錄被調用次數。因為調用次數根據comm保存在map裡，輸出結果是進程執行系統調用的次數統計。
 
-Maps会在bpftrace结束(如按Ctrl-C)时自动打印出来。
+Maps會在bpftrace結束(如按Ctrl-C)時自動打印出來。
 
-# 5. read()返回值分布统计
+# 5. read()返回值分佈統計
 
 ```
 # bpftrace -e 'tracepoint:syscalls:sys_exit_read /pid == 18644/ { @bytes = hist(args.ret); }'
@@ -89,14 +89,14 @@ Attaching 1 probe...
 [128, 256)             1 |@
 ```
 
-这里统计进程号为18644的进程执行内核函数sys_read()的返回值，并打印出直方图。
-- /.../: 这里设置一个过滤条件(条件判断)，满足该过滤条件时才执行{}里面的动作。在这个例子中意思是只追踪进程号为18644的进程。过滤条件表达式也支持布尔运算，如("&&", "||")。
-- ret: 表示函数的返回值。对于sys_read()，它可能是-1(错误)或者成功读取的字节数。
-- @: 类似于上节的map，但是这里没有key，即[]。该map的名称"bytes"会出现在输出中。
-- hist(): 一个map函数，用来描述直方图的参数。输出行以2次方的间隔开始，如`[128, 256)`表示值大于等于128且小于256。后面跟着位于该区间的参数个数统计，最后是ascii码表示的直方图。该图可以用来研究它的模式分布。
-- 其它的map函数还有lhist(线性直方图)，count()，sum()，avg()，min()和max()。
+這裡統計進程號為18644的進程執行內核函數sys_read()的返回值，並打印出直方圖。
+- /.../: 這裡設置一個過濾條件(條件判斷)，滿足該過濾條件時才執行{}裡面的動作。在這個例子中意思是隻追蹤進程號為18644的進程。過濾條件表達式也支持布爾運算，如("&&", "||")。
+- ret: 表示函數的返回值。對於sys_read()，它可能是-1(錯誤)或者成功讀取的字節數。
+- @: 類似於上節的map，但是這裡沒有key，即[]。該map的名稱"bytes"會出現在輸出中。
+- hist(): 一個map函數，用來描述直方圖的參數。輸出行以2次方的間隔開始，如`[128, 256)`表示值大於等於128且小於256。後面跟著位於該區間的參數個數統計，最後是ascii碼錶示的直方圖。該圖可以用來研究它的模式分佈。
+- 其它的map函數還有lhist(線性直方圖)，count()，sum()，avg()，min()和max()。
 
-# 6. 内核动态跟踪read()返回的字节数
+# 6. 內核動態跟蹤read()返回的字節數
 
 ```
 # bpftrace -e 'kretprobe:vfs_read { @bytes = lhist(retval, 0, 2000, 200); }'
@@ -118,12 +118,12 @@ Attaching 1 probe...
 [2000,...)            39 |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@                      |
 ```
 
-使用内核动态跟踪技术显示read()返回字节数的直方图。
+使用內核動態跟蹤技術顯示read()返回字節數的直方圖。
 
-- `kretprobe:vfs_read`: 这是kretprobe类型(动态跟踪内核函数返回值)的探针，跟踪`vfs_read`内核函数。此外还有kprobe类型的探针(在下一节介绍)用于跟踪内核函数的调用。它们是功能强大的探针类型，让我们可以跟踪成千上万的内核函数。然而它们是"不稳定"的探针类型:由于它们可以跟踪任意内核函数，对于不同的内核版本，kprobe和kretprobe不一定能够正常工作。因为内核函数名，参数，返回值和作用等可能会变化。此外，由于它们用来跟踪底层内核的，你需要浏览内核源代码，理解这些探针的参数和返回值的意义。
-- lhist(): 线性直方图函数:参数分别是value，最小值，最大值，步进值。第一个参数(`retval`)表示系统调用sys_read()返回值:即成功读取的字节数。
+- `kretprobe:vfs_read`: 這是kretprobe類型(動態跟蹤內核函數返回值)的探針，跟蹤`vfs_read`內核函數。此外還有kprobe類型的探針(在下一節介紹)用於跟蹤內核函數的調用。它們是功能強大的探針類型，讓我們可以跟蹤成千上萬的內核函數。然而它們是"不穩定"的探針類型:由於它們可以跟蹤任意內核函數，對於不同的內核版本，kprobe和kretprobe不一定能夠正常工作。因為內核函數名，參數，返回值和作用等可能會變化。此外，由於它們用來跟蹤底層內核的，你需要瀏覽內核源代碼，理解這些探針的參數和返回值的意義。
+- lhist(): 線性直方圖函數:參數分別是value，最小值，最大值，步進值。第一個參數(`retval`)表示系統調用sys_read()返回值:即成功讀取的字節數。
 
-# 7. read()调用的时间
+# 7. read()調用的時間
 
 ```
 # bpftrace -e 'kprobe:vfs_read { @start[tid] = nsecs; } kretprobe:vfs_read /@start[tid]/ { @ns[comm] = hist(nsecs - @start[tid]); delete(@start[tid]); }'
@@ -154,14 +154,14 @@ Attaching 2 probes...
 [1M, 2M)               1 |                                                    |
 ```
 
-根据进程名，以直方图的形式显示read()调用花费的时间，时间单位为纳秒。
+根據進程名，以直方圖的形式顯示read()調用花費的時間，時間單位為納秒。
 
-- @start[tid]: 使用线程ID作为key。某一时刻，可能有许许多多的read调用正在进行，我们希望为每个调用记录一个起始时间戳。这要如何做到呢？我们可以为每个read调用建立一个唯一的标识符，并用它作为key进行统计。由于内核线程一次只能执行一个系统调用，我们可以使用线程ID作为上述标识符。
-- nsecs: 自系统启动到现在的纳秒数。这是一个高精度时间戳，可以用来对事件计时。
-- /@start[tid]/: 该过滤条件检查起始时间戳是否被记录。程序可能在某次read调用中途被启动，如果没有这个过滤条件，这个调用的时间会被统计为now-zero，而不是now-start。
-- delete(@start[tid]): 释放变量。
+- @start[tid]: 使用線程ID作為key。某一時刻，可能有許許多多的read調用正在進行，我們希望為每個調用記錄一個起始時間戳。這要如何做到呢？我們可以為每個read調用建立一個唯一的標識符，並用它作為key進行統計。由於內核線程一次只能執行一個系統調用，我們可以使用線程ID作為上述標識符。
+- nsecs: 自系統啟動到現在的納秒數。這是一個高精度時間戳，可以用來對事件計時。
+- /@start[tid]/: 該過濾條件檢查起始時間戳是否被記錄。程序可能在某次read調用中途被啟動，如果沒有這個過濾條件，這個調用的時間會被統計為now-zero，而不是now-start。
+- delete(@start[tid]): 釋放變量。
 
-# 8. 统计进程级别的事件
+# 8. 統計進程級別的事件
 
 ```
 # bpftrace -e 'tracepoint:sched:sched* { @[probe] = count(); } interval:s:5 { exit(); }'
@@ -179,14 +179,14 @@ Attaching 25 probes...
 @[tracepoint:sched:sched_switch]: 510
 ```
 
-这里统计5秒内进程级的事件并打印。
+這裡統計5秒內進程級的事件並打印。
 
-- sched: `sched`探针可以探测调度器的高级事件和进程事件如fork, exec和上下文切换。
-- probe: 探针的完整名称。
-- interval:s:5: 这是一个每5秒在每个CPU上触发一次的探针，它用来创建脚本级别的间隔或超时时间。
+- sched: `sched`探針可以探測調度器的高級事件和進程事件如fork, exec和上下文切換。
+- probe: 探針的完整名稱。
+- interval:s:5: 這是一個每5秒在每個CPU上觸發一次的探針，它用來創建腳本級別的間隔或超時時間。
 - exit(): 退出bpftrace。
 
-# 9. 分析内核实时函数栈
+# 9. 分析內核實時函數棧
 
 ```
 # bpftrace -e 'profile:hz:99 { @[kstack] = count(); }'
@@ -211,12 +211,12 @@ secondary_startup_64+165
 ]: 22122
 ```
 
-以99赫兹的频率分析内核调用栈并打印次数统计。
+以99赫茲的頻率分析內核調用棧並打印次數統計。
 
-- profile:hz:99: 这里所有cpu都以99赫兹的频率采样分析内核栈。为什么是99而不是100或者1000？我们想要抓取足够详细的内核执行时内核栈信息，但是频率太大影响性能。100赫兹足够了，但是我们不想用正好100赫兹，这样采样频率可能与其他定时事件步调一致，所以99赫兹是一个理想的选择。
-- kstack: 返回内核调用栈。这里作为map的关键字，可以跟踪次数。这些输出信息可以使用火焰图可视化。此外`ustack`用来分析用户级堆栈。
+- profile:hz:99: 這裡所有cpu都以99赫茲的頻率採樣分析內核棧。為什麼是99而不是100或者1000？我們想要抓取足夠詳細的內核執行時內核棧信息，但是頻率太大影響性能。100赫茲足夠了，但是我們不想用正好100赫茲，這樣採樣頻率可能與其他定時事件步調一致，所以99赫茲是一個理想的選擇。
+- kstack: 返回內核調用棧。這裡作為map的關鍵字，可以跟蹤次數。這些輸出信息可以使用火焰圖可視化。此外`ustack`用來分析用戶級堆棧。
 
-# 10. 调度器跟踪
+# 10. 調度器跟蹤
 
 ```
 # bpftrace -e 'tracepoint:sched:sched_switch { @[kstack] = count(); }'
@@ -243,14 +243,14 @@ secondary_startup_64+165
 ]: 305
 ```
 
-这里统计进程上下文切换次数。以上输出被截断，只输出了最后两个结果。
+這裡統計進程上下文切換次數。以上輸出被截斷，只輸出了最後兩個結果。
 
-- sched: 跟踪调度类别的调度器事件:sched_switch, sched_wakeup, sched_migrate_task等。
-- sched_switch: 当线程释放cpu资源，当前不运行时触发。这里可能的阻塞事件:如等待I/O，定时器，分页/交换，锁等。
-- kstack: 内核堆栈跟踪，打印调用栈。
-- sched_switch在线程切换的时候触发，打印的调用栈是被切换出cpu的那个线程。像你使用其他探针一样，注意这里的上下文，例如comm, pid, kstack等等，并不一定反映了探针的目标的状态。
+- sched: 跟蹤調度類別的調度器事件:sched_switch, sched_wakeup, sched_migrate_task等。
+- sched_switch: 當線程釋放cpu資源，當前不運行時觸發。這裡可能的阻塞事件:如等待I/O，定時器，分頁/交換，鎖等。
+- kstack: 內核堆棧跟蹤，打印調用棧。
+- sched_switch在線程切換的時候觸發，打印的調用棧是被切換出cpu的那個線程。像你使用其他探針一樣，注意這裡的上下文，例如comm, pid, kstack等等，並不一定反映了探針的目標的狀態。
 
-# 11. 块级I/O跟踪
+# 11. 塊級I/O跟蹤
 
 ```
 # bpftrace -e 'tracepoint:block:block_rq_issue { @ = hist(args.bytes); }'
@@ -279,15 +279,15 @@ Attaching 1 probe...
 
 ```
 
-以上是块I/O请求字节数的直方图。
+以上是塊I/O請求字節數的直方圖。
 
-- tracepoint:block: 块类别的跟踪点跟踪块级I/O事件。
-- block_rq_issue: 当I/O提交到块设备时触发。
-- args.bytes: 跟踪点block_rq_issue的参数成员bytes，表示提交I/O请求的字节数。
+- tracepoint:block: 塊類別的跟蹤點跟蹤塊級I/O事件。
+- block_rq_issue: 當I/O提交到塊設備時觸發。
+- args.bytes: 跟蹤點block_rq_issue的參數成員bytes，表示提交I/O請求的字節數。
 
-该探针的上下文是非常重要的: 它在I/O请求被提交给块设备时触发。这通常发生在进程上下文，此时通过内核的comm可以得到进程名；也可能发生在内核上下文，(如readahead)，此时不能显示预期的进程号和进程名信息。
+該探針的上下文是非常重要的: 它在I/O請求被提交給塊設備時觸發。這通常發生在進程上下文，此時通過內核的comm可以得到進程名；也可能發生在內核上下文，(如readahead)，此時不能顯示預期的進程號和進程名信息。
 
-# 12. 内核结构跟踪
+# 12. 內核結構跟蹤
 
 ```
 # cat path.bt
@@ -310,15 +310,15 @@ open path: retrans_time_ms
 ```
 
 
-这里使用内核动态跟踪技术跟踪vfs_read()函数，该函数的(struct path *)作为第一个参数。
+這裡使用內核動態跟蹤技術跟蹤vfs_read()函數，該函數的(struct path *)作為第一個參數。
 
-- kprobe: 如前面所述，这是内核动态跟踪kprobe探针类型，跟踪内核函数的调用(kretprobe探针类型跟踪内核函数返回值)。
-- `arg0` 是一个内建变量，表示探针的第一个参数，其含义由探针类型决定。对于`kprobe`类型探针，它表示函数的第一个参数。其它参数使用arg1,...,argN访问。
-- `((struct path *)arg0)->dentry->d_name.name`: 这里`arg0`作为`struct path *`并引用dentry。
-- #include: 在没有BTF (BPF Type Format) 的情况下,包含必要的path和dentry类型声明的头文件。
+- kprobe: 如前面所述，這是內核動態跟蹤kprobe探針類型，跟蹤內核函數的調用(kretprobe探針類型跟蹤內核函數返回值)。
+- `arg0` 是一個內建變量，表示探針的第一個參數，其含義由探針類型決定。對於`kprobe`類型探針，它表示函數的第一個參數。其它參數使用arg1,...,argN訪問。
+- `((struct path *)arg0)->dentry->d_name.name`: 這裡`arg0`作為`struct path *`並引用dentry。
+- #include: 在沒有BTF (BPF Type Format) 的情況下,包含必要的path和dentry類型聲明的頭文件。
 
-bpftrace对内核结构跟踪的支持和bcc是一样的，允许使用内核头文件。这意味着大多数结构是可用的，但是并不是所有的，有时需要手动增加某些结构的声明。例如这个例子，见[dcsnoop tool](https://github.com/iovisor/bpftrace/blob/master/docs/../tools/dcsnoop.bt)，包含struct nameidata的声明。倘若内核有提供BTF数据，则所有结构都可用。
+bpftrace對內核結構跟蹤的支持和bcc是一樣的，允許使用內核頭文件。這意味著大多數結構是可用的，但是並不是所有的，有時需要手動增加某些結構的聲明。例如這個例子，見[dcsnoop tool](https://github.com/iovisor/bpftrace/blob/master/docs/../tools/dcsnoop.bt)，包含struct nameidata的聲明。倘若內核有提供BTF數據，則所有結構都可用。
 
-现在，你已经理解了bpftrace的大部分功能，你可以开始使用和编写强大的一行命令。查阅[参考手册](https://github.com/iovisor/bpftrace/blob/master/docs/reference_guide.md)更多的功能。
+現在，你已經理解了bpftrace的大部分功能，你可以開始使用和編寫強大的一行命令。查閱[參考手冊](https://github.com/iovisor/bpftrace/blob/master/docs/reference_guide.md)更多的功能。
 
 > 原文地址：https://github.com/iovisor/bpftrace/blob/master/docs

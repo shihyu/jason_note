@@ -1,41 +1,41 @@
-# eBPF 入门开发实践教程十一：在 eBPF 中使用 libbpf 开发用户态程序并跟踪 exec() 和 exit() 系统调用
+# eBPF 入門開發實踐教程十一：在 eBPF 中使用 libbpf 開發用戶態程序並跟蹤 exec() 和 exit() 系統調用
 
-eBPF (Extended Berkeley Packet Filter) 是 Linux 内核上的一个强大的网络和性能分析工具。它允许开发者在内核运行时动态加载、更新和运行用户定义的代码。
+eBPF (Extended Berkeley Packet Filter) 是 Linux 內核上的一個強大的網絡和性能分析工具。它允許開發者在內核運行時動態加載、更新和運行用戶定義的代碼。
 
-在本教程中，我们将了解内核态和用户态的 eBPF 程序是如何协同工作的。我们还将学习如何使用原生的 libbpf 开发用户态程序，将 eBPF 应用打包为可执行文件，实现跨内核版本分发。
+在本教程中，我們將瞭解內核態和用戶態的 eBPF 程序是如何協同工作的。我們還將學習如何使用原生的 libbpf 開發用戶態程序，將 eBPF 應用打包為可執行文件，實現跨內核版本分發。
 
-## libbpf 库，以及为什么需要使用它
+## libbpf 庫，以及為什麼需要使用它
 
-libbpf 是一个 C 语言库，伴随内核版本分发，用于辅助 eBPF 程序的加载和运行。它提供了用于与 eBPF 系统交互的一组 C API，使开发者能够更轻松地编写用户态程序来加载和管理 eBPF 程序。这些用户态程序通常用于分析、监控或优化系统性能。
+libbpf 是一個 C 語言庫，伴隨內核版本分發，用於輔助 eBPF 程序的加載和運行。它提供了用於與 eBPF 系統交互的一組 C API，使開發者能夠更輕鬆地編寫用戶態程序來加載和管理 eBPF 程序。這些用戶態程序通常用於分析、監控或優化系統性能。
 
-使用 libbpf 库有以下优势：
+使用 libbpf 庫有以下優勢：
 
-- 它简化了 eBPF 程序的加载、更新和运行过程。
-- 它提供了一组易于使用的 API，使开发者能够专注于编写核心逻辑，而不是处理底层细节。
-- 它能够确保与内核中的 eBPF 子系统的兼容性，降低了维护成本。
+- 它簡化了 eBPF 程序的加載、更新和運行過程。
+- 它提供了一組易於使用的 API，使開發者能夠專注於編寫核心邏輯，而不是處理底層細節。
+- 它能夠確保與內核中的 eBPF 子系統的兼容性，降低了維護成本。
 
-同时，libbpf 和 BTF（BPF Type Format）都是 eBPF 生态系统的重要组成部分。它们各自在实现跨内核版本兼容方面发挥着关键作用。BTF（BPF Type Format）是一种元数据格式，用于描述 eBPF 程序中的类型信息。BTF 的主要目的是提供一种结构化的方式，以描述内核中的数据结构，以便 eBPF 程序可以更轻松地访问和操作它们。
+同時，libbpf 和 BTF（BPF Type Format）都是 eBPF 生態系統的重要組成部分。它們各自在實現跨內核版本兼容方面發揮著關鍵作用。BTF（BPF Type Format）是一種元數據格式，用於描述 eBPF 程序中的類型信息。BTF 的主要目的是提供一種結構化的方式，以描述內核中的數據結構，以便 eBPF 程序可以更輕鬆地訪問和操作它們。
 
-BTF 在实现跨内核版本兼容方面的关键作用如下：
+BTF 在實現跨內核版本兼容方面的關鍵作用如下：
 
-- BTF 允许 eBPF 程序访问内核数据结构的详细类型信息，而无需对特定内核版本进行硬编码。这使得 eBPF 程序可以适应不同版本的内核，从而实现跨内核版本兼容。
-- 通过使用 BPF CO-RE（Compile Once, Run Everywhere）技术，eBPF 程序可以利用 BTF 在编译时解析内核数据结构的类型信息，进而生成可以在不同内核版本上运行的 eBPF 程序。
+- BTF 允許 eBPF 程序訪問內核數據結構的詳細類型信息，而無需對特定內核版本進行硬編碼。這使得 eBPF 程序可以適應不同版本的內核，從而實現跨內核版本兼容。
+- 通過使用 BPF CO-RE（Compile Once, Run Everywhere）技術，eBPF 程序可以利用 BTF 在編譯時解析內核數據結構的類型信息，進而生成可以在不同內核版本上運行的 eBPF 程序。
 
-结合 libbpf 和 BTF，eBPF 程序可以在各种不同版本的内核上运行，而无需为每个内核版本单独编译。这极大地提高了 eBPF 生态系统的可移植性和兼容性，降低了开发和维护的难度。
+結合 libbpf 和 BTF，eBPF 程序可以在各種不同版本的內核上運行，而無需為每個內核版本單獨編譯。這極大地提高了 eBPF 生態系統的可移植性和兼容性，降低了開發和維護的難度。
 
-## 什么是 bootstrap
+## 什麼是 bootstrap
 
-Bootstrap 是一个使用 libbpf 的完整应用，它利用 eBPF 程序来跟踪内核中的 exec() 系统调用（通过 SEC("tp/sched/sched_process_exec") handle_exec BPF 程序），这主要对应于新进程的创建（不包括 fork() 部分）。此外，它还跟踪进程的 exit() 系统调用（通过 SEC("tp/sched/sched_process_exit") handle_exit BPF 程序），以了解每个进程何时退出。
+Bootstrap 是一個使用 libbpf 的完整應用，它利用 eBPF 程序來跟蹤內核中的 exec() 系統調用（通過 SEC("tp/sched/sched_process_exec") handle_exec BPF 程序），這主要對應於新進程的創建（不包括 fork() 部分）。此外，它還跟蹤進程的 exit() 系統調用（通過 SEC("tp/sched/sched_process_exit") handle_exit BPF 程序），以瞭解每個進程何時退出。
 
-这两个 BPF 程序共同工作，允许捕获关于新进程的有趣信息，例如二进制文件的文件名，以及测量进程的生命周期，并在进程结束时收集有趣的统计信息，例如退出代码或消耗的资源量等。这是深入了解内核内部并观察事物如何真正运作的良好起点。
+這兩個 BPF 程序共同工作，允許捕獲關於新進程的有趣信息，例如二進制文件的文件名，以及測量進程的生命週期，並在進程結束時收集有趣的統計信息，例如退出代碼或消耗的資源量等。這是深入瞭解內核內部並觀察事物如何真正運作的良好起點。
 
-Bootstrap 还使用 argp API（libc 的一部分）进行命令行参数解析，使得用户可以通过命令行选项配置应用行为。这种方式提供了灵活性，让用户能够根据实际需求自定义程序行为。虽然这些功能使用 eunomia-bpf 工具也可以实现，但是这里我们使用 libbpf 可以在用户态提供更高的可扩展性，不过也带来了不少额外的复杂度。
+Bootstrap 還使用 argp API（libc 的一部分）進行命令行參數解析，使得用戶可以通過命令行選項配置應用行為。這種方式提供了靈活性，讓用戶能夠根據實際需求自定義程序行為。雖然這些功能使用 eunomia-bpf 工具也可以實現，但是這裡我們使用 libbpf 可以在用戶態提供更高的可擴展性，不過也帶來了不少額外的複雜度。
 
 ## Bootstrap
 
-Bootstrap 分为两个部分：内核态和用户态。内核态部分是一个 eBPF 程序，它跟踪 exec() 和 exit() 系统调用。用户态部分是一个 C 语言程序，它使用 libbpf 库来加载和运行内核态程序，并处理从内核态程序收集的数据。
+Bootstrap 分為兩個部分：內核態和用戶態。內核態部分是一個 eBPF 程序，它跟蹤 exec() 和 exit() 系統調用。用戶態部分是一個 C 語言程序，它使用 libbpf 庫來加載和運行內核態程序，並處理從內核態程序收集的數據。
 
-### 内核态 eBPF 程序 bootstrap.bpf.c
+### 內核態 eBPF 程序 bootstrap.bpf.c
 
 ```c
 // SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
@@ -151,9 +151,9 @@ int handle_exit(struct trace_event_raw_sched_process_template* ctx)
 }
 ```
 
-这段代码是一个内核态 eBPF 程序（bootstrap.bpf.c），主要用于跟踪 exec() 和 exit() 系统调用。它通过 eBPF 程序捕获进程的创建和退出事件，并将相关信息发送到用户态程序进行处理。下面是对代码的详细解释。
+這段代碼是一個內核態 eBPF 程序（bootstrap.bpf.c），主要用於跟蹤 exec() 和 exit() 系統調用。它通過 eBPF 程序捕獲進程的創建和退出事件，並將相關信息發送到用戶態程序進行處理。下面是對代碼的詳細解釋。
 
-首先，我们引入所需的头文件，定义 eBPF 程序的许可证以及两个 eBPF maps：exec_start 和 rb。exec_start 是一个哈希类型的 eBPF map，用于存储进程开始执行时的时间戳。rb 是一个环形缓冲区类型的 eBPF map，用于存储捕获的事件数据，并将其发送到用户态程序。
+首先，我們引入所需的頭文件，定義 eBPF 程序的許可證以及兩個 eBPF maps：exec_start 和 rb。exec_start 是一個哈希類型的 eBPF map，用於存儲進程開始執行時的時間戳。rb 是一個環形緩衝區類型的 eBPF map，用於存儲捕獲的事件數據，並將其發送到用戶態程序。
 
 ```c
 #include "vmlinux.h"
@@ -179,7 +179,7 @@ struct {
 const volatile unsigned long long min_duration_ns = 0;
 ```
 
-接下来，我们定义了一个名为 handle_exec 的 eBPF 程序，它会在进程执行 exec() 系统调用时触发。首先，我们从当前进程中获取 PID，记录进程开始执行的时间戳，然后将其存储在 exec_start map 中。
+接下來，我們定義了一個名為 handle_exec 的 eBPF 程序，它會在進程執行 exec() 系統調用時觸發。首先，我們從當前進程中獲取 PID，記錄進程開始執行的時間戳，然後將其存儲在 exec_start map 中。
 
 ```c
 SEC("tp/sched/sched_process_exec")
@@ -194,7 +194,7 @@ int handle_exec(struct trace_event_raw_sched_process_exec *ctx)
 }
 ```
 
-然后，我们从环形缓冲区 map rb 中预留一个事件结构，并填充相关数据，如进程 ID、父进程 ID、进程名等。之后，我们将这些数据发送到用户态程序进行处理。
+然後，我們從環形緩衝區 map rb 中預留一個事件結構，並填充相關數據，如進程 ID、父進程 ID、進程名等。之後，我們將這些數據發送到用戶態程序進行處理。
 
 ```c
     // reserve sample from BPF ringbuf
@@ -218,7 +218,7 @@ int handle_exec(struct trace_event_raw_sched_process_exec *ctx)
     return 0;
 ```
 
-最后，我们定义了一个名为 handle_exit 的 eBPF 程序，它会在进程执行 exit() 系统调用时触发。首先，我们从当前进程中获取 PID 和 TID（线程 ID）。如果 PID 和 TID 不相等，说明这是一个线程退出，我们将忽略此事件。
+最後，我們定義了一個名為 handle_exit 的 eBPF 程序，它會在進程執行 exit() 系統調用時觸發。首先，我們從當前進程中獲取 PID 和 TID（線程 ID）。如果 PID 和 TID 不相等，說明這是一個線程退出，我們將忽略此事件。
 
 ```c
 SEC("tp/sched/sched_process_exit")
@@ -237,7 +237,7 @@ int handle_exit(struct trace_event_raw_sched_process_template* ctx)
 }
 ```
 
-接着，我们查找之前存储在 exec_start map 中的进程开始执行的时间戳。如果找到了时间戳，我们将计算进程的生命周期（持续时间），然后从 exec_start map 中删除该记录。如果未找到时间戳且指定了最小持续时间，则直接返回。
+接著，我們查找之前存儲在 exec_start map 中的進程開始執行的時間戳。如果找到了時間戳，我們將計算進程的生命週期（持續時間），然後從 exec_start map 中刪除該記錄。如果未找到時間戳且指定了最小持續時間，則直接返回。
 
 ```c
     // if we recorded start of the process, calculate lifetime duration
@@ -253,7 +253,7 @@ int handle_exit(struct trace_event_raw_sched_process_template* ctx)
         return 0;
 ```
 
-然后，我们从环形缓冲区 map rb 中预留一个事件结构，并填充相关数据，如进程 ID、父进程 ID、进程名、进程持续时间等。最后，我们将这些数据发送到用户态程序进行处理。
+然後，我們從環形緩衝區 map rb 中預留一個事件結構，並填充相關數據，如進程 ID、父進程 ID、進程名、進程持續時間等。最後，我們將這些數據發送到用戶態程序進行處理。
 
 ```c
     /* reserve sample from BPF ringbuf */
@@ -277,9 +277,9 @@ int handle_exit(struct trace_event_raw_sched_process_template* ctx)
 }
 ```
 
-这样，当进程执行 exec() 或 exit() 系统调用时，我们的 eBPF 程序会捕获相应的事件，并将详细信息发送到用户态程序进行后续处理。这使得我们可以轻松地监控进程的创建和退出，并获取有关进程的详细信息。
+這樣，當進程執行 exec() 或 exit() 系統調用時，我們的 eBPF 程序會捕獲相應的事件，並將詳細信息發送到用戶態程序進行後續處理。這使得我們可以輕鬆地監控進程的創建和退出，並獲取有關進程的詳細信息。
 
-除此之外，在 bootstrap.h 中，我们还定义了和用户态交互的数据结构：
+除此之外，在 bootstrap.h 中，我們還定義了和用戶態交互的數據結構：
 
 ```c
 /* SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause) */
@@ -303,7 +303,7 @@ struct event {
 #endif /* __BOOTSTRAP_H */
 ```
 
-### 用户态，bootstrap.c
+### 用戶態，bootstrap.c
 
 ```c
 // SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
@@ -481,9 +481,9 @@ cleanup:
 }
 ```
 
-这个用户态程序主要用于加载、验证、附加 eBPF 程序，以及接收 eBPF 程序收集的事件数据，并将其打印出来。我们将分析一些关键部分。
+這個用戶態程序主要用於加載、驗證、附加 eBPF 程序，以及接收 eBPF 程序收集的事件數據，並將其打印出來。我們將分析一些關鍵部分。
 
-首先，我们定义了一个 env 结构，用于存储命令行参数：
+首先，我們定義了一個 env 結構，用於存儲命令行參數：
 
 ```c
 static struct env {
@@ -492,7 +492,7 @@ static struct env {
 } env;
 ```
 
-接下来，我们使用 argp 库来解析命令行参数：
+接下來，我們使用 argp 庫來解析命令行參數：
 
 ```c
 static const struct argp_option opts[] = {
@@ -513,7 +513,7 @@ static const struct argp argp = {
 };
 ```
 
-main() 函数中，首先解析命令行参数，然后设置 libbpf 的打印回调函数 libbpf_print_fn，以便在需要时输出调试信息：
+main() 函數中，首先解析命令行參數，然後設置 libbpf 的打印回調函數 libbpf_print_fn，以便在需要時輸出調試信息：
 
 ```c
 err = argp_parse(&argp, argc, argv, 0, NULL, NULL);
@@ -523,7 +523,7 @@ if (err)
 libbpf_set_print(libbpf_print_fn);
 ```
 
-接下来，我们打开 eBPF 脚手架（skeleton）文件，将最小持续时间参数传递给 eBPF 程序，并加载和附加 eBPF 程序：
+接下來，我們打開 eBPF 腳手架（skeleton）文件，將最小持續時間參數傳遞給 eBPF 程序，並加載和附加 eBPF 程序：
 
 ```c
 skel = bootstrap_bpf__open();
@@ -547,7 +547,7 @@ if (err) {
 }
 ```
 
-然后，我们创建一个环形缓冲区（ring buffer），用于接收 eBPF 程序发送的事件数据：
+然後，我們創建一個環形緩衝區（ring buffer），用於接收 eBPF 程序發送的事件數據：
 
 ```c
 rb = ring_buffer__new(bpf_map__fd(skel->maps.rb), handle_event, NULL, NULL);
@@ -558,9 +558,9 @@ if (!rb) {
 }
 ```
 
-handle_event() 函数会处理从 eBPF 程序收到的事件。根据事件类型（进程执行或退出），它会提取并打印事件信息，如时间戳、进程名、进程 ID、父进程 ID、文件名或退出代码等。
+handle_event() 函數會處理從 eBPF 程序收到的事件。根據事件類型（進程執行或退出），它會提取並打印事件信息，如時間戳、進程名、進程 ID、父進程 ID、文件名或退出代碼等。
 
-最后，我们使用 ring_buffer__poll() 函数轮询环形缓冲区，处理收到的事件数据：
+最後，我們使用 ring_buffer__poll() 函數輪詢環形緩衝區，處理收到的事件數據：
 
 ```c
 while (!exiting) {
@@ -569,7 +569,7 @@ while (!exiting) {
 }
 ```
 
-当程序收到 SIGINT 或 SIGTERM 信号时，它会最后完成清理、退出操作，关闭和卸载 eBPF 程序：
+當程序收到 SIGINT 或 SIGTERM 信號時，它會最後完成清理、退出操作，關閉和卸載 eBPF 程序：
 
 ```c
 cleanup:
@@ -581,25 +581,25 @@ cleanup:
 }
 ```
 
-## 安装依赖
+## 安裝依賴
 
-构建示例需要 clang、libelf 和 zlib。包名在不同的发行版中可能会有所不同。
+構建示例需要 clang、libelf 和 zlib。包名在不同的發行版中可能會有所不同。
 
-在 Ubuntu/Debian 上，你需要执行以下命令：
+在 Ubuntu/Debian 上，你需要執行以下命令：
 
 ```shell
 sudo apt install clang libelf1 libelf-dev zlib1g-dev
 ```
 
-在 CentOS/Fedora 上，你需要执行以下命令：
+在 CentOS/Fedora 上，你需要執行以下命令：
 
 ```shell
 sudo dnf install clang elfutils-libelf elfutils-libelf-devel zlib-devel
 ```
 
-## 编译运行
+## 編譯運行
 
-编译运行上述代码：
+編譯運行上述代碼：
 
 ```console
 $ git submodule update --init --recursive
@@ -621,8 +621,8 @@ TIME     EVENT COMM             PID     PPID    FILENAME/EXIT CODE
 03:16:41 EXIT  sh               110690  80168   [0] (51ms)
 ```
 
-## 总结
+## 總結
 
-通过这个实例，我们了解了如何将 eBPF 程序与用户态程序结合使用。这种结合为开发者提供了一个强大的工具集，可以实现跨内核和用户空间的高效数据收集和处理。通过使用 eBPF 和 libbpf，您可以构建更高效、可扩展和安全的监控和性能分析工具。
+通過這個實例，我們瞭解瞭如何將 eBPF 程序與用戶態程序結合使用。這種結合為開發者提供了一個強大的工具集，可以實現跨內核和用戶空間的高效數據收集和處理。通過使用 eBPF 和 libbpf，您可以構建更高效、可擴展和安全的監控和性能分析工具。
 
-如果您希望学习更多关于 eBPF 的知识和实践，可以访问我们的教程代码仓库 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或网站 <https://eunomia.dev/zh/tutorials/> 以获取更多示例和完整的教程。
+如果您希望學習更多關於 eBPF 的知識和實踐，可以訪問我們的教程代碼倉庫 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或網站 <https://eunomia.dev/zh/tutorials/> 以獲取更多示例和完整的教程。

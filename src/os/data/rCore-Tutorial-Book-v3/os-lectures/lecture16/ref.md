@@ -1,20 +1,20 @@
-## 20200410-第十六讲 进程通信
+## 20200410-第十六講 進程通信
 [v1](https://github.com/LearningOS/os-lectures/blob/2f1d9c5b9494e0d2c25afa3102884380991840c4/lecture16/ref.md)
 
 [v2](https://github.com/LearningOS/os-lectures/blob/49cfe2da914e337c08b0356ce136dcc4c7b5a6bb/lecture16/ref.md)
 
 [v3](https://github.com/LearningOS/os-lectures/blob/7bf7fbeca5d8eef3ba9b1a6ae059afbe0b0854d6/lecture16/ref.md)
 
-### 目录
-第十六讲 进程通信
-16.1 进程通信概念
-16.2 信号和管道
-16.3 Linux信号机制
-16.4 消息队列和共享内存
+### 目錄
+第十六講 進程通信
+16.1 進程通信概念
+16.2 信號和管道
+16.3 Linux信號機制
+16.4 消息隊列和共享內存
 16.5 dbus
 16.6 binder
 
-### 16.3 Linux信号机制
+### 16.3 Linux信號機制
 
 20200410-09-ipc.pdf
 20200410-understanding.linux.kernel.pdf
@@ -112,23 +112,23 @@ Ref: 20200410-09-ipc.pdf-Page: 17
 
 ### dbus 
 - [dbus in baidu](https://baike.baidu.com/item/dbus/17507523)
-- [IPC机制学习---D-BUS](https://my.oschina.net/u/158589/blog/59218)
-- [一个dbus精简IPC实例源码](http://blog.chinaunix.net/uid-20564848-id-73694.html)
-- [dbus和经典IPC的对比](http://www.voidcn.com/article/p-uisjqenm-bae.html)
+- [IPC機制學習---D-BUS](https://my.oschina.net/u/158589/blog/59218)
+- [一個dbus精簡IPC實例源碼](http://blog.chinaunix.net/uid-20564848-id-73694.html)
+- [dbus和經典IPC的對比](http://www.voidcn.com/article/p-uisjqenm-bae.html)
 
 - [ D-Bus in freedesktop.org](https://www.freedesktop.org/wiki/Software/dbus/)
-- [D-BUS详细分析](https://blog.csdn.net/iteye_8149/article/details/82236708?depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromBaidu-2&utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromBaidu-2)
-- [DBus学习笔记](https://blog.csdn.net/lvliang2008/article/details/6214955)
+- [D-BUS詳細分析](https://blog.csdn.net/iteye_8149/article/details/82236708?depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromBaidu-2&utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromBaidu-2)
+- [DBus學習筆記](https://blog.csdn.net/lvliang2008/article/details/6214955)
 - [IntroductionToDBus-freedesktop.net](https://www.freedesktop.org/wiki/IntroductionToDBus/)
 - [dbus-tutorial-freedesktip.net](https://dbus.freedesktop.org/doc/dbus-tutorial.html)
 
 ### binder
-- [[Android Binder机制原理](https://www.cnblogs.com/qingchen1984/p/5212755.html)](https://www.cnblogs.com/qingchen1984/p/5212755.html)
-- [简单理解Binder机制的原理](https://www.jianshu.com/p/4920c7781afe)
-- [Binder系列—开篇](http://gityuan.com/2015/10/31/binder-prepare/)
+- [[Android Binder機制原理](https://www.cnblogs.com/qingchen1984/p/5212755.html)](https://www.cnblogs.com/qingchen1984/p/5212755.html)
+- [簡單理解Binder機制的原理](https://www.jianshu.com/p/4920c7781afe)
+- [Binder系列—開篇](http://gityuan.com/2015/10/31/binder-prepare/)
 - [Binder IPC Mechanism](http://www.angryredplanet.com/~hackbod/openbinder/docs/html/BinderIPCMechanism.html)
-- [深刻理解Linux进程间通信（IPC）](https://www.ibm.com/developerworks/cn/linux/l-ipc/)
-- [为什么 Android 要采用 Binder 作为 IPC 机制？--知乎](https://www.zhihu.com/question/39440766?sort=created)
+- [深刻理解Linux進程間通信（IPC）](https://www.ibm.com/developerworks/cn/linux/l-ipc/)
+- [為什麼 Android 要採用 Binder 作為 IPC 機制？--知乎](https://www.zhihu.com/question/39440766?sort=created)
 - [A Good Understanding of D-BUS - An IPC Mechanism in Linux](https://linoxide.com/how-tos/d-bus-ipc-mechanism-linux/)
-- [图文详解 Android Binder跨进程通信的原理](https://www.jianshu.com/p/4ee3fd07da14)
-- [DBUS和Binder对比](https://blog.csdn.net/vastyh/article/details/8690175)
+- [圖文詳解 Android Binder跨進程通信的原理](https://www.jianshu.com/p/4ee3fd07da14)
+- [DBUS和Binder對比](https://blog.csdn.net/vastyh/article/details/8690175)

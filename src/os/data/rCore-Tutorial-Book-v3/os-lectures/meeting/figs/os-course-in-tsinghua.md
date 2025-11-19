@@ -7,19 +7,19 @@ excalidraw-plugin: parsed
 
 
 # Text Elements
-计算机系 ^Hvmw4QoS
+計算機系 ^Hvmw4QoS
 
-电子系 ^P49ye4BZ
+電子系 ^P49ye4BZ
 
-自动化系 ^sUia6zML
+自動化系 ^sUia6zML
 
-交叉信息学院 ^jQSZHuls
+交叉信息學院 ^jQSZHuls
 
-软件学院 ^7zM5lGx3
+軟件學院 ^7zM5lGx3
 
-全校选修 ^itEKnZsM
+全校選修 ^itEKnZsM
 
-网络研究院 ^6yX5WimN
+網絡研究院 ^6yX5WimN
 
 
 # Embedded files
@@ -88,13 +88,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 33.543701171875,
 			"fontFamily": 4,
-			"text": "计算机系",
-			"rawText": "计算机系",
+			"text": "計算機系",
+			"rawText": "計算機系",
 			"baseline": 30,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "计算机系"
+			"originalText": "計算機系"
 		},
 		{
 			"type": "rectangle",
@@ -151,13 +151,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 33.543701171875,
 			"fontFamily": 4,
-			"text": "电子系",
-			"rawText": "电子系",
+			"text": "電子系",
+			"rawText": "電子系",
 			"baseline": 30,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "电子系"
+			"originalText": "電子系"
 		},
 		{
 			"type": "rectangle",
@@ -214,13 +214,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 33.543701171875,
 			"fontFamily": 4,
-			"text": "自动化系",
-			"rawText": "自动化系",
+			"text": "自動化系",
+			"rawText": "自動化系",
 			"baseline": 30,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "自动化系"
+			"originalText": "自動化系"
 		},
 		{
 			"type": "rectangle",
@@ -277,13 +277,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 33.543701171875,
 			"fontFamily": 4,
-			"text": "交叉信息学院",
-			"rawText": "交叉信息学院",
+			"text": "交叉信息學院",
+			"rawText": "交叉信息學院",
 			"baseline": 30,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "交叉信息学院"
+			"originalText": "交叉信息學院"
 		},
 		{
 			"type": "rectangle",
@@ -340,13 +340,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 33.543701171875,
 			"fontFamily": 4,
-			"text": "软件学院",
-			"rawText": "软件学院",
+			"text": "軟件學院",
+			"rawText": "軟件學院",
 			"baseline": 30,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "软件学院"
+			"originalText": "軟件學院"
 		},
 		{
 			"type": "rectangle",
@@ -403,13 +403,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 33.543701171875,
 			"fontFamily": 4,
-			"text": "全校选修",
-			"rawText": "全校选修",
+			"text": "全校選修",
+			"rawText": "全校選修",
 			"baseline": 30,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "全校选修"
+			"originalText": "全校選修"
 		},
 		{
 			"type": "rectangle",
@@ -466,13 +466,13 @@ excalidraw-plugin: parsed
 			"link": null,
 			"fontSize": 33.543701171875,
 			"fontFamily": 4,
-			"text": "网络研究院",
-			"rawText": "网络研究院",
+			"text": "網絡研究院",
+			"rawText": "網絡研究院",
 			"baseline": 30,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "网络研究院"
+			"originalText": "網絡研究院"
 		},
 		{
 			"type": "image",

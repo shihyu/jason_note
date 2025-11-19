@@ -403,7 +403,7 @@ wasm-objdump -d buttplug_server_bg.wasm    # 才能看到完整函數
 
 ### 不包含的功能：
 
-- 非 WebAssembly 平台的功能
+- 非 WebAssembly 平臺的功能
 - 未使用的設備協定
 - 除錯和測試專用功能
 - `default-features = false` 排除的功能

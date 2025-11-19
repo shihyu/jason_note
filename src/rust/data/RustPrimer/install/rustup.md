@@ -6,7 +6,7 @@ rustup 是rust官方的版本管理工具。應當作為安裝 Rust 的首選。
 
 ## Features
 
-* 管理安裝多個官方版本的 Rust 二進制程序。
+* 管理安裝多個官方版本的 Rust 二進製程序。
 * 配置基於目錄的 Rust 工具鏈。
 * 安裝和更新來自 Rust 的發佈通道: nightly, beta 和 stable。
 * 接收來自發布通道更新的通知。

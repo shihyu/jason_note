@@ -331,7 +331,7 @@ func selectExample() {
 ```
 Mutex vs RWMutex:
 Mutex:   🚪🔒 (互斥存取)
-RWMutex: 👀👀👀 或 ✍️🚫 (讀者並行，寫者獨占)
+RWMutex: 👀👀👀 或 ✍️🚫 (讀者並行，寫者獨佔)
 ```
 
 ### 基本 Mutex 範例
@@ -1424,7 +1424,7 @@ func pubSubExample() {
     time.Sleep(100 * time.Millisecond)
     
     ps.Publish("news", "重要新聞：Go 1.22 發布")
-    ps.Publish("sports", "足球賽事：台灣 vs 日本")
+    ps.Publish("sports", "足球賽事：臺灣 vs 日本")
     ps.Publish("news", "科技新聞：AI 新突破")
     
     time.Sleep(1 * time.Second)

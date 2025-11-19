@@ -19,7 +19,7 @@ Context ^LEoJ88pK
 
 控制流 ^XmXv3ytO
 
-执行状态 ^bJmLBiTb
+執行狀態 ^bJmLBiTb
 
 heap ^1EYDvgDH
 
@@ -31,23 +31,23 @@ Context ^ue184JMR
 
 Context ^vs5nMcdO
 
-协程中的
-变量 ^G1eMq8Kp
+協程中的
+變量 ^G1eMq8Kp
 
-执行状态 ^7YZkhrrB
+執行狀態 ^7YZkhrrB
 
-协程中的
-变量 ^DADOPtDV
+協程中的
+變量 ^DADOPtDV
 
 Stack ^dAeXrfNn
 
-无栈协程 ^DgQTKXng
+無棧協程 ^DgQTKXng
 
 控制流 ^IeTMJ4Bv
 
 控制流 ^02FFgXFh
 
-执行状态 ^2aHr3Kw7
+執行狀態 ^2aHr3Kw7
 
 heap ^fuElU3Ve
 
@@ -59,55 +59,55 @@ Context ^iBcykZa8
 
 Context ^3qYhS15c
 
-局部变量 ^4Hkz5QIk
+局部變量 ^4Hkz5QIk
 
-全局执行状态 ^8FrjWJy7
+全局執行狀態 ^8FrjWJy7
 
-全局变量 ^6u67eTTZ
+全局變量 ^6u67eTTZ
 
 Stack ^vNLlYGZz
 
-有栈协程/线程 ^QRwotJ5l
+有棧協程/線程 ^QRwotJ5l
 
 Stack ^QbQHu7dD
 
-执行状态 ^1k237rRG
+執行狀態 ^1k237rRG
 
-局部变量 ^r1LYkG3S
+局部變量 ^r1LYkG3S
 
-无栈协程调度 ^lfzkJmr7
+無棧協程調度 ^lfzkJmr7
 
-有栈协程/
-线程
-调度 ^pO1oWjlI
+有棧協程/
+線程
+調度 ^pO1oWjlI
 
-地址空间 ^nQXjFJNP
+地址空間 ^nQXjFJNP
 
 文件 ^0HeRVYXS
 
-各种资源 ^cvPFhOGE
+各種資源 ^cvPFhOGE
 
-进程(单线程) ^r5RjUUzT
+進程(單線程) ^r5RjUUzT
 
-同步互斥资源 ^ok0NaP2u
+同步互斥資源 ^ok0NaP2u
 
-锁 ^5ygg5DzG
+鎖 ^5ygg5DzG
 
-信号量 ^VIjT6H97
+信號量 ^VIjT6H97
 
-条件变量 ^Zgmd8ujC
+條件變量 ^Zgmd8ujC
 
-特权级切换 ^DtkVKjdl
+特權級切換 ^DtkVKjdl
 
-进程调度 ^GKoFRuRC
+進程調度 ^GKoFRuRC
 
-信号 ^OWJLCRSS
+信號 ^OWJLCRSS
 
-IPC资源 ^nB2CYra6
+IPC資源 ^nB2CYra6
 
 管道 ^4cRHnHQF
 
-进程 ^gVKGAwKi
+進程 ^gVKGAwKi
 
 %%
 # Drawing
@@ -1822,13 +1822,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 17.848495723852835,
 			"fontFamily": 4,
-			"text": "执行状态",
-			"rawText": "执行状态",
+			"text": "執行狀態",
+			"rawText": "執行狀態",
 			"baseline": 15,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "执行状态"
+			"originalText": "執行狀態"
 		},
 		{
 			"type": "text",
@@ -2101,13 +2101,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 16.043128108732375,
 			"fontFamily": 4,
-			"text": "协程中的\n变量",
-			"rawText": "协程中的\n变量",
+			"text": "協程中的\n變量",
+			"rawText": "協程中的\n變量",
 			"baseline": 31,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "协程中的\n变量"
+			"originalText": "協程中的\n變量"
 		},
 		{
 			"type": "line",
@@ -2175,13 +2175,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 17.848495723852835,
 			"fontFamily": 4,
-			"text": "执行状态",
-			"rawText": "执行状态",
+			"text": "執行狀態",
+			"rawText": "執行狀態",
 			"baseline": 15,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "执行状态"
+			"originalText": "執行狀態"
 		},
 		{
 			"type": "rectangle",
@@ -2234,13 +2234,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 16.043128108732375,
 			"fontFamily": 4,
-			"text": "协程中的\n变量",
-			"rawText": "协程中的\n变量",
+			"text": "協程中的\n變量",
+			"rawText": "協程中的\n變量",
 			"baseline": 31,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "协程中的\n变量"
+			"originalText": "協程中的\n變量"
 		},
 		{
 			"type": "line",
@@ -2367,13 +2367,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 28.081485523897047,
 			"fontFamily": 4,
-			"text": "无栈协程",
-			"rawText": "无栈协程",
+			"text": "無棧協程",
+			"rawText": "無棧協程",
 			"baseline": 25,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "无栈协程"
+			"originalText": "無棧協程"
 		},
 		{
 			"type": "rectangle",
@@ -3650,13 +3650,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 17.848495723852835,
 			"fontFamily": 4,
-			"text": "全局执行状态",
-			"rawText": "全局执行状态",
+			"text": "全局執行狀態",
+			"rawText": "全局執行狀態",
 			"baseline": 15,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "全局执行状态"
+			"originalText": "全局執行狀態"
 		},
 		{
 			"type": "text",
@@ -3684,13 +3684,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 20.551853304209146,
 			"fontFamily": 4,
-			"text": "全局变量",
-			"rawText": "全局变量",
+			"text": "全局變量",
+			"rawText": "全局變量",
 			"baseline": 18,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "全局变量"
+			"originalText": "全局變量"
 		},
 		{
 			"type": "rectangle",
@@ -3777,13 +3777,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 28.081485523897047,
 			"fontFamily": 4,
-			"text": "有栈协程/线程",
-			"rawText": "有栈协程/线程",
+			"text": "有棧協程/線程",
+			"rawText": "有棧協程/線程",
 			"baseline": 25,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "有栈协程/线程"
+			"originalText": "有棧協程/線程"
 		},
 		{
 			"type": "rectangle",
@@ -3920,13 +3920,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 17.848495723852835,
 			"fontFamily": 4,
-			"text": "执行状态",
-			"rawText": "执行状态",
+			"text": "執行狀態",
+			"rawText": "執行狀態",
 			"baseline": 15,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "执行状态"
+			"originalText": "執行狀態"
 		},
 		{
 			"type": "rectangle",
@@ -3979,13 +3979,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 16.043128108732375,
 			"fontFamily": 4,
-			"text": "局部变量",
-			"rawText": "局部变量",
+			"text": "局部變量",
+			"rawText": "局部變量",
 			"baseline": 14,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "局部变量"
+			"originalText": "局部變量"
 		},
 		{
 			"type": "line",
@@ -4053,13 +4053,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 17.848495723852835,
 			"fontFamily": 4,
-			"text": "执行状态",
-			"rawText": "执行状态",
+			"text": "執行狀態",
+			"rawText": "執行狀態",
 			"baseline": 15,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "执行状态"
+			"originalText": "執行狀態"
 		},
 		{
 			"type": "rectangle",
@@ -4112,13 +4112,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 16.043128108732375,
 			"fontFamily": 4,
-			"text": "局部变量",
-			"rawText": "局部变量",
+			"text": "局部變量",
+			"rawText": "局部變量",
 			"baseline": 14,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "局部变量"
+			"originalText": "局部變量"
 		},
 		{
 			"type": "line",
@@ -4368,13 +4368,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 25.758099724264714,
 			"fontFamily": 4,
-			"text": "无栈协程调度",
-			"rawText": "无栈协程调度",
+			"text": "無棧協程調度",
+			"rawText": "無棧協程調度",
 			"baseline": 23,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "无栈协程调度"
+			"originalText": "無棧協程調度"
 		},
 		{
 			"type": "rectangle",
@@ -4436,13 +4436,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 21.15375397386056,
 			"fontFamily": 4,
-			"text": "有栈协程/\n线程\n调度",
-			"rawText": "有栈协程/\n线程\n调度",
+			"text": "有棧協程/\n線程\n調度",
+			"rawText": "有棧協程/\n線程\n調度",
 			"baseline": 68,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "有栈协程/\n线程\n调度"
+			"originalText": "有棧協程/\n線程\n調度"
 		},
 		{
 			"type": "arrow",
@@ -4642,13 +4642,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 25.700908070559937,
 			"fontFamily": 4,
-			"text": "地址空间",
-			"rawText": "地址空间",
+			"text": "地址空間",
+			"rawText": "地址空間",
 			"baseline": 23,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "地址空间"
+			"originalText": "地址空間"
 		},
 		{
 			"type": "rectangle",
@@ -4760,13 +4760,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 26.6874569163603,
 			"fontFamily": 4,
-			"text": "各种资源",
-			"rawText": "各种资源",
+			"text": "各種資源",
+			"rawText": "各種資源",
 			"baseline": 24,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "各种资源"
+			"originalText": "各種資源"
 		},
 		{
 			"type": "text",
@@ -4794,13 +4794,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 17.965756928403632,
 			"fontFamily": 4,
-			"text": "进程(单线程)",
-			"rawText": "进程(单线程)",
+			"text": "進程(單線程)",
+			"rawText": "進程(單線程)",
 			"baseline": 15,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程(单线程)"
+			"originalText": "進程(單線程)"
 		},
 		{
 			"type": "text",
@@ -4828,13 +4828,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 22.50539981617647,
 			"fontFamily": 4,
-			"text": "同步互斥资源",
-			"rawText": "同步互斥资源",
+			"text": "同步互斥資源",
+			"rawText": "同步互斥資源",
 			"baseline": 21,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "同步互斥资源"
+			"originalText": "同步互斥資源"
 		},
 		{
 			"type": "rectangle",
@@ -4912,13 +4912,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 22.505629595588236,
 			"fontFamily": 4,
-			"text": "锁",
-			"rawText": "锁",
+			"text": "鎖",
+			"rawText": "鎖",
 			"baseline": 21,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "锁"
+			"originalText": "鎖"
 		},
 		{
 			"type": "text",
@@ -4946,13 +4946,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 22.505629595588236,
 			"fontFamily": 4,
-			"text": "信号量",
-			"rawText": "信号量",
+			"text": "信號量",
+			"rawText": "信號量",
 			"baseline": 21,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "信号量"
+			"originalText": "信號量"
 		},
 		{
 			"type": "text",
@@ -4980,13 +4980,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 22.505629595588236,
 			"fontFamily": 4,
-			"text": "条件变量",
-			"rawText": "条件变量",
+			"text": "條件變量",
+			"rawText": "條件變量",
 			"baseline": 21,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "条件变量"
+			"originalText": "條件變量"
 		},
 		{
 			"type": "rectangle",
@@ -5089,13 +5089,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 19.252699908088236,
 			"fontFamily": 4,
-			"text": "特权级切换",
-			"rawText": "特权级切换",
+			"text": "特權級切換",
+			"rawText": "特權級切換",
 			"baseline": 17,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "特权级切换"
+			"originalText": "特權級切換"
 		},
 		{
 			"type": "text",
@@ -5132,13 +5132,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 20.308830492424235,
 			"fontFamily": 4,
-			"text": "进程调度",
-			"rawText": "进程调度",
+			"text": "進程調度",
+			"rawText": "進程調度",
 			"baseline": 18,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程调度"
+			"originalText": "進程調度"
 		},
 		{
 			"type": "rectangle",
@@ -5250,13 +5250,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 20.182014016544116,
 			"fontFamily": 4,
-			"text": "信号",
-			"rawText": "信号",
+			"text": "信號",
+			"rawText": "信號",
 			"baseline": 18,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "信号"
+			"originalText": "信號"
 		},
 		{
 			"type": "text",
@@ -5284,13 +5284,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 19.159843749999983,
 			"fontFamily": 4,
-			"text": "IPC资源",
-			"rawText": "IPC资源",
+			"text": "IPC資源",
+			"rawText": "IPC資源",
 			"baseline": 16,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "IPC资源"
+			"originalText": "IPC資源"
 		},
 		{
 			"type": "text",
@@ -5546,13 +5546,13 @@ IPC资源 ^nB2CYra6
 			"link": null,
 			"fontSize": 41.61325165719698,
 			"fontFamily": 4,
-			"text": "进程",
-			"rawText": "进程",
+			"text": "進程",
+			"rawText": "進程",
 			"baseline": 37,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程"
+			"originalText": "進程"
 		},
 		{
 			"type": "arrow",

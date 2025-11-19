@@ -90,7 +90,7 @@ Android (TFLite) 搜尋結果：
 
 #### 速度實測對比表 (MobileCLIP-S1, 單張 256×256 圖片)
 
-| 平台 | 框架 | CPU 推論 | GPU/ANE 推論 | 備註 |
+| 平臺 | 框架 | CPU 推論 | GPU/ANE 推論 | 備註 |
 |------|------|---------|-------------|------|
 | **Python (電腦)** | PyTorch | 20-30ms | 5-10ms | 基準參考 |
 | | | | | |
@@ -216,7 +216,7 @@ Python (電腦 GPU):       0.5-1.0 秒  💻
 階段 4: iOS 版本 (如果要做)
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 已有 PyTorch Mobile 版本:
-→ 直接用（跨平台）
+→ 直接用（跨平臺）
 
 追求極致效能:
 → 轉換成 Core ML
@@ -229,7 +229,7 @@ Python (電腦 GPU):       0.5-1.0 秒  💻
 |------|---------|-------------|-----------|---------|
 | **開發最簡單** | PyTorch Mobile | PyTorch Mobile | 99.9% | ⭐ 簡單 |
 | **效能最好** | Core ML | TensorFlow Lite | 98-99% | ⭐⭐⭐ 複雜 |
-| **跨平台** | PyTorch Mobile | PyTorch Mobile | 99.9% | ⭐ 簡單 |
+| **跨平臺** | PyTorch Mobile | PyTorch Mobile | 99.9% | ⭐ 簡單 |
 | **檔案最小** | Core ML | TensorFlow Lite | 98-99% | ⭐⭐⭐ 複雜 |
 
 ### 我給您的建議 🎯
@@ -486,7 +486,7 @@ interpreter.run(inputArray, outputArray)
 
 使用場景：
 - PyTorch → TensorFlow 的橋樑
-- 跨平台模型分享
+- 跨平臺模型分享
 - 模型優化工具鏈
 ```
 
@@ -526,9 +526,9 @@ output = session.run(None, {input_name: input_data})
 
 ---
 
-## 📱 iOS vs Android 平台比較
+## 📱 iOS vs Android 平臺比較
 
-### 同一個模型，不同平台的表現
+### 同一個模型，不同平臺的表現
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -649,7 +649,7 @@ Android (TFLite):
 
 #### **速度對比表** (MobileCLIP-S1，單張圖片)
 
-| 平台 | 框架 | CPU 推論 | GPU 推論 | 備註 |
+| 平臺 | 框架 | CPU 推論 | GPU 推論 | 備註 |
 |------|------|----------|----------|------|
 | **Python (電腦)** | PyTorch | 20-30ms | 5-10ms | 基準參考 |
 | | | | | |
@@ -718,7 +718,7 @@ PyTorch → ONNX → Core ML
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 優點：
 ✓ 轉換簡單（一步完成）
-✓ 跨平台（iOS + Android）
+✓ 跨平臺（iOS + Android）
 ✓ 與原始 PyTorch 代碼相似
 
 缺點：
@@ -778,7 +778,7 @@ PyTorch → ONNX → TensorFlow → TFLite
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 優點：
 ✓ 轉換簡單
-✓ 跨平台（與 iOS 共用）
+✓ 跨平臺（與 iOS 共用）
 ✓ 精度完全一致
 
 缺點：
@@ -797,9 +797,9 @@ PyTorch → TorchScript (.ptl)
 
 | 需求 | iOS 推薦 | Android 推薦 | 理由 |
 |------|---------|-------------|------|
-| **最佳效能** | Core ML | TFLite | 平台原生優化 |
+| **最佳效能** | Core ML | TFLite | 平臺原生優化 |
 | **最簡單** | PyTorch Mobile | PyTorch Mobile | 一步轉換 |
-| **跨平台** | PyTorch Mobile | PyTorch Mobile | 共用代碼 |
+| **跨平臺** | PyTorch Mobile | PyTorch Mobile | 共用代碼 |
 | **檔案最小** | Core ML | TFLite | 高度壓縮 |
 | **精度最高** | PyTorch Mobile | PyTorch Mobile | 無轉換損失 |
 
@@ -847,7 +847,7 @@ Android PyTorch:    ██████░░░░ 50-80ms (CPU)
 - 建立基準效能數據
 ```
 
-### 跨平台開發階段
+### 跨平臺開發階段
 
 ```
 方案 A: 追求簡單 ⭐
@@ -923,10 +923,10 @@ A: 幾乎相同
 
 ### Q4: 哪個框架最快？
 ```
-A: 取決於平台
+A: 取決於平臺
 - iOS: Core ML 最快
 - Android: TensorFlow Lite 最快
-- 跨平台: PyTorch Mobile 夠用
+- 跨平臺: PyTorch Mobile 夠用
 ```
 
 ### Q5: 我該選哪個模型大小？
@@ -949,4 +949,4 @@ A: 建議順序
 
 ---
 
-**結論：同一個 MobileCLIP 模型可以在不同平台上獲得一致的結果，只是速度會有差異。選擇合適的框架可以平衡開發難度和執行效能。** 🎯
+**結論：同一個 MobileCLIP 模型可以在不同平臺上獲得一致的結果，只是速度會有差異。選擇合適的框架可以平衡開發難度和執行效能。** 🎯

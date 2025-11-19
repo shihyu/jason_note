@@ -7,29 +7,29 @@ excalidraw-plugin: parsed
 
 
 # Text Elements
-OS管理的管理的内存池 ^Xe6daegJ
+OS管理的管理的內存池 ^Xe6daegJ
 
-运行的程序 ^96X6dVDK
+運行的程序 ^96X6dVDK
 
 sys_sbrk ^9Neufowg
 
-虚拟地址空间 ^z0qow8fs
+虛擬地址空間 ^z0qow8fs
 
-物理地址空间 ^9DxfGfPp
+物理地址空間 ^9DxfGfPp
 
-虚拟地址空间 ^IPUsejmM
+虛擬地址空間 ^IPUsejmM
 
-系统调用 ^ESOnAkTW
+系統調用 ^ESOnAkTW
 
-代码段 ^pIzXV0A7
+代碼段 ^pIzXV0A7
 
-数据段 ^Mv3Qe05x
+數據段 ^Mv3Qe05x
 
-栈 ^VZ4pvg5l
+棧 ^VZ4pvg5l
 
 堆 ^cuv8DcwK
 
-Lib库管理的内存池 ^yJvjV7WS
+Lib庫管理的內存池 ^yJvjV7WS
 
 Malloc ^CZXiCnKn
 
@@ -186,13 +186,13 @@ Malloc ^CZXiCnKn
 			"link": null,
 			"fontSize": 49.323484951155194,
 			"fontFamily": 4,
-			"text": "OS管理的管理的内存池",
-			"rawText": "OS管理的管理的内存池",
+			"text": "OS管理的管理的內存池",
+			"rawText": "OS管理的管理的內存池",
 			"baseline": 44,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "OS管理的管理的内存池"
+			"originalText": "OS管理的管理的內存池"
 		},
 		{
 			"type": "text",
@@ -220,13 +220,13 @@ Malloc ^CZXiCnKn
 			"link": null,
 			"fontSize": 63.323082557091325,
 			"fontFamily": 4,
-			"text": "运行的程序",
-			"rawText": "运行的程序",
+			"text": "運行的程序",
+			"rawText": "運行的程序",
 			"baseline": 57,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "运行的程序"
+			"originalText": "運行的程序"
 		},
 		{
 			"type": "rectangle",
@@ -946,13 +946,13 @@ Malloc ^CZXiCnKn
 			"link": null,
 			"fontSize": 32.217503420218904,
 			"fontFamily": 4,
-			"text": "虚拟地址空间",
-			"rawText": "虚拟地址空间",
+			"text": "虛擬地址空間",
+			"rawText": "虛擬地址空間",
 			"baseline": 29,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "虚拟地址空间"
+			"originalText": "虛擬地址空間"
 		},
 		{
 			"type": "text",
@@ -980,13 +980,13 @@ Malloc ^CZXiCnKn
 			"link": null,
 			"fontSize": 32.217503420218904,
 			"fontFamily": 4,
-			"text": "物理地址空间",
-			"rawText": "物理地址空间",
+			"text": "物理地址空間",
+			"rawText": "物理地址空間",
 			"baseline": 29,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "物理地址空间"
+			"originalText": "物理地址空間"
 		},
 		{
 			"type": "text",
@@ -1014,13 +1014,13 @@ Malloc ^CZXiCnKn
 			"link": null,
 			"fontSize": 32.217503420218904,
 			"fontFamily": 4,
-			"text": "虚拟地址空间",
-			"rawText": "虚拟地址空间",
+			"text": "虛擬地址空間",
+			"rawText": "虛擬地址空間",
 			"baseline": 29,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "虚拟地址空间"
+			"originalText": "虛擬地址空間"
 		},
 		{
 			"type": "text",
@@ -1053,13 +1053,13 @@ Malloc ^CZXiCnKn
 			"link": null,
 			"fontSize": 22.990346342941816,
 			"fontFamily": 4,
-			"text": "系统调用",
-			"rawText": "系统调用",
+			"text": "系統調用",
+			"rawText": "系統調用",
 			"baseline": 21,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "系统调用"
+			"originalText": "系統調用"
 		},
 		{
 			"type": "text",
@@ -1087,13 +1087,13 @@ Malloc ^CZXiCnKn
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "代码段",
-			"rawText": "代码段",
+			"text": "代碼段",
+			"rawText": "代碼段",
 			"baseline": 33,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "代码段"
+			"originalText": "代碼段"
 		},
 		{
 			"type": "text",
@@ -1121,13 +1121,13 @@ Malloc ^CZXiCnKn
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "数据段",
-			"rawText": "数据段",
+			"text": "數據段",
+			"rawText": "數據段",
 			"baseline": 33,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "数据段"
+			"originalText": "數據段"
 		},
 		{
 			"type": "text",
@@ -1160,13 +1160,13 @@ Malloc ^CZXiCnKn
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "栈",
-			"rawText": "栈",
+			"text": "棧",
+			"rawText": "棧",
 			"baseline": 33,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "栈"
+			"originalText": "棧"
 		},
 		{
 			"type": "rectangle",
@@ -1482,13 +1482,13 @@ Malloc ^CZXiCnKn
 			"link": null,
 			"fontSize": 28.72166893687047,
 			"fontFamily": 4,
-			"text": "Lib库管理的内存池",
-			"rawText": "Lib库管理的内存池",
+			"text": "Lib庫管理的內存池",
+			"rawText": "Lib庫管理的內存池",
 			"baseline": 26,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "Lib库管理的内存池"
+			"originalText": "Lib庫管理的內存池"
 		},
 		{
 			"type": "text",

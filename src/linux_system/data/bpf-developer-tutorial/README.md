@@ -13,7 +13,7 @@ This tutorial **does not cover complex concepts and scenario introductions**. It
 
 The tutorial focuses on eBPF examples in observability, networking, security, and more.
 
-[**中文版在这里**](README.zh.md)
+[**中文版在這裡**](README.zh.md)
 
 ## Table of Contents
 

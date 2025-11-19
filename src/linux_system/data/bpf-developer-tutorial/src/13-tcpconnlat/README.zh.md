@@ -1,50 +1,50 @@
-# eBPF入门开发实践教程十三：统计 TCP 连接延时，并使用 libbpf 在用户态处理数据
+# eBPF入門開發實踐教程十三：統計 TCP 連接延時，並使用 libbpf 在用戶態處理數據
 
-eBPF (Extended Berkeley Packet Filter) 是一项强大的网络和性能分析工具，被应用在 Linux 内核上。eBPF 允许开发者动态加载、更新和运行用户定义的代码，而无需重启内核或更改内核源代码。
+eBPF (Extended Berkeley Packet Filter) 是一項強大的網絡和性能分析工具，被應用在 Linux 內核上。eBPF 允許開發者動態加載、更新和運行用戶定義的代碼，而無需重啟內核或更改內核源代碼。
 
-本文是 eBPF 入门开发实践教程的第十三篇，主要介绍如何使用 eBPF 统计 TCP 连接延时，并使用 libbpf 在用户态处理数据。
+本文是 eBPF 入門開發實踐教程的第十三篇，主要介紹如何使用 eBPF 統計 TCP 連接延時，並使用 libbpf 在用戶態處理數據。
 
 ## 背景
 
-在进行后端开发时，不论使用何种编程语言，我们都常常需要调用 MySQL、Redis 等数据库，或执行一些 RPC 远程调用，或者调用其他的 RESTful API。这些调用的底层，通常都是基于 TCP 协议进行的。原因是 TCP 协议具有可靠连接、错误重传、拥塞控制等优点，因此在网络传输层协议中，TCP 的应用广泛程度超过了 UDP。然而，TCP 也有一些缺点，如建立连接的延时较长。因此，也出现了一些替代方案，例如 QUIC（Quick UDP Internet Connections，快速 UDP 网络连接）。
+在進行後端開發時，不論使用何種編程語言，我們都常常需要調用 MySQL、Redis 等數據庫，或執行一些 RPC 遠程調用，或者調用其他的 RESTful API。這些調用的底層，通常都是基於 TCP 協議進行的。原因是 TCP 協議具有可靠連接、錯誤重傳、擁塞控制等優點，因此在網絡傳輸層協議中，TCP 的應用廣泛程度超過了 UDP。然而，TCP 也有一些缺點，如建立連接的延時較長。因此，也出現了一些替代方案，例如 QUIC（Quick UDP Internet Connections，快速 UDP 網絡連接）。
 
-分析 TCP 连接延时对网络性能分析、优化以及故障排查都非常有用。
+分析 TCP 連接延時對網絡性能分析、優化以及故障排查都非常有用。
 
 ## tcpconnlat 工具概述
 
-`tcpconnlat` 这个工具能够跟踪内核中执行活动 TCP 连接的函数（如通过 `connect()` 系统调用），并测量并显示连接延时，即从发送 SYN 到收到响应包的时间。
+`tcpconnlat` 這個工具能夠跟蹤內核中執行活動 TCP 連接的函數（如通過 `connect()` 系統調用），並測量並顯示連接延時，即從發送 SYN 到收到響應包的時間。
 
-### TCP 连接原理
+### TCP 連接原理
 
-TCP 连接的建立过程，常被称为“三次握手”（Three-way Handshake）。以下是整个过程的步骤：
+TCP 連接的建立過程，常被稱為“三次握手”（Three-way Handshake）。以下是整個過程的步驟：
 
-1. 客户端向服务器发送 SYN 包：客户端通过 `connect()` 系统调用发出 SYN。这涉及到本地的系统调用以及软中断的 CPU 时间开销。
-2. SYN 包传送到服务器：这是一次网络传输，涉及到的时间取决于网络延迟。
-3. 服务器处理 SYN 包：服务器内核通过软中断接收包，然后将其放入半连接队列，并发送 SYN/ACK 响应。这主要涉及 CPU 时间开销。
-4. SYN/ACK 包传送到客户端：这是另一次网络传输。
-5. 客户端处理 SYN/ACK：客户端内核接收并处理 SYN/ACK 包，然后发送 ACK。这主要涉及软中断处理开销。
-6. ACK 包传送到服务器：这是第三次网络传输。
-7. 服务器接收 ACK：服务器内核接收并处理 ACK，然后将对应的连接从半连接队列移动到全连接队列。这涉及到一次软中断的 CPU 开销。
-8. 唤醒服务器端用户进程：被 `accept()` 系统调用阻塞的用户进程被唤醒，然后从全连接队列中取出来已经建立好的连接。这涉及一次上下文切换的CPU开销。
+1. 客戶端向服務器發送 SYN 包：客戶端通過 `connect()` 系統調用發出 SYN。這涉及到本地的系統調用以及軟中斷的 CPU 時間開銷。
+2. SYN 包傳送到服務器：這是一次網絡傳輸，涉及到的時間取決於網絡延遲。
+3. 服務器處理 SYN 包：服務器內核通過軟中斷接收包，然後將其放入半連接隊列，併發送 SYN/ACK 響應。這主要涉及 CPU 時間開銷。
+4. SYN/ACK 包傳送到客戶端：這是另一次網絡傳輸。
+5. 客戶端處理 SYN/ACK：客戶端內核接收並處理 SYN/ACK 包，然後發送 ACK。這主要涉及軟中斷處理開銷。
+6. ACK 包傳送到服務器：這是第三次網絡傳輸。
+7. 服務器接收 ACK：服務器內核接收並處理 ACK，然後將對應的連接從半連接隊列移動到全連接隊列。這涉及到一次軟中斷的 CPU 開銷。
+8. 喚醒服務器端用戶進程：被 `accept()` 系統調用阻塞的用戶進程被喚醒，然後從全連接隊列中取出來已經建立好的連接。這涉及一次上下文切換的CPU開銷。
 
-完整的流程图如下所示：
+完整的流程圖如下所示：
 
 ![tcpconnlat1](tcpconnlat1.png)
 
-在客户端视角，在正常情况下一次TCP连接总的耗时也就就大约是一次网络RTT的耗时。但在某些情况下，可能会导致连接时的网络传输耗时上涨、CPU处理开销增加、甚至是连接失败。这种时候在发现延时过长之后，就可以结合其他信息进行分析。
+在客戶端視角，在正常情況下一次TCP連接總的耗時也就就大約是一次網絡RTT的耗時。但在某些情況下，可能會導致連接時的網絡傳輸耗時上漲、CPU處理開銷增加、甚至是連接失敗。這種時候在發現延時過長之後，就可以結合其他信息進行分析。
 
-## tcpconnlat 的 eBPF 实现
+## tcpconnlat 的 eBPF 實現
 
-为了理解 TCP 的连接建立过程，我们需要理解 Linux 内核在处理 TCP 连接时所使用的两个队列：
+為了理解 TCP 的連接建立過程，我們需要理解 Linux 內核在處理 TCP 連接時所使用的兩個隊列：
 
-- 半连接队列（SYN 队列）：存储那些正在进行三次握手操作的 TCP 连接，服务器收到 SYN 包后，会将该连接信息存储在此队列中。
-- 全连接队列（Accept 队列）：存储已经完成三次握手，等待应用程序调用 `accept()` 函数的 TCP 连接。服务器在收到 ACK 包后，会创建一个新的连接并将其添加到此队列。
+- 半連接隊列（SYN 隊列）：存儲那些正在進行三次握手操作的 TCP 連接，服務器收到 SYN 包後，會將該連接信息存儲在此隊列中。
+- 全連接隊列（Accept 隊列）：存儲已經完成三次握手，等待應用程序調用 `accept()` 函數的 TCP 連接。服務器在收到 ACK 包後，會創建一個新的連接並將其添加到此隊列。
 
-理解了这两个队列的用途，我们就可以开始探究 tcpconnlat 的具体实现。tcpconnlat 的实现可以分为内核态和用户态两个部分，其中包括了几个主要的跟踪点：`tcp_v4_connect`, `tcp_v6_connect` 和 `tcp_rcv_state_process`。
+理解了這兩個隊列的用途，我們就可以開始探究 tcpconnlat 的具體實現。tcpconnlat 的實現可以分為內核態和用戶態兩個部分，其中包括了幾個主要的跟蹤點：`tcp_v4_connect`, `tcp_v6_connect` 和 `tcp_rcv_state_process`。
 
-这些跟踪点主要位于内核中的 TCP/IP 网络栈。当执行相关的系统调用或内核函数时，这些跟踪点会被激活，从而触发 eBPF 程序的执行。这使我们能够捕获和测量 TCP 连接建立的整个过程。
+這些跟蹤點主要位於內核中的 TCP/IP 網絡棧。當執行相關的系統調用或內核函數時，這些跟蹤點會被激活，從而觸發 eBPF 程序的執行。這使我們能夠捕獲和測量 TCP 連接建立的整個過程。
 
-让我们先来看一下这些挂载点的源代码：
+讓我們先來看一下這些掛載點的源代碼：
 
 ```c
 SEC("kprobe/tcp_v4_connect")
@@ -66,13 +66,13 @@ int BPF_KPROBE(tcp_rcv_state_process, struct sock *sk)
 }
 ```
 
-这段代码展示了三个内核探针（kprobe）的定义。`tcp_v4_connect` 和 `tcp_v6_connect` 在对应的 IPv4 和 IPv6 连接被初始化时被触发，调用 `trace_connect()` 函数，而 `tcp_rcv_state_process` 在内核处理 TCP 连接状态变化时被触发，调用 `handle_tcp_rcv_state_process()` 函数。
+這段代碼展示了三個內核探針（kprobe）的定義。`tcp_v4_connect` 和 `tcp_v6_connect` 在對應的 IPv4 和 IPv6 連接被初始化時被觸發，調用 `trace_connect()` 函數，而 `tcp_rcv_state_process` 在內核處理 TCP 連接狀態變化時被觸發，調用 `handle_tcp_rcv_state_process()` 函數。
 
-接下来的部分将分为两大块：一部分是对这些挂载点内核态部分的分析，我们将解读内核源代码来详细说明这些函数如何工作；另一部分是用户态的分析，将关注 eBPF 程序如何收集这些挂载点的数据，以及如何与用户态程序进行交互。
+接下來的部分將分為兩大塊：一部分是對這些掛載點內核態部分的分析，我們將解讀內核源代碼來詳細說明這些函數如何工作；另一部分是用戶態的分析，將關注 eBPF 程序如何收集這些掛載點的數據，以及如何與用戶態程序進行交互。
 
-### tcp_v4_connect 函数解析
+### tcp_v4_connect 函數解析
 
-`tcp_v4_connect`函数是Linux内核处理TCP的IPv4连接请求的主要方式。当用户态程序通过`socket`系统调用创建了一个套接字后，接着通过`connect`系统调用尝试连接到远程服务器，此时就会触发`tcp_v4_connect`函数。
+`tcp_v4_connect`函數是Linux內核處理TCP的IPv4連接請求的主要方式。當用戶態程序通過`socket`系統調用創建了一個套接字後，接著通過`connect`系統調用嘗試連接到遠程服務器，此時就會觸發`tcp_v4_connect`函數。
 
 ```c
 /* This will initiate an outgoing connection. */
@@ -219,19 +219,19 @@ failure:
 EXPORT_SYMBOL(tcp_v4_connect);
 ```
 
-参考链接：<https://elixir.bootlin.com/linux/latest/source/net/ipv4/tcp_ipv4.c#L340>
+參考鏈接：<https://elixir.bootlin.com/linux/latest/source/net/ipv4/tcp_ipv4.c#L340>
 
-接下来，我们一步步分析这个函数：
+接下來，我們一步步分析這個函數：
 
-首先，这个函数接收三个参数：一个套接字指针`sk`，一个指向套接字地址结构的指针`uaddr`和地址的长度`addr_len`。
+首先，這個函數接收三個參數：一個套接字指針`sk`，一個指向套接字地址結構的指針`uaddr`和地址的長度`addr_len`。
 
 ```c
 int tcp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 ```
 
-函数一开始就进行了参数检查，确认地址长度正确，而且地址的协议族必须是IPv4。不满足这些条件会导致函数返回错误。
+函數一開始就進行了參數檢查，確認地址長度正確，而且地址的協議族必須是IPv4。不滿足這些條件會導致函數返回錯誤。
 
-接下来，函数获取目标地址，如果设置了源路由选项（这是一个高级的IP特性，通常不会被使用），那么它还会获取源路由的下一跳地址。
+接下來，函數獲取目標地址，如果設置了源路由選項（這是一個高級的IP特性，通常不會被使用），那麼它還會獲取源路由的下一跳地址。
 
 ```c
 nexthop = daddr = usin->sin_addr.s_addr;
@@ -244,23 +244,23 @@ if (inet_opt && inet_opt->opt.srr) {
 }
 ```
 
-然后，使用这些信息来寻找一个路由到目标地址的路由项。如果不能找到路由项或者路由项指向一个多播或广播地址，函数返回错误。
+然後，使用這些信息來尋找一個路由到目標地址的路由項。如果不能找到路由項或者路由項指向一個多播或廣播地址，函數返回錯誤。
 
-接下来，它更新了源地址，处理了一些TCP时间戳选项的状态，并设置了目标端口和地址。之后，它更新了一些其他的套接字和TCP选项，并设置了连接状态为`SYN-SENT`。
+接下來，它更新了源地址，處理了一些TCP時間戳選項的狀態，並設置了目標端口和地址。之後，它更新了一些其他的套接字和TCP選項，並設置了連接狀態為`SYN-SENT`。
 
-然后，这个函数使用`inet_hash_connect`函数尝试将套接字添加到已连接的套接字的散列表中。如果这步失败，它会恢复套接字的状态并返回错误。
+然後，這個函數使用`inet_hash_connect`函數嘗試將套接字添加到已連接的套接字的散列表中。如果這步失敗，它會恢復套接字的狀態並返回錯誤。
 
-如果前面的步骤都成功了，接着，使用新的源和目标端口来更新路由项。如果这步失败，它会清理资源并返回错误。
+如果前面的步驟都成功了，接著，使用新的源和目標端口來更新路由項。如果這步失敗，它會清理資源並返回錯誤。
 
-接下来，它提交目标信息到套接字，并为之后的分段偏移选择一个安全的随机值。
+接下來，它提交目標信息到套接字，併為之後的分段偏移選擇一個安全的隨機值。
 
-然后，函数尝试使用TCP Fast Open（TFO）进行连接，如果不能使用TFO或者TFO尝试失败，它会使用普通的TCP三次握手进行连接。
+然後，函數嘗試使用TCP Fast Open（TFO）進行連接，如果不能使用TFO或者TFO嘗試失敗，它會使用普通的TCP三次握手進行連接。
 
-最后，如果上面的步骤都成功了，函数返回成功，否则，它会清理所有资源并返回错误。
+最後，如果上面的步驟都成功了，函數返回成功，否則，它會清理所有資源並返回錯誤。
 
-总的来说，`tcp_v4_connect`函数是一个处理TCP连接请求的复杂函数，它处理了很多情况，包括参数检查、路由查找、源地址选择、源路由、TCP选项处理、TCP Fast Open，等等。它的主要目标是尽可能安全和有效地建立TCP连接。
+總的來說，`tcp_v4_connect`函數是一個處理TCP連接請求的複雜函數，它處理了很多情況，包括參數檢查、路由查找、源地址選擇、源路由、TCP選項處理、TCP Fast Open，等等。它的主要目標是儘可能安全和有效地建立TCP連接。
 
-### 内核态代码
+### 內核態代碼
 
 ```c
 // SPDX-License-Identifier: GPL-2.0
@@ -396,9 +396,9 @@ int BPF_PROG(fentry_tcp_rcv_state_process, struct sock *sk)
 char LICENSE[] SEC("license") = "GPL";
 ```
 
-这个eBPF（Extended Berkeley Packet Filter）程序主要用来监控并收集TCP连接的建立时间，即从发起TCP连接请求(`connect`系统调用)到连接建立完成(SYN-ACK握手过程完成)的时间间隔。这对于监测网络延迟、服务性能分析等方面非常有用。
+這個eBPF（Extended Berkeley Packet Filter）程序主要用來監控並收集TCP連接的建立時間，即從發起TCP連接請求(`connect`系統調用)到連接建立完成(SYN-ACK握手過程完成)的時間間隔。這對於監測網絡延遲、服務性能分析等方面非常有用。
 
-首先，定义了两个eBPF maps：`start`和`events`。`start`是一个哈希表，用于存储发起连接请求的进程信息和时间戳，而`events`是一个`PERF_EVENT_ARRAY`类型的map，用于将事件数据传输到用户态。
+首先，定義了兩個eBPF maps：`start`和`events`。`start`是一個哈希表，用於存儲發起連接請求的進程信息和時間戳，而`events`是一個`PERF_EVENT_ARRAY`類型的map，用於將事件數據傳輸到用戶態。
 
 ```c
 struct {
@@ -415,7 +415,7 @@ struct {
 } events SEC(".maps");
 ```
 
-在`tcp_v4_connect`和`tcp_v6_connect`的kprobe处理函数`trace_connect`中，会记录下发起连接请求的进程信息（进程名、进程ID和当前时间戳），并以socket结构作为key，存储到`start`这个map中。
+在`tcp_v4_connect`和`tcp_v6_connect`的kprobe處理函數`trace_connect`中，會記錄下發起連接請求的進程信息（進程名、進程ID和當前時間戳），並以socket結構作為key，存儲到`start`這個map中。
 
 ```c
 static int trace_connect(struct sock *sk)
@@ -434,7 +434,7 @@ static int trace_connect(struct sock *sk)
 }
 ```
 
-当TCP状态机处理到SYN-ACK包，即连接建立的时候，会触发`tcp_rcv_state_process`的kprobe处理函数`handle_tcp_rcv_state_process`。在这个函数中，首先检查socket的状态是否为`SYN-SENT`，如果是，会从`start`这个map中查找socket对应的进程信息。然后计算出从发起连接到现在的时间间隔，将该时间间隔，进程信息，以及TCP连接的详细信息（源端口，目标端口，源IP，目标IP等）作为event，通过`bpf_perf_event_output`函数发送到用户态。
+當TCP狀態機處理到SYN-ACK包，即連接建立的時候，會觸發`tcp_rcv_state_process`的kprobe處理函數`handle_tcp_rcv_state_process`。在這個函數中，首先檢查socket的狀態是否為`SYN-SENT`，如果是，會從`start`這個map中查找socket對應的進程信息。然後計算出從發起連接到現在的時間間隔，將該時間間隔，進程信息，以及TCP連接的詳細信息（源端口，目標端口，源IP，目標IP等）作為event，通過`bpf_perf_event_output`函數發送到用戶態。
 
 ```c
 static int handle_tcp_rcv_state_process(void *ctx, struct sock *sk)
@@ -486,19 +486,19 @@ cleanup:
 }
 ```
 
-理解这个程序的关键在于理解Linux内核的网络栈处理流程，以及eBPF程序的运行模式。Linux内核网络栈对TCP连接建立的处理过程是，首先调用`tcp_v4_connect`或`tcp_v6_connect`函数（根据IP版本不同）发起TCP连接，然后在收到SYN-ACK包时，通过`tcp_rcv_state_process`函数来处理。eBPF程序通过在这两个关键函数上设置kprobe，可以在关键时刻得到通知并执行相应的处理代码。
+理解這個程序的關鍵在於理解Linux內核的網絡棧處理流程，以及eBPF程序的運行模式。Linux內核網絡棧對TCP連接建立的處理過程是，首先調用`tcp_v4_connect`或`tcp_v6_connect`函數（根據IP版本不同）發起TCP連接，然後在收到SYN-ACK包時，通過`tcp_rcv_state_process`函數來處理。eBPF程序通過在這兩個關鍵函數上設置kprobe，可以在關鍵時刻得到通知並執行相應的處理代碼。
 
-一些关键概念说明：
+一些關鍵概念說明：
 
-- kprobe：Kernel Probe，是Linux内核中用于动态追踪内核行为的机制。可以在内核函数的入口和退出处设置断点，当断点被触发时，会执行与kprobe关联的eBPF程序。
-- map：是eBPF程序中的一种数据结构，用于在内核态和用户态之间共享数据。
-- socket：在Linux网络编程中，socket是一个抽象概念，表示一个网络连接的端点。内核中的`struct sock`结构就是对socket的实现。
+- kprobe：Kernel Probe，是Linux內核中用於動態追蹤內核行為的機制。可以在內核函數的入口和退出處設置斷點，當斷點被觸發時，會執行與kprobe關聯的eBPF程序。
+- map：是eBPF程序中的一種數據結構，用於在內核態和用戶態之間共享數據。
+- socket：在Linux網絡編程中，socket是一個抽象概念，表示一個網絡連接的端點。內核中的`struct sock`結構就是對socket的實現。
 
-### 用户态数据处理
+### 用戶態數據處理
 
-用户态数据处理是使用`perf_buffer__poll`来接收并处理从内核发送到用户态的eBPF事件。`perf_buffer__poll`是libbpf库提供的一个便捷函数，用于轮询perf event buffer并处理接收到的数据。
+用戶態數據處理是使用`perf_buffer__poll`來接收並處理從內核發送到用戶態的eBPF事件。`perf_buffer__poll`是libbpf庫提供的一個便捷函數，用於輪詢perf event buffer並處理接收到的數據。
 
-首先，让我们详细看一下主轮询循环：
+首先，讓我們詳細看一下主輪詢循環：
 
 ```c
     /* main: poll */
@@ -513,9 +513,9 @@ cleanup:
     }
 ```
 
-这段代码使用一个while循环来反复轮询perf event buffer。如果轮询出错（例如由于信号中断），会打印出错误消息。这个轮询过程会一直持续，直到收到一个退出标志`exiting`。
+這段代碼使用一個while循環來反覆輪詢perf event buffer。如果輪詢出錯（例如由於信號中斷），會打印出錯誤消息。這個輪詢過程會一直持續，直到收到一個退出標誌`exiting`。
 
-接下来，让我们来看看`handle_event`函数，这个函数将处理从内核发送到用户态的每一个eBPF事件：
+接下來，讓我們來看看`handle_event`函數，這個函數將處理從內核發送到用戶態的每一個eBPF事件：
 
 ```c
 void handle_event(void* ctx, int cpu, void* data, __u32 data_sz) {
@@ -559,13 +559,13 @@ void handle_event(void* ctx, int cpu, void* data, __u32 data_sz) {
 }
 ```
 
-`handle_event`函数的参数包括了CPU编号、指向数据的指针以及数据的大小。数据是一个`event`结构体，包含了之前在内核态计算得到的TCP连接的信息。
+`handle_event`函數的參數包括了CPU編號、指向數據的指針以及數據的大小。數據是一個`event`結構體，包含了之前在內核態計算得到的TCP連接的信息。
 
-首先，它将接收到的事件的时间戳和起始时间戳（如果存在）进行对比，计算出事件的相对时间，并打印出来。接着，根据IP地址的类型（IPv4或IPv6），将源地址和目标地址从网络字节序转换为主机字节序。
+首先，它將接收到的事件的時間戳和起始時間戳（如果存在）進行對比，計算出事件的相對時間，並打印出來。接著，根據IP地址的類型（IPv4或IPv6），將源地址和目標地址從網絡字節序轉換為主機字節序。
 
-最后，根据用户是否选择了显示本地端口，将进程ID、进程名称、IP版本、源IP地址、本地端口（如果有）、目标IP地址、目标端口以及连接建立时间打印出来。这个连接建立时间是我们在内核态eBPF程序中计算并发送到用户态的。
+最後，根據用戶是否選擇了顯示本地端口，將進程ID、進程名稱、IP版本、源IP地址、本地端口（如果有）、目標IP地址、目標端口以及連接建立時間打印出來。這個連接建立時間是我們在內核態eBPF程序中計算併發送到用戶態的。
 
-## 编译运行
+## 編譯運行
 
 ```console
 $ make
@@ -582,18 +582,18 @@ PID    COMM         IP SADDR            DADDR            DPORT LAT(ms)
 222774 ssh          4  192.168.88.15    1.15.149.151     22    25.31
 ```
 
-源代码：<https://github.com/eunomia-bpf/bpf-developer-tutorial/tree/main/src/13-tcpconnlat> 关于如何安装依赖，请参考：<https://eunomia.dev/tutorials/11-bootstrap/>
+源代碼：<https://github.com/eunomia-bpf/bpf-developer-tutorial/tree/main/src/13-tcpconnlat> 關於如何安裝依賴，請參考：<https://eunomia.dev/tutorials/11-bootstrap/>
 
-参考资料：
+參考資料：
 
 - [tcpconnlat](https://github.com/iovisor/bcc/blob/master/libbpf-tools/tcpconnlat.c)
 
-## 总结
+## 總結
 
-通过本篇 eBPF 入门实践教程，我们学习了如何使用 eBPF 来跟踪和统计 TCP 连接建立的延时。我们首先深入探讨了 eBPF 程序如何在内核态监听特定的内核函数，然后通过捕获这些函数的调用，从而得到连接建立的起始时间和结束时间，计算出延时。
+通過本篇 eBPF 入門實踐教程，我們學習瞭如何使用 eBPF 來跟蹤和統計 TCP 連接建立的延時。我們首先深入探討了 eBPF 程序如何在內核態監聽特定的內核函數，然後通過捕獲這些函數的調用，從而得到連接建立的起始時間和結束時間，計算出延時。
 
-我们还进一步了解了如何使用 BPF maps 来在内核态存储和查询数据，从而在 eBPF 程序的多个部分之间共享数据。同时，我们也探讨了如何使用 perf events 来将数据从内核态发送到用户态，以便进一步处理和展示。
+我們還進一步瞭解瞭如何使用 BPF maps 來在內核態存儲和查詢數據，從而在 eBPF 程序的多個部分之間共享數據。同時，我們也探討了如何使用 perf events 來將數據從內核態發送到用戶態，以便進一步處理和展示。
 
-在用户态，我们介绍了如何使用 libbpf 库的 API，例如 perf_buffer__poll，来接收和处理内核态发送过来的数据。我们还讲解了如何对这些数据进行解析和打印，使得它们能以人类可读的形式显示出来。
+在用戶態，我們介紹瞭如何使用 libbpf 庫的 API，例如 perf_buffer__poll，來接收和處理內核態發送過來的數據。我們還講解了如何對這些數據進行解析和打印，使得它們能以人類可讀的形式顯示出來。
 
-如果您希望学习更多关于 eBPF 的知识和实践，请查阅 eunomia-bpf 的官方文档：<https://github.com/eunomia-bpf/eunomia-bpf> 。您还可以访问我们的教程代码仓库 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或网站 <https://eunomia.dev/zh/tutorials/> 以获取更多示例和完整的教程。
+如果您希望學習更多關於 eBPF 的知識和實踐，請查閱 eunomia-bpf 的官方文檔：<https://github.com/eunomia-bpf/eunomia-bpf> 。您還可以訪問我們的教程代碼倉庫 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或網站 <https://eunomia.dev/zh/tutorials/> 以獲取更多示例和完整的教程。

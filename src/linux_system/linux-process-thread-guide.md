@@ -196,7 +196,7 @@ User Space TID = Kernel Space PID
 
 ## 10. 記憶體管理深度解析
 
-### Process 記憶體布局
+### Process 記憶體佈局
 
 ```
 Process A 記憶體空間:
@@ -383,7 +383,7 @@ tgkill(tgid, tid, SIGTERM);         // Kernel 層面發給特定 Thread
 sigset_t set;
 sigemptyset(&set);
 sigaddset(&set, SIGINT);
-pthread_sigmask(SIG_BLOCK, &set, NULL);  // 只影響當前 Thread
+pthread_sigmask(SIG_BLOCK, &set, NULL);  // 隻影響當前 Thread
 
 // 但 Signal Handler 是所有 Thread 共享的
 signal(SIGINT, handler);  // 影響整個 Process
@@ -892,7 +892,7 @@ pmap -X PID                  # 詳細記憶體映射
 cat /proc/PID/smaps          # 最詳細的記憶體使用資訊
 ```
 
-## 20. 圖解複雜記憶體布局與進程關係
+## 20. 圖解複雜記憶體佈局與進程關係
 
 ### 完整的記憶體分層視圖
 
@@ -930,10 +930,10 @@ cat /proc/PID/smaps          # 最詳細的記憶體使用資訊
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Thread 記憶體布局詳細圖解
+### Thread 記憶體佈局詳細圖解
 
 ```
-                   單一 Process 內多 Thread 記憶體分布:
+                   單一 Process 內多 Thread 記憶體分佈:
 
 ┌─────────────────────────────────────────────────────────────────┐ 0xFFFFFFFF
 │                        Kernel Space                            │
@@ -1516,7 +1516,7 @@ perf sched latency             # 分析調度延遲
 5. **COW 機制**：fork 不會立即複製記憶體，而是使用 Copy-on-Write
 6. **調度統一**：Linux 內核將 Process 和 Thread 都視為 task，使用相同的調度器
 7. **CFS 公平性**：透過 vruntime 機制確保所有任務獲得公平的 CPU 時間
-8. **OOM 保護**：了解 OOM Killer 機制，適當設定記憶體限制和監控
+8. **OOM 保護**：瞭解 OOM Killer 機制，適當設定記憶體限制和監控
 
 ### 實務建議
 

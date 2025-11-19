@@ -4,7 +4,7 @@
 1. [基本概念](#基本概念)
 2. [動態連結](#動態連結)
 3. [靜態編譯](#靜態編譯)
-4. [跨平台編譯](#跨平台編譯)
+4. [跨平臺編譯](#跨平臺編譯)
 5. [實戰範例](#實戰範例)
 6. [疑難排解](#疑難排解)
 7. [最佳實踐](#最佳實踐)
@@ -134,7 +134,7 @@ brew install zig  # macOS
 cargo zigbuild --release --target x86_64-unknown-linux-musl
 ```
 
-## 跨平台編譯
+## 跨平臺編譯
 
 ### 使用 cross 工具
 
@@ -240,7 +240,7 @@ cargo build --release --target x86_64-unknown-linux-musl
 upx --best --lzma target/x86_64-unknown-linux-musl/release/web-service
 ```
 
-### 範例 2：CLI 工具跨平台發布
+### 範例 2：CLI 工具跨平臺發布
 
 ```bash
 #!/bin/bash
@@ -549,7 +549,7 @@ criterion_group!(benches, criterion_benchmark);
 criterion_main!(benches);
 ```
 
-### 跨平台優化策略
+### 跨平臺優化策略
 
 #### CPU 指令集優化
 
@@ -570,7 +570,7 @@ RUSTFLAGS="-C target-cpu=native" cargo build --release
 #### 條件編譯優化
 
 ```rust
-// 根據目標平台優化
+// 根據目標平臺優化
 #[cfg(target_os = "linux")]
 fn platform_specific_optimization() {
     // Linux 特定優化
@@ -624,7 +624,7 @@ fn main() {
 
 - **動態連結**：適合受控環境、容器部署
 - **靜態連結**：適合分發、跨發行版、嵌入式
-- **musl**：最佳跨平台相容性，一般應用效能損失 < 5%
+- **musl**：最佳跨平臺相容性，一般應用效能損失 < 5%
 - **跨發行版效能**：靜態編譯幾乎無效能損失，某些情況還更快
 - **優化**：LTO + strip + UPX 可大幅減少檔案大小
 - **測試**：務必在目標環境測試

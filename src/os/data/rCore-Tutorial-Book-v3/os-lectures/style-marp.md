@@ -1,4 +1,4 @@
-##### 向勇使用的风格
+##### 向勇使用的風格
 ```
 ---
 marp: true
@@ -6,11 +6,11 @@ theme: default
 paginate: true
 _paginate: false
 header: ''
-footer: '向勇：异步编程、Rust语言和异步操作系统'
+footer: '向勇：異步編程、Rust語言和異步操作系統'
 ---
 ```
 
-#### 分页
+#### 分頁
 
 ```
 
@@ -18,7 +18,7 @@ footer: '向勇：异步编程、Rust语言和异步操作系统'
 
 ```
 
-#### 页码
+#### 頁碼
 
 ```
 ---
@@ -33,19 +33,19 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 ---
 ```
 
-#### 幻灯片页眉
+#### 幻燈片頁眉
 
-有了下面这一行后，后面的第一页都会页眉了。
+有了下面這一行後，後面的第一頁都會頁眉了。
 
 ```
-<!-- header: '1. 异步编程 - 1.1 基本概念和原理'-->
+<!-- header: '1. 異步編程 - 1.1 基本概念和原理'-->
 ```
 
 #### Annotations in markdown
 
 [Annotations in markdown](https://stackoverflow.com/questions/29853106/annotations-in-markdown)
 
-下面幻灯片中的2和3行是不显示的。
+下面幻燈片中的2和3行是不顯示的。
 
 ```
 ---
@@ -57,6 +57,6 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 * Item 3 -->
 ```
 
-#### 插图
+#### 插圖
 
-`![width:900px](figs/异步IO模型.png)`
+`![width:900px](figs/異步IO模型.png)`

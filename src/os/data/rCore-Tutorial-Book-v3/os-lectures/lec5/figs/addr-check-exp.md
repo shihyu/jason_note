@@ -17,13 +17,13 @@ Vaddr ^gXmel8kg
 
 TLB命中，查到Paddr ^Y74dGQfE
 
-TLB不命中，去查内存中的页表 ^dmT1JJQr
+TLB不命中，去查內存中的頁表 ^dmT1JJQr
 
-高速缓存/内存 ^1OVxJC2b
+高速緩存/內存 ^1OVxJC2b
 
-物理内存单元 ^o3nda797
+物理內存單元 ^o3nda797
 
-页表 ^IZ0Xarku
+頁表 ^IZ0Xarku
 
 1 ^BkT85raa
 
@@ -33,24 +33,24 @@ TLB不命中，去查内存中的页表 ^dmT1JJQr
 
 5 ^pYiQhii8
 
-读数据 ^1lRx0Ure
+讀數據 ^1lRx0Ure
 
-获得页表项 ^QAmO3QDL
+獲得頁表項 ^QAmO3QDL
 
 3 ^NSkmh49c
 
-缺页/不符合权限等导致异常 ^5dcLHt2h
+缺頁/不符合權限等導致異常 ^5dcLHt2h
 
 4 ^5BoSDbxf
 
-异常处理例程 ^gixvbpBU
+異常處理例程 ^gixvbpBU
 
-磁盘 ^7VBnw5QE
+磁盤 ^7VBnw5QE
 
-读取到数据 ^tFftjdtZ
+讀取到數據 ^tFftjdtZ
 
-2.1 MMU进行地址检查，符合各种地址/权限检查后，可访问物理内存单元
-4  MMU进行地址检查，不符合各种地址/权限检查，产生异常，CPU跳转到异常处理例程  ^nAGajWw2
+2.1 MMU進行地址檢查，符合各種地址/權限檢查後，可訪問物理內存單元
+4  MMU進行地址檢查，不符合各種地址/權限檢查，產生異常，CPU跳轉到異常處理例程  ^nAGajWw2
 
 CPU ^PO9U2K2N
 
@@ -584,13 +584,13 @@ CPU ^PO9U2K2N
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "TLB不命中，去查内存中的页表",
-			"rawText": "TLB不命中，去查内存中的页表",
+			"text": "TLB不命中，去查內存中的頁表",
+			"rawText": "TLB不命中，去查內存中的頁表",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "TLB不命中，去查内存中的页表"
+			"originalText": "TLB不命中，去查內存中的頁表"
 		},
 		{
 			"type": "rectangle",
@@ -661,13 +661,13 @@ CPU ^PO9U2K2N
 			"link": null,
 			"fontSize": 24.217757770721892,
 			"fontFamily": 4,
-			"text": "高速缓存/内存",
-			"rawText": "高速缓存/内存",
+			"text": "高速緩存/內存",
+			"rawText": "高速緩存/內存",
 			"baseline": 22,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "高速缓存/内存"
+			"originalText": "高速緩存/內存"
 		},
 		{
 			"type": "rectangle",
@@ -729,13 +729,13 @@ CPU ^PO9U2K2N
 			"link": null,
 			"fontSize": 24.780106977982957,
 			"fontFamily": 4,
-			"text": "物理内存单元",
-			"rawText": "物理内存单元",
+			"text": "物理內存單元",
+			"rawText": "物理內存單元",
 			"baseline": 22,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "物理内存单元"
+			"originalText": "物理內存單元"
 		},
 		{
 			"type": "rectangle",
@@ -797,13 +797,13 @@ CPU ^PO9U2K2N
 			"link": null,
 			"fontSize": 28.549745141006103,
 			"fontFamily": 4,
-			"text": "页表",
-			"rawText": "页表",
+			"text": "頁表",
+			"rawText": "頁表",
 			"baseline": 26,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "页表"
+			"originalText": "頁表"
 		},
 		{
 			"type": "line",
@@ -1159,13 +1159,13 @@ CPU ^PO9U2K2N
 			"link": null,
 			"fontSize": 24.78016246448863,
 			"fontFamily": 4,
-			"text": "读数据",
-			"rawText": "读数据",
+			"text": "讀數據",
+			"rawText": "讀數據",
 			"baseline": 22,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "读数据"
+			"originalText": "讀數據"
 		},
 		{
 			"type": "line",
@@ -1281,13 +1281,13 @@ CPU ^PO9U2K2N
 			"link": null,
 			"fontSize": 21.593405983664773,
 			"fontFamily": 4,
-			"text": "获得页表项",
-			"rawText": "获得页表项",
+			"text": "獲得頁表項",
+			"rawText": "獲得頁表項",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "获得页表项"
+			"originalText": "獲得頁表項"
 		},
 		{
 			"type": "ellipse",
@@ -1484,13 +1484,13 @@ CPU ^PO9U2K2N
 			"link": null,
 			"fontSize": 22.39008123224432,
 			"fontFamily": 4,
-			"text": "缺页/不符合权限等导致异常",
-			"rawText": "缺页/不符合权限等导致异常",
+			"text": "缺頁/不符合權限等導致異常",
+			"rawText": "缺頁/不符合權限等導致異常",
 			"baseline": 20,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "缺页/不符合权限等导致异常"
+			"originalText": "缺頁/不符合權限等導致異常"
 		},
 		{
 			"type": "ellipse",
@@ -1640,13 +1640,13 @@ CPU ^PO9U2K2N
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "异常处理例程",
-			"rawText": "异常处理例程",
+			"text": "異常處理例程",
+			"rawText": "異常處理例程",
 			"baseline": 19,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "IThbDrR5nhj4I5JLIohHV",
-			"originalText": "异常处理例程"
+			"originalText": "異常處理例程"
 		},
 		{
 			"type": "arrow",
@@ -1757,13 +1757,13 @@ CPU ^PO9U2K2N
 			"link": null,
 			"fontSize": 33.543673428622164,
 			"fontFamily": 4,
-			"text": "磁盘",
-			"rawText": "磁盘",
+			"text": "磁盤",
+			"rawText": "磁盤",
 			"baseline": 30,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "磁盘"
+			"originalText": "磁盤"
 		},
 		{
 			"type": "arrow",
@@ -2051,13 +2051,13 @@ CPU ^PO9U2K2N
 			"link": null,
 			"fontSize": 24.78016246448863,
 			"fontFamily": 4,
-			"text": "读取到数据",
-			"rawText": "读取到数据",
+			"text": "讀取到數據",
+			"rawText": "讀取到數據",
 			"baseline": 22,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "读取到数据"
+			"originalText": "讀取到數據"
 		},
 		{
 			"type": "text",
@@ -2085,13 +2085,13 @@ CPU ^PO9U2K2N
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "2.1 MMU进行地址检查，符合各种地址/权限检查后，可访问物理内存单元\n4  MMU进行地址检查，不符合各种地址/权限检查，产生异常，CPU跳转到异常处理例程 ",
-			"rawText": "2.1 MMU进行地址检查，符合各种地址/权限检查后，可访问物理内存单元\n4  MMU进行地址检查，不符合各种地址/权限检查，产生异常，CPU跳转到异常处理例程 ",
+			"text": "2.1 MMU進行地址檢查，符合各種地址/權限檢查後，可訪問物理內存單元\n4  MMU進行地址檢查，不符合各種地址/權限檢查，產生異常，CPU跳轉到異常處理例程 ",
+			"rawText": "2.1 MMU進行地址檢查，符合各種地址/權限檢查後，可訪問物理內存單元\n4  MMU進行地址檢查，不符合各種地址/權限檢查，產生異常，CPU跳轉到異常處理例程 ",
 			"baseline": 40,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "2.1 MMU进行地址检查，符合各种地址/权限检查后，可访问物理内存单元\n4  MMU进行地址检查，不符合各种地址/权限检查，产生异常，CPU跳转到异常处理例程 "
+			"originalText": "2.1 MMU進行地址檢查，符合各種地址/權限檢查後，可訪問物理內存單元\n4  MMU進行地址檢查，不符合各種地址/權限檢查，產生異常，CPU跳轉到異常處理例程 "
 		},
 		{
 			"type": "text",

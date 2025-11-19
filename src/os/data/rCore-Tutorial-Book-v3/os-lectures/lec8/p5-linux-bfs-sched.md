@@ -11,128 +11,128 @@ backgroundColor: white
 <!-- theme: gaia -->
 <!-- _class: lead -->
 
-# 第八讲 多处理器调度
+# 第八講 多處理器調度
 
-## 第五节 Linux/FreeBSD BFS 调度
+## 第五節 Linux/FreeBSD BFS 調度
 
 -- From [Analysis of the BFS Scheduler in FreeBSD](http://vellvisher.github.io/papers_reports/doc/BFS_FreeBSD.pdf)
 
 <br>
 <br>
 
-向勇 陈渝 李国良 
+向勇 陳渝 李國良 
 
 2022年秋季
 
 ---
 
-**提纲**
+**提綱**
 
-### 1. BFS调度器
-2. BFS 与 CFS 的性能对比 (2012)
+### 1. BFS調度器
+2. BFS 與 CFS 的性能對比 (2012)
 
 ---
 
 #### BFS 的思路
-BFS全称：Brain Fuck Scheduler，脑残调度器
-- BFS 调度算法是一种时间片轮转算法的变种。
-- 在多处理机时使用单就绪队列（双向链表）
-  - 增加了队列互斥访问的开销
-  - 减少了负载均衡算法开销
+BFS全稱：Brain Fuck Scheduler，腦殘調度器
+- BFS 調度算法是一種時間片輪轉算法的變種。
+- 在多處理機時使用單就緒隊列（雙向鏈表）
+  - 增加了隊列互斥訪問的開銷
+  - 減少了負載均衡算法開銷
 
 ---
-#### BFS 的进程优先级
+#### BFS 的進程優先級
 
-- 进程有 103 个优先级
-  - 100 个静态的实时优先级；
-  - 3 个普通优先级 
-      - SCHED_ISO (isochronous) : 交互式任务
-      - SCHED_NORMAL  : 普通任务
-      - SCHED_IDLEPRIO ：低优先级任务
-
-
----
-#### BFS 的就绪队列
-
-- 就绪队列
-  - 所有 CPU 共享一个双向链表结构的**单就绪队列**；
-  - 所有进程按优先级排队；
-  - 相同优先级的每个进程有一个时间片长度和虚拟截止时间；
-
----
-#### BFS 的时间片
-- 时间片大小：由算法参数指定，可在 1ms 到 1000ms 间选择，缺省设置为 6ms；
-- 虚拟截止时间（Virtual Deadline）：关于就绪队列中进程等待 CPU 最长时间的排序，并不是真实的截止时间；
-  - 进程**时间片用完**时，重新计算虚拟截止时间；
-  - **事件等待结束**时，虚拟截止时间保持不变，以抢先相同优先级的就绪进程；
-  - 为了让进程在**上次运行的 CPU** 上运行（亲和性），不同 CPU 对进程的虚拟截止时间加一个权重；
+- 進程有 103 個優先級
+  - 100 個靜態的實時優先級；
+  - 3 個普通優先級 
+      - SCHED_ISO (isochronous) : 交互式任務
+      - SCHED_NORMAL  : 普通任務
+      - SCHED_IDLEPRIO ：低優先級任務
 
 
 ---
-#### BFS 的虚拟截止时间计算
-- 依据当前时间、进程优先级和时间片设置计算；
+#### BFS 的就緒隊列
+
+- 就緒隊列
+  - 所有 CPU 共享一個雙向鏈表結構的**單就緒隊列**；
+  - 所有進程按優先級排隊；
+  - 相同優先級的每個進程有一個時間片長度和虛擬截止時間；
+
+---
+#### BFS 的時間片
+- 時間片大小：由算法參數指定，可在 1ms 到 1000ms 間選擇，缺省設置為 6ms；
+- 虛擬截止時間（Virtual Deadline）：關於就緒隊列中進程等待 CPU 最長時間的排序，並不是真實的截止時間；
+  - 進程**時間片用完**時，重新計算虛擬截止時間；
+  - **事件等待結束**時，虛擬截止時間保持不變，以搶先相同優先級的就緒進程；
+  - 為了讓進程在**上次運行的 CPU** 上運行（親和性），不同 CPU 對進程的虛擬截止時間加一個權重；
+
+
+---
+#### BFS 的虛擬截止時間計算
+- 依據當前時間、進程優先級和時間片設置計算；
 ```
 offset = niffies + (prioratio ∗ rr_interval)
 prioratio increases by 10% for every nice level
 ```
-- niffies是当前时间；prio_ratios[priority]是一个常量数组，不同的priority对应不同的prio_ratios[priority]；rr_interval是timeslice，是CPU分配给每个任务的时间片，是一个常数
+- niffies是當前時間；prio_ratios[priority]是一個常量數組，不同的priority對應不同的prio_ratios[priority]；rr_interval是timeslice，是CPU分配給每個任務的時間片，是一個常數
 
-- 虚拟截止时间计算结果：https://wikimili.com/en/Brain_Fuck_Scheduler
+- 虛擬截止時間計算結果：https://wikimili.com/en/Brain_Fuck_Scheduler
 
 
 ---
-#### BFS 的调度思路
-使用O(1)调度器中的**位图**概念，所有进程被安排到103个queue中，各个进程不是按照优先级而是按照优先级区间被排列到各自所在的区间，每一个区间拥有一个queue。
+#### BFS 的調度思路
+使用O(1)調度器中的**位圖**概念，所有進程被安排到103個queue中，各個進程不是按照優先級而是按照優先級區間被排列到各自所在的區間，每一個區間擁有一個queue。
 <!-- https://www.cnblogs.com/dragonsuc/p/7144265.html -->
 ![bg right 100%](figs/bfs.png)
 
 
 ---
-#### BFS 的调度思路
-按照O(1)调度器的方式首先查找位图中不为0的那个queue，然后在该queue中执行O(n)查找，查找到virtual deadline最小的那个进程投入执行。
+#### BFS 的調度思路
+按照O(1)調度器的方式首先查找位圖中不為0的那個queue，然後在該queue中執行O(n)查找，查找到virtual deadline最小的那個進程投入執行。
 
 ![bg right 100%](figs/bfs.png)
 
 ---
 
-#### BFS 的就绪队列插入
+#### BFS 的就緒隊列插入
 
-- 时间片用完：重新设置虚拟截止时间后，插入就绪队列；
-- 等待事件出现：虚拟截止时间保持不变，抢先低优先级进程或插入就绪队列；
-
----
-
-**提纲**
-
-1. BFS调度器
-### 2. BFS 与 CFS 的性能对比 (2012)
+- 時間片用完：重新設置虛擬截止時間後，插入就緒隊列；
+- 等待事件出現：虛擬截止時間保持不變，搶先低優先級進程或插入就緒隊列；
 
 ---
 
-#### BFS 与 CFS 的[性能对比](http://repo-ck.com/bench/cpu_schedulers_compared.pdf) (2012)
-测试用例集
-- Linux kernel v3.6.2.2 的 GCC **编译**
-- Linux kernel v3.6.2 内核源代码树的 lrzip **压缩**
-- 从 720p 到 360p 的 MPEG2 视频 ffmpeg **压缩**
+**提綱**
+
+1. BFS調度器
+### 2. BFS 與 CFS 的性能對比 (2012)
+
+---
+
+#### BFS 與 CFS 的[性能對比](http://repo-ck.com/bench/cpu_schedulers_compared.pdf) (2012)
+測試用例集
+- Linux kernel v3.6.2.2 的 GCC **編譯**
+- Linux kernel v3.6.2 內核源代碼樹的 lrzip **壓縮**
+- 從 720p 到 360p 的 MPEG2 視頻 ffmpeg **壓縮**
 
 ![bg right:53% 90%](figs/test-machines.png)
 
 ---
-#### BFS 与 CFS 的性能对比: 压缩测试
+#### BFS 與 CFS 的性能對比: 壓縮測試
 ![w:1000](figs/compression-test.png)
 
 ---
-#### BFS 与 CFS 的性能对比: 测试编译
+#### BFS 與 CFS 的性能對比: 測試編譯
 ![w:1000](figs/make-test.png)
 
 ---
 
-#### BFS 与 CFS 的性能对比: 视频编码测试
+#### BFS 與 CFS 的性能對比: 視頻編碼測試
 ![w:1000](figs/video-test.png)
 
 ---
 
-### 参考文献
+### 參考文獻
 - http://repo-ck.com/bench/cpu_schedulers_compared.pdf
 - https://zhuanlan.zhihu.com/p/351876567
 - https://blog.csdn.net/dog250/article/details/7459533

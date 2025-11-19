@@ -7,57 +7,57 @@ excalidraw-plugin: parsed
 
 
 # Text Elements
-进程控制块(TCB)数据结构 ^WPTOnhYX
+進程控制塊(TCB)數據結構 ^WPTOnhYX
 
 CPU ^MBoRkaK2
 
-进程控制块的就绪队列 ^c2mZdpeI
+進程控制塊的就緒隊列 ^c2mZdpeI
 
-Processor数据结构 ^NeGUySKb
+Processor數據結構 ^NeGUySKb
 
 idle task ctx ^pQXrHnAd
 
-TaskManager数据结构 ^Fv9E6IgO
+TaskManager數據結構 ^Fv9E6IgO
 
-进程id ^nUgoV8ZU
+進程id ^nUgoV8ZU
 
-进程内核栈 ^rqHVJvOL
+進程內核棧 ^rqHVJvOL
 
-代表内核的
-空闲任务上下文 ^Clnx4Uit
+代表內核的
+空閒任務上下文 ^Clnx4Uit
 
-正在运行进程的
-进程控制块 ^dGVLXuZa
+正在運行進程的
+進程控制塊 ^dGVLXuZa
 
 current ^rDv11ZGf
 
-任务上下文 ^ymIRhhIh
+任務上下文 ^ymIRhhIh
 
 陷入上下文 ^A0PMGXJr
 
 地址
-空间 ^NIRW7c0G
+空間 ^NIRW7c0G
 
 父子
-关系 ^6Cr3G2N1
+關係 ^6Cr3G2N1
 
-退出码 ^XFY4uX4X
+退出碼 ^XFY4uX4X
 
-进程
-状态 ^9RKVHhoS
+進程
+狀態 ^9RKVHhoS
 
-进程上下文 ^urlVcLu5
+進程上下文 ^urlVcLu5
 
 idle task
 kernel stack ^QFfZenDa
 
-应用可访问的地址空间 ^dEdLnCa9
+應用可訪問的地址空間 ^dEdLnCa9
 
-数据段 ^HsHMOZZZ
+數據段 ^HsHMOZZZ
 
 堆 ^5dzp73bd
 
-栈 ^TfMhD9C6
+棧 ^TfMhD9C6
 
 OSInode ^Ds9sGka5
 
@@ -71,7 +71,7 @@ Signal ^JRjr1r4b
 
 signal_handler ^qZgFj0ba
 
-代码段 ^eBfv6mIk
+代碼段 ^eBfv6mIk
 
 fd文件描述符 ^TjKHDib5
 
@@ -134,13 +134,13 @@ fd文件描述符 ^TjKHDib5
 			"link": null,
 			"fontSize": 35.27904191175954,
 			"fontFamily": 4,
-			"text": "进程控制块(TCB)数据结构",
-			"rawText": "进程控制块(TCB)数据结构",
+			"text": "進程控制塊(TCB)數據結構",
+			"rawText": "進程控制塊(TCB)數據結構",
 			"baseline": 32,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程控制块(TCB)数据结构"
+			"originalText": "進程控制塊(TCB)數據結構"
 		},
 		{
 			"type": "ellipse",
@@ -312,13 +312,13 @@ fd文件描述符 ^TjKHDib5
 			"link": null,
 			"fontSize": 38.31455886033503,
 			"fontFamily": 4,
-			"text": "进程控制块的就绪队列",
-			"rawText": "进程控制块的就绪队列",
+			"text": "進程控制塊的就緒隊列",
+			"rawText": "進程控制塊的就緒隊列",
 			"baseline": 34,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程控制块的就绪队列"
+			"originalText": "進程控制塊的就緒隊列"
 		},
 		{
 			"type": "rectangle",
@@ -410,13 +410,13 @@ fd文件描述符 ^TjKHDib5
 			"link": null,
 			"fontSize": 35.933754660866484,
 			"fontFamily": 4,
-			"text": "Processor数据结构",
-			"rawText": "Processor数据结构",
+			"text": "Processor數據結構",
+			"rawText": "Processor數據結構",
 			"baseline": 32,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "Processor数据结构"
+			"originalText": "Processor數據結構"
 		},
 		{
 			"type": "arrow",
@@ -629,13 +629,13 @@ fd文件描述符 ^TjKHDib5
 			"link": null,
 			"fontSize": 36.50158053901717,
 			"fontFamily": 4,
-			"text": "TaskManager数据结构",
-			"rawText": "TaskManager数据结构",
+			"text": "TaskManager數據結構",
+			"rawText": "TaskManager數據結構",
 			"baseline": 33,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "TaskManager数据结构"
+			"originalText": "TaskManager數據結構"
 		},
 		{
 			"type": "rectangle",
@@ -741,13 +741,13 @@ fd文件描述符 ^TjKHDib5
 			"link": null,
 			"fontSize": 32.215844356652454,
 			"fontFamily": 4,
-			"text": "进程id",
-			"rawText": "进程id",
+			"text": "進程id",
+			"rawText": "進程id",
 			"baseline": 30,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程id"
+			"originalText": "進程id"
 		},
 		{
 			"type": "line",
@@ -897,13 +897,13 @@ fd文件描述符 ^TjKHDib5
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "进程内\n核栈",
-			"rawText": "进程内核栈",
+			"text": "進程內\n核棧",
+			"rawText": "進程內核棧",
 			"baseline": 40,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": "sYf0CE6yVqVugFSxwPq_7",
-			"originalText": "进程内核栈"
+			"originalText": "進程內核棧"
 		},
 		{
 			"type": "text",
@@ -931,13 +931,13 @@ fd文件描述符 ^TjKHDib5
 			"link": null,
 			"fontSize": 31.950350674715924,
 			"fontFamily": 4,
-			"text": "代表内核的\n空闲任务上下文",
-			"rawText": "代表内核的\n空闲任务上下文",
+			"text": "代表內核的\n空閒任務上下文",
+			"rawText": "代表內核的\n空閒任務上下文",
 			"baseline": 64,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "代表内核的\n空闲任务上下文"
+			"originalText": "代表內核的\n空閒任務上下文"
 		},
 		{
 			"type": "text",
@@ -965,13 +965,13 @@ fd文件描述符 ^TjKHDib5
 			"link": null,
 			"fontSize": 31.950350674715924,
 			"fontFamily": 4,
-			"text": "正在运行进程的\n进程控制块",
-			"rawText": "正在运行进程的\n进程控制块",
+			"text": "正在運行進程的\n進程控制塊",
+			"rawText": "正在運行進程的\n進程控制塊",
 			"baseline": 64,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "正在运行进程的\n进程控制块"
+			"originalText": "正在運行進程的\n進程控制塊"
 		},
 		{
 			"type": "text",
@@ -1067,13 +1067,13 @@ fd文件描述符 ^TjKHDib5
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "任务上\n下文",
-			"rawText": "任务上下文",
+			"text": "任務上\n下文",
+			"rawText": "任務上下文",
 			"baseline": 40,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "8Yrjl68h3nE7ewmquuY3m",
-			"originalText": "任务上下文"
+			"originalText": "任務上下文"
 		},
 		{
 			"type": "rectangle",
@@ -1211,13 +1211,13 @@ fd文件描述符 ^TjKHDib5
 			"link": null,
 			"fontSize": 22.14147352634514,
 			"fontFamily": 4,
-			"text": "地址\n空间",
-			"rawText": "地址\n空间",
+			"text": "地址\n空間",
+			"rawText": "地址\n空間",
 			"baseline": 45,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "Q-FmellhJCL8Lr6mSDbDu",
-			"originalText": "地址\n空间"
+			"originalText": "地址\n空間"
 		},
 		{
 			"type": "rectangle",
@@ -1279,13 +1279,13 @@ fd文件描述符 ^TjKHDib5
 			"link": null,
 			"fontSize": 22.14147352634514,
 			"fontFamily": 4,
-			"text": "父子\n关系",
-			"rawText": "父子\n关系",
+			"text": "父子\n關係",
+			"rawText": "父子\n關係",
 			"baseline": 45,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "2_MTDs1TB2QMid6tNl144",
-			"originalText": "父子\n关系"
+			"originalText": "父子\n關係"
 		},
 		{
 			"type": "rectangle",
@@ -1351,13 +1351,13 @@ fd文件描述符 ^TjKHDib5
 			"link": null,
 			"fontSize": 22.14147352634514,
 			"fontFamily": 4,
-			"text": "退出码",
-			"rawText": "退出码",
+			"text": "退出碼",
+			"rawText": "退出碼",
 			"baseline": 20,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "FqLAUFKYDov9hsbIEDMcP",
-			"originalText": "退出码"
+			"originalText": "退出碼"
 		},
 		{
 			"type": "rectangle",
@@ -1423,13 +1423,13 @@ fd文件描述符 ^TjKHDib5
 			"link": null,
 			"fontSize": 22.14147352634514,
 			"fontFamily": 4,
-			"text": "进程\n状态",
-			"rawText": "进程\n状态",
+			"text": "進程\n狀態",
+			"rawText": "進程\n狀態",
 			"baseline": 45,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "2RRLQcUC4EjuGMfGCoRrg",
-			"originalText": "进程\n状态"
+			"originalText": "進程\n狀態"
 		},
 		{
 			"type": "rectangle",
@@ -1482,13 +1482,13 @@ fd文件描述符 ^TjKHDib5
 			"link": null,
 			"fontSize": 23.983415876116073,
 			"fontFamily": 4,
-			"text": "进程上下文",
-			"rawText": "进程上下文",
+			"text": "進程上下文",
+			"rawText": "進程上下文",
 			"baseline": 22,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程上下文"
+			"originalText": "進程上下文"
 		},
 		{
 			"type": "rectangle",
@@ -1610,13 +1610,13 @@ fd文件描述符 ^TjKHDib5
 			"link": null,
 			"fontSize": 32.907604980468776,
 			"fontFamily": 4,
-			"text": "应用可访问的地址空间",
-			"rawText": "应用可访问的地址空间",
+			"text": "應用可訪問的地址空間",
+			"rawText": "應用可訪問的地址空間",
 			"baseline": 30,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "应用可访问的地址空间"
+			"originalText": "應用可訪問的地址空間"
 		},
 		{
 			"type": "rectangle",
@@ -1703,13 +1703,13 @@ fd文件描述符 ^TjKHDib5
 			"link": null,
 			"fontSize": 28,
 			"fontFamily": 4,
-			"text": "数据段",
-			"rawText": "数据段",
+			"text": "數據段",
+			"rawText": "數據段",
 			"baseline": 26,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "uRfVrFFcidYKnYYIvxDnT",
-			"originalText": "数据段"
+			"originalText": "數據段"
 		},
 		{
 			"type": "rectangle",
@@ -1851,13 +1851,13 @@ fd文件描述符 ^TjKHDib5
 			"link": null,
 			"fontSize": 36,
 			"fontFamily": 4,
-			"text": "栈",
-			"rawText": "栈",
+			"text": "棧",
+			"rawText": "棧",
 			"baseline": 32,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "TxvXc7qjb8-ble__8X2eq",
-			"originalText": "栈"
+			"originalText": "棧"
 		},
 		{
 			"type": "line",
@@ -2828,15 +2828,15 @@ fd文件描述符 ^TjKHDib5
 			"boundElements": null,
 			"updated": 1650897724411,
 			"link": null,
-			"text": "代码段",
-			"rawText": "代码段",
+			"text": "代碼段",
+			"rawText": "代碼段",
 			"fontSize": 29.39449541284404,
 			"fontFamily": 4,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"baseline": 27,
 			"containerId": null,
-			"originalText": "代码段"
+			"originalText": "代碼段"
 		},
 		{
 			"id": "15w4kjUlLyicbnu2S9MAg",

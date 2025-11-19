@@ -495,7 +495,7 @@ CREATE TABLE market_ticks (
 PARTITION BY toYYYYMM(ts)
 ORDER BY (symbol, ts);
 
--- 查看表結構
+-- 查看錶結構
 DESCRIBE TABLE market_ticks;
 ```
 

@@ -1,120 +1,120 @@
-# 实验 5：文件系统与SHELL
+# 實驗 5：文件系統與SHELL
 
-## 简介
+## 簡介
 
-在微内核架构下，文件系统作为系统服务运行在用户态。本实验的第一部分将实现一种基于索引节点（index node，inode）的用户态内存文件系统：临时文件系统（temporary file system，tmpfs）。第二部分将实现一个shell程序，提供用户和操作系统交互的方式，包括文件和目录相关的简单命令。第三部分将实现一种简单的微内核架构下的虚拟文件系统（Virtual File Systems, VFS），能够管理不同文件系统并为应用提供统一的文件操作接口。
+在微內核架構下，文件系統作為系統服務運行在用戶態。本實驗的第一部分將實現一種基於索引節點（index node，inode）的用戶態內存文件系統：臨時文件系統（temporary file system，tmpfs）。第二部分將實現一個shell程序，提供用戶和操作系統交互的方式，包括文件和目錄相關的簡單命令。第三部分將實現一種簡單的微內核架構下的虛擬文件系統（Virtual File Systems, VFS），能夠管理不同文件系統併為應用提供統一的文件操作接口。
 
-## 第一部分：临时文件系统
+## 第一部分：臨時文件系統
 
-### tmpfs简介
+### tmpfs簡介
 
-tmpfs是基于inode的内存文件系统，即使用内存空间作为文件系统的存储空间，并且将存储空间分为inode区域和数据区域。在inode区域中，存储着每个文件的inode，该inode中保存有关该文件的元数据，例如文件大小，以及该文件数据块的位置。数据区域存储文件数据块，tmpfs中的文件数据块由一系列分散的内存页组成。文件分为常规文件和目录文件：常规文件存储数据本身，目录文件存储从文件名到目录项（dicrectory entry，dentry）的哈希表映射。
+tmpfs是基於inode的內存文件系統，即使用內存空間作為文件系統的存儲空間，並且將存儲空間分為inode區域和數據區域。在inode區域中，存儲著每個文件的inode，該inode中保存有關該文件的元數據，例如文件大小，以及該文件數據塊的位置。數據區域存儲文件數據塊，tmpfs中的文件數據塊由一系列分散的內存頁組成。文件分為常規文件和目錄文件：常規文件存儲數據本身，目錄文件存儲從文件名到目錄項（dicrectory entry，dentry）的哈希表映射。
 
-ChCore的tmpfs位于`userland/servers/tmpfs`，如图所示，具有以下几个重要的数据结构（结构的定义位于`libchcore/include/chcore/fs/defs.h`中）：
+ChCore的tmpfs位於`userland/servers/tmpfs`，如圖所示，具有以下幾個重要的數據結構（結構的定義位於`libchcore/include/chcore/fs/defs.h`中）：
 
-- inode。每个inode对应一个文件，记录文件类型（type：常规REG/目录DIR）和文件大小（size）。接口`new_dir`和`new_reg`用于创建这两种类型的inode。
-- 目录。目录inode存储一个指向哈希表htable的指针，该哈希表从文件名的哈希值映射到dentry。哈希表中的每个哈希桶都存储dentry的链表，并且通过hlist_node指针链接。其中，`tmpfs_root`表示根目录（`/`）的 inode。
-- 每个常规文件的数据块以基数树的形式组织，树的根节点指针保存在常规文件inode中。该树的叶节点是大小为PAGE_SIZE的数据块（即内存页），通过内存页的顺序编号搜索。
+- inode。每個inode對應一個文件，記錄文件類型（type：常規REG/目錄DIR）和文件大小（size）。接口`new_dir`和`new_reg`用於創建這兩種類型的inode。
+- 目錄。目錄inode存儲一個指向哈希表htable的指針，該哈希表從文件名的哈希值映射到dentry。哈希表中的每個哈希桶都存儲dentry的鏈表，並且通過hlist_node指針鏈接。其中，`tmpfs_root`表示根目錄（`/`）的 inode。
+- 每個常規文件的數據塊以基數樹的形式組織，樹的根節點指針保存在常規文件inode中。該樹的葉節點是大小為PAGE_SIZE的數據塊（即內存頁），通過內存頁的順序編號搜索。
 
 ![](./assets/lab5-tmpfs.png)
 
-### 实验内容
-tmpfs的基本功能在`userland/servers/tmpfs/tmpfs.c` 与 `userland/servers/tmpfs/tmpfs_ops.c`中定义，实现过程中请参考头文件`userland/servers/tmpfs/tmpfs.h`和`userland/servers/tmpfs/tmpfs_ops.h`，以及已实现函数的相关代码和注释。在实现基本的文件操作之前，需要先实现一些修改文件结构的辅助函数：`tfs_mknod`和`tfs_namex`。`tfs_mknod`函数用于创建文件时，在父目录下创建目录inode或常规文件inode。`tfs_namex`函数用于遍历文件系统以查找文件。
+### 實驗內容
+tmpfs的基本功能在`userland/servers/tmpfs/tmpfs.c` 與 `userland/servers/tmpfs/tmpfs_ops.c`中定義，實現過程中請參考頭文件`userland/servers/tmpfs/tmpfs.h`和`userland/servers/tmpfs/tmpfs_ops.h`，以及已實現函數的相關代碼和註釋。在實現基本的文件操作之前，需要先實現一些修改文件結構的輔助函數：`tfs_mknod`和`tfs_namex`。`tfs_mknod`函數用於創建文件時，在父目錄下創建目錄inode或常規文件inode。`tfs_namex`函數用於遍歷文件系統以查找文件。
 
-> 练习题 1：实现位于`userland/servers/tmpfs/tmpfs.c`的`tfs_mknod`和`tfs_namex`。
+> 練習題 1：實現位於`userland/servers/tmpfs/tmpfs.c`的`tfs_mknod`和`tfs_namex`。
 
-文件读写是文件系统的基本功能，tmpfs的读写操作会将文件数据块中内容读入内存缓冲区，或将缓冲区内容写入对应文件数据块。`tfs_file_read`和 `tfs_file_write`两个函数分别用于以一定偏移量读取和写入一段长度的数据，并且返回实际的读写字节长度
-（读取不能超过文件大小）。
+文件讀寫是文件系統的基本功能，tmpfs的讀寫操作會將文件數據塊中內容讀入內存緩衝區，或將緩衝區內容寫入對應文件數據塊。`tfs_file_read`和 `tfs_file_write`兩個函數分別用於以一定偏移量讀取和寫入一段長度的數據，並且返回實際的讀寫字節長度
+（讀取不能超過文件大小）。
 
-> 练习题 2：实现位于`userland/servers/tmpfs/tmpfs.c`的`tfs_file_read`和`tfs_file_write`。提示：由于数据块的大小为PAGE_SIZE，因此读写可能会牵涉到多个页面。读取不能超过文件大小，而写入可能会增加文件大小（也可能需要创建新的数据块）。
+> 練習題 2：實現位於`userland/servers/tmpfs/tmpfs.c`的`tfs_file_read`和`tfs_file_write`。提示：由於數據塊的大小為PAGE_SIZE，因此讀寫可能會牽涉到多個頁面。讀取不能超過文件大小，而寫入可能會增加文件大小（也可能需要創建新的數據塊）。
 
-在实验5中，用户态程序会被编译为ELF文件（`userland/_build/ramdisk/*.bin`），并与测试文件`userland/_build/ramdisk/test.txt`一起，连接为一个后缀名为`cpio`的文件。cpio的每个成员文件都包含一个头（在`userland/servers/tmpfs/cpio.h`中定义），后面是文件内容。cpio的末尾是一个名为`TRAILER!!!`的空文件表示终止。本实验中，tmpfs会通过`tfs_load_image`加载`ramdisk.cpio`中的内容。
+在實驗5中，用戶態程序會被編譯為ELF文件（`userland/_build/ramdisk/*.bin`），並與測試文件`userland/_build/ramdisk/test.txt`一起，連接為一個後綴名為`cpio`的文件。cpio的每個成員文件都包含一個頭（在`userland/servers/tmpfs/cpio.h`中定義），後面是文件內容。cpio的末尾是一個名為`TRAILER!!!`的空文件表示終止。本實驗中，tmpfs會通過`tfs_load_image`加載`ramdisk.cpio`中的內容。
 
-> 练习题 3：实现位于`userland/servers/tmpfs/tmpfs.c`的`tfs_load_image`函数。需要通过之前实现的tmpfs函数进行目录和文件的创建，以及数据的读写。
+> 練習題 3：實現位於`userland/servers/tmpfs/tmpfs.c`的`tfs_load_image`函數。需要通過之前實現的tmpfs函數進行目錄和文件的創建，以及數據的讀寫。
 
-正确完以上所有练习后，输入`make grade LAB=5`总共可以获得15分。
+正確完以上所有練習後，輸入`make grade LAB=5`總共可以獲得15分。
 
-用户程序需要通过IPC给文件系统服务发送请求以使用文件系统。以文件读取为例，在下图中的虚线上方是用户程序和文件系统的主要处理逻辑，虚线下方是文件系统服务的IPC处理机制。用户程序通过调用由用户实现的`fs_read`，使用`ipc_call`将消息发送到文件系统服务进程。
+用戶程序需要通過IPC給文件系統服務發送請求以使用文件系統。以文件讀取為例，在下圖中的虛線上方是用戶程序和文件系統的主要處理邏輯，虛線下方是文件系統服務的IPC處理機制。用戶程序通過調用由用戶實現的`fs_read`，使用`ipc_call`將消息發送到文件系統服務進程。
 
-文件系统服务主函数在`userland/servers/tmpfs/main.c`中定义。其主要逻辑是轮询IPC请求，通过`fs_server_dispatch`将请求分派到适当的处理函数，完成处理后，再通过IPC将结果返回。tmpfs的处理函数在`userland/servers/tmpfs_ops.{h,c}`中定义。
+文件系統服務主函數在`userland/servers/tmpfs/main.c`中定義。其主要邏輯是輪詢IPC請求，通過`fs_server_dispatch`將請求分派到適當的處理函數，完成處理後，再通過IPC將結果返回。tmpfs的處理函數在`userland/servers/tmpfs_ops.{h,c}`中定義。
 
-`fs_server_dispatch`函数在`userland/fs_base/fs_wrapper.c`中实现，在本实验中，不同文件系统可共用的逻辑（如根据IPC请求分派处理函数等）被包装在`userland/servers/fs_base`中，不同的文件系统可以共用这部分已经实现的逻辑，本实验过程中不会修改该目录下的内容。`fs_server_dispatch`会在解析IPC请求后，根据请求类型的不同，利用注册在结构体`server_ops`中的函数指针，调用不同的文件系统函数。
-在下图示例中，`fs_server_dispatch`将请求分派到`server_ops.read`，在tmpfs中，该函数指针已经指向`tmpfs_read`，并最终调用`tfs_file_read`来实际进行文件读取。
+`fs_server_dispatch`函數在`userland/fs_base/fs_wrapper.c`中實現，在本實驗中，不同文件系統可共用的邏輯（如根據IPC請求分派處理函數等）被包裝在`userland/servers/fs_base`中，不同的文件系統可以共用這部分已經實現的邏輯，本實驗過程中不會修改該目錄下的內容。`fs_server_dispatch`會在解析IPC請求後，根據請求類型的不同，利用註冊在結構體`server_ops`中的函數指針，調用不同的文件系統函數。
+在下圖示例中，`fs_server_dispatch`將請求分派到`server_ops.read`，在tmpfs中，該函數指針已經指向`tmpfs_read`，並最終調用`tfs_file_read`來實際進行文件讀取。
 
 ![](./assets/lab5-fsserver.png)
 
-> 练习题 4：利用`userland/servers/tmpfs/tmpfs.c`中已经实现的函数，完成在`userland/servers/tmpfs/tmpfs_ops.c`中的`fs_creat`、`tmpfs_unlink`和`tmpfs_mkdir`函数，从而使`tmpfs_*`函数可以被`fs_server_dispatch`调用以提供系统服务。对应关系可以参照`userland/servers/tmpfs/tmpfs_ops.c`中`server_ops`的设置以及`userland/fs_base/fs_wrapper.c`的`fs_server_dispatch`函数。在本实验中只需考虑如下几个文件操作函数：
+> 練習題 4：利用`userland/servers/tmpfs/tmpfs.c`中已經實現的函數，完成在`userland/servers/tmpfs/tmpfs_ops.c`中的`fs_creat`、`tmpfs_unlink`和`tmpfs_mkdir`函數，從而使`tmpfs_*`函數可以被`fs_server_dispatch`調用以提供系統服務。對應關係可以參照`userland/servers/tmpfs/tmpfs_ops.c`中`server_ops`的設置以及`userland/fs_base/fs_wrapper.c`的`fs_server_dispatch`函數。在本實驗中只需考慮如下幾個文件操作函數：
 
-| 请求ID | 函数 | 功能 |
+| 請求ID | 函數 | 功能 |
 | :---- | :---- | :---- |
-| FS_REQ_OPEN | tmpfs_open | 打开文件 |
-| FS_REQ_READ | tmpfs_read | 读文件 |
-| FS_REQ_WRITE | tmpfs_write | 写文件 |
-| FS_REQ_CLOSE | tmpfs_close | 关闭文件 |
-| FS_REQ_CREAT | tmpfs_creat | 创建文件 |
+| FS_REQ_OPEN | tmpfs_open | 打開文件 |
+| FS_REQ_READ | tmpfs_read | 讀文件 |
+| FS_REQ_WRITE | tmpfs_write | 寫文件 |
+| FS_REQ_CLOSE | tmpfs_close | 關閉文件 |
+| FS_REQ_CREAT | tmpfs_creat | 創建文件 |
 | FS_REQ_UNLINK | tmpfs_unlink | 移除文件 |
-| FS_REQ_RMDIR | tmpfs_mkdir | 创建目录 |
-| FS_REQ_MKDIR | tmpfs_rmdir | 移除目录 |
-| FS_REQ_GETDENTS64 | tmpfs_getdents | 获取目录文件信息 |
-| FS_REQ_GET_SIZE | tmpfs_get_size | 获取文件大小 |
+| FS_REQ_RMDIR | tmpfs_mkdir | 創建目錄 |
+| FS_REQ_MKDIR | tmpfs_rmdir | 移除目錄 |
+| FS_REQ_GETDENTS64 | tmpfs_getdents | 獲取目錄文件信息 |
+| FS_REQ_GET_SIZE | tmpfs_get_size | 獲取文件大小 |
 
-> 提示：`userland/server/fs_base/fs_wrapper.c`中会维护用户态进程的文件描述符`fd`到文件系统`fid`的映射，用户态程序在进行文件操作时需自行分配`fd`，而一个文件的`fid`在该文件系统中是唯一的，与文件一一对应，该`fd`到`fid`的映射会在调用`FS_REQ_OPEN`时被`fs_server_dispatch`创建。
-> 所有`userland/servers/tmpfs`目录下出现的`fd`，均已经在`fs_server_dispatch`中被转化为`fid`。
+> 提示：`userland/server/fs_base/fs_wrapper.c`中會維護用戶態進程的文件描述符`fd`到文件系統`fid`的映射，用戶態程序在進行文件操作時需自行分配`fd`，而一個文件的`fid`在該文件系統中是唯一的，與文件一一對應，該`fd`到`fid`的映射會在調用`FS_REQ_OPEN`時被`fs_server_dispatch`創建。
+> 所有`userland/servers/tmpfs`目錄下出現的`fd`，均已經在`fs_server_dispatch`中被轉化為`fid`。
 >
-> **注意：本部分测试需要打开`CHCORE_TMPFS_TEST`，即在`.config`文件中如下行选择`ON`。**
+> **注意：本部分測試需要打開`CHCORE_TMPFS_TEST`，即在`.config`文件中如下行選擇`ON`。**
 > ```
 > CHCORE_TMPFS_TEST:BOOL=ON
 > ```
 
-正确完成以上所有练习后，输入`make grade LAB=5`可以获得30分。
+正確完成以上所有練習後，輸入`make grade LAB=5`可以獲得30分。
 
 ## 第二部分：SHELL
-本实验的第二部分是实现用户态shell，该用户态shell在`userland/servers/shell`中实现。
+本實驗的第二部分是實現用戶態shell，該用戶態shell在`userland/servers/shell`中實現。
 
-> 练习题 5：实现在`userland/servers/shell/main.c`中定义的`getch`，该函数会每次从标准输入中获取字符，并实现在`userland/servers/shell/shell.c`中的`readline`，该函数会将按下回车键之前的输入内容存入内存缓冲区。代码中可以使用在`libchcore/include/libc/stdio.h`中的定义的I/O函数。
+> 練習題 5：實現在`userland/servers/shell/main.c`中定義的`getch`，該函數會每次從標準輸入中獲取字符，並實現在`userland/servers/shell/shell.c`中的`readline`，該函數會將按下回車鍵之前的輸入內容存入內存緩衝區。代碼中可以使用在`libchcore/include/libc/stdio.h`中的定義的I/O函數。
 
-> 练习题 6：根据在`userland/servers/shell/shell.c`中实现好的`bultin_cmd`函数，完成shell中内置命令对应的`do_*`函数，需要支持的命令包括：`ls [dir]`、`echo [string]`、`cat [filename]`和`top`。
+> 練習題 6：根據在`userland/servers/shell/shell.c`中實現好的`bultin_cmd`函數，完成shell中內置命令對應的`do_*`函數，需要支持的命令包括：`ls [dir]`、`echo [string]`、`cat [filename]`和`top`。
 
-> 练习题 7：实现在`userland/servers/shell/shell.c`中定义的`run_cmd`，以通过输入文件名来运行可执行文件，同时补全`do_complement`函数并修改`readline`函数，以支持按tab键自动补全根目录（`/`）下的文件名。
+> 練習題 7：實現在`userland/servers/shell/shell.c`中定義的`run_cmd`，以通過輸入文件名來運行可執行文件，同時補全`do_complement`函數並修改`readline`函數，以支持按tab鍵自動補全根目錄（`/`）下的文件名。
 >
-> **注意：本部分测试需要打开`CHCORE_SHELL_TEST`，即在`.config`文件中如下行选择`ON`。**
+> **注意：本部分測試需要打開`CHCORE_SHELL_TEST`，即在`.config`文件中如下行選擇`ON`。**
 > ```
 > CHCORE_SHELL_TEST:BOOL=ON
 > ```
 
-正确完以上所有后，输入`make grade LAB=5`总共可以获得65分。
+正確完以上所有後，輸入`make grade LAB=5`總共可以獲得65分。
 
-## 第三部分：文件系统拓展
+## 第三部分：文件系統拓展
 
-### 文件系统用户态接口
+### 文件系統用戶態接口
 
-目前，应用程序只能通过IPC直接将请求发送给文件系统进程，为了更方便地对文件系统进行访问，通常需要对文件系统接口进行一定的封装。
+目前，應用程序只能通過IPC直接將請求發送給文件系統進程，為了更方便地對文件系統進行訪問，通常需要對文件系統接口進行一定的封裝。
 
-> 练习题 8：补全`userland/apps/lab5`目录下的`lab5_stdio.h`与`lab5_stdio.c`文件，以实现`fopen`, `fwrite`, `fread`, `fclose`, `fscanf`, `fprintf`五个函数，函数用法应与libc中一致，可以参照`lab5_main.c`中测试代码。
+> 練習題 8：補全`userland/apps/lab5`目錄下的`lab5_stdio.h`與`lab5_stdio.c`文件，以實現`fopen`, `fwrite`, `fread`, `fclose`, `fscanf`, `fprintf`五個函數，函數用法應與libc中一致，可以參照`lab5_main.c`中測試代碼。
 >
-> **注意：本部分测试需要打开`CHCORE_SHELL_TEST`，即在`.config`文件中如下行选择`ON`。**
+> **注意：本部分測試需要打開`CHCORE_SHELL_TEST`，即在`.config`文件中如下行選擇`ON`。**
 > ```
 > CHCORE_SHELL_TEST:BOOL=ON
 > ```
 
 
-正确完成以上所有练习后，输入`make grade LAB=5`可以获得80分。
+正確完成以上所有練習後，輸入`make grade LAB=5`可以獲得80分。
 
-### 虚拟文件系统
+### 虛擬文件系統
 
-虚拟文件系统（VFS）是一层抽象，使得应用程序能够以统一的接口访问不同类型的文件系统。本实验中将再实现一个系统服务FSM（File System Manager）协助实现虚拟文件系统抽象。如下图所示，当存在多个文件系统时，用户态应用只需要将IPC请求发送给FSM，FSM会分析被请求路径所在的文件系统，并将请求发送给对应的文件系统进程，因此应用程序仅通过FSM就可以访问不同的文件系统。
+虛擬文件系統（VFS）是一層抽象，使得應用程序能夠以統一的接口訪問不同類型的文件系統。本實驗中將再實現一個系統服務FSM（File System Manager）協助實現虛擬文件系統抽象。如下圖所示，當存在多個文件系統時，用戶態應用只需要將IPC請求發送給FSM，FSM會分析被請求路徑所在的文件系統，並將請求發送給對應的文件系統進程，因此應用程序僅通過FSM就可以訪問不同的文件系統。
 
-> 练习题 9：FSM需要两种不同的文件系统才能体现其特点，本实验提供了一个fakefs用于模拟部分文件系统的接口，测试代码会默认将tmpfs挂载到路径`/`，并将fakefs挂载在到路径`/fakefs`。本练习需要实现`userland/server/fsm/main.c`中空缺的部分，使得用户程序将文件系统请求发送给FSM后，FSM根据访问路径向对应文件系统发起请求，并将结果返回给用户程序。实现过程中可以使用`userland/server/fsm`目录下已经实现的函数。
+> 練習題 9：FSM需要兩種不同的文件系統才能體現其特點，本實驗提供了一個fakefs用於模擬部分文件系統的接口，測試代碼會默認將tmpfs掛載到路徑`/`，並將fakefs掛載在到路徑`/fakefs`。本練習需要實現`userland/server/fsm/main.c`中空缺的部分，使得用戶程序將文件系統請求發送給FSM後，FSM根據訪問路徑向對應文件系統發起請求，並將結果返回給用戶程序。實現過程中可以使用`userland/server/fsm`目錄下已經實現的函數。
 
-> 提示：本练习中只需考虑已经在tmpsfs中实现的请求类型。本练习的测试代码会用到shell中已经实现的`ls`与`cat`命令。
+> 提示：本練習中只需考慮已經在tmpsfs中實現的請求類型。本練習的測試代碼會用到shell中已經實現的`ls`與`cat`命令。
 
 ![](./assets/lab5-fsm.png)
 
-> 练习题 10：为减少文件操作过程中的IPC次数，可以对FSM的转发机制进行简化。本练习需要完成`libchcore/src/fs/fsm.c`中空缺的部分，使得`fsm_read_file`和`fsm_write_file`函数先利用ID为FS_REQ_GET_FS_CAP的请求通过FSM处理文件路径并获取对应文件系统的 Capability，然后直接对相应文件系统发送文件操作请求。
+> 練習題 10：為減少文件操作過程中的IPC次數，可以對FSM的轉發機制進行簡化。本練習需要完成`libchcore/src/fs/fsm.c`中空缺的部分，使得`fsm_read_file`和`fsm_write_file`函數先利用ID為FS_REQ_GET_FS_CAP的請求通過FSM處理文件路徑並獲取對應文件系統的 Capability，然後直接對相應文件系統發送文件操作請求。
 >
-> **注意：本部分测试需要打开`CHCORE_FSM_TEST`，即在`.config`文件中如下行选择`ON`。**
+> **注意：本部分測試需要打開`CHCORE_FSM_TEST`，即在`.config`文件中如下行選擇`ON`。**
 > ```
 > CHCORE_FSM_TEST:BOOL=ON
 > ```
 
-正确完成以上所有练习后，输入`make grade LAB=5`可以获得100分。
+正確完成以上所有練習後，輸入`make grade LAB=5`可以獲得100分。

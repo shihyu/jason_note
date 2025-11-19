@@ -759,7 +759,7 @@ class MainActivity : AppCompatActivity() {
                     "一隻貓",
                     "一隻狗",
                     "一輛車",
-                    "一台電腦",
+                    "一臺電腦",
                     "一支手機"
                 )
                 

@@ -29,9 +29,9 @@ APP ^HMaHuPKN
 
 Lib ^NGcXkrUr
 
-函数调用 ^ReUkMTQm
+函數調用 ^ReUkMTQm
 
-系统调用 ^K8tulimU
+系統調用 ^K8tulimU
 
 U-Mode ^fkBzzDPD
 
@@ -53,7 +53,7 @@ current_task ^FSlKa5EB
 
 Loader ^Til8wHbq
 
-时间 ^CpYApfQo
+時間 ^CpYApfQo
 
 task1 ^kccFwmwM
 
@@ -1469,13 +1469,13 @@ task1 ^xhmfqNfh
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "函数调用",
-			"rawText": "函数调用",
+			"text": "函數調用",
+			"rawText": "函數調用",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "函数调用"
+			"originalText": "函數調用"
 		},
 		{
 			"type": "text",
@@ -1508,13 +1508,13 @@ task1 ^xhmfqNfh
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "系统调用",
-			"rawText": "系统调用",
+			"text": "系統調用",
+			"rawText": "系統調用",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "系统调用"
+			"originalText": "系統調用"
 		},
 		{
 			"type": "line",
@@ -2455,13 +2455,13 @@ task1 ^xhmfqNfh
 			"link": null,
 			"fontSize": 16,
 			"fontFamily": 4,
-			"text": "时间",
-			"rawText": "时间",
+			"text": "時間",
+			"rawText": "時間",
 			"baseline": 15,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "时间"
+			"originalText": "時間"
 		},
 		{
 			"type": "rectangle",

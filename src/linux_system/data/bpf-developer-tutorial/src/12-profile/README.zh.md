@@ -1,23 +1,23 @@
-# eBPF 入门实践教程十二：使用 eBPF 程序 profile 进行性能分析
+# eBPF 入門實踐教程十二：使用 eBPF 程序 profile 進行性能分析
 
-本教程将指导您使用 libbpf 和 eBPF 程序进行性能分析。我们将利用内核中的 perf 机制，学习如何捕获函数的执行时间以及如何查看性能数据。
+本教程將指導您使用 libbpf 和 eBPF 程序進行性能分析。我們將利用內核中的 perf 機制，學習如何捕獲函數的執行時間以及如何查看性能數據。
 
-libbpf 是一个用于与 eBPF 交互的 C 库。它提供了创建、加载和使用 eBPF 程序所需的基本功能。本教程中，我们将主要使用 libbpf 完成开发工作。perf 是 Linux 内核中的性能分析工具，允许用户测量和分析内核及用户空间程序的性能，以及获取对应的调用堆栈。它利用内核中的硬件计数器和软件事件来收集性能数据。
+libbpf 是一個用於與 eBPF 交互的 C 庫。它提供了創建、加載和使用 eBPF 程序所需的基本功能。本教程中，我們將主要使用 libbpf 完成開發工作。perf 是 Linux 內核中的性能分析工具，允許用戶測量和分析內核及用戶空間程序的性能，以及獲取對應的調用堆棧。它利用內核中的硬件計數器和軟件事件來收集性能數據。
 
 ## eBPF 工具：profile 性能分析示例
 
-`profile` 工具基于 eBPF 实现，利用 Linux 内核中的 perf 事件进行性能分析。`profile` 工具会定期对每个处理器进行采样，以便捕获内核函数和用户空间函数的执行。它可以显示栈回溯的以下信息：
+`profile` 工具基於 eBPF 實現，利用 Linux 內核中的 perf 事件進行性能分析。`profile` 工具會定期對每個處理器進行採樣，以便捕獲內核函數和用戶空間函數的執行。它可以顯示棧回溯的以下信息：
 
-- 地址：函数调用的内存地址
-- 符号：函数名称
-- 文件名：源代码文件名称
-- 行号：源代码中的行号
+- 地址：函數調用的內存地址
+- 符號：函數名稱
+- 文件名：源代碼文件名稱
+- 行號：源代碼中的行號
 
-这些信息有助于开发人员定位性能瓶颈和优化代码。更进一步，可以通过这些对应的信息生成火焰图，以便更直观的查看性能数据。
+這些信息有助於開發人員定位性能瓶頸和優化代碼。更進一步，可以通過這些對應的信息生成火焰圖，以便更直觀的查看性能數據。
 
-在本示例中，可以通过 libbpf 库编译运行它（以 Ubuntu/Debian 为例）：
+在本示例中，可以通過 libbpf 庫編譯運行它（以 Ubuntu/Debian 為例）：
 
-**NOTE:** 首先需要安装 `cargo` 才能编译得到 `profile`, 安装方法可以参考[Cargo 手册](https://rustwiki.org/en/cargo/getting-started/installation.html)  
+**NOTE:** 首先需要安裝 `cargo` 才能編譯得到 `profile`, 安裝方法可以參考[Cargo 手冊](https://rustwiki.org/en/cargo/getting-started/installation.html)  
 
 ```console
 $ git submodule update --init --recursive
@@ -45,13 +45,13 @@ Userspace:
   1 [<0000556dec34cad0>]
 ```
 
-## 实现原理
+## 實現原理
 
-profile 工具由两个部分组成，内核态中的 eBPF 程序和用户态中的 `profile` 符号处理程序。`profile` 符号处理程序负责加载 eBPF 程序，以及处理 eBPF 程序输出的数据。
+profile 工具由兩個部分組成，內核態中的 eBPF 程序和用戶態中的 `profile` 符號處理程序。`profile` 符號處理程序負責加載 eBPF 程序，以及處理 eBPF 程序輸出的數據。
 
-### 内核态部分
+### 內核態部分
 
-内核态 eBPF 程序的实现逻辑主要是借助 perf event，对程序的堆栈进行定时采样，从而捕获程序的执行流程。
+內核態 eBPF 程序的實現邏輯主要是藉助 perf event，對程序的堆棧進行定時採樣，從而捕獲程序的執行流程。
 
 ```c
 // SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
@@ -98,9 +98,9 @@ int profile(void *ctx)
 }
 ```
 
-接下来，我们将重点讲解内核态代码的关键部分。
+接下來，我們將重點講解內核態代碼的關鍵部分。
 
-1. 定义 eBPF maps `events`：
+1. 定義 eBPF maps `events`：
 
     ```c
 
@@ -110,27 +110,27 @@ int profile(void *ctx)
     } events SEC(".maps");
     ```
 
-    这里定义了一个类型为 `BPF_MAP_TYPE_RINGBUF` 的 eBPF  maps 。Ring Buffer 是一种高性能的循环缓冲区，用于在内核和用户空间之间传输数据。`max_entries` 设置了 Ring Buffer 的最大大小。
+    這裡定義了一個類型為 `BPF_MAP_TYPE_RINGBUF` 的 eBPF  maps 。Ring Buffer 是一種高性能的循環緩衝區，用於在內核和用戶空間之間傳輸數據。`max_entries` 設置了 Ring Buffer 的最大大小。
 
-2. 定义 `perf_event` eBPF 程序：
+2. 定義 `perf_event` eBPF 程序：
 
     ```c
     SEC("perf_event")
     int profile(void *ctx)
     ```
 
-    这里定义了一个名为 `profile` 的 eBPF 程序，它将在 perf 事件触发时执行。
+    這裡定義了一個名為 `profile` 的 eBPF 程序，它將在 perf 事件觸發時執行。
 
-3. 获取进程 ID 和 CPU ID：
+3. 獲取進程 ID 和 CPU ID：
 
     ```c
     int pid = bpf_get_current_pid_tgid() >> 32;
     int cpu_id = bpf_get_smp_processor_id();
     ```
 
-    `bpf_get_current_pid_tgid()` 函数返回当前进程的 PID 和 TID，通过右移 32 位，我们得到 PID。`bpf_get_smp_processor_id()` 函数返回当前 CPU 的 ID。
+    `bpf_get_current_pid_tgid()` 函數返回當前進程的 PID 和 TID，通過右移 32 位，我們得到 PID。`bpf_get_smp_processor_id()` 函數返回當前 CPU 的 ID。
 
-4. 预留 Ring Buffer 空间：
+4. 預留 Ring Buffer 空間：
 
     ```c
     event = bpf_ringbuf_reserve(&events, sizeof(*event), 0);
@@ -138,9 +138,9 @@ int profile(void *ctx)
         return 1;
     ```
 
-    通过 `bpf_ringbuf_reserve()` 函数预留 Ring Buffer 空间，用于存储采集的栈信息。若预留失败，返回错误.
+    通過 `bpf_ringbuf_reserve()` 函數預留 Ring Buffer 空間，用於存儲採集的棧信息。若預留失敗，返回錯誤.
 
-5. 获取当前进程名：
+5. 獲取當前進程名：
 
     ```c
 
@@ -148,38 +148,38 @@ int profile(void *ctx)
         event->comm[0] = 0;
     ```
 
-    使用 `bpf_get_current_comm()` 函数获取当前进程名并将其存储到 `event->comm`。
+    使用 `bpf_get_current_comm()` 函數獲取當前進程名並將其存儲到 `event->comm`。
 
-6. 获取内核栈信息：
+6. 獲取內核棧信息：
 
     ```c
 
     event->kstack_sz = bpf_get_stack(ctx, event->kstack, sizeof(event->kstack), 0);
     ```
 
-    使用 `bpf_get_stack()` 函数获取内核栈信息。将结果存储在 `event->kstack`，并将其大小存储在 `event->kstack_sz`。
+    使用 `bpf_get_stack()` 函數獲取內核棧信息。將結果存儲在 `event->kstack`，並將其大小存儲在 `event->kstack_sz`。
 
-7. 获取用户空间栈信息：
+7. 獲取用戶空間棧信息：
 
     ```c
     event->ustack_sz = bpf_get_stack(ctx, event->ustack, sizeof(event->ustack), BPF_F_USER_STACK);
     ```
 
-    同样使用 `bpf_get_stack()` 函数，但传递 `BPF_F_USER_STACK` 标志以获取用户空间栈信息。将结果存储在 `event->ustack`，并将其大小存储在 `event->ustack_sz`。
+    同樣使用 `bpf_get_stack()` 函數，但傳遞 `BPF_F_USER_STACK` 標誌以獲取用戶空間棧信息。將結果存儲在 `event->ustack`，並將其大小存儲在 `event->ustack_sz`。
 
-8. 将事件提交到 Ring Buffer：
+8. 將事件提交到 Ring Buffer：
 
     ```c
     bpf_ringbuf_submit(event, 0);
     ```
 
-    最后，使用 `bpf_ringbuf_submit()` 函数将事件提交到 Ring Buffer，以便用户空间程序可以读取和处理。
+    最後，使用 `bpf_ringbuf_submit()` 函數將事件提交到 Ring Buffer，以便用戶空間程序可以讀取和處理。
 
-    这个内核态 eBPF 程序通过定期采样程序的内核栈和用户空间栈来捕获程序的执行流程。这些数据将存储在 Ring Buffer 中，以便用户态的 `profile` 程序能读取。
+    這個內核態 eBPF 程序通過定期採樣程序的內核棧和用戶空間棧來捕獲程序的執行流程。這些數據將存儲在 Ring Buffer 中，以便用戶態的 `profile` 程序能讀取。
 
-### 用户态部分
+### 用戶態部分
 
-这段代码主要负责为每个在线 CPU 设置 perf event 并附加 eBPF 程序：
+這段代碼主要負責為每個在線 CPU 設置 perf event 並附加 eBPF 程序：
 
 ```c
 static long perf_event_open(struct perf_event_attr *hw_event, pid_t pid,
@@ -218,9 +218,9 @@ int main(){
 }
 ```
 
-`perf_event_open` 这个函数是一个对 perf_event_open 系统调用的封装。它接收一个 perf_event_attr 结构体指针，用于指定 perf event 的类型和属性。pid 参数用于指定要监控的进程 ID（-1 表示监控所有进程），cpu 参数用于指定要监控的 CPU。group_fd 参数用于将 perf event 分组，这里我们使用 -1，表示不需要分组。flags 参数用于设置一些标志，这里我们使用 PERF_FLAG_FD_CLOEXEC 以确保在执行 exec 系列系统调用时关闭文件描述符。
+`perf_event_open` 這個函數是一個對 perf_event_open 系統調用的封裝。它接收一個 perf_event_attr 結構體指針，用於指定 perf event 的類型和屬性。pid 參數用於指定要監控的進程 ID（-1 表示監控所有進程），cpu 參數用於指定要監控的 CPU。group_fd 參數用於將 perf event 分組，這裡我們使用 -1，表示不需要分組。flags 參數用於設置一些標誌，這裡我們使用 PERF_FLAG_FD_CLOEXEC 以確保在執行 exec 系列系統調用時關閉文件描述符。
 
-在 main 函数中：
+在 main 函數中：
 
 ```c
 for (cpu = 0; cpu < num_cpus; cpu++) {
@@ -228,11 +228,11 @@ for (cpu = 0; cpu < num_cpus; cpu++) {
 }
 ```
 
-这个循环针对每个在线 CPU 设置 perf event 并附加 eBPF 程序。首先，它会检查当前 CPU 是否在线，如果不在线则跳过。然后，使用 perf_event_open() 函数为当前 CPU 设置 perf event，并将返回的文件描述符存储在 pefds 数组中。最后，使用 bpf_program__attach_perf_event() 函数将 eBPF 程序附加到 perf event。links 数组用于存储每个 CPU 上的 BPF 链接，以便在程序结束时销毁它们。
+這個循環針對每個在線 CPU 設置 perf event 並附加 eBPF 程序。首先，它會檢查當前 CPU 是否在線，如果不在線則跳過。然後，使用 perf_event_open() 函數為當前 CPU 設置 perf event，並將返回的文件描述符存儲在 pefds 數組中。最後，使用 bpf_program__attach_perf_event() 函數將 eBPF 程序附加到 perf event。links 數組用於存儲每個 CPU 上的 BPF 鏈接，以便在程序結束時銷燬它們。
 
-通过这种方式，用户态程序为每个在线 CPU 设置 perf event，并将 eBPF 程序附加到这些 perf event 上，从而实现对系统中所有在线 CPU 的监控。
+通過這種方式，用戶態程序為每個在線 CPU 設置 perf event，並將 eBPF 程序附加到這些 perf event 上，從而實現對系統中所有在線 CPU 的監控。
 
-以下这两个函数分别用于显示栈回溯和处理从 ring buffer 接收到的事件：
+以下這兩個函數分別用於顯示棧回溯和處理從 ring buffer 接收到的事件：
 
 ```c
 static void show_stack_trace(__u64 *stack, int stack_sz, pid_t pid)
@@ -320,16 +320,16 @@ static int event_handler(void *_ctx, void *data, size_t size)
 }
 ```
 
-`show_stack_trace()` 函数用于显示内核或用户空间的栈回溯。它接收一个 stack 参数，是一个指向内核或用户空间栈的指针，stack_sz 参数表示栈的大小，pid 参数表示要显示的进程的 ID（当显示内核栈时，设置为 0）。函数中首先根据 pid 参数确定栈的来源（内核或用户空间），然后调用 blazesym_symbolize() 函数将栈中的地址解析为符号名和源代码位置。最后，遍历解析结果，输出符号名和源代码位置信息。
+`show_stack_trace()` 函數用於顯示內核或用戶空間的棧回溯。它接收一個 stack 參數，是一個指向內核或用戶空間棧的指針，stack_sz 參數表示棧的大小，pid 參數表示要顯示的進程的 ID（當顯示內核棧時，設置為 0）。函數中首先根據 pid 參數確定棧的來源（內核或用戶空間），然後調用 blazesym_symbolize() 函數將棧中的地址解析為符號名和源代碼位置。最後，遍歷解析結果，輸出符號名和源代碼位置信息。
 
-`event_handler()` 函数用于处理从 ring buffer 接收到的事件。它接收一个 data 参数，指向 ring buffer 中的数据，size 参数表示数据的大小。函数首先将 data 指针转换为 stacktrace_event 结构体指针，然后检查内核和用户空间栈的大小。如果栈为空，则直接返回。接下来，函数输出进程名称、进程 ID 和 CPU ID 信息。然后分别显示内核栈和用户空间栈的回溯。调用 show_stack_trace() 函数时，分别传入内核栈和用户空间栈的地址、大小和进程 ID。
+`event_handler()` 函數用於處理從 ring buffer 接收到的事件。它接收一個 data 參數，指向 ring buffer 中的數據，size 參數表示數據的大小。函數首先將 data 指針轉換為 stacktrace_event 結構體指針，然後檢查內核和用戶空間棧的大小。如果棧為空，則直接返回。接下來，函數輸出進程名稱、進程 ID 和 CPU ID 信息。然後分別顯示內核棧和用戶空間棧的回溯。調用 show_stack_trace() 函數時，分別傳入內核棧和用戶空間棧的地址、大小和進程 ID。
 
-这两个函数作为 eBPF profile 工具的一部分，用于显示和处理 eBPF 程序收集到的栈回溯信息，帮助用户了解程序的运行情况和性能瓶颈。
+這兩個函數作為 eBPF profile 工具的一部分，用於顯示和處理 eBPF 程序收集到的棧回溯信息，幫助用戶瞭解程序的運行情況和性能瓶頸。
 
-### 总结
+### 總結
 
-通过本篇 eBPF 入门实践教程，我们学习了如何使用 eBPF 程序进行性能分析。在这个过程中，我们详细讲解了如何创建 eBPF 程序，监控进程的性能，并从 ring buffer 中获取数据以分析栈回溯。我们还学习了如何使用 perf_event_open() 函数设置性能监控，并将 BPF 程序附加到性能事件上。在本教程中，我们还展示了如何编写 eBPF 程序来捕获进程的内核和用户空间栈信息，进而分析程序性能瓶颈。通过这个例子，您可以了解到 eBPF 在性能分析方面的强大功能。
+通過本篇 eBPF 入門實踐教程，我們學習瞭如何使用 eBPF 程序進行性能分析。在這個過程中，我們詳細講解了如何創建 eBPF 程序，監控進程的性能，並從 ring buffer 中獲取數據以分析棧回溯。我們還學習瞭如何使用 perf_event_open() 函數設置性能監控，並將 BPF 程序附加到性能事件上。在本教程中，我們還展示瞭如何編寫 eBPF 程序來捕獲進程的內核和用戶空間棧信息，進而分析程序性能瓶頸。通過這個例子，您可以瞭解到 eBPF 在性能分析方面的強大功能。
 
-如果您希望学习更多关于 eBPF 的知识和实践，请查阅 eunomia-bpf 的官方文档：<https://github.com/eunomia-bpf/eunomia-bpf> 。您还可以访问我们的教程代码仓库 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或网站 <https://eunomia.dev/zh/tutorials/> 以获取更多示例和完整的教程。
+如果您希望學習更多關於 eBPF 的知識和實踐，請查閱 eunomia-bpf 的官方文檔：<https://github.com/eunomia-bpf/eunomia-bpf> 。您還可以訪問我們的教程代碼倉庫 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或網站 <https://eunomia.dev/zh/tutorials/> 以獲取更多示例和完整的教程。
 
-接下来的教程将进一步探讨 eBPF 的高级特性，我们会继续分享更多有关 eBPF 开发实践的内容，帮助您更好地理解和掌握 eBPF 技术，希望这些内容对您在 eBPF 开发道路上的学习和实践有所帮助。
+接下來的教程將進一步探討 eBPF 的高級特性，我們會繼續分享更多有關 eBPF 開發實踐的內容，幫助您更好地理解和掌握 eBPF 技術，希望這些內容對您在 eBPF 開發道路上的學習和實踐有所幫助。

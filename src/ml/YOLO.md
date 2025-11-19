@@ -4,7 +4,7 @@ https://chih-sheng-huang821.medium.com/%E6%B7%B1%E5%BA%A6%E5%AD%B8%E7%BF%92-%E7%
 
 
 
-You Only Look Once (YOLO)這個字是作者取自於You only live once，YOLO是one stage的物件偵測方法，也就是只需要對圖片作一次 CNN架構便能夠判斷圖形內的物體位置與類別，因此提升辨識速度。對於one stage和two stage是什麼可以參考: [**深度學習-什麼是one stage，什麼是two stage 物件偵測**](https://medium.com/@chih.sheng.huang821/深度學習-什麼是one-stage-什麼是two-stage-物件偵測-fc3ce505390f)
+You Only Look Once (YOLO)這個字是作者取自於You only live once，YOLO是one stage的物件偵測方法，也就是隻需要對圖片作一次 CNN架構便能夠判斷圖形內的物體位置與類別，因此提升辨識速度。對於one stage和two stage是什麼可以參考: [**深度學習-什麼是one stage，什麼是two stage 物件偵測**](https://medium.com/@chih.sheng.huang821/深度學習-什麼是one-stage-什麼是two-stage-物件偵測-fc3ce505390f)
 
 三個YOLO重要的步驟
 
@@ -81,7 +81,7 @@ III. 20就是屬於20個類別的機率。
 
 ![img](images/1*lxX75gUy_1kkiLerFsUcug.png)
 
-2. 根據YOLO作者的想法整張圖一共最多有98個Bounding Box，也就是實際最多只能偵測98個物件，然後全部候選的Bounding box的(中心座標、長寬和confidence score)根據閾值和NMS選出這張圖所有的物件(如下圖的紅色框、紫色框和土黃色框)。
+2. 根據YOLO作者的想法整張圖一共最多有98個Bounding Box，也就是實際最多隻能偵測98個物件，然後全部候選的Bounding box的(中心座標、長寬和confidence score)根據閾值和NMS選出這張圖所有的物件(如下圖的紅色框、紫色框和土黃色框)。
 
 Note: 在YOLO作者的例子(7×7×(2×5+20))，共有7×7=49個grid cell，每個grid cell最多有2個Bounding box，所以全部候選的bounding box共有7×7×2=98個。
 
@@ -116,7 +116,7 @@ Bounding box的中心座標(x,y)是在特定grid cell的偏移(offset)，所以�
 
 一般都用平方誤差和(sum-squared error)當作loss function，原因是容易最佳化(可以參考倒傳遞相關文章)。作者認為此方法不能完美校正去最大化目標的平均精度(average precision)，主要原因是每項目的error(比如bounding box的定位誤差(localization error)和分類的誤差(class error))都佔有一樣的比重，所以結果不太好(我猜作者應該是試過equal weight，所以他在文章寫in every image many grid cells do not contain any object.)，而且物件偵測多數情況，大多數的grid cell內是沒有物件的(在梯度求解的時候容易將有物件的cell壓過去)，所以容易導致confidence幾乎趨近於0，也因為如此容易造成模型不穩定。
 
-為了解決這個問題，作者
+為瞭解決這個問題，作者
 
 1. 增加了在bounding box座標預測的loss權重 (λcoord=5)
 2. 減低那些不包含物件的Box，confidence預測時的權重(λnoobj=0.5)
@@ -133,6 +133,6 @@ Performance 這部分直接看論文吧。
 
 這邊作者有提到YOLO的Limitations → 所以才有[YOLOv2](https://arxiv.org/abs/1612.08242)出來啊。
 
-1. 第一點也是我前面有提到YOLO對Bounding box有很強烈的空間限制，也就是每個grid cell只有最多只有2個bounding box和一個類別，也是因為這點所以如果有兩個以上的物件在空間上離的非常近會導致模型無法有效偵測到，比如說有一群鳥(一群小物件)。
+1. 第一點也是我前面有提到YOLO對Bounding box有很強烈的空間限制，也就是每個grid cell只有最多隻有2個bounding box和一個類別，也是因為這點所以如果有兩個以上的物件在空間上離的非常近會導致模型無法有效偵測到，比如說有一群鳥(一群小物件)。
 2. 第二bounding box的預測是從資料學來的，所以如果訓練好的模型要去預測其他新物件或是比例很怪的物件，可能就沒有辦法框的很好。這部份原因來自於YOLO本身有很多層的Pooling (downsampling)，最後得到的feature用來預測bounding box，相較於原始圖在空間上是比較粗略的。
 3. 最後一點，作者提出的loss function在小物件和大物件的Bounding Box都用一樣的比重，但實際上在計算IOU時，小物件只要差一點點，定位(localization)的error影響就會很大，相對的大物件而言就比較沒有太大差異，作者提到主要的錯誤都是來自不正確的定位(incorrect localizations)。

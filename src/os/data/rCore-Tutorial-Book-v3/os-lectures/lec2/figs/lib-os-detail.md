@@ -21,10 +21,10 @@ RustSBI ^kRQf2u7U
 
 APP ^HMaHuPKN
 
-Qemu加载
+Qemu加載
 app+os Image ^Q1vbeJnD
 
-函数调用 ^ReUkMTQm
+函數調用 ^ReUkMTQm
 
 S-Mode ^XcoycXep
 
@@ -34,20 +34,20 @@ OS ^Xdln7jVm
 
 SBI-service ^T1eJDVYa
 
-建立栈空间 ^F7qjg9kk
+建立棧空間 ^F7qjg9kk
 
 bss段清零 ^QVp5tson
 
-APP运行前的
+APP運行前的
 初始化工作 ^C9Xp75L4
 
-输出字符串 ^0koKzjAw
+輸出字符串 ^0koKzjAw
 
-关机shutdown ^D2cvnKGq
+關機shutdown ^D2cvnKGq
 
 OS Service ^TtcTgT0o
 
-panic处理 ^C1egQfdG
+panic處理 ^C1egQfdG
 
 %%
 # Drawing
@@ -1094,13 +1094,13 @@ panic处理 ^C1egQfdG
 			"link": null,
 			"fontSize": 20.679272465778364,
 			"fontFamily": 4,
-			"text": "Qemu加载\napp+os Image",
-			"rawText": "Qemu加载\napp+os Image",
+			"text": "Qemu加載\napp+os Image",
+			"rawText": "Qemu加載\napp+os Image",
 			"baseline": 40,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "Qemu加载\napp+os Image"
+			"originalText": "Qemu加載\napp+os Image"
 		},
 		{
 			"type": "arrow",
@@ -1181,13 +1181,13 @@ panic处理 ^C1egQfdG
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "函数调用",
-			"rawText": "函数调用",
+			"text": "函數調用",
+			"rawText": "函數調用",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "函数调用"
+			"originalText": "函數調用"
 		},
 		{
 			"type": "line",
@@ -1531,13 +1531,13 @@ panic处理 ^C1egQfdG
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "建立栈空间",
-			"rawText": "建立栈空间",
+			"text": "建立棧空間",
+			"rawText": "建立棧空間",
 			"baseline": 19,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "5NfSovrLFhnBSibdOrvxR",
-			"originalText": "建立栈空间"
+			"originalText": "建立棧空間"
 		},
 		{
 			"type": "rectangle",
@@ -1683,13 +1683,13 @@ panic处理 ^C1egQfdG
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "APP运行前的\n初始化工作",
-			"rawText": "APP运行前的\n初始化工作",
+			"text": "APP運行前的\n初始化工作",
+			"rawText": "APP運行前的\n初始化工作",
 			"baseline": 40,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "APP运行前的\n初始化工作"
+			"originalText": "APP運行前的\n初始化工作"
 		},
 		{
 			"type": "rectangle",
@@ -1771,13 +1771,13 @@ panic处理 ^C1egQfdG
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "输出字符串",
-			"rawText": "输出字符串",
+			"text": "輸出字符串",
+			"rawText": "輸出字符串",
 			"baseline": 19,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "SodweLyClZZNLiTK8N-Sk",
-			"originalText": "输出字符串"
+			"originalText": "輸出字符串"
 		},
 		{
 			"type": "rectangle",
@@ -1863,13 +1863,13 @@ panic处理 ^C1egQfdG
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "关机shutdown",
-			"rawText": "关机shutdown",
+			"text": "關機shutdown",
+			"rawText": "關機shutdown",
 			"baseline": 19,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "mRW3HV18Yn6I5Q9DEvOhm",
-			"originalText": "关机shutdown"
+			"originalText": "關機shutdown"
 		},
 		{
 			"type": "text",
@@ -2038,13 +2038,13 @@ panic处理 ^C1egQfdG
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "panic处理",
-			"rawText": "panic处理",
+			"text": "panic處理",
+			"rawText": "panic處理",
 			"baseline": 19,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "9aiqe7_jjYffeBAfxaZYT",
-			"originalText": "panic处理"
+			"originalText": "panic處理"
 		}
 	],
 	"appState": {

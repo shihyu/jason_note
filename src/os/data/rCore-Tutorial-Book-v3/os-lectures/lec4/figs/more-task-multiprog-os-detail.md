@@ -29,7 +29,7 @@ APP ^HMaHuPKN
 
 Lib ^NGcXkrUr
 
-系统调用 ^K8tulimU
+系統調用 ^K8tulimU
 
 U-Mode ^fkBzzDPD
 
@@ -49,7 +49,7 @@ TCBs ^xdJyQyEV
 
 Loader ^Til8wHbq
 
-时间 ^CpYApfQo
+時間 ^CpYApfQo
 
 task1 ^kccFwmwM
 
@@ -69,7 +69,7 @@ task2 ^psmYqiJ4
 
 task1 ^xhmfqNfh
 
-此时间段 ^P2eKVfTb
+此時間段 ^P2eKVfTb
 
 task1: running ^832nDa8r
 
@@ -77,15 +77,15 @@ task2: ready ^DR8YxWq8
 
 task3: ready ^yxxCQe1r
 
-任务状态 ^8fmElmNe
+任務狀態 ^8fmElmNe
 
-任务状态 ^bqLpNlER
+任務狀態 ^bqLpNlER
 
-任务上下文 ^hFQRaqYX
+任務上下文 ^hFQRaqYX
 
 trap上下文 ^UPDWCAWi
 
-函数上下文 ^uBHUEvJg
+函數上下文 ^uBHUEvJg
 
 stack ^5F6H3Wha
 
@@ -1463,13 +1463,13 @@ stack ^S6neJbJQ
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "系统调用",
-			"rawText": "系统调用",
+			"text": "系統調用",
+			"rawText": "系統調用",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "系统调用"
+			"originalText": "系統調用"
 		},
 		{
 			"type": "line",
@@ -2380,13 +2380,13 @@ stack ^S6neJbJQ
 			"link": null,
 			"fontSize": 16,
 			"fontFamily": 4,
-			"text": "时间",
-			"rawText": "时间",
+			"text": "時間",
+			"rawText": "時間",
 			"baseline": 15,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "时间"
+			"originalText": "時間"
 		},
 		{
 			"type": "rectangle",
@@ -3076,13 +3076,13 @@ stack ^S6neJbJQ
 			"link": null,
 			"fontSize": 16,
 			"fontFamily": 4,
-			"text": "此时间段",
-			"rawText": "此时间段",
+			"text": "此時間段",
+			"rawText": "此時間段",
 			"baseline": 15,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "此时间段"
+			"originalText": "此時間段"
 		},
 		{
 			"type": "rectangle",
@@ -3404,13 +3404,13 @@ stack ^S6neJbJQ
 			"link": null,
 			"fontSize": 28,
 			"fontFamily": 4,
-			"text": "任务状态",
-			"rawText": "任务状态",
+			"text": "任務狀態",
+			"rawText": "任務狀態",
 			"baseline": 25,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "任务状态"
+			"originalText": "任務狀態"
 		},
 		{
 			"type": "text",
@@ -3438,13 +3438,13 @@ stack ^S6neJbJQ
 			"link": null,
 			"fontSize": 16,
 			"fontFamily": 4,
-			"text": "任务状态",
-			"rawText": "任务状态",
+			"text": "任務狀態",
+			"rawText": "任務狀態",
 			"baseline": 15,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "任务状态"
+			"originalText": "任務狀態"
 		},
 		{
 			"type": "text",
@@ -3472,13 +3472,13 @@ stack ^S6neJbJQ
 			"link": null,
 			"fontSize": 16,
 			"fontFamily": 4,
-			"text": "任务上下文",
-			"rawText": "任务上下文",
+			"text": "任務上下文",
+			"rawText": "任務上下文",
 			"baseline": 15,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "任务上下文"
+			"originalText": "任務上下文"
 		},
 		{
 			"type": "text",
@@ -3545,13 +3545,13 @@ stack ^S6neJbJQ
 			"link": null,
 			"fontSize": 16,
 			"fontFamily": 4,
-			"text": "函数上下文",
-			"rawText": "函数上下文",
+			"text": "函數上下文",
+			"rawText": "函數上下文",
 			"baseline": 15,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "函数上下文"
+			"originalText": "函數上下文"
 		},
 		{
 			"type": "rectangle",

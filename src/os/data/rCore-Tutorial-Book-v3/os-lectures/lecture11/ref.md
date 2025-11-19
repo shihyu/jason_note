@@ -1,6 +1,6 @@
-## 20200319-第十一讲准备
-2020春,操作系统课,准备
-第十一讲 处理机调度
+## 20200319-第十一講準備
+2020春,操作系統課,準備
+第十一講 處理機調度
 
 [v1](https://github.com/LearningOS/os-lectures/blob/2ee6a37e314bd4fe2e9d57899b66d5cacd0ebada/lecture11/ref.md)
 
@@ -9,19 +9,19 @@
 ### ref
 
 http://os.cs.tsinghua.edu.cn/oscourse/OS2019spring/lecture15
-2019年第十五讲 处理机调度
+2019年第十五講 處理機調度
 
-rCore调度框架
+rCore調度框架
 
-### 11.1 处理机调度概念 
-### 11.2 调度准则 
-### 11.3 先来先服务、短进程优先和最高响应比优先调度算法 
-### 11.4 时间片轮转、多级反馈队列、公平共享调度算法和ucore调度框架 
-### 11.5 实时调度
-### 11.6 优先级反置 
-### 11.7 rCore调度框架和时间片轮转调度算法
+### 11.1 處理機調度概念 
+### 11.2 調度準則 
+### 11.3 先來先服務、短進程優先和最高響應比優先調度算法 
+### 11.4 時間片輪轉、多級反饋隊列、公平共享調度算法和ucore調度框架 
+### 11.5 實時調度
+### 11.6 優先級反置 
+### 11.7 rCore調度框架和時間片輪轉調度算法
 
-#### 调度框架与线程控制
+#### 調度框架與線程控制
 /Users/xyong/github/rcore-thread/src/scheduler/mod.rs
 pub trait Scheduler: 'static
 
@@ -46,7 +46,7 @@ pub trait Scheduler: 'static {
 
 /Users/xyong/github/rcore-thread/src/thread_pool.rs
 self.scheduler.
-与调度相关的线程控制函数
+與調度相關的線程控制函數
 
 ![thread-pool-scheduler](figs/thread-pool-scheduler.png)
 
@@ -59,16 +59,16 @@ pub(crate) fn stop(&self, tid: Tid, context: Box<dyn Context>)
 fn set_status(&self, tid: Tid, status: Status)
 pub fn wakeup(&self, tid: Tid)
 ```
-#### 调度数据结构
+#### 調度數據結構
 
 /Users/xyong/github/rcore-thread/src/scheduler/mod.rs
 pub trait Scheduler: 'static
-调度算法接口
+調度算法接口
 
 /Users/xyong/github/rcore-thread/src/thread_pool.rs
 pub struct ThreadPool
-线程池数据结构
-记录调度算法相关信息和参数；
+線程池數據結構
+記錄調度算法相關信息和參數；
 
 ![ThreadPool](figs/ThreadPool.png)
 
@@ -82,9 +82,9 @@ pub struct ThreadPool {
 
 /Users/xyong/github/rCore/kernel/src/process/mod.rs
 pub fn init()
-初始化函数
-指定调度算法；
-初始化线程池；
+初始化函數
+指定調度算法；
+初始化線程池；
 
 ![scheduler-init](figs/scheduler-init.png)
 
@@ -103,12 +103,12 @@ pub fn init() {
 }
 ```
 
-#### 时间片轮转调度算法
+#### 時間片輪轉調度算法
 
 /Users/xyong/github/rcore-thread/src/scheduler/rr.rs
-pub struct RRScheduler RR调度算法数据结构
-struct RRSchedulerInner 线程双向链表表头数据结构
-struct RRProcInfo 线程双向链表节点数据结构
+pub struct RRScheduler RR調度算法數據結構
+struct RRSchedulerInner 線程雙向鏈表表頭數據結構
+struct RRProcInfo 線程雙向鏈表節點數據結構
 
 ![RRScheduler](figs/RRScheduler.png)
 
@@ -129,12 +129,12 @@ struct RRProcInfo {
 }
 ```
 impl RRSchedulerInner
-具体的调度接口实现函数
+具體的調度接口實現函數
 
 ![RRSchedulerInner](figs/RRSchedulerInner.png)
 
 
-#### 时间片用完时的线程调度和切换过程
+#### 時間片用完時的線程調度和切換過程
 
 /Users/xyong/github/rCore/kernel/src/arch/riscv/interrupt.rs
 pub extern "C" fn rust_trap(tf: &mut TrapFrame)

@@ -399,7 +399,7 @@ ABI（應用程式二進制介面）
 
 ---
 
-### 不同平台的系統呼叫 ABI
+### 不同平臺的系統呼叫 ABI
 
 #### Linux x86-64
 
@@ -1028,10 +1028,10 @@ zig-1.8 version  # 1.8.0
 
 ---
 
-### Zig 如何處理跨平台差異
+### Zig 如何處理跨平臺差異
 
 ```zig
-// Zig 的標準庫自動處理不同平台的 ABI 差異
+// Zig 的標準庫自動處理不同平臺的 ABI 差異
 
 const std = @import("std");
 
@@ -1040,7 +1040,7 @@ pub fn main() !void {
     try stdout.print("Hello\n", .{});
 }
 
-// Zig 內部會根據目標平台：
+// Zig 內部會根據目標平臺：
 // - Linux x86-64: 使用 syscall 指令，參數用 rdi, rsi, rdx...
 // - Linux x86: 使用 int 0x80，參數用 ebx, ecx, edx...
 // - Windows: 使用 Windows API，完全不同的 ABI

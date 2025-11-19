@@ -240,7 +240,7 @@ unsigned int convert_time_to_seconds_using_table(unsigned int time_in_hhmmss)
 
 - **GCC**：使用 GCC 編譯器進行編譯與優化測試。
 - **objdump**：可用於檢查編譯後的二進位檔，幫助進行性能分析和優化。
-- **Quick-Bench**：在線性能測試平台，便於快速比較不同程式片段的效能。
+- **Quick-Bench**：在線性能測試平臺，便於快速比較不同程式片段的效能。
   - https://quick-bench.com/
 - **Godbolt Compiler Explorer**：提供多種編譯器的即時代碼檢查和性能測試，便於分析和學習不同編譯器的行為。
   - https://gcc.godbolt.org

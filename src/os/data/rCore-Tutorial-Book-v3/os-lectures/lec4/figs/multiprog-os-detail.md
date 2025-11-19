@@ -29,9 +29,9 @@ APP ^HMaHuPKN
 
 Lib ^NGcXkrUr
 
-函数调用 ^ReUkMTQm
+函數調用 ^ReUkMTQm
 
-系统调用 ^K8tulimU
+系統調用 ^K8tulimU
 
 U-Mode ^fkBzzDPD
 
@@ -1449,13 +1449,13 @@ Loader ^Til8wHbq
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "函数调用",
-			"rawText": "函数调用",
+			"text": "函數調用",
+			"rawText": "函數調用",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "函数调用"
+			"originalText": "函數調用"
 		},
 		{
 			"type": "text",
@@ -1483,13 +1483,13 @@ Loader ^Til8wHbq
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "系统调用",
-			"rawText": "系统调用",
+			"text": "系統調用",
+			"rawText": "系統調用",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "系统调用"
+			"originalText": "系統調用"
 		},
 		{
 			"type": "line",

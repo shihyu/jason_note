@@ -11,100 +11,100 @@ backgroundColor: white
 <!-- theme: gaia -->
 <!-- _class: lead -->
 
-# 第十一讲 线程与协程
+# 第十一講 線程與協程
 
-## 第二节 协程
+## 第二節 協程
 
 
 <br>
 <br>
 
-向勇 陈渝 李国良 
+向勇 陳渝 李國良 
 
 2022年秋季
 
 ---
 
-**提纲**
+**提綱**
 
-### 1. 协程的概念
-2. 协程的实现
-3. 协程示例
-4. 协程与操作系统内核
+### 1. 協程的概念
+2. 協程的實現
+3. 協程示例
+4. 協程與操作系統內核
 
 ![bg right:60% 70%](figs/coroutine-2.png)
 
 ---
 
-#### 线程存在的不足
+#### 線程存在的不足
 
-<!-- 什么是协程？ https://zhuanlan.zhihu.com/p/172471249 -->
-- 线程有啥不足？
-  -  大规模并发I/O操作场景
-     -  大量线程**占内存**总量大
-     -  管理线程程开销大
-        - 创建/删除/切换
-     -  访问共享数据易错
+<!-- 什麼是協程？ https://zhuanlan.zhihu.com/p/172471249 -->
+- 線程有啥不足？
+  -  大規模併發I/O操作場景
+     -  大量線程**佔內存**總量大
+     -  管理線程程開銷大
+        - 創建/刪除/切換
+     -  訪問共享數據易錯
 ![bg right:51% 100%](figs/thread-issue1.png)
 
 
 ---
-#### 协程(coroutine)的提出
+#### 協程(coroutine)的提出
 
-<!-- 并发编程漫谈之 协程详解--以python协程入手（三） https://blog.csdn.net/u013597671/article/details/89762233 -->
-协程由Melvin Conway在1963年提出并实现
-- 作者对协程的描述是“行为与主程序相似的子例程(subroutine)”
-- 协程采用同步编程方式支持大规模并发I/O异步操作
+<!-- 併發編程漫談之 協程詳解--以python協程入手（三） https://blog.csdn.net/u013597671/article/details/89762233 -->
+協程由Melvin Conway在1963年提出並實現
+- 作者對協程的描述是“行為與主程序相似的子例程(subroutine)”
+- 協程採用同步編程方式支持大規模併發I/O異步操作
 
-Donald  Knuth ：子例程是协程的特例
+Donald  Knuth ：子例程是協程的特例
 ![bg right:42% 100%](figs/coroutine-3.png)
 
-<!-- 协程的概念最早由Melvin Conway在1963年提出并实现，用于简化COBOL编译器的词法和句法分析器间的协作，当时他对协程的描述是“行为与主程序相似的子例程”。 -->
+<!-- 協程的概念最早由Melvin Conway在1963年提出並實現，用於簡化COBOL編譯器的詞法和句法分析器間的協作，當時他對協程的描述是“行為與主程序相似的子例程”。 -->
 
 ---
 
-#### 协程的定义
+#### 協程的定義
 
-<!-- 并发编程漫谈之 协程详解--以python协程入手（三） https://blog.csdn.net/u013597671/article/details/89762233 -->
-- Wiki的定义：协程是一种程序组件，是由子例程（过程、函数、例程、方法、子程序）的概念泛化而来的，子例程只有一个入口点且只返回一次，协程允许多个入口点，可在指定位置挂起和恢复执行。
+<!-- 併發編程漫談之 協程詳解--以python協程入手（三） https://blog.csdn.net/u013597671/article/details/89762233 -->
+- Wiki的定義：協程是一種程序組件，是由子例程（過程、函數、例程、方法、子程序）的概念泛化而來的，子例程只有一個入口點且只返回一次，協程允許多個入口點，可在指定位置掛起和恢復執行。
 
-协程的核心思想：控制流的主动让出与恢复
+協程的核心思想：控制流的主動讓出與恢復
 
-<!-- 协程(Coroutine)-ES中关于Generator/async/await的学习思考 https://blog.csdn.net/shenlei19911210/article/details/61194617 -->
+<!-- 協程(Coroutine)-ES中關於Generator/async/await的學習思考 https://blog.csdn.net/shenlei19911210/article/details/61194617 -->
 
 ![bg right:35% 100%](figs/coroutine-3.png)
 
 ---
-#### 协程（异步函数）与函数（同步函数）
+#### 協程（異步函數）與函數（同步函數）
 
-<!-- C++20协程原理和应用 https://zhuanlan.zhihu.com/p/498253158 -->
-- 相比普通函数，协程的函数体可以挂起并在任意时刻恢复执行
-  - **无栈协程是普通函数的泛化**
-  - **本课程**中的协程限指无栈协程(Stackless Coroutine)
+<!-- C++20協程原理和應用 https://zhuanlan.zhihu.com/p/498253158 -->
+- 相比普通函數，協程的函數體可以掛起並在任意時刻恢復執行
+  - **無棧協程是普通函數的泛化**
+  - **本課程**中的協程限指無棧協程(Stackless Coroutine)
 
 ![w:900](figs/function-coroutine.png)
 
 ---
 
-#### 协程(无栈协程)与用户线程的比较
+#### 協程(無棧協程)與用戶線程的比較
 
-- 协程的内存占用比线程小
-  - 线程数量越多，协程的性能优势越明显
-- 不需要多线程的锁机制，不存在同时写变量冲突，在协程中控制共享资源不加锁，只需要判断状态，所以执行效率比多线程高很多。
+- 協程的內存佔用比線程小
+  - 線程數量越多，協程的性能優勢越明顯
+- 不需要多線程的鎖機制，不存在同時寫變量衝突，在協程中控制共享資源不加鎖，只需要判斷狀態，所以執行效率比多線程高很多。
 ![w:750](figs/coroutinevsthread.png)
 
 ---
 
-#### 协程示例
+#### 協程示例
 
 ```
-def func()://普通函数
+def func()://普通函數
    print("a")
    print("b")
    print("c")
 ```
 ```
-def func()://协程函数
+def func()://協程函數
   print("a")
   yield
   print("b")
@@ -116,100 +116,100 @@ def func()://协程函数
 
 ---
 
-**提纲**
+**提綱**
 
-1. 协程的概念
-### 2. 协程的实现
-3. 协程示例
-4. 协程与操作系统内核
+1. 協程的概念
+### 2. 協程的實現
+3. 協程示例
+4. 協程與操作系統內核
 
 ![bg right:60% 70%](figs/coroutine-2.png)
 
 ---
 
-#### 协程的实现方式
+#### 協程的實現方式
 
-<!-- 并发编程漫谈之 协程详解--以python协程入手（三） https://blog.csdn.net/u013597671/article/details/89762233 -->
-2004年Lua的作者Ana Lucia de Moura和Roberto Ierusalimschy发表论文“[Revisiting Coroutines](https://www.researchgate.net/publication/2934331_Revisiting_Coroutines)”，提出依照三个因素来对协程进行分类：
-- 控制传递（Control-transfer）机制
-- 栈式（Stackful）构造
-- 编程语言中第一类（First-class）对象
-
----
-
-#### 基于控制传递的协程
-
-控制传递机制：对称（Symmetric） v.s. 非对称（Asymmetric）协程
-- 对称协程：
-   - 只提供一种传递操作，用于在协程间直接传递控制
-   - 对称协程都是等价的，控制权直接在对称协程之间进行传递
-   - 对称协程在挂起时主动指明另外一个对称协程来接收控制权
-- 非对称协程（半对称（Semi-symmetric）协程）：
-  - 提供调用和挂起两种操作，非对称协程挂起时将控制返回给调用者
-  - 调用者或上层管理者根据某调度策略调用其他非对称协程进行工作
-
-<!-- 出于支持并发而提供的协程通常是对称协程，用于表示独立的执行单元，如golang中的协程。用于产生值序列的协程则为非对称协程，如迭代器和生成器。
-这两种控制传递机制可以相互表达，因此要提供通用协程时只须实现其中一种即可。但是，两者表达力相同并不意味着在易用性上也相同。对称协程会把程序的控制流变得相对复杂而难以理解和管理，而非对称协程的行为在某种意义上与函数类似，因为控制总是返回给调用者。使用非对称协程写出的程序更加结构化。 -->
+<!-- 併發編程漫談之 協程詳解--以python協程入手（三） https://blog.csdn.net/u013597671/article/details/89762233 -->
+2004年Lua的作者Ana Lucia de Moura和Roberto Ierusalimschy發表論文“[Revisiting Coroutines](https://www.researchgate.net/publication/2934331_Revisiting_Coroutines)”，提出依照三個因素來對協程進行分類：
+- 控制傳遞（Control-transfer）機制
+- 棧式（Stackful）構造
+- 編程語言中第一類（First-class）對象
 
 ---
 
-#### 基于控制传递的协程
+#### 基於控制傳遞的協程
+
+控制傳遞機制：對稱（Symmetric） v.s. 非對稱（Asymmetric）協程
+- 對稱協程：
+   - 只提供一種傳遞操作，用於在協程間直接傳遞控制
+   - 對稱協程都是等價的，控制權直接在對稱協程之間進行傳遞
+   - 對稱協程在掛起時主動指明另外一個對稱協程來接收控制權
+- 非對稱協程（半對稱（Semi-symmetric）協程）：
+  - 提供調用和掛起兩種操作，非對稱協程掛起時將控制返回給調用者
+  - 調用者或上層管理者根據某調度策略調用其他非對稱協程進行工作
+
+<!-- 出於支持併發而提供的協程通常是對稱協程，用於表示獨立的執行單元，如golang中的協程。用於產生值序列的協程則為非對稱協程，如迭代器和生成器。
+這兩種控制傳遞機制可以相互表達，因此要提供通用協程時只須實現其中一種即可。但是，兩者表達力相同並不意味著在易用性上也相同。對稱協程會把程序的控制流變得相對複雜而難以理解和管理，而非對稱協程的行為在某種意義上與函數類似，因為控制總是返回給調用者。使用非對稱協程寫出的程序更加結構化。 -->
+
+---
+
+#### 基於控制傳遞的協程
 
 ![w:900](figs/coroutine-sym.png)
 
 ---
 
-#### 基于控制传递的协程
+#### 基於控制傳遞的協程
 
 ![w:850](figs/coroutine-asym.png)
 
 ---
 
-#### 有栈协程和无栈协程
+#### 有棧協程和無棧協程
 
-<!-- 有栈协程和无栈协程 https://cloud.tencent.com/developer/article/1888257 -->
-栈式（Stackful）构造：有栈(stackful)协程 v.s. 无栈(stackless)协程
-- 无栈协程：指可挂起/恢复的函数
-   - 无独立的上下文空间（栈），数据保存在堆上 
-   - 开销： 函数调用的开销
-- 有栈协程：用户态管理并运行的线程
-  - 有独立的上下文空间（栈）
-  - 开销：用户态切换线程的开销
-- 是否可以在任意嵌套函数中被挂起？
-  - 有栈协程：可以；无栈协程：不行
+<!-- 有棧協程和無棧協程 https://cloud.tencent.com/developer/article/1888257 -->
+棧式（Stackful）構造：有棧(stackful)協程 v.s. 無棧(stackless)協程
+- 無棧協程：指可掛起/恢復的函數
+   - 無獨立的上下文空間（棧），數據保存在堆上 
+   - 開銷： 函數調用的開銷
+- 有棧協程：用戶態管理並運行的線程
+  - 有獨立的上下文空間（棧）
+  - 開銷：用戶態切換線程的開銷
+- 是否可以在任意嵌套函數中被掛起？
+  - 有棧協程：可以；無棧協程：不行
 <!-- ![bg right:40% 100%](figs/function-coroutine.png) -->
 
 <!-- 
 https://zhuanlan.zhihu.com/p/25513336
-Coroutine从入门到劝退
+Coroutine從入門到勸退
 
-除此之外，wiki上还对coroutine做了分类：
-非对称式协程，asymmetric coroutine。
-对称式协程，symmetric coroutine。
-半协程，semi-coroutine。 
+除此之外，wiki上還對coroutine做了分類：
+非對稱式協程，asymmetric coroutine。
+對稱式協程，symmetric coroutine。
+半協程，semi-coroutine。 
 
 -->
 
 ---
-#### 基于第一类语言对象的协程
-<!-- 有栈协程和无栈协程 https://cloud.tencent.com/developer/article/1888257 -->
-第一类（First-class）语言对象：First-class对象 v.s. 受限协程 (**是否可以作为参数传递**)
-- First-class对象 : 协程被在语言中作为first-class对象
-   - 可以作为参数被传递，由函数创建并返回，并存储在一个数据结构中供后续操作
-   - 提供了良好的编程表达力，方便开发者对协程进行操作
--  受限协程
-   -  特定用途而实现的协程，协程对象限制在指定的代码结构中
+#### 基於第一類語言對象的協程
+<!-- 有棧協程和無棧協程 https://cloud.tencent.com/developer/article/1888257 -->
+第一類（First-class）語言對象：First-class對象 v.s. 受限協程 (**是否可以作為參數傳遞**)
+- First-class對象 : 協程被在語言中作為first-class對象
+   - 可以作為參數被傳遞，由函數創建並返回，並存儲在一個數據結構中供後續操作
+   - 提供了良好的編程表達力，方便開發者對協程進行操作
+-  受限協程
+   -  特定用途而實現的協程，協程對象限制在指定的代碼結構中
  
 ---
-#### 第一类（First-class）语言对象
-- 可以被赋值给一个变量
-- 可以嵌入到数据结构中
-- 可以作为参数传递给函数
-- 可以作为值被函数返回
+#### 第一類（First-class）語言對象
+- 可以被賦值給一個變量
+- 可以嵌入到數據結構中
+- 可以作為參數傳遞給函數
+- 可以作為值被函數返回
 
 ---
 
-#### Rust语言中的协程Future
+#### Rust語言中的協程Future
 
 <!--
 Ref: https://os.phil-opp.com/async-await/#example
@@ -221,7 +221,7 @@ A future is a representation of some operation which will **complete in the futu
 
 ---
 
-#### 基于有限状态机的Rust协程实现
+#### 基於有限狀態機的Rust協程實現
 
 ```rust
 async fn example(min_len: usize) -> String {
@@ -253,77 +253,77 @@ async fn example(min_len: usize) -> String {
 ---
 -->
 
-#### 基于轮询的 Future的异步执行过程
+#### 基於輪詢的 Future的異步執行過程
 
 <!--
-基于轮询的 Future的异步执行过程
+基於輪詢的 Future的異步執行過程
 
-- 执行器会轮询 `Future`，直到最终 `Future` 需要执行某种 I/O 
-- 该 `Future` 将被移交给处理 I/O 的反应器，即 `Future` 会等待该特定 I/O 
-- I/O 事件发生时，反应器将使用传递的`Waker` 参数唤醒 `Future` ，传回执行器
-- 循环上述三步，直到最终`future`任务完成（resolved）
-- 任务完成并得出结果时，执行器释放句柄和整个`Future`，整个调用过程就完成了
+- 執行器會輪詢 `Future`，直到最終 `Future` 需要執行某種 I/O 
+- 該 `Future` 將被移交給處理 I/O 的反應器，即 `Future` 會等待該特定 I/O 
+- I/O 事件發生時，反應器將使用傳遞的`Waker` 參數喚醒 `Future` ，傳回執行器
+- 循環上述三步，直到最終`future`任務完成（resolved）
+- 任務完成並得出結果時，執行器釋放句柄和整個`Future`，整個調用過程就完成了
   -->
 
 ![width:750px](figs/future-loop.jpg)
 
 ---
 
-#### 协程的优点
-- 协程创建成本小，降低了内存消耗
-- 协程自己的调度器，减少了 CPU 上下文切换的开销，提高了 CPU 缓存命中率
-- 减少同步加锁，整体上提高了性能
-- 可按照同步思维写异步代码
-  - 用同步的逻辑，写由协程调度的回调
+#### 協程的優點
+- 協程創建成本小，降低了內存消耗
+- 協程自己的調度器，減少了 CPU 上下文切換的開銷，提高了 CPU 緩存命中率
+- 減少同步加鎖，整體上提高了性能
+- 可按照同步思維寫異步代碼
+  - 用同步的邏輯，寫由協程調度的回調
 
 ---
-#### 协程 vs 线程 vs 进程 
-- 切换
-  - 进程：页表，堆，栈，寄存器
-  - 线程：栈，寄存器
-  - 协程：寄存器，不换栈
+#### 協程 vs 線程 vs 進程 
+- 切換
+  - 進程：頁表，堆，棧，寄存器
+  - 線程：棧，寄存器
+  - 協程：寄存器，不換棧
 
 ![w:560](figs/threadvsroutine1.png)![w:580](figs/threadvsroutine2.png)
 
 ---
 
-#### 协程 vs 线程 vs 进程 
+#### 協程 vs 線程 vs 進程 
 
-协程适合IO密集型场景
+協程適合IO密集型場景
 
 ![w:1200](figs/coroutine-asym3.jpeg)
 
 ---
 
-**提纲**
+**提綱**
 
-1. 协程的概念
-2. 协程的实现
-### 3. 协程示例
-4. 协程与操作系统内核
+1. 協程的概念
+2. 協程的實現
+### 3. 協程示例
+4. 協程與操作系統內核
 
 ![bg right:60% 70%](figs/coroutine-2.png)
 
 ---
 
-#### 支持协程的编程语言
-- 无栈协程：Rust、C++20、C Python、Java、Javascript等
-- 有栈协程（即线程）：Go、Java2022、Python、Lua
+#### 支持協程的編程語言
+- 無棧協程：Rust、C++20、C Python、Java、Javascript等
+- 有棧協程（即線程）：Go、Java2022、Python、Lua
    
 ![w:1100](figs/coroutine-langs.png)
 <!-- 
 https://wiki.brewlin.com/wiki/compiler/rust%E5%8D%8F%E7%A8%8B_%E8%B0%83%E5%BA%A6%E5%99%A8%E5%AE%9E%E7%8E%B0/
 
-理解协程的核心就是暂停和恢复，rust的协程通过状态机做到这一点，golang通过独立的栈做到这一点。理解这一点很重要 -->
+理解協程的核心就是暫停和恢復，rust的協程通過狀態機做到這一點，golang通過獨立的棧做到這一點。理解這一點很重要 -->
 
-<!-- Java 协程要来了 https://cloud.tencent.com/developer/article/1949981 -->
-<!-- 深入Lua：协程的实现 https://zhuanlan.zhihu.com/p/99608423 -->
+<!-- Java 協程要來了 https://cloud.tencent.com/developer/article/1949981 -->
+<!-- 深入Lua：協程的實現 https://zhuanlan.zhihu.com/p/99608423 -->
 
-<!-- Rust中的协程: Future与async/await https://zijiaw.github.io/posts/a7-rsfuture/ -->
+<!-- Rust中的協程: Future與async/await https://zijiaw.github.io/posts/a7-rsfuture/ -->
 
 ---
-### 使用协程 -- go
-<!-- Go by Example 中文版: 协程
+### 使用協程 -- go
+<!-- Go by Example 中文版: 協程
 https://gobyexample-cn.github.io/goroutines -->
 
 ```go
@@ -351,8 +351,8 @@ func main() {
 Making multiple HTTP requests using Python (synchronous, multiprocessing, multithreading, asyncio)
 https://www.youtube.com/watch?v=R4Oz8JUuM4s
 https://github.com/nikhilkumarsingh/async-http-requests-tut -->
-### 使用协程 -- python
-<!-- asyncio 是 Python 3.4 引入的标准库，直接内置了对异步 IO 的支持。只要在一个函数前面加上 async 关键字就可以将一个函数变为一个协程。 -->
+### 使用協程 -- python
+<!-- asyncio 是 Python 3.4 引入的標準庫，直接內置了對異步 IO 的支持。只要在一個函數前面加上 async 關鍵字就可以將一個函數變為一個協程。 -->
 
 ```python
 URL = 'https://httpbin.org/uuid'
@@ -374,7 +374,7 @@ b6e20fef-5ad7-49d9-b8ae-84b08e0f2d35
 1.5898115579998375
 ```
 
-<!-- 进程，线程和协程 (Process, Thread and Coroutine) 理论篇，实践篇，代码 python
+<!-- 進程，線程和協程 (Process, Thread and Coroutine) 理論篇，實踐篇，代碼 python
 https://leovan.me/cn/2021/04/process-thread-and-coroutine-theory/
 https://leovan.me/cn/2021/04/process-thread-and-coroutine-python-implementation/
 https://github.com/leovan/leovan.me/tree/master/scripts/cn/2021-04-03-process-thread-and-coroutine-python-implementation -->
@@ -382,7 +382,7 @@ https://github.com/leovan/leovan.me/tree/master/scripts/cn/2021-04-03-process-th
 
 
 ---
-### 使用协程 -- rust
+### 使用協程 -- rust
 
 <!-- https://rust-lang.github.io/async-book/01_getting_started/01_chapter.html -->
 
@@ -403,16 +403,16 @@ https://rust-lang.github.io/async-book/01_getting_started/01_chapter.html
 ```
 
 <!-- 
-用python 写一个os
+用python 寫一個os
 http://www.dabeaz.com/coroutines/
 http://www.dabeaz.com/coroutines/Coroutines.pdf -->
 ---
-### 进程/线程/协程性能比较
+### 進程/線程/協程性能比較
 <!-- 
 https://www.youtube.com/watch?v=R4Oz8JUuM4s
 https://github.com/nikhilkumarsingh/async-http-requests-tut
 git@github.com:nikhilkumarsingh/async-http-requests-tut.git -->
-单进程：28秒
+單進程：28秒
 ```python
 import requests
 from timer import timer
@@ -428,12 +428,12 @@ def main():
 
 ```
 ---
-### 进程/线程/协程性能比较
+### 進程/線程/協程性能比較
 <!-- 
 https://www.youtube.com/watch?v=R4Oz8JUuM4s
 https://github.com/nikhilkumarsingh/async-http-requests-tut
 git@github.com:nikhilkumarsingh/async-http-requests-tut.git -->
-多进程：7秒
+多進程：7秒
 ```python
 from multiprocessing.pool import Pool
 import requests
@@ -450,12 +450,12 @@ def main():
 ```
 
 ---
-### 进程/线程/协程性能比较
+### 進程/線程/協程性能比較
 <!-- 
 https://www.youtube.com/watch?v=R4Oz8JUuM4s
 https://github.com/nikhilkumarsingh/async-http-requests-tut
 git@github.com:nikhilkumarsingh/async-http-requests-tut.git -->
-线程：4秒
+線程：4秒
 ```python
 from concurrent.futures import ThreadPoolExecutor
 import requests
@@ -473,12 +473,12 @@ def main():
 ```
 
 ---
-### 进程/线程/协程性能比较
+### 進程/線程/協程性能比較
 <!-- 
 https://www.youtube.com/watch?v=R4Oz8JUuM4s
 https://github.com/nikhilkumarsingh/async-http-requests-tut
 git@github.com:nikhilkumarsingh/async-http-requests-tut.git -->
-协程：2秒
+協程：2秒
 ```python
 ...
 URL = 'https://httpbin.org/uuid'
@@ -505,7 +505,7 @@ aiohttp
 -->
 
 ---
-#### Rust线程与协程的[示例](https://deepu.tech/concurrency-in-modern-languages/)
+#### Rust線程與協程的[示例](https://deepu.tech/concurrency-in-modern-languages/)
 
 Multi-threaded concurrent webserver
 
@@ -529,7 +529,7 @@ fn main() {
 
 ---
 
-#### Rust线程与协程的[示例](https://deepu.tech/concurrency-in-modern-languages/)
+#### Rust線程與協程的[示例](https://deepu.tech/concurrency-in-modern-languages/)
 
 Asynchronous concurrent webserver
 
@@ -550,7 +550,7 @@ async fn main() {
 ```
 ---
 
-#### Rust线程与协程的[示例](https://deepu.tech/concurrency-in-modern-languages/)
+#### Rust線程與協程的[示例](https://deepu.tech/concurrency-in-modern-languages/)
 
 
 
@@ -579,35 +579,35 @@ fn main() { //Asynchronous multi-threaded concurrent webserver
 
 ---
 
-#### 线程/协程性能比较
+#### 線程/協程性能比較
 
 ![width:950px](figs/webserver-Thread-Coroutine-Performance.png)
 
 ---
 
-**提纲**
+**提綱**
 
-1. 协程的概念
-2. 协程的实现
-3. 协程示例
-### 4. 协程与操作系统内核
+1. 協程的概念
+2. 協程的實現
+3. 協程示例
+### 4. 協程與操作系統內核
 
 ![bg right:52% 95%](figs/coroutine-2.png)
 
 ---
 
-#### [线程与协程的统一调度](https://lexiangla.com/teams/k100041/classes/14e3d0ba33e211ecb668e28d1509205c/courses/8b52ee1233e111ecbcb4be09afb7b0ee)
+#### [線程與協程的統一調度](https://lexiangla.com/teams/k100041/classes/14e3d0ba33e211ecb668e28d1509205c/courses/8b52ee1233e111ecbcb4be09afb7b0ee)
 
-1. 协程与线程灵活绑定；
-2. 实现协程（future）在单CPU上并发执行；可在多CPU上并行执行；
-3. 线程和协程可采取不同的调度策略；
-4. 沿用线程中断的处理过程，**协程可被强制中断**；
+1. 協程與線程靈活綁定；
+2. 實現協程（future）在單CPU上併發執行；可在多CPU上並行執行；
+3. 線程和協程可採取不同的調度策略；
+4. 沿用線程中斷的處理過程，**協程可被強制中斷**；
 
 ![width:800px](figs/thread-corouting-scheduler.png)
 
 ---
 
-#### 用户态的协程控制块(CCB, Coroutine Control Block)
+#### 用戶態的協程控制塊(CCB, Coroutine Control Block)
 
 ![bg right:60% 90%](figs/coroutine-CCB.png)
 
@@ -615,18 +615,18 @@ Ref: [A Design and Implementation of Rust Coroutine with priority in Operating S
 
 ---
 
-#### 内核态的进程调度
+#### 內核態的進程調度
 
 ![width:850px](figs/coroutine-scheduler-bitmap.png)
 
 ---
 
-#### 线程和协程的性能比较
+#### 線程和協程的性能比較
 
 ![width:950px](figs/pipe-thread-coroutine-performance.png)
 
 ---
-#### 参考信息
+#### 參考信息
 - https://www.youtube.com/watch?v=R4Oz8JUuM4s
 - https://github.com/nikhilkumarsingh/async-http-requests-tut
 - http://www.dabeaz.com/coroutines/
@@ -637,11 +637,11 @@ Ref: [A Design and Implementation of Rust Coroutine with priority in Operating S
 
 ---
 
-### 小结
+### 小結
 
-1. 协程的概念
-2. 协程的实现
-3. 协程示例
-4. 协程与操作系统内核
+1. 協程的概念
+2. 協程的實現
+3. 協程示例
+4. 協程與操作系統內核
 
 ![bg right:40% 100%](figs/coroutine-2.png)

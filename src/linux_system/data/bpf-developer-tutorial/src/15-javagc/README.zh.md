@@ -1,16 +1,16 @@
-# eBPF 入门实践教程十五：使用 USDT 捕获用户态 Java GC 事件耗时
+# eBPF 入門實踐教程十五：使用 USDT 捕獲用戶態 Java GC 事件耗時
 
-eBPF (扩展的伯克利数据包过滤器) 是一项强大的网络和性能分析工具，被广泛应用在 Linux 内核上。eBPF 使得开发者能够动态地加载、更新和运行用户定义的代码，而无需重启内核或更改内核源代码。这个特性使得 eBPF 能够提供极高的灵活性和性能，使其在网络和系统性能分析方面具有广泛的应用。此外，eBPF 还支持使用 USDT (用户级静态定义跟踪点) 捕获用户态的应用程序行为。
+eBPF (擴展的伯克利數據包過濾器) 是一項強大的網絡和性能分析工具，被廣泛應用在 Linux 內核上。eBPF 使得開發者能夠動態地加載、更新和運行用戶定義的代碼，而無需重啟內核或更改內核源代碼。這個特性使得 eBPF 能夠提供極高的靈活性和性能，使其在網絡和系統性能分析方面具有廣泛的應用。此外，eBPF 還支持使用 USDT (用戶級靜態定義跟蹤點) 捕獲用戶態的應用程序行為。
 
-在我们的 eBPF 入门实践教程系列的这一篇，我们将介绍如何使用 eBPF 和 USDT 来捕获和分析 Java 的垃圾回收 (GC) 事件的耗时。
+在我們的 eBPF 入門實踐教程系列的這一篇，我們將介紹如何使用 eBPF 和 USDT 來捕獲和分析 Java 的垃圾回收 (GC) 事件的耗時。
 
-## USDT 介绍
+## USDT 介紹
 
-USDT 是一种在应用程序中插入静态跟踪点的机制，它允许开发者在程序的关键位置插入可用于调试和性能分析的探针。这些探针可以在运行时被 DTrace、SystemTap 或 eBPF 等工具动态激活，从而在不重启应用程序或更改程序代码的情况下，获取程序的内部状态和性能指标。USDT 在很多开源软件，如 MySQL、PostgreSQL、Ruby、Python 和 Node.js 等都有广泛的应用。
+USDT 是一種在應用程序中插入靜態跟蹤點的機制，它允許開發者在程序的關鍵位置插入可用於調試和性能分析的探針。這些探針可以在運行時被 DTrace、SystemTap 或 eBPF 等工具動態激活，從而在不重啟應用程序或更改程序代碼的情況下，獲取程序的內部狀態和性能指標。USDT 在很多開源軟件，如 MySQL、PostgreSQL、Ruby、Python 和 Node.js 等都有廣泛的應用。
 
-### 用户层面的追踪机制：用户级动态跟踪和 USDT
+### 用戶層面的追蹤機制：用戶級動態跟蹤和 USDT
 
-在用户层面进行动态跟踪，即用户级动态跟踪（User-Level Dynamic Tracing）允许我们对任何用户级别的代码进行插桩。比如，我们可以通过在 MySQL 服务器的 `dispatch_command()` 函数上进行插桩，来跟踪服务器的查询请求：
+在用戶層面進行動態跟蹤，即用戶級動態跟蹤（User-Level Dynamic Tracing）允許我們對任何用戶級別的代碼進行插樁。比如，我們可以通過在 MySQL 服務器的 `dispatch_command()` 函數上進行插樁，來跟蹤服務器的查詢請求：
 
 ```bash
 # ./uprobe 'p:cmd /opt/bin/mysqld:_Z16dispatch_command19enum_server_commandP3THDPcj +0(%dx):string'
@@ -20,9 +20,9 @@ Tracing uprobe cmd (p:cmd /opt/bin/mysqld:0x2dbd40 +0(%dx):string). Ctrl-C to en
 [...]
 ```
 
-这里我们使用了 `uprobe` 工具，它利用了 Linux 的内置功能：ftrace（跟踪器）和 uprobes（用户级动态跟踪，需要较新的 Linux 版本，例如 4.0 左右）。其他的跟踪器，如 perf_events 和 SystemTap，也可以实现此功能。
+這裡我們使用了 `uprobe` 工具，它利用了 Linux 的內置功能：ftrace（跟蹤器）和 uprobes（用戶級動態跟蹤，需要較新的 Linux 版本，例如 4.0 左右）。其他的跟蹤器，如 perf_events 和 SystemTap，也可以實現此功能。
 
-许多其他的 MySQL 函数也可以被跟踪以获取更多的信息。我们可以列出和计算这些函数的数量：
+許多其他的 MySQL 函數也可以被跟蹤以獲取更多的信息。我們可以列出和計算這些函數的數量：
 
 ```bash
 # ./uprobe -l /opt/bin/mysqld | more
@@ -36,17 +36,17 @@ adjust_time_range
 21809
 ```
 
-这有 21,000 个函数。我们也可以跟踪库函数，甚至是单个的指令偏移。
+這有 21,000 個函數。我們也可以跟蹤庫函數，甚至是單個的指令偏移。
 
-用户级动态跟踪的能力是非常强大的，它可以解决无数的问题。然而，使用它也有一些困难：需要确定需要跟踪的代码，处理函数参数，以及应对代码的更改。
+用戶級動態跟蹤的能力是非常強大的，它可以解決無數的問題。然而，使用它也有一些困難：需要確定需要跟蹤的代碼，處理函數參數，以及應對代碼的更改。
 
-用户级静态定义跟踪（User-level Statically Defined Tracing, USDT）则可以在某种程度上解决这些问题。USDT 探针（或者称为用户级 "marker"）是开发者在代码的关键位置插入的跟踪宏，提供稳定且已经过文档说明的 API。这使得跟踪工作变得更加简单。
+用戶級靜態定義跟蹤（User-level Statically Defined Tracing, USDT）則可以在某種程度上解決這些問題。USDT 探針（或者稱為用戶級 "marker"）是開發者在代碼的關鍵位置插入的跟蹤宏，提供穩定且已經過文檔說明的 API。這使得跟蹤工作變得更加簡單。
 
-使用 USDT，我们可以简单地跟踪一个名为 `mysql:query__start` 的探针，而不是去跟踪那个名为 `_Z16dispatch_command19enum_server_commandP3THDPcj` 的 C++ 符号，也就是 `dispatch_command()` 函数。当然，我们仍然可以在需要的时候去跟踪 `dispatch_command()` 以及其他 21,000 个 mysqld 函数，但只有当 USDT 探针无法解决问题的时候我们才需要这么做。
+使用 USDT，我們可以簡單地跟蹤一個名為 `mysql:query__start` 的探針，而不是去跟蹤那個名為 `_Z16dispatch_command19enum_server_commandP3THDPcj` 的 C++ 符號，也就是 `dispatch_command()` 函數。當然，我們仍然可以在需要的時候去跟蹤 `dispatch_command()` 以及其他 21,000 個 mysqld 函數，但只有當 USDT 探針無法解決問題的時候我們才需要這麼做。
 
-在 Linux 中的 USDT，无论是哪种形式的静态跟踪点，其实都已经存在了几十年。它最近由于 Sun 的 DTrace 工具的流行而再次受到关注，这使得许多常见的应用程序，包括 MySQL、PostgreSQL、Node.js、Java 等都加入了 USDT。SystemTap 则开发了一种可以消费这些 DTrace 探针的方式。
+在 Linux 中的 USDT，無論是哪種形式的靜態跟蹤點，其實都已經存在了幾十年。它最近由於 Sun 的 DTrace 工具的流行而再次受到關注，這使得許多常見的應用程序，包括 MySQL、PostgreSQL、Node.js、Java 等都加入了 USDT。SystemTap 則開發了一種可以消費這些 DTrace 探針的方式。
 
-你可能正在运行一个已经包含了 USDT 探针的 Linux 应用程序，或者可能需要重新编译（通常是 --enable-dtrace）。你可以使用 `readelf` 来进行检查，例如对于 Node.js：
+你可能正在運行一個已經包含了 USDT 探針的 Linux 應用程序，或者可能需要重新編譯（通常是 --enable-dtrace）。你可以使用 `readelf` 來進行檢查，例如對於 Node.js：
 
 ```bash
 # readelf -n node
@@ -67,23 +67,23 @@ Notes at offset 0x00c43058 with length 0x00000494:
 [...]
 ```
 
-这就是使用 --enable-dtrace 重新编译的 node，以及安装了提供 "dtrace" 功能来构建 USDT 支持的 systemtap-sdt-dev 包。这里显示了两个探针：node:gc__start（开始进行垃圾回收）和 node:http__client__request。
+這就是使用 --enable-dtrace 重新編譯的 node，以及安裝了提供 "dtrace" 功能來構建 USDT 支持的 systemtap-sdt-dev 包。這裡顯示了兩個探針：node:gc__start（開始進行垃圾回收）和 node:http__client__request。
 
-在这一点上，你可以使用 SystemTap 或者 LTTng 来跟踪这些探针。然而，内置的 Linux 跟踪器，比如 ftrace 和 perf_events，目前还无法做到这一点（尽管 perf_events 的支持正在开发中）。
+在這一點上，你可以使用 SystemTap 或者 LTTng 來跟蹤這些探針。然而，內置的 Linux 跟蹤器，比如 ftrace 和 perf_events，目前還無法做到這一點（儘管 perf_events 的支持正在開發中）。
 
-USDT 在内核态 eBPF 运行时，也可能产生比较大的性能开销，这时候也可以考虑使用用户态 eBPF 运行时，例如  [bpftime](https://github.com/eunomia-bpf/bpftime)。bpftime 是一个基于 LLVM JIT/AOT 的用户态 eBPF 运行时，它可以在用户态运行 eBPF 程序，和内核态的 eBPF 兼容，避免了内核态和用户态之间的上下文切换，从而提高了 eBPF 程序的执行效率。对于 uprobe 而言，bpftime 的性能开销比 kernel 小一个数量级。
+USDT 在內核態 eBPF 運行時，也可能產生比較大的性能開銷，這時候也可以考慮使用用戶態 eBPF 運行時，例如  [bpftime](https://github.com/eunomia-bpf/bpftime)。bpftime 是一個基於 LLVM JIT/AOT 的用戶態 eBPF 運行時，它可以在用戶態運行 eBPF 程序，和內核態的 eBPF 兼容，避免了內核態和用戶態之間的上下文切換，從而提高了 eBPF 程序的執行效率。對於 uprobe 而言，bpftime 的性能開銷比 kernel 小一個數量級。
 
-## Java GC 介绍
+## Java GC 介紹
 
-Java 作为一种高级编程语言，其自动垃圾回收（GC）是其核心特性之一。Java GC 的目标是自动地回收那些不再被程序使用的内存空间，从而减轻程序员在内存管理方面的负担。然而，GC 过程可能会引发应用程序的停顿，对程序的性能和响应时间产生影响。因此，对 Java GC 事件进行监控和分析，对于理解和优化 Java 应用的性能是非常重要的。
+Java 作為一種高級編程語言，其自動垃圾回收（GC）是其核心特性之一。Java GC 的目標是自動地回收那些不再被程序使用的內存空間，從而減輕程序員在內存管理方面的負擔。然而，GC 過程可能會引發應用程序的停頓，對程序的性能和響應時間產生影響。因此，對 Java GC 事件進行監控和分析，對於理解和優化 Java 應用的性能是非常重要的。
 
-在接下来的教程中，我们将演示如何使用 eBPF 和 USDT 来监控和分析 Java GC 事件的耗时，希望这些内容对你在使用 eBPF 进行应用性能分析方面的工作有所帮助。
+在接下來的教程中，我們將演示如何使用 eBPF 和 USDT 來監控和分析 Java GC 事件的耗時，希望這些內容對你在使用 eBPF 進行應用性能分析方面的工作有所幫助。
 
-## eBPF 实现机制
+## eBPF 實現機制
 
-Java GC 的 eBPF 程序分为内核态和用户态两部分，我们会分别介绍这两部分的实现机制。
+Java GC 的 eBPF 程序分為內核態和用戶態兩部分，我們會分別介紹這兩部分的實現機制。
 
-### 内核态程序
+### 內核態程序
 
 ```c
 /* SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause) */
@@ -169,28 +169,28 @@ int handle_mem_pool_gc_end(struct pt_regs *ctx)
 char LICENSE[] SEC("license") = "Dual BSD/GPL";
 ```
 
-首先，我们定义了两个映射（map）：
+首先，我們定義了兩個映射（map）：
 
-- `data_map`：这个 hashmap 存储每个进程 ID 的垃圾收集开始时间。`data_t` 结构体包含进程 ID、CPU ID 和时间戳。
-- `perf_map`：这是一个 perf event array，用于将数据发送回用户态程序。
+- `data_map`：這個 hashmap 存儲每個進程 ID 的垃圾收集開始時間。`data_t` 結構體包含進程 ID、CPU ID 和時間戳。
+- `perf_map`：這是一個 perf event array，用於將數據發送回用戶態程序。
 
-然后，我们有四个处理函数：`gc_start`、`gc_end` 和两个 USDT 处理函数 `handle_mem_pool_gc_start` 和 `handle_mem_pool_gc_end`。这些函数都用 BPF 的 `SEC("usdt")` 宏注解，以便在 Java 进程中捕获到与垃圾收集相关的 USDT 事件。
+然後，我們有四個處理函數：`gc_start`、`gc_end` 和兩個 USDT 處理函數 `handle_mem_pool_gc_start` 和 `handle_mem_pool_gc_end`。這些函數都用 BPF 的 `SEC("usdt")` 宏註解，以便在 Java 進程中捕獲到與垃圾收集相關的 USDT 事件。
 
-`gc_start` 函数在垃圾收集开始时被调用。它首先获取当前的 CPU ID、进程 ID 和时间戳，然后将这些数据存入 `data_map`。
+`gc_start` 函數在垃圾收集開始時被調用。它首先獲取當前的 CPU ID、進程 ID 和時間戳，然後將這些數據存入 `data_map`。
 
-`gc_end` 函数在垃圾收集结束时被调用。它执行与 `gc_start` 类似的操作，但是它还从 `data_map` 中检索开始时间，并计算垃圾收集的持续时间。如果持续时间超过了设定的阈值（变量 `time`），那么它将数据发送回用户态程序。
+`gc_end` 函數在垃圾收集結束時被調用。它執行與 `gc_start` 類似的操作，但是它還從 `data_map` 中檢索開始時間，並計算垃圾收集的持續時間。如果持續時間超過了設定的閾值（變量 `time`），那麼它將數據發送回用戶態程序。
 
-`handle_gc_start` 和 `handle_gc_end` 是针对垃圾收集开始和结束事件的处理函数，它们分别调用了 `gc_start` 和 `gc_end`。
+`handle_gc_start` 和 `handle_gc_end` 是針對垃圾收集開始和結束事件的處理函數，它們分別調用了 `gc_start` 和 `gc_end`。
 
-`handle_mem_pool_gc_start` 和 `handle_mem_pool_gc_end` 是针对内存池的垃圾收集开始和结束事件的处理函数，它们也分别调用了 `gc_start` 和 `gc_end`。
+`handle_mem_pool_gc_start` 和 `handle_mem_pool_gc_end` 是針對內存池的垃圾收集開始和結束事件的處理函數，它們也分別調用了 `gc_start` 和 `gc_end`。
 
-最后，我们有一个 `LICENSE` 数组，声明了该 BPF 程序的许可证，这是加载 BPF 程序所必需的。
+最後，我們有一個 `LICENSE` 數組，聲明瞭該 BPF 程序的許可證，這是加載 BPF 程序所必需的。
 
-### 用户态程序
+### 用戶態程序
 
-用户态程序的主要目标是加载和运行eBPF程序，以及处理来自内核态程序的数据。它是通过 libbpf 库来完成这些操作的。这里我们省略了一些通用的加载和运行 eBPF 程序的代码，只展示了与 USDT 相关的部分。
+用戶態程序的主要目標是加載和運行eBPF程序，以及處理來自內核態程序的數據。它是通過 libbpf 庫來完成這些操作的。這裡我們省略了一些通用的加載和運行 eBPF 程序的代碼，只展示了與 USDT 相關的部分。
 
-第一个函数 `get_jvmso_path` 被用来获取运行的Java虚拟机（JVM）的 `libjvm.so` 库的路径。首先，它打开了 `/proc/<pid>/maps` 文件，该文件包含了进程地址空间的内存映射信息。然后，它在文件中搜索包含 `libjvm.so` 的行，然后复制该行的路径到提供的参数中。
+第一個函數 `get_jvmso_path` 被用來獲取運行的Java虛擬機（JVM）的 `libjvm.so` 庫的路徑。首先，它打開了 `/proc/<pid>/maps` 文件，該文件包含了進程地址空間的內存映射信息。然後，它在文件中搜索包含 `libjvm.so` 的行，然後複製該行的路徑到提供的參數中。
 
 ```c
 static int get_jvmso_path(char *path)
@@ -222,7 +222,7 @@ static int get_jvmso_path(char *path)
 }
 ```
 
-接下来，我们看到的是将 eBPF 程序（函数 `handle_gc_start` 和 `handle_gc_end`）附加到Java进程的相关USDT探针上。每个程序都通过调用 `bpf_program__attach_usdt` 函数来实现这一点，该函数的参数包括BPF程序、进程ID、二进制路径以及探针的提供者和名称。如果探针挂载成功，`bpf_program__attach_usdt` 将返回一个链接对象，该对象将存储在skeleton的链接成员中。如果挂载失败，程序将打印错误消息并进行清理。
+接下來，我們看到的是將 eBPF 程序（函數 `handle_gc_start` 和 `handle_gc_end`）附加到Java進程的相關USDT探針上。每個程序都通過調用 `bpf_program__attach_usdt` 函數來實現這一點，該函數的參數包括BPF程序、進程ID、二進制路徑以及探針的提供者和名稱。如果探針掛載成功，`bpf_program__attach_usdt` 將返回一個鏈接對象，該對象將存儲在skeleton的鏈接成員中。如果掛載失敗，程序將打印錯誤消息並進行清理。
 
 ```c
     skel->links.handle_mem_pool_gc_start = bpf_program__attach_usdt(skel->progs.handle_gc_start, env.pid,
@@ -258,7 +258,7 @@ static int get_jvmso_path(char *path)
     }
 ```
 
-最后一个函数 `handle_event` 是一个回调函数，用于处理从perf event array收到的数据。这个函数会被 perf event array 触发，并在每次接收到新的事件时调用。函数首先将数据转换为 `data_t` 结构体，然后将当前时间格式化为字符串，并打印出事件的时间戳、CPU ID、进程 ID，以及垃圾回收的持续时间。
+最後一個函數 `handle_event` 是一個回調函數，用於處理從perf event array收到的數據。這個函數會被 perf event array 觸發，並在每次接收到新的事件時調用。函數首先將數據轉換為 `data_t` 結構體，然後將當前時間格式化為字符串，並打印出事件的時間戳、CPU ID、進程 ID，以及垃圾回收的持續時間。
 
 ```c
 static void handle_event(void *ctx, int cpu, void *data, __u32 data_sz)
@@ -275,25 +275,25 @@ static void handle_event(void *ctx, int cpu, void *data, __u32 data_sz)
 }
 ```
 
-## 安装依赖
+## 安裝依賴
 
-构建示例需要 clang、libelf 和 zlib。包名在不同的发行版中可能会有所不同。
+構建示例需要 clang、libelf 和 zlib。包名在不同的發行版中可能會有所不同。
 
-在 Ubuntu/Debian 上，你需要执行以下命令：
+在 Ubuntu/Debian 上，你需要執行以下命令：
 
 ```shell
 sudo apt install clang libelf1 libelf-dev zlib1g-dev
 ```
 
-在 CentOS/Fedora 上，你需要执行以下命令：
+在 CentOS/Fedora 上，你需要執行以下命令：
 
 ```shell
 sudo dnf install clang elfutils-libelf elfutils-libelf-devel zlib-devel
 ```
 
-## 编译运行
+## 編譯運行
 
-在对应的目录中，运行 Make 即可编译运行上述代码：
+在對應的目錄中，運行 Make 即可編譯運行上述代碼：
 
 ```console
 $ make
@@ -307,21 +307,21 @@ TIME     CPU     PID     GC TIME
 10:00:05 11%     12345   50ms
 ```
 
-完整源代码：
+完整源代碼：
 
 - <https://github.com/eunomia-bpf/bpf-developer-tutorial/tree/main/src/15-javagc>
 
-参考资料：
+參考資料：
 
 - <https://www.brendangregg.com/blog/2015-07-03/hacking-linux-usdt-ftrace.html>
 - <https://github.com/iovisor/bcc/blob/master/libbpf-tools/javagc.c>
 
-## 总结
+## 總結
 
-通过本篇 eBPF 入门实践教程，我们学习了如何使用 eBPF 和 USDT 动态跟踪和分析 Java 的垃圾回收(GC)事件。我们了解了如何在用户态应用程序中设置 USDT 跟踪点，以及如何编写 eBPF 程序来捕获这些跟踪点的信息，从而更深入地理解和优化 Java GC 的行为和性能。
+通過本篇 eBPF 入門實踐教程，我們學習瞭如何使用 eBPF 和 USDT 動態跟蹤和分析 Java 的垃圾回收(GC)事件。我們瞭解瞭如何在用戶態應用程序中設置 USDT 跟蹤點，以及如何編寫 eBPF 程序來捕獲這些跟蹤點的信息，從而更深入地理解和優化 Java GC 的行為和性能。
 
-此外，我们也介绍了一些关于 Java GC、USDT 和 eBPF 的基础知识和实践技巧，这些知识和技巧对于想要在网络和系统性能分析领域深入研究的开发者来说是非常有价值的。
+此外，我們也介紹了一些關於 Java GC、USDT 和 eBPF 的基礎知識和實踐技巧，這些知識和技巧對於想要在網絡和系統性能分析領域深入研究的開發者來說是非常有價值的。
 
-如果您希望学习更多关于 eBPF 的知识和实践，可以访问我们的教程代码仓库 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或网站 <https://eunomia.dev/zh/tutorials/> 以获取更多示例和完整的教程。
+如果您希望學習更多關於 eBPF 的知識和實踐，可以訪問我們的教程代碼倉庫 <https://github.com/eunomia-bpf/bpf-developer-tutorial> 或網站 <https://eunomia.dev/zh/tutorials/> 以獲取更多示例和完整的教程。
 
 > The original link of this article: <https://eunomia.dev/tutorials/15-javagc>

@@ -7,25 +7,25 @@ excalidraw-plugin: parsed
 
 
 # Text Elements
-kill(信号值) ^EgdrzoZT
+kill(信號值) ^EgdrzoZT
 
-进程A ^ycIqCppZ
+進程A ^ycIqCppZ
 
-进程B ^nNeD3iRe
+進程B ^nNeD3iRe
 
 signal_handler ^RI99OW42
 
-内核 ^CoZHPu7o
+內核 ^CoZHPu7o
 
 硬件 ^ZOdCNOXa
 
-外设中断 ^WVEqptx7
+外設中斷 ^WVEqptx7
 
-忽略/转发/产生信号 OR 杀死进程 ^CLT6RDPK
+忽略/轉發/產生信號 OR 殺死進程 ^CLT6RDPK
 
-信号 ^4FXrw53J
+信號 ^4FXrw53J
 
-信号 ^Oo1ers8x
+信號 ^Oo1ers8x
 
 %%
 # Drawing
@@ -116,13 +116,13 @@ signal_handler ^RI99OW42
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "kill(信号值)",
-			"rawText": "kill(信号值)",
+			"text": "kill(信號值)",
+			"rawText": "kill(信號值)",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "kill(信号值)"
+			"originalText": "kill(信號值)"
 		},
 		{
 			"type": "text",
@@ -150,13 +150,13 @@ signal_handler ^RI99OW42
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "进程A",
-			"rawText": "进程A",
+			"text": "進程A",
+			"rawText": "進程A",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程A"
+			"originalText": "進程A"
 		},
 		{
 			"type": "rectangle",
@@ -248,13 +248,13 @@ signal_handler ^RI99OW42
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "进程B",
-			"rawText": "进程B",
+			"text": "進程B",
+			"rawText": "進程B",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程B"
+			"originalText": "進程B"
 		},
 		{
 			"type": "text",
@@ -341,13 +341,13 @@ signal_handler ^RI99OW42
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "内核",
-			"rawText": "内核",
+			"text": "內核",
+			"rawText": "內核",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "内核"
+			"originalText": "內核"
 		},
 		{
 			"type": "rectangle",
@@ -572,13 +572,13 @@ signal_handler ^RI99OW42
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "外设中断",
-			"rawText": "外设中断",
+			"text": "外設中斷",
+			"rawText": "外設中斷",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "外设中断"
+			"originalText": "外設中斷"
 		},
 		{
 			"type": "rectangle",
@@ -644,13 +644,13 @@ signal_handler ^RI99OW42
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "忽略/转发/产生信号 \nOR 杀死进程",
-			"rawText": "忽略/转发/产生信号 OR 杀死进程",
+			"text": "忽略/轉發/產生信號 \nOR 殺死進程",
+			"rawText": "忽略/轉發/產生信號 OR 殺死進程",
 			"baseline": 40,
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "g-stbP-toqm34mE2_7kK1",
-			"originalText": "忽略/转发/产生信号 OR 杀死进程"
+			"originalText": "忽略/轉發/產生信號 OR 殺死進程"
 		},
 		{
 			"type": "arrow",
@@ -782,13 +782,13 @@ signal_handler ^RI99OW42
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "信号",
-			"rawText": "信号",
+			"text": "信號",
+			"rawText": "信號",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "信号"
+			"originalText": "信號"
 		},
 		{
 			"type": "text",
@@ -816,13 +816,13 @@ signal_handler ^RI99OW42
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "信号",
-			"rawText": "信号",
+			"text": "信號",
+			"rawText": "信號",
 			"baseline": 18,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "信号"
+			"originalText": "信號"
 		},
 		{
 			"type": "arrow",

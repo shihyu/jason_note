@@ -94,7 +94,7 @@ npm install -g ccusage
 ccusage blocks --live
 ```
 
-顯示即時的使用儀表板。
+顯示即時的使用儀錶板。
 
 ---
 

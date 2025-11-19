@@ -2,7 +2,7 @@
 
 這三個語言代表了系統程式設計的三種不同哲學：Zig 追求簡潔與控制、Rust 強調安全與正確性、Go 專注於生產力與併發。
 
-> 💡 本文提供配套的程式碼範例專案，涵蓋記憶體管理、併發模型、HTTP 伺服器、跨平台編譯和錯誤處理。
+> 💡 本文提供配套的程式碼範例專案，涵蓋記憶體管理、併發模型、HTTP 伺服器、跨平臺編譯和錯誤處理。
 > 詳見: [Zig-Rust-Go-Comparison](./Zig-Rust-Go-Comparison/)
 
 ### 設計哲學與記憶體管理
@@ -37,7 +37,7 @@ println!("{}", s3);  // ✓ s3 仍然有效
 
 完整範例請參考: [examples/01-memory-management/rust/](./Zig-Rust-Go-Comparison/examples/01-memory-management/rust/src/main.rs)
 
-**Go** 使用自動垃圾回收（GC），採用併發的三色標記清除演算法。Go 的 GC 持續改進，最新版本進一步提升了多核心系統的擴展性。雖然 GC 會帶來短暫的停頓（通常小於 100 微秒），但大幅簡化了開發流程。[^8][^9][^10][^11]
+**Go** 使用自動垃圾回收（GC），採用併發的三色標記清除演算法。Go 的 GC 持續改進，最新版本進一步提升了多核心繫統的擴展性。雖然 GC 會帶來短暫的停頓（通常小於 100 微秒），但大幅簡化了開發流程。[^8][^9][^10][^11]
 
 **程式碼範例**: Go 的 GC 自動管理記憶體：
 ```go
@@ -72,9 +72,9 @@ func main() {
 
 我們的簡化 HTTP 伺服器範例可在此查看: [examples/03-http-server/](./Zig-Rust-Go-Comparison/examples/03-http-server/)
 
-### 編譯與跨平台支援
+### 編譯與跨平臺支援
 
-**Zig** 的跨平台編譯能力極為出色。它內建支援所有主要平台的 libc 實作，能在單一機器上為所有目標平台建構執行檔。Zig 甚至能為 Apple Silicon 進行交叉簽名，這是目前其他 C/C++ 編譯器做不到的。[^14][^15]
+**Zig** 的跨平臺編譯能力極為出色。它內建支援所有主要平臺的 libc 實作，能在單一機器上為所有目標平臺建構執行檔。Zig 甚至能為 Apple Silicon 進行交叉簽名，這是目前其他 C/C++ 編譯器做不到的。[^14][^15]
 
 **實際範例**:
 ```bash
@@ -90,17 +90,17 @@ zig build-exe main.zig -target aarch64-linux
 # 無需安裝額外工具鏈！
 ```
 
-**Rust** 的跨平台編譯需要透過工具鏈配置，某些相依套件不支援 WebAssembly 或需要額外處理。不過 Rust 擁有強大的建構系統 Cargo，能自動處理相依性管理。[^16][^17][^18]
+**Rust** 的跨平臺編譯需要透過工具鏈配置，某些相依套件不支援 WebAssembly 或需要額外處理。不過 Rust 擁有強大的建構系統 Cargo，能自動處理相依性管理。[^16][^17][^18]
 
 ```bash
 # 安裝目標工具鏈
 rustup target add x86_64-pc-windows-gnu
 
-# 編譯到目標平台
+# 編譯到目標平臺
 cargo build --target x86_64-pc-windows-gnu
 ```
 
-**Go** 的跨平台編譯相對直觀，透過設定 `GOOS` 和 `GOARCH` 環境變數即可。使用 Zig 作為 C 編譯器可以讓 Go 的 CGO 專案輕鬆實現跨平台編譯。[^15]
+**Go** 的跨平臺編譯相對直觀，透過設定 `GOOS` 和 `GOARCH` 環境變數即可。使用 Zig 作為 C 編譯器可以讓 Go 的 CGO 專案輕鬆實現跨平臺編譯。[^15]
 
 ```bash
 # Linux AMD64
@@ -113,7 +113,7 @@ GOOS=windows GOARCH=amd64 go build
 GOOS=darwin GOARCH=arm64 go build
 ```
 
-跨平台編譯測試腳本: [tests/test_cross_compilation.sh](./Zig-Rust-Go-Comparison/tests/test_cross_compilation.sh)
+跨平臺編譯測試腳本: [tests/test_cross_compilation.sh](./Zig-Rust-Go-Comparison/tests/test_cross_compilation.sh)
 
 ### 併發模型
 
@@ -290,13 +290,13 @@ if err != nil {
 
 **Go** 在 Google、Uber、Netflix 等公司的後端系統中扮演關鍵角色。其在雲端原生應用和容器技術（如 Docker、Kubernetes）中的地位無可替代。[^34]
 
-**Zig** 的生產環境採用正在增長，預計未來三年將看到更廣泛的應用。有團隊在面對 Zig vs Rust 選擇時，基於學習曲線、工具鏈體驗和跨平台需求選擇了 Zig。[^47][^48][^36]
+**Zig** 的生產環境採用正在增長，預計未來三年將看到更廣泛的應用。有團隊在面對 Zig vs Rust 選擇時，基於學習曲線、工具鏈體驗和跨平臺需求選擇了 Zig。[^47][^48][^36]
 
 ### 適用場景建議
 
 **選擇 Zig**：
 - ✓ 需要細粒度記憶體控制
-- ✓ 跨平台編譯簡便性
+- ✓ 跨平臺編譯簡便性
 - ✓ 類 C 的簡潔性
 - ✓ 不需要自動記憶體安全保證
 
@@ -347,7 +347,7 @@ if err != nil {
 | 記憶體管理 | [zig/main.zig](./Zig-Rust-Go-Comparison/examples/01-memory-management/zig/main.zig) | [rust/src/main.rs](./Zig-Rust-Go-Comparison/examples/01-memory-management/rust/src/main.rs) | [go/main.go](./Zig-Rust-Go-Comparison/examples/01-memory-management/go/main.go) | [test_memory_management.sh](./Zig-Rust-Go-Comparison/tests/test_memory_management.sh) |
 | 併發模型 | [zig/main.zig](./Zig-Rust-Go-Comparison/examples/02-concurrency/zig/main.zig) | [rust/src/main.rs](./Zig-Rust-Go-Comparison/examples/02-concurrency/rust/src/main.rs) | [go/main.go](./Zig-Rust-Go-Comparison/examples/02-concurrency/go/main.go) | [test_concurrency.sh](./Zig-Rust-Go-Comparison/tests/test_concurrency.sh) |
 | HTTP 伺服器 | [zig/main.zig](./Zig-Rust-Go-Comparison/examples/03-http-server/zig/main.zig) | [rust/src/main.rs](./Zig-Rust-Go-Comparison/examples/03-http-server/rust/src/main.rs) | [go/main.go](./Zig-Rust-Go-Comparison/examples/03-http-server/go/main.go) | [test_http_server.sh](./Zig-Rust-Go-Comparison/tests/test_http_server.sh) |
-| 跨平台編譯 | [zig/main.zig](./Zig-Rust-Go-Comparison/examples/04-cross-compilation/zig/main.zig) | [rust/src/main.rs](./Zig-Rust-Go-Comparison/examples/04-cross-compilation/rust/src/main.rs) | [go/main.go](./Zig-Rust-Go-Comparison/examples/04-cross-compilation/go/main.go) | [test_cross_compilation.sh](./Zig-Rust-Go-Comparison/tests/test_cross_compilation.sh) |
+| 跨平臺編譯 | [zig/main.zig](./Zig-Rust-Go-Comparison/examples/04-cross-compilation/zig/main.zig) | [rust/src/main.rs](./Zig-Rust-Go-Comparison/examples/04-cross-compilation/rust/src/main.rs) | [go/main.go](./Zig-Rust-Go-Comparison/examples/04-cross-compilation/go/main.go) | [test_cross_compilation.sh](./Zig-Rust-Go-Comparison/tests/test_cross_compilation.sh) |
 | 錯誤處理 | [zig/main.zig](./Zig-Rust-Go-Comparison/examples/05-error-handling/zig/main.zig) | [rust/src/main.rs](./Zig-Rust-Go-Comparison/examples/05-error-handling/rust/src/main.rs) | [go/main.go](./Zig-Rust-Go-Comparison/examples/05-error-handling/go/main.go) | [test_error_handling.sh](./Zig-Rust-Go-Comparison/tests/test_error_handling.sh) |
 
 **執行所有測試**:

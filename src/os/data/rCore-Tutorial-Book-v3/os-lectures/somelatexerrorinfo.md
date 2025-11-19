@@ -1,4 +1,4 @@
-# latex 常见错误提示及原因简析
+# latex 常見錯誤提示及原因簡析
 
 from https://blog.csdn.net/dlaicxf/article/details/52527367
 
@@ -6,11 +6,11 @@ from https://blog.csdn.net/dlaicxf/article/details/52527367
 
 
 
-###  较为模糊的错误
+###  較為模糊的錯誤
 
 This is a list of error classes with ambiguos error messages. Here either the errors are have different causes and the message output is same or else the errors have the same root cause but the messages are different.
 
-| S.No | Class         | 错误提示信息                                           | 错误原因简析                                                 |
+| S.No | Class         | 錯誤提示信息                                           | 錯誤原因簡析                                                 |
 | :--- | :------------ | :----------------------------------------------------- | :----------------------------------------------------------- |
 | 1    | e_des         | ! LaTeX Error: There's no line here to end             | Usage of \\ at the end of a long label in 'description' environment |
 | 2    | e_center      | ! LaTeX Error: There's no line here to end             | Usage of \\ after the heading line in 'center' environment   |
@@ -43,9 +43,9 @@ This is a list of error classes with ambiguos error messages. Here either the er
 
 
 
-### 常见错误
+### 常見錯誤
 
-| S.No | Class         | 错误提示信息                                                 | 错误原因简析                                                 |
+| S.No | Class         | 錯誤提示信息                                                 | 錯誤原因簡析                                                 |
 | :--- | :------------ | :----------------------------------------------------------- | :----------------------------------------------------------- |
 | 1    | e_fileEnd     | ! File ended while scanning use of \end.                     | Generally caused because of missing a brace                  |
 | 2    | e_end         | No message only an asterisk, i.e *                           | Missing \end{document}                                       |

@@ -90,7 +90,7 @@ Rustup 是 Rust 程式語言的官方工具鏈管理器，主要負責：
 
 - 安裝與管理不同版本的 Rust 編譯器
 - 切換發布渠道（stable、beta、nightly）
-- 管理交叉編譯目標平台
+- 管理交叉編譯目標平臺
 - 安裝或移除 Rust 組件
 
 ### Rustup 常用指令：
@@ -164,7 +164,7 @@ Rustup 與 Cargo 的關係：
 - [RustPrimer繁體](https://shihyu.github.io/RustPrimerBook/)
 - [Rust學習筆記](https://skyao.io/learning-rust/)
 - [通過大量的鏈表學習Rust](https://weathfold.gitbooks.io/rust-too-many-lists-zhcn/content/)
-- [Rust入門祕籍](https://shihyu.github.io/rust_hacks/)
+- [Rust入門秘籍](https://shihyu.github.io/rust_hacks/)
 - [Rust 新手村 系列](https://ithelp.ithome.com.tw/users/20129675/ironman/4260?page=1)
 - [30 天深入淺出 Rust 系列](https://ithelp.ithome.com.tw/users/20111802/ironman/1742)
 - [30 天快快樂樂學 Rust 系列](https://ithelp.ithome.com.tw/users/20120293/ironman/5180)

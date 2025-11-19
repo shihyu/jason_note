@@ -7,34 +7,34 @@ excalidraw-plugin: parsed
 
 
 # Text Elements
-进程继续执行 ^civJ0kAx
+進程繼續執行 ^civJ0kAx
 
-进程 ^BCJVH8ZY
+進程 ^BCJVH8ZY
 
 sys_async_read ^1YqUYTPI
 
-异步系统调用 ^Lm01RAUs
+異步系統調用 ^Lm01RAUs
 
 OS kernel ^vhIkgWjV
 
-数据没准备好 ^zFS35GNs
+數據沒準備好 ^zFS35GNs
 
-等待磁盘数据 ^4l1N0fGM
+等待磁盤數據 ^4l1N0fGM
 
-数据准备好
-复制数据 ^UTvK4Os9
+數據準備好
+複製數據 ^UTvK4Os9
 
-复制完成 ^fUTFDj0v
+複製完成 ^fUTFDj0v
 
-发出async_read
-指定的信号 ^Peq5q6BO
+發出async_read
+指定的信號 ^Peq5q6BO
 
-信号处理例程
-接收信号并
-处理数据 ^SC6hOMAr
+信號處理例程
+接收信號並
+處理數據 ^SC6hOMAr
 
-将数据从内核空间
-复制到进程用户空间 ^55xRyF4q
+將數據從內核空間
+複製到進程用戶空間 ^55xRyF4q
 
 返回 ^RfMVNzFK
 
@@ -139,13 +139,13 @@ OS kernel ^vhIkgWjV
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "进程继续执行",
-			"rawText": "进程继续执行",
+			"text": "進程繼續執行",
+			"rawText": "進程繼續執行",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程继续执行"
+			"originalText": "進程繼續執行"
 		},
 		{
 			"type": "text",
@@ -173,13 +173,13 @@ OS kernel ^vhIkgWjV
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "进程",
-			"rawText": "进程",
+			"text": "進程",
+			"rawText": "進程",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "进程"
+			"originalText": "進程"
 		},
 		{
 			"type": "text",
@@ -299,13 +299,13 @@ OS kernel ^vhIkgWjV
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "异步系统调用",
-			"rawText": "异步系统调用",
+			"text": "異步系統調用",
+			"rawText": "異步系統調用",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "异步系统调用"
+			"originalText": "異步系統調用"
 		},
 		{
 			"type": "text",
@@ -380,13 +380,13 @@ OS kernel ^vhIkgWjV
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "数据没准备好",
-			"rawText": "数据没准备好",
+			"text": "數據沒準備好",
+			"rawText": "數據沒準備好",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "数据没准备好"
+			"originalText": "數據沒準備好"
 		},
 		{
 			"type": "text",
@@ -414,13 +414,13 @@ OS kernel ^vhIkgWjV
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "等待磁盘数据",
-			"rawText": "等待磁盘数据",
+			"text": "等待磁盤數據",
+			"rawText": "等待磁盤數據",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "等待磁盘数据"
+			"originalText": "等待磁盤數據"
 		},
 		{
 			"type": "arrow",
@@ -501,13 +501,13 @@ OS kernel ^vhIkgWjV
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "数据准备好\n复制数据",
-			"rawText": "数据准备好\n复制数据",
+			"text": "數據準備好\n複製數據",
+			"rawText": "數據準備好\n複製數據",
 			"baseline": 40,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "数据准备好\n复制数据"
+			"originalText": "數據準備好\n複製數據"
 		},
 		{
 			"type": "arrow",
@@ -584,13 +584,13 @@ OS kernel ^vhIkgWjV
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "复制完成",
-			"rawText": "复制完成",
+			"text": "複製完成",
+			"rawText": "複製完成",
 			"baseline": 19,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "复制完成"
+			"originalText": "複製完成"
 		},
 		{
 			"type": "text",
@@ -623,13 +623,13 @@ OS kernel ^vhIkgWjV
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "发出async_read\n指定的信号",
-			"rawText": "发出async_read\n指定的信号",
+			"text": "發出async_read\n指定的信號",
+			"rawText": "發出async_read\n指定的信號",
 			"baseline": 40,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "发出async_read\n指定的信号"
+			"originalText": "發出async_read\n指定的信號"
 		},
 		{
 			"type": "arrow",
@@ -710,13 +710,13 @@ OS kernel ^vhIkgWjV
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "信号处理例程\n接收信号并\n处理数据",
-			"rawText": "信号处理例程\n接收信号并\n处理数据",
+			"text": "信號處理例程\n接收信號並\n處理數據",
+			"rawText": "信號處理例程\n接收信號並\n處理數據",
 			"baseline": 62,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "信号处理例程\n接收信号并\n处理数据"
+			"originalText": "信號處理例程\n接收信號並\n處理數據"
 		},
 		{
 			"type": "image",
@@ -775,13 +775,13 @@ OS kernel ^vhIkgWjV
 			"link": null,
 			"fontSize": 20,
 			"fontFamily": 4,
-			"text": "将数据从内核空间\n复制到进程用户空间",
-			"rawText": "将数据从内核空间\n复制到进程用户空间",
+			"text": "將數據從內核空間\n複製到進程用戶空間",
+			"rawText": "將數據從內核空間\n複製到進程用戶空間",
 			"baseline": 40,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "将数据从内核空间\n复制到进程用户空间"
+			"originalText": "將數據從內核空間\n複製到進程用戶空間"
 		},
 		{
 			"type": "arrow",

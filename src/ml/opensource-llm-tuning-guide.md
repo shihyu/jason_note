@@ -334,7 +334,7 @@ add_safety_guardrails(model, medical_guidelines)
 ### 💬 社群資源
 - [LocalLLaMA Reddit](https://reddit.com/r/LocalLLaMA)
 - [HuggingFace Discord](https://discord.gg/huggingface)
-- [LLM 台灣社群](https://www.facebook.com/groups/llm.tw)
+- [LLM 臺灣社群](https://www.facebook.com/groups/llm.tw)
 
 ---
 

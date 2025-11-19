@@ -1554,7 +1554,7 @@ grep Huge /proc/meminfo
 # 監控 CPU 使用
 htop
 
-# 查看中斷分布
+# 查看中斷分佈
 cat /proc/interrupts
 ```
 

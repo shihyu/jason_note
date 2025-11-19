@@ -78,7 +78,7 @@ sudo ln -s /usr/bin/xdg-open ~/.mybin/o
 # 互動式時區設定
 tzselect
 
-# 設定台北時區
+# 設定臺北時區
 sudo cp /usr/share/zoneinfo/Asia/Taipei /etc/localtime
 
 # 安裝時間同步工具

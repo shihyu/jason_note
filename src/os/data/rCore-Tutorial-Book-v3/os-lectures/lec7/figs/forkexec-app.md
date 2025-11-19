@@ -17,29 +17,29 @@ OS kernel ^bD4D8zwE
 
 1. OS 初始化 ^HaFIP3HB
 
-2. 找到initproc执行程序并
-   创建initproc进程控制块 ^f2t3WwHz
+2. 找到initproc執行程序並
+   創建initproc進程控制塊 ^f2t3WwHz
 
-3. 执行initproc APP ^s2oL4MM0
+3. 執行initproc APP ^s2oL4MM0
 
 initproc ^mvEkzmmP
 
-4. initproc执行fork+exec(user_shell)
-   ，执行waitpid等待子进程  ^mqgNMG6Q
+4. initproc執行fork+exec(user_shell)
+   ，執行waitpid等待子進程  ^mqgNMG6Q
 
-5. user_shell在得到字符串输入"forexec"后，
-   执行fork+exec(forkexec)，
-   执行waitpid等待子进程 ^yS2BD4Bl
+5. user_shell在得到字符串輸入"forexec"後，
+   執行fork+exec(forkexec)，
+   執行waitpid等待子進程 ^yS2BD4Bl
 
-7. hello_world执行完毕并退出 ^LJKDmhfK
+7. hello_world執行完畢並退出 ^LJKDmhfK
 
-6. forkexec执行fork+exec(helloworld)
-   ，执行waitpid等待子进程 ^qPuAzxPL
+6. forkexec執行fork+exec(helloworld)
+   ，執行waitpid等待子進程 ^qPuAzxPL
 
-8. forkexec执行waitpid返回，并退出   ^rl9IsCzH
+8. forkexec執行waitpid返回，並退出   ^rl9IsCzH
 
-9. user_shell执行waitpid返回，
-   回到第5步等待字符串输入 ^kFEqilbY
+9. user_shell執行waitpid返回，
+   回到第5步等待字符串輸入 ^kFEqilbY
 
 %%
 # Drawing
@@ -345,13 +345,13 @@ initproc ^mvEkzmmP
 			"link": null,
 			"fontSize": 38.32380814985793,
 			"fontFamily": 4,
-			"text": "2. 找到initproc执行程序并\n   创建initproc进程控制块",
-			"rawText": "2. 找到initproc执行程序并\n   创建initproc进程控制块",
+			"text": "2. 找到initproc執行程序並\n   創建initproc進程控制塊",
+			"rawText": "2. 找到initproc執行程序並\n   創建initproc進程控制塊",
 			"baseline": 77,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "2. 找到initproc执行程序并\n   创建initproc进程控制块"
+			"originalText": "2. 找到initproc執行程序並\n   創建initproc進程控制塊"
 		},
 		{
 			"type": "text",
@@ -379,13 +379,13 @@ initproc ^mvEkzmmP
 			"link": null,
 			"fontSize": 38.32380814985793,
 			"fontFamily": 4,
-			"text": "3. 执行initproc APP",
-			"rawText": "3. 执行initproc APP",
+			"text": "3. 執行initproc APP",
+			"rawText": "3. 執行initproc APP",
 			"baseline": 35,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "3. 执行initproc APP"
+			"originalText": "3. 執行initproc APP"
 		},
 		{
 			"type": "rectangle",
@@ -472,13 +472,13 @@ initproc ^mvEkzmmP
 			"link": null,
 			"fontSize": 38.32380814985793,
 			"fontFamily": 4,
-			"text": "4. initproc执行fork+exec(user_shell)\n   ，执行waitpid等待子进程 ",
-			"rawText": "4. initproc执行fork+exec(user_shell)\n   ，执行waitpid等待子进程 ",
+			"text": "4. initproc執行fork+exec(user_shell)\n   ，執行waitpid等待子進程 ",
+			"rawText": "4. initproc執行fork+exec(user_shell)\n   ，執行waitpid等待子進程 ",
 			"baseline": 77,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "4. initproc执行fork+exec(user_shell)\n   ，执行waitpid等待子进程 "
+			"originalText": "4. initproc執行fork+exec(user_shell)\n   ，執行waitpid等待子進程 "
 		},
 		{
 			"type": "text",
@@ -506,13 +506,13 @@ initproc ^mvEkzmmP
 			"link": null,
 			"fontSize": 38.32380814985793,
 			"fontFamily": 4,
-			"text": "5. user_shell在得到字符串输入\"forexec\"后，\n   执行fork+exec(forkexec)，\n   执行waitpid等待子进程",
-			"rawText": "5. user_shell在得到字符串输入\"forexec\"后，\n   执行fork+exec(forkexec)，\n   执行waitpid等待子进程",
+			"text": "5. user_shell在得到字符串輸入\"forexec\"後，\n   執行fork+exec(forkexec)，\n   執行waitpid等待子進程",
+			"rawText": "5. user_shell在得到字符串輸入\"forexec\"後，\n   執行fork+exec(forkexec)，\n   執行waitpid等待子進程",
 			"baseline": 119,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "5. user_shell在得到字符串输入\"forexec\"后，\n   执行fork+exec(forkexec)，\n   执行waitpid等待子进程"
+			"originalText": "5. user_shell在得到字符串輸入\"forexec\"後，\n   執行fork+exec(forkexec)，\n   執行waitpid等待子進程"
 		},
 		{
 			"type": "text",
@@ -540,13 +540,13 @@ initproc ^mvEkzmmP
 			"link": null,
 			"fontSize": 38.32380814985793,
 			"fontFamily": 4,
-			"text": "7. hello_world执行完毕并退出",
-			"rawText": "7. hello_world执行完毕并退出",
+			"text": "7. hello_world執行完畢並退出",
+			"rawText": "7. hello_world執行完畢並退出",
 			"baseline": 35,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "7. hello_world执行完毕并退出"
+			"originalText": "7. hello_world執行完畢並退出"
 		},
 		{
 			"type": "text",
@@ -574,13 +574,13 @@ initproc ^mvEkzmmP
 			"link": null,
 			"fontSize": 38.32380814985793,
 			"fontFamily": 4,
-			"text": "6. forkexec执行fork+exec(helloworld)\n   ，执行waitpid等待子进程",
-			"rawText": "6. forkexec执行fork+exec(helloworld)\n   ，执行waitpid等待子进程",
+			"text": "6. forkexec執行fork+exec(helloworld)\n   ，執行waitpid等待子進程",
+			"rawText": "6. forkexec執行fork+exec(helloworld)\n   ，執行waitpid等待子進程",
 			"baseline": 77,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "6. forkexec执行fork+exec(helloworld)\n   ，执行waitpid等待子进程"
+			"originalText": "6. forkexec執行fork+exec(helloworld)\n   ，執行waitpid等待子進程"
 		},
 		{
 			"type": "text",
@@ -608,13 +608,13 @@ initproc ^mvEkzmmP
 			"link": null,
 			"fontSize": 38.32380814985793,
 			"fontFamily": 4,
-			"text": "8. forkexec执行waitpid返回，并退出  ",
-			"rawText": "8. forkexec执行waitpid返回，并退出  ",
+			"text": "8. forkexec執行waitpid返回，並退出  ",
+			"rawText": "8. forkexec執行waitpid返回，並退出  ",
 			"baseline": 35,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "8. forkexec执行waitpid返回，并退出  "
+			"originalText": "8. forkexec執行waitpid返回，並退出  "
 		},
 		{
 			"type": "text",
@@ -642,13 +642,13 @@ initproc ^mvEkzmmP
 			"link": null,
 			"fontSize": 38.32380814985793,
 			"fontFamily": 4,
-			"text": "9. user_shell执行waitpid返回，\n   回到第5步等待字符串输入",
-			"rawText": "9. user_shell执行waitpid返回，\n   回到第5步等待字符串输入",
+			"text": "9. user_shell執行waitpid返回，\n   回到第5步等待字符串輸入",
+			"rawText": "9. user_shell執行waitpid返回，\n   回到第5步等待字符串輸入",
 			"baseline": 77,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "9. user_shell执行waitpid返回，\n   回到第5步等待字符串输入"
+			"originalText": "9. user_shell執行waitpid返回，\n   回到第5步等待字符串輸入"
 		},
 		{
 			"id": "J83m5xaWUCVZ5Cxn6iawi",

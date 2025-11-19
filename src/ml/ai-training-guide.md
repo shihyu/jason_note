@@ -16,7 +16,7 @@
 ### 基礎語言模型
 - **Llama 3.1/3.2** (Meta): 效能優異，有 8B、70B 等版本
 - **Mistral/Mixtral**: 輕量但效果好，適合財務分析
-- **Qwen 2.5** (阿里): 中文支援佳，適合中文財報
+- **Qwen 2.5** (阿里): 中文支援佳，適閤中文財報
 - **Yi-1.5** (零一萬物): 中英雙語能力強
 - **Phi-2** (Microsoft): 2.7B 參數，適合初學者
 - **TinyLlama**: 1.1B 參數，訓練快速
@@ -104,7 +104,7 @@ import yfinance as yf
 ticker = yf.Ticker("TSLA")
 financials = ticker.financials
 
-# 台灣公開資訊觀測站
+# 臺灣公開資訊觀測站
 # https://mops.twse.com.tw/
 ```
 
@@ -387,7 +387,7 @@ def analyze_financial_report(report_text):
 ## 學習路線圖
 
 ### Week 1-2: 基礎學習
-- 了解 Transformer 架構
+- 瞭解 Transformer 架構
 - 熟悉 Hugging Face 生態系統
 - 在 Colab 跑通第一個模型
 

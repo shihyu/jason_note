@@ -494,7 +494,7 @@ atop -r /var/log/atop.log
 atop -r /var/log/atop.log -b 10:00
 ```
 
-### glances - 跨平台監控
+### glances - 跨平臺監控
 ```bash
 # 基本監控
 glances
@@ -1484,7 +1484,7 @@ pidstat -w 1 5
 pidstat -w 1 1 | sort -k4 -rn | head
 ```
 
-### 即時監控儀表板
+### 即時監控儀錶板
 ```bash
 # 使用 tmux 分割畫面
 tmux new-session \; \

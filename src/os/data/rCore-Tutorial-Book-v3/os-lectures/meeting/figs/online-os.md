@@ -7,10 +7,10 @@ excalidraw-plugin: parsed
 
 
 # Text Elements
-头歌实践教学平台 ^eaBhqb6y
+頭歌實踐教學平臺 ^eaBhqb6y
 
 CourseGrading(希冀)
-信息类专业教学与科研一体化平台 ^nPzCMeM5
+信息類專業教學與科研一體化平臺 ^nPzCMeM5
 
 
 # Embedded files
@@ -83,13 +83,13 @@ f4f541a1b9034f72c4e8287c0cd0788eb618cf90: [[Pasted Image 20220728180738_848.png]
 			"link": null,
 			"fontSize": 58.24096679687501,
 			"fontFamily": 4,
-			"text": "头歌实践教学平台",
-			"rawText": "头歌实践教学平台",
+			"text": "頭歌實踐教學平臺",
+			"rawText": "頭歌實踐教學平臺",
 			"baseline": 53,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "头歌实践教学平台"
+			"originalText": "頭歌實踐教學平臺"
 		},
 		{
 			"type": "image",
@@ -148,13 +148,13 @@ f4f541a1b9034f72c4e8287c0cd0788eb618cf90: [[Pasted Image 20220728180738_848.png]
 			"link": null,
 			"fontSize": 41.0605618616108,
 			"fontFamily": 4,
-			"text": "CourseGrading(希冀)\n信息类专业教学与科研一体化平台",
-			"rawText": "CourseGrading(希冀)\n信息类专业教学与科研一体化平台",
+			"text": "CourseGrading(希冀)\n信息類專業教學與科研一體化平臺",
+			"rawText": "CourseGrading(希冀)\n信息類專業教學與科研一體化平臺",
 			"baseline": 82,
 			"textAlign": "center",
 			"verticalAlign": "top",
 			"containerId": null,
-			"originalText": "CourseGrading(希冀)\n信息类专业教学与科研一体化平台"
+			"originalText": "CourseGrading(希冀)\n信息類專業教學與科研一體化平臺"
 		},
 		{
 			"type": "image",
