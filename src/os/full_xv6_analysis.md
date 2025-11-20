@@ -1697,7 +1697,7 @@ bootasm.S
 
 -   Find below table from [x86-64处理器的几种运行模式](https://zhuanlan.zhihu.com/p/69334474)
 
-![](https://picx.zhimg.com/v2-c2f06a68a48172453878ff804d956d27_1440w.jpg?source=172ae18b)
+![](images/v2-c2f06a68a48172453878ff804d956d27_1440w.jpg?source=172ae18b)
 
 One thing worthwhile noticing is mentioned earlier that 
 ```
@@ -1721,7 +1721,7 @@ This [article - 2.1. Internal Microprocessor Architecture](https://www.byclb.com
 
 Figure below shows the format of a descriptor for the 80286 through the Pentium II. Note that each descriptor is 8 bytes in length, so the global and local descriptor tables are each a maximum of 64K bytes in length. Descriptors for the 80286 and the 80386 through the Pentium II differ slightly, but the 80286 descriptor is upward-compatible (with reserved 2 bytes). Though we can see the 'ugly' structure of descriptor in 80386 to be backward compatible with 80286.
 
-![Descriptor difference between 80286 and 80386](https://www.byclb.com/TR/Tutorials/microprocessors/ch2_1_dosyalar/image006.gif)
+![Descriptor difference between 80286 and 80386](images/image006.gif)
 
 **2.2 
 ```
@@ -2890,6 +2890,6 @@ As you can see, it uses -b binary to embed the files initcode and entryother, so
 -   **Youtube collections**  -   [xv6 Kernel by hhp3](https://www.youtube.com/watch?v=fWUJKH0RNFE&list=PLbtzT1TYeoMhTPzyTZboW_j7TPAnjv9XB) : 38 videos
 ---
 
-[![:arrow_left:](https://assets.hackmd.io/build/emojify.js/dist/images/basic/arrow_left.png)Previous article - Q&A for Linux](https://hackmd.io/@MarconiJiang/QnA_Linux)  
-[![:arrow_right:](https://assets.hackmd.io/build/emojify.js/dist/images/basic/arrow_right.png)Next article - x86 RISC-C Implementation](https://hackmd.io/@MarconiJiang/xv6-riscv-implementation)  
-[![:arrow_up:](https://assets.hackmd.io/build/emojify.js/dist/images/basic/arrow_up.png)back to marconi's blog](https://marconi1964.github.io/)
+[![:arrow_left:](images/arrow_left.png)Previous article - Q&A for Linux](https://hackmd.io/@MarconiJiang/QnA_Linux)  
+[![:arrow_right:](images/arrow_right.png)Next article - x86 RISC-C Implementation](https://hackmd.io/@MarconiJiang/xv6-riscv-implementation)  
+[![:arrow_up:](images/arrow_up.png)back to marconi's blog](https://marconi1964.github.io/)
