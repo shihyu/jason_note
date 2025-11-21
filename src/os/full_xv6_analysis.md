@@ -1,17 +1,8 @@
 # 讀書心得 : 操作系統原型 - xv6 分析與實踐 羅秋明 著 - HackMD
 
-###### [](#tags-202211-unixv6-xv6 "tags-202211-unixv6-xv6")tags: 
-```
-2022/11
-```
- 
-```
-unixv6
-```
- 
-```
-xv6
-```
+###### [](#tags-202211-unixv6-xv6 "tags-202211-unixv6-xv6")
+
+tags: 2022/11 unixv6 xv6
 
 (2022/11/20) 發現這本難得的好書, 對 Unix/Linux kernel 的實作了解大有幫助. 該作者目前已經發行四本(實體)書, 分別是
 
@@ -20,11 +11,7 @@ xv6
 3.  "操作系統原型 - xv6 分析與實踐" : 在裸硬件上, 設計與實現操作系統核心機制的能力
 4.  "Linux 技術內幕" : 鑽研真實操作系統代碼(程式碼)
 
-For English documentation related to 
-```
-xv6
-```
-, I found two articles valueable, they are official [xv6 book (pdf) - xv6 a simple, Unix-like teaching operating system](https://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf), and [Lions' Commentary on UNIX' 6th Edition, John Lions (pdf version)](http://www.lemis.com/grog/Documentation/Lions/book.pdf)
+For English documentation related to xv6 , I found two articles valueable, they are official [xv6 book (pdf) - xv6 a simple, Unix-like teaching operating system](https://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf), and [Lions' Commentary on UNIX' 6th Edition, John Lions (pdf version)](http://www.lemis.com/grog/Documentation/Lions/book.pdf)
 
 latest update on 2023/02/27
 
@@ -127,61 +114,15 @@ gdb -q kernel
 
 ```
 
-#### [](#A-note-about-xv6-gdb-environment "A-note-about-xv6-gdb-environment")**A note about xv6 gdb environment**
+#### [](#A-note-about-xv6-gdb-environment "A-note-about-xv6-gdb-environment")
 
-In above 3.2-1 example, we will find below message after launching 
-```
-gdb
-```
-, and learn that there is a 
-```
-.gdbinit
-```
- file in xv6 directory which set up the environment for 
-```
-gdb
-```
- client. However, 
-```
-gdb
-```
- does not execute that 
-```
-.gdinit
-```
+In above 3.2-1 example, we will find below message after launching gdb , and learn that there is a .gdbinit
+ file in xv6 directory which set up the environment for gdb client. However, gdb does not execute that .gdinit
  for security concern. We need to enable it manually. In 3.2-2, we specify the working directory of xv6 and 
-```
-.gdbinit
-```
- in command line option 
-```
-gdb -iex
-```
-. Or in 3.2-3, we create a file 
-```
-.gdbinit
-```
- under 
-```
-~/
-```
- directory with the content of 
-```
-"set auto-load safe-path /home/kernel-dev/myworks/xv6-public"
-```
- so 
-```
-gdb
-```
- will execute xv6 
-```
-.gdbinit
-```
- to set up environments. Either way can work.
+.gdbinit in command line option `gdb -iex` . Or in 3.2-3, we create a file `.gdbinit` under `~/` directory with the content of `"set auto-load safe-path /home/kernel-dev/myworks/xv6-public"` so `gdb` will execute xv6 `
+.gdbinit` to set up environments. Either way can work.
 
 ```
-
-
 Reading symbols from kernel...done.
 warning: File "/home/kernel-dev/myworks/xv6-public/.gdbinit" auto-loading has been declined by your `auto-load safe-path' set to "$debugdir:$datadir/auto-load".
 To enable execution of this file add
@@ -193,52 +134,29 @@ line to your configuration file "/home/kernel-dev/.gdbinit".
 For more information about this security protection see the
 "Auto-loading safe path" section in the GDB manual.  E.g., run from the shell:
 	info "(gdb)Auto-loading safe path"
-
-
-
-
-
 ```
 
-#### [](#Notes-about-QEMU-and-gdb-commands-to-exit "Notes-about-QEMU-and-gdb-commands-to-exit")**Notes about QEMU and gdb commands to exit**
+#### [](#Notes-about-QEMU-and-gdb-commands-to-exit "Notes-about-QEMU-and-gdb-commands-to-exit")
 
 For those who are not familiar with QEMU and gdb, you might need to know the commands how to exit. Without knowing those commands, you will be annoyed by how to exit QEMU and gdb.
 
--   CTRL+a then x (not CTRL-x) : Exit from QEMU (if using 
-    ```
-    qemu-nox
-    ```
-     command)
--   CTRL+ALT or CTRL+ALT+g : Escape mouse and keyboard from QEMU screen, back to host (if using 
-    ```
-    qemu
-    ```
-     command)
+-   CTRL+a then x (not CTRL-x) : Exit from QEMU (if using `qemu-nox` command)
+-   CTRL+ALT or CTRL+ALT+g : Escape mouse and keyboard from QEMU screen, back to host (if using` qemu` command)
 -   CTRL+d : Exit from gdb
 
 Please look for more QEMU and gdb commands in respective manuals.
 
 ---
 
-### [](#xv6-shell-command-introduction "xv6-shell-command-introduction")xv6 shell command introduction
+### [](#xv6-shell-command-introduction "xv6-shell-command-introduction")
 
-After launching xv6 
-```
-CPUS=4 make qemu-nox
-```
-, it shows shell command prompt 
-```
-$
-```
+After launching xv6 `CPUS=4 make qemu-nox` , it shows shell command prompt `$`
 . (One strange thing is, xv6 system becomes very slow when I set CPUS to 8 or 16. Could be an interesting topic to dive into details)
 
 ```
 SeaBIOS (version rel-1.13.0-0-gf21b5a4aeb02-prebuilt.qemu.org)
 
-
 iPXE (http://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+1FF908D0+1FEF08D0 CA00
-                                                                               
-
 
 Booting from Hard Disk..xv6...
 cpu1: starting xv6 on cpu1
@@ -248,28 +166,11 @@ cpu0: starting xv6 on cpu0
 sb: size 1000 nblocks 941 ninodes 200 nlog 30 logstart 2 inodestart 32 bmap sta8
 init: starting sh
 $ 
-
 ```
 
-After entering xv6 system, we can issue 
-```
-ls
-```
- command to check what else commands available, as in left column of below table. Also list the files in xv6 source code with 
-```
-*.c
-```
- as reference. There are quite some differences beween both, as the 
-```
-xv6
-```
- column shows the commands in user space, and 
-```
-host Linux
-```
- shows commands/API's for both user and kernel space.
+After entering xv6 system, we can issue `ls` command to check what else commands available, as in left column of below table. Also list the files in xv6 source code with `*.c` as reference. There are quite some differences beween both, as the `xv6` column shows the commands in user space, and `host Linux` shows commands/API's for both user and kernel space.
 
-<table><tbody><tr><td>host Linux</td><td>qemu - xv6</td></tr><tr><td><div data-position="6358" data-infoprefix-length="6" data-endline="203" data-startline="155" class="part code-block-wrapper code-block-toolbar-handled"><pre class="click-event-handled"><code class="shell hljs"><div class="wrapper"><p><span class="hljs-meta">$ </span><span class="language-bash"><span class="hljs-built_in">ls</span> *.c</span>                       
+<table class=""><tbody><tr><td>host Linux</td><td>qemu - xv6</td></tr><tr><td><div data-position="6358" data-infoprefix-length="6" data-endline="203" data-startline="155" class="part code-block-wrapper code-block-toolbar-handled"><pre class="click-event-handled"><code class="shell hljs"><div class="wrapper"><p><span class="hljs-meta">$ </span><span class="language-bash"><span class="hljs-built_in">ls</span> *.c</span>                       
 bio.c
 bootmain.c
 cat.c
@@ -338,33 +239,20 @@ zombie         2 17 12260
 console        3 22 0
 </p></div></code></pre></div></td></tr></tbody></table>
 
-#### [](#xv6-special-command-CTRLp "xv6-special-command-CTRLp")**xv6 special command CTRL+p**
+#### [](#xv6-special-command-CTRLp "xv6-special-command-CTRLp")
 
-People familiar with Linux know the command 
-```
-ps
-```
- to list the active processes running (in foreground and background). In xv6, there is a special command, or should be called key strokes, of CTRL+p, to print out the active processes. Below is the example when CTRL+p were pressed at vx6 prompt.
+People familiar with Linux know the command `ps` to list the active processes running (in foreground and background). In xv6, there is a special command, or should be called key strokes, of CTRL+p, to print out the active processes. Below is the example when CTRL+p were pressed at vx6 prompt.
 
 ```
-
-
 $ 1 sleep  init 80103db7 80103e59 80104857 801058e9 8010564e
 2 sleep  sh 80103d7c 801002c2 80100f8c 80104b52 80104857 801058e9 8010564e
-
-
-
-
-
 ```
 
-#### [](#Check-xv6-source-code-of-the-active-processes-on-host-Linux "Check-xv6-source-code-of-the-active-processes-on-host-Linux")**Check xv6 source code of the active processes on host Linux**
+#### [](#Check-xv6-source-code-of-the-active-processes-on-host-Linux "Check-xv6-source-code-of-the-active-processes-on-host-Linux")
 
 Then we switch back to the host Linux environment, to check what those numbers mean in xv6 source code.
 
 ```
-
-
 # now we switch back to host Linux environment
 cd xv6-public
 # print out the source code of running process `init`
@@ -383,11 +271,6 @@ addr2line -e kernel 80103d7c 801002c2 80100f8c 80104b52 80104857 801058e9 801056
 # /home/kernel-dev/myworks/xv6-public/syscall.c:141
 # /home/kernel-dev/myworks/xv6-public/trap.c:44
 # /home/kernel-dev/myworks/xv6-public/trapasm.S:21
-
-
-
-
-
 ```
 
 ---
@@ -703,7 +586,7 @@ UPROGS=\
 
 Let's check the result.
 
-<table><tbody><tr><td>host Linux</td><td>qemu - xv6</td></tr><tr><td><div data-position="12172" data-infoprefix-length="6" data-endline="412" data-startline="401" class="part code-block-wrapper code-block-toolbar-handled"><pre class="click-event-handled"><code class="shell hljs"><div class="wrapper"><p><span class="hljs-meta">$ </span><span class="language-bash">make</span>
+<table class=""><tbody><tr><td>host Linux</td><td>qemu - xv6</td></tr><tr><td><div data-position="12172" data-infoprefix-length="6" data-endline="412" data-startline="401" class="part code-block-wrapper code-block-toolbar-handled"><pre class="click-event-handled"><code class="shell hljs"><div class="wrapper"><p><span class="hljs-meta">$ </span><span class="language-bash">make</span>
 <span class="hljs-meta"># </span><span class="language-bash">output of make is omitted</span>
 <span class="hljs-meta">$ </span><span class="language-bash"><span class="hljs-built_in">ls</span> -l my-app*</span>
 -rw-rw-r-- 1 kernel-dev kernel-dev 43517 十一 20 15:44 my-app.asm
@@ -1697,7 +1580,7 @@ bootasm.S
 
 -   Find below table from [x86-64处理器的几种运行模式](https://zhuanlan.zhihu.com/p/69334474)
 
-![](images/v2-c2f06a68a48172453878ff804d956d27_1440w.jpg?source=172ae18b)
+![](https://picx.zhimg.com/v2-c2f06a68a48172453878ff804d956d27_1440w.jpg?source=172ae18b)
 
 One thing worthwhile noticing is mentioned earlier that 
 ```
@@ -1721,7 +1604,7 @@ This [article - 2.1. Internal Microprocessor Architecture](https://www.byclb.com
 
 Figure below shows the format of a descriptor for the 80286 through the Pentium II. Note that each descriptor is 8 bytes in length, so the global and local descriptor tables are each a maximum of 64K bytes in length. Descriptors for the 80286 and the 80386 through the Pentium II differ slightly, but the 80286 descriptor is upward-compatible (with reserved 2 bytes). Though we can see the 'ugly' structure of descriptor in 80386 to be backward compatible with 80286.
 
-![Descriptor difference between 80286 and 80386](images/image006.gif)
+![Descriptor difference between 80286 and 80386](https://www.byclb.com/TR/Tutorials/microprocessors/ch2_1_dosyalar/image006.gif)
 
 **2.2 
 ```
@@ -2308,7 +2191,7 @@ Program Header:
 LOAD off 0x00001000 vaddr 0x00100000 paddr 0x00100000 align 2**12
 filesz 0x000063ca memsz 0x000063ca flags r-x
 LOAD off 0x000073e0 vaddr 0x001073e0 paddr 0x001073e0 align 2**12
-filesz 0x0000079e memsz 0x000067e4 flags rwSTACK off 0x00000000 vaddr 0x00000000 paddr 0x00000000 align 2**2
+filesz 0x0000079e memsz 0x000067e4 flags rw␂STACK off 0x00000000 vaddr 0x00000000 paddr 0x00000000 align 2**2
 filesz 0x00000000 memsz 0x00000000 flags rwx
 
 ```
@@ -2890,6 +2773,6 @@ As you can see, it uses -b binary to embed the files initcode and entryother, so
 -   **Youtube collections**  -   [xv6 Kernel by hhp3](https://www.youtube.com/watch?v=fWUJKH0RNFE&list=PLbtzT1TYeoMhTPzyTZboW_j7TPAnjv9XB) : 38 videos
 ---
 
-[![:arrow_left:](images/arrow_left.png)Previous article - Q&A for Linux](https://hackmd.io/@MarconiJiang/QnA_Linux)  
-[![:arrow_right:](images/arrow_right.png)Next article - x86 RISC-C Implementation](https://hackmd.io/@MarconiJiang/xv6-riscv-implementation)  
-[![:arrow_up:](images/arrow_up.png)back to marconi's blog](https://marconi1964.github.io/)
+[![:arrow_left:](https://assets.hackmd.io/build/emojify.js/dist/images/basic/arrow_left.png)Previous article - Q&A for Linux](https://hackmd.io/@MarconiJiang/QnA_Linux)  
+[![:arrow_right:](https://assets.hackmd.io/build/emojify.js/dist/images/basic/arrow_right.png)Next article - x86 RISC-C Implementation](https://hackmd.io/@MarconiJiang/xv6-riscv-implementation)  
+[![:arrow_up:](https://assets.hackmd.io/build/emojify.js/dist/images/basic/arrow_up.png)back to marconi's blog](https://marconi1964.github.io/)
