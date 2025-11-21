@@ -1,8 +1,6 @@
-# 讀書心得 : 操作系統原型 - xv6 分析與實踐 羅秋明 著 - HackMD
+[MarconiJiang](https://hackmd.io/@MarconiJiang)讀書心得 : 操作系統原型 - xv6 分析與實踐 羅秋明 著
 
-###### [](#tags-202211-unixv6-xv6 "tags-202211-unixv6-xv6")
-
-tags: 2022/11 unixv6 xv6
+[![HackMD Logo](https://hackmd.io/Logo.svg) HackMD](https://hackmd.io?utm_source=view-page&utm_medium=logo-nav)
 
 (2022/11/20) 發現這本難得的好書, 對 Unix/Linux kernel 的實作了解大有幫助. 該作者目前已經發行四本(實體)書, 分別是
 
@@ -11,48 +9,50 @@ tags: 2022/11 unixv6 xv6
 3.  "操作系統原型 - xv6 分析與實踐" : 在裸硬件上, 設計與實現操作系統核心機制的能力
 4.  "Linux 技術內幕" : 鑽研真實操作系統代碼(程式碼)
 
-For English documentation related to xv6 , I found two articles valueable, they are official [xv6 book (pdf) - xv6 a simple, Unix-like teaching operating system](https://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf), and [Lions' Commentary on UNIX' 6th Edition, John Lions (pdf version)](http://www.lemis.com/grog/Documentation/Lions/book.pdf)
+For English documentation related to `xv6`, I found two articles valueable, they are official [xv6 book (pdf) - xv6 a simple, Unix-like teaching operating system](https://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf), and [Lions' Commentary on UNIX' 6th Edition, John Lions (pdf version)](http://www.lemis.com/grog/Documentation/Lions/book.pdf)
 
 latest update on 2023/02/27
 
----
+* * *
 
 **Table of Contents**
 
--   [讀書心得 : 操作系統原型 - xv6 分析與實踐 羅秋明 著](#讀書心得--操作系統原型---xv6-分析與實踐-羅秋明-著 "讀書心得 : 操作系統原型 - xv6 分析與實踐 羅秋明 著")  -   [Chapter 0 How to read this article / 建議閱讀順序](#Chapter-0-How-to-read-this-article--建議閱讀順序 "Chapter 0 How to read this article / 建議閱讀順序")
-      -   [Chapter 1 xv6 installation](#Chapter-1-xv6-installation "Chapter 1 xv6 installation")    -   [What is xv6](#What-is-xv6 "What is xv6")
-              -   [Install xv6 and run xv6 on QEMU / gdb](#Install-xv6-and-run-xv6-on-QEMU--gdb "Install xv6 and run xv6 on QEMU / gdb")
-              -   [xv6 shell command introduction](#xv6-shell-command-introduction "xv6 shell command introduction")
-          
-      -   [Chapter 2 - xv6 Experiements, Level One](#Chapter-2---xv6-Experiements-Level-One "Chapter 2 - xv6 Experiements, Level One")    -   [How xv6 Makefile generates the disk image](#How-xv6-Makefile-generates-the-disk-image "How xv6 Makefile generates the disk image")
-              -   [Experiment 1-0 : Modify xv6 greetings](#Experiment-1-0--Modify-xv6-greetings "Experiment 1-0 : Modify xv6 greetings")
-              -   [Experiment 1-1 : Adding one user application (new shell command) on xv6](#Experiment-1-1--Adding-one-user-application-new-shell-command-on-xv6 "Experiment 1-1 : Adding one user application (new shell command) on xv6")
-              -   [Experiment 1-2 : Adding one kernel System Call in xv6](#Experiment-1-2--Adding-one-kernel-System-Call-in-xv6 "Experiment 1-2 : Adding one kernel System Call in xv6")
-              -   [Deep dive into how the System Call example works - 1 : more descriptions](#Deep-dive-into-how-the-System-Call-example-works---1--more-descriptions "Deep dive into how the System Call example works - 1 : more descriptions")
-              -   [Deep dive into how the System Call example works - 2 : trace by gdb](#Deep-dive-into-how-the-System-Call-example-works---2--trace-by-gdb "Deep dive into how the System Call example works - 2 : trace by gdb")
-              -   [Deep dive into how the System Call example works - 3 : another example getpid](#Deep-dive-into-how-the-System-Call-example-works---3--another-example-getpid "Deep dive into how the System Call example works - 3 : another example getpid")
-              -   [xv6 binary and image](#xv6-binary-and-image "xv6 binary and image")
-              -   [File Descriptors](#File-Descriptors "File Descriptors")
-              -   [Testing multiple cores and fork](#Testing-multiple-cores-and-fork "Testing multiple cores and fork")
-    
--   [讀書心得 - xv6 a simple, Unix-like teaching operating system](#讀書心得---xv6-a-simple-Unix-like-teaching-operating-system "讀書心得 - xv6 a simple, Unix-like teaching operating system")  -   [Appendix A - Source code in boot sequence](#Appendix-A---Source-code-in-boot-sequence "Appendix A - Source code in boot sequence")
-      -   [Appendix B - xv6 Bootstrap](#Appendix-B---xv6-Bootstrap "Appendix B - xv6 Bootstrap")
-      -   [References](#References "References")
----
+-   [讀書心得 : 操作系統原型 - xv6 分析與實踐 羅秋明 著](https://hackmd.io/@MarconiJiang/xv6_analysis#%E8%AE%80%E6%9B%B8%E5%BF%83%E5%BE%97--%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%B5%B1%E5%8E%9F%E5%9E%8B---xv6-%E5%88%86%E6%9E%90%E8%88%87%E5%AF%A6%E8%B8%90-%E7%BE%85%E7%A7%8B%E6%98%8E-%E8%91%97)
+    -   [Chapter 0 How to read this article / 建議閱讀順序](https://hackmd.io/@MarconiJiang/xv6_analysis#Chapter-0-How-to-read-this-article--%E5%BB%BA%E8%AD%B0%E9%96%B1%E8%AE%80%E9%A0%86%E5%BA%8F)
+    -   [Chapter 1 xv6 installation](https://hackmd.io/@MarconiJiang/xv6_analysis#Chapter-1-xv6-installation)
+        -   [What is xv6](https://hackmd.io/@MarconiJiang/xv6_analysis#What-is-xv6)
+        -   [Install xv6 and run xv6 on QEMU / gdb](https://hackmd.io/@MarconiJiang/xv6_analysis#Install-xv6-and-run-xv6-on-QEMU--gdb)
+        -   [xv6 shell command introduction](https://hackmd.io/@MarconiJiang/xv6_analysis#xv6-shell-command-introduction)
+    -   [Chapter 2 - xv6 Experiements, Level One](https://hackmd.io/@MarconiJiang/xv6_analysis#Chapter-2---xv6-Experiements-Level-One)
+        -   [How xv6 Makefile generates the disk image](https://hackmd.io/@MarconiJiang/xv6_analysis#How-xv6-Makefile-generates-the-disk-image)
+        -   [Experiment 1-0 : Modify xv6 greetings](https://hackmd.io/@MarconiJiang/xv6_analysis#Experiment-1-0--Modify-xv6-greetings)
+        -   [Experiment 1-1 : Adding one user application (new shell command) on xv6](https://hackmd.io/@MarconiJiang/xv6_analysis#Experiment-1-1--Adding-one-user-application-new-shell-command-on-xv6)
+        -   [Experiment 1-2 : Adding one kernel System Call in xv6](https://hackmd.io/@MarconiJiang/xv6_analysis#Experiment-1-2--Adding-one-kernel-System-Call-in-xv6)
+        -   [Deep dive into how the System Call example works - 1 : more descriptions](https://hackmd.io/@MarconiJiang/xv6_analysis#Deep-dive-into-how-the-System-Call-example-works---1--more-descriptions)
+        -   [Deep dive into how the System Call example works - 2 : trace by gdb](https://hackmd.io/@MarconiJiang/xv6_analysis#Deep-dive-into-how-the-System-Call-example-works---2--trace-by-gdb)
+        -   [Deep dive into how the System Call example works - 3 : another example getpid](https://hackmd.io/@MarconiJiang/xv6_analysis#Deep-dive-into-how-the-System-Call-example-works---3--another-example-getpid)
+        -   [xv6 binary and image](https://hackmd.io/@MarconiJiang/xv6_analysis#xv6-binary-and-image)
+        -   [File Descriptors](https://hackmd.io/@MarconiJiang/xv6_analysis#File-Descriptors)
+        -   [Testing multiple cores and fork](https://hackmd.io/@MarconiJiang/xv6_analysis#Testing-multiple-cores-and-fork)
+-   [讀書心得 - xv6 a simple, Unix-like teaching operating system](https://hackmd.io/@MarconiJiang/xv6_analysis#%E8%AE%80%E6%9B%B8%E5%BF%83%E5%BE%97---xv6-a-simple-Unix-like-teaching-operating-system)
+    -   [Appendix A - Source code in boot sequence](https://hackmd.io/@MarconiJiang/xv6_analysis#Appendix-A---Source-code-in-boot-sequence)
+    -   [Appendix B - xv6 Bootstrap](https://hackmd.io/@MarconiJiang/xv6_analysis#Appendix-B---xv6-Bootstrap)
+    -   [References](https://hackmd.io/@MarconiJiang/xv6_analysis#References)
 
-## [](#Chapter-0-How-to-read-this-article--建議閱讀順序 "Chapter-0-How-to-read-this-article--建議閱讀順序")Chapter 0 How to read this article / 建議閱讀順序
+* * *
+
+## [](https://hackmd.io/@MarconiJiang/xv6_analysis#Chapter-0-How-to-read-this-article--%E5%BB%BA%E8%AD%B0%E9%96%B1%E8%AE%80%E9%A0%86%E5%BA%8F)
 
 本文主要參考 2 本書的心得 "操作系統原型 - xv6 分析與實踐 羅秋明 著" 跟 "xv6 a simple, Unix-like teaching operating system".
 
-喜歡實作的人, 可以從 ["Chapter 1 xv6 installation"](#Chapter-1-xv6-installation) 開始操作, 下載 xv6 原始碼, 進行編譯及修改, 再進入 xv6 的原理, 介紹 bootstrap 到 kernel 的實踐.
+喜歡實作的人, 可以從 ["Chapter 1 xv6 installation"](https://hackmd.io/@MarconiJiang/xv6_analysis#Chapter-1-xv6-installation) 開始操作, 下載 xv6 原始碼, 進行編譯及修改, 再進入 xv6 的原理, 介紹 bootstrap 到 kernel 的實踐.
 
-如果是喜歡先理解原理的人, 可以先從 [xv6 a simple Unix like teaching operating system](#%E8%AE%80%E6%9B%B8%E5%BF%83%E5%BE%97---xv6-a-simple-Unix-like-teaching-operating-system) 的 Appendix A & B 開始讀起.
+如果是喜歡先理解原理的人, 可以先從 [xv6 a simple Unix like teaching operating system](https://hackmd.io/@MarconiJiang/xv6_analysis#%E8%AE%80%E6%9B%B8%E5%BF%83%E5%BE%97---xv6-a-simple-Unix-like-teaching-operating-system) 的 Appendix A & B 開始讀起.
 
----
+* * *
 
-## [](#Chapter-1-xv6-installation "Chapter-1-xv6-installation")Chapter 1 xv6 installation
-
-### [](#What-is-xv6 "What-is-xv6")What is xv6
+## [](https://hackmd.io/@MarconiJiang/xv6_analysis#Chapter-1-xv6-installation)
+### [](https://hackmd.io/@MarconiJiang/xv6_analysis#What-is-xv6)
 
 A : xv6 是個教學用的操作系統, 是 Unix Version 6 (v6) 的簡單實現, 但是並不嚴格遵守 v6 的結構與風格. 2020/8/11 後已不再維護, 而轉向 RISC-V 版本.
 
@@ -70,57 +70,53 @@ xv6 borrows code from the following sources:
 -   Plan 9 (entryother.S, mp.h, mp.c, lapic.c)
 -   FreeBSD (ioapic.c)
 -   NetBSD (console.c)
----
 
-### [](#Install-xv6-and-run-xv6-on-QEMU--gdb "Install-xv6-and-run-xv6-on-QEMU--gdb")Install xv6 and run xv6 on QEMU / gdb
+* * *
+
+### [](https://hackmd.io/@MarconiJiang/xv6_analysis#Install-xv6-and-run-xv6-on-QEMU--gdb)
 
 從 [https://github.com/mit-pdos/xv6-public/tags](https://github.com/mit-pdos/xv6-public/tags) 下載 rev9 版本 [xv6-rev9.tar.gz](https://github.com/mit-pdos/xv6-public/archive/refs/tags/xv6-rev9.tar.gz) 後就可以在 QEMU 上執行, 或在 QEMU / gdb 執行.
 
 ```
-
-
 # Download and make
 wget https://github.com/mit-pdos/xv6-public/archive/refs/tags/xv6-rev9.tar.gz
 tar -xvf xv6-rev9.tar.gz
 cd xv6-public-xv6-rev9
 make
+
 # Different ways of execution
 # 1.1 Running xv6 on QEMU in a separate screen
 make qemu
 # 1.2 Running xv6 on QEMU from the same terminal screen
 make qemu-nox
+
 # 2. Running xv6 on QEMU with four (4) CPU cores
 CPUS=4 make qemu-nox
+
 # 3.1 Running xv6 on QEMU+gdb
 #    It is required to open another terminal to run gdb. See 3.2-x
 make qemu-gdb
+
 # 3.2-1 open another terminal screen and run gdb 
 gdb -q kernel
 (gdb) target remote localhost:26000
 (gdb) continue
+
 # or 3.2-2 use .gdbinit under the current working directory
 #    /home/kernel-dev/myworks/xv6-public
 gdb -q kernel -iex "set auto-load safe-path /home/kernel-dev/myworks/xv6-public"
 (gdb) continue
+
 # or 3.2-3 set up ~/.gdbinit with current working directory
 #    then launch gdb
 echo "set auto-load safe-path /home/kernel-dev/myworks/xv6-public" > ~/.gdbinit
 gdb -q kernel
 (gdb) continue
-
-
-
-
-
 ```
 
-#### [](#A-note-about-xv6-gdb-environment "A-note-about-xv6-gdb-environment")
+#### [](https://hackmd.io/@MarconiJiang/xv6_analysis#A-note-about-xv6-gdb-environment)
 
-In above 3.2-1 example, we will find below message after launching gdb , and learn that there is a .gdbinit
- file in xv6 directory which set up the environment for gdb client. However, gdb does not execute that .gdinit
- for security concern. We need to enable it manually. In 3.2-2, we specify the working directory of xv6 and 
-.gdbinit in command line option `gdb -iex` . Or in 3.2-3, we create a file `.gdbinit` under `~/` directory with the content of `"set auto-load safe-path /home/kernel-dev/myworks/xv6-public"` so `gdb` will execute xv6 `
-.gdbinit` to set up environments. Either way can work.
+In above 3.2-1 example, we will find below message after launching `gdb`, and learn that there is a `.gdbinit` file in xv6 directory which set up the environment for `gdb` client. However, `gdb` does not execute that `.gdinit` for security concern. We need to enable it manually. In 3.2-2, we specify the working directory of xv6 and `.gdbinit` in command line option `gdb -iex`. Or in 3.2-3, we create a file `.gdbinit` under `~/` directory with the content of `"set auto-load safe-path /home/kernel-dev/myworks/xv6-public"` so `gdb` will execute xv6 `.gdbinit` to set up environments. Either way can work.
 
 ```
 Reading symbols from kernel...done.
@@ -136,25 +132,25 @@ For more information about this security protection see the
 	info "(gdb)Auto-loading safe path"
 ```
 
-#### [](#Notes-about-QEMU-and-gdb-commands-to-exit "Notes-about-QEMU-and-gdb-commands-to-exit")
+#### [](https://hackmd.io/@MarconiJiang/xv6_analysis#Notes-about-QEMU-and-gdb-commands-to-exit)
 
 For those who are not familiar with QEMU and gdb, you might need to know the commands how to exit. Without knowing those commands, you will be annoyed by how to exit QEMU and gdb.
 
 -   CTRL+a then x (not CTRL-x) : Exit from QEMU (if using `qemu-nox` command)
--   CTRL+ALT or CTRL+ALT+g : Escape mouse and keyboard from QEMU screen, back to host (if using` qemu` command)
+-   CTRL+ALT or CTRL+ALT+g : Escape mouse and keyboard from QEMU screen, back to host (if using `qemu` command)
 -   CTRL+d : Exit from gdb
 
 Please look for more QEMU and gdb commands in respective manuals.
 
----
+* * *
 
-### [](#xv6-shell-command-introduction "xv6-shell-command-introduction")
+### [](https://hackmd.io/@MarconiJiang/xv6_analysis#xv6-shell-command-introduction)
 
-After launching xv6 `CPUS=4 make qemu-nox` , it shows shell command prompt `$`
-. (One strange thing is, xv6 system becomes very slow when I set CPUS to 8 or 16. Could be an interesting topic to dive into details)
+After launching xv6 `CPUS=4 make qemu-nox`, it shows shell command prompt `$`. (One strange thing is, xv6 system becomes very slow when I set CPUS to 8 or 16. Could be an interesting topic to dive into details)
 
 ```
 SeaBIOS (version rel-1.13.0-0-gf21b5a4aeb02-prebuilt.qemu.org)
+
 
 iPXE (http://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+1FF908D0+1FEF08D0 CA00
 
@@ -170,7 +166,9 @@ $
 
 After entering xv6 system, we can issue `ls` command to check what else commands available, as in left column of below table. Also list the files in xv6 source code with `*.c` as reference. There are quite some differences beween both, as the `xv6` column shows the commands in user space, and `host Linux` shows commands/API's for both user and kernel space.
 
-<table class=""><tbody><tr><td>host Linux</td><td>qemu - xv6</td></tr><tr><td><div data-position="6358" data-infoprefix-length="6" data-endline="203" data-startline="155" class="part code-block-wrapper code-block-toolbar-handled"><pre class="click-event-handled"><code class="shell hljs"><div class="wrapper"><p><span class="hljs-meta">$ </span><span class="language-bash"><span class="hljs-built_in">ls</span> *.c</span>                       
+| host Linux | qemu - xv6 |
+| --- | --- |
+| $ ls *.c                       
 bio.c
 bootmain.c
 cat.c
@@ -216,8 +214,7 @@ umalloc.c
 usertests.c
 vm.c
 wc.c
-zombie.c
-</p></div></code></pre></div></td><td><div data-position="6775" data-infoprefix-length="6" data-endline="229" data-startline="208" class="part code-block-wrapper code-block-toolbar-handled"><pre class="click-event-handled"><code class="shell hljs"><div class="wrapper"><p><span class="hljs-meta">$ </span><span class="language-bash"><span class="hljs-built_in">ls</span></span>
+zombie.c | $ ls
 .              1 1 512
 ..             1 1 512
 README         2 2 2286
@@ -236,10 +233,8 @@ stressfs       2 14 13208
 usertests      2 15 56088
 wc             2 16 14064
 zombie         2 17 12260
-console        3 22 0
-</p></div></code></pre></div></td></tr></tbody></table>
-
-#### [](#xv6-special-command-CTRLp "xv6-special-command-CTRLp")
+console        3 22 0 |
+#### [](https://hackmd.io/@MarconiJiang/xv6_analysis#xv6-special-command-CTRLp)
 
 People familiar with Linux know the command `ps` to list the active processes running (in foreground and background). In xv6, there is a special command, or should be called key strokes, of CTRL+p, to print out the active processes. Below is the example when CTRL+p were pressed at vx6 prompt.
 
@@ -248,13 +243,14 @@ $ 1 sleep  init 80103db7 80103e59 80104857 801058e9 8010564e
 2 sleep  sh 80103d7c 801002c2 80100f8c 80104b52 80104857 801058e9 8010564e
 ```
 
-#### [](#Check-xv6-source-code-of-the-active-processes-on-host-Linux "Check-xv6-source-code-of-the-active-processes-on-host-Linux")
+#### [](https://hackmd.io/@MarconiJiang/xv6_analysis#Check-xv6-source-code-of-the-active-processes-on-host-Linux)
 
 Then we switch back to the host Linux environment, to check what those numbers mean in xv6 source code.
 
 ```
 # now we switch back to host Linux environment
 cd xv6-public
+
 # print out the source code of running process `init`
 addr2line -e kernel 80103db7 80103e59 80104857 801058e9 8010564e
 # /home/kernel-dev/myworks/xv6-public/proc.c:445
@@ -262,6 +258,7 @@ addr2line -e kernel 80103db7 80103e59 80104857 801058e9 8010564e
 # /home/kernel-dev/myworks/xv6-public/syscall.c:141
 # /home/kernel-dev/myworks/xv6-public/trap.c:44
 # /home/kernel-dev/myworks/xv6-public/trapasm.S:21
+
 # print out the source code of running process `sh`
 addr2line -e kernel 80103d7c 801002c2 80100f8c 80104b52 80104857 801058e9 8010564e
 # /home/kernel-dev/myworks/xv6-public/proc.c:445
@@ -273,98 +270,27 @@ addr2line -e kernel 80103d7c 801002c2 80100f8c 80104b52 80104857 801058e9 801056
 # /home/kernel-dev/myworks/xv6-public/trapasm.S:21
 ```
 
----
+* * *
 
-## [](#Chapter-2---xv6-Experiements-Level-One "Chapter-2---xv6-Experiements-Level-One")Chapter 2 - xv6 Experiements, Level One
+## [](https://hackmd.io/@MarconiJiang/xv6_analysis#Chapter-2---xv6-Experiements-Level-One)
+### [](https://hackmd.io/@MarconiJiang/xv6_analysis#How-xv6-Makefile-generates-the-disk-image)
 
-### [](#How-xv6-Makefile-generates-the-disk-image "How-xv6-Makefile-generates-the-disk-image")How xv6 Makefile generates the disk image
-
-This section can be skipped if you are not (yet) intestered in using 
-```
-Makefile
-```
- to build xv6 (or other Linux) image. There are 2 steps to generate the xv6 disk file system.
+This section can be skipped if you are not (yet) intestered in using `Makefile` to build xv6 (or other Linux) image. There are 2 steps to generate the xv6 disk file system.
 
 -   Generate all applications
 -   Generate File System image from those applications.
-1.  Generate all applications : Below is the 
-    ```
-    Makefile
-    ```
-     snippet to build all applicaions.
 
-Each 
-```
-%.o
-```
- file will link 
-```
-$(LD)
-```
- with 
-```
-$(ULIB)
-```
- to produce its executable file named 
-```
-_%
-```
-. (
-```
-%
-```
- will be replaced by 
-```
-cat
-```
-, 
-```
-echo
-```
-, or other user applications)
+1.  Generate all applications : Below is the `Makefile` snippet to build all applicaions.
+
+Each `%.o` file will link `$(LD)` with `$(ULIB)` to produce its executable file named `_%`. (`%` will be replaced by `cat`, `echo`, or other user applications)
+
+`-Ttext 0` to assign the code to start from address `0`.
+
+`-e main` indicates to use `main` function as the first instruction.
+
+`-N` is to specify the `data` and `text` sections allows `read` and `write`, and no need to align with page boundary.
 
 ```
--Ttext 0
-```
- to assign the code to start from address 
-```
-0
-```
-.
-
-```
--e main
-```
- indicates to use 
-```
-main
-```
- function as the first instruction.
-
-```
--N
-```
- is to specify the 
-```
-data
-```
- and 
-```
-text
-```
- sections allows 
-```
-read
-```
- and 
-```
-write
-```
-, and no need to align with page boundary.
-
-```
-
-
 ULIB = ulib.o usys.o printf.o umalloc.o
 
 _%: %.o $(ULIB)
@@ -372,34 +298,11 @@ _%: %.o $(ULIB)
         $(OBJDUMP) -S $@ > $*.asm
         $(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $*.sym
 
-
-
-
-
-
 ```
 
-2.  Generate File System image from those applications : 
-    ```
-    UPROGS
-    ```
-     parameter includes all the related executable file names. Then generate 
-    ```
-    fs.img
-    ```
-     by 
-    ```
-    mkfs
-    ```
-     with README and 
-    ```
-    UPROGS
-    ```
-     files.
+2.  Generate File System image from those applications : `UPROGS` parameter includes all the related executable file names. Then generate `fs.img` by `mkfs` with README and `UPROGS` files.
 
 ```
-
-
 UPROGS=\
         _cat\
         _echo\
@@ -423,30 +326,15 @@ UPROGS=\
 
 fs.img: mkfs README $(UPROGS)
         ./mkfs fs.img README $(UPROGS)
-
-
-
-
-
 ```
 
----
+* * *
 
-### [](#Experiment-1-0--Modify-xv6-greetings "Experiment-1-0--Modify-xv6-greetings")Experiment 1-0 : Modify xv6 greetings
+### [](https://hackmd.io/@MarconiJiang/xv6_analysis#Experiment-1-0--Modify-xv6-greetings)
 
-Find the file 
-```
-main.c
-```
- under 
-```
-xv6
-```
- source code, find below code snippet.
+Find the file `main.c` under `xv6` source code, find below code snippet.
 
 ```
-
-
 mpmain(void)
 {
   cprintf("cpu%d: starting %d\n", cpuid(), cpuid());
@@ -454,79 +342,26 @@ mpmain(void)
   xchg(&(mycpu()->started), 1); // tell startothers() we're up
   scheduler();     // start running processes
 }
-
-
-
-
-
 ```
 
-Modify the 
-```
-cprintf
-```
- line by adding 
-```
-xv6
-```
-. Then run 
-```
-make qemu-nox
-```
- to see the greeting has changed with your modification.
+Modify the `cprintf` line by adding `xv6`. Then run `make qemu-nox` to see the greeting has changed with your modification.
 
 ```
-
-
-cprintf("cpu%d: starting xv6 %d\n", cpuid(), cpuid());
-
-
-
-
-
+  cprintf("cpu%d: starting xv6 %d\n", cpuid(), cpuid());
 ```
 
----
+* * *
 
-### [](#Experiment-1-1--Adding-one-user-application-new-shell-command-on-xv6 "Experiment-1-1--Adding-one-user-application-new-shell-command-on-xv6")Experiment 1-1 : Adding one user application (new shell command) on xv6
+### [](https://hackmd.io/@MarconiJiang/xv6_analysis#Experiment-1-1--Adding-one-user-application-new-shell-command-on-xv6)
 
 To add one shell command/application in user space of xv6 requires two actions:
 
-1.  Create the file 
-    ```
-    my-app.c
-    ```
-     (or other file name you prefer), under the directory of 
-    ```
-    xv6-public
-    ```
-    , same with 
-    ```
-    Makefile
-    ```
-     and other applications.
-2.  In 
-    ```
-    Makefile
-    ```
-    , add 
-    ```
-    _my-app
-    ```
-     (or other file name you pick) to the parameter 
-    ```
-    UPROGS
-    ```
-    .
+1.  Create the file `my-app.c` (or other file name you prefer), under the directory of `xv6-public`, same with `Makefile` and other applications.
+2.  In `Makefile`, add `_my-app` (or other file name you pick) to the parameter `UPROGS`.
+
+`my-app.c` file content
 
 ```
-my-app.c
-```
- file content
-
-```
-
-
 #include "types.h"
 #include "stat.h"
 #include "user.h"
@@ -536,30 +371,11 @@ int main(int argc, char *argv[])
     printf(1, "This is Marconi's app.\n");
     exit();
 }
-
-
-
-
-
 ```
 
-Add one line of 
-```
-_my-app
-```
- to the 
-```
-UPROGS
-```
- parameter in 
-```
-Makefile
-```
-.
+Add one line of `_my-app` to the `UPROGS` parameter in `Makefile`.
 
 ```
-
-
 UPROGS=\
         _cat\
         _echo\
@@ -577,92 +393,46 @@ UPROGS=\
         _wc\
         _zombie\
         _my-app\
-
-
-
-
-
 ```
 
 Let's check the result.
 
-<table class=""><tbody><tr><td>host Linux</td><td>qemu - xv6</td></tr><tr><td><div data-position="12172" data-infoprefix-length="6" data-endline="412" data-startline="401" class="part code-block-wrapper code-block-toolbar-handled"><pre class="click-event-handled"><code class="shell hljs"><div class="wrapper"><p><span class="hljs-meta">$ </span><span class="language-bash">make</span>
-<span class="hljs-meta"># </span><span class="language-bash">output of make is omitted</span>
-<span class="hljs-meta">$ </span><span class="language-bash"><span class="hljs-built_in">ls</span> -l my-app*</span>
+| host Linux | qemu - xv6 |
+| --- | --- |
+| $ make
+# output of make is omitted
+$ ls -l my-app*
 -rw-rw-r-- 1 kernel-dev kernel-dev 43517 十一 20 15:44 my-app.asm
 -rw-rw-r-- 1 kernel-dev kernel-dev   151 十一 15 08:10 my-app.c
 -rw-rw-r-- 1 kernel-dev kernel-dev    72 十一 20 15:44 my-app.d
 -rw-rw-r-- 1 kernel-dev kernel-dev  2696 十一 20 15:44 my-app.o
 -rw-rw-r-- 1 kernel-dev kernel-dev   950 十一 20 15:44 my-app.sym
-<span class="hljs-meta">$ </span><span class="language-bash">make qemu</span>
-<span class="hljs-meta"># </span><span class="language-bash">Check the screen to the right of qemu <span class="hljs-keyword">for</span> xv6</span> 
-</p></div></code></pre></div></td><td><div data-position="12625" data-infoprefix-length="6" data-endline="422" data-startline="417" class="part code-block-wrapper code-block-toolbar-handled"><pre class="click-event-handled"><code class="shell hljs"><div class="wrapper"><p><span class="hljs-meta">$ </span><span class="language-bash"><span class="hljs-built_in">ls</span> my-app-1</span>
+$ make qemu
+# Check the screen to the right of qemu for xv6 | $ ls my-app-1
 my-app-1       2 18 12316
-<span class="hljs-meta">$ </span><span class="language-bash">my-app-1</span>
-This is Marconi's app.
-</p></div></code></pre></div></td></tr></tbody></table>
+$ my-app-1
+This is Marconi's app. |
 
----
+* * *
 
-### [](#Experiment-1-2--Adding-one-kernel-System-Call-in-xv6 "Experiment-1-2--Adding-one-kernel-System-Call-in-xv6")Experiment 1-2 : Adding one kernel System Call in xv6
+### [](https://hackmd.io/@MarconiJiang/xv6_analysis#Experiment-1-2--Adding-one-kernel-System-Call-in-xv6)
 
 Unlike adding an application in user space, it take much more procedures to add a system call in kernel space (all applications are in user space, not in kernel space. In kernel space, it is called system call).
 
 To create a system call in kernel, it requires the following steps:
 
-1.  Modify 
-    ```
-    syscall.h
-    ```
-    
-2.  Modify 
-    ```
-    user.h
-    ```
-    
-3.  Modify 
-    ```
-    usys.S
-    ```
-    
-4.  Modify 
-    ```
-    syscall.c
-    ```
-    
-5.  Modify 
-    ```
-    sysproc.c
-    ```
-    
-6.  Modify 
-    ```
-    proc.c
-    ```
-    
-7.  Modify 
-    ```
-    defs.h
-    ```
-    
-8.  Create a user space application 
-    ```
-    pcpuid.c
-    ```
-    
-9.  Update 
-    ```
-    Makefile
-    ```
-    
-10.  Execute 
-    ```
-    make qemu
-    ```
+1.  Modify `syscall.h`
+2.  Modify `user.h`
+3.  Modify `usys.S`
+4.  Modify `syscall.c`
+5.  Modify `sysproc.c`
+6.  Modify `proc.c`
+7.  Modify `defs.h`
+8.  Create a user space application `pcpuid.c`
+9.  Update `Makefile`
+10.  Execute `make qemu`
 
 ```
-
-
 // Add one line to the end of syscall.h
 #define SYS_getcpuid 22
 
@@ -713,215 +483,65 @@ int main(int argc, char *argv[])
 // And add _pcpuid to parameter UPROGS in Makefile
 UPROGS=\
         _pcpuid\
-
-
-
-
-
 ```
 
-Now, execute 
-```
-make qemu
-```
- to run into 
-```
-xv6 shell
-```
-, and run 
-```
-pcpuid
-```
-. (with 
-```
-CPUS=4 make qemu
-```
- might get different 
-```
-pcpuid
-```
- results.)
+Now, execute `make qemu` to run into `xv6 shell`, and run `pcpuid`. (with `CPUS=4 make qemu` might get different `pcpuid` results.)
 
 ```
-
-
 $ pcpuid
 My CPU id is :0
-
-
-
-
-
 ```
 
 You make it
 
----
+* * *
 
-### [](#Deep-dive-into-how-the-System-Call-example-works---1--more-descriptions "Deep-dive-into-how-the-System-Call-example-works---1--more-descriptions")Deep dive into how the System Call example works - 1 : more descriptions
+### [](https://hackmd.io/@MarconiJiang/xv6_analysis#Deep-dive-into-how-the-System-Call-example-works---1--more-descriptions)
 
 The book explains in a little bit more details on how those files work.
 
-1.  **Modify 
-    ```
-    syscall.h
-    ```
-    5.* : In xv6, each System Call has one unique ID, so adding 
-    ```
-    SYS_getcpuid
-    ```
-     with ID of 
-    ```
-    22
-    ```
-    .
+1.  **Modify `syscall.h`** : In xv6, each System Call has one unique ID, so adding `SYS_getcpuid` with ID of `22`.
 
 ```
-
-
 #define SYS_getcpuid 22
-
-
-
-
-
 ```
 
-2.  **Modify 
-    ```
-    user.h
-    ```
-    6.* : Declare user state entry function 
-    ```
-    getcpuid
-    ```
-     to the header file of 
-    ```
-    user.h
-    ```
-     14. 
-    ```
-    int getcpuid(void);
-    ```
-    . Then it can be called by user application program.
+2.  **Modify `user.h`** : Declare user state entry function `getcpuid` to the header file of `user.h` - `int getcpuid(void);`. Then it can be called by user application program.
 
 ```
-
-
 int getcpuid(void);
-
-
-
-
-
 ```
 
-3.  **Modify 
-    ```
-    usys.S
-    ```
-    7.* : 
-    ```
-    usys.S
-    ```
-     defines a macro 
-    ```
-    SYSCALL(getcpuid)
-    ```
-     to move 
-    ```
-    SYS_getcpuid=22
-    ```
-     to register 
-    ```
-    eax
-    ```
-    , then issue interrupt command 
-    ```
-    int $T_SYSCALL
-    ```
+3.  **Modify `usys.S`** : `usys.S` defines a macro `SYSCALL(getcpuid)` to move `SYS_getcpuid=22` to register `eax`, then issue interrupt command `int $T_SYSCALL`
 
 ```
-
-
 #define SYSCALL(name) \
   .globl name; \
   name: \
     movl $SYS_ ## name, %eax; \
     int $T_SYSCALL; \
     ret
-
-
-
-
-
 ```
 
-Add one line in 
-```
-usys.S
-```
+Add one line in `usys.S`
 
 ```
-
-
 SYSCALL(getcpuid)
-
-
-
-
-
 ```
 
-4.  **Modify 
-    ```
-    syscall.c
-    ```
-    8.* : Define the entry for syscall 
-    ```
-    sys_getcpuid()
-    ```
-     when issueing 
-    ```
-    int $T_SYSCALL
-    ```
-     and 
-    ```
-    eax
-    ```
-     = 22.
+4.  **Modify `syscall.c`** : Define the entry for syscall `sys_getcpuid()` when issueing `int $T_SYSCALL` and `eax` = 22.
 
 ```
-
-
 extern int sys_getcpuid(void);
-
-
-
-
-
 ```
 
 ```
-
-
 [SYS_getcpuid] sys_getcpuid,
-
-
-
-
-
 ```
 
-Below is the 
-```
-syscall()
-```
- snippet
+Below is the `syscall()` snippet
 
 ```
-
-
 void
 syscall(void)
 {
@@ -937,96 +557,22 @@ syscall(void)
     curproc->tf->eax = -1;
   }
 }
-
-
-
-
-
 ```
 
-Until now, the set up is ready for both 
-```
-getcpuid()
-```
- and 
-```
-sys_getcpuid()
-```
-. We are going to implement the code for both. 
-```
-sys_getcpuid()
-```
- is defined in the source file 
-```
-sysproc.c
-```
-, and 
-```
-getcpuid()
-```
- defined in 
-```
-proc.c
-```
-.  
-5\. **Modify 
-```
-sysproc.c
-```
-** : Implement 
-```
-sys_getcpuid()
-```
- function. It just calls 
-```
-getcpuid()
-```
- directly.
+Until now, the set up is ready for both `getcpuid()` and `sys_getcpuid()`. We are going to implement the code for both. `sys_getcpuid()` is defined in the source file `sysproc.c`, and `getcpuid()` defined in `proc.c`.  
+5\. **Modify `sysproc.c`** : Implement `sys_getcpuid()` function. It just calls `getcpuid()` directly.
 
 ```
-
-
 int
 sys_getcpuid(void)
 {
   return getcpuid();
 }
-
-
-
-
-
 ```
 
-6.  **Modify 
-    ```
-    proc.c
-    ```
-    10.* : Implement 
-    ```
-    getcpuid()
-    ```
-     in 
-    ```
-    proc.c
-    ```
-    . It is quite straight forward to call 
-    ```
-    cpuid()
-    ```
-    . However, it needs to disable interrupt first before calling it, so 
-    ```
-    cli()
-    ```
-     is added before and 
-    ```
-    sti()
-    ```
-     after.
+6.  **Modify `proc.c`** : Implement `getcpuid()` in `proc.c`. It is quite straight forward to call `cpuid()`. However, it needs to disable interrupt first before calling it, so `cli()` is added before and `sti()` after.
 
 ```
-
-
 int getcpuid(void)
 {
   int cpuidnum;
@@ -1035,100 +581,31 @@ int getcpuid(void)
   sti();
   return cpuidnum;
 }
-
-
-
-
-
 ```
 
-7.  **Modify 
-    ```
-    defs.h
-    ```
-    11.* : 
-    ```
-    defs.h
-    ```
-     defines (almost) all the 
-    ```
-    xv6
-    ```
-     kernal data structure and functions. In order to get 
-    ```
-    sys_getcpuid()
-    ```
-     within 
-    ```
-    sysproc.c
-    ```
-     to be able to call 
-    ```
-    getcpuid()
-    ```
-    , we need to add 
-    ```
-    int getcpuid(void);
-    ```
-     in 
-    ```
-    defs.h
-    ```
-    .
+7.  **Modify `defs.h`** : `defs.h` defines (almost) all the `xv6` kernal data structure and functions. In order to get `sys_getcpuid()` within `sysproc.c` to be able to call `getcpuid()`, we need to add `int getcpuid(void);` in `defs.h`.
 
 ```
-
-
-int             getcpuid(void);
-
-
-
-
-
+int getcpuid(void);
 ```
 
-8.  **Create a user space application 
-    ```
-    pcpuid.c
-    ```
-    12.* : Relatively easy as other regular user applications.
----
+8.  **Create a user space application `pcpuid.c`** : Relatively easy as other regular user applications.
 
-### [](#Deep-dive-into-how-the-System-Call-example-works---2--trace-by-gdb "Deep-dive-into-how-the-System-Call-example-works---2--trace-by-gdb")Deep dive into how the System Call example works - 2 : trace by 
-```
-gdb
-```
+* * *
 
-Now I understand better the design, but still not clear exactly how the program will flow among all those functional calls. So use 
-```
-gbd
-```
- to trace the process flow.
+### [](https://hackmd.io/@MarconiJiang/xv6_analysis#Deep-dive-into-how-the-System-Call-example-works---2--trace-by-gdb)
+
+Now I understand better the design, but still not clear exactly how the program will flow among all those functional calls. So use `gbd` to trace the process flow.
+
+`qemu` terminal screen
 
 ```
-qemu
-```
- terminal screen
-
-```
-
-
 $ CPUS=1 make qemu-gdb
-
-
-
-
-
 ```
 
-```
-gdb
-```
- terminal screen
+`gdb` terminal screen
 
 ```
-
-
 $ gdb kernel
 (gdb) c
 # wait for qemu terminal screen ready and showing $ prompt
@@ -1141,39 +618,17 @@ Breakpoint 2 at 0x80105630: file sysproc.c, line 96.
 (gdb) br proc.c:getcpuid
 Breakpoint 3 at 0x80104080: file proc.c, line 537.
 (gdb) c
-
-
-
-
-
 ```
 
-Back to 
-```
-qemu
-```
- screen
+Back to `qemu` screen
 
 ```
-
-
 $ pcpuid <Enter>
-
-
-
-
-
 ```
 
-We will see 
-```
-gdb
-```
- screen pops up with Breakpint like below
+We will see `gdb` screen pops up with Breakpint like below
 
 ```
-
-
 Breakpoint 1, syscall () at syscall.c:141
 (gdb) print num
 $1 = 22
@@ -1213,39 +668,21 @@ trap (tf=0x8df4bfb4) at trap.c:44
 => 0x8010564e <alltraps+21>:    add    $0x4,%esp
 alltraps () at trapasm.S:21
 
-
-
-
-
-
 ```
 
-Based on above 
-```
-gdb
-```
- findings and previous coding, I try to imagine the process flow like below. Though it needs to be validated. Advise is welcome, and more works to do
-
----
-
-### [](#Deep-dive-into-how-the-System-Call-example-works---3--another-example-getpid "Deep-dive-into-how-the-System-Call-example-works---3--another-example-getpid")Deep dive into how the System Call example works - 3 : another example 
-```
-getpid
-```
-
-Try to understand the other (simple) System Call - 
-```
-getpid
-```
-, to see if 
-```
-getpid
-```
- shows up at exactly the same source files.
+Based on above `gdb` findings and previous coding, I try to imagine the process flow like below. Though it needs to be validated. Advise is welcome, and more works to do
 
 ```
+Created with Raphaël 2.2.0User spaceUser spaceKernel spaceKernel spacesetup syscall.c:syscall()setup syscall.c:sys\_getcpuiduser invoke \`pcpuid\`(supposedly) trapasm.S(supposedly) trap.csysproc.c:97proc.c:537proc.c:542syscall.c:147trap.c:44trapasm.S:21
+```
 
+* * *
 
+### [](https://hackmd.io/@MarconiJiang/xv6_analysis#Deep-dive-into-how-the-System-Call-example-works---3--another-example-getpid)
+
+Try to understand the other (simple) System Call - `getpid`, to see if `getpid` shows up at exactly the same source files.
+
+```
 $ grep -n "getpid" *.[ch]
 syscall.c:92:extern int sys_getpid(void);
 syscall.c:119:[SYS_getpid]  sys_getpid,
@@ -1254,225 +691,111 @@ sysproc.c:40:sys_getpid(void)
 user.h:22:int getpid(void);
 usertests.c:434:  ppid = getpid();
 usertests.c:1498:    ppid = getpid();
-
-
-
-
-
 ```
 
-```
-getpid
-```
- only shows up in above 1,2,4,5 files (
-```
-syscall.h
-```
-, 
-```
-user.h
-```
-, 
-```
-syscall.c
-```
-, 
-```
-sysproc.c
-```
-) modified for 
-```
-gcpuid
-```
-, plus user application 
-```
-usertests.c
-```
-, but not in 
-```
-usys.S
-```
-, 
-```
-proc.c
-```
-, 
-```
-defs.h
-```
-.
+`getpid` only shows up in above 1,2,4,5 files (`syscall.h`, `user.h`, `syscall.c`, `sysproc.c`) modified for `gcpuid`, plus user application `usertests.c`, but not in `usys.S`, `proc.c`, `defs.h`.
 
----
+* * *
 
-### [](#xv6-binary-and-image "xv6-binary-and-image")xv6 binary and image
+### [](https://hackmd.io/@MarconiJiang/xv6_analysis#xv6-binary-and-image)
 
 xv6 binary consists of 2 sections :
 
--   boot loader - 
-    ```
-    bootblock
-    ```
-    
+-   boot loader - `bootblock`
 -   kernel  
-    Both are built by GNU GCC, and in ELF format. So it can be viewed and analyzed by 
-    ```
-    binutils
-    ```
-     tool. For those (including me) who are not familiar with ELF format, bootloader and 
-    ```
-    binutils
-    ```
-     tool can refer to Chap 4 of another book <<Linux GNU C 程式观察>> by the same author.
+    Both are built by GNU GCC, and in ELF format. So it can be viewed and analyzed by `binutils` tool. For those (including me) who are not familiar with ELF format, bootloader and `binutils` tool can refer to Chap 4 of another book <<Linux GNU C 程式观察>> by the same author.
 
 **Simplify the boot loader by putting kernel on the same disk image with boot loader**  
 Reference from appendix B of [xv6 a simple, Unix-like teaching operating system](https://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf), or translation in Mandarin [xv6代码阅读：系统引导](http://ybin.cc/os/xv6-boot/). There is a [draft version from Cox, Kaashoek, Morris released in 2010](https://www.cs.columbia.edu/~junfeng/11sp-w4118/lectures/boot.pdf), which explains in more details about bootstrap than later version in 2012.
 
-The boot loader compiles to around 470 byes (definitely needs to be less than 510bytes, to fit into one sector, plus magic words of 0x55aa.) of machine code, depending on the optimizations used when compiling C code. **In order to fit in that small amout of space, the xv6 boot loader makes a major simpifying assumption, that the kernel has been written to the boot disk contiguously starting at sector 1. (Boot loader was stored at sector 0 of the boot disk).** We know that from the 
-```
-Makefile
-```
- of 
-```
-xv6
-```
-. It is unlike modern PC uses a two-step boot process.
+The boot loader compiles to around 470 byes (definitely needs to be less than 510bytes, to fit into one sector, plus magic words of 0x55aa.) of machine code, depending on the optimizations used when compiling C code. **In order to fit in that small amout of space, the xv6 boot loader makes a major simpifying assumption, that the kernel has been written to the boot disk contiguously starting at sector 1. (Boot loader was stored at sector 0 of the boot disk).** We know that from the `Makefile` of `xv6`. It is unlike modern PC uses a two-step boot process.
 
-So 
-```
-xv6
-```
- boot loader relies on the less space constraint BIOS for disk access rather than trying to drive the disk itself.
+So `xv6` boot loader relies on the less space constraint BIOS for disk access rather than trying to drive the disk itself.
 
 ```
-
-
 xv6.img: bootblock kernel fs.img
 	dd if=/dev/zero of=xv6.img count=10000
 	dd if=bootblock of=xv6.img conv=notrunc # bootblock部分放置到第一个扇区(该部分必须保证自己的size小于512bytes)
 	dd if=kernel of=xv6.img seek=1 conv=notrunc # kernel代码放置到第二个以及以后的扇区
-
-
-
-
-
 ```
 
----
+* * *
 
-#### [](#xv6-binary-and-image---bootblock-description "xv6-binary-and-image---bootblock-description")xv6 binary and image - 
-```
-bootblock
-```
- description
+#### [](https://hackmd.io/@MarconiJiang/xv6_analysis#xv6-binary-and-image---bootblock-description)
 
 To understand how PC works from scratch, it might require some computer architecture and hardware/firmware/software, and some PC development history. Can refer to articles [MBR 載入位址 0x7C00 的來源與意義的調查結果](https://gist.github.com/letoh/2790559), or [From the bootloader to the kernel](https://0xax.gitbooks.io/linux-insides/content/Booting/linux-bootstrap-1.html).
 
-x86 system BIOS (after checking hardware, or called POST, Power On Self Test) or 
-```
-qemu
-```
- will load the first 512 byts boot code (or MBR from HDD) to RAM memory address 0x7c00, and jump to 0x7c00 to execute the boot code, it is 
-```
-bootblock
-```
- used in 
-```
-xv6
-```
-. This 512 byte boot code will further load the kernel from HDD, then transfer the control to kernel.
+x86 system BIOS (after checking hardware, or called POST, Power On Self Test) or `qemu` will load the first 512 byts boot code (or MBR from HDD) to RAM memory address 0x7c00, and jump to 0x7c00 to execute the boot code, it is `bootblock` used in `xv6`. This 512 byte boot code will further load the kernel from HDD, then transfer the control to kernel.
+
+`bootblock` file size is 512 bytes, and `MBR boot sector` when checked by `file` instruction.
 
 ```
-bootblock
-```
- file size is 512 bytes, and 
-```
-MBR boot sector
-```
- when checked by 
-```
-file
-```
- instruction.
-
-```
-
-
 $ ls -l bootblock
 -rwxr-xr-x 1 ubuntu ubuntu 512 Nov 29 22:17 bootblock
+
 $ file bootblock
 bootblock: DOS/MBR boot sector
-
-
-
-
-
 ```
 
----
+* * *
 
-#### [](#xv6-binary-and-image---How-bootblock-is-generated-with-starting-address-from-7c00 "xv6-binary-and-image---How-bootblock-is-generated-with-starting-address-from-7c00")**xv6 binary and image - How 
-```
-bootblock
-```
- is generated, with starting address from $7c00**
+#### [](https://hackmd.io/@MarconiJiang/xv6_analysis#xv6-binary-and-image---How-bootblock-is-generated-with-starting-address-from-7c00)
 
-**A :** [Appendix B - The boot loader of "xv6 a simple, Unix-like teaching operating system"](https://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf) provides a clear view on boot sequence. It explains how 
-```
-bootasm.S
-```
- and 
-```
-bootmain.c
-```
- works.
+**A :** [Appendix B - The boot loader of "xv6 a simple, Unix-like teaching operating system"](https://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf) provides a clear view on boot sequence. It explains how `bootasm.S` and `bootmain.c` works.
 
 Below chart is referred from the book "操作系統原型 - xv6 分析與實踐 羅秋明 著".
 
-**1\. About which one is first between 
 ```
+hierarchy
+
 bootasm.S
-```
- and 
-```
-bootmain.c
-```
-? :** Even I know the BIOS entry is $7c00, but I was not sure which one will 
-```
-bootblock
-```
- start first? 
-```
 bootasm.S
-```
- or 
-```
-bootmain.c
-```
-. (Normally, I would expect the program shall start from main(), haha, which is **not in this case**.) Finally, I learned from [Compiling & Linking](https://people.cs.pitt.edu/~xianeizhang/notes/Linking.html) that the linker scans the relocatable obj files and archives left to right in the same sequential order that they appear on the compiler driver's command line. (The driver automatically translates any .c files on the cmd line into .o files.) And in 
-```
-xv6 Makefile
-```
-, the 
-```
+
 bootasm.o
-```
- is in front of 
-```
+bootasm.o
+
+bootasm.S->bootasm.o
+  $(CC)
+
+bootblock.o
+bootblock.o
+
+bootasm.o->bootblock.o
+         $(LD)
+
+bootmain.c
+bootmain.c
+
 bootmain.o
+bootmain.o
+
+bootmain.c->bootmain.o
+  $(CC)
+
+bootmain.o->bootblock.o
+
+bootblock.
+bootblock.
+
+bootblock.o->bootblock.
+$(OBJCOPY)
+
+bootblock.asm
+bootblock.asm
+
+bootblock.o->bootblock.asm
+ $(OBJDUMP)
+
+bootblock
+bootblock
+
+bootblock.->bootblock
+  sign.pl
 ```
-. So when BIOS completes the hardware setup, load the 'bootloader' 512 bytes into the memory address of $7c00, 
-```
-xv6
-```
- will start from 
-```
-bootasm.S
-```
-.
+
+**1\. About which one is first between `bootasm.S` and `bootmain.c`? :** Even I know the BIOS entry is $7c00, but I was not sure which one will `bootblock` start first? `bootasm.S` or `bootmain.c`. (Normally, I would expect the program shall start from main(), haha, which is **not in this case**.) Finally, I learned from [Compiling & Linking](https://people.cs.pitt.edu/~xianeizhang/notes/Linking.html) that the linker scans the relocatable obj files and archives left to right in the same sequential order that they appear on the compiler driver's command line. (The driver automatically translates any .c files on the cmd line into .o files.) And in `xv6 Makefile`, the `bootasm.o` is in front of `bootmain.o`. So when BIOS completes the hardware setup, load the 'bootloader' 512 bytes into the memory address of $7c00, `xv6` will start from `bootasm.S`.
 
 ```
-
-
 bootblock: bootasm.S bootmain.c
         $(CC) $(CFLAGS) -fno-pic -O -nostdinc -I. -c bootmain.c
         $(CC) $(CFLAGS) -fno-pic -nostdinc -I. -c bootasm.S
@@ -1480,26 +803,11 @@ bootblock: bootasm.S bootmain.c
         $(OBJDUMP) -S bootblock.o > bootblock.asm
         $(OBJCOPY) -S -O binary -j .text bootblock.o bootblock
         ./sign.pl bootblock
-
-
-
-
-
 ```
 
-Also, we can cross check with the first few line of 
-```
-bootblock.asm
-```
-, which is exactly the same as the beginning of 
-```
-bootasm.S
-```
-.
+Also, we can cross check with the first few line of `bootblock.asm`, which is exactly the same as the beginning of `bootasm.S`.
 
 ```
-
-
 bootblock.o:     file format elf32-i386
 
 
@@ -1524,18 +832,9 @@ start:
   movw    %ax,%ss             # -> Stack Segment
     7c07:       8e d0                   mov    %eax,%ss
 
-
-
-
-
-
 ```
 
-**2\. 
-```
-bootasm.S
-```
- Code - Assembly bootstrap :**
+**2\. `bootasm.S` Code - Assembly bootstrap :**
 
 Reference from appendix B of [xv6 a simple, Unix-like teaching operating system](https://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf), or translation in Mandarin [xv6代码阅读：系统引导](http://ybin.cc/os/xv6-boot/)
 
@@ -1547,56 +846,20 @@ Reference from appendix B of [xv6 a simple, Unix-like teaching operating system]
 2.4 Switch from real to protected mode by loading GDT, and enable CR0\_PE bit  
 2.5 Complete the transition to 32-bit protected mode to reload %cs and %eip by using a long jmp instruction  
 2.6 Tell assembler to generate 32 bit code from now on. Then, set up the protected-mode data segment registers. Select Data Segement for DS, ES, and SS, null Segment for FS, and GS.  
-2.7 Set up Stack Pointer and call into 
-```
-bootmain.c
-```
-  
-2.8 If 
-```
-bootmain.c
-```
- returns (it shouldn't but it would happen with error), trigger a Boch kind of emulator, then hangs by an infinite loop.
+2.7 Set up Stack Pointer and call into `bootmain.c`  
+2.8 If `bootmain.c` returns (it shouldn't but it would happen with error), trigger a Boch kind of emulator, then hangs by an infinite loop.
 
-**2.1 
-```
-bootasm.S
-```
- Code - 
-```
-80286/80386 protected mode
-```
- and legacy 
-```
-8086 real mode
-```
-**
+**2.1 `bootasm.S` Code - `80286/80386 protected mode` and legacy `8086 real mode`**
 
-Before diving into how 
-```
-bootasm.S
-```
- works, let's understand how it is defined in the Segment Descriptor, and some lagecy from 8086 to 80286, then 80386, and lately 64 bit. xv6 (and Linux) starts from 80386 design, however, x86 CPU always boots up in 8086 real mode first, so is the reason to under the lagacy.
+Before diving into how `bootasm.S` works, let's understand how it is defined in the Segment Descriptor, and some lagecy from 8086 to 80286, then 80386, and lately 64 bit. xv6 (and Linux) starts from 80386 design, however, x86 CPU always boots up in 8086 real mode first, so is the reason to under the lagacy.
 
 -   Find below table from [x86-64处理器的几种运行模式](https://zhuanlan.zhihu.com/p/69334474)
 
 ![](https://picx.zhimg.com/v2-c2f06a68a48172453878ff804d956d27_1440w.jpg?source=172ae18b)
 
-One thing worthwhile noticing is mentioned earlier that 
-```
-bootmain()
-```
-, the xv6 boot loader, makes a major simpifying assumption, that the kernel has been written to the boot disk contiguously starting at sector 1. And it uses BIOS API to read the kernel images into memory.
+One thing worthwhile noticing is mentioned earlier that `bootmain()`, the xv6 boot loader, makes a major simpifying assumption, that the kernel has been written to the boot disk contiguously starting at sector 1. And it uses BIOS API to read the kernel images into memory.
 
-This [article - 2.1. Internal Microprocessor Architecture](https://www.byclb.com/TR/Tutorials/microprocessors/ch2_1.htm) describes the evolution from 
-```
-8086 real mode
-```
- to 
-```
-80286 (16bit)/80386(32bit) protected mode
-```
-.
+This [article - 2.1. Internal Microprocessor Architecture](https://www.byclb.com/TR/Tutorials/microprocessors/ch2_1.htm) describes the evolution from `8086 real mode` to `80286 (16bit)/80386(32bit) protected mode`.
 
 -   2.2. Real Mode Memory Addressing
 -   2.3. Introduction to Protected Mode Memory Addressing  
@@ -1606,11 +869,7 @@ Figure below shows the format of a descriptor for the 80286 through the Pentium 
 
 ![Descriptor difference between 80286 and 80386](https://www.byclb.com/TR/Tutorials/microprocessors/ch2_1_dosyalar/image006.gif)
 
-**2.2 
-```
-bootasm.S
-```
- Code - Implementation of Global Descriptor Table (GDT)**
+**2.2 `bootasm.S` Code - Implementation of Global Descriptor Table (GDT)**
 
 Segment Descriptor entry has a complex structure. (Reference from [osdev - GDT](https://wiki.osdev.org/Global_Descriptor_Table))
 
@@ -1637,22 +896,11 @@ Segment Descriptor (contains 8bytes)
  |Limit                      |
  |15                        0|
 1+---------------------------+0
-
 ```
 
-Below are code snippet related to GDP in 
-```
-xv6/x86.h
-```
- and 
-```
-bootasm.S
-```
-.
+Below are code snippet related to GDP in `xv6/x86.h` and `bootasm.S`.
 
-```
-xv6/x86.h
-```
+`xv6/x86.h`
 
 ```
 0650 //
@@ -1676,12 +924,9 @@ xv6/x86.h
 0668 #define STA_W 0x2 // Writeable (non−executable segments)
 0669 #define STA_R 0x2 // Readable (executable segments)
 0670 #define STA_A 0x1 // Accessed
-
 ```
 
-```
-xv6/bootasm.S
-```
+`xv6/bootasm.S`
 
 ```
 8438 # Switch from real to protected mode. Use a bootstrap GDT that makes
@@ -1699,55 +944,18 @@ xv6/bootasm.S
 8487 gdtdesc:
 8488 .word (gdtdesc − gdt − 1) # sizeof(gdt) − 1
 8489 .long gdt # address gdt
-
 ```
 
-```
-xv6
-```
- code 
-```
-lines 0660-0663
-```
- 
-```
-SEG_ASM(type,base,lim)
-```
- does the job of converting the values of 
-```
-type
-```
-, 
-```
-base
-```
- and 
-```
-limit
-```
- to the structure required by the _Segment Descriptor_.
+`xv6` code `lines 0660-0663` `SEG_ASM(type,base,lim)` does the job of converting the values of `type`, `base` and `limit` to the structure required by the _Segment Descriptor_.
 
-line 
-```
-8484
-```
- sets up for code segment, and line 8485 sets up for data segment.
+line `8484` sets up for code segment, and line 8485 sets up for data segment.
 
 ```
 8484 SEG_ASM(STA_X|STA_R, 0x0, 0xffffffff) # code seg
 8485 SEG_ASM(STA_W, 0x0, 0xffffffff) # data seg
-
 ```
 
-So, the Segment Descript of 
-```
-code segment
-```
- in 
-```
-xv6 bootloader
-```
- looks like this
+So, the Segment Descript of `code segment` in `xv6 bootloader` looks like this
 
 ```
 Segment Descriptor (contains 8bytes)
@@ -1772,14 +980,9 @@ Segment Descriptor (contains 8bytes)
  |Limit                      |
  |15                        0|
 1+---------------------------+0
-
 ```
 
-And 
-```
-data segment
-```
- looks like this
+And `data segment` looks like this
 
 ```
 Segment Descriptor (contains 8bytes)
@@ -1804,53 +1007,21 @@ Segment Descriptor (contains 8bytes)
  |Limit                      |
  |15                        0|
 1+---------------------------+0
-
 ```
 
----
+* * *
 
-**3\. 
-```
-bootmain.c
-```
- Code - C bootstrap:**
+**3\. `bootmain.c` Code - C bootstrap:**
 
-As described in 
-```
-bootmain.c
-```
-, 
-```
-bootmain()
-```
- loads an ELF kernel image from the disk starting at sector 1 and then jumps to the kernel entry routine. That is the only task of what 
-```
-bootmain.c
-```
- does.
+As described in `bootmain.c`, `bootmain()` loads an ELF kernel image from the disk starting at sector 1 and then jumps to the kernel entry routine. That is the only task of what `bootmain.c` does.
 
-**3.1 
-```
-bootmain.c
-```
- C bootstrap memory map:**
+**3.1 `bootmain.c` C bootstrap memory map:**
 
-```
-xv6
-```
- Memory map with reference from [xv6代码阅读：系统引导](http://ybin.cc/os/xv6-boot/).
+`xv6` Memory map with reference from [xv6代码阅读：系统引导](http://ybin.cc/os/xv6-boot/).
 
 **3.1.1 Memory map loading 512 bytes from disc sector 0**
 
-The CPU is in 
-```
-real
-```
- mode, in which it simulates an Intel 8088. In real mode, there are eight 16-bit general registers, but the processor sends 20 bits of address to memory. The segment registers %cs, %ds, %es, and %ss provide the additional bits necessary to generate 20-bit memory address from 16-bit registers. That gives x86 CPU with addressing capability of maximum 
-```
-1MBytes
-```
- in real mode. We will call the **_segment:offset_** as **virtual memory** reference in real mode, and processor chip sends to memory 20-bit **physical addresses**.
+The CPU is in `real` mode, in which it simulates an Intel 8088. In real mode, there are eight 16-bit general registers, but the processor sends 20 bits of address to memory. The segment registers %cs, %ds, %es, and %ss provide the additional bits necessary to generate 20-bit memory address from 16-bit registers. That gives x86 CPU with addressing capability of maximum `1MBytes` in real mode. We will call the **_segment:offset_** as **virtual memory** reference in real mode, and processor chip sends to memory 20-bit **physical addresses**.
 
 Quote from [Cox, Kaashoek, Morris - Bootstrap](https://www.cs.columbia.edu/~junfeng/11sp-w4118/lectures/boot.pdf)
 
@@ -1895,22 +1066,11 @@ CPU working in real mode
                    |                   |
                    |                   |
                    +-------------------+ <- 0MB
-
 ```
 
-\*\*3.1.2 Memory map after 
-```
-bootasm.S
-```
- and 
-```
-bootmain.c
-```
- \*\*
+\*\*3.1.2 Memory map after `bootasm.S` and `bootmain.c` \*\*
 
-```
-bootasm.S
-```
+`bootasm.S`
 
 ```
 /*
@@ -1963,223 +1123,44 @@ kernel memlayout吻合起来，见memlayout.h。
                    +-------------------+  0GB
 
  */
-
 ```
 
-Check [x86 inline assembly](https://hackmd.io/@MarconiJiang/x86assembly#Assembly-Language--Inline-Assembly-in-C-Language-Example---insl) for detail explanation on inline aseembly in 
-```
-bootmain.c
-```
- line 8573 
-```
-insl(0x1F0, dst, SECTSIZE/4);
-```
+Check [x86 inline assembly](https://hackmd.io/@MarconiJiang/x86assembly#Assembly-Language--Inline-Assembly-in-C-Language-Example---insl) for detail explanation on inline aseembly in `bootmain.c` line 8573 `insl(0x1F0, dst, SECTSIZE/4);`
 
----
+* * *
 
-### [](#File-Descriptors "File-Descriptors")**File Descriptors**
+### [](https://hackmd.io/@MarconiJiang/xv6_analysis#File-Descriptors)
 
 **A :** [簡介 file descriptor (檔案描述符)](https://www.hy-star.com.tw/tech/linux/fd/fd.html)
 
- fd Number | Name | Function |
+| fd Number | Name | Function |
 | --- | --- | --- |
- 0 | stdin | 標準輸入 |
- 1 | stdout | 標準輸出 |
- 2 | stderr | 標準錯誤 |
+| 0 | stdin | 標準輸入 |
+| 1 | stdout | 標準輸出 |
+| 2 | stderr | 標準錯誤 |
 
----
+* * *
 
-### [](#Testing-multiple-cores-and-fork "Testing-multiple-cores-and-fork")**Testing multiple cores and 
-```
-fork
-```
-**
+### [](https://hackmd.io/@MarconiJiang/xv6_analysis#Testing-multiple-cores-and-fork)
 
 Page 10, section 1.2.3  
 Page 23, section 2.3
 
----
+* * *
 
-## [](#讀書心得---xv6-a-simple-Unix-like-teaching-operating-system "讀書心得---xv6-a-simple-Unix-like-teaching-operating-system")讀書心得 - xv6 a simple, Unix-like teaching operating system
+# [](https://hackmd.io/@MarconiJiang/xv6_analysis#%E8%AE%80%E6%9B%B8%E5%BF%83%E5%BE%97---xv6-a-simple-Unix-like-teaching-operating-system)
 
-To those who are interested in boot sequences of xv6, suggest to read below _["Appendix A - Source code boot sequence"](#Appendix-A---Source-code-in-boot-sequence)_ and _["Appendix B - xv6 Bootstrap"](#Appendix-B---xv6-Bootstrap)_, from which [draft version from Cox, Kaashoek, Morris released in 2010](https://www.cs.columbia.edu/~junfeng/11sp-w4118/lectures/boot.pdf) explains in more details of boot sequence, before reading this book [xv6 book (pdf) - xv6 a simple, Unix-like teaching operating system](https://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf). It also contains this topic in its _"Appendix B The boot loader"_, though with less details.
+To those who are interested in boot sequences of xv6, suggest to read below _["Appendix A - Source code boot sequence"](https://hackmd.io/@MarconiJiang/xv6_analysis#Appendix-A---Source-code-in-boot-sequence)_ and _["Appendix B - xv6 Bootstrap"](https://hackmd.io/@MarconiJiang/xv6_analysis#Appendix-B---xv6-Bootstrap)_, from which [draft version from Cox, Kaashoek, Morris released in 2010](https://www.cs.columbia.edu/~junfeng/11sp-w4118/lectures/boot.pdf) explains in more details of boot sequence, before reading this book [xv6 book (pdf) - xv6 a simple, Unix-like teaching operating system](https://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf). It also contains this topic in its _"Appendix B The boot loader"_, though with less details.
 
----
+* * *
 
-## [](#Appendix-A---Source-code-in-boot-sequence "Appendix-A---Source-code-in-boot-sequence")Appendix A - Source code in boot sequence
-
- Item | Source code /  
-Function Entry | Line no. <sup>\[1\]</sup> | Description | Memory address/  
-Entry point | Call from | x86 mode | user/kernel mode |
+## [](https://hackmd.io/@MarconiJiang/xv6_analysis#Appendix-A---Source-code-in-boot-sequence)
+| Item | Source code /Function Entry | Line no. [1] | Description | Memory address/Entry point | Call from | x86 mode | user/kernel mode |
 | --- | --- | --- | --- | --- | --- | --- | --- |
- 1. | 
-```
-bootasm.S
-```
- /  
-```
-start:
-```
- | 9100  
-9111 | Start of bootloader sequence.
-BIOS loads this code from first sector (0) of HDD into memory address 
-```
-0x7c00 - 0x7e00
-```
- and starts execution in real mode with 
-```
-%cs=0 %ip=0x7c00
-```
-
-```
-bootasm.S
-```
- sets up A20 line, switches from real mode to 80286 protected mode, then to 32bit 80386 protected mode.
-
- | 
-```
-0x7c00 - 0x7e00
-```
- (just below 32KB)  
-Entry: 
-```
-0x7c00
-```
- | BIOS | Real -> Protected (16bit) -> Protected (32bit) |  |
- 2. | 
-```
-bootmain.c
-```
- /  
-```
-bootmain(void)
-```
- | 9200  
-9216 | Part of Bootblock, along with 
-```
-bootasm.S
-```
-.
-
-The function 
-```
-bootmain()
-```
- loads ELF image _(contains 
-```
-elf header
-```
- and 
-```
-program header
-```
-)_ from HDD sector 1 _(right after the bootloader of HDD sector 0)_, and store in scratch memory address 
-```
-0x10000 (64KB)
-```
- for temporary usage.
-
-Follow the contents of 
-```
-elf header / program header
-```
-, and read again from HDD to the memory address specified.
-
-Then jump to and execute kernel 
-```
-entry.S entry:
-```
- routine
-
- | 
-```
-0x7c00 - 0x7e00 (just below 32KB)
-```
-  
-Entry: 
-```
-0x7cxx
-```
- _(following bootasm.S, real address depending on xv6 compiled result)_ | 
-```
-bootasm.S
-```
- | Protected (32bit) |  |
- 3. | 
-```
-entry.S
-```
- /  
-```
-_start
-```
-  
-```
-entry:
-```
- | 1100  
-1139  
-1144 | The xv6 kernel starts executing in this fie.
-
-Entering xv6 on boot processor, turn on page size extention, set up stack pointer, jump to 
-```
-main()
-```
-
-
- | 
-```
-0x100000 - 0x1063ca
-```
- & 
-```
-0x1073e0 - 0x107b7e
-```
-<sup>\[2\]</sup>  
-Entry point : 
-```
-0x10000c(1MB)
-```
-<sup>\[3\]</sup> | 
-```
-bootmain.c
-```
- | Protected (32bit) |  |
- 4. | 
-```
-main.c
-```
- /  
-```
-main(void)
-```
- | 1300  
-1316 | Bootstrap processor starts running C code here.
-
-Allocate a real stack and switch to it, first doing some setup required for memory allocator to work. Tasks are listed in <sup>\[4\]</sup>
-
- | 
-```
-0x100000 - 0x1063ca
-```
- & 
-```
-0x1073e0 - 0x107b7e
-```
-<sup>\[2\]</sup>  
-Entry point : 
-```
-0x10xxxx
-```
- _(following 
-```
-entry.S
-```
-, real address depending on xv6 compiled result)_ | 
-```
-entry.S
-```
- | Protected (32bit) |  |
+| 1. | bootasm.S /start: | 91009111 | Start of bootloader sequence.BIOS loads this code from first sector (0) of HDD into memory address 0x7c00 - 0x7e00 and starts execution in real mode with %cs=0 %ip=0x7c00bootasm.S sets up A20 line, switches from real mode to 80286 protected mode, then to 32bit 80386 protected mode. | 0x7c00 - 0x7e00 (just below 32KB)Entry: 0x7c00 | BIOS | Real -> Protected (16bit) -> Protected (32bit) |  |
+| 2. | bootmain.c /bootmain(void) | 92009216 | Part of Bootblock, along with bootasm.S.The function bootmain() loads ELF image (contains elf header and program header) from HDD sector 1 (right after the bootloader of HDD sector 0), and store in scratch memory address 0x10000 (64KB) for temporary usage.Follow the contents of elf header / program header, and read again from HDD to the memory address specified.Then jump to and execute kernel entry.S entry: routine | 0x7c00 - 0x7e00 (just below 32KB)Entry: 0x7cxx (following bootasm.S, real address depending on xv6 compiled result) | bootasm.S | Protected (32bit) |  |
+| 3. | entry.S /_startentry: | 110011391144 | The xv6 kernel starts executing in this fie.Entering xv6 on boot processor, turn on page size extention, set up stack pointer, jump to main() | 0x100000 - 0x1063ca & 0x1073e0 - 0x107b7e[2]Entry point : 0x10000c(1MB)[3] | bootmain.c | Protected (32bit) |  |
+| 4. | main.c /main(void) | 13001316 | Bootstrap processor starts running C code here.Allocate a real stack and switch to it, first doing some setup required for memory allocator to work. Tasks are listed in [4] | 0x100000 - 0x1063ca & 0x1073e0 - 0x107b7e[2]Entry point : 0x10xxxx (following entry.S, real address depending on xv6 compiled result) | entry.S | Protected (32bit) |  |
 
 \[1\]: Line no. of xv6 rev9 source code  
 \[2\]: Check page 6 of [draft version from Cox, Kaashoek, Morris released in 2010](https://www.cs.columbia.edu/~junfeng/11sp-w4118/lectures/boot.pdf)
@@ -2193,15 +1174,10 @@ filesz 0x000063ca memsz 0x000063ca flags r-x
 LOAD off 0x000073e0 vaddr 0x001073e0 paddr 0x001073e0 align 2**12
 filesz 0x0000079e memsz 0x000067e4 flags rw␂STACK off 0x00000000 vaddr 0x00000000 paddr 0x00000000 align 2**2
 filesz 0x00000000 memsz 0x00000000 flags rwx
-
 ```
 
 \[3\]: Check [xv6启动源码阅读 - csdn](https://blog.csdn.net/vally1989/article/details/71796482)  
-\[4\]: 
-```
-main()
-```
- function does the following tasks
+\[4\]: `main()` function does the following tasks
 
 ```
 1316 int
@@ -2229,27 +1205,19 @@ main()
 1338   userinit();    // first user process
 1339   mpmain();      // finish this processor’s setup
 1340 }
-
 ```
 
----
+* * *
 
-## [](#Appendix-B---xv6-Bootstrap "Appendix-B---xv6-Bootstrap")Appendix B - xv6 Bootstrap
+## [](https://hackmd.io/@MarconiJiang/xv6_analysis#Appendix-B---xv6-Bootstrap)
 
 There is a [draft version from Cox, Kaashoek, Morris released in 2010](https://www.cs.columbia.edu/~junfeng/11sp-w4118/lectures/boot.pdf), which explains in more details about bootstrap than later version in 2016. It uses [xv6 rev4](https://www.cs.columbia.edu/~junfeng/11sp-w4118/xv6/xv6-rev4.pdf) as reference source code, which is different from [xv6 rev9 source code pdf](https://pdos.csail.mit.edu/6.828/2016/xv6/xv6-rev9.pdf) used in xv6 book. (we use the rev9 as the reference throughout this note for consistance)
 
----
+* * *
 
-#### [](#Line-9111-bootasmS "Line-9111-bootasmS")Line 9111 
-```
-bootasm.S
-```
+#### [](https://hackmd.io/@MarconiJiang/xv6_analysis#Line-9111-bootasmS)
 
-Below is the complete list of 
-```
-bootasm.S
-```
- source code.
+Below is the complete list of `bootasm.S` source code.
 
 ```
 9100 #include "asm.h"
@@ -2337,15 +1305,11 @@ bootasm.S
 9187 gdtdesc:
 9188	.word	(gdtdesc − gdt − 1)	# sizeof(gdt) − 1
 9189	.long	gdt	# address gdt 
-
 ```
 
----
+* * *
 
-#### [](#Line-9216-bootmainc "Line-9216-bootmainc")Line 9216 
-```
-bootmain.c
-```
+#### [](https://hackmd.io/@MarconiJiang/xv6_analysis#Line-9216-bootmainc)
 
 ```
 9200 // Boot loader.
@@ -2445,26 +1409,13 @@ bootmain.c
 9294	for(; pa < epa; pa += SECTSIZE, offset++)
 9295	  readsect(pa, offset);
 9296 }
-
 ```
 
----
+* * *
 
-#### [](#Line-9234-ph--struct-proghdrucharelf--elf−gtphoff "Line-9234-ph--struct-proghdrucharelf--elf−gtphoff")Line 9234 ph = (struct proghdr\*)((uchar\*)elf + elf−>phoff);
+#### [](https://hackmd.io/@MarconiJiang/xv6_analysis#Line-9234-ph--struct-proghdrucharelf--elf%E2%88%92gtphoff)
 
-Check [wiki - Executable and Linkable Format (ELF)](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) about [File header](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format#File_header) and [Program header](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format#Program_header) for both 32 and 64 bit format, which xv6 uses 32 bit format. xv6 defines in 
-```
- xv6/elf.h
-```
- about 
-```
-elfhdr
-```
- and 
-```
-proghdr
-```
-.
+Check [wiki - Executable and Linkable Format (ELF)](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) about [File header](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format#File_header) and [Program header](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format#Program_header) for both 32 and 64 bit format, which xv6 uses 32 bit format. xv6 defines in `xv6/elf.h` about `elfhdr` and `proghdr`.
 
 ```
 1004 // File header
@@ -2497,46 +1448,32 @@ proghdr
 1031   uint flags;
 1032   uint align;
 1033 };
-
 ```
 
----
+* * *
 
-#### [](#Line-9245-entry--voidvoidelf−gtentry "Line-9245-entry--voidvoidelf−gtentry")Line 9245 entry = (void(\*)(void))(elf−>entry);
+#### [](https://hackmd.io/@MarconiJiang/xv6_analysis#Line-9245-entry--voidvoidelf%E2%88%92gtentry)
 
 Check [Stackoverflow - Casting an address to a function: using "void(\*)(void)"](https://stackoverflow.com/questions/21081156/casting-an-address-to-a-function-using-void-void).
 
-```
-((void (*)(void))
-```
-  
+`((void (*)(void))`  
 It's casting the expression  
-```
-(ELFHDR->e_entry)
-```
-  
+`(ELFHDR->e_entry)`  
 to be a pointer to a function that takes no arguments and returns nothing.
 
 or another explaination
 
 The tool you want is [cdecl](http://cdecl.org/), which translates C types into English. In this case, it translates:
 
-```
-(void (*)(void))
-```
+`(void (*)(void))`
 
 into:
 
-```
-cast unknown_name into pointer to function (void) returning void
-```
+`cast unknown_name into pointer to function (void) returning void`
 
----
+* * *
 
-#### [](#Line-1144-entryS "Line-1144-entryS")Line 1144 
-```
-entry.S
-```
+#### [](https://hackmd.io/@MarconiJiang/xv6_analysis#Line-1144-entryS)
 
 ```
 1100 # The xv6 kernel starts executing in this file. This file is linked with 1101 # the kernel C code, so it can refer to kernel symbols such as main(). 1102 # The boot block (bootasm.S and bootmain.c) jumps to entry below.
@@ -2584,15 +1521,11 @@ entry.S
 1164	mov $main, %eax 1165	jmp *%eax
 1166
 1167 .comm stack, KSTACKSIZE 
-
 ```
 
----
+* * *
 
-#### [](#Line-1316-mainc "Line-1316-mainc")Line 1316 
-```
-main.c
-```
+#### [](https://hackmd.io/@MarconiJiang/xv6_analysis#Line-1316-mainc)
 
 ```
 1300	#include "types.h"
@@ -2704,74 +1637,77 @@ main.c
 1415	// Map VA’s [KERNBASE, KERNBASE+4MB) to PA’s [0, 4MB)
 1416	[KERNBASE>>PDXSHIFT] = (0) | PTE_P | PTE_W | PTE_PS,
 1417 };
-
 ```
 
----
+* * *
 
-#### [](#xv6-Compile-amp-Make---xv6-Makefile-LD--b-binary-initcode-entryother "xv6-Compile-amp-Make---xv6-Makefile-LD--b-binary-initcode-entryother")xv6 Compile & Make - 
-```
-xv6 Makefile $(LD) -b binary initcode entryother
-```
+#### [](https://hackmd.io/@MarconiJiang/xv6_analysis#xv6-Compile-amp-Make---xv6-Makefile-LD--b-binary-initcode-entryother)
 
-[Stackoverflow article $(LD) -b binary](https://stackoverflow.com/questions/29034840/binutils-kernel-binary-meaning) explains 
-```
-xv6
-```
- how linker work to generate the kernel, with command line below:
+[Stackoverflow article $(LD) -b binary](https://stackoverflow.com/questions/29034840/binutils-kernel-binary-meaning) explains `xv6` how linker work to generate the kernel, with command line below:
 
 ```
 $(LD) $(LDFLAGS) -T kernel.ld -o kernel entry.o $(OBJS) -b binary initcode entryother
-
 ```
 
 As you can see, it uses -b binary to embed the files initcode and entryother, so the above symbols will be defined during this process.
 
----
+* * *
 
-## [](#References "References")References
+## [](https://hackmd.io/@MarconiJiang/xv6_analysis#References)
 
--   **xv6 officials**  -   [MIT PDOS (Parallel and Distributed Operating Systems group at MIT CSAIL) xv6 source code github](https://github.com/mit-pdos/xv6-public)    -   [xv6 revisions](https://github.com/mit-pdos/xv6-public/tags)
-              -   [xv6 book (html) - xv6 a simple, Unix-like teaching operating system](https://pekopeko11.sakura.ne.jp/unix_v6/xv6-book/en/index.html)
-              -   [xv6 book (pdf) - xv6 a simple, Unix-like teaching operating system](https://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf)      -   [xv6 rev9 source code pdf - the version used in xv6 book](https://pdos.csail.mit.edu/6.828/2016/xv6/xv6-rev9.pdf)
-                  
-              -   There is a [draft version from Cox, Kaashoek, Morris released in 2010](https://www.cs.columbia.edu/~junfeng/11sp-w4118/lectures/boot.pdf), which explains in more details about bootstrap than later version in 2016.      -   Use [xv6 rev4](https://www.cs.columbia.edu/~junfeng/11sp-w4118/xv6/xv6-rev4.pdf) as reference
-          
-      -   [Lions' Commentary on UNIX' 6th Edition, John Lions](http://www.lemis.com/grog/Documentation/Lions/)    -   [Lions' Commentary on UNIX' 6th Edition, John Lions (pdf version)](http://www.lemis.com/grog/Documentation/Lions/book.pdf)
-          
-      -   [Washington Univ. CSE451 course](https://courses.cs.washington.edu/courses/cse451/15au/schedule.html)
-      -   [OSDev wiki](https://wiki.osdev.org/)
----
--   **xv6 English article collections**  -   [xv6 explained by YehudaShapira  
-          ](https://github.com/YehudaShapira/xv6-explained)    -   [xv6 code explained](https://github.com/YehudaShapira/xv6-explained/blob/master/xv6%20Code%20Explained.md) : though not sure about what the entry point means
-          
-      -   [CTRL + P : Repository contains the code developed for Xv6 Operating system to implement Ctrl + P functionality](https://github.com/anandankit95/Ctrl-P)    -   The Ctrl + P, or Ctrl + p key combination gives the following details in the following given format:-
-              -   Process ID, Process Name, Uptime ,Process Status
-          
-      -   [Intro to xv6 - write a System Call ny Tyler Allen/](https://tnallen.people.clemson.edu/2019/03/04/intro-to-xv6.html)
-      -   Principles of Operating Systems by Anton Burtsev    -   [Lecture 7: System boot (2018 fall - 143A)](https://www.ics.uci.edu/~aburtsev/143A/2018fall/lectures/lecture06-system-boot/lecture06-system-boot.pdf) : [https://www.ics.uci.edu/~aburtsev/143A/2018fall/lectures/lecture06-system-boot/lecture06-system-boot.pdf](https://www.ics.uci.edu/~aburtsev/143A/2018fall/lectures/lecture06-system-boot/lecture06-system-boot.pdf)
-              -   [CS5460/6460: Operating Systems Lecture 9: Finishing system boot, and system init](https://www.ics.uci.edu/~aburtsev/143A/2017fall/lectures/lecture09-kernel-init/lecture09-kernel-init.pdf): [https://www.ics.uci.edu/~aburtsev/143A/2017fall/lectures/lecture09-kernel-init/lecture09-kernel-init.pdf](https://www.ics.uci.edu/~aburtsev/143A/2017fall/lectures/lecture09-kernel-init/lecture09-kernel-init.pdf)
-              -   [Lecture 7: System boot (238P)](https://www.ics.uci.edu/~aburtsev/238P/lectures/lecture07-system-boot/lecture07-system-boot.pdf) : [https://www.ics.uci.edu/~aburtsev/238P/lectures/lecture07-system-boot/lecture07-system-boot.pdf](https://www.ics.uci.edu/~aburtsev/238P/lectures/lecture07-system-boot/lecture07-system-boot.pdf)
----
--   **xv6 Mandarin article collections**  -   [LuSkyWalter - xv6 based on x86](https://blog.lusw.dev/categories/XV6/)    -   [XV6 - PC Hardware 2018-08-27](https://blog.lusw.dev/posts/xv6/hardware.html)
-              -   [XV6 - Memory Page Tables 2018-07-23](https://blog.lusw.dev/posts/xv6/mem.html)
-              -   [XV6 - Traps and Drivers 2018-07-30](https://blog.lusw.dev/posts/xv6/trap.html)
-              -   [XV6 - OS Organization 2018-07-16](https://blog.lusw.dev/posts/xv6/process.html)
-              -   [XV6 - OS Interfaces 2018-07-09](https://blog.lusw.dev/posts/xv6/intro.html)
-              -   [XV6 - Running 2018-08-27](https://blog.lusw.dev/posts/xv6/running.html)
-              -   [XV6 - The Boot loader 2018-08-27](https://blog.lusw.dev/posts/xv6/bootloader.html)
-              -   [XV6 - Starting Process 2018-08-27](https://blog.lusw.dev/posts/xv6/starting.html)
-              -   [XV6 - File System 2018-08-23](https://blog.lusw.dev/posts/xv6/fs.html)
-              -   [XV6 - Scheduling 2018-08-14](https://blog.lusw.dev/posts/xv6/scheduler.html)
-              -   [XV6 - Locking 2018-08-07](https://blog.lusw.dev/posts/xv6/lock.html)
-          
-      -   [xv6启动源码阅读 - csdn](https://blog.csdn.net/vally1989/article/details/71796482) or [codeantenna link](https://codeantenna.com/a/xcCMl54eeQ) : 最近在学习MIT的6.828操作系统课程，课程地址: [https://pdos.csail.mit.edu/6.828/2016/](https://pdos.csail.mit.edu/6.828/2016/) 。6.828的课程自带了一个简单的基于unix的操作系统。打算写几篇阅读这个操作系统源码的文章。这是第一篇，主要讲解启动时候的主要操作。
-      -   [淺談特權模式與模式切換 - xv6 RISC-V](https://ithelp.ithome.com.tw/articles/10279502?sc=hot) : 恐龍書上的 User Mode 與 Kernel Mode. 在恐龍書中有提到，作業系統一般會在 User Mode 與 Kernel Mode 之間切換，Kernel Mode 具有更高的系統控制權且掌管了多數的硬體資源。而 User Mode 通常用於執行 User Application，如果 User Application 呼叫了 System call，系統便會切換到 Kernel Mode 進行處理，並在處理完成後退回 User Mode。恐龍本沒有教的事:特權指令.
-      -   [xv6 Trap (user mode): Trace Trap - 2022 iThome 鐵人賽](https://ithelp.ithome.com.tw/m/articles/10302200)
-      -   [Google search result - how to judge kernel mode or user mode xv6](https://www.google.com/search?q=how+to+judge+kernel+mode+or+user+mode+xv6&oq=how+to+judge+kernel+mode+or+user+mode+xv6&aqs=edge..69i57.50387j0j1&sourceid=chrome&ie=UTF-8)
----
--   **Youtube collections**  -   [xv6 Kernel by hhp3](https://www.youtube.com/watch?v=fWUJKH0RNFE&list=PLbtzT1TYeoMhTPzyTZboW_j7TPAnjv9XB) : 38 videos
----
+-   **xv6 officials**
+    -   [MIT PDOS (Parallel and Distributed Operating Systems group at MIT CSAIL) xv6 source code github](https://github.com/mit-pdos/xv6-public)
+        -   [xv6 revisions](https://github.com/mit-pdos/xv6-public/tags)
+        -   [xv6 book (html) - xv6 a simple, Unix-like teaching operating system](https://pekopeko11.sakura.ne.jp/unix_v6/xv6-book/en/index.html)
+        -   [xv6 book (pdf) - xv6 a simple, Unix-like teaching operating system](https://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf)
+            -   [xv6 rev9 source code pdf - the version used in xv6 book](https://pdos.csail.mit.edu/6.828/2016/xv6/xv6-rev9.pdf)
+        -   There is a [draft version from Cox, Kaashoek, Morris released in 2010](https://www.cs.columbia.edu/~junfeng/11sp-w4118/lectures/boot.pdf), which explains in more details about bootstrap than later version in 2016.
+            -   Use [xv6 rev4](https://www.cs.columbia.edu/~junfeng/11sp-w4118/xv6/xv6-rev4.pdf) as reference
+    -   [Lions' Commentary on UNIX' 6th Edition, John Lions](http://www.lemis.com/grog/Documentation/Lions/)
+        -   [Lions' Commentary on UNIX' 6th Edition, John Lions (pdf version)](http://www.lemis.com/grog/Documentation/Lions/book.pdf)
+    -   [Washington Univ. CSE451 course](https://courses.cs.washington.edu/courses/cse451/15au/schedule.html)
+    -   [OSDev wiki](https://wiki.osdev.org)
+
+* * *
+
+-   **xv6 English article collections**
+    -   [xv6 explained by YehudaShapira](https://github.com/YehudaShapira/xv6-explained)
+        -   [xv6 code explained](https://github.com/YehudaShapira/xv6-explained/blob/master/xv6%20Code%20Explained.md) : though not sure about what the entry point means
+    -   [CTRL + P : Repository contains the code developed for Xv6 Operating system to implement Ctrl + P functionality](https://github.com/anandankit95/Ctrl-P)
+        -   The Ctrl + P, or Ctrl + p key combination gives the following details in the following given format:-
+        -   Process ID, Process Name, Uptime ,Process Status
+    -   [Intro to xv6 - write a System Call ny Tyler Allen/](https://tnallen.people.clemson.edu/2019/03/04/intro-to-xv6.html)
+    -   Principles of Operating Systems by Anton Burtsev
+        -   [Lecture 7: System boot (2018 fall - 143A)](https://www.ics.uci.edu/~aburtsev/143A/2018fall/lectures/lecture06-system-boot/lecture06-system-boot.pdf) : [https://www.ics.uci.edu/~aburtsev/143A/2018fall/lectures/lecture06-system-boot/lecture06-system-boot.pdf](https://www.ics.uci.edu/~aburtsev/143A/2018fall/lectures/lecture06-system-boot/lecture06-system-boot.pdf)
+        -   [CS5460/6460: Operating Systems Lecture 9: Finishing system boot, and system init](https://www.ics.uci.edu/~aburtsev/143A/2017fall/lectures/lecture09-kernel-init/lecture09-kernel-init.pdf): [https://www.ics.uci.edu/~aburtsev/143A/2017fall/lectures/lecture09-kernel-init/lecture09-kernel-init.pdf](https://www.ics.uci.edu/~aburtsev/143A/2017fall/lectures/lecture09-kernel-init/lecture09-kernel-init.pdf)
+        -   [Lecture 7: System boot (238P)](https://www.ics.uci.edu/~aburtsev/238P/lectures/lecture07-system-boot/lecture07-system-boot.pdf) : [https://www.ics.uci.edu/~aburtsev/238P/lectures/lecture07-system-boot/lecture07-system-boot.pdf](https://www.ics.uci.edu/~aburtsev/238P/lectures/lecture07-system-boot/lecture07-system-boot.pdf)
+
+* * *
+
+-   **xv6 Mandarin article collections**
+    -   [LuSkyWalter - xv6 based on x86](https://blog.lusw.dev/categories/XV6/)
+        -   [XV6 - PC Hardware 2018-08-27](https://blog.lusw.dev/posts/xv6/hardware.html)
+        -   [XV6 - Memory Page Tables 2018-07-23](https://blog.lusw.dev/posts/xv6/mem.html)
+        -   [XV6 - Traps and Drivers 2018-07-30](https://blog.lusw.dev/posts/xv6/trap.html)
+        -   [XV6 - OS Organization 2018-07-16](https://blog.lusw.dev/posts/xv6/process.html)
+        -   [XV6 - OS Interfaces 2018-07-09](https://blog.lusw.dev/posts/xv6/intro.html)
+        -   [XV6 - Running 2018-08-27](https://blog.lusw.dev/posts/xv6/running.html)
+        -   [XV6 - The Boot loader 2018-08-27](https://blog.lusw.dev/posts/xv6/bootloader.html)
+        -   [XV6 - Starting Process 2018-08-27](https://blog.lusw.dev/posts/xv6/starting.html)
+        -   [XV6 - File System 2018-08-23](https://blog.lusw.dev/posts/xv6/fs.html)
+        -   [XV6 - Scheduling 2018-08-14](https://blog.lusw.dev/posts/xv6/scheduler.html)
+        -   [XV6 - Locking 2018-08-07](https://blog.lusw.dev/posts/xv6/lock.html)
+    -   [xv6启动源码阅读 - csdn](https://blog.csdn.net/vally1989/article/details/71796482) or [codeantenna link](https://codeantenna.com/a/xcCMl54eeQ) : 最近在学习MIT的6.828操作系统课程，课程地址: [https://pdos.csail.mit.edu/6.828/2016/](https://pdos.csail.mit.edu/6.828/2016/) 。6.828的课程自带了一个简单的基于unix的操作系统。打算写几篇阅读这个操作系统源码的文章。这是第一篇，主要讲解启动时候的主要操作。
+    -   [淺談特權模式與模式切換 - xv6 RISC-V](https://ithelp.ithome.com.tw/articles/10279502?sc=hot) : 恐龍書上的 User Mode 與 Kernel Mode. 在恐龍書中有提到，作業系統一般會在 User Mode 與 Kernel Mode 之間切換，Kernel Mode 具有更高的系統控制權且掌管了多數的硬體資源。而 User Mode 通常用於執行 User Application，如果 User Application 呼叫了 System call，系統便會切換到 Kernel Mode 進行處理，並在處理完成後退回 User Mode。恐龍本沒有教的事:特權指令.
+    -   [xv6 Trap (user mode): Trace Trap - 2022 iThome 鐵人賽](https://ithelp.ithome.com.tw/m/articles/10302200)
+    -   [Google search result - how to judge kernel mode or user mode xv6](https://www.google.com/search?q=how+to+judge+kernel+mode+or+user+mode+xv6&oq=how+to+judge+kernel+mode+or+user+mode+xv6&aqs=edge..69i57.50387j0j1&sourceid=chrome&ie=UTF-8)
+
+* * *
+
+-   **Youtube collections**
+    -   [xv6 Kernel by hhp3](https://www.youtube.com/watch?v=fWUJKH0RNFE&list=PLbtzT1TYeoMhTPzyTZboW_j7TPAnjv9XB) : 38 videos
+
+* * *
 
 [![:arrow_left:](https://assets.hackmd.io/build/emojify.js/dist/images/basic/arrow_left.png)Previous article - Q&A for Linux](https://hackmd.io/@MarconiJiang/QnA_Linux)  
 [![:arrow_right:](https://assets.hackmd.io/build/emojify.js/dist/images/basic/arrow_right.png)Next article - x86 RISC-C Implementation](https://hackmd.io/@MarconiJiang/xv6-riscv-implementation)  
