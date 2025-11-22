@@ -394,6 +394,7 @@
     - [區塊鏈錢包技術實現理論 - 企業級系統架構解析](blockchain/blockchain-wallet-implementation.md)
     - [區塊鏈交易完整指南](blockchain/blockchain-transaction-complete-guide.md)
     - [以太坊交易機制完全指南](blockchain/ethereum-transaction-guide-tc.md)
+    - [TRON 區塊鏈底層實現指南](blockchain/TRON_Blockchain_Implementation_Guide.md)
 
 ## Quantitative Trading
 - [Strategy](strategy/bollmaker.md)
