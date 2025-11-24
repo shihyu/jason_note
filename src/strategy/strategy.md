@@ -8,3 +8,6 @@
 
 - lawrence910426 Medium
   https://medium.com/@lawrence910426
+
+- 姜成瀚 Threads
+  https://www.threads.com/@chenghan.jiang?hl=zh-tw
