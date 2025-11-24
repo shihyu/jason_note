@@ -451,7 +451,7 @@
     - [CIS](strategy/cis.md)
     - [GA](strategy/GA.md)
     - [Stock](strategy/stock.md)
-    - [Resource](strategy/note.md)
+    - [Resource](strategy/strategy.md)
     - [Nansen](strategy/nansen.md)
     - [Example](strategy/example.md)
     - [Other](strategy/other.md)
