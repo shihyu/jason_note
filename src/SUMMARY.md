@@ -297,6 +297,7 @@
 - [SSH](ssh/ssh.md)
 - [Network](network/socket.md)
 - [Compilers and Interpreters](compilers-and-interpreters/compilers-and-interpreters.md)
+    - [Go、C、C++、Rust 核心語言特性全面比較](compilers-and-interpreters/language-comparison-full.md)
 
 ## Software Engineering
 - [Software Engineering](software_engineering/software_engineering.md)
