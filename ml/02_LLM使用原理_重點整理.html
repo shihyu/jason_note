@@ -1,0 +1,687 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>LLM 使用原理 - 重點整理與補充說明 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="llm-使用原理---重點整理與補充說明"><a class="header" href="#llm-使用原理---重點整理與補充說明">LLM 使用原理 - 重點整理與補充說明</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ol>
+<li><a href="#1-llm-%E6%A8%A1%E5%9E%8B%E5%8E%9F%E7%90%86">LLM 模型原理</a></li>
+<li><a href="#2-llm-%E4%BD%BF%E7%94%A8%E5%8E%9F%E7%90%86">LLM 使用原理</a></li>
+<li><a href="#3-llm-%E4%BD%BF%E7%94%A8%E5%8E%9F%E5%89%87">LLM 使用原則</a></li>
+<li><a href="#4-%E6%96%B0%E4%B8%80%E4%BB%A3-llm-%E5%8A%9F%E8%83%BD">新一代 LLM 功能</a></li>
+<li><a href="#5-%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8">工具使用</a></li>
+<li><a href="#6-%E5%A4%9A%E6%A8%A1%E6%85%8B%E8%83%BD%E5%8A%9B">多模態能力</a></li>
+</ol>
+<hr />
+<h2 id="openai-5-agi-階段"><a class="header" href="#openai-5-agi-階段">OpenAI 5 AGI 階段</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>階段</th><th>類型</th><th>說明</th></tr></thead><tbody>
+<tr><td>Level 1</td><td>對話式 AI (Chatbot)</td><td>基本聊天功能</td></tr>
+<tr><td>Level 2</td><td>推理式 AI (Reasoner)</td><td>具備邏輯推理能力</td></tr>
+<tr><td>Level 3</td><td>自動化 AI (Agent)</td><td>自主執行任務</td></tr>
+<tr><td>Level 4</td><td>創新化 AI (Innovator)</td><td>具備創新思維</td></tr>
+<tr><td>Level 5</td><td>組織化 AI (Organization)</td><td>完整組織運作能力</td></tr>
+</tbody></table>
+</div>
+<p><strong>補充說明：</strong> 這是 OpenAI 對 AGI (通用人工智慧) 發展的五階段路線圖。目前大多數商用 LLM 處於 Level 1-2，部分最新模型如 GPT-4o 和 Claude 3.5 已開始展現 Level 3 的能力。</p>
+<hr />
+<h2 id="1-llm-模型原理"><a class="header" href="#1-llm-模型原理">1. LLM 模型原理</a></h2>
+<h3 id="11-數據收集與處理"><a class="header" href="#11-數據收集與處理">1.1 數據收集與處理</a></h3>
+<pre><code>下載全世界資料 → 清理整理 → 純文字呈現
+</code></pre>
+<p><strong>流程：</strong></p>
+<ul>
+<li>盡辦法下載全世界所有文字資料</li>
+<li>整理、去重、去雜訊、去標籤、去識別</li>
+<li>將資料以純文字方式呈現</li>
+</ul>
+<p><strong>補充說明：</strong> 這個過程涉及爬取網頁、書籍、論文、程式碼等。數據量通常達到 PB (Petabyte) 級別。清理過程非常重要，會影響模型品質。</p>
+<hr />
+<h3 id="12-tokenization-分詞"><a class="header" href="#12-tokenization-分詞">1.2 Tokenization (分詞)</a></h3>
+<p><strong>核心概念：</strong></p>
+<ul>
+<li>將文字轉換成一系列符號 (Token)</li>
+<li>從 256 個 token 開始（Unicode Byte）</li>
+<li>使用 <strong>BPE (Byte Pair Encoding)</strong> 方式增加新 token，直到目標止</li>
+</ul>
+<p><strong>補充說明：</strong></p>
+<pre><code class="language-python"># BPE 範例
+原始文字: "LLM is great"
+Token化後: ["LL", "M", " is", " great"]
+Token IDs: [9188, 44, 318, 1049]
+</code></pre>
+<p>BPE 的原理：</p>
+<ol>
+<li>統計字元對出現頻率</li>
+<li>合併最常出現的字元對</li>
+<li>重複直到達到目標詞彙量（通常 32K-100K tokens）</li>
+</ol>
+<p>不同語言的效率不同：英文約 1 token = 4 字元，中文約 1 token = 1-2 字元。</p>
+<hr />
+<h3 id="13-預訓練-pre-training---失真壓縮"><a class="header" href="#13-預訓練-pre-training---失真壓縮">1.3 預訓練 (Pre-training) - 失真壓縮</a></h3>
+<p><strong>核心類比：</strong></p>
+<ul>
+<li>就像將圖片 RAW 壓縮成 JPEG</li>
+<li>大小會變小，會失去一些訊號</li>
+<li>但盡量保留圖片本身的資訊</li>
+<li>LLM 使用的壓縮方式為「深度學習神經網路」</li>
+</ul>
+<p><strong>壓縮結果：</strong></p>
+<ul>
+<li>原來上千 PB 的文字 → 壓縮成數十億至數千億的機率分布「參數」</li>
+<li>模型大小約 1TB（以 GPT-4 級別為例）</li>
+<li>這就是「模型」本身，有預先儲存的知識</li>
+</ul>
+<p><strong>重要限制：</strong></p>
+<ul>
+<li><strong>知識截止日期 (Knowledge Cutoff)</strong>：壓縮之後產生的資料，模型並不知道</li>
+<li>通常幾個月才能做一次資料更新，非常花錢且花時間</li>
+<li>解決方案：Post-training（SFT、RLHF、RL 等方法）</li>
+</ul>
+<p><strong>補充說明：</strong> 預訓練的目標是學習「下一個 token 預測」（Next Token Prediction）。模型學習的是語言的統計規律，而非真正的「理解」。這也是為什麼 LLM 會產生幻覺（Hallucination）的原因之一。</p>
+<hr />
+<h3 id="14-如果-chatgpt-是一個人"><a class="header" href="#14-如果-chatgpt-是一個人">1.4 如果 ChatGPT 是一個人</a></h3>
+<blockquote>
+<p>"我的大小為 1TB，我的所有知識來自網路。我花了 6 個月閱讀並消化了所有網路資料。我現在只知道大概，無法詳細記住。我的語氣是後訓練出來的，我本身沒個性。我的知識在你問的時候有點過時又模糊。我回答時會用猜的，比較多人討論的知識我會記得較清楚，反之不清楚。如果要我學新知識，我的舊知識也要全部再重新讀一次，除非你讓我可以用工具。"</p>
+</blockquote>
+<p><strong>重點提示：</strong></p>
+<ol>
+<li>知識是壓縮且模糊的</li>
+<li>人格是後訓練的結果</li>
+<li>知識會過時</li>
+<li>回答基於機率而非確定性</li>
+<li>熱門話題記得清楚，冷門話題容易出錯</li>
+<li>更新知識代價高昂</li>
+</ol>
+<hr />
+<h2 id="2-llm-使用原理"><a class="header" href="#2-llm-使用原理">2. LLM 使用原理</a></h2>
+<h3 id="21-對話機制"><a class="header" href="#21-對話機制">2.1 對話機制</a></h3>
+<pre><code>用戶輸入 → Token 序列 → LLM 處理 → Token 序列 → 文字輸出
+</code></pre>
+<p><strong>流程說明：</strong></p>
+<ol>
+<li>在 LLM 中輸入文字</li>
+<li>文字被轉換成序列 token</li>
+<li>回答也是序列 tokens</li>
+<li>將完整對話附加在後面</li>
+</ol>
+<p><strong>補充說明：</strong> 每次對話，LLM 都會看到完整的對話歷史，這是為什麼它能「記住」之前說過的話。但這也意味著長對話會消耗更多 token。</p>
+<hr />
+<h3 id="22-一輪聊天的結構"><a class="header" href="#22-一輪聊天的結構">2.2 一輪聊天的結構</a></h3>
+<p><strong>Token 序列結構：</strong></p>
+<pre><code>[系統提示] + [用戶輸入] + [Enter] + [LLM回答] + [&lt;eos&gt;] + [用戶輸入] + ...
+</code></pre>
+<p><strong>關鍵概念：</strong></p>
+<ul>
+<li>使用者輸入 Enter 代表使用者結束</li>
+<li>LLM 產生 <code>&lt;eos&gt;</code> (End of Sequence) 代表 LLM 輸出結束</li>
+<li>整個 token 序列被視為「<strong>工作記憶體</strong>」</li>
+<li>記憶體長度稱為 <strong>Context Window</strong></li>
+</ul>
+<p><strong>補充說明：</strong></p>
+<ul>
+<li>GPT-4 Turbo: 128K tokens</li>
+<li>Claude 3: 200K tokens</li>
+<li>Gemini 1.5: 1M-2M tokens</li>
+</ul>
+<p>Context Window 越大，能處理的對話歷史和文件就越長，但成本也越高。</p>
+<hr />
+<h2 id="3-llm-使用原則"><a class="header" href="#3-llm-使用原則">3. LLM 使用原則</a></h2>
+<h3 id="實用建議"><a class="header" href="#實用建議">實用建議</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>原則</th><th>說明</th></tr></thead><tbody>
+<tr><td><strong>多產品測試</strong></td><td>在多個產品中測試，找出最適合你需求的</td></tr>
+<tr><td><strong>選擇付費方案</strong></td><td>免費版功能越來越受限，推薦 ChatGPT Plus (20美元/月)</td></tr>
+<tr><td><strong>查詢穩定資訊</strong></td><td>已經不會變的資訊，就直接查</td></tr>
+<tr><td><strong>建立新 Session</strong></td><td>話題結束後建立新 Chat Session，結果更正確也更快</td></tr>
+<tr><td><strong>使用最新模型</strong></td><td>盡量使用最新的 Model</td></tr>
+<tr><td><strong>不一定要最強</strong></td><td>根據任務選擇適合的模型，不必總是用最強的</td></tr>
+</tbody></table>
+</div>
+<p><strong>補充說明：</strong></p>
+<ol>
+<li>
+<p><strong>為什麼新 Session 更好？</strong></p>
+<ul>
+<li>避免上下文污染</li>
+<li>減少 token 消耗</li>
+<li>模型回答更聚焦</li>
+</ul>
+</li>
+<li>
+<p><strong>模型選擇策略：</strong></p>
+<ul>
+<li>簡單問答：GPT-3.5 / Claude Haiku（快速便宜）</li>
+<li>複雜推理：GPT-4 / Claude Sonnet（平衡）</li>
+<li>專業任務：GPT-4o / Claude Opus（最強）</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h2 id="4-新一代-llm-功能"><a class="header" href="#4-新一代-llm-功能">4. 新一代 LLM 功能</a></h2>
+<h3 id="41-舊款自迴歸模型"><a class="header" href="#41-舊款自迴歸模型">4.1 舊款自迴歸模型</a></h3>
+<p><strong>Auto-regressive 名稱由來：</strong></p>
+<ul>
+<li><strong>Regression</strong>：回復、退回</li>
+<li><strong>Linear Regression</strong>：預測新資料是否回到先前資料集的分布</li>
+<li><strong>Regressive 模型</strong>：在機率分布中，新資料是否回到先前資料集建立的分布</li>
+<li><strong>Auto-regressive</strong>：用自己來預測是否有迴歸</li>
+</ul>
+<p><strong>補充說明：</strong> 自迴歸模型的核心是「用已生成的 token 預測下一個 token」。這是一種串行的生成過程，每次只生成一個 token。</p>
+<hr />
+<h3 id="42-舊模型的限制與演進"><a class="header" href="#42-舊模型的限制與演進">4.2 舊模型的限制與演進</a></h3>
+<p><strong>舊模型問題：</strong></p>
+<ul>
+<li>單純不斷利用自己產生新的 token，直到出現 <code>&lt;eos&gt;</code> 才結束（文字接龍）</li>
+<li>利用 Few-shot 方式套出預先壓縮知識</li>
+<li>使用 COT (Chain of Thought) 方式套出知識</li>
+<li>如果有錯就更改提示詞（Try and Error）</li>
+</ul>
+<p><strong>演進方向：</strong></p>
+<ul>
+<li>如果有一個機制，讓模型不斷用 Try and Error 的方式找出正確答案</li>
+<li><strong>RL (Reinforcement Learning)</strong> 的介入：Agent → Action → Observation → Reward</li>
+</ul>
+<hr />
+<h3 id="43-讓-llm-思考出答案"><a class="header" href="#43-讓-llm-思考出答案">4.3 讓 LLM 思考出答案</a></h3>
+<p><strong>人類解題過程：</strong></p>
+<ol>
+<li>了解問題之後，會先試一個方法</li>
+<li>不行會重新定向，再換一個方法</li>
+<li>如此反覆循環，不斷試驗中間試過的方法</li>
+<li>列出思考的過程一一實驗</li>
+</ol>
+<p><strong>訓練會思考的 LLM：</strong></p>
+<ul>
+<li>將思考獲得正確答案的完整過程丟給 LLM 作為訓練資料</li>
+<li>可以得到一個會思考的 LLM</li>
+<li><strong>Deepseek R1</strong> 的論文首次揭露完整過程</li>
+</ul>
+<p><strong>補充說明：</strong> 這種方法稱為「Process Reward Model」，不只獎勵正確答案，還獎勵正確的思考過程。這是從「結果導向」轉變為「過程導向」的重大突破。</p>
+<hr />
+<h3 id="44-llm-訓練階段"><a class="header" href="#44-llm-訓練階段">4.4 LLM 訓練階段</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>階段</th><th>目的</th><th>說明</th></tr></thead><tbody>
+<tr><td><strong>預訓練 (Pre-training)</strong></td><td>獲得基本知識的概貌</td><td>學習語言規律</td></tr>
+<tr><td><strong>SFT (Supervised Fine-Tuning)</strong></td><td>增加新的知識或能力</td><td>特定任務微調</td></tr>
+<tr><td><strong>RLHF (RL from Human Feedback)</strong></td><td>讓輸出貼近人類要求</td><td>對齊人類價值觀</td></tr>
+<tr><td><strong>RL (Reinforcement Learning)</strong></td><td>讓 LLM 學會人類解題方式</td><td>學習推理過程</td></tr>
+<tr><td><strong>DRPO</strong></td><td>LLM 學會思考</td><td>深度推理優化</td></tr>
+</tbody></table>
+</div>
+<p><strong>補充說明：</strong></p>
+<ul>
+<li><strong>SFT</strong>：使用標註數據進行監督學習</li>
+<li><strong>RLHF</strong>：結合人類偏好進行強化學習</li>
+<li><strong>RL</strong>：使用獎勵信號優化策略</li>
+<li><strong>DRPO (Direct Reward Policy Optimization)</strong>：更直接的獎勵優化方法</li>
+</ul>
+<hr />
+<h3 id="45-會思考的模型"><a class="header" href="#45-會思考的模型">4.5 會思考的模型</a></h3>
+<p><strong>發展歷程：</strong></p>
+<ul>
+<li>首先在 ChatGPT 的 o 開頭模型中出現（o1, o1-mini）</li>
+<li><strong>Deepseek R1</strong> 提出完整論文</li>
+<li>將此思考能力稱為 <strong>Aha-Moment</strong></li>
+</ul>
+<p><strong>思考模型的流程：</strong></p>
+<pre><code>1. 生成 &lt;think&gt; token → 開始思考
+2. 生成解題步驟
+3. 將步驟送回 LLM 產生新內容
+4. 不斷循環
+5. 輸出 &lt;/think&gt; 結束思考
+6. 將結果放入 context window
+7. 產生最終回答直到 &lt;eos&gt;
+</code></pre>
+<p><strong>特點：</strong></p>
+<ul>
+<li>非常花 token（思考過程也消耗 token）</li>
+<li>也很花時間</li>
+<li><strong>付費模型才會有</strong></li>
+</ul>
+<p><strong>補充說明：</strong> 思考模型的核心創新是「讓模型在回答前先思考」。這類似於人類的 System 2 思考（慢思考），而非傳統 LLM 的 System 1（快思考）。</p>
+<hr />
+<h2 id="5-工具使用"><a class="header" href="#5-工具使用">5. 工具使用</a></h2>
+<h3 id="51-記憶機制"><a class="header" href="#51-記憶機制">5.1 記憶機制</a></h3>
+<p><strong>Context Window 特性：</strong></p>
+<ul>
+<li>整個 token 序列被視為「工作記憶體」</li>
+<li>有大小限制</li>
+<li>超過限制需要壓縮或截斷</li>
+</ul>
+<p><strong>補充說明：</strong> 這是 LLM 的短期記憶。長期記憶需要透過外部存儲（如向量資料庫）實現。</p>
+<hr />
+<h3 id="52-網路搜尋"><a class="header" href="#52-網路搜尋">5.2 網路搜尋</a></h3>
+<p><strong>為什麼需要網路搜尋？</strong></p>
+<ul>
+<li>比較 3.11 和 3.9 哪個大，直接文字接龍失敗</li>
+<li>用思考模型思考解題過程可行但慢</li>
+<li>直接用計算機或寫程式又快又準</li>
+<li><strong>即時知識</strong>無法透過預訓練獲得</li>
+</ul>
+<p><strong>解決方案演進：</strong></p>
+<ul>
+<li>SFT：不定時加入新知識（慢）</li>
+<li>RAG：轉換向量資料庫（複雜）</li>
+<li><strong>網路搜尋</strong>：直接上網搜尋，把結果丟回 context window（最快最準）</li>
+</ul>
+<p><strong>補充說明：</strong> 這就是 ChatGPT Plus 的 Browse with Bing、Claude 的 Web Search 等功能的原理。</p>
+<hr />
+<h3 id="53-工具使用機制"><a class="header" href="#53-工具使用機制">5.3 工具使用機制</a></h3>
+<p><strong>工具調用流程：</strong></p>
+<pre><code>[用戶提問] → [LLM 回答] → [LLM 生成 &lt;tool&gt; token]
+    → [暫停 LLM] → [呼叫外部資源] → [獲得結果]
+    → [放入 &lt;output&gt;&lt;/output&gt;&lt;/tool&gt; 區段]
+    → [繼續 LLM 輸出直到 &lt;eos&gt;]
+</code></pre>
+<p><strong>核心能力：</strong></p>
+<ul>
+<li>LLM 具有呼叫多種工具的能力</li>
+<li>可以串接這些工具</li>
+<li>形成工具鏈 (Tool Chain)</li>
+</ul>
+<p><strong>補充說明：</strong> 這是 Agent 的基礎能力。常見工具包括：</p>
+<ul>
+<li>計算器</li>
+<li>程式碼執行器</li>
+<li>網路搜尋</li>
+<li>文件讀取</li>
+<li>API 調用</li>
+</ul>
+<hr />
+<h3 id="54-深度研究-deep-research"><a class="header" href="#54-深度研究-deep-research">5.4 深度研究 (Deep Research)</a></h3>
+<p><strong>功能展示：</strong></p>
+<p>輸入：「幫我做增肌減脂的調查及計劃」</p>
+<p>自動執行：</p>
+<ul>
+<li>開啟網頁</li>
+<li>讀取 PDF</li>
+<li>執行程式</li>
+<li>執行計算</li>
+</ul>
+<p>輸出：</p>
+<ul>
+<li>完整的論文</li>
+<li>報告</li>
+<li>問卷調查</li>
+</ul>
+<p><strong>技術本質：</strong></p>
+<ul>
+<li>AI Agent 的基礎</li>
+<li>先使用工具完成多模態資料讀入和消化</li>
+<li>最後排版輸出</li>
+<li>多個 LLM 產品提供這個服務</li>
+<li><strong>大部分需要付費</strong></li>
+</ul>
+<p><strong>補充說明：</strong> Deep Research 已經具備基本 Agent 功能，能夠：</p>
+<ol>
+<li>自主規劃任務</li>
+<li>選擇合適工具</li>
+<li>執行多步驟操作</li>
+<li>整合結果輸出</li>
+</ol>
+<hr />
+<h3 id="55-檔案上傳功能"><a class="header" href="#55-檔案上傳功能">5.5 檔案上傳功能</a></h3>
+<p><strong>功能特點：</strong></p>
+<ul>
+<li>LLM 具有多模態功能，可在文字之間互轉</li>
+<li>讀取的圖片也被轉成 token 放入 context window</li>
+<li>支援：PDF、docx、pptx 等</li>
+<li><strong>可利用檔案上傳增加 LLM 外部知識，而不一定要經過微調</strong></li>
+</ul>
+<p><strong>補充說明：</strong> 這是一種輕量級的知識注入方式，適合：</p>
+<ul>
+<li>臨時文件分析</li>
+<li>特定文檔問答</li>
+<li>不需要永久學習的場景</li>
+</ul>
+<p>缺點：每次對話都要重新上傳，且受 context window 限制。</p>
+<hr />
+<h3 id="56-python-解譯器功能"><a class="header" href="#56-python-解譯器功能">5.6 Python 解譯器功能</a></h3>
+<p><strong>能力突破：</strong></p>
+<ul>
+<li>可呼叫瀏覽器，即可呼叫其它工具</li>
+<li>上一代 LLM 是直接產生 token，問題很多</li>
+<li>同樣的問題經過深度思考也不見得有答案（如數學、程式設計）</li>
+<li><strong>為何不直接呼叫計算機、程式編輯器來執行？</strong></li>
+<li>LLM 開始具備自動執行其它程式，甚至是其它 LLM 的能力</li>
+</ul>
+<p><strong>補充說明：</strong> 這是 LLM 從「思考者」變成「執行者」的關鍵一步。程式碼解譯器讓 LLM 能夠：</p>
+<ul>
+<li>驗證數學計算</li>
+<li>執行數據分析</li>
+<li>生成視覺化圖表</li>
+<li>測試程式碼</li>
+</ul>
+<hr />
+<h2 id="6-多模態能力"><a class="header" href="#6-多模態能力">6. 多模態能力</a></h2>
+<h3 id="61-vibe-coding-開發"><a class="header" href="#61-vibe-coding-開發">6.1 Vibe Coding 開發</a></h3>
+<p><strong>概念：</strong></p>
+<ul>
+<li>沉浸式開發，由 <strong>Andrej Karpathy</strong> 提出</li>
+<li>使用直接詢問的方式寫程式，由 AI 完成程式碼</li>
+<li>使用者只是提出需求</li>
+<li><strong>讓程式設計師變成產品工程師</strong></li>
+</ul>
+<p><strong>必要條件：</strong></p>
+<ul>
+<li>支援 AI 的編輯器（VSCode, Cursor）</li>
+<li>支援的 LLM（GPT-4o, Claude 3.7 Sonnet 等）</li>
+<li>編輯器會直接編寫程式、安裝工具、除錯、執行</li>
+</ul>
+<p><strong>常用工具：</strong></p>
+<ul>
+<li><strong>Cursor AI</strong>：專為 AI 輔助設計的 IDE</li>
+<li><strong>Copilot</strong>：GitHub 的 AI 配對程式設計工具</li>
+<li><strong>Colab AI</strong>：Google 的 Notebook AI 輔助功能</li>
+</ul>
+<p><strong>補充說明：</strong> Vibe Coding 的核心理念是「描述你想要什麼，而不是怎麼做」。這代表程式設計的範式轉移，從「寫程式碼」到「描述意圖」。</p>
+<hr />
+<h3 id="62-語音-token"><a class="header" href="#62-語音-token">6.2 語音 Token</a></h3>
+<p><strong>文字 Token：</strong></p>
+<ul>
+<li>訓練 LLM 前，用語料庫利用 BPE 方式找出基礎詞彙表</li>
+<li>數量：數萬到數十萬個</li>
+</ul>
+<p><strong>語音 Token：</strong></p>
+<ul>
+<li>利用<strong>梅爾頻譜 (Mel Spectrogram)</strong></li>
+<li>找到音素級或字元級的發音 Token</li>
+</ul>
+<p><strong>補充說明：</strong> 語音模型如 Whisper、VALL-E 等使用類似的 tokenization 方法。語音 token 可以：</p>
+<ul>
+<li>表示音素 (Phoneme)</li>
+<li>表示聲學特徵</li>
+<li>支持語音生成和識別</li>
+</ul>
+<hr />
+<h3 id="63-影像及影片-視覺"><a class="header" href="#63-影像及影片-視覺">6.3 影像及影片 (視覺)</a></h3>
+<p><strong>視覺 Token 化：</strong></p>
+<ul>
+<li>圖片被分割成 patches（小塊）</li>
+<li>每個 patch 轉換為 token</li>
+<li>這些 token 與文字 token 一起處理</li>
+</ul>
+<p><strong>補充說明：</strong></p>
+<ul>
+<li><strong>Vision Transformer (ViT)</strong>：將圖片分成 16x16 的 patches</li>
+<li><strong>GPT-4V</strong>、<strong>Claude 3 Vision</strong>：支持圖片理解</li>
+<li><strong>Gemini</strong>：原生多模態設計</li>
+</ul>
+<p>影片處理：</p>
+<ul>
+<li>抽取關鍵幀</li>
+<li>每幀作為圖片處理</li>
+<li>理解時序資訊</li>
+</ul>
+<hr />
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<h3 id="llm-的本質"><a class="header" href="#llm-的本質">LLM 的本質</a></h3>
+<ol>
+<li><strong>知識壓縮機</strong>：將海量文字壓縮成參數</li>
+<li><strong>機率模型</strong>：基於統計預測下一個 token</li>
+<li><strong>工具使用者</strong>：能夠調用外部工具增強能力</li>
+<li><strong>多模態處理器</strong>：處理文字、圖片、語音、影片</li>
+</ol>
+<h3 id="使用建議"><a class="header" href="#使用建議">使用建議</a></h3>
+<ol>
+<li><strong>理解限制</strong>：知識截止、幻覺、token 限制</li>
+<li><strong>善用工具</strong>：搜尋、計算、程式執行</li>
+<li><strong>選擇適合模型</strong>：平衡成本和效能</li>
+<li><strong>新 Session 策略</strong>：保持對話聚焦</li>
+<li><strong>付費方案</strong>：獲得更多功能和更好體驗</li>
+</ol>
+<h3 id="未來趨勢"><a class="header" href="#未來趨勢">未來趨勢</a></h3>
+<ol>
+<li><strong>思考模型</strong>：從快思考到慢思考</li>
+<li><strong>Agent 能力</strong>：自主規劃和執行</li>
+<li><strong>多模態融合</strong>：統一處理所有模態</li>
+<li><strong>工具生態</strong>：更豐富的外部工具整合</li>
+<li><strong>程式設計範式轉移</strong>：從寫程式碼到描述意圖</li>
+</ol>
+<hr />
+<h2 id="實用資源"><a class="header" href="#實用資源">實用資源</a></h2>
+<ul>
+<li><strong>ChatGPT Plus</strong>：20 美元/月</li>
+<li><strong>Cursor IDE</strong>：AI 輔助程式開發</li>
+<li><strong>Deepseek R1 論文</strong>：思考模型的技術細節</li>
+<li><strong>OpenAI API</strong>：程式化調用 LLM</li>
+</ul>
+<hr />
+<p><em>本文檔整理自「LLM使用原理」課程投影片，並補充相關技術說明和實用建議。</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../ml/ml.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../ml/ai-training-guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../ml/ml.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../ml/ai-training-guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
