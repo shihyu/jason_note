@@ -157,6 +157,7 @@
     - [pytago](go/pytago.md)
     - [Go 編程實戰派基礎入門](go/Go編程實戰派基礎入門.md)
     - [Go 編程實戰派 Web 開發基礎](go/Go編程實戰派Web開發基礎.md)
+    - [Golang 高效能開發完整指南](go/Golang高效能開發完整指南.md)
     - [Golang Debugger](go/golang_debugger.md)
     - [從一知半解到略懂 Go modules](go/golang-go-module-tutorial.md)
     - [Go Modules](go/go_mod.md)
