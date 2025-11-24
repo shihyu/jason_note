@@ -180,31 +180,31 @@
                     <main>
                         <h2 id="硬核乘以-001-和除以-100-哪個快"><a class="header" href="#硬核乘以-001-和除以-100-哪個快"><a href="https://segmentfault.com/a/1190000041065275">【硬核】乘以 0.01 和除以 100 哪個快？</a></a></h2>
 <p>在知乎上看到這個問題，覺得挺有趣的。下面的回答五花八門，但是就是沒有直接給出真正的benchmark結果的。還有直接搬反彙編程式碼的，只不過彙編裡用了 x87 FPU 指令集，天那這都 202x 年了真的還有程序用這個老掉牙的浮點運算指令集的嗎？</p>
-<p>我也決定研究一下，讀反彙編，寫 benchmark。平臺以 x86-64 為準，編譯器 clang 12，開編譯器最佳化（不開最佳化談速度無意義）</p>
+<p>我也決定研究一下，讀反彙編，寫 benchmark。平台以 x86-64 為準，編譯器 clang 12，開編譯器最佳化（不開最佳化談速度無意義）</p>
 <h3 id="程式碼及反彙編"><a class="header" href="#程式碼及反彙編">程式碼及反彙編</a></h3>
 <p><a href="https://gcc.godbolt.org/z/rvT9nEE9Y">https://gcc.godbolt.org/z/rvT9nEE9Y</a></p>
 <p><img src="images/1460000041065277" alt="godbolt" /></p>
 <h4 id="簡單彙編語言科普"><a class="header" href="#簡單彙編語言科普">簡單彙編語言科普</a></h4>
 <p>在深入反彙編之前，先要對彙編語言有簡單的瞭解。本文由於原始程式碼都很簡單，甚至沒有循環和判斷，所以涉及到的彙編指令也很少。</p>
 <ol>
-<li><a href="https://link.segmentfault.com/?enc=QFBDXelxNpIZUWj46nCUyQ%3D%3D.kzAJaZHE%2Flavy3nyxSnqHqy7BnfU2yApwUPqtnkQxwNgah2%2FwcRgdM4i1N2o0edsQiPitVUCsyCFEn2iKw19iFYCZzRO3XKEBlBXHEMWEvE%3D">彙編語言</a>與平臺強相關，這裡以 <a href="https://link.segmentfault.com/?enc=aGZKTSBIq1utaayqZyQfxA%3D%3D.DKa%2Bc6GC122WtUJyKj8QX0g2QJaF3MMGQhfi%2BPNE7RVzlNFDpdXhQr%2BxeXRHlk9f">x86-64</a>（x86的64位相容指令集，由於被AMD最先發明，也稱作AMD64）為例，簡稱x64</li>
-<li><a href="https://link.segmentfault.com/?enc=ynsV7TIKheMCThmktdUNgA%3D%3D.OsqsjXmgmjMuWKjsQobfQsjfEL3YSjSJ%2BYln4m%2FtxBsBhU64jUh5PdatGzUJQ5vntbL9vT%2FAW4niYSp9ZDOGB1BAGM3i9NYkcYhcvKBZkNgUuXnvOpS18GNqgAkQyP72qdF0OWzXvBC5vKhtwyhwSg%3D%3D">x64彙編語言也有兩種語法</a>，一種為 Intel 語法（主要被微軟平臺編譯器使用），一種為 AT&amp;T 語法（是gcc相容編譯器的默認語法，但是gcc也支援輸出intel 語法）。個人感覺 Intel 語法更易懂，這裡以 Intel 語法為例</li>
+<li><a href="https://link.segmentfault.com/?enc=QFBDXelxNpIZUWj46nCUyQ%3D%3D.kzAJaZHE%2Flavy3nyxSnqHqy7BnfU2yApwUPqtnkQxwNgah2%2FwcRgdM4i1N2o0edsQiPitVUCsyCFEn2iKw19iFYCZzRO3XKEBlBXHEMWEvE%3D">彙編語言</a>與平台強相關，這裡以 <a href="https://link.segmentfault.com/?enc=aGZKTSBIq1utaayqZyQfxA%3D%3D.DKa%2Bc6GC122WtUJyKj8QX0g2QJaF3MMGQhfi%2BPNE7RVzlNFDpdXhQr%2BxeXRHlk9f">x86-64</a>（x86的64位相容指令集，由於被AMD最先發明，也稱作AMD64）為例，簡稱x64</li>
+<li><a href="https://link.segmentfault.com/?enc=ynsV7TIKheMCThmktdUNgA%3D%3D.OsqsjXmgmjMuWKjsQobfQsjfEL3YSjSJ%2BYln4m%2FtxBsBhU64jUh5PdatGzUJQ5vntbL9vT%2FAW4niYSp9ZDOGB1BAGM3i9NYkcYhcvKBZkNgUuXnvOpS18GNqgAkQyP72qdF0OWzXvBC5vKhtwyhwSg%3D%3D">x64彙編語言也有兩種語法</a>，一種為 Intel 語法（主要被微軟平台編譯器使用），一種為 AT&amp;T 語法（是gcc相容編譯器的默認語法，但是gcc也支援輸出intel 語法）。個人感覺 Intel 語法更易懂，這裡以 Intel 語法為例</li>
 <li>基本語法。例如 <code>mov rcx, rax</code>：<code>mov</code> 是指令名“賦值”。<code>rcx</code> 和 <code>rax</code> 是 <code>mov</code> 指令的兩個運算元，他們都是通用暫存器名。Intel 彙編語法，第一個運算元同時被用於儲存運算結果。所以：
 <ol>
 <li><code>mov rcx, rax</code>，賦值指令，將暫存器 <code>rax</code> 中的值賦值給暫存器 <code>rcx</code>。翻譯為C語言程式碼為 <code>rcx = rax</code></li>
 <li><code>add rcx, rax</code>，加法指令，將暫存器 <code>rcx</code> 和 <code>rax</code> 的值相加後，結果賦值給 <code>rcx</code>。翻譯為 C 語言程式碼為 <code>rcx += rax</code></li>
 </ol>
 </li>
-<li><a href="https://link.segmentfault.com/?enc=MyaB4OixExEs9R%2B%2B13%2FS5g%3D%3D.reB78Z8kNpnWqoVtafcU18b0yoX3wkQuuwIAtqngpq8TUg2XIFL1enC6EeFtO8lrh%2F0HOLUGyHfJdqbGBkynmwhuH6srtHHu9Y6XzNGUWdU%3D">暫存器</a>。編譯器最佳化後，多數操作都直接在暫存器中操作，不涉及記憶體訪問。下文只涉及三類暫存器（x64平臺）。
+<li><a href="https://link.segmentfault.com/?enc=MyaB4OixExEs9R%2B%2B13%2FS5g%3D%3D.reB78Z8kNpnWqoVtafcU18b0yoX3wkQuuwIAtqngpq8TUg2XIFL1enC6EeFtO8lrh%2F0HOLUGyHfJdqbGBkynmwhuH6srtHHu9Y6XzNGUWdU%3D">暫存器</a>。編譯器最佳化後，多數操作都直接在暫存器中操作，不涉及記憶體訪問。下文只涉及三類暫存器（x64平台）。
 <ol>
 <li>以 <code>r</code> 打頭的 <code>rxx</code> 是 64 位暫存器</li>
 <li>以 <code>e</code> 打頭的 <code>exx</code> 是 32 位暫存器，同時就是同名 64 位 <code>rxx</code> 暫存器的低 32 位部分。</li>
 <li><code>xmmX</code> 是 128 位 SSE 暫存器。由於本文不涉及 SIMD 運算，可以簡單的將其當做浮點數暫存器。對於雙精度浮點數，只使用暫存器的低 64 位部分</li>
 </ol>
 </li>
-<li><a href="https://link.segmentfault.com/?enc=5sdo8GuwkJEuKmhO8DH7gw%3D%3D.zlaQCaaziFWTnWCDB7V3ugz3UTckClCUqxzb9omaPeWsdoz9Ex7AkG7QjI%2F%2F3HK1oWxMycq6MI1jJFiAnCwKkqRO9KQeMnzixc%2FvYbpUvK4%3D">呼叫約定</a>。C語言特性，所有程式碼都依附於函數，呼叫函數時父函數向子函數傳值、子函數向父函數返回值的方式叫做函數<code>呼叫約定</code>。呼叫約定是保證應用程式 ABI 相容的最基本要求，不同的平臺。不同的作業系統有不同的呼叫約定。本文的反彙編程式碼都是使用 godbolt 生成的，godbolt 使用的是 Linux 平臺，所以遵循 Linux 平臺通用的 <a href="https://link.segmentfault.com/?enc=WsHpy79Zuhz7C%2BfXhnCV1g%3D%3D.jO2AgqZunKV8nsMAy2e7u92e9zT5J2bfXawnt4jMjYP25wig3UQIbktVfQvnVeF31lKWgGZTPZb50LrYmwOtjHGtcgoMyuZdYgQYNwwKNozIHcWm9pu54AyUcmAMYK8T">System V 呼叫約定</a> 呼叫約定。因為本文涉及到的程式碼都非常簡單（都只有一個函數參數），讀者只需要知道三點：
+<li><a href="https://link.segmentfault.com/?enc=5sdo8GuwkJEuKmhO8DH7gw%3D%3D.zlaQCaaziFWTnWCDB7V3ugz3UTckClCUqxzb9omaPeWsdoz9Ex7AkG7QjI%2F%2F3HK1oWxMycq6MI1jJFiAnCwKkqRO9KQeMnzixc%2FvYbpUvK4%3D">呼叫約定</a>。C語言特性，所有程式碼都依附於函數，呼叫函數時父函數向子函數傳值、子函數向父函數返回值的方式叫做函數<code>呼叫約定</code>。呼叫約定是保證應用程式 ABI 相容的最基本要求，不同的平台。不同的作業系統有不同的呼叫約定。本文的反彙編程式碼都是使用 godbolt 生成的，godbolt 使用的是 Linux 平台，所以遵循 Linux 平台通用的 <a href="https://link.segmentfault.com/?enc=WsHpy79Zuhz7C%2BfXhnCV1g%3D%3D.jO2AgqZunKV8nsMAy2e7u92e9zT5J2bfXawnt4jMjYP25wig3UQIbktVfQvnVeF31lKWgGZTPZb50LrYmwOtjHGtcgoMyuZdYgQYNwwKNozIHcWm9pu54AyUcmAMYK8T">System V 呼叫約定</a> 呼叫約定。因為本文涉及到的程式碼都非常簡單（都只有一個函數參數），讀者只需要知道三點：
 <ol>
-<li>函數的第一個整數參數通過 <code>rdi / edi</code> 暫存器傳入（<code>rdi / edi</code> 存放呼叫方的第一個參數的值）。<code>rdi</code> 為 64 位暫存器，對應 <code>long</code> 類型（Linux 平臺）。<code>edi</code> 為 32 位暫存器，對應 <code>int</code> 類型</li>
+<li>函數的第一個整數參數通過 <code>rdi / edi</code> 暫存器傳入（<code>rdi / edi</code> 存放呼叫方的第一個參數的值）。<code>rdi</code> 為 64 位暫存器，對應 <code>long</code> 類型（Linux 平台）。<code>edi</code> 為 32 位暫存器，對應 <code>int</code> 類型</li>
 <li>函數的第一個浮點數參數通過 <code>xmm0</code> 暫存器傳入，不區分單、雙精度</li>
 <li>函數的返回值整數類型通過 <code>rax / eax</code> 存放，浮點數通過 <code>xmm0</code> 存放</li>
 </ol>

@@ -185,10 +185,10 @@
 <p>💡 <strong>白話解釋</strong>：想像你在搶演唱會門票，別人按下購買鍵到完成交易需要1秒，而你的系統優化到只需0.001秒。在高頻交易世界，這種速度差異就是賺錢與賠錢的差別。1毫秒=1000微秒=1,000,000奈秒，高頻交易就是在爭奪這些極微小的時間優勢。</p>
 </blockquote>
 <h3 id="核心挑戰"><a class="header" href="#核心挑戰">核心挑戰</a></h3>
-<p>核心挑戰在於馴服作業系統和硬體平臺，消除其引入的非確定性和額外延遲：</p>
+<p>核心挑戰在於馴服作業系統和硬體平台，消除其引入的非確定性和額外延遲：</p>
 <ul>
 <li>
-<p><strong>作業系統排程不確定性</strong>：預設的完全公平排程(CFS)策略可能導致低延遲關鍵行程被背景任務（如日誌、監控）或核心執行緒（如 ksoftirqd, kworker）搶佔，引入不可預測的微秒級甚至毫秒級停頓。</p>
+<p><strong>作業系統排程不確定性</strong>：預設的完全公平排程(CFS)策略可能導致低延遲關鍵行程被背景任務（如日誌、監控）或核心執行緒（如 ksoftirqd, kworker）搶占，引入不可預測的微秒級甚至毫秒級停頓。</p>
 <blockquote>
 <p>💡 <strong>白話解釋</strong>：就像你正在專心打電競，突然電腦決定要更新防毒軟體，導致遊戲卡頓。CFS就像一個「公平」的老師，要求每個程式都有機會使用CPU，但對時間敏感的交易程式來說，這種「公平」反而是災難。</p>
 </blockquote>
@@ -218,23 +218,23 @@
 <p>💡 <strong>白話解釋</strong>：就像把賽車的單圈時間從「60±5秒」優化到「50±0.1秒」，不僅更快，而且每圈時間都非常穩定，這種可預測性對交易策略至關重要。</p>
 </blockquote>
 <h2 id="核心隔離消除資源競爭"><a class="header" href="#核心隔離消除資源競爭">核心隔離：消除資源競爭</a></h2>
-<h3 id="1-實體核獨佔cpu-pinning"><a class="header" href="#1-實體核獨佔cpu-pinning">1. 實體核獨佔（CPU Pinning）</a></h3>
+<h3 id="1-實體核獨占cpu-pinning"><a class="header" href="#1-實體核獨占cpu-pinning">1. 實體核獨占（CPU Pinning）</a></h3>
 <h4 id="為什麼需要"><a class="header" href="#為什麼需要">為什麼需要</a></h4>
 <p>現代CPU的超執行緒技術(HT)將一個實體核模擬為兩個邏輯核，它們共享核心的執行單元（如ALU、FPU）和L1/L2快取。在高頻交易場景下，這帶來兩個致命問題：</p>
 <ol>
-<li>若綁定到同一實體核上的兄弟執行緒（如日誌執行緒、監控執行緒）執行了計算密集型操作，尤其是使用AVX等寬指令集時，會完全佔用共享的浮點單元，導致交易執行緒被阻塞</li>
-<li>兄弟執行緒對L1/L2快取的存取會汙染或驅逐交易執行緒的熱點資料，增加快取未命中(Cache Miss)率</li>
+<li>若綁定到同一實體核上的兄弟執行緒（如日誌執行緒、監控執行緒）執行了計算密集型操作，尤其是使用AVX等寬指令集時，會完全占用共享的浮點單元，導致交易執行緒被阻塞</li>
+<li>兄弟執行緒對L1/L2快取的存取會污染或驅逐交易執行緒的熱點資料，增加快取未命中(Cache Miss)率</li>
 </ol>
 <blockquote>
 <p>💡 <strong>白話解釋</strong>：</p>
 <ul>
-<li><strong>問題1</strong>：就像兩個人共用一臺電腦，一個在跑3D渲染（佔用顯卡），另一個想玩遊戲就卡住了。</li>
+<li><strong>問題1</strong>：就像兩個人共用一台電腦，一個在跑3D渲染（佔用顯卡），另一個想玩遊戲就卡住了。</li>
 <li><strong>問題2</strong>：快取像你的工作桌面，你精心擺放好常用文件，室友卻把他的東西也堆上來，導致你的文件被擠到地上，要用時得重新找。</li>
 </ul>
 </blockquote>
 <p><strong>實測資料表明</strong>，在高負載、低延遲敏感場景下，停用超執行緒可使關鍵交易執行緒的執行延遲降低高達22%（基於Intel Xeon Scalable處理器測試），更重要的是大幅降低了延遲波動（Jitter）。</p>
 <h4 id="權衡取捨"><a class="header" href="#權衡取捨">權衡取捨</a></h4>
-<p>停用超執行緒會降低系統的整體吞吐量(Throughput)。因此，合理的策略是<strong>隔離關鍵路徑</strong>：將交易策略引擎、網路處理執行緒等低延遲敏感任務<strong>獨佔綁定到實體核心</strong>（使用邏輯核ID的偶數或奇數部分），而將日誌記錄、監控上報、資料持久化等非即時性任務部署在啟用超執行緒的核心上。</p>
+<p>停用超執行緒會降低系統的整體吞吐量(Throughput)。因此，合理的策略是<strong>隔離關鍵路徑</strong>：將交易策略引擎、網路處理執行緒等低延遲敏感任務<strong>獨占綁定到實體核心</strong>（使用邏輯核ID的偶數或奇數部分），而將日誌記錄、監控上報、資料持久化等非即時性任務部署在啟用超執行緒的核心上。</p>
 <blockquote>
 <p>💡 <strong>白話解釋</strong>：就像餐廳經營，把最好的廚師和爐具專門留給做主菜（交易任務），其他廚師共用設備做配菜和甜點（日誌、監控等）。</p>
 </blockquote>
@@ -255,8 +255,8 @@ sched_setaffinity(0, sizeof(cpuset), &amp;cpuset);
 <h4 id="為什麼需要-1"><a class="header" href="#為什麼需要-1">為什麼需要</a></h4>
 <p>網路介面卡(NIC)產生的中斷(IRQ)預設通常由CPU 0處理。如果在關鍵交易執行緒執行的CPU核心上處理網路中斷，會產生嚴重的負面影響：</p>
 <ol>
-<li><strong>中斷處理程式搶佔使用者態交易執行緒</strong>，強制進行上下文切換</li>
-<li><strong>中斷處理程式存取記憶體會汙染該核心的L1d快取</strong>，導致交易執行緒的熱點資料被驅逐</li>
+<li><strong>中斷處理程式搶占使用者態交易執行緒</strong>，強制進行上下文切換</li>
+<li><strong>中斷處理程式存取記憶體會污染該核心的L1d快取</strong>，導致交易執行緒的熱點資料被驅逐</li>
 </ol>
 <blockquote>
 <p>💡 <strong>白話解釋</strong>：</p>
@@ -273,7 +273,7 @@ echo "fff000" &gt; /proc/irq/$IRQ/smp_affinity  # 遮罩對應CPU16-23
 </code></pre>
 <h3 id="3-核心排程隔離"><a class="header" href="#3-核心排程隔離">3. 核心排程隔離</a></h3>
 <h4 id="為什麼需要-2"><a class="header" href="#為什麼需要-2">為什麼需要</a></h4>
-<p>即使進行了CPU綁定，預設情況下，核心執行緒（如負責軟中斷處理的ksoftirqd，處理工作佇列的kworker）仍然可能被排程到綁定的核心上執行，搶佔使用者態交易執行緒。</p>
+<p>即使進行了CPU綁定，預設情況下，核心執行緒（如負責軟中斷處理的ksoftirqd，處理工作佇列的kworker）仍然可能被排程到綁定的核心上執行，搶占使用者態交易執行緒。</p>
 <blockquote>
 <p>💡 <strong>白話解釋</strong>：就像你租了一間VIP包廂看球賽，但保全、清潔人員還是會不時進來打擾。這些核心執行緒就像「系統工作人員」，isolcpus等參數就是告訴他們「這幾個CPU核心是VIP專用，閒雜人等勿入」。</p>
 </blockquote>
@@ -300,9 +300,9 @@ grub2-mkconfig -o /boot/grub2/grub.cfg
 <h2 id="numa記憶體最佳化攻克跨節點延遲"><a class="header" href="#numa記憶體最佳化攻克跨節點延遲">NUMA記憶體最佳化：攻克跨節點延遲</a></h2>
 <h3 id="1-記憶體本地化綁定"><a class="header" href="#1-記憶體本地化綁定">1. 記憶體本地化綁定</a></h3>
 <h4 id="為什麼需要-3"><a class="header" href="#為什麼需要-3">為什麼需要</a></h4>
-<p>在多路伺服器(NUMA架構)中，記憶體控制器分佈在不同的實體CPU插槽(Node)上。CPU存取其本地節點的記憶體(<strong>Local Access</strong>)速度最快，而存取其他節點(<strong>Remote Access</strong>)的記憶體需要透過CPU間的互連，延遲顯著增加（通常高出50%-100%甚至更多）。</p>
+<p>在多路伺服器(NUMA架構)中，記憶體控制器分布在不同的實體CPU插槽(Node)上。CPU存取其本地節點的記憶體(<strong>Local Access</strong>)速度最快，而存取其他節點(<strong>Remote Access</strong>)的記憶體需要透過CPU間的互連，延遲顯著增加（通常高出50%-100%甚至更多）。</p>
 <blockquote>
-<p>💡 <strong>白話解釋</strong>：想像一個大公司有臺北和高雄兩個辦公室，每個辦公室都有自己的檔案室。臺北員工要查臺北檔案室的資料很快（本地存取），但要查高雄檔案室就得打電話請那邊傳真過來（遠端存取），慢很多。</p>
+<p>💡 <strong>白話解釋</strong>：想像一個大公司有台北和高雄兩個辦公室，每個辦公室都有自己的檔案室。台北員工要查台北檔案室的資料很快（本地存取），但要查高雄檔案室就得打電話請那邊傳真過來（遠端存取），慢很多。</p>
 </blockquote>
 <p>透過將策略行程及其使用的記憶體嚴格綁定在同一個NUMA節點上，可以消除跨節點存取，將記憶體延遲降低多達50%，並大幅降低延遲波動。</p>
 <h4 id="設定方法-3"><a class="header" href="#設定方法-3">設定方法</a></h4>
@@ -327,11 +327,11 @@ void* mem = numa_alloc_local(1024*1024); // 1MB本地記憶體
 <h4 id="為什麼需要-4"><a class="header" href="#為什麼需要-4">為什麼需要</a></h4>
 <p>預設情況下，作業系統會根據記憶體壓力將行程不常用的記憶體頁換出到磁碟。執行時觸發的換入會造成毫秒級的不可預測停頓。</p>
 <blockquote>
-<p>💡 <strong>白話解釋</strong>：就像圖書館為了節省空間，把很久沒人借的書移到地下倉庫。當你突然要用時，得等管理員去地下室搬上來，很耗時。記憶體鎖定就是告訴圖書館「這些書永遠放在閱覽室，不準移走」。</p>
+<p>💡 <strong>白話解釋</strong>：就像圖書館為了節省空間，把很久沒人借的書移到地下倉庫。當你突然要用時，得等管理員去地下室搬上來，很耗時。記憶體鎖定就是告訴圖書館「這些書永遠放在閱覽室，不准移走」。</p>
 </blockquote>
 <p><code>mlock</code>系統呼叫將指定的虛擬記憶體範圍<strong>鎖定在實體記憶體(RAM)中</strong>，確保其不會被換出。此外，它還具有兩個關鍵優勢：</p>
 <ol>
-<li><strong>防止頁快取回寫幹擾</strong>：鎖定的匿名頁不會被標記為髒頁</li>
+<li><strong>防止頁快取回寫干擾</strong>：鎖定的匿名頁不會被標記為髒頁</li>
 <li><strong>確定性提升</strong>：結合NUMA綁定，確保所需記憶體始終駐留在本地節點的實體記憶體中</li>
 </ol>
 <h4 id="設定方法-4"><a class="header" href="#設定方法-4">設定方法</a></h4>
@@ -508,7 +508,7 @@ int main() {
 <p>💡 <strong>白話解釋</strong>：就像整理衣櫃，把常穿的衣服放在最容易拿到的地方，換季衣物放在高處，很少穿的放在儲藏室。交易系統也要把最常用的資料放在最快的記憶體位置。</p>
 </blockquote>
 <h4 id="設定方法-6"><a class="header" href="#設定方法-6">設定方法</a></h4>
-<pre><code class="language-bash"># 檢視NUMA節點分佈
+<pre><code class="language-bash"># 檢視NUMA節點分布
 numactl --hardware
 
 # 為Node0分配1024個2MB大頁
@@ -566,7 +566,7 @@ sudo pqos -a 'llc:2=5678'     # 將PID 5678綁定到COS2
 
 # 5. 即時監控快取使用
 pqos -m all:1                 # 整體監控(每秒重新整理)
-pqos -m llc:1 -t 10           # 監控COS1的LLC佔用
+pqos -m llc:1 -t 10           # 監控COS1的LLC占用
 </code></pre>
 <h3 id="2-資料結構對齊"><a class="header" href="#2-資料結構對齊">2. 資料結構對齊</a></h3>
 <h4 id="為什麼需要-9"><a class="header" href="#為什麼需要-9">為什麼需要</a></h4>
@@ -574,7 +574,7 @@ pqos -m llc:1 -t 10           # 監控COS1的LLC佔用
 <blockquote>
 <p>💡 <strong>白話解釋</strong>：快取行就像辦公桌的抽屜，一次只能一個人開。如果你的筆和同事的尺都放在同一個抽屜（同一快取行），你們倆要用東西就得輪流開抽屜，效率很低。資料對齊就是確保每人的東西放在各自的抽屜裡。</p>
 </blockquote>
-<p>透過將高頻並行存取的關鍵資料結構按快取行大小(64位元組)進行記憶體對齊，確保它們獨佔一個或多個完整的快取行，可以徹底消除偽共享帶來的效能損耗。</p>
+<p>透過將高頻並行存取的關鍵資料結構按快取行大小(64位元組)進行記憶體對齊，確保它們獨占一個或多個完整的快取行，可以徹底消除偽共享帶來的效能損耗。</p>
 <h4 id="程式碼實作-4"><a class="header" href="#程式碼實作-4">程式碼實作</a></h4>
 <pre><code class="language-cpp">struct __attribute__((aligned(64))) MarketData {
     std::atomic&lt;uint64_t&gt; timestamp;
@@ -611,10 +611,10 @@ static_assert(offsetof(MarketData, timestamp) % 64 == 0, "未對齊");
 <h2 id="關鍵結論"><a class="header" href="#關鍵結論">關鍵結論</a></h2>
 <p>在追求奈秒級競爭優勢的高頻交易領域，作業系統的預設行為往往是延遲不確定性的主要來源。透過本文詳述的系統性調校實踐：</p>
 <ul>
-<li>從核心隔離消除排程幹擾</li>
+<li>從核心隔離消除排程干擾</li>
 <li>到NUMA綁定最佳化記憶體位置</li>
 <li>再到記憶體鎖定/預取/大頁消除缺頁停頓</li>
-<li>最後透過快取隔離和資料結構最佳化減少核心間幹擾</li>
+<li>最後透過快取隔離和資料結構最佳化減少核心間干擾</li>
 </ul>
 <p>我們能夠將關鍵交易路徑的延遲<strong>穩定地壓縮到20微秒(μs)以內</strong>，並將其波動範圍(<strong>Jitter</strong>)控制在**±1微秒(μs)<strong>的狹窄區間。這種</strong>高度確定的微秒級回應能力**是策略穩定獲利的基礎設施保障。</p>
 <blockquote>
@@ -729,7 +729,7 @@ sudo perf stat -e cache-references,cache-misses ./strategy_engine
 sudo perf stat -e context-switches,cpu-migrations ./strategy_engine
 </code></pre>
 <h4 id="監控中斷"><a class="header" href="#監控中斷">監控中斷</a></h4>
-<pre><code class="language-bash"># 即時監控中斷分佈
+<pre><code class="language-bash"># 即時監控中斷分布
 watch -n 1 'cat /proc/interrupts | grep eth0'
 
 # 檢查CPU親和性
