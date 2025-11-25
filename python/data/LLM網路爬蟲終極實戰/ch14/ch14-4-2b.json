@@ -1,0 +1,214 @@
+{
+  "name": "ch14-4-2b",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:11235/crawl",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"urls\": [\n    {{ $json.URL }}\n  ],\n  \"crawler_config\": {\n    \"type\": \"CrawlerRunConfig\",\n    \"params\": {\n      \"scraping_strategy\": {\n        \"type\": \"LXMLWebScrapingStrategy\",\n        \"params\": {}\n      },\n      \"exclude_social_media_domains\": [\n        \"facebook.com\",\n        \"twitter.com\",\n        \"x.com\",\n        \"linkedin.com\",\n        \"instagram.com\",\n        \"pinterest.com\",\n        \"tiktok.com\",\n        \"snapchat.com\",\n        \"reddit.com\"\n      ],\n      \"stream\": true\n    }\n  }\n}",
+        "options": {}
+      },
+      "id": "40a56a9a-faf9-4b26-b269-370d6c031945",
+      "name": "Crawl4AI API Call",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        784,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 取得搜尋結果\nconst searchData = $input.all()[0].json;\nconst results = searchData.results || [];\n\n// 取前 5 筆結果並格式化\nconst processedResults = results.slice(0, 5).map((result, index) => {\n  return {\n    序號: index + 1,\n    標題: result.title || '',\n    URL: result.url || '',\n    內容: result.content || '',\n    搜尋時間: new Date().toLocaleString('zh-TW')\n  };\n});\n\nreturn processedResults.map(item => ({\n  json: item\n}));"
+      },
+      "id": "e9eb9d54-0468-411f-b92b-2dfcf6e89fa1",
+      "name": "處理搜尋結果",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        192
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        160,
+        192
+      ],
+      "id": "46d73138-4e09-43d8-ae21-a16427583dc2",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "http://127.0.0.1:8888/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "什麼是RAG"
+            },
+            {
+              "name": "format",
+              "value": "json"
+            },
+            {
+              "name": "categories",
+              "value": "general"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        320,
+        192
+      ],
+      "id": "b3896cfa-4fc9-4415-bcda-fcfcd029b10a",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "67af157d-2b40-4060-b3fd-cc0b8a0fc38c",
+              "name": "URL",
+              "value": "=\"{{ $json.URL }}\"",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        640,
+        192
+      ],
+      "id": "9689afa7-fa2c-48db-b31c-53cf1a7ebb27",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "C:/F5326/ch14/crawl4AI.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        688,
+        400
+      ],
+      "id": "3f3d0fd4-7163-4b2b-9d71-ce3bcd508fa2",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        528,
+        400
+      ],
+      "id": "dd016028-d715-4d31-9aec-b386762447ac",
+      "name": "Convert to File"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Crawl4AI API Call": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "處理搜尋結果": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "處理搜尋結果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Crawl4AI API Call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        []
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "53c032f6-c671-4b1a-a5d5-5da02b5bd91c",
+  "meta": {
+    "instanceId": "1fbcbc38338c7862e1320bac899d0a657225bf66cda187c985bb8ba77b39eebe"
+  },
+  "id": "zmsZlUi1irC9MriD",
+  "tags": []
+}

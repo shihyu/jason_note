@@ -1,0 +1,369 @@
+{
+  "name": "ch14-4-1b",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1472,
+        -32
+      ],
+      "id": "bb053cd4-e12c-4169-9e47-fdfb4bf63255",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "table_data",
+              "cssSelector": "body > main > div > div > div.row div.col-md-4",
+              "returnValue": "html",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {
+          "trimValues": true,
+          "cleanUpText": true
+        }
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        -1296,
+        64
+      ],
+      "id": "6113d3d9-c399-4539-a4b6-c7e9efb86558",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "url": "https://fchart.github.io/test/album.html",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1296,
+        -144
+      ],
+      "id": "4138f979-b4b9-40ec-ac0b-a3f99e7d9057",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -672,
+        64
+      ],
+      "id": "84849679-6305-4893-a75e-6bae0e892e1b",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "C:/f5326/ch14/album.xlsx",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -528,
+        64
+      ],
+      "id": "d0f68e58-af61-4d72-8696-59d4e8664395",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "table_data",
+        "options": {
+          "destinationFieldName": "table_tr"
+        }
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -1104,
+        -32
+      ],
+      "id": "fcd7e24d-7a0f-413b-9388-548488a96c87",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "dataPropertyName": "table_tr",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "image",
+              "cssSelector": "img.card-img-top",
+              "returnValue": "attribute",
+              "attribute": "src",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        -896,
+        -192
+      ],
+      "id": "034f22f9-7eb5-47f5-9fb1-ccb806f01faa",
+      "name": "HTML_image"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "dataPropertyName": "table_tr",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "text",
+              "cssSelector": "div p.card-text",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        -896,
+        -32
+      ],
+      "id": "e88ee6f9-d0d9-4a5b-81ba-9794092b4661",
+      "name": "HTML_text"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "dataPropertyName": "table_tr",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "found",
+              "cssSelector": "div h6.pull-right",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        -896,
+        128
+      ],
+      "id": "2a5a7b61-5af2-47f7-bae7-30a03340552c",
+      "name": "HTML_sponsor"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 3,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -672,
+        -176
+      ],
+      "id": "8cfefb93-640f-45d9-9daf-7b9c4a953260",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "54df4b75-6d66-42eb-a3f9-ced737711ab7",
+              "name": "圖片",
+              "value": "={{ $json.image[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "0099139a-f467-49d1-b2e2-2fc952837e77",
+              "name": "描述",
+              "value": "={{ $json.text[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "ad6e2fe8-0c45-49c1-9609-a7e5d9bcd1e9",
+              "name": "贊助",
+              "value": "={{ Number($json.found[0].replace(/^.*\\$/, '')) }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -528,
+        -160
+      ],
+      "id": "c2913052-983f-49cd-b81e-ba62d3170be3",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "HTML_image",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTML_text",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTML_sponsor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML_image": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML_text": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "HTML_sponsor": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "af6fdd65-5fd0-4349-a765-64aff0a67f29",
+  "meta": {
+    "instanceId": "1fbcbc38338c7862e1320bac899d0a657225bf66cda187c985bb8ba77b39eebe"
+  },
+  "id": "I2w0Mad8s0i1DdAW",
+  "tags": []
+}
