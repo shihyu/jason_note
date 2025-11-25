@@ -304,6 +304,9 @@
 - [Software Engineering](software_engineering/software_engineering.md)
     - [迭代思維與人才優勢](software_engineering/迭代思維與人才優勢.md)
 
+## Algorithm
+- [演算法](algorithm/algorithm.md)
+
 ## Data & Services
 - [Database](database/database.md)
     - [Redis](database/redis.md)

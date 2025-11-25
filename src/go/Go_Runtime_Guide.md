@@ -555,3 +555,434 @@ func main() {
 | Synchronization | 提供 channel、mutex 等同步原語 |
 
 Go Runtime 的設計使得開發者可以輕鬆編寫高效的並發程序，而不需要手動管理線程和內存。
+
+---
+
+# Go Runtime 原始碼檔案結構
+
+## 原始碼路徑
+```
+/home/shihyu/go/src/runtime/
+```
+
+本目錄包含約 507 個 Go 原始碼檔案，以及多個子目錄。以下是核心關鍵檔案的分類介紹。
+
+---
+
+## 一、核心結構與型別定義
+
+### 1. runtime2.go (核心資料結構)
+- **路徑**: `/home/shihyu/go/src/runtime/runtime2.go`
+- **說明**: 定義 runtime 最核心的資料結構
+- **包含內容**:
+  - `g` (goroutine) 結構體定義
+  - `m` (machine/OS thread) 結構體定義
+  - `p` (processor) 結構體定義
+  - goroutine 狀態常數 (_Gidle, _Grunnable, _Grunning, _Gsyscall 等)
+  - 各種核心型別和常數定義
+
+### 2. type.go
+- **路徑**: `/home/shihyu/go/src/runtime/type.go`
+- **說明**: 型別系統的 runtime 表示
+
+---
+
+## 二、排程器 (Scheduler)
+
+### 3. proc.go (核心排程邏輯)
+- **路徑**: `/home/shihyu/go/src/runtime/proc.go`
+- **說明**: goroutine 排程器的核心實作
+- **關鍵功能**:
+  - goroutine 的建立、執行、停止
+  - M-P-G 排程模型實作
+  - Work-stealing 演算法
+  - 系統呼叫的處理
+  - 執行緒停放與喚醒機制
+- **設計文件**: https://golang.org/s/go11sched
+
+### 4. runtime1.go
+- **路徑**: `/home/shihyu/go/src/runtime/runtime1.go`
+- **說明**: runtime 初始化相關功能
+
+---
+
+## 三、記憶體管理 (Memory Management)
+
+### 5. malloc.go (記憶體分配器)
+- **路徑**: `/home/shihyu/go/src/runtime/malloc.go`
+- **說明**: 記憶體分配的主要邏輯
+- **關鍵功能**:
+  - 物件記憶體分配 (small/large objects)
+  - span 管理
+  - size class 定義
+
+### 6. mheap.go (堆記憶體管理)
+- **路徑**: `/home/shihyu/go/src/runtime/mheap.go`
+- **說明**: 堆記憶體的管理
+- **關鍵功能**:
+  - mheap 結構體與操作
+  - span 的分配與回收
+  - 記憶體頁管理
+
+### 7. mcache.go (執行緒快取)
+- **路徑**: `/home/shihyu/go/src/runtime/mcache.go`
+- **說明**: 每個 P 的本地記憶體快取
+- **關鍵功能**:
+  - 小物件快速分配
+  - 減少鎖競爭
+
+### 8. mcentral.go (中央快取)
+- **路徑**: `/home/shihyu/go/src/runtime/mcentral.go`
+- **說明**: 中央 span 快取，連接 mcache 和 mheap
+
+### 9. mprof.go (記憶體 profiling)
+- **路徑**: `/home/shihyu/go/src/runtime/mprof.go`
+- **說明**: 記憶體分配追蹤與 profiling
+
+### 10. msize.go
+- **路徑**: `/home/shihyu/go/src/runtime/msize.go`
+- **說明**: 記憶體 size class 計算
+
+### 11. mstats.go
+- **路徑**: `/home/shihyu/go/src/runtime/mstats.go`
+- **說明**: 記憶體統計資訊
+
+### 12. mmap*.go
+- **路徑**: `/home/shihyu/go/src/runtime/mmap*.go`
+- **說明**: 不同平台的記憶體映射實作
+
+---
+
+## 四、垃圾回收 (Garbage Collection)
+
+### 13. mgc.go (垃圾回收主邏輯)
+- **路徑**: `/home/shihyu/go/src/runtime/mgc.go`
+- **說明**: GC 的核心實作
+- **關鍵功能**:
+  - 並行標記清除 (concurrent mark-sweep)
+  - GC 觸發條件
+  - STW (stop-the-world) 控制
+  - Write barrier
+
+### 14. mgcmark.go (標記階段)
+- **路徑**: `/home/shihyu/go/src/runtime/mgcmark.go`
+- **說明**: GC 標記階段實作
+- **關鍵功能**:
+  - 物件掃描與標記
+  - Work buffer 管理
+  - 協助標記 (assist marking)
+
+### 15. mgcsweep.go (清除階段)
+- **路徑**: `/home/shihyu/go/src/runtime/mgcsweep.go`
+- **說明**: GC 清除階段實作
+
+### 16. mgcscavenge.go (記憶體歸還)
+- **路徑**: `/home/shihyu/go/src/runtime/mgcscavenge.go`
+- **說明**: 將未使用記憶體歸還給作業系統
+
+### 17. mgcstack.go (堆疊掃描)
+- **路徑**: `/home/shihyu/go/src/runtime/mgcstack.go`
+- **說明**: GC 掃描 goroutine 堆疊
+
+### 18. mgcwork.go (GC 工作佇列)
+- **路徑**: `/home/shihyu/go/src/runtime/mgcwork.go`
+- **說明**: GC 工作佇列管理
+
+### 19. mbarrier.go (Write Barrier)
+- **路徑**: `/home/shihyu/go/src/runtime/mbarrier.go`
+- **說明**: Write barrier 實作
+
+### 20. mbitmap.go (記憶體 bitmap)
+- **路徑**: `/home/shihyu/go/src/runtime/mbitmap.go`
+- **說明**: 記憶體標記 bitmap，用於追蹤指標
+
+---
+
+## 五、並發原語 (Concurrency Primitives)
+
+### 21. chan.go (Channel)
+- **路徑**: `/home/shihyu/go/src/runtime/chan.go`
+- **說明**: channel 的實作
+- **關鍵功能**:
+  - send/receive 操作
+  - 緩衝管理
+  - goroutine 阻塞與喚醒
+
+### 22. select.go (Select)
+- **路徑**: `/home/shihyu/go/src/runtime/select.go`
+- **說明**: select 語句的實作
+
+### 23. sema.go (Semaphore)
+- **路徑**: `/home/shihyu/go/src/runtime/sema.go`
+- **說明**: semaphore 與 sync 原語的底層實作
+
+### 24. lock*.go (鎖機制)
+- **路徑**: `/home/shihyu/go/src/runtime/lock_*.go`
+- **說明**: mutex 等鎖機制的實作
+
+### 25. rwmutex.go
+- **路徑**: `/home/shihyu/go/src/runtime/rwmutex.go`
+- **說明**: 讀寫鎖
+
+---
+
+## 六、堆疊管理 (Stack Management)
+
+### 26. stack.go (堆疊管理)
+- **路徑**: `/home/shihyu/go/src/runtime/stack.go`
+- **說明**: goroutine 堆疊管理
+- **關鍵功能**:
+  - 堆疊分配與釋放
+  - 堆疊增長 (stack growth)
+  - 堆疊收縮 (stack shrinking)
+  - 堆疊複製
+
+---
+
+## 七、錯誤處理 (Error Handling)
+
+### 27. panic.go (Panic/Recover)
+- **路徑**: `/home/shihyu/go/src/runtime/panic.go`
+- **說明**: panic 與 recover 機制
+- **關鍵功能**:
+  - panic 處理流程
+  - defer 執行
+  - recover 機制
+
+### 28. error.go
+- **路徑**: `/home/shihyu/go/src/runtime/error.go`
+- **說明**: runtime error 型別
+
+---
+
+## 八、訊號處理 (Signal Handling)
+
+### 29. signal_unix.go
+- **路徑**: `/home/shihyu/go/src/runtime/signal_unix.go`
+- **說明**: Unix/Linux 訊號處理
+
+### 30. os_*.go
+- **路徑**: `/home/shihyu/go/src/runtime/os_*.go`
+- **說明**: 不同作業系統的底層介面
+
+### 31. sys_*.go
+- **路徑**: `/home/shihyu/go/src/runtime/sys_*.go`
+- **說明**: 系統呼叫相關
+
+---
+
+## 九、組合語言實作 (Assembly)
+
+### 32. asm_*.s
+- **路徑**: `/home/shihyu/go/src/runtime/asm_*.s`
+- **平台**:
+  - `asm_amd64.s` - x86-64 架構
+  - `asm_arm64.s` - ARM64 架構
+  - `asm_386.s` - x86 架構
+  - 等各平台組語實作
+- **說明**: runtime 核心功能的組語實作
+- **包含**:
+  - context switch
+  - 系統呼叫
+  - goroutine 啟動
+  - 堆疊操作
+
+---
+
+## 十、介面與反射 (Interface & Reflection)
+
+### 33. iface.go (介面)
+- **路徑**: `/home/shihyu/go/src/runtime/iface.go`
+- **說明**: interface 的 runtime 實作
+- **關鍵功能**:
+  - interface value 表示
+  - 型別斷言 (type assertion)
+  - 型別轉換
+
+### 34. alg.go (演算法)
+- **路徑**: `/home/shihyu/go/src/runtime/alg.go`
+- **說明**: 雜湊、比較等演算法
+
+---
+
+## 十一、除錯與追蹤 (Debugging & Tracing)
+
+### 35. debug.go
+- **路徑**: `/home/shihyu/go/src/runtime/debug.go`
+- **說明**: runtime 除錯支援
+
+### 36. debuglog.go
+- **路徑**: `/home/shihyu/go/src/runtime/debuglog.go`
+- **說明**: runtime 內部日誌
+
+### 37. trace.go
+- **路徑**: `/home/shihyu/go/src/runtime/trace.go`
+- **說明**: 執行追蹤 (execution tracing)
+
+### 38. traceback.go
+- **路徑**: `/home/shihyu/go/src/runtime/traceback.go`
+- **說明**: 堆疊回溯 (stack traceback)
+
+---
+
+## 十二、效能分析 (Profiling)
+
+### 39. cpuprof.go
+- **路徑**: `/home/shihyu/go/src/runtime/cpuprof.go`
+- **說明**: CPU profiling
+
+### 40. profbuf.go
+- **路徑**: `/home/shihyu/go/src/runtime/profbuf.go`
+- **說明**: Profiling buffer 管理
+
+---
+
+## 十三、CGO 支援
+
+### 41. cgocall.go
+- **路徑**: `/home/shihyu/go/src/runtime/cgocall.go`
+- **說明**: Go 呼叫 C 程式碼的支援
+
+### 42. cgo*.go
+- **路徑**: `/home/shihyu/go/src/runtime/cgo*.go`
+- **說明**: CGO 相關支援檔案
+
+---
+
+## 十四、計時器與時間 (Timer & Time)
+
+### 43. time.go
+- **路徑**: `/home/shihyu/go/src/runtime/time.go`
+- **說明**: 計時器管理
+- **關鍵功能**:
+  - timer 實作
+  - ticker 實作
+  - time.Sleep 支援
+
+---
+
+## 十五、競態檢測與記憶體檢測
+
+### 44. race.go / race/
+- **路徑**:
+  - `/home/shihyu/go/src/runtime/race.go`
+  - `/home/shihyu/go/src/runtime/race/`
+- **說明**: 資料競態檢測器 (race detector)
+
+### 45. msan.go / msan/
+- **路徑**:
+  - `/home/shihyu/go/src/runtime/msan.go`
+  - `/home/shihyu/go/src/runtime/msan/`
+- **說明**: Memory Sanitizer 支援
+
+### 46. asan.go / asan/
+- **路徑**:
+  - `/home/shihyu/go/src/runtime/asan.go`
+  - `/home/shihyu/go/src/runtime/asan/`
+- **說明**: Address Sanitizer 支援
+
+---
+
+## 十六、重要子目錄
+
+### 47. internal/
+- **路徑**: `/home/shihyu/go/src/runtime/internal/`
+- **說明**: runtime 內部套件
+- **子套件**:
+  - `atomic/` - 原子操作
+  - `sys/` - 系統參數與常數
+  - `math/` - 數學函數
+
+### 48. pprof/
+- **路徑**: `/home/shihyu/go/src/runtime/pprof/`
+- **說明**: pprof profiling 工具介面
+
+### 49. debug/
+- **路徑**: `/home/shihyu/go/src/runtime/debug/`
+- **說明**: runtime/debug 套件
+
+### 50. trace/
+- **路徑**: `/home/shihyu/go/src/runtime/trace/`
+- **說明**: runtime/trace 套件
+
+### 51. metrics/
+- **路徑**: `/home/shihyu/go/src/runtime/metrics/`
+- **說明**: runtime/metrics 套件
+
+### 52. coverage/
+- **路徑**: `/home/shihyu/go/src/runtime/coverage/`
+- **說明**: 程式碼覆蓋率支援
+
+---
+
+## 核心檔案學習順序建議
+
+如果要深入學習 Go runtime，建議按以下順序閱讀:
+
+### 階段一：基礎結構
+1. `runtime2.go` - 理解核心資料結構 (g, m, p)
+2. `type.go` - 理解型別系統
+
+### 階段二：排程器
+3. `proc.go` - 理解 goroutine 排程
+4. `runtime1.go` - runtime 初始化
+
+### 階段三：記憶體管理
+5. `malloc.go` - 記憶體分配
+6. `mheap.go` - 堆記憶體
+7. `mcache.go` - 執行緒快取
+8. `mcentral.go` - 中央快取
+
+### 階段四：垃圾回收
+9. `mgc.go` - GC 主邏輯
+10. `mgcmark.go` - 標記階段
+11. `mgcsweep.go` - 清除階段
+12. `mbarrier.go` - Write barrier
+
+### 階段五：並發原語
+13. `chan.go` - channel 實作
+14. `select.go` - select 實作
+15. `sema.go` - semaphore
+
+### 階段六：其他重要主題
+16. `stack.go` - 堆疊管理
+17. `panic.go` - panic/recover
+18. `iface.go` - interface
+19. `signal_unix.go` - 訊號處理
+
+### 階段七：組語深入
+20. `asm_amd64.s` - 組語實作 (依你的平台選擇)
+
+---
+
+## 重要設計文件與資源
+
+1. **Go Scheduler Design Doc**
+   https://golang.org/s/go11sched
+
+2. **Go Memory Allocator**
+   https://golang.org/s/go-memory-allocator
+
+3. **Go GC Design Doc**
+   https://golang.org/s/go15gcpacing
+
+4. **Go Runtime 原始碼**
+   https://github.com/golang/go/tree/master/src/runtime
+
+---
+
+## 統計資訊
+
+- **總 Go 檔案數**: 約 507 個
+- **核心行數**: 超過 23,000 行 (僅計算關鍵檔案)
+- **支援平台**: linux, darwin, windows, freebsd, openbsd, netbsd, dragonfly, solaris, aix
+- **支援架構**: amd64, 386, arm, arm64, ppc64, ppc64le, mips, mips64, riscv64, s390x, wasm
+
+---
+
+## 備註
+
+- 所有 `*_test.go` 檔案為測試檔案
+- 平台特定檔案使用 `_<os>_<arch>.go` 命名規則
+- 組語檔案使用 `.s` 副檔名
+- runtime 程式碼屬於 Go 編譯器的內部實作，API 可能會改變
