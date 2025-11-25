@@ -1,0 +1,162 @@
+{
+  "name": "ch16-5a",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "你是一位智慧型助理。對於每一個問題：\n1. 先用 Qdrant Vector Store 搜尋相關資料\n2. 基於這些資料來回答問題\n3. 如果知識庫中沒有相關資料，就以你的知識來回答\n回答格式：\n【基於知識庫資料提供你的分析和回答】\n重要：先搜尋，再參考知識庫的內容，最後整合回答和加上你的了解。"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -128
+      ],
+      "id": "33ff3f22-5091-46da-b2b1-c75fee55192d",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        656,
+        -128
+      ],
+      "id": "5925f49c-57b7-41c1-b535-65313794e27a",
+      "name": "When chat message received",
+      "webhookId": "731edaee-6989-4bf0-a1aa-5e65b18c163d"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        896,
+        96
+      ],
+      "id": "160243c5-8513-4649-8290-5e7880843597",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "A RAG knowledge base ",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "rag_collection",
+          "mode": "list",
+          "cachedResultName": "rag_collection"
+        },
+        "topK": 3,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        1056,
+        96
+      ],
+      "id": "9986b7f7-d5e8-4bc2-8961-ee3c5993b251",
+      "name": "Qdrant Vector Store"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        752,
+        96
+      ],
+      "id": "a84ac4a8-a54d-4722-9947-520d2304ac9a",
+      "name": "Google Gemini Chat Model"
+    },
+    {
+      "parameters": {
+        "model": "EntropyYue/jina-embeddings-v2-base-zh:latest"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        1152,
+        256
+      ],
+      "id": "91901894-7e2a-48fa-8208-4587ede2e86d",
+      "name": "Embeddings Ollama"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1470009a-1280-4e76-ae33-dc28b60e5625",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1fbcbc38338c7862e1320bac899d0a657225bf66cda187c985bb8ba77b39eebe"
+  },
+  "id": "7hWplrfow62wkcTY",
+  "tags": []
+}
