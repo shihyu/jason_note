@@ -402,6 +402,7 @@
 ## Quantitative Trading
 - [Strategy](strategy/bollmaker.md)
     - [股票期貨交易策略筆記](strategy/trading_strategy.md)
+    - [高頻交易系統與程式交易雲端部署簡介](strategy/hft_and_algo_trading_cloud_deployment.md)
     - [AI 主觀交易研究流程模板](strategy/AI_Discretionary_Trading_Workflow.md)
     - [對敲保命錦囊](strategy/對敲保命錦囊.md)
     - [蔣承翰（台大少年股神）短線交易](strategy/蔣承翰.md)
