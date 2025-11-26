@@ -664,6 +664,512 @@ func main() {
 </tbody></table>
 </div>
 <p>Go Runtime 的設計使得開發者可以輕鬆編寫高效的並發程序，而不需要手動管理線程和內存。</p>
+<hr />
+<h1 id="go-runtime-原始碼檔案結構"><a class="header" href="#go-runtime-原始碼檔案結構">Go Runtime 原始碼檔案結構</a></h1>
+<h2 id="原始碼路徑"><a class="header" href="#原始碼路徑">原始碼路徑</a></h2>
+<pre><code>/home/shihyu/go/src/runtime/
+</code></pre>
+<p>本目錄包含約 507 個 Go 原始碼檔案，以及多個子目錄。以下是核心關鍵檔案的分類介紹。</p>
+<hr />
+<h2 id="一核心結構與型別定義"><a class="header" href="#一核心結構與型別定義">一、核心結構與型別定義</a></h2>
+<h3 id="1-runtime2go-核心資料結構"><a class="header" href="#1-runtime2go-核心資料結構">1. runtime2.go (核心資料結構)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/runtime2.go</code></li>
+<li><strong>說明</strong>: 定義 runtime 最核心的資料結構</li>
+<li><strong>包含內容</strong>:
+<ul>
+<li><code>g</code> (goroutine) 結構體定義</li>
+<li><code>m</code> (machine/OS thread) 結構體定義</li>
+<li><code>p</code> (processor) 結構體定義</li>
+<li>goroutine 狀態常數 (_Gidle, _Grunnable, _Grunning, _Gsyscall 等)</li>
+<li>各種核心型別和常數定義</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-typego"><a class="header" href="#2-typego">2. type.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/type.go</code></li>
+<li><strong>說明</strong>: 型別系統的 runtime 表示</li>
+</ul>
+<hr />
+<h2 id="二排程器-scheduler"><a class="header" href="#二排程器-scheduler">二、排程器 (Scheduler)</a></h2>
+<h3 id="3-procgo-核心排程邏輯"><a class="header" href="#3-procgo-核心排程邏輯">3. proc.go (核心排程邏輯)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/proc.go</code></li>
+<li><strong>說明</strong>: goroutine 排程器的核心實作</li>
+<li><strong>關鍵功能</strong>:
+<ul>
+<li>goroutine 的建立、執行、停止</li>
+<li>M-P-G 排程模型實作</li>
+<li>Work-stealing 演算法</li>
+<li>系統呼叫的處理</li>
+<li>執行緒停放與喚醒機制</li>
+</ul>
+</li>
+<li><strong>設計文件</strong>: https://golang.org/s/go11sched</li>
+</ul>
+<h3 id="4-runtime1go"><a class="header" href="#4-runtime1go">4. runtime1.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/runtime1.go</code></li>
+<li><strong>說明</strong>: runtime 初始化相關功能</li>
+</ul>
+<hr />
+<h2 id="三記憶體管理-memory-management"><a class="header" href="#三記憶體管理-memory-management">三、記憶體管理 (Memory Management)</a></h2>
+<h3 id="5-mallocgo-記憶體分配器"><a class="header" href="#5-mallocgo-記憶體分配器">5. malloc.go (記憶體分配器)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/malloc.go</code></li>
+<li><strong>說明</strong>: 記憶體分配的主要邏輯</li>
+<li><strong>關鍵功能</strong>:
+<ul>
+<li>物件記憶體分配 (small/large objects)</li>
+<li>span 管理</li>
+<li>size class 定義</li>
+</ul>
+</li>
+</ul>
+<h3 id="6-mheapgo-堆記憶體管理"><a class="header" href="#6-mheapgo-堆記憶體管理">6. mheap.go (堆記憶體管理)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/mheap.go</code></li>
+<li><strong>說明</strong>: 堆記憶體的管理</li>
+<li><strong>關鍵功能</strong>:
+<ul>
+<li>mheap 結構體與操作</li>
+<li>span 的分配與回收</li>
+<li>記憶體頁管理</li>
+</ul>
+</li>
+</ul>
+<h3 id="7-mcachego-執行緒快取"><a class="header" href="#7-mcachego-執行緒快取">7. mcache.go (執行緒快取)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/mcache.go</code></li>
+<li><strong>說明</strong>: 每個 P 的本地記憶體快取</li>
+<li><strong>關鍵功能</strong>:
+<ul>
+<li>小物件快速分配</li>
+<li>減少鎖競爭</li>
+</ul>
+</li>
+</ul>
+<h3 id="8-mcentralgo-中央快取"><a class="header" href="#8-mcentralgo-中央快取">8. mcentral.go (中央快取)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/mcentral.go</code></li>
+<li><strong>說明</strong>: 中央 span 快取，連接 mcache 和 mheap</li>
+</ul>
+<h3 id="9-mprofgo-記憶體-profiling"><a class="header" href="#9-mprofgo-記憶體-profiling">9. mprof.go (記憶體 profiling)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/mprof.go</code></li>
+<li><strong>說明</strong>: 記憶體分配追蹤與 profiling</li>
+</ul>
+<h3 id="10-msizego"><a class="header" href="#10-msizego">10. msize.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/msize.go</code></li>
+<li><strong>說明</strong>: 記憶體 size class 計算</li>
+</ul>
+<h3 id="11-mstatsgo"><a class="header" href="#11-mstatsgo">11. mstats.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/mstats.go</code></li>
+<li><strong>說明</strong>: 記憶體統計資訊</li>
+</ul>
+<h3 id="12-mmapgo"><a class="header" href="#12-mmapgo">12. mmap*.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/mmap*.go</code></li>
+<li><strong>說明</strong>: 不同平台的記憶體映射實作</li>
+</ul>
+<hr />
+<h2 id="四垃圾回收-garbage-collection"><a class="header" href="#四垃圾回收-garbage-collection">四、垃圾回收 (Garbage Collection)</a></h2>
+<h3 id="13-mgcgo-垃圾回收主邏輯"><a class="header" href="#13-mgcgo-垃圾回收主邏輯">13. mgc.go (垃圾回收主邏輯)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/mgc.go</code></li>
+<li><strong>說明</strong>: GC 的核心實作</li>
+<li><strong>關鍵功能</strong>:
+<ul>
+<li>並行標記清除 (concurrent mark-sweep)</li>
+<li>GC 觸發條件</li>
+<li>STW (stop-the-world) 控制</li>
+<li>Write barrier</li>
+</ul>
+</li>
+</ul>
+<h3 id="14-mgcmarkgo-標記階段"><a class="header" href="#14-mgcmarkgo-標記階段">14. mgcmark.go (標記階段)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/mgcmark.go</code></li>
+<li><strong>說明</strong>: GC 標記階段實作</li>
+<li><strong>關鍵功能</strong>:
+<ul>
+<li>物件掃描與標記</li>
+<li>Work buffer 管理</li>
+<li>協助標記 (assist marking)</li>
+</ul>
+</li>
+</ul>
+<h3 id="15-mgcsweepgo-清除階段"><a class="header" href="#15-mgcsweepgo-清除階段">15. mgcsweep.go (清除階段)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/mgcsweep.go</code></li>
+<li><strong>說明</strong>: GC 清除階段實作</li>
+</ul>
+<h3 id="16-mgcscavengego-記憶體歸還"><a class="header" href="#16-mgcscavengego-記憶體歸還">16. mgcscavenge.go (記憶體歸還)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/mgcscavenge.go</code></li>
+<li><strong>說明</strong>: 將未使用記憶體歸還給作業系統</li>
+</ul>
+<h3 id="17-mgcstackgo-堆疊掃描"><a class="header" href="#17-mgcstackgo-堆疊掃描">17. mgcstack.go (堆疊掃描)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/mgcstack.go</code></li>
+<li><strong>說明</strong>: GC 掃描 goroutine 堆疊</li>
+</ul>
+<h3 id="18-mgcworkgo-gc-工作佇列"><a class="header" href="#18-mgcworkgo-gc-工作佇列">18. mgcwork.go (GC 工作佇列)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/mgcwork.go</code></li>
+<li><strong>說明</strong>: GC 工作佇列管理</li>
+</ul>
+<h3 id="19-mbarriergo-write-barrier"><a class="header" href="#19-mbarriergo-write-barrier">19. mbarrier.go (Write Barrier)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/mbarrier.go</code></li>
+<li><strong>說明</strong>: Write barrier 實作</li>
+</ul>
+<h3 id="20-mbitmapgo-記憶體-bitmap"><a class="header" href="#20-mbitmapgo-記憶體-bitmap">20. mbitmap.go (記憶體 bitmap)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/mbitmap.go</code></li>
+<li><strong>說明</strong>: 記憶體標記 bitmap，用於追蹤指標</li>
+</ul>
+<hr />
+<h2 id="五並發原語-concurrency-primitives"><a class="header" href="#五並發原語-concurrency-primitives">五、並發原語 (Concurrency Primitives)</a></h2>
+<h3 id="21-chango-channel"><a class="header" href="#21-chango-channel">21. chan.go (Channel)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/chan.go</code></li>
+<li><strong>說明</strong>: channel 的實作</li>
+<li><strong>關鍵功能</strong>:
+<ul>
+<li>send/receive 操作</li>
+<li>緩衝管理</li>
+<li>goroutine 阻塞與喚醒</li>
+</ul>
+</li>
+</ul>
+<h3 id="22-selectgo-select"><a class="header" href="#22-selectgo-select">22. select.go (Select)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/select.go</code></li>
+<li><strong>說明</strong>: select 語句的實作</li>
+</ul>
+<h3 id="23-semago-semaphore"><a class="header" href="#23-semago-semaphore">23. sema.go (Semaphore)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/sema.go</code></li>
+<li><strong>說明</strong>: semaphore 與 sync 原語的底層實作</li>
+</ul>
+<h3 id="24-lockgo-鎖機制"><a class="header" href="#24-lockgo-鎖機制">24. lock*.go (鎖機制)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/lock_*.go</code></li>
+<li><strong>說明</strong>: mutex 等鎖機制的實作</li>
+</ul>
+<h3 id="25-rwmutexgo"><a class="header" href="#25-rwmutexgo">25. rwmutex.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/rwmutex.go</code></li>
+<li><strong>說明</strong>: 讀寫鎖</li>
+</ul>
+<hr />
+<h2 id="六堆疊管理-stack-management"><a class="header" href="#六堆疊管理-stack-management">六、堆疊管理 (Stack Management)</a></h2>
+<h3 id="26-stackgo-堆疊管理"><a class="header" href="#26-stackgo-堆疊管理">26. stack.go (堆疊管理)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/stack.go</code></li>
+<li><strong>說明</strong>: goroutine 堆疊管理</li>
+<li><strong>關鍵功能</strong>:
+<ul>
+<li>堆疊分配與釋放</li>
+<li>堆疊增長 (stack growth)</li>
+<li>堆疊收縮 (stack shrinking)</li>
+<li>堆疊複製</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="七錯誤處理-error-handling"><a class="header" href="#七錯誤處理-error-handling">七、錯誤處理 (Error Handling)</a></h2>
+<h3 id="27-panicgo-panicrecover"><a class="header" href="#27-panicgo-panicrecover">27. panic.go (Panic/Recover)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/panic.go</code></li>
+<li><strong>說明</strong>: panic 與 recover 機制</li>
+<li><strong>關鍵功能</strong>:
+<ul>
+<li>panic 處理流程</li>
+<li>defer 執行</li>
+<li>recover 機制</li>
+</ul>
+</li>
+</ul>
+<h3 id="28-errorgo"><a class="header" href="#28-errorgo">28. error.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/error.go</code></li>
+<li><strong>說明</strong>: runtime error 型別</li>
+</ul>
+<hr />
+<h2 id="八訊號處理-signal-handling"><a class="header" href="#八訊號處理-signal-handling">八、訊號處理 (Signal Handling)</a></h2>
+<h3 id="29-signal_unixgo"><a class="header" href="#29-signal_unixgo">29. signal_unix.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/signal_unix.go</code></li>
+<li><strong>說明</strong>: Unix/Linux 訊號處理</li>
+</ul>
+<h3 id="30-os_go"><a class="header" href="#30-os_go">30. os_*.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/os_*.go</code></li>
+<li><strong>說明</strong>: 不同作業系統的底層介面</li>
+</ul>
+<h3 id="31-sys_go"><a class="header" href="#31-sys_go">31. sys_*.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/sys_*.go</code></li>
+<li><strong>說明</strong>: 系統呼叫相關</li>
+</ul>
+<hr />
+<h2 id="九組合語言實作-assembly"><a class="header" href="#九組合語言實作-assembly">九、組合語言實作 (Assembly)</a></h2>
+<h3 id="32-asm_s"><a class="header" href="#32-asm_s">32. asm_*.s</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/asm_*.s</code></li>
+<li><strong>平台</strong>:
+<ul>
+<li><code>asm_amd64.s</code> - x86-64 架構</li>
+<li><code>asm_arm64.s</code> - ARM64 架構</li>
+<li><code>asm_386.s</code> - x86 架構</li>
+<li>等各平台組語實作</li>
+</ul>
+</li>
+<li><strong>說明</strong>: runtime 核心功能的組語實作</li>
+<li><strong>包含</strong>:
+<ul>
+<li>context switch</li>
+<li>系統呼叫</li>
+<li>goroutine 啟動</li>
+<li>堆疊操作</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="十介面與反射-interface--reflection"><a class="header" href="#十介面與反射-interface--reflection">十、介面與反射 (Interface &amp; Reflection)</a></h2>
+<h3 id="33-ifacego-介面"><a class="header" href="#33-ifacego-介面">33. iface.go (介面)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/iface.go</code></li>
+<li><strong>說明</strong>: interface 的 runtime 實作</li>
+<li><strong>關鍵功能</strong>:
+<ul>
+<li>interface value 表示</li>
+<li>型別斷言 (type assertion)</li>
+<li>型別轉換</li>
+</ul>
+</li>
+</ul>
+<h3 id="34-alggo-演算法"><a class="header" href="#34-alggo-演算法">34. alg.go (演算法)</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/alg.go</code></li>
+<li><strong>說明</strong>: 雜湊、比較等演算法</li>
+</ul>
+<hr />
+<h2 id="十一除錯與追蹤-debugging--tracing"><a class="header" href="#十一除錯與追蹤-debugging--tracing">十一、除錯與追蹤 (Debugging &amp; Tracing)</a></h2>
+<h3 id="35-debuggo"><a class="header" href="#35-debuggo">35. debug.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/debug.go</code></li>
+<li><strong>說明</strong>: runtime 除錯支援</li>
+</ul>
+<h3 id="36-debugloggo"><a class="header" href="#36-debugloggo">36. debuglog.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/debuglog.go</code></li>
+<li><strong>說明</strong>: runtime 內部日誌</li>
+</ul>
+<h3 id="37-tracego"><a class="header" href="#37-tracego">37. trace.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/trace.go</code></li>
+<li><strong>說明</strong>: 執行追蹤 (execution tracing)</li>
+</ul>
+<h3 id="38-tracebackgo"><a class="header" href="#38-tracebackgo">38. traceback.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/traceback.go</code></li>
+<li><strong>說明</strong>: 堆疊回溯 (stack traceback)</li>
+</ul>
+<hr />
+<h2 id="十二效能分析-profiling"><a class="header" href="#十二效能分析-profiling">十二、效能分析 (Profiling)</a></h2>
+<h3 id="39-cpuprofgo"><a class="header" href="#39-cpuprofgo">39. cpuprof.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/cpuprof.go</code></li>
+<li><strong>說明</strong>: CPU profiling</li>
+</ul>
+<h3 id="40-profbufgo"><a class="header" href="#40-profbufgo">40. profbuf.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/profbuf.go</code></li>
+<li><strong>說明</strong>: Profiling buffer 管理</li>
+</ul>
+<hr />
+<h2 id="十三cgo-支援"><a class="header" href="#十三cgo-支援">十三、CGO 支援</a></h2>
+<h3 id="41-cgocallgo"><a class="header" href="#41-cgocallgo">41. cgocall.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/cgocall.go</code></li>
+<li><strong>說明</strong>: Go 呼叫 C 程式碼的支援</li>
+</ul>
+<h3 id="42-cgogo"><a class="header" href="#42-cgogo">42. cgo*.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/cgo*.go</code></li>
+<li><strong>說明</strong>: CGO 相關支援檔案</li>
+</ul>
+<hr />
+<h2 id="十四計時器與時間-timer--time"><a class="header" href="#十四計時器與時間-timer--time">十四、計時器與時間 (Timer &amp; Time)</a></h2>
+<h3 id="43-timego"><a class="header" href="#43-timego">43. time.go</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/time.go</code></li>
+<li><strong>說明</strong>: 計時器管理</li>
+<li><strong>關鍵功能</strong>:
+<ul>
+<li>timer 實作</li>
+<li>ticker 實作</li>
+<li>time.Sleep 支援</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="十五競態檢測與記憶體檢測"><a class="header" href="#十五競態檢測與記憶體檢測">十五、競態檢測與記憶體檢測</a></h2>
+<h3 id="44-racego--race"><a class="header" href="#44-racego--race">44. race.go / race/</a></h3>
+<ul>
+<li><strong>路徑</strong>:
+<ul>
+<li><code>/home/shihyu/go/src/runtime/race.go</code></li>
+<li><code>/home/shihyu/go/src/runtime/race/</code></li>
+</ul>
+</li>
+<li><strong>說明</strong>: 資料競態檢測器 (race detector)</li>
+</ul>
+<h3 id="45-msango--msan"><a class="header" href="#45-msango--msan">45. msan.go / msan/</a></h3>
+<ul>
+<li><strong>路徑</strong>:
+<ul>
+<li><code>/home/shihyu/go/src/runtime/msan.go</code></li>
+<li><code>/home/shihyu/go/src/runtime/msan/</code></li>
+</ul>
+</li>
+<li><strong>說明</strong>: Memory Sanitizer 支援</li>
+</ul>
+<h3 id="46-asango--asan"><a class="header" href="#46-asango--asan">46. asan.go / asan/</a></h3>
+<ul>
+<li><strong>路徑</strong>:
+<ul>
+<li><code>/home/shihyu/go/src/runtime/asan.go</code></li>
+<li><code>/home/shihyu/go/src/runtime/asan/</code></li>
+</ul>
+</li>
+<li><strong>說明</strong>: Address Sanitizer 支援</li>
+</ul>
+<hr />
+<h2 id="十六重要子目錄"><a class="header" href="#十六重要子目錄">十六、重要子目錄</a></h2>
+<h3 id="47-internal"><a class="header" href="#47-internal">47. internal/</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/internal/</code></li>
+<li><strong>說明</strong>: runtime 內部套件</li>
+<li><strong>子套件</strong>:
+<ul>
+<li><code>atomic/</code> - 原子操作</li>
+<li><code>sys/</code> - 系統參數與常數</li>
+<li><code>math/</code> - 數學函數</li>
+</ul>
+</li>
+</ul>
+<h3 id="48-pprof"><a class="header" href="#48-pprof">48. pprof/</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/pprof/</code></li>
+<li><strong>說明</strong>: pprof profiling 工具介面</li>
+</ul>
+<h3 id="49-debug"><a class="header" href="#49-debug">49. debug/</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/debug/</code></li>
+<li><strong>說明</strong>: runtime/debug 套件</li>
+</ul>
+<h3 id="50-trace"><a class="header" href="#50-trace">50. trace/</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/trace/</code></li>
+<li><strong>說明</strong>: runtime/trace 套件</li>
+</ul>
+<h3 id="51-metrics"><a class="header" href="#51-metrics">51. metrics/</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/metrics/</code></li>
+<li><strong>說明</strong>: runtime/metrics 套件</li>
+</ul>
+<h3 id="52-coverage"><a class="header" href="#52-coverage">52. coverage/</a></h3>
+<ul>
+<li><strong>路徑</strong>: <code>/home/shihyu/go/src/runtime/coverage/</code></li>
+<li><strong>說明</strong>: 程式碼覆蓋率支援</li>
+</ul>
+<hr />
+<h2 id="核心檔案學習順序建議"><a class="header" href="#核心檔案學習順序建議">核心檔案學習順序建議</a></h2>
+<p>如果要深入學習 Go runtime，建議按以下順序閱讀:</p>
+<h3 id="階段一基礎結構"><a class="header" href="#階段一基礎結構">階段一：基礎結構</a></h3>
+<ol>
+<li><code>runtime2.go</code> - 理解核心資料結構 (g, m, p)</li>
+<li><code>type.go</code> - 理解型別系統</li>
+</ol>
+<h3 id="階段二排程器"><a class="header" href="#階段二排程器">階段二：排程器</a></h3>
+<ol start="3">
+<li><code>proc.go</code> - 理解 goroutine 排程</li>
+<li><code>runtime1.go</code> - runtime 初始化</li>
+</ol>
+<h3 id="階段三記憶體管理"><a class="header" href="#階段三記憶體管理">階段三：記憶體管理</a></h3>
+<ol start="5">
+<li><code>malloc.go</code> - 記憶體分配</li>
+<li><code>mheap.go</code> - 堆記憶體</li>
+<li><code>mcache.go</code> - 執行緒快取</li>
+<li><code>mcentral.go</code> - 中央快取</li>
+</ol>
+<h3 id="階段四垃圾回收"><a class="header" href="#階段四垃圾回收">階段四：垃圾回收</a></h3>
+<ol start="9">
+<li><code>mgc.go</code> - GC 主邏輯</li>
+<li><code>mgcmark.go</code> - 標記階段</li>
+<li><code>mgcsweep.go</code> - 清除階段</li>
+<li><code>mbarrier.go</code> - Write barrier</li>
+</ol>
+<h3 id="階段五並發原語"><a class="header" href="#階段五並發原語">階段五：並發原語</a></h3>
+<ol start="13">
+<li><code>chan.go</code> - channel 實作</li>
+<li><code>select.go</code> - select 實作</li>
+<li><code>sema.go</code> - semaphore</li>
+</ol>
+<h3 id="階段六其他重要主題"><a class="header" href="#階段六其他重要主題">階段六：其他重要主題</a></h3>
+<ol start="16">
+<li><code>stack.go</code> - 堆疊管理</li>
+<li><code>panic.go</code> - panic/recover</li>
+<li><code>iface.go</code> - interface</li>
+<li><code>signal_unix.go</code> - 訊號處理</li>
+</ol>
+<h3 id="階段七組語深入"><a class="header" href="#階段七組語深入">階段七：組語深入</a></h3>
+<ol start="20">
+<li><code>asm_amd64.s</code> - 組語實作 (依你的平台選擇)</li>
+</ol>
+<hr />
+<h2 id="重要設計文件與資源"><a class="header" href="#重要設計文件與資源">重要設計文件與資源</a></h2>
+<ol>
+<li>
+<p><strong>Go Scheduler Design Doc</strong>
+https://golang.org/s/go11sched</p>
+</li>
+<li>
+<p><strong>Go Memory Allocator</strong>
+https://golang.org/s/go-memory-allocator</p>
+</li>
+<li>
+<p><strong>Go GC Design Doc</strong>
+https://golang.org/s/go15gcpacing</p>
+</li>
+<li>
+<p><strong>Go Runtime 原始碼</strong>
+https://github.com/golang/go/tree/master/src/runtime</p>
+</li>
+</ol>
+<hr />
+<h2 id="統計資訊"><a class="header" href="#統計資訊">統計資訊</a></h2>
+<ul>
+<li><strong>總 Go 檔案數</strong>: 約 507 個</li>
+<li><strong>核心行數</strong>: 超過 23,000 行 (僅計算關鍵檔案)</li>
+<li><strong>支援平台</strong>: linux, darwin, windows, freebsd, openbsd, netbsd, dragonfly, solaris, aix</li>
+<li><strong>支援架構</strong>: amd64, 386, arm, arm64, ppc64, ppc64le, mips, mips64, riscv64, s390x, wasm</li>
+</ul>
+<hr />
+<h2 id="備註"><a class="header" href="#備註">備註</a></h2>
+<ul>
+<li>所有 <code>*_test.go</code> 檔案為測試檔案</li>
+<li>平台特定檔案使用 <code>_&lt;os&gt;_&lt;arch&gt;.go</code> 命名規則</li>
+<li>組語檔案使用 <code>.s</code> 副檔名</li>
+<li>runtime 程式碼屬於 Go 編譯器的內部實作，API 可能會改變</li>
+</ul>
 
                     </main>
 
