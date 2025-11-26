@@ -518,6 +518,7 @@
     - [為什麼高頻交易避開 Go？](hft/why-hft-avoids-go.md)
     - [HugePage、I/O 與 Threading 最佳化指南](hft/hugepages-io-threading-guide.md)
     - [高頻交易系統：作業系統效能調校實踐](hft/hft-os-tuning.md)
+    - [高頻交易系統完整指南](hft/HFT-OS-Tuning-Guide.md)
     - [GitHub高頻交易項目技術實現分析](hft/hft-github-projects.md)
     - [併發模型實戰對比：Go vs Rust vs C++](hft/concurrency_comparison.md)
     - [Rust 與 C++ API 整合指南](hft/rust-cpp-api-integration.md)
