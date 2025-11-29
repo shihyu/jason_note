@@ -152,6 +152,7 @@
     - [Rust 靜態與動態分析指南](rust/rust-static-dynamic-guide.md)
     - [第一部分：基礎部分 - 量化語境下的Rust編程基礎](rust/第一部分_基礎部分_量化語境下的Rust編程基礎.md)
     - [第二部分：進階部分 - 量化實戰](rust/第二部分_進階部分_量化實戰.md)
+    - [高頻交易Rust終極效能優化指南](rust/高頻交易Rust終極效能優化指南.md)
 - [Go](go/go.md)
     - [Golang Note](go/note.md)
     - [pytago](go/pytago.md)
