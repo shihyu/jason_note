@@ -1,31 +1,45 @@
 # Web 開發資源
 
-本章節包含 Web 開發相關的技術文檔和實作指南，主要專注於現代 Web 技術，特別是 WebAssembly (WASM) 的應用。
+> Node.js、WebSocket、WebAssembly 完整開發指南。
 
-## 內容概覽
+## 🗂️ 主題分類
 
-### WebAssembly 技術
-- 詳細介紹 WebAssembly 的核心概念和實作方式
-- 涵蓋 Rust 編譯至 WASM 的完整流程
-- 程式碼相容性與最佳實踐指南
+### 📗 Node.js 與 WebSocket
+#### [01. Node.js 與 WebSocket](01_Node.js與WebSocket.md)
+- Node.js 完整開發指南
+- WebSocket 效能對決
 
-### 硬體控制應用
-- 透過 Web Bluetooth API 實現設備控制
-- WASM 與瀏覽器原生 API 的整合實作
-- 實際專案開發流程與架構設計
+### 📘 WebAssembly 基礎
+#### [02. WebAssembly 基礎](02_WebAssembly基礎.md)
+- WASM 概念與完整指南
+- 核心技術介紹
 
-## 技術特色
+### 📙 WASM + Rust 實戰
+#### [03. WASM + Rust 實戰](03_WASM+Rust實戰.md)
+- Rust + WASM 開發
+- Buttplug 專案實戰
+- wasm_bindgen 與工具鏈
 
-- **高效能**: 利用 WebAssembly 提供近原生的執行效能
-- **跨平臺**: 支援所有現代瀏覽器環境
-- **安全性**: 沙盒執行環境確保安全性
-- **互操作性**: 與 JavaScript 無縫整合
+### 📕 性能優化與雲服務
+#### [04. 性能優化與雲服務](04_性能優化與雲服務.md)
+- WASM 編譯優化
+- 雲服務效能陷阱
 
-## 適用對象
+## 🎯 學習路徑
 
-- Web 開發者希望瞭解 WebAssembly 技術
-- 需要在瀏覽器中實現高效能計算的開發者
-- 對硬體控制與 Web 技術整合有興趣的開發者
-- Rust 開發者想要將程式碼部署至 Web 平臺
+### 初學者路徑
+1. 從 **Node.js 與 WebSocket** 開始，掌握現代 Web 開發基礎
+2. 學習 **WebAssembly 基礎**，理解 WASM 核心概念
+3. 閱讀 **性能優化與雲服務**，了解實際部署考量
 
-這些文檔提供從基礎概念到實際應用的完整開發指南，幫助開發者快速掌握現代 Web 技術的核心概念和實作技巧。
+### 進階路徑
+1. 深入 **WASM + Rust 實戰**，學習跨語言 Web 開發
+2. 實作 Buttplug 等真實專案
+3. 掌握 wasm_bindgen 與 WASM 工具鏈
+
+### 專家路徑
+1. 研究 **性能優化與雲服務** 中的高階技巧
+2. 進行 WebSocket、WASM 效能調優
+3. 深入 wasm-objdump 分析與依賴管理
+
+**最後更新**: 2025-12-01
