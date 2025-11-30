@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Copy Trait - Jason Notes</title>
+        <title>數據處理與交易 - Jason Notes</title>
 
 
         <!-- Custom HTML head -->
@@ -178,146 +178,78 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="copy-trait的std文件"><a class="header" href="#copy-trait的std文件">Copy trait的std文件</a></h1>
-<p>Copy trait的std文件</p>
-<p>https://doc.rust-lang.org/std/marker/trait.Copy.html</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub trait Copy: Clone { }
-<span class="boring">}</span></code></pre></pre>
-<p>只需複製位即可複製其值的類型。</p>
-<p>默認情況下，變數繫結具有 <code>move語義</code>。換句話說:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>#[derive(Debug)]
-struct Foo;
-
-let x = Foo;
-
-let y = x;
-
-// `x` 已移至 `y`，因此無法使用
-
-// println!("{:?}", x); // error: use of moved value
-<span class="boring">}</span></code></pre></pre>
-<p>但是，如果類型實現 <code>Copy</code>，則它具有複製語義:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// 我們可以派生一個 `Copy` 實現。
-// `Clone` 也是必需的，因為它是 `Copy` 的父特徵。
-#[derive(Debug, Copy, Clone)]
-struct Foo;
-
-let x = Foo;
-
-let y = x;
-
-// `y` 是 `x` 的副本
-
-println!("{:?}", x); // A-OK!
-<span class="boring">}</span></code></pre></pre>
-<p>重要的是要注意，在這兩個示例中，唯一的區別是分配後是否允許您訪問 <code>x</code>。 在後臺，複製(copy)和移動(move)都可能導致將位複製到記憶體中，儘管有時會對其進行最佳化。</p>
-<h3 id="如何實現-copy"><a class="header" href="#如何實現-copy">如何實現 <code>Copy</code>?</a></h3>
-<p>有兩種方法可以在您的類型上實現 <code>Copy</code>。最簡單的是使用 <code>derive</code>:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>#[derive(Copy, Clone)]
-struct MyStruct;
-<span class="boring">}</span></code></pre></pre>
-<p>您還可以手動實現 <code>Copy</code> 和 <code>Clone</code>:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>struct MyStruct;
-
-impl Copy for MyStruct { }
-
-impl Clone for MyStruct {
-    fn clone(&amp;self) -&gt; MyStruct {
-        *self
-    }
-}
-<span class="boring">}</span></code></pre></pre>
-<p>兩者之間的區別很小: <code>derive</code> 策略還將 <code>Copy</code> 繫結在類型參數上，這並不總是需要的。</p>
-<h3 id="copy-和-clone-有什麼區別"><a class="header" href="#copy-和-clone-有什麼區別"><code>Copy</code> 和 <code>Clone</code> 有什麼區別？</a></h3>
-<p>複製是隱式發生的，例如作為分配 <code>y = x</code> 的一部分。<code>Copy</code> 的行為不可多載; 它始終是簡單的按位複製。</p>
-<p>克隆是一個明確的動作 <code>x.clone()</code>。<code>Clone</code> 的實現可以提供安全複製值所需的任何特定於類型的行為。 例如，用於 <code>String</code>的 <code>Clone</code> 的實現需要在堆中複製指向字串的緩衝區。 <code>String</code> 值的簡單按位副本將僅複製指針，從而導致該行向下雙重釋放。 因此，<code>String</code>是 <code>Clone</code>，但不是 <code>Copy</code>。</p>
-<p><code>Clone</code> 是 <code>Copy</code> 的父特徵，因此 <code>Copy</code> 的所有類型也必須實現 <code>Clone</code>。 如果類型為 <code>Copy</code>，則其 <code>Clone</code> 實現僅需要返回 <code>*self</code> (請參見上面的示例)。</p>
-<h3 id="類型何時可以是-copy"><a class="header" href="#類型何時可以是-copy">類型何時可以是 <code>Copy</code>?</a></h3>
-<p>如果類型的所有元件都實現 <code>Copy</code>，則它可以實現 <code>Copy</code>。例如，此結構體可以是 <code>Copy</code>:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>#[derive(Copy, Clone)]
-struct Point {
-   x: i32,
-   y: i32,
-}
-<span class="boring">}</span></code></pre></pre>
-<p>一個結構體可以是 <code>Copy</code>，而 <code>i32</code> 是 <code>Copy</code>，因此 <code>Point</code> 有資格成為 <code>Copy</code>。 相比之下，考慮</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>struct PointList {
-    points: Vec&lt;Point&gt;,
-}
-<span class="boring">}</span></code></pre></pre>
-<p>結構體 <code>PointList</code> 無法實現 <code>Copy</code>，因為 <code>Vec</code> 不是 <code>Copy</code>。如果嘗試派生 <code>Copy</code> 實現，則會收到錯誤消息:</p>
-<pre><code class="language-bash">the trait `Copy` may not be implemented for this type; field `points` does not implement `Copy`
-</code></pre>
-<p>共享引用 (<code>&amp;T</code>) 也是 <code>Copy</code>，因此，即使類型中包含不是 *<code>Copy</code> 類型的共享引用 <code>T</code>，也可以是 <code>Copy</code>。 考慮下面的結構體，它可以實現 <code>Copy</code>，因為它從上方僅對我們的非 Copy 類型 <code>PointList</code> 持有一個 <em>shared 引用</em>:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>#[derive(Copy, Clone)]
-struct PointListWrapper&lt;'a&gt; {
-    point_list_ref: &amp;'a PointList,
-}
-<span class="boring">}</span></code></pre></pre>
-<h3 id="什麼時候類型不能為-copy"><a class="header" href="#什麼時候類型不能為-copy">什麼時候類型不能為 <code>Copy</code>?</a></h3>
-<p>某些類型無法安全複製。例如，複製 <code>&amp;mut T</code> 將建立一個別名可變引用。 複製 <code>String</code> 將重複管理 <code>String</code> 緩衝區，從而導致雙重釋放。</p>
-<p>概括後一種情況，任何實現 <code>Drop</code> 的類型都不能是 <code>Copy</code>，因為它除了管理自己的 <code>size_of::</code> 位元組外還管理一些資源。</p>
-<p>果您嘗試在包含非 <code>Copy</code> 資料的結構或列舉上實現 <code>Copy</code>，則會收到 <a href="https://skyao.io/learning-rust/std/marker/error-index.html#E0204">E0204</a> 錯誤。</p>
-<h3 id="什麼時候類型應該是-copy"><a class="header" href="#什麼時候類型應該是-copy">什麼時候類型應該是 <code>Copy</code>?</a></h3>
-<p>一般來說，如果您的類型可以實現 <code>Copy</code>，則應該這樣做。 但是請記住，實現 <code>Copy</code> 是您類型的公共 API 的一部分。 如果該類型將來可能變為非 <code>Copy</code>，則最好現在省略 <code>Copy</code> 實現，以避免 API 發生重大更改。</p>
-<h3 id="其他實現者"><a class="header" href="#其他實現者">其他實現者</a></h3>
-<p>除下面列出的實現者外，以下類型還實現 <code>Copy</code>:</p>
+                        <h1 id="python-數據處理與交易"><a class="header" href="#python-數據處理與交易">Python 數據處理與交易</a></h1>
+<blockquote>
+<p>Pandas、數據分析、金融數據、交易 API 等主題。</p>
+</blockquote>
+<h2 id="-數據處理"><a class="header" href="#-數據處理">📊 數據處理</a></h2>
+<h3 id="pandas"><a class="header" href="#pandas">Pandas</a></h3>
 <ul>
-<li>函數項類型 (即，為每個函數定義的不同類型)</li>
-<li>函數指針類型 (例如 <code>fn() -&gt; i32</code>)</li>
-<li>如果項類型也實現 <code>Copy</code> (例如 <code>[i32; 123456]</code>)，則所有大小的陣列類型</li>
-<li>如果每個元件還實現 <code>Copy</code> (例如 <code>()</code>，<code>(i32, bool)</code>)，則為元組類型</li>
-<li>閉包類型，如果它們沒有從環境中捕獲任何值，或者所有此類捕獲的值本身都實現了 <code>Copy</code>。 請注意，由共享引用捕獲的變數始終實現 <code>Copy</code> (即使引用對象沒有實現)，而由變數引用捕獲的變數從不實現 <code>Copy</code>。</li>
+<li><a href="pandas.html">Pandas</a> - 數據處理核心庫</li>
 </ul>
-<hr />
-<pre><pre class="playground"><code class="language-rust">#[derive(Debug)]
-struct MyStruct;
-
-impl Copy for MyStruct {
-}
-
-impl Clone for MyStruct {
-    fn clone(&amp;self) -&gt; MyStruct {
-        println!("Cloning MyStruct");
-        *self
-    }
-}
-
-fn main() {
-    let original = MyStruct;
-    let copied = original;
-    let cloned = original.clone();
-
-    println!("Original: {:?}", original);
-    println!("Copied: {:?}", copied);
-    println!("Cloned: {:?}", cloned);
-}</code></pre></pre>
+<h3 id="視覺化"><a class="header" href="#視覺化">視覺化</a></h3>
+<ul>
+<li><a href="plot.html">Plot</a> - 數據視覺化</li>
+</ul>
+<h2 id="-金融數據與交易"><a class="header" href="#-金融數據與交易">💰 金融數據與交易</a></h2>
+<h3 id="金融數據源"><a class="header" href="#金融數據源">金融數據源</a></h3>
+<ul>
+<li><a href="finmind.html">FinMind</a> - 台灣金融資料平台</li>
+</ul>
+<h3 id="交易-api"><a class="header" href="#交易-api">交易 API</a></h3>
+<ul>
+<li><a href="shioaji.html">Shioaji</a> - 永豐證券 API</li>
+</ul>
+<h3 id="交易系統對比"><a class="header" href="#交易系統對比">交易系統對比</a></h3>
+<ul>
+<li><a href="fast_trading_comparison.html">快速交易系統對比</a></li>
+</ul>
+<h2 id="-應用建議"><a class="header" href="#-應用建議">💡 應用建議</a></h2>
+<h3 id="pandas-使用場景"><a class="header" href="#pandas-使用場景">Pandas 使用場景</a></h3>
+<ul>
+<li>數據清洗與預處理</li>
+<li>時間序列分析</li>
+<li>金融數據分析</li>
+<li>統計計算</li>
+</ul>
+<h3 id="金融數據分析流程"><a class="header" href="#金融數據分析流程">金融數據分析流程</a></h3>
+<ol>
+<li><strong>數據獲取</strong>：FinMind、Shioaji</li>
+<li><strong>數據清洗</strong>：Pandas</li>
+<li><strong>數據分析</strong>：統計、技術指標</li>
+<li><strong>視覺化</strong>：Plot、Matplotlib</li>
+<li><strong>策略回測</strong>：Backtrader、vectorbt</li>
+</ol>
+<h3 id="交易系統開發"><a class="header" href="#交易系統開發">交易系統開發</a></h3>
+<ul>
+<li>使用 Shioaji 連接券商</li>
+<li>異步處理提高性能</li>
+<li>實時數據處理</li>
+<li>風險管理與監控</li>
+</ul>
+<h3 id="性能優化建議"><a class="header" href="#性能優化建議">性能優化建議</a></h3>
+<ul>
+<li>使用向量化操作（Pandas）</li>
+<li>避免循環遍歷 DataFrame</li>
+<li>考慮使用 Polars（更快的替代品）</li>
+<li>大數據使用 Dask</li>
+</ul>
+<p><strong>相關資源</strong>:</p>
+<ul>
+<li><a href="../rust/06_%E5%AF%A6%E6%88%B0%E6%87%89%E7%94%A8.html">Rust 實戰應用</a> - Polars 教學</li>
+<li><a href="../strategy/">Strategy 量化策略</a> - 交易策略</li>
+</ul>
+<p><strong>最後更新</strong>: 2025-12-01</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../rust/pointer.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../python/uv-uvx-cheatsheet.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../rust/binary_lib.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../python/pandas.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -327,11 +259,11 @@ fn main() {
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../rust/pointer.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../python/uv-uvx-cheatsheet.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../rust/binary_lib.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../python/pandas.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

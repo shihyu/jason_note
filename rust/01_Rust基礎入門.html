@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Rust 檔案格式 - Jason Notes</title>
+        <title>Rust 基礎入門 - Jason Notes</title>
 
 
         <!-- Custom HTML head -->
@@ -178,106 +178,50 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="rust-中的-bin-lib-rlib-a-so-概念介紹"><a class="header" href="#rust-中的-bin-lib-rlib-a-so-概念介紹">Rust 中的 bin, lib, rlib, a, so 概念介紹</a></h1>
-<p>出處:https://cloud.tencent.com/developer/article/1583081</p>
-<p>寫了這麼久的 Rust 程式碼了，可能很多人還對 Rust 的編譯後的檔案格式不是很清晰。本篇我們就來理一下，Rust 中的 bin, lib, rlib, a, so 是什麼，如何生成，以及其它一些細節。</p>
-<h3 id="從-cargo-new-說起"><a class="header" href="#從-cargo-new-說起"><strong>從 cargo new 說起</strong></a></h3>
-<p>我們建立一個新工程，通常從下面兩句入手：</p>
-<pre><code class="language-javascript">cargo new foobar
-</code></pre>
-<p>複製</p>
-<p>或</p>
-<pre><code class="language-javascript">cargo new --lib foobar
-</code></pre>
-<p>複製</p>
-<p>前者建立一個可執行工程，而後者建立一個庫工程。</p>
-<p>實際上，你去探索上述命令列生成的檔案，發現它們的 Cargo.toml 完全一樣，區別僅在於 src 目錄下，可執行工程是一個 main.rs，而庫工程是一個 lib.rs。</p>
-<p>這是因為 main.rs 和 lib.rs 對於一個 crate 來講，是兩個特殊的檔案名稱。rustc 內建了對這兩個特殊檔案名稱的處理（當然也可以通過 Cargo.toml 進行組態，不詳談），我們可以認為它們就是一個 crate 的入口。</p>
-<p>可執行 crate 和庫 crate 是兩種不同的 crate。下面我們就來一併說一下它們的兄弟姐妹及其之間的異同。</p>
-<h3 id="crate-type"><a class="header" href="#crate-type"><strong>crate type</strong></a></h3>
-<p>執行</p>
-<pre><code class="language-javascript">rustc --help|grep crate-type
-</code></pre>
-<p>複製</p>
-<p>可得到如下輸出</p>
-<pre><code class="language-javascript">       --crate-type [bin|lib|rlib|dylib|cdylib|staticlib|proc-macro]
-</code></pre>
-<p>複製</p>
-<p>才發現，原來有這麼多種 crate type。下面挨個看一下。</p>
-<h4 id="bin"><a class="header" href="#bin"><strong>bin</strong></a></h4>
-<p>二進制可執行 crate，編譯出的檔案為二進制可執行檔案。必須要有 main 函數作為入口。這種 crate 不需要在 Cargo.toml 中或 --crate-type 命令列參數中指定，會自動識別。</p>
-<h4 id="lib"><a class="header" href="#lib"><strong>lib</strong></a></h4>
-<p>庫 crate。它其實並不是一種具體的庫，它指代後面各種庫 crate 中的一種，可以認為是一個代理名稱（alias）。</p>
-<p>通常來講，如果什麼都不組態，默認指的是 rlib, 會生成 .rlib 的檔案。</p>
-<h4 id="rlib"><a class="header" href="#rlib"><strong>rlib</strong></a></h4>
-<p>rlib 是 Rust Library 特定靜態中間庫格式。如果只是純 Rust 程式碼項目之間的依賴和呼叫，那麼，用 rlib 就能完全滿足使用需求。</p>
-<p>rlib 實現為一個 ar 歸檔檔案。</p>
-<pre><code class="language-javascript">&gt; file target/debug/libfoobar.rlib
-target/debug/libfoobar.rlib: current ar archive
-</code></pre>
-<p>複製</p>
-<p>rlib 中包含很多 metadata 資訊（比如可能的上游依賴資訊），用來做後面的 linkage。</p>
-<p>在 Cargo.toml 中組態：</p>
-<pre><code class="language-javascript">[lib]
-name = "foobar"
-crate-type = ["rlib"]
-</code></pre>
-<p>複製</p>
-<p>可以指定生成 rlib，但是一般沒必要設定，因為默認 lib 就是 rlib。</p>
-<p>rlib 是平臺（Linux, MacOS, Windows ...）無關的。</p>
-<h4 id="dylib"><a class="header" href="#dylib"><strong>dylib</strong></a></h4>
-<p>動態庫。</p>
-<p>在 Cargo.toml 中組態：</p>
-<pre><code class="language-javascript">[lib]
-name = "foobar"
-crate-type = ["dylib"]
-</code></pre>
-<p>複製</p>
-<p>會在編譯的時候，生成動態庫（Linux 上為 .so, MacOS 上為 .dylib, Windows 上為 .dll）。</p>
-<p>動態庫是平臺相關的庫。動態庫在被依賴並連結時，不會被連結到目標檔案中。這種動態庫只能被 Rust 寫的程序(或遵循 Rust 內部不穩定的規範的程序)呼叫。這個動態庫可能依賴於其它動態庫（比如，Linux 下用 C 語言寫的 <a href="https://cloud.tencent.com/product/postgresql?from=10680">PostgreSQL</a> 的 libpq.so，或者另一個編譯成 "dylib" 的 Rust 動態庫）。</p>
-<h4 id="cdylib"><a class="header" href="#cdylib"><strong>cdylib</strong></a></h4>
-<p>C規範動態庫。</p>
-<p>在 Cargo.toml 中組態：</p>
-<pre><code class="language-javascript">[lib]
-name = "foobar"
-crate-type = ["cdylib"]
-</code></pre>
-<p>複製</p>
-<p>與 dylib 類似，也會生成 .so, .dylib 或 .dll 檔案。但是這種動態庫可以被其它語言呼叫（因為幾乎所有語言都有遵循 C 規範的 FFI 實現），也就是跨語言 FFI 使用。這個動態庫可能依賴於其它動態庫（比如，Linux 下用 C 語言寫的 PostgreSQL 的 libpq.so）。</p>
-<h4 id="staticlib"><a class="header" href="#staticlib"><strong>staticlib</strong></a></h4>
-<p>靜態庫。</p>
-<p>在 Cargo.toml 中組態：</p>
-<pre><code class="language-javascript">[lib]
-name = "foobar"
-crate-type = ["staticlib"]
-</code></pre>
-<p>複製</p>
-<p>編譯會生成 .a 檔案（在 Linux 和 MacOS 上），或 .lib 檔案（在 Windows 上）。</p>
-<p>編譯器會把所有實現的 Rust 庫程式碼以及依賴的庫程式碼全部編譯到一個靜態庫檔案中，也就是對外界不產生任何依賴了。這特別適合將 Rust 實現的功能封裝好給第三方應用使用。</p>
-<h4 id="proc-macro"><a class="header" href="#proc-macro"><strong>proc-macro</strong></a></h4>
-<p>過程宏 crate.</p>
-<p>在 Cargo.toml 中組態：</p>
-<pre><code class="language-javascript">[lib]
-name = "foobar"
-crate-type = ["proc-macro"]
-</code></pre>
-<p>複製</p>
-<p>這種 crate 裡面只能匯出過程宏，被匯出的過程宏可以被其它 crate 引用。</p>
-<hr />
-<p>Crate type 以及它們之間的區別就介紹到這裡了，有些細節還是需要仔細理解的。本篇意在闡述一些基礎知識，而不打算成為一篇完整的參考檔案，如要查看 Rust Linkage 的詳細內容，直接訪問 Rust Reference。</p>
-<p>https://doc.rust-lang.org/reference/linkage.html</p>
-<p>這一篇帖子非常有用：</p>
-<p>https://users.rust-lang.org/t/what-is-the-difference-between-dylib-and-cdylib/28847</p>
+                        <h1 id="rust-基礎入門"><a class="header" href="#rust-基礎入門">Rust 基礎入門</a></h1>
+<blockquote>
+<p>Rust 語言基礎語法、入門教學、核心概念介紹。</p>
+</blockquote>
+<h2 id="-入門教學"><a class="header" href="#-入門教學">📚 入門教學</a></h2>
+<h3 id="系列教程"><a class="header" href="#系列教程">系列教程</a></h3>
+<ul>
+<li><a href="30%E5%A4%A9%E6%B7%B1%E5%85%A5%E6%B7%BA%E5%87%BARust%E7%B3%BB%E5%88%97.html">30天深入淺出Rust系列</a> - 完整30天教程</li>
+<li><a href="easy_rust.html">Easy Rust</a> - 簡單易懂的Rust教程</li>
+<li><a href="10-rust-an-introduction.html">Rust 入門介紹</a></li>
+<li><a href="Rust%E7%9A%84%E7%B2%BE%E9%AB%93.html">Rust 的精髓</a></li>
+</ul>
+<h3 id="基礎文檔"><a class="header" href="#基礎文檔">基礎文檔</a></h3>
+<ul>
+<li><a href="basic.html">基礎語法</a></li>
+<li><a href="overview.html">概覽</a></li>
+<li><a href="note.html">筆記</a></li>
+<li><a href="rust_note.html">Rust Note</a></li>
+<li><a href="rust_easy.html">Rust Easy</a></li>
+</ul>
+<h2 id="-學習路徑"><a class="header" href="#-學習路徑">💡 學習路徑</a></h2>
+<h3 id="新手路徑"><a class="header" href="#新手路徑">新手路徑</a></h3>
+<ol>
+<li>閱讀 <a href="30%E5%A4%A9%E6%B7%B1%E5%85%A5%E6%B7%BA%E5%87%BARust%E7%B3%BB%E5%88%97.html">30天深入淺出Rust系列</a></li>
+<li>學習 <a href="basic.html">基礎語法</a></li>
+<li>理解核心概念（見 02_核心概念）</li>
+</ol>
+<h3 id="進階路徑"><a class="header" href="#進階路徑">進階路徑</a></h3>
+<ol>
+<li>深入學習所有權系統</li>
+<li>掌握 Trait 系統</li>
+<li>學習生命週期</li>
+</ol>
+<p><strong>最後更新</strong>: 2025-12-01</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../rust/rust_vs_cpp.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../rust/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../rust/rust-an-introduction-in-oop.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../rust/30天深入淺出Rust系列.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -287,11 +231,11 @@ crate-type = ["proc-macro"]
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../rust/rust_vs_cpp.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../rust/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../rust/rust-an-introduction-in-oop.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../rust/30天深入淺出Rust系列.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

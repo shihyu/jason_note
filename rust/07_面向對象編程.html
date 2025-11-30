@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Rust 記憶體配置指南：Stack vs Heap - Jason Notes</title>
+        <title>面向對象編程 - Jason Notes</title>
 
 
         <!-- Custom HTML head -->
@@ -178,138 +178,63 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="rust-記憶體配置指南stack-vs-heap"><a class="header" href="#rust-記憶體配置指南stack-vs-heap">Rust 記憶體配置指南：Stack vs Heap</a></h1>
-<p>在 Rust 中，變數的記憶體配置有其獨特的規則，主要由<strong>所有權系統</strong>和<strong>型別特性</strong>決定。</p>
-<h2 id="stack-上的變數"><a class="header" href="#stack-上的變數">Stack 上的變數</a></h2>
-<h3 id="實作-copy-trait-的型別"><a class="header" href="#實作-copy-trait-的型別">實作 Copy trait 的型別</a></h3>
-<pre><pre class="playground"><code class="language-rust">fn main() {
-    let x = 42;           // i32, stack 上
-    let y = 3.14;         // f64, stack 上
-    let flag = true;      // bool, stack 上
-    let ch = 'A';         // char, stack 上
-    let tuple = (1, 2);   // (i32, i32), stack 上
-}</code></pre></pre>
-<h3 id="固定大小的陣列"><a class="header" href="#固定大小的陣列">固定大小的陣列</a></h3>
-<pre><pre class="playground"><code class="language-rust">fn main() {
-    let arr = [1, 2, 3, 4, 5];  // [i32; 5], stack 上
-    let bytes = [0u8; 1024];    // [u8; 1024], stack 上
-}</code></pre></pre>
-<h2 id="heap-上的變數"><a class="header" href="#heap-上的變數">Heap 上的變數</a></h2>
-<h3 id="使用-box"><a class="header" href="#使用-box">使用 Box<T></a></h3>
-<pre><pre class="playground"><code class="language-rust">fn main() {
-    let boxed = Box::new(42);        // Box&lt;i32&gt;, 值在 heap
-    let large_array = Box::new([0; 1000000]);  // 大陣列在 heap
-}</code></pre></pre>
-<h3 id="vecstring-等集合型別"><a class="header" href="#vecstring-等集合型別">Vec、String 等集合型別</a></h3>
-<pre><pre class="playground"><code class="language-rust">fn main() {
-    let mut vec = Vec::new();        // 資料在 heap
-    vec.push(1);
-    
-    let s = String::from("hello");   // 字串資料在 heap
-}</code></pre></pre>
-<h3 id="自定義結構體預設在-stack"><a class="header" href="#自定義結構體預設在-stack">自定義結構體（預設在 stack）</a></h3>
-<pre><pre class="playground"><code class="language-rust">struct Point {
-    x: i32,
-    y: i32,
-}
-
-fn main() {
-    let p1 = Point { x: 1, y: 2 };      // stack 上
-    let p2 = Box::new(Point { x: 3, y: 4 }); // heap 上
-}</code></pre></pre>
-<h2 id="判斷方法"><a class="header" href="#判斷方法">判斷方法</a></h2>
-<h3 id="1-檢查型別特性"><a class="header" href="#1-檢查型別特性">1. 檢查型別特性</a></h3>
-<pre><pre class="playground"><code class="language-rust">use std::mem;
-
-fn main() {
-    let x = 42;
-    let s = String::from("hello");
-    
-    // 如果型別實作了 Copy，通常在 stack
-    fn is_copy&lt;T: Copy&gt;() {}
-    is_copy::&lt;i32&gt;();  // 編譯通過，i32 在 stack
-    // is_copy::&lt;String&gt;();  // 編譯錯誤，String 不是 Copy
-}</code></pre></pre>
-<h3 id="2-觀察所有權轉移"><a class="header" href="#2-觀察所有權轉移">2. 觀察所有權轉移</a></h3>
-<pre><pre class="playground"><code class="language-rust">fn main() {
-    let x = 5;
-    let y = x;  // Copy，x 仍可使用，說明在 stack
-    println!("{}", x); // OK
-    
-    let s1 = String::from("hello");
-    let s2 = s1;  // Move，s1 不可再使用，說明涉及 heap
-    // println!("{}", s1); // 編譯錯誤
-}</code></pre></pre>
-<h3 id="3-使用記憶體分析工具"><a class="header" href="#3-使用記憶體分析工具">3. 使用記憶體分析工具</a></h3>
-<pre><pre class="playground"><code class="language-rust">fn main() {
-    let x = 42;
-    let boxed = Box::new(42);
-    
-    println!("stack variable address: {:p}", &amp;x);
-    println!("box pointer address: {:p}", &amp;boxed);
-    println!("heap value address: {:p}", boxed.as_ref());
-}</code></pre></pre>
-<h2 id="特殊情況"><a class="header" href="#特殊情況">特殊情況</a></h2>
-<h3 id="智慧指標"><a class="header" href="#智慧指標">智慧指標</a></h3>
-<pre><pre class="playground"><code class="language-rust">use std::rc::Rc;
-use std::sync::Arc;
-
-fn main() {
-    let rc = Rc::new(42);     // 值在 heap，Rc 本身在 stack
-    let arc = Arc::new(42);   // 值在 heap，Arc 本身在 stack
-}</code></pre></pre>
-<h3 id="閉包捕獲"><a class="header" href="#閉包捕獲">閉包捕獲</a></h3>
-<pre><pre class="playground"><code class="language-rust">fn main() {
-    let x = 42;  // stack
-    
-    let closure = move || {
-        println!("{}", x);  // x 被移動到閉包中
-    };
-    // 閉包可能在 stack 或 heap，取決於使用方式
-}</code></pre></pre>
-<h2 id="編譯器最佳化"><a class="header" href="#編譯器最佳化">編譯器最佳化</a></h2>
-<p>Rust 編譯器會進行各種最佳化：</p>
+                        <h1 id="rust-面向對象編程"><a class="header" href="#rust-面向對象編程">Rust 面向對象編程</a></h1>
+<blockquote>
+<p>Rust 中的 OOP 概念、設計模式、封裝與多態。</p>
+</blockquote>
+<h2 id="-oop-介紹"><a class="header" href="#-oop-介紹">📚 OOP 介紹</a></h2>
+<h3 id="rust-中的-oop"><a class="header" href="#rust-中的-oop">Rust 中的 OOP</a></h3>
 <ul>
-<li><strong>逃逸分析</strong>：如果堆疊變數不會逃出函數範圍，可能保持在 stack</li>
-<li><strong>內聯展開</strong>：小函數可能被內聯，影響變數位置</li>
-<li><strong>LLVM 最佳化</strong>：後端最佳化可能重新安排記憶體配置</li>
+<li><a href="rust-an-introduction-in-oop.html">Rust OOP 介紹</a></li>
 </ul>
-<h2 id="實用檢查方法"><a class="header" href="#實用檢查方法">實用檢查方法</a></h2>
-<p>要準確瞭解變數位置，可以：</p>
-<ol>
-<li><strong>查看型別是否實作 Copy trait</strong></li>
-<li><strong>觀察所有權轉移行為</strong></li>
-<li><strong>使用 <code>cargo expand</code> 查看巨集展開後的程式碼</strong></li>
-<li><strong>使用記憶體分析工具</strong>如 Valgrind 或 heaptrack</li>
-</ol>
-<h2 id="快速判斷表"><a class="header" href="#快速判斷表">快速判斷表</a></h2>
-<div class="table-wrapper"><table><thead><tr><th>型別類型</th><th>位置</th><th>範例</th></tr></thead><tbody>
-<tr><td>基本型別 (i32, f64, bool, char)</td><td>Stack</td><td><code>let x = 42;</code></td></tr>
-<tr><td>固定陣列</td><td>Stack</td><td><code>let arr = [1, 2, 3];</code></td></tr>
-<tr><td>Box<T></td><td>Heap (值)</td><td><code>let boxed = Box::new(42);</code></td></tr>
-<tr><td>Vec<T></td><td>Heap (資料)</td><td><code>let vec = vec![1, 2, 3];</code></td></tr>
-<tr><td>String</td><td>Heap (資料)</td><td><code>let s = String::from("hello");</code></td></tr>
-<tr><td>&amp;str</td><td>Stack (指標)</td><td><code>let s = "hello";</code></td></tr>
-<tr><td>自定義 struct</td><td>Stack (預設)</td><td><code>let p = Point { x: 1, y: 2 };</code></td></tr>
-</tbody></table>
-</div>
-<h2 id="記憶要點"><a class="header" href="#記憶要點">記憶要點</a></h2>
+<h2 id="-主要概念"><a class="header" href="#-主要概念">🎯 主要概念</a></h2>
+<h3 id="封裝-encapsulation"><a class="header" href="#封裝-encapsulation">封裝 (Encapsulation)</a></h3>
 <ul>
-<li><strong>Copy trait</strong>: 實作此 trait 的型別通常在 stack</li>
-<li><strong>所有權轉移</strong>: 發生 move 的型別通常涉及 heap</li>
-<li><strong>明確配置</strong>: 使用 <code>Box::new()</code> 強制放在 heap</li>
-<li><strong>編譯器智慧</strong>: 最終位置可能因最佳化而改變</li>
+<li>使用 struct 和 impl 塊</li>
+<li>pub 可見性控制</li>
 </ul>
+<h3 id="繼承-inheritance"><a class="header" href="#繼承-inheritance">繼承 (Inheritance)</a></h3>
+<ul>
+<li>Trait 作為接口</li>
+<li>Trait 默認實現</li>
+<li>Trait Bounds</li>
+</ul>
+<h3 id="多態-polymorphism"><a class="header" href="#多態-polymorphism">多態 (Polymorphism)</a></h3>
+<ul>
+<li>Trait Objects (動態分發)</li>
+<li>泛型 (靜態分發)</li>
+<li>參考: <a href="rust-static-dynamic-guide.html">靜態與動態指南</a></li>
+</ul>
+<h2 id="-rust-oop-vs-傳統-oop"><a class="header" href="#-rust-oop-vs-傳統-oop">💡 Rust OOP vs 傳統 OOP</a></h2>
+<p><strong>相似之處</strong>:</p>
+<ul>
+<li>封裝：struct + impl</li>
+<li>多態：trait objects + generics</li>
+<li>接口：traits</li>
+</ul>
+<p><strong>不同之處</strong>:</p>
+<ul>
+<li>無類繼承（用 trait 和組合）</li>
+<li>無 null（用 Option）</li>
+<li>無 this（用 self）</li>
+</ul>
+<p><strong>推薦做法</strong>:</p>
+<ul>
+<li>優先使用組合而非繼承</li>
+<li>使用 Trait 定義接口</li>
+<li>泛型優於 Trait Objects（性能更好）</li>
+</ul>
+<p><strong>最後更新</strong>: 2025-12-01</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../rust/rust_ownership_complete_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../rust/rust-wasm-compilation-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../rust/rust_wrappers_guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../rust/rust-an-introduction-in-oop.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -319,11 +244,11 @@ fn main() {
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../rust/rust_ownership_complete_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../rust/rust-wasm-compilation-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../rust/rust_wrappers_guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../rust/rust-an-introduction-in-oop.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
