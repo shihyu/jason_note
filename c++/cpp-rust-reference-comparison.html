@@ -1,0 +1,603 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>C++ 左右值參考與 Rust 所有權系統比較 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="c-左右值參考與-rust-所有權系統比較"><a class="header" href="#c-左右值參考與-rust-所有權系統比較">C++ 左右值參考與 Rust 所有權系統比較</a></h1>
+<h2 id="c-基本概念"><a class="header" href="#c-基本概念">C++ 基本概念</a></h2>
+<h3 id="左值與右值"><a class="header" href="#左值與右值">左值與右值</a></h3>
+<p><strong>左值（lvalue）</strong>：可以取地址的表達式，通常代表一個持久的物件</p>
+<ul>
+<li>例如：變數名稱、陣列元素、解參考的指標等</li>
+</ul>
+<p><strong>右值（rvalue）</strong>：暫時的、即將消失的值</p>
+<ul>
+<li>例如：字面值、臨時物件、函數返回的臨時值等</li>
+</ul>
+<h3 id="參考類型"><a class="header" href="#參考類型">參考類型</a></h3>
+<p><strong>左值參考（Lvalue Reference）</strong> - 使用 <code>&amp;</code></p>
+<pre><code class="language-cpp">int x = 10;
+int&amp; ref = x;  // 左值參考，綁定到 x
+ref = 20;      // 修改 x 的值
+</code></pre>
+<p><strong>右值參考（Rvalue Reference）</strong> - 使用 <code>&amp;&amp;</code>（C++11 引入）</p>
+<pre><code class="language-cpp">int&amp;&amp; rref = 10;           // 右值參考，綁定到臨時值
+int&amp;&amp; rref2 = getValue();  // 綁定到函數返回的臨時物件
+</code></pre>
+<h3 id="為什麼需要右值參考"><a class="header" href="#為什麼需要右值參考">為什麼需要右值參考？</a></h3>
+<h4 id="1-移動語意move-semantics"><a class="header" href="#1-移動語意move-semantics">1. 移動語意（Move Semantics）</a></h4>
+<pre><code class="language-cpp">class MyString {
+    char* data;
+public:
+    // 移動建構函數
+    MyString(MyString&amp;&amp; other) noexcept {
+        data = other.data;      // 直接「偷」資源
+        other.data = nullptr;   // 清空來源
+    }
+    
+    // 移動賦值運算子
+    MyString&amp; operator=(MyString&amp;&amp; other) noexcept {
+        if (this != &amp;other) {
+            delete[] data;
+            data = other.data;
+            other.data = nullptr;
+        }
+        return *this;
+    }
+};
+</code></pre>
+<h4 id="2-完美轉發perfect-forwarding"><a class="header" href="#2-完美轉發perfect-forwarding">2. 完美轉發（Perfect Forwarding）</a></h4>
+<pre><code class="language-cpp">template&lt;typename T&gt;
+void wrapper(T&amp;&amp; arg) {
+    // 保持參數的左值/右值屬性
+    actualFunction(std::forward&lt;T&gt;(arg));
+}
+</code></pre>
+<h3 id="實際例子"><a class="header" href="#實際例子">實際例子</a></h3>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+
+void process(int&amp; x) {
+    std::cout &lt;&lt; "左值參考版本\n";
+}
+
+void process(int&amp;&amp; x) {
+    std::cout &lt;&lt; "右值參考版本\n";
+}
+
+int main() {
+    int a = 10;
+    process(a);        // 呼叫左值參考版本
+    process(20);       // 呼叫右值參考版本
+    process(a + 5);    // 呼叫右值參考版本（臨時值）
+    
+    std::vector&lt;int&gt; v1 = {1, 2, 3};
+    std::vector&lt;int&gt; v2 = std::move(v1);  // 使用移動語意，高效率
+}
+</code></pre>
+<h3 id="關鍵優勢"><a class="header" href="#關鍵優勢">關鍵優勢</a></h3>
+<p>使用右值參考和移動語意可以避免不必要的複製，大幅提升效能，特別是處理大型物件（如容器、字串）時。這是現代 C++ 效能優化的核心技術之一。</p>
+<hr />
+<h2 id="為什麼右值參考是效能優化工具"><a class="header" href="#為什麼右值參考是效能優化工具">為什麼右值參考是效能優化工具？</a></h2>
+<h3 id="核心問題昂貴的複製操作"><a class="header" href="#核心問題昂貴的複製操作">核心問題：昂貴的複製操作</a></h3>
+<p>在沒有右值參考之前，C++ 會進行<strong>深層複製（Deep Copy）</strong>：</p>
+<pre><code class="language-cpp">class BigData {
+    int* data;
+    size_t size;
+public:
+    BigData(size_t s) : size(s) {
+        data = new int[size];
+        // 假設這裡有大量資料
+    }
+    
+    // 傳統複製建構函數
+    BigData(const BigData&amp; other) : size(other.size) {
+        data = new int[size];
+        // 複製所有資料！這很慢！
+        for (size_t i = 0; i &lt; size; ++i) {
+            data[i] = other.data[i];
+        }
+    }
+    
+    ~BigData() {
+        delete[] data;
+    }
+};
+
+BigData createBigData() {
+    BigData temp(1000000);  // 100萬個整數
+    return temp;  // 返回時會觸發複製！
+}
+
+int main() {
+    BigData obj = createBigData();  // 又一次複製！
+    // 總共可能發生多次昂貴的複製操作
+}
+</code></pre>
+<h4 id="沒有移動語意時的流程"><a class="header" href="#沒有移動語意時的流程">沒有移動語意時的流程：</a></h4>
+<pre><code>1. 在函數內創建 temp          → 分配記憶體 + 初始化
+2. 返回時複製到臨時物件        → 再次分配記憶體 + 複製所有資料
+3. 賦值給 obj                 → 第三次分配記憶體 + 複製所有資料
+4. 銷毀臨時物件               → 釋放記憶體
+</code></pre>
+<p><strong>時間複雜度</strong>：O(n) × 複製次數，其中 n 是資料大小</p>
+<h3 id="右值參考的優化方案"><a class="header" href="#右值參考的優化方案">右值參考的優化方案</a></h3>
+<p>使用移動語意，我們可以<strong>直接轉移資源</strong>而不是複製：</p>
+<pre><code class="language-cpp">class BigData {
+    int* data;
+    size_t size;
+public:
+    // ... 其他程式碼 ...
+    
+    // 移動建構函數 - 關鍵優化！
+    BigData(BigData&amp;&amp; other) noexcept : data(other.data), size(other.size) {
+        // 只是「偷走」指標，不複製資料！
+        other.data = nullptr;
+        other.size = 0;
+    }
+    
+    // 移動賦值運算子
+    BigData&amp; operator=(BigData&amp;&amp; other) noexcept {
+        if (this != &amp;other) {
+            delete[] data;  // 清理舊資料
+            
+            // 直接接管資源
+            data = other.data;
+            size = other.size;
+            
+            // 清空來源
+            other.data = nullptr;
+            other.size = 0;
+        }
+        return *this;
+    }
+};
+
+int main() {
+    BigData obj = createBigData();  // 現在使用移動，超快！
+}
+</code></pre>
+<h4 id="使用移動語意後的流程"><a class="header" href="#使用移動語意後的流程">使用移動語意後的流程：</a></h4>
+<pre><code>1. 在函數內創建 temp          → 分配記憶體 + 初始化
+2. 返回時移動到臨時物件        → 只轉移指標（幾個位元組）
+3. 移動到 obj                 → 只轉移指標（幾個位元組）
+4. 銷毀臨時物件               → 什麼都不用做（已經是 nullptr）
+</code></pre>
+<p><strong>時間複雜度</strong>：O(1)</p>
+<h3 id="實際效能對比"><a class="header" href="#實際效能對比">實際效能對比</a></h3>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;chrono&gt;
+#include &lt;vector&gt;
+
+class Timer {
+    std::chrono::time_point&lt;std::chrono::high_resolution_clock&gt; start;
+public:
+    Timer() : start(std::chrono::high_resolution_clock::now()) {}
+    
+    ~Timer() {
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(end - start);
+        std::cout &lt;&lt; "耗時: " &lt;&lt; duration.count() &lt;&lt; " ms\n";
+    }
+};
+
+int main() {
+    const size_t SIZE = 10000000;  // 1000萬個整數
+    
+    std::cout &lt;&lt; "測試複製操作:\n";
+    {
+        Timer t;
+        std::vector&lt;int&gt; v1(SIZE, 42);
+        std::vector&lt;int&gt; v2 = v1;  // 複製！需要分配新記憶體並複製所有元素
+    }
+    
+    std::cout &lt;&lt; "\n測試移動操作:\n";
+    {
+        Timer t;
+        std::vector&lt;int&gt; v1(SIZE, 42);
+        std::vector&lt;int&gt; v2 = std::move(v1);  // 移動！只轉移指標
+    }
+}
+</code></pre>
+<p><strong>典型輸出</strong>：</p>
+<pre><code>測試複製操作:
+耗時: 45 ms
+
+測試移動操作:
+耗時: 0 ms
+</code></pre>
+<h3 id="為什麼能優化"><a class="header" href="#為什麼能優化">為什麼能優化？</a></h3>
+<h4 id="1-避免記憶體分配"><a class="header" href="#1-避免記憶體分配">1. 避免記憶體分配</a></h4>
+<pre><code class="language-cpp">// 複製：需要 new
+BigData copy = original;  // new int[1000000]
+
+// 移動：不需要 new
+BigData moved = std::move(original);  // 只是 pointer = other.pointer
+</code></pre>
+<h4 id="2-避免資料複製"><a class="header" href="#2-避免資料複製">2. 避免資料複製</a></h4>
+<pre><code class="language-cpp">// 複製：O(n) 時間
+for (int i = 0; i &lt; 1000000; ++i) {
+    data[i] = other.data[i];
+}
+
+// 移動：O(1) 時間
+data = other.data;  // 一個指標賦值
+</code></pre>
+<h4 id="3-減少解構函數呼叫的工作"><a class="header" href="#3-減少解構函數呼叫的工作">3. 減少解構函數呼叫的工作</a></h4>
+<pre><code class="language-cpp">// 複製後的臨時物件：需要 delete[] 大量記憶體
+~BigData() { delete[] data; }
+
+// 移動後的臨時物件：data 已經是 nullptr，什麼都不用做
+~BigData() { delete[] data; }  // delete nullptr 是安全且快速的
+</code></pre>
+<h3 id="實際應用場景"><a class="header" href="#實際應用場景">實際應用場景</a></h3>
+<h4 id="1-容器操作"><a class="header" href="#1-容器操作">1. 容器操作</a></h4>
+<pre><code class="language-cpp">std::vector&lt;std::string&gt; v;
+std::string s = "very long string...";
+
+v.push_back(s);              // 複製，s 仍然有效
+v.push_back(std::move(s));   // 移動，快很多！s 變成空字串
+</code></pre>
+<h4 id="2-工廠函數"><a class="header" href="#2-工廠函數">2. 工廠函數</a></h4>
+<pre><code class="language-cpp">std::unique_ptr&lt;BigObject&gt; createObject() {
+    auto obj = std::make_unique&lt;BigObject&gt;();
+    // ... 初始化 ...
+    return obj;  // 自動移動，不複製
+}
+</code></pre>
+<h4 id="3-swap-操作"><a class="header" href="#3-swap-操作">3. swap 操作</a></h4>
+<pre><code class="language-cpp">// 傳統 swap：需要 3 次複製
+void swap(T&amp; a, T&amp; b) {
+    T temp = a;    // 複製
+    a = b;         // 複製
+    b = temp;      // 複製
+}
+
+// 現代 swap：只需要 3 次移動
+void swap(T&amp; a, T&amp; b) {
+    T temp = std::move(a);    // 移動
+    a = std::move(b);         // 移動
+    b = std::move(temp);      // 移動
+}
+</code></pre>
+<h3 id="效能優化總結"><a class="header" href="#效能優化總結">效能優化總結</a></h3>
+<p>右值參考是效能優化工具，因為它：</p>
+<ol>
+<li><strong>將 O(n) 的複製操作變成 O(1) 的指標轉移</strong></li>
+<li><strong>避免不必要的記憶體分配和釋放</strong></li>
+<li><strong>減少 CPU 快取未命中（cache miss）</strong></li>
+<li><strong>特別適合處理大型物件</strong>：字串、容器、資源包裝器等</li>
+</ol>
+<p>這就是為什麼現代 C++ 程式碼中到處都能看到 <code>std::move</code> 的原因！</p>
+<hr />
+<h2 id="rust-的所有權系統"><a class="header" href="#rust-的所有權系統">Rust 的所有權系統</a></h2>
+<p>Rust 有<strong>更嚴格但更安全</strong>的類似概念，稱為<strong>所有權（Ownership）<strong>和</strong>移動語意（Move Semantics）</strong></p>
+<h3 id="基本所有權"><a class="header" href="#基本所有權">基本所有權</a></h3>
+<pre><pre class="playground"><code class="language-rust">fn main() {
+    let s1 = String::from("hello");
+    let s2 = s1;  // s1 的所有權「移動」到 s2
+    
+    // println!("{}", s1);  // 編譯錯誤！s1 已經無效
+    println!("{}", s2);     // 正常運作
+}</code></pre></pre>
+<h3 id="rust-的特點"><a class="header" href="#rust-的特點">Rust 的特點</a></h3>
+<ul>
+<li><strong>預設就是移動</strong>：賦值或傳參數時，預設轉移所有權</li>
+<li><strong>借用（Borrowing）</strong>：類似 C++ 的參考，但有編譯期檢查</li>
+</ul>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn process(s: &amp;String) {  // 不可變借用
+    println!("{}", s);
+}
+
+fn modify(s: &amp;mut String) {  // 可變借用
+    s.push_str(" world");
+}
+<span class="boring">}</span></code></pre></pre>
+<ul>
+<li><strong>沒有運行時開銷</strong>：所有檢查都在編譯期完成</li>
+</ul>
+<hr />
+<h2 id="其他語言的對比"><a class="header" href="#其他語言的對比">其他語言的對比</a></h2>
+<h3 id="java--c--python"><a class="header" href="#java--c--python">Java / C# / Python</a></h3>
+<ul>
+<li>物件都是參考（reference），不需要區分左右值</li>
+<li>依賴垃圾回收（GC），沒有手動的移動語意</li>
+<li>方便但可能有效能開銷</li>
+</ul>
+<pre><code class="language-python"># Python - 一切都是參考
+a = [1, 2, 3]
+b = a  # b 和 a 指向同一個物件，沒有複製
+</code></pre>
+<h3 id="go"><a class="header" href="#go">Go</a></h3>
+<ul>
+<li>有指標和值的概念</li>
+<li>但沒有明確的左右值參考語法</li>
+<li>編譯器會自動優化</li>
+</ul>
+<h3 id="swift"><a class="header" href="#swift">Swift</a></h3>
+<ul>
+<li>有 <code>inout</code> 參數（類似參考）</li>
+<li>值類型（struct）和參考類型（class）的區別</li>
+<li>Copy-on-Write 優化</li>
+</ul>
+<pre><code class="language-swift">func modify(_ value: inout Int) {
+    value += 10
+}
+</code></pre>
+<hr />
+<h2 id="rust-vs-c-核心差異"><a class="header" href="#rust-vs-c-核心差異">Rust vs C++ 核心差異</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>C++</th><th>Rust</th></tr></thead><tbody>
+<tr><td>安全性</td><td>程式設計師負責</td><td>編譯器強制保證</td></tr>
+<tr><td>移動語意</td><td>需明確使用 <code>std::move</code></td><td>預設行為</td></tr>
+<tr><td>參考檢查</td><td>運行時可能出錯</td><td>編譯期保證正確</td></tr>
+<tr><td>靈活性</td><td>更高（也更危險）</td><td>受限但更安全</td></tr>
+</tbody></table>
+</div>
+<h3 id="c---可能的危險程式碼"><a class="header" href="#c---可能的危險程式碼">C++ - 可能的危險程式碼</a></h3>
+<pre><code class="language-cpp">int* ptr = new int(10);
+delete ptr;
+*ptr = 20;  // 運行時錯誤！dangling pointer
+</code></pre>
+<h3 id="rust---編譯器阻止錯誤"><a class="header" href="#rust---編譯器阻止錯誤">Rust - 編譯器阻止錯誤</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let v = vec![1, 2, 3];
+let ptr = &amp;v[0];
+drop(v);           // 編譯錯誤！
+// println!("{}", ptr);  // ptr 會變成 dangling reference
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<ul>
+<li><strong>C++</strong>：靈活但需要小心，右值參考是效能優化工具</li>
+<li><strong>Rust</strong>：安全第一，所有權系統從根本上防止記憶體錯誤</li>
+<li><strong>其他高階語言</strong>：用 GC 換取便利性，犧牲一些效能</li>
+</ul>
+<p>Rust 可以說是把 C++ 的移動語意概念「做到極致」，並在編譯期就保證記憶體安全。</p>
+<hr />
+<h2 id="延伸閱讀"><a class="header" href="#延伸閱讀">延伸閱讀</a></h2>
+<ul>
+<li><a href="https://en.cppreference.com/">C++ Reference Documentation</a></li>
+<li><a href="https://doc.rust-lang.org/book/">The Rust Programming Language Book</a></li>
+<li><a href="https://www.learncpp.com/cpp-tutorial/introduction-to-smart-pointers-move-semantics/">Understanding Move Semantics</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../c++/cpp-move-semantics-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../c++/02_高性能程式設計.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../c++/cpp-move-semantics-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../c++/02_高性能程式設計.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
