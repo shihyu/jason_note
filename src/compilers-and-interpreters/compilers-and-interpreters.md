@@ -1,59 +1,17 @@
 # 編譯器與直譯器
 
-本目錄收集了與編譯器、直譯器、虛擬機以及系統軟體開發相關的學習資源和專案。
+本目錄收集了編譯器、直譯器、虛擬機的學習資源、實作教學和專案範例。從零基礎到進階主題，提供完整的學習路徑與實作指引。
+
+**適合對象：**
+- 想了解程式語言如何運作的開發者
+- 希望實作自己的程式語言或 DSL
+- 對編譯器最佳化技術感興趣的工程師
+- 準備相關面試或研究所考試的學生
 
 ## 目錄結構
 
 ### data/
-包含多個編譯器、直譯器和作業系統相關的專案和學習材料：
-
-#### ChCore
-一個教學用的作業系統內核專案，用於深入理解作業系統設計原理和系統軟體開發。
-
-**相關主題：**
-- 內核架構設計
-- 進程與執行緒管理
-- 記憶體管理與虛擬記憶體
-- 中斷與異常處理
-- 檔案系統實現
-- 系統呼叫介面
-
-#### ChCore_new
-ChCore 的新版本或改進版本，可能包含最新的功能、效能最佳化和現代系統設計。
-
-#### rCore-Tutorial-Book-v3
-Rust 語言編寫的教學用作業系統專案（第三版），重點關注系統編程和編譯器最佳化。
-
-**相關主題：**
-- 用 Rust 編寫作業系統
-- RISC-V 架構支援與最佳化
-- 系統編程最佳實踐
-- 記憶體安全與所有權管理
-- 裸機編程（Bare Metal）
-- 編譯器代碼生成最佳化
-- 連結器與加載器整合
-
-**學習價值：**
-- 理解編譯器如何與作業系統互動
-- Rust 在系統編程中的優勢
-- 低級硬體互動和最佳化
-- 現代 OS 設計思想
-
-#### test_sel4
-seL4 微內核作業系統的測試專案，強調形式化驗證和可靠性。
-
-**相關主題：**
-- 微內核架構 (Microkernel)
-- 能力安全 (Capability-based Security)
-- 形式化驗證與編譯器證明
-- 即時作業系統（RTOS）特性
-- IPC 通訊機制
-- 編譯器安全最佳化
-
-**特點：**
-- 高可靠性和可驗證性（形式化方法）
-- 最小化 TCB（信任計算基）
-- 用於嵌入式和即時系統
+包含編譯器與直譯器相關的學習材料和專案實作範例。
 
 ### Crafting Interpreters（中文翻譯）
 一本免費且優秀的編譯器和直譯器入門書籍，提供詳細的實踐指導。
@@ -165,20 +123,14 @@ seL4 微內核作業系統的測試專案，強調形式化驗證和可靠性。
 - 機器碼生成與指令調度
 - 形式化驗證
 
-### 2. 不同架構與設計
+### 2. 語言與工具鏈
 
-| 架構 | 特色 | 編譯器角色 |
-|------|------|---------|
-| **宏內核** (ChCore) | 模組化，功能齊全 | 編譯器可針對性最佳化 |
-| **微內核** (seL4) | 最小化特權代碼 | 形式化驗證對編譯器安全性的要求 |
-| **Rust OS** (rCore) | 記憶體安全設計 | 利用編譯器保證安全性 |
-
-### 3. 語言與工具鏈
-
-**系統編程語言：**
-- **C/C++**：傳統系統編程（ChCore 可能使用）
-- **Rust**：記憶體安全性，編譯時檢查（rCore）
-- **Zig**：低階控制，安全性
+**常見實現語言：**
+- **C/C++**：傳統編譯器實現（GCC、Clang）
+- **Rust**：現代編譯器開發（rustc、Cranelift）
+- **OCaml/Haskell**：函數式編譯器（Reason、GHC）
+- **Java/Kotlin**：基於 JVM 的編譯器
+- **Python**：原型設計與教學用途
 
 **編譯器基礎設施：**
 - **LLVM**：模組化編譯器框架
@@ -186,45 +138,60 @@ seL4 微內核作業系統的測試專案，強調形式化驗證和可靠性。
 - **Cranelift**：Rust 寫的快速編譯器
 - **TVM**：機器學習編譯器
 
-**低級語言：**
-- **RISC-V 匯編**：開放指令集架構
-- **x86-64 匯編**：主流處理器架構
+**目標平臺：**
+- **RISC-V**：開放指令集架構
+- **x86-64**：主流處理器架構
+- **ARM**：行動與嵌入式系統
+- **WebAssembly**：瀏覽器與跨平臺
 
-### 4. 虛擬機與直譯器
-- **Python 直譯器**：教學用途
-- **Java 虛擬機**：工業級 JIT 編譯
-- **WebAssembly VM**：跨平臺執行
+### 3. 虛擬機與直譯器範例
+- **CPython**：Python 官方直譯器（位元組碼）
+- **JVM**：Java 虛擬機（JIT 編譯）
+- **V8**：JavaScript 引擎（多層 JIT）
+- **LuaJIT**：高效能 Lua JIT 編譯器
+- **WebAssembly VM**：安全沙盒執行環境
 
 ## 實踐建議
 
 ### 從零開始的學習順序
 
-**第一階段：編譯器基礎（4-6 週）**
-1. 學習編譯原理基礎（自動機、形式語言）
-2. 實現簡單計算器編譯器
-3. 實現玩具語言（如 Lox 或 Lua 子集）
+**第一階段：編譯器基礎**
+1. 學習理論基礎
+   - 正規表達式與有限狀態機
+   - 上下文無關文法（CFG）
+   - 詞彙分析與語法分析算法
 
-**第二階段：系統軟體（8-12 週）**
-1. 研究 rCore
-   - 理解 Rust 編譯器如何處理低級代碼
-   - 學習系統編程最佳實踐
-   - 見識現代編譯器技術的應用
+2. 實作練習
+   - 簡單計算器（支援四則運算）
+   - 表達式求值器（含變數）
+   - Lox 語言編譯器（跟隨 Crafting Interpreters）
 
-2. 研究 ChCore
-   - 理解傳統內核架構
-   - C 編譯器最佳化的重要性
-   - 系統軟體的設計模式
+**第二階段：中階技術**
+1. 語意分析與型別系統
+   - 符號表管理
+   - 型別檢查與推導
+   - 作用域分析
 
-**第三階段：進階主題（12+ 週）**
-1. 深入 seL4
-   - 形式化驗證方法
-   - 編譯器安全證明
-   - 高可靠性系統設計
+2. 中間表示與最佳化
+   - AST 與 IR 設計
+   - 基礎最佳化（常數折疊、死代碼消除）
+   - 控制流與資料流分析
 
-2. LLVM/GCC 研究
-   - 中間表示優化
-   - 後端代碼生成
-   - 指令選擇與調度
+**第三階段：進階主題**
+1. 代碼生成
+   - 目標機器指令選擇
+   - 暫存器分配
+   - 指令調度
+
+2. 進階最佳化
+   - SSA 形式
+   - 迴圈最佳化
+   - 內聯與逃逸分析
+
+3. 現代技術
+   - JIT 編譯
+   - 垃圾回收
+   - 並行編譯
 
 ### 編譯器開發路線圖
 ```
@@ -265,64 +232,177 @@ JIT 編譯器（運行時編譯）
 ❌ 記憶體開銷大
 ❌ 無法提前最佳化
 
-## 相關資源連結
+## 編譯器與直譯器學習資源
 
-### 官方專案
-- [ChCore Project](https://github.com/OS-F23/ChCore)
-- [rCore-Tutorial-Book](https://github.com/rcore-os/rCore-Tutorial-Book-v3)
-- [seL4 Official](https://sel4.systems/)
+### 📚 入門書籍與教材
 
-### 編譯器學習資源
+**免費線上資源：**
 
-#### 入門階段
-- **[Crafting Interpreters 繁體中文版](https://shihyu.github.io/crafting_interpreters_zh_tw/)** - 免費線上書，詳細講解詞彙分析、語法分析、AST 和直譯器實現
-  - 包含 Lox 語言的完整實現（Java 版和 C 版）
-  - 適合初學者，代碼實例豐富
+- **[Crafting Interpreters 繁體中文版](https://shihyu.github.io/crafting_interpreters_zh_tw/)** ⭐ 強力推薦
+  - 從零開始實現 Lox 語言
+  - 包含樹走訪直譯器（Java）和位元組碼虛擬機（C）
+  - 詞彙分析、語法分析、AST、環境管理、閉包實現
+  - 適合完全初學者，代碼清晰易懂
+  - [官方英文版](https://craftinginterpreters.com/)
 
-- **[SICP Python 繁體中文版](https://shihyu.github.io/sicp-py-zh-tw/)** - 經典計算機科學教材，強調抽象和系統思維
-  - 涵蓋編譯器和直譯器的理論基礎
-  - 適合深入理解語言設計原理
+- **[SICP Python 繁體中文版](https://shihyu.github.io/sicp-py-zh-tw/)**
+  - 經典計算機科學教材的 Python 改寫版
+  - 語言設計哲學與抽象思維
+  - 求值器與編譯器基礎
+  - 元語言抽象與程式即資料
+  - [官方英文版](https://composingprograms.com/)
 
-#### 進階學習
-- [Engineering a Compiler](https://www.elsevier.com/books/engineering-a-compiler/cooper/978-0-12-815412-0)
-- [LLVM 官方文件](https://llvm.org/docs/)
-- [Compiler Explorer](https://godbolt.org/) - 線上編譯器探索工具
+- **[Let's Build a Compiler (Jack Crenshaw)](https://compilers.iecc.com/crenshaw/)**
+  - 經典的編譯器教學系列
+  - 遞迴下降解析器
+  - 直接生成彙編代碼
+  - 實用導向
 
-### 編譯器專案
-- [LLVM](https://llvm.org/) - 模組化編譯器框架
-- [GCC](https://gcc.gnu.org/) - GNU 編譯器集合
-- [Rust 編譯器 (rustc)](https://github.com/rust-lang/rust)
-- [Cranelift](https://github.com/bytecodealliance/cranelift) - Rust 寫的快速編譯器
+**經典教科書：**
 
-## 更多學習內容
+- **Dragon Book** - [Compilers: Principles, Techniques, and Tools](https://suif.stanford.edu/dragonbook/)
+  - 編譯器領域的聖經
+  - 理論完整但較艱深
+  - 適合作為參考書
 
-### 系統軟體相關
-- [Linux 內核調試](../kernel/linux_kernel.md)
-- [eBPF 完整指南](../linux_system/ebpf-complete-guide.md)
-- [Linux 系統深度解析](../linux_system/linux_system.md)
-- [Linker and Loader Guide](../kernel/linker-loader-guide.md)
+- **Engineering a Compiler (Cooper & Torczon)**
+  - 現代編譯器設計
+  - 重視最佳化技術
+  - 工程實踐導向
 
-### 編譯器相關
+- **Modern Compiler Implementation (Appel)**
+  - 提供 C/Java/ML 三種語言版本
+  - Tiger 語言完整實現
+  - 理論與實作兼顧
+
+### 🎓 線上課程
+
+- **[Stanford CS143: Compilers](https://web.stanford.edu/class/cs143/)**
+  - 史丹佛大學編譯器課程
+  - Cool 語言編譯器實作
+  - 完整的課程影片與作業
+
+- **[MIT 6.035: Computer Language Engineering](https://ocw.mit.edu/courses/6-035-computer-language-engineering-spring-2010/)**
+  - MIT 開放課程
+  - Decaf 語言編譯器
+  - 進階最佳化技術
+
+- **[Building a LISP](https://www.buildyourownlisp.com/)**
+  - 用 C 實現 LISP 直譯器
+  - 從解析到求值的完整過程
+
+### 🛠️ 編譯器框架與專案
+
+**產業級框架：**
+
+- **[LLVM](https://llvm.org/)** - 模組化編譯器基礎架構
+  - [LLVM Tutorial](https://llvm.org/docs/tutorial/) - Kaleidoscope 語言教學
+  - SSA 中間表示
+  - 強大的最佳化 Pass 系統
+  - 多目標平臺支援
+
+- **[GCC](https://gcc.gnu.org/)** - GNU 編譯器集合
+  - C/C++/Fortran/Ada 等多語言支援
+  - GIMPLE 中間表示
+  - [GCC Internals](https://gcc.gnu.org/onlinedocs/gccint/)
+
+**現代編譯器專案：**
+
+- **[Rust 編譯器 (rustc)](https://github.com/rust-lang/rust)**
+  - [Rustc Dev Guide](https://rustc-dev-guide.rust-lang.org/) - 編譯器開發指南
+  - 借用檢查器與生命週期分析
+  - MIR（中階中間表示）設計
+
+- **[Cranelift](https://github.com/bytecodealliance/cranelift)**
+  - Rust 實現的快速代碼生成器
+  - 用於 WebAssembly 和 Rust
+
+- **[TinyCC (TCC)](https://bellard.org/tcc/)**
+  - 極小的 C 編譯器
+  - 編譯速度極快
+  - 適合學習 C 編譯器實現
+
+### 💻 直譯器實作資源
+
+**直譯器教學專案：**
+
+- **[Write an Interpreter in Go](https://interpreterbook.com/)**
+  - Monkey 語言直譯器
+  - 用 Go 實現
+  - 詞彙分析、語法分析、求值
+
+- **[Build Your Own Lisp in C](https://www.buildyourownlisp.com/)**
+  - 從零開始的 LISP 直譯器
+  - 理解 S-表達式與求值
+
+- **[mal (Make a Lisp)](https://github.com/kanaka/mal)**
+  - 用任何語言實現 LISP
+  - 支援超過 80 種語言版本
+  - 逐步引導的教學
+
+**虛擬機設計：**
+
+- **[Write a Simple 16-bit VM](https://www.jmeiners.com/lc3-vm/)**
+  - LC-3 虛擬機實現
+  - 理解指令集與執行循環
+
+- **[A Python Interpreter Written in Python](https://www.aosabook.org/en/500L/a-python-interpreter-written-in-python.html)**
+  - Byterun：Python 位元組碼直譯器
+  - 理解 CPython 內部運作
+
+### 🔬 進階主題
+
+**最佳化技術：**
+
+- **[SSA Book](https://pfalcon.github.io/ssabook/latest/book-full.pdf)** - Static Single Assignment 形式
+- **[Optimizing Compilers](https://www.clear.rice.edu/comp512/)** - Rice 大學課程
+
+**型別系統：**
+
+- **[Type Systems](http://lucacardelli.name/Topics/TypeSystems/)** - Luca Cardelli
+- **[Types and Programming Languages (TAPL)](https://www.cis.upenn.edu/~bcpierce/tapl/)** - Benjamin Pierce
+
+**垃圾回收：**
+
+- **[The Garbage Collection Handbook](https://gchandbook.org/)**
+- **[Baby's First Garbage Collector](https://journal.stuffwithstuff.com/2013/12/08/babys-first-garbage-collector/)**
+
+### 🎯 實作練習建議
+
+**初學者專案（1-2 週）：**
+1. 正規表達式引擎（詞彙分析基礎）
+2. JSON/INI 解析器（練習遞迴下降）
+3. 簡單計算器（含變數）
+4. Lisp 子集直譯器
+
+**中階專案（4-8 週）：**
+1. Lox 語言完整實現（跟隨 Crafting Interpreters）
+2. Scheme 子集編譯器
+3. Stack-based 虛擬機
+4. 簡單型別推導系統
+
+**進階專案（12+ 週）：**
+1. LLVM 前端（自定義語言 → LLVM IR）
+2. JIT 編譯器（結合直譯與編譯）
+3. 增量編譯器（如 TypeScript）
+4. 帶 GC 的語言實現
+
+### 🌐 社群與論壇
+
+- **[/r/Compilers](https://www.reddit.com/r/Compilers/)** - Reddit 編譯器社群
+- **[LLVM Discourse](https://discourse.llvm.org/)** - LLVM 官方論壇
+- **[Compiler Explorer (Godbolt)](https://godbolt.org/)** - 線上編譯器探索工具
+
+## 編譯器相關延伸閱讀
+
+### 編譯器工具鏈
 - [LLVM 編譯器架構與語言效能深度解析](../tools/llvm_guide.md)
 - [Cross Compiler 與 LLVM vs GCC 完整解析](../tools/cross-compiler-llvm-gcc-guide.md)
+- [Linker and Loader Guide](../kernel/linker-loader-guide.md)
 
-### 語言系統編程
-- [Rust 系統編程](../rust/rust.md)
-- [Rust 標準函式庫範例](../rust/rust-stdlib-examples.md)
-- [Rust Unsafe 底層分析與最佳化技術](../rust/rust-unsafe-analysis.md)
-- [C++ 高級特性](../c++/cpp.md)
-- [Go 編程實戰派](../go/go.md)
-
-### 效能優化
-- [Rust 程式追蹤與分析完整指南](../rust/rust_trace_guide.md)
-- [Linux 效能檢測工具完整指南](../linux_system/linux-performance-tools.md)
-- [Flamegraph 效能分析指南](../tools/flamegraph-guide.md)
-- [Google Benchmark 指南](../c++/google_benchmark_guide.md)
-
-### 虛擬機與執行時
+### 虛擬機與執行時環境
 - [WebAssembly 相容性與載入器完整指南](../web/wasm_compatibility_guide.md)
 - [WebAssembly (WASM) 完整開發指南](../web/webassembly_complete_guide.md)
-- [Python 異步程式效能基準測試完整指南](../python/complete-async-benchmark.md)
 
 # 線上編譯器 / IDE / 編譯器分析工具整理
 
@@ -382,3 +462,157 @@ JIT 編譯器（運行時編譯）
 | **研究編譯器行為（組合語言）**        | Compiler Explorer (Godbolt)           |
 | **研究二進位、反組譯、逆向工程**       | Decompiler Explorer、Ghidra（需本地）       |
 | **測試 C/C++ 不同編譯器 / ABI** | Wandbox、Godbolt                       |
+
+---
+
+## 編譯器開發實用工具
+
+### 解析器生成器 (Parser Generators)
+
+| 工具 | 語言 | 特色 |
+|------|------|------|
+| **[ANTLR](https://www.antlr.org/)** | Java/C#/Python/C++/Go | 強大的 LL(*) 解析器，支援多種目標語言 |
+| **[Bison](https://www.gnu.org/software/bison/)** | C/C++ | GNU 項目，LALR 解析器生成器 |
+| **[Yacc](http://dinosaur.compilertools.net/)** | C | 經典的 LALR 解析器 |
+| **[PEG.js](https://pegjs.org/)** | JavaScript | PEG 解析器，適合 JS 生態 |
+| **[Pest](https://pest.rs/)** | Rust | Rust 的 PEG 解析器 |
+| **[Tree-sitter](https://tree-sitter.github.io/tree-sitter/)** | 多語言 | 增量解析器，用於編輯器與代碼分析 |
+
+### 詞彙分析工具 (Lexer Generators)
+
+| 工具 | 語言 | 特色 |
+|------|------|------|
+| **[Flex](https://github.com/westes/flex)** | C/C++ | Fast Lexical Analyzer，業界標準 |
+| **[Lex](http://dinosaur.compilertools.net/)** | C | 經典詞彙分析器生成器 |
+| **[RE/flex](https://www.genivia.com/doc/reflex/html/)** | C++ | 現代化的 Flex 替代品 |
+
+### 中間表示與最佳化框架
+
+- **[LLVM](https://llvm.org/)** - 模組化編譯器框架，SSA 形式
+- **[MLIR](https://mlir.llvm.org/)** - 多層次中間表示（用於機器學習編譯器）
+- **[Graal](https://www.graalvm.org/)** - 多語言 JIT 編譯器
+- **[Cranelift](https://cranelift.dev/)** - 快速代碼生成器（Rust）
+
+### 除錯與分析工具
+
+- **[Valgrind](https://valgrind.org/)** - 記憶體檢查與性能分析
+- **[GDB](https://www.gnu.org/software/gdb/)** - GNU 除錯器
+- **[LLDB](https://lldb.llvm.org/)** - LLVM 除錯器
+- **[perf](https://perf.wiki.kernel.org/)** - Linux 性能分析
+- **[Flamegraph](https://www.brendangregg.com/flamegraphs.html)** - 視覺化性能分析
+
+---
+
+## 快速參考
+
+### 編譯器實作核心步驟
+
+```
+1. 詞彙分析 (Lexical Analysis)
+   輸入：源代碼字串
+   輸出：Token 流
+   工具：手寫/Flex/Lex
+
+2. 語法分析 (Syntax Analysis)
+   輸入：Token 流
+   輸出：抽象語法樹 (AST)
+   方法：遞迴下降/LL/LR/PEG
+   工具：手寫/ANTLR/Bison
+
+3. 語意分析 (Semantic Analysis)
+   - 符號表建立與查詢
+   - 型別檢查
+   - 作用域解析
+   輸出：帶標註的 AST
+
+4. 中間代碼生成 (IR Generation)
+   輸入：AST
+   輸出：中間表示（如 LLVM IR、三地址碼）
+
+5. 最佳化 (Optimization)
+   - 控制流分析（CFG）
+   - 資料流分析（DFA）
+   - SSA 轉換
+   - 常見優化：
+     * 常數折疊
+     * 死代碼消除
+     * 公共子表達式消除
+     * 迴圈不變量外提
+     * 內聯
+
+6. 代碼生成 (Code Generation)
+   - 指令選擇
+   - 暫存器分配
+   - 指令調度
+   輸出：組合語言或機器碼
+```
+
+### 常見文法類型
+
+| 文法類型 | 解析方法 | 特點 | 適用場景 |
+|---------|---------|------|---------|
+| **LL(1)** | 遞迴下降 | 左到右掃描，最左推導 | 手寫解析器 |
+| **LR(1)** | 移進-歸約 | 左到右掃描，最右推導 | 解析器生成器 |
+| **LALR(1)** | LR 簡化版 | 狀態數較少 | Yacc/Bison |
+| **PEG** | Packrat | 有序選擇，無歧義 | 現代解析器 |
+
+### 中間表示形式
+
+| IR 類型 | 代表 | 特點 |
+|---------|------|------|
+| **AST** | 抽象語法樹 | 高階，保留語法結構 |
+| **三地址碼** | x = y op z | 簡單，易於最佳化 |
+| **SSA** | Static Single Assignment | 每個變數只賦值一次 |
+| **CPS** | Continuation-Passing Style | 函數式風格 |
+| **字節碼** | JVM bytecode, Python bytecode | 便於直譯執行 |
+
+### 型別系統分類
+
+| 分類維度 | 類型 | 範例語言 |
+|---------|------|---------|
+| **型別檢查時機** | 靜態 | C, Java, Rust, Haskell |
+|  | 動態 | Python, JavaScript, Ruby |
+| **型別強度** | 強型別 | Java, Python, Haskell |
+|  | 弱型別 | C, JavaScript |
+| **型別推導** | 顯式 | C, Java |
+|  | 隱式 | Haskell, OCaml, Rust（部分）|
+
+---
+
+## 學習路線圖總結
+
+```
+階段 1: 基礎理論（2-4 週）
+├─ 自動機理論與形式語言
+├─ 正規表達式與 DFA/NFA
+└─ 上下文無關文法
+
+階段 2: 前端開發（4-8 週）
+├─ 詞彙分析器實作
+├─ 語法分析器實作（遞迴下降）
+├─ AST 設計與走訪
+└─ 符號表與作用域
+
+階段 3: 語意與型別（4-6 週）
+├─ 型別檢查
+├─ 型別推導（Hindley-Milner）
+└─ 錯誤恢復與報告
+
+階段 4: 中端技術（6-8 週）
+├─ IR 設計（三地址碼、SSA）
+├─ 控制流圖（CFG）
+├─ 資料流分析
+└─ 基礎最佳化
+
+階段 5: 後端開發（8-12 週）
+├─ 指令選擇
+├─ 暫存器分配（圖著色）
+├─ 指令調度
+└─ 代碼發射
+
+階段 6: 進階主題（持續學習）
+├─ JIT 編譯
+├─ 垃圾回收
+├─ 並行編譯
+└─ 特定領域最佳化
+``
