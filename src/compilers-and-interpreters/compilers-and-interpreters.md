@@ -323,3 +323,62 @@ JIT 編譯器（運行時編譯）
 - [WebAssembly 相容性與載入器完整指南](../web/wasm_compatibility_guide.md)
 - [WebAssembly (WASM) 完整開發指南](../web/webassembly_complete_guide.md)
 - [Python 異步程式效能基準測試完整指南](../python/complete-async-benchmark.md)
+
+# 線上編譯器 / IDE / 編譯器分析工具整理
+
+本表整理常用的線上程式編譯、執行與反組譯工具，依用途分成兩大類：
+
+1. **多語言線上編譯器 / IDE**
+2. **編譯器產物分析（組語 / 反組譯）**
+
+---
+
+## 一、支援多種程式語言的線上編譯器 / IDE
+
+這類平台主要用來 **編譯、執行程式碼**，快速測試語法或分享程式碼片段。
+
+| 網站名稱        | 主要特色                            | 支援語言數量           |
+| ----------- | ------------------------------- | ---------------- |
+| [JDoodle](https://www.jdoodle.com/) | 簡潔、易用，支援執行及 API 呼叫              | 超過 **88** 種語言    |
+| [Ideone](https://www.ideone.com/)  | 老牌線上編譯器，適合快速測試程式碼片段             | 超過 **60** 種語言    |
+| [Replit](https://replit.com/)  | 完整線上 IDE，支援專案結構、協作、部署           | 超過 **60** 種語言與框架 |
+| [Wandbox](https://wandbox.org/) | 專注在 C++ 多版本、多編譯器測試（GCC / Clang） | 多種語言（主打 C/C++）   |
+
+### 💡補充推薦
+
+| 網站名稱          | 特色補充                                                |
+| ------------- | --------------------------------------------------- |
+| [OnlineGDB](https://www.onlinegdb.com/) | 支援 **除錯器 (Debugger)**，可逐步執行、觀察變數（C/C++/Java/Python） |
+| [Paiza.IO](https://paiza.io/)  | 免登入快速執行程式，速度快                                       |
+| [Glot.io](https://glot.io/)   | 支援 API，可用來當作「線上沙盒」執行程式碼                             |
+
+---
+
+## 二、編譯器輸出分析（組合語言 / 反組譯器）
+
+這類網站著重於 **研究編譯器產生的機器碼**，適合系統工程師、逆向工程、優化分析。
+
+| 網站名稱                                  | 主要特色                                           | 支援語言 / 目標                             |
+| ------------------------------------- | ---------------------------------------------- | ------------------------------------- |
+| [Compiler Explorer (Godbolt)](https://godbolt.org/) | 即時顯示不同編譯器輸出的組合語言；常用於 C++ 優化分析                  | C/C++, Rust, Go, Zig, D, C#, Python 等 |
+| [Decompiler Explorer (Dogbolt.org)](https://dogbolt.org/) | 同一個二進位檔可用多種反組譯器分析輸出（Ghidra / IDA / Hex-Rays 等） | ELF, PE, Mach-O 等多種格式                 |
+| [Online Java Decompiler](https://www.decompiler.com/)            | 專門將 `.class` / `.jar` 反組譯回 Java 原始碼            | Java bytecode                         |
+
+### 💡補充推薦（逆向工具）
+
+| 工具名稱                           | 特色                                          |
+| ------------------------------ | ------------------------------------------- |
+| [Godbolt Rust MIR / LLVM IR](https://godbolt.org/) | Godbolt 除了組語，也能顯示 Rust MIR、LLVM IR，用於學習編譯流程 |
+| [WebAssembly Explorer](https://mbebenita.github.io/WasmExplorer/)       | 將 C/C++ 轉成 WASM，查看編譯細節                      |
+| [JSFuck](https://www.jsfuck.com/) / [Babel Repl](https://babeljs.io/repl)        | 適合看 JS 如何被轉換、壓縮、混淆                          |
+
+---
+
+## 三、用途總結
+
+| 用途                       | 推薦工具                                  |
+| ------------------------ | ------------------------------------- |
+| **快速跑程式碼 / 多語言支援**       | Replit、JDoodle、Ideone、Paiza、OnlineGDB |
+| **研究編譯器行為（組合語言）**        | Compiler Explorer (Godbolt)           |
+| **研究二進位、反組譯、逆向工程**       | Decompiler Explorer、Ghidra（需本地）       |
+| **測試 C/C++ 不同編譯器 / ABI** | Wandbox、Godbolt                       |
