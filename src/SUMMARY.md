@@ -534,6 +534,7 @@
     - [DPDK 高性能網路框架介紹](hft/dpdk-introduction.md)
     - [DPDK QEMU GDB 調試指南](hft/DPDK_QEMU_GDB_Guide.md)
     - [C_CLIENT_THREAD_POOL_OPTIMIZATION_TC](hft/C_CLIENT_THREAD_POOL_OPTIMIZATION_TC.md)
+    - [高性能運算與低延遲交易技術概覽](hft/高性能運算與低延遲交易技術概覽.md)
 
 ## Others
 - [Design Patterns](dp/dp.md)
