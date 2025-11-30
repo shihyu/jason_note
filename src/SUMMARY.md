@@ -90,6 +90,7 @@
         - [L&R Value](c++/l&rvalue.md)
         - [Move](c++/move.md)
         - [C++ Move 語意完整指南](c++/cpp-move-semantics-guide.md)
+        - [C++ 左右值參考與 Rust 所有權系統比較](c++/cpp-rust-reference-comparison.md)
     - [高性能程式設計](c++/02_高性能程式設計.md)
         - [Benchmark](c++/benchmark.md)
         - [Google Benchmark 指南](c++/google_benchmark_guide.md)
