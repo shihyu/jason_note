@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Go、C、C++、Rust 核心語言特性全面比較 - Jason Notes</title>
+        <title>從編譯器角度看語言特性：Go/C/C++/Rust - Jason Notes</title>
 
 
         <!-- Custom HTML head -->
@@ -178,69 +178,184 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="goccrust-核心語言特性全面比較"><a class="header" href="#goccrust-核心語言特性全面比較">Go、C、C++、Rust 核心語言特性全面比較</a></h1>
+                        <h1 id="從編譯器與直譯器角度看語言特性goccrust-實作比較"><a class="header" href="#從編譯器與直譯器角度看語言特性goccrust-實作比較">從編譯器與直譯器角度看語言特性：Go、C、C++、Rust 實作比較</a></h1>
+<p><strong>文件定位：</strong> 本文從編譯器/直譯器實作的角度,解析不同語言特性背後的設計權衡與運行時機制。</p>
+<p><strong>適合讀者：</strong></p>
+<ul>
+<li>想深入理解語言特性如何被編譯器實現的開發者</li>
+<li>正在學習編譯器設計,想了解產業級語言實作的學生</li>
+<li>對語言運行時(Runtime)機制感興趣的工程師</li>
+</ul>
 <h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
 <ol>
-<li><a href="#%E4%B8%80%E4%BD%B5%E7%99%BC%E6%A9%9F%E5%88%B6%E6%AF%94%E8%BC%83">併發機制比較</a></li>
-<li><a href="#%E4%BA%8C%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E8%88%87%E8%A8%98%E6%86%B6%E9%AB%94%E7%AE%A1%E7%90%86">垃圾回收與記憶體管理</a></li>
-<li><a href="#%E4%B8%89%E4%BB%8B%E9%9D%A2%E8%88%87%E5%A4%9A%E5%9E%8B">介面與多型</a></li>
-<li><a href="#%E5%9B%9B%E9%8C%AF%E8%AA%A4%E8%99%95%E7%90%86">錯誤處理</a></li>
-<li><a href="#%E4%BA%94%E5%8F%8D%E5%B0%84%E6%A9%9F%E5%88%B6">反射機制</a></li>
-<li><a href="#%E5%85%AD%E5%8C%85%E7%AE%A1%E7%90%86%E8%88%87%E7%B7%A8%E8%AD%AF">包管理與編譯</a></li>
-<li><a href="#%E4%B8%83%E6%B3%9B%E5%9E%8B%E7%B3%BB%E7%B5%B1">泛型系統</a></li>
-<li><a href="#%E5%85%AB%E7%B8%BD%E7%B5%90%E6%AF%94%E8%BC%83">總結比較</a></li>
+<li><a href="#%E4%B8%80%E7%B7%A8%E8%AD%AF%E6%A8%A1%E5%9E%8B%E8%88%87%E9%81%8B%E8%A1%8C%E6%99%82%E7%B3%BB%E7%B5%B1">編譯模型與運行時系統</a></li>
+<li><a href="#%E4%BA%8C%E4%BD%B5%E7%99%BC%E6%A9%9F%E5%88%B6%E7%9A%84%E7%B7%A8%E8%AD%AF%E5%99%A8%E5%AF%A6%E4%BD%9C">併發機制的編譯器實作</a></li>
+<li><a href="#%E4%B8%89%E8%A8%98%E6%86%B6%E9%AB%94%E7%AE%A1%E7%90%86%E7%9A%84%E7%B7%A8%E8%AD%AF%E6%99%82%E8%88%87%E9%81%8B%E8%A1%8C%E6%99%82%E7%AD%96%E7%95%A5">記憶體管理的編譯時與運行時策略</a></li>
+<li><a href="#%E5%9B%9B%E5%A4%9A%E5%9E%8B%E6%A9%9F%E5%88%B6%E7%9A%84%E4%BB%A3%E7%A2%BC%E7%94%9F%E6%88%90%E7%AD%96%E7%95%A5">多型機制的代碼生成策略</a></li>
+<li><a href="#%E4%BA%94%E9%8C%AF%E8%AA%A4%E8%99%95%E7%90%86%E7%9A%84%E6%8E%A7%E5%88%B6%E6%B5%81%E5%AF%A6%E4%BD%9C">錯誤處理的控制流實作</a></li>
+<li><a href="#%E5%85%AD%E5%8F%8D%E5%B0%84%E8%88%87%E5%85%83%E7%B7%A8%E7%A8%8B%E7%9A%84%E7%B7%A8%E8%AD%AF%E6%99%82%E9%81%8B%E8%A1%8C%E6%99%82%E6%AC%8A%E8%A1%A1">反射與元編程的編譯時/運行時權衡</a></li>
+<li><a href="#%E4%B8%83%E6%B3%9B%E5%9E%8B%E8%88%87%E4%BB%A3%E7%A2%BC%E7%89%B9%E5%8C%96">泛型與代碼特化</a></li>
+<li><a href="#%E5%85%AB%E7%B7%A8%E8%AD%AF%E5%B7%A5%E5%85%B7%E9%8F%88%E6%9E%B6%E6%A7%8B">編譯工具鏈架構</a></li>
+<li><a href="#%E4%B9%9D%E7%B8%BD%E7%B5%90%E8%AA%9E%E8%A8%80%E8%A8%AD%E8%A8%88%E7%9A%84%E7%B7%A8%E8%AD%AF%E5%99%A8%E8%A6%96%E8%A7%92">總結：語言設計的編譯器視角</a></li>
 </ol>
 <hr />
-<h2 id="一併發機制比較"><a class="header" href="#一併發機制比較">一、併發機制比較</a></h2>
-<h3 id="11-goroutine-go"><a class="header" href="#11-goroutine-go">1.1 Goroutine (Go)</a></h3>
-<h4 id="設計哲學與實現"><a class="header" href="#設計哲學與實現">設計哲學與實現</a></h4>
+<h2 id="一編譯模型與運行時系統"><a class="header" href="#一編譯模型與運行時系統">一、編譯模型與運行時系統</a></h2>
+<h3 id="11-編譯流程概覽"><a class="header" href="#11-編譯流程概覽">1.1 編譯流程概覽</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>語言</th><th>編譯模型</th><th>中間表示</th><th>運行時依賴</th><th>輸出產物</th></tr></thead><tbody>
+<tr><td><strong>C</strong></td><td>原生編譯</td><td>AST → 匯編</td><td>無(僅 libc)</td><td>原生機器碼</td></tr>
+<tr><td><strong>C++</strong></td><td>原生編譯</td><td>AST → LLVM IR → 匯編</td><td>無(僅 libstdc++)</td><td>原生機器碼</td></tr>
+<tr><td><strong>Go</strong></td><td>原生編譯+運行時</td><td>AST → SSA → 匯編</td><td>Go Runtime (GC, Scheduler)</td><td>原生機器碼+Runtime</td></tr>
+<tr><td><strong>Rust</strong></td><td>原生編譯</td><td>HIR → MIR → LLVM IR</td><td>極小 (libstd, 無GC)</td><td>原生機器碼</td></tr>
+</tbody></table>
+</div>
+<h3 id="12-運行時系統比較"><a class="header" href="#12-運行時系統比較">1.2 運行時系統比較</a></h3>
+<p><strong>Go Runtime 職責：</strong></p>
 <ul>
-<li><strong>設計哲學：</strong> Go 將併發性 (concurrency) 作為其語言的核心功能之一。</li>
-<li><strong>實現方式：</strong> Goroutine 是有棧協程 (stackful coroutines)，由 Go 運行時 (runtime) 排程器管理，而非作業系統執行緒。</li>
+<li>垃圾回收器 (GC)</li>
+<li>Goroutine 調度器 (M:N 調度)</li>
+<li>記憶體分配器</li>
+<li>Channel 實作</li>
+<li>堆疊管理 (動態擴展)</li>
 </ul>
-<h4 id="優勢"><a class="header" href="#優勢">優勢</a></h4>
+<p><strong>Rust Runtime：</strong></p>
 <ul>
-<li><strong>輕量高效：</strong> 啟動棧空間極小 (幾 KB)，可以在單一程式中輕鬆管理數百萬個併發任務，適合高併發的網路服務和微服務。</li>
-<li><strong>使用簡便：</strong> 內建於語言中，使用 <code>go func()</code> 即可建立，開發者體驗佳。</li>
-<li><strong>隱藏底層細節：</strong> 開發者不需要手動管理異步操作的細節，由 Go 運行時自動處理。</li>
+<li>幾乎無運行時</li>
+<li>僅包含基礎 panic 處理</li>
+<li>async 運行時由第三方庫提供 (Tokio)</li>
 </ul>
-<h4 id="限制"><a class="header" href="#限制">限制</a></h4>
+<p><strong>C/C++ Runtime：</strong></p>
 <ul>
-<li>依賴垃圾回收 (GC) 和 Go 運行時，記憶體管理不如 C++/Rust 精細。</li>
-</ul>
-<hr />
-<h3 id="12-coroutines-c20"><a class="header" href="#12-coroutines-c20">1.2 Coroutines (C++20)</a></h3>
-<h4 id="設計哲學與實現-1"><a class="header" href="#設計哲學與實現-1">設計哲學與實現</a></h4>
-<ul>
-<li><strong>設計哲學：</strong> 為程式設計師提供低階控制和極致彈性。</li>
-<li><strong>實現方式：</strong> 支援無棧協程 (stackless coroutines) 和有棧協程的實現 (透過函式庫如 Boost.Asio)，允許高度優化和客製化的排程器。</li>
-</ul>
-<h4 id="優勢-1"><a class="header" href="#優勢-1">優勢</a></h4>
-<ul>
-<li><strong>極致效能：</strong> 允許開發者精確控制記憶體配置和執行流程，實現接近裸機的性能。</li>
-<li><strong>零成本抽象：</strong> 在許多情況下，C++ Coroutines 可以編譯成高效的機器碼，避免不必要的開銷。</li>
-<li><strong>高度靈活：</strong> 開發者可以自行選擇或編寫排程器，實現特定用途的最佳化。</li>
-</ul>
-<h4 id="限制-1"><a class="header" href="#限制-1">限制</a></h4>
-<ul>
-<li>複雜度高，學習曲線陡峭，需要手動管理許多細節 (如記憶體配置、排程器整合)。</li>
+<li>標準函式庫 (libc/libstdc++)</li>
+<li>無 GC、無調度器</li>
+<li>完全靜態連結或動態連結</li>
 </ul>
 <hr />
-<h3 id="13-asyncawait-rust"><a class="header" href="#13-asyncawait-rust">1.3 Async/Await (Rust)</a></h3>
-<h4 id="設計哲學與實現-2"><a class="header" href="#設計哲學與實現-2">設計哲學與實現</a></h4>
+<h2 id="二併發機制的編譯器實作"><a class="header" href="#二併發機制的編譯器實作">二、併發機制的編譯器實作</a></h2>
+<h3 id="21-編譯器如何實現併發四種模型"><a class="header" href="#21-編譯器如何實現併發四種模型">2.1 編譯器如何實現併發：四種模型</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>語言</th><th>併發抽象</th><th>編譯時處理</th><th>運行時支持</th><th>調度模型</th></tr></thead><tbody>
+<tr><td><strong>C</strong></td><td>pthread</td><td>直接呼叫系統 API</td><td>作業系統執行緒</td><td>1:1 (內核態)</td></tr>
+<tr><td><strong>C++</strong></td><td>std::thread</td><td>包裝系統執行緒</td><td>STL + 作業系統</td><td>1:1 (內核態)</td></tr>
+<tr><td><strong>C++20</strong></td><td>coroutine</td><td>編譯為狀態機</td><td>自定義或無</td><td>用戶態 (可選)</td></tr>
+<tr><td><strong>Go</strong></td><td>goroutine</td><td>編譯為運行時呼叫</td><td>M:N 調度器</td><td>M:N (用戶態)</td></tr>
+<tr><td><strong>Rust</strong></td><td>async/await</td><td>編譯為狀態機</td><td>第三方運行時</td><td>用戶態</td></tr>
+</tbody></table>
+</div>
+<h3 id="22-go-goroutine編譯器--運行時協作"><a class="header" href="#22-go-goroutine編譯器--運行時協作">2.2 Go Goroutine：編譯器 + 運行時協作</a></h3>
+<h4 id="編譯時處理"><a class="header" href="#編譯時處理">編譯時處理</a></h4>
+<pre><code class="language-go">go func() {
+    // 工作代碼
+}()
+</code></pre>
+<p><strong>編譯器轉換：</strong></p>
+<ol>
+<li>將 <code>go</code> 關鍵字轉換為 <code>runtime.newproc()</code> 呼叫</li>
+<li>捕獲閉包變數,分配堆疊空間</li>
+<li>生成函數指標</li>
+</ol>
+<p><strong>運行時實作：</strong></p>
 <ul>
-<li><strong>設計哲學：</strong> 強調記憶體安全性和正確性，並提供高性能。</li>
-<li><strong>實現方式：</strong> 採用無棧協程 (stackless coroutines)，編譯時將異步狀態機嵌入 <code>Future</code> trait 中。</li>
+<li>
+<p><strong>M:N 調度模型</strong>：M 個 goroutine 映射到 N 個 OS 執行緒</p>
+<ul>
+<li>M (Machine)：OS 執行緒</li>
+<li>P (Processor)：虛擬處理器,持有本地運行佇列</li>
+<li>G (Goroutine)：用戶態協程</li>
 </ul>
-<h4 id="優勢-2"><a class="header" href="#優勢-2">優勢</a></h4>
-<ul>
-<li><strong>記憶體安全：</strong> 利用所有權 (ownership) 系統在編譯時保證執行緒安全，大大減少併發 bug。</li>
-<li><strong>無垃圾回收：</strong> 性能穩定且可預測，無 GC 停頓問題。</li>
-<li><strong>靈活選擇運行時：</strong> <code>async/await</code> 語法是語言特性，但運行時 (如 Tokio) 由函式庫提供，允許開發者選擇最適合的運行時。</li>
+</li>
+<li>
+<p><strong>Work Stealing 算法</strong>：空閒 P 從其他 P 竊取 goroutine</p>
+</li>
+<li>
+<p><strong>搶佔式調度</strong>：Go 1.14+ 使用基於信號的搶佔</p>
+</li>
 </ul>
-<h4 id="限制-2"><a class="header" href="#限制-2">限制</a></h4>
+<h4 id="堆疊管理"><a class="header" href="#堆疊管理">堆疊管理</a></h4>
 <ul>
-<li>學習曲線較陡峭，且有「函數著色」(function coloring) 問題 (同步函數無法直接呼叫異步函數，反之亦然)，需要使用特定的 async 運行時來執行。</li>
+<li>初始堆疊：2KB (動態擴展)</li>
+<li>堆疊拷貝：當空間不足時,編譯器插入檢查點</li>
+<li><strong>編譯器插入的堆疊檢查代碼</strong>：函數序言檢查 <code>stackguard</code></li>
+</ul>
+<h3 id="23-c20-coroutines編譯時狀態機轉換"><a class="header" href="#23-c20-coroutines編譯時狀態機轉換">2.3 C++20 Coroutines：編譯時狀態機轉換</a></h3>
+<h4 id="編譯器轉換"><a class="header" href="#編譯器轉換">編譯器轉換</a></h4>
+<pre><code class="language-cpp">cppcoro::task&lt;int&gt; async_add(int a, int b) {
+    co_return a + b;  // co_return 觸發編譯器轉換
+}
+</code></pre>
+<p><strong>編譯器生成的代碼</strong>：</p>
+<ol>
+<li>
+<p><strong>狀態機結構</strong>：將協程轉換為帶狀態的對象</p>
+<pre><code class="language-cpp">struct __async_add_state {
+    int __state = 0;
+    int a, b;
+    std::coroutine_handle&lt;&gt; __continuation;
+};
+</code></pre>
+</li>
+<li>
+<p><strong>Promise 對象</strong>：管理協程生命週期</p>
+</li>
+<li>
+<p><strong>Resume/Suspend 點</strong>：<code>co_await</code> 位置成為狀態切換點</p>
+</li>
+</ol>
+<h4 id="零運行時開銷"><a class="header" href="#零運行時開銷">零運行時開銷</a></h4>
+<ul>
+<li>所有調度邏輯在編譯時確定</li>
+<li>可完全內聯,無虛函數呼叫</li>
+<li>開發者控制記憶體分配策略</li>
+</ul>
+<h3 id="24-rust-asyncawait編譯時-future-轉換"><a class="header" href="#24-rust-asyncawait編譯時-future-轉換">2.4 Rust async/await：編譯時 Future 轉換</a></h3>
+<h4 id="編譯器轉換-1"><a class="header" href="#編譯器轉換-1">編譯器轉換</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn fetch_data() -&gt; String {
+    let data = fetch().await;  // await 觸發編譯器轉換
+    process(data).await
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>編譯器生成</strong>：</p>
+<ol>
+<li>
+<p><strong>Future 狀態機</strong>：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>enum FetchDataFuture {
+    Initial,
+    AwaitingFetch(FetchFuture),
+    AwaitingProcess(ProcessFuture),
+    Done,
+}
+<span class="boring">}</span></code></pre></pre>
+</li>
+<li>
+<p><strong>Poll 方法</strong>：實現 <code>Future</code> trait</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Future for FetchDataFuture {
+    type Output = String;
+    fn poll(self: Pin&lt;&amp;mut Self&gt;, cx: &amp;mut Context) -&gt; Poll&lt;String&gt; {
+        // 狀態機邏輯
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+</li>
+<li>
+<p><strong>Pin 保證</strong>：編譯器確保自引用安全</p>
+</li>
+</ol>
+<h4 id="所有權系統與併發"><a class="header" href="#所有權系統與併發">所有權系統與併發</a></h4>
+<ul>
+<li><strong>編譯時驗證</strong>：Send/Sync trait 保證執行緒安全</li>
+<li><strong>零成本抽象</strong>：運行時無額外檢查</li>
+<li><strong>無 GC</strong>：確定性析構</li>
+</ul>
+<h3 id="25-c-pthread直接系統呼叫"><a class="header" href="#25-c-pthread直接系統呼叫">2.5 C pthread：直接系統呼叫</a></h3>
+<h4 id="編譯器處理"><a class="header" href="#編譯器處理">編譯器處理</a></h4>
+<ul>
+<li>幾乎無轉換,直接生成系統呼叫</li>
+<li>完全依賴作業系統執行緒調度</li>
+<li>每個執行緒約 2MB 堆疊 (Linux)</li>
 </ul>
 <hr />
 <h3 id="14-併發實現範例"><a class="header" href="#14-併發實現範例">1.4 併發實現範例</a></h3>
@@ -600,13 +715,13 @@ async fn main() {
 <li><strong>設計哲學：</strong> 自動記憶體管理，降低開發負擔</li>
 <li><strong>實現方式：</strong> 併發三色標記清除 (Concurrent Mark-Sweep)，STW 時間極短</li>
 </ul>
-<h4 id="優勢-3"><a class="header" href="#優勢-3">優勢</a></h4>
+<h4 id="優勢"><a class="header" href="#優勢">優勢</a></h4>
 <ul>
 <li>開發效率極高，無需手動管理記憶體</li>
 <li>減少記憶體洩漏和懸空指標等常見錯誤</li>
 <li>適合快速迭代開發</li>
 </ul>
-<h4 id="限制-3"><a class="header" href="#限制-3">限制</a></h4>
+<h4 id="限制"><a class="header" href="#限制">限制</a></h4>
 <ul>
 <li>GC 暫停影響延遲敏感應用</li>
 <li>記憶體佔用較高（需保留堆空間）</li>
