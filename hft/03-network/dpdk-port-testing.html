@@ -1,0 +1,1081 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>DPDK 雙埠測試 - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="dpdk-20-雙埠收發測試完整指南---ubuntu"><a class="header" href="#dpdk-20-雙埠收發測試完整指南---ubuntu">DPDK 20 雙埠收發測試完整指南 - Ubuntu</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ol>
+<li><a href="#%E7%92%B0%E5%A2%83%E9%9C%80%E6%B1%82">環境需求</a></li>
+<li><a href="#dpdk-%E5%AE%89%E8%A3%9D">DPDK 安裝</a></li>
+<li><a href="#%E7%B3%BB%E7%B5%B1%E9%85%8D%E7%BD%AE">系統配置</a></li>
+<li><a href="#%E6%B8%AC%E8%A9%A6%E7%A8%8B%E5%BC%8F%E5%AF%A6%E4%BD%9C">測試程式實作</a></li>
+<li><a href="#%E5%9F%B7%E8%A1%8C%E6%B8%AC%E8%A9%A6">執行測試</a></li>
+<li><a href="#%E6%95%88%E8%83%BD%E7%9B%A3%E6%8E%A7">效能監控</a></li>
+<li><a href="#%E5%B8%B8%E8%A6%8B%E5%95%8F%E9%A1%8C">常見問題</a></li>
+</ol>
+<hr />
+<h2 id="環境需求"><a class="header" href="#環境需求">環境需求</a></h2>
+<h3 id="硬體需求"><a class="header" href="#硬體需求">硬體需求</a></h3>
+<ul>
+<li><strong>CPU</strong>: 支援 SSE4.2 的 x86_64 處理器（建議 4 核心以上）</li>
+<li><strong>記憶體</strong>: 最少 4GB（建議 8GB 以上）</li>
+<li><strong>網卡</strong>:
+<ul>
+<li>2 個 DPDK 支援的網路埠（可以是雙埠網卡或兩張單埠網卡）</li>
+<li>支援的網卡：Intel 82599/X520/X710/E810, Mellanox ConnectX-3/4/5/6</li>
+<li>虛擬環境：virtio-net, vmxnet3</li>
+</ul>
+</li>
+</ul>
+<h3 id="軟體需求"><a class="header" href="#軟體需求">軟體需求</a></h3>
+<ul>
+<li><strong>Ubuntu</strong>: 20.04 LTS 或 22.04 LTS</li>
+<li><strong>核心</strong>: 4.15 以上</li>
+<li><strong>編譯器</strong>: GCC 7.5+ 或 Clang 6.0+</li>
+</ul>
+<h3 id="檢查系統"><a class="header" href="#檢查系統">檢查系統</a></h3>
+<pre><code class="language-bash"># 檢查 CPU 支援
+grep -m1 sse4_2 /proc/cpuinfo
+
+# 檢查網卡
+lspci | grep -i ethernet
+
+# 檢查核心版本
+uname -r
+</code></pre>
+<hr />
+<h2 id="dpdk-安裝"><a class="header" href="#dpdk-安裝">DPDK 安裝</a></h2>
+<h3 id="方法一從套件管理器安裝簡單但版本較舊"><a class="header" href="#方法一從套件管理器安裝簡單但版本較舊">方法一：從套件管理器安裝（簡單但版本較舊）</a></h3>
+<pre><code class="language-bash"># Ubuntu 20.04/22.04
+sudo apt update
+sudo apt install dpdk dpdk-dev dpdk-doc libdpdk-dev
+</code></pre>
+<h3 id="方法二從原始碼編譯推薦最新版本"><a class="header" href="#方法二從原始碼編譯推薦最新版本">方法二：從原始碼編譯（推薦，最新版本）</a></h3>
+<h4 id="1-安裝依賴"><a class="header" href="#1-安裝依賴">1. 安裝依賴</a></h4>
+<pre><code class="language-bash">sudo apt update
+sudo apt install -y build-essential libnuma-dev python3-pip \
+    python3-pyelftools python3-setuptools meson ninja-build \
+    pkg-config libarchive-dev libelf-dev libpcap-dev
+
+# Python 依賴
+pip3 install meson ninja pyelftools
+</code></pre>
+<h4 id="2-下載-dpdk-2011-lts"><a class="header" href="#2-下載-dpdk-2011-lts">2. 下載 DPDK 20.11 LTS</a></h4>
+<pre><code class="language-bash">cd /tmp
+wget https://fast.dpdk.org/rel/dpdk-20.11.9.tar.xz
+tar xf dpdk-20.11.9.tar.xz
+cd dpdk-stable-20.11.9
+</code></pre>
+<h4 id="3-編譯安裝"><a class="header" href="#3-編譯安裝">3. 編譯安裝</a></h4>
+<pre><code class="language-bash"># 設定編譯選項
+meson build
+cd build
+
+# 配置選項（可選）
+meson configure -Dexamples=all
+meson configure -Ddisable_drivers=regex/octeontx2
+
+# 編譯
+ninja
+
+# 安裝
+sudo ninja install
+sudo ldconfig
+
+# 驗證安裝
+pkg-config --modversion libdpdk
+</code></pre>
+<hr />
+<h2 id="系統配置"><a class="header" href="#系統配置">系統配置</a></h2>
+<h3 id="1-設定大頁記憶體hugepages"><a class="header" href="#1-設定大頁記憶體hugepages">1. 設定大頁記憶體（Hugepages）</a></h3>
+<pre><code class="language-bash"># 檢查當前設定
+grep -i huge /proc/meminfo
+
+# 設定 2MB 大頁（推薦用於測試）
+echo 1024 | sudo tee /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
+
+# 或設定 1GB 大頁（更好的效能）
+echo 4 | sudo tee /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages
+
+# 掛載 hugetlbfs
+sudo mkdir -p /mnt/huge
+sudo mount -t hugetlbfs nodev /mnt/huge
+
+# 永久設定（加入 /etc/fstab）
+echo "nodev /mnt/huge hugetlbfs defaults 0 0" | sudo tee -antml /etc/fstab
+
+# 永久設定大頁數量（/etc/sysctl.conf）
+echo "vm.nr_hugepages = 1024" | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
+</code></pre>
+<h3 id="2-載入核心模組"><a class="header" href="#2-載入核心模組">2. 載入核心模組</a></h3>
+<pre><code class="language-bash"># 載入 UIO 模組
+sudo modprobe uio
+sudo modprobe uio_pci_generic
+
+# 或使用 VFIO（更安全，推薦）
+sudo modprobe vfio-pci
+sudo chmod a+x /dev/vfio
+sudo chmod 0666 /dev/vfio/*
+
+# 自動載入（永久）
+echo "uio" | sudo tee -a /etc/modules
+echo "uio_pci_generic" | sudo tee -a /etc/modules
+# 或
+echo "vfio-pci" | sudo tee -a /etc/modules
+</code></pre>
+<h3 id="3-綁定網卡到-dpdk"><a class="header" href="#3-綁定網卡到-dpdk">3. 綁定網卡到 DPDK</a></h3>
+<pre><code class="language-bash"># 查看網卡狀態
+sudo dpdk-devbind.py --status
+
+# 範例輸出：
+# Network devices using kernel driver
+# ====================================
+# 0000:02:00.0 '82599ES 10-Gigabit' if=eth0 drv=ixgbe unused=vfio-pci
+# 0000:02:00.1 '82599ES 10-Gigabit' if=eth1 drv=ixgbe unused=vfio-pci
+
+# 綁定網卡（請替換為您的 PCI 地址）
+sudo ifconfig eth0 down
+sudo ifconfig eth1 down
+
+# 使用 vfio-pci（推薦）
+sudo dpdk-devbind.py -b vfio-pci 0000:02:00.0 0000:02:00.1
+
+# 或使用 uio_pci_generic
+sudo dpdk-devbind.py -b uio_pci_generic 0000:02:00.0 0000:02:00.1
+
+# 確認綁定
+sudo dpdk-devbind.py --status
+</code></pre>
+<h3 id="4-設定-cpu-隔離可選但推薦"><a class="header" href="#4-設定-cpu-隔離可選但推薦">4. 設定 CPU 隔離（可選但推薦）</a></h3>
+<pre><code class="language-bash"># 編輯 /etc/default/grub
+# 加入 isolcpus=2,3,4,5 到 GRUB_CMDLINE_LINUX_DEFAULT
+sudo nano /etc/default/grub
+
+# 更新 grub
+sudo update-grub
+sudo reboot
+</code></pre>
+<hr />
+<h2 id="測試程式實作"><a class="header" href="#測試程式實作">測試程式實作</a></h2>
+<h3 id="1-基本轉發測試程式-l2fwd_testc"><a class="header" href="#1-基本轉發測試程式-l2fwd_testc">1. 基本轉發測試程式 (l2fwd_test.c)</a></h3>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+#include &lt;stdint.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;signal.h&gt;
+
+#include &lt;rte_eal.h&gt;
+#include &lt;rte_ethdev.h&gt;
+#include &lt;rte_cycles.h&gt;
+#include &lt;rte_lcore.h&gt;
+#include &lt;rte_mbuf.h&gt;
+#include &lt;rte_ether.h&gt;
+#include &lt;rte_ip.h&gt;
+#include &lt;rte_udp.h&gt;
+
+#define RX_RING_SIZE 1024
+#define TX_RING_SIZE 1024
+#define NUM_MBUFS 8191
+#define MBUF_CACHE_SIZE 250
+#define BURST_SIZE 32
+
+static volatile bool force_quit = false;
+
+/* 統計資訊 */
+struct port_statistics {
+    uint64_t tx;
+    uint64_t rx;
+    uint64_t dropped;
+} __rte_cache_aligned;
+
+static struct port_statistics port_stats[2];
+
+/* 乙太網埠配置 */
+static const struct rte_eth_conf port_conf_default = {
+    .rxmode = {
+        .max_rx_pkt_len = RTE_ETHER_MAX_LEN,
+    },
+};
+
+/* 初始化埠 */
+static inline int
+port_init(uint16_t port, struct rte_mempool *mbuf_pool)
+{
+    struct rte_eth_conf port_conf = port_conf_default;
+    const uint16_t rx_rings = 1, tx_rings = 1;
+    uint16_t nb_rxd = RX_RING_SIZE;
+    uint16_t nb_txd = TX_RING_SIZE;
+    int retval;
+    struct rte_eth_dev_info dev_info;
+    struct rte_eth_txconf txconf;
+
+    if (!rte_eth_dev_is_valid_port(port))
+        return -1;
+
+    /* 獲取設備資訊 */
+    retval = rte_eth_dev_info_get(port, &amp;dev_info);
+    if (retval != 0) {
+        printf("Error during getting device (port %u) info: %s\n",
+                port, strerror(-retval));
+        return retval;
+    }
+
+    if (dev_info.tx_offload_capa &amp; DEV_TX_OFFLOAD_MBUF_FAST_FREE)
+        port_conf.txmode.offloads |= DEV_TX_OFFLOAD_MBUF_FAST_FREE;
+
+    /* 配置設備 */
+    retval = rte_eth_dev_configure(port, rx_rings, tx_rings, &amp;port_conf);
+    if (retval != 0)
+        return retval;
+
+    retval = rte_eth_dev_adjust_nb_rx_tx_desc(port, &amp;nb_rxd, &amp;nb_txd);
+    if (retval != 0)
+        return retval;
+
+    /* 配置 RX 佇列 */
+    for (uint16_t q = 0; q &lt; rx_rings; q++) {
+        retval = rte_eth_rx_queue_setup(port, q, nb_rxd,
+                rte_eth_dev_socket_id(port), NULL, mbuf_pool);
+        if (retval &lt; 0)
+            return retval;
+    }
+
+    txconf = dev_info.default_txconf;
+    txconf.offloads = port_conf.txmode.offloads;
+
+    /* 配置 TX 佇列 */
+    for (uint16_t q = 0; q &lt; tx_rings; q++) {
+        retval = rte_eth_tx_queue_setup(port, q, nb_txd,
+                rte_eth_dev_socket_id(port), &amp;txconf);
+        if (retval &lt; 0)
+            return retval;
+    }
+
+    /* 啟動設備 */
+    retval = rte_eth_dev_start(port);
+    if (retval &lt; 0)
+        return retval;
+
+    /* 顯示埠 MAC 地址 */
+    struct rte_ether_addr addr;
+    retval = rte_eth_macaddr_get(port, &amp;addr);
+    if (retval != 0)
+        return retval;
+
+    printf("Port %u MAC: %02" PRIx8 ":%02" PRIx8 ":%02" PRIx8
+           ":%02" PRIx8 ":%02" PRIx8 ":%02" PRIx8 "\n",
+            port,
+            addr.addr_bytes[0], addr.addr_bytes[1],
+            addr.addr_bytes[2], addr.addr_bytes[3],
+            addr.addr_bytes[4], addr.addr_bytes[5]);
+
+    /* 啟用混雜模式 */
+    retval = rte_eth_promiscuous_enable(port);
+    if (retval != 0)
+        return retval;
+
+    return 0;
+}
+
+/* 主要處理迴圈 */
+static void
+l2fwd_main_loop(void)
+{
+    struct rte_mbuf *pkts_burst[BURST_SIZE];
+    uint16_t port;
+    uint16_t nb_rx, nb_tx;
+
+    printf("\nCore %u forwarding packets. [Ctrl+C to quit]\n",
+            rte_lcore_id());
+
+    /* 主迴圈 */
+    while (!force_quit) {
+        /* 從埠 0 接收，轉發到埠 1 */
+        nb_rx = rte_eth_rx_burst(0, 0, pkts_burst, BURST_SIZE);
+        if (nb_rx &gt; 0) {
+            port_stats[0].rx += nb_rx;
+            
+            nb_tx = rte_eth_tx_burst(1, 0, pkts_burst, nb_rx);
+            port_stats[1].tx += nb_tx;
+            
+            /* 釋放未傳送的封包 */
+            if (unlikely(nb_tx &lt; nb_rx)) {
+                port_stats[1].dropped += (nb_rx - nb_tx);
+                for (uint16_t buf = nb_tx; buf &lt; nb_rx; buf++)
+                    rte_pktmbuf_free(pkts_burst[buf]);
+            }
+        }
+
+        /* 從埠 1 接收，轉發到埠 0 */
+        nb_rx = rte_eth_rx_burst(1, 0, pkts_burst, BURST_SIZE);
+        if (nb_rx &gt; 0) {
+            port_stats[1].rx += nb_rx;
+            
+            nb_tx = rte_eth_tx_burst(0, 0, pkts_burst, nb_rx);
+            port_stats[0].tx += nb_tx;
+            
+            /* 釋放未傳送的封包 */
+            if (unlikely(nb_tx &lt; nb_rx)) {
+                port_stats[0].dropped += (nb_rx - nb_tx);
+                for (uint16_t buf = nb_tx; buf &lt; nb_rx; buf++)
+                    rte_pktmbuf_free(pkts_burst[buf]);
+            }
+        }
+    }
+}
+
+/* 顯示統計資訊 */
+static void
+print_stats(void)
+{
+    uint64_t total_packets_dropped, total_packets_tx, total_packets_rx;
+    
+    total_packets_dropped = port_stats[0].dropped + port_stats[1].dropped;
+    total_packets_tx = port_stats[0].tx + port_stats[1].tx;
+    total_packets_rx = port_stats[0].rx + port_stats[1].rx;
+
+    printf("\n====== Port Statistics ======\n");
+    printf("Port 0: RX: %"PRIu64" TX: %"PRIu64" Dropped: %"PRIu64"\n",
+            port_stats[0].rx, port_stats[0].tx, port_stats[0].dropped);
+    printf("Port 1: RX: %"PRIu64" TX: %"PRIu64" Dropped: %"PRIu64"\n",
+            port_stats[1].rx, port_stats[1].tx, port_stats[1].dropped);
+    printf("Total: RX: %"PRIu64" TX: %"PRIu64" Dropped: %"PRIu64"\n",
+            total_packets_rx, total_packets_tx, total_packets_dropped);
+    printf("============================\n");
+}
+
+/* 信號處理 */
+static void
+signal_handler(int signum)
+{
+    if (signum == SIGINT || signum == SIGTERM) {
+        printf("\n\nSignal %d received, preparing to exit...\n", signum);
+        force_quit = true;
+    }
+}
+
+int
+main(int argc, char *argv[])
+{
+    struct rte_mempool *mbuf_pool;
+    uint16_t portid;
+    int ret;
+
+    /* 初始化 EAL */
+    ret = rte_eal_init(argc, argv);
+    if (ret &lt; 0)
+        rte_exit(EXIT_FAILURE, "Error with EAL initialization\n");
+
+    argc -= ret;
+    argv += ret;
+
+    /* 檢查是否有兩個埠可用 */
+    if (rte_eth_dev_count_avail() &lt; 2)
+        rte_exit(EXIT_FAILURE, "Error: need at least 2 ports\n");
+
+    /* 建立 mbuf 池 */
+    mbuf_pool = rte_pktmbuf_pool_create("MBUF_POOL", NUM_MBUFS,
+        MBUF_CACHE_SIZE, 0, RTE_MBUF_DEFAULT_BUF_SIZE,
+        rte_socket_id());
+
+    if (mbuf_pool == NULL)
+        rte_exit(EXIT_FAILURE, "Cannot create mbuf pool\n");
+
+    /* 初始化所有埠 */
+    RTE_ETH_FOREACH_DEV(portid) {
+        if (portid &gt;= 2)
+            break;
+        if (port_init(portid, mbuf_pool) != 0)
+            rte_exit(EXIT_FAILURE, "Cannot init port %"PRIu16 "\n", portid);
+    }
+
+    /* 註冊信號處理 */
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+
+    /* 執行主迴圈 */
+    l2fwd_main_loop();
+
+    /* 顯示最終統計 */
+    print_stats();
+
+    /* 清理 */
+    RTE_ETH_FOREACH_DEV(portid) {
+        if (portid &gt;= 2)
+            break;
+        printf("Closing port %"PRIu16"...\n", portid);
+        rte_eth_dev_stop(portid);
+        rte_eth_dev_close(portid);
+    }
+
+    printf("Bye...\n");
+
+    return 0;
+}
+</code></pre>
+<h3 id="2-makefile"><a class="header" href="#2-makefile">2. Makefile</a></h3>
+<pre><code class="language-makefile"># SPDX-License-Identifier: BSD-3-Clause
+
+# binary name
+APP = l2fwd_test
+
+# all source are stored in SRCS-y
+SRCS-y := l2fwd_test.c
+
+# Build using pkg-config variables if possible
+ifeq ($(shell pkg-config --exists libdpdk &amp;&amp; echo 0),0)
+
+all: shared
+.PHONY: shared static
+shared: build/$(APP)-shared
+	ln -sf $(APP)-shared build/$(APP)
+static: build/$(APP)-static
+	ln -sf $(APP)-static build/$(APP)
+
+PKGCONF ?= pkg-config
+
+PC_FILE := $(shell $(PKGCONF) --path libdpdk 2&gt;/dev/null)
+CFLAGS += -O3 $(shell $(PKGCONF) --cflags libdpdk)
+LDFLAGS_SHARED = $(shell $(PKGCONF) --libs libdpdk)
+LDFLAGS_STATIC = $(shell $(PKGCONF) --static --libs libdpdk)
+
+build/$(APP)-shared: $(SRCS-y) Makefile $(PC_FILE) | build
+	$(CC) $(CFLAGS) $(SRCS-y) -o $@ $(LDFLAGS) $(LDFLAGS_SHARED)
+
+build/$(APP)-static: $(SRCS-y) Makefile $(PC_FILE) | build
+	$(CC) $(CFLAGS) $(SRCS-y) -o $@ $(LDFLAGS) $(LDFLAGS_STATIC)
+
+build:
+	@mkdir -p $@
+
+.PHONY: clean
+clean:
+	rm -f build/$(APP) build/$(APP)-static build/$(APP)-shared
+	test -d build &amp;&amp; rmdir -p build || true
+
+else # Build using legacy build system
+
+ifeq ($(RTE_SDK),)
+$(error "Please define RTE_SDK environment variable")
+endif
+
+# Default target, detect a build directory, by looking for a path with a .config
+RTE_TARGET ?= $(notdir $(abspath $(dir $(firstword $(wildcard $(RTE_SDK)/*/.config)))))
+
+include $(RTE_SDK)/mk/rte.vars.mk
+
+CFLAGS += -O3
+CFLAGS += $(WERROR_FLAGS)
+
+include $(RTE_SDK)/mk/rte.extapp.mk
+endif
+</code></pre>
+<h3 id="3-進階測試程式含封包產生器"><a class="header" href="#3-進階測試程式含封包產生器">3. 進階測試程式（含封包產生器）</a></h3>
+<pre><code class="language-c">/* packet_generator.c - 封包產生與測試 */
+#include &lt;rte_cycles.h&gt;
+
+/* 產生測試封包 */
+static struct rte_mbuf *
+create_test_packet(struct rte_mempool *pool, uint16_t pkt_size)
+{
+    struct rte_mbuf *pkt;
+    struct rte_ether_hdr *eth_hdr;
+    struct rte_ipv4_hdr *ip_hdr;
+    struct rte_udp_hdr *udp_hdr;
+    uint8_t *payload;
+    
+    pkt = rte_pktmbuf_alloc(pool);
+    if (pkt == NULL)
+        return NULL;
+    
+    /* 乙太網標頭 */
+    eth_hdr = rte_pktmbuf_mtod(pkt, struct rte_ether_hdr *);
+    rte_eth_random_addr(eth_hdr-&gt;s_addr.addr_bytes);
+    rte_eth_random_addr(eth_hdr-&gt;d_addr.addr_bytes);
+    eth_hdr-&gt;ether_type = rte_cpu_to_be_16(RTE_ETHER_TYPE_IPV4);
+    
+    /* IP 標頭 */
+    ip_hdr = (struct rte_ipv4_hdr *)(eth_hdr + 1);
+    memset(ip_hdr, 0, sizeof(*ip_hdr));
+    ip_hdr-&gt;version_ihl = 0x45;
+    ip_hdr-&gt;type_of_service = 0;
+    ip_hdr-&gt;total_length = rte_cpu_to_be_16(pkt_size - sizeof(*eth_hdr));
+    ip_hdr-&gt;packet_id = 0;
+    ip_hdr-&gt;fragment_offset = 0;
+    ip_hdr-&gt;time_to_live = 64;
+    ip_hdr-&gt;next_proto_id = IPPROTO_UDP;
+    ip_hdr-&gt;src_addr = rte_cpu_to_be_32(0x0A000001); // 10.0.0.1
+    ip_hdr-&gt;dst_addr = rte_cpu_to_be_32(0x0A000002); // 10.0.0.2
+    
+    /* UDP 標頭 */
+    udp_hdr = (struct rte_udp_hdr *)(ip_hdr + 1);
+    udp_hdr-&gt;src_port = rte_cpu_to_be_16(1234);
+    udp_hdr-&gt;dst_port = rte_cpu_to_be_16(5678);
+    udp_hdr-&gt;dgram_len = rte_cpu_to_be_16(pkt_size - sizeof(*eth_hdr) - sizeof(*ip_hdr));
+    
+    /* 填充資料 */
+    payload = (uint8_t *)(udp_hdr + 1);
+    for (int i = 0; i &lt; pkt_size - sizeof(*eth_hdr) - sizeof(*ip_hdr) - sizeof(*udp_hdr); i++) {
+        payload[i] = i &amp; 0xFF;
+    }
+    
+    pkt-&gt;data_len = pkt_size;
+    pkt-&gt;pkt_len = pkt_size;
+    
+    return pkt;
+}
+
+/* 效能測試函數 */
+static void
+run_performance_test(uint16_t port_id, struct rte_mempool *pool)
+{
+    struct rte_mbuf *pkts[BURST_SIZE];
+    uint64_t start_cycles, end_cycles;
+    uint64_t total_packets = 0;
+    double duration;
+    
+    printf("\nStarting performance test on port %u...\n", port_id);
+    
+    /* 準備測試封包 */
+    for (int i = 0; i &lt; BURST_SIZE; i++) {
+        pkts[i] = create_test_packet(pool, 64); // 64 位元組封包
+        if (pkts[i] == NULL) {
+            printf("Failed to create packet %d\n", i);
+            return;
+        }
+    }
+    
+    /* 開始測試 */
+    start_cycles = rte_get_timer_cycles();
+    
+    /* 傳送 1 百萬個封包 */
+    for (int i = 0; i &lt; 1000000 / BURST_SIZE; i++) {
+        uint16_t nb_tx = rte_eth_tx_burst(port_id, 0, pkts, BURST_SIZE);
+        total_packets += nb_tx;
+        
+        /* 重新分配未傳送的封包 */
+        for (uint16_t j = nb_tx; j &lt; BURST_SIZE; j++) {
+            rte_pktmbuf_free(pkts[j]);
+            pkts[j] = create_test_packet(pool, 64);
+        }
+    }
+    
+    end_cycles = rte_get_timer_cycles();
+    
+    /* 計算結果 */
+    duration = (double)(end_cycles - start_cycles) / rte_get_timer_hz();
+    printf("Sent %lu packets in %.2f seconds\n", total_packets, duration);
+    printf("Rate: %.2f Mpps\n", total_packets / duration / 1000000);
+    printf("Throughput: %.2f Gbps\n", total_packets * 64 * 8 / duration / 1000000000);
+    
+    /* 清理 */
+    for (int i = 0; i &lt; BURST_SIZE; i++) {
+        if (pkts[i] != NULL)
+            rte_pktmbuf_free(pkts[i]);
+    }
+}
+</code></pre>
+<hr />
+<h2 id="執行測試"><a class="header" href="#執行測試">執行測試</a></h2>
+<h3 id="1-編譯程式"><a class="header" href="#1-編譯程式">1. 編譯程式</a></h3>
+<pre><code class="language-bash"># 使用 pkg-config
+make
+
+# 或指定 DPDK 路徑
+make RTE_SDK=/usr/local/share/dpdk RTE_TARGET=x86_64-native-linux-gcc
+</code></pre>
+<h3 id="2-執行基本轉發測試"><a class="header" href="#2-執行基本轉發測試">2. 執行基本轉發測試</a></h3>
+<pre><code class="language-bash"># 基本執行
+sudo ./build/l2fwd_test
+
+# 指定核心和記憶體
+sudo ./build/l2fwd_test -l 0-3 -n 4
+
+# 使用特定核心進行轉發
+sudo ./build/l2fwd_test -l 0,2 -n 4 -- -p 0x3
+
+# 啟用除錯訊息
+sudo ./build/l2fwd_test --log-level=8
+</code></pre>
+<h3 id="3-使用-testpmddpdk-內建測試工具"><a class="header" href="#3-使用-testpmddpdk-內建測試工具">3. 使用 testpmd（DPDK 內建測試工具）</a></h3>
+<pre><code class="language-bash"># 基本轉發模式
+sudo dpdk-testpmd -l 0-3 -n 4 -- -i --portmask=0x3 --nb-cores=2
+
+# 在 testpmd 提示符下
+testpmd&gt; set fwd mac  # MAC 轉發模式
+testpmd&gt; start
+
+# 其他轉發模式
+testpmd&gt; set fwd io      # I/O 模式
+testpmd&gt; set fwd rxonly  # 只接收
+testpmd&gt; set fwd txonly  # 只傳送
+testpmd&gt; set fwd csum    # Checksum 轉發
+
+# 顯示統計
+testpmd&gt; show port stats all
+testpmd&gt; show fwd stats all
+
+# 停止測試
+testpmd&gt; stop
+testpmd&gt; quit
+</code></pre>
+<h3 id="4-產生測試流量"><a class="header" href="#4-產生測試流量">4. 產生測試流量</a></h3>
+<h4 id="使用-pktgen-dpdk"><a class="header" href="#使用-pktgen-dpdk">使用 pktgen-dpdk</a></h4>
+<pre><code class="language-bash"># 安裝 pktgen
+git clone https://github.com/pktgen/Pktgen-DPDK.git
+cd Pktgen-DPDK
+make
+
+# 執行 pktgen
+sudo ./app/x86_64-native-linux-gcc/pktgen -l 0-3 -n 4 -- \
+    -P -m "[1:2].0, [3:4].1"
+
+# pktgen 命令
+Pktgen&gt; set 0 count 1000000
+Pktgen&gt; set 0 size 64
+Pktgen&gt; set 0 rate 100
+Pktgen&gt; start 0
+</code></pre>
+<h4 id="使用-moongen高精度流量產生器"><a class="header" href="#使用-moongen高精度流量產生器">使用 MoonGen（高精度流量產生器）</a></h4>
+<pre><code class="language-bash"># 安裝 MoonGen
+git clone https://github.com/emmericp/MoonGen
+cd MoonGen
+./build.sh
+
+# 執行測試
+sudo ./moongen examples/l2-load-latency.lua 0 1
+</code></pre>
+<hr />
+<h2 id="效能監控"><a class="header" href="#效能監控">效能監控</a></h2>
+<h3 id="1-即時監控腳本"><a class="header" href="#1-即時監控腳本">1. 即時監控腳本</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# dpdk_monitor.sh
+
+while true; do
+    clear
+    echo "===== DPDK Port Statistics ====="
+    
+    # 顯示埠資訊
+    for port in 0 1; do
+        echo "Port $port:"
+        cat /sys/class/net/dpdk_port_$port/statistics/rx_packets 2&gt;/dev/null || echo "N/A"
+        cat /sys/class/net/dpdk_port_$port/statistics/tx_packets 2&gt;/dev/null || echo "N/A"
+    done
+    
+    # CPU 使用率
+    echo -e "\n===== CPU Usage ====="
+    mpstat -P ALL 1 1 | tail -n +4
+    
+    # 記憶體使用
+    echo -e "\n===== Memory Usage ====="
+    free -h | grep -E "Mem|Huge"
+    
+    # 中斷統計
+    echo -e "\n===== Interrupts ====="
+    grep -E "eth|dpdk" /proc/interrupts | head -5
+    
+    sleep 2
+done
+</code></pre>
+<h3 id="2-效能分析"><a class="header" href="#2-效能分析">2. 效能分析</a></h3>
+<pre><code class="language-bash"># 使用 perf 分析
+sudo perf record -g ./build/l2fwd_test
+sudo perf report
+
+# 檢查 CPU 快取未命中
+sudo perf stat -e cache-misses,cache-references ./build/l2fwd_test
+
+# 追蹤系統呼叫
+sudo strace -c ./build/l2fwd_test
+</code></pre>
+<h3 id="3-調優建議"><a class="header" href="#3-調優建議">3. 調優建議</a></h3>
+<pre><code class="language-bash"># CPU 頻率調節
+sudo cpupower frequency-set -g performance
+
+# 關閉 CPU C-states
+sudo cpupower idle-set -d 2
+sudo cpupower idle-set -d 3
+
+# NUMA 優化
+numactl --cpunodebind=0 --membind=0 ./build/l2fwd_test
+
+# 網卡中斷親和性
+sudo sh -c 'echo 2 &gt; /proc/irq/24/smp_affinity'
+</code></pre>
+<hr />
+<h2 id="常見問題"><a class="header" href="#常見問題">常見問題</a></h2>
+<h3 id="q1-找不到網卡"><a class="header" href="#q1-找不到網卡">Q1: 找不到網卡</a></h3>
+<pre><code class="language-bash"># 檢查網卡是否支援
+dpdk-devbind.py --status-dev net
+
+# 確認驅動載入
+lsmod | grep -E "vfio|uio"
+
+# 重新綁定
+sudo dpdk-devbind.py -u 0000:02:00.0
+sudo dpdk-devbind.py -b vfio-pci 0000:02:00.0
+</code></pre>
+<h3 id="q2-大頁記憶體不足"><a class="header" href="#q2-大頁記憶體不足">Q2: 大頁記憶體不足</a></h3>
+<pre><code class="language-bash"># 增加大頁數量
+echo 2048 | sudo tee /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
+
+# 檢查分配
+grep -i huge /proc/meminfo
+
+# 清理舊的大頁
+sudo rm -f /mnt/huge/*
+</code></pre>
+<h3 id="q3-權限問題"><a class="header" href="#q3-權限問題">Q3: 權限問題</a></h3>
+<pre><code class="language-bash"># 使用 vfio 需要設定權限
+sudo chmod a+x /dev/vfio
+sudo chmod 0666 /dev/vfio/*
+
+# 或加入 vfio 群組
+sudo usermod -a -G vfio $USER
+</code></pre>
+<h3 id="q4-虛擬機測試"><a class="header" href="#q4-虛擬機測試">Q4: 虛擬機測試</a></h3>
+<h4 id="kvmqemu-設定"><a class="header" href="#kvmqemu-設定">KVM/QEMU 設定</a></h4>
+<pre><code class="language-xml">&lt;!-- 虛擬機 XML 配置 --&gt;
+&lt;interface type='hostdev'&gt;
+  &lt;source&gt;
+    &lt;address type='pci' domain='0x0000' bus='0x02' slot='0x00' function='0x0'/&gt;
+  &lt;/source&gt;
+  &lt;model type='virtio'/&gt;
+&lt;/interface&gt;
+</code></pre>
+<h4 id="virtualbox-設定"><a class="header" href="#virtualbox-設定">VirtualBox 設定</a></h4>
+<pre><code class="language-bash"># 啟用虛擬化
+VBoxManage modifyvm "VM_NAME" --hwvirtex on --nestedpaging on
+
+# 設定網卡類型
+VBoxManage modifyvm "VM_NAME" --nictype1 virtio
+VBoxManage modifyvm "VM_NAME" --nictype2 virtio
+</code></pre>
+<h3 id="q5-效能不佳"><a class="header" href="#q5-效能不佳">Q5: 效能不佳</a></h3>
+<ol>
+<li><strong>檢查 CPU 親和性</strong></li>
+</ol>
+<pre><code class="language-bash">taskset -pc $(pidof l2fwd_test)
+</code></pre>
+<ol start="2">
+<li><strong>檢查 NUMA 節點</strong></li>
+</ol>
+<pre><code class="language-bash">numactl --hardware
+lstopo
+</code></pre>
+<ol start="3">
+<li><strong>檢查網卡設定</strong></li>
+</ol>
+<pre><code class="language-bash">ethtool -g eth0  # Ring buffer 大小
+ethtool -c eth0  # Coalescing 設定
+ethtool -k eth0  # Offload 功能
+</code></pre>
+<hr />
+<h2 id="進階配置"><a class="header" href="#進階配置">進階配置</a></h2>
+<h3 id="多佇列支援"><a class="header" href="#多佇列支援">多佇列支援</a></h3>
+<pre><code class="language-c">/* 修改程式支援多佇列 */
+#define NB_RX_QUEUE 4
+#define NB_TX_QUEUE 4
+
+/* RSS 配置 */
+struct rte_eth_conf port_conf = {
+    .rxmode = {
+        .mq_mode = ETH_MQ_RX_RSS,
+    },
+    .rx_adv_conf = {
+        .rss_conf = {
+            .rss_key = NULL,
+            .rss_hf = ETH_RSS_IP | ETH_RSS_UDP | ETH_RSS_TCP,
+        },
+    },
+};
+</code></pre>
+<h3 id="使用-rte_flow-進行封包分類"><a class="header" href="#使用-rte_flow-進行封包分類">使用 rte_flow 進行封包分類</a></h3>
+<pre><code class="language-c">/* 建立 flow rule */
+struct rte_flow_attr attr = {
+    .ingress = 1,
+};
+
+struct rte_flow_item pattern[] = {
+    {
+        .type = RTE_FLOW_ITEM_TYPE_ETH,
+    },
+    {
+        .type = RTE_FLOW_ITEM_TYPE_IPV4,
+    },
+    {
+        .type = RTE_FLOW_ITEM_TYPE_END,
+    },
+};
+
+struct rte_flow_action action[] = {
+    {
+        .type = RTE_FLOW_ACTION_TYPE_QUEUE,
+        .conf = &amp;(struct rte_flow_action_queue){
+            .index = 0,
+        },
+    },
+    {
+        .type = RTE_FLOW_ACTION_TYPE_END,
+    },
+};
+</code></pre>
+<hr />
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<p>這份指南涵蓋了在 Ubuntu 上使用 DPDK 20 測試雙埠收發的完整流程：</p>
+<ol>
+<li><strong>環境準備</strong>：安裝 DPDK、配置系統</li>
+<li><strong>程式開發</strong>：基本轉發程式、效能測試</li>
+<li><strong>執行測試</strong>：使用自定義程式或 testpmd</li>
+<li><strong>效能監控</strong>：即時監控、效能分析</li>
+<li><strong>問題排查</strong>：常見問題解決方案</li>
+</ol>
+<p><strong>關鍵要點</strong>：</p>
+<ul>
+<li>Ubuntu 完全支援 DPDK 測試</li>
+<li>虛擬機也可以測試（使用 virtio-net）</li>
+<li>適當的系統配置對效能至關重要</li>
+<li>使用 testpmd 可快速驗證功能</li>
+</ul>
+<p>根據您的硬體和需求，可以進一步調整配置以獲得最佳效能。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../hft/03-network/dpdk-introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../hft/03-network/dpdk-qemu-gdb.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../hft/03-network/dpdk-introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../hft/03-network/dpdk-qemu-gdb.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../../ace.js"></script>
+        <script src="../../mode-rust.js"></script>
+        <script src="../../editor.js"></script>
+        <script src="../../theme-dawn.js"></script>
+        <script src="../../theme-tomorrow_night.js"></script>
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../../mermaid.min.js"></script>
+        <script src="../../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

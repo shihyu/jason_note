@@ -1,0 +1,586 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>為什麼 HFT 避開 Go - Jason Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="為什麼高頻交易避開-go"><a class="header" href="#為什麼高頻交易避開-go">為什麼高頻交易避開 Go？</a></h1>
+<h2 id="-核心原因"><a class="header" href="#-核心原因">🎯 核心原因</a></h2>
+<h3 id="1-gc-stop-the-world-暫停-"><a class="header" href="#1-gc-stop-the-world-暫停-">1. <strong>GC Stop-The-World 暫停</strong> ⏸️</a></h3>
+<pre><code>Go GC 暫停時間：50-500 微秒（甚至更久）
+高頻交易要求：   &lt; 10 微秒延遲
+
+❌ 即使 Go 1.5+ 改進很多，仍有不可預測的暫停
+❌ 在關鍵時刻暫停 = 錯失交易機會 = 虧損
+</code></pre>
+<p><strong>問題本質：</strong></p>
+<ul>
+<li>GC 會在不可預測的時間點觸發</li>
+<li>暫停期間無法處理任何交易邏輯</li>
+<li>高頻交易中，微秒級的延遲就可能導致套利機會消失</li>
+</ul>
+<hr />
+<h3 id="2-延遲的可預測性-"><a class="header" href="#2-延遲的可預測性-">2. <strong>延遲的可預測性</strong> 📊</a></h3>
+<p>高頻交易最重視的不只是「平均延遲」，更是「最壞情況延遲」。</p>
+<div class="table-wrapper"><table><thead><tr><th>語言</th><th>平均延遲</th><th>P99 延遲</th><th>P99.99 延遲</th><th>可預測性</th></tr></thead><tbody>
+<tr><td><strong>C/C++/Rust</strong></td><td>3-5 μs</td><td>8 μs</td><td>15 μs</td><td>⭐⭐⭐⭐⭐</td></tr>
+<tr><td><strong>Go</strong></td><td>3-5 μs</td><td>50 μs</td><td>500+ μs</td><td>⭐⭐</td></tr>
+</tbody></table>
+</div>
+<p><strong>高頻交易寧願要：</strong></p>
+<pre><code>「穩定的 5 微秒」&gt;&gt;&gt; 「平均 3 微秒，但偶爾 500 微秒」
+</code></pre>
+<p><strong>為什麼？</strong></p>
+<ul>
+<li>長尾延遲（tail latency）會導致：
+<ul>
+<li>錯過最佳報價</li>
+<li>被其他機器人搶先</li>
+<li>在波動市場中吃到滑點</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h3 id="3-記憶體控制-"><a class="header" href="#3-記憶體控制-">3. <strong>記憶體控制</strong> 🧠</a></h3>
+<h4 id="ccrustzig-的優勢"><a class="header" href="#ccrustzig-的優勢"><strong>C/C++/Rust/Zig 的優勢：</strong></a></h4>
+<ul>
+<li>✅ 手動管理記憶體，精確控制 memory layout</li>
+<li>✅ 可以使用 memory pool、arena allocator</li>
+<li>✅ 避免記憶體碎片化</li>
+<li>✅ Cache-friendly 數據結構（提升 CPU cache hit rate）</li>
+<li>✅ 可以使用 lock-free data structures</li>
+</ul>
+<h4 id="go-的限制"><a class="header" href="#go-的限制"><strong>Go 的限制：</strong></a></h4>
+<ul>
+<li>❌ 自動記憶體管理，無法精確控制</li>
+<li>❌ 無法完全避免 heap allocation</li>
+<li>❌ GC 掃描會影響 CPU cache</li>
+<li>❌ 難以優化 memory locality</li>
+</ul>
+<p><strong>實際影響：</strong></p>
+<pre><code class="language-c++">// C++ - 完全控制記憶體
+struct Order {
+    uint64_t price;
+    uint64_t quantity;
+    uint64_t timestamp;
+}; // 24 bytes, cache-line aligned
+
+Order order_pool[10000]; // 預先分配，零 GC 開銷
+</code></pre>
+<pre><code class="language-go">// Go - 自動管理，有 GC 開銷
+type Order struct {
+    Price     uint64
+    Quantity  uint64
+    Timestamp uint64
+}
+
+orders := make([]*Order, 10000) // 會觸發 GC
+</code></pre>
+<hr />
+<h2 id="-各語言在-hft-的定位"><a class="header" href="#-各語言在-hft-的定位">🔍 各語言在 HFT 的定位</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>語言</th><th>延遲</th><th>控制度</th><th>開發速度</th><th>記憶體安全</th><th>HFT 使用場景</th></tr></thead><tbody>
+<tr><td><strong>C</strong></td><td>最低<br>(1-3 μs)</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐</td><td>❌</td><td>✅ Ultra-low latency<br>✅ 交易所核心引擎</td></tr>
+<tr><td><strong>C++</strong></td><td>極低<br>(2-5 μs)</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐</td><td>❌</td><td>✅ 主流 HFT（最多人用）<br>✅ 成熟生態系統</td></tr>
+<tr><td><strong>Rust</strong></td><td>極低<br>(2-5 μs)</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐</td><td>✅</td><td>✅ 現代 HFT<br>✅ 安全 + 性能兼具</td></tr>
+<tr><td><strong>Zig</strong></td><td>極低<br>(2-5 μs)</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐</td><td>⚠️</td><td>⚠️ 新興選擇<br>⚠️ 生態系統還在成長</td></tr>
+<tr><td><strong>Go</strong></td><td>中等<br>(10-100 μs)</td><td>⭐⭐</td><td>⭐⭐⭐⭐⭐</td><td>✅</td><td>❌ Ultra-low latency<br>✅ 中頻交易<br>✅ 基礎設施</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="-go-在交易系統的定位"><a class="header" href="#-go-在交易系統的定位">💡 Go 在交易系統的定位</a></h2>
+<h3 id="-go-不適合"><a class="header" href="#-go-不適合">❌ Go <strong>不適合</strong>：</a></h3>
+<ol>
+<li>
+<p><strong>Ultra-low latency trading engine</strong> (&lt; 10 μs)</p>
+<ul>
+<li>需要納秒/微秒級響應</li>
+<li>每一微秒都影響盈虧</li>
+</ul>
+</li>
+<li>
+<p><strong>交易所 matching engine</strong></p>
+<ul>
+<li>需要處理每秒百萬級訂單</li>
+<li>延遲必須極度可預測</li>
+</ul>
+</li>
+<li>
+<p><strong>納秒級套利</strong></p>
+<ul>
+<li>Latency arbitrage</li>
+<li>Co-location 交易</li>
+</ul>
+</li>
+<li>
+<p><strong>Market data feed handler（極端高頻）</strong></p>
+<ul>
+<li>需要解析每秒百萬級 tick data</li>
+<li>零延遲容忍度</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h3 id="-go-很適合"><a class="header" href="#-go-很適合">✅ Go <strong>很適合</strong>：</a></h3>
+<ol>
+<li>
+<p><strong>中頻交易</strong>（秒級、分鐘級）</p>
+<ul>
+<li>策略執行頻率：1-1000 次/秒</li>
+<li>延遲容忍度：&gt; 10 毫秒</li>
+</ul>
+</li>
+<li>
+<p><strong>風控系統</strong></p>
+<ul>
+<li>實時監控倉位</li>
+<li>風險指標計算</li>
+<li>異常檢測</li>
+</ul>
+</li>
+<li>
+<p><strong>監控與告警系統</strong></p>
+<ul>
+<li>系統健康檢查</li>
+<li>性能監控</li>
+<li>日誌聚合</li>
+</ul>
+</li>
+<li>
+<p><strong>WebSocket / REST API 服務</strong></p>
+<ul>
+<li>行情分發</li>
+<li>訂單路由</li>
+<li>用戶接口層</li>
+</ul>
+</li>
+<li>
+<p><strong>策略回測與數據處理</strong></p>
+<ul>
+<li>歷史數據分析</li>
+<li>策略參數優化</li>
+<li>報表生成</li>
+</ul>
+</li>
+<li>
+<p><strong>Market Maker（非 ultra-HFT）</strong></p>
+<ul>
+<li>如果延遲要求 &gt; 10 毫秒</li>
+<li>訂單頻率 &lt; 100 筆/秒</li>
+<li><strong>你的 adaptive market maker 很適合用 Go！</strong></li>
+</ul>
+</li>
+</ol>
+<hr />
+<h2 id="-如何選擇語言"><a class="header" href="#-如何選擇語言">🎯 如何選擇語言？</a></h2>
+<h3 id="決策樹"><a class="header" href="#決策樹">決策樹：</a></h3>
+<pre><code>是否需要 &lt; 1 毫秒延遲？
+│
+├─ 是 ──&gt; 是否需要 &lt; 10 微秒延遲？
+│         │
+│         ├─ 是 ──&gt; 選擇 C/C++/Rust
+│         │         (交易所核心、ultra-HFT)
+│         │
+│         └─ 否 ──&gt; 考慮 Rust/C++
+│                   (一般 HFT、低延遲系統)
+│
+└─ 否 ──&gt; 是否需要極高吞吐量？
+          │
+          ├─ 是 ──&gt; 選擇 Go/Rust
+          │         (中頻交易、API 服務)
+          │
+          └─ 否 ──&gt; 選擇 Go/Python
+                    (策略開發、數據分析)
+</code></pre>
+<h3 id="量化判斷標準"><a class="header" href="#量化判斷標準">量化判斷標準：</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>場景</th><th>延遲要求</th><th>頻率</th><th>推薦語言</th></tr></thead><tbody>
+<tr><td><strong>Ultra HFT</strong></td><td>&lt; 10 μs</td><td>&gt; 10,000 筆/秒</td><td>C++, Rust</td></tr>
+<tr><td><strong>高頻交易</strong></td><td>10 μs - 1 ms</td><td>1,000-10,000 筆/秒</td><td>C++, Rust</td></tr>
+<tr><td><strong>中頻交易</strong></td><td>1-100 ms</td><td>10-1,000 筆/秒</td><td>Go, Rust</td></tr>
+<tr><td><strong>低頻交易</strong></td><td>&gt; 100 ms</td><td>&lt; 10 筆/秒</td><td>Go, Python</td></tr>
+<tr><td><strong>Market Making</strong></td><td>10-100 ms</td><td>100-1,000 筆/秒</td><td><strong>Go</strong>, Rust</td></tr>
+<tr><td><strong>API 服務</strong></td><td>10-100 ms</td><td>高併發</td><td><strong>Go</strong></td></tr>
+<tr><td><strong>數據處理</strong></td><td>秒級</td><td>批處理</td><td>Python, Go</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="-實務建議"><a class="header" href="#-實務建議">📌 實務建議</a></h2>
+<h3 id="1-混合架構業界主流做法"><a class="header" href="#1-混合架構業界主流做法">1. <strong>混合架構</strong>（業界主流做法）</a></h3>
+<pre><code>┌─────────────────────────────────────┐
+│      交易系統分層架構                 │
+├─────────────────────────────────────┤
+│  交易引擎核心 (C++/Rust)             │ ← 微秒級延遲
+│  ├─ Order matching                  │
+│  ├─ Risk checks                     │
+│  └─ Market data processing          │
+├─────────────────────────────────────┤
+│  API Gateway (Go)                   │ ← 毫秒級延遲
+│  ├─ WebSocket connections           │
+│  ├─ REST API                        │
+│  └─ Order routing                   │
+├─────────────────────────────────────┤
+│  風控/監控 (Go)                      │ ← 秒級處理
+│  ├─ Position monitoring             │
+│  ├─ Alert system                    │
+│  └─ Dashboard                       │
+├─────────────────────────────────────┤
+│  數據分析 (Python/Go)                │ ← 分鐘/小時級
+│  ├─ Strategy backtesting            │
+│  ├─ Performance analysis            │
+│  └─ Reporting                       │
+└─────────────────────────────────────┘
+</code></pre>
+<p><strong>典型公司架構：</strong></p>
+<ul>
+<li><strong>Jane Street, Citadel, Jump Trading</strong>: 核心用 C++/OCaml，周邊用 Python/Go</li>
+<li><strong>Coinbase, Binance</strong>: Matching engine 用 C++，API 用 Go</li>
+<li><strong>小型做市商</strong>: 全棧 Go（如果不做 ultra-HFT）</li>
+</ul>
+<hr />
+<h3 id="2-go-的性能優化技巧"><a class="header" href="#2-go-的性能優化技巧">2. <strong>Go 的性能優化技巧</strong></a></h3>
+<p>如果堅持使用 Go 進行高頻交易，可以採用以下優化：</p>
+<h4 id="減少-gc-壓力"><a class="header" href="#減少-gc-壓力"><strong>減少 GC 壓力：</strong></a></h4>
+<pre><code class="language-go">// ❌ 不好：頻繁分配
+func processOrder() {
+    order := &amp;Order{...} // 每次都分配
+    // ...
+}
+
+// ✅ 好：使用 sync.Pool
+var orderPool = sync.Pool{
+    New: func() interface{} {
+        return &amp;Order{}
+    },
+}
+
+func processOrder() {
+    order := orderPool.Get().(*Order)
+    defer orderPool.Put(order)
+    // ...
+}
+</code></pre>
+<h4 id="調整-gc-參數"><a class="header" href="#調整-gc-參數"><strong>調整 GC 參數：</strong></a></h4>
+<pre><code class="language-bash"># 增加 GC 觸發閾值（減少 GC 頻率，但增加暫停時間）
+GOGC=800 ./your-trading-bot
+
+# 設置最大記憶體限制（Go 1.19+）
+GOMEMLIMIT=8GiB ./your-trading-bot
+</code></pre>
+<h4 id="避免-heap-allocation"><a class="header" href="#避免-heap-allocation"><strong>避免 heap allocation：</strong></a></h4>
+<pre><code class="language-go">// ❌ 不好：逃逸到 heap
+func getPrice() *float64 {
+    price := 100.5
+    return &amp;price // 逃逸到 heap
+}
+
+// ✅ 好：留在 stack
+func getPrice() float64 {
+    return 100.5
+}
+</code></pre>
+<h4 id="使用-zero-allocation-技巧"><a class="header" href="#使用-zero-allocation-技巧"><strong>使用 zero-allocation 技巧：</strong></a></h4>
+<pre><code class="language-go">// 使用 strings.Builder 而不是 string concatenation
+var builder strings.Builder
+builder.WriteString("order_")
+builder.WriteString(orderID)
+
+// 使用 slice 容量預分配
+orders := make([]Order, 0, 1000)
+</code></pre>
+<p><strong>但即使如此，仍然無法完全消除 GC 暫停！</strong></p>
+<hr />
+<h3 id="3-何時該從-go-遷移到-rustc"><a class="header" href="#3-何時該從-go-遷移到-rustc">3. <strong>何時該從 Go 遷移到 Rust/C++？</strong></a></h3>
+<h4 id="遷移信號"><a class="header" href="#遷移信號"><strong>遷移信號：</strong></a></h4>
+<ol>
+<li>✅ <strong>延遲監控顯示 P99 &gt; 10ms</strong></li>
+<li>✅ <strong>GC 暫停影響交易執行</strong></li>
+<li>✅ <strong>交易頻率增加到 &gt; 1000 筆/秒</strong></li>
+<li>✅ <strong>與其他 HFT 競爭時處於劣勢</strong></li>
+<li>✅ <strong>需要與交易所 co-location</strong></li>
+</ol>
+<h4 id="遷移策略"><a class="header" href="#遷移策略"><strong>遷移策略：</strong></a></h4>
+<pre><code>Phase 1: 保留 Go 做快速原型開發
+         ↓
+Phase 2: 將核心引擎改寫為 Rust/C++
+         ├─ Order execution
+         ├─ Market data handler
+         └─ Risk engine
+         ↓
+Phase 3: Go 保留在非關鍵路徑
+         ├─ Admin dashboard
+         ├─ Monitoring
+         └─ Logging
+</code></pre>
+<hr />
+<h2 id="-結論"><a class="header" href="#-結論">🏁 結論</a></h2>
+<h3 id="go-的定位"><a class="header" href="#go-的定位">Go 的定位：</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>評價</th></tr></thead><tbody>
+<tr><td><strong>Ultra-low latency trading</strong></td><td>❌ 不適合（GC 問題）</td></tr>
+<tr><td><strong>中頻交易 / Market Making</strong></td><td>✅ 非常適合</td></tr>
+<tr><td><strong>開發速度</strong></td><td>⭐⭐⭐⭐⭐ 極快</td></tr>
+<tr><td><strong>維護性</strong></td><td>⭐⭐⭐⭐⭐ 簡單易維護</td></tr>
+<tr><td><strong>生態系統</strong></td><td>⭐⭐⭐⭐⭐ 豐富</td></tr>
+<tr><td><strong>團隊招聘</strong></td><td>⭐⭐⭐⭐⭐ 容易找人</td></tr>
+</tbody></table>
+</div>
+<h3 id="最終建議"><a class="header" href="#最終建議">最終建議：</a></h3>
+<pre><code class="language-python">if 你的系統延遲要求 &lt; 1ms and 交易頻率 &gt; 1000/秒:
+    選擇 Rust 或 C++
+    
+elif 你需要快速迭代 and 團隊熟悉 Go:
+    先用 Go 開發
+    等系統成熟後再考慮部分模組改用 Rust
+    
+else:
+    Go 就很好！
+    專注於策略邏輯，而不是微觀優化
+</code></pre>
+<hr />
+<h2 id="-延伸閱讀"><a class="header" href="#-延伸閱讀">📚 延伸閱讀</a></h2>
+<ul>
+<li><a href="https://discord.com/blog/why-discord-is-switching-from-go-to-rust">Why Discord is switching from Go to Rust</a></li>
+<li><a href="https://gist.github.com/jboner/2841832">Latency Numbers Every Programmer Should Know</a></li>
+<li><a href="https://medium.com/@val_deleplace/go-gc-and-the-latency-problem-5f5c2f1c2c3e">Go GC: Latency Problem</a></li>
+<li><a href="https://www.youtube.com/watch?v=NH1Tta7purM">High-Frequency Trading with C++</a></li>
+</ul>
+<hr />
+<p><strong>總結一句話：</strong></p>
+<blockquote>
+<p>Go 是絕佳的「快速開發高性能系統」的語言，但當你需要「極致性能與可預測延遲」時，C++/Rust 才是正解。選擇工具要看使用場景，沒有絕對的好壞！ 🚀</p>
+</blockquote>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../hft/01-language/rust-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../hft/01-language/rust-cpp-integration.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../hft/01-language/rust-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../hft/01-language/rust-cpp-integration.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../../ace.js"></script>
+        <script src="../../mode-rust.js"></script>
+        <script src="../../editor.js"></script>
+        <script src="../../theme-dawn.js"></script>
+        <script src="../../theme-tomorrow_night.js"></script>
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../../mermaid.min.js"></script>
+        <script src="../../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
