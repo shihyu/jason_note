@@ -1,6 +1,6 @@
 # Summary
 
-- [Jason Notes](index.md)
+- [Jason's Notes](index.md)
 
 ## Development Environment
 - [Ubuntu](ubuntu/ubuntu_setup.md)
