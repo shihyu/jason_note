@@ -319,6 +319,7 @@
     - [Understanding eBPF](linux_system/understanding-ebpf.md)
     - [Linux 二進位分析工具完整指南](linux_system/linux-binary-tools-guide.md)
     - [API vs ABI 完整指南](linux_system/api_vs_abi_guide.md)
+    - [Linux 靜態連結編譯說明](linux_system/static_build.md)
     - [現代程式語言的靜態連結策略分析](linux_system/static-linking-comparison.md)
 - [Linux Kernel](kernel/linux_kernel.md)
     - [What is eBPF](kernel/what-is-ebpf.md)
