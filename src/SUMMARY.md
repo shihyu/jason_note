@@ -41,6 +41,7 @@
         - [Claude Code 效能測試與正確性驗證完整指南](tools/claude-code-performance-testing-guide.md)
         - [GitHub Spec Kit - SDD 規格驅動開發](tools/github-spec-kit-sdd.md)
         - [Spec-Kit 開發指南](tools/spec-kit-guide.md)
+        - [Spec-Driven Development 深度分析整理](tools/SDD-分析整理.md)
         - [Claude Nights Watch - 自主任務執行系統](tools/claude_nights_watch_zh.md)
         - [Claude Nights Watch Setup](tools/claude-nights-watch-setup.md)
         - [MCP Setup Guide](tools/mcp-setup-guide.md)
