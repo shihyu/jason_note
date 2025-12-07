@@ -177,6 +177,7 @@
         - [Interface](go/interface.md)
         - [Example](go/example.md)
     - [並發編程與 GMP 模型](go/02_並發編程與GMP模型.md)
+        - [Go 的 GMP 調度模型完整指南](go/Go_GMP_調度模型完整指南.md)
         - [Goroutine 與 GMP 原理全面分析](go/golang-goroutine.md)
         - [Go 語言 CPU、GMP 模型與多程式執行完整指南](go/go-cpu-gmp-guide.md)
         - [Goroutine vs C++/Rust 協程完整對比指南](go/goroutine_complete_guide.md)
