@@ -1,0 +1,953 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Go 的 GMP 調度模型完整指南 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="go-的-gmp-調度模型完整指南"><a class="header" href="#go-的-gmp-調度模型完整指南">Go 的 GMP 調度模型完整指南</a></h1>
+<h2 id="一基本概念用餐廳類比"><a class="header" href="#一基本概念用餐廳類比">一、基本概念（用餐廳類比）</a></h2>
+<p>想像 Go 程序是一家高效率的餐廳：</p>
+<div class="table-wrapper"><table><thead><tr><th>角色</th><th>是什麼</th><th>餐廳類比</th><th>特點</th></tr></thead><tbody>
+<tr><td><strong>G</strong> (Goroutine)</td><td>你寫的任務</td><td>📋 客人的訂單</td><td>超級多、超級輕（2KB）</td></tr>
+<tr><td><strong>M</strong> (Machine)</td><td>OS 線程</td><td>👨‍🍳 廚師</td><td>真正幹活的人（8MB）</td></tr>
+<tr><td><strong>P</strong> (Processor)</td><td>邏輯處理器</td><td>🍳 廚房工作檯</td><td>數量 = CPU 核心數</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="二基本數量關係"><a class="header" href="#二基本數量關係">二、基本數量關係</a></h2>
+<h3 id="在-16-核心-cpu-上"><a class="header" href="#在-16-核心-cpu-上">在 16 核心 CPU 上：</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "runtime"
+)
+
+func main() {
+    fmt.Println("CPU 核心數:", runtime.NumCPU())           // 16
+    fmt.Println("P 的數量:", runtime.GOMAXPROCS(0))        // 16（預設）
+    fmt.Println("當前 G 數量:", runtime.NumGoroutine())    // 1（main goroutine）
+    
+    // 創建 1000 個 goroutine
+    for i := 0; i &lt; 1000; i++ {
+        go func(id int) {
+            // 做一些工作
+            sum := 0
+            for j := 0; j &lt; 1000000; j++ {
+                sum += j
+            }
+        }(i)
+    }
+    
+    fmt.Println("創建後 G 數量:", runtime.NumGoroutine())  // 約 1000
+}
+</code></pre>
+<p><strong>白話解釋：</strong></p>
+<ul>
+<li>有 16 個工作檯（P）</li>
+<li>來了 1000 份訂單（G）</li>
+<li>每個工作檯分配約 62 份訂單</li>
+<li>廚師（M）會根據需要自動出現（通常 ≈ P 的數量）</li>
+</ul>
+<hr />
+<h2 id="三完整工作流程"><a class="header" href="#三完整工作流程">三、完整工作流程</a></h2>
+<h3 id="範例-1基本調度"><a class="header" href="#範例-1基本調度">範例 1：基本調度</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "runtime"
+    "sync"
+    "time"
+)
+
+func main() {
+    // 設置使用 4 個核心（方便觀察）
+    runtime.GOMAXPROCS(4)
+    
+    var wg sync.WaitGroup
+    
+    // 創建 12 個 goroutine
+    for i := 0; i &lt; 12; i++ {
+        wg.Add(1)
+        go worker(i, &amp;wg)
+    }
+    
+    wg.Wait()
+    fmt.Println("所有任務完成")
+}
+
+func worker(id int, wg *sync.WaitGroup) {
+    defer wg.Done()
+    
+    fmt.Printf("G%d 開始執行\n", id)
+    
+    // CPU 密集型工作
+    sum := 0
+    for i := 0; i &lt; 100000000; i++ {
+        sum += i
+    }
+    
+    fmt.Printf("G%d 完成\n", id)
+}
+</code></pre>
+<p><strong>執行過程（白話）：</strong></p>
+<pre><code>1. 啟動時：
+   - 創建 4 個 P（P0, P1, P2, P3）
+   - 創建 12 個 G（G0~G11）
+
+2. 初始分配：
+   P0 隊列: [G0, G4, G8]
+   P1 隊列: [G1, G5, G9]
+   P2 隊列: [G2, G6, G10]
+   P3 隊列: [G3, G7, G11]
+
+3. 開始執行：
+   M0 + P0 → 執行 G0
+   M1 + P1 → 執行 G1
+   M2 + P2 → 執行 G2
+   M3 + P3 → 執行 G3
+   
+   （4 個廚師同時在 4 個工作檯做菜）
+
+4. G0 完成後：
+   M0 + P0 → 立刻取出 G4 繼續執行
+   
+   （廚師做完一份訂單，立刻拿下一份）
+
+5. 全部完成：
+   12 個 G 都執行完畢
+</code></pre>
+<hr />
+<h2 id="四阻塞場景重點"><a class="header" href="#四阻塞場景重點">四、阻塞場景（重點！）</a></h2>
+<h3 id="範例-2遇到阻塞操作"><a class="header" href="#範例-2遇到阻塞操作">範例 2：遇到阻塞操作</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "runtime"
+    "sync"
+    "time"
+)
+
+func main() {
+    runtime.GOMAXPROCS(4)
+    
+    var wg sync.WaitGroup
+    
+    // 創建 20 個會阻塞的 goroutine
+    for i := 0; i &lt; 20; i++ {
+        wg.Add(1)
+        go blockingWorker(i, &amp;wg)
+    }
+    
+    wg.Wait()
+}
+
+func blockingWorker(id int, wg *sync.WaitGroup) {
+    defer wg.Done()
+    
+    fmt.Printf("G%d 開始\n", id)
+    
+    // 模擬 I/O 阻塞（網絡請求、文件讀取等）
+    time.Sleep(1 * time.Second)
+    
+    fmt.Printf("G%d 完成\n", id)
+}
+</code></pre>
+<p><strong>阻塞時的處理（白話）：</strong></p>
+<pre><code>1. G0 在 M0 上執行，遇到 time.Sleep
+   
+2. Go runtime 的處理：
+   ① G0 進入休眠狀態
+   ② P0 和 M0 解綁
+   ③ P0 立刻找到或創建新的 M（比如 M4）
+   ④ P0 + M4 繼續執行隊列中的下一個 G
+   
+   （這個廚師要等食材，工作檯不能閒著，換個廚師繼續做）
+
+3. 1 秒後 G0 醒來：
+   ① G0 重新進入某個 P 的隊列
+   ② 等待 M 來執行
+   
+   （食材到了，訂單重新排隊）
+</code></pre>
+<hr />
+<h2 id="五work-stealing搶工作機制"><a class="header" href="#五work-stealing搶工作機制">五、Work Stealing（搶工作機制）</a></h2>
+<h3 id="範例-3負載不均衡"><a class="header" href="#範例-3負載不均衡">範例 3：負載不均衡</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "runtime"
+    "sync"
+    "time"
+)
+
+func main() {
+    runtime.GOMAXPROCS(4)
+    
+    var wg sync.WaitGroup
+    
+    // P0 分配到重任務
+    for i := 0; i &lt; 5; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            fmt.Printf("重任務 G%d 開始\n", id)
+            time.Sleep(2 * time.Second) // 模擬重任務
+            fmt.Printf("重任務 G%d 完成\n", id)
+        }(i)
+    }
+    
+    // P1-P3 分配到輕任務
+    for i := 100; i &lt; 103; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            fmt.Printf("輕任務 G%d 開始\n", id)
+            time.Sleep(100 * time.Millisecond) // 快速完成
+            fmt.Printf("輕任務 G%d 完成\n", id)
+        }(i)
+    }
+    
+    wg.Wait()
+}
+</code></pre>
+<p><strong>Work Stealing 流程（白話）：</strong></p>
+<pre><code>1. 初始狀態：
+   P0: [G0, G1, G2, G3, G4]  ← 5 個重任務
+   P1: [G100]                ← 1 個輕任務
+   P2: [G101]
+   P3: [G102]
+
+2. 執行過程：
+   - P1 的 M1 很快完成 G100
+   - P1 的隊列空了！
+
+3. Work Stealing 觸發：
+   - M1 發現 P1 沒工作了
+   - M1 偷偷去看 P0 的隊列
+   - M1 從 P0 隊列尾部偷走一半：[G3, G4]
+   
+   （空閒的廚師去幫忙別的工作檯）
+
+4. 結果：
+   P0: [G0, G1, G2]
+   P1: [G3, G4]  ← 偷來的
+   
+   負載更均衡了！
+</code></pre>
+<hr />
+<h2 id="六系統調用場景"><a class="header" href="#六系統調用場景">六、系統調用場景</a></h2>
+<h3 id="範例-4系統調用阻塞"><a class="header" href="#範例-4系統調用阻塞">範例 4：系統調用阻塞</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "os"
+    "runtime"
+    "sync"
+)
+
+func main() {
+    runtime.GOMAXPROCS(4)
+    
+    var wg sync.WaitGroup
+    
+    for i := 0; i &lt; 10; i++ {
+        wg.Add(1)
+        go syscallWorker(i, &amp;wg)
+    }
+    
+    wg.Wait()
+}
+
+func syscallWorker(id int, wg *sync.WaitGroup) {
+    defer wg.Done()
+    
+    fmt.Printf("G%d 準備系統調用\n", id)
+    
+    // 系統調用（會阻塞 M）
+    file, _ := os.Create(fmt.Sprintf("/tmp/test_%d.txt", id))
+    file.WriteString("Hello")
+    file.Close()
+    
+    fmt.Printf("G%d 系統調用完成\n", id)
+}
+</code></pre>
+<p><strong>系統調用時的處理（白話）：</strong></p>
+<pre><code>1. G0 在 M0 上執行系統調用（寫文件）
+   
+2. 問題：系統調用會阻塞 M0（OS 層面的阻塞）
+   
+3. Go runtime 的處理：
+   ① M0 和 G0 一起被阻塞（陷入內核態）
+   ② P0 檢測到 M0 被阻塞
+   ③ P0 解綁 M0，去找新的 M（比如 M5）
+   ④ P0 + M5 繼續執行其他 G
+   
+   （廚師卡在某個步驟，工作檯換個廚師繼續）
+
+4. 系統調用完成後：
+   ① M0 和 G0 恢復
+   ② M0 嘗試重新獲取 P
+   ③ 如果沒有空閒 P，M0 和 G0 進入休眠
+   ④ G0 會被放入全局隊列，等待調度
+   
+   （原來的廚師回來了，如果沒有空工作檯，就待命）
+</code></pre>
+<hr />
+<h2 id="七完整狀態圖"><a class="header" href="#七完整狀態圖">七、完整狀態圖</a></h2>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│                     Go Scheduler                         │
+├─────────────────────────────────────────────────────────┤
+│                                                           │
+│  全局隊列 (Global Queue)                                  │
+│  [G50, G51, G52, ...]  ← 沒有 P 的 G 在這裡等待           │
+│                                                           │
+├─────────────────────────────────────────────────────────┤
+│                                                           │
+│  P0 [本地隊列]          M0 ─────→ 正在執行 G0              │
+│  [G1, G2, G3]                                             │
+│                                                           │
+│  P1 [本地隊列]          M1 ─────→ 正在執行 G10             │
+│  [G11, G12, G13]                                          │
+│                                                           │
+│  P2 [本地隊列]          M2 ─────→ 正在執行 G20             │
+│  [G21, G22]                                               │
+│                                                           │
+│  P3 [本地隊列]          M3 ─────→ 正在執行 G30             │
+│  [空]  ← 會去偷其他 P 的工作                               │
+│                                                           │
+├─────────────────────────────────────────────────────────┤
+│                                                           │
+│  閒置 M 池: [M4, M5, M6, ...]                             │
+│  (待命的線程，需要時可以快速喚醒)                           │
+│                                                           │
+└─────────────────────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2 id="八關鍵數據對比"><a class="header" href="#八關鍵數據對比">八、關鍵數據對比</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>項目</th><th>G</th><th>M</th><th>P</th></tr></thead><tbody>
+<tr><td><strong>數量</strong></td><td>成千上萬個</td><td>通常 ≈ P 的數量<br>最多 10000</td><td>= CPU 核心數</td></tr>
+<tr><td><strong>記憶體</strong></td><td>2KB 起始</td><td>8MB</td><td>很小</td></tr>
+<tr><td><strong>創建成本</strong></td><td>極低（納秒）</td><td>較高（毫秒）</td><td>啟動時創建</td></tr>
+<tr><td><strong>誰創建</strong></td><td>程序員 (<code>go</code>)</td><td>Go runtime</td><td>Go runtime</td></tr>
+<tr><td><strong>誰調度</strong></td><td>Go scheduler</td><td>OS scheduler</td><td>-</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="九gmp-詳細解釋"><a class="header" href="#九gmp-詳細解釋">九、G、M、P 詳細解釋</a></h2>
+<h3 id="ggoroutine--訂單"><a class="header" href="#ggoroutine--訂單">G（Goroutine）- 訂單</a></h3>
+<p><strong>定義：</strong></p>
+<ul>
+<li>你用 <code>go</code> 關鍵字創建的每個任務</li>
+<li>Go 程序的最小執行單位</li>
+</ul>
+<p><strong>特性：</strong></p>
+<ul>
+<li>非常輕量：初始堆疊只有 <strong>2KB</strong>（可動態增長到 1GB）</li>
+<li>可以有數十萬個同時存在</li>
+<li>包含：函數代碼、堆疊、程序計數器、狀態等</li>
+</ul>
+<p><strong>生命週期：</strong></p>
+<pre><code>創建 → 等待運行 → 正在運行 → 阻塞 → 等待運行 → 完成
+</code></pre>
+<p><strong>程式碼範例：</strong></p>
+<pre><code class="language-go">// 每個 go 關鍵字都創建一個 G
+go func() {
+    fmt.Println("這是 G1")
+}()
+
+go func() {
+    fmt.Println("這是 G2")
+}()
+
+// 現在有 3 個 G：main goroutine + G1 + G2
+</code></pre>
+<hr />
+<h3 id="mmachineos-thread--廚師"><a class="header" href="#mmachineos-thread--廚師">M（Machine/OS Thread）- 廚師</a></h3>
+<p><strong>定義：</strong></p>
+<ul>
+<li>真正的作業系統線程（pthread、Windows thread）</li>
+<li>是實際執行代碼的載體</li>
+</ul>
+<p><strong>特性：</strong></p>
+<ul>
+<li>比較重量：每個線程約 <strong>8MB</strong> 堆疊</li>
+<li>數量有限：Go 預設最多 <strong>10000</strong> 個 M</li>
+<li>由 Go runtime 動態創建和銷毀</li>
+</ul>
+<p><strong>工作流程：</strong></p>
+<pre><code>1. M 綁定一個 P
+2. 從 P 的本地隊列取出 G
+3. 執行 G 的代碼
+4. G 完成後，繼續取下一個 G
+</code></pre>
+<p><strong>特殊情況：</strong></p>
+<ul>
+<li>當 G 發起系統調用時，M 會和 G 一起阻塞</li>
+<li>P 會解綁這個 M，去找新的 M 繼續工作</li>
+<li>阻塞結束後，M 嘗試重新獲取 P</li>
+</ul>
+<hr />
+<h3 id="pprocessor--工作檯"><a class="header" href="#pprocessor--工作檯">P（Processor）- 工作檯</a></h3>
+<p><strong>定義：</strong></p>
+<ul>
+<li>邏輯處理器，是 G 和 M 之間的橋樑</li>
+<li>持有 G 的本地運行隊列</li>
+</ul>
+<p><strong>特性：</strong></p>
+<ul>
+<li>數量 = <code>GOMAXPROCS</code> = CPU 核心數（預設）</li>
+<li>每個 P 有自己的本地隊列（最多 256 個 G）</li>
+<li>P 必須綁定 M 才能執行 G</li>
+</ul>
+<p><strong>核心作用：</strong></p>
+<ol>
+<li>維護本地 G 隊列</li>
+<li>管理記憶體分配（mcache）</li>
+<li>調度 G 的執行</li>
+</ol>
+<p><strong>調整 P 的數量：</strong></p>
+<pre><code class="language-go">runtime.GOMAXPROCS(8)  // 設置為 8 個 P
+</code></pre>
+<hr />
+<h2 id="十實用調試技巧"><a class="header" href="#十實用調試技巧">十、實用調試技巧</a></h2>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "runtime"
+    "time"
+)
+
+func main() {
+    // 查看調度信息
+    fmt.Println("=== 初始狀態 ===")
+    printStats()
+    
+    // 創建大量 goroutine
+    for i := 0; i &lt; 100; i++ {
+        go func() {
+            time.Sleep(10 * time.Second)
+        }()
+    }
+    
+    time.Sleep(1 * time.Second)
+    
+    fmt.Println("\n=== 創建 100 個 G 後 ===")
+    printStats()
+}
+
+func printStats() {
+    fmt.Printf("CPU 核心數: %d\n", runtime.NumCPU())
+    fmt.Printf("GOMAXPROCS: %d\n", runtime.GOMAXPROCS(0))
+    fmt.Printf("當前 Goroutine 數: %d\n", runtime.NumGoroutine())
+    
+    var m runtime.MemStats
+    runtime.ReadMemStats(&amp;m)
+    fmt.Printf("Goroutine 堆疊記憶體: %d KB\n", m.StackInuse/1024)
+}
+</code></pre>
+<p><strong>進階調試：</strong></p>
+<pre><code class="language-bash"># 使用 GODEBUG 查看調度器信息
+GODEBUG=schedtrace=1000 go run main.go
+
+# 輸出解釋：
+# SCHED 1000ms: gomaxprocs=8 idleprocs=0 threads=10 ...
+# gomaxprocs: P 的數量
+# idleprocs: 空閒的 P 數量
+# threads: M 的數量
+</code></pre>
+<hr />
+<h2 id="十一常見問題-faq"><a class="header" href="#十一常見問題-faq">十一、常見問題 FAQ</a></h2>
+<h3 id="q1-為什麼需要-p直接-g-和-m-不行嗎"><a class="header" href="#q1-為什麼需要-p直接-g-和-m-不行嗎">Q1: 為什麼需要 P？直接 G 和 M 不行嗎？</a></h3>
+<p><strong>答：</strong> P 的存在是為了更好的調度效率：</p>
+<ul>
+<li>P 維護本地隊列，減少全局隊列的鎖競爭</li>
+<li>P 實現 work stealing，自動負載均衡</li>
+<li>P 管理記憶體分配，減少記憶體競爭</li>
+</ul>
+<h3 id="q2-m-的數量會無限增長嗎"><a class="header" href="#q2-m-的數量會無限增長嗎">Q2: M 的數量會無限增長嗎？</a></h3>
+<p><strong>答：</strong> 不會</p>
+<ul>
+<li>Go 限制最多 10000 個 M（可調整）</li>
+<li>閒置的 M 會被放入池中複用</li>
+<li>長時間不用的 M 會被銷毀</li>
+</ul>
+<h3 id="q3-什麼時候會創建新的-m"><a class="header" href="#q3-什麼時候會創建新的-m">Q3: 什麼時候會創建新的 M？</a></h3>
+<p><strong>答：</strong></p>
+<ol>
+<li>所有 M 都在執行 G，且有 G 在等待</li>
+<li>M 被系統調用阻塞，P 需要新的 M</li>
+<li>手動調用 <code>runtime.LockOSThread()</code></li>
+</ol>
+<h3 id="q4-goroutine-的堆疊如何增長"><a class="header" href="#q4-goroutine-的堆疊如何增長">Q4: Goroutine 的堆疊如何增長？</a></h3>
+<p><strong>答：</strong></p>
+<ul>
+<li>初始 2KB</li>
+<li>動態增長：2KB → 4KB → 8KB → ...</li>
+<li>最大可達 1GB</li>
+<li>使用分段堆疊（segmented stacks）或連續堆疊（contiguous stacks）</li>
+</ul>
+<h3 id="q5-如何避免-goroutine-洩漏"><a class="header" href="#q5-如何避免-goroutine-洩漏">Q5: 如何避免 Goroutine 洩漏？</a></h3>
+<p><strong>答：</strong></p>
+<pre><code class="language-go">// ❌ 錯誤：goroutine 永遠阻塞
+func bad() {
+    ch := make(chan int)
+    go func() {
+        ch &lt;- 1  // 沒有接收者，永遠阻塞
+    }()
+}
+
+// ✅ 正確：使用 context 或 buffered channel
+func good(ctx context.Context) {
+    ch := make(chan int, 1)  // buffered
+    go func() {
+        select {
+        case ch &lt;- 1:
+        case &lt;-ctx.Done():
+            return
+        }
+    }()
+}
+</code></pre>
+<hr />
+<h2 id="十二性能優化建議"><a class="header" href="#十二性能優化建議">十二、性能優化建議</a></h2>
+<h3 id="1-合理設置-gomaxprocs"><a class="header" href="#1-合理設置-gomaxprocs">1. 合理設置 GOMAXPROCS</a></h3>
+<pre><code class="language-go">// 對於 CPU 密集型任務
+runtime.GOMAXPROCS(runtime.NumCPU())  // 使用所有核心
+
+// 對於 I/O 密集型任務
+runtime.GOMAXPROCS(runtime.NumCPU() * 2)  // 可以超配
+
+// 容器環境注意
+// Docker 限制了 CPU，但 runtime.NumCPU() 可能返回宿主機核心數
+// 建議手動設置
+</code></pre>
+<h3 id="2-避免大量短生命週期-goroutine"><a class="header" href="#2-避免大量短生命週期-goroutine">2. 避免大量短生命週期 Goroutine</a></h3>
+<pre><code class="language-go">// ❌ 不好：創建過多 goroutine
+for i := 0; i &lt; 1000000; i++ {
+    go process(i)
+}
+
+// ✅ 更好：使用 worker pool
+func workerPool(jobs &lt;-chan int, workers int) {
+    var wg sync.WaitGroup
+    for w := 0; w &lt; workers; w++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            for job := range jobs {
+                process(job)
+            }
+        }()
+    }
+    wg.Wait()
+}
+</code></pre>
+<h3 id="3-注意-goroutine-的通信成本"><a class="header" href="#3-注意-goroutine-的通信成本">3. 注意 Goroutine 的通信成本</a></h3>
+<pre><code class="language-go">// 如果 goroutine 之間頻繁通信
+// 可能不如單線程處理快
+
+// 經驗法則：
+// - CPU 密集型：goroutine 數量 ≈ CPU 核心數
+// - I/O 密集型：可以創建大量 goroutine
+</code></pre>
+<hr />
+<h2 id="十三與其他語言對比"><a class="header" href="#十三與其他語言對比">十三、與其他語言對比</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>Go Goroutine</th><th>Python async/await</th><th>Java Thread</th></tr></thead><tbody>
+<tr><td>並發模型</td><td>CSP (Communicating Sequential Processes)</td><td>協程 (Coroutine)</td><td>線程 (Thread)</td></tr>
+<tr><td>調度</td><td>Go runtime (M:N)</td><td>事件循環 (Event Loop)</td><td>OS 調度</td></tr>
+<tr><td>堆疊大小</td><td>2KB 起始</td><td>~1KB</td><td>1MB+</td></tr>
+<tr><td>創建成本</td><td>極低</td><td>低</td><td>高</td></tr>
+<tr><td>並行</td><td>✅ 真並行</td><td>❌ 單線程並發</td><td>✅ 真並行</td></tr>
+<tr><td>語法</td><td><code>go func()</code></td><td><code>async/await</code></td><td><code>new Thread()</code></td></tr>
+<tr><td>通信方式</td><td>Channel</td><td>Queue/asyncio</td><td>共享記憶體</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="十四總結口訣"><a class="header" href="#十四總結口訣">十四、總結口訣</a></h2>
+<pre><code>G 是任務輕如羽，成千上萬不是夢
+M 是線程真幹活，數量有限要珍惜
+P 是檯子分核心，工作隊列藏其中
+
+G 排隊等 M 做，M 綁定 P 才能活
+遇到阻塞不要慌，換個 M 繼續幹
+隊列空了去偷工，負載均衡自動成
+
+記住三點不會錯：
+1. P 數量等於核心數
+2. M 會根據需要增減
+3. G 想執行必須通過 P
+</code></pre>
+<hr />
+<h2 id="十五學習資源"><a class="header" href="#十五學習資源">十五、學習資源</a></h2>
+<h3 id="官方文檔"><a class="header" href="#官方文檔">官方文檔</a></h3>
+<ul>
+<li><a href="https://go.dev/blog/concurrency-is-not-parallelism">Go 並發模型</a></li>
+<li><a href="https://go.dev/doc/effective_go#concurrency">Effective Go - Concurrency</a></li>
+</ul>
+<h3 id="深入閱讀"><a class="header" href="#深入閱讀">深入閱讀</a></h3>
+<ul>
+<li><a href="https://github.com/golang/go/blob/master/src/runtime/proc.go">Go scheduler 源碼</a></li>
+<li><a href="https://docs.google.com/document/d/1TTj4T2JO42uD5ID9e89oa0sLKhJYD0Y_kqxDv3I3XMw">Scalable Go Scheduler Design</a></li>
+</ul>
+<h3 id="實用工具"><a class="header" href="#實用工具">實用工具</a></h3>
+<pre><code class="language-bash"># 查看 goroutine 堆疊
+curl http://localhost:6060/debug/pprof/goroutine?debug=1
+
+# 性能分析
+go tool pprof http://localhost:6060/debug/pprof/profile
+</code></pre>
+<hr />
+<h2 id="附錄完整示例程序"><a class="header" href="#附錄完整示例程序">附錄：完整示例程序</a></h2>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "runtime"
+    "sync"
+    "time"
+)
+
+func main() {
+    fmt.Println("=== Go GMP 調度模型示例 ===\n")
+    
+    // 設置使用 4 個核心
+    runtime.GOMAXPROCS(4)
+    fmt.Printf("使用 %d 個 CPU 核心\n\n", runtime.GOMAXPROCS(0))
+    
+    // 示例 1: 基本並發
+    fmt.Println("--- 示例 1: 基本並發 ---")
+    basicConcurrency()
+    
+    // 示例 2: I/O 阻塞
+    fmt.Println("\n--- 示例 2: I/O 阻塞處理 ---")
+    ioBlocking()
+    
+    // 示例 3: Work Stealing
+    fmt.Println("\n--- 示例 3: Work Stealing ---")
+    workStealing()
+    
+    // 顯示最終統計
+    fmt.Println("\n--- 最終統計 ---")
+    printStats()
+}
+
+func basicConcurrency() {
+    var wg sync.WaitGroup
+    
+    for i := 0; i &lt; 8; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            fmt.Printf("G%d 開始\n", id)
+            compute()
+            fmt.Printf("G%d 完成\n", id)
+        }(i)
+    }
+    
+    wg.Wait()
+}
+
+func ioBlocking() {
+    var wg sync.WaitGroup
+    
+    for i := 0; i &lt; 10; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            fmt.Printf("G%d 開始 I/O\n", id)
+            time.Sleep(100 * time.Millisecond)
+            fmt.Printf("G%d I/O 完成\n", id)
+        }(i)
+    }
+    
+    wg.Wait()
+}
+
+func workStealing() {
+    var wg sync.WaitGroup
+    
+    // 創建不均衡的任務
+    for i := 0; i &lt; 4; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            if id == 0 {
+                // P0 分配到重任務
+                time.Sleep(500 * time.Millisecond)
+            } else {
+                // 其他 P 快速完成
+                time.Sleep(50 * time.Millisecond)
+            }
+            fmt.Printf("G%d 完成\n", id)
+        }(i)
+    }
+    
+    wg.Wait()
+}
+
+func compute() {
+    sum := 0
+    for i := 0; i &lt; 10000000; i++ {
+        sum += i
+    }
+}
+
+func printStats() {
+    fmt.Printf("CPU 核心數: %d\n", runtime.NumCPU())
+    fmt.Printf("GOMAXPROCS: %d\n", runtime.GOMAXPROCS(0))
+    fmt.Printf("當前 Goroutine 數: %d\n", runtime.NumGoroutine())
+    
+    var m runtime.MemStats
+    runtime.ReadMemStats(&amp;m)
+    fmt.Printf("堆疊記憶體: %d KB\n", m.StackInuse/1024)
+    fmt.Printf("堆記憶體: %d MB\n", m.Alloc/1024/1024)
+}
+</code></pre>
+<hr />
+<p><strong>文件創建日期：</strong> 2024-12-08<br />
+<strong>作者：</strong> Claude<br />
+<strong>版本：</strong> 1.0</p>
+<p>如有問題或建議，歡迎交流！</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../go/02_並發編程與GMP模型.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../go/golang-goroutine.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../go/02_並發編程與GMP模型.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../go/golang-goroutine.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
