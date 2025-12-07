@@ -237,6 +237,7 @@
         - [Poetry](python/poetry.md)
         - [Poetry 完全入門](python/Poetry完全入門指南.md)
         - [UV & UVX 指南](python/uv-uvx-cheatsheet.md)
+        - [uv：Python 極速全能管理工具指南](python/uv_guide.md)
     - [數據處理與交易](python/05_數據處理與交易.md)
         - [Pandas](python/pandas.md)
         - [Plot 視覺化](python/plot.md)
