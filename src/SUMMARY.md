@@ -74,6 +74,7 @@
         - [開源授權指南](tools/open_source_licenses_guide.md)
         - [asciinema 把終端操作錄製成 gif 動畫](tools/asciinema.md)
         - [PaddleOCR 使用指南](tools/paddleocr_guide.md)
+        - [PyMuPDF4LLM 安裝與使用指南](tools/PDF_TO_MARKDOWN.md)
         - [Buttplug Python 安裝設置指南](tools/buttplug_python_setup.md)
         - [Buttplug Python 簡易指南](tools/buttplug_complete_guide.md)
     - [其他實用工具](tools/05_其他實用工具.md)
