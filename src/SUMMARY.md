@@ -200,6 +200,7 @@
         - [Golang 大殺器之跟蹤剖析 trace](go/trace.md)
         - [Golang Debugger](go/golang_debugger.md)
         - [Go + MySQL 死鎖問題調查指南](go/go_mysql_deadlock_debug.md)
+        - [GDB 調試 Go Runtime 指南](go/go-runtime-internals.md)
 - [Python 程式設計完整指南](python/README.md)
     - [異步編程與並發](python/01_異步編程與並發.md)
         - [Python 異步指南](python/python-async-guide.md)
