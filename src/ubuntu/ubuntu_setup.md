@@ -317,3 +317,8 @@ adguardvpn-cli check-update     # 檢查更新
 adguardvpn-cli --help-all       # 查看所有指令
 adguardvpn-cli uninstall        # 移除
 ```
+
+### Superfile 安裝
+```sh
+bash -c "$(curl -sLo- https://superfile.dev/install.sh)"
+```
