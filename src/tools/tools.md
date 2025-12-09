@@ -3,7 +3,7 @@
 https://itsfoss.com/rust-cli-tools/
 
 ```sh
-cargo install bottom procs zoxide du-dust exa tealdeer bat difftastic tokei hyperfine fd-find sshx --locked
+cargo install bottom procs zoxide du-dust exa tealdeer bat difftastic tokei hyperfine fd-find sshx broot --locked
 ```
 
 ```
@@ -21,6 +21,12 @@ tldr strace
 - bat
 ```sh
 alias cat="bat --theme=\$(defaults read -globalDomain AppleInterfaceStyle &> /dev/null && echo default || echo GitHub)"
+```
+
+- broot: An interactive, configurable, and high-performance file manager.
+```sh
+# Start broot
+broot
 ```
 
 - tig
