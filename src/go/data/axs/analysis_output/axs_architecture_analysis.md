@@ -34,30 +34,59 @@
 ```mermaid
 graph TD
     Client[Client] -->|gRPC Request| API[gRPC Server]
-    
-    subgraph "Write Side (Producer)"
-        API -->|1. Get ShardID| DB[(PostgreSQL)]
-        API -->|2. Insert Init Log| DB
-        API -->|3. Publish Event| Kafka{Kafka Topic}
-        API -->|4. Update Log Info| DB
+
+    subgraph "Write Side (Producer) - Outbox Pattern"
+        API -->|①查詢 ShardID| DB[(PostgreSQL)]
+        API -->|②先寫 Init Log<br/>防止訊息丟失| DB
+        API -->|③發送 Event| Kafka{Kafka Topic}
+        API -->|④更新 Log<br/>記錄 Offset| DB
     end
-    
-    subgraph "Processing Side (Consumer)"
+
+    subgraph "Processing Side (Consumer) - Leader Election & Processing"
         Kafka -->|Consume Batch| Consumer[Batch Consumer]
-        Consumer -->|Leader Election| Redis[(Redis)]
+        Consumer -->|⑤搶鎖<br/>Fencing Token| DB
+        Consumer -->|⑥心跳續約| DB
         Consumer -->|Process Logic| Processor[Event Processor]
-        
+
         Processor -->|Apply Changes| Applier[Change Applier]
-        Applier -->|Read/Write Cache| Redis
-        Applier -->|Bulk Copy Write| DB
+        Applier -->|⑦同步快取| Redis[(Redis)]
+        Applier -->|⑧批次寫入<br/>COPY + CTE| DB
+        Applier -->|⑨提交 Offset<br/>檢查 Fencing Token| DB
     end
+
+    style DB fill:#e1f5ff
+    style Kafka fill:#fff4e1
+    style Redis fill:#ffe1e1
 ```
 
 ---
 
-## 3. 關鍵流程詳解
+## 3. 架構圖關鍵說明
 
-### 3.1 寫入流程 (Write Path) - `grpc`
+### 3.1 流程順序解析
+
+上圖中的 ① 到 ⑨ 標記了完整的資料流向，關鍵要點：
+
+**寫入側（①-④）：Outbox Pattern 保證訊息不丟失**
+- ②**必須**在 ③ 之前執行：先寫 DB Log，再發 Kafka
+- 即使 Kafka 發送失敗，DB 中也有記錄可供重試
+- ④ 是非同步執行，不阻塞用戶回應
+
+**處理側（⑤-⑨）：Leader Election + Fencing Token 防止腦裂**
+- ⑤ 每個 Consumer 啟動時必須先「搶鎖」，獲得 Fencing Token
+- ⑥ 持續心跳續約，確保 Leader 地位
+- ⑨ 提交 Offset 時會檢查 Fencing Token，若 Token 已過期（被新 Leader 搶走），交易會回滾
+
+### 3.2 顏色標記說明
+- 🔵 **藍色 (PostgreSQL)**：強一致性的資料源，所有關鍵狀態的最終歸宿
+- 🟡 **黃色 (Kafka)**：高吞吐量的事件暫存區，作為 Event Sourcing 的 WAL
+- 🔴 **紅色 (Redis)**：高速快取層，用於即時查詢與 Leader 心跳續約
+
+---
+
+## 4. 關鍵流程詳解
+
+### 4.1 寫入流程 (Write Path) - `grpc`
 **目標**：接收外部餘額變更請求，並確保事件被可靠地送入 Kafka。
 
 - **檔案**: `pkg/handler/grpcapi/balance_change_grpc.go`
@@ -69,7 +98,7 @@ graph TD
     - 將發送 Kafka 的動作放入 `WorkerPool` 非同步執行。
     - 成功發送後，更新 DB 中的 Log，補上 Kafka Partition 與 Offset 資訊。
 
-### 3.2 處理流程 (Process Path) - `consumer`
+### 4.2 處理流程 (Process Path) - `consumer`
 **目標**：從 Kafka 消費事件，計算餘額變更，並高效寫入 DB。
 
 - **檔案**: `pkg/service/processor/event_processor.go`
@@ -88,7 +117,7 @@ graph TD
 
 ---
 
-## 4. 關鍵程式碼檔案索引
+## 5. 關鍵程式碼檔案索引
 
 | 功能模組 | 檔案路徑 | 用途 |
 | :--- | :--- | :--- |

@@ -194,14 +194,68 @@ try_insert AS (
     RETURNING account_id
 ),
 
--- 4. 統計結果 (Validate)
+-- 4. 錯誤檢查 (Error Validation)
+-- 找出那些既沒有更新成功、也沒有插入成功的記錄（通常是餘額不足）
+error_records AS (
+    SELECT
+        t.account_id,
+        t.shard_id,
+        t.currency_code,
+        t.available_delta,
+        t.frozen_delta,
+        'INSUFFICIENT_BALANCE' AS reject_reason
+    FROM temp_balance_write_records_1 t
+    LEFT JOIN try_update u
+        ON u.account_id = t.account_id
+        AND u.shard_id = t.shard_id
+        AND u.currency_code = t.currency_code
+    LEFT JOIN try_insert i
+        ON i.account_id = t.account_id
+        AND i.shard_id = t.shard_id
+        AND i.currency_code = t.currency_code
+    WHERE u.account_id IS NULL  -- 沒有更新成功
+      AND i.account_id IS NULL  -- 也沒有插入成功
+),
+
+-- 5. 統計結果 (Validate)
 validate AS (
     SELECT
         (SELECT count(*) FROM try_update) AS updated_rows,
-        (SELECT count(*) FROM try_insert) AS inserted_rows
+        (SELECT count(*) FROM try_insert) AS inserted_rows,
+        (SELECT count(*) FROM error_records) AS error_rows
 )
 SELECT * FROM validate;
 ```
 
+**這段 SQL 的完整邏輯拆解：**
+
+1. **try_update**: 嘗試更新現有餘額記錄
+   - 只有當餘額充足時才會更新成功
+   - `RETURNING` 子句回傳成功更新的記錄 ID
+
+2. **missing**: 找出所有未被 update 的記錄
+   - 可能是新幣種（帳戶還沒有這個幣種的餘額記錄）
+   - 也可能是餘額不足（更新失敗）
+
+3. **try_insert**: 嘗試插入新幣種
+   - 只處理 `available_delta >= 0` 的情況（不能一開戶就透支）
+   - 這實現了 "Lazy Insert" 策略
+
+4. **error_records**: 錯誤檢查（NEW!）
+   - 找出那些既沒更新、也沒插入的記錄
+   - 這些通常是因為餘額不足而被拒絕的交易
+   - 應用層可以根據這個結果將失敗的交易寫入 `balance_change_logs` 並標記為 `REJECTED`
+
+5. **validate**: 統計結果
+   - `updated_rows`: 成功更新的筆數（舊帳號扣款/入帳）
+   - `inserted_rows`: 成功插入的筆數（新幣種開戶）
+   - `error_rows`: 失敗的筆數（需要進一步處理）
+
 **總結這段 SQL 的威力：**
-它在一個 Atomic 的操作中，同時處理了「舊帳號扣款」和「新帳號開戶」，而且不需要應用層介入判斷，極大地減少了程式碼複雜度與網路來回次數。
+它在一個 Atomic 的操作中，同時完成了：
+- 舊帳號的餘額更新
+- 新幣種的自動開戶（Lazy Insert）
+- 餘額不足的錯誤檢測
+- 完整的統計與驗證
+
+而且**不需要應用層介入判斷**，極大地減少了程式碼複雜度與網路來回次數。應用層只需要檢查 `validate` 的結果，就能知道這一批次處理的成功率與失敗原因。

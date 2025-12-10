@@ -147,10 +147,132 @@ if rowsAffected != 1 {
 3.  **架構簡單**: 不需要依賴複雜的分散式交易 (2PC/Saga) 或外部鎖服務 (Zookeeper/Etcd)，僅靠 PostgreSQL 即可實現。
 
 ### 缺點與風險
-1.  **DB 負載集中**: 所有壓力最終都落在 Primary DB 上。雖然寫入極快，但若併發量過大，PostgreSQL 的 CPU/IO 仍可能成為瓶頸 (需透過 Sharding 解決)。
-2.  **SQL 複雜度高**: 維護 `ApplyAccountBalanceChanges` 中的複雜 CTE SQL 需要較高的資料庫造詣，除錯與修改不易。
-3.  **依賴 PostgreSQL 特性**: 使用了 `COPY`, `UNLOGGED TABLE`, `RETURNING` 等 PG 特有功能，若要遷移到 MySQL 或 Oracle 需要大幅重寫 (MySQL 沒有直接對應的 COPY 機制能達到同等速度，且 CTE 語法略有不同)。
-4.  **延遲 (Latency)**: 批次處理本質上是用「延遲」換取「吞吐量」。對於需要極低延遲 (<10ms) 的場景，這種架構可能需要調整參數。
+
+#### 1. DB 負載集中風險 ⚠️
+**問題描述**：所有寫入壓力最終都落在 Primary DB 上。
+
+**潛在影響**：
+- PostgreSQL 的 CPU/IO 可能成為瓶頸
+- 單點故障風險（Primary DB 宕機會導致全系統停擺）
+- 垂直擴展有上限（單機資源有限）
+
+**緩解策略**：
+- 採用 Sharding 策略，將不同 `shard_id` 的數據分散到不同 DB 實例
+- 使用 PostgreSQL Streaming Replication 提供高可用性
+- 考慮使用 Patroni 或 Stolon 等自動容錯移轉方案
+
+#### 2. SQL 複雜度高 🔧
+**問題描述**：`ApplyAccountBalanceChanges` 中的 CTE SQL 邏輯複雜。
+
+**潛在影響**：
+- 新人上手困難，學習曲線陡峭
+- 除錯時難以定位問題（SQL 執行計劃複雜）
+- 修改時容易引入 Bug（如遺漏 JOIN 條件）
+
+**緩解策略**：
+- 在程式碼中添加詳細的 SQL 註解，說明每個 CTE 的用途
+- 建立完整的單元測試，覆蓋各種邊界情況
+- 使用 `EXPLAIN ANALYZE` 定期檢查 SQL 執行計劃
+- 考慮將部分邏輯提取為 PostgreSQL 的 Stored Procedure（權衡維護成本）
+
+#### 3. 依賴 PostgreSQL 特性 🔒
+**問題描述**：大量使用 `COPY`, `UNLOGGED TABLE`, `RETURNING` 等 PG 特有功能。
+
+**潛在影響**：
+- 資料庫遷移成本極高（MySQL/Oracle 無對等功能）
+- 廠商鎖定（Vendor Lock-in）
+- 升級 PostgreSQL 版本時需要重新驗證相容性
+
+**緩解策略**：
+- 在架構設計時就明確「不考慮跨資料庫」，接受這個技術債
+- 若未來確實需要遷移，考慮使用 Vitess (MySQL Sharding) 或 CockroachDB (PostgreSQL 相容)
+- 建立完整的效能基準測試，確保升級後效能不退化
+
+#### 4. 批次處理的延遲權衡 ⏱️
+**問題描述**：批次處理用「延遲」換取「吞吐量」。
+
+**潛在影響**：
+- 正常情況下延遲為 `batchingDelay` (30ms) 到 `maxReadTimeout` (1s)
+- 對於需要極低延遲 (<10ms) 的場景（如高頻交易 HFT），不適用
+- 用戶可能抱怨「下單後要等一下才看到餘額變化」
+
+**緩解策略**：
+- 在 gRPC 回應中立即返回「預期的餘額變化」（樂觀更新 UI）
+- 提供 WebSocket 推送，當實際處理完成後通知前端
+- 根據業務場景調整 `batchSize` 和 `batchingDelay`（如 VIP 用戶使用更小的 batch）
+- 考慮實作「快速通道」（Fast Path）：餘額充足的小額交易走非批次處理
+
+#### 5. UNLOGGED TABLE 的災難恢復風險 💥 **[NEW]**
+**問題描述**：`UNLOGGED` 臨時表不寫 WAL (Write-Ahead Log)，提升速度但犧牲了持久化保證。
+
+**潛在影響**：
+- 如果 PostgreSQL 在 `COPY` 執行過程中崩潰，UNLOGGED TABLE 會被**自動清空**
+- 雖然主表數據不會丟失（因為尚未提交交易），但會浪費已完成的計算
+- 極端情況：DB 頻繁重啟會導致系統吞吐量大幅下降（不斷重新處理）
+
+**緩解策略**：
+- 確保 PostgreSQL 運行環境穩定（使用高可用架構、UPS 電源、ECC 記憶體）
+- 監控 DB 的重啟次數，設置告警閾值
+- 考慮使用 `LOGGED` 臨時表作為降級方案（效能下降約 30%，但更安全）
+- 在批次處理前後記錄 Checkpoint，便於從斷點恢復
+
+#### 6. 批次回滾的代價 🔄 **[NEW]**
+**問題描述**：一批 200 筆交易中，如果最後 1 筆失敗（如餘額不足），整批交易會回滾。
+
+**潛在影響**：
+- 浪費了前 199 筆的計算資源（CPU、記憶體、I/O）
+- 在高失敗率場景下，實際吞吐量會遠低於理論值
+- 可能導致「雪崩效應」：失敗重試導致積壓越來越多
+
+**緩解策略**：
+- 在批次處理前進行「預檢查」（Pre-validation）：
+  - 從 Redis 快取中快速檢查餘額是否充足
+  - 將明顯會失敗的交易提前剔除
+- 使用「分段提交」（Mini-batches）：
+  - 將 200 筆拆成 4 個 50 筆的子批次
+  - 每個子批次獨立提交，減少單次回滾的範圍
+- 使用 PostgreSQL 的 `SAVEPOINT`：
+  - 在批次處理中設置多個保存點
+  - 失敗時回滾到最近的 SAVEPOINT 而非整個交易
+
+#### 7. Memory Bloat 問題 🐘 **[NEW]**
+**問題描述**：長時間運行的批次處理可能導致記憶體碎片化與膨脹。
+
+**潛在影響**：
+- Go 的 GC (Garbage Collector) 壓力增大，導致 STW (Stop-The-World) 時間變長
+- 記憶體佔用持續增長，最終觸發 OOM (Out Of Memory)
+- 效能逐漸退化，需要定期重啟服務
+
+**緩解策略**：
+- 使用 `sync.Pool` 重用切片和結構體，減少記憶體分配
+- 定期執行 `runtime.GC()` 強制垃圾回收（僅在低流量時段）
+- 監控 Go Runtime 指標（`runtime.ReadMemStats`）：
+  - `HeapAlloc`: 當前堆記憶體使用量
+  - `NumGC`: GC 執行次數
+  - `PauseNs`: GC 暫停時間
+- 實作「優雅重啟」（Graceful Restart）機制：
+  - 每處理 N 個批次後，主動讓出 Leader 地位
+  - 讓新啟動的 Consumer 接手（記憶體重置）
+- 使用 `pprof` 定期進行記憶體分析，找出洩漏點
+
+---
+
+### 風險矩陣總結
+
+| 風險項目 | 嚴重性 | 發生機率 | 優先級 | 緩解難度 |
+|---------|-------|---------|-------|---------|
+| DB 負載集中 | 高 | 中 | **P0** | 中（需 Sharding） |
+| SQL 複雜度高 | 中 | 高 | P2 | 低（加註解+測試） |
+| 廠商鎖定 | 低 | 低 | P3 | 高（重寫成本大） |
+| 批次延遲 | 中 | 中 | P2 | 低（調參數） |
+| UNLOGGED TABLE 風險 | 高 | 極低 | P1 | 中（加監控+降級方案） |
+| 批次回滾代價 | 中 | 中 | **P1** | 中（需預檢查） |
+| Memory Bloat | 中 | 中 | P2 | 中（需優雅重啟） |
+
+**優先處理建議**：
+1. **P0 - DB 負載集中**：規劃 Sharding 策略，準備擴展方案
+2. **P1 - 批次回滾代價**：實作 Redis 預檢查，降低失敗率
+3. **P1 - UNLOGGED TABLE 風險**：加強 DB 監控，準備降級方案
 
 ---
 

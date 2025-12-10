@@ -236,6 +236,63 @@ type StressTestStats struct {
 
 在高併發的分散式系統中，錯誤是不可避免的。有效的錯誤處理機制是系統韌性的關鍵。axs 將錯誤分為不同的類別，並採用了重試 (`Retry`) 和死信佇列 (`DLQ`) 機制，以確保系統在遇到暫時性問題時能自我恢復，同時對不可恢復的錯誤進行隔離。
 
+### 錯誤分類與處理策略
+
+| 錯誤類型 | 範例 | 重試? | 最大重試次數 | 退避策略 | 進DLQ? | 處理優先級 |
+|---------|-----|------|------------|---------|--------|----------|
+| **網路暫時性錯誤** | Connection timeout, DNS lookup failed | ✅ | 3次 | 指數退避<br/>(100ms → 200ms → 400ms) | 否 | P2 |
+| **資料庫鎖超時** | Lock wait timeout exceeded | ✅ | 5次 | 線性退避<br/>(50ms 固定) | 否 | P1 |
+| **資料庫連線池耗盡** | Too many connections | ✅ | 10次 | 指數退避<br/>(50ms → 100ms → ...) | 否 | **P0** |
+| **Kafka 暫時不可用** | Leader not available for partition | ✅ | 5次 | 線性退避<br/>(100ms 固定) | 否 | P1 |
+| **餘額不足** | Available balance < required amount | ❌ | 0次 | N/A | 是 | P3 |
+| **資料格式錯誤** | Invalid JSON, missing required field | ❌ | 0次 | N/A | 是 | **P0** |
+| **業務邏輯錯誤** | Negative amount, invalid currency code | ❌ | 0次 | N/A | 是 | P2 |
+| **腦裂偵測** | Fencing token mismatch | ❌ | 0次 | **立即停止 Consumer** | 否 | **P0** |
+| **Leader 租約過期** | Lease expired during processing | ❌ | 0次 | **優雅退出** | 否 | **P0** |
+
+**優先級說明**：
+- **P0（緊急）**：可能導致資料不一致或系統崩潰，需立即處理
+- **P1（高）**：影響系統吞吐量，需盡快恢復
+- **P2（中）**：局部影響，可延後處理
+- **P3（低）**：業務層錯誤，記錄即可
+
+### DLQ (Dead Letter Queue) 處理流程
+
+```mermaid
+graph TD
+    A[Consumer 處理失敗] --> B{錯誤類型判斷}
+
+    B -->|暫時性錯誤| C[執行重試邏輯]
+    C --> D{重試成功?}
+    D -->|是| E[繼續處理下一批]
+    D -->|否| F{達到最大重試次數?}
+    F -->|否| C
+    F -->|是| G[發送到 DLQ Topic]
+
+    B -->|不可恢復錯誤| G
+
+    G --> H[DLQ Consumer 接收]
+    H --> I[寫入 failed_events 表]
+    I --> J[觸發 Prometheus 告警]
+    J --> K{告警閾值?}
+    K -->|DLQ 訊息數 > 10| L[PagerDuty 通知 On-call]
+    K -->|DLQ 訊息數 > 100| M[自動降級:<br/>停止部分 Consumer]
+
+    L --> N[人工介入處理]
+    N --> O{錯誤原因?}
+    O -->|餘額不足| P[通知客服聯繫用戶充值]
+    O -->|資料格式錯誤| Q[修正資料後重新發送到主 Topic]
+    O -->|程式 Bug| R[修復程式碼後批次重放 DLQ]
+
+    P --> S[更新 failed_events 狀態為 RESOLVED]
+    Q --> S
+    R --> S
+
+    style G fill:#ffcccc
+    style L fill:#ff9999
+    style M fill:#ff6666
+```
+
 ### 代碼對照與深度解析
 
 *   **程式碼位置**:
@@ -299,6 +356,36 @@ func Retry(fn func() (bool, error), opts ...RetryOption) error {
     *   `NeedRetryError`: 指示操作遇到暫時性問題（如網路瞬斷、資料庫瞬時壓力），應用層應進行重試。
 *   **重試機制**: `batch_consumer.go` 中的 `handleErr` 函數會捕獲錯誤。如果是 `IsNeedRetryError`，則會呼叫 `utils.Retry` 函數。這個函數通常會實現帶有指數退避策略 (Exponential Backoff) 的重試邏輯，避免短時間內對依賴服務造成更大壓力。
 *   **死信佇列 (DLQ)**: 對於重試後依然失敗的錯誤，或者直接就是不可恢復的錯誤，`ProcessEventsErr` 方法會被呼叫。在這個方法中，通常會將失敗的訊息發送到一個單獨的死信佇列 (Dead Letter Queue, DLQ)，以便後續人工干預或離線分析，防止單一壞消息阻塞整個消費進程。
+
+### 錯誤監控與告警指標
+
+為確保錯誤能被及時發現並處理，系統需要監控以下關鍵指標：
+
+| 指標名稱 | 類型 | 說明 | 告警閾值 | 處理動作 |
+|---------|------|------|---------|---------|
+| `dlq_message_count` | Gauge | DLQ 中待處理的訊息數量 | > 10 | 發送 Slack 通知 |
+| `dlq_message_count` | Gauge | DLQ 中待處理的訊息數量 | > 100 | PagerDuty 呼叫 On-call |
+| `consumer_error_rate` | Counter | Consumer 錯誤發生率（錯誤數/總處理數） | > 5% | 檢查 DB/Kafka 健康度 |
+| `retry_count_total` | Counter | 重試總次數（按錯誤類型分組） | 持續增長 | 識別根本原因 |
+| `fencing_token_mismatch` | Counter | 腦裂偵測次數 | > 0 | **緊急調查** |
+| `failed_events_by_reason` | Counter | 失敗事件分類統計 | - | 業務分析 |
+| `batch_rollback_count` | Counter | 批次回滾次數 | > 10/min | 檢查餘額不足問題 |
+
+**Prometheus 查詢範例**：
+
+```promql
+# DLQ 訊息積壓情況
+sum(kafka_consumer_lag{topic="balance_change_dlq"})
+
+# 過去 5 分鐘的錯誤率
+rate(consumer_errors_total[5m]) / rate(consumer_messages_total[5m]) * 100
+
+# 按錯誤類型分組的重試次數
+sum by (error_type) (retry_count_total)
+
+# 腦裂偵測告警（應該永遠為 0）
+fencing_token_mismatch > 0
+```
 
 ---
 
