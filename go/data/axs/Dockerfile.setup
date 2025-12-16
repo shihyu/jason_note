@@ -1,0 +1,39 @@
+FROM golang:1.24-alpine3.22 AS builder
+
+RUN apk update && \
+    apk upgrade && \
+    apk add --no-cache openssl alpine-sdk bash git ca-certificates imagemagick-dev openssl gcc build-base && \
+    rm -rf /var/cache/apk/*
+
+RUN addgroup --gid 1000 golang && \
+    adduser --disabled-password --ingroup golang --uid 1000 golang 
+
+
+USER root
+WORKDIR /home/golang
+COPY . /home/golang/
+RUN chown -R golang:golang /home/golang
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go mod tidy
+RUN go build -tags musl -o /home/golang/bin/app ./setup/main.go
+
+
+FROM alpine:3.22 
+
+RUN apk add openssl --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/main && \
+    apk add --no-cache ca-certificates && \
+    apk add --no-cache tzdata && \
+    apk del openssl && rm -f /var/cache/apk/*
+
+RUN addgroup app && adduser -DH app -G app
+WORKDIR /home/golang
+RUN chown app /home/golang
+USER app
+
+COPY ./setup/migration /home/golang/migration
+COPY ./setup/kafka /home/golang/kafka
+COPY --from=builder /home/golang/bin/app /home/golang/bin/app
+
+ENTRYPOINT [ "/home/golang/bin/app" ]
+CMD [ "/home/golang/bin/app" ]

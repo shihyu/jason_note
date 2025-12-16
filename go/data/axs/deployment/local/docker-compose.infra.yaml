@@ -1,0 +1,132 @@
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:18
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: local_test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - 127.0.0.1:5432:5432
+  redis:
+    container_name: redis
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - 127.0.0.1:6379:6379
+  kafka2:
+    container_name: kafka2
+    restart: always
+    image: bitnami/kafka:4.0.0
+    environment:
+      - BITNAMI_DEBUG=true
+      - KAFKA_CFG_NODE_ID=2
+      - KAFKA_CFG_ADVERTISED_LISTENERS=INTERNAL://kafka2:19096,CONTROLLER://kafka2:9097,EXTERNAL://localhost:9096
+      - KAFKA_CFG_LISTENERS=INTERNAL://kafka2:19096,CONTROLLER://kafka2:9097,EXTERNAL://0.0.0.0:9096
+      - KAFKA_CLUSTER_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka0:9093,1@kafka1:9095,2@kafka2:9097
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions.sh", "--bootstrap-server", "kafka2:19096"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - 127.0.0.1:9096:9096
+    networks:
+      - axs_kafka
+  kafka1:
+    container_name: kafka1
+    restart: always
+    image: bitnami/kafka:4.0.0
+    environment:
+      - BITNAMI_DEBUG=true
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_ADVERTISED_LISTENERS=INTERNAL://kafka1:19094,CONTROLLER://kafka1:9095,EXTERNAL://localhost:9094
+      - KAFKA_CFG_LISTENERS=INTERNAL://kafka1:19094,CONTROLLER://kafka1:9095,EXTERNAL://0.0.0.0:9094
+      - KAFKA_CLUSTER_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka0:9093,1@kafka1:9095,2@kafka2:9097
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions.sh", "--bootstrap-server", "kafka1:19094"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - 127.0.0.1:9094:9094
+    networks:
+      - axs_kafka
+  kafka0:
+    container_name: kafka0
+    restart: always
+    image: bitnami/kafka:4.0.0
+    environment:
+      - BITNAMI_DEBUG=true
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_ADVERTISED_LISTENERS=INTERNAL://kafka0:19092,CONTROLLER://kafka0:9093,EXTERNAL://localhost:9092
+      - KAFKA_CFG_LISTENERS=INTERNAL://kafka0:19092,CONTROLLER://kafka0:9093,EXTERNAL://0.0.0.0:9092
+      - KAFKA_CLUSTER_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka0:9093,1@kafka1:9095,2@kafka2:9097
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions.sh", "--bootstrap-server", "kafka0:19092"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - 127.0.0.1:9092:9092
+    networks:
+      - axs_kafka
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 127.0.0.1:8081:8080
+    depends_on:
+      - kafka0
+    environment:
+      - DYNAMIC_CONFIG_ENABLED=true
+      - KAFKA_CLUSTERS_0_NAME=wizard_test
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka0:19092
+    networks:
+      - axs_kafka
+  setup:
+    image: axs-setup:latest
+    container_name: axs-setup
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka0:
+        condition: service_healthy
+      kafka1:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+    network_mode: "host"
+    command:
+      - -sql-driver=postgres
+      - -sql-dsn=postgres://test:test@localhost:5432/local_test?sslmode=disable
+      - -kafka-broker=localhost:9092
+      - -run-seed=true
+
+networks:
+  axs_kafka:
+    driver: bridge

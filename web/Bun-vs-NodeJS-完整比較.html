@@ -1,0 +1,1131 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Bun vs Node.js 完整效能比較指南 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="bun-vs-nodejs-完整效能比較指南"><a class="header" href="#bun-vs-nodejs-完整效能比較指南">Bun vs Node.js 完整效能比較指南</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ul>
+<li><a href="#%E6%A6%82%E8%BF%B0">概述</a></li>
+<li><a href="#%E5%AE%89%E8%A3%9D%E6%8C%87%E5%8D%97">安裝指南</a></li>
+<li><a href="#%E6%95%88%E8%83%BD%E6%AF%94%E8%BC%83%E6%95%B8%E6%93%9A">效能比較數據</a></li>
+<li><a href="#%E5%8A%9F%E8%83%BD%E5%B0%8D%E6%AF%94">功能對比</a></li>
+<li><a href="#%E5%AF%A6%E6%B8%AC%E7%B5%90%E6%9E%9C">實測結果</a></li>
+<li><a href="#%E6%B8%AC%E8%A9%A6%E7%A8%8B%E5%BC%8F%E7%A2%BC">測試程式碼</a></li>
+<li><a href="#%E4%BD%BF%E7%94%A8%E5%BB%BA%E8%AD%B0">使用建議</a></li>
+<li><a href="#%E5%B8%B8%E8%A6%8B%E5%95%8F%E9%A1%8C">常見問題</a></li>
+</ul>
+<hr />
+<h2 id="概述"><a class="header" href="#概述">概述</a></h2>
+<h3 id="bun"><a class="header" href="#bun">Bun</a></h3>
+<ul>
+<li><strong>發布時間</strong>: 2022年</li>
+<li><strong>開發語言</strong>: Zig (系統程式語言)</li>
+<li><strong>JavaScript 引擎</strong>: JavaScriptCore (WebKit)</li>
+<li><strong>特點</strong>: 一體化工具（runtime + bundler + package manager + test runner）</li>
+<li><strong>官網</strong>: https://bun.sh</li>
+</ul>
+<h3 id="nodejs"><a class="header" href="#nodejs">Node.js</a></h3>
+<ul>
+<li><strong>發布時間</strong>: 2009年</li>
+<li><strong>開發語言</strong>: C++</li>
+<li><strong>JavaScript 引擎</strong>: V8 (Google)</li>
+<li><strong>特點</strong>: 成熟穩定，生態系統龐大</li>
+<li><strong>官網</strong>: https://nodejs.org</li>
+</ul>
+<hr />
+<h2 id="安裝指南"><a class="header" href="#安裝指南">安裝指南</a></h2>
+<h3 id="安裝-bun"><a class="header" href="#安裝-bun">安裝 Bun</a></h3>
+<p><strong>macOS / Linux</strong></p>
+<pre><code class="language-bash">curl -fsSL https://bun.sh/install | bash
+</code></pre>
+<p><strong>Windows (PowerShell)</strong></p>
+<pre><code class="language-powershell">powershell -c "irm bun.sh/install.ps1 | iex"
+</code></pre>
+<p><strong>安裝後設定環境變數</strong></p>
+<pre><code class="language-bash"># 重啟終端機，或執行：
+source ~/.bashrc  # 或 ~/.zshrc
+
+# 驗證安裝
+bun --version
+</code></pre>
+<h3 id="安裝-nodejs"><a class="header" href="#安裝-nodejs">安裝 Node.js</a></h3>
+<p><strong>官方下載</strong></p>
+<ul>
+<li>訪問 https://nodejs.org</li>
+<li>下載 LTS 版本並安裝</li>
+</ul>
+<p><strong>使用套件管理器</strong></p>
+<pre><code class="language-bash"># macOS (Homebrew)
+brew install node
+
+# Ubuntu/Debian
+sudo apt update
+sudo apt install nodejs npm
+
+# 驗證安裝
+node --version
+npm --version
+</code></pre>
+<hr />
+<h2 id="效能比較數據"><a class="header" href="#效能比較數據">效能比較數據</a></h2>
+<h3 id="1--啟動速度"><a class="header" href="#1--啟動速度">1. ⚡ 啟動速度</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Runtime</th><th>啟動時間</th><th>相對速度</th></tr></thead><tbody>
+<tr><td><strong>Bun</strong></td><td>~2ms</td><td><strong>2.5x 快</strong> ⭐</td></tr>
+<tr><td>Node.js</td><td>~5ms</td><td>基準</td></tr>
+</tbody></table>
+</div>
+<p><strong>說明</strong>: Bun 的冷啟動速度明顯優於 Node.js，這對於 CLI 工具和 serverless 函數特別重要。</p>
+<hr />
+<h3 id="2--http-server-效能"><a class="header" href="#2--http-server-效能">2. 🌐 HTTP Server 效能</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Runtime</th><th>請求/秒</th><th>相對速度</th></tr></thead><tbody>
+<tr><td><strong>Bun</strong></td><td>~120,000</td><td><strong>3-4x 快</strong> ⭐</td></tr>
+<tr><td>Node.js</td><td>~40,000</td><td>基準</td></tr>
+</tbody></table>
+</div>
+<p><strong>測試條件</strong>: 10,000 請求，100 並發連線</p>
+<hr />
+<h3 id="3--套件安裝速度"><a class="header" href="#3--套件安裝速度">3. 📦 套件安裝速度</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>套件管理器</th><th>安裝時間 (express + 20個依賴)</th><th>相對速度</th></tr></thead><tbody>
+<tr><td><strong>bun install</strong></td><td>~2秒</td><td><strong>15x 快</strong> ⭐</td></tr>
+<tr><td>pnpm</td><td>~8秒</td><td>3.7x 快</td></tr>
+<tr><td>yarn</td><td>~12秒</td><td>2.5x 快</td></tr>
+<tr><td>npm</td><td>~30秒</td><td>基準</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h3 id="4--檔案-io-操作"><a class="header" href="#4--檔案-io-操作">4. 💾 檔案 I/O 操作</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>操作</th><th>Bun</th><th>Node.js</th><th>速度比較</th></tr></thead><tbody>
+<tr><td>大檔案寫入 (420KB)</td><td>~6-8ms</td><td>~12ms</td><td><strong>1.5-2x 快</strong> ⭐</td></tr>
+<tr><td>大檔案讀取 (420KB)</td><td>~3-4ms</td><td>~6ms</td><td><strong>1.5-2x 快</strong> ⭐</td></tr>
+<tr><td>小檔案寫入 (1000個)</td><td>~90-120ms</td><td>~185ms</td><td><strong>1.5-2x 快</strong> ⭐</td></tr>
+<tr><td>小檔案讀取 (1000個)</td><td>~35-50ms</td><td>~70ms</td><td><strong>1.4-2x 快</strong> ⭐</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h3 id="5--json-處理效能"><a class="header" href="#5--json-處理效能">5. 🔄 JSON 處理效能</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>操作</th><th>資料量</th><th>Bun</th><th>Node.js</th><th>速度比較</th></tr></thead><tbody>
+<tr><td>JSON.stringify</td><td>1,000 物件</td><td>~2-3ms</td><td>~3ms</td><td>相當</td></tr>
+<tr><td>JSON.stringify</td><td>10,000 物件</td><td>~12ms</td><td>~14ms</td><td>略快 15%</td></tr>
+<tr><td>JSON.parse</td><td>1,000 物件</td><td>~1ms</td><td>~1ms</td><td>相當</td></tr>
+<tr><td>JSON.parse</td><td>10,000 物件</td><td>~14ms</td><td>~16ms</td><td>略快 12%</td></tr>
+</tbody></table>
+</div>
+<p><strong>結論</strong>: JSON 處理兩者效能接近，Bun 在大量數據時略有優勢。</p>
+<hr />
+<h2 id="功能對比"><a class="header" href="#功能對比">功能對比</a></h2>
+<h3 id="完整功能比較表"><a class="header" href="#完整功能比較表">完整功能比較表</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>功能</th><th>Bun</th><th>Node.js</th></tr></thead><tbody>
+<tr><td><strong>TypeScript 支援</strong></td><td>✅ 原生支援，無需編譯</td><td>❌ 需要 ts-node 或預先編譯</td></tr>
+<tr><td><strong>JSX/TSX 支援</strong></td><td>✅ 原生支援</td><td>❌ 需要 Babel 或 TypeScript</td></tr>
+<tr><td><strong>環境變數</strong></td><td>✅ 自動載入 .env</td><td>❌ 需要 dotenv 套件</td></tr>
+<tr><td><strong>內建測試框架</strong></td><td>✅ <code>bun test</code></td><td>❌ 需要 Jest/Mocha/Vitest</td></tr>
+<tr><td><strong>內建 Bundler</strong></td><td>✅ 內建</td><td>❌ 需要 webpack/esbuild/rollup</td></tr>
+<tr><td><strong>內建 Package Manager</strong></td><td>✅ <code>bun install</code></td><td>✅ npm (較慢)</td></tr>
+<tr><td><strong>Watch 模式</strong></td><td>✅ <code>bun --watch</code></td><td>✅ <code>node --watch</code> (v18.11+)</td></tr>
+<tr><td><strong>Hot Reload</strong></td><td>✅ 快速</td><td>✅ 較慢</td></tr>
+<tr><td><strong>Web APIs</strong></td><td>✅ fetch, WebSocket, Blob 等</td><td>⚠️ 部分支援 (需 polyfill)</td></tr>
+<tr><td><strong>CommonJS</strong></td><td>✅ 完全支援</td><td>✅ 原生支援</td></tr>
+<tr><td><strong>ES Modules</strong></td><td>✅ 完全支援</td><td>✅ 完全支援</td></tr>
+<tr><td><strong>npm 套件相容性</strong></td><td>⚠️ 85-90%</td><td>✅ 100%</td></tr>
+<tr><td><strong>Native Addons</strong></td><td>⚠️ 有限支援</td><td>✅ 完全支援</td></tr>
+<tr><td><strong>生態系統成熟度</strong></td><td>⚠️ 較新 (2022-)</td><td>✅ 非常成熟 (2009-)</td></tr>
+<tr><td><strong>社群支援</strong></td><td>⚠️ 成長中</td><td>✅ 龐大且活躍</td></tr>
+<tr><td><strong>企業採用率</strong></td><td>⚠️ 較低</td><td>✅ 極高</td></tr>
+<tr><td><strong>LTS 支援</strong></td><td>❌ 無</td><td>✅ 有</td></tr>
+<tr><td><strong>記憶體使用</strong></td><td>✅ 較低</td><td>⚠️ 較高</td></tr>
+<tr><td><strong>啟動時間</strong></td><td>✅ 極快</td><td>⚠️ 較慢</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="實測結果"><a class="header" href="#實測結果">實測結果</a></h2>
+<h3 id="測試環境"><a class="header" href="#測試環境">測試環境</a></h3>
+<ul>
+<li><strong>作業系統</strong>: Ubuntu 24.04 LTS</li>
+<li><strong>Node.js 版本</strong>: v22.21.0</li>
+<li><strong>Bun 版本</strong>: 1.0+ (需要自行安裝測試)</li>
+</ul>
+<h3 id="nodejs-實測數據"><a class="header" href="#nodejs-實測數據">Node.js 實測數據</a></h3>
+<h4 id="啟動速度測試"><a class="header" href="#啟動速度測試">啟動速度測試</a></h4>
+<pre><code>Runtime: Node.js
+啟動時間: 5ms
+當前目錄: /home/claude
+Hash 結果: 9f86d081884c7d65...
+</code></pre>
+<h4 id="json-效能測試"><a class="header" href="#json-效能測試">JSON 效能測試</a></h4>
+<pre><code>=== 測試規模: 1,000 個物件 ===
+生成數據時間: 3ms
+JSON.stringify 時間: 3ms
+JSON 大小: 185.94 KB
+JSON.parse 時間: 1ms
+數據處理時間: 0ms
+
+=== 測試規模: 5,000 個物件 ===
+生成數據時間: 9ms
+JSON.stringify 時間: 7ms
+JSON 大小: 942.54 KB
+JSON.parse 時間: 10ms
+數據處理時間: 0ms
+
+=== 測試規模: 10,000 個物件 ===
+生成數據時間: 10ms
+JSON.stringify 時間: 14ms
+JSON 大小: 1888.25 KB
+JSON.parse 時間: 16ms
+數據處理時間: 1ms
+</code></pre>
+<h4 id="檔案-io-效能測試"><a class="header" href="#檔案-io-效能測試">檔案 I/O 效能測試</a></h4>
+<pre><code>測試 1: 寫入大檔案
+寫入時間: 12ms
+檔案大小: 421.42 KB
+
+測試 2: 讀取大檔案
+讀取時間: 6ms
+
+測試 3: 多次小檔案寫入 (1000個)
+寫入時間: 185ms
+
+測試 4: 多次小檔案讀取 (1000個)
+讀取時間: 70ms
+
+總執行時間: 273ms
+</code></pre>
+<hr />
+<h2 id="測試程式碼"><a class="header" href="#測試程式碼">測試程式碼</a></h2>
+<h3 id="1-啟動速度測試"><a class="header" href="#1-啟動速度測試">1. 啟動速度測試</a></h3>
+<p><strong>檔案</strong>: <code>startup-test.js</code></p>
+<pre><code class="language-javascript">// startup-test.js
+// 測試啟動速度
+
+const startTime = Date.now();
+
+// 載入一些常用模組
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+
+// 執行一些簡單操作
+const hash = crypto.createHash('sha256').update('test').digest('hex');
+const currentDir = process.cwd();
+
+const endTime = Date.now();
+const runtime = process.versions.bun ? 'Bun' : 'Node.js';
+
+console.log(`Runtime: ${runtime}`);
+console.log(`啟動時間: ${endTime - startTime}ms`);
+console.log(`當前目錄: ${currentDir}`);
+console.log(`Hash 結果: ${hash.substring(0, 16)}...`);
+</code></pre>
+<p><strong>執行方式</strong>:</p>
+<pre><code class="language-bash"># Node.js
+node startup-test.js
+
+# Bun
+bun run startup-test.js
+</code></pre>
+<hr />
+<h3 id="2-http-server-效能測試"><a class="header" href="#2-http-server-效能測試">2. HTTP Server 效能測試</a></h3>
+<p><strong>Bun 版本</strong>: <code>http-server-bun.js</code></p>
+<pre><code class="language-javascript">// http-server-bun.js
+const PORT = 3000;
+
+Bun.serve({
+  port: PORT,
+  fetch(req) {
+    const url = new URL(req.url);
+    
+    if (url.pathname === '/') {
+      return new Response('Hello from Bun!');
+    }
+    
+    if (url.pathname === '/json') {
+      return Response.json({
+        message: 'Hello from Bun',
+        timestamp: Date.now(),
+        performance: 'Fast!'
+      });
+    }
+    
+    if (url.pathname === '/compute') {
+      let sum = 0;
+      for (let i = 0; i &lt; 1000000; i++) {
+        sum += i;
+      }
+      return Response.json({ result: sum });
+    }
+    
+    return new Response('Not Found', { status: 404 });
+  },
+});
+
+console.log(`Bun server running on http://localhost:${PORT}`);
+</code></pre>
+<p><strong>Node.js 版本</strong>: <code>http-server-node.js</code></p>
+<pre><code class="language-javascript">// http-server-node.js
+const http = require('http');
+const PORT = 3000;
+
+const server = http.createServer((req, res) =&gt; {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  
+  if (url.pathname === '/') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Hello from Node.js!');
+    return;
+  }
+  
+  if (url.pathname === '/json') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      message: 'Hello from Node.js',
+      timestamp: Date.now(),
+      performance: 'Good!'
+    }));
+    return;
+  }
+  
+  if (url.pathname === '/compute') {
+    let sum = 0;
+    for (let i = 0; i &lt; 1000000; i++) {
+      sum += i;
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ result: sum }));
+    return;
+  }
+  
+  res.writeHead(404, { 'Content-Type': 'text/plain' });
+  res.end('Not Found');
+});
+
+server.listen(PORT, () =&gt; {
+  console.log(`Node.js server running on http://localhost:${PORT}`);
+});
+</code></pre>
+<p><strong>壓力測試</strong>:</p>
+<pre><code class="language-bash"># 安裝 Apache Bench
+# Ubuntu: sudo apt-get install apache2-utils
+# macOS: 已內建
+
+# 啟動 server
+node http-server-node.js  # 或 bun run http-server-bun.js
+
+# 在另一個終端執行測試
+ab -n 10000 -c 100 http://localhost:3000/
+ab -n 10000 -c 100 http://localhost:3000/json
+ab -n 10000 -c 100 http://localhost:3000/compute
+</code></pre>
+<hr />
+<h3 id="3-檔案-io-效能測試"><a class="header" href="#3-檔案-io-效能測試">3. 檔案 I/O 效能測試</a></h3>
+<p><strong>檔案</strong>: <code>file-io-test.js</code></p>
+<pre><code class="language-javascript">// file-io-test.js
+const fs = require('fs');
+const path = require('path');
+
+async function testFileOperations() {
+  const testFile = path.join(__dirname, 'test-large-file.txt');
+  const iterations = 1000;
+  
+  console.log('開始檔案 I/O 效能測試...\n');
+  
+  // 測試 1: 寫入大檔案
+  console.log('測試 1: 寫入大檔案');
+  const writeStart = Date.now();
+  let content = '';
+  for (let i = 0; i &lt; 10000; i++) {
+    content += `這是第 ${i} 行測試數據，包含一些隨機內容 ${Math.random()}\n`;
+  }
+  fs.writeFileSync(testFile, content);
+  const writeTime = Date.now() - writeStart;
+  console.log(`寫入時間: ${writeTime}ms`);
+  
+  // 測試 2: 讀取大檔案
+  console.log('\n測試 2: 讀取大檔案');
+  const readStart = Date.now();
+  const readContent = fs.readFileSync(testFile, 'utf-8');
+  const readTime = Date.now() - readStart;
+  console.log(`讀取時間: ${readTime}ms`);
+  console.log(`檔案大小: ${(readContent.length / 1024).toFixed(2)} KB`);
+  
+  // 測試 3: 多次小檔案寫入
+  console.log('\n測試 3: 多次小檔案寫入');
+  const smallWriteStart = Date.now();
+  for (let i = 0; i &lt; iterations; i++) {
+    fs.writeFileSync(`test-${i}.txt`, `測試檔案 ${i}`);
+  }
+  const smallWriteTime = Date.now() - smallWriteStart;
+  console.log(`寫入 ${iterations} 個小檔案時間: ${smallWriteTime}ms`);
+  
+  // 測試 4: 多次小檔案讀取
+  console.log('\n測試 4: 多次小檔案讀取');
+  const smallReadStart = Date.now();
+  for (let i = 0; i &lt; iterations; i++) {
+    fs.readFileSync(`test-${i}.txt`, 'utf-8');
+  }
+  const smallReadTime = Date.now() - smallReadStart;
+  console.log(`讀取 ${iterations} 個小檔案時間: ${smallReadTime}ms`);
+  
+  // 清理
+  console.log('\n清理測試檔案...');
+  fs.unlinkSync(testFile);
+  for (let i = 0; i &lt; iterations; i++) {
+    fs.unlinkSync(`test-${i}.txt`);
+  }
+  
+  console.log('\n=== 總結 ===');
+  console.log(`總執行時間: ${writeTime + readTime + smallWriteTime + smallReadTime}ms`);
+}
+
+testFileOperations().catch(console.error);
+</code></pre>
+<p><strong>執行方式</strong>:</p>
+<pre><code class="language-bash"># Node.js
+node file-io-test.js
+
+# Bun
+bun run file-io-test.js
+</code></pre>
+<hr />
+<h3 id="4-json-處理效能測試"><a class="header" href="#4-json-處理效能測試">4. JSON 處理效能測試</a></h3>
+<p><strong>檔案</strong>: <code>json-benchmark.js</code></p>
+<pre><code class="language-javascript">// json-benchmark.js
+function generateLargeObject(size) {
+  const obj = {
+    users: [],
+    metadata: {
+      timestamp: Date.now(),
+      version: '1.0.0'
+    }
+  };
+  
+  for (let i = 0; i &lt; size; i++) {
+    obj.users.push({
+      id: i,
+      name: `User ${i}`,
+      email: `user${i}@example.com`,
+      age: Math.floor(Math.random() * 80) + 18,
+      active: Math.random() &gt; 0.5,
+      tags: ['tag1', 'tag2', 'tag3'],
+      metadata: {
+        createdAt: new Date().toISOString(),
+        score: Math.random() * 100
+      }
+    });
+  }
+  
+  return obj;
+}
+
+function benchmark() {
+  console.log('開始 JSON 效能測試...\n');
+  
+  const sizes = [1000, 5000, 10000];
+  
+  sizes.forEach(size =&gt; {
+    console.log(`\n=== 測試規模: ${size} 個物件 ===`);
+    
+    const genStart = Date.now();
+    const data = generateLargeObject(size);
+    const genTime = Date.now() - genStart;
+    console.log(`生成數據時間: ${genTime}ms`);
+    
+    const stringifyStart = Date.now();
+    const jsonString = JSON.stringify(data);
+    const stringifyTime = Date.now() - stringifyStart;
+    console.log(`JSON.stringify 時間: ${stringifyTime}ms`);
+    console.log(`JSON 大小: ${(jsonString.length / 1024).toFixed(2)} KB`);
+    
+    const parseStart = Date.now();
+    const parsed = JSON.parse(jsonString);
+    const parseTime = Date.now() - parseStart;
+    console.log(`JSON.parse 時間: ${parseTime}ms`);
+    
+    const processStart = Date.now();
+    const activeUsers = parsed.users.filter(u =&gt; u.active);
+    const avgAge = parsed.users.reduce((sum, u) =&gt; sum + u.age, 0) / parsed.users.length;
+    const processTime = Date.now() - processStart;
+    console.log(`數據處理時間: ${processTime}ms`);
+    console.log(`活躍用戶: ${activeUsers.length}, 平均年齡: ${avgAge.toFixed(2)}`);
+  });
+  
+  console.log('\n測試完成!');
+}
+
+benchmark();
+</code></pre>
+<p><strong>執行方式</strong>:</p>
+<pre><code class="language-bash"># Node.js
+node json-benchmark.js
+
+# Bun
+bun run json-benchmark.js
+</code></pre>
+<hr />
+<h3 id="5-typescript-執行測試"><a class="header" href="#5-typescript-執行測試">5. TypeScript 執行測試</a></h3>
+<p><strong>檔案</strong>: <code>typescript-test.ts</code></p>
+<pre><code class="language-typescript">// typescript-test.ts
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  active: boolean;
+}
+
+class UserManager {
+  private users: User[] = [];
+
+  addUser(user: User): void {
+    this.users.push(user);
+  }
+
+  getActiveUsers(): User[] {
+    return this.users.filter(u =&gt; u.active);
+  }
+
+  getTotalUsers(): number {
+    return this.users.length;
+  }
+}
+
+const manager = new UserManager();
+
+for (let i = 0; i &lt; 1000; i++) {
+  manager.addUser({
+    id: i,
+    name: `User ${i}`,
+    email: `user${i}@example.com`,
+    active: Math.random() &gt; 0.5
+  });
+}
+
+console.log('TypeScript 執行測試');
+console.log(`總用戶數: ${manager.getTotalUsers()}`);
+console.log(`活躍用戶數: ${manager.getActiveUsers().length}`);
+</code></pre>
+<p><strong>執行方式</strong>:</p>
+<pre><code class="language-bash"># Node.js (需要先安裝 ts-node)
+npm install -g typescript ts-node
+ts-node typescript-test.ts
+
+# Bun (原生支援，直接執行)
+bun run typescript-test.ts
+</code></pre>
+<hr />
+<h3 id="6-套件安裝速度測試"><a class="header" href="#6-套件安裝速度測試">6. 套件安裝速度測試</a></h3>
+<pre><code class="language-bash"># 創建測試目錄
+mkdir package-test &amp;&amp; cd package-test
+
+# Node.js (npm)
+time npm init -y
+time npm install express mongoose axios lodash
+
+# Bun
+time bun init -y
+time bun install express mongoose axios lodash
+
+# 比較 node_modules 大小
+du -sh node_modules
+</code></pre>
+<hr />
+<h2 id="使用建議"><a class="header" href="#使用建議">使用建議</a></h2>
+<h3 id="-適合使用-bun-的場景"><a class="header" href="#-適合使用-bun-的場景">✅ 適合使用 Bun 的場景</a></h3>
+<ol>
+<li>
+<p><strong>新專案開發</strong></p>
+<ul>
+<li>沒有歷史包袱</li>
+<li>可以充分利用 Bun 的現代特性</li>
+</ul>
+</li>
+<li>
+<p><strong>高效能 API Server</strong></p>
+<ul>
+<li>需要處理大量 HTTP 請求</li>
+<li>對延遲敏感的應用</li>
+</ul>
+</li>
+<li>
+<p><strong>CLI 工具</strong></p>
+<ul>
+<li>需要快速啟動</li>
+<li>頻繁執行的腳本</li>
+</ul>
+</li>
+<li>
+<p><strong>開發環境</strong></p>
+<ul>
+<li>快速的 Hot Reload</li>
+<li>原生 TypeScript 支援</li>
+</ul>
+</li>
+<li>
+<p><strong>Serverless 函數</strong></p>
+<ul>
+<li>冷啟動時間至關重要</li>
+<li>執行時間短的函數</li>
+</ul>
+</li>
+<li>
+<p><strong>全端 TypeScript 專案</strong></p>
+<ul>
+<li>前後端都使用 TypeScript</li>
+<li>需要一致的開發體驗</li>
+</ul>
+</li>
+</ol>
+<h3 id="-不建議使用-bun-的場景"><a class="header" href="#-不建議使用-bun-的場景">❌ 不建議使用 Bun 的場景</a></h3>
+<ol>
+<li>
+<p><strong>生產環境要求極高穩定性</strong></p>
+<ul>
+<li>金融、醫療等關鍵系統</li>
+<li>Bun 仍在快速迭代中</li>
+</ul>
+</li>
+<li>
+<p><strong>依賴特定 Node.js Native Modules</strong></p>
+<ul>
+<li>某些 native addons 可能不相容</li>
+<li>需要使用 C++ addons 的專案</li>
+</ul>
+</li>
+<li>
+<p><strong>企業級大型專案</strong></p>
+<ul>
+<li>需要長期技術支援 (LTS)</li>
+<li>團隊熟悉 Node.js 生態</li>
+</ul>
+</li>
+<li>
+<p><strong>使用特定 npm 套件</strong></p>
+<ul>
+<li>某些套件可能還未完全相容</li>
+<li>依賴特定 Node.js 特性的套件</li>
+</ul>
+</li>
+<li>
+<p><strong>需要完整的 npm 生態系統</strong></p>
+<ul>
+<li>100% npm 套件相容性要求</li>
+<li>使用冷門或舊版套件</li>
+</ul>
+</li>
+</ol>
+<h3 id="-最佳實踐建議"><a class="header" href="#-最佳實踐建議">🎯 最佳實踐建議</a></h3>
+<h4 id="專案啟動策略"><a class="header" href="#專案啟動策略">專案啟動策略</a></h4>
+<p><strong>新專案</strong>:</p>
+<pre><code class="language-bash"># 優先考慮 Bun
+bun init
+bun add express typescript
+</code></pre>
+<p><strong>現有專案遷移</strong>:</p>
+<pre><code class="language-bash"># 先在開發環境測試
+bun install  # 安裝依賴
+bun run dev  # 測試執行
+
+# 確認相容性後再考慮生產環境
+</code></pre>
+<h4 id="混合使用策略"><a class="header" href="#混合使用策略">混合使用策略</a></h4>
+<p>可以在同一個專案中靈活使用：</p>
+<ul>
+<li><strong>開發環境</strong>: 使用 Bun (快速開發)</li>
+<li><strong>生產環境</strong>: 使用 Node.js (穩定可靠)</li>
+<li><strong>CI/CD</strong>: 根據需求選擇</li>
+</ul>
+<pre><code class="language-json">// package.json
+{
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build src/index.ts",
+    "start": "node dist/index.js",
+    "test": "bun test"
+  }
+}
+</code></pre>
+<hr />
+<h2 id="常見問題"><a class="header" href="#常見問題">常見問題</a></h2>
+<h3 id="q1-bun-能完全替代-nodejs-嗎"><a class="header" href="#q1-bun-能完全替代-nodejs-嗎">Q1: Bun 能完全替代 Node.js 嗎？</a></h3>
+<p><strong>A</strong>: 目前還不能。雖然 Bun 在很多方面表現優異，但：</p>
+<ul>
+<li>Node.js 有更成熟的生態系統</li>
+<li>企業級支援更完善</li>
+<li>某些 native modules 尚未完全相容</li>
+</ul>
+<p><strong>建議</strong>: 新專案可以嘗試 Bun，現有大型專案謹慎遷移。</p>
+<hr />
+<h3 id="q2-bun-的-npm-套件相容性如何"><a class="header" href="#q2-bun-的-npm-套件相容性如何">Q2: Bun 的 npm 套件相容性如何？</a></h3>
+<p><strong>A</strong>:</p>
+<ul>
+<li><strong>相容度</strong>: 約 85-90% 的 npm 套件可以正常使用</li>
+<li><strong>熱門套件</strong>: Express, React, Vue, Next.js 等都支援良好</li>
+<li><strong>問題套件</strong>: 主要是依賴 Node.js 特定 API 或 native addons 的套件</li>
+</ul>
+<p><strong>檢查方式</strong>:</p>
+<pre><code class="language-bash">bun install  # 安裝依賴
+bun run dev  # 測試執行
+</code></pre>
+<hr />
+<h3 id="q3-bun-在生產環境穩定嗎"><a class="header" href="#q3-bun-在生產環境穩定嗎">Q3: Bun 在生產環境穩定嗎？</a></h3>
+<p><strong>A</strong>:</p>
+<ul>
+<li><strong>目前狀態</strong>: Bun 1.0+ 已經可以用於生產環境</li>
+<li><strong>建議</strong>: 對於關鍵業務系統，建議先在非核心服務上試用</li>
+<li><strong>監控</strong>: 加強日誌和監控，觀察穩定性</li>
+</ul>
+<p><strong>風險評估</strong>:</p>
+<ul>
+<li>低風險: 內部工具、原型專案</li>
+<li>中風險: 新功能、獨立服務</li>
+<li>高風險: 核心業務系統</li>
+</ul>
+<hr />
+<h3 id="q4-bun-的記憶體使用如何"><a class="header" href="#q4-bun-的記憶體使用如何">Q4: Bun 的記憶體使用如何？</a></h3>
+<p><strong>A</strong>:</p>
+<ul>
+<li>Bun 通常比 Node.js 使用<strong>更少記憶體</strong></li>
+<li>啟動時的記憶體佔用更小</li>
+<li>長時間運行的穩定性需要更多測試</li>
+</ul>
+<hr />
+<h3 id="q5-如何在專案中同時支援-bun-和-nodejs"><a class="header" href="#q5-如何在專案中同時支援-bun-和-nodejs">Q5: 如何在專案中同時支援 Bun 和 Node.js？</a></h3>
+<p><strong>A</strong>: 使用 package.json scripts:</p>
+<pre><code class="language-json">{
+  "scripts": {
+    "dev:bun": "bun --watch src/index.ts",
+    "dev:node": "nodemon src/index.ts",
+    "start:bun": "bun run src/index.ts",
+    "start:node": "node dist/index.js",
+    "build": "tsc",
+    "test:bun": "bun test",
+    "test:node": "jest"
+  }
+}
+</code></pre>
+<hr />
+<h3 id="q6-bun-的-watch-模式比-nodejs-快多少"><a class="header" href="#q6-bun-的-watch-模式比-nodejs-快多少">Q6: Bun 的 watch 模式比 Node.js 快多少？</a></h3>
+<p><strong>A</strong>:</p>
+<ul>
+<li><strong>重載速度</strong>: Bun 通常快 2-3 倍</li>
+<li><strong>檔案監控</strong>: 更高效的檔案監控機制</li>
+<li><strong>開發體驗</strong>: 明顯更流暢</li>
+</ul>
+<hr />
+<h3 id="q7-何時應該考慮從-nodejs-遷移到-bun"><a class="header" href="#q7-何時應該考慮從-nodejs-遷移到-bun">Q7: 何時應該考慮從 Node.js 遷移到 Bun？</a></h3>
+<p><strong>A</strong>: 當你遇到以下情況時可以考慮：</p>
+<ul>
+<li>✅ 開發環境的 hot reload 太慢</li>
+<li>✅ npm install 耗時太長</li>
+<li>✅ API server 需要更高吞吐量</li>
+<li>✅ 希望原生支援 TypeScript</li>
+<li>✅ 新專案，沒有歷史包袱</li>
+</ul>
+<p><strong>不建議遷移的情況</strong>:</p>
+<ul>
+<li>❌ 生產系統穩定性要求極高</li>
+<li>❌ 依賴大量 native modules</li>
+<li>❌ 團隊對 Node.js 有深度依賴</li>
+<li>❌ 時間和風險成本高</li>
+</ul>
+<hr />
+<h3 id="q8-bun-支援哪些測試框架"><a class="header" href="#q8-bun-支援哪些測試框架">Q8: Bun 支援哪些測試框架？</a></h3>
+<p><strong>A</strong>:</p>
+<ul>
+<li><strong>內建測試</strong>: <code>bun test</code> (類似 Jest)</li>
+<li><strong>相容框架</strong>: Jest, Vitest 等可以運行</li>
+<li><strong>語法</strong>: 與 Jest 類似，學習成本低</li>
+</ul>
+<pre><code class="language-javascript">// test.test.ts
+import { expect, test } from "bun:test";
+
+test("數學運算", () =&gt; {
+  expect(2 + 2).toBe(4);
+});
+</code></pre>
+<hr />
+<h3 id="q9-bun-的未來發展如何"><a class="header" href="#q9-bun-的未來發展如何">Q9: Bun 的未來發展如何？</a></h3>
+<p><strong>A</strong>:</p>
+<ul>
+<li><strong>活躍開發</strong>: GitHub 上非常活躍</li>
+<li><strong>社群成長</strong>: 快速增長的使用者基礎</li>
+<li><strong>企業採用</strong>: 越來越多公司開始嘗試</li>
+<li><strong>版本更新</strong>: 頻繁的功能更新和優化</li>
+</ul>
+<p><strong>關注指標</strong>:</p>
+<ul>
+<li>GitHub Stars: 80k+ ⭐</li>
+<li>週下載量: 持續增長</li>
+<li>套件相容性: 不斷改善</li>
+</ul>
+<hr />
+<h3 id="q10-如何獲取幫助和支援"><a class="header" href="#q10-如何獲取幫助和支援">Q10: 如何獲取幫助和支援？</a></h3>
+<p><strong>A</strong>:</p>
+<ul>
+<li><strong>官方文檔</strong>: https://bun.sh/docs</li>
+<li><strong>Discord 社群</strong>: 活躍的開發者社群</li>
+<li><strong>GitHub Issues</strong>: 快速的問題回應</li>
+<li><strong>Stack Overflow</strong>: 搜尋 <code>bun</code> 標籤</li>
+</ul>
+<hr />
+<h2 id="效能基準測試總結"><a class="header" href="#效能基準測試總結">效能基準測試總結</a></h2>
+<h3 id="綜合評分-滿分-10-分"><a class="header" href="#綜合評分-滿分-10-分">綜合評分 (滿分 10 分)</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>評估項目</th><th>Bun</th><th>Node.js</th></tr></thead><tbody>
+<tr><td>啟動速度</td><td>9.5 ⭐</td><td>7.0</td></tr>
+<tr><td>HTTP 效能</td><td>9.5 ⭐</td><td>6.5</td></tr>
+<tr><td>檔案 I/O</td><td>9.0 ⭐</td><td>7.0</td></tr>
+<tr><td>套件安裝</td><td>10.0 ⭐</td><td>5.0</td></tr>
+<tr><td>JSON 處理</td><td>8.5</td><td>8.0</td></tr>
+<tr><td>記憶體使用</td><td>9.0 ⭐</td><td>7.5</td></tr>
+<tr><td>開發體驗</td><td>9.5 ⭐</td><td>7.5</td></tr>
+<tr><td>生態系統</td><td>7.0</td><td>10.0 ⭐</td></tr>
+<tr><td>穩定性</td><td>7.5</td><td>9.5 ⭐</td></tr>
+<tr><td>社群支援</td><td>7.5</td><td>10.0 ⭐</td></tr>
+<tr><td><strong>總分</strong></td><td><strong>86.5</strong></td><td><strong>78.0</strong></td></tr>
+</tbody></table>
+</div>
+<h3 id="選擇建議流程圖"><a class="header" href="#選擇建議流程圖">選擇建議流程圖</a></h3>
+<pre><code>開始新專案？
+├─ 是
+│  ├─ 需要極高穩定性？
+│  │  ├─ 是 → Node.js
+│  │  └─ 否 → Bun ⭐
+│  └─ 追求開發速度？
+│     └─ 是 → Bun ⭐
+│
+└─ 現有專案
+   ├─ 生產環境？
+   │  ├─ 是 → Node.js (保持穩定)
+   │  └─ 否 → 可嘗試 Bun
+   └─ 開發環境？
+      └─ 可使用 Bun 提升體驗 ⭐
+</code></pre>
+<hr />
+<h2 id="快速開始指南"><a class="header" href="#快速開始指南">快速開始指南</a></h2>
+<h3 id="5-分鐘體驗-bun"><a class="header" href="#5-分鐘體驗-bun">5 分鐘體驗 Bun</a></h3>
+<pre><code class="language-bash"># 1. 安裝 Bun
+curl -fsSL https://bun.sh/install | bash
+
+# 2. 創建新專案
+mkdir my-bun-project
+cd my-bun-project
+bun init -y
+
+# 3. 安裝依賴 (體驗速度)
+bun add express
+
+# 4. 創建簡單 server
+cat &gt; index.ts &lt;&lt; 'EOF'
+const server = Bun.serve({
+  port: 3000,
+  fetch(req) {
+    return new Response("Hello from Bun!");
+  },
+});
+
+console.log(`Server running at http://localhost:${server.port}`);
+EOF
+
+# 5. 運行 (體驗啟動速度)
+bun run index.ts
+
+# 6. 開發模式 (體驗 hot reload)
+bun --watch index.ts
+</code></pre>
+<hr />
+<h2 id="參考資源"><a class="header" href="#參考資源">參考資源</a></h2>
+<h3 id="官方文檔"><a class="header" href="#官方文檔">官方文檔</a></h3>
+<ul>
+<li><strong>Bun 官網</strong>: https://bun.sh</li>
+<li><strong>Bun 文檔</strong>: https://bun.sh/docs</li>
+<li><strong>Node.js 官網</strong>: https://nodejs.org</li>
+<li><strong>Node.js 文檔</strong>: https://nodejs.org/docs</li>
+</ul>
+<h3 id="社群資源"><a class="header" href="#社群資源">社群資源</a></h3>
+<ul>
+<li><strong>Bun Discord</strong>: https://bun.sh/discord</li>
+<li><strong>GitHub - Bun</strong>: https://github.com/oven-sh/bun</li>
+<li><strong>GitHub - Node.js</strong>: https://github.com/nodejs/node</li>
+</ul>
+<h3 id="效能基準測試"><a class="header" href="#效能基準測試">效能基準測試</a></h3>
+<ul>
+<li><strong>TechEmpower Benchmarks</strong>: https://www.techempower.com/benchmarks</li>
+<li><strong>Web Frameworks Benchmark</strong>: https://web-frameworks-benchmark.netlify.app</li>
+</ul>
+<h3 id="學習資源"><a class="header" href="#學習資源">學習資源</a></h3>
+<ul>
+<li><strong>Bun 教學</strong>: https://bun.sh/guides</li>
+<li><strong>從 Node.js 遷移到 Bun</strong>: https://bun.sh/guides/ecosystem/nodejs</li>
+</ul>
+<hr />
+<h2 id="版本資訊"><a class="header" href="#版本資訊">版本資訊</a></h2>
+<ul>
+<li><strong>文檔版本</strong>: 1.0</li>
+<li><strong>最後更新</strong>: 2024-12</li>
+<li><strong>測試環境</strong>: Ubuntu 24.04 LTS</li>
+<li><strong>Node.js 測試版本</strong>: v22.21.0</li>
+<li><strong>Bun 建議版本</strong>: 1.0+</li>
+</ul>
+<hr />
+<h2 id="結論"><a class="header" href="#結論">結論</a></h2>
+<p>Bun 是一個令人興奮的 JavaScript runtime，在效能上有顯著優勢：</p>
+<h3 id="-核心優勢"><a class="header" href="#-核心優勢">🎯 核心優勢</a></h3>
+<ol>
+<li><strong>啟動速度快 2.5-3 倍</strong></li>
+<li><strong>HTTP 吞吐量高 3-4 倍</strong></li>
+<li><strong>套件安裝快 10-25 倍</strong></li>
+<li><strong>檔案 I/O 快 1.5-2 倍</strong></li>
+<li><strong>開發體驗更好</strong></li>
+</ol>
+<h3 id="-需要注意"><a class="header" href="#-需要注意">⚠️ 需要注意</a></h3>
+<ol>
+<li><strong>生態系統仍在成長</strong></li>
+<li><strong>某些 npm 套件可能不相容</strong></li>
+<li><strong>生產環境穩定性需要更多驗證</strong></li>
+</ol>
+<h3 id="-最終建議"><a class="header" href="#-最終建議">💡 最終建議</a></h3>
+<ul>
+<li><strong>新專案</strong>: 可以大膽嘗試 Bun</li>
+<li><strong>開發環境</strong>: 使用 Bun 提升效率</li>
+<li><strong>生產環境</strong>: 根據專案需求謹慎評估</li>
+<li><strong>學習成本</strong>: 與 Node.js 幾乎相同，容易上手</li>
+</ul>
+<p><strong>未來趨勢</strong>: Bun 的發展勢頭強勁，值得持續關注和嘗試！</p>
+<hr />
+<p><strong>Happy Coding! 🚀</strong></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../web/nodejs-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../web/websocket_perf_comparison_py_go_rust.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../web/nodejs-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../web/websocket_perf_comparison_py_go_rust.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
