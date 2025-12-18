@@ -34,7 +34,7 @@
 - [AI 訓練指南](ai-training-guide.md)
 
 ### 標註工具
-- [Roboflow 標註平台](Roboflow.md)
+- [Roboflow 標註平臺](Roboflow.md)
 
 ## 🌐 AI 生態系統
 

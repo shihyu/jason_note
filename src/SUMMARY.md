@@ -408,6 +408,7 @@
     - [深度學習與 PyTorch](ml/02_深度學習與PyTorch.md)
         - [PyTorch 基礎](ml/pytorch.md)
         - [PyTorch 安裝設定](ml/pytorch_setup.md)
+        - [從0手搓 Transformer 代碼拆解](ml/transformer-implementation-guide.md)
         - [AI 識別指南](ml/ai-recognition-guide.md)
         - [人臉辨識](ml/data/Face-Recognition/README.md)
         - [YOLO 物件偵測](ml/YOLO.md)
