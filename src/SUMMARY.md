@@ -394,6 +394,7 @@
 ## Machine Learning
 - [機器學習與深度學習完整指南](ml/README.md)
     - [機器學習基礎](ml/01_機器學習基礎.md)
+        - [機器學習常見術語完整版](ml/機器學習常見術語完整版.md)
         - [全民瘋AI系列2.0](ml/src/2021-13th-ironman/README.md)
         - [新手也能懂得AI](ml/新手也能懂得AI/ML.md)
         - [梯度下降法](ml/梯度下降法_gradient_descent.md)
