@@ -1,0 +1,45 @@
+# CSAPP閱讀記錄
+
+- [第一章：計算機系統漫遊](./01Overview)
+- [第二章：信息的表示與處理](./02Information)
+- [第三章：程序的機器級表示](./03X86MachineCode)
+- [第四章：處理器體系結構](./04CPUArchitecture)
+- [第五章：優化程序性能](./05Optimization)
+- [第六章：存儲器層次結構](./06Memory)
+- [第七章：鏈接](./07Linking)
+- [第八章：異常控制流](./08ExceptionalControlFlow)
+- [第九章：虛擬內存](./09VirtualMemory)
+- [第十章：系統級I/O](./10SystemIO)
+- [第十一章：網絡編程](./11Network)
+- [第十二章：併發編程](./12Concurrency)
+
+資料補充：
+- Posix標準：[https://www.opengroup.org/membership/forums/platform/unix](https://www.opengroup.org/membership/forums/platform/unix)
+- Linux官網：[https://www.linux.org/](https://www.linux.org/)
+- GNU官網：[https://www.gnu.org/](https://www.gnu.org/)
+- [Intel® 64 and IA-32 Architectures Software Developer’s Manual](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html)
+- [ELF-64 Object File Format, Version 1.5 Draft 2, 1998](https://uclibc.org/docs/elf-64-gen.pdf)
+- 體系結構：
+    - [計算機體系結構：量化研究方法](https://book.douban.com/subject/36108789/)
+    - [計算機組成與設計：硬件軟件接口](https://book.douban.com/subject/26604008/)
+    - [現代處理器設計：超標量處理器基礎](https://book.douban.com/subject/1161528/)
+- 編譯與鏈接：
+    - [高級編譯器設計與實現](高級編譯器設計與實現)
+    - [鏈接器和加載器](https://book.douban.com/subject/4083265/)
+    - [程序員的自我修養——鏈接、裝載與庫](https://book.douban.com/subject/3652388/)
+- 操作系統：
+    - [操作系統概念](https://book.douban.com/subject/30297919/)
+    - [現代操作系統](https://book.douban.com/subject/27096665/)
+    - [深入理解Linux內核](https://book.douban.com/subject/1230516/)
+    - [操作系統——精髓與設計原理](https://book.douban.com/subject/26993995/)
+- 系統編程：
+    - [UNIX環境高級編程](https://book.douban.com/subject/25900403/)
+    - [Linux系統編程手冊](https://book.douban.com/subject/25809330/)
+- 算法：
+    - [計算機程序設計藝術](https://book.douban.com/subject/26681685/)
+- 計算機網絡：
+    - [計算機網絡：自頂向下方法](https://book.douban.com/subject/30280001/)
+    - [計算機網絡：系統方法](https://book.douban.com/subject/26417896/)
+    - [計算機網絡](https://book.douban.com/subject/36022287/)
+    - [TCP/IP詳解 卷1：協議](https://book.douban.com/subject/26825411/)，以及卷2，卷3
+    - [Unix網絡編程](https://book.douban.com/subject/4859464/)，卷1：套接字聯網API，卷2：進程間通信
