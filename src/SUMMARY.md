@@ -343,6 +343,7 @@
 - [主流開發語言、架構與資料庫效能全解析](performance/Performance_Comparison_2025.md)
 - [效能提示](performance/Performance_Hints_zh_TW.md)
 - [Abseil 效能優化建議](performance/abseil_hints.md)
+- [Abseil 效能優化建議 (繁體中文)](performance/abseil_hints_zh_TW.md)
 
 ## Algorithm
 - [演算法](algorithm/algorithm.md)
