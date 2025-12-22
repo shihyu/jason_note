@@ -42,7 +42,7 @@ Knuth 經常被斷章取義地引用為「過早優化是萬惡之源」。[完�
   3. 上述過程給出了系統在資源使用方面的**成本**。如果您關心延遲（latency），且系統具有任何併發性，某些成本可能會重疊，您可能需要進行稍微複雜一點的分析來估計延遲。
 
 下表是 [2007 年史丹佛大學演講](https://static.googleusercontent.com/media/research.google.com/en//people/jeff/stanford-295-talk.pdf)中表格的更新版本（2007 年演講的影片已不復存在，但有一個[相關的 2011 年史丹佛演講影片](https://www.youtube.com/watch?v=modXC5IWTJI)，涵蓋了部分相同內容），它列出了需要考慮的操作類型及其粗略成本，可能對您有所幫助：
-[code] 
+```cpp 
     L1 快取參考 (L1 cache reference)                0.5 ns
     L2 快取參考 (L2 cache reference)                  3 ns
     分支預測錯誤 (Branch mispredict)                   5 ns
@@ -58,7 +58,7 @@ Knuth 經常被斷章取義地引用為「過早優化是萬惡之源」。[完�
     從磁碟循序讀取 1MB                     10,000,000 ns
     加州 -> 荷蘭 -> 加州 封包傳輸          150,000,000 ns
     
-[/code]
+```
 
 上表包含了某些基本低階操作的粗略成本。您可能還會發現追蹤與您的系統相關的高階操作估計成本很有用。例如，您可能想知道從 SQL 資料庫讀取一個點的粗略成本、與雲端服務互動的延遲，或渲染一個簡單 HTML 頁面的時間。如果您不知道不同操作的相關成本，就無法進行體面的概算！
 
@@ -127,14 +127,14 @@ Knuth 經常被斷章取義地引用為「過早優化是萬惡之源」。[完�
 除了加入批量介面外，這也簡化了新批量變體的簽名：事實證明用戶端只需要知道是否找到了所有鍵，因此我們可以返回一個 bool 而不是 Status 物件。
 
 memory_manager.h
-[code] 
+```cpp 
     class MemoryManager {
      public:
       ...
       util::StatusOr<LiveTensor> Lookup(const TensorIdProto& id);
     
-[/code]
-[code] 
+```
+```cpp 
     class MemoryManager {
      public:
       ...
@@ -148,20 +148,20 @@ memory_manager.h
       bool LookupMany(absl::Span<const LookupKey> keys,
                       absl::Span<tensorflow::Tensor> tensors);
     
-[/code]
+```
 
 加入批量 `ObjectStore::DeleteRefs` API 以攤銷鎖定開銷。
 
 object_store.h
-[code] 
+```cpp 
     template <typename T>
     class ObjectStore {
      public:
       ...
       absl::Status DeleteRef(Ref);
     
-[/code]
-[code] 
+```
+```cpp 
     template <typename T>
     class ObjectStore {
      public:
@@ -182,10 +182,10 @@ object_store.h
       return result;
     }
     
-[/code]
+```
 
 memory_tracking.cc
-[code] 
+```cpp 
     void HandleBatch(int, const plaque::Batch& input) override {
       for (const auto& t : input) {
         auto in = In(t);
@@ -198,8 +198,8 @@ memory_tracking.cc
       }
     }
     
-[/code]
-[code] 
+```
+```cpp 
     void HandleBatch(int, const plaque::Batch& input) override {
       for (const auto& t : input) {
         auto in = In(t);
@@ -214,7 +214,7 @@ memory_tracking.cc
       }
     }
     
-[/code]
+```
 
 使用 [Floyd 的堆積構建法](https://en.wikipedia.org/wiki/Heapsort#Variations) 進行高效率初始化。
 
@@ -227,7 +227,7 @@ memory_tracking.cc
 每次查詢需要解碼整個包含 K 個項目的區塊。將解碼後的項目儲存在快取中，並在未來的查詢中諮詢快取。
 
 lexicon.cc
-[code] 
+```cpp 
     void GetTokenString(int pos, std::string* out) const {
       ...
       absl::FixedArray<LexiconEntry, 32> entries(pos + 1);
@@ -240,8 +240,8 @@ lexicon.cc
         p += entries[i].remaining;  // 剩餘位元組跟隨每個項目。
       }
     
-[/code]
-[code] 
+```
+```cpp 
     mutable std::vector<absl::InlinedVector<std::string, 16>> cache_;
     ...
     void GetTokenString(int pos, std::string* out) const {
@@ -268,7 +268,7 @@ lexicon.cc
       }
       *out = cache_[skentry][pos];
     
-[/code]
+```
 
 ### 視圖類型 (View types)
 
@@ -281,29 +281,29 @@ lexicon.cc
 加入 `RPC_Stats::RecordRPC` 變體，允許用戶端傳入已經可用的 `WallTime` 值。
 
 rpc-stats.h
-[code] 
+```cpp 
     static void RecordRPC(const Name &name, const RPC_Stats_Measurement& m);
     
-[/code]
-[code] 
+```
+```cpp 
     static void RecordRPC(const Name &name, const RPC_Stats_Measurement& m,
                           WallTime now);
     
-[/code]
+```
 
 clientchannel.cc
-[code] 
+```cpp 
     const WallTime now = WallTime_Now();
     ...
     RPC_Stats::RecordRPC(stats_name, m);
     
-[/code]
-[code] 
+```
+```cpp 
     const WallTime now = WallTime_Now();
     ...
     RPC_Stats::RecordRPC(stats_name, m, now);
     
-[/code]
+```
 
 ### 執行緒相容 vs. 執行緒安全類型 (Thread-compatible vs. Thread-safe types)
 
@@ -312,34 +312,34 @@ clientchannel.cc
 使類別成為執行緒相容，因為呼叫者已經同步。
 
 hitless-transfer-phase.cc
-[code] 
+```cpp 
     TransferPhase HitlessTransferPhase::get() const {
       static CallsiteMetrics cm("HitlessTransferPhase::get");
       MonitoredMutexLock l(&cm, &mutex_);
       return phase_;
     }
     
-[/code]
-[code] 
+```
+```cpp 
     TransferPhase HitlessTransferPhase::get() const { return phase_; }
     
-[/code]
+```
 
 hitless-transfer-phase.cc
-[code] 
+```cpp 
     bool HitlessTransferPhase::AllowAllocate() const {
       static CallsiteMetrics cm("HitlessTransferPhase::AllowAllocate");
       MonitoredMutexLock l(&cm, &mutex_);
       return phase_ == TransferPhase::kNormal || phase_ == TransferPhase::kBrownout;
     }
     
-[/code]
-[code] 
+```
+```cpp 
     bool HitlessTransferPhase::AllowAllocate() const {
       return phase_ == TransferPhase::kNormal || phase_ == TransferPhase::kBrownout;
     }
     
-[/code]
+```
 
 然而，如果類型的典型用途需要同步，則優先將同步移到類型內部。這允許根據需要調整同步機制以提高效能（例如：透過分片減少競爭），而不會影響呼叫者。
 
@@ -352,7 +352,7 @@ hitless-transfer-phase.cc
 我們之前是逐個將圖節點和邊添加到循環檢測資料結構中，這需要對每條邊進行昂貴的工作。我們現在以反向後序添加整個圖，這使得循環檢測變得微道。
 
 graphcycles.h
-[code] 
+```cpp 
     class GraphCycles : public util_graph::Graph {
      public:
       GraphCycles();
@@ -360,8 +360,8 @@ graphcycles.h
     
       using Node = util_graph::Node;
     
-[/code]
-[code] 
+```
+```cpp 
     class GraphCycles : public util_graph::Graph {
      public:
       GraphCycles();
@@ -374,10 +374,10 @@ graphcycles.h
       // 要求：尚未向 GraphCycles 添加任何節點和邊。
       bool InitFrom(const util_graph::Graph& src);
     
-[/code]
+```
 
 graphcycles.cc
-[code] 
+```cpp 
     bool GraphCycles::InitFrom(const util_graph::Graph& src) {
       ...
       // 以拓撲順序分配排名，這樣我們在初始化期間就不需要任何重新排序。
@@ -412,10 +412,10 @@ graphcycles.cc
       }
     }
     
-[/code]
+```
 
 graph_partitioner.cc
-[code] 
+```cpp 
     absl::Status MergeGraph::Init() {
       const Graph& graph = *compiler_->graph();
       clusters_.resize(graph.NodeLimit());
@@ -436,12 +436,12 @@ graph_partitioner.cc
       return s;
     }
     
-[/code]
+```
       return s;
     }
     
-[/code]
-[code] 
+```
+```cpp 
     absl::Status MergeGraph::Init() {
       const Graph& graph = *compiler_->graph();
       if (!graph_->InitFrom(graph)) {
@@ -456,7 +456,7 @@ graph_partitioner.cc
       return absl::OkStatus();
     }
     
-[/code]
+```
 
 以更好的演算法替換內建在 Mutex 實作中的死結檢測系統。
 
@@ -465,29 +465,29 @@ graph_partitioner.cc
 新演算法佔用 O(|V|+|E|) 空間（而不是舊演算法所需的 O(|V|^2) 位元）。鎖獲取順序圖非常稀疏，因此這節省了大量空間。該演算法也非常簡單：核心部分約為 100 行 C++。由於程式碼現在可以擴展到更大數量的 Mutex，我們能夠放寬人為的 2K 限制，這揭露了實際程式中許多潛在的死結。
 
 基準測試結果：這些是在 DEBUG 模式下執行的，因為死結檢測主要在除錯模式下啟用。基準測試參數 (/2k 等) 是追蹤節點的數量。在舊演算法預設的 2k 限制下，新演算法每次 InsertEdge 僅需 0.5 微秒，而舊演算法則需 22 微秒。新演算法還能輕鬆擴展到更大的圖，而舊演算法則會迅速崩潰。
-[code] 
+```cpp 
     DEBUG: Benchmark            Time(ns)    CPU(ns) Iterations
     ----------------------------------------------------------
     DEBUG: BM_StressTest/2k        23553      23566      29086
     DEBUG: BM_StressTest/4k        45879      45909      15287
     DEBUG: BM_StressTest/16k      776938     777472        817
     
-[/code]
-[code] 
+```
+```cpp 
     DEBUG: BM_StressTest/2k          392        393   10485760
     DEBUG: BM_StressTest/4k          392        393   10485760
     DEBUG: BM_StressTest/32k         407        407   10485760
     DEBUG: BM_StressTest/256k        456        456   10485760
     DEBUG: BM_StressTest/1M          534        534   10485760
     
-[/code]
+```
 
 使用雜湊表 (O(1) 查詢) 取代 `IntervalMap` (具有 O(lg N) 查詢)。
 
 初始程式碼使用 `IntervalMap` 是因為它看起來是支援相鄰區塊合併的正確資料結構，但雜湊表就足夠了，因為相鄰區塊可以透過雜湊表查詢找到。這（加上 CL 中的其他變更）使 `tpu::BestFitAllocator` 的效能提高了約 4 倍。
 
 best_fit_allocator.h
-[code] 
+```cpp 
     using Block = gtl::IntervalMap<int64, BlockState>::Entry;
     ...
     // 對於覆蓋範圍 [0, allocatable_range_end_) 的每個配置，都有一個 (地址範圍, BlockState) 對的映射項目。
@@ -497,8 +497,8 @@ best_fit_allocator.h
     // 所有根據配置策略排序的空閒區塊集合。相鄰的空閒區塊會被合併。
     std::set<Block, BlockSelector> free_list_;
     
-[/code]
-[code] 
+```
+```cpp 
     // 用於 BlockTable 中偏移量的更快雜湊函式
     struct OffsetHash {
       ABSL_ATTRIBUTE_ALWAYS_INLINE size_t operator()(int64 value) const {
@@ -517,21 +517,21 @@ best_fit_allocator.h
     };
     using BlockTable = absl::flat_hash_map<int64, HashTableEntry, OffsetHash>;
     
-[/code]
+```
 
 使用雜湊表查詢 (O(N)) 取代排序列表交集 (O(N log N))。
 
 舊程式碼偵測兩個節點是否共享共同來源時，會以排序順序取得每個節點的來源，然後執行排序交集。新程式碼將一個節點的來源放在雜湊表中，然後迭代另一個節點的來源並檢查雜湊表。
-[code] 
+```cpp 
     名稱 (name)        舊時間 (old time/op)  新時間 (new time/op)  差異 (delta)
     BM_CompileLarge        28.5s ± 2%            22.4s ± 2%        -21.61%  (p=0.008 n=5+5)
     
-[/code]
+```
 
 實作良好的雜湊函式，使複雜度為 O(1) 而非 O(N)。
 
 location.h
-[code] 
+```cpp 
     // Location 物件的雜湊器。
     struct LocationHash {
       size_t operator()(const Location* key) const {
@@ -539,8 +539,8 @@ location.h
       }
     };
     
-[/code]
-[code] 
+```
+```cpp 
     size_t HashLocation(const Location& loc);
     ...
     struct LocationHash {
@@ -549,10 +549,10 @@ location.h
       }
     };
     
-[/code]
+```
 
 location.cc
-[code] 
+```cpp 
     size_t HashLocation(const Location& loc) {
       util_hash::MurmurCat m;
     
@@ -601,7 +601,7 @@ location.cc
       return m.GetHash();
     }
     
-[/code]
+```
 
 ## 更好的記憶體表示 (Better memory representation)
 
@@ -648,17 +648,17 @@ location.cc
 透過將 `btree<a,btree<b,c>>` 轉換為 `btree<pair<a,b>,c>` 來減少配置並改善快取足跡。
 
 graph_splitter.cc
-[code] 
+```cpp 
     absl::btree_map<std::string, absl::btree_map<std::string, OpDef>> ops;
     
-[/code]
-[code] 
+```
+```cpp 
     // 此 btree 從 {package_name, op_name} 映射到其 const Opdef*。
     absl::btree_map<std::pair<absl::string_view, absl::string_view>,
                     const OpDef*>
         ops;
     
-[/code]
+```
 
 警告：如果第一個 Map 的鍵很大，堅持使用嵌套 Map 可能會更好：
 
@@ -679,11 +679,11 @@ Arena 可以幫助減少記憶體配置成本，但它們還有另一個好處�
 使用陣列取代 `flat_map`。
 
 rtp_controller.h
-[code] 
+```cpp 
     const gtl::flat_map<int, int> payload_type_to_clock_frequency_;
     
-[/code]
-[code] 
+```
+```cpp 
     // 一個由 payload_type 索引到該 payload 類型的時鐘頻率（或 0）的映射（實作為簡單陣列）
     struct PayloadTypeToClockRateMap {
       int map[128];
@@ -691,7 +691,7 @@ rtp_controller.h
     ...
     const PayloadTypeToClockRateMap payload_type_to_clock_frequency_;
     
-[/code]
+```
 
 ### 位元向量取代 Set (Bit vectors instead of sets)
 
@@ -700,7 +700,7 @@ rtp_controller.h
 Spanner 放置系統。使用每個區域一位元的位元向量取代 `dense_hash_set<ZoneId>`。
 
 zone_set.h
-[code] 
+```cpp 
     class ZoneSet: public dense_hash_set<ZoneId> {
      public:
       ...
@@ -708,8 +708,8 @@ zone_set.h
         return count(zone) > 0;
       }
     
-[/code]
-[code] 
+```
+```cpp 
     class ZoneSet {
       ...
       // 若且唯若 "zone" 包含在集合中時返回 true
@@ -721,10 +721,10 @@ zone_set.h
       int size_;          // 插入的區域數量
       util::bitmap::InlinedBitVector<256> b_;
     
-[/code]
+```
 
 基準測試結果：
-[code] 
+```cpp 
     CPU: AMD Opteron (4 cores) dL1:64KB dL2:1024KB
     基準測試 (Benchmark)              基準 (Base) (ns)  新 (New) (ns) 改進 (Improvement)
     ------------------------------------------------------------------
@@ -737,18 +737,18 @@ zone_set.h
     BM_Evaluate/20                         17922     12338    +31.2%
     BM_Evaluate/40                         36836     26430    +28.2%
     
-[/code]
+```
 
 使用位元矩陣來追蹤運算元之間的通達性 (reachability)屬性，而不是使用雜湊表。
 
 hlo_computation.h
-[code] 
+```cpp 
     using TransitiveOperandMap =
         std::unordered_map<const HloInstruction*,
                            std::unordered_set<const HloInstruction*>>;
     
-[/code]
-[code] 
+```
+```cpp 
     class HloComputation::ReachabilityMap {
       ...
       // 從 HloInstruction* 到數值的密集 ID 分配
@@ -757,7 +757,7 @@ hlo_computation.h
       tensorflow::core::Bitmap matrix_;
     };
     
-[/code]
+```
 
 ## 減少配置 (Reduce allocations)
 
@@ -774,15 +774,15 @@ hlo_computation.h
 減少配置使基準測試吞吐量提高 21%。
 
 memory_manager.cc
-[code] 
+```cpp 
     LiveTensor::LiveTensor(tf::Tensor t, std::shared_ptr<const DeviceInfo> dinfo,
                            bool is_batched)
         : tensor(std::move(t)),
           device_info(dinfo ? std::move(dinfo) : std::make_shared<DeviceInfo>()),
           is_batched(is_batched) {
     
-[/code]
-[code] 
+```
+```cpp 
     static const std::shared_ptr<DeviceInfo>& empty_device_info() {
       static std::shared_ptr<DeviceInfo>* result =
           new std::shared_ptr<DeviceInfo>(new DeviceInfo);
@@ -798,12 +798,12 @@ memory_manager.cc
         device_info = empty_device_info();
       }
     
-[/code]
+```
 
 盡可能使用靜態配置的零向量，而不是配置一個向量並用零填充。
 
 embedding_executor_8bit.cc
-[code] 
+```cpp 
     // 使用模板參數而非物件成員來提高效能的 EmbeddingLookUpT 實際實作。
     template <bool Mean, bool SymmetricInputRange>
     static tensorflow::Status EmbeddingLookUpT(...) {
@@ -812,8 +812,8 @@ embedding_executor_8bit.cc
           new tensorflow::quint8[max_embedding_width]);
       memset(zero_data.get(), 0, sizeof(tensorflow::quint8) * max_embedding_width);
     
-[/code]
-[code] 
+```
+```cpp 
     // 足以處理大多數嵌入寬度的大小
     static const int kTypicalMaxEmbedding = 256;
     static tensorflow::quint8 static_zero_data[kTypicalMaxEmbedding];  // 全為零
@@ -838,7 +838,7 @@ embedding_executor_8bit.cc
         zero_data = zero_data_backing.get();
       }
     
-[/code]
+```
 
 此外，當物件生命週期受作用域 (scope) 限制時，優先使用堆疊 (stack) 分配而非堆 (heap) 分配（儘管對於大型物件要注意堆疊框架的大小）。
 
@@ -849,7 +849,7 @@ embedding_executor_8bit.cc
 預先調整向量大小並填充它，而不是進行 N 次 `push_back` 操作。
 
 indexblockdecoder.cc
-[code] 
+```cpp 
     for (int i = 0; i < ndocs-1; i++) {
       uint32 delta;
       ERRORCHECK(b->GetRice(rice_base, &delta));
@@ -858,8 +858,8 @@ indexblockdecoder.cc
     }
     docs_.push_back(last_docid_);
     
-[/code]
-[code] 
+```
+```cpp 
     docs_.resize(ndocs);
     DocId* docptr = &docs_[0];
     for (int i = 0; i < ndocs-1; i++) {
@@ -871,7 +871,7 @@ indexblockdecoder.cc
     }
     *docptr = last_docid_;
     
-[/code]
+```
 
 警告：不要使用 `resize` 或 `reserve` 每次增加一個元素，因為這可能導致二次方 (quadratic) 行為。此外，如果元素建構很昂貴，優先使用初始 `reserve` 呼叫後接多次 `push_back` 或 `emplace_back` 呼叫，而不是初始 `resize`，因為後者會使建構子呼叫次數翻倍。
 
@@ -883,40 +883,40 @@ indexblockdecoder.cc
 避免在透過 gRPC 接收 Tensor 時產生額外的複製。
 
 一個傳送大約 400KB Tensor 的基準測試速度提升了約 10-15%：
-[code] 
+```cpp 
     基準測試 (Benchmark)    時間 (Time) (ns)    CPU (ns)  迭代次數 (Iterations)
     -----------------------------------------------------
     BM_RPC/30/98k_mean    148764691 1369998944       1000
     
-[/code]
-[code] 
+```
+```cpp 
     基準測試 (Benchmark)    時間 (Time) (ns)    CPU (ns)  迭代次數 (Iterations)
     -----------------------------------------------------
     BM_RPC/30/98k_mean    131595940 1216998084       1000
     
-[/code]
+```
 
 移動大型選項結構而不是複製它。
 
 index.cc
-[code] 
+```cpp 
     return search_iterators::DocPLIteratorFactory::Create(opts);
     
-[/code]
-[code] 
+```
+```cpp 
     return search_iterators::DocPLIteratorFactory::Create(std::move(opts));
     
-[/code]
+```
 
 使用 `std::sort` 取代 `std::stable_sort`，這避免了 `stable_sort` 實作內部的內部複製。
 
 encoded-vector-hits.h
-[code] 
+```cpp 
     std::stable_sort(hits_.begin(), hits_.end(),
                      gtl::OrderByField(&HitWithPayloadOffset::docid));
     
-[/code]
-[code] 
+```
+```cpp 
     struct HitWithPayloadOffset {
       search_iterators::LocalDocId64 docid;
       int first_payload_offset;  // 負載向量的偏移量。
@@ -931,7 +931,7 @@ encoded-vector-hits.h
         ...
         std::sort(hits_.begin(), hits_.end());
     
-[/code]
+```
 
 ### 重用臨時物件 (Reuse temporary objects)
 
@@ -940,7 +940,7 @@ encoded-vector-hits.h
 將變數定義提升到迴圈迭代之外。
 
 autofdo_profile_utils.h
-[code] 
+```cpp 
     auto iterator = absl::WrapUnique(sstable->GetIterator());
     while (!iterator->done()) {
       T profile;
@@ -952,8 +952,8 @@ autofdo_profile_utils.h
       iterator->Next();
     }
     
-[/code]
-[code] 
+```
+```cpp 
     auto iterator = absl::WrapUnique(sstable->GetIterator());
     T profile;
     while (!iterator->done()) {
@@ -965,12 +965,12 @@ autofdo_profile_utils.h
       iterator->Next();
     }
     
-[/code]
+```
 
 在迴圈外定義 Protobuf 變數，以便其分配的儲存空間可以在迴圈迭代之間重用。
 
 stats-router.cc
-[code] 
+```cpp 
     for (auto& r : routers_to_update) {
       ...
       ResourceRecord record;
@@ -981,8 +981,8 @@ stats-router.cc
       ...
     }
     
-[/code]
-[code] 
+```
+```cpp 
     ResourceRecord record;
     for (auto& r : routers_to_update) {
       ...
@@ -994,12 +994,12 @@ stats-router.cc
       ...
     }
     
-[/code]
+```
 
 重複序列化到同一個 `std::string`。
 
 program_rep.cc
-[code] 
+```cpp 
     std::string DeterministicSerialization(const proto2::Message& m) {
       std::string result;
       proto2::io::StringOutputStream sink(&result);
@@ -1009,8 +1009,8 @@ program_rep.cc
       return result;
     }
     
-[/code]
-[code] 
+```
+```cpp 
     absl::string_view DeterministicSerializationTo(const proto2::Message& m,
                                                    std::string* scratch) {
       scratch->clear();
@@ -1021,7 +1021,7 @@ program_rep.cc
       return absl::string_view(*scratch);
     }
     
-[/code]
+```
 
 警告：Protobuf、字串、向量、容器等往往會增長到其中儲存過的最大值的大小。因此，定期（例如：每使用 N 次後）重新建構它們有助於減少記憶體需求和重新初始化成本。
 
@@ -1038,7 +1038,7 @@ program_rep.cc
 加入對末尾單個 ASCII 位元組的處理，而不是僅在此常式中處理四位元組的倍數。這避免了對全 ASCII 字串（例如：5 位元組）呼叫較慢的通用常式。
 
 utf8statetable.cc
-[code] 
+```cpp 
     // 根據狀態表掃描 UTF-8 stringpiece。
     // 始終掃描完整的 UTF-8 字元。
     // 設定掃描的位元組數。返回退出的原因。
@@ -1065,8 +1065,8 @@ utf8statetable.cc
       return exit_reason;
     }
     
-[/code]
-[code] 
+```
+```cpp 
     // 根據狀態表掃描 UTF-8 stringpiece。
     // 始終掃描完整的 UTF-8 字元。
     // 設定掃詢的位元組數。返回退出的原因。
@@ -1098,12 +1098,12 @@ utf8statetable.cc
       return exit_reason;
     }
     
-[/code]
+```
 
 `InlinedVector` 的更簡單快速路徑。
 
 inlined_vector.h
-[code] 
+```cpp 
     auto Storage<T, N, A>::Resize(ValueAdapter values, size_type new_size) -> void {
       StorageView storage_view = MakeStorageView();
     
@@ -1126,8 +1126,8 @@ inlined_vector.h
         destroy_loop = {storage_view.data + new_size, storage_view.size - new_size};
       }
     
-[/code]
-[code] 
+```
+```cpp 
     auto Storage<T, N, A>::Resize(ValueAdapter values, size_type new_size) -> void {
       StorageView storage_view = MakeStorageView();
       auto* const base = storage_view.data;
@@ -1145,12 +1145,12 @@ inlined_vector.h
       ...
       }
     
-[/code]
+```
 
 初始化 1-D 到 4-D Tensor 常見情況的快速路徑。
 
 tensor_shape.cc
-[code] 
+```cpp 
     template <class Shape>
     TensorShapeBase<Shape>::TensorShapeBase(gtl::ArraySlice<int64> dim_sizes) {
       set_tag(REP16);
@@ -1162,8 +1162,8 @@ tensor_shape.cc
       }
     }
     
-[/code]
-[code] 
+```
+```cpp 
     template <class Shape>
     void TensorShapeBase<Shape>::InitDims(gtl::ArraySlice<int64> dim_sizes) {
       DCHECK_EQ(tag(), REP16);
@@ -1216,14 +1216,14 @@ tensor_shape.cc
       }
     }
     
-[/code]
+```
 
 使 Varint 解析器快速路徑僅涵蓋 1 位元組情況，而不是涵蓋 1 位元組和 2 位元組情況。
 
 減小（內聯）快速路徑的大小可以減少程式碼大小和 icache 壓力，從而提高效能。
 
 parse_context.h
-[code] 
+```cpp 
     template <typename T>
     PROTOBUF_NODISCARD const char* VarintParse(const char* p, T* out) {
       auto ptr = reinterpret_cast<const uint8_t*>(p);
@@ -1241,8 +1241,8 @@ parse_context.h
       return VarintParseSlow(p, res, out);
     }
     
-[/code]
-[code] 
+```
+```cpp 
     template <typename T>
     PROTOBUF_NODISCARD const char* VarintParse(const char* p, T* out) {
       auto ptr = reinterpret_cast<const uint8_t*>(p);
@@ -1254,10 +1254,10 @@ parse_context.h
       return VarintParseSlow(p, res, out);
     }
     
-[/code]
+```
 
 parse_context.cc
-[code] 
+```cpp 
     std::pair<const char*, uint32_t> VarintParseSlow32(const char* p,
                                                        uint32_t res) {
       for (std::uint32_t i = 2; i < 5; i++) {
@@ -1271,8 +1271,8 @@ parse_context.cc
       ...
     }
     
-[/code]
-[code] 
+```
+```cpp 
     std::pair<const char*, uint32_t> VarintParseSlow32(const char* p,
                                                        uint32_t res) {
       for (std::uint32_t i = 1; i < 5; i++) {
@@ -1286,18 +1286,18 @@ parse_context.cc
       ...
     }
     
-[/code]
+```
 
 如果沒有發生錯誤，則在 `RPC_Stats_Measurement` 加法中跳過顯著工作。
 
 rpc-stats.h
-[code] 
+```cpp 
     struct RPC_Stats_Measurement {
       ...
       double errors[RPC::NUM_ERRORS];
     
-[/code]
-[code] 
+```
+```cpp 
     struct RPC_Stats_Measurement {
       ...
       double get_errors(int index) const { return errors[index]; }
@@ -1312,10 +1312,10 @@ rpc-stats.h
       double errors[RPC::NUM_ERRORS];
       bool any_errors_set;  // 若且唯若 errors[i] 值中任一個為非零時為 true。
     
-[/code]
+```
 
 rpc-stats.cc
-[code] 
+```cpp 
     void RPC_Stats_Measurement::operator+=(const RPC_Stats_Measurement& x) {
       ...
       for (int i = 0; i < RPC::NUM_ERRORS; ++i) {
@@ -1323,8 +1323,8 @@ rpc-stats.cc
       }
     }
     
-[/code]
-[code] 
+```
+```cpp 
     void RPC_Stats_Measurement::operator+=(const RPC_Stats_Measurement& x) {
       ...
       if (x.any_errors_set) {
@@ -1335,21 +1335,21 @@ rpc-stats.cc
       }
     }
     
-[/code]
+```
 
 對字串的第一個位元組執行陣列查詢，以便通常避免對整個字串進行指紋識別 (fingerprinting)。
 
 soft-tokens-helper.cc
-[code] 
+```cpp 
     bool SoftTokensHelper::IsSoftToken(const StringPiece& token) const {
       return soft_tokens_.find(Fingerprint(token.data(), token.size())) !=
           soft_tokens_.end();
     }
     
-[/code]
+```
 
 soft-tokens-helper.h
-[code] 
+```cpp 
     class SoftTokensHelper {
      ...
      private:
@@ -1373,23 +1373,23 @@ soft-tokens-helper.h
       return IsSoftTokenFallback(token);
     }
     
-[/code]
+```
 
 soft-tokens-helper.cc
-[code] 
+```cpp 
     bool SoftTokensHelper::IsSoftTokenFallback(const StringPiece& token) const {
       return soft_tokens_.find(Fingerprint(token.data(), token.size())) !=
           soft_tokens_.end();
     }
     
-[/code]
+```
 
 ### 預先計算昂貴資訊一次 (Precompute expensive information once)
 
 預先計算 TensorFlow 圖執行節點屬性，使我們能夠快速排除某些異常情況。
 
 executor.cc
-[code] 
+```cpp 
     struct NodeItem {
       ...
       bool kernel_is_expensive = false;  // 若且唯若 kernel->IsExpensive() 時為 true
@@ -1407,8 +1407,8 @@ executor.cc
         ...
       }
     
-[/code]
-[code] 
+```
+```cpp 
     struct NodeItem {
       ...
       bool kernel_is_expensive : 1;  // 若且唯若 kernel->IsExpensive() 時為 true
@@ -1434,12 +1434,12 @@ executor.cc
         ...
       }
     
-[/code]
+```
 
 預先計算 256 個元素的陣列，並在 Trigram 初始化期間使用。
 
 byte_trigram_classifier.cc
-[code] 
+```cpp 
     void ByteTrigramClassifier::VerifyModel(void) const {
       ProbT class_sums[num_classes_];
       for (int cls = 0; cls < num_classes_; cls++) {
@@ -1453,8 +1453,8 @@ byte_trigram_classifier.cc
       ...
     }                         
     
-[/code]
-[code] 
+```
+```cpp 
     void ByteTrigramClassifier::VerifyModel(void) const {
       CHECK_EQ(sizeof(ByteLogProbT), 1);
       ProbT fast_prob[256];
@@ -1474,7 +1474,7 @@ byte_trigram_classifier.cc
       ...
     }                         
     
-[/code]
+```
 
 一般建議：在模組邊界檢查格式錯誤的輸入，而不是在內部重複檢查。
 
@@ -1483,25 +1483,25 @@ byte_trigram_classifier.cc
 將邊界計算移出迴圈。
 
 literal_linearizer.cc
-[code] 
+```cpp 
     for (int64 i = 0; i < src_shape.dimensions(dimension_numbers.front());
          ++i) {
     
-[/code]
-[code] 
+```
+```cpp 
     int64 dim_front = src_shape.dimensions(dimension_numbers.front());
     const uint8* src_buffer_data = src_buffer.data();
     uint8* dst_buffer_data = dst_buffer.data();
     for (int64 i = 0; i < dim_front; ++i) {
     
-[/code]
+```
 
 ### 推遲昂貴計算 (Defer expensive computation)
 
 推遲 `GetSubSharding` 呼叫直到需要時，這將 43 秒的 CPU 時間減少到 2 秒。
 
 sharding_propagation.cc
-[code] 
+```cpp 
     HloSharding alternative_sub_sharding =
         user.sharding().GetSubSharding(user.shape(), {i});
     if (user.operand(i) == &instruction &&
@@ -1510,8 +1510,8 @@ sharding_propagation.cc
       sub_sharding = alternative_sub_sharding;
     }
     
-[/code]
-[code] 
+```
+```cpp 
     if (user.operand(i) == &instruction) {
       // 僅在對此運算元感興趣時才評估 GetSubSharding，因為它相對昂貴。
       HloSharding alternative_sub_sharding =
@@ -1522,7 +1522,7 @@ sharding_propagation.cc
       }
     }
     
-[/code]
+```
 
 不要主動更新統計資訊；按需計算。
 
@@ -1533,14 +1533,14 @@ sharding_propagation.cc
 一個簡單的更改使 Web 伺服器的 CPU 使用率降低了 7.5%。
 
 querytree.h
-[code] 
+```cpp 
     static const int kInitParseTreeSize = 200;   // 查詢節點池的初始大小
     
-[/code]
-[code] 
+```
+```cpp 
     static const int kInitParseTreeSize = 10;   // 查詢節點池的初始大小
     
-[/code]
+```
 
 更改搜尋順序使吞吐量提高 19%。
 
@@ -1557,7 +1557,7 @@ querytree.h
 這段程式碼對效能很敏感，因為當監控系統從各種伺服器收集統計資訊時會呼叫它。
 
 histogram_export.cc
-[code] 
+```cpp 
     void Histogram::PopulateBuckets(const string &prefix,
                                     expvar::MapProto *const var) const {
                                     ...
@@ -1588,8 +1588,8 @@ histogram_export.cc
                             var);
       }
     
-[/code]
-[code] 
+```
+```cpp 
     // 根據格式格式化 "val"。如果 "need_escape" 為 true，則該格式可能產生
     // 帶有 '.' 的輸出，結果將被轉義。如果 "need_escape" 為 false，則呼叫者
     // 保證格式使得產生的數字不會有任何 '.' 字元，因此我們可以避免呼叫 EscapeKey。
@@ -1667,14 +1667,14 @@ histogram_export.cc
       }
     }
     
-[/code]
+```
 
 加入對 `VLOG(1)`, `VLOG(2)`, … 的特化，以提高速度並縮小程式碼大小。
 
 `VLOG` 是整個程式碼庫中頻繁使用的巨集。此更改避免了在幾乎每個呼叫點傳遞額外的整數常數（如果呼叫點的日誌級別是常數，就像在 `VLOG(1) << ...` 中幾乎總是如此），這節省了程式碼空間。
 
 vlog_is_on.h
-[code] 
+```cpp 
     class VLogSite final {
      public:
       ...
@@ -1696,8 +1696,8 @@ vlog_is_on.h
       ...
     };
     
-[/code]
-[code] 
+```
+```cpp 
     class VLogSite final {
      public:
       ...
@@ -1736,10 +1736,10 @@ vlog_is_on.h
       ...
     };
     
-[/code]
+```
 
 vlog_is_on.cc
-[code] 
+```cpp 
     bool VLogSite::SlowIsEnabled0(int stale_v) { return SlowIsEnabled(stale_v, 0); }
     bool VLogSite::SlowIsEnabled1(int stale_v) { return SlowIsEnabled(stale_v, 1); }
     bool VLogSite::SlowIsEnabled2(int stale_v) { return SlowIsEnabled(stale_v, 2); }
@@ -1747,12 +1747,12 @@ vlog_is_on.cc
     bool VLogSite::SlowIsEnabled4(int stale_v) { return SlowIsEnabled(stale_v, 4); }
     bool VLogSite::SlowIsEnabled5(int stale_v) { return SlowIsEnabled(stale_v, 5); }
     
-[/code]
+```
 
 盡可能使用簡單的前綴匹配取代 `RE2` 呼叫。
 
 read_matcher.cc
-[code] 
+```cpp 
     enum MatchItemType {
       MATCH_TYPE_INVALID,
       MATCH_TYPE_RANGE,
@@ -1760,8 +1760,8 @@ read_matcher.cc
       MATCH_TYPE_REGEXP,
     };
     
-[/code]
-[code] 
+```
+```cpp 
     enum MatchItemType {
       MATCH_TYPE_INVALID,
       MATCH_TYPE_RANGE,
@@ -1770,14 +1770,14 @@ read_matcher.cc
       MATCH_TYPE_PREFIX,   // 正規表示式 ".*" 的特殊類型
     };
     
-[/code]
+```
 
 read_matcher.cc
-[code] 
+```cpp 
     p->type = MATCH_TYPE_REGEXP;
     
-[/code]
-[code] 
+```
+```cpp 
     term.NonMetaPrefix().CopyToString(&p->prefix);
     if (term.RegexpSuffix() == ".*") {
       // 匹配任何內容的正規表示式的特殊情況，因此我們可以繞過 RE2::FullMatch
@@ -1785,12 +1785,12 @@ read_matcher.cc
     } else {
       p->type = MATCH_TYPE_REGEXP;
     
-[/code]
+```
 
 使用 `StrCat` 而非 `StringPrintf` 來格式化 IP 地址。
 
 ipaddress.cc
-[code] 
+```cpp 
     string IPAddress::ToString() const {
       char buf[INET6_ADDRSTRLEN];
     
@@ -1822,8 +1822,8 @@ ipaddress.cc
       return IPAddressToURIString(host_) + StringPrintf(":%u", port_);
     }
     
-[/code]
-[code] 
+```
+```cpp 
     string IPAddress::ToString() const {
       char buf[INET6_ADDRSTRLEN];
     
@@ -1860,22 +1860,22 @@ ipaddress.cc
       return StrCat(IPAddressToURIString(host_), ":", port_);
     }
     
-[/code]
+```
 
 ### 使用快取避免重複工作 (Use caching to avoid repeated work)
 
 基於預先計算的大型序列化 Proto 指紋進行快取。
 
 dp_ops.cc
-[code] 
+```cpp 
     InputOutputMappingProto mapping_proto;
     PLAQUE_OP_REQUIRES(
         mapping_proto.ParseFromStringPiece(GetAttrMappingProto(state)),
         absl::InternalError("解析 InputOutputMappingProto 失敗"));
     ParseMapping(mapping_proto);
     
-[/code]
-[code] 
+```
+```cpp 
     uint64 mapping_proto_fp = GetAttrMappingProtoFp(state);
     {
       absl::MutexLock l(&fp_to_iometa_mu);
@@ -1899,7 +1899,7 @@ dp_ops.cc
       }
     }
     
-[/code]
+```
 
 ### 讓編譯器的工作更容易 (Make the compiler’s job easier)
 
@@ -1915,7 +1915,7 @@ dp_ops.cc
 透過將 `absl::Span` 替換為指向底層陣列的原始指標來加速 `ShapeUtil::ForEachState`。
 
 shape_util.h
-[code] 
+```cpp 
     struct ForEachState {
       ForEachState(const Shape& s, absl::Span<const int64_t> b,
                    absl::Span<const int64_t> c, absl::Span<const int64_t> i);
@@ -1926,8 +1926,8 @@ shape_util.h
       const absl::Span<const int64_t> count;
       const absl::Span<const int64_t> incr;
     
-[/code]
-[code] 
+```
+```cpp 
     struct ForEachState {
       ForEachState(const Shape& s, absl::Span<const int64_t> b,
                    absl::Span<const int64_t> c, absl::Span<const int64_t> i);
@@ -1939,12 +1939,12 @@ shape_util.h
       const int64_t* const count;
       const int64_t* const incr;
     
-[/code]
+```
 
 手動展開[循環冗餘檢查](https://en.wikipedia.org/wiki/Cyclic_redundancy_check) (CRC) 計算迴圈。
 
 crc.cc
-[code] 
+```cpp 
     void CRC32::Extend(uint64 *lo, uint64 *hi, const void *bytes, size_t length)
                           const {
                           ...
@@ -1966,8 +1966,8 @@ crc.cc
       *lo = l;
     }
     
-[/code]
-[code] 
+```
+```cpp 
     void CRC32::Extend(uint64 *lo, uint64 *hi, const void *bytes, size_t length)
                           const {
                           ...
@@ -2002,7 +2002,7 @@ crc.cc
       *lo = l;
     }
     
-[/code]
+```
 
 在解析 Spanner Key 時一次處理四個字元。
 
@@ -2011,7 +2011,7 @@ crc.cc
   3. 向後搜尋帶有 '#' 分隔符號的名稱分隔部分（而不是向前搜尋），因為名稱的第一部分可能是最長的。
 
 key.cc
-[code] 
+```cpp 
     void Key::InitSeps(const char* start) {
       const char* base = &rep_[0];
       const char* limit = base + rep_.size();
@@ -2028,8 +2028,8 @@ key.cc
       }
     }
     
-[/code]
-[code] 
+```
+```cpp 
     inline const char* ScanBackwardsForSep(const char* base, const char* p) {
       while (p >= base + 4) {
         if (p[0] == '#') return p;
@@ -2067,12 +2067,12 @@ key.cc
       seps_[0] = p - base;
     }
     
-[/code]
+```
 
 透過將 `ABSL_LOG(FATAL)` 轉換為 `ABSL_DCHECK(false)` 來避免框架設定成本。
 
 arena_cleanup.h
-[code] 
+```cpp 
     inline ABSL_ATTRIBUTE_ALWAYS_INLINE size_t Size(Tag tag) {
       if (!EnableSpecializedTags()) return sizeof(DynamicNode);
     
@@ -2089,8 +2089,8 @@ arena_cleanup.h
       }
     }
     
-[/code]
-[code] 
+```
+```cpp 
     inline ABSL_ATTRIBUTE_ALWAYS_INLINE size_t Size(Tag tag) {
       if (!EnableSpecializedTags()) return sizeof(DynamicNode);
     
@@ -2107,7 +2107,7 @@ arena_cleanup.h
       }
     }
     
-[/code]
+```
 
 ### 減少統計收集成本 (Reduce stats collection costs)
 
@@ -2120,7 +2120,7 @@ arena_cleanup.h
 這是將設定警報時間從 771 ns 減少到 271 ns 的更改之一。
 
 selectserver.h
-[code] 
+```cpp 
     class SelectServer {
      public:
      ...
@@ -2132,8 +2132,8 @@ selectserver.h
       ...
     };
     
-[/code]
-[code] 
+```
+```cpp 
     // Selectserver 類別
     class SelectServer {
      ...
@@ -2141,10 +2141,10 @@ selectserver.h
      ...
     };
     
-[/code]
+```
 
 /selectserver.cc
-[code] 
+```cpp 
     void SelectServer::AddAlarmInternal(Alarmer* alarmer,
                                         int offset_in_ms,
                                         int id,
@@ -2155,8 +2155,8 @@ selectserver.h
       ...
     }
     
-[/code]
-[code] 
+```
+```cpp 
     void SelectServer::AddAlarmInternal(Alarmer* alarmer,
                                         int offset_in_ms,
                                         int id,
@@ -2166,10 +2166,10 @@ selectserver.h
       ...
     }
     
-[/code]
+```
 
 /selectserver.cc
-[code] 
+```cpp 
     void SelectServer::RemoveAlarm(Alarmer* alarmer, int id) {
           ...
           alarms_->erase(alarm);
@@ -2177,15 +2177,15 @@ selectserver.h
           ...
     }
     
-[/code]
-[code] 
+```
+```cpp 
     void SelectServer::RemoveAlarm(Alarmer* alarmer, int id) {
           ...
           alarms_->Remove(alarm);
           ...
     }
     
-[/code]
+```
 
 通常，可以對系統處理的元素子集（例如 RPC 請求、輸入記錄、使用者）維護統計資訊或其他屬性。許多子系統使用這種方法（tcmalloc 配置追蹤、/requestz status 頁面、Dapper 採樣）。
 
@@ -2196,11 +2196,11 @@ selectserver.h
 採樣使我們能夠在大多數請求中避免觸及 39 個直方圖和 `MinuteTenMinuteHour` 統計資訊。
 
 generic-leaf-stats.cc
-[code] 
+```cpp 
     ... 為每個請求更新各種統計資訊而觸及 39 個直方圖的程式碼 ...
     
-[/code]
-[code] 
+```
+```cpp 
     // 定期添加到直方圖中
     if (TryLockToUpdateHistogramsDocInfo(docinfo_stats, bucket)) {
       // 僅在我們應該對此請求進行採樣以維護統計資訊時，
@@ -2209,14 +2209,14 @@ generic-leaf-stats.cc
       bucket->lock.Unlock();
     }
     
-[/code]
+```
 
 降低採樣率並做出更快的採樣決定。
 
 此更改將採樣率從 1/10 降低到 1/32。此外，我們現在僅對採樣事件保留執行時間統計資訊，並透過使用 2 的冪次方取模 (modulus) 來加速採樣決定。這段程式碼在 Google Meet 視訊會議系統的每個封包上都會被呼叫，並且在 COVID 爆發初期，隨著使用者迅速遷移到進行更多線上會議，需要進行效能工作以跟上容量需求。
 
 packet_executor.cc
-[code] 
+```cpp 
     class ScopedPerformanceMeasurement {
      public:
       explicit ScopedPerformanceMeasurement(PacketExecutor* packet_executor)
@@ -2237,8 +2237,8 @@ packet_executor.cc
     
       ~ScopedPerformanceMeasurement() {
     
-[/code]
-[code] 
+```
+```cpp 
     ScopedPerformanceMeasurement::ScopedPerformanceMeasurement(
         PacketExecutor* packet_executor)
         : packet_executor_(packet_executor),
@@ -2256,10 +2256,10 @@ packet_executor.cc
       run_start_time_ = absl::Now();
     }
     
-[/code]
+```
 
 packet_executor.cc
-[code] 
+```cpp 
     ~ScopedPerformanceMeasurement() {
       auto run_end_time = absl::Now();
       auto run_duration = run_end_time - run_start_time_;
@@ -2270,8 +2270,8 @@ packet_executor.cc
     
       closure_execution_time->Record(absl::ToInt64Microseconds(run_duration));
     
-[/code]
-[code] 
+```
+```cpp 
     ScopedPerformanceMeasurement::~ScopedPerformanceMeasurement() {
       auto run_end_time = absl::Now();
       auto run_duration = run_end_time - run_start_time_;
@@ -2281,17 +2281,17 @@ packet_executor.cc
         closure_execution_time->Record(absl::ToInt64Microseconds(run_duration));
       }
     
-[/code]
+```
 
 基準測試結果：
-[code] 
+```cpp 
     Run on (40 X 2793 MHz CPUs); 2020-03-24T20:08:19.991412535-07:00
     CPU: Intel Ivybridge with HyperThreading (20 cores) dL1:32KB dL2:256KB dL3:25MB
     基準測試 (Benchmark)                           基準 (Base) (ns)    新 (New) (ns) 改進 (Improvement)
     ----------------------------------------------------------------------------
     BM_PacketOverhead_mean                               224          85    +62.0%
     
-[/code]
+```
 
 ### 避免在熱點程式碼路徑上進行日誌記錄 (Avoid logging on hot code paths)
 
@@ -2302,7 +2302,7 @@ packet_executor.cc
 這是一個較大更改的一小部分。
 
 gpu_bfc_allocator.cc
-[code] 
+```cpp 
     void GPUBFCAllocator::SplitChunk(...) {
       ...
       VLOG(6) << "添加到區塊地圖: " << new_chunk->ptr;
@@ -2315,8 +2315,8 @@ gpu_bfc_allocator.cc
       ...
     }
     
-[/code]
-[code] 
+```
+```cpp 
     void GPUBFCAllocator::SplitChunk(...) {
     ...
     }
@@ -2325,12 +2325,12 @@ gpu_bfc_allocator.cc
     ...
     }
     
-[/code]
+```
 
 在嵌套迴圈外預先計算是否啟用了日誌記錄。
 
 image_similarity.cc
-[code] 
+```cpp 
     for (int j = 0; j < output_subimage_size_y; j++) {
       int j1 = j - rad + output_to_integral_subimage_y;
       int j2 = j1 + 2 * rad + 1;
@@ -2346,8 +2346,8 @@ image_similarity.cc
       }
     }
     
-[/code]
-[code] 
+```
+```cpp 
     const bool vlog_3 = DEBUG_MODE ? VLOG_IS_ON(3) : false;
     
     for (int j = 0; j < output_subimage_size_y; j++) {
@@ -2364,8 +2364,8 @@ image_similarity.cc
       }
     }
     
-[/code]
-[code] 
+```
+```cpp 
     Run on (40 X 2801 MHz CPUs); 2016-05-16T15:55:32.250633072-07:00
     CPU: Intel Ivybridge with HyperThreading (20 cores) dL1:32KB dL2:256KB dL3:25MB
     基準測試 (Benchmark)              基準 (Base) (ns)  新 (New) (ns) 改進 (Improvement)
@@ -2379,12 +2379,12 @@ image_similarity.cc
     BM_NCCLimitedBoundsPerformance/512   9335684   8477567     +9.2%
     BM_NCCLimitedBoundsPerformance/1k   37223897  34201739     +8.1%
     
-[/code]
+```
 
 預先計算是否啟用了日誌記錄，並在輔助常式中使用該結果。
 
 periodic_call.cc
-[code] 
+```cpp 
       VLOG(1) << Logid()
               << "MaybeScheduleAlarmAtNextTick. Time until next real time: "
               << time_until_next_real_time;
@@ -2428,8 +2428,8 @@ periodic_call.cc
           delay, new Alarm(this, virtual_time_ms, scheduling_sequence_number_));
     }
     
-[/code]
-[code] 
+```
+```cpp 
       const bool vlog_1 = VLOG_IS_ON(1);
     
       if (vlog_1) {
@@ -2482,7 +2482,7 @@ periodic_call.cc
           delay, new Alarm(this, virtual_time_ms, scheduling_sequence_number_));
     }
     
-[/code]
+```
 ## 程式碼大小考量 (Code size considerations)
 
 效能不僅僅包含執行速度。有時，考慮軟體選擇對產生的程式碼大小的影響也是值得的。較大的程式碼大小意謂著更長的編譯和連結時間、膨脹的執行檔、更多的記憶體使用、更多的指令快取 (icache) 壓力，以及其他有時對分支預測器等微架構結構產生的負面影響。在編寫將在許多地方使用的低階函式庫程式碼，或編寫您預期將為許多不同類型實例化的模板程式碼時，思考這些問題尤為重要。
@@ -2498,12 +2498,12 @@ periodic_call.cc
 避免建立 Ok 物件，並透過在行外 (out-of-line) 執行致命錯誤訊息的複雜格式化，而不是在每個呼叫點執行，來節省程式碼空間。
 
 status.h
-[code] 
+```cpp 
     #define TF_CHECK_OK(val) CHECK_EQ(::tensorflow::Status::OK(), (val))
     #define TF_QCHECK_OK(val) QCHECK_EQ(::tensorflow::Status::OK(), (val))
     
-[/code]
-[code] 
+```
+```cpp 
     extern tensorflow::string* TfCheckOpHelperOutOfLine(
         const ::tensorflow::Status& v, const char* msg);
     inline tensorflow::string* TfCheckOpHelper(::tensorflow::Status v,
@@ -2518,10 +2518,10 @@ status.h
       while (tensorflow::string* _result = TfCheckOpHelper(val, #val)) \
       LOG(QFATAL) << *(_result)
     
-[/code]
+```
 
 status.cc
-[code] 
+```cpp 
     string* TfCheckOpHelperOutOfLine(const ::tensorflow::Status& v,
                                      const char* msg) {
       string r("非 OK 狀態: ");
@@ -2532,7 +2532,7 @@ status.cc
       return new string(r);
     }
     
-[/code]
+```
 
 將每個 `RETURN_IF_ERROR` 呼叫點縮小 79 位元組的程式碼。
 
@@ -2544,7 +2544,7 @@ status.cc
 將 `CHECK_GE` 的效能提升 4.5 倍，並將程式碼大小從 125 位元組縮小到 77 位元組。
 
 logging.h
-[code] 
+```cpp 
     struct CheckOpString {
       CheckOpString(string* str) : str_(str) { } 
       ~CheckOpString() { delete str_; }
@@ -2568,8 +2568,8 @@ logging.h
     DEFINE_CHECK_OP_IMPL(GT, > )
     #undef DEFINE_CHECK_OP_IMPL
     
-[/code]
-[code] 
+```
+```cpp 
     struct CheckOpString {
       CheckOpString(string* str) : str_(str) { } 
       // 無析構函式：如果 str_ 非空，我們即將呼叫 LOG(FATAL)，
@@ -2604,17 +2604,17 @@ logging.h
     DEFINE_CHECK_OP_IMPL(GT, > )
     #undef DEFINE_CHECK_OP_IMPL
     
-[/code]
+```
 
 logging.cc
-[code] 
+```cpp 
     string* MakeCheckOpStringIntInt(int v1, int v2, const char* names) {
       strstream ss;
       ss << names << " (" << v1 << " vs. " << v2 << ")";
       return new string(ss.str(), ss.pcount());
     }
     
-[/code]
+```
 
 ### 謹慎內聯 (Inline with care)
 
@@ -2633,7 +2633,7 @@ Protocol Buffer 函式庫更改。避免在編碼長度 ≥ 128 位元組的訊�
 一個大型執行檔中某個高度內聯常式每行產生的程式碼位元組數。第一個數字代表為特定源代碼行產生的總位元組數，包括該程式碼被內聯的所有位置。
 
 Before:
-[code] 
+```cpp 
     .           0   1825 template <typename MessageType>
     .           0   1826 inline uint8* WireFormatLite::InternalWriteMessage(
     .           0   1827     int field_number, const MessageType& value, uint8* target,
@@ -2644,10 +2644,10 @@ Before:
     >>>   1285539   1832   return value._InternalSerialize(target, stream);
     .           0   1833 }
     
-[/code]
+```
 
 此更改後的程式碼大小輸出如下：
-[code] 
+```cpp 
     .           0   1825 template <typename MessageType>
     .           0   1826 inline uint8* WireFormatLite::InternalWriteMessage(
     .           0   1827     int field_number, const MessageType& value, uint8* target,
@@ -2658,11 +2658,11 @@ Before:
     >>>   1597394   1832   return value._InternalSerialize(target, stream);
     .           0   1833 }
     
-[/code]
+```
 
 ```
 coded_stream.h
-[code] 
+```cpp 
     class PROTOBUF_EXPORT CodedOutputStream {
       ...
       // 類似 WriteVarint32() 但直接寫入目標陣列，且較少見的情況路徑位於行外而非內聯。
@@ -2680,10 +2680,10 @@ coded_stream.h
       }
     }
     
-[/code]
+```
 
 coded_stream.cc
-[code] 
+```cpp 
     uint8* CodedOutputStream::WriteVarint32ToArrayOutOfLineHelper(uint32 value,
                                                                   uint8* target) {
       DCHECK_GE(value, 0x80);
@@ -2704,7 +2704,7 @@ coded_stream.cc
       return target;
     }
     
-[/code]
+```
 
 減少 `absl::flat_hash_set` 和 `absl::flat_hash_map` 的程式碼大小。
 
@@ -2717,7 +2717,7 @@ coded_stream.cc
 不使用 Protobuf Arena 時，不內聯字串配置和解除配置。
 
 public/arenastring.h
-[code] 
+```cpp 
       if (IsDefault(default_value)) {
         std::string* new_string = new std::string();
         tagged_ptr_.Set(new_string);
@@ -2727,8 +2727,8 @@ public/arenastring.h
       }
     }
     
-[/code]
-[code] 
+```
+```cpp 
       if (IsDefault(default_value)) {
         return SetAndReturnNewString();
       } else {
@@ -2736,22 +2736,22 @@ public/arenastring.h
       }
     }
     
-[/code]
+```
 
 internal/arenastring.cc
-[code] 
+```cpp 
     std::string* ArenaStringPtr::SetAndReturnNewString() {
       std::string* new_string = new std::string();
       tagged_ptr_.Set(new_string);
       return new_string;
     }
     
-[/code]
+```
 
 避免內聯某些常式。建立接受 `const char*` 而非 `const std::string&` 的常式變體，以避免在每個呼叫點產生的 `std::string` 建構程式碼。
 
 op.h
-[code] 
+```cpp 
     class OpDefBuilderWrapper {
      public:
       explicit OpDefBuilderWrapper(const char name[]) : builder_(name) {}
@@ -2768,8 +2768,8 @@ op.h
         return *this;
       }
     
-[/code]
-[code] 
+```
+```cpp 
     class OpDefBuilderWrapper {
      public:
       explicit OpDefBuilderWrapper(const char name[]) : builder_(name) {}
@@ -2795,7 +2795,7 @@ op.h
         return Output(std::string(spec));
       }
     
-[/code]
+```
 
 ### 減少模板實例化 (Reduce template instantiations)
 
@@ -2806,7 +2806,7 @@ op.h
 將一個以 `bool` 為模板引數的大型常式改為將該 `bool` 作為額外引數。（該 `bool` 僅被使用一次來選擇兩個字串常數之一，因此執行時檢查完全沒問題。）這將該大型常式的實例化數量從 287 個減少到 143 個。
 
 sharding_util_ops.cc
-[code] 
+```cpp 
     template <bool Split>
     Status GetAndValidateAttributes(OpKernelConstruction* ctx,
                                     std::vector<int32>& num_partitions,
@@ -2818,8 +2818,8 @@ sharding_util_ops.cc
       return OkStatus();
     }
     
-[/code]
-[code] 
+```
+```cpp 
     Status GetAndValidateAttributes(bool split, OpKernelConstruction* ctx,
                                     std::vector<int32>& num_partitions,
                                     int& num_slices, std::vector<int32>& paddings,
@@ -2830,14 +2830,14 @@ sharding_util_ops.cc
       return OkStatus();
     }
     
-[/code]
+```
 
 將龐大的程式碼從模板化建構子移動到非模板化的共享基類建構子。
 
 同時將模板實例化數量從 `<T, Device, Rank>` 的每個組合一個減少到每個 `<T>` 一個和每個 `<Rank>` 一個。
 
 sharding_util_ops.cc
-[code] 
+```cpp 
     template <typename Device, typename T>
     class XlaSplitNDBaseOp : public OpKernel {
      public:
@@ -2847,8 +2847,8 @@ sharding_util_ops.cc
                                           num_slices_, paddings_, has_paddings_));
       }
     
-[/code]
-[code] 
+```
+```cpp 
     // 共享基類以節省程式碼空間
     class XlaSplitNDShared : public OpKernel {
      public:
@@ -2860,7 +2860,7 @@ sharding_util_ops.cc
                                  paddings_, has_paddings_);
       }
     
-[/code]
+```
 
 減少 `absl::flat_hash_set` 和 `absl::flat_hash_map` 產生的程式碼大小。
 
@@ -2875,7 +2875,7 @@ sharding_util_ops.cc
 將初始化 Emoji 字元雜湊表的許多連續 Map 插入呼叫轉換為單個批量插入操作 (從 188KB 文本減少到連結到許多執行檔的函式庫中的 360 位元組)。 😊
 
 textfallback_init.h
-[code] 
+```cpp 
     inline void AddEmojiFallbacks(TextFallbackMap *map) {
       (*map)[0xFE000] = &kFE000;
       (*map)[0xFE001] = &kFE001;
@@ -2889,8 +2889,8 @@ textfallback_init.h
       (*map)[0xFE331] = &kFE331;
     };
     
-[/code]
-[code] 
+```
+```cpp 
     inline void AddEmojiFallbacks(TextFallbackMap *map) {
     #define PAIR(x) {0x##x, &k##x}
       // clang-format off
@@ -2909,24 +2909,24 @@ textfallback_init.h
     #undef PAIR
     };
     
-[/code]
+```
 
 停止內聯 `InlinedVector` 操作的重度使用者。
 
 將從 `.h` 檔案中內聯的極長常式移動到 `.cc`（內聯此內容沒有實際的效能好處）。
 
 reduction_ops_common.h
-[code] 
+```cpp 
     Status Simplify(const Tensor& data, const Tensor& axis,
                     const bool keep_dims) {
       ... 八十行常式主體 ...
     }
     
-[/code]
-[code] 
+```
+```cpp 
     Status Simplify(const Tensor& data, const Tensor& axis, const bool keep_dims);
     
-[/code]
+```
 
 ## 並列化與同步 (Parallelization and synchronization)
 
@@ -2937,7 +2937,7 @@ reduction_ops_common.h
 四路並列化使編碼 Token 的速率提高了約 3.6 倍。
 
 blocked-token-coder.cc
-[code] 
+```cpp 
     MutexLock l(&encoder_threads_lock);
     if (encoder_threads == NULL) {
       encoder_threads = new ThreadPool(NumCPUs());
@@ -2952,18 +2952,18 @@ blocked-token-coder.cc
                      controller_->GetClosureWithCost
                      (NewCallback(&DummyCallback), N)));
     
-[/code]
+```
 
 並列化使解碼效能提高了 5 倍。
 
 coding.cc
-[code] 
+```cpp 
     for (int c = 0; c < clusters->size(); c++) {
       RET_CHECK_OK(DecodeBulkForCluster(...);
     }
     
-[/code]
-[code] 
+```
+```cpp 
     struct SubTask {
       absl::Status result;
       absl::Notification done;
@@ -2983,7 +2983,7 @@ coding.cc
       RETURN_IF_ERROR(tasks[c].result);
     }
     
-[/code]
+```
 
 應仔細測量對系統效能的影響——如果沒有可用的備用 CPU，或者如果記憶體頻寬已飽和，並列化可能沒有幫助，甚至可能有害。
 
@@ -2994,7 +2994,7 @@ coding.cc
 一次獲取鎖以釋放整個查詢節點樹，而不是為樹中的每個節點重新獲取鎖。
 
 mustang-query.cc
-[code] 
+```cpp 
     // 查詢節點池
     ThreadSafeFreeList<MustangQuery> pool_(256);
     ...
@@ -3007,8 +3007,8 @@ mustang-query.cc
       pool_.Delete(node);
     }
     
-[/code]
-[code] 
+```
+```cpp 
     // 查詢節點池
     Mutex pool_lock_;
     FreeList<MustangQuery> pool_(256);
@@ -3032,7 +3032,7 @@ mustang-query.cc
       pool_.Delete(node);
     }
     
-[/code]
+```
 
 ### 保持關鍵區間簡短 (Keep critical sections short)
 
@@ -3048,7 +3048,7 @@ mustang-query.cc
 避免在持有 Mutex 時執行 RPC。
 
 trainer.cc
-[code] 
+```cpp 
     {
       // 通知參數伺服器我們正在開始。
       MutexLock l(&lock_);
@@ -3056,8 +3056,8 @@ trainer.cc
       MaybeRecordProgress(last_global_step_);
     }
     
-[/code]
-[code] 
+```
+```cpp 
     bool should_start_record_progress = false;
     int64 step_for_progress = -1;
     {
@@ -3071,7 +3071,7 @@ trainer.cc
       StartRecordProgress(step_for_progress);
     }
     
-[/code]
+```
 
 此外，要警惕在 Mutex 解鎖前執行的昂貴析構函式（這通常發生在由 `~MutexUnlock` 觸發 Mutex 解鎖時）。在 `MutexLock` 之前宣告具有昂貴析構函式的物件可能會有幫助（假設它是執行緒安全的）。
 
@@ -3082,7 +3082,7 @@ trainer.cc
 將快取分成 16 個分片，這在多執行緒負載下使吞吐量提高了約 2 倍。
 
 cache.cc
-[code] 
+```cpp 
     class ShardedLRUCache : public Cache {
      private:
       LRUCache shard_[kNumShards];
@@ -3102,20 +3102,20 @@ cache.cc
         return shard_[Shard(hash)].Lookup(key, hash);
       }
     
-[/code]
+```
 
 將用於追蹤呼叫的 Spanner 資料結構分片。
 
 transaction_manager.cc
-[code] 
+```cpp 
     absl::MutexLock l(&active_calls_in_mu_);
     ActiveCallMap::const_iterator iter = active_calls_in_.find(m->tid());
     if (iter != active_calls_in_.end()) {
       iter->second.ExtractElements(&m->tmp_calls_);
     }
     
-[/code]
-[code] 
+```
+```cpp 
     ActiveCalls::LockedShard shard(active_calls_in_, m->tid());
     const ActiveCallMap& active_calls_map = shard.active_calls_map();
     ActiveCallMap::const_iterator iter = active_calls_map.find(m->tid());
@@ -3123,7 +3123,7 @@ transaction_manager.cc
       iter->second.ExtractElements(&m->tmp_calls_);
     }
     
-[/code]
+```
 
 如果所討論的資料結構是 Map，請考慮使用併發雜湊表 (concurrent hash map) 實作。
 
@@ -3132,7 +3132,7 @@ transaction_manager.cc
 修正用於分片選擇的資訊以防止雜湊表問題。
 
 netmon_map_impl.h
-[code] 
+```cpp 
     ConnectionBucket* GetBucket(Index index) {
       // 重新雜湊以確保我們不是基於原始雜湊對儲存桶進行分區。
       // 如果 num_buckets_ 是 2 的冪次方，那會降低儲存桶的熵。
@@ -3141,51 +3141,51 @@ netmon_map_impl.h
       return &buckets_[hash];
     }
     
-[/code]
-[code] 
+```
+```cpp 
     ConnectionBucket* GetBucket(Index index) {
       absl::Hash<std::pair<Index, size_t>> hasher{};
       // 將雜湊值與 42 結合，以防止使用與底層雜湊表相同的位元進行分片選擇。
       return &buckets_[hasher({index, 42}) % num_buckets_];
     }
     
-[/code]
+```
 
 將用於追蹤呼叫的 Spanner 資料結構分片。
 
 此 CL 將 `ActiveCallMap` 分為 64 個分片。每個分片都由單獨的 Mutex 保護。給定的事務將精確映射到一個分片。加入了一個新的介面 `LockedShard(tid)`，用於以執行緒安全的方式存取事務的 `ActiveCallMap`。範例用法：
 
 transaction_manager.cc
-[code] 
+```cpp 
     {
       absl::MutexLock l(&active_calls_in_mu_);
       delayed_locks_timer_ring_.Add(delayed_locks_flush_time_ms, tid);
     }
     
-[/code]
-[code] 
+```
+```cpp 
     {
       ActiveCalls::LockedShard shard(active_calls_in_, tid);
       shard.delayed_locks_timer_ring().Add(delayed_locks_flush_time_ms, tid);
     }
     
-[/code]
+```
 
 結果顯示，在使用 8192 個 Fiber 執行基準測試時，總體牆鐘時間 (wall-clock time) 減少了 69%。
-[code] 
+```cpp 
     基準測試 (Benchmark)           時間 (Time) (ns)    CPU (ns)  迭代次數 (Iterations)
     ------------------------------------------------------------------
     BM_ActiveCalls/8k        11854633492     98766564676            10
     BM_ActiveCalls/16k       26356203552    217325836709            10
     
-[/code]
-[code] 
+```
+```cpp 
     基準測試 (Benchmark)           時間 (Time) (ns)    CPU (ns)  迭代次數 (Iterations)
     ------------------------------------------------------------------
     BM_ActiveCalls/8k         3696794642     39670670110            10
     BM_ActiveCalls/16k        7366284437     79435705713            10
     
-[/code]
+```
 
 ### SIMD 指令 (SIMD Instructions)
 
@@ -3198,7 +3198,7 @@ transaction_manager.cc
 將常用的突變欄位與其他欄位隔離在不同的快取行中。
 
 histogram.h
-[code] 
+```cpp 
     HistogramOptions options_;
     ...
     internal::HistogramBoundaries *boundaries_;
@@ -3213,8 +3213,8 @@ histogram.h
     ...
     RegisterVariableExporter *exporter_;
     
-[/code]
-[code] 
+```
+```cpp 
       HistogramOptions options_;
       ...
       internal::HistogramBoundaries *boundaries_;
@@ -3235,14 +3235,14 @@ histogram.h
       double sum_;             // 值之和。
       double sum_of_squares_;  // 值的平方和。
     
-[/code]
+```
 
 ### 減少上下文切換的頻率 (Reduce frequency of context switches)
 
 內聯處理小型工作項，而不是在裝置執行緒池中處理。
 
 cast_op.cc
-[code] 
+```cpp 
     template <typename Device, typename Tout, typename Tin>
     void CastMaybeInline(const Device& d, typename TTypes<Tout>::Flat o,
                          typename TTypes<Tin>::ConstFlat i) {
@@ -3254,7 +3254,7 @@ cast_op.cc
       }
     }
     
-[/code]
+```
 
 ### 使用緩衝通道進行流水線處理 (Use buffered channels for pipelining)
 
@@ -3271,7 +3271,7 @@ RPC Stub 快取中的項目每秒被讀取數千次，且很少修改。切換�
 使用固定的詞典 + 無鎖雜湊表來加速確定 `IsValidTokenId`。
 
 dynamic_token_class_manager.h
-[code] 
+```cpp 
     mutable Mutex mutex_;
     
     // 此雜湊表的密度由動態詞典在嘗試分配新 TokenId 之前重用
@@ -3279,29 +3279,29 @@ dynamic_token_class_manager.h
     dense_hash_map<TokenId, common::LocalTokenClassId> tid_to_cid_
         GUARDED_BY(mutex_);
     
-[/code]
-[code] 
+```
+```cpp 
     // 此雜湊表的讀取存取應使用 'epoch_gc_'::(EnterFast / LeaveFast) 執行。
     // 寫入者應定期透過簡單地呼叫 LockFreeHashMap::CreateGC 來 GC 刪除的項目。
     typedef util::gtl::LockFreeHashMap<TokenId, common::LocalTokenClassId>
         TokenIdTokenClassIdMap;
     TokenIdTokenClassIdMap tid_to_cid_;
     
-[/code]
+```
 
 ## Protocol Buffer 建議 (Protocol Buffer advice)
 
 Protobuf 是資料的便捷表示形式，特別是如果要透過網路傳送或持久化儲存資料。然而，它們可能具有顯著的效能成本。例如，一段填充 1000 個點並加總 Y 座標的程式碼，從 Protobuf 轉換為 C++ 的 `std::vector` 結構體後，速度提高了 **20 倍**！
 
 兩個版本的基準測試程式碼結果。
-[code] 
+```cpp 
     名稱 (name)        舊時間 (old time/op)  新時間 (new time/op)  差異 (delta)
     BenchmarkIteration      17.4µs ± 5%           0.8µs ± 1%        -95.30%  (p=0.000 n=11+12)
     
-[/code]
+```
 
 Protobuf 版本：
-[code] 
+```cpp 
     message PointProto {
       int32 x = 1;
       int32 y = 2;
@@ -3310,8 +3310,8 @@ Protobuf 版本：
       repeated PointProto points = 1;
     }
     
-[/code]
-[code] 
+```
+```cpp 
     void SumProto(const PointListProto& vec) {
       int sum = 0;
       for (const PointProto& p : vec.points()) {
@@ -3331,10 +3331,10 @@ Protobuf 版本：
       SumProto(points);
     }
     
-[/code]
+```
 
 非 Protobuf 版本：
-[code] 
+```cpp 
     struct PointStruct {
       int x;
       int y;
@@ -3357,7 +3357,7 @@ Protobuf 版本：
       SumVector(points);
     }
     
-[/code]
+```
 
 此外，Protobuf 版本向二進制檔案添加了幾 KB 的程式碼和資料，這看起來可能不多，但在具有許多 Protobuf 類型的系統中會迅速累積。這種增加的大小透過產生 i-cache 和 d-cache 壓力來引發效能問題。
 
@@ -3372,7 +3372,7 @@ Protobuf 版本：
 訊息層級對於以更易讀的方式組織資訊很有用。然而，額外的訊息層級會產生成本，如記憶體配置、函式呼叫、快取失誤、較大的序列化訊息等。
 
 例如，與其使用：
-[code] 
+```cpp 
     message Foo {
       optional Bar bar = 1;
     }
@@ -3383,15 +3383,15 @@ Protobuf 版本：
       optional int32 count = 1;
     }
     
-[/code]
+```
 
 優先選擇：
-[code] 
+```cpp 
     message Foo {
       optional int32 count = 1;
     }
     
-[/code]
+```
 
 Protocol Buffer 訊息對應於 C++ 產生的程式碼中的訊息類別，並在網路上發出標籤和負載長度。為了承載一個整數，舊形式需要更多的配置（和解除配置），並產生更大量的程式碼。因此，所有 Protocol Buffer 操作（解析、序列化、大小計算等）都會變得更昂貴，因為必須遍歷訊息樹。新形式沒有這種開銷，效率更高。
 
@@ -3424,13 +3424,13 @@ Varint 佔用較少的位元組來編碼小的整數，可以節省空間，代�
 考慮 `string_type = VIEW` 以避免複製。
 
 在解析期間複製大的字串或位元組欄位很昂貴。這種成本通常可以透過將欄位標記為 `string_type = VIEW` 來避免。
-[code] 
+```cpp 
     message Image {
       ...
       bytes jpeg_encoding = 4 [features.(pb.cpp).string_type=VIEW];
     }
     
-[/code]
+```
 
 如果沒有 `VIEW` 標註，當解析 Protocol Buffer 時，潛在的大型欄位內容會從序列化的 Protocol Buffer 複製到記憶體中的字串物件。根據字串或位元組欄位的數量以及這些欄位的大小，複製的開銷可能會很顯著。
 
@@ -3439,13 +3439,13 @@ Varint 佔用較少的位元組來編碼小的整數，可以節省空間，代�
 考慮對大型欄位使用 `Cord` 以降低複製成本。
 
 標註大型 `bytes` 和 `string` 欄位為 `[ctype=CORD]` 可能會降低複製成本。此標註將欄位的表示形式從 `std::string` 更改為 `absl::Cord`。`absl::Cord` 使用引用計數和基於樹的存儲來降低複製和追加成本。如果 Protocol Buffer 被序列化為 Cord，則解析帶有 `[ctype=CORD]` 的字串或位元組欄位可以避免複製欄位內容。
-[code] 
+```cpp 
     message Document {
       ...
       bytes html = 4 [ctype = CORD];
     }
     
-[/code]
+```
 
 Cord 欄位的效能取決於長度分布和存取模式。使用基準測試來驗證此類更改。
 
@@ -3468,23 +3468,23 @@ Cord 欄位的效能取決於長度分布和存取模式。使用基準測試來
 Protobuf Map 欄位存在效能問題，通常超過了它們提供的微小語法便利。優先使用從 Protobuf 內容初始化的非 Protobuf Map：
 
 msg.proto
-[code] 
+```cpp 
     map<string, bytes> env_variables = 5;
     
-[/code]
-[code] 
+```
+```cpp 
     message Var {
       string key = 1;
       bytes value = 2;
     }
     repeated Var env_variables = 5;
     
-[/code]
+```
 
 使用具有欄位子集的 Protobuf 訊息定義。
 
 如果您只想存取大型訊息類型的少數幾個欄位，請考慮定義您自己的、模仿原始類型的 Protocol Buffer 訊息類型，但僅定義您關心的欄位。這是一個範例：
-[code] 
+```cpp 
     message FullMessage {
       optional int32 field1 = 1;
       optional BigMessage field2 = 2;
@@ -3494,14 +3494,14 @@ msg.proto
       optional int32 field100 = 100;
     }
     
-[/code]
-[code] 
+```
+```cpp 
     message SubsetMessage {
       optional int32 field3 = 3;
       optional int32 field88 = 88;
     }
     
-[/code]
+```
 
 透過將序列化的 `FullMessage` 解析為 `SubsetMessage`，一百個欄位中僅有兩個被解析，其他欄位被視為未知欄位。在適當時，考慮使用丟棄未知欄位的 API 來進一步提高效能。
 
@@ -3518,53 +3518,53 @@ msg.proto
 加速 `LanguageFromCode`（使用 `absl::flat_hash_map` 代替 `__gnu_cxx::hash_map`）。
 
 languages.cc
-[code] 
+```cpp 
     class CodeToLanguage
         ...
         : public __gnu_cxx::hash_map<absl::string_view, i18n::languages::Language,
                                      CodeHash, CodeCompare> {
     
-[/code]
-[code] 
+```
+```cpp 
     class CodeToLanguage
         ...
         : public absl::flat_hash_map<absl::string_view, i18n::languages::Language,
                                      CodeHash, CodeCompare> {
     
-[/code]
+```
 
 基準測試結果：
-[code] 
+```cpp 
     名稱 (name)        舊時間 (old time/op)  新時間 (new time/op)  差異 (delta)
     BM_CodeToLanguage      19.4ns ± 1%           10.2ns ± 3%        -47.47%  (p=0.000 n=8+10) 
     
-[/code]
+```
 
 加速統計發佈/取消發佈（這是一個較舊的更改，因此使用了 `dense_hash_map` 而不是當時尚不存在的 `absl::flat_hash_map`）。
 
 publish.cc
-[code] 
+```cpp 
     typedef hash_map<uint64, Publication*> PublicationMap;
     static PublicationMap* publications = NULL;
     
-[/code]
-[code] 
+```
+```cpp 
     typedef dense_hash_map<uint64, Publication*> PublicationMap;;
     static PublicationMap* publications GUARDED_BY(mu) = NULL;
     
-[/code]
+```
 
 使用 `dense_hash_map` 取代 `hash_map` 來追蹤 `SelectServer` 警報（今天會使用 `absl::flat_hash_map`）。
 
 alarmer.h
-[code] 
+```cpp 
     typedef hash_map<int, Alarm*> AlarmList;
     
-[/code]
-[code] 
+```
+```cpp 
     typedef dense_hash_map<int, Alarm*> AlarmList;
     
-[/code]
+```
 
 ### absl::btree_map/absl::btree_set
 
@@ -3573,14 +3573,14 @@ alarmer.h
 使用 `btree_set` 取代 `std::set` 來表示一個非常頻繁使用的工作隊列。
 
 register_allocator.h
-[code] 
+```cpp 
     using container_type = std::set<WorklistItem>;
     
-[/code]
-[code] 
+```
+```cpp 
     using container_type = absl::btree_set<WorklistItem>;
     
-[/code]
+```
 
 ### util::bitmap::InlinedBitVector
 
@@ -3589,7 +3589,7 @@ register_allocator.h
 使用 `InlinedBitVector` 取代 `std::vector<bool>`，然後使用 `FindNextBitSet` 來尋找下一個感興趣的項目。
 
 block_encoder.cc
-[code] 
+```cpp 
     vector<bool> live_reads(nreads);
     ...
     for (int offset = 0; offset < b_.block_width(); offset++) {
@@ -3597,8 +3597,8 @@ block_encoder.cc
       for (int r = 0; r < nreads; r++) {
         if (live_reads[r]) {
     
-[/code]
-[code] 
+```
+```cpp 
     util::bitmap::InlinedBitVector<4096> live_reads(nreads);
     ...
     for (int offset = 0; offset < b_.block_width(); offset++) {
@@ -3606,7 +3606,7 @@ block_encoder.cc
       for (size_t r = 0; live_reads.FindNextSetBit(&r); r++) {
         DCHECK(live_reads[r]);
     
-[/code]
+```
 
 ### absl::InlinedVector
 
@@ -3615,7 +3615,7 @@ block_encoder.cc
 在各處使用 `InlinedVector` 取代 `std::vector`。
 
 bundle.h
-[code] 
+```cpp 
     class Bundle {
      public:
      ...
@@ -3625,8 +3625,8 @@ bundle.h
       ...
     };
     
-[/code]
-[code] 
+```
+```cpp 
     class Bundle {
      public:
      ...
@@ -3636,7 +3636,7 @@ bundle.h
       ...
     };
     
-[/code]
+```
 
 ### gtl::vector32
 
@@ -3645,7 +3645,7 @@ bundle.h
 簡單的類型更改在 Spanner 中節省了 ~8TiB 記憶體。
 
 table_ply.h
-[code] 
+```cpp 
     class TablePly {
         ...
         // 返回為此表存儲在此檔案中的數據列集合。
@@ -3657,8 +3657,8 @@ table_ply.h
         ...
         std::vector<FamilyId> modified_data_columns_;  // 表中的數據列。
     
-[/code]
-[code] 
+```
+```cpp 
     #include "util/gtl/vector32.h"
         ...
         // 返回為此表存儲在此檔案中的數據列集合。
@@ -3671,7 +3671,7 @@ table_ply.h
         // 表中的數據列。
         gtl::vector32<FamilyId> modified_data_columns_;
     
-[/code]
+```
 
 ### gtl::small_map
 
@@ -3680,15 +3680,15 @@ table_ply.h
 在 `tflite_model` 中使用 `gtl::small_map`。
 
 tflite_model.cc
-[code] 
+```cpp 
     using ChoiceIdToContextMap = gtl::flat_hash_map<int, TFLiteContext*>;
     
-[/code]
-[code] 
+```
+```cpp 
     using ChoiceIdToContextMap =
         gtl::small_map<gtl::flat_hash_map<int, TFLiteContext*>>;
     
-[/code]
+```
 
 ### gtl::small_ordered_set
 
@@ -3697,7 +3697,7 @@ tflite_model.cc
 使用 `gtl::small_ordered_set` 持有監聽者集合。
 
 broadcast_stream.h
-[code] 
+```cpp 
     class BroadcastStream : public ParsedRtpTransport {
      ...
      private:
@@ -3705,8 +3705,8 @@ broadcast_stream.h
       std::set<ParsedRtpTransport*> listeners_ ABSL_GUARDED_BY(listeners_mutex_);
     };
     
-[/code]
-[code] 
+```
+```cpp 
     class BroadcastStream : public ParsedRtpTransport {
      ...
      private:
@@ -3715,7 +3715,7 @@ broadcast_stream.h
           gtl::small_ordered_set<std::set<ParsedRtpTransport*>, 10>;
       ListenersSet listeners_ ABSL_GUARDED_BY(listeners_mutex_);
     
-[/code]
+```
 
 ### gtl::intrusive_list
 
@@ -3724,11 +3724,11 @@ broadcast_stream.h
 使用 `intrusive_list` 追蹤每個索引行更新的在途請求。
 
 row-update-sender-inflight-set.h
-[code] 
+```cpp 
     std::set<int64> inflight_requests_ GUARDED_BY(mu_);
     
-[/code]
-[code] 
+```
+```cpp 
     class SeqNum : public gtl::intrusive_link<SeqNum> {
       ...
       int64 val_ = -1;
@@ -3737,7 +3737,7 @@ row-update-sender-inflight-set.h
     ...
     gtl::intrusive_list<SeqNum> inflight_requests_ GUARDED_BY(mu_);
     
-[/code]
+```
 
 ### 限制 absl::Status 和 absl::StatusOr 的使用 (Limit absl::Status and absl::StatusOr usage)
 
@@ -3746,7 +3746,7 @@ row-update-sender-inflight-set.h
 為 `RoundUpToAlignment()` 函式避免 `StatusOr<int64>` 返回類型。
 
 best_fit_allocator.cc
-[code] 
+```cpp 
     absl::StatusOr<int64> BestFitAllocator::RoundUpToAlignment(int64 bytes) const {
       TPU_RET_CHECK_GE(bytes, 0);
     
@@ -3764,10 +3764,10 @@ best_fit_allocator.cc
       return MathUtil::RoundUpTo<int64>(bytes, alignment_in_bytes_);
     }
     
-[/code]
+```
 
 best_fit_allocator.h
-[code] 
+```cpp 
     // 將位元組向上舍入到最接近的 alignment_ 的倍數。
     // 要求：bytes >= 0。
     // 要求：結果不溢出 int64。
@@ -3781,12 +3781,12 @@ best_fit_allocator.h
       return result;
     }
     
-[/code]
+```
 
 加入 `ShapeUtil::ForEachIndexNoStatus` 以避免為 Tensor 的每個元素建立 Status 返回物件。
 
 shape_util.h
-[code] 
+```cpp 
     using ForEachVisitorFunction = 
         absl::FunctionRef<StatusOr<bool>(absl::Span<const int64_t>)>;
         ...
@@ -3796,8 +3796,8 @@ shape_util.h
                              const ForEachVisitorFunction& visitor_function);
     
     
-[/code]
-[code] 
+```
+```cpp 
     using ForEachVisitorFunctionNoStatus = 
         absl::FunctionRef<bool(absl::Span<const int64_t>)>;
         ...
@@ -3806,10 +3806,10 @@ shape_util.h
         absl::Span<const int64_t> count, absl::Span<const int64_t> incr,
         const ForEachVisitorFunctionNoStatus& visitor_function);
     
-[/code]
+```
 
 literal.cc
-[code] 
+```cpp 
     ShapeUtil::ForEachIndex(
         result_shape, [&](absl::Span<const int64_t> output_index) {
           for (int64_t i = 0, end = dimensions.size(); i < end; ++i) {
@@ -3824,8 +3824,8 @@ literal.cc
           return true;
         });
     
-[/code]
-[code] 
+```
+```cpp 
     ShapeUtil::ForEachIndexNoStatus(
         result_shape, [&](absl::Span<const int64_t> output_index) {
           // 計算 dest_index
@@ -3853,17 +3853,17 @@ literal.cc
           return true;
         });
     
-[/code]
+```
 
 在 `TF_CHECK_OK` 中，避免為了測試 `ok()` 而建立 Ok 物件。
 
 status.h
-[code] 
+```cpp 
     #define TF_CHECK_OK(val) CHECK_EQ(::tensorflow::Status::OK(), (val))
     #define TF_QCHECK_OK(val) QCHECK_EQ(::tensorflow::Status::OK(), (val))
     
-[/code]
-[code] 
+```
+```cpp 
     extern tensorflow::string* TfCheckOpHelperOutOfLine(
         const ::tensorflow::Status& v, const char* msg);
     inline tensorflow::string* TfCheckOpHelper(::tensorflow::Status v, 
@@ -3878,21 +3878,21 @@ status.h
       while (tensorflow::string* _result = TfCheckOpHelper(val, #val)) \
       LOG(QFATAL) << *(_result)
     
-[/code]
+```
 
 從遠程程序呼叫 (RPC) 的熱點路徑中移除 `StatusOr`。
 
 從熱點路徑移除 `StatusOr` 消除了一個由早期更改引起的 RPC 基準測試中 14% 的 CPU 退化。
 
 privacy_context.h
-[code] 
+```cpp 
     absl::StatusOr<privacy::context::PrivacyContext> GetRawPrivacyContext(
         const CensusHandle& h);
     
-[/code]
+```
 
 privacy_context_statusfree.h
-[code] 
+```cpp 
     enum class Result { 
       kSuccess,
       kNoRootScopedData,
@@ -3905,7 +3905,7 @@ privacy_context_statusfree.h
     Result GetRawPrivacyContext(const CensusHandle& h,
                                 PrivacyContext* privacy_context);
     
-[/code]
+```
 
 ## 批量操作 (Bulk operations)
 
@@ -3916,7 +3916,7 @@ privacy_context_statusfree.h
 參見 [Swiss Table 設計筆記](https://abseil.io/about/design/swisstables) 及 Matt Kulukundis 相關的 [CppCon 2017](https://www.youtube.com/watch?v=ncHmEUmJZf4) 和 [CppCon 2019](https://www.youtube.com/watch?v=JZE3_0qvrMg) 演講。
 
 raw_hash_set.h
-[code] 
+```cpp 
     // 返回一個位元遮罩，表示與雜湊匹配的插槽位置。
     BitMask<uint32_t> Match(h2_t hash) const {
       auto ctrl = _mm_loadu_si128(reinterpret_cast<const __m128i*>(pos));
@@ -3924,12 +3924,12 @@ raw_hash_set.h
       return BitMask<uint32_t>(_mm_movemask_epi8(_mm_cmpeq_epi8(match, ctrl)));
     }
     
-[/code]
+```
 
 執行單個操作來處理多個位元組並進行修正，而不是檢查每個位元組該做什麼。
 
 ordered-code.cc
-[code] 
+```cpp 
     int len = 0;
     while (val > 0) {
       len++;
@@ -3940,18 +3940,18 @@ ordered-code.cc
     len++;
     FastStringAppend(dest, reinterpret_cast<const char*>(buf + 9 - len), len);
     
-[/code]
-[code] 
+```
+```cpp 
     BigEndian::Store(val, buf + 1);  // buf[0] 可能需要用於長度
     const unsigned int length = OrderedNumLength(val);
     char* start = buf + 9 - length - 1;
     *start = length;
     AppendUpto9(dest, start, length + 1);
     
-[/code]
+```
 
 透過更有效地分塊處理多個交錯的輸入緩衝區，提高 Reed-Solomon 處理速度。
-[code] 
+```cpp 
     Run on (12 X 3501 MHz CPUs); 2016-09-27T16:04:55.065995192-04:00
     CPU: Intel Haswell with HyperThreading (6 cores) dL1:32KB dL2:256KB dL3:15MB
     基準測試 (Benchmark)              基準 (Base) (ns)  新 (New) (ns) 改進 (Improvement)
@@ -3972,14 +3972,14 @@ ordered-code.cc
     BM_AllOutputsSetUpOnce/6/3           1802353   1398600    +22.4%
     BM_AllOutputsSetUpOnce/8/4           3166930   2455973    +22.4%
     
-[/code]
+```
 
 一次解碼四個整數（約 2004 年）。
 
 引入了 [GroupVarInt 格式](https://static.googleusercontent.com/media/research.google.com/en//people/jeff/WSDM09-keynote.pdf)，它一次在 5-17 位元組中編碼/解碼一組 4 個變長整數，而不是一次一個。解碼新格式中的一組 4 個整數僅需解碼 4 個單獨 Varint 編碼整數所需時間的約 1/3。
 
 groupvarint.cc
-[code] 
+```cpp 
     const char* DecodeGroupVar(const char* p, int N, uint32* dest) {
       assert(groupvar_initialized);
       assert(N % 4 == 0);
@@ -4008,7 +4008,7 @@ groupvarint.cc
       return p;
     }
     
-[/code]
+```
 
 一次編碼一組 4 個 k 位元數字。
 
@@ -4035,7 +4035,7 @@ groupvarint.cc
 加入了多執行緒基準測試，以測試競爭下的配置。
 
 在我的配備 Titan X 顯卡的桌上型電腦上，將 `ptb_word_lm` 的速度從每秒 8036 個單詞提升到 8272 個單詞 (+2.9%)。
-[code] 
+```cpp 
     Run on (40 X 2801 MHz CPUs); 2016/02/16-15:12:49
     CPU: Intel Ivybridge with HyperThreading (20 cores) dL1:32KB dL2:256KB dL3:25MB
     基準測試 (Benchmark)              基準 (Base) (ns)  新 (New) (ns) 改進 (Improvement)
@@ -4049,7 +4049,7 @@ groupvarint.cc
     BM_AllocationDelayed/100                 245       149    +39.2%
     BM_AllocationDelayed/1000                238       151    +36.6%
     
-[/code]
+```
 
 透過一系列雜項更改將 Pathways 吞吐量提高約 20%。
 
@@ -4066,11 +4066,11 @@ groupvarint.cc
   * 移除了 `TransferDispatchOp` 中一些不必要的字串建立。
 
   * 在同一程序中將 1000 個 1KB Tensor 的批次從一個組件傳輸到另一個組件的效能結果：
-[code] 
+```cpp 
     之前 (Before): 227.01 steps/sec
     之後 (After):  272.52 steps/sec (+20% 吞吐量)
     
-[/code]
+```
 
 透過一系列更改將 XLA 編譯器效能提升約 15%。
 
@@ -4098,7 +4098,7 @@ groupvarint.cc
   * 內聯了 `PushLogId` 和 `PopLogid()` 常式（因為沒有了 `LOG_EVERY_N_SECONDS(ERROR, ...)` 語句，它們現在足夠小以進行內聯）。
   * 切換到使用大小為 4 的固定陣列和一個 `int size` 變數，而不是使用 `InlinedVector<...>` 來維護執行緒局部狀態。由於我們的大小從未超過 4，因此 `InlinedVector` 的功能超出了需求。
 
-[code] 
+```cpp 
     基準 (Base): 基準線加上 scoped_logid_test.cc 中加入基準測試的程式碼
     新 (New): 此變更列表 (CL)
     
@@ -4111,7 +4111,7 @@ groupvarint.cc
     BM_ScopedLogId/threads:8                               8           4    +52.1%
     BM_ScopedLogId/threads:16                             11           6    +44.0%
     
-[/code]
+```
 
 透過改進 Shape 處理，將 XLA 編譯時間縮短約 31%。
 
@@ -4148,7 +4148,7 @@ groupvarint.cc
   4. 在 `ShardingPropagation::GetShardingFromUser` 中，對於 `HloOpcode::kTuple` 情況，僅當我們發現該運算元值得關注時才呼叫 `user.sharding().GetSubSharding(...)`。避免主動呼叫它使一個冗長編譯中的此常式 CPU 時間從 43.7s 減少到 2.0s。
 
   5. 為 `ShapeUtil::ForEachIndex` 和 `Literal::Broadcast` 以及新的 `ShapeUtil::ForEachIndexNoStatus` 加入了基準測試。
-[code] 
+```cpp 
     基準 (Base) 是加入了 BM_ForEachIndex 和 BM_BroadcastVectorToMatrix 基準測試（以及加入基準測試依賴項的 BUILD 檔案更改），但沒有其他更改。
     
     新 (New) 是此 CL。
@@ -4164,27 +4164,27 @@ groupvarint.cc
     BM_ForEachIndex/1                                  90.90       85.50     +5.9%
     BM_ForEachIndex/2                               1973606     1642197     +16.8%
     
-[/code]
+```
 
 新加入的 `ForEachIndexNoStatus` 比 `ForEachIndex` 變體明顯快得多（它僅存在於此新 CL 中，但 `BM_ForEachIndexNoStatus/NUM` 執行的基準測試工作與上述 `BM_ForEachIndex/NUM` 結果相當）。
-[code] 
+```cpp 
     Benchmark                                      Base (ns)    New (ns) Improvement
     ----------------------------------------------------------------------------
     BM_ForEachIndexNoStatus/0                             0        46.90    ----
     BM_ForEachIndexNoStatus/1                             0        65.60    ----
     BM_ForEachIndexNoStatus/2                             0     1001277     ----
     
-[/code]
+```
 
 Broadcast 效能提高了約 58%。
-[code] 
+```cpp 
     Benchmark                                      Base (ns)    New (ns) Improvement
     ----------------------------------------------------------------------------
     BM_BroadcastVectorToMatrix/16/16                   5556        2374     +57.3%
     BM_BroadcastVectorToMatrix/16/1024               319510      131075     +59.0%
     BM_BroadcastVectorToMatrix/1024/1024           20216949     8408188     +58.4%
     
-[/code]
+```
 
 對一個大型語言模型進行提前編譯 (AOT) 的巨觀結果（程式不僅僅執行 XLA 編譯，但花費了不到一半的時間在 XLA 相關程式碼中）：
 
@@ -4204,11 +4204,11 @@ Broadcast 效能提高了約 58%。
   4. 在上述 B-tree 中儲存指向 `opdef` 的指標，而不是將 `opdef` 複製到 B-tree 中。
 
 對大型程式（約 4.5 萬個運算）的速度測量：
-[code] 
+```cpp 
     名稱 (name)        舊時間 (old time/op)  新時間 (new time/op)  差異 (delta)
     BM_CompileLarge        28.5s ± 2%            22.4s ± 2%        -21.61%  (p=0.008 n=5+5)
     
-[/code]
+```
 
 MapReduce 改進（單詞計數基準測試加速約 2 倍）。
 
@@ -4221,13 +4221,13 @@ MapReduce 加速：
      * 它明顯更快，因為當我們為表中已存在的鍵插入新值時，我們避免了額外的雜湊表項（相反地，我們只需將值掛接到該鍵的值鏈結串列中）。
 
      * 由於我們為鏈結串列中的每個值關聯了一個重複計數，我們可以將此序列：
-[code] Output(key, "1");
+```cpp Output(key, "1");
            Output(key, "1");
            Output(key, "1");
            Output(key, "1");
            Output(key, "1");
            
-[/code]
+```
 
 表示為「key」鏈結串列中的單個條目，重複計數為 5。內部我們向使用者層級的 Combining 函式產出 5 次「1」。(類似的技巧或許也可以應用於 Reduce 端)。
 
@@ -4250,20 +4250,20 @@ MapReduce 加速：
   3. 移除了 `num_alarms_stat_` 和 `num_closures_stat_` `MinuteTenMinuteHourStat` 物件以及相應的導出變數。雖然監控這些看起來不錯，但在實踐中它們為關鍵網路程式碼添加了顯著開銷。如果我將這些變數保留為 `Atomic32` 變數而非 `MinuteTenMinuteHourStat`，它們仍會將添加和移除警報的成本從 281 奈秒增加到 340 奈秒。
 
 基準測試結果
-[code] 
+```cpp 
     Benchmark                      Time(ns)  CPU(ns) Iterations
     -----------------------------------------------------------
     BM_AddAlarm/1                       902      771     777777
     
-[/code]
+```
 
 使用此更改
-[code] 
+```cpp 
     Benchmark                      Time(ns)  CPU(ns) Iterations
     -----------------------------------------------------------
     BM_AddAlarm/1                       324      281    2239999
     
-[/code]
+```
 
 索引服務速度提升 3.3 倍！
 
@@ -4299,13 +4299,13 @@ MapReduce 加速：
 ## 建議引用 (Suggested citation)
 
 如果您想引用此文件，我們建議：
-[code] 
+```cpp 
     Jeffrey Dean & Sanjay Ghemawat, Performance Hints, 2025, https://abseil.io/fast/hints.html
     
-[/code]
+```
 
 或以 BibTeX 引用：
-[code] 
+```cpp 
     @misc{DeanGhemawatPerformance2025,
       author = {Dean, Jeffrey and Ghemawat, Sanjay},
       title = {Performance Hints},
@@ -4313,7 +4313,7 @@ MapReduce 加速：
       howpublished = {\url{https://abseil.io/fast/hints.html}},
     }
     
-[/code]
+```
 
 ## 致謝 (Acknowledgments)
 
