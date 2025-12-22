@@ -338,8 +338,11 @@
 ## Software Engineering
 - [Software Engineering](software_engineering/software_engineering.md)
     - [迭代思維與人才優勢](software_engineering/迭代思維與人才優勢.md)
-    - [主流開發語言、架構與資料庫效能全解析](software_engineering/Performance_Comparison_2025.md)
-    - [效能提示](software_engineering/Performance_Hints_zh_TW.md)
+
+## Performance
+- [主流開發語言、架構與資料庫效能全解析](performance/Performance_Comparison_2025.md)
+- [效能提示](performance/Performance_Hints_zh_TW.md)
+- [Abseil 效能優化建議](performance/abseil_hints.md)
 
 ## Algorithm
 - [演算法](algorithm/algorithm.md)
