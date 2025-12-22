@@ -4,7 +4,7 @@
 
 Original version: 2023/07/27, last updated: 2025/12/16
 
-Expand all details Collapse all details
+
 
 Over the years, we (Jeff & Sanjay) have done a fair bit of diving into performance tuning of various pieces of code, and improving the performance of our software has been important from the very earliest days of Google, since it lets us do more for more users. We wrote this document as a way of identifying some general principles and specific techniques that we use when doing this sort of work, and tried to pick illustrative source code changes (change lists, or CLs) that provide examples of the various approaches and techniques. Most of the concrete suggestions below reference C++ types and CLs, but the general principles apply to other languages. The document focuses on general performance tuning in the context of a single binary, and does not cover distributed systems or machine learning (ML) hardware performance tuning (huge areas unto themselves). We hope others will find this useful.
 
@@ -48,7 +48,7 @@ Here is how such an estimation might work:
 
 
 The following table, which is an updated version of a table from a [2007 talk at Stanford University](https://static.googleusercontent.com/media/research.google.com/en//people/jeff/stanford-295-talk.pdf) (video of the 2007 talk no longer exists, but there is a [video of a related 2011 Stanford talk that covers some of the same content](https://www.youtube.com/watch?v=modXC5IWTJI)) may be useful since it lists the types of operations to consider, and their rough cost:
-[code] 
+```text 
     L1 cache reference                             0.5 ns
     L2 cache reference                             3 ns
     Branch mispredict                              5 ns
@@ -64,7 +64,7 @@ The following table, which is an updated version of a table from a [2007 talk at
     Read 1MB sequentially from disk       10,000,000 ns
     Send packet CA->Netherlands->CA      150,000,000 ns
     
-[/code]
+```
 
 The preceding table contains rough costs for some basic low-level operations. You may find it useful to also track estimated costs for higher-level operations relevant to your system. E.g., you might want to know the rough cost of a point read from your SQL database, the latency of interacting with a Cloud service, or the time to render a simple HTML page. If you don’t know the relevant cost of different operations, you can’t do decent back-of-the-envelope calculations!
 
@@ -141,14 +141,14 @@ Add bulk MemoryManager::LookupMany interface.
 In addition to adding a bulk interface, this also simplified the signature for the new bulk variant: it turns out clients only needed to know if all the keys were found, so we can return a bool rather than a Status object.
 
 memory_manager.h
-[code] 
+```cpp 
     class MemoryManager {
      public:
       ...
       util::StatusOr<LiveTensor> Lookup(const TensorIdProto& id);
     
-[/code]
-[code] 
+```
+```cpp 
     class MemoryManager {
      public:
       ...
@@ -162,20 +162,20 @@ memory_manager.h
       bool LookupMany(absl::Span<const LookupKey> keys,
                       absl::Span<tensorflow::Tensor> tensors);
     
-[/code]
+```
 
 Add bulk ObjectStore::DeleteRefs API to amortize locking overhead.
 
 object_store.h
-[code] 
+```cpp 
     template <typename T>
     class ObjectStore {
      public:
       ...
       absl::Status DeleteRef(Ref);
     
-[/code]
-[code] 
+```
+```cpp 
     template <typename T>
     class ObjectStore {
      public:
@@ -196,10 +196,10 @@ object_store.h
       return result;
     }
     
-[/code]
+```
 
 memory_tracking.cc
-[code] 
+```cpp 
     void HandleBatch(int, const plaque::Batch& input) override {
       for (const auto& t : input) {
         auto in = In(t);
@@ -212,8 +212,8 @@ memory_tracking.cc
       }
     }
     
-[/code]
-[code] 
+```
+```cpp 
     void HandleBatch(int, const plaque::Batch& input) override {
       for (const auto& t : input) {
         auto in = In(t);
@@ -228,7 +228,7 @@ memory_tracking.cc
       }
     }
     
-[/code]
+```
 
 Use [Floyd's heap construction](https://en.wikipedia.org/wiki/Heapsort#Variations) for efficient initialization.
 
@@ -241,7 +241,7 @@ Cache block decode results for use in future calls.
 Each lookup needs to decode a whole block of K entries. Store the decoded entries in a cache and consult the cache on future lookups.
 
 lexicon.cc
-[code] 
+```cpp 
     void GetTokenString(int pos, std::string* out) const {
       ...
       absl::FixedArray<LexiconEntry, 32> entries(pos + 1);
@@ -254,8 +254,8 @@ lexicon.cc
         p += entries[i].remaining;  // remaining bytes trail each entry.
       }
     
-[/code]
-[code] 
+```
+```cpp 
     mutable std::vector<absl::InlinedVector<std::string, 16>> cache_;
     ...
     void GetTokenString(int pos, std::string* out) const {
@@ -282,7 +282,7 @@ lexicon.cc
       }
       *out = cache_[skentry][pos];
     
-[/code]
+```
 
 ### View types
 
@@ -295,29 +295,29 @@ For frequently called routines, sometimes it is useful to allow higher-level cal
 Add RPC_Stats::RecordRPC variant allowing client to pass in already available WallTime value.
 
 rpc-stats.h
-[code] 
+```cpp 
     static void RecordRPC(const Name &name, const RPC_Stats_Measurement& m);
     
-[/code]
-[code] 
+```
+```cpp 
     static void RecordRPC(const Name &name, const RPC_Stats_Measurement& m,
                           WallTime now);
     
-[/code]
+```
 
 clientchannel.cc
-[code] 
+```cpp 
     const WallTime now = WallTime_Now();
     ...
     RPC_Stats::RecordRPC(stats_name, m);
     
-[/code]
-[code] 
+```
+```cpp 
     const WallTime now = WallTime_Now();
     ...
     RPC_Stats::RecordRPC(stats_name, m, now);
     
-[/code]
+```
 
 ### Thread-compatible vs. Thread-safe types
 
@@ -326,34 +326,34 @@ A type may be either thread-compatible (synchronized externally) or thread-safe 
 Make a class thread-compatible since callers are already synchronized.
 
 hitless-transfer-phase.cc
-[code] 
+```cpp 
     TransferPhase HitlessTransferPhase::get() const {
       static CallsiteMetrics cm("HitlessTransferPhase::get");
       MonitoredMutexLock l(&cm, &mutex_);
       return phase_;
     }
     
-[/code]
-[code] 
+```
+```cpp 
     TransferPhase HitlessTransferPhase::get() const { return phase_; }
     
-[/code]
+```
 
 hitless-transfer-phase.cc
-[code] 
+```cpp 
     bool HitlessTransferPhase::AllowAllocate() const {
       static CallsiteMetrics cm("HitlessTransferPhase::AllowAllocate");
       MonitoredMutexLock l(&cm, &mutex_);
       return phase_ == TransferPhase::kNormal || phase_ == TransferPhase::kBrownout;
     }
     
-[/code]
-[code] 
+```
+```cpp 
     bool HitlessTransferPhase::AllowAllocate() const {
       return phase_ == TransferPhase::kNormal || phase_ == TransferPhase::kBrownout;
     }
     
-[/code]
+```
 
 However if the typical use of a type needs synchronization, prefer to move the synchronization inside the type. This allows the synchronization mechanism to be tweaked as necessary to improve performance (e.g., sharding to reduce contention) without affecting callers.
 
@@ -366,7 +366,7 @@ Add nodes to cycle detection structure in reverse post-order.
 We were previously adding graph nodes and edges one at a time to a cycle-detection data structure, which required expensive work per edge. We now add the entire graph in reverse post-order, which makes cycle-detection trivial.
 
 graphcycles.h
-[code] 
+```cpp 
     class GraphCycles : public util_graph::Graph {
      public:
       GraphCycles();
@@ -374,8 +374,8 @@ graphcycles.h
     
       using Node = util_graph::Node;
     
-[/code]
-[code] 
+```
+```cpp 
     class GraphCycles : public util_graph::Graph {
      public:
       GraphCycles();
@@ -388,10 +388,10 @@ graphcycles.h
       // REQUIRES: no nodes and edges have been added to GraphCycles yet.
       bool InitFrom(const util_graph::Graph& src);
     
-[/code]
+```
 
 graphcycles.cc
-[code] 
+```cpp 
     bool GraphCycles::InitFrom(const util_graph::Graph& src) {
       ...
       // Assign ranks in topological order so we don't need any reordering during
@@ -427,10 +427,10 @@ graphcycles.cc
       }
     }
     
-[/code]
+```
 
 graph_partitioner.cc
-[code] 
+```cpp 
     absl::Status MergeGraph::Init() {
       const Graph& graph = *compiler_->graph();
       clusters_.resize(graph.NodeLimit());
@@ -451,8 +451,8 @@ graph_partitioner.cc
       return s;
     }
     
-[/code]
-[code] 
+```
+```cpp 
     absl::Status MergeGraph::Init() {
       const Graph& graph = *compiler_->graph();
       if (!graph_->InitFrom(graph)) {
@@ -467,7 +467,7 @@ graph_partitioner.cc
       return absl::OkStatus();
     }
     
-[/code]
+```
 
 Replace the deadlock detection system built into a mutex implementation with a better algorithm.
 
@@ -476,29 +476,29 @@ Replaced deadlock detection algorithm by one that is ~50x as fast and scales to 
 The new algorithm takes O(|V|+|E|) space (instead of the O(|V|^2) bits needed by the older algorithm). Lock-acquisition order graphs are very sparse, so this is much less space. The algorithm is also quite simple: the core of it is ~100 lines of C++. Since the code now scales to much larger number of Mutexes, we were able to relax an artificial 2K limit, which uncovered a number of latent deadlocks in real programs.
 
 Benchmark results: these were run in DEBUG mode since deadlock detection is mainly enabled in debug mode. The benchmark argument (/2k etc.) is the number of tracked nodes. At the default 2k limit of the old algorithm, the new algorithm takes only 0.5 microseconds per InsertEdge compared to 22 microseconds for the old algorithm. The new algorithm also easily scales to much larger graphs without problems whereas the old algorithm keels over quickly.
-[code] 
+```text 
     DEBUG: Benchmark            Time(ns)    CPU(ns) Iterations
     ----------------------------------------------------------
     DEBUG: BM_StressTest/2k        23553      23566      29086
     DEBUG: BM_StressTest/4k        45879      45909      15287
     DEBUG: BM_StressTest/16k      776938     777472        817
     
-[/code]
-[code] 
+```
+```text 
     DEBUG: BM_StressTest/2k          392        393   10485760
     DEBUG: BM_StressTest/4k          392        393   10485760
     DEBUG: BM_StressTest/32k         407        407   10485760
     DEBUG: BM_StressTest/256k        456        456   10485760
     DEBUG: BM_StressTest/1M          534        534   10485760
     
-[/code]
+```
 
 Replace an IntervalMap (with O(lg N) lookups) with a hash table (O(1) lookups).
 
 The initial code was using IntervalMap because it seemed like the right data structure to support coalescing of adjacent blocks, but a hash table suffices since the adjacent block can be found by a hash table lookup. This (plus other changes in the CL) improve the performance of tpu::BestFitAllocator by ~4X.
 
 best_fit_allocator.h
-[code] 
+```cpp 
     using Block = gtl::IntervalMap<int64, BlockState>::Entry;
     ...
     // Map of pairs (address range, BlockState) with one entry for each allocation
@@ -511,8 +511,8 @@ best_fit_allocator.h
     // free blocks are coalesced.
     std::set<Block, BlockSelector> free_list_;
     
-[/code]
-[code] 
+```
+```cpp 
     // A faster hash function for offsets in the BlockTable
     struct OffsetHash {
       ABSL_ATTRIBUTE_ALWAYS_INLINE size_t operator()(int64 value) const {
@@ -532,21 +532,21 @@ best_fit_allocator.h
     };
     using BlockTable = absl::flat_hash_map<int64, HashTableEntry, OffsetHash>;
     
-[/code]
+```
 
 Replace sorted-list intersection (O(N log N)) with hash table lookups (O(N)).
 
 Old code to detect whether or not two nodes share a common source would get the sources for each node in sorted order and then do a sorted intersection. The new code places the sources for one node in a hash-table and then iterates over the other node's sources checking the hash-table.
-[code] 
+```cpp 
     name             old time/op  new time/op  delta
     BM_CompileLarge   28.5s ± 2%   22.4s ± 2%  -21.61%  (p=0.008 n=5+5)
     
-[/code]
+```
 
 Implement good hash function so that things are O(1) instead of O(N).
 
 location.h
-[code] 
+```cpp 
     // Hasher for Location objects.
     struct LocationHash {
       size_t operator()(const Location* key) const {
@@ -554,8 +554,8 @@ location.h
       }
     };
     
-[/code]
-[code] 
+```
+```cpp 
     size_t HashLocation(const Location& loc);
     ...
     struct LocationHash {
@@ -564,10 +564,10 @@ location.h
       }
     };
     
-[/code]
+```
 
 location.cc
-[code] 
+```cpp 
     size_t HashLocation(const Location& loc) {
       util_hash::MurmurCat m;
     
@@ -617,7 +617,7 @@ location.cc
       return m.GetHash();
     }
     
-[/code]
+```
 
 ## Better memory representation
 
@@ -666,17 +666,17 @@ Sometimes a nested map data structure can be replaced with a single-level map wi
 Reduce allocations and improve cache footprint by converting btree<a,btree<b,c>> to btree<pair<a,b>,c>.
 
 graph_splitter.cc
-[code] 
+```cpp 
     absl::btree_map<std::string, absl::btree_map<std::string, OpDef>> ops;
     
-[/code]
-[code] 
+```
+```cpp 
     // The btree maps from {package_name, op_name} to its const Opdef*.
     absl::btree_map<std::pair<absl::string_view, absl::string_view>,
                     const OpDef*>
         ops;
     
-[/code]
+```
 
 Caveat: if the first map key is big, it might be better to stick with nested maps:
 
@@ -697,11 +697,11 @@ If the domain of a map can be represented by a small integer or is an enum, or i
 Use an array instead of flat_map.
 
 rtp_controller.h
-[code] 
+```cpp 
     const gtl::flat_map<int, int> payload_type_to_clock_frequency_;
     
-[/code]
-[code] 
+```
+```cpp 
     // A map (implemented as a simple array) indexed by payload_type to clock freq
     // for that paylaod type (or 0)
     struct PayloadTypeToClockRateMap {
@@ -710,7 +710,7 @@ rtp_controller.h
     ...
     const PayloadTypeToClockRateMap payload_type_to_clock_frequency_;
     
-[/code]
+```
 
 ### Bit vectors instead of sets
 
@@ -719,7 +719,7 @@ If the domain of a set can be represented by a small integer, the set can be rep
 Spanner placement system. Replace dense_hash_set<ZoneId> with a bit-vector with one bit per zone.
 
 zone_set.h
-[code] 
+```cpp 
     class ZoneSet: public dense_hash_set<ZoneId> {
      public:
       ...
@@ -727,8 +727,8 @@ zone_set.h
         return count(zone) > 0;
       }
     
-[/code]
-[code] 
+```
+```cpp 
     class ZoneSet {
       ...
       // Returns true iff "zone" is contained in the set
@@ -740,10 +740,10 @@ zone_set.h
       int size_;          // Number of zones inserted
       util::bitmap::InlinedBitVector<256> b_;
     
-[/code]
+```
 
 Benchmark results:
-[code] 
+```text 
     CPU: AMD Opteron (4 cores) dL1:64KB dL2:1024KB
     Benchmark                          Base (ns)  New (ns) Improvement
     ------------------------------------------------------------------
@@ -756,18 +756,18 @@ Benchmark results:
     BM_Evaluate/20                         17922     12338    +31.2%
     BM_Evaluate/40                         36836     26430    +28.2%
     
-[/code]
+```
 
 Use bit matrix to keep track of reachability properties between operands instead of hash table.
 
 hlo_computation.h
-[code] 
+```cpp 
     using TransitiveOperandMap =
         std::unordered_map<const HloInstruction*,
                            std::unordered_set<const HloInstruction*>>;
     
-[/code]
-[code] 
+```
+```cpp 
     class HloComputation::ReachabilityMap {
       ...
       // dense id assignment from HloInstruction* to number
@@ -776,7 +776,7 @@ hlo_computation.h
       tensorflow::core::Bitmap matrix_;
     };
     
-[/code]
+```
 
 ## Reduce allocations
 
@@ -795,15 +795,15 @@ Garbage-collection runtimes sometimes obviate issue #3 by placing consecutive al
 Reducing allocations increases benchmark throughput by 21%.
 
 memory_manager.cc
-[code] 
+```cpp 
     LiveTensor::LiveTensor(tf::Tensor t, std::shared_ptr<const DeviceInfo> dinfo,
                            bool is_batched)
         : tensor(std::move(t)),
           device_info(dinfo ? std::move(dinfo) : std::make_shared<DeviceInfo>()),
           is_batched(is_batched) {
     
-[/code]
-[code] 
+```
+```cpp 
     static const std::shared_ptr<DeviceInfo>& empty_device_info() {
       static std::shared_ptr<DeviceInfo>* result =
           new std::shared_ptr<DeviceInfo>(new DeviceInfo);
@@ -819,12 +819,12 @@ memory_manager.cc
         device_info = empty_device_info();
       }
     
-[/code]
+```
 
 Use statically-allocated zero vector when possible rather than allocating a vector and filling it with zeroes.
 
 embedding_executor_8bit.cc
-[code] 
+```cpp 
     // The actual implementation of the EmbeddingLookUpT using template parameters
     // instead of object members to improve the performance.
     template <bool Mean, bool SymmetricInputRange>
@@ -834,8 +834,8 @@ embedding_executor_8bit.cc
           new tensorflow::quint8[max_embedding_width]);
       memset(zero_data.get(), 0, sizeof(tensorflow::quint8) * max_embedding_width);
     
-[/code]
-[code] 
+```
+```cpp 
     // A size large enough to handle most embedding widths
     static const int kTypicalMaxEmbedding = 256;
     static tensorflow::quint8 static_zero_data[kTypicalMaxEmbedding];  // All zeroes
@@ -862,7 +862,7 @@ embedding_executor_8bit.cc
         zero_data = zero_data_backing.get();
       }
     
-[/code]
+```
 
 Also, prefer stack allocation over heap allocation when object lifetime is bounded by the scope (although be careful with stack frame sizes for large objects).
 
@@ -873,7 +873,7 @@ When the maximum or expected maximum size of a vector (or some other container t
 Pre-size a vector and fill it in, rather than N push_back operations.
 
 indexblockdecoder.cc
-[code] 
+```cpp 
     for (int i = 0; i < ndocs-1; i++) {
       uint32 delta;
       ERRORCHECK(b->GetRice(rice_base, &delta));
@@ -882,8 +882,8 @@ indexblockdecoder.cc
     }
     docs_.push_back(last_docid_);
     
-[/code]
-[code] 
+```
+```cpp 
     docs_.resize(ndocs);
     DocId* docptr = &docs_[0];
     for (int i = 0; i < ndocs-1; i++) {
@@ -895,7 +895,7 @@ indexblockdecoder.cc
     }
     *docptr = last_docid_;
     
-[/code]
+```
 
 Caveat: Do not use `resize` or `reserve` to grow one element at a time since that may lead to quadratic behavior. Also, if element construction is expensive, prefer an initial `reserve` call followed by several `push_back` or `emplace_back` calls instead of an initial `resize` since that will double the number of constructor calls.
 
@@ -909,40 +909,40 @@ Caveat: Do not use `resize` or `reserve` to grow one element at a time since tha
 Avoid an extra copy when receiving a tensor via gRPC.
 
 A benchmark that sends around 400KB tensors speeds up by ~10-15%:
-[code] 
+```text 
     Benchmark              Time(ns)    CPU(ns) Iterations
     -----------------------------------------------------
     BM_RPC/30/98k_mean    148764691 1369998944       1000
     
-[/code]
-[code] 
+```
+```text 
     Benchmark              Time(ns)    CPU(ns) Iterations
     -----------------------------------------------------
     BM_RPC/30/98k_mean    131595940 1216998084       1000
     
-[/code]
+```
 
 Move large options structure rather than copying it.
 
 index.cc
-[code] 
+```cpp 
     return search_iterators::DocPLIteratorFactory::Create(opts);
     
-[/code]
-[code] 
+```
+```cpp 
     return search_iterators::DocPLIteratorFactory::Create(std::move(opts));
     
-[/code]
+```
 
 Use std::sort instead of std::stable_sort, which avoids an internal copy inside the stable sort implementation.
 
 encoded-vector-hits.h
-[code] 
+```cpp 
     std::stable_sort(hits_.begin(), hits_.end(),
                      gtl::OrderByField(&HitWithPayloadOffset::docid));
     
-[/code]
-[code] 
+```
+```cpp 
     struct HitWithPayloadOffset {
       search_iterators::LocalDocId64 docid;
       int first_payload_offset;  // offset into the payload vector.
@@ -957,7 +957,7 @@ encoded-vector-hits.h
         ...
         std::sort(hits_.begin(), hits_.end());
     
-[/code]
+```
 
 ### Reuse temporary objects
 
@@ -966,7 +966,7 @@ A container or an object declared inside a loop will be recreated on every loop 
 Hoist variable definition outside of loop iteration.
 
 autofdo_profile_utils.h
-[code] 
+```cpp 
     auto iterator = absl::WrapUnique(sstable->GetIterator());
     while (!iterator->done()) {
       T profile;
@@ -978,8 +978,8 @@ autofdo_profile_utils.h
       iterator->Next();
     }
     
-[/code]
-[code] 
+```
+```cpp 
     auto iterator = absl::WrapUnique(sstable->GetIterator());
     T profile;
     while (!iterator->done()) {
@@ -991,12 +991,12 @@ autofdo_profile_utils.h
       iterator->Next();
     }
     
-[/code]
+```
 
 Define a protobuf variable outside a loop so that its allocated storage can be reused across loop iterations.
 
 stats-router.cc
-[code] 
+```cpp 
     for (auto& r : routers_to_update) {
       ...
       ResourceRecord record;
@@ -1007,8 +1007,8 @@ stats-router.cc
       ...
     }
     
-[/code]
-[code] 
+```
+```cpp 
     ResourceRecord record;
     for (auto& r : routers_to_update) {
       ...
@@ -1020,12 +1020,12 @@ stats-router.cc
       ...
     }
     
-[/code]
+```
 
 Serialize to same std::string repeatedly.
 
 program_rep.cc
-[code] 
+```cpp 
     std::string DeterministicSerialization(const proto2::Message& m) {
       std::string result;
       proto2::io::StringOutputStream sink(&result);
@@ -1035,8 +1035,8 @@ program_rep.cc
       return result;
     }
     
-[/code]
-[code] 
+```
+```cpp 
     absl::string_view DeterministicSerializationTo(const proto2::Message& m,
                                                    std::string* scratch) {
       scratch->clear();
@@ -1047,7 +1047,7 @@ program_rep.cc
       return absl::string_view(*scratch);
     }
     
-[/code]
+```
 
 Caveat: protobuf, string, vector, containers etc. tend to grow to the size of the largest value ever stored in them. Therefore reconstructing them periodically (e.g., after every N uses) can help reduce memory requirements and reinitialization costs.
 
@@ -1064,7 +1064,7 @@ Make fast path cover more common cases.
 Add handling of trailing single ASCII bytes, rather than only handling multiples of four bytes with this routine. This avoids calling the slower generic routine for all-ASCII strings that are, for example, 5 bytes.
 
 utf8statetable.cc
-[code] 
+```cpp 
     // Scan a UTF-8 stringpiece based on state table.
     // Always scan complete UTF-8 characters
     // Set number of bytes scanned. Return reason for exiting
@@ -1091,8 +1091,8 @@ utf8statetable.cc
       return exit_reason;
     }
     
-[/code]
-[code] 
+```
+```cpp 
     // Scan a UTF-8 stringpiece based on state table.
     // Always scan complete UTF-8 characters
     // Set number of bytes scanned. Return reason for exiting
@@ -1124,12 +1124,12 @@ utf8statetable.cc
       return exit_reason;
     }
     
-[/code]
+```
 
 Simpler fast paths for InlinedVector.
 
 inlined_vector.h
-[code] 
+```cpp 
     auto Storage<T, N, A>::Resize(ValueAdapter values, size_type new_size) -> void {
       StorageView storage_view = MakeStorageView();
     
@@ -1152,8 +1152,8 @@ inlined_vector.h
         destroy_loop = {storage_view.data + new_size, storage_view.size - new_size};
       }
     
-[/code]
-[code] 
+```
+```cpp 
     auto Storage<T, N, A>::Resize(ValueAdapter values, size_type new_size) -> void {
       StorageView storage_view = MakeStorageView();
       auto* const base = storage_view.data;
@@ -1171,12 +1171,12 @@ inlined_vector.h
       ...
       }
     
-[/code]
+```
 
 Fast path for common cases of initializing 1-D to 4-D tensors.
 
 tensor_shape.cc
-[code] 
+```cpp 
     template <class Shape>
     TensorShapeBase<Shape>::TensorShapeBase(gtl::ArraySlice<int64> dim_sizes) {
       set_tag(REP16);
@@ -1188,8 +1188,8 @@ tensor_shape.cc
       }
     }
     
-[/code]
-[code] 
+```
+```cpp 
     template <class Shape>
     void TensorShapeBase<Shape>::InitDims(gtl::ArraySlice<int64> dim_sizes) {
       DCHECK_EQ(tag(), REP16);
@@ -1243,14 +1243,14 @@ tensor_shape.cc
       }
     }
     
-[/code]
+```
 
 Make varint parser fast path cover just the 1-byte case, instead of covering 1-byte and 2-byte cases.
 
 Reducing the size of the (inlined) fast path reduces code size and icache pressure, which leads to improved performance.
 
 parse_context.h
-[code] 
+```cpp 
     template <typename T>
     PROTOBUF_NODISCARD const char* VarintParse(const char* p, T* out) {
       auto ptr = reinterpret_cast<const uint8_t*>(p);
@@ -1268,8 +1268,8 @@ parse_context.h
       return VarintParseSlow(p, res, out);
     }
     
-[/code]
-[code] 
+```
+```cpp 
     template <typename T>
     PROTOBUF_NODISCARD const char* VarintParse(const char* p, T* out) {
       auto ptr = reinterpret_cast<const uint8_t*>(p);
@@ -1281,10 +1281,10 @@ parse_context.h
       return VarintParseSlow(p, res, out);
     }
     
-[/code]
+```
 
 parse_context.cc
-[code] 
+```cpp 
     std::pair<const char*, uint32_t> VarintParseSlow32(const char* p,
                                                        uint32_t res) {
       for (std::uint32_t i = 2; i < 5; i++) {
@@ -1298,8 +1298,8 @@ parse_context.cc
       ...
     }
     
-[/code]
-[code] 
+```
+```cpp 
     std::pair<const char*, uint32_t> VarintParseSlow32(const char* p,
                                                        uint32_t res) {
       for (std::uint32_t i = 1; i < 5; i++) {
@@ -1313,18 +1313,18 @@ parse_context.cc
       ...
     }
     
-[/code]
+```
 
 Skip significant work in RPC_Stats_Measurement addition if no errors have occurred.
 
 rpc-stats.h
-[code] 
+```cpp 
     struct RPC_Stats_Measurement {
       ...
       double errors[RPC::NUM_ERRORS];
     
-[/code]
-[code] 
+```
+```cpp 
     struct RPC_Stats_Measurement {
       ...
       double get_errors(int index) const { return errors[index]; }
@@ -1339,10 +1339,10 @@ rpc-stats.h
       double errors[RPC::NUM_ERRORS];
       bool any_errors_set;  // True iff any of the errors[i] values are non-zero
     
-[/code]
+```
 
 rpc-stats.cc
-[code] 
+```cpp 
     void RPC_Stats_Measurement::operator+=(const RPC_Stats_Measurement& x) {
       ...
       for (int i = 0; i < RPC::NUM_ERRORS; ++i) {
@@ -1350,8 +1350,8 @@ rpc-stats.cc
       }
     }
     
-[/code]
-[code] 
+```
+```cpp 
     void RPC_Stats_Measurement::operator+=(const RPC_Stats_Measurement& x) {
       ...
       if (x.any_errors_set) {
@@ -1362,21 +1362,21 @@ rpc-stats.cc
       }
     }
     
-[/code]
+```
 
 Do array lookup on first byte of string to often avoid fingerprinting full string.
 
 soft-tokens-helper.cc
-[code] 
+```cpp 
     bool SoftTokensHelper::IsSoftToken(const StringPiece& token) const {
       return soft_tokens_.find(Fingerprint(token.data(), token.size())) !=
           soft_tokens_.end();
     }
     
-[/code]
+```
 
 soft-tokens-helper.h
-[code] 
+```cpp 
     class SoftTokensHelper {
      ...
      private:
@@ -1401,23 +1401,23 @@ soft-tokens-helper.h
       return IsSoftTokenFallback(token);
     }
     
-[/code]
+```
 
 soft-tokens-helper.cc
-[code] 
+```cpp 
     bool SoftTokensHelper::IsSoftTokenFallback(const StringPiece& token) const {
       return soft_tokens_.find(Fingerprint(token.data(), token.size())) !=
           soft_tokens_.end();
     }
     
-[/code]
+```
 
 ### Precompute expensive information once
 
 Precompute a TensorFlow graph execution node property that allows us to quickly rule out certain unusual cases.
 
 executor.cc
-[code] 
+```cpp 
     struct NodeItem {
       ...
       bool kernel_is_expensive = false;  // True iff kernel->IsExpensive()
@@ -1435,8 +1435,8 @@ executor.cc
         ...
       }
     
-[/code]
-[code] 
+```
+```cpp 
     struct NodeItem {
       ...
       bool kernel_is_expensive : 1;  // True iff kernel->IsExpensive()
@@ -1462,12 +1462,12 @@ executor.cc
         ...
       }
     
-[/code]
+```
 
 Precompute 256 element array and use during trigram initialization.
 
 byte_trigram_classifier.cc
-[code] 
+```cpp 
     void ByteTrigramClassifier::VerifyModel(void) const {
       ProbT class_sums[num_classes_];
       for (int cls = 0; cls < num_classes_; cls++) {
@@ -1481,8 +1481,8 @@ byte_trigram_classifier.cc
       ...
     }                         
     
-[/code]
-[code] 
+```
+```cpp 
     void ByteTrigramClassifier::VerifyModel(void) const {
       CHECK_EQ(sizeof(ByteLogProbT), 1);
       ProbT fast_prob[256];
@@ -1502,7 +1502,7 @@ byte_trigram_classifier.cc
       ...
     }                         
     
-[/code]
+```
 
 General advice: check for malformed inputs at module boundaries instead of repeating checks internally.
 
@@ -1511,25 +1511,25 @@ General advice: check for malformed inputs at module boundaries instead of repea
 Move bounds computation outside loop.
 
 literal_linearizer.cc
-[code] 
+```cpp 
     for (int64 i = 0; i < src_shape.dimensions(dimension_numbers.front());
          ++i) {
     
-[/code]
-[code] 
+```
+```cpp 
     int64 dim_front = src_shape.dimensions(dimension_numbers.front());
     const uint8* src_buffer_data = src_buffer.data();
     uint8* dst_buffer_data = dst_buffer.data();
     for (int64 i = 0; i < dim_front; ++i) {
     
-[/code]
+```
 
 ### Defer expensive computation
 
 Defer GetSubSharding call until needed, which reduces 43 seconds of CPU time to 2 seconds.
 
 sharding_propagation.cc
-[code] 
+```cpp 
     HloSharding alternative_sub_sharding =
         user.sharding().GetSubSharding(user.shape(), {i});
     if (user.operand(i) == &instruction &&
@@ -1538,8 +1538,8 @@ sharding_propagation.cc
       sub_sharding = alternative_sub_sharding;
     }
     
-[/code]
-[code] 
+```
+```cpp 
     if (user.operand(i) == &instruction) {
       // Only evaluate GetSubSharding if this operand is of interest,
       // as it is relatively expensive.
@@ -1551,7 +1551,7 @@ sharding_propagation.cc
       }
     }
     
-[/code]
+```
 
 Don't update stats eagerly; compute them on demand.
 
@@ -1562,14 +1562,14 @@ Preallocate 10 nodes not 200 for query handling in Google's web server.
 A simple change that reduced web server's CPU usage by 7.5%.
 
 querytree.h
-[code] 
+```cpp 
     static const int kInitParseTreeSize = 200;   // initial size of querynode pool
     
-[/code]
-[code] 
+```
+```cpp 
     static const int kInitParseTreeSize = 10;   // initial size of querynode pool
     
-[/code]
+```
 
 Change search order for 19% throughput improvement.
 
@@ -1586,7 +1586,7 @@ Custom printing code for Histogram class is 4x as fast as sprintf.
 This code is performance sensitive because it is invoked when monitoring systems gather statistics from various servers.
 
 histogram_export.cc
-[code] 
+```cpp 
     void Histogram::PopulateBuckets(const string &prefix,
                                     expvar::MapProto *const var) const {
                                     ...
@@ -1619,8 +1619,8 @@ histogram_export.cc
                             var);
       }
     
-[/code]
-[code] 
+```
+```cpp 
     // Format "val" according to format.  If "need_escape" is true, then the
     // format can produce output with a '.' in it, and the result will be escaped.
     // If "need_escape" is false, then the caller guarantees that format is
@@ -1702,14 +1702,14 @@ histogram_export.cc
       }
     }
     
-[/code]
+```
 
 Add specializations for VLOG(1), VLOG(2), … for speed and smaller code size.
 
 `VLOG` is a heavily used macro throughout the code base. This change avoids passing an extra integer constant at nearly every call site (if the log level is constant at the call site, as it almost always is, as in `VLOG(1) << ...`), which saves code space.
 
 vlog_is_on.h
-[code] 
+```cpp 
     class VLogSite final {
      public:
       ...
@@ -1731,8 +1731,8 @@ vlog_is_on.h
       ...
     };
     
-[/code]
-[code] 
+```
+```cpp 
     class VLogSite final {
      public:
       ...
@@ -1771,10 +1771,10 @@ vlog_is_on.h
       ...
     };
     
-[/code]
+```
 
 vlog_is_on.cc
-[code] 
+```cpp 
     bool VLogSite::SlowIsEnabled0(int stale_v) { return SlowIsEnabled(stale_v, 0); }
     bool VLogSite::SlowIsEnabled1(int stale_v) { return SlowIsEnabled(stale_v, 1); }
     bool VLogSite::SlowIsEnabled2(int stale_v) { return SlowIsEnabled(stale_v, 2); }
@@ -1782,12 +1782,12 @@ vlog_is_on.cc
     bool VLogSite::SlowIsEnabled4(int stale_v) { return SlowIsEnabled(stale_v, 4); }
     bool VLogSite::SlowIsEnabled5(int stale_v) { return SlowIsEnabled(stale_v, 5); }
     
-[/code]
+```
 
 Replace RE2 call with a simple prefix match when possible.
 
 read_matcher.cc
-[code] 
+```cpp 
     enum MatchItemType {
       MATCH_TYPE_INVALID,
       MATCH_TYPE_RANGE,
@@ -1795,8 +1795,8 @@ read_matcher.cc
       MATCH_TYPE_REGEXP,
     };
     
-[/code]
-[code] 
+```
+```cpp 
     enum MatchItemType {
       MATCH_TYPE_INVALID,
       MATCH_TYPE_RANGE,
@@ -1805,14 +1805,14 @@ read_matcher.cc
       MATCH_TYPE_PREFIX,   // Special type for regexp ".*"
     };
     
-[/code]
+```
 
 read_matcher.cc
-[code] 
+```cpp 
     p->type = MATCH_TYPE_REGEXP;
     
-[/code]
-[code] 
+```
+```cpp 
     term.NonMetaPrefix().CopyToString(&p->prefix);
     if (term.RegexpSuffix() == ".*") {
       // Special case for a regexp that matches anything, so we can
@@ -1821,12 +1821,12 @@ read_matcher.cc
     } else {
       p->type = MATCH_TYPE_REGEXP;
     
-[/code]
+```
 
 Use StrCat rather than StringPrintf to format IP addresses.
 
 ipaddress.cc
-[code] 
+```cpp 
     string IPAddress::ToString() const {
       char buf[INET6_ADDRSTRLEN];
     
@@ -1858,8 +1858,8 @@ ipaddress.cc
       return IPAddressToURIString(host_) + StringPrintf(":%u", port_);
     }
     
-[/code]
-[code] 
+```
+```cpp 
     string IPAddress::ToString() const {
       char buf[INET6_ADDRSTRLEN];
     
@@ -1896,22 +1896,22 @@ ipaddress.cc
       return StrCat(IPAddressToURIString(host_), ":", port_);
     }
     
-[/code]
+```
 
 ### Use caching to avoid repeated work
 
 Cache based on precomputed fingerprint of large serialized proto.
 
 dp_ops.cc
-[code] 
+```cpp 
     InputOutputMappingProto mapping_proto;
     PLAQUE_OP_REQUIRES(
         mapping_proto.ParseFromStringPiece(GetAttrMappingProto(state)),
         absl::InternalError("Failed to parse InputOutputMappingProto"));
     ParseMapping(mapping_proto);
     
-[/code]
-[code] 
+```
+```cpp 
     uint64 mapping_proto_fp = GetAttrMappingProtoFp(state);
     {
       absl::MutexLock l(&fp_to_iometa_mu);
@@ -1935,7 +1935,7 @@ dp_ops.cc
       }
     }
     
-[/code]
+```
 
 ### Make the compiler’s job easier
 
@@ -1953,7 +1953,7 @@ Some techniques that may be useful:
 Speed up ShapeUtil::ForEachState by replacing absl::Span with raw pointers to the underlying arrays.
 
 shape_util.h
-[code] 
+```cpp 
     struct ForEachState {
       ForEachState(const Shape& s, absl::Span<const int64_t> b,
                    absl::Span<const int64_t> c, absl::Span<const int64_t> i);
@@ -1964,8 +1964,8 @@ shape_util.h
       const absl::Span<const int64_t> count;
       const absl::Span<const int64_t> incr;
     
-[/code]
-[code] 
+```
+```cpp 
     struct ForEachState {
       ForEachState(const Shape& s, absl::Span<const int64_t> b,
                    absl::Span<const int64_t> c, absl::Span<const int64_t> i);
@@ -1977,12 +1977,12 @@ shape_util.h
       const int64_t* const count;
       const int64_t* const incr;
     
-[/code]
+```
 
 Hand unroll [cyclic redundancy check](https://en.wikipedia.org/wiki/Cyclic_redundancy_check) (CRC) computation loop.
 
 crc.cc
-[code] 
+```cpp 
     void CRC32::Extend(uint64 *lo, uint64 *hi, const void *bytes, size_t length)
                           const {
                           ...
@@ -2004,8 +2004,8 @@ crc.cc
       *lo = l;
     }
     
-[/code]
-[code] 
+```
+```cpp 
     void CRC32::Extend(uint64 *lo, uint64 *hi, const void *bytes, size_t length)
                           const {
                           ...
@@ -2041,7 +2041,7 @@ crc.cc
     }
     
     
-[/code]
+```
 
 Handle four characters at a time when parsing Spanner keys.
 
@@ -2055,7 +2055,7 @@ Handle four characters at a time when parsing Spanner keys.
 
 
 key.cc
-[code] 
+```cpp 
     void Key::InitSeps(const char* start) {
       const char* base = &rep_[0];
       const char* limit = base + rep_.size();
@@ -2072,8 +2072,8 @@ key.cc
       }
     }
     
-[/code]
-[code] 
+```
+```cpp 
     inline const char* ScanBackwardsForSep(const char* base, const char* p) {
       while (p >= base + 4) {
         if (p[0] == '#') return p;
@@ -2112,12 +2112,12 @@ key.cc
       seps_[0] = p - base;
     }
     
-[/code]
+```
 
 Avoid frame setup costs by converting ABSL_LOG(FATAL) to ABSL_DCHECK(false).
 
 arena_cleanup.h
-[code] 
+```cpp 
     inline ABSL_ATTRIBUTE_ALWAYS_INLINE size_t Size(Tag tag) {
       if (!EnableSpecializedTags()) return sizeof(DynamicNode);
     
@@ -2134,8 +2134,8 @@ arena_cleanup.h
       }
     }
     
-[/code]
-[code] 
+```
+```cpp 
     inline ABSL_ATTRIBUTE_ALWAYS_INLINE size_t Size(Tag tag) {
       if (!EnableSpecializedTags()) return sizeof(DynamicNode);
     
@@ -2152,7 +2152,7 @@ arena_cleanup.h
       }
     }
     
-[/code]
+```
 
 ### Reduce stats collection costs
 
@@ -2165,7 +2165,7 @@ Stop maintaining expensive stats about number of alarms and closures in SelectSe
 Part of changes that reduce time for setting an alarm from 771 ns to 271 ns.
 
 selectserver.h
-[code] 
+```cpp 
     class SelectServer {
      public:
      ...
@@ -2177,8 +2177,8 @@ selectserver.h
       ...
     };
     
-[/code]
-[code] 
+```
+```cpp 
     // Selectserver class
     class SelectServer {
      ...
@@ -2186,10 +2186,10 @@ selectserver.h
      ...
     };
     
-[/code]
+```
 
 /selectserver.cc
-[code] 
+```cpp 
     void SelectServer::AddAlarmInternal(Alarmer* alarmer,
                                         int offset_in_ms,
                                         int id,
@@ -2200,8 +2200,8 @@ selectserver.h
       ...
     }
     
-[/code]
-[code] 
+```
+```cpp 
     void SelectServer::AddAlarmInternal(Alarmer* alarmer,
                                         int offset_in_ms,
                                         int id,
@@ -2211,10 +2211,10 @@ selectserver.h
       ...
     }
     
-[/code]
+```
 
 /selectserver.cc
-[code] 
+```cpp 
     void SelectServer::RemoveAlarm(Alarmer* alarmer, int id) {
           ...
           alarms_->erase(alarm);
@@ -2222,15 +2222,15 @@ selectserver.h
           ...
     }
     
-[/code]
-[code] 
+```
+```cpp 
     void SelectServer::RemoveAlarm(Alarmer* alarmer, int id) {
           ...
           alarms_->Remove(alarm);
           ...
     }
     
-[/code]
+```
 
 Often, stats or other properties can be maintained for a sample of the elements handled by the system (e.g., RPC requests, input records, users). Many subsystems use this approach (tcmalloc allocation tracking, /requestz status pages, Dapper samples).
 
@@ -2241,11 +2241,11 @@ Maintain stats for just a sample of doc info requests.
 Sampling allows us to avoid touching 39 histograms and MinuteTenMinuteHour stats for most requests.
 
 generic-leaf-stats.cc
-[code] 
+```cpp 
     ... code that touches 39 histograms to update various stats on every request ...
     
-[/code]
-[code] 
+```
+```cpp 
     // Add to the histograms periodically
     if (TryLockToUpdateHistogramsDocInfo(docinfo_stats, bucket)) {
       // Returns true and grabs bucket->lock only if we should sample this
@@ -2254,14 +2254,14 @@ generic-leaf-stats.cc
       bucket->lock.Unlock();
     }
     
-[/code]
+```
 
 Reduce sampling rate and make faster sampling decisions.
 
 This change reduces the sampling rate from 1 in 10 to 1 in 32. Furthermore, we now keep execution time stats just for the sampled events and speed up sampling decisions by using a power of two modulus. This code is called on every packet in the Google Meet video conferencing system and needed performance work to keep up with capacity demands during the first part of the COVID outbreak as users rapidly migrated to doing more online meetings.
 
 packet_executor.cc
-[code] 
+```cpp 
     class ScopedPerformanceMeasurement {
      public:
       explicit ScopedPerformanceMeasurement(PacketExecutor* packet_executor)
@@ -2282,8 +2282,8 @@ packet_executor.cc
     
       ~ScopedPerformanceMeasurement() {
     
-[/code]
-[code] 
+```
+```cpp 
     ScopedPerformanceMeasurement::ScopedPerformanceMeasurement(
         PacketExecutor* packet_executor)
         : packet_executor_(packet_executor),
@@ -2301,10 +2301,10 @@ packet_executor.cc
       run_start_time_ = absl::Now();
     }
     
-[/code]
+```
 
 packet_executor.cc
-[code] 
+```cpp 
     ~ScopedPerformanceMeasurement() {
       auto run_end_time = absl::Now();
       auto run_duration = run_end_time - run_start_time_;
@@ -2315,8 +2315,8 @@ packet_executor.cc
     
       closure_execution_time->Record(absl::ToInt64Microseconds(run_duration));
     
-[/code]
-[code] 
+```
+```cpp 
     ScopedPerformanceMeasurement::~ScopedPerformanceMeasurement() {
       auto run_end_time = absl::Now();
       auto run_duration = run_end_time - run_start_time_;
@@ -2326,17 +2326,17 @@ packet_executor.cc
         closure_execution_time->Record(absl::ToInt64Microseconds(run_duration));
       }
     
-[/code]
+```
 
 Benchmark results:
-[code] 
+```text 
     Run on (40 X 2793 MHz CPUs); 2020-03-24T20:08:19.991412535-07:00
     CPU: Intel Ivybridge with HyperThreading (20 cores) dL1:32KB dL2:256KB dL3:25MB
     Benchmark                                      Base (ns)    New (ns) Improvement
     ----------------------------------------------------------------------------
     BM_PacketOverhead_mean                               224          85    +62.0%
     
-[/code]
+```
 
 ### Avoid logging on hot code paths
 
@@ -2347,7 +2347,7 @@ Remove logging from guts of memory allocator.
 This was a small part of a larger change.
 
 gpu_bfc_allocator.cc
-[code] 
+```cpp 
     void GPUBFCAllocator::SplitChunk(...) {
       ...
       VLOG(6) << "Adding to chunk map: " << new_chunk->ptr;
@@ -2360,8 +2360,8 @@ gpu_bfc_allocator.cc
       ...
     }
     
-[/code]
-[code] 
+```
+```cpp 
     void GPUBFCAllocator::SplitChunk(...) {
     ...
     }
@@ -2370,12 +2370,12 @@ gpu_bfc_allocator.cc
     ...
     }
     
-[/code]
+```
 
 Precompute whether or not logging is enabled outside a nested loop.
 
 image_similarity.cc
-[code] 
+```cpp 
     for (int j = 0; j < output_subimage_size_y; j++) {
       int j1 = j - rad + output_to_integral_subimage_y;
       int j2 = j1 + 2 * rad + 1;
@@ -2392,8 +2392,8 @@ image_similarity.cc
       }
     }
     
-[/code]
-[code] 
+```
+```cpp 
     const bool vlog_3 = DEBUG_MODE ? VLOG_IS_ON(3) : false;
     
     for (int j = 0; j < output_subimage_size_y; j++) {
@@ -2411,8 +2411,8 @@ image_similarity.cc
       }
     }
     
-[/code]
-[code] 
+```
+```text 
     Run on (40 X 2801 MHz CPUs); 2016-05-16T15:55:32.250633072-07:00
     CPU: Intel Ivybridge with HyperThreading (20 cores) dL1:32KB dL2:256KB dL3:25MB
     Benchmark                          Base (ns)  New (ns) Improvement
@@ -2426,12 +2426,12 @@ image_similarity.cc
     BM_NCCLimitedBoundsPerformance/512   9335684   8477567     +9.2%
     BM_NCCLimitedBoundsPerformance/1k   37223897  34201739     +8.1%
     
-[/code]
+```
 
 Precompute whether logging is enabled and use the result in helper routines.
 
 periodic_call.cc
-[code] 
+```cpp 
       VLOG(1) << Logid()
               << "MaybeScheduleAlarmAtNextTick. Time until next real time: "
               << time_until_next_real_time;
@@ -2475,8 +2475,8 @@ periodic_call.cc
           delay, new Alarm(this, virtual_time_ms, scheduling_sequence_number_));
     }
     
-[/code]
-[code] 
+```
+```cpp 
       const bool vlog_1 = VLOG_IS_ON(1);
     
       if (vlog_1) {
@@ -2529,7 +2529,7 @@ periodic_call.cc
           delay, new Alarm(this, virtual_time_ms, scheduling_sequence_number_));
     }
     
-[/code]
+```
 
 ## Code size considerations
 
@@ -2546,12 +2546,12 @@ Speed up TF_CHECK_OK.
 Avoid creating Ok object, and save code space by doing complex formatting of fatal error message out of line instead of at every call site.
 
 status.h
-[code] 
+```cpp 
     #define TF_CHECK_OK(val) CHECK_EQ(::tensorflow::Status::OK(), (val))
     #define TF_QCHECK_OK(val) QCHECK_EQ(::tensorflow::Status::OK(), (val))
     
-[/code]
-[code] 
+```
+```cpp 
     extern tensorflow::string* TfCheckOpHelperOutOfLine(
         const ::tensorflow::Status& v, const char* msg);
     inline tensorflow::string* TfCheckOpHelper(::tensorflow::Status v,
@@ -2566,10 +2566,10 @@ status.h
       while (tensorflow::string* _result = TfCheckOpHelper(val, #val)) \
       LOG(QFATAL) << *(_result)
     
-[/code]
+```
 
 status.cc
-[code] 
+```cpp 
     string* TfCheckOpHelperOutOfLine(const ::tensorflow::Status& v,
                                      const char* msg) {
       string r("Non-OK-status: ");
@@ -2580,7 +2580,7 @@ status.cc
       return new string(r);
     }
     
-[/code]
+```
 
 Shrink each RETURN_IF_ERROR call site by 79 bytes of code.
 
@@ -2594,7 +2594,7 @@ Shrink each RETURN_IF_ERROR call site by 79 bytes of code.
 Improve performance of CHECK_GE by 4.5X and shrink code size from 125 bytes to 77 bytes.
 
 logging.h
-[code] 
+```cpp 
     struct CheckOpString {
       CheckOpString(string* str) : str_(str) { }
       ~CheckOpString() { delete str_; }
@@ -2618,8 +2618,8 @@ logging.h
     DEFINE_CHECK_OP_IMPL(GT, > )
     #undef DEFINE_CHECK_OP_IMPL
     
-[/code]
-[code] 
+```
+```cpp 
     struct CheckOpString {
       CheckOpString(string* str) : str_(str) { }
       // No destructor: if str_ is non-NULL, we're about to LOG(FATAL),
@@ -2654,17 +2654,17 @@ logging.h
     DEFINE_CHECK_OP_IMPL(GT, > )
     #undef DEFINE_CHECK_OP_IMPL
     
-[/code]
+```
 
 logging.cc
-[code] 
+```cpp 
     string* MakeCheckOpStringIntInt(int v1, int v2, const char* names) {
       strstream ss;
       ss << names << " (" << v1 << " vs. " << v2 << ")";
       return new string(ss.str(), ss.pcount());
     }
     
-[/code]
+```
 
 ### Inline with care
 
@@ -2683,7 +2683,7 @@ Not only makes important large binaries smaller but also faster.
 Bytes of generated code per line of a heavily inlined routine in one large binary. First number represents the total bytes generated for a particular source line including all locations where that code has been inlined.
 
 Before:
-[code] 
+```cpp 
     .           0   1825 template <typename MessageType>
     .           0   1826 inline uint8* WireFormatLite::InternalWriteMessage(
     .           0   1827     int field_number, const MessageType& value, uint8* target,
@@ -2694,10 +2694,10 @@ Before:
     >>>   1285539   1832   return value._InternalSerialize(target, stream);
     .           0   1833 }
     
-[/code]
+```
 
 The new codesize output with this change looks like:
-[code] 
+```cpp 
     .           0   1825 template <typename MessageType>
     .           0   1826 inline uint8* WireFormatLite::InternalWriteMessage(
     .           0   1827     int field_number, const MessageType& value, uint8* target,
@@ -2708,10 +2708,10 @@ The new codesize output with this change looks like:
     >>>   1597394   1832   return value._InternalSerialize(target, stream);
     .           0   1833 }
     
-[/code]
+```
 
 coded_stream.h
-[code] 
+```cpp 
     class PROTOBUF_EXPORT CodedOutputStream {
       ...
       // Like WriteVarint32()  but writing directly to the target array, and with the
@@ -2730,10 +2730,10 @@ coded_stream.h
       }
     }
     
-[/code]
+```
 
 coded_stream.cc
-[code] 
+```cpp 
     uint8* CodedOutputStream::WriteVarint32ToArrayOutOfLineHelper(uint32 value,
                                                                   uint8* target) {
       DCHECK_GE(value, 0x80);
@@ -2754,7 +2754,7 @@ coded_stream.cc
       return target;
     }
     
-[/code]
+```
 
 Reduce absl::flat_hash_set and absl::flat_hash_map code size.
 
@@ -2769,7 +2769,7 @@ Reduces sizes of some large binaries by ~0.5%.
 Do not inline string allocation and deallocation when not using protobuf arenas.
 
 public/arenastring.h
-[code] 
+```cpp 
       if (IsDefault(default_value)) {
         std::string* new_string = new std::string();
         tagged_ptr_.Set(new_string);
@@ -2779,8 +2779,8 @@ public/arenastring.h
       }
     }
     
-[/code]
-[code] 
+```
+```cpp 
       if (IsDefault(default_value)) {
         return SetAndReturnNewString();
       } else {
@@ -2788,22 +2788,22 @@ public/arenastring.h
       }
     }
     
-[/code]
+```
 
 internal/arenastring.cc
-[code] 
+```cpp 
     std::string* ArenaStringPtr::SetAndReturnNewString() {
       std::string* new_string = new std::string();
       tagged_ptr_.Set(new_string);
       return new_string;
     }
     
-[/code]
+```
 
 Avoid inlining some routines. Create variants of routines that take 'const char*' rather than 'const std::string&' to avoid std::string construction code at every call site.
 
 op.h
-[code] 
+```cpp 
     class OpDefBuilderWrapper {
      public:
       explicit OpDefBuilderWrapper(const char name[]) : builder_(name) {}
@@ -2820,8 +2820,8 @@ op.h
         return *this;
       }
     
-[/code]
-[code] 
+```
+```cpp 
     class OpDefBuilderWrapper {
      public:
       explicit OpDefBuilderWrapper(const char name[]) : builder_(name) {}
@@ -2847,7 +2847,7 @@ op.h
         return Output(std::string(spec));
       }
     
-[/code]
+```
 
 ### Reduce template instantiations
 
@@ -2858,7 +2858,7 @@ Replace template argument with a regular argument.
 Changed a large routine templated on a bool to instead take the bool as an extra argument. (The bool was only being used once to select one of two string constants, so a run-time check was just fine.) This reduced the # of instantiations of the large routine from 287 to 143.
 
 sharding_util_ops.cc
-[code] 
+```cpp 
     template <bool Split>
     Status GetAndValidateAttributes(OpKernelConstruction* ctx,
                                     std::vector<int32>& num_partitions,
@@ -2870,8 +2870,8 @@ sharding_util_ops.cc
       return OkStatus();
     }
     
-[/code]
-[code] 
+```
+```cpp 
     Status GetAndValidateAttributes(bool split, OpKernelConstruction* ctx,
                                     std::vector<int32>& num_partitions,
                                     int& num_slices, std::vector<int32>& paddings,
@@ -2882,14 +2882,14 @@ sharding_util_ops.cc
       return OkStatus();
     }
     
-[/code]
+```
 
 Move bulky code from templated constructor to a non-templated shared base class constructor.
 
 Also reduce number of template instantiations from one for every combination of `<T, Device, Rank>` to one for every `<T>` and every `<Rank>`.
 
 sharding_util_ops.cc
-[code] 
+```cpp 
     template <typename Device, typename T>
     class XlaSplitNDBaseOp : public OpKernel {
      public:
@@ -2899,8 +2899,8 @@ sharding_util_ops.cc
                                           num_slices_, paddings_, has_paddings_));
       }
     
-[/code]
-[code] 
+```
+```cpp 
     // Shared base class to save code space
     class XlaSplitNDShared : public OpKernel {
      public:
@@ -2912,7 +2912,7 @@ sharding_util_ops.cc
                                  paddings_, has_paddings_);
       }
     
-[/code]
+```
 
 Reduce generated code size for absl::flat_hash_set and absl::flat_hash_map.
 
@@ -2929,7 +2929,7 @@ Consider the impact of map and other container operations since each call to suc
 Turn many map insertion calls in a row to initialize a hash table of emoji characters into a single bulk insert operation (188KB of text down to 360 bytes in library linked into many binaries). 😊
 
 textfallback_init.h
-[code] 
+```cpp 
     inline void AddEmojiFallbacks(TextFallbackMap *map) {
       (*map)[0xFE000] = &kFE000;
       (*map)[0xFE001] = &kFE001;
@@ -2943,8 +2943,8 @@ textfallback_init.h
       (*map)[0xFE331] = &kFE331;
     };
     
-[/code]
-[code] 
+```
+```cpp 
     inline void AddEmojiFallbacks(TextFallbackMap *map) {
     #define PAIR(x) {0x##x, &k##x}
       // clang-format off
@@ -2963,24 +2963,24 @@ textfallback_init.h
     #undef PAIR
     };
     
-[/code]
+```
 
 Stop inlining a heavy user of InlinedVector operations.
 
 Moved very long routine that was being inlined from .h file to .cc (no real performance benefit from inlining this).
 
 reduction_ops_common.h
-[code] 
+```cpp 
     Status Simplify(const Tensor& data, const Tensor& axis,
                     const bool keep_dims) {
       ... Eighty line routine body ...
     }
     
-[/code]
-[code] 
+```
+```cpp 
     Status Simplify(const Tensor& data, const Tensor& axis, const bool keep_dims);
     
-[/code]
+```
 
 ## Parallelization and synchronization
 
@@ -2991,7 +2991,7 @@ Modern machines have many cores, and they are often underutilized. Expensive wor
 Four-way parallelization improves the rate of encoding tokens by ~3.6x.
 
 blocked-token-coder.cc
-[code] 
+```cpp 
     MutexLock l(&encoder_threads_lock);
     if (encoder_threads == NULL) {
       encoder_threads = new ThreadPool(NumCPUs());
@@ -3006,18 +3006,18 @@ blocked-token-coder.cc
                      controller_->GetClosureWithCost
                      (NewCallback(&DummyCallback), N)));
     
-[/code]
+```
 
 Parallelization improves decoding performance by 5x.
 
 coding.cc
-[code] 
+```cpp 
     for (int c = 0; c < clusters->size(); c++) {
       RET_CHECK_OK(DecodeBulkForCluster(...);
     }
     
-[/code]
-[code] 
+```
+```cpp 
     struct SubTask {
       absl::Status result;
       absl::Notification done;
@@ -3037,7 +3037,7 @@ coding.cc
       RETURN_IF_ERROR(tasks[c].result);
     }
     
-[/code]
+```
 
 The effect on system performance should be measured carefully – if spare CPU is not available, or if memory bandwidth is saturated, parallelization may not help, or may even hurt.
 
@@ -3048,7 +3048,7 @@ Avoid fine-grained locking to reduce the cost of Mutex operations in hot paths. 
 Acquire lock once to free entire tree of query nodes, rather than reacquiring lock for every node in tree.
 
 mustang-query.cc
-[code] 
+```cpp 
     // Pool of query nodes
     ThreadSafeFreeList<MustangQuery> pool_(256);
     ...
@@ -3061,8 +3061,8 @@ mustang-query.cc
       pool_.Delete(node);
     }
     
-[/code]
-[code] 
+```
+```cpp 
     // Pool of query nodes
     Mutex pool_lock_;
     FreeList<MustangQuery> pool_(256);
@@ -3086,7 +3086,7 @@ mustang-query.cc
       pool_.Delete(node);
     }
     
-[/code]
+```
 
 ### Keep critical sections short
 
@@ -3104,7 +3104,7 @@ Careful data structure adjustments reduce the number of cache lines accessed sig
 Avoid RPC while holding Mutex.
 
 trainer.cc
-[code] 
+```cpp 
     {
       // Notify the parameter server that we are starting.
       MutexLock l(&lock_);
@@ -3112,8 +3112,8 @@ trainer.cc
       MaybeRecordProgress(last_global_step_);
     }
     
-[/code]
-[code] 
+```
+```cpp 
     bool should_start_record_progress = false;
     int64 step_for_progress = -1;
     {
@@ -3127,7 +3127,7 @@ trainer.cc
       StartRecordProgress(step_for_progress);
     }
     
-[/code]
+```
 
 Also, be wary of expensive destructors that will run before a Mutex is unlocked (this can often happen when the Mutex unlock is triggered by a `~MutexUnlock`.) Declaring objects with expensive destructors before MutexLock may help (assuming it is thread-safe).
 
@@ -3138,7 +3138,7 @@ Sometimes a data structure protected by a Mutex that is exhibiting high contenti
 Shard a cache 16 ways which improves throughput under a multi-threaded load by ~2x.
 
 cache.cc
-[code] 
+```cpp 
     class ShardedLRUCache : public Cache {
      private:
       LRUCache shard_[kNumShards];
@@ -3158,20 +3158,20 @@ cache.cc
         return shard_[Shard(hash)].Lookup(key, hash);
       }
     
-[/code]
+```
 
 Shard spanner data structure for tracking calls.
 
 transaction_manager.cc
-[code] 
+```cpp 
     absl::MutexLock l(&active_calls_in_mu_);
     ActiveCallMap::const_iterator iter = active_calls_in_.find(m->tid());
     if (iter != active_calls_in_.end()) {
       iter->second.ExtractElements(&m->tmp_calls_);
     }
     
-[/code]
-[code] 
+```
+```cpp 
     ActiveCalls::LockedShard shard(active_calls_in_, m->tid());
     const ActiveCallMap& active_calls_map = shard.active_calls_map();
     ActiveCallMap::const_iterator iter = active_calls_map.find(m->tid());
@@ -3179,7 +3179,7 @@ transaction_manager.cc
       iter->second.ExtractElements(&m->tmp_calls_);
     }
     
-[/code]
+```
 
 If the data structure in question is a map, consider using a concurrent hash map implementation instead.
 
@@ -3188,7 +3188,7 @@ Be careful with the information used for shard selection. If, for example, you u
 Fix information used for shard selection to prevent hash table issues.
 
 netmon_map_impl.h
-[code] 
+```cpp 
     ConnectionBucket* GetBucket(Index index) {
       // Rehash the hash to make sure we are not partitioning the buckets based on
       // the original hash. If num_buckets_ is a power of 2 that would drop the
@@ -3198,8 +3198,8 @@ netmon_map_impl.h
       return &buckets_[hash];
     }
     
-[/code]
-[code] 
+```
+```cpp 
     ConnectionBucket* GetBucket(Index index) {
       absl::Hash<std::pair<Index, size_t>> hasher{};
       // Combine the hash with 42 to prevent shard selection using the same bits
@@ -3207,43 +3207,43 @@ netmon_map_impl.h
       return &buckets_[hasher({index, 42}) % num_buckets_];
     }
     
-[/code]
+```
 
 Shard Spanner data structure used for tracking calls.
 
 This CL partitions the ActiveCallMap into 64 shards. Each shard is protected by a separate mutex. A given transaction will be mapped to exactly one shard. A new interface LockedShard(tid) is added for accessing the ActiveCallMap for a transaction in a thread-safe manner. Example usage:
 
 transaction_manager.cc
-[code] 
+```cpp 
     {
       absl::MutexLock l(&active_calls_in_mu_);
       delayed_locks_timer_ring_.Add(delayed_locks_flush_time_ms, tid);
     }
     
-[/code]
-[code] 
+```
+```cpp 
     {
       ActiveCalls::LockedShard shard(active_calls_in_, tid);
       shard.delayed_locks_timer_ring().Add(delayed_locks_flush_time_ms, tid);
     }
     
-[/code]
+```
 
 The results show a 69% reduction in overall wall-clock time when running the benchmark with 8192 fibers
-[code] 
+```text 
     Benchmark                   Time(ns)        CPU(ns)     Iterations
     ------------------------------------------------------------------
     BM_ActiveCalls/8k        11854633492     98766564676            10
     BM_ActiveCalls/16k       26356203552    217325836709            10
     
-[/code]
-[code] 
+```
+```text 
     Benchmark                   Time(ns)        CPU(ns)     Iterations
     ------------------------------------------------------------------
     BM_ActiveCalls/8k         3696794642     39670670110            10
     BM_ActiveCalls/16k        7366284437     79435705713            10
     
-[/code]
+```
 
 ### SIMD Instructions
 
@@ -3256,7 +3256,7 @@ If different threads access different mutable data, consider placing the differe
 Segregate commonly mutated fields in a different cache line than other fields.
 
 histogram.h
-[code] 
+```cpp 
     HistogramOptions options_;
     ...
     internal::HistogramBoundaries *boundaries_;
@@ -3271,8 +3271,8 @@ histogram.h
     ...
     RegisterVariableExporter *exporter_;
     
-[/code]
-[code] 
+```
+```cpp 
       HistogramOptions options_;
       ...
       internal::HistogramBoundaries *boundaries_;
@@ -3293,14 +3293,14 @@ histogram.h
       double sum_;             // Sum of values.
       double sum_of_squares_;  // Sum of squares of values.
     
-[/code]
+```
 
 ### Reduce frequency of context switches
 
 Process small work items inline instead of on device thread pool.
 
 cast_op.cc
-[code] 
+```cpp 
     template <typename Device, typename Tout, typename Tin>
     void CastMaybeInline(const Device& d, typename TTypes<Tout>::Flat o,
                          typename TTypes<Tin>::ConstFlat i) {
@@ -3312,7 +3312,7 @@ cast_op.cc
       }
     }
     
-[/code]
+```
 
 ### Use buffered channels for pipelining
 
@@ -3329,7 +3329,7 @@ Entries in an RPC stub cache are read thousands of times a second and modified r
 Use a fixed lexicon+lock-free hash map to speed-up determining IsValidTokenId.
 
 dynamic_token_class_manager.h
-[code] 
+```cpp 
     mutable Mutex mutex_;
     
     // The density of this hash map is guaranteed by the fact that the
@@ -3338,8 +3338,8 @@ dynamic_token_class_manager.h
     dense_hash_map<TokenId, common::LocalTokenClassId> tid_to_cid_
         GUARDED_BY(mutex_);
     
-[/code]
-[code] 
+```
+```cpp 
     // Read accesses to this hash-map should be done using
     // 'epoch_gc_'::(EnterFast / LeaveFast). The writers should periodically
     // GC the deleted entries, by simply invoking LockFreeHashMap::CreateGC.
@@ -3347,21 +3347,21 @@ dynamic_token_class_manager.h
         TokenIdTokenClassIdMap;
     TokenIdTokenClassIdMap tid_to_cid_;
     
-[/code]
+```
 
 ## Protocol Buffer advice
 
 Protobufs are a convenient representation of data, especially if the data will be sent over the wire or stored persistently. However, they can have significant performance costs. For example, a piece of code that fills in a list of 1000 points and then sums up the Y coordinates, speeds up by a **factor of 20** when converted from protobufs to a C++ std::vector of structs!
 
 Benchmark code for both versions.
-[code] 
+```text 
     name                old time/op  new time/op  delta
     BenchmarkIteration  17.4µs ± 5%   0.8µs ± 1%  -95.30%  (p=0.000 n=11+12)
     
-[/code]
+```
 
 Protobuf version:
-[code] 
+```cpp 
     message PointProto {
       int32 x = 1;
       int32 y = 2;
@@ -3370,8 +3370,8 @@ Protobuf version:
       repeated PointProto points = 1;
     }
     
-[/code]
-[code] 
+```
+```text 
     void SumProto(const PointListProto& vec) {
       int sum = 0;
       for (const PointProto& p : vec.points()) {
@@ -3391,10 +3391,10 @@ Protobuf version:
       SumProto(points);
     }
     
-[/code]
+```
 
 Non-protobuf version:
-[code] 
+```text 
     struct PointStruct {
       int x;
       int y;
@@ -3417,7 +3417,7 @@ Non-protobuf version:
       SumVector(points);
     }
     
-[/code]
+```
 
 In addition, the protobuf version adds a few kilobytes of code and data to the binary, which may not seem like much, but adds up quickly in systems with many protobuf types. This increased size creates performance problems by creating i-cache and d-cache pressure.
 
@@ -3432,7 +3432,7 @@ Avoid unnecessary message hierarchies.
 Message hierarchy can be useful to organize information in a more readable fashion. However, the extra level of message hierarchy incurs overheads like memory allocations, function calls, cache misses, larger serialized messages, etc.
 
 E.g., instead of:
-[code] 
+```cpp 
     message Foo {
       optional Bar bar = 1;
     }
@@ -3443,15 +3443,15 @@ E.g., instead of:
       optional int32 count = 1;
     }
     
-[/code]
+```
 
 Prefer:
-[code] 
+```cpp 
     message Foo {
       optional int32 count = 1;
     }
     
-[/code]
+```
 
 A protocol buffer message corresponds to a message class in C++ generated code and emits a tag and the length of the payload on the wire. To carry an integer, the old form requires more allocations (and deallocations) and emits a larger amount of generated code. As a result, all protocol buffer operations (parsing, serialization, size, etc.) become more expensive, having to traverse the message tree. The new form does not have such overhead and is more efficient.
 
@@ -3484,13 +3484,13 @@ The `string` type holds UTF8-encoded text, and can sometimes require validation.
 Consider `string_type = VIEW` to avoid copying.
 
 Copying a big string or bytes field during parsing is expensive. Such cost can often be avoided by marking the field with `string_type = VIEW`.
-[code] 
+```cpp 
     message Image {
       ...
       bytes jpeg_encoding = 4 [features.(pb.cpp).string_type=VIEW];
     }
     
-[/code]
+```
 
 Without the `VIEW` annotation, when the protocol buffer is parsed, the potentially large field contents are copied from the serialized protocol buffer to a string object in memory. Depending on the number of string or bytes fields and the size of those fields, the overhead of copying can be significant.
 
@@ -3499,13 +3499,13 @@ Instead of copying the big binary blobs, routines like `ParseFromStringWithAlias
 Consider using `Cord` for large fields to reduce copying costs.
 
 Annotating large `bytes` and `string` fields with `[ctype=CORD]` may reduce copying costs. This annotation changes the representation of the field from `std::string` to `absl::Cord`. `absl::Cord` uses reference counting and tree-based storage to reduce copying and appending costs. If a protocol buffer is serialized to a cord, parsing a string or bytes field with `[ctype=CORD]` can avoid copying the field contents.
-[code] 
+```cpp 
     message Document {
       ...
       bytes html = 4 [ctype = CORD];
     }
     
-[/code]
+```
 
 Performance of a Cord field depends on length distribution and access patterns. Use benchmarks to validate such changes.
 
@@ -3528,23 +3528,23 @@ Avoid protobuf map fields.
 Protobuf map fields have performance problems that usually outweigh the small syntactic convenience they provide. Prefer using non-protobuf maps initialized from protobuf contents:
 
 msg.proto
-[code] 
+```cpp 
     map<string, bytes> env_variables = 5;
     
-[/code]
-[code] 
+```
+```cpp 
     message Var {
       string key = 1;
       bytes value = 2;
     }
     repeated Var env_variables = 5;
     
-[/code]
+```
 
 Use protobuf message definition with a subset of the fields.
 
 If you want to access only a few fields of a large message type, consider defining your own protocol buffer message type that mimics the original type, but only defines the fields that you care about. Here's an example:
-[code] 
+```cpp 
     message FullMessage {
       optional int32 field1 = 1;
       optional BigMessage field2 = 2;
@@ -3554,14 +3554,14 @@ If you want to access only a few fields of a large message type, consider defini
       optional int32 field100 = 100;
     }
     
-[/code]
-[code] 
+```
+```cpp 
     message SubsetMessage {
       optional int32 field3 = 3;
       optional int32 field88 = 88;
     }
     
-[/code]
+```
 
 By parsing a serialized `FullMessage` into a `SubsetMessage`, only two out of a hundred fields are parsed and others are treated as unknown fields. Consider using APIs that discard unknown fields to improve performance even more when appropriate.
 
@@ -3578,53 +3578,53 @@ Declare protobuf objects outside loops so that their allocated storage can be re
 Speed up LanguageFromCode (use absl::flat_hash_map instead of a __gnu_cxx::hash_map).
 
 languages.cc
-[code] 
+```cpp 
     class CodeToLanguage
         ...
         : public __gnu_cxx::hash_map<absl::string_view, i18n::languages::Language,
                                      CodeHash, CodeCompare> {
     
-[/code]
-[code] 
+```
+```cpp 
     class CodeToLanguage
         ...
         : public absl::flat_hash_map<absl::string_view, i18n::languages::Language,
                                      CodeHash, CodeCompare> {
     
-[/code]
+```
 
 Benchmark results:
-[code] 
+```cpp 
     name               old time/op  new time/op  delta
     BM_CodeToLanguage  19.4ns ± 1%  10.2ns ± 3%  -47.47%  (p=0.000 n=8+10)
     
-[/code]
+```
 
 Speed up stats publish/unpublish (an older change, so uses dense_hash_map instead of absl::flat_hash_map, which did not exist at the time).
 
 publish.cc
-[code] 
+```cpp 
     typedef hash_map<uint64, Publication*> PublicationMap;
     static PublicationMap* publications = NULL;
     
-[/code]
-[code] 
+```
+```cpp 
     typedef dense_hash_map<uint64, Publication*> PublicationMap;;
     static PublicationMap* publications GUARDED_BY(mu) = NULL;
     
-[/code]
+```
 
 Use dense_hash_map instead of hash_map for keeping track of SelectServer alarms (would use absl::flat_hash_map today).
 
 alarmer.h
-[code] 
+```cpp 
     typedef hash_map<int, Alarm*> AlarmList;
     
-[/code]
-[code] 
+```
+```cpp 
     typedef dense_hash_map<int, Alarm*> AlarmList;
     
-[/code]
+```
 
 ### absl::btree_map/absl::btree_set
 
@@ -3633,14 +3633,14 @@ absl::btree_map and absl::btree_set store multiple entries per tree node. This h
 Use btree_set instead of std::set to represent a very heavily used work-queue.
 
 register_allocator.h
-[code] 
+```cpp 
     using container_type = std::set<WorklistItem>;
     
-[/code]
-[code] 
+```
+```cpp 
     using container_type = absl::btree_set<WorklistItem>;
     
-[/code]
+```
 
 ### util::bitmap::InlinedBitVector
 
@@ -3649,7 +3649,7 @@ register_allocator.h
 Use InlinedBitVector instead of std::vector<bool>, and then use FindNextBitSet to find the next item of interest.
 
 block_encoder.cc
-[code] 
+```cpp 
     vector<bool> live_reads(nreads);
     ...
     for (int offset = 0; offset < b_.block_width(); offset++) {
@@ -3657,8 +3657,8 @@ block_encoder.cc
       for (int r = 0; r < nreads; r++) {
         if (live_reads[r]) {
     
-[/code]
-[code] 
+```
+```cpp 
     util::bitmap::InlinedBitVector<4096> live_reads(nreads);
     ...
     for (int offset = 0; offset < b_.block_width(); offset++) {
@@ -3666,7 +3666,7 @@ block_encoder.cc
       for (size_t r = 0; live_reads.FindNextSetBit(&r); r++) {
         DCHECK(live_reads[r]);
     
-[/code]
+```
 
 ### absl::InlinedVector
 
@@ -3675,7 +3675,7 @@ absl::InlinedVector stores a small number of elements inline (configurable via t
 Use InlinedVector instead of std::vector in various places.
 
 bundle.h
-[code] 
+```cpp 
     class Bundle {
      public:
      ...
@@ -3685,8 +3685,8 @@ bundle.h
       ...
     };
     
-[/code]
-[code] 
+```
+```cpp 
     class Bundle {
      public:
      ...
@@ -3696,7 +3696,7 @@ bundle.h
       ...
     };
     
-[/code]
+```
 
 ### gtl::vector32
 
@@ -3705,7 +3705,7 @@ Saves space by using a customized vector type that only supports sizes that fit 
 Simple type change saves ~8TiB of memory in Spanner.
 
 table_ply.h
-[code] 
+```cpp 
     class TablePly {
         ...
         // Returns the set of data columns stored in this file for this table.
@@ -3717,8 +3717,8 @@ table_ply.h
         ...
         std::vector<FamilyId> modified_data_columns_;  // Data columns in the table.
     
-[/code]
-[code] 
+```
+```cpp 
     #include "util/gtl/vector32.h"
         ...
         // Returns the set of data columns stored in this file for this table.
@@ -3731,7 +3731,7 @@ table_ply.h
         // Data columns in the table.
         gtl::vector32<FamilyId> modified_data_columns_;
     
-[/code]
+```
 
 ### gtl::small_map
 
@@ -3740,15 +3740,15 @@ gtl::small_map uses an inline array to store up to a certain number of unique ke
 Use gtl::small_map in tflite_model.
 
 tflite_model.cc
-[code] 
+```cpp 
     using ChoiceIdToContextMap = gtl::flat_hash_map<int, TFLiteContext*>;
     
-[/code]
-[code] 
+```
+```cpp 
     using ChoiceIdToContextMap =
         gtl::small_map<gtl::flat_hash_map<int, TFLiteContext*>>;
     
-[/code]
+```
 
 ### gtl::small_ordered_set
 
@@ -3757,7 +3757,7 @@ gtl::small_ordered_set is an optimization for associative containers (such as st
 Use gtl::small_ordered_set to hold set of listeners.
 
 broadcast_stream.h
-[code] 
+```cpp 
     class BroadcastStream : public ParsedRtpTransport {
      ...
      private:
@@ -3765,8 +3765,8 @@ broadcast_stream.h
       std::set<ParsedRtpTransport*> listeners_ ABSL_GUARDED_BY(listeners_mutex_);
     };
     
-[/code]
-[code] 
+```
+```cpp 
     class BroadcastStream : public ParsedRtpTransport {
      ...
      private:
@@ -3775,7 +3775,7 @@ broadcast_stream.h
           gtl::small_ordered_set<std::set<ParsedRtpTransport*>, 10>;
       ListenersSet listeners_ ABSL_GUARDED_BY(listeners_mutex_);
     
-[/code]
+```
 
 ### gtl::intrusive_list
 
@@ -3784,11 +3784,11 @@ broadcast_stream.h
 Use intrusive_list to keep track of inflight requests for each index row update.
 
 row-update-sender-inflight-set.h
-[code] 
+```cpp 
     std::set<int64> inflight_requests_ GUARDED_BY(mu_);
     
-[/code]
-[code] 
+```
+```cpp 
     class SeqNum : public gtl::intrusive_link<SeqNum> {
       ...
       int64 val_ = -1;
@@ -3797,7 +3797,7 @@ row-update-sender-inflight-set.h
     ...
     gtl::intrusive_list<SeqNum> inflight_requests_ GUARDED_BY(mu_);
     
-[/code]
+```
 
 ### Limit absl::Status and absl::StatusOr usage
 
@@ -3806,7 +3806,7 @@ Even though `absl::Status` and `absl::StatusOr` types are fairly efficient, they
 Avoid StatusOr<int64> return type for RoundUpToAlignment() function.
 
 best_fit_allocator.cc
-[code] 
+```cpp 
     absl::StatusOr<int64> BestFitAllocator::RoundUpToAlignment(int64 bytes) const {
       TPU_RET_CHECK_GE(bytes, 0);
     
@@ -3824,10 +3824,10 @@ best_fit_allocator.cc
       return MathUtil::RoundUpTo<int64>(bytes, alignment_in_bytes_);
     }
     
-[/code]
+```
 
 best_fit_allocator.h
-[code] 
+```cpp 
     // Rounds bytes up to nearest multiple of alignment_.
     // REQUIRES: bytes >= 0.
     // REQUIRES: result does not overflow int64.
@@ -3841,12 +3841,12 @@ best_fit_allocator.h
       return result;
     }
     
-[/code]
+```
 
 Add ShapeUtil::ForEachIndexNoStatus to avoid creating a Status return object for every element of a tensor.
 
 shape_util.h
-[code] 
+```cpp 
     using ForEachVisitorFunction =
         absl::FunctionRef<StatusOr<bool>(absl::Span<const int64_t>)>;
         ...
@@ -3856,8 +3856,8 @@ shape_util.h
                              const ForEachVisitorFunction& visitor_function);
     
     
-[/code]
-[code] 
+```
+```cpp 
     using ForEachVisitorFunctionNoStatus =
         absl::FunctionRef<bool(absl::Span<const int64_t>)>;
         ...
@@ -3866,10 +3866,10 @@ shape_util.h
         absl::Span<const int64_t> count, absl::Span<const int64_t> incr,
         const ForEachVisitorFunctionNoStatus& visitor_function);
     
-[/code]
+```
 
 literal.cc
-[code] 
+```cpp 
     ShapeUtil::ForEachIndex(
         result_shape, [&](absl::Span<const int64_t> output_index) {
           for (int64_t i = 0, end = dimensions.size(); i < end; ++i) {
@@ -3884,8 +3884,8 @@ literal.cc
           return true;
         });
     
-[/code]
-[code] 
+```
+```cpp 
     ShapeUtil::ForEachIndexNoStatus(
         result_shape, [&](absl::Span<const int64_t> output_index) {
           // Compute dest_index
@@ -3913,17 +3913,17 @@ literal.cc
           return true;
         });
     
-[/code]
+```
 
 In TF_CHECK_OK, avoid creating Ok object in order to test for ok().
 
 status.h
-[code] 
+```cpp 
     #define TF_CHECK_OK(val) CHECK_EQ(::tensorflow::Status::OK(), (val))
     #define TF_QCHECK_OK(val) QCHECK_EQ(::tensorflow::Status::OK(), (val))
     
-[/code]
-[code] 
+```
+```cpp 
     extern tensorflow::string* TfCheckOpHelperOutOfLine(
         const ::tensorflow::Status& v, const char* msg);
     inline tensorflow::string* TfCheckOpHelper(::tensorflow::Status v,
@@ -3938,21 +3938,21 @@ status.h
       while (tensorflow::string* _result = TfCheckOpHelper(val, #val)) \
       LOG(QFATAL) << *(_result)
     
-[/code]
+```
 
 Remove StatusOr from the hot path of remote procedure calls (RPCs).
 
 Removal of StatusOr from a hot path eliminated a 14% CPU regression in RPC benchmarks caused by an earlier change.
 
 privacy_context.h
-[code] 
+```cpp 
     absl::StatusOr<privacy::context::PrivacyContext> GetRawPrivacyContext(
         const CensusHandle& h);
     
-[/code]
+```
 
 privacy_context_statusfree.h
-[code] 
+```cpp 
     enum class Result {
       kSuccess,
       kNoRootScopedData,
@@ -3965,7 +3965,7 @@ privacy_context_statusfree.h
     Result GetRawPrivacyContext(const CensusHandle& h,
                                 PrivacyContext* privacy_context);
     
-[/code]
+```
 
 ## Bulk operations
 
@@ -3976,7 +3976,7 @@ absl::flat_hash_map compares one hash byte per key from a group of keys using a 
 See [Swiss Table Design Notes](https://abseil.io/about/design/swisstables) and related [CppCon 2017](https://www.youtube.com/watch?v=ncHmEUmJZf4) and [CppCon 2019](https://www.youtube.com/watch?v=JZE3_0qvrMg) talks by Matt Kulukundis.
 
 raw_hash_set.h
-[code] 
+```cpp 
     // Returns a bitmask representing the positions of slots that match hash.
     BitMask<uint32_t> Match(h2_t hash) const {
       auto ctrl = _mm_loadu_si128(reinterpret_cast<const __m128i*>(pos));
@@ -3984,12 +3984,12 @@ raw_hash_set.h
       return BitMask<uint32_t>(_mm_movemask_epi8(_mm_cmpeq_epi8(match, ctrl)));
     }
     
-[/code]
+```
 
 Do single operations to deal with many bytes and fix things up, rather than checking every byte what to do.
 
 ordered-code.cc
-[code] 
+```cpp 
     int len = 0;
     while (val > 0) {
       len++;
@@ -4000,18 +4000,18 @@ ordered-code.cc
     len++;
     FastStringAppend(dest, reinterpret_cast<const char*>(buf + 9 - len), len);
     
-[/code]
-[code] 
+```
+```cpp 
     BigEndian::Store(val, buf + 1);  // buf[0] may be needed for length
     const unsigned int length = OrderedNumLength(val);
     char* start = buf + 9 - length - 1;
     *start = length;
     AppendUpto9(dest, start, length + 1);
     
-[/code]
+```
 
 Improve Reed-Solomon processing speed by handling multiple interleaved input buffers more efficiently in chunks.
-[code] 
+```text 
     Run on (12 X 3501 MHz CPUs); 2016-09-27T16:04:55.065995192-04:00
     CPU: Intel Haswell with HyperThreading (6 cores) dL1:32KB dL2:256KB dL3:15MB
     Benchmark                          Base (ns)  New (ns) Improvement
@@ -4032,14 +4032,14 @@ Improve Reed-Solomon processing speed by handling multiple interleaved input buf
     BM_AllOutputsSetUpOnce/6/3           1802353   1398600    +22.4%
     BM_AllOutputsSetUpOnce/8/4           3166930   2455973    +22.4%
     
-[/code]
+```
 
 Decode four integers at a time (circa 2004).
 
 Introduced a [GroupVarInt format](https://static.googleusercontent.com/media/research.google.com/en//people/jeff/WSDM09-keynote.pdf) that encodes/decodes groups of 4 variable-length integers at a time in 5-17 bytes, rather than one integer at a time. Decoding one group of 4 integers in the new format takes ~1/3rd the time of decoding 4 individually varint-encoded integers.
 
 groupvarint.cc
-[code] 
+```cpp 
     const char* DecodeGroupVar(const char* p, int N, uint32* dest) {
       assert(groupvar_initialized);
       assert(N % 4 == 0);
@@ -4068,7 +4068,7 @@ groupvarint.cc
       return p;
     }
     
-[/code]
+```
 
 Encode groups of 4 k-bit numbers at a time.
 
@@ -4098,7 +4098,7 @@ Speed up GPU memory allocator by ~40%.
 Added multi-threaded benchmark to test allocation under contention.
 
 Speeds up ptb_word_lm on my desktop machine with a Titan X card from 8036 words per second to 8272 words per second (+2.9%).
-[code] 
+```text 
     Run on (40 X 2801 MHz CPUs); 2016/02/16-15:12:49
     CPU: Intel Ivybridge with HyperThreading (20 cores) dL1:32KB dL2:256KB dL3:25MB
     Benchmark                          Base (ns)  New (ns) Improvement
@@ -4112,7 +4112,7 @@ Speeds up ptb_word_lm on my desktop machine with a Titan X card from 8036 words 
     BM_AllocationDelayed/100                 245       149    +39.2%
     BM_AllocationDelayed/1000                238       151    +36.6%
     
-[/code]
+```
 
 Speed up Pathways throughput by ~20% via a set of miscellaneous changes.
 
@@ -4132,11 +4132,11 @@ Speed up Pathways throughput by ~20% via a set of miscellaneous changes.
 
 
 
-[code] 
+```cpp 
     Before: 227.01 steps/sec
     After:  272.52 steps/sec (+20% throughput)
     
-[/code]
+```
 
 ~15% XLA compiler performance improvement through a series of changes.
 
@@ -4168,7 +4168,7 @@ Speed up ScopedLogId, which is on the critical path for each packet.
   * Switched to using a fixed array of size 4 and an 'int size' variable instead of an `InlinedVector<...>` for maintaining the thread local state. Since we never were growing beyond size 4 anyway, the InlinedVector's functionality was more general than needed.
 
 
-[code] 
+```text 
     Base: Baseline plus the code in scoped_logid_test.cc to add the benchmark
     New: This changelist
     
@@ -4182,7 +4182,7 @@ Speed up ScopedLogId, which is on the critical path for each packet.
     BM_ScopedLogId/threads:16                             11           6    +44.0%
     
     
-[/code]
+```
 
 Reduce XLA compilation time by ~31% by improving Shape handling.
 
@@ -4221,7 +4221,7 @@ Several changes to improve XLA compiler performance:
 
 
 
-[code] 
+```text 
     Base is with the benchmark additions of
     BM_ForEachIndex and BM_BroadcastVectorToMatrix (and BUILD file change to add
     benchmark dependency), but no other changes.
@@ -4239,27 +4239,27 @@ Several changes to improve XLA compiler performance:
     BM_ForEachIndex/1                                  90.90       85.50     +5.9%
     BM_ForEachIndex/2                               1973606     1642197     +16.8%
     
-[/code]
+```
 
 The newly added ForEachIndexNoStatus is considerably faster than the ForEachIndex variant (it only exists in this new cl, but the benchmark work that is done by BM_ForEachIndexNoStatus/NUM is comparable to the BM_ForEachIndex/NUM results above).
-[code] 
+```text 
     Benchmark                                      Base (ns)    New (ns) Improvement
     ----------------------------------------------------------------------------
     BM_ForEachIndexNoStatus/0                             0        46.90    ----
     BM_ForEachIndexNoStatus/1                             0        65.60    ----
     BM_ForEachIndexNoStatus/2                             0     1001277     ----
     
-[/code]
+```
 
 Broadcast performance improves by ~58%.
-[code] 
+```text 
     Benchmark                                      Base (ns)    New (ns) Improvement
     ----------------------------------------------------------------------------
     BM_BroadcastVectorToMatrix/16/16                   5556        2374     +57.3%
     BM_BroadcastVectorToMatrix/16/1024               319510      131075     +59.0%
     BM_BroadcastVectorToMatrix/1024/1024           20216949     8408188     +58.4%
     
-[/code]
+```
 
 Macro results from doing ahead-of-time compilation of a large language model (program does more than just the XLA compilation, but spends a bit less than half its time in XLA-related code):
 
@@ -4281,11 +4281,11 @@ Small tweaks to speed up compilation by ~22%.
 
 
 Measurement of speed on large programs (~45K ops):
-[code] 
+```cpp 
     name             old time/op  new time/op  delta
     BM_CompileLarge   28.5s ± 2%   22.4s ± 2%  -21.61%  (p=0.008 n=5+5)
     
-[/code]
+```
 
 MapReduce improvements (~2X speedup for wordcount benchmark).
 
@@ -4298,13 +4298,13 @@ Mapreduce speedups:
      * It's significantly faster, since we avoid extra hash table entries when we're inserting a new value for a key that already exists in the table (and instead we just hook the value into the linked list of values for that key).
 
      * Since we associate a repetition count with each value in the linked list, we can represent this sequence:
-[code] Output(key, "1");
+```cpp Output(key, "1");
            Output(key, "1");
            Output(key, "1");
            Output(key, "1");
            Output(key, "1");
            
-[/code]
+```
 
 as a single entry in the linked list for "key" with a repetition count of 5. Internally we yield "1" five times to the user-level combining function. (A similar trick could be applied on the reduce side, perhaps).
 
@@ -4333,20 +4333,20 @@ Changes:
 
 
 Benchmark results
-[code] 
+```text 
     Benchmark                      Time(ns)  CPU(ns) Iterations
     -----------------------------------------------------------
     BM_AddAlarm/1                       902      771     777777
     
-[/code]
+```
 
 With this change
-[code] 
+```text 
     Benchmark                      Time(ns)  CPU(ns) Iterations
     -----------------------------------------------------------
     BM_AddAlarm/1                       324      281    2239999
     
-[/code]
+```
 
 3.3X performance in index serving speed!
 
@@ -4386,13 +4386,13 @@ In no particular order, a list of performance related books and articles that th
 ## Suggested citation
 
 If you want to cite this document, we suggest:
-[code] 
+```cpp 
     Jeffrey Dean & Sanjay Ghemawat, Performance Hints, 2025, https://abseil.io/fast/hints.html
     
-[/code]
+```
 
 Or in BibTeX:
-[code] 
+```bibtex 
     @misc{DeanGhemawatPerformance2025,
       author = {Dean, Jeffrey and Ghemawat, Sanjay},
       title = {Performance Hints},
@@ -4400,7 +4400,7 @@ Or in BibTeX:
       howpublished = {\url{https://abseil.io/fast/hints.html}},
     }
     
-[/code]
+```
 
 ## Acknowledgments
 
