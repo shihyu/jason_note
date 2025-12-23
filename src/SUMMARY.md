@@ -341,6 +341,7 @@
 
 ## Performance
 - [效能量測指南](performance/Performance.md)
+    - [Linux Kernel 與 User Space 效能分析工具完整指南](performance/linux_performance_tools.md)
     - [主流開發語言、架構與資料庫效能全解析](performance/Performance_Comparison_2025.md)
     - [效能提示](performance/Performance_Hints_zh_TW.md)
     - [Abseil 效能優化建議](performance/abseil_hints.md)
