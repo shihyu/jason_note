@@ -1,0 +1,697 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Linux Kernel 與 User Space 效能分析工具完整指南 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="linux-kernel-與-user-space-效能分析工具完整指南"><a class="header" href="#linux-kernel-與-user-space-效能分析工具完整指南">Linux Kernel 與 User Space 效能分析工具完整指南</a></h1>
+<h2 id="主線內核內建工具無需打補丁"><a class="header" href="#主線內核內建工具無需打補丁">主線內核內建工具（無需打補丁）</a></h2>
+<h3 id="1-ftrace"><a class="header" href="#1-ftrace">1. Ftrace</a></h3>
+<ul>
+<li><strong>內建於內核</strong>，功能強大的追蹤框架</li>
+<li>支援函數追蹤、事件追蹤、圖形化追蹤</li>
+<li>極低開銷，適合生產環境</li>
+</ul>
+<p><strong>使用範例：</strong></p>
+<pre><code class="language-bash"># 啟用函數追蹤
+echo function &gt; /sys/kernel/debug/tracing/current_tracer
+echo 1 &gt; /sys/kernel/debug/tracing/tracing_on
+
+# 查看追蹤結果
+cat /sys/kernel/debug/tracing/trace
+</code></pre>
+<p><strong>特點：</strong></p>
+<ul>
+<li>內核原生支援</li>
+<li>開銷極低（&lt; 1%）</li>
+<li>支援多種追蹤器（function, function_graph, irqsoff, preemptoff 等）</li>
+</ul>
+<hr />
+<h3 id="2-perf-perf_events"><a class="header" href="#2-perf-perf_events">2. perf (perf_events)</a></h3>
+<ul>
+<li>Linux 官方效能分析工具</li>
+<li>CPU profiling、硬體計數器、事件追蹤</li>
+<li>生成 Flame Graphs 的標準工具</li>
+</ul>
+<p><strong>使用範例：</strong></p>
+<pre><code class="language-bash"># CPU profiling
+perf record -F 99 -a -g -- sleep 30
+perf report
+
+# 查看系統調用
+perf trace
+
+# 統計事件
+perf stat ./my_program
+
+# 查看 CPU 快取未命中
+perf stat -e cache-misses,cache-references ./my_program
+</code></pre>
+<p><strong>特點：</strong></p>
+<ul>
+<li>支援硬體 PMU (Performance Monitoring Unit)</li>
+<li>豐富的事件類型（硬體、軟體、tracepoint）</li>
+<li>可生成火焰圖</li>
+<li>主流發行版都內建</li>
+</ul>
+<hr />
+<h3 id="3-ebpf--bcc--bpftrace"><a class="header" href="#3-ebpf--bcc--bpftrace">3. eBPF / BCC / bpftrace</a></h3>
+<ul>
+<li>功能最豐富的追蹤框架</li>
+<li>可編程、安全、高效</li>
+<li>支援內核和用戶空間追蹤</li>
+</ul>
+<p><strong>使用範例：</strong></p>
+<pre><code class="language-bash"># 使用 bpftrace 追蹤系統調用延遲
+bpftrace -e 'tracepoint:syscalls:sys_enter_read { @start[tid] = nsecs; }
+             tracepoint:syscalls:sys_exit_read /@start[tid]/ { 
+               @latency = hist(nsecs - @start[tid]); 
+               delete(@start[tid]); 
+             }'
+
+# 使用 BCC 工具追蹤打開的文件
+opensnoop-bpfcc
+
+# 分析 I/O 延遲分佈
+biolatency-bpfcc
+
+# 追蹤 TCP 連線
+tcpconnect-bpfcc
+</code></pre>
+<p><strong>特點：</strong></p>
+<ul>
+<li>在內核中執行自定義程式</li>
+<li>安全（通過驗證器檢查）</li>
+<li>豐富的工具生態系統</li>
+<li>支援即時聚合和過濾</li>
+</ul>
+<hr />
+<h3 id="4-lttng-linux-trace-toolkit-next-generation"><a class="header" href="#4-lttng-linux-trace-toolkit-next-generation">4. LTTng (Linux Trace Toolkit Next Generation)</a></h3>
+<ul>
+<li>專注於低開銷的追蹤</li>
+<li>支援 kernel 和 userspace 追蹤</li>
+<li>適合實時系統和長時間追蹤</li>
+</ul>
+<p><strong>使用範例：</strong></p>
+<pre><code class="language-bash"># 創建追蹤會話
+lttng create my-session
+
+# 啟用所有內核事件
+lttng enable-event -k --all
+
+# 啟用用戶空間事件
+lttng enable-event -u --all
+
+# 開始追蹤
+lttng start
+
+# 運行你的程式
+./my_program
+
+# 停止追蹤
+lttng stop
+
+# 查看結果
+lttng view
+
+# 銷毀會話
+lttng destroy
+</code></pre>
+<p><strong>特點：</strong></p>
+<ul>
+<li>極低開銷（接近零影響）</li>
+<li>適合長時間生產環境追蹤</li>
+<li>支援多種輸出格式</li>
+<li>優秀的時間戳精度</li>
+</ul>
+<hr />
+<h2 id="專門化追蹤工具"><a class="header" href="#專門化追蹤工具">專門化追蹤工具</a></h2>
+<h3 id="5-systemtap"><a class="header" href="#5-systemtap">5. SystemTap</a></h3>
+<ul>
+<li>類似 DTrace 的追蹤語言</li>
+<li>需要編譯內核模組</li>
+<li>功能強大但學習曲線較陡</li>
+</ul>
+<p><strong>使用範例：</strong></p>
+<pre><code class="language-bash"># 追蹤 read 系統調用
+stap -e 'probe syscall.read { 
+    printf("%s(%d) read %d bytes\n", execname(), pid(), $count) 
+}'
+
+# 追蹤內核函數
+stap -e 'probe kernel.function("vfs_read") { 
+    printf("Reading file: %s\n", kernel_string($file-&gt;f_path-&gt;dentry-&gt;d_name-&gt;name)) 
+}'
+</code></pre>
+<p><strong>特點：</strong></p>
+<ul>
+<li>類似 DTrace 的腳本語言</li>
+<li>功能極其強大</li>
+<li>需要內核偵錯符號</li>
+<li>安全性較 eBPF 低</li>
+</ul>
+<hr />
+<h3 id="6-kprobes--uprobes"><a class="header" href="#6-kprobes--uprobes">6. kprobes / uprobes</a></h3>
+<ul>
+<li>動態探針機制</li>
+<li>eBPF、perf、SystemTap 的基礎技術</li>
+<li>可在任意內核/用戶函數插入探針</li>
+</ul>
+<p><strong>類型：</strong></p>
+<ul>
+<li><strong>kprobes</strong>: 內核探針</li>
+<li><strong>uprobes</strong>: 用戶空間探針</li>
+<li><strong>kretprobes / uretprobes</strong>: 函數返回探針</li>
+</ul>
+<p><strong>使用範例：</strong></p>
+<pre><code class="language-bash"># 使用 perf 設置 kprobe
+perf probe --add 'do_sys_open filename:string'
+perf record -e probe:do_sys_open -aR sleep 10
+perf script
+
+# 使用 uprobe 追蹤用戶程式
+perf probe -x /bin/bash --add readline
+perf record -e probe_bash:readline -a
+</code></pre>
+<hr />
+<h3 id="7-trace-cmd"><a class="header" href="#7-trace-cmd">7. trace-cmd</a></h3>
+<ul>
+<li>Ftrace 的命令行前端工具</li>
+<li>更易用的 ftrace 介面</li>
+<li>簡化了 ftrace 的使用</li>
+</ul>
+<p><strong>使用範例：</strong></p>
+<pre><code class="language-bash"># 記錄函數圖追蹤
+trace-cmd record -p function_graph ls
+
+# 顯示追蹤結果
+trace-cmd report
+
+# 追蹤特定函數
+trace-cmd record -p function -l do_sys_open sleep 5
+
+# 記錄事件
+trace-cmd record -e sched_switch -e sched_wakeup
+</code></pre>
+<p><strong>特點：</strong></p>
+<ul>
+<li>比直接使用 ftrace 更簡單</li>
+<li>支援追蹤記錄和回放</li>
+<li>可配合 kernelshark 視覺化</li>
+</ul>
+<hr />
+<h2 id="視覺化和分析工具"><a class="header" href="#視覺化和分析工具">視覺化和分析工具</a></h2>
+<h3 id="8-flame-graphs-火焰圖"><a class="header" href="#8-flame-graphs-火焰圖">8. Flame Graphs (火焰圖)</a></h3>
+<ul>
+<li>Brendan Gregg 開發的可視化工具</li>
+<li>配合 perf、eBPF 使用</li>
+<li>多種類型：CPU、Off-CPU、Memory</li>
+</ul>
+<p><strong>生成方式：</strong></p>
+<pre><code class="language-bash"># CPU 火焰圖
+perf record -F 99 -a -g -- sleep 30
+perf script | ./stackcollapse-perf.pl | ./flamegraph.pl &gt; cpu.svg
+
+# Off-CPU 火焰圖（使用 eBPF）
+offcputime-bpfcc -df 30 &gt; out.stacks
+./flamegraph.pl --color=io --title="Off-CPU Time" &lt; out.stacks &gt; offcpu.svg
+</code></pre>
+<p><strong>類型：</strong></p>
+<ul>
+<li><strong>CPU Flame Graphs</strong>: 顯示 CPU 時間消耗</li>
+<li><strong>Off-CPU Flame Graphs</strong>: 顯示阻塞時間</li>
+<li><strong>Memory Flame Graphs</strong>: 顯示記憶體分配</li>
+<li><strong>Differential Flame Graphs</strong>: 比較兩次追蹤的差異</li>
+</ul>
+<hr />
+<h3 id="9-intel-vtune--amd-uprof"><a class="header" href="#9-intel-vtune--amd-uprof">9. Intel VTune / AMD uProf</a></h3>
+<ul>
+<li>廠商專屬的 PMU 工具</li>
+<li>深度硬體分析</li>
+<li>支援高級 CPU 性能計數器</li>
+</ul>
+<p><strong>特點：</strong></p>
+<ul>
+<li>Intel VTune: Intel CPU 專用</li>
+<li>AMD uProf: AMD CPU 專用</li>
+<li>提供 GUI 介面</li>
+<li>深入的微架構分析</li>
+</ul>
+<hr />
+<h3 id="10-kernelshark"><a class="header" href="#10-kernelshark">10. kernelshark</a></h3>
+<ul>
+<li>Ftrace/trace-cmd 的 GUI 視覺化工具</li>
+<li>時間線視圖，易於理解</li>
+<li>支援事件過濾和搜索</li>
+</ul>
+<p><strong>使用方式：</strong></p>
+<pre><code class="language-bash"># 記錄追蹤
+trace-cmd record -e all
+
+# 使用 kernelshark 視覺化
+kernelshark trace.dat
+</code></pre>
+<p><strong>特點：</strong></p>
+<ul>
+<li>圖形化時間線</li>
+<li>支援多個 CPU 同時顯示</li>
+<li>事件過濾和搜索功能</li>
+</ul>
+<hr />
+<h2 id="綜合性能分析工具集"><a class="header" href="#綜合性能分析工具集">綜合性能分析工具集</a></h2>
+<h3 id="11-perf-tools"><a class="header" href="#11-perf-tools">11. perf-tools</a></h3>
+<ul>
+<li>Brendan Gregg 開發的腳本集合</li>
+<li>基於 ftrace 和 perf</li>
+<li>超過 30 個實用工具</li>
+</ul>
+<p><strong>常用工具：</strong></p>
+<pre><code class="language-bash"># 統計函數調用次數
+funccount 'vfs_*'
+
+# 追蹤文件系統同步操作
+funccount 'ext4_sync_*'
+
+# 追蹤進程執行
+execsnoop
+
+# 追蹤 I/O 操作
+iosnoop
+
+# 追蹤記憶體頁錯誤
+funcgraph do_page_fault
+</code></pre>
+<p><strong>專案地址：</strong> https://github.com/brendangregg/perf-tools</p>
+<hr />
+<h3 id="12-bcc-tools-ebpf-工具集"><a class="header" href="#12-bcc-tools-ebpf-工具集">12. bcc-tools (eBPF 工具集)</a></h3>
+<ul>
+<li>超過 70+ 個現成的追蹤工具</li>
+<li>基於 eBPF/BCC 框架</li>
+<li>涵蓋網路、磁碟、CPU、記憶體等</li>
+</ul>
+<p><strong>常用工具：</strong></p>
+<pre><code class="language-bash"># 追蹤打開的文件
+opensnoop-bpfcc
+
+# 分析 I/O 延遲分佈
+biolatency-bpfcc
+
+# 追蹤 TCP 連線
+tcpconnect-bpfcc
+
+# 追蹤 TCP 生命週期
+tcplife-bpfcc
+
+# CPU 採樣分析
+profile-bpfcc -F 99 -a -g
+
+# 追蹤 malloc/free
+memleak-bpfcc
+
+# 分析硬碟 I/O 模式
+biotop-bpfcc
+
+# 追蹤網路封包丟失
+tcpdrop-bpfcc
+</code></pre>
+<p><strong>專案地址：</strong> https://github.com/iovisor/bcc</p>
+<hr />
+<h2 id="kutrace"><a class="header" href="#kutrace">KUTrace</a></h2>
+<ul>
+<li>需要內核補丁</li>
+<li>極低開銷（&lt; 1%）</li>
+<li>微秒級全系統時間線追蹤</li>
+</ul>
+<p><strong>特點：</strong></p>
+<ul>
+<li>專注於調度和內核-用戶態切換</li>
+<li>完整的時間線視圖</li>
+<li>適合分析系統級性能問題</li>
+</ul>
+<hr />
+<h2 id="工具選擇指南"><a class="header" href="#工具選擇指南">工具選擇指南</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>使用場景</th><th>推薦工具</th><th>開銷</th><th>易用性</th></tr></thead><tbody>
+<tr><td><strong>快速 CPU profiling</strong></td><td>perf + Flame Graphs</td><td>低</td><td>高</td></tr>
+<tr><td><strong>通用追蹤和監控</strong></td><td>eBPF/BCC</td><td>極低</td><td>中</td></tr>
+<tr><td><strong>極低開銷追蹤</strong></td><td>LTTng, Ftrace</td><td>極低</td><td>中</td></tr>
+<tr><td><strong>開發調試</strong></td><td>perf, trace-cmd</td><td>低</td><td>高</td></tr>
+<tr><td><strong>生產環境</strong></td><td>eBPF, perf, LTTng</td><td>極低</td><td>中-高</td></tr>
+<tr><td><strong>深度內核分析</strong></td><td>SystemTap, Ftrace</td><td>低-中</td><td>低</td></tr>
+<tr><td><strong>微秒級全系統追蹤</strong></td><td>KUTrace</td><td>極低</td><td>低</td></tr>
+<tr><td><strong>網路分析</strong></td><td>bcc-tools (tcplife, tcptop)</td><td>極低</td><td>高</td></tr>
+<tr><td><strong>I/O 分析</strong></td><td>bcc-tools (biolatency, biotop)</td><td>極低</td><td>高</td></tr>
+<tr><td><strong>記憶體分析</strong></td><td>perf, bcc-tools (memleak)</td><td>低</td><td>中</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="現代最佳實踐組合"><a class="header" href="#現代最佳實踐組合">現代最佳實踐組合</a></h2>
+<h3 id="日常開發和監控"><a class="header" href="#日常開發和監控">日常開發和監控</a></h3>
+<pre><code>eBPF/BCC tools → 快速問題定位
+perf + Flame Graphs → CPU 性能分析
+trace-cmd/Ftrace → 詳細事件追蹤
+</code></pre>
+<h3 id="生產環境"><a class="header" href="#生產環境">生產環境</a></h3>
+<pre><code>LTTng → 長期低開銷追蹤
+eBPF → 即時監控和告警
+perf → 週期性性能採樣
+</code></pre>
+<h3 id="深度性能調優"><a class="header" href="#深度性能調優">深度性能調優</a></h3>
+<pre><code>perf → 硬體計數器分析
+eBPF → 自定義追蹤邏輯
+SystemTap → 複雜場景腳本
+Intel VTune/AMD uProf → 微架構分析
+</code></pre>
+<hr />
+<h2 id="快速上手建議"><a class="header" href="#快速上手建議">快速上手建議</a></h2>
+<h3 id="1-初學者起步"><a class="header" href="#1-初學者起步">1. 初學者起步</a></h3>
+<pre><code class="language-bash"># 安裝基本工具
+sudo apt install linux-tools-common linux-tools-generic bpfcc-tools
+
+# 簡單 CPU 分析
+perf top
+
+# 查看系統調用
+perf trace -p $(pidof my_program)
+
+# 使用現成的 BCC 工具
+opensnoop-bpfcc
+</code></pre>
+<h3 id="2-進階使用"><a class="header" href="#2-進階使用">2. 進階使用</a></h3>
+<pre><code class="language-bash"># CPU 火焰圖
+perf record -F 99 -a -g -- sleep 30
+perf script | stackcollapse-perf.pl | flamegraph.pl &gt; flame.svg
+
+# 自定義 eBPF 追蹤
+bpftrace -e 'kprobe:do_sys_open { printf("%s opened %s\n", comm, str(arg1)); }'
+
+# Ftrace 函數圖
+trace-cmd record -p function_graph -F my_program
+trace-cmd report
+</code></pre>
+<h3 id="3-生產環境監控"><a class="header" href="#3-生產環境監控">3. 生產環境監控</a></h3>
+<pre><code class="language-bash"># 低開銷 CPU 採樣
+perf record -F 49 -a -g -- sleep 60
+
+# 實時 I/O 監控
+biolatency-bpfcc 1
+
+# TCP 連線追蹤
+tcplife-bpfcc
+</code></pre>
+<hr />
+<h2 id="工具對比總結"><a class="header" href="#工具對比總結">工具對比總結</a></h2>
+<h3 id="功能豐富度排名"><a class="header" href="#功能豐富度排名">功能豐富度排名</a></h3>
+<ol>
+<li><strong>eBPF/BCC</strong> - 最全面，支援幾乎所有追蹤場景</li>
+<li><strong>SystemTap</strong> - 功能強大，但需要內核開發知識</li>
+<li><strong>perf</strong> - 專注性能分析，硬體支援好</li>
+<li><strong>LTTng</strong> - 專注低開銷長期追蹤</li>
+<li><strong>Ftrace</strong> - 內核內建，功能實用</li>
+<li><strong>KUTrace</strong> - 專精微秒級全系統追蹤</li>
+</ol>
+<h3 id="易用性排名"><a class="header" href="#易用性排名">易用性排名</a></h3>
+<ol>
+<li><strong>bcc-tools</strong> - 開箱即用的工具集</li>
+<li><strong>perf top/record</strong> - 簡單直觀</li>
+<li><strong>trace-cmd</strong> - 簡化 ftrace 使用</li>
+<li><strong>Ftrace</strong> - 需要了解 sysfs 介面</li>
+<li><strong>eBPF/bpftrace</strong> - 需要學習語法</li>
+<li><strong>SystemTap</strong> - 學習曲線陡峭</li>
+<li><strong>KUTrace</strong> - 需要打補丁，門檻高</li>
+</ol>
+<h3 id="開銷排名從低到高"><a class="header" href="#開銷排名從低到高">開銷排名（從低到高）</a></h3>
+<ol>
+<li><strong>LTTng</strong> - 接近零開銷</li>
+<li><strong>Ftrace</strong> - 極低開銷（&lt; 1%）</li>
+<li><strong>eBPF</strong> - 低開銷（內核聚合）</li>
+<li><strong>perf</strong> - 低開銷（採樣方式）</li>
+<li><strong>KUTrace</strong> - 低開銷（&lt; 1%）</li>
+<li><strong>SystemTap</strong> - 中等開銷</li>
+</ol>
+<hr />
+<h2 id="參考資源"><a class="header" href="#參考資源">參考資源</a></h2>
+<h3 id="官方文檔"><a class="header" href="#官方文檔">官方文檔</a></h3>
+<ul>
+<li><a href="https://www.kernel.org/doc/html/latest/trace/">Linux Kernel Tracing</a></li>
+<li><a href="https://perf.wiki.kernel.org/">perf Wiki</a></li>
+<li><a href="https://ebpf.io/">eBPF Documentation</a></li>
+<li><a href="https://github.com/iovisor/bcc/blob/master/docs/tutorial.md">BCC Tutorial</a></li>
+</ul>
+<h3 id="推薦書籍"><a class="header" href="#推薦書籍">推薦書籍</a></h3>
+<ul>
+<li><strong>Systems Performance: Enterprise and the Cloud</strong> (Brendan Gregg)</li>
+<li><strong>BPF Performance Tools</strong> (Brendan Gregg)</li>
+<li><strong>Linux Kernel Development</strong> (Robert Love)</li>
+</ul>
+<h3 id="線上資源"><a class="header" href="#線上資源">線上資源</a></h3>
+<ul>
+<li><a href="https://www.brendangregg.com/">Brendan Gregg's Blog</a></li>
+<li><a href="https://www.brendangregg.com/linuxperf.html">Linux Performance</a></li>
+<li><a href="https://www.brendangregg.com/ebpf.html">eBPF Tracing Tools</a></li>
+</ul>
+<hr />
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<p>Linux 提供了豐富的效能分析工具，從內核內建的 Ftrace 到強大的 eBPF 框架，每個工具都有其適用場景。對於大多數使用者：</p>
+<ul>
+<li><strong>日常使用</strong>：perf + bcc-tools</li>
+<li><strong>深度分析</strong>：eBPF/bpftrace + Flame Graphs</li>
+<li><strong>生產環境</strong>：LTTng 或低頻率的 perf 採樣</li>
+</ul>
+<p>不需要像 KUTrace 那樣打內核補丁，就能獲得優秀的追蹤和分析能力。選擇合適的工具組合，可以高效地定位和解決性能問題。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../performance/Performance.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../performance/Performance_Comparison_2025.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../performance/Performance.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../performance/Performance_Comparison_2025.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
