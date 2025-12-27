@@ -532,7 +532,7 @@
         - [美國經濟指標](strategy/us_economy_financial_relationships.md)
         - [加碼策略研究](strategy/stock-averaging-strategy-research.md)
     - [生活與投資平衡](strategy/16_生活與投資平衡.md)
-        - [大學體悟雜談 - Lawrence](strategy/大學體悟雜談 - Lawrence - Medium.md)
+        - [大學體悟雜談](strategy/大學體悟雜談_Lawrence.md)
         - [工作效率指南](strategy/productivity_investment_guide.md)
         - [程式設計師延壽](strategy/程式設計師延壽指南.md)
         - [周爺交易策略](strategy/zhou_trading_strategies.md)
