@@ -1,0 +1,471 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>qsort vs std::sort - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="c-qsort-vs-c-stdsort為什麼效能差這麼多"><a class="header" href="#c-qsort-vs-c-stdsort為什麼效能差這麼多">C <code>qsort()</code> vs C++ <code>std::sort()</code>：為什麼效能差這麼多？</a></h1>
+<p>一句話總結：</p>
+<blockquote>
+<p><strong><code>std::sort</code> 能在「編譯期知道型別與比較方式」，而 <code>qsort</code> 只能在「執行期透過 <code>void* + function pointer</code>」，這讓編譯器最佳化能力差了一整個等級。</strong></p>
+</blockquote>
+<hr />
+<h2 id="1-核心差異inline-vs-function-pointer"><a class="header" href="#1-核心差異inline-vs-function-pointer">1️⃣ 核心差異：inline vs function pointer</a></h2>
+<h3 id="c-qsort"><a class="header" href="#c-qsort">C <code>qsort()</code></a></h3>
+<pre><code class="language-c">void qsort(
+    void* base,
+    size_t num,
+    size_t size,
+    int (*compar)(const void*, const void*)
+);
+</code></pre>
+<ul>
+<li>每一次比較都必須：
+<ul>
+<li>透過 <strong>function pointer 間接呼叫</strong></li>
+<li>將 <code>void*</code> 轉型成實際型別</li>
+</ul>
+</li>
+<li>對編譯器而言：
+<ul>
+<li>❌ 無法 inline</li>
+<li>❌ 無法看穿比較邏輯</li>
+<li>❌ 幾乎不能做進階最佳化</li>
+</ul>
+</li>
+</ul>
+<p>➡️ <strong>每次 compare 都是昂貴的 indirect call</strong></p>
+<hr />
+<h3 id="c-stdsort"><a class="header" href="#c-stdsort">C++ <code>std::sort()</code></a></h3>
+<pre><code class="language-cpp">std::sort(begin, end);               // 預設 std::less&lt;T&gt;
+std::sort(begin, end, comp);         // comp 通常是 lambda / functor
+</code></pre>
+<ul>
+<li>比較器是 <strong>template 參數</strong></li>
+<li>型別在 <strong>編譯期已知</strong></li>
+<li><code>std::less&lt;int&gt;::operator()</code> 幾乎一定會 <strong>inline</strong></li>
+</ul>
+<p>實際產生的機器碼通常只是：</p>
+<pre><code class="language-asm">cmp eax, ebx
+jl  ...
+</code></pre>
+<p>➡️ <strong>零函式呼叫成本</strong></p>
+<hr />
+<h2 id="2-編譯器最佳化能力的巨大落差"><a class="header" href="#2-編譯器最佳化能力的巨大落差">2️⃣ 編譯器最佳化能力的巨大落差</a></h2>
+<h3 id="stdsort-可以做到"><a class="header" href="#stdsort-可以做到"><code>std::sort</code> 可以做到：</a></h3>
+<ul>
+<li>inline comparison</li>
+<li>loop unrolling</li>
+<li>better branch prediction</li>
+<li>去除多餘的 cast / bounds check</li>
+<li>在某些情況下可 vectorize</li>
+</ul>
+<h3 id="qsort-幾乎全部做不到"><a class="header" href="#qsort-幾乎全部做不到"><code>qsort</code> 幾乎全部做不到：</a></h3>
+<ul>
+<li>indirect call 會中斷最佳化 pipeline</li>
+<li><code>void*</code> 讓 alias analysis 直接失效</li>
+<li>comparator 可能有 side effect，編譯器不敢動</li>
+</ul>
+<hr />
+<h2 id="3-演算法層面introsort-vs-未規範的-qsort"><a class="header" href="#3-演算法層面introsort-vs-未規範的-qsort">3️⃣ 演算法層面：Introsort vs 未規範的 <code>qsort</code></a></h2>
+<ul>
+<li>C 標準 <strong>沒有規定</strong> <code>qsort</code> 必須使用的演算法</li>
+<li>多數實作仍是 quicksort 或其變形</li>
+<li>C++ <code>std::sort</code> 的典型實作：
+<ul>
+<li>採用 <strong>Introsort</strong>
+<ul>
+<li>quicksort（平均快）</li>
+<li>遞迴過深 → heap sort（保證 O(N log N)）</li>
+<li>小區間 → insertion sort（cache friendly）</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>➡️ 為現代 CPU / cache hierarchy 高度最佳化</p>
+<hr />
+<h2 id="4-cache-與-cpu-pipeline-友善度"><a class="header" href="#4-cache-與-cpu-pipeline-友善度">4️⃣ Cache 與 CPU pipeline 友善度</a></h2>
+<p>以排序 <code>int</code> 為例：</p>
+<h3 id="stdsortint"><a class="header" href="#stdsortint"><code>std::sort&lt;int*&gt;</code></a></h3>
+<ul>
+<li>連續記憶體</li>
+<li>比較極輕量</li>
+<li>branch predictable</li>
+</ul>
+<h3 id="qsort"><a class="header" href="#qsort"><code>qsort</code></a></h3>
+<ul>
+<li>每次比較都要 function call</li>
+<li>instruction cache 與 branch predictor 容易被打亂</li>
+</ul>
+<p>➡️ 資料越簡單、差距越誇張（3～10 倍很常見）</p>
+<hr />
+<h2 id="5-型別安全與語言設計差異非主要效能原因"><a class="header" href="#5-型別安全與語言設計差異非主要效能原因">5️⃣ 型別安全與語言設計差異（非主要效能原因）</a></h2>
+<ul>
+<li>
+<p><code>qsort</code></p>
+<ul>
+<li>C 時代的通用 API</li>
+<li>使用 <code>void*</code></li>
+<li>無型別安全</li>
+</ul>
+</li>
+<li>
+<p><code>std::sort</code></p>
+<ul>
+<li>STL + template 設計</li>
+<li>為 <strong>編譯期專用最佳化程式碼</strong> 而生</li>
+<li>型別安全</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="6-工程師版一句話結論"><a class="header" href="#6-工程師版一句話結論">6️⃣ 工程師版一句話結論</a></h2>
+<blockquote>
+<p><strong><code>qsort</code> 慢不是因為 C 慢，而是因為它是「執行期多型」；<br />
+<code>std::sort</code> 快，是因為它是「編譯期多型 + inline + 全最佳化」。</strong></p>
+</blockquote>
+<hr />
+<h2 id="7-完整效能比較範例程式碼可直接編譯執行"><a class="header" href="#7-完整效能比較範例程式碼可直接編譯執行">7️⃣ 完整效能比較範例程式碼（可直接編譯執行）</a></h2>
+<p>以下程式展示 <strong>C <code>qsort()</code> 與 C++ <code>std::sort()</code> 在相同資料下的效能差異</strong>。</p>
+<pre><code class="language-cpp">// C++ program to compare performance of C qsort() and C++ std::sort()
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+// Number of elements to be sorted
+#define N 1000000
+
+// Comparator function used by qsort
+int compare(const void* a, const void* b)
+{
+    return (*(const int*)a - *(const int*)b);
+}
+
+int main()
+{
+    static int arr[N];
+    static int dupArr[N];
+
+    // Seed random number generator
+    srand(static_cast&lt;unsigned&gt;(time(nullptr)));
+
+    // Generate random input
+    for (int i = 0; i &lt; N; i++)
+        dupArr[i] = arr[i] = rand() % 100000;
+
+    clock_t begin, end;
+    double time_spent;
+
+    // Measure C qsort()
+    begin = clock();
+    qsort(arr, N, sizeof(int), compare);
+    end = clock();
+    time_spent = double(end - begin) / CLOCKS_PER_SEC;
+    cout &lt;&lt; "Time taken by C qsort(): " &lt;&lt; time_spent &lt;&lt; " sec" &lt;&lt; endl;
+
+    // Measure C++ std::sort()
+    begin = clock();
+    sort(dupArr, dupArr + N);
+    end = clock();
+    time_spent = double(end - begin) / CLOCKS_PER_SEC;
+    cout &lt;&lt; "Time taken by C++ std::sort(): " &lt;&lt; time_spent &lt;&lt; " sec" &lt;&lt; endl;
+
+    return 0;
+}
+</code></pre>
+<h3 id="編譯方式建議"><a class="header" href="#編譯方式建議">編譯方式（建議）</a></h3>
+<pre><code class="language-bash">g++ -O2 -std=c++17 sort_benchmark.cpp -o sort_benchmark
+</code></pre>
+<h3 id="範例輸出"><a class="header" href="#範例輸出">範例輸出</a></h3>
+<pre><code class="language-text">Time taken by C qsort():     0.24 sec
+Time taken by C++ std::sort(): 0.08 sec
+</code></pre>
+<blockquote>
+<p>實際數值會依 CPU、編譯器版本與最佳化選項而異，但 <strong><code>std::sort</code> 幾乎一定顯著快於 <code>qsort</code></strong>。</p>
+</blockquote>
+<hr />
+<h2 id="9-隱藏的代價code-bloat-執行檔大小"><a class="header" href="#9-隱藏的代價code-bloat-執行檔大小">9️⃣ 隱藏的代價：Code Bloat (執行檔大小)</a></h2>
+<p>雖然 <code>std::sort</code> 快，但它有代價：</p>
+<ul>
+<li><strong><code>qsort</code></strong>：只有一份 compiled binary code。不管你排 <code>int</code> 還是 <code>struct</code>，都呼叫同一份函式庫代碼。</li>
+<li><strong><code>std::sort</code></strong>：Template 會為<strong>每種型別與比較器組合</strong>產生一份獨立的機械碼。
+<ul>
+<li>排 <code>vector&lt;int&gt;</code> 是一份 code</li>
+<li>排 <code>vector&lt;double&gt;</code> 是另一份 code</li>
+<li>排 <code>vector&lt;Player&gt;</code> 又是另一份 code</li>
+</ul>
+</li>
+</ul>
+<p>➡️ <strong>效能換空間</strong>：在嵌入式系統或對 binary size 極度敏感的場合，這點值得注意。</p>
+<hr />
+<h2 id="-context-passing-傳遞參數的痛苦"><a class="header" href="#-context-passing-傳遞參數的痛苦">🔟 Context Passing (傳遞參數的痛苦)</a></h2>
+<p>如果你需要在比較函式中用到額外參數（例如：「根據外部變數 <code>OrderMode</code> 來決定排序方向」）：</p>
+<h3 id="c-qsort-的痛點"><a class="header" href="#c-qsort-的痛點">C <code>qsort</code> 的痛點</a></h3>
+<p>標準 <code>qsort</code> 的 comparator 格式固定，無法傳入 userdata。</p>
+<ul>
+<li>❌ <strong>解法 1</strong>：用全域變數 (Global Variable) → <strong>Thread-unsafe</strong>。</li>
+<li>⚠️ <strong>解法 2</strong>：用非標準/C11 的 <code>qsort_r</code> / <code>qsort_s</code> → 跨平台相容性差。</li>
+</ul>
+<h3 id="c-stdsort-的優雅"><a class="header" href="#c-stdsort-的優雅">C++ <code>std::sort</code> 的優雅</a></h3>
+<p>直接用 Lambda Capture：</p>
+<pre><code class="language-cpp">bool ascending = true;
+std::sort(vec.begin(), vec.end(), [ascending](int a, int b) {
+    return ascending ? (a &lt; b) : (a &gt; b);
+});
+</code></pre>
+<p>➡️ <strong>C++ Lambda 完美解決了狀態傳遞問題，且依然能 Inline。</strong></p>
+<hr />
+<h2 id="11-現代-c-的殺手鐧parallel-sort-c17"><a class="header" href="#11-現代-c-的殺手鐧parallel-sort-c17">1️⃣1️⃣ 現代 C++ 的殺手鐧：Parallel Sort (C++17)</a></h2>
+<p>如果資料量巨大（例如 1000 萬筆），C++17 標準庫直接支援平行運算：</p>
+<pre><code class="language-cpp">#include &lt;execution&gt;
+#include &lt;algorithm&gt;
+
+// 自動使用多核心平行排序
+std::sort(std::execution::par, vec.begin(), vec.end());
+</code></pre>
+<p>➡️ <strong>一行程式碼就能利用多核心 CPU，這是 <code>qsort</code> 永遠做不到的效能維度。</strong></p>
+<hr />
+<h2 id="延伸討論可選"><a class="header" href="#延伸討論可選">延伸討論（可選）</a></h2>
+<ul>
+<li>為什麼 <code>qsort_r()</code> 幾乎救不了效能</li>
+<li>indirect call 在現代 CPU 上的 cycle penalty</li>
+<li><code>objdump</code> 對比 <code>qsort</code> vs <code>std::sort&lt;int*&gt;</code> 的 assembly</li>
+<li>branch misprediction 對排序效能的實際影響</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../performance/abseil_hints_zh_TW.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../algorithm/algorithm.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../performance/abseil_hints_zh_TW.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../algorithm/algorithm.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
