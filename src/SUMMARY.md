@@ -339,6 +339,7 @@
 ## Software Engineering
 - [Software Engineering](software_engineering/software_engineering.md)
     - [迭代思維與人才優勢](software_engineering/迭代思維與人才優勢.md)
+    - [黑箱測試方法與AI應用 - 課程筆記](software_engineering/黑箱測試方法與AI應用_課程筆記.md)
 
 ## Performance
 - [效能量測指南](performance/Performance.md)
@@ -347,6 +348,7 @@
     - [效能提示](performance/Performance_Hints_zh_TW.md)
     - [Abseil 效能優化建議](performance/abseil_hints.md)
     - [Abseil 效能優化建議 (繁體中文)](performance/abseil_hints_zh_TW.md)
+    - [qsort vs std::sort](performance/qsort_vs_std_sort.md)
 
 ## Algorithm
 - [演算法](algorithm/algorithm.md)
