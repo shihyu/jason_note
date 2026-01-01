@@ -340,6 +340,7 @@
 - [Software Engineering](software_engineering/software_engineering.md)
     - [迭代思維與人才優勢](software_engineering/迭代思維與人才優勢.md)
     - [黑箱測試方法與AI應用 - 課程筆記](software_engineering/黑箱測試方法與AI應用_課程筆記.md)
+    - [黑箱測試方法詳細指南](software_engineering/testing_methods_guide.md)
 
 ## Performance
 - [效能量測指南](performance/Performance.md)
