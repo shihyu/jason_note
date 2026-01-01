@@ -528,6 +528,7 @@
         - [HFT雲端部署](strategy/hft_and_algo_trading_cloud_deployment.md)
         - [訂單簿分析](strategy/orderbook.md)
         - [AI主觀交易](strategy/AI_Discretionary_Trading_Workflow.md)
+        - [Vic 流 AI 產業分析方法論](strategy/vic_ai_analysis_methodology.md)
         - [遺傳演算法](strategy/GA.md)
     - [台指期貨操作實務](strategy/14_台指期貨操作實務.md)
         - [台指期貨](strategy/tw_futures.md)
