@@ -324,6 +324,7 @@
     - [Linux 效能檢測工具完整指南](linux_system/linux-performance-tools.md)
     - [eBPF 完整指南](linux_system/ebpf-complete-guide.md)
     - [Understanding eBPF](linux_system/understanding-ebpf.md)
+    - [libbpf 架構解析與 xgotop 實作說明](linux_system/libbpf-explained.md)
     - [Linux 二進位分析工具完整指南](linux_system/linux-binary-tools-guide.md)
     - [API vs ABI 完整指南](linux_system/api_vs_abi_guide.md)
     - [Linux 靜態連結編譯說明](linux_system/static_build.md)
