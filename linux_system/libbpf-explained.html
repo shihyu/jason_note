@@ -1,0 +1,980 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>libbpf 架構解析與 xgotop 實作說明 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="libbpf-架構解析與-xgotop-實作說明"><a class="header" href="#libbpf-架構解析與-xgotop-實作說明">libbpf 架構解析與 xgotop 實作說明</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ul>
+<li><a href="#1-libbpf-%E6%98%AF%E4%BB%80%E9%BA%BC">1. libbpf 是什麼</a></li>
+<li><a href="#2-%E6%95%B4%E9%AB%94%E6%9E%B6%E6%A7%8B">2. 整體架構</a></li>
+<li><a href="#3-libbpf-%E6%A0%B8%E5%BF%83%E5%8A%9F%E8%83%BD">3. libbpf 核心功能</a></li>
+<li><a href="#4-xgotop-%E4%B8%AD%E7%9A%84%E5%AF%A6%E9%9A%9B%E6%87%89%E7%94%A8">4. xgotop 中的實際應用</a></li>
+<li><a href="#5-bcc-vs-libbpf-%E6%AF%94%E8%BC%83">5. BCC vs libbpf 比較</a></li>
+<li><a href="#6-vmlinuxh-%E7%9A%84%E8%A7%92%E8%89%B2">6. vmlinux.h 的角色</a></li>
+<li><a href="#7-co-re-%E6%A9%9F%E5%88%B6%E8%A9%B3%E8%A7%A3">7. CO-RE 機制詳解</a></li>
+</ul>
+<hr />
+<h2 id="1-libbpf-是什麼"><a class="header" href="#1-libbpf-是什麼">1. libbpf 是什麼</a></h2>
+<p><strong>libbpf</strong> 是一個 <strong>userspace library</strong>，負責在用戶空間（userspace）和 Linux kernel 之間橋接 eBPF 程式。</p>
+<h3 id="核心定位"><a class="header" href="#核心定位">核心定位</a></h3>
+<pre><code>┌─────────────────────────────────────────┐
+│         Your Application                │
+│         (xgotop Go 程式)                 │
+│  - 業務邏輯                              │
+│  - 資料處理                              │
+│  - UI/API                                │
+└────────────────┬────────────────────────┘
+                 │
+                 │ 使用 libbpf API
+                 ↓
+┌─────────────────────────────────────────┐
+│         libbpf Library                  │  ← 這裡！
+│  (xgotop 使用 cilium/ebpf - Go 版本)     │
+│                                         │
+│  功能：                                  │
+│  1. 載入 eBPF 程式到 kernel              │
+│  2. Attach probe 到函數                  │
+│  3. 管理 eBPF maps (kernel-user 通訊)    │
+│  4. 讀取 ringbuffer/perf buffer         │
+│  5. BTF 重定位 (CO-RE)                   │
+└────────────────┬────────────────────────┘
+                 │
+                 │ syscall: bpf()
+                 ↓
+┌─────────────────────────────────────────┐
+│         Linux Kernel                    │
+│                                         │
+│  - eBPF 虛擬機執行程式                   │
+│  - eBPF maps 儲存                        │
+│  - Ringbuffer                           │
+│  - Verifier (安全性驗證)                 │
+└─────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2 id="2-整體架構"><a class="header" href="#2-整體架構">2. 整體架構</a></h2>
+<h3 id="21-開發流程"><a class="header" href="#21-開發流程">2.1 開發流程</a></h3>
+<pre><code>┌─────────────── 開發時 ──────────────┐
+│                                    │
+│  1. 生成 vmlinux.h                  │
+│     bpftool btf dump file          │
+│     /sys/kernel/btf/vmlinux        │
+│            ↓                       │
+│  2. 編寫 eBPF C 程式                │
+│     #include "vmlinux.h"           │
+│     xgotop.bpf.c                   │
+│            ↓                       │
+│  3. 編譯成 .bpf.o                   │
+│     clang -target bpf              │
+│     含 BTF 型別資訊                 │
+│            ↓                       │
+│  4. 產生 Go binding                 │
+│     bpf2go (cilium/ebpf)           │
+│     生成 ebpfObjects 結構           │
+│                                    │
+└────────────────────────────────────┘
+                 │
+                 │ 部署
+                 ↓
+┌─────────────── 運行時 ──────────────┐
+│                                    │
+│  1. libbpf 載入 .bpf.o              │
+│     loadEbpfObjects()              │
+│            ↓                       │
+│  2. BTF 重定位 (CO-RE)              │
+│     讀取 /sys/kernel/btf/vmlinux   │
+│     調整 offset                     │
+│            ↓                       │
+│  3. Kernel verifier 驗證            │
+│     安全性檢查                      │
+│            ↓                       │
+│  4. JIT 編譯並執行                  │
+│     eBPF bytecode → native code    │
+│            ↓                       │
+│  5. Attach probe                   │
+│     ex.Uprobe(symbol, prog)        │
+│            ↓                       │
+│  6. 事件流動                        │
+│     Kernel → Ringbuffer → libbpf  │
+│            → Application           │
+│                                    │
+└────────────────────────────────────┘
+</code></pre>
+<h3 id="22-資料流動"><a class="header" href="#22-資料流動">2.2 資料流動</a></h3>
+<pre><code>Go Runtime (目標程式)
+     │
+     │ goroutine 事件發生
+     │ (create/exit/alloc)
+     ↓
+┌──────────────────────────┐
+│ eBPF Uprobe Hook         │
+│ runtime.casgstatus()     │  ← xgotop.bpf.c
+│ runtime.newproc1()       │
+│ runtime.makeslice()      │
+│ ...                      │
+└────────┬─────────────────┘
+         │
+         │ 收集資料
+         ↓
+┌──────────────────────────┐
+│ eBPF Program             │
+│ - 讀取 g struct          │
+│ - 記錄 goid, timestamp   │
+│ - 檢查 sampling rate     │
+└────────┬─────────────────┘
+         │
+         │ 寫入
+         ↓
+┌──────────────────────────┐
+│ eBPF Ringbuffer          │  ← Kernel space
+│ (環形緩衝區)              │
+└────────┬─────────────────┘
+         │
+         │ libbpf 讀取
+         │ ringbuf.NewReader()
+         ↓
+┌──────────────────────────┐
+│ xgotop Userspace         │
+│ - Event readers (goroutines)
+│ - Event processors       │
+└────────┬─────────────────┘
+         │
+         ├─→ Storage (Protobuf/JSONL)
+         │
+         └─→ WebSocket → Web UI
+</code></pre>
+<hr />
+<h2 id="3-libbpf-核心功能"><a class="header" href="#3-libbpf-核心功能">3. libbpf 核心功能</a></h2>
+<h3 id="31-六大功能模組"><a class="header" href="#31-六大功能模組">3.1 六大功能模組</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>功能</th><th>說明</th><th>API 範例</th><th>xgotop 使用位置</th></tr></thead><tbody>
+<tr><td><strong>Load</strong></td><td>載入 <code>.bpf.o</code> 到 kernel</td><td><code>loadEbpfObjects()</code></td><td>main.go:168</td></tr>
+<tr><td><strong>Verify</strong></td><td>協助 kernel verifier</td><td>自動執行</td><td>-</td></tr>
+<tr><td><strong>Relocate</strong></td><td>BTF-based CO-RE 重定位</td><td>自動執行</td><td>-</td></tr>
+<tr><td><strong>Attach</strong></td><td>附加到 hook 點</td><td><code>ex.Uprobe()</code></td><td>main.go:215</td></tr>
+<tr><td><strong>Maps</strong></td><td>管理 kernel-user 通訊</td><td><code>map.Update()</code></td><td>main.go:182</td></tr>
+<tr><td><strong>Data I/O</strong></td><td>Ringbuffer/Perf buffer</td><td><code>ringbuf.NewReader()</code></td><td>main.go:220</td></tr>
+</tbody></table>
+</div>
+<h3 id="32-功能詳解"><a class="header" href="#32-功能詳解">3.2 功能詳解</a></h3>
+<h4 id="321-load---載入-ebpf-物件"><a class="header" href="#321-load---載入-ebpf-物件">3.2.1 Load - 載入 eBPF 物件</a></h4>
+<pre><code class="language-go">// cmd/xgotop/main.go:167-170
+objs := ebpfObjects{}
+err = loadEbpfObjects(&amp;objs, nil)  // ← libbpf API
+must(err, "loading objects")
+defer objs.Close()
+</code></pre>
+<p><strong>背後發生的事：</strong></p>
+<pre><code>loadEbpfObjects()
+    ↓
+1. 讀取 xgotop.bpf.o 檔案
+2. 解析 ELF sections
+3. 提取 eBPF 程式碼和 BTF 資訊
+4. 呼叫 bpf(BPF_PROG_LOAD, ...)
+5. Kernel verifier 驗證程式安全性
+6. 初始化 eBPF maps
+7. 回傳 objs 結構（包含所有程式和 maps）
+</code></pre>
+<h4 id="322-attach---附加到目標函數"><a class="header" href="#322-attach---附加到目標函數">3.2.2 Attach - 附加到目標函數</a></h4>
+<pre><code class="language-go">// cmd/xgotop/main.go:205-218
+ex, err := link.OpenExecutable(executablePath)
+
+uprobeOpts := &amp;link.UprobeOptions{}
+if *pid != 0 {
+    uprobeOpts.PID = *pid  // 只監控特定 PID
+}
+
+probes := map[string]*ebpf.Program{
+    "runtime.casgstatus": objs.UprobeCasgstatus,
+    "runtime.makeslice":  objs.UprobeMakeslice,
+    "runtime.newproc1":   objs.UprobeNewproc1,
+    // ...
+}
+
+for symbol, probe := range probes {
+    uprobe, err := ex.Uprobe(symbol, probe, uprobeOpts)
+    //              ↑ libbpf attach API
+    must(err, "attaching uprobe at "+symbol)
+    defer uprobe.Close()
+}
+</code></pre>
+<p><strong>Uprobe 原理：</strong></p>
+<pre><code>目標 binary (testserver)
+    ↓
+1. 找到 runtime.casgstatus 的位址
+2. 在該位址設置 breakpoint
+3. 當執行到該位址時：
+   → 觸發 uprobe
+   → 執行 eBPF 程式
+   → 記錄事件
+   → 繼續執行原程式
+</code></pre>
+<h4 id="323-maps---kernel-userspace-通訊"><a class="header" href="#323-maps---kernel-userspace-通訊">3.2.3 Maps - Kernel-Userspace 通訊</a></h4>
+<pre><code class="language-go">// cmd/xgotop/main.go:179-187
+if objs.SamplingRates != nil {
+    for eventType, rate := range rates {
+        key := uint32(eventType)
+        err := objs.SamplingRates.Update(&amp;key, &amp;rate, ebpf.UpdateAny)
+        //                             ↑ userspace → kernel
+        if err != nil {
+            log.Fatalf("Failed to update sampling rate: %v", err)
+        }
+    }
+}
+</code></pre>
+<p><strong>Maps 類型：</strong></p>
+<pre><code class="language-c">// xgotop.h 中的 map 定義
+struct {
+    __uint(type, BPF_MAP_TYPE_ARRAY);
+    __uint(max_entries, 16);
+    __type(key, u32);
+    __type(value, u32);
+} sampling_rates SEC(".maps");
+</code></pre>
+<p><strong>雙向通訊：</strong></p>
+<pre><code>Userspace                    Kernel
+    │                           │
+    │  map.Update(key, value)   │
+    │ ────────────────────────&gt; │  eBPF 程式讀取
+    │                           │  map_lookup_elem()
+    │                           │
+    │  map.Lookup(&amp;key, &amp;val)   │
+    │ &lt;──────────────────────── │  eBPF 程式寫入
+    │                           │  map_update_elem()
+</code></pre>
+<h4 id="324-ringbuffer---高效事件傳輸"><a class="header" href="#324-ringbuffer---高效事件傳輸">3.2.4 Ringbuffer - 高效事件傳輸</a></h4>
+<pre><code class="language-go">// cmd/xgotop/main.go:220-222
+rd, err := ringbuf.NewReader(objs.Events)
+must(err, "creating events ringbuf reader")
+defer rd.Close()
+
+// 讀取事件
+for {
+    record, err := rd.Read()
+    if err != nil {
+        break
+    }
+    // 處理 record.RawSample
+}
+</code></pre>
+<p><strong>Ringbuffer 優勢：</strong></p>
+<pre><code>傳統 Perf Buffer              Ringbuffer (現代)
+    │                              │
+    ├─ 每個 CPU 一個 buffer        ├─ 全域共享 buffer
+    ├─ 需要輪詢所有 CPU            ├─ 單一讀取點
+    ├─ 可能 reorder                ├─ 保證順序
+    └─ 較高 overhead               └─ 更高效
+</code></pre>
+<hr />
+<h2 id="4-xgotop-中的實際應用"><a class="header" href="#4-xgotop-中的實際應用">4. xgotop 中的實際應用</a></h2>
+<h3 id="41-完整初始化流程"><a class="header" href="#41-完整初始化流程">4.1 完整初始化流程</a></h3>
+<pre><code class="language-go">// cmd/xgotop/main.go 簡化版
+
+func main() {
+    // 1. 移除記憶體鎖定限制
+    err := rlimit.RemoveMemlock()
+    // 允許 eBPF 鎖定記憶體，避免被 swap
+
+    // 2. 載入 eBPF 物件
+    objs := ebpfObjects{}
+    err = loadEbpfObjects(&amp;objs, nil)
+    defer objs.Close()
+
+    // 3. 設定 sampling rates (透過 map)
+    for eventType, rate := range rates {
+        key := uint32(eventType)
+        objs.SamplingRates.Update(&amp;key, &amp;rate, ebpf.UpdateAny)
+    }
+
+    // 4. Attach uprobes
+    ex, err := link.OpenExecutable(executablePath)
+    for symbol, probe := range probes {
+        uprobe, err := ex.Uprobe(symbol, probe, nil)
+        defer uprobe.Close()
+    }
+
+    // 5. 建立 ringbuffer reader
+    rd, err := ringbuf.NewReader(objs.Events)
+    defer rd.Close()
+
+    // 6. 啟動 event readers (goroutines)
+    for i := 0; i &lt; *readWorkers; i++ {
+        go readEvents(rd, eventCh)
+    }
+
+    // 7. 啟動 event processors
+    for i := 0; i &lt; *processWorkers; i++ {
+        go processEvents(eventCh, eventStore)
+    }
+}
+</code></pre>
+<h3 id="42-事件處理流程"><a class="header" href="#42-事件處理流程">4.2 事件處理流程</a></h3>
+<pre><code>[Kernel] eBPF Hook 觸發
+    ↓
+[Kernel] 寫入 Ringbuffer
+    ↓
+[User] ringbuf.NewReader().Read()  ← libbpf
+    ↓
+[User] readEvents() goroutine
+    ↓ 放入 channel
+[User] eventCh := make(chan *ebpfGoRuntimeEventT, 1_000_000)
+    ↓
+[User] processEvents() goroutine
+    ↓
+[User] Storage (Protobuf/JSONL)
+    ↓
+[User] WebSocket → Web UI
+</code></pre>
+<h3 id="43-生成的-go-binding"><a class="header" href="#43-生成的-go-binding">4.3 生成的 Go Binding</a></h3>
+<pre><code class="language-bash"># gen.go
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go \
+    -type go_runtime_event_t \
+    -target arm64 \
+    -output-dir cmd/xgotop \
+    ebpf xgotop.bpf.c
+</code></pre>
+<p><strong>生成檔案：</strong></p>
+<pre><code>cmd/xgotop/
+├── ebpf_arm64_bpfeb.go     ← Big-endian
+├── ebpf_arm64_bpfel.go     ← Little-endian
+└── ebpf_arm64_bpfel.o      ← eBPF bytecode
+</code></pre>
+<p><strong>自動生成的結構：</strong></p>
+<pre><code class="language-go">// ebpf_arm64_bpfel.go (自動生成)
+
+type ebpfObjects struct {
+    // Programs
+    UprobeCasgstatus *ebpf.Program
+    UprobeMakeslice  *ebpf.Program
+    UprobeNewproc1   *ebpf.Program
+    // ...
+
+    // Maps
+    Events         *ebpf.Map  // Ringbuffer
+    SamplingRates  *ebpf.Map  // Array map
+}
+
+func loadEbpfObjects(obj *ebpfObjects, opts *ebpf.CollectionOptions) error {
+    // 自動生成的載入邏輯
+}
+</code></pre>
+<hr />
+<h2 id="5-bcc-vs-libbpf-比較"><a class="header" href="#5-bcc-vs-libbpf-比較">5. BCC vs libbpf 比較</a></h2>
+<h3 id="51-開發方法對比"><a class="header" href="#51-開發方法對比">5.1 開發方法對比</a></h3>
+<h4 id="bcc-方法傳統"><a class="header" href="#bcc-方法傳統">BCC 方法（傳統）</a></h4>
+<pre><code class="language-python"># BCC Python 範例
+from bcc import BPF
+
+bpf_text = """
+#include &lt;linux/sched.h&gt;      // ← 使用 kernel headers
+#include &lt;linux/fs.h&gt;
+
+int trace_open(struct pt_regs *ctx) {
+    struct task_struct *task =
+        (struct task_struct *)bpf_get_current_task();
+    bpf_trace_printk("PID: %d\\n", task-&gt;pid);
+    return 0;
+}
+"""
+
+b = BPF(text=bpf_text)  # ← 運行時編譯
+b.attach_kprobe(event="do_sys_open", fn_name="trace_open")
+</code></pre>
+<p><strong>特點：</strong></p>
+<ul>
+<li>❌ 不需要 vmlinux.h</li>
+<li>✅ 使用 kernel headers (<code>/usr/include/linux/*</code>)</li>
+<li>🔄 <strong>運行時編譯</strong>（每次執行都編譯）</li>
+<li>📦 需要安裝 LLVM/Clang</li>
+<li>🐍 Python API（易學）</li>
+</ul>
+<h4 id="libbpf--co-re-方法現代xgotop-使用"><a class="header" href="#libbpf--co-re-方法現代xgotop-使用">libbpf + CO-RE 方法（現代，xgotop 使用）</a></h4>
+<pre><code class="language-c">// xgotop.bpf.c
+#include "vmlinux.h"           // ← 使用 vmlinux.h
+#include &lt;bpf/bpf_helpers.h&gt;
+
+SEC("uprobe/runtime.casgstatus")
+int uprobe_casgstatus(struct pt_regs *ctx) {
+    struct go_runtime_g g;
+    bpf_probe_read(&amp;g, sizeof(g), gp);
+    return 0;
+}
+</code></pre>
+<pre><code class="language-bash"># 開發機器：預先編譯
+clang -target bpf -c xgotop.bpf.c -o xgotop.bpf.o
+
+# 目標機器：直接執行
+./xgotop  # 不需要編譯器
+</code></pre>
+<p><strong>特點：</strong></p>
+<ul>
+<li>✅ <strong>需要 vmlinux.h</strong></li>
+<li>❌ 不使用 kernel headers</li>
+<li>⚡ <strong>預先編譯</strong> (Compile Once, Run Everywhere)</li>
+<li>📦 只需要目標機器支援 BTF</li>
+<li>🚀 啟動快速、部署輕量</li>
+</ul>
+<h3 id="52-完整對比表"><a class="header" href="#52-完整對比表">5.2 完整對比表</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>項目</th><th>BCC</th><th>libbpf + CO-RE</th></tr></thead><tbody>
+<tr><td><strong>vmlinux.h</strong></td><td>❌ 不需要</td><td>✅ <strong>需要</strong></td></tr>
+<tr><td><strong>Kernel Headers</strong></td><td>✅ 需要</td><td>❌ 不需要</td></tr>
+<tr><td><strong>LLVM/Clang</strong></td><td>運行時需要</td><td>編譯時需要</td></tr>
+<tr><td><strong>編譯時機</strong></td><td>運行時</td><td>開發時</td></tr>
+<tr><td><strong>啟動速度</strong></td><td>慢（5-10秒）</td><td>快（&lt;1秒）</td></tr>
+<tr><td><strong>部署大小</strong></td><td>大（需要 headers）</td><td>小（單一 binary）</td></tr>
+<tr><td><strong>學習曲線</strong></td><td>簡單（Python）</td><td>較陡（C + BTF）</td></tr>
+<tr><td><strong>適用場景</strong></td><td>快速開發、實驗</td><td>生產環境</td></tr>
+<tr><td><strong>跨版本相容</strong></td><td>差</td><td>好（CO-RE）</td></tr>
+<tr><td><strong>效能 overhead</strong></td><td>較高</td><td>較低</td></tr>
+</tbody></table>
+</div>
+<h3 id="53-編譯流程對比"><a class="header" href="#53-編譯流程對比">5.3 編譯流程對比</a></h3>
+<p><strong>BCC：</strong></p>
+<pre><code>運行時（目標機器）
+┌─────────────────────────────┐
+│ 1. Python 腳本執行           │
+│ 2. 讀取 kernel headers       │ ← 需要安裝
+│    /usr/include/linux/*     │
+│ 3. LLVM 即時編譯             │ ← 每次都編譯
+│ 4. 載入到 kernel             │
+└─────────────────────────────┘
+   啟動時間：5-10 秒
+</code></pre>
+<p><strong>libbpf + CO-RE：</strong></p>
+<pre><code>開發時（開發機器）              運行時（目標機器）
+┌─────────────────────┐       ┌──────────────────┐
+│ 1. 生成 vmlinux.h    │       │ 1. 載入 .bpf.o    │
+│ 2. clang 編譯        │  ──&gt;  │ 2. BTF 重定位     │ ← 自動適配
+│ 3. 產生 .bpf.o       │       │ 3. 執行           │
+└─────────────────────┘       └──────────────────┘
+                               啟動時間：&lt;1 秒
+</code></pre>
+<hr />
+<h2 id="6-vmlinuxh-的角色"><a class="header" href="#6-vmlinuxh-的角色">6. vmlinux.h 的角色</a></h2>
+<h3 id="61-為什麼需要-vmlinuxh"><a class="header" href="#61-為什麼需要-vmlinuxh">6.1 為什麼需要 vmlinux.h</a></h3>
+<p><strong>問題：Kernel 版本差異</strong></p>
+<pre><code class="language-c">// Kernel 5.10
+struct task_struct {
+    int field_a;      // offset 0
+    long field_b;     // offset 4
+};
+
+// Kernel 6.14
+struct task_struct {
+    long new_field;   // offset 0  ← 新增！
+    int field_a;      // offset 8  ← offset 改變！
+    long field_b;     // offset 12
+};
+</code></pre>
+<p>如果寫死 offset，程式會在不同 kernel 版本上<strong>讀到錯誤資料</strong>。</p>
+<h3 id="62-vmlinuxh-生成流程"><a class="header" href="#62-vmlinuxh-生成流程">6.2 vmlinux.h 生成流程</a></h3>
+<pre><code class="language-bash"># Makefile
+vmlinux:
+    bpftool btf dump file /sys/kernel/btf/vmlinux format c &gt; vmlinux.h
+</code></pre>
+<p><strong>流程圖：</strong></p>
+<pre><code>/sys/kernel/btf/vmlinux
+    ↓ (二進位 BTF 格式)
+    │ 包含 kernel 所有型別資訊
+    ↓
+bpftool btf dump
+    ↓ (轉換成 C header)
+    │ 產生 3.8MB 的 header
+    ↓
+vmlinux.h
+    ↓ (包含所有結構定義)
+    │ struct task_struct { ... }
+    │ struct pt_regs { ... }
+    │ ...（數千個結構）
+    ↓
+#include "vmlinux.h"  ← xgotop.h
+</code></pre>
+<h3 id="63-在-xgotop-的使用"><a class="header" href="#63-在-xgotop-的使用">6.3 在 xgotop 的使用</a></h3>
+<pre><code class="language-c">// xgotop.h:4
+#include "vmlinux.h"
+
+// 使用 vmlinux.h 中的定義
+struct pt_regs {  // ← 來自 vmlinux.h
+    unsigned long regs[31];
+    unsigned long sp;
+    unsigned long pc;
+    // ...
+};
+
+// xgotop.bpf.c 中使用
+SEC("uprobe/runtime.casgstatus")
+int BPF_KPROBE(uprobe_casgstatus,
+               const void *gp,
+               const u32 oldval,
+               const u32 newval) {
+    struct go_runtime_g g;
+    // pt_regs 透過 ctx 傳入，型別來自 vmlinux.h
+}
+</code></pre>
+<hr />
+<h2 id="7-co-re-機制詳解"><a class="header" href="#7-co-re-機制詳解">7. CO-RE 機制詳解</a></h2>
+<h3 id="71-co-re-架構"><a class="header" href="#71-co-re-架構">7.1 CO-RE 架構</a></h3>
+<p><strong>CO-RE = Compile Once, Run Everywhere</strong></p>
+<pre><code>┌─────────── 編譯時 ────────────┐
+│                              │
+│  vmlinux.h (開發機器)         │
+│  struct task_struct {        │
+│      int pid;  // offset 123 │  ← BTF 記錄
+│  }                           │
+│         ↓                    │
+│  clang -target bpf           │
+│         ↓                    │
+│  xgotop.bpf.o                │
+│  + BTF relocations           │  ← 記住 "pid" 這個欄位名稱
+│                              │
+└──────────────────────────────┘
+            │
+            │ 部署
+            ↓
+┌─────────── 運行時 ────────────┐
+│                              │
+│  /sys/kernel/btf/vmlinux     │
+│  (目標機器實際 kernel)        │
+│  struct task_struct {        │
+│      long new_field;         │
+│      int pid;  // offset 456 │  ← 不同 offset！
+│  }                           │
+│         ↓                    │
+│  libbpf 重定位引擎            │
+│         ↓                    │
+│  找到 "pid" 欄位              │
+│  offset 123 → 456            │  ← 自動調整
+│         ↓                    │
+│  載入到 kernel                │
+│                              │
+└──────────────────────────────┘
+</code></pre>
+<h3 id="72-btf-bpf-type-format"><a class="header" href="#72-btf-bpf-type-format">7.2 BTF (BPF Type Format)</a></h3>
+<p><strong>BTF 儲存的資訊：</strong></p>
+<pre><code class="language-c">// 原始結構
+struct task_struct {
+    int pid;           // offset 456, size 4
+    char comm[16];     // offset 460, size 16
+};
+</code></pre>
+<p><strong>BTF 格式：</strong></p>
+<pre><code>BTF Type #123: struct task_struct {
+    member: pid
+        type: int
+        offset: 456 bits
+        size: 32 bits
+    member: comm
+        type: char[16]
+        offset: 460 bits
+        size: 128 bits
+}
+</code></pre>
+<h3 id="73-libbpf-重定位過程"><a class="header" href="#73-libbpf-重定位過程">7.3 libbpf 重定位過程</a></h3>
+<pre><code>1. 讀取 .bpf.o 的 BTF section
+   → 知道程式想存取 task_struct.pid
+   → 編譯時 offset = 123
+
+2. 讀取 /sys/kernel/btf/vmlinux
+   → 找到 task_struct 定義
+   → 運行時 offset = 456
+
+3. 修改程式碼中的 offset
+   → mov r1, [r0 + 123]  改成
+   → mov r1, [r0 + 456]
+
+4. 載入到 kernel
+</code></pre>
+<h3 id="74-co-re-helper-巨集"><a class="header" href="#74-co-re-helper-巨集">7.4 CO-RE Helper 巨集</a></h3>
+<pre><code class="language-c">// xgotop.h:6
+#include &lt;bpf/bpf_core_read.h&gt;
+
+// 使用 CO-RE helper
+if (bpf_core_type_exists(struct trace_event_raw_bpf_trace_printk___x)) {
+    // 檢查結構是否存在於當前 kernel
+    // 不存在則跳過，避免 crash
+}
+
+// 讀取欄位（自動處理 offset）
+int pid = BPF_CORE_READ(task, pid);
+//        ↑ 展開成 bpf_probe_read + offset calculation
+</code></pre>
+<hr />
+<h2 id="8-實戰範例追蹤流程"><a class="header" href="#8-實戰範例追蹤流程">8. 實戰範例：追蹤流程</a></h2>
+<h3 id="81-從-hook-到顯示的完整路徑"><a class="header" href="#81-從-hook-到顯示的完整路徑">8.1 從 Hook 到顯示的完整路徑</a></h3>
+<pre><code>[Step 1] Go 程式執行
+testserver 的 runtime.casgstatus() 被呼叫
+
+    ↓
+
+[Step 2] Uprobe 觸發
+xgotop attach 的 eBPF 程式執行
+
+    ↓
+
+[Step 3] eBPF 程式執行
+// xgotop.bpf.c:4-30
+SEC("uprobe/runtime.casgstatus")
+int BPF_KPROBE(uprobe_casgstatus, ...) {
+    struct go_runtime_g g;
+    bpf_probe_read(&amp;g, sizeof(g), gp);  // 讀取 goroutine 結構
+
+    // 組裝事件
+    struct go_runtime_event event = {
+        .event_type = EVENT_TYPE_CASGSTATUS,
+        .timestamp = bpf_ktime_get_ns(),
+        .goid = g.goid,
+        // ...
+    };
+
+    // 寫入 ringbuffer
+    bpf_ringbuf_output(&amp;events, &amp;event, sizeof(event), 0);
+}
+
+    ↓
+
+[Step 4] Ringbuffer → Userspace (libbpf)
+// main.go:220
+rd, err := ringbuf.NewReader(objs.Events)
+
+// 多個 reader goroutines
+for i := 0; i &lt; *readWorkers; i++ {
+    go func() {
+        for {
+            record, err := rd.Read()  // ← libbpf API
+            eventCh &lt;- parseEvent(record.RawSample)
+        }
+    }()
+}
+
+    ↓
+
+[Step 5] Event Processing
+// main.go:processEvents
+go func() {
+    for event := range eventCh {
+        // 處理事件
+        processedEvent := transform(event)
+
+        // 儲存到 storage
+        eventStore.Write(processedEvent)
+
+        // 發送到 WebSocket
+        apiServer.Broadcast(processedEvent)
+    }
+}()
+
+    ↓
+
+[Step 6] Storage &amp; Web UI
+Protobuf/JSONL 寫入磁碟
+WebSocket 推送到瀏覽器
+Timeline 視覺化顯示
+</code></pre>
+<h3 id="82-效能指標追蹤"><a class="header" href="#82-效能指標追蹤">8.2 效能指標追蹤</a></h3>
+<pre><code class="language-go">// main.go:234-238
+var probeDurationNsSum atomic.Int64     // LAT: eBPF hook 時間
+var processingTimeNsSum atomic.Int64    // PRC: 處理時間
+
+var readEventCount atomic.Uint64        // RPS: 讀取速率
+var procEventCount atomic.Uint64        // PPS: 處理速率
+
+eventCh := make(chan *ebpfGoRuntimeEventT, 1_000_000)
+// ↑ EWP: len(eventCh) = 等待處理的事件數
+</code></pre>
+<p><strong>計算公式：</strong></p>
+<pre><code>LAT = probeDurationNsSum / probeDurationNsCount
+RPS = readEventCount / 時間間隔
+PPS = procEventCount / 時間間隔
+EWP = len(eventCh)
+PRC = processingTimeNsSum / processingTimeNsCount
+</code></pre>
+<hr />
+<h2 id="9-總結"><a class="header" href="#9-總結">9. 總結</a></h2>
+<h3 id="91-關鍵概念回顧"><a class="header" href="#91-關鍵概念回顧">9.1 關鍵概念回顧</a></h3>
+<pre><code>vmlinux.h
+    ↓ 提供 kernel 型別定義
+    ↓
+eBPF C 程式 (xgotop.bpf.c)
+    ↓ clang 編譯 + BTF
+    ↓
+.bpf.o (eBPF bytecode)
+    ↓ libbpf 載入
+    ↓
+Kernel (執行)
+    ↓ Ringbuffer
+    ↓
+libbpf 讀取
+    ↓
+Application (xgotop)
+</code></pre>
+<h3 id="92-libbpf-的價值"><a class="header" href="#92-libbpf-的價值">9.2 libbpf 的價值</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>沒有 libbpf</th><th>有 libbpf</th></tr></thead><tbody>
+<tr><td>手動 syscall(__NR_bpf, ...)</td><td><code>loadEbpfObjects()</code></td></tr>
+<tr><td>手動解析 BTF</td><td>自動重定位</td></tr>
+<tr><td>手動管理 maps</td><td><code>map.Update()</code></td></tr>
+<tr><td>手動讀取 ringbuffer</td><td><code>ringbuf.NewReader()</code></td></tr>
+<tr><td>數百行 boilerplate</td><td>幾行程式碼</td></tr>
+</tbody></table>
+</div>
+<h3 id="93-開發建議"><a class="header" href="#93-開發建議">9.3 開發建議</a></h3>
+<p><strong>使用 BCC 當：</strong></p>
+<ul>
+<li>快速原型開發</li>
+<li>一次性除錯任務</li>
+<li>學習 eBPF 基礎</li>
+</ul>
+<p><strong>使用 libbpf + CO-RE 當：</strong></p>
+<ul>
+<li>生產環境工具</li>
+<li>需要跨 kernel 版本分發</li>
+<li>效能要求高</li>
+<li>最小化部署依賴</li>
+</ul>
+<h3 id="94-參考資源"><a class="header" href="#94-參考資源">9.4 參考資源</a></h3>
+<ul>
+<li><strong>cilium/ebpf</strong>: https://github.com/cilium/ebpf</li>
+<li><strong>libbpf 官方文檔</strong>: https://github.com/libbpf/libbpf</li>
+<li><strong>BPF CO-RE 介紹</strong>: https://nakryiko.com/posts/bpf-portability-and-co-re/</li>
+<li><strong>xgotop 專案</strong>: https://github.com/sazak-io/xgotop</li>
+</ul>
+<hr />
+<p><strong>文件版本</strong>: 1.0
+<strong>最後更新</strong>: 2026-01-01
+<strong>適用於</strong>: xgotop (arm64), Linux kernel 5.2+</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../linux_system/understanding-ebpf.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../linux_system/linux-binary-tools-guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../linux_system/understanding-ebpf.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../linux_system/linux-binary-tools-guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
