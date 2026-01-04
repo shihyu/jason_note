@@ -597,6 +597,7 @@
     - [設計模式完整指南](dp/design-patterns-guide.md)
     - [響應式系統設計模式完整指南](dp/reactive-patterns-guide.md)
 - [Git](git/git.md)
+    - [Git Submodule 完整使用指南](git/git-submodule-guide.md)
     - [git-remove-commited-files](git/git-remove-commited-files.md)
     - [Git 常用](git/cheat-sheet.md)
 - [Mermaid](mermaid/mermaid.md)
