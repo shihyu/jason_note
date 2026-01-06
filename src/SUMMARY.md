@@ -39,6 +39,7 @@
         - [Claude Code 最佳實踐指南](tools/claude_code_best_practices.md)
         - [Claude Code 使用後感受](tools/claude_code_experience.md)
         - [Claude Code 效能測試與正確性驗證完整指南](tools/claude-code-performance-testing-guide.md)
+        - [Claude Code Skills：常見誤解與補充整理](tools/claude_code_skills_常見誤解與補充整理.md)
         - [CCS (Claude Code Switch) 完整指南](tools/ccs_complete_guide.md)
         - [GitHub Spec Kit - SDD 規格驅動開發](tools/github-spec-kit-sdd.md)
         - [Spec-Kit 開發指南](tools/spec-kit-guide.md)
@@ -342,6 +343,8 @@
     - [迭代思維與人才優勢](software_engineering/迭代思維與人才優勢.md)
     - [黑箱測試方法與AI應用 - 課程筆記](software_engineering/黑箱測試方法與AI應用_課程筆記.md)
     - [黑箱測試方法詳細指南](software_engineering/testing_methods_guide.md)
+- [System Design](linux_system/system_design_comparisons.md)
+    - [系統設計機制完整比較指南](linux_system/system_design_comparisons.md)
 
 ## Performance
 - [效能量測指南](performance/Performance.md)
