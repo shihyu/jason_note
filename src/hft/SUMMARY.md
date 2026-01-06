@@ -23,6 +23,9 @@
 
 ## 02. 系統優化
 
+### 低延遲系統設計
+- [低延遲交易系統設計](02-system/low_latency_trading_system_design.md) - 系統級優化、記憶體層級、並發架構、指令級優化
+
 ### 作業系統選擇與調優
 - [OS 選擇指南](02-system/os-selection.md) - 為何選擇 Linux、核心繞過、FPGA 協同
 - [OS 調優完整指南](02-system/os-tuning-guide.md) - 核心隔離、NUMA、開源項目、臺灣市場實踐
