@@ -315,9 +315,22 @@ Claude 會：
 
 ---
 
+## 八、.CLAUDE 與 Token 使用最佳實務
+
+- `.CLAUDE` 是專案層級 system / instruction context
+- **內容越多,且越常被注入到任務 context,token 消耗越多**
+- 沒有被使用的部分不會消耗 token
+- 建議使用短而結構化的規範,避免長篇 prose
+- 避免把 README、公司規範整篇貼入 `.CLAUDE`,只保留必要設定和限制
+
+> 心法：`.CLAUDE` = 精準小而準,skill = 多功能 agent loop；token 消耗主要來自實際執行和上下文大小,而非 skill 數量本身。
+
+---
+
 ### 本章總結
 
 - 重構 skill = 多個 skill 的組合行為
+- `.CLAUDE` 太大會增加 token,但只計入實際被用到的部分
 - 強項在 **中大型、可 build 的 C / Linux 專案**
 - 最適合用在：
   - legacy code 清理
