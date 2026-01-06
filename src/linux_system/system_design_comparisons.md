@@ -122,6 +122,106 @@
 
 ---
 
+### 5. 零拷貝 vs 傳統拷貝 (Zero-Copy vs Traditional Copy)
+
+| 比較項目 | 零拷貝 (Zero-Copy) | 傳統拷貝 (Traditional Copy) |
+|---------|-------------------|---------------------------|
+| **運作方式** | 資料直接從來源到目的地,不經過CPU | 資料經過多次CPU拷貝(Kernel→User→Kernel) |
+| **白話比喻** | 像傳送帶:貨物直接從倉庫到卡車 | 像人工搬運:貨物先搬到暫存區再搬上車 |
+| **CPU使用率** | 極低(幾乎不佔用) | 高(CPU忙著拷貝資料) |
+| **拷貝次數** | 0-1次 | 4次(Disk→Kernel→User→Kernel→Network) |
+| **適用場景** | 大檔案傳輸、影片串流、Proxy伺服器 | 需要處理資料內容的場景 |
+| **優點** | 效能極佳,減少CPU和記憶體頻寬佔用 | 可以在User space處理資料 |
+| **缺點** | 無法修改資料內容 | 效能差,多次拷貝浪費資源 |
+| **實際範例** | Nginx sendfile、Kafka檔案傳輸 | 傳統HTTP伺服器read+write |
+
+**詳細說明:**
+- **傳統拷貝流程**:發送檔案給客戶端
+  ```
+  1. read(): Disk → Kernel buffer (DMA)
+  2. read(): Kernel buffer → User buffer (CPU拷貝)
+  3. write(): User buffer → Socket buffer (CPU拷貝)
+  4. write(): Socket buffer → Network card (DMA)
+  總共:2次DMA + 2次CPU拷貝 + 4次上下文切換
+  ```
+- **零拷貝流程**:使用sendfile()
+  ```
+  1. sendfile(): Disk → Kernel buffer (DMA)
+  2. sendfile(): Kernel buffer → Network card (DMA或直接描述符傳遞)
+  總共:2次DMA + 0次CPU拷貝 + 2次上下文切換
+  ```
+- **實際程式碼對比**:
+  ```c
+  // 傳統方式
+  char buffer[4096];
+  while ((n = read(fd, buffer, 4096)) > 0) {
+      write(socket, buffer, n);  // 2次CPU拷貝
+  }
+
+  // 零拷貝
+  sendfile(socket, fd, NULL, file_size);  // 0次CPU拷貝
+  ```
+- **效能提升**:
+  - 傳統方式:100MB檔案,CPU使用率30%,吞吐量500MB/s
+  - 零拷貝:100MB檔案,CPU使用率5%,吞吐量2GB/s
+
+---
+
+### 6. 記憶體映射 I/O vs 標準 I/O (Memory-Mapped I/O vs Standard I/O)
+
+| 比較項目 | 記憶體映射 I/O (mmap) | 標準 I/O (read/write) |
+|---------|---------------------|---------------------|
+| **運作方式** | 將檔案映射到記憶體位址,像存取陣列 | 使用系統呼叫讀寫檔案 |
+| **白話比喻** | 像把整本書攤開在桌上:隨便翻哪一頁 | 像看書:從第一頁依序看 |
+| **存取方式** | 記憶體指標存取 | 系統呼叫(read/write) |
+| **效能特性** | 隨機存取快,大檔案優勢明顯 | 順序存取快,小檔案開銷小 |
+| **適用場景** | 大檔案隨機存取、資料庫、共享記憶體 | 順序讀寫、小檔案、串流資料 |
+| **優點** | 隨機存取效率高,減少系統呼叫 | 實作簡單,適合順序操作 |
+| **缺點** | 需要虛擬記憶體支援,小檔案開銷大 | 隨機存取慢,系統呼叫開銷 |
+| **實際範例** | 資料庫索引(B-tree)、進程間共享記憶體 | 日誌寫入、檔案複製 |
+
+**詳細說明:**
+- **mmap範例**:隨機存取大檔案
+  ```c
+  // 映射檔案到記憶體
+  int fd = open("data.db", O_RDWR);
+  char* addr = mmap(NULL, file_size, PROT_READ|PROT_WRITE,
+                    MAP_SHARED, fd, 0);
+
+  // 像存取陣列一樣存取檔案
+  addr[1000] = 'A';      // 直接修改offset 1000
+  addr[999999] = 'B';    // 跳到offset 999999,無需seek
+
+  munmap(addr, file_size);
+  ```
+- **標準I/O範例**:順序讀取
+  ```c
+  FILE* fp = fopen("data.txt", "r");
+  char buffer[4096];
+  while (fread(buffer, 1, 4096, fp) > 0) {
+      process(buffer);
+  }
+  fclose(fp);
+  ```
+- **效能對比**(100MB檔案,隨機存取10000次):
+  - mmap:約100ms(頁面錯誤後幾乎零開銷)
+  - read/write + lseek:約5000ms(每次都要系統呼叫)
+- **共享記憶體應用**:多程序通訊
+  ```c
+  // 程序A
+  void* shared = mmap(NULL, SIZE, PROT_READ|PROT_WRITE,
+                      MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+  fork();  // 子程序繼承映射
+
+  // 父子程序共享這塊記憶體,無需pipe或socket
+  ```
+- **注意事項**:
+  - mmap檔案修改不會立即寫入磁碟,需要msync()強制同步
+  - 映射大檔案可能耗盡虛擬記憶體位址空間(32位元系統)
+  - 適合大檔案(>幾MB),小檔案反而比read/write慢
+
+---
+
 ## 記憶體管理
 
 ### 5. 分頁 vs 分段 (Paging vs Segmentation)
