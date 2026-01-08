@@ -338,6 +338,7 @@
 - [Network](network/socket.md)
 - [編譯器與直譯器](compilers-and-interpreters/compilers-and-interpreters.md)
     - [從編譯器角度看語言特性：Go/C/C++/Rust](compilers-and-interpreters/language-comparison-full.md)
+    - [高併發語言特性分析](compilers-and-interpreters/high_concurrency_languages.md)
 
 ## Software Engineering
 - [Software Engineering](software_engineering/software_engineering.md)
