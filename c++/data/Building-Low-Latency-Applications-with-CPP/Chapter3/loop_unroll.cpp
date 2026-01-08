@@ -1,17 +1,25 @@
-int main() {
-  { // original code.
-    int a[5];
-    a[0] = 0;
-    for(int i = 1; i < 5; ++i)
-      a[i] = a[i-1] + 1;
-  }
+int main()
+{
+    {
+        // ❌ 原始迴圈：有分支和迴圈控制開銷
+        // 成本：4 次跳躍（JMP）+ 4 次比較（CMP）+ 4 次遞增（INC）
+        int a[5];
+        a[0] = 0;
 
-  { // loop unrolled code.
-    int a[5];
-    a[0] = 0;
-    a[1] = a[0] + 1;
-    a[2] = a[1] + 1;
-    a[3] = a[2] + 1;
-    a[4] = a[3] + 1;
-  }
+        for (int i = 1; i < 5; ++i) {
+            a[i] = a[i - 1] + 1;
+        }
+    }
+
+    {
+        // ✅ 迴圈展開：消除所有迴圈控制開銷
+        // ⚡ 效能關鍵：無分支、無跳躍、CPU Pipeline 不中斷
+        // 收益：減少 Branch Misprediction 風險，增加指令級平行性（ILP）
+        int a[5];
+        a[0] = 0;
+        a[1] = a[0] + 1;
+        a[2] = a[1] + 1;
+        a[3] = a[2] + 1;
+        a[4] = a[3] + 1;
+    }
 }

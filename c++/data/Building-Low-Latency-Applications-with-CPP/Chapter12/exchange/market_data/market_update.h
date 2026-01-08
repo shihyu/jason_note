@@ -7,9 +7,10 @@
 
 using namespace Common;
 
-namespace Exchange {
-  /// Represents the type / action in the market update message.
-  enum class MarketUpdateType : uint8_t {
+namespace Exchange
+{
+/// Represents the type / action in the market update message.
+enum class MarketUpdateType : uint8_t {
     INVALID = 0,
     CLEAR = 1,
     ADD = 2,
@@ -18,35 +19,44 @@ namespace Exchange {
     TRADE = 5,
     SNAPSHOT_START = 6,
     SNAPSHOT_END = 7
-  };
+};
 
-  inline std::string marketUpdateTypeToString(MarketUpdateType type) {
+inline std::string marketUpdateTypeToString(MarketUpdateType type)
+{
     switch (type) {
-      case MarketUpdateType::CLEAR:
+    case MarketUpdateType::CLEAR:
         return "CLEAR";
-      case MarketUpdateType::ADD:
+
+    case MarketUpdateType::ADD:
         return "ADD";
-      case MarketUpdateType::MODIFY:
+
+    case MarketUpdateType::MODIFY:
         return "MODIFY";
-      case MarketUpdateType::CANCEL:
+
+    case MarketUpdateType::CANCEL:
         return "CANCEL";
-      case MarketUpdateType::TRADE:
+
+    case MarketUpdateType::TRADE:
         return "TRADE";
-      case MarketUpdateType::SNAPSHOT_START:
+
+    case MarketUpdateType::SNAPSHOT_START:
         return "SNAPSHOT_START";
-      case MarketUpdateType::SNAPSHOT_END:
+
+    case MarketUpdateType::SNAPSHOT_END:
         return "SNAPSHOT_END";
-      case MarketUpdateType::INVALID:
+
+    case MarketUpdateType::INVALID:
         return "INVALID";
     }
-    return "UNKNOWN";
-  }
 
-  /// These structures go over the wire / network, so the binary structures are packed to remove system dependent extra padding.
+    return "UNKNOWN";
+}
+
+/// These structures go over the wire / network, so the binary structures are packed to remove system dependent extra padding.
 #pragma pack(push, 1)
 
-  /// Market update structure used internally by the matching engine.
-  struct MEMarketUpdate {
+/// Market update structure used internally by the matching engine.
+struct MEMarketUpdate {
     MarketUpdateType type_ = MarketUpdateType::INVALID;
 
     OrderId order_id_ = OrderId_INVALID;
@@ -56,41 +66,43 @@ namespace Exchange {
     Qty qty_ = Qty_INVALID;
     Priority priority_ = Priority_INVALID;
 
-    auto toString() const {
-      std::stringstream ss;
-      ss << "MEMarketUpdate"
-         << " ["
-         << " type:" << marketUpdateTypeToString(type_)
-         << " ticker:" << tickerIdToString(ticker_id_)
-         << " oid:" << orderIdToString(order_id_)
-         << " side:" << sideToString(side_)
-         << " qty:" << qtyToString(qty_)
-         << " price:" << priceToString(price_)
-         << " priority:" << priorityToString(priority_)
-         << "]";
-      return ss.str();
+    auto toString() const
+    {
+        std::stringstream ss;
+        ss << "MEMarketUpdate"
+           << " ["
+           << " type:" << marketUpdateTypeToString(type_)
+           << " ticker:" << tickerIdToString(ticker_id_)
+           << " oid:" << orderIdToString(order_id_)
+           << " side:" << sideToString(side_)
+           << " qty:" << qtyToString(qty_)
+           << " price:" << priceToString(price_)
+           << " priority:" << priorityToString(priority_)
+           << "]";
+        return ss.str();
     }
-  };
+};
 
-  /// Market update structure published over the network by the market data publisher.
-  struct MDPMarketUpdate {
+/// Market update structure published over the network by the market data publisher.
+struct MDPMarketUpdate {
     size_t seq_num_ = 0;
     MEMarketUpdate me_market_update_;
 
-    auto toString() const {
-      std::stringstream ss;
-      ss << "MDPMarketUpdate"
-         << " ["
-         << " seq:" << seq_num_
-         << " " << me_market_update_.toString()
-         << "]";
-      return ss.str();
+    auto toString() const
+    {
+        std::stringstream ss;
+        ss << "MDPMarketUpdate"
+           << " ["
+           << " seq:" << seq_num_
+           << " " << me_market_update_.toString()
+           << "]";
+        return ss.str();
     }
-  };
+};
 
 #pragma pack(pop) // Undo the packed binary structure directive moving forward.
 
-  /// Lock free queues of matching engine market update messages and market data publisher market updates messages respectively.
-  typedef Common::LFQueue<Exchange::MEMarketUpdate> MEMarketUpdateLFQueue;
-  typedef Common::LFQueue<Exchange::MDPMarketUpdate> MDPMarketUpdateLFQueue;
+/// Lock free queues of matching engine market update messages and market data publisher market updates messages respectively.
+typedef Common::LFQueue<Exchange::MEMarketUpdate> MEMarketUpdateLFQueue;
+typedef Common::LFQueue<Exchange::MDPMarketUpdate> MDPMarketUpdateLFQueue;
 }

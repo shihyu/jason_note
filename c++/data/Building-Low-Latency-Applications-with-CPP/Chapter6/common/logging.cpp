@@ -1,4 +1,5 @@
 #include "common/logging.h"
 
-namespace Common {
+namespace Common
+{
 }

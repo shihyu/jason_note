@@ -1,14 +1,20 @@
-int main() {
-  [[maybe_unused]] int a[100];
+int main()
+{
+    [[maybe_unused]] int a[100];
 
-  // original
-  for(auto i = 0; i < 100; ++i)
-    a[i] = i * 10 + 12;
+    // ❌ 原始版本：每次迭代都執行乘法
+    // 成本：IMUL 指令（3-5 週期）+ ADD 指令（1 週期）
+    for (auto i = 0; i < 100; ++i) {
+        a[i] = i * 10 + 12;
+    }
 
-  // optimized
-  int temp = 12;
-  for(auto i = 0; i < 100; ++i) {
-    a[i] = temp;
-    temp += 10;
-  }
+    // ✅ 歸納變數優化：將乘法轉換為加法
+    // ⚡ 效能關鍵：只使用 ADD 指令（1 週期），節省 2-4 週期/迭代
+    // 原理：i*10+12 的遞增規律是線性的（每次 +10）
+    int temp = 12;
+
+    for (auto i = 0; i < 100; ++i) {
+        a[i] = temp;
+        temp += 10;  // 加法代替乘法
+    }
 }
