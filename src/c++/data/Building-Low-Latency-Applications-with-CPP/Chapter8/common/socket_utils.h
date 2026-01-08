@@ -45,10 +45,11 @@ struct SocketCfg {
     }
 };
 
-/// Represents the maximum number of pending / unaccepted TCP connections.
+// TCP 伺服器最大待處理連線數 (Backlog)
 constexpr int MaxTCPServerBacklog = 1024;
 
-/// Convert interface name "eth0" to ip "123.123.123.123".
+// 取得網路介面 (Interface) 對應的 IP 位址
+// 例如: "eth0" -> "192.168.1.10"
 inline auto getIfaceIP(const std::string& iface) -> std::string
 {
     char buf[NI_MAXHOST] = {'\0'};
@@ -70,7 +71,8 @@ inline auto getIfaceIP(const std::string& iface) -> std::string
     return buf;
 }
 
-/// Sockets will not block on read, but instead return immediately if data is not available.
+// 設定 Socket 為非阻塞模式 (Non-Blocking)
+// ⚡ 核心優化：避免 read/recv 卡住執行緒，這對於單執行緒 Event Loop 至關重要
 inline auto setNonBlocking(int fd) -> bool
 {
     const auto flags = fcntl(fd, F_GETFL, 0);
@@ -82,7 +84,9 @@ inline auto setNonBlocking(int fd) -> bool
     return (fcntl(fd, F_SETFL, flags | O_NONBLOCK) != -1);
 }
 
-/// Disable Nagle's algorithm and associated delays.
+// 停用 Nagle 演算法 (TCP_NODELAY)
+// ⚡ 低延遲關鍵：Nagle 演算法會合併小封包以提高頻寬利用率，但會增加延遲
+// 對於即時交易系統，我們希望每個小封包 (如 Order Update) 立即發送
 inline auto disableNagle(int fd) -> bool
 {
     int one = 1;
@@ -90,7 +94,8 @@ inline auto disableNagle(int fd) -> bool
                        sizeof(one)) != -1);
 }
 
-/// Allow software receive timestamps on incoming packets.
+// 啟用核心層級的接收時間戳記 (SO_TIMESTAMP)
+// 允許透過 recvmsg() 獲取封包到達網卡的精確時間
 inline auto setSOTimestamp(int fd) -> bool
 {
     int one = 1;
@@ -98,7 +103,7 @@ inline auto setSOTimestamp(int fd) -> bool
                        sizeof(one)) != -1);
 }
 
-/// Add / Join membership / subscription to the multicast stream specified and on the interface specified.
+// 加入多播群組 (Multicast Join)
 inline auto join(int fd, const std::string& ip) -> bool
 {
     const ip_mreq mreq{{inet_addr(ip.c_str())}, {htonl(INADDR_ANY)}};
@@ -106,7 +111,8 @@ inline auto join(int fd, const std::string& ip) -> bool
                        sizeof(mreq)) != -1);
 }
 
-/// Create a TCP / UDP socket to either connect to or listen for data on or listen for connections on the specified interface and IP:port information.
+// 建立並設定 Socket
+// 包含：socket(), bind(), connect(), listen(), setsockopt() 等一系列操作
 [[nodiscard]] inline auto createSocket(Logger& logger,
                                        const SocketCfg& socket_cfg) -> int
 {
@@ -136,6 +142,7 @@ inline auto join(int fd, const std::string& ip) -> bool
                                    rp->ai_protocol)) != -1,
                "socket() failed. errno:" + std::string(strerror(errno)));
 
+        // ⚡ 預設設定非阻塞
         ASSERT(setNonBlocking(socket_fd),
                "setNonBlocking() failed. errno:" + std::string(strerror(errno)));
 

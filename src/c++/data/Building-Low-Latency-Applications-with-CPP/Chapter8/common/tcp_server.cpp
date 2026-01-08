@@ -2,14 +2,20 @@
 
 namespace Common
 {
-/// Add and remove socket file descriptors to and from the EPOLL list.
+// 將 Socket 加入 Epoll 監控清單
+// 監控事件：
+// - EPOLLET (Edge Triggered): 邊緣觸發模式，僅在狀態變化時通知一次 (高效但需一次讀完)
+// - EPOLLIN: 可讀事件 (有新連線或新數據)
 auto TCPServer::addToEpollList(TCPSocket* socket)
 {
     epoll_event ev{EPOLLET | EPOLLIN, {reinterpret_cast<void*>(socket)}};
     return !epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, socket->socket_fd_, &ev);
 }
 
-/// Start listening for connections on the provided interface and port.
+// 啟動監聽
+// 1. 建立 Epoll 實例
+// 2. 建立並綁定監聽 Socket
+// 3. 將監聽 Socket 加入 Epoll 監控
 auto TCPServer::listen(const std::string& iface, int port) -> void
 {
     epoll_fd_ = epoll_create(1);
@@ -25,30 +31,36 @@ auto TCPServer::listen(const std::string& iface, int port) -> void
            "epoll_ctl() failed. error:" + std::string(std::strerror(errno)));
 }
 
-/// Publish outgoing data from the send buffer and read incoming data from the receive buffer.
+// 處理數據收發
+// 遍歷所有活躍的 Socket，呼叫其 sendAndRecv() 方法
 auto TCPServer::sendAndRecv() noexcept -> void
 {
     auto recv = false;
 
+    // 1. 接收數據
     std::for_each(receive_sockets_.begin(),
     receive_sockets_.end(), [&recv](auto socket) {
         recv |= socket->sendAndRecv();
     });
 
+    // 若有收到任何數據，觸發處理完成回調 (例如：通知訂單閘道進行排序)
     if (recv) { // There were some events and they have all been dispatched, inform listener.
         recv_finished_callback_();
     }
 
+    // 2. 發送數據
     std::for_each(send_sockets_.begin(), send_sockets_.end(), [](auto socket) {
         socket->sendAndRecv();
     });
 }
 
-/// Check for new connections or dead connections and update containers that track the sockets.
+// 輪詢 Epoll 事件
+// 檢查是否有新連線、斷線或數據到達
 auto TCPServer::poll() noexcept -> void
 {
     const int max_events = 1 + send_sockets_.size() + receive_sockets_.size();
 
+    // ⚡ epoll_wait: timeout=0 表示非阻塞立即返回
     const int n = epoll_wait(epoll_fd_, events_, max_events, 0);
     bool have_new_connection = false;
 
@@ -59,6 +71,7 @@ auto TCPServer::poll() noexcept -> void
         // Check for new connections.
         if (event.events & EPOLLIN) {
             if (socket == &listener_socket_) {
+                // 監聽 Socket 有事件 -> 表示有新連線請求
                 logger_.log("%:% %() % EPOLLIN listener_socket:%\n", __FILE__, __LINE__,
                             __FUNCTION__,
                             Common::getCurrentTimeStr(&time_str_), socket->socket_fd_);
@@ -66,6 +79,7 @@ auto TCPServer::poll() noexcept -> void
                 continue;
             }
 
+            // 一般 Socket 有事件 -> 有數據可讀
             logger_.log("%:% %() % EPOLLIN socket:%\n", __FILE__, __LINE__, __FUNCTION__,
                         Common::getCurrentTimeStr(&time_str_), socket->socket_fd_);
 
@@ -96,7 +110,7 @@ auto TCPServer::poll() noexcept -> void
         }
     }
 
-    // Accept a new connection, create a TCPSocket and add it to our containers.
+    // 接受新連線
     while (have_new_connection) {
         logger_.log("%:% %() % have_new_connection\n", __FILE__, __LINE__, __FUNCTION__,
                     Common::getCurrentTimeStr(&time_str_));
@@ -109,6 +123,7 @@ auto TCPServer::poll() noexcept -> void
             break;
         }
 
+        // 設定非阻塞與 NoDelay
         ASSERT(setNonBlocking(fd) && disableNagle(fd),
                "Failed to set non-blocking or no-delay on socket:" + std::to_string(fd));
 
@@ -118,6 +133,8 @@ auto TCPServer::poll() noexcept -> void
         auto socket = new TCPSocket(logger_);
         socket->socket_fd_ = fd;
         socket->recv_callback_ = recv_callback_;
+        
+        // 將新連線加入 Epoll
         ASSERT(addToEpollList(socket),
                "Unable to add socket. error:" + std::string(std::strerror(errno)));
 
