@@ -31,10 +31,11 @@ public:
     }
 
     // ⚡ 訂單簿更新：計算公平市場價格（Market Price）
-    // 📌 公式：(Bid × AskQty + Ask × BidQty) / (BidQty + AskQty)
-    // 📊 原理：根據掛單量加權，反映供需關係
+    // 📌 公式：(Bid * AskQty + Ask * BidQty) / (BidQty + AskQty)
+    // 📊 原理：根據掛單量加權，反映供需關係 (Volume Weighted Mid Price)
     // 範例：Bid=100(500張) Ask=100.05(300張)
     //      → (100*300 + 100.05*500) / 800 = 100.03125
+    // 意義: 如果買單量大，價格會偏向 Ask (買方推升價格的壓力大)
     auto onOrderBookUpdate(TickerId ticker_id, Price price, Side side,
                            MarketOrderBook* book) noexcept -> void
     {
@@ -58,8 +59,9 @@ public:
     // ⚡ 成交事件：計算激進成交比率（Aggressive Trade Quantity Ratio）
     // 📌 公式：成交量 / 被動方掛單量
     // 📊 含義：衡量成交的激進程度
-    // 範例：買入 80 張 @ Ask(100張) → 比率 = 0.8（非常激進）
+    // 範例：買入 80 張 @ Ask(100張) → 比率 = 0.8（非常激進，吃掉大部分流動性）
     //      買入 10 張 @ Ask(500張) → 比率 = 0.02（溫和）
+    // 用途: Liquidity Taker 策略可用此判斷是否跟隨趨勢
     auto onTradeUpdate(const Exchange::MEMarketUpdate* market_update,
                        MarketOrderBook* book) noexcept -> void
     {

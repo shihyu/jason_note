@@ -11,8 +11,8 @@ namespace Exchange
 {
 enum class ClientRequestType : uint8_t {
     INVALID = 0,
-    NEW = 1,
-    CANCEL = 2
+    NEW = 1,       // 新增訂單
+    CANCEL = 2     // 取消訂單
 };
 
 inline std::string clientRequestTypeToString(ClientRequestType type)
@@ -31,8 +31,14 @@ inline std::string clientRequestTypeToString(ClientRequestType type)
     return "UNKNOWN";
 }
 
+// ⚡ 緊湊封裝 (Tight Packing): 強制 1-byte 對齊
+// 目的: 
+// 1. 減少網路傳輸量 (避免 padding)
+// 2. 確保跨平台/語言的記憶體佈局一致
 #pragma pack(push, 1)
 
+// 撮合引擎客戶端請求 (Matching Engine Client Request)
+// 這是透過 Lock-Free Queue 傳遞給 ME 的內部格式
 struct MEClientRequest {
     ClientRequestType type_ = ClientRequestType::INVALID;
 
@@ -60,9 +66,11 @@ struct MEClientRequest {
     }
 };
 
+// 訂單管理客戶端請求 (Order Manager Client Request)
+// 這是從網路上接收到的原始格式 (包含序列號)
 struct OMClientRequest {
-    size_t seq_num_ = 0;
-    MEClientRequest me_client_request_;
+    size_t seq_num_ = 0;              // ⚡ 序列號: 用於檢測丟包與重複
+    MEClientRequest me_client_request_; // 實際請求內容
 
     auto toString() const
     {

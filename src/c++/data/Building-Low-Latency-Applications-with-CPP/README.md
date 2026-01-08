@@ -44,6 +44,26 @@ This is the code repository for [Building Low Latency Applications with C++](htt
 
 **Develop a complete low latency trading ecosystem from scratch using modern C++**
 
+## 🇹🇼 繁體中文導讀 (Traditional Chinese Documentation)
+
+本專案包含完整的繁體中文技術解析文件，深入探討低延遲系統的核心設計原理與實作細節。
+
+### [📚 專案總覽 (Project Overview)](docs/總覽.md)
+
+| 章節 | 主題 | 重點技術 |
+|------|------|----------|
+| **Ch 3** | [C++ 優化技巧](docs/Chapter3_詳解.md) | Branch Prediction, Cache Locality, Loop Unrolling |
+| **Ch 4** | [低延遲元件庫](docs/Chapter4_詳解.md) | Lock-Free Queue, Memory Pool, Zero-Allocation Logger |
+| **Ch 6** | [撮合引擎核心](docs/Chapter6_詳解.md) | Order Book (Linked List), FIFO Matching |
+| **Ch 7** | [行情發布系統](docs/Chapter7_詳解.md) | UDP Multicast, Incremental Updates |
+| **Ch 8** | [連線閘道與伺服器](docs/Chapter8_詳解.md) | TCP Non-blocking I/O, Epoll, FIFO Sequencer |
+| **Ch 9** | [風控管理器](docs/Chapter9_詳解.md) | Pre-trade Risk Check, Position Tracking |
+| **Ch 10**| [交易策略引擎](docs/Chapter10_詳解.md)| Market Making, Liquidity Taking, Feature Engine |
+| **Ch 11**| [系統優化](docs/Chapter11_詳解.md) | RDTSC Measurement, CPU Affinity, Kernel Bypass |
+| **Ch 12**| [基準測試](docs/Chapter12_詳解.md) | Benchmarking (P50/P99), Optimization Verification |
+
+---
+
 ## What is this book about?
 C++ is meticulously designed with efficiency, performance, and flexibility as its core objectives. However, real-time low latency applications demand a distinct set of requirements, particularly in terms of performance latencies.
 

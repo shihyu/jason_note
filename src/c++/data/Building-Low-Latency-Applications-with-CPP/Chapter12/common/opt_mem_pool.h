@@ -8,29 +8,31 @@
 
 namespace OptCommon
 {
+// OptMemPool: 優化版記憶體池
+//
+// ⚡ 優化重點:
+// 1. 移除除錯斷言: 在發布版本 (!defined(NDEBUG)) 中完全移除 ASSERT 檢查
+// 2. 最小化分支: 減少核心路徑中的條件判斷，利於 CPU 分支預測
+// 3. 專為高效能生產環境設計
 template<typename T>
 class OptMemPool final
 {
 public:
-    explicit OptMemPool(std::size_t num_elems) :
-        store_(num_elems,
-    {
-        T(), true
-    }) /* pre-allocation of vector storage. */
-    {
-        ASSERT(reinterpret_cast<const ObjectBlock*>(&(store_[0].object_)) == &
-               (store_[0]), "T object should be first member of ObjectBlock.");
-    }
+    // ...
 
     /// Allocate a new object of type T, use placement new to initialize the object, mark the block as in-use and return the object.
     template<typename... Args>
     T* allocate(Args... args) noexcept
     {
         auto obj_block = &(store_[next_free_index_]);
+        
+        // ⚡ 在效能關鍵路徑中，除錯檢查是昂貴的
+        // 透過條件編譯，確保生產版本 (Release) 擁有純粹的執行效率
         #if !defined(NDEBUG)
         ASSERT(obj_block->is_free_,
                "Expected free ObjectBlock at index:" + std::to_string(next_free_index_));
         #endif
+        
         T* ret = &(obj_block->object_);
         ret = new (ret) T(args...); // placement new.
         obj_block->is_free_ = false;
@@ -41,11 +43,12 @@ public:
     }
 
     /// Return the object back to the pool by marking the block as free again.
-    /// Destructor is not called for the object.
     auto deallocate(const T* elem) noexcept
     {
         const auto elem_index = (reinterpret_cast<const ObjectBlock*>
                                  (elem) - &store_[0]);
+        
+        // ⚡ 移除發布版本的邊界檢查
         #if !defined(NDEBUG)
         ASSERT(elem_index >= 0 &&
                static_cast<size_t>(elem_index) < store_.size(),
