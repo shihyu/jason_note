@@ -35,6 +35,7 @@
 ### 專項優化技術
 - [C 語言終極優化](02-system/c-optimization-complete.md) - 位元運算、查表法、SIMD、Lock-free、FPGA
 - [大頁面與執行緒模型](02-system/hugepages-threading.md) - HugePages、TLB 優化、執行緒設計
+- [TSE Receiver 優化指南](02-system/TSE_Receiver_Optimization_Guide.md) - I/O 模式對比、Blocking/Busy Polling、HFT 級優化方案
 
 ---
 
@@ -111,7 +112,7 @@
 
 ### 檔案組織原則
 - **01-language/**: 語言選型與比較（7 個檔案）
-- **02-system/**: 系統層優化（6 個檔案）
+- **02-system/**: 系統層優化（8 個檔案）
 - **03-network/**: 網路與 I/O 優化（6 個檔案）
 - **04-testing/**: 測試與監控（2 個檔案）
 - **05-practice/**: 實踐案例（1 個檔案）
@@ -130,5 +131,5 @@
 
 ---
 
-**最後更新**: 2025-12-05
-**總檔案數**: 26 個核心文檔 + 多個實踐項目
+**最後更新**: 2026-01-09
+**總檔案數**: 27 個核心文檔 + 多個實踐項目
