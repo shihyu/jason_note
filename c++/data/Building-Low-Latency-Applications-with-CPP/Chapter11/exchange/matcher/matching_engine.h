@@ -33,6 +33,7 @@ public:
 
         switch (client_request->type_) {
         case ClientRequestType::NEW: {
+                // 📊 量測訂單簿新增訂單的時鐘週期數
                 START_MEASURE(Exchange_MEOrderBook_add);
                 order_book->add(client_request->client_id_, client_request->order_id_,
                                 client_request->ticker_id_,
@@ -42,6 +43,7 @@ public:
             break;
 
         case ClientRequestType::CANCEL: {
+                // 📊 量測取消訂單的時鐘週期數
                 START_MEASURE(Exchange_MEOrderBook_cancel);
                 order_book->cancel(client_request->client_id_, client_request->order_id_,
                                    client_request->ticker_id_);
@@ -65,6 +67,7 @@ public:
         auto next_write = outgoing_ogw_responses_->getNextToWriteTo();
         *next_write = std::move(*client_response);
         outgoing_ogw_responses_->updateWriteIndex();
+        // 📊 記錄資料寫入回應佇列的時間戳 (TTT Trace)
         TTT_MEASURE(T4t_MatchingEngine_LFQueue_write, logger_);
     }
 
@@ -76,6 +79,7 @@ public:
         auto next_write = outgoing_md_updates_->getNextToWriteTo();
         *next_write = *market_update;
         outgoing_md_updates_->updateWriteIndex();
+        // 📊 記錄資料寫入行情佇列的時間戳 (TTT Trace)
         TTT_MEASURE(T4_MatchingEngine_LFQueue_write, logger_);
     }
 
@@ -89,14 +93,18 @@ public:
             const auto me_client_request = incoming_requests_->getNextToRead();
 
             if (LIKELY(me_client_request)) {
+                // 📊 記錄從佇列讀取請求的時間戳
                 TTT_MEASURE(T3_MatchingEngine_LFQueue_read, logger_);
 
                 logger_.log("%:% %() % Processing %\n", __FILE__, __LINE__, __FUNCTION__,
                             Common::getCurrentTimeStr(&time_str_),
                             me_client_request->toString());
+                
+                // 📊 量測整體請求處理邏輯的開銷
                 START_MEASURE(Exchange_MatchingEngine_processClientRequest);
                 processClientRequest(me_client_request);
                 END_MEASURE(Exchange_MatchingEngine_processClientRequest, logger_);
+                
                 incoming_requests_->updateReadIndex();
             }
         }

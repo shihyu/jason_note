@@ -85,6 +85,7 @@ auto TradeEngine::sendClientRequest(const Exchange::MEClientRequest*
     auto next_write = outgoing_ogw_requests_->getNextToWriteTo();
     *next_write = std::move(*client_request);
     outgoing_ogw_requests_->updateWriteIndex();
+    // 📊 記錄請求送出到閘道的時間點 (Tick-to-Trade 追蹤點 T10)
     TTT_MEASURE(T10_TradeEngine_LFQueue_write, logger_);
 }
 
@@ -97,6 +98,7 @@ auto TradeEngine::run() noexcept -> void
     while (run_) {
         for (auto client_response = incoming_ogw_responses_->getNextToRead();
              client_response; client_response = incoming_ogw_responses_->getNextToRead()) {
+            // 📊 記錄從閘道收到回應的時間點 (TTT T9t)
             TTT_MEASURE(T9t_TradeEngine_LFQueue_read, logger_);
 
             logger_.log("%:% %() % Processing %\n", __FILE__, __LINE__, __FUNCTION__,
@@ -109,6 +111,7 @@ auto TradeEngine::run() noexcept -> void
 
         for (auto market_update = incoming_md_updates_->getNextToRead(); market_update;
              market_update = incoming_md_updates_->getNextToRead()) {
+            // 📊 記錄收到行情更新的時間點 (TTT T9)
             TTT_MEASURE(T9_TradeEngine_LFQueue_read, logger_);
 
             logger_.log("%:% %() % Processing %\n", __FILE__, __LINE__, __FUNCTION__,
@@ -135,14 +138,17 @@ auto TradeEngine::onOrderBookUpdate(TickerId ticker_id, Price price, Side side,
 
     auto bbo = book->getBBO();
 
+    // 📊 量測倉位管理器更新 BBO 的時鐘週期
     START_MEASURE(Trading_PositionKeeper_updateBBO);
     position_keeper_.updateBBO(ticker_id, bbo);
     END_MEASURE(Trading_PositionKeeper_updateBBO, logger_);
 
+    // 📊 量測特徵引擎計算特徵的時鐘週期 (通常是熱路徑中最重的部分)
     START_MEASURE(Trading_FeatureEngine_onOrderBookUpdate);
     feature_engine_.onOrderBookUpdate(ticker_id, price, side, book);
     END_MEASURE(Trading_FeatureEngine_onOrderBookUpdate, logger_);
 
+    // 📊 量測策略邏輯回調的開銷
     START_MEASURE(Trading_TradeEngine_algoOnOrderBookUpdate_);
     algoOnOrderBookUpdate_(ticker_id, price, side, book);
     END_MEASURE(Trading_TradeEngine_algoOnOrderBookUpdate_, logger_);
@@ -156,10 +162,12 @@ auto TradeEngine::onTradeUpdate(const Exchange::MEMarketUpdate* market_update,
                 Common::getCurrentTimeStr(&time_str_),
                 market_update->toString().c_str());
 
+    // 📊 量測特徵引擎處理成交事件的開銷
     START_MEASURE(Trading_FeatureEngine_onTradeUpdate);
     feature_engine_.onTradeUpdate(market_update, book);
     END_MEASURE(Trading_FeatureEngine_onTradeUpdate, logger_);
 
+    // 📊 量測策略處理成交事件的開銷
     START_MEASURE(Trading_TradeEngine_algoOnTradeUpdate_);
     algoOnTradeUpdate_(market_update, book);
     END_MEASURE(Trading_TradeEngine_algoOnTradeUpdate_, logger_);
@@ -174,11 +182,13 @@ auto TradeEngine::onOrderUpdate(const Exchange::MEClientResponse*
                 client_response->toString().c_str());
 
     if (UNLIKELY(client_response->type_ == Exchange::ClientResponseType::FILLED)) {
+        // 📊 量測倉位管理器處理成交回報的開銷
         START_MEASURE(Trading_PositionKeeper_addFill);
         position_keeper_.addFill(client_response);
         END_MEASURE(Trading_PositionKeeper_addFill, logger_);
     }
 
+    // 📊 量測策略處理訂單狀態更新的開銷
     START_MEASURE(Trading_TradeEngine_algoOnOrderUpdate_);
     algoOnOrderUpdate_(client_response);
     END_MEASURE(Trading_TradeEngine_algoOnOrderUpdate_, logger_);

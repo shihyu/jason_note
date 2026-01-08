@@ -39,6 +39,24 @@ void SnapshotSynthesizer::stop()
     run_ = false;
 }
 
+/**
+ * addToSnapshot() - 處理增量更新並維護訂單簿狀態
+ *
+ * @param market_update 帶有序列號的市場數據更新 (Incremental Update)
+ *
+ * 職責：
+ * 1. 根據增量更新 (ADD/MODIFY/CANCEL) 修改本地訂單簿副本 (ticker_orders_)
+ * 2. 驗證序列號連續性 (Sequence Number Check)
+ *
+ * 處理邏輯：
+ * - ADD: 分配新訂單並存入 ticker_orders_
+ * - MODIFY: 更新現有訂單的數量和價格
+ * - CANCEL: 釋放訂單並從 ticker_orders_ 移除
+ *
+ * 安全性檢查：
+ * - ASSERT(order == nullptr/nullptr): 確保操作狀態正確
+ * - ASSERT(seq_num): 確保沒有漏掉任何增量更新，保證狀態一致性
+ */
 auto SnapshotSynthesizer::addToSnapshot(const MDPMarketUpdate* market_update)
 {
     const auto& me_market_update = market_update->me_market_update_;
@@ -95,10 +113,28 @@ auto SnapshotSynthesizer::addToSnapshot(const MDPMarketUpdate* market_update)
     last_inc_seq_num_ = market_update->seq_num_;
 }
 
+/**
+ * publishSnapshot() - 發布完整快照
+ *
+ * 頻率：每 60 秒發布一次
+ * 目的：讓新加入的客戶端或丟包的客戶端重建訂單簿狀態
+ *
+ * 協議流程：
+ * 1. SNAPSHOT_START: 包含 last_inc_seq_num_，告知此快照對應哪個增量序列號
+ * 2. 對每個商品 (Ticker):
+ *    a. CLEAR: 通知客戶端清空該商品的本地訂單簿
+ *    b. ADDs: 發送該商品所有有效訂單 (Active Orders)
+ * 3. SNAPSHOT_END: 標記快照結束
+ *
+ * 效能：
+ * - 使用 UDP Multicast (McastSocket)
+ * - 批次發送 (sendAndRecv 在 McastSocket 內部處理緩衝區)
+ */
 auto SnapshotSynthesizer::publishSnapshot()
 {
     size_t snapshot_size = 0;
 
+    // 1. 發送 SNAPSHOT_START
     const MDPMarketUpdate start_market_update{snapshot_size++, {MarketUpdateType::SNAPSHOT_START, last_inc_seq_num_}};
     logger_.log("%:% %() % %\n", __FILE__, __LINE__, __FUNCTION__,
                 getCurrentTimeStr(&time_str_), start_market_update.toString());
@@ -107,6 +143,7 @@ auto SnapshotSynthesizer::publishSnapshot()
     for (size_t ticker_id = 0; ticker_id < ticker_orders_.size(); ++ticker_id) {
         const auto& orders = ticker_orders_.at(ticker_id);
 
+        // 2a. 發送 CLEAR (清空該商品)
         MEMarketUpdate me_market_update;
         me_market_update.type_ = MarketUpdateType::CLEAR;
         me_market_update.ticker_id_ = ticker_id;
@@ -116,6 +153,7 @@ auto SnapshotSynthesizer::publishSnapshot()
                     getCurrentTimeStr(&time_str_), clear_market_update.toString());
         snapshot_socket_.send(&clear_market_update, sizeof(MDPMarketUpdate));
 
+        // 2b. 發送所有現存訂單 (ADD)
         for (const auto order : orders) {
             if (order) {
                 const MDPMarketUpdate market_update{snapshot_size++, *order};
@@ -127,6 +165,7 @@ auto SnapshotSynthesizer::publishSnapshot()
         }
     }
 
+    // 3. 發送 SNAPSHOT_END
     const MDPMarketUpdate end_market_update{snapshot_size++, {MarketUpdateType::SNAPSHOT_END, last_inc_seq_num_}};
     logger_.log("%:% %() % %\n", __FILE__, __LINE__, __FUNCTION__,
                 getCurrentTimeStr(&time_str_), end_market_update.toString());
