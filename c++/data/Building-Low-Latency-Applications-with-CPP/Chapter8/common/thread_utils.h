@@ -9,7 +9,12 @@
 
 namespace Common
 {
-/// Set affinity for current thread to be pinned to the provided core_id.
+// 設定執行緒的 CPU 親和性 (CPU Affinity)
+// @param core_id: 目標 CPU 核心 ID
+//
+// ⚡ 效能關鍵：
+// 1. 防止執行緒在核心間遷移 (Migration)，保留 L1/L2 Cache 熱度
+// 2. 隔離關鍵執行緒 (如撮合引擎)，避免與作業系統或其他雜務爭搶資源
 inline auto setThreadCore(int core_id) noexcept
 {
     cpu_set_t cpuset;
@@ -17,12 +22,16 @@ inline auto setThreadCore(int core_id) noexcept
     CPU_ZERO(&cpuset);
     CPU_SET(core_id, &cpuset);
 
+    // pthread_setaffinity_np 是 Linux 特有 API (Non-Portable)
     return (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t),
                                    &cpuset) == 0);
 }
 
-/// Creates a thread instance, sets affinity on it, assigns it a name and
-/// passes the function to be run on that thread as well as the arguments to the function.
+// 建立並啟動執行緒，同時設定 CPU 親和性
+// @param core_id: 綁定的 CPU 核心 ID (-1 表示不綁定)
+// @param name: 執行緒名稱 (用於日誌/除錯)
+// @param func: 執行緒函式
+// @param args: 函式參數
 template<typename T, typename... A>
 inline auto createAndStartThread(int core_id, const std::string& name, T&& func,
                                  A&& ... args) noexcept
@@ -40,6 +49,7 @@ inline auto createAndStartThread(int core_id, const std::string& name, T&& func,
         std::forward<T>(func)((std::forward<A>(args))...);
     });
 
+    // 讓執行緒有時間啟動與初始化
     using namespace std::literals::chrono_literals;
     std::this_thread::sleep_for(1s);
 

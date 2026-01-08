@@ -11,8 +11,11 @@
 
 namespace Common
 {
+// 日誌佇列大小 (8 MB)
+// ⚡ 足夠緩衝大量日誌，避免阻塞主執行緒
 constexpr size_t LOG_QUEUE_SIZE = 8 * 1024 * 1024;
 
+// 日誌資料類型
 enum class LogType : int8_t {
     CHAR = 0,
     INTEGER = 1,
@@ -25,6 +28,9 @@ enum class LogType : int8_t {
     DOUBLE = 8
 };
 
+// 日誌元素結構 (Tagged Union)
+// ⚡ 避免動態記憶體分配 (Zero Allocation)
+// 每個日誌片段 (字元、整數、浮點數) 都存為一個固定大小的結構
 struct LogElement {
     LogType type_ = LogType::CHAR;
     union {
@@ -40,9 +46,17 @@ struct LogElement {
     } u_;
 };
 
+// ============================================================================
+// 低延遲日誌系統 (Low Latency Logger)
+// ============================================================================
+// 📌 設計原則：
+// 1. 非同步寫入 (Asynchronous)：主執行緒只寫入記憶體佇列，後台執行緒寫入磁碟
+// 2. 零記憶體分配 (Zero Allocation)：日誌內容不轉為 std::string，直接存入 Ring Buffer
+// 3. 無鎖佇列 (Lock-Free Queue)：確保寫入操作極快且不阻塞
 class Logger final
 {
 public:
+    // 後台執行緒函式：消費佇列並寫入檔案
     auto flushQueue() noexcept
     {
         while (running_) {
@@ -92,6 +106,7 @@ public:
 
             file_.flush();
 
+            // ⚡ 避免佔用過多 CPU，適度休眠
             using namespace std::literals::chrono_literals;
             std::this_thread::sleep_for(10ms);
         }
@@ -102,6 +117,8 @@ public:
     {
         file_.open(file_name);
         ASSERT(file_.is_open(), "Could not open log file:" + file_name);
+        
+        // 啟動獨立的日誌執行緒
         logger_thread_ = createAndStartThread(-1,
         "Common/Logger " + file_name_, [this]() {
             flushQueue();
@@ -115,6 +132,7 @@ public:
         std::cerr << Common::getCurrentTimeStr(&time_str) <<
                   " Flushing and closing Logger for " << file_name_ << std::endl;
 
+        // 等待所有日誌寫入完成
         while (queue_.size()) {
             using namespace std::literals::chrono_literals;
             std::this_thread::sleep_for(1s);
@@ -128,6 +146,7 @@ public:
                   file_name_ << " exiting." << std::endl;
     }
 
+    // 寫入基礎型別到佇列 (多載函式)
     auto pushValue(const LogElement& log_element) noexcept
     {
         *(queue_.getNextToWriteTo()) = log_element;
@@ -179,6 +198,7 @@ public:
         pushValue(LogElement{LogType::DOUBLE, {.d = value}});
     }
 
+    // 字串處理：逐字元寫入，避免字串拷貝
     auto pushValue(const char* value) noexcept
     {
         while (*value) {
@@ -192,6 +212,8 @@ public:
         pushValue(value.c_str());
     }
 
+    // ⚡ Variadic Template 實作 printf 風格的日誌記錄
+    // 編譯期展開遞迴呼叫，無執行期格式化開銷
     template<typename T, typename... A>
     auto log(const char* s, const T& value, A... args) noexcept
     {
@@ -200,8 +222,8 @@ public:
                 if (UNLIKELY(*(s + 1) == '%')) { // to allow %% -> % escape character.
                     ++s;
                 } else {
-                    pushValue(value); // substitute % with the value specified in the arguments.
-                    log(s + 1, args...); // pop an argument and call self recursively.
+                    pushValue(value); // 寫入當前參數
+                    log(s + 1, args...); // 遞迴處理剩餘參數
                     return;
                 }
             }
@@ -212,7 +234,7 @@ public:
         FATAL("extra arguments provided to log()");
     }
 
-    // note that this is overloading not specialization. gcc does not allow inline specializations.
+    // 遞迴終止條件 (無參數時)
     auto log(const char* s) noexcept
     {
         while (*s) {
@@ -243,7 +265,7 @@ private:
     const std::string file_name_;
     std::ofstream file_;
 
-    LFQueue<LogElement> queue_;
+    LFQueue<LogElement> queue_; // 無鎖佇列
     std::atomic<bool> running_ = {true};
     std::thread* logger_thread_ = nullptr;
 };

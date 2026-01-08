@@ -1,0 +1,1542 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>多執行緒鎖機制完全指南 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="-多執行緒鎖機制完全指南"><a class="header" href="#-多執行緒鎖機制完全指南">🔐 多執行緒鎖機制完全指南</a></h1>
+<blockquote>
+<p>用白話和示意圖理解所有常見的鎖機制</p>
+</blockquote>
+<hr />
+<h2 id="-目錄"><a class="header" href="#-目錄">📚 目錄</a></h2>
+<ol>
+<li><a href="#1-%E7%84%A1%E9%8E%96%E6%A9%9F%E5%88%B6-lock-free">無鎖機制 (Lock-Free)</a></li>
+<li><a href="#2-%E4%BA%92%E6%96%A5%E9%8E%96-mutex">互斥鎖 (Mutex)</a></li>
+<li><a href="#3-%E8%87%AA%E6%97%8B%E9%8E%96-spinlock">自旋鎖 (Spinlock)</a></li>
+<li><a href="#4-%E8%AE%80%E5%AF%AB%E9%8E%96-read-write-lock">讀寫鎖 (Read-Write Lock)</a></li>
+<li><a href="#5-%E9%81%9E%E8%BF%B4%E9%8E%96-recursive-lock">遞迴鎖 (Recursive Lock)</a></li>
+<li><a href="#6-%E6%A2%9D%E4%BB%B6%E8%AE%8A%E6%95%B8-condition-variable">條件變數 (Condition Variable)</a></li>
+<li><a href="#7-%E4%BF%A1%E8%99%9F%E9%87%8F-semaphore">信號量 (Semaphore)</a></li>
+<li><a href="#8-%E6%9F%B5%E6%AC%84-barrier">柵欄 (Barrier)</a></li>
+<li><a href="#9-%E9%A0%86%E5%BA%8F%E9%8E%96-seqlock">順序鎖 (Seqlock)</a></li>
+<li><a href="#10-%E6%95%88%E8%83%BD%E6%AF%94%E8%BC%83%E7%B8%BD%E8%A1%A8">效能比較總表</a></li>
+</ol>
+<hr />
+<h2 id="1-無鎖機制-lock-free"><a class="header" href="#1-無鎖機制-lock-free">1. 無鎖機制 (Lock-Free)</a></h2>
+<h3 id="-核心概念"><a class="header" href="#-核心概念">🎯 核心概念</a></h3>
+<p>想像一個「旋轉壽司台」：</p>
+<ul>
+<li><strong>生產者</strong> = 廚師放壽司</li>
+<li><strong>消費者</strong> = 客人拿壽司</li>
+<li><strong>不需要服務生協調</strong>（不需要鎖）</li>
+</ul>
+<h3 id="-示意圖"><a class="header" href="#-示意圖">📊 示意圖</a></h3>
+<pre><code>環狀緩衝區（SPSC Queue）
+┌───┬───┬───┬───┬───┬───┬───┬───┐
+│ A │ B │ C │   │   │   │   │   │
+└───┴───┴───┴───┴───┴───┴───┴───┘
+  ↑       ↑
+  讀      寫
+
+生產者（廚師）         消費者（客人）
+只改寫入位置   ←→     只改讀取位置
+互不干擾！
+</code></pre>
+<h3 id="-程式碼範例"><a class="header" href="#-程式碼範例">💻 程式碼範例</a></h3>
+<pre><code class="language-cpp">template&lt;typename T&gt;
+class LockFreeQueue {
+    std::vector&lt;T&gt; buffer_;
+    std::atomic&lt;size_t&gt; next_write_index_{0};  // 原子變數
+    std::atomic&lt;size_t&gt; next_read_index_{0};
+    
+public:
+    void push(T data) {
+        size_t write_pos = next_write_index_.load(std::memory_order_relaxed);
+        buffer_[write_pos] = data;
+        next_write_index_.store(write_pos + 1, std::memory_order_release);
+    }
+    
+    bool pop(T&amp; data) {
+        size_t read_pos = next_read_index_.load(std::memory_order_relaxed);
+        size_t write_pos = next_write_index_.load(std::memory_order_acquire);
+        
+        if (read_pos == write_pos) return false;  // 佇列空
+        
+        data = buffer_[read_pos];
+        next_read_index_.store(read_pos + 1, std::memory_order_release);
+        return true;
+    }
+};
+</code></pre>
+<h3 id="-優點"><a class="header" href="#-優點">✅ 優點</a></h3>
+<ul>
+<li><strong>超快速</strong>：沒有 Context Switch</li>
+<li><strong>無死鎖</strong>：沒有鎖就不會卡住</li>
+<li><strong>低延遲</strong>：適合即時系統</li>
+</ul>
+<h3 id="-缺點"><a class="header" href="#-缺點">❌ 缺點</a></h3>
+<ul>
+<li><strong>限制多</strong>：通常只支援 SPSC（單生產者單消費者）</li>
+<li><strong>複雜度高</strong>：需要理解記憶體順序（Memory Order）</li>
+<li><strong>除錯困難</strong>：錯誤不易重現</li>
+</ul>
+<h3 id="-使用場景"><a class="header" href="#-使用場景">🎯 使用場景</a></h3>
+<ul>
+<li>音訊處理管線</li>
+<li>高頻交易系統</li>
+<li>網路封包處理</li>
+</ul>
+<hr />
+<h2 id="2-互斥鎖-mutex"><a class="header" href="#2-互斥鎖-mutex">2. 互斥鎖 (Mutex)</a></h2>
+<h3 id="-核心概念-1"><a class="header" href="#-核心概念-1">🎯 核心概念</a></h3>
+<p>想像一個「公共廁所」：</p>
+<ul>
+<li><strong>只有一把鑰匙</strong>（鎖）</li>
+<li><strong>誰拿到鑰匙誰進去</strong></li>
+<li><strong>其他人在外面排隊等</strong></li>
+</ul>
+<h3 id="-示意圖-1"><a class="header" href="#-示意圖-1">📊 示意圖</a></h3>
+<pre><code>時間軸：
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━→
+
+執行緒 A:  [取得鎖]───執行中───[釋放鎖]
+執行緒 B:            [等待......]  [取得鎖]───執行中───
+執行緒 C:                          [等待..................]
+
+狀態：
+┌─────────────┐
+│ 共享資源    │
+│ (counter)   │  ← 只有拿到鎖的執行緒能存取
+└─────────────┘
+      ↑
+      🔒 Mutex
+</code></pre>
+<h3 id="-程式碼範例-1"><a class="header" href="#-程式碼範例-1">💻 程式碼範例</a></h3>
+<pre><code class="language-cpp">#include &lt;mutex&gt;
+
+class BankAccount {
+    int balance_ = 0;
+    std::mutex mutex_;  // 保護 balance_
+    
+public:
+    void deposit(int amount) {
+        std::lock_guard&lt;std::mutex&gt; lock(mutex_);  // 自動加鎖
+        balance_ += amount;
+        // 離開作用域自動解鎖
+    }
+    
+    void withdraw(int amount) {
+        std::lock_guard&lt;std::mutex&gt; lock(mutex_);
+        if (balance_ &gt;= amount) {
+            balance_ -= amount;
+        }
+    }
+    
+    int get_balance() {
+        std::lock_guard&lt;std::mutex&gt; lock(mutex_);
+        return balance_;
+    }
+};
+</code></pre>
+<h3 id="-運作流程"><a class="header" href="#-運作流程">🔄 運作流程</a></h3>
+<pre><code>執行緒 A 想要修改 balance_：
+
+1. 執行到 lock_guard
+   ↓
+2. 嘗試取得 mutex_
+   ├─ 成功 → 繼續執行
+   └─ 失敗 → 進入睡眠，等作業系統喚醒
+   
+3. 執行 balance_ += amount
+   
+4. 離開 {} 作用域
+   ↓
+5. 自動釋放 mutex_
+   ↓
+6. 作業系統喚醒等待中的執行緒
+</code></pre>
+<h3 id="-優點-1"><a class="header" href="#-優點-1">✅ 優點</a></h3>
+<ul>
+<li><strong>簡單易用</strong>：最基本的同步機制</li>
+<li><strong>保證互斥</strong>：絕對不會有兩個執行緒同時執行</li>
+<li><strong>自動管理</strong>：搭配 RAII（lock_guard）不會忘記解鎖</li>
+</ul>
+<h3 id="-缺點-1"><a class="header" href="#-缺點-1">❌ 缺點</a></h3>
+<ul>
+<li><strong>Context Switch 開銷</strong>：等待時會睡眠</li>
+<li><strong>可能死鎖</strong>：互相等待對方的鎖</li>
+<li><strong>不公平</strong>：無法保證先等待的先取得</li>
+</ul>
+<h3 id="-使用場景-1"><a class="header" href="#-使用場景-1">🎯 使用場景</a></h3>
+<ul>
+<li>銀行轉帳系統</li>
+<li>資料庫連線池</li>
+<li>任何需要保護共享資源的情境</li>
+</ul>
+<hr />
+<h2 id="3-自旋鎖-spinlock"><a class="header" href="#3-自旋鎖-spinlock">3. 自旋鎖 (Spinlock)</a></h2>
+<h3 id="-核心概念-2"><a class="header" href="#-核心概念-2">🎯 核心概念</a></h3>
+<p>想像「排隊買演唱會票」：</p>
+<ul>
+<li><strong>不離開隊伍</strong>（不睡眠）</li>
+<li><strong>一直盯著售票口</strong>（一直檢查）</li>
+<li><strong>票一開賣馬上衝</strong>（立即取得）</li>
+</ul>
+<h3 id="-示意圖-2"><a class="header" href="#-示意圖-2">📊 示意圖</a></h3>
+<pre><code>Mutex（睡眠等待）：
+執行緒 B: [嘗試鎖]→ 😴 睡覺... → 被喚醒 → [取得鎖]
+                    （Context Switch）
+
+Spinlock（忙碌等待）：
+執行緒 B: [嘗試鎖]→ 🔄🔄🔄 一直檢查... → [取得鎖]
+                    （消耗 CPU 但無 Context Switch）
+
+CPU 使用率：
+Mutex:     ▓░░░░░░░░░░░▓▓▓▓ (睡眠時不佔用)
+Spinlock:  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ (一直佔用 CPU)
+</code></pre>
+<h3 id="-程式碼範例-2"><a class="header" href="#-程式碼範例-2">💻 程式碼範例</a></h3>
+<pre><code class="language-cpp">#include &lt;atomic&gt;
+
+class Spinlock {
+    std::atomic_flag flag_ = ATOMIC_FLAG_INIT;
+    
+public:
+    void lock() {
+        // 一直嘗試直到成功
+        while (flag_.test_and_set(std::memory_order_acquire)) {
+            // 空轉等待（可加入 CPU pause 指令優化）
+            #ifdef __x86_64__
+                __builtin_ia32_pause();  // x86 的 PAUSE 指令
+            #endif
+        }
+    }
+    
+    void unlock() {
+        flag_.clear(std::memory_order_release);
+    }
+};
+
+// 使用範例
+class Counter {
+    int value_ = 0;
+    Spinlock lock_;
+    
+public:
+    void increment() {
+        lock_.lock();
+        ++value_;
+        lock_.unlock();
+    }
+};
+</code></pre>
+<h3 id="-運作對比"><a class="header" href="#-運作對比">🔄 運作對比</a></h3>
+<pre><code>關鍵時刻圖：
+
+Mutex（等待 100 微秒）：
+[執行] → [睡眠 100μs] → [喚醒] → [執行]
+         ↑              ↑
+    Context Switch   Context Switch
+    (~1-10 微秒)     (~1-10 微秒)
+
+總成本：100 + 1 + 1 = 102 微秒
+
+Spinlock（等待 5 微秒）：
+[執行] → [空轉 5μs] → [執行]
+         ↑
+    沒有 Context Switch！
+
+總成本：5 微秒（但 CPU 一直忙碌）
+</code></pre>
+<h3 id="-優點-2"><a class="header" href="#-優點-2">✅ 優點</a></h3>
+<ul>
+<li><strong>低延遲</strong>：無 Context Switch</li>
+<li><strong>適合短臨界區</strong>：鎖定時間 &lt; 1 微秒時很快</li>
+<li><strong>簡單實作</strong>：只需要原子操作</li>
+</ul>
+<h3 id="-缺點-2"><a class="header" href="#-缺點-2">❌ 缺點</a></h3>
+<ul>
+<li><strong>浪費 CPU</strong>：等待時一直消耗 CPU</li>
+<li><strong>可能活鎖</strong>：優先權反轉問題</li>
+<li><strong>不適合長時間鎖定</strong>：會讓其他執行緒餓死</li>
+</ul>
+<h3 id="-使用場景-2"><a class="header" href="#-使用場景-2">🎯 使用場景</a></h3>
+<ul>
+<li>作業系統核心（Kernel）</li>
+<li>中斷處理程序</li>
+<li>非常短的臨界區（&lt; 100 奈秒）</li>
+</ul>
+<hr />
+<h2 id="4-讀寫鎖-read-write-lock"><a class="header" href="#4-讀寫鎖-read-write-lock">4. 讀寫鎖 (Read-Write Lock)</a></h2>
+<h3 id="-核心概念-3"><a class="header" href="#-核心概念-3">🎯 核心概念</a></h3>
+<p>想像一個「圖書館」：</p>
+<ul>
+<li><strong>讀者</strong>：很多人可以同時看書（共享）</li>
+<li><strong>作者</strong>：只能一個人寫書，寫的時候不能讀（獨佔）</li>
+</ul>
+<h3 id="-示意圖-3"><a class="header" href="#-示意圖-3">📊 示意圖</a></h3>
+<pre><code>時間軸：
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━→
+
+讀者 A:  [讀取────────]
+讀者 B:    [讀取──────]     ← 可以同時讀
+讀者 C:      [讀取────]
+
+寫者 X:               [等待] [寫入] ← 等所有讀者結束
+讀者 D:                      [等待] [讀取] ← 等寫者結束
+
+狀態表：
+┌─────────────┬─────────────┬─────────────┐
+│   讀模式    │   讀模式    │   寫模式    │
+├─────────────┼─────────────┼─────────────┤
+│ 多人可讀    │ ← 切換 →    │ 只有一人    │
+│ 無人可寫    │             │ 無人可讀寫  │
+└─────────────┴─────────────┴─────────────┘
+</code></pre>
+<h3 id="-程式碼範例-3"><a class="header" href="#-程式碼範例-3">💻 程式碼範例</a></h3>
+<pre><code class="language-cpp">#include &lt;shared_mutex&gt;
+
+class ThreadSafeCache {
+    std::map&lt;std::string, std::string&gt; cache_;
+    mutable std::shared_mutex mutex_;  // C++17
+    
+public:
+    // 讀取（共享鎖）
+    std::string get(const std::string&amp; key) const {
+        std::shared_lock&lt;std::shared_mutex&gt; lock(mutex_);  // 共享鎖
+        auto it = cache_.find(key);
+        return it != cache_.end() ? it-&gt;second : "";
+    }
+    
+    // 寫入（獨佔鎖）
+    void set(const std::string&amp; key, const std::string&amp; value) {
+        std::unique_lock&lt;std::shared_mutex&gt; lock(mutex_);  // 獨佔鎖
+        cache_[key] = value;
+    }
+    
+    // 檢查存在（共享鎖）
+    bool contains(const std::string&amp; key) const {
+        std::shared_lock&lt;std::shared_mutex&gt; lock(mutex_);
+        return cache_.find(key) != cache_.end();
+    }
+};
+</code></pre>
+<h3 id="-執行流程"><a class="header" href="#-執行流程">🔄 執行流程</a></h3>
+<pre><code>場景：5 個讀者，1 個寫者
+
+步驟 1: 讀者 A, B, C 同時讀取
+┌─────────────┐
+│ 共享資源    │
+│ (Data)      │
+└─────────────┘
+  ↑   ↑   ↑
+  A   B   C    ← 共享鎖，可以同時讀
+
+步驟 2: 寫者 X 嘗試寫入
+┌─────────────┐
+│ 共享資源    │
+│ (Data)      │
+└─────────────┘
+  ↑   ↑   ↑
+  A   B   C    ← 還在讀
+      ⏰ X     ← 等待中（無法取得獨佔鎖）
+
+步驟 3: 所有讀者結束，寫者開始
+┌─────────────┐
+│ 共享資源    │
+│ (Data)      │
+└─────────────┘
+      ↑
+      X        ← 獨佔鎖，只有它能存取
+
+步驟 4: 寫者結束，新讀者進入
+┌─────────────┐
+│ 共享資源    │
+│ (Data)      │
+└─────────────┘
+  ↑   ↑
+  D   E        ← 新的讀者可以同時讀
+</code></pre>
+<h3 id="-優點-3"><a class="header" href="#-優點-3">✅ 優點</a></h3>
+<ul>
+<li><strong>讀取效能高</strong>：多個讀者不互斥</li>
+<li><strong>適合讀多寫少</strong>：如快取系統</li>
+<li><strong>公平性可調</strong>：可優先讀者或寫者</li>
+</ul>
+<h3 id="-缺點-3"><a class="header" href="#-缺點-3">❌ 缺點</a></h3>
+<ul>
+<li><strong>寫者可能餓死</strong>：讀者不斷進入</li>
+<li><strong>實作複雜</strong>：需要兩種鎖狀態</li>
+<li><strong>額外開銷</strong>：比普通 Mutex 慢</li>
+</ul>
+<h3 id="-使用場景-3"><a class="header" href="#-使用場景-3">🎯 使用場景</a></h3>
+<ul>
+<li>快取系統（Redis, Memcached）</li>
+<li>組態檔讀取</li>
+<li>資料庫索引</li>
+</ul>
+<hr />
+<h2 id="5-遞迴鎖-recursive-lock"><a class="header" href="#5-遞迴鎖-recursive-lock">5. 遞迴鎖 (Recursive Lock)</a></h2>
+<h3 id="-核心概念-4"><a class="header" href="#-核心概念-4">🎯 核心概念</a></h3>
+<p>想像「俄羅斯娃娃」：</p>
+<ul>
+<li><strong>同一個人可以多次開門</strong>（同一執行緒可多次加鎖）</li>
+<li><strong>但要記得開幾次就要關幾次</strong></li>
+</ul>
+<h3 id="-示意圖-4"><a class="header" href="#-示意圖-4">📊 示意圖</a></h3>
+<pre><code>普通 Mutex（會死鎖）：
+void funcA() {
+    mutex.lock();         // ✅ 第一次加鎖成功
+    // ...
+    funcB();              // 呼叫 funcB
+}
+
+void funcB() {
+    mutex.lock();         // ❌ 死鎖！同一執行緒嘗試再次加鎖
+    // ...
+    mutex.unlock();
+}
+
+遞迴鎖（可以重入）：
+void funcA() {
+    recursive_mutex.lock();  // ✅ 計數 = 1
+    // ...
+    funcB();
+}
+
+void funcB() {
+    recursive_mutex.lock();  // ✅ 計數 = 2（同一執行緒）
+    // ...
+    recursive_mutex.unlock(); // 計數 = 1
+}
+// funcA 結束時 unlock()     // 計數 = 0（真正釋放）
+
+鎖計數器：
+執行位置         | lock() 次數 | unlock() 次數 | 計數器
+----------------|------------|--------------|-------
+進入 funcA       |     1      |      0       |   1
+進入 funcB       |     2      |      0       |   2
+離開 funcB       |     2      |      1       |   1
+離開 funcA       |     2      |      2       |   0  ← 釋放
+</code></pre>
+<h3 id="-程式碼範例-4"><a class="header" href="#-程式碼範例-4">💻 程式碼範例</a></h3>
+<pre><code class="language-cpp">#include &lt;mutex&gt;
+
+class FileSystem {
+    std::recursive_mutex mutex_;
+    std::string root_path_;
+    
+public:
+    void createDirectory(const std::string&amp; path) {
+        std::lock_guard&lt;std::recursive_mutex&gt; lock(mutex_);
+        
+        // 建立父目錄（遞迴呼叫）
+        auto parent = getParentPath(path);
+        if (!parent.empty()) {
+            ensureDirectoryExists(parent);  // 會再次加鎖！
+        }
+        
+        // 建立目錄
+        mkdir(path.c_str(), 0755);
+    }
+    
+    void ensureDirectoryExists(const std::string&amp; path) {
+        std::lock_guard&lt;std::recursive_mutex&gt; lock(mutex_);  // 重入鎖
+        
+        if (!exists(path)) {
+            createDirectory(path);  // 又呼叫回去了！
+        }
+    }
+};
+</code></pre>
+<h3 id="-呼叫堆疊範例"><a class="header" href="#-呼叫堆疊範例">🔄 呼叫堆疊範例</a></h3>
+<pre><code>呼叫過程：
+createDirectory("/a/b/c/d")
+  ├─ lock()  [計數=1]
+  ├─ ensureDirectoryExists("/a/b/c")
+  │    ├─ lock()  [計數=2]  ← 同一執行緒，允許！
+  │    ├─ createDirectory("/a/b/c")
+  │    │    ├─ lock()  [計數=3]
+  │    │    ├─ ensureDirectoryExists("/a/b")
+  │    │    │    └─ lock()  [計數=4]
+  │    │    │    └─ unlock() [計數=3]
+  │    │    └─ unlock() [計數=2]
+  │    └─ unlock() [計數=1]
+  └─ unlock() [計數=0]  ← 真正釋放
+</code></pre>
+<h3 id="-優點-4"><a class="header" href="#-優點-4">✅ 優點</a></h3>
+<ul>
+<li><strong>允許重入</strong>：遞迴函式不會死鎖</li>
+<li><strong>簡化設計</strong>：不需追蹤是否已加鎖</li>
+<li><strong>相容 OOP</strong>：物件方法互相呼叫方便</li>
+</ul>
+<h3 id="-缺點-4"><a class="header" href="#-缺點-4">❌ 缺點</a></h3>
+<ul>
+<li><strong>效能較差</strong>：需要記錄擁有者和計數</li>
+<li><strong>容易誤用</strong>：隱藏設計問題</li>
+<li><strong>記憶體開銷</strong>：需要額外儲存資訊</li>
+</ul>
+<h3 id="-使用場景-4"><a class="header" href="#-使用場景-4">🎯 使用場景</a></h3>
+<ul>
+<li>樹狀結構遍歷</li>
+<li>遞迴演算法</li>
+<li>複雜物件方法呼叫</li>
+</ul>
+<hr />
+<h2 id="6-條件變數-condition-variable"><a class="header" href="#6-條件變數-condition-variable">6. 條件變數 (Condition Variable)</a></h2>
+<h3 id="-核心概念-5"><a class="header" href="#-核心概念-5">🎯 核心概念</a></h3>
+<p>想像「餐廳叫號系統」：</p>
+<ul>
+<li><strong>客人拿號碼牌等待</strong>（wait）</li>
+<li><strong>廚師做好餐點通知</strong>（notify）</li>
+<li><strong>被叫到號碼的去取餐</strong>（被喚醒）</li>
+</ul>
+<h3 id="-示意圖-5"><a class="header" href="#-示意圖-5">📊 示意圖</a></h3>
+<pre><code>生產者-消費者模型：
+
+生產者執行緒：                消費者執行緒：
+┌─────────────┐              ┌─────────────┐
+│ 生產資料     │              │ 等待資料     │
+│   ↓         │              │   ↓         │
+│ lock()      │              │ lock()      │
+│   ↓         │              │   ↓         │
+│ queue.push()│              │ while(empty)│
+│   ↓         │              │   cv.wait() │ ← 釋放鎖並睡眠
+│ cv.notify() │ ────通知───→ │ (被喚醒)    │ ← 重新取得鎖
+│   ↓         │              │   ↓         │
+│ unlock()    │              │ queue.pop() │
+└─────────────┘              │   ↓         │
+                             │ unlock()    │
+                             └─────────────┘
+
+時間序列：
+消費者: [lock]→[檢查空]→[wait 睡眠......]→[被喚醒]→[pop]→[unlock]
+生產者:                  [lock]→[push]→[notify]→[unlock]
+                                        ↑
+                                    喚醒訊號
+</code></pre>
+<h3 id="-程式碼範例-5"><a class="header" href="#-程式碼範例-5">💻 程式碼範例</a></h3>
+<pre><code class="language-cpp">#include &lt;condition_variable&gt;
+#include &lt;mutex&gt;
+#include &lt;queue&gt;
+
+template&lt;typename T&gt;
+class BlockingQueue {
+    std::queue&lt;T&gt; queue_;
+    std::mutex mutex_;
+    std::condition_variable cv_;
+    
+public:
+    // 生產者：放入資料
+    void push(T value) {
+        std::unique_lock&lt;std::mutex&gt; lock(mutex_);
+        queue_.push(value);
+        cv_.notify_one();  // 通知一個等待的消費者
+    }
+    
+    // 消費者：取出資料（會阻塞）
+    T pop() {
+        std::unique_lock&lt;std::mutex&gt; lock(mutex_);
+        
+        // 等待直到佇列不為空
+        cv_.wait(lock, [this] { return !queue_.empty(); });
+        
+        T value = queue_.front();
+        queue_.pop();
+        return value;
+    }
+    
+    // 嘗試取出（不阻塞）
+    bool try_pop(T&amp; value, std::chrono::milliseconds timeout) {
+        std::unique_lock&lt;std::mutex&gt; lock(mutex_);
+        
+        if (cv_.wait_for(lock, timeout, [this] { return !queue_.empty(); })) {
+            value = queue_.front();
+            queue_.pop();
+            return true;
+        }
+        return false;  // 逾時
+    }
+};
+</code></pre>
+<h3 id="-詳細執行流程"><a class="header" href="#-詳細執行流程">🔄 詳細執行流程</a></h3>
+<pre><code>初始狀態：佇列空
+
+步驟 1: 消費者 A 嘗試 pop()
+┌──────────┐
+│ mutex_   │ ← A 取得
+├──────────┤
+│ queue_   │
+│ (空)     │
+└──────────┘
+消費者 A: "佇列是空的，我要等待"
+         cv_.wait() → 釋放 mutex_ → 進入睡眠
+
+步驟 2: 生產者 B 執行 push("資料")
+┌──────────┐
+│ mutex_   │ ← B 取得（因為 A 釋放了）
+├──────────┤
+│ queue_   │
+│ [資料]   │ ← B 放入
+└──────────┘
+生產者 B: "通知等待的人"
+         cv_.notify_one() → 喚醒 A
+         釋放 mutex_
+
+步驟 3: 消費者 A 被喚醒
+┌──────────┐
+│ mutex_   │ ← A 重新取得
+├──────────┤
+│ queue_   │
+│ [資料]   │ ← A 取出
+└──────────┘
+消費者 A: "拿到資料了！"
+         返回 "資料"
+         釋放 mutex_
+</code></pre>
+<h3 id="-常見陷阱虛假喚醒"><a class="header" href="#-常見陷阱虛假喚醒">⚠️ 常見陷阱：虛假喚醒</a></h3>
+<pre><code class="language-cpp">// ❌ 錯誤寫法（可能虛假喚醒）
+cv_.wait(lock);
+T value = queue_.front();  // 可能 queue_ 還是空的！
+
+// ✅ 正確寫法（用 predicate）
+cv_.wait(lock, [this] { return !queue_.empty(); });
+T value = queue_.front();  // 保證有資料
+
+// 等價於：
+while (queue_.empty()) {
+    cv_.wait(lock);  // 被喚醒後重新檢查
+}
+</code></pre>
+<h3 id="-優點-5"><a class="header" href="#-優點-5">✅ 優點</a></h3>
+<ul>
+<li><strong>高效等待</strong>：不需要忙碌輪詢</li>
+<li><strong>自動管理</strong>：配合 RAII 不會忘記解鎖</li>
+<li><strong>支援逾時</strong>：wait_for, wait_until</li>
+</ul>
+<h3 id="-缺點-5"><a class="header" href="#-缺點-5">❌ 缺點</a></h3>
+<ul>
+<li><strong>需搭配 Mutex</strong>：不能單獨使用</li>
+<li><strong>虛假喚醒</strong>：需要用 while 迴圈</li>
+<li><strong>效能開銷</strong>：系統呼叫</li>
+</ul>
+<h3 id="-使用場景-5"><a class="header" href="#-使用場景-5">🎯 使用場景</a></h3>
+<ul>
+<li>生產者-消費者佇列</li>
+<li>執行緒池</li>
+<li>事件通知系統</li>
+</ul>
+<hr />
+<h2 id="7-信號量-semaphore"><a class="header" href="#7-信號量-semaphore">7. 信號量 (Semaphore)</a></h2>
+<h3 id="-核心概念-6"><a class="header" href="#-核心概念-6">🎯 核心概念</a></h3>
+<p>想像「停車場」：</p>
+<ul>
+<li><strong>有 N 個停車位</strong>（資源數量）</li>
+<li><strong>車進來 → 可用車位 -1</strong>（acquire）</li>
+<li><strong>車出去 → 可用車位 +1</strong>（release）</li>
+<li><strong>車位滿了就在外面等</strong></li>
+</ul>
+<h3 id="-示意圖-6"><a class="header" href="#-示意圖-6">📊 示意圖</a></h3>
+<pre><code>二元信號量（Binary Semaphore）= Mutex
+┌─────┐
+│  1  │ ← 初始值
+└─────┘
+
+執行緒 A:  acquire() → 0 → [執行] → release() → 1
+執行緒 B:              ↑ 等待（值=0）              ↑ 被喚醒
+
+計數信號量（Counting Semaphore）：資源池
+┌─────┐
+│  3  │ ← 有 3 個資源
+└─────┘
+
+執行緒 A: acquire() → 2
+執行緒 B: acquire() → 1
+執行緒 C: acquire() → 0
+執行緒 D: acquire() → [阻塞，等待有人 release()]
+
+視覺化：
+停車場（容量 3）：
+[🚗] [🚗] [🚗]  ← 滿了，執行緒 D 在外面等
+ A    B    C
+
+執行緒 A 離開：
+[  ] [🚗] [🚗]  ← 有空位了！執行緒 D 進來
+     B    C
+[🚗]
+ D
+</code></pre>
+<h3 id="-程式碼範例-6"><a class="header" href="#-程式碼範例-6">💻 程式碼範例</a></h3>
+<pre><code class="language-cpp">#include &lt;semaphore&gt;  // C++20
+
+// 資料庫連線池（最多 5 個連線）
+class ConnectionPool {
+    std::counting_semaphore&lt;5&gt; semaphore_{5};  // 初始值 5
+    std::vector&lt;Connection*&gt; connections_;
+    std::mutex mutex_;
+    
+public:
+    ConnectionPool() {
+        // 初始化 5 個連線
+        for (int i = 0; i &lt; 5; ++i) {
+            connections_.push_back(new Connection());
+        }
+    }
+    
+    // 取得連線（會阻塞直到有可用連線）
+    Connection* acquire() {
+        semaphore_.acquire();  // 可用數 -1（可能阻塞）
+        
+        std::lock_guard&lt;std::mutex&gt; lock(mutex_);
+        Connection* conn = connections_.back();
+        connections_.pop_back();
+        return conn;
+    }
+    
+    // 歸還連線
+    void release(Connection* conn) {
+        std::lock_guard&lt;std::mutex&gt; lock(mutex_);
+        connections_.push_back(conn);
+        
+        semaphore_.release();  // 可用數 +1（喚醒等待者）
+    }
+    
+    // 嘗試取得（不阻塞）
+    Connection* try_acquire() {
+        if (semaphore_.try_acquire()) {  // 成功返回 true
+            std::lock_guard&lt;std::mutex&gt; lock(mutex_);
+            Connection* conn = connections_.back();
+            connections_.pop_back();
+            return conn;
+        }
+        return nullptr;  // 無可用連線
+    }
+};
+
+// 使用範例
+void worker_thread(ConnectionPool&amp; pool) {
+    Connection* conn = pool.acquire();  // 等待可用連線
+    
+    // 使用連線執行查詢
+    conn-&gt;execute("SELECT * FROM users");
+    
+    pool.release(conn);  // 歸還連線
+}
+</code></pre>
+<h3 id="-執行時序"><a class="header" href="#-執行時序">🔄 執行時序</a></h3>
+<pre><code>場景：5 個連線的資料庫池
+
+時刻 0: 信號量值 = 5
+┌───┬───┬───┬───┬───┐
+│ 1 │ 2 │ 3 │ 4 │ 5 │ 所有連線都可用
+└───┴───┴───┴───┴───┘
+
+時刻 1: 執行緒 A, B, C, D, E 都 acquire()
+信號量值 = 0
+┌───┬───┬───┬───┬───┐
+│ A │ B │ C │ D │ E │ 連線全部被佔用
+└───┴───┴───┴───┴───┘
+
+時刻 2: 執行緒 F, G 嘗試 acquire()
+┌─────────┐
+│ 等待佇列│
+│   F     │ ← 阻塞中
+│   G     │ ← 阻塞中
+└─────────┘
+
+時刻 3: 執行緒 A release()
+信號量值 = 1 → 喚醒 F
+┌───┬───┬───┬───┬───┐
+│ F │ B │ C │ D │ E │
+└───┴───┴───┴───┴───┘
+等待佇列：[G]
+
+時刻 4: 執行緒 B release()
+信號量值 = 1 → 喚醒 G
+┌───┬───┬───┬───┬───┐
+│ F │ G │ C │ D │ E │
+└───┴───┴───┴───┴───┘
+</code></pre>
+<h3 id="-semaphore-vs-mutex-對比"><a class="header" href="#-semaphore-vs-mutex-對比">🆚 Semaphore vs Mutex 對比</a></h3>
+<pre><code>┌─────────────┬──────────────┬─────────────┐
+│   特性      │   Mutex      │  Semaphore  │
+├─────────────┼──────────────┼─────────────┤
+│ 初始值      │ 1 (unlocked) │ N (可設定)  │
+│ 誰能釋放    │ 只有擁有者   │ 任何執行緒  │
+│ 用途        │ 互斥存取     │ 資源計數    │
+│ 可重入      │ 需 recursive │ 不支援      │
+└─────────────┴──────────────┴─────────────┘
+</code></pre>
+<h3 id="-優點-6"><a class="header" href="#-優點-6">✅ 優點</a></h3>
+<ul>
+<li><strong>限制並行數</strong>：控制資源使用</li>
+<li><strong>簡單直觀</strong>：概念容易理解</li>
+<li><strong>彈性高</strong>：支援多種語義（二元、計數）</li>
+</ul>
+<h3 id="-缺點-6"><a class="header" href="#-缺點-6">❌ 缺點</a></h3>
+<ul>
+<li><strong>容易誤用</strong>：release 不當會破壞計數</li>
+<li><strong>無擁有權概念</strong>：任何人都能 release</li>
+<li><strong>除錯困難</strong>：信號量洩漏難以追蹤</li>
+</ul>
+<h3 id="-使用場景-6"><a class="header" href="#-使用場景-6">🎯 使用場景</a></h3>
+<ul>
+<li>連線池、執行緒池</li>
+<li>限流器（Rate Limiter）</li>
+<li>資源池管理</li>
+</ul>
+<hr />
+<h2 id="8-柵欄-barrier"><a class="header" href="#8-柵欄-barrier">8. 柵欄 (Barrier)</a></h2>
+<h3 id="-核心概念-7"><a class="header" href="#-核心概念-7">🎯 核心概念</a></h3>
+<p>想像「團體旅遊集合點」：</p>
+<ul>
+<li><strong>所有人都到了才能繼續</strong></li>
+<li><strong>早到的人等晚到的</strong></li>
+<li><strong>最後一人到達 → 所有人一起出發</strong></li>
+</ul>
+<h3 id="-示意圖-7"><a class="header" href="#-示意圖-7">📊 示意圖</a></h3>
+<pre><code>5 個執行緒使用 Barrier(5)：
+
+執行緒 1:  ───────────●──→ [等待....]
+執行緒 2:  ──────●───────→ [等待....]
+執行緒 3:  ────●─────────→ [等待....]
+執行緒 4:  ──●───────────→ [等待....]
+執行緒 5:  ─────────────●→ [最後到達，釋放所有人！]
+                         ↓
+執行緒 1:                ──────────→ [繼續執行]
+執行緒 2:                ──────────→ [繼續執行]
+執行緒 3:                ──────────→ [繼續執行]
+執行緒 4:                ──────────→ [繼續執行]
+執行緒 5:                ──────────→ [繼續執行]
+
+集合點示意：
+到達計數器：0/5 → 1/5 → 2/5 → 3/5 → 4/5 → 5/5 ✓
+            ↑     ↑     ↑     ↑     ↑     ↑
+           T4    T2    T3    T1    T5   (全員到齊！)
+</code></pre>
+<h3 id="-程式碼範例-7"><a class="header" href="#-程式碼範例-7">💻 程式碼範例</a></h3>
+<pre><code class="language-cpp">#include &lt;barrier&gt;  // C++20
+
+// 多階段平行計算
+class ParallelProcessor {
+    std::barrier&lt;&gt; sync_point_;  // 同步點
+    std::vector&lt;std::thread&gt; workers_;
+    
+public:
+    ParallelProcessor(int num_threads) 
+        : sync_point_(num_threads) {  // 初始化柵欄
+        
+        for (int i = 0; i &lt; num_threads; ++i) {
+            workers_.emplace_back([this, i] {
+                worker_task(i);
+            });
+        }
+    }
+    
+    void worker_task(int id) {
+        // 階段 1：讀取資料
+        auto data = read_data(id);
+        sync_point_.arrive_and_wait();  // 等所有人讀完
+        
+        // 階段 2：處理資料
+        auto result = process_data(data);
+        sync_point_.arrive_and_wait();  // 等所有人處理完
+        
+        // 階段 3：寫入結果
+        write_result(id, result);
+        sync_point_.arrive_and_wait();  // 等所有人寫完
+    }
+};
+
+// 使用回調的版本（C++20）
+void parallel_map_reduce() {
+    const int N = 4;
+    std::vector&lt;int&gt; results(N);
+    
+    // Barrier 完成時執行的回調
+    auto on_completion = [&amp;]() noexcept {
+        int sum = 0;
+        for (int r : results) sum += r;
+        std::cout &lt;&lt; "總和: " &lt;&lt; sum &lt;&lt; std::endl;
+    };
+    
+    std::barrier sync_point(N, on_completion);
+    
+    std::vector&lt;std::thread&gt; threads;
+    for (int i = 0; i &lt; N; ++i) {
+        threads.emplace_back([&amp;, i] {
+            results[i] = compute(i);
+            sync_point.arrive_and_wait();  // 最後一人觸發回調
+        });
+    }
+    
+    for (auto&amp; t : threads) t.join();
+}
+</code></pre>
+<h3 id="-執行時序範例"><a class="header" href="#-執行時序範例">🔄 執行時序範例</a></h3>
+<pre><code>場景：4 個執行緒計算矩陣
+
+階段 1：每個執行緒計算自己的列
+┌─────────────────────────────────┐
+│ Thread 0: [計算列 0] → 完成 ●   │
+│ Thread 1: [計算列 1] → 完成 ●   │
+│ Thread 2: [計算列 2........] →  │ ← 還在算
+│ Thread 3: [計算列 3] → 完成 ●   │
+└─────────────────────────────────┘
+到達計數：3/4（等待 Thread 2）
+
+Thread 2 完成：
+┌─────────────────────────────────┐
+│ Thread 0: [等待]                │
+│ Thread 1: [等待]                │
+│ Thread 2: [計算列 2] → 完成 ● → │ 全員到齊！
+│ Thread 3: [等待]                │
+└─────────────────────────────────┘
+到達計數：4/4 ✓ → 所有人繼續
+
+階段 2：同步後開始下一階段
+┌─────────────────────────────────┐
+│ Thread 0: → [正規化列 0]        │
+│ Thread 1: → [正規化列 1]        │
+│ Thread 2: → [正規化列 2]        │
+│ Thread 3: → [正規化列 3]        │
+└─────────────────────────────────┘
+</code></pre>
+<h3 id="-barrier-vs-condition-variable"><a class="header" href="#-barrier-vs-condition-variable">🆚 Barrier vs Condition Variable</a></h3>
+<pre><code>┌────────────┬─────────────────┬──────────────────┐
+│   比較項   │    Barrier      │ Condition Var    │
+├────────────┼─────────────────┼──────────────────┤
+│ 喚醒方式   │ 最後一人到達    │ 明確 notify      │
+│ 等待語義   │ 全員到齊        │ 條件滿足         │
+│ 重複使用   │ 自動重置        │ 需手動管理       │
+│ 適用場景   │ 多階段同步      │ 生產者-消費者    │
+└────────────┴─────────────────┴──────────────────┘
+</code></pre>
+<h3 id="-優點-7"><a class="header" href="#-優點-7">✅ 優點</a></h3>
+<ul>
+<li><strong>簡化多階段同步</strong>：不需複雜的計數邏輯</li>
+<li><strong>自動重置</strong>：可重複使用</li>
+<li><strong>支援回調</strong>：完成時自動執行</li>
+</ul>
+<h3 id="-缺點-7"><a class="header" href="#-缺點-7">❌ 缺點</a></h3>
+<ul>
+<li><strong>固定參與者數量</strong>：無法動態調整</li>
+<li><strong>全員阻塞</strong>：一個慢拖累全部</li>
+<li><strong>需 C++20</strong>：舊編譯器不支援</li>
+</ul>
+<h3 id="-使用場景-7"><a class="header" href="#-使用場景-7">🎯 使用場景</a></h3>
+<ul>
+<li>平行演算法（MapReduce）</li>
+<li>GPU 計算同步</li>
+<li>遊戲引擎幀同步</li>
+</ul>
+<hr />
+<h2 id="9-順序鎖-seqlock"><a class="header" href="#9-順序鎖-seqlock">9. 順序鎖 (Seqlock)</a></h2>
+<h3 id="-核心概念-8"><a class="header" href="#-核心概念-8">🎯 核心概念</a></h3>
+<p>想像「博物館展品」：</p>
+<ul>
+<li><strong>參觀者</strong>：隨時可以看（讀者）</li>
+<li><strong>管理員</strong>：偶爾換展品（寫者）</li>
+<li><strong>參觀者規則</strong>：如果看到管理員在換，重新看一次</li>
+</ul>
+<h3 id="-示意圖-8"><a class="header" href="#-示意圖-8">📊 示意圖</a></h3>
+<pre><code>資料結構：
+┌─────────────────────┐
+│ sequence: 0 (偶數)  │ ← 版本號
+│ data: {x:10, y:20}  │ ← 實際資料
+└─────────────────────┘
+
+寫入過程：
+步驟 1: 寫者開始
+sequence = 1 (奇數)  ← "正在修改中"
+寫者: 寫入 x = 15
+寫者: 寫入 y = 25
+sequence = 2 (偶數)  ← "修改完成"
+
+讀取過程（樂觀讀取）：
+┌─────────────────────────────────────┐
+│ 讀者開始:                            │
+│   seq1 = sequence.load()  // 記錄版本│
+│   ↓                                  │
+│   讀取 data                          │
+│   ↓                                  │
+│   seq2 = sequence.load()  // 再次檢查│
+│   ↓                                  │
+│   if (seq1 == seq2 &amp;&amp; seq1 % 2 == 0) │
+│     → 資料一致，使用它               │
+│   else                               │
+│     → 重試！                         │
+└─────────────────────────────────────┘
+
+時序圖：
+讀者 A:  [seq=0] → 讀取 → [seq=0] ✓ 成功
+寫者:                  [seq=1] 寫入中 [seq=2]
+讀者 B:          [seq=0] → 讀取 → [seq=2] ✗ 重試
+                         [seq=2] → 讀取 → [seq=2] ✓ 成功
+</code></pre>
+<h3 id="-程式碼範例-8"><a class="header" href="#-程式碼範例-8">💻 程式碼範例</a></h3>
+<pre><code class="language-cpp">#include &lt;atomic&gt;
+
+template&lt;typename T&gt;
+class Seqlock {
+    std::atomic&lt;unsigned&gt; sequence_{0};
+    T data_;
+    
+public:
+    // 寫入（獨佔）
+    void write(const T&amp; new_data) {
+        // 步驟 1：增加版本號（變奇數）
+        unsigned seq = sequence_.load(std::memory_order_relaxed);
+        sequence_.store(seq + 1, std::memory_order_release);
+        
+        // 步驟 2：寫入資料
+        data_ = new_data;
+        
+        // 步驟 3：再次增加版本號（變偶數）
+        sequence_.store(seq + 2, std::memory_order_release);
+    }
+    
+    // 讀取（樂觀）
+    T read() const {
+        T result;
+        unsigned seq1, seq2;
+        
+        do {
+            // 記錄版本號
+            seq1 = sequence_.load(std::memory_order_acquire);
+            
+            // 如果是奇數，表示正在寫入，等一下
+            while (seq1 &amp; 1) {
+                seq1 = sequence_.load(std::memory_order_acquire);
+            }
+            
+            // 讀取資料
+            result = data_;
+            
+            // 檢查版本號是否改變
+            seq2 = sequence_.load(std::memory_order_acquire);
+            
+        } while (seq1 != seq2);  // 不一致就重試
+        
+        return result;
+    }
+};
+
+// 實際應用：座標追蹤
+struct Position {
+    double x, y, z;
+    uint64_t timestamp;
+};
+
+Seqlock&lt;Position&gt; player_position;
+
+// 遊戲執行緒（寫者）
+void update_position(double x, double y, double z) {
+    Position pos{x, y, z, get_timestamp()};
+    player_position.write(pos);
+}
+
+// 渲染執行緒（讀者）
+void render_player() {
+    Position pos = player_position.read();
+    draw_at(pos.x, pos.y, pos.z);
+}
+</code></pre>
+<h3 id="-競爭條件處理"><a class="header" href="#-競爭條件處理">🔄 競爭條件處理</a></h3>
+<pre><code>場景：讀者在寫者修改期間讀取
+
+初始狀態：
+┌────────────────────┐
+│ sequence = 100     │
+│ x = 10, y = 20     │
+└────────────────────┘
+
+時刻 T1：讀者開始讀取
+讀者: seq1 = 100 (偶數，OK)
+讀者: 讀取 x = 10
+
+時刻 T2：寫者開始寫入（在讀者讀完之前）
+寫者: sequence = 101 (奇數)  ← 標記"正在寫"
+寫者: x = 15
+寫者: y = 25
+寫者: sequence = 102 (偶數)
+
+時刻 T3：讀者讀完檢查
+讀者: 讀取 y = 25  ← 可能是新值！
+讀者: seq2 = 102
+讀者: seq1(100) != seq2(102) → 資料不一致！
+讀者: 重試...
+
+時刻 T4：讀者重試
+讀者: seq1 = 102
+讀者: 讀取 x = 15, y = 25
+讀者: seq2 = 102
+讀者: seq1 == seq2 → 成功！✓
+</code></pre>
+<h3 id="-seqlock-vs-rwlock"><a class="header" href="#-seqlock-vs-rwlock">🆚 Seqlock vs RWLock</a></h3>
+<pre><code>┌─────────────┬──────────────┬─────────────┐
+│   特性      │   Seqlock    │   RWLock    │
+├─────────────┼──────────────┼─────────────┤
+│ 讀取成本    │ 無鎖（快）   │ 需加鎖（慢）│
+│ 寫入成本    │ 無鎖         │ 獨佔鎖      │
+│ 讀失敗處理  │ 重試         │ 阻塞等待    │
+│ 資料一致性  │ 最終一致     │ 強一致      │
+│ 適用場景    │ 讀多寫少     │ 讀多寫中    │
+└─────────────┴──────────────┴─────────────┘
+</code></pre>
+<h3 id="-優點-8"><a class="header" href="#-優點-8">✅ 優點</a></h3>
+<ul>
+<li><strong>讀取超快</strong>：完全無鎖</li>
+<li><strong>寫者不阻塞讀者</strong>：讀者自己重試</li>
+<li><strong>無死鎖</strong>：沒有鎖就不會卡</li>
+</ul>
+<h3 id="-缺點-8"><a class="header" href="#-缺點-8">❌ 缺點</a></h3>
+<ul>
+<li><strong>讀者可能餓死</strong>：頻繁寫入時一直重試</li>
+<li><strong>資料大小限制</strong>：複製成本高</li>
+<li><strong>寫者需互斥</strong>：多寫者需額外機制</li>
+</ul>
+<h3 id="-使用場景-8"><a class="header" href="#-使用場景-8">🎯 使用場景</a></h3>
+<ul>
+<li>即時系統（股票價格）</li>
+<li>遊戲引擎（位置更新）</li>
+<li>系統監控（統計資料）</li>
+</ul>
+<hr />
+<h2 id="10-效能比較總表"><a class="header" href="#10-效能比較總表">10. 效能比較總表</a></h2>
+<h3 id="-延遲對比"><a class="header" href="#-延遲對比">📊 延遲對比</a></h3>
+<pre><code>操作延遲（單位：奈秒，以現代 x86-64 為準）：
+
+Lock-Free (CAS):      ~10-50 ns
+Spinlock:             ~50-100 ns
+Mutex (無競爭):       ~50-100 ns
+Mutex (有競爭):       ~1,000-10,000 ns  ← Context Switch
+RWLock (讀):          ~100-200 ns
+RWLock (寫):          ~1,000-10,000 ns
+Semaphore:            ~1,000-5,000 ns
+Condition Variable:   ~1,000-10,000 ns
+
+圖示：
+Lock-Free  ▓░░░░░░░░░░░░░░░░░░░░  (極快)
+Spinlock   ▓▓░░░░░░░░░░░░░░░░░░░  (快)
+Mutex(無)  ▓▓░░░░░░░░░░░░░░░░░░░  (快)
+Mutex(有)  ▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░  (慢)
+Semaphore  ▓▓▓▓▓▓▓▓░░░░░░░░░░░░  (中慢)
+</code></pre>
+<h3 id="-使用場景選擇表"><a class="header" href="#-使用場景選擇表">🎯 使用場景選擇表</a></h3>
+<pre><code>┌────────────────────┬─────────────────────────────────┐
+│     場景           │          推薦鎖機制              │
+├────────────────────┼─────────────────────────────────┤
+│ SPSC 佇列          │ Lock-Free Queue                 │
+│ 共享計數器         │ Atomic / Spinlock               │
+│ 銀行轉帳           │ Mutex                           │
+│ 快取系統           │ RWLock / Seqlock                │
+│ 遞迴函式保護       │ Recursive Mutex                 │
+│ 生產者-消費者      │ Condition Variable              │
+│ 連線池             │ Semaphore                       │
+│ 平行演算法同步     │ Barrier                         │
+│ 即時股價更新       │ Seqlock                         │
+│ 核心 Interrupt     │ Spinlock                        │
+└────────────────────┴─────────────────────────────────┘
+</code></pre>
+<h3 id="-決策樹"><a class="header" href="#-決策樹">🔍 決策樹</a></h3>
+<pre><code>開始
+  │
+  ├─ 是否需要共享資料？
+  │   ├─ 否 → 無需鎖（Thread-Local Storage）
+  │   └─ 是 ↓
+  │
+  ├─ 是否為 SPSC 模式？
+  │   ├─ 是 → Lock-Free Queue
+  │   └─ 否 ↓
+  │
+  ├─ 臨界區是否極短（&lt; 100ns）？
+  │   ├─ 是 → Spinlock / Atomic
+  │   └─ 否 ↓
+  │
+  ├─ 是否讀多寫少（讀寫比 &gt; 10:1）？
+  │   ├─ 是 → RWLock / Seqlock
+  │   └─ 否 ↓
+  │
+  ├─ 是否需要限制資源數量？
+  │   ├─ 是 → Semaphore
+  │   └─ 否 ↓
+  │
+  ├─ 是否需要條件等待？
+  │   ├─ 是 → Condition Variable
+  │   └─ 否 ↓
+  │
+  ├─ 是否有遞迴呼叫？
+  │   ├─ 是 → Recursive Mutex
+  │   └─ 否 ↓
+  │
+  └─ 預設選擇 → Mutex
+</code></pre>
+<h3 id="-優化建議"><a class="header" href="#-優化建議">⚡ 優化建議</a></h3>
+<pre><code>1. 減少鎖粒度
+   ❌ 整個物件一個大鎖
+   ✅ 不同欄位用不同鎖
+
+2. 避免鎖順序死鎖
+   ❌ 執行緒 A: lock(L1) → lock(L2)
+      執行緒 B: lock(L2) → lock(L1)
+   ✅ 統一鎖順序：都先 L1 再 L2
+
+3. 使用 RAII 管理鎖
+   ❌ mutex.lock();
+      do_something();
+      mutex.unlock();  // 可能忘記
+   ✅ std::lock_guard&lt;std::mutex&gt; lock(mutex);
+
+4. 考慮無鎖替代
+   ❌ mutex + counter++
+   ✅ std::atomic&lt;int&gt; counter;
+      counter.fetch_add(1);
+
+5. 批次操作減少鎖次數
+   ❌ for (item : items) {
+        lock();
+        process(item);
+        unlock();
+      }
+   ✅ lock();
+      for (item : items) {
+        process(item);
+      }
+      unlock();
+</code></pre>
+<hr />
+<h2 id="-總結"><a class="header" href="#-總結">📝 總結</a></h2>
+<h3 id="快速記憶口訣"><a class="header" href="#快速記憶口訣">快速記憶口訣</a></h3>
+<pre><code>🚀 速度要求高？        → Lock-Free / Spinlock
+🔐 簡單互斥就好？      → Mutex
+📖 讀多寫少？          → RWLock / Seqlock
+🔁 會遞迴呼叫？        → Recursive Mutex
+⏰ 需要條件等待？      → Condition Variable
+🎫 限制資源數量？      → Semaphore
+🚧 多階段同步？        → Barrier
+</code></pre>
+<h3 id="常見錯誤"><a class="header" href="#常見錯誤">常見錯誤</a></h3>
+<pre><code>❌ 忘記解鎖               → 使用 RAII (lock_guard)
+❌ 死鎖                   → 統一鎖順序
+❌ 虛假喚醒               → Condition Variable 用 while
+❌ 過度使用 Spinlock      → 長臨界區用 Mutex
+❌ 忽略記憶體順序         → Atomic 正確使用 memory_order
+</code></pre>
+<hr />
+<h2 id="-延伸閱讀"><a class="header" href="#-延伸閱讀">📚 延伸閱讀</a></h2>
+<ul>
+<li><a href="https://www.manning.com/books/c-plus-plus-concurrency-in-action-second-edition">C++ Concurrency in Action (2nd Edition)</a></li>
+<li><a href="https://www.elsevier.com/books/the-art-of-multiprocessor-programming/herlihy/978-0-12-415950-1">The Art of Multiprocessor Programming</a></li>
+<li><a href="https://www.kernel.org/doc/html/latest/locking/index.html">Linux Kernel Locking</a></li>
+</ul>
+<hr />
+<p><strong>文件版本</strong>: 1.0<br />
+<strong>最後更新</strong>: 2026-01-09<br />
+<strong>授權</strong>: CC BY-NC-SA 4.0</p>
+<hr />
+<h2 id="附錄實用程式碼片段"><a class="header" href="#附錄實用程式碼片段">附錄：實用程式碼片段</a></h2>
+<h3 id="a1-簡易效能測試框架"><a class="header" href="#a1-簡易效能測試框架">A1. 簡易效能測試框架</a></h3>
+<pre><code class="language-cpp">#include &lt;chrono&gt;
+#include &lt;iostream&gt;
+
+template&lt;typename Func&gt;
+double benchmark(Func f, int iterations = 1000000) {
+    auto start = std::chrono::high_resolution_clock::now();
+    
+    for (int i = 0; i &lt; iterations; ++i) {
+        f();
+    }
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast&lt;std::chrono::nanoseconds&gt;(end - start);
+    
+    return duration.count() / (double)iterations;
+}
+
+// 使用範例
+int main() {
+    std::mutex mutex;
+    int counter = 0;
+    
+    double avg_ns = benchmark([&amp;] {
+        std::lock_guard&lt;std::mutex&gt; lock(mutex);
+        ++counter;
+    });
+    
+    std::cout &lt;&lt; "平均每次操作: " &lt;&lt; avg_ns &lt;&lt; " ns\n";
+}
+</code></pre>
+<h3 id="a2-死鎖檢測器"><a class="header" href="#a2-死鎖檢測器">A2. 死鎖檢測器</a></h3>
+<pre><code class="language-cpp">#include &lt;map&gt;
+#include &lt;thread&gt;
+#include &lt;mutex&gt;
+
+class DeadlockDetector {
+    std::map&lt;std::thread::id, std::vector&lt;void*&gt;&gt; held_locks_;
+    std::mutex detector_mutex_;
+    
+public:
+    void acquire(void* lock) {
+        std::lock_guard&lt;std::mutex&gt; guard(detector_mutex_);
+        auto tid = std::this_thread::get_id();
+        held_locks_[tid].push_back(lock);
+        check_for_cycles(tid);
+    }
+    
+    void release(void* lock) {
+        std::lock_guard&lt;std::mutex&gt; guard(detector_mutex_);
+        auto tid = std::this_thread::get_id();
+        auto&amp; locks = held_locks_[tid];
+        locks.erase(std::remove(locks.begin(), locks.end(), lock), locks.end());
+    }
+    
+private:
+    void check_for_cycles(std::thread::id tid) {
+        // 簡化版：檢查是否有執行緒持有多個鎖
+        if (held_locks_[tid].size() &gt; 1) {
+            std::cerr &lt;&lt; "警告：執行緒持有多個鎖，可能死鎖！\n";
+        }
+    }
+};
+</code></pre>
+<hr />
+<p>希望這份指南能幫助你理解各種鎖機制！🎓</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../c++/locks_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../c++/高性能程式設計實戰.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../c++/locks_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../c++/高性能程式設計實戰.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
