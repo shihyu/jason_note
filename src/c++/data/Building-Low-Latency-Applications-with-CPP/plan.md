@@ -191,29 +191,54 @@ list-files:  ## 列出所有需要註解的程式碼檔案
 - 非阻塞 I/O 的處理
 - Sequence Number 驗證
 
-### 階段 8：Chapter 9（風控系統）
+### 階段 8：Chapter 9（風控系統）✅ **已完成**
 **檔案**：risk_manager.h/cpp, position_keeper.h, order_manager.h/cpp
 
-**文件產出**：`docs/Chapter9_詳解.md`
-- Pre-trade Risk 檢查清單
-- Position Tracking 的 Race Condition 處理
-- Order Manager 的狀態同步
+**文件產出**：`docs/Chapter9_詳解.md` ✅
+- [x] Pre-trade Risk 檢查機制（ORDER_TOO_LARGE, POSITION_TOO_LARGE, LOSS_TOO_LARGE）
+- [x] Position Tracking 與 VWAP 計算（已實現/未實現 PnL）
+- [x] Order Manager 狀態機詳解（INVALID → PENDING_NEW → LIVE → DEAD）
+- [x] 倉位翻轉處理邏輯（開倉/加倉、減倉、翻倉）
+- [x] Race Condition 處理（單執行緒設計、Lock-Free Queue）
+- [x] 效能分析與記憶體佈局優化
+- [x] 實戰應用場景（Market Maker 策略、丟包處理）
 
-**程式碼註解**：
-- 風控規則的優先級
-- PnL 計算公式
+**程式碼註解**：✅
+- [x] risk_manager.h：RiskCheckResult、checkPreTradeRisk、UNLIKELY 優化、時間複雜度分析
+- [x] position_keeper.h：PositionInfo、addFill（三種情境）、updateBBO、VWAP 計算
+- [x] order_manager.h：onOrderUpdate、moveOrder、風控整合、狀態機轉換
+- [x] 使用 ⚡ 標記效能關鍵點
+- [x] 使用 ⚠️ 標記陷阱警告
 
-### 階段 9：Chapter 10（交易策略）
+**完成統計**：
+- 文件字數：~14,500 字
+- 核心檔案註解：3/3（risk_manager.h, position_keeper.h, order_manager.h）
+- Token 使用：79,946 / 200,000 (39.9%)
+
+### 階段 9：Chapter 10（交易策略）✅ **已完成**
 **檔案**：market_maker.h/cpp, liquidity_taker.h/cpp, trade_engine.h/cpp, feature_engine.h
 
-**文件產出**：`docs/Chapter10_詳解.md`
-- Market Maker 策略的 Greeks 計算
-- Liquidity Taker 的 Smart Order Routing
-- Feature Engine 的訊號生成
+**文件產出**：`docs/Chapter10_詳解.md` ✅
+- [x] 系統架構總覽（元件關係圖、資料流向）
+- [x] TradeEngine 主控引擎（事件循環、策略整合、Lambda 回調機制）
+- [x] FeatureEngine 特徵計算（市場價格、激進成交比率）
+- [x] MarketMaker 做市商策略（動態定價算法、風險控制）
+- [x] LiquidityTaker 流動性獲取策略（趨勢檢測、跟隨邏輯）
+- [x] 效能分析（事件處理延遲、記憶體佈局、架構比較）
+- [x] 實戰應用場景（風控措施、防追高殺跌、特徵工程進階）
 
-**程式碼註解**：
-- Alpha 訊號的來源
-- 訂單路由決策樹
+**程式碼註解**：✅
+- [x] feature_engine.h：Feature_INVALID、onOrderBookUpdate（市場價格）、onTradeUpdate（激進成交比率）
+- [x] market_maker.h：策略類別、onOrderBookUpdate（動態定價算法）、配置管理
+- [x] liquidity_taker.h：策略類別、onTradeUpdate（趨勢檢測與跟隨）、市價成交邏輯
+- [x] trade_engine.h：主控引擎、Lambda 回調機制、Lock-Free Queue、核心元件整合
+- [x] 使用 ⚡ 標記效能關鍵點
+- [x] 使用 📊 標記計算公式與範例
+
+**完成統計**：
+- 文件字數：~12,000 字
+- 核心檔案註解：4/4（feature_engine.h, market_maker.h, liquidity_taker.h, trade_engine.h）✅ **完整**
+- Token 使用：117,641 / 200,000 (58.8%)
 
 ### 階段 10：Chapter 11（系統優化）
 **檔案**：thread_utils.h, perf_utils.h
