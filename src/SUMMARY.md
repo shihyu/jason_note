@@ -583,6 +583,9 @@
     - [OS 調優完整指南](hft/02-system/os-tuning-guide.md)
     - [OS 調優實踐手冊](hft/02-system/os-tuning-practice.md)
     - [高頻低延遲 Linux 完整配置指南](hft/02-system/高頻低延遲Linux完整配置指南.md)
+    - [低延遲交易系統設計](hft/02-system/low_latency_trading_system_design.md)
+    - [TSE Receiver 優化指南](hft/02-system/TSE_Receiver_Optimization_Guide.md)
+    - [TSE Receiver 優化詳解與程式碼對照分析](hft/02-system/TSE_RECEIVER_OPTIMIZATION_ANALYSIS.md)
     - [系統效能優化](hft/02-system/system-optimization.md)
     - [C 語言終極優化](hft/02-system/c-optimization-complete.md)
     - [大頁面與執行緒模型](hft/02-system/hugepages-threading.md)
@@ -597,6 +600,7 @@
     - [執行緒池優化案例](hft/05-practice/thread-pool-optimization.md)
     - [HFT 系統總覽](hft/06-resources/hft-index.md)
     - [高性能運算概覽](hft/06-resources/hft-introduction.md)
+    - [HFT 開發完整指南](hft/06-resources/hft-dev-complete-guide.md)
     - [GitHub 開源項目分析](hft/06-resources/github-projects.md)
 
 ## Others
