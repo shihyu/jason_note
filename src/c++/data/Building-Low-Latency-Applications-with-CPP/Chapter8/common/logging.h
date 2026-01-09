@@ -147,6 +147,83 @@ public:
     }
 
     // 寫入基礎型別到佇列 (多載函式)
+    //
+    // ⚠️ 佇列滿時的行為：
+    // - 當前實作：無檢查，直接覆寫舊資料 (Ring Buffer 特性)
+    // - 風險：日誌丟失，且無任何警告
+    // - 觸發條件：日誌產生速度 > 後台寫入磁碟速度
+    //
+    // 📊 佇列容量分析：
+    // - 佇列大小：8 MB (LOG_QUEUE_SIZE)
+    // - 每個 LogElement：約 16 bytes (union + type 欄位)
+    // - 最大容量：8 MB ÷ 16 bytes ≈ 500,000 個元素
+    // - 若每秒產生 100 萬個日誌元素，佇列會在 0.5 秒內填滿
+    //
+    // 🔧 生產環境建議改進：
+    // 1. 檢查佇列大小（丟棄或等待）：
+    //    ```cpp
+    //    auto pushValue(const LogElement& log_element) noexcept {
+    //        if (queue_.size() >= LOG_QUEUE_SIZE - 1024) {  // 保留 1024 空間避免覆寫
+    //            // 方案 A：靜默丟棄
+    //            return;
+    //
+    //            // 方案 B：輸出警告（可能影響效能）
+    //            std::cerr << "Logger queue full, dropping log\n";
+    //            return;
+    //
+    //            // 方案 C：等待（阻塞，不推薦）
+    //            while (queue_.size() >= LOG_QUEUE_SIZE - 1024) {
+    //                std::this_thread::yield();
+    //            }
+    //        }
+    //        *(queue_.getNextToWriteTo()) = log_element;
+    //        queue_.updateWriteIndex();
+    //    }
+    //    ```
+    //
+    // 2. 使用更大的佇列：
+    //    ```cpp
+    //    constexpr size_t LOG_QUEUE_SIZE = 64 * 1024 * 1024;  // 64 MB
+    //    ```
+    //    - 代價：佔用更多記憶體
+    //
+    // 3. 動態調整後台執行緒 flush 頻率：
+    //    ```cpp
+    //    auto flush_interval = (queue_.size() > LOG_QUEUE_SIZE / 2) ? 1ms : 10ms;
+    //    std::this_thread::sleep_for(flush_interval);
+    //    ```
+    //
+    // 4. 使用條件變數通知後台執行緒：
+    //    ```cpp
+    //    std::condition_variable queue_not_empty_;
+    //    // pushValue() 時通知
+    //    queue_not_empty_.notify_one();
+    //    // flushQueue() 時等待
+    //    queue_not_empty_.wait_for(lock, 10ms);
+    //    ```
+    //    - 優點：佇列有資料時立即處理
+    //    - 缺點：增加同步開銷（需要 Mutex）
+    //
+    // 📊 監控建議：
+    // - 定期檢查 queue_.size()，若長期接近上限則需優化
+    // - 記錄峰值佇列大小：
+    //   ```cpp
+    //   static size_t max_queue_size = 0;
+    //   max_queue_size = std::max(max_queue_size, queue_.size());
+    //   ```
+    // - 若峰值 > 80% 容量，考慮：
+    //   1. 減少日誌量（提高日誌級別過濾）
+    //   2. 增加佇列大小
+    //   3. 使用更快的儲存裝置（SSD、RAM Disk）
+    //
+    // ⚠️ 特殊情況：磁碟 I/O 阻塞
+    // - 若磁碟寫入速度慢（例如 HDD、網路檔案系統）
+    // - 後台執行緒會長時間阻塞在 file_.flush()
+    // - 主執行緒會持續寫入佇列，最終覆寫舊資料
+    // - 緩解措施：
+    //   1. 使用 SSD 或 RAM Disk (tmpfs)
+    //   2. 使用非同步 I/O (io_uring、libaio)
+    //   3. 定期輪轉日誌檔案（避免單一大檔案）
     auto pushValue(const LogElement& log_element) noexcept
     {
         *(queue_.getNextToWriteTo()) = log_element;
