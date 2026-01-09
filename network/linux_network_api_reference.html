@@ -828,6 +828,116 @@ close(sockfd);
 </code></pre>
 <hr />
 <h2 id="io-多工機制"><a class="header" href="#io-多工機制">I/O 多工機制</a></h2>
+<h3 id="socket-阻塞與非阻塞模式"><a class="header" href="#socket-阻塞與非阻塞模式">Socket 阻塞與非阻塞模式</a></h3>
+<p>在討論 I/O 多工之前，需要先理解 <strong>socket 本身就有阻塞和非阻塞兩種模式</strong>。</p>
+<h4 id="1-阻塞模式-blocking-io---預設模式"><a class="header" href="#1-阻塞模式-blocking-io---預設模式">1. 阻塞模式 (Blocking I/O) - 預設模式</a></h4>
+<pre><code class="language-c">int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+// 預設就是阻塞模式
+
+// accept() 會阻塞等待，直到有連線進來
+int connfd = accept(sockfd, NULL, NULL);
+
+// recv() 會阻塞等待，直到收到資料
+recv(connfd, buffer, sizeof(buffer), 0);
+</code></pre>
+<h4 id="2-非阻塞模式-non-blocking-io"><a class="header" href="#2-非阻塞模式-non-blocking-io">2. 非阻塞模式 (Non-blocking I/O)</a></h4>
+<pre><code class="language-c">// 設定非阻塞
+int flags = fcntl(sockfd, F_GETFL, 0);
+fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+
+// 或建立時直接設定 (Linux 2.6.27+)
+int sockfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+
+// accept() 立即返回，沒連線就返回 -1 (errno=EAGAIN)
+int connfd = accept(sockfd, NULL, NULL);
+
+// recv() 立即返回，沒資料就返回 -1 (errno=EAGAIN)
+recv(connfd, buffer, sizeof(buffer), 0);
+</code></pre>
+<hr />
+<h3 id="為什麼需要-selectpollepoll"><a class="header" href="#為什麼需要-selectpollepoll">為什麼需要 select/poll/epoll？</a></h3>
+<p><strong>問題場景：</strong></p>
+<ul>
+<li>你有 100 個 socket 需要監控</li>
+<li>不知道哪個 socket 有資料可讀</li>
+</ul>
+<h4 id="-沒有-io-多工的解決方案"><a class="header" href="#-沒有-io-多工的解決方案">❌ 沒有 I/O 多工的解決方案</a></h4>
+<h5 id="方案-1阻塞模式---無法同時監控多個-socket"><a class="header" href="#方案-1阻塞模式---無法同時監控多個-socket">方案 1：阻塞模式 - 無法同時監控多個 socket</a></h5>
+<pre><code class="language-c">// 只能一個一個檢查，會卡在第一個 recv
+recv(sock1, buf, size, 0);  // 卡在這裡
+recv(sock2, buf, size, 0);  // 永遠執行不到
+</code></pre>
+<h5 id="方案-2非阻塞模式---cpu-空轉浪費資源"><a class="header" href="#方案-2非阻塞模式---cpu-空轉浪費資源">方案 2：非阻塞模式 - CPU 空轉浪費資源</a></h5>
+<pre><code class="language-c">// 輪詢 (polling) - 不斷檢查每個 socket
+while (1) {
+    for (int i = 0; i &lt; 100; i++) {
+        int n = recv(socks[i], buf, size, 0);
+        if (n &gt; 0) {
+            // 處理資料
+        }
+    }
+    // CPU 空轉，100% 使用率！
+}
+</code></pre>
+<h5 id="方案-3多執行緒---資源浪費"><a class="header" href="#方案-3多執行緒---資源浪費">方案 3：多執行緒 - 資源浪費</a></h5>
+<pre><code class="language-c">// 為每個 socket 開一個執行緒
+for (int i = 0; i &lt; 100; i++) {
+    pthread_create(&amp;thread, NULL, handle_client, &amp;socks[i]);
+}
+// 100 個連線 = 100 個執行緒！記憶體、context switch 開銷大
+</code></pre>
+<h4 id="-有-selectpollepoll-的解決方案"><a class="header" href="#-有-selectpollepoll-的解決方案">✅ 有 select/poll/epoll 的解決方案</a></h4>
+<pre><code class="language-c">int epfd = epoll_create1(0);
+
+// 註冊 100 個 socket
+for (int i = 0; i &lt; 100; i++) {
+    struct epoll_event ev;
+    ev.events = EPOLLIN;
+    ev.data.fd = socks[i];
+    epoll_ctl(epfd, EPOLL_CTL_ADD, socks[i], &amp;ev);
+}
+
+// 一次監控所有 socket，只有就緒的會被通知
+struct epoll_event events[100];
+while (1) {
+    // 這裡會阻塞等待，但只要有任何一個 socket 就緒就會返回
+    int nfds = epoll_wait(epfd, events, 100, -1);
+
+    for (int i = 0; i &lt; nfds; i++) {
+        int fd = events[i].data.fd;
+        recv(fd, buffer, size, 0);  // 這裡保證有資料，不會阻塞
+    }
+}
+</code></pre>
+<p><strong>核心優勢：</strong></p>
+<ol>
+<li><strong>不需要輪詢</strong> - 系統會通知你哪些 socket 就緒</li>
+<li><strong>不浪費 CPU</strong> - 沒有事件時進程休眠</li>
+<li><strong>可擴展性好</strong> - 輕鬆處理成千上萬的連線</li>
+</ol>
+<hr />
+<h3 id="io-模型總結對比"><a class="header" href="#io-模型總結對比">I/O 模型總結對比</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>模式</th><th>優點</th><th>缺點</th><th>使用場景</th></tr></thead><tbody>
+<tr><td><strong>阻塞 I/O</strong></td><td>簡單</td><td>一次只能處理一個連線</td><td>單一連線、簡單應用</td></tr>
+<tr><td><strong>非阻塞 I/O (輪詢)</strong></td><td>可處理多個連線</td><td>CPU 空轉浪費</td><td><strong>不建議單獨使用</strong></td></tr>
+<tr><td><strong>多執行緒/行程</strong></td><td>可處理多個連線</td><td>資源開銷大</td><td>連線數少 (&lt;100)</td></tr>
+<tr><td><strong>select/poll/epoll</strong></td><td>高效監控多個連線</td><td>程式碼複雜度高</td><td><strong>高並發 (&gt;100 連線)</strong></td></tr>
+</tbody></table>
+</div>
+<p><strong>實際使用建議：</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>連線數</th><th>推薦方案</th><th>範例</th></tr></thead><tbody>
+<tr><td><strong>&lt; 10</strong></td><td>阻塞 I/O + 多執行緒</td><td><code>pthread_create(&amp;tid, NULL, handle_client, &amp;connfd);</code></td></tr>
+<tr><td><strong>100-1000</strong></td><td>poll + 非阻塞</td><td><code>poll(fds, nfds, -1);</code></td></tr>
+<tr><td><strong>&gt; 1000</strong></td><td>epoll + 非阻塞 + 邊緣觸發</td><td><code>epoll_wait(epfd, events, MAX_EVENTS, -1);</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>核心結論：</strong></p>
+<ol>
+<li>✅ <strong>Socket 本身可以阻塞/非阻塞</strong> - 這是 socket 的屬性</li>
+<li>✅ <strong>select/poll/epoll 用於監控多個 socket</strong> - 解決「不知道哪個 socket 就緒」的問題</li>
+<li>✅ <strong>搭配使用才高效</strong> - epoll + 非阻塞是高並發伺服器的標準做法</li>
+</ol>
+<hr />
 <h3 id="selectpollepoll-比較表"><a class="header" href="#selectpollepoll-比較表">select、poll、epoll 比較表</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>特性</th><th>select</th><th>poll</th><th>epoll</th></tr></thead><tbody>
 <tr><td><strong>監控數量限制</strong></td><td>1024（FD_SETSIZE）</td><td>無限制</td><td>無限制</td></tr>
