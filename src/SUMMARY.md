@@ -582,6 +582,7 @@
     - [OS 選擇指南](hft/02-system/os-selection.md)
     - [OS 調優完整指南](hft/02-system/os-tuning-guide.md)
     - [OS 調優實踐手冊](hft/02-system/os-tuning-practice.md)
+    - [高頻低延遲 Linux 完整配置指南](hft/02-system/高頻低延遲Linux完整配置指南.md)
     - [系統效能優化](hft/02-system/system-optimization.md)
     - [C 語言終極優化](hft/02-system/c-optimization-complete.md)
     - [大頁面與執行緒模型](hft/02-system/hugepages-threading.md)
