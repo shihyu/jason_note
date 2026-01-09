@@ -105,7 +105,7 @@ list-files:  ## 列出所有需要註解的程式碼檔案
 - [x] 使用 ⚠️ 標記陷阱警告
 
 ### 階段 4：Chapter 4（低延遲元件）✅ **已完成**
-**檔案**：lf_queue.h, mem_pool.h, logging.h, thread_utils.h, time_utils.h, socket_utils.h, tcp_socket.h, tcp_server.h, mcast_socket.h
+**檔案**：lf_queue.h, mem_pool.h, logging.h, thread_utils.h, time_utils.h, socket_utils.h, tcp_socket.h/cpp, tcp_server.h/cpp, mcast_socket.h/cpp, 範例程式碼 (5 個)
 
 **文件產出**：`docs/Chapter4_詳解.md` ✅
 - [x] Lock-Free Queue 的 ABA 問題與 Memory Ordering
@@ -117,16 +117,44 @@ list-files:  ## 列出所有需要註解的程式碼檔案
 - [x] 與標準庫的比較（std::queue、std::allocator、spdlog）
 - [x] 實戰應用場景與常見陷阱
 
-**程式碼註解**：✅
-- [x] lf_queue.h：Memory Ordering、Cache Line False Sharing、ABA Problem
-- [x] mem_pool.h：Placement New、指標算術、零碎片化設計
+**程式碼註解**：✅ **全部完成 (18/18)**
+
+**核心元件檔案 (13/13)** ✅
+- [x] lf_queue.h：Memory Ordering、Cache Line False Sharing、ABA Problem、Ring Buffer 設計
+- [x] mem_pool.h：Placement New、指標算術、零碎片化設計、O(1)~O(N) 分配
+- [x] logging.h：Tagged Union、Lock-Free Queue、變參模板遞迴、批次 Flush 機制
+- [x] macros.h：LIKELY/UNLIKELY 分支預測、__builtin_expect、ASSERT vs assert()
+- [x] time_utils.h：奈秒時間戳、system_clock vs steady_clock、VDSO 優化
+- [x] socket_utils.h：Nagle 演算法、SO_TIMESTAMP、非阻塞 IO、Epoll 設定
+- [x] tcp_socket.h：SO_TIMESTAMP 配置、FIFOSequencer 整合
+- [x] tcp_socket.cpp：recvmsg ancillary data、核心時間戳提取、MSG_DONTWAIT
+- [x] tcp_server.h：Epoll Reactor 模式、Edge-Triggered vs Level-Triggered
+- [x] tcp_server.cpp：epoll_wait、EPOLLIN/EPOLLOUT/EPOLLERR、批次接收/傳送
+- [x] thread_utils.h：CPU Affinity、pthread_setaffinity_np
+- [x] mcast_socket.h：UDP 多播架構、64MB 緩衝區設計、兩步驟初始化
+- [x] mcast_socket.cpp：批次處理模式、IGMP 協議、MSG_DONTWAIT/MSG_NOSIGNAL
+
+**範例程式碼 (5/5)** ✅ **本次完成**
+- [x] lf_queue_example.cpp：生產者-消費者模式、兩步驟讀寫、索引更新順序、常見錯誤範例
+- [x] logging_example.cpp：型別自動推導、20-40x 效能優勢、與 printf/spdlog 比較、使用建議
+- [x] mem_pool_example.cpp：O(1) 分配/釋放、Free List 重用機制、5-50x 加速比、容量規劃
+- [x] socket_example.cpp：Epoll 事件循環、Lambda 回調、非阻塞 I/O、客戶端-伺服器互動、進階優化
+- [x] thread_example.cpp：CPU Affinity、Context Switch 開銷、NUMA 系統考量、核心隔離技術
+
+**通用標記**：
 - [x] 使用 ⚡ 標記效能關鍵點
 - [x] 使用 ⚠️ 標記陷阱警告
+- [x] 使用 📊 標記效能分析數據
 
-**完成統計**：
-- 文件字數：~13,500 字
-- 核心檔案註解：2/9（lf_queue.h, mem_pool.h）
-- Token 使用：96,298 / 200,000 (48%)
+**完成統計**（更新於 2026-01-10 凌晨 3:00）：
+- **文件字數**：~18,500 字（原 13,500 字 + 新增 5,000 字範例詳解）✅ **剛更新**
+- **文件大小**：58KB（原 42KB → 增加 16KB）
+- **文件行數**：1,945 行（原 1,355 行 → 增加 590 行）
+- **核心檔案註解**：13/13（100% 完成）✅
+- **範例程式碼註解**：5/5（100% 完成）✅
+- **範例程式碼文件**：5/5（100% 完成）✅ **剛完成**
+- **總計**：18/18 檔案註解 + 完整文件 🎉
+- Token 使用：84,551 / 200,000 (42.3%)
 
 ### 階段 5：Chapter 6（撮合引擎核心）✅ **已完成**
 **檔案**：matching_engine.h/cpp, me_order_book.h/cpp, me_order.h/cpp

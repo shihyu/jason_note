@@ -1195,6 +1195,596 @@ logger.log("Trade confirmed: %", trade_id);  // ⚠️ 最多 10ms 後才寫入�
 
 ---
 
+## 八之二、範例程式碼詳解
+
+本章節提供 5 個完整的範例程式，展示如何在實際場景中使用 Chapter 4 的低延遲元件。每個範例都包含執行流程、預期輸出、效能分析和常見錯誤。
+
+### 8.4 Lock-Free Queue 完整範例 (lf_queue_example.cpp)
+
+**📄 檔案位置**: `Chapter4/lf_queue_example.cpp`
+
+**範例目的**: 展示生產者-消費者模式的正確實作
+
+**執行流程**:
+```cpp
+// 1. 建立容量為 20 的 Lock-Free Queue
+LFQueue<MyStruct> lfq(20);
+
+// 2. 啟動消費者執行緒(延遲 5 秒後開始消費)
+auto ct = createAndStartThread(-1, "", consumeFunction, &lfq);
+
+// 3. 主執行緒(生產者)每秒產生 1 筆資料
+for (auto i = 0; i < 50; ++i) {
+    const MyStruct d{i, i * 10, i * 100};
+
+    // ⚡ 兩步驟寫入
+    auto* write_ptr = lfq.getNextToWriteTo();  // 取得寫入位置
+    *write_ptr = d;                             // 寫入資料
+    lfq.updateWriteIndex();                     // 更新索引(Memory Barrier)
+
+    std::this_thread::sleep_for(1s);
+}
+```
+
+**消費者行為**:
+```cpp
+auto consumeFunction(LFQueue<MyStruct>* lfq) {
+    std::this_thread::sleep_for(5s);  // 模擬啟動延遲
+
+    while (lfq->size()) {
+        // ⚡ 兩步驟讀取
+        const auto d = lfq->getNextToRead();  // 取得讀取位置
+        lfq->updateReadIndex();                // 更新索引(標記已讀)
+
+        // 處理資料
+        std::cout << "Read: " << d->d_[0] << std::endl;
+        std::this_thread::sleep_for(1s);
+    }
+}
+```
+
+**時間軸分析**:
+```
+時間 0-5 秒:
+  生產者產生: [0][1][2][3][4]
+  消費者狀態: 休眠中
+  佇列大小: 增加到 5
+
+時間 5 秒後:
+  生產者: 每秒產生 1 筆 → [5][6][7]...
+  消費者: 每秒消費 1 筆 → 處理 [0][1][2]...
+  佇列大小: 穩定在 5 左右
+
+時間 50 秒後:
+  生產者: 停止(已產生 50 筆)
+  消費者: 繼續處理剩餘 5 筆
+  佇列大小: 逐漸降至 0
+```
+
+**常見錯誤範例**:
+
+❌ **錯誤 1: 忘記更新索引**
+```cpp
+auto* ptr = lfq.getNextToWriteTo();
+*ptr = data;
+// 忘記呼叫 updateWriteIndex()!
+// 結果: 消費者永遠讀不到這筆資料
+```
+
+❌ **錯誤 2: 索引更新順序錯誤**
+```cpp
+lfq.updateWriteIndex();  // ❌ 先更新索引
+*lfq.getNextToWriteTo() = data;  // ❌ 後寫入資料
+// 結果: 消費者可能讀到未初始化的資料(Race Condition)
+```
+
+✅ **正確做法**:
+```cpp
+auto* ptr = lfq.getNextToWriteTo();
+*ptr = data;  // 1. 先完成資料寫入
+lfq.updateWriteIndex();  // 2. 再更新索引(Memory Barrier 保證順序)
+```
+
+**效能關鍵點**:
+- 單次寫入延遲: **~10-20ns** (指標操作 + Memory Barrier)
+- 單次讀取延遲: **~10-20ns**
+- 零系統呼叫: 完全在用戶態完成
+- Cache 友善: Ring Buffer 連續記憶體佈局
+
+---
+
+### 8.5 Logger 使用範例 (logging_example.cpp)
+
+**📄 檔案位置**: `Chapter4/logging_example.cpp`
+
+**範例目的**: 展示如何記錄不同型別的資料
+
+**完整程式碼**:
+```cpp
+int main() {
+    using namespace Common;
+
+    // 準備測試資料
+    char c = 'd';
+    int i = 3;
+    unsigned long ul = 65;
+    float f = 3.4;
+    double d = 34.56;
+    const char* s = "test C-string";
+    std::string ss = "test string";
+
+    // 建立 Logger(啟動背景執行緒)
+    Logger logger("logging_example.log");
+
+    // 記錄不同型別(自動推導)
+    logger.log("Logging a char:% an int:% and an unsigned:%\n", c, i, ul);
+    logger.log("Logging a float:% and a double:%\n", f, d);
+    logger.log("Logging a C-string:'%'\n", s);
+    logger.log("Logging a string:'%'\n", ss);
+
+    // 程式結束時自動 Flush
+    return 0;
+}
+```
+
+**預期輸出** (logging_example.log):
+```
+Logging a char:d an int:3 and an unsigned:65
+Logging a float:3.4 and a double:34.56
+Logging a C-string:'test C-string'
+Logging a string:'test string'
+```
+
+**效能分析**:
+
+| 操作型別 | 延遲 | 說明 |
+|---------|------|------|
+| 基本型別(int, char) | ~50ns | 僅記憶體複製 |
+| 浮點數(float, double) | ~200ns | 需要格式化 |
+| C-string | ~100-300ns | 視字串長度 |
+| std::string | ~100-300ns | .data() + .size() |
+
+**與 printf 比較**:
+
+| 特性 | printf | Logger | 改善 |
+|------|--------|--------|------|
+| 記錄延遲 | ~1-2μs | ~50ns | **20-40x** |
+| 多執行緒安全 | 需 mutex | Lock-Free | 無競爭 |
+| 記憶體分配 | 動態 | 零分配 | 可預測 |
+| I/O 阻塞 | 是 | 否 | 背景寫入 |
+
+**背景執行緒行為**:
+```
+主執行緒:
+  logger.log() → 寫入 Lock-Free Queue → 立即返回(~50ns)
+
+背景執行緒:
+  每 10ms 檢查佇列
+  若有資料 → 批次寫入檔案(1 次 write() 寫入所有累積日誌)
+  I/O 開銷 ~1-2ms,主執行緒不受影響
+```
+
+**常見陷阱**:
+
+⚠️ **陷阱 1: 指標懸空**
+```cpp
+int local_var = 42;
+logger.log("Value: %\n", &local_var);  // ❌ 背景執行緒讀取時 local_var 可能已銷毀
+logger.log("Value: %\n", local_var);   // ✅ 複製值
+```
+
+⚠️ **陷阱 2: 字串過長**
+```cpp
+std::string huge_str(10000, 'x');  // 10KB 字串
+logger.log("%\n", huge_str);  // ⚠️ 可能超過緩衝區大小被截斷
+// 建議: 單筆日誌 < 1KB
+```
+
+⚠️ **陷阱 3: 佇列滿溢**
+```cpp
+// 高頻日誌(每秒 100 萬次)
+for (int i = 0; i < 1000000; ++i) {
+    logger.log("Tick %\n", i);  // ⚠️ 若背景寫入速度 < 生產速度,佇列會滿
+}
+// 解決: 增大 Queue 容量或降低日誌頻率
+```
+
+---
+
+### 8.6 Memory Pool 使用範例 (mem_pool_example.cpp)
+
+**📄 檔案位置**: `Chapter4/mem_pool_example.cpp`
+
+**範例目的**: 展示記憶體重用機制
+
+**完整程式碼**:
+```cpp
+int main() {
+    using namespace Common;
+
+    // 建立兩個 Memory Pool(各 50 個物件)
+    MemPool<double> prim_pool(50);
+    MemPool<MyStruct> struct_pool(50);
+
+    for (auto i = 0; i < 50; ++i) {
+        // O(1) 分配
+        auto p_ret = prim_pool.allocate(i);
+        auto s_ret = struct_pool.allocate(MyStruct{i, i+1, i+2});
+
+        std::cout << "allocated at: " << p_ret << std::endl;
+
+        // 每 5 個釋放一次(測試重用)
+        if (i % 5 == 0) {
+            prim_pool.deallocate(p_ret);
+            struct_pool.deallocate(s_ret);
+        }
+    }
+
+    return 0;
+}
+```
+
+**記憶體佈局**:
+```
+初始化時:
+  [obj0][obj1][obj2]...[obj49]  ← 連續記憶體
+  Free List: 0→1→2→...→49→null
+
+第 0 次分配:
+  分配: obj0 (位址 0x1000)
+  Free List: 1→2→...→49→null
+
+第 0 次釋放:
+  釋放: obj0
+  Free List: 0→1→2→...→49→null  ← obj0 插入頭部
+
+第 5 次分配:
+  分配: obj0 (位址 0x1000)  ← 重用!
+  Free List: 1→2→...→49→null
+```
+
+**預期輸出分析**:
+```
+allocated at: 0x1000  ← 第 0 次
+allocated at: 0x1008  ← 第 1 次
+allocated at: 0x1010  ← 第 2 次
+...
+allocated at: 0x1000  ← 第 5 次(重用第 0 次的位址)
+allocated at: 0x1030  ← 第 6 次(新位址)
+...
+allocated at: 0x1008  ← 第 10 次(重用第 1 次的位址)
+```
+
+**觀察重點**:
+- ✅ 記憶體位址循環出現(證明重用機制)
+- ✅ 位址始終在初始分配範圍內(0x1000~0x1190)
+- ✅ 無需向系統請求新記憶體
+
+**效能對比**:
+
+| 操作 | new/delete | MemPool | 加速比 |
+|------|-----------|---------|--------|
+| 分配 | ~100-500ns | ~10-20ns | **5-50x** |
+| 釋放 | ~50-200ns | ~5-10ns | **5-40x** |
+| 碎片化 | 嚴重 | 零碎片 | - |
+| 缺頁中斷 | 可能 | 不會 | - |
+
+**容量規劃公式**:
+```cpp
+Pool 大小 = (峰值併發數) × 1.2  // 20% 緩衝
+
+// 範例: 峰值有 1000 個活躍 Order
+MemPool<Order> order_pool(1200);
+```
+
+**常見陷阱**:
+
+❌ **陷阱 1: Pool 容量不足**
+```cpp
+MemPool<Order> pool(10);  // 只能容納 10 個
+for (int i = 0; i < 20; ++i) {
+    auto* obj = pool.allocate();  // 第 11 個會失敗,返回 nullptr
+    // ⚠️ 未檢查返回值會導致 Segfault
+}
+
+// ✅ 正確做法:
+if (auto* obj = pool.allocate(); obj != nullptr) {
+    // 使用 obj
+} else {
+    // 處理容量不足
+}
+```
+
+❌ **陷阱 2: 重複釋放(Double Free)**
+```cpp
+auto* obj = pool.allocate();
+pool.deallocate(obj);
+pool.deallocate(obj);  // ❌ 破壞 Free List 結構,未定義行為
+```
+
+❌ **陷阱 3: 釋放錯誤的指標**
+```cpp
+auto* obj = new Order();
+pool.deallocate(obj);  // ❌ obj 不是從 pool 分配的
+```
+
+---
+
+### 8.7 TCP Socket 完整範例 (socket_example.cpp)
+
+**📄 檔案位置**: `Chapter4/socket_example.cpp`
+
+**範例目的**: 展示客戶端-伺服器通訊與 Epoll 事件循環
+
+**系統架構**:
+```
+┌─────────────┐                    ┌─────────────┐
+│ TCPServer   │                    │ TCPSocket   │
+│ (127.0.0.1: │◄───────────────────┤ Client 0    │
+│  12345)     │  connect()         └─────────────┘
+│             │                    ┌─────────────┐
+│ Epoll       │◄───────────────────┤ Client 1    │
+│ 事件循環    │                    └─────────────┘
+│             │                           ...
+│             │                    ┌─────────────┐
+│             │◄───────────────────┤ Client 4    │
+└─────────────┘                    └─────────────┘
+```
+
+**執行流程**:
+
+**階段 1: 初始化**
+```cpp
+// 1. 建立伺服器
+TCPServer server(logger_);
+server.recv_callback_ = tcpServerRecvCallback;  // 設定回調
+server.listen("lo", 12345);  // 監聽 127.0.0.1:12345
+
+// 2. 建立 5 個客戶端連線
+for (size_t i = 0; i < 5; ++i) {
+    clients[i] = new TCPSocket(logger_);
+    clients[i]->connect("127.0.0.1", "lo", 12345, false);
+    server.poll();  // ⚡ 關鍵: 觸發 accept()
+}
+```
+
+**階段 2: 訊息交換**
+```cpp
+for (auto itr = 0; itr < 5; ++itr) {           // 5 輪
+    for (size_t i = 0; i < 5; ++i) {           // 5 個客戶端
+        // 客戶端發送訊息
+        std::string msg = "CLIENT-[" + std::to_string(i) + "]";
+        clients[i]->send(msg.data(), msg.length());  // 累積到緩衝區
+        clients[i]->sendAndRecv();  // 批次發送 + 接收
+
+        std::this_thread::sleep_for(500ms);
+
+        // 伺服器處理事件
+        server.poll();        // epoll_wait() → EPOLLIN 事件 → recv_callback_
+        server.sendAndRecv(); // 批次發送回應
+    }
+}
+// 總共: 5 輪 × 5 客戶端 = 25 筆訊息
+```
+
+**Epoll 事件流程**:
+```
+1. clients[0]->sendAndRecv()
+   └─→ send() 發送資料到核心緩衝區
+
+2. server.poll()
+   └─→ epoll_wait() 檢測到 clients[0] 的 EPOLLIN 事件
+       └─→ recv() 讀取資料
+           └─→ 觸發 tcpServerRecvCallback
+               └─→ socket->send(reply)  // 累積回應到緩衝區
+
+3. server.sendAndRecv()
+   └─→ send() 批次發送所有回應
+```
+
+**回調函數範例**:
+```cpp
+// 伺服器接收回調
+auto tcpServerRecvCallback = [&](TCPSocket* socket, Nanos rx_time) {
+    // 1. 讀取客戶端訊息
+    std::string msg(socket->inbound_data_.data(), socket->next_rcv_valid_index_);
+    socket->next_rcv_valid_index_ = 0;  // 重置緩衝區
+
+    // 2. 建立回應(Echo Server)
+    std::string reply = "Server received: " + msg;
+
+    // 3. 累積回應到發送緩衝區(不立即發送)
+    socket->send(reply.data(), reply.length());
+};
+
+// 客戶端接收回調
+auto tcpClientRecvCallback = [&](TCPSocket* socket, Nanos rx_time) {
+    std::string msg(socket->inbound_data_.data(), socket->next_rcv_valid_index_);
+    socket->next_rcv_valid_index_ = 0;
+
+    std::cout << "Client received: " << msg << " (rx_time: " << rx_time << "ns)" << std::endl;
+};
+```
+
+**預期輸出**:
+```
+Creating TCPServer on iface:lo port:12345
+Connecting TCPClient-[0] ...
+Connecting TCPClient-[1] ...
+...
+Sending TCPClient-[0] CLIENT-[0] : Sending 0
+TCPServer::defaultRecvCallback() socket:5 len:28 rx:1234567890
+TCPSocket::defaultRecvCallback() ... msg:Server received: CLIENT-[0] : Sending 0
+...
+(重複 25 次)
+```
+
+**效能分析**:
+
+| 操作 | 延遲 | 說明 |
+|------|------|------|
+| sendAndRecv() | ~1-2μs | 無資料時(系統呼叫開銷) |
+| sendAndRecv() | ~5-10μs | 有資料時(含複製) |
+| poll() | ~1-2μs | 無事件時(立即返回) |
+| poll() | ~5-20μs | 有事件時(視連線數) |
+| Loopback RTT | ~10-50μs | 本地迴環 |
+
+**常見陷阱**:
+
+⚠️ **陷阱 1: 忘記呼叫 poll()**
+```cpp
+clients[i]->sendAndRecv();  // 客戶端發送
+// ❌ 忘記 server.poll(),伺服器不會處理!
+server.sendAndRecv();  // 無法發送回應(因為沒接收到資料)
+
+// ✅ 正確順序:
+clients[i]->sendAndRecv();
+server.poll();         // 處理接收事件
+server.sendAndRecv();  // 發送回應
+```
+
+⚠️ **陷阱 2: 回調中執行耗時操作**
+```cpp
+auto callback = [](TCPSocket* socket, Nanos rx_time) {
+    // ❌ 阻塞事件循環
+    query_database();  // 可能耗時數毫秒
+    process_complex_logic();
+};
+
+// ✅ 正確做法: 放入工作佇列
+auto callback = [](TCPSocket* socket, Nanos rx_time) {
+    work_queue.push(socket->inbound_data_);  // 快速返回
+};
+```
+
+**進階優化**:
+1. **SO_REUSEPORT**: 多執行緒監聽同一埠
+2. **TCP_QUICKACK**: 禁用延遲 ACK(降低 ~40ms 延遲)
+3. **CPU Affinity**: 綁定執行緒到特定核心
+
+---
+
+### 8.8 Thread CPU Affinity 範例 (thread_example.cpp)
+
+**📄 檔案位置**: `Chapter4/thread_example.cpp`
+
+**範例目的**: 展示 CPU 核心綁定技術
+
+**完整程式碼**:
+```cpp
+int main() {
+    using namespace Common;
+
+    // 執行緒 1: 不綁定核心(作業系統自由排程)
+    auto t1 = createAndStartThread(-1, "dummyFunction1",
+                                   dummyFunction, 12, 21, false);
+
+    // 執行緒 2: 綁定到 CPU 核心 1
+    auto t2 = createAndStartThread(1, "dummyFunction2",
+                                   dummyFunction, 15, 51, true);
+
+    // 等待執行緒完成
+    t1->join();
+    t2->join();
+
+    return 0;
+}
+```
+
+**CPU Affinity 原理**:
+```cpp
+// 底層實作(pthread_setaffinity_np)
+cpu_set_t cpuset;
+CPU_ZERO(&cpuset);
+CPU_SET(1, &cpuset);  // 允許在核心 1 執行
+pthread_setaffinity_np(thread.native_handle(), sizeof(cpuset), &cpuset);
+```
+
+**預期行為**:
+
+| 執行緒 | CPU 綁定 | PSR (Last Used CPU) | 行為 |
+|-------|---------|---------------------|------|
+| t1 | 無(-1) | 0, 1, 2, 3, ... | 可能在核心間移動 |
+| t2 | 核心 1 | 1, 1, 1, 1, ... | 固定在核心 1 |
+
+**驗證方法**:
+```bash
+# 執行程式
+./thread_example &
+PID=$!
+
+# 查看執行緒在哪個核心執行
+ps -o pid,tid,psr,comm -p $PID
+# PSR 欄位: 當前 CPU 核心編號
+
+# 或使用 top
+top -H -p $PID  # 按 'f' 選擇 P (Last Used CPU)
+```
+
+**Context Switch 開銷分析**:
+
+| 成本類型 | 延遲 | 說明 |
+|---------|------|------|
+| 直接成本 | ~1-5μs | 保存/恢復暫存器、切換頁表 |
+| 間接成本 | ~10-100μs | L1/L2 Cache Miss |
+
+**CPU Affinity 效能提升**:
+
+| 場景 | 無綁定 | 綁定核心 | 改善 |
+|------|--------|----------|------|
+| 高頻熱路徑(每秒 100 萬次) | ~50ns | ~20ns | **2.5x** |
+| Cache Miss 率 | ~10% | ~1% | **10x** |
+| 延遲 Jitter (P99) | ~500ns | ~50ns | **10x** |
+
+**NUMA 系統考量**:
+```bash
+# 檢查 NUMA 拓撲
+numactl --hardware
+# 輸出:
+# node 0 cpus: 0 2 4 6 8 10
+# node 1 cpus: 1 3 5 7 9 11
+```
+
+```cpp
+// ✅ 正確: 記憶體在 Node 0,執行緒綁定到 Node 0 的核心
+void* data = numa_alloc_onnode(size, 0);  // 分配在 Node 0
+createAndStartThread(0, "worker", process, data);  // 綁定核心 0(Node 0)
+
+// ❌ 錯誤: 跨 NUMA Node 存取(延遲 2-3x)
+void* data = numa_alloc_onnode(size, 0);  // 分配在 Node 0
+createAndStartThread(1, "worker", process, data);  // 綁定核心 1(Node 1)
+```
+
+**適合綁定核心的執行緒**:
+- ✅ 撮合引擎執行緒(交易系統)
+- ✅ 網路接收執行緒(高頻交易)
+- ✅ 渲染執行緒(遊戲引擎)
+- ✅ 控制迴路執行緒(即時系統)
+
+**不應該綁定核心的執行緒**:
+- ❌ 日誌執行緒(不頻繁執行)
+- ❌ 監控執行緒(低優先級)
+- ❌ 背景清理執行緒
+- ❌ 短暫存在的工作執行緒
+
+**進階優化: 核心隔離**
+```bash
+# 開機參數: 保留核心 1-3 給應用程式
+# 編輯 /etc/default/grub
+GRUB_CMDLINE_LINUX="isolcpus=1,2,3 nohz_full=1,2,3"
+
+# 效果: 作業系統不會在這些核心上排程其他行程
+```
+
+**進階優化: 中斷親和性**
+```bash
+# 將網卡中斷路由到核心 0,避免干擾核心 1
+IRQ=$(cat /proc/interrupts | grep eth0 | cut -d: -f1)
+echo 1 > /proc/irq/$IRQ/smp_affinity  # Bitmask: 0x1 = 核心 0
+```
+
+---
+
 ## 九、與標準庫的比較
 
 ### 9.1 Lock-Free Queue vs std::queue
