@@ -36,6 +36,7 @@
 - [C 語言終極優化](02-system/c-optimization-complete.md) - 位元運算、查表法、SIMD、Lock-free、FPGA
 - [大頁面與執行緒模型](02-system/hugepages-threading.md) - HugePages、TLB 優化、執行緒設計
 - [TSE Receiver 優化指南](02-system/TSE_Receiver_Optimization_Guide.md) - I/O 模式對比、Blocking/Busy Polling、HFT 級優化方案
+- [TSE Receiver 優化詳解與程式碼對照分析](02-system/TSE_RECEIVER_OPTIMIZATION_ANALYSIS.md) - 從參考實作到低延遲版本的程式碼級分析
 
 ---
 
