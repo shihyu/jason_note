@@ -1,0 +1,380 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>TSE Receiver 優化詳解與程式碼對照分析 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="tse-receiver-優化詳解與程式碼對照分析"><a class="header" href="#tse-receiver-優化詳解與程式碼對照分析">TSE Receiver 優化詳解與程式碼對照分析</a></h1>
+<h2 id="1-執行摘要"><a class="header" href="#1-執行摘要">1. 執行摘要</a></h2>
+<p>本文件詳細說明將 TSE 報價接收程式從參考實作 (<code>tse_receiver.c</code>) 升級為低延遲基準測試版本 (<code>tse_receiver_benchmark.c</code>) 的關鍵技術細節。透過程式碼層級的優化與系統層級的調優，我們成功將 <strong>P99 延遲從 14.32 ms 降低至 5.33 ms</strong>，改善幅度達 <strong>62.8%</strong>。</p>
+<hr />
+<h2 id="2-程式碼層級優化-code-level-optimizations"><a class="header" href="#2-程式碼層級優化-code-level-optimizations">2. 程式碼層級優化 (Code-Level Optimizations)</a></h2>
+<h3 id="21-引入-non-blocking-io-busy-polling"><a class="header" href="#21-引入-non-blocking-io-busy-polling">2.1 引入 Non-blocking I/O (Busy Polling)</a></h3>
+<p>傳統的 Blocking I/O 會導致進程進入睡眠狀態，等待數據到達時再由 kernel 喚醒，這個過程包含上下文切換 (Context Switch) 開銷。我們改用 Non-blocking 模式配合 Busy Polling 來消除此開銷。</p>
+<p><strong>優化前 (<code>tse_receiver.c</code>)</strong>:</p>
+<pre><code class="language-c">// 傳統阻塞式接收
+// 進程會在這裡掛起 (Sleep)，直到有數據到達
+int nbytes = recvfrom(sockfd, buf, BUF_SIZE, 0, (struct sockaddr*)&amp;src_addr, &amp;addrlen);
+</code></pre>
+<p><strong>優化後 (<code>tse_receiver_benchmark.c</code>)</strong>:</p>
+<pre><code class="language-c">// 1. 設定 Socket 為 Non-blocking
+if (g_config.use_nonblocking) {
+    int flags = fcntl(sockfd, F_GETFL, 0);
+    fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+}
+
+// ... 在接收迴圈中 ...
+
+// 2. 使用 MSG_DONTWAIT (雙重保險)
+int nbytes = recvfrom(sockfd, buf, BUF_SIZE,
+                      g_config.use_nonblocking ? MSG_DONTWAIT : 0,
+                      (struct sockaddr*)&amp;src_addr, &amp;addrlen);
+
+if (nbytes &lt; 0) {
+    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        // 3. Busy Polling: 沒數據不睡覺，立刻重試
+        // 雖然吃滿 100% CPU，但反應最快
+        continue;
+    }
+    // ... 錯誤處理 ...
+}
+</code></pre>
+<h3 id="22-cpu-親和性綁定-cpu-affinity"><a class="header" href="#22-cpu-親和性綁定-cpu-affinity">2.2 CPU 親和性綁定 (CPU Affinity)</a></h3>
+<p>為了避免作業系統將進程在不同 CPU 核心間遷移 (Migration)，導致 L1/L2 Cache 失效，我們強制將程式綁定在特定核心。</p>
+<p><strong>優化前</strong>:</p>
+<ul>
+<li>無此代碼。作業系統排程器自由決定程式跑在哪個核。</li>
+</ul>
+<p><strong>優化後</strong>:</p>
+<pre><code class="language-c">// 設定 CPU Affinity
+int SetCPUAffinity(int cpu_id)
+{
+    cpu_set_t cpuset;
+    CPU_ZERO(&amp;cpuset);
+    CPU_SET(cpu_id, &amp;cpuset);
+
+    if (sched_setaffinity(0, sizeof(cpuset), &amp;cpuset) == -1) {
+        perror("設置 CPU affinity 失敗");
+        return -1;
+    }
+    return 0;
+}
+
+// 在 main() 中呼叫
+if (g_config.cpu_affinity &gt;= 0) {
+    SetCPUAffinity(g_config.cpu_affinity);
+}
+</code></pre>
+<h3 id="23-即時排程策略-real-time-scheduling"><a class="header" href="#23-即時排程策略-real-time-scheduling">2.3 即時排程策略 (Real-time Scheduling)</a></h3>
+<p>將進程提升為即時優先級，避免被其他背景程式搶佔 CPU 時間片。</p>
+<p><strong>優化後</strong>:</p>
+<pre><code class="language-c">int SetRealtimeScheduling(void)
+{
+    struct sched_param param;
+    param.sched_priority = 80; // 高優先級
+
+    // 使用 FIFO 策略：除非自己讓出 CPU 或被更高優先級搶佔，否則一直執行
+    if (sched_setscheduler(0, SCHED_FIFO, &amp;param) == -1) {
+        perror("設置即時排程失敗");
+        return -1;
+    }
+    return 0;
+}
+</code></pre>
+<h3 id="24-統計與延遲測量-latency-measurement"><a class="header" href="#24-統計與延遲測量-latency-measurement">2.4 統計與延遲測量 (Latency Measurement)</a></h3>
+<p>為了精確量化優化效果，我們將原本的 <code>PrintQuote</code> (單純印出) 替換為高效能的記憶體內統計。</p>
+<p><strong>優化前</strong>:</p>
+<pre><code class="language-c">// 每次接收都 printf，I/O 操作極慢，嚴重拖累接收效能
+PrintQuote(&amp;quote);
+</code></pre>
+<p><strong>優化後</strong>:</p>
+<pre><code class="language-c">// 1. 僅寫入記憶體陣列，極快
+AddLatencySample(q-&gt;CalibratedLatencyMicros);
+
+// 2. 僅在收集完畢或每隔 N 筆才做一次 I/O 輸出
+if (g_stats.count % STAT_INTERVAL == 0) {
+    PrintStatistics();
+}
+</code></pre>
+<hr />
+<h2 id="3-系統層級優化-system-level-optimizations"><a class="header" href="#3-系統層級優化-system-level-optimizations">3. 系統層級優化 (System-Level Optimizations)</a></h2>
+<p>程式碼寫得再好，如果作業系統配置不當，效果也會大打折扣。以下是配合程式碼的關鍵系統設定。</p>
+<h3 id="31-中斷親和性-irq-affinity"><a class="header" href="#31-中斷親和性-irq-affinity">3.1 中斷親和性 (IRQ Affinity)</a></h3>
+<p>這是本次優化<strong>最關鍵</strong>的一步。原本網卡中斷 (IRQ) 分散在 CPU3，而程式跑在 CPU2，導致跨核通訊 (Cache Coherency) 延遲。</p>
+<ul>
+<li><strong>操作</strong>: 將網卡的所有 IRQ 隊列綁定到 <strong>CPU1</strong>。</li>
+<li><strong>指令</strong>:
+<pre><code class="language-bash">echo 1 &gt; /proc/irq/62/smp_affinity_list
+# ... 對所有相關 IRQ 重複此操作 ...
+</code></pre>
+</li>
+<li><strong>配合程式</strong>: 使用 <code>-c 1</code> 參數將程式也綁定到 <strong>CPU1</strong>。
+<pre><code class="language-bash">taskset -c 1 ./tse_receiver_benchmark ...
+</code></pre>
+</li>
+<li><strong>結果</strong>: 數據從網卡 -&gt; Driver -&gt; 用戶空間程式，全程在同一顆 CPU 的 L1/L2 Cache 中流動，零拷貝、零跨核。</li>
+</ul>
+<h3 id="32-禁用中斷合併-disable-interrupt-coalescing"><a class="header" href="#32-禁用中斷合併-disable-interrupt-coalescing">3.2 禁用中斷合併 (Disable Interrupt Coalescing)</a></h3>
+<p>網卡預設會累積幾個封包或等待幾微秒才發一次中斷，以節省 CPU。這對吞吐量有利，但對延遲是災難。</p>
+<ul>
+<li><strong>操作</strong>: <code>ethtool -C ens224 rx-usecs 0</code></li>
+<li><strong>效果</strong>: 每個封包到達，網卡立刻發中斷，程式立刻收到。</li>
+</ul>
+<h3 id="33-擴大-socket-緩衝區"><a class="header" href="#33-擴大-socket-緩衝區">3.3 擴大 Socket 緩衝區</a></h3>
+<p>防止微秒級的流量突波導致丟包。</p>
+<ul>
+<li><strong>系統層</strong>: <code>ethtool -G ens224 rx 4096</code> (網卡硬體環)</li>
+<li><strong>程式層</strong>:
+<pre><code class="language-c">int rcvbuf = 8 * 1024 * 1024;  // 8 MB
+setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &amp;rcvbuf, sizeof(rcvbuf));
+</code></pre>
+</li>
+</ul>
+<hr />
+<h2 id="4-優化前後效能對比表"><a class="header" href="#4-優化前後效能對比表">4. 優化前後效能對比表</a></h2>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">指標</th><th style="text-align: left">優化前 (Baseline)</th><th style="text-align: left">優化後 (Optimized)</th><th style="text-align: left">改善說明</th></tr></thead><tbody>
+<tr><td style="text-align: left"><strong>P99 延遲</strong></td><td style="text-align: left">14.32 ms</td><td style="text-align: left"><strong>5.33 ms</strong></td><td style="text-align: left"><strong>減少 63%</strong>，主要歸功於 IRQ/CPU 綁定消除跨核開銷。</td></tr>
+<tr><td style="text-align: left"><strong>P999 延遲</strong></td><td style="text-align: left">15.90 ms</td><td style="text-align: left"><strong>6.01 ms</strong></td><td style="text-align: left"><strong>尾端延遲大幅收斂</strong>，系統抖動極小。</td></tr>
+<tr><td style="text-align: left"><strong>&lt; 1μs 封包比例</strong></td><td style="text-align: left">31.0%</td><td style="text-align: left"><strong>83.8%</strong></td><td style="text-align: left">絕大多數封包都能即時處理，不再堆積。</td></tr>
+<tr><td style="text-align: left"><strong>CPU 使用率</strong></td><td style="text-align: left">低 (Sleeping)</td><td style="text-align: left"><strong>100% (如果是 Non-blocking)</strong></td><td style="text-align: left">用 CPU 資源換取極致低延遲 (Busy Polling 代價)。</td></tr>
+</tbody></table>
+</div>
+<h2 id="5-結論"><a class="header" href="#5-結論">5. 結論</a></h2>
+<p>透過將程式邏輯 (Non-blocking, Affinity) 與系統特性 (IRQ, Ethtool) 緊密結合，我們成功打造了一個 kernel-based 的低延遲接收方案。目前的瓶頸已轉移至 Linux Kernel 本身的網路堆疊 (Network Stack)，若需進一步突破 (如 &lt; 1ms)，則需考慮 DPDK 等 Kernel Bypass 技術。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../hft/02-system/TSE_Receiver_Optimization_Guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../hft/02-system/system-optimization.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../hft/02-system/TSE_Receiver_Optimization_Guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../hft/02-system/system-optimization.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../../ace.js"></script>
+        <script src="../../mode-rust.js"></script>
+        <script src="../../editor.js"></script>
+        <script src="../../theme-dawn.js"></script>
+        <script src="../../theme-tomorrow_night.js"></script>
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../../mermaid.min.js"></script>
+        <script src="../../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

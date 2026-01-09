@@ -1,0 +1,1675 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>TSE Receiver 優化指南 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="tse-receiver-完整優化指南"><a class="header" href="#tse-receiver-完整優化指南">TSE Receiver 完整優化指南</a></h1>
+<h2 id="-目錄"><a class="header" href="#-目錄">📋 目錄</a></h2>
+<ol>
+<li><a href="#io-%E6%A8%A1%E5%BC%8F%E5%B0%8D%E6%AF%94%E5%88%86%E6%9E%90">I/O 模式對比分析</a></li>
+<li><a href="#%E7%95%B6%E5%89%8D%E7%A8%8B%E5%BC%8F%E7%8B%80%E6%85%8B%E5%88%86%E6%9E%90">當前程式狀態分析</a></li>
+<li><a href="#%E5%84%AA%E5%8C%96%E6%96%B9%E6%A1%88%E7%B8%BD%E8%A6%BD">優化方案總覽</a></li>
+<li><a href="#%E6%96%B9%E6%A1%88-1-blocking-io-%E8%BC%95%E9%87%8F%E5%84%AA%E5%8C%96">方案 1: Blocking I/O 輕量優化</a></li>
+<li><a href="#%E6%96%B9%E6%A1%88-2-non-blocking--busy-polling-hft-%E7%B4%9A">方案 2: Non-blocking + Busy Polling (HFT 級)</a></li>
+<li><a href="#%E6%96%B9%E6%A1%88-3-%E5%AE%8C%E6%95%B4-hft-%E7%89%88%E6%9C%AC">方案 3: 完整 HFT 版本</a></li>
+<li><a href="#%E6%80%A7%E8%83%BD%E5%B0%8D%E6%AF%94%E8%88%87%E9%81%B8%E6%93%87%E5%BB%BA%E8%AD%B0">性能對比與選擇建議</a></li>
+<li><a href="#%E7%B3%BB%E7%B5%B1%E7%B4%9A%E5%84%AA%E5%8C%96%E9%85%8D%E7%BD%AE">系統級優化配置</a></li>
+<li><a href="#%E7%9B%A3%E6%8E%A7%E8%88%87%E8%AA%BF%E8%A9%A6%E5%B7%A5%E5%85%B7">監控與調試工具</a></li>
+</ol>
+<hr />
+<h2 id="io-模式對比分析"><a class="header" href="#io-模式對比分析">I/O 模式對比分析</a></h2>
+<h3 id="延遲組成分析"><a class="header" href="#延遲組成分析">延遲組成分析</a></h3>
+<pre><code>總延遲 = 網路傳輸時間 + 內核處理時間 + 應用層處理時間
+</code></pre>
+<h3 id="三種-io-模式對比"><a class="header" href="#三種-io-模式對比">三種 I/O 模式對比</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>I/O 模式</th><th>延遲路徑</th><th>P50 延遲</th><th>P99 延遲</th><th>CPU 使用率</th></tr></thead><tbody>
+<tr><td><strong>Blocking I/O</strong></td><td>數據到達 → 內核喚醒線程 → recvfrom 返回 → 處理</td><td>2-7 μs</td><td>10-50 μs</td><td>~0%</td></tr>
+<tr><td><strong>epoll</strong></td><td>數據到達 → 內核喚醒 → epoll_wait 返回 → recvfrom → 處理</td><td>3-10 μs</td><td>15-60 μs</td><td>~0%</td></tr>
+<tr><td><strong>Busy Polling</strong></td><td>數據到達 → (程式已運行) → recvfrom 立即返回 → 處理</td><td>0.5-2 μs</td><td>3-10 μs</td><td>100%</td></tr>
+</tbody></table>
+</div>
+<h3 id="為什麼-epoll-不適合這個場景"><a class="header" href="#為什麼-epoll-不適合這個場景">為什麼 epoll 不適合這個場景？</a></h3>
+<h4 id="-epoll-的問題"><a class="header" href="#-epoll-的問題">❌ epoll 的問題</a></h4>
+<ol>
+<li>
+<p><strong>單一 Socket 場景</strong></p>
+<ul>
+<li>當前只監聽 1 個 UDP multicast socket</li>
+<li>epoll 優勢是管理數千個並發連線</li>
+<li>單一 socket 時，epoll 只會增加系統調用開銷</li>
+</ul>
+</li>
+<li>
+<p><strong>增加延遲</strong></p>
+<pre><code>Blocking: 數據到達 → 立即處理 (2 μs)
+epoll:    數據到達 → epoll_wait → recvfrom → 處理 (3-4 μs)
+</code></pre>
+</li>
+<li>
+<p><strong>UDP 特性</strong></p>
+<ul>
+<li>UDP 無狀態，無需管理連線</li>
+<li>數據到達時 blocking recvfrom 立即喚醒</li>
+<li>沒有 TCP 的連線維護開銷</li>
+</ul>
+</li>
+</ol>
+<h4 id="-正確選擇"><a class="header" href="#-正確選擇">✅ 正確選擇</a></h4>
+<ul>
+<li><strong>一般場景</strong> → Blocking I/O</li>
+<li><strong>HFT 場景</strong> → Busy Polling</li>
+<li><strong>永遠不用</strong> → epoll (單一 socket)</li>
+</ul>
+<hr />
+<h2 id="當前程式狀態分析"><a class="header" href="#當前程式狀態分析">當前程式狀態分析</a></h2>
+<h3 id="目前使用的-io-模式blocking-io"><a class="header" href="#目前使用的-io-模式blocking-io">目前使用的 I/O 模式：<strong>Blocking I/O</strong></a></h3>
+<h4 id="證據-1-socket-創建"><a class="header" href="#證據-1-socket-創建">證據 1: Socket 創建</a></h4>
+<pre><code class="language-c">// 第 289 行 - 默認創建阻塞式 socket
+sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+// ❌ 沒有設置 O_NONBLOCK
+</code></pre>
+<h4 id="證據-2-recvfrom-調用"><a class="header" href="#證據-2-recvfrom-調用">證據 2: recvfrom 調用</a></h4>
+<pre><code class="language-c">// 第 360 行 - flags = 0 表示阻塞模式
+nbytes = recvfrom(sockfd, buf, BUF_SIZE, 0,  // ← 阻塞式
+                  (struct sockaddr*)&amp;src_addr, &amp;addrlen);
+</code></pre>
+<h4 id="證據-3-錯誤處理邏輯"><a class="header" href="#證據-3-錯誤處理邏輯">證據 3: 錯誤處理邏輯</a></h4>
+<pre><code class="language-c">if (nbytes &lt; 0) {
+    perror("接收錯誤");
+    break;  // ❌ 沒有處理 EAGAIN，表示不是 non-blocking
+}
+</code></pre>
+<h3 id="驗證方法"><a class="header" href="#驗證方法">驗證方法</a></h3>
+<h4 id="方法-1-使用-strace"><a class="header" href="#方法-1-使用-strace">方法 1: 使用 strace</a></h4>
+<pre><code class="language-bash">strace -e trace=recvfrom ./tse_receiver 2&gt;&amp;1 | head -20
+</code></pre>
+<p><strong>預期輸出 (Blocking):</strong></p>
+<pre><code>recvfrom(3, &lt;未完成&gt;...  ← 程式在此等待
+recvfrom(3, "...", 5120, 0, ...) = 256  ← 數據到達後返回
+</code></pre>
+<h4 id="方法-2-查看-socket-flags"><a class="header" href="#方法-2-查看-socket-flags">方法 2: 查看 socket flags</a></h4>
+<pre><code class="language-c">int flags = fcntl(sockfd, F_GETFL, 0);
+if (flags &amp; O_NONBLOCK) {
+    printf("Non-blocking\n");
+} else {
+    printf("Blocking\n");  // ← 會印這個
+}
+</code></pre>
+<h4 id="方法-3-觀察-cpu-使用率"><a class="header" href="#方法-3-觀察-cpu-使用率">方法 3: 觀察 CPU 使用率</a></h4>
+<pre><code class="language-bash">top -p $(pgrep tse_receiver)
+# Blocking: CPU ~0%
+# Busy Polling: CPU ~100%
+</code></pre>
+<hr />
+<h2 id="優化方案總覽"><a class="header" href="#優化方案總覽">優化方案總覽</a></h2>
+<h3 id="方案對比矩陣"><a class="header" href="#方案對比矩陣">方案對比矩陣</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>方案</th><th>複雜度</th><th>延遲改善</th><th>CPU 成本</th><th>適用場景</th><th>開發時間</th></tr></thead><tbody>
+<tr><td><strong>方案 1: Blocking 輕量優化</strong></td><td>低</td><td>20-30%</td><td>無</td><td>一般行情接收</td><td>1 小時</td></tr>
+<tr><td><strong>方案 2: Busy Polling</strong></td><td>中</td><td>70-80%</td><td>高 (100%)</td><td>高頻交易</td><td>2 小時</td></tr>
+<tr><td><strong>方案 3: 完整 HFT</strong></td><td>中</td><td>80-90%</td><td>高 (100%)</td><td>專業 HFT</td><td>3 小時</td></tr>
+<tr><td><strong>DPDK (不推薦)</strong></td><td>極高</td><td>90-95%</td><td>極高</td><td>超高頻</td><td>數週</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="方案-1-blocking-io-輕量優化"><a class="header" href="#方案-1-blocking-io-輕量優化">方案 1: Blocking I/O 輕量優化</a></h2>
+<p><strong>適用場景:</strong> 一般行情接收、量化交易回測、數據分析</p>
+<p><strong>延遲改善:</strong> 20-30% (從 3-7 μs → 2-5 μs)</p>
+<p><strong>CPU 成本:</strong> 幾乎無 (~0%)</p>
+<h3 id="優化-1-內核時間戳-so_timestampns"><a class="header" href="#優化-1-內核時間戳-so_timestampns">優化 1: 內核時間戳 (SO_TIMESTAMPNS)</a></h3>
+<p><strong>效果:</strong> 消除用戶態時間戳誤差，精度達到納秒級</p>
+<pre><code class="language-c">// ========================================
+// 在 socket 創建後添加
+// ========================================
+
+int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+// 1. 啟用內核時間戳
+int ts_flag = 1;
+if (setsockopt(sockfd, SOL_SOCKET, SO_TIMESTAMPNS, &amp;ts_flag, sizeof(ts_flag)) &lt; 0) {
+    perror("setsockopt SO_TIMESTAMPNS");
+}
+
+printf("✓ 啟用內核時間戳 (SO_TIMESTAMPNS)\n");
+</code></pre>
+<pre><code class="language-c">// ========================================
+// 修改接收邏輯，使用 recvmsg 替代 recvfrom
+// ========================================
+
+// 準備 recvmsg 所需結構
+struct msghdr msg;
+struct iovec iov;
+char ctrl_buf[CMSG_SPACE(sizeof(struct timespec))];
+struct timespec kernel_ts;
+
+memset(&amp;msg, 0, sizeof(msg));
+iov.iov_base = buf;
+iov.iov_len = BUF_SIZE;
+msg.msg_iov = &amp;iov;
+msg.msg_iovlen = 1;
+msg.msg_control = ctrl_buf;
+msg.msg_controllen = sizeof(ctrl_buf);
+msg.msg_name = &amp;src_addr;
+msg.msg_namelen = sizeof(src_addr);
+
+// 接收數據
+nbytes = recvmsg(sockfd, &amp;msg, 0);
+
+if (nbytes &lt; 0) {
+    perror("recvmsg");
+    break;
+}
+
+// 解析內核時間戳
+int got_kernel_ts = 0;
+for (struct cmsghdr *cmsg = CMSG_FIRSTHDR(&amp;msg); 
+     cmsg != NULL; 
+     cmsg = CMSG_NXTHDR(&amp;msg, cmsg)) {
+    
+    if (cmsg-&gt;cmsg_level == SOL_SOCKET &amp;&amp; 
+        cmsg-&gt;cmsg_type == SO_TIMESTAMPNS) {
+        
+        memcpy(&amp;kernel_ts, CMSG_DATA(cmsg), sizeof(struct timespec));
+        got_kernel_ts = 1;
+        break;
+    }
+}
+
+// 使用內核時間戳計算延遲
+long long local_timestamp_micros;
+if (got_kernel_ts) {
+    // 使用內核時間戳（更精確）
+    local_timestamp_micros = (long long)kernel_ts.tv_sec * 1000000LL + 
+                            kernel_ts.tv_nsec / 1000;
+} else {
+    // 降級到用戶態時間戳
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &amp;ts);
+    local_timestamp_micros = (long long)ts.tv_sec * 1000000LL + 
+                            ts.tv_nsec / 1000;
+}
+
+// 後續處理...
+</code></pre>
+<h3 id="優化-2-cpu-綁核-cpu-affinity"><a class="header" href="#優化-2-cpu-綁核-cpu-affinity">優化 2: CPU 綁核 (CPU Affinity)</a></h3>
+<p><strong>效果:</strong> 減少 CPU 遷移，降低 cache miss，延遲降低 10-20%</p>
+<pre><code class="language-c">#define _GNU_SOURCE
+#include &lt;sched.h&gt;
+#include &lt;pthread.h&gt;
+
+// ========================================
+// 在 main 函數開頭添加
+// ========================================
+
+/**
+ * 綁定到指定 CPU 核心
+ * 建議：使用 CPU 2 或更高（避開 CPU 0/1，系統常用）
+ */
+void bind_to_cpu(int cpu_id) {
+    cpu_set_t cpuset;
+    CPU_ZERO(&amp;cpuset);
+    CPU_SET(cpu_id, &amp;cpuset);
+    
+    if (pthread_setaffinity_np(pthread_self(), sizeof(cpuset), &amp;cpuset) != 0) {
+        perror("pthread_setaffinity_np");
+        fprintf(stderr, "警告: CPU 綁核失敗\n");
+        return;
+    }
+    
+    printf("✓ 線程已綁定到 CPU %d\n", cpu_id);
+}
+
+int main() {
+    // 綁定到 CPU 2
+    bind_to_cpu(2);
+    
+    // 其餘代碼...
+}
+</code></pre>
+<h3 id="優化-3-增大接收緩衝區"><a class="header" href="#優化-3-增大接收緩衝區">優化 3: 增大接收緩衝區</a></h3>
+<p><strong>效果:</strong> 避免突發流量導致的丟包</p>
+<pre><code class="language-c">// ========================================
+// 在 bind 之前添加
+// ========================================
+
+// 增大接收緩衝區到 16MB
+int rcvbuf = 16 * 1024 * 1024;
+if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &amp;rcvbuf, sizeof(rcvbuf)) &lt; 0) {
+    perror("setsockopt SO_RCVBUF");
+}
+
+// 驗證實際設置的大小
+socklen_t len = sizeof(rcvbuf);
+getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &amp;rcvbuf, &amp;len);
+printf("✓ 接收緩衝區: %d bytes (%.2f MB)\n", rcvbuf, rcvbuf / 1024.0 / 1024.0);
+</code></pre>
+<h3 id="優化-4-即時排程優先級-可選需要-root"><a class="header" href="#優化-4-即時排程優先級-可選需要-root">優化 4: 即時排程優先級 (可選，需要 root)</a></h3>
+<p><strong>效果:</strong> 確保接收線程優先執行，減少排程延遲</p>
+<pre><code class="language-c">#include &lt;sched.h&gt;
+
+// ========================================
+// 在 main 函數中，bind_to_cpu 之後添加
+// ========================================
+
+void set_realtime_priority(int priority) {
+    struct sched_param param;
+    param.sched_priority = priority;  // 1-99
+    
+    if (sched_setscheduler(0, SCHED_FIFO, &amp;param) != 0) {
+        perror("sched_setscheduler");
+        fprintf(stderr, "提示: 使用 sudo 執行以啟用即時優先級\n");
+        return;
+    }
+    
+    printf("✓ 設置 SCHED_FIFO 優先級: %d\n", priority);
+}
+
+int main() {
+    bind_to_cpu(2);
+    
+    // 設置即時優先級（需要 root 權限）
+    if (geteuid() == 0) {
+        set_realtime_priority(50);  // 中等優先級
+    } else {
+        printf("⚠ 非 root 用戶，跳過即時優先級設置\n");
+    }
+    
+    // 其餘代碼...
+}
+</code></pre>
+<h3 id="完整的方案-1-差異檔"><a class="header" href="#完整的方案-1-差異檔">完整的方案 1 差異檔</a></h3>
+<pre><code class="language-c">// ========================================
+// 文件開頭添加
+// ========================================
+#define _GNU_SOURCE
+#include &lt;sched.h&gt;
+#include &lt;pthread.h&gt;
+
+// ========================================
+// 在全局變量區域添加
+// ========================================
+static struct timespec g_last_kernel_ts = {0};
+
+// ========================================
+// 輔助函數區域添加
+// ========================================
+
+void bind_to_cpu(int cpu_id) {
+    cpu_set_t cpuset;
+    CPU_ZERO(&amp;cpuset);
+    CPU_SET(cpu_id, &amp;cpuset);
+    
+    if (pthread_setaffinity_np(pthread_self(), sizeof(cpuset), &amp;cpuset) != 0) {
+        perror("pthread_setaffinity_np");
+        return;
+    }
+    printf("✓ 線程已綁定到 CPU %d\n", cpu_id);
+}
+
+void set_realtime_priority(int priority) {
+    struct sched_param param;
+    param.sched_priority = priority;
+    
+    if (sched_setscheduler(0, SCHED_FIFO, &amp;param) != 0) {
+        perror("sched_setscheduler");
+        fprintf(stderr, "提示: 使用 sudo 執行以啟用即時優先級\n");
+        return;
+    }
+    printf("✓ 設置 SCHED_FIFO 優先級: %d\n", priority);
+}
+
+// ========================================
+// main 函數修改
+// ========================================
+
+int main() {
+    int sockfd;
+    struct sockaddr_in local_addr, src_addr;
+    struct ip_mreq group;
+    unsigned char buf[BUF_SIZE];
+    ssize_t nbytes;
+    
+    printf("TSE Receiver - 輕量優化版\n\n");
+    
+    // 優化 1: CPU 綁核
+    bind_to_cpu(2);
+    
+    // 優化 2: 即時優先級（可選）
+    if (geteuid() == 0) {
+        set_realtime_priority(50);
+    }
+    
+    // 創建 socket
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd &lt; 0) {
+        perror("socket");
+        return 1;
+    }
+    
+    // 優化 3: 啟用內核時間戳
+    int ts_flag = 1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_TIMESTAMPNS, &amp;ts_flag, sizeof(ts_flag)) == 0) {
+        printf("✓ 啟用 SO_TIMESTAMPNS\n");
+    }
+    
+    // 優化 4: 增大接收緩衝區
+    int rcvbuf = 16 * 1024 * 1024;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &amp;rcvbuf, sizeof(rcvbuf)) == 0) {
+        socklen_t len = sizeof(rcvbuf);
+        getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &amp;rcvbuf, &amp;len);
+        printf("✓ 接收緩衝區: %.2f MB\n", rcvbuf / 1024.0 / 1024.0);
+    }
+    
+    // SO_REUSEADDR
+    int reuse = 1;
+    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &amp;reuse, sizeof(reuse));
+    
+    // Bind
+    memset(&amp;local_addr, 0, sizeof(local_addr));
+    local_addr.sin_family = AF_INET;
+    local_addr.sin_addr.s_addr = INADDR_ANY;
+    local_addr.sin_port = htons(MCAST_PORT_TSE);
+    
+    if (bind(sockfd, (struct sockaddr*)&amp;local_addr, sizeof(local_addr))) {
+        perror("bind");
+        close(sockfd);
+        return 1;
+    }
+    
+    // 加入 Multicast
+    group.imr_multiaddr.s_addr = inet_addr(MCAST_GRP_TSE);
+    group.imr_interface.s_addr = inet_addr(LOCAL_INTERFACE_IP);
+    if (group.imr_interface.s_addr == INADDR_NONE) {
+        group.imr_interface.s_addr = INADDR_ANY;
+    }
+    
+    if (setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &amp;group, sizeof(group)) &lt; 0) {
+        perror("IP_ADD_MEMBERSHIP");
+        close(sockfd);
+        return 1;
+    }
+    
+    printf("✓ 監聽 %s:%d\n\n", MCAST_GRP_TSE, MCAST_PORT_TSE);
+    
+    // ========================================
+    // 接收循環（使用 recvmsg 獲取內核時間戳）
+    // ========================================
+    
+    struct msghdr msg;
+    struct iovec iov;
+    char ctrl_buf[CMSG_SPACE(sizeof(struct timespec))];
+    
+    while (1) {
+        // 準備 recvmsg 結構
+        memset(&amp;msg, 0, sizeof(msg));
+        iov.iov_base = buf;
+        iov.iov_len = BUF_SIZE;
+        msg.msg_iov = &amp;iov;
+        msg.msg_iovlen = 1;
+        msg.msg_control = ctrl_buf;
+        msg.msg_controllen = sizeof(ctrl_buf);
+        msg.msg_name = &amp;src_addr;
+        msg.msg_namelen = sizeof(src_addr);
+        
+        // 接收數據
+        nbytes = recvmsg(sockfd, &amp;msg, 0);
+        
+        if (nbytes &lt; 0) {
+            perror("recvmsg");
+            break;
+        }
+        
+        // 解析內核時間戳
+        struct timespec kernel_ts;
+        int got_kernel_ts = 0;
+        
+        for (struct cmsghdr *cmsg = CMSG_FIRSTHDR(&amp;msg); 
+             cmsg != NULL; 
+             cmsg = CMSG_NXTHDR(&amp;msg, cmsg)) {
+            
+            if (cmsg-&gt;cmsg_level == SOL_SOCKET &amp;&amp; 
+                cmsg-&gt;cmsg_type == SO_TIMESTAMPNS) {
+                
+                memcpy(&amp;kernel_ts, CMSG_DATA(cmsg), sizeof(struct timespec));
+                got_kernel_ts = 1;
+                break;
+            }
+        }
+        
+        // 計算時間戳
+        long long local_timestamp_micros;
+        if (got_kernel_ts) {
+            local_timestamp_micros = (long long)kernel_ts.tv_sec * 1000000LL + 
+                                    kernel_ts.tv_nsec / 1000;
+        } else {
+            struct timespec ts;
+            clock_gettime(CLOCK_REALTIME, &amp;ts);
+            local_timestamp_micros = (long long)ts.tv_sec * 1000000LL + 
+                                    ts.tv_nsec / 1000;
+        }
+        
+        // 封包處理邏輯（與原版相同）
+        int msgStart = 0;
+        while (msgStart &lt; nbytes) {
+            if (buf[msgStart] == ESC_CHAR) {
+                int msgLen = GetBCD(buf, msgStart + 1, 2);
+                
+                if (msgStart + msgLen &gt; nbytes) {
+                    break;
+                }
+                
+                if (buf[msgStart + msgLen - 2] == 0x0D &amp;&amp;
+                    buf[msgStart + msgLen - 1] == 0x0A) {
+                    
+                    unsigned char checkSum = 0;
+                    for (int i = msgStart + 1; i &lt; msgStart + msgLen - 3; i++) {
+                        checkSum ^= buf[i];
+                    }
+                    
+                    if (buf[msgStart + msgLen - 3] == checkSum) {
+                        int msgKind = GetBCD(buf, msgStart + 4, 1);
+                        
+                        if (msgKind == 6) {
+                            TseQuote quote;
+                            quote.Market = MARKET_TSE;
+                            ParseQuoteBody(&amp;quote, buf, msgStart + HEADER_LEN, 
+                                         local_timestamp_micros);
+                            PrintQuote(&amp;quote);
+                        }
+                    }
+                    
+                    msgStart += msgLen;
+                } else {
+                    msgStart++;
+                }
+            } else {
+                msgStart++;
+            }
+        }
+    }
+    
+    close(sockfd);
+    return 0;
+}
+</code></pre>
+<h3 id="編譯與執行"><a class="header" href="#編譯與執行">編譯與執行</a></h3>
+<pre><code class="language-bash"># 編譯
+gcc -o tse_receiver_opt1 tse_receiver_opt1.c -pthread
+
+# 執行（無 root）
+./tse_receiver_opt1
+
+# 執行（有 root，啟用即時優先級）
+sudo ./tse_receiver_opt1
+</code></pre>
+<hr />
+<h2 id="方案-2-non-blocking--busy-polling-hft-級"><a class="header" href="#方案-2-non-blocking--busy-polling-hft-級">方案 2: Non-blocking + Busy Polling (HFT 級)</a></h2>
+<p><strong>適用場景:</strong> 高頻交易、做市商、套利策略</p>
+<p><strong>延遲改善:</strong> 70-80% (從 3-7 μs → 0.5-2 μs)</p>
+<p><strong>CPU 成本:</strong> 高 (100% 單核)</p>
+<h3 id="核心改動"><a class="header" href="#核心改動">核心改動</a></h3>
+<ol>
+<li><strong>設置非阻塞 socket</strong></li>
+<li><strong>持續輪詢 (busy polling)</strong></li>
+<li><strong>CPU 綁核</strong></li>
+<li><strong>即時排程</strong></li>
+</ol>
+<h3 id="關鍵代碼"><a class="header" href="#關鍵代碼">關鍵代碼</a></h3>
+<pre><code class="language-c">// ========================================
+// 設置非阻塞 socket
+// ========================================
+
+int make_socket_nonblocking(int sockfd) {
+    int flags = fcntl(sockfd, F_GETFL, 0);
+    if (flags == -1) {
+        perror("fcntl F_GETFL");
+        return -1;
+    }
+    
+    if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) == -1) {
+        perror("fcntl F_SETFL");
+        return -1;
+    }
+    
+    printf("✓ Socket 設置為 Non-blocking\n");
+    return 0;
+}
+
+// 在創建 socket 後調用
+make_socket_nonblocking(sockfd);
+</code></pre>
+<pre><code class="language-c">// ========================================
+// Busy Polling 接收循環
+// ========================================
+
+unsigned long long poll_count = 0;
+unsigned long long packet_count = 0;
+
+while (1) {
+    struct sockaddr_in src_addr;
+    socklen_t addrlen = sizeof(src_addr);
+    
+    // 持續輪詢（不睡眠）
+    nbytes = recvfrom(sockfd, buf, BUF_SIZE, 0,
+                     (struct sockaddr*)&amp;src_addr, &amp;addrlen);
+    
+    poll_count++;
+    
+    if (nbytes &gt; 0) {
+        // 立即記錄時間戳
+        struct timespec ts;
+        clock_gettime(CLOCK_REALTIME, &amp;ts);
+        long long local_timestamp_micros = 
+            (long long)ts.tv_sec * 1000000LL + ts.tv_nsec / 1000;
+        
+        packet_count++;
+        
+        // 處理封包...
+        
+        // 每 100 萬次輪詢報告統計
+        if (poll_count % 1000000 == 0) {
+            double hit_rate = (packet_count * 100.0) / poll_count;
+            printf("[統計] 輪詢: %llu, 收包: %llu, 命中率: %.4f%%\n",
+                   poll_count, packet_count, hit_rate);
+        }
+        
+    } else if (nbytes &lt; 0) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // 無數據，繼續輪詢（這是正常的）
+            continue;
+        } else {
+            // 真正的錯誤
+            perror("recvfrom");
+            break;
+        }
+    }
+}
+</code></pre>
+<h3 id="額外優化"><a class="header" href="#額外優化">額外優化</a></h3>
+<pre><code class="language-c">// ========================================
+// SO_BUSY_POLL - 內核級 busy polling
+// ========================================
+
+// 讓內核在輪詢網卡時不立即睡眠（Linux 3.11+）
+int busy_poll = 50;  // 微秒
+if (setsockopt(sockfd, SOL_SOCKET, SO_BUSY_POLL, &amp;busy_poll, sizeof(busy_poll)) == 0) {
+    printf("✓ 啟用 SO_BUSY_POLL (50 μs)\n");
+}
+</code></pre>
+<hr />
+<h2 id="方案-3-完整-hft-版本"><a class="header" href="#方案-3-完整-hft-版本">方案 3: 完整 HFT 版本</a></h2>
+<p><strong>完整的生產級 HFT 接收器，包含所有優化</strong></p>
+<h3 id="完整代碼"><a class="header" href="#完整代碼">完整代碼</a></h3>
+<pre><code class="language-c">/*
+ * TSE/OTC Quote Receiver - High Frequency Trading Edition
+ * 特性: Non-blocking + Busy Polling + CPU 綁核 + 即時優先級
+ * 編譯: gcc -o tse_receiver_hft tse_receiver_hft.c -pthread -O3
+ * 執行: sudo ./tse_receiver_hft
+ */
+
+#define _GNU_SOURCE
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;sched.h&gt;
+#include &lt;pthread.h&gt;
+#include &lt;arpa/inet.h&gt;
+#include &lt;sys/socket.h&gt;
+#include &lt;netinet/in.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;time.h&gt;
+
+// --- 設定參數 ---
+#define MCAST_GRP_TSE "224.0.200.200"
+#define MCAST_PORT_TSE 20000
+#define LOCAL_INTERFACE_IP "10.102.22.111"
+#define BUF_SIZE 5120
+#define ESC_CHAR 0x1B
+#define HEADER_LEN 10
+
+// HFT 優化參數
+#define HFT_CPU_CORE 2              // 綁定 CPU 核心
+#define HFT_PRIORITY 80             // 即時優先級 (1-99)
+#define ENABLE_BUSY_POLLING 1       // 啟用 busy polling
+#define ENABLE_CPU_AFFINITY 1       // 啟用 CPU 綁核
+#define ENABLE_REALTIME_SCHED 1     // 啟用即時排程
+#define STATS_INTERVAL 1000000      // 統計報告間隔
+
+// --- 資料結構 ---
+typedef enum {
+    MARKET_TSE = 1,
+    MARKET_OTC = 2
+} MarketEnum;
+
+typedef struct {
+    MarketEnum Market;
+    char ProdID[7];
+    char OrderBookChangeTime[24];
+    char LocalReceiveTime[24];
+    long long RawLatencyMicros;
+    long long CalibratedLatencyMicros;
+    int Price;
+    int Volume;
+    int TotalVolume;
+    int BuyPrice1;
+    int BuyVolume1;
+    int SellPrice1;
+    int SellVolume1;
+    int DealCount;
+    int BuyCount;
+    int SellCount;
+} TseQuote;
+
+// --- 全局變量 ---
+static long long g_clock_offset = 0;
+static int g_is_calibrated = 0;
+static unsigned long long g_total_packets = 0;
+static unsigned long long g_poll_count = 0;
+static unsigned long long g_error_count = 0;
+
+// --- HFT 優化函數 ---
+
+/**
+ * 綁定到指定 CPU 核心
+ */
+int bind_to_cpu(int cpu_id) {
+    cpu_set_t cpuset;
+    CPU_ZERO(&amp;cpuset);
+    CPU_SET(cpu_id, &amp;cpuset);
+    
+    if (pthread_setaffinity_np(pthread_self(), sizeof(cpuset), &amp;cpuset) != 0) {
+        perror("pthread_setaffinity_np");
+        return -1;
+    }
+    
+    printf("✓ 線程已綁定到 CPU %d\n", cpu_id);
+    return 0;
+}
+
+/**
+ * 設置即時排程優先級
+ */
+int set_realtime_priority(int priority) {
+    struct sched_param param;
+    param.sched_priority = priority;
+    
+    if (sched_setscheduler(0, SCHED_FIFO, &amp;param) != 0) {
+        perror("sched_setscheduler");
+        fprintf(stderr, "提示: 使用 sudo 執行程式以啟用即時優先級\n");
+        return -1;
+    }
+    
+    printf("✓ 設置 SCHED_FIFO 優先級: %d\n", priority);
+    return 0;
+}
+
+/**
+ * 設置 socket 為非阻塞模式
+ */
+int make_socket_nonblocking(int sockfd) {
+    int flags = fcntl(sockfd, F_GETFL, 0);
+    if (flags == -1) {
+        perror("fcntl F_GETFL");
+        return -1;
+    }
+    
+    if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) == -1) {
+        perror("fcntl F_SETFL");
+        return -1;
+    }
+    
+    printf("✓ Socket 已設置為 Non-blocking 模式\n");
+    return 0;
+}
+
+/**
+ * HFT 級別的 socket 優化
+ */
+void optimize_socket_for_hft(int sockfd) {
+    int result;
+    
+    // 1. 增大接收緩衝區 (16MB)
+    int rcvbuf = 16 * 1024 * 1024;
+    result = setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &amp;rcvbuf, sizeof(rcvbuf));
+    if (result == 0) {
+        socklen_t len = sizeof(rcvbuf);
+        getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &amp;rcvbuf, &amp;len);
+        printf("✓ 接收緩衝區: %.2f MB\n", rcvbuf / 1024.0 / 1024.0);
+    }
+    
+    // 2. 啟用內核時間戳 (納秒精度)
+    int ts_flag = 1;
+    result = setsockopt(sockfd, SOL_SOCKET, SO_TIMESTAMPNS, &amp;ts_flag, sizeof(ts_flag));
+    if (result == 0) {
+        printf("✓ 啟用 SO_TIMESTAMPNS (內核時間戳)\n");
+    }
+    
+    // 3. 啟用 busy poll (Linux 3.11+)
+    int busy_poll = 50; // 微秒
+    result = setsockopt(sockfd, SOL_SOCKET, SO_BUSY_POLL, &amp;busy_poll, sizeof(busy_poll));
+    if (result == 0) {
+        printf("✓ 啟用 SO_BUSY_POLL (50 μs)\n");
+    }
+    
+    // 4. 設置低延遲模式
+    int low_latency = 1;
+    setsockopt(sockfd, SOL_SOCKET, SO_PRIORITY, &amp;low_latency, sizeof(low_latency));
+}
+
+// --- 輔助函式 (與原版相同) ---
+
+int GetBCD(unsigned char* msg, int start, int len) {
+    int result = 0;
+    for (int i = start; i &lt; start + len; i++) {
+        result *= 100;
+        unsigned char bt = msg[i];
+        result += (bt &gt;&gt; 4) * 10 + (bt &amp; 0x0F);
+    }
+    return result;
+}
+
+long long ParseTimeToMicros(const char* time_str) {
+    int hh, mm, ss, us;
+    sscanf(time_str, "%d:%d:%d.%d", &amp;hh, &amp;mm, &amp;ss, &amp;us);
+    return (long long)hh * 3600000000LL + (long long)mm * 60000000LL +
+           (long long)ss * 1000000LL + (long long)us;
+}
+
+long long CalculateLatency(long long local_micros, const char* orderbook_time_str) {
+    time_t seconds = local_micros / 1000000LL;
+    struct tm* tm_info = localtime(&amp;seconds);
+    long long local_day_micros = (long long)tm_info-&gt;tm_hour * 3600000000LL +
+                                 (long long)tm_info-&gt;tm_min * 60000000LL +
+                                 (long long)tm_info-&gt;tm_sec * 1000000LL +
+                                 (local_micros % 1000000LL);
+    
+    long long orderbook_micros = ParseTimeToMicros(orderbook_time_str);
+    return local_day_micros - orderbook_micros;
+}
+
+void ParseQuoteBody(TseQuote* quote, unsigned char* buf, int start, long long local_timestamp_micros) {
+    // 股票代號
+    memcpy(quote-&gt;ProdID, &amp;buf[start], 6);
+    quote-&gt;ProdID[6] = '\0';
+    
+    // 掛單簿變動時間
+    int hh = GetBCD(buf, start + 6, 1);
+    int mm = GetBCD(buf, start + 7, 1);
+    int ss = GetBCD(buf, start + 8, 1);
+    int us = GetBCD(buf, start + 9, 3);
+    snprintf(quote-&gt;OrderBookChangeTime, sizeof(quote-&gt;OrderBookChangeTime),
+             "%02d:%02d:%02d.%06d", hh, mm, ss, us);
+    
+    // 本地接收時間
+    time_t seconds = local_timestamp_micros / 1000000LL;
+    long long micros_part = local_timestamp_micros % 1000000LL;
+    struct tm* tm_info = localtime(&amp;seconds);
+    snprintf(quote-&gt;LocalReceiveTime, sizeof(quote-&gt;LocalReceiveTime),
+             "%02d:%02d:%02d.%06lld",
+             tm_info-&gt;tm_hour, tm_info-&gt;tm_min, tm_info-&gt;tm_sec, micros_part);
+    
+    // 計算延遲
+    quote-&gt;RawLatencyMicros = CalculateLatency(local_timestamp_micros, quote-&gt;OrderBookChangeTime);
+    
+    // 時鐘校準
+    if (!g_is_calibrated) {
+        g_clock_offset = quote-&gt;RawLatencyMicros;
+        g_is_calibrated = 1;
+        printf("\n=== 時鐘校準完成 ===\n");
+        printf("檢測到時鐘偏移: %lld μs (%.3f ms)\n",
+               g_clock_offset, g_clock_offset / 1000.0);
+        printf("=====================\n\n");
+    }
+    
+    quote-&gt;CalibratedLatencyMicros = quote-&gt;RawLatencyMicros - g_clock_offset;
+    
+    // PriceNote
+    unsigned char priceNote = buf[start + 12];
+    quote-&gt;DealCount = (priceNote &amp; 0x80) &gt;&gt; 7;
+    quote-&gt;BuyCount = (priceNote &amp; 0x70) &gt;&gt; 4;
+    quote-&gt;SellCount = (priceNote &amp; 0x0E) &gt;&gt; 1;
+    
+    // 總量
+    quote-&gt;TotalVolume = GetBCD(buf, start + 15, 4);
+    
+    // 成交價
+    if (quote-&gt;DealCount &gt; 0) {
+        int base = start + 19;
+        quote-&gt;Price = GetBCD(buf, base, 5);
+        quote-&gt;Volume = GetBCD(buf, base + 5, 4);
+    } else {
+        quote-&gt;Price = 0;
+        quote-&gt;Volume = 0;
+    }
+    
+    // 買進價
+    if (quote-&gt;BuyCount &gt; 0) {
+        int i = quote-&gt;DealCount;
+        int base = start + 19 + (i * 9);
+        quote-&gt;BuyPrice1 = GetBCD(buf, base, 5);
+        quote-&gt;BuyVolume1 = GetBCD(buf, base + 5, 4);
+    } else {
+        quote-&gt;BuyPrice1 = 0;
+        quote-&gt;BuyVolume1 = 0;
+    }
+    
+    // 賣出價
+    if (quote-&gt;SellCount &gt; 0) {
+        int i = quote-&gt;DealCount + quote-&gt;BuyCount;
+        int base = start + 19 + (i * 9);
+        quote-&gt;SellPrice1 = GetBCD(buf, base, 5);
+        quote-&gt;SellVolume1 = GetBCD(buf, base + 5, 4);
+    } else {
+        quote-&gt;SellPrice1 = 0;
+        quote-&gt;SellVolume1 = 0;
+    }
+}
+
+void PrintQuote(TseQuote* q) {
+    printf("========================================\n");
+    printf("股票: %s | ", q-&gt;ProdID);
+    printf("延遲: %lld μs (%.3f ms)\n", 
+           q-&gt;CalibratedLatencyMicros, q-&gt;CalibratedLatencyMicros / 1000.0);
+    printf("掛單簿時間: %s\n", q-&gt;OrderBookChangeTime);
+    printf("接收時間  : %s\n", q-&gt;LocalReceiveTime);
+    
+    if (q-&gt;BuyCount &gt; 0 &amp;&amp; q-&gt;SellCount &gt; 0) {
+        printf("買: %.2f (%d) | 賣: %.2f (%d)\n",
+               q-&gt;BuyPrice1 / 100.0, q-&gt;BuyVolume1,
+               q-&gt;SellPrice1 / 100.0, q-&gt;SellVolume1);
+    }
+    
+    double hit_rate = (g_poll_count &gt; 0) ? (g_total_packets * 100.0 / g_poll_count) : 0;
+    printf("統計: 收包 %llu | 輪詢 %llu | 命中率 %.4f%%\n",
+           g_total_packets, g_poll_count, hit_rate);
+    printf("========================================\n");
+}
+
+// --- 主程式 ---
+
+int main() {
+    int sockfd;
+    struct sockaddr_in local_addr;
+    struct ip_mreq group;
+    unsigned char buf[BUF_SIZE];
+    ssize_t nbytes;
+    
+    printf("\n");
+    printf("╔════════════════════════════════════════════╗\n");
+    printf("║  TSE Receiver - HFT Edition                ║\n");
+    printf("║  Non-blocking I/O + Busy Polling           ║\n");
+    printf("╚════════════════════════════════════════════╝\n");
+    printf("\n");
+    
+    // 檢查權限
+    if (geteuid() != 0) {
+        printf("⚠ 警告: 非 root 用戶，部分優化將無法啟用\n");
+        printf("  建議: sudo ./tse_receiver_hft\n\n");
+    }
+    
+    // HFT 優化 1: CPU 綁核
+    if (ENABLE_CPU_AFFINITY) {
+        bind_to_cpu(HFT_CPU_CORE);
+    }
+    
+    // HFT 優化 2: 即時優先級
+    if (ENABLE_REALTIME_SCHED &amp;&amp; geteuid() == 0) {
+        set_realtime_priority(HFT_PRIORITY);
+    }
+    
+    // 建立 Socket
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd &lt; 0) {
+        perror("socket");
+        return 1;
+    }
+    
+    // 設置 SO_REUSEADDR
+    int reuse = 1;
+    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &amp;reuse, sizeof(reuse));
+    
+    // HFT 優化 3: Socket 優化
+    optimize_socket_for_hft(sockfd);
+    
+    // HFT 優化 4: 非阻塞模式
+    if (ENABLE_BUSY_POLLING) {
+        make_socket_nonblocking(sockfd);
+    }
+    
+    // Bind
+    memset(&amp;local_addr, 0, sizeof(local_addr));
+    local_addr.sin_family = AF_INET;
+    local_addr.sin_addr.s_addr = INADDR_ANY;
+    local_addr.sin_port = htons(MCAST_PORT_TSE);
+    
+    if (bind(sockfd, (struct sockaddr*)&amp;local_addr, sizeof(local_addr))) {
+        perror("bind");
+        close(sockfd);
+        return 1;
+    }
+    
+    // 加入 Multicast 群組
+    group.imr_multiaddr.s_addr = inet_addr(MCAST_GRP_TSE);
+    group.imr_interface.s_addr = inet_addr(LOCAL_INTERFACE_IP);
+    
+    if (group.imr_interface.s_addr == INADDR_NONE) {
+        group.imr_interface.s_addr = INADDR_ANY;
+    }
+    
+    if (setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &amp;group, sizeof(group)) &lt; 0) {
+        perror("IP_ADD_MEMBERSHIP");
+        close(sockfd);
+        return 1;
+    }
+    
+    printf("✓ 已加入 Multicast 群組 %s:%d\n", MCAST_GRP_TSE, MCAST_PORT_TSE);
+    printf("\n");
+    printf("🚀 Busy Polling 已啟動 (CPU 將達到 100%%)\n");
+    printf("\n");
+    
+    // Busy Polling 接收循環
+    while (1) {
+        struct sockaddr_in src_addr;
+        socklen_t addrlen = sizeof(src_addr);
+        
+        // 持續輪詢
+        nbytes = recvfrom(sockfd, buf, BUF_SIZE, 0,
+                         (struct sockaddr*)&amp;src_addr, &amp;addrlen);
+        
+        g_poll_count++;
+        
+        if (nbytes &gt; 0) {
+            // 立即記錄時間戳
+            struct timespec ts;
+            clock_gettime(CLOCK_REALTIME, &amp;ts);
+            long long local_timestamp_micros = 
+                (long long)ts.tv_sec * 1000000LL + ts.tv_nsec / 1000;
+            
+            g_total_packets++;
+            
+            // 處理封包
+            int msgStart = 0;
+            while (msgStart &lt; nbytes) {
+                if (buf[msgStart] == ESC_CHAR) {
+                    int msgLen = GetBCD(buf, msgStart + 1, 2);
+                    
+                    if (msgStart + msgLen &gt; nbytes) {
+                        break;
+                    }
+                    
+                    if (buf[msgStart + msgLen - 2] == 0x0D &amp;&amp;
+                        buf[msgStart + msgLen - 1] == 0x0A) {
+                        
+                        unsigned char checkSum = 0;
+                        for (int i = msgStart + 1; i &lt; msgStart + msgLen - 3; i++) {
+                            checkSum ^= buf[i];
+                        }
+                        
+                        if (buf[msgStart + msgLen - 3] == checkSum) {
+                            int msgKind = GetBCD(buf, msgStart + 4, 1);
+                            
+                            if (msgKind == 6) {
+                                TseQuote quote;
+                                quote.Market = MARKET_TSE;
+                                ParseQuoteBody(&amp;quote, buf, msgStart + HEADER_LEN, 
+                                             local_timestamp_micros);
+                                PrintQuote(&amp;quote);
+                            }
+                        } else {
+                            g_error_count++;
+                        }
+                        
+                        msgStart += msgLen;
+                    } else {
+                        msgStart++;
+                    }
+                } else {
+                    msgStart++;
+                }
+            }
+            
+        } else if (nbytes &lt; 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                // 無數據，繼續輪詢
+                continue;
+            } else {
+                perror("recvfrom");
+                g_error_count++;
+                break;
+            }
+        }
+    }
+    
+    close(sockfd);
+    return 0;
+}
+</code></pre>
+<h3 id="編譯與執行-1"><a class="header" href="#編譯與執行-1">編譯與執行</a></h3>
+<pre><code class="language-bash"># 編譯（開啟 O3 優化）
+gcc -o tse_receiver_hft tse_receiver_hft.c -pthread -O3
+
+# 執行（需要 root）
+sudo ./tse_receiver_hft
+
+# 或使用 capabilities（推薦）
+sudo setcap cap_sys_nice=eip ./tse_receiver_hft
+./tse_receiver_hft
+</code></pre>
+<hr />
+<h2 id="性能對比與選擇建議"><a class="header" href="#性能對比與選擇建議">性能對比與選擇建議</a></h2>
+<h3 id="延遲對比表"><a class="header" href="#延遲對比表">延遲對比表</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>版本</th><th>I/O 模式</th><th>P50 延遲</th><th>P99 延遲</th><th>CPU</th><th>適用場景</th></tr></thead><tbody>
+<tr><td><strong>原版</strong></td><td>Blocking</td><td>3-7 μs</td><td>10-50 μs</td><td>~0%</td><td>一般行情</td></tr>
+<tr><td><strong>方案 1</strong></td><td>Blocking + 優化</td><td>2-5 μs</td><td>8-30 μs</td><td>~0%</td><td>量化交易</td></tr>
+<tr><td><strong>方案 2</strong></td><td>Busy Polling</td><td>0.8-2 μs</td><td>3-8 μs</td><td>100%</td><td>HFT</td></tr>
+<tr><td><strong>方案 3</strong></td><td>完整 HFT</td><td>0.5-1.5 μs</td><td>2-6 μs</td><td>100%</td><td>專業 HFT</td></tr>
+</tbody></table>
+</div>
+<h3 id="選擇指南"><a class="header" href="#選擇指南">選擇指南</a></h3>
+<pre><code>┌─────────────────────────────────────────┐
+│  你的延遲要求是多少？                      │
+└─────────────────────────────────────────┘
+         │
+         ├─ &lt; 100 μs (毫秒級) ────────→ 使用原版 Blocking
+         │
+         ├─ &lt; 10 μs (十微秒級) ───────→ 使用方案 1 (輕量優化)
+         │
+         ├─ &lt; 3 μs (微秒級) ─────────→ 使用方案 2/3 (HFT)
+         │
+         └─ &lt; 1 μs (納秒級) ─────────→ 考慮 DPDK/FPGA
+
+┌─────────────────────────────────────────┐
+│  你有多少 CPU 資源？                       │
+└─────────────────────────────────────────┘
+         │
+         ├─ CPU 有限 ───────────────→ 使用方案 1
+         │
+         ├─ 有專用核心 ─────────────→ 使用方案 2/3
+         │
+         └─ 專用伺服器 ─────────────→ 使用方案 3 + 系統調優
+</code></pre>
+<hr />
+<h2 id="系統級優化配置"><a class="header" href="#系統級優化配置">系統級優化配置</a></h2>
+<h3 id="1-隔離-cpu-核心"><a class="header" href="#1-隔離-cpu-核心">1. 隔離 CPU 核心</a></h3>
+<p><strong>目的:</strong> 避免系統任務干擾 HFT 程式</p>
+<pre><code class="language-bash"># 編輯 /etc/default/grub
+sudo nano /etc/default/grub
+
+# 添加以下參數到 GRUB_CMDLINE_LINUX
+isolcpus=2,3 nohz_full=2,3 rcu_nocbs=2,3
+
+# 更新 grub
+sudo update-grub
+sudo reboot
+</code></pre>
+<p><strong>參數說明:</strong></p>
+<ul>
+<li><code>isolcpus=2,3</code>: 隔離 CPU 2 和 3，不接受一般排程</li>
+<li><code>nohz_full=2,3</code>: 減少時鐘中斷</li>
+<li><code>rcu_nocbs=2,3</code>: 將 RCU 回調移到其他 CPU</li>
+</ul>
+<h3 id="2-禁用-cpu-頻率調整"><a class="header" href="#2-禁用-cpu-頻率調整">2. 禁用 CPU 頻率調整</a></h3>
+<p><strong>目的:</strong> 保持 CPU 全速運行，避免頻率切換延遲</p>
+<pre><code class="language-bash"># 設置為 performance 模式
+echo performance | sudo tee /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor
+echo performance | sudo tee /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor
+
+# 驗證
+cat /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor
+</code></pre>
+<h3 id="3-網卡中斷綁定"><a class="header" href="#3-網卡中斷綁定">3. 網卡中斷綁定</a></h3>
+<p><strong>目的:</strong> 將網卡中斷綁定到非隔離的 CPU</p>
+<pre><code class="language-bash"># 查看網卡中斷號
+cat /proc/interrupts | grep eth0
+
+# 假設中斷號是 25，綁定到 CPU 0
+echo 1 &gt; /proc/irq/25/smp_affinity
+
+# 驗證
+cat /proc/irq/25/smp_affinity_list
+</code></pre>
+<h3 id="4-關閉不必要的服務"><a class="header" href="#4-關閉不必要的服務">4. 關閉不必要的服務</a></h3>
+<pre><code class="language-bash"># 停用 IRQ balance（避免中斷遷移）
+sudo systemctl stop irqbalance
+sudo systemctl disable irqbalance
+
+# 停用節能功能
+sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
+</code></pre>
+<h3 id="5-網卡優化"><a class="header" href="#5-網卡優化">5. 網卡優化</a></h3>
+<pre><code class="language-bash"># 增大網卡接收緩衝區
+sudo ethtool -G eth0 rx 4096
+
+# 啟用網卡多隊列
+sudo ethtool -L eth0 combined 4
+
+# 關閉網卡節能
+sudo ethtool -s eth0 speed 10000 duplex full autoneg off
+
+# 啟用 RSS (Receive Side Scaling)
+sudo ethtool -X eth0 equal 4
+</code></pre>
+<h3 id="6-記憶體鎖定"><a class="header" href="#6-記憶體鎖定">6. 記憶體鎖定</a></h3>
+<pre><code class="language-bash"># 允許程式鎖定記憶體（避免 swap）
+sudo sh -c 'echo "* soft memlock unlimited" &gt;&gt; /etc/security/limits.conf'
+sudo sh -c 'echo "* hard memlock unlimited" &gt;&gt; /etc/security/limits.conf'
+</code></pre>
+<p>在程式中添加：</p>
+<pre><code class="language-c">#include &lt;sys/mman.h&gt;
+
+int main() {
+    // 鎖定所有記憶體
+    if (mlockall(MCL_CURRENT | MCL_FUTURE) != 0) {
+        perror("mlockall");
+    }
+    
+    // 其餘代碼...
+}
+</code></pre>
+<h3 id="7-巨頁-huge-pages"><a class="header" href="#7-巨頁-huge-pages">7. 巨頁 (Huge Pages)</a></h3>
+<pre><code class="language-bash"># 配置 2MB 巨頁
+echo 1024 | sudo tee /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
+
+# 驗證
+cat /proc/meminfo | grep Huge
+</code></pre>
+<hr />
+<h2 id="監控與調試工具"><a class="header" href="#監控與調試工具">監控與調試工具</a></h2>
+<h3 id="1-實時監控-cpu-使用率"><a class="header" href="#1-實時監控-cpu-使用率">1. 實時監控 CPU 使用率</a></h3>
+<pre><code class="language-bash"># 安裝 htop
+sudo apt-get install htop
+
+# 監控特定程式
+htop -p $(pgrep tse_receiver)
+</code></pre>
+<h3 id="2-查看程式優先級"><a class="header" href="#2-查看程式優先級">2. 查看程式優先級</a></h3>
+<pre><code class="language-bash"># 查看排程策略和優先級
+chrt -p $(pgrep tse_receiver)
+
+# 輸出範例：
+# pid 1234's current scheduling policy: SCHED_FIFO
+# pid 1234's current scheduling priority: 80
+</code></pre>
+<h3 id="3-查看-cpu-綁定"><a class="header" href="#3-查看-cpu-綁定">3. 查看 CPU 綁定</a></h3>
+<pre><code class="language-bash"># 查看程式綁定的 CPU
+taskset -cp $(pgrep tse_receiver)
+
+# 輸出範例：
+# pid 1234's current affinity list: 2
+</code></pre>
+<h3 id="4-網路統計"><a class="header" href="#4-網路統計">4. 網路統計</a></h3>
+<pre><code class="language-bash"># 查看網卡統計
+netstat -i
+
+# 查看 UDP 統計
+netstat -su
+
+# 實時監控封包
+sudo tcpdump -i eth0 -n dst 224.0.200.200 and port 20000
+</code></pre>
+<h3 id="5-延遲測量工具"><a class="header" href="#5-延遲測量工具">5. 延遲測量工具</a></h3>
+<pre><code class="language-bash"># 安裝 perf
+sudo apt-get install linux-tools-generic
+
+# 測量程式的延遲分佈
+sudo perf stat -e cycles,instructions,cache-misses ./tse_receiver_hft
+
+# 記錄 CPU 事件
+sudo perf record -g ./tse_receiver_hft
+sudo perf report
+</code></pre>
+<h3 id="6-系統調用追蹤"><a class="header" href="#6-系統調用追蹤">6. 系統調用追蹤</a></h3>
+<pre><code class="language-bash"># 追蹤系統調用
+strace -c ./tse_receiver_hft
+
+# 只追蹤網路相關調用
+strace -e trace=network ./tse_receiver_hft
+
+# 測量每個系統調用的時間
+strace -T -e trace=recvfrom ./tse_receiver_hft
+</code></pre>
+<h3 id="7-自訂監控腳本"><a class="header" href="#7-自訂監控腳本">7. 自訂監控腳本</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# monitor_hft.sh - 監控 HFT 程式狀態
+
+PID=$(pgrep tse_receiver)
+
+while true; do
+    clear
+    echo "=== TSE Receiver HFT 監控 ==="
+    echo "時間: $(date '+%Y-%m-%d %H:%M:%S')"
+    echo ""
+    
+    # CPU 使用率
+    CPU=$(ps -p $PID -o %cpu= 2&gt;/dev/null)
+    echo "CPU 使用率: ${CPU}%"
+    
+    # 記憶體使用
+    MEM=$(ps -p $PID -o rss= 2&gt;/dev/null)
+    echo "記憶體: $((MEM / 1024)) MB"
+    
+    # 綁定的 CPU
+    AFFINITY=$(taskset -cp $PID 2&gt;/dev/null | awk '{print $NF}')
+    echo "CPU 綁定: $AFFINITY"
+    
+    # 排程優先級
+    SCHED=$(chrt -p $PID 2&gt;/dev/null | grep policy | awk '{print $NF}')
+    PRIO=$(chrt -p $PID 2&gt;/dev/null | grep priority | awk '{print $NF}')
+    echo "排程: $SCHED, 優先級: $PRIO"
+    
+    # 網路統計
+    echo ""
+    echo "=== 網路統計 ==="
+    netstat -su | grep -E "packets received|packet receive errors"
+    
+    sleep 5
+done
+</code></pre>
+<p>使用方式：</p>
+<pre><code class="language-bash">chmod +x monitor_hft.sh
+./monitor_hft.sh
+</code></pre>
+<hr />
+<h2 id="附錄完整優化-checklist"><a class="header" href="#附錄完整優化-checklist">附錄：完整優化 Checklist</a></h2>
+<h3 id="軟體層面"><a class="header" href="#軟體層面">軟體層面</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+設置 socket 為 non-blocking</li>
+<li><input disabled="" type="checkbox"/>
+啟用 SO_TIMESTAMPNS (內核時間戳)</li>
+<li><input disabled="" type="checkbox"/>
+啟用 SO_BUSY_POLL</li>
+<li><input disabled="" type="checkbox"/>
+增大接收緩衝區 (SO_RCVBUF)</li>
+<li><input disabled="" type="checkbox"/>
+CPU 綁核 (pthread_setaffinity_np)</li>
+<li><input disabled="" type="checkbox"/>
+即時排程優先級 (SCHED_FIFO)</li>
+<li><input disabled="" type="checkbox"/>
+記憶體鎖定 (mlockall)</li>
+<li><input disabled="" type="checkbox"/>
+使用編譯器優化 (-O3)</li>
+</ul>
+<h3 id="系統層面"><a class="header" href="#系統層面">系統層面</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+隔離 CPU 核心 (isolcpus)</li>
+<li><input disabled="" type="checkbox"/>
+禁用 CPU 頻率調整</li>
+<li><input disabled="" type="checkbox"/>
+網卡中斷綁定</li>
+<li><input disabled="" type="checkbox"/>
+停用 IRQ balance</li>
+<li><input disabled="" type="checkbox"/>
+關閉節能功能</li>
+<li><input disabled="" type="checkbox"/>
+配置巨頁</li>
+<li><input disabled="" type="checkbox"/>
+增大網卡緩衝區</li>
+<li><input disabled="" type="checkbox"/>
+啟用網卡多隊列</li>
+</ul>
+<h3 id="網路層面"><a class="header" href="#網路層面">網路層面</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+使用專用網路介面</li>
+<li><input disabled="" type="checkbox"/>
+配置 VLAN 隔離</li>
+<li><input disabled="" type="checkbox"/>
+啟用網卡 RSS</li>
+<li><input disabled="" type="checkbox"/>
+關閉網卡節能</li>
+<li><input disabled="" type="checkbox"/>
+增大 socket 緩衝區限制</li>
+<li><input disabled="" type="checkbox"/>
+調整 net.core.rmem_max</li>
+</ul>
+<h3 id="監控層面"><a class="header" href="#監控層面">監控層面</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+部署 CPU 監控</li>
+<li><input disabled="" type="checkbox"/>
+部署記憶體監控</li>
+<li><input disabled="" type="checkbox"/>
+部署網路監控</li>
+<li><input disabled="" type="checkbox"/>
+部署延遲監控</li>
+<li><input disabled="" type="checkbox"/>
+設置告警機制</li>
+</ul>
+<hr />
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<h3 id="快速決策樹"><a class="header" href="#快速決策樹">快速決策樹</a></h3>
+<pre><code>需要優化 TSE Receiver 延遲？
+│
+├─ 延遲要求 &lt; 10 μs？
+│  │
+│  ├─ 否 → 使用方案 1（Blocking + 輕量優化）
+│  │       - 最簡單
+│  │       - CPU 效率高
+│  │       - 適合 90% 場景
+│  │
+│  └─ 是 → 繼續往下
+│
+├─ 有專用 CPU 核心？
+│  │
+│  ├─ 否 → 還是用方案 1
+│  │       - Busy polling 不適合共享環境
+│  │
+│  └─ 是 → 使用方案 2/3（Busy Polling）
+│           - 延遲降低 70-80%
+│           - CPU 100% 但值得
+│
+└─ 需要 &lt; 1 μs？
+   │
+   └─ 是 → 考慮 DPDK/FPGA
+           - 複雜度極高
+           - 需要專業團隊
+           - 成本高昂
+</code></pre>
+<h3 id="最佳實踐建議"><a class="header" href="#最佳實踐建議">最佳實踐建議</a></h3>
+<ol>
+<li>
+<p><strong>先測量，再優化</strong></p>
+<ul>
+<li>使用 <code>perf</code> 或 <code>strace</code> 確認瓶頸</li>
+<li>記錄優化前後的延遲數據</li>
+</ul>
+</li>
+<li>
+<p><strong>循序漸進</strong></p>
+<ul>
+<li>先實施方案 1（成本低，效果好）</li>
+<li>確認不夠再升級到方案 2/3</li>
+</ul>
+</li>
+<li>
+<p><strong>關注整體系統</strong></p>
+<ul>
+<li>優化程式只是一部分</li>
+<li>系統配置、網路、硬體都很重要</li>
+</ul>
+</li>
+<li>
+<p><strong>持續監控</strong></p>
+<ul>
+<li>部署監控系統</li>
+<li>設置延遲告警</li>
+<li>定期檢查性能退化</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h2 id="編譯指令總結"><a class="header" href="#編譯指令總結">編譯指令總結</a></h2>
+<pre><code class="language-bash"># 方案 1: Blocking + 輕量優化
+gcc -o tse_receiver_opt1 tse_receiver_opt1.c -pthread -O2
+
+# 方案 2/3: HFT 版本
+gcc -o tse_receiver_hft tse_receiver_hft.c -pthread -O3
+
+# 執行（方案 1，無需 root）
+./tse_receiver_opt1
+
+# 執行（方案 2/3，需要 root）
+sudo ./tse_receiver_hft
+
+# 或使用 capabilities（推薦）
+sudo setcap cap_sys_nice=eip ./tse_receiver_hft
+./tse_receiver_hft
+</code></pre>
+<hr />
+<p><strong>文件版本:</strong> 1.0<br />
+<strong>最後更新:</strong> 2026-01-09<br />
+<strong>作者:</strong> Claude (Anthropic)</p>
+<p><strong>適用於:</strong> Linux (Ubuntu/Debian/RHEL/CentOS)<br />
+<strong>測試環境:</strong> Ubuntu 20.04 LTS, Linux kernel 5.15+</p>
+<hr />
+<h2 id="聯絡與支援"><a class="header" href="#聯絡與支援">聯絡與支援</a></h2>
+<p>如有問題或需要進一步協助，請：</p>
+<ol>
+<li>檢查程式輸出的錯誤訊息</li>
+<li>使用 <code>strace</code> 和 <code>perf</code> 工具診斷</li>
+<li>查看系統日誌 (<code>dmesg</code>, <code>/var/log/syslog</code>)</li>
+<li>確認網路連線和 multicast 配置</li>
+</ol>
+<p>祝你優化順利！🚀</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../hft/02-system/low_latency_trading_system_design.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../hft/02-system/TSE_RECEIVER_OPTIMIZATION_ANALYSIS.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../hft/02-system/low_latency_trading_system_design.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../hft/02-system/TSE_RECEIVER_OPTIMIZATION_ANALYSIS.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../../ace.js"></script>
+        <script src="../../mode-rust.js"></script>
+        <script src="../../editor.js"></script>
+        <script src="../../theme-dawn.js"></script>
+        <script src="../../theme-tomorrow_night.js"></script>
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../../mermaid.min.js"></script>
+        <script src="../../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

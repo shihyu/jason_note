@@ -1,0 +1,2259 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>高頻低延遲 Linux 完整配置指南 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="高頻低延遲-linux-cc-完整配置指南"><a class="header" href="#高頻低延遲-linux-cc-完整配置指南">高頻/低延遲 Linux C/C++ 完整配置指南</a></h1>
+<blockquote>
+<p><strong>目標</strong>：硬體 + 系統 + 程式碼 = 極致低延遲<br />
+<strong>適用</strong>：HFT、DPDK、超低延遲交易系統</p>
+</blockquote>
+<hr />
+<h2 id="-三層架構總覽"><a class="header" href="#-三層架構總覽">🎯 三層架構總覽</a></h2>
+<pre><code>┌─────────────────────────────────────┐
+│  1. 硬體層（Hardware）               │
+│  - 高階網卡 + BIOS 設定              │
+└──────────────┬──────────────────────┘
+               ↓
+┌─────────────────────────────────────┐
+│  2. 系統層（OS/Kernel）              │
+│  - GRUB 參數 + Runtime 設定          │
+└──────────────┬──────────────────────┘
+               ↓
+┌─────────────────────────────────────┐
+│  3. 應用層（C/C++ Code）             │
+│  - DPDK + Lock-free + 記憶體管理     │
+└─────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2 id="1-硬體層配置"><a class="header" href="#1-硬體層配置">1️⃣ 硬體層配置</a></h2>
+<h3 id="bios-設定開機前"><a class="header" href="#bios-設定開機前">BIOS 設定（開機前）</a></h3>
+<pre><code>┌─────────────────────────────┐
+│ 必須關閉                     │
+├─────────────────────────────┤
+│ ✓ Hyper-Threading (SMT)     │
+│ ✓ C-States (省電模式)        │
+│ ✓ P-States (動態頻率)        │
+│ ✓ Turbo Boost               │
+│ ✓ NUMA Node Interleaving    │
+└─────────────────────────────┘
+
+┌─────────────────────────────┐
+│ 必須開啟                     │
+├─────────────────────────────┤
+│ ✓ VT-d / IOMMU              │
+│ ✓ Performance Mode          │
+│ ✓ ACS (Access Control)      │
+└─────────────────────────────┘
+</code></pre>
+<h3 id="網卡要求"><a class="header" href="#網卡要求">網卡要求</a></h3>
+<pre><code>推薦型號：
+- Intel X710 / XL710
+- Mellanox ConnectX-5/6
+
+必備功能：
+✓ SR-IOV
+✓ Flow Director / Flow Steering
+✓ RSS (Receive Side Scaling)
+✓ 32+ RX/TX queues
+✓ DPDK PMD 支援
+</code></pre>
+<hr />
+<h2 id="2-系統層配置"><a class="header" href="#2-系統層配置">2️⃣ 系統層配置</a></h2>
+<h3 id="a-grub-啟動參數"><a class="header" href="#a-grub-啟動參數">A. GRUB 啟動參數</a></h3>
+<p>編輯 <code>/etc/default/grub</code>：</p>
+<pre><code class="language-bash">GRUB_CMDLINE_LINUX="
+  isolcpus=1-7
+  nohz_full=1-7
+  rcu_nocbs=1-7
+  rcu_nocb_poll
+  intel_pstate=disable
+  intel_idle.max_cstate=0
+  processor.max_cstate=0
+  idle=poll
+  nosoftlockup
+  nmi_watchdog=0
+  mce=off
+  intel_iommu=on
+  iommu=pt
+  default_hugepagesz=1G
+  hugepagesz=1G
+  hugepages=8
+  transparent_hugepage=never
+"
+</code></pre>
+<p>更新並重啟：</p>
+<pre><code class="language-bash">sudo update-grub
+sudo reboot
+</code></pre>
+<h3 id="b-系統服務管理"><a class="header" href="#b-系統服務管理">B. 系統服務管理</a></h3>
+<pre><code class="language-bash"># 關閉不必要服務
+systemctl stop irqbalance
+systemctl disable irqbalance
+systemctl stop cpupower
+systemctl mask systemd-journald.service
+
+# 鎖定 CPU 頻率
+cpupower frequency-set -g performance
+for cpu in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+    echo performance &gt; $cpu
+done
+</code></pre>
+<h3 id="c-irq-親和性設定現代更新"><a class="header" href="#c-irq-親和性設定現代更新">C. IRQ 親和性設定（現代更新）</a></h3>
+<p><strong>重要觀念轉變</strong>：在 Kernel Bypass 模式下，不再強調「把 IRQ 綁到哪個 CPU」，而是強調「避開 Polling CPU」。</p>
+<h4 id="為什麼-irq-綁定觀念改變了"><a class="header" href="#為什麼-irq-綁定觀念改變了">為什麼 IRQ 綁定觀念改變了？</a></h4>
+<ol>
+<li><strong>自動化</strong>：高階網卡（如 Mellanox ConnectX-7+）在 Bypass 模式下會自動關閉硬體中斷</li>
+<li><strong>避開策略</strong>：重點是「確保中斷不要出現在 Polling 核心上」</li>
+<li><strong>系統中斷處理</strong>：將所有系統中斷（磁碟、計時器）綁定到非交易核心（通常是 CPU 0）</li>
+</ol>
+<pre><code class="language-bash">#!/bin/bash
+# irq_binding.sh - 將所有系統中斷綁定到 CPU 0
+
+# 策略：讓所有中斷都在 CPU 0 處理，保護 1-7 號核心
+for irq in /proc/irq/*/smp_affinity; do
+    # 跳過 default_smp_affinity
+    if [[ $irq == *"default"* ]]; then
+        continue
+    fi
+
+    # 0x01 = 二進位 0001 = CPU 0
+    echo 1 &gt; $irq 2&gt;/dev/null
+done
+
+# 驗證：所有中斷應該只在 CPU 0 上增長
+watch -n 1 'cat /proc/interrupts | head -20'
+</code></pre>
+<h4 id="numa-拓撲對齊關鍵"><a class="header" href="#numa-拓撲對齊關鍵">NUMA 拓撲對齊（關鍵！）</a></h4>
+<pre><code class="language-bash"># 1. 檢查網卡在哪個 NUMA Node
+lspci -vvv -s 0000:03:00.0 | grep "NUMA node"
+# 輸出範例：NUMA node: 0
+
+# 2. 檢查 CPU 拓撲
+lstopo-no-graphics --of txt
+# 或
+numactl --hardware
+
+# 3. 確保你的 Polling 程式運行在同一個 NUMA Node
+# 例如網卡在 NUMA 0，則使用 CPU 0-11 (假設 12 核/socket)
+</code></pre>
+<p><strong>關鍵</strong>：跨 NUMA 存取的延遲會毀掉所有優化效果！</p>
+<h3 id="e-kernel-bypass-關鍵概念"><a class="header" href="#e-kernel-bypass-關鍵概念">E. Kernel Bypass 關鍵概念</a></h3>
+<h4 id="為什麼-irq-綁定變少了"><a class="header" href="#為什麼-irq-綁定變少了">為什麼 IRQ 綁定變少了？</a></h4>
+<pre><code>傳統觀念 (舊)           現代 Bypass 模式 (新)
+─────────────────────  ──────────────────────────
+把 IRQ 綁到特定 CPU    → 避開 Polling CPU，關閉不必要的中斷
+需要手動調整 affinity  → 高階網卡自動關閉硬體中斷
+</code></pre>
+<p><strong>核心原則</strong>：在 Kernel Bypass 模式下，重點不是「把中斷綁到哪」，而是「確保中斷不要出現在 Polling 核心上」。</p>
+<p><strong>「靜默/關閉中斷」的意思</strong>：網卡在 Bypass 模式下不會產生硬體中斷通知 CPU，因為我們使用 Busy Polling（不斷主動輪詢）取代被動等待中斷。</p>
+<h4 id="系統配置四要素"><a class="header" href="#系統配置四要素">系統配置四要素</a></h4>
+<p><strong>1. 軟體層級：捨棄 poll()</strong></p>
+<pre><code class="language-cpp">// ❌ 不要使用
+struct pollfd fds[1];
+poll(fds, 1, timeout);
+
+// ✅ 改用 DPDK
+rte_eth_rx_burst(port, queue_id, bufs, BURST_SIZE);
+</code></pre>
+<p><strong>2. 作業系統層級：核心隔離</strong></p>
+<pre><code class="language-bash"># 必要操作：在 GRUB 設定中加入
+isolcpus=X,Y        # 防止排程器使用這些核心
+nohz_full=X,Y       # 關閉該核心的 tick
+</code></pre>
+<p><strong>3. IRQ 管理：綁定到非交易核心</strong></p>
+<pre><code class="language-bash"># 將所有系統中斷綁定到 CPU 0（非 Polling 核心）
+for irq in /proc/irq/*/smp_affinity; do
+    echo 1 &gt; $irq 2&gt;/dev/null
+done
+</code></pre>
+<p><strong>4. 硬體對齊：NUMA 拓撲</strong></p>
+<pre><code class="language-bash"># 檢查網卡在哪個 NUMA Node
+lstopo-no-graphics --of txt
+
+# 或使用
+lspci -vvv -s &lt;PCI_ADDR&gt; | grep "NUMA node"
+
+# 關鍵：Polling 程式必須運行在同一個 NUMA Node 的 CPU 上
+</code></pre>
+<h3 id="d-dpdk-環境準備"><a class="header" href="#d-dpdk-環境準備">D. DPDK 環境準備</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+# dpdk_setup.sh
+
+# 1. 載入 VFIO 模組
+modprobe vfio-pci
+echo 1 &gt; /sys/module/vfio/parameters/enable_unsafe_noiommu_mode
+
+# 2. 查看網卡 PCI 位址
+lspci | grep Ethernet
+# 假設輸出：0000:03:00.0 Ethernet controller: Intel Corporation
+
+# 3. 解綁原驅動
+echo "0000:03:00.0" &gt; /sys/bus/pci/drivers/i40e/unbind
+
+# 4. 綁定到 vfio-pci（Intel X710 的 vendor:device ID）
+echo "8086 1572" &gt; /sys/bus/pci/drivers/vfio-pci/new_id
+echo "0000:03:00.0" &gt; /sys/bus/pci/drivers/vfio-pci/bind
+
+# 5. 掛載 Hugepages
+mkdir -p /mnt/huge
+mount -t hugetlbfs nodev /mnt/huge
+echo 8 &gt; /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages
+
+# 6. 驗證
+cat /proc/meminfo | grep Huge
+</code></pre>
+<hr />
+<h2 id="25-dpdk-vs-傳統網路編程"><a class="header" href="#25-dpdk-vs-傳統網路編程">2.5 DPDK vs 傳統網路編程</a></h2>
+<h3 id="poll-vs-recvfrom---傳統-socket-的兩階段流程"><a class="header" href="#poll-vs-recvfrom---傳統-socket-的兩階段流程">poll() vs recvfrom() - 傳統 Socket 的兩階段流程</a></h3>
+<p>在傳統 Linux 網路編程中，<code>poll()</code> 和 <code>recvfrom()</code> 是<strong>兩個不同的系統呼叫</strong>，各司其職：</p>
+<pre><code>┌─────────────────────────────────────────────┐
+│ 傳統 Socket 兩階段流程                       │
+├─────────────────────────────────────────────┤
+│                                             │
+│  1. poll() / select() / epoll()            │
+│     └─ 監控 socket 狀態                     │
+│     └─ 等待「有資料可讀」事件                │
+│     └─ 可同時監控多個 socket                │
+│     └─ 阻塞或非阻塞模式                     │
+│                                             │
+│  2. recvfrom() / recv() / read()           │
+│     └─ 實際接收資料                         │
+│     └─ 從 kernel buffer 拷貝到 user buffer  │
+│     └─ 一次處理一個 socket                  │
+│                                             │
+└─────────────────────────────────────────────┘
+</code></pre>
+<h4 id="傳統方式的典型程式碼"><a class="header" href="#傳統方式的典型程式碼">傳統方式的典型程式碼</a></h4>
+<pre><code class="language-c">#include &lt;sys/socket.h&gt;
+#include &lt;poll.h&gt;
+
+int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+bind(sockfd, ...);
+
+struct pollfd fds[1];
+fds[0].fd = sockfd;
+fds[0].events = POLLIN;  // 監控「可讀」事件
+
+while (1) {
+    // 階段 1：等待 socket 有資料（可能阻塞）
+    int ret = poll(fds, 1, 1000);  // timeout 1000ms
+
+    if (ret &gt; 0 &amp;&amp; (fds[0].revents &amp; POLLIN)) {
+        // 階段 2：實際接收資料
+        char buffer[1500];
+        struct sockaddr_in src_addr;
+        socklen_t addrlen = sizeof(src_addr);
+
+        ssize_t n = recvfrom(sockfd, buffer, sizeof(buffer), 0,
+                             (struct sockaddr*)&amp;src_addr, &amp;addrlen);
+
+        if (n &gt; 0) {
+            process_data(buffer, n);
+        }
+    }
+}
+</code></pre>
+<h4 id="recvfrom-可以不需要-poll-嗎"><a class="header" href="#recvfrom-可以不需要-poll-嗎">recvfrom() 可以不需要 poll() 嗎？</a></h4>
+<p><strong>答案：可以！</strong> <code>poll()</code> 不是必須的，有多種使用方式：</p>
+<p><strong>方式 1：純阻塞模式（最簡單）</strong></p>
+<pre><code class="language-c">int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+bind(sockfd, ...);
+
+while (1) {
+    char buffer[1500];
+    // 直接呼叫 recvfrom，會一直等待直到有資料
+    ssize_t n = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
+
+    if (n &gt; 0) {
+        process_data(buffer, n);
+    }
+}
+</code></pre>
+<ul>
+<li>✅ 最簡單，不需要 poll</li>
+<li>❌ 會一直阻塞，無法設定 timeout</li>
+<li>❌ 無法處理多個 socket</li>
+</ul>
+<p><strong>方式 2：非阻塞 + Busy Polling（模仿 DPDK，但效率差）</strong></p>
+<pre><code class="language-c">int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+bind(sockfd, ...);
+
+// 設定為非阻塞模式
+int flags = fcntl(sockfd, F_GETFL, 0);
+fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+
+while (1) {
+    char buffer[1500];
+    // ⚠️ 每次都是系統呼叫，立即回傳
+    ssize_t n = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
+
+    if (n &gt; 0) {
+        // 有封包，處理資料
+        process_data(buffer, n);
+    } else if (n &lt; 0 &amp;&amp; errno == EAGAIN) {
+        // 沒封包，但馬上又進入下一次迴圈
+        // ⚠️ 每次迴圈都要進 kernel 檢查是否有封包
+        continue;
+    }
+}
+</code></pre>
+<p><strong>重點：recvfrom 在非阻塞模式下的行為</strong></p>
+<pre><code>每次呼叫 recvfrom() 都會：
+  1. 進入 kernel space            (系統呼叫開銷)
+  2. 檢查 socket buffer 是否有資料
+  3. 如果有資料 → 拷貝到 user buffer，返回資料長度
+  4. 如果沒資料 → 返回 -1，設定 errno = EAGAIN
+  5. 回到 user space              (系統呼叫開銷)
+
+問題：每次迴圈都要這樣做，即使 99% 的時間沒資料！
+</code></pre>
+<ul>
+<li>✅ 不會阻塞，有資料立即處理</li>
+<li>❌ <strong>瘋狂系統呼叫</strong>，每次迴圈都要進 kernel 檢查</li>
+<li>❌ CPU 100%，但大部分時間浪費在進出 kernel</li>
+</ul>
+<p><strong>方式 3：poll() + recvfrom()（推薦）</strong></p>
+<pre><code class="language-c">struct pollfd fds[1];
+fds[0].fd = sockfd;
+fds[0].events = POLLIN;
+
+while (1) {
+    // 只呼叫一次 poll 等待
+    int ret = poll(fds, 1, 1000);
+
+    if (ret &gt; 0) {
+        // 確定有資料才呼叫 recvfrom
+        ssize_t n = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
+        process_data(buffer, n);
+    }
+}
+</code></pre>
+<ul>
+<li>✅ 有資料時才讀取，減少無效系統呼叫</li>
+<li>✅ 可設定 timeout</li>
+<li>✅ 可同時監控多個 socket</li>
+</ul>
+<h4 id="為什麼需要-poll"><a class="header" href="#為什麼需要-poll">為什麼需要 poll()？</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>場景</th><th>不用 poll 的問題</th><th>用 poll 的好處</th></tr></thead><tbody>
+<tr><td>單一 socket</td><td><code>recvfrom()</code> 會一直阻塞</td><td>可設定 timeout</td></tr>
+<tr><td>多個 socket</td><td>不知道該讀哪個，需要逐一輪詢</td><td>一次監控多個，知道哪個有資料</td></tr>
+<tr><td>非阻塞模式</td><td>瘋狂系統呼叫浪費 CPU</td><td>只在有資料時才呼叫 recvfrom</td></tr>
+</tbody></table>
+</div>
+<h4 id="recvfrom-系統呼叫行為詳解"><a class="header" href="#recvfrom-系統呼叫行為詳解">recvfrom() 系統呼叫行為詳解</a></h4>
+<p><strong>關鍵問題：recvfrom 要每次系統呼叫看是否有封包嗎？</strong></p>
+<p><strong>答案：取決於模式！</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>模式</th><th>行為</th><th>系統呼叫頻率</th><th>適用場景</th></tr></thead><tbody>
+<tr><td><strong>阻塞模式</strong></td><td>呼叫一次，等到有資料才返回</td><td>有資料時才返回</td><td>簡單應用</td></tr>
+<tr><td><strong>非阻塞模式</strong></td><td>每次呼叫立即返回</td><td><strong>每次迴圈都要系統呼叫</strong></td><td>Busy polling (效率差)</td></tr>
+<tr><td><strong>poll + recvfrom</strong></td><td>poll 等待，確定有資料才 recvfrom</td><td>有資料時才 recvfrom</td><td>推薦</td></tr>
+</tbody></table>
+</div>
+<p><strong>詳細行為對比：</strong></p>
+<pre><code>阻塞模式：
+  recvfrom(sockfd, ...);  ← 呼叫一次
+  ↓
+  ⏸️ 在 kernel 內等待（程式暫停）
+  ↓
+  📦 有封包到達
+  ↓
+  ✅ 拷貝資料，返回
+  ↓
+  處理資料
+  ↓
+  recvfrom(sockfd, ...);  ← 再次呼叫，又會等待
+
+  系統呼叫次數：等於封包數量（最少）
+
+非阻塞模式（Busy Polling）：
+  while (1) {
+    recvfrom(sockfd, ...);  ← 每次迴圈都系統呼叫
+    ↓
+    立即檢查 socket buffer
+    ↓
+    沒資料？返回 EAGAIN
+    ↓
+    recvfrom(sockfd, ...);  ← 又是系統呼叫
+    ↓
+    沒資料？返回 EAGAIN
+    ↓
+    recvfrom(sockfd, ...);  ← 又是系統呼叫
+    ...（可能重複數百萬次）
+    ↓
+    📦 有封包到達
+    ↓
+    拷貝資料，返回
+  }
+
+  系統呼叫次數：可能數百萬次/秒（極多！）
+
+poll + recvfrom：
+  while (1) {
+    poll(fds, ...);         ← 系統呼叫，等待事件
+    ↓
+    ⏸️ 在 kernel 內等待
+    ↓
+    📦 有封包到達
+    ↓
+    ✅ 返回「有資料可讀」
+    ↓
+    recvfrom(sockfd, ...);  ← 確定有資料才系統呼叫
+    ↓
+    拷貝資料，返回
+  }
+
+  系統呼叫次數：約 2 × 封包數量（適中）
+</code></pre>
+<p><strong>關鍵差異總結：</strong></p>
+<pre><code>┌─────────────────────────────────────────────────────┐
+│ 非阻塞 recvfrom busy polling 為什麼這麼差？         │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  while (1) {                                        │
+│    recvfrom(...)  ← 系統呼叫 1                      │
+│    recvfrom(...)  ← 系統呼叫 2                      │
+│    recvfrom(...)  ← 系統呼叫 3                      │
+│    ...                                              │
+│    recvfrom(...)  ← 系統呼叫 1000000                │
+│  }                                                  │
+│                                                     │
+│  每次都要：                                         │
+│  1. user → kernel 切換     (50-100 cycles)          │
+│  2. 檢查 socket buffer     (20-50 cycles)           │
+│  3. kernel → user 切換     (50-100 cycles)          │
+│                                                     │
+│  即使沒封包，也要這樣做！                           │
+└─────────────────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h4 id="對比三種方式-vs-dpdk"><a class="header" href="#對比三種方式-vs-dpdk">對比：三種方式 vs DPDK</a></h4>
+<pre><code>方式 1（阻塞 recvfrom）:
+  while (1) {
+    recvfrom(...);  // 阻塞等待，簡單但不靈活
+  }
+
+方式 2（非阻塞 recvfrom busy polling）:
+  while (1) {
+    recvfrom(...);  // 瘋狂系統呼叫，CPU 100%
+  }
+  ❌ 想模仿 DPDK 但效率極差
+
+方式 3（poll + recvfrom）:
+  while (1) {
+    poll(...);      // 等待事件
+    recvfrom(...);  // 有資料才讀
+  }
+  ✅ 推薦的傳統方式
+
+DPDK（真正的 busy polling）:
+  while (1) {
+    rte_eth_rx_burst(...);  // 直接讀記憶體，零系統呼叫
+  }
+  ✅ CPU 100% 但全在 user space
+</code></pre>
+<hr />
+<h4 id="-深入分析為什麼方式-2-效率這麼差"><a class="header" href="#-深入分析為什麼方式-2-效率這麼差">💡 深入分析：為什麼方式 2 效率這麼差？</a></h4>
+<p>雖然方式 2（非阻塞 recvfrom busy polling）和 DPDK 都是 busy polling，但<strong>效率差異高達 1000 倍！</strong></p>
+<p><strong>非阻塞 recvfrom busy polling 的開銷：</strong></p>
+<pre><code>每次迴圈都要：
+  1. 切換到 kernel mode      (50-100 cycles)
+  2. 檢查 socket buffer       (20-50 cycles)
+  3. 拷貝資料（如果有）       (依資料大小，1500 bytes ≈ 300 cycles)
+  4. 切換回 user mode         (50-100 cycles)
+
+沒資料時：浪費 100-200 cycles
+有資料時：還要加上拷貝開銷 300+ cycles
+系統呼叫次數：每次迴圈都呼叫（可能數百萬次/秒）
+</code></pre>
+<p><strong>DPDK busy polling 的開銷：</strong></p>
+<pre><code>每次迴圈：
+  1. 直接讀記憶體              (10-20 cycles)
+  2. 資料已經在那裡（零拷貝）  (0 cycles)
+
+沒資料時：只浪費 10-20 cycles
+有資料時：資料已經在 user space，不需拷貝
+系統呼叫次數：0
+</code></pre>
+<p><strong>效率對比總結：</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>項目</th><th>方式 2 (非阻塞 recvfrom)</th><th>DPDK (rx_burst)</th><th>差異</th></tr></thead><tbody>
+<tr><td><strong>每次迴圈開銷</strong></td><td>100-200 cycles</td><td>10-20 cycles</td><td><strong>10-20倍</strong></td></tr>
+<tr><td><strong>系統呼叫</strong></td><td>每次都要</td><td>零次</td><td><strong>∞</strong></td></tr>
+<tr><td><strong>資料拷貝</strong></td><td>需要（300+ cycles）</td><td>不需要（0 cycles）</td><td><strong>∞</strong></td></tr>
+<tr><td><strong>Context Switch</strong></td><td>每次 2 次</td><td>零次</td><td><strong>∞</strong></td></tr>
+<tr><td><strong>總體效率</strong></td><td>極差</td><td>極佳</td><td><strong>1000-3000倍</strong></td></tr>
+</tbody></table>
+</div>
+<p><strong>關鍵結論：</strong></p>
+<pre><code>┌──────────────────────────────────────────────────────┐
+│  同樣是 CPU 100% 的 Busy Polling                      │
+│                                                      │
+│  方式 2：CPU 時間浪費在進出 kernel                    │
+│          ❌ 每次迴圈：kernel ↔ user 切換開銷          │
+│          ❌ 大量無效系統呼叫                          │
+│                                                      │
+│  DPDK：  CPU 時間用在處理封包                         │
+│          ✅ 完全在 user space                        │
+│          ✅ 零系統呼叫，零拷貝                        │
+│                                                      │
+│  結論：即使都是 busy polling，DPDK 快 1000 倍！       │
+└──────────────────────────────────────────────────────┘
+</code></pre>
+<p><strong>實測數據示例：</strong></p>
+<pre><code>測試環境：Intel Xeon E5-2680 v4 @ 2.4GHz
+封包大小：64 bytes (最小 UDP 封包)
+測試時間：10 秒
+
+方式 2 (非阻塞 recvfrom busy polling):
+  - 封包處理速度：~100,000 pps
+  - CPU 使用率：100%
+  - 系統呼叫次數：~10,000,000 次/秒
+  - 平均延遲：~10 μs
+
+DPDK (rx_burst):
+  - 封包處理速度：~14,000,000 pps (線速)
+  - CPU 使用率：100%
+  - 系統呼叫次數：0
+  - 平均延遲：~0.5 μs
+
+效率提升：140x (封包處理速度)
+延遲降低：20x
+</code></pre>
+<blockquote>
+<p><strong>重點</strong>：這就是為什麼<strong>即使都是 busy polling，DPDK 還是快得多</strong>！不是概念的差異，而是實作層級的根本差異。</p>
+</blockquote>
+<hr />
+<h4 id="核心差異一覽"><a class="header" href="#核心差異一覽">核心差異一覽</a></h4>
+<p><strong>是的，poll() 和 recvfrom() 完全不一樣！</strong></p>
+<pre><code>poll()              recvfrom()
+───────────────     ───────────────
+監控階段             實際讀取階段
+等待事件通知         拷貝資料
+可監控多個 socket    一次處理一個
+返回「就緒狀態」     返回「實際資料」
+</code></pre>
+<p><strong>傳統流程（兩階段）</strong></p>
+<pre><code class="language-c">// 第 1 步：問 kernel「有資料嗎?」
+poll(fds, 1, timeout);
+
+// 第 2 步：「有！那我來拿」
+recvfrom(sockfd, buffer, ...);
+</code></pre>
+<p><strong>DPDK 流程（單一步驟）</strong></p>
+<pre><code class="language-cpp">// 一步到位：直接從網卡記憶體拿資料
+rte_eth_rx_burst(port_id, 0, bufs, BURST_SIZE);
+</code></pre>
+<p><strong>為什麼 DPDK 只需要一步？</strong></p>
+<ol>
+<li><strong>不需要 poll()</strong> - 因為我們不依賴 kernel 通知，直接自己去網卡記憶體看有沒有資料</li>
+<li><strong>不需要 recvfrom()</strong> - 因為資料已經在我們的記憶體裡（DMA 直接寫入），不需要從 kernel buffer 拷貝</li>
+</ol>
+<p><strong>效能差異</strong></p>
+<pre><code>傳統方式（每個封包）:
+poll() 系統呼叫 (1ms)
+  → kernel 檢查 socket
+  → 等待中斷
+  → 回傳「有資料」
+recvfrom() 系統呼叫 (0.5ms)
+  → kernel 拷貝資料
+  → 回傳資料
+總計：~1.5ms
+
+DPDK 方式（批次 32 個封包）:
+rte_eth_rx_burst() (0.5μs)
+  → 直接讀記憶體
+  → 拿到 32 個封包
+總計：~0.5μs (快 3000 倍!)
+</code></pre>
+<blockquote>
+<p><strong>重點</strong>：這就是為什麼在「E. Kernel Bypass 關鍵概念」章節中，第一條就是「<strong>捨棄 poll()</strong>」- 因為在 Bypass 模式下，我們完全跳過了 kernel 的事件通知機制！</p>
+</blockquote>
+<hr />
+<h4 id="dpdk-的差異單一步驟"><a class="header" href="#dpdk-的差異單一步驟">DPDK 的差異：單一步驟</a></h4>
+<pre><code class="language-cpp">// DPDK 方式：沒有兩階段，直接取資料
+while (1) {
+    struct rte_mbuf *bufs[BURST_SIZE];
+
+    // 一步到位：檢查 + 取資料
+    uint16_t nb_rx = rte_eth_rx_burst(port_id, 0, bufs, BURST_SIZE);
+
+    // nb_rx 可能是 0（沒資料）或 1-32（有資料）
+    for (uint16_t i = 0; i &lt; nb_rx; i++) {
+        process_packet(bufs[i]);
+        rte_pktmbuf_free(bufs[i]);
+    }
+
+    // 沒資料也不睡眠（busy polling）
+    if (nb_rx == 0) {
+        rte_pause();  // 只是 CPU pause 指令
+    }
+}
+</code></pre>
+<h4 id="關鍵差異總結"><a class="header" href="#關鍵差異總結">關鍵差異總結</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>層面</th><th>傳統 Socket</th><th>DPDK</th></tr></thead><tbody>
+<tr><td><strong>步驟</strong></td><td>兩階段（poll → recvfrom）</td><td>單一步驟（rx_burst）</td></tr>
+<tr><td><strong>系統呼叫</strong></td><td>每輪至少 1 次（poll）+ 有資料時多 1 次（recvfrom）</td><td>0 次（完全在 user space）</td></tr>
+<tr><td><strong>等待機制</strong></td><td>poll 阻塞等待 kernel 通知</td><td>busy polling 主動輪詢</td></tr>
+<tr><td><strong>資料拷貝</strong></td><td>kernel buffer → user buffer</td><td>零拷貝（DMA 直達）</td></tr>
+<tr><td><strong>批次處理</strong></td><td>每次 1 個封包</td><td>每次最多 32 個封包</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h3 id="核心差異對照表"><a class="header" href="#核心差異對照表">核心差異對照表</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>傳統 recvfrom</th><th>DPDK rte_eth_rx_burst</th></tr></thead><tbody>
+<tr><td><strong>資料路徑</strong></td><td>網卡 → 核心緩衝區 → 拷貝 → 用戶空間</td><td>網卡 → 直接寫入用戶空間記憶體 (Zero-copy)</td></tr>
+<tr><td><strong>處理單位</strong></td><td>單個封包 (Single Packet)</td><td>一批封包 (Batch/Burst)</td></tr>
+<tr><td><strong>阻塞特性</strong></td><td>可阻塞 (Blocking) 或非阻塞</td><td>永遠不阻塞（立即回傳目前抓到的封包數）</td></tr>
+<tr><td><strong>協議棧</strong></td><td>自動處理 TCP/IP（由 Linux Kernel 處理）</td><td>裸封包 (Raw Packet)，需自己解析 Ethernet/IP/UDP 標頭</td></tr>
+<tr><td><strong>系統呼叫</strong></td><td>每次都進入 kernel space</td><td>完全在 user space（零系統呼叫）</td></tr>
+<tr><td><strong>中斷處理</strong></td><td>依賴硬體中斷喚醒程式</td><td>Busy Polling，不依賴中斷</td></tr>
+</tbody></table>
+</div>
+<h3 id="程式碼對比"><a class="header" href="#程式碼對比">程式碼對比</a></h3>
+<h4 id="傳統-socket-方式"><a class="header" href="#傳統-socket-方式">傳統 Socket 方式</a></h4>
+<pre><code class="language-cpp">// 傳統方式：每次處理一個封包，有系統呼叫開銷
+int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+bind(sockfd, ...);
+
+while (1) {
+    char buffer[1500];
+    struct sockaddr_in src_addr;
+    socklen_t addrlen = sizeof(src_addr);
+
+    // 阻塞等待或輪詢（有 kernel overhead）
+    ssize_t n = recvfrom(sockfd, buffer, sizeof(buffer), 0,
+                         (struct sockaddr*)&amp;src_addr, &amp;addrlen);
+
+    if (n &gt; 0) {
+        // 資料已經被 kernel 解析過（TCP/IP stack）
+        process_data(buffer, n);
+    }
+}
+</code></pre>
+<h4 id="dpdk-方式"><a class="header" href="#dpdk-方式">DPDK 方式</a></h4>
+<pre><code class="language-cpp">// DPDK 方式：批次處理，零系統呼叫，零拷貝
+uint16_t port_id = 0;
+uint16_t queue_id = 0;
+
+while (1) {
+    struct rte_mbuf *bufs[BURST_SIZE];
+
+    // 非阻塞：立即回傳（目前抓到幾個就回傳幾個）
+    uint16_t nb_rx = rte_eth_rx_burst(port_id, queue_id,
+                                       bufs, BURST_SIZE);
+
+    // 批次處理
+    for (uint16_t i = 0; i &lt; nb_rx; i++) {
+        // 裸封包：需要自己解析 Ethernet/IP/UDP header
+        uint8_t *pkt = rte_pktmbuf_mtod(bufs[i], uint8_t*);
+
+        struct rte_ether_hdr *eth = (struct rte_ether_hdr *)pkt;
+        struct rte_ipv4_hdr *ip = (struct rte_ipv4_hdr *)(eth + 1);
+        struct rte_udp_hdr *udp = (struct rte_udp_hdr *)(ip + 1);
+
+        uint8_t *payload = (uint8_t *)(udp + 1);
+
+        // 處理業務邏輯
+        process_packet(payload);
+
+        // 釋放或轉發
+        rte_pktmbuf_free(bufs[i]);
+    }
+
+    // 即使 nb_rx == 0 也不睡眠（busy polling）
+    if (unlikely(nb_rx == 0)) {
+        rte_pause();  // CPU pause 指令
+    }
+}
+</code></pre>
+<h3 id="重要觀念"><a class="header" href="#重要觀念">重要觀念</a></h3>
+<h4 id="1-batch-處理優勢"><a class="header" href="#1-batch-處理優勢">1. Batch 處理優勢</a></h4>
+<pre><code>傳統 Socket (N 次系統呼叫)
+recvfrom() → 處理 → recvfrom() → 處理 → ...
+每次都進 kernel
+
+DPDK Burst (1 次 DMA 操作取得多個封包)
+rte_eth_rx_burst() → 取得 32 個封包 → 全部處理
+完全在 user space
+</code></pre>
+<h4 id="2-零拷貝原理"><a class="header" href="#2-零拷貝原理">2. 零拷貝原理</a></h4>
+<pre><code>傳統：
+網卡 DMA → Kernel Buffer → memcpy → User Buffer
+          ↑ 拷貝開銷
+
+DPDK：
+網卡 DMA → User Space Mbuf Pool (透過 IOMMU)
+          ↑ 直接寫入
+</code></pre>
+<h4 id="3-為什麼需要自己解析協議"><a class="header" href="#3-為什麼需要自己解析協議">3. 為什麼需要自己解析協議？</a></h4>
+<pre><code class="language-cpp">// Kernel 幫你做的事（傳統 Socket）
+- Ethernet 解封裝
+- IP checksum 驗證
+- UDP/TCP 解析
+- Socket buffer 管理
+
+// DPDK 你要自己做
+uint8_t *pkt = rte_pktmbuf_mtod(mbuf, uint8_t*);
+
+// 手動解析每一層
+struct rte_ether_hdr *eth = (struct rte_ether_hdr *)pkt;
+struct rte_ipv4_hdr *ip = (struct rte_ipv4_hdr *)(eth + 1);
+struct rte_udp_hdr *udp = (struct rte_udp_hdr *)(ip + 1);
+void *payload = (void *)(udp + 1);
+</code></pre>
+<p><strong>代價</strong>：複雜度 ↑
+<strong>好處</strong>：延遲 ↓ (通常降低 10-100x)</p>
+<hr />
+<h2 id="251-沒有-dpdk-的高頻低延遲最佳方案"><a class="header" href="#251-沒有-dpdk-的高頻低延遲最佳方案">2.5.1 沒有 DPDK 的高頻低延遲最佳方案</a></h2>
+<h3 id="實際場景無法使用-kernel-bypass-時怎麼辦"><a class="header" href="#實際場景無法使用-kernel-bypass-時怎麼辦">實際場景：無法使用 Kernel Bypass 時怎麼辦？</a></h3>
+<p>在很多情況下無法使用 DPDK：</p>
+<ul>
+<li>共享伺服器環境（不能獨佔網卡）</li>
+<li>需要使用標準 TCP/IP 協議棧</li>
+<li>安全性考量（不想 bypass kernel）</li>
+<li>預算限制（無法購買高階網卡）</li>
+</ul>
+<p><strong>這時候，傳統 Socket 編程的最佳方案是什麼？</strong></p>
+<h3 id="-推薦方案epoll-edge-triggered--優化技巧"><a class="header" href="#-推薦方案epoll-edge-triggered--優化技巧">⭐ 推薦方案：epoll (Edge-Triggered) + 優化技巧</a></h3>
+<h4 id="方案架構"><a class="header" href="#方案架構">方案架構</a></h4>
+<pre><code>┌─────────────────────────────────────────────┐
+│ 最佳傳統方案（無 DPDK）                      │
+├─────────────────────────────────────────────┤
+│                                             │
+│  1. epoll (edge-triggered mode)            │
+│     ✓ 比 poll/select 快很多                 │
+│     ✓ O(1) 複雜度                           │
+│     ✓ 只通知有變化的 socket                 │
+│                                             │
+│  2. SO_BUSY_POLL socket 選項                │
+│     ✓ Kernel 內的 busy poll                 │
+│     ✓ 減少中斷延遲                          │
+│                                             │
+│  3. CPU Affinity + IRQ 綁定                 │
+│     ✓ 減少 cache miss                       │
+│     ✓ 降低 context switch                   │
+│                                             │
+│  4. Batch 處理                              │
+│     ✓ epoll_wait 一次取多個事件             │
+│     ✓ recvmmsg 一次讀多個封包               │
+│                                             │
+└─────────────────────────────────────────────┘
+</code></pre>
+<h3 id="實作範例最佳化的傳統方案"><a class="header" href="#實作範例最佳化的傳統方案">實作範例：最佳化的傳統方案</a></h3>
+<pre><code class="language-c">#define _GNU_SOURCE
+#include &lt;sys/epoll.h&gt;
+#include &lt;sys/socket.h&gt;
+#include &lt;sched.h&gt;
+#include &lt;pthread.h&gt;
+
+#define MAX_EVENTS 32
+#define BATCH_SIZE 32
+
+// 1. 設定 socket 選項
+int setup_optimized_socket(int sockfd) {
+    // 設定為非阻塞
+    int flags = fcntl(sockfd, F_GETFL, 0);
+    fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+
+    // 啟用 SO_BUSY_POLL（kernel 內的 busy poll）
+    int busy_poll_us = 50;  // 50 微秒
+    setsockopt(sockfd, SOL_SOCKET, SO_BUSY_POLL,
+               &amp;busy_poll_us, sizeof(busy_poll_us));
+
+    // 設定接收緩衝區大小
+    int rcvbuf = 4 * 1024 * 1024;  // 4MB
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF,
+               &amp;rcvbuf, sizeof(rcvbuf));
+
+    // 啟用 SO_REUSEPORT（多執行緒負載均衡）
+    int reuse = 1;
+    setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT,
+               &amp;reuse, sizeof(reuse));
+
+    return 0;
+}
+
+// 2. 綁定到特定 CPU
+void bind_to_cpu(int cpu_id) {
+    cpu_set_t cpuset;
+    CPU_ZERO(&amp;cpuset);
+    CPU_SET(cpu_id, &amp;cpuset);
+    pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &amp;cpuset);
+}
+
+// 3. 使用 epoll edge-triggered 模式
+int main() {
+    // 綁定到特定 CPU
+    bind_to_cpu(2);
+
+    // 建立 socket
+    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    bind(sockfd, ...);
+    setup_optimized_socket(sockfd);
+
+    // 建立 epoll
+    int epfd = epoll_create1(0);
+
+    // 加入 socket（Edge-Triggered 模式）
+    struct epoll_event ev;
+    ev.events = EPOLLIN | EPOLLET;  // ← Edge-Triggered
+    ev.data.fd = sockfd;
+    epoll_ctl(epfd, EPOLL_CTL_ADD, sockfd, &amp;ev);
+
+    // 準備接收緩衝區
+    struct mmsghdr msgs[BATCH_SIZE];
+    struct iovec iovecs[BATCH_SIZE];
+    char buffers[BATCH_SIZE][2048];
+
+    for (int i = 0; i &lt; BATCH_SIZE; i++) {
+        iovecs[i].iov_base = buffers[i];
+        iovecs[i].iov_len = sizeof(buffers[i]);
+        msgs[i].msg_hdr.msg_iov = &amp;iovecs[i];
+        msgs[i].msg_hdr.msg_iovlen = 1;
+        msgs[i].msg_hdr.msg_name = NULL;
+        msgs[i].msg_hdr.msg_namelen = 0;
+    }
+
+    // 主迴圈
+    struct epoll_event events[MAX_EVENTS];
+
+    while (1) {
+        // 等待事件（可設 timeout = 0 做 busy poll）
+        int nfds = epoll_wait(epfd, events, MAX_EVENTS, 0);  // 0 = 非阻塞
+
+        for (int i = 0; i &lt; nfds; i++) {
+            if (events[i].events &amp; EPOLLIN) {
+                // Edge-triggered：需要讀取所有可用資料
+                while (1) {
+                    // 使用 recvmmsg 批次接收
+                    int nr = recvmmsg(sockfd, msgs, BATCH_SIZE,
+                                     MSG_DONTWAIT, NULL);
+
+                    if (nr &lt;= 0) {
+                        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                            break;  // 沒資料了
+                        }
+                        // 處理錯誤
+                        break;
+                    }
+
+                    // 批次處理封包
+                    for (int j = 0; j &lt; nr; j++) {
+                        process_packet(buffers[j], msgs[j].msg_len);
+                    }
+                }
+            }
+        }
+
+        // 即使沒事件也會立即回到迴圈（busy poll）
+    }
+
+    return 0;
+}
+</code></pre>
+<h3 id="關鍵優化技巧"><a class="header" href="#關鍵優化技巧">關鍵優化技巧</a></h3>
+<h4 id="1-使用-epoll-而非-pollselect"><a class="header" href="#1-使用-epoll-而非-pollselect">1. 使用 epoll 而非 poll/select</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>方案</th><th>時間複雜度</th><th>最大 fd 數</th><th>推薦度</th></tr></thead><tbody>
+<tr><td>select()</td><td>O(n)</td><td>1024</td><td>❌ 不推薦</td></tr>
+<tr><td>poll()</td><td>O(n)</td><td>無限制</td><td>△ 普通</td></tr>
+<tr><td>epoll()</td><td>O(1)</td><td>無限制</td><td>✅ 推薦</td></tr>
+</tbody></table>
+</div>
+<p><strong>epoll 優勢：</strong></p>
+<ul>
+<li>不需要每次傳遞整個 fd 列表</li>
+<li>只返回有事件的 fd</li>
+<li>Edge-triggered 模式更高效</li>
+</ul>
+<h4 id="2-so_busy_poll---kernel-內的-busy-poll"><a class="header" href="#2-so_busy_poll---kernel-內的-busy-poll">2. SO_BUSY_POLL - Kernel 內的 Busy Poll</a></h4>
+<pre><code class="language-c">// Kernel 會在指定時間內 busy poll，減少中斷延遲
+int busy_poll_us = 50;  // 微秒
+setsockopt(sockfd, SOL_SOCKET, SO_BUSY_POLL,
+           &amp;busy_poll_us, sizeof(busy_poll_us));
+</code></pre>
+<p><strong>效果：</strong></p>
+<ul>
+<li>延遲從 ~50μs 降到 ~10μs</li>
+<li>代價：增加 CPU 使用率</li>
+</ul>
+<h4 id="3-使用-recvmmsg-批次接收"><a class="header" href="#3-使用-recvmmsg-批次接收">3. 使用 recvmmsg 批次接收</a></h4>
+<pre><code class="language-c">// 一次接收多個封包，減少系統呼叫
+struct mmsghdr msgs[32];
+int nr = recvmmsg(sockfd, msgs, 32, MSG_DONTWAIT, NULL);
+
+// 比起 32 次 recvfrom，只需要 1 次系統呼叫！
+</code></pre>
+<h4 id="4-so_reuseport-多執行緒負載均衡"><a class="header" href="#4-so_reuseport-多執行緒負載均衡">4. SO_REUSEPORT 多執行緒負載均衡</a></h4>
+<pre><code class="language-c">int reuse = 1;
+setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &amp;reuse, sizeof(reuse));
+
+// 多個執行緒可以 bind 同一個 port
+// Kernel 會自動做負載均衡
+</code></pre>
+<h4 id="5-cpu-affinity-和-irq-綁定"><a class="header" href="#5-cpu-affinity-和-irq-綁定">5. CPU Affinity 和 IRQ 綁定</a></h4>
+<pre><code class="language-bash"># 將接收執行緒綁到 CPU 2
+taskset -c 2 ./my_app
+
+# 將網卡 IRQ 綁到同一個 CPU
+echo 4 &gt; /proc/irq/&lt;IRQ_NUM&gt;/smp_affinity  # 0x4 = CPU 2
+</code></pre>
+<h3 id="效能對比"><a class="header" href="#效能對比">效能對比</a></h3>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│ 傳統方案效能對比（無 DPDK）                              │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  方案                      延遲        吞吐量           │
+│  ───────────────────────  ─────────  ────────────────  │
+│  阻塞 recvfrom            100-500μs   ~50,000 pps       │
+│  poll + recvfrom          50-200μs    ~100,000 pps      │
+│  epoll + recvfrom         20-100μs    ~500,000 pps      │
+│  epoll + recvmmsg         10-50μs     ~1,000,000 pps    │
+│  epoll + recvmmsg +       5-30μs      ~2,000,000 pps    │
+│    SO_BUSY_POLL                                         │
+│                                                         │
+│  DPDK (參考)              0.5-2μs     ~14,000,000 pps   │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="最佳實踐-checklist"><a class="header" href="#最佳實踐-checklist">最佳實踐 Checklist</a></h3>
+<pre><code>系統層級：
+[✓] IRQ 綁定到特定 CPU
+[✓] 關閉 irqbalance
+[✓] CPU governor = performance
+[✓] 網卡 RSS/RPS 設定
+
+Socket 選項：
+[✓] SO_BUSY_POLL（50μs）
+[✓] SO_REUSEPORT（多執行緒）
+[✓] SO_RCVBUF（增大緩衝區）
+[✓] O_NONBLOCK（非阻塞）
+
+程式設計：
+[✓] 使用 epoll edge-triggered
+[✓] 使用 recvmmsg 批次接收
+[✓] CPU affinity 綁定
+[✓] 避免記憶體分配
+[✓] Batch 處理
+</code></pre>
+<h3 id="何時升級到-dpdk"><a class="header" href="#何時升級到-dpdk">何時升級到 DPDK？</a></h3>
+<pre><code>傳統方案能滿足：
+  ✓ 延遲要求 &gt; 10μs
+  ✓ 吞吐量 &lt; 2M pps
+  ✓ 需要標準 TCP/IP 協議棧
+  ✓ 共享伺服器環境
+
+考慮 DPDK：
+  ✗ 延遲要求 &lt; 5μs
+  ✗ 吞吐量 &gt; 5M pps
+  ✗ 需要極致效能
+  ✗ 可以獨佔網卡
+</code></pre>
+<blockquote>
+<p><strong>結論</strong>：在沒有 DPDK 的情況下，<strong>epoll (edge-triggered) + recvmmsg + SO_BUSY_POLL</strong> 是最佳方案，可以達到 ~10μs 延遲和 1-2M pps 吞吐量。</p>
+</blockquote>
+<hr />
+<h2 id="252-單一高頻連線的-io-模型選擇"><a class="header" href="#252-單一高頻連線的-io-模型選擇">2.5.2 單一高頻連線的 I/O 模型選擇</a></h2>
+<h3 id="重要問題單一-udp-連線需要用-epoll-嗎"><a class="header" href="#重要問題單一-udp-連線需要用-epoll-嗎">重要問題：單一 UDP 連線需要用 epoll 嗎？</a></h3>
+<p><strong>場景</strong>：接收台灣證券交易所 UDP Multicast 報價（TSE Receiver）</p>
+<ul>
+<li>✅ 只有一個 UDP socket</li>
+<li>✅ 高頻報價（每秒數千到數萬筆）</li>
+<li>✅ 要求極低延遲（微秒級）</li>
+</ul>
+<p><strong>答案：❌ 不應該用 epoll！應該用非阻塞 + Busy Polling</strong></p>
+<h3 id="epoll-vs-busy-polling-延遲對比"><a class="header" href="#epoll-vs-busy-polling-延遲對比">epoll vs Busy Polling 延遲對比</a></h3>
+<h4 id="為什麼-epoll-在單一連線下更慢"><a class="header" href="#為什麼-epoll-在單一連線下更慢">為什麼 epoll 在單一連線下更慢？</a></h4>
+<pre><code>Busy Polling 流程（目前最佳方案）：
+用戶態 → recvfrom (syscall) → 內核檢查 → 返回用戶態
+總延遲：~1-3 μs
+
+epoll 流程（不推薦）：
+用戶態 → epoll_wait (syscall) → 內核休眠 → 封包到達
+  → 喚醒進程 → 返回用戶態 → recvfrom (syscall)
+總延遲：~10-50 μs（多了 context switch 和喚醒開銷）
+</code></pre>
+<h4 id="延遲分析表"><a class="header" href="#延遲分析表">延遲分析表</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>方法</th><th>平均延遲</th><th>P99 延遲</th><th>CPU 使用率</th><th>複雜度</th><th>適用場景</th></tr></thead><tbody>
+<tr><td><strong>Busy Polling（非阻塞 recvfrom）</strong></td><td><strong>2-5 μs</strong></td><td><strong>10 μs</strong></td><td>100%</td><td>低 ✅</td><td><strong>單一高頻連線</strong></td></tr>
+<tr><td>+ SO_BUSY_POLL</td><td>1-3 μs</td><td>8 μs</td><td>100%</td><td>低</td><td>進階優化</td></tr>
+<tr><td>+ AF_XDP</td><td>0.5-2 μs</td><td>5 μs</td><td>100%</td><td>高</td><td>極致低延遲</td></tr>
+<tr><td>epoll (不建議) ❌</td><td>20-50 μs</td><td>100 μs</td><td>5%</td><td>中</td><td>多連線場景</td></tr>
+<tr><td>阻塞 recvfrom</td><td>50-100 μs</td><td>200 μs</td><td>&lt;1%</td><td>低</td><td>低頻應用</td></tr>
+</tbody></table>
+</div>
+<h3 id="核心差異分析"><a class="header" href="#核心差異分析">核心差異分析</a></h3>
+<h4 id="1-epoll_wait-的額外開銷"><a class="header" href="#1-epoll_wait-的額外開銷">1. epoll_wait 的額外開銷</a></h4>
+<pre><code class="language-c">// ❌ 使用 epoll（反而更慢）
+int epfd = epoll_create1(0);
+struct epoll_event ev, events[1];
+ev.events = EPOLLIN;
+ev.data.fd = sockfd;
+epoll_ctl(epfd, EPOLL_CTL_ADD, sockfd, &amp;ev);
+
+while (1) {
+    // 步驟 1：epoll_wait（需要 context switch）
+    int nfds = epoll_wait(epfd, events, 1, -1);  // ~10-50 μs
+
+    if (nfds &gt; 0) {
+        // 步驟 2：recvfrom
+        nbytes = recvfrom(sockfd, buf, size, 0, ...);  // ~1-3 μs
+    }
+}
+
+// 總延遲：epoll_wait + recvfrom ≈ 11-53 μs
+</code></pre>
+<pre><code class="language-c">// ✅ 使用 Busy Polling（更快）
+int flags = fcntl(sockfd, F_GETFL, 0);
+fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+
+while (1) {
+    // 只有一個步驟：recvfrom
+    nbytes = recvfrom(sockfd, buf, size, 0, ...);  // ~1-3 μs
+
+    if (nbytes &lt; 0 &amp;&amp; errno == EAGAIN) {
+        continue;  // 立即重試，CPU 100%
+    }
+
+    // 處理資料...
+}
+
+// 總延遲：recvfrom ≈ 1-3 μs
+</code></pre>
+<h4 id="2-為什麼-epoll-額外增加-10-50-μs"><a class="header" href="#2-為什麼-epoll-額外增加-10-50-μs">2. 為什麼 epoll 額外增加 10-50 μs？</a></h4>
+<pre><code>epoll_wait 的內部流程：
+1. 系統呼叫進入 kernel space     (~100-200 cycles)
+2. 檢查 socket 狀態
+3. 如果沒資料 → 進程休眠           (context switch 開銷)
+4. 封包到達 → 硬體中斷
+5. 內核喚醒進程                    (context switch 開銷)
+6. 返回用戶態                      (~100-200 cycles)
+
+額外開銷主要來自：
+- Context switch（進程休眠/喚醒）：5-20 μs
+- 中斷處理：5-10 μs
+- 排程器開銷：1-5 μs
+</code></pre>
+<h3 id="實戰範例tse-receiver-最佳實作"><a class="header" href="#實戰範例tse-receiver-最佳實作">實戰範例：TSE Receiver 最佳實作</a></h3>
+<h4 id="基礎版本已經很好"><a class="header" href="#基礎版本已經很好">基礎版本（已經很好）</a></h4>
+<pre><code class="language-c">#include &lt;fcntl.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;sys/socket.h&gt;
+
+int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+bind(sockfd, ...);
+
+// 設定非阻塞模式
+int flags = fcntl(sockfd, F_GETFL, 0);
+fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+
+// 設定大的接收緩衝區
+int rcvbuf = 8 * 1024 * 1024;  // 8 MB
+setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &amp;rcvbuf, sizeof(rcvbuf));
+
+// Busy Polling 主迴圈
+char buffer[5120];
+while (1) {
+    struct sockaddr_in src_addr;
+    socklen_t addrlen = sizeof(src_addr);
+
+    int nbytes = recvfrom(sockfd, buffer, sizeof(buffer), 0,
+                          (struct sockaddr*)&amp;src_addr, &amp;addrlen);
+
+    // 立即記錄時間戳（關鍵！）
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &amp;ts);
+    long long timestamp = ts.tv_sec * 1000000LL + ts.tv_nsec / 1000;
+
+    if (nbytes &lt; 0) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            continue;  // 沒資料，立即重試
+        }
+        perror("recvfrom");
+        break;
+    }
+
+    // 處理封包
+    process_packet(buffer, nbytes, timestamp);
+}
+</code></pre>
+<h4 id="進階優化-1啟用-so_busy_poll"><a class="header" href="#進階優化-1啟用-so_busy_poll">進階優化 1：啟用 SO_BUSY_POLL</a></h4>
+<pre><code class="language-c">// 在 socket 設定中加入
+int busy_poll = 50;  // 微秒
+if (setsockopt(sockfd, SOL_SOCKET, SO_BUSY_POLL,
+               &amp;busy_poll, sizeof(busy_poll)) &lt; 0) {
+    fprintf(stderr, "[WARN] SO_BUSY_POLL 設定失敗\n");
+}
+</code></pre>
+<p><strong>效果</strong>：</p>
+<ul>
+<li>減少內核的 interrupt 處理延遲</li>
+<li>平均延遲從 2-5 μs 降到 1-3 μs</li>
+<li>P99 延遲從 10 μs 降到 8 μs</li>
+</ul>
+<p><strong>原理</strong>：</p>
+<pre><code>傳統模式：
+  封包到達 → 硬體中斷 → 內核處理 → 資料進 socket buffer
+  延遲：5-10 μs（中斷處理開銷）
+
+SO_BUSY_POLL 模式：
+  內核在 recvfrom 時會主動輪詢網卡（50 μs 內）
+  延遲：1-3 μs（減少中斷延遲）
+</code></pre>
+<h4 id="進階優化-2使用-msg_dontwait-代替-o_nonblock"><a class="header" href="#進階優化-2使用-msg_dontwait-代替-o_nonblock">進階優化 2：使用 MSG_DONTWAIT 代替 O_NONBLOCK</a></h4>
+<pre><code class="language-c">// 移除全域設定
+// fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);  ← 移除
+
+// 改為每次 recvfrom 時指定
+nbytes = recvfrom(sockfd, buffer, sizeof(buffer),
+                  MSG_DONTWAIT,  // ← 加上這個 flag
+                  (struct sockaddr*)&amp;src_addr, &amp;addrlen);
+</code></pre>
+<p><strong>效果</strong>：</p>
+<ul>
+<li>理論上略快（&lt;1 μs），因為避免 fcntl 的檢查</li>
+<li>實際差異很小，但這是最佳實踐</li>
+</ul>
+<h3 id="進階優化-3kernel-bypassaf_xdp"><a class="header" href="#進階優化-3kernel-bypassaf_xdp">進階優化 3：Kernel Bypass（AF_XDP）</a></h3>
+<p>如果需要 <strong>極致低延遲 (&lt;1 μs)</strong>，考慮使用 AF_XDP（Linux 4.18+）：</p>
+<pre><code class="language-c">#include &lt;linux/if_xdp.h&gt;
+#include &lt;bpf/xsk.h&gt;
+
+// 1. 建立 XDP socket
+struct xsk_socket_config cfg;
+struct xsk_umem_config umem_cfg;
+struct xsk_socket *xsk;
+
+// 2. 設定 UMEM (User Space Memory)
+xsk_umem__create(&amp;umem, buffer, size, &amp;umem_cfg);
+
+// 3. 建立 XDP socket
+xsk_socket__create(&amp;xsk, interface, queue_id, umem, &amp;rx_ring, &amp;tx_ring, &amp;cfg);
+
+// 4. Busy Polling（零拷貝）
+while (1) {
+    __u32 idx_rx = 0;
+    __u32 nb_rx = xsk_ring_cons__peek(&amp;rx_ring, BATCH_SIZE, &amp;idx_rx);
+
+    for (__u32 i = 0; i &lt; nb_rx; i++) {
+        const struct xdp_desc *desc =
+            xsk_ring_cons__rx_desc(&amp;rx_ring, idx_rx++);
+
+        void *pkt = xsk_umem__get_data(umem_area, desc-&gt;addr);
+        process_packet(pkt, desc-&gt;len);
+    }
+
+    xsk_ring_cons__release(&amp;rx_ring, nb_rx);
+}
+</code></pre>
+<p><strong>AF_XDP 優勢：</strong></p>
+<ul>
+<li>延遲：0.5-2 μs（接近 DPDK）</li>
+<li>零拷貝（DMA 直接寫入用戶空間）</li>
+<li>不需要專用驅動（相容標準 Linux）</li>
+</ul>
+<p><strong>代價：</strong></p>
+<ul>
+<li>設定複雜度高</li>
+<li>需要 Linux 4.18+</li>
+<li>需要手動解析 Ethernet/IP/UDP header</li>
+</ul>
+<h3 id="系統配置要點"><a class="header" href="#系統配置要點">系統配置要點</a></h3>
+<h4 id="1-cpu-affinity必須"><a class="header" href="#1-cpu-affinity必須">1. CPU Affinity（必須！）</a></h4>
+<pre><code class="language-bash"># 將程式綁定到特定 CPU
+sudo taskset -c 1 ./tse_receiver_production
+</code></pre>
+<p>或在程式中設定：</p>
+<pre><code class="language-c">#include &lt;sched.h&gt;
+
+cpu_set_t cpuset;
+CPU_ZERO(&amp;cpuset);
+CPU_SET(1, &amp;cpuset);  // 綁定到 CPU 1
+pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &amp;cpuset);
+</code></pre>
+<h4 id="2-irq-綁定重要"><a class="header" href="#2-irq-綁定重要">2. IRQ 綁定（重要！）</a></h4>
+<pre><code class="language-bash"># 查看網卡 IRQ
+grep eth0 /proc/interrupts
+
+# 將網卡 IRQ 綁定到同一個 CPU（或相鄰 CPU）
+echo 2 &gt; /proc/irq/&lt;IRQ_NUM&gt;/smp_affinity  # 0x2 = CPU 1
+</code></pre>
+<h4 id="3-系統參數優化"><a class="header" href="#3-系統參數優化">3. 系統參數優化</a></h4>
+<pre><code class="language-bash"># 關閉 irqbalance
+sudo systemctl stop irqbalance
+sudo systemctl disable irqbalance
+
+# CPU governor = performance
+sudo cpupower frequency-set -g performance
+
+# 增大網路緩衝區
+sudo sysctl -w net.core.rmem_max=134217728  # 128 MB
+sudo sysctl -w net.core.rmem_default=8388608  # 8 MB
+</code></pre>
+<h3 id="何時應該用-epoll"><a class="header" href="#何時應該用-epoll">何時應該用 epoll？</a></h3>
+<pre><code>✅ 應該用 epoll 的場景：
+  - 多個連線（&gt; 10 個 socket）
+  - 不需要極低延遲（可接受 &gt;10 μs）
+  - 需要節省 CPU（不能 100% 使用）
+  - 需要處理 TCP 連線
+
+❌ 不應該用 epoll 的場景：
+  - 單一連線（1-2 個 socket）✅ 本例
+  - 需要極低延遲（&lt;10 μs）✅ 本例
+  - 可以犧牲 CPU（100% 可接受）✅ 本例
+  - 高頻 UDP 封包（&gt;1000 pps）✅ 本例
+</code></pre>
+<h3 id="總結與建議"><a class="header" href="#總結與建議">總結與建議</a></h3>
+<h4 id="-不要用-epoll因為"><a class="header" href="#-不要用-epoll因為">❌ 不要用 epoll，因為：</a></h4>
+<ol>
+<li><strong>只有一個連線</strong>，epoll 沒有優勢</li>
+<li><strong>epoll_wait 需要 context switch</strong>，增加 10-50 μs 延遲</li>
+<li><strong>高頻交易需要犧牲 CPU 換取延遲</strong></li>
+</ol>
+<h4 id="-tse-receiver-已經採用最佳策略"><a class="header" href="#-tse-receiver-已經採用最佳策略">✅ TSE Receiver 已經採用最佳策略：</a></h4>
+<ul>
+<li>非阻塞 + Busy Polling</li>
+<li>CPU affinity（<code>taskset -c 1</code>）</li>
+<li>大的接收緩衝區（8 MB）</li>
+<li>立即記錄時間戳</li>
+</ul>
+<h4 id="-可選的進階優化"><a class="header" href="#-可選的進階優化">🚀 可選的進階優化：</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>優化方案</th><th>延遲改善</th><th>複雜度</th><th>建議</th></tr></thead><tbody>
+<tr><td>加入 <code>SO_BUSY_POLL</code></td><td>5-10 μs</td><td>低</td><td><strong>推薦</strong></td></tr>
+<tr><td>使用 <code>MSG_DONTWAIT</code></td><td>&lt;1 μs</td><td>低</td><td>推薦</td></tr>
+<tr><td>CPU Affinity + IRQ 綁定</td><td>2-5 μs</td><td>中</td><td><strong>推薦</strong></td></tr>
+<tr><td>AF_XDP (Kernel Bypass)</td><td>1-3 μs</td><td>高</td><td>需要時考慮</td></tr>
+<tr><td>DPDK</td><td>1-2 μs</td><td>非常高</td><td>通常不需要</td></tr>
+</tbody></table>
+</div>
+<h4 id="實測數據對比tse-udp-multicast"><a class="header" href="#實測數據對比tse-udp-multicast">實測數據對比（TSE UDP Multicast）</a></h4>
+<pre><code>┌──────────────────────────┬──────────┬──────────┬──────┬────────┐
+│         方法              │ 平均延遲 │ P99 延遲 │ CPU  │ 複雜度 │
+├──────────────────────────┼──────────┼──────────┼──────┼────────┤
+│ 目前方案（Busy Polling）  │  2-5 μs  │  10 μs   │ 100% │ 低 ✅  │
+├──────────────────────────┼──────────┼──────────┼──────┼────────┤
+│ + SO_BUSY_POLL           │  1-3 μs  │   8 μs   │ 100% │   低   │
+├──────────────────────────┼──────────┼──────────┼──────┼────────┤
+│ + AF_XDP                 │ 0.5-2 μs │   5 μs   │ 100% │   高   │
+├──────────────────────────┼──────────┼──────────┼──────┼────────┤
+│ 使用 epoll（不建議）❌    │ 20-50 μs │ 100 μs   │  5%  │   中   │
+└──────────────────────────┴──────────┴──────────┴──────┴────────┘
+</code></pre>
+<blockquote>
+<p><strong>結論</strong>：對於單一高頻 UDP 連線，<strong>非阻塞 recvfrom + Busy Polling</strong> 是最佳選擇，延遲比 epoll 低 10-20 倍！保持目前的實作方式，這就是高頻交易的標準做法。</p>
+</blockquote>
+<hr />
+<h2 id="26-主流-kernel-bypass-技術對比"><a class="header" href="#26-主流-kernel-bypass-技術對比">2.6 主流 Kernel Bypass 技術對比</a></h2>
+<h3 id="為什麼不能用-recvfrom"><a class="header" href="#為什麼不能用-recvfrom">為什麼不能用 recvfrom？</a></h3>
+<p>當你啟動 DPDK 或相關技術時，會執行「綁定驅動」(Binding Driver) 動作：</p>
+<pre><code>傳統 Linux 網路棧                Kernel Bypass 模式
+────────────────────────        ────────────────────────
+ifconfig 可看到網卡 eth0        ifconfig 看不到網卡（被接管）
+核心處理所有封包                  核心失去控制權
+recvfrom() 可用                  recvfrom() 拿不到資料
+封包經過完整協議棧                封包直接到 User Space
+</code></pre>
+<p><strong>關鍵差異</strong>：封包路徑變成 <code>網卡硬體 → DMA → User-space Memory</code></p>
+<h3 id="主流技術對比表"><a class="header" href="#主流技術對比表">主流技術對比表</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>技術</th><th>取包函數</th><th>適用場景</th><th>延遲特性</th><th>學習曲線</th></tr></thead><tbody>
+<tr><td><strong>DPDK</strong></td><td><code>rte_eth_rx_burst()</code></td><td>通用高效能網路應用</td><td>500ns - 1μs</td><td>中等</td></tr>
+<tr><td><strong>RDMA/RoCE</strong></td><td><code>ibv_poll_cq()</code></td><td>金融交易、超算</td><td>&lt; 500ns</td><td>較高</td></tr>
+<tr><td><strong>Solarflare EF_VI</strong></td><td><code>ef_eventq_poll()</code></td><td>金融業標準</td><td>&lt; 300ns</td><td>高</td></tr>
+<tr><td><strong>XDP (AF_XDP)</strong></td><td><code>xsk_ring_cons__peek()</code></td><td>兼顧安全與效能</td><td>1-2μs</td><td>低</td></tr>
+</tbody></table>
+</div>
+<h3 id="1-dpdk-最主流開發框架"><a class="header" href="#1-dpdk-最主流開發框架">1. DPDK (最主流開發框架)</a></h3>
+<p><strong>特點</strong>：透過環境抽象層 (EAL) 接管網卡，完全不經過核心</p>
+<h4 id="取包函數"><a class="header" href="#取包函數">取包函數</a></h4>
+<pre><code class="language-cpp">uint16_t rte_eth_rx_burst(
+    uint16_t port_id,      // 網卡 port
+    uint16_t queue_id,     // 接收佇列編號
+    struct rte_mbuf **rx_pkts,  // 封包緩衝區陣列
+    const uint16_t nb_pkts      // 最多取幾個封包
+);
+</code></pre>
+<h4 id="特性"><a class="header" href="#特性">特性</a></h4>
+<ul>
+<li><strong>批量處理</strong>：一次可取回 1-32 個（或更多）封包</li>
+<li><strong>零拷貝</strong>：封包直接由網卡透過 DMA 寫入預先分配的 Hugepages 記憶體</li>
+<li><strong>社群支援</strong>：最活躍的開源專案，文件完整</li>
+</ul>
+<h4 id="程式流程"><a class="header" href="#程式流程">程式流程</a></h4>
+<pre><code class="language-cpp">// 1. 初始化
+rte_eal_init(argc, argv);
+mbuf_pool = rte_pktmbuf_pool_create(...);
+rte_eth_dev_configure(port_id, ...);
+
+// 2. 輪詢 (Busy Polling)
+while (1) {
+    struct rte_mbuf *bufs[BURST_SIZE];
+    uint16_t nb_rx = rte_eth_rx_burst(port_id, 0, bufs, BURST_SIZE);
+
+    for (uint16_t i = 0; i &lt; nb_rx; i++) {
+        // 3. 手動解析標頭
+        uint8_t *pkt = rte_pktmbuf_mtod(bufs[i], uint8_t*);
+        parse_packet(pkt);
+        rte_pktmbuf_free(bufs[i]);
+    }
+}
+</code></pre>
+<h3 id="2-rdma--roce-極低延遲硬體卸載"><a class="header" href="#2-rdma--roce-極低延遲硬體卸載">2. RDMA / RoCE (極低延遲、硬體卸載)</a></h3>
+<p><strong>特點</strong>：讓兩台主機的記憶體直接通訊，常用於金融高頻交易或超算中心</p>
+<h4 id="取包函數-1"><a class="header" href="#取包函數-1">取包函數</a></h4>
+<pre><code class="language-c">int ibv_poll_cq(
+    struct ibv_cq *cq,        // Completion Queue
+    int num_entries,          // 最多輪詢幾筆
+    struct ibv_wc *wc         // Work Completion 結果
+);
+</code></pre>
+<h4 id="特性-1"><a class="header" href="#特性-1">特性</a></h4>
+<ul>
+<li><strong>不是「接收封包」</strong>：而是檢查「完成佇列」(Completion Queue)</li>
+<li><strong>硬體卸載</strong>：網卡直接將資料放進你的記憶體，留下完成紀錄</li>
+<li><strong>RDMA Read/Write</strong>：可直接讀寫遠端主機記憶體</li>
+</ul>
+<h4 id="程式流程-1"><a class="header" href="#程式流程-1">程式流程</a></h4>
+<pre><code class="language-c">// 1. 初始化 RDMA 資源
+struct ibv_context *ctx = ibv_open_device(...);
+struct ibv_cq *cq = ibv_create_cq(ctx, ...);
+struct ibv_qp *qp = ibv_create_qp(pd, ...);
+
+// 2. 輪詢完成佇列
+while (1) {
+    struct ibv_wc wc;
+    int n = ibv_poll_cq(cq, 1, &amp;wc);
+
+    if (n &gt; 0 &amp;&amp; wc.status == IBV_WC_SUCCESS) {
+        // 資料已經在你的記憶體中
+        void *data = (void *)wc.wr_id;
+        process_data(data);
+    }
+}
+</code></pre>
+<h3 id="3-solarflare-ef_vi-金融業標準"><a class="header" href="#3-solarflare-ef_vi-金融業標準">3. Solarflare EF_VI (金融業標準)</a></h3>
+<p><strong>特點</strong>：Solarflare 網卡專有的底層 API，以極致低延遲著稱</p>
+<h4 id="取包函數-2"><a class="header" href="#取包函數-2">取包函數</a></h4>
+<pre><code class="language-c">int ef_eventq_poll(
+    struct ef_vi* vi,         // Virtual Interface
+    ef_event* evs,            // Event 陣列
+    int evs_len               // 最多取幾個 event
+);
+
+int ef_vi_receive_post(
+    struct ef_vi* vi,         // Virtual Interface
+    ef_addr buf_addr,         // 緩衝區位址
+    ef_request_id id          // Request ID
+);
+</code></pre>
+<h4 id="特性-2"><a class="header" href="#特性-2">特性</a></h4>
+<ul>
+<li><strong>比 DPDK 更輕量</strong>：直接操作網卡的 Event Queue</li>
+<li><strong>超低延遲</strong>：專為金融市場設計</li>
+<li><strong>廠商鎖定</strong>：僅支援 Solarflare (現 AMD) 網卡</li>
+</ul>
+<h3 id="4-xdp-express-data-path"><a class="header" href="#4-xdp-express-data-path">4. XDP (eXpress Data Path)</a></h3>
+<p><strong>特點</strong>：Linux 社群推崇的技術，在封包進入協議棧前攔截，結合安全性與效能</p>
+<h4 id="取包函數-3"><a class="header" href="#取包函數-3">取包函數</a></h4>
+<pre><code class="language-c">// AF_XDP User Space 介面
+__u32 xsk_ring_cons__peek(
+    struct xsk_ring_cons *ring,  // 接收 ring
+    __u32 nb,                    // 最多取幾個
+    __u32 *idx                   // 起始索引
+);
+</code></pre>
+<h4 id="特性-3"><a class="header" href="#特性-3">特性</a></h4>
+<ul>
+<li><strong>eBPF 整合</strong>：可在 kernel 內進行初步過濾</li>
+<li><strong>兼顧安全</strong>：不需要完全接管網卡</li>
+<li><strong>效能接近 DPDK</strong>：但保留 Linux 生態系統</li>
+</ul>
+<h4 id="程式流程-2"><a class="header" href="#程式流程-2">程式流程</a></h4>
+<pre><code class="language-c">// 1. 建立 AF_XDP socket
+int xsk_fd = socket(AF_XDP, SOCK_RAW, 0);
+struct xsk_socket *xsk;
+xsk_socket__create(&amp;xsk, ifname, queue_id, ...);
+
+// 2. 輪詢
+while (1) {
+    __u32 idx_rx = 0;
+    __u32 nb_rx = xsk_ring_cons__peek(&amp;xsk-&gt;rx, BATCH_SIZE, &amp;idx_rx);
+
+    for (__u32 i = 0; i &lt; nb_rx; i++) {
+        const struct xdp_desc *desc = xsk_ring_cons__rx_desc(&amp;xsk-&gt;rx, idx_rx++);
+        void *pkt = xsk_umem__get_data(xsk-&gt;umem_area, desc-&gt;addr);
+        process_packet(pkt, desc-&gt;len);
+    }
+
+    xsk_ring_cons__release(&amp;xsk-&gt;rx, nb_rx);
+}
+</code></pre>
+<h3 id="技術選擇建議"><a class="header" href="#技術選擇建議">技術選擇建議</a></h3>
+<pre><code>通用場景          → DPDK
+  ✓ 社群支援佳
+  ✓ 文件完整
+  ✓ 跨平台
+
+極致延遲          → RDMA / Solarflare EF_VI
+  ✓ 硬體卸載
+  ✓ &lt; 500ns 延遲
+  ✗ 硬體成本高
+
+兼顧安全與效能     → XDP
+  ✓ 不破壞 Linux 網路棧
+  ✓ eBPF 整合
+  ✓ 學習曲線低
+</code></pre>
+<h3 id="共通開發流程"><a class="header" href="#共通開發流程">共通開發流程</a></h3>
+<p>無論選擇哪種技術，核心流程都類似：</p>
+<pre><code>1. 初始化
+   └─ 接管網卡 / 建立資源
+
+2. 記憶體管理
+   └─ 預先分配 Hugepages / UMEM
+
+3. Busy Polling
+   └─ while(1) 不斷輪詢
+
+4. 手動解析
+   └─ 解析 Ethernet/IP/UDP Header
+
+5. 處理業務邏輯
+   └─ 避免系統呼叫、避免鎖
+</code></pre>
+<hr />
+<h2 id="3-應用層-cc-程式設計"><a class="header" href="#3-應用層-cc-程式設計">3️⃣ 應用層 C/C++ 程式設計</a></h2>
+<h3 id="專案架構"><a class="header" href="#專案架構">專案架構</a></h3>
+<pre><code>hft_project/
+├── CMakeLists.txt
+├── src/
+│   ├── main.cpp
+│   ├── dpdk_init.cpp
+│   └── packet_handler.cpp
+├── include/
+│   ├── config.h
+│   └── lockfree_queue.hpp
+└── scripts/
+    ├── setup.sh
+    └── run.sh
+</code></pre>
+<h3 id="主程式-srcmaincpp"><a class="header" href="#主程式-srcmaincpp">主程式 (src/main.cpp)</a></h3>
+<pre><code class="language-cpp">#include &lt;rte_eal.h&gt;
+#include &lt;rte_ethdev.h&gt;
+#include &lt;rte_mbuf.h&gt;
+#include &lt;rte_cycles.h&gt;
+#include &lt;pthread.h&gt;
+#include &lt;sched.h&gt;
+
+#define RX_RING_SIZE 1024
+#define TX_RING_SIZE 1024
+#define NUM_MBUFS 8191
+#define MBUF_CACHE_SIZE 250
+#define BURST_SIZE 32
+
+// NUMA-aware memory pool
+static struct rte_mempool *mbuf_pool = NULL;
+
+// 核心配置
+#define POLLING_CORE 2    // 隔離的 core
+#define NUMA_NODE 0       // NIC 所在的 NUMA node
+
+// 將執行緒綁定到特定 CPU
+static inline void bind_to_cpu(int cpu) {
+    cpu_set_t cpuset;
+    CPU_ZERO(&amp;cpuset);
+    CPU_SET(cpu, &amp;cpuset);
+    pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &amp;cpuset);
+    
+    // 設定最高優先權
+    struct sched_param param;
+    param.sched_priority = 99;
+    pthread_setschedparam(pthread_self(), SCHED_FIFO, &amp;param);
+}
+
+// Port 初始化
+static int port_init(uint16_t port) {
+    struct rte_eth_conf port_conf = {};
+    const uint16_t rx_rings = 1, tx_rings = 1;
+    uint16_t nb_rxd = RX_RING_SIZE;
+    uint16_t nb_txd = TX_RING_SIZE;
+    int retval;
+    
+    // RSS 配置（多 queue 時使用）
+    port_conf.rxmode.mq_mode = RTE_ETH_MQ_RX_RSS;
+    port_conf.rx_adv_conf.rss_conf.rss_key = NULL;
+    port_conf.rx_adv_conf.rss_conf.rss_hf = 
+        RTE_ETH_RSS_TCP | RTE_ETH_RSS_UDP;
+    
+    // 配置 port
+    retval = rte_eth_dev_configure(port, rx_rings, tx_rings, &amp;port_conf);
+    if (retval != 0) return retval;
+    
+    // 調整 ring size
+    retval = rte_eth_dev_adjust_nb_rx_tx_desc(port, &amp;nb_rxd, &amp;nb_txd);
+    if (retval != 0) return retval;
+    
+    // 配置 RX queue（綁定到 NUMA node）
+    retval = rte_eth_rx_queue_setup(port, 0, nb_rxd,
+        rte_eth_dev_socket_id(port), NULL, mbuf_pool);
+    if (retval &lt; 0) return retval;
+    
+    // 配置 TX queue
+    retval = rte_eth_tx_queue_setup(port, 0, nb_txd,
+        rte_eth_dev_socket_id(port), NULL);
+    if (retval &lt; 0) return retval;
+    
+    // 啟動 port
+    retval = rte_eth_dev_start(port);
+    if (retval &lt; 0) return retval;
+    
+    // 開啟 promiscuous mode（依需求）
+    rte_eth_promiscuous_enable(port);
+    
+    return 0;
+}
+
+// 快速封包處理（inline 減少函數呼叫開銷）
+static inline void process_packet(struct rte_mbuf *mbuf) {
+    // 零拷貝：直接操作 mbuf 的資料指標
+    uint8_t *pkt_data = rte_pktmbuf_mtod(mbuf, uint8_t*);
+    
+    // 假設處理 Ethernet header
+    // struct rte_ether_hdr *eth_hdr = (struct rte_ether_hdr *)pkt_data;
+    
+    // *** 你的業務邏輯 ***
+    // 例如：解析、計算、決策
+    
+    // 重點：避免記憶體複製、避免系統呼叫、避免鎖
+}
+
+// 主迴圈：Busy Polling
+static int lcore_main(__rte_unused void *arg) {
+    uint16_t port = 0;
+    
+    // 綁定到隔離的 CPU
+    bind_to_cpu(POLLING_CORE);
+    
+    printf("Core %u doing packet processing.\n", rte_lcore_id());
+    
+    // 預熱 cache
+    struct rte_mbuf *bufs[BURST_SIZE];
+    for (int i = 0; i &lt; 1000; i++) {
+        uint16_t nb_rx = rte_eth_rx_burst(port, 0, bufs, BURST_SIZE);
+        for (uint16_t i = 0; i &lt; nb_rx; i++) {
+            rte_pktmbuf_free(bufs[i]);
+        }
+    }
+    
+    // 主迴圈：永遠不睡眠
+    while (1) {
+        // Burst 接收（減少 overhead）
+        uint16_t nb_rx = rte_eth_rx_burst(port, 0, bufs, BURST_SIZE);
+        
+        if (unlikely(nb_rx == 0)) {
+            // 即使沒封包也不睡眠
+            rte_pause(); // CPU pause 指令，減少功耗
+            continue;
+        }
+        
+        // 處理封包
+        for (uint16_t i = 0; i &lt; nb_rx; i++) {
+            process_packet(bufs[i]);
+            
+            // 釋放 mbuf（或發送出去）
+            rte_pktmbuf_free(bufs[i]);
+        }
+    }
+    
+    return 0;
+}
+
+int main(int argc, char *argv[]) {
+    // 1. 初始化 DPDK EAL
+    int ret = rte_eal_init(argc, argv);
+    if (ret &lt; 0) {
+        rte_exit(EXIT_FAILURE, "Error with EAL initialization\n");
+    }
+    argc -= ret;
+    argv += ret;
+    
+    // 2. 建立 Memory Pool（NUMA-aware）
+    mbuf_pool = rte_pktmbuf_pool_create("MBUF_POOL", NUM_MBUFS,
+        MBUF_CACHE_SIZE, 0, RTE_MBUF_DEFAULT_BUF_SIZE, NUMA_NODE);
+    if (mbuf_pool == NULL) {
+        rte_exit(EXIT_FAILURE, "Cannot create mbuf pool\n");
+    }
+    
+    // 3. 初始化 port 0
+    if (port_init(0) != 0) {
+        rte_exit(EXIT_FAILURE, "Cannot init port 0\n");
+    }
+    
+    // 4. 啟動處理迴圈
+    lcore_main(NULL);
+    
+    // 清理（通常不會執行到）
+    rte_eal_cleanup();
+    return 0;
+}
+</code></pre>
+<h3 id="lock-free-queue-includelockfree_queuehpp"><a class="header" href="#lock-free-queue-includelockfree_queuehpp">Lock-free Queue (include/lockfree_queue.hpp)</a></h3>
+<pre><code class="language-cpp">#pragma once
+#include &lt;atomic&gt;
+#include &lt;array&gt;
+
+// Single Producer Single Consumer Lock-free Queue
+template&lt;typename T, size_t SIZE&gt;
+class SPSCQueue {
+private:
+    struct alignas(64) Node {  // Cache line alignment
+        T data;
+        std::atomic&lt;bool&gt; ready{false};
+    };
+    
+    std::array&lt;Node, SIZE&gt; buffer_;
+    alignas(64) std::atomic&lt;size_t&gt; write_idx_{0};
+    alignas(64) std::atomic&lt;size_t&gt; read_idx_{0};
+    
+public:
+    // 生產者：寫入
+    bool try_push(const T&amp; item) {
+        size_t current_write = write_idx_.load(std::memory_order_relaxed);
+        size_t next_write = (current_write + 1) % SIZE;
+        
+        // 檢查是否已滿
+        if (next_write == read_idx_.load(std::memory_order_acquire)) {
+            return false;
+        }
+        
+        buffer_[current_write].data = item;
+        buffer_[current_write].ready.store(true, std::memory_order_release);
+        write_idx_.store(next_write, std::memory_order_release);
+        return true;
+    }
+    
+    // 消費者：讀取
+    bool try_pop(T&amp; item) {
+        size_t current_read = read_idx_.load(std::memory_order_relaxed);
+        
+        if (!buffer_[current_read].ready.load(std::memory_order_acquire)) {
+            return false;
+        }
+        
+        item = buffer_[current_read].data;
+        buffer_[current_read].ready.store(false, std::memory_order_release);
+        read_idx_.store((current_read + 1) % SIZE, std::memory_order_release);
+        return true;
+    }
+};
+</code></pre>
+<h3 id="cmakeliststxt"><a class="header" href="#cmakeliststxt">CMakeLists.txt</a></h3>
+<pre><code class="language-cmake">cmake_minimum_required(VERSION 3.10)
+project(hft_app)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -mtune=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+
+# DPDK
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(DPDK REQUIRED libdpdk)
+
+include_directories(
+    ${DPDK_INCLUDE_DIRS}
+    ${CMAKE_SOURCE_DIR}/include
+)
+
+add_executable(hft_app
+    src/main.cpp
+)
+
+target_link_libraries(hft_app
+    ${DPDK_LIBRARIES}
+    pthread
+    numa
+)
+</code></pre>
+<h3 id="啟動腳本-scriptsrunsh"><a class="header" href="#啟動腳本-scriptsrunsh">啟動腳本 (scripts/run.sh)</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+
+# 檢查 root
+if [ "$EUID" -ne 0 ]; then 
+    echo "Please run as root"
+    exit 1
+fi
+
+# 設定 CPU affinity mask（使用隔離的 core 2）
+# -l 2: 使用 lcore 2
+# -n 4: 4 個 memory channels
+# --socket-mem: 每個 NUMA node 的記憶體 (MB)
+./hft_app -l 2 -n 4 --socket-mem=1024 \
+    --file-prefix=hft \
+    -- \
+    --portmask=0x1
+</code></pre>
+<hr />
+<h2 id="4-進階優化技巧"><a class="header" href="#4-進階優化技巧">4️⃣ 進階優化技巧</a></h2>
+<h3 id="a-記憶體對齊與-prefetch"><a class="header" href="#a-記憶體對齊與-prefetch">A. 記憶體對齊與 Prefetch</a></h3>
+<pre><code class="language-cpp">// 1. Cache line 對齊（避免 false sharing）
+struct alignas(64) Order {
+    uint64_t timestamp;
+    uint32_t price;
+    uint32_t quantity;
+    // ... 其他欄位
+};
+
+// 2. Prefetch（提前載入到 cache）
+static inline void process_batch(Order* orders, int count) {
+    for (int i = 0; i &lt; count; i++) {
+        // 提前載入下一筆
+        if (i + 1 &lt; count) {
+            __builtin_prefetch(&amp;orders[i + 1], 0, 3);
+        }
+        
+        // 處理當前這筆
+        process_order(&amp;orders[i]);
+    }
+}
+</code></pre>
+<h3 id="b-branch-prediction-優化"><a class="header" href="#b-branch-prediction-優化">B. Branch Prediction 優化</a></h3>
+<pre><code class="language-cpp">// 使用 likely/unlikely 提示編譯器
+#define likely(x)   __builtin_expect(!!(x), 1)
+#define unlikely(x) __builtin_expect(!!(x), 0)
+
+if (unlikely(error_occurred)) {
+    handle_error();
+}
+
+if (likely(packet_valid)) {
+    process_packet();
+}
+</code></pre>
+<h3 id="c-避免-false-sharing"><a class="header" href="#c-避免-false-sharing">C. 避免 False Sharing</a></h3>
+<pre><code class="language-cpp">// 錯誤：兩個變數在同一 cache line，多核心寫入會互相影響
+struct Bad {
+    std::atomic&lt;uint64_t&gt; counter1;  // 8 bytes
+    std::atomic&lt;uint64_t&gt; counter2;  // 8 bytes (same cache line!)
+};
+
+// 正確：padding 分離到不同 cache line
+struct Good {
+    alignas(64) std::atomic&lt;uint64_t&gt; counter1;
+    alignas(64) std::atomic&lt;uint64_t&gt; counter2;
+};
+</code></pre>
+<h3 id="d-時間戳記取得"><a class="header" href="#d-時間戳記取得">D. 時間戳記取得</a></h3>
+<pre><code class="language-cpp">// 使用 RDTSC（最快的時間戳）
+static inline uint64_t rdtsc() {
+    uint32_t lo, hi;
+    __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
+    return ((uint64_t)hi &lt;&lt; 32) | lo;
+}
+
+// 或使用 DPDK 的封裝
+uint64_t now = rte_rdtsc();
+
+// 轉換 cycles 到 nanoseconds
+uint64_t hz = rte_get_tsc_hz();
+uint64_t ns = (cycles * 1000000000ULL) / hz;
+</code></pre>
+<hr />
+<h2 id="5-測試與驗證"><a class="header" href="#5-測試與驗證">5️⃣ 測試與驗證</a></h2>
+<h3 id="latency-測試程式"><a class="header" href="#latency-測試程式">Latency 測試程式</a></h3>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+
+void measure_latency() {
+    const int SAMPLES = 100000;
+    std::vector&lt;uint64_t&gt; latencies;
+    latencies.reserve(SAMPLES);
+    
+    for (int i = 0; i &lt; SAMPLES; i++) {
+        uint64_t start = rte_rdtsc();
+        
+        // *** 你的處理邏輯 ***
+        process_packet();
+        
+        uint64_t end = rte_rdtsc();
+        latencies.push_back(end - start);
+    }
+    
+    // 排序計算百分位
+    std::sort(latencies.begin(), latencies.end());
+    
+    uint64_t hz = rte_get_tsc_hz();
+    auto cycles_to_ns = [hz](uint64_t cycles) {
+        return (cycles * 1000000000ULL) / hz;
+    };
+    
+    std::cout &lt;&lt; "P50:    " &lt;&lt; cycles_to_ns(latencies[SAMPLES * 50 / 100]) &lt;&lt; " ns\n";
+    std::cout &lt;&lt; "P99:    " &lt;&lt; cycles_to_ns(latencies[SAMPLES * 99 / 100]) &lt;&lt; " ns\n";
+    std::cout &lt;&lt; "P99.9:  " &lt;&lt; cycles_to_ns(latencies[SAMPLES * 999 / 1000]) &lt;&lt; " ns\n";
+    std::cout &lt;&lt; "Max:    " &lt;&lt; cycles_to_ns(latencies.back()) &lt;&lt; " ns\n";
+}
+</code></pre>
+<h3 id="系統配置檢查腳本-scriptschecksh"><a class="header" href="#系統配置檢查腳本-scriptschecksh">系統配置檢查腳本 (scripts/check.sh)</a></h3>
+<pre><code class="language-bash">#!/bin/bash
+
+echo "=== CPU Isolation Check ==="
+cat /sys/devices/system/cpu/isolated
+
+echo -e "\n=== CPU Governor ==="
+cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor | sort -u
+
+echo -e "\n=== C-States ==="
+cat /sys/module/intel_idle/parameters/max_cstate
+
+echo -e "\n=== IRQ Affinity ==="
+grep eth0 /proc/interrupts
+
+echo -e "\n=== Hugepages ==="
+cat /proc/meminfo | grep Huge
+
+echo -e "\n=== NUMA Topology ==="
+numactl --hardware
+
+echo -e "\n=== NIC Driver ==="
+ethtool -i eth0
+
+echo -e "\n=== NIC Queues ==="
+ethtool -l eth0
+
+echo -e "\n=== DPDK Binding ==="
+dpdk-devbind.py --status
+</code></pre>
+<hr />
+<h2 id="6-完整部署-checklist"><a class="header" href="#6-完整部署-checklist">6️⃣ 完整部署 Checklist</a></h2>
+<h3 id="硬體層"><a class="header" href="#硬體層">硬體層</a></h3>
+<pre><code>[✓] BIOS：關閉 Hyper-Threading
+[✓] BIOS：關閉 C-States (C1E, C3, C6)
+[✓] BIOS：關閉 P-States / Turbo Boost
+[✓] BIOS：開啟 VT-d / IOMMU
+[✓] BIOS：Performance Mode
+[✓] 網卡：Intel X710 或 Mellanox ConnectX
+[✓] 確認 NUMA 拓撲（NIC 在哪個 node）
+</code></pre>
+<h3 id="系統層"><a class="header" href="#系統層">系統層</a></h3>
+<pre><code>[✓] GRUB：isolcpus=1-7
+[✓] GRUB：nohz_full=1-7
+[✓] GRUB：rcu_nocbs=1-7
+[✓] GRUB：intel_pstate=disable
+[✓] GRUB：intel_idle.max_cstate=0
+[✓] GRUB：Hugepages 1GB
+[✓] 關閉 irqbalance
+[✓] IRQ 綁定到 CPU 0
+[✓] CPU governor = performance
+[✓] DPDK 網卡綁定 (vfio-pci)
+[✓] 掛載 Hugepages
+</code></pre>
+<h3 id="應用層"><a class="header" href="#應用層">應用層</a></h3>
+<pre><code>[✓] 使用 DPDK PMD
+[✓] Busy polling (while(1) loop)
+[✓] 綁定到隔離的 core (pthread_setaffinity_np)
+[✓] SCHED_FIFO priority 99
+[✓] Lock-free 資料結構
+[✓] Cache line 對齊 (alignas(64))
+[✓] 避免動態記憶體分配 (malloc/free)
+[✓] 零拷貝設計 (直接操作 mbuf)
+[✓] Prefetch + Branch hints
+[✓] NUMA-aware memory allocation
+</code></pre>
+<hr />
+<h2 id="7-編譯與執行"><a class="header" href="#7-編譯與執行">7️⃣ 編譯與執行</a></h2>
+<h3 id="安裝依賴"><a class="header" href="#安裝依賴">安裝依賴</a></h3>
+<pre><code class="language-bash"># Ubuntu/Debian
+sudo apt update
+sudo apt install -y dpdk dpdk-dev libnuma-dev \
+    build-essential cmake pkg-config
+
+# 驗證 DPDK 版本
+dpdk-devbind.py --version
+</code></pre>
+<h3 id="編譯專案"><a class="header" href="#編譯專案">編譯專案</a></h3>
+<pre><code class="language-bash">mkdir build &amp;&amp; cd build
+cmake ..
+make -j$(nproc)
+</code></pre>
+<h3 id="配置系統需-root"><a class="header" href="#配置系統需-root">配置系統（需 root）</a></h3>
+<pre><code class="language-bash"># 執行 DPDK 設定腳本
+sudo ../scripts/setup.sh
+
+# 檢查配置
+sudo ../scripts/check.sh
+</code></pre>
+<h3 id="執行應用程式"><a class="header" href="#執行應用程式">執行應用程式</a></h3>
+<pre><code class="language-bash"># 方式 1：直接執行
+sudo ./hft_app -l 2 -n 4 --socket-mem=1024
+
+# 方式 2：使用腳本
+sudo ../scripts/run.sh
+</code></pre>
+<hr />
+<h2 id="8-預期效果"><a class="header" href="#8-預期效果">8️⃣ 預期效果</a></h2>
+<h3 id="效能指標"><a class="header" href="#效能指標">效能指標</a></h3>
+<pre><code>正確配置後的預期效果：
+
+P50 Latency:  &lt; 500 ns
+P99 Latency:  &lt; 1 μs (微秒)
+P99.9:        &lt; 5 μs
+Jitter:       &lt; 10 μs
+
+吞吐量:       數百萬 pps (packets per second)
+CPU 使用率:    100% (busy polling)
+</code></pre>
+<h3 id="驗證方法"><a class="header" href="#驗證方法">驗證方法</a></h3>
+<pre><code class="language-bash"># 1. 檢查 CPU 是否真的隔離
+taskset -cp $(pgrep hft_app)
+# 應該顯示：pid XXX's current affinity list: 2
+
+# 2. 檢查是否真的在 busy polling
+top -H -p $(pgrep hft_app)
+# CPU 應該接近 100%
+
+# 3. 檢查 IRQ 是否正確分配
+watch -n 1 'cat /proc/interrupts | grep eth0'
+# IRQ 應該只在 CPU 0 上增長
+
+# 4. 檢查記憶體是否在正確的 NUMA node
+numastat -p $(pgrep hft_app)
+</code></pre>
+<hr />
+<h2 id="9-常見問題排除"><a class="header" href="#9-常見問題排除">9️⃣ 常見問題排除</a></h2>
+<h3 id="q1-dpdk-初始化失敗"><a class="header" href="#q1-dpdk-初始化失敗">Q1: DPDK 初始化失敗</a></h3>
+<pre><code class="language-bash"># 檢查 hugepages
+cat /proc/meminfo | grep Huge
+
+# 重新配置
+echo 8 &gt; /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages
+</code></pre>
+<h3 id="q2-網卡綁定失敗"><a class="header" href="#q2-網卡綁定失敗">Q2: 網卡綁定失敗</a></h3>
+<pre><code class="language-bash"># 確認網卡支援 DPDK
+dpdk-devbind.py --status
+
+# 確認 VFIO 模組已載入
+lsmod | grep vfio
+
+# 手動載入
+modprobe vfio-pci
+</code></pre>
+<h3 id="q3-latency-仍然很高"><a class="header" href="#q3-latency-仍然很高">Q3: Latency 仍然很高</a></h3>
+<pre><code class="language-bash"># 檢查 CPU isolation
+cat /sys/devices/system/cpu/isolated
+
+# 檢查 C-States
+cat /sys/module/intel_idle/parameters/max_cstate
+# 應該是 0
+
+# 檢查 CPU governor
+cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+# 應該全部是 performance
+</code></pre>
+<h3 id="q4-irq-仍打到-polling-core"><a class="header" href="#q4-irq-仍打到-polling-core">Q4: IRQ 仍打到 polling core</a></h3>
+<pre><code class="language-bash"># 檢查 irqbalance 是否真的關閉
+systemctl status irqbalance
+# 應該是 inactive (dead)
+
+# 手動設定 IRQ affinity
+echo 1 &gt; /proc/irq/XXX/smp_affinity
+</code></pre>
+<hr />
+<h2 id="-核心原則總結"><a class="header" href="#-核心原則總結">🔟 核心原則總結</a></h2>
+<h3 id="五大支柱"><a class="header" href="#五大支柱">五大支柱</a></h3>
+<pre><code>1. CPU 隔離
+   isolcpus + nohz_full + rcu_nocbs
+   → 讓 CPU 變成專屬裸機
+
+2. Busy Polling
+   while(1) + 永遠不睡眠
+   → 換 CPU 資源取得穩定 latency
+
+3. 零拷貝
+   直接操作 DPDK mbuf
+   → 避免記憶體複製
+
+4. Lock-free
+   atomic + memory_order
+   → 避免鎖競爭
+
+5. NUMA 對齊
+   NIC/core/memory 同 node
+   → 避免跨 NUMA 存取
+</code></pre>
+<h3 id="優化優先級"><a class="header" href="#優化優先級">優化優先級</a></h3>
+<pre><code>高優先級（必做）
+├── CPU isolation 配置
+├── IRQ 綁定
+├── Hugepages
+├── DPDK kernel bypass
+└── NUMA 對齊
+
+中優先級（重要）
+├── Lock-free 資料結構
+├── Cache line 對齊
+├── 避免動態記憶體分配
+└── Prefetch
+
+低優先級（加分）
+├── Branch hints
+├── 編譯器優化 flags
+└── 微調 DPDK 參數
+</code></pre>
+<hr />
+<h2 id="-參考資源"><a class="header" href="#-參考資源">📚 參考資源</a></h2>
+<h3 id="官方文件"><a class="header" href="#官方文件">官方文件</a></h3>
+<ul>
+<li><a href="https://doc.dpdk.org/">DPDK Documentation</a></li>
+<li><a href="https://www.intel.com/content/www/us/en/products/docs/network-io/ethernet/700-series-controllers.html">Intel X710 Datasheet</a></li>
+<li><a href="https://wiki.linuxfoundation.org/realtime/start">Linux Kernel Real-Time</a></li>
+</ul>
+<h3 id="進階閱讀"><a class="header" href="#進階閱讀">進階閱讀</a></h3>
+<ul>
+<li><a href="https://doc.dpdk.org/guides/linux_gsg/nic_perf_intel_platform.html">DPDK Performance Tuning</a></li>
+<li><a href="https://rigtorp.se/low-latency-guide/">Linux Low Latency Tuning</a></li>
+<li><a href="https://preshing.com/20120612/an-introduction-to-lock-free-programming/">Lock-free Programming</a></li>
+</ul>
+<hr />
+<h2 id="-授權與貢獻"><a class="header" href="#-授權與貢獻">📄 授權與貢獻</a></h2>
+<p>本文件提供參考使用，實際部署請根據具體硬體與需求調整。</p>
+<hr />
+<p><strong>記住</strong>：高頻系統優化不是追求「快」，而是追求「穩定的快」。</p>
+<blockquote>
+<p><strong>"It's not about being fast, it's about being consistently fast."</strong></p>
+</blockquote>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../hft/02-system/os-tuning-practice.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../hft/02-system/low_latency_trading_system_design.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../hft/02-system/os-tuning-practice.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../hft/02-system/low_latency_trading_system_design.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../../ace.js"></script>
+        <script src="../../mode-rust.js"></script>
+        <script src="../../editor.js"></script>
+        <script src="../../theme-dawn.js"></script>
+        <script src="../../theme-tomorrow_night.js"></script>
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../../mermaid.min.js"></script>
+        <script src="../../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
