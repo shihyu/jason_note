@@ -115,12 +115,15 @@ inline auto priorityToString(Priority priority) -> std::string
 }
 
 // 買賣方向 (Side)
-// 使用 int8_t 節省空間 (1 byte)
+// ⚡ 記憶體優化：使用 int8_t 節省空間 (1 byte)
+// 📌 設計巧思：
+// - BUY = 1, SELL = -1：便於計算倉位（買入 +Qty，賣出 -Qty）
+// - 可直接與數量相乘計算倉位變化：position_delta = qty * sideToValue(side)
 enum class Side : int8_t {
     INVALID = 0,
-    BUY = 1,
-    SELL = -1,
-    MAX = 2
+    BUY = 1,     // 買入訂單
+    SELL = -1,   // 賣出訂單
+    MAX = 2      // 陣列大小界限（用於 std::array<T, Side::MAX>）
 };
 
 inline auto sideToString(Side side) -> std::string
@@ -142,16 +145,27 @@ inline auto sideToString(Side side) -> std::string
     return "UNKNOWN";
 }
 
+// ⚡ sideToIndex()：將 Side 轉換為陣列索引
+// 映射：BUY(1) -> index 2, SELL(-1) -> index 0, INVALID(0) -> index 1
+// 用途：std::array<T, 3> sides_; sides_[sideToIndex(Side::BUY)]
 inline constexpr auto sideToIndex(Side side) noexcept
 {
     return static_cast<size_t>(side) + 1;
 }
 
+// ⚡ sideToValue()：取得 Side 的數值 (BUY=1, SELL=-1)
+// 用途：計算倉位變化 position_delta = qty * sideToValue(side)
 inline constexpr auto sideToValue(Side side) noexcept
 {
     return static_cast<int>(side);
 }
 
+// 演算法類型 (Algorithm Type)
+// 用於交易引擎策略選擇
+// 📌 策略說明：
+// - RANDOM：隨機下單測試策略
+// - MAKER：做市商策略（Market Maker，提供流動性，被動成交）
+// - TAKER：流動性獲取策略（Liquidity Taker，主動成交）
 enum class AlgoType : int8_t {
     INVALID = 0,
     RANDOM = 1,
@@ -182,6 +196,9 @@ inline auto algoTypeToString(AlgoType type) -> std::string
     return "UNKNOWN";
 }
 
+// 字串轉換為 AlgoType
+// 用途：從配置檔案讀取策略名稱並轉換為枚舉值
+// ⚠️ 效能考量：此函式使用線性搜尋 O(N)，僅應在初始化階段呼叫
 inline auto stringToAlgoType(const std::string& str) -> AlgoType
 {
     for (auto i = static_cast<int>(AlgoType::INVALID);
@@ -196,10 +213,15 @@ inline auto stringToAlgoType(const std::string& str) -> AlgoType
     return AlgoType::INVALID;
 }
 
+// ============================================================================
+// 風險管理配置 (Risk Management Configuration)
+// ============================================================================
+// 📌 用於 Pre-trade Risk Check（交易前風險檢查）
+// 任一限制超過將拒絕新訂單
 struct RiskCfg {
-    Qty max_order_size_ = 0;
-    Qty max_position_ = 0;
-    double max_loss_ = 0;
+    Qty max_order_size_ = 0;     // 單筆訂單最大數量限制
+    Qty max_position_ = 0;       // 最大持倉數量（絕對值）
+    double max_loss_ = 0;        // 最大虧損金額（已實現 + 未實現 PnL）
 
     auto toString() const
     {
@@ -215,10 +237,14 @@ struct RiskCfg {
     }
 };
 
+// ============================================================================
+// 交易引擎配置 (Trade Engine Configuration)
+// ============================================================================
+// 📌 每個商品（Ticker）可有獨立的策略配置
 struct TradeEngineCfg {
-    Qty clip_ = 0;
-    double threshold_ = 0;
-    RiskCfg risk_cfg_;
+    Qty clip_ = 0;              // 單次下單數量（Clip Size）
+    double threshold_ = 0;      // 策略觸發閾值（具體意義視策略而定）
+    RiskCfg risk_cfg_;          // 風險管理參數
 
     auto toString() const
     {
@@ -233,5 +259,7 @@ struct TradeEngineCfg {
     }
 };
 
+// ⚡ 效能優化：使用編譯期固定大小的 std::array，避免執行期動態分配
+// 每個商品（Ticker）對應一個配置
 typedef std::array<TradeEngineCfg, ME_MAX_TICKERS> TradeEngineCfgHashMap;
 }
