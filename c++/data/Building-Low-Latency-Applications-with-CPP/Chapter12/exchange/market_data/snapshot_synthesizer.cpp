@@ -1,19 +1,49 @@
+/**
+ * @file snapshot_synthesizer.cpp
+ * @brief 行情快照合成器（Market Data Snapshot Synthesizer）
+ *
+ * 🎯 核心功能：
+ * - 維護完整訂單簿快照（所有標的的所有活動訂單）
+ * - 定期發布快照（每 60 秒一次）
+ * - 處理增量更新（ADD/MODIFY/CANCEL）同步訂單簿狀態
+ *
+ * 📊 快照協議（Snapshot Protocol）：
+ * 1. SNAPSHOT_START：標記快照開始，包含最後增量序號
+ * 2. 每個標的發送 CLEAR 訊息
+ * 3. 發送該標的所有活動訂單
+ * 4. SNAPSHOT_END：標記快照結束，包含最後增量序號
+ *
+ * ⚡ 用途：
+ * - 新加入的客戶端可快速恢復完整訂單簿狀態
+ * - 客戶端丟失增量更新時可重新同步
+ * - 與增量更新（Incremental Feed）配合實現可靠行情分發
+ *
+ * 🎯 增量 vs 快照：
+ * - 增量：即時更新（低延遲），但可能丟失或亂序
+ * - 快照：完整狀態（高可靠），但延遲較高（60秒週期）
+ * - 客戶端策略：優先使用增量，快照用於恢復
+ */
 #include "snapshot_synthesizer.h"
 
 namespace Exchange
 {
+/// 建構函式：初始化快照合成器
 SnapshotSynthesizer::SnapshotSynthesizer(MDPMarketUpdateLFQueue* market_updates,
         const std::string& iface,
         const std::string& snapshot_ip, int snapshot_port)
-    : snapshot_md_updates_(market_updates),
-      logger_("exchange_snapshot_synthesizer.log"), snapshot_socket_(logger_),
-      order_pool_(ME_MAX_ORDER_IDS)
+    : snapshot_md_updates_(market_updates),  // 增量更新佇列（輸入）
+      logger_("exchange_snapshot_synthesizer.log"),
+      snapshot_socket_(logger_),             // UDP Multicast 快照通道（輸出）
+      order_pool_(ME_MAX_ORDER_IDS)          // 訂單物件記憶體池
 {
+    // 初始化快照多播 socket
+    // ⚠️ is_listening = false：這是發送端，非接收端
     ASSERT(snapshot_socket_.init(snapshot_ip, iface,
                                  snapshot_port, /*is_listening*/ false) >= 0,
            "Unable to create snapshot mcast socket. error:" + std::string(std::strerror(
                        errno)));
 
+    // 初始化所有標的的訂單陣列（ME_MAX_ORDER_IDS 個指標，初始為 nullptr）
     for (auto& orders : ticker_orders_) {
         orders.fill(nullptr);
     }
