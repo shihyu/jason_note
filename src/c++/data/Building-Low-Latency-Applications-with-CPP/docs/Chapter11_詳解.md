@@ -174,7 +174,311 @@ CPU 可能為了優化效能而重新排列指令順序。如果我們直接量�
 | 抖動 | Jitter | 延遲的不穩定性 |
 | 屏障 | Barrier | 防止指令重排序的機制 |
 
+## 7. 實際應用範例：撮合引擎效能追蹤
+
+### 7.1 撮合引擎中的量測點
+
+在 `matching_engine.cpp` 中，我們在關鍵路徑上嵌入量測：
+
+```cpp
+// 量測訂單處理總延遲
+TTT_MEASURE(T0_ClientRequest_In, logger_);
+START_MEASURE(Exchange_Matching_processClientRequest);
+
+// 處理新增訂單請求
+auto client_response = order_book_->add(client_request);
+
+END_MEASURE(Exchange_Matching_processClientRequest, logger_);
+TTT_MEASURE(T1_ClientResponse_Out, logger_);
+```
+
+**日誌輸出範例**：
+```
+2026-01-10 12:34:56.123456789 TTT T0_ClientRequest_In 1736481296123456789
+2026-01-10 12:34:56.123458012 RDTSC Exchange_Matching_processClientRequest 3690
+2026-01-10 12:34:56.123458200 TTT T1_ClientResponse_Out 1736481296123458200
+```
+
+**延遲分析**：
+- 總延遲：T1 - T0 = 1411 奈秒
+- 撮合邏輯：3690 週期 ÷ 3GHz = 1230 奈秒
+- 其他開銷：181 奈秒（日誌、序列化等）
+
+### 7.2 交易策略效能追蹤
+
+在 `MarketMaker::onOrderBookUpdate()` 中：
+
+```cpp
+START_MEASURE(Strategy_MarketMaker_PriceUpdate);
+
+// 動態定價邏輯
+const auto fair_price = feature_engine_->getFairPrice(ticker_id);
+const auto spread = ticker_cfg_[ticker_id].spread_;
+const auto bid = fair_price - spread;
+const auto ask = fair_price + spread;
+
+// 風控檢查
+if (risk_manager_->checkPreTradeRisk(...) == RiskCheckResult::ALLOWED) {
+    // 發送報價
+    order_manager_->sendNewOrder(ticker_id, Side::BUY, bid, qty);
+    order_manager_->sendNewOrder(ticker_id, Side::SELL, ask, qty);
+}
+
+END_MEASURE(Strategy_MarketMaker_PriceUpdate, logger_);
+```
+
+**效能瓶頸識別**：
+- 若量測值 > 5000 週期（~1.6μs），表示策略過於複雜
+- 應檢查是否有除法運算、sqrt() 等昂貴操作
+- 使用編譯器優化 `-ffast-math` 加速浮點運算
+
+---
+
+## 8. 數據分析最佳實踐
+
+### 8.1 延遲分佈分析
+
+收集到 RDTSC 數據後，應計算以下統計指標：
+
+```python
+import numpy as np
+
+cycles = [120, 135, 118, 142, 128, ...]  # 從日誌提取的週期數
+
+# 基本統計
+mean = np.mean(cycles)
+p50 = np.percentile(cycles, 50)
+p90 = np.percentile(cycles, 90)
+p99 = np.percentile(cycles, 99)
+p999 = np.percentile(cycles, 99.9)
+
+# 抖動分析
+jitter = np.std(cycles)  # 標準差
+cv = jitter / mean       # 變異係數（越小越穩定）
+
+print(f"平均: {mean:.1f} cycles")
+print(f"P50: {p50} | P90: {p90} | P99: {p99} | P99.9: {p999}")
+print(f"抖動: {jitter:.1f} cycles (CV: {cv:.2%})")
+```
+
+**良好效能指標**：
+- P99 < 2× P50（長尾不明顯）
+- CV < 20%（抖動可控）
+- P99.9 < 5× P50（無離群值）
+
+### 8.2 熱圖分析（Heatmap）
+
+將延遲數據可視化，識別異常模式：
+
+```python
+import matplotlib.pyplot as plt
+
+# 時間序列熱圖
+plt.scatter(timestamps, cycles, alpha=0.5, s=1)
+plt.axhline(y=p99, color='r', linestyle='--', label='P99')
+plt.xlabel('時間（秒）')
+plt.ylabel('延遲（週期）')
+plt.legend()
+plt.show()
+```
+
+**異常模式識別**：
+- 週期性尖峰：可能是 GC（Go/Java）或 Timer（C++）
+- 突發長尾：可能是 NUMA 遠端記憶體存取
+- 逐漸上升：可能是快取污染或記憶體碎片化
+
+---
+
+## 9. 優化策略與技巧
+
+### 9.1 CPU 親和性優化實戰
+
+```bash
+# 使用 isolcpus 隔離核心（開機參數）
+isolcpus=2,3,4,5
+
+# 關閉超執行緒（Hyper-Threading）
+echo off > /sys/devices/system/cpu/smt/control
+
+# 固定 CPU 頻率（避免 Turbo Boost 波動）
+cpupower frequency-set -g performance -d 3.5GHz -u 3.5GHz
+```
+
+**執行緒核心分配範例**：
+```cpp
+// Matching Engine: Core 2（隔離核心）
+createAndStartThread(2, "MatchingEngine", [this]() { run(); });
+
+// Market Data Publisher: Core 3（相鄰核心，共享 L3 Cache）
+createAndStartThread(3, "MarketDataPublisher", [this]() { run(); });
+
+// Trading Strategy: Core 4（獨立核心，避免快取競爭）
+createAndStartThread(4, "TradingStrategy", [this]() { run(); });
+```
+
+### 9.2 觀察者效應最小化
+
+**問題**：量測工具本身會拖慢系統（Heisenberg Uncertainty Principle in CS）
+
+**解決方案**：
+
+1. **條件編譯**：生產環境關閉量測
+```cpp
+#ifdef ENABLE_PROFILING
+  START_MEASURE(MyFunction);
+  // ... 業務邏輯 ...
+  END_MEASURE(MyFunction, logger_);
+#else
+  // ... 業務邏輯 ...（無量測開銷）
+#endif
+```
+
+2. **取樣量測**：不是每次都量測
+```cpp
+static uint64_t counter = 0;
+if (++counter % 1000 == 0) {  // 每 1000 次量測一次
+    START_MEASURE(SampledFunction);
+    doWork();
+    END_MEASURE(SampledFunction, logger_);
+} else {
+    doWork();
+}
+```
+
+3. **統計聚合**：在記憶體中累加，定期輸出
+```cpp
+struct PerfStats {
+    uint64_t count = 0;
+    uint64_t sum = 0;
+    uint64_t min = UINT64_MAX;
+    uint64_t max = 0;
+
+    void record(uint64_t cycles) {
+        count++;
+        sum += cycles;
+        min = std::min(min, cycles);
+        max = std::max(max, cycles);
+    }
+
+    void report(Logger& logger) {
+        if (count > 0) {
+            logger.log("Avg: % Min: % Max: % Count: %\n",
+                       sum/count, min, max, count);
+        }
+    }
+};
+
+// 每秒輸出一次統計
+if (getCurrentNanos() - last_report_time > 1'000'000'000) {
+    stats.report(logger_);
+    stats = PerfStats{};  // 重置
+    last_report_time = getCurrentNanos();
+}
+```
+
+---
+
+## 10. 常見效能陷阱與偵錯
+
+### 10.1 False Sharing（偽共享）
+
+**問題**：不同執行緒訪問同一 Cache Line 的不同變數，導致 Cache 頻繁失效。
+
+**範例**：
+```cpp
+// ❌ 錯誤：兩個變數在同一 Cache Line（64 bytes）
+struct BadStruct {
+    uint64_t thread1_counter;  // Cache Line 0
+    uint64_t thread2_counter;  // Cache Line 0（偽共享！）
+};
+
+// ✅ 正確：使用 Cache Line 對齊
+struct alignas(64) GoodStruct {
+    uint64_t thread1_counter;  // Cache Line 0
+    char padding[56];          // 填充到 64 bytes
+    uint64_t thread2_counter;  // Cache Line 1（無偽共享）
+};
+```
+
+**偵錯工具**：
+```bash
+# 使用 perf 檢測 Cache Miss
+perf stat -e LLC-load-misses,LLC-store-misses ./trading_engine
+
+# 使用 Valgrind Cachegrind 分析
+valgrind --tool=cachegrind --cache-sim=yes ./matching_engine
+```
+
+### 10.2 NUMA 遠端記憶體存取
+
+**問題**：在多 Socket 系統中，訪問其他 NUMA 節點的記憶體延遲是本地的 2-3 倍。
+
+**偵錯**：
+```bash
+# 檢查 NUMA 拓撲
+numactl --hardware
+
+# 綁定記憶體到特定 NUMA 節點
+numactl --cpunodebind=0 --membind=0 ./trading_engine
+```
+
+**程式碼修正**：
+```cpp
+// 確保記憶體池在執行緒的 NUMA 節點上配置
+void* allocateOnLocalNode(size_t size) {
+    void* ptr = numa_alloc_local(size);
+    return ptr;
+}
+```
+
+---
+
+## 11. 效能基準參考數據
+
+### 11.1 典型組件延遲（3GHz CPU）
+
+| 操作類型 | CPU 週期 | 時間（奈秒） | 說明 |
+|---------|---------|------------|------|
+| L1 Cache 讀取 | 4-5 | 1.3-1.6 | 最快記憶體存取 |
+| L2 Cache 讀取 | 12-15 | 4-5 | 次快記憶體存取 |
+| L3 Cache 讀取 | 40-75 | 13-25 | 跨核心共享快取 |
+| 主記憶體讀取 | 200-300 | 67-100 | Cache Miss 懲罰 |
+| RDTSC 指令 | 20-40 | 7-13 | 計時開銷 |
+| 原子操作（std::atomic） | 50-100 | 17-33 | 記憶體屏障開銷 |
+| Mutex Lock/Unlock | 50-200 | 17-67 | 無競爭情況 |
+| Context Switch | 3000-10000 | 1-3.3μs | 作業系統排程 |
+| 系統呼叫 | 500-2000 | 167-667 | 核心態切換 |
+
+### 11.2 低延遲系統預算
+
+一個端到端（End-to-End）交易延遲預算範例：
+
+| 階段 | 預算（微秒） | 累計 |
+|------|-------------|------|
+| 訂單接收（OrderGateway） | 1-2 | 2 |
+| FIFO 排序（FIFOSequencer） | 0.5-1 | 3 |
+| 撮合引擎（MatchingEngine） | 1-3 | 6 |
+| 行情發布（MarketDataPublisher） | 0.5-1 | 7 |
+| 網路傳輸（Multicast） | 10-50 | 57 |
+| **總計（同機房）** | **~7-57μs** | |
+
+**優化目標**：
+- P50 < 10μs（中位延遲）
+- P99 < 50μs（長尾延遲）
+- P99.9 < 100μs（極端情況）
+
+---
+
 ## 總結
 
-Chapter 11 為系統建立了一雙「眼睛」。透過 `rdtsc()` 量測工法，我們將低延遲系統的開發從「憑感覺優化」提升到了「數據驅動優化」的層次。這為 Chapter 12 的基準測試（Benchmarks）與最終性能調優奠定了基礎。
+Chapter 11 為系統建立了一雙「眼睛」。透過 `rdtsc()` 量測工法，我們將低延遲系統的開發從「憑感覺優化」提升到了「數據驅動優化」的層次。
+
+**關鍵要點**：
+1. ⚡ **RDTSC 量測**：極低開銷（~10ns），適合熱路徑
+2. 📊 **分佈分析**：P50/P90/P99 指標，識別長尾延遲
+3. 🔧 **CPU 親和性**：核心隔離 + 頻率鎖定，減少抖動
+4. ⚠️ **觀察者效應**：條件編譯 + 取樣量測，最小化干擾
+5. 🎯 **瓶頸識別**：數據驅動決策，優先優化熱點
+
+這為 Chapter 12 的基準測試（Benchmarks）與最終性能調優奠定了基礎。
 
