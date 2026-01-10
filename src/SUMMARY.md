@@ -346,6 +346,7 @@
 ## Software Engineering
 - [Software Engineering](software_engineering/software_engineering.md)
     - [迭代思維與人才優勢](software_engineering/迭代思維與人才優勢.md)
+    - [AI 時代寫程式：學習還是偷懶？](software_engineering/vibe-coding-vs-software-engineering.md)
     - [黑箱測試方法與AI應用 - 課程筆記](software_engineering/黑箱測試方法與AI應用_課程筆記.md)
     - [黑箱測試方法詳細指南](software_engineering/testing_methods_guide.md)
     - [系統設計機制完整比較指南](linux_system/system_design_comparisons.md)
