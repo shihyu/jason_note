@@ -106,7 +106,73 @@ private:
 
     // 內部儲存單元
     // 包含物件本身與一個布林標記
-    // 結構體設計有助於 Cache Locality (狀態標記就在物件旁)
+    //
+    // ✅ Cache Locality 優勢：
+    // - 狀態標記 (is_free_) 與物件資料緊鄰
+    // - 查詢空閒區塊時，物件資料可能已在 Cache 中
+    //
+    // ⚠️ False Sharing 風險：
+    // - 定義：多個 CPU 核心同時存取同一 Cache Line 的不同位置
+    // - Cache Line 大小通常為 64 bytes (x86/x64)
+    // - 若 ObjectBlock 小於 64 bytes，多個區塊會共享同一 Cache Line
+    //
+    // 🔬 問題場景：
+    // ```
+    // Cache Line (64 bytes)：
+    // [ObjectBlock 0 (32B)] [ObjectBlock 1 (32B)]
+    // ```
+    // - 執行緒 A 在核心 0 修改 ObjectBlock 0 的 is_free_
+    // - 執行緒 B 在核心 1 修改 ObjectBlock 1 的 is_free_
+    // - 結果：兩個核心反覆使對方的 Cache 失效 (Cache Invalidation)
+    // - 效能影響：延遲增加 10-50 倍 (取決於跨核心距離)
+    //
+    // 📊 效能數據：
+    // - 本地 Cache 存取：~4 個時鐘週期 (~1ns @ 3GHz)
+    // - 跨核心 Cache 同步：~40 個時鐘週期 (~13ns @ 3GHz)
+    // - False Sharing 懲罰：可達數百個時鐘週期
+    //
+    // 🔧 解決方案 1：快取行對齊 (Cache Line Alignment)
+    // ```cpp
+    // struct alignas(64) ObjectBlock {
+    //     T object_;
+    //     bool is_free_ = true;
+    // };
+    // ```
+    // - 效果：每個 ObjectBlock 獨佔一個 Cache Line
+    // - 代價：記憶體使用增加 (若 T 很小，浪費空間)
+    // - 範例：若 T 是 8 bytes，每個 ObjectBlock 佔用 64 bytes (浪費 56 bytes)
+    //
+    // 🔧 解決方案 2：分離資料與元資料
+    // ```cpp
+    // std::vector<T> objects_;           // 物件儲存
+    // std::vector<bool> is_free_flags_;  // 狀態標記（獨立陣列）
+    // ```
+    // - 效果：避免 False Sharing，但失去 Cache Locality
+    //
+    // 🔧 解決方案 3：使用 Padding
+    // ```cpp
+    // struct ObjectBlock {
+    //     T object_;
+    //     bool is_free_ = true;
+    //     char padding_[63];  // 填充至 64 bytes
+    // };
+    // ```
+    //
+    // ✅ 當前實作適用場景：
+    // - 單執行緒環境 (無 False Sharing 風險)
+    // - 低競爭多執行緒環境 (不同執行緒存取不同區塊)
+    // - T 本身較大 (例如 >= 32 bytes，減少 False Sharing 機率)
+    //
+    // ⚠️ 不適用場景：
+    // - 多執行緒頻繁分配/釋放小物件 (高 False Sharing 風險)
+    // - 此時建議改用 Per-Thread Memory Pool (每個執行緒獨立的記憶體池)
+    //
+    // 📚 進階優化：Per-Thread Memory Pool
+    // ```cpp
+    // thread_local MemPool<T> local_pool(1024);  // 每個執行緒獨立
+    // ```
+    // - 優點：完全避免跨執行緒競爭
+    // - 缺點：記憶體無法跨執行緒共享
     struct ObjectBlock {
         T object_;
         bool is_free_ = true;

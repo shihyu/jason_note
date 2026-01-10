@@ -156,9 +156,77 @@ struct TCPSocket {
      * - 分離緩衝和發送邏輯（減少系統呼叫）
      * - 支援批次發送（多次 send() 後一次 sendAndRecv()）
      *
-     * 注意：
-     * - 若緩衝區滿，會覆蓋舊資料（無邊界檢查）
-     * - 應確保緩衝區足夠大（64 MB 通常足夠）
+     * ⚠️ 緩衝區溢位風險：
+     * - 當前實作無邊界檢查（為了效能）
+     * - 若累積的資料超過 64 MB，會發生緩衝區溢位
+     * - 溢位行為：
+     *   1. 記憶體越界（Undefined Behavior）
+     *   2. 可能覆蓋相鄰記憶體（導致程式崩潰或安全問題）
+     *   3. 難以除錯（症狀可能在遠離溢位點的地方出現）
+     *
+     * 🔧 使用者責任：
+     * 1. 單次發送不超過緩衝區大小：
+     *    ```cpp
+     *    if (len > TCPBufferSize) {
+     *        logger.log("ERROR: Message too large: % bytes\n", len);
+     *        return;
+     *    }
+     *    ```
+     *
+     * 2. 頻繁呼叫 sendAndRecv() 清空緩衝區：
+     *    ```cpp
+     *    socket.send(msg1, len1);
+     *    socket.send(msg2, len2);
+     *    socket.sendAndRecv();  // 清空緩衝區
+     *    ```
+     *
+     * 3. 監控緩衝區使用率：
+     *    ```cpp
+     *    if (next_send_valid_index_ > TCPBufferSize * 0.8) {
+     *        logger.log("WARNING: Send buffer 80%% full\n");
+     *    }
+     *    ```
+     *
+     * 🔧 生產環境建議（新增邊界檢查）：
+     * ```cpp
+     * auto send(const void* data, size_t len) noexcept -> void {
+     *     // 方案 1：斷言檢查（Debug 模式）
+     *     ASSERT(next_send_valid_index_ + len <= outbound_data_.size(),
+     *            "Send buffer overflow");
+     *
+     *     // 方案 2：靜默丟棄（Release 模式）
+     *     if (next_send_valid_index_ + len > outbound_data_.size()) {
+     *         logger.log("ERROR: Send buffer full, dropping % bytes\n", len);
+     *         return;
+     *     }
+     *
+     *     // 方案 3：強制發送舊資料
+     *     if (next_send_valid_index_ + len > outbound_data_.size()) {
+     *         sendAndRecv();  // 清空緩衝區
+     *     }
+     *
+     *     // 正常拷貝資料...
+     * }
+     * ```
+     *
+     * 📊 緩衝區容量估算：
+     * - 假設平均訊息大小：100 bytes
+     * - 發送頻率：10,000 msg/s
+     * - sendAndRecv() 呼叫頻率：1,000 次/s
+     * - 需要緩衝區：100 bytes × (10,000 ÷ 1,000) = 1,000 bytes
+     * - 64 MB 緩衝區足夠應付極端情況（例如網路暫時阻塞）
+     *
+     * ⚠️ 特殊情況：網路擁塞
+     * - 若 sendAndRecv() 無法清空緩衝區（例如 TCP 接收窗口滿）
+     * - 持續呼叫 send() 最終會溢位
+     * - 建議監控 sendAndRecv() 的返回值與實際發送量
+     *
+     * 📚 替代設計：動態緩衝區
+     * ```cpp
+     * std::deque<std::vector<char>> outbound_queue_;  // 多個小緩衝區
+     * ```
+     * - 優點：避免溢位（可動態擴展）
+     * - 缺點：記憶體分配開銷、Cache Locality 較差
      */
     auto send(const void* data, size_t len) noexcept -> void;
 
