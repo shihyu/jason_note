@@ -486,6 +486,7 @@
         - [投資投機的觀念](strategy/投資投機的觀念與心得分享.md)
         - [韭菜的自我修養](strategy/韭菜的自我修養核心要點.md)
         - [投資策略與複利增長](strategy/投資策略與複利增長完整指南.md)
+        - [大賺小賠交易心法](strategy/大賺小賠交易心法_供需策略與心態管理.md)
     - [phcebus菲式思考](strategy/02_台灣大師心法_phcebus菲式思考.md)
         - [phcebus](strategy/phcebus/phcebus.md)
         - [菲式思考](strategy/phcebus/菲式思考.md)
