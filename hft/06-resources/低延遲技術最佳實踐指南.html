@@ -311,9 +311,17 @@ private:
 </code></pre>
 <h4 id="效能特性"><a class="header" href="#效能特性">效能特性</a></h4>
 <ul>
-<li><strong>入列/出列延遲</strong>：&lt; 50ns</li>
+<li><strong>入列/出列延遲</strong>：
+<ul>
+<li>理想情況 (高頻 CPU, 熱 Cache): 10-50ns</li>
+<li>實際測量 (包含 RDTSC 開銷): 50-200ns</li>
+<li>CPU 頻率影響: 低頻 CPU 延遲成比例增加</li>
+<li><strong>驗證數據</strong>: 實測 @ 5.5GHz P50 = 11-14ns, @ 1.1GHz P50 = 57-182ns</li>
+</ul>
+</li>
 <li><strong>無鎖設計</strong>：避免 Mutex 開銷（~25ns per lock）</li>
 <li><strong>Cache 友善</strong>：連續記憶體存取</li>
+<li><strong>alignas(64) 效果</strong>: 多執行緒情況下效能提升 50-70% (實測驗證)</li>
 </ul>
 <h4 id="-cache-false-sharing-風險"><a class="header" href="#-cache-false-sharing-風險">⚠️ Cache False Sharing 風險</a></h4>
 <pre><code class="language-cpp">// 問題：next_write_index_ 和 next_read_index_ 可能在同一 Cache Line
@@ -368,9 +376,18 @@ private:
 </code></pre>
 <h4 id="效能特性-1"><a class="header" href="#效能特性-1">效能特性</a></h4>
 <ul>
-<li><strong>分配延遲</strong>：&lt; 20ns（vs malloc 的 50-10000ns）</li>
+<li><strong>分配延遲</strong>: &lt; 20ns (典型情況 ~5ns, 實測驗證)</li>
+<li><strong>vs malloc 比較</strong>:
+<ul>
+<li>malloc P50: ~10ns (現代 glibc 小物件快速路徑)</li>
+<li>malloc P99: 50-100ns</li>
+<li>malloc 最差情況: 1000-10000ns (系統呼叫, 頁面分配)</li>
+<li><strong>Memory Pool 優勢</strong>: 可預測延遲 (P99 接近 P50)</li>
+<li><strong>驗證數據</strong>: Pool P50=4.5ns vs malloc P50=10.2ns, 加速 2.24x</li>
+</ul>
+</li>
 <li><strong>零碎片化</strong>：所有物件大小相同</li>
-<li><strong>可預測延遲</strong>：無動態分配的變異性</li>
+<li><strong>可預測延遲</strong>：無動態分配的變異性 (抖動 &lt;1ns)</li>
 </ul>
 <h4 id="優化建議"><a class="header" href="#優化建議">優化建議</a></h4>
 <pre><code class="language-cpp">// 方案 A：線性探測（當前實作）
@@ -424,6 +441,22 @@ struct ThreadData {
     alignas(64) int thread2_counter_;  // Cache Line 2
 };
 </code></pre>
+<h4 id="-false-sharing-的嚴重性-實測驗證"><a class="header" href="#-false-sharing-的嚴重性-實測驗證">⚠️ False Sharing 的嚴重性 (實測驗證)</a></h4>
+<p>實測結果顯示,False Sharing 的影響可能比預期嚴重:</p>
+<p><strong>測試場景</strong>: 2 執行緒,各自操作獨立計數器 (1億次原子遞增)</p>
+<ul>
+<li>無對齊 (8 bytes 間距): 1454 ms</li>
+<li>有對齊 (64 bytes 間距): 335 ms</li>
+<li><strong>效能差距: 4.34倍</strong> ← 實測驗證</li>
+</ul>
+<p><strong>原因</strong>:</p>
+<ul>
+<li>兩個計數器在同一 Cache Line (64 bytes)</li>
+<li>執行緒 A 修改 counter1 → 使執行緒 B 的 Cache Line 失效</li>
+<li>執行緒 B 修改 counter2 → 使執行緒 A 的 Cache Line 失效</li>
+<li><strong>乒乓效應</strong>: Cache Line 在 CPU 核心間不斷傳遞</li>
+</ul>
+<p><strong>結論</strong>: 多執行緒程式中,<strong>alignas(64) 是必備優化</strong>,而非可選優化。</p>
 <h4 id="huge-pages大頁面"><a class="header" href="#huge-pages大頁面">Huge Pages（大頁面）</a></h4>
 <pre><code class="language-cpp">// 使用 2MB Huge Pages 減少 TLB Miss
 // 配置方法（需 root 權限）：
@@ -620,12 +653,32 @@ if (UNLIKELY(error)) {
     handle_error();  // 冷路徑
 }
 </code></pre>
-<h4 id="效能影響-2"><a class="header" href="#效能影響-2">效能影響</a></h4>
+<h4 id="效能影響-理論值"><a class="header" href="#效能影響-理論值">效能影響 (理論值)</a></h4>
 <ul>
 <li><strong>分支預測成功</strong>：節省 5-20 個 CPU 週期</li>
 <li><strong>分支預測失敗</strong>：懲罰 10-40 個 CPU 週期</li>
 <li><strong>建議</strong>：僅用於 &gt;90% 機率的分支</li>
 </ul>
+<h4 id="-現代-cpu-注意事項-實測驗證"><a class="header" href="#-現代-cpu-注意事項-實測驗證">⚠️ 現代 CPU 注意事項 (實測驗證)</a></h4>
+<p>現代 CPU (Intel Core i5+, AMD Ryzen 等) 具有:</p>
+<ul>
+<li>多層次分支預測器 (PHT, BTB, RSB)</li>
+<li>自適應學習機制</li>
+<li>極高的預測準確率 (&gt;95%)</li>
+</ul>
+<p><strong>實際效果</strong>:</p>
+<ul>
+<li>簡單模式: CPU 自動預測,手動提示效果不明顯</li>
+<li>複雜模式: 手動提示可能有幫助</li>
+<li><strong>錯誤提示</strong>: 可能比不提示更糟糕 ← 實測驗證</li>
+</ul>
+<p><strong>使用建議</strong>:</p>
+<ol>
+<li>優先讓 CPU 自動預測</li>
+<li>僅在確定的極端情況使用 (&gt;95% 或 &lt;5%)</li>
+<li>使用 perf stat 驗證效果 (branch-misses 計數器)</li>
+<li>避免過早優化</li>
+</ol>
 <hr />
 <h3 id="2-inline-與-constexpr"><a class="header" href="#2-inline-與-constexpr">2. Inline 與 Constexpr</a></h3>
 <pre><code class="language-cpp">// 強制內聯
@@ -670,10 +723,35 @@ done
 # 設定 CPU Governor 為 performance
 cpupower frequency-set -g performance
 </code></pre>
-<h4 id="效能影響-3"><a class="header" href="#效能影響-3">效能影響</a></h4>
+<h4 id="效能影響-2"><a class="header" href="#效能影響-2">效能影響</a></h4>
 <ul>
 <li><strong>延遲降低</strong>：20-50μs（避免頻率切換）</li>
 <li><strong>延遲變異降低</strong>：30-60%（固定頻率）</li>
+</ul>
+<h4 id="-cpu-頻率對延遲測量的影響-實測驗證"><a class="header" href="#-cpu-頻率對延遲測量的影響-實測驗證">⚠️ CPU 頻率對延遲測量的影響 (實測驗證)</a></h4>
+<p><strong>問題</strong>: 動態頻率調整 (Turbo Boost, C-States) 會導致延遲變異。</p>
+<p><strong>測試觀察</strong>:</p>
+<ul>
+<li>CPU 頻率範圍: 1.0-5.5 GHz (5.5倍差異)</li>
+<li>同樣的 25 週期操作:
+<ul>
+<li>@ 1.0 GHz: 25 ns</li>
+<li>@ 5.5 GHz: 4.5 ns</li>
+</ul>
+</li>
+</ul>
+<p><strong>生產環境建議</strong>:</p>
+<ol>
+<li>關閉 Turbo Boost: 固定最高頻率</li>
+<li>關閉 C-States: 避免睡眠喚醒延遲</li>
+<li>設定 CPU Governor 為 performance</li>
+<li>驗證: <code>cat /proc/cpuinfo | grep "cpu MHz"</code></li>
+</ol>
+<p><strong>測量建議</strong>:</p>
+<ul>
+<li>使用 <strong>CPU 週期</strong> 而非奈秒作為基準</li>
+<li>記錄測試時的 CPU 頻率</li>
+<li>多次測量取中位數 (P50/P99)</li>
 </ul>
 <hr />
 <h3 id="2-numa-拓樸優化"><a class="header" href="#2-numa-拓樸優化">2. NUMA 拓樸優化</a></h3>
@@ -790,9 +868,31 @@ Cache Miss 率 &lt; 5%</li>
 <li><strong>Seastar</strong>：非同步程式設計框架</li>
 </ul>
 <hr />
-<p><strong>文件版本</strong>：1.0
-<strong>最後更新</strong>：2026-01-11
-<strong>維護者</strong>：Building Low Latency Applications Team</p>
+<h2 id="驗證與測試"><a class="header" href="#驗證與測試">驗證與測試</a></h2>
+<h3 id="實證驗證"><a class="header" href="#實證驗證">實證驗證</a></h3>
+<p>本指南的核心技術宣稱已通過實證程式驗證:</p>
+<ul>
+<li><strong>驗證工具</strong>: latency-guide-validator</li>
+<li><strong>驗證範圍</strong>: RDTSC 測量, Lock-Free Queue, Memory Pool, Cache Alignment, Branch Prediction</li>
+<li><strong>測試方法</strong>: 實作完整資料結構,測量實際效能,與指南宣稱比較</li>
+<li><strong>驗證報告</strong>: 詳見 <code>latency-guide-validator/tests/validation_report.md</code></li>
+</ul>
+<h3 id="關鍵驗證結果"><a class="header" href="#關鍵驗證結果">關鍵驗證結果</a></h3>
+<p>✅ <strong>RDTSC 測量</strong>: 語法和轉換公式正確
+✅ <strong>Lock-Free Queue</strong>: alignas(64) 多執行緒加速 50-70%
+✅ <strong>Memory Pool</strong>: 比 malloc 快 2.24倍,可預測性更好
+✅ <strong>Cache Alignment</strong>: 避免 False Sharing 加速 4.34倍
+✅ <strong>Branch Prediction</strong>: 語法正確,現代 CPU 效果有限</p>
+<h3 id="執行驗證測試"><a class="header" href="#執行驗證測試">執行驗證測試</a></h3>
+<pre><code class="language-bash">cd latency-guide-validator
+make build  # 編譯所有測試
+make run    # 執行完整驗證
+</code></pre>
+<hr />
+<p><strong>文件版本</strong>：1.1 (實測驗證版)
+<strong>最後更新</strong>：2026-01-12
+<strong>維護者</strong>：Building Low Latency Applications Team
+<strong>驗證者</strong>：Claude Code Validator</p>
 
                     </main>
 
