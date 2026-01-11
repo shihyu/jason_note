@@ -346,6 +346,7 @@
 ## Software Engineering
 - [Software Engineering](software_engineering/software_engineering.md)
     - [迭代思維與人才優勢](software_engineering/迭代思維與人才優勢.md)
+    - [Google 工程師 21 條金律](software_engineering/google工程師21條金律.md)
     - [AI 時代寫程式：學習還是偷懶？](software_engineering/vibe-coding-vs-software-engineering.md)
     - [黑箱測試方法與AI應用 - 課程筆記](software_engineering/黑箱測試方法與AI應用_課程筆記.md)
     - [黑箱測試方法詳細指南](software_engineering/testing_methods_guide.md)
