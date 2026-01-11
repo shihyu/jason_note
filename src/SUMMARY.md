@@ -603,6 +603,7 @@
     - [HFT 系統總覽](hft/06-resources/hft-index.md)
     - [高性能運算概覽](hft/06-resources/hft-introduction.md)
     - [HFT 開發完整指南](hft/06-resources/hft-dev-complete-guide.md)
+    - [低延遲技術最佳實踐指南](hft/06-resources/低延遲技術最佳實踐指南.md)
     - [GitHub 開源項目分析](hft/06-resources/github-projects.md)
 
 ## Others
