@@ -489,6 +489,7 @@
         - [投資策略與複利增長](strategy/投資策略與複利增長完整指南.md)
         - [大賺小賠交易心法](strategy/大賺小賠交易心法_供需策略與心態管理.md)
         - [巨人傑交易心法與實戰策略](strategy/巨人傑-交易心法與實戰策略精華.md)
+        - [Joeman vs 巨人傑：交易心法與 2026 產業趨勢對談](strategy/joeman_giant_jay_interview.md)
         - [15年交易經驗分享](strategy/trading_experience_and_strategies.md)
     - [phcebus菲式思考](strategy/02_台灣大師心法_phcebus菲式思考.md)
         - [phcebus](strategy/phcebus/phcebus.md)
