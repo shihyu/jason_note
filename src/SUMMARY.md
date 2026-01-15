@@ -496,6 +496,7 @@
         - [phcebus](strategy/phcebus/phcebus.md)
         - [菲式思考](strategy/phcebus/菲式思考.md)
         - [買股3心法](strategy/phcebus/買股3心法.md)
+        - [菲式思考全球漲價族群投資框架](strategy/菲式思考全球漲價族群投資框架.md)
     - [奇正操作系統](strategy/03_台灣大師心法_奇正操作系統.md)
         - [奇正](strategy/奇正/奇正.md)
         - [資金控管與試單](strategy/奇正/資金控管與試單策略.md)
