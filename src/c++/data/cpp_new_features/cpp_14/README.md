@@ -3,9 +3,9 @@
 ![C++14思維導圖](https://www.0voice.com/uiwebsite/cpp_new_features/C++14_new_features.png)
 -----------
 
-<h4 id="cpp_14_01">函數返回值類型推導</h4>
+<h4 id="cpp_14_01">函式回傳值型別推導</h4>
 
-C++14對函數返回類型推導規則做了優化，先看一段代碼：
+C++14對函式返回型別推導規則做了最佳化，先看一段程式碼：
 
 ```CPP
 #include <iostream>
@@ -29,9 +29,9 @@ test.cc:5:16: error: ‘func’ function uses ‘auto’ type specifier without 
                 ^
 test.cc:5:16: note: deduced return type only available with -std=c++14 or -std=gnu++14
 ```
-上面的代碼使用C++11是不能通過編譯的，通過編譯器輸出的信息也可以看見這個特性需要到C++14才被支持。
+上面的程式碼使用C++11是不能通過編譯的，通過編譯器輸出的資訊也可以看見這個特性需要到C++14才被支援。
 
-返回值類型推導也可以用在模板中：
+回傳值型別推導也可以用在樣板中：
 
 ```CPP
 #include <iostream>
@@ -48,7 +48,7 @@ int main() {
 
 注意：
 
-）函數內如果有多個return語句，它們必須返回相同的類型，否則編譯失敗。
+）函式內如果有多個return語句，它們必須返回相同的型別，否則編譯失敗。
 
 ```CPP
 auto func(bool flag) {
@@ -58,7 +58,7 @@ auto func(bool flag) {
 // inconsistent deduction for auto return type: ‘int’ and then ‘double’
 ```
 
-）如果return語句返回初始化列表，返回值類型推導也會失敗
+）如果return語句返回初始化列表，回傳值型別推導也會失敗
 
 ```CPP
 auto func() {
@@ -66,7 +66,7 @@ auto func() {
 }
 ```
 
-) 如果函數是虛函數，不能使用返回值類型推導
+) 如果函式是虛擬函式，不能使用回傳值型別推導
 ```CPP
 struct A {
 	// error: virtual function cannot have deduced return type
@@ -74,7 +74,7 @@ struct A {
 }
 ```
 
-） 返回類型推導可以用在前向聲明中，但是在使用它們之前，翻譯單元中必須能夠得到函數定義
+） 返回型別推導可以用在前向聲明中，但是在使用它們之前，翻譯單元中必須能夠得到函式定義
 ```CPP
 auto f();               // declared, not yet defined
 auto f() { return 42; } // defined, return type is int
@@ -84,7 +84,7 @@ int main() {
 }
 ```
 
-）返回類型推導可以用在遞歸函數中，但是遞歸調用必須以至少一個返回語句作為先導，以便編譯器推導出返回類型。
+）返回型別推導可以用在遞歸函式中，但是遞歸調用必須以至少一個返回語句作為先導，以便編譯器推導出返回型別。
 ```CPP
 auto sum(int i) {
     if (i == 1)
@@ -99,13 +99,13 @@ auto sum(int i) {
 
 <h4 id="cpp_14_02">lambda參數auto</h4>
 
-在C++11中，lambda表達式參數需要使用具體的類型聲明：
+在C++11中，lambda表達式參數需要使用具體的型別聲明：
 
 ```CPP
 auto f = [] (int a) { return a; }
 ```
 
-在C++14中，對此進行優化，lambda表達式參數可以直接是auto：
+在C++14中，對此進行最佳化，lambda表達式參數可以直接是auto：
 
 ```CPP
 auto f = [] (auto a) { return a; };
@@ -116,9 +116,9 @@ cout << f(2.3f) << endl;
 <br/>
 <br/>
 
-<h4 id="cpp_14_03">變量模板</h4>
+<h4 id="cpp_14_03">變數樣板</h4>
 
-C++14支持變量模板：
+C++14支援變數樣板：
 
 ```CPP
 template<class T>
@@ -134,9 +134,9 @@ int main() {
 <br/>
 <br/>
 
-<h4 id="cpp_14_04">別名模板</h4>
+<h4 id="cpp_14_04">別名樣板</h4>
 
-C++14也支持別名模板：
+C++14也支援別名樣板：
 
 ```CPP
 template<typename T, typename U>
@@ -165,7 +165,7 @@ int main() {
 
 C++14相較於C++11對constexpr減少了一些限制：
 
-）C++11中constexpr函數可以使用遞歸，在C++14中可以使用局部變量和循環
+）C++11中constexpr函式可以使用遞歸，在C++14中可以使用局部變數和迴圈
 
 ```CPP
 constexpr int factorial(int n) { // C++14 和 C++11均可
@@ -184,7 +184,7 @@ constexpr int factorial(int n) { // C++11中不可，C++14中可以
 }
 ```
 
-）C++11中constexpr函數必須必須把所有東西都放在一個單獨的return語句中，而constexpr則無此限制：
+）C++11中constexpr函式必須必須把所有東西都放在一個單獨的return語句中，而constexpr則無此限制：
 ```CPP
 constexpr int func(bool flag) { // C++14 和 C++11均可
     return 0;
@@ -204,7 +204,7 @@ constexpr int func(bool flag) { // C++11中不可，C++14中可以
 
 <h4 id="cpp_14_06">[[deprecated]]標記</h4>
 
-C++14中增加了deprecated標記，修飾類、變、函數等，當程序中使用到了被其修飾的代碼時，編譯時被產生警告，用戶提示開發者該標記修飾的內容將來可能會被丟棄，儘量不要使用。
+C++14中增加了deprecated標記，修飾類、變、函式等，當程式中使用到了被其修飾的程式碼時，編譯時被產生警告，用戶提示開發者該標記修飾的內容將來可能會被丟棄，儘量不要使用。
 
 ```CPP
 struct [[deprecated]] A { };
@@ -254,7 +254,7 @@ std::unique_ptr<A> ptr = std::make_unique<A>();
 
 <h4 id="cpp_14_08">std::shared_timed_mutex與std::shared_lock</h4>
 
-C++14通過std::shared_timed_mutex和std::shared_lock來實現讀寫鎖，保證多個線程可以同時讀，但是寫線程必須獨立運行，寫操作不可以同時和讀操作一起進行。
+C++14通過std::shared_timed_mutex和std::shared_lock來實現讀寫鎖，保證多個執行緒可以同時讀，但是寫執行緒必須獨立運行，寫操作不可以同時和讀操作一起進行。
 
 實現方式如下：
 
@@ -328,7 +328,7 @@ auto map_filter_tuple(F&& f, T& t) {
 
 <h4 id="cpp_14_10">std::exchange</h4>
 
-直接看代碼吧：
+直接看程式碼吧：
 
 ```CPP
 int main() {
@@ -361,7 +361,7 @@ constexpr T exchange(T& obj, U&& new_value) {
 
 <h4 id="cpp_14_11">std::quoted</h4>
 
-C++14引入std::quoted用於給字符串添加雙引號，直接看代碼：
+C++14引入std::quoted用於給字串添加雙引號，直接看程式碼：
 
 ```CPP
 int main() {

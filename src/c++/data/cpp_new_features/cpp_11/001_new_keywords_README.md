@@ -10,13 +10,13 @@ C++中有4種存儲週期：
   * dynamic
   * thread
 
-有且只有thread_local關鍵字修飾的變量具有線程週期(thread duration)，這些變量(或者說對象）在線程開始的時候被生成(allocated)，在線程結束的時候被銷燬(deallocated)。並且每 一個線程都擁有一個獨立的變量實例(Each thread has its own instance of the object)。thread_local 可以和static 與 extern關鍵字聯合使用，這將影響變量的鏈接屬性(to adjust linkage)。
+有且只有thread_local關鍵字修飾的變數具有執行緒週期(thread duration)，這些變數(或者說物件）在執行緒開始的時候被生成(allocated)，在執行緒結束的時候被銷燬(deallocated)。並且每 一個執行緒都擁有一個獨立的變數實體(Each thread has its own instance of the object)。thread_local 可以和static 與 extern關鍵字聯合使用，這將影響變數的連結屬性(to adjust linkage)。
 
-那麼，哪些變量可以被聲明為thread_local？可以是以下3類：
+那麼，哪些變數可以被聲明為thread_local？可以是以下3類：
 
-  * 命名空間下的全局變量
-  * 類的static成員變量
-  * 本地變量
+  * 命名空間下的全局變數
+  * 類的static成員變數
+  * 本地變數
 
 thread_local案例
 
@@ -30,7 +30,7 @@ thread_local unsigned int rage = 1;
 std::mutex cout_mutex;
  
 void increase_rage(const std::string& thread_name) {
-  ++rage; // 在鎖外修改 OK ；這是線程局域變量
+  ++rage; // 在鎖外修改 OK ；這是執行緒局域變數
   std::lock_guard<std::mutex> lock(cout_mutex);
   std::cout << "Rage counter for " << thread_name << ": " << rage << '\n';
 }
@@ -85,7 +85,7 @@ struct MyEmptyClass
     void func();
 };
 
-// 確保MyEmptyClass是一個空類（沒有任何非靜態成員變量，也沒有虛函數）
+// 確保MyEmptyClass是一個空類（沒有任何非靜態成員變數，也沒有虛擬函式）
 static_assert(std::is_empty<MyEmptyClass>::value, "empty class needed");
 
 //確保MyClass是一個非空類
@@ -94,19 +94,19 @@ static_assert(!std::is_empty<MyClass>::value, "non-empty class needed");
 template <typename T, typename U, typename V>
 class MyTemplate
 {
-    // 確保模板參數T是一個非空類
+    // 確保樣板參數T是一個非空類
     static_assert(
         !std::is_empty<T>::value,
         "T should be n non-empty class"
     );
 
-    // 確保模板參數U是一個空類
+    // 確保樣板參數U是一個空類
     static_assert(
         std::is_empty<U>::value,
         "U should be an empty class"
     );
 
-    // 確保模板參數V是從std::allocator<T>直接或間接派生而來，
+    // 確保樣板參數V是從std::allocator<T>直接或間接派生而來，
     // 或者V就是std::allocator<T>
     static_assert(
         std::is_base_of<std::allocator<T>, V>::value,
@@ -115,8 +115,8 @@ class MyTemplate
 
 };
 
-// 僅當模板實例化時，MyTemplate裡面的那三個static_assert才會真正被演算，
-// 藉此檢查模板參數是否符合期望
+// 僅當樣板實體化時，MyTemplate裡面的那三個static_assert才會真正被演算，
+// 藉此檢查樣板參數是否符合期望
 template class MyTemplate<MyClass, MyEmptyClass, std::allocator<MyClass>>;
 ```
 
@@ -124,7 +124,7 @@ template class MyTemplate<MyClass, MyEmptyClass, std::allocator<MyClass>>;
 
 ##### <h4 id="nullptr">nullptr</h4>
 
-nullptr關鍵字用於標識空指針，是std::nullptr_t類型的（constexpr）變量。它可以轉換成任何指針類型和bool布爾類型（主要是為了兼容普通指針可以作為條件判斷語句的寫法），但是不能被轉換為整數。
+nullptr關鍵字用於標識空指標，是std::nullptr_t型別的（constexpr）變數。它可以轉換成任何指標型別和bool布爾型別（主要是為了兼容普通指標可以作為條件判斷語句的寫法），但是不能被轉換為整數。
 ```C++
 char *p1 = nullptr;     // 正確
 int  *p2 = nullptr;     // 正確
@@ -136,23 +136,23 @@ int a = nullptr;        // error
 
 ##### <h4 id="noexcept">noexcept</h4>
 
-noexcept有兩類作用：noexcept指定符和noexcept運算符
+noexcept有兩類作用：noexcept指定符和noexcept運算子
 
 * noexcept 指定符
 ```C++
-void f() noexcept;  // 函數 f() 不拋出
-void (*fp)() noexcept(false); // fp 指向可能拋出的函數
-void g(void pfa() noexcept);  // g 接收指向不拋出的函數的指針
+void f() noexcept;  // 函式 f() 不拋出
+void (*fp)() noexcept(false); // fp 指向可能拋出的函式
+void g(void pfa() noexcept);  // g 接收指向不拋出的函式的指標
 // typedef int (*pf)() noexcept; // 錯誤
 ```
 
-* noexcept運算符
+* noexcept運算子
 ```C++
 #include <iostream>
 #include <utility>
 #include <vector>
  
-// noexcept 運算符 
+// noexcept 運算子 
 void may_throw() {};
 void no_throw() noexcept {};
 auto lmay_throw = [] {};
@@ -230,7 +230,7 @@ int main()
 
 ##### <h4 id="decltype">decltype</h4>
 
-decltype類型說明符，它的作用是選擇並返回操作數的數據類型，在此過程中，編譯器分析表達式並得到它的類型，卻不實際計算表達式的值。
+decltype型別說明符，它的作用是選擇並返回操作數的數據型別，在此過程中，編譯器分析表達式並得到它的型別，卻不實際計算表達式的值。
 decltype用法
 * 基本用法
 ```C++
@@ -242,7 +242,7 @@ int main(void)
     
     /*1.dclTempA為int*/
     decltype(tempA) dclTempA;
-    /*2.dclTempB為int，對於getSize根本沒有定義，但是程序依舊正常，因為decltype只做分析，並不調用getSize，*/
+    /*2.dclTempB為int，對於getSize根本沒有定義，但是程式依舊正常，因為decltype只做分析，並不調用getSize，*/
     decltype(getSize()) dclTempB;
 
     return 0;
@@ -262,81 +262,81 @@ double tempA = 3.0;
     dclTempA = 5;
     /*3.dclTempB推斷為const double * const*/
     decltype(cptrTempA) dclTempB = &ctempA;
-    /*4.輸出為4（32位計算機）和5*/
+    /*4.輸出為4（32位元元電腦）和5*/
     cout<<sizeof(dclTempB)<<"    "<<*dclTempB<<endl;
-    /*5.保留頂層const，不能修改指針指向的對象，編譯不過*/
+    /*5.保留頂層const，不能修改指標指向的物件，編譯不過*/
     dclTempB = &ctempB;
-    /*6.保留底層const，不能修改指針指向的對象的值，編譯不過*/
+    /*6.保留底層const，不能修改指標指向的物件的值，編譯不過*/
     *dclTempB = 7.0;
 ```C
 
-* 與引用結合
+* 與參照結合
 ```C
 int tempA = 0, &refTempA = tempA;
 
-    /*1.dclTempA為引用，綁定到tempA*/
+    /*1.dclTempA為參照，綁定到tempA*/
     decltype(refTempA) dclTempA = tempA;
-    /*2.dclTempB為引用，必須綁定到變量，編譯不過*/
+    /*2.dclTempB為參照，必須綁定到變數，編譯不過*/
     decltype(refTempA) dclTempB = 0;
-    /*3.dclTempC為引用，必須初始化，編譯不過*/
+    /*3.dclTempC為參照，必須初始化，編譯不過*/
     decltype(refTempA) dclTempC;
-    /*4.雙層括號表示引用，dclTempD為引用，綁定到tempA*/
+    /*4.雙層括號表示參照，dclTempD為參照，綁定到tempA*/
     decltype((tempA)) dclTempD = tempA;
     
     const int ctempA = 1, &crefTempA = ctempA;
     
-    /*5.dclTempE為常量引用，可以綁定到普通變量tempA*/
+    /*5.dclTempE為常數參照，可以綁定到普通變數tempA*/
     decltype(crefTempA) dclTempE = tempA;
-    /*6.dclTempF為常量引用，可以綁定到常量ctempA*/
+    /*6.dclTempF為常數參照，可以綁定到常數ctempA*/
     decltype(crefTempA) dclTempF = ctempA;
-    /*7.dclTempG為常量引用，綁定到一個臨時變量*/
+    /*7.dclTempG為常數參照，綁定到一個臨時變數*/
     decltype(crefTempA) dclTempG = 0;
-    /*8.dclTempH為常量引用，必須初始化，編譯不過*/
+    /*8.dclTempH為常數參照，必須初始化，編譯不過*/
     decltype(crefTempA) dclTempH;
-    /*9.雙層括號表示引用,dclTempI為常量引用，可以綁定到普通變量tempA*/
+    /*9.雙層括號表示參照,dclTempI為常數參照，可以綁定到普通變數tempA*/
     decltype((ctempA))  dclTempI = ctempA;
 ```
 
-* 與指針結合
+* 與指標結合
 ```C++
 int tempA = 2;
 int *ptrTempA = &tempA;
-/*1.常規使用dclTempA為一個int *的指針*/
+/*1.常規使用dclTempA為一個int *的指標*/
 decltype(ptrTempA) dclTempA;
-/*2.需要特別注意，表達式內容為解引用操作，dclTempB為一個引用，引用必須初始化，故編譯不過*/
+/*2.需要特別注意，表達式內容為解參照操作，dclTempB為一個參照，參照必須初始化，故編譯不過*/
 decltype(*ptrTempA) dclTempB;
 ```
 
 decltype總結
-decltype和auto都可以用來推斷類型，但是二者有幾處明顯的差異：
+decltype和auto都可以用來推斷型別，但是二者有幾處明顯的差異：
 1.auto忽略頂層const，decltype保留頂層const；
-2.對引用操作，auto推斷出原有類型，decltype推斷出引用；
-3.對解引用操作，auto推斷出原有類型，decltype推斷出引用；
+2.對參照操作，auto推斷出原有型別，decltype推斷出參照；
+3.對解參照操作，auto推斷出原有型別，decltype推斷出參照；
 4.auto推斷時會實際執行，decltype不會執行，只做分析。
-總之在使用中過程中和const、引用和指針結合時需要特別小心。
+總之在使用中過程中和const、參照和指標結合時需要特別小心。
 
 <br/>
 
 ##### <h4 id="constexpr">constexpr</h4>
 
 constexpr意義
-將變量聲明為constexpr類型以便由編譯器來驗證變量是否是一個常量表達式（不會改變，在編譯過程中就能得到計算結果的表達式）。是一種比const更強的約束，這樣可以得到更好的效率和安全性。
+將變數聲明為constexpr型別以便由編譯器來驗證變數是否是一個常數表達式（不會改變，在編譯過程中就能得到計算結果的表達式）。是一種比const更強的約束，這樣可以得到更好的效率和安全性。
 
 constexpr用法
-* 修飾函數
+* 修飾函式
 ```C++
-/*1.如果size在編譯時能確定，那麼返回值就可以是constexpr,編譯通過*/
+/*1.如果size在編譯時能確定，那麼回傳值就可以是constexpr,編譯通過*/
 constexpr int getSizeA(int size)
 {
     return 4*size;
 }
-/*2.編譯通過，有告警：在constexpr中定義變量*/
+/*2.編譯通過，有告警：在constexpr中定義變數*/
 constexpr int getSizeB(int size)
 {
     int index = 0;
     return 4;
 }
-/*3.編譯通過，有告警：在constexpr中定義變量（這個有點迷糊）*/
+/*3.編譯通過，有告警：在constexpr中定義變數（這個有點迷糊）*/
 constexpr int getSizeC(int size)
 {
     constexpr int index = 0;
@@ -349,13 +349,13 @@ constexpr int getSizeD(int size)
     {}
     return 4;
 }
-/*5.定義變量並且沒有初始化，編譯不過*/
+/*5.定義變數並且沒有初始化，編譯不過*/
 constexpr int getSizeE(int size)
 {
     int index;
     return 4;
 }
-/*6.rand()為運行期函數，不能在編譯期確定，編譯不過*/
+/*6.rand()為運行期函式，不能在編譯期確定，編譯不過*/
 constexpr int getSizeF(int size)
 {
     return 4*rand();
@@ -369,7 +369,7 @@ constexpr int getSizeG(int size)
 }
 ```
 
-* 修改類型
+* 修改型別
 ```C++
 int tempA;
 cin>>tempA;
@@ -386,7 +386,7 @@ constexpr int conexprE = tempA;
 constexpr int conexprF = ctempB;
 ```
 
-* 修飾指針
+* 修飾指標
 ```C++
 int g_tempA = 4;
 const int g_conTempA = 4;
@@ -402,15 +402,15 @@ int main(void)
     const int *conptrA = &tempA;
     const int *conptrB = &conTempA;
     const int *conptrC = &conexprTempA;
-    /*2.局部變量的地址要運行時才能確認，故不能在編譯期決定，編譯不過*/
+    /*2.局部變數的地址要運行時才能確認，故不能在編譯期決定，編譯不過*/
     constexpr int *conexprPtrA = &tempA;
     constexpr int *conexprPtrB = &conTempA
     constexpr int *conexprPtrC = &conexprTempA;
-    /*3.第一個通過，後面兩個不過,因為constexpr int *所限定的是指針是常量，故不能將常量的地址賦給頂層const*/
+    /*3.第一個通過，後面兩個不過,因為constexpr int *所限定的是指標是常數，故不能將常數的地址賦給頂層const*/
     constexpr int *conexprPtrD = &g_tempA;
     constexpr int *conexprPtrE = &g_conTempA
     constexpr int *conexprPtrF = &g_conexprTempA;
-    /*4.局部變量的地址要運行時才能確認，故不能在編譯期決定，編譯不過*/
+    /*4.局部變數的地址要運行時才能確認，故不能在編譯期決定，編譯不過*/
     constexpr const int *conexprConPtrA = &tempA;
     constexpr const int *conexprConPtrB = &conTempA;
     constexpr const int *conexprConPtrC = &conexprTempA;
@@ -423,7 +423,7 @@ int main(void)
 }
  ```
  
-* 修飾引用
+* 修飾參照
 ```C++
 int g_tempA = 4;
 const int g_conTempA = 4;
@@ -438,11 +438,11 @@ int main(void)
     const int &conptrA = tempA;
     const int &conptrB = conTempA;
     const int &conptrC = conexprTempA;
-    /*2.有兩個問題：一是引用到局部變量，不能再編譯器確定；二是conexprPtrB和conexprPtrC應該為constexpr const類型，編譯不過*/
+    /*2.有兩個問題：一是參照到局部變數，不能再編譯器確定；二是conexprPtrB和conexprPtrC應該為constexpr const型別，編譯不過*/
     constexpr int &conexprPtrA = tempA;
     constexpr int &conexprPtrB = conTempA 
     constexpr int &conexprPtrC = conexprTempA;
-    /*3.第一個編譯通過，後兩個不通過，原因是因為conexprPtrE和conexprPtrF應該為constexpr const類型*/
+    /*3.第一個編譯通過，後兩個不通過，原因是因為conexprPtrE和conexprPtrF應該為constexpr const型別*/
     constexpr int &conexprPtrD = g_tempA;
     constexpr int &conexprPtrE = g_conTempA;
     constexpr int &conexprPtrF = g_conexprTempA;
@@ -462,19 +462,19 @@ int main(void)
 char16_t和char32_t:
 
 產生原因：
-隨著編程人員日益的熟悉Unicode，類型wchar_t顯然已經滿足不了需求，在計算機系統上進行的編碼字符和字符串編碼時，僅僅使用Unicode碼點顯然是不夠的。
-比如：如果在進行字符串編碼時，如果有特定長度和符號特徵的類型將很有幫助，而類型wchar_t的長度和符號特徵隨實現而已。
-因此C++11新增了類型char16_t,char32_t。
+隨著編程人員日益的熟悉Unicode，型別wchar_t顯然已經滿足不了需求，在電腦系統上進行的編碼字符和字串編碼時，僅僅使用Unicode碼點顯然是不夠的。
+比如：如果在進行字串編碼時，如果有特定長度和符號特徵的型別將很有幫助，而型別wchar_t的長度和符號特徵隨實現而已。
+因此C++11新增了型別char16_t,char32_t。
 
-char16_t:無符號類型，長16位，
-char32_t無符號類型，長32位
+char16_t:無符號型別，長16位元元，
+char32_t無符號型別，長32位元元
 
-C++11使用前綴u表示char16_t字符常量和字符串常量如：u‘L’；u“lilili”;
-C++11使用前綴U表示char32_t字符常量和字符串常量如：U'L';U"lilili";
+C++11使用前綴u表示char16_t字符常數和字串常數如：u‘L’；u“lilili”;
+C++11使用前綴U表示char32_t字符常數和字串常數如：U'L';U"lilili";
 
-類型char16_t與/u00F6形式的通用字符名匹配，
-類型char32_t與/U0000222B形式的通用字符名匹配。
-前綴u和U分別指出字符字面值的類型為char16_t和char32_t。
+型別char16_t與/u00F6形式的通用字符名匹配，
+型別char32_t與/U0000222B形式的通用字符名匹配。
+前綴u和U分別指出字符字面值的型別為char16_t和char32_t。
 
 注意：
 如果你在VS中使用char16_t或者char32_t的話，不要加前綴u或者U只能加前綴L.
@@ -485,7 +485,7 @@ C++11使用前綴U表示char32_t字符常量和字符串常量如：U'L';U"lilil
 
 C++11新引入操作符alignof， 對齊描述符alignas，基本對齊值 alignof(std::max_align_t)
 
-alignas可以接受常量表達式和類型作為參數，可以修飾變量、類的數據成員等，不能修飾位域和用register申明的變量。一般往大對齊。
+alignas可以接受常數表達式和型別作為參數，可以修飾變數、類的數據成員等，不能修飾位元元元欄和用register申明的變數。一般往大對齊。
 
 ```C++
 struct s3
