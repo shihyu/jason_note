@@ -8,6 +8,8 @@ build:
 	@find src -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
 	@echo "開始建置..."
 	@mdbook build 2>&1 | grep -v "search index is very large" || true
+	@echo "套用中文搜尋支援..."
+	@cp theme/searcher.js book/searcher.js 2>/dev/null || true
 
 clean:
 	rm -fr book
