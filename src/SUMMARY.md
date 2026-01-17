@@ -527,6 +527,7 @@
         - [處置股分析](strategy/台股處置股與注意股：條件分析與交易策略全解析.md)
         - [抄底王策略](strategy/抄底王策略全解析：台股投資人的逆勢操作完整攻略.md)
         - [AI受惠股分析](strategy/Taiwan-AI-Stocks-Extended-Analysis.md)
+        - [AI產業完整供應鏈架構圖](strategy/AI產業完整架構圖.md)
     - [vectorbt量化回測實戰](strategy/10_vectorbt量化回測實戰.md)
         - [vectorbt教學](strategy/vectorbt.md)
         - [vectorbt配對交易](strategy/vectorbt_配對.md)
