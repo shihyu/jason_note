@@ -523,6 +523,7 @@
         - [質押00713+正二](strategy/質押00713+正二.md)
         - [指數節稅投資法](strategy/指數節稅多元收益投資法.md)
     - [台股特殊情境策略](strategy/09_台股特殊情境策略.md)
+        - [當沖隔日沖策略大全](strategy/台股當沖隔日沖策略大全.md)
         - [處置股分析](strategy/台股處置股與注意股：條件分析與交易策略全解析.md)
         - [抄底王策略](strategy/抄底王策略全解析：台股投資人的逆勢操作完整攻略.md)
         - [AI受惠股分析](strategy/Taiwan-AI-Stocks-Extended-Analysis.md)
