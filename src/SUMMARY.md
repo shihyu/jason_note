@@ -113,6 +113,7 @@
         - [UC_CAPITAL](c++/UC_CAPITAL.md)
     - [實戰技巧集](c++/04_實戰技巧集.md)
         - [現代 C++11 必備特性完整指南](c++/modern-cpp11-essential-guide.md)
+        - [C++11 ~ C++23 與 Rust 功能對照表](c++/cpp_rust_comparison.md)
         - [C++ 基礎](c++/cpp.md)
         - [Note](c++/cpp_note.md)
         - [Interview](c++/interview.md)
