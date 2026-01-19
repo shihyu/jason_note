@@ -50,6 +50,7 @@
         - [MCP Setup Guide](tools/mcp-setup-guide.md)
         - [MCP Commands Reference](tools/mcp-commands-reference.md)
         - [Gemini CLI 安裝與使用指南](tools/gemini-cli-guide.md)
+        - [Codex CLI 完整指南](tools/codex-guide.md)
         - [Thinking Protocol 中文指南](tools/thinking-protocol-zh-tw.md)
     - [系統分析與效能工具](tools/02_系統分析與效能工具.md)
         - [程式分析與效能工具完整指南](tools/cpp-analysis-tools.md)
