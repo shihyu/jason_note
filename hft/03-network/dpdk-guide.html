@@ -1,0 +1,685 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>DPDK 網卡完整指南 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="dpdk-網卡完整指南"><a class="header" href="#dpdk-網卡完整指南">DPDK 網卡完整指南</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ul>
+<li><a href="#%E4%BB%80%E9%BA%BC%E6%98%AF-dpdk-%E7%B6%B2%E5%8D%A1">什麼是 DPDK 網卡</a></li>
+<li><a href="#dpdk-%E7%B6%B2%E5%8D%A1%E7%9A%84%E7%89%B9%E9%BB%9E">DPDK 網卡的特點</a></li>
+<li><a href="#%E4%B8%80%E8%88%AC%E4%B8%8A%E7%B6%B2%E8%83%BD%E5%90%A6%E8%B5%B0-dpdk">一般上網能否走 DPDK</a></li>
+<li><a href="#%E5%AF%A6%E9%9A%9B%E9%83%A8%E7%BD%B2%E6%96%B9%E5%BC%8F">實際部署方式</a></li>
+<li><a href="#%E5%B8%B8%E8%A6%8B%E8%AA%A4%E8%A7%A3">常見誤解</a></li>
+<li><a href="#%E9%87%8D%E8%A6%81%E8%A3%9C%E5%85%85">重要補充</a></li>
+<li><a href="#%E5%AF%A6%E9%9A%9B%E5%BB%BA%E8%AD%B0">實際建議</a></li>
+</ul>
+<hr />
+<h2 id="什麼是-dpdk-網卡"><a class="header" href="#什麼是-dpdk-網卡">什麼是 DPDK 網卡</a></h2>
+<p>DPDK (Data Plane Development Kit) 支援的網卡和一般網卡在架構上有顯著差異。DPDK 是一套使用者空間的高性能封包處理框架。</p>
+<h3 id="常見支援-dpdk-的網卡品牌"><a class="header" href="#常見支援-dpdk-的網卡品牌">常見支援 DPDK 的網卡品牌</a></h3>
+<ul>
+<li>Intel (82599、X710 系列)</li>
+<li>Mellanox</li>
+<li>Broadcom</li>
+<li>其他企業級網卡</li>
+</ul>
+<hr />
+<h2 id="dpdk-網卡的特點"><a class="header" href="#dpdk-網卡的特點">DPDK 網卡的特點</a></h2>
+<h3 id="核心特性"><a class="header" href="#核心特性">核心特性</a></h3>
+<ol>
+<li>
+<p><strong>繞過核心 (Kernel Bypass)</strong></p>
+<ul>
+<li>DPDK 應用程式直接在使用者空間操作網卡</li>
+<li>繞過 Linux 核心的網路堆疊</li>
+<li>減少上下文切換和系統呼叫</li>
+</ul>
+</li>
+<li>
+<p><strong>輪詢模式 (Poll Mode Driver, PMD)</strong></p>
+<ul>
+<li>使用持續輪詢取代中斷驅動</li>
+<li>CPU 會被「吃滿」到 100%，即使沒有流量</li>
+<li>換取更低的延遲和更高的吞吐量</li>
+</ul>
+</li>
+<li>
+<p><strong>零拷貝 (Zero Copy)</strong></p>
+<ul>
+<li>減少資料在記憶體間的複製次數</li>
+<li>直接從網卡 DMA 到應用程式記憶體</li>
+</ul>
+</li>
+<li>
+<p><strong>CPU 綁定 (CPU Affinity)</strong></p>
+<ul>
+<li>將特定 CPU 核心專門用於封包處理</li>
+<li>避免核心間的快取同步開銷</li>
+</ul>
+</li>
+</ol>
+<h3 id="主要應用場景"><a class="header" href="#主要應用場景">主要應用場景</a></h3>
+<ul>
+<li>路由器/交換機</li>
+<li>防火牆/負載均衡器</li>
+<li>5G 核心網</li>
+<li>高頻交易系統</li>
+<li>NFV (Network Function Virtualization)</li>
+<li>DPI (Deep Packet Inspection)</li>
+</ul>
+<hr />
+<h2 id="一般上網能否走-dpdk"><a class="header" href="#一般上網能否走-dpdk">一般上網能否走 DPDK</a></h2>
+<h3 id="答案技術上可行但實際上不適合"><a class="header" href="#答案技術上可行但實際上不適合">答案：技術上可行但實際上不適合</a></h3>
+<h4 id="為什麼不適合一般上網"><a class="header" href="#為什麼不適合一般上網">為什麼不適合一般上網？</a></h4>
+<ol>
+<li>
+<p><strong>需要專用應用程式</strong></p>
+<ul>
+<li>DPDK 繞過了 Linux 核心網路堆疊</li>
+<li>一般的瀏覽器、應用程式無法直接使用 DPDK 網卡</li>
+<li>需要用 DPDK API 重新開發應用</li>
+</ul>
+</li>
+<li>
+<p><strong>資源消耗大</strong></p>
+<ul>
+<li>需要獨佔 CPU 核心持續輪詢</li>
+<li>對於一般上網來說太浪費資源</li>
+<li>一個 DPDK 應用可能佔用 4-8 個核心</li>
+</ul>
+</li>
+<li>
+<p><strong>使用場景不同</strong></p>
+<ul>
+<li>一般上網：延遲要求不高，頻寬需求適中</li>
+<li>DPDK：需要處理數百萬 pps (packets per second)</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h2 id="實際部署方式"><a class="header" href="#實際部署方式">實際部署方式</a></h2>
+<h3 id="雙網卡配置推薦做法"><a class="header" href="#雙網卡配置推薦做法">雙網卡配置（推薦做法）</a></h3>
+<p>如果一台機器需要同時做一般上網和高性能封包處理：</p>
+<h4 id="網卡-1一般網卡"><a class="header" href="#網卡-1一般網卡">網卡 1：一般網卡</a></h4>
+<ul>
+<li>走 Linux 核心網路堆疊</li>
+<li><strong>用途：</strong>
+<ul>
+<li>SSH 遠端管理</li>
+<li>系統更新</li>
+<li>監控和日誌</li>
+<li>一般網路存取</li>
+</ul>
+</li>
+</ul>
+<h4 id="網卡-2dpdk-網卡"><a class="header" href="#網卡-2dpdk-網卡">網卡 2：DPDK 網卡</a></h4>
+<ul>
+<li>走 DPDK 使用者空間</li>
+<li>綁定到 DPDK 驅動 (如 <code>vfio-pci</code> 或 <code>uio_pci_generic</code>)</li>
+<li><strong>用途：</strong>
+<ul>
+<li>專門處理高速封包</li>
+<li>在高頻交易中處理市場數據、下單等</li>
+<li>高吞吐量的封包轉發</li>
+</ul>
+</li>
+</ul>
+<h3 id="高頻交易的典型架構"><a class="header" href="#高頻交易的典型架構">高頻交易的典型架構</a></h3>
+<pre><code>[交易所] ←→ [DPDK 網卡] ←→ [DPDK 應用程式 (市場數據/下單)]
+                              
+[管理網路] ←→ [一般網卡] ←→ [系統管理/監控/SSH]
+</code></pre>
+<h3 id="為什麼需要分開"><a class="header" href="#為什麼需要分開">為什麼需要分開？</a></h3>
+<ol>
+<li>
+<p><strong>隔離風險</strong></p>
+<ul>
+<li>DPDK 網卡綁定後，系統就看不到它</li>
+<li>如果只有一張網卡，可能連 SSH 都連不進去</li>
+</ul>
+</li>
+<li>
+<p><strong>管理方便</strong></p>
+<ul>
+<li>保留一張網卡用於管理</li>
+<li>不影響 DPDK 應用的性能</li>
+</ul>
+</li>
+<li>
+<p><strong>網路分離</strong></p>
+<ul>
+<li>交易網路和管理網路實體隔離</li>
+<li>提高安全性</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h2 id="常見誤解"><a class="header" href="#常見誤解">常見誤解</a></h2>
+<h3 id="誤解-1dpdk-網卡--特殊硬體"><a class="header" href="#誤解-1dpdk-網卡--特殊硬體">誤解 1：DPDK 網卡 = 特殊硬體</a></h3>
+<p><strong>錯誤認知：</strong> 需要購買特殊的「DPDK 網卡」硬體</p>
+<p><strong>實際情況：</strong></p>
+<ul>
+<li>大多數企業級網卡都支援 DPDK</li>
+<li>關鍵在於<strong>驅動程式和軟體配置</strong></li>
+<li>同一張網卡可以在「一般模式」和「DPDK 模式」之間切換</li>
+<li>透過綁定/解綁驅動來切換模式</li>
+</ul>
+<h3 id="誤解-2綁定後網卡消失了"><a class="header" href="#誤解-2綁定後網卡消失了">誤解 2：綁定後網卡「消失」了</a></h3>
+<p><strong>實際情況：</strong></p>
+<ul>
+<li>一旦網卡綁定到 DPDK 驅動 (如 <code>vfio-pci</code>)</li>
+<li><code>ifconfig</code> 或 <code>ip addr</code> 就看不到它</li>
+<li>系統層面完全失去對該網卡的控制</li>
+<li>必須用 <code>dpdk-devbind.py</code> 工具來管理綁定/解綁</li>
+</ul>
+<p><strong>示例：</strong></p>
+<pre><code class="language-bash"># 查看網卡狀態
+dpdk-devbind.py --status
+
+# 綁定網卡到 DPDK
+dpdk-devbind.py --bind=vfio-pci 0000:03:00.0
+
+# 解綁回核心驅動
+dpdk-devbind.py --bind=ixgbe 0000:03:00.0
+</code></pre>
+<h3 id="誤解-3cpu-被吃滿是異常"><a class="header" href="#誤解-3cpu-被吃滿是異常">誤解 3：CPU 被「吃滿」是異常</a></h3>
+<p><strong>實際情況：</strong></p>
+<ul>
+<li>DPDK 的 PMD 會讓 CPU 核心使用率達到 100%</li>
+<li><strong>即使沒有流量也是 100%</strong></li>
+<li>這是<strong>正常現象</strong>，因為它持續輪詢網卡</li>
+<li>需要預留專用 CPU 核心，不能跟一般應用競爭</li>
+</ul>
+<h3 id="誤解-4dpdk-一定比核心網路堆疊快"><a class="header" href="#誤解-4dpdk-一定比核心網路堆疊快">誤解 4：DPDK 一定比核心網路堆疊快</a></h3>
+<p><strong>實際情況：</strong></p>
+<ul>
+<li>對於低流量場景 (&lt;10 Gbps)，一般核心網路堆疊可能更省資源</li>
+<li>DPDK 的優勢在於<strong>高封包率</strong>和<strong>低延遲</strong></li>
+<li>如果只是頻寬需求，不一定需要 DPDK</li>
+<li>需要根據實際場景評估</li>
+</ul>
+<hr />
+<h2 id="重要補充"><a class="header" href="#重要補充">重要補充</a></h2>
+<h3 id="1-huge-pages-記憶體需求"><a class="header" href="#1-huge-pages-記憶體需求">1. Huge Pages 記憶體需求</a></h3>
+<p>DPDK 需要使用 Huge Pages 來提高記憶體存取效率。</p>
+<pre><code class="language-bash"># 配置 2MB 的 Huge Pages (1024 個)
+echo 1024 &gt; /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
+
+# 或配置 1GB 的 Huge Pages
+echo 4 &gt; /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages
+
+# 掛載 hugetlbfs
+mkdir /mnt/huge
+mount -t hugetlbfs nodev /mnt/huge
+</code></pre>
+<p><strong>注意事項：</strong></p>
+<ul>
+<li>必須事先分配，不能動態取用</li>
+<li>通常需要幾 GB 的 Huge Pages</li>
+<li>系統其他程式無法使用這些記憶體</li>
+<li>重開機後需要重新配置</li>
+</ul>
+<h3 id="2-numa-架構考量"><a class="header" href="#2-numa-架構考量">2. NUMA 架構考量</a></h3>
+<p>在多 CPU 插槽的伺服器上：</p>
+<ul>
+<li>網卡、CPU、記憶體最好在<strong>同一個 NUMA 節點</strong></li>
+<li>跨 NUMA 存取會有顯著的性能損失</li>
+<li>需要配置 CPU affinity 和記憶體分配策略</li>
+</ul>
+<pre><code class="language-bash"># 查看 NUMA 拓撲
+numactl --hardware
+
+# 查看網卡所在的 NUMA 節點
+cat /sys/class/net/eth0/device/numa_node
+</code></pre>
+<h3 id="3-不支援所有協定特性"><a class="header" href="#3-不支援所有協定特性">3. 不支援所有協定特性</a></h3>
+<p><strong>限制：</strong></p>
+<ul>
+<li>DPDK 需要自己實現網路堆疊</li>
+<li>TCP/IP、TLS 等都需要用 DPDK 相容的函式庫</li>
+<li>不像核心網路堆疊那樣功能完整</li>
+</ul>
+<p><strong>解決方案：</strong></p>
+<ul>
+<li>使用第三方網路堆疊：mTCP, f-stack, TLDK</li>
+<li>或只處理特定協定（如 UDP、Raw Ethernet）</li>
+</ul>
+<h3 id="4-sr-iov-虛擬化場景"><a class="header" href="#4-sr-iov-虛擬化場景">4. SR-IOV 虛擬化場景</a></h3>
+<p><strong>功能：</strong></p>
+<ul>
+<li>一張實體網卡可以虛擬成多個 VF (Virtual Function)</li>
+<li>每個 VM 可以獨立使用 DPDK</li>
+<li>實現接近原生性能的虛擬化網路</li>
+</ul>
+<p><strong>要求：</strong></p>
+<ul>
+<li>硬體支援 SR-IOV</li>
+<li>BIOS 需要啟用 VT-d / AMD-Vi</li>
+<li>配置更複雜</li>
+</ul>
+<pre><code class="language-bash"># 啟用 SR-IOV，創建 4 個 VF
+echo 4 &gt; /sys/class/net/eth0/device/sriov_numvfs
+</code></pre>
+<h3 id="5-成本考量"><a class="header" href="#5-成本考量">5. 成本考量</a></h3>
+<p><strong>資源成本：</strong></p>
+<ul>
+<li><strong>CPU 核心專用：</strong> 一個 DPDK 應用可能佔用 4-8 個核心</li>
+<li><strong>記憶體佔用：</strong> Huge Pages 可能佔用數 GB</li>
+<li><strong>網卡成本：</strong> 高性能網卡價格較高</li>
+</ul>
+<p><strong>人力成本：</strong></p>
+<ul>
+<li>需要專業知識，學習曲線陡峭</li>
+<li>不像一般 socket 程式設計簡單</li>
+<li>維護和除錯需要專門技能</li>
+</ul>
+<h3 id="6-除錯困難"><a class="header" href="#6-除錯困難">6. 除錯困難</a></h3>
+<p><strong>挑戰：</strong></p>
+<ul>
+<li>無法用 <code>tcpdump</code>、<code>wireshark</code> 直接抓包</li>
+<li>需要在應用層實現封包捕獲</li>
+<li>系統工具 (<code>netstat</code>, <code>ss</code>) 看不到連線狀態</li>
+<li>需要自己實現監控和診斷工具</li>
+</ul>
+<p><strong>解決方案：</strong></p>
+<ul>
+<li>使用 DPDK 的 <code>pdump</code> 函式庫</li>
+<li>實現自訂的統計和監控</li>
+<li>使用 DPDK Telemetry API</li>
+</ul>
+<h3 id="7-核心網路功能缺失"><a class="header" href="#7-核心網路功能缺失">7. 核心網路功能缺失</a></h3>
+<p><strong>DPDK 不支援或需要自己實現：</strong></p>
+<ul>
+<li>iptables / netfilter</li>
+<li>路由表自動更新</li>
+<li>ARP 自動處理</li>
+<li>ICMP (ping)</li>
+<li>大部分的 socket 選項</li>
+</ul>
+<h3 id="8-驅動和核心版本相依性"><a class="header" href="#8-驅動和核心版本相依性">8. 驅動和核心版本相依性</a></h3>
+<p><strong>注意：</strong></p>
+<ul>
+<li>DPDK 版本與 Linux 核心版本有相依性</li>
+<li>升級系統可能影響 DPDK 應用</li>
+<li>需要仔細規劃升級策略</li>
+</ul>
+<h3 id="9-中斷-coalescing-和輪詢的權衡"><a class="header" href="#9-中斷-coalescing-和輪詢的權衡">9. 中斷 Coalescing 和輪詢的權衡</a></h3>
+<p><strong>考量因素：</strong></p>
+<ul>
+<li>輪詢模式：低延遲，高 CPU 使用率</li>
+<li>中斷模式：省 CPU，延遲較高</li>
+<li>有些場景可以使用混合模式</li>
+</ul>
+<h3 id="10-不適合所有網路應用"><a class="header" href="#10-不適合所有網路應用">10. 不適合所有網路應用</a></h3>
+<p><strong>DPDK 適合：</strong></p>
+<ul>
+<li>高封包率 (&gt;1M pps)</li>
+<li>低延遲要求 (&lt;10 μs)</li>
+<li>封包處理邏輯相對簡單</li>
+</ul>
+<p><strong>DPDK 不適合：</strong></p>
+<ul>
+<li>複雜的應用層協定處理</li>
+<li>需要完整 TCP/IP 堆疊特性</li>
+<li>低流量、低頻率的應用</li>
+</ul>
+<hr />
+<h2 id="實際建議"><a class="header" href="#實際建議">實際建議</a></h2>
+<h3 id="對於高頻交易場景"><a class="header" href="#對於高頻交易場景">對於高頻交易場景</a></h3>
+<h4 id="1-一定要量測"><a class="header" href="#1-一定要量測">1. 一定要量測</a></h4>
+<ul>
+<li><strong>先確認瓶頸：</strong> 是否真的遇到核心網路堆疊瓶頸</li>
+<li><strong>基準測試：</strong> 測量當前系統的延遲和吞吐量</li>
+<li><strong>成本效益分析：</strong> DPDK 的收益是否值得投入成本</li>
+</ul>
+<h4 id="2-漸進式部署"><a class="header" href="#2-漸進式部署">2. 漸進式部署</a></h4>
+<ul>
+<li>
+<p><strong>先優化核心網路堆疊：</strong></p>
+<ul>
+<li>調整 IRQ affinity</li>
+<li>啟用 RSS (Receive Side Scaling)</li>
+<li>使用 SO_BUSY_POLL</li>
+<li>調整核心參數</li>
+</ul>
+</li>
+<li>
+<p><strong>考慮其他方案：</strong></p>
+<ul>
+<li>Kernel bypass 的其他方案 (如 Solarflare's OpenOnload)</li>
+<li>XDP (eXpress Data Path)</li>
+<li>AF_XDP sockets</li>
+</ul>
+</li>
+<li>
+<p><strong>最後才考慮 DPDK</strong></p>
+</li>
+</ul>
+<h4 id="3-團隊技能"><a class="header" href="#3-團隊技能">3. 團隊技能</a></h4>
+<ul>
+<li>確保團隊有能力維護 DPDK 應用</li>
+<li>投資培訓和知識轉移</li>
+<li>建立完善的文件和運維流程</li>
+</ul>
+<h4 id="4-測試環境"><a class="header" href="#4-測試環境">4. 測試環境</a></h4>
+<ul>
+<li>建立與生產環境相同的測試環境</li>
+<li>充分測試各種場景</li>
+<li>準備回退方案</li>
+</ul>
+<h4 id="5-監控和告警"><a class="header" href="#5-監控和告警">5. 監控和告警</a></h4>
+<ul>
+<li>實現完善的監控系統</li>
+<li>監控封包丟失、延遲、吞吐量</li>
+<li>設定合理的告警閾值</li>
+</ul>
+<h3 id="架構設計建議"><a class="header" href="#架構設計建議">架構設計建議</a></h3>
+<ol>
+<li>
+<p><strong>保留管理網路</strong></p>
+<ul>
+<li>至少保留一張網卡用於管理</li>
+<li>使用 out-of-band 管理網路</li>
+</ul>
+</li>
+<li>
+<p><strong>高可用性</strong></p>
+<ul>
+<li>考慮使用主備或負載均衡</li>
+<li>實現快速故障轉移</li>
+</ul>
+</li>
+<li>
+<p><strong>可觀測性</strong></p>
+<ul>
+<li>實現詳細的日誌記錄</li>
+<li>提供性能指標輸出</li>
+<li>整合到現有監控系統</li>
+</ul>
+</li>
+<li>
+<p><strong>安全性</strong></p>
+<ul>
+<li>DPDK 應用也需要考慮安全</li>
+<li>實現必要的存取控制</li>
+<li>定期安全審計</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
+<h3 id="dpdk-的優勢"><a class="header" href="#dpdk-的優勢">DPDK 的優勢</a></h3>
+<ul>
+<li>極低延遲 (微秒級)</li>
+<li>極高吞吐量 (數千萬 pps)</li>
+<li>完全控制封包處理流程</li>
+</ul>
+<h3 id="dpdk-的代價"><a class="header" href="#dpdk-的代價">DPDK 的代價</a></h3>
+<ul>
+<li>高 CPU 使用率</li>
+<li>開發和維護複雜度高</li>
+<li>需要專業知識</li>
+<li>調試困難</li>
+</ul>
+<h3 id="何時使用-dpdk"><a class="header" href="#何時使用-dpdk">何時使用 DPDK</a></h3>
+<ul>
+<li>高頻交易</li>
+<li>電信級網路設備</li>
+<li>需要極致性能的場景</li>
+</ul>
+<h3 id="何時不用-dpdk"><a class="header" href="#何時不用-dpdk">何時不用 DPDK</a></h3>
+<ul>
+<li>一般 web 應用</li>
+<li>低頻率網路通訊</li>
+<li>資源受限的環境</li>
+</ul>
+<hr />
+<h2 id="參考資源"><a class="header" href="#參考資源">參考資源</a></h2>
+<ul>
+<li><a href="https://www.dpdk.org/">DPDK 官方網站</a></li>
+<li><a href="https://doc.dpdk.org/">DPDK 官方文件</a></li>
+<li><a href="https://doc.dpdk.org/guides/linux_gsg/index.html">DPDK Getting Started Guide</a></li>
+<li><a href="https://www.intel.com/content/www/us/en/developer/topic-technology/open/data-plane-development-kit/overview.html">Intel DPDK 教學</a></li>
+</ul>
+<hr />
+<p><strong>文件版本：</strong> 1.0<br />
+<strong>最後更新：</strong> 2026-01-19</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../hft/03-network/dpdk-introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../hft/03-network/dpdk-port-testing.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../hft/03-network/dpdk-introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../hft/03-network/dpdk-port-testing.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../../ace.js"></script>
+        <script src="../../mode-rust.js"></script>
+        <script src="../../editor.js"></script>
+        <script src="../../theme-dawn.js"></script>
+        <script src="../../theme-tomorrow_night.js"></script>
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../../mermaid.min.js"></script>
+        <script src="../../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
