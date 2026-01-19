@@ -1,14 +1,21 @@
+// 高效能關鍵技術示例
+// 章節：Concurrency - 檔案：bounded_buffer_2.cpp
+
+#include <utility>
+
 #include <array>
 #include <iostream>
 #include <mutex>
 #include <thread>
 #include <optional>
+// 關鍵技術：計數信號量控制併發資源。
 #include <semaphore> // new
 
 template <typename T, int N>
 class BoundedBuffer {
 public:
     void push(const T &t) { do_push(t); }
+    // 關鍵技術：std::move 觸發移動語意，降低拷貝成本。
     void push(T &&t) { do_push(std::move(t)); }
     
     auto pop()

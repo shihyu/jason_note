@@ -1,8 +1,18 @@
+// 高效能關鍵技術示例
+// 關鍵技術：自訂配置器降低記憶體配置成本。
+// 章節：Memory Management - 檔案：mallocator.h
+
 // The infamous "Mallocator" - a stateless allocator
+
+#include <cstddef>
+#include <limits>
+#include <cstdlib>
+#include <new>
 
 #include <iostream>
 
 template <class T> struct Mallocator {
+    // 關鍵技術：自訂配置器與記憶體池。
     using value_type = T;
     
     Mallocator() = default;

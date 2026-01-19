@@ -1,4 +1,7 @@
-#include "../../Source Code/Chapter12/generator.h"
+// 高效能關鍵技術示例
+// 章節：Coroutines and Lazy Generators - 檔案：gap_encode_decode.cpp
+
+#include "generator.h"
 #include <vector>
 #include <iostream>
 
@@ -8,6 +11,7 @@ Generator<int> gap_encode(Range &ids) {
     for (int last_id = 0; const auto &id : ids) {
         const int gap = id - last_id;
         last_id = id;
+        // 關鍵技術：協程延遲計算/非同步。
         co_yield gap;
     }
 }

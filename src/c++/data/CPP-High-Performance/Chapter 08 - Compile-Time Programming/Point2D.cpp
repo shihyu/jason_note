@@ -1,3 +1,6 @@
+// 高效能關鍵技術示例
+// 章節：Compile-Time Programming - 檔案：Point2D.cpp
+
 #include <concepts>
 #include <cmath>
 #include <iostream>
@@ -17,6 +20,7 @@ private:
 
 template <typename T, typename U, typename V, typename W>
 auto dist(const Point2D<T, U> &p1, const Point2D<V, W> &p2) {
+    // 關鍵技術：編譯期計算與型別約束。
     auto a = abs(p2.y() - p1.y());
     auto b = abs(p2.x() - p1.x());
     return std::sqrt( (a * a) + (b * b) );

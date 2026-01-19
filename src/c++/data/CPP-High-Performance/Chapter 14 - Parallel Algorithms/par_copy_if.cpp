@@ -1,3 +1,11 @@
+// 高效能關鍵技術示例
+// 章節：Parallel Algorithms - 檔案：par_copy_if.cpp
+
+#include <algorithm>
+#include <atomic>
+#include <thread>
+#include <iterator>
+
 #include <iostream>
 #include <future>
 #include <vector>
@@ -20,6 +28,7 @@ void copy_if(_InputIt __first, _InputIt __last, _OutputIt __result, std::atomic_
     
     _InputIt __middle = std::next(__first, n / 2);
     
+    // 關鍵技術：非同步任務與結果傳遞。
     auto future = std::async( [__first, __middle, __result, &__result_index, &__pred, __chunk_sz] () {
         par::copy_if(__first, __middle, __result, __result_index, __pred, __chunk_sz);
     } );

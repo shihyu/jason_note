@@ -1,3 +1,9 @@
+// 高效能關鍵技術示例
+// 章節：Essential C++ Techniques - 檔案：foo.cpp
+
+#include <iostream>
+#include <utility>
+
 struct Foo {
     // performs like "const"
     void func() && { std::cout << "This object is an rvalue" << std::endl; }
@@ -16,6 +22,7 @@ int main() {
     bar.func();
     
     // rvalue
+    // 關鍵技術：std::move 觸發移動語意，降低拷貝成本。
     std::move(bar).func();
     
     // rvalue

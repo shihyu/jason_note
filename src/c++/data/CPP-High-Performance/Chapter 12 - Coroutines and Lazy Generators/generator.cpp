@@ -1,5 +1,11 @@
-#include <experimental/coroutine>
+// 高效能關鍵技術示例
+// 章節：Coroutines and Lazy Generators - 檔案：generator.cpp
+
+#include "chapter_12.h"
 #include <iostream>
+#include <iterator>
+#include <memory>
+#include <utility>
 
 template <typename T>
 class Generator {
@@ -9,7 +15,7 @@ class Generator {
 public:
     using promise_type = Promise;
     
-    Generator(Generator &&g) { std::exchange(g.h_, h_); }
+    Generator(Generator &&g) : h_(std::exchange(g.h_, {})) {}
     
     ~Generator()
     {
@@ -24,8 +30,8 @@ public:
     
     auto end() { return Sentinel(); }
 private:
-    std::experimental::coroutine_handle<Promise> h_;
-    explicit Generator(std::experimental::coroutine_handle<Promise> h) : h_{h} { }
+    std::coroutine_handle<Promise> h_;
+    explicit Generator(std::coroutine_handle<Promise> h) : h_{h} { }
 };
 
 template <typename T>
@@ -34,12 +40,12 @@ struct Generator<T>::Promise {
     
     Generator get_return_object()
     {
-        using Handle = std::experimental::coroutine_handle<Promise>;
+        using Handle = std::coroutine_handle<Promise>;
         return Generator{Handle::from_promise(*this)};
     }
     
-    auto initial_suspend() { return std::experimental::suspend_always{}; }
-    auto final_suspend() noexcept { return std::experimental::suspend_always{}; }
+    auto initial_suspend() { return std::suspend_always{}; }
+    auto final_suspend() noexcept { return std::suspend_always{}; }
     
     void return_void() {}
     void unhandled_exception() { throw; }
@@ -50,7 +56,7 @@ struct Generator<T>::Promise {
     auto yield_value(auto &&value)
     {   // why not use technique from before?
         value_ = std::forward<decltype(value)>(value);
-        return std::experimental::suspend_always();
+        return std::suspend_always();
     }
 };
 
@@ -62,7 +68,7 @@ struct Generator<T>::Iterator {
     using pointer = T*;
     using reference = T&;
     
-    std::experimental::coroutine_handle<Promise> h_; // Data member
+    std::coroutine_handle<Promise> h_; // Data member
     
     Iterator& operator++()
     {
@@ -80,6 +86,7 @@ struct Generator<T>::Iterator {
 
 template <typename T> Generator<T> seq() {
     for (T i = { }; /*...*/ ; ++i) {
+        // 關鍵技術：協程延遲計算/非同步。
         co_yield i;
     }
 }

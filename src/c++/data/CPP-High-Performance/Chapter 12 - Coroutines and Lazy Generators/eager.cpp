@@ -1,6 +1,14 @@
+// 高效能關鍵技術示例
+// 章節：Coroutines and Lazy Generators - 檔案：eager.cpp
+
+#include <vector>
+#include <iostream>
+#include <cstddef>
+
 template <typename T>
 std::vector<T> lin_space(T start, T stop, std::size_t n) {
     std::vector<T> result;
+    // 關鍵技術：reserve 預先配置容量，降低重新配置成本。
     result.reserve(n);
     
     T diff = static_cast<T>(stop - start) / (n - 1);

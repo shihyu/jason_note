@@ -1,3 +1,7 @@
+// 高效能關鍵技術示例
+// 關鍵技術：string_view 避免字串拷貝。
+// 章節：Data Structures - 檔案：string_view.cpp
+
 #include <string_view>
 #include <chrono>
 #include <iostream>
@@ -12,6 +16,7 @@ int main()
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     t1 = std::chrono::high_resolution_clock::now();
+    // 關鍵技術：string_view 避免字串拷貝。
     std::string_view sv = "manbearpig";
     t2 = std::chrono::high_resolution_clock::now();
     auto sv_result = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();

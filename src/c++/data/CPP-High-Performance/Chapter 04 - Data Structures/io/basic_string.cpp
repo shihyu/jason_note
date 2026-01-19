@@ -1,8 +1,13 @@
+// 高效能關鍵技術示例
+// 章節：Data Structures - 檔案：basic_string.cpp
+
 #include <fstream>
 #include <iostream>
 
+// 關鍵技術：資料結構配置與快取區域性。
 int main()
 {
+    // 關鍵技術：資料結構配置與快取區域性。
     std::ifstream file("file.txt", std::ios::binary | std::ios::ate);
     
     if (!file.is_open()) {

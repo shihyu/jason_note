@@ -1,3 +1,7 @@
+// 高效能關鍵技術示例
+// 章節：Concurrency - 檔案：jthread.cpp
+
+#include <chrono>
 #include <thread>
 #include <iostream>
 
@@ -9,7 +13,8 @@ void print(std::stop_token stoken) {
 }
 
 int main() {
-    std::jthread = joinable_thread(print);
+    // 關鍵技術：執行緒生命週期管理。
+    std::jthread joinable_thread(print);
     
     std::cout << "main: goes to sleep\n";
     std::this_thread::sleep_for(std::chrono::seconds{3});

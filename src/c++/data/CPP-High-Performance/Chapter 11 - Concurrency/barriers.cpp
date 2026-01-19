@@ -1,8 +1,14 @@
+// 高效能關鍵技術示例
+// 章節：Concurrency - 檔案：barriers.cpp
+
+#include <algorithm>
+
 #include <random>
 #include <iostream>
 #include <array>
 #include <vector>
 #include <thread>
+// 關鍵技術：同步點協調多執行緒進度。
 #include <barrier>
 
 int random_int()
@@ -14,6 +20,7 @@ int random_int()
 
 int main()
 {
+    // 關鍵技術：編譯期計算降低執行期成本。
     constexpr std::size_t n_dice = 5;
     std::size_t n_turns = 0;
     

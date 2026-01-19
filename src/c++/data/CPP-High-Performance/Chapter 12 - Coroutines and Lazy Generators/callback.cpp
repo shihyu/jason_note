@@ -1,9 +1,15 @@
+// 高效能關鍵技術示例
+// 章節：Coroutines and Lazy Generators - 檔案：callback.cpp
+
+#include <cstddef>
+
 #include <concepts>
 #include <iostream>
 
 template <typename T, typename F>
 requires std::invocable<F&, const T&>
 void lin_space(T start, T stop, std::size_t n, F &&f) {
+    // 關鍵技術：協程與 lazy generator。
     T diff = static_cast<T>(stop - start) / (n - 1);
     for (int i = 0; i != n; ++i) {
         f(start + diff * i);

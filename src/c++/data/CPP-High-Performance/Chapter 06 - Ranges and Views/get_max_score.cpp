@@ -1,3 +1,7 @@
+// 高效能關鍵技術示例
+// 章節：Ranges and Views - 檔案：get_max_score.cpp
+
+#if __has_include(<benchmark/benchmark.h>)
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -27,6 +31,7 @@ int year = 2;
 int get_max_score(const std::vector<Student> &students, int year) {
     auto by_year = [=] (const auto &s) { return s.year_ == year; };
     std ::vector<Student> v;
+    // 關鍵技術：view 延遲計算避免中間容器。
     // std::ranges::copy_if(students, std::back_inserter(v), by_year);
     std::copy_if(students.begin(), students.end(), std::back_inserter(v), by_year);
     // auto it = std::ranges::max_element(v, std::less, &Student::score_);
@@ -103,3 +108,4 @@ BENCHMARK_MAIN();
 // bm_no_waste_BigO     119.54 (1)      119.30 (1)  
 // bm_no_waste_RMS           1 %             1 %    
 // Program ended with exit code: 0
+#endif

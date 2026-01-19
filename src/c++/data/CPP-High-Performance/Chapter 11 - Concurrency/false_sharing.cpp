@@ -1,4 +1,8 @@
+// 高效能關鍵技術示例
+// 章節：Concurrency - 檔案：false_sharing.cpp
+
 #include <iostream>
+#include <new>
 #include <thread>
 #include <vector>
 
@@ -6,7 +10,7 @@ struct Element {
     int e = 42;
 };
 
-struct alignas(_X86_INSTRUCTION_STATE_CACHELINE_SIZE) AlignedElement {
+struct alignas(std::hardware_destructive_interference_size) AlignedElement {
     int e = 42;
 };
 
@@ -21,6 +25,7 @@ void printMemoryLocations(const std::vector<E> &evec) {
 
 int main()
 {
+    // 關鍵技術：執行緒生命週期管理。
     std::size_t num_threads = std::thread::hardware_concurrency();
     
     std::vector<Element> evec1(num_threads);

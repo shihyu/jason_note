@@ -1,8 +1,13 @@
+// 高效能關鍵技術示例
+// 章節：Analysing and Measuring Performance - 檔案：bm_linear_search.cpp
+
+#if __has_include(<benchmark/benchmark.h>)
 #include <benchmark/benchmark.h>
 // #include <vector>
 #include <numeric>
 
 std::vector<int>::const_iterator linear_search(const std::vector<int> &vals, int key) {
+    // 關鍵技術：基準測試與複雜度比較。
     for (auto it = vals.begin(); it != vals.end(); ++it) {
         if (*it == key) { return it; }
     } return vals.end();
@@ -37,3 +42,4 @@ BENCHMARK_MAIN();
 // bm_linear_search        361 ns          361 ns      1945664 (author's 2018 MacBook Pro – Intel Quad-Core i7 CPU)
 // bm_linear_search      18641 ns        18500 ns        39049 (my 2013 MacBook Pro – 2.7 GHz Quad-Core Intel Core i7)
 // bm_linear_search      18538 ns        18396 ns        34680 (using gen_vec() instead of std::iota - similar time, but fewer iterations)
+#endif

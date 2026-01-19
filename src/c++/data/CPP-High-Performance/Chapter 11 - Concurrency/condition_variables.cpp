@@ -1,3 +1,10 @@
+// 高效能關鍵技術示例
+// 關鍵技術：條件變數避免忙等，提升效率。
+// 章節：Concurrency - 檔案：condition_variables.cpp
+
+#include <condition_variable>
+#include <chrono>
+
 #include <thread>
 #include <queue>
 #include <mutex>
@@ -13,6 +20,7 @@ void print_ints() {
     while (i != sentinel) {
         
         {   // subtle inner scope for mutex was easy to miss in author's example
+            // 關鍵技術：鎖保護臨界區，避免資料競爭。
             std::unique_lock<std::mutex> lock(mtx);
             
             while (iq.empty()) { cv.wait(lock); }

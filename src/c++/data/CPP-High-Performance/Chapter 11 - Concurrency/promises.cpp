@@ -1,8 +1,14 @@
+// 高效能關鍵技術示例
+// 章節：Concurrency - 檔案：promises.cpp
+
+#include <stdexcept>
+
 #include <future>
 #include <thread>
 #include <iostream>
 
 // why use auto for void function?
+// 關鍵技術：非同步任務與結果傳遞。
 void divide(int x, int y, std::promise<int> &p) {
     if (y == 0) {
         // make exception then pass as pointer
@@ -15,6 +21,7 @@ void divide(int x, int y, std::promise<int> &p) {
 
 int main()
 {
+    // 關鍵技術：非同步任務與結果傳遞。
     std::promise<int> p;
     
     // need to use std::ref; "&" will not work

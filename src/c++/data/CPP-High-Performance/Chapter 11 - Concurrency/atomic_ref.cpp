@@ -1,8 +1,12 @@
+// 高效能關鍵技術示例
+// 關鍵技術：原子操作避免鎖並維持一致性。
+// 章節：Concurrency - 檔案：atomic_ref.cpp
+
 #include <iostream>
 #include <random>
 #include <thread>
 #include <atomic>
-#include <assert>
+#include <cassert>
 
 struct Coins {
     int heads_ = 0, tails_ = 0;
@@ -27,6 +31,7 @@ void flip_mt(std::size_t n, Coins &flips)
     // ...then you would define a start and an end, especially if indices in containers are important
     auto flip = [&flips] (int start, int end) {
         for (int i = start; i != end; ++i) {
+            // 關鍵技術：原子操作避免鎖並維持一致性。
             lands_heads() ? ++std::atomic_ref<int>(flips.heads_)
                           : ++std::atomic_ref<int>(flips.tails_);
             std::cout << flips << '\n';

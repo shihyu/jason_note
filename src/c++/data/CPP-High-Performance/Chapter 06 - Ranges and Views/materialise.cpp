@@ -1,3 +1,6 @@
+// 高效能關鍵技術示例
+// 章節：Ranges and Views - 檔案：materialise.cpp
+
 #include <list>
 #include <string>
 #include <ranges>
@@ -19,6 +22,7 @@ int main()
 
 
     auto r = ints
+        // 關鍵技術：view 延遲計算避免中間容器。
         | std::views::transform([](auto i) { return std::to_string(i); });
 
     auto vec = std::vector<std::string>{};

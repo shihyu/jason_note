@@ -1,3 +1,7 @@
+// 高效能關鍵技術示例
+// 章節：Compile-Time Programming - 檔案：bm_animal.cpp
+
+#if __has_include(<benchmark/benchmark.h>)
 #include <iostream>
 #include <type_traits>
 
@@ -34,6 +38,7 @@ struct DogConstexpr {
 // ...hich will then fail to compile since Bear does not contain a quack() member function"_
 template <typename Animal> void speakConstexpr(const Animal &a) {
     // if (std::is_same_v<Animal, Bear>) {
+    // 關鍵技術：編譯期計算降低執行期成本。
     if constexpr (std::is_same_v<Animal, BearConstexpr>) {
         a.roar();
         // } else if (std::is_same_v<Animal, Dog>){
@@ -100,3 +105,4 @@ BENCHMARK_MAIN();
 // bm_constexpr_BigO        10.38 (1)       10.35 (1)
 // bm_constexpr_RMS             0 %             0 %
 // Program ended with exit code: 0
+#endif

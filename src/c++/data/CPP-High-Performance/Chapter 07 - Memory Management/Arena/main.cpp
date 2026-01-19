@@ -1,10 +1,21 @@
+// 高效能關鍵技術示例
+// 章節：Memory Management - 檔案：main.cpp
+
+// 關鍵技術：自訂配置器降低記憶體配置成本。
+#include <cstdlib>
+#include <memory>
+#include <cstddef>
+
 #include "Arena.h"
 
 Arena<1024> user_arena;
 
 class ArenaUser {
 public:
-    void* operator new(std::size_t size) { return user_arena.allocate(size); }
+    void* operator new(std::size_t size) {
+        // 關鍵技術：自訂配置器與記憶體池。
+        return user_arena.allocate(size);
+    }
     
     void operator delete(void *p)
     {

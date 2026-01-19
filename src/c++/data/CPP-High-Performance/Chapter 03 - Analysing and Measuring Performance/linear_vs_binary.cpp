@@ -1,3 +1,7 @@
+// 高效能關鍵技術示例
+// 章節：Analysing and Measuring Performance - 檔案：linear_vs_binary.cpp
+
+#if __has_include(<benchmark/benchmark.h>)
 #include <benchmark/benchmark.h>
 #include <numeric>
 
@@ -13,6 +17,7 @@ std::vector<int>::const_iterator linear_search(const std::vector<int> &vals, int
 
 template<class ForwardIt, class T>
 ForwardIt stl_binary_search(ForwardIt first, ForwardIt last, const T& value) {
+    // 關鍵技術：二分搜尋降低比較次數。
     first = std::lower_bound(first, last, value);
     return (!(first == last) and !(value < *first)) ? first : last;
 }
@@ -82,3 +87,4 @@ BENCHMARK_MAIN();
 // bm_binary_search/4096        280 ns          280 ns      2599872
 // bm_binary_search_BigO      25.21 lgN       25.15 lgN  
 // bm_binary_search_RMS           7 %             7 %    
+#endif

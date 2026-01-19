@@ -1,3 +1,6 @@
+// 高效能關鍵技術示例
+// 章節：Concurrency - 檔案：task.cpp
+
 #include <iostream>
 #include <future>
 #include <thread>
@@ -14,6 +17,7 @@ int main()
     // NB: exception will be throw if get_future() is not called ahead of thread
     auto f = task.get_future();
  
+    // 關鍵技術：std::move 觸發移動語意，降低拷貝成本。
     std::thread(std::move(task), 45, 5).detach();
     
     try {

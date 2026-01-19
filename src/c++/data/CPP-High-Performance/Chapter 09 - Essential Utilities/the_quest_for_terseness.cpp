@@ -1,3 +1,6 @@
+// 高效能關鍵技術示例
+// 章節：Essential Utilities - 檔案：the_quest_for_terseness.cpp
+
 #include <iostream>
 #include <vector>
 #include <ranges>
@@ -29,6 +32,7 @@ int main()
     
     std::vector<Player> players1(players_template);
     
+    // 關鍵技術：std::sort 平均 O(n log n)，多數情況效率佳。
     std::sort(players1.begin(), players1.end(), [] (const Player &lhs, const Player &rhs) {
         return (lhs.level_ == rhs.level_) ? lhs.score_ < rhs.score_
                                           : lhs.level_ < rhs.level_;

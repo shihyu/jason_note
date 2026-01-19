@@ -1,3 +1,6 @@
+// 高效能關鍵技術示例
+// 章節：Ranges and Views - 檔案：take.cpp
+
 #include <vector>
 #include <ranges>
 #include <iostream>
@@ -15,6 +18,7 @@ int main()
     std::cout << "ivec: "; printVec(ivec);
 
     auto all_of_ivec = ivec
+        // 關鍵技術：view 延遲計算避免中間容器。
         | std::views::take(ivec.size());
 
     std::ranges::sort(all_of_ivec);

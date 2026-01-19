@@ -1,3 +1,6 @@
+// 高效能關鍵技術示例
+// 章節：Parallel Algorithms - 檔案：divide_and_conquer.cpp
+
 #include <iostream>
 #include <algorithm>
 #include <future>
@@ -8,6 +11,7 @@ _OutputIt par_transform(_InputIt __first, _InputIt __last, _OutputIt __result, _
     const std::size_t n = static_cast<std::size_t>(std::distance(__first, __last));
     
     if (n <= chunk) {
+        // 關鍵技術：標準演算法優化迴圈。
         std::transform(__first, __last, __result, __op);
         return __result;
     }

@@ -1,8 +1,16 @@
+// 高效能關鍵技術示例
+// 關鍵技術：自訂配置器降低記憶體配置成本。
+// 章節：Memory Management - 檔案：Arena.h
+
+#include <cstddef>
+#include <cstdint>
+
 #include <iostream>
 
 template <std::size_t N>
 class Arena {
 public:
+    // 關鍵技術：自訂配置器降低記憶體配置成本。
     Arena() noexcept : ptr_(buffer_) { }
     
     Arena(const Arena&) = delete;

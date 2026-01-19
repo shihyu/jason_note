@@ -1,3 +1,8 @@
+// 高效能關鍵技術示例
+// 章節：Data Structures - 檔案：document.cpp
+
+#include <algorithm>
+
 #include <string>
 #include <memory>
 
@@ -24,6 +29,7 @@ bool cmp(const Hit &lhs, const Hit &rhs)
 
 template <typename ForwardIt>
 std::vector<Hit> sort_hits(ForwardIt begin, ForwardIt end, std::size_t m) {
+    // 關鍵技術：資料結構配置與快取區域性。
     std::vector<Hit> result(m);
 
     std::priority_queue<Hit, std::vector<Hit>, decltype(cmp)*> pq;

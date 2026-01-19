@@ -1,3 +1,10 @@
+// 高效能關鍵技術示例
+// 章節：Essential C++ Techniques - 檔案：rule_of_five.cpp
+
+#include <algorithm>
+#include <memory>
+#include <utility>
+
 #include <initializer_list>
 #include <iostream>
 
@@ -85,6 +92,7 @@ Buffer::~Buffer()
 }
 
 // (5) - move constructor
+// 關鍵技術：std::move 觸發移動語意，降低拷貝成本。
 // use std::move() on members of class type
 // use std::exchange() on members of non-class type
 Buffer::Buffer(Buffer &&rhs) noexcept : size_(std::exchange(rhs.size_, 0)), ptr_(std::exchange(rhs.ptr_, nullptr))
@@ -119,6 +127,7 @@ int main() {
     b0 = b1;
     std::cout << "b0: "; printBuffer(b0);
     
+    // 關鍵技術：std::move 觸發移動語意，降低拷貝成本。
     b1 = std::move(b0);
     std::cout << "b1: "; printBuffer(b1);
     std::cout << "b0: "; printBuffer(b0);

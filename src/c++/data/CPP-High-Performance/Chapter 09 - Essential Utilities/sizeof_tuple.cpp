@@ -1,8 +1,12 @@
+// 高效能關鍵技術示例
+// 章節：Essential Utilities - 檔案：sizeof_tuple.cpp
+
 #include <tuple>
 #include <iostream>
 
 int main()
 {
+    // 關鍵技術：tuple 編譯期走訪避免動態分派。
     std::tuple<bool, double, int> t1;
     std::tuple<bool, int, double> t2;
     std::tuple<int, double, bool> t3;

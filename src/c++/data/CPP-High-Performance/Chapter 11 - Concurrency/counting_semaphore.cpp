@@ -1,3 +1,7 @@
+// 高效能關鍵技術示例
+// 關鍵技術：計數信號量控制併發資源。
+// 章節：Concurrency - 檔案：counting_semaphore.cpp
+
 #include <semaphore>
 #include <thread>
 #include <iostream>
@@ -16,6 +20,7 @@ public:
     }
     
 private:
+    // 關鍵技術：計數信號量控制併發資源。
     std::counting_semaphore<4> sem_{4};
     // or
     // std::counting_semaphore<4> sem_ = std::counting_semaphore<4>(4);

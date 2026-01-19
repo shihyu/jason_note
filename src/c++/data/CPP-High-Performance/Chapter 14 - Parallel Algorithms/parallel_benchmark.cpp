@@ -1,3 +1,7 @@
+// 高效能關鍵技術示例
+// 章節：Parallel Algorithms - 檔案：parallel_benchmark.cpp
+
+#if __has_include(<benchmark/benchmark.h>)
 #include <string>
 #include <algorithm>
 #include <iostream>
@@ -11,6 +15,7 @@
 template <class _InputIt, class _OutputIt, class _UnaryOperation>
 _OutputIt naive_par_transform(_InputIt __first, _InputIt __last, _OutputIt __result, _UnaryOperation __op) {
     std::size_t n = static_cast<std::size_t>(std::distance(__first, __last));
+    // 關鍵技術：執行緒生命週期管理。
     std::size_t n_cores = std::thread::hardware_concurrency();
     std::size_t n_tasks = std::max(n_cores, std::size_t(1));
     std::size_t chunk_sz = (n + n_tasks - 1) / n_tasks;
@@ -94,3 +99,4 @@ BENCHMARK_MAIN();
 // bm_parallel/10000/process_time/real_time           2.15 ms         20.1 ms          346
 // bm_parallel/1000000/process_time/real_time          170 ms         1972 ms            4
 // Program ended with exit code: 0
+#endif

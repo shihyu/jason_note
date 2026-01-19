@@ -1,3 +1,9 @@
+// 高效能關鍵技術示例
+// 章節：Proxy Objects and Lazy Evaluation - 檔案：bm_Vec2D.cpp
+
+#include <algorithm>
+#include <cassert>
+
 #include <cmath>
 #include <iostream>
 #include <vector>
@@ -41,6 +47,8 @@ float smallestVec2D(const std::vector<Vec2D> &vvec) {
 //   auto cmp = [](auto&& a, auto&& b) {
 //     return a.length () < b.length();
 //   };
+// 關鍵技術：view 延遲計算避免中間容器。
+// 關鍵技術：view 延遲計算避免中間容器。
 //   auto it = std::ranges::min_element(r, cmp);
 //   return it->length();
 // }
@@ -53,6 +61,7 @@ int coord() {
 
 std::vector<Vec2D> gen(std::size_t n) {
     std::vector<Vec2D> vvec;
+    // 關鍵技術：reserve 預先配置容量，降低重新配置成本。
     vvec.reserve(n);
     
     for (std::size_t i = 0; i != n; ++i) {

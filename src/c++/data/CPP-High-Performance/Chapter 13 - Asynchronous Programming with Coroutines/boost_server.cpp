@@ -1,3 +1,7 @@
+// 高效能關鍵技術示例
+// 章節：Asynchronous Programming with Coroutines - 檔案：boost_server.cpp
+
+#if __has_include(<boost/asio.hpp>)
 #include <boost/asio.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/use_awaitable.hpp>
@@ -8,6 +12,7 @@ using namespace std::chrono;
 
 boost::asio::awaitable<void> serve_client(boost::asio::ip::tcp::socket socket) {
     std::cout << "New client connected\n";
+    // 關鍵技術：協程延遲計算/非同步。
     auto ex = co_await boost::asio::this_coro::executor;
     boost::asio::system_timer timer(ex);
     std::size_t counter = 0;
@@ -72,3 +77,4 @@ int main()
 // 1
 // 2
 // ...
+#endif

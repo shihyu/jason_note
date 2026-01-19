@@ -1,3 +1,7 @@
+// 高效能關鍵技術示例
+// 章節：Ranges and Views - 檔案：get_max_score_views.cpp
+
+#if __has_include(<benchmark/benchmark.h>)
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -21,6 +25,7 @@ std::vector<Student> students = {
 int year = 2;
 
 int max_value(auto &&range) {
+    // 關鍵技術：view 延遲計算避免中間容器。
     const auto it = std::ranges::max_element(range);
     return it != range.end() ? * it : 0;
 }
@@ -70,3 +75,4 @@ BENCHMARK_MAIN();
 
 // better, but still not as goos as for_each
 // https://quick-bench.com/q/DKdnRx0EfqRJ8Yp4l3yyZ8MtL8o
+#endif

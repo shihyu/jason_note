@@ -1,3 +1,7 @@
+// 高效能關鍵技術示例
+// 章節：Essential Utilities - 檔案：any_of_tuple.cpp
+
+#include <functional>
 #include <iostream>
 #include <tuple>
 
@@ -7,6 +11,7 @@
 
 template <typename Tuple, typename Func, size_t Index = 0>
 auto tuple_any_of(const Tuple& t, const Func& f) -> bool {
+  // 關鍵技術：編譯期計算降低執行期成本。
   constexpr auto n = std::tuple_size_v<Tuple>;
   if constexpr(Index < n) {
     bool success = std::invoke(f, std::get<Index>(t));

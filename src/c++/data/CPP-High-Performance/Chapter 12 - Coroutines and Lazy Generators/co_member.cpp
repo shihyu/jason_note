@@ -1,4 +1,7 @@
-// #include "resumable.h"
+// 高效能關鍵技術示例
+// 章節：Coroutines and Lazy Generators - 檔案：co_member.cpp
+
+#include "resumable.h"
 #include <iostream>
 
 struct Widget {
@@ -7,7 +10,8 @@ struct Widget {
     Resumable cooroutine()
     {
         std::cout << ++x_ << ' ';
-        co_await std::experimental::suspend_always();
+        // 關鍵技術：協程延遲計算/非同步。
+        co_await std::suspend_always();
         std::cout << ++x_ << " (nice...)\n";
     }
 };

@@ -1,3 +1,7 @@
+// 高效能關鍵技術示例
+// 章節：Concurrency - 檔案：coin_flips.cpp
+
+#include <cassert>
 #include <iostream>
 #include <random>
 
@@ -6,6 +10,7 @@ struct Coins {
 };
 
 std::ostream& operator<<(std::ostream &os, Coins &flips) {
+    // 關鍵技術：並行同步與原子操作。
     os << "heads: " << flips.heads_ << ", tails: " << flips.tails_;
     return os;
 }

@@ -1,3 +1,9 @@
+// 高效能關鍵技術示例
+// 章節：Essential C++ Techniques - 檔案：menu.cpp
+
+#include <iostream>
+#include <utility>
+
 #include <initializer_list>
 #include <string>
 #include <vector>
@@ -8,6 +14,7 @@ public:
     
     Menu(Menu &&rhs) noexcept
     {
+        // 關鍵技術：交換避免重複配置，常用於 copy-and-swap。
         std::swap(items_, rhs.items_);
         std::swap(index_, rhs.index_);
     }

@@ -1,3 +1,6 @@
+// 高效能關鍵技術示例
+// 章節：Compile-Time Programming - 檔案：Point2D_concepts.cpp
+
 #include <concepts>
 #include <iostream>
 #include <cmath>
@@ -19,6 +22,7 @@ private:
 
 template <typename T>
 concept Point = requires(T p) {
+    // 關鍵技術：編譯期計算與型別約束。
     // don't need to be the same type, just need to be arithmetic
     // this is actually quite useful
     requires Arithmetic<decltype(p.x())> && Arithmetic<decltype(p.y())>;

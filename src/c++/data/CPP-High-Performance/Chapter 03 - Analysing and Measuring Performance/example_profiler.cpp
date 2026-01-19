@@ -1,3 +1,6 @@
+// 高效能關鍵技術示例
+// 章節：Analysing and Measuring Performance - 檔案：example_profiler.cpp
+
 // not very polish, but an example of what a sampling profiler could be, as and when functions enter and leave the stack
 
 #include <stack>
@@ -8,12 +11,16 @@
 #include <iostream>
 #include <iomanip>
 
+// 關鍵技術：基準測試與複雜度比較。
 class SamplingConcept {
 public:
     SamplingConcept()
     {
         stk_.push("main");
-        stkvec_.push_back({ stk_, std::chrono::steady_clock::now() });
+        stkvec_.push_back( {
+            // 關鍵技術：基準測試與複雜度比較。
+            stk_, std::chrono::steady_clock::now()
+        });
         f3();
         stkvec_.push_back({ stk_, std::chrono::steady_clock::now() });
         f2();

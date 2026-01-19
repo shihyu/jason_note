@@ -1,14 +1,19 @@
+// 高效能關鍵技術示例
+// 章節：Concurrency - 檔案：lock_free_queue.cpp
+
 #include <iostream>
 #include <array>
 #include <atomic>
 #include <optional>
+#include <utility>
 
 template <typename T, std::size_t N>
 class LockFreeQueue {
 public:
     // "writer" thread functions
-    bool push(const T &t) { do_push(t); }
-    bool push(T &&t) { do_push(std::move(t)); }
+    bool push(const T &t) { return do_push(t); }
+    // 關鍵技術：std::move 觸發移動語意，降低拷貝成本。
+    bool push(T &&t) { return do_push(std::move(t)); }
     
     // "reader" thread functions
     std::optional<T> pop()
@@ -25,7 +30,7 @@ public:
     }
     
     // both threads can call size()
-    std::size_t& size() const noexcept { return size_.load(); }
+    std::size_t size() const noexcept { return size_.load(); }
     
 private:
     std::array<T, N> buffer_;               // used by both threads

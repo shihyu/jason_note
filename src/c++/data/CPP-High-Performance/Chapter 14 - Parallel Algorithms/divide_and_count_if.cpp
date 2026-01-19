@@ -1,3 +1,10 @@
+// 高效能關鍵技術示例
+// 章節：Parallel Algorithms - 檔案：divide_and_count_if.cpp
+
+#include <algorithm>
+#include <thread>
+#include <iterator>
+
 #include <iostream>
 #include <future>
 #include <vector>
@@ -13,6 +20,7 @@ std::size_t count_if(_ForwardIt __first, _ForwardIt __last, _UnaryOperation __op
     
     _ForwardIt __middle = std::next(__first, n / 2);
     
+    // 關鍵技術：非同步任務與結果傳遞。
     auto future = std::async(std::launch::async, [=, &__op] () {
         return par::count_if(__first, __middle, __op, chunk);
     } );

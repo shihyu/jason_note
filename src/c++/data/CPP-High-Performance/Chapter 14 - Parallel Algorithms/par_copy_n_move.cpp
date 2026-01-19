@@ -1,3 +1,11 @@
+// 高效能關鍵技術示例
+// 章節：Parallel Algorithms - 檔案：par_copy_n_move.cpp
+
+#include <algorithm>
+#include <thread>
+#include <iterator>
+#include <utility>
+
 #include <iostream>
 #include <vector>
 #include <future>
@@ -9,6 +17,7 @@ _OutputIt copy_if(_InputIt __first, _InputIt __last, _OutputIt __result, _Predic
     // Part 1 - filter out the chunks according to the predicate
     const std::size_t n = static_cast<std::size_t>(std::distance(__first, __last));
     
+    // 關鍵技術：非同步任務與結果傳遞。
     std::vector<std::future<std::pair<_OutputIt, _OutputIt>>> futures;
     futures.reserve(n / __chunk_sz);
     

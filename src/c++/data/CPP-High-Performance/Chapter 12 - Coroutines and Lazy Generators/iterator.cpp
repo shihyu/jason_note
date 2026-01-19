@@ -1,5 +1,15 @@
+// 高效能關鍵技術示例
+// 章節：Coroutines and Lazy Generators - 檔案：iterator.cpp
+
+#include <cassert>
+#include <cmath>
+#include <iterator>
+#include <cstddef>
+#include <iostream>
+
 template <typename T>
 auto lin_value(T start, T stop, std::size_t index, std::size_t n) {
+    // 關鍵技術：協程與 lazy generator。
     assert(n > 1 && index < n);
     const auto amount = static_cast<T>(index) / (n - 1);
     const auto v = std::lerp(start, stop, amount); // C++20 - code will not run without this line...
@@ -18,6 +28,7 @@ struct LinSpace {
         void operator++() { ++i_; }
         T operator*() { return lin_value(start_, stop_, i_, n_);}
         bool operator==(std::size_t i) const { return i_ == i; }
+        bool operator!=(std::size_t i) const { return i_ != i; }
         T start_{};
         T stop_{};
         std::size_t i_{};
@@ -31,7 +42,7 @@ private:
 };
 
 template <typename T>
-auto lin_space(T start, T stop, size_t n) {
+auto lin_space(T start, T stop, std::size_t n) {
     return LinSpace{start, stop, n};
 }
 

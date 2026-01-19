@@ -1,3 +1,8 @@
+// 高效能關鍵技術示例
+// 章節：Essential Utilities - 檔案：Widget.cpp
+
+#include <exception>
+
 #include <variant>
 #include <iostream>
 
@@ -5,6 +10,7 @@ struct Widget {
     explicit Widget(int) { throw std::exception(); }
 };
 
+// 關鍵技術：variant/visit 分派降低虛擬呼叫成本。
 void attempt1(std::variant<double, Widget> &v) {
     try {
         v.emplace<1>(42);
@@ -49,6 +55,7 @@ void attempt3(std::variant<double, Widget> v) {
 
 int main()
 {
+    // 關鍵技術：variant/visit 分派降低虛擬呼叫成本。
     std::variant<double, Widget> v = 1.0;
     std::cout << "v = " << std::get<0>(v) << '\n';
     

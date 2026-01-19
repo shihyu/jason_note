@@ -1,7 +1,12 @@
+// 高效能關鍵技術示例
+// 章節：Compile-Time Programming - 檔案：cts_benchmark.cpp
+
+#if __has_include(<benchmark/benchmark.h>)
 #include <iostream>
 
 #include <benchmark/benchmark.h>
 
+// 關鍵技術：編譯期計算降低執行期成本。
 constexpr std::size_t hash_function(const char* str) {
     std::size_t sum = 0;
     for (auto ptr = str; *ptr != '\0'; ++ptr) {
@@ -43,6 +48,7 @@ static void bm_string(benchmark::State &state) {
 
 static void bm_sview(benchmark::State &state) {
     auto n = state.range(0);
+    // 關鍵技術：string_view 避免字串拷貝。
     std::string_view s_view = "asdbasjkd78wqevsakbdsJASKJDbbuq97dbiausdbasdbasjkd78wqevsakbdsJASKJDbbuq97dbiausdbasdbasjkd78wqevsakbdsJASKJDbbuq97dbiausdbasdbasjkd78wqevsakbdsJASKJDbbuq97dbiausdbasdbasjkd78wqevsakbdsJASKJDbbuq97dbiausdbasdbasjkd78wqevsakbdsJASKJDbbuq97dbiausdbasdbasjkd78wqevsakbdsJASKJDbbuq97dbiausdbasdbasjkd78wqevsakbdsJASKJDbbuq97dbiausdbasdbasjkd78wqevsakbdsJASKJDbbuq97dbiausdbasdbasjkd78wqevsakbdsJASKJDbbuq97dbiausdbasdbasjkd78wqevsakbdsJASKJDbbuq97dbiausdbasdbasjkd78wqevsakbdsJASKJDbbuq97dbiausdbasdbasjkd78wqevsakbdsJASKJDbbuq97dbiausdbasdbasjkd78wqevsakbdsJASKJDbbuq97dbiausdbasdbasjkd78wqevsakbdsJASKJDbbuq97dbiausdb!";
     for (auto _ : state) {
         hash_string(s_view);
@@ -87,3 +93,4 @@ BENCHMARK_MAIN();
 // bm_sview_BigO     1500.90 (1)     1499.87 (1)  
 // bm_sview_RMS            1 %             1 %    
 // Program ended with exit code: 0
+#endif

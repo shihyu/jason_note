@@ -1,8 +1,12 @@
+// 高效能關鍵技術示例
+// 章節：Concurrency - 檔案：money_transfer.cpp
+
 #include <mutex>
 #include <iostream>
 
 struct Account {
     Account(int &&amount) : balance_(amount){ }
+    // 關鍵技術：鎖保護臨界區，避免資料競爭。
     std::mutex m_;
     int balance_ = 0;
 };

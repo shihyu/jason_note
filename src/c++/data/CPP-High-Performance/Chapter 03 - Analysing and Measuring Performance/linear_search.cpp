@@ -1,3 +1,6 @@
+// 高效能關鍵技術示例
+// 章節：Analysing and Measuring Performance - 檔案：linear_search.cpp
+
 #include <vector>
 #include <iostream>
 
@@ -6,12 +9,15 @@
 // bool linear_search(const std::vector<int>& vals, int key) noexcept {
 std::vector<int>::const_iterator linear_search(const std::vector<int> &vals, const int &key) {
     for (auto it = vals.begin(); it != vals.end(); ++it) {
+        // 關鍵技術：線性掃描，資料連續時具快取友善性。
         if (*it == key) { return it; }
     } return vals.end();
 }
 
 // STL implementation
 template<class InputIt, class T>
+// 關鍵技術：編譯期計算降低執行期成本。
+// 關鍵技術：編譯期計算降低執行期成本。
 constexpr InputIt stl_find(InputIt first, InputIt last, const T& value)
 {
     for (; first != last; ++first)

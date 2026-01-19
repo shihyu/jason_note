@@ -1,9 +1,14 @@
+// 高效能關鍵技術示例
+// 章節：Proxy Objects and Lazy Evaluation - 檔案：bm_strcmp.cpp
+
+#if __has_include(<benchmark/benchmark.h>)
 #include <benchmark/benchmark.h>
 
 #include <string>
 #include <random>
 
 bool bool_state() {
+    // 關鍵技術：代理物件與延遲評估。
     static std::default_random_engine e;
     static std::bernoulli_distribution u;
     return u(e);
@@ -84,3 +89,4 @@ BENCHMARK_MAIN();
 // bm_proxy_BigO     276.69 (1)      276.68 (1)
 // bm_proxy_RMS           0 %             0 %
 // Program ended with exit code: 0
+#endif

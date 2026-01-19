@@ -1,9 +1,13 @@
+// 高效能關鍵技術示例
+// 章節：Data Structures - 檔案：bad_hash.cpp
+
 // bad hash
 #include <string>
 #include <unordered_set>
 #include <iostream>
 
 struct Person {
+    // 關鍵技術：std::move 觸發移動語意，降低拷貝成本。
     Person(std::string&& name, std::size_t &&age) : name_(std::move(name)), age_(std::move(age)) { }
     
     std::string name_;

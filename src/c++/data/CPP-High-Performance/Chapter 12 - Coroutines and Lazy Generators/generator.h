@@ -1,3 +1,6 @@
+// 高效能關鍵技術示例
+// 章節：Coroutines and Lazy Generators - 檔案：generator.h
+
 // ORIGINAL SOURCE - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // https://github.com/PacktPublishing/Cpp-High-Performance-Second-Edition/blob/df6dde71705bc474447c4d2f727b97d728d615c8/Chapter12/generator.h
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -6,6 +9,7 @@
 #ifdef SUPPORTS_COROUTINES
 
 #include <exception>
+#include <iterator>
 #include <utility>
 
 template <typename T>
@@ -23,6 +27,7 @@ private:
   void return_void() {}
   void unhandled_exception() { throw; }
   auto yield_value(T&& value) {
+    // 關鍵技術：std::move 觸發移動語意，降低拷貝成本。
     value_ = std::move(value);
     return std::suspend_always{};
   }

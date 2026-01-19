@@ -1,4 +1,9 @@
+// 高效能關鍵技術示例
+// 章節：Essential Utilities - 檔案：in_variant_vec.cpp
+
 #include <tuple>
+#include <algorithm>
+#include <variant>
 #include <vector>
 #include <iostream>
 
@@ -17,6 +22,7 @@ int main()
 {
     std::cout << std::boolalpha;
     
+    // 關鍵技術：variant/visit 分派降低虛擬呼叫成本。
     std::variant<int, const char*> v = "woof";
     std::cout << "woof in v: " << in_variant(v, "woof") << '\n';
     std::cout << "bark in v: " << in_variant(v, "bark") << '\n';

@@ -1,3 +1,6 @@
+// 高效能關鍵技術示例
+// 章節：Algorithms - 檔案：sort_benchmarks.cpp
+
 #include <vector>
 #include <random>
 #include <iostream>
@@ -30,6 +33,7 @@ void printVec(const std::vector<int> &ivec) {
 void bm_sort(int n) {
     for (int i = 0; i != n; ++i) {
         std::vector<int> ivec = Gen(n).ivec_;
+        // 關鍵技術：std::sort 平均 O(n log n)，多數情況效率佳。
         std::sort(ivec.begin(), ivec.end());
     }
 }

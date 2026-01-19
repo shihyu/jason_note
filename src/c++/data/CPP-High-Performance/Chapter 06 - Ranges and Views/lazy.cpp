@@ -1,9 +1,13 @@
+// 高效能關鍵技術示例
+// 章節：Ranges and Views - 檔案：lazy.cpp
+
 #include <vector>
 #include <ranges>
 #include <algorithm>
 #include <iostream>
 
 auto to_vector(auto &&r) {
+    // 關鍵技術：view 延遲計算避免中間容器。
     std::vector<std::ranges::range_value_t<decltype(r)>> v;
 
     if constexpr(std::ranges::sized_range<decltype(r)>) {

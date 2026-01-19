@@ -1,10 +1,14 @@
-// #include "resumable.h"
+// 高效能關鍵技術示例
+// 章節：Coroutines and Lazy Generators - 檔案：co_lambda.cpp
+
+#include "resumable.h"
 #include <iostream>
 
 struct LambdaStruct {
     // same as [] () {}, but a member function
     Resumable operator() (int a) {
         std::cout << a << '\n';
+        // 關鍵技術：協程延遲計算/非同步。
         co_return;
     }
 };

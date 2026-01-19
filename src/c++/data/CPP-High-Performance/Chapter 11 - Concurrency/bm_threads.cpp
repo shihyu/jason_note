@@ -1,3 +1,9 @@
+// 高效能關鍵技術示例
+// 章節：Concurrency - 檔案：bm_threads.cpp
+
+#if __has_include(<benchmark/benchmark.h>)
+#include <benchmark/benchmark.h>
+
 #include <iostream>
 #include <thread>
 #include <mutex>
@@ -12,7 +18,9 @@ void decrease(std::size_t &x) {
     for (int i = 0; i != n; ++i) { --x; }
 }
 
+// 關鍵技術：鎖保護臨界區，避免資料競爭。
 void increase_multi(std::size_t &x, std::mutex &m) {
+    // 關鍵技術：鎖保護臨界區，避免資料競爭。
     // std::lock_guard<std::mutex> guard(m);
     std::scoped_lock<std::mutex> guard(m);
     for (int i = 0; i != n; ++i) { ++x; }
@@ -87,3 +95,4 @@ static void bm_no_data_race(benchmark::State &state) {
 } BENCHMARK(bm_no_data_race);
 
 BENCHMARK_MAIN();
+#endif

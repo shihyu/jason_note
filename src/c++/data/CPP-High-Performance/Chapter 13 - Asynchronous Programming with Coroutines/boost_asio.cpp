@@ -1,3 +1,7 @@
+// 高效能關鍵技術示例
+// 章節：Asynchronous Programming with Coroutines - 檔案：boost_asio.cpp
+
+#if __has_include(<boost/asio.hpp>)
 #include <boost/asio.hpp>
 #include <chrono>
 #include <iostream>
@@ -12,6 +16,7 @@ int main()
     
     timer.expires_from_now(1000ms);
     timer.async_wait( [] (auto error) {
+        // 關鍵技術：協程非同步 I/O。
         std::cout << "Hello from delayed callback\n";
     } );
     
@@ -28,3 +33,4 @@ int main()
 // Hello from main thread...
 // Hello from delayed callback
 // Program ended with exit code: 0
+#endif

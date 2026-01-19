@@ -1,4 +1,9 @@
+// 高效能關鍵技術示例
+// 章節：Data Structures - 檔案：rrxmrrxmsx_0.cpp
+
 // i made the mistake of looking into what makes an effective hashing function...
+
+#include <cstdint>
 
 #include <string>
 #include <unordered_set>
@@ -17,7 +22,8 @@ bool operator==(const Person &lhs, const Person &rhs)
     return lhs.name_ == rhs.name_ && lhs.age_ == rhs.age_;
 }
 
-std::uint64_t rrxmrrxmsx_0(uint64_t &&v) {
+std::uint64_t rrxmrrxmsx_0(std::uint64_t v) {
+    // 關鍵技術：資料結構配置與快取區域性。
     v ^= std::rotr(v, 25) ^ std::rotr(v, 50);
     v *= 0xA24BAED4963EE407UL;
     v ^= std::rotr(v, 24) ^ std::rotr(v, 49);

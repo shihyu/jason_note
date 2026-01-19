@@ -1,3 +1,6 @@
+// 高效能關鍵技術示例
+// 章節：Data Structures - 檔案：sizeof_benchmark.cpp
+
 #include <array>
 #include <random>
 #include <vector>
@@ -9,6 +12,7 @@ struct SmallObject {
     int score_ = gen();
     
     int gen() {
+        // 關鍵技術：資料結構配置與快取區域性。
         static std::default_random_engine e;
         static std::uniform_int_distribution u(0, 10);
         return u(e);

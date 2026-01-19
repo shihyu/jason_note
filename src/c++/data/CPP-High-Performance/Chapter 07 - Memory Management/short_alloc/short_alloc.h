@@ -1,3 +1,7 @@
+// 高效能關鍵技術示例
+// 關鍵技術：自訂配置器降低記憶體配置成本。
+// 章節：Memory Management - 檔案：short_alloc.h
+
 // a simplified version of Howard Hinnant's `short_alloc`
 
 #ifndef short_alloc_h
@@ -6,6 +10,7 @@
 #include "../Arena/Arena.h"
 
 template <class T, std::size_t N> class short_alloc {
+    // 關鍵技術：自訂配置器降低記憶體配置成本。
     template <class U, std::size_t M> friend class short_alloc;
 public:
     using value_type = T;

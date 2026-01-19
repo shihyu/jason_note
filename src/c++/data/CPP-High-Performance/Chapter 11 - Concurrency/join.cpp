@@ -1,3 +1,6 @@
+// 高效能關鍵技術示例
+// 章節：Concurrency - 檔案：join.cpp
+
 #include <thread>
 #include <iostream>
 
@@ -9,6 +12,7 @@ void print() {
 
 int main()
 {
+    // 關鍵技術：執行緒生命週期管理。
     std::thread t1(print);
     t1.join();
     

@@ -1,9 +1,14 @@
+// 高效能關鍵技術示例
+// 章節：Analysing and Measuring Performance - 檔案：bm_linear_search_with_range.cpp
+
+#if __has_include(<benchmark/benchmark.h>)
 #include <benchmark/benchmark.h>
 // #include <vector>
 // #include <cinttypes>
 #include <numeric>
 
 std::vector<int>::const_iterator linear_search(const std::vector<int> &vals, int key) {
+    // 關鍵技術：基準測試與複雜度比較。
     for (auto it = vals.begin(); it != vals.end(); ++it) {
         if (*it == key) { return it; }
     } return vals.end();
@@ -53,3 +58,4 @@ BENCHMARK_MAIN();
 // bm_linear_search/64        17.9 ns         17.9 ns     38143169
 // bm_linear_search/128       44.3 ns         44.2 ns     15521161
 // bm_linear_search/256       74.8 ns         74.7 ns      8836955
+#endif

@@ -1,3 +1,6 @@
+// 高效能關鍵技術示例
+// 章節：Proxy Objects and Lazy Evaluation - 檔案：concat_proxy.cpp
+
 #include <string>
 #include <iostream>
 
@@ -12,6 +15,7 @@ struct String {
     String() = default;
     
     // change from std::string to const char* to allow it to work with main()
+    // 關鍵技術：std::move 觸發移動語意，降低拷貝成本。
     String(const char *str) : str_(std::move(str)) { }
     
     std::string str_;

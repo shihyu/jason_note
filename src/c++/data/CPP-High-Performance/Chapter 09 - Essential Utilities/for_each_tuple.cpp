@@ -1,3 +1,6 @@
+// 高效能關鍵技術示例
+// 章節：Essential Utilities - 檔案：for_each_tuple.cpp
+
 #include <tuple>
 #include <iostream>
 #include <functional>
@@ -14,6 +17,7 @@ void tuple_at(const Tuple& t, Func f) {
 
 template <typename T, typename F, size_t N = 0>
 void tuple_for_each(const T &t, const F &f) {
+    // 關鍵技術：編譯期計算降低執行期成本。
     constexpr std::size_t sz = std::tuple_size_v<T>;
     if constexpr(N < sz) {
         tuple_at<N>(t, f);

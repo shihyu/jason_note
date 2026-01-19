@@ -1,8 +1,14 @@
+// 高效能關鍵技術示例
+// 章節：Algorithms - 檔案：sar.cpp
+
+#include <algorithm>
+
 #include <vector>
 #include <iostream>
 
 template <typename T>
 void sar(T &t, std::size_t n) {
+    // 關鍵技術：std::rotate 就地旋轉，避免額外配置。
     std::rotate(t.begin(), t.begin() += n, t.end());
 }
 

@@ -1,3 +1,6 @@
+// 高效能關鍵技術示例
+// 章節：Compile-Time Programming - 檔案：generic_mod.cpp
+
 #include <cassert>
 #include <type_traits>
 #include <cmath>
@@ -6,6 +9,7 @@
 template <typename T, typename U>
 auto generic_mod(const T &t, const U &u) -> decltype(t / u) {
     assert(u != 0);
+    // 關鍵技術：編譯期計算降低執行期成本。
     if constexpr (std::is_floating_point_v<decltype(t / u)>) { return std::fmod(t, u); }
     else { return t % u; }
 }

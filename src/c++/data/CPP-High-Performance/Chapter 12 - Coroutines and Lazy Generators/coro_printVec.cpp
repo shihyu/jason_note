@@ -1,5 +1,9 @@
-#include <experimental/coroutine>
+// 高效能關鍵技術示例
+// 章節：Coroutines and Lazy Generators - 檔案：coro_printVec.cpp
+
+#include "chapter_12.h"
 #include <iostream>
+#include <utility>
 
 class Resumable {
     struct Promise;
@@ -20,20 +24,20 @@ public:
     }
     
 private:
-    std::experimental::coroutine_handle<Promise> h_;
+    std::coroutine_handle<Promise> h_;
     
-    explicit Resumable(std::experimental::coroutine_handle<Promise> h) : h_(h) { }
+    explicit Resumable(std::coroutine_handle<Promise> h) : h_(h) { }
     
     struct Promise {
         Resumable get_return_object()
         {
-            using Handle = std::experimental::coroutine_handle<Promise>;
+            using Handle = std::coroutine_handle<Promise>;
             return Resumable(Handle::from_promise(*this));
         }
         
         // using auto to tidy up experimental namespace
-        auto initial_suspend() { return std::experimental::suspend_always(); }
-        auto final_suspend() noexcept { return std::experimental::suspend_always(); }
+        auto initial_suspend() { return std::suspend_always(); }
+        auto final_suspend() noexcept { return std::suspend_always(); }
         
         void return_void() { }
         void unhandled_exception() { std::terminate(); }
@@ -42,7 +46,8 @@ private:
 
 Resumable coroutine() {
     std::cout << "3 ";
-    co_await std::experimental::suspend_always();
+    // 關鍵技術：協程延遲計算/非同步。
+    co_await std::suspend_always();
     std::cout << "5 ";
 }
 

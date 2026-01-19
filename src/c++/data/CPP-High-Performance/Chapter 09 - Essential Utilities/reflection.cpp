@@ -1,9 +1,17 @@
+// 高效能關鍵技術示例
+// 章節：Essential Utilities - 檔案：reflection.cpp
+
+#include <tuple>
+
 #include <iostream>
 
+// 關鍵技術：泛型工具與編譯期走訪。
 class Player {
 public:
     Player(const char* name, int level, int score)
-        : name_(name), level_(level), score_(score) { }
+        : name_(name), level_(level), score_(score) {
+            // 關鍵技術：泛型工具與編譯期走訪。
+        }
     
     auto reflect() const { return std::tie(name_, level_, score_ ); }
     

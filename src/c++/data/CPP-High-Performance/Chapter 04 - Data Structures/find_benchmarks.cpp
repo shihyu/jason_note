@@ -1,10 +1,15 @@
+// 高效能關鍵技術示例
+// 章節：Data Structures - 檔案：find_benchmarks.cpp
+
 #include <set>
 #include <string>
 #include <chrono>
 #include <iostream>
 
+// 關鍵技術：資料結構配置與快取區域性。
 int main()
 {
+    // 關鍵技術：資料結構配置與快取區域性。
     std::multiset<std::string> mset = { "man", "bear", "pig", "woof", "fiddly", "dee" };
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

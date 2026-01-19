@@ -1,3 +1,10 @@
+// 高效能關鍵技術示例
+// 關鍵技術：二分搜尋降低比較次數。
+// 章節：Analysing and Measuring Performance - 檔案：binary_search.cpp
+
+#include <algorithm>
+#include <iterator>
+
 #include <vector>
 #include <iostream>
 
@@ -6,6 +13,7 @@ std::vector<int>::const_iterator binary_search(const std::vector<int> &vals, con
     if (key < vals.front() || key > vals.back()) { return vals.end(); }
     
     auto lo = vals.begin(), hi = vals.end() - 1;
+    // 關鍵技術：透過區間縮減達到 O(log n) 搜尋。
     while (lo <= hi) {
         auto mid = lo;
         std::advance(mid, (hi - lo) / 2);
@@ -22,6 +30,7 @@ std::vector<int>::const_iterator binary_search(const std::vector<int> &vals, con
 // template<class ForwardIt, class T>
 // bool stl_binary_search(ForwardIt first, ForwardIt last, const T& value)
 // {
+// 關鍵技術：二分搜尋降低比較次數。
 //     first = std::lower_bound(first, last, value);
 //     return (!(first == last) and !(value < *first));
 // }

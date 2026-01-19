@@ -1,4 +1,12 @@
-#include "../../Source Code//Chapter12/generator.h"
+// 高效能關鍵技術示例
+// 章節：Coroutines and Lazy Generators - 檔案：variable_bytes.cpp
+
+#include <cstdint>
+#include <iterator>
+#include <string>
+#include <algorithm>
+
+#include "generator.h"
 #include <fstream>
 #include <ranges>
 #include <vector>
@@ -9,6 +17,7 @@ Generator<std::uint8_t> vb_encode_num(int n) {
         std::uint8_t b = static_cast<std::uint8_t>(n % 128);
         n /= 128;
         cont = (!n ? 128 :0);
+        // 關鍵技術：協程延遲計算/非同步。
         co_yield (b + cont);
     }
 }

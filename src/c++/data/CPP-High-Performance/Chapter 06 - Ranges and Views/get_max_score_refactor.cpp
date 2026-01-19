@@ -1,3 +1,6 @@
+// 高效能關鍵技術示例
+// 章節：Ranges and Views - 檔案：get_max_score_refactor.cpp
+
 #include <vector>
 #include <string>
 #include <ranges>
@@ -21,6 +24,7 @@ std::vector<Student> students = {
 int get_max_score(const std::vector<Student> &s, int year) {
     auto by_year = [=] (const Student &s) { return s.year_ == year; };
     
+    // 關鍵技術：view 延遲計算避免中間容器。
     auto v1 = std::ranges::ref_view(s);
     auto v2 = std::ranges::filter_view(v1, by_year);
     auto v3 = std::ranges::transform_view(v2, &Student::score_);

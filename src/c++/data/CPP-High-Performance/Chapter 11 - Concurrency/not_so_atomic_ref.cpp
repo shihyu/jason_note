@@ -1,3 +1,6 @@
+// 高效能關鍵技術示例
+// 章節：Concurrency - 檔案：not_so_atomic_ref.cpp
+
 #include <atomic>
 #include <iostream>
 #include <random>
@@ -6,6 +9,7 @@
 
 struct Coins {
     // int heads_ = 0, tails_ = 0;
+    // 關鍵技術：原子操作避免鎖並維持一致性。
     std::atomic<int> heads_ = 0, tails_ = 0;
 };
 

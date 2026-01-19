@@ -1,8 +1,15 @@
+// 高效能關鍵技術示例
+// 章節：Concurrency - 檔案：wait_overload.cpp
+
+#include <condition_variable>
+#include <chrono>
+
 #include <thread>
 #include <queue>
 #include <mutex>
 #include <iostream>
 
+// 關鍵技術：條件變數避免忙等，提升效率。
 std::condition_variable cv;
 std::queue<int> iq;
 std::mutex mtx;
@@ -13,6 +20,7 @@ void print_ints() {
     while (i != sentinel) {
         
         {
+            // 關鍵技術：鎖保護臨界區，避免資料競爭。
             std::unique_lock<std::mutex> lock(mtx);
             
             cv.wait(lock, [] () { return !iq.empty(); } );
