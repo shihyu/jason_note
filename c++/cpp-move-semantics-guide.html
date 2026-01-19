@@ -188,6 +188,41 @@
 <li><strong>移動語意</strong>：轉移物件的資源（只有一個物件擁有資料）</li>
 <li><strong>右值引用</strong>：<code>std::move</code> 將左值轉換為右值引用，啟用移動語意</li>
 </ul>
+<h3 id="一定要提右值嗎"><a class="header" href="#一定要提右值嗎">一定要提右值嗎？</a></h3>
+<p>是。移動語意是透過「右值引用 + 重載解析」觸發的：<code>std::move</code> 只是把左值轉成右值引用，讓 <code>T&amp;&amp;</code> 的移動建構/賦值被選中；不提右值會讓讀者誤解「move 是魔法」。</p>
+<h3 id="白話說明--示意圖"><a class="header" href="#白話說明--示意圖">白話說明 + 示意圖</a></h3>
+<p>白話：<code>std::move(x)</code> 不會搬東西，它只是舉手說「這個 x 可以被搬走」。真正搬不搬，要看你有沒有寫/使用到 <code>T&amp;&amp;</code> 的移動建構或移動賦值。</p>
+<p>示意圖：</p>
+<pre><code>        lvalue x
+           |
+           | std::move(x)  (只是轉型/表態)
+           v
+        rvalue ref (T&amp;&amp;)
+           |
+           | overload resolution
+           v
+   move ctor / move assign
+</code></pre>
+<p>對照：</p>
+<pre><code>T&amp;   -&gt; copy ctor / copy assign
+T&amp;&amp;  -&gt; move ctor / move assign
+</code></pre>
+<p>小例子：</p>
+<pre><code class="language-cpp">struct X {
+    X() = default;
+    X(const X&amp;) { std::cout &lt;&lt; "copy\n"; }
+    X(X&amp;&amp;) { std::cout &lt;&lt; "move\n"; }
+};
+
+void use(X&amp; )  { X y = X{}; (void)y; }    // 這裡只示意 T&amp; 版本存在
+void use(X&amp;&amp;)  { X y = X{}; (void)y; }    // 這裡只示意 T&amp;&amp; 版本存在
+
+int main() {
+    X a;
+    use(a);            // T&amp; 版本
+    use(std::move(a)); // T&amp;&amp; 版本
+}
+</code></pre>
 <h3 id="移動-vs-複製"><a class="header" href="#移動-vs-複製">移動 vs 複製</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>操作</th><th>複製</th><th>移動</th></tr></thead><tbody>
 <tr><td><strong>資源分配</strong></td><td>新分配記憶體</td><td>轉移現有資源</td></tr>
