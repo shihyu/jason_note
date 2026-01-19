@@ -263,6 +263,7 @@ auto UnorderedMapMEOrderBook::cancel(ClientId client_id, OrderId order_id,
     auto is_cancelable = (client_id < cid_oid_to_order_.size());
     MEOrder* exchange_order = nullptr;
 
+    // ⚡ 分支預測提示：降低誤判成本。
     if (LIKELY(is_cancelable)) {  // 📊 LIKELY：大部分情況 client_id 有效
         // 步驟 2：查找訂單（cid_oid_to_order_[client_id][order_id]）
         auto& co_itr = cid_oid_to_order_[client_id];

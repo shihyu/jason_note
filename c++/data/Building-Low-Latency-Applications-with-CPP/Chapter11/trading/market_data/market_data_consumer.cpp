@@ -13,6 +13,7 @@ MarketDataConsumer::MarketDataConsumer(Common::ClientId client_id,
       iface_(iface), snapshot_ip_(snapshot_ip), snapshot_port_(snapshot_port)
 {
     auto recv_callback = [this](auto socket) {
+        // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
         recvCallback(socket);
     };
 
@@ -212,6 +213,7 @@ auto MarketDataConsumer::recvCallback(McastSocket* socket) noexcept -> void
     const auto is_snapshot = (socket->socket_fd_ ==
                               snapshot_mcast_socket_.socket_fd_);
 
+    // ⚡ 分支預測提示：降低誤判成本。
     if (UNLIKELY(is_snapshot &&
                  !in_recovery_)) { // market update was read from the snapshot market data stream and we are not in recovery, so we dont need it and discard it.
         socket->next_rcv_valid_index_ = 0;
@@ -239,6 +241,7 @@ auto MarketDataConsumer::recvCallback(McastSocket* socket) noexcept -> void
             in_recovery_ = (already_in_recovery ||
                             request->seq_num_ != next_exp_inc_seq_num_);
 
+            // ⚡ 分支預測提示：降低誤判成本。
             if (UNLIKELY(in_recovery_)) {
                 if (UNLIKELY(
                         !already_in_recovery)) { // if we just entered recovery, start the snapshot synchonization process by subscribing to the snapshot multicast stream.

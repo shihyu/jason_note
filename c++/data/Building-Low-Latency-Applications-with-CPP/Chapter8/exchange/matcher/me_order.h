@@ -1,5 +1,9 @@
 #pragma once
 
+// 訂單物件與鏈結結構：intrusive list 避免額外配置。
+// ⚡ 效能關鍵：連續記憶體 + O(1) 插入/移除。
+// ⚠️ 注意：指標生命週期由物件池管理。
+
 #include <array>
 #include <sstream>
 #include "common/types.h"
@@ -32,6 +36,7 @@ struct MEOrder {
           side_(side),
           price_(price), qty_(qty), priority_(priority), prev_order_(prev_order),
           next_order_(next_order) {}
+              // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
 
     auto toString() const -> std::string;
 };

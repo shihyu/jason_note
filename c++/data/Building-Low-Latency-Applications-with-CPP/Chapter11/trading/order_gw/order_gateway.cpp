@@ -1,3 +1,7 @@
+// 訂單閘道實作：管理連線與轉發路徑。
+// ⚡ 效能關鍵：批次送出與零配置封包。
+// ⚠️ 注意：錯誤處理不可阻塞熱路徑。
+
 #include "order_gateway.h"
 
 namespace Trading
@@ -12,6 +16,7 @@ OrderGateway::OrderGateway(ClientId client_id,
       tcp_socket_(logger_)
 {
     tcp_socket_.recv_callback_ = [this](auto socket, auto rx_time) {
+        // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
         recvCallback(socket, rx_time);
     };
 }
@@ -34,6 +39,7 @@ auto OrderGateway::run() noexcept -> void
                         Common::getCurrentTimeStr(&time_str_), client_id_, next_outgoing_seq_num_,
                         client_request->toString());
             START_MEASURE(Trading_TCPSocket_send);
+            // ⚡ Socket 收發：熱路徑避免額外拷貝。
             tcp_socket_.send(&next_outgoing_seq_num_, sizeof(next_outgoing_seq_num_));
             tcp_socket_.send(client_request, sizeof(Exchange::MEClientRequest));
             END_MEASURE(Trading_TCPSocket_send, logger_);

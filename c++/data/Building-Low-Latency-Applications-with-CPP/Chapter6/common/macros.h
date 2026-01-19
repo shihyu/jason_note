@@ -1,3 +1,7 @@
+// 分支預測/斷言巨集：熱路徑微優化。
+// ⚡ 效能關鍵：LIKELY/UNLIKELY 降低誤判成本。
+// ⚠️ 注意：NDEBUG 行為差異。
+
 // ============================================================================
 // 低延遲編程核心巨集 (Low-Latency Core Macros)
 // ============================================================================
@@ -51,6 +55,7 @@
 // ASSERT(index < size, "Index out of bounds");
 inline auto ASSERT(bool cond, const std::string& msg) noexcept
 {
+    // ⚡ 分支預測提示：降低誤判成本。
     if (UNLIKELY(!cond)) {
         std::cerr << "ASSERT : " << msg << std::endl;
 

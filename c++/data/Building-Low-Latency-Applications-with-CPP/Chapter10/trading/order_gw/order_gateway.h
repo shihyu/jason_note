@@ -1,5 +1,9 @@
 #pragma once
 
+// 訂單閘道：策略端與交易所間的低延遲轉送層。
+// ⚡ 效能關鍵：序列號檢測 + 非阻塞收發。
+// ⚠️ 注意：斷線重連與狀態恢復。
+
 #include <functional>
 
 #include "common/thread_utils.h"
@@ -35,6 +39,7 @@ public:
                "Unable to connect to ip:" + ip_ + " port:" + std::to_string(
                    port_) + " on iface:" + iface_ + " error:" + std::string(std::strerror(errno)));
         ASSERT(Common::createAndStartThread(-1, "Trading/OrderGateway", [this]() {
+            // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
             run();
         }) != nullptr, "Failed to start OrderGateway thread.");
     }
@@ -69,6 +74,7 @@ private:
     /// Lock free queue on which we write client responses which we read and processed from the exchange, to be consumed by the trade engine.
     Exchange::ClientResponseLFQueue* incoming_responses_ = nullptr;
 
+    // ⚠️ 注意：volatile 僅防優化，非同步原語。
     volatile bool run_ = false;
 
     std::string time_str_;

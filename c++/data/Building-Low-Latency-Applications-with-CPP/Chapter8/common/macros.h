@@ -149,6 +149,7 @@
 // 僅在條件失敗時執行錯誤處理 (UNLIKELY)
 inline auto ASSERT(bool cond, const std::string& msg) noexcept
 {
+    // ⚡ 分支預測提示：降低誤判成本。
     if (UNLIKELY(!cond)) {
         std::cerr << "ASSERT : " << msg << std::endl;
 

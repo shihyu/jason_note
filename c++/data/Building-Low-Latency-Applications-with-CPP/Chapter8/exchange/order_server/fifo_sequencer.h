@@ -54,6 +54,7 @@ public:
     // ⚡ 時間複雜度: O(N log N), N = pending_size_
     auto sequenceAndPublish()
     {
+        // ⚡ 分支預測提示：降低誤判成本。
         if (UNLIKELY(!pending_size_)) {
             return;
         }

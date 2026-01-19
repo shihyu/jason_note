@@ -113,4 +113,3 @@ private:
     SnapshotSynthesizer* snapshot_synthesizer_ = nullptr;
 };
 }
-}

@@ -1,3 +1,7 @@
+// 訂單管理器介面：狀態機與風控協作。
+// ⚡ 效能關鍵：避免鎖與動態分配。
+// ⚠️ 注意：單執行緒假設。
+
 /**
  * @file order_manager.h
  * @brief 訂單管理器標頭檔 - 管理客戶端訂單生命週期
@@ -280,9 +284,11 @@ public:
 
         case OMOrderState::INVALID:
         case OMOrderState::DEAD: {
+                // ⚡ 分支預測提示：降低誤判成本。
                 if (LIKELY(price != Price_INVALID)) {
                     const auto risk_result = risk_manager_.checkPreTradeRisk(ticker_id, side, qty);
 
+                    // ⚡ 分支預測提示：降低誤判成本。
                     if (LIKELY(risk_result == RiskCheckResult::ALLOWED)) {
                         newOrder(order, ticker_id, price, side, qty);
                     } else

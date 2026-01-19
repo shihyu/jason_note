@@ -1,5 +1,9 @@
 #pragma once
 
+// 客戶回應訊息格式：回報撮合結果與錯誤。
+// ⚡ 效能關鍵：固定大小封包，避免變動長度。
+// ⚠️ 注意：狀態碼與序列號一致性。
+
 #include <sstream>
 
 #include "common/types.h"

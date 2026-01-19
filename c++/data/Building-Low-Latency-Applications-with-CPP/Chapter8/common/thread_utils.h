@@ -85,6 +85,7 @@ inline auto setThreadCore(int core_id) noexcept
     cpu_set_t cpuset;
 
     CPU_ZERO(&cpuset);
+    // ⚡ 綁核：降低遷移與 cache 失效。
     CPU_SET(core_id, &cpuset);
 
     // pthread_setaffinity_np 是 Linux 特有 API (Non-Portable)
@@ -102,6 +103,7 @@ inline auto createAndStartThread(int core_id, const std::string& name, T&& func,
                                  A&& ... args) noexcept
 {
     auto t = new std::thread([&]() {
+        // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
         if (core_id >= 0 && !setThreadCore(core_id)) {
             std::cerr << "Failed to set core affinity for " << name << " " << pthread_self()
                       << " to " << core_id << std::endl;

@@ -48,6 +48,7 @@ public:
         ASSERT(obj_block->is_free_,
                "Expected free ObjectBlock at index:" + std::to_string(next_free_index_));
         T* ret = &(obj_block->object_);
+        // ⚡ Placement new：物件池避免動態分配。
         ret = new (ret) T(args...); // ⚡ Placement New: 在指定記憶體位置呼叫建構子
         obj_block->is_free_ = false;
 
@@ -94,11 +95,13 @@ private:
         while (!store_[next_free_index_].is_free_) {
             ++next_free_index_;
 
+            // ⚡ 分支預測提示：降低誤判成本。
             if (UNLIKELY(next_free_index_ ==
                          store_.size())) { // hardware branch predictor should almost always predict this to be false any ways.
                 next_free_index_ = 0;
             }
 
+            // ⚡ 分支預測提示：降低誤判成本。
             if (UNLIKELY(initial_free_index == next_free_index_)) {
                 ASSERT(initial_free_index != next_free_index_, "Memory Pool out of space.");
             }

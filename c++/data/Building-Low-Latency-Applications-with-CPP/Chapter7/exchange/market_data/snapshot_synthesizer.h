@@ -141,4 +141,3 @@ private:
     MemPool<MEMarketUpdate> order_pool_;
 };
 }
-}

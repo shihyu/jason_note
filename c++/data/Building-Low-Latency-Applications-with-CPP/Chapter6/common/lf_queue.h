@@ -71,6 +71,7 @@ public:
     // @return: 當前元素數量(原子讀取)
     auto size() const noexcept
     {
+        // ⚡ 記憶體序：影響可見性與效能。
         return num_elements_.load();  // 預設使用 memory_order_seq_cst
     }
 

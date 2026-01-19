@@ -1,5 +1,9 @@
 #pragma once
 
+// 特徵引擎：將市場狀態轉為可快速判斷的特徵。
+// ⚡ 效能關鍵：只做常數時間計算與快取。
+// ⚠️ 注意：特徵值需同步更新避免 staleness。
+
 #include "common/macros.h"
 #include "common/logging.h"
 
@@ -22,8 +26,10 @@ public:
     {
         const auto bbo = book->getBBO();
 
+        // ⚡ 分支預測提示：降低誤判成本。
         if (LIKELY(bbo->bid_price_ != Price_INVALID &&
                    bbo->ask_price_ != Price_INVALID)) {
+                       // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
             mkt_price_ = (bbo->bid_price_ * bbo->ask_qty_ + bbo->ask_price_ *
                           bbo->bid_qty_) / static_cast<double>(bbo->bid_qty_ + bbo->ask_qty_);
         }
@@ -40,6 +46,7 @@ public:
     {
         const auto bbo = book->getBBO();
 
+        // ⚡ 分支預測提示：降低誤判成本。
         if (LIKELY(bbo->bid_price_ != Price_INVALID &&
                    bbo->ask_price_ != Price_INVALID)) {
             agg_trade_qty_ratio_ = static_cast<double>(market_update->qty_) /

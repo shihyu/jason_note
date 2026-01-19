@@ -1,6 +1,11 @@
 #pragma once
 
+// 做市商策略介面：被動報價，靠訂單簿更新驅動。
+// ⚡ 效能關鍵：價差/風險計算須保持常數時間。
+// ⚠️ 注意：避免在回調中做阻塞 I/O。
+
 #include "common/macros.h"
+#include "common/perf_utils.h"
 #include "common/logging.h"
 
 #include "order_manager.h"
@@ -31,8 +36,10 @@ public:
         const auto bbo = book->getBBO();
         const auto fair_price = feature_engine_->getMktPrice();
 
+        // ⚡ 分支預測提示：降低誤判成本。
         if (LIKELY(bbo->bid_price_ != Price_INVALID &&
                    bbo->ask_price_ != Price_INVALID && fair_price != Feature_INVALID)) {
+                       // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
             logger_->log("%:% %() % % fair-price:%\n", __FILE__, __LINE__, __FUNCTION__,
                          Common::getCurrentTimeStr(&time_str_),
                          bbo->toString().c_str(), fair_price);

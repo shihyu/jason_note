@@ -250,6 +250,7 @@ auto TradeEngine::onOrderUpdate(const Exchange::MEClientResponse*
                 Common::getCurrentTimeStr(&time_str_),
                 client_response->toString().c_str());
 
+    // ⚡ 分支預測提示：降低誤判成本。
     if (UNLIKELY(client_response->type_ == Exchange::ClientResponseType::FILLED)) {
         START_MEASURE(Trading_PositionKeeper_addFill);
         position_keeper_.addFill(client_response);

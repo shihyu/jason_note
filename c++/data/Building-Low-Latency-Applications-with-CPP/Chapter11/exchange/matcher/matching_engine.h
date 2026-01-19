@@ -1,8 +1,13 @@
 #pragma once
 
+// 撮合引擎事件迴圈：單執行緒處理客戶請求與市場更新。
+// ⚡ 效能關鍵：Lock-Free Queue 直通、避免鎖競爭。
+// ⚠️ 注意：事件處理順序影響公平性與一致性。
+
 #include "common/thread_utils.h"
 #include "common/lf_queue.h"
 #include "common/macros.h"
+#include "common/perf_utils.h"
 
 #include "order_server/client_request.h"
 #include "order_server/client_response.h"
@@ -92,6 +97,7 @@ public:
         while (run_) {
             const auto me_client_request = incoming_requests_->getNextToRead();
 
+            // ⚡ 分支預測提示：降低誤判成本。
             if (LIKELY(me_client_request)) {
                 // 📊 記錄從佇列讀取請求的時間戳
                 TTT_MEASURE(T3_MatchingEngine_LFQueue_read, logger_);
@@ -133,6 +139,7 @@ private:
     ClientResponseLFQueue* outgoing_ogw_responses_ = nullptr;
     MEMarketUpdateLFQueue* outgoing_md_updates_ = nullptr;
 
+    // ⚠️ 注意：volatile 僅防優化，非同步原語。
     volatile bool run_ = false;
 
     std::string time_str_;
