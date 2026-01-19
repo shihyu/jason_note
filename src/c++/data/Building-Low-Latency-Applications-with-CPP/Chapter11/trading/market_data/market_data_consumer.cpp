@@ -13,6 +13,7 @@ MarketDataConsumer::MarketDataConsumer(Common::ClientId client_id,
       iface_(iface), snapshot_ip_(snapshot_ip), snapshot_port_(snapshot_port)
 {
     auto recv_callback = [this](auto socket) {
+        // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
         recvCallback(socket);
     };
 

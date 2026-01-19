@@ -1,5 +1,9 @@
 #pragma once
 
+// 時間工具：奈秒級時間戳，避免高開銷 API。
+// ⚡ 效能關鍵：VDSO/clock_gettime 走捷徑。
+// ⚠️ 注意：時鐘來源一致性。
+
 #include <string>
 #include <chrono>
 #include <ctime>
@@ -75,6 +79,7 @@ constexpr Nanos NANOS_TO_SECS = NANOS_TO_MILLIS * MILLIS_TO_SECS;
 //    - 實作範例：
 //      ```cpp
 //      inline uint64_t rdtsc() {
+    // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
 //          unsigned int lo, hi;
 //          __asm__ __volatile__ ("rdtsc" : "=a" (lo), "=d" (hi));
 //          return ((uint64_t)hi << 32) | lo;

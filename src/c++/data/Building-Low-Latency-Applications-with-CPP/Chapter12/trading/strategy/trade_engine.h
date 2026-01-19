@@ -1,5 +1,9 @@
 #pragma once
 
+// 交易策略主引擎：事件驅動，統一回調入口。
+// ⚡ 效能關鍵：單執行緒處理，避免鎖爭用。
+// ⚠️ 注意：回調順序影響策略一致性。
+
 #include <functional>
 
 #include "common/thread_utils.h"
@@ -41,6 +45,7 @@ public:
     {
         run_ = true;
         ASSERT(Common::createAndStartThread(-1, "Trading/TradeEngine", [this] { run(); })
+            // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
                != nullptr, "Failed to start TradeEngine thread.");
     }
 

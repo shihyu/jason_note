@@ -1,9 +1,14 @@
 #pragma once
 
+// 訂單閘道：策略端與交易所間的低延遲轉送層。
+// ⚡ 效能關鍵：序列號檢測 + 非阻塞收發。
+// ⚠️ 注意：斷線重連與狀態恢復。
+
 #include <functional>
 
 #include "common/thread_utils.h"
 #include "common/macros.h"
+#include "common/perf_utils.h"
 #include "common/tcp_server.h"
 
 #include "exchange/order_server/client_request.h"
@@ -35,6 +40,7 @@ public:
                "Unable to connect to ip:" + ip_ + " port:" + std::to_string(
                    port_) + " on iface:" + iface_ + " error:" + std::string(std::strerror(errno)));
         ASSERT(Common::createAndStartThread(-1, "Trading/OrderGateway", [this]() {
+            // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
             run();
         }) != nullptr, "Failed to start OrderGateway thread.");
     }

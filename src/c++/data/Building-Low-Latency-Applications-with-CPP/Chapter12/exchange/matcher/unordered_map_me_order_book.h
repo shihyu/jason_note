@@ -1,5 +1,9 @@
 #pragma once
 
+// 以 std::unordered_map 實作的訂單簿，用於效能對照。
+// ⚡ 效能關鍵：雜湊查找與鏈結維護的成本比較。
+// ⚠️ 注意：雜湊分配與 rehash 可能造成抖動。
+
 #include <unordered_map>
 
 #include "common/types.h"
@@ -94,6 +98,7 @@ private:
     {
         if (price_orders_at_price_.find(priceToIndex(price)) ==
             price_orders_at_price_.end()) {
+                // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
             return nullptr;
         }
 

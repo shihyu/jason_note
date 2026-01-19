@@ -1,3 +1,7 @@
+// UDP Multicast 收發：行情熱路徑 I/O 實作。
+// ⚡ 效能關鍵：單次 recv/write 合併處理。
+// ⚠️ 注意：回調不可阻塞。
+
 #include "mcast_socket.h"
 
 namespace Common

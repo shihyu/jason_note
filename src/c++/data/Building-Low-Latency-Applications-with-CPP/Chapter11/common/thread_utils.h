@@ -1,5 +1,9 @@
 #pragma once
 
+// 執行緒工具：CPU 親和性與命名降低抖動。
+// ⚡ 效能關鍵：綁核避免遷移造成 cache 失效。
+// ⚠️ 注意：需與 NUMA/隔離策略一致。
+
 #include <iostream>
 #include <atomic>
 #include <thread>
@@ -88,6 +92,7 @@ inline auto setThreadCore(int core_id) noexcept
  * ```cpp
  * // 綁定到核心 2，無參數函式
  * auto thread1 = createAndStartThread(2, "TradeEngine", []() {
+     // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
  *     while (true) { process(); }
  * });
  *

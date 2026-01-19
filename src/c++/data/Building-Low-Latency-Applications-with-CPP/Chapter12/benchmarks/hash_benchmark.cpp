@@ -1,3 +1,7 @@
+// 雜湊查找基準測試：對比不同資料結構延遲。
+// ⚡ 效能關鍵：控制負載因子與記憶體配置。
+// ⚠️ 注意：避免測試中觸發 rehash。
+
 #include "matcher/matching_engine.h"
 #include "matcher/unordered_map_me_order_book.h"
 

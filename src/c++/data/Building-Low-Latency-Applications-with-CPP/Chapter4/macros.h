@@ -76,6 +76,7 @@ inline auto ASSERT(bool cond, const std::string& msg) noexcept
 //
 // 範例:
 //   switch(msg_type) {
+    // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
 //     case NEW_ORDER: ...
 //     case CANCEL: ...
 //     default: FATAL("Unknown message type");

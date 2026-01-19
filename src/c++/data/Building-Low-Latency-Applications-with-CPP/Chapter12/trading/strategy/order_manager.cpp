@@ -1,3 +1,7 @@
+// 訂單管理器：狀態機驅動下單/撤單。
+// ⚡ 效能關鍵：O(1) 狀態轉換。
+// ⚠️ 注意：狀態轉移完整性。
+
 /**
  * @file order_manager.cpp
  * @brief 訂單管理器實作檔案 - 訂單生命週期管理核心邏輯
@@ -62,6 +66,7 @@ auto OrderManager::newOrder(OMOrder* order, TickerId ticker_id, Price price,
 {
     // 1. 建構新訂單請求
     const Exchange::MEClientRequest new_request{Exchange::ClientRequestType::NEW, trade_engine_->clientId(), ticker_id,
+        // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
             next_order_id_, side, price, qty};
 
     // 2. 發送請求到交易引擎

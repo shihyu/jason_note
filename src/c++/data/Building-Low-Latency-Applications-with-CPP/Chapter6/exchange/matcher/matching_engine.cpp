@@ -1,3 +1,7 @@
+// 撮合引擎主循環：讀取請求並驅動訂單簿。
+// ⚡ 效能關鍵：單執行緒避免鎖競爭。
+// ⚠️ 注意：回應/市場更新順序。
+
 #include "matching_engine.h"
 
 namespace Exchange
@@ -141,6 +145,7 @@ auto MatchingEngine::start() -> void
     run_ = true;  // 設置運行旗標
     // 建立並啟動執行緒（執行 run() 方法）
     ASSERT(Common::createAndStartThread(-1, "Exchange/MatchingEngine", [this]() {
+        // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
         run();
     }) != nullptr, "Failed to start MatchingEngine thread.");
 }

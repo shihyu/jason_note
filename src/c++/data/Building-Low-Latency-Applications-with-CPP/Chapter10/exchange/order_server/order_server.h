@@ -1,5 +1,9 @@
 #pragma once
 
+// 訂單伺服器：TCP 收發 + FIFO 排序，維持順序與公平性。
+// ⚡ 效能關鍵：非阻塞 I/O + 批次收發。
+// ⚠️ 注意：序列號跳號/重傳處理。
+
 #include <functional>
 
 #include "common/thread_utils.h"
@@ -39,6 +43,7 @@ public:
             for (auto client_response = outgoing_responses_->getNextToRead();
                  outgoing_responses_->size() &&
                  client_response; client_response = outgoing_responses_->getNextToRead()) {
+                     // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
                 auto& next_outgoing_seq_num =
                     cid_next_outgoing_seq_num_[client_response->client_id_];
                 logger_.log("%:% %() % Processing cid:% seq:% %\n", __FILE__, __LINE__,

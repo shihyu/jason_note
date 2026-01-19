@@ -36,6 +36,7 @@ int main()
         int last_qty[3] = {0, 0, 0}, position = 0;
 
         auto sideToInt = [](Side side) noexcept {
+            // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
             return static_cast<int16_t>(side);
         };
 

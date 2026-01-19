@@ -31,6 +31,7 @@ public:
 
         ASSERT(Common::createAndStartThread(-1,
         "Exchange/MarketDataPublisher", [this]() {
+            // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
             run();
         }) != nullptr, "Failed to start MarketData thread.");
 

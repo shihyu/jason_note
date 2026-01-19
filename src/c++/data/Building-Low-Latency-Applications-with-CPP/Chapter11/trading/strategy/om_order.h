@@ -1,5 +1,9 @@
 #pragma once
 
+// 訂單管理器內部訂單表示。
+// ⚡ 效能關鍵：狀態切換需 O(1)。
+// ⚠️ 注意：狀態機轉換完整性。
+
 #include <array>
 #include <sstream>
 #include "common/types.h"

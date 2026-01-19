@@ -1,9 +1,15 @@
+// 日誌基準測試：隔離 I/O 影響，量測批次吞吐。
+// ⚡ 效能關鍵：固定工作集，避免 cache 污染。
+// ⚠️ 注意：需固定 CPU affinity 以降低抖動。
+
 #include "common/logging.h"
 #include "common/opt_logging.h"
+#include "common/perf_utils.h"
 
 std::string random_string(size_t length)
 {
     auto randchar = []() -> char {
+        // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
         const char charset[] =
         "0123456789"
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

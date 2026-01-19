@@ -1,3 +1,7 @@
+// 策略側訂單簿更新：處理 ADD/MODIFY/CANCEL。
+// ⚡ 效能關鍵：BBO 快速更新、零分配。
+// ⚠️ 注意：增量更新順序不可錯。
+
 /**
  * @file market_order_book.cpp
  * @brief 客戶端市場訂單簿實作檔案 - 本地訂單簿副本維護
@@ -205,6 +209,7 @@ auto MarketOrderBook::onMarketUpdate(const Exchange::MEMarketUpdate*
                 // 遍歷環狀鏈表（circular linked list）
                 for (auto bid = bids_by_price_->next_entry_; bid != bids_by_price_;
                      bid = bid->next_entry_) {
+                         // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
                     orders_at_price_pool_.deallocate(bid);
                 }
 

@@ -1,3 +1,7 @@
+// 撮合訂單簿核心流程：新增/取消/撮合熱路徑。
+// ⚡ 效能關鍵：最優價快速定位與 O(1) 鏈結。
+// ⚠️ 注意：數量/狀態更新順序一致性。
+
 #include "me_order_book.h"
 
 #include "matcher/matching_engine.h"
@@ -578,6 +582,7 @@ auto MEOrderBook::toString(bool detailed,
      */
     auto printer = [&](std::stringstream & ss, MEOrdersAtPrice * itr, Side side,
     Price & last_price, bool sanity_check) {
+        // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
         char buf[4096];  // 輸出緩衝區
         Qty qty = 0;     // 該價格層級的總數量
         size_t num_orders = 0;  // 該價格層級的訂單數

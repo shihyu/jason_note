@@ -1,3 +1,7 @@
+// 交易端主程式：初始化策略、風控與通訊。
+// ⚡ 效能關鍵：啟動即分配、避免動態擴展。
+// ⚠️ 注意：啟動順序與依賴關係。
+
 #include <csignal>
 
 #include "strategy/trade_engine.h"
@@ -44,6 +48,7 @@ int main(int argc, char** argv)
 
     for (int i = 3; i < argc; i += 5, ++next_ticker_id) {
         ticker_cfg.at(next_ticker_id) = {static_cast<Qty>(std::atoi(argv[i])), std::atof(argv[i + 1]),
+            // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
             {
                 static_cast<Qty>(std::atoi(argv[i + 2])),
                 static_cast<Qty>(std::atoi(argv[i + 3])),

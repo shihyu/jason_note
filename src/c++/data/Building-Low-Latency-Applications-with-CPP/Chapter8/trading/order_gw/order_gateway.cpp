@@ -1,3 +1,7 @@
+// 訂單閘道實作：收發與序列號控制。
+// ⚡ 效能關鍵：最小化 syscall。
+// ⚠️ 注意：TCP 粘包處理。
+
 #include "order_gateway.h"
 
 namespace Trading
@@ -23,6 +27,7 @@ OrderGateway::OrderGateway(ClientId client_id,
     // 設置 TCP Socket 接收回調函式
     // 當 TCP 收到資料時，會自動呼叫 recvCallback()
     tcp_socket_.recv_callback_ = [this](auto socket, auto rx_time) {
+        // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
         recvCallback(socket, rx_time);
     };
 }

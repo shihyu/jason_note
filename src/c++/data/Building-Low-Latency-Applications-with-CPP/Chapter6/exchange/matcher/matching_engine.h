@@ -180,4 +180,3 @@ private:
     Logger logger_;         // 日誌記錄器
 };
 }
-}

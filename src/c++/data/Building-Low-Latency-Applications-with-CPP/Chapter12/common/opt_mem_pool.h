@@ -18,7 +18,10 @@ template<typename T>
 class OptMemPool final
 {
 public:
-    // ...
+    // 預先配置固定大小的物件池，避免執行期動態分配
+    explicit OptMemPool(size_t num_elems) : store_(num_elems)
+    {
+    }
 
     /// Allocate a new object of type T, use placement new to initialize the object, mark the block as in-use and return the object.
     template<typename... Args>

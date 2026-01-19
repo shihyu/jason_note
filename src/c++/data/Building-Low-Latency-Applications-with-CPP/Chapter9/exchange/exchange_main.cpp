@@ -1,3 +1,7 @@
+// 交易所主程式：組裝撮合、行情、網路佇列。
+// ⚡ 效能關鍵：固定配置、單執行緒事件迴圈。
+// ⚠️ 注意：啟動/關閉順序需確保佇列安全。
+
 #include <csignal>
 
 #include "matcher/matching_engine.h"

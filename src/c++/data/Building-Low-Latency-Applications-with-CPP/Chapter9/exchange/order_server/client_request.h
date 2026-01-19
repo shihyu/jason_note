@@ -1,5 +1,9 @@
 #pragma once
 
+// 客戶請求訊息格式：固定大小結構便於快取與序列化。
+// ⚡ 效能關鍵：緊湊佈局減少複製與 cache miss。
+// ⚠️ 注意：欄位對齊與大小需與網路協議一致。
+
 #include <sstream>
 
 #include "common/types.h"

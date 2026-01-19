@@ -6,6 +6,7 @@
 #include "common/thread_utils.h"
 #include "common/lf_queue.h"
 #include "common/macros.h"
+#include "common/perf_utils.h"
 #include "common/mcast_socket.h"
 
 #include "exchange/market_data/market_update.h"
@@ -33,6 +34,7 @@ public:
     {
         run_ = true;
         ASSERT(Common::createAndStartThread(-1, "Trading/MarketDataConsumer", [this]() {
+            // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
             run();
         }) != nullptr, "Failed to start MarketData thread.");
     }

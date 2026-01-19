@@ -1,5 +1,9 @@
 #pragma once
 
+// TCP Socket 介面：低延遲收發與緩衝管理。
+// ⚡ 效能關鍵：非阻塞 I/O + 批次收發。
+// ⚠️ 注意：避免在熱路徑做格式化/分配。
+
 #include <functional>
 
 #include "socket_utils.h"
@@ -56,6 +60,7 @@ constexpr size_t TCPBufferSize = 64 * 1024 * 1024;
  * TCPSocket socket(logger);
  * socket.connect("192.168.1.100", "eth0", 8080, false);  // 客戶端模式
  * socket.recv_callback_ = [](auto* s, auto rx_time) {
+     // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
  *     // 處理接收到的資料
  * };
  * while (true) {

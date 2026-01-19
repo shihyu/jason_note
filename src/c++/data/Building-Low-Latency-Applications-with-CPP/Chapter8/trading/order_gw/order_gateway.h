@@ -1,5 +1,9 @@
 #pragma once
 
+// 訂單閘道介面：低延遲轉送層。
+// ⚡ 效能關鍵：序列號校驗與批次收發。
+// ⚠️ 注意：重連狀態恢復。
+
 #include <functional>
 
 #include "common/thread_utils.h"
@@ -88,6 +92,7 @@ public:
 
         // 啟動網路 I/O 執行緒（不綁定特定 CPU 核心，-1 表示讓 OS 調度）
         ASSERT(Common::createAndStartThread(-1, "Trading/OrderGateway", [this]() {
+            // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
             run();
         }) != nullptr, "Failed to start OrderGateway thread.");
     }

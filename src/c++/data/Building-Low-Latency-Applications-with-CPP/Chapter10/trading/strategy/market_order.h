@@ -1,5 +1,9 @@
 #pragma once
 
+// 市場更新中的單筆訂單描述。
+// ⚡ 效能關鍵：緊湊佈局降低快取 miss。
+// ⚠️ 注意：與線上協議格式一致。
+
 #include <array>
 #include <sstream>
 #include "common/types.h"
@@ -27,6 +31,7 @@ struct MarketOrder {
                 Priority priority, MarketOrder* prev_order, MarketOrder* next_order) noexcept
         : order_id_(order_id), side_(side), price_(price), qty_(qty),
           priority_(priority), prev_order_(prev_order), next_order_(next_order) {}
+              // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
 
     auto toString() const -> std::string;
 };

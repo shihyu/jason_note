@@ -1,3 +1,7 @@
+// 交易策略主迴圈：處理交易所回報與市場更新。
+// ⚡ 效能關鍵：佇列直通與分支預測優化。
+// ⚠️ 注意：熱路徑避免格式化與動態配置。
+
 #include "trade_engine.h"
 
 namespace Trading
@@ -24,6 +28,7 @@ TradeEngine::TradeEngine(Common::ClientId client_id,
 
     algoOnOrderBookUpdate_ = [this](auto ticker_id, auto price, auto side,
     auto book) {
+        // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
         defaultAlgoOnOrderBookUpdate(ticker_id, price, side, book);
     };
     algoOnTradeUpdate_ = [this](auto market_update, auto book) {
