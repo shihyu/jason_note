@@ -43,7 +43,7 @@ model_context_window = 200000            # 上下文視窗大小
 model_max_output_tokens = 100000         # 最大輸出 token
 
 # 啟用網路搜尋功能
-web_search = true
+# web_search 是命令列參數，不是 config 選項，已移除
 
 # 完全自動模式 - 跳過所有確認提示
 approval_policy = "never"                # untrusted | on-failure | on-request | never
@@ -51,8 +51,8 @@ approval_policy = "never"                # untrusted | on-failure | on-request |
 # 關閉沙盒限制
 sandbox_mode = "danger-full-access"      # read-only | workspace-write | danger-full-access
 
-# 編輯器整合 (nvim 用戶建議設 none)
-file_opener = "none"                     # vscode | vscode-insiders | cursor | windsurf | none
+# 編輯器整合 (nvim 用戶不需設定，直接註解掉)
+# file_opener = "vscode"                 # vscode | vscode-insiders | cursor | windsurf
 
 # 顯示設定
 hide_agent_reasoning = false             # 顯示 AI 推理過程
@@ -64,9 +64,9 @@ project_root_markers = [".git", ".hg", "Makefile", "package.json", "Cargo.toml",
 # ========================================
 # 功能開關
 # ========================================
-[features]
-shell_snapshot = true                    # 加速重複指令執行
-web_search_request = true                # 允許 AI 主動搜尋網路
+# [features]
+# shell_snapshot = true                  # 加速重複指令執行
+# web_search_request = true              # 允許 AI 主動搜尋網路
 
 # ========================================
 # 全域信任設定
@@ -92,6 +92,7 @@ exclude = ["AWS_SECRET*", "AZURE_*", "GCP_*", "*_TOKEN", "*_KEY", "*_SECRET"]
 # ========================================
 # 配置 Profiles (可選)
 # ========================================
+# 使用方式: codex --profile quick
 [profiles.quick]
 model_reasoning_effort = "low"
 approval_policy = "never"
@@ -263,7 +264,6 @@ codex -p careful "重要的程式修改"
 model_reasoning_effort = "medium"
 approval_policy = "on-failure"
 sandbox_mode = "workspace-write"
-web_search = true
 ```
 
 然後使用：
