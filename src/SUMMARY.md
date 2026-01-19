@@ -607,6 +607,7 @@
     - [Kernel Bypass 技術](hft/03-network/kernel-bypass.md)
     - [網路 I/O 與 FPGA 整合](hft/03-network/network-fpga-guide.md)
     - [DPDK 完整介紹](hft/03-network/dpdk-introduction.md)
+    - [DPDK 網卡完整指南](hft/03-network/dpdk-guide.md)
     - [DPDK 雙埠測試](hft/03-network/dpdk-port-testing.md)
     - [DPDK + QEMU + GDB 調試](hft/03-network/dpdk-qemu-gdb.md)
     - [延遲測試指南](hft/04-testing/latency-testing.md)
