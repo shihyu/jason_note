@@ -85,6 +85,7 @@ inline auto setThreadCore(int core_id) noexcept
     cpu_set_t cpuset;
 
     CPU_ZERO(&cpuset);
+    // ⚡ 綁核：降低遷移與 cache 失效。
     CPU_SET(core_id, &cpuset);
 
     // pthread_setaffinity_np 是 Linux 特有 API (Non-Portable)

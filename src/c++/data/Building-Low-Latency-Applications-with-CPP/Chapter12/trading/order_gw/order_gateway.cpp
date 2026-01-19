@@ -39,6 +39,7 @@ auto OrderGateway::run() noexcept -> void
                         Common::getCurrentTimeStr(&time_str_), client_id_, next_outgoing_seq_num_,
                         client_request->toString());
             START_MEASURE(Trading_TCPSocket_send);
+            // ⚡ Socket 收發：熱路徑避免額外拷貝。
             tcp_socket_.send(&next_outgoing_seq_num_, sizeof(next_outgoing_seq_num_));
             tcp_socket_.send(client_request, sizeof(Exchange::MEClientRequest));
             END_MEASURE(Trading_TCPSocket_send, logger_);

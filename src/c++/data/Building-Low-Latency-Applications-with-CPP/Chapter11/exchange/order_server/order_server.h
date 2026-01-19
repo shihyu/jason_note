@@ -58,8 +58,10 @@ public:
                        "Dont have a TCPSocket for ClientId:" + std::to_string(
                            client_response->client_id_));
                 START_MEASURE(Exchange_TCPSocket_send);
+                // ⚡ Socket 收發：熱路徑避免額外拷貝。
                 cid_tcp_socket_[client_response->client_id_]->send(&next_outgoing_seq_num,
                         sizeof(next_outgoing_seq_num));
+                // ⚡ Socket 收發：熱路徑避免額外拷貝。
                 cid_tcp_socket_[client_response->client_id_]->send(client_response,
                         sizeof(MEClientResponse));
                 END_MEASURE(Exchange_TCPSocket_send, logger_);
@@ -90,6 +92,7 @@ public:
                 logger_.log("%:% %() % Received %\n", __FILE__, __LINE__, __FUNCTION__,
                             Common::getCurrentTimeStr(&time_str_), request->toString());
 
+                // ⚡ 分支預測提示：降低誤判成本。
                 if (UNLIKELY(cid_tcp_socket_[request->me_client_request_.client_id_] ==
                              nullptr)) { // first message from this ClientId.
                     cid_tcp_socket_[request->me_client_request_.client_id_] = socket;
@@ -156,6 +159,7 @@ private:
     /// Lock free queue of outgoing client responses to be sent out to connected clients.
     ClientResponseLFQueue* outgoing_responses_ = nullptr;
 
+    // ⚠️ 注意：volatile 僅防優化，非同步原語。
     volatile bool run_ = false;
 
     std::string time_str_;

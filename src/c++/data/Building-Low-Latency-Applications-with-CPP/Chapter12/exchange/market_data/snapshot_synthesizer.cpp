@@ -137,6 +137,7 @@ auto SnapshotSynthesizer::publishSnapshot()
     const MDPMarketUpdate start_market_update{snapshot_size++, {MarketUpdateType::SNAPSHOT_START, last_inc_seq_num_}};
     logger_.log("%:% %() % %\n", __FILE__, __LINE__, __FUNCTION__,
                 getCurrentTimeStr(&time_str_), start_market_update.toString());
+    // ⚡ Socket 收發：熱路徑避免額外拷貝。
     snapshot_socket_.send(&start_market_update, sizeof(MDPMarketUpdate));
 
     // Publish order information for each order in the limit order book for each instrument.
@@ -151,6 +152,7 @@ auto SnapshotSynthesizer::publishSnapshot()
         const MDPMarketUpdate clear_market_update{snapshot_size++, me_market_update};
         logger_.log("%:% %() % %\n", __FILE__, __LINE__, __FUNCTION__,
                     getCurrentTimeStr(&time_str_), clear_market_update.toString());
+        // ⚡ Socket 收發：熱路徑避免額外拷貝。
         snapshot_socket_.send(&clear_market_update, sizeof(MDPMarketUpdate));
 
         // Publish each order.
@@ -159,6 +161,7 @@ auto SnapshotSynthesizer::publishSnapshot()
                 const MDPMarketUpdate market_update{snapshot_size++, *order};
                 logger_.log("%:% %() % %\n", __FILE__, __LINE__, __FUNCTION__,
                             getCurrentTimeStr(&time_str_), market_update.toString());
+                // ⚡ Socket 收發：熱路徑避免額外拷貝。
                 snapshot_socket_.send(&market_update, sizeof(MDPMarketUpdate));
                 snapshot_socket_.sendAndRecv();
             }
@@ -169,6 +172,7 @@ auto SnapshotSynthesizer::publishSnapshot()
     const MDPMarketUpdate end_market_update{snapshot_size++, {MarketUpdateType::SNAPSHOT_END, last_inc_seq_num_}};
     logger_.log("%:% %() % %\n", __FILE__, __LINE__, __FUNCTION__,
                 getCurrentTimeStr(&time_str_), end_market_update.toString());
+    // ⚡ Socket 收發：熱路徑避免額外拷貝。
     snapshot_socket_.send(&end_market_update, sizeof(MDPMarketUpdate));
     snapshot_socket_.sendAndRecv();
 
@@ -195,6 +199,7 @@ void SnapshotSynthesizer::run()
             snapshot_md_updates_->updateReadIndex();
         }
 
+        // ⚡ 時間戳取得：避免高開銷 API。
         if (getCurrentNanos() - last_snapshot_time_ > 60 * NANOS_TO_SECS) {
             last_snapshot_time_ = getCurrentNanos();
             publishSnapshot();

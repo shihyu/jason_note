@@ -35,6 +35,7 @@ constexpr auto OrderId_INVALID = std::numeric_limits<OrderId>::max();
 
 inline auto orderIdToString(OrderId order_id) -> std::string
 {
+    // ⚡ 分支預測提示：降低誤判成本。
     if (UNLIKELY(order_id == OrderId_INVALID)) {
         return "INVALID";
     }
@@ -50,6 +51,7 @@ constexpr auto TickerId_INVALID = std::numeric_limits<TickerId>::max();
 
 inline auto tickerIdToString(TickerId ticker_id) -> std::string
 {
+    // ⚡ 分支預測提示：降低誤判成本。
     if (UNLIKELY(ticker_id == TickerId_INVALID)) {
         return "INVALID";
     }
@@ -65,6 +67,7 @@ constexpr auto ClientId_INVALID = std::numeric_limits<ClientId>::max();
 
 inline auto clientIdToString(ClientId client_id) -> std::string
 {
+    // ⚡ 分支預測提示：降低誤判成本。
     if (UNLIKELY(client_id == ClientId_INVALID)) {
         return "INVALID";
     }
@@ -82,6 +85,7 @@ constexpr auto Price_INVALID = std::numeric_limits<Price>::max();
 
 inline auto priceToString(Price price) -> std::string
 {
+    // ⚡ 分支預測提示：降低誤判成本。
     if (UNLIKELY(price == Price_INVALID)) {
         return "INVALID";
     }
@@ -97,6 +101,7 @@ constexpr auto Qty_INVALID = std::numeric_limits<Qty>::max();
 
 inline auto qtyToString(Qty qty) -> std::string
 {
+    // ⚡ 分支預測提示：降低誤判成本。
     if (UNLIKELY(qty == Qty_INVALID)) {
         return "INVALID";
     }
@@ -113,6 +118,7 @@ constexpr auto Priority_INVALID = std::numeric_limits<Priority>::max();
 
 inline auto priorityToString(Priority priority) -> std::string
 {
+    // ⚡ 分支預測提示：降低誤判成本。
     if (UNLIKELY(priority == Priority_INVALID)) {
         return "INVALID";
     }

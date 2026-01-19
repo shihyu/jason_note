@@ -40,6 +40,7 @@ public:
     /// Sort pending client requests in ascending receive time order and then write them to the lock free queue for the matching engine to consume from.
     auto sequenceAndPublish()
     {
+        // ⚡ 分支預測提示：降低誤判成本。
         if (UNLIKELY(!pending_size_)) {
             return;
         }

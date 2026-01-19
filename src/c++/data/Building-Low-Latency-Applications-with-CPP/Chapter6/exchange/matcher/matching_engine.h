@@ -136,6 +136,7 @@ public:
             // 從 Lock-Free Queue 讀取下一個客戶請求
             const auto me_client_request = incoming_requests_->getNextToRead();
 
+            // ⚡ 分支預測提示：降低誤判成本。
             if (LIKELY(me_client_request)) {  // ⚡ 分支預測: 假設大部分時間有請求
                 logger_.log("%:% %() % Processing %\n", __FILE__, __LINE__, __FUNCTION__,
                             Common::getCurrentTimeStr(&time_str_),

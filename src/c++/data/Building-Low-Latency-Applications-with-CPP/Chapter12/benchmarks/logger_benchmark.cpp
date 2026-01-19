@@ -30,8 +30,10 @@ size_t benchmarkLogging(T* logger)
 
     for (size_t i = 0; i < loop_count; ++i) {
         const auto s = random_string(128);
+        // ⚡ 週期計數：用於微秒級量測。
         const auto start = Common::rdtsc();
         logger->log("%\n", s);
+        // ⚡ 週期計數：用於微秒級量測。
         total_rdtsc += (Common::rdtsc() - start);
     }
 

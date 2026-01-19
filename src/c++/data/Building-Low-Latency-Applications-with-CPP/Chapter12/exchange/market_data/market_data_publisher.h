@@ -70,6 +70,7 @@ private:
     /// Lock free queue on which we forward the incremental market data updates to send to the snapshot synthesizer.
     MDPMarketUpdateLFQueue snapshot_md_updates_;
 
+    // ⚠️ 注意：volatile 僅防優化，非同步原語。
     volatile bool run_ = false;
 
     std::string time_str_;

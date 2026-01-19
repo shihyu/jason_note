@@ -105,6 +105,7 @@ private:
         const auto best_orders_by_price = (new_orders_at_price->side_ == Side::BUY ?
                                            bids_by_price_ : asks_by_price_);
 
+        // ⚡ 分支預測提示：降低誤判成本。
         if (UNLIKELY(!best_orders_by_price)) {
             (new_orders_at_price->side_ == Side::BUY ? bids_by_price_ : asks_by_price_) =
                 new_orders_at_price;
@@ -172,6 +173,7 @@ private:
                                            asks_by_price_);
         auto orders_at_price = getOrdersAtPrice(price);
 
+        // ⚡ 分支預測提示：降低誤判成本。
         if (UNLIKELY(orders_at_price->next_entry_ ==
                      orders_at_price)) { // empty side of book.
             (side == Side::BUY ? bids_by_price_ : asks_by_price_) = nullptr;

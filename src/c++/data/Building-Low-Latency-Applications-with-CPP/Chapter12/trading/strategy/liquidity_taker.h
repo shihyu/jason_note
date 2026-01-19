@@ -45,6 +45,7 @@ public:
         const auto bbo = book->getBBO();
         const auto agg_qty_ratio = feature_engine_->getAggTradeQtyRatio();
 
+        // ⚡ 分支預測提示：降低誤判成本。
         if (LIKELY(bbo->bid_price_ != Price_INVALID &&
                    bbo->ask_price_ != Price_INVALID && agg_qty_ratio != Feature_INVALID)) {
                        // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。

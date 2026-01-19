@@ -48,6 +48,7 @@ public:
         ASSERT(obj_block->is_free_,
                "Expected free ObjectBlock at index:" + std::to_string(next_free_index_));
         T* ret = &(obj_block->object_);
+        // ⚡ Placement new：物件池避免動態分配。
         ret = new (ret) T(args...); // ⚡ Placement New: 在指定記憶體位置呼叫建構子
         obj_block->is_free_ = false;
 

@@ -69,6 +69,7 @@ private:
     Exchange::ClientRequestLFQueue* outgoing_requests_ = nullptr;
     Exchange::ClientResponseLFQueue* incoming_responses_ = nullptr;
 
+    // ⚠️ 注意：volatile 僅防優化，非同步原語。
     volatile bool run_ = false;
 
     std::string time_str_;

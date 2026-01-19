@@ -38,6 +38,7 @@ private:
     auto addToEpollList(TCPSocket* socket);
 
 public:
+    // ⚡ Epoll I/O：事件驅動降低延遲。
     int epoll_fd_ = -1;
     TCPSocket listener_socket_; // 監聽 Socket (負責 accept 新連線)
 

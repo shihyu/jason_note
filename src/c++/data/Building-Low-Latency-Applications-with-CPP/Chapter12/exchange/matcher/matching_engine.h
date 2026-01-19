@@ -93,6 +93,7 @@ public:
         while (run_) {
             const auto me_client_request = incoming_requests_->getNextToRead();
 
+            // ⚡ 分支預測提示：降低誤判成本。
             if (LIKELY(me_client_request)) {
                 TTT_MEASURE(T3_MatchingEngine_LFQueue_read, logger_);
 
@@ -130,6 +131,7 @@ private:
     ClientResponseLFQueue* outgoing_ogw_responses_ = nullptr;
     MEMarketUpdateLFQueue* outgoing_md_updates_ = nullptr;
 
+    // ⚠️ 注意：volatile 僅防優化，非同步原語。
     volatile bool run_ = false;
 
     std::string time_str_;

@@ -40,6 +40,7 @@ auto McastSocket::sendAndRecv() noexcept -> bool
     // MSG_DONTWAIT: 若無數據可讀，立即返回 -1 (errno=EAGAIN)
     const ssize_t n_rcv = recv(socket_fd_,
                                inbound_data_.data() + next_rcv_valid_index_,
+                               // ⚡ 非阻塞 I/O：避免 syscall 阻塞。
                                McastBufferSize - next_rcv_valid_index_, MSG_DONTWAIT);
 
     if (n_rcv > 0) {

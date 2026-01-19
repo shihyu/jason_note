@@ -329,6 +329,7 @@ public:
     {
         while (*s) {
             if (*s == '%') {
+                // ⚡ 分支預測提示：降低誤判成本。
                 if (UNLIKELY(*(s + 1) == '%')) {  // %% 逃逸序列 -> 單一 %
                     ++s;
                 } else {
@@ -354,6 +355,7 @@ public:
     {
         while (*s) {
             if (*s == '%') {
+                // ⚡ 分支預測提示：降低誤判成本。
                 if (UNLIKELY(*(s + 1) == '%')) {  // %% 逃逸序列
                     ++s;
                 } else {
@@ -388,6 +390,7 @@ private:
     std::ofstream file_;
 
     LFQueue<LogElement> queue_;  // SPSC Lock-Free Queue
+    // ⚡ 原子操作：避免鎖但需注意記憶體序。
     std::atomic<bool> running_ = {true};  // 執行緒停止信號
     std::thread* logger_thread_ = nullptr;  // 日誌刷新執行緒
 };

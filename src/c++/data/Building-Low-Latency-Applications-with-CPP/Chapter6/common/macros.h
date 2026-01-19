@@ -55,6 +55,7 @@
 // ASSERT(index < size, "Index out of bounds");
 inline auto ASSERT(bool cond, const std::string& msg) noexcept
 {
+    // ⚡ 分支預測提示：降低誤判成本。
     if (UNLIKELY(!cond)) {
         std::cerr << "ASSERT : " << msg << std::endl;
 

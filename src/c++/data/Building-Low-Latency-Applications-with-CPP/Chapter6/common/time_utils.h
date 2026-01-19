@@ -52,6 +52,7 @@ constexpr Nanos NANOS_TO_SECS = NANOS_TO_MILLIS * MILLIS_TO_SECS;        // 奈�
 inline auto getCurrentNanos() noexcept
 {
     return std::chrono::duration_cast<std::chrono::nanoseconds>
+           // ⚡ 時間戳取得：避免高開銷 API。
            (std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
@@ -83,6 +84,7 @@ inline auto getCurrentNanos() noexcept
 // - 人類可讀的時間顯示
 inline auto& getCurrentTimeStr(std::string* time_str)
 {
+    // ⚡ 時間戳取得：避免高開銷 API。
     const auto time = std::chrono::system_clock::to_time_t(
                           std::chrono::system_clock::now());
     time_str->assign(ctime(&time));

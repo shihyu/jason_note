@@ -30,6 +30,7 @@ inline auto rdtsc() noexcept
 // 📊 TAG 名稱會被轉化為字串標籤
 #define END_MEASURE(TAG, LOGGER)                                                              \
       do {                                                                                    \
+        // ⚡ 週期計數：用於微秒級量測。
         const auto end = Common::rdtsc();                                                     \
         LOGGER.log("% RDTSC "#TAG" %\n", Common::getCurrentTimeStr(&time_str_), (end - TAG)); \
       } while(false)
@@ -38,6 +39,7 @@ inline auto rdtsc() noexcept
 // 記錄當前的絕對納秒時間戳，用於追蹤封包流轉生命週期
 #define TTT_MEASURE(TAG, LOGGER)                                                              \
       do {                                                                                    \
+        // ⚡ 時間戳取得：避免高開銷 API。
         const auto TAG = Common::getCurrentNanos();                                           \
         LOGGER.log("% TTT "#TAG" %\n", Common::getCurrentTimeStr(&time_str_), TAG);           \
       } while(false)

@@ -181,6 +181,7 @@ public:
     {
         while (*s) {
             if (*s == '%') {
+                // ⚡ 分支預測提示：降低誤判成本。
                 if (UNLIKELY(*(s + 1) == '%')) { // to allow %% -> % escape character.
                     ++s;
                 } else {
@@ -202,6 +203,7 @@ public:
     {
         while (*s) {
             if (*s == '%') {
+                // ⚡ 分支預測提示：降低誤判成本。
                 if (UNLIKELY(*(s + 1) == '%')) { // to allow %% -> % escape character.
                     ++s;
                 } else {
@@ -263,6 +265,7 @@ private:
 
     /// Lock free queue of log elements from main logging thread to background formatting and disk writer thread.
     Common::LFQueue<LogElement> queue_;
+    // ⚡ 原子操作：避免鎖但需注意記憶體序。
     std::atomic<bool> running_ = {true};
 
     /// Background logging thread.

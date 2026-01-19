@@ -220,10 +220,12 @@ inline auto setNonBlocking(int fd) -> bool
 {
     const auto flags = fcntl(fd, F_GETFL, 0);
 
+    // ⚡ 非阻塞 I/O：避免 syscall 阻塞。
     if (flags & O_NONBLOCK) {
         return true;
     }
 
+    // ⚡ 非阻塞 I/O：避免 syscall 阻塞。
     return (fcntl(fd, F_SETFL, flags | O_NONBLOCK) != -1);
 }
 

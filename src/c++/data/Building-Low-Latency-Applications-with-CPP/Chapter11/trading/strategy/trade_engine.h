@@ -97,11 +97,13 @@ public:
 
     auto initLastEventTime()
     {
+        // ⚡ 時間戳取得：避免高開銷 API。
         last_event_time_ = Common::getCurrentNanos();
     }
 
     auto silentSeconds()
     {
+        // ⚡ 時間戳取得：避免高開銷 API。
         return (Common::getCurrentNanos() - last_event_time_) / NANOS_TO_SECS;
     }
 
@@ -137,6 +139,7 @@ private:
     Exchange::MEMarketUpdateLFQueue* incoming_md_updates_ = nullptr;
 
     Nanos last_event_time_ = 0;
+    // ⚠️ 注意：volatile 僅防優化，非同步原語。
     volatile bool run_ = false;
 
     std::string time_str_;

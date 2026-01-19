@@ -37,6 +37,7 @@ public:
 
     auto sequenceAndPublish()
     {
+        // ⚡ 分支預測提示：降低誤判成本。
         if (UNLIKELY(!pending_size_)) {
             return;
         }

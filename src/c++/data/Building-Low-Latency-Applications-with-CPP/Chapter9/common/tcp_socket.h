@@ -64,6 +64,7 @@ constexpr size_t TCPBufferSize = 64 * 1024 * 1024;
  *     // 處理接收到的資料
  * };
  * while (true) {
+ // ⚡ Socket 收發：熱路徑避免額外拷貝。
  *     socket.send(data, len);      // 寫入發送緩衝區
  *     socket.sendAndRecv();        // 實際收發
  * }
@@ -147,6 +148,7 @@ struct TCPSocket {
     auto sendAndRecv() noexcept -> bool;
 
     /**
+     // ⚡ Socket 收發：熱路徑避免額外拷貝。
      * send() - 將資料寫入發送緩衝區
      *
      * @param data 資料指標
@@ -181,6 +183,7 @@ struct TCPSocket {
      * 2. 頻繁呼叫 sendAndRecv() 清空緩衝區：
      *    ```cpp
      *    socket.send(msg1, len1);
+     // ⚡ Socket 收發：熱路徑避免額外拷貝。
      *    socket.send(msg2, len2);
      *    socket.sendAndRecv();  // 清空緩衝區
      *    ```

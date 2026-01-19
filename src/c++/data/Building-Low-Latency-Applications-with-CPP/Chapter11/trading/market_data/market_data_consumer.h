@@ -62,6 +62,7 @@ private:
     /// Lock free queue on which decoded market data updates are pushed to, to be consumed by the trade engine.
     Exchange::MEMarketUpdateLFQueue* incoming_md_updates_ = nullptr;
 
+    // ⚠️ 注意：volatile 僅防優化，非同步原語。
     volatile bool run_ = false;
 
     std::string time_str_;

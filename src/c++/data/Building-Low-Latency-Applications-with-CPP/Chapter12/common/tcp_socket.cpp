@@ -50,6 +50,7 @@ auto TCPSocket::sendAndRecv() noexcept -> bool
                           NANOS_TO_MICROS; // 轉換為奈秒
         }
 
+        // ⚡ 時間戳取得：避免高開銷 API。
         const auto user_time = getCurrentNanos();
 
         logger_.log("%:% %() % read socket:% len:% utime:% ktime:% diff:%\n", __FILE__,
@@ -64,6 +65,7 @@ auto TCPSocket::sendAndRecv() noexcept -> bool
     // 3. 發送數據 (若有)
     if (next_send_valid_index_ > 0) {
         const auto n = ::send(socket_fd_, outbound_data_.data(), next_send_valid_index_,
+                              // ⚡ 非阻塞 I/O：避免 syscall 阻塞。
                               MSG_DONTWAIT | MSG_NOSIGNAL);
         logger_.log("%:% %() % send socket:% len:%\n", __FILE__, __LINE__, __FUNCTION__,
                     Common::getCurrentTimeStr(&time_str_), socket_fd_, n);

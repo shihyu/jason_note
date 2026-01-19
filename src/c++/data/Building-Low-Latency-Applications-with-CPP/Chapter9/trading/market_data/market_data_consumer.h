@@ -57,6 +57,7 @@ private:
     size_t next_exp_inc_seq_num_ = 1;
     Exchange::MEMarketUpdateLFQueue* incoming_md_updates_ = nullptr;
 
+    // ⚠️ 注意：volatile 僅防優化，非同步原語。
     volatile bool run_ = false;
 
     std::string time_str_;

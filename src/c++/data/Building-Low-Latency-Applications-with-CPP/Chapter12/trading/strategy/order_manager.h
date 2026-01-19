@@ -284,9 +284,11 @@ public:
 
         case OMOrderState::INVALID:
         case OMOrderState::DEAD: {
+                // ⚡ 分支預測提示：降低誤判成本。
                 if (LIKELY(price != Price_INVALID)) {
                     const auto risk_result = risk_manager_.checkPreTradeRisk(ticker_id, side, qty);
 
+                    // ⚡ 分支預測提示：降低誤判成本。
                     if (LIKELY(risk_result == RiskCheckResult::ALLOWED)) {
                         newOrder(order, ticker_id, price, side, qty);
                     } else

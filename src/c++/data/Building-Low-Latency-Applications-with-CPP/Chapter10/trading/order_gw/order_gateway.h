@@ -74,6 +74,7 @@ private:
     /// Lock free queue on which we write client responses which we read and processed from the exchange, to be consumed by the trade engine.
     Exchange::ClientResponseLFQueue* incoming_responses_ = nullptr;
 
+    // ⚠️ 注意：volatile 僅防優化，非同步原語。
     volatile bool run_ = false;
 
     std::string time_str_;

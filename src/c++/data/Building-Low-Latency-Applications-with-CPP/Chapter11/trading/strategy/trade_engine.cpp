@@ -111,6 +111,7 @@ auto TradeEngine::run() noexcept -> void
                         client_response->toString().c_str());
             onOrderUpdate(client_response);
             incoming_ogw_responses_->updateReadIndex();
+            // ⚡ 時間戳取得：避免高開銷 API。
             last_event_time_ = Common::getCurrentNanos();
         }
 
@@ -126,6 +127,7 @@ auto TradeEngine::run() noexcept -> void
                    "Unknown ticker-id on update:" + market_update->toString());
             ticker_order_book_[market_update->ticker_id_]->onMarketUpdate(market_update);
             incoming_md_updates_->updateReadIndex();
+            // ⚡ 時間戳取得：避免高開銷 API。
             last_event_time_ = Common::getCurrentNanos();
         }
     }
@@ -186,6 +188,7 @@ auto TradeEngine::onOrderUpdate(const Exchange::MEClientResponse*
                 Common::getCurrentTimeStr(&time_str_),
                 client_response->toString().c_str());
 
+    // ⚡ 分支預測提示：降低誤判成本。
     if (UNLIKELY(client_response->type_ == Exchange::ClientResponseType::FILLED)) {
         // 📊 量測倉位管理器處理成交回報的開銷
         START_MEASURE(Trading_PositionKeeper_addFill);
