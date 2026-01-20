@@ -549,6 +549,7 @@
         - [訂單簿分析](strategy/orderbook.md)
         - [AI主觀交易](strategy/AI_Discretionary_Trading_Workflow.md)
         - [Vic 流 AI 產業分析方法論](strategy/vic_ai_analysis_methodology.md)
+        - [Vic Prompt 指令 20251212](strategy/Prompt指令-VIC-20251212.md)
         - [遺傳演算法](strategy/GA.md)
     - [台指期貨操作實務](strategy/14_台指期貨操作實務.md)
         - [台指期貨](strategy/tw_futures.md)
