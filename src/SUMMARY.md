@@ -41,6 +41,7 @@
         - [Claude Code 效能測試與正確性驗證完整指南](tools/claude-code-performance-testing-guide.md)
         - [Claude Code Skills：常見誤解與補充整理](tools/claude_code_skills_常見誤解與補充整理.md)
         - [Claude Code Skills 完整教學](tools/claude-code-skills.md)
+        - [Agent-Browser - 強大的瀏覽器自動化工具](tools/agent-browser.md)
         - [CCS (Claude Code Switch) 完整指南](tools/ccs_complete_guide.md)
         - [GitHub Spec Kit - SDD 規格驅動開發](tools/github-spec-kit-sdd.md)
         - [Spec-Kit 開發指南](tools/spec-kit-guide.md)
