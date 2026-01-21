@@ -1,0 +1,668 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Agent-Browser - 強大的瀏覽器自動化工具 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="agent-browser---強大的瀏覽器自動化工具"><a class="header" href="#agent-browser---強大的瀏覽器自動化工具">Agent-Browser - 強大的瀏覽器自動化工具</a></h1>
+<h2 id="簡介"><a class="header" href="#簡介">簡介</a></h2>
+<p>Agent-Browser 是由 Vercel Labs 開發的瀏覽器自動化 CLI 工具，專為 AI Agent 設計。相比其他 Browser Use 工具，agent-browser 具有以下優勢：</p>
+<ul>
+<li><strong>超過 200 種瀏覽器操作</strong>：涵蓋你能想到的所有操作</li>
+<li><strong>支援 Headless 模式</strong>：可在遠端 Linux 主機上運行，無需圖形界面</li>
+<li><strong>Token 用量更少</strong>：相比 Playwright MCP，更節省 token</li>
+<li><strong>反應速度快</strong>：不易觸發 Context Window 限制</li>
+<li><strong>不易被網站偵測</strong>：相比 chrome-devtools MCP，更不容易被識別為機器人</li>
+</ul>
+<h2 id="與其他工具比較"><a class="header" href="#與其他工具比較">與其他工具比較</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>工具</th><th>優點</th><th>缺點</th></tr></thead><tbody>
+<tr><td><strong>chrome-devtools MCP</strong></td><td>功能強大</td><td>容易被網站偵測為機器人</td></tr>
+<tr><td><strong>Playwright (內建)</strong></td><td>功能完整</td><td>token 用量多、反應慢、容易爆 Context Window</td></tr>
+<tr><td><strong>agent-browser</strong></td><td>token 少、速度快、不易被偵測、支援 headless</td><td>-</td></tr>
+</tbody></table>
+</div>
+<h2 id="安裝步驟"><a class="header" href="#安裝步驟">安裝步驟</a></h2>
+<h3 id="前置需求"><a class="header" href="#前置需求">前置需求</a></h3>
+<p>確保已安裝 Node.js 和 npm。</p>
+<h3 id="1-安裝-agent-browser-cli"><a class="header" href="#1-安裝-agent-browser-cli">1. 安裝 agent-browser CLI</a></h3>
+<pre><code class="language-bash">npm install -g agent-browser
+</code></pre>
+<h3 id="2-下載-chromium"><a class="header" href="#2-下載-chromium">2. 下載 Chromium</a></h3>
+<pre><code class="language-bash">agent-browser install
+</code></pre>
+<h3 id="3-安裝到-claude-code-skill"><a class="header" href="#3-安裝到-claude-code-skill">3. 安裝到 Claude Code (Skill)</a></h3>
+<pre><code class="language-bash"># 建立 skill 目錄
+mkdir -p ~/.claude/skills/agent-browser
+
+# 下載 SKILL.md 檔案
+curl -o ~/.claude/skills/agent-browser/SKILL.md \
+  https://raw.githubusercontent.com/vercel-labs/agent-browser/main/skills/agent-browser/SKILL.md
+
+# 驗證下載成功（檔案應有 250+ 行，8KB+ 大小）
+wc -l ~/.claude/skills/agent-browser/SKILL.md
+ls -lh ~/.claude/skills/agent-browser/SKILL.md
+</code></pre>
+<h4 id="一鍵安裝與驗證腳本"><a class="header" href="#一鍵安裝與驗證腳本">一鍵安裝與驗證腳本</a></h4>
+<pre><code class="language-bash">#!/bin/bash
+# 安裝 agent-browser skill
+
+SKILL_DIR="$HOME/.claude/skills/agent-browser"
+SKILL_URL="https://raw.githubusercontent.com/vercel-labs/agent-browser/main/skills/agent-browser/SKILL.md"
+
+echo "Creating skill directory..."
+mkdir -p "$SKILL_DIR"
+
+echo "Downloading SKILL.md..."
+curl -o "$SKILL_DIR/SKILL.md" "$SKILL_URL"
+
+# 驗證下載
+if [ -f "$SKILL_DIR/SKILL.md" ]; then
+    lines=$(wc -l &lt; "$SKILL_DIR/SKILL.md")
+    size=$(wc -c &lt; "$SKILL_DIR/SKILL.md")
+
+    if [ "$lines" -gt 200 ] &amp;&amp; [ "$size" -gt 8000 ]; then
+        echo "✅ Installation successful!"
+        echo "   Lines: $lines"
+        echo "   Size: $size bytes"
+    else
+        echo "❌ Downloaded file seems incomplete"
+        echo "   Lines: $lines (expected &gt; 200)"
+        echo "   Size: $size bytes (expected &gt; 8000)"
+        exit 1
+    fi
+else
+    echo "❌ Download failed"
+    exit 1
+fi
+</code></pre>
+<h2 id="核心功能"><a class="header" href="#核心功能">核心功能</a></h2>
+<h3 id="導航控制"><a class="header" href="#導航控制">導航控制</a></h3>
+<ul>
+<li><code>agent-browser open &lt;url&gt;</code> - 開啟網頁</li>
+<li><code>agent-browser back</code> - 返回上一頁</li>
+<li><code>agent-browser forward</code> - 前往下一頁</li>
+<li><code>agent-browser reload</code> - 重新載入頁面</li>
+<li><code>agent-browser close</code> - 關閉瀏覽器</li>
+</ul>
+<h3 id="頁面快照與分析"><a class="header" href="#頁面快照與分析">頁面快照與分析</a></h3>
+<pre><code class="language-bash">agent-browser snapshot            # 完整的可訪問性樹狀結構
+agent-browser snapshot -i         # 僅顯示互動元素（推薦）
+agent-browser snapshot -c         # 精簡輸出
+agent-browser snapshot -d 3       # 限制深度為 3
+agent-browser snapshot -s "#main" # 限定 CSS 選擇器範圍
+</code></pre>
+<h3 id="互動操作使用-ref"><a class="header" href="#互動操作使用-ref">互動操作（使用 @ref）</a></h3>
+<pre><code class="language-bash">agent-browser click @e1           # 點擊
+agent-browser dblclick @e1        # 雙擊
+agent-browser focus @e1           # 聚焦元素
+agent-browser fill @e2 "text"     # 清除並輸入
+agent-browser type @e2 "text"     # 輸入（不清除）
+agent-browser press Enter         # 按鍵
+agent-browser press Control+a     # 組合鍵
+agent-browser hover @e1           # 滑鼠懸停
+agent-browser check @e1           # 勾選核取方塊
+agent-browser uncheck @e1         # 取消勾選
+agent-browser select @e1 "value"  # 選擇下拉選單
+agent-browser scroll down 500     # 滾動頁面
+agent-browser drag @e1 @e2        # 拖放
+agent-browser upload @e1 file.pdf # 上傳檔案
+</code></pre>
+<h3 id="資訊擷取"><a class="header" href="#資訊擷取">資訊擷取</a></h3>
+<pre><code class="language-bash">agent-browser get text @e1        # 取得元素文字
+agent-browser get html @e1        # 取得 innerHTML
+agent-browser get value @e1       # 取得輸入值
+agent-browser get attr @e1 href   # 取得屬性
+agent-browser get title           # 取得頁面標題
+agent-browser get url             # 取得當前 URL
+agent-browser get count ".item"   # 計算符合元素數量
+</code></pre>
+<h3 id="狀態檢查"><a class="header" href="#狀態檢查">狀態檢查</a></h3>
+<pre><code class="language-bash">agent-browser is visible @e1      # 檢查是否可見
+agent-browser is enabled @e1      # 檢查是否啟用
+agent-browser is checked @e1      # 檢查是否勾選
+</code></pre>
+<h3 id="截圖與錄影"><a class="header" href="#截圖與錄影">截圖與錄影</a></h3>
+<pre><code class="language-bash">agent-browser screenshot          # 截圖輸出到 stdout
+agent-browser screenshot path.png # 儲存截圖
+agent-browser screenshot --full   # 完整頁面截圖
+agent-browser pdf output.pdf      # 儲存為 PDF
+
+# 錄影功能
+agent-browser record start ./demo.webm    # 開始錄影
+agent-browser click @e1                   # 執行操作
+agent-browser record stop                 # 停止並儲存
+</code></pre>
+<h3 id="等待機制"><a class="header" href="#等待機制">等待機制</a></h3>
+<pre><code class="language-bash">agent-browser wait @e1                     # 等待元素
+agent-browser wait 2000                    # 等待毫秒
+agent-browser wait --text "Success"        # 等待文字出現
+agent-browser wait --url "**/dashboard"    # 等待 URL 符合
+agent-browser wait --load networkidle      # 等待網路閒置
+agent-browser wait --fn "window.ready"     # 等待 JS 條件
+</code></pre>
+<h3 id="進階功能"><a class="header" href="#進階功能">進階功能</a></h3>
+<h4 id="視窗與裝置設定"><a class="header" href="#視窗與裝置設定">視窗與裝置設定</a></h4>
+<pre><code class="language-bash">agent-browser set viewport 1920 1080      # 設定視窗大小
+agent-browser set device "iPhone 14"      # 模擬裝置
+agent-browser set geo 37.7749 -122.4194   # 設定地理位置
+agent-browser set offline on              # 切換離線模式
+agent-browser set headers '{"X-Key":"v"}' # 設定 HTTP headers
+agent-browser set media dark              # 模擬深色模式
+</code></pre>
+<h4 id="cookies-與儲存"><a class="header" href="#cookies-與儲存">Cookies 與儲存</a></h4>
+<pre><code class="language-bash">agent-browser cookies                     # 取得所有 cookies
+agent-browser cookies set name value      # 設定 cookie
+agent-browser cookies clear               # 清除 cookies
+agent-browser storage local               # 取得 localStorage
+agent-browser storage local set k v       # 設定值
+agent-browser storage local clear         # 清除
+</code></pre>
+<h4 id="多分頁與視窗"><a class="header" href="#多分頁與視窗">多分頁與視窗</a></h4>
+<pre><code class="language-bash">agent-browser tab                 # 列出分頁
+agent-browser tab new [url]       # 新分頁
+agent-browser tab 2               # 切換到分頁 2
+agent-browser tab close           # 關閉分頁
+agent-browser window new          # 新視窗
+</code></pre>
+<h4 id="網路攔截"><a class="header" href="#網路攔截">網路攔截</a></h4>
+<pre><code class="language-bash">agent-browser network route &lt;url&gt;              # 攔截請求
+agent-browser network route &lt;url&gt; --abort      # 封鎖請求
+agent-browser network route &lt;url&gt; --body '{}'  # 模擬回應
+agent-browser network requests                 # 查看請求記錄
+</code></pre>
+<h2 id="使用範例"><a class="header" href="#使用範例">使用範例</a></h2>
+<h3 id="範例-1表單提交"><a class="header" href="#範例-1表單提交">範例 1：表單提交</a></h3>
+<pre><code class="language-bash">agent-browser open https://example.com/form
+agent-browser snapshot -i
+# 輸出顯示: textbox "Email" [ref=e1], textbox "Password" [ref=e2], button "Submit" [ref=e3]
+
+agent-browser fill @e1 "user@example.com"
+agent-browser fill @e2 "password123"
+agent-browser click @e3
+agent-browser wait --load networkidle
+agent-browser snapshot -i  # 檢查結果
+</code></pre>
+<h3 id="範例-2儲存認證狀態"><a class="header" href="#範例-2儲存認證狀態">範例 2：儲存認證狀態</a></h3>
+<pre><code class="language-bash"># 登入一次
+agent-browser open https://app.example.com/login
+agent-browser snapshot -i
+agent-browser fill @e1 "username"
+agent-browser fill @e2 "password"
+agent-browser click @e3
+agent-browser wait --url "**/dashboard"
+agent-browser state save auth.json
+
+# 後續使用：載入已儲存的狀態
+agent-browser state load auth.json
+agent-browser open https://app.example.com/dashboard
+</code></pre>
+<h3 id="範例-3並行瀏覽器session"><a class="header" href="#範例-3並行瀏覽器session">範例 3：並行瀏覽器（Session）</a></h3>
+<pre><code class="language-bash">agent-browser --session test1 open site-a.com
+agent-browser --session test2 open site-b.com
+agent-browser session list
+</code></pre>
+<h3 id="範例-4抓取-hacker-news-頭條新聞"><a class="header" href="#範例-4抓取-hacker-news-頭條新聞">範例 4：抓取 Hacker News 頭條新聞</a></h3>
+<p>這是一個實際使用案例，展示如何快速抓取新聞網站內容。</p>
+<h4 id="用戶提示詞"><a class="header" href="#用戶提示詞">用戶提示詞</a></h4>
+<pre><code>今天 Hacker News 有什麼新聞嘛？使用 agent-browser
+</code></pre>
+<h4 id="claude-code-執行流程"><a class="header" href="#claude-code-執行流程">Claude Code 執行流程</a></h4>
+<pre><code class="language-bash"># 1. 開啟 Hacker News 首頁
+agent-browser open https://news.ycombinator.com
+
+# 2. 獲取頁面互動元素（可選，用於了解頁面結構）
+agent-browser snapshot -i
+
+# 3. 使用 JavaScript 提取新聞標題和連結
+agent-browser eval "Array.from(document.querySelectorAll('.titleline &gt; a')).slice(0, 20).map((a, i) =&gt; \`\${i+1}. \${a.innerText}\\n   URL: \${a.href}\`).join('\\n\\n')"
+
+# 4. 關閉瀏覽器
+agent-browser close
+</code></pre>
+<h4 id="實際輸出結果"><a class="header" href="#實際輸出結果">實際輸出結果</a></h4>
+<pre><code>1. Show HN: ChartGPU – WebGPU-powered charting library (1M points at 60fps)
+   URL: https://github.com/ChartGPU/ChartGPU
+
+2. SmartOS
+   URL: https://docs.smartos.org/
+
+3. PicoPCMCIA – a PCMCIA development board for retro-computing enthusiasts
+   URL: https://www.yyzkevin.com/picopcmcia/
+
+4. Nested Code Fences in Markdown
+   URL: https://susam.net/nested-code-fences.html
+
+5. JPEG XL Demo Page
+   URL: https://tildeweb.nl/~michiel/jxl/
+
+... (更多新聞)
+
+20. SETI@home is in hiberation
+    URL: https://setiathome.berkeley.edu/
+</code></pre>
+<h4 id="進階版提取更多資訊"><a class="header" href="#進階版提取更多資訊">進階版：提取更多資訊</a></h4>
+<pre><code class="language-bash"># 同時提取標題、連結、評論數和發佈時間
+agent-browser eval "
+Array.from(document.querySelectorAll('.athing')).slice(0, 10).map((row, i) =&gt; {
+  const title = row.querySelector('.titleline &gt; a');
+  const subtext = row.nextElementSibling?.querySelector('.subtext');
+  const points = subtext?.querySelector('.score')?.innerText || 'N/A';
+  const comments = subtext?.querySelector('a[href*=\"item?id=\"]:last-child')?.innerText || '0 comments';
+  const time = subtext?.querySelector('.age')?.innerText || 'N/A';
+
+  return \`\${i+1}. \${title.innerText}
+   URL: \${title.href}
+   Points: \${points} | Comments: \${comments} | Posted: \${time}
+   ---\`;
+}).join('\\n\\n')
+"
+</code></pre>
+<h4 id="優勢展示"><a class="header" href="#優勢展示">優勢展示</a></h4>
+<p>使用 agent-browser 相比傳統方法的優勢：</p>
+<ul>
+<li>✅ <strong>處理動態內容</strong>：可執行 JavaScript 獲取動態載入的內容</li>
+<li>✅ <strong>Token 經濟</strong>：只提取需要的資訊，不抓取整個 HTML</li>
+<li>✅ <strong>快速開發</strong>：不需要寫爬蟲腳本，直接用 eval 即可</li>
+<li>✅ <strong>可視化除錯</strong>：使用 <code>--headed</code> 模式可看到瀏覽器操作過程</li>
+</ul>
+<h2 id="在-claude-code-中使用"><a class="header" href="#在-claude-code-中使用">在 Claude Code 中使用</a></h2>
+<p>安裝 skill 後，直接在對話中使用自然語言提示詞，Claude Code 會自動調用 agent-browser。</p>
+<h3 id="推薦提示詞範例"><a class="header" href="#推薦提示詞範例">推薦提示詞範例</a></h3>
+<h4 id="1-新聞與資訊抓取"><a class="header" href="#1-新聞與資訊抓取">1. 新聞與資訊抓取</a></h4>
+<pre><code>今天 Hacker News 有什麼新聞嘛？使用 agent-browser
+</code></pre>
+<pre><code>幫我抓取 Reddit r/programming 首頁的熱門文章，使用 agent-browser
+</code></pre>
+<pre><code>用 agent-browser 查看 GitHub Trending 今天有哪些熱門專案
+</code></pre>
+<h4 id="2-網站測試與截圖"><a class="header" href="#2-網站測試與截圖">2. 網站測試與截圖</a></h4>
+<pre><code>使用 agent-browser 開啟 https://example.com 並截圖首頁
+</code></pre>
+<pre><code>幫我測試 https://myapp.com/login 的登入流程，使用 agent-browser
+</code></pre>
+<pre><code>用 agent-browser 檢查我的網站在手機版和電腦版的顯示效果
+</code></pre>
+<h4 id="3-表單填寫與自動化"><a class="header" href="#3-表單填寫與自動化">3. 表單填寫與自動化</a></h4>
+<pre><code>使用 agent-browser 自動填寫這個表單：https://example.com/form
+</code></pre>
+<pre><code>幫我用 agent-browser 測試購物車結帳流程
+</code></pre>
+<h4 id="4-資料擷取與監控"><a class="header" href="#4-資料擷取與監控">4. 資料擷取與監控</a></h4>
+<pre><code>用 agent-browser 幫我監控這個頁面的價格變化
+</code></pre>
+<pre><code>使用 agent-browser 提取這個網站的所有產品連結
+</code></pre>
+<h3 id="明確呼叫-skill"><a class="header" href="#明確呼叫-skill">明確呼叫 Skill</a></h3>
+<p>也可以使用 slash command 明確呼叫：</p>
+<pre><code>/agent-browser 請幫我測試登入流程
+</code></pre>
+<h3 id="自動化流程"><a class="header" href="#自動化流程">自動化流程</a></h3>
+<p>Claude Code 會自動：</p>
+<ol>
+<li>辨識你需要使用 agent-browser</li>
+<li>規劃執行步驟（open → snapshot → interact → extract）</li>
+<li>執行指令並回報結果</li>
+<li>自動關閉瀏覽器（clean up）</li>
+</ol>
+<p>無需手動編寫腳本，只需用自然語言描述任務即可！</p>
+<h2 id="除錯功能"><a class="header" href="#除錯功能">除錯功能</a></h2>
+<pre><code class="language-bash">agent-browser open example.com --headed              # 顯示瀏覽器視窗
+agent-browser console                                # 查看控制台訊息
+agent-browser console --clear                        # 清除控制台
+agent-browser errors                                 # 查看頁面錯誤
+agent-browser errors --clear                         # 清除錯誤
+agent-browser highlight @e1                          # 高亮元素
+agent-browser trace start                            # 開始記錄追蹤
+agent-browser trace stop trace.zip                   # 停止並儲存追蹤
+</code></pre>
+<h2 id="json-輸出供程式解析"><a class="header" href="#json-輸出供程式解析">JSON 輸出（供程式解析）</a></h2>
+<p>加上 <code>--json</code> 參數可獲得機器可讀的輸出：</p>
+<pre><code class="language-bash">agent-browser snapshot -i --json
+agent-browser get text @e1 --json
+</code></pre>
+<h2 id="特色功能"><a class="header" href="#特色功能">特色功能</a></h2>
+<h3 id="headless-模式的優勢"><a class="header" href="#headless-模式的優勢">Headless 模式的優勢</a></h3>
+<p>在遠端 Linux 伺服器上，即使沒有圖形界面，agent-browser 仍可完美運作：</p>
+<pre><code class="language-bash"># 在遠端主機上執行（無需 X11 或 Wayland）
+ssh user@remote-server
+agent-browser open https://example.com
+agent-browser screenshot output.png
+</code></pre>
+<h3 id="語義化定位器semantic-locators"><a class="header" href="#語義化定位器semantic-locators">語義化定位器（Semantic Locators）</a></h3>
+<p>除了使用 <code>@ref</code>，也可以使用語義化的方式定位元素：</p>
+<pre><code class="language-bash">agent-browser find role button click --name "Submit"
+agent-browser find text "Sign In" click
+agent-browser find label "Email" fill "user@test.com"
+agent-browser find first ".item" click
+agent-browser find nth 2 "a" text
+</code></pre>
+<h2 id="常見使用情境"><a class="header" href="#常見使用情境">常見使用情境</a></h2>
+<ol>
+<li><strong>網頁測試</strong>：自動化測試流程，包含登入、表單填寫、頁面導航</li>
+<li><strong>資料擷取</strong>：從動態網站擷取資料（比 curl/wget 更強大）</li>
+<li><strong>截圖與錄影</strong>：自動生成網站截圖或操作示範影片</li>
+<li><strong>表單自動填寫</strong>：批次處理表單提交</li>
+<li><strong>破解 Captcha</strong>：AI Agent 可透過視覺理解來處理驗證碼</li>
+</ol>
+<h2 id="完整示範案例從提示詞到結果"><a class="header" href="#完整示範案例從提示詞到結果">完整示範案例：從提示詞到結果</a></h2>
+<h3 id="場景抓取-hacker-news-最新新聞"><a class="header" href="#場景抓取-hacker-news-最新新聞">場景：抓取 Hacker News 最新新聞</a></h3>
+<h4 id="步驟-1使用者輸入提示詞"><a class="header" href="#步驟-1使用者輸入提示詞">步驟 1：使用者輸入提示詞</a></h4>
+<pre><code>今天 Hacker News 有什麼新聞嘛？使用 agent-browser
+</code></pre>
+<h4 id="步驟-2claude-code-自動執行"><a class="header" href="#步驟-2claude-code-自動執行">步驟 2：Claude Code 自動執行</a></h4>
+<p>Claude Code 會自動規劃並執行以下步驟：</p>
+<pre><code class="language-bash"># 1. 開啟網頁
+agent-browser open https://news.ycombinator.com
+# ✓ Hacker News
+#   https://news.ycombinator.com/
+
+# 2. 分析頁面結構（內部執行）
+agent-browser snapshot -i
+
+# 3. 提取新聞資料
+agent-browser eval "Array.from(document.querySelectorAll('.titleline &gt; a')).slice(0, 20).map((a, i) =&gt; \`\${i+1}. \${a.innerText}\\n   URL: \${a.href}\`).join('\\n\\n')"
+
+# 4. 清理
+agent-browser close
+# ✓ Browser closed
+</code></pre>
+<h4 id="步驟-3claude-code-整理輸出"><a class="header" href="#步驟-3claude-code-整理輸出">步驟 3：Claude Code 整理輸出</a></h4>
+<pre><code class="language-markdown">## 今天 Hacker News 的熱門新聞
+
+以下是今天（2026-01-22）Hacker News 首頁的前 20 條熱門新聞：
+
+### 技術項目類
+
+1. **Show HN: ChartGPU – WebGPU-powered charting library (1M points at 60fps)**
+   https://github.com/ChartGPU/ChartGPU
+
+2. **SmartOS**
+   https://docs.smartos.org/
+
+3. **PicoPCMCIA – a PCMCIA development board for retro-computing enthusiasts**
+   https://www.yyzkevin.com/picopcmcia/
+
+### 開源與開發工具
+
+4. **Anthropic's original take home assignment open sourced**
+   https://github.com/anthropics/original_performance_takehome
+
+5. **Skip Is Now Free and Open Source**
+   https://skip.dev/blog/skip-is-free/
+
+... (更多分類新聞)
+</code></pre>
+<h3 id="整個流程的特點"><a class="header" href="#整個流程的特點">整個流程的特點</a></h3>
+<ol>
+<li><strong>零配置</strong>：不需要寫程式碼，自然語言即可</li>
+<li><strong>智能規劃</strong>：Claude 自動選擇最佳的指令組合</li>
+<li><strong>結構化輸出</strong>：自動整理成易讀的格式</li>
+<li><strong>自動清理</strong>：執行完畢自動關閉瀏覽器</li>
+<li><strong>快速高效</strong>：整個流程通常在 5-10 秒內完成</li>
+</ol>
+<h3 id="token-使用量比較"><a class="header" href="#token-使用量比較">Token 使用量比較</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>方法</th><th>Token 用量</th><th>執行時間</th></tr></thead><tbody>
+<tr><td><strong>agent-browser</strong></td><td>~3,000 tokens</td><td>5-8 秒</td></tr>
+<tr><td>Playwright MCP</td><td>~8,000 tokens</td><td>15-20 秒</td></tr>
+<tr><td>直接 WebFetch HTML</td><td>~15,000 tokens</td><td>10-15 秒</td></tr>
+</tbody></table>
+</div>
+<p><strong>結論</strong>：agent-browser 在速度和 token 經濟性上都有顯著優勢。</p>
+<h2 id="優勢總結"><a class="header" href="#優勢總結">優勢總結</a></h2>
+<p>✅ <strong>Token 經濟</strong>：相比 Playwright MCP，大幅減少 token 使用量
+✅ <strong>速度快</strong>：反應迅速，不會卡頓
+✅ <strong>不易觸發限制</strong>：降低 Context Window 爆滿的風險
+✅ <strong>Headless 友善</strong>：完美支援無圖形界面的環境
+✅ <strong>難以偵測</strong>：不易被網站識別為機器人
+✅ <strong>功能完整</strong>：超過 200 種操作，幾乎涵蓋所有需求
+✅ <strong>自然語言友善</strong>：用說的就能完成複雜的瀏覽器操作</p>
+<h2 id="參考資源"><a class="header" href="#參考資源">參考資源</a></h2>
+<ul>
+<li><strong>GitHub 儲存庫</strong>: <a href="https://github.com/vercel-labs/agent-browser">vercel-labs/agent-browser</a></li>
+<li><strong>SKILL.md 檔案</strong>: <a href="https://github.com/vercel-labs/agent-browser/blob/main/skills/agent-browser/SKILL.md">SKILL.md</a></li>
+<li><strong>安裝指令</strong>:
+<pre><code class="language-bash">curl -o ~/.claude/skills/agent-browser/SKILL.md \
+  https://raw.githubusercontent.com/vercel-labs/agent-browser/main/skills/agent-browser/SKILL.md
+</code></pre>
+</li>
+</ul>
+<h2 id="結論"><a class="header" href="#結論">結論</a></h2>
+<p>Agent-Browser 目前已成為 Claude Code 瀏覽器操作的首選工具。無論是日常的網頁測試、資料擷取，還是複雜的自動化流程，agent-browser 都能以更低的 token 成本、更快的速度、更穩定的表現來完成任務。</p>
+<p>強烈推薦所有 Claude Code 使用者安裝並體驗這個工具！</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tools/claude-code-skills.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../tools/ccs_complete_guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tools/claude-code-skills.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../tools/ccs_complete_guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
