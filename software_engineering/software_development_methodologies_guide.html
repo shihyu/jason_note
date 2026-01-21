@@ -187,6 +187,7 @@
 <ol>
 <li><a href="#%E6%96%B9%E6%B3%95%E8%AB%96%E7%B8%BD%E8%A6%BD">方法論總覽</a></li>
 <li><a href="#%E7%99%BD%E8%A9%B1%E7%89%88%E5%BF%AB%E9%80%9F%E7%90%86%E8%A7%A3">白話版快速理解</a></li>
+<li><a href="#sdd-%E8%88%87-bdd-%E7%9A%84%E5%85%88%E5%BE%8C%E9%A0%86%E5%BA%8F%E8%88%87%E5%8D%94%E4%BD%9C%E9%97%9C%E4%BF%82">SDD 與 BDD 的先後順序與協作關係</a></li>
 <li><a href="#ai-agent-%E5%AF%A6%E6%88%B0%E6%87%89%E7%94%A8">AI Agent 實戰應用</a></li>
 <li><a href="#%E5%AE%8C%E6%95%B4%E9%96%8B%E7%99%BC%E6%B5%81%E7%A8%8B">完整開發流程</a></li>
 <li><a href="#%E5%AF%A6%E6%88%B0%E5%BB%BA%E8%AD%B0%E8%88%87%E5%B8%B8%E8%A6%8B%E8%AA%A4%E5%8D%80">實戰建議與常見誤區</a></li>
@@ -225,6 +226,621 @@
 <li><strong>DDD</strong>：解決「複雜業務邏輯」的管理問題</li>
 <li><strong>DataDD</strong>：解決「持續優化」的問題</li>
 </ul>
+<hr />
+<h2 id="sdd-與-bdd-的先後順序與協作關係-"><a class="header" href="#sdd-與-bdd-的先後順序與協作關係-">SDD 與 BDD 的先後順序與協作關係 🔄</a></h2>
+<h3 id="核心問題要先寫-sdd-還是-bdd"><a class="header" href="#核心問題要先寫-sdd-還是-bdd">核心問題：要先寫 SDD 還是 BDD？</a></h3>
+<p><strong>答案</strong>：理想上<strong>先 BDD 後 SDD</strong>，但實務上會<strong>並行迭代</strong>！</p>
+<hr />
+<h3 id="理想的執行順序"><a class="header" href="#理想的執行順序">理想的執行順序</a></h3>
+<pre><code>階段 1: BDD (行為定義) → 階段 2: SDD (技術設計) → 階段 3: BDD (場景細化)
+         ↓                        ↓                        ↓
+    「要做什麼」                「怎麼做」              「驗證細節」
+</code></pre>
+<hr />
+<h3 id="為什麼是這個順序"><a class="header" href="#為什麼是這個順序">為什麼是這個順序？</a></h3>
+<h4 id="階段-1先寫-bdd高層次場景"><a class="header" href="#階段-1先寫-bdd高層次場景">階段 1：先寫 BDD（高層次場景）</a></h4>
+<p><strong>目的</strong>：確認「做對的事」</p>
+<pre><code class="language-gherkin">Feature: 用戶登入系統
+
+  Scenario: 成功登入
+    Given 用戶輸入正確的帳號密碼
+    When 點擊登入按鈕
+    Then 應該看到個人首頁
+</code></pre>
+<p><strong>此時重點</strong>：</p>
+<ul>
+<li>✅ 業務需求是什麼</li>
+<li>✅ 用戶期望什麼行為</li>
+<li>✅ 驗收標準是什麼</li>
+<li>❌ 還不考慮技術細節</li>
+</ul>
+<p><strong>產出物</strong>：</p>
+<ul>
+<li>BDD 場景檔案（.feature）</li>
+<li>用戶故事（User Story）</li>
+<li>驗收標準清單</li>
+</ul>
+<hr />
+<h4 id="階段-2再寫-sdd技術設計"><a class="header" href="#階段-2再寫-sdd技術設計">階段 2：再寫 SDD（技術設計）</a></h4>
+<p><strong>目的</strong>：根據 BDD 場景，設計技術方案</p>
+<pre><code class="language-markdown">## SDD - 登入功能技術設計
+
+### API 設計
+- POST /api/v1/auth/login
+- Request: { "username": "string", "password": "string" }
+- Response: { "token": "jwt_token", "user": {...} }
+
+### 資料庫設計
+- Table: users
+- Columns: id, username, password_hash, created_at
+
+### 技術選型
+- 密碼加密: bcrypt
+- Token: JWT (過期時間 24 小時)
+- Session 儲存: Redis
+
+### 流程圖
+[用戶] → [API Gateway] → [Auth Service] → [Database]
+                ↓
+            [Redis Cache]
+</code></pre>
+<p><strong>此時重點</strong>：</p>
+<ul>
+<li>✅ 用什麼技術實作</li>
+<li>✅ API 格式怎麼設計</li>
+<li>✅ 資料結構如何規劃</li>
+<li>✅ 效能與安全性考量</li>
+</ul>
+<p><strong>產出物</strong>：</p>
+<ul>
+<li>技術設計文件（SDD.md）</li>
+<li>API 規格（OpenAPI/Swagger）</li>
+<li>架構圖（系統、部署、流程圖）</li>
+<li>資料庫 Schema</li>
+</ul>
+<hr />
+<h4 id="階段-3回來細化-bdd技術細節場景"><a class="header" href="#階段-3回來細化-bdd技術細節場景">階段 3：回來細化 BDD（技術細節場景）</a></h4>
+<p><strong>目的</strong>：補充技術層面的測試場景</p>
+<pre><code class="language-gherkin">Feature: 登入 API 技術驗證
+
+  Scenario: JWT Token 格式驗證
+    Given 用戶成功登入
+    When 系統回傳 Token
+    Then Token 應該符合 JWT 標準
+    And Token 包含 user_id 和 exp 欄位
+    And Token 過期時間為 24 小時後
+    
+  Scenario: 密碼錯誤次數限制
+    Given 用戶連續輸入錯誤密碼 5 次
+    When 第 5 次登入失敗
+    Then 帳號應該被鎖定 15 分鐘
+    And 系統記錄安全事件到日誌
+    And 發送警告郵件給用戶
+    
+  Scenario: Session 過期處理
+    Given 用戶的 Token 已過期
+    When 用戶嘗試存取需要認證的資源
+    Then 系統返回 401 Unauthorized
+    And 提示「請重新登入」
+</code></pre>
+<p><strong>產出物</strong>：</p>
+<ul>
+<li>完整的 BDD 場景檔案</li>
+<li>邊界條件測試</li>
+<li>異常處理場景</li>
+<li>效能測試場景</li>
+</ul>
+<hr />
+<h3 id="實務上的互動關係"><a class="header" href="#實務上的互動關係">實務上的互動關係</a></h3>
+<h4 id="迭代循環agile-開發"><a class="header" href="#迭代循環agile-開發">迭代循環（Agile 開發）</a></h4>
+<pre><code>Sprint Planning
+    ↓
+[1] 產品經理寫 BDD 高層場景
+    「用戶要能登入系統」
+    ↓
+[2] 架構師看 BDD → 寫 SDD 技術設計
+    「決定用 JWT、bcrypt、Redis」
+    ↓
+[3] 開發者看 SDD → 補充 BDD 技術場景
+    「Token 格式、過期處理、錯誤次數」
+    ↓
+[4] 三方討論調整 → BDD &amp; SDD 都更新
+    「發現 Redis 成本高，改用 In-Memory Cache」
+    ↓
+[5] 開始 TDD 開發
+    「紅-綠-重構循環」
+</code></pre>
+<hr />
+<h3 id="三種常見的執行模式"><a class="header" href="#三種常見的執行模式">三種常見的執行模式</a></h3>
+<h4 id="模式-a瀑布式-不推薦"><a class="header" href="#模式-a瀑布式-不推薦">模式 A：瀑布式（❌ 不推薦）</a></h4>
+<pre><code>BDD (100% 完成) → SDD (100% 完成) → 開發
+</code></pre>
+<p><strong>問題</strong>：</p>
+<ul>
+<li>❌ 發現技術限制時，BDD 已經定死</li>
+<li>❌ 缺乏彈性，無法應對變化</li>
+<li>❌ 返工成本高</li>
+</ul>
+<p><strong>適用場景</strong>：</p>
+<ul>
+<li>需求非常明確且不會變的專案（罕見）</li>
+<li>政府標案等嚴格規範的專案</li>
+</ul>
+<hr />
+<h4 id="模式-b並行式-強烈推薦"><a class="header" href="#模式-b並行式-強烈推薦">模式 B：並行式（✅ 強烈推薦）</a></h4>
+<pre><code>BDD (核心場景 60%) ⟷ SDD (架構設計 60%)
+         ↓                    ↓
+   補充細節 (30%)  ⟷    技術細化 (30%)
+         ↓                    ↓
+   邊界案例 (10%)  ⟷    效能優化 (10%)
+</code></pre>
+<p><strong>優點</strong>：</p>
+<ul>
+<li>✅ 靈活調整，及早發現問題</li>
+<li>✅ 團隊協作順暢</li>
+<li>✅ 降低返工風險</li>
+<li>✅ 符合敏捷精神</li>
+</ul>
+<p><strong>執行方式</strong>：</p>
+<ol>
+<li><strong>Week 1</strong>：BDD 寫主要場景，SDD 畫大架構</li>
+<li><strong>Week 2</strong>：BDD 加細節，SDD 補技術規格</li>
+<li><strong>Week 3+</strong>：邊開發邊調整兩份文件</li>
+</ol>
+<p><strong>適用場景</strong>：</p>
+<ul>
+<li>✅ 大部分的軟體專案</li>
+<li>✅ 需求會持續調整的專案</li>
+<li>✅ 團隊規模 3 人以上</li>
+</ul>
+<hr />
+<h4 id="模式-c技術驅動-特殊情況"><a class="header" href="#模式-c技術驅動-特殊情況">模式 C：技術驅動（⚠️ 特殊情況）</a></h4>
+<pre><code>SDD (技術可行性驗證) → BDD (根據技術限制調整場景)
+</code></pre>
+<p><strong>適用場景</strong>：</p>
+<ul>
+<li>🔬 技術 POC 專案</li>
+<li>🧪 新技術導入評估</li>
+<li>⚡ 效能要求極高的系統</li>
+<li>🏭 硬體限制明確的專案</li>
+</ul>
+<p><strong>範例</strong>：</p>
+<blockquote>
+<p>「我們要做即時語音翻譯，但發現現有技術延遲 &gt; 3 秒，<br />
+所以 BDD 場景要調整為『接受 3 秒延遲』而非『即時』」</p>
+</blockquote>
+<p><strong>執行方式</strong>：</p>
+<ol>
+<li>先做技術 POC 驗證可行性</li>
+<li>根據技術限制定義 BDD 場景</li>
+<li>確保 BDD 的期望在技術可達範圍內</li>
+</ol>
+<hr />
+<h3 id="實際案例對比"><a class="header" href="#實際案例對比">實際案例對比</a></h3>
+<h4 id="-案例-1先-bdd-後-sdd正確"><a class="header" href="#-案例-1先-bdd-後-sdd正確">✅ 案例 1：先 BDD 後 SDD（正確）</a></h4>
+<p><strong>需求</strong>：AI 客服要能自動回答常見問題</p>
+<p><strong>BDD 場景（先寫）</strong>：</p>
+<pre><code class="language-gherkin">Feature: AI 客服自動回答
+
+  Scenario: 自動回答運費問題
+    Given 用戶問「運費怎麼算」
+    When AI 識別到運費意圖
+    Then 回答「訂單滿 500 免運，未滿收 60 元」
+    And 回應時間少於 2 秒
+    
+  Scenario: 自動回答退貨問題
+    Given 用戶問「如何退貨」
+    When AI 識別到退貨意圖
+    Then 回答退貨流程說明
+    And 提供退貨申請連結
+</code></pre>
+<p><strong>SDD 設計（後寫）</strong>：</p>
+<pre><code class="language-markdown">## AI 客服技術設計
+
+### 意圖識別
+- 模型：BERT-base-chinese
+- 訓練資料：1000+ 標註對話
+- 準確率目標：&gt; 90%
+
+### FAQ 儲存
+- Vector Database: Pinecone
+- Embedding Model: text-embedding-ada-002
+- 相似度閾值：0.8
+
+### 回應策略
+- 相似度 &gt; 0.8：自動回答
+- 0.6 &lt; 相似度 &lt; 0.8：提供建議並轉人工
+- 相似度 &lt; 0.6：直接轉人工
+
+### 效能指標
+- 回應時間：&lt; 2s (P95)
+- 並發處理：100 QPS
+</code></pre>
+<p><strong>結果</strong>：✅ 技術方案完全支援業務需求，開發順利</p>
+<hr />
+<h4 id="-案例-2先-sdd-後-bdd有風險"><a class="header" href="#-案例-2先-sdd-後-bdd有風險">❌ 案例 2：先 SDD 後 BDD（有風險）</a></h4>
+<p><strong>SDD 設計（先寫）</strong>：</p>
+<pre><code class="language-markdown">## AI 對話系統技術設計
+
+### 核心技術
+- 模型：GPT-3.5-turbo
+- API：OpenAI API
+- 成本：$0.002 / 1K tokens
+
+### 架構設計
+- 每次對話呼叫 OpenAI API
+- 回應時間：1-2 秒
+- 無本地快取
+</code></pre>
+<p><strong>BDD 場景（後寫）</strong>：</p>
+<pre><code class="language-gherkin">Feature: 高並發對話處理
+
+  Scenario: 尖峰時段處理
+    Given 同時有 10,000 用戶提問
+    When 系統處理所有請求
+    Then 所有用戶應在 2 秒內收到回應
+    And 系統穩定運行不當機
+</code></pre>
+<p><strong>問題發現</strong>：</p>
+<ul>
+<li>❌ 10,000 次 × $0.002 = <strong>$20 美金/次</strong></li>
+<li>❌ 尖峰時段一天可能發生 10 次 = <strong>$200/天</strong></li>
+<li>❌ 月成本：<strong>$6,000</strong> （可能爆表！）</li>
+<li>❌ OpenAI API 有 Rate Limit，無法支援 10,000 QPS</li>
+</ul>
+<p><strong>解決方案</strong>：</p>
+<pre><code class="language-markdown">## 重新設計 SDD
+
+### 混合架構
+- 常見問題：本地 BERT 模型（免費）
+- 複雜問題：GPT-3.5（付費）
+- 預估：70% 用本地，30% 用 API
+
+### 成本優化
+- 原方案：$6,000/月
+- 新方案：$1,800/月（節省 70%）
+</code></pre>
+<p><strong>結果</strong>：❌ 需要返工重新設計，浪費 2 週時間</p>
+<p><strong>教訓</strong>：應該先確認業務需求（高並發、成本限制），再選技術方案</p>
+<hr />
+<h3 id="不同專案規模的執行建議"><a class="header" href="#不同專案規模的執行建議">不同專案規模的執行建議</a></h3>
+<h4 id="小型專案1-3-人1-2-週"><a class="header" href="#小型專案1-3-人1-2-週">小型專案（1-3 人，1-2 週）</a></h4>
+<p><strong>時程安排</strong>：</p>
+<pre><code>Day 1: 
+  上午 (2hr)：團隊討論 BDD 主場景 (3-5 個)
+  下午 (2hr)：架構師快速寫 SDD (簡化版)
+  
+Day 2-3:
+  開發時邊補充 BDD 細節，邊調整 SDD
+  使用 Google Doc 即時協作
+</code></pre>
+<p><strong>文件規模</strong>：</p>
+<ul>
+<li>BDD：5-10 個場景</li>
+<li>SDD：2-3 頁 A4</li>
+</ul>
+<p><strong>工具推薦</strong>：</p>
+<ul>
+<li>BDD：直接寫 Markdown</li>
+<li>SDD：Google Doc / Notion</li>
+</ul>
+<hr />
+<h4 id="中型專案4-10-人1-3-個月"><a class="header" href="#中型專案4-10-人1-3-個月">中型專案（4-10 人，1-3 個月）</a></h4>
+<p><strong>時程安排</strong>：</p>
+<pre><code>Week 1:
+  - PM 撰寫 BDD 場景 (主流程)
+  - 架構師撰寫 SDD (架構設計)
+  - 每日站會同步進度 (15 min)
+
+Week 2:
+  - 開發者看 SDD 補充 BDD 技術場景
+  - 三方 Review Meeting (2 hr)
+  - 確認 BDD &amp; SDD 一致性
+
+Week 3+:
+  - 開始 TDD 開發
+  - 持續更新 BDD &amp; SDD
+  - 每週 Refinement Meeting
+</code></pre>
+<p><strong>文件規模</strong>：</p>
+<ul>
+<li>BDD：20-50 個場景</li>
+<li>SDD：10-20 頁，包含圖表</li>
+</ul>
+<p><strong>工具推薦</strong>：</p>
+<ul>
+<li>BDD：Cucumber / SpecFlow</li>
+<li>SDD：Confluence / Notion</li>
+<li>協作：Jira 關聯文件</li>
+</ul>
+<hr />
+<h4 id="大型專案10-人3-個月"><a class="header" href="#大型專案10-人3-個月">大型專案（10+ 人，3+ 個月）</a></h4>
+<p><strong>時程安排</strong>：</p>
+<pre><code>Sprint 0 (準備期 - 2 週):
+  - 產品經理：BDD 場景初稿 (Epic 層級)
+  - 架構師：SDD 架構設計 (High-level)
+  - 技術主管：技術可行性評估
+  - 全員：Kickoff Meeting 對齊理解
+
+Sprint 1-N (開發期):
+  - BDD &amp; SDD 並行細化
+  - 每週 Refinement Meeting (2 hr)
+  - 每兩週 Architecture Review (1 hr)
+  - 文件版本控制（Git）
+
+持續整個專案:
+  - BDD &amp; SDD 同步更新
+  - 使用 ADR (Architecture Decision Record)
+  - 定期文件審查
+</code></pre>
+<p><strong>文件規模</strong>：</p>
+<ul>
+<li>BDD：100+ 個場景，多個 Feature</li>
+<li>SDD：50+ 頁，分模組撰寫</li>
+</ul>
+<p><strong>工具推薦</strong>：</p>
+<ul>
+<li>BDD：Cucumber + CI/CD 整合</li>
+<li>SDD：Confluence + PlantUML</li>
+<li>版本控制：Git (docs/ 目錄)</li>
+<li>協作：Jira + Confluence 雙向連結</li>
+</ul>
+<hr />
+<h3 id="協作的核心原則"><a class="header" href="#協作的核心原則">協作的核心原則</a></h3>
+<h4 id="原則-1先有業務需求bdd再談技術方案sdd"><a class="header" href="#原則-1先有業務需求bdd再談技術方案sdd">原則 1：先有業務需求（BDD），再談技術方案（SDD）</a></h4>
+<p><strong>❌ 錯誤範例</strong>：</p>
+<pre><code>架構師：「我們用 Kubernetes 部署！」
+PM：「為什麼？」
+架構師：「因為很潮啊！」
+</code></pre>
+<p><strong>✅ 正確範例</strong>：</p>
+<pre><code>PM：「我們需要支援 100 萬並發用戶」（BDD 需求）
+架構師：「那我們用 K8s 做水平擴展」（SDD 方案）
+PM：「預算只有 10 萬/月」（BDD 限制）
+架構師：「那改用 Auto Scaling + Serverless」（SDD 調整）
+</code></pre>
+<p><strong>原則</strong>：</p>
+<ul>
+<li>BDD 定義「目標」（what）</li>
+<li>SDD 提供「手段」（how）</li>
+<li>目標不變，手段可調整</li>
+</ul>
+<hr />
+<h4 id="原則-2bdd-和-sdd-要持續對齊"><a class="header" href="#原則-2bdd-和-sdd-要持續對齊">原則 2：BDD 和 SDD 要持續對齊</a></h4>
+<p><strong>對齊機制</strong>：</p>
+<pre><code>BDD 改了 → 檢查 SDD 是否需要調整
+SDD 改了 → 檢查 BDD 是否需要更新
+
+範例：
+BDD 新增：「支援第三方登入（Google、Facebook）」
+→ SDD 要補充：OAuth 2.0 整合設計
+
+SDD 調整：「因成本考量，Redis 改用 In-Memory Cache」
+→ BDD 要更新：「系統重啟會登出所有用戶」
+</code></pre>
+<p><strong>工具輔助</strong>：</p>
+<ul>
+<li><strong>Jira</strong>：關聯 BDD Feature 和 SDD Document</li>
+<li><strong>Confluence</strong>：用雙向連結 (Backlinks)</li>
+<li><strong>Git</strong>：使用分支關聯
+<pre><code>feature/user-login (BDD 場景)
+docs/user-login-sdd (SDD 文件)
+</code></pre>
+</li>
+</ul>
+<p><strong>定期檢查</strong>：</p>
+<ul>
+<li>每日站會：快速確認一致性</li>
+<li>每週 Refinement：深入檢查對齊</li>
+<li>Sprint Review：展示 BDD + SDD 完整性</li>
+</ul>
+<hr />
+<h4 id="原則-3文件是活的持續演進"><a class="header" href="#原則-3文件是活的持續演進">原則 3：文件是活的，持續演進</a></h4>
+<p><strong>版本控制範例</strong>：</p>
+<pre><code>v0.1 → 草稿（抓大方向）
+       - BDD：主要場景 3-5 個
+       - SDD：架構草圖 + 技術選型
+
+v0.5 → 完整（可以開發了）
+       - BDD：包含異常處理場景
+       - SDD：詳細 API 規格 + DB Schema
+
+v1.0 → 定案（開發中確認）
+       - BDD：補充邊界條件
+       - SDD：效能優化方案
+
+v1.x → 持續更新（根據實作調整）
+       - BDD：根據實測調整驗收標準
+       - SDD：記錄實作與設計的差異
+</code></pre>
+<p><strong>文件更新原則</strong>：</p>
+<ul>
+<li>📝 需求變更 → 先更新 BDD → 再調整 SDD</li>
+<li>🔧 技術調整 → 先更新 SDD → 再檢查 BDD</li>
+<li>🐛 發現 Bug → 兩者都要更新</li>
+<li>✅ 功能完成 → 最終確認兩者一致性</li>
+</ul>
+<hr />
+<h3 id="協作的實戰技巧"><a class="header" href="#協作的實戰技巧">協作的實戰技巧</a></h3>
+<h4 id="技巧-1使用三欄對照法"><a class="header" href="#技巧-1使用三欄對照法">技巧 1：使用「三欄對照法」</a></h4>
+<p><strong>文件結構</strong>：</p>
+<div class="table-wrapper"><table><thead><tr><th>BDD 場景</th><th>SDD 技術方案</th><th>實作狀態</th></tr></thead><tbody>
+<tr><td>用戶可以用 Google 登入</td><td>OAuth 2.0 + Google API</td><td>✅ 完成</td></tr>
+<tr><td>登入後自動同步個人資料</td><td>Google People API</td><td>🚧 進行中</td></tr>
+<tr><td>第三方登入失敗時顯示錯誤</td><td>Error Handling + Log</td><td>⏳ 待開發</td></tr>
+</tbody></table>
+</div>
+<p><strong>優點</strong>：</p>
+<ul>
+<li>一眼看出 BDD 和 SDD 的對應關係</li>
+<li>追蹤開發進度</li>
+<li>發現遺漏的場景或技術設計</li>
+</ul>
+<hr />
+<h4 id="技巧-2定期舉辦對齊會議"><a class="header" href="#技巧-2定期舉辦對齊會議">技巧 2：定期舉辦「對齊會議」</a></h4>
+<p><strong>會議形式</strong>：</p>
+<pre><code>三方對齊會議（每週 1 次，1 小時）
+
+參與者：
+  - Product Manager (BDD 負責人)
+  - Architect (SDD 負責人)
+  - Tech Lead (開發負責人)
+
+議程：
+  1. 回顧上週 BDD 變更 (10 min)
+  2. 回顧上週 SDD 變更 (10 min)
+  3. 檢查是否有不一致 (20 min)
+  4. 討論解決方案 (15 min)
+  5. 確認 Action Items (5 min)
+</code></pre>
+<p><strong>產出物</strong>：</p>
+<ul>
+<li>會議記錄</li>
+<li>需要更新的 BDD/SDD 清單</li>
+<li>Action Items 分配</li>
+</ul>
+<hr />
+<h4 id="技巧-3使用影響分析矩陣"><a class="header" href="#技巧-3使用影響分析矩陣">技巧 3：使用「影響分析矩陣」</a></h4>
+<p><strong>當 BDD 變更時</strong>：</p>
+<div class="table-wrapper"><table><thead><tr><th>BDD 變更</th><th>影響的 SDD 部分</th><th>影響程度</th><th>預估工時</th></tr></thead><tbody>
+<tr><td>新增第三方登入</td><td>Authentication 模組</td><td>🔴 高</td><td>3 天</td></tr>
+<tr><td>調整密碼長度限制</td><td>Validation 邏輯</td><td>🟡 中</td><td>0.5 天</td></tr>
+<tr><td>修改錯誤訊息文字</td><td>前端 i18n 檔案</td><td>🟢 低</td><td>0.1 天</td></tr>
+</tbody></table>
+</div>
+<p><strong>當 SDD 變更時</strong>：</p>
+<div class="table-wrapper"><table><thead><tr><th>SDD 變更</th><th>影響的 BDD 場景</th><th>需要調整嗎</th></tr></thead><tbody>
+<tr><td>Redis → In-Memory</td><td>「系統重啟後 Session 保留」</td><td>✅ 需要調整</td></tr>
+<tr><td>增加 CDN</td><td>無</td><td>❌ 不需要</td></tr>
+<tr><td>DB 改用分片</td><td>「查詢回應時間 &lt; 1s」</td><td>⚠️ 需要重新測試</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h3 id="常見陷阱與解決方案"><a class="header" href="#常見陷阱與解決方案">常見陷阱與解決方案</a></h3>
+<h4 id="陷阱-1bdd-過於技術化"><a class="header" href="#陷阱-1bdd-過於技術化">陷阱 1：BDD 過於技術化</a></h4>
+<p><strong>❌ 錯誤範例</strong>：</p>
+<pre><code class="language-gherkin">Scenario: 資料庫連線
+  Given Redis 連線池初始化完成
+  When 執行 HSET user:123 token "abc"
+  Then 回傳 OK
+</code></pre>
+<p><strong>✅ 正確範例</strong>：</p>
+<pre><code class="language-gherkin">Scenario: 用戶登入後記住狀態
+  Given 用戶成功登入
+  When 用戶關閉瀏覽器後重新開啟
+  Then 用戶仍然保持登入狀態
+</code></pre>
+<p><strong>原則</strong>：BDD 應該用「業務語言」，技術細節放 SDD</p>
+<hr />
+<h4 id="陷阱-2sdd-缺乏業務脈絡"><a class="header" href="#陷阱-2sdd-缺乏業務脈絡">陷阱 2：SDD 缺乏業務脈絡</a></h4>
+<p><strong>❌ 錯誤範例</strong>：</p>
+<pre><code class="language-markdown">## 技術架構
+- 使用 Redis Cluster
+- 3 個 Master + 3 個 Slave
+- 使用 Sentinel 做故障轉移
+</code></pre>
+<p><strong>✅ 正確範例</strong>：</p>
+<pre><code class="language-markdown">## Session 管理技術設計
+
+### 業務需求（來自 BDD）
+- 支援 100 萬並發用戶登入
+- 系統重啟後 Session 不丟失
+- Session 過期時間 24 小時
+
+### 技術方案
+- Redis Cluster (高可用)
+  - 3 Master + 3 Slave
+  - Sentinel 自動故障轉移
+- Session 持久化到 RDB
+- 預估記憶體：100 萬 × 1KB = 1GB
+</code></pre>
+<p><strong>原則</strong>：SDD 要說明「為什麼」選這個技術方案</p>
+<hr />
+<h4 id="陷阱-3文件與實作脫節"><a class="header" href="#陷阱-3文件與實作脫節">陷阱 3：文件與實作脫節</a></h4>
+<p><strong>問題</strong>：</p>
+<ul>
+<li>程式碼改了，文件沒更新</li>
+<li>新人看文件被誤導</li>
+<li>開會時大家各說各話</li>
+</ul>
+<p><strong>✅ 解決方案</strong>：</p>
+<p><strong>方案 A：自動化驗證</strong></p>
+<pre><code class="language-python"># 用程式碼檢查 BDD 和實作是否一致
+def test_bdd_scenarios():
+    """確保 BDD 場景都有對應的測試"""
+    feature_files = load_all_feature_files()
+    test_files = load_all_test_files()
+    
+    for scenario in feature_files:
+        assert has_corresponding_test(scenario, test_files), \
+            f"場景 {scenario} 沒有對應的測試！"
+</code></pre>
+<p><strong>方案 B：CI/CD 檢查</strong></p>
+<pre><code class="language-yaml"># .github/workflows/docs-check.yml
+name: Documentation Check
+
+on: [pull_request]
+
+jobs:
+  check-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 檢查 SDD 是否更新
+        run: |
+          if git diff --name-only | grep "src/"; then
+            if ! git diff --name-only | grep "docs/sdd/"; then
+              echo "❌ 程式碼有變更，但 SDD 未更新！"
+              exit 1
+            fi
+          fi
+</code></pre>
+<p><strong>方案 C：定期審查</strong></p>
+<pre><code>每月文件健檢日：
+  - 所有開發者一起審查 BDD &amp; SDD
+  - 找出過時或錯誤的內容
+  - 集中時間更新文件
+  - 更新後重新發布
+</code></pre>
+<hr />
+<h3 id="總結與快速參考"><a class="header" href="#總結與快速參考">總結與快速參考</a></h3>
+<h4 id="核心觀念速記"><a class="header" href="#核心觀念速記">核心觀念速記</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>問題</th><th>答案</th></tr></thead><tbody>
+<tr><td><strong>有先後順序嗎？</strong></td><td>理想上先 BDD 後 SDD，但實務上會<strong>並行迭代</strong></td></tr>
+<tr><td><strong>為什麼先 BDD？</strong></td><td>確保「做對的事」再考慮「怎麼做」</td></tr>
+<tr><td><strong>可以先 SDD 嗎？</strong></td><td>可以，但風險是技術方案不符合業務需求，可能需要返工</td></tr>
+<tr><td><strong>最佳實踐？</strong></td><td>BDD 核心場景 (60%) → SDD 技術設計 (60%) → 交叉細化 (40%)</td></tr>
+<tr><td><strong>小專案怎麼做？</strong></td><td>簡化版本，BDD 和 SDD 可以在同一份文件</td></tr>
+<tr><td><strong>大專案怎麼做？</strong></td><td>分模組撰寫，使用工具追蹤關聯</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h4 id="一句話記住"><a class="header" href="#一句話記住">一句話記住</a></h4>
+<blockquote>
+<p><strong>BDD 是地圖（要去哪），SDD 是交通工具（怎麼去），兩者要配合才能順利抵達！</strong> 🗺️🚗</p>
+</blockquote>
+<hr />
+<h4 id="執行檢查清單"><a class="header" href="#執行檢查清單">執行檢查清單</a></h4>
+<pre><code class="language-markdown">## BDD 撰寫檢查
+
+- [ ] 使用業務語言，非技術術語
+- [ ] 每個場景都有明確的驗收標準
+- [ ] 包含主流程、異常流程、邊界條件
+- [ ] 與 Product Manager 確認無誤
+
+## SDD 撰寫檢查
+
+- [ ] 說明「為什麼」選這個技術方案
+- [ ] 包含架構圖、流程圖、資料結構
+- [ ] 有明確的效能、安全性、可維護性考量
+- [ ] 與 BDD 場景對應，無遺漏
+
+## 協作檢查
+
+- [ ] BDD 和 SDD 已建立關聯（Jira/Confluence）
+- [ ] 定期舉辦三方對齊會議
+- [ ] 文件有版本控制
+- [ ] 變更時同步更新兩份文件
+</code></pre>
 <hr />
 <h2 id="ai-agent-實戰應用"><a class="header" href="#ai-agent-實戰應用">AI Agent 實戰應用</a></h2>
 <h3 id="1-bdd---讓-ai-聽懂需求-"><a class="header" href="#1-bdd---讓-ai-聽懂需求-">1. BDD - 讓 AI 聽懂需求 🗣️</a></h3>
