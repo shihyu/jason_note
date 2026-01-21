@@ -1,0 +1,448 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>在 Cloudflare 上構建並部署遠端 MCP 伺服器 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="在-cloudflare-上構建並部署遠端模型上下文協議-mcp-伺服器"><a class="header" href="#在-cloudflare-上構建並部署遠端模型上下文協議-mcp-伺服器">在 Cloudflare 上構建並部署遠端模型上下文協議 (MCP) 伺服器</a></h1>
+<p>2025-03-25</p>
+<p>9 分鐘閱讀</p>
+<p><img src="https://cf-assets.www.cloudflare.com/zkvhlag99gkb/6ifiJyB00Saj3K0TtU5QWn/7c552a4795603414457c7c33c4f432a2/image2.png" alt="" /></p>
+<p>感覺幾乎所有構建 AI 應用程式和<a href="https://www.cloudflare.com/learning/ai/what-is-agentic-ai/">代理 (agents)</a> 的人都在談論<a href="https://www.cloudflare.com/learning/ai/what-is-model-context-protocol-mcp/">模型上下文協議 (Model Context Protocol)</a> (MCP)，以及構建在自己電腦上本地安裝和運行的 MCP 伺服器。</p>
+<p>現在，您可以向 Cloudflare <a href="https://developers.cloudflare.com/agents/guides/remote-mcp-server/">構建並部署遠端 MCP 伺服器</a>。我們在 Cloudflare 中添加了四項功能，為您處理構建遠端 MCP 伺服器的困難部分：</p>
+<ol>
+<li>
+<p><a href="https://developers.cloudflare.com/agents/model-context-protocol/authorization">workers-oauth-provider</a> — 一個讓授權變得簡單的 <a href="https://www.cloudflare.com/learning/access-management/what-is-oauth/">OAuth</a> 提供者</p>
+</li>
+<li>
+<p><a href="https://developers.cloudflare.com/agents/model-context-protocol/tools/">McpAgent</a> — 內建於 <a href="https://developers.cloudflare.com/agents/">Cloudflare Agents SDK</a> 中、負責處理遠端傳輸的類別</p>
+</li>
+<li>
+<p><a href="https://developers.cloudflare.com/agents/guides/test-remote-mcp-server/">mcp-remote</a> — 一個適配器，讓原本僅支援本地連接的 MCP 客戶端能與遠端 MCP 伺服器配合使用</p>
+</li>
+<li>
+<p><a href="https://playground.ai.cloudflare.com/">AI playground 作為遠端 MCP 客戶端</a> — 一個聊天介面，允許您連接到遠端 MCP 伺服器，並包含身份驗證檢查</p>
+</li>
+</ol>
+<p>點擊下方的按鈕，或參考<a href="https://developers.cloudflare.com/agents/guides/remote-mcp-server/">開發者文檔</a>，只需不到兩分鐘即可讓<a href="https://github.com/cloudflare/ai/tree/main/demos/remote-mcp-server">此範例 MCP 伺服器</a>在生產環境中運行：</p>
+<p><a href="https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/ai/tree/main/demos/remote-mcp-server"><img src="https://deploy.workers.cloudflare.com/button" alt="部署到 Cloudflare" /></a></p>
+<p>與您之前可能使用的本地 MCP 伺服器不同，遠端 MCP 伺服器可以在網際網路上存取。使用者只需登入並使用熟悉的授權流程向 MCP 客戶端授予權限。我們認為這將是一件大事——在過去幾個月中，將程式碼代理連接到 MCP 伺服器讓開發者大開眼界，而遠端 MCP 伺服器具有同樣的潛力，可以為更廣泛的受眾（包括更多日常消費者用例）開闢與 LLM 和代理互動的新方式。</p>
+<h2 id="從本地到遠端--將-mcp-帶給大眾"><a class="header" href="#從本地到遠端--將-mcp-帶給大眾">從本地到遠端 —— 將 MCP 帶給大眾</a></h2>
+<p>MCP 正迅速成為通用協議，使 LLM 能超越<a href="https://www.cloudflare.com/learning/ai/inference-vs-training/">推理 (inference)</a> 和 <a href="https://developers.cloudflare.com/reference-architecture/diagrams/ai/ai-rag/">RAG</a>，採取需要存取 AI 應用程式本身以外資源的行動（例如發送電子郵件、部署程式碼變更、發布部落格文章等，隨您想像）。它使 AI 代理（MCP 客戶端）能存取來自外部服務（MCP 伺服器）的工具和資源。</p>
+<p>到目前為止，MCP 僅限於在您自己的機器上本地運行——如果您想使用 MCP 存取網路上的工具，則必須在本地設定伺服器。您無法從基於網路的介面或行動應用程式使用 MCP，也沒有辦法讓使用者進行身份驗證並授予 MCP 客戶端權限。實際上，MCP 伺服器尚未真正上線。</p>
+<p><img src="https://cf-assets.www.cloudflare.com/zkvhlag99gkb/1EyiTXzB4FvBs2zEfzuNTp/5ce4b55457348e9ab83e6d9cf35d8c3c/image7.png" alt="" /></p>
+<p>支援<a href="https://spec.modelcontextprotocol.io/specification/draft/basic/transports/#streamable-http">遠端 MCP 連接</a>改變了這一點。它創造了接觸更廣泛網際網路使用者的機會，這些使用者不會為了配合桌面應用程式而特別在本地安裝和運行 MCP 伺服器。遠端 MCP 支援就像是從桌面軟體到網頁軟體的過渡。人們期望能跨裝置繼續任務，並在登入後讓一切正常運作。本地 MCP 對開發者來說很棒，但遠端 MCP 連接是觸及網際網路上所有人的最後一塊拼圖。</p>
+<p><img src="https://cf-assets.www.cloudflare.com/zkvhlag99gkb/7bI7rJtLh89jmZaibSgiLl/e426f93616a8210d80b979c47d89dc75/image4.png" alt="" /></p>
+<h2 id="讓身份驗證與授權在-mcp-上順利運作"><a class="header" href="#讓身份驗證與授權在-mcp-上順利運作">讓身份驗證與授權在 MCP 上順利運作</a></h2>
+<p>除了改變傳輸層（從 <a href="https://modelcontextprotocol.io/docs/concepts/transports#standard-input%2Foutput-stdio">stdio</a> 到 <a href="https://github.com/modelcontextprotocol/specification/pull/206">streamable HTTP</a>）之外，當您構建使用來自終端使用者帳戶資訊的遠端 MCP 伺服器時，您需要<a href="https://www.cloudflare.com/learning/access-management/authn-vs-authz/">身份驗證與授權</a>。您需要一種方式讓使用者登入並證明自己的身份（身份驗證），以及一種方式讓使用者控制 AI 代理在測試服務時能存取什麼（授權）。</p>
+<p>MCP 通過 <a href="https://oauth.net/2/">OAuth</a> 實現這一點，OAuth 是一項標準協議，允許使用者授予應用程式存取其資訊或服務的權限，而無需分享密碼。在這裡，MCP 伺服器本身充當 OAuth 提供者。然而，自己實作 MCP 的 OAuth 非常困難，因此當您在 Cloudflare 上構建 MCP 伺服器時，我們為您提供了這項功能。</p>
+<h3 id="workers-oauth-provider--適用於-cloudflare-workers-的-oauth-21-提供者庫"><a class="header" href="#workers-oauth-provider--適用於-cloudflare-workers-的-oauth-21-提供者庫">workers-oauth-provider — 適用於 Cloudflare Workers 的 OAuth 2.1 提供者庫</a></h3>
+<p>當您向 Cloudflare <a href="https://developers.cloudflare.com/agents/guides/remote-mcp-server/">部署 MCP 伺服器</a>時，您的 Worker 會使用 <a href="https://github.com/cloudflare/workers-oauth-provider">workers-oauth-provider</a> 充當 OAuth 提供者。這是一個新的 TypeScript 庫，它包裝了您的 Worker 程式碼，為 API 端點添加授權，包括（但不限於）MCP 伺服器 API 端點。</p>
+<p>您的 MCP 伺服器將接收已經過身份驗證的使用者詳細資訊作為參數。您不需要自己執行任何檢查，也不需要直接管理令牌。您仍然可以完全控制如何驗證使用者：從他們登入時看到的 UI，到他們使用哪個提供者登入。您可以選擇帶入自己的第三方身份驗證和授權提供者（如 Google 或 GitHub），或整合您自己的。</p>
+<p>完整的 <a href="https://spec.modelcontextprotocol.io/specification/draft/basic/authorization/">MCP OAuth 流程</a>如下所示：</p>
+<p><img src="https://cf-assets.www.cloudflare.com/zkvhlag99gkb/VTPBfZ4hRPdq2TWE5VOjS/00abc97e4beedf59a4101957612fd503/image5.png" alt="" /></p>
+<p>在這裡，您的 MCP 伺服器既充當上游服務的 OAuth 客戶端，<em>又</em>充當 MCP 客戶端的 OAuth 伺服器（也稱為 OAuth「提供者」）。您可以使用任何您想要的上游身份驗證流程，但 workers-oauth-provider 保證您的 MCP 伺服器<a href="https://spec.modelcontextprotocol.io/specification/draft/basic/authorization">符合規格</a>，並能與各種客戶端應用程式和網站配合使用。這包括對動態客戶端註冊 (<a href="https://datatracker.ietf.org/doc/html/rfc7591">RFC 7591</a>) 和授權伺服器元數據 (<a href="https://datatracker.ietf.org/doc/html/rfc8414">RFC 8414</a>) 的支援。</p>
+<h3 id="一個簡單可插拔的-oauth-介面"><a class="header" href="#一個簡單可插拔的-oauth-介面">一個簡單、可插拔的 OAuth 介面</a></h3>
+<p>當您使用 Cloudflare Workers 構建 MCP 伺服器時，您需要提供 OAuth 提供者實例，指向您的授權、令牌和客戶端註冊端點，以及適用於 MCP 伺服器和身份驗證的<a href="https://developers.cloudflare.com/workers/runtime-apis/handlers/fetch/">處理程序 (handlers)</a>：</p>
+<pre><code class="language-JavaScript">import OAuthProvider from "@cloudflare/workers-oauth-provider";
+import MyMCPServer from "./my-mcp-server";
+import MyAuthHandler from "./auth-handler";
+
+export default new OAuthProvider({
+  apiRoute: "/sse", // MCP 客戶端連接到您伺服器的路徑
+  apiHandler: MyMCPServer.mount('/sse'), // 您的 MCP 伺服器實作
+  defaultHandler: MyAuthHandler, // 您的身份驗證實作
+  authorizeEndpoint: "/authorize",
+  tokenEndpoint: "/token",
+  clientRegistrationEndpoint: "/register",
+});
+</code></pre>
+<p>這種抽象讓您可以輕鬆插入自己的身份驗證。看看<a href="https://github.com/cloudflare/ai/blob/main/demos/remote-mcp-github-oauth/src/github-handler.ts">這個範例</a>，它使用 GitHub 作為 MCP 伺服器的身份提供者，通過實作 /callback 和 /authorize 路由，只需不到 100 行程式碼。</p>
+<h3 id="為什麼-mcp-伺服器要發行自己的令牌"><a class="header" href="#為什麼-mcp-伺服器要發行自己的令牌">為什麼 MCP 伺服器要發行自己的令牌？</a></h3>
+<p>您可能在上面的授權圖示以及 MCP 規格的<a href="https://spec.modelcontextprotocol.io/specification/draft/basic/authorization">授權章節</a>中注意到，MCP 伺服器會向 MCP 客戶端發行自己的令牌。</p>
+<p>您的 Worker 不會將從上游提供者收到的令牌直接傳遞給 MCP 客戶端，而是將加密的存取令牌儲存在 <a href="https://developers.cloudflare.com/kv/">Workers KV</a> 中。然後，它向客戶端發行自己的令牌。如上面的 <a href="https://github.com/cloudflare/ai/blob/main/demos/remote-mcp-github-oauth/src/github-handler.ts">GitHub 範例</a>所示，workers-oauth-provider 會代表您處理這項工作——您的程式碼永遠不會直接處理寫入此令牌的操作，從而防止錯誤。您可以在上述 <a href="https://github.com/cloudflare/ai/blob/main/demos/remote-mcp-github-oauth/src/github-handler.ts">GitHub 範例</a>的以下程式碼片段中看到這一點：</p>
+<pre><code class="language-JavaScript">  // 當您呼叫 completeAuthorization 時，您傳遞給它的 accessToken
+  // 會被加密並儲存，永遠不會暴露給 MCP 客戶端
+  // 一個新的、獨立的令牌會被生成，並在 /token 端點提供給客戶端
+  const { redirectTo } = await c.env.OAUTH_PROVIDER.completeAuthorization({
+    request: oauthReqInfo,
+    userId: login,
+    metadata: { label: name },
+    scope: oauthReqInfo.scope,
+    props: {
+      accessToken,  // 加密儲存，永遠不會發送給 MCP 客戶端
+    },
+  })
+
+  return Response.redirect(redirectTo)
+</code></pre>
+<p>從表面上看，這種間接方式聽起來可能更複雜。為什麼要這樣運作？</p>
+<p>通過發行自己的令牌，MCP 伺服器可以比上游提供者限制更多存取權限並執行更細粒度的控制。如果您發行給 MCP 客戶端的令牌遭到破解，攻擊者只能獲得您通過 MCP 工具明確授予的有限權限，而無法完全存取原始令牌的權限。</p>
+<p>假設您的 MCP 伺服器請求使用者授權從其 Gmail 帳戶讀取電子郵件的權限，使用的是 <a href="https://developers.google.com/identity/protocols/oauth2/scopes#gmail">gmail.readonly 範圍</a>。MCP 伺服器公開的工具則更為狹隘，僅允許讀取來自有限寄件者的旅遊預訂通知，以處理像是「我明天旅館房間的退房時間是幾點？」之類的問題。您可以在 MCP 伺服器中強制執行此約束，如果發行給 MCP 客戶端的令牌遭到破解，由於該令牌是針對您的 MCP 伺服器——而不是針對上游提供者 (Google) 的原始令牌——攻擊者將無法使用它來讀取任意電子郵件。他們只能呼叫您的 MCP 伺服器提供的工具。OWASP 將<a href="https://genai.owasp.org/llmrisk/llm062025-excessive-agency/">「過度代理 (Excessive Agency)」</a>列為構建 AI 應用程式的首要風險因素之一，通過向客戶端發行自己的令牌並強制執行約束，您的 MCP 伺服器可以將工具存取權限限制在客戶端僅需要的範圍內。</p>
+<p>或者延續早前的 GitHub 範例，您可以強制要求只有特定使用者才能存取特定工具。在下面的範例中，只有白名單中的使用者才能看到或呼叫 <code>generateImage</code> 工具，該工具使用 <a href="https://developers.cloudflare.com/workers-ai/">Workers AI</a> 根據提示詞生成圖像：</p>
+<pre><code class="language-JavaScript">import { McpAgent } from "agents/mcp";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+
+const USER_ALLOWLIST = ["geelen"];
+
+export class MyMCP extends McpAgent&lt;Props, Env&gt; {
+  server = new McpServer({
+    name: "Github OAuth Proxy Demo",
+    version: "1.0.0",
+  });
+
+  async init() {
+    // 根據使用者身份動態添加工具
+    if (USER_ALLOWLIST.has(this.props.login)) {
+      this.server.tool(
+        'generateImage',
+        'Generate an image using the flux-1-schnell model.',
+        {
+          prompt: z.string().describe('A text description of the image you want to generate.')
+        },
+        async ({ prompt }) =&gt; {
+          const response = await this.env.AI.run('@cf/black-forest-labs/flux-1-schnell', { 
+            prompt, 
+            steps: 8 
+          })
+          return {
+            content: [{ type: 'image', data: response.image!, mimeType: 'image/jpeg' }],
+          }
+        }
+      )
+    }
+  }
+}
+
+</code></pre>
+<h2 id="介紹-mcpagent現即可用的遠端傳輸支援並將支援-mcp-規格修訂"><a class="header" href="#介紹-mcpagent現即可用的遠端傳輸支援並將支援-mcp-規格修訂">介紹 McpAgent：現即可用的遠端傳輸支援，並將支援 MCP 規格修訂</a></h2>
+<p>將 MCP 擴展到本地機器之外的下一步是開啟遠端傳輸層進行通訊。您在本地機器上運行的 MCP 伺服器僅通過 <a href="https://modelcontextprotocol.io/docs/concepts/transports#standard-input%2Foutput-stdio">stdio</a> 進行通訊，但要讓 MCP 伺服器能透過網際網路呼叫，它必須實作<a href="https://spec.modelcontextprotocol.io/specification/draft/basic/transports/#http-with-sse">遠端傳輸</a>。</p>
+<p>我們今天作為 <a href="https://github.com/cloudflare/agents">Agents SDK</a> 一部分介紹的 <a href="https://github.com/cloudflare/agents/blob/2f82f51784f4e27292249747b5fbeeef94305552/packages/agents/src/mcp.ts">McpAgent</a> 類別會為您處理這項工作，它在後台使用 <a href="https://developers.cloudflare.com/durable-objects/">Durable Objects</a> 來保持持久連接開啟，以便 MCP 客戶端可以向您的 MCP 伺服器發送<a href="https://modelcontextprotocol.io/docs/concepts/transports#server-sent-events-sse">伺服器發送事件 (SSE)</a>。您不需要編寫程式碼來自行處理傳輸或序列化。一個只需 15 行程式碼的最簡 MCP 伺服器如下所示：</p>
+<pre><code class="language-JavaScript">import { McpAgent } from "agents/mcp";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+
+export class MyMCP extends McpAgent {
+  server = new McpServer({
+    name: "Demo",
+    version: "1.0.0",
+  });
+  async init() {
+    this.server.tool("add", { a: z.number(), b: z.number() }, async ({ a, b }) =&gt; ({
+      content: [{ type: "text", text: String(a + b) }],
+    }));
+  }
+}
+</code></pre>
+<p>經過多次<a href="https://github.com/modelcontextprotocol/specification/discussions/102">討論</a>，MCP 規格中的遠端傳輸正在發生變化，<a href="https://github.com/modelcontextprotocol/specification/pull/206">Streamable HTTP 將取代 HTTP+SSE</a>。這允許與 MCP 伺服器進行無狀態、純 HTTP 的連接，並提供升級到 SSE 的選項，同時取消了 MCP 客戶端必須向與初始連接不同的端點發送消息的需求。McpAgent 類別將隨之改變並直接與 Streamable HTTP 配合使用，因此您無需為了支援傳輸方式的修訂而重新開始。</p>
+<p>這也適用於傳輸方式的未來迭代。今天，絕大多數 MCP 伺服器僅公開工具，這些工具是簡單的<a href="https://en.wikipedia.org/wiki/Remote_procedure_call">遠端程序呼叫 (RPC)</a> 方法，可由無狀態傳輸提供。但更複雜的人機協作 (human-in-the-loop) 和代理間互動將需要<a href="https://modelcontextprotocol.io/docs/concepts/prompts">提示詞 (prompts)</a> 和<a href="https://modelcontextprotocol.io/docs/concepts/sampling">取樣 (sampling)</a>。我們預期這些類型的頻繁對話、雙向互動將需要即時性，如果沒有雙向傳輸層，這將難以良好實作。屆時，Cloudflare、<a href="https://developers.cloudflare.com/agents/">Agents SDK</a> 和 Durable Objects 都原生支援 <a href="https://developers.cloudflare.com/durable-objects/best-practices/websockets/">WebSockets</a>，這能實現全雙工、雙向的即時通訊。</p>
+<h2 id="有狀態的代理式-mcp-伺服器"><a class="header" href="#有狀態的代理式-mcp-伺服器">有狀態的代理式 MCP 伺服器</a></h2>
+<p>當您在 Cloudflare 上構建 MCP 伺服器時，每個 MCP 客戶端會話都由透過 <a href="https://developers.cloudflare.com/agents/">Agents SDK</a> 提供的 Durable Object 支援。這意味著每個會話都可以管理並持久化自己的狀態，並<a href="https://developers.cloudflare.com/agents/api-reference/store-and-sync-state/">由其專屬的 SQL 資料庫支援</a>。</p>
+<p>這開啟了構建有狀態 MCP 伺服器的大門。Cloudflare 上的 MCP 伺服器不僅僅是充當客戶端應用程式與外部 API 之間的無狀態層，它們本身就可以是有狀態的應用程式——遊戲、購物車與結帳流程、<a href="https://github.com/modelcontextprotocol/servers/tree/main/src/memory">持久化知識圖譜</a>，或者任何您能想像到的東西。當您在 Cloudflare 上構建時，MCP 伺服器可以遠超僅作為 REST API 前端的角色。</p>
+<p>要理解其運作基本原理，讓我們看一個遞增計數器的最簡範例：</p>
+<pre><code class="language-JavaScript">import { McpAgent } from "agents/mcp";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+
+type State = { counter: number }
+
+export class MyMCP extends McpAgent&lt;Env, State, {}&gt; {
+  server = new McpServer({
+    name: "Demo",
+    version: "1.0.0",
+  });
+
+  initialState: State = {
+    counter: 1,
+  }
+
+  async init() {
+    this.server.resource(`counter`, `mcp://resource/counter`, (uri) =&gt; {
+      return {
+        contents: [{ uri: uri.href, text: String(this.state.counter) }],
+      }
+    })
+
+    this.server.tool('add', 'Add to the counter, stored in the MCP', { a: z.number() }, async ({ a }) =&gt; {
+      this.setState({ ...this.state, counter: this.state.counter + a })
+
+      return {
+        content: [{ type: 'text', text: String(`Added ${a}, total is now ${this.state.counter}`) }],
+      }
+    })
+  }
+
+  onStateUpdate(state: State) {
+    console.log({ stateUpdate: state })
+  }
+
+}
+</code></pre>
+<p>對於給定的會話，上述 MCP 伺服器將在不同工具呼叫之間記住計數器的狀態。</p>
+<p>在 MCP 伺服器內，您可以使用 Cloudflare 的整個開發者平台，讓您的 MCP 伺服器<a href="https://developers.cloudflare.com/agents/api-reference/browse-the-web/">啟動自己的網頁瀏覽器</a>、<a href="https://developers.cloudflare.com/agents/api-reference/run-workflows/">觸發 Workflow</a>、<a href="https://developers.cloudflare.com/agents/api-reference/using-ai-models/">呼叫 AI 模型</a>等等。我們很高興看到 MCP 生態系演進到更進階的用例。</p>
+<h2 id="從目前僅支援本地-mcp-的客戶端連接到遠端-mcp-伺服器"><a class="header" href="#從目前僅支援本地-mcp-的客戶端連接到遠端-mcp-伺服器">從目前僅支援本地 MCP 的客戶端連接到遠端 MCP 伺服器</a></h2>
+<p>Cloudflare 很早就開始支援遠端 MCP——在最著名的 MCP 客戶端應用程式支援遠端、經過驗證的 MCP 之前，以及在其他平台支援遠端 MCP 之前。我們這樣做是為了讓您在 MCP 的發展方向上搶佔先機。</p>
+<p>但如果您今天構建遠端 MCP 伺服器，這會面臨一個挑戰——如果沒有支援遠端 MCP 的 MCP 客戶端，人們該如何開始使用您的 MCP 伺服器？</p>
+<p>我們有兩個新工具，可以讓您測試遠端 MCP 伺服器並模擬使用者未來的互動方式：</p>
+<p>我們更新了 <a href="https://playground.ai.cloudflare.com/">Workers AI Playground</a>，使其成為一個完全遠端的 MCP 客戶端，允許您連接到任何具有內建身份驗證支援的遠端 MCP 伺服器。這個線上聊天介面讓您可以立即測試遠端 MCP 伺服器，而無需在裝置上安裝任何東西。只需輸入遠端 MCP 伺服器的 URL（例如 https://remote-server.example.com/sse）並點擊「Connect」。</p>
+<p><img src="https://cf-assets.www.cloudflare.com/zkvhlag99gkb/4N64nJHJiQygmMdSK7clIs/c0bf8c64f1607674f81be10c3871a64b/image1.png" alt="" /></p>
+<p>點擊「Connect」後，您將進入身份驗證流程（如果您有設定的話），之後您就能直接從聊天介面與 MCP 伺服器工具互動。</p>
+<p>如果您更偏好使用像 Claude Desktop 或 Cursor 這樣已經支援 MCP、但尚未處理帶身份驗證之遠端連接的客戶端，您可以使用 <a href="https://www.npmjs.com/package/mcp-remote">mcp-remote</a>。mcp-remote 是一個適配器，讓原本僅支援本地連接的 MCP 客戶端能與遠端 MCP 伺服器配合使用。這讓您和您的使用者能在客戶端原生支援遠端 MCP 之前，從您目前已在使用的工具中預覽與遠端 MCP 伺服器的互動情況。</p>
+<p>我們已經<a href="https://developers.cloudflare.com/agents/guides/test-remote-mcp-server/">發布了一份指南</a>，介紹如何在熱門的 MCP 客戶端（包括 Claude Desktop、Cursor 和 Windsurf）中使用 mcp-remote。在 Claude Desktop 中，您可以在設定檔中添加以下內容：</p>
+<pre><code class="language-JavaScript">{
+  "mcpServers": {
+    "remote-example": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://remote-server.example.com/sse"
+      ]
+    }
+  }
+}
+</code></pre>
+<p>遠端模型上下文協議 (MCP) 即將到來！當客戶端應用程式支援遠端 MCP 伺服器時，能使用它們的受眾將從僅限我們這些開發者，擴大到其餘大眾——他們甚至可能永遠不需要知道 MCP 是什麼或代表什麼。</p>
+<p>構建遠端 MCP 伺服器是將您的服務帶入數百萬人使用的 AI 助手和工具的方法。我們很高興看到網際網路上許多大公司目前正忙著構建 MCP 伺服器，我們也對那些以代理優先、MCP 原生方式出現的新企業感到好奇。</p>
+<p>在 Cloudflare 上，<a href="https://developers.cloudflare.com/agents/guides/remote-mcp-server/">您今天就可以開始構建</a>。我們已經準備好為您服務，並準備好協助您共同構建。請發送電子郵件至 <a href="mailto:1800-mcp@cloudflare.com">1800-mcp@cloudflare.com</a>，我們將協助您開始。MCP 還有很多新功能即將推出，我們期待看到您的創作。</p>
+<p>Cloudflare 的連線性雲 (connectivity cloud) 保護<a href="https://www.cloudflare.com/network-services/">整個企業網路</a>，協助客戶<a href="https://workers.cloudflare.com/">高效構建網際網路規模的應用程式</a>，加速任何<a href="https://www.cloudflare.com/performance/accelerate-internet-applications/">網站或網際網路應用程式</a>，<a href="https://www.cloudflare.com/ddos/">抵禦 DDoS 攻擊</a>，阻止<a href="https://www.cloudflare.com/application-security/">駭客入侵</a>，並能協助您<a href="https://www.cloudflare.com/products/zero-trust/">邁向 Zero Trust 之旅</a>。</p>
+<p>從任何裝置造訪 <a href="https://one.one.one.one/">1.1.1.1</a> 即可開始使用我們的免費應用程式，讓您的網際網路更快速且更安全。</p>
+<p>要瞭解更多關於我們協助構建更好網際網路的使命，<a href="https://www.cloudflare.com/learning/what-is-cloudflare/">請點此開始</a>。如果您正在尋找新的職涯方向，請查看<a href="http://www.cloudflare.com/careers">我們的職缺</a>。</p>
+<p><a href="https://blog.cloudflare.com/tag/ai/">AI</a><a href="https://blog.cloudflare.com/tag/developers/">Developers</a><a href="https://blog.cloudflare.com/tag/mcp/">MCP</a><a href="https://blog.cloudflare.com/tag/agents/">Agents</a></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tools/mcp-commands-reference.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../tools/gemini-cli-guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tools/mcp-commands-reference.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../tools/gemini-cli-guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
