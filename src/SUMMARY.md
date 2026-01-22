@@ -50,6 +50,7 @@
         - [Claude Nights Watch Setup](tools/claude-nights-watch-setup.md)
         - [MCP Setup Guide](tools/mcp-setup-guide.md)
         - [MCP Commands Reference](tools/mcp-commands-reference.md)
+        - [工程師必備 MCP 完整指南 2026](tools/mcp_engineers_guide.md)
         - [在 Cloudflare 上構建並部署遠端 MCP 伺服器](tools/cloudflare-remote-mcp.tw.md)
         - [Gemini CLI 安裝與使用指南](tools/gemini-cli-guide.md)
         - [Codex CLI 完整指南](tools/codex-guide.md)
