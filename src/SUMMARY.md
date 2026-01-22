@@ -626,6 +626,11 @@
     - [低延遲技術最佳實踐指南](hft/06-resources/低延遲技術最佳實踐指南.md)
     - [GitHub 開源項目分析](hft/06-resources/github-projects.md)
 
+## AI Agent
+- [AI Agent 自主系統開發](ai_agent/ai_agent.md)
+    - [Ralph Loop 自動化循環系統](ai_agent/RALPH_GUIDE.md)
+    - [AutoContent Loop 內容生產系統](ai_agent/development_plan.md)
+
 ## Others
 - [Design Patterns](dp/dp.md)
     - [設計模式完整指南](dp/design-patterns-guide.md)
