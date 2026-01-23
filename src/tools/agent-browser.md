@@ -87,6 +87,167 @@ else
 fi
 ```
 
+### 為 Gemini CLI 安裝
+
+如果你同時使用 Gemini CLI，可以用以下方法安裝 agent-browser skill：
+
+#### 方法 1: 直接下載安裝
+
+```bash
+# 建立 skill 目錄
+mkdir -p ~/.gemini/skills/agent-browser
+
+# 下載 SKILL.md 檔案
+curl -o ~/.gemini/skills/agent-browser/SKILL.md \
+  https://raw.githubusercontent.com/vercel-labs/agent-browser/main/skills/agent-browser/SKILL.md
+
+# 驗證下載成功
+wc -l ~/.gemini/skills/agent-browser/SKILL.md
+ls -lh ~/.gemini/skills/agent-browser/SKILL.md
+```
+
+#### 方法 2: 使用 Gemini CLI 指令
+
+```bash
+# 從 GitHub 直接安裝
+gemini skills install https://github.com/vercel-labs/agent-browser
+
+# 查看已安裝的 skills
+gemini skills list
+
+# 啟用 skill（如果需要）
+gemini skills enable agent-browser
+```
+
+#### 一鍵安裝與驗證腳本
+
+```bash
+#!/bin/bash
+# 為 Gemini CLI 安裝 agent-browser skill
+
+SKILL_DIR="$HOME/.gemini/skills/agent-browser"
+SKILL_URL="https://raw.githubusercontent.com/vercel-labs/agent-browser/main/skills/agent-browser/SKILL.md"
+
+echo "Creating skill directory for Gemini..."
+mkdir -p "$SKILL_DIR"
+
+echo "Downloading SKILL.md..."
+curl -o "$SKILL_DIR/SKILL.md" "$SKILL_URL"
+
+# 驗證下載
+if [ -f "$SKILL_DIR/SKILL.md" ]; then
+    lines=$(wc -l < "$SKILL_DIR/SKILL.md")
+    size=$(wc -c < "$SKILL_DIR/SKILL.md")
+
+    if [ "$lines" -gt 200 ] && [ "$size" -gt 8000 ]; then
+        echo "✅ Gemini installation successful!"
+        echo "   Lines: $lines"
+        echo "   Size: $size bytes"
+
+        # 使用 Gemini CLI 驗證
+        echo ""
+        echo "Verifying with Gemini CLI..."
+        gemini skills list
+    else
+        echo "❌ Downloaded file seems incomplete"
+        echo "   Lines: $lines (expected > 200)"
+        echo "   Size: $size bytes (expected > 8000)"
+        exit 1
+    fi
+else
+    echo "❌ Download failed"
+    exit 1
+fi
+```
+
+#### 在 Gemini 中使用
+
+安裝完成後，在 Gemini CLI 對話中直接使用：
+
+```
+今天 Hacker News 有什麼新聞嘛？使用 agent-browser
+```
+
+或明確呼叫：
+
+```
+/agent-browser 請幫我測試登入流程
+```
+
+### 為 Codex CLI 安裝
+
+如果你使用 Codex CLI，也可以用相同的方法安裝 agent-browser skill：
+
+#### 方法 1: 直接下載安裝
+
+```bash
+# 建立 skill 目錄
+mkdir -p ~/.codex/skills/agent-browser
+
+# 下載 SKILL.md 檔案
+curl -o ~/.codex/skills/agent-browser/SKILL.md \
+  https://raw.githubusercontent.com/vercel-labs/agent-browser/main/skills/agent-browser/SKILL.md
+
+# 驗證下載成功
+wc -l ~/.codex/skills/agent-browser/SKILL.md
+ls -lh ~/.codex/skills/agent-browser/SKILL.md
+```
+
+#### 一鍵安裝與驗證腳本
+
+```bash
+#!/bin/bash
+# 為 Codex CLI 安裝 agent-browser skill
+
+SKILL_DIR="$HOME/.codex/skills/agent-browser"
+SKILL_URL="https://raw.githubusercontent.com/vercel-labs/agent-browser/main/skills/agent-browser/SKILL.md"
+
+echo "Creating skill directory for Codex..."
+mkdir -p "$SKILL_DIR"
+
+echo "Downloading SKILL.md..."
+curl -o "$SKILL_DIR/SKILL.md" "$SKILL_URL"
+
+# 驗證下載
+if [ -f "$SKILL_DIR/SKILL.md" ]; then
+    lines=$(wc -l < "$SKILL_DIR/SKILL.md")
+    size=$(wc -c < "$SKILL_DIR/SKILL.md")
+
+    if [ "$lines" -gt 200 ] && [ "$size" -gt 8000 ]; then
+        echo "✅ Codex installation successful!"
+        echo "   Lines: $lines"
+        echo "   Size: $size bytes"
+
+        # 檢查 Codex skills 目錄
+        echo ""
+        echo "Installed skills in Codex:"
+        ls -1 ~/.codex/skills/ | grep -v "^\."
+    else
+        echo "❌ Downloaded file seems incomplete"
+        echo "   Lines: $lines (expected > 200)"
+        echo "   Size: $size bytes (expected > 8000)"
+        exit 1
+    fi
+else
+    echo "❌ Download failed"
+    exit 1
+fi
+```
+
+#### 在 Codex 中使用
+
+安裝完成後，在 Codex CLI 對話中直接使用：
+
+```
+今天 Hacker News 有什麼新聞嘛？使用 agent-browser
+```
+
+或在互動模式下執行：
+
+```bash
+codex "用 agent-browser 幫我測試這個網站"
+```
+
 ## 核心功能
 
 ### 導航控制
