@@ -28,19 +28,19 @@
 
 ```mermaid
 graph TD
-    User((User)) -- Telegram --> TGBot[Telegram Bot (Python)]
-    
-    subgraph "Local Machine (Mac/Linux)"
-        TGBot -- 1. Receive Cmd --> Controller[Controller Logic]
-        Controller -- 2. subprocess.run() --> CLI[Gemini CLI]
-        
-        CLI -- 3. Tool Use --> Tools[Tools (Browser/Files)]
-        CLI -- 4. RAG --> NLM[NotebookLM]
-        
-        CLI -- 5. Stdout --> Controller
+    User((User)) -->|Telegram| TGBot[Telegram Bot Python]
+
+    subgraph LocalMachine[Local Machine]
+        TGBot -->|1. Receive Cmd| Controller[Controller Logic]
+        Controller -->|2. subprocess.run| CLI[Gemini CLI]
+
+        CLI -->|3. Tool Use| Tools[Tools Browser/Files]
+        CLI -->|4. RAG| NLM[NotebookLM]
+
+        CLI -->|5. Stdout| Controller
     end
-    
-    Controller -- 6. Reply Text/File --> User
+
+    Controller -->|6. Reply Text/File| User
 ```
 
 **關鍵實作細節：**
