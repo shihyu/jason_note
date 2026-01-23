@@ -360,6 +360,7 @@
     - [黑箱測試方法詳細指南](software_engineering/testing_methods_guide.md)
     - [軟體開發方法論完整指南](software_engineering/software_development_methodologies_guide.md)
     - [系統設計機制完整比較指南](linux_system/system_design_comparisons.md)
+    - [單一個案子,從3萬到20萬 把這件事做好就行](software_engineering/從3萬到20萬把這件事做好就行.md)
 
 ## Performance
 - [效能量測指南](performance/Performance.md)
@@ -630,6 +631,7 @@
 - [AI Agent 自主系統開發](ai_agent/ai_agent.md)
     - [Ralph Loop 自動化循環系統](ai_agent/RALPH_GUIDE.md)
     - [AutoContent Loop 內容生產系統](ai_agent/development_plan.md)
+    - [我的 AI 是怎麼記錄我的寫文習慣的？](ai_agent/AI是怎麼記錄我的寫文習慣的.md)
 
 ## Others
 - [Design Patterns](dp/dp.md)
