@@ -633,6 +633,10 @@
     - [AutoContent Loop 內容生產系統](ai_agent/development_plan.md)
     - [我的 AI 是怎麼記錄我的寫文習慣的？](ai_agent/AI是怎麼記錄我的寫文習慣的.md)
 
+## Lifestyle & Resources
+- [台北生活指南](lifestyle/README.md)
+    - [台北北歐二手家具店完整指南](lifestyle/taipei-nordic-furniture-stores.md)
+
 ## Others
 - [Design Patterns](dp/dp.md)
     - [設計模式完整指南](dp/design-patterns-guide.md)
