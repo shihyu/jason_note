@@ -208,7 +208,7 @@ Clawdbot 支援三種主流 AI 模型，全部使用 OAuth 認證（更安全，
 
 | AI Model | Provider | 認證方式 | 有效期 |
 |----------|----------|----------|--------|
-| **Claude Opus 4.5** | Anthropic | OAuth | ~5 小時 |
+| **Claude Sonnet 4.5** | Anthropic | OAuth | ~5 小時 |
 | **Gemini 3 Pro** | Google | OAuth | ~1 小時 |
 | **Codex** | OpenAI | OAuth | ~10 天 |
 
@@ -276,7 +276,7 @@ OAuth/token status
 clawdbot models list
 
 # 設定預設 model（選擇一個）
-clawdbot models set anthropic/claude-opus-4-5           # Claude
+clawdbot models set anthropic/claude-sonnet-4-5           # Claude
 clawdbot models set google-gemini-cli/gemini-3-pro-preview  # Gemini
 clawdbot models set openai-codex/gpt-4o                 # Codex
 
@@ -296,8 +296,8 @@ clawdbot models status | grep "Default"
 #### 方式 1：使用 clawdbot agent 指令測試
 
 ```bash
-# ✅ 測試 Claude Opus 4.5（推薦，最穩定）
-clawdbot models set anthropic/claude-opus-4-5
+# ✅ 測試 Claude Sonnet 4.5（推薦，最穩定）
+clawdbot models set anthropic/claude-sonnet-4-5
 clawdbot agent --session-id test-claude --message "你好，請用繁體中文自我介紹" --json
 
 # ⚠️ 測試 Gemini 3 Pro（可能遇到容量不足 429 錯誤）
@@ -321,7 +321,7 @@ clawdbot agent --session-id test-gemini --message "你好，請用繁體中文�
 
 #### 測試結果預期
 
-**Claude Opus 4.5** 回應範例：
+**Claude Sonnet 4.5** 回應範例：
 ```json
 {
   "status": "ok",
@@ -332,7 +332,7 @@ clawdbot agent --session-id test-gemini --message "你好，請用繁體中文�
     "meta": {
       "agentMeta": {
         "provider": "anthropic",
-        "model": "claude-opus-4-5",
+        "model": "claude-sonnet-4-5",
         "usage": {
           "input": 10,
           "output": 472
@@ -446,7 +446,7 @@ clawdbot models list | grep -v "missing"
 clawdbot models status
 
 # 3. 使用確認可用的 model
-clawdbot models set anthropic/claude-opus-4-5  # 推薦
+clawdbot models set anthropic/claude-sonnet-4-5  # 推薦
 ```
 
 #### 問題：Gemini 容量不足 (429 Error)
@@ -547,7 +547,7 @@ clawdbot models list
 clawdbot models status
 
 # 設定預設 model
-clawdbot models set anthropic/claude-opus-4-5
+clawdbot models set anthropic/claude-sonnet-4-5
 
 # OAuth 登入
 clawdbot models auth login --provider anthropic
@@ -692,7 +692,7 @@ clawdbot logs --tail 100 | grep -i error
 
 ```bash
 # ✅ 測試 Claude（最穩定）
-clawdbot models set anthropic/claude-opus-4-5
+clawdbot models set anthropic/claude-sonnet-4-5
 clawdbot agent --session-id test-claude --message "測試 Claude 連線" --json | jq '.result.payloads[0].text'
 
 # ⚠️ 測試 Gemini（可能遇到容量不足）
@@ -934,7 +934,7 @@ clawdbot models auth login --provider openai-codex
 ### 切換 Model
 ```bash
 # 切換到 Claude
-clawdbot models set anthropic/claude-opus-4-5
+clawdbot models set anthropic/claude-sonnet-4-5
 
 # 切換到 Gemini
 clawdbot models set google-gemini-cli/gemini-3-pro-preview
@@ -1048,7 +1048,7 @@ clawdbot agents add
 # 編輯 ~/.clawdbot/clawdbot.json
 {
   "agents": {
-    "main": { "model": "anthropic/claude-opus-4-5" },
+    "main": { "model": "anthropic/claude-sonnet-4-5" },
     "research": { "model": "google-gemini-cli/gemini-3-pro-preview" },
     "coding": { "model": "openai-codex/gpt-4o" }
   }
@@ -1061,7 +1061,7 @@ clawdbot agents add
 
 ```bash
 # 設定 fallback 順序
-clawdbot models fallbacks add anthropic/claude-opus-4-5
+clawdbot models fallbacks add anthropic/claude-sonnet-4-5
 clawdbot models fallbacks add google-gemini-cli/gemini-3-pro-preview
 clawdbot models fallbacks add openai-codex/gpt-4o
 
