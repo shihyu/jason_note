@@ -4,10 +4,12 @@
 1. [概念介紹](#概念介紹)
 2. [核心功能](#核心功能)
 3. [使用方法](#使用方法)
-4. [常用指令](#常用指令)
-5. [成本估算](#成本估算)
-6. [安全警告](#安全警告)
-7. [常見 Q&A](#常見qa)
+4. [OAuth 配置完整指南](#oauth-配置完整指南)
+5. [快速切換 AI Model](#快速切換-ai-model)
+6. [常用指令](#常用指令)
+7. [成本估算](#成本估算)
+8. [安全警告](#安全警告)
+9. [常見 Q&A](#常見qa)
 
 ---
 
@@ -648,6 +650,263 @@ LINE 伺服器
 Claude/ChatGPT
     ↓
 回覆 + 執行任務
+```
+
+---
+
+## 快速切換 AI Model
+
+Clawdbot 支援在多個 AI 模型之間快速切換，以下提供三種方法：
+
+### 方法 1：使用 Model Aliases（最推薦）
+
+#### 設定 Aliases
+
+```bash
+# 為常用 models 設定簡短別名
+clawdbot models aliases add claude anthropic/claude-sonnet-4-5
+clawdbot models aliases add opus anthropic/claude-opus-4-5
+clawdbot models aliases add gemini google-gemini-cli/gemini-3-pro-preview
+clawdbot models aliases add codex openai-codex/gpt-5.2-codex
+
+# 查看所有 aliases
+clawdbot models aliases list
+```
+
+#### 快速切換
+
+```bash
+# 使用 alias 快速切換
+clawdbot models set claude    # 切換到 Claude Sonnet 4.5
+clawdbot models set gemini    # 切換到 Gemini 3 Pro
+clawdbot models set codex     # 切換到 Codex GPT-5.2
+clawdbot models set opus      # 切換到 Claude Opus 4.5
+
+# 查看當前使用的 model
+clawdbot models status | grep "Default"
+```
+
+### 方法 2：快速切換腳本（推薦進階使用者）
+
+建立一個快速切換腳本，更方便管理：
+
+#### 建立腳本檔案
+
+將以下內容儲存為 `~/clawdbot-switch.sh`：
+
+```bash
+#!/bin/bash
+# Clawdbot 快速切換 AI Model 腳本
+
+case "$1" in
+  claude)
+    echo "🤖 切換到 Claude Sonnet 4.5..."
+    clawdbot models set claude
+    ;;
+  opus)
+    echo "🤖 切換到 Claude Opus 4.5..."
+    clawdbot models set opus
+    ;;
+  gemini)
+    echo "🤖 切換到 Gemini 3 Pro Preview..."
+    clawdbot models set gemini
+    ;;
+  codex)
+    echo "🤖 切換到 Codex GPT-5.2..."
+    clawdbot models set codex
+    ;;
+  status)
+    echo "📊 當前 Model 狀態："
+    clawdbot models status | grep -A 3 "Default\|Primary"
+    ;;
+  list)
+    echo "📋 可用的 Models："
+    clawdbot models aliases list
+    ;;
+  *)
+    echo "用法: $0 {claude|opus|gemini|codex|status|list}"
+    echo ""
+    echo "快速切換 AI Model："
+    echo "  $0 claude   - 切換到 Claude Sonnet 4.5（快速、日常對話）"
+    echo "  $0 opus     - 切換到 Claude Opus 4.5（最強推理）"
+    echo "  $0 gemini   - 切換到 Gemini 3 Pro（大 context）"
+    echo "  $0 codex    - 切換到 Codex GPT-5.2（代碼優化）"
+    echo "  $0 status   - 查看當前使用的 model"
+    echo "  $0 list     - 列出所有可用 models"
+    exit 1
+    ;;
+esac
+```
+
+#### 設定執行權限
+
+```bash
+chmod +x ~/clawdbot-switch.sh
+```
+
+#### 使用範例
+
+```bash
+# 切換到 Claude（快速、日常對話）
+~/clawdbot-switch.sh claude
+
+# 切換到 Gemini（大 context，約 2 分鐘回應）
+~/clawdbot-switch.sh gemini
+
+# 切換到 Codex（代碼優化）
+~/clawdbot-switch.sh codex
+
+# 切換到 Opus（最強推理）
+~/clawdbot-switch.sh opus
+
+# 查看當前使用的 model
+~/clawdbot-switch.sh status
+
+# 列出所有可用 models
+~/clawdbot-switch.sh list
+```
+
+### 方法 3：Shell Aliases（最快速）
+
+在 `~/.bashrc` 或 `~/.zshrc` 中加入以下內容：
+
+```bash
+# Clawdbot Model 快速切換
+alias cb-switch='~/clawdbot-switch.sh'
+alias cb-claude='clawdbot models set claude'
+alias cb-gemini='clawdbot models set gemini'
+alias cb-codex='clawdbot models set codex'
+alias cb-opus='clawdbot models set opus'
+alias cb-status='clawdbot models status | grep -A 3 "Default"'
+alias cb-list='clawdbot models aliases list'
+```
+
+重新載入配置：
+
+```bash
+source ~/.bashrc   # 或 source ~/.zshrc
+```
+
+使用範例：
+
+```bash
+cb-claude    # 切換到 Claude Sonnet 4.5
+cb-gemini    # 切換到 Gemini 3 Pro
+cb-codex     # 切換到 Codex GPT-5.2
+cb-opus      # 切換到 Claude Opus 4.5
+cb-status    # 查看當前狀態
+cb-list      # 列出所有 aliases
+```
+
+### Model 選擇建議
+
+| 場景 | 推薦 Model | 切換指令 | 特性 |
+|------|-----------|---------|------|
+| **日常對話** | Claude Sonnet 4.5 | `cb-claude` | 快速（~10秒）、平衡 |
+| **最強推理** | Claude Opus 4.5 | `cb-opus` | 最聰明、較慢、較貴 |
+| **長文分析** | Gemini 3 Pro | `cb-gemini` | 大 context (1024k)、慢（~2分鐘） |
+| **程式開發** | Codex GPT-5.2 | `cb-codex` | 代碼優化、快速（~15秒） |
+
+### 注意事項
+
+⚠️ **切換後的行為**：
+- 切換 model 後，**在 Telegram 的下一次對話就會使用新的 model**
+- 不需要重啟 Gateway
+- 切換是即時生效的
+- 不會影響現有的對話歷史和記憶
+
+### 建議工作流程
+
+```bash
+# 早上起床，用 Claude 處理日常對話
+cb-claude
+
+# 需要分析長文件時，切換到 Gemini
+cb-gemini
+
+# 寫程式時，切換到 Codex
+cb-codex
+
+# 需要最強推理時，切換到 Opus
+cb-opus
+
+# 隨時查看當前使用的 model
+cb-status
+```
+
+### 一鍵安裝腳本
+
+快速安裝切換腳本並設定 aliases：
+
+```bash
+# 下載腳本（如果你有放在 GitHub）
+curl -o ~/clawdbot-switch.sh https://your-repo/clawdbot-switch.sh
+chmod +x ~/clawdbot-switch.sh
+
+# 或直接建立腳本
+cat > ~/clawdbot-switch.sh << 'EOF'
+#!/bin/bash
+# Clawdbot 快速切換 AI Model 腳本
+
+case "$1" in
+  claude)
+    echo "🤖 切換到 Claude Sonnet 4.5..."
+    clawdbot models set claude
+    ;;
+  opus)
+    echo "🤖 切換到 Claude Opus 4.5..."
+    clawdbot models set opus
+    ;;
+  gemini)
+    echo "🤖 切換到 Gemini 3 Pro Preview..."
+    clawdbot models set gemini
+    ;;
+  codex)
+    echo "🤖 切換到 Codex GPT-5.2..."
+    clawdbot models set codex
+    ;;
+  status)
+    echo "📊 當前 Model 狀態："
+    clawdbot models status | grep -A 3 "Default\|Primary"
+    ;;
+  list)
+    echo "📋 可用的 Models："
+    clawdbot models aliases list
+    ;;
+  *)
+    echo "用法: $0 {claude|opus|gemini|codex|status|list}"
+    echo ""
+    echo "快速切換 AI Model："
+    echo "  $0 claude   - 切換到 Claude Sonnet 4.5（快速、日常對話）"
+    echo "  $0 opus     - 切換到 Claude Opus 4.5（最強推理）"
+    echo "  $0 gemini   - 切換到 Gemini 3 Pro（大 context）"
+    echo "  $0 codex    - 切換到 Codex GPT-5.2（代碼優化）"
+    echo "  $0 status   - 查看當前使用的 model"
+    echo "  $0 list     - 列出所有可用 models"
+    exit 1
+    ;;
+esac
+EOF
+
+chmod +x ~/clawdbot-switch.sh
+
+# 自動加入 aliases 到 ~/.bashrc
+cat >> ~/.bashrc << 'EOF'
+
+# Clawdbot Model 快速切換
+alias cb-switch='~/clawdbot-switch.sh'
+alias cb-claude='clawdbot models set claude'
+alias cb-gemini='clawdbot models set gemini'
+alias cb-codex='clawdbot models set codex'
+alias cb-opus='clawdbot models set opus'
+alias cb-status='clawdbot models status | grep -A 3 "Default"'
+alias cb-list='clawdbot models aliases list'
+EOF
+
+# 重新載入配置
+source ~/.bashrc
+
+echo "✅ 安裝完成！現在可以使用 cb-claude, cb-gemini, cb-codex 等指令快速切換 Model"
 ```
 
 ---
