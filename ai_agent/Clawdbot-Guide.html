@@ -351,6 +351,268 @@ Claude / ChatGPT / Gemini（本地運行）
 <li>等等</li>
 </ul>
 <hr />
+<h2 id="oauth-配置完整指南"><a class="header" href="#oauth-配置完整指南">OAuth 配置完整指南</a></h2>
+<h3 id="概述"><a class="header" href="#概述">概述</a></h3>
+<p>Clawdbot 支援三種主流 AI 模型，全部使用 OAuth 認證（更安全，無需手動管理 API Key）：</p>
+<div class="table-wrapper"><table><thead><tr><th>AI Model</th><th>Provider</th><th>Model ID</th><th>認證方式</th><th>有效期</th></tr></thead><tbody>
+<tr><td><strong>Claude Sonnet 4.5</strong></td><td>Anthropic</td><td><code>anthropic/claude-sonnet-4-5</code></td><td>OAuth</td><td>~5 小時</td></tr>
+<tr><td><strong>Gemini 3 Pro Preview</strong></td><td>Google</td><td><code>google-gemini-cli/gemini-3-pro-preview</code></td><td>OAuth</td><td>~1 小時</td></tr>
+<tr><td><strong>Codex (GPT-5.2)</strong></td><td>OpenAI</td><td><code>openai-codex/gpt-5.2-codex</code></td><td>OAuth</td><td>~10 天</td></tr>
+</tbody></table>
+</div>
+<h3 id="1-啟用-oauth-plugins"><a class="header" href="#1-啟用-oauth-plugins">1. 啟用 OAuth Plugins</a></h3>
+<pre><code class="language-bash"># 啟用 Gemini OAuth plugin
+clawdbot plugins enable google-gemini-cli-auth
+
+# 重啟 gateway 套用變更
+clawdbot gateway restart
+</code></pre>
+<h3 id="2-執行-oauth-登入"><a class="header" href="#2-執行-oauth-登入">2. 執行 OAuth 登入</a></h3>
+<h4 id="claude-oauth"><a class="header" href="#claude-oauth">Claude OAuth</a></h4>
+<pre><code class="language-bash">clawdbot models auth login --provider anthropic
+</code></pre>
+<ul>
+<li>會開啟瀏覽器</li>
+<li>登入你的 Anthropic 帳號</li>
+<li>授權完成後自動儲存 token</li>
+</ul>
+<h4 id="gemini-oauth"><a class="header" href="#gemini-oauth">Gemini OAuth</a></h4>
+<pre><code class="language-bash">clawdbot models auth login --provider google-gemini-cli
+</code></pre>
+<ul>
+<li>會開啟瀏覽器</li>
+<li>登入 Google 帳號</li>
+<li>授權 Gemini CLI 存取權限</li>
+</ul>
+<h4 id="codex-openai-oauth"><a class="header" href="#codex-openai-oauth">Codex (OpenAI) OAuth</a></h4>
+<pre><code class="language-bash">clawdbot models auth login --provider openai-codex
+</code></pre>
+<ul>
+<li>會開啟瀏覽器</li>
+<li>登入 ChatGPT 帳號（需要 Plus 訂閱）</li>
+<li>授權完成後自動儲存</li>
+</ul>
+<h3 id="3-檢查認證狀態"><a class="header" href="#3-檢查認證狀態">3. 檢查認證狀態</a></h3>
+<pre><code class="language-bash"># 查看所有 model 的認證狀態
+clawdbot models status
+
+# 查看 OAuth token 有效期
+clawdbot models status | grep -A 10 "OAuth/token status"
+</code></pre>
+<p><strong>範例輸出：</strong></p>
+<pre><code>OAuth/token status
+- anthropic usage: 5h 45% left ⏱2h 16m
+  - anthropic:claude-cli expiring expires in 52m (claude-cli)
+- google-gemini-cli usage: Pro 100% left · Flash 100% left
+  - google-gemini-cli:jason@example.com expiring expires in 54m
+- openai-codex usage: 5h 100% left ⏱5h · Day 100% left ⏱Feb 2
+  - openai-codex:codex-cli ok expires in 10d (codex-cli)
+</code></pre>
+<h3 id="4-設定預設-model"><a class="header" href="#4-設定預設-model">4. 設定預設 Model</a></h3>
+<pre><code class="language-bash"># 查看可用的 models
+clawdbot models list
+
+# 設定預設 model（選擇一個）
+clawdbot models set anthropic/claude-sonnet-4-5              # Claude Sonnet 4.5
+clawdbot models set google-gemini-cli/gemini-3-pro-preview   # Gemini 3 Pro Preview
+clawdbot models set openai-codex/gpt-5.2-codex               # Codex (GPT-5.2)
+
+# 查看當前設定
+clawdbot models status | grep "Default"
+</code></pre>
+<h3 id="5-測試三種-model"><a class="header" href="#5-測試三種-model">5. 測試三種 Model</a></h3>
+<h4 id="-重要agent-指令需要指定-session"><a class="header" href="#-重要agent-指令需要指定-session">⚠️ 重要：agent 指令需要指定 session</a></h4>
+<p>使用 <code>clawdbot agent</code> 指令時，<strong>必須</strong>加上以下其中一個參數：</p>
+<ul>
+<li><code>--session-id &lt;id&gt;</code> - 指定 session ID（最簡單，適合測試）</li>
+<li><code>--to &lt;E.164&gt;</code> - 指定電話號碼（例如：+886912345678）</li>
+<li><code>--agent &lt;id&gt;</code> - 指定 agent ID</li>
+</ul>
+<h4 id="方式-1使用-clawdbot-agent-指令測試"><a class="header" href="#方式-1使用-clawdbot-agent-指令測試">方式 1：使用 clawdbot agent 指令測試</a></h4>
+<pre><code class="language-bash"># ✅ 測試 Claude Sonnet 4.5（推薦，最快速）
+clawdbot models set anthropic/claude-sonnet-4-5
+clawdbot agent --session-id test-claude --message "你好，請用繁體中文自我介紹" --json
+
+# ✅ 測試 Gemini 3 Pro Preview（支援大 context）
+clawdbot models set google-gemini-cli/gemini-3-pro-preview
+clawdbot agent --session-id test-gemini --message "你好，請用繁體中文自我介紹" --json
+
+# ✅ 測試 Codex (GPT-5.2)（最新代碼模型）
+clawdbot models set openai-codex/gpt-5.2-codex
+clawdbot agent --session-id test-codex --message "你好，請用繁體中文自我介紹" --json
+</code></pre>
+<p><strong>注意事項：</strong></p>
+<ul>
+<li><strong>Claude Sonnet 4.5</strong>: 最快（~10秒），適合日常對話和快速任務</li>
+<li><strong>Gemini 3 Pro</strong>: 較慢（~2分鐘），但支援超大 context window (1024k)</li>
+<li><strong>Codex (GPT-5.2)</strong>: 快速（~15秒），專為代碼任務優化</li>
+</ul>
+<h4 id="方式-2在通訊軟體中測試推薦"><a class="header" href="#方式-2在通訊軟體中測試推薦">方式 2：在通訊軟體中測試（推薦）</a></h4>
+<p>發送訊息到你的 Telegram/WhatsApp bot：</p>
+<pre><code>你好，請自我介紹一下
+</code></pre>
+<p>通訊軟體中的測試會自動使用預設 model，無需指定 session-id。切換 model 後再測試以比較回應風格。</p>
+<h4 id="測試結果預期"><a class="header" href="#測試結果預期">測試結果預期</a></h4>
+<p><strong>Claude Sonnet 4.5</strong> 回應範例：</p>
+<pre><code class="language-json">{
+  "status": "ok",
+  "result": {
+    "payloads": [{
+      "text": "你好！我是 Claude，由 Anthropic 公司開發的 AI 助手..."
+    }],
+    "meta": {
+      "durationMs": 10401,
+      "agentMeta": {
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "usage": {
+          "input": 10,
+          "output": 472
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p><strong>Gemini 3 Pro Preview</strong> 回應範例：</p>
+<pre><code class="language-json">{
+  "status": "ok",
+  "result": {
+    "payloads": [{
+      "text": "你好！我是由 Google 的 Gemini 3 Pro 模型驅動的 AI 助手..."
+    }],
+    "meta": {
+      "durationMs": 142208,
+      "agentMeta": {
+        "provider": "google-gemini-cli",
+        "model": "gemini-3-pro-preview",
+        "usage": {
+          "input": 6004,
+          "output": 905
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p><strong>注意</strong>: Gemini 回應較慢（~2分鐘），這是正常現象。</p>
+<p><strong>Codex (GPT-5.2)</strong> 回應範例：</p>
+<pre><code class="language-json">{
+  "status": "ok",
+  "result": {
+    "payloads": [{
+      "text": "你好！我是你的個人助理 AI，使用的模型是 openai-codex/gpt-5.2-codex..."
+    }],
+    "meta": {
+      "durationMs": 15377,
+      "agentMeta": {
+        "provider": "openai-codex",
+        "model": "gpt-5.2-codex",
+        "usage": {
+          "input": 218,
+          "output": 185
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<h3 id="6-token-更新管理"><a class="header" href="#6-token-更新管理">6. Token 更新管理</a></h3>
+<h4 id="自動更新推薦"><a class="header" href="#自動更新推薦">自動更新（推薦）</a></h4>
+<p>OAuth tokens 會在接近過期時自動更新（如果有 refresh token）。</p>
+<h4 id="手動更新"><a class="header" href="#手動更新">手動更新</a></h4>
+<p>如果 token 過期，重新執行登入即可：</p>
+<pre><code class="language-bash">clawdbot models auth login --provider anthropic
+clawdbot models auth login --provider google-gemini-cli
+clawdbot models auth login --provider openai-codex
+</code></pre>
+<h3 id="7-移除舊的-api-keys可選"><a class="header" href="#7-移除舊的-api-keys可選">7. 移除舊的 API Keys（可選）</a></h3>
+<p>如果之前用 API Key 方式設定，現在改用 OAuth，可以清理環境變數：</p>
+<pre><code class="language-bash"># 檢查哪裡設定了 API Keys
+grep -r "ANTHROPIC_API_KEY\|GEMINI_API_KEY\|OPENAI_API_KEY" \
+  ~/.bashrc ~/.zshrc ~/.profile ~/.bash_profile 2&gt;/dev/null
+
+# 編輯對應檔案移除這些環境變數
+vim ~/.bashrc  # 或其他檔案
+
+# 重新載入環境
+source ~/.bashrc
+</code></pre>
+<h3 id="8-疑難排解"><a class="header" href="#8-疑難排解">8. 疑難排解</a></h3>
+<h4 id="問題oauth-登入失敗"><a class="header" href="#問題oauth-登入失敗">問題：OAuth 登入失敗</a></h4>
+<pre><code class="language-bash"># 檢查 gateway 是否運行
+clawdbot gateway status
+
+# 重啟 gateway
+clawdbot gateway restart
+
+# 檢查是否有錯誤
+clawdbot logs --tail 50
+</code></pre>
+<h4 id="問題token-過期"><a class="header" href="#問題token-過期">問題：Token 過期</a></h4>
+<pre><code class="language-bash"># 重新登入即可
+clawdbot models auth login --provider &lt;provider-name&gt;
+</code></pre>
+<h4 id="問題找不到認證檔案"><a class="header" href="#問題找不到認證檔案">問題：找不到認證檔案</a></h4>
+<pre><code class="language-bash"># 檢查認證檔案位置
+ls -la ~/.clawdbot/agents/main/agent/auth-profiles.json
+
+# 查看檔案內容（確認 token 存在）
+cat ~/.clawdbot/agents/main/agent/auth-profiles.json | jq '.profiles | keys'
+</code></pre>
+<h4 id="問題agent-指令要求-session-id"><a class="header" href="#問題agent-指令要求-session-id">問題：agent 指令要求 session-id</a></h4>
+<pre><code>Error: Pass --to &lt;E.164&gt;, --session-id, or --agent to choose a session
+</code></pre>
+<p><strong>解決方案</strong>：agent 指令必須指定 session，使用以下任一參數：</p>
+<pre><code class="language-bash"># 方法 1：使用 session-id（最簡單，適合測試）
+clawdbot agent --session-id test --message "你好" --json
+
+# 方法 2：使用電話號碼（E.164 格式）
+clawdbot agent --to +886912345678 --message "你好" --json
+
+# 方法 3：指定 agent ID
+clawdbot agent --agent main --message "你好" --json
+</code></pre>
+<h4 id="問題model-不可用-unknown-model"><a class="header" href="#問題model-不可用-unknown-model">問題：Model 不可用 (Unknown model)</a></h4>
+<pre><code>Error: Unknown model: openai-codex/gpt-5.2-codex
+</code></pre>
+<p><strong>原因</strong>：使用了錯誤的 model ID</p>
+<p><strong>解決方案</strong>：</p>
+<pre><code class="language-bash"># 1. 檢查可用的 models
+clawdbot models list | grep -v "missing"
+
+# 2. 使用正確的 Model ID
+clawdbot models set anthropic/claude-sonnet-4-5              # Claude
+clawdbot models set google-gemini-cli/gemini-3-pro-preview   # Gemini
+clawdbot models set openai-codex/gpt-5.2-codex               # Codex (正確)
+
+# 3. 確認設定
+clawdbot models status | grep "Default"
+</code></pre>
+<h4 id="問題gemini-回應很慢-2-分鐘"><a class="header" href="#問題gemini-回應很慢-2-分鐘">問題：Gemini 回應很慢 (~2 分鐘)</a></h4>
+<p><strong>原因</strong>：這是 Gemini 3 Pro Preview 的正常行為</p>
+<p><strong>說明</strong>：</p>
+<ul>
+<li>Gemini 平均回應時間：120-150 秒</li>
+<li>Claude 平均回應時間：10-15 秒</li>
+<li>Codex 平均回應時間：15-20 秒</li>
+</ul>
+<p><strong>建議</strong>：</p>
+<ul>
+<li>日常對話使用 Claude Sonnet 4.5（最快）</li>
+<li>需要大 context 時使用 Gemini（支援 1024k）</li>
+<li>代碼任務使用 Codex GPT-5.2（代碼優化）</li>
+</ul>
+<h4 id="問題gemini-容量不足-429-error---已少見"><a class="header" href="#問題gemini-容量不足-429-error---已少見">問題：Gemini 容量不足 (429 Error) - 已少見</a></h4>
+<pre><code>Cloud Code Assist API error (429): No capacity available for model gemini-3-pro-preview
+</code></pre>
+<p><strong>解決方案</strong>：</p>
+<ul>
+<li>Google 伺服器暫時容量不足（目前已較少發生）</li>
+<li>稍後再試（通常幾分鐘後恢復）</li>
+<li>或暫時切換到其他 model（Claude 或 Codex）</li>
+</ul>
+<hr />
 <h2 id="遠端控制電腦的原理"><a class="header" href="#遠端控制電腦的原理">遠端控制電腦的原理</a></h2>
 <h3 id="運作流程"><a class="header" href="#運作流程">運作流程</a></h3>
 <ol>
@@ -380,7 +642,8 @@ Claude/ChatGPT
 </code></pre>
 <hr />
 <h2 id="常用指令"><a class="header" href="#常用指令">常用指令</a></h2>
-<p>在任何通訊軟體中可使用以下指令：</p>
+<h3 id="通訊軟體中的指令"><a class="header" href="#通訊軟體中的指令">通訊軟體中的指令</a></h3>
+<p>在任何通訊軟體（Telegram/WhatsApp/Discord 等）中可使用：</p>
 <div class="table-wrapper"><table><thead><tr><th>指令</th><th>功能</th></tr></thead><tbody>
 <tr><td><code>/status</code></td><td>查看會話狀態（模型、token 數、費用）</td></tr>
 <tr><td><code>/new</code> 或 <code>/reset</code></td><td>重設對話</td></tr>
@@ -390,6 +653,178 @@ Claude/ChatGPT
 <tr><td><code>/usage off|tokens|full</code></td><td>設定費用顯示</td></tr>
 </tbody></table>
 </div>
+<h3 id="cli-命令行指令"><a class="header" href="#cli-命令行指令">CLI 命令行指令</a></h3>
+<h4 id="gateway-管理"><a class="header" href="#gateway-管理">Gateway 管理</a></h4>
+<pre><code class="language-bash"># 啟動 gateway
+clawdbot gateway
+
+# 強制啟動（自動 kill 佔用的 port）
+clawdbot gateway --force
+
+# 指定 port
+clawdbot gateway --port 18789
+
+# 查看 gateway 狀態
+clawdbot gateway status
+
+# 重啟 gateway
+clawdbot gateway restart
+
+# 停止 gateway
+clawdbot gateway stop
+
+# 查看即時 logs
+clawdbot logs --tail 50
+
+# 持續監看 logs
+clawdbot logs --follow
+</code></pre>
+<h4 id="model-管理"><a class="header" href="#model-管理">Model 管理</a></h4>
+<pre><code class="language-bash"># 列出所有可用 models
+clawdbot models list
+
+# 查看 model 認證狀態
+clawdbot models status
+
+# 設定預設 model
+clawdbot models set anthropic/claude-sonnet-4-5
+
+# OAuth 登入
+clawdbot models auth login --provider anthropic
+clawdbot models auth login --provider google-gemini-cli
+clawdbot models auth login --provider openai-codex
+
+# 查看認證 profiles
+clawdbot models auth order
+</code></pre>
+<h4 id="agent-管理"><a class="header" href="#agent-管理">Agent 管理</a></h4>
+<pre><code class="language-bash"># 列出所有 agents
+clawdbot agents list
+
+# 添加新 agent
+clawdbot agents add
+
+# 刪除 agent
+clawdbot agents delete &lt;agent-id&gt;
+
+# 發送訊息給 agent
+clawdbot agent --message "你好" --json
+
+# 指定 agent 處理
+clawdbot agent --agent ops --message "產生報告"
+
+# 指定 session
+clawdbot agent --to +886912345678 --message "查詢狀態"
+
+# 直接傳送回覆到通訊軟體
+clawdbot agent --message "總結今天的工作" --deliver
+
+# 本地執行（不透過 Gateway）
+clawdbot agent --local --message "分析程式碼"
+</code></pre>
+<h4 id="通訊頻道管理"><a class="header" href="#通訊頻道管理">通訊頻道管理</a></h4>
+<pre><code class="language-bash"># 查看頻道狀態
+clawdbot channels status
+
+# 登入頻道（例如 WhatsApp）
+clawdbot channels login
+
+# 查看 sessions
+clawdbot sessions
+
+# 發送訊息
+clawdbot message send --target +886912345678 --message "Hi" --json
+</code></pre>
+<h4 id="plugin-管理"><a class="header" href="#plugin-管理">Plugin 管理</a></h4>
+<pre><code class="language-bash"># 列出所有 plugins
+clawdbot plugins list
+
+# 查看 plugin 詳情
+clawdbot plugins info &lt;plugin-id&gt;
+
+# 啟用 plugin
+clawdbot plugins enable &lt;plugin-id&gt;
+
+# 停用 plugin
+clawdbot plugins disable &lt;plugin-id&gt;
+
+# 安裝 plugin
+clawdbot plugins install &lt;path-or-npm-spec&gt;
+
+# 更新 plugins
+clawdbot plugins update
+</code></pre>
+<h4 id="系統診斷"><a class="header" href="#系統診斷">系統診斷</a></h4>
+<pre><code class="language-bash"># 健康檢查
+clawdbot doctor
+
+# 系統健康狀態
+clawdbot health
+
+# 查看頻道和 session 狀態
+clawdbot status
+
+# 配置管理
+clawdbot config get &lt;path&gt;
+clawdbot config set &lt;path&gt; &lt;value&gt;
+clawdbot config unset &lt;path&gt;
+</code></pre>
+<h4 id="其他工具"><a class="header" href="#其他工具">其他工具</a></h4>
+<pre><code class="language-bash"># 開啟控制面板
+clawdbot dashboard
+
+# 查看 cron 排程
+clawdbot cron
+
+# 記憶體搜尋
+clawdbot memory
+
+# 瀏覽器管理
+clawdbot browser
+
+# 沙箱工具
+clawdbot sandbox
+
+# 更新 CLI
+clawdbot update
+
+# 重設配置
+clawdbot reset
+
+# 完全移除
+clawdbot uninstall
+</code></pre>
+<h4 id="快速檢查指令組合"><a class="header" href="#快速檢查指令組合">快速檢查指令組合</a></h4>
+<pre><code class="language-bash"># 全面狀態檢查
+clawdbot gateway status &amp;&amp; \
+clawdbot models status &amp;&amp; \
+clawdbot channels status &amp;&amp; \
+clawdbot agents list
+
+# 重啟並檢查
+clawdbot gateway restart &amp;&amp; \
+sleep 3 &amp;&amp; \
+clawdbot health
+
+# 查看最近錯誤
+clawdbot logs --tail 100 | grep -i error
+</code></pre>
+<h4 id="測試連線"><a class="header" href="#測試連線">測試連線</a></h4>
+<pre><code class="language-bash"># ✅ 測試 Claude Sonnet 4.5（最快速）
+clawdbot models set anthropic/claude-sonnet-4-5
+clawdbot agent --session-id test-claude --message "測試 Claude 連線" --json | jq '.result.payloads[0].text'
+
+# ✅ 測試 Gemini 3 Pro（支援大 context，較慢約 2 分鐘）
+clawdbot models set google-gemini-cli/gemini-3-pro-preview
+clawdbot agent --session-id test-gemini --message "測試 Gemini 連線" --json | jq '.result.payloads[0].text'
+
+# ✅ 測試 Codex GPT-5.2（代碼優化）
+clawdbot models set openai-codex/gpt-5.2-codex
+clawdbot agent --session-id test-codex --message "測試 Codex 連線" --json | jq '.result.payloads[0].text'
+
+# 簡化測試（不使用 jq，查看完整 JSON）
+clawdbot agent --session-id test --message "Hello" --json
+</code></pre>
 <h3 id="實際使用例子"><a class="header" href="#實際使用例子">實際使用例子</a></h3>
 <pre><code>你：「查查看今天有沒有重要郵件」
 機器人：「你有 3 封郵件：1 件來自老闆，2 件來自客戶，我已幫你分類。」
@@ -570,7 +1005,208 @@ Claude/ChatGPT
 </ul>
 <p>用 30 分鐘、花費每月 $20-30，你就能擁有一個真正的 <strong>AI 超級秘書</strong>。</p>
 <hr />
-<p><em>文件更新日期：2026 年 1 月 26 日</em></p>
+<h2 id="快速參考卡"><a class="header" href="#快速參考卡">快速參考卡</a></h2>
+<h3 id="每日檢查指令"><a class="header" href="#每日檢查指令">每日檢查指令</a></h3>
+<pre><code class="language-bash"># 查看系統狀態
+clawdbot gateway status
+clawdbot models status
+clawdbot health
+
+# 查看 OAuth 有效期
+clawdbot models status | grep "expires in"
+
+# 查看最近 logs
+clawdbot logs --tail 20
+</code></pre>
+<h3 id="oauth-更新token-過期時"><a class="header" href="#oauth-更新token-過期時">OAuth 更新（Token 過期時）</a></h3>
+<pre><code class="language-bash"># Claude
+clawdbot models auth login --provider anthropic
+
+# Gemini
+clawdbot models auth login --provider google-gemini-cli
+
+# Codex
+clawdbot models auth login --provider openai-codex
+</code></pre>
+<h3 id="切換-model"><a class="header" href="#切換-model">切換 Model</a></h3>
+<pre><code class="language-bash"># 切換到 Claude
+clawdbot models set anthropic/claude-sonnet-4-5
+
+# 切換到 Gemini
+clawdbot models set google-gemini-cli/gemini-3-pro-preview
+
+# 切換到 Codex
+clawdbot models set openai-codex/gpt-5.2-codex
+</code></pre>
+<h3 id="重啟-gateway遇到問題時"><a class="header" href="#重啟-gateway遇到問題時">重啟 Gateway（遇到問題時）</a></h3>
+<pre><code class="language-bash"># 標準重啟
+clawdbot gateway restart
+
+# 強制重啟（清理舊 process）
+clawdbot gateway stop
+sleep 2
+clawdbot gateway --force
+</code></pre>
+<h3 id="測試-ai-回應"><a class="header" href="#測試-ai-回應">測試 AI 回應</a></h3>
+<pre><code class="language-bash"># 快速測試（使用當前預設 model，必須指定 session-id）
+clawdbot agent --session-id test --message "測試連線" --json
+
+# 測試特定 model
+clawdbot agent --session-id test-claude --message "你是什麼 AI?" --json
+
+# 測試並傳送到通訊軟體（需要先設定通訊頻道）
+clawdbot agent --session-id test --message "測試訊息" --deliver --reply-channel telegram
+</code></pre>
+<h3 id="記憶檔案位置"><a class="header" href="#記憶檔案位置">記憶檔案位置</a></h3>
+<pre><code class="language-bash"># Agent 記憶體目錄
+~/.clawdbot/agents/main/agent/
+
+# 認證檔案
+~/.clawdbot/agents/main/agent/auth-profiles.json
+
+# 配置檔案
+~/.clawdbot/clawdbot.json
+
+# Logs 目錄
+/tmp/clawdbot/
+</code></pre>
+<h3 id="故障排除-checklist"><a class="header" href="#故障排除-checklist">故障排除 Checklist</a></h3>
+<ol>
+<li>
+<p><strong>Gateway 無法啟動</strong></p>
+<pre><code class="language-bash">clawdbot gateway status
+clawdbot doctor
+lsof -i :18789  # 檢查 port 是否被佔用
+</code></pre>
+</li>
+<li>
+<p><strong>OAuth 過期</strong></p>
+<pre><code class="language-bash">clawdbot models status | grep "expiring"
+clawdbot models auth login --provider &lt;provider&gt;
+</code></pre>
+</li>
+<li>
+<p><strong>Agent 無回應</strong></p>
+<pre><code class="language-bash">clawdbot health
+clawdbot logs --tail 50
+clawdbot gateway restart
+</code></pre>
+</li>
+<li>
+<p><strong>通訊頻道離線</strong></p>
+<pre><code class="language-bash">clawdbot channels status
+clawdbot channels login
+</code></pre>
+</li>
+</ol>
+<h3 id="效能優化"><a class="header" href="#效能優化">效能優化</a></h3>
+<pre><code class="language-bash"># 檢查記憶體使用
+ps aux | grep clawdbot
+
+# 設定記憶體限制
+NODE_OPTIONS="--max-old-space-size=2048" clawdbot gateway --force
+
+# 清理舊 sessions
+clawdbot sessions | grep -i inactive
+</code></pre>
+<h3 id="備份重要資料"><a class="header" href="#備份重要資料">備份重要資料</a></h3>
+<pre><code class="language-bash"># 備份配置和認證
+tar -czf clawdbot-backup-$(date +%Y%m%d).tar.gz \
+  ~/.clawdbot/clawdbot.json \
+  ~/.clawdbot/agents/main/agent/auth-profiles.json
+
+# 還原備份
+tar -xzf clawdbot-backup-YYYYMMDD.tar.gz -C ~/
+</code></pre>
+<hr />
+<h2 id="進階技巧"><a class="header" href="#進階技巧">進階技巧</a></h2>
+<h3 id="1-多-agent-配置"><a class="header" href="#1-多-agent-配置">1. 多 Agent 配置</a></h3>
+<p>不同的 agent 可以用不同的 model：</p>
+<pre><code class="language-bash"># 添加專用 agent
+clawdbot agents add
+
+# 為不同 agent 設定不同的 workspace
+# 編輯 ~/.clawdbot/clawdbot.json
+{
+  "agents": {
+    "main": { "model": "anthropic/claude-sonnet-4-5" },
+    "research": { "model": "google-gemini-cli/gemini-3-pro-preview" },
+    "coding": { "model": "openai-codex/gpt-5.2-codex" }
+  }
+}
+</code></pre>
+<h3 id="2-設定-fallback-models"><a class="header" href="#2-設定-fallback-models">2. 設定 Fallback Models</a></h3>
+<p>當主 model 失敗時自動切換：</p>
+<pre><code class="language-bash"># 設定 fallback 順序
+clawdbot models fallbacks add anthropic/claude-sonnet-4-5
+clawdbot models fallbacks add google-gemini-cli/gemini-3-pro-preview
+clawdbot models fallbacks add openai-codex/gpt-5.2-codex
+
+# 查看 fallback 設定
+clawdbot models status | grep Fallbacks
+</code></pre>
+<h3 id="3-定時-token-更新"><a class="header" href="#3-定時-token-更新">3. 定時 Token 更新</a></h3>
+<p>建立 cron job 自動更新 OAuth tokens：</p>
+<pre><code class="language-bash"># 編輯 crontab
+crontab -e
+
+# 每 4 小時更新 Claude token
+0 */4 * * * clawdbot models auth login --provider anthropic 2&gt;&amp;1 | logger -t clawdbot-auth
+
+# 每小時更新 Gemini token
+0 * * * * clawdbot models auth login --provider google-gemini-cli 2&gt;&amp;1 | logger -t clawdbot-auth
+</code></pre>
+<h3 id="4-監控腳本"><a class="header" href="#4-監控腳本">4. 監控腳本</a></h3>
+<p>建立簡單的監控腳本：</p>
+<pre><code class="language-bash">#!/bin/bash
+# ~/monitor-clawdbot.sh
+
+echo "=== Clawdbot 狀態檢查 ==="
+echo "時間: $(date)"
+echo ""
+
+# Gateway 狀態
+echo "Gateway:"
+clawdbot gateway status | grep "Runtime"
+
+# Model 認證
+echo -e "\nModel OAuth 狀態:"
+clawdbot models status | grep -A 3 "OAuth/token status"
+
+# 錯誤檢查
+echo -e "\n最近錯誤:"
+clawdbot logs --tail 100 | grep -i error | tail -5
+
+echo "======================"
+</code></pre>
+<p>使用：</p>
+<pre><code class="language-bash">chmod +x ~/monitor-clawdbot.sh
+~/monitor-clawdbot.sh
+</code></pre>
+<hr />
+<h2 id="社群資源"><a class="header" href="#社群資源">社群資源</a></h2>
+<h3 id="官方資源"><a class="header" href="#官方資源">官方資源</a></h3>
+<ul>
+<li><strong>GitHub</strong>: https://github.com/clawdbot/clawdbot</li>
+<li><strong>官網</strong>: https://clawd.bot</li>
+<li><strong>文件</strong>: https://docs.clawd.bot</li>
+<li><strong>Discord</strong>: https://discord.gg/clawdbot</li>
+</ul>
+<h3 id="學習資源"><a class="header" href="#學習資源">學習資源</a></h3>
+<ul>
+<li>YouTube 教學影片搜尋: "Clawdbot tutorial"</li>
+<li>Reddit: r/clawdbot</li>
+<li>Twitter/X: #clawdbot</li>
+</ul>
+<h3 id="疑難排解"><a class="header" href="#疑難排解">疑難排解</a></h3>
+<ul>
+<li>GitHub Issues: 報告 bug 和功能請求</li>
+<li>Discord #support: 即時支援</li>
+<li>Stack Overflow: [clawdbot] tag</li>
+</ul>
+<hr />
+<p><em>文件更新日期：2026 年 1 月 26 日</em>
+<em>版本：2.0 - 新增 OAuth 完整指南和 CLI 指令參考</em></p>
 
                     </main>
 
