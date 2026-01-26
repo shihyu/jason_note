@@ -633,6 +633,7 @@
     - [Ralph Loop 自動化循環系統](ai_agent/RALPH_GUIDE.md)
     - [AutoContent Loop 內容生產系統](ai_agent/development_plan.md)
     - [我的 AI 是怎麼記錄我的寫文習慣的？](ai_agent/AI是怎麼記錄我的寫文習慣的.md)
+    - [Clawdbot 完整使用指南](ai_agent/Clawdbot-Guide.md)
 
 ## Lifestyle & Resources
 - [台北生活指南](lifestyle/README.md)
