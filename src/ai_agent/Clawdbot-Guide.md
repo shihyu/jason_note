@@ -200,6 +200,267 @@ Set up Brave search with this API key: [你的 Key]
 
 ---
 
+## OAuth 配置完整指南
+
+### 概述
+
+Clawdbot 支援三種主流 AI 模型，全部使用 OAuth 認證（更安全，無需手動管理 API Key）：
+
+| AI Model | Provider | 認證方式 | 有效期 |
+|----------|----------|----------|--------|
+| **Claude Opus 4.5** | Anthropic | OAuth | ~5 小時 |
+| **Gemini 3 Pro** | Google | OAuth | ~1 小時 |
+| **Codex** | OpenAI | OAuth | ~10 天 |
+
+### 1. 啟用 OAuth Plugins
+
+```bash
+# 啟用 Gemini OAuth plugin
+clawdbot plugins enable google-gemini-cli-auth
+
+# 重啟 gateway 套用變更
+clawdbot gateway restart
+```
+
+### 2. 執行 OAuth 登入
+
+#### Claude OAuth
+```bash
+clawdbot models auth login --provider anthropic
+```
+- 會開啟瀏覽器
+- 登入你的 Anthropic 帳號
+- 授權完成後自動儲存 token
+
+#### Gemini OAuth
+```bash
+clawdbot models auth login --provider google-gemini-cli
+```
+- 會開啟瀏覽器
+- 登入 Google 帳號
+- 授權 Gemini CLI 存取權限
+
+#### Codex (OpenAI) OAuth
+```bash
+clawdbot models auth login --provider openai-codex
+```
+- 會開啟瀏覽器
+- 登入 ChatGPT 帳號（需要 Plus 訂閱）
+- 授權完成後自動儲存
+
+### 3. 檢查認證狀態
+
+```bash
+# 查看所有 model 的認證狀態
+clawdbot models status
+
+# 查看 OAuth token 有效期
+clawdbot models status | grep -A 10 "OAuth/token status"
+```
+
+**範例輸出：**
+```
+OAuth/token status
+- anthropic usage: 5h 45% left ⏱2h 16m
+  - anthropic:claude-cli expiring expires in 52m (claude-cli)
+- google-gemini-cli usage: Pro 100% left · Flash 100% left
+  - google-gemini-cli:jason@example.com expiring expires in 54m
+- openai-codex usage: 5h 100% left ⏱5h · Day 100% left ⏱Feb 2
+  - openai-codex:codex-cli ok expires in 10d (codex-cli)
+```
+
+### 4. 設定預設 Model
+
+```bash
+# 查看可用的 models
+clawdbot models list
+
+# 設定預設 model（選擇一個）
+clawdbot models set anthropic/claude-opus-4-5           # Claude
+clawdbot models set google-gemini-cli/gemini-3-pro-preview  # Gemini
+clawdbot models set openai-codex/gpt-4o                 # Codex
+
+# 查看當前設定
+clawdbot models status | grep "Default"
+```
+
+### 5. 測試三種 Model
+
+#### ⚠️ 重要：agent 指令需要指定 session
+
+使用 `clawdbot agent` 指令時，**必須**加上以下其中一個參數：
+- `--session-id <id>` - 指定 session ID（最簡單，適合測試）
+- `--to <E.164>` - 指定電話號碼（例如：+886912345678）
+- `--agent <id>` - 指定 agent ID
+
+#### 方式 1：使用 clawdbot agent 指令測試
+
+```bash
+# ✅ 測試 Claude Opus 4.5（推薦，最穩定）
+clawdbot models set anthropic/claude-opus-4-5
+clawdbot agent --session-id test-claude --message "你好，請用繁體中文自我介紹" --json
+
+# ⚠️ 測試 Gemini 3 Pro（可能遇到容量不足 429 錯誤）
+clawdbot models set google-gemini-cli/gemini-3-pro-preview
+clawdbot agent --session-id test-gemini --message "你好，請用繁體中文自我介紹" --json
+
+# ❌ 測試 Codex（目前 model 不可用）
+# clawdbot models set openai-codex/gpt-4o
+# clawdbot agent --session-id test-codex --message "你好，請用繁體中文自我介紹" --json
+# 註：OpenAI Codex 可能需要特殊配置或 model ID 不正確
+```
+
+#### 方式 2：在通訊軟體中測試（推薦）
+
+發送訊息到你的 Telegram/WhatsApp bot：
+```
+你好，請自我介紹一下
+```
+
+通訊軟體中的測試會自動使用預設 model，無需指定 session-id。切換 model 後再測試以比較回應風格。
+
+#### 測試結果預期
+
+**Claude Opus 4.5** 回應範例：
+```json
+{
+  "status": "ok",
+  "result": {
+    "payloads": [{
+      "text": "你好！我是 Claude，由 Anthropic 公司開發的 AI 助手..."
+    }],
+    "meta": {
+      "agentMeta": {
+        "provider": "anthropic",
+        "model": "claude-opus-4-5",
+        "usage": {
+          "input": 10,
+          "output": 472
+        }
+      }
+    }
+  }
+}
+```
+
+**Gemini 3 Pro** 可能的錯誤：
+```
+Cloud Code Assist API error (429): No capacity available for model gemini-3-pro-preview on the server
+```
+→ 這是 Google 伺服器容量不足，稍後再試或使用其他 model
+
+**Codex** 可能的錯誤：
+```
+Error: Unknown model: openai-codex/gpt-4o
+```
+→ 檢查 model 名稱是否正確，或查看 `clawdbot models list` 確認可用的 models
+
+### 6. Token 更新管理
+
+#### 自動更新（推薦）
+OAuth tokens 會在接近過期時自動更新（如果有 refresh token）。
+
+#### 手動更新
+如果 token 過期，重新執行登入即可：
+```bash
+clawdbot models auth login --provider anthropic
+clawdbot models auth login --provider google-gemini-cli
+clawdbot models auth login --provider openai-codex
+```
+
+### 7. 移除舊的 API Keys（可選）
+
+如果之前用 API Key 方式設定，現在改用 OAuth，可以清理環境變數：
+
+```bash
+# 檢查哪裡設定了 API Keys
+grep -r "ANTHROPIC_API_KEY\|GEMINI_API_KEY\|OPENAI_API_KEY" \
+  ~/.bashrc ~/.zshrc ~/.profile ~/.bash_profile 2>/dev/null
+
+# 編輯對應檔案移除這些環境變數
+vim ~/.bashrc  # 或其他檔案
+
+# 重新載入環境
+source ~/.bashrc
+```
+
+### 8. 疑難排解
+
+#### 問題：OAuth 登入失敗
+```bash
+# 檢查 gateway 是否運行
+clawdbot gateway status
+
+# 重啟 gateway
+clawdbot gateway restart
+
+# 檢查是否有錯誤
+clawdbot logs --tail 50
+```
+
+#### 問題：Token 過期
+```bash
+# 重新登入即可
+clawdbot models auth login --provider <provider-name>
+```
+
+#### 問題：找不到認證檔案
+```bash
+# 檢查認證檔案位置
+ls -la ~/.clawdbot/agents/main/agent/auth-profiles.json
+
+# 查看檔案內容（確認 token 存在）
+cat ~/.clawdbot/agents/main/agent/auth-profiles.json | jq '.profiles | keys'
+```
+
+#### 問題：agent 指令要求 session-id
+```
+Error: Pass --to <E.164>, --session-id, or --agent to choose a session
+```
+
+**解決方案**：agent 指令必須指定 session，使用以下任一參數：
+
+```bash
+# 方法 1：使用 session-id（最簡單，適合測試）
+clawdbot agent --session-id test --message "你好" --json
+
+# 方法 2：使用電話號碼（E.164 格式）
+clawdbot agent --to +886912345678 --message "你好" --json
+
+# 方法 3：指定 agent ID
+clawdbot agent --agent main --message "你好" --json
+```
+
+#### 問題：Model 不可用 (Unknown model)
+```
+Error: Unknown model: openai-codex/gpt-4o
+```
+
+**解決方案**：
+
+```bash
+# 1. 檢查可用的 models
+clawdbot models list | grep -v "missing"
+
+# 2. 檢查 OAuth 認證狀態
+clawdbot models status
+
+# 3. 使用確認可用的 model
+clawdbot models set anthropic/claude-opus-4-5  # 推薦
+```
+
+#### 問題：Gemini 容量不足 (429 Error)
+```
+Cloud Code Assist API error (429): No capacity available for model gemini-3-pro-preview
+```
+
+**解決方案**：
+- Google 伺服器暫時容量不足
+- 稍後再試（通常幾分鐘到幾小時後恢復）
+- 或切換到其他 model（Claude 或 Codex）
+
+---
+
 ## 遠端控制電腦的原理
 
 ### 運作流程
@@ -233,7 +494,9 @@ Claude/ChatGPT
 
 ## 常用指令
 
-在任何通訊軟體中可使用以下指令：
+### 通訊軟體中的指令
+
+在任何通訊軟體（Telegram/WhatsApp/Discord 等）中可使用：
 
 | 指令 | 功能 |
 |-----|------|
@@ -243,6 +506,206 @@ Claude/ChatGPT
 | `/think <等級>` | 設定 AI 思考深度（off/minimal/low/medium/high/xhigh） |
 | `/verbose on\|off` | 開關詳細模式 |
 | `/usage off\|tokens\|full` | 設定費用顯示 |
+
+### CLI 命令行指令
+
+#### Gateway 管理
+
+```bash
+# 啟動 gateway
+clawdbot gateway
+
+# 強制啟動（自動 kill 佔用的 port）
+clawdbot gateway --force
+
+# 指定 port
+clawdbot gateway --port 18789
+
+# 查看 gateway 狀態
+clawdbot gateway status
+
+# 重啟 gateway
+clawdbot gateway restart
+
+# 停止 gateway
+clawdbot gateway stop
+
+# 查看即時 logs
+clawdbot logs --tail 50
+
+# 持續監看 logs
+clawdbot logs --follow
+```
+
+#### Model 管理
+
+```bash
+# 列出所有可用 models
+clawdbot models list
+
+# 查看 model 認證狀態
+clawdbot models status
+
+# 設定預設 model
+clawdbot models set anthropic/claude-opus-4-5
+
+# OAuth 登入
+clawdbot models auth login --provider anthropic
+clawdbot models auth login --provider google-gemini-cli
+clawdbot models auth login --provider openai-codex
+
+# 查看認證 profiles
+clawdbot models auth order
+```
+
+#### Agent 管理
+
+```bash
+# 列出所有 agents
+clawdbot agents list
+
+# 添加新 agent
+clawdbot agents add
+
+# 刪除 agent
+clawdbot agents delete <agent-id>
+
+# 發送訊息給 agent
+clawdbot agent --message "你好" --json
+
+# 指定 agent 處理
+clawdbot agent --agent ops --message "產生報告"
+
+# 指定 session
+clawdbot agent --to +886912345678 --message "查詢狀態"
+
+# 直接傳送回覆到通訊軟體
+clawdbot agent --message "總結今天的工作" --deliver
+
+# 本地執行（不透過 Gateway）
+clawdbot agent --local --message "分析程式碼"
+```
+
+#### 通訊頻道管理
+
+```bash
+# 查看頻道狀態
+clawdbot channels status
+
+# 登入頻道（例如 WhatsApp）
+clawdbot channels login
+
+# 查看 sessions
+clawdbot sessions
+
+# 發送訊息
+clawdbot message send --target +886912345678 --message "Hi" --json
+```
+
+#### Plugin 管理
+
+```bash
+# 列出所有 plugins
+clawdbot plugins list
+
+# 查看 plugin 詳情
+clawdbot plugins info <plugin-id>
+
+# 啟用 plugin
+clawdbot plugins enable <plugin-id>
+
+# 停用 plugin
+clawdbot plugins disable <plugin-id>
+
+# 安裝 plugin
+clawdbot plugins install <path-or-npm-spec>
+
+# 更新 plugins
+clawdbot plugins update
+```
+
+#### 系統診斷
+
+```bash
+# 健康檢查
+clawdbot doctor
+
+# 系統健康狀態
+clawdbot health
+
+# 查看頻道和 session 狀態
+clawdbot status
+
+# 配置管理
+clawdbot config get <path>
+clawdbot config set <path> <value>
+clawdbot config unset <path>
+```
+
+#### 其他工具
+
+```bash
+# 開啟控制面板
+clawdbot dashboard
+
+# 查看 cron 排程
+clawdbot cron
+
+# 記憶體搜尋
+clawdbot memory
+
+# 瀏覽器管理
+clawdbot browser
+
+# 沙箱工具
+clawdbot sandbox
+
+# 更新 CLI
+clawdbot update
+
+# 重設配置
+clawdbot reset
+
+# 完全移除
+clawdbot uninstall
+```
+
+#### 快速檢查指令組合
+
+```bash
+# 全面狀態檢查
+clawdbot gateway status && \
+clawdbot models status && \
+clawdbot channels status && \
+clawdbot agents list
+
+# 重啟並檢查
+clawdbot gateway restart && \
+sleep 3 && \
+clawdbot health
+
+# 查看最近錯誤
+clawdbot logs --tail 100 | grep -i error
+```
+
+#### 測試連線
+
+```bash
+# ✅ 測試 Claude（最穩定）
+clawdbot models set anthropic/claude-opus-4-5
+clawdbot agent --session-id test-claude --message "測試 Claude 連線" --json | jq '.result.payloads[0].text'
+
+# ⚠️ 測試 Gemini（可能遇到容量不足）
+clawdbot models set google-gemini-cli/gemini-3-pro-preview
+clawdbot agent --session-id test-gemini --message "測試 Gemini 連線" --json | jq '.result.payloads[0].text'
+
+# ❌ 測試 Codex（目前不可用，需要檢查 model 配置）
+# clawdbot models set openai-codex/gpt-4o
+# clawdbot agent --session-id test-codex --message "測試 Codex 連線" --json | jq '.result.payloads[0].text'
+
+# 簡化測試（不使用 jq，查看完整 JSON）
+clawdbot agent --session-id test --message "Hello" --json
+```
 
 ### 實際使用例子
 
@@ -440,4 +903,241 @@ NODE_OPTIONS="--max-old-space-size=2048" clawdbot gateway --force
 
 ---
 
+## 快速參考卡
+
+### 每日檢查指令
+```bash
+# 查看系統狀態
+clawdbot gateway status
+clawdbot models status
+clawdbot health
+
+# 查看 OAuth 有效期
+clawdbot models status | grep "expires in"
+
+# 查看最近 logs
+clawdbot logs --tail 20
+```
+
+### OAuth 更新（Token 過期時）
+```bash
+# Claude
+clawdbot models auth login --provider anthropic
+
+# Gemini
+clawdbot models auth login --provider google-gemini-cli
+
+# Codex
+clawdbot models auth login --provider openai-codex
+```
+
+### 切換 Model
+```bash
+# 切換到 Claude
+clawdbot models set anthropic/claude-opus-4-5
+
+# 切換到 Gemini
+clawdbot models set google-gemini-cli/gemini-3-pro-preview
+
+# 切換到 Codex
+clawdbot models set openai-codex/gpt-4o
+```
+
+### 重啟 Gateway（遇到問題時）
+```bash
+# 標準重啟
+clawdbot gateway restart
+
+# 強制重啟（清理舊 process）
+clawdbot gateway stop
+sleep 2
+clawdbot gateway --force
+```
+
+### 測試 AI 回應
+```bash
+# 快速測試（使用當前預設 model，必須指定 session-id）
+clawdbot agent --session-id test --message "測試連線" --json
+
+# 測試特定 model
+clawdbot agent --session-id test-claude --message "你是什麼 AI?" --json
+
+# 測試並傳送到通訊軟體（需要先設定通訊頻道）
+clawdbot agent --session-id test --message "測試訊息" --deliver --reply-channel telegram
+```
+
+### 記憶檔案位置
+```bash
+# Agent 記憶體目錄
+~/.clawdbot/agents/main/agent/
+
+# 認證檔案
+~/.clawdbot/agents/main/agent/auth-profiles.json
+
+# 配置檔案
+~/.clawdbot/clawdbot.json
+
+# Logs 目錄
+/tmp/clawdbot/
+```
+
+### 故障排除 Checklist
+
+1. **Gateway 無法啟動**
+   ```bash
+   clawdbot gateway status
+   clawdbot doctor
+   lsof -i :18789  # 檢查 port 是否被佔用
+   ```
+
+2. **OAuth 過期**
+   ```bash
+   clawdbot models status | grep "expiring"
+   clawdbot models auth login --provider <provider>
+   ```
+
+3. **Agent 無回應**
+   ```bash
+   clawdbot health
+   clawdbot logs --tail 50
+   clawdbot gateway restart
+   ```
+
+4. **通訊頻道離線**
+   ```bash
+   clawdbot channels status
+   clawdbot channels login
+   ```
+
+### 效能優化
+```bash
+# 檢查記憶體使用
+ps aux | grep clawdbot
+
+# 設定記憶體限制
+NODE_OPTIONS="--max-old-space-size=2048" clawdbot gateway --force
+
+# 清理舊 sessions
+clawdbot sessions | grep -i inactive
+```
+
+### 備份重要資料
+```bash
+# 備份配置和認證
+tar -czf clawdbot-backup-$(date +%Y%m%d).tar.gz \
+  ~/.clawdbot/clawdbot.json \
+  ~/.clawdbot/agents/main/agent/auth-profiles.json
+
+# 還原備份
+tar -xzf clawdbot-backup-YYYYMMDD.tar.gz -C ~/
+```
+
+---
+
+## 進階技巧
+
+### 1. 多 Agent 配置
+
+不同的 agent 可以用不同的 model：
+
+```bash
+# 添加專用 agent
+clawdbot agents add
+
+# 為不同 agent 設定不同的 workspace
+# 編輯 ~/.clawdbot/clawdbot.json
+{
+  "agents": {
+    "main": { "model": "anthropic/claude-opus-4-5" },
+    "research": { "model": "google-gemini-cli/gemini-3-pro-preview" },
+    "coding": { "model": "openai-codex/gpt-4o" }
+  }
+}
+```
+
+### 2. 設定 Fallback Models
+
+當主 model 失敗時自動切換：
+
+```bash
+# 設定 fallback 順序
+clawdbot models fallbacks add anthropic/claude-opus-4-5
+clawdbot models fallbacks add google-gemini-cli/gemini-3-pro-preview
+clawdbot models fallbacks add openai-codex/gpt-4o
+
+# 查看 fallback 設定
+clawdbot models status | grep Fallbacks
+```
+
+### 3. 定時 Token 更新
+
+建立 cron job 自動更新 OAuth tokens：
+
+```bash
+# 編輯 crontab
+crontab -e
+
+# 每 4 小時更新 Claude token
+0 */4 * * * clawdbot models auth login --provider anthropic 2>&1 | logger -t clawdbot-auth
+
+# 每小時更新 Gemini token
+0 * * * * clawdbot models auth login --provider google-gemini-cli 2>&1 | logger -t clawdbot-auth
+```
+
+### 4. 監控腳本
+
+建立簡單的監控腳本：
+
+```bash
+#!/bin/bash
+# ~/monitor-clawdbot.sh
+
+echo "=== Clawdbot 狀態檢查 ==="
+echo "時間: $(date)"
+echo ""
+
+# Gateway 狀態
+echo "Gateway:"
+clawdbot gateway status | grep "Runtime"
+
+# Model 認證
+echo -e "\nModel OAuth 狀態:"
+clawdbot models status | grep -A 3 "OAuth/token status"
+
+# 錯誤檢查
+echo -e "\n最近錯誤:"
+clawdbot logs --tail 100 | grep -i error | tail -5
+
+echo "======================"
+```
+
+使用：
+```bash
+chmod +x ~/monitor-clawdbot.sh
+~/monitor-clawdbot.sh
+```
+
+---
+
+## 社群資源
+
+### 官方資源
+- **GitHub**: https://github.com/clawdbot/clawdbot
+- **官網**: https://clawd.bot
+- **文件**: https://docs.clawd.bot
+- **Discord**: https://discord.gg/clawdbot
+
+### 學習資源
+- YouTube 教學影片搜尋: "Clawdbot tutorial"
+- Reddit: r/clawdbot
+- Twitter/X: #clawdbot
+
+### 疑難排解
+- GitHub Issues: 報告 bug 和功能請求
+- Discord #support: 即時支援
+- Stack Overflow: [clawdbot] tag
+
+---
+
 *文件更新日期：2026 年 1 月 26 日*
+*版本：2.0 - 新增 OAuth 完整指南和 CLI 指令參考*
