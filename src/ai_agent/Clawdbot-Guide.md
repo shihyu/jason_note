@@ -206,11 +206,11 @@ Set up Brave search with this API key: [你的 Key]
 
 Clawdbot 支援三種主流 AI 模型，全部使用 OAuth 認證（更安全，無需手動管理 API Key）：
 
-| AI Model | Provider | 認證方式 | 有效期 |
-|----------|----------|----------|--------|
-| **Claude Sonnet 4.5** | Anthropic | OAuth | ~5 小時 |
-| **Gemini 3 Pro** | Google | OAuth | ~1 小時 |
-| **Codex** | OpenAI | OAuth | ~10 天 |
+| AI Model | Provider | Model ID | 認證方式 | 有效期 |
+|----------|----------|----------|----------|--------|
+| **Claude Sonnet 4.5** | Anthropic | `anthropic/claude-sonnet-4-5` | OAuth | ~5 小時 |
+| **Gemini 3 Pro Preview** | Google | `google-gemini-cli/gemini-3-pro-preview` | OAuth | ~1 小時 |
+| **Codex (GPT-5.2)** | OpenAI | `openai-codex/gpt-5.2-codex` | OAuth | ~10 天 |
 
 ### 1. 啟用 OAuth Plugins
 
@@ -276,9 +276,9 @@ OAuth/token status
 clawdbot models list
 
 # 設定預設 model（選擇一個）
-clawdbot models set anthropic/claude-sonnet-4-5           # Claude
-clawdbot models set google-gemini-cli/gemini-3-pro-preview  # Gemini
-clawdbot models set openai-codex/gpt-4o                 # Codex
+clawdbot models set anthropic/claude-sonnet-4-5              # Claude Sonnet 4.5
+clawdbot models set google-gemini-cli/gemini-3-pro-preview   # Gemini 3 Pro Preview
+clawdbot models set openai-codex/gpt-5.2-codex               # Codex (GPT-5.2)
 
 # 查看當前設定
 clawdbot models status | grep "Default"
@@ -296,19 +296,23 @@ clawdbot models status | grep "Default"
 #### 方式 1：使用 clawdbot agent 指令測試
 
 ```bash
-# ✅ 測試 Claude Sonnet 4.5（推薦，最穩定）
+# ✅ 測試 Claude Sonnet 4.5（推薦，最快速）
 clawdbot models set anthropic/claude-sonnet-4-5
 clawdbot agent --session-id test-claude --message "你好，請用繁體中文自我介紹" --json
 
-# ⚠️ 測試 Gemini 3 Pro（可能遇到容量不足 429 錯誤）
+# ✅ 測試 Gemini 3 Pro Preview（支援大 context）
 clawdbot models set google-gemini-cli/gemini-3-pro-preview
 clawdbot agent --session-id test-gemini --message "你好，請用繁體中文自我介紹" --json
 
-# ❌ 測試 Codex（目前 model 不可用）
-# clawdbot models set openai-codex/gpt-4o
-# clawdbot agent --session-id test-codex --message "你好，請用繁體中文自我介紹" --json
-# 註：OpenAI Codex 可能需要特殊配置或 model ID 不正確
+# ✅ 測試 Codex (GPT-5.2)（最新代碼模型）
+clawdbot models set openai-codex/gpt-5.2-codex
+clawdbot agent --session-id test-codex --message "你好，請用繁體中文自我介紹" --json
 ```
+
+**注意事項：**
+- **Claude Sonnet 4.5**: 最快（~10秒），適合日常對話和快速任務
+- **Gemini 3 Pro**: 較慢（~2分鐘），但支援超大 context window (1024k)
+- **Codex (GPT-5.2)**: 快速（~15秒），專為代碼任務優化
 
 #### 方式 2：在通訊軟體中測試（推薦）
 
@@ -330,6 +334,7 @@ clawdbot agent --session-id test-gemini --message "你好，請用繁體中文�
       "text": "你好！我是 Claude，由 Anthropic 公司開發的 AI 助手..."
     }],
     "meta": {
+      "durationMs": 10401,
       "agentMeta": {
         "provider": "anthropic",
         "model": "claude-sonnet-4-5",
@@ -343,17 +348,52 @@ clawdbot agent --session-id test-gemini --message "你好，請用繁體中文�
 }
 ```
 
-**Gemini 3 Pro** 可能的錯誤：
+**Gemini 3 Pro Preview** 回應範例：
+```json
+{
+  "status": "ok",
+  "result": {
+    "payloads": [{
+      "text": "你好！我是由 Google 的 Gemini 3 Pro 模型驅動的 AI 助手..."
+    }],
+    "meta": {
+      "durationMs": 142208,
+      "agentMeta": {
+        "provider": "google-gemini-cli",
+        "model": "gemini-3-pro-preview",
+        "usage": {
+          "input": 6004,
+          "output": 905
+        }
+      }
+    }
+  }
+}
 ```
-Cloud Code Assist API error (429): No capacity available for model gemini-3-pro-preview on the server
-```
-→ 這是 Google 伺服器容量不足，稍後再試或使用其他 model
+**注意**: Gemini 回應較慢（~2分鐘），這是正常現象。
 
-**Codex** 可能的錯誤：
+**Codex (GPT-5.2)** 回應範例：
+```json
+{
+  "status": "ok",
+  "result": {
+    "payloads": [{
+      "text": "你好！我是你的個人助理 AI，使用的模型是 openai-codex/gpt-5.2-codex..."
+    }],
+    "meta": {
+      "durationMs": 15377,
+      "agentMeta": {
+        "provider": "openai-codex",
+        "model": "gpt-5.2-codex",
+        "usage": {
+          "input": 218,
+          "output": 185
+        }
+      }
+    }
+  }
+}
 ```
-Error: Unknown model: openai-codex/gpt-4o
-```
-→ 檢查 model 名稱是否正確，或查看 `clawdbot models list` 確認可用的 models
 
 ### 6. Token 更新管理
 
@@ -433,8 +473,10 @@ clawdbot agent --agent main --message "你好" --json
 
 #### 問題：Model 不可用 (Unknown model)
 ```
-Error: Unknown model: openai-codex/gpt-4o
+Error: Unknown model: openai-codex/gpt-5.2-codex
 ```
+
+**原因**：使用了錯誤的 model ID
 
 **解決方案**：
 
@@ -442,22 +484,38 @@ Error: Unknown model: openai-codex/gpt-4o
 # 1. 檢查可用的 models
 clawdbot models list | grep -v "missing"
 
-# 2. 檢查 OAuth 認證狀態
-clawdbot models status
+# 2. 使用正確的 Model ID
+clawdbot models set anthropic/claude-sonnet-4-5              # Claude
+clawdbot models set google-gemini-cli/gemini-3-pro-preview   # Gemini
+clawdbot models set openai-codex/gpt-5.2-codex               # Codex (正確)
 
-# 3. 使用確認可用的 model
-clawdbot models set anthropic/claude-sonnet-4-5  # 推薦
+# 3. 確認設定
+clawdbot models status | grep "Default"
 ```
 
-#### 問題：Gemini 容量不足 (429 Error)
+#### 問題：Gemini 回應很慢 (~2 分鐘)
+
+**原因**：這是 Gemini 3 Pro Preview 的正常行為
+
+**說明**：
+- Gemini 平均回應時間：120-150 秒
+- Claude 平均回應時間：10-15 秒
+- Codex 平均回應時間：15-20 秒
+
+**建議**：
+- 日常對話使用 Claude Sonnet 4.5（最快）
+- 需要大 context 時使用 Gemini（支援 1024k）
+- 代碼任務使用 Codex GPT-5.2（代碼優化）
+
+#### 問題：Gemini 容量不足 (429 Error) - 已少見
 ```
 Cloud Code Assist API error (429): No capacity available for model gemini-3-pro-preview
 ```
 
 **解決方案**：
-- Google 伺服器暫時容量不足
-- 稍後再試（通常幾分鐘到幾小時後恢復）
-- 或切換到其他 model（Claude 或 Codex）
+- Google 伺服器暫時容量不足（目前已較少發生）
+- 稍後再試（通常幾分鐘後恢復）
+- 或暫時切換到其他 model（Claude 或 Codex）
 
 ---
 
@@ -691,17 +749,17 @@ clawdbot logs --tail 100 | grep -i error
 #### 測試連線
 
 ```bash
-# ✅ 測試 Claude（最穩定）
+# ✅ 測試 Claude Sonnet 4.5（最快速）
 clawdbot models set anthropic/claude-sonnet-4-5
 clawdbot agent --session-id test-claude --message "測試 Claude 連線" --json | jq '.result.payloads[0].text'
 
-# ⚠️ 測試 Gemini（可能遇到容量不足）
+# ✅ 測試 Gemini 3 Pro（支援大 context，較慢約 2 分鐘）
 clawdbot models set google-gemini-cli/gemini-3-pro-preview
 clawdbot agent --session-id test-gemini --message "測試 Gemini 連線" --json | jq '.result.payloads[0].text'
 
-# ❌ 測試 Codex（目前不可用，需要檢查 model 配置）
-# clawdbot models set openai-codex/gpt-4o
-# clawdbot agent --session-id test-codex --message "測試 Codex 連線" --json | jq '.result.payloads[0].text'
+# ✅ 測試 Codex GPT-5.2（代碼優化）
+clawdbot models set openai-codex/gpt-5.2-codex
+clawdbot agent --session-id test-codex --message "測試 Codex 連線" --json | jq '.result.payloads[0].text'
 
 # 簡化測試（不使用 jq，查看完整 JSON）
 clawdbot agent --session-id test --message "Hello" --json
@@ -940,7 +998,7 @@ clawdbot models set anthropic/claude-sonnet-4-5
 clawdbot models set google-gemini-cli/gemini-3-pro-preview
 
 # 切換到 Codex
-clawdbot models set openai-codex/gpt-4o
+clawdbot models set openai-codex/gpt-5.2-codex
 ```
 
 ### 重啟 Gateway（遇到問題時）
@@ -1050,7 +1108,7 @@ clawdbot agents add
   "agents": {
     "main": { "model": "anthropic/claude-sonnet-4-5" },
     "research": { "model": "google-gemini-cli/gemini-3-pro-preview" },
-    "coding": { "model": "openai-codex/gpt-4o" }
+    "coding": { "model": "openai-codex/gpt-5.2-codex" }
   }
 }
 ```
@@ -1063,7 +1121,7 @@ clawdbot agents add
 # 設定 fallback 順序
 clawdbot models fallbacks add anthropic/claude-sonnet-4-5
 clawdbot models fallbacks add google-gemini-cli/gemini-3-pro-preview
-clawdbot models fallbacks add openai-codex/gpt-4o
+clawdbot models fallbacks add openai-codex/gpt-5.2-codex
 
 # 查看 fallback 設定
 clawdbot models status | grep Fallbacks
