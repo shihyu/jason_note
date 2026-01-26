@@ -538,6 +538,7 @@
         - [AI受惠股分析](strategy/Taiwan-AI-Stocks-Extended-Analysis.md)
         - [AI產業完整供應鏈架構圖](strategy/AI產業完整架構圖.md)
         - [台股族群輪動篩選整理](strategy/台股族群輪動篩選整理.md)
+        - [Tick 數據買賣力道指標與橫切面 Quantile 分析](strategy/tick_買賣力道指標分析.md)
     - [vectorbt量化回測實戰](strategy/10_vectorbt量化回測實戰.md)
         - [vectorbt教學](strategy/vectorbt.md)
         - [vectorbt配對交易](strategy/vectorbt_配對.md)
