@@ -155,18 +155,120 @@ curl -fsSL https://clawd.bot/install.sh | bash
 
 ### 第四步：連接通訊軟體（5 分鐘，以 Telegram 為例）
 
-#### Telegram 連接步驟
+#### Telegram 連接步驟（詳細版）
+
+##### 步驟 1：建立 Telegram Bot
 
 1. 打開 Telegram，搜尋 `@botfather`
 2. 發送指令 `/newbot`
-3. BotFather 給你一串 Token，複製它
-4. 貼回 Clawdbot 設定精靈
-5. 回到 Telegram，機器人會詢問設定身份：
-   - 你該叫我什麼名字？
-   - 你該叫我什麼？
-   - 我的存在目的是什麼？
-   - 你在哪個時區？
-6. 完成！機器人已上線
+3. BotFather 會詢問：
+   - Bot 的顯示名稱（例如：`My AI Assistant`）
+   - Bot 的用戶名（必須以 `bot` 結尾，例如：`my_ai_assistant_bot`）
+4. BotFather 會給你一串 **Bot Token**（格式類似：`1234567890:ABCdefGHIjklMNOpqrsTUVwxyz`）
+5. **重要**：立即複製這個 Token，不要分享給任何人
+
+##### 步驟 2：設定 Clawdbot 連接
+
+```bash
+# 方法 A：使用設定精靈（推薦，首次設定）
+clawdbot channels login
+
+# 方法 B：直接設定（進階使用者）
+# 編輯配置檔案 ~/.clawdbot/clawdbot.json
+```
+
+選擇 **Telegram** 作為通訊平台，然後貼上剛才取得的 Bot Token。
+
+##### 步驟 3：初始化對話
+
+1. 回到 Telegram，搜尋你剛建立的 Bot（使用 Bot 的用戶名）
+2. 點擊 **Start** 或發送 `/start`
+3. Bot 會詢問一些初始設定問題：
+   - **你該叫我什麼名字？**（例如：`小明`、`Jason`）
+   - **你該叫我什麼？**（例如：`助理`、`AI`、`小幫手`）
+   - **我的存在目的是什麼？**（例如：`協助我處理日常任務`）
+   - **你在哪個時區？**（例如：`Asia/Taipei`、`GMT+8`）
+4. 回答完成後，Bot 會確認設定並開始運作
+
+##### 步驟 4：驗證連線
+
+```bash
+# 檢查頻道狀態
+clawdbot channels status
+
+# 預期輸出應該包含類似：
+# ✓ telegram: connected
+# └─ Bot: @your_bot_name
+
+# 查看完整狀態
+clawdbot status --deep
+
+# 測試發送訊息（可選）
+clawdbot message send --target telegram --message "測試連線" --json
+```
+
+**預期結果**：
+- `clawdbot channels status` 應該顯示 Telegram 頻道為 `connected` 狀態
+- 在 Telegram 中發送任何訊息，Bot 應該會回應
+
+##### 常見問題排解
+
+**問題 1：Bot Token 錯誤**
+```
+Error: Invalid bot token
+```
+解決方案：
+- 確認 Token 完整複製（包含所有字元）
+- 向 @botfather 發送 `/token` 重新獲取
+- 確認沒有多餘的空格或換行
+
+**問題 2：頻道狀態顯示為空**
+```bash
+# 執行
+clawdbot channels status
+# 沒有顯示任何頻道
+```
+解決方案：
+```bash
+# 重新登入
+clawdbot channels login
+
+# 如果還是失敗，檢查 Gateway
+clawdbot gateway status
+clawdbot gateway restart
+```
+
+**問題 3：Bot 不回應訊息**
+```bash
+# 1. 檢查 Gateway 是否運行
+clawdbot gateway status
+
+# 2. 檢查 Model 認證
+clawdbot models status
+
+# 3. 查看 logs 找出錯誤
+clawdbot logs --tail 50
+
+# 4. 重啟 Gateway
+clawdbot gateway restart
+```
+
+**問題 4：找不到 Bot**
+- 確認 Bot 用戶名輸入正確
+- 確認 Bot 已透過 @botfather 建立成功
+- 在 Telegram 搜尋時要包含 `@` 符號（例如：`@my_ai_assistant_bot`）
+
+##### 完整檢查清單
+
+設定完成後，確認以下項目：
+
+- [ ] BotFather 顯示 Bot 建立成功
+- [ ] 已取得並保存 Bot Token
+- [ ] `clawdbot channels status` 顯示 Telegram 已連接
+- [ ] `clawdbot models status` 顯示至少一個 AI model 已認證
+- [ ] `clawdbot gateway status` 顯示 Gateway 正在運行
+- [ ] 在 Telegram 中發送訊息，Bot 有回應
+- [ ] Bot 的初始設定問題已回答完成
 
 #### 其他平台連接
 
