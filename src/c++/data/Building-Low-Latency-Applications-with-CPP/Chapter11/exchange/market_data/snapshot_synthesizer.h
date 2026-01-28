@@ -55,6 +55,7 @@ private:
 
     Logger logger_;
 
+    // ⚠️ 注意：volatile 僅防優化，非同步原語。
     volatile bool run_ = false;
 
     std::string time_str_;

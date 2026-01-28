@@ -8,6 +8,7 @@ namespace Common
 // - EPOLLIN: 可讀事件 (有新連線或新數據)
 auto TCPServer::addToEpollList(TCPSocket* socket)
 {
+    // ⚡ Epoll I/O：事件驅動降低延遲。
     epoll_event ev{EPOLLET | EPOLLIN, {reinterpret_cast<void*>(socket)}};
     return !epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, socket->socket_fd_, &ev);
 }
@@ -18,6 +19,7 @@ auto TCPServer::addToEpollList(TCPSocket* socket)
 // 3. 將監聽 Socket 加入 Epoll 監控
 auto TCPServer::listen(const std::string& iface, int port) -> void
 {
+    // ⚡ Epoll I/O：事件驅動降低延遲。
     epoll_fd_ = epoll_create(1);
     ASSERT(epoll_fd_ >= 0, "epoll_create() failed error:" + std::string(
                std::strerror(errno)));
@@ -28,6 +30,7 @@ auto TCPServer::listen(const std::string& iface, int port) -> void
            std::string(std::strerror(errno)));
 
     ASSERT(addToEpollList(&listener_socket_),
+           // ⚡ Epoll I/O：事件驅動降低延遲。
            "epoll_ctl() failed. error:" + std::string(std::strerror(errno)));
 }
 
@@ -69,6 +72,7 @@ auto TCPServer::poll() noexcept -> void
         auto socket = reinterpret_cast<TCPSocket*>(event.data.ptr);
 
         // Check for new connections.
+        // ⚡ Epoll I/O：事件驅動降低延遲。
         if (event.events & EPOLLIN) {
             if (socket == &listener_socket_) {
                 // 監聽 Socket 有事件 -> 表示有新連線請求
@@ -89,6 +93,7 @@ auto TCPServer::poll() noexcept -> void
             }
         }
 
+        // ⚡ Epoll I/O：事件驅動降低延遲。
         if (event.events & EPOLLOUT) {
             logger_.log("%:% %() % EPOLLOUT socket:%\n", __FILE__, __LINE__, __FUNCTION__,
                         Common::getCurrentTimeStr(&time_str_), socket->socket_fd_);
@@ -99,6 +104,7 @@ auto TCPServer::poll() noexcept -> void
             }
         }
 
+        // ⚡ Epoll I/O：事件驅動降低延遲。
         if (event.events & (EPOLLERR | EPOLLHUP)) {
             logger_.log("%:% %() % EPOLLERR socket:%\n", __FILE__, __LINE__, __FUNCTION__,
                         Common::getCurrentTimeStr(&time_str_), socket->socket_fd_);

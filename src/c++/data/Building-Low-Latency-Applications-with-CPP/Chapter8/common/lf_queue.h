@@ -154,9 +154,11 @@ private:
     // 📚 參考資料：
     // - C++ Memory Model：https://en.cppreference.com/w/cpp/atomic/memory_order
     // - "C++ Concurrency in Action" by Anthony Williams (Chapter 5)
+    // ⚡ 原子操作：避免鎖但需注意記憶體序。
     std::atomic<size_t> next_write_index_ = {0};
     std::atomic<size_t> next_read_index_ = {0};
 
+    // ⚡ 原子操作：避免鎖但需注意記憶體序。
     std::atomic<size_t> num_elements_ = {0};
 };
 }

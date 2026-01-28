@@ -1,5 +1,9 @@
 #pragma once
 
+// 流動性獲取策略介面：以成交事件驅動。
+// ⚡ 效能關鍵：只處理必要訊號，縮短反應時間。
+// ⚠️ 注意：跟隨單需控管風險上限。
+
 #include "common/macros.h"
 #include "common/logging.h"
 
@@ -38,8 +42,10 @@ public:
         const auto bbo = book->getBBO();
         const auto agg_qty_ratio = feature_engine_->getAggTradeQtyRatio();
 
+        // ⚡ 分支預測提示：降低誤判成本。
         if (LIKELY(bbo->bid_price_ != Price_INVALID &&
                    bbo->ask_price_ != Price_INVALID && agg_qty_ratio != Feature_INVALID)) {
+                       // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
             logger_->log("%:% %() % % agg-qty-ratio:%\n", __FILE__, __LINE__, __FUNCTION__,
                          Common::getCurrentTimeStr(&time_str_),
                          bbo->toString().c_str(), agg_qty_ratio);

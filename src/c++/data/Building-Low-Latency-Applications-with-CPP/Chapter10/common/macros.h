@@ -60,6 +60,7 @@
 // - 失敗路徑: 程式終止,無需考慮效能
 inline auto ASSERT(bool cond, const std::string& msg) noexcept
 {
+    // ⚡ 分支預測提示：降低誤判成本。
     if (UNLIKELY(!cond)) {  // 提示編譯器:斷言失敗是罕見事件
         std::cerr << "ASSERT : " << msg << std::endl;
 
@@ -76,6 +77,7 @@ inline auto ASSERT(bool cond, const std::string& msg) noexcept
 //
 // 範例:
 //   switch(msg_type) {
+    // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
 //     case NEW_ORDER: ...
 //     case CANCEL: ...
 //     default: FATAL("Unknown message type");

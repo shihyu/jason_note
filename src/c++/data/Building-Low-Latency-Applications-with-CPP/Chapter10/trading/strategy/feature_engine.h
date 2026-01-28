@@ -41,6 +41,7 @@ public:
     {
         const auto bbo = book->getBBO();
 
+        // ⚡ 分支預測提示：降低誤判成本。
         if (LIKELY(bbo->bid_price_ != Price_INVALID &&
                    bbo->ask_price_ != Price_INVALID)) {
             // 📊 數量加權價格：考慮買賣掛單量的平衡
@@ -67,6 +68,7 @@ public:
     {
         const auto bbo = book->getBBO();
 
+        // ⚡ 分支預測提示：降低誤判成本。
         if (LIKELY(bbo->bid_price_ != Price_INVALID &&
                    bbo->ask_price_ != Price_INVALID)) {
             // 📊 計算成交量相對於對手盤掛單量的比率

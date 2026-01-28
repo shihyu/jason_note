@@ -1,3 +1,7 @@
+// 雜湊查找基準測試：對比不同資料結構延遲。
+// ⚡ 效能關鍵：控制負載因子與記憶體配置。
+// ⚠️ 注意：避免測試中觸發 rehash。
+
 #include "matcher/matching_engine.h"
 #include "matcher/unordered_map_me_order_book.h"
 
@@ -14,18 +18,22 @@ size_t benchmarkHashMap(T* order_book,
 
         switch (client_request.type_) {
         case Exchange::ClientRequestType::NEW: {
+                // ⚡ 週期計數：用於微秒級量測。
                 const auto start = Common::rdtsc();
                 order_book->add(client_request.client_id_, client_request.order_id_,
                                 client_request.ticker_id_,
                                 client_request.side_, client_request.price_, client_request.qty_);
+                // ⚡ 週期計數：用於微秒級量測。
                 total_rdtsc += (Common::rdtsc() - start);
             }
             break;
 
         case Exchange::ClientRequestType::CANCEL: {
+                // ⚡ 週期計數：用於微秒級量測。
                 const auto start = Common::rdtsc();
                 order_book->cancel(client_request.client_id_, client_request.order_id_,
                                    client_request.ticker_id_);
+                // ⚡ 週期計數：用於微秒級量測。
                 total_rdtsc += (Common::rdtsc() - start);
             }
             break;

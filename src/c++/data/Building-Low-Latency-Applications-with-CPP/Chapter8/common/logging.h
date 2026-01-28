@@ -296,6 +296,7 @@ public:
     {
         while (*s) {
             if (*s == '%') {
+                // ⚡ 分支預測提示：降低誤判成本。
                 if (UNLIKELY(*(s + 1) == '%')) { // to allow %% -> % escape character.
                     ++s;
                 } else {
@@ -316,6 +317,7 @@ public:
     {
         while (*s) {
             if (*s == '%') {
+                // ⚡ 分支預測提示：降低誤判成本。
                 if (UNLIKELY(*(s + 1) == '%')) { // to allow %% -> % escape character.
                     ++s;
                 } else {

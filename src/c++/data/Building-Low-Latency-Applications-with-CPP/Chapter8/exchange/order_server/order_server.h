@@ -75,6 +75,7 @@ public:
                 // 3b. 發送序列號 + 回應內容
                 cid_tcp_socket_[client_response->client_id_]->send(&next_outgoing_seq_num,
                         sizeof(next_outgoing_seq_num));
+                // ⚡ Socket 收發：熱路徑避免額外拷貝。
                 cid_tcp_socket_[client_response->client_id_]->send(client_response,
                         sizeof(MEClientResponse));
 
@@ -182,6 +183,7 @@ private:
     /// Lock free queue of outgoing client responses to be sent out to connected clients.
     ClientResponseLFQueue* outgoing_responses_ = nullptr;
 
+    // ⚠️ 注意：volatile 僅防優化，非同步原語。
     volatile bool run_ = false;
 
     std::string time_str_;

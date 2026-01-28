@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 #include <cstdio>
+#include <cstring>
 
 #include "macros.h"
 #include "lf_queue.h"
@@ -62,7 +63,33 @@ public:
             for (auto next = queue_.getNextToRead(); queue_.size() &&
                  next; next = queue_.getNextToRead()) {
                 switch (next->type_) {
-                // ... (其餘型別處理)
+                case LogType::CHAR:
+                    file_ << next->u_.c;
+                    break;
+                case LogType::INTEGER:
+                    file_ << next->u_.i;
+                    break;
+                case LogType::LONG_INTEGER:
+                    file_ << next->u_.l;
+                    break;
+                case LogType::LONG_LONG_INTEGER:
+                    file_ << next->u_.ll;
+                    break;
+                case LogType::UNSIGNED_INTEGER:
+                    file_ << next->u_.u;
+                    break;
+                case LogType::UNSIGNED_LONG_INTEGER:
+                    file_ << next->u_.ul;
+                    break;
+                case LogType::UNSIGNED_LONG_LONG_INTEGER:
+                    file_ << next->u_.ull;
+                    break;
+                case LogType::FLOAT:
+                    file_ << next->u_.f;
+                    break;
+                case LogType::DOUBLE:
+                    file_ << next->u_.d;
+                    break;
                 case LogType::STRING:
                     // ⚡ 直接寫入整個字串，效率高於逐字元輸出
                     file_ << next->u_.s;
@@ -80,6 +107,58 @@ public:
     }
 
     // ...
+
+    // 基礎推入函式: 將 LogElement 寫入佇列
+    auto pushValue(const LogElement& log_element) noexcept
+    {
+        *(queue_.getNextToWriteTo()) = log_element;
+        queue_.updateWriteIndex();
+    }
+
+    auto pushValue(const char value) noexcept
+    {
+        pushValue(LogElement{LogType::CHAR, {.c = value}});
+    }
+
+    auto pushValue(const int value) noexcept
+    {
+        pushValue(LogElement{LogType::INTEGER, {.i = value}});
+    }
+
+    auto pushValue(const long value) noexcept
+    {
+        pushValue(LogElement{LogType::LONG_INTEGER, {.l = value}});
+    }
+
+    auto pushValue(const long long value) noexcept
+    {
+        pushValue(LogElement{LogType::LONG_LONG_INTEGER, {.ll = value}});
+    }
+
+    auto pushValue(const unsigned value) noexcept
+    {
+        pushValue(LogElement{LogType::UNSIGNED_INTEGER, {.u = value}});
+    }
+
+    auto pushValue(const unsigned long value) noexcept
+    {
+        pushValue(LogElement{LogType::UNSIGNED_LONG_INTEGER, {.ul = value}});
+    }
+
+    auto pushValue(const unsigned long long value) noexcept
+    {
+        pushValue(LogElement{LogType::UNSIGNED_LONG_LONG_INTEGER, {.ull = value}});
+    }
+
+    auto pushValue(const float value) noexcept
+    {
+        pushValue(LogElement{LogType::FLOAT, {.f = value}});
+    }
+
+    auto pushValue(const double value) noexcept
+    {
+        pushValue(LogElement{LogType::DOUBLE, {.d = value}});
+    }
 
     // ⚡ 優化後的字串寫入
     // 使用 strncpy 將字串拷貝到 LogElement 的 union 緩衝區中
@@ -102,6 +181,7 @@ public:
     {
         while (*s) {
             if (*s == '%') {
+                // ⚡ 分支預測提示：降低誤判成本。
                 if (UNLIKELY(*(s + 1) == '%')) { // to allow %% -> % escape character.
                     ++s;
                 } else {
@@ -123,6 +203,7 @@ public:
     {
         while (*s) {
             if (*s == '%') {
+                // ⚡ 分支預測提示：降低誤判成本。
                 if (UNLIKELY(*(s + 1) == '%')) { // to allow %% -> % escape character.
                     ++s;
                 } else {
@@ -132,6 +213,38 @@ public:
 
             pushValue(*s++);
         }
+    }
+
+    explicit OptLogger(const std::string& file_name)
+        : file_name_(file_name), queue_(LOG_QUEUE_SIZE)
+    {
+        file_.open(file_name);
+        ASSERT(file_.is_open(), "Could not open log file:" + file_name);
+
+        logger_thread_ = Common::createAndStartThread(-1,
+        "OptCommon/OptLogger " + file_name_, [this]() {
+            flushQueue();
+        });
+        ASSERT(logger_thread_ != nullptr, "Failed to start OptLogger thread.");
+    }
+
+    ~OptLogger()
+    {
+        std::string time_str;
+        std::cerr << Common::getCurrentTimeStr(&time_str) <<
+                  " Flushing and closing OptLogger for " << file_name_ << std::endl;
+
+        while (queue_.size()) {
+            using namespace std::literals::chrono_literals;
+            std::this_thread::sleep_for(1s);
+        }
+
+        running_ = false;
+        logger_thread_->join();
+        file_.close();
+
+        delete logger_thread_;
+        logger_thread_ = nullptr;
     }
 
     /// Deleted default, copy & move constructors and assignment-operators.
@@ -152,6 +265,7 @@ private:
 
     /// Lock free queue of log elements from main logging thread to background formatting and disk writer thread.
     Common::LFQueue<LogElement> queue_;
+    // ⚡ 原子操作：避免鎖但需注意記憶體序。
     std::atomic<bool> running_ = {true};
 
     /// Background logging thread.

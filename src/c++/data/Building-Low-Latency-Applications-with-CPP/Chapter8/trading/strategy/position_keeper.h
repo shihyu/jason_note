@@ -1,5 +1,9 @@
 #pragma once
 
+// 倉位追蹤：即時更新持倉與 VWAP。
+// ⚡ 效能關鍵：增量更新避免全量重算。
+// ⚠️ 注意：成交方向與數量符號。
+
 #include "common/macros.h"
 #include "common/types.h"
 #include "common/logging.h"
@@ -51,6 +55,7 @@ struct PositionInfo {
 
         if (old_position * sideToValue(client_response->side_) >=
             0) { // opened / increased position.
+                // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
             open_vwap_[side_index] += (client_response->price_ *
                                        client_response->exec_qty_);
         } else { // decreased position.

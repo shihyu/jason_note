@@ -1,5 +1,9 @@
 #pragma once
 
+// 撮合訂單簿核心：價格時間優先，單執行緒熱路徑避免鎖。
+// ⚡ 效能關鍵：O(1) 索引 + 環狀鏈結，零動態配置。
+// ⚠️ 注意：插入/移除需維持鏈結與索引一致。
+
 #include "common/types.h"
 #include "common/mem_pool.h"
 #include "common/logging.h"
@@ -101,6 +105,7 @@ private:
         const auto best_orders_by_price = (new_orders_at_price->side_ == Side::BUY ?
                                            bids_by_price_ : asks_by_price_);
 
+        // ⚡ 分支預測提示：降低誤判成本。
         if (UNLIKELY(!best_orders_by_price)) {
             (new_orders_at_price->side_ == Side::BUY ? bids_by_price_ : asks_by_price_) =
                 new_orders_at_price;
@@ -151,6 +156,7 @@ private:
                      new_orders_at_price->price_ > best_orders_by_price->price_) ||
                     (new_orders_at_price->side_ == Side::SELL &&
                      new_orders_at_price->price_ < best_orders_by_price->price_)) {
+                         // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
                     target->next_entry_ = (target->next_entry_ == best_orders_by_price ?
                                            new_orders_at_price : target->next_entry_);
                     (new_orders_at_price->side_ == Side::BUY ? bids_by_price_ : asks_by_price_) =
@@ -167,6 +173,7 @@ private:
                                            asks_by_price_);
         auto orders_at_price = getOrdersAtPrice(price);
 
+        // ⚡ 分支預測提示：降低誤判成本。
         if (UNLIKELY(orders_at_price->next_entry_ ==
                      orders_at_price)) { // empty side of book.
             (side == Side::BUY ? bids_by_price_ : asks_by_price_) = nullptr;

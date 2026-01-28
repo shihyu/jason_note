@@ -28,6 +28,7 @@ MarketDataConsumer::MarketDataConsumer(Common::ClientId client_id,
 {
     // 建立接收回調 Lambda（兩個 socket 共用同一個回調函式）
     auto recv_callback = [this](auto socket) {
+        // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
         recvCallback(socket);
     };
 

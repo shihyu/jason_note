@@ -312,6 +312,7 @@ auto MEOrderBook::cancel(ClientId client_id, OrderId order_id,
     auto is_cancelable = (client_id < cid_oid_to_order_.size());
     MEOrder* exchange_order = nullptr;
 
+    // ⚡ 分支預測提示：降低誤判成本。
     if (LIKELY(is_cancelable)) {
         // 2. 查找訂單
         auto& co_itr = cid_oid_to_order_.at(client_id);

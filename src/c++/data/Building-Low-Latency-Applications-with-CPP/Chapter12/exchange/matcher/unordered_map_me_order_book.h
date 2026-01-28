@@ -1,5 +1,9 @@
 #pragma once
 
+// 以 std::unordered_map 實作的訂單簿，用於效能對照。
+// ⚡ 效能關鍵：雜湊查找與鏈結維護的成本比較。
+// ⚠️ 注意：雜湊分配與 rehash 可能造成抖動。
+
 #include <unordered_map>
 
 #include "common/types.h"
@@ -94,6 +98,7 @@ private:
     {
         if (price_orders_at_price_.find(priceToIndex(price)) ==
             price_orders_at_price_.end()) {
+                // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
             return nullptr;
         }
 
@@ -109,6 +114,7 @@ private:
         const auto best_orders_by_price = (new_orders_at_price->side_ == Side::BUY ?
                                            bids_by_price_ : asks_by_price_);
 
+        // ⚡ 分支預測提示：降低誤判成本。
         if (UNLIKELY(!best_orders_by_price)) {
             (new_orders_at_price->side_ == Side::BUY ? bids_by_price_ : asks_by_price_) =
                 new_orders_at_price;
@@ -175,6 +181,7 @@ private:
                                            asks_by_price_);
         auto orders_at_price = getOrdersAtPrice(price);
 
+        // ⚡ 分支預測提示：降低誤判成本。
         if (UNLIKELY(orders_at_price->next_entry_ ==
                      orders_at_price)) { // empty side of book.
             (side == Side::BUY ? bids_by_price_ : asks_by_price_) = nullptr;

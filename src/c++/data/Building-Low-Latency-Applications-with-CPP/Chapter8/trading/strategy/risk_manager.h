@@ -1,3 +1,7 @@
+// 風控檢查：下單前快速檢核。
+// ⚡ 效能關鍵：常數時間檢查。
+// ⚠️ 注意：配置與倉位一致性。
+
 /**
  * @file risk_manager.h
  * @brief 風控管理器標頭檔 - 交易前風險檢查
@@ -192,6 +196,7 @@ struct RiskInfo {
         if (UNLIKELY(std::abs(position_info_->position_ + sideToValue(
                                   side) * static_cast<int32_t>(qty)) > static_cast<int32_t>
                      (risk_cfg_.max_position_))) {
+                         // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
             return RiskCheckResult::POSITION_TOO_LARGE;
         }
 

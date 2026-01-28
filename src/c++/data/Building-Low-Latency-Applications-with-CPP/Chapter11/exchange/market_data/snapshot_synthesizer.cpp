@@ -259,6 +259,7 @@ auto SnapshotSynthesizer::publishSnapshot()
     const MDPMarketUpdate start_market_update{snapshot_size++, {MarketUpdateType::SNAPSHOT_START, last_inc_seq_num_}};
     logger_.log("%:% %() % %\n", __FILE__, __LINE__, __FUNCTION__,
                 getCurrentTimeStr(&time_str_), start_market_update.toString());
+    // ⚡ Socket 收發：熱路徑避免額外拷貝。
     snapshot_socket_.send(&start_market_update, sizeof(MDPMarketUpdate));
 
     // 步驟 2：遍歷所有商品，發送每個商品的訂單簿狀態
@@ -273,6 +274,7 @@ auto SnapshotSynthesizer::publishSnapshot()
         const MDPMarketUpdate clear_market_update{snapshot_size++, me_market_update};
         logger_.log("%:% %() % %\n", __FILE__, __LINE__, __FUNCTION__,
                     getCurrentTimeStr(&time_str_), clear_market_update.toString());
+        // ⚡ Socket 收發：熱路徑避免額外拷貝。
         snapshot_socket_.send(&clear_market_update, sizeof(MDPMarketUpdate));
 
         // 步驟 2b：發送該商品的所有活躍訂單（逐筆發送 ADD 訊息）
@@ -282,6 +284,7 @@ auto SnapshotSynthesizer::publishSnapshot()
                 const MDPMarketUpdate market_update{snapshot_size++, *order};
                 logger_.log("%:% %() % %\n", __FILE__, __LINE__, __FUNCTION__,
                             getCurrentTimeStr(&time_str_), market_update.toString());
+                // ⚡ Socket 收發：熱路徑避免額外拷貝。
                 snapshot_socket_.send(&market_update, sizeof(MDPMarketUpdate));
 
                 // ⚡ 批次發送：每個訂單發送後立即呼叫 sendAndRecv()
@@ -296,6 +299,7 @@ auto SnapshotSynthesizer::publishSnapshot()
     const MDPMarketUpdate end_market_update{snapshot_size++, {MarketUpdateType::SNAPSHOT_END, last_inc_seq_num_}};
     logger_.log("%:% %() % %\n", __FILE__, __LINE__, __FUNCTION__,
                 getCurrentTimeStr(&time_str_), end_market_update.toString());
+    // ⚡ Socket 收發：熱路徑避免額外拷貝。
     snapshot_socket_.send(&end_market_update, sizeof(MDPMarketUpdate));
     snapshot_socket_.sendAndRecv();
 

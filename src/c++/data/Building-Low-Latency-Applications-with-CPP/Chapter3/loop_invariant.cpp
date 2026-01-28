@@ -3,6 +3,7 @@
 int main()
 {
     auto doSomething = [](double r) noexcept {
+        // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
         return 3.14 * r * r;
     };
     [[maybe_unused]] int a[100], b = rand();

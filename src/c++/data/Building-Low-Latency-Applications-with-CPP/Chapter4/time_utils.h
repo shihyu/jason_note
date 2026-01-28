@@ -52,9 +52,11 @@ constexpr Nanos NANOS_TO_SECS = NANOS_TO_MILLIS * MILLIS_TO_SECS;      // 1,000,
 //   Nanos start = getCurrentNanos();
 //   process_order();
 //   Nanos latency = getCurrentNanos() - start;
+// ⚡ 時間戳取得：避免高開銷 API。
 inline auto getCurrentNanos() noexcept
 {
     return std::chrono::duration_cast<std::chrono::nanoseconds>
+           // ⚡ 時間戳取得：避免高開銷 API。
            (std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
@@ -73,6 +75,7 @@ inline auto getCurrentNanos() noexcept
 //   logger.log("Current time: %\n", getCurrentTimeStr(&time_str));
 inline auto& getCurrentTimeStr(std::string* time_str)
 {
+    // ⚡ 時間戳取得：避免高開銷 API。
     const auto time = std::chrono::system_clock::to_time_t(
                           std::chrono::system_clock::now());
     time_str->assign(ctime(&time));  // ctime 格式: "Fri Jan 10 12:34:56 2026\n"

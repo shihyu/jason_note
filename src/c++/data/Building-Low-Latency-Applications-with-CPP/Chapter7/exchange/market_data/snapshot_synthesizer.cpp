@@ -249,6 +249,7 @@ auto SnapshotSynthesizer::publishSnapshot()
     const MDPMarketUpdate start_market_update{snapshot_size++, {MarketUpdateType::SNAPSHOT_START, last_inc_seq_num_}};
     logger_.log("%:% %() % %\n", __FILE__, __LINE__, __FUNCTION__,
                 getCurrentTimeStr(&time_str_), start_market_update.toString());
+    // ⚡ Socket 收發：熱路徑避免額外拷貝。
     snapshot_socket_.send(&start_market_update, sizeof(MDPMarketUpdate));
 
     for (size_t ticker_id = 0; ticker_id < ticker_orders_.size(); ++ticker_id) {
@@ -262,6 +263,7 @@ auto SnapshotSynthesizer::publishSnapshot()
         const MDPMarketUpdate clear_market_update{snapshot_size++, me_market_update};
         logger_.log("%:% %() % %\n", __FILE__, __LINE__, __FUNCTION__,
                     getCurrentTimeStr(&time_str_), clear_market_update.toString());
+        // ⚡ Socket 收發：熱路徑避免額外拷貝。
         snapshot_socket_.send(&clear_market_update, sizeof(MDPMarketUpdate));
 
         // 2b. 發送所有現存訂單 (ADD)
@@ -270,6 +272,7 @@ auto SnapshotSynthesizer::publishSnapshot()
                 const MDPMarketUpdate market_update{snapshot_size++, *order};
                 logger_.log("%:% %() % %\n", __FILE__, __LINE__, __FUNCTION__,
                             getCurrentTimeStr(&time_str_), market_update.toString());
+                // ⚡ Socket 收發：熱路徑避免額外拷貝。
                 snapshot_socket_.send(&market_update, sizeof(MDPMarketUpdate));
                 snapshot_socket_.sendAndRecv();
             }
@@ -280,6 +283,7 @@ auto SnapshotSynthesizer::publishSnapshot()
     const MDPMarketUpdate end_market_update{snapshot_size++, {MarketUpdateType::SNAPSHOT_END, last_inc_seq_num_}};
     logger_.log("%:% %() % %\n", __FILE__, __LINE__, __FUNCTION__,
                 getCurrentTimeStr(&time_str_), end_market_update.toString());
+    // ⚡ Socket 收發：熱路徑避免額外拷貝。
     snapshot_socket_.send(&end_market_update, sizeof(MDPMarketUpdate));
     snapshot_socket_.sendAndRecv();
 

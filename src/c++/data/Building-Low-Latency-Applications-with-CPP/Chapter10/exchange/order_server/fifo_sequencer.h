@@ -1,5 +1,9 @@
 #pragma once
 
+// 排序器 (FIFO)：以接收時間排序請求，提供公平性。
+// ⚡ 效能關鍵：小型容器與 O(log N) 插入。
+// ⚠️ 注意：時間戳精度與排序穩定性。
+
 #include "common/thread_utils.h"
 #include "common/macros.h"
 
@@ -30,11 +34,13 @@ public:
         }
 
         pending_client_requests_.at(pending_size_++) = std::move(RecvTimeClientRequest{rx_time, request});
+            // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
     }
 
     /// Sort pending client requests in ascending receive time order and then write them to the lock free queue for the matching engine to consume from.
     auto sequenceAndPublish()
     {
+        // ⚡ 分支預測提示：降低誤判成本。
         if (UNLIKELY(!pending_size_)) {
             return;
         }

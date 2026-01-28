@@ -14,6 +14,8 @@ help:  ## 顯示說明訊息
 	@echo ""
 	@echo "可用指令："
 	@echo "  make view-docs       - 在瀏覽器中開啟繁體中文導讀文件"
+	@echo "  make check-zh        - 檢查繁體中文註解覆蓋率"
+	@echo "  make list-files      - 列出所有程式碼檔案"
 	@echo "  make build-all       - 建置所有章節的程式碼"
 	@echo "  make clean-all       - 清理所有章節的建置產物"
 	@echo ""
@@ -31,6 +33,15 @@ help:  ## 顯示說明訊息
 view-docs:  ## 開啟繁體中文文件目錄
 	@echo "開啟文件目錄..."
 	@xdg-open docs/總覽.md 2>/dev/null || open docs/總覽.md || echo "請手動開啟 docs/總覽.md"
+
+.PHONY: check-zh
+check-zh:  ## 檢查哪些檔案缺少繁體中文註解
+	@echo "檢查繁體中文註解覆蓋率..."
+	@rg --files-without-match "// [\\u4e00-\\u9fff]+" -g "*.cpp" -g "*.h" Chapter* | rg -v "\\.md$$" || echo "所有檔案都有繁體註解！"
+
+.PHONY: list-files
+list-files:  ## 列出所有需要註解的程式碼檔案
+	@rg --files -g "*.cpp" -g "*.h" Chapter3 Chapter4 Chapter6 Chapter7 Chapter8 Chapter9 Chapter10 Chapter11 Chapter12
 
 # 動態生成建置規則
 define BUILD_RULE

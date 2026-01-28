@@ -1,5 +1,9 @@
 #pragma once
 
+// 低延遲模組：關鍵路徑避免鎖與分配。
+// ⚡ 效能關鍵：固定佈局、批次處理。
+// ⚠️ 注意：狀態一致性。
+
 #include <iostream>
 #include <atomic>
 #include <thread>
@@ -88,6 +92,7 @@ inline auto setThreadCore(int core_id) noexcept
  * ```cpp
  * // 綁定到核心 2，無參數函式
  * auto thread1 = createAndStartThread(2, "TradeEngine", []() {
+     // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
  *     while (true) { process(); }
  * });
  *

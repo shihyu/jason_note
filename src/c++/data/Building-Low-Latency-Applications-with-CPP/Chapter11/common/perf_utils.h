@@ -1,5 +1,9 @@
 #pragma once
 
+#include <cstdint>
+
+#include "time_utils.h"
+
 namespace Common
 {
 // rdtsc: 讀取時鐘週期暫存器 (Read Time-Stamp Counter)

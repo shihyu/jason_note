@@ -1,5 +1,9 @@
 #pragma once
 
+// 訂單伺服器：TCP 收發 + FIFO 排序，維持順序與公平性。
+// ⚡ 效能關鍵：非阻塞 I/O + 批次收發。
+// ⚠️ 注意：序列號跳號/重傳處理。
+
 #include <functional>
 
 #include "common/thread_utils.h"
@@ -39,6 +43,7 @@ public:
             for (auto client_response = outgoing_responses_->getNextToRead();
                  outgoing_responses_->size() &&
                  client_response; client_response = outgoing_responses_->getNextToRead()) {
+                     // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
                 auto& next_outgoing_seq_num =
                     cid_next_outgoing_seq_num_[client_response->client_id_];
                 logger_.log("%:% %() % Processing cid:% seq:% %\n", __FILE__, __LINE__,
@@ -49,8 +54,10 @@ public:
                 ASSERT(cid_tcp_socket_[client_response->client_id_] != nullptr,
                        "Dont have a TCPSocket for ClientId:" + std::to_string(
                            client_response->client_id_));
+                // ⚡ Socket 收發：熱路徑避免額外拷貝。
                 cid_tcp_socket_[client_response->client_id_]->send(&next_outgoing_seq_num,
                         sizeof(next_outgoing_seq_num));
+                // ⚡ Socket 收發：熱路徑避免額外拷貝。
                 cid_tcp_socket_[client_response->client_id_]->send(client_response,
                         sizeof(MEClientResponse));
 
@@ -78,6 +85,7 @@ public:
                 logger_.log("%:% %() % Received %\n", __FILE__, __LINE__, __FUNCTION__,
                             Common::getCurrentTimeStr(&time_str_), request->toString());
 
+                // ⚡ 分支預測提示：降低誤判成本。
                 if (UNLIKELY(cid_tcp_socket_[request->me_client_request_.client_id_] ==
                              nullptr)) { // first message from this ClientId.
                     cid_tcp_socket_[request->me_client_request_.client_id_] = socket;
@@ -140,6 +148,7 @@ private:
     /// Lock free queue of outgoing client responses to be sent out to connected clients.
     ClientResponseLFQueue* outgoing_responses_ = nullptr;
 
+    // ⚠️ 注意：volatile 僅防優化，非同步原語。
     volatile bool run_ = false;
 
     std::string time_str_;

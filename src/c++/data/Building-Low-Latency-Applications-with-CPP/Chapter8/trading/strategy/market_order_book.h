@@ -1,5 +1,9 @@
 #pragma once
 
+// 策略側訂單簿：維護本地快照以降低依賴外部延遲。
+// ⚡ 效能關鍵：與撮合相同的價格/時間優先結構。
+// ⚠️ 注意：處理增量更新順序不可錯。
+
 #include "common/types.h"
 #include "common/mem_pool.h"
 #include "common/logging.h"
@@ -35,6 +39,7 @@ public:
 
                 for (auto order = bids_by_price_->first_mkt_order_->next_order_;
                      order != bids_by_price_->first_mkt_order_; order = order->next_order_) {
+                         // ⚡ 關鍵路徑：函式內避免鎖/分配，保持快取局部性。
                     bbo_.bid_qty_ += order->qty_;
                 }
             } else {
@@ -116,6 +121,7 @@ private:
         const auto best_orders_by_price = (new_orders_at_price->side_ == Side::BUY ?
                                            bids_by_price_ : asks_by_price_);
 
+        // ⚡ 分支預測提示：降低誤判成本。
         if (UNLIKELY(!best_orders_by_price)) {
             (new_orders_at_price->side_ == Side::BUY ? bids_by_price_ : asks_by_price_) =
                 new_orders_at_price;
@@ -182,6 +188,7 @@ private:
                                            asks_by_price_);
         auto orders_at_price = getOrdersAtPrice(price);
 
+        // ⚡ 分支預測提示：降低誤判成本。
         if (UNLIKELY(orders_at_price->next_entry_ ==
                      orders_at_price)) { // empty side of book.
             (side == Side::BUY ? bids_by_price_ : asks_by_price_) = nullptr;

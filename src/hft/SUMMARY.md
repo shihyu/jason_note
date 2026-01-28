@@ -50,6 +50,7 @@
 
 ### DPDK 專題
 - [DPDK 完整介紹](03-network/dpdk-introduction.md) - 什麼是 DPDK、核心概念、為何需要
+- [DPDK 網卡完整指南](03-network/dpdk-guide.md) - DPDK 網卡特點、部署方式、Huge Pages、NUMA、常見誤解
 - [DPDK 雙埠測試](03-network/dpdk-port-testing.md) - DPDK 20 環境配置、安裝、測試步驟
 - [DPDK + QEMU + GDB 調試](03-network/dpdk-qemu-gdb.md) - 虛擬化環境下的 DPDK 調試
 
@@ -116,7 +117,7 @@
 ### 檔案組織原則
 - **01-language/**: 語言選型與比較（7 個檔案）
 - **02-system/**: 系統層優化（10 個檔案）
-- **03-network/**: 網路與 I/O 優化（6 個檔案）
+- **03-network/**: 網路與 I/O 優化（7 個檔案）
 - **04-testing/**: 測試與監控（2 個檔案）
 - **05-practice/**: 實踐案例（1 個檔案）
 - **06-resources/**: 資源與參考（5 個檔案）
@@ -134,5 +135,5 @@
 
 ---
 
-**最後更新**: 2026-01-11
-**總檔案數**: 29 個核心文檔 + 多個實踐項目
+**最後更新**: 2026-01-19
+**總檔案數**: 30 個核心文檔 + 多個實踐項目
