@@ -357,6 +357,7 @@
     - [Google 工程師 21 條金律](software_engineering/google工程師21條金律.md)
     - [AI 時代寫程式：學習還是偷懶？](software_engineering/vibe-coding-vs-software-engineering.md)
     - [AI 協作開發實踐指南：避開六大盲區](software_engineering/AI協作開發實踐指南_避開六大盲區.md)
+    - [Netflix 工程師談 Vibe Coding 副作用](software_engineering/Netflix工程師談VibeCoding副作用_理解萎縮危機與三步驟解方.md)
     - [黑箱測試方法與AI應用 - 課程筆記](software_engineering/黑箱測試方法與AI應用_課程筆記.md)
     - [黑箱測試方法詳細指南](software_engineering/testing_methods_guide.md)
     - [軟體開發方法論完整指南](software_engineering/software_development_methodologies_guide.md)
