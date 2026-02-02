@@ -440,6 +440,7 @@
         - [基於DEAP庫的Python進化演算法](ml/基於DEAP庫的Python進化演算法從入門到入土.md)
         - [OpenEvolve 快速入門指南](ml/OpenEvolve快速入門指南.md)
         - [OpenEvolve 完整指南](ml/OpenEvolve_Complete_Guide.md)
+        - [OpenEvolve 進化式編程完整指南](ml/OpenEvolve進化式編程完整指南.md)
         - [XGBoost 詳解](ml/XGBoost.md)
         - [ML From Scratch](ml/src/ML-From-Scratch/README.md)
         - [機器學習資源整理](ml/ml.md)
