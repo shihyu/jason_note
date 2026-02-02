@@ -208,37 +208,37 @@
 </blockquote>
 <h2 id="核心概念"><a class="header" href="#核心概念">核心概念</a></h2>
 <h3 id="1-系統架構圖"><a class="header" href="#1-系統架構圖">1. 系統架構圖</a></h3>
-<pre class="mermaid">graph TB
+<pre><code class="language-mermaid">graph TB
     subgraph US [使用者空間]
-        APP[&quot;應用程式&lt;br/&gt;Python/Go/C++&quot;]
-        TOOL[&quot;開發工具&lt;br/&gt;bcc/bpftrace&quot;]
-        LIB[&quot;eBPF 函式庫&quot;]
+        APP["應用程式&lt;br/&gt;Python/Go/C++"]
+        TOOL["開發工具&lt;br/&gt;bcc/bpftrace"]
+        LIB["eBPF 函式庫"]
     end
     
     subgraph ES [eBPF 子系統]
         LOAD[載入器]
-        VERIFY[&quot;驗證器&lt;br/&gt;Verifier&quot;]
-        JIT[&quot;JIT 編譯器&quot;]
-        MAPS[&quot;eBPF Maps&lt;br/&gt;資料儲存&quot;]
+        VERIFY["驗證器&lt;br/&gt;Verifier"]
+        JIT["JIT 編譯器"]
+        MAPS["eBPF Maps&lt;br/&gt;資料儲存"]
     end
     
     subgraph LK [Linux 核心]
-        HOOK[&quot;鉤子點 Hooks&quot;]
-        PROG[&quot;eBPF 程式&lt;br/&gt;執行環境&quot;]
-        HELPER[&quot;Helper 函數&quot;]
+        HOOK["鉤子點 Hooks"]
+        PROG["eBPF 程式&lt;br/&gt;執行環境"]
+        HELPER["Helper 函數"]
         SUBSYS[核心子系統]
     end
     
     subgraph HWL [硬體層]
-        HW[&quot;CPU/記憶體/網卡&quot;]
+        HW["CPU/記憶體/網卡"]
     end
     
     APP --&gt; TOOL
     TOOL --&gt; LIB
-    LIB --&gt;|&quot;bpf()系統呼叫&quot;| LOAD
+    LIB --&gt;|"bpf()系統呼叫"| LOAD
     LOAD --&gt; VERIFY
-    VERIFY --&gt;|&quot;安全檢查通過&quot;| JIT
-    JIT --&gt;|&quot;機器碼&quot;| PROG
+    VERIFY --&gt;|"安全檢查通過"| JIT
+    JIT --&gt;|"機器碼"| PROG
     PROG &lt;--&gt; MAPS
     PROG --&gt; HELPER
     PROG --&gt; HOOK
@@ -248,7 +248,7 @@
     style VERIFY fill:#ff9999
     style JIT fill:#99ff99
     style MAPS fill:#9999ff
-</pre>
+</code></pre>
 <h3 id="2-鉤子點-hooks"><a class="header" href="#2-鉤子點-hooks">2. 鉤子點 (Hooks)</a></h3>
 <p>eBPF 程序可以附加到多種鉤子點：</p>
 <div class="table-wrapper"><table><thead><tr><th>鉤子類型</th><th>用途</th><th>觸發時機</th></tr></thead><tbody>
@@ -262,32 +262,32 @@
 </tbody></table>
 </div>
 <h3 id="3-ebpf-程式執行流程"><a class="header" href="#3-ebpf-程式執行流程">3. eBPF 程式執行流程</a></h3>
-<pre class="mermaid">graph LR
+<pre><code class="language-mermaid">graph LR
     subgraph DEV [開發階段]
-        CODE[&quot;C/Rust 程式碼&quot;]
-        COMPILE[&quot;LLVM/Clang&lt;br/&gt;編譯&quot;]
-        BYTECODE[&quot;eBPF Bytecode&quot;]
+        CODE["C/Rust 程式碼"]
+        COMPILE["LLVM/Clang&lt;br/&gt;編譯"]
+        BYTECODE["eBPF Bytecode"]
     end
     
     subgraph LOADSTAGE [載入階段]
-        SYSCALL[&quot;bpf() 系統呼叫&quot;]
+        SYSCALL["bpf() 系統呼叫"]
         VERIFIER[驗證器檢查]
-        JIT_COMP[&quot;JIT 編譯&quot;]
+        JIT_COMP["JIT 編譯"]
     end
     
     subgraph RUNTIME [執行階段]
         ATTACH[附加到鉤子]
         RUN[事件觸發執行]
-        MAPS_RW[&quot;讀寫 Maps&quot;]
-        HELPERS[&quot;呼叫 Helper&quot;]  
+        MAPS_RW["讀寫 Maps"]
+        HELPERS["呼叫 Helper"]  
     end
     
     CODE --&gt; COMPILE
     COMPILE --&gt; BYTECODE
     BYTECODE --&gt; SYSCALL
     SYSCALL --&gt; VERIFIER
-    VERIFIER --&gt;|&quot;通過&quot;| JIT_COMP
-    VERIFIER --&gt;|&quot;失敗&quot;| REJECT[&quot;拒絕載入&quot;]
+    VERIFIER --&gt;|"通過"| JIT_COMP
+    VERIFIER --&gt;|"失敗"| REJECT["拒絕載入"]
     JIT_COMP --&gt; ATTACH
     ATTACH --&gt; RUN
     RUN --&gt; MAPS_RW
@@ -295,93 +295,93 @@
     
     style VERIFIER fill:#ffcccc
     style JIT_COMP fill:#ccffcc
-</pre>
+</code></pre>
 <h2 id="架構組件"><a class="header" href="#架構組件">架構組件</a></h2>
 <h3 id="1-ebpf-maps"><a class="header" href="#1-ebpf-maps">1. eBPF Maps</a></h3>
 <p>Maps 是核心與使用者空間的資料橋樑：</p>
-<pre class="mermaid">graph TB
+<pre><code class="language-mermaid">graph TB
     subgraph USERSPACE [使用者空間程式]
-        USER[&quot;Python/Go/C++ 應用&quot;]
+        USER["Python/Go/C++ 應用"]
     end
     
     subgraph MAPTYPES [eBPF Maps 類型]
-        HASH[&quot;Hash Map&lt;br/&gt;鍵值對儲存&quot;]
-        ARRAY[&quot;Array&lt;br/&gt;固定大小陣列&quot;]
-        PERF[&quot;Perf Event Array&lt;br/&gt;事件傳遞&quot;]
-        STACK[&quot;Stack Trace&lt;br/&gt;堆疊追蹤&quot;]
-        LRU[&quot;LRU Hash&lt;br/&gt;快取儲存&quot;]
-        PERCPU[&quot;Per-CPU Array&lt;br/&gt;CPU 獨立儲存&quot;]
+        HASH["Hash Map&lt;br/&gt;鍵值對儲存"]
+        ARRAY["Array&lt;br/&gt;固定大小陣列"]
+        PERF["Perf Event Array&lt;br/&gt;事件傳遞"]
+        STACK["Stack Trace&lt;br/&gt;堆疊追蹤"]
+        LRU["LRU Hash&lt;br/&gt;快取儲存"]
+        PERCPU["Per-CPU Array&lt;br/&gt;CPU 獨立儲存"]
     end
     
     subgraph KERNELPROG [核心 eBPF 程式]
-        KERNEL[&quot;eBPF 程式邏輯&quot;]
+        KERNEL["eBPF 程式邏輯"]
     end
     
-    USER &lt;--&gt;|&quot;讀寫&quot;| HASH
-    USER &lt;--&gt;|&quot;讀寫&quot;| ARRAY
-    USER --&gt;|&quot;讀取事件&quot;| PERF
+    USER &lt;--&gt;|"讀寫"| HASH
+    USER &lt;--&gt;|"讀寫"| ARRAY
+    USER --&gt;|"讀取事件"| PERF
     
-    KERNEL --&gt;|&quot;更新&quot;| HASH
-    KERNEL --&gt;|&quot;寫入&quot;| ARRAY
-    KERNEL --&gt;|&quot;提交事件&quot;| PERF
-    KERNEL --&gt;|&quot;記錄&quot;| STACK
+    KERNEL --&gt;|"更新"| HASH
+    KERNEL --&gt;|"寫入"| ARRAY
+    KERNEL --&gt;|"提交事件"| PERF
+    KERNEL --&gt;|"記錄"| STACK
     KERNEL &lt;--&gt; LRU
     KERNEL &lt;--&gt; PERCPU
     
     style HASH fill:#ffffcc
     style PERF fill:#ccffff
-</pre>
+</code></pre>
 <h3 id="2-驗證器-verifier"><a class="header" href="#2-驗證器-verifier">2. 驗證器 (Verifier)</a></h3>
 <p>驗證器確保 eBPF 程式的安全性：</p>
-<pre class="mermaid">flowchart TD
+<pre><code class="language-mermaid">flowchart TD
     START[eBPF Bytecode]
     
-    CHECK1{&quot;檢查指令數量&lt;br/&gt;&lt; 1M ?&quot;}
+    CHECK1{"檢查指令數量&lt;br/&gt;&lt; 1M ?"}
     CHECK2{模擬所有路徑}
-    CHECK3{&quot;記憶體訪問&lt;br/&gt;安全？&quot;}
-    CHECK4{&quot;程式會結束？&lt;br/&gt;無無限迴圈&quot;}
-    CHECK5{&quot;Helper 使用&lt;br/&gt;正確？&quot;}
+    CHECK3{"記憶體訪問&lt;br/&gt;安全？"}
+    CHECK4{"程式會結束？&lt;br/&gt;無無限迴圈"}
+    CHECK5{"Helper 使用&lt;br/&gt;正確？"}
     
-    PASS[&quot;✅ 載入到核心&quot;]
-    FAIL[&quot;❌ 拒絕載入&quot;]
+    PASS["✅ 載入到核心"]
+    FAIL["❌ 拒絕載入"]
     
     START --&gt; CHECK1
-    CHECK1 --&gt;|&quot;是&quot;| CHECK2
-    CHECK1 --&gt;|&quot;否&quot;| FAIL
-    CHECK2 --&gt;|&quot;通過&quot;| CHECK3
-    CHECK2 --&gt;|&quot;失敗&quot;| FAIL
-    CHECK3 --&gt;|&quot;安全&quot;| CHECK4
-    CHECK3 --&gt;|&quot;不安全&quot;| FAIL
-    CHECK4 --&gt;|&quot;是&quot;| CHECK5
-    CHECK4 --&gt;|&quot;否&quot;| FAIL
-    CHECK5 --&gt;|&quot;正確&quot;| PASS
-    CHECK5 --&gt;|&quot;錯誤&quot;| FAIL
+    CHECK1 --&gt;|"是"| CHECK2
+    CHECK1 --&gt;|"否"| FAIL
+    CHECK2 --&gt;|"通過"| CHECK3
+    CHECK2 --&gt;|"失敗"| FAIL
+    CHECK3 --&gt;|"安全"| CHECK4
+    CHECK3 --&gt;|"不安全"| FAIL
+    CHECK4 --&gt;|"是"| CHECK5
+    CHECK4 --&gt;|"否"| FAIL
+    CHECK5 --&gt;|"正確"| PASS
+    CHECK5 --&gt;|"錯誤"| FAIL
     
     style PASS fill:#90EE90
     style FAIL fill:#FFB6C1
-</pre>
+</code></pre>
 <h3 id="3-jit-編譯器"><a class="header" href="#3-jit-編譯器">3. JIT 編譯器</a></h3>
 <p>將 eBPF bytecode 轉換為機器碼：</p>
-<pre class="mermaid">graph LR
+<pre><code class="language-mermaid">graph LR
     subgraph COMPILEFLOW [編譯流程]
-        BC[&quot;eBPF Bytecode&lt;br/&gt;虛擬指令&quot;]
-        JIT[&quot;JIT 編譯器&quot;]
-        MC[&quot;機器碼&lt;br/&gt;x86/ARM&quot;]
+        BC["eBPF Bytecode&lt;br/&gt;虛擬指令"]
+        JIT["JIT 編譯器"]
+        MC["機器碼&lt;br/&gt;x86/ARM"]
     end
     
     subgraph PERFCOMPARE [效能對比]
-        INTERP[&quot;解釋執行&lt;br/&gt;速度: 1x&quot;]
-        NATIVE[&quot;原生執行&lt;br/&gt;速度: 10x+&quot;]
+        INTERP["解釋執行&lt;br/&gt;速度: 1x"]
+        NATIVE["原生執行&lt;br/&gt;速度: 10x+"]
     end
     
     BC --&gt; JIT
     JIT --&gt; MC
-    BC -.-&gt;|&quot;沒有 JIT&quot;| INTERP
-    MC --&gt;|&quot;有 JIT&quot;| NATIVE
+    BC -.-&gt;|"沒有 JIT"| INTERP
+    MC --&gt;|"有 JIT"| NATIVE
     
     style NATIVE fill:#90EE90
     style INTERP fill:#FFE4B5
-</pre>
+</code></pre>
 <h3 id="4-helper-函數"><a class="header" href="#4-helper-函數">4. Helper 函數</a></h3>
 <p>eBPF 程式通過 Helper 函數與核心互動：</p>
 <div class="table-wrapper"><table><thead><tr><th>Helper 類別</th><th>功能範例</th></tr></thead><tbody>
@@ -395,19 +395,19 @@
 </div>
 <h2 id="開發工具鏈"><a class="header" href="#開發工具鏈">開發工具鏈</a></h2>
 <h3 id="工具對比"><a class="header" href="#工具對比">工具對比</a></h3>
-<pre class="mermaid">graph TB
+<pre><code class="language-mermaid">graph TB
     subgraph HIGHLEVEL [高階工具]
-        BPFTRACE[&quot;bpftrace&lt;br/&gt;一行指令追蹤&quot;]
-        BCC[&quot;BCC&lt;br/&gt;Python + eBPF&quot;]
+        BPFTRACE["bpftrace&lt;br/&gt;一行指令追蹤"]
+        BCC["BCC&lt;br/&gt;Python + eBPF"]
     end
     
     subgraph MIDLEVEL [中階框架]
-        GO[&quot;eBPF Go&lt;br/&gt;Go 語言函式庫&quot;]
-        RUST[&quot;Aya&lt;br/&gt;Rust 框架&quot;]
+        GO["eBPF Go&lt;br/&gt;Go 語言函式庫"]
+        RUST["Aya&lt;br/&gt;Rust 框架"]
     end
     
     subgraph LOWLEVEL [底層函式庫]
-        LIBBPF[&quot;libbpf&lt;br/&gt;C/C++ 函式庫&quot;]
+        LIBBPF["libbpf&lt;br/&gt;C/C++ 函式庫"]
     end
     
     subgraph USECASES [使用場景]
@@ -425,7 +425,7 @@
     style BPFTRACE fill:#FFE4B5
     style BCC fill:#E6E6FA
     style LIBBPF fill:#90EE90
-</pre>
+</code></pre>
 <h3 id="各工具特點"><a class="header" href="#各工具特點">各工具特點</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>工具</th><th>語言</th><th>學習曲線</th><th>部署複雜度</th><th>適用場景</th></tr></thead><tbody>
 <tr><td><strong>bpftrace</strong></td><td>DSL</td><td>簡單</td><td>低</td><td>臨時診斷、一行指令</td></tr>
@@ -437,21 +437,21 @@
 </div>
 <h2 id="安全機制"><a class="header" href="#安全機制">安全機制</a></h2>
 <h3 id="多層安全保障"><a class="header" href="#多層安全保障">多層安全保障</a></h3>
-<pre class="mermaid">graph TD
+<pre><code class="language-mermaid">graph TD
     subgraph L1 [第一層：權限控制]
-        PRIV[&quot;需要 root 或 CAP_BPF 權限&quot;]
+        PRIV["需要 root 或 CAP_BPF 權限"]
     end
     
     subgraph L2 [第二層：驗證器]
-        VER[&quot;程式安全性驗證&lt;br/&gt;- 無無限迴圈&lt;br/&gt;- 記憶體訪問安全&lt;br/&gt;- 有界限執行&quot;]
+        VER["程式安全性驗證&lt;br/&gt;- 無無限迴圈&lt;br/&gt;- 記憶體訪問安全&lt;br/&gt;- 有界限執行"]
     end
     
     subgraph L3 [第三層：加固]
-        HARD[&quot;執行時保護&lt;br/&gt;- 程式唯讀&lt;br/&gt;- Spectre 緩解&lt;br/&gt;- 常數盲化&quot;]
+        HARD["執行時保護&lt;br/&gt;- 程式唯讀&lt;br/&gt;- Spectre 緩解&lt;br/&gt;- 常數盲化"]
     end
     
     subgraph L4 [第四層：隔離]
-        ISO[&quot;執行環境隔離&lt;br/&gt;- 不能直接訪問記憶體&lt;br/&gt;- 必須使用 Helper&lt;br/&gt;- 受限的上下文&quot;]
+        ISO["執行環境隔離&lt;br/&gt;- 不能直接訪問記憶體&lt;br/&gt;- 必須使用 Helper&lt;br/&gt;- 受限的上下文"]
     end
     
     PRIV --&gt; VER
@@ -462,10 +462,10 @@
     style VER fill:#FFE4B5
     style HARD fill:#E6E6FA
     style ISO fill:#90EE90
-</pre>
+</code></pre>
 <h2 id="為什麼使用-ebpf"><a class="header" href="#為什麼使用-ebpf">為什麼使用 eBPF？</a></h2>
 <h3 id="傳統方式-vs-ebpf"><a class="header" href="#傳統方式-vs-ebpf">傳統方式 vs eBPF</a></h3>
-<pre class="mermaid">graph LR
+<pre><code class="language-mermaid">graph LR
     subgraph TRADITIONAL [傳統方式]
         T1[修改核心原始碼]
         T2[等待數年發布]
@@ -474,7 +474,7 @@
     end
     
     subgraph EBPFWAY [eBPF 方式]
-        E1[&quot;編寫 eBPF 程式&quot;]
+        E1["編寫 eBPF 程式"]
         E2[即時載入執行]
         E3[安全沙盒環境]
         E4[動態可程式化]
@@ -489,7 +489,7 @@
     
     style T4 fill:#FFB6C1
     style E4 fill:#90EE90
-</pre>
+</code></pre>
 <h3 id="ebpf-的革命性影響"><a class="header" href="#ebpf-的革命性影響">eBPF 的革命性影響</a></h3>
 <p>類似於 JavaScript 對 Web 的影響：</p>
 <div class="table-wrapper"><table><thead><tr><th>層面</th><th>Web (JavaScript)</th><th>Linux (eBPF)</th></tr></thead><tbody>
