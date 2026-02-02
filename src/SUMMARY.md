@@ -446,6 +446,7 @@
         - [PyTorch 基礎](ml/pytorch.md)
         - [PyTorch 安裝設定](ml/pytorch_setup.md)
         - [從0手搓 Transformer 代碼拆解](ml/transformer-implementation-guide.md)
+        - [Transformer 工作原理：600 行 Python 實現 self-attention](ml/transformers-from-scratch-zh.md)
         - [AI 識別指南](ml/ai-recognition-guide.md)
         - [人臉辨識](ml/data/Face-Recognition/README.md)
         - [YOLO 物件偵測](ml/YOLO.md)
