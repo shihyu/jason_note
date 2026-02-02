@@ -1,14 +1,5 @@
 # 2025年AI編程革命：OpenEvolve如何用大語言模型「進化」而非「編寫」代碼
 
-> 字數 3803，閱讀大約需 20 分鐘
-
-![OpenEvolve Banner](images/openevolve-banner.png)
-
-## 2025年AI編程革命：OpenEvolve如何用大語言模型「進化」而非「編寫」代碼
-
-> 微信公眾號：**[AI健自習室]**
-> 關注Crypto與LLM技術、關注 AI-StudyLab。問題或建議，請公眾號留言。
-
 本文基於OpenEvolve開源項目（[github.com/codelion/openevolve](https://github.com/codelion/openevolve)）以及Google DeepMind的AlphaEvolve技術文檔整理而成，由AI健自習室團隊編譯。
 
 你是否曾想過，未來的程序員可能不再是「寫代碼」，而是「設計進化」？OpenEvolve這個革命性項目正在將編程範式從「手寫代碼」轉向「AI進化代碼」，它不僅能自動優化算法，甚至能發現人類從未想到的解決方案！本文帶你深入了解這項技術如何重塑軟件開發的未來。
