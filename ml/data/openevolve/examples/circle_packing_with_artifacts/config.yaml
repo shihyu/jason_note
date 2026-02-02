@@ -1,0 +1,90 @@
+# Circle Packing Benchmark Configuration with Thompson Sampling
+# Based on config_benchmark.yaml but uses two models with Thompson sampling
+
+max_iterations: 500
+checkpoint_interval: 10
+log_level: "INFO"
+random_seed: 42
+
+# Full rewrite mode (best for constructor-based problems)
+diff_based_evolution: false
+max_code_length: 50000
+
+# LLM Configuration - Two models
+llm:
+  api_base: "https://openrouter.ai/api/v1"
+  models:
+    - name: "google/gemini-2.5-flash-lite"
+      weight: 0.8
+    - name: "google/gemini-2.5-flash"
+      weight: 0.2
+
+  temperature: 0.4
+  top_p: 0.95
+  max_tokens: 16000
+  timeout: 180
+  retries: 3
+
+# Prompt Configuration
+prompt:
+  system_message: |
+    You are an expert mathematician specializing in circle packing problems and computational geometry.
+    Your task is to improve a constructor function that places 26 circles in a unit square to maximize the sum of their radii.
+
+    Target: AlphaEvolve achieved sum of radii = 2.635 for n=26.
+
+    Key insights:
+    - This is a constrained optimization problem with many local minima
+    - Local optimization methods may get stuck - consider approaches that explore the solution space more broadly
+    - Multiple starting points or perturbation strategies can help find better solutions
+    - Good initial placements matter: hexagonal patterns, corner utilization, edge circles
+    - The problem has 78 degrees of freedom (26 centers + 26 radii)
+
+    Think about how to formulate this mathematically and what optimization strategies might help escape local minima.
+
+  num_top_programs: 3
+  num_diverse_programs: 2
+
+  # Artifacts enabled for debugging/visualization data
+  include_artifacts: true
+  max_artifact_bytes: 20480  # 20KB
+
+# Database Configuration
+database:
+  population_size: 100
+  archive_size: 50
+  num_islands: 4  # Optimal island count
+
+  # Selection parameters
+  elite_selection_ratio: 0.1
+  exploration_ratio: 0.4   # Higher exploration to discover optimization approaches
+  exploitation_ratio: 0.5  # Balance with exploitation
+
+  # Feature dimensions for MAP-Elites (diversity-focused metrics)
+  # - radius_variance: separates uniform vs varied circle sizes (0-1 normalized)
+  # - spatial_spread: separates clustered vs distributed centers (0-1 normalized)
+  feature_dimensions: ["radius_variance", "spatial_spread"]
+  feature_bins: 10
+
+  # Migration parameters - faster sharing of breakthroughs
+  migration_interval: 10  # Share discoveries sooner
+  migration_rate: 0.15    # Migrate more programs
+
+# Evaluator Configuration
+evaluator:
+  timeout: 600  # Allow complex optimization programs to complete
+  max_retries: 3
+  cascade_evaluation: true
+  cascade_thresholds: [0.5, 0.8]
+  parallel_evaluations: 4
+  use_llm_feedback: false
+  enable_artifacts: true
+
+# Novelty Detection - prevent duplicate evaluations
+novelty:
+  enabled: true
+  embedding_backend: "local"
+  embedding_model: "all-MiniLM-L6-v2"
+  similarity_threshold: 0.95
+  max_regeneration_attempts: 3
+  temperature_increment: 0.15
