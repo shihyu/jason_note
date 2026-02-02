@@ -2,7 +2,7 @@
 
 > 目的：說清楚 OpenEvolve 的整體架構、資料流程、核心技術與可擴充點，方便快速理解與二次開發。
 
-![OpenEvolve Architecture](images/openevolve-architecture.png)
+![OpenEvolve Architecture](openevolve-architecture.png)
 
 ## 1. 專案定位與核心概念
 OpenEvolve 是一個以 **LLM 驅動的演化式程式優化系統**。核心思想是：

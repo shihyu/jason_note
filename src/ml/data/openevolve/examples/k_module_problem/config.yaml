@@ -1,0 +1,87 @@
+# K-Module Problem Configuration for OpenEvolve
+# Demonstrates evolutionary search vs iterative refinement
+#
+# This configuration uses the same model (gemini-2.5-flash) as the
+# iterative agent for fair comparison.
+
+max_iterations: 50
+checkpoint_interval: 10
+log_level: "INFO"
+random_seed: 123
+
+# Full rewrite mode - the problem is about finding the right configuration
+diff_based_evolution: false
+max_code_length: 10000
+
+# LLM Configuration - using lightweight model for cost efficiency
+llm:
+  api_base: "https://openrouter.ai/api/v1"
+  models:
+    - name: "google/gemini-2.5-flash-lite"
+      weight: 1.0
+
+  temperature: 0.9  # Higher temperature for more exploration
+  top_p: 0.98
+  max_tokens: 4096
+  timeout: 60
+  retries: 3
+
+# Prompt Configuration
+prompt:
+  system_message: |
+    You are optimizing a data processing pipeline configuration through EXPLORATION.
+
+    The pipeline has 4 independent modules, each with 5 possible options:
+    - loader: ['csv_reader', 'json_reader', 'xml_reader', 'parquet_reader', 'sql_reader']
+    - preprocess: ['normalize', 'standardize', 'minmax', 'scale', 'none']
+    - algorithm: ['quicksort', 'mergesort', 'heapsort', 'bubblesort', 'insertion']
+    - formatter: ['json', 'xml', 'csv', 'yaml', 'protobuf']
+
+    CRITICAL: The score tells you how many modules are correct (0-4), but NOT which ones.
+    This means when you have 3/4 correct, ANY of the 4 modules could be wrong!
+
+    STRATEGY FOR SUCCESS:
+    1. When stuck at a score, try DIFFERENT options for EACH module systematically
+    2. Don't assume any module is definitely correct - even ones that seem obvious
+    3. Combine successful elements from different high-scoring configurations
+    4. If multiple configs have the same score, they may have DIFFERENT correct modules
+
+    Your goal: Find the configuration with 4/4 modules correct.
+
+  num_top_programs: 5   # More examples to learn from
+  num_diverse_programs: 3  # More diversity in examples
+  include_artifacts: true
+  max_artifact_bytes: 10240
+
+# Database Configuration - KEY FOR EVOLUTIONARY CROSSOVER
+database:
+  population_size: 25  # Larger population for more diversity
+  archive_size: 15
+  num_islands: 5  # More islands for parallel exploration
+
+  # Selection parameters - maximize exploration for combinatorial problem
+  elite_selection_ratio: 0.15
+  exploration_ratio: 0.6   # Very high exploration
+  exploitation_ratio: 0.25
+
+  # Feature dimensions - use built-in features
+  feature_dimensions: ["complexity", "diversity"]
+  feature_bins: 5
+
+  # Frequent migration helps combine good building blocks across islands
+  migration_interval: 3  # More frequent migration
+  migration_rate: 0.3    # Higher migration rate
+
+# Evaluator Configuration
+evaluator:
+  timeout: 30
+  max_retries: 2
+  cascade_evaluation: false  # Simple evaluation, no cascade needed
+  parallel_evaluations: 4
+  use_llm_feedback: false
+  enable_artifacts: true
+
+# Early stopping - disabled to allow full exploration
+early_stopping_patience: 100  # Allow full run
+convergence_threshold: 0.001
+early_stopping_metric: "combined_score"
