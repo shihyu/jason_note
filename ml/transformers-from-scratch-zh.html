@@ -1,0 +1,1163 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Transformer 工作原理：600 行 Python 實現 self-attention - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="译-transformer-是如何工作的600-行-python-代码实现-self-attention-和两类-transformer2019"><a class="header" href="#译-transformer-是如何工作的600-行-python-代码实现-self-attention-和两类-transformer2019">[译] Transformer 是如何工作的：600 行 Python 代码实现 self-attention 和两类 Transformer（2019）</a></h1>
+<p>Published at 2023-06-06 | Last Update 2024-04-23</p>
+<h3 id="译者序"><a class="header" href="#译者序">译者序</a></h3>
+<p>本文整理和翻译自 2019 年（最后更新 2023 年）的一篇文章： <a href="https://peterbloem.nl/blog/transformers">Transformers From Scratch</a>， 由浅入深地解释了 transformer/self-attention 背后的工作原理。</p>
+<p>如果对 transformer 的使用场景和所处位置还不清楚，可以先看一下这篇：</p>
+<ul>
+<li><a href="https://arthurchiao.art/blog/gpt-as-a-finite-state-markov-chain-zh/">GPT 是如何工作的：200 行 Python 代码实现一个极简 GPT（2023）</a></li>
+</ul>
+<p>理解本文大部分内容只需要基本的高数知识（矩阵乘法）和一点耐心。 原文代码见<a href="https://github.com/pbloem/former">这里</a>，不过 AI 相关的库更新非常快， 因此现在让跑起来可能有点困难。有兴趣有时间的可以考虑基于较新版本的库重构一下其代码。</p>
+<p>水平及维护精力所限，译文不免存在错误或过时之处，如有疑问，请查阅原文。 <strong>传播知识，尊重劳动，年满十八周岁，转载请注明<a href="https://arthurchiao.art/">出处</a></strong>。</p>
+<p>以下是译文。</p>
+<hr />
+<ul>
+<li>
+<p><a href="#%E8%AF%91%E8%80%85%E5%BA%8F">译者序</a></p>
+</li>
+<li>
+<p><a href="#%E6%91%98%E8%A6%81">摘要</a></p>
+</li>
+<li>
+<p><a href="#1-self-attention%E8%87%AA%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%A8%A1%E5%9E%8B">1 self-attention（自注意力）模型</a>  -   <a href="#10-attention%E6%B3%A8%E6%84%8F%E5%8A%9B%E5%90%8D%E5%AD%97%E7%94%B1%E6%9D%A5">1.0 Attention（注意力）：名字由来</a></p>
+<ul>
+<li><a href="#11-%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BAvector-to-vector-%E8%BF%90%E7%AE%97">1.1 输入输出：vector-to-vector 运算</a></li>
+<li><a href="#12-%E6%9D%83%E9%87%8D%E7%9F%A9%E9%98%B5%E8%AE%A1%E7%AE%97%E5%92%8C%E5%BD%92%E4%B8%80%E5%8C%96">1.2 权重矩阵计算和归一化</a></li>
+<li><a href="#13-%E7%9B%B4%E8%A7%82%E5%B1%95%E7%A4%BA%E4%B8%8E%E5%B0%8F%E7%BB%93">1.3 直观展示与小结</a></li>
+</ul>
+</li>
+<li>
+<p><a href="#2-self-attention-%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E6%95%88%E4%BB%A5%E7%94%B5%E5%BD%B1%E6%8E%A8%E8%8D%90%E4%B8%BA%E4%BE%8B">2 self-attention 为什么有效？以电影推荐为例</a>  -   <a href="#21-%E4%BC%A0%E7%BB%9F%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%E7%89%B9%E6%80%A7%E5%90%91%E9%87%8F%E7%82%B9%E7%A7%AF%E7%94%A8%E6%88%B7%E5%81%8F%E5%A5%BD">2.1 传统推荐系统：特性向量
+<code>plaintext       点积       </code>
+用户偏好</a></p>
+<ul>
+<li><a href="#22-%E5%9F%BA%E4%BA%8E-self-attention-%E7%9A%84%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F">2.2 基于 self-attention 的推荐系统</a>    -   <a href="#221-%E7%94%B5%E5%BD%B1%E7%89%B9%E5%BE%81%E5%92%8C%E7%94%A8%E6%88%B7%E7%89%B9%E5%BE%81%E4%BD%9C%E4%B8%BA%E6%A8%A1%E5%9E%8B%E5%8F%82%E6%95%B0%E5%8C%B9%E9%85%8D%E5%B7%B2%E7%9F%A5%E7%9A%84%E7%94%A8%E6%88%B7%E5%81%8F%E5%A5%BD">2.2.1
+<code>plaintext         电影特征         </code>
+和
+<code>plaintext         用户特征         </code>
+作为模型参数，匹配
+<code>plaintext         已知的用户偏好         </code>
+</a>
+-   <a href="#222-%E5%B5%8C%E5%85%A5%E5%B1%82%E5%AF%B9%E8%BE%93%E5%85%A5%E8%BF%9B%E8%A1%8C%E5%A4%84%E7%90%86">2.2.2 嵌入层：对输入进行处理</a>
+-   <a href="#223-%E7%9B%B4%E8%A7%82%E8%A7%A3%E9%87%8A">2.2.3 直观解释</a>
+-   <a href="#224-self-attention-%E7%89%B9%E6%AE%8A%E5%B1%9E%E6%80%A7">2.2.4 self-attention 特殊属性</a></li>
+</ul>
+</li>
+<li>
+<p><a href="#3-%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E5%9F%BA%E6%9C%AC%E7%9A%84-self-attention">3. 实现一个基本的 self-attention</a>  -   <a href="#31-%E8%BE%93%E5%85%A5%E7%9A%84%E8%A1%A8%E7%A4%BAtensor%E5%A4%9A%E7%BB%B4%E7%9F%A9%E9%98%B5">3.1 输入的表示：tensor（多维矩阵）</a></p>
+<ul>
+<li><a href="#32-%E8%AE%A1%E7%AE%97%E6%9D%83%E9%87%8D%E7%9F%A9%E9%98%B5%E8%BE%93%E5%85%A5%E7%9F%A9%E9%98%B5--%E8%BD%AC%E7%BD%AE%E7%9F%A9%E9%98%B5">3.2 计算权重矩阵：输入矩阵 * 转置矩阵</a></li>
+<li><a href="#33-%E8%AE%A1%E7%AE%97%E8%BE%93%E5%87%BA">3.3 计算输出</a></li>
+</ul>
+</li>
+<li>
+<p><a href="#4-%E7%8E%B0%E4%BB%A3-transformer-%E5%AF%B9-self-attention-%E7%9A%84%E6%89%A9%E5%B1%95">4 现代 transformer 对 self-attention 的扩展</a>  -   <a href="#41-%E5%BC%95%E5%85%A5%E6%8E%A7%E5%88%B6%E5%8F%82%E6%95%B0for-queries-keys-and-values">4.1 引入控制参数（for queries, keys and values）</a>    -   <a href="#411-%E6%AF%8F%E4%B8%AA-input-vector-%E9%83%BD%E8%A2%AB%E4%BD%BF%E7%94%A8%E4%B8%89%E6%AC%A1">4.1.1 每个 input vector 都被使用三次</a>
+-   <a href="#412-%E5%85%B7%E4%BD%93%E4%BE%8B%E5%AD%90%E8%AF%91%E6%B3%A8">4.1.2 具体例子（译注）</a>
+-   <a href="#413-%E5%BC%95%E5%85%A5%E4%B8%89%E4%B8%AA-k-times-k-%E6%9D%83%E9%87%8D%E7%9F%A9%E9%98%B5">4.1.3 引入三个 k×k 权重矩阵</a></p>
+<ul>
+<li>
+<p><a href="#42-%E5%AF%B9%E7%82%B9%E7%A7%AF%E5%81%9A%E7%BC%A9%E6%94%BE%E5%A4%84%E7%90%86scaling-the-dot-product">4.2 对点积做缩放处理（scaling the dot product）</a></p>
+</li>
+<li>
+<p><a href="#43-%E5%BC%95%E5%85%A5-multi-head-attention">4.3 引入 multi-head attention</a>    -   <a href="#431-%E9%9C%80%E6%B1%82%E8%BE%93%E5%87%BA%E4%B8%AD%E5%B5%8C%E5%85%A5%E6%9B%B4%E5%A4%9A%E4%BF%A1%E6%81%AF">4.3.1 需求：输出中嵌入更多信息</a>
+-   <a href="#432-%E8%A7%A3%E5%86%B3%E6%96%B9%E5%BC%8F%E5%BC%95%E5%85%A5%E5%A4%9A%E4%B8%AA-self-attentionmulti-head">4.3.2 解决方式：引入多个 self-attention（multi-head）</a>
+-   <a href="#433-%E6%8F%90%E5%8D%87-multi-head-self-attention-%E6%95%88%E7%8E%87querykeyvalue-%E9%99%8D%E7%BB%B4">4.3.3 提升 multi-head self-attention 效率：query/key/value 降维</a>
+-   <a href="#434-%E5%AE%8C%E6%95%B4%E5%B7%A5%E4%BD%9C%E6%B5%81">4.3.4 完整工作流</a></p>
+</li>
+<li>
+<p><a href="#45-multi-head-vs-single-head-%E6%A8%A1%E5%9E%8B%E5%8F%82%E6%95%B0%E6%95%B0%E9%87%8F%E5%AF%B9%E6%AF%94">4.5 multi-head vs. single-head 模型参数数量对比</a>    -   <a href="#451-single-head">4.5.1 single-head</a>
+-   <a href="#452-multi-head">4.5.2 multi-head</a></p>
+</li>
+</ul>
+</li>
+<li>
+<p><a href="#5-self-attention-%E4%B8%BB%E8%A6%81%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0">5 self-attention 主要代码实现</a></p>
+</li>
+<li>
+<p><a href="#6-%E5%9F%BA%E4%BA%8E-multi-head-self-attention-%E5%AE%9E%E7%8E%B0-transformers">6 基于 multi-head self-attention 实现 transformers</a>  -   <a href="#61-transformer-%E5%AE%9A%E4%B9%89">6.1 Transformer 定义</a></p>
+<ul>
+<li>
+<p><a href="#62-transformer-block">6.2 Transformer block</a></p>
+</li>
+<li>
+<p><a href="#63-%E6%96%87%E6%9C%AC%E5%88%86%E7%B1%BBtext-classificationtransformer">6.3 文本分类（text classification）transformer</a>    -   <a href="#631-%E8%BE%93%E5%87%BA%E5%8D%95%E4%B8%AA%E5%88%86%E7%B1%BB%E7%BB%93%E6%9E%9C">6.3.1 输出：单个分类结果</a>
+-   <a href="#632-%E8%BE%93%E5%85%A5%E8%AF%8D%E5%BA%8F%E6%95%8F%E6%84%9Fusing-the-positions">6.3.2 输入：词序敏感（using the positions）</a>      -   <a href="#%E4%BD%8D%E7%BD%AE%E5%B5%8C%E5%85%A5position-embeddings">位置嵌入（position embeddings）</a>
+-   <a href="#%E4%BD%8D%E7%BD%AE%E7%BC%96%E7%A0%81position-encodings">位置编码（position encodings）</a></p>
+<pre><code>-   [6.3.3 基于 Pytorch 实现](#633-基于-pytorch-实现)
+</code></pre>
+</li>
+<li>
+<p><a href="#64-%E6%96%87%E6%9C%AC%E7%94%9F%E6%88%90text-generationtransformer">6.4 文本生成（text generation）transformer</a>    -   <a href="#641-%E8%87%AA%E5%9B%9E%E5%BD%92%E6%A8%A1%E5%9E%8B%E5%92%8C%E6%8E%A9%E7%A0%81">6.4.1 自回归模型和掩码</a>
+-   <a href="#642-%E8%AE%AD%E7%BB%83%E5%9F%BA%E4%BA%8E%E7%BB%B4%E5%9F%BA%E7%99%BE%E7%A7%91%E6%95%B0%E6%8D%AE%E9%9B%86-enwik8">6.4.2 训练：基于维基百科数据集
+<code>plaintext         enwik8         </code>
+</a>
+-   <a href="#643-%E6%96%87%E6%9C%AC%E7%94%9F%E6%88%90%E7%BB%93%E6%9E%9C%E5%88%86%E6%9E%90">6.4.3 文本生成结果分析</a></p>
+</li>
+<li>
+<p><a href="#65-%E8%AE%BE%E8%AE%A1%E8%80%83%E8%99%91transformer-%E4%B8%8E-rnn%E5%8D%B7%E7%A7%AF-%E5%AF%B9%E6%AF%94">6.5 设计考虑：Transformer 与 RNN/卷积 对比</a></p>
+</li>
+</ul>
+</li>
+<li>
+<p><a href="#7-%E5%8E%86%E5%8F%B2%E5%8C%85%E8%A2%B1">7 历史包袱</a>  -   <a href="#71-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8F%AB-self-attention">7.1 为什么叫 self-attention？</a></p>
+<ul>
+<li><a href="#72-%E6%9C%80%E5%88%9D%E7%9A%84-transformer-encoders-and-decoders">7.2 最初的 transformer: encoders and decoders</a></li>
+</ul>
+</li>
+<li>
+<p><a href="#8-%E7%8E%B0%E4%BB%A3-transformers">8 现代 transformers</a>  -   <a href="#81-google-bert340m-%E5%8F%82%E6%95%B0">8.1 Google
+<code>plaintext       BERT       </code>
+：
+<code>plaintext       340M       </code>
+参数</a></p>
+<ul>
+<li><a href="#82-openai-gpt-215b-%E5%8F%82%E6%95%B0">8.2 OpenAI
+<pre><code class="language-plaintext">GPT-2
+</code></pre>
+：
+<pre><code class="language-plaintext">1.5B
+</code></pre>
+参数</a></li>
+<li><a href="#83-transformer-xl">8.3</a> <a href="https://arxiv.org/abs/1901.02860">Transformer-XL</a></li>
+<li><a href="#84-sparse-transformers">8.4</a> <a href="https://openai.com/blog/sparse-transformer/">Sparse transformers</a></li>
+</ul>
+</li>
+<li>
+<p><a href="#9-%E5%A4%A7%E5%9E%8B%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8C%96">9 大型模型优化</a>  -   <a href="#91-%E5%8D%8A%E7%B2%BE%E5%BA%A6half-precision">9.1 半精度（half precision）</a></p>
+<ul>
+<li><a href="#92-%E6%A2%AF%E5%BA%A6%E7%A7%AF%E7%B4%AFgradient-accumulation">9.2 梯度积累（gradient accumulation）</a></li>
+<li><a href="#93-%E6%A2%AF%E5%BA%A6-checkpointgradient-checkpointing">9.3 梯度 checkpoint（gradient checkpointing）</a></li>
+</ul>
+</li>
+<li>
+<p><a href="#10-%E7%BB%93%E6%9D%9F%E8%AF%AD">10 结束语</a></p>
+</li>
+<li>
+<p><a href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99">参考资料</a></p>
+</li>
+</ul>
+<hr />
+<h2 id="摘要"><a class="header" href="#摘要">摘要</a></h2>
+<p>Transformer 是一类非常令人着迷的<strong>机器学习架构</strong>（a family of machine learning architectures）。 之前已经有一些不错的介绍文章（例如 [1, 2]），但过去几年 <strong>transformer 变得简单了很多</strong>， 因此要解释清楚现代架构（modern architectures）是如何工作的，比以前容易多了。</p>
+<p>本文试图丢掉历史包袱，开门见山地解释<strong>现代 transformer 的工作原理</strong>。</p>
+<blockquote>
+<p><strong>神经网络和反向传播</strong>（neural networks and backpropagation）的基本知识有助于更好地理解本文，</p>
+<ul>
+<li><a href="https://mlvu.github.io/lecture06/">这个讲座</a> 介绍了神经网络的基础知识；</li>
+<li><a href="https://mlvu.github.io/lecture07/">这个讲座</a> 介绍了神经网络如何应用于现代深度学习系统。</li>
+</ul>
+<p>另外，理解本文程序需要<a href="https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html">一点 Pytorch 基础</a>， 但没有基础关系也不大。</p>
+</blockquote>
+<h2 id="1-self-attention自注意力模型"><a class="header" href="#1-self-attention自注意力模型">1 self-attention（自注意力）模型</a></h2>
+<p>self-attention 运算是<strong>所有 transformer 架构的基本运算</strong>。</p>
+<h2 id="10-attention注意力名字由来"><a class="header" href="#10-attention注意力名字由来">1.0 Attention（注意力）：名字由来</a></h2>
+<p>从最简形式上来说，神经网络是一系列<strong>对输入进行加权计算，得到一个输出</strong>的过程。</p>
+<p>具体来说，比如给定一个向量 [1,2,3,4,5] 作为输入，权重矩阵可能是 **</p>
+<pre><code>[0, 0, 0, 0.5, 0.5]
+</code></pre>
+<p><strong>， 也就是说最终的 output 实际上只与 input 中的最后两个元素有关系 —— 换句话说， 这一层神经网络只</strong>关注**最后两个元素（<strong>注意力</strong>在最后两个元素上）， 其他元素是什么值对结果没有影响 —— 这就是 **</p>
+<pre><code>attention
+</code></pre>
+<p>** 这一名字的由来。</p>
+<blockquote>
+<p>注意力模型大大降低了神经网络的计算量：经典神经网络是全连接的，而上面的例子中， 这一层神经网络不需要全连接了，每个输出连接到最后两个输入就行了，也就是从 1x5 维降低到了 1x2 维。</p>
+<p>图像处理中的卷积神经网络（CNN）也是类似原理：只用一小块图像计算下一层的输出，而不是用整帧图像。</p>
+</blockquote>
+<h2 id="11-输入输出vector-to-vector-运算"><a class="header" href="#11-输入输出vector-to-vector-运算">1.1 输入输出：vector-to-vector 运算</a></h2>
+<p>Self-attention 是一个 <strong>sequence-to-sequence 运算</strong>： 输入一个向量序列（a sequence of vectors），输出另一个向量序列。</p>
+<p>我们用 𝐱1,𝐱2,…,𝐱t 表示<strong>输入向量</strong>，用 𝐲1,𝐲2,…,𝐲t 表示相应的<strong>输出向量</strong>，这些向量都是 k 维的。 要计算输出向量 𝐲i ，self-attention 只需对所有输入向量做<strong>加权平均</strong>（weighted average），</p>
+<p>𝐲i=∑jwij𝐱j</p>
+<p>在传统神经网络中，权重都是（常量）<strong>参数</strong>， 但这里的权重并不是：wij 是根据 𝐱i 和 𝐱j 计算出来的。 计算它有很多种方式（算法），接下来看一种最简单的。</p>
+<h2 id="12-权重矩阵计算和归一化"><a class="header" href="#12-权重矩阵计算和归一化">1.2 权重矩阵计算和归一化</a></h2>
+<p>计算权重矩阵的 <strong>最简单函数就是点积</strong>（dot product）：</p>
+<p>w′ij=𝐱iT𝐱j</p>
+<blockquote>
+<p>注意到权重矩阵的计算跟它所在的位置 (i,j) 直接相关，也就是说，每个位置 (i,j) 对应的权重矩阵都不一样。</p>
+</blockquote>
+<p>点积得到的结果取值范围是正负无穷，为了使累加和（表示概率）等于 100%， 需要对它们做<strong>归一化</strong>：用 pytorch 术语来说就是 **</p>
+<pre><code>softmax
+</code></pre>
+<p>**，</p>
+<p>wij=exp w′ij∑jexp w′ij</p>
+<p>这会将每个权重矩阵归一化到 [0,1]，并且累加和等于 1。</p>
+<h2 id="13-直观展示与小结"><a class="header" href="#13-直观展示与小结">1.3 直观展示与小结</a></h2>
+<p>以上就是关于 self-attention 的基本运算。总结起来就是两点：</p>
+<ol>
+<li><strong>vector-to-vector 运算</strong>：self-attention 是对 input vector 做<strong>矩阵运算</strong>，得到一个<strong>加权结果</strong>作为 output vector；</li>
+<li><strong>加权矩阵计算</strong>：权重矩阵<strong>不是常量</strong>，而是跟它所在的位置
+<pre><code class="language-plaintext">(i,j)
+</code></pre>
+直接相关，根据对应位置的 input vector 计算。</li>
+</ol>
+<p>用图来表示如下：</p>
+<p><img src="images/self-attention.png" alt="" /></p>
+<p>self-attention 基本运算</p>
+<ul>
+<li>output vector 中的每个元素 yj 都是对 <strong>input vector 中所有元素</strong>的加权和；</li>
+<li>对于 yj，加权矩阵由 input 元素 xj 与每个 input 元素计算得到；</li>
+</ul>
+<p>要构建一个完整的 transformer 还需要一点其他东西，但<strong>最核心的运算就是以上这两个了</strong>。 更重要的是，</p>
+<ul>
+<li>这是整个架构中，唯一在 <strong>input &amp; output vector 之间</strong> 所做的运算；</li>
+<li>Transformer 架构中的其他运算都是<strong>单纯对 input vector 做运算</strong>。</li>
+</ul>
+<h2 id="2-self-attention-为什么有效以电影推荐为例"><a class="header" href="#2-self-attention-为什么有效以电影推荐为例">2 self-attention 为什么有效？以电影推荐为例</a></h2>
+<p>上面看到 self-attention 模型非常简单，本质上就一个加权平均公式，那为什么这个加权平均机制的效果这么好呢？ 为了直观解释这个问题，我们看个具体例子 —— 电影推荐 —— 假设你经营着一家电影租赁公司， 想向用户推荐他们可能会喜欢的电影。接下来看看基于传统方式和 transformer 方式分别是怎么做的。</p>
+<h2 id="21-传统推荐系统特性向量"><a class="header" href="#21-传统推荐系统特性向量">2.1 传统推荐系统：特性向量</a></h2>
+<p><code>点积</code>
+用户偏好</p>
+<p>步骤很简单：</p>
+<ol>
+<li>人工设计一些<strong>电影特征</strong>，比如浪漫指数、动作指数，</li>
+<li>人工设计一些<strong>用户特征</strong>，例如他们喜欢浪漫电影或动作片的可能性；</li>
+</ol>
+<p>有了这两个维度的数据（特征向量）之后，<strong>对二者做点积</strong>（dot product）， 得到的就是电影属性与用户喜欢程度之间的<strong>匹配程度</strong>，用得分表示，</p>
+<p><img src="images/movie-dot-product.png" alt="" /></p>
+<p>电影推荐：电影特征向量（浪漫、动作、喜剧）与用户特性向量（喜欢浪漫、动作、喜剧的程度）做点积运算</p>
+<p>关于计算结果（得分）：</p>
+<ul>
+<li>如果<strong>特征的符号相同</strong>，例如“浪漫电影 &amp;&amp; 用户喜欢浪漫电影”， 或者“不是浪漫电影 &amp;&amp; 用户不喜欢浪漫电影”，得到的<strong>点积就是正数</strong>；反之就是负数；</li>
+<li><strong>特征值的大小</strong>决定该特征<strong>对总分的贡献大小</strong>： 一部电影可能有点浪漫，但不是很明显，或者用户可能只是不喜欢浪漫，但也没到讨厌的程度。</li>
+</ul>
+<p>这种推荐模型的好处是简单直接，很容易上手；缺点是规模大了很难搞， 因为对几百万部电影打标的成本非常高，精确标记用户喜欢或不喜欢什么也几乎是不可能的。</p>
+<h2 id="22-基于-self-attention-的推荐系统"><a class="header" href="#22-基于-self-attention-的推荐系统">2.2 基于 self-attention 的推荐系统</a></h2>
+<p>接下来看基于 self-attention 的推荐系统是怎么设计的。</p>
+<h3 id="221"><a class="header" href="#221">2.2.1</a></h3>
+<p><code>电影特征</code>
+和
+<code>用户特征</code>
+作为模型参数，匹配
+<code>已知的用户偏好</code></p>
+<p>也是两步：</p>
+<ol>
+<li><strong>电影特征和用户特征</strong>不再直接做点积运算，而是作为<strong>模型的参数</strong>（parameters of the model）；</li>
+<li>收集少量的<strong>用户偏好作为目标</strong>，然后通过<strong>优化用户特征和电影特征</strong>（模型参数）， 使二者的<strong>点积匹配已知的用户喜好</strong>。</li>
+</ol>
+<p>这就是 self-attention 的基本原理。注意， 尽管我们<strong>没有告诉模型某个特征意味着什么</strong>（表示什么）， 但实践证明，训练之后的特征确实反映了关于电影内容的合理语义。</p>
+<blockquote>
+<p>用素人术语来重新描述以上过程：我们告诉神经网络，</p>
+<ol>
+<li>我有一些关于电影和用户的信息，作为<strong>输入</strong>；有一些用户偏好信息，作为<strong>输出</strong>。</li>
+<li>你把这两者串联起来，能够根据输入预测输出，<strong>你自己怎么实现我不管</strong>，把最终模型（参数）给我就行了。</li>
+</ol>
+<p>译注。</p>
+</blockquote>
+<p><img src="images/movie-features.png" alt="" /></p>
+<p>从一个基本的 matrix factorization 模型学习到的前两个特征。 模型只用到了“哪些用户喜欢哪些电影”信息，而没有用到任何电影内容信息。 横轴：从流俗到高雅；纵轴：从小众到主流。信息来自 [4]。</p>
+<blockquote>
+<p>这些已经足够说明 dot product 是如何表示对象和它们的关系的。 更多关于推荐系统的内容，可移步 <a href="https://mlvu.github.io/lecture12">mlvu.github.io/lecture12</a>。</p>
+</blockquote>
+<h3 id="222-嵌入层对输入进行处理"><a class="header" href="#222-嵌入层对输入进行处理">2.2.2 嵌入层：对输入进行处理</a></h3>
+<p>假设我们有一串单词作为输入，原理上只要将其作为 input vector 送到 self-attention 模型。 但实际上我们需要对这个 input vector 做一下预处理（下一节会解释为什么），生成一个中间表示， 这就是序列建模中的<strong>嵌入层</strong>。 具体来说，会<strong>为每个单词</strong> t <strong>分配一个嵌入向量</strong>（embedding vector） 𝐯t（我们后面将学习到这个值）。</p>
+<p>嵌入层将 input vector：</p>
+<p>the,cat,walks,on,the,street</p>
+<p>转换为 <strong>embedding vector</strong>（注意：每个单词的维度从 1x1 变成了 1xN）：</p>
+<p>𝐯the,𝐯cat,𝐯walks,𝐯on,𝐯the,𝐯street</p>
+<p>将这个 embedding vector <strong>输入 self-attention</strong> 层，得到的就是 output vector：</p>
+<p>𝐲the,𝐲cat,𝐲walks,𝐲on,𝐲the,𝐲street</p>
+<p>其中 𝐲cat 是所有嵌入向量的加权和（weighted sum），由它们与 𝐯cat 的（归一化）点积加权。</p>
+<h3 id="223-直观解释"><a class="header" href="#223-直观解释">2.2.3 直观解释</a></h3>
+<p>由于我们正在<strong>学习（learning）</strong> 𝐯t 的值是什么，两个词的“相关”程度完全由任务决定。</p>
+<ul>
+<li>在大多数情况下，<strong>定冠词 "the"</strong> 与句子中其他单词表示什么意思（the interpretation of the other words）关系不大； 因此我们最终得到的嵌入层 𝐯the 与所有其他单词的点积可能<strong>很小或为负数</strong>；</li>
+<li>另一方面，要解释这句话中 “walks” 的意思，弄清楚谁在走路是非常有用的。这很可能由名词表达， 因此对于像 cat 这样的名词和像 walks 这样的动词，我们可能最终学习到的 𝐯cat and 𝐯walks 点积是个<strong>较大的正数</strong>。</li>
+</ul>
+<p>这就是 self-attention 背后的基本直觉：</p>
+<ol>
+<li><strong>点积表示</strong>输入序列中两个向量的<strong>相关程度</strong>，“相关”由学习任务（learning task）定义，</li>
+<li><strong>输出向量</strong>是整个输入序列的<strong>加权和，权重由这些点积决定</strong>。</li>
+</ol>
+<h3 id="224-self-attention-特殊属性"><a class="header" href="#224-self-attention-特殊属性">2.2.4 self-attention 特殊属性</a></h3>
+<p>在继续之前，有些特殊属性需要提及一下，因为不同于在一般的 sequence-to-sequence 运算：</p>
+<ol>
+<li>
+<p><strong>到目前为止，我们的 self-attention 模型还没有参数</strong>（ 虽然下文中，我们还是会为 self-attention 添加几个参数）。</p>
+<p>换句话说，基本的 self-attention 实际上做什么完全取决于<strong>生成输入序列的上游机制</strong>。 例如嵌入层这种机制会驱动着 self-attention 学习基于点积的表示。</p>
+</li>
+<li>
+<p>self-attention <strong>将输入当做一个集合（set）而不是序列（sequence）</strong>。</p>
+<p>如果我们对输入序列进行重排（permute），输出序列除了也跟着重排，其他方面将完全相同， 也就是说 self-attention 是<strong>排列等变</strong>的（permutation equivariant）。 后面会看到，构建完整的 transformer 时，我们还是会引入一些东西来保持输入的顺序信息， 但要明白 <strong>self-attention 本身是不关心输入的顺序属性的</strong>（sequential nature）。</p>
+</li>
+</ol>
+<h2 id="3-实现一个基本的-self-attention"><a class="header" href="#3-实现一个基本的-self-attention">3. 实现一个基本的 self-attention</a></h2>
+<blockquote>
+<p>What I cannot create, I do not understand. —— Feynman.</p>
+<p>纸上得来终觉浅，绝知此事要躬行 —— 陆游《冬夜读书示子聿》</p>
+</blockquote>
+<p>接下来我们基于 pytorch 实现前面介绍的最基础 self-attention 模型。</p>
+<h2 id="31-输入的表示tensor多维矩阵"><a class="header" href="#31-输入的表示tensor多维矩阵">3.1 输入的表示：tensor（多维矩阵）</a></h2>
+<p>我们面临的第一个问题是<strong>如何用矩阵乘法表示 self-attention</strong>： 按照定义，直接遍历所有 input vectors 来计算 weight 和 output 就行， 但显然这种方式效率太低；改进的方式就是用 pytorch 的 tensor 来表示， 这是一个<strong>多维矩阵</strong>数据结构：</p>
+<blockquote>
+<p>A **</p>
+<pre><code>torch.Tensor
+</code></pre>
+<p>** is a multi-dimensional matrix containing elements of a single data type.</p>
+<p><a href="https://pytorch.org/docs/stable/tensors.html">pytorch.org/docs/stable/tensors.html</a></p>
+</blockquote>
+<ul>
+<li>输入 𝐗 由 t 个 k-维 vector 组成的序列，</li>
+<li>引入一个 **
+<pre><code>mini-batch
+</code></pre>
+** dimension b，</li>
+</ul>
+<p>就得到了一个<strong>三维矩阵</strong> (b,t,k)，这就是一个 tensor。</p>
+<h2 id="32-计算权重矩阵输入矩阵--转置矩阵"><a class="header" href="#32-计算权重矩阵输入矩阵--转置矩阵">3.2 计算权重矩阵：输入矩阵 * 转置矩阵</a></h2>
+<p>接下来计算加权矩阵，它表示的是 <strong>input vector 之间的相关性</strong>， 因此用输入矩阵 𝐗 乘以它的转置矩阵（transpose），用 pytorch 库来计算非常方便。</p>
+<pre><code>import torch
+import torch.nn.functional as F
+
+# 假设我们有一些 tensor x 作为输入，它是 (b, t, k) 维矩阵
+x = ...
+
+# torch.bmm() 是批量矩阵乘法（batched matrix multiplication）函数，对一批矩阵执行乘法操作
+raw_weights = torch.bmm(x, x.transpose(1, 2))
+
+</code></pre>
+<p>然后对权重矩阵进行正值化和归一化，以使得一个 row 内所有权重加起来为 1，</p>
+<pre><code>weights = F.softmax(raw_weights, dim=2)
+
+</code></pre>
+<h2 id="33-计算输出"><a class="header" href="#33-计算输出">3.3 计算输出</a></h2>
+<p>有了权重矩阵，计算输出就非常简单了：只需要将输入 𝐗 和权重矩阵相乘即可，一行代码搞定：</p>
+<pre><code>y = torch.bmm(weights, x)
+
+</code></pre>
+<p>输出矩阵 𝐘 就是 size
+<code>(b, t, k)</code>
+的 tensor，每一行都是对 𝐗 的行的加权。</p>
+<p>这就是 <strong>最基础的 self-attention 模型</strong>的实现： <strong>两次矩阵乘法和一次归一化</strong>（softmax）。</p>
+<h2 id="4-现代-transformer-对-self-attention-的扩展"><a class="header" href="#4-现代-transformer-对-self-attention-的扩展">4 现代 transformer 对 self-attention 的扩展</a></h2>
+<p>现代 transformer 中实际使用的 self-attention 依赖于三个额外技巧。</p>
+<h2 id="41-引入控制参数for-queries-keys-and-values"><a class="header" href="#41-引入控制参数for-queries-keys-and-values">4.1 引入控制参数（for queries, keys and values）</a></h2>
+<h3 id="411-每个-input-vector-都被使用三次"><a class="header" href="#411-每个-input-vector-都被使用三次">4.1.1 每个 input vector 都被使用三次</a></h3>
+<p>上一节已经看到，每个 input vector 𝐱i 在 <strong>self-attention 计算中会被使用三次</strong>， 根据角色的不同这三次分别称为 queries、keys、values（查询、键和值，后面再解释这些名称的来源），</p>
+<ol>
+<li>**
+<pre><code>query
+</code></pre>
+5.<em>：与其他所有 input vector 联合计算 **
+<pre><code>i
+</code></pre>
+9.</em> 位置的 output vector 𝐲i 所需的权重；</li>
+<li>**
+<pre><code>key
+</code></pre>
+14.<em>：与 query 类似，与其他所有 input vector 联合计算 **
+<pre><code>j
+</code></pre>
+18.</em> 位置的 output vector 𝐲j 所需的权重，这里 j≠i；</li>
+<li>**
+<pre><code>value
+</code></pre>
+23.*：在计算每个 output vector 时，作为输入值参与<strong>加权求和</strong>。</li>
+</ol>
+<p>也就是说在我们目前的基本 self-attention 中，<strong>每个 input vector 必须承担所有三个角色</strong>。</p>
+<h3 id="412-具体例子译注"><a class="header" href="#412-具体例子译注">4.1.2 具体例子（译注）</a></h3>
+<p>上面的描述比较抽象，这里参考下图更直观解释一下。这个图对应 i=2，因此 𝐱2 会用到三次（更准确地说是<strong>三种用途</strong>）：</p>
+<p><img src="images/self-attention.png" alt="" /></p>
+<p>图：self-attention 基本运算</p>
+<ol>
+<li>**
+<pre><code>query
+</code></pre>
+5.*：𝐱2 与 𝐱2 联合计算 𝐰22；</li>
+<li>**
+<pre><code>key
+</code></pre>
+10.*：𝐱2 与 𝐱j 联合计算 𝐰2j 权重，这里 j≠2；</li>
+<li>**
+<pre><code>value
+</code></pre>
+15.*：𝐱2 作为输入值参与<strong>加权求和</strong>。</li>
+</ol>
+<h3 id="413-引入三个-kk-权重矩阵"><a class="header" href="#413-引入三个-kk-权重矩阵">4.1.3 引入三个 k×k 权重矩阵</a></h3>
+<p>对原始 input vector 应用线性变换，我们就能够为每个角色衍生（derive）出一个新向量，从而简化 self-attention。 具体来说，引入三个 k×k 权重矩阵 𝐖q, 𝐖k, 𝐖v（来自 <strong>query/key/value 首字母</strong>） 对每个输入 xi 计算三个线性变换，</p>
+<p>𝐪i=𝐖q𝐱i𝐤i=𝐖k𝐱i𝐯i=𝐖v𝐱i</p>
+<p>那么 (i,j) 位置处的权重矩阵就可以表示为：</p>
+<p>w′ij=𝐪iT𝐤j</p>
+<p>做归一化处理，</p>
+<p>wij=softmax(w′ij)</p>
+<p>最后，output vector 中位置 j 处的值为：</p>
+<p>𝐲i=∑jwij𝐯j</p>
+<p>这就给 self-attention layer 引入了几个<strong>可控制的参数</strong>（controllable parameters, 𝐖q, 𝐖k, 𝐖v）， 对同一份输入应用不同的线性变换，就可以得到不同角色所需的值，如下图所示，</p>
+<p><img src="images/key-query-value.png" alt="" /></p>
+<p>self-attention key/query/value transformation 的直观解释</p>
+<h2 id="42-对点积做缩放处理scaling-the-dot-product"><a class="header" href="#42-对点积做缩放处理scaling-the-dot-product">4.2 对点积做缩放处理（scaling the dot product）</a></h2>
+<p>softmax 函数对非常大的输入值敏感。这些 input 会梯度消失，学习变慢甚至完全停止。 由于点积的平均值随着嵌入维度 k 的增加而增大，因此点积送到 softmax 之前进行缩放有助于缓解这个问题。</p>
+<p>原来执行 softmax 之前的权重矩阵：</p>
+<p>w′ij=𝐪iT𝐤j</p>
+<p>现在：</p>
+<p>w′ij=𝐪iT𝐤jk−−√</p>
+<blockquote>
+<p>Why k−−√? Imagine a vector in ℝk with values all c. Its Euclidean length is k−−√c. Therefore, we are dividing out the amount by which the increase in dimension increases the length of the average vectors</p>
+</blockquote>
+<h2 id="43-引入-multi-head-attention"><a class="header" href="#43-引入-multi-head-attention">4.3 引入 multi-head attention</a></h2>
+<p>最后，需要考虑到，同一个单词随着相邻单词们的不同表示的意思也可能不同。例如下面这个句子：</p>
+<p>mary,gave,roses,to,susan</p>
+<p>我们看到 “gave” 这个词与句子的不同部分有不同的关系：</p>
+<ul>
+<li>“mary” 表示谁在 “gave”，</li>
+<li>“roses” 表示 “gave” 的是什么，</li>
+<li>“susan” 表示接受者是谁。</li>
+</ul>
+<h3 id="431-需求输出中嵌入更多信息"><a class="header" href="#431-需求输出中嵌入更多信息">4.3.1 需求：输出中嵌入更多信息</a></h3>
+<p>在我们的<strong>基本 self-attention 中，所有这些信息是混合在一起的</strong>： 输入 𝐱mary 和 𝐱susan 可以不同程度地影响输出 𝐲gave ，这取决于它们与 𝐱gave 的点积。</p>
+<p>但是，如果我们想以其他方式影响输出，这种模型就不行了。 例如，如果 “roses” 的给予方和接受方信息都出现在 𝐲gave ，但位于不同部分。 也就是说，<strong>基本的 self-attention 欠缺了很多灵活性</strong>。</p>
+<blockquote>
+<p>This leaves aside how we figure out who gave the roses. We can do that based on prior knowledge about Mary and Susan, encoded in the embeddings. We can also look at the order of the words, but we’ll look at how to achieve that later.</p>
+</blockquote>
+<h3 id="432-解决方式引入多个-self-attentionmulti-head"><a class="header" href="#432-解决方式引入多个-self-attentionmulti-head">4.3.2 解决方式：引入多个 self-attention（multi-head）</a></h3>
+<p>要实现这个目的，就需要让我们的模型有<strong>更强的辨识力</strong>，一种做法就是 <strong>组合多个 self-attention</strong>（用 r 索引）， 每个<strong>对应不同的 query/key/value 参数矩阵</strong> 𝐖rq, 𝐖rk,𝐖rv， 这些就称为 <strong>attention heads</strong>（注意力头）。</p>
+<p>对于 input 𝐱i，每个 attention head 产生不同的 output vector 𝐲ri（一部分输出）。 最后再将这些部分输出连接起来，<strong>通过线性变换来降维</strong>回 k。</p>
+<h3 id="433-提升-multi-head-self-attention-效率querykeyvalue-降维"><a class="header" href="#433-提升-multi-head-self-attention-效率querykeyvalue-降维">4.3.3 提升 multi-head self-attention 效率：query/key/value 降维</a></h3>
+<p>理解 multi-head self-attention 最简单的方法是把它看作<strong>多个并行的 self-attention 机制</strong>， 每个都有自己的键、值和查询转换。</p>
+<p>Multi-head self-attention 的缺点是慢，对于 R 头，<strong>慢</strong> R 倍。 不过有办法优化：我们可以实现这样的 multi-head self-attention，它既能利用多个 self-attention 提升辨识力， 又与 single-head self-attention 基本一样快。要实现这个目的，每个 head 需要<strong>对 query/key/value 降维</strong>。 如果输入向量有 k=256 维，我们的模型有 h=4 个 attention head，则降维操作包括：</p>
+<ul>
+<li>将输入向量乘以一个 **
+<pre><code>256×64
+</code></pre>
+** 矩阵，这会将 input vector <strong>从 256 维降到 64 维</strong>；</li>
+<li>对于每个 head 需要执行 3 次降维：分别针对 query/key/value 的计算。</li>
+</ul>
+<p>我们甚至只用三次 **</p>
+<pre><code>k×k
+</code></pre>
+<p>** 矩阵乘法就能实现 multi-head 功能， 唯一需要的额外操作是将生成的 output vector 重新按块排序：</p>
+<p><img src="images/kqv-computation.png" alt="" /></p>
+<p>To compute multi-head attention efficiently, we combine the computation of the projections down to a lower dimensional representation and the computations of the keys, queries and values into three k×k matrices.</p>
+<h3 id="434-完整工作流"><a class="header" href="#434-完整工作流">4.3.4 完整工作流</a></h3>
+<p>下图展示了的整个 multi-head self-attention 过程：</p>
+<p><img src="images/multi-head.png" alt="" /></p>
+<p>4-head self-attention 的直观解释。对输入进行降维，针对 key/value/query 分别进行矩阵运算来实现。</p>
+<p>从左到右分为 5 列：</p>
+<ol>
+<li>
+<p>原始 256-维 input vector；</p>
+</li>
+<li>
+<p>输入降维：将 input vector 乘以 256x64 矩阵，降维到 64 维；</p>
+<p>注意：对每个 input vector 需要分别针对 query/key/value 降维，总共是 3 遍；</p>
+</li>
+<li>
+<p>将降维后的 input 分别输入多个并行的 self-attention；</p>
+</li>
+<li>
+<p>计算得到多个降维之后的 output vector；</p>
+</li>
+<li>
+<p>对低维度 output vectors 进行拼接，重新回到与 input vectors 一样的维度。</p>
+</li>
+</ol>
+<h2 id="45-multi-head-vs-single-head-模型参数数量对比"><a class="header" href="#45-multi-head-vs-single-head-模型参数数量对比">4.5 multi-head vs. single-head 模型参数数量对比</a></h2>
+<p>参数指的是在将 input vector 变成 output vector 过程中用到的那些系数（权重矩阵）。</p>
+<p>我们假设输入的是 k-维 input vectors，接下来分别看下 multi-head 和 single-head 的参数数量。</p>
+<h3 id="451-single-head"><a class="header" href="#451-single-head">4.5.1 single-head</a></h3>
+<ul>
+<li>权重矩阵 wij，其中 i,j∈[0,k]；</li>
+<li>3 个平面：query/key/value；</li>
+</ul>
+<p>因此<strong>总参数数量</strong>是 3k2。</p>
+<h3 id="452-multi-head"><a class="header" href="#452-multi-head">4.5.2 multi-head</a></h3>
+<p>假设有 4 个 head，即 h=4，</p>
+<ul>
+<li>每个 head 对应一个 self-attention，每个 self-attention 3 个平面（query/key/value），因此总共 **
+<pre><code>3h
+</code></pre>
+** 个平面；</li>
+<li>每个平面的权重矩阵 wij，其中 i∈[0,k],j∈[0,k/h]；</li>
+</ul>
+<p>因此总的参数个数：3hkkh=3k2，<strong>与 single-head self-attention 的参数数量相同</strong>。</p>
+<p><img src="images/multi-head.png" alt="" /></p>
+<p>4-head self-attention 的直观解释。对输入进行降维，针对 key/value/query 分别进行矩阵运算来实现。</p>
+<blockquote>
+<p>唯一的区别是 multi-head self-attention 最后拼接 output vector 时多了一个矩阵 Wo。与 single-head 相比，这增加了 k2 个参数。 在大多数 Transformer 中，每次 self-attention 之后会紧跟着一个前馈层（feed-forward layer），因此这可能不是绝对必要的。 但我还未见过能否把 Wo 去掉的严肃讨论。</p>
+</blockquote>
+<h2 id="5-self-attention-主要代码实现"><a class="header" href="#5-self-attention-主要代码实现">5 self-attention 主要代码实现</a></h2>
+<p>接下来将我们的 self-attention 实现为一个 python 模块，方便复用：</p>
+<pre><code>import torch
+from torch import nn
+import torch.nn.functional as F
+
+class SelfAttention(nn.Module):
+    def __init__(self, k, heads=4, mask=False):
+    super().__init__()
+
+    assert k % heads == 0 # input vector size 必须是 heads 的整数倍
+    self.k, self.heads = k, heads
+
+</code></pre>
+<p>然后，初始化几个
+<code>k*k</code>
+的线性变换矩阵，
+<code>nn.Linear(bias=False)</code>
+能实现这个效果，并做了适当的初始化：</p>
+<pre><code>    # Compute the queries, keys and values for all heads
+    self.tokeys    = nn.Linear(k, k, bias=False)
+    self.toqueries = nn.Linear(k, k, bias=False)
+    self.tovalues  = nn.Linear(k, k, bias=False)
+
+    # This will be applied after the multi-head self-attention operation.
+    self.unifyheads = nn.Linear(k, k)
+
+</code></pre>
+<p>接下来就可以实现了 self-attention 的计算了，在模型中对应的是 **</p>
+<pre><code>forward()
+</code></pre>
+<p>** 函数。</p>
+<pre><code>def forward(self, x):
+    b, t, k = x.size()
+    h = self.heads
+
+    # 首先，为所有 heads 计算 query/key/value，得到的是完整嵌入维度的 k*k 矩阵
+    queries = self.toqueries(x)
+    keys    = self.tokeys(x)
+    values  = self.tovalues(x)
+
+    # 接下来将 queries/keys/values 切块（降维），分别送到不同的 head
+    s = k // h
+    keys    = keys.view(b, t, h, s)
+    queries = queries.view(b, t, h, s)
+    values  = values.view(b, t, h, s)
+
+</code></pre>
+<p>这对 tensors 进行了简单 reshape，现在 tensors 增加了一个 head 维度。 对于每个 input vector，可以理解为将这个 **</p>
+<pre><code>k*1
+</code></pre>
+<p>** 矩阵变成了一个 **</p>
+<pre><code>h * k//h
+</code></pre>
+<p>** 矩阵，</p>
+<p><img src="images/reshape.png" alt="" /></p>
+<p>接下来计算点积。每个 head 的点积运算都是一样的，因为我们将 heads fold 到 batch dimention。 这样我们就可以使用
+<code>torch.bmm()</code>
+（batch matrix multiplification），而 keys, queries and values 可以看做是 batch，只是 batch size 稍大了一点。</p>
+<p>由于 head 和 batch dimension 没有相邻，因此我们在 <strong>reshape 之前需要转置</strong>。 这个操作开销很大，但似乎无法避免：</p>
+<pre><code>    # - fold heads into the batch dimension
+    keys = keys.transpose(1, 2).contiguous().view(b * h, t, s)
+    queries = queries.transpose(1, 2).contiguous().view(b * h, t, s)
+    values = values.transpose(1, 2).contiguous().view(b * h, t, s)
+
+</code></pre>
+<blockquote>
+<p>You can avoid these calls to</p>
+<pre><code class="language-plaintext">contiguous()
+</code></pre>
+<p>by using</p>
+<pre><code class="language-plaintext">reshape()
+</code></pre>
+<p>instead of</p>
+<pre><code class="language-plaintext">view()
+</code></pre>
+<p>but I prefer to make it explicit when we are copying a tensor, and when we are just viewing it. See <a href="https://github.com/mlvu/worksheets/blob/master/Worksheet%205%2C%20Pytorch.ipynb">this notebook</a> for an explanation of the difference.</p>
+</blockquote>
+<p>跟之前一样，点积可以用单个矩阵乘法实现，但现在是 queries 乘以 keys，</p>
+<pre><code>    # Get dot product of queries and keys, and scale
+    dot = torch.bmm(queries, keys.transpose(1, 2)) # -- dot has size (b*h, t, t) containing raw weights
+    dot = dot / (k ** (1/2))                       # scale the dot product
+    dot = F.softmax(dot, dim=2)                    # normalize, dot now contains row-wise normalized weights
+
+</code></pre>
+<p>然后用得到的权重再和 values 做点积，得到的就是每个 attention head 的输出：</p>
+<pre><code>    out = torch.bmm(dot, values).view(b, h, t, s) # apply the self attention to the values
+
+</code></pre>
+<p>为了将每个 head 的输出重新串联起来得到 k-维的最终输出，我们需要再次转置，然后将转置后的矩阵送到
+<code>unifyheads</code>
+layer 做最好的维度变换：</p>
+<pre><code>    # swap h, t back, unify heads
+    out = out.transpose(1, 2).contiguous().view(b, t, s * h)
+
+    return self.unifyheads(out)
+
+</code></pre>
+<p>至此，一个 multi-head, scaled dot-product self attention 模型就实现好了。</p>
+<blockquote>
+<p>The implementation can be made more concise using <a href="https://rockt.github.io/2018/04/30/einsum">einsum notation</a> (see an example <a href="https://github.com/pbloem/former/issues/4">here</a>).</p>
+</blockquote>
+<h2 id="6-基于-multi-head-self-attention-实现-transformers"><a class="header" href="#6-基于-multi-head-self-attention-实现-transformers">6 基于 multi-head self-attention 实现 transformers</a></h2>
+<h2 id="61-transformer-定义"><a class="header" href="#61-transformer-定义">6.1 Transformer 定义</a></h2>
+<p>transformer 不仅仅是一个 self-attention layer，还是一种<strong>架构</strong>（architecture）。 如何精确地判断一个东西是或者不是 transformer 还不是很明确，本文采用如下的定义：</p>
+<blockquote>
+<p>任何设计用来<strong>处理一组连接的单元</strong>（例如序列中的 token 或图像中的像素）， 如果<strong>单元之间的唯一交互方式是 self-attention</strong>，那这样的架构就称为 transformer。</p>
+</blockquote>
+<p>与**其他机制（如卷积）**一样，可以基于 self-attention 层构建成更大的网络。但在此之前， 我们需要将 self-attention 重构为一个可以复用的 block。</p>
+<h2 id="62-transformer-block"><a class="header" href="#62-transformer-block">6.2 Transformer block</a></h2>
+<p>构建基本的 transformer 有几种略微不同的方式，但大多数结构都大致如下：</p>
+<p><img src="images/transformer-block.png" alt="" /></p>
+<p>各块依次执行：</p>
+<ol>
+<li>self-attention 层；</li>
+<li>归一化层；</li>
+<li><strong>前馈层</strong>（feed forward layer），每个 MLP（multi-layer perceptron）分别与每个 input 做运算；</li>
+<li>另一个层归一化。</li>
+</ol>
+<p>两次归一化之前都会添加残差连接（residual connections）。</p>
+<p>各组件的顺序并不是只能这样，重要的是</p>
+<ol>
+<li>将 self-attention 与局部前馈相结合（combine self-attention with a local feedforward），</li>
+<li>添加归一化和残差连接。</li>
+</ol>
+<p>归一化和残差连接是常规技巧，用于使深度神经网络的训练更快、更准确。 层归一化仅应用于嵌入维度（layer normalization is applied over the embedding dimension only）。</p>
+<p>实现：</p>
+<pre><code>class TransformerBlock(nn.Module):
+  def __init__(self, k, heads):
+    super().__init__()
+
+    self.attention = SelfAttention(k, heads=heads)
+
+    self.norm1 = nn.LayerNorm(k)
+    self.norm2 = nn.LayerNorm(k)
+
+    self.ff = nn.Sequential(
+      nn.Linear(k, 4 * k),
+      nn.ReLU(),
+      nn.Linear(4 * k, k))
+
+  def forward(self, x):
+    attended = self.attention(x)
+    x = self.norm1(attended + x)
+
+    fedforward = self.ff(x)
+    return self.norm2(fedforward + x)
+
+</code></pre>
+<p>这里我们选择了让 feed forward 隐藏层比 input/output 大 4 倍，这个倍数的选择是随意的， 更小的倍数可能也能工作，并且占用内存更少，但最小不能小于 input/output layer 大小。</p>
+<h2 id="63-文本分类text-classificationtransformer"><a class="header" href="#63-文本分类text-classificationtransformer">6.3 文本分类（text classification）transformer</a></h2>
+<p>我们能构建的最简单 transformer 叫 <strong>sequence classifier</strong>（顺序分类器）。 我们用 <strong>IMDb</strong>（Internet Movie Database）sentiment classification 数据集：</p>
+<ul>
+<li>数据内容是影评，</li>
+<li>token 化成了单词序列，</li>
+<li>分类标签是
+<pre><code class="language-plaintext">positive
+</code></pre>
+和
+<pre><code class="language-plaintext">negative
+</code></pre>
+（对电影的正面/负面评价）</li>
+</ul>
+<p><strong>架构的核心部分非常简单，就是一长串 transformer block</strong>。所需做的事情：</p>
+<ul>
+<li>如何将 input sequence feed 给这个长链，</li>
+<li>如何对最终 output sequence 进行变换，得到单个分类结果。</li>
+</ul>
+<h3 id="631-输出单个分类结果"><a class="header" href="#631-输出单个分类结果">6.3.1 输出：单个分类结果</a></h3>
+<p>从 sequence-to-sequence layers 构建 sequence classifier 的最常见方法是 对最终输出序列做 global average pooling，并将结果映射到 softmaxed class vector。</p>
+<p><img src="images/classifier.png" alt="" /></p>
+<p>Overview of a simple sequence classification transformer. The output sequence is averaged to produce a single vector representing the whole sequence. This vector is projected down to a vector with one element per class and softmaxed to produce probabilities.</p>
+<h3 id="632-输入词序敏感using-the-positions"><a class="header" href="#632-输入词序敏感using-the-positions">6.3.2 输入：词序敏感（using the positions）</a></h3>
+<p>前面已经讨论了<strong>嵌入层的原理</strong>，接下来我们将用它来表示单词。</p>
+<p>正如前面已经提到的，我们正在<strong>堆叠</strong>（stacking）<strong>排列等变层</strong>（permutation equivariant layers）， 最终的 global average pooling 是排列不变的（permutation _in_variant）， 因此<strong>整个网络也是排列不变的</strong>。用白话来说， <strong>即使我们打乱句子中的单词顺序</strong>，无论我们学到什么权重，<strong>都会得到完全相同的分类结果</strong>。 显然，我们希望这个先进的语言模型至少对词序具有一定的敏感性，因此我们需要解决这个问题。</p>
+<p>解决方案很简单：创建一个与 input 等长的向量记录当前句子中单词的位置，并将其添加到 word embedding 中。 具体到实现上，有两种选择。</p>
+<h4 id="位置嵌入position-embeddings"><a class="header" href="#位置嵌入position-embeddings">位置嵌入（position embeddings）</a></h4>
+<p>像嵌入文字一样嵌入位置。就像创建嵌入向量𝐯cat 和 𝐯susan 一样， 我们创建嵌入向量𝐯12 和 𝐯25。</p>
+<p>缺点是在训练期间必须看到每个不同长度的序列，否则相关的位置嵌入得不到训练。 优点是效果还不错，而且很容易实现。</p>
+<h4 id="位置编码position-encodings"><a class="header" href="#位置编码position-encodings">位置编码（position encodings）</a></h4>
+<p>位置编码与位置嵌入的工作方式类似，但不学习位置向量，而只是选择一些函数</p>
+<p>f:ℕ→ℝk</p>
+<p>将位置映射到实值向量，并让网络弄清楚如何解释这些编码。</p>
+<p>好处是，对于精心选择的函数，网络能够处理比训练期间看到的序列更长的序列（在它们上表现应该不会太好，但至少我们可以 check）。 缺点是编码函数的选择是一个复杂的超参数（a complicated hyperparameter），实现起来有点复杂。</p>
+<h3 id="633-基于-pytorch-实现"><a class="header" href="#633-基于-pytorch-实现">6.3.3 基于 Pytorch 实现</a></h3>
+<p>简单起见，本文使用位置嵌入（position embeddings）来记录 input 顺序。</p>
+<p>以下就是我们的 text classification transformer 的完整实现：</p>
+<pre><code>class Transformer(nn.Module):
+    def __init__(self, k, heads, depth, seq_length, num_tokens, num_classes):
+        super().__init__()
+
+        self.num_tokens = num_tokens
+        self.token_emb = nn.Embedding(num_tokens, k)
+        self.pos_emb = nn.Embedding(seq_length, k)
+
+        # The sequence of transformer blocks that does all the heavy lifting
+        tblocks = []
+        for i in range(depth):
+            tblocks.append(TransformerBlock(k=k, heads=heads))
+        self.tblocks = nn.Sequential(*tblocks)
+
+        # Maps the final output sequence to class logits
+        self.toprobs = nn.Linear(k, num_classes)
+
+    def forward(self, x):
+        """
+        :param x: A (b, t) tensor of integer values representing words (in some predetermined vocabulary).
+        :return: A (b, c) tensor of log-probabilities over the classes (where c is the nr. of classes).
+        """
+        # generate token embeddings
+        tokens = self.token_emb(x)
+        b, t, k = tokens.size()
+
+        # generate position embeddings
+        positions = torch.arange(t)
+        positions = self.pos_emb(positions)[None, :, :].expand(b, t, k)
+
+        x = tokens + positions # 为什么文本嵌入和位置嵌入相加，没有理论，可能就是实验下来效果不错。
+                               # https://writings.stephenwolfram.com/2023/02/what-is-chatgpt-doing-and-why-does-it-work/
+        x = self.tblocks(x)
+
+        # Average-pool over the t dimension and project to class
+        # probabilities
+        x = self.toprobs(x.mean(dim=1))
+        return F.log_softmax(x, dim=1)
+
+</code></pre>
+<p>在深度为 6 ，最大序列长度为 512 时，这个 transformer 取得了 85% 的准确度，与 RNN（循环神经网络）模型的结果相当，但训练速度快得多。 要看到这个 transformer 真正接近人类的性能，就需要在更多数据上训练更深的模型。后文将详细介绍怎么做。</p>
+<h2 id="64-文本生成text-generationtransformer"><a class="header" href="#64-文本生成text-generationtransformer">6.4 文本生成（text generation）transformer</a></h2>
+<p>接下来尝试一下<strong>自回归模型</strong>（<em>autoregressive</em> model）： 训练一个字符级别（<em>character</em> level）的 transformer 来预测序列中的下一个字符。</p>
+<h3 id="641-自回归模型和掩码"><a class="header" href="#641-自回归模型和掩码">6.4.1 自回归模型和掩码</a></h3>
+<p>训练方式很简单（并且在 transformer 出现之前就已经<a href="http://karpathy.github.io/2015/05/21/rnn-effectiveness/">存在</a>很久了）。 我们给 sequence-to-sequence 模型一个序列作为输入，然后要求它预测序列中下一个位置的字符。 换句话说，目标输出是向左移动一个字符的相同序列：</p>
+<p><img src="images/generator.png" alt="" /></p>
+<ul>
+<li>如果是 **
+<pre><code>RNN
+</code></pre>
+** 模型，那这就是我们所需做的所有事情， 因为它<strong>不能往前看</strong>，output i 只依赖 inputs 0 ~ i。</li>
+<li>而对于 **
+<pre><code>transformer
+</code></pre>
+<strong>，output 取决于</strong>整个 input sequence**， 因此预测下一个单词就简单多了，只需从 input 中挑选。</li>
+</ul>
+<p>要将 self-attention 用作自回归模型，需要确保它<strong>不能 look forward input 序列</strong>。 在 softmax 之前对点积矩阵应用一个<strong>掩码</strong>，禁用矩阵对角线之上的所有元素， 就能帮我们实现这一目的。</p>
+<p><img src="images/masked-attention.png" alt="" /></p>
+<p>对 self-attention 进行 masking 操作，确保 input sequence 中只有当前位置之前的 input elements 能参与计算。 注意图中的乘法符号其实有一点点误导性：我们实际上是将右上角的元素设置为负无穷大 −∞</p>
+<p>由于我们希望这些元素在 softmax 之后全是 0，因此将它们设置为 −∞。相应的代码：</p>
+<pre><code>dot = torch.bmm(queries, keys.transpose(1, 2))
+
+indices = torch.triu_indices(t, t, offset=1)
+dot[:, indices[0], indices[1]] = float('-inf')
+
+dot = F.softmax(dot, dim=2)
+
+</code></pre>
+<p>这样修改 self-attention 模块之后，模型就不能再 look forward input sequence 了。</p>
+<h3 id="642-训练基于维基百科数据集"><a class="header" href="#642-训练基于维基百科数据集">6.4.2 训练：基于维基百科数据集</a></h3>
+<p><code>enwik8</code></p>
+<p>我们在标准 **</p>
+<pre><code>enwik8
+</code></pre>
+<p>** 数据集（取自 <a href="http://prize.hutter1.net/">Hutter prize</a>） 上进行训练，该数据集包含 108 个维基百科文本中的字符。在训练期间，通过从数据中随机抽取子序列来生成批次。</p>
+<p>我们使用由 12 个 transformer block 和 256 个嵌入维度组成的 transformer，对长度为 256 的序列进行训练。 在 **</p>
+<pre><code>RTX 2080Ti
+</code></pre>
+<p>**（大约 170K 个大小为 32 的批次）上训练了大约 24 小时后， 让模型从 256 个字符的种子开始生成：对于每个字符，输入它前面的 256 个字符， 然后预测下一个字符。 我们从<a href="https://towardsdatascience.com/how-to-sample-from-language-models-682bceb97277">temperature</a> 为 0.5 的那个开始采样，然后移动到下一个字符。</p>
+<p>输出如下所示：</p>
+<blockquote>
+<p>1228X Human &amp; Rousseau. Because many of his stories were originally published in long-forgotten magazines and journals, there are a number of [[anthology|anthologies]] by different collators each containing a different selection. His original books have been considered an anthologie in the [[Middle Ages]], and were likely to be one of the most common in the [[Indian Ocean]] in the [[1st century]]. As a result of his death, the Bible was recognised as a counter-attack by the [[Gospel of Matthew]] (1177-1133), and the [[Saxony|Saxons]] of the [[Isle of Matthew]] (1100-1138), the third was a topic of the [[Saxony|Saxon]] throne, and the [[Roman Empire|Roman]] troops of [[Antiochia]] (1145-1148). The [[Roman Empire|Romans]] resigned in [[1148]] and [[1148]] began to collapse. The [[Saxony|Saxons]] of the [[Battle of Valasander]] reported the y</p>
+</blockquote>
+<h3 id="643-文本生成结果分析"><a class="header" href="#643-文本生成结果分析">6.4.3 文本生成结果分析</a></h3>
+<p>对于上面的输出，应该注意到，</p>
+<ol>
+<li>输出的文本中正确使用了维基百科链接标签语法，链接内的文本准确表达了链接主题。</li>
+<li>生成的内容也与主题大致一致：生成的文本以圣经和罗马帝国为主题，在不同的地方使用不同的相关术语。</li>
+<li>还有一个不那么明显的地方：“Battle of Valasander”，这场“战争”似乎是这个神经网络<strong>自己杜撰的</strong>。</li>
+</ol>
+<p>这虽然与 <a href="https://openai.com/blog/better-language-models/">GPT-2</a> 等模型的性能相去甚远，但与 RNN 等模型相比优势已经很明显：更快的训练速度（类似的 RNN 模型需要很多天来训练）和更好的长期一致性。</p>
+<p>另外，该模型在验证集上实现了 **</p>
+<pre><code>1.343bit/byte
+</code></pre>
+<p>** 的压缩， 这与 GPT-2 模型（下文会展开介绍）实现的每字节 0.93 位的相差不远。</p>
+<h2 id="65-设计考虑transformer-与-rnn卷积-对比"><a class="header" href="#65-设计考虑transformer-与-rnn卷积-对比">6.5 设计考虑：Transformer 与 RNN/卷积 对比</a></h2>
+<p>在 <strong>transformer 之前，最先进的架构是 RNN</strong>（通常是 LSTM 或 GRU），但它们存在一些问题。</p>
+<p>RNN <a href="https://colah.github.io/posts/2015-08-Understanding-LSTMs/">展开（unrolled）</a>后长这样：</p>
+<p><img src="images/recurrent-connection.png" alt="" /></p>
+<p>RNN 最大的问题是**</p>
+<pre><code>级联
+</code></pre>
+<p>**（recurrent connection）： 虽然它使得信息能沿着 input sequence 一路传导， 但也意味着在计算出 i−1 单元之前，无法计算出 i 单元的输出。</p>
+<p>与 RNN 此对比，<strong>一维卷积</strong>（1D convolution）如下：</p>
+<p><img src="images/convolutional-connection.png" alt="" /></p>
+<p>在这个模型中，所有输出向量都可以并行计算，因此速度非常快。但缺点是它们 在 long range dependencies 建模方面非常弱。在一个卷积层中，只有距离比 kernel size 小的单词之间才能彼此交互。对于更长的依赖，就需要堆叠许多卷积。</p>
+<p><strong>Transformer 试图兼顾二者的优点</strong>：</p>
+<ul>
+<li>可以像对彼此相邻的单词一样，轻松地对输入序列的整个范围内的依赖关系进行建模（事实上，如果没有位置向量，二者就没有区别）；</li>
+<li>同时，避免 recurrent connections，因此整个模型可以用非常高效的 feed forward 方式计算。</li>
+</ul>
+<p>Transformer 的其余设计主要基于一个考虑因素 —— <strong>深度</strong> —— 大多数选择都是训练大量 transformer block 层，例如，transformer 中<strong>只有两个非线性的地方</strong>：</p>
+<ol>
+<li>self-attention 中的 softmax；</li>
+<li>前馈层中的 ReLU。</li>
+</ol>
+<p>模型的其余部分完全由线性变换组成，<strong>完美地保留了梯度</strong>。</p>
+<blockquote>
+<p>I suppose the layer normalization is also nonlinear, but that is one nonlinearity that actually helps to keep the gradient stable as it propagates back down the network.</p>
+</blockquote>
+<h2 id="7-历史包袱"><a class="header" href="#7-历史包袱">7 历史包袱</a></h2>
+<p>如果在网上看一些介绍 transformer 的文章，可能会经注意它们提到的一些概念和术语本文并没有介绍。 这是因为我认为那些东西并不是理解现代 transformer 所必需的。 话虽如此，有两个方面还是可以介绍一下，因为它们对于理解网上的那些关于现代 transformer 的文章还是有帮助的。</p>
+<h2 id="71-为什么叫-self-attention"><a class="header" href="#71-为什么叫-self-attention">7.1 为什么叫 self-attention？</a></h2>
+<p>重点在 <strong>attention</strong> 这个单词上。</p>
+<p>在 self-attention 提出之前，sequence models 主要指的是<strong>由 recurrent networks 或 convolutions 堆叠（stack）而成的网络</strong>。 之后人们发现，如果不是将上一层的输出直接 feed 到下一层的输入， 而是<strong>引入一种中间机制来判断输入中的哪些元素与输出中的某个特定单词相关</strong>， 就能给 sequence models 带来很大改善。具体来说，</p>
+<ul>
+<li>我们把 input 称为 <strong>values</strong>（因为它们是实实在在的值，我们将基于这些值计算输出）；</li>
+<li>然后，一些（trainable）机制为<strong>每个 value 分配一个 key</strong>；</li>
+<li>最后，对每个 output，一些其他机制分配一个 query。</li>
+</ul>
+<p>这些名称源自<strong>键值存储（key-value store）数据结构</strong>。 在 key-value store 场景中，对于每个 query（查询），store 中（最多）只有一个 item 能匹配到， 这个 item 有唯一的 key，返回这个 key 对应的 value。</p>
+<p>Attention（注意力）模型是 key-value store 模型的宽松版：</p>
+<ul>
+<li>store 中的每个 key 都能在某种程度上（而不是精确 100% 或 0%）匹配到 query；</li>
+<li>另外，query 返回的也不是单个 value，而是所有 value，我们<strong>根据每个 key 与 query 匹配的程度对相应 value 取一个加权和</strong>。</li>
+</ul>
+<p>self-attention 的重大突破在于，attention 本身就是一种足够强大的机制，能完成所有学习。 正如作者所说，<a href="https://arthurchiao.art/blog/attention-is-all-you-need-zh/">Attention is all you need</a>。</p>
+<ul>
+<li>Key/value/query 都来自同一个 input vector（只是各自经过了略微不同的线性变换）；</li>
+<li>他们关注自己（attend to themselves），因此叫 self-attention；</li>
+<li>这种 self-attention 经过多层堆叠之后，就能提供足够的非线性和表征能力（nonlinearity and representational power）来学习非常复杂的功能。</li>
+</ul>
+<h2 id="72-最初的-transformer-encoders-and-decoders"><a class="header" href="#72-最初的-transformer-encoders-and-decoders">7.2 最初的 transformer: encoders and decoders</a></h2>
+<p>当时的 sequence-to-sequence model 的标准结构是带 <a href="https://blog.keras.io/a-ten-minute-introduction-to-sequence-to-sequence-learning-in-keras.html">teacher forcing</a> 的 encoder-decoder 架构，</p>
+<p><img src="images/encoder-decoder.png" alt="" /></p>
+<p>encoder-decoder 模型</p>
+<p>Encoder 获取输入序列并将整个 sequence 映射为一个 latent representations， 这可以是一系列 latent vectors，也可以是如上图中的单个向量。 然后将该向量传递给 decoder，后者将其解码为期望的目标序列（例如，同一句话的另一种语言表示）。</p>
+<p>Teacher forcing 指的是<strong>允许 decoder 访问 input</strong> 的技术 —— 但以自回归（autoregressive）的方式。 也就是说， decoder 基于 latent vectors 和它自己已经生成的单词，逐单词生成输出句子。 这减轻了 latent representations 的一些压力：</p>
+<ul>
+<li>decoder 可以使用逐词采样（word-by-word sampling）来处理语法（syntax and grammar）等低级结构，</li>
+<li>而使用 latent vectors 来 capture 更高级别的语义结构（semantic structure）。</li>
+</ul>
+<p>理想情况下，使用相同的 latent representations 进行两次 decoding 会得到两个具有相同含义的不同句子。</p>
+<p><strong>在后来的 transformer 中</strong>，如 BERT 和 GPT-2， <strong>encoder/decoder 被完全去掉了</strong>。 简单的 transformer block 做堆叠（stack）就足以在许多基于序列的任务中实现最先进的效果。 这种模型有时被称为 <strong>decoder-only transformer</strong>（对于自回归模型） 或 <strong>encoder-only transformer</strong>（对于没有 masking 的模型）。</p>
+<h2 id="8-现代-transformers"><a class="header" href="#8-现代-transformers">8 现代 transformers</a></h2>
+<p>来看几个有代表性的现代 transformers。</p>
+<h2 id="81-google"><a class="header" href="#81-google">8.1 Google</a></h2>
+<p><code>BERT</code>
+：
+<code>340M</code>
+参数</p>
+<ul>
+<li><a href="https://arthurchiao.art/blog/bert-paper-zh/">(译/论文) BERT：预训练深度双向 Transformers 做语言理解（Google，2019）</a></li>
+</ul>
+<p><a href="https://arxiv.org/abs/1810.04805">BERT</a> (Bidirectional Encoder Representations from Transformers) 是首批证明 <strong>transformer 可以在各种基于语言的任务上</strong> （question answering, sentiment classification or classifying whether two sentences naturally follow one another） <strong>达到人类水平</strong>的模型之一。</p>
+<p>BERT 由一些与本文描述的类似的简单 transformer block 堆叠而成，然后在一个大型通用领域语料库上进行<strong>预训练</strong>， 该语料库由包含 <strong>8 亿个（800M）单词</strong>的英文书籍（现代作品，from unpublished authors） 和包含 25 亿（**</p>
+<pre><code>2.5B
+</code></pre>
+<p><strong>）个</strong>单词英文**维基百科文章（去掉了 markup）组成。</p>
+<p>预训练由两个任务组成：</p>
+<p>Masking</p>
+<p>A certain number of words in the input sequence are: masked out, replaced with a random word or kept as is. The model is then asked to predict, for these words, what the original words were. Note that the model doesn't need to predict the entire denoised sentence, just the modified words. Since the model doesn't know which words it will be asked about, it learns a representation for every word in the sequence.</p>
+<p>Next sequence classification</p>
+<p>Two sequences of about 256 words are sampled that either (a) follow each other directly in the corpus, or (b) are both taken from random places. The model must then predict whether a or b is the case.</p>
+<p>BERT uses WordPiece tokenization, which is somewhere in between word-level and character level sequences. It breaks words like walking up into the tokens walk and ##ing. This allows the model to make some inferences based on word structure: two verbs ending in -ing have similar grammatical functions, and two verbs starting with walk- have similar semantic function.</p>
+<p>The input is prepended with a special
+<code>&lt;cls&gt;</code>
+token. The output vector corresponding to this token is used as a sentence representation in sequence classification tasks like the next sentence classification (as opposed to the global average pooling over all vectors that we used in our classification model above).</p>
+<p>After pretraining, a single task-specific layer is placed after the body of transformer blocks, which maps the general purpose representation to a task specific output. For classification tasks, this simply maps the first output token to softmax probabilities over the classes. For more complex tasks, a final sequence-to-sequence layer is designed specifically for the task.</p>
+<p>The whole model is then re-trained to finetune the model for the specific task at hand.</p>
+<p>作者展示了与之前的模型相比，最大的改进来自 BERT 的双向特性（bidirectional nature）。 之前的模型，例如 GPT，使用的是 autoregressive mask，只允许 attention 使用前面的 token。 在 BERT 中，all attention is over the whole sequence，这是性能提升的主要来源。</p>
+<blockquote>
+<p>这也是为什么 “BERT” 中的 B 表示 “bidirectional”。</p>
+</blockquote>
+<p>最大的 BERT model 使用了 24 transformer blocks，embedding dimension 1024，16 attention heads， <strong>总参数数量为 3.4 亿</strong>（340M）。</p>
+<h2 id="82-openai"><a class="header" href="#82-openai">8.2 OpenAI</a></h2>
+<p><code>GPT-2</code>
+：
+<code>1.5B</code>
+参数</p>
+<p>They show state-of-the art performance on many tasks. On the wikipedia compression task that we tried above, they achieve 0.93 bits per byte.</p>
+<p><a href="https://openai.com/blog/better-language-models/">GPT-2</a> 是第一个真正进入<a href="https://www.bbc.com/news/technology-47249163">主流新闻</a>的 transformer 模型，原因是 GPT-2 可以生成看起来足够可信的文本，如果 2016 年有这种技术， 那当年美国总统大选中出现的那种大规模假新闻活动只需要一个人就能完成了。</p>
+<blockquote>
+<p>对于 GPT-2，OpenAI 也做出了一个颇受争议的决定 —— 不公布完整模型。</p>
+</blockquote>
+<p>GPT-2 第一个技巧是<strong>构建一个新的高质量数据集</strong>，</p>
+<ul>
+<li>虽然 BERT 使用了高质量的数据，但数据的来源（精心编写的书籍和维基百科文章）在<strong>写作风格上缺乏多样性</strong>；</li>
+<li>为了在不牺牲质量的前提下收集更多不同的数据，作者使用社交媒体网站 Reddit 上的链接来收集大量文本。</li>
+</ul>
+<p>GPT2 本质上是一个语言<strong>生成</strong>模型（language <em>generation</em> model）， 因此像我们自己设计的 text generation transformer 一样，它也<strong>使用了 masked self-attention</strong>。 它使用<strong>字节对编码</strong>（byte-pair encoding）来 tokenize the language， 这与 WordPiece encoding 一样<strong>将单词拆分为比“比单词短、比单个字母长”的 tokens</strong>。</p>
+<p>GPT2 与我们的 text generation transformer 非常相似，只有很小的层级顺序差异，以及增加了训练深度。 最大的模型使用 48 个 transformer block，序列长度为 1024，嵌入维度为 1600，总共 <strong>1.5B 参数</strong>。</p>
+<p>GPT2 在很多任务上都表现出了最先进的性能。在上面提到的维基百科压缩任务中，它取得了每字节 0.93 位的压缩效率。</p>
+<h2 id="83-transformer-xl"><a class="header" href="#83-transformer-xl">8.3 <a href="https://arxiv.org/abs/1901.02860">Transformer-XL</a></a></h2>
+<p>While the transformer represents a massive leap forward in modeling long-range dependency, the models we have seen so far are still fundamentally limited by the size of the input. Since the size of the dot-product matrix grows quadratically in the sequence length, this quickly becomes the bottleneck as we try to extend the length of the input sequence. Transformer-XL is one of the first succesful transformer models to tackle this problem.</p>
+<p>During training, a long sequence of text (longer than the model could deal with) is broken up into shorter segments. Each segment is processed in sequence, with self-attention computed over the tokens in the curent segment <em>and the previous segment</em>. Gradients are only computed over the current segment, but information still propagates as the segment window moves through the text. In theory at layer n, information may be used from n segments ago.</p>
+<blockquote>
+<p>A similar trick in RNN training is called truncated backpropagation through time. We feed the model a very long sequence, but backpropagate only over part of it. The first part of the sequence, for which no gradients are computed, still influences the values of the hidden states in the part for which they are.</p>
+</blockquote>
+<p>To make this work, the authors had to let go of the standard position encoding/embedding scheme. Since the position encoding is <em>absolute</em>, it would change for each segment and not lead to a consistent embedding over the whole sequence. Instead they use a <em>relative</em> encoding. For each output vector, a different sequence of position vectors is used that denotes not the absolute position, but the distance to the current output.</p>
+<p>This requires moving the position encoding into the attention mechanism (which is detailed in the paper). One benefit is that the resulting transformer will likely generalize much better to sequences of unseen length.</p>
+<h2 id="84-sparse-transformers"><a class="header" href="#84-sparse-transformers">8.4 <a href="https://openai.com/blog/sparse-transformer/">Sparse transformers</a></a></h2>
+<p>Sparse transformers tackle the problem of quadratic memory use head-on. Instead of computing a dense matrix of attention weights (which grows quadratically), they compute the self-attention only for particular pairs of input tokens, resulting in a <em>sparse</em> attention matrix, with only nn−−√ explicit elements.</p>
+<p>This allows models with very large context sizes, for instance for generative modeling over images, with large dependencies between pixels. The tradeoff is that the sparsity structure is not learned, so by the choice of sparse matrix, we are disabling some interactions between input tokens that might otherwise have been useful. However, two units that are not directly related may still interact in higher layers of the transformer (similar to the way a convolutional net builds up a larger receptive field with more convolutional layers).</p>
+<p>Beyond the simple benefit of training transformers with very large sequence lengths, the sparse transformer also allows a very elegant way of designing an inductive bias. We take our input as a collection of units (words, characters, pixels in an image, nodes in a graph) and we specify, through the sparsity of the attention matrix, which units we believe to be related. The rest is just a matter of building the transformer up as deep as it will go and seeing if it trains.</p>
+<h2 id="9-大型模型优化"><a class="header" href="#9-大型模型优化">9 大型模型优化</a></h2>
+<p>训练 transformer 的一大瓶颈是 self attention 中的点积矩阵，</p>
+<ul>
+<li>对于序列长度 t，这是一个包含 t2 个元素的稠密矩阵。</li>
+<li>在标准的 32 位精度下，当 t=1000 时，16 矩阵作为一个 batch，这个 batch 占用大约 250Mb 的显存。</li>
+<li>由于我们每个 self-attention 操作至少需要四个层（在 softmax 之前和之后，加上它们的梯度），这限制了在标准 12Gb GPU 中最多只能使用 12 层。</li>
+</ul>
+<p>实际上我们能用到的层数更少，因为输入和输出也占用了大量显存（尽管点积占主导地位）。</p>
+<blockquote>
+<p>网上有些模型包含<a href="https://openai.com/blog/sparse-transformer/">超过 12000 的序列长度，有 48 层</a>， 使用密实的点积矩阵。这些模型是在集群上训练的，但是单个前向/后向 propagation 仍然只能由单个 GPU 来完成。</p>
+</blockquote>
+<p>如何将如此巨大的 transformer 放入 12Gb 内存中？主要有三个技巧。</p>
+<h2 id="91-半精度half-precision"><a class="header" href="#91-半精度half-precision">9.1 半精度（half precision）</a></h2>
+<p>在现代 GPU 和 TPU 上，tensor 计算可以在 16 位浮点上高效完成。 但并不是将 tensor 的 dtype 设置为
+<code>torch.float16</code>
+那么简单。对于某些部分，如 loss，仍然需要 32 位精度。 但其中大部分可以通过<a href="https://github.com/NVIDIA/apex">现有库</a>相对轻松地搞定。</p>
+<p>半精度优化能使内存占用减半，或者说能使有效内存翻倍。</p>
+<h2 id="92-梯度积累gradient-accumulation"><a class="header" href="#92-梯度积累gradient-accumulation">9.2 梯度积累（gradient accumulation）</a></h2>
+<p>对于大型模型，我们可能只能对单个实例执行前向/后向传递（forward/backward pass）。
+<code>batch size = 1</code>
+不太可能产生稳定的学习。</p>
+<p>幸运的是，我们可以对更大 batch size 中的每个实例执行单个前向/后向，并对我们找到的梯度简单地求和 （这是多元链式法则<a href="https://youtu.be/7mTcWrnexkk?t=195">multivariate chain rule</a>的结果）。 当我们到达 batch 的末尾时，执行单步梯度下降，并将梯度归零（zero out）。 在 Pytorch 中这非常容易，**</p>
+<pre><code>optimizer.zero_grad()
+</code></pre>
+<p>** 就行了。</p>
+<h2 id="93-梯度-checkpointgradient-checkpointing"><a class="header" href="#93-梯度-checkpointgradient-checkpointing">9.3 梯度 checkpoint（gradient checkpointing）</a></h2>
+<p>如果模型太大以至于即使是单个 forward/backward 也无法放入内存，那就只能牺牲更多的计算来提高内存效率。</p>
+<p>在 gradient checkpointing 中，将模型分成几个部分（sections）。对每个部分执行单独的 forward/backward 梯度计算，而无需为其余部分保留中间值。 Pytorch <a href="https://pytorch.org/docs/stable/checkpoint.html">相关的函数</a>直接可用。 更多信息可参考 <a href="https://medium.com/huggingface/training-larger-batches-practical-tips-on-1-gpu-multi-gpu-distributed-setups-ec88c3e51255">这篇博客</a>。</p>
+<h2 id="10-结束语"><a class="header" href="#10-结束语">10 结束语</a></h2>
+<p>Transformer 很可能是未来几十年占主导地位的最简单机器学习架构。作为从业者，有充分的理由关注它们。</p>
+<p>首先，<strong>目前的性能瓶颈纯粹在硬件上</strong>。与卷积或 LSTM 不同， transformer 目前的限制完全取决于我们能把多大的模型放到 GPU 内存中， 以及我们可以在合理的时间内输入多少数据进去。 我毫不怀疑我们最终会达到这样的地步： 更多层和更多数据不再有帮助，但目前似乎还没有达到这个地步。</p>
+<p>其次，<strong>transformer 极其通用</strong>。 到目前为止，transformer 主要在语言建模方面取得了巨大成功， 在图像和音乐分析方面也取得了一定的成功，但 transformer 具有一定程度的通用性，其他领域的应用还有待开发。</p>
+<ul>
+<li>基本 transformer 是一个 set-to-set 模型。 只要数据是基本单位组成的集合（a set of units），就可以应用 transformer；</li>
+<li>数据的其他信息（如局部结构），可以通过位置嵌入或通过 manipulate 注意力矩阵的结构（使其稀疏或屏蔽部分）来添加， 这在<strong>多模态学习</strong>（multi-modal learning）中特别有用。例如，可以轻松地将带字幕的图像 分解为像素集合和字符集合，然后设计一些精巧的嵌入和稀疏结构来帮助模型组合和对齐二者。 如果我们将关于某一领域的全部知识组合成一个关系型结构（relational structure）， 如多模态知识图谱（multi-modal knowledge graph，[3]），那就可以使用简单的 transformer block 在多模态单元之间传播信息， 然后通过稀疏结构控制与哪些单元直接交互。</li>
+</ul>
+<p>到目前为止，transformer 还主要被视为一种<strong>语言模型</strong>。希望随着时间推移， 我们会看到它在其他领域得到更多采用，不仅是提高这些领域的效率，还包括简化这些领域的现有模型， 让从业者能更直观地控制他们模型的归纳偏差。</p>
+<h2 id="参考资料"><a class="header" href="#参考资料">参考资料</a></h2>
+<ol>
+<li><a href="http://jalammar.github.io/illustrated-transformer/">The illustrated transformer</a>, Jay Allamar.</li>
+<li><a href="http://nlp.seas.harvard.edu/2018/04/03/attention.html">The annotated transformer</a>, Alexander Rush.</li>
+<li><a href="https://content.iospress.com/articles/data-science/ds007">The knowledge graph as the default data model for learning on heterogeneous knowledge</a> Xander Wilcke, Peter Bloem, Victor de Boer</li>
+<li><a href="https://datajobs.com/data-science-repo/Recommender-Systems-%5BNetflix%5D.pdf">Matrix factorization techniques for recommender systems</a> Yehuda Koren et al.</li>
+</ol>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../ml/transformer-implementation-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../ml/ai-recognition-guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../ml/transformer-implementation-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../ml/ai-recognition-guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
