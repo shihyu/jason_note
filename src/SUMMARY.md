@@ -438,6 +438,7 @@
         - [初探基因演算法](ml/初探基因演算法.md)
         - [DEAP 進化演算法](ml/deap.md)
         - [基於DEAP庫的Python進化演算法](ml/基於DEAP庫的Python進化演算法從入門到入土.md)
+        - [OpenEvolve 完整指南](ml/OpenEvolve_Complete_Guide.md)
         - [XGBoost 詳解](ml/XGBoost.md)
         - [ML From Scratch](ml/src/ML-From-Scratch/README.md)
         - [機器學習資源整理](ml/ml.md)
