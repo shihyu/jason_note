@@ -1,1 +1,0 @@
-add_library(fs_layer STATIC "file_ops.c")

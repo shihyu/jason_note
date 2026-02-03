@@ -1,1 +1,0 @@
-add_executable(fakefs.srv main.c fakefs_ops.c ../fs_base/fs_wrapper_ops.c ../fs_base/fs_wrapper.c ../fs_base/fs_vnode.c)

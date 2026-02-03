@@ -1,1 +1,0 @@
-message("MYVAR: ${MYVAR}")

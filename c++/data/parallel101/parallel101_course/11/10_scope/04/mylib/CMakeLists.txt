@@ -1,1 +1,0 @@
-set(MYVAR ON PARENT_SCOPE)
