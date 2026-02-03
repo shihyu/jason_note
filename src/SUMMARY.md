@@ -441,6 +441,7 @@
         - [OpenEvolve 快速入門指南](ml/OpenEvolve快速入門指南.md)
         - [OpenEvolve 完整指南](ml/OpenEvolve_Complete_Guide.md)
         - [OpenEvolve 進化式編程完整指南](ml/OpenEvolve進化式編程完整指南.md)
+        - [OpenEvolve 多語言演化 Assembly 範例整理](ml/OpenEvolve_Assembly_Evolution_Guide.md)
         - [XGBoost 詳解](ml/XGBoost.md)
         - [ML From Scratch](ml/src/ML-From-Scratch/README.md)
         - [機器學習資源整理](ml/ml.md)
