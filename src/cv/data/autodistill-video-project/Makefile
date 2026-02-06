@@ -43,6 +43,7 @@ test:  ## 驗證結果
 .PHONY: clean
 clean:  ## 清理產出
 	rm -rf data/images
-	rm -rf data/dataset
+	rm -rf data/datasets
+	rm -rf data/temp_images
 	rm -rf data/visualizations
 	@echo "清理完成。"

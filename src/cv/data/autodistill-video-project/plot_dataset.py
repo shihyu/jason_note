@@ -4,28 +4,28 @@ import supervision as sv
 import glob
 from pathlib import Path
 
-def main():
-    DATASET_DIR = "data/dataset"
-    OUTPUT_DIR = "data/visualizations"
-    
-    if not os.path.exists(DATASET_DIR):
-        print(f"Error: Dataset directory {DATASET_DIR} not found. Run 'make run' first.")
-        return
+def plot_dataset(dataset_dir: str, output_dir: str, dataset_name: str):
+    """
+    為單一資料集產生標記預覽圖
+    """
+    print(f"\nProcessing dataset: {dataset_name}")
 
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    box_annotator = sv.BoxAnnotator()
+    label_annotator = sv.LabelAnnotator()
 
-    # 1. 載入 YOLO 格式資料集
-    # 我們分別處理 train 和 valid
+    total_images = 0
+
+    # 處理 train 和 valid 兩個 split
     for split in ["train", "valid"]:
-        images_path = os.path.join(DATASET_DIR, split, "images")
-        annotations_path = os.path.join(DATASET_DIR, split, "labels")
-        data_yaml_path = os.path.join(DATASET_DIR, "data.yaml")
+        images_path = os.path.join(dataset_dir, split, "images")
+        annotations_path = os.path.join(dataset_dir, split, "labels")
+        data_yaml_path = os.path.join(dataset_dir, "data.yaml")
 
         if not os.path.exists(images_path):
             continue
 
-        print(f"Processing {split} split...")
-        
+        print(f"  Processing {split} split...")
+
         # 使用 supervision 載入資料集
         dataset = sv.DetectionDataset.from_yolo(
             images_directory_path=images_path,
@@ -33,34 +33,67 @@ def main():
             data_yaml_path=data_yaml_path
         )
 
-        box_annotator = sv.BoxAnnotator()
-        label_annotator = sv.LabelAnnotator()
-
-        # 2. 為每張圖片產生標記圖
+        # 為每張圖片產生標記圖
         for image_path, _, detections in dataset:
             image_name = os.path.basename(image_path)
             image = cv2.imread(image_path)
-            
+
             labels = [
                 f"{dataset.classes[class_id]}"
                 for class_id in detections.class_id
             ]
 
             annotated_frame = box_annotator.annotate(
-                scene=image.copy(), 
+                scene=image.copy(),
                 detections=detections
             )
             annotated_frame = label_annotator.annotate(
-                scene=annotated_frame, 
-                detections=detections, 
+                scene=annotated_frame,
+                detections=detections,
                 labels=labels
             )
 
-            # 儲存到可視化目錄
-            output_file = os.path.join(OUTPUT_DIR, f"{split}_{image_name}")
+            # 儲存到可視化目錄（包含資料集名稱和 split）
+            output_file = os.path.join(output_dir, f"{dataset_name}_{split}_{image_name}")
             cv2.imwrite(output_file, annotated_frame)
-    
-    print(f"Successfully generated labeled images in: {OUTPUT_DIR}")
+            total_images += 1
+
+    print(f"  ✓ Generated {total_images} labeled images")
+
+def main():
+    DATASETS_ROOT = "data/datasets"
+    OUTPUT_DIR = "data/visualizations"
+
+    if not os.path.exists(DATASETS_ROOT):
+        print(f"Error: Datasets directory {DATASETS_ROOT} not found. Run 'make run' first.")
+        return
+
+    # 掃描所有影片資料集
+    dataset_dirs = [d for d in os.listdir(DATASETS_ROOT)
+                   if os.path.isdir(os.path.join(DATASETS_ROOT, d))]
+
+    if not dataset_dirs:
+        print(f"Error: No datasets found in {DATASETS_ROOT}")
+        return
+
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    print(f"Found {len(dataset_dirs)} dataset(s) to visualize:")
+    for dataset_name in dataset_dirs:
+        print(f"  - {dataset_name}")
+
+    # 處理每個資料集
+    for dataset_name in dataset_dirs:
+        dataset_path = os.path.join(DATASETS_ROOT, dataset_name)
+        try:
+            plot_dataset(dataset_path, OUTPUT_DIR, dataset_name)
+        except Exception as e:
+            print(f"Error processing {dataset_name}: {e}")
+            continue
+
+    print(f"\n{'='*60}")
+    print(f"All visualizations saved to: {OUTPUT_DIR}")
+    print(f"{'='*60}")
 
 if __name__ == "__main__":
     main()
