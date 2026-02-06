@@ -30,6 +30,7 @@
 
 ### Supervision 套件
 - [Supervision 電腦視覺套件完整指南](supervision.md)
+- [YOLOv8 物體檢測介紹](yolov8-物體檢測介紹.md)
 
 功能特點：
 - 物件偵測後處理

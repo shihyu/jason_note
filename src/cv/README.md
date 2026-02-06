@@ -37,6 +37,7 @@
 - MobileCLIP Android 部署
 - MobileCLIP 與深度學習框架關係
 - Supervision 電腦視覺套件
+- YOLOv8 物體檢測介紹
 
 **適合**: 深度學習開發者、Mobile AI
 
