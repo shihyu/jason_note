@@ -480,6 +480,7 @@
         - [MobileCLIP 與深度學習框架的關係](cv/mobileclip-frameworks-comparison.md)
         - [MobileCLIP Android 完整部署指南](cv/MobileCLIP_Android_部署指南.md)
         - [Supervision 電腦視覺套件完整指南](cv/supervision.md)
+        - [YOLOv8 物體檢測介紹](cv/yolov8-物體檢測介紹.md)
     - [實戰應用與技術方案](cv/03_實戰應用與技術方案.md)
         - [AR 眼鏡辨別詐騙技術指南](cv/AR眼鏡辨別詐騙.md)
         - [AR 眼鏡面相分析技術方案](cv/AR眼鏡面相分析技術方案.md)
