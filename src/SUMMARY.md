@@ -482,6 +482,7 @@
         - [Supervision 電腦視覺套件完整指南](cv/supervision.md)
         - [YOLOv8 物體檢測介紹](cv/yolov8-物體檢測介紹.md)
         - [Autodistill + YOLOv8 自動標註教學](cv/autodistill-yolov8-自動標註教學.md)
+        - [labelImg 教學：標註 YOLO 格式資料](cv/labelimg-yolo-標註教學.md)
     - [實戰應用與技術方案](cv/03_實戰應用與技術方案.md)
         - [AR 眼鏡辨別詐騙技術指南](cv/AR眼鏡辨別詐騙.md)
         - [AR 眼鏡面相分析技術方案](cv/AR眼鏡面相分析技術方案.md)
