@@ -344,6 +344,7 @@
 - [Linux Kernel](kernel/linux_kernel.md)
     - [What is eBPF](kernel/what-is-ebpf.md)
     - [Linker and Loader Guide](kernel/linker-loader-guide.md)
+    - [Running Linux 6.19 on STM32H750](kernel/stm32h750-linux-6.19.md)
 - [SSH](ssh/ssh.md)
 - [Network](network/socket.md)
     - [Linux 網路程式設計 API 完整參考手冊](network/linux_network_api_reference.md)
