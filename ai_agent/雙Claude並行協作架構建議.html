@@ -314,6 +314,171 @@ class DevAgent:
 <li><strong>優先級</strong>：該先修哪個 bug？</li>
 </ul>
 <p>可以加一個「仲裁者 Claude C」專門決定優先級。</p>
+<hr />
+<h2 id="建議升級ab-並行--coordinator必要"><a class="header" href="#建議升級ab-並行--coordinator必要">建議升級：A/B 並行 + Coordinator（必要）</a></h2>
+<p>如果要穩定跑長時間，建議最小升級成 3 角色：</p>
+<ul>
+<li><code>Claude A (QA)</code>：只負責產生可重現測試與驗收條件</li>
+<li><code>Claude B (Dev)</code>：只負責修復與提交 patch</li>
+<li><code>Coordinator</code>：只負責排程、鎖定、合併策略、停止條件</li>
+</ul>
+<p>這樣可以避免 A/B 互相覆蓋與無限循環。</p>
+<hr />
+<h2 id="任務狀態機避免鬼打牆"><a class="header" href="#任務狀態機避免鬼打牆">任務狀態機（避免鬼打牆）</a></h2>
+<pre><code class="language-text">OPEN
+  -&gt; QA_READY        (A 已提交 failing test)
+  -&gt; DEV_WORKING     (B 已領取任務)
+  -&gt; DEV_READY       (B 已提交 fix + 本地測試)
+  -&gt; QA_VERIFYING    (A 驗證中)
+  -&gt; DONE            (驗證通過)
+  -&gt; REOPENED        (驗證失敗，附新證據)
+  -&gt; BLOCKED         (衝突/依賴缺失/超時)
+</code></pre>
+<p>規則：</p>
+<ul>
+<li><code>REOPENED</code> 最多 2 次，超過直接進 <code>BLOCKED</code> 交給 C</li>
+<li>每個 issue 設定 <code>max_iterations=3</code></li>
+<li>單任務 TTL（例如 30 分鐘），超時回收</li>
+</ul>
+<hr />
+<h2 id="衝突處理策略同檔同區塊修改"><a class="header" href="#衝突處理策略同檔同區塊修改">衝突處理策略（同檔同區塊修改）</a></h2>
+<p>採用「先測試、後合併、再重放」：</p>
+<ol>
+<li>A 的測試分支先 merge 到整合分支</li>
+<li>B 的修復分支 rebase 到整合分支最新</li>
+<li>若衝突：
+<ul>
+<li>同檔同函式：交給 C 做一次性裁決</li>
+<li>不同函式：自動合併</li>
+</ul>
+</li>
+<li>合併後固定跑：
+<ul>
+<li>目標測試（A 提交的測試）</li>
+<li>快速 smoke test</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h2 id="最小資料結構json"><a class="header" href="#最小資料結構json">最小資料結構（JSON）</a></h2>
+<pre><code class="language-json">{
+  "issue_id": "ISSUE-042",
+  "title": "xss in comment preview",
+  "priority": "high",
+  "owner": "claude_b",
+  "status": "DEV_WORKING",
+  "qa_branch": "qa/ISSUE-042",
+  "dev_branch": "fix/ISSUE-042",
+  "acceptance": [
+    "test_xss_preview fails before fix",
+    "test_xss_preview passes after fix"
+  ],
+  "iterations": 1,
+  "ttl_minutes": 30
+}
+</code></pre>
+<hr />
+<h2 id="可直接落地的目錄"><a class="header" href="#可直接落地的目錄">可直接落地的目錄</a></h2>
+<pre><code class="language-text">.ai-orchestrator/
+├── queue/
+│   ├── open/
+│   ├── working/
+│   ├── verify/
+│   └── done/
+├── locks/
+│   └── ISSUE-042.lock
+├── logs/
+│   ├── qa.log
+│   ├── dev.log
+│   └── coordinator.log
+└── state/
+    └── ISSUE-042.json
+</code></pre>
+<hr />
+<h2 id="coordinator-核心守則精簡版"><a class="header" href="#coordinator-核心守則精簡版">Coordinator 核心守則（精簡版）</a></h2>
+<ul>
+<li>一次只允許一個 agent 持有同一個 <code>issue lock</code></li>
+<li>若 <code>test baseline</code> 改變，強制重新驗證所有 <code>DEV_READY</code></li>
+<li>每輪只放行 <code>Top-N</code> 高優先級 issue（避免 token 爆量）</li>
+<li>每日預算上限：
+<ul>
+<li>token budget</li>
+<li>API cost budget</li>
+<li>max active issues</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="你可直接補資料的區塊模板"><a class="header" href="#你可直接補資料的區塊模板">你可直接補資料的區塊模板</a></h2>
+<p>把你後續要給我的內容直接填在這裡，我可再幫你轉成流程與腳本：</p>
+<pre><code class="language-markdown">### 專案背景
+- 
+
+### 目前技術棧
+- 
+
+### 已知痛點
+- 
+
+### 必要限制（成本/時間/模型配額）
+- 
+
+### 你想優先自動化的 3 件事
+1. 
+2. 
+3. 
+</code></pre>
+<hr />
+<h2 id="開源專案候選多-agent-協作"><a class="header" href="#開源專案候選多-agent-協作">開源專案候選（多 Agent 協作）</a></h2>
+<blockquote>
+<p>註：星數與活躍度會變動，以下以「架構匹配度」為主。</p>
+</blockquote>
+<div class="table-wrapper"><table><thead><tr><th>專案名稱</th><th>連結</th><th>核心特色</th><th>對應你的場景</th></tr></thead><tbody>
+<tr><td>MetaGPT</td><td>https://github.com/geekan/MetaGPT</td><td>多角色軟體公司流程（PM/Architect/Engineer），可輸出文件與程式碼，適合 SOP 化協作</td><td>可映射 <code>Claude A(QA)</code> / <code>Claude B(Dev)</code>，並由 Coordinator 控管流程</td></tr>
+<tr><td>ChatDev</td><td>https://github.com/OpenBMB/ChatDev</td><td>角色對話式開發（CEO/CTO/Programmer/Reviewer/Tester），支援分階段協作</td><td>適合做「QA 產測試 -&gt; Dev 修復 -&gt; QA 驗證」回圈</td></tr>
+<tr><td>PR-Agent</td><td>https://github.com/qodo-ai/pr-agent</td><td>針對 PR 的自動審查、摘要與建議，整合 GitHub 流程</td><td>可作為 B 提交後的自動審核層，補強 QA Gate</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="導入順序建議最小風險"><a class="header" href="#導入順序建議最小風險">導入順序建議（最小風險）</a></h2>
+<ol>
+<li>先上 <code>MetaGPT</code> 做單一 repo PoC，只開 1 條 issue 流水線驗證可行性。</li>
+<li>加入 <code>PR-Agent</code> 接在 PR 階段，讓審查標準固定化。</li>
+<li>需要更多角色對話時再引入 <code>ChatDev</code>，避免初期系統過重。</li>
+</ol>
+<hr />
+<h2 id="與-abcoordinator-的映射"><a class="header" href="#與-abcoordinator-的映射">與 A/B/Coordinator 的映射</a></h2>
+<ul>
+<li><code>Claude A (QA)</code>：
+<ul>
+<li>產 failing tests</li>
+<li>定義 acceptance criteria</li>
+<li>驗證 <code>DEV_READY</code></li>
+</ul>
+</li>
+<li><code>Claude B (Dev)</code>：
+<ul>
+<li>依 issue 與測試修復</li>
+<li>提交 fix branch / PR</li>
+</ul>
+</li>
+<li><code>Coordinator</code>：
+<ul>
+<li>控 <code>lock</code>、TTL、重試次數</li>
+<li>決定 merge 順序與優先級</li>
+<li>超過迭代上限時標記 <code>BLOCKED</code></li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="快速啟動原則避免跑一天一夜"><a class="header" href="#快速啟動原則避免跑一天一夜">快速啟動原則（避免跑一天一夜）</a></h2>
+<ul>
+<li>限制並行數：<code>max_active_issues = 3</code></li>
+<li>限制迭代數：<code>max_iterations = 3</code></li>
+<li>限制驗證時間：<code>ttl_minutes = 30</code></li>
+<li>固定節流：每輪 agent 呼叫加入延遲（rate limit）</li>
+<li>預算硬上限：token / cost / 日任務數超限即停</li>
+</ul>
 
                     </main>
 
