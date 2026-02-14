@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>day20-day-20-web3-與進階後端-實作即時-erc-20-balance</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">day20-day-20-web3-與進階後端-實作即時-erc-20-balance</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#day-20day-20---web3-與進階後端實作即時-erc-20-balance"
+id="toc-day-20day-20---web3-與進階後端實作即時-erc-20-balance">DAY
+20｜Day 20 - Web3 與進階後端：實作即時 ERC-20 Balance</a>
+<ul>
+<li><a href="#章節內容" id="toc-章節內容">章節內容</a>
+<ul>
+<li><a href="#未分章內容" id="toc-未分章內容">1. 未分章內容</a></li>
+<li><a href="#取得-erc-20-event-logs" id="toc-取得-erc-20-event-logs">2.
+取得 ERC-20 Event Logs</a></li>
+<li><a href="#組出-token-balance" id="toc-組出-token-balance">3. 組出
+Token Balance</a></li>
+<li><a href="#判斷合約-schema" id="toc-判斷合約-schema">4. 判斷合約
+Schema</a></li>
+<li><a href="#資料整理與輸出" id="toc-資料整理與輸出">5.
+資料整理與輸出</a></li>
+<li><a href="#即時更新-token-balance" id="toc-即時更新-token-balance">6.
+即時更新 Token Balance</a></li>
+<li><a href="#小結" id="toc-小結">7. 小結</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="day-20day-20---web3-與進階後端實作即時-erc-20-balance">DAY
+20｜Day 20 - Web3 與進階後端：實作即時 ERC-20 Balance</h1>
+<ul>
+<li>原文：https://ithelp.ithome.com.tw/articles/10330773</li>
+<li>發佈時間：2023-09-29 15:06:34</li>
+</ul>
+<h2 id="章節內容">章節內容</h2>
+<h3 id="未分章內容">1. 未分章內容</h3>
+<p>今天要來實作的是直接查詢鏈上資料來組合出一個地址的完整 ERC-20
+Balance，並且即時偵測該地址在鏈上的 Token Balance
+變動。這樣的功能將等於是在 Day 10 中使用的第三方 API
+功能，通過實作這功能，我們將更深入了解 Debank、Metamask Portfolio
+等資產管理工具背後的機制及挑戰。</p>
+<h3 id="取得-erc-20-event-logs">2. 取得 ERC-20 Event Logs</h3>
+<p>在 Day 15 已經深入探討了 Event Logs 的概念。為了計算出完整的 ERC-20
+Balance，我們只需取得該地址過去所有的 Token Transfer Event
+並對其做加總即可。以 <a
+href="https://etherscan.io/address/0x2089035369B33403DdcaBa6258c34e0B3FfbbBd9">satoshi.eth</a>
+作為今日的實作範例，目標是要找出該地址在 Ethereum 主網上的所有 ERC-20
+Balance。</p>
+<p>首先回顧一下 Transfer Event 的結構，它的 Topic 0 是
+<code>keccak256("Transfer(address,address,uint256)")</code>，Topic 1 與
+Topic 2 則分別是代幣轉移的 from 與 to
+address。所以需要分別查詢匹配轉入和轉出條件的 Event
+Logs，再將它們組合起來。</p>
+<p>值得注意的是這些資料會對應到 Etherscan 上的 Token Transfer
+Tab，可以發現其實 Etherscan 也是採用同樣的方式來呈現 ERC-20 Token
+的轉帳紀錄。</p>
+<figure>
+<img src="../ironman-6262-assets/images/day20-img001-ad69b6d635.png"
+alt="https://ithelp.ithome.com.tw/upload/images/20230929/201622942cqbJGxOkH.png" />
+<figcaption
+aria-hidden="true">https://ithelp.ithome.com.tw/upload/images/20230929/201622942cqbJGxOkH.png</figcaption>
+</figure>
+<p>在取得 Event Logs 之前，需要先連接到 Ethereum 主網的 Alchemy RPC
+Node：</p>
+<p>[code] // connect to json rpc node client, err :=
+ethclient.Dial(“wss://eth-sepolia.g.alchemy.com/v2/” +
+os.Getenv(“ALCHEMY_API_KEY”)) if err != nil { log.Fatal(err) }</p>
+<p>[/code]</p>
+<p>有了 <code>client</code> 後，就可以使用
+<code>client.FilterLogs</code> 方法分別取得轉入和轉出的所有 Logs：</p>
+<p>[code] const transferEventSignature =
+“Transfer(address,address,uint256)”</p>
+<pre><code>// transfer out filter query
+transferEventSignatureHash := crypto.Keccak256Hash([]byte(transferEventSignature))
+transferOutQuery := ethereum.FilterQuery{
+    Addresses: []common.Address{},
+    Topics: [][]common.Hash{
+        {transferEventSignatureHash},
+        {common.HexToHash(targetAddress)},
+        {},
+    },
+}
+transferOutLogs, err := client.FilterLogs(context.Background(), transferOutQuery)
+if err != nil {
+    log.Fatalf(&quot;Failed to retrieve logs: %v&quot;, err)
+}
+fmt.Printf(&quot;Got %d transfer out logs\n&quot;, len(transferOutLogs))
+
+// transfer in filter query
+transferInQuery := ethereum.FilterQuery{
+    Addresses: []common.Address{},
+    Topics: [][]common.Hash{
+        {transferEventSignatureHash},
+        {},
+        {common.HexToHash(targetAddress)},
+    },
+}
+transferInLogs, err := client.FilterLogs(context.Background(), transferInQuery)
+if err != nil {
+    log.Fatalf(&quot;Failed to retrieve logs: %v&quot;, err)
+}
+fmt.Printf(&quot;Got %d transfer in logs\n&quot;, len(transferInLogs))</code></pre>
+<p>[/code]</p>
+<p>由於我們想拿到所有 ERC-20 Token Contract 發出的 Event，所以 Addresses
+欄位需要填入空陣列，他代表想查詢哪些合約地址發出的 Event
+Log。再來比較有趣的是 Topics
+欄位的值，他是一個二維陣列，可以看一下定義：</p>
+<figure>
+<img src="../ironman-6262-assets/images/day20-img002-5c92d607a6.png"
+alt="https://ithelp.ithome.com.tw/upload/images/20230929/201622946lecYjEGha.png" />
+<figcaption
+aria-hidden="true">https://ithelp.ithome.com.tw/upload/images/20230929/201622946lecYjEGha.png</figcaption>
+</figure>
+<p>可以看到這個結構能方便指定像這樣的過濾條件：Topic 0 為
+<code>A or B</code> 且 Topic 1 為 <code>C or D</code>
+。這樣的好處是能在一次 API Call 中拿到多種類的 Event Log（例如我同時想拿
+<code>Transfer</code> 跟 <code>Approve</code> event 的 logs，就可以在
+Topic 0 指定兩個值）。而如果在那個位子不指定的話就放入空陣列即可。</p>
+<p>這個取得 Event Log 的功能背後其實是打 <code>eth_getLogs</code> 這個
+RPC Method，裡面的 topics 參數就提供了這種查詢方式，詳細可以看 Alchemy
+的 <a href="https://docs.alchemy.com/reference/eth-getlogs">eth_getLogs
+文件</a>。</p>
+<p>拿到這些 Logs
+之後，還有一個需要注意的細節，因為這個過濾方式可能還會包含一些不是
+ERC-20 Token Transfer 的 Event Log。像 ERC-721 的 Transfer Event
+定義如下：</p>
+<p>[code] event Transfer(address indexed from, address indexed to,
+uint256 indexed tokenId)</p>
+<p>[/code]</p>
+<p>可以發現他的 Event Signature（也就是 Log 中的 Topic 0）跟 ERC-20
+Transfer 是一樣的，都是
+<code>keccak256(”Transfer(address,address,uint256)”)</code>，唯一差別是在
+ERC-721 Event 的第三個欄位紀錄的是 Token ID，並且他有被
+indexed。因此能區分出這兩種 Log 的方式就是 Topics 數量，後續在針對每筆
+Log 處理時就要 Filter 掉 Topics 數量不為 3 的 Log。</p>
+<h3 id="組出-token-balance">3. 組出 Token Balance</h3>
+<p>有了所有轉入跟轉出的 Logs，就可以開始對這些 Logs 進行解析，確定每一筆
+Log 代表的 Token 轉移數量，並按照發出該 Log 的 Token Contract Address
+去計算該地址的總轉入與總轉出，進而算出他在對應 Token Contract
+的餘額。</p>
+<p>回顧一下轉移的 Token 數量會被記錄在 Log 的 Data 欄位中，因為他沒有被
+indexed，而要從原始的 Log Topics 以及 Data
+去解析出需要的資料是比較繁瑣的處理，因此這裡可以善用 ERC-20 的 Go
+Binding 裡面提供的 <code>ParseTransfer()</code> ，可以方便解析出
+Transfer Event 中的資料：</p>
+<p>[code] // get an arbitrary erc20 binding erc20Token, err :=
+erc20.NewErc20(common.HexToAddress(“0x0000000000000000000000000000000000000000”),
+client) if err != nil { log.Fatalf(“Failed to bind to erc20 contract:
+%v”, err) }</p>
+<pre><code>// When parsing a log
+transferEvent, err := erc20Token.ParseTransfer(vLog)
+if err != nil {
+    log.Fatalf(&quot;Failed to unmarshal Transfer event: %v&quot;, err)
+}
+// We can use transferEvent.From, transferEvent.To, transferEvent.Value now</code></pre>
+<p>[/code]</p>
+<p>有了這些工具後就能順利解析所有的 Logs。為了方便處理可以先合併
+Transfer In 跟 Out 的 Logs，並且用一個 <code>map[string]*big.Int</code>
+來追蹤該地址在每個 Token Contract 的餘額：</p>
+<p>[code] // calculate token balances allLogs := append(transferInLogs,
+transferOutLogs…) tokenBalances := make(map[string]*big.Int) for _, vLog
+:= range allLogs { // check if the log is ERC-20 Transfer event if
+len(vLog.Topics) != 3 { continue } contractAddress :=
+vLog.Address.Hex()</p>
+<pre><code>    // update token balance
+    transferEvent, err := erc20Token.ParseTransfer(vLog)
+    if err != nil {
+        log.Fatalf(&quot;Failed to unmarshal Transfer event: %v&quot;, err)
+    }
+    if transferEvent.From != transferEvent.To {
+        if _, ok := tokenBalances[contractAddress]; !ok {
+            tokenBalances[contractAddress] = big.NewInt(0)
+        }
+        if vLog.Topics[1] == common.HexToHash(targetAddress) {
+            tokenBalances[contractAddress] = tokenBalances[contractAddress].Sub(tokenBalances[contractAddress], transferEvent.Value)
+        } else {
+            tokenBalances[contractAddress] = tokenBalances[contractAddress].Add(tokenBalances[contractAddress], transferEvent.Value)
+        }
+    }
+}</code></pre>
+<p>[/code]</p>
+<p>這樣就可以得到初步的 Token Balance
+結果了。但這還不夠精準，必須考慮一個重要的問題：這個合約地址是否真的是一個
+ERC-20 Token。</p>
+<h3 id="判斷合約-schema">4. 判斷合約 Schema</h3>
+<p>要判斷一個合約地址是否為 ERC-20，可以參考 <strong><a
+href="https://docs.openzeppelin.com/contracts/4.x/api/token/erc20#IERC20Metadata">OpenZeppelin</a></strong>
+的文件，回顧一下 ERC-20 合約應該有哪些介面：</p>
+<figure>
+<img src="../ironman-6262-assets/images/day20-img003-6f243d80f8.png"
+alt="https://ithelp.ithome.com.tw/upload/images/20230929/20162294Qtyyp1FAv4.png" />
+<figcaption
+aria-hidden="true">https://ithelp.ithome.com.tw/upload/images/20230929/20162294Qtyyp1FAv4.png</figcaption>
+</figure>
+<p>因為要支援所有這些介面才能算是 ERC-20
+合約，最直觀的判斷方式就是對每個 function
+都嘗試呼叫一次這個合約試試看，如果都得到正常的回覆就代表這個合約有實作對應的
+function。如果合約不支援該方法，通常會得到一個
+<code>execution reverted</code> 的
+error。因此這樣就能判斷出他是否（很可能）是 ERC-20 Token。</p>
+<p>以下 function 檢查了 ERC-20 的部分方法，並回傳 Token 的 name 和
+decimals 來方便後續顯示結果時使用：</p>
+<p>[code] // getNameAndDecimals get name and decimals if contract is
+ERC20 token. Otherwise, return error. func getNameAndDecimals(client
+*ethclient.Client, address common.Address) (name string, decimals uint8,
+err error) { erc20Token, err := erc20.NewErc20(address, client) if err
+!= nil { return } name, err = erc20Token.Name(nil) if err != nil || name
+== “” { return } symbol, err := erc20Token.Symbol(nil) if err != nil ||
+symbol == “” { return } totalSupply, err := erc20Token.TotalSupply(nil)
+if err != nil || totalSupply.Cmp(big.NewInt(0)) == 0 { return }
+decimals, err = erc20Token.Decimals(nil) if err != nil || decimals == 0
+{ return } _, err = erc20Token.BalanceOf(nil,
+common.HexToAddress(“0x0000000000000000000000000000000000000000”)) if
+err != nil { return } fmt.Printf(“%s is ERC20 token”, address.Hex())
+return }</p>
+<p>[/code]</p>
+<p>這裡只有嘗試呼叫部分方法，是因為像 <code>transfer</code> function
+如果在 from 地址沒有該 Token
+時也會執行失敗，導致無法判斷出錯的原因是來自於合約不支援 transfer
+function 還是地址餘額不足。</p>
+<p>然而此判斷方法並不太有效率，因為要做很多次的鏈上查詢，而且結果也不一定是
+100% 準確。不過幸好在許多新的合約標準中會支援 <a
+href="https://eips.ethereum.org/EIPS/eip-165">ERC-165</a> 的
+<code>supportsInterface()</code>
+方法，可以迅速確定一個合約是否支援某個特定的 interface。例如， RC-721 和
+ERC-1155 都已經要求合約要實作這個 function（<a
+href="https://docs.openzeppelin.com/contracts/2.x/api/token/erc721#IERC721">範例</a>），但因為
+ERC-20 是早期標準，許多早期部署的 ERC-20 Token Contracts 都沒有支援
+ERC-165，因此只能用比較低效率的方法判斷。</p>
+<p>一個典型的 ERC-721 合約 <code>supportsInterface</code>
+的實作如下：</p>
+<p>[code] bytes4 constant InterfaceID_ERC165 =
+bytes4(keccak256(‘supportsInterface(bytes4)’));</p>
+<pre><code>bytes4 constant InterfaceID_ERC721 =
+  bytes4(keccak256(&#39;name()&#39;)) ^
+  bytes4(keccak256(&#39;symbol()&#39;)) ^
+  bytes4(keccak256(&#39;totalSupply()&#39;)) ^
+  bytes4(keccak256(&#39;balanceOf(address)&#39;)) ^
+  bytes4(keccak256(&#39;ownerOf(uint256)&#39;)) ^
+  bytes4(keccak256(&#39;approve(address,uint256)&#39;)) ^
+  bytes4(keccak256(&#39;transfer(address,uint256)&#39;)) ^
+  bytes4(keccak256(&#39;transferFrom(address,address,uint256)&#39;)) ^
+  bytes4(keccak256(&#39;tokensOfOwner(address)&#39;));
+
+function supportsInterface(bytes4 _interfaceID) external view returns (bool) {
+  return ((_interfaceID == InterfaceID_ERC165) || (_interfaceID == InterfaceID_ERC721));
+}</code></pre>
+<p>[/code]</p>
+<p>可以看到 ERC-721 有一個固定的 interface ID，是由所有包含的 function
+signature hash 而來。只需使用此 ID 去呼叫合約的
+<code>supportsInterface</code>，即可確定該合約是否支援 ERC-721
+標準了。此方法也可用來檢查一個合約是否有支援任何其他
+interface，只要它符合 ERC-165 標準即可。</p>
+<h3 id="資料整理與輸出">5. 資料整理與輸出</h3>
+<p>有了以上知識就可以完成 ERC-20 Token Balance
+的程式碼，並把結果輸出。為了豐富輸出結果，程式碼中還加上了輸出 Token
+Name 以及搭配 Decimals 算出可讀的 Balance
+資料。另外因為查詢一個合約地址是否是 ERC-20
+會花費比較多時間，可以搭配一個 map 紀錄已查詢過的地址結果：</p>
+<p>[code] isERC20Contract := make(map[string]bool) for _, vLog := range
+allLogs { // … // check if the contract is ERC20 token contract
+contractAddress := vLog.Address.Hex() if val, ok :=
+isERC20Contract[contractAddress]; ok &amp;&amp; !val { // already
+checked and not ERC20 token contract continue }</p>
+<pre><code>    // get token data
+    if _, ok := tokens[contractAddress]; !ok {
+        name, decimals, err := getNameAndDecimals(client, vLog.Address)
+        if err != nil {
+            // not ERC20 token contract
+            isERC20Contract[contractAddress] = false
+            continue
+        }
+        isERC20Contract[contractAddress] = true
+        tokens[contractAddress] = struct {
+            name     string
+            decimals uint8
+        }{name, decimals}
+    }
+
+  // update token balance
+  // ...
+}
+
+// print token balances
+fmt.Println(&quot;Token Balances:&quot;)
+for contractAddress, balance := range tokenBalances {
+    if balance.Cmp(big.NewInt(0)) == 0 {
+        continue
+    }
+    balanceStr := decimal.NewFromBigInt(balance, -int32(tokens[contractAddress].decimals))
+    fmt.Printf(&quot;%-32s: %s (%s)\n&quot;, tokens[contractAddress].name, balanceStr, contractAddress)
+}</code></pre>
+<p>[/code]</p>
+<p>裡面還用到 <a href="github.com/shopspring/decimal">decimal</a>
+package 來計算 <code>big.Int</code>
+的除法。跑起來的結果如下（只截取部分）：</p>
+<figure>
+<img src="../ironman-6262-assets/images/day20-img004-2f189ed812.png"
+alt="https://ithelp.ithome.com.tw/upload/images/20230929/20162294TF0b8FYqrg.png" />
+<figcaption
+aria-hidden="true">https://ithelp.ithome.com.tw/upload/images/20230929/20162294TF0b8FYqrg.png</figcaption>
+</figure>
+<figure>
+<img src="../ironman-6262-assets/images/day20-img005-efbd41e54f.png"
+alt="https://ithelp.ithome.com.tw/upload/images/20230929/20162294cDgObkNUZJ.png" />
+<figcaption
+aria-hidden="true">https://ithelp.ithome.com.tw/upload/images/20230929/20162294cDgObkNUZJ.png</figcaption>
+</figure>
+<p>讀者可以把這個結果跟 Etherscan 的 <a
+href="https://etherscan.io/tokenholdings?a=0x2089035369B33403DdcaBa6258c34e0B3FfbbBd9">Token
+Holdings</a>
+頁面比較，會發現大部分是吻合的。但還是會有少部分奇怪的結果，例如以下這筆是負的值：</p>
+<p>[code] USD Coin (USDC). : -2000
+(0x8E03d7A2D4Aa98472bb6104756567dF8C727A9D1)</p>
+<p>[/code]</p>
+<p>這其實是因為他是<a
+href="https://etherscan.io/address/0x8E03d7A2D4Aa98472bb6104756567dF8C727A9D1">假的
+USDC 合約</a>，他內部的邏輯允許了就算餘額是 0 還是能觸發 Transfer
+event，因為他只要在 transfer 前不去檢查 from
+地址的餘額就好了。這種合約雖然有實作需要的 ERC-20
+function，但實作方式並不符合 ERC-20
+要達到的效果。若要更嚴謹的把這種合約過濾掉，可以再加上去查詢目標地址呼叫這個合約的
+<code>balanceOf</code>
+判斷是否跟計算出來的值符合，有的話才代表合約中有好好維護一個地址 Token
+Balance 的變化。</p>
+<h3 id="即時更新-token-balance">6. 即時更新 Token Balance</h3>
+<p>我們已經能拿到一個地址當下的所有 ERC-20 Token
+Balance，接下來只要能監聽鏈上關於目標地址的所有新 Token Transfer
+Log，就能即時更新他的 Token
+Balance。為了展示這個功能，首先把目標地址跟鏈換成我的 Sepolia
+地址，並且在連接 RPC Node 時要用 Web Socket 連線才有監聽的功能：</p>
+<p>[code] const targetAddress =
+“0x32e0556aeC41a34C3002a264f4694193EBCf44F7”</p>
+<pre><code>// connect to json rpc node
+client, err := ethclient.Dial(&quot;wss://eth-sepolia.g.alchemy.com/v2/&quot; + os.Getenv(&quot;ALCHEMY_API_KEY&quot;))
+if err != nil {
+    log.Fatal(err)
+}</code></pre>
+<p>[/code]</p>
+<p>再來就可以用 <code>client.SubscribeFilterLogs</code>
+搭配前面已經定義過的 <code>transferOutQuery</code> 和
+<code>transferInQuery</code> 來即時接收符合這兩個 Filter 的 Log：</p>
+<p>[code] // listen to new transfer in/out event fmt.Println(“Listening
+to new transfer in/out event…”) transferOutChan := make(chan types.Log)
+transferOutSub, err := client.SubscribeFilterLogs(context.Background(),
+transferOutQuery, transferOutChan) if err != nil { log.Fatalf(“Failed to
+subscribe to transfer out event: %v”, err) } transferInChan := make(chan
+types.Log) transferInSub, err :=
+client.SubscribeFilterLogs(context.Background(), transferInQuery,
+transferInChan) if err != nil { log.Fatalf(“Failed to subscribe to
+transfer in event: %v”, err) }</p>
+<pre><code>for {
+    // wait for new transfer event
+    var newLog types.Log
+    select {
+    case err := &lt;-transferOutSub.Err():
+        log.Fatalf(&quot;Failed to receive transfer out event: %v&quot;, err)
+    case err := &lt;-transferInSub.Err():
+        log.Fatalf(&quot;Failed to receive transfer in event: %v&quot;, err)
+    case newLog = &lt;-transferOutChan:
+        fmt.Printf(&quot;Got transfer out event. hash: %s, address: %s, block: %d, topics: %+v\n&quot;, newLog.TxHash, newLog.Address, newLog.BlockNumber, newLog.Topics)
+        // we can get the token name and decimals, then update token balance here
+    case newLog = &lt;-transferInChan:
+        fmt.Printf(&quot;Got transfer in event. hash: %s, address: %s, block: %d, topics: %+v\n&quot;, newLog.TxHash, newLog.Address, newLog.BlockNumber, newLog.Topics)
+        // we can get the token name and decimals, then update token balance here
+    }
+}</code></pre>
+<p>[/code]</p>
+<p>這裡就省略更新 Token Balance 的部分。執行起來後會拿到我的地址在
+Sepolia 鏈上的 ERC-20 Token Balance 並監聽新的變動。再來使用 day 18
+的程式碼來發送 UNI Token Transfer 交易以及 Swap
+交易，來看以上程式是否能正確監聽到對應的
+Log。以下是發出兩個交易的結果：</p>
+<figure>
+<img src="../ironman-6262-assets/images/day20-img006-4fc452ee54.png"
+alt="https://ithelp.ithome.com.tw/upload/images/20230929/20162294fPxbnNOF37.png" />
+<figcaption
+aria-hidden="true">https://ithelp.ithome.com.tw/upload/images/20230929/20162294fPxbnNOF37.png</figcaption>
+</figure>
+<p>回到今天 script 的輸出視窗，可以看到他成功收到兩個新的 ERC-20
+Transfer Event 了，並且 Log 的 Block number 以及 Transaction hash
+都是吻合的！</p>
+<figure>
+<img src="../ironman-6262-assets/images/day20-img007-0b08a35aab.png"
+alt="https://ithelp.ithome.com.tw/upload/images/20230929/20162294BTS5AzGQ6P.png" />
+<figcaption
+aria-hidden="true">https://ithelp.ithome.com.tw/upload/images/20230929/20162294BTS5AzGQ6P.png</figcaption>
+</figure>
+<h3 id="小結">7. 小結</h3>
+<p>今天我們深入講解了如何自己實作完整的 ERC-20 Token Balance
+以及監聽最新的變動，完整程式碼在<a
+href="https://github.com/a00012025/ironman-2023-web3-fullstack/tree/main/backend/day20">這裡</a>。實際的後端系統會再多考慮把合約地址的
+Schema 存到資料庫中，就可以避免重複查詢。</p>
+<p>不過以實際系統需要的 Token Balance 資料來說，還差像 Token Image
+URL、幣價、同一 Token
+在多條鏈上的合約地址等等資訊，才能呈現最完整的結果。這些資料無法直接從鏈上取得，需要結合其他第三方
+API 才行（如 coinmarketcap, coingecko 等等）。</p>
+<p>另外今天的作法也可用來實作出完整 ERC-721 &amp; ERC-1155 NFT
+的餘額，有興趣的讀者可自行嘗試。明天會講解如何解析並整理出一個地址的交易歷史資料。</p>
+</body>
+</html>

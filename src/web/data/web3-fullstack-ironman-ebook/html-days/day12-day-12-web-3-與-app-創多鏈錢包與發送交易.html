@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>day12-day-12-web-3-與-app-創多鏈錢包與發送交易</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">day12-day-12-web-3-與-app-創多鏈錢包與發送交易</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#day-12day-12---web-3-與-app創多鏈錢包與發送交易"
+id="toc-day-12day-12---web-3-與-app創多鏈錢包與發送交易">DAY 12｜Day 12
+- Web 3 與 App：創多鏈錢包與發送交易</a>
+<ul>
+<li><a href="#章節內容" id="toc-章節內容">章節內容</a>
+<ul>
+<li><a href="#未分章內容" id="toc-未分章內容">1. 未分章內容</a></li>
+<li><a href="#創建錢包" id="toc-創建錢包">2. 創建錢包</a></li>
+<li><a href="#交易簽名" id="toc-交易簽名">3. 交易簽名</a></li>
+<li><a href="#完整應用" id="toc-完整應用">4. 完整應用</a></li>
+<li><a href="#小結" id="toc-小結">5. 小結</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="day-12day-12---web-3-與-app創多鏈錢包與發送交易">DAY 12｜Day 12
+- Web 3 與 App：創多鏈錢包與發送交易</h1>
+<ul>
+<li>原文：https://ithelp.ithome.com.tw/articles/10324026</li>
+<li>發佈時間：2023-09-21 09:56:25</li>
+</ul>
+<h2 id="章節內容">章節內容</h2>
+<h3 id="未分章內容">1. 未分章內容</h3>
+<p>今天我們正式進入到 Web3 與 App 開發的主題，使用的框架/語言是
+Flutter/Dart，對於 Flutter 及 Dart
+不熟悉的讀者可以先參考官方的介紹與教學：https://flutter.dev/
+。接下來會跳過初始化一個 Flutter App
+的過程，直接進入錢包相關功能的實作。今天的目標是做到多鏈錢包的管理，包含
+Bitcoin, Ethereum, Tron
+的多鏈錢包，以及在這些鏈上如何發出交易。之前的內容較專注在 Ethereum
+鏈的機制，因此也會稍微介紹 Bitcoin, Tron 與 Ethereum的不同。</p>
+<h3 id="創建錢包">2. 創建錢包</h3>
+<p>要實作 Bitcoin, Ethereum, Tron 的多鏈錢包，最方便的作法還是使用 HD
+Wallet，因為這樣使用者只要記一個註記詞，就能用他計算出 Bitcoin,
+Ethereum, Tron 鏈的錢包（不熟悉的讀者可以回去看 Day 10
+的內容），而且每條鏈還能產生多個錢包，可以說光一個註記詞就能儲存一個人在任何區塊鏈上的資產了（只要任何新的公鏈都選擇好在
+BIP-44 標準中要用什麼 Coin Type 即可）</p>
+<p>可以安裝 <a href="https://pub.dev/packages/bip39">bip39</a> 跟 <a
+href="https://pub.dev/packages/flutter_bitcoin">flutter_bitcoin</a>
+套件來透過註記詞產生 HD Wallet，並按照 <a
+href="https://github.com/satoshilabs/slips/blob/master/slip-0044.md">BIP-44
+標準</a>查到 Bitcoin, Ethereum, Tron 各自對應的 Coin Type 為 0, 60,
+195，因此就可以 Derive 出對應的公私鑰：</p>
+<p>[code] import ‘package:bip39/bip39.dart’ as bip39; import
+‘package:flutter_bitcoin/flutter_bitcoin.dart’;</p>
+<pre><code>final mnemonic = bip39.generateMnemonic(strength: 128);
+final seed = bip39.mnemonicToSeed(mnemonic);
+final hdWallet = HDWallet.fromSeed(seed);
+btcWallet = hdWallet.derivePath(&quot;m/44&#39;/0&#39;/0&#39;/0/0&quot;);
+ethWallet = hdWallet.derivePath(&quot;m/44&#39;/60&#39;/0&#39;/0/0&quot;);
+tronWallet = hdWallet.derivePath(&quot;m/44&#39;/195&#39;/0&#39;/0/0&quot;);</code></pre>
+<p>[/code]</p>
+<p>這時 <code>btcWallet</code>, <code>ethWallet</code>,
+<code>tronWallet</code> 都是 <code>HDWallet</code> 這個 class
+的物件，裡面儲存這個錢包的公鑰跟私鑰，但要計算出錢包地址的話還需要做一些轉換，因為公鑰跟私鑰都只是長度
+256 bits 的 hex 字串。前面 HD Wallet 使用的套件是
+<code>flutter_bitcoin</code> ，預設他就有個 <code>address</code>
+欄位可以拿到 Bitcoin 的地址：</p>
+<p>[code] final btcAddress = btcWallet.address;</p>
+<p>[/code]</p>
+<p>再來是 Ethereum 的地址，<a
+href="https://pub.dev/packages/web3dart">web3dart</a>
+是方便我們產生與管理 Ethereum
+錢包、跟區塊鏈互動、發送交易的套件，裡面也提供了從 private key
+轉成以太坊地址的 function：</p>
+<p>[code] import ‘package:web3dart/web3dart.dart’;</p>
+<pre><code>final ethPriKey = EthPrivateKey.fromHex(ethWallet.privKey!);
+final ethAddress = ethPriKey.address.hex;</code></pre>
+<p>[/code]</p>
+<p>至於 Tron 則可以使用 <a
+href="https://pub.dev/packages/wallet">wallet</a> 套件來作轉換：</p>
+<p>[code] import ‘package:wallet/wallet.dart’ as wallet;</p>
+<pre><code>final tronPrivateKey =
+    wallet.PrivateKey(BigInt.parse(tronWallet.privKey!, radix: 16));
+final tronPubKey = wallet.tron.createPublicKey(tronPrivateKey);
+tronAddress = wallet.tron.createAddress(tronPubKey);</code></pre>
+<p>[/code]</p>
+<p>結果如下：</p>
+<figure>
+<img src="../ironman-6262-assets/images/day12-img001-45d651e1f0.png"
+alt="https://ithelp.ithome.com.tw/upload/images/20230921/20162294hkvdwozq36.png" />
+<figcaption
+aria-hidden="true">https://ithelp.ithome.com.tw/upload/images/20230921/20162294hkvdwozq36.png</figcaption>
+</figure>
+<p>這三條鏈從 private key 轉成地址的定義都不一樣：</p>
+<ul>
+<li>Bitcoin 會先對公鑰做 SHA256 hash 再做 RIPEMD160
+hash，在前後加入一些版本與 checksum 資訊後用 Base58 編碼得出
+<ul>
+<li>Ethereum 是取公鑰做 keccak256 hash 後拿最後 20 bytes 作為地址</li>
+<li>Tron 則是先對公鑰經過跟 Bitcoin 一樣的 hash 方式（SHA256,
+RIPEMD160），但最後用的是 <a
+href="https://en.bitcoin.it/wiki/Base58Check_encoding">Base58Check</a>
+編碼方式</li>
+</ul></li>
+</ul>
+<p>因為生成方式不同，Bitcoin 地址通常會以 1 或 3
+開頭（在一些比較新的地址版本如 SegWit 或 Taproot 可能會是 bc1 開頭），而
+Tron 則是 T
+開頭，這樣也有個好處是看到地址就能大致知道是什麼鏈的地址。</p>
+<h3 id="交易簽名">3. 交易簽名</h3>
+<p>有了私鑰與地址後就可以來實作交易簽名與送出。Ethereum
+的作法大家應該已經熟悉，指定好 from address, to address,
+value（要送出多少 ETH）, chain ID 後用 web3dart 提供的
+<code>signTransaction()</code> ，會自動從鏈上查詢當下的 gas price, gas
+limit, nonce 等資訊，簽名完後就可以使用
+<code>sendRawTransaction()</code> 送出交易：</p>
+<p>[code] const alchemyApiKey = ‘…’; final web3Client =
+Web3Client(‘https://eth-sepolia.g.alchemy.com/v2/${alchemyApiKey}’,
+Client());</p>
+<pre><code>Future&lt;String&gt; signTransaction({
+  required EthPrivateKey privateKey,
+  required Transaction transaction,
+}) async {
+  try {
+    final result = await web3Client.signTransaction(
+      privateKey,
+      transaction,
+      chainId: 11155111,
+    );
+    return HEX.encode(result);
+  } catch (e) {
+    rethrow;
+  }
+}
+
+// sign and send transaction
+final ethPriKey = EthPrivateKey.fromHex(ethWallet.privKey!);
+final tx = await signTransaction(
+  privateKey: ethPriKey,
+  transaction: Transaction(
+    from: ethPriKey.address,
+    to: EthereumAddress.fromHex(&quot;0xE2Dc3214f7096a94077E71A3E218243E289F1067&quot;),
+    value: EtherAmount.fromBase10String(EtherUnit.gwei, &quot;10000&quot;),
+  ),
+);
+final txHash =
+    await web3Client.sendRawTransaction(Uint8List.fromList(HEX.decode(tx)));
+print(txHash);</code></pre>
+<p>[/code]</p>
+<p>前面一樣要先建立跟 RPC node（也就是
+Alchemy）的連線才能從鏈上查詢當下的資料，整體程式碼應該算好理解。</p>
+<p>再來由於 Tron 的簽名與發送交易在 Dart 中還沒有好用的
+library，這裡先只介紹比特幣的交易簽名機制。對 Tron
+交易機制有興趣的讀者可以參考官方的 JS Library
+中的作法：https://developers.tron.network/v3.7/docs/tronweb-transaction-builder</p>
+<p>Bitcoin 的設計方式跟 Ethereum 不太一樣，在 Ethereum
+中是使用「帳戶模型」，意思是每個地址都是一個帳戶，區塊鏈中直接紀錄了每個帳戶的
+ETH 餘額，並且每個帳戶都對應一個 Nonce 代表他已經發送過幾個交易。</p>
+<p>但 Bitcoin 中是使用「UTXO 模型」，也就是 Unspent Transaction Output
+（未花費的交易輸出）的簡稱，例如 B 曾經轉給 A 一個 BTC、C 曾經轉給 A
+兩個 BTC，這時區塊鏈上會紀錄 A 有兩個 Unspent Transaction Output：1 BTC
+跟 2 BTC，用這些 UTXO 的總和可以算出 A 的餘額有 3 BTC。</p>
+<p>假設接下來 A 要送出 2.5 BTC 給
+D，那麼這個交易的結構會長得像這樣：</p>
+<p>[code] Inputs: - 1 BTC from B - 2 BTC from C</p>
+<pre><code>Outputs:
+- 2.5 BTC to D
+- 0.5 BTC to A</code></pre>
+<p>[/code]</p>
+<p>這邊忽略了礦工費，所以實際 A 剩餘的 BTC 數量會少於 0.5。所以 A
+其實是拿他過去的兩個 UTXO 來組合出 2.5 BTC 的 output 送給
+D，再把找的零錢（0.5 BTC）給自己，來完成這筆 UTXO 交易。因此一個 Bitcoin
+的交易可以有任意多個 inputs / outputs，而越多 inputs / outputs
+也就需要越高的 gas fee。Bitcoin 是用 Satoshi per Byte 乘上 Transaction
+Bytes 來算出最終的礦工費（Satoshi 是比特幣的最小單位，1 Bitcoin = 10^8
+Satoshi），可以各自想像成 Ethereum 中的 Gas Price 以及 Gas
+Limit，詳細可以參考官方的解說：https://en.bitcoinwiki.org/wiki/Transaction_commission</p>
+<p>有了這些概念後，就可以來看範例的 Bitcoin 交易簽名如何實作：</p>
+<p>[code] String sampleBitcoinTx(HDWallet btcWallet) { final txb =
+TransactionBuilder(); txb.setVersion(1); // previous transaction output,
+has 15000 satoshis txb.addInput(
+‘61d520ccb74288c96bc1a2b20ea1c0d5a704776dd0164a396efec3ea7040349d’, 0);
+// (in)15000 - (out)12000 = (fee)3000, this is the miner fee
+txb.addOutput(‘1cMh228HTCiwS8ZsaakH8A8wze1JR5ZsP’, 12000); txb.sign(vin:
+0, keyPair: ECPair.fromWIF(btcWallet.wif!)); return txb.build().toHex();
+}</p>
+<p>[/code]</p>
+<p>只要使用 <code>flutter_bitcoin</code> 套件提供的
+<code>TransactionBuilder()</code> 並加上對應的 inputs, outputs
+即可。但以上的程式碼還不夠完整，因為有個問題是要如何知道當下地址有哪些
+UTXO 來作為 inputs？這個就需要使用第三方的 API 來查詢了，像 <a
+href="https://www.quicknode.com/">QuickNode</a> 跟 <a
+href="https://blockchair.com/">Blockchair</a>
+等服務都有提供，完整實作就不在這裡展開。</p>
+<h3 id="完整應用">4. 完整應用</h3>
+<p>有了以上程式碼就可以來完成一個簡單的應用：輸入註記詞後產生對應的
+Bitcoin, Ethereum, Tron 地址、簽名出 Bitcoin, Ethereum 的交易，以及送出
+Ethereum 的交易。這裡沒有示範送出 Bitcoin
+的交易是因為還需要領取測試網上的幣，讀者可以自行嘗試。以下是這個應用送出
+Ethereum 交易後的樣子：</p>
+<figure>
+<img src="../ironman-6262-assets/images/day12-img002-8193e21e3a.png"
+alt="https://ithelp.ithome.com.tw/upload/images/20230921/201622949Kvivim9I7.png" />
+<figcaption
+aria-hidden="true">https://ithelp.ithome.com.tw/upload/images/20230921/201622949Kvivim9I7.png</figcaption>
+</figure>
+<h3 id="小結">5. 小結</h3>
+<p>今天我們稍微介紹了 Bitcoin, Tron 與 Ethereum
+的差別，包含地址與交易的生成方式，並使用 Dart 來實作他們。完整的 Flutter
+應用在<a
+href="https://github.com/a00012025/ironman-2023-web3-fullstack/tree/main/mobile/day12">這裡</a>，有安裝好
+Flutter 以及 Android/iOS 模擬器的讀者可以使用以下指令把他跑起來：</p>
+<p>[code] flutter pub get flutter run</p>
+<p>[/code]</p>
+<p>今天的知識已經足以在 Flutter 中實作一個基本的多鏈錢包了，而且只要修改
+HD Wallet 的 Derive Path
+參數的最後一個數字，就能產生一條鏈上的多個錢包。接下來我們會介紹 Flutter
+中如何發送 Token Transfer 的交易，以及 Gas Fee 的進階設定方式：EIP
+1559。</p>
+</body>
+</html>
