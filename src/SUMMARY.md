@@ -503,6 +503,7 @@
     - [區塊鏈交易完整指南](blockchain/blockchain-transaction-complete-guide.md)
     - [以太坊交易機制完全指南](blockchain/ethereum-transaction-guide-tc.md)
     - [TRON 區塊鏈底層實現指南](blockchain/TRON_Blockchain_Implementation_Guide.md)
+    - [加密貨幣交易所 × BitGo 託管架構完整說明](blockchain/exchange_bit_go_architecture.md)
 
 ## Quantitative Trading
 - [策略文檔總覽](strategy/README.md)
