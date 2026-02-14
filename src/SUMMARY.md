@@ -212,6 +212,7 @@
         - [Go 語言完整特性與常見誤解指南](go/golang_guide.md)
     - [性能分析與除錯](go/05_性能分析與除錯.md)
         - [Go 效能分析與最佳化指南](go/go_performance_analysis.md)
+        - [Go 並行效能優化指南](go/go-performance-guide.md)
         - [Golang 高效能開發完整指南](go/Golang高效能開發完整指南.md)
         - [Golang 大殺器之跟蹤剖析 trace](go/trace.md)
         - [Golang Debugger](go/golang_debugger.md)
