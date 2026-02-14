@@ -199,6 +199,7 @@
         - [Go 併發](go/goroutine-and-channel.md)
         - [Go 並行機制完整指南](go/go_concurrency_guide.md)
         - [sync.Mutex 和 sync.RWMutex](go/mutex-rwmutex.md)
+        - [Go 入門實務問題整理（交易系統 / 高併發場景）](go/go_practical_issues_for_trading_engineer.md)
     - [Runtime 與記憶體管理](go/03_Runtime與記憶體管理.md)
         - [Go Runtime 完整指南](go/Go_Runtime_Guide.md)
         - [GC 全面解析](go/golang-memory-management.md)
