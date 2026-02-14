@@ -655,6 +655,7 @@
     - [我的 AI 是怎麼記錄我的寫文習慣的？](ai_agent/AI是怎麼記錄我的寫文習慣的.md)
     - [Clawdbot 完整使用指南](ai_agent/Clawdbot-Guide.md)
     - [雙Claude並行協作架構建議](ai_agent/雙Claude並行協作架構建議.md)
+    - [2026年AI學習路徑與12項必備AI技能工具清單](ai_agent/2026年AI學習路徑與12項必備AI技能工具清單.md)
 
 ## Lifestyle & Resources
 - [台北生活指南](lifestyle/README.md)
