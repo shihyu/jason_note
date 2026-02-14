@@ -183,6 +183,7 @@
     - [Go 基礎與模組管理](go/01_Go基礎與模組管理.md)
         - [Golang Note](go/note.md)
         - [Go 基礎](go/go.md)
+        - [C/C++ 與 Linux Kernel 背景學習 Go 語言完整指南](go/go_learning_guide.md)
         - [Go 編程實戰派基礎入門](go/Go編程實戰派基礎入門.md)
         - [從一知半解到略懂 Go modules](go/golang-go-module-tutorial.md)
         - [Go Modules](go/go_mod.md)
