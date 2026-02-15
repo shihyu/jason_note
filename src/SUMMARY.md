@@ -275,6 +275,7 @@
 
 ## Web Development
 - [Web 開發資源](web/README.md)
+    - [AI Skills：前端新的效率神器！](web/AI-Skills-前端效率神器.md)
     - [Node.js 與 WebSocket](web/01_Node.js與WebSocket.md)
         - [Node.js 完整開發指南](web/nodejs-guide.md)
         - [Bun vs Node.js 完整效能比較指南](web/Bun-vs-NodeJS-完整比較.md)
