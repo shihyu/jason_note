@@ -658,6 +658,7 @@
     - [crewAI：打造多Agent協作的任務指揮系統](ai_agent/crewAI_打造多Agent協作的任務指揮系統.md)
     - [crewAI (PyPI) 繁體中文翻譯](ai_agent/crewai_pypi_zh_tw.md)
     - [2026年AI學習路徑與12項必備AI技能工具清單](ai_agent/2026年AI學習路徑與12項必備AI技能工具清單.md)
+    - [Agent Skill 的目錄組成結構說明與範本](ai_agent/agent_skill_structure.md)
 
 ## Lifestyle & Resources
 - [台北生活指南](lifestyle/README.md)
