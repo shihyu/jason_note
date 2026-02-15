@@ -8,7 +8,8 @@
 
 - [第一部分：Go 語言核心設計與 C++ 差異](#第一部分go-語言核心設計與-c-差異)
   - [1-3：型別系統、method dispatch、interface 基礎](#1-go-沒有-class只有-type)
-  - [4：Interface 進階（隱式實作、itab 結構、method set 規則）](#4-實作者不需要知道-interface-存在)
+  - [4：Interface 進階（隱式實作、itab、method set、escape analysis）](#4-實作者不需要知道-interface-存在)
+  - [4.7：跨語言比較：Go interface vs Rust trait vs C++ virtual](#47-跨語言比較go-interface-vs-rust-trait-vs-c-virtual)
   - [5-10：組合、錯誤處理、指標、並行模型](#5-沒有繼承只有組合)
   - [11：Generics 泛型](#11-genericsgo-118)
   - [12：Error Handling 進階（errors.Is / As / Wrap）](#12-error-handling-進階errorsis--as--wrap)
@@ -1075,6 +1076,206 @@ var handlerPool = sync.Pool{
 
 > **面試回答模板：**
 > Value receiver 直接呼叫時值複製在 stack 上，零 GC 壓力。Pointer receiver 直接呼叫時，如果指標沒逃逸，編譯器也能保留在 stack。但一旦塞進 interface，不論用哪種 receiver，data 幾乎都會逃逸到 heap。所以在低延遲的 hot path 上，應該避免 interface dispatch，直接用具體型別呼叫。
+
+---
+
+## 4.7 跨語言比較：Go interface vs Rust trait vs C++ virtual
+
+Go、Rust、C++ 都沒有（或不鼓勵）傳統 OOP 的 class hierarchy，但它們的多型機制走的是三條完全不同的路。如果你有 C++ 或 Rust 背景，這張對比圖能幫你快速定位 Go 的設計位置。
+
+### 三種語言的型別 + 方法綁定方式
+
+```text
+Go                          Rust                        C++
+─────────────               ─────────────               ─────────────
+type Dog struct{}           struct Dog;                 class Dog : public Speaker {
+                                                        public:
+func (d Dog) Speak() {}     impl Dog {                      void Speak() override {}
+                                fn speak(&self) {}      };
+                            }
+
+方法「掛」在型別外           方法在 impl block 裡          方法在 class 裡
+沒有 class                  沒有 class                   有 class + 繼承
+```
+
+---
+
+### Go interface：runtime 動態派發
+
+```go
+type Speaker interface { Speak() }
+type Dog struct{}
+func (Dog) Speak() {}
+
+var s Speaker = Dog{}
+s.Speak()
+```
+
+```text
+interface value（2 words）
+
+┌──────────────────────────┐
+│ itab pointer ────────────┼────┐
+│ data pointer ────────────┼──┐ │
+└──────────────────────────┘  │ │
+                              │ │
+            data ◄────────────┘ │
+            ┌────────┐         │
+            │ Dog{}  │         │
+            └────────┘         │
+                               ▼
+                 ┌────────────────────┐
+                 │ itab               │
+                 │────────────────────│
+                 │ interface: Speaker │
+                 │ concrete:  Dog     │
+                 │────────────────────│
+                 │ Speak → func ptr ─┼──→ func(Dog) Speak
+                 └────────────────────┘
+```
+
+呼叫 `s.Speak()`：load itab → lookup Speak func ptr → call func(data)
+
+**特點：** interface 與 type 完全解耦、itab 在 runtime 快取、不需要繼承
+
+---
+
+### Rust trait：靜態派發（預設）+ 動態派發（opt-in）
+
+Rust 有兩種完全不同的 dispatch：
+
+**A. 靜態派發（zero-cost，預設）**
+
+```rust
+trait Speaker { fn speak(&self); }
+struct Dog;
+impl Speaker for Dog { fn speak(&self) {} }
+
+fn call<T: Speaker>(x: T) { x.speak(); }
+
+call(Dog);  // 編譯器產出：call_Dog(x)
+call(Cat);  // 編譯器產出：call_Cat(x)
+```
+
+```text
+編譯後（monomorphization）
+
+call<Dog> → call_Dog(x Dog)    ← 獨立的函數，完全展開
+call<Cat> → call_Cat(x Cat)    ← 獨立的函數，完全展開
+
+沒有 vtable
+沒有 runtime lookup
+沒有間接呼叫
+等同 C++ template 展開
+```
+
+**B. 動態派發（`dyn` trait）**
+
+```rust
+fn call(x: &dyn Speaker) { x.speak(); }
+```
+
+```text
+&dyn Speaker（fat pointer，2 words）
+
+┌────────────────────┐
+│ data pointer       │──→ Dog 實例
+│ vtable pointer ────┼────┐
+└────────────────────┘    │
+                          ▼
+                ┌───────────────────┐
+                │ vtable            │
+                │───────────────────│
+                │ drop fn ptr       │  ← Rust 特有：解構函數
+                │ size: 0           │  ← 型別大小
+                │ align: 1          │  ← 對齊
+                │ speak → fn ptr ───┼──→ Dog::speak
+                └───────────────────┘
+```
+
+**特點：** 靜態派發為主（零成本）、動態派發是明確 opt-in、vtable 在 compile-time 生成
+
+---
+
+### C++ virtual function：物件內嵌 vptr
+
+```cpp
+class Speaker {
+public:
+    virtual void Speak() = 0;
+};
+
+class Dog : public Speaker {
+public:
+    void Speak() override {}
+};
+
+Speaker* s = new Dog();
+s->Speak();
+```
+
+```text
+Dog 物件（vptr 內嵌在物件裡）
+
+┌────────────────────┐
+│ vptr ──────────────┼────┐
+│ data fields        │    │
+└────────────────────┘    │
+                          ▼
+                ┌─────────────────┐
+                │ vtable          │
+                │─────────────────│
+                │ Speak → fn ptr ─┼──→ Dog::Speak
+                └─────────────────┘
+```
+
+呼叫 `s->Speak()`：load vptr → lookup Speak → call
+
+**特點：** vptr 是物件的一部分、需要 class 繼承、vtable 在 compile-time 生成
+
+---
+
+### 三方核心差異總表
+
+```text
+┌─────────────────┬──────────────────┬──────────────────┬──────────────────┐
+│                 │ Go interface     │ Rust dyn trait    │ C++ virtual      │
+├─────────────────┼──────────────────┼──────────────────┼──────────────────┤
+│ 指標結構         │ 2 words          │ 2 words          │ 1 word（vptr     │
+│                 │ (itab + data)    │ (data + vtable)  │   內嵌在物件)     │
+├─────────────────┼──────────────────┼──────────────────┼──────────────────┤
+│ vtable 位置      │ interface 持有   │ fat pointer 持有  │ 物件內嵌          │
+├─────────────────┼──────────────────┼──────────────────┼──────────────────┤
+│ vtable 生成時機  │ runtime 首次使用 │ compile-time     │ compile-time     │
+│                 │ 後快取           │                  │                  │
+├─────────────────┼──────────────────┼──────────────────┼──────────────────┤
+│ 需要繼承嗎       │ ❌ 隱式實作      │ ❌ 顯式 impl     │ ✅ 必須繼承       │
+├─────────────────┼──────────────────┼──────────────────┼──────────────────┤
+│ 靜態派發         │ ❌ 無            │ ✅ 預設（泛型）   │ ✅ template       │
+├─────────────────┼──────────────────┼──────────────────┼──────────────────┤
+│ 記憶體管理       │ GC              │ ownership        │ 手動 / RAII      │
+├─────────────────┼──────────────────┼──────────────────┼──────────────────┤
+│ 型別檢查         │ compile +       │ compile-time     │ compile-time     │
+│                 │ runtime          │ 為主             │                  │
+└─────────────────┴──────────────────┴──────────────────┴──────────────────┘
+```
+
+### 設計哲學一句話
+
+```text
+Go   → interface 與 type 解耦，runtime 組合，開發效率優先
+Rust → trait 是型別系統核心，static dispatch 為主，零成本抽象
+C++  → inheritance 為中心，virtual 是 class 內建特性，最大彈性
+```
+
+### 從系統工程師（Linux / memory）的角度看
+
+| 觀察角度 | Go | Rust | C++ |
+|---|---|---|---|
+| 物件 layout | runtime 才知道完整結構 | 編譯期完全確定 | 編譯期確定（含 vptr） |
+| cache 友善度 | 較差（間接指標多） | 最好（靜態派發零間接） | 中等（vptr 一次間接） |
+| heap 壓力 | 高（interface assign 常逃逸） | 低（stack 為主） | 看寫法 |
+| 適合場景 | 高併發服務、快速開發 | 系統程式、嵌入式、低延遲 | 遊戲引擎、OS、通用系統 |
 
 ---
 
