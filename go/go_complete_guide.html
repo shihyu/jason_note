@@ -180,15 +180,30 @@
                     <main>
                         <h1 id="go-語言完整實戰指南從語言特性到效能優化"><a class="header" href="#go-語言完整實戰指南從語言特性到效能優化">Go 語言完整實戰指南：從語言特性到效能優化</a></h1>
 <blockquote>
-<p>本文整合 Go 語言的核心設計哲學、函數追蹤工具、並行效能優化，以及高併發場景下的實務問題，適合有 C/C++ 或系統底層經驗的工程師進階學習。</p>
+<p>本文整合 Go 語言的核心設計哲學、進階語言特性（泛型、error wrapping、slice/map 陷阱）、函數追蹤工具、並行效能優化、高併發場景實務問題，以及測試與 benchmark 最佳實踐，適合有 C/C++ 或系統底層經驗的工程師進階學習。</p>
 </blockquote>
 <hr />
 <h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
 <ul>
-<li><a href="#%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86go-%E8%AA%9E%E8%A8%80%E6%A0%B8%E5%BF%83%E8%A8%AD%E8%A8%88%E8%88%87-c-%E5%B7%AE%E7%95%B0">第一部分：Go 語言核心設計與 C++ 差異</a></li>
+<li><a href="#%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86go-%E8%AA%9E%E8%A8%80%E6%A0%B8%E5%BF%83%E8%A8%AD%E8%A8%88%E8%88%87-c-%E5%B7%AE%E7%95%B0">第一部分：Go 語言核心設計與 C++ 差異</a>
+<ul>
+<li><a href="#1-go-%E6%B2%92%E6%9C%89-class%E5%8F%AA%E6%9C%89-type">1-3：型別系統、method dispatch、interface 基礎</a></li>
+<li><a href="#4-%E5%AF%A6%E4%BD%9C%E8%80%85%E4%B8%8D%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93-interface-%E5%AD%98%E5%9C%A8">4：Interface 進階（隱式實作、itab、method set、escape analysis）</a></li>
+<li><a href="#47-%E8%B7%A8%E8%AA%9E%E8%A8%80%E6%AF%94%E8%BC%83go-interface-vs-rust-trait-vs-c-virtual">4.7：跨語言比較：Go interface vs Rust trait vs C++ virtual</a></li>
+<li><a href="#5-%E6%B2%92%E6%9C%89%E7%B9%BC%E6%89%BF%E5%8F%AA%E6%9C%89%E7%B5%84%E5%90%88">5-10：組合、錯誤處理、指標、並行模型</a></li>
+<li><a href="#11-genericsgo-118">11：Generics 泛型</a></li>
+<li><a href="#12-error-handling-%E9%80%B2%E9%9A%8Eerrorsis--as--wrap">12：Error Handling 進階（errors.Is / As / Wrap）</a></li>
+<li><a href="#13-defer--panic--recover">13：defer / panic / recover</a></li>
+<li><a href="#14-slice-%E8%88%87-map-%E5%B8%B8%E8%A6%8B%E9%99%B7%E9%98%B1">14：Slice 與 Map 常見陷阱</a></li>
+<li><a href="#15-struct-embedding%E7%B5%90%E6%A7%8B%E5%B5%8C%E5%85%A5">15：Struct Embedding</a></li>
+<li><a href="#16-init-%E5%87%BD%E6%95%B8%E8%88%87%E7%A8%8B%E5%BC%8F%E5%95%9F%E5%8B%95%E9%A0%86%E5%BA%8F">16：init() 函數與啟動順序</a></li>
+</ul>
+</li>
 <li><a href="#%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86%E5%87%BD%E6%95%B8%E5%91%BC%E5%8F%AB%E8%BF%BD%E8%B9%A4%E8%88%87%E9%99%A4%E9%8C%AF%E5%B7%A5%E5%85%B7">第二部分：函數呼叫追蹤與除錯工具</a></li>
 <li><a href="#%E7%AC%AC%E4%B8%89%E9%83%A8%E5%88%86%E4%B8%A6%E8%A1%8C%E6%95%88%E8%83%BD%E5%84%AA%E5%8C%96">第三部分：並行效能優化</a></li>
 <li><a href="#%E7%AC%AC%E5%9B%9B%E9%83%A8%E5%88%86%E9%AB%98%E4%BD%B5%E7%99%BC%E5%A0%B4%E6%99%AF%E5%AF%A6%E5%8B%99%E5%95%8F%E9%A1%8C">第四部分：高併發場景實務問題</a></li>
+<li><a href="#%E7%AC%AC%E4%BA%94%E9%83%A8%E5%88%86%E6%B8%AC%E8%A9%A6%E8%88%87-benchmark">第五部分：測試與 Benchmark</a></li>
+<li><a href="#%E9%99%84%E9%8C%84go-%E9%96%8B%E7%99%BC%E5%B8%B8%E7%94%A8%E5%B7%A5%E5%85%B7%E6%95%B4%E7%90%86">附錄：Go 開發常用工具整理</a></li>
 <li><a href="#%E7%B8%BD%E7%B5%90">總結</a></li>
 </ul>
 <hr />
@@ -217,9 +232,155 @@ func (d Dog) Speak() {
 </ul>
 <p>白話：Go 是「先定義型別，再幫它加能力」，不是像 C++ 把所有東西包在 class 裡。</p>
 <hr />
+<h3 id="11-type-x-struct-vs-type-x-interface--兩種完全不同的東西"><a class="header" href="#11-type-x-struct-vs-type-x-interface--兩種完全不同的東西">1.1 <code>type X struct</code> vs <code>type X interface</code> — 兩種完全不同的東西</a></h3>
+<p>Go 裡 <code>type</code> 關鍵字後面可以接 <code>struct</code> 或 <code>interface</code>，雖然語法長得像，但意思完全不同。用餐廳來比喻：</p>
+<pre><code class="language-text">type Chef struct { ... }        ← 定義「廚師」這個人（有名字、有技能、佔空間）
+type CookAbility interface { .. } ← 定義「會做菜」這個標準（不管你是誰，會就算）
+</code></pre>
+<h3 id="struct我是什麼有資料有實體"><a class="header" href="#struct我是什麼有資料有實體">struct：我是什麼（有資料、有實體）</a></h3>
+<pre><code class="language-go">type Dog struct {
+    Name   string
+    Age    int
+    Breed  string
+}
+
+func (d Dog) Speak() string {
+    return d.Name + " says woof!"
+}
+
+func (d Dog) Info() string {
+    return fmt.Sprintf("%s (%s, %d歲)", d.Name, d.Breed, d.Age)
+}
+</code></pre>
+<ul>
+<li>struct 定義的是<strong>具體的東西</strong>——它有哪些欄位、佔多少記憶體</li>
+<li>你可以建立實例：<code>d := Dog{Name: "Rex", Age: 3, Breed: "柴犬"}</code></li>
+<li>method 是「後來掛上去的能力」</li>
+</ul>
+<h3 id="interface我能做什麼只有行為契約沒有資料"><a class="header" href="#interface我能做什麼只有行為契約沒有資料">interface：我能做什麼（只有行為契約、沒有資料）</a></h3>
+<pre><code class="language-go">type Speaker interface {
+    Speak() string
+}
+
+type Describer interface {
+    Info() string
+}
+</code></pre>
+<ul>
+<li>interface 定義的是<strong>能力清單</strong>——你能做什麼事</li>
+<li>你<strong>不能</strong>建立 interface 的實例：<code>s := Speaker{}</code> ← 編譯錯誤</li>
+<li>沒有欄位、沒有實作，只有方法簽名</li>
+</ul>
+<h3 id="它們怎麼配合"><a class="header" href="#它們怎麼配合">它們怎麼配合？</a></h3>
+<pre><code class="language-go">// Dog 是 struct（具體實體）
+d := Dog{Name: "Rex", Age: 3, Breed: "柴犬"}
+
+// Speaker 是 interface（能力標準）
+var s Speaker = d   // ✅ Dog 有 Speak() → 自動符合 Speaker
+s.Speak()           // "Rex says woof!"
+
+// Describer 也是 interface
+var desc Describer = d  // ✅ Dog 有 Info() → 自動符合 Describer
+desc.Info()             // "Rex (柴犬, 3歲)"
+</code></pre>
+<h3 id="用同一個-interface-接不同-struct"><a class="header" href="#用同一個-interface-接不同-struct">用同一個 interface 接不同 struct</a></h3>
+<p>這才是 interface 真正的威力——<strong>不同的東西，同一個標準</strong>：</p>
+<pre><code class="language-go">type Cat struct{ Name string }
+func (c Cat) Speak() string { return c.Name + " says meow!" }
+
+type Parrot struct{ Name string }
+func (p Parrot) Speak() string { return p.Name + " says hello!" }
+
+// 三種完全不同的 struct，都符合 Speaker
+animals := []Speaker{
+    Dog{Name: "Rex"},
+    Cat{Name: "Mimi"},
+    Parrot{Name: "Polly"},
+}
+
+for _, a := range animals {
+    fmt.Println(a.Speak())
+}
+// Rex says woof!
+// Mimi says meow!
+// Polly says hello!
+</code></pre>
+<h3 id="完整對照表"><a class="header" href="#完整對照表">完整對照表</a></h3>
+<pre><code class="language-text">┌──────────────────┬───────────────────────┬───────────────────────┐
+│                  │   type X struct       │   type X interface    │
+├──────────────────┼───────────────────────┼───────────────────────┤
+│ 定義的是          │ 資料結構（是什麼）     │ 行為契約（能做什麼）   │
+├──────────────────┼───────────────────────┼───────────────────────┤
+│ 有欄位嗎          │ ✅ 有                 │ ❌ 沒有               │
+├──────────────────┼───────────────────────┼───────────────────────┤
+│ 有方法實作嗎       │ ✅ 透過 receiver 掛   │ ❌ 只有方法簽名        │
+├──────────────────┼───────────────────────┼───────────────────────┤
+│ 能建立實例嗎       │ ✅ Dog{Name: "Rex"}  │ ❌ 不行               │
+├──────────────────┼───────────────────────┼───────────────────────┤
+│ 佔記憶體嗎        │ ✅ 欄位大小之和       │ ❌ 本身不佔            │
+│                  │                       │  （裝東西時才佔）     │
+├──────────────────┼───────────────────────┼───────────────────────┤
+│ C++ 對應概念      │ class（有成員變數）   │ 純虛基類 / concept    │
+├──────────────────┼───────────────────────┼───────────────────────┤
+│ 關係             │ 「我是一隻狗」         │ 「我會說話」          │
+├──────────────────┼───────────────────────┼───────────────────────┤
+│ 白話             │ 設計圖 + 材料清單      │ 資格考試的考題        │
+└──────────────────┴───────────────────────┴───────────────────────┘
+</code></pre>
+<h3 id="常見錯誤"><a class="header" href="#常見錯誤">常見錯誤</a></h3>
+<pre><code class="language-go">// ❌ 把 interface 當 struct 用
+type Speaker interface {
+    Name string      // 編譯錯誤！interface 不能有欄位
+    Speak() string
+}
+
+// ❌ 把 struct 當 interface 用
+func process(d Dog) {}     // 只能接受 Dog
+func process(s Speaker) {} // ✅ 能接受任何會 Speak 的東西
+
+// ❌ 搞混「實作」和「宣告」
+type Speaker interface {
+    Speak() string { return "hello" }  // 編譯錯誤！interface 不能有實作
+}
+</code></pre>
+<blockquote>
+<p><strong>一句話記憶：</strong> <code>struct</code> 是名詞（我是什麼），<code>interface</code> 是動詞（我能做什麼）。struct 裝資料，interface 定標準。</p>
+</blockquote>
+<hr />
 <h2 id="2-method-其實就是特殊語法的-function"><a class="header" href="#2-method-其實就是特殊語法的-function">2. method 其實就是特殊語法的 function</a></h2>
 <pre><code class="language-go">func (d Dog) Speak()
 </code></pre>
+<p>拆解每個部分：</p>
+<pre><code>func (d Dog) Speak()
+ │    │  │     │
+ │    │  │     └─ Speak 是 method 名稱
+ │    │  └─────── Dog 是 receiver 型別（這個方法綁定在 Dog 上）
+ │    └────────── d 是 receiver 變數（在方法內部用來存取 Dog 的欄位）
+ └─────────────── func 關鍵字
+</code></pre>
+<p><strong>Value receiver vs Pointer receiver：</strong></p>
+<pre><code class="language-go">func (d Dog) Speak()    // value receiver：方法內拿到的是 Dog 的複製品
+func (d *Dog) Rename()  // pointer receiver：方法內可以修改原始的 Dog
+</code></pre>
+<div class="table-wrapper"><table><thead><tr><th></th><th>Value Receiver <code>(d Dog)</code></th><th>Pointer Receiver <code>(d *Dog)</code></th></tr></thead><tbody>
+<tr><td>方法內修改 d</td><td>不影響原始值</td><td>會修改原始值</td></tr>
+<tr><td>呼叫時</td><td>值或指標都可以呼叫</td><td>值或指標都可以呼叫</td></tr>
+<tr><td>常見用途</td><td>小 struct、唯讀操作</td><td>需要修改、大 struct 避免複製</td></tr>
+</tbody></table>
+</div>
+<pre><code class="language-go">type Dog struct{ Name string }
+
+func (d Dog) Speak() string    { return d.Name + " says woof" }
+func (d *Dog) Rename(n string) { d.Name = n }  // 可以改原始值
+
+d := Dog{Name: "Rex"}
+d.Rename("Max")       // Go 自動取址：(&amp;d).Rename("Max")
+fmt.Println(d.Name)   // "Max" ← 被修改了
+fmt.Println(d.Speak()) // "Max says woof"
+</code></pre>
+<blockquote>
+<p><strong>經驗法則：</strong> 如果不確定用哪個，就用 pointer receiver。同一個型別的所有 method 最好統一使用同一種 receiver。</p>
+</blockquote>
 <p>等價概念：</p>
 <pre><code class="language-go">func Speak(d Dog)
 </code></pre>
@@ -228,6 +389,39 @@ func (d Dog) Speak() {
 Speak(d)    // function
 </code></pre>
 <p>白話：method 本質還是 function，只是語法糖。</p>
+<h3 id="21-method-dispatch-結構圖"><a class="header" href="#21-method-dispatch-結構圖">2.1 Method Dispatch 結構圖</a></h3>
+<pre><code class="language-go">type Dog struct{}
+
+func (d Dog) Speak() {
+    fmt.Println("woof")
+}
+
+d := Dog{}
+d.Speak()
+</code></pre>
+<p>實際發生什麼事？</p>
+<pre><code class="language-text">┌────────────┐
+│   Dog{}    │   ← 值 (value)
+└─────┬──────┘
+      │
+      │ method call: d.Speak()
+      ▼
+┌──────────────────────────┐
+│ func Speak(d Dog)        │
+│ {                        │
+│   fmt.Println("woof")   │
+│ }                        │
+└──────────────────────────┘
+</code></pre>
+<p><strong>重點：</strong></p>
+<ul>
+<li>Go 的 method <strong>不是存在物件裡</strong>（不像 C++ 的 vtable 附在物件上）</li>
+<li>是「型別 + receiver」的語法糖</li>
+<li>編譯期就決定呼叫哪個 function（非 virtual dispatch）</li>
+</ul>
+<blockquote>
+<p><strong>method = function + receiver</strong></p>
+</blockquote>
 <hr />
 <h2 id="3-interface-是隱式實作"><a class="header" href="#3-interface-是隱式實作">3. Interface 是「隱式實作」</a></h2>
 <h3 id="go-1"><a class="header" href="#go-1">Go</a></h3>
@@ -409,6 +603,609 @@ user space 必須照那個 interface 實作</p>
 👉 實作者不需要知道抽象存在
 👉 耦合方向反轉（dependency inversion 但更輕量）</p>
 <hr />
+<h2 id="42-interface-在-runtime-的實際結構itab"><a class="header" href="#42-interface-在-runtime-的實際結構itab">4.2 Interface 在 Runtime 的實際結構（itab）</a></h2>
+<p>當你把一個具體型別 assign 給 interface 變數時，Go runtime 建立的記憶體結構如下：</p>
+<pre><code class="language-go">type Speaker interface {
+    Speak()
+}
+
+var s Speaker
+s = Dog{}
+s.Speak()
+</code></pre>
+<pre><code class="language-text">interface 變數 (Speaker)
+┌───────────────────────────────┐
+│ itab ────────────────┐        │
+│                      ▼        │
+│        ┌───────────────────┐  │
+│        │ type: Dog         │  │
+│        │ method table      │  │
+│        │  Speak → func ptr │──┼──→ func(Dog) Speak
+│        └───────────────────┘  │
+│                               │
+│ data ────────────────┐        │
+│                      ▼        │
+│        ┌───────────────┐      │
+│        │ Dog{} 的複製  │      │
+│        └───────────────┘      │
+└───────────────────────────────┘
+</code></pre>
+<h3 id="呼叫-sspeak-發生什麼"><a class="header" href="#呼叫-sspeak-發生什麼">呼叫 <code>s.Speak()</code> 發生什麼？</a></h3>
+<pre><code class="language-text">s.Speak()
+  │
+  ▼
+查 itab.method_table["Speak"]    ← 找到 function pointer
+  │
+  ▼
+func(Dog) Speak                  ← 實際的函數
+  │
+  ▼
+傳 data(Dog{}) 當 receiver       ← 把 data 區的值當第一個參數
+</code></pre>
+<p><strong>關鍵結論：</strong></p>
+<blockquote>
+<p>Go 的 interface 是 <strong>runtime 動態派發</strong>，但不是 inheritance，也不是 C++ 的 vtable。</p>
+<p>它由三個部分組成：</p>
+<ul>
+<li><strong>itab</strong>（interface table）：型別資訊 + method name → function pointer 的對應表</li>
+<li><strong>data pointer</strong>：指向實際值的指標</li>
+</ul>
+</blockquote>
+<h3 id="nil-interface-vs-interface-holding-nil-pointer"><a class="header" href="#nil-interface-vs-interface-holding-nil-pointer">nil interface vs interface holding nil pointer</a></h3>
+<p>這是 Go 最容易搞混的地方：</p>
+<pre><code class="language-go">var s Speaker          // nil interface：itab=nil, data=nil
+fmt.Println(s == nil)  // true
+
+var d *Dog = nil
+var s2 Speaker = d     // 非 nil interface！itab=*Dog, data=nil
+fmt.Println(s2 == nil) // false ← 很多人死在這裡
+</code></pre>
+<pre><code class="language-text">nil interface          interface holding nil pointer
+┌──────────┐           ┌──────────────┐
+│ itab: nil│           │ itab: *Dog   │  ← 有型別資訊！
+│ data: nil│           │ data: nil    │  ← 值是 nil
+└──────────┘           └──────────────┘
+  == nil ✅              == nil ❌
+</code></pre>
+<blockquote>
+<p><strong>防坑口訣：</strong> 判斷 interface 是否為 nil，看的是「itab 和 data 是否都是 nil」。只要塞過具體型別進去，即使值是 nil，interface 本身就不是 nil。</p>
+</blockquote>
+<hr />
+<h2 id="43-method-set-規則90-的人死在這"><a class="header" href="#43-method-set-規則90-的人死在這">4.3 Method Set 規則（90% 的人死在這）</a></h2>
+<h3 id="型別定義"><a class="header" href="#型別定義">型別定義</a></h3>
+<pre><code class="language-go">type Dog struct{}
+
+func (d Dog) Speak() {}   // value receiver
+func (d *Dog) Run()  {}   // pointer receiver
+</code></pre>
+<h3 id="method-set-規則總覽"><a class="header" href="#method-set-規則總覽">Method Set 規則總覽</a></h3>
+<pre><code class="language-text">Dog (value)                    *Dog (pointer)
+┌───────────────┐              ┌───────────────┐
+│ Speak()  ✅   │              │ Speak()  ✅   │
+│ Run()    ❌   │              │ Run()    ✅   │
+└───────────────┘              └───────────────┘
+
+value 型別只有 value receiver 的方法
+pointer 型別有 value + pointer receiver 的所有方法
+</code></pre>
+<h3 id="對-interface-的影響"><a class="header" href="#對-interface-的影響">對 interface 的影響</a></h3>
+<pre><code class="language-go">type Speaker interface { Speak() }
+type Runner interface  { Run() }
+
+var s Speaker
+s = Dog{}     // ✅ Dog 的 method set 有 Speak
+s = &amp;Dog{}    // ✅ *Dog 的 method set 有 Speak
+
+var r Runner
+r = Dog{}     // ❌ 編譯錯誤！Dog 的 method set 沒有 Run
+r = &amp;Dog{}    // ✅ *Dog 的 method set 有 Run
+</code></pre>
+<blockquote>
+<p><strong>一句話總結：</strong> interface 看的是「method set 是否完整」，不是你有沒有實作「概念上」像不像。</p>
+</blockquote>
+<h3 id="終極總表"><a class="header" href="#終極總表">終極總表</a></h3>
+<pre><code class="language-text">method receiver      可用 method set
+────────────────────────────────────
+Dog                 value methods only
+*Dog                value + pointer methods
+</code></pre>
+<h3 id="為什麼-go-要這樣設計"><a class="header" href="#為什麼-go-要這樣設計">為什麼 Go 要這樣設計？</a></h3>
+<ul>
+<li><strong>避免隱式 allocation</strong>：把 value 塞進 interface 時，Go 會複製一份。如果允許 value 呼叫 pointer receiver method，就意味著對「複製品」做修改，這是無意義且危險的</li>
+<li><strong>明確控制 copy vs mutation</strong>：用 pointer receiver 就是在說「我要改原始值」，那呼叫方也必須持有指標</li>
+<li><strong>interface 可以零侵入實作</strong>：隱式 + method set 規則 = 完美的 decoupling</li>
+</ul>
+<hr />
+<h2 id="44-面試王關itab-建立時機compile-vs-runtime"><a class="header" href="#44-面試王關itab-建立時機compile-vs-runtime">4.4 面試王關：itab 建立時機（Compile vs Runtime）</a></h2>
+<p>面試官常問：「itab 是什麼時候建立的？」答案不是非黑即白——<strong>compile time 和 runtime 都有參與</strong>。</p>
+<h3 id="第一階段compile-time靜態準備"><a class="header" href="#第一階段compile-time靜態準備">第一階段：Compile Time（靜態準備）</a></h3>
+<p>編譯器在看到 interface assignment 時，就會做以下事情：</p>
+<pre><code class="language-go">var s Speaker = Dog{}  // 編譯器在這裡介入
+</code></pre>
+<pre><code class="language-text">編譯期
+┌─────────────────────────────────────────────┐
+│ 1. 檢查 Dog 是否滿足 Speaker interface      │
+│    → Dog 有 Speak()？ ✅ 通過               │
+│                                             │
+│ 2. 產生 itab 的「模板」                      │
+│    ┌──────────────────────────┐             │
+│    │ inter: *Speaker (interf) │             │
+│    │ _type: *Dog    (concrete)│             │
+│    │ fun[0]: Dog.Speak 的位址  │             │
+│    └──────────────────────────┘             │
+│                                             │
+│ 3. 把 itab 模板寫入 binary 的 rodata section │
+└─────────────────────────────────────────────┘
+</code></pre>
+<h3 id="第二階段runtime動態快取"><a class="header" href="#第二階段runtime動態快取">第二階段：Runtime（動態快取）</a></h3>
+<p>程式執行時，Go runtime 維護一個全域的 <strong>itab hash table</strong>：</p>
+<pre><code class="language-text">Runtime（第一次使用時）
+┌─────────────────────────────────────────────────┐
+│                                                 │
+│  itab hash table (runtime.itabTable)            │
+│  ┌──────────┬──────────┬──────────┐             │
+│  │ bucket 0 │ bucket 1 │ bucket 2 │ ...         │
+│  └────┬─────┴──────────┴──────────┘             │
+│       │                                         │
+│       ▼                                         │
+│  ┌─────────────────────┐                        │
+│  │ key: (Speaker, Dog) │                        │
+│  │ val: itab 指標       │──→ itab struct         │
+│  │ next: ...           │                        │
+│  └─────────────────────┘                        │
+│                                                 │
+│  查找過程：                                      │
+│  1. hash(Speaker, Dog) → bucket index           │
+│  2. 在 bucket 鏈上找匹配的 itab                  │
+│  3. 找到 → 直接用（O(1) 平均）                   │
+│  4. 沒找到 → 建立新 itab，插入 table             │
+│                                                 │
+└─────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="完整流程圖"><a class="header" href="#完整流程圖">完整流程圖</a></h3>
+<pre><code class="language-text">var s Speaker = Dog{}
+
+  compile time                    runtime
+  ─────────────                   ─────────
+  ① 型別檢查                      ④ 第一次 assign
+     Dog 實作 Speaker? ✅            查 itab hash table
+                                     │
+  ② 產生 itab 模板                   ├─ 命中 → 直接用
+     寫入 binary rodata              │
+                                     └─ 未命中 → 從 rodata 載入
+  ③ 產生 assignment 的               │           插入 hash table
+     machine code                    │
+                                     ▼
+                                  ⑤ 組裝 interface
+                                     itab = 快取的 itab 指標
+                                     data = Dog{} 的複製
+</code></pre>
+<h3 id="type-assertion-的-itab-行為"><a class="header" href="#type-assertion-的-itab-行為">Type Assertion 的 itab 行為</a></h3>
+<pre><code class="language-go">s := Speaker(Dog{})
+
+// type assertion 也走 itab
+d, ok := s.(Runner)  // s 裡的 Dog 是否也滿足 Runner？
+</code></pre>
+<pre><code class="language-text">s.(Runner)
+  │
+  ▼
+查 itab hash table: key = (Runner, Dog)
+  │
+  ├─ 找到且 fun 不為空 → ok=true, d=Dog{}
+  │
+  └─ 找到但 fun[0]==nil → ok=false（Dog 沒有 Run()）
+     │
+     └─ 這個「否定 itab」也會被快取！
+        避免重複檢查（negative caching）
+</code></pre>
+<blockquote>
+<p><strong>面試回答模板：</strong>
+itab 在 compile time 做型別檢查和模板準備，在 runtime 第一次 assignment 時建立並快取到全域 hash table。之後同一對 (interface, concrete type) 的 itab 是 O(1) 查找。連 type assertion 失敗的結果都會被 negative cache。</p>
+</blockquote>
+<hr />
+<h2 id="45-面試王關nil-interface-的完整真相"><a class="header" href="#45-面試王關nil-interface-的完整真相">4.5 面試王關：nil interface 的完整真相</a></h2>
+<p>4.2 已經提過基本概念，這裡深入到讓面試官點頭的程度。</p>
+<h3 id="三種nil狀態"><a class="header" href="#三種nil狀態">三種「nil」狀態</a></h3>
+<pre><code class="language-go">// 狀態 A：完全 nil 的 interface
+var s Speaker
+fmt.Println(s == nil)  // true
+
+// 狀態 B：interface 持有 nil pointer
+var d *Dog = nil
+var s2 Speaker = d
+fmt.Println(s2 == nil) // false ← 經典陷阱
+
+// 狀態 C：interface 持有 non-nil 值
+s3 := Speaker(Dog{})
+fmt.Println(s3 == nil) // false
+</code></pre>
+<h3 id="記憶體結構對照"><a class="header" href="#記憶體結構對照">記憶體結構對照</a></h3>
+<pre><code class="language-text">狀態 A: nil interface           狀態 B: holding nil ptr       狀態 C: holding value
+┌──────────────┐               ┌──────────────┐              ┌──────────────┐
+│ itab:  nil   │               │ itab:  *Dog  │              │ itab:  Dog   │
+│ data:  nil   │               │ data:  nil   │              │ data:  ──────┼─→ Dog{}
+└──────────────┘               └──────────────┘              └──────────────┘
+  == nil ✅                      == nil ❌                     == nil ❌
+  呼叫方法 → panic               呼叫方法 → 看方法實作          呼叫方法 → 正常
+</code></pre>
+<h3 id="為什麼狀態-b-會-panic"><a class="header" href="#為什麼狀態-b-會-panic">為什麼狀態 B 會 panic？</a></h3>
+<pre><code class="language-go">type Dog struct{ Name string }
+
+func (d *Dog) Speak() {
+    fmt.Println(d.Name)  // ← d 是 nil pointer，存取 Name → panic
+}
+
+var d *Dog = nil
+var s Speaker = d
+s.Speak()  // panic: runtime error: invalid memory address
+</code></pre>
+<pre><code class="language-text">s.Speak() 的執行過程：
+  │
+  ▼
+itab 不是 nil → 找到 (*Dog).Speak 的 function pointer → 可以呼叫！
+  │
+  ▼
+傳入 data(nil) 當 receiver → d *Dog = nil
+  │
+  ▼
+d.Name → 對 nil pointer 做 field access → 💥 panic
+</code></pre>
+<p><strong>但如果方法不存取欄位，就不會 panic：</strong></p>
+<pre><code class="language-go">func (d *Dog) Speak() {
+    if d == nil {
+        fmt.Println("I'm a ghost dog")
+        return
+    }
+    fmt.Println(d.Name)
+}
+
+var d *Dog = nil
+var s Speaker = d
+s.Speak()  // "I'm a ghost dog" ← 正常執行！
+</code></pre>
+<h3 id="生產環境的正確防禦寫法"><a class="header" href="#生產環境的正確防禦寫法">生產環境的正確防禦寫法</a></h3>
+<pre><code class="language-go">// ❌ 錯誤：這個 function 永遠回傳「非 nil interface」
+func GetSpeaker(ok bool) Speaker {
+    var d *Dog
+    if ok {
+        d = &amp;Dog{Name: "Rex"}
+    }
+    return d  // 即使 d==nil，回傳的 Speaker 也不是 nil！
+}
+
+s := GetSpeaker(false)
+if s == nil {
+    fmt.Println("nil")  // 永遠不會印出！
+}
+
+// ✅ 正確：明確回傳 nil interface
+func GetSpeaker(ok bool) Speaker {
+    if ok {
+        return &amp;Dog{Name: "Rex"}
+    }
+    return nil  // 明確回傳 nil
+}
+</code></pre>
+<blockquote>
+<p><strong>面試回答模板：</strong>
+Go 的 interface 是 (itab, data) 二元組。只有兩者都是 nil 時，<code>== nil</code> 才為 true。常見陷阱是函數回傳了型別化的 nil pointer，導致 interface 不是 nil。正確做法是在函數中明確 <code>return nil</code> 回傳 nil interface。</p>
+</blockquote>
+<hr />
+<h2 id="46-面試王關escape-analysis-與-receiver-的關係"><a class="header" href="#46-面試王關escape-analysis-與-receiver-的關係">4.6 面試王關：Escape Analysis 與 Receiver 的關係</a></h2>
+<p>編譯器的 escape analysis 決定變數放 stack（快）還是 heap（慢、需要 GC）。Receiver 的選擇直接影響 escape analysis 的結果。</p>
+<h3 id="基本規則"><a class="header" href="#基本規則">基本規則</a></h3>
+<pre><code class="language-go">func (d Dog) Speak() string {   // value receiver
+    return d.Name               // d 在 stack 上（如果沒逃逸）
+}
+
+func (d *Dog) Rename(n string) { // pointer receiver
+    d.Name = n                   // d 指向的記憶體可能在 heap
+}
+</code></pre>
+<h3 id="觀察-escape-analysis"><a class="header" href="#觀察-escape-analysis">觀察 escape analysis</a></h3>
+<pre><code class="language-bash">go build -gcflags="-m -m" main.go 2&gt;&amp;1 | grep -E "escape|moved"
+</code></pre>
+<h3 id="場景分析"><a class="header" href="#場景分析">場景分析</a></h3>
+<pre><code class="language-go">// 場景 1：value receiver + 不逃逸 = 全部在 stack
+func example1() {
+    d := Dog{Name: "Rex"}  // stack
+    d.Speak()              // d 被複製到 Speak 的 stack frame
+}                          // 函數結束，stack 自動回收，零 GC 壓力
+
+// 場景 2：pointer receiver + 不逃逸 = 仍然在 stack
+func example2() {
+    d := Dog{Name: "Rex"}  // 可能在 stack
+    d.Rename("Max")        // Go 自動取址 (&amp;d)，但 d 沒逃出函數
+}                          // 編譯器夠聰明，d 仍然在 stack
+
+// 場景 3：塞進 interface = 逃逸到 heap
+func example3() {
+    d := Dog{Name: "Rex"}
+    var s Speaker = d      // ← d 被複製到 heap！
+    s.Speak()              //    因為 interface 的 data 是指標
+}
+</code></pre>
+<h3 id="完整-escape-決策圖"><a class="header" href="#完整-escape-決策圖">完整 escape 決策圖</a></h3>
+<pre><code class="language-text">變數會不會逃逸到 heap？
+
+    ┌─ 塞進 interface？
+    │   ├─ Yes → 幾乎一定逃逸 ❌ heap
+    │   └─ No ─┐
+    │          │
+    │   ┌──────┘
+    │   ├─ 回傳指標？
+    │   │   ├─ Yes → 逃逸 ❌ heap
+    │   │   └─ No ─┐
+    │   │          │
+    │   │   ┌──────┘
+    │   │   ├─ 被 goroutine 捕獲？
+    │   │   │   ├─ Yes → 逃逸 ❌ heap
+    │   │   │   └─ No ─┐
+    │   │   │          │
+    │   │   │   ┌──────┘
+    │   │   │   ├─ 大小超過限制？（~64KB）
+    │   │   │   │   ├─ Yes → 逃逸 ❌ heap
+    │   │   │   │   └─ No → 不逃逸 ✅ stack
+    │   │   │   │
+</code></pre>
+<h3 id="receiver-選擇-vs-escape-analysis-對照表"><a class="header" href="#receiver-選擇-vs-escape-analysis-對照表">Receiver 選擇 vs Escape Analysis 對照表</a></h3>
+<pre><code class="language-text">┌──────────────────┬──────────────────┬──────────────────┐
+│     場景          │  Value Receiver  │ Pointer Receiver │
+├──────────────────┼──────────────────┼──────────────────┤
+│ 直接呼叫          │ ✅ stack         │ ✅ stack *       │
+│ d.Method()       │ (複製 d)         │ (取址，但不逃逸) │
+├──────────────────┼──────────────────┼──────────────────┤
+│ 塞進 interface   │ ❌ heap          │ ❌ heap          │
+│ var i I = d      │ (d 被複製到heap) │ (d 必須在 heap)  │
+├──────────────────┼──────────────────┼──────────────────┤
+│ 回傳值           │ ✅ stack         │ ❌ heap          │
+│ return d / &amp;d    │ (值複製，安全)   │ (指標逃逸)       │
+├──────────────────┼──────────────────┼──────────────────┤
+│ goroutine 捕獲   │ ❌ heap          │ ❌ heap          │
+│ go func(){ d }   │ (閉包捕獲)      │ (閉包捕獲)       │
+└──────────────────┴──────────────────┴──────────────────┘
+
+* pointer receiver 直接呼叫不逃逸的前提：指標沒被存到別的地方
+</code></pre>
+<h3 id="實測驗證"><a class="header" href="#實測驗證">實測驗證</a></h3>
+<pre><code class="language-go">// escape_test.go
+package main
+
+type Dog struct{ Name string }
+type Speaker interface{ Speak() }
+
+func (d Dog) Speak()             {}
+func (d *Dog) Run()              {}
+
+//go:noinline
+func directValueCall() {
+    d := Dog{Name: "Rex"}  // 想看這行是否逃逸
+    d.Speak()
+}
+
+//go:noinline
+func directPointerCall() {
+    d := Dog{Name: "Rex"}  // 想看這行是否逃逸
+    d.Run()
+}
+
+//go:noinline
+func interfaceAssign() {
+    d := Dog{Name: "Rex"}  // 想看這行是否逃逸
+    var s Speaker = d
+    s.Speak()
+}
+</code></pre>
+<pre><code class="language-bash">$ go build -gcflags="-m" escape_test.go
+
+# 輸出（簡化）：
+# directValueCall: d does not escape            ← ✅ stack
+# directPointerCall: d does not escape          ← ✅ stack（聰明！）
+# interfaceAssign: d escapes to heap            ← ❌ heap
+# interfaceAssign: Dog{...} escapes to heap
+</code></pre>
+<h3 id="效能影響的實測"><a class="header" href="#效能影響的實測">效能影響的實測</a></h3>
+<pre><code class="language-go">func BenchmarkDirectCall(b *testing.B) {
+    for i := 0; i &lt; b.N; i++ {
+        d := Dog{Name: "Rex"}
+        d.Speak()  // stack，零 GC
+    }
+}
+
+func BenchmarkInterfaceCall(b *testing.B) {
+    for i := 0; i &lt; b.N; i++ {
+        d := Dog{Name: "Rex"}
+        var s Speaker = d  // heap allocation
+        s.Speak()
+    }
+}
+
+// 典型結果：
+// BenchmarkDirectCall-8       1000000000   0.29 ns/op   0 B/op   0 allocs/op
+// BenchmarkInterfaceCall-8     30000000   45.3 ns/op  16 B/op   1 allocs/op
+//                                                                ↑ 每次都分配
+</code></pre>
+<h3 id="交易系統-hot-path-的最佳實踐"><a class="header" href="#交易系統-hot-path-的最佳實踐">交易系統 Hot Path 的最佳實踐</a></h3>
+<pre><code class="language-go">// ❌ hot path 裡用 interface → 每次 heap allocation
+func processOrder(handler OrderHandler) {  // interface
+    handler.Execute(order)
+}
+
+// ✅ hot path 裡用具體型別 → 零 allocation
+func processOrder(handler *ConcreteHandler) {  // concrete type
+    handler.Execute(order)
+}
+
+// ✅ 如果必須用 interface，用 sync.Pool 重用
+var handlerPool = sync.Pool{
+    New: func() any { return &amp;ConcreteHandler{} },
+}
+</code></pre>
+<blockquote>
+<p><strong>面試回答模板：</strong>
+Value receiver 直接呼叫時值複製在 stack 上，零 GC 壓力。Pointer receiver 直接呼叫時，如果指標沒逃逸，編譯器也能保留在 stack。但一旦塞進 interface，不論用哪種 receiver，data 幾乎都會逃逸到 heap。所以在低延遲的 hot path 上，應該避免 interface dispatch，直接用具體型別呼叫。</p>
+</blockquote>
+<hr />
+<h2 id="47-跨語言比較go-interface-vs-rust-trait-vs-c-virtual"><a class="header" href="#47-跨語言比較go-interface-vs-rust-trait-vs-c-virtual">4.7 跨語言比較：Go interface vs Rust trait vs C++ virtual</a></h2>
+<p>Go、Rust、C++ 都沒有（或不鼓勵）傳統 OOP 的 class hierarchy，但它們的多型機制走的是三條完全不同的路。如果你有 C++ 或 Rust 背景，這張對比圖能幫你快速定位 Go 的設計位置。</p>
+<h3 id="三種語言的型別--方法綁定方式"><a class="header" href="#三種語言的型別--方法綁定方式">三種語言的型別 + 方法綁定方式</a></h3>
+<pre><code class="language-text">Go                          Rust                        C++
+─────────────               ─────────────               ─────────────
+type Dog struct{}           struct Dog;                 class Dog : public Speaker {
+                                                        public:
+func (d Dog) Speak() {}     impl Dog {                      void Speak() override {}
+                                fn speak(&amp;self) {}      };
+                            }
+
+方法「掛」在型別外           方法在 impl block 裡          方法在 class 裡
+沒有 class                  沒有 class                   有 class + 繼承
+</code></pre>
+<hr />
+<h3 id="go-interfaceruntime-動態派發"><a class="header" href="#go-interfaceruntime-動態派發">Go interface：runtime 動態派發</a></h3>
+<pre><code class="language-go">type Speaker interface { Speak() }
+type Dog struct{}
+func (Dog) Speak() {}
+
+var s Speaker = Dog{}
+s.Speak()
+</code></pre>
+<pre><code class="language-text">interface value（2 words）
+
+┌──────────────────────────┐
+│ itab pointer ────────────┼────┐
+│ data pointer ────────────┼──┐ │
+└──────────────────────────┘  │ │
+                              │ │
+            data ◄────────────┘ │
+            ┌────────┐         │
+            │ Dog{}  │         │
+            └────────┘         │
+                               ▼
+                 ┌────────────────────┐
+                 │ itab               │
+                 │────────────────────│
+                 │ interface: Speaker │
+                 │ concrete:  Dog     │
+                 │────────────────────│
+                 │ Speak → func ptr ─┼──→ func(Dog) Speak
+                 └────────────────────┘
+</code></pre>
+<p>呼叫 <code>s.Speak()</code>：load itab → lookup Speak func ptr → call func(data)</p>
+<p><strong>特點：</strong> interface 與 type 完全解耦、itab 在 runtime 快取、不需要繼承</p>
+<hr />
+<h3 id="rust-trait靜態派發預設-動態派發opt-in"><a class="header" href="#rust-trait靜態派發預設-動態派發opt-in">Rust trait：靜態派發（預設）+ 動態派發（opt-in）</a></h3>
+<p>Rust 有兩種完全不同的 dispatch：</p>
+<p><strong>A. 靜態派發（zero-cost，預設）</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait Speaker { fn speak(&amp;self); }
+struct Dog;
+impl Speaker for Dog { fn speak(&amp;self) {} }
+
+fn call&lt;T: Speaker&gt;(x: T) { x.speak(); }
+
+call(Dog);  // 編譯器產出：call_Dog(x)
+call(Cat);  // 編譯器產出：call_Cat(x)
+<span class="boring">}</span></code></pre></pre>
+<pre><code class="language-text">編譯後（monomorphization）
+
+call&lt;Dog&gt; → call_Dog(x Dog)    ← 獨立的函數，完全展開
+call&lt;Cat&gt; → call_Cat(x Cat)    ← 獨立的函數，完全展開
+
+沒有 vtable
+沒有 runtime lookup
+沒有間接呼叫
+等同 C++ template 展開
+</code></pre>
+<p><strong>B. 動態派發（<code>dyn</code> trait）</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn call(x: &amp;dyn Speaker) { x.speak(); }
+<span class="boring">}</span></code></pre></pre>
+<pre><code class="language-text">&amp;dyn Speaker（fat pointer，2 words）
+
+┌────────────────────┐
+│ data pointer       │──→ Dog 實例
+│ vtable pointer ────┼────┐
+└────────────────────┘    │
+                          ▼
+                ┌───────────────────┐
+                │ vtable            │
+                │───────────────────│
+                │ drop fn ptr       │  ← Rust 特有：解構函數
+                │ size: 0           │  ← 型別大小
+                │ align: 1          │  ← 對齊
+                │ speak → fn ptr ───┼──→ Dog::speak
+                └───────────────────┘
+</code></pre>
+<p><strong>特點：</strong> 靜態派發為主（零成本）、動態派發是明確 opt-in、vtable 在 compile-time 生成</p>
+<hr />
+<h3 id="c-virtual-function物件內嵌-vptr"><a class="header" href="#c-virtual-function物件內嵌-vptr">C++ virtual function：物件內嵌 vptr</a></h3>
+<pre><code class="language-cpp">class Speaker {
+public:
+    virtual void Speak() = 0;
+};
+
+class Dog : public Speaker {
+public:
+    void Speak() override {}
+};
+
+Speaker* s = new Dog();
+s-&gt;Speak();
+</code></pre>
+<pre><code class="language-text">Dog 物件（vptr 內嵌在物件裡）
+
+┌────────────────────┐
+│ vptr ──────────────┼────┐
+│ data fields        │    │
+└────────────────────┘    │
+                          ▼
+                ┌─────────────────┐
+                │ vtable          │
+                │─────────────────│
+                │ Speak → fn ptr ─┼──→ Dog::Speak
+                └─────────────────┘
+</code></pre>
+<p>呼叫 <code>s-&gt;Speak()</code>：load vptr → lookup Speak → call</p>
+<p><strong>特點：</strong> vptr 是物件的一部分、需要 class 繼承、vtable 在 compile-time 生成</p>
+<hr />
+<h3 id="三方核心差異總表"><a class="header" href="#三方核心差異總表">三方核心差異總表</a></h3>
+<pre><code class="language-text">┌─────────────────┬──────────────────┬──────────────────┬──────────────────┐
+│                 │ Go interface     │ Rust dyn trait    │ C++ virtual      │
+├─────────────────┼──────────────────┼──────────────────┼──────────────────┤
+│ 指標結構         │ 2 words          │ 2 words          │ 1 word（vptr     │
+│                 │ (itab + data)    │ (data + vtable)  │   內嵌在物件)     │
+├─────────────────┼──────────────────┼──────────────────┼──────────────────┤
+│ vtable 位置      │ interface 持有   │ fat pointer 持有  │ 物件內嵌          │
+├─────────────────┼──────────────────┼──────────────────┼──────────────────┤
+│ vtable 生成時機  │ runtime 首次使用 │ compile-time     │ compile-time     │
+│                 │ 後快取           │                  │                  │
+├─────────────────┼──────────────────┼──────────────────┼──────────────────┤
+│ 需要繼承嗎       │ ❌ 隱式實作      │ ❌ 顯式 impl     │ ✅ 必須繼承       │
+├─────────────────┼──────────────────┼──────────────────┼──────────────────┤
+│ 靜態派發         │ ❌ 無            │ ✅ 預設（泛型）   │ ✅ template       │
+├─────────────────┼──────────────────┼──────────────────┼──────────────────┤
+│ 記憶體管理       │ GC              │ ownership        │ 手動 / RAII      │
+├─────────────────┼──────────────────┼──────────────────┼──────────────────┤
+│ 型別檢查         │ compile +       │ compile-time     │ compile-time     │
+│                 │ runtime          │ 為主             │                  │
+└─────────────────┴──────────────────┴──────────────────┴──────────────────┘
+</code></pre>
+<h3 id="設計哲學一句話"><a class="header" href="#設計哲學一句話">設計哲學一句話</a></h3>
+<pre><code class="language-text">Go   → interface 與 type 解耦，runtime 組合，開發效率優先
+Rust → trait 是型別系統核心，static dispatch 為主，零成本抽象
+C++  → inheritance 為中心，virtual 是 class 內建特性，最大彈性
+</code></pre>
+<h3 id="從系統工程師linux--memory的角度看"><a class="header" href="#從系統工程師linux--memory的角度看">從系統工程師（Linux / memory）的角度看</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>觀察角度</th><th>Go</th><th>Rust</th><th>C++</th></tr></thead><tbody>
+<tr><td>物件 layout</td><td>runtime 才知道完整結構</td><td>編譯期完全確定</td><td>編譯期確定（含 vptr）</td></tr>
+<tr><td>cache 友善度</td><td>較差（間接指標多）</td><td>最好（靜態派發零間接）</td><td>中等（vptr 一次間接）</td></tr>
+<tr><td>heap 壓力</td><td>高（interface assign 常逃逸）</td><td>低（stack 為主）</td><td>看寫法</td></tr>
+<tr><td>適合場景</td><td>高併發服務、快速開發</td><td>系統程式、嵌入式、低延遲</td><td>遊戲引擎、OS、通用系統</td></tr>
+</tbody></table>
+</div>
+<hr />
 <h2 id="5-沒有繼承只有組合"><a class="header" href="#5-沒有繼承只有組合">5. 沒有繼承，只有組合</a></h2>
 <p>C++ 有 inheritance tree。Go 沒有 extends / subclass。</p>
 <p>只用：</p>
@@ -457,6 +1254,411 @@ ch := make(chan int)
 C++：共享記憶體 + 鎖
 Go：不要共享記憶體，用 channel 溝通</p>
 <hr />
+<h2 id="11-generics泛型go-118"><a class="header" href="#11-generics泛型go-118">11. Generics（泛型，Go 1.18+）</a></h2>
+<p>Go 1.18 引入了泛型，但設計風格一如既往地保守——只提供最基本的型別參數（type parameters），沒有 C++ template 的黑魔法。</p>
+<h3 id="基本語法"><a class="header" href="#基本語法">基本語法</a></h3>
+<pre><code class="language-go">// 泛型函數
+func Map[T any, U any](s []T, f func(T) U) []U {
+    result := make([]U, len(s))
+    for i, v := range s {
+        result[i] = f(v)
+    }
+    return result
+}
+
+// 使用
+names := Map([]int{1, 2, 3}, func(n int) string {
+    return fmt.Sprintf("item-%d", n)
+})
+// → ["item-1", "item-2", "item-3"]
+</code></pre>
+<h3 id="型別約束type-constraints"><a class="header" href="#型別約束type-constraints">型別約束（Type Constraints）</a></h3>
+<pre><code class="language-go">// 用 interface 定義約束
+type Number interface {
+    ~int | ~int64 | ~float64  // ~ 表示底層型別匹配
+}
+
+func Sum[T Number](nums []T) T {
+    var total T
+    for _, n := range nums {
+        total += n
+    }
+    return total
+}
+
+// 標準庫提供的約束（golang.org/x/exp/constraints → Go 1.21 移入 cmp）
+import "cmp"
+
+func Max[T cmp.Ordered](a, b T) T {
+    if a &gt; b {
+        return a
+    }
+    return b
+}
+</code></pre>
+<h3 id="泛型-struct"><a class="header" href="#泛型-struct">泛型 struct</a></h3>
+<pre><code class="language-go">type Stack[T any] struct {
+    items []T
+}
+
+func (s *Stack[T]) Push(item T) {
+    s.items = append(s.items, item)
+}
+
+func (s *Stack[T]) Pop() (T, bool) {
+    if len(s.items) == 0 {
+        var zero T
+        return zero, false
+    }
+    item := s.items[len(s.items)-1]
+    s.items = s.items[:len(s.items)-1]
+    return item, true
+}
+</code></pre>
+<h3 id="c-template-vs-go-generics"><a class="header" href="#c-template-vs-go-generics">C++ template vs Go generics</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>C++ Template</th><th>Go Generics</th></tr></thead><tbody>
+<tr><td>編譯期展開，可產出完全特化的程式碼</td><td>部分使用 dictionary / stenciling 混合策略</td></tr>
+<tr><td>SFINAE / concepts / constexpr if</td><td>只有 interface 約束</td></tr>
+<tr><td>template metaprogramming</td><td>不支援</td></tr>
+<tr><td>特化（specialization）</td><td>不支援</td></tr>
+<tr><td>編譯錯誤訊息極難讀</td><td>錯誤訊息清晰</td></tr>
+</tbody></table>
+</div>
+<h3 id="使用原則"><a class="header" href="#使用原則">使用原則</a></h3>
+<ul>
+<li><strong>不要為了用泛型而用泛型</strong>。如果 <code>interface{}</code> + type assertion 就能解決，就不需要泛型</li>
+<li>泛型最適合：容器（Stack、Queue）、演算法函數（Map、Filter、Reduce）、型別安全的工具函數</li>
+<li>避免過度抽象：Go 社群偏好「一點重複 &gt; 一點錯誤的抽象」</li>
+</ul>
+<hr />
+<h2 id="12-error-handling-進階errorsis--as--wrap"><a class="header" href="#12-error-handling-進階errorsis--as--wrap">12. Error Handling 進階：errors.Is / As / Wrap</a></h2>
+<p>Go 1.13 引入了 error wrapping，讓錯誤可以「包裝」再傳遞，同時保留原始錯誤資訊。</p>
+<h3 id="基本用法"><a class="header" href="#基本用法">基本用法</a></h3>
+<pre><code class="language-go">import (
+    "errors"
+    "fmt"
+)
+
+// 定義 sentinel error
+var ErrNotFound = errors.New("not found")
+var ErrPermission = errors.New("permission denied")
+
+// 包裝錯誤（用 %w）
+func findUser(id int) error {
+    // ... 查詢邏輯
+    return fmt.Errorf("findUser(%d): %w", id, ErrNotFound)
+}
+
+// 判斷錯誤鏈中是否包含特定錯誤
+err := findUser(42)
+if errors.Is(err, ErrNotFound) {
+    // ✅ 即使被包裝了，仍然匹配
+    fmt.Println("使用者不存在")
+}
+</code></pre>
+<h3 id="errorsas--取出特定型別的錯誤"><a class="header" href="#errorsas--取出特定型別的錯誤">errors.As — 取出特定型別的錯誤</a></h3>
+<pre><code class="language-go">type ValidationError struct {
+    Field   string
+    Message string
+}
+
+func (e *ValidationError) Error() string {
+    return fmt.Sprintf("validation error: %s - %s", e.Field, e.Message)
+}
+
+func validate(name string) error {
+    if name == "" {
+        return fmt.Errorf("validate: %w", &amp;ValidationError{
+            Field: "name", Message: "不能為空",
+        })
+    }
+    return nil
+}
+
+err := validate("")
+var ve *ValidationError
+if errors.As(err, &amp;ve) {
+    fmt.Printf("欄位 %s 驗證失敗: %s\n", ve.Field, ve.Message)
+}
+</code></pre>
+<h3 id="錯誤處理最佳實踐"><a class="header" href="#錯誤處理最佳實踐">錯誤處理最佳實踐</a></h3>
+<pre><code class="language-go">// ❌ 不好：字串比對，容易壞
+if err.Error() == "not found" { ... }
+
+// ❌ 不好：只用 %v，丟失錯誤鏈
+return fmt.Errorf("failed: %v", err)
+
+// ✅ 好：用 %w 保留錯誤鏈
+return fmt.Errorf("findUser(%d): %w", id, err)
+
+// ✅ 好：用 errors.Is 判斷
+if errors.Is(err, ErrNotFound) { ... }
+
+// ✅ 好：用 errors.As 取出型別資訊
+var ve *ValidationError
+if errors.As(err, &amp;ve) { ... }
+</code></pre>
+<h3 id="錯誤處理策略"><a class="header" href="#錯誤處理策略">錯誤處理策略</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>場景</th><th>做法</th></tr></thead><tbody>
+<tr><td>函式庫對外 API</td><td>定義 sentinel error（<code>var ErrXxx = errors.New(...)</code>）</td></tr>
+<tr><td>內部傳遞</td><td>用 <code>fmt.Errorf("context: %w", err)</code> 包裝</td></tr>
+<tr><td>最上層（main / handler）</td><td>記 log + 回傳適當 HTTP status</td></tr>
+<tr><td>不可恢復的錯誤</td><td>考慮用 <code>panic</code>（但幾乎不會用到）</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="13-defer--panic--recover"><a class="header" href="#13-defer--panic--recover">13. defer / panic / recover</a></h2>
+<h3 id="defer延遲執行"><a class="header" href="#defer延遲執行">defer：延遲執行</a></h3>
+<pre><code class="language-go">func readFile(path string) ([]byte, error) {
+    f, err := os.Open(path)
+    if err != nil {
+        return nil, err
+    }
+    defer f.Close()  // ← 函數 return 時才執行，確保檔案關閉
+    return io.ReadAll(f)
+}
+</code></pre>
+<p><strong>defer 的三個規則：</strong></p>
+<ol>
+<li>
+<p><strong>引數在 defer 時求值</strong>（不是在執行時）</p>
+<pre><code class="language-go">x := 10
+defer fmt.Println(x)  // 印出 10，不是 20
+x = 20
+</code></pre>
+</li>
+<li>
+<p><strong>多個 defer 是 LIFO（後進先出）</strong></p>
+<pre><code class="language-go">defer fmt.Println("A")
+defer fmt.Println("B")
+defer fmt.Println("C")
+// 輸出: C → B → A
+</code></pre>
+</li>
+<li>
+<p><strong>defer 可以修改具名回傳值</strong></p>
+<pre><code class="language-go">func doSomething() (err error) {
+    tx := beginTransaction()
+    defer func() {
+        if err != nil {
+            tx.Rollback()
+        } else {
+            err = tx.Commit()  // 可以修改 err
+        }
+    }()
+    // ... 做事情
+    return nil
+}
+</code></pre>
+</li>
+</ol>
+<h3 id="panic--recover"><a class="header" href="#panic--recover">panic / recover</a></h3>
+<pre><code class="language-go">// panic：程式遇到不可恢復的錯誤
+func mustParseConfig(path string) Config {
+    data, err := os.ReadFile(path)
+    if err != nil {
+        panic(fmt.Sprintf("config file missing: %s", path))
+    }
+    // ...
+}
+
+// recover：攔截 panic，防止程式 crash
+func safeHandler(w http.ResponseWriter, r *http.Request) {
+    defer func() {
+        if r := recover(); r != nil {
+            log.Printf("panic recovered: %v\n%s", r, debug.Stack())
+            http.Error(w, "Internal Server Error", 500)
+        }
+    }()
+    // ... 可能 panic 的邏輯
+}
+</code></pre>
+<p><strong>使用原則：</strong></p>
+<ul>
+<li><strong>幾乎不要用 panic</strong>。Go 慣例是回傳 <code>error</code></li>
+<li>panic 只適用於：程式初始化失敗、不可能發生的情況（bug）</li>
+<li>函式庫<strong>絕對不應該 panic</strong>，應該回傳 error</li>
+<li>HTTP server 的中介層可以用 recover 做安全網</li>
+</ul>
+<hr />
+<h2 id="14-slice-與-map-常見陷阱"><a class="header" href="#14-slice-與-map-常見陷阱">14. Slice 與 Map 常見陷阱</a></h2>
+<h3 id="slice-內部結構"><a class="header" href="#slice-內部結構">Slice 內部結構</a></h3>
+<pre><code class="language-go">// slice 是一個 3 欄位的 struct
+type slice struct {
+    array unsafe.Pointer  // 指向底層陣列
+    len   int
+    cap   int
+}
+</code></pre>
+<h3 id="陷阱-1slice-append-可能共用底層陣列"><a class="header" href="#陷阱-1slice-append-可能共用底層陣列">陷阱 1：Slice append 可能共用底層陣列</a></h3>
+<pre><code class="language-go">a := []int{1, 2, 3, 4, 5}
+b := a[1:3]  // b = [2, 3]，和 a 共用底層陣列
+
+b = append(b, 99)
+fmt.Println(a)  // [1 2 3 99 5] ← a 被改了！
+
+// ✅ 安全做法：用 copy 或 full slice expression
+b := append([]int{}, a[1:3]...)  // 複製一份
+// 或
+b := a[1:3:3]  // 限制 cap，append 時強制分配新陣列
+</code></pre>
+<h3 id="陷阱-2大陣列的-slice-導致記憶體洩漏"><a class="header" href="#陷阱-2大陣列的-slice-導致記憶體洩漏">陷阱 2：大陣列的 slice 導致記憶體洩漏</a></h3>
+<pre><code class="language-go">// ❌ 回傳的 slice 仍引用原始大陣列
+func getHeader(data []byte) []byte {
+    return data[:10]  // 整個 data 都不會被 GC
+}
+
+// ✅ 複製需要的部分
+func getHeader(data []byte) []byte {
+    header := make([]byte, 10)
+    copy(header, data[:10])
+    return header
+}
+</code></pre>
+<h3 id="陷阱-3range-的值是複製"><a class="header" href="#陷阱-3range-的值是複製">陷阱 3：range 的值是複製</a></h3>
+<pre><code class="language-go">type Item struct{ Value int }
+
+items := []Item{{1}, {2}, {3}}
+for _, item := range items {
+    item.Value = 0  // ❌ 修改的是複製品，原始 slice 不受影響
+}
+// items 仍然是 [{1} {2} {3}]
+
+// ✅ 用 index
+for i := range items {
+    items[i].Value = 0
+}
+</code></pre>
+<h3 id="map-常見陷阱"><a class="header" href="#map-常見陷阱">Map 常見陷阱</a></h3>
+<pre><code class="language-go">// 1. Map 迭代順序是隨機的
+m := map[string]int{"a": 1, "b": 2, "c": 3}
+for k, v := range m {
+    fmt.Println(k, v)  // 每次順序可能不同
+}
+// 需要固定順序時，先取 keys 排序
+
+// 2. nil map 可讀不可寫
+var m map[string]int
+_ = m["key"]      // ✅ 回傳 zero value
+m["key"] = 1      // ❌ panic: assignment to entry in nil map
+
+// 3. 併發讀寫 map 直接 panic（不只是 data race，Go runtime 會偵測並 crash）
+// 必須用 sync.Mutex 或 sync.Map
+
+// 4. 檢查 key 是否存在
+if val, ok := m["key"]; ok {
+    fmt.Println(val)
+}
+</code></pre>
+<h3 id="string-與-byte-轉換"><a class="header" href="#string-與-byte-轉換">string 與 []byte 轉換</a></h3>
+<pre><code class="language-go">s := "hello"
+b := []byte(s)   // ← 會複製！O(n)
+s2 := string(b)  // ← 也會複製！
+
+// 高效能場景下，可用 unsafe 避免複製（Go 1.20+）
+import "unsafe"
+b := unsafe.Slice(unsafe.StringData(s), len(s))
+// 但要非常小心，不可修改 b 的內容
+</code></pre>
+<hr />
+<h2 id="15-struct-embedding結構嵌入"><a class="header" href="#15-struct-embedding結構嵌入">15. Struct Embedding（結構嵌入）</a></h2>
+<p>Go 用 embedding 替代繼承，讓你獲得類似「繼承」的效果，但本質是<strong>組合</strong>。</p>
+<h3 id="基本用法-1"><a class="header" href="#基本用法-1">基本用法</a></h3>
+<pre><code class="language-go">type Animal struct {
+    Name string
+}
+
+func (a Animal) Speak() string {
+    return a.Name + " makes a sound"
+}
+
+type Dog struct {
+    Animal     // 嵌入，不是欄位名
+    Breed string
+}
+
+d := Dog{
+    Animal: Animal{Name: "Rex"},
+    Breed:  "Labrador",
+}
+fmt.Println(d.Name)    // ← 直接存取，不需要 d.Animal.Name
+fmt.Println(d.Speak()) // ← 方法也會「提升」
+</code></pre>
+<h3 id="嵌入-interface"><a class="header" href="#嵌入-interface">嵌入 interface</a></h3>
+<pre><code class="language-go">type Reader interface {
+    Read(p []byte) (n int, err error)
+}
+
+type Writer interface {
+    Write(p []byte) (n int, err error)
+}
+
+// 組合 interface
+type ReadWriter interface {
+    Reader
+    Writer
+}
+
+// 標準庫大量使用這個模式：io.ReadWriter, io.ReadCloser 等
+</code></pre>
+<h3 id="嵌入的陷阱"><a class="header" href="#嵌入的陷阱">嵌入的陷阱</a></h3>
+<pre><code class="language-go">// 1. 嵌入不是繼承，沒有多態
+type Base struct{}
+func (Base) Method() { fmt.Println("Base") }
+
+type Derived struct{ Base }
+func (Derived) Method() { fmt.Println("Derived") }
+
+d := Derived{}
+d.Method()       // "Derived" ← 遮蔽了 Base 的 Method
+d.Base.Method()  // "Base"    ← 仍然可以存取
+
+// 2. 嵌入的零值：嵌入指標型別時，零值是 nil
+type Wrapper struct {
+    *sync.Mutex  // 零值是 nil
+}
+w := Wrapper{}
+w.Lock()  // ❌ panic: nil pointer dereference
+// ✅ 要初始化：w := Wrapper{Mutex: &amp;sync.Mutex{}}
+
+// 3. 嵌入匯出與非匯出
+type inner struct{ value int }
+type Outer struct{ inner }  // inner 的欄位在外部 package 不可見
+</code></pre>
+<hr />
+<h2 id="16-init-函數與程式啟動順序"><a class="header" href="#16-init-函數與程式啟動順序">16. init() 函數與程式啟動順序</a></h2>
+<pre><code class="language-go">package main
+
+import "fmt"
+
+var globalVar = initGlobal()  // 1. 先執行 package-level 變數初始化
+
+func initGlobal() int {
+    fmt.Println("全域變數初始化")
+    return 42
+}
+
+func init() {  // 2. 再執行 init()
+    fmt.Println("init() 執行")
+}
+
+func main() {  // 3. 最後執行 main()
+    fmt.Println("main() 執行")
+}
+</code></pre>
+<p><strong>啟動順序：</strong></p>
+<pre><code>1. 依賴 package 的 init() 先執行（遞迴，被 import 的先跑）
+2. 當前 package 的 package-level 變數初始化
+3. 當前 package 的 init() 函數（同一個 package 可以有多個 init()）
+4. main()
+</code></pre>
+<p><strong>使用建議：</strong></p>
+<ul>
+<li>init() 適合：註冊 driver（如 <code>database/sql</code>）、設定全域配置</li>
+<li>避免在 init() 中做 I/O 或耗時操作</li>
+<li>避免在 init() 中依賴其他 package 的初始化順序（除了 import 順序保證的）</li>
+</ul>
+<hr />
 <h2 id="核心哲學差異總結"><a class="header" href="#核心哲學差異總結">核心哲學差異總結</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>C++</th><th>Go</th></tr></thead><tbody>
 <tr><td>Powerful</td><td>Simple</td></tr>
@@ -496,7 +1698,7 @@ Go：不要共享記憶體，用 channel 溝通</p>
 <pre><code class="language-bash">go install github.com/ofabry/go-callvis@latest
 sudo apt install graphviz
 </code></pre>
-<h3 id="基本用法"><a class="header" href="#基本用法">基本用法</a></h3>
+<h3 id="基本用法-2"><a class="header" href="#基本用法-2">基本用法</a></h3>
 <pre><code class="language-bash">cd your-go-project/
 
 # 產生 SVG（排除標準庫）
@@ -1294,6 +2496,24 @@ GOMAXPROCS=28 → 耗時: 11.724444ms   ← 核心再多也只有 4 個任務
 <blockquote>
 <p>交易系統通常設成 <code>runtime.NumCPU()</code> 就好（Go 預設值）。容器環境下建議用 <code>go.uber.org/automaxprocs</code> 自動偵測 cgroup 限制。</p>
 </blockquote>
+<h3 id="11-goroutine-vs-c-pthread-深入比較"><a class="header" href="#11-goroutine-vs-c-pthread-深入比較">1.1 Goroutine vs C pthread 深入比較</a></h3>
+<p>Goroutine 和 C pthread 是兩種不同的並發模型，前者由 Go 運行時管理為輕量級協程，後者則是 OS 級別的系統線程。</p>
+<h4 id="核心差異"><a class="header" href="#核心差異">核心差異</a></h4>
+<p><strong>映射關係</strong>：Goroutine 採用 M:N 模型，多個 goroutine 多工於少量 OS 線程（如 pthread），而每個 pthread 直接對應一個 OS 線程，易導致線程爆炸。</p>
+<p><strong>記憶體消耗</strong>：Goroutine 初始堆疊僅 2KB 並可動態擴容至 1GB；pthread 通常需 1-2MB 固定堆疊，加上守護頁，資源開銷大。</p>
+<p><strong>建立與銷毀</strong>：Goroutine 為用戶態，由 Go runtime 處理，成本低（無需系統呼叫）；pthread 為核心態，需線程池緩解高開銷。</p>
+<h4 id="切換與效能"><a class="header" href="#切換與效能">切換與效能</a></h4>
+<p>Goroutine 切換僅存 3 個暫存器（PC、SP、BP），耗時約 200ns；pthread 需存多達數十個暫存器，耗時 1000-1500ns，切換成本高 5 倍以上。</p>
+<p>Goroutine 適合高併發（如 HTTP 伺服器處理萬級請求），不易 OOM；pthread 適合低併發 CPU 密集任務。</p>
+<h4 id="對照表"><a class="header" href="#對照表">對照表</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>Goroutine</th><th>C pthread (OS 線程)</th></tr></thead><tbody>
+<tr><td>堆疊大小</td><td>2KB 初始，動態擴容</td><td>1-2MB 固定</td></tr>
+<tr><td>建立成本</td><td>用戶態，低</td><td>核心態，高</td></tr>
+<tr><td>切換時間</td><td>~200ns</td><td>~1000ns</td></tr>
+<tr><td>最大數量</td><td>百萬級</td><td>萬級</td></tr>
+<tr><td>調度器</td><td>Go runtime</td><td>OS 核心</td></tr>
+</tbody></table>
+</div>
 <h3 id="2-data-race"><a class="header" href="#2-data-race">2. Data Race</a></h3>
 <p>兩個 goroutine 同時讀寫同一塊記憶體，結果不確定。最經典的就是 <strong>map 併發寫入直接 panic</strong>。</p>
 <p><strong>正確做法（三種方式）：</strong></p>
@@ -1526,6 +2746,176 @@ git config --global url."git@github.com:".insteadOf "https://github.com/"
 go build -mod=vendor ./...
 </code></pre>
 <hr />
+<h1 id="第五部分測試與-benchmark"><a class="header" href="#第五部分測試與-benchmark">第五部分：測試與 Benchmark</a></h1>
+<p>Go 內建的 <code>testing</code> 套件是一等公民，不需要第三方框架就能做到完整的測試和效能分析。「寫 Go 不寫測試」是不合格的——Go 讓測試變得太容易了，沒有藉口不寫。</p>
+<h2 id="1-基本測試"><a class="header" href="#1-基本測試">1. 基本測試</a></h2>
+<pre><code class="language-go">// math.go
+package math
+
+func Add(a, b int) int {
+    return a + b
+}
+
+// math_test.go（測試檔案必須以 _test.go 結尾）
+package math
+
+import "testing"
+
+func TestAdd(t *testing.T) {
+    got := Add(2, 3)
+    want := 5
+    if got != want {
+        t.Errorf("Add(2, 3) = %d, want %d", got, want)
+    }
+}
+</code></pre>
+<pre><code class="language-bash">go test ./...           # 跑所有測試
+go test -v ./...        # 顯示詳細輸出
+go test -run TestAdd .  # 只跑符合 pattern 的測試
+go test -count=1 ./...  # 不使用 cache
+</code></pre>
+<h2 id="2-table-driven-tests表驅動測試"><a class="header" href="#2-table-driven-tests表驅動測試">2. Table-Driven Tests（表驅動測試）</a></h2>
+<p>Go 社群最推崇的測試風格——用一個 slice 定義所有測試案例：</p>
+<pre><code class="language-go">func TestAdd(t *testing.T) {
+    tests := []struct {
+        name     string
+        a, b     int
+        expected int
+    }{
+        {"positive", 2, 3, 5},
+        {"negative", -1, -2, -3},
+        {"zero", 0, 0, 0},
+        {"mixed", -1, 5, 4},
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            got := Add(tt.a, tt.b)
+            if got != tt.expected {
+                t.Errorf("Add(%d, %d) = %d, want %d",
+                    tt.a, tt.b, got, tt.expected)
+            }
+        })
+    }
+}
+</code></pre>
+<pre><code class="language-bash">go test -v -run TestAdd/negative .  # 只跑特定 subtest
+</code></pre>
+<h2 id="3-test-helpers"><a class="header" href="#3-test-helpers">3. Test Helpers</a></h2>
+<pre><code class="language-go">// testdata/ 目錄會被 go tool 自動忽略，適合放測試用的檔案
+
+// helper function 用 t.Helper() 標記，讓錯誤訊息指向呼叫者
+func assertEqual(t *testing.T, got, want int) {
+    t.Helper()  // ← 關鍵：錯誤訊息會指向呼叫 assertEqual 的那一行
+    if got != want {
+        t.Errorf("got %d, want %d", got, want)
+    }
+}
+
+// TestMain：整個 package 的 setup/teardown
+func TestMain(m *testing.M) {
+    // setup（例如啟動測試 DB）
+    setup()
+
+    code := m.Run()  // 執行所有測試
+
+    // teardown（例如清理測試 DB）
+    teardown()
+    os.Exit(code)
+}
+</code></pre>
+<h2 id="4-benchmark"><a class="header" href="#4-benchmark">4. Benchmark</a></h2>
+<pre><code class="language-go">func BenchmarkAdd(b *testing.B) {
+    for i := 0; i &lt; b.N; i++ {
+        Add(2, 3)
+    }
+}
+
+// benchmark 含記憶體分配統計
+func BenchmarkSliceAppend(b *testing.B) {
+    b.ReportAllocs()
+    for i := 0; i &lt; b.N; i++ {
+        s := make([]int, 0)
+        for j := 0; j &lt; 1000; j++ {
+            s = append(s, j)
+        }
+    }
+}
+
+// 比較不同實作
+func BenchmarkSlicePreAlloc(b *testing.B) {
+    b.ReportAllocs()
+    for i := 0; i &lt; b.N; i++ {
+        s := make([]int, 0, 1000)
+        for j := 0; j &lt; 1000; j++ {
+            s = append(s, j)
+        }
+    }
+}
+</code></pre>
+<pre><code class="language-bash">go test -bench=. -benchmem ./...
+go test -bench=BenchmarkSlice -benchtime=3s -count=5 ./...
+
+# 輸出範例
+# BenchmarkSliceAppend-8       54321   21345 ns/op   25208 B/op   11 allocs/op
+# BenchmarkSlicePreAlloc-8    198765    6012 ns/op    8192 B/op    1 allocs/op
+#                                                                  ↑ 預先分配只需 1 次
+</code></pre>
+<h3 id="搭配-benchstat-分析"><a class="header" href="#搭配-benchstat-分析">搭配 benchstat 分析</a></h3>
+<pre><code class="language-bash">go install golang.org/x/perf/cmd/benchstat@latest
+
+# 比較兩次 benchmark 結果
+go test -bench=. -count=10 ./... &gt; old.txt
+# ... 做修改 ...
+go test -bench=. -count=10 ./... &gt; new.txt
+benchstat old.txt new.txt
+</code></pre>
+<h2 id="5-fuzzing模糊測試go-118"><a class="header" href="#5-fuzzing模糊測試go-118">5. Fuzzing（模糊測試，Go 1.18+）</a></h2>
+<p>讓 Go 自動產生隨機輸入，找出邊界條件的 bug：</p>
+<pre><code class="language-go">func FuzzParseJSON(f *testing.F) {
+    // 提供種子語料
+    f.Add([]byte(`{"name":"test"}`))
+    f.Add([]byte(`{}`))
+    f.Add([]byte(`[]`))
+
+    f.Fuzz(func(t *testing.T, data []byte) {
+        var result map[string]any
+        err := json.Unmarshal(data, &amp;result)
+        if err != nil {
+            return  // 預期會有解析失敗
+        }
+        // 驗證 Marshal → Unmarshal 的 round-trip
+        encoded, err := json.Marshal(result)
+        if err != nil {
+            t.Fatalf("Marshal failed: %v", err)
+        }
+        var result2 map[string]any
+        if err := json.Unmarshal(encoded, &amp;result2); err != nil {
+            t.Fatalf("Round-trip failed: %v", err)
+        }
+    })
+}
+</code></pre>
+<pre><code class="language-bash">go test -fuzz=FuzzParseJSON -fuzztime=30s ./...
+</code></pre>
+<h2 id="6-測試覆蓋率"><a class="header" href="#6-測試覆蓋率">6. 測試覆蓋率</a></h2>
+<pre><code class="language-bash">go test -cover ./...                          # 顯示覆蓋率百分比
+go test -coverprofile=coverage.out ./...      # 產生覆蓋率檔案
+go tool cover -html=coverage.out              # 瀏覽器查看（綠色=覆蓋，紅色=未覆蓋）
+go tool cover -func=coverage.out              # 終端顯示每個函數的覆蓋率
+</code></pre>
+<h2 id="測試最佳實踐"><a class="header" href="#測試最佳實踐">測試最佳實踐</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>原則</th><th>說明</th></tr></thead><tbody>
+<tr><td>測試行為，不是實作</td><td>測試公開 API 的輸出，不要測試內部細節</td></tr>
+<tr><td>一個測試一個邏輯</td><td>避免一個 TestXxx 裡測太多東西</td></tr>
+<tr><td>Table-Driven</td><td>結構化、容易增加案例、名稱清晰</td></tr>
+<tr><td>測試命名</td><td><code>TestFuncName_Condition_Expected</code></td></tr>
+<tr><td>避免 mock 過度</td><td>優先用真實依賴，只在必要時 mock</td></tr>
+<tr><td>測試檔案放同 package</td><td><code>_test.go</code> 放在被測試的 package 裡</td></tr>
+<tr><td>黑盒測試</td><td>用 <code>package foo_test</code> 測試公開介面</td></tr>
+</tbody></table>
+</div>
+<hr />
 <h1 id="附錄go-開發常用工具整理"><a class="header" href="#附錄go-開發常用工具整理">附錄：Go 開發常用工具整理</a></h1>
 <h2 id="工具總覽"><a class="header" href="#工具總覽">工具總覽</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>工具</th><th>功能</th><th>一句話說明</th></tr></thead><tbody>
@@ -1637,10 +3027,10 @@ export GOMAXPROCS=4                # 限制邏輯處理器數量
 <p><strong>推薦練習順序：</strong> 1 → 4 → 3 → 2 → 5（由易到難）</p>
 <hr />
 <h1 id="總結"><a class="header" href="#總結">總結</a></h1>
-<p>本文從四個維度完整涵蓋了 Go 語言的進階實戰知識：</p>
+<p>本文從五個維度完整涵蓋了 Go 語言的進階實戰知識：</p>
 <ol>
 <li>
-<p><strong>語言設計哲學</strong>：Go 刻意捨棄了 C++ 的複雜機制（繼承、例外處理、運算子重載），換來更簡單、更不容易出錯的程式碼。核心轉換心法是「小 interface + 組合 + 明確錯誤處理」。</p>
+<p><strong>語言設計哲學</strong>：Go 刻意捨棄了 C++ 的複雜機制（繼承、例外處理、運算子重載），換來更簡單、更不容易出錯的程式碼。核心轉換心法是「小 interface + 組合 + 明確錯誤處理」。本部分也涵蓋了泛型、error wrapping、defer/panic/recover、slice/map 陷阱、struct embedding 等進階語言特性。</p>
 </li>
 <li>
 <p><strong>觀察與追蹤能力</strong>：五種互補的函數呼叫追蹤方法——go-callvis 看架構、tracer.Enter() 看執行路徑、eBPF 做生產環境追蹤、pprof 做效能分析、runtime/trace 看並發行為。工具選擇的關鍵在於「你想回答什麼問題」。</p>
@@ -1650,6 +3040,9 @@ export GOMAXPROCS=4                # 限制邏輯處理器數量
 </li>
 <li>
 <p><strong>生產環境實務</strong>：Data Race、Goroutine Leak、Connection Leak、FD 耗盡、Channel 死鎖——這些都是高併發場景下的常客。防治的核心原則是：永遠加 timeout、永遠有退出機制、永遠用工具驗證而非靠肉眼判斷。</p>
+</li>
+<li>
+<p><strong>測試與 Benchmark</strong>：Go 內建的 testing 套件是一等公民。Table-Driven Tests 是社群標準、Benchmark 搭配 pprof 做效能分析、Fuzzing 自動找邊界 bug、覆蓋率工具確保程式碼品質。</p>
 </li>
 </ol>
 <p><strong>一句話總結：</strong> Go 的簡單不是限制，而是設計。用好它的工具鏈，遵循「先正確、再觀察、後優化」的流程，就能寫出既簡潔又高效的程式碼。</p>
