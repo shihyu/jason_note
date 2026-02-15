@@ -61,6 +61,142 @@ func (d Dog) Speak() {
 
 ---
 
+### 1.1 `type X struct` vs `type X interface` — 兩種完全不同的東西
+
+Go 裡 `type` 關鍵字後面可以接 `struct` 或 `interface`，雖然語法長得像，但意思完全不同。用餐廳來比喻：
+
+```text
+type Chef struct { ... }        ← 定義「廚師」這個人（有名字、有技能、佔空間）
+type CookAbility interface { .. } ← 定義「會做菜」這個標準（不管你是誰，會就算）
+```
+
+### struct：我是什麼（有資料、有實體）
+
+```go
+type Dog struct {
+    Name   string
+    Age    int
+    Breed  string
+}
+
+func (d Dog) Speak() string {
+    return d.Name + " says woof!"
+}
+
+func (d Dog) Info() string {
+    return fmt.Sprintf("%s (%s, %d歲)", d.Name, d.Breed, d.Age)
+}
+```
+
+- struct 定義的是**具體的東西**——它有哪些欄位、佔多少記憶體
+- 你可以建立實例：`d := Dog{Name: "Rex", Age: 3, Breed: "柴犬"}`
+- method 是「後來掛上去的能力」
+
+### interface：我能做什麼（只有行為契約、沒有資料）
+
+```go
+type Speaker interface {
+    Speak() string
+}
+
+type Describer interface {
+    Info() string
+}
+```
+
+- interface 定義的是**能力清單**——你能做什麼事
+- 你**不能**建立 interface 的實例：`s := Speaker{}` ← 編譯錯誤
+- 沒有欄位、沒有實作，只有方法簽名
+
+### 它們怎麼配合？
+
+```go
+// Dog 是 struct（具體實體）
+d := Dog{Name: "Rex", Age: 3, Breed: "柴犬"}
+
+// Speaker 是 interface（能力標準）
+var s Speaker = d   // ✅ Dog 有 Speak() → 自動符合 Speaker
+s.Speak()           // "Rex says woof!"
+
+// Describer 也是 interface
+var desc Describer = d  // ✅ Dog 有 Info() → 自動符合 Describer
+desc.Info()             // "Rex (柴犬, 3歲)"
+```
+
+### 用同一個 interface 接不同 struct
+
+這才是 interface 真正的威力——**不同的東西，同一個標準**：
+
+```go
+type Cat struct{ Name string }
+func (c Cat) Speak() string { return c.Name + " says meow!" }
+
+type Parrot struct{ Name string }
+func (p Parrot) Speak() string { return p.Name + " says hello!" }
+
+// 三種完全不同的 struct，都符合 Speaker
+animals := []Speaker{
+    Dog{Name: "Rex"},
+    Cat{Name: "Mimi"},
+    Parrot{Name: "Polly"},
+}
+
+for _, a := range animals {
+    fmt.Println(a.Speak())
+}
+// Rex says woof!
+// Mimi says meow!
+// Polly says hello!
+```
+
+### 完整對照表
+
+```text
+┌──────────────────┬───────────────────────┬───────────────────────┐
+│                  │   type X struct       │   type X interface    │
+├──────────────────┼───────────────────────┼───────────────────────┤
+│ 定義的是          │ 資料結構（是什麼）     │ 行為契約（能做什麼）   │
+├──────────────────┼───────────────────────┼───────────────────────┤
+│ 有欄位嗎          │ ✅ 有                 │ ❌ 沒有               │
+├──────────────────┼───────────────────────┼───────────────────────┤
+│ 有方法實作嗎       │ ✅ 透過 receiver 掛   │ ❌ 只有方法簽名        │
+├──────────────────┼───────────────────────┼───────────────────────┤
+│ 能建立實例嗎       │ ✅ Dog{Name: "Rex"}  │ ❌ 不行               │
+├──────────────────┼───────────────────────┼───────────────────────┤
+│ 佔記憶體嗎        │ ✅ 欄位大小之和       │ ❌ 本身不佔            │
+│                  │                       │  （裝東西時才佔）     │
+├──────────────────┼───────────────────────┼───────────────────────┤
+│ C++ 對應概念      │ class（有成員變數）   │ 純虛基類 / concept    │
+├──────────────────┼───────────────────────┼───────────────────────┤
+│ 關係             │ 「我是一隻狗」         │ 「我會說話」          │
+├──────────────────┼───────────────────────┼───────────────────────┤
+│ 白話             │ 設計圖 + 材料清單      │ 資格考試的考題        │
+└──────────────────┴───────────────────────┴───────────────────────┘
+```
+
+### 常見錯誤
+
+```go
+// ❌ 把 interface 當 struct 用
+type Speaker interface {
+    Name string      // 編譯錯誤！interface 不能有欄位
+    Speak() string
+}
+
+// ❌ 把 struct 當 interface 用
+func process(d Dog) {}     // 只能接受 Dog
+func process(s Speaker) {} // ✅ 能接受任何會 Speak 的東西
+
+// ❌ 搞混「實作」和「宣告」
+type Speaker interface {
+    Speak() string { return "hello" }  // 編譯錯誤！interface 不能有實作
+}
+```
+
+> **一句話記憶：** `struct` 是名詞（我是什麼），`interface` 是動詞（我能做什麼）。struct 裝資料，interface 定標準。
+
+---
+
 ## 2. method 其實就是特殊語法的 function
 
 ```go
