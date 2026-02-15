@@ -558,15 +558,257 @@ go tool trace trace.out
 
 ### 真實專案驗證：gogcli
 
-使用 [steipete/gogcli](https://github.com/steipete/gogcli)（506 個 Go 檔、973 個函數）驗證五種方法全部 PASS。
+使用 [steipete/gogcli](https://github.com/steipete/gogcli)（506 個 Go 檔、973 個函數）實際驗證五種方法，以下為完整可重現的指令與輸出。
+
+#### 環境準備
+
+```bash
+git clone https://github.com/steipete/gogcli.git /tmp/gogcli
+cd /tmp/gogcli
+go build -o ./bin/gog ./cmd/gog/
+./bin/gog version
+# → 0.12.0-dev
+```
+
+#### 方法一驗證：go-callvis 靜態呼叫圖
+
+```bash
+cd /tmp/gogcli
+
+# 聚焦 main package（產出 4.9KB SVG，秒級完成）
+go-callvis -file gogcli-main -format svg -nostd \
+  -focus "github.com/steipete/gogcli/cmd/gog" \
+  -limit "github.com/steipete/gogcli" \
+  ./cmd/gog/
+# → writing dot output
+# → converting dot to svg
+# → 產出 gogcli-main.svg (4.9KB)
+
+# 聚焦 internal/cmd package（更完整，但 SVG 較大）
+go-callvis -file gogcli-cmd -format svg -nostd \
+  -focus "github.com/steipete/gogcli/internal/cmd" \
+  -limit "github.com/steipete/gogcli" \
+  ./cmd/gog/
+# → 產出 gogcli-cmd.svg (4.3MB)
+```
+
+> **踩坑**：不加 `-focus`/`-limit` 時，中間的 `.gv` 檔達數十 MB，graphviz 渲染卡死。大專案**必須**縮小範圍。
+
+#### 方法二驗證：tracer.Enter() 動態追蹤
+
+**步驟 1**：在專案中建立 tracer 套件（複製上面的 `tracer/tracer.go`）
+
+```bash
+mkdir -p internal/tracer
+# 將 tracer.go 放入 internal/tracer/
+```
+
+**步驟 2**：在關鍵函數加入 `defer tracer.Enter()()`
+
+```go
+// cmd/gog/main.go
+func main() {
+    defer tracer.PrintTrace()  // 程式結束時印出追蹤結果
+    defer tracer.Enter()()     // 追蹤 main
+    if err := cmd.Execute(os.Args[1:]); err != nil {
+        os.Exit(cmd.ExitCode(err))
+    }
+}
+
+// internal/cmd/root.go
+func Execute(args []string) (err error) {
+    defer tracer.Enter()()  // ← 加這一行
+    // ...
+}
+
+// internal/cmd/version.go
+func (c *VersionCmd) Run(ctx context.Context) error {
+    defer tracer.Enter()()  // ← 加這一行
+    // ...
+}
+```
+
+**步驟 3**：執行並觀察
+
+```bash
+go build -o ./bin/gog-traced ./cmd/gog/
+./bin/gog-traced version
+```
+
+**實際輸出**：
+
+```
+0.12.0-dev
+======================================================================
+  函數執行路徑（Runtime Function Call Trace）
+======================================================================
+  ┌─ main.main  ← called by runtime.main
+  │ ┌─ cmd.Execute  ← called by main.main
+  │ │ ┌─ cmd.rewriteDesirePathArgs  ← called by cmd.Execute
+  │ │ └─ return cmd.rewriteDesirePathArgs [2.213µs]
+  │ │ ┌─ cmd.newParser  ← called by cmd.Execute
+  │ │ │ ┌─ cmd.VersionString  ← called by cmd.newParser
+  │ │ │ └─ return cmd.VersionString [848ns]
+  │ │ └─ return cmd.newParser [44.659ms]
+  │ │ │ │ │ │ │ │ ┌─ cmd.(*VersionCmd).Run  ← called by reflect.Value.call
+  │ │ │ │ │ │ │ │ │ ┌─ cmd.VersionString  ← called by cmd.(*VersionCmd).Run
+  │ │ │ │ │ │ │ │ │ └─ return cmd.VersionString [416ns]
+  │ │ │ │ │ │ │ │ └─ return cmd.(*VersionCmd).Run [17.204µs]
+  │ └─ return cmd.Execute [49.370ms]
+  └─ return main.main [49.392ms]
+======================================================================
+```
+
+> 可以清楚看到：`main.main` → `cmd.Execute` → `cmd.newParser`（耗時最多，44ms）→ Kong 框架透過 `reflect.Value.call` 呼叫 `VersionCmd.Run`。
+
+#### 方法三驗證：eBPF uprobe 非侵入式追蹤
+
+```bash
+cd /tmp/gogcli
+
+# 1. 關閉 inlining 編譯
+go build -gcflags='-l' -o ./bin/gog-noinline ./cmd/gog/
+
+# 2. 查看可追蹤的函數符號
+go tool nm ./bin/gog-noinline | grep ' T ' | grep -E 'main\.|cmd\.(Execute|newParser|VersionString)'
+# → d1fd60 T github.com/steipete/gogcli/internal/cmd.Execute
+# → d42fa0 T github.com/steipete/gogcli/internal/cmd.VersionString
+# → d21540 T github.com/steipete/gogcli/internal/cmd.newParser
+# → d52b40 T main.main
+
+# 3. 寫 bpftrace 腳本 trace-gogcli.bt
+cat > trace-gogcli.bt << 'EOF'
+#!/usr/bin/env bpftrace
+BEGIN {
+    printf("%-12s %-6s %s\n", "TIME(µs)", "TID", "FUNCTION");
+    printf("─────────────────────────────────────\n");
+}
+uprobe:./bin/gog-noinline:main.main
+{ printf("%-12lu %-6d → main.main\n", elapsed/1000, tid); }
+uprobe:./bin/gog-noinline:"github.com/steipete/gogcli/internal/cmd.Execute"
+{ printf("%-12lu %-6d   → cmd.Execute\n", elapsed/1000, tid); }
+uprobe:./bin/gog-noinline:"github.com/steipete/gogcli/internal/cmd.rewriteDesirePathArgs"
+{ printf("%-12lu %-6d     → cmd.rewriteDesirePathArgs\n", elapsed/1000, tid); }
+uprobe:./bin/gog-noinline:"github.com/steipete/gogcli/internal/cmd.newParser"
+{ printf("%-12lu %-6d     → cmd.newParser\n", elapsed/1000, tid); }
+uprobe:./bin/gog-noinline:"github.com/steipete/gogcli/internal/cmd.VersionString"
+{ printf("%-12lu %-6d       → cmd.VersionString\n", elapsed/1000, tid); }
+EOF
+
+# 4. 執行（需要 root）
+sudo bpftrace trace-gogcli.bt -c './bin/gog-noinline version'
+```
+
+**實際輸出**：
+
+```
+Attaching 6 probes...
+TIME(µs)    TID    FUNCTION
+─────────────────────────────────────
+59793        2380773 → main.main
+59816        2380773   → cmd.Execute
+59819        2380773     → cmd.rewriteDesirePathArgs
+59844        2380773     → cmd.newParser
+59856        2380773       → cmd.VersionString
+0.12.0-dev
+112488       2380787       → cmd.VersionString
+```
+
+> **注意**：VersionString 出現兩次——第一次在 `newParser` 中設定版本字串給 Kong，第二次在 `VersionCmd.Run` 中印出版本。第二次的 TID 不同（2380787），代表 Kong 框架在不同 goroutine 中執行了指令。
+
+#### 方法四驗證：pprof CPU profiling
+
+```bash
+cd /tmp/gogcli
+
+# 對 tracking 套件跑 5 次測試，產生 CPU profile
+go test -cpuprofile=cpu.prof -count=5 ./internal/tracking/...
+# → ok  github.com/steipete/gogcli/internal/tracking  0.618s
+
+# 查看熱點函數
+go tool pprof -top -nodecount=10 cpu.prof
+```
+
+**實際輸出**：
+
+```
+Type: cpu
+Duration: 603.41ms, Total samples = 430ms (71.26%)
+Showing top 10 nodes out of 116
+      flat  flat%   sum%        cum   cum%
+     140ms 32.56% 32.56%      140ms 32.56%  crypto/internal/fips140/sha256.blockSHANI
+      70ms 16.28% 48.84%       70ms 16.28%  internal/runtime/syscall.Syscall6
+      50ms 11.63% 60.47%      220ms 51.16%  crypto/internal/fips140/sha256.(*Digest).checkSum
+      30ms  6.98% 67.44%      190ms 44.19%  crypto/internal/fips140/sha256.(*Digest).Write
+      30ms  6.98% 74.42%       30ms  6.98%  runtime.memmove
+      10ms  2.33% 76.74%      250ms 58.14%  crypto/internal/fips140/sha256.(*Digest).Sum
+      10ms  2.33% 79.07%       20ms  4.65%  crypto/internal/fips140/sha256.(*Digest).UnmarshalBinary
+      10ms  2.33% 81.40%       10ms  2.33%  internal/poll.runtime_pollOpen
+      10ms  2.33% 83.72%       10ms  2.33%  runtime.duffcopy
+      10ms  2.33% 86.05%       10ms  2.33%  runtime.forEachG
+```
+
+> CPU 熱點集中在 SHA256（tracking 套件用 hash 做檔案追蹤），這在實際專案中很常見。
+
+```bash
+# 產生 SVG 呼叫圖
+go tool pprof -svg -output=gogcli-pprof.svg cpu.prof
+# → 產出 gogcli-pprof.svg (127KB)
+
+# 互動式 Web UI（含火焰圖）
+go tool pprof -http=:8080 cpu.prof
+```
+
+#### 方法五驗證：runtime/trace 時間線
+
+```bash
+cd /tmp/gogcli
+
+# 產生 trace 檔案
+go test -trace=trace.out ./internal/tracking/...
+# → ok  github.com/steipete/gogcli/internal/tracking  0.078s
+
+ls -lh trace.out
+# → 112K trace.out
+
+# 查看 trace 事件統計
+go tool trace -d=footprint trace.out
+```
+
+**實際輸出**（事件分布）：
+
+```
+Event                Bytes  %       Count  %
+Stack                76897  67.56%  726    12.89%
+String               14938  13.12%  405    7.19%
+HeapAlloc            9298   8.17%   1365   24.23%
+GoSyscallBegin       5852   5.14%   1074   19.06%
+GoSyscallEnd         2308   2.03%   1074   19.06%
+GoStart              834    0.73%   205    3.64%
+GoBlock              649    0.57%   150    2.66%
+GoUnblock            626    0.55%   119    2.11%
+GoCreate             354    0.31%   66     1.17%
+```
+
+> 可以看到：66 個 goroutine 被建立、1074 次 syscall、1365 次 heap 分配。這些數據對應 tracking 套件讀檔計算 hash 的行為。
+
+```bash
+# 用瀏覽器檢視完整時間線
+go tool trace trace.out
+# → 打開 http://localhost:xxxx
+# → View trace：看 goroutine 排程時間線
+# → Goroutine analysis：看各 goroutine 的狀態分布
+```
 
 ### 踩坑記錄
 
 | 問題 | 原因 | 解法 |
 |------|------|------|
 | go-callvis `internal error: package without types` | go-callvis 版本太舊 | `go install github.com/ofabry/go-callvis@latest` |
-| go-callvis 大專案渲染卡死 | `.gv` 檔 33MB，graphviz 吃不消 | 加 `-focus` / `-limit` 過濾 |
-| eBPF `uretprobe` 導致 Go 程式 crash | goroutine stack 機制衝突 | 只用 `uprobe`，不用 `uretprobe` |
+| go-callvis 大專案渲染卡死 | `.gv` 檔達數十 MB，graphviz 吃不消 | 加 `-focus` / `-limit` 過濾，先產小範圍 SVG |
+| eBPF `uretprobe` 導致 Go 程式 crash | goroutine stack 機制與 uretprobe 衝突 | 只用 `uprobe`，不用 `uretprobe` |
+| bpftrace 看到同一函數不同 TID | Kong 框架在內部 goroutine 執行指令 | 正常行為，觀察 TID 可發現並行模式 |
+| pprof 取樣數據少 | 測試執行時間太短 | 加 `-count=5` 或 `-benchtime=3s` 增加取樣 |
 | Delve `dlv trace` crash | Go 版本和 Delve 版本不匹配 | 確保版本一致，或改用 eBPF |
 
 ---
