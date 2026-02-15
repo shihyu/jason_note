@@ -610,12 +610,218 @@ go tool trace trace.out
 └─ goroutine 排程、鎖競爭 → runtime/trace
 </code></pre>
 <h3 id="真實專案驗證gogcli"><a class="header" href="#真實專案驗證gogcli">真實專案驗證：gogcli</a></h3>
-<p>使用 <a href="https://github.com/steipete/gogcli">steipete/gogcli</a>（506 個 Go 檔、973 個函數）驗證五種方法全部 PASS。</p>
+<p>使用 <a href="https://github.com/steipete/gogcli">steipete/gogcli</a>（506 個 Go 檔、973 個函數）實際驗證五種方法，以下為完整可重現的指令與輸出。</p>
+<h4 id="環境準備"><a class="header" href="#環境準備">環境準備</a></h4>
+<pre><code class="language-bash">git clone https://github.com/steipete/gogcli.git /tmp/gogcli
+cd /tmp/gogcli
+go build -o ./bin/gog ./cmd/gog/
+./bin/gog version
+# → 0.12.0-dev
+</code></pre>
+<h4 id="方法一驗證go-callvis-靜態呼叫圖"><a class="header" href="#方法一驗證go-callvis-靜態呼叫圖">方法一驗證：go-callvis 靜態呼叫圖</a></h4>
+<pre><code class="language-bash">cd /tmp/gogcli
+
+# 聚焦 main package（產出 4.9KB SVG，秒級完成）
+go-callvis -file gogcli-main -format svg -nostd \
+  -focus "github.com/steipete/gogcli/cmd/gog" \
+  -limit "github.com/steipete/gogcli" \
+  ./cmd/gog/
+# → writing dot output
+# → converting dot to svg
+# → 產出 gogcli-main.svg (4.9KB)
+
+# 聚焦 internal/cmd package（更完整，但 SVG 較大）
+go-callvis -file gogcli-cmd -format svg -nostd \
+  -focus "github.com/steipete/gogcli/internal/cmd" \
+  -limit "github.com/steipete/gogcli" \
+  ./cmd/gog/
+# → 產出 gogcli-cmd.svg (4.3MB)
+</code></pre>
+<blockquote>
+<p><strong>踩坑</strong>：不加 <code>-focus</code>/<code>-limit</code> 時，中間的 <code>.gv</code> 檔達數十 MB，graphviz 渲染卡死。大專案<strong>必須</strong>縮小範圍。</p>
+</blockquote>
+<h4 id="方法二驗證tracerenter-動態追蹤"><a class="header" href="#方法二驗證tracerenter-動態追蹤">方法二驗證：tracer.Enter() 動態追蹤</a></h4>
+<p><strong>步驟 1</strong>：在專案中建立 tracer 套件（複製上面的 <code>tracer/tracer.go</code>）</p>
+<pre><code class="language-bash">mkdir -p internal/tracer
+# 將 tracer.go 放入 internal/tracer/
+</code></pre>
+<p><strong>步驟 2</strong>：在關鍵函數加入 <code>defer tracer.Enter()()</code></p>
+<pre><code class="language-go">// cmd/gog/main.go
+func main() {
+    defer tracer.PrintTrace()  // 程式結束時印出追蹤結果
+    defer tracer.Enter()()     // 追蹤 main
+    if err := cmd.Execute(os.Args[1:]); err != nil {
+        os.Exit(cmd.ExitCode(err))
+    }
+}
+
+// internal/cmd/root.go
+func Execute(args []string) (err error) {
+    defer tracer.Enter()()  // ← 加這一行
+    // ...
+}
+
+// internal/cmd/version.go
+func (c *VersionCmd) Run(ctx context.Context) error {
+    defer tracer.Enter()()  // ← 加這一行
+    // ...
+}
+</code></pre>
+<p><strong>步驟 3</strong>：執行並觀察</p>
+<pre><code class="language-bash">go build -o ./bin/gog-traced ./cmd/gog/
+./bin/gog-traced version
+</code></pre>
+<p><strong>實際輸出</strong>：</p>
+<pre><code>0.12.0-dev
+======================================================================
+  函數執行路徑（Runtime Function Call Trace）
+======================================================================
+  ┌─ main.main  ← called by runtime.main
+  │ ┌─ cmd.Execute  ← called by main.main
+  │ │ ┌─ cmd.rewriteDesirePathArgs  ← called by cmd.Execute
+  │ │ └─ return cmd.rewriteDesirePathArgs [2.213µs]
+  │ │ ┌─ cmd.newParser  ← called by cmd.Execute
+  │ │ │ ┌─ cmd.VersionString  ← called by cmd.newParser
+  │ │ │ └─ return cmd.VersionString [848ns]
+  │ │ └─ return cmd.newParser [44.659ms]
+  │ │ │ │ │ │ │ │ ┌─ cmd.(*VersionCmd).Run  ← called by reflect.Value.call
+  │ │ │ │ │ │ │ │ │ ┌─ cmd.VersionString  ← called by cmd.(*VersionCmd).Run
+  │ │ │ │ │ │ │ │ │ └─ return cmd.VersionString [416ns]
+  │ │ │ │ │ │ │ │ └─ return cmd.(*VersionCmd).Run [17.204µs]
+  │ └─ return cmd.Execute [49.370ms]
+  └─ return main.main [49.392ms]
+======================================================================
+</code></pre>
+<blockquote>
+<p>可以清楚看到：<code>main.main</code> → <code>cmd.Execute</code> → <code>cmd.newParser</code>（耗時最多，44ms）→ Kong 框架透過 <code>reflect.Value.call</code> 呼叫 <code>VersionCmd.Run</code>。</p>
+</blockquote>
+<h4 id="方法三驗證ebpf-uprobe-非侵入式追蹤"><a class="header" href="#方法三驗證ebpf-uprobe-非侵入式追蹤">方法三驗證：eBPF uprobe 非侵入式追蹤</a></h4>
+<pre><code class="language-bash">cd /tmp/gogcli
+
+# 1. 關閉 inlining 編譯
+go build -gcflags='-l' -o ./bin/gog-noinline ./cmd/gog/
+
+# 2. 查看可追蹤的函數符號
+go tool nm ./bin/gog-noinline | grep ' T ' | grep -E 'main\.|cmd\.(Execute|newParser|VersionString)'
+# → d1fd60 T github.com/steipete/gogcli/internal/cmd.Execute
+# → d42fa0 T github.com/steipete/gogcli/internal/cmd.VersionString
+# → d21540 T github.com/steipete/gogcli/internal/cmd.newParser
+# → d52b40 T main.main
+
+# 3. 寫 bpftrace 腳本 trace-gogcli.bt
+cat &gt; trace-gogcli.bt &lt;&lt; 'EOF'
+#!/usr/bin/env bpftrace
+BEGIN {
+    printf("%-12s %-6s %s\n", "TIME(µs)", "TID", "FUNCTION");
+    printf("─────────────────────────────────────\n");
+}
+uprobe:./bin/gog-noinline:main.main
+{ printf("%-12lu %-6d → main.main\n", elapsed/1000, tid); }
+uprobe:./bin/gog-noinline:"github.com/steipete/gogcli/internal/cmd.Execute"
+{ printf("%-12lu %-6d   → cmd.Execute\n", elapsed/1000, tid); }
+uprobe:./bin/gog-noinline:"github.com/steipete/gogcli/internal/cmd.rewriteDesirePathArgs"
+{ printf("%-12lu %-6d     → cmd.rewriteDesirePathArgs\n", elapsed/1000, tid); }
+uprobe:./bin/gog-noinline:"github.com/steipete/gogcli/internal/cmd.newParser"
+{ printf("%-12lu %-6d     → cmd.newParser\n", elapsed/1000, tid); }
+uprobe:./bin/gog-noinline:"github.com/steipete/gogcli/internal/cmd.VersionString"
+{ printf("%-12lu %-6d       → cmd.VersionString\n", elapsed/1000, tid); }
+EOF
+
+# 4. 執行（需要 root）
+sudo bpftrace trace-gogcli.bt -c './bin/gog-noinline version'
+</code></pre>
+<p><strong>實際輸出</strong>：</p>
+<pre><code>Attaching 6 probes...
+TIME(µs)    TID    FUNCTION
+─────────────────────────────────────
+59793        2380773 → main.main
+59816        2380773   → cmd.Execute
+59819        2380773     → cmd.rewriteDesirePathArgs
+59844        2380773     → cmd.newParser
+59856        2380773       → cmd.VersionString
+0.12.0-dev
+112488       2380787       → cmd.VersionString
+</code></pre>
+<blockquote>
+<p><strong>注意</strong>：VersionString 出現兩次——第一次在 <code>newParser</code> 中設定版本字串給 Kong，第二次在 <code>VersionCmd.Run</code> 中印出版本。第二次的 TID 不同（2380787），代表 Kong 框架在不同 goroutine 中執行了指令。</p>
+</blockquote>
+<h4 id="方法四驗證pprof-cpu-profiling"><a class="header" href="#方法四驗證pprof-cpu-profiling">方法四驗證：pprof CPU profiling</a></h4>
+<pre><code class="language-bash">cd /tmp/gogcli
+
+# 對 tracking 套件跑 5 次測試，產生 CPU profile
+go test -cpuprofile=cpu.prof -count=5 ./internal/tracking/...
+# → ok  github.com/steipete/gogcli/internal/tracking  0.618s
+
+# 查看熱點函數
+go tool pprof -top -nodecount=10 cpu.prof
+</code></pre>
+<p><strong>實際輸出</strong>：</p>
+<pre><code>Type: cpu
+Duration: 603.41ms, Total samples = 430ms (71.26%)
+Showing top 10 nodes out of 116
+      flat  flat%   sum%        cum   cum%
+     140ms 32.56% 32.56%      140ms 32.56%  crypto/internal/fips140/sha256.blockSHANI
+      70ms 16.28% 48.84%       70ms 16.28%  internal/runtime/syscall.Syscall6
+      50ms 11.63% 60.47%      220ms 51.16%  crypto/internal/fips140/sha256.(*Digest).checkSum
+      30ms  6.98% 67.44%      190ms 44.19%  crypto/internal/fips140/sha256.(*Digest).Write
+      30ms  6.98% 74.42%       30ms  6.98%  runtime.memmove
+      10ms  2.33% 76.74%      250ms 58.14%  crypto/internal/fips140/sha256.(*Digest).Sum
+      10ms  2.33% 79.07%       20ms  4.65%  crypto/internal/fips140/sha256.(*Digest).UnmarshalBinary
+      10ms  2.33% 81.40%       10ms  2.33%  internal/poll.runtime_pollOpen
+      10ms  2.33% 83.72%       10ms  2.33%  runtime.duffcopy
+      10ms  2.33% 86.05%       10ms  2.33%  runtime.forEachG
+</code></pre>
+<blockquote>
+<p>CPU 熱點集中在 SHA256（tracking 套件用 hash 做檔案追蹤），這在實際專案中很常見。</p>
+</blockquote>
+<pre><code class="language-bash"># 產生 SVG 呼叫圖
+go tool pprof -svg -output=gogcli-pprof.svg cpu.prof
+# → 產出 gogcli-pprof.svg (127KB)
+
+# 互動式 Web UI（含火焰圖）
+go tool pprof -http=:8080 cpu.prof
+</code></pre>
+<h4 id="方法五驗證runtimetrace-時間線"><a class="header" href="#方法五驗證runtimetrace-時間線">方法五驗證：runtime/trace 時間線</a></h4>
+<pre><code class="language-bash">cd /tmp/gogcli
+
+# 產生 trace 檔案
+go test -trace=trace.out ./internal/tracking/...
+# → ok  github.com/steipete/gogcli/internal/tracking  0.078s
+
+ls -lh trace.out
+# → 112K trace.out
+
+# 查看 trace 事件統計
+go tool trace -d=footprint trace.out
+</code></pre>
+<p><strong>實際輸出</strong>（事件分布）：</p>
+<pre><code>Event                Bytes  %       Count  %
+Stack                76897  67.56%  726    12.89%
+String               14938  13.12%  405    7.19%
+HeapAlloc            9298   8.17%   1365   24.23%
+GoSyscallBegin       5852   5.14%   1074   19.06%
+GoSyscallEnd         2308   2.03%   1074   19.06%
+GoStart              834    0.73%   205    3.64%
+GoBlock              649    0.57%   150    2.66%
+GoUnblock            626    0.55%   119    2.11%
+GoCreate             354    0.31%   66     1.17%
+</code></pre>
+<blockquote>
+<p>可以看到：66 個 goroutine 被建立、1074 次 syscall、1365 次 heap 分配。這些數據對應 tracking 套件讀檔計算 hash 的行為。</p>
+</blockquote>
+<pre><code class="language-bash"># 用瀏覽器檢視完整時間線
+go tool trace trace.out
+# → 打開 http://localhost:xxxx
+# → View trace：看 goroutine 排程時間線
+# → Goroutine analysis：看各 goroutine 的狀態分布
+</code></pre>
 <h3 id="踩坑記錄"><a class="header" href="#踩坑記錄">踩坑記錄</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>問題</th><th>原因</th><th>解法</th></tr></thead><tbody>
 <tr><td>go-callvis <code>internal error: package without types</code></td><td>go-callvis 版本太舊</td><td><code>go install github.com/ofabry/go-callvis@latest</code></td></tr>
-<tr><td>go-callvis 大專案渲染卡死</td><td><code>.gv</code> 檔 33MB，graphviz 吃不消</td><td>加 <code>-focus</code> / <code>-limit</code> 過濾</td></tr>
-<tr><td>eBPF <code>uretprobe</code> 導致 Go 程式 crash</td><td>goroutine stack 機制衝突</td><td>只用 <code>uprobe</code>，不用 <code>uretprobe</code></td></tr>
+<tr><td>go-callvis 大專案渲染卡死</td><td><code>.gv</code> 檔達數十 MB，graphviz 吃不消</td><td>加 <code>-focus</code> / <code>-limit</code> 過濾，先產小範圍 SVG</td></tr>
+<tr><td>eBPF <code>uretprobe</code> 導致 Go 程式 crash</td><td>goroutine stack 機制與 uretprobe 衝突</td><td>只用 <code>uprobe</code>，不用 <code>uretprobe</code></td></tr>
+<tr><td>bpftrace 看到同一函數不同 TID</td><td>Kong 框架在內部 goroutine 執行指令</td><td>正常行為，觀察 TID 可發現並行模式</td></tr>
+<tr><td>pprof 取樣數據少</td><td>測試執行時間太短</td><td>加 <code>-count=5</code> 或 <code>-benchtime=3s</code> 增加取樣</td></tr>
 <tr><td>Delve <code>dlv trace</code> crash</td><td>Go 版本和 Delve 版本不匹配</td><td>確保版本一致，或改用 eBPF</td></tr>
 </tbody></table>
 </div>
@@ -1311,7 +1517,7 @@ export GOMAXPROCS=4                # 限制邏輯處理器數量
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../go/go_learning_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../go/go.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
@@ -1325,7 +1531,7 @@ export GOMAXPROCS=4                # 限制邏輯處理器數量
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../go/go_learning_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../go/go.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
