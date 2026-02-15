@@ -1,0 +1,61 @@
+#!/usr/bin/env bpftrace
+// 用 eBPF uprobe 追蹤 Go binary 的函數進入（非侵入式，不改程式碼）
+// 用法：sudo bpftrace trace-uprobe-entry.bt -c ./demo-noinline
+
+BEGIN {
+    printf("=== eBPF uprobe: Go 函數執行路徑（非侵入式） ===\n");
+    printf("%-12s %-6s %s\n", "TIME(µs)", "TID", "FUNCTION");
+    printf("---------------------------------------------------\n");
+}
+
+uprobe:./demo-noinline:main.main
+{ printf("%-12lu %-6d → main\n", elapsed/1000, tid); }
+
+uprobe:./demo-noinline:"github.com/demo/go-callgraph-demo/server.NewApp"
+{ printf("%-12lu %-6d   → server.NewApp\n", elapsed/1000, tid); }
+
+uprobe:./demo-noinline:"github.com/demo/go-callgraph-demo/server/middleware.(*Chain).Use"
+{ printf("%-12lu %-6d       → middleware.Chain.Use\n", elapsed/1000, tid); }
+
+uprobe:./demo-noinline:"github.com/demo/go-callgraph-demo/server/middleware.Logger"
+{ printf("%-12lu %-6d         → middleware.Logger\n", elapsed/1000, tid); }
+
+uprobe:./demo-noinline:"github.com/demo/go-callgraph-demo/server/middleware.Auth"
+{ printf("%-12lu %-6d         → middleware.Auth\n", elapsed/1000, tid); }
+
+uprobe:./demo-noinline:"github.com/demo/go-callgraph-demo/server/middleware.RateLimit"
+{ printf("%-12lu %-6d         → middleware.RateLimit\n", elapsed/1000, tid); }
+
+uprobe:./demo-noinline:"github.com/demo/go-callgraph-demo/server.(*App).Init"
+{ printf("%-12lu %-6d   → server.App.Init\n", elapsed/1000, tid); }
+
+uprobe:./demo-noinline:"github.com/demo/go-callgraph-demo/server.(*App).Shutdown"
+{ printf("%-12lu %-6d   → server.App.Shutdown\n", elapsed/1000, tid); }
+
+uprobe:./demo-noinline:"github.com/demo/go-callgraph-demo/service.NewUserService"
+{ printf("%-12lu %-6d   → service.NewUserService\n", elapsed/1000, tid); }
+
+uprobe:./demo-noinline:"github.com/demo/go-callgraph-demo/service.NewOrderService"
+{ printf("%-12lu %-6d   → service.NewOrderService\n", elapsed/1000, tid); }
+
+uprobe:./demo-noinline:"github.com/demo/go-callgraph-demo/service.(*UserService).CreateUser"
+{ printf("%-12lu %-6d   → service.UserService.CreateUser\n", elapsed/1000, tid); }
+
+uprobe:./demo-noinline:"github.com/demo/go-callgraph-demo/util.GenerateID"
+{ printf("%-12lu %-6d     → util.GenerateID\n", elapsed/1000, tid); }
+
+uprobe:./demo-noinline:"github.com/demo/go-callgraph-demo/service.(*OrderService).PlaceOrder"
+{ printf("%-12lu %-6d   → service.OrderService.PlaceOrder\n", elapsed/1000, tid); }
+
+uprobe:./demo-noinline:"github.com/demo/go-callgraph-demo/service.(*OrderService).notifyUser"
+{ printf("%-12lu %-6d       → service.OrderService.notifyUser\n", elapsed/1000, tid); }
+
+uprobe:./demo-noinline:"github.com/demo/go-callgraph-demo/service.(*OrderService).GenerateReport"
+{ printf("%-12lu %-6d   → service.OrderService.GenerateReport\n", elapsed/1000, tid); }
+
+uprobe:./demo-noinline:main.randomProduct
+{ printf("%-12lu %-6d   → main.randomProduct\n", elapsed/1000, tid); }
+
+END {
+    printf("=== 追蹤結束 ===\n");
+}
