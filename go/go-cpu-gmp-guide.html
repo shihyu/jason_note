@@ -255,15 +255,20 @@ G 層:      本地隊列 本地隊列 本地隊列     本地隊列
                       全局隊列: [G1000, G1001, ...]
 </code></pre>
 <h3 id="23-goroutine-特點"><a class="header" href="#23-goroutine-特點">2.3 Goroutine 特點</a></h3>
-<p><strong>對比 OS Thread：</strong></p>
-<div class="table-wrapper"><table><thead><tr><th>特性</th><th>Goroutine</th><th>OS Thread</th></tr></thead><tbody>
-<tr><td>初始堆疊大小</td><td>~2 KB</td><td>1-2 MB</td></tr>
-<tr><td>創建成本</td><td>極低</td><td>較高</td></tr>
-<tr><td>切換成本</td><td>極低（用戶態）</td><td>較高（內核態）</td></tr>
-<tr><td>數量限制</td><td>幾萬～幾十萬</td><td>幾千</td></tr>
-<tr><td>調度器</td><td>Go Runtime</td><td>OS Kernel</td></tr>
+<p><strong>對比 C pthread（OS Thread）：</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>Goroutine</th><th>C pthread（Linux 常見）</th></tr></thead><tbody>
+<tr><td>堆疊大小</td><td>初始約 <code>2KB</code>，可動態增減</td><td>預設通常較大（Linux/glibc 常見 <code>8MB</code>），可調整</td></tr>
+<tr><td>建立與銷毀</td><td>成本較低（主要在 user-space）</td><td>成本較高（需核心參與）</td></tr>
+<tr><td>切換成本</td><td>通常較低</td><td>通常較高</td></tr>
+<tr><td>典型併發規模</td><td>高（常見可到十萬級，受資源限制）</td><td>較低（受每線程資源與排程成本限制）</td></tr>
+<tr><td>調度器</td><td>Go Runtime（G-M-P / M:N）</td><td>OS Kernel（1:1）</td></tr>
 </tbody></table>
 </div>
+<p><strong>補充：</strong></p>
+<ul>
+<li>Goroutine 的建立通常不需要每次進入核心態，但 runtime 需要擴增 M 時仍可能觸發系統呼叫。</li>
+<li>切換時間會受硬體、負載、搶占與快取命中率影響，不宜用固定常數描述。</li>
+</ul>
 <p><strong>範例：</strong></p>
 <pre><code class="language-go">// 輕鬆創建 10000 個 goroutine
 for i := 0; i &lt; 10000; i++ {
