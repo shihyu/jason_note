@@ -1404,6 +1404,34 @@ GOMAXPROCS=28 → 耗時: 11.724444ms   ← 核心再多也只有 4 個任務
 
 > 交易系統通常設成 `runtime.NumCPU()` 就好（Go 預設值）。容器環境下建議用 `go.uber.org/automaxprocs` 自動偵測 cgroup 限制。
 
+### 1.1 Goroutine vs C pthread 深入比較
+
+Goroutine 和 C pthread 是兩種不同的並發模型，前者由 Go 運行時管理為輕量級協程，後者則是 OS 級別的系統線程。
+
+#### 核心差異
+
+**映射關係**：Goroutine 採用 M:N 模型，多個 goroutine 多工於少量 OS 線程（如 pthread），而每個 pthread 直接對應一個 OS 線程，易導致線程爆炸。
+
+**記憶體消耗**：Goroutine 初始堆疊僅 2KB 並可動態擴容至 1GB；pthread 通常需 1-2MB 固定堆疊，加上守護頁，資源開銷大。
+
+**建立與銷毀**：Goroutine 為用戶態，由 Go runtime 處理，成本低（無需系統呼叫）；pthread 為核心態，需線程池緩解高開銷。
+
+#### 切換與效能
+
+Goroutine 切換僅存 3 個暫存器（PC、SP、BP），耗時約 200ns；pthread 需存多達數十個暫存器，耗時 1000-1500ns，切換成本高 5 倍以上。
+
+Goroutine 適合高併發（如 HTTP 伺服器處理萬級請求），不易 OOM；pthread 適合低併發 CPU 密集任務。
+
+#### 對照表
+
+| 特性 | Goroutine | C pthread (OS 線程) |
+|------|-----------|-------------------|
+| 堆疊大小 | 2KB 初始，動態擴容 | 1-2MB 固定 |
+| 建立成本 | 用戶態，低 | 核心態，高 |
+| 切換時間 | ~200ns | ~1000ns |
+| 最大數量 | 百萬級 | 萬級 |
+| 調度器 | Go runtime | OS 核心 |
+
 ### 2. Data Race
 
 兩個 goroutine 同時讀寫同一塊記憶體，結果不確定。最經典的就是 **map 併發寫入直接 panic**。
