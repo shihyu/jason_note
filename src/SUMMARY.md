@@ -360,6 +360,7 @@
     - [AI 協作開發實踐指南：避開六大盲區](software_engineering/AI協作開發實踐指南_避開六大盲區.md)
     - [Netflix 工程師談 Vibe Coding 副作用](software_engineering/Netflix工程師談VibeCoding副作用_理解萎縮危機與三步驟解方.md)
     - [Anthropic 研究：AI 輔助編程對初級工程師學習能力的影響](software_engineering/Anthropic研究_AI輔助編程對初級工程師學習能力的影響.md)
+    - [OpenClaw 創始人 Peter Steinberger 的 AI 代理人工程核心開發思維](software_engineering/OpenClaw創始人Peter_Steinberger的AI代理人工程核心開發思維.md)
     - [取代你的不是 AI，而是使用 AI 的人：程世嘉的 6 項關鍵思考](software_engineering/取代你的不是AI而是使用AI的人_程世嘉AI六項關鍵思考.md)
     - [黑箱測試方法與AI應用 - 課程筆記](software_engineering/黑箱測試方法與AI應用_課程筆記.md)
     - [黑箱測試方法詳細指南](software_engineering/testing_methods_guide.md)
