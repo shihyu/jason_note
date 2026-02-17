@@ -1,0 +1,658 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>EVM vs Non-EVM 區塊鏈架構總整理（整合版） - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="-evm-vs-non-evm-區塊鏈架構總整理整合版"><a class="header" href="#-evm-vs-non-evm-區塊鏈架構總整理整合版">🌐 EVM vs Non-EVM 區塊鏈架構總整理（整合版）</a></h1>
+<h2 id="版本定位"><a class="header" href="#版本定位">版本定位</a></h2>
+<p>本文件整合以下三份內容：</p>
+<ul>
+<li><code>EVM_vs_NonEVM_區塊鏈架構總整理.md</code>（入門生態與選鏈）</li>
+<li><code>EVM_vs_NonEVM_區塊鏈架構總整理_V2_進階版.md</code>（VM、擴容、遷移成本）</li>
+<li><code>EVM_vs_NonEVM_區塊鏈架構總整理_V3_深度工程版.md</code>（State、Bridge、安全、交易所架構）</li>
+</ul>
+<p>適合對象：</p>
+<ul>
+<li>新手：快速分清 EVM 與 Non-EVM</li>
+<li>工程師：掌握 VM / State / Rollup / DA / Bridge 全鏈路</li>
+<li>交易所或基礎設施團隊：評估多鏈錢包與風控設計</li>
+</ul>
+<hr />
+<h2 id="一先用一句話抓核心"><a class="header" href="#一先用一句話抓核心">一、先用一句話抓核心</a></h2>
+<ul>
+<li>EVM：工具鏈與生態最成熟，開發遷移成本最低</li>
+<li>Non-EVM：架構多樣、性能上限高，但工具與心智負擔較大</li>
+</ul>
+<hr />
+<h2 id="二區塊鏈完整分層架構l1l2-共通視角"><a class="header" href="#二區塊鏈完整分層架構l1l2-共通視角">二、區塊鏈完整分層架構（L1/L2 共通視角）</a></h2>
+<pre><code class="language-text">                ┌──────────────────────┐
+                │     Application      │  (DeFi / NFT / GameFi / Social)
+                └──────────┬───────────┘
+                           │
+                ┌──────────┴───────────┐
+                │    Execution Layer   │  (EVM / Move VM / SVM)
+                └──────────┬───────────┘
+                           │
+                ┌──────────┴───────────┐
+                │    Consensus Layer   │  (PoS / DPoS / BFT)
+                └──────────┬───────────┘
+                           │
+                ┌──────────┴───────────┐
+                │      Data Layer      │  (State DB / Trie / DA)
+                └──────────────────────┘
+</code></pre>
+<p>核心拆解：</p>
+<ul>
+<li>Execution：怎麼算、能不能並行、開發體驗如何</li>
+<li>Consensus：誰決定順序、最終性多快</li>
+<li>Data：狀態如何儲存與驗證、DA 成本如何</li>
+</ul>
+<hr />
+<h2 id="三vm-與-state-模型對比真正的架構分水嶺"><a class="header" href="#三vm-與-state-模型對比真正的架構分水嶺">三、VM 與 State 模型對比（真正的架構分水嶺）</a></h2>
+<h3 id="1-evmethereum-系"><a class="header" href="#1-evmethereum-系">1. EVM（Ethereum 系）</a></h3>
+<ul>
+<li>Model：Account-based + Global shared state</li>
+<li>Storage：Merkle Patricia Trie</li>
+<li>Contract Language：Solidity 為主</li>
+<li>優點：生態最大、工具成熟（MetaMask/Hardhat/Foundry）</li>
+<li>限制：全域狀態競爭明顯，原生並行困難</li>
+</ul>
+<h3 id="2-solana--svmrust-based-vm"><a class="header" href="#2-solana--svmrust-based-vm">2. Solana / SVM（Rust-based VM）</a></h3>
+<ul>
+<li>Model：Account 分離，交易預先宣告讀寫集合</li>
+<li>語言：Rust 為主</li>
+<li>優點：天然並行、高吞吐、低費率</li>
+<li>限制：開發除錯與運維心智成本高</li>
+</ul>
+<pre><code class="language-text">Transaction:
+  Read Accounts  -&gt; A, B
+  Write Accounts -&gt; C
+若交易間讀寫集合不衝突，可同時執行
+</code></pre>
+<h3 id="3-move-系sui--aptos"><a class="header" href="#3-move-系sui--aptos">3. Move 系（Sui / Aptos）</a></h3>
+<ul>
+<li>Model：Object/Resource-based</li>
+<li>特性：資產不可隱式複製，所有權語義更強</li>
+<li>優點：安全語義清楚，並行化較自然</li>
+<li>限制：相對 EVM，生態與工具仍在擴張期</li>
+</ul>
+<pre><code class="language-text">EVM:  Balance = number in shared state
+Move: Coin    = first-class resource/object
+</code></pre>
+<hr />
+<h2 id="四擴容路線總覽l1l2shardingparallel-evm"><a class="header" href="#四擴容路線總覽l1l2shardingparallel-evm">四、擴容路線總覽：L1、L2、Sharding、Parallel EVM</a></h2>
+<h3 id="1-l1-垂直擴容"><a class="header" href="#1-l1-垂直擴容">1. L1 垂直擴容</a></h3>
+<ul>
+<li>代表：BSC、Solana、Avalanche</li>
+<li>作法：提升單鏈吞吐與執行效率</li>
+<li>取捨：效能上升，去中心化壓力通常也上升</li>
+</ul>
+<h3 id="2-l2-rollup以太坊主流擴容"><a class="header" href="#2-l2-rollup以太坊主流擴容">2. L2 Rollup（以太坊主流擴容）</a></h3>
+<pre><code class="language-text">User TX
+  -&gt; L2 Sequencer 排序
+  -&gt; Batch/State Diff
+  -&gt; 提交到 Ethereum(L1)
+</code></pre>
+<h4 id="optimistic-rollup"><a class="header" href="#optimistic-rollup">Optimistic Rollup</a></h4>
+<ul>
+<li>機制：Fraud Proof + Challenge Period</li>
+<li>優點：工程成熟、成本較低</li>
+<li>風險：提款延遲（常見設計約數天級）</li>
+</ul>
+<h4 id="zk-rollup"><a class="header" href="#zk-rollup">ZK Rollup</a></h4>
+<ul>
+<li>機制：Validity Proof</li>
+<li>優點：無需長挑戰期，安全與最終性路徑更直接</li>
+<li>風險：Prover 成本高、系統複雜度高</li>
+</ul>
+<h3 id="3-sharding"><a class="header" href="#3-sharding">3. Sharding</a></h3>
+<ul>
+<li>觀念：多分片平行處理 + 協調層統合</li>
+<li>代表思路：NEAR、Ethereum 長期演進方向的一部分</li>
+</ul>
+<h3 id="4-parallel-evm新趨勢"><a class="header" href="#4-parallel-evm新趨勢">4. Parallel EVM（新趨勢）</a></h3>
+<ul>
+<li>代表：Monad、Sei V2</li>
+<li>目標：盡量維持 EVM 相容，同時引入平行執行能力</li>
+</ul>
+<hr />
+<h2 id="五gasfee-與開發者遷移成本"><a class="header" href="#五gasfee-與開發者遷移成本">五、Gas/Fee 與開發者遷移成本</a></h2>
+<h3 id="gasfee-模型簡化比較"><a class="header" href="#gasfee-模型簡化比較">Gas/Fee 模型（簡化比較）</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>架構</th><th>Fee 模型特徵</th><th>典型體感</th></tr></thead><tbody>
+<tr><td>EVM</td><td>操作級 Gas 計價</td><td>精細、但高峰期偏貴</td></tr>
+<tr><td>Solana</td><td>基礎費 + 優先費</td><td>常態便宜、延遲低</td></tr>
+<tr><td>Move 系</td><td>類 EVM 計費 + 可並行優勢</td><td>在特定場景成本可下降</td></tr>
+</tbody></table>
+</div>
+<h3 id="遷移成本evm-開發者視角"><a class="header" href="#遷移成本evm-開發者視角">遷移成本（EVM 開發者視角）</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>路徑</th><th>難度</th></tr></thead><tbody>
+<tr><td>EVM -&gt; EVM L2</td><td>★</td></tr>
+<tr><td>EVM -&gt; Move</td><td>★★★</td></tr>
+<tr><td>EVM -&gt; Solana</td><td>★★★★</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="六生態地圖evm-與-non-evm-主流鏈"><a class="header" href="#六生態地圖evm-與-non-evm-主流鏈">六、生態地圖：EVM 與 Non-EVM 主流鏈</a></h2>
+<h3 id="evm-兼容鏈支援-metamask常見-0x-地址"><a class="header" href="#evm-兼容鏈支援-metamask常見-0x-地址">EVM 兼容鏈（支援 MetaMask，常見 0x 地址）</a></h3>
+<h4 id="l1--側鏈"><a class="header" href="#l1--側鏈">L1 / 側鏈</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>鏈</th><th>定位</th><th>核心特點</th></tr></thead><tbody>
+<tr><td>BNB Smart Chain (BSC)</td><td>幣安生態</td><td>手續費低、用戶量大</td></tr>
+<tr><td>Avalanche C-Chain</td><td>高效能合約鏈</td><td>秒級確認、子網架構</td></tr>
+<tr><td>Polygon PoS</td><td>以太坊側鏈</td><td>生態完整、應用多</td></tr>
+<tr><td>Fantom</td><td>高效能公鏈</td><td>適合高速交易</td></tr>
+<tr><td>Cronos</td><td>CeFi + DeFi 整合</td><td>Crypto.com 官方鏈</td></tr>
+<tr><td>Celo</td><td>行動支付導向</td><td>碳中和設計</td></tr>
+</tbody></table>
+</div>
+<h4 id="l2"><a class="header" href="#l2">L2</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>鏈</th><th>類型</th><th>特點</th></tr></thead><tbody>
+<tr><td>Arbitrum One</td><td>Optimistic Rollup</td><td>生態成熟</td></tr>
+<tr><td>Optimism</td><td>Optimistic Rollup</td><td>OP Stack 核心成員</td></tr>
+<tr><td>Base</td><td>OP Stack</td><td>Coinbase 生態入口</td></tr>
+<tr><td>Mantle</td><td>模組化 L2</td><td>DAO 財庫資源充足</td></tr>
+</tbody></table>
+</div>
+<h4 id="zk-系"><a class="header" href="#zk-系">ZK 系</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>鏈</th><th>類型</th><th>特點</th></tr></thead><tbody>
+<tr><td>zkSync Era</td><td>zkEVM</td><td>安全與低 Gas</td></tr>
+<tr><td>Linea</td><td>zkEVM</td><td>ConsenSys 推進</td></tr>
+<tr><td>Scroll</td><td>zkEVM</td><td>強調以太坊等效</td></tr>
+</tbody></table>
+</div>
+<h3 id="non-evm需專用錢包地址簽名規則不同"><a class="header" href="#non-evm需專用錢包地址簽名規則不同">Non-EVM（需專用錢包，地址/簽名規則不同）</a></h3>
+<h4 id="高效能單體鏈"><a class="header" href="#高效能單體鏈">高效能單體鏈</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>鏈</th><th>常見錢包</th><th>語言/模型</th><th>特點</th></tr></thead><tbody>
+<tr><td>Solana</td><td>Phantom</td><td>Rust / SVM</td><td>速度快、Meme 活躍</td></tr>
+<tr><td>TON</td><td>Tonkeeper</td><td>Func</td><td>Telegram 生態</td></tr>
+<tr><td>Cardano</td><td>Yoroi</td><td>Haskell</td><td>學術導向</td></tr>
+<tr><td>NEAR</td><td>NEAR Wallet</td><td>Rust</td><td>分片設計</td></tr>
+</tbody></table>
+</div>
+<h4 id="move-系"><a class="header" href="#move-系">Move 系</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>鏈</th><th>常見錢包</th><th>特點</th></tr></thead><tbody>
+<tr><td>Sui</td><td>Sui Wallet</td><td>Object 資產模型</td></tr>
+<tr><td>Aptos</td><td>Petra</td><td>高併發導向</td></tr>
+</tbody></table>
+</div>
+<h4 id="多鏈互聯生態"><a class="header" href="#多鏈互聯生態">多鏈互聯生態</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>生態</th><th>常見錢包</th><th>特點</th></tr></thead><tbody>
+<tr><td>Cosmos</td><td>Keplr</td><td>IBC 跨鏈架構</td></tr>
+<tr><td>Polkadot</td><td>Polkadot.js</td><td>平行鏈共享安全</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="七rollup-與-data-availabilityda"><a class="header" href="#七rollup-與-data-availabilityda">七、Rollup 與 Data Availability（DA）</a></h2>
+<p>Rollup 不只看 TPS，真正要問：</p>
+<ul>
+<li>資料可用性放在哪裡（L1 DA、外部 DA、委任 DA）？</li>
+<li>Sequencer 是否去中心化？</li>
+<li>故障時的恢復與退出機制是否可驗證？</li>
+</ul>
+<p>工程重點：</p>
+<ul>
+<li>DA 成本常是長期競爭關鍵</li>
+<li>Sequencer 中心化是目前多數 L2 的現實折衷</li>
+</ul>
+<hr />
+<h2 id="八跨鏈橋安全模型高風險重災區"><a class="header" href="#八跨鏈橋安全模型高風險重災區">八、跨鏈橋安全模型（高風險重災區）</a></h2>
+<h3 id="1-lock--mint"><a class="header" href="#1-lock--mint">1. Lock &amp; Mint</a></h3>
+<pre><code class="language-text">Chain A: Lock Token
+Chain B: Mint Wrapped Token
+</code></pre>
+<ul>
+<li>優點：容易落地、支援快</li>
+<li>風險：橋合約漏洞、多簽私鑰風險、Wrapped 資產信任問題</li>
+</ul>
+<h3 id="2-light-client-bridge"><a class="header" href="#2-light-client-bridge">2. Light Client Bridge</a></h3>
+<ul>
+<li>機制：目標鏈驗證來源鏈區塊頭/證明</li>
+<li>優點：安全性更接近原鏈假設</li>
+<li>成本：計算與實作複雜度高</li>
+</ul>
+<h3 id="3-第三方託管--委託模型"><a class="header" href="#3-第三方託管--委託模型">3. 第三方託管 / 委託模型</a></h3>
+<ul>
+<li>優點：速度快、整合快</li>
+<li>風險：中心化信任與治理風險最高</li>
+</ul>
+<hr />
+<h2 id="九交易所多鏈錢包架構實務設計"><a class="header" href="#九交易所多鏈錢包架構實務設計">九、交易所多鏈錢包架構（實務設計）</a></h2>
+<pre><code class="language-text">             ┌──────────────┐
+             │   API Layer  │
+             └──────┬───────┘
+                    │
+         ┌──────────┴──────────┐
+         │   Wallet Service    │
+         └──────────┬──────────┘
+                    │
+      ┌─────────────┼─────────────┐
+      │             │             │
+   EVM Node      Solana RPC    Cosmos Node
+</code></pre>
+<p>關鍵挑戰：</p>
+<ul>
+<li>地址格式差異（0x vs base58 等）</li>
+<li>簽名演算法差異（ECDSA / Ed25519）</li>
+<li>Fee 模型與估算邏輯不同</li>
+<li>Confirm / Finality 標準不同</li>
+<li>鏈上重組、節點異常、橋事件需要獨立風控</li>
+</ul>
+<p>建議：</p>
+<ul>
+<li>做統一 <code>Wallet Service</code> 抽象層</li>
+<li>每條鏈獨立 adapter + 風險參數</li>
+<li>監控系統拆成「鏈健康 / 交易生命週期 / 資產對帳」三層</li>
+</ul>
+<hr />
+<h2 id="十共識與性能工程化極簡表"><a class="header" href="#十共識與性能工程化極簡表">十、共識與性能（工程化極簡表）</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>類別</th><th>代表</th><th>特點</th></tr></thead><tbody>
+<tr><td>PoS</td><td>Ethereum</td><td>安全穩定、去中心化權衡完整</td></tr>
+<tr><td>DPoS</td><td>BSC</td><td>高效率、治理相對集中</td></tr>
+<tr><td>BFT 系</td><td>Cosmos</td><td>快速最終性</td></tr>
+<tr><td>Tower BFT</td><td>Solana</td><td>高吞吐與低延遲</td></tr>
+</tbody></table>
+</div><div class="table-wrapper"><table><thead><tr><th>架構</th><th>並行性</th><th>狀態模型</th><th>開發難度</th></tr></thead><tbody>
+<tr><td>EVM</td><td>低</td><td>Global shared state</td><td>低</td></tr>
+<tr><td>Solana/SVM</td><td>高</td><td>Account 分離</td><td>高</td></tr>
+<tr><td>Move</td><td>中高</td><td>Object/Resource</td><td>中高</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="十一快速選擇指南"><a class="header" href="#十一快速選擇指南">十一、快速選擇指南</a></h2>
+<h3 id="如果你要快速上手用-metamask做-definft"><a class="header" href="#如果你要快速上手用-metamask做-definft">如果你要快速上手、用 MetaMask、做 DeFi/NFT</a></h3>
+<ul>
+<li>先走 EVM：Ethereum / Arbitrum / Base / BSC / Polygon</li>
+</ul>
+<h3 id="如果你要追求高性能或低費率互動"><a class="header" href="#如果你要追求高性能或低費率互動">如果你要追求高性能或低費率互動</a></h3>
+<ul>
+<li>看 Solana、Sui、Aptos（需接受新工具鏈與新心智模型）</li>
+</ul>
+<h3 id="如果你是交易所基礎設施團隊"><a class="header" href="#如果你是交易所基礎設施團隊">如果你是交易所/基礎設施團隊</a></h3>
+<ul>
+<li>優先處理多鏈錢包抽象與跨鏈安全，不要先追 TPS 數字</li>
+</ul>
+<h3 id="如果你要做長期技術投資"><a class="header" href="#如果你要做長期技術投資">如果你要做長期技術投資</a></h3>
+<ul>
+<li>主修 EVM + 補一條 Non-EVM（Solana 或 Move 系）</li>
+</ul>
+<hr />
+<h2 id="十二最終總結前置版"><a class="header" href="#十二最終總結前置版">十二、最終總結（前置版）</a></h2>
+<p>區塊鏈競爭的真正核心不是單一 TPS，而是四件事：</p>
+<ul>
+<li>Execution 的可擴展性（是否可並行）</li>
+<li>Consensus 的最終性與穩定性</li>
+<li>Data Availability 的長期成本</li>
+<li>Cross-chain 的安全邊界</li>
+</ul>
+<hr />
+<h2 id="十三選鏈決策矩陣可加權"><a class="header" href="#十三選鏈決策矩陣可加權">十三、選鏈決策矩陣（可加權）</a></h2>
+<p>評分說明：每項 1-5 分，總分 = <code>sum(weight_i * score_i)</code>。</p>
+<div class="table-wrapper"><table><thead><tr><th>維度</th><th style="text-align: right">權重範例（交易所）</th><th style="text-align: right">權重範例（DApp 團隊）</th><th>評分要點</th></tr></thead><tbody>
+<tr><td>安全性（歷史事故/客戶端成熟）</td><td style="text-align: right">0.25</td><td style="text-align: right">0.20</td><td>共識穩定、重大事故頻率</td></tr>
+<tr><td>最終性/延遲</td><td style="text-align: right">0.20</td><td style="text-align: right">0.20</td><td>入帳速度、重組風險</td></tr>
+<tr><td>成本（Gas + 基礎設施）</td><td style="text-align: right">0.15</td><td style="text-align: right">0.20</td><td>鏈上費用、節點/RPC 成本</td></tr>
+<tr><td>生態流動性（TVL/交易深度）</td><td style="text-align: right">0.15</td><td style="text-align: right">0.20</td><td>主流協議與資產可得性</td></tr>
+<tr><td>維運複雜度（節點/索引器）</td><td style="text-align: right">0.15</td><td style="text-align: right">0.10</td><td>DevOps 與故障處置成本</td></tr>
+<tr><td>開發效率（SDK/工具鏈）</td><td style="text-align: right">0.10</td><td style="text-align: right">0.10</td><td>語言、測試、除錯成熟度</td></tr>
+</tbody></table>
+</div>
+<p>參考判斷：</p>
+<ul>
+<li>交易所權重通常偏安全與最終性</li>
+<li>應用團隊權重通常偏成本與生態流動性</li>
+</ul>
+<hr />
+<h2 id="十四最終性與入帳策略充值提幣"><a class="header" href="#十四最終性與入帳策略充值提幣">十四、最終性與入帳策略（充值/提幣）</a></h2>
+<p>核心原則：<code>風險越高的鏈，入帳確認數越高</code>。</p>
+<div class="table-wrapper"><table><thead><tr><th>鏈類型</th><th>入帳策略</th><th>提幣風控</th><th>回滾處置</th></tr></thead><tbody>
+<tr><td>Ethereum L1 / 成熟 PoS</td><td>低到中確認數</td><td>大額二次風控</td><td>少見，保留人工覆核</td></tr>
+<tr><td>EVM 側鏈/高性能鏈</td><td>中確認數</td><td>限額 + 時間窗</td><td>出現重組時自動凍結地址</td></tr>
+<tr><td>L2 Rollup</td><td>區分 L2 最終與 L1 最終</td><td>分層限額</td><td>Sequencer 異常切換慢路徑</td></tr>
+<tr><td>新鏈/小生態鏈</td><td>高確認數</td><td>白名單 + 低限額起步</td><td>預設高風險模式</td></tr>
+</tbody></table>
+</div>
+<p>落地建議：</p>
+<ul>
+<li>入帳系統維護「鏈別風險等級」參數表</li>
+<li>充值顯示「交易已上鏈 / 交易已最終」雙狀態</li>
+<li>任何跨鏈資產先做來源橋型別標註</li>
+</ul>
+<hr />
+<h2 id="十五l2-信任模型矩陣"><a class="header" href="#十五l2-信任模型矩陣">十五、L2 信任模型矩陣</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>L2 類型</th><th>Sequencer</th><th>Proof 模型</th><th>DA 位置</th><th>Upgrade 權限風險</th><th>退出路徑</th></tr></thead><tbody>
+<tr><td>Optimistic Rollup</td><td>常見中心化排序</td><td>Fraud Proof</td><td>常見落 L1</td><td>需檢查多簽/治理</td><td>挑戰期後可退出</td></tr>
+<tr><td>ZK Rollup</td><td>常見中心化排序</td><td>Validity Proof</td><td>常見落 L1</td><td>需檢查合約升級權</td><td>通常較快確認</td></tr>
+<tr><td>Validium/外部 DA 類</td><td>可能中心化</td><td>Validity/混合</td><td>外部 DA</td><td>DA 與治理風險疊加</td><td>依設計差異大</td></tr>
+</tbody></table>
+</div>
+<p>審核清單：</p>
+<ul>
+<li>Sequencer 是否有去中心化 roadmap</li>
+<li>Prover 是否單點供應</li>
+<li>DA 不可用時是否可強制退出</li>
+<li>Upgrade key 是否有 timelock + 多方治理</li>
+</ul>
+<hr />
+<h2 id="十六bridge-威脅模型與控制"><a class="header" href="#十六bridge-威脅模型與控制">十六、Bridge 威脅模型與控制</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>攻擊面</th><th>典型問題</th><th>控制措施</th></tr></thead><tbody>
+<tr><td>Bridge 合約</td><td>驗證邏輯漏洞、重放攻擊</td><td>形式化驗證、限權、暫停開關</td></tr>
+<tr><td>驗證者/多簽</td><td>私鑰外洩、治理劫持</td><td>HSM/MPC、門檻簽、分權治理</td></tr>
+<tr><td>預言機/訊息層</td><td>偽造訊息、延遲攻擊</td><td>多來源驗證、重放保護、序號檢查</td></tr>
+<tr><td>Wrapped 資產</td><td>抵押不足、脫鉤</td><td>鏈上儲備證明、即時對帳告警</td></tr>
+</tbody></table>
+</div>
+<p>執行建議：</p>
+<ul>
+<li>橋資產單獨風險分層，不與原生資產同風控</li>
+<li>異常事件時先停入帳再評估是否停提幣</li>
+<li>建立橋事件演練（key compromise、鏈停擺、DA 不可用）</li>
+</ul>
+<hr />
+<h2 id="十七mev-與排序權execution-現實層"><a class="header" href="#十七mev-與排序權execution-現實層">十七、MEV 與排序權（Execution 現實層）</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>生態</th><th>排序權來源</th><th>常見 MEV 型態</th><th>工程對策</th></tr></thead><tbody>
+<tr><td>EVM L1/L2</td><td>Builder/Sequencer</td><td>Sandwich、Backrun、Liquidation</td><td>私有交易流、slippage 保護</td></tr>
+<tr><td>Solana</td><td>高速區塊排序</td><td>搶跑、清算競爭</td><td>優先費策略、交易分片提交</td></tr>
+<tr><td>應用層</td><td>自家撮合/路由</td><td>路由洩漏、價格滑點</td><td>RFQ、批次撮合、延遲保護</td></tr>
+</tbody></table>
+</div>
+<p>重點：</p>
+<ul>
+<li>MEV 不是例外，是默認市場結構</li>
+<li>架構設計需先定義「可接受 MEV 邊界」</li>
+</ul>
+<hr />
+<h2 id="十八運維與成本模型infra-tco"><a class="header" href="#十八運維與成本模型infra-tco">十八、運維與成本模型（Infra TCO）</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>項目</th><th>EVM 系</th><th>Solana/高性能鏈</th><th>Move 系</th></tr></thead><tbody>
+<tr><td>節點成本</td><td>中</td><td>高</td><td>中高</td></tr>
+<tr><td>RPC 壓力</td><td>中高</td><td>高</td><td>中</td></tr>
+<tr><td>索引器複雜度</td><td>中</td><td>高</td><td>中高</td></tr>
+<tr><td>版本升級風險</td><td>中</td><td>高</td><td>中</td></tr>
+</tbody></table>
+</div>
+<p>TCO 公式（實務簡化）：</p>
+<p><code>總成本 = 節點 + RPC + 索引器 + 監控告警 + 值班人力 + 事故損失</code></p>
+<p>落地建議：</p>
+<ul>
+<li>關鍵鏈至少雙活 RPC + 異地備援</li>
+<li>讀寫分離（查詢走索引器，送單走專用 RPC）</li>
+<li>對高流量鏈做尖峰限流與自動降級</li>
+</ul>
+<hr />
+<h2 id="十九多鏈錢包實作細節交易生命週期"><a class="header" href="#十九多鏈錢包實作細節交易生命週期">十九、多鏈錢包實作細節（交易生命週期）</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>主題</th><th>常見坑</th><th>實作建議</th></tr></thead><tbody>
+<tr><td>Nonce 管理（EVM）</td><td>併發下 nonce 衝突</td><td>單地址序列化或 nonce locker</td></tr>
+<tr><td>Fee Bump</td><td>長時間 pending</td><td>超時自動加價重送</td></tr>
+<tr><td>廣播策略</td><td>單 RPC 黑洞</td><td>多 RPC 扇出 + 去重</td></tr>
+<tr><td>重組補償</td><td>已入帳後回滾</td><td>延後最終入帳 + 反向沖正流程</td></tr>
+<tr><td>簽名域隔離</td><td>錯鏈簽名重放</td><td>chainId/domain separation 強制校驗</td></tr>
+</tbody></table>
+</div>
+<p>建議狀態機：</p>
+<p><code>created -&gt; signed -&gt; broadcasted -&gt; seen -&gt; confirmed -&gt; finalized</code></p>
+<hr />
+<h2 id="二十sre-監控指標與-slo"><a class="header" href="#二十sre-監控指標與-slo">二十、SRE 監控指標與 SLO</a></h2>
+<p>必備指標：</p>
+<ul>
+<li>鏈健康：出塊間隔、節點同步高度差、分叉率</li>
+<li>交易管線：送單成功率、pending 時長、最終確認時長 P95/P99</li>
+<li>資產安全：入帳卡單數、橋資產脫鉤率、對帳差額</li>
+<li>成本效率：單筆交易平均成本、失敗重送率</li>
+</ul>
+<p>告警分級：</p>
+<ul>
+<li>P1：入帳中斷、節點全面失聯、橋資產異常</li>
+<li>P2：確認延遲異常飆升、重送率飆升</li>
+<li>P3：成本偏高、局部 RPC 異常</li>
+</ul>
+<p>SLO 範例：</p>
+<ul>
+<li><code>充值可用性 &gt;= 99.95%</code></li>
+<li><code>提幣廣播成功率 &gt;= 99.9%</code></li>
+<li><code>高風險鏈入帳誤判 = 0</code></li>
+</ul>
+<hr />
+<h2 id="二十一最終總結工程實戰版"><a class="header" href="#二十一最終總結工程實戰版">二十一、最終總結（工程實戰版）</a></h2>
+<p>做鏈選型與架構決策時，請固定用以下順序：</p>
+<ol>
+<li>先定義安全與最終性邊界</li>
+<li>再評估 DA 與橋模型</li>
+<li>最後才是 TPS 與敘事熱度</li>
+</ol>
+<p>這樣能同時降低事故率、維運成本與錯誤入帳風險。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../blockchain/ethereum-transaction-guide-tc.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../blockchain/TRON_Blockchain_Implementation_Guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../blockchain/ethereum-transaction-guide-tc.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../blockchain/TRON_Blockchain_Implementation_Guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
