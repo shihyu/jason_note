@@ -576,6 +576,7 @@
         - [造市商概念](strategy/造市/market_market.md)
         - [網格交易](strategy/grid.md)
         - [套利交易](strategy/arbitrage.md)
+        - [Bitfinex 放貸策略開發心得](strategy/Bitfinex放貸策略開發心得.md)
     - [高頻與演算法交易](strategy/13_高頻與演算法交易.md)
         - [HFT雲端部署](strategy/hft_and_algo_trading_cloud_deployment.md)
         - [訂單簿分析](strategy/orderbook.md)
