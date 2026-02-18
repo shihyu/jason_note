@@ -518,6 +518,7 @@
         - [犀利媽選股與進出場邏輯](strategy/犀利媽選股與進出場邏輯.md)
         - [Joeman vs 巨人傑：交易心法與 2026 產業趨勢對談](strategy/joeman_giant_jay_interview.md)
         - [15年交易經驗分享](strategy/trading_experience_and_strategies.md)
+        - [如何成為股市天才讀書筆記](strategy/如何成為股市天才讀書筆記.md)
     - [phcebus菲式思考](strategy/02_台灣大師心法_phcebus菲式思考.md)
         - [phcebus](strategy/phcebus/phcebus.md)
         - [菲式思考](strategy/phcebus/菲式思考.md)
@@ -661,6 +662,7 @@
     - [crewAI (PyPI) 繁體中文翻譯](ai_agent/crewai_pypi_zh_tw.md)
     - [2026年AI學習路徑與12項必備AI技能工具清單](ai_agent/2026年AI學習路徑與12項必備AI技能工具清單.md)
     - [Agent Skill 的目錄組成結構說明與範本](ai_agent/agent_skill_structure.md)
+    - [AI 寫程式的終極悖論：你越依賴它，越需要人類思考](ai_agent/ai-coding-paradox-rpi.md)
 
 ## Lifestyle & Resources
 - [台北生活指南](lifestyle/README.md)
