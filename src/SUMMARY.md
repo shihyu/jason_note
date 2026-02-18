@@ -502,6 +502,7 @@
     - [區塊鏈錢包技術實現理論 - 企業級系統架構解析](blockchain/blockchain-wallet-implementation.md)
     - [區塊鏈交易完整指南](blockchain/blockchain-transaction-complete-guide.md)
     - [以太坊交易機制完全指南](blockchain/ethereum-transaction-guide-tc.md)
+    - [Nonce 白話解析：交易與區塊的差異](blockchain/blockchain-nonce-guide-zh-tw.md)
     - [EVM vs Non-EVM 區塊鏈架構總整理（整合版）](blockchain/EVM_vs_NonEVM_區塊鏈架構總整理_整合版.md)
     - [TRON 區塊鏈底層實現指南](blockchain/TRON_Blockchain_Implementation_Guide.md)
     - [加密貨幣交易所 × BitGo 託管架構完整說明](blockchain/exchange_bit_go_architecture.md)
