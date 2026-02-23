@@ -1,0 +1,452 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Go 併發觀察與調試工具全覽 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="go-併發觀察與調試工具全覽"><a class="header" href="#go-併發觀察與調試工具全覽">Go 併發觀察與調試工具全覽</a></h1>
+<hr />
+<h2 id="1-go-tool-trace--執行追蹤視覺化"><a class="header" href="#1-go-tool-trace--執行追蹤視覺化">1. <code>go tool trace</code> — 執行追蹤視覺化</a></h2>
+<p><strong>安裝方式：</strong> 內建，無需額外安裝</p>
+<pre><code class="language-go">// main.go
+package main
+
+import (
+    "os"
+    "runtime/trace"
+    "sync"
+)
+
+func main() {
+    f, _ := os.Create("trace.out")
+    defer f.Close()
+    trace.Start(f)
+    defer trace.Stop()
+
+    var wg sync.WaitGroup
+    for i := 0; i &lt; 5; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            // 模擬工作
+        }(i)
+    }
+    wg.Wait()
+}
+</code></pre>
+<pre><code class="language-bash">go run main.go
+go tool trace trace.out   # 開啟瀏覽器視覺化介面
+</code></pre>
+<p><strong>可觀察：</strong> Goroutine 生命週期、阻塞原因、Syscall、Channel 操作、GC 事件</p>
+<hr />
+<h2 id="2-pprof--效能剖析"><a class="header" href="#2-pprof--效能剖析">2. <code>pprof</code> — 效能剖析</a></h2>
+<pre><code class="language-go">import (
+    "net/http"
+    _ "net/http/pprof"  // 自動註冊 /debug/pprof 端點
+)
+
+func main() {
+    go func() {
+        http.ListenAndServe(":6060", nil)
+    }()
+    // ... 你的程式
+}
+</code></pre>
+<pre><code class="language-bash"># 抓取 goroutine 快照
+go tool pprof http://localhost:6060/debug/pprof/goroutine
+
+# 抓取鎖競爭 (需先啟用)
+go tool pprof http://localhost:6060/debug/pprof/mutex
+
+# 抓取阻塞剖析
+go tool pprof http://localhost:6060/debug/pprof/block
+
+# 互動式分析
+(pprof) top
+(pprof) web        # 生成 SVG 圖形（需安裝 graphviz）
+(pprof) list main  # 查看特定函數細節
+</code></pre>
+<p><strong>啟用 mutex/block 剖析需加這行：</strong></p>
+<pre><code class="language-go">runtime.SetMutexProfileFraction(1)   // mutex
+runtime.SetBlockProfileRate(1)       // block
+</code></pre>
+<hr />
+<h2 id="3--race-競態偵測器"><a class="header" href="#3--race-競態偵測器">3. <code>-race</code> 競態偵測器</a></h2>
+<pre><code class="language-go">// race_example.go
+package main
+
+import "fmt"
+
+func main() {
+    counter := 0
+    done := make(chan bool)
+
+    go func() {
+        counter++   // ← Data Race！
+        done &lt;- true
+    }()
+
+    counter++       // ← Data Race！
+    &lt;-done
+    fmt.Println(counter)
+}
+</code></pre>
+<pre><code class="language-bash">go run -race race_example.go
+# 輸出：WARNING: DATA RACE，包含完整 goroutine stack trace
+go test -race ./...   # 對整個專案跑競態測試
+</code></pre>
+<hr />
+<h2 id="4-godebug-環境變數"><a class="header" href="#4-godebug-環境變數">4. <code>GODEBUG</code> 環境變數</a></h2>
+<pre><code class="language-bash"># schedtrace：每 500ms 輸出 Scheduler 狀態
+GODEBUG=schedtrace=500 go run main.go
+# 輸出格式（Go 1.21+）：
+# SCHED 0ms: gomaxprocs=8 idleprocs=6 threads=5 spinningthreads=1 needspinning=0 idlethreads=0 runqueue=0 [0 0 0 0 0 0 0 0]
+# 欄位說明：spinningthreads=自旋中執行緒, needspinning=需要自旋, idlethreads=閒置執行緒
+
+# scheddetail：更詳細的 goroutine 狀態（加上 gcwaiting/stopwait 等 GC 欄位）
+GODEBUG=schedtrace=1000,scheddetail=1 go run main.go
+
+# asyncpreemptoff=1：關閉異步搶占（調試特定問題用）
+GODEBUG=asyncpreemptoff=1 go run main.go
+</code></pre>
+<hr />
+<h2 id="5-runtime-套件--程式內部監控"><a class="header" href="#5-runtime-套件--程式內部監控">5. <code>runtime</code> 套件 — 程式內部監控</a></h2>
+<pre><code class="language-go">import "runtime"
+
+func printStats() {
+    fmt.Println("Goroutine 數量:", runtime.NumGoroutine())
+    fmt.Println("CPU 核心數:", runtime.NumCPU())
+    fmt.Println("GOMAXPROCS:", runtime.GOMAXPROCS(0))
+
+    var ms runtime.MemStats
+    runtime.ReadMemStats(&amp;ms)
+    fmt.Printf("Heap 使用: %v MB\n", ms.HeapAlloc/1024/1024)
+}
+</code></pre>
+<hr />
+<h2 id="6-goleak--goroutine-洩漏偵測-"><a class="header" href="#6-goleak--goroutine-洩漏偵測-">6. <code>goleak</code> — Goroutine 洩漏偵測 ⭐</a></h2>
+<pre><code class="language-bash">go get go.uber.org/goleak   # 需在 go module 專案內執行
+</code></pre>
+<pre><code class="language-go">import (
+    "testing"
+    "time"
+    "go.uber.org/goleak"
+)
+
+// 洩漏範例：測試會失敗並報告洩漏位置
+func TestLeakyFunc(t *testing.T) {
+    defer goleak.VerifyNone(t)
+
+    go func() {
+        time.Sleep(time.Hour)  // 這個 goroutine 永遠不結束 → 洩漏
+    }()
+}
+
+// 正確範例：測試通過
+func TestCleanFunc(t *testing.T) {
+    defer goleak.VerifyNone(t)
+
+    done := make(chan struct{})
+    go func() {
+        defer close(done)
+        // 做完事情就結束
+    }()
+    &lt;-done
+}
+</code></pre>
+<pre><code># TestLeakyFunc 執行後輸出：
+# --- FAIL: TestLeakyFunc
+#     goleak.go:XX: found unexpected goroutines:
+#     [Goroutine 7 in state sleep, with time.Sleep on top of the stack:...]
+</code></pre>
+<hr />
+<h2 id="7-dlv-delve--go-專用-debugger-"><a class="header" href="#7-dlv-delve--go-專用-debugger-">7. <code>dlv</code> (Delve) — Go 專用 Debugger ⭐</a></h2>
+<pre><code class="language-bash">go install github.com/go-delve/delve/cmd/dlv@latest
+
+dlv debug main.go         # 啟動調試
+dlv attach &lt;PID&gt;          # 附加到執行中的程序
+</code></pre>
+<pre><code># Delve 常用指令
+(dlv) goroutines          # 列出所有 goroutine
+(dlv) goroutine 18        # 切換到指定 goroutine
+(dlv) bt                  # 查看當前 goroutine stack trace
+(dlv) goroutines -t       # 顯示所有 goroutine 的 stack trace
+</code></pre>
+<hr />
+<h2 id="8-context-超時監控模式-"><a class="header" href="#8-context-超時監控模式-">8. <code>context</code> 超時監控模式 ⭐</a></h2>
+<pre><code class="language-go">// 用 context 偵測 goroutine 是否卡死
+func doWork(ctx context.Context) error {
+    done := make(chan struct{})
+    go func() {
+        // 實際工作...
+        close(done)
+    }()
+
+    select {
+    case &lt;-done:
+        return nil
+    case &lt;-ctx.Done():
+        return fmt.Errorf("goroutine timeout: %w", ctx.Err())
+    }
+}
+
+// 使用
+ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+defer cancel()
+if err := doWork(ctx); err != nil {
+    log.Println("偵測到超時或卡死:", err)
+}
+</code></pre>
+<hr />
+<h2 id="工具選用速查表"><a class="header" href="#工具選用速查表">工具選用速查表</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>問題場景</th><th>推薦工具</th></tr></thead><tbody>
+<tr><td>Goroutine 執行順序異常</td><td><code>go tool trace</code></td></tr>
+<tr><td>懷疑有 Data Race</td><td><code>-race</code></td></tr>
+<tr><td>鎖競爭嚴重，CPU 高</td><td><code>pprof mutex/block</code></td></tr>
+<tr><td>Goroutine 數量一直增長</td><td><code>goleak</code> + <code>runtime.NumGoroutine()</code></td></tr>
+<tr><td>想暫停程序看 goroutine 狀態</td><td><code>dlv</code></td></tr>
+<tr><td>生產環境即時監控</td><td><code>pprof HTTP endpoint</code> + <code>GODEBUG</code></td></tr>
+<tr><td>Goroutine 疑似卡死</td><td><code>context.WithTimeout</code> + <code>pprof goroutine</code></td></tr>
+</tbody></table>
+</div>
+<hr />
+<blockquote>
+<p>最常用的黃金組合：<strong><code>-race</code> + <code>pprof</code> + <code>go tool trace</code></strong>，三者涵蓋了從正確性到效能的完整調試需求。</p>
+</blockquote>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../go/go_performance_analysis.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../go/trace.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../go/go_performance_analysis.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../go/trace.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
