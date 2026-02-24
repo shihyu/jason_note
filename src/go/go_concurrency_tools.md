@@ -35,6 +35,10 @@ func main() {
 ```
 
 ```bash
+mkdir -p /tmp/go-trace-demo && cd /tmp/go-trace-demo
+cat > main.go <<'EOF'
+// 貼上上面的程式碼
+EOF
 go run main.go
 go tool trace trace.out   # 開啟瀏覽器視覺化介面
 ```
@@ -46,20 +50,62 @@ go tool trace trace.out   # 開啟瀏覽器視覺化介面
 ## 2. `pprof` — 效能剖析
 
 ```go
+// pprof_demo.go
+package main
+
 import (
+    "log"
     "net/http"
     _ "net/http/pprof"  // 自動註冊 /debug/pprof 端點
+    "runtime"
+    "sync"
+    "time"
 )
 
 func main() {
+    // 啟用 mutex / block profile（預設關閉）
+    runtime.SetMutexProfileFraction(1)
+    runtime.SetBlockProfileRate(1)
+
+    var mu sync.Mutex
+    ch := make(chan struct{})
+
+    // 製造一點鎖競爭與阻塞，讓 /mutex、/block 有資料
+    for i := 0; i < 4; i++ {
+        go func() {
+            for {
+                mu.Lock()
+                time.Sleep(10 * time.Millisecond)
+                mu.Unlock()
+
+                select {
+                case ch <- struct{}{}:
+                case <-time.After(5 * time.Millisecond):
+                }
+            }
+        }()
+    }
+
     go func() {
-        http.ListenAndServe(":6060", nil)
+        log.Println("pprof listening on :6060")
+        log.Println(http.ListenAndServe(":6060", nil))
     }()
-    // ... 你的程式
+
+    select {} // demo 用：保持程序存活
 }
 ```
 
 ```bash
+# 建議在獨立目錄操作
+mkdir -p /tmp/go-pprof-demo && cd /tmp/go-pprof-demo
+cat > pprof_demo.go <<'EOF'
+// 貼上上面的程式碼
+EOF
+go run pprof_demo.go
+
+# 另開一個 terminal 驗證端點
+curl http://localhost:6060/debug/pprof/
+
 # 抓取 goroutine 快照
 go tool pprof http://localhost:6060/debug/pprof/goroutine
 
@@ -73,14 +119,15 @@ go tool pprof http://localhost:6060/debug/pprof/block
 (pprof) top
 (pprof) web        # 生成 SVG 圖形（需安裝 graphviz）
 (pprof) list main  # 查看特定函數細節
+
+# CPU 採樣（常用）
+go tool pprof http://localhost:6060/debug/pprof/profile?seconds=10
 ```
 
-**啟用 mutex/block 剖析需加這行：**
+`/debug/pprof/mutex` 與 `/debug/pprof/block` 需要先在程式內啟用（上方 `pprof_demo.go` 已包含）：
 
-```go
-runtime.SetMutexProfileFraction(1)   // mutex
-runtime.SetBlockProfileRate(1)       // block
-```
+- `runtime.SetMutexProfileFraction(1)`
+- `runtime.SetBlockProfileRate(1)`
 
 ---
 
@@ -108,8 +155,20 @@ func main() {
 ```
 
 ```bash
+mkdir -p /tmp/go-race-demo && cd /tmp/go-race-demo
+cat > race_example.go <<'EOF'
+// 貼上上面的程式碼
+EOF
 go run -race race_example.go
 # 輸出：WARNING: DATA RACE，包含完整 goroutine stack trace
+
+# 若要示範 go test -race，補一個最小 test 檔
+go mod init example.com/race-demo
+cat > race_example_test.go <<'EOF'
+package main
+import "testing"
+func TestSmoke(t *testing.T) { main() }
+EOF
 go test -race ./...   # 對整個專案跑競態測試
 ```
 
@@ -117,21 +176,63 @@ go test -race ./...   # 對整個專案跑競態測試
 
 ## 4. `GODEBUG` 環境變數
 
+先準備一個會持續配置記憶體與建立 goroutine 的範例，這樣 `schedtrace` / `gctrace` 才看得到輸出：
+
+```go
+// godebug_demo.go
+package main
+
+import (
+    "bytes"
+    "runtime"
+    "time"
+)
+
+func main() {
+    jobs := make(chan []byte, 1024)
+
+    for i := 0; i < 4; i++ {
+        go func() {
+            for b := range jobs {
+                _ = bytes.Count(b, []byte{1})
+                time.Sleep(2 * time.Millisecond)
+            }
+        }()
+    }
+
+    for i := 0; i < 200000; i++ {
+        b := make([]byte, 32*1024) // 製造 GC 壓力
+        jobs <- b
+        if i%1000 == 0 {
+            runtime.Gosched()
+        }
+    }
+    close(jobs)
+    time.Sleep(2 * time.Second)
+}
+```
+
 ```bash
+# 建議在獨立目錄操作
+mkdir -p /tmp/go-godebug-demo && cd /tmp/go-godebug-demo
+cat > godebug_demo.go <<'EOF'
+// 貼上上面的程式碼
+EOF
+
 # schedtrace：每 500ms 輸出 Scheduler 狀態
-GODEBUG=schedtrace=500 go run main.go
+GODEBUG=schedtrace=500 go run godebug_demo.go
 # 輸出格式（Go 1.21+）：
 # SCHED 0ms: gomaxprocs=8 idleprocs=6 threads=5 spinningthreads=1 needspinning=0 idlethreads=0 runqueue=0 [0 0 0 0 0 0 0 0]
 # 欄位說明：spinningthreads=自旋中執行緒, needspinning=需要自旋, idlethreads=閒置執行緒
 
 # scheddetail：更詳細的 goroutine 狀態（加上 gcwaiting/stopwait 等 GC 欄位）
-GODEBUG=schedtrace=1000,scheddetail=1 go run main.go
+GODEBUG=schedtrace=1000,scheddetail=1 go run godebug_demo.go
 
 # asyncpreemptoff=1：關閉異步搶占（調試特定問題用）
-GODEBUG=asyncpreemptoff=1 go run main.go
+GODEBUG=asyncpreemptoff=1 go run godebug_demo.go
 
 # gctrace=1：每次 GC 輸出一行摘要，觀察 STW 暫停對併發的影響
-GODEBUG=gctrace=1 go run main.go
+GODEBUG=gctrace=1 go run godebug_demo.go
 # 輸出範例：
 # gc 1 @0.011s 2%: 0.011+0.39+0.012 ms clock, 0.022+0.020/0.22/0+0.025 ms cpu, 4->4->0 MB, 5 MB goal, 4 P
 # 欄位解讀：
@@ -144,6 +245,12 @@ GODEBUG=gctrace=1 go run main.go
 #   4 P        = 當前 GOMAXPROCS
 
 # gccheckmark=1：GC 正確性驗證（開發/測試用，會大幅降速）
+go mod init example.com/godebug-demo
+cat > godebug_demo_test.go <<'EOF'
+package main
+import "testing"
+func TestSmoke(t *testing.T) {}
+EOF
 GODEBUG=gccheckmark=1 go test ./...
 ```
 
@@ -152,7 +259,13 @@ GODEBUG=gccheckmark=1 go test ./...
 ## 5. `runtime` 套件 — 程式內部監控
 
 ```go
-import "runtime"
+// runtime_stats.go
+package main
+
+import (
+    "fmt"
+    "runtime"
+)
 
 func printStats() {
     fmt.Println("Goroutine 數量:", runtime.NumGoroutine())
@@ -163,6 +276,18 @@ func printStats() {
     runtime.ReadMemStats(&ms)
     fmt.Printf("Heap 使用: %v MB\n", ms.HeapAlloc/1024/1024)
 }
+
+func main() {
+    printStats()
+}
+```
+
+```bash
+mkdir -p /tmp/go-runtime-demo && cd /tmp/go-runtime-demo
+cat > runtime_stats.go <<'EOF'
+// 貼上上面的程式碼
+EOF
+go run runtime_stats.go
 ```
 
 ---
@@ -170,10 +295,18 @@ func printStats() {
 ## 6. `goleak` — Goroutine 洩漏偵測 ⭐
 
 ```bash
+mkdir -p /tmp/go-goleak-demo && cd /tmp/go-goleak-demo
+go mod init example.com/goleak-demo
 go get go.uber.org/goleak   # 需在 go module 專案內執行
+cat > leak_test.go <<'EOF'
+// 貼上下面的 leak_test.go
+EOF
 ```
 
 ```go
+// leak_test.go
+package leakdemo
+
 import (
     "testing"
     "time"
@@ -202,6 +335,14 @@ func TestCleanFunc(t *testing.T) {
 }
 ```
 
+```bash
+# 先看失敗案例（會看到 goleak 報告）
+go test -run TestLeakyFunc -v
+
+# 再看正常案例（會通過）
+go test -run TestCleanFunc -v
+```
+
 ```
 # TestLeakyFunc 執行後輸出：
 # --- FAIL: TestLeakyFunc
@@ -213,10 +354,38 @@ func TestCleanFunc(t *testing.T) {
 
 ## 7. `dlv` (Delve) — Go 專用 Debugger ⭐
 
+```go
+// dlv_demo.go
+package main
+
+import (
+    "fmt"
+    "time"
+)
+
+func worker(id int) {
+    for i := 0; i < 3; i++ {
+        fmt.Printf("worker=%d i=%d\n", id, i)
+        time.Sleep(500 * time.Millisecond)
+    }
+}
+
+func main() {
+    go worker(1)
+    worker(0)
+}
+```
+
 ```bash
+mkdir -p /tmp/go-dlv-demo && cd /tmp/go-dlv-demo
+go mod init example.com/dlv-demo
+cat > dlv_demo.go <<'EOF'
+// 貼上上面的程式碼
+EOF
+
 go install github.com/go-delve/delve/cmd/dlv@latest
 
-dlv debug main.go         # 啟動調試
+dlv debug .               # 啟動調試
 dlv attach <PID>          # 附加到執行中的程序
 ```
 
@@ -233,11 +402,22 @@ dlv attach <PID>          # 附加到執行中的程序
 ## 8. `context` 超時監控模式 ⭐
 
 ```go
+// context_timeout.go
+package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+    "time"
+)
+
 // 用 context 偵測 goroutine 是否卡死
 func doWork(ctx context.Context) error {
     done := make(chan struct{})
     go func() {
         // 實際工作...
+        time.Sleep(10 * time.Second) // 故意超過 timeout
         close(done)
     }()
 
@@ -250,11 +430,23 @@ func doWork(ctx context.Context) error {
 }
 
 // 使用
-ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-defer cancel()
-if err := doWork(ctx); err != nil {
-    log.Println("偵測到超時或卡死:", err)
+func main() {
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+
+    if err := doWork(ctx); err != nil {
+        log.Println("偵測到超時或卡死:", err)
+    }
 }
+```
+
+```bash
+mkdir -p /tmp/go-context-demo && cd /tmp/go-context-demo
+cat > context_timeout.go <<'EOF'
+// 貼上上面的程式碼
+EOF
+go run context_timeout.go
+# 預期輸出：偵測到超時或卡死: goroutine timeout: context deadline exceeded
 ```
 
 ---
@@ -265,7 +457,41 @@ if err := doWork(ctx); err != nil {
 
 測試時直接生成剖析檔，是定位效能問題最直接的路徑。
 
+```go
+// profile_bench_test.go
+package profiledemo
+
+import (
+    "crypto/sha256"
+    "fmt"
+    "testing"
+)
+
+func worker(n int) [32]byte {
+    return sha256.Sum256([]byte(fmt.Sprintf("job-%d", n)))
+}
+
+func BenchmarkWorker(b *testing.B) {
+    for i := 0; i < b.N; i++ {
+        _ = worker(i)
+    }
+}
+
+func TestWorker(t *testing.T) {
+    got := worker(1)
+    if got == ([32]byte{}) {
+        t.Fatal("unexpected zero hash")
+    }
+}
+```
+
 ```bash
+mkdir -p /tmp/go-test-profile-demo && cd /tmp/go-test-profile-demo
+go mod init example.com/profile-demo
+cat > profile_bench_test.go <<'EOF'
+// 貼上上面的程式碼
+EOF
+
 # CPU 剖析 + Benchmark
 go test -bench=. -benchmem -cpuprofile=cpu.prof ./...
 go tool pprof cpu.prof
@@ -310,10 +536,17 @@ go tool pprof cpu.prof
 **安裝方式：** 內建標準函式庫
 
 ```go
+// stack_dump_demo.go
+package main
+
 import (
     "fmt"
+    "os"
+    "os/signal"
     "runtime"
     "runtime/debug"
+    "syscall"
+    "time"
 )
 
 // 印出當前 goroutine 的 stack（crash handler 常用）
@@ -323,38 +556,13 @@ func crashHandler() {
 
 // 抓取所有 goroutine 的 stack 到 buffer（true = 所有 goroutine）
 func dumpAllGoroutines() {
-    buf := make([]byte, 1<<20)  // 1 MB 緩衝區
+    buf := make([]byte, 1<<20) // 1 MB 緩衝區
     n := runtime.Stack(buf, true)
     fmt.Printf("=== goroutine dump ===\n%s\n", buf[:n])
 }
 
-// 設定最大 OS 執行緒數（預設 10000）
-// 當 CGO 或 runtime.LockOSThread() 使用過多時會觸發 panic
-debug.SetMaxThreads(1000)
-
-// 調整 GC 觸發比例（預設 100，代表 heap 翻倍時觸發）
-// 設為負值可完全關閉 GC（測試用途）
-debug.SetGCPercent(50)   // 更頻繁 GC，降低記憶體峰值
-debug.SetGCPercent(-1)   // 關閉 GC（危險！僅測試用）
-
-// 強制執行一次 GC
-runtime.GC()
-
-// 取得 build 資訊（module 路徑、版本、依賴）
-if info, ok := debug.ReadBuildInfo(); ok {
-    fmt.Println("Module:", info.Main.Path)
-}
-```
-
-```go
 // 實用模式：程式收到 SIGQUIT 時 dump 所有 goroutine
-import (
-    "os"
-    "os/signal"
-    "syscall"
-)
-
-func init() {
+func installSIGQUITDump() {
     go func() {
         c := make(chan os.Signal, 1)
         signal.Notify(c, syscall.SIGQUIT)
@@ -365,7 +573,51 @@ func init() {
         }
     }()
 }
-// 觸發：kill -QUIT <PID>  或  Ctrl+\
+
+func main() {
+    installSIGQUITDump()
+
+    // 設定最大 OS 執行緒數（預設 10000）
+    // 當 CGO 或 runtime.LockOSThread() 使用過多時會觸發 panic
+    debug.SetMaxThreads(1000)
+
+    // 調整 GC 觸發比例（預設 100，代表 heap 翻倍時觸發）
+    debug.SetGCPercent(50)
+
+    // 製造一些 goroutine，方便 dump
+    for i := 0; i < 3; i++ {
+        go func(id int) {
+            for {
+                time.Sleep(2 * time.Second)
+                fmt.Println("worker", id, "alive")
+            }
+        }(i)
+    }
+
+    time.Sleep(200 * time.Millisecond)
+    crashHandler()
+    dumpAllGoroutines()
+    runtime.GC()
+
+    if info, ok := debug.ReadBuildInfo(); ok {
+        fmt.Println("Module:", info.Main.Path)
+    }
+
+    fmt.Println("PID:", os.Getpid(), "（可用 kill -QUIT <PID> 再次 dump）")
+    select {}
+}
+```
+
+```bash
+mkdir -p /tmp/go-stackdump-demo && cd /tmp/go-stackdump-demo
+cat > stack_dump_demo.go <<'EOF'
+// 貼上上面的程式碼
+EOF
+go run stack_dump_demo.go
+
+# 另開 terminal（Linux/macOS）
+kill -QUIT <PID>
+# 或在前景程式按 Ctrl+\
 ```
 
 **可觀察：** 所有 goroutine 當前 stack、GC 行為調整、執行緒上限控制
@@ -379,8 +631,13 @@ func init() {
 比 pprof 更輕量，適合生產環境持續暴露程式狀態，無需採樣開銷。
 
 ```go
+// expvar_demo.go
+package main
+
 import (
+    "fmt"
     "expvar"
+    "log"
     "net/http"
     "runtime"
     "time"
@@ -410,22 +667,49 @@ func worker(id int, jobs <-chan int) {
 }
 
 func main() {
+    jobs := make(chan int, 16)
+
+    for i := 0; i < 2; i++ {
+        go worker(i, jobs)
+    }
+
+    go func() {
+        for i := 0; ; i++ {
+            jobs <- i
+            queueDepth.Set(int64(len(jobs)))
+            if i%10 == 0 {
+                tasksFailed.Add(1) // demo 用：模擬少量失敗
+            }
+            time.Sleep(100 * time.Millisecond)
+        }
+    }()
+
     // 定期更新 goroutine 計數
     go func() {
         for {
             goroutineCount.Set(int64(runtime.NumGoroutine()))
+            queueDepth.Set(int64(len(jobs)))
             time.Sleep(time.Second)
         }
     }()
 
-    go http.ListenAndServe(":6060", nil)
-    // 其餘程式...
+    log.Println("expvar + pprof listening on :6060")
+    log.Fatal(http.ListenAndServe(":6060", nil))
 }
 ```
 
 ```bash
+mkdir -p /tmp/go-expvar-demo && cd /tmp/go-expvar-demo
+cat > expvar_demo.go <<'EOF'
+// 貼上上面的程式碼
+EOF
+go run expvar_demo.go
+
+# 另開 terminal
 # 查看所有指標（JSON 格式）
 curl http://localhost:6060/debug/vars
+curl -s http://localhost:6060/debug/vars | jq
+curl -s http://localhost:6060/debug/vars | jq '.goroutine_count, .tasks_done, .worker_status'
 
 # 輸出範例：
 # {
@@ -447,6 +731,9 @@ curl http://localhost:6060/debug/vars
 **安裝方式：** 內建，無需額外安裝
 
 ```bash
+mkdir -p /tmp/go-vet-demo && cd /tmp/go-vet-demo
+go mod init example.com/vet-demo
+
 go vet ./...                    # 分析整個專案
 go vet -v ./...                 # 顯示執行的分析器清單
 go vet -composites=false ./...  # 關閉特定分析器
@@ -455,50 +742,78 @@ go vet -composites=false ./...  # 關閉特定分析器
 **常見偵測項目（與併發相關）：**
 
 ```go
-// ❌ 1. sync.Mutex/sync.WaitGroup 被複製（傳值而非傳指標）
+// copylocks_demo.go
+package vetdemo
+
+import "sync"
+
+// ❌ sync.Mutex 被複製（傳值）會觸發 go vet 的 copylocks
 type Worker struct {
-    mu sync.Mutex  // ← 若 Worker 被複製，go vet 會警告
+    mu sync.Mutex
 }
-func process(w Worker) { w.mu.Lock() }  // 警告：w contains sync.Mutex by value
+
+func process(w Worker) { // go vet: passes lock by value
+    w.mu.Lock()
+    defer w.mu.Unlock()
+}
 
 // ✅ 修正：傳指標
-func process(w *Worker) { w.mu.Lock() }
-
-// ❌ 2. sync/atomic 操作對象未對齊（32-bit 系統）
-type Counter struct {
-    _ [0]func()
-    n int64  // 必須 64-bit 對齊
+func processPtr(w *Worker) {
+    w.mu.Lock()
+    defer w.mu.Unlock()
 }
+```
 
-// ❌ 3. goroutine 中使用 loop variable（Go 1.22 以前的常見 bug）
-for i := 0; i < 5; i++ {
-    go func() {
-        fmt.Println(i)  // go vet 警告：loop variable i captured by func literal
-    }()
-}
-// ✅ 修正（Go 1.22 以前）：
-for i := 0; i < 5; i++ {
-    i := i  // shadow 變數
-    go func() { fmt.Println(i) }()
-}
+```go
+// lostcancel_demo.go
+package vetdemo
 
-// ❌ 4. channel 方向性使用錯誤
+import "context"
+
+// ❌ 未呼叫 cancel，會觸發 go vet 的 lostcancel
+func leakedContext(parent context.Context) context.Context {
+    ctx, _ := context.WithCancel(parent)
+    return ctx
+}
+```
+
+```go
+// compile_error_channel_direction.go（示意：這是編譯期錯誤，不是 go vet）
+package main
+
 func send(ch <-chan int) {
-    ch <- 1  // go vet 警告：send on receive-only channel
+    ch <- 1 // compile error: send to receive-only channel
 }
-
-// ❌ 5. context.WithCancel 洩漏（需搭配 staticcheck）
-ctx, _ := context.WithCancel(parent)  // cancel 未儲存 → 資源洩漏
 ```
 
 ```bash
+# 先建立可被 go vet 偵測的檔案
+cat > copylocks_demo.go <<'EOF'
+// 貼上 copylocks_demo.go
+EOF
+cat > lostcancel_demo.go <<'EOF'
+// 貼上 lostcancel_demo.go
+EOF
+go vet ./...
+# 預期可看到 copylocks / lostcancel 類型警告
+
+# 再測試編譯期錯誤例子（分開放，避免干擾 go vet 示範）
+mkdir -p compileerr && cd compileerr
+cat > main.go <<'EOF'
+// 貼上 compile_error_channel_direction.go
+EOF
+go mod init example.com/compileerr
+go build ./...
+# 預期：send to receive-only channel
+cd ..
+
 # 搭配 staticcheck 做更深入的靜態分析（第三方但業界標準）
 go install honnef.co/go/tools/cmd/staticcheck@latest
 staticcheck ./...
-# 額外偵測：不必要的鎖、channel 死鎖模式、context 洩漏
+# 額外偵測：更多 code smell、部分併發誤用模式、context 洩漏
 ```
 
-**可觀察：** Mutex 複製、loop variable 捕獲、atomic 對齊問題、channel 方向性錯誤
+**可觀察：** Mutex 複製、lost cancel、部分併發誤用模式（另有編譯期錯誤示例）
 
 ---
 
