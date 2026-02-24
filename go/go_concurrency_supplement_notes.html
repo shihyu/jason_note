@@ -184,25 +184,36 @@
 <pre><code class="language-go">go func() {
     fmt.Println("我在另一個 goroutine 跑")
 }()
-</code></pre>
-<p>Goroutine 的啟動成本極低，初始堆疊約 2KB，而 C++ thread 通常需要 1MB 以上。你可以同時跑數十萬個 goroutine，因為它們由 Go runtime 排程，而不是直接對應 OS thread（M:N mapping）。</p>
-<hr />
-<h3 id="2-channel通道"><a class="header" href="#2-channel通道">2. Channel（通道）</a></h3>
-<pre><code class="language-go">ch := make(chan int, 1) // buffered channel
+```go
+
+Goroutine 的啟動成本極低，初始堆疊約 2KB，而 C++ thread 通常需要 1MB 以上。你可以同時跑數十萬個 goroutine，因為它們由 Go runtime 排程，而不是直接對應 OS thread（M:N mapping）。
+
+---
+
+### 2. Channel（通道）
+
+```go
+ch := make(chan int, 1) // buffered channel
 ch &lt;- 42               // 發送
 v := &lt;-ch              // 接收
-</code></pre>
-<p>Go 的核心哲學：</p>
-<blockquote>
-<p><strong>"不要透過共享記憶體來通訊，要透過通訊來共享記憶體"</strong></p>
-</blockquote>
-<p>Channel 方向宣告可以限制使用方式，讓 API 更安全：</p>
-<pre><code class="language-go">func producer(ch chan&lt;- int) { ... } // 只能寫
+```go
+
+Go 的核心哲學：
+&gt; **"不要透過共享記憶體來通訊，要透過通訊來共享記憶體"**
+
+Channel 方向宣告可以限制使用方式，讓 API 更安全：
+
+```go
+func producer(ch chan&lt;- int) { ... } // 只能寫
 func consumer(ch &lt;-chan int) { ... } // 只能讀
-</code></pre>
-<hr />
-<h3 id="3-select"><a class="header" href="#3-select">3. Select</a></h3>
-<pre><code class="language-go">select {
+```go
+
+---
+
+### 3. Select
+
+```go
+select {
 case msg := &lt;-ch1:
     fmt.Println(msg)
 case msg := &lt;-ch2:
@@ -228,9 +239,12 @@ case &lt;-time.After(1 * time.Second):
     done uint32  // 標記是否已執行過，0 = 未執行，1 = 已執行
     m    Mutex   // 互斥鎖，保護 f() 只被呼叫一次
 }
-</code></pre>
-<h3 id="原始碼"><a class="header" href="#原始碼">原始碼</a></h3>
-<pre><code class="language-go">func (o *Once) Do(f func()) {
+```go
+
+### 原始碼
+
+```go
+func (o *Once) Do(f func()) {
     if atomic.LoadUint32(&amp;o.done) == 0 {
         o.doSlow(f)
     }
@@ -253,9 +267,12 @@ func (o *Once) doSlow(f func()) {
  │        │       └────────── 方法名稱
  │        └────────────────── 接收者：屬於 *Once 型別
  └─────────────────────────── 關鍵字
-</code></pre>
-<p><code>func (o *Once) Do(f func())</code> 是<strong>方法</strong>，不是函數。差別在於有沒有接收者：</p>
-<pre><code class="language-go">// 函數 — 直接呼叫
+```go
+
+`func (o *Once) Do(f func())` 是**方法**，不是函數。差別在於有沒有接收者：
+
+```go
+// 函數 — 直接呼叫
 func Do(f func()) { ... }
 Do(f)
 
@@ -263,9 +280,12 @@ Do(f)
 func (o *Once) Do(f func()) { ... }
 var once Once
 once.Do(f)
-</code></pre>
-<p><code>f func()</code> 是參數，型別是「一個無參數、無回傳值的函數」：</p>
-<pre><code class="language-go">// 一般參數
+```go
+
+`f func()` 是參數，型別是「一個無參數、無回傳值的函數」：
+
+```go
+// 一般參數
 func Add(n int)   { ... }  // n 是 int
 
 // 函數作為參數
@@ -343,10 +363,14 @@ once.Do(func() {
     config = loadConfig()
 })
 // Do 返回後直接使用，不需要再判斷 nil
-</code></pre>
-<hr />
-<h3 id="完整可執行範例"><a class="header" href="#完整可執行範例">完整可執行範例</a></h3>
-<pre><code class="language-go">package main
+```go
+
+---
+
+### 完整可執行範例
+
+```go
+package main
 
 import (
     "fmt"
@@ -560,18 +584,23 @@ if ready {
 </blockquote>
 <pre><code>A ──happens-before──→ B
 寫 x=42               讀 x（保證是 42）
-</code></pre>
-<p>Go 保證以下操作具有 happens-before 關係：</p>
-<ul>
-<li><code>sync.Mutex</code> 的 <code>Lock</code> / <code>Unlock</code></li>
-<li>Channel 的發送 / 接收</li>
-<li><code>sync.WaitGroup</code> 的 <code>Wait</code></li>
-<li><code>go</code> 啟動 goroutine 那一行</li>
-</ul>
-<hr />
-<h3 id="正確修法"><a class="header" href="#正確修法">正確修法</a></h3>
-<p><strong>方法一：Channel（最 Go 風格）</strong></p>
-<pre><code class="language-go">package main
+```go
+
+Go 保證以下操作具有 happens-before 關係：
+
+- `sync.Mutex` 的 `Lock` / `Unlock`
+- Channel 的發送 / 接收
+- `sync.WaitGroup` 的 `Wait`
+- `go` 啟動 goroutine 那一行
+
+---
+
+### 正確修法
+
+**方法一：Channel（最 Go 風格）**
+
+```go
+package main
 
 import "fmt"
 
@@ -711,8 +740,10 @@ P1 [G1, G2, G3, ...]      P2 [G4, G5, G6, ...]
 std::atomic&lt;int&gt; x;
 x.store(42, std::memory_order_release);
 x.load(std::memory_order_acquire);
-</code></pre>
-<pre><code class="language-go">// Go — 隱藏底層複雜度，用 channel 或 mutex 就好
+```go
+
+```go
+// Go — 隱藏底層複雜度，用 channel 或 mutex 就好
 ch := make(chan int)
 go func() { ch &lt;- 42 }()
 result := &lt;-ch
@@ -725,8 +756,10 @@ std::thread t([&amp;]() {
     shared_data++;
 });
 t.join();
-</code></pre>
-<pre><code class="language-go">// Go — 用 channel 更安全、更簡潔
+```go
+
+```go
+// Go — 用 channel 更安全、更簡潔
 ch := make(chan int)
 go func() { ch &lt;- 1 }()
 result := &lt;-ch
@@ -825,11 +858,16 @@ C++20 Coroutine（自己搭排程器）
 
 // Go goroutine 可以遞迴很深
 // runtime 會自動擴展 stack
-</code></pre>
-<hr />
-<h3 id="程式碼對比"><a class="header" href="#程式碼對比">程式碼對比</a></h3>
-<p><strong>Go — 簡單直接</strong></p>
-<pre><code class="language-go">func fetchData(url string) string {
+```go
+
+---
+
+### 程式碼對比
+
+**Go — 簡單直接**
+
+```go
+func fetchData(url string) string {
     // 直接寫，runtime 幫你處理非同步
     resp, _ := http.Get(url)
     defer resp.Body.Close()
@@ -891,11 +929,16 @@ Task fetchData(std::string url) {
 go func() {
     ch &lt;- data // 永遠阻塞！
 }()
-</code></pre>
-<p>啟動 goroutine 前，要確認誰負責讀取或關閉 channel，否則這個 goroutine 會永遠存在、佔用記憶體。</p>
-<hr />
-<h3 id="2-閉包捕獲問題"><a class="header" href="#2-閉包捕獲問題">2. 閉包捕獲問題</a></h3>
-<pre><code class="language-go">// 錯誤示範：全部可能印出 3
+```go
+
+啟動 goroutine 前，要確認誰負責讀取或關閉 channel，否則這個 goroutine 會永遠存在、佔用記憶體。
+
+---
+
+### 2. 閉包捕獲問題
+
+```go
+// 錯誤示範：全部可能印出 3
 for i := 0; i &lt; 3; i++ {
     go func() { fmt.Println(i) }()
 }
@@ -919,45 +962,56 @@ var counter int64
 for i := 0; i &lt; 1000; i++ {
     go func() { atomic.AddInt64(&amp;counter, 1) }()
 }
-</code></pre>
-<hr />
-<h2 id="八重要一句話"><a class="header" href="#八重要一句話">八、重要一句話</a></h2>
-<blockquote>
-<p>只要兩個 goroutine 共享資料，就<strong>必須</strong>用同步機制（channel / mutex / atomic），否則結果是未定義的，即使「看起來能跑」。</p>
-</blockquote>
-<p>用 <code>go run -race main.go</code> 可以幫你抓大部分這類問題。</p>
-<hr />
-<h2 id="九學習工具與資源"><a class="header" href="#九學習工具與資源">九、學習工具與資源</a></h2>
-<h3 id="開發時必用"><a class="header" href="#開發時必用">開發時必用</a></h3>
-<ul>
-<li><code>go run -race main.go</code> — 內建 race detector，強烈建議開發時常開</li>
-</ul>
-<h3 id="互動學習"><a class="header" href="#互動學習">互動學習</a></h3>
-<ul>
-<li><strong>Go Tour</strong> — 官方互動教學，必做</li>
-<li><strong>Go Playground</strong> — 線上執行、快速測試</li>
-</ul>
-<h3 id="深入理解"><a class="header" href="#深入理解">深入理解</a></h3>
-<ul>
-<li><strong>Goroutine visualizer</strong> — 視覺化 goroutine 行為</li>
-<li><strong>Go Memory Model（官方文件）</strong> — 理解 happens-before 的權威來源</li>
-</ul>
-<h3 id="書籍"><a class="header" href="#書籍">書籍</a></h3>
-<ul>
-<li><strong>《Concurrency in Go》</strong> by Katherine Cox-Buday — 目前最完整的 Go 併發參考書</li>
-</ul>
-<h3 id="實作練習最重要的三個-pattern"><a class="header" href="#實作練習最重要的三個-pattern">實作練習（最重要的三個 Pattern）</a></h3>
-<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>概念</th></tr></thead><tbody>
-<tr><td>Pipeline</td><td>多個 goroutine 串成流水線，前一個的輸出是下一個的輸入</td></tr>
-<tr><td>Fan-out / Fan-in</td><td>一個輸入分散給多個 worker 處理，再匯聚回來</td></tr>
-<tr><td>Worker Pool</td><td>固定數量的 goroutine 處理任務佇列，控制併發上限</td></tr>
-</tbody></table>
-</div>
-<p>這三個 pattern 涵蓋了大多數實務場景，自己實作一遍理解會非常深。</p>
-<hr />
-<h2 id="十三大-pattern-完整範例"><a class="header" href="#十三大-pattern-完整範例">十、三大 Pattern 完整範例</a></h2>
-<h3 id="pattern-1pipelineproducer-consumer"><a class="header" href="#pattern-1pipelineproducer-consumer">Pattern 1：Pipeline（Producer-Consumer）</a></h3>
-<pre><code class="language-go">package main
+```go
+
+---
+
+## 八、重要一句話
+
+&gt; 只要兩個 goroutine 共享資料，就**必須**用同步機制（channel / mutex / atomic），否則結果是未定義的，即使「看起來能跑」。
+
+用 `go run -race main.go` 可以幫你抓大部分這類問題。
+
+---
+
+## 九、學習工具與資源
+
+### 開發時必用
+
+- `go run -race main.go` — 內建 race detector，強烈建議開發時常開
+
+### 互動學習
+
+- **Go Tour** — 官方互動教學，必做
+- **Go Playground** — 線上執行、快速測試
+
+### 深入理解
+
+- **Goroutine visualizer** — 視覺化 goroutine 行為
+- **Go Memory Model（官方文件）** — 理解 happens-before 的權威來源
+
+### 書籍
+
+- **《Concurrency in Go》** by Katherine Cox-Buday — 目前最完整的 Go 併發參考書
+
+### 實作練習（最重要的三個 Pattern）
+
+| Pattern | 概念 |
+|---|---|
+| Pipeline | 多個 goroutine 串成流水線，前一個的輸出是下一個的輸入 |
+| Fan-out / Fan-in | 一個輸入分散給多個 worker 處理，再匯聚回來 |
+| Worker Pool | 固定數量的 goroutine 處理任務佇列，控制併發上限 |
+
+這三個 pattern 涵蓋了大多數實務場景，自己實作一遍理解會非常深。
+
+---
+
+## 十、三大 Pattern 完整範例
+
+### Pattern 1：Pipeline（Producer-Consumer）
+
+```go
+package main
 
 import (
 	"fmt"
@@ -995,16 +1049,19 @@ func main() {
 
 	wg.Wait()
 }
-</code></pre>
-<p><strong>重點：</strong></p>
-<ul>
-<li><code>close(ch)</code> 用 <code>defer</code> 確保一定會關閉，<code>range ch</code> 在 channel 關閉後自動結束</li>
-<li><code>chan&lt;- int</code> 只寫、<code>&lt;-chan int</code> 只讀，讓編譯器幫你檢查誤用</li>
-<li>Producer 關閉 channel，Consumer 感知到後自動退出，不需要額外信號</li>
-</ul>
-<hr />
-<h3 id="pattern-2fan-out--fan-in"><a class="header" href="#pattern-2fan-out--fan-in">Pattern 2：Fan-out / Fan-in</a></h3>
-<pre><code class="language-go">package main
+```go
+
+**重點：**
+- `close(ch)` 用 `defer` 確保一定會關閉，`range ch` 在 channel 關閉後自動結束
+- `chan&lt;- int` 只寫、`&lt;-chan int` 只讀，讓編譯器幫你檢查誤用
+- Producer 關閉 channel，Consumer 感知到後自動退出，不需要額外信號
+
+---
+
+### Pattern 2：Fan-out / Fan-in
+
+```go
+package main
 
 import (
 	"fmt"
@@ -1065,16 +1122,19 @@ func main() {
 		fmt.Println(v)
 	}
 }
-</code></pre>
-<p><strong>重點：</strong></p>
-<ul>
-<li>Fan-out：一個 channel 的資料分散給多個 goroutine 並行處理</li>
-<li>Fan-in：用一個 WaitGroup + goroutine 監控所有輸入，全部關閉後再關閉輸出</li>
-<li>注意 <code>fanOut</code> 中 <code>go func(out chan&lt;- int)</code> 傳入參數，避免閉包捕獲同一個變數</li>
-</ul>
-<hr />
-<h3 id="pattern-3worker-pool"><a class="header" href="#pattern-3worker-pool">Pattern 3：Worker Pool</a></h3>
-<pre><code class="language-go">package main
+```go
+
+**重點：**
+- Fan-out：一個 channel 的資料分散給多個 goroutine 並行處理
+- Fan-in：用一個 WaitGroup + goroutine 監控所有輸入，全部關閉後再關閉輸出
+- 注意 `fanOut` 中 `go func(out chan&lt;- int)` 傳入參數，避免閉包捕獲同一個變數
+
+---
+
+### Pattern 3：Worker Pool
+
+```go
+package main
 
 import (
 	"fmt"

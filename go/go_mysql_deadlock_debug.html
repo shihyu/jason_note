@@ -252,11 +252,15 @@ Process 3: Thread 1, Thread 2, Thread 3
 Go 模式：
 Process 1: 20個線程 + 10000個 Goroutine  
 → 20 個線程，1 個記憶體空間，goroutine 間通訊簡單
-</code></pre>
-<h3 id="何時會有多個-process"><a class="header" href="#何時會有多個-process">何時會有多個 Process？</a></h3>
-<p><strong>只有主動建立時</strong>：</p>
-<h4 id="1-使用-osexec-套件"><a class="header" href="#1-使用-osexec-套件">1. 使用 os/exec 套件</a></h4>
-<pre><code class="language-go">import "os/exec"
+```go
+
+### 何時會有多個 Process？
+
+**只有主動建立時**：
+
+#### 1. 使用 os/exec 套件
+```go
+import "os/exec"
 
 func main() {
     // 主動啟動另一個程序
@@ -298,11 +302,14 @@ Thread-12: [TraceID-099] Transfer complete
 </ul>
 <h4 id="開啟完整死鎖記錄"><a class="header" href="#開啟完整死鎖記錄">開啟完整死鎖記錄</a></h4>
 <pre><code class="language-sql">SET GLOBAL innodb_print_all_deadlocks = ON;
-</code></pre>
-<p>所有死鎖都會記錄到 MySQL 錯誤日誌中</p>
-<h3 id="2-go-程式中加入追蹤"><a class="header" href="#2-go-程式中加入追蹤">2. Go 程式中加入追蹤</a></h3>
-<h4 id="關鍵操作加入詳細-log"><a class="header" href="#關鍵操作加入詳細-log">關鍵操作加入詳細 Log</a></h4>
-<pre><code class="language-go">func transferMoney(fromID, toID int, amount float64) {
+```go
+所有死鎖都會記錄到 MySQL 錯誤日誌中
+
+### 2. Go 程式中加入追蹤
+
+#### 關鍵操作加入詳細 Log
+```go
+func transferMoney(fromID, toID int, amount float64) {
     traceID := generateTraceID() // 產生唯一追蹤ID
     
     log.Printf("[%s] START transfer from=%d to=%d amount=%.2f", traceID, fromID, toID, amount)
@@ -322,9 +329,11 @@ Thread-12: [TraceID-099] Transfer complete
     
     // ... 其他操作也都加 log
 }
-</code></pre>
-<h4 id="記錄-goroutine-資訊"><a class="header" href="#記錄-goroutine-資訊">記錄 Goroutine 資訊</a></h4>
-<pre><code class="language-go">import "runtime"
+```go
+
+#### 記錄 Goroutine 資訊
+```go
+import "runtime"
 
 func getGoroutineID() uint64 {
     // 取得當前 goroutine ID
@@ -333,10 +342,13 @@ func getGoroutineID() uint64 {
 
 // 在每個資料庫操作前記錄
 log.Printf("Goroutine %d executing SQL: %s", getGoroutineID(), sqlQuery)
-</code></pre>
-<h3 id="3-使用分散式追蹤"><a class="header" href="#3-使用分散式追蹤">3. 使用分散式追蹤</a></h3>
-<h4 id="建立追蹤上下文"><a class="header" href="#建立追蹤上下文">建立追蹤上下文</a></h4>
-<pre><code class="language-go">import "github.com/google/uuid"
+```go
+
+### 3. 使用分散式追蹤
+
+#### 建立追蹤上下文
+```go
+import "github.com/google/uuid"
 
 type Context struct {
     TraceID string
@@ -353,10 +365,13 @@ ctx := &amp;Context{
     TraceID: uuid.New().String(),
     UserID:  123,
 }
-</code></pre>
-<h3 id="4-業務流程監控"><a class="header" href="#4-業務流程監控">4. 業務流程監控</a></h3>
-<h4 id="記錄完整業務上下文"><a class="header" href="#記錄完整業務上下文">記錄完整業務上下文</a></h4>
-<pre><code class="language-go">func processOrder(orderID int) {
+```go
+
+### 4. 業務流程監控
+
+#### 記錄完整業務上下文
+```go
+func processOrder(orderID int) {
     log.Printf("=== Processing Order %d START ===", orderID)
     defer log.Printf("=== Processing Order %d END ===", orderID)
     
@@ -369,17 +384,20 @@ ctx := &amp;Context{
     log.Printf("Order %d: creating payment", orderID)
     // ... SQL操作
 }
-</code></pre>
-<h3 id="5-程式碼靜態分析"><a class="header" href="#5-程式碼靜態分析">5. 程式碼靜態分析</a></h3>
-<h4 id="檢查鎖定順序"><a class="header" href="#檢查鎖定順序">檢查鎖定順序</a></h4>
-<ul>
-<li>搜尋所有 <code>FOR UPDATE</code>、<code>BEGIN TRANSACTION</code> 語句</li>
-<li>檢查不同函數是否以不同順序存取相同資料表</li>
-<li>建立鎖定依賴圖，視覺化潛在死鎖路徑</li>
-</ul>
-<h3 id="6-壓力測試重現"><a class="header" href="#6-壓力測試重現">6. 壓力測試重現</a></h3>
-<h4 id="建立死鎖重現測試"><a class="header" href="#建立死鎖重現測試">建立死鎖重現測試</a></h4>
-<pre><code class="language-go">func TestDeadlock(t *testing.T) {
+```go
+
+### 5. 程式碼靜態分析
+
+#### 檢查鎖定順序
+- 搜尋所有 `FOR UPDATE`、`BEGIN TRANSACTION` 語句
+- 檢查不同函數是否以不同順序存取相同資料表
+- 建立鎖定依賴圖，視覺化潛在死鎖路徑
+
+### 6. 壓力測試重現
+
+#### 建立死鎖重現測試
+```go
+func TestDeadlock(t *testing.T) {
     var wg sync.WaitGroup
     
     // 同時執行多個會衝突的操作
@@ -404,9 +422,11 @@ runtime.GOMAXPROCS(10) // 只用10個線程而不是20個
 // 或者調整資料庫連接池
 db.SetMaxOpenConns(10) // 限制最大連接數
 db.SetMaxIdleConns(5)  // 限制閒置連接數
-</code></pre>
-<p><strong>監控策略</strong>：</p>
-<pre><code class="language-go">// 需要更詳細的 goroutine 和線程資訊
+```go
+
+**監控策略**：
+```go
+// 需要更詳細的 goroutine 和線程資訊
 func logWithRuntimeInfo() {
     log.Printf("PID: %d, GOMAXPROCS: %d, NumGoroutine: %d, NumCPU: %d", 
                os.Getpid(),

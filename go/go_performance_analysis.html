@@ -227,20 +227,21 @@
 </code></pre>
 <p>對比 C：</p>
 <pre><code class="language-c">snprintf(json_payload, ...)  // 手動構建 JSON，效率較低
-</code></pre>
-<h3 id="6-內存分配策略"><a class="header" href="#6-內存分配策略">6. 內存分配策略</a></h3>
-<ul>
-<li>Go 預分配了 slice：<code>latencies: make([]float64, 0)</code></li>
-<li>C/C++ 可能有更多動態分配開銷</li>
-</ul>
-<h2 id="go-高尾部延遲的原因"><a class="header" href="#go-高尾部延遲的原因">Go 高尾部延遲的原因</a></h2>
-<h3 id="1-gc-垃圾回收-導致的長尾延遲"><a class="header" href="#1-gc-垃圾回收-導致的長尾延遲">1. GC (垃圾回收) 導致的長尾延遲</a></h3>
-<ul>
-<li>Go 使用並發垃圾回收器，在高負載時會造成 STW (Stop-The-World) 暫停</li>
-<li>這些暫停通常很短（幾毫秒），但在 P95-P99 會明顯累積</li>
-</ul>
-<h3 id="2-goroutine-調度延遲"><a class="header" href="#2-goroutine-調度延遲">2. Goroutine 調度延遲</a></h3>
-<pre><code class="language-go">go func(orderID int) {
+```go
+
+### 6. 內存分配策略
+- Go 預分配了 slice：`latencies: make([]float64, 0)`
+- C/C++ 可能有更多動態分配開銷
+
+## Go 高尾部延遲的原因
+
+### 1. GC (垃圾回收) 導致的長尾延遲
+- Go 使用並發垃圾回收器，在高負載時會造成 STW (Stop-The-World) 暫停
+- 這些暫停通常很短（幾毫秒），但在 P95-P99 會明顯累積
+
+### 2. Goroutine 調度延遲
+```go
+go func(orderID int) {
     defer wg.Done()
     defer func() { &lt;-sem }()
     // 這裡可能會有調度延遲

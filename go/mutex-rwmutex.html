@@ -212,12 +212,18 @@ func main() {
 }
 $ go run main.go
 3000
-</code></pre>
-<p>執行之後結果是 3000 沒問題，1000+1000+1000=3000。</p>
-<h2 id="同時存款"><a class="header" href="#同時存款">同時存款</a></h2>
-<p>銀行不太可能讓人一個一個排隊存款，也需要支援同時存款，當今天存款的動作是並行的，會發生什麼事呢？</p>
-<p>這邊用 sync.WaitGroup 去等待所有 goroutine 執行完畢，之後再印出餘額。</p>
-<pre><code class="language-go">func main() {
+```go
+
+執行之後結果是 3000 沒問題，1000+1000+1000=3000。
+
+## 同時存款
+
+銀行不太可能讓人一個一個排隊存款，也需要支援同時存款，當今天存款的動作是並行的，會發生什麼事呢？
+
+這邊用 sync.WaitGroup 去等待所有 goroutine 執行完畢，之後再印出餘額。
+
+```go
+func main() {
     var wg sync.WaitGroup
     b := &amp;Bank{}
 
@@ -241,9 +247,12 @@ $ go run main.go
 }
 $ go run main.go
 3000
-</code></pre>
-<p>還是 3000 沒問題，那我們同時存款 1000 次的時候會發生什麼事呢？</p>
-<pre><code class="language-go">func main() {
+```go
+
+還是 3000 沒問題，那我們同時存款 1000 次的時候會發生什麼事呢？
+
+```go
+func main() {
     var wg sync.WaitGroup
     b := &amp;Bank{}
 
@@ -288,12 +297,18 @@ Goroutine 7 (finished) created at:
 996000
 Found 1 data race(s)
 exit status 66
-</code></pre>
-<p>喔喔喔發現原來有 <a href="https://zh.wikipedia.org/wiki/%E7%AB%B6%E7%88%AD%E5%8D%B1%E5%AE%B3">race condition</a>， 因為同時去對 Bank.balance 去做存取的動作，數量少的時候可能沒問題，當量大的時候就可能出錯。</p>
-<h2 id="syncmutex"><a class="header" href="#syncmutex">sync.Mutex</a></h2>
-<p>為了防止這種狀況發生，就可以用<a href="https://zh.wikipedia.org/wiki/%E4%BA%92%E6%96%A5%E9%8E%96">互斥鎖</a> <code>sync.Mutex</code> 來處理這個問題，同時間只有一個 goroutine 能存取該變數。</p>
-<p>這次我們在 <code>Deposit()</code> 存款前先 <code>Lock()</code>，存款後再 <code>Unlock()</code>。</p>
-<pre><code class="language-go">type Bank struct {
+```go
+
+喔喔喔發現原來有 [race condition](https://zh.wikipedia.org/wiki/競爭危害)， 因為同時去對 Bank.balance 去做存取的動作，數量少的時候可能沒問題，當量大的時候就可能出錯。
+
+## sync.Mutex
+
+為了防止這種狀況發生，就可以用[互斥鎖](https://zh.wikipedia.org/wiki/互斥鎖) `sync.Mutex` 來處理這個問題，同時間只有一個 goroutine 能存取該變數。
+
+這次我們在 `Deposit()` 存款前先 `Lock()`，存款後再 `Unlock()`。
+
+```go
+type Bank struct {
     balance int
     mux     sync.Mutex
 }
@@ -309,12 +324,18 @@ func (b *Bank) Balance() int {
 }
 $ go run -race main.go
 1000000
-</code></pre>
-<p>這次結果正確了，而且也沒跳出 race condition 的警訊。</p>
-<h2 id="同時存款和查詢"><a class="header" href="#同時存款和查詢">同時存款和查詢</a></h2>
-<p>想當然會有多人一起存款，就會有多人一起查詢餘額。<del>也會有多人一起運動</del></p>
-<p>多加一組查詢 1000 次的 goroutine 再執行看看。</p>
-<pre><code class="language-go">func main() {
+```go
+
+這次結果正確了，而且也沒跳出 race condition 的警訊。
+
+## 同時存款和查詢
+
+想當然會有多人一起存款，就會有多人一起查詢餘額。~~也會有多人一起運動~~
+
+多加一組查詢 1000 次的 goroutine 再執行看看。
+
+```go
+func main() {
     var wg sync.WaitGroup
 
     b := &amp;Bank{}
@@ -383,10 +404,14 @@ Goroutine 58 (finished) created at:
 1000000
 Found 2 data race(s)
 exit status 66
-</code></pre>
-<p>不意外，因為同時對 balance 去做讀寫，當然跳出 race condition 的警告。</p>
-<p>我們一樣在 Balance() 加上 <code>Lock()</code> 和 <code>Unlock()</code> 後執行。</p>
-<pre><code class="language-go">type Bank struct {
+```go
+
+不意外，因為同時對 balance 去做讀寫，當然跳出 race condition 的警告。
+
+我們一樣在 Balance() 加上 `Lock()` 和 `Unlock()` 後執行。
+
+```go
+type Bank struct {
     balance int
     mux     sync.Mutex
 }
@@ -405,12 +430,18 @@ func (b *Bank) Balance() (balnce int) {
 }
 $ go run -race main.go
 1000000
-</code></pre>
-<p>結果成功了，也沒有 race 的警告了。</p>
-<h2 id="讀寫互相阻塞"><a class="header" href="#讀寫互相阻塞">讀寫互相阻塞</a></h2>
-<p>目前這邊看起來都還不錯，但以現在的情況來說，只要有人讀，或只要有人寫，就會被 block。</p>
-<p>假如銀行存款和查詢各要上花一秒：</p>
-<pre><code class="language-go">package main
+```go
+
+結果成功了，也沒有 race 的警告了。
+
+## 讀寫互相阻塞
+
+目前這邊看起來都還不錯，但以現在的情況來說，只要有人讀，或只要有人寫，就會被 block。
+
+假如銀行存款和查詢各要上花一秒：
+
+```go
+package main
 
 import (
     "log"
@@ -472,12 +503,18 @@ $ go run -race main.go
 2020/05/02 02:11:31 Read: balance: 5000
 2020/05/02 02:11:32 Read: balance: 5000
 2020/05/02 02:11:33 Read: balance: 5000
-</code></pre>
-<p>就會發現，每隔一秒才能處理一個 action，以各五次讀寫來說，總共就要花上 10 秒，但對讀來說，應該可以瘋狂讀，每次讀都會是安全的， 值也都會是一樣，除非當下有寫的動作，它不應該被其他讀的動作 block。</p>
-<h2 id="syncrwmutex"><a class="header" href="#syncrwmutex">sync.RWMutex</a></h2>
-<p><code>sync.RWMutex</code> 是一個<a href="https://zh.wikipedia.org/wiki/%E8%AE%80%E5%AF%AB%E9%8E%96">讀寫鎖</a>(multiple readers, single writer lock)，多讀單寫，可以允許多個讀並發，單個寫。</p>
-<p>把 <code>sync.Mutex</code> 換成 <code>sync.RWMutex</code>：</p>
-<pre><code class="language-go">type Bank struct {
+```go
+
+就會發現，每隔一秒才能處理一個 action，以各五次讀寫來說，總共就要花上 10 秒，但對讀來說，應該可以瘋狂讀，每次讀都會是安全的， 值也都會是一樣，除非當下有寫的動作，它不應該被其他讀的動作 block。
+
+## sync.RWMutex
+
+`sync.RWMutex` 是一個[讀寫鎖](https://zh.wikipedia.org/wiki/讀寫鎖)(multiple readers, single writer lock)，多讀單寫，可以允許多個讀並發，單個寫。
+
+把 `sync.Mutex` 換成 `sync.RWMutex`：
+
+```go
+type Bank struct {
     balance int
     mux     sync.RWMutex    // read write lock
 }
