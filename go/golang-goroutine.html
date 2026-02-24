@@ -180,7 +180,7 @@
                     <main>
                         <h1 id="golang-goroutine-與-gmp-原理全面分析"><a class="header" href="#golang-goroutine-與-gmp-原理全面分析">Golang Goroutine 與 GMP 原理全面分析</a></h1>
 <p>最近在研讀 Kubernetes ，所以得好好地跟 golang 這個語言當朋友，看著看著看到了 goroutine ，但是始終不解 goroutine 是哪來幹嘛、為何而生的？所以我們在開始深入認識 goroutine 之前，我們可能要先來認識一下歷史，這樣我們才能更全面的認識 goroutine 的原理與設計思想。</p>
-<h1 id="golang-調度器的由來"><a class="header" href="#golang-調度器的由來">Golang 調度器的由來</a></h1>
+<h2 id="golang-調度器的由來"><a class="header" href="#golang-調度器的由來">Golang 調度器的由來</a></h2>
 <h2 id="單進程時代"><a class="header" href="#單進程時代">單進程時代</a></h2>
 <p>我們都知道軟體是跑在操作系統之上的，真正來計算的人是 CPU，早期的操作系統每個程序就是一個進程，直到一個程序運行完畢之後，才能運行下一個進程。</p>
 <p>假設有三個進程，分別為 A 、 B 與 C ，那麼在 CPU 上的調度就是依照執行順序執行。</p>
@@ -225,16 +225,16 @@
 <li>Machine ： 抽象化代表內核線程，紀錄內核線程 stack 信息，當 goroutine 調度到線程時候，使用該 goroutine 自己的 stack 信息。</li>
 <li>Process ： 表示調度器，負責調度 goroutine ，維護一個本地 goroutine 對列，並且把對列跟 M 綁定，讓 M 從 P 上獲得 goroutine 並執行，同時還負責部分記憶體管理。</li>
 </ul>
-<p><img src="images/2022-01-24-gmp.jpg" alt="" /></p>
+<p><img src="images/2022-01-24-gmp.jpg" alt="golang GMP" /></p>
 <h3 id="mpg-的對應關係"><a class="header" href="#mpg-的對應關係">MPG 的對應關係</a></h3>
 <ul>
 <li>KSE: Kernel Scheduling Entity</li>
 <li>M 我們可以理解跟 Kernel Task 一對一對應</li>
 <li>一個 P 上面可以有多個 G，P 會去識當前狀態來決定要跟哪個 M 來綁定，比如說一個 M 已經陷入到內核態，而 P 就有可能換主，去找其他 M 執行。</li>
 </ul>
-<p><img src="images/2022-01-24-mpg.jpg" alt="" /></p>
+<p><img src="images/2022-01-24-mpg.jpg" alt="golang MPG" /></p>
 <h3 id="gmp-模型細節"><a class="header" href="#gmp-模型細節">GMP 模型細節</a></h3>
-<p><img src="images/2022-01-24-gmp-detail.jpg" alt="" /></p>
+<p><img src="images/2022-01-24-gmp-detail.jpg" alt="golang GMP Model" /></p>
 <ul>
 <li>LRQ： local run queue</li>
 <li>GRQ： global run queue</li>
@@ -253,7 +253,7 @@
 <li>如果 G 已經完成運行後，他會把自己放到 gFree 去，這樣就可以重複使用 G ，減少開銷。</li>
 </ul>
 <h4 id="p-的狀態"><a class="header" href="#p-的狀態">P 的狀態</a></h4>
-<p><img src="images/2022-01-24-p-state-machine.jpg" alt="" /></p>
+<p><img src="images/2022-01-24-p-state-machine.jpg" alt="golang GMP P state machine" /></p>
 <ul>
 <li>_Pidle： 處理器沒有運行用戶代碼或者調度器，被空閒對列或者改變其狀態的結構持有，運行對列為空。</li>
 <li>_Prunning： 被線程 M 持有，並且正在執行用戶代碼或者調度器。</li>
@@ -262,7 +262,7 @@
 <li>_Pdead： 當前處理器已經不被使用。</li>
 </ul>
 <h4 id="g-的狀態"><a class="header" href="#g-的狀態">G 的狀態</a></h4>
-<p><img src="images/2022-01-24-g-state-machine.jpg" alt="" /></p>
+<p><img src="images/2022-01-24-g-state-machine.jpg" alt="golang GMP G state machine" /></p>
 <ul>
 <li>_Gidle： 剛剛被分配，並且還沒被初始化，值為 0 ，為創建 goroutine 後的默認值。</li>
 <li>_Grunnable： 沒有執行代碼，沒有 stack 的所有權，存儲在運行對列中，可能在某個 P 的本地對列或者全局對列中。</li>
@@ -285,14 +285,13 @@
 </ul>
 </li>
 </ul>
-<h1 id="總結"><a class="header" href="#總結">總結</a></h1>
+<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
 <p>好久沒看那麼硬的知識了，但我總覺得我今天會消化不良，我需要反反覆覆在看個好幾次，看完之後你的心得如何呢？</p>
 <p>歡迎到我的 Facebook <a href="https://www.facebook.com/alanzhan0513">Alan 的筆記本</a> 留言，順手給我個讚吧！你的讚將成為我持續更新的動力，感謝你的閱讀，讓我們一起學習成為更好的自己。</p>
 <h2 id="參考"><a class="header" href="#參考">參考</a></h2>
 <ul>
-<li><a href="https://github.com/aceld/golang/blob/main/2%E3%80%81Golang%E7%9A%84%E5%8D%94%E7%A8%8B%E8%AA%BF%E5%BA%A6%E5%99%A8%E5%8E%9F%E7%90%86%E5%8F%8AGMP%E8%A8%AD%E8%A8%88%E6%80%9D%E6%83%B3%EF%BC%9F.md">Golang的協程調度器原理及GMP設計思想？</a></li>
+<li><a href="https://github.com/aceld/golang/blob/main/2%E3%80%81Golang%E7%9A%84%E5%8D%8F%E7%A8%8B%E8%B0%83%E5%BA%A6%E5%99%A8%E5%8E%9F%E7%90%86%E5%8F%8AGMP%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3%EF%BC%9F.md">Golang的协程调度器原理及GMP设计思想？</a></li>
 </ul>
-<h2 id=""><a class="header" href="#"></a></h2>
 
                     </main>
 
