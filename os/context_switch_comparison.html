@@ -1,0 +1,652 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Context Switch 完整比較：OS 底層 vs 語言層級 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="context-switch-完整比較os-底層-vs-語言層級"><a class="header" href="#context-switch-完整比較os-底層-vs-語言層級">Context Switch 完整比較：OS 底層 vs 語言層級</a></h1>
+<blockquote>
+<p>整理日期：2026-02-24<br />
+涵蓋：作業系統原理、C/C++、Rust、Go</p>
+</blockquote>
+<hr />
+<h2 id="一什麼是-context-switch上下文切換"><a class="header" href="#一什麼是-context-switch上下文切換">一、什麼是 Context Switch（上下文切換）？</a></h2>
+<p>Context Switch 是指 <strong>CPU 停止執行當前任務，並切換去執行另一個任務</strong> 的過程。</p>
+<h3 id="切換時需要儲存的狀態cpu-context"><a class="header" href="#切換時需要儲存的狀態cpu-context">切換時需要儲存的狀態（CPU Context）</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>類別</th><th>內容</th></tr></thead><tbody>
+<tr><td>通用寄存器</td><td>RAX, RBX, RCX, RDX …</td></tr>
+<tr><td>程序計數器</td><td>RIP（下一條要執行的指令位置）</td></tr>
+<tr><td>Stack Pointer</td><td>RSP（目前 stack 頂端）</td></tr>
+<tr><td>CPU Flags</td><td>RFLAGS（條件旗標）</td></tr>
+<tr><td>FPU / SIMD 狀態</td><td>XMM / YMM 寄存器（浮點數與向量運算）</td></tr>
+<tr><td>記憶體映射</td><td>CR3（Page Table 基址，process 切換時需要換）</td></tr>
+</tbody></table>
+</div>
+<blockquote>
+<p><strong>Process 切換</strong> 比 <strong>Thread 切換</strong> 更貴，因為需要額外更換 Page Table（TLB flush）。</p>
+</blockquote>
+<hr />
+<h2 id="二context-switch-的層次分類"><a class="header" href="#二context-switch-的層次分類">二、Context Switch 的層次分類</a></h2>
+<pre><code>┌─────────────────────────────────────────────────┐
+│               應用程式層（Developer）              │
+│  Go context.Context / Rust Future / C++ coroutine │
+├─────────────────────────────────────────────────┤
+│               語言執行期層（Runtime）              │
+│  Go Scheduler (M:N)  /  Tokio Executor           │
+├─────────────────────────────────────────────────┤
+│               作業系統層（Kernel）                 │
+│  Process / Kernel Thread  context switch          │
+├─────────────────────────────────────────────────┤
+│               硬體層（CPU）                        │
+│  暫存器儲存、TLB 刷新、Cache Miss                  │
+└─────────────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2 id="三各語言-context-switch-機制比較"><a class="header" href="#三各語言-context-switch-機制比較">三、各語言 Context Switch 機制比較</a></h2>
+<h3 id="31-總覽表"><a class="header" href="#31-總覽表">3.1 總覽表</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>C（pthread）</th><th>C++20 Coroutine</th><th>Rust async/await</th><th>Go Goroutine</th></tr></thead><tbody>
+<tr><td><strong>並發單元</strong></td><td>Kernel Thread</td><td>Coroutine（stackless）</td><td>Future（stackless）</td><td>Goroutine（stackful）</td></tr>
+<tr><td><strong>Stack</strong></td><td>OS 分配（預設 8MB）</td><td>無獨立 Stack</td><td>無獨立 Stack</td><td>動態 Stack（初始 2KB）</td></tr>
+<tr><td><strong>切換類型</strong></td><td>OS Context Switch</td><td>State Machine 轉移</td><td>State Machine 轉移</td><td>Go Runtime 切換</td></tr>
+<tr><td><strong>切換成本</strong></td><td>高（需進 Kernel）</td><td>極低</td><td>極低</td><td>低（User Space）</td></tr>
+<tr><td><strong>調度者</strong></td><td>OS Kernel</td><td>開發者/框架</td><td>tokio / async-std</td><td>Go Runtime</td></tr>
+<tr><td><strong>並發模型</strong></td><td>1:1（Thread:OS Thread）</td><td>N:1 or M:N（視框架）</td><td>M:N（tokio）</td><td>M:N</td></tr>
+<tr><td><strong>記憶體安全</strong></td><td>手動（不安全）</td><td>手動（不安全）</td><td>編譯期保證</td><td>GC + Race Detector</td></tr>
+<tr><td><strong>學習曲線</strong></td><td>中</td><td>高</td><td>高</td><td>低</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h3 id="32-c-語言最接近底層"><a class="header" href="#32-c-語言最接近底層">3.2 C 語言：最接近底層</a></h3>
+<h4 id="使用-pthreadkernel-thread"><a class="header" href="#使用-pthreadkernel-thread">使用 pthread（Kernel Thread）</a></h4>
+<pre><code class="language-c">#include &lt;pthread.h&gt;
+
+void* worker(void* arg) {
+    // 每個 thread 由 OS 調度，切換時是完整的 context switch
+    return NULL;
+}
+
+int main() {
+    pthread_t t;
+    pthread_create(&amp;t, NULL, worker, NULL);
+    pthread_join(t, NULL);
+}
+</code></pre>
+<p><strong>特點：</strong></p>
+<ul>
+<li>每個 thread 是 OS Kernel Thread，切換需要 syscall，成本高</li>
+<li>預設 Stack 大小 8MB，大量 thread 會耗盡記憶體</li>
+</ul>
+<h4 id="使用-ucontextuser-space-協程模擬"><a class="header" href="#使用-ucontextuser-space-協程模擬">使用 ucontext（User Space 協程模擬）</a></h4>
+<pre><code class="language-c">#include &lt;ucontext.h&gt;
+
+ucontext_t ctx1, ctx2;
+char stack[64 * 1024];  // 手動分配 Stack
+
+void func2() {
+    printf("in func2\n");
+    swapcontext(&amp;ctx2, &amp;ctx1);  // 切回 ctx1
+}
+
+int main() {
+    getcontext(&amp;ctx2);
+    ctx2.uc_stack.ss_sp = stack;
+    ctx2.uc_stack.ss_size = sizeof(stack);
+    ctx2.uc_link = &amp;ctx1;
+    makecontext(&amp;ctx2, func2, 0);
+
+    swapcontext(&amp;ctx1, &amp;ctx2);  // 切換到 ctx2
+    printf("back in main\n");
+}
+</code></pre>
+<p><strong>特點：</strong></p>
+<ul>
+<li>User Space 切換，不需要進入 Kernel</li>
+<li>比 pthread 輕量，但需要<strong>手動管理 Stack</strong></li>
+<li>是許多協程框架（如 libco、libtask）的底層原語</li>
+</ul>
+<hr />
+<h3 id="33-c20stackless-coroutine"><a class="header" href="#33-c20stackless-coroutine">3.3 C++20：Stackless Coroutine</a></h3>
+<p>C++20 引入 <code>co_await</code>、<code>co_yield</code>、<code>co_return</code>，編譯器自動產生 <strong>State Machine</strong>。</p>
+<pre><code class="language-cpp">#include &lt;coroutine&gt;
+#include &lt;iostream&gt;
+
+struct Generator {
+    struct promise_type {
+        int value;
+        Generator get_return_object() {
+            return Generator{std::coroutine_handle&lt;promise_type&gt;::from_promise(*this)};
+        }
+        std::suspend_always initial_suspend() { return {}; }
+        std::suspend_always final_suspend() noexcept { return {}; }
+        std::suspend_always yield_value(int v) {
+            value = v;
+            return {};
+        }
+        void return_void() {}
+        void unhandled_exception() {}
+    };
+
+    std::coroutine_handle&lt;promise_type&gt; handle;
+
+    int next() {
+        handle.resume();  // ← 這裡發生 "context switch"（state machine 轉移）
+        return handle.promise().value;
+    }
+};
+
+Generator counter() {
+    for (int i = 0; ; ++i)
+        co_yield i;  // ← 暫停點，儲存目前狀態
+}
+
+int main() {
+    auto gen = counter();
+    for (int i = 0; i &lt; 5; ++i)
+        std::cout &lt;&lt; gen.next() &lt;&lt; "\n";
+}
+</code></pre>
+<p><strong>切換原理：</strong></p>
+<pre><code>co_yield / co_await 遇到時：
+  → 編譯器將目前局部變數打包進 coroutine frame（heap 上）
+  → 記錄下一個 resume 的位置（類似 goto label）
+  → 返回給 caller
+
+resume() 呼叫時：
+  → 從 coroutine frame 恢復狀態
+  → 跳到上次暫停的位置繼續執行
+</code></pre>
+<p><strong>成本對比：</strong></p>
+<ul>
+<li>無 Stack 分配（只有一個 heap object）</li>
+<li>切換只是 <strong>函式呼叫 + struct 欄位存取</strong>，極輕量</li>
+<li>缺點：無法在任意深度的呼叫堆疊中 <code>co_await</code>（不像 Go 可以在任何地方被調度）</li>
+</ul>
+<hr />
+<h3 id="34-rustasyncawait--future"><a class="header" href="#34-rustasyncawait--future">3.4 Rust：async/await + Future</a></h3>
+<p>Rust 的 async 也是 <strong>stackless coroutine</strong>，但加上了編譯期記憶體安全保證。</p>
+<pre><pre class="playground"><code class="language-rust">use tokio::time::{sleep, Duration};
+
+async fn task_a() {
+    println!("Task A: start");
+    sleep(Duration::from_millis(100)).await;  // ← 暫停點，讓出執行權
+    println!("Task A: done");
+}
+
+async fn task_b() {
+    println!("Task B: start");
+    sleep(Duration::from_millis(50)).await;
+    println!("Task B: done");
+}
+
+#[tokio::main]
+async fn main() {
+    tokio::join!(task_a(), task_b());
+}</code></pre></pre>
+<p><strong>Future 的本質：</strong></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// async fn task_a() 會被編譯器轉成類似這樣的 State Machine：
+enum TaskAState {
+    Start,
+    WaitingSleep(SleepFuture),
+    Done,
+}
+
+impl Future for TaskA {
+    type Output = ();
+    fn poll(&amp;mut self, cx: &amp;mut Context) -&gt; Poll&lt;()&gt; {
+        match self.state {
+            Start =&gt; {
+                println!("Task A: start");
+                self.state = WaitingSleep(sleep(...));
+                Poll::Pending  // ← 告訴 runtime 我還沒好
+            }
+            WaitingSleep(ref mut f) =&gt; {
+                if f.poll(cx).is_ready() {
+                    println!("Task A: done");
+                    Poll::Ready(())
+                } else {
+                    Poll::Pending
+                }
+            }
+        }
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>tokio 的 M:N 調度：</strong></p>
+<pre><code>┌──────────────────────────────────────┐
+│  tokio Runtime                        │
+│  ┌────────────┐  ┌────────────┐       │
+│  │ Worker 1   │  │ Worker 2   │  ...  │  ← OS Threads（數量 = CPU 核心數）
+│  │            │  │            │       │
+│  │ Future A   │  │ Future C   │       │
+│  │ Future B   │  │ Future D   │       │
+│  └────────────┘  └────────────┘       │
+│         ↑ poll() / wake() 驅動         │
+└──────────────────────────────────────┘
+</code></pre>
+<p><strong>Rust vs Go 記憶體安全：</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>場景</th><th>Go</th><th>Rust</th></tr></thead><tbody>
+<tr><td>跨 Goroutine 共享資料</td><td>執行期 Race Detector</td><td>編譯期 Send/Sync trait 檢查</td></tr>
+<tr><td>資料競爭</td><td><code>go run -race</code> 檢測</td><td>編譯器直接拒絕</td></tr>
+<tr><td>記憶體洩漏</td><td>GC 自動回收</td><td>所有權系統自動釋放</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h3 id="35-gogoroutine--g-m-p-調度模型"><a class="header" href="#35-gogoroutine--g-m-p-調度模型">3.5 Go：Goroutine + G-M-P 調度模型</a></h3>
+<h4 id="goroutine-的特點"><a class="header" href="#goroutine-的特點">Goroutine 的特點</a></h4>
+<pre><code class="language-go">package main
+
+import (
+    "context"
+    "fmt"
+    "time"
+)
+
+func worker(ctx context.Context, id int) {
+    for {
+        select {
+        case &lt;-ctx.Done():
+            fmt.Printf("Worker %d stopped: %v\n", id, ctx.Err())
+            return
+        default:
+            fmt.Printf("Worker %d working...\n", id)
+            time.Sleep(100 * time.Millisecond)
+        }
+    }
+}
+
+func main() {
+    ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+    defer cancel()
+
+    for i := 0; i &lt; 3; i++ {
+        go worker(ctx, i)  // ← 建立 Goroutine，僅 2KB stack
+    }
+
+    &lt;-ctx.Done()
+    fmt.Println("All workers stopped")
+}
+</code></pre>
+<h4 id="g-m-p-調度模型"><a class="header" href="#g-m-p-調度模型">G-M-P 調度模型</a></h4>
+<pre><code>G = Goroutine（使用者的並發任務）
+M = Machine（OS Thread，真正執行 G 的載體）
+P = Processor（調度上下文，持有 run queue）
+
+┌────────────────────────────────────────────────┐
+│  Go Runtime Scheduler                           │
+│                                                 │
+│  P1: [G1, G2, G3, ...]  →  M1 (OS Thread)      │
+│  P2: [G4, G5, G6, ...]  →  M2 (OS Thread)      │
+│  P3: [G7, ...]          →  M3 (OS Thread)       │
+│                                                 │
+│  Global Queue: [G8, G9, ...]                    │
+└────────────────────────────────────────────────┘
+
+當 G 遇到以下情況時，Go Scheduler 切換 Goroutine：
+  - channel 阻塞
+  - syscall（Go 會把 M 與 P 分離）
+  - time.Sleep
+  - runtime.Gosched()
+  - 函式呼叫（搶佔式調度，Go 1.14+）
+</code></pre>
+<p><strong>Goroutine 切換 vs OS Context Switch 成本比較：</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>項目</th><th>OS Thread Context Switch</th><th>Goroutine Switch</th></tr></thead><tbody>
+<tr><td>觸發方式</td><td>Kernel 中斷</td><td>Go Runtime 函式呼叫</td></tr>
+<tr><td>儲存的狀態</td><td>所有 CPU 寄存器 + FPU</td><td>僅 3 個寄存器（SP, PC, DX）</td></tr>
+<tr><td>典型耗時</td><td>~1–10 μs</td><td>~100–200 ns</td></tr>
+<tr><td>Stack 大小</td><td>固定（MB 級）</td><td>動態 2KB–1GB</td></tr>
+<tr><td>最大並發數</td><td>千～萬</td><td>百萬</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="四go-contextcontext應用層的任務控制"><a class="header" href="#四go-contextcontext應用層的任務控制">四、Go <code>context.Context</code>：應用層的任務控制</a></h2>
+<p>這與 OS Context Switch 完全不同，是用來 <strong>控制 Goroutine 生命週期</strong> 的工具。</p>
+<h3 id="context-的樹狀結構"><a class="header" href="#context-的樹狀結構">context 的樹狀結構</a></h3>
+<pre><code>context.Background()
+    └── WithCancel(ctx)          ← 可手動取消
+        └── WithTimeout(ctx, 5s) ← 5 秒後自動取消
+            └── WithValue(ctx, "traceID", "abc123")  ← 攜帶元數據
+</code></pre>
+<h3 id="四種-context-函式"><a class="header" href="#四種-context-函式">四種 context 函式</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>函式</th><th>用途</th><th>典型場景</th></tr></thead><tbody>
+<tr><td><code>context.Background()</code></td><td>根 context，永不取消</td><td>main / 頂層函式</td></tr>
+<tr><td><code>WithCancel(parent)</code></td><td>手動呼叫 <code>cancel()</code> 時取消</td><td>提前結束子任務</td></tr>
+<tr><td><code>WithTimeout(parent, d)</code></td><td>超時自動取消</td><td>HTTP 請求逾時</td></tr>
+<tr><td><code>WithDeadline(parent, t)</code></td><td>指定截止時間點取消</td><td>定時任務</td></tr>
+<tr><td><code>WithValue(parent, k, v)</code></td><td>傳遞請求級別的值</td><td>Trace ID、Auth Token</td></tr>
+</tbody></table>
+</div>
+<h3 id="實際應用http-請求鏈"><a class="header" href="#實際應用http-請求鏈">實際應用：HTTP 請求鏈</a></h3>
+<pre><code class="language-go">func handleRequest(w http.ResponseWriter, r *http.Request) {
+    ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+    defer cancel()
+
+    // 傳遞 TraceID
+    ctx = context.WithValue(ctx, "traceID", generateTraceID())
+
+    result, err := queryDatabase(ctx)
+    if err != nil {
+        if errors.Is(err, context.DeadlineExceeded) {
+            http.Error(w, "timeout", 504)
+        }
+        return
+    }
+    // ...
+}
+
+func queryDatabase(ctx context.Context) (string, error) {
+    select {
+    case &lt;-ctx.Done():
+        return "", ctx.Err()  // 上游取消了，立即返回
+    case result := &lt;-doQuery():
+        return result, nil
+    }
+}
+</code></pre>
+<hr />
+<h2 id="五各語言協程機制深度對比"><a class="header" href="#五各語言協程機制深度對比">五、各語言協程機制深度對比</a></h2>
+<h3 id="stackful-vs-stackless"><a class="header" href="#stackful-vs-stackless">Stackful vs Stackless</a></h3>
+<pre><code>Stackful Coroutine（Go Goroutine / C ucontext）：
+  ┌──────────────────────┐
+  │ Goroutine A          │
+  │  Stack Frame 3       │  ← 可以在任意呼叫深度暫停
+  │  Stack Frame 2       │
+  │  Stack Frame 1       │
+  └──────────────────────┘
+
+Stackless Coroutine（Rust Future / C++20 coroutine）：
+  ┌──────────────────────┐
+  │ Future/State Machine │
+  │  { state: Waiting,   │  ← 只儲存暫停點的局部變數
+  │    local_var: 42 }   │
+  └──────────────────────┘
+  注意：只能在 async fn 內使用 await，不能在普通函式中暫停
+</code></pre>
+<h3 id="效能基準參考值"><a class="header" href="#效能基準參考值">效能基準（參考值）</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>操作</th><th>耗時（參考）</th></tr></thead><tbody>
+<tr><td>OS Thread Context Switch</td><td>1,000 – 10,000 ns</td></tr>
+<tr><td>Go Goroutine Switch</td><td>100 – 300 ns</td></tr>
+<tr><td>Rust Future Poll（無等待）</td><td>&lt; 10 ns</td></tr>
+<tr><td>C ucontext swapcontext</td><td>50 – 200 ns</td></tr>
+<tr><td>C++20 coroutine resume</td><td>&lt; 10 ns</td></tr>
+</tbody></table>
+</div>
+<h3 id="記憶體佔用每個並發單元"><a class="header" href="#記憶體佔用每個並發單元">記憶體佔用（每個並發單元）</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>並發單元</th><th>記憶體</th><th>最大建議數量</th></tr></thead><tbody>
+<tr><td>OS Thread（Linux）</td><td>~8 MB stack</td><td>~數千</td></tr>
+<tr><td>Go Goroutine</td><td>2KB – 8KB（動態）</td><td>~百萬</td></tr>
+<tr><td>Rust Future</td><td>依狀態 struct 大小</td><td>~百萬以上</td></tr>
+<tr><td>C ucontext</td><td>手動設定（通常 64KB+）</td><td>~數萬</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="六選擇指南"><a class="header" href="#六選擇指南">六、選擇指南</a></h2>
+<pre><code>你需要什麼？
+│
+├─ 高效能 I/O 密集型服務（Web API、微服務）
+│   ├─ 易用性優先 → Go（Goroutine + context）
+│   └─ 效能/控制優先 → Rust（tokio + async）
+│
+├─ 系統程式 / 嵌入式（記憶體受限）
+│   ├─ 傳統多執行緒 → C（pthread）
+│   └─ 現代協程 → C++20 coroutine 或 Rust async（no_std）
+│
+├─ CPU 密集型運算
+│   ├─ 所有語言的 OS Thread 都適用
+│   └─ Go 的 Goroutine 在 CPU-bound 無明顯優勢
+│
+└─ 需要細粒度控制生命週期
+    └─ 一定要用 Go context.Context 或 Rust 的 CancellationToken
+</code></pre>
+<hr />
+<h2 id="七總結一句話"><a class="header" href="#七總結一句話">七、總結一句話</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>語言/概念</th><th>核心問題</th></tr></thead><tbody>
+<tr><td><strong>OS Context Switch</strong></td><td>CPU 現在要幫誰工作？</td></tr>
+<tr><td><strong>C pthread</strong></td><td>我來直接開 OS Thread，切換交給 Kernel</td></tr>
+<tr><td><strong>C ucontext</strong></td><td>我手動切換，比 Kernel 便宜但你要自己管</td></tr>
+<tr><td><strong>C++20 coroutine</strong></td><td>編譯器幫我產生 State Machine，切換超便宜</td></tr>
+<tr><td><strong>Rust async/await</strong></td><td>同上，但加上編譯期記憶體安全</td></tr>
+<tr><td><strong>Go Goroutine</strong></td><td>Runtime 幫我調度，Stack 自動增長，用起來最簡單</td></tr>
+<tr><td><strong>Go context.Context</strong></td><td>這個任務還需要繼續執行嗎？</td></tr>
+</tbody></table>
+</div>
+<hr />
+<p><em>本文整理自 OS 原理、C POSIX 文件、C++20 標準、Rust async Book、Go 官方文件</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../os/full_xv6_analysis.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../docker/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../os/full_xv6_analysis.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../docker/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
