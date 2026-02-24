@@ -954,7 +954,198 @@ for i := 0; i &lt; 1000; i++ {
 </tbody></table>
 </div>
 <p>這三個 pattern 涵蓋了大多數實務場景，自己實作一遍理解會非常深。</p>
+<hr />
+<h2 id="十三大-pattern-完整範例"><a class="header" href="#十三大-pattern-完整範例">十、三大 Pattern 完整範例</a></h2>
+<h3 id="pattern-1pipelineproducer-consumer"><a class="header" href="#pattern-1pipelineproducer-consumer">Pattern 1：Pipeline（Producer-Consumer）</a></h3>
+<pre><code class="language-go">package main
 
+import (
+	"fmt"
+	"sync"
+)
+
+func producer(ch chan&lt;- int, wg *sync.WaitGroup) {
+	defer wg.Done()
+	defer close(ch)
+	for i := 1; i &lt;= 5; i++ {
+		fmt.Printf("生產: %d\n", i)
+		ch &lt;- i
+	}
+}
+
+func consumer(ch &lt;-chan int, id int, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for v := range ch {
+		fmt.Printf("消費者 %d 處理: %d\n", id, v)
+	}
+}
+
+func main() {
+	ch := make(chan int, 2)
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go producer(ch, &amp;wg)
+
+	// 兩個消費者從同一個 channel 搶資料
+	for i := 1; i &lt;= 2; i++ {
+		wg.Add(1)
+		go consumer(ch, i, &amp;wg)
+	}
+
+	wg.Wait()
+}
+</code></pre>
+<p><strong>重點：</strong></p>
+<ul>
+<li><code>close(ch)</code> 用 <code>defer</code> 確保一定會關閉，<code>range ch</code> 在 channel 關閉後自動結束</li>
+<li><code>chan&lt;- int</code> 只寫、<code>&lt;-chan int</code> 只讀，讓編譯器幫你檢查誤用</li>
+<li>Producer 關閉 channel，Consumer 感知到後自動退出，不需要額外信號</li>
+</ul>
+<hr />
+<h3 id="pattern-2fan-out--fan-in"><a class="header" href="#pattern-2fan-out--fan-in">Pattern 2：Fan-out / Fan-in</a></h3>
+<pre><code class="language-go">package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+// 一個輸入 channel，複製給多個 worker
+func fanOut(in &lt;-chan int, n int) []&lt;-chan int {
+	outs := make([]&lt;-chan int, n)
+	for i := range outs {
+		out := make(chan int)
+		outs[i] = out
+		go func(out chan&lt;- int) {
+			defer close(out)
+			for v := range in {
+				out &lt;- v * v // 每個 worker 做平方
+			}
+		}(out)
+	}
+	return outs
+}
+
+// 多個 channel 合併成一個
+func fanIn(ins ...&lt;-chan int) &lt;-chan int {
+	out := make(chan int)
+	var wg sync.WaitGroup
+	for _, in := range ins {
+		wg.Add(1)
+		go func(ch &lt;-chan int) {
+			defer wg.Done()
+			for v := range ch {
+				out &lt;- v
+			}
+		}(in)
+	}
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
+}
+
+func main() {
+	in := make(chan int)
+	go func() {
+		defer close(in)
+		for i := 1; i &lt;= 6; i++ {
+			in &lt;- i
+		}
+	}()
+
+	// 分散給 3 個 worker
+	outs := fanOut(in, 3)
+
+	// 匯聚回一個 channel
+	merged := fanIn(outs...)
+	for v := range merged {
+		fmt.Println(v)
+	}
+}
+</code></pre>
+<p><strong>重點：</strong></p>
+<ul>
+<li>Fan-out：一個 channel 的資料分散給多個 goroutine 並行處理</li>
+<li>Fan-in：用一個 WaitGroup + goroutine 監控所有輸入，全部關閉後再關閉輸出</li>
+<li>注意 <code>fanOut</code> 中 <code>go func(out chan&lt;- int)</code> 傳入參數，避免閉包捕獲同一個變數</li>
+</ul>
+<hr />
+<h3 id="pattern-3worker-pool"><a class="header" href="#pattern-3worker-pool">Pattern 3：Worker Pool</a></h3>
+<pre><code class="language-go">package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+type Job struct {
+	ID    int
+	Value int
+}
+
+type Result struct {
+	JobID  int
+	Output int
+}
+
+func worker(id int, jobs &lt;-chan Job, results chan&lt;- Result, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for job := range jobs {
+		output := job.Value * job.Value
+		fmt.Printf("Worker %d 處理 Job %d\n", id, job.ID)
+		results &lt;- Result{JobID: job.ID, Output: output}
+	}
+}
+
+func main() {
+	const numWorkers = 3
+	const numJobs = 9
+
+	jobs := make(chan Job, numJobs)
+	results := make(chan Result, numJobs)
+	var wg sync.WaitGroup
+
+	// 啟動固定數量的 worker
+	for i := 1; i &lt;= numWorkers; i++ {
+		wg.Add(1)
+		go worker(i, jobs, results, &amp;wg)
+	}
+
+	// 送出所有任務後關閉 jobs channel
+	for j := 1; j &lt;= numJobs; j++ {
+		jobs &lt;- Job{ID: j, Value: j}
+	}
+	close(jobs)
+
+	// 等所有 worker 結束後關閉 results
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	// 收集結果
+	for r := range results {
+		fmt.Printf("Job %d 結果: %d\n", r.JobID, r.Output)
+	}
+}
+</code></pre>
+<p><strong>重點：</strong></p>
+<ul>
+<li>Worker pool 限制最大併發數為 <code>numWorkers</code>，避免無限開 goroutine</li>
+<li><code>close(jobs)</code> 讓所有 worker 的 <code>range jobs</code> 自然結束，不需要傳終止信號</li>
+<li>Results channel 要用獨立 goroutine 等 <code>wg.Wait()</code> 後才關閉，否則主程式的 <code>range results</code> 會死鎖</li>
+</ul>
+<hr />
+<h3 id="三種-pattern-的選用時機"><a class="header" href="#三種-pattern-的選用時機">三種 Pattern 的選用時機</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>適用場景</th></tr></thead><tbody>
+<tr><td>Pipeline</td><td>資料需要多個處理步驟串接，每步有獨立 goroutine</td></tr>
+<tr><td>Fan-out / Fan-in</td><td>一批任務可以並行處理，最後匯聚結果</td></tr>
+<tr><td>Worker Pool</td><td>任務量大但要控制最大並發數，避免資源耗盡</td></tr>
+</tbody></table>
+</div>
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
