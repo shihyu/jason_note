@@ -989,3 +989,207 @@ for i := 0; i < 1000; i++ {
 | Worker Pool | 固定數量的 goroutine 處理任務佇列，控制併發上限 |
 
 這三個 pattern 涵蓋了大多數實務場景，自己實作一遍理解會非常深。
+
+---
+
+## 十、三大 Pattern 完整範例
+
+### Pattern 1：Pipeline（Producer-Consumer）
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+func producer(ch chan<- int, wg *sync.WaitGroup) {
+	defer wg.Done()
+	defer close(ch)
+	for i := 1; i <= 5; i++ {
+		fmt.Printf("生產: %d\n", i)
+		ch <- i
+	}
+}
+
+func consumer(ch <-chan int, id int, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for v := range ch {
+		fmt.Printf("消費者 %d 處理: %d\n", id, v)
+	}
+}
+
+func main() {
+	ch := make(chan int, 2)
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go producer(ch, &wg)
+
+	// 兩個消費者從同一個 channel 搶資料
+	for i := 1; i <= 2; i++ {
+		wg.Add(1)
+		go consumer(ch, i, &wg)
+	}
+
+	wg.Wait()
+}
+```
+
+**重點：**
+- `close(ch)` 用 `defer` 確保一定會關閉，`range ch` 在 channel 關閉後自動結束
+- `chan<- int` 只寫、`<-chan int` 只讀，讓編譯器幫你檢查誤用
+- Producer 關閉 channel，Consumer 感知到後自動退出，不需要額外信號
+
+---
+
+### Pattern 2：Fan-out / Fan-in
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+// 一個輸入 channel，複製給多個 worker
+func fanOut(in <-chan int, n int) []<-chan int {
+	outs := make([]<-chan int, n)
+	for i := range outs {
+		out := make(chan int)
+		outs[i] = out
+		go func(out chan<- int) {
+			defer close(out)
+			for v := range in {
+				out <- v * v // 每個 worker 做平方
+			}
+		}(out)
+	}
+	return outs
+}
+
+// 多個 channel 合併成一個
+func fanIn(ins ...<-chan int) <-chan int {
+	out := make(chan int)
+	var wg sync.WaitGroup
+	for _, in := range ins {
+		wg.Add(1)
+		go func(ch <-chan int) {
+			defer wg.Done()
+			for v := range ch {
+				out <- v
+			}
+		}(in)
+	}
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
+}
+
+func main() {
+	in := make(chan int)
+	go func() {
+		defer close(in)
+		for i := 1; i <= 6; i++ {
+			in <- i
+		}
+	}()
+
+	// 分散給 3 個 worker
+	outs := fanOut(in, 3)
+
+	// 匯聚回一個 channel
+	merged := fanIn(outs...)
+	for v := range merged {
+		fmt.Println(v)
+	}
+}
+```
+
+**重點：**
+- Fan-out：一個 channel 的資料分散給多個 goroutine 並行處理
+- Fan-in：用一個 WaitGroup + goroutine 監控所有輸入，全部關閉後再關閉輸出
+- 注意 `fanOut` 中 `go func(out chan<- int)` 傳入參數，避免閉包捕獲同一個變數
+
+---
+
+### Pattern 3：Worker Pool
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+type Job struct {
+	ID    int
+	Value int
+}
+
+type Result struct {
+	JobID  int
+	Output int
+}
+
+func worker(id int, jobs <-chan Job, results chan<- Result, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for job := range jobs {
+		output := job.Value * job.Value
+		fmt.Printf("Worker %d 處理 Job %d\n", id, job.ID)
+		results <- Result{JobID: job.ID, Output: output}
+	}
+}
+
+func main() {
+	const numWorkers = 3
+	const numJobs = 9
+
+	jobs := make(chan Job, numJobs)
+	results := make(chan Result, numJobs)
+	var wg sync.WaitGroup
+
+	// 啟動固定數量的 worker
+	for i := 1; i <= numWorkers; i++ {
+		wg.Add(1)
+		go worker(i, jobs, results, &wg)
+	}
+
+	// 送出所有任務後關閉 jobs channel
+	for j := 1; j <= numJobs; j++ {
+		jobs <- Job{ID: j, Value: j}
+	}
+	close(jobs)
+
+	// 等所有 worker 結束後關閉 results
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	// 收集結果
+	for r := range results {
+		fmt.Printf("Job %d 結果: %d\n", r.JobID, r.Output)
+	}
+}
+```
+
+**重點：**
+- Worker pool 限制最大併發數為 `numWorkers`，避免無限開 goroutine
+- `close(jobs)` 讓所有 worker 的 `range jobs` 自然結束，不需要傳終止信號
+- Results channel 要用獨立 goroutine 等 `wg.Wait()` 後才關閉，否則主程式的 `range results` 會死鎖
+
+---
+
+### 三種 Pattern 的選用時機
+
+| Pattern | 適用場景 |
+|---|---|
+| Pipeline | 資料需要多個處理步驟串接，每步有獨立 goroutine |
+| Fan-out / Fan-in | 一批任務可以並行處理，最後匯聚結果 |
+| Worker Pool | 任務量大但要控制最大並發數，避免資源耗盡 |
