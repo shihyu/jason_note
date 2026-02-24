@@ -282,6 +282,22 @@ GODEBUG=schedtrace=1000,scheddetail=1 go run main.go
 
 # asyncpreemptoff=1：關閉異步搶占（調試特定問題用）
 GODEBUG=asyncpreemptoff=1 go run main.go
+
+# gctrace=1：每次 GC 輸出一行摘要，觀察 STW 暫停對併發的影響
+GODEBUG=gctrace=1 go run main.go
+# 輸出範例：
+# gc 1 @0.011s 2%: 0.011+0.39+0.012 ms clock, 0.022+0.020/0.22/0+0.025 ms cpu, 4-&gt;4-&gt;0 MB, 5 MB goal, 4 P
+# 欄位解讀：
+#   gc 1       = 第幾次 GC
+#   @0.011s    = 程式啟動後的時間點
+#   2%         = GC 佔 CPU 總時間的比例
+#   0.011+0.39+0.012 ms = STW掃描終止 + 並發標記 + STW標記終止
+#   4-&gt;4-&gt;0 MB = GC前heap → 標記後heap → 存活物件
+#   5 MB goal  = 下次 GC 觸發門檻
+#   4 P        = 當前 GOMAXPROCS
+
+# gccheckmark=1：GC 正確性驗證（開發/測試用，會大幅降速）
+GODEBUG=gccheckmark=1 go test ./...
 </code></pre>
 <hr />
 <h2 id="5-runtime-套件--程式內部監控"><a class="header" href="#5-runtime-套件--程式內部監控">5. <code>runtime</code> 套件 — 程式內部監控</a></h2>
@@ -372,20 +388,232 @@ if err := doWork(ctx); err != nil {
 }
 </code></pre>
 <hr />
+<h2 id="9-go-test-整合剖析--測試期間直接採樣"><a class="header" href="#9-go-test-整合剖析--測試期間直接採樣">9. <code>go test</code> 整合剖析 — 測試期間直接採樣</a></h2>
+<p><strong>安裝方式：</strong> 內建，無需額外安裝</p>
+<p>測試時直接生成剖析檔，是定位效能問題最直接的路徑。</p>
+<pre><code class="language-bash"># CPU 剖析 + Benchmark
+go test -bench=. -benchmem -cpuprofile=cpu.prof ./...
+go tool pprof cpu.prof
+
+# Memory 剖析
+go test -bench=. -memprofile=mem.prof ./...
+go tool pprof -alloc_space mem.prof   # 查看所有分配（含已釋放）
+go tool pprof -inuse_space mem.prof   # 查看當前佔用
+
+# 執行追蹤（輸出給 go tool trace）
+go test -trace=trace.out ./...
+go tool trace trace.out
+
+# Block 剖析（等待鎖/channel 的時間）
+go test -blockprofile=block.prof ./...
+go tool pprof block.prof
+
+# Mutex 競爭剖析
+go test -mutexprofile=mutex.prof ./...
+go tool pprof mutex.prof
+
+# 同時開多種剖析（一次跑完）
+go test -bench=BenchmarkWorker -cpuprofile=cpu.prof -memprofile=mem.prof -trace=trace.out ./...
+</code></pre>
+<pre><code class="language-bash"># pprof 互動式常用指令
+go tool pprof cpu.prof
+(pprof) top 10          # 前 10 個耗時函數
+(pprof) top -cum        # 按累計時間排序（含子呼叫）
+(pprof) list MyFunc     # 逐行顯示某函數的耗時
+(pprof) web             # 生成 SVG 火焰圖（需 graphviz）
+(pprof) png &gt; out.png   # 輸出圖片
+</code></pre>
+<p><strong>可觀察：</strong> 測試中的 CPU 熱點、記憶體分配來源、鎖競爭位置</p>
+<hr />
+<h2 id="10-runtimedebug--runtimestack--程式內-stack-dump"><a class="header" href="#10-runtimedebug--runtimestack--程式內-stack-dump">10. <code>runtime/debug</code> + <code>runtime.Stack()</code> — 程式內 Stack Dump</a></h2>
+<p><strong>安裝方式：</strong> 內建標準函式庫</p>
+<pre><code class="language-go">import (
+    "fmt"
+    "runtime"
+    "runtime/debug"
+)
+
+// 印出當前 goroutine 的 stack（crash handler 常用）
+func crashHandler() {
+    debug.PrintStack()
+}
+
+// 抓取所有 goroutine 的 stack 到 buffer（true = 所有 goroutine）
+func dumpAllGoroutines() {
+    buf := make([]byte, 1&lt;&lt;20)  // 1 MB 緩衝區
+    n := runtime.Stack(buf, true)
+    fmt.Printf("=== goroutine dump ===\n%s\n", buf[:n])
+}
+
+// 設定最大 OS 執行緒數（預設 10000）
+// 當 CGO 或 runtime.LockOSThread() 使用過多時會觸發 panic
+debug.SetMaxThreads(1000)
+
+// 調整 GC 觸發比例（預設 100，代表 heap 翻倍時觸發）
+// 設為負值可完全關閉 GC（測試用途）
+debug.SetGCPercent(50)   // 更頻繁 GC，降低記憶體峰值
+debug.SetGCPercent(-1)   // 關閉 GC（危險！僅測試用）
+
+// 強制執行一次 GC
+runtime.GC()
+
+// 取得 build 資訊（module 路徑、版本、依賴）
+if info, ok := debug.ReadBuildInfo(); ok {
+    fmt.Println("Module:", info.Main.Path)
+}
+</code></pre>
+<pre><code class="language-go">// 實用模式：程式收到 SIGQUIT 時 dump 所有 goroutine
+import (
+    "os"
+    "os/signal"
+    "syscall"
+)
+
+func init() {
+    go func() {
+        c := make(chan os.Signal, 1)
+        signal.Notify(c, syscall.SIGQUIT)
+        for range c {
+            buf := make([]byte, 1&lt;&lt;20)
+            n := runtime.Stack(buf, true)
+            fmt.Fprintf(os.Stderr, "%s", buf[:n])
+        }
+    }()
+}
+// 觸發：kill -QUIT &lt;PID&gt;  或  Ctrl+\
+</code></pre>
+<p><strong>可觀察：</strong> 所有 goroutine 當前 stack、GC 行為調整、執行緒上限控制</p>
+<hr />
+<h2 id="11-expvar--輕量級即時監控"><a class="header" href="#11-expvar--輕量級即時監控">11. <code>expvar</code> — 輕量級即時監控</a></h2>
+<p><strong>安裝方式：</strong> 內建標準函式庫</p>
+<p>比 pprof 更輕量，適合生產環境持續暴露程式狀態，無需採樣開銷。</p>
+<pre><code class="language-go">import (
+    "expvar"
+    "net/http"
+    "runtime"
+    "time"
+    _ "net/http/pprof"  // 同時掛載 pprof
+)
+
+// 宣告監控變數（全域）
+var (
+    goroutineCount = expvar.NewInt("goroutine_count")
+    tasksDone      = expvar.NewInt("tasks_done")
+    tasksFailed    = expvar.NewInt("tasks_failed")
+    queueDepth     = expvar.NewInt("queue_depth")
+    workerStatus   = expvar.NewMap("worker_status")  // key-value map
+)
+
+func worker(id int, jobs &lt;-chan int) {
+    workerStatus.Set(fmt.Sprintf("worker_%d", id), expvar.Func(func() any {
+        return "running"
+    }))
+    for j := range jobs {
+        _ = j
+        tasksDone.Add(1)
+    }
+    workerStatus.Set(fmt.Sprintf("worker_%d", id), expvar.Func(func() any {
+        return "idle"
+    }))
+}
+
+func main() {
+    // 定期更新 goroutine 計數
+    go func() {
+        for {
+            goroutineCount.Set(int64(runtime.NumGoroutine()))
+            time.Sleep(time.Second)
+        }
+    }()
+
+    go http.ListenAndServe(":6060", nil)
+    // 其餘程式...
+}
+</code></pre>
+<pre><code class="language-bash"># 查看所有指標（JSON 格式）
+curl http://localhost:6060/debug/vars
+
+# 輸出範例：
+# {
+#   "goroutine_count": 12,
+#   "tasks_done": 1543,
+#   "tasks_failed": 2,
+#   "queue_depth": 8,
+#   "worker_status": {"worker_0": "running", "worker_1": "idle"},
+#   "memstats": {...}   ← expvar 自動包含記憶體統計
+# }
+</code></pre>
+<p><strong>可觀察：</strong> 自訂業務指標、即時 goroutine 數量、任務佇列深度，無額外 CPU 開銷</p>
+<hr />
+<h2 id="12-go-vet--靜態分析偵測併發陷阱"><a class="header" href="#12-go-vet--靜態分析偵測併發陷阱">12. <code>go vet</code> — 靜態分析偵測併發陷阱</a></h2>
+<p><strong>安裝方式：</strong> 內建，無需額外安裝</p>
+<pre><code class="language-bash">go vet ./...                    # 分析整個專案
+go vet -v ./...                 # 顯示執行的分析器清單
+go vet -composites=false ./...  # 關閉特定分析器
+</code></pre>
+<p><strong>常見偵測項目（與併發相關）：</strong></p>
+<pre><code class="language-go">// ❌ 1. sync.Mutex/sync.WaitGroup 被複製（傳值而非傳指標）
+type Worker struct {
+    mu sync.Mutex  // ← 若 Worker 被複製，go vet 會警告
+}
+func process(w Worker) { w.mu.Lock() }  // 警告：w contains sync.Mutex by value
+
+// ✅ 修正：傳指標
+func process(w *Worker) { w.mu.Lock() }
+
+// ❌ 2. sync/atomic 操作對象未對齊（32-bit 系統）
+type Counter struct {
+    _ [0]func()
+    n int64  // 必須 64-bit 對齊
+}
+
+// ❌ 3. goroutine 中使用 loop variable（Go 1.22 以前的常見 bug）
+for i := 0; i &lt; 5; i++ {
+    go func() {
+        fmt.Println(i)  // go vet 警告：loop variable i captured by func literal
+    }()
+}
+// ✅ 修正（Go 1.22 以前）：
+for i := 0; i &lt; 5; i++ {
+    i := i  // shadow 變數
+    go func() { fmt.Println(i) }()
+}
+
+// ❌ 4. channel 方向性使用錯誤
+func send(ch &lt;-chan int) {
+    ch &lt;- 1  // go vet 警告：send on receive-only channel
+}
+
+// ❌ 5. context.WithCancel 洩漏（需搭配 staticcheck）
+ctx, _ := context.WithCancel(parent)  // cancel 未儲存 → 資源洩漏
+</code></pre>
+<pre><code class="language-bash"># 搭配 staticcheck 做更深入的靜態分析（第三方但業界標準）
+go install honnef.co/go/tools/cmd/staticcheck@latest
+staticcheck ./...
+# 額外偵測：不必要的鎖、channel 死鎖模式、context 洩漏
+</code></pre>
+<p><strong>可觀察：</strong> Mutex 複製、loop variable 捕獲、atomic 對齊問題、channel 方向性錯誤</p>
+<hr />
 <h2 id="工具選用速查表"><a class="header" href="#工具選用速查表">工具選用速查表</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>問題場景</th><th>推薦工具</th></tr></thead><tbody>
 <tr><td>Goroutine 執行順序異常</td><td><code>go tool trace</code></td></tr>
 <tr><td>懷疑有 Data Race</td><td><code>-race</code></td></tr>
-<tr><td>鎖競爭嚴重，CPU 高</td><td><code>pprof mutex/block</code></td></tr>
+<tr><td>鎖競爭嚴重，CPU 高</td><td><code>pprof mutex/block</code>、<code>go test -mutexprofile</code></td></tr>
 <tr><td>Goroutine 數量一直增長</td><td><code>goleak</code> + <code>runtime.NumGoroutine()</code></td></tr>
 <tr><td>想暫停程序看 goroutine 狀態</td><td><code>dlv</code></td></tr>
-<tr><td>生產環境即時監控</td><td><code>pprof HTTP endpoint</code> + <code>GODEBUG</code></td></tr>
-<tr><td>Goroutine 疑似卡死</td><td><code>context.WithTimeout</code> + <code>pprof goroutine</code></td></tr>
+<tr><td>生產環境即時監控</td><td><code>pprof HTTP endpoint</code> + <code>expvar</code> + <code>GODEBUG</code></td></tr>
+<tr><td>Goroutine 疑似卡死</td><td><code>context.WithTimeout</code> + <code>runtime.Stack()</code></td></tr>
+<tr><td>GC 暫停影響延遲</td><td><code>GODEBUG=gctrace=1</code></td></tr>
+<tr><td>Benchmark 效能問題</td><td><code>go test -cpuprofile</code> + <code>go test -trace</code></td></tr>
+<tr><td>程式崩潰時抓 stack</td><td><code>runtime.Stack()</code> + SIGQUIT handler</td></tr>
+<tr><td>程式碼靜態問題</td><td><code>go vet</code> + <code>staticcheck</code></td></tr>
+<tr><td>低開銷業務指標監控</td><td><code>expvar</code></td></tr>
 </tbody></table>
 </div>
 <hr />
 <blockquote>
 <p>最常用的黃金組合：<strong><code>-race</code> + <code>pprof</code> + <code>go tool trace</code></strong>，三者涵蓋了從正確性到效能的完整調試需求。</p>
+<p>生產環境推薦組合：<strong><code>expvar</code> + <code>pprof HTTP endpoint</code> + SIGQUIT <code>runtime.Stack()</code> handler</strong>，零侵入持續可觀測。</p>
 </blockquote>
 
                     </main>
