@@ -37,7 +37,7 @@ func main() {
 ```bash
 go run main.go
 go tool trace trace.out   # 開啟瀏覽器視覺化介面
-```go
+```
 
 **可觀察：** Goroutine 生命週期、阻塞原因、Syscall、Channel 操作、GC 事件
 
@@ -80,7 +80,7 @@ go tool pprof http://localhost:6060/debug/pprof/block
 ```go
 runtime.SetMutexProfileFraction(1)   // mutex
 runtime.SetBlockProfileRate(1)       // block
-```go
+```
 
 ---
 
@@ -129,7 +129,7 @@ GODEBUG=schedtrace=1000,scheddetail=1 go run main.go
 
 # asyncpreemptoff=1：關閉異步搶占（調試特定問題用）
 GODEBUG=asyncpreemptoff=1 go run main.go
-```go
+```
 
 ---
 
@@ -155,7 +155,7 @@ func printStats() {
 
 ```bash
 go get go.uber.org/goleak   # 需在 go module 專案內執行
-```go
+```
 
 ```go
 import (
@@ -210,7 +210,7 @@ dlv attach <PID>          # 附加到執行中的程序
 (dlv) goroutine 18        # 切換到指定 goroutine
 (dlv) bt                  # 查看當前 goroutine stack trace
 (dlv) goroutines -t       # 顯示所有 goroutine 的 stack trace
-```go
+```
 
 ---
 
