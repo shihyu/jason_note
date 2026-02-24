@@ -4,7 +4,7 @@ OKEX go版本的v5sdk，僅供學習交流使用。
 # 項目說明
 
 ## REST調用
-``` go
+```go
     // 設置您的APIKey
 	apikey := APIKeyInfo{
 		ApiKey:     "xxxx",
@@ -27,7 +27,7 @@ OKEX go版本的v5sdk，僅供學習交流使用。
 	fmt.Println("\terrCode: ", rsp.V5Response.Code)
 	fmt.Println("\terrMsg: ", rsp.V5Response.Msg)
 	fmt.Println("\tdata: ", rsp.V5Response.Data)
- ```
+ ```go
 更多示例請查看rest/rest_test.go  
 
 ## websocket訂閱
@@ -93,7 +93,7 @@ OKEX go版本的v5sdk，僅供學習交流使用。
 	} else {
 		fmt.Println("取消訂閱失敗！", err)
 	}
-```
+```go
 更多示例請查看ws/ws_priv_channel_test.go  
 
 ### 公有頻道
@@ -148,7 +148,7 @@ OKEX go版本的v5sdk，僅供學習交流使用。
 	} else {
 		fmt.Println("取消訂閱失敗！", err)
 	}
-```
+```go
 更多示例請查看ws/ws_pub_channel_test.go  
 
 ## websocket交易
@@ -207,7 +207,7 @@ OKEX go版本的v5sdk，僅供學習交流使用。
 		fmt.Println("下單失敗！", usedTime.String(), err)
 	}
 
-```
+```go
 更多示例請查看ws/ws_jrpc_test.go  
 
 ## wesocket推送
@@ -228,7 +228,7 @@ type DepthData struct {
 	Action string            `json:"action"`
 	Data   []DepthDetail     `json:"data"`
 }
-```
+```go
 如果需要對推送數據做處理用戶可以自定義回調函數:
 1. 全局消息處理的回調函數  
 該回調函數會處理所有從服務端接受到的數據。
@@ -240,7 +240,7 @@ func (a *WsClient) AddMessageHook(fn ReceivedDataCallback) error {
 	a.onMessageHook = fn
 	return nil
 }
-```
+```go
 使用方法參見 ws/ws_test.go中測試用例TestAddMessageHook。
 
 2. 訂閱消息處理回調函數  
@@ -253,7 +253,7 @@ func (a *WsClient) AddBookMsgHook(fn ReceivedMsgDataCallback) error {
 	a.onBookMsgHook = fn
 	return nil
 }
-```
+```go
 使用方法參見 ws/ws_test.go中測試用例TestAddBookedDataHook。
 
 
@@ -267,7 +267,7 @@ func (a *WsClient) AddDepthHook(fn ReceivedDepthDataCallback) error {
 	a.onDepthHook = fn
 	return nil
 }
-```
+```go
 使用方法參見 ws/ws_pub_channel_test.go中測試用例TestOrderBooks。
 
 4. 錯誤消息類型回調函數  

@@ -3,7 +3,7 @@
 
 首先先實現一個future
 
-```
+```rust
 //file:future_timer.rs
 use futures;
 use std::{
@@ -77,7 +77,7 @@ impl TimerFuture {
 
 再實現一個executor，用於執行`Future`。
 
-```
+```rust
 // file:main.rs
 use {
     futures::{

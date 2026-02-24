@@ -213,7 +213,7 @@ try!(f.read_to_string(&mut buffer));
 
 用法比較簡單，我們修改一下剛剛的函數：
 
-```
+```rust
 fn set_greeting(request: &mut Request) -> IronResult<Response> {
         let mut payload = String::new();
         request.body.read_to_string(&mut payload);

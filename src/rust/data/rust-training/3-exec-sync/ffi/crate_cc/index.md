@@ -36,7 +36,7 @@ void hello(){
 在 rust中，不需要使用#[link]屬性指定需要鏈接的C庫。
 Cargo會依賴在build.rs構建腳本進行自動鏈接。
 
-```
+```rust
 extern "C" { fn hello(); }
 fn main(){
     unsafe { hello(); }

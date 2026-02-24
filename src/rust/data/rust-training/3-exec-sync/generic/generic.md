@@ -3,7 +3,7 @@
 
 下面是一個使用泛型的例子。
 
-```
+```rust
 use std::cmp::PartialOrd;
 fn largest<T: PartialOrd  + Copy>(list: &[T]) -> T {
     let mut largest = list[0];

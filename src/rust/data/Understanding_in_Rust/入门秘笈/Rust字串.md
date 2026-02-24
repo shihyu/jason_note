@@ -216,7 +216,7 @@ C is a programming language.
 
 `String`以 因此，字串無法編入索引。下面通過一個例子來理解這個概念：`UTF-8`
 
-```
+```rust
 fn main()   
 {  
     let s = String::from("Yiibai");  
@@ -274,7 +274,7 @@ ell
 
 下面來看一個簡單的例子：
 
-```
+```rust
 fn main()   
 {  
     let s = "C is a programming language";  

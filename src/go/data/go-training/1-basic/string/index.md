@@ -6,7 +6,7 @@
 
 一個字符串是由兩個部分組成，一個是StringHeader，
 
-```
+```go
 type StringHeader struct {
 	Data uintptr
 	Len  int
@@ -15,7 +15,7 @@ type StringHeader struct {
 
 例如對於以下字符串：
 
-```
+```go
 func main() {
 	s := "Thiis is a long long long long long long long long long long long long string"
 }
@@ -38,7 +38,7 @@ Res := string(bytes)
 
 原理是切片的元數據header和string的元數據header是對齊的。所以可以這麼hack地操作。
 
-```
+```go
 type SliceHeader struct {
 	Data uintptr
 	Len  int

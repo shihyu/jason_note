@@ -132,7 +132,7 @@ func cgocallbackg(fn, frame unsafe.Pointer, ctxt uintptr) {
     gp.m.syscallsp = sp
 }
 
-```
+```go
 
 cgocallbackg1調用 reflectcall，正式進入到用戶定義的 Go 函數。
 ```go
@@ -146,7 +146,7 @@ func cgocallbackg1(fn, frame unsafe.Pointer, ctxt uintptr) {
     *(*unsafe.Pointer)(unsafe.Pointer(&cb)) = noescape(unsafe.Pointer(&cbFV))
     cb(frame)
 }
-```
+```go
 
 ## 代理函數 _cgo_types.go
 

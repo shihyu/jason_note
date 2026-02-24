@@ -4,7 +4,7 @@
 
 在async函數中，可以使用await來等待一個Future完成。以下是一個例子。
 
-```
+```rust
 async fn learn_song() -> bool { 
     println!("learn_song");
     true

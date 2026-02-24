@@ -71,7 +71,7 @@ func main() {
 	var animal Animal
 	fmt.Println(animal)
 }
-```
+```go
 
 這樣輸出會是 nil。
 
@@ -85,7 +85,7 @@ func main() {
    	animal = &Dog{Name:"Kenny"}
    	fmt.Println(animal)
    }
-   ```
+   ```go
 
    運行結果為 `&{Kenny}`。
 
@@ -148,7 +148,7 @@ func main() {
 	ShowEat2(&dog)
 	ShowRun2(&dog)
 }
-```
+```go
 
 在 Animal interface 透過內嵌的方式，將 Eater interface、Runner interface 定義的行為放進去。
 
@@ -241,7 +241,7 @@ func main() {
 		fmt.Println(instance)
 	}
 }
-```
+```go
 
 在這邊多定義了 Cat Struct，並且同樣實現了 Animal interface。
 
@@ -278,7 +278,7 @@ func main() {
 
 ```
 panic: interface conversion: main.Animal is *main.Cat, not *main.Dog
-```
+```go
 
 這是因為後面的 animal 是指定 Cat 實例，結果後面型態斷言用 Dog，會造成執行時期的錯誤。
 
@@ -304,7 +304,7 @@ func main() {
 		}
 	}
 }
-```
+```go
 
 透過`.(type)` 來一一比對出對的型態。
 
@@ -355,7 +355,7 @@ type Reader interface {
 type Writer interface {
 	Write(p []byte) (n int, err error)
 }
-```
+```go
 
 利用 `os.File` 實現了 Reader、Writer interface，來實作檔案讀寫的實現。
 
@@ -374,7 +374,7 @@ interface有兩種，分別是型態與定義。**interface可以代表任何型
 ```go
 func Hello(value interface{}) {  
 }
-```
+```go
 
 將interface作為參數宣告，這個函數就可以接受任意型態的參數。但在實際使用之前，我們還是必須先辨別傳遞進來的參數型別，才能做接下來的邏輯實作，畢竟golang依然是個強型別的語言，沒有因為有了interface就做出讓步。
 
@@ -390,7 +390,7 @@ func Hello(value interface{}) {
             fmt.Printf("value 是數值，加上二就是 %d", v + 2)
     }
 }
-```
+```go
 
 延續第一個範例，我們從外部得到型別未知的參數`value`，透過`switch`與`value.(type)`方法，可以將不同型別的邏輯分離出來，做不同的處理。如果你很確定參數的型別，也可以直接使用宣告的方式來取代`switch`判斷，方法如下：
 
@@ -411,7 +411,7 @@ s := "Hello world"
 // a可以儲存任意類別的值
 a = i
 a = s
-```
+```go
 
 到這邊你可能會想，一個強型別語言為什麼需要想辦法實作一個可以是任何型態的參數或變數，這不是根本否定的強型別的價值嗎？我想到一個長久以來在工程師圈關於「限制-自由」的拉扯，有一句名言是這樣總結的：
 
@@ -476,7 +476,7 @@ Woof!
 Meow!
 Pika pika!
 Design patterns!
-```
+```go
 
 Animal作為一個interface定義一個空的`Speak()`方法，藉由宣告一個Animal陣列`animals`將貓、狗、皮卡丘、工程師實體傳進陣列中，接著實體各自執行自己實作的`Speak()`方法。
 
@@ -500,7 +500,7 @@ type User struct {
 var user User
 var user1 *User = &User{}
 var user2 *User = new(User)
-```
+```go
 
 **struct的方法**
 
@@ -510,7 +510,7 @@ var user2 *User = new(User)
 func (p *player) Name() string {
 	return p.name
 }
-```
+```go
 
 上面的程式碼為player這個自定義型別宣告一個名為Name的方法，該方法返回一個string。值得注意的是（p *player）這段程式碼指定了我們是**為player建立方法**，並將呼叫該方法的例項指標當作變數p傳入該函式，如果沒有（p *player）這段程式碼，這個方法就變成了一個普通的全域性函式。
 
@@ -522,7 +522,7 @@ go語言中的“繼承”和其他語言中的繼承有很大區別，比如：
 type player struct {
 	User
 }
-```
+```go
 
 這是一種**繼承**的寫法，在go語言中這種方式叫做**嵌入（embed）**，此時player型別就擁有了User型別的Name, Age, mess 等變數
 
@@ -548,7 +548,7 @@ func main() {
 	conJson, _ := json.Marshal(user)
 	fmt.Println(string(conJson)) //{"userName":"nick","userAge":0}
 }
-```
+```go
 
 **interface**
 
@@ -574,7 +574,7 @@ type Car interface {
 var a int
 var b interface{} //空介面
 b = a
-```
+```go
 
 **interface的多型**
 
@@ -606,7 +606,7 @@ func (r *ChickenBurger) Name() string {
 func (r *ChickenBurger) Price() float64 {
 	return 5.5
 }
-```
+```go
 
 **Interface巢狀**
 

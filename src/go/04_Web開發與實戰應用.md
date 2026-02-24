@@ -43,7 +43,7 @@ func main() {
 
     http.ListenAndServe(":8080", nil)
 }
-```
+```go
 
 ### RESTful API
 ```go
@@ -59,7 +59,7 @@ func handleUsers(w http.ResponseWriter, r *http.Request) {
         // 刪除用戶
     }
 }
-```
+```go
 
 ### Middleware
 ```go
@@ -69,7 +69,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
         next.ServeHTTP(w, r)
     })
 }
-```
+```go
 
 ## 🔌 WebSocket 實踐
 
@@ -98,7 +98,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
         conn.WriteMessage(websocket.TextMessage, message)
     }
 }
-```
+```go
 
 ## 🌉 Python + Go 整合
 

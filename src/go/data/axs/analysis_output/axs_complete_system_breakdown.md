@@ -192,7 +192,7 @@ func (ep *EventProcessor) ProcessEvents(ctx context.Context, msgs []mq.ConsumedM
     }
     return nil
 }
-```
+```go
 
 ```go
 // pkg/service/processor/event_result_publisher.go - PublishStressTestStats 函數片段
@@ -205,7 +205,7 @@ func (rp ResultPublisher) PublishStressTestStats(ctx context.Context, stats *mod
     }
     rp.Producer.Publish(ctx, mqMsg)
 }
-```
+```go
 
 ```go
 // pkg/model/stats.go - StressTestStats 結構
@@ -315,7 +315,7 @@ func IsStopConsumingError(err error) bool {
 func IsNeedRetryError(err error) bool {
 	return errors.Is(err, NeedRetryError)
 }
-```
+```go
 
 ```go
 // pkg/handler/consumer/batch_consumer.go - handleErr 函數片段
@@ -341,7 +341,7 @@ func (c *BatchEventConsumer) handleErr(ctx context.Context, err error, batchMsgs
     // 其他所有錯誤，都直接送入 ProcessEventsErr 進行處理 (通常是記錄日誌或發送 DLQ)
     c.handler.ProcessEventsErr(ctx, batchMsgs, err)
 }
-```
+```go
 
 ```go
 // pkg/utils/retry.go - Retry 函數片段

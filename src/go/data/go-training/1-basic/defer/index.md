@@ -1,7 +1,7 @@
 # defer 語句
 defer 是G o語言提供的一種用於註冊延遲調用的機制：讓函數或語句可以在當前函數執行完畢後（包括通過 return 正常結束或者 panic 導致的異常結束）執行，它會經常被用於關閉文件描述符、關閉數據庫連接以及解鎖資源等。
 
-```go  
+```go
 func main() {
 	fmt.Println("start")
 	for i := 0; i < 5; i++ {
@@ -19,11 +19,11 @@ func main() {
     1
     0
 }
-```
+```go
 
 defer 後面跟的內容除了可以是一行語句以外，也可以是一個函數/匿名函數。
 
-```go  
+```go
 func closeAll() {
 	fmt.Println("close all 1 !")
 }
@@ -45,7 +45,7 @@ panic()，正常語句就會立即終止，然後執行 defer 語句，再報告
 常信息，最後退出 goroutine。如果在 defer 中使用了 recover()
 函數,則會捕獲錯誤信息，使該錯誤信息終止報告。
 
-```go  
+```go
 func main() {
 	fmt.Println("start")
 	defer func() { fmt.Println("close all") }()
@@ -54,7 +54,7 @@ func main() {
 }
 ```
 輸出結果為
-```go  
+```go
 start
 close all
 panic: ERROR
@@ -65,13 +65,13 @@ main.main()
 
 Process finished with exit code 2
 
-```
+```go
 注意：panic 只會觸發當前 Goroutine 的延遲函數調用；
 
 # recover
 recover 只有在 defer 函數中調用才會生效
 
-```go  
+```go
 fmt.Println("start")
 defer func() {
     if r := recover(); r != nil {
@@ -84,7 +84,7 @@ fmt.Println("end")
 
 panic之後雖然end同樣沒有輸出，但是和沒有recover的demo相比，程序並沒有異常退出。
 
-```go  
+```go
 start
 Recovered in f ERROR
 

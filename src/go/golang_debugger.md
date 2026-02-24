@@ -17,7 +17,7 @@ https://github.com/go-delve/delve/tree/master/Documentation/installation
 
 ```
 $ go install github.com/go-delve/delve/cmd/dlv@v1.7.3
-```
+```go
 
 記得，所有平臺都要先將 `$GOPATH/bin` 加入系統環境 `PATH`變數，這樣才找得到執行檔。
 
@@ -77,7 +77,7 @@ Breakpoint 2 set at 0x10b0758 for main.demo() ./delve-demo.go:7
 
 接著使用 `c` 或是 `continue`讓程式跑起來，你就會看到 dlv 停在中斷點上：
 
-```
+```go
 (dlv) b main.main
 Breakpoint 1 set at 0x10b0958 for main.main() ./delve-demo.go:12
 (dlv) c

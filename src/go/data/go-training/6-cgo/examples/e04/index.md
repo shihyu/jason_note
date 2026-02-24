@@ -5,17 +5,17 @@ CGO 的 C 虛擬包提供了一組函數、用於 Go 語言和 C 語言之間數
 
 ```cgo
 C.CString(string) *C.char
-```
+```go
 輸入的 Go 字符串，克隆一個 C 語言格式的字符串；返回的字符串由 C 語言的 malloc 函數分配，不使用時需要通過 C 語言的 free 函數釋放。
 
 ```cgo
 func C.CBytes([]byte) unsafe.Pointer
-```
+```go
 C.CBytes 函數的功能和 C.CString 類似，用於從輸入的 Go 語言字節切片克隆一個 C 語言版本的字節數組，同樣返回的數組需要在合適的時候釋放。
 
 ```cgo
 func C.GoString(*C.char) string
-```
+```go
 C.GoString 用於將從 NULL 結尾的 C 語言字符串克隆一個 Go 語言字符串。
 
 ```cgo

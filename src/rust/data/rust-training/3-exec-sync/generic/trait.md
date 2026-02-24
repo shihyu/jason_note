@@ -32,7 +32,7 @@ trait可以作為參數傳遞給函數。
 - trait bound 方式
 
 下面是是採用impl Trait 的方式
-```
+```rust
 fn function1(a: impl Action){
     println!("{}", a.Eat());
 }

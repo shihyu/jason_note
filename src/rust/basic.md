@@ -171,13 +171,13 @@ fn grow (age: Age, year: u32) -> Age {
 
 - 宣告靜態變數
 
-```
+```rust
 static GLOBAL: i32 = 0;
 ```
 
 - 宣告常數
 
-```
+```rust
 const GLOBAL: i32 = 0;
 ```
 

@@ -10,7 +10,7 @@ s1 := string(b1[4:l])
 但這樣設計到了內存拷貝，如果數組很大的話會浪費內存申請、內存拷貝開銷。
 以下是一個零拷貝的函數
 
-```
+```go
 // BytesToString 零拷貝將[]byte轉換為字符串
 func BytesToString(b []byte) string {
 	// 獲取字節切片的底層結構指針

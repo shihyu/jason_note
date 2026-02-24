@@ -2,7 +2,7 @@
 
 # if/else
 基本格式如下:
-```go  
+```go
 if condition {
     分支1
 } else if condition {
@@ -13,7 +13,7 @@ if condition {
 ```  
 
 # for循環
-```go  
+```go
 for 初始語句;條件表達式;結束語句 {
     循環體語句
 }
@@ -44,7 +44,7 @@ for {
 # for/range
 在golang中，對於數組、切片、map以及channel等數據結構，用for/range遍歷起來會更方便
 
-```go  
+```go
 //遍歷切片
 s := []int{1, 2, 3, 4, 5}
 for k, v := range s {
@@ -64,7 +64,7 @@ for k, v := range m {
 # switch分支
 需要特別說一下的是，和c裡的switch不同，Go 語言中不需要特別使用 break 語句來表示分支結束。
 
-```go  
+```go
 n := 2
 switch n {
 case 1:

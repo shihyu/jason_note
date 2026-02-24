@@ -192,7 +192,7 @@ import "fmt"
 func main() {
     fmt.Println("Hello, World!")
 }
-```
+```go
 
 ### Goroutine 基礎
 
@@ -215,7 +215,7 @@ func main() {
     go say("world")
     say("hello")
 }
-```
+```go
 
 ### Channel 通訊
 
@@ -242,7 +242,7 @@ func main() {
     x, y := <-c, <-c // 從 channel 接收
     fmt.Println(x, y, x+y)
 }
-```
+```go
 
 ### Web Server
 

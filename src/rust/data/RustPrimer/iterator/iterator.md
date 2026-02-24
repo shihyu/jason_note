@@ -15,7 +15,7 @@ for i in 1..10 {
 這裡我們知道， (1..10) 其本身是一個迭代器，我們能對這個迭代器調用 `.next()` 方法，因此，`for`循環就能完整的遍歷一個循環。
 而對於`Vec`來說：
 
-```
+```rust
 let values = vec![1,2,3];
 for x in values {
     println!("{}", x);

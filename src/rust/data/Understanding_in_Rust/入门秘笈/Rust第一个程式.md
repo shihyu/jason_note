@@ -2,7 +2,7 @@
 
 在本文中，使用Rust語言編寫簡單的程式，以瞭解如何編寫，儲存和編譯Rust程式。現在，開啟記事本檔案並編寫以下程式碼：
 
-```rs
+```rust
 fn main(){
     println!("Hello, world!");
 }

@@ -38,7 +38,7 @@ fn main() {
 
 ## 聲明宏的基本結構
 宏的基本結構如下：
-```
+```rust
 macro_rules! $name {
     $rule0 ;
     $rule1 ;
@@ -78,7 +78,7 @@ fn myTest1() -> Result<(), Box<dyn std::error::Error>>{
 }
 ```
 使用了try!宏後，代碼可以簡化成：
-```
+```rust
 macro_rules! my_try {
     ($result:expr) => {
         match $result {

@@ -1,7 +1,7 @@
 
 ## 結構體的定義與打印
 
-```
+```rust
 #[derive(Debug)]
 struct Rectangle {
     width: u32,

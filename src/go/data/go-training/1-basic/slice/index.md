@@ -1,7 +1,7 @@
 
 # slice 的內存佈局
 
-```
+```go
 type SliceHeader struct {
 	Data uintptr
 	Len  int

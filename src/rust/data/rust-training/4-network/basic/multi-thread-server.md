@@ -84,7 +84,7 @@ impl ThreadPool {
   - 使用stream.read來讀取連接上的請求數據
   - 使用stream.write來向連接發送響應數據
 
-```
+```rust
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;

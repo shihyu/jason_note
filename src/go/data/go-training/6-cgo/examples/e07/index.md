@@ -20,7 +20,7 @@ func main() {
 
 ## C.sum函數的實現
 在生成的main.cgo1.go文件中，可以看到C.sum函數的實現。
-```
+```go
 package main
 
 //int sum(int a, int b) { return a+b; }
@@ -29,7 +29,7 @@ import _ "unsafe"
 func main() {
     println((_Cfunc_sum)(1, 1))
 }
-```
+```go
 
 可以看到，C.sum函數被轉換成了一個名為_Cfunc_sum的Go語言函數。
 _Cfunc_sum 函數（這是一個go函數，）在 cgo 生成的 _cgo_gotypes.go 文件中定義。
@@ -125,7 +125,7 @@ func reentersyscall(pc, sp uintptr) {
     _g_.m.oldp.set(pp) //把p記錄在oldp中，等從系統調用返回時，優先綁定這個p
     _g_.m.p = 0
 }
-```
+```go
 
 entersyscall 直接調用了reentersyscall函數，reentersyscall首先把現場信息保存在當前g的sched成員中，然後解除m和p的綁定關係並設置p的狀態為_Psyscall.
 
@@ -146,7 +146,7 @@ func retake(now int64) uint32 {
 		handoffp(_p_)
     }
 }
-```
+```go
 
 handoffp 方法會調用 startm 來啟動一個新的 M,出來接管P。
 
@@ -241,7 +241,7 @@ nosave:
     MOVQ    SI, SP
     MOVL    AX, ret+16(FP)
     RET	
-```
+```go
 
 ### exitsyscall
 exitsyscall的基本思路是，

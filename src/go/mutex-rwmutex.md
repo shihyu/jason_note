@@ -40,7 +40,7 @@ func main() {
 }
 $ go run main.go
 3000
-```
+```go
 
 執行之後結果是 3000 沒問題，1000+1000+1000=3000。
 
@@ -75,7 +75,7 @@ func main() {
 }
 $ go run main.go
 3000
-```
+```go
 
 還是 3000 沒問題，那我們同時存款 1000 次的時候會發生什麼事呢？
 
@@ -128,7 +128,7 @@ Goroutine 7 (finished) created at:
 996000
 Found 1 data race(s)
 exit status 66
-```
+```go
 
 喔喔喔發現原來有 [race condition](https://zh.wikipedia.org/wiki/競爭危害)， 因為同時去對 Bank.balance 去做存取的動作，數量少的時候可能沒問題，當量大的時候就可能出錯。
 
@@ -155,7 +155,7 @@ func (b *Bank) Balance() int {
 }
 $ go run -race main.go
 1000000
-```
+```go
 
 這次結果正確了，而且也沒跳出 race condition 的警訊。
 
@@ -235,7 +235,7 @@ Goroutine 58 (finished) created at:
 1000000
 Found 2 data race(s)
 exit status 66
-```
+```go
 
 不意外，因為同時對 balance 去做讀寫，當然跳出 race condition 的警告。
 
@@ -261,7 +261,7 @@ func (b *Bank) Balance() (balnce int) {
 }
 $ go run -race main.go
 1000000
-```
+```go
 
 結果成功了，也沒有 race 的警告了。
 
@@ -334,7 +334,7 @@ $ go run -race main.go
 2020/05/02 02:11:31 Read: balance: 5000
 2020/05/02 02:11:32 Read: balance: 5000
 2020/05/02 02:11:33 Read: balance: 5000
-```
+```go
 
 就會發現，每隔一秒才能處理一個 action，以各五次讀寫來說，總共就要花上 10 秒，但對讀來說，應該可以瘋狂讀，每次讀都會是安全的， 值也都會是一樣，除非當下有寫的動作，它不應該被其他讀的動作 block。
 

@@ -487,7 +487,7 @@ scrape_configs:
 
 # 統計錯誤類型
 sum by (error_type) (rate({app="axs-consumer"} |= "ERROR" [5m]))
-```
+```go
 
 ---
 

@@ -53,7 +53,7 @@ https://golang.google.cn/dl/
 
 ## 1.2 第一個Go程序
 
-```
+```go
 package main
 
 import "fmt"
@@ -61,7 +61,7 @@ import "fmt"
 func main() {
 	fmt.Println("Hello World～")
 }
-```
+```go
 
 1. 包聲明
 
@@ -69,7 +69,7 @@ func main() {
 
 ```go
 package xxx
-```
+```go
 
 - 目錄下同級文件屬於同一個包
 - 包名與目錄名可以不同
@@ -171,7 +171,7 @@ name = “y” + “x”
 ```go
 var name type
 var c, d *int
-```
+```go
 
 默認零值或空值，int為0，float為0.0，bool為false，string為""，指針為nil。
 建議駝峰命名法totalPrice或下劃線命名法total_price。
@@ -182,7 +182,7 @@ var (
 	name string
 	balance float32
 )
-```
+```go
 
 名字 := 表達式
 簡短模式（short variable declaration）限制：
@@ -236,7 +236,7 @@ func main() {
 	c, d = d, c
 	fmt.Printf("d=%s, c=%s\n", d, c)
 }
-```
+```go
 
 局部變量，函數體內聲明的變量，參數和返回值變量都是局部變量。
 
@@ -254,7 +254,7 @@ func main() {
 	
 	fmt.Printf("local1=%d, local2=%d, local3=%d\n", local1, local2, local3)
 }
-```
+```go
 
 全局變量，函數體外聲明的變量，可以在整個包甚至外部包（被導出）中使用，也可在任何函數中使用。
 
@@ -284,7 +284,7 @@ func main() {
 	var global int = 99
 	fmt.Printf("global=%d\n", global)
 }
-```
+```go
 
 ### 1.3.3 常量
 
@@ -368,7 +368,7 @@ func main() {
 	c = complex128(Pi64)
 	fmt.Printf("a=%v, b=%v, c=%v\n", a, b, c)
 }
-```
+```go
 
 ### 1.3.4 運算符
 
@@ -409,7 +409,7 @@ func main() {
 
 ### 1.3.5 流程控制語句
 
-```
+```go
 if-else
 package main
 
@@ -430,7 +430,7 @@ func if_else_return(b int) int {
 func main() {
 	fmt.Println(if_else_return(10))
 }
-```
+```go
 
 `for`
 Go不支持while和do while。
@@ -476,7 +476,7 @@ JumpLoop:
 		}
 	}
 }
-```
+```go
 
 `for-range`
 可以遍歷數組、切片、字符串、map和channel。
@@ -541,7 +541,7 @@ func main() {
 		fmt.Printf("key:%d\n", key)
 	}
 }
-```
+```go
 
 `swith-case`
 表達式不必為常量，甚至整數，不需通過break跳出，各case中類型一致。
@@ -615,7 +615,7 @@ func main() {
 breakTag:
 	fmt.Println("over")
 }
-```
+```go
 
 goto在`多錯誤處理`中優勢
 
@@ -708,7 +708,7 @@ func main() {
 ```go
 //聲明和初始化
 str := "string"
-```
+```go
 
 字符串字面量用"或`創建
 
@@ -788,7 +788,7 @@ by[4] = '國'
 fmt.Println(str)
 fmt.Println(by)
 fmt.Println(string(by))
-```
+```go
 
 ### 1.4.4 指針類型
 
@@ -882,7 +882,7 @@ func main() {
 	exchange5(&x, &y)
 	fmt.Println(x, y)
 }
-```
+```go
 
 ### 1.4.5 復合類型
 
@@ -910,7 +910,7 @@ func main() {
 		fmt.Printf("arr[%d] = %d\n", j, arr[j])
 	}
 }
-```
+```go
 
 1. 結構體類型
 
@@ -1037,7 +1037,7 @@ achievement := map[string]float32{
 }
 map1 := make(map[int][]int)
 map2 := make(map[int]*[]int)
-```
+```go
 
 ## 1.5 函數
 
@@ -1095,7 +1095,7 @@ func main() {
 	c, d := compute(a, b)
 	fmt.Println(c,d)
 }
-```
+```go
 
 ### 1.5.2 函數參數
 
@@ -1112,7 +1112,7 @@ func myFunc(arg ...string) {
 		fmt.Printf("the string is: %s\n", v)
 	}
 }
-```
+```go
 
 1. 參數傳遞
 
@@ -1138,7 +1138,7 @@ func main() {
 	fmt.Printf("交換後a=%d\n", a)
 	fmt.Printf("交換後b=%d\n", b)
 }
-```
+```go
 
 - 引用傳遞
 
@@ -1162,7 +1162,7 @@ func main() {
 	fmt.Printf("交換後a=%d\n", a)
 	fmt.Printf("交換後b=%d\n", b)
 }
-```
+```go
 
 ### 1.5.3 匿名函數
 
@@ -1192,7 +1192,7 @@ func main() {
 16 108
 defer x,y = 6 108
 */
-```
+```go
 
 1. 調用
 
@@ -1215,7 +1215,7 @@ func main() {
 		fmt.Println("closure, directly", data)
 	}(8)
 }
-```
+```go
 
 - 回調函數（call then back）
 
@@ -1236,7 +1236,7 @@ func main() {
 		fmt.Println(value)
 	})
 }
-```
+```go
 
 ### 1.5.4 defer延遲語句
 
@@ -1304,7 +1304,7 @@ func main() {
 //myfunc()函數裡的name: go
 //main()函數裡的name: python
 //main()函數裡的myname: go
-```
+```go
 
 defer常用應用場景：
 
@@ -1334,7 +1334,7 @@ func g(i int) {
     fmt.Println("Printing in g", i)
     g(i + 1)
 }
-```
+```go
 
 ## 1.6 Go面向對象編程
 
@@ -1348,7 +1348,7 @@ type Triangle struct {
 	Bottom float32
 	Height float32
 }
-```
+```go
 
 方法（Methods）是作用在接收者（receiver）（某種類型的變量）上的函數。
 
@@ -1371,7 +1371,7 @@ func main() {
 	t := Triangle(6, 8)
 	fmt.Println(t.Area())
 }
-```
+```go
 
 訪問權限指類屬性是公開還是私有的，Go通過首字母大小寫來控制可見性。
 常量、變量、類型、接口、結構體、函數等若是大寫字母開頭，則能被其他包訪問或調用（public）；非大寫開頭則只能包內使用（private）。
@@ -1421,7 +1421,7 @@ func main() {
 	s.Age = 22
 	fmt.Println(s.GetName())
 }
-```
+```go
 
 ### 1.6.2 繼承
 
@@ -1441,7 +1441,7 @@ func (c *Bus) Working() {
 	c.Run()
 	c.Stop()
 }
-```
+```go
 
 ### 1.6.3 多態
 
@@ -1501,7 +1501,7 @@ type 接口名稱 interface {
 	//...
 	methodn(參數列表) 返回值列表
 }
-```
+```go
 
 空接口（interface{}），無任何方法聲明，類似面向對象中的根類型，c中的void*，默認值nil。實現接口的類型支持相等運算，才能比較。
 
@@ -1531,7 +1531,7 @@ func CompareTwoMapInterface(data1 map[string]interface{}, data2 map[string]inter
 
 	return string(dataStr1) == string(dataStr2)
 }
-```
+```go
 
 ### 1.7.2 接口賦值
 
@@ -1582,7 +1582,7 @@ Go語言會根據非指針成員方法，自動生成對應的指針成員方法
 func (x Num) Equal(i Num) bool
 func (x *Num) Equal(i Num) bool
 */
-```
+```go
 
 1. 一個接口賦值給另一個接口
 
@@ -1623,7 +1623,7 @@ func (x Num) BiggerThan(i int) bool {
 var f1 Num = 6
 var f2 oop1.NumInterface1 = f1
 var f3 oop2.NumInterface2 = f2
-```
+```go
 
 若接口A的方法列表是接口B的方法列表的子集，則接口B可以直接賦值給接口A。
 
@@ -1662,7 +1662,7 @@ func (x *Num) Sum(i int) {
 var f1 Num = 6
 var f2 NumInterface2 = &f1
 var f3 NumInterface1 = f2
-```
+```go
 
 ### 1.7.3 接口查詢
 
@@ -1697,7 +1697,7 @@ func Len(array interface{}) int {
 	}
 	return length
 }
-```
+```go
 
 ### 1.7.4 接口組合
 
@@ -1716,7 +1716,7 @@ type InterfaceCombine interface {
 	Interface1
 	Interface2
 }
-```
+```go
 
 ### 1.7.5 接口應用
 
@@ -1747,7 +1747,7 @@ func main() {
 		fmt.Println("unknown")
 	}
 }
-```
+```go
 
 1. 實現多態功能
 
@@ -1789,7 +1789,7 @@ func main() {
 func sendMessage(n Message) {
 	n.sending()
 }
-```
+```go
 
 ## 1.8 反射
 
@@ -1805,7 +1805,7 @@ reflect包定義了接口和結構體，獲取類型信息。
 ```go
 func TypeOf(i interface{}) Type
 func ValueOf(i interface{}) Value
-```
+```go
 
 ### 1.8.2 反射的三大法則
 
@@ -1835,7 +1835,7 @@ func main() {
 //kind is float64: true
 //type: float64
 //value: 3.4
-```
+```go
 
 1. 反射類型對象轉換為接口類型變量
 
@@ -1867,7 +1867,7 @@ func main() {
 //Type類型為*reflect.rtype，值為string
 //Value類型為reflect.Value，值為shirdon
 //新對象interface{}類型為string，值為shirdon
-```
+```go
 
 1. 修改反射類型對象，其值必須是可寫的（settable）
 
@@ -1925,7 +1925,7 @@ func main() {
 //輸出
 //name原始值: shirdon
 //反射對象修改後，name值: yx
-```
+```go
 
 ## 1.9 goroutine簡介
 
@@ -1949,7 +1949,7 @@ func main() {
 	time.Sleep(1*time.Second)
 	fmt.Println("end")
 }
-```
+```go
 
 ## 1.10 單元測試（go test）
 
@@ -2153,6 +2153,6 @@ func CallFunc() {
 | -t        | 同時下載測試源碼文件中的依賴代碼包                           |
 | -u        | 更新已有代碼包及其依賴包                                     |
 
-```go
+```bash
 go get -u github.com/shirdon1/TP-Link-HS110
 ```

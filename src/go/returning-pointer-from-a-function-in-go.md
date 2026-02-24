@@ -55,7 +55,7 @@ int* rpf(int n1)
 
 ```
 745
-```
+```go
 
 The main reason behind this scenario is that compiler always make a stack for a function call. As soon as the function exits the function stack also get removed which causes the local variables of functions goes out of scope. Making it static will resolve the problem. As static variables have a property of preserving their value even after they are out of their scope.
 

@@ -8,7 +8,7 @@
 
 
 
-```go
+```bash
  go mod init go-phishing
 ```
 
@@ -16,7 +16,7 @@
 
 ```go
 go get github.com/sirupsen/logrus
-```
+```go
 
 ```go
 package main
@@ -38,13 +38,13 @@ func main() {
 }
 ```
 
-```go
+```bash
 go run main.go
 ```
 
 編譯完再看一下 `go.mod` 裡面就有 `logrus` 了，跟 Nodejs 的 `package.json` 長得很像
 
-```go
+```text
 module go-phishing
 
 go 1.18
@@ -118,7 +118,7 @@ package mainimport "fmt"func main() {
 
 此時還沒有任何改變，但接著我們嘗試加入一個 dependency
 
-```
+```go
 package mainimport "fmt"
 import "github.com/gofrs/uuid"func main() {
   uuid, _ := uuid.NewV4()

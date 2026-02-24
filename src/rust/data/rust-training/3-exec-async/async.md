@@ -8,7 +8,7 @@ futures = "0.3"
 
 async fn函數返回實現了Future的類型。需要使用執行器（executor）執行這個Future
 
-```
+```rust
 use futures::executor::block_on;
 
 async fn async_func1() {
@@ -60,7 +60,7 @@ async fn 會獲取引用，所以參數的生命週期必須比async fn函數更
 
 如下是 async fn 展開的例子
 
-```
+```rust
 // This function:
 async fn foo(x: &u8) -> u8 { *x }
 

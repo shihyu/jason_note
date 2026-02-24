@@ -141,7 +141,7 @@ Runtime 在後台運行：
 4. GC 最後一次運行
 5. 釋放所有資源
 6. 進程退出
-```
+```go
 
 ## 關鍵數據結構
 
@@ -178,7 +178,7 @@ type m struct {
     procid      uint64          // 操作系統線程 ID
     // ... 更多字段
 }
-```
+```go
 
 ### P（Processor）結構體
 
@@ -217,7 +217,7 @@ runtime.SetGCPercent(p)     // 設置 GC 觸發阈值
 runtime.Stack(buf, all)     // 獲取棧信息
 runtime.Caller(skip)        // 獲取調用者信息
 runtime.SetMutexProfileFraction(r)  // 設置 mutex 分析
-```
+```go
 
 ## 性能優化技巧
 
@@ -471,7 +471,7 @@ $ strings ./myprogram | grep "runtime\." | head -20
 │      ... 管理 goroutine ...                │
 │                                            │
 └────────────────────────────────────────────┘
-```
+```go
 
 ### 實際編譯例子
 
@@ -520,7 +520,7 @@ $ go build main.go
    - 生成可執行檔案
    
    輸出：main（可執行檔案，約 3-6 MB）
-```
+```go
 
 ## 查看 Runtime 信息
 

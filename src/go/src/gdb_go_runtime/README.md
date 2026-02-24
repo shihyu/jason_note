@@ -13,7 +13,7 @@ make debug
 
 # 清理建置產物
 make clean
-```
+```go
 
 **`make debug` 會自動設置以下斷點：**
 - `main.main` - 程式入口
@@ -210,7 +210,7 @@ Breakpoint 2, runtime.makechan (t=0x..., size=2) at chan.go:75
 Breakpoint 3.1, runtime.newproc () at proc.go:5077
 (gdb) continue
 # 依序在各個斷點停止...
-```
+```go
 
 ### 方法 2：手動設置斷點，逐步跟蹤
 

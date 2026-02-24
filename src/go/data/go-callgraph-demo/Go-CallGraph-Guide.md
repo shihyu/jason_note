@@ -192,7 +192,7 @@ func WriteTraceToFile(filename string) error {
     }
     fmt.Fprintln(f, "```"); return nil
 }
-```
+```go
 
 ### 使用方式
 

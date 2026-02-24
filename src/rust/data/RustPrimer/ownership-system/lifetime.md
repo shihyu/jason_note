@@ -281,7 +281,7 @@ struct Person<'a> {
 
 不需要對`Person`後面的`<'a>`感到疑惑，這裡的`'a`並不是指`Person`這個`struct`的Lifetime，僅僅是一個泛型參數而已，`struct`可以有多個Lifetime參數用來約束不同的`field`，實際的Lifetime應該是所有`field`Lifetime交集的子集。例如：
 
-```
+```rust
 fn main() {
 	let x = 20_u8;
 	let stormgbs = Person {

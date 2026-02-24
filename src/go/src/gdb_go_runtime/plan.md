@@ -15,7 +15,7 @@ test_go/
 ├── Makefile
 ├── test.go
 └── README.md
-```
+```go
 
 ## Makefile 規範
 
@@ -75,7 +75,7 @@ func worker(ch chan int, id int) {
     val := <-ch
     fmt.Printf("Worker %d received: %d\n", id, val)
 }
-```
+```go
 
 ### 設計理念
 - 包含 goroutine 創建（`go` 關鍵字）

@@ -2,7 +2,7 @@
 ## 基本用法
 hashmap的基本用法
 
-```
+```rust
 use std::collections::HashMap;
 fn main() {
     let mut scores = HashMap::new();

@@ -86,7 +86,7 @@ $ rustc --emit=asm main.rs
 
 但如果你拿去跟上面的 C 語言產生的組語比較的話，你會發現在 padding 方面好像又不太一樣， Rust 為了提高空間的利用效率，實際上是用像這樣的方式儲存的：
 
-```
+```rust
 union Foo {
   struct A {
     tag: u8,

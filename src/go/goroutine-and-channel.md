@@ -31,7 +31,7 @@ hello
 hello
 hello
 hello
-```
+```go
 
 上例會先執行完 `say("world")` 後再執行 `say("hello")`。
 
@@ -119,7 +119,7 @@ func main() {
 
     time.Sleep(5 * time.Second)
 }
-```
+```go
 
 ![](images/sleep.png)
 
@@ -149,7 +149,7 @@ func main() {
 
     wg.Wait()
 }
-```
+```go
 
 ![](images/wait-group.png)
 
@@ -188,7 +188,7 @@ func main() {
     <-ch
     <-ch
 }
-```
+```go
 
 ![](images/channel-wait.png)
 
@@ -217,7 +217,7 @@ func main() {
     time.Sleep(time.Second)
     fmt.Println(total)
 }
-```
+```go
 
 ![](images/total-error.png)
 
@@ -254,7 +254,7 @@ func main() {
     fmt.Println(total.v)
     total.mux.Unlock()
 }
-```
+```go
 
 ![](images/total-mutex.png)
 
@@ -281,7 +281,7 @@ func main() {
     time.Sleep(time.Second)
     fmt.Println(<-ch)
 }
-```
+```go
 
 ![](images/total-channel.png)
 
@@ -317,7 +317,7 @@ ch := make(chan int) // 建立 int 型別的 Channel
 ```go
 ch <- v    // Send v to channel ch.
 v := <-ch  // Receive from ch, and assign value to v.
-```
+```go
 
 ### Channel 的阻塞
 
@@ -361,7 +361,7 @@ calculate goroutine ends calculating
 FINISH
 calculate goroutine finished
 main goroutine finished
-```
+```go
 
 
 
@@ -427,7 +427,7 @@ main goroutine finished
 
 ```go
 ch: make(chan int, 100)
-```
+```go
 
 Buffered Channel 的宣告會在第二個參數中定義 buffer 的長度，它只會在 Buffered 中資料填滿**以後**才會阻塞造成等待，以上例來說：第101個資料推入的時候，推入方的 Goroutine 才會等待。
 
@@ -451,7 +451,7 @@ goroutine 1 [chan send]:
 main.main()
         /go/unbuffered-channel-error.go:9 +0x59
 exit status 2
-```
+```go
 
 上例使用 Unbuffered Channel：
 
@@ -470,7 +470,7 @@ func main() {
     ch <- 1
     fmt.Println(<-ch)
 }
-```
+```go
 
 原因是：
 
@@ -514,7 +514,7 @@ func main() {
 7
 8
 9
-```
+```go
 
 
 
@@ -528,7 +528,7 @@ func main() {
     c <- 0 // Panic!!!
 }
 panic: send on closed channel
-```
+```go
 
 > 為了避免將資料推入已關閉的 Channel 中造成 Panic，Channel 的關閉應該由推入的 Goroutine 處理。
 
@@ -550,7 +550,7 @@ func main() {
         fmt.Println(i)
     }
 }
-```
+```go
 
 ### 使用 select 避免等待
 
@@ -586,7 +586,7 @@ calculate goroutine ends calculating
 calculate goroutine finished
 FINISH # main goroutine 解除阻塞
 main goroutine finished
-```
+```go
 
 main goroutine 要拉取 `ch` 的資料時，會被迫等待，這時會無法回饋目前的狀態給使用者，造成卡頓的清況。
 

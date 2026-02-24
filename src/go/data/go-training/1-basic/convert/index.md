@@ -1,7 +1,7 @@
 # 類型轉換
 Golang是強類型語言，而且不會像C、C++那樣進行進行隱式類型轉換，如下的代碼會報錯
 
-```go  
+```go
 package main
 
 import "fmt"
@@ -14,12 +14,12 @@ func main() {
 ```
 
 報錯如下
-```go  
+```go
 invalid operation: a * b (mismatched types float32 and int)
 ```
 
 必須進行顯式的類型轉換才可以相乘
-```go  
+```go
 fmt.Println(a * float32(b))
 ```
 

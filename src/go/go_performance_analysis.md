@@ -50,7 +50,7 @@ jsonData, err := json.Marshal(order)  // Go 的 json 包高度優化
 對比 C：
 ```c
 snprintf(json_payload, ...)  // 手動構建 JSON，效率較低
-```
+```go
 
 ### 6. 內存分配策略
 - Go 預分配了 slice：`latencies: make([]float64, 0)`

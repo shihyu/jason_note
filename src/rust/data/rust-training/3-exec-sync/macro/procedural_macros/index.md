@@ -23,14 +23,14 @@ impl HelloMacro for Tiger {
 ```
 
 而如果使用drive宏，就可以通過如下簡單方式為struct添加hello_macro功能：
-```
+```rust
 use hello_macro_derive::HelloMacro;
 #[derive(HelloMacro)]
 struct Dog;
 ```
 
 derive過程宏只能用在struct/enum/union上。 其定義方式如下：
-```
+```rust
 #[proc_macro_derive(HelloMacro)]
 pub fn hello_macro_derive(input: TokenStream) -> TokenStream {
     // 基於 input 構建 AST 語法樹

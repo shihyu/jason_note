@@ -131,7 +131,7 @@ Python (解釋執行)          Go (編譯執行)
    虛擬機執行               CPU 直接執行
 
 執行速度：  1x                  10-50x
-```
+```go
 
 ### 實測範例
 
@@ -170,7 +170,7 @@ Java Thread                 Go Goroutine
     = 10 GB                 = 20 MB
 
 記憶體差距：500 倍！
-```
+```go
 
 ### 並發能力實測
 
@@ -196,7 +196,7 @@ func demonstrateGoroutine() {
 // 對比其他語言：
 // - Java Thread:  10,000 個 = 10 GB 記憶體（系統崩潰）
 // - Python Thread: 100 個就開始變慢
-```
+```go
 
 | 語言/框架 | 最大並發數 | 記憶體使用 | 切換開銷 |
 |----------|-----------|-----------|---------|
@@ -289,7 +289,7 @@ def add(a, b):
 +---------------------------+-----------------------------+
 
 基準效能：Go 預設寫法 = Python 最佳化寫法 × 10
-```
+```go
 
 ---
 
@@ -341,7 +341,7 @@ func fastStringConcat() string {
 預先分配 40000 bytes
 循環 1-10000: 直接寫入
 總分配：40000 bytes（一次）
-```
+```go
 
 ---
 
@@ -479,7 +479,7 @@ SELECT * FROM orders WHERE user_id = 1000;          -- 查詢 1001
 -- ✅ 正確：批次查詢
 SELECT * FROM users WHERE id IN (1,2,3,...,1000);   -- 查詢 1
 SELECT * FROM orders WHERE user_id IN (1,2,3,...,1000);  -- 查詢 2
-```
+```go
 
 ---
 
@@ -602,7 +602,7 @@ func processRequestsWithPool() {
   ↓        ↓           ↓          ↓
 10萬個   緩衝區      100個     並發處理
 請求               goroutine
-```
+```go
 
 #### 完整實作
 
@@ -682,7 +682,7 @@ workers := db.MaxOpenConns  // 與資料庫連線池相同
 
 // 4. 混合型任務
 workers := runtime.NumCPU() * 4
-```
+```go
 
 ---
 
@@ -782,7 +782,7 @@ func main() {
 - 總時間：10 × 10ms = 100ms
 
 效能提升：100 倍！
-```
+```go
 
 ---
 
@@ -877,7 +877,7 @@ func main() {
 │     - PostgreSQL, MySQL              │
 │     - 適合：永久儲存                 │
 └─────────────────────────────────────┘
-```
+```go
 
 ---
 
@@ -924,7 +924,7 @@ MaxOpenConns = ((CPU 核心數 × 2) + 磁碟數)
 - 每個連線佔用資料庫資源
 - 過多連線反而降低效能（爭搶資源）
 - 資料庫有最大連線數限制
-```
+```go
 
 ---
 
@@ -947,7 +947,7 @@ func GetUsersWithOrders() {
         user.Orders = orders
     }
 }
-```
+```go
 
 #### 正確做法
 
@@ -998,7 +998,7 @@ func GetUsersWithOrders(ctx context.Context, userIDs []int64) (
 
     return users, nil
 }
-```
+```go
 
 ---
 
@@ -1044,7 +1044,7 @@ func BenchmarkStringConcat(b *testing.B) {
 // 輸出：
 // BenchmarkStringConcat/使用+運算子-8        5000    250000 ns/op
 // BenchmarkStringConcat/使用strings.Builder-8  500000    2500 ns/op
-```
+```go
 
 #### 2. 壓力測試工具
 
@@ -1140,7 +1140,7 @@ func main() {
 
     loadTester.Run(context.Background())
 }
-```
+```go
 
 ---
 
@@ -1170,7 +1170,7 @@ type Metrics struct {
     DBQueriesTotal  int64
     DBQueryLatency  time.Duration
 }
-```
+```go
 
 #### Goroutine 監控
 
@@ -1213,7 +1213,7 @@ func main() {
     ctx := context.Background()
     go monitor.Start(ctx)
 }
-```
+```go
 
 #### 請求追蹤
 
@@ -1344,7 +1344,7 @@ go tool cover -html=coverage.out
 │  ├─ 快取 (Redis)                            │
 │  └─ 訊息佇列 (RabbitMQ/Kafka)               │
 └─────────────────────────────────────────────┘
-```
+```go
 
 ---
 
@@ -1701,7 +1701,7 @@ func main() {
 Go 的優勢:
 引擎好（語言）+ 好開（簡單）
 = 新手也快，高手更極致！
-```
+```go
 
 ---
 
@@ -2023,7 +2023,7 @@ jsonData, err := json.Marshal(order)  // Go 的 json 包高度優化
 對比 C：
 ```c
 snprintf(json_payload, ...)  // 手動構建 JSON，效率較低
-```
+```go
 
 ### 6. 內存分配策略
 - Go 預分配了 slice：`latencies: make([]float64, 0)`
@@ -2118,7 +2118,7 @@ Go 在**常見情況**（P50 以下）表現優異是因為：
    - 存在資源等待的環狀鏈
 
 破壞任一條件即可避免死鎖！
-```
+```go
 
 ---
 
@@ -2161,7 +2161,7 @@ T3: 執行緒 A 等待 Account2 ⏳ (被 B 持有)
 
 T4: 死鎖！ 💀
     兩個執行緒互相等待，永遠無法繼續
-```
+```go
 
 #### 正確做法
 
@@ -2204,7 +2204,7 @@ func TransferGood(from, to *Account, amount int64) error {
 所有執行緒都按 1 → 2 的順序鎖定
 → 不會形成循環等待
 → 不會死鎖 ✓
-```
+```go
 
 ---
 
@@ -2302,7 +2302,7 @@ func UpdateBalanceOptimistic(ctx context.Context, accountID, amount int64) error
 
     return fmt.Errorf("max retries exceeded")
 }
-```
+```go
 
 ---
 
@@ -2429,7 +2429,7 @@ func isDeadlockError(err error) bool {
            strings.Contains(errMsg, "40P01") ||
            strings.Contains(errMsg, "1213")
 }
-```
+```go
 
 ---
 

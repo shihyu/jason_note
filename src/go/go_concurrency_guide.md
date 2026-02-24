@@ -85,7 +85,7 @@ Goroutine + Channel 工作示意圖：
 Goroutine1: 🏃 ──┐
 Goroutine2: 🏃 ──┼──▶ 📡 Channel ──▶ 🏃 Goroutine3
 Goroutine3: 🏃 ──┘
-```
+```go
 
 ### 基本 Goroutine 範例
 
@@ -126,7 +126,7 @@ func basicGoroutineExample() {
 func main() {
     basicGoroutineExample()
 }
-```
+```go
 
 ### Channel 基本使用範例
 
@@ -182,7 +182,7 @@ func bufferedChannelExample() {
         time.Sleep(500 * time.Millisecond)
     }
 }
-```
+```go
 
 ### 生產者-消費者範例
 
@@ -266,7 +266,7 @@ func worker(id int, jobs <-chan Job, results chan<- Result, wg *sync.WaitGroup) 
     
     fmt.Printf("工作者 %d 結束\n", id)
 }
-```
+```go
 
 ### Select 多路復用
 
@@ -332,7 +332,7 @@ func selectExample() {
 Mutex vs RWMutex:
 Mutex:   🚪🔒 (互斥存取)
 RWMutex: 👀👀👀 或 ✍️🚫 (讀者並行，寫者獨佔)
-```
+```go
 
 ### 基本 Mutex 範例
 
@@ -383,7 +383,7 @@ func mutexExample() {
     wg.Wait()
     fmt.Printf("最終計數: %d\n", counter.Value())
 }
-```
+```go
 
 ### RWMutex 讀寫鎖範例
 
@@ -476,7 +476,7 @@ func rwMutexExample() {
         fmt.Printf("  %s: %s\n", k, v)
     }
 }
-```
+```go
 
 ### 效能比較範例
 
@@ -542,7 +542,7 @@ func performanceComparison() {
     fmt.Printf("RWMutex 比 Mutex 快 %.2fx\n", 
         float64(mutexTime.Nanoseconds())/float64(rwMutexTime.Nanoseconds()))
 }
-```
+```go
 
 ---
 
@@ -611,7 +611,7 @@ func waitGroupCorrectExample() {
     
     wg.Wait()
 }
-```
+```go
 
 ### Once 單次執行
 
@@ -675,7 +675,7 @@ func getConfig(key string) string {
     loadConfig() // 保證只執行一次
     return config[key]
 }
-```
+```go
 
 ### Cond 條件變數
 
@@ -759,7 +759,7 @@ func multiConsumerExample() {
     
     time.Sleep(1 * time.Second)
 }
-```
+```go
 
 ---
 
@@ -824,7 +824,7 @@ func atomicFlagExample() {
     
     wg.Wait()
 }
-```
+```go
 
 ### Compare-And-Swap (CAS) 操作
 
@@ -907,7 +907,7 @@ func (s *LockFreeStack) Pop() (int, bool) {
         }
     }
 }
-```
+```go
 
 ### 原子值 (atomic.Value)
 
@@ -964,7 +964,7 @@ func atomicValueExample() {
     
     wg.Wait()
 }
-```
+```go
 
 ---
 
@@ -1075,7 +1075,7 @@ func contextChainExample() {
     
     time.Sleep(1 * time.Second)
 }
-```
+```go
 
 ### HTTP 服務器範例
 
@@ -1129,7 +1129,7 @@ func longTaskHandler(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "請求被取消", http.StatusRequestTimeout)
     }
 }
-```
+```go
 
 ---
 
@@ -1235,7 +1235,7 @@ func workerPoolExample() {
         }
     }
 }
-```
+```go
 
 ### Pipeline 管道模式
 
@@ -1332,7 +1332,7 @@ func fanIn(channels ...<-chan int) <-chan int {
     
     return out
 }
-```
+```go
 
 ### Publish-Subscribe 模式
 
@@ -1429,7 +1429,7 @@ func pubSubExample() {
     
     time.Sleep(1 * time.Second)
 }
-```
+```go
 
 ### 限制器 (Rate Limiter)
 
@@ -1571,7 +1571,7 @@ Go 並行原語選擇指南：
 
 記住：優先使用 Channel，它是 Go 的核心設計理念
 */
-```
+```go
 
 ### 效能對比表
 
@@ -1647,7 +1647,7 @@ func avoidGoroutineLeak() {
     
     // 如果沒有發送資料，goroutine 會洩漏
 }
-```
+```go
 
 #### 2. Channel 最佳實踐
 
@@ -1705,7 +1705,7 @@ func consumer(ch <-chan int) {
         fmt.Printf("消費: %d\n", val)
     }
 }
-```
+```go
 
 #### 3. 錯誤處理
 
@@ -1790,7 +1790,7 @@ func processJob(workerID, job int) WorkerResult {
         Data: fmt.Sprintf("任務 %d 完成", job),
     }
 }
-```
+```go
 
 #### 4. 效能優化技巧
 
@@ -1913,7 +1913,7 @@ func (pool *AdaptiveWorkerPool) autoScale() {
         pool.monitor.Report()
     }
 }
-```
+```go
 
 ### 除錯與診斷技巧
 
@@ -1961,7 +1961,7 @@ func leakyFunction() {
         <-ch // 永遠阻塞
     }()
 }
-```
+```go
 
 #### 2. 死鎖檢測
 

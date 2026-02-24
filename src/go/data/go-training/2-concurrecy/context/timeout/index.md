@@ -6,7 +6,7 @@
 設置context的超時時間
 ```go
 ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-```
+```go
 
 定義一個協程函數
 ```go

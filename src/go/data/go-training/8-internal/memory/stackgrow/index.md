@@ -29,7 +29,7 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	CALL	runtime·newstack(SB)
 	CALL	runtime·abort(SB)	// crash if newstack returns
 	RET
-```
+```go
 
 runtime·morestack 做完校驗和賦值操作後會切換到 G0 調用 runtime·newstack來完成擴容的操作
 
@@ -46,7 +46,7 @@ func newstack() {
 	//進行棧的申請和拷貝
     copystack(gp, newsize)
 }
-```
+```go
 
 在 copystack 中完成新棧的分配，將舊棧拷貝到新棧，
 

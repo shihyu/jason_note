@@ -20,22 +20,22 @@ package 包名
 # 包的導入
 要在代碼中引用其他包的內容，可以使用 import 關鍵字導入要使用的包，Go 語言中禁止循環導入包（即 A 導入 B，B 導入 C，C 又導入 A），import 的一般格式如下:
 
-```go  
+```go
 import "包的路徑或 URL 地址" 
-```
+```go
 
 導入多個包時，建議使用一個括號括起來。
 
-```go  
+```go
 import (
     "fmt"
     "os"
 )
-```
+```go
 
 導入的包之間可以通過添加空行來分組；通常將來自不同組織的包獨自分組。包的導入順序無關緊要，但是在每個分組中一般會根據字符串順序排列。（gofmt 和 goimports 工具都可以將不同分組導入的包獨立排序。）
 
-```go  
+```go
 import (
     "fmt"
     "html/template"
@@ -50,7 +50,7 @@ import (
 # 一個完整的Demo
 下面我們通過自定義一個工具util包，並在包中實現一個打印方法
 
-```go  
+```go
 //main.go
 package main
 
@@ -63,10 +63,10 @@ func main() {
 	fmt.Println("2")
 	util.Add()
 }
-```
+```go
 
 接下來在項目目錄下創建一個util目錄，並在下面創建一個math.go的文件
-```go  
+```go
 package util
 
 import "fmt"

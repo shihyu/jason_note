@@ -85,7 +85,7 @@ Process 3: Thread 1, Thread 2, Thread 3
 Go 模式：
 Process 1: 20個線程 + 10000個 Goroutine  
 → 20 個線程，1 個記憶體空間，goroutine 間通訊簡單
-```
+```go
 
 ### 何時會有多個 Process？
 
@@ -143,7 +143,7 @@ SHOW ENGINE INNODB STATUS;
 #### 開啟完整死鎖記錄
 ```sql
 SET GLOBAL innodb_print_all_deadlocks = ON;
-```
+```go
 所有死鎖都會記錄到 MySQL 錯誤日誌中
 
 ### 2. Go 程式中加入追蹤
@@ -170,7 +170,7 @@ func transferMoney(fromID, toID int, amount float64) {
     
     // ... 其他操作也都加 log
 }
-```
+```go
 
 #### 記錄 Goroutine 資訊
 ```go
@@ -183,7 +183,7 @@ func getGoroutineID() uint64 {
 
 // 在每個資料庫操作前記錄
 log.Printf("Goroutine %d executing SQL: %s", getGoroutineID(), sqlQuery)
-```
+```go
 
 ### 3. 使用分散式追蹤
 
@@ -206,7 +206,7 @@ ctx := &Context{
     TraceID: uuid.New().String(),
     UserID:  123,
 }
-```
+```go
 
 ### 4. 業務流程監控
 
@@ -225,7 +225,7 @@ func processOrder(orderID int) {
     log.Printf("Order %d: creating payment", orderID)
     // ... SQL操作
 }
-```
+```go
 
 ### 5. 程式碼靜態分析
 
@@ -265,7 +265,7 @@ runtime.GOMAXPROCS(10) // 只用10個線程而不是20個
 // 或者調整資料庫連接池
 db.SetMaxOpenConns(10) // 限制最大連接數
 db.SetMaxIdleConns(5)  // 限制閒置連接數
-```
+```go
 
 **監控策略**：
 ```go

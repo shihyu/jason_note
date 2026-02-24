@@ -25,7 +25,7 @@ go myFunction()
 go func() {
     fmt.Println("Hello from goroutine!")
 }()
-```
+```go
 
 ### 完整範例
 ```go
@@ -442,7 +442,7 @@ tokio::spawn(async {
 
 // 或等待完成
 let result = my_async_function().await;
-```
+```go
 
 ### 通信機制對比
 

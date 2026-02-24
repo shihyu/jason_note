@@ -7,7 +7,7 @@ context 的很重要的一個作用是在各個子 routine 之間傳遞一些共
 func main() {
 	ctx := context.WithValue(context.Background(), "userid", "1234567")
 }
-```
+```go
 
 只要能獲取到該 ctx 的協程都可以獲取到該值。
 

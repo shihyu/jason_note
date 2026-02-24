@@ -316,7 +316,7 @@ fn main () {
 
 ![img](images/w9TQhgu.jpg)
 
-```
+```rust
 pub struct TraitObject {
     pub data: *mut (),
     pub vtable: *mut (),

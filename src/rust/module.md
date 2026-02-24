@@ -1094,7 +1094,7 @@ use std::io::{self, Write};
 
 對於之前一行一行引入 `std::collections` 的方式，我們還可以使用
 
-```
+```rust
 use std::collections::*;
 ```
 
@@ -1122,7 +1122,7 @@ fn main() {
 
 通過 `#[path ="你的路徑"]` 可以放在任何目錄都行，如：
 
-```
+```rust
 #[path ="你的路徑"]
 mod core;
 ```
@@ -1455,7 +1455,7 @@ pub fn add(x: i32, y: i32) -> i32 {
 
 然後在`mod.rs`裡匯出：
 
-```
+```rust
 pub mod user;
 ```
 

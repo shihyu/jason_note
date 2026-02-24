@@ -13,7 +13,7 @@ fn main() {
 
 也可以通過vec! 宏來創建一個新的 Vec
 
-```
+```rust
 let v = vec![1, 2, 3];
 ```
 

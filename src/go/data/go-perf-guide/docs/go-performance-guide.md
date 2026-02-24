@@ -156,7 +156,7 @@ CPU Core 0                     CPU Core 1
      寫入 sumA                     寫入 sumB
      → 導致 Core 1               → 導致 Core 0
        的 cache line 失效           的 cache line 失效
-```
+```go
 
 ### 問題程式碼
 
@@ -189,7 +189,7 @@ func count(inputs []Input) Result {
     wg.Wait()
     return result
 }
-```
+```go
 
 ### 解決方案：Cache Line Padding
 
@@ -296,7 +296,7 @@ make run-gc
 
 # 搭配 gctrace 觀測更詳細
 GODEBUG=gctrace=1 ./bin/gc-pressure
-```
+```go
 
 ---
 
@@ -411,7 +411,7 @@ export GOGC=50
 
 # 完全關閉 GC（需搭配 GOMEMLIMIT）
 export GOGC=off
-```
+```go
 
 ```go
 import "runtime/debug"
@@ -430,7 +430,7 @@ export GOMEMLIMIT=2GiB
 
 # 在容器中：留 5-10% 給 runtime 開銷
 # 容器 1GiB → GOMEMLIMIT=900MiB
-```
+```go
 
 ```go
 import "runtime/debug"
@@ -535,7 +535,7 @@ Go runtime 的排程器（GMP 模型）已經非常成熟：
 │  - GC 與 goroutine 的協調                   │
 │                                             │
 └─────────────────────────────────────────────┘
-```
+```go
 
 ### 為什麼不該過早使用 Pool
 

@@ -60,7 +60,7 @@ game
 
 你應該能看到一個名為 `src` 的目錄，其中有一個名為 `main.rs` 的檔案：
 
-```
+```rust
 fn main() {
     println!("Hello, world!");
 }

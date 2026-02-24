@@ -1486,7 +1486,7 @@ fn main() {
 
 下面我會詳細解釋以下兩行代碼：
 
-```
+```rust
 let max_price = price_window.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
 let min_price = price_window.iter().cloned().fold(f64::INFINITY, f64::min);
 ```
@@ -6870,7 +6870,7 @@ fn main() {
 
 在Rust中，你可以使用`static`聲明來創建具有靜態生命週期的全局變量，這些變量將在整個程序運行期間存在，並且可以被強制轉換成更短的生命週期。以下是一個給樂隊成員報幕的Rust代碼示例：
 
-```
+```rust
 // 定義一個包含樂隊成員信息的結構體
 struct BandMember {
     name: &'static str,

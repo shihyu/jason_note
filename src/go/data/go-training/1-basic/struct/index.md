@@ -2,7 +2,7 @@
 # 結構體
 
 **1.結構體定義**
-```go  
+```go
 type 類型名 struct {
     字段名 字段類型
     字段名 字段類型
@@ -20,13 +20,13 @@ type 類型名 struct {
 **2.結構體實例化**  
 
 結構體必須實例化後才能使用結構體的字段，只有實例化後才會分配內存。實例化方法有兩種:  
-```go  
+```go
 var 結構體實例 結構體類型
 var 結構體實例 = new(結構體類型)
-```
+```go
 
 剛實例化完沒有賦值的結構體，其成員變量都是對應其類型的零值。  
-```go 
+```go
 type Device struct {
 	Phone string
 	Imei  string
@@ -43,7 +43,7 @@ fmt.Printf("%#v\n", s2) //&main.Device{Phone:"", Imei:""}
 
 **3.結構體賦值**  
 當結構體實例化完了以後，就可以使用其中的字段並進行賦值了。  
-```go  
+```go
 var s3 Device
 s3.Phone = "13811111111"
 s3.Imei = "867029040684350"
@@ -51,7 +51,7 @@ fmt.Println(s3) //{13811111111 867029040684350}
 ```
 
 如果嫌實例化、賦值分開略繁瑣的話，可以將這兩個步驟合併到一起。如下：  
-```go  
+```go
 //實例化同時賦值1
 s4 := Device{
     Phone: "13822222222",
@@ -65,12 +65,12 @@ s5 := Device{
     "967029040684350",
 }
 fmt.Println(s5) //main.Device{Phone:"13822222222", Imei:"967029040684350"}
-```
+```go
 
 **4.嵌套結構體**
 結構體中的成員有可能是另外一個結構體，對於這種嵌套型的結構體來說，它的賦值方法稍微有一點點的不同，但也同樣很簡單。
 
-```go  
+```go
 type Device struct {
 	Phone string
 	Imei  string
@@ -104,7 +104,7 @@ fmt.Printf("%#v\n", s7) //main.User{Id:2, Name:"李四", Device:main.Device{Phon
 
 **5.結構體的標籤**  
 結構體可以在字段後邊定義 Tag，由一對反引號包裹起來。標籤最經常是在json處理的地方會用到。
-```go  
+```go
 //json序列化
 data, err := json.Marshal(s7)
 if err != nil {

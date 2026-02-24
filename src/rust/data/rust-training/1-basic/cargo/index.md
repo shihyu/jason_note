@@ -27,7 +27,7 @@
 ## cargo 測試
 
 如下是一段單元測試的代碼
-```
+```rust
 struct Counter {
     count: u32,
 }

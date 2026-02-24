@@ -36,7 +36,7 @@ func main() {
 		<-down
 	}
 }
-```
+```go
 
 
 
@@ -68,7 +68,7 @@ func main() {
         <-down
     }
 }
-```
+```go
 
 ```go
 package main

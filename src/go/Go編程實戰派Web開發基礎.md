@@ -192,7 +192,7 @@ scheme://host[:port#]/path/.../[?query-string][#anchor]
 //協議（服務方式）
 //主機域名或IP地址（可含端口號）
 //具體地址，目錄和文件名等
-```
+```go
 
 1. URN（Uniform Resource Name，統一資源名）
    帶有名字的因特網資源，是URL的更新形式，不依賴位置，可減少失效鏈接個數。
@@ -317,7 +317,7 @@ func main() {
 	http.HandleFunc("/hello", hello)
 	http.ListenAndServe(":8080", referer)
 }
-```
+```go
 
 1. 創建和解析HTTPS服務器端
 
@@ -341,7 +341,7 @@ func main() {
 	log.Printf("Serving on https://0.0.0.0:8088")
 	log.Fatal(srv.ListenAndServeTLS("server.crt", "server.key"))
 }
-```
+```go
 
 ### 2.3.2 創建簡單的客戶端
 
@@ -377,7 +377,7 @@ func NewRequest(method, url string, body io.Reader) (*Request, error)
 //請求類型
 //請求地址
 //若body實現io.Closer接口，則Request返回值的Body字段會被設置為body值，並被Client的Do()、Post()和PostForm()方法關閉。
-```
+```go
 
 1. 創建GET請求
 
@@ -399,7 +399,7 @@ func main() {
 	bytes, err := ioutil.ReadAll(closer)
 	fmt.Println(string(bytes))
 }
-```
+```go
 
 1. 創建POST請求
 
@@ -423,7 +423,7 @@ func main() {
 	bytes, err := ioutil.ReadAll(resp.Body)
 	fmt.Println(string(bytes))
 }
-```
+```go
 
 1. 創建PUT請求
 
@@ -451,7 +451,7 @@ func main() {
 	fmt.Println(string(res))
 	fmt.Println(string(bytes))
 }
-```
+```go
 
 1. 創建DELETE請求
 
@@ -514,25 +514,25 @@ text/template處理任意格式的文本，html/template生成可對抗代碼注
 
 ```go
 func New(name string) *Template
-```
+```go
 
 解析模板內容
 
 ```go
 func (t *Template) Parse(src string) (*Template, error)
-```
+```go
 
 解析模板文件
 
 ```go
 func ParseFiles(filenames...string) (*Template, error)
-```
+```go
 
 正則匹配解析文件，template.ParaeGlob(“a*”)
 
 ```go
 func ParseGlob(pattern string) (*Template, error)
-```
+```go
 
 （3）渲染模板文件
 
@@ -541,7 +541,7 @@ func (t *Template) Execute(wr io.Writer, data interface{}) error
 
 //配合ParseFiles()函數使用，需指定模板名稱
 func (t *Template) ExecuteTemplate(wr io.Writer, name string, data interface{}) error
-```
+```go
 
 ### 2.4.2 使用html/template包
 
@@ -584,7 +584,7 @@ func main() {
 	http.HandleFunc("/", helloHandleFunc)
 	http.ListenAndServe(":8086", nil)
 }
-```
+```go
 
 1. 模板語法
    模板語法都包含在{{和}}中間。
@@ -630,7 +630,7 @@ func sayHello(w http.ResponseWriter, r *http.Request) {
 
 - 注釋
 
-```go
+```html
 {{/* 這是一個注釋，不會解析 */}}
 ```
 
@@ -645,15 +645,15 @@ $variable := pipeline
 
 - 條件判斷
 
-```go
+```html
 {{if pipeline}} T1 {{end}}
 {{if pipeline}} T1 {{else}} T0 {{end}}
 {{if pipeline}} T1 {{else if pipeline}} T0 {{end}}
-```
+```go
 
 - range關鍵字
 
-```go
+```html
 {{range pipeline}} T1 {{end}}
 {{range pipeline}} T1 {{else}} T0 {{end}}
 package main
@@ -713,7 +713,7 @@ func main() {
 
 - with關鍵字
 
-```go
+```html
 {{with pipeline}} T1 {{end}}
 {{with pipeline}} T1 {{else}} T0 {{end}}
 ```
@@ -723,7 +723,7 @@ func main() {
   布爾函數將任何類型的零值視為假。
   只有eq可以接受2個以上參數。
 
-```go
+```html
 {{eq arg1 arg2 arg3}}
 eq
 ne
@@ -755,7 +755,7 @@ ge
 
 ```go
 func (t *Template) Funcs(funcMap FuncMap) *Template
-```
+```go
 
 FuncMap映射函數要求1或2個返回值，第2個為error，非nil會中斷並返回給調用者。
 
@@ -836,7 +836,7 @@ funcs.html
 - 模板嵌套
   可以通過文件嵌套和define定義
 
-```go
+```html
 {{define "name"}} T {{end}}
 {{template "name"}}
 {{template "name" pipeline}}
@@ -873,7 +873,7 @@ t.html
     <li>I love c</li>
 </ol>
 {{end}}
-```
+```go
 
 ul.html
 

@@ -69,7 +69,7 @@ macro_rules! numin {
 
 於是上面的程序可以被改寫成：
 
-```
+```rust
 
 fn main() {
     let num: i32 = numin!();

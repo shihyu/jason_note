@@ -23,7 +23,7 @@
 ```go
 runtime.GOMAXPROCS(0)  // 返回 16
 runtime.NumCPU()        // 返回 16
-```
+```go
 
 **歷史變化：**
 - **Go 1.5 之前**：預設只有 1 個 P（需要手動設置)
@@ -42,7 +42,7 @@ func main() {
     fmt.Printf("CPU 核心數: %d\n", runtime.NumCPU())
     fmt.Printf("GOMAXPROCS (預設使用): %d\n", runtime.GOMAXPROCS(0))
 }
-```
+```go
 
 ### 1.2 手動設置 GOMAXPROCS
 
@@ -232,7 +232,7 @@ Go Scheduler 會在以下時機進行調度：
   16 個 Processor (P)
        ↓
   幾萬個 Goroutine (G)
-```
+```go
 
 ### 3.2 資源使用
 
@@ -450,7 +450,7 @@ runtime.GOMAXPROCS(8)  // 限制使用 8 個 P
 ```bash
 GOMAXPROCS=8 ./app_a &
 GOMAXPROCS=8 ./app_b &
-```
+```go
 
 **注意：**
 - 這只是限制 P 的數量
@@ -509,7 +509,7 @@ go run single_app.go
 top -pid $(pgrep single_app)
 
 # 應該看到 1600% CPU (16 核心全滿)
-```
+```go
 
 ### 5.2 雙程式範例
 
@@ -547,7 +547,7 @@ func main() {
             os.Getpid(), runtime.NumGoroutine())
     }
 }
-```
+```go
 
 **程式 B：app_b.go**
 ```go
@@ -656,7 +656,7 @@ runtime.GOMAXPROCS(12)
 
 // 次要服務 B - 使用 4 個核心
 runtime.GOMAXPROCS(4)
-```
+```go
 
 ### 6.3 性能監控
 
@@ -691,7 +691,7 @@ func main() {
     // 你的程式邏輯...
     select {}
 }
-```
+```go
 
 ### 6.4 常見問題與解決方案
 
@@ -717,7 +717,7 @@ func main() {
     
     // 發送任務...
 }
-```
+```go
 
 #### **問題 2：單個 CPU 密集型任務無法利用多核**
 

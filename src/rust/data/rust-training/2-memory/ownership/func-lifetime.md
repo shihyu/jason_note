@@ -51,7 +51,7 @@ fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
 這樣編譯時的生命週期檢查器可以確定返回值的生命週期，並判斷是否允許編譯通過。
 
 生命週期檢查器允許下面的調用通過
-```
+```rust
 fn main() {
     let string1 = String::from("long string is long");
     {
@@ -64,7 +64,7 @@ fn main() {
 
 但不允許下面的調用通過
 
-```
+```rust
 fn main() {
     let string1 = String::from("long string is long");
     {
