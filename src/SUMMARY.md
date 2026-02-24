@@ -199,6 +199,7 @@
         - [行程、執行緒、協程，傻傻分得清楚！](go/Coroutine.md)
         - [Go 併發](go/goroutine-and-channel.md)
         - [Go 並行機制完整指南](go/go_concurrency_guide.md)
+        - [Go 並行補充筆記](go/go_concurrency_supplement_notes.md)
         - [sync.Mutex 和 sync.RWMutex](go/mutex-rwmutex.md)
     - [Runtime 與記憶體管理](go/03_Runtime與記憶體管理.md)
         - [Returning Pointer from a Function in Go](go/returning-pointer-from-a-function-in-go.md)
