@@ -1,0 +1,89 @@
+struct g {
+    uint8_t _pad1[152];
+    uint64_t goid; // offset=152 size=8
+    uint8_t _pad2[112];
+    uint64_t parentGoid; // offset=272 size=8
+};
+
+uprobe:./testserver:runtime.casgstatus
+{
+    $gp = reg("r0");
+    $goid = *(uint64 *)($gp + 152);
+    $parentGoid = *(uint64 *)($gp + 272);
+    $startpc = *(uint64 *)($gp + 296);
+
+    $goroutine = reg("r28");
+    $goroutine_id   = *(uint64 *)($goroutine + 152);
+
+    $status = reg("r2");
+
+    printf("[%llu] pid=%d goid=%llu parentGoid=%llu startpc=%llx status=%llu [goroutine_id=%lld]\n", nsecs, pid, $goid, $parentGoid, $startpc, $status, $goroutine_id);
+}
+
+uprobe:./testserver:runtime.mallocgc
+{
+    $size = reg("r0");
+
+    $goroutine = reg("r28");
+    $goroutine_id = *(uint64 *)($goroutine + 152);
+
+    printf("[%llu] goroutine %lld allocated %llu bytes\n", nsecs, $goroutine_id, $size);
+}
+
+// internal/abi.Type.Size_ offset=0 size=8
+// internal/abi.Type.Kind_ offset=23 size=1
+// runtime.g.goid offset=152 size=8
+// runtime.g.parentGoid offset=272 size=8
+// runtime.g.startpc offset=296 size=8
+
+// func newobject(typ *_type) unsafe.Pointer {
+// 	return mallocgc(typ.Size_, typ, true)
+// }
+uprobe:./testserver:runtime.newobject
+{
+    $goroutine = reg("r28");
+    $g = (struct g *)($goroutine);
+    $goroutine_id = $g->goid;
+
+    $typ = (struct _type *)(reg("r0"));
+    $size = $typ->size;
+    $kind = $typ->kind;
+
+    printf("[%llu] g:%lld:runtime.newobject(size=%llu, kind=%llu)\n", nsecs, $goroutine_id, $size, $kind);
+}
+
+// func makeslice(et *_type, len, cap int) unsafe.Pointer 
+uprobe:./testserver:runtime.makeslice
+{
+    $goroutine = reg("r28");
+    $g = (struct g *)($goroutine);
+    $goroutine_id = $g->goid;
+
+    $typ = (struct _type *)(reg("r0"));
+    $size = $typ->size;
+    $kind = $typ->kind;
+
+    $len = reg("r1");
+    $cap = reg("r2");
+
+    printf("[%llu] g:%lld:runtime.makeslice(size=%llu, kind=%llu, len=%llu, cap=%llu)\n", nsecs, $goroutine_id, $size, $kind, $len, $cap);
+}
+
+// func makemap(t *abi.MapType, hint int, m *maps.Map) *maps.Map
+uprobe:./testserver:runtime.makemap
+{
+    $goroutine = reg("r28");
+    $g = (struct g *)($goroutine);
+    $goroutine_id = $g->goid;
+
+    $maptyp = (struct mapType *)(reg("r0"));
+
+    $keysize = $maptyp->key->size;
+    $keykind = $maptyp->key->kind;
+    $valsize = $maptyp->elem->size;
+    $valkind = $maptyp->elem->kind;
+
+    $hint = reg("r1");
+
+    printf("[%llu] g:%lld:runtime.makemap(keysize=%llu, keykind=%llu, valsize=%llu, valkind=%llu, hint=%llu)\n", nsecs, $goroutine_id, $keysize, $keykind, $valsize, $valkind, $hint);
+}
