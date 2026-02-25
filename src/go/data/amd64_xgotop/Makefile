@@ -5,9 +5,9 @@ install-protoc:
 	@if [ "$$(uname)" = "Darwin" ]; then \
 		brew install protobuf || echo "Failed to install protobuf using Homebrew."; \
 	elif [ "$$(uname)" = "Linux" ]; then \
-		sudo apt-get install -y protobuf-compiler || echo "Failed to install protobuf using apt-get."; \
+		sudo apt-get update && sudo apt-get install -y protobuf-compiler libbpf-dev libelf-dev || echo "Failed to install build dependencies using apt-get."; \
 	fi
-	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
 
 vmlinux:
 	bpftool btf dump file /sys/kernel/btf/vmlinux format c > vmlinux.h
