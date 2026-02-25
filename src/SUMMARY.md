@@ -347,6 +347,8 @@
     - [現代程式語言的靜態連結策略分析](linux_system/static-linking-comparison.md)
 - [Linux Kernel](kernel/linux_kernel.md)
     - [What is eBPF](kernel/what-is-ebpf.md)
+    - [什麼是 eBPF：Introduction and Deep Dive](kernel/what-is-ebpf-introduction-deep-dive.md)
+    - [Linux 核心設計：eBPF（BCC / libbpf）](kernel/ebpf-bcc-libbpf.md)
     - [Linker and Loader Guide](kernel/linker-loader-guide.md)
     - [Running Linux 6.19 on STM32H750](kernel/stm32h750-linux-6.19.md)
 - [SSH](ssh/ssh.md)
