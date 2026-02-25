@@ -338,6 +338,7 @@
     - [Systems Performance Tools Guide](linux_system/systems-performance-tools-guide.md)
     - [Linux 效能檢測工具完整指南](linux_system/linux-performance-tools.md)
     - [eBPF 完整指南](linux_system/ebpf-complete-guide.md)
+    - [BPF 與 Go：Linux 中的現代內省形式](linux_system/bpf-go-modern-linux-introspection.md)
     - [Understanding eBPF](linux_system/understanding-ebpf.md)
     - [libbpf 架構解析與 xgotop 實作說明](linux_system/libbpf-explained.md)
     - [Linux 二進位分析工具完整指南](linux_system/linux-binary-tools-guide.md)
