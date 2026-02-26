@@ -210,6 +210,72 @@ go run -race race_example.go
 go test -race ./...   # 對整個專案跑競態測試（CI 必備）
 ```
 
+### 用 Channel 正確修復 Race
+
+**關鍵原則：讓兩個 `counter++` 有明確的先後順序。**
+
+```go
+// ✅ 修復版：goroutine 先做，主程式等通知再做
+package main
+
+import "fmt"
+
+func main() {
+    counter := 0
+    done := make(chan bool)
+
+    go func() {
+        counter++      // ① goroutine 先做
+        done <- true   // ② 通知主程式（send）
+    }()
+
+    <-done             // ③ 等 goroutine 完成（receive）
+    counter++          // ④ 主程式才做
+    fmt.Println("counter:", counter)
+}
+```
+
+```bash
+go run -race good.go
+# 輸出：counter: 2（無任何 WARNING，race 偵測通過）
+```
+
+**為何修復有效（happens-before 鏈）：**
+
+```
+goroutine: counter++
+           ↓
+goroutine: done <- true    ← channel send
+                    ↓
+           main: <-done    ← channel receive（Go 記憶體模型保證：send happens-before receive）
+                    ↓
+           main: counter++
+```
+
+**❌ vs ✅ 對比：**
+
+| | ❌ 原始版本（Race） | ✅ 修復版本（無 Race） |
+|---|---|---|
+| 主程式 `counter++` | 在 `<-done` **之前** | 在 `<-done` **之後** |
+| 兩個 `counter++` 的關係 | 無 happens-before，同時執行 | 有明確先後順序 |
+| `-race` 結果 | `WARNING: DATA RACE` | 無警告，結果穩定為 `2` |
+
+**Race detector 輸出解讀（原始版本）：**
+
+```
+WARNING: DATA RACE
+Read at 0x00c000124008 by goroutine 7:
+  main.main.func1()
+      bad.go:10          ← goroutine 的 counter++
+
+Previous write at 0x00c000124008 by main goroutine:
+  main.main()
+      bad.go:14          ← 主程式的 counter++（幾乎同時）
+
+Found 1 data race(s)
+exit status 66
+```
+
 ---
 
 ## 4. `GODEBUG` 環境變數
