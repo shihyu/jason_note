@@ -360,6 +360,59 @@ func main() {
 
 go test -race ./...   # 對整個專案跑競態測試（CI 必備）
 </code></pre>
+<h3 id="用-channel-正確修復-race"><a class="header" href="#用-channel-正確修復-race">用 Channel 正確修復 Race</a></h3>
+<p><strong>關鍵原則：讓兩個 <code>counter++</code> 有明確的先後順序。</strong></p>
+<pre><code class="language-go">// ✅ 修復版：goroutine 先做，主程式等通知再做
+package main
+
+import "fmt"
+
+func main() {
+    counter := 0
+    done := make(chan bool)
+
+    go func() {
+        counter++      // ① goroutine 先做
+        done &lt;- true   // ② 通知主程式（send）
+    }()
+
+    &lt;-done             // ③ 等 goroutine 完成（receive）
+    counter++          // ④ 主程式才做
+    fmt.Println("counter:", counter)
+}
+</code></pre>
+<pre><code class="language-bash">go run -race good.go
+# 輸出：counter: 2（無任何 WARNING，race 偵測通過）
+</code></pre>
+<p><strong>為何修復有效（happens-before 鏈）：</strong></p>
+<pre><code>goroutine: counter++
+           ↓
+goroutine: done &lt;- true    ← channel send
+                    ↓
+           main: &lt;-done    ← channel receive（Go 記憶體模型保證：send happens-before receive）
+                    ↓
+           main: counter++
+</code></pre>
+<p><strong>❌ vs ✅ 對比：</strong></p>
+<div class="table-wrapper"><table><thead><tr><th></th><th>❌ 原始版本（Race）</th><th>✅ 修復版本（無 Race）</th></tr></thead><tbody>
+<tr><td>主程式 <code>counter++</code></td><td>在 <code>&lt;-done</code> <strong>之前</strong></td><td>在 <code>&lt;-done</code> <strong>之後</strong></td></tr>
+<tr><td>兩個 <code>counter++</code> 的關係</td><td>無 happens-before，同時執行</td><td>有明確先後順序</td></tr>
+<tr><td><code>-race</code> 結果</td><td><code>WARNING: DATA RACE</code></td><td>無警告，結果穩定為 <code>2</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>Race detector 輸出解讀（原始版本）：</strong></p>
+<pre><code>WARNING: DATA RACE
+Read at 0x00c000124008 by goroutine 7:
+  main.main.func1()
+      bad.go:10          ← goroutine 的 counter++
+
+Previous write at 0x00c000124008 by main goroutine:
+  main.main()
+      bad.go:14          ← 主程式的 counter++（幾乎同時）
+
+Found 1 data race(s)
+exit status 66
+</code></pre>
 <hr />
 <h2 id="4-godebug-環境變數"><a class="header" href="#4-godebug-環境變數">4. <code>GODEBUG</code> 環境變數</a></h2>
 <p><strong>白話說明：</strong> 不改程式碼，只用環境變數就能讓 Go runtime 在跑的時候「自言自語」把內部狀態印出來。像是 Scheduler 怎麼分配工作、GC 何時觸發、停頓多久。</p>
