@@ -59,6 +59,39 @@ go run main.go              # 執行後產生 trace.out
 go tool trace trace.out     # 開啟瀏覽器視覺化介面（自動在 http://127.0.0.1:PORT 開啟）
 ```
 
+### 也可以轉成文字嗎？
+
+可以，但分成兩種：
+
+1. **事件明細文字**：把 trace 解析成一行一筆事件，適合 `grep`、存檔、快速看 goroutine / scheduler / GC 事件。
+2. **pprof 風格摘要**：先從 trace 萃取一種 profile，再用 `go tool pprof -top` 看文字統計。
+
+以下指令已在本機 repo 內的 Go 1.24.9 環境實測通過；較舊的 trace 格式對 `-d` 參數格式可能不同。
+
+```bash
+# 直接輸出解析後的事件文字
+go tool trace -d=parsed trace.out > trace.txt
+
+# 其他除錯格式
+go tool trace -d=wire trace.out > trace-wire.txt
+go tool trace -d=footprint trace.out > trace-footprint.txt
+
+# 從 trace 匯出 scheduler latency profile，再看文字摘要
+go tool trace -pprof=sched trace.out > sched.pprof
+go tool pprof -top sched.pprof
+```
+
+`-pprof` 支援的類型：
+
+```text
+net
+sync
+syscall
+sched
+```
+
+如果你的需求是「把 trace 內容轉成純文字保存或做命令列分析」，最直接的是 `-d=parsed`。如果你的需求是「看哪裡卡住最久」，通常先看 `-pprof=sched` 或 `-pprof=sync` 會比較快。
+
 **可觀察：** Goroutine 生命週期、阻塞原因、Syscall、Channel 操作、GC 事件
 
 ---
