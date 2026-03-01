@@ -185,6 +185,7 @@
     - [🎯 Go Runtime 完整指南](go/Go_Runtime_Complete_Guide.md)
     - [🎯 Go 高效能開發完整指南](go/go_performance_complete_guide.md)
     - [🎯 Go Memory Model & Happens-Before 完整整理](go/go_memory_model_happens_before_complete.md)
+    - [🎯 cgo 完整指南：Go 與 C/C++ 互通實務](go/cgo_complete_guide.md)
     - [Go 基礎與模組管理](go/01_Go基礎與模組管理.md)
         - [Golang Note](go/note.md)
         - [Go 基礎](go/go.md)
