@@ -228,6 +228,31 @@ func main() {
 <pre><code class="language-bash">go run main.go              # 執行後產生 trace.out
 go tool trace trace.out     # 開啟瀏覽器視覺化介面（自動在 http://127.0.0.1:PORT 開啟）
 </code></pre>
+<h3 id="也可以轉成文字嗎"><a class="header" href="#也可以轉成文字嗎">也可以轉成文字嗎？</a></h3>
+<p>可以，但分成兩種：</p>
+<ol>
+<li><strong>事件明細文字</strong>：把 trace 解析成一行一筆事件，適合 <code>grep</code>、存檔、快速看 goroutine / scheduler / GC 事件。</li>
+<li><strong>pprof 風格摘要</strong>：先從 trace 萃取一種 profile，再用 <code>go tool pprof -top</code> 看文字統計。</li>
+</ol>
+<p>以下指令已在本機 repo 內的 Go 1.24.9 環境實測通過；較舊的 trace 格式對 <code>-d</code> 參數格式可能不同。</p>
+<pre><code class="language-bash"># 直接輸出解析後的事件文字
+go tool trace -d=parsed trace.out &gt; trace.txt
+
+# 其他除錯格式
+go tool trace -d=wire trace.out &gt; trace-wire.txt
+go tool trace -d=footprint trace.out &gt; trace-footprint.txt
+
+# 從 trace 匯出 scheduler latency profile，再看文字摘要
+go tool trace -pprof=sched trace.out &gt; sched.pprof
+go tool pprof -top sched.pprof
+</code></pre>
+<p><code>-pprof</code> 支援的類型：</p>
+<pre><code class="language-text">net
+sync
+syscall
+sched
+</code></pre>
+<p>如果你的需求是「把 trace 內容轉成純文字保存或做命令列分析」，最直接的是 <code>-d=parsed</code>。如果你的需求是「看哪裡卡住最久」，通常先看 <code>-pprof=sched</code> 或 <code>-pprof=sync</code> 會比較快。</p>
 <p><strong>可觀察：</strong> Goroutine 生命週期、阻塞原因、Syscall、Channel 操作、GC 事件</p>
 <hr />
 <h2 id="2-pprof--效能剖析"><a class="header" href="#2-pprof--效能剖析">2. <code>pprof</code> — 效能剖析</a></h2>

@@ -1,0 +1,403 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🎯 cgo 完整指南：Go 與 C/C++ 互通實務 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="cgo-完整指南go-與-cc-互通實務"><a class="header" href="#cgo-完整指南go-與-cc-互通實務">cgo 完整指南：Go 與 C/C++ 互通實務</a></h1>
+<p>cgo 是 Go 提供的跨語言橋接機制，讓 Go 程式可以直接呼叫 C 程式碼，也能讓 C 程式反向呼叫 Go。當你需要整合現成的 C/C++ 函式庫、使用底層系統 API，或處理極端效能熱區時，cgo 會是實用選項。</p>
+<p><img src="images/go-logo-blue.svg" alt="Go 標誌" /></p>
+<p><img src="images/c-programming-language.svg" alt="C 語言標誌" /></p>
+<blockquote>
+<p>cgo 很強，但不是預設選項。能用純 Go 解決時，通常仍優先選純 Go。</p>
+</blockquote>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ul>
+<li><a href="#%E4%BB%80%E9%BA%BC%E6%98%AF-cgo">什麼是 cgo</a></li>
+<li><a href="#%E7%82%BA%E4%BB%80%E9%BA%BC%E9%9C%80%E8%A6%81-cgo">為什麼需要 cgo</a></li>
+<li><a href="#cgo-%E7%9A%84%E9%81%8B%E4%BD%9C%E5%8E%9F%E7%90%86">cgo 的運作原理</a></li>
+<li><a href="#%E5%AF%A6%E6%88%B0go-%E5%91%BC%E5%8F%AB-c-%E5%87%BD%E5%BC%8F">實戰：Go 呼叫 C 函式</a></li>
+<li><a href="#%E5%AF%A6%E6%88%B0c-%E5%91%BC%E5%8F%AB-go-%E5%87%BD%E5%BC%8F">實戰：C 呼叫 Go 函式</a></li>
+<li><a href="#%E5%B8%B8%E8%A6%8B%E9%99%B7%E9%98%B1%E8%88%87%E6%9C%80%E4%BD%B3%E5%AF%A6%E8%B8%90">常見陷阱與最佳實踐</a></li>
+<li><a href="#%E9%81%A9%E5%90%88%E4%BD%BF%E7%94%A8-cgo-%E7%9A%84%E5%A0%B4%E6%99%AF">適合使用 cgo 的場景</a></li>
+<li><a href="#faq">FAQ</a></li>
+<li><a href="#%E7%B5%90%E8%AB%96">結論</a></li>
+</ul>
+<h2 id="什麼是-cgo"><a class="header" href="#什麼是-cgo">什麼是 cgo</a></h2>
+<p>cgo 是 Go 工具鏈的一部分，透過特殊的 <code>import "C"</code> 語法，讓 Go 程式能夠：</p>
+<ul>
+<li>呼叫 C 函式</li>
+<li>使用 C 型別、常數與結構</li>
+<li>連結外部 C 或 C++ 函式庫</li>
+<li>將 Go 函式匯出給 C 呼叫</li>
+</ul>
+<p>它不是獨立語言，也不是額外框架，而是 Go 在編譯階段提供的跨語言互通能力。</p>
+<h2 id="為什麼需要-cgo"><a class="header" href="#為什麼需要-cgo">為什麼需要 cgo</a></h2>
+<p>以下是最常見的使用原因：</p>
+<ul>
+<li><strong>重用既有函式庫</strong>：例如 OpenCV、FFmpeg、SQLite、各式驅動程式或數值運算函式庫。</li>
+<li><strong>接觸底層系統能力</strong>：某些作業系統 API 或硬體介面只有 C 層封裝最完整。</li>
+<li><strong>整合遺留系統</strong>：企業常有大量穩定運行的 C/C++ 模組，不會因為導入 Go 就全部重寫。</li>
+<li><strong>處理效能熱區</strong>：少數極度仰賴 SIMD、手寫最佳化或成熟原生函式庫的場景，C/C++ 仍有優勢。</li>
+</ul>
+<p>但 cgo 同時會帶來記憶體管理、編譯流程與部署複雜度，因此不應為了「好像比較快」就直接採用。</p>
+<h2 id="cgo-的運作原理"><a class="header" href="#cgo-的運作原理">cgo 的運作原理</a></h2>
+<p>當 Go 編譯器看到 <code>import "C"</code> 時，會進行幾個步驟：</p>
+<ol>
+<li>解析 <code>import "C"</code> 上方的 C 程式碼或 <code>#include</code> 宣告。</li>
+<li>產生 Go 與 C 之間的橋接程式碼。</li>
+<li>呼叫系統上的 C 編譯器，例如 GCC 或 Clang。</li>
+<li>將 Go 目標檔、C 目標檔與橋接程式碼一起連結成最終產物。</li>
+</ol>
+<p>這也是為什麼只要用了 cgo，就必須依賴本機 C 編譯器與對應函式庫。</p>
+<h2 id="實戰go-呼叫-c-函式"><a class="header" href="#實戰go-呼叫-c-函式">實戰：Go 呼叫 C 函式</a></h2>
+<p>下面是一個最小可執行範例，示範 Go 直接呼叫 C 的 <code>add</code> 函式。</p>
+<pre><code class="language-go">package main
+
+/*
+#include &lt;stdio.h&gt;
+
+int add(int a, int b) {
+    printf("C 函式正在執行加法\n");
+    return a + b;
+}
+*/
+import "C"
+
+import "fmt"
+
+func main() {
+    result := C.add(C.int(10), C.int(20))
+    fmt.Printf("計算結果：%d\n", int(result))
+}
+</code></pre>
+<h3 id="重點"><a class="header" href="#重點">重點</a></h3>
+<ul>
+<li><code>import "C"</code> 前方的註解區塊會被當成 C 程式碼處理。</li>
+<li>Go 呼叫 C 時，通常要明確做型別轉換，例如 <code>C.int(10)</code>。</li>
+<li>回傳值若要在 Go 端使用，通常也會再轉回 Go 型別。</li>
+</ul>
+<h3 id="執行方式"><a class="header" href="#執行方式">執行方式</a></h3>
+<pre><code class="language-bash">go run add.go
+</code></pre>
+<h2 id="實戰c-呼叫-go-函式"><a class="header" href="#實戰c-呼叫-go-函式">實戰：C 呼叫 Go 函式</a></h2>
+<p>若要讓 C 呼叫 Go，需要使用 <code>//export</code> 將 Go 函式匯出。</p>
+<h3 id="go-程式"><a class="header" href="#go-程式">Go 程式</a></h3>
+<pre><code class="language-go">package main
+
+/*
+#include &lt;stdio.h&gt;
+*/
+import "C"
+
+import "fmt"
+
+//export MyGoFunction
+func MyGoFunction(name *C.char, age C.int) {
+    fmt.Printf("哈囉 %s，你今年 %d 歲。\n", C.GoString(name), int(age))
+}
+
+func main() {}
+</code></pre>
+<h3 id="c-程式"><a class="header" href="#c-程式">C 程式</a></h3>
+<pre><code class="language-c">#include "_cgo_export.h"
+#include &lt;stdio.h&gt;
+
+int main(void) {
+    MyGoFunction("小明", 30);
+    return 0;
+}
+</code></pre>
+<h3 id="編譯方式"><a class="header" href="#編譯方式">編譯方式</a></h3>
+<p>先將 Go 編譯成可供 C 連結的靜態函式庫：</p>
+<pre><code class="language-bash">go build -buildmode=c-archive -o mygoapp.a go_callback.go
+</code></pre>
+<p>再使用 C 編譯器連結：</p>
+<pre><code class="language-bash">gcc -o my_c_program main.c mygoapp.a -lpthread
+</code></pre>
+<h3 id="注意事項"><a class="header" href="#注意事項">注意事項</a></h3>
+<ul>
+<li><code>_cgo_export.h</code> 由 Go 工具鏈自動產生。</li>
+<li><code>//export</code> 只能放在符合 cgo 規則的位置。</li>
+<li>C 與 Go 之間的字串、指標與記憶體生命週期要特別小心。</li>
+</ul>
+<h2 id="常見陷阱與最佳實踐"><a class="header" href="#常見陷阱與最佳實踐">常見陷阱與最佳實踐</a></h2>
+<h3 id="常見陷阱"><a class="header" href="#常見陷阱">常見陷阱</a></h3>
+<ol>
+<li><strong>呼叫次數過多</strong>：Go 與 C 之間切換有成本，頻繁小呼叫很容易拖慢整體效能。</li>
+<li><strong>記憶體洩漏</strong>：C 端用 <code>malloc</code> 配置的記憶體，不會被 Go GC 自動回收。</li>
+<li><strong>指標誤用</strong>：把 Go 指標交給 C 長期持有，可能導致未定行為或執行期錯誤。</li>
+<li><strong>部署變複雜</strong>：需要額外準備 C 編譯器、標頭檔、共享函式庫與連結設定。</li>
+<li><strong>跨平台變困難</strong>：一旦用到 cgo，交叉編譯就不再是單純設定 <code>GOOS</code>、<code>GOARCH</code>。</li>
+</ol>
+<h3 id="最佳實踐"><a class="header" href="#最佳實踐">最佳實踐</a></h3>
+<ol>
+<li><strong>降低跨語言邊界次數</strong>：一次傳大批資料，比多次小呼叫更合理。</li>
+<li><strong>封裝 cgo 程式碼</strong>：把 cgo 集中在少數 package，避免汙染整個程式架構。</li>
+<li><strong>明確記憶體責任</strong>：誰配置、誰釋放，必須寫清楚。</li>
+<li><strong>先找純 Go 替代方案</strong>：能不用 cgo，就少一層維護成本。</li>
+<li><strong>加強整合測試</strong>：cgo 問題常出在執行期，不是編譯期。</li>
+</ol>
+<h2 id="適合使用-cgo-的場景"><a class="header" href="#適合使用-cgo-的場景">適合使用 cgo 的場景</a></h2>
+<p>以下情況通常值得考慮 cgo：</p>
+<ul>
+<li>需要整合成熟的 C/C++ 函式庫</li>
+<li>需要直接操作系統底層 API 或硬體</li>
+<li>需要逐步接手舊有 C/C++ 系統</li>
+<li>已確認某段邏輯是效能瓶頸，且原生函式庫已存在成熟實作</li>
+</ul>
+<p>以下情況通常不建議：</p>
+<ul>
+<li>只是想「可能比較快」</li>
+<li>功能可以用純 Go 函式庫取代</li>
+<li>專案非常重視簡單部署與跨平台發佈</li>
+</ul>
+<h2 id="faq"><a class="header" href="#faq">FAQ</a></h2>
+<h3 id="cgo-會讓程式變慢嗎"><a class="header" href="#cgo-會讓程式變慢嗎">cgo 會讓程式變慢嗎？</a></h3>
+<p>有可能。單次呼叫成本通常比純 Go 函式高，因此不適合做大量細碎呼叫。若每次呼叫都能處理大量工作，成本才比較值得。</p>
+<h3 id="cgo-會影響-goroutine-嗎"><a class="header" href="#cgo-會影響-goroutine-嗎">cgo 會影響 Goroutine 嗎？</a></h3>
+<p>會。Go 呼叫 C 時，執行中的 Goroutine 可能會佔用作業系統執行緒較久，影響排程效率。長時間阻塞的 C 呼叫尤其要小心。</p>
+<h3 id="cgo-可以跨平台編譯嗎"><a class="header" href="#cgo-可以跨平台編譯嗎">cgo 可以跨平台編譯嗎？</a></h3>
+<p>可以，但通常需要對應平台的 C 交叉編譯工具鏈，難度遠高於純 Go。</p>
+<h3 id="使用-cgo-安全嗎"><a class="header" href="#使用-cgo-安全嗎">使用 cgo 安全嗎？</a></h3>
+<p>安全性取決於你整合的 C/C++ 程式碼品質。記憶體越界、use-after-free、緩衝區溢位等問題，都可能直接影響 Go 程式。</p>
+<h2 id="結論"><a class="header" href="#結論">結論</a></h2>
+<p>cgo 讓 Go 不必孤軍奮戰，能夠直接借力成熟的 C/C++ 生態系。不過它帶來的不是免費能力，而是額外的工程成本。正確的策略通常不是「先用 cgo」，而是「確定真的需要，再精準地用 cgo」。</p>
+<p>如果你的目標是整合既有原生函式庫、補足系統能力或處理已確認的效能熱區，cgo 很有價值；如果只是一般應用開發，純 Go 通常會更穩定、可攜且容易維護。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../go/go_memory_model_happens_before_complete.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../go/01_Go基礎與模組管理.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../go/go_memory_model_happens_before_complete.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../go/01_Go基礎與模組管理.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
