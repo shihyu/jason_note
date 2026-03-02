@@ -217,6 +217,7 @@
         - [pytago](go/pytago.md)
     - [性能分析與除錯](go/05_性能分析與除錯.md)
         - [Go 效能分析與最佳化指南](go/go_performance_analysis.md)
+        - [Go 編譯細節查看指令](go/go-compile-details.md)
         - [Go 併發觀察與調試工具全覽](go/go_concurrency_tools.md)
         - [Golang 大殺器之跟蹤剖析 trace](go/trace.md)
         - [Golang Debugger](go/golang_debugger.md)
