@@ -301,6 +301,7 @@
         - [WebAssembly 相容性與載入器完整指南](web/wasm_compatibility_guide.md)
         - [WASM 最佳化編譯測試](web/wasm-optimized-build-testing.md)
         - [雲服務效能陷阱完整指南](web/cloud-performance-pitfalls.md)
+        - [Cloudflare Workers 完整指南：Python & Go](web/cloudflare-workers-guide.md)
 
 ## System & Debug
 - [GDB 除錯完整指南](gdb/README.md)
