@@ -179,6 +179,110 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="go-編譯細節查看指令"><a class="header" href="#go-編譯細節查看指令">Go 編譯細節查看指令</a></h1>
+<pre><code class="language-text">┌────────────────────────────────────────────────────────────┐
+│  test.go                                                   │
+│  Go source code                                            │
+└────────────────────────────────────────────────────────────┘
+                               |
+                               v
+┌────────────────────────────────────────────────────────────┐
+│  go build  -a -x -work  test.go                            │
+│  GOOS=linux  GOARCH=amd64  CGO_ENABLED=0                   │
+│  (交叉編譯加: GOARM=7 / GOMIPS=softfloat 等)               │
+└────────────────────────────────────────────────────────────┘
+                               |
+                               v
+┌────────────────────────────────────────────────────────────┐
+│  mkdir -p $WORK/b001/  $WORK/b002/ ...                     │
+│  建立暫存工作目錄  WORK=/tmp/go-buildXXXXXXXX               │
+└────────────────────────────────────────────────────────────┘
+                               |
+               ┌───────────────┴────────────────┐
+               |                                |
+               v                                v
+┌────────────────────────────┐  ┌────────────────────────────┐
+│  一般套件                  │  │  含 .s 組語的套件            │
+│  compile                  │  │  compile                   │
+│    -o $WORK/bXXX/_pkg_.a  │  │    -o $WORK/bXXX/_pkg_.a   │
+│    -p &lt;pkgname&gt;           │  │    -p &lt;pkgname&gt;            │
+│    -importcfg importcfg   │  │  asm -p &lt;pkgname&gt; *.s      │
+│                           │  │    → *.o                   │
+│  fmt / time / math/rand   │  │  pack r _pkg_.a *.o        │
+│  等標準套件               │  │  runtime / sync/atomic 等  │
+└────────────────────────────┘  └────────────────────────────┘
+               |                                |
+               └───────────────┬────────────────┘
+                               |
+                               v
+┌────────────────────────────────────────────────────────────┐
+│  build cache                                               │
+│  cp $WORK/bXXX/_pkg_.a  →  ~/.cache/go-build/&lt;hash&gt;-d      │
+│  相同輸入條件下次直接復用，跳過重編                          │
+└────────────────────────────────────────────────────────────┘
+                               |
+                               v
+┌────────────────────────────────────────────────────────────┐
+│  importcfg  (compile 階段相依表)                            │
+│  cat &gt; $WORK/b001/importcfg &lt;&lt; 'EOF'                       │
+│  packagefile fmt     = $WORK/b002/_pkg_.a                  │
+│  packagefile time    = $WORK/b038/_pkg_.a                  │
+│  packagefile runtime = $WORK/b009/_pkg_.a                  │
+│  EOF                                                       │
+└────────────────────────────────────────────────────────────┘
+                               |
+                               v
+┌────────────────────────────────────────────────────────────┐
+│  compile -p main  ./test.go                                │
+│    -o $WORK/b001/_pkg_.a  -pack                            │
+│    -importcfg $WORK/b001/importcfg                         │
+└────────────────────────────────────────────────────────────┘
+                               |
+                               v
+┌────────────────────────────────────────────────────────────┐
+│  importcfg.link  (link 階段相依表)                          │
+│  cat &gt; $WORK/b001/importcfg.link &lt;&lt; 'EOF'                  │
+│  packagefile command-line-arguments=$WORK/b001/_pkg_.a     │
+│  packagefile fmt     = $WORK/b002/_pkg_.a                  │
+│  packagefile runtime = $WORK/b009/_pkg_.a  ...             │
+│  EOF                                                       │
+└────────────────────────────────────────────────────────────┘
+                               |
+                               v
+┌────────────────────────────────────────────────────────────┐
+│  link                                                      │
+│    -o $WORK/b001/exe/a.out                                 │
+│    -importcfg $WORK/b001/importcfg.link                    │
+│    -buildmode=exe  -extld=gcc                              │
+│    $WORK/b001/_pkg_.a                                      │
+└────────────────────────────────────────────────────────────┘
+                               |
+                               v
+┌────────────────────────────────────────────────────────────┐
+│  buildid -w $WORK/b001/exe/a.out                           │
+│  寫入 build ID                                             │
+└────────────────────────────────────────────────────────────┘
+                               |
+                               v
+┌────────────────────────────────────────────────────────────┐
+│  cp $WORK/b001/exe/a.out → 最終輸出                        │
+│                                                            │
+│  本機編譯：  cp ... → ./test                               │
+│  交叉編譯：  cp ... → qemu-bin/test-linux-386              │
+│                       qemu-bin/test-linux-armv7            │
+│                       qemu-bin/test-linux-mips             │
+│                       qemu-bin/test-linux-ppc64            │
+└────────────────────────────────────────────────────────────┘
+                               |
+                               v  (交叉編譯時)
+┌────────────────────────────────────────────────────────────┐
+│  qemu user-mode verify                                     │
+│  timeout 8s qemu-i386  ./qemu-bin/test-linux-386           │
+│  timeout 8s qemu-arm   ./qemu-bin/test-linux-armv7         │
+│  timeout 8s qemu-mips  ./qemu-bin/test-linux-mips          │
+│  timeout 8s qemu-ppc64 ./qemu-bin/test-linux-ppc64         │
+│  → 驗證輸出正常 + exit code = 0                            │
+└────────────────────────────────────────────────────────────┘
+</code></pre>
 <p>以目前目錄的 <code>test.go</code> 為例。</p>
 <h2 id="範例程式碼"><a class="header" href="#範例程式碼">範例程式碼</a></h2>
 <p><code>test.go</code> 內容如下：</p>
@@ -546,6 +650,65 @@ exit_group(0) = ?
 <li>這些呼叫主要來自 Go runtime 與標準庫</li>
 <li>即使 <code>test</code> 是靜態連結，也一樣會直接使用 Linux syscall</li>
 </ul>
+<h2 id="12-交叉編譯-x86--arm--mips--powerpc-並用-qemu-驗證"><a class="header" href="#12-交叉編譯-x86--arm--mips--powerpc-並用-qemu-驗證">12. 交叉編譯 <code>x86</code> / <code>ARM</code> / <code>MIPS</code> / <code>PowerPC</code> 並用 qemu 驗證</a></h2>
+<p>先安裝 qemu user mode：</p>
+<pre><code class="language-bash">sudo apt-get update
+sudo apt-get install -y qemu-user
+</code></pre>
+<h3 id="編譯四種-linux-架構執行檔"><a class="header" href="#編譯四種-linux-架構執行檔">編譯四種 Linux 架構執行檔</a></h3>
+<p>這裡用 <code>CGO_ENABLED=0</code> 產出靜態執行檔，避免還要準備對應架構的動態函式庫。</p>
+<pre><code class="language-bash">mkdir -p qemu-bin
+
+CGO_ENABLED=0 GOOS=linux GOARCH=386 \
+go build -o qemu-bin/test-linux-386 ./test.go
+
+CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 \
+go build -o qemu-bin/test-linux-armv7 ./test.go
+
+CGO_ENABLED=0 GOOS=linux GOARCH=mips GOMIPS=softfloat \
+go build -o qemu-bin/test-linux-mips ./test.go
+
+CGO_ENABLED=0 GOOS=linux GOARCH=ppc64 \
+go build -o qemu-bin/test-linux-ppc64 ./test.go
+</code></pre>
+<h3 id="確認產物架構"><a class="header" href="#確認產物架構">確認產物架構</a></h3>
+<pre><code class="language-bash">file qemu-bin/test-linux-386 qemu-bin/test-linux-armv7 qemu-bin/test-linux-mips qemu-bin/test-linux-ppc64
+</code></pre>
+<p>這次實際結果：</p>
+<pre><code class="language-text">qemu-bin/test-linux-386:   ELF 32-bit LSB executable, Intel 80386, ... statically linked
+qemu-bin/test-linux-armv7: ELF 32-bit LSB executable, ARM, EABI5 ... statically linked
+qemu-bin/test-linux-mips:  ELF 32-bit MSB executable, MIPS, MIPS32 ... statically linked
+qemu-bin/test-linux-ppc64: ELF 64-bit MSB executable, 64-bit PowerPC ... statically linked
+</code></pre>
+<h3 id="用-qemu-執行驗證"><a class="header" href="#用-qemu-執行驗證">用 qemu 執行驗證</a></h3>
+<pre><code class="language-bash">timeout 8s qemu-i386 ./qemu-bin/test-linux-386
+timeout 8s qemu-arm  ./qemu-bin/test-linux-armv7
+timeout 8s qemu-mips ./qemu-bin/test-linux-mips
+timeout 8s qemu-ppc64 ./qemu-bin/test-linux-ppc64
+</code></pre>
+<p>如果能正常看到程式輸出，例如：</p>
+<pre><code class="language-text">烏龜跑了 1 步...
+兔子睡著了zzzz
+兔子跑了 2 步...
+</code></pre>
+<p>而且行程最後正常結束，就代表：</p>
+<ul>
+<li>binary 架構正確</li>
+<li>qemu 對應模擬器可正常載入該執行檔</li>
+<li>該架構下的 Go runtime 可正常啟動與執行</li>
+</ul>
+<h3 id="這次驗證結果"><a class="header" href="#這次驗證結果">這次驗證結果</a></h3>
+<ul>
+<li><code>qemu-i386 ./qemu-bin/test-linux-386</code>：可執行，exit code <code>0</code></li>
+<li><code>qemu-arm ./qemu-bin/test-linux-armv7</code>：可執行，exit code <code>0</code></li>
+<li><code>qemu-mips ./qemu-bin/test-linux-mips</code>：可執行，exit code <code>0</code></li>
+<li><code>qemu-ppc64 ./qemu-bin/test-linux-ppc64</code>：可執行，exit code <code>0</code></li>
+</ul>
+<h3 id="補充"><a class="header" href="#補充">補充</a></h3>
+<p>這支 <code>test.go</code> 的 <code>random()</code> 每次呼叫都重新 <code>Seed(time.Now().Unix())</code>，同一秒內可能一直拿到相同亂數，所以會看到大量重複的：</p>
+<pre><code class="language-text">兔子睡著了zzzz
+</code></pre>
+<p>這不影響 qemu 驗證結果，只是程式本身的亂數寫法會讓輸出非常多。</p>
 
                     </main>
 
