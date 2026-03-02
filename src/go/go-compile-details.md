@@ -244,3 +244,241 @@ go run -a -x test.go
 - 沒加 `-a` 時，可能只看到 `WORK=...`，因為 Go 直接用 cache
 - `-S`、`-m` 大多走 stderr，重導向時要注意
 - 單檔案模式會輸出成預設執行檔，例如這裡是 `./test`
+
+## 9. `build.log` 這份紀錄是怎麼編成執行檔的
+
+這份 `build.log` 對應的是：
+
+```bash
+go build -a -x -work test.go > build.log 2>&1
+```
+
+最後產生的執行檔是目前目錄下的 `test`。
+
+### 流程拆解
+
+1. 建立暫存工作目錄
+
+一開始會看到：
+
+```text
+WORK=/tmp/go-build1624675521
+mkdir -p $WORK/b015/
+mkdir -p $WORK/b008/
+...
+```
+
+意思是 Go 先建立一個暫存建置目錄，後面的 `b001`、`b002`、`b009` 這些子目錄就是各套件的中間產物目錄。
+
+2. 先編標準庫與相依套件
+
+例如：
+
+```text
+/home/shihyu/go/pkg/tool/linux_amd64/compile -o $WORK/b002/_pkg_.a ... -p fmt ...
+/home/shihyu/go/pkg/tool/linux_amd64/compile -o $WORK/b038/_pkg_.a ... -p time ...
+/home/shihyu/go/pkg/tool/linux_amd64/compile -o $WORK/b044/_pkg_.a ... -p math/rand ...
+```
+
+- `-p fmt`、`-p time`、`-p math/rand` 表示正在編哪個 package
+- 輸出檔 `_pkg_.a` 是該 package 的 archive
+- 因為有 `-a`，所以連標準庫也會重編
+
+3. 有 assembly 的套件會先 `asm` 再 `pack`
+
+例如 runtime：
+
+```text
+/home/shihyu/go/pkg/tool/linux_amd64/asm -p runtime ...
+/home/shihyu/go/pkg/tool/linux_amd64/pack r $WORK/b009/_pkg_.a ...
+```
+
+流程是先把 `.s` 組語檔組譯成 `.o`，再把 `.go` 編譯結果和 `.o` 一起打包進 `_pkg_.a`。
+
+4. 每個 package 編完會寫入 build cache
+
+例如：
+
+```text
+cp $WORK/b002/_pkg_.a /home/shihyu/.cache/go-build/...
+```
+
+這表示中間產物被複製到 Go build cache，之後若條件相同可直接重用。
+
+5. 輪到主程式 `test.go`
+
+關鍵段落是：
+
+```text
+cat >.../b001/importcfg << 'EOF'
+packagefile fmt=/tmp/go-build1624675521/b002/_pkg_.a
+packagefile math/rand=/tmp/go-build1624675521/b044/_pkg_.a
+packagefile time=/tmp/go-build1624675521/b038/_pkg_.a
+packagefile runtime=/tmp/go-build1624675521/b009/_pkg_.a
+EOF
+/home/shihyu/go/pkg/tool/linux_amd64/compile -o $WORK/b001/_pkg_.a ... -p main ... -pack ./test.go
+```
+
+- `importcfg` 先列出 `test.go` 需要的 package 檔案位置
+- `-p main` 表示這次編的是主套件
+- `./test.go` 被編成 `$WORK/b001/_pkg_.a`
+
+6. 產生 link 階段用的相依清單
+
+接著會看到：
+
+```text
+cat >.../b001/importcfg.link << 'EOF'
+packagefile command-line-arguments=/tmp/go-build1624675521/b001/_pkg_.a
+packagefile fmt=/tmp/go-build1624675521/b002/_pkg_.a
+packagefile math/rand=/tmp/go-build1624675521/b044/_pkg_.a
+...
+EOF
+```
+
+- `command-line-arguments` 就是這次命令列直接編譯的主程式，也就是 `test.go`
+- `importcfg.link` 比前面的 `importcfg` 更完整，會把 link 階段需要的所有 package 都列出來
+
+7. linker 產生暫存執行檔
+
+真正把可執行檔連出來的是：
+
+```text
+/home/shihyu/go/pkg/tool/linux_amd64/link -o $WORK/b001/exe/a.out -importcfg $WORK/b001/importcfg.link -buildmode=exe ... -extld=gcc $WORK/b001/_pkg_.a
+```
+
+- `link` 讀入主套件 `$WORK/b001/_pkg_.a`
+- 再依照 `importcfg.link` 把 `fmt`、`time`、`runtime` 等 package 一起連結
+- `-buildmode=exe` 表示輸出型態是一般 Linux 可執行檔
+- `-extld=gcc` 表示需要外部 linker 時會交給 `gcc`
+
+8. 把暫存執行檔複製成最終輸出
+
+最後兩行最重要：
+
+```text
+/home/shihyu/go/pkg/tool/linux_amd64/buildid -w $WORK/b001/exe/a.out # internal
+cp $WORK/b001/exe/a.out test
+```
+
+- `buildid -w` 會把 build id 寫回執行檔
+- `cp ... test` 才是把暫存中的 `a.out` 複製成目前目錄下真正的輸出檔 `test`
+
+### 一句話總結
+
+這份 `build.log` 的流程就是：
+
+`編標準庫/相依套件 -> 產生各自的 _pkg_.a -> 編 test.go 成 main package -> 生成 importcfg.link -> link 成 $WORK/b001/exe/a.out -> 複製成 ./test`
+
+## 10. 只看編譯出來的 `test`，怎麼判斷有沒有用到 Linux system API
+
+先分清楚兩件事：
+
+- Linux kernel syscall
+- 系統 C 函式庫，例如 `glibc`
+
+這兩個不是同一件事。
+
+### 1. 看執行時實際打了哪些 Linux syscall
+
+最準的是：
+
+```bash
+strace -f ./test
+```
+
+會直接看到實際發生的 syscall，例如：
+
+```text
+write(1, ...)
+futex(...)
+clone(...)
+mmap(...)
+clock_nanosleep(...)
+```
+
+如果看到了這些，就代表程式執行時確實有呼叫 Linux kernel API。
+
+### 2. 看有沒有依賴系統 C 函式庫
+
+```bash
+ldd ./test
+readelf -d ./test | rg 'NEEDED|INTERP'
+```
+
+判讀方式：
+
+- 有 `libc.so.6`、`libpthread.so.0` 之類，代表有動態依賴系統函式庫
+- 如果像這次的 `test` 一樣是靜態連結，`ldd` 會顯示不是動態可執行檔
+
+注意：
+
+- 沒有動態依賴 `glibc`，不代表沒有 syscall
+- Go 純靜態程式一樣可能直接對 Linux kernel 發 syscall
+
+### 3. 看 binary 內可能會用到哪些 syscall 或 runtime 路徑
+
+```bash
+go tool nm ./test | rg 'syscall|runtime\.|futex|clone|write|epoll'
+objdump -d ./test | rg '\bsyscall\b'
+strings ./test | rg 'epoll|futex|clone|nanosleep|clock_gettime'
+```
+
+這些只能幫你判斷「可能會用到」，不能保證執行時一定走到。
+
+### 4. 只看 `build.log` 能知道多少
+
+`build.log` 比較適合看：
+
+- 有沒有走 `cgo`
+- 有沒有出現 `gcc` / `_cgo_*.go` / C 編譯步驟
+- 最後是怎麼 link 成執行檔
+
+但它不能準確告訴你執行時到底打了哪些 Linux syscall。
+
+### 一句話總結
+
+- 想看「執行時真的有沒有呼叫 Linux kernel API」：`strace -f ./test`
+- 想看「有沒有依賴 glibc 之類系統函式庫」：`ldd ./test`、`readelf -d ./test`
+- 想看「binary 內可能有哪些 syscall 痕跡」：`go tool nm`、`objdump`、`strings`
+
+## 11. 這次 `test` 實際跑出來的 Linux syscall
+
+直接執行：
+
+```bash
+strace -f ./test
+```
+
+這次實際看到的代表性輸出包含：
+
+```text
+execve("./test", ["./test"], ...) = 0
+mmap(NULL, 262144, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = ...
+clone(child_stack=..., flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|...) = ...
+futex(..., FUTEX_WAIT_PRIVATE, ...)
+futex(..., FUTEX_WAKE_PRIVATE, ...)
+write(1, "烏龜跑了 1 步...\n", 22) = 22
+epoll_create1(EPOLL_CLOEXEC) = 3
+epoll_ctl(3, EPOLL_CTL_ADD, 4, ...) = 0
+epoll_pwait(3, [], 128, 4999, NULL, 0) = 0
+nanosleep({tv_sec=0, tv_nsec=20000}, NULL) = 0
+exit_group(0) = ?
+```
+
+### 這些 syscall 大致對應什麼
+
+- `execve`：啟動 `./test`
+- `mmap`：Go runtime 配置記憶體
+- `clone`：建立 runtime thread
+- `futex`：goroutine / thread 同步
+- `write`：`fmt.Printf`、`fmt.Println` 輸出到 stdout
+- `epoll_*`：Go runtime 的 netpoll / 事件等待機制
+- `nanosleep`：`time.Sleep` 以及 runtime 內部等待
+- `exit_group`：程式結束
+
+### 這次案例的結論
+
+- `test` 確實有呼叫 Linux kernel API
+- 這些呼叫主要來自 Go runtime 與標準庫
+- 即使 `test` 是靜態連結，也一樣會直接使用 Linux syscall
