@@ -168,6 +168,7 @@
         - [Rust 調用 C Cargo](rust/rust_call_c_cargo.md)
         - [Rust vs C++](rust/rust_vs_cpp.md)
         - [C++ vs Rust 對比](rust/cpp_vs_rust_comparison.md)
+        - [C/C++ 開發者學 Rust：完整差異指南](rust/c-cpp-to-rust-guide.md)
         - [PyO3](rust/pyo3.md)
     - [實戰應用](rust/06_實戰應用.md)
         - [RESTful API 開發](rust/Rust-RESTful-API-完整開發指南.md)
