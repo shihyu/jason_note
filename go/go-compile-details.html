@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Go 效能分析與最佳化指南 - Jason&#x27;s Notes</title>
+        <title>Go 編譯細節查看指令 - Jason&#x27;s Notes</title>
 
 
         <!-- Custom HTML head -->
@@ -178,135 +178,195 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="go-客戶端性能分析為何低平均延遲但高尾部延遲"><a class="header" href="#go-客戶端性能分析為何低平均延遲但高尾部延遲">Go 客戶端性能分析：為何低平均延遲但高尾部延遲</a></h1>
-<h2 id="性能現象"><a class="header" href="#性能現象">性能現象</a></h2>
-<p>從測試數據中發現 Go 客戶端呈現以下特徵：</p>
-<ul>
-<li><strong>Min/Average 延遲</strong>：優於 C/C++/Rust</li>
-<li><strong>P95/P99 延遲</strong>：劣於 C/C++/Rust</li>
-</ul>
-<p>這種「快的更快，慢的更慢」的現象需要深入分析。</p>
-<h2 id="go-低平均延遲的原因"><a class="header" href="#go-低平均延遲的原因">Go 低平均延遲的原因</a></h2>
-<h3 id="1-連線池預熱效率高"><a class="header" href="#1-連線池預熱效率高">1. 連線池預熱效率高</a></h3>
-<pre><code class="language-go">transport := &amp;http.Transport{
-    MaxIdleConns:        maxConnections,
-    MaxConnsPerHost:     maxConnections,
-    MaxIdleConnsPerHost: maxConnections,
+                        <h1 id="go-編譯細節查看指令"><a class="header" href="#go-編譯細節查看指令">Go 編譯細節查看指令</a></h1>
+<p>以目前目錄的 <code>test.go</code> 為例。</p>
+<h2 id="範例程式碼"><a class="header" href="#範例程式碼">範例程式碼</a></h2>
+<p><code>test.go</code> 內容如下：</p>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "math/rand"
+    "time"
+)
+
+func random(min, max int) int {
+    rand.Seed(time.Now().Unix())
+    return rand.Intn(max-min) + min
+}
+
+func tortoise(totalStep int) {
+    for step := 1; step &lt;= totalStep; step++ {
+        fmt.Printf("烏龜跑了 %d 步...\n", step)
+    }
+}
+
+func hare(totalStep int) {
+    flags := [...]bool{true, false}
+    step := 0
+    for step &lt; totalStep {
+        isHareSleep := flags[random(1, 10)%2]
+        if isHareSleep {
+            fmt.Println("兔子睡著了zzzz")
+        } else {
+            step += 2
+            fmt.Printf("兔子跑了 %d 步...\n", step)
+        }
+    }
+}
+
+func main() {
+    totalStep := 10
+
+    go tortoise(totalStep)
+    go hare(totalStep)
+
+    time.Sleep(5 * time.Second)
 }
 </code></pre>
-<ul>
-<li>Go 的 <code>http.Transport</code> 連線池實現非常高效</li>
-<li>積極保持連線並快速重用</li>
-<li>C/C++ 使用 libcurl 每次需要從連線池獲取，有額外開銷</li>
-</ul>
-<h3 id="2-goroutine-輕量級並發優勢"><a class="header" href="#2-goroutine-輕量級並發優勢">2. Goroutine 輕量級並發優勢</a></h3>
-<pre><code class="language-go">go func(orderID int) {
-    latency, err := c.sendOrder(warmupOrders + orderID)
-}
+<h2 id="1-看完整編譯流程"><a class="header" href="#1-看完整編譯流程">1. 看完整編譯流程</a></h2>
+<pre><code class="language-bash">go build -a -x -work test.go
 </code></pre>
 <ul>
-<li>Goroutine 創建成本極低（約 2KB 堆棧）</li>
-<li>C 使用 pthread 線程池，線程切換成本較高</li>
-<li>C++ 使用 <code>std::async</code>，也有線程管理開銷</li>
+<li><code>-x</code>：印出實際執行的 compile / asm / link 指令</li>
+<li><code>-a</code>：強制重編，避免 build cache 導致輸出過少</li>
+<li><code>-work</code>：保留暫存目錄，輸出會顯示 <code>WORK=/tmp/go-build...</code></li>
 </ul>
-<h3 id="3-http-客戶端實現差異"><a class="header" href="#3-http-客戶端實現差異">3. HTTP 客戶端實現差異</a></h3>
-<ul>
-<li><strong>Go</strong>: 原生 HTTP 客戶端深度優化，直接操作 TCP socket</li>
-<li><strong>C/C++</strong>: 通過 libcurl 庫，多一層抽象開銷</li>
-<li>Go 的 <code>net/http</code> 包針對並發請求優化，減少鎖競爭</li>
-</ul>
-<h3 id="4-最佳情況表現min-latency"><a class="header" href="#4-最佳情況表現min-latency">4. 最佳情況表現（min latency）</a></h3>
-<p>Go 在理想情況下（無 GC、連線已建立）的表現：</p>
-<ul>
-<li>直接從連線池取得連線：幾乎零開銷</li>
-<li>無需 libcurl 的初始化和清理</li>
-<li>Goroutine 已就緒，無線程創建延遲</li>
-</ul>
-<h3 id="5-json-序列化效率"><a class="header" href="#5-json-序列化效率">5. JSON 序列化效率</a></h3>
-<pre><code class="language-go">jsonData, err := json.Marshal(order)  // Go 的 json 包高度優化
+<p>常見重點輸出：</p>
+<pre><code class="language-text">/home/shihyu/go/pkg/tool/linux_amd64/compile ... ./test.go
+/home/shihyu/go/pkg/tool/linux_amd64/link ...
+cp $WORK/b001/exe/a.out test
 </code></pre>
-<p>對比 C：</p>
-<pre><code class="language-c">snprintf(json_payload, ...)  // 手動構建 JSON，效率較低
-```go
-
-### 6. 內存分配策略
-- Go 預分配了 slice：`latencies: make([]float64, 0)`
-- C/C++ 可能有更多動態分配開銷
-
-## Go 高尾部延遲的原因
-
-### 1. GC (垃圾回收) 導致的長尾延遲
-- Go 使用並發垃圾回收器，在高負載時會造成 STW (Stop-The-World) 暫停
-- 這些暫停通常很短（幾毫秒），但在 P95-P99 會明顯累積
-
-### 2. Goroutine 調度延遲
-```go
-go func(orderID int) {
-    defer wg.Done()
-    defer func() { &lt;-sem }()
-    // 這裡可能會有調度延遲
-    latency, err := c.sendOrder(warmupOrders + orderID)
-}
+<h2 id="2-只想執行並顯示建置流程"><a class="header" href="#2-只想執行並顯示建置流程">2. 只想執行並顯示建置流程</a></h2>
+<pre><code class="language-bash">go run -a -x test.go
 </code></pre>
-<p>當大量 goroutine 同時運行時，調度器可能造成某些 goroutine 等待較長時間。</p>
-<h3 id="3-與其他語言的對比"><a class="header" href="#3-與其他語言的對比">3. 與其他語言的對比</a></h3>
-<ul>
-<li><strong>C/C++</strong>：使用 libcurl 配置了 <code>TCP_KEEPALIVE</code> 和 <code>TCP_NODELAY</code>，減少網路延遲</li>
-<li><strong>Rust</strong>：明確設置了 <code>pool_max_idle_per_host</code> 和 <code>pool_idle_timeout</code>，連線池管理更精確</li>
-<li><strong>Go</strong>：雖有連線池但缺少 TCP 優化選項（如 TCP_NODELAY）</li>
-</ul>
-<h3 id="4-http-transport-配置差異"><a class="header" href="#4-http-transport-配置差異">4. HTTP Transport 配置差異</a></h3>
-<p>Go 設置了 <code>IdleConnTimeout: 90 * time.Second</code>（較長），而 Rust 只設 30 秒，可能導致某些連線在長時間閒置後性能下降。</p>
-<h2 id="實際數據解釋"><a class="header" href="#實際數據解釋">實際數據解釋</a></h2>
-<p>從圖表數據看：</p>
-<ul>
-<li><strong>Go min ≈ 0ms</strong>：最佳情況幾乎無延遲（連線重用完美）</li>
-<li><strong>C min ≈ 0.2ms</strong>：即使最佳情況也有 libcurl 開銷</li>
-<li><strong>Go avg ≈ 0.1ms</strong>：大部分請求都能利用連線池</li>
-<li><strong>C avg ≈ 0.4ms</strong>：平均有更多協議處理開銷</li>
-</ul>
-<h2 id="優化建議"><a class="header" href="#優化建議">優化建議</a></h2>
-<h3 id="go-客戶端優化"><a class="header" href="#go-客戶端優化">Go 客戶端優化</a></h3>
-<ol>
-<li>加入 <code>GOGC=800</code> 環境變數減少 GC 頻率</li>
-<li>設置 <code>GODEBUG=gctrace=1</code> 監控 GC 影響</li>
-<li>考慮使用 <code>runtime.GC()</code> 在測試前手動觸發 GC</li>
-<li>調整 Transport 參數，如減少 <code>IdleConnTimeout</code></li>
-</ol>
-<h3 id="測試環境優化"><a class="header" href="#測試環境優化">測試環境優化</a></h3>
-<pre><code class="language-bash"># 增加檔案描述符限制
-ulimit -n 65536
-
-# 設定 CPU 為高效能模式
-sudo cpupower frequency-set -g performance
-
-# 監控 GC 影響
-GOGC=800 GODEBUG=gctrace=1 ./go_client
+<p>適合快速看 <code>run</code> 時背後做了哪些編譯與連結步驟。</p>
+<h2 id="3-看-inline--escape-analysis"><a class="header" href="#3-看-inline--escape-analysis">3. 看 inline / escape analysis</a></h2>
+<pre><code class="language-bash">go build -gcflags='all=-m -m' test.go
 </code></pre>
-<h2 id="總結"><a class="header" href="#總結">總結</a></h2>
-<p>Go 在<strong>常見情況</strong>（P50 以下）表現優異是因為：</p>
-<ol>
-<li>高效的連線池重用</li>
-<li>輕量級 goroutine</li>
-<li>原生 HTTP 實現</li>
-</ol>
-<p>但在<strong>極端情況</strong>（P95-P99）表現較差是因為：</p>
-<ol>
-<li>GC 暫停</li>
-<li>Goroutine 調度延遲</li>
-<li>缺少 TCP 層級優化</li>
-</ol>
-<p>這解釋了為何 Go 有「快的更快，慢的更慢」的特性，適合對平均延遲敏感但能容忍偶發長尾的場景。</p>
+<p>可看到：</p>
+<ul>
+<li>哪些函式被 inline</li>
+<li>哪些變數逃逸到 heap</li>
+<li>編譯器最佳化判斷</li>
+</ul>
+<h2 id="4-看組語"><a class="header" href="#4-看組語">4. 看組語</a></h2>
+<pre><code class="language-bash">go build -a -gcflags='all=-S' test.go 2&gt; build.s
+</code></pre>
+<ul>
+<li><code>-S</code>：輸出 assembly</li>
+<li>建議把 stderr 轉到檔案，不然終端會很亂</li>
+</ul>
+<p>查看：</p>
+<pre><code class="language-bash">less build.s
+</code></pre>
+<h2 id="5-看暫存工作目錄內容"><a class="header" href="#5-看暫存工作目錄內容">5. 看暫存工作目錄內容</a></h2>
+<p>先執行：</p>
+<pre><code class="language-bash">go build -a -x -work test.go
+</code></pre>
+<p>再進去 <code>WORK</code> 目錄，例如：</p>
+<pre><code class="language-bash">less /tmp/go-build438143439/b001/importcfg
+less /tmp/go-build438143439/b001/importcfg.link
+</code></pre>
+<p>可看到：</p>
+<ul>
+<li>套件依賴</li>
+<li>link 階段匯入設定</li>
+<li>中間產物位置</li>
+</ul>
+<h2 id="6-常用組合"><a class="header" href="#6-常用組合">6. 常用組合</a></h2>
+<h3 id="看流程--最佳化資訊"><a class="header" href="#看流程--最佳化資訊">看流程 + 最佳化資訊</a></h3>
+<pre><code class="language-bash">go build -a -x -work -gcflags='all=-m -m' test.go
+</code></pre>
+<h3 id="看流程--組語"><a class="header" href="#看流程--組語">看流程 + 組語</a></h3>
+<pre><code class="language-bash">go build -a -x -work -gcflags='all=-S' test.go 2&gt; build.s
+</code></pre>
+<h2 id="7-使用範例"><a class="header" href="#7-使用範例">7. 使用範例</a></h2>
+<h3 id="範例-1直接看-testgo-的完整編譯流程"><a class="header" href="#範例-1直接看-testgo-的完整編譯流程">範例 1：直接看 <code>test.go</code> 的完整編譯流程</a></h3>
+<pre><code class="language-bash">go build -a -x -work test.go
+</code></pre>
+<p>預期會看到類似：</p>
+<pre><code class="language-text">WORK=/tmp/go-build438143439
+/home/shihyu/go/pkg/tool/linux_amd64/compile ... ./test.go
+/home/shihyu/go/pkg/tool/linux_amd64/link ...
+cp $WORK/b001/exe/a.out test
+</code></pre>
+<p>用途：</p>
+<ul>
+<li>確認 Go 實際呼叫了哪些 compiler / linker</li>
+<li>確認最後輸出的執行檔名稱</li>
+</ul>
+<h3 id="範例-2把編譯流程存成-log"><a class="header" href="#範例-2把編譯流程存成-log">範例 2：把編譯流程存成 log</a></h3>
+<pre><code class="language-bash">go build -a -x -work test.go &gt; build.log 2&gt;&amp;1
+less build.log
+</code></pre>
+<p>用途：</p>
+<ul>
+<li>方便搜尋 <code>compile</code></li>
+<li>方便搜尋 <code>link</code></li>
+<li>適合保留建置紀錄</li>
+</ul>
+<h3 id="範例-3只看-escape-analysis"><a class="header" href="#範例-3只看-escape-analysis">範例 3：只看 escape analysis</a></h3>
+<pre><code class="language-bash">go build -gcflags='all=-m -m' test.go 2&gt; escape.log
+less escape.log
+</code></pre>
+<p>可搜尋：</p>
+<pre><code class="language-bash">rg "escapes to heap|can inline|inlining call" escape.log
+</code></pre>
+<p>用途：</p>
+<ul>
+<li>檢查變數是否逃逸到 heap</li>
+<li>檢查函式是否被 inline</li>
+</ul>
+<h3 id="範例-4輸出組語後查-mainmain"><a class="header" href="#範例-4輸出組語後查-mainmain">範例 4：輸出組語後查 <code>main.main</code></a></h3>
+<pre><code class="language-bash">go build -a -gcflags='all=-S' test.go 2&gt; build.s
+rg "main.main|main.hare|main.tortoise" build.s
+</code></pre>
+<p>用途：</p>
+<ul>
+<li>快速定位 <code>main.main</code></li>
+<li>檢查 <code>hare</code> / <code>tortoise</code> 對應的 assembly</li>
+</ul>
+<h3 id="範例-5取得-work-目錄後查看-link-設定"><a class="header" href="#範例-5取得-work-目錄後查看-link-設定">範例 5：取得 <code>WORK</code> 目錄後查看 link 設定</a></h3>
+<pre><code class="language-bash">go build -a -x -work test.go 2&gt;&amp;1 | tee build.log
+rg '^WORK=' build.log
+</code></pre>
+<p>假設找到：</p>
+<pre><code class="language-text">WORK=/tmp/go-build438143439
+</code></pre>
+<p>再查看：</p>
+<pre><code class="language-bash">less /tmp/go-build438143439/b001/importcfg
+less /tmp/go-build438143439/b001/importcfg.link
+</code></pre>
+<p>用途：</p>
+<ul>
+<li>看 <code>test.go</code> 編譯時吃了哪些套件</li>
+<li>看 link 階段的 packagefile 對應</li>
+</ul>
+<h3 id="範例-6邊執行邊看建置流程"><a class="header" href="#範例-6邊執行邊看建置流程">範例 6：邊執行邊看建置流程</a></h3>
+<pre><code class="language-bash">go run -a -x test.go
+</code></pre>
+<p>用途：</p>
+<ul>
+<li>不只編譯，還會直接執行程式</li>
+<li>適合快速驗證單檔案程式</li>
+</ul>
+<h2 id="8-注意事項"><a class="header" href="#8-注意事項">8. 注意事項</a></h2>
+<ul>
+<li>沒加 <code>-a</code> 時，可能只看到 <code>WORK=...</code>，因為 Go 直接用 cache</li>
+<li><code>-S</code>、<code>-m</code> 大多走 stderr，重導向時要注意</li>
+<li>單檔案模式會輸出成預設執行檔，例如這裡是 <code>./test</code></li>
+</ul>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../go/05_性能分析與除錯.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../go/go_performance_analysis.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../go/go-compile-details.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../go/go_concurrency_tools.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -316,11 +376,11 @@ GOGC=800 GODEBUG=gctrace=1 ./go_client
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../go/05_性能分析與除錯.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../go/go_performance_analysis.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../go/go-compile-details.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../go/go_concurrency_tools.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
