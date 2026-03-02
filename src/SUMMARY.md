@@ -206,6 +206,7 @@
         - [Go 並行補充筆記](go/go_concurrency_supplement_notes.md)
         - [sync.Mutex 和 sync.RWMutex](go/mutex-rwmutex.md)
     - [Runtime 與記憶體管理](go/03_Runtime與記憶體管理.md)
+        - [Go Runtime 簡析](go/go_runtime_brief_analysis.md)
         - [Returning Pointer from a Function in Go](go/returning-pointer-from-a-function-in-go.md)
     - [Web 開發與實戰應用](go/04_Web開發與實戰應用.md)
         - [Go 編程實戰派 Web 開發基礎](go/Go編程實戰派Web開發基礎.md)
