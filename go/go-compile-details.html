@@ -357,6 +357,195 @@ less /tmp/go-build438143439/b001/importcfg.link
 <li><code>-S</code>、<code>-m</code> 大多走 stderr，重導向時要注意</li>
 <li>單檔案模式會輸出成預設執行檔，例如這裡是 <code>./test</code></li>
 </ul>
+<h2 id="9-buildlog-這份紀錄是怎麼編成執行檔的"><a class="header" href="#9-buildlog-這份紀錄是怎麼編成執行檔的">9. <code>build.log</code> 這份紀錄是怎麼編成執行檔的</a></h2>
+<p>這份 <code>build.log</code> 對應的是：</p>
+<pre><code class="language-bash">go build -a -x -work test.go &gt; build.log 2&gt;&amp;1
+</code></pre>
+<p>最後產生的執行檔是目前目錄下的 <code>test</code>。</p>
+<h3 id="流程拆解"><a class="header" href="#流程拆解">流程拆解</a></h3>
+<ol>
+<li>建立暫存工作目錄</li>
+</ol>
+<p>一開始會看到：</p>
+<pre><code class="language-text">WORK=/tmp/go-build1624675521
+mkdir -p $WORK/b015/
+mkdir -p $WORK/b008/
+...
+</code></pre>
+<p>意思是 Go 先建立一個暫存建置目錄，後面的 <code>b001</code>、<code>b002</code>、<code>b009</code> 這些子目錄就是各套件的中間產物目錄。</p>
+<ol start="2">
+<li>先編標準庫與相依套件</li>
+</ol>
+<p>例如：</p>
+<pre><code class="language-text">/home/shihyu/go/pkg/tool/linux_amd64/compile -o $WORK/b002/_pkg_.a ... -p fmt ...
+/home/shihyu/go/pkg/tool/linux_amd64/compile -o $WORK/b038/_pkg_.a ... -p time ...
+/home/shihyu/go/pkg/tool/linux_amd64/compile -o $WORK/b044/_pkg_.a ... -p math/rand ...
+</code></pre>
+<ul>
+<li><code>-p fmt</code>、<code>-p time</code>、<code>-p math/rand</code> 表示正在編哪個 package</li>
+<li>輸出檔 <code>_pkg_.a</code> 是該 package 的 archive</li>
+<li>因為有 <code>-a</code>，所以連標準庫也會重編</li>
+</ul>
+<ol start="3">
+<li>有 assembly 的套件會先 <code>asm</code> 再 <code>pack</code></li>
+</ol>
+<p>例如 runtime：</p>
+<pre><code class="language-text">/home/shihyu/go/pkg/tool/linux_amd64/asm -p runtime ...
+/home/shihyu/go/pkg/tool/linux_amd64/pack r $WORK/b009/_pkg_.a ...
+</code></pre>
+<p>流程是先把 <code>.s</code> 組語檔組譯成 <code>.o</code>，再把 <code>.go</code> 編譯結果和 <code>.o</code> 一起打包進 <code>_pkg_.a</code>。</p>
+<ol start="4">
+<li>每個 package 編完會寫入 build cache</li>
+</ol>
+<p>例如：</p>
+<pre><code class="language-text">cp $WORK/b002/_pkg_.a /home/shihyu/.cache/go-build/...
+</code></pre>
+<p>這表示中間產物被複製到 Go build cache，之後若條件相同可直接重用。</p>
+<ol start="5">
+<li>輪到主程式 <code>test.go</code></li>
+</ol>
+<p>關鍵段落是：</p>
+<pre><code class="language-text">cat &gt;.../b001/importcfg &lt;&lt; 'EOF'
+packagefile fmt=/tmp/go-build1624675521/b002/_pkg_.a
+packagefile math/rand=/tmp/go-build1624675521/b044/_pkg_.a
+packagefile time=/tmp/go-build1624675521/b038/_pkg_.a
+packagefile runtime=/tmp/go-build1624675521/b009/_pkg_.a
+EOF
+/home/shihyu/go/pkg/tool/linux_amd64/compile -o $WORK/b001/_pkg_.a ... -p main ... -pack ./test.go
+</code></pre>
+<ul>
+<li><code>importcfg</code> 先列出 <code>test.go</code> 需要的 package 檔案位置</li>
+<li><code>-p main</code> 表示這次編的是主套件</li>
+<li><code>./test.go</code> 被編成 <code>$WORK/b001/_pkg_.a</code></li>
+</ul>
+<ol start="6">
+<li>產生 link 階段用的相依清單</li>
+</ol>
+<p>接著會看到：</p>
+<pre><code class="language-text">cat &gt;.../b001/importcfg.link &lt;&lt; 'EOF'
+packagefile command-line-arguments=/tmp/go-build1624675521/b001/_pkg_.a
+packagefile fmt=/tmp/go-build1624675521/b002/_pkg_.a
+packagefile math/rand=/tmp/go-build1624675521/b044/_pkg_.a
+...
+EOF
+</code></pre>
+<ul>
+<li><code>command-line-arguments</code> 就是這次命令列直接編譯的主程式，也就是 <code>test.go</code></li>
+<li><code>importcfg.link</code> 比前面的 <code>importcfg</code> 更完整，會把 link 階段需要的所有 package 都列出來</li>
+</ul>
+<ol start="7">
+<li>linker 產生暫存執行檔</li>
+</ol>
+<p>真正把可執行檔連出來的是：</p>
+<pre><code class="language-text">/home/shihyu/go/pkg/tool/linux_amd64/link -o $WORK/b001/exe/a.out -importcfg $WORK/b001/importcfg.link -buildmode=exe ... -extld=gcc $WORK/b001/_pkg_.a
+</code></pre>
+<ul>
+<li><code>link</code> 讀入主套件 <code>$WORK/b001/_pkg_.a</code></li>
+<li>再依照 <code>importcfg.link</code> 把 <code>fmt</code>、<code>time</code>、<code>runtime</code> 等 package 一起連結</li>
+<li><code>-buildmode=exe</code> 表示輸出型態是一般 Linux 可執行檔</li>
+<li><code>-extld=gcc</code> 表示需要外部 linker 時會交給 <code>gcc</code></li>
+</ul>
+<ol start="8">
+<li>把暫存執行檔複製成最終輸出</li>
+</ol>
+<p>最後兩行最重要：</p>
+<pre><code class="language-text">/home/shihyu/go/pkg/tool/linux_amd64/buildid -w $WORK/b001/exe/a.out # internal
+cp $WORK/b001/exe/a.out test
+</code></pre>
+<ul>
+<li><code>buildid -w</code> 會把 build id 寫回執行檔</li>
+<li><code>cp ... test</code> 才是把暫存中的 <code>a.out</code> 複製成目前目錄下真正的輸出檔 <code>test</code></li>
+</ul>
+<h3 id="一句話總結"><a class="header" href="#一句話總結">一句話總結</a></h3>
+<p>這份 <code>build.log</code> 的流程就是：</p>
+<p><code>編標準庫/相依套件 -&gt; 產生各自的 _pkg_.a -&gt; 編 test.go 成 main package -&gt; 生成 importcfg.link -&gt; link 成 $WORK/b001/exe/a.out -&gt; 複製成 ./test</code></p>
+<h2 id="10-只看編譯出來的-test怎麼判斷有沒有用到-linux-system-api"><a class="header" href="#10-只看編譯出來的-test怎麼判斷有沒有用到-linux-system-api">10. 只看編譯出來的 <code>test</code>，怎麼判斷有沒有用到 Linux system API</a></h2>
+<p>先分清楚兩件事：</p>
+<ul>
+<li>Linux kernel syscall</li>
+<li>系統 C 函式庫，例如 <code>glibc</code></li>
+</ul>
+<p>這兩個不是同一件事。</p>
+<h3 id="1-看執行時實際打了哪些-linux-syscall"><a class="header" href="#1-看執行時實際打了哪些-linux-syscall">1. 看執行時實際打了哪些 Linux syscall</a></h3>
+<p>最準的是：</p>
+<pre><code class="language-bash">strace -f ./test
+</code></pre>
+<p>會直接看到實際發生的 syscall，例如：</p>
+<pre><code class="language-text">write(1, ...)
+futex(...)
+clone(...)
+mmap(...)
+clock_nanosleep(...)
+</code></pre>
+<p>如果看到了這些，就代表程式執行時確實有呼叫 Linux kernel API。</p>
+<h3 id="2-看有沒有依賴系統-c-函式庫"><a class="header" href="#2-看有沒有依賴系統-c-函式庫">2. 看有沒有依賴系統 C 函式庫</a></h3>
+<pre><code class="language-bash">ldd ./test
+readelf -d ./test | rg 'NEEDED|INTERP'
+</code></pre>
+<p>判讀方式：</p>
+<ul>
+<li>有 <code>libc.so.6</code>、<code>libpthread.so.0</code> 之類，代表有動態依賴系統函式庫</li>
+<li>如果像這次的 <code>test</code> 一樣是靜態連結，<code>ldd</code> 會顯示不是動態可執行檔</li>
+</ul>
+<p>注意：</p>
+<ul>
+<li>沒有動態依賴 <code>glibc</code>，不代表沒有 syscall</li>
+<li>Go 純靜態程式一樣可能直接對 Linux kernel 發 syscall</li>
+</ul>
+<h3 id="3-看-binary-內可能會用到哪些-syscall-或-runtime-路徑"><a class="header" href="#3-看-binary-內可能會用到哪些-syscall-或-runtime-路徑">3. 看 binary 內可能會用到哪些 syscall 或 runtime 路徑</a></h3>
+<pre><code class="language-bash">go tool nm ./test | rg 'syscall|runtime\.|futex|clone|write|epoll'
+objdump -d ./test | rg '\bsyscall\b'
+strings ./test | rg 'epoll|futex|clone|nanosleep|clock_gettime'
+</code></pre>
+<p>這些只能幫你判斷「可能會用到」，不能保證執行時一定走到。</p>
+<h3 id="4-只看-buildlog-能知道多少"><a class="header" href="#4-只看-buildlog-能知道多少">4. 只看 <code>build.log</code> 能知道多少</a></h3>
+<p><code>build.log</code> 比較適合看：</p>
+<ul>
+<li>有沒有走 <code>cgo</code></li>
+<li>有沒有出現 <code>gcc</code> / <code>_cgo_*.go</code> / C 編譯步驟</li>
+<li>最後是怎麼 link 成執行檔</li>
+</ul>
+<p>但它不能準確告訴你執行時到底打了哪些 Linux syscall。</p>
+<h3 id="一句話總結-1"><a class="header" href="#一句話總結-1">一句話總結</a></h3>
+<ul>
+<li>想看「執行時真的有沒有呼叫 Linux kernel API」：<code>strace -f ./test</code></li>
+<li>想看「有沒有依賴 glibc 之類系統函式庫」：<code>ldd ./test</code>、<code>readelf -d ./test</code></li>
+<li>想看「binary 內可能有哪些 syscall 痕跡」：<code>go tool nm</code>、<code>objdump</code>、<code>strings</code></li>
+</ul>
+<h2 id="11-這次-test-實際跑出來的-linux-syscall"><a class="header" href="#11-這次-test-實際跑出來的-linux-syscall">11. 這次 <code>test</code> 實際跑出來的 Linux syscall</a></h2>
+<p>直接執行：</p>
+<pre><code class="language-bash">strace -f ./test
+</code></pre>
+<p>這次實際看到的代表性輸出包含：</p>
+<pre><code class="language-text">execve("./test", ["./test"], ...) = 0
+mmap(NULL, 262144, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = ...
+clone(child_stack=..., flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|...) = ...
+futex(..., FUTEX_WAIT_PRIVATE, ...)
+futex(..., FUTEX_WAKE_PRIVATE, ...)
+write(1, "烏龜跑了 1 步...\n", 22) = 22
+epoll_create1(EPOLL_CLOEXEC) = 3
+epoll_ctl(3, EPOLL_CTL_ADD, 4, ...) = 0
+epoll_pwait(3, [], 128, 4999, NULL, 0) = 0
+nanosleep({tv_sec=0, tv_nsec=20000}, NULL) = 0
+exit_group(0) = ?
+</code></pre>
+<h3 id="這些-syscall-大致對應什麼"><a class="header" href="#這些-syscall-大致對應什麼">這些 syscall 大致對應什麼</a></h3>
+<ul>
+<li><code>execve</code>：啟動 <code>./test</code></li>
+<li><code>mmap</code>：Go runtime 配置記憶體</li>
+<li><code>clone</code>：建立 runtime thread</li>
+<li><code>futex</code>：goroutine / thread 同步</li>
+<li><code>write</code>：<code>fmt.Printf</code>、<code>fmt.Println</code> 輸出到 stdout</li>
+<li><code>epoll_*</code>：Go runtime 的 netpoll / 事件等待機制</li>
+<li><code>nanosleep</code>：<code>time.Sleep</code> 以及 runtime 內部等待</li>
+<li><code>exit_group</code>：程式結束</li>
+</ul>
+<h3 id="這次案例的結論"><a class="header" href="#這次案例的結論">這次案例的結論</a></h3>
+<ul>
+<li><code>test</code> 確實有呼叫 Linux kernel API</li>
+<li>這些呼叫主要來自 Go runtime 與標準庫</li>
+<li>即使 <code>test</code> 是靜態連結，也一樣會直接使用 Linux syscall</li>
+</ul>
 
                     </main>
 
