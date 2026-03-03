@@ -1,0 +1,1353 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Go 官方工具與 Runtime 診斷總整理 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="go-官方工具與-runtime-診斷總整理"><a class="header" href="#go-官方工具與-runtime-診斷總整理">Go 官方工具與 Runtime 診斷總整理</a></h1>
+<p>基準版本：<code>go1.21.6 linux/amd64</code></p>
+<p>範圍：</p>
+<ul>
+<li>官方 <code>go</code> 指令</li>
+<li>官方 <code>go tool</code> 子工具</li>
+<li>官方 runtime 診斷/觀測機制</li>
+<li><code>GODEBUG</code> 與相關環境變數</li>
+</ul>
+<p>不含：</p>
+<ul>
+<li>第三方工具，例如 <code>dlv</code>、<code>staticcheck</code>、<code>golangci-lint</code></li>
+</ul>
+<hr />
+<h2 id="先講結論"><a class="header" href="#先講結論">先講結論</a></h2>
+<p>如果你只想知道「什麼時候用什麼」：</p>
+<div class="table-wrapper"><table><thead><tr><th>情境</th><th>先用什麼</th></tr></thead><tbody>
+<tr><td>程式變慢、CPU 飆高</td><td><code>go test -cpuprofile</code> + <code>go tool pprof</code></td></tr>
+<tr><td>記憶體暴增、疑似洩漏</td><td><code>go test -memprofile</code> + <code>go tool pprof</code></td></tr>
+<tr><td>Goroutine 卡住、鎖競爭、阻塞</td><td><code>block profile</code>、<code>mutex profile</code>、<code>goroutine profile</code>、<code>go tool trace</code></td></tr>
+<tr><td>想看排程器、syscall、GC、阻塞全貌</td><td><code>go test -trace</code> + <code>go tool trace</code></td></tr>
+<tr><td>懷疑資料競態</td><td><code>go test -race</code></td></tr>
+<tr><td>想知道測試覆蓋率</td><td><code>go test -cover</code> / <code>-coverprofile</code> / <code>go tool cover</code></td></tr>
+<tr><td>想看 runtime GC 行為</td><td><code>GODEBUG=gctrace=1</code></td></tr>
+<tr><td>想看 scheduler 行為</td><td><code>GODEBUG=schedtrace=1000,scheddetail=1</code></td></tr>
+<tr><td>想調 GC 壓力</td><td><code>GOGC</code>、<code>GOMEMLIMIT</code></td></tr>
+<tr><td>想看 panic 時所有 goroutine</td><td><code>GOTRACEBACK=all</code> 或 <code>system</code></td></tr>
+<tr><td>只想快速看匯編、符號、物件內容</td><td><code>go tool objdump</code>、<code>nm</code>、<code>addr2line</code></td></tr>
+<tr><td>想抓 API 文件或符號說明</td><td><code>go doc</code> / <code>go tool doc</code></td></tr>
+<tr><td>想做程式碼檢查</td><td><code>go vet</code></td></tr>
+<tr><td>想批次修正舊 API</td><td><code>go fix</code></td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="範例程式碼所有範例均已驗證可執行"><a class="header" href="#範例程式碼所有範例均已驗證可執行">範例程式碼（所有範例均已驗證可執行）</a></h2>
+<p>以下範例以這個模組為基礎：</p>
+<pre><code class="language-bash">mkdir demo &amp;&amp; cd demo
+go mod init demo
+</code></pre>
+<h3 id="範例主程式-maingo"><a class="header" href="#範例主程式-maingo">範例主程式 <code>main.go</code></a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "math"
+    "runtime"
+    "runtime/debug"
+    "sync"
+    "time"
+)
+
+func isPrime(n int) bool {
+    if n &lt; 2 {
+        return false
+    }
+    for i := 2; i &lt;= int(math.Sqrt(float64(n))); i++ {
+        if n%i == 0 {
+            return false
+        }
+    }
+    return true
+}
+
+func countPrimes(max int) int {
+    count := 0
+    for i := 2; i &lt;= max; i++ {
+        if isPrime(i) {
+            count++
+        }
+    }
+    return count
+}
+
+func allocStrings(n int) []string {
+    result := make([]string, n)
+    for i := range result {
+        result[i] = fmt.Sprintf("item-%d", i)
+    }
+    return result
+}
+
+type Counter struct {
+    mu    sync.Mutex
+    value int
+}
+
+func (c *Counter) Inc() {
+    c.mu.Lock()
+    c.value++
+    c.mu.Unlock()
+}
+
+func (c *Counter) Get() int {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    return c.value
+}
+
+func main() {
+    fmt.Printf("Go version: %s\n", runtime.Version())
+    fmt.Printf("GOMAXPROCS: %d\n", runtime.GOMAXPROCS(0))
+
+    count := countPrimes(100000)
+    fmt.Printf("Primes below 100000: %d\n", count)
+
+    var ms runtime.MemStats
+    runtime.ReadMemStats(&amp;ms)
+    fmt.Printf("HeapAlloc: %d KB\n", ms.HeapAlloc/1024)
+
+    if info, ok := debug.ReadBuildInfo(); ok {
+        fmt.Printf("Module: %s\n", info.Main.Path)
+    }
+    _ = time.Now()
+}
+</code></pre>
+<h3 id="範例測試-main_testgo完整示範各種-profiling"><a class="header" href="#範例測試-main_testgo完整示範各種-profiling">範例測試 <code>main_test.go</code>（完整示範各種 profiling）</a></h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "os"
+    "runtime"
+    "runtime/debug"
+    "runtime/pprof"
+    "runtime/trace"
+    "sync"
+    "testing"
+    "time"
+)
+
+// ===== 基本功能測試 =====
+
+func TestIsPrime(t *testing.T) {
+    cases := []struct {
+        n    int
+        want bool
+    }{
+        {1, false}, {2, true}, {3, true}, {4, false},
+        {17, true}, {100, false}, {97, true},
+    }
+    for _, c := range cases {
+        if got := isPrime(c.n); got != c.want {
+            t.Errorf("isPrime(%d) = %v, want %v", c.n, got, c.want)
+        }
+    }
+}
+
+func TestCountPrimes(t *testing.T) {
+    if got := countPrimes(100); got != 25 { // π(100) = 25
+        t.Errorf("countPrimes(100) = %d, want 25", got)
+    }
+}
+
+func TestCounter(t *testing.T) {
+    c := &amp;Counter{}
+    var wg sync.WaitGroup
+    for i := 0; i &lt; 100; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            c.Inc()
+        }()
+    }
+    wg.Wait()
+    if got := c.Get(); got != 100 {
+        t.Errorf("Counter = %d, want 100", got)
+    }
+}
+
+// ===== Benchmark =====
+
+func BenchmarkIsPrime(b *testing.B) {
+    for i := 0; i &lt; b.N; i++ {
+        isPrime(999983)
+    }
+}
+
+func BenchmarkCountPrimes(b *testing.B) {
+    for i := 0; i &lt; b.N; i++ {
+        countPrimes(10000)
+    }
+}
+
+func BenchmarkAllocStrings(b *testing.B) {
+    b.ReportAllocs()
+    for i := 0; i &lt; b.N; i++ {
+        _ = allocStrings(1000)
+    }
+}
+
+func BenchmarkCounterParallel(b *testing.B) {
+    c := &amp;Counter{}
+    b.RunParallel(func(pb *testing.PB) {
+        for pb.Next() {
+            c.Inc()
+        }
+    })
+}
+
+// 預分配 vs 動態增長對比
+var sink []string
+
+func BenchmarkAllocWithGrow(b *testing.B) {
+    b.ReportAllocs()
+    for i := 0; i &lt; b.N; i++ {
+        var s []string
+        for j := 0; j &lt; 100; j++ {
+            s = append(s, fmt.Sprintf("x%d", j))
+        }
+        sink = s
+    }
+}
+
+func BenchmarkAllocWithPrealloc(b *testing.B) {
+    b.ReportAllocs()
+    for i := 0; i &lt; b.N; i++ {
+        s := make([]string, 0, 100)
+        for j := 0; j &lt; 100; j++ {
+            s = append(s, fmt.Sprintf("x%d", j))
+        }
+        sink = s
+    }
+}
+
+// ===== CPU Profile（程式內手動） =====
+
+func TestCPUProfile(t *testing.T) {
+    f, _ := os.Create("cpu.out")
+    defer f.Close()
+    if err := pprof.StartCPUProfile(f); err != nil {
+        t.Logf("skip: %v", err) // 外部已開 -cpuprofile 時會衝突
+        return
+    }
+    defer pprof.StopCPUProfile()
+    t.Logf("Primes: %d (cpu.out written)", countPrimes(50000))
+}
+
+// ===== Memory Profile =====
+
+func TestMemProfile(t *testing.T) {
+    for i := 0; i &lt; 5; i++ {
+        _ = allocStrings(10000)
+    }
+    runtime.GC()
+    f, _ := os.Create("mem.out")
+    defer f.Close()
+    pprof.WriteHeapProfile(f)
+    t.Log("mem.out written")
+}
+
+// ===== Block Profile =====
+
+func TestBlockProfile(t *testing.T) {
+    runtime.SetBlockProfileRate(1)
+    defer runtime.SetBlockProfileRate(0)
+
+    ch := make(chan int)
+    var wg sync.WaitGroup
+    for i := 0; i &lt; 10; i++ {
+        wg.Add(1)
+        go func() { defer wg.Done(); ch &lt;- 1 }()
+    }
+    go func() {
+        for i := 0; i &lt; 10; i++ { &lt;-ch; time.Sleep(time.Millisecond) }
+    }()
+    wg.Wait()
+
+    f, _ := os.Create("block.out")
+    defer f.Close()
+    pprof.Lookup("block").WriteTo(f, 0)
+    t.Log("block.out written")
+}
+
+// ===== Mutex Profile =====
+
+func TestMutexProfile(t *testing.T) {
+    runtime.SetMutexProfileFraction(1)
+    defer runtime.SetMutexProfileFraction(0)
+
+    c := &amp;Counter{}
+    var wg sync.WaitGroup
+    for i := 0; i &lt; 50; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            for j := 0; j &lt; 100; j++ { c.Inc() }
+        }()
+    }
+    wg.Wait()
+
+    f, _ := os.Create("mutex.out")
+    defer f.Close()
+    pprof.Lookup("mutex").WriteTo(f, 0)
+    t.Logf("mutex.out written, counter=%d", c.Get())
+}
+
+// ===== Trace =====
+
+func TestTrace(t *testing.T) {
+    f, _ := os.Create("trace.out")
+    defer f.Close()
+    if err := trace.Start(f); err != nil {
+        t.Logf("skip: %v", err) // 外部已開 -trace 時會衝突
+        return
+    }
+    defer trace.Stop()
+
+    var wg sync.WaitGroup
+    for i := 0; i &lt; 5; i++ {
+        wg.Add(1)
+        go func() { defer wg.Done(); _ = countPrimes(5000) }()
+    }
+    wg.Wait()
+    t.Log("trace.out written")
+}
+
+// ===== Goroutine Profile =====
+
+func safeGoroutine(done &lt;-chan struct{}) {
+    for {
+        select {
+        case &lt;-done:
+            return
+        case &lt;-time.After(10 * time.Millisecond):
+        }
+    }
+}
+
+func TestGoroutineProfile(t *testing.T) {
+    done := make(chan struct{})
+    for i := 0; i &lt; 3; i++ {
+        go safeGoroutine(done)
+    }
+    time.Sleep(10 * time.Millisecond)
+
+    f, _ := os.Create("goroutine.out")
+    defer f.Close()
+    pprof.Lookup("goroutine").WriteTo(f, 1)
+    close(done)
+    t.Logf("goroutine.out written, goroutines=%d", runtime.NumGoroutine())
+}
+
+// ===== MemStats =====
+
+func TestMemStats(t *testing.T) {
+    var before, after runtime.MemStats
+    runtime.ReadMemStats(&amp;before)
+    _ = allocStrings(100000)
+    runtime.GC()
+    runtime.ReadMemStats(&amp;after)
+    t.Logf("HeapAlloc before: %d KB", before.HeapAlloc/1024)
+    t.Logf("HeapAlloc after:  %d KB", after.HeapAlloc/1024)
+    t.Logf("NumGC: %d", after.NumGC)
+    t.Logf("TotalAlloc: %d KB", after.TotalAlloc/1024)
+}
+
+// ===== Fuzz =====
+
+func FuzzIsPrime(f *testing.F) {
+    f.Add(0); f.Add(1); f.Add(2); f.Add(97); f.Add(-1)
+    f.Fuzz(func(t *testing.T, n int) {
+        _ = isPrime(n) // 只驗不 panic
+    })
+}
+
+// ===== Escape Analysis =====
+
+func newOnHeap() *int { x := 42; return &amp;x } // → heap
+func stayOnStack() int { x := 42; return x } // → stack
+
+func TestEscapeAnalysis(t *testing.T) {
+    p := newOnHeap()
+    t.Logf("heap ptr: %p = %d", p, *p)
+    t.Logf("stack val: %d", stayOnStack())
+}
+
+// ===== runtime/debug =====
+
+func TestRuntimeDebug(t *testing.T) {
+    old := debug.SetGCPercent(50)
+    defer debug.SetGCPercent(old)
+    t.Logf("old GC percent: %d", old)
+
+    debug.FreeOSMemory()
+
+    if info, ok := debug.ReadBuildInfo(); ok {
+        t.Logf("module: %s", info.Main.Path)
+    }
+
+    var stats debug.GCStats
+    debug.ReadGCStats(&amp;stats)
+    t.Logf("NumGC: %d", stats.NumGC)
+}
+
+// ===== 列出所有可用 profile =====
+
+func TestListProfiles(t *testing.T) {
+    for _, p := range pprof.Profiles() {
+        t.Logf("  %s (count=%d)", p.Name(), p.Count())
+    }
+}
+</code></pre>
+<hr />
+<h2 id="1-高階-go-指令"><a class="header" href="#1-高階-go-指令">1. 高階 <code>go</code> 指令</a></h2>
+<p>這些是平常最常用的入口。</p>
+<div class="table-wrapper"><table><thead><tr><th>指令</th><th>用途</th><th>什麼時候用</th></tr></thead><tbody>
+<tr><td><code>go build</code></td><td>編譯 package / binary</td><td>驗證是否可編譯、產出執行檔、加建置旗標</td></tr>
+<tr><td><code>go run</code></td><td>臨時編譯並執行</td><td>小工具、範例、一次性腳本</td></tr>
+<tr><td><code>go test</code></td><td>跑測試/benchmark/fuzz</td><td>平時測試、效能分析、race 檢查、coverage</td></tr>
+<tr><td><code>go vet</code></td><td>找高機率 bug</td><td>CI、提交前靜態檢查</td></tr>
+<tr><td><code>go fmt</code></td><td>格式化</td><td>提交前、批次整理</td></tr>
+<tr><td><code>go fix</code></td><td>自動遷移舊 API 用法</td><td>升 Go 版本後清舊語法</td></tr>
+<tr><td><code>go doc</code></td><td>查 package / symbol 文件</td><td>忘記 API、查標準庫</td></tr>
+<tr><td><code>go env</code></td><td>看 Go 環境</td><td>排查環境、CGO、module、交叉編譯問題</td></tr>
+<tr><td><code>go list</code></td><td>列 package/module 資訊</td><td>腳本、自動化、查依賴</td></tr>
+<tr><td><code>go generate</code></td><td>執行 <code>//go:generate</code></td><td>codegen、mock、stringer 類流程</td></tr>
+<tr><td><code>go install</code></td><td>安裝 binary</td><td>裝 CLI 或編譯主程式到 <code>$GOBIN</code></td></tr>
+<tr><td><code>go get</code></td><td>加/升依賴</td><td>更新 module 依賴</td></tr>
+<tr><td><code>go mod</code></td><td>module 維護</td><td><code>tidy</code>、<code>vendor</code>、<code>graph</code>、<code>why</code></td></tr>
+<tr><td><code>go work</code></td><td>workspace 維護</td><td>多 module 聯合開發</td></tr>
+<tr><td><code>go version</code></td><td>看工具鏈版本</td><td>排查版本差異</td></tr>
+<tr><td><code>go tool</code></td><td>跑低階工具</td><td>看匯編、trace、pprof、cover 等</td></tr>
+<tr><td><code>go bug</code></td><td>產生 issue 範本</td><td>要回報 Go 問題時</td></tr>
+</tbody></table>
+</div>
+<h3 id="go-build-常見診斷旗標"><a class="header" href="#go-build-常見診斷旗標"><code>go build</code> 常見診斷旗標</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>旗標</th><th>用途</th><th>什麼時候用</th></tr></thead><tbody>
+<tr><td><code>-race</code></td><td>資料競態偵測</td><td>共享資料疑似沒鎖好</td></tr>
+<tr><td><code>-cover</code></td><td>編譯時插 coverage instrumentation</td><td>要跑可執行檔 coverage</td></tr>
+<tr><td><code>-asan</code></td><td>AddressSanitizer 互通</td><td>cgo / native memory 問題</td></tr>
+<tr><td><code>-msan</code></td><td>MemorySanitizer 互通</td><td>cgo / 未初始化記憶體問題</td></tr>
+<tr><td><code>-pgo</code></td><td>Profile-guided optimization</td><td>熱點穩定、要擠壓效能</td></tr>
+<tr><td><code>-gcflags=all=-m</code></td><td>看 escape analysis / inline 決策</td><td>查 allocation、多餘 heap escape</td></tr>
+<tr><td><code>-gcflags=all=-S</code></td><td>看組合語言輸出</td><td>極限效能分析</td></tr>
+<tr><td><code>-ldflags</code></td><td>link 階段參數</td><td>瘦身、注入版本字串</td></tr>
+<tr><td><code>-trimpath</code></td><td>去除本機絕對路徑</td><td>可重現建置、乾淨 binary</td></tr>
+<tr><td><code>-work</code></td><td>保留暫存建置目錄</td><td>排查編譯流程</td></tr>
+<tr><td><code>-x</code></td><td>顯示實際執行命令</td><td>排查 toolchain 行為</td></tr>
+</tbody></table>
+</div>
+<h4 id="escape-analysis-範例"><a class="header" href="#escape-analysis-範例">Escape Analysis 範例</a></h4>
+<pre><code class="language-bash">go build -gcflags='-m' ./...
+</code></pre>
+<p>輸出節錄（實測）：</p>
+<pre><code class="language-text">./main.go:13:6: can inline isPrime
+./main.go:25:6: can inline countPrimes
+./main.go:37:16: make([]string, n) escapes to heap
+./main.go:39:38: i escapes to heap
+</code></pre>
+<p>解讀：</p>
+<ul>
+<li><code>can inline</code>：函式夠小，會被 inline，無呼叫開銷</li>
+<li><code>escapes to heap</code>：物件分配在 heap，GC 需管理</li>
+<li>stack 上的變數不會出現在這裡</li>
+</ul>
+<hr />
+<h2 id="2-go-test-其實是最重要的分析入口"><a class="header" href="#2-go-test-其實是最重要的分析入口">2. <code>go test</code> 其實是最重要的分析入口</a></h2>
+<p>大多數官方分析流程都從 <code>go test</code> 開始。</p>
+<h3 id="功能型旗標"><a class="header" href="#功能型旗標">功能型旗標</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>旗標</th><th>用途</th><th>什麼時候用</th></tr></thead><tbody>
+<tr><td><code>-run</code></td><td>只跑特定測試</td><td>縮小問題範圍</td></tr>
+<tr><td><code>-bench</code></td><td>跑 benchmark</td><td>效能基準</td></tr>
+<tr><td><code>-benchmem</code></td><td>顯示 allocation 次數與大小</td><td>盯 allocation regression</td></tr>
+<tr><td><code>-count</code></td><td>重跑多次</td><td>確認 flaky 或 benchmark 穩定性</td></tr>
+<tr><td><code>-cpu</code></td><td>多組 <code>GOMAXPROCS</code> 測</td><td>看並行縮放性</td></tr>
+<tr><td><code>-parallel</code></td><td>控制測試平行度</td><td>降噪、避免資源搶占</td></tr>
+<tr><td><code>-shuffle</code></td><td>打亂順序</td><td>揪出順序相依測試</td></tr>
+<tr><td><code>-fuzz</code></td><td>啟動 fuzzing</td><td>不信任輸入、parser、decoder、protocol</td></tr>
+<tr><td><code>-json</code></td><td>JSON 格式輸出</td><td>丟 CI、分析工具</td></tr>
+<tr><td><code>-timeout</code></td><td>設定逾時</td><td>防止測試掛死</td></tr>
+<tr><td><code>-v</code></td><td>詳細輸出</td><td>看每個 test 的 log</td></tr>
+<tr><td><code>-short</code></td><td>跳過耗時測試</td><td>快速 smoke test</td></tr>
+</tbody></table>
+</div>
+<h3 id="分析型旗標"><a class="header" href="#分析型旗標">分析型旗標</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>旗標</th><th>輸出</th><th>什麼時候用</th></tr></thead><tbody>
+<tr><td><code>-cpuprofile=cpu.out</code></td><td>CPU profile</td><td>CPU 熱點分析</td></tr>
+<tr><td><code>-memprofile=mem.out</code></td><td>Memory profile</td><td>allocation / heap 分析</td></tr>
+<tr><td><code>-blockprofile=block.out</code></td><td>阻塞 profile</td><td>channel / mutex / syscall 卡住</td></tr>
+<tr><td><code>-mutexprofile=mutex.out</code></td><td>mutex contention profile</td><td>鎖競爭</td></tr>
+<tr><td><code>-trace=trace.out</code></td><td>execution trace</td><td>排程、GC、阻塞、syscall 全景</td></tr>
+<tr><td><code>-coverprofile=cover.out</code></td><td>coverage profile</td><td>覆蓋率報告</td></tr>
+<tr><td><code>-blockprofilerate=1</code></td><td>開啟完整阻塞取樣</td><td>要抓 block 時常一起開</td></tr>
+<tr><td><code>-mutexprofilefraction=1</code></td><td>提高 mutex 取樣</td><td>鎖競爭很重時</td></tr>
+<tr><td><code>-memprofilerate=1</code></td><td>所有 allocation 都採樣</td><td>要極精準記憶體分析時，代價高</td></tr>
+</tbody></table>
+</div>
+<h3 id="典型命令均已驗證"><a class="header" href="#典型命令均已驗證">典型命令（均已驗證）</a></h3>
+<pre><code class="language-bash"># 所有測試加 race detector
+go test ./... -race
+
+# 跑指定 benchmark，印 allocation 統計
+go test ./... -bench=BenchmarkCountPrimes -benchmem
+# BenchmarkCountPrimes-16    4728    239650 ns/op    0 B/op    0 allocs/op
+
+# 只跑特定測試，產生 CPU profile
+go test ./... -bench=BenchmarkCountPrimes -cpuprofile=cpu.out
+
+# 只跑特定測試，產生 memory profile
+go test ./... -bench=BenchmarkAllocStrings -memprofile=mem.out
+
+# block profile（需先在程式內設 rate 或加 -blockprofilerate）
+go test ./... -run TestBlockProfile -blockprofile=block.out -blockprofilerate=1
+
+# mutex profile
+go test ./... -run TestMutexProfile -mutexprofile=mutex.out -mutexprofilefraction=1
+
+# trace
+go test ./... -run TestTrace -trace=trace.out
+
+# coverage
+go test ./... -coverprofile=cover.out
+
+# 打亂測試順序（找隱性依賴）
+go test ./... -shuffle=on -count=3
+</code></pre>
+<h3 id="benchmark-結果說明"><a class="header" href="#benchmark-結果說明">Benchmark 結果說明</a></h3>
+<pre><code class="language-text">BenchmarkIsPrime-16        816644    1500 ns/op    0 B/op    0 allocs/op
+                   ^          ^         ^            ^           ^
+              GOMAXPROCS   iteration  每次耗時     每次分配    每次分配次數
+</code></pre>
+<h3 id="預分配-vs-動態增長實測結果"><a class="header" href="#預分配-vs-動態增長實測結果">預分配 vs 動態增長（實測結果）</a></h3>
+<pre><code class="language-bash">go test -bench='BenchmarkAllocWith' -benchmem
+</code></pre>
+<pre><code class="language-text">BenchmarkAllocWithGrow-16       232879    5044 ns/op    4391 B/op    108 allocs/op
+BenchmarkAllocWithPrealloc-16   244104    4445 ns/op    2102 B/op    101 allocs/op
+</code></pre>
+<p>結論：預分配容量可減少約一半 allocation 次數和記憶體用量。</p>
+<hr />
+<h2 id="3-pprof-全家桶"><a class="header" href="#3-pprof-全家桶">3. PProf 全家桶</a></h2>
+<p>這組工具專門處理「哪裡花最多資源」。</p>
+<h3 id="runtimepprof"><a class="header" href="#runtimepprof"><code>runtime/pprof</code></a></h3>
+<p>用途：</p>
+<ul>
+<li>在程式內手動產生 profile</li>
+<li>適合 CLI、batch job、非 HTTP 程式</li>
+</ul>
+<p>什麼時候用：</p>
+<ul>
+<li>你的程式不是長駐 HTTP 服務</li>
+<li>想精準控制開始/結束分析時間點</li>
+</ul>
+<p>常用 API：</p>
+<pre><code class="language-go">import "runtime/pprof"
+
+// CPU
+f, _ := os.Create("cpu.out")
+pprof.StartCPUProfile(f)
+// ... 你的工作 ...
+pprof.StopCPUProfile()
+f.Close()
+
+// Heap（任意時刻抓快照）
+f, _ := os.Create("mem.out")
+runtime.GC()
+pprof.WriteHeapProfile(f)
+f.Close()
+
+// 任意具名 profile
+f, _ := os.Create("block.out")
+pprof.Lookup("block").WriteTo(f, 0)
+f.Close()
+
+// 所有可用 profile 名稱
+for _, p := range pprof.Profiles() {
+    fmt.Printf("%s count=%d\n", p.Name(), p.Count())
+}
+// 輸出: allocs / block / goroutine / heap / mutex / threadcreate
+</code></pre>
+<blockquote>
+<p><strong>注意</strong>：<code>go test -cpuprofile</code> 已開啟 CPU profiling，再呼叫 <code>pprof.StartCPUProfile</code> 會回傳 error，要判斷跳過。<code>-trace</code> 同理。</p>
+</blockquote>
+<h3 id="nethttppprof"><a class="header" href="#nethttppprof"><code>net/http/pprof</code></a></h3>
+<p>用途：</p>
+<ul>
+<li>幫 HTTP 服務掛上 <code>/debug/pprof/*</code></li>
+</ul>
+<pre><code class="language-go">import (
+    "net/http"
+    _ "net/http/pprof" // 副作用 import 即可註冊路由
+)
+
+func main() {
+    go http.ListenAndServe(":6060", nil)
+    // ... 你的程式 ...
+}
+</code></pre>
+<p>常見 endpoint：</p>
+<div class="table-wrapper"><table><thead><tr><th>路徑</th><th>用途</th></tr></thead><tbody>
+<tr><td><code>/debug/pprof/</code></td><td>總覽</td></tr>
+<tr><td><code>/debug/pprof/profile?seconds=30</code></td><td>CPU 30 秒</td></tr>
+<tr><td><code>/debug/pprof/heap</code></td><td>heap 快照</td></tr>
+<tr><td><code>/debug/pprof/goroutine</code></td><td>goroutine 堆疊</td></tr>
+<tr><td><code>/debug/pprof/block</code></td><td>block profile</td></tr>
+<tr><td><code>/debug/pprof/mutex</code></td><td>mutex profile</td></tr>
+<tr><td><code>/debug/pprof/trace?seconds=5</code></td><td>execution trace</td></tr>
+</tbody></table>
+</div>
+<p>注意：</p>
+<ul>
+<li><code>block</code> 需要 <code>runtime.SetBlockProfileRate(1)</code></li>
+<li><code>mutex</code> 需要 <code>runtime.SetMutexProfileFraction(1)</code></li>
+</ul>
+<h3 id="go-tool-pprof"><a class="header" href="#go-tool-pprof"><code>go tool pprof</code></a></h3>
+<p>用途：</p>
+<ul>
+<li>讀 profile 並做文字/圖形分析</li>
+</ul>
+<pre><code class="language-bash"># 讀本機 profile 檔
+go tool pprof cpu.out
+go tool pprof mem.out
+
+# 直接從 HTTP 抓（程式要先跑起來）
+go tool pprof http://127.0.0.1:6060/debug/pprof/heap
+go tool pprof http://127.0.0.1:6060/debug/pprof/profile?seconds=30
+
+# 開啟瀏覽器互動 UI（需要 graphviz）
+go tool pprof -http=:8080 cpu.out
+</code></pre>
+<p>互動模式常用命令：</p>
+<div class="table-wrapper"><table><thead><tr><th>命令</th><th>用途</th></tr></thead><tbody>
+<tr><td><code>top</code></td><td>看最熱函式（flat/cum）</td></tr>
+<tr><td><code>top10</code></td><td>只看前幾名</td></tr>
+<tr><td><code>list Foo</code></td><td>對照原始碼，看哪幾行最熱</td></tr>
+<tr><td><code>web</code></td><td>開呼叫圖（需 graphviz）</td></tr>
+<tr><td><code>peek Foo</code></td><td>看 callers/callees</td></tr>
+<tr><td><code>traces</code></td><td>看樣本堆疊</td></tr>
+<tr><td><code>svg</code></td><td>輸出 SVG 呼叫圖</td></tr>
+</tbody></table>
+</div>
+<h4 id="實測輸出cpu-profile"><a class="header" href="#實測輸出cpu-profile">實測輸出（CPU profile）</a></h4>
+<pre><code class="language-bash">go test -bench=BenchmarkCountPrimes -cpuprofile=cpu.out
+go tool pprof -top cpu.out
+</code></pre>
+<pre><code class="language-text">Type: cpu  Duration: 1.30s  Samples = 1.17s (89.72%)
+      flat  flat%   sum%        cum   cum%
+     0.95s 81.20% 81.20%      1.03s 88.03%  go-tools-demo.isPrime (inline)
+     0.12s 10.26% 91.45%      1.15s 98.29%  go-tools-demo.BenchmarkCountPrimes
+     0.08s  6.84% 98.29%      0.08s  6.84%  math.Sqrt (inline)
+</code></pre>
+<p>解讀：</p>
+<ul>
+<li><code>flat</code>：函式自己花的時間（不含被呼叫者）</li>
+<li><code>cum</code>：函式 + 所有被呼叫者加起來的時間</li>
+<li><code>(inline)</code>：已被 inline，不是真正的函式呼叫</li>
+</ul>
+<h4 id="實測輸出memory-profile"><a class="header" href="#實測輸出memory-profile">實測輸出（Memory profile）</a></h4>
+<pre><code class="language-bash">go test -bench=BenchmarkAllocStrings -memprofile=mem.out
+go tool pprof -top mem.out
+</code></pre>
+<pre><code class="language-text">Type: alloc_space
+      flat  flat%   sum%        cum   cum%
+  654.21MB 69.55% 69.55%   932.72MB 99.16%  go-tools-demo.allocStrings
+     278MB 29.56% 99.11%   278.51MB 29.61%  fmt.Sprintf
+</code></pre>
+<h3 id="go-tool-pprof-與-go-tool-trace-怎麼選"><a class="header" href="#go-tool-pprof-與-go-tool-trace-怎麼選"><code>go tool pprof</code> 與 <code>go tool trace</code> 怎麼選</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>工具</th><th>主要回答的問題</th></tr></thead><tbody>
+<tr><td><code>pprof</code></td><td>哪些函式最吃 CPU / memory / lock / block</td></tr>
+<tr><td><code>trace</code></td><td>為什麼 goroutine 在那個時間點沒跑、被誰卡住、GC/排程如何互動</td></tr>
+</tbody></table>
+</div>
+<p>一句話：</p>
+<ul>
+<li>熱點先看 <code>pprof</code></li>
+<li>時序、排程、阻塞因果看 <code>trace</code></li>
+</ul>
+<hr />
+<h2 id="4-trace-全家桶"><a class="header" href="#4-trace-全家桶">4. Trace 全家桶</a></h2>
+<h3 id="runtimetrace"><a class="header" href="#runtimetrace"><code>runtime/trace</code></a></h3>
+<p>用途：</p>
+<ul>
+<li>在程式中產生 execution trace</li>
+</ul>
+<pre><code class="language-go">import "runtime/trace"
+
+f, _ := os.Create("trace.out")
+trace.Start(f)
+defer trace.Stop()
+// ... 你的工作 ...
+</code></pre>
+<p>標註業務 task / region（方便在 UI 中對齊）：</p>
+<pre><code class="language-go">import "runtime/trace"
+
+ctx, task := trace.NewTask(context.Background(), "processRequest")
+defer task.End()
+
+trace.WithRegion(ctx, "parse", func() {
+    // 解析邏輯
+})
+
+trace.Log(ctx, "db", "query start")
+</code></pre>
+<p>什麼時候用：</p>
+<ul>
+<li>想看 goroutine 建立、喚醒、阻塞、syscall、GC、P/M/G 排程</li>
+<li>不只想知道「熱點」，還要知道「為什麼這個時間點卡住」</li>
+</ul>
+<h3 id="go-tool-trace"><a class="header" href="#go-tool-trace"><code>go tool trace</code></a></h3>
+<pre><code class="language-bash">go test ./... -run TestTrace -trace=trace.out
+go tool trace trace.out
+# 開啟瀏覽器 http://127.0.0.1:&lt;隨機port&gt;
+
+# 或從 HTTP 服務抓
+curl -o trace.out http://127.0.0.1:6060/debug/pprof/trace?seconds=5
+go tool trace trace.out
+</code></pre>
+<p>UI 頁面說明：</p>
+<div class="table-wrapper"><table><thead><tr><th>頁面</th><th>看什麼</th></tr></thead><tbody>
+<tr><td>View trace</td><td>時間軸，所有 goroutine/P/GC 事件</td></tr>
+<tr><td>Goroutine analysis</td><td>各 goroutine 排程延遲統計</td></tr>
+<tr><td>Network blocking</td><td>network 等待時間</td></tr>
+<tr><td>Synchronization blocking</td><td>channel/mutex 等待時間</td></tr>
+<tr><td>Syscall blocking</td><td>syscall 阻塞時間</td></tr>
+<tr><td>Scheduler latency</td><td>goroutine 從 runnable 到 running 的延遲</td></tr>
+<tr><td>User-defined tasks</td><td><code>trace.NewTask</code> 標記的業務任務</td></tr>
+</tbody></table>
+</div>
+<p>優勢：有時間軸、有 goroutine 與 task 關聯、看得出 block/unblock 因果</p>
+<p>限制：檔案可能很大；trace overhead 通常比 pprof 高</p>
+<hr />
+<h2 id="5-coverage-工具"><a class="header" href="#5-coverage-工具">5. Coverage 工具</a></h2>
+<h3 id="go-test--cover---coverprofile"><a class="header" href="#go-test--cover---coverprofile"><code>go test -cover</code> / <code>-coverprofile</code></a></h3>
+<pre><code class="language-bash"># 快速看覆蓋率百分比
+go test ./... -cover
+# ok  demo  0.255s  coverage: 50.0% of statements
+
+# 輸出詳細 profile
+go test ./... -coverprofile=cover.out
+</code></pre>
+<h3 id="go-tool-cover"><a class="header" href="#go-tool-cover"><code>go tool cover</code></a></h3>
+<pre><code class="language-bash"># 每個函式的覆蓋率
+go tool cover -func=cover.out
+# main.go:13:  isPrime      100.0%
+# main.go:25:  countPrimes  100.0%
+# main.go:73:  main           0.0%
+# total:       (statements)  50.0%
+
+# 開 HTML 報告（瀏覽器高亮顯示哪些行沒測到）
+go tool cover -html=cover.out
+</code></pre>
+<h3 id="go-tool-covdatago-120"><a class="header" href="#go-tool-covdatago-120"><code>go tool covdata</code>（Go 1.20+）</a></h3>
+<p>用途：</p>
+<ul>
+<li>操作新版 coverage data 檔案</li>
+<li>整合多次執行、多個 binary 的 coverage</li>
+</ul>
+<pre><code class="language-bash"># 收集可執行檔的 coverage
+GOCOVERDIR=/tmp/cov ./myapp
+go tool covdata textfmt -i=/tmp/cov -o=cover.out
+go tool cover -html=cover.out
+</code></pre>
+<hr />
+<h2 id="6-race--sanitizer--memory-問題"><a class="header" href="#6-race--sanitizer--memory-問題">6. Race / Sanitizer / Memory 問題</a></h2>
+<h3 id="-race"><a class="header" href="#-race"><code>-race</code></a></h3>
+<pre><code class="language-bash">go test ./... -race
+go build -race -o myapp .
+</code></pre>
+<p>代價：慢 2~20x、binary 變大。建議只在 CI 或排查時開。</p>
+<p><strong>有意識地製造 race（反面教材）：</strong></p>
+<pre><code class="language-go">// 這段程式碼沒有鎖，會被 -race 抓到
+var counter int
+var wg sync.WaitGroup
+for i := 0; i &lt; 100; i++ {
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+        counter++ // DATA RACE
+    }()
+}
+wg.Wait()
+</code></pre>
+<p><strong>正確做法：用 sync.Mutex 或 atomic：</strong></p>
+<pre><code class="language-go">// 方法一：Mutex（上面的 Counter 示範）
+// 方法二：atomic
+var counter int64
+go func() { atomic.AddInt64(&amp;counter, 1) }()
+</code></pre>
+<h3 id="-asan"><a class="header" href="#-asan"><code>-asan</code></a></h3>
+<pre><code class="language-bash">go build -asan -o myapp .
+</code></pre>
+<p>適用：cgo 程式懷疑 native memory 越界、use-after-free。</p>
+<h3 id="-msan"><a class="header" href="#-msan"><code>-msan</code></a></h3>
+<pre><code class="language-bash">go build -msan -o myapp .
+</code></pre>
+<p>適用：cgo 程式懷疑未初始化記憶體。</p>
+<hr />
+<h2 id="7-runtime-觀測與控制"><a class="header" href="#7-runtime-觀測與控制">7. Runtime 觀測與控制</a></h2>
+<h3 id="godebug"><a class="header" href="#godebug"><code>GODEBUG</code></a></h3>
+<p>格式：</p>
+<pre><code class="language-bash">GODEBUG=key=value,key=value ./app
+</code></pre>
+<h3 id="常用-godebug-選項"><a class="header" href="#常用-godebug-選項">常用 <code>GODEBUG</code> 選項</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>變數</th><th>用途</th><th>什麼時候用</th></tr></thead><tbody>
+<tr><td><code>gctrace=1</code></td><td>每次 GC 印一行摘要</td><td>先看 GC 是否異常頻繁、pause 是否過大</td></tr>
+<tr><td><code>schedtrace=1000</code></td><td>每 1000ms 印 scheduler 摘要</td><td>看 runnable goroutine 是否堆積</td></tr>
+<tr><td><code>scheddetail=1</code></td><td>配合 <code>schedtrace</code> 印更多細節</td><td>scheduler 問題深入分析</td></tr>
+<tr><td><code>inittrace=1</code></td><td>印每個 package init 時間/配置量</td><td>啟動慢、初始化太肥</td></tr>
+<tr><td><code>scavtrace=1</code></td><td>印 scavenger 資訊</td><td>看記憶體回收給 OS 的行為</td></tr>
+<tr><td><code>gcpacertrace=1</code></td><td>印 GC pacer 狀態</td><td>深入 GC 調校</td></tr>
+<tr><td><code>allocfreetrace=1</code></td><td>每次 alloc/free 都列 trace</td><td>小範圍重現可疑 allocation 問題，代價極高</td></tr>
+<tr><td><code>clobberfree=1</code></td><td>free 後覆寫壞值</td><td>查 use-after-free 類問題</td></tr>
+<tr><td><code>efence=1</code></td><td>每個物件單獨 page 配置</td><td>查 allocator / memory smash 類問題</td></tr>
+<tr><td><code>cgocheck=2</code></td><td>cgo 指標傳遞重檢查</td><td>懷疑 Go pointer 被錯誤交給 C</td></tr>
+<tr><td><code>madvdontneed=0/1</code></td><td>控制記憶體歸還 OS 策略</td><td>查 RSS 不降問題</td></tr>
+<tr><td><code>memprofilerate=1</code></td><td>調整記憶體 profile 取樣率</td><td>要更精準 allocation profile</td></tr>
+<tr><td><code>tracebackancestors=N</code></td><td>traceback 顯示 goroutine 祖先</td><td>查 goroutine 是誰生出來的</td></tr>
+<tr><td><code>asyncpreemptoff=1</code></td><td>關閉 async preemption</td><td>查 preemption / GC 相關疑難雜症</td></tr>
+<tr><td><code>gcstoptheworld=1</code></td><td>關閉 concurrent GC</td><td>對照 GC 行為，不建議常態使用</td></tr>
+</tbody></table>
+</div>
+<h4 id="gctrace1-輸出解讀"><a class="header" href="#gctrace1-輸出解讀"><code>gctrace=1</code> 輸出解讀</a></h4>
+<pre><code class="language-text">gc 7 @0.123s 2%: 0.1+0.5+0.03 ms clock, 0.8+0.4/0.3/0+0.2 ms cpu, 4-&gt;4-&gt;2 MB, 5 MB goal, 16 P
+^   ^  ^     ^   ^              ^                                  ^         ^
+GC# 時間戳 佔比 STW+並發+STW  CPU時間            heap: before-&gt;after-&gt;live  goal P數
+</code></pre>
+<h4 id="常見命令"><a class="header" href="#常見命令">常見命令</a></h4>
+<pre><code class="language-bash">GODEBUG=gctrace=1 ./app
+GODEBUG=schedtrace=1000,scheddetail=1 ./app
+GODEBUG=inittrace=1 ./app
+GODEBUG=gctrace=1,scavtrace=1 ./app
+</code></pre>
+<h3 id="gogc"><a class="header" href="#gogc"><code>GOGC</code></a></h3>
+<p>用途：控制 GC 目標比例，預設 <code>100</code>（即 heap 增長到上次存活大小的 2 倍時觸發 GC）。</p>
+<pre><code class="language-bash">GOGC=50 ./app    # 更積極 GC，記憶體壓力大時用
+GOGC=200 ./app   # 少 GC，記憶體夠多時用
+GOGC=off ./app   # 完全關閉 GC（危險，只用於診斷）
+</code></pre>
+<p>程式內動態調整：</p>
+<pre><code class="language-go">old := debug.SetGCPercent(50)
+defer debug.SetGCPercent(old)
+</code></pre>
+<h3 id="gomemlimitgo-119"><a class="header" href="#gomemlimitgo-119"><code>GOMEMLIMIT</code>（Go 1.19+）</a></h3>
+<p>用途：設定 Go runtime soft memory limit。</p>
+<pre><code class="language-bash">GOMEMLIMIT=512MiB ./app
+GOMEMLIMIT=1GiB ./app
+</code></pre>
+<p>適用場景：</p>
+<ul>
+<li>容器內記憶體有限，避免 OOM Kill</li>
+<li>搭配 <code>GOGC=off</code> 讓 GC 只由記憶體上限觸發，減少 GC 次數</li>
+</ul>
+<p>程式內設定：</p>
+<pre><code class="language-go">import "runtime/debug"
+debug.SetMemoryLimit(512 * 1024 * 1024) // 512 MiB
+</code></pre>
+<h3 id="gomaxprocs"><a class="header" href="#gomaxprocs"><code>GOMAXPROCS</code></a></h3>
+<pre><code class="language-bash">GOMAXPROCS=4 ./app   # 限制只用 4 個 CPU
+</code></pre>
+<p>程式內設定：</p>
+<pre><code class="language-go">runtime.GOMAXPROCS(4)
+fmt.Println(runtime.GOMAXPROCS(0)) // 查詢當前值
+</code></pre>
+<h3 id="gorace"><a class="header" href="#gorace"><code>GORACE</code></a></h3>
+<p>配合 <code>-race</code> 使用：</p>
+<pre><code class="language-bash">GORACE="log_path=/tmp/race.log halt_on_error=1" go test ./... -race
+</code></pre>
+<h3 id="gotraceback"><a class="header" href="#gotraceback"><code>GOTRACEBACK</code></a></h3>
+<div class="table-wrapper"><table><thead><tr><th>值</th><th>效果</th></tr></thead><tbody>
+<tr><td><code>none</code></td><td>幾乎不印 stack</td></tr>
+<tr><td><code>single</code></td><td>只印當前 goroutine</td></tr>
+<tr><td><code>all</code></td><td>印所有 user goroutine</td></tr>
+<tr><td><code>system</code></td><td>連 runtime goroutine 一起印</td></tr>
+<tr><td><code>crash</code></td><td>印完後觸發系統層 crash/core dump</td></tr>
+</tbody></table>
+</div>
+<pre><code class="language-bash">GOTRACEBACK=all ./app
+GOTRACEBACK=crash ./app  # 搭配 ulimit -c unlimited 產生 core dump
+</code></pre>
+<hr />
+<h2 id="8-runtimemetrics-與-runtimedebug"><a class="header" href="#8-runtimemetrics-與-runtimedebug">8. <code>runtime/metrics</code> 與 <code>runtime/debug</code></a></h2>
+<h3 id="runtimemetricsgo-116"><a class="header" href="#runtimemetricsgo-116"><code>runtime/metrics</code>（Go 1.16+）</a></h3>
+<p>用途：穩定地讀取 runtime 指標（比 <code>MemStats</code> 更好的 API）。</p>
+<pre><code class="language-go">import "runtime/metrics"
+
+// 查詢所有可用指標
+descs := metrics.All()
+for _, d := range descs {
+    fmt.Printf("%s: %s\n", d.Name, d.Description)
+}
+
+// 讀取特定指標
+samples := []metrics.Sample{
+    {Name: "/gc/heap/allocs:bytes"},
+    {Name: "/gc/cycles/total:gc-cycles"},
+    {Name: "/memory/classes/heap/objects:bytes"},
+    {Name: "/sched/latencies:seconds"},
+}
+metrics.Read(samples)
+for _, s := range samples {
+    fmt.Printf("%s = %v\n", s.Name, s.Value)
+}
+</code></pre>
+<p>常用指標名稱：</p>
+<div class="table-wrapper"><table><thead><tr><th>指標</th><th>意義</th></tr></thead><tbody>
+<tr><td><code>/gc/heap/allocs:bytes</code></td><td>累計分配 bytes</td></tr>
+<tr><td><code>/gc/heap/frees:bytes</code></td><td>累計釋放 bytes</td></tr>
+<tr><td><code>/gc/cycles/total:gc-cycles</code></td><td>GC 次數</td></tr>
+<tr><td><code>/gc/pauses/total/other:seconds</code></td><td>GC pause 時間</td></tr>
+<tr><td><code>/memory/classes/heap/objects:bytes</code></td><td>活躍 heap 物件大小</td></tr>
+<tr><td><code>/sched/latencies:seconds</code></td><td>goroutine 排程延遲分佈</td></tr>
+<tr><td><code>/cpu/classes/user:cpu-seconds</code></td><td>user CPU 使用時間</td></tr>
+</tbody></table>
+</div>
+<p>適合：exporter、<code>/metrics</code> endpoint、長期監控儀表板。</p>
+<h3 id="runtimedebug"><a class="header" href="#runtimedebug"><code>runtime/debug</code></a></h3>
+<pre><code class="language-go">import "runtime/debug"
+
+// 動態調整 GC
+old := debug.SetGCPercent(50)
+defer debug.SetGCPercent(old)
+
+// 設定記憶體上限（等同 GOMEMLIMIT）
+debug.SetMemoryLimit(512 * 1024 * 1024)
+
+// 主動把記憶體還給 OS
+debug.FreeOSMemory()
+
+// 讀 GC 統計
+var stats debug.GCStats
+debug.ReadGCStats(&amp;stats)
+fmt.Printf("NumGC=%d, LastGC=%v\n", stats.NumGC, stats.LastGC)
+fmt.Printf("Pause total: %v\n", stats.PauseTotal)
+
+// 讀 build info（module 路徑、版本、依賴）
+if info, ok := debug.ReadBuildInfo(); ok {
+    fmt.Printf("module: %s\n", info.Main.Path)
+    for _, dep := range info.Deps {
+        fmt.Printf("  dep: %s %s\n", dep.Path, dep.Version)
+    }
+}
+</code></pre>
+<h3 id="runtimememstats"><a class="header" href="#runtimememstats"><code>runtime.MemStats</code></a></h3>
+<pre><code class="language-go">var ms runtime.MemStats
+runtime.GC()                   // 先 GC 讓數字準確
+runtime.ReadMemStats(&amp;ms)
+
+fmt.Printf("HeapAlloc:   %d KB\n", ms.HeapAlloc/1024)   // 當前活躍 heap
+fmt.Printf("TotalAlloc:  %d KB\n", ms.TotalAlloc/1024)  // 累計分配（只增不減）
+fmt.Printf("Sys:         %d KB\n", ms.Sys/1024)          // 從 OS 取得的總記憶體
+fmt.Printf("NumGC:       %d\n", ms.NumGC)                // GC 次數
+fmt.Printf("PauseTotalNs:%d ns\n", ms.PauseTotalNs)      // GC 累計 pause 時間
+</code></pre>
+<hr />
+<h2 id="9-低階-go-tool-完整列表"><a class="header" href="#9-低階-go-tool-完整列表">9. 低階 <code>go tool</code> 完整列表</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>工具</th><th>用途</th><th>什麼時候用</th></tr></thead><tbody>
+<tr><td><code>addr2line</code></td><td>位址轉原始碼位置</td><td>有 PC 位址、stack 位址，要反查檔案/行號</td></tr>
+<tr><td><code>asm</code></td><td>Go 組譯器</td><td>寫 <code>.s</code>、研究底層 ABI，平時很少直接用</td></tr>
+<tr><td><code>buildid</code></td><td>讀/寫 build ID</td><td>排查 binary 是否對應正確 build</td></tr>
+<tr><td><code>cgo</code></td><td>產生 Go/C 互通膠水碼</td><td>cgo 除錯、研究產生碼</td></tr>
+<tr><td><code>compile</code></td><td>Go 編譯器</td><td>極低階分析、看編譯器行為</td></tr>
+<tr><td><code>covdata</code></td><td>操作 coverage data</td><td>整合多份 coverage</td></tr>
+<tr><td><code>cover</code></td><td>coverage 報告/HTML</td><td>看哪些行沒測到</td></tr>
+<tr><td><code>dist</code></td><td>Go 發行版/建置相關</td><td>工具鏈開發、少數情境</td></tr>
+<tr><td><code>distpack</code></td><td>發行打包工具</td><td>幾乎只有 Go 發行流程會碰</td></tr>
+<tr><td><code>doc</code></td><td>文件查詢低階入口</td><td>一般直接用 <code>go doc</code> 即可</td></tr>
+<tr><td><code>fix</code></td><td>API 遷移修正低階入口</td><td>一般直接用 <code>go fix</code></td></tr>
+<tr><td><code>link</code></td><td>Go linker</td><td>研究連結流程、極低階分析</td></tr>
+<tr><td><code>nm</code></td><td>列 symbol table</td><td>binary 符號分析、大小、是否被裁剪</td></tr>
+<tr><td><code>objdump</code></td><td>反組譯</td><td>查 hot path 最終機器碼</td></tr>
+<tr><td><code>pack</code></td><td>操作 archive</td><td>極少直接使用</td></tr>
+<tr><td><code>pprof</code></td><td>profile 分析</td><td>CPU / memory / block / mutex 熱點分析</td></tr>
+<tr><td><code>test2json</code></td><td>測試輸出轉 JSON</td><td>CI、IDE、機器分析</td></tr>
+<tr><td><code>trace</code></td><td>execution trace UI</td><td>排程、GC、阻塞因果分析</td></tr>
+<tr><td><code>vet</code></td><td>靜態檢查低階入口</td><td>一般直接用 <code>go vet</code></td></tr>
+</tbody></table>
+</div>
+<h3 id="go-tool-nm-範例"><a class="header" href="#go-tool-nm-範例"><code>go tool nm</code> 範例</a></h3>
+<pre><code class="language-bash">go build -o myapp .
+go tool nm myapp | grep "main\."
+</code></pre>
+<p>輸出（實測）：</p>
+<pre><code class="language-text">483a80 T main.(*Counter).Get
+483a00 T main.(*Counter).Inc
+483900 T main.allocStrings
+483ba0 T main.main
+</code></pre>
+<p>欄位：<code>地址 類型 符號名</code>，<code>T</code> = text（程式碼段）</p>
+<h3 id="go-tool-objdump-範例"><a class="header" href="#go-tool-objdump-範例"><code>go tool objdump</code> 範例</a></h3>
+<pre><code class="language-bash">go tool objdump -s "main\.allocStrings" myapp | head -15
+</code></pre>
+<p>輸出（實測）：</p>
+<pre><code class="language-text">TEXT main.allocStrings(SB) /path/to/main.go
+  main.go:36    CMPQ SP, 0x10(R14)
+  main.go:36    JBE  ...
+  main.go:37    MOVQ AX, BX
+  main.go:37    LEAQ 0x859c(IP), AX
+  main.go:37    CALL runtime.makeslice(SB)
+</code></pre>
+<h3 id="go-tool-addr2line-範例"><a class="header" href="#go-tool-addr2line-範例"><code>go tool addr2line</code> 範例</a></h3>
+<pre><code class="language-bash"># 把 PC 位址轉成 file:line
+echo "0x483900" | go tool addr2line myapp
+</code></pre>
+<h3 id="go-doc-範例"><a class="header" href="#go-doc-範例"><code>go doc</code> 範例</a></h3>
+<pre><code class="language-bash">go doc runtime.MemStats
+go doc sync.Mutex.Lock
+go doc fmt.Sprintf
+go doc -all net/http
+</code></pre>
+<h3 id="go-tool-test2json-範例"><a class="header" href="#go-tool-test2json-範例"><code>go tool test2json</code> 範例</a></h3>
+<pre><code class="language-bash">go test ./... -v | go tool test2json | jq '.Action'
+# "run" "output" "pass" "fail" ...
+</code></pre>
+<hr />
+<h2 id="10-實戰選型"><a class="header" href="#10-實戰選型">10. 實戰選型</a></h2>
+<h3 id="cpu-高"><a class="header" href="#cpu-高">CPU 高</a></h3>
+<p>先用：</p>
+<pre><code class="language-bash">go test ./... -bench=. -cpuprofile=cpu.out
+go tool pprof cpu.out
+# 互動輸入 top10，看 flat% 最高的函式
+</code></pre>
+<p>如果是線上服務：</p>
+<pre><code class="language-bash">go tool pprof http://127.0.0.1:6060/debug/pprof/profile?seconds=30
+</code></pre>
+<h3 id="記憶體高"><a class="header" href="#記憶體高">記憶體高</a></h3>
+<p>先用：</p>
+<pre><code class="language-bash">go test ./... -run TestX -memprofile=mem.out
+go tool pprof mem.out
+# 互動輸入 top，看 alloc_space 最高的函式
+</code></pre>
+<p>再搭配：</p>
+<pre><code class="language-bash">GODEBUG=gctrace=1 ./app
+</code></pre>
+<p>如果是容器壓力：</p>
+<ul>
+<li>看 <code>GOMEMLIMIT</code></li>
+<li>看 <code>GOGC</code></li>
+<li>看 <code>runtime/metrics</code></li>
+</ul>
+<h3 id="鎖競爭--卡住"><a class="header" href="#鎖競爭--卡住">鎖競爭 / 卡住</a></h3>
+<p>先用：</p>
+<pre><code class="language-bash">go test ./... -run TestX -mutexprofile=mutex.out -mutexprofilefraction=1
+go tool pprof mutex.out
+</code></pre>
+<p>如果要看卡住時序：</p>
+<pre><code class="language-bash">go test ./... -run TestX -trace=trace.out
+go tool trace trace.out
+</code></pre>
+<h3 id="goroutine-洩漏--誰沒結束"><a class="header" href="#goroutine-洩漏--誰沒結束">Goroutine 洩漏 / 誰沒結束</a></h3>
+<p>先用：</p>
+<pre><code class="language-bash"># 線上服務
+go tool pprof http://127.0.0.1:6060/debug/pprof/goroutine
+
+# 非 HTTP 服務（程式內抓）
+f, _ := os.Create("goroutine.out")
+pprof.Lookup("goroutine").WriteTo(f, 1) // 1 = text 格式
+f.Close()
+
+# panic 時印全部 goroutine
+GOTRACEBACK=all ./app
+</code></pre>
+<h3 id="啟動慢"><a class="header" href="#啟動慢">啟動慢</a></h3>
+<p>先用：</p>
+<pre><code class="language-bash">GODEBUG=inittrace=1 ./app
+</code></pre>
+<p>輸出格式：<code>init pkg=xxx @t ms, 2 ms clock, 1000 bytes, 3 allocs</code></p>
+<p>如果還要看整段啟動時序：</p>
+<pre><code class="language-bash">go test -run TestStartup -trace=trace.out
+go tool trace trace.out
+</code></pre>
+<h3 id="疑似資料競態"><a class="header" href="#疑似資料競態">疑似資料競態</a></h3>
+<p>直接先用：</p>
+<pre><code class="language-bash">go test ./... -race
+</code></pre>
+<p>不要一開始就先看 pprof。那是不同維度的問題。</p>
+<h3 id="想看-inline--escape-決策"><a class="header" href="#想看-inline--escape-決策">想看 inline / escape 決策</a></h3>
+<pre><code class="language-bash">go build -gcflags='-m' ./...           # 一層 inline 資訊
+go build -gcflags='-m -m' ./...        # 更詳細
+go build -gcflags='all=-m' ./...       # 包含依賴
+</code></pre>
+<hr />
+<h2 id="11-一句話版心法"><a class="header" href="#11-一句話版心法">11. 一句話版心法</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>問題類型</th><th>最優先工具</th></tr></thead><tbody>
+<tr><td>熱點</td><td><code>pprof</code></td></tr>
+<tr><td>時序/阻塞/排程</td><td><code>trace</code></td></tr>
+<tr><td>競態</td><td><code>-race</code></td></tr>
+<tr><td>測試覆蓋率</td><td><code>cover</code></td></tr>
+<tr><td>runtime 內部狀態</td><td><code>GODEBUG</code></td></tr>
+<tr><td>GC/記憶體策略</td><td><code>GOGC</code>、<code>GOMEMLIMIT</code>、<code>runtime/metrics</code></td></tr>
+<tr><td>低階 binary/匯編</td><td><code>objdump</code>、<code>nm</code>、<code>addr2line</code></td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="12-建議工作流"><a class="header" href="#12-建議工作流">12. 建議工作流</a></h2>
+<p>效能問題排查，通常照這順序最省時間：</p>
+<ol>
+<li>先重現問題（加 <code>-race</code> 先排掉競態）</li>
+<li>CPU 問題先抓 <code>pprof</code>（<code>-cpuprofile</code> + <code>go tool pprof -top</code>）</li>
+<li>卡頓/延遲/阻塞再補 <code>trace</code>（<code>-trace</code> + <code>go tool trace</code>）</li>
+<li>記憶體問題加 <code>memprofile</code>、<code>gctrace</code></li>
+<li>並發正確性問題跑 <code>-race</code></li>
+<li>需要長期監控時接 <code>runtime/metrics</code></li>
+</ol>
+<p>不要反過來：</p>
+<ul>
+<li>不要一上來就開一堆 <code>GODEBUG</code></li>
+<li>不要還沒 benchmark 就急著看匯編</li>
+<li>不要把 <code>pprof</code> 跟 <code>trace</code> 當同一種工具</li>
+<li>不要在生產環境一開始就跑 <code>allocfreetrace=1</code>（overhead 極高）</li>
+</ul>
+<hr />
+<h2 id="13-快速參考profile-種類對照"><a class="header" href="#13-快速參考profile-種類對照">13. 快速參考：profile 種類對照</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Profile 種類</th><th>收集方式</th><th>讀取方式</th><th>看什麼</th></tr></thead><tbody>
+<tr><td>CPU</td><td><code>-cpuprofile</code> / <code>pprof.StartCPUProfile</code></td><td><code>go tool pprof -top</code></td><td>函式 CPU 佔比</td></tr>
+<tr><td>Heap</td><td><code>-memprofile</code> / <code>pprof.WriteHeapProfile</code></td><td><code>go tool pprof -top</code></td><td>allocation 大頭</td></tr>
+<tr><td>Block</td><td><code>-blockprofile</code> + rate=1 / <code>Lookup("block")</code></td><td><code>go tool pprof -top</code></td><td>channel/mutex/syscall 阻塞</td></tr>
+<tr><td>Mutex</td><td><code>-mutexprofile</code> + fraction=1 / <code>Lookup("mutex")</code></td><td><code>go tool pprof -top</code></td><td>鎖競爭熱點</td></tr>
+<tr><td>Goroutine</td><td><code>Lookup("goroutine").WriteTo(f,1)</code></td><td>直接看文字 / <code>pprof</code></td><td>goroutine 堆疊快照</td></tr>
+<tr><td>Trace</td><td><code>-trace</code> / <code>trace.Start</code></td><td><code>go tool trace</code></td><td>時序、排程、GC 全景</td></tr>
+<tr><td>Coverage</td><td><code>-coverprofile</code></td><td><code>go tool cover</code></td><td>哪些行未被測試覆蓋</td></tr>
+</tbody></table>
+</div>
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../go/go-compile-details.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../go/go_concurrency_tools.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../go/go-compile-details.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../go/go_concurrency_tools.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
