@@ -220,6 +220,7 @@
         - [Go 效能分析與最佳化指南](go/go_performance_analysis.md)
         - [Go 編譯細節查看指令](go/go-compile-details.md)
         - [Go 併發觀察與調試工具全覽](go/go_concurrency_tools.md)
+        - [GODEBUG 環境變數與 Runtime 除錯指南](go/go_godebug_runtime_debug_guide.md)
         - [Golang 大殺器之跟蹤剖析 trace](go/trace.md)
         - [Golang Debugger](go/golang_debugger.md)
         - [Go + MySQL 死鎖問題調查指南](go/go_mysql_deadlock_debug.md)
