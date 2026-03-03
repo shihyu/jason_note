@@ -1,0 +1,487 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Go Runtime 啟動流程與 Scheduler Trace 解析 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="go-runtime-啟動流程與-scheduler-trace-解析"><a class="header" href="#go-runtime-啟動流程與-scheduler-trace-解析">Go Runtime 啟動流程與 Scheduler Trace 解析</a></h1>
+<h2 id="整理來源"><a class="header" href="#整理來源">整理來源</a></h2>
+<ul>
+<li>Day 12: <a href="https://ithelp.ithome.com.tw/articles/10221613">簡單除錯 GO 語言程式</a></li>
+<li>Day 13: <a href="https://ithelp.ithome.com.tw/articles/10221931">更多除錯訊息</a></li>
+</ul>
+<h2 id="前言"><a class="header" href="#前言">前言</a></h2>
+<p>這兩篇主要圍繞 <code>runtime.schedinit</code> 後半段的初始化流程，以及 <code>GODEBUG</code> 相關除錯選項如何在 Go runtime 中生效。若把內容串起來看，脈絡會是：</p>
+<ol>
+<li>啟動時先整理命令列參數與環境變數。</li>
+<li>解析 <code>GODEBUG</code>、<code>GOTRACEBACK</code> 等除錯設定。</li>
+<li>透過 <code>allocfreetrace</code>、<code>schedtrace</code>、<code>scheddetail</code> 觀察 runtime 行為。</li>
+<li>回頭追蹤 runtime 原始碼，確認這些 trace 是怎麼印出來的。</li>
+</ol>
+<h2 id="schedinit-看到哪裡"><a class="header" href="#schedinit-看到哪裡"><code>schedinit</code> 看到哪裡</a></h2>
+<p>在這一段初始化流程中，可以先聚焦幾個關鍵呼叫：</p>
+<pre><code class="language-go">...
+goargs()
+goenvs()
+parsedebugvars()
+gcinit()
+
+sched.lastpoll = uint64(nanotime())
+procs := ncpu
+if n, ok := atoi32(gogetenv("GOMAXPROCS")); ok &amp;&amp; n &gt; 0 {
+    procs = n
+}
+...
+</code></pre>
+<p>前半段處理啟動資訊，後半段則開始依據環境設定初始化 scheduler 與 GC。</p>
+<h2 id="goargs處理命令列參數"><a class="header" href="#goargs處理命令列參數"><code>goargs</code>：處理命令列參數</a></h2>
+<p><code>goargs</code> 位在 <code>runtime/runtime1.go</code>：</p>
+<pre><code class="language-go">func goargs() {
+    if GOOS == "windows" {
+        return
+    }
+    argslice = make([]string, argc)
+    for i := int32(0); i &lt; argc; i++ {
+        argslice[i] = gostringnocopy(argv_index(argv, i))
+    }
+}
+</code></pre>
+<p>這段邏輯很直接：</p>
+<ul>
+<li>Windows 走不同路徑，這裡直接略過。</li>
+<li>先建立 <code>argslice</code>。</li>
+<li>逐一從 <code>argv</code> 取出參數位置。</li>
+<li>用 <code>gostringnocopy</code> 把底層 byte 資料轉成 Go 的 <code>string</code>。</li>
+</ul>
+<p><code>gostringnocopy</code> 的核心如下：</p>
+<pre><code class="language-go">func gostringnocopy(str *byte) string {
+    ss := stringStruct{str: unsafe.Pointer(str), len: findnull(str)}
+    s := *(*string)(unsafe.Pointer(&amp;ss))
+    return s
+}
+</code></pre>
+<p>重點是它沒有重新複製字串內容，而是透過 <code>unsafe</code> 直接把既有記憶體包裝成 Go 字串。</p>
+<h2 id="goenvs處理環境變數"><a class="header" href="#goenvs處理環境變數"><code>goenvs</code>：處理環境變數</a></h2>
+<p>Linux 下的 <code>goenvs</code> 會轉呼叫 <code>goenvs_unix</code>：</p>
+<pre><code class="language-go">func goenvs_unix() {
+    // TODO(austin): ppc64 in dynamic linking mode doesn't
+    // guarantee env[] will immediately follow argv. Might cause
+    // problems.
+    n := int32(0)
+    for argv_index(argv, argc+1+n) != nil {
+        n++
+    }
+
+    envs = make([]string, n)
+    for i := int32(0); i &lt; n; i++ {
+        envs[i] = gostring(argv_index(argv, argc+1+i))
+    }
+}
+</code></pre>
+<p>這裡依賴一個重要假設：環境變數陣列緊接在命令列參數之後。流程和 <code>goargs</code> 很像，但改用 <code>gostring</code>，不是 <code>gostringnocopy</code>。原文留下的問題也集中在這裡：</p>
+<ul>
+<li>為什麼 Windows 不走這個處理流程？</li>
+<li>為什麼環境變數這裡不用 <code>gostringnocopy</code>？</li>
+</ul>
+<h2 id="parsedebugvars解析-godebug"><a class="header" href="#parsedebugvars解析-godebug"><code>parsedebugvars</code>：解析 <code>GODEBUG</code></a></h2>
+<p><code>parsedebugvars</code> 會把 <code>GODEBUG</code> 解析成多組 <code>key=value</code>：</p>
+<pre><code class="language-go">func parsedebugvars() {
+    ...
+    for p := gogetenv("GODEBUG"); p != ""; {
+        field := ""
+        i := index(p, ",")
+        if i &lt; 0 {
+            field, p = p, ""
+        } else {
+            field, p = p[:i], p[i+1:]
+        }
+        i = index(field, "=")
+        if i &lt; 0 {
+            continue
+        }
+        key, value := field[:i], field[i+1:]
+        ...
+    }
+}
+</code></pre>
+<p>這表示 <code>GODEBUG</code> 可以一次攜帶多組設定，例如：</p>
+<pre><code class="language-bash">GODEBUG=allocfreetrace=1,schedtrace=10,scheddetail=1
+</code></pre>
+<h2 id="allocfreetrace觀察記憶體配置"><a class="header" href="#allocfreetrace觀察記憶體配置"><code>allocfreetrace</code>：觀察記憶體配置</a></h2>
+<p><code>allocfreetrace=1</code> 會在配置或釋放記憶體時印出 trace。原文用 hello world 範例觀察：</p>
+<pre><code class="language-bash">GODEBUG=allocfreetrace=1 ./hw
+</code></pre>
+<p>輸出中會看到大量 <code>tracealloc(...)</code> 與對應 stack trace。即使只是很小的程式，輸出量也會相當可觀，執行時間也會明顯拉長。這類 trace 的價值在於：</p>
+<ul>
+<li>可以看到記憶體配置從哪條呼叫鏈發生。</li>
+<li>能快速判斷初始化階段誰在大量配置物件。</li>
+<li>對照不同程式，能粗看 allocation/free 的分布差異。</li>
+</ul>
+<blockquote>
+<p>實測註記（Go 1.21.6 / Linux amd64）：hello world 範例仍可看到 <code>tracealloc</code>，本次驗證共出現 65 次 <code>tracealloc</code>、0 次 <code>tracefree</code>；實際數量會隨 Go 版本與執行環境改變。</p>
+</blockquote>
+<h2 id="schedtrace觀察-scheduler-狀態"><a class="header" href="#schedtrace觀察-scheduler-狀態"><code>schedtrace</code>：觀察 scheduler 狀態</a></h2>
+<p>單純 hello world 幾乎看不到 scheduler 的變化，因此需要更忙碌的範例。原文設計了一個 <code>multi-hw.go</code>，讓 <code>n</code> 個 goroutine 透過 channel 互相交換訊息，強迫 scheduler 持續介入。</p>
+<p>初始化 channel 的核心片段如下：</p>
+<pre><code class="language-go">chans := make([][]chan uint32, n)
+shadow := make([]chan uint32, n*n)
+for i := 0; i &lt; n; i++ {
+    chans[i] = shadow[i*n : (i+1)*n]
+    for j := 0; j &lt; n; j++ {
+        chans[i][j] = make(chan uint32)
+    }
+}
+</code></pre>
+<p>再配合 <code>sync.WaitGroup</code> 等待所有 goroutine 結束：</p>
+<pre><code class="language-go">var id uint32
+var wg sync.WaitGroup
+wg.Add(n)
+
+for i := 0; i &lt; n; i++ {
+    go func() {
+        defer wg.Done()
+        myID := atomic.AddUint32(&amp;id, 1) - 1
+        ...
+    }()
+}
+
+wg.Wait()
+time.Sleep(500 * time.Microsecond)
+</code></pre>
+<p>goroutine 之間用同步 channel 互傳資料，並以 <code>myID</code> 做出固定順序，避免 deadlock：</p>
+<pre><code class="language-go">for i = 0; i &lt; myID; i++ {
+    &lt;-chans[i][myID]
+    chans[myID][i] &lt;- myID
+}
+
+for i = myID + 1; i &lt; uint32(n); i++ {
+    chans[myID][i] &lt;- myID
+    &lt;-chans[i][myID]
+}
+</code></pre>
+<p>開啟 <code>schedtrace</code> 之後：</p>
+<pre><code class="language-bash">GODEBUG=schedtrace=1 ./multi-hw 2048
+</code></pre>
+<p>會持續看到這類輸出：</p>
+<pre><code class="language-text">SCHED 0ms: gomaxprocs=8 idleprocs=5 threads=5 spinningthreads=1 idlethreads=0 runqueue=0 [1 0 0 0 0 0 0 0]
+SCHED 1ms: gomaxprocs=8 idleprocs=6 threads=5 spinningthreads=0 idlethreads=2 runqueue=0 [0 0 0 0 0 0 0 0]
+...
+</code></pre>
+<p>從這裡至少可以直接觀察：</p>
+<ul>
+<li><code>gomaxprocs</code> 目前可並行執行的 P 數量。</li>
+<li><code>idleprocs</code> 空閒中的 P。</li>
+<li><code>threads</code> 當前 M 的總數。</li>
+<li><code>runqueue</code> 全域 runnable queue 的狀態。</li>
+</ul>
+<blockquote>
+<p>實測註記（Go 1.21.6 / Linux amd64）：目前輸出會多出 <code>needspinning</code> 等欄位，<code>gomaxprocs</code> 也會依主機 CPU 數改變；本次驗證值為 16，不會固定等於原文示例中的 8。</p>
+</blockquote>
+<h2 id="scheddetail展開-p--m--g-細節"><a class="header" href="#scheddetail展開-p--m--g-細節"><code>scheddetail</code>：展開 P / M / G 細節</a></h2>
+<p>如果只看 <code>schedtrace</code>，資訊會太粗。把 <code>scheddetail=1</code> 一起打開：</p>
+<pre><code class="language-bash">GODEBUG=schedtrace=10,scheddetail=1 ./multi-hw 2048
+</code></pre>
+<p>輸出會展開成 P、M、G 三層資訊，例如：</p>
+<pre><code class="language-text">SCHED 564ms: gomaxprocs=8 idleprocs=0 threads=9 spinningthreads=0 idlethreads=0 runqueue=0 gcwaiting=0 nmidlelocked=0 stopwait=0 sysmonwait=0
+  P0: status=1 schedtick=2651 syscalltick=9 m=0 runqsize=1 gfreecnt=2
+  ...
+  M8: p=3 curg=1714 mallocing=0 throwing=0 preemptoff= locks=0 dying=0 spinning=false blocked=false lockedg=-1
+  ...
+  G142: status=2(chan send) m=5 lockedm=-1
+  ...
+</code></pre>
+<p>這能幫助理解 runtime 當下：</p>
+<ul>
+<li>哪些 P 正在執行、哪個 M 綁在哪個 P 上。</li>
+<li>哪些 G 正卡在 <code>chan send</code> 或 <code>chan receive</code>。</li>
+<li>某些 runnable 或 blocked goroutine 是否集中在特定 P/M。</li>
+</ul>
+<p>但它也帶出一個現象：trace 本身是 runtime 運作當下的快照，不是完全靜止的世界，因此 P、M、G 之間的關係不保證在輸出的所有行中都完全一致。</p>
+<h2 id="這些-trace-在-runtime-怎麼生效"><a class="header" href="#這些-trace-在-runtime-怎麼生效">這些 trace 在 runtime 怎麼生效</a></h2>
+<p>直接在 runtime 原始碼搜尋 <code>debug.schedtrace</code>，可以看到幾個重要位置：</p>
+<pre><code class="language-go">./runtime/runtime1.go:334: {"scheddetail", &amp;debug.scheddetail},
+./runtime/runtime1.go:335: {"schedtrace", &amp;debug.schedtrace},
+./runtime/panic.go:919:   if debug.schedtrace &gt; 0 || debug.scheddetail &gt; 0 {
+./runtime/proc.go:4367:   if debug.schedtrace &gt; 0 &amp;&amp; lasttrace+int64(debug.schedtrace)*1000000 &lt;= now {
+./runtime/proc.go:4369:       schedtrace(debug.scheddetail &gt; 0)
+</code></pre>
+<p>真正印出 <code>SCHED ...</code> 的函式在 <code>runtime/proc.go</code>：</p>
+<pre><code class="language-go">func schedtrace(detailed bool) {
+    now := nanotime()
+    if starttime == 0 {
+        starttime = now
+    }
+
+    lock(&amp;sched.lock)
+    print("SCHED ", (now-starttime)/1e6, "ms: gomaxprocs=", gomaxprocs,
+        " idleprocs=", sched.npidle, " threads=", mcount(),
+        " spinningthreads=", sched.nmspinning, " idlethreads=", sched.nmidle,
+        " runqueue=", sched.runqsize)
+    if detailed {
+        print(" gcwaiting=", sched.gcwaiting, " nmidlelocked=", sched.nmidlelocked,
+            " stopwait=", sched.stopwait, " sysmonwait=", sched.sysmonwait, "\n")
+    }
+    ...
+}
+</code></pre>
+<p>這段後面會分別掃過 <code>allp</code>、<code>allm</code>、<code>allg</code>。更關鍵的是原始碼中的註解：</p>
+<pre><code class="language-go">// We must be careful while reading data from P's, M's and G's.
+// Even if we hold schedlock, most data can be changed concurrently.
+</code></pre>
+<p>也就是說，trace 的資料在讀取同時，scheduler 仍可能持續推進。這正是前面觀察到「P/M 看似對得上，但 G 的關聯未必完全一致」的原因。</p>
+<h2 id="綜合整理"><a class="header" href="#綜合整理">綜合整理</a></h2>
+<p>把兩篇合起來看，可以得到一條比較完整的路徑：</p>
+<ol>
+<li><code>goargs</code> 和 <code>goenvs</code> 先把啟動參數、環境變數整理進 runtime。</li>
+<li><code>parsedebugvars</code> 把 <code>GODEBUG</code> 解析成多組 runtime debug 開關。</li>
+<li><code>allocfreetrace</code> 適合看 allocation 呼叫鏈。</li>
+<li><code>schedtrace</code> 適合看 scheduler 的週期性狀態。</li>
+<li><code>scheddetail</code> 則能進一步看到 P、M、G 的快照。</li>
+<li>這些 trace 都是動態觀測結果，閱讀時不能把它們當作完全靜態的一致狀態。</li>
+</ol>
+<h2 id="後續可追的問題"><a class="header" href="#後續可追的問題">後續可追的問題</a></h2>
+<ul>
+<li>Windows 為什麼不走 <code>goargs</code> 這條路？</li>
+<li><code>gostringnocopy</code> 透過 <code>unsafe</code> 轉字串時，底層記憶體保證在哪裡？</li>
+<li>為什麼 <code>goenvs_unix</code> 用 <code>gostring</code> 而不是 <code>gostringnocopy</code>？</li>
+<li><code>schedtrace</code> 在真實除錯場景中最常拿來解哪一類問題？</li>
+</ul>
+<h2 id="小結"><a class="header" href="#小結">小結</a></h2>
+<p>這兩篇其實是在做同一件事：從 runtime 啟動初始化一路接到可觀測性。前半段處理資料從哪裡來，後半段處理 runtime 願意把哪些內部狀態吐出來。把 <code>goargs</code>、<code>goenvs</code>、<code>parsedebugvars</code> 與 <code>schedtrace</code> 串起來之後，<code>GODEBUG</code> 就不再只是幾個零散選項，而是一條完整的 runtime 除錯入口。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../go/go_godebug_runtime_debug_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../go/trace.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../go/go_godebug_runtime_debug_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../go/trace.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
