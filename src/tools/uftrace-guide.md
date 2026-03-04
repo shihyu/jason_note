@@ -608,3 +608,298 @@ chmod +x verify_uftrace.sh
 ```
 
 正常情況下最後一行應印出「驗證完成」，且中間各步驟無錯誤訊息。
+
+---
+
+## 12. Rust 支援
+
+### 12.1 編譯方式
+
+Rust 使用動態插樁（Dynamic Patching）而非編譯期 mcount，因此**不需要**特別的編譯旗標，只需保留除錯符號即可。
+
+```bash
+# 直接用 rustc 編譯（加 -g 保留除錯符號）
+rustc -g source.rs -o program
+
+# 或使用 cargo（dev profile 預設已含除錯符號）
+cargo build
+# 若要確保有符號，可顯式指定：
+RUSTFLAGS="-g" cargo build
+```
+
+> **注意**：現代 Rust（LLVM 後端）已移除 `mcount` pass，`-C passes=mcount` 會報錯。
+> 正確做法是讓 uftrace 在執行期透過 `-P` 選項進行動態插樁。
+
+---
+
+### 12.2 範例程式
+
+```rust
+// /tmp/uftrace_rust.rs
+use std::thread;
+use std::time::Duration;
+
+fn func_c() {
+    println!("In function C");
+    thread::sleep(Duration::from_micros(1000));
+}
+
+fn func_b() {
+    println!("In function B");
+    thread::sleep(Duration::from_micros(2000));
+    func_c();
+}
+
+fn func_a() {
+    println!("In function A");
+    thread::sleep(Duration::from_micros(3000));
+    func_b();
+}
+
+fn main() {
+    println!("Starting program");
+    func_a();
+    println!("Program finished");
+}
+```
+
+---
+
+### 12.3 編譯與追蹤
+
+**步驟 1：編譯（只需 `-g`）**
+
+```bash
+rustc -g /tmp/uftrace_rust.rs -o /tmp/uftrace_rust
+```
+
+**步驟 2：用 `-P` 動態插樁錄製**
+
+```bash
+cd /tmp
+
+# 只追蹤目前 crate 的函式（crate 名稱即檔名，連字符轉底線）
+uftrace record -P 'uftrace_rust*' ./uftrace_rust
+```
+
+`-P 'uftrace_rust*'` 的意思是：在執行期對所有名稱符合 `uftrace_rust*` 的函式進行動態插樁。這樣可以過濾掉 Rust 標準庫的大量內部函式。
+
+**步驟 3：重播結果**
+
+```bash
+uftrace replay
+```
+
+實際輸出：
+
+```text
+# DURATION     TID     FUNCTION
+            [3412363] | uftrace_rust::main() {
+            [3412363] |   uftrace_rust::func_a() {
+            [3412363] |     uftrace_rust::func_b() {
+   1.059 ms [3412363] |       uftrace_rust::func_c();
+   3.118 ms [3412363] |     } /* uftrace_rust::func_b */
+   6.179 ms [3412363] |   } /* uftrace_rust::func_a */
+   6.196 ms [3412363] | } /* uftrace_rust::main */
+```
+
+函式名稱自動以 `crate名稱::函式名稱` 格式顯示，uftrace 已內建 Rust 名稱解混淆（demangle）。
+
+**步驟 4：報表與呼叫圖**
+
+```bash
+uftrace report
+```
+
+```text
+  Total time   Self time       Calls  Function
+  ==========  ==========  ==========  ====================
+    6.196 ms   17.071 us           1  uftrace_rust::main
+    6.179 ms    3.060 ms           1  uftrace_rust::func_a
+    3.118 ms    2.059 ms           1  uftrace_rust::func_b
+    1.059 ms    1.059 ms           1  uftrace_rust::func_c
+```
+
+```bash
+uftrace graph
+```
+
+```text
+# Function Call Graph for 'uftrace_rust' (session: 62c952afcad2f9aa)
+========== FUNCTION CALL GRAPH ==========
+# TOTAL TIME   FUNCTION
+    6.196 ms : (1) uftrace_rust
+    6.196 ms : (1) uftrace_rust::main
+    6.179 ms : (1) uftrace_rust::func_a
+    3.118 ms : (1) uftrace_rust::func_b
+    1.059 ms : (1) uftrace_rust::func_c
+```
+
+---
+
+### 12.4 Cargo 專案
+
+```bash
+# 編譯（dev profile 預設含 debuginfo）
+cargo build
+
+# 錄製（crate 名稱中的連字符 `-` 會變成底線 `_`）
+# 例如 package name = "rust-uftrace-demo" → 過濾用 rust_uftrace_demo*
+uftrace record -P 'rust_uftrace_demo*' ./target/debug/rust-uftrace-demo
+uftrace replay
+```
+
+實際輸出：
+
+```text
+# DURATION     TID     FUNCTION
+            [3413056] | rust_uftrace_demo::main() {
+            [3413056] |   rust_uftrace_demo::func_a() {
+            [3413056] |     rust_uftrace_demo::func_b() {
+   1.057 ms [3413056] |       rust_uftrace_demo::func_c();
+   3.120 ms [3413056] |     } /* rust_uftrace_demo::func_b */
+   6.185 ms [3413056] |   } /* rust_uftrace_demo::func_a */
+   6.202 ms [3413056] | } /* rust_uftrace_demo::main */
+```
+
+---
+
+### 12.5 觀察完整呼叫（含標準庫）
+
+若想觀察包含 Rust runtime 與標準庫的完整呼叫路徑，改用 `-P .`（追蹤所有函式）：
+
+```bash
+uftrace record -P . ./uftrace_rust
+uftrace replay
+```
+
+輸出會包含大量 `std::rt::*`、`core::fmt::*` 等內部函式，適合深入分析 I/O 路徑或分配行為。搭配時間門檻可降低雜訊：
+
+```bash
+uftrace record -P . -t 10us ./uftrace_rust
+uftrace replay
+```
+
+---
+
+### 12.6 注意事項
+
+| 情況 | 說明 |
+| --- | --- |
+| 函式名稱含 `::` 無法當作 `-P` 萬用字元 | 用 `crate名*` 而非 `crate::*`，uftrace 不支援 `::` 萬用字元 |
+| 函式太小無法插樁 | 動態插樁需要函式本體至少 ~16 bytes；純呼叫轉發的 8-byte 包裝函式可能被跳過，需有實際邏輯（println! / sleep / 計算）才能追蹤 |
+| `main` 函式不出現 | Rust 的 `fn main()` 有時會被編譯為 ELF HIDDEN 符號，動態插樁無法觸及；可改觀察 `uftrace_rust::main`（crate 前綴版本） |
+| async fn 追蹤 | async 函式會展開為 state machine，函式名稱會含 `_{{closure}}`，需用 `-P .` 才能看全貌 |
+| 泛型函式 | 每個具體型別會產生獨立符號，報表中會出現多個同名不同簽名的條目 |
+| release build | `cargo build --release` 會啟用 inlining，部分函式會消失，建議分析時用 `dev` profile |
+| package 名稱與 crate 名稱 | `Cargo.toml` 中 `name = "my-app"` 在追蹤時應用 `my_app*`（連字符轉底線） |
+
+---
+
+### 12.7 快速驗證腳本（Rust）
+
+```bash
+#!/usr/bin/env bash
+set -e
+
+echo "=== Rust + uftrace 驗證 ==="
+rustc --version
+uftrace --version | head -1
+
+echo ""
+echo "=== 建立測試程式 ==="
+# 注意：函式需有實際邏輯（非純包裝），動態插樁才能成功（函式本體需 ≥ 16 bytes）
+cat > /tmp/uft_rust_verify.rs << 'EOF'
+use std::thread;
+use std::time::Duration;
+
+fn func_c() {
+    println!("inner");
+    thread::sleep(Duration::from_micros(500));
+}
+
+fn func_b() {
+    println!("middle");
+    thread::sleep(Duration::from_micros(500));
+    func_c();
+}
+
+fn func_a() {
+    println!("outer");
+    thread::sleep(Duration::from_micros(500));
+    func_b();
+}
+
+fn main() {
+    println!("start");
+    func_a();
+    println!("done");
+}
+EOF
+
+rustc -g /tmp/uft_rust_verify.rs -o /tmp/uft_rust_verify
+echo "編譯成功"
+
+echo ""
+echo "=== 動態插樁錄製 ==="
+cd /tmp
+uftrace record -P 'uft_rust_verify*' ./uft_rust_verify
+echo "錄製完成"
+
+echo ""
+echo "=== Replay ==="
+uftrace replay
+
+echo ""
+echo "=== Report ==="
+uftrace report
+
+echo ""
+echo "=== 驗證完成 ==="
+```
+
+```bash
+chmod +x verify_uftrace_rust.sh
+./verify_uftrace_rust.sh
+```
+
+實際輸出：
+
+```text
+=== Rust + uftrace 驗證 ===
+rustc 1.91.1 (ed61e7d7e 2025-11-07)
+uftrace v0.15 ( x86_64 dwarf python3 luajit tui perf sched dynamic kernel )
+
+=== 建立測試程式 ===
+編譯成功
+
+=== 動態插樁錄製 ===
+start
+outer
+middle
+inner
+done
+錄製完成
+
+=== Replay ===
+# DURATION     TID     FUNCTION
+            [3417831] | uft_rust_verify::main() {
+            [3417831] |   uft_rust_verify::func_a() {
+            [3417831] |     uft_rust_verify::func_b() {
+ 555.164 us [3417831] |       uft_rust_verify::func_c();
+   1.113 ms [3417831] |     } /* uft_rust_verify::func_b */
+   1.672 ms [3417831] |   } /* uft_rust_verify::func_a */
+   1.686 ms [3417831] | } /* uft_rust_verify::main */
+
+=== Report ===
+  Total time   Self time       Calls  Function
+  ==========  ==========  ==========  ====================
+    1.686 ms   13.496 us           1  uft_rust_verify::main
+    1.672 ms  559.061 us           1  uft_rust_verify::func_a
+    1.113 ms  558.289 us           1  uft_rust_verify::func_b
+  555.164 us  555.164 us           1  uft_rust_verify::func_c
+
+=== 驗證完成 ===
+```
+
+四個使用者函式均出現在報表中，呼叫鏈 `main → func_a → func_b → func_c` 正確呈現，即表示 Rust 動態追蹤正常運作。
