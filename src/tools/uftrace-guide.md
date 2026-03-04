@@ -175,16 +175,76 @@ uftrace replay
 
 ### 5.3 輸出範例
 
+`uftrace replay` 實際輸出：
+
 ```text
 # DURATION     TID     FUNCTION
-            [  1234] | main() {
-   3.000 ms [  1234] |   func_a() {
-   2.000 ms [  1234] |     func_b() {
-   1.000 ms [  1234] |       func_c();
-   2.000 ms [  1234] |     } /* func_b */
-   3.000 ms [  1234] |   } /* func_a */
-            [  1234] | } /* main */
+   0.221 us [3407146] | __monstartup();
+   0.061 us [3407146] | __cxa_atexit();
+            [3407146] | main() {
+   4.018 us [3407146] |   puts();
+            [3407146] |   func_a() {
+   0.080 us [3407146] |     puts();
+   3.064 ms [3407146] |     usleep();
+            [3407146] |     func_b() {
+   0.360 us [3407146] |       puts();
+   2.062 ms [3407146] |       usleep();
+            [3407146] |       func_c() {
+   0.381 us [3407146] |         puts();
+   1.056 ms [3407146] |         usleep();
+   1.057 ms [3407146] |       } /* func_c */
+   3.121 ms [3407146] |     } /* func_b */
+   6.185 ms [3407146] |   } /* func_a */
+   0.140 us [3407146] |   puts();
+   6.190 ms [3407146] | } /* main */
 ```
+
+`uftrace report` 實際輸出：
+
+```text
+Total time   Self time       Calls  Function
+  ==========  ==========  ==========  ====================
+    6.190 ms    0.361 us           1  main
+    6.185 ms    0.320 us           1  func_a
+    6.183 ms    6.183 ms           3  usleep
+    3.121 ms    0.563 us           1  func_b
+    1.057 ms    0.330 us           1  func_c
+    4.979 us    4.979 us           5  puts
+    0.221 us    0.221 us           1  __monstartup
+    0.061 us    0.061 us           1  __cxa_atexit
+```
+
+`uftrace graph` 實際輸出：
+
+```text
+# Function Call Graph for 'uftrace_test' (session: b7df94d7ada96d79)
+========== FUNCTION CALL GRAPH ==========
+# TOTAL TIME   FUNCTION
+    6.190 ms : (1) uftrace_test
+    0.221 us :  +-(1) __monstartup
+             :  |
+    0.061 us :  +-(1) __cxa_atexit
+             :  |
+    6.190 ms :  +-(1) main
+    4.158 us :     +-(2) puts
+             :     |
+    6.185 ms :     +-(1) func_a
+    0.080 us :        +-(1) puts
+             :        |
+    3.064 ms :        +-(1) usleep
+             :        |
+    3.121 ms :        +-(1) func_b
+    0.360 us :           +-(1) puts
+             :           |
+    2.062 ms :           +-(1) usleep
+             :           |
+    1.057 ms :           +-(1) func_c
+    0.381 us :              +-(1) puts
+             :              |
+    1.056 ms :              +-(1) usleep
+```
+
+> **注意**：`printf` 會被 glibc 最佳化為 `puts`（不含格式字串時），所以輸出中看到的是 `puts` 而非 `printf`。`__monstartup` 和 `__cxa_atexit` 是 gprof 插樁的初始化函式，正常出現。
 
 ## 6. 進階功能
 
@@ -288,3 +348,263 @@ replay = -T -t
 ## 10. 小結
 
 如果你想知道「哪個函式被誰呼叫、花了多久、順序是什麼」，`uftrace` 會比單純的取樣式工具更直觀。它特別適合拿來理解大型 C / C++ 程式的執行路徑，也能和 Chrome Trace、Graphviz、Flame Graph 一起搭配使用。
+
+---
+
+## 11. 測試驗證
+
+### 11.1 驗證安裝是否正常
+
+```bash
+# 確認版本
+uftrace --version
+# uftrace v0.15 ( x86_64 dwarf python3 luajit tui perf sched dynamic kernel )
+
+# 確認 uftrace 在 PATH 中
+which uftrace
+# /usr/bin/uftrace 或 /usr/local/bin/uftrace
+```
+
+括號內列出的是編譯時啟用的功能模組；`kernel` 表示支援核心函式追蹤，`python3` 表示支援 Python 腳本分析。
+
+### 11.2 最小可驗證範例
+
+使用第 5 節的範例程式進行完整流程驗證：
+
+**步驟 1：建立測試程式**
+
+```bash
+cat > /tmp/uftrace_test.c << 'EOF'
+#include <stdio.h>
+#include <unistd.h>
+
+void func_c(void) {
+    printf("In function C\n");
+    usleep(1000);
+}
+
+void func_b(void) {
+    printf("In function B\n");
+    usleep(2000);
+    func_c();
+}
+
+void func_a(void) {
+    printf("In function A\n");
+    usleep(3000);
+    func_b();
+}
+
+int main(void) {
+    printf("Starting program\n");
+    func_a();
+    printf("Program finished\n");
+    return 0;
+}
+EOF
+```
+
+**步驟 2：編譯（必須加 `-pg`）**
+
+```bash
+gcc -g -pg -o /tmp/uftrace_test /tmp/uftrace_test.c
+```
+
+**步驟 3：錄製追蹤資料**
+
+```bash
+cd /tmp
+uftrace record ./uftrace_test
+```
+
+預期畫面：
+
+```text
+Starting program
+In function A
+In function B
+In function C
+Program finished
+```
+
+**步驟 4：重播追蹤結果**
+
+```bash
+uftrace replay
+```
+
+驗證重播輸出中應出現以下特徵：
+
+- 每一行有 `DURATION`、`TID`、`FUNCTION` 三欄
+- 函式以縮排形式呈現巢狀呼叫（`main → func_a → func_b → func_c`）
+- 耗時數字與 `usleep` 呼叫的微秒值大致吻合
+
+**步驟 5：確認報表輸出**
+
+```bash
+uftrace report
+```
+
+預期輸出欄位：`Total time`、`Self time`、`Calls`、`Function`，且四個函式（`main`、`func_a`、`func_b`、`func_c`）都應出現在清單中。
+
+**步驟 6：確認呼叫圖**
+
+```bash
+uftrace graph
+```
+
+預期輸出中，`main` 應位於最頂層，並依序展開到 `func_a → func_b → func_c`。
+
+### 11.3 驗證參數與回傳值追蹤
+
+```c
+// /tmp/uftrace_args.c
+#include <stdio.h>
+
+int add(int a, int b) {
+    return a + b;
+}
+
+int main(void) {
+    int result = add(3, 4);
+    printf("result = %d\n", result);
+    return 0;
+}
+```
+
+```bash
+gcc -g -pg -o /tmp/uftrace_args /tmp/uftrace_args.c
+uftrace record -A 'add@arg1/i32,arg2/i32' -R 'add@retval/i32' /tmp/uftrace_args
+uftrace replay
+```
+
+實際輸出：
+
+```text
+# DURATION     TID     FUNCTION
+   0.401 us [3407716] | __monstartup();
+   0.061 us [3407716] | __cxa_atexit();
+            [3407716] | main() {
+   0.712 us [3407716] |   add(3, 4) = 7;
+   4.919 us [3407716] |   printf();
+   6.091 us [3407716] | } /* main */
+```
+
+`add(3, 4) = 7` 出現在追蹤輸出中，確認 `-A` 和 `-R` 選項生效。
+
+### 11.4 驗證深度限制
+
+```bash
+uftrace record -D 2 /tmp/uftrace_test
+uftrace replay
+```
+
+實際輸出（`-D 2` 只記錄到第 2 層，`func_b`、`func_c` 被截斷，`func_a` 顯示為葉節點）：
+
+```text
+# DURATION     TID     FUNCTION
+   0.601 us [3407861] | __monstartup();
+   0.141 us [3407861] | __cxa_atexit();
+            [3407861] | main() {
+   3.386 us [3407861] |   puts();
+   6.147 ms [3407861] |   func_a();
+   0.281 us [3407861] |   puts();
+   6.151 ms [3407861] | } /* main */
+```
+
+`func_a` 後方沒有 `{`，表示其內部呼叫未被記錄。
+
+### 11.5 驗證時間門檻過濾
+
+```bash
+uftrace record -t 2ms /tmp/uftrace_test
+uftrace replay
+```
+
+實際輸出（耗時不足 2ms 的函式被過濾，`puts` 和 `func_c` 消失；`usleep` 因呼叫本身超過門檻而保留）：
+
+```text
+# DURATION     TID     FUNCTION
+            [3408022] | main() {
+            [3408022] |   func_a() {
+   3.058 ms [3408022] |     usleep();
+            [3408022] |     func_b() {
+   2.056 ms [3408022] |       usleep();
+   3.113 ms [3408022] |     } /* func_b */
+   6.172 ms [3408022] |   } /* func_a */
+   6.178 ms [3408022] | } /* main */
+```
+
+`func_c`（約 1ms）和所有 `puts`（微秒級）均不出現，驗證門檻過濾生效。
+
+### 11.6 驗證 Chrome Trace 匯出
+
+```bash
+uftrace record /tmp/uftrace_test
+uftrace dump --chrome > /tmp/trace.json
+
+# 確認 JSON 檔案格式正確
+python3 -c "import json; data=json.load(open('/tmp/trace.json')); print('事件數:', len(data['traceEvents']))"
+```
+
+實際輸出：
+
+```text
+事件數: 30
+```
+
+JSON 格式合法，可直接載入 Chrome 追蹤檢視工具（chrome://tracing 或 Perfetto）。
+
+### 11.7 常見驗證失敗原因
+
+| 現象 | 可能原因 | 解法 |
+| --- | --- | --- |
+| `replay` 顯示空白或只有 `main` | 未加 `-pg` 編譯 | `gcc -g -pg -o ...` |
+| `record` 執行時立即報錯 | uftrace 版本過舊或不支援 | `uftrace --version` 確認，必要時從原始碼編譯 |
+| 函式名稱顯示為 `??` | 缺少除錯符號 | 加上 `-g` 編譯選項 |
+| 核心函式追蹤失敗 | 需要 root 權限 | 改用 `sudo uftrace record -k ...` |
+| 參數顯示 `<unknown>` | 型別標記語法錯誤 | 確認 `-A` 格式：`func@argN/type` |
+
+### 11.8 快速驗證腳本
+
+可將以下腳本存為 `verify_uftrace.sh`，一鍵執行所有驗證步驟：
+
+```bash
+#!/usr/bin/env bash
+set -e
+
+echo "=== uftrace 安裝驗證 ==="
+uftrace --version
+
+echo ""
+echo "=== 編譯測試程式 ==="
+cat > /tmp/uft_verify.c << 'EOF'
+#include <stdio.h>
+#include <unistd.h>
+void inner(void) { usleep(500); }
+void outer(void) { inner(); }
+int main(void) { outer(); return 0; }
+EOF
+gcc -g -pg -o /tmp/uft_verify /tmp/uft_verify.c
+echo "編譯成功"
+
+echo ""
+echo "=== 錄製與重播 ==="
+cd /tmp
+uftrace record ./uft_verify
+uftrace replay | grep -E "(main|outer|inner)" | head -5
+
+echo ""
+echo "=== 報表輸出 ==="
+uftrace report | head -6
+
+echo ""
+echo "=== 驗證完成 ==="
+```
+
+```bash
+chmod +x verify_uftrace.sh
+./verify_uftrace.sh
+```
+
+正常情況下最後一行應印出「驗證完成」，且中間各步驟無錯誤訊息。
