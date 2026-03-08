@@ -686,6 +686,7 @@
     - [2026年AI學習路徑與12項必備AI技能工具清單](ai_agent/2026年AI學習路徑與12項必備AI技能工具清單.md)
     - [Agent Skill 的目錄組成結構說明與範本](ai_agent/agent_skill_structure.md)
     - [別再打造 Agent了打造 Skills 吧](ai_agent/別再打造Agent了打造Skills吧-Anthropic演講重點整理.md)
+    - [Claude／OpenCode Skills 新手超詳細講解與知識整理](ai_agent/Claude與OpenCode的Skills新手超詳細講解與知識整理.md)
     - [AI 寫程式的終極悖論：你越依賴它，越需要人類思考](ai_agent/ai-coding-paradox-rpi.md)
 
 ## Lifestyle & Resources
