@@ -1,0 +1,923 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>uftrace 使用指南 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="uftrace-使用指南"><a class="header" href="#uftrace-使用指南">uftrace 使用指南</a></h1>
+<p><code>uftrace</code> 是 Linux 上相當實用的函式追蹤工具，適合用來觀察程式的呼叫路徑、執行時間、函式參數與回傳值。對 C、C++ 這類需要做函式級分析的情境特別好用。</p>
+<p>官方資源：</p>
+<ul>
+<li>原始碼：<a href="https://github.com/namhyung/uftrace">https://github.com/namhyung/uftrace</a></li>
+<li>文件目錄：<a href="https://github.com/namhyung/uftrace/tree/master/doc">https://github.com/namhyung/uftrace/tree/master/doc</a></li>
+</ul>
+<h2 id="1-安裝"><a class="header" href="#1-安裝">1. 安裝</a></h2>
+<h3 id="ubuntu--debian"><a class="header" href="#ubuntu--debian">Ubuntu / Debian</a></h3>
+<pre><code class="language-bash">sudo apt update
+sudo apt install uftrace
+</code></pre>
+<h3 id="centos--rhel"><a class="header" href="#centos--rhel">CentOS / RHEL</a></h3>
+<pre><code class="language-bash">sudo yum install uftrace
+
+# 較新的發行版可改用 dnf
+sudo dnf install uftrace
+</code></pre>
+<h3 id="從原始碼編譯"><a class="header" href="#從原始碼編譯">從原始碼編譯</a></h3>
+<pre><code class="language-bash">git clone https://github.com/namhyung/uftrace.git
+cd uftrace
+make
+sudo make install
+</code></pre>
+<h2 id="2-使用前準備"><a class="header" href="#2-使用前準備">2. 使用前準備</a></h2>
+<p><code>uftrace</code> 通常需要搭配編譯期插樁資訊，常見作法如下：</p>
+<pre><code class="language-bash">gcc -pg -o program source.c
+
+# 或者
+gcc -finstrument-functions -o program source.c
+</code></pre>
+<p>若你要分析的程式比較複雜，建議保留除錯資訊，後續輸出會比較好讀：</p>
+<pre><code class="language-bash">gcc -g -pg -o program source.c
+</code></pre>
+<h2 id="3-基本工作流程"><a class="header" href="#3-基本工作流程">3. 基本工作流程</a></h2>
+<h3 id="31-記錄執行軌跡"><a class="header" href="#31-記錄執行軌跡">3.1 記錄執行軌跡</a></h3>
+<pre><code class="language-bash"># 基本用法
+uftrace record ./your_program
+
+# 指定輸出目錄
+uftrace record -d trace_data ./your_program
+
+# 記錄函式參數
+uftrace record -A main ./your_program
+</code></pre>
+<h3 id="32-重播追蹤結果"><a class="header" href="#32-重播追蹤結果">3.2 重播追蹤結果</a></h3>
+<pre><code class="language-bash"># 直接重播
+uftrace replay
+
+# 從指定目錄讀取
+uftrace replay -d trace_data
+
+# 顯示函式參數與回傳值
+uftrace replay -A main -R main
+</code></pre>
+<h3 id="33-產生報表與呼叫圖"><a class="header" href="#33-產生報表與呼叫圖">3.3 產生報表與呼叫圖</a></h3>
+<pre><code class="language-bash"># 函式統計報表
+uftrace report
+
+# 依呼叫次數與總耗時排序
+uftrace report -s call,total
+
+# 顯示呼叫關係
+uftrace graph
+</code></pre>
+<h2 id="4-常用選項"><a class="header" href="#4-常用選項">4. 常用選項</a></h2>
+<h3 id="41-record-常見參數"><a class="header" href="#41-record-常見參數">4.1 <code>record</code> 常見參數</a></h3>
+<pre><code class="language-bash"># 限制追蹤深度
+uftrace record -D 5 ./program
+
+# 只追蹤特定函式
+uftrace record -F main,func1,func2 ./program
+
+# 排除雜訊函式
+uftrace record -N printf,malloc,free ./program
+
+# 只記錄耗時超過 1ms 的函式
+uftrace record -t 1ms ./program
+
+# 記錄核心函式
+sudo uftrace record -k ./program
+
+# 記錄回傳值
+uftrace record -R func_name ./program
+</code></pre>
+<h3 id="42-replay-常見參數"><a class="header" href="#42-replay-常見參數">4.2 <code>replay</code> 常見參數</a></h3>
+<pre><code class="language-bash"># 顯示時間戳
+uftrace replay -t
+
+# 顯示耗時
+uftrace replay -T
+
+# 僅顯示指定函式
+uftrace replay -F main,important_func
+
+# 顯示參數與回傳值
+uftrace replay -A main -R main
+</code></pre>
+<h2 id="5-實作範例"><a class="header" href="#5-實作範例">5. 實作範例</a></h2>
+<h3 id="51-範例程式"><a class="header" href="#51-範例程式">5.1 範例程式</a></h3>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+
+void func_c(void) {
+    printf("In function C\n");
+    usleep(1000);
+}
+
+void func_b(void) {
+    printf("In function B\n");
+    usleep(2000);
+    func_c();
+}
+
+void func_a(void) {
+    printf("In function A\n");
+    usleep(3000);
+    func_b();
+}
+
+int main(void) {
+    printf("Starting program\n");
+    func_a();
+    printf("Program finished\n");
+    return 0;
+}
+</code></pre>
+<h3 id="52-編譯與追蹤"><a class="header" href="#52-編譯與追蹤">5.2 編譯與追蹤</a></h3>
+<pre><code class="language-bash">gcc -g -pg -o test test.c
+uftrace record ./test
+uftrace replay
+</code></pre>
+<h3 id="53-輸出範例"><a class="header" href="#53-輸出範例">5.3 輸出範例</a></h3>
+<p><code>uftrace replay</code> 實際輸出：</p>
+<pre><code class="language-text"># DURATION     TID     FUNCTION
+   0.221 us [3407146] | __monstartup();
+   0.061 us [3407146] | __cxa_atexit();
+            [3407146] | main() {
+   4.018 us [3407146] |   puts();
+            [3407146] |   func_a() {
+   0.080 us [3407146] |     puts();
+   3.064 ms [3407146] |     usleep();
+            [3407146] |     func_b() {
+   0.360 us [3407146] |       puts();
+   2.062 ms [3407146] |       usleep();
+            [3407146] |       func_c() {
+   0.381 us [3407146] |         puts();
+   1.056 ms [3407146] |         usleep();
+   1.057 ms [3407146] |       } /* func_c */
+   3.121 ms [3407146] |     } /* func_b */
+   6.185 ms [3407146] |   } /* func_a */
+   0.140 us [3407146] |   puts();
+   6.190 ms [3407146] | } /* main */
+</code></pre>
+<p><code>uftrace report</code> 實際輸出：</p>
+<pre><code class="language-text">Total time   Self time       Calls  Function
+  ==========  ==========  ==========  ====================
+    6.190 ms    0.361 us           1  main
+    6.185 ms    0.320 us           1  func_a
+    6.183 ms    6.183 ms           3  usleep
+    3.121 ms    0.563 us           1  func_b
+    1.057 ms    0.330 us           1  func_c
+    4.979 us    4.979 us           5  puts
+    0.221 us    0.221 us           1  __monstartup
+    0.061 us    0.061 us           1  __cxa_atexit
+</code></pre>
+<p><code>uftrace graph</code> 實際輸出：</p>
+<pre><code class="language-text"># Function Call Graph for 'uftrace_test' (session: b7df94d7ada96d79)
+========== FUNCTION CALL GRAPH ==========
+# TOTAL TIME   FUNCTION
+    6.190 ms : (1) uftrace_test
+    0.221 us :  +-(1) __monstartup
+             :  |
+    0.061 us :  +-(1) __cxa_atexit
+             :  |
+    6.190 ms :  +-(1) main
+    4.158 us :     +-(2) puts
+             :     |
+    6.185 ms :     +-(1) func_a
+    0.080 us :        +-(1) puts
+             :        |
+    3.064 ms :        +-(1) usleep
+             :        |
+    3.121 ms :        +-(1) func_b
+    0.360 us :           +-(1) puts
+             :           |
+    2.062 ms :           +-(1) usleep
+             :           |
+    1.057 ms :           +-(1) func_c
+    0.381 us :              +-(1) puts
+             :              |
+    1.056 ms :              +-(1) usleep
+</code></pre>
+<blockquote>
+<p><strong>注意</strong>：<code>printf</code> 會被 glibc 最佳化為 <code>puts</code>（不含格式字串時），所以輸出中看到的是 <code>puts</code> 而非 <code>printf</code>。<code>__monstartup</code> 和 <code>__cxa_atexit</code> 是 gprof 插樁的初始化函式，正常出現。</p>
+</blockquote>
+<h2 id="6-進階功能"><a class="header" href="#6-進階功能">6. 進階功能</a></h2>
+<h3 id="61-使用腳本自訂分析"><a class="header" href="#61-使用腳本自訂分析">6.1 使用腳本自訂分析</a></h3>
+<pre><code class="language-bash">uftrace script -S analyze.py
+</code></pre>
+<pre><code class="language-python">def uftrace_entry(ctx):
+    print(f"進入: {ctx['name']}，時間戳: {ctx['timestamp']}")
+
+
+def uftrace_exit(ctx):
+    print(f"離開: {ctx['name']}，耗時: {ctx['duration']}")
+</code></pre>
+<h3 id="62-匯出-chrome-trace"><a class="header" href="#62-匯出-chrome-trace">6.2 匯出 Chrome Trace</a></h3>
+<pre><code class="language-bash">uftrace dump --chrome &gt; trace.json
+</code></pre>
+<p>之後可在 Chromium / Chrome 的追蹤檢視工具中載入 <code>trace.json</code> 進行視覺化分析。</p>
+<p><img src="images/uftrace-chrome.png" alt="uftrace 的 Chrome Trace 視覺化畫面" /></p>
+<h3 id="63-匯出-graphviz-呼叫圖"><a class="header" href="#63-匯出-graphviz-呼叫圖">6.3 匯出 Graphviz 呼叫圖</a></h3>
+<pre><code class="language-bash">uftrace graph --graphviz | dot -Tpng -o callgraph.png
+</code></pre>
+<h3 id="64-產生-flame-graph-資料"><a class="header" href="#64-產生-flame-graph-資料">6.4 產生 Flame Graph 資料</a></h3>
+<pre><code class="language-bash">uftrace dump --flame-graph &gt; flamegraph.txt
+./flamegraph.pl flamegraph.txt &gt; flamegraph.svg
+</code></pre>
+<h2 id="7-除錯與調整技巧"><a class="header" href="#7-除錯與調整技巧">7. 除錯與調整技巧</a></h2>
+<h3 id="71-過濾雜訊函式"><a class="header" href="#71-過濾雜訊函式">7.1 過濾雜訊函式</a></h3>
+<pre><code class="language-bash">uftrace record -N "malloc,free,printf,puts" ./program
+uftrace record -F "main,func*" ./program
+</code></pre>
+<h3 id="72-設定合理門檻"><a class="header" href="#72-設定合理門檻">7.2 設定合理門檻</a></h3>
+<pre><code class="language-bash"># 只觀察耗時超過 100us 的函式
+uftrace record -t 100us ./program
+</code></pre>
+<h3 id="73-控制追蹤資料量"><a class="header" href="#73-控制追蹤資料量">7.3 控制追蹤資料量</a></h3>
+<pre><code class="language-bash">uftrace record --max-stack 100M ./program
+uftrace record -t 1ms -D 10 ./program
+</code></pre>
+<h2 id="8-常見問題"><a class="header" href="#8-常見問題">8. 常見問題</a></h2>
+<h3 id="81-看不到函式呼叫"><a class="header" href="#81-看不到函式呼叫">8.1 看不到函式呼叫</a></h3>
+<p>通常是因為編譯時沒有加上 <code>-pg</code> 或 <code>-finstrument-functions</code>。</p>
+<pre><code class="language-bash">gcc -g -pg -o program source.c
+</code></pre>
+<h3 id="82-追蹤核心函式失敗"><a class="header" href="#82-追蹤核心函式失敗">8.2 追蹤核心函式失敗</a></h3>
+<p>這類操作通常需要 <code>root</code> 權限：</p>
+<pre><code class="language-bash">sudo uftrace record -k ./program
+</code></pre>
+<h3 id="83-想把預設參數固定下來"><a class="header" href="#83-想把預設參數固定下來">8.3 想把預設參數固定下來</a></h3>
+<p>可建立 <code>~/.uftrace</code>：</p>
+<pre><code class="language-ini">record = -t 100us -D 20
+replay = -T -t
+</code></pre>
+<h2 id="9-與其他工具比較"><a class="header" href="#9-與其他工具比較">9. 與其他工具比較</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>工具</th><th>優勢</th><th>適用情境</th></tr></thead><tbody>
+<tr><td><code>uftrace</code></td><td>函式層級追蹤細節完整，能看呼叫關係</td><td>函式耗時分析、呼叫鏈追蹤</td></tr>
+<tr><td><code>strace</code></td><td>系統呼叫層級觀察清楚</td><td>系統互動、I/O 問題排查</td></tr>
+<tr><td><code>perf</code></td><td>CPU 取樣與硬體事件分析能力強</td><td>整體效能瓶頸分析</td></tr>
+<tr><td><code>gprof</code></td><td>傳統插樁式效能分析</td><td>舊專案或基本函式統計</td></tr>
+</tbody></table>
+</div>
+<h2 id="10-小結"><a class="header" href="#10-小結">10. 小結</a></h2>
+<p>如果你想知道「哪個函式被誰呼叫、花了多久、順序是什麼」，<code>uftrace</code> 會比單純的取樣式工具更直觀。它特別適合拿來理解大型 C / C++ 程式的執行路徑，也能和 Chrome Trace、Graphviz、Flame Graph 一起搭配使用。</p>
+<hr />
+<h2 id="11-測試驗證"><a class="header" href="#11-測試驗證">11. 測試驗證</a></h2>
+<h3 id="111-驗證安裝是否正常"><a class="header" href="#111-驗證安裝是否正常">11.1 驗證安裝是否正常</a></h3>
+<pre><code class="language-bash"># 確認版本
+uftrace --version
+# uftrace v0.15 ( x86_64 dwarf python3 luajit tui perf sched dynamic kernel )
+
+# 確認 uftrace 在 PATH 中
+which uftrace
+# /usr/bin/uftrace 或 /usr/local/bin/uftrace
+</code></pre>
+<p>括號內列出的是編譯時啟用的功能模組；<code>kernel</code> 表示支援核心函式追蹤，<code>python3</code> 表示支援 Python 腳本分析。</p>
+<h3 id="112-最小可驗證範例"><a class="header" href="#112-最小可驗證範例">11.2 最小可驗證範例</a></h3>
+<p>使用第 5 節的範例程式進行完整流程驗證：</p>
+<p><strong>步驟 1：建立測試程式</strong></p>
+<pre><code class="language-bash">cat &gt; /tmp/uftrace_test.c &lt;&lt; 'EOF'
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+
+void func_c(void) {
+    printf("In function C\n");
+    usleep(1000);
+}
+
+void func_b(void) {
+    printf("In function B\n");
+    usleep(2000);
+    func_c();
+}
+
+void func_a(void) {
+    printf("In function A\n");
+    usleep(3000);
+    func_b();
+}
+
+int main(void) {
+    printf("Starting program\n");
+    func_a();
+    printf("Program finished\n");
+    return 0;
+}
+EOF
+</code></pre>
+<p><strong>步驟 2：編譯（必須加 <code>-pg</code>）</strong></p>
+<pre><code class="language-bash">gcc -g -pg -o /tmp/uftrace_test /tmp/uftrace_test.c
+</code></pre>
+<p><strong>步驟 3：錄製追蹤資料</strong></p>
+<pre><code class="language-bash">cd /tmp
+uftrace record ./uftrace_test
+</code></pre>
+<p>預期畫面：</p>
+<pre><code class="language-text">Starting program
+In function A
+In function B
+In function C
+Program finished
+</code></pre>
+<p><strong>步驟 4：重播追蹤結果</strong></p>
+<pre><code class="language-bash">uftrace replay
+</code></pre>
+<p>驗證重播輸出中應出現以下特徵：</p>
+<ul>
+<li>每一行有 <code>DURATION</code>、<code>TID</code>、<code>FUNCTION</code> 三欄</li>
+<li>函式以縮排形式呈現巢狀呼叫（<code>main → func_a → func_b → func_c</code>）</li>
+<li>耗時數字與 <code>usleep</code> 呼叫的微秒值大致吻合</li>
+</ul>
+<p><strong>步驟 5：確認報表輸出</strong></p>
+<pre><code class="language-bash">uftrace report
+</code></pre>
+<p>預期輸出欄位：<code>Total time</code>、<code>Self time</code>、<code>Calls</code>、<code>Function</code>，且四個函式（<code>main</code>、<code>func_a</code>、<code>func_b</code>、<code>func_c</code>）都應出現在清單中。</p>
+<p><strong>步驟 6：確認呼叫圖</strong></p>
+<pre><code class="language-bash">uftrace graph
+</code></pre>
+<p>預期輸出中，<code>main</code> 應位於最頂層，並依序展開到 <code>func_a → func_b → func_c</code>。</p>
+<h3 id="113-驗證參數與回傳值追蹤"><a class="header" href="#113-驗證參數與回傳值追蹤">11.3 驗證參數與回傳值追蹤</a></h3>
+<pre><code class="language-c">// /tmp/uftrace_args.c
+#include &lt;stdio.h&gt;
+
+int add(int a, int b) {
+    return a + b;
+}
+
+int main(void) {
+    int result = add(3, 4);
+    printf("result = %d\n", result);
+    return 0;
+}
+</code></pre>
+<pre><code class="language-bash">gcc -g -pg -o /tmp/uftrace_args /tmp/uftrace_args.c
+uftrace record -A 'add@arg1/i32,arg2/i32' -R 'add@retval/i32' /tmp/uftrace_args
+uftrace replay
+</code></pre>
+<p>實際輸出：</p>
+<pre><code class="language-text"># DURATION     TID     FUNCTION
+   0.401 us [3407716] | __monstartup();
+   0.061 us [3407716] | __cxa_atexit();
+            [3407716] | main() {
+   0.712 us [3407716] |   add(3, 4) = 7;
+   4.919 us [3407716] |   printf();
+   6.091 us [3407716] | } /* main */
+</code></pre>
+<p><code>add(3, 4) = 7</code> 出現在追蹤輸出中，確認 <code>-A</code> 和 <code>-R</code> 選項生效。</p>
+<h3 id="114-驗證深度限制"><a class="header" href="#114-驗證深度限制">11.4 驗證深度限制</a></h3>
+<pre><code class="language-bash">uftrace record -D 2 /tmp/uftrace_test
+uftrace replay
+</code></pre>
+<p>實際輸出（<code>-D 2</code> 只記錄到第 2 層，<code>func_b</code>、<code>func_c</code> 被截斷，<code>func_a</code> 顯示為葉節點）：</p>
+<pre><code class="language-text"># DURATION     TID     FUNCTION
+   0.601 us [3407861] | __monstartup();
+   0.141 us [3407861] | __cxa_atexit();
+            [3407861] | main() {
+   3.386 us [3407861] |   puts();
+   6.147 ms [3407861] |   func_a();
+   0.281 us [3407861] |   puts();
+   6.151 ms [3407861] | } /* main */
+</code></pre>
+<p><code>func_a</code> 後方沒有 <code>{</code>，表示其內部呼叫未被記錄。</p>
+<h3 id="115-驗證時間門檻過濾"><a class="header" href="#115-驗證時間門檻過濾">11.5 驗證時間門檻過濾</a></h3>
+<pre><code class="language-bash">uftrace record -t 2ms /tmp/uftrace_test
+uftrace replay
+</code></pre>
+<p>實際輸出（耗時不足 2ms 的函式被過濾，<code>puts</code> 和 <code>func_c</code> 消失；<code>usleep</code> 因呼叫本身超過門檻而保留）：</p>
+<pre><code class="language-text"># DURATION     TID     FUNCTION
+            [3408022] | main() {
+            [3408022] |   func_a() {
+   3.058 ms [3408022] |     usleep();
+            [3408022] |     func_b() {
+   2.056 ms [3408022] |       usleep();
+   3.113 ms [3408022] |     } /* func_b */
+   6.172 ms [3408022] |   } /* func_a */
+   6.178 ms [3408022] | } /* main */
+</code></pre>
+<p><code>func_c</code>（約 1ms）和所有 <code>puts</code>（微秒級）均不出現，驗證門檻過濾生效。</p>
+<h3 id="116-驗證-chrome-trace-匯出"><a class="header" href="#116-驗證-chrome-trace-匯出">11.6 驗證 Chrome Trace 匯出</a></h3>
+<pre><code class="language-bash">uftrace record /tmp/uftrace_test
+uftrace dump --chrome &gt; /tmp/trace.json
+
+# 確認 JSON 檔案格式正確
+python3 -c "import json; data=json.load(open('/tmp/trace.json')); print('事件數:', len(data['traceEvents']))"
+</code></pre>
+<p>實際輸出：</p>
+<pre><code class="language-text">事件數: 30
+</code></pre>
+<p>JSON 格式合法，可直接載入 Chrome 追蹤檢視工具（chrome://tracing 或 Perfetto）。</p>
+<h3 id="117-常見驗證失敗原因"><a class="header" href="#117-常見驗證失敗原因">11.7 常見驗證失敗原因</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>現象</th><th>可能原因</th><th>解法</th></tr></thead><tbody>
+<tr><td><code>replay</code> 顯示空白或只有 <code>main</code></td><td>未加 <code>-pg</code> 編譯</td><td><code>gcc -g -pg -o ...</code></td></tr>
+<tr><td><code>record</code> 執行時立即報錯</td><td>uftrace 版本過舊或不支援</td><td><code>uftrace --version</code> 確認，必要時從原始碼編譯</td></tr>
+<tr><td>函式名稱顯示為 <code>??</code></td><td>缺少除錯符號</td><td>加上 <code>-g</code> 編譯選項</td></tr>
+<tr><td>核心函式追蹤失敗</td><td>需要 root 權限</td><td>改用 <code>sudo uftrace record -k ...</code></td></tr>
+<tr><td>參數顯示 <code>&lt;unknown&gt;</code></td><td>型別標記語法錯誤</td><td>確認 <code>-A</code> 格式：<code>func@argN/type</code></td></tr>
+</tbody></table>
+</div>
+<h3 id="118-快速驗證腳本"><a class="header" href="#118-快速驗證腳本">11.8 快速驗證腳本</a></h3>
+<p>可將以下腳本存為 <code>verify_uftrace.sh</code>，一鍵執行所有驗證步驟：</p>
+<pre><code class="language-bash">#!/usr/bin/env bash
+set -e
+
+echo "=== uftrace 安裝驗證 ==="
+uftrace --version
+
+echo ""
+echo "=== 編譯測試程式 ==="
+cat &gt; /tmp/uft_verify.c &lt;&lt; 'EOF'
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+void inner(void) { usleep(500); }
+void outer(void) { inner(); }
+int main(void) { outer(); return 0; }
+EOF
+gcc -g -pg -o /tmp/uft_verify /tmp/uft_verify.c
+echo "編譯成功"
+
+echo ""
+echo "=== 錄製與重播 ==="
+cd /tmp
+uftrace record ./uft_verify
+uftrace replay | grep -E "(main|outer|inner)" | head -5
+
+echo ""
+echo "=== 報表輸出 ==="
+uftrace report | head -6
+
+echo ""
+echo "=== 驗證完成 ==="
+</code></pre>
+<pre><code class="language-bash">chmod +x verify_uftrace.sh
+./verify_uftrace.sh
+</code></pre>
+<p>正常情況下最後一行應印出「驗證完成」，且中間各步驟無錯誤訊息。</p>
+<hr />
+<h2 id="12-rust-支援"><a class="header" href="#12-rust-支援">12. Rust 支援</a></h2>
+<h3 id="121-編譯方式"><a class="header" href="#121-編譯方式">12.1 編譯方式</a></h3>
+<p>Rust 使用動態插樁（Dynamic Patching）而非編譯期 mcount，因此<strong>不需要</strong>特別的編譯旗標，只需保留除錯符號即可。</p>
+<pre><code class="language-bash"># 直接用 rustc 編譯（加 -g 保留除錯符號）
+rustc -g source.rs -o program
+
+# 或使用 cargo（dev profile 預設已含除錯符號）
+cargo build
+# 若要確保有符號，可顯式指定：
+RUSTFLAGS="-g" cargo build
+</code></pre>
+<blockquote>
+<p><strong>注意</strong>：現代 Rust（LLVM 後端）已移除 <code>mcount</code> pass，<code>-C passes=mcount</code> 會報錯。
+正確做法是讓 uftrace 在執行期透過 <code>-P</code> 選項進行動態插樁。</p>
+</blockquote>
+<hr />
+<h3 id="122-範例程式"><a class="header" href="#122-範例程式">12.2 範例程式</a></h3>
+<pre><pre class="playground"><code class="language-rust">// /tmp/uftrace_rust.rs
+use std::thread;
+use std::time::Duration;
+
+fn func_c() {
+    println!("In function C");
+    thread::sleep(Duration::from_micros(1000));
+}
+
+fn func_b() {
+    println!("In function B");
+    thread::sleep(Duration::from_micros(2000));
+    func_c();
+}
+
+fn func_a() {
+    println!("In function A");
+    thread::sleep(Duration::from_micros(3000));
+    func_b();
+}
+
+fn main() {
+    println!("Starting program");
+    func_a();
+    println!("Program finished");
+}</code></pre></pre>
+<hr />
+<h3 id="123-編譯與追蹤"><a class="header" href="#123-編譯與追蹤">12.3 編譯與追蹤</a></h3>
+<p><strong>步驟 1：編譯（只需 <code>-g</code>）</strong></p>
+<pre><code class="language-bash">rustc -g /tmp/uftrace_rust.rs -o /tmp/uftrace_rust
+</code></pre>
+<p><strong>步驟 2：用 <code>-P</code> 動態插樁錄製</strong></p>
+<pre><code class="language-bash">cd /tmp
+
+# 只追蹤目前 crate 的函式（crate 名稱即檔名，連字符轉底線）
+uftrace record -P 'uftrace_rust*' ./uftrace_rust
+</code></pre>
+<p><code>-P 'uftrace_rust*'</code> 的意思是：在執行期對所有名稱符合 <code>uftrace_rust*</code> 的函式進行動態插樁。這樣可以過濾掉 Rust 標準庫的大量內部函式。</p>
+<p><strong>步驟 3：重播結果</strong></p>
+<pre><code class="language-bash">uftrace replay
+</code></pre>
+<p>實際輸出：</p>
+<pre><code class="language-text"># DURATION     TID     FUNCTION
+            [3412363] | uftrace_rust::main() {
+            [3412363] |   uftrace_rust::func_a() {
+            [3412363] |     uftrace_rust::func_b() {
+   1.059 ms [3412363] |       uftrace_rust::func_c();
+   3.118 ms [3412363] |     } /* uftrace_rust::func_b */
+   6.179 ms [3412363] |   } /* uftrace_rust::func_a */
+   6.196 ms [3412363] | } /* uftrace_rust::main */
+</code></pre>
+<p>函式名稱自動以 <code>crate名稱::函式名稱</code> 格式顯示，uftrace 已內建 Rust 名稱解混淆（demangle）。</p>
+<p><strong>步驟 4：報表與呼叫圖</strong></p>
+<pre><code class="language-bash">uftrace report
+</code></pre>
+<pre><code class="language-text">  Total time   Self time       Calls  Function
+  ==========  ==========  ==========  ====================
+    6.196 ms   17.071 us           1  uftrace_rust::main
+    6.179 ms    3.060 ms           1  uftrace_rust::func_a
+    3.118 ms    2.059 ms           1  uftrace_rust::func_b
+    1.059 ms    1.059 ms           1  uftrace_rust::func_c
+</code></pre>
+<pre><code class="language-bash">uftrace graph
+</code></pre>
+<pre><code class="language-text"># Function Call Graph for 'uftrace_rust' (session: 62c952afcad2f9aa)
+========== FUNCTION CALL GRAPH ==========
+# TOTAL TIME   FUNCTION
+    6.196 ms : (1) uftrace_rust
+    6.196 ms : (1) uftrace_rust::main
+    6.179 ms : (1) uftrace_rust::func_a
+    3.118 ms : (1) uftrace_rust::func_b
+    1.059 ms : (1) uftrace_rust::func_c
+</code></pre>
+<hr />
+<h3 id="124-cargo-專案"><a class="header" href="#124-cargo-專案">12.4 Cargo 專案</a></h3>
+<pre><code class="language-bash"># 編譯（dev profile 預設含 debuginfo）
+cargo build
+
+# 錄製（crate 名稱中的連字符 `-` 會變成底線 `_`）
+# 例如 package name = "rust-uftrace-demo" → 過濾用 rust_uftrace_demo*
+uftrace record -P 'rust_uftrace_demo*' ./target/debug/rust-uftrace-demo
+uftrace replay
+</code></pre>
+<p>實際輸出：</p>
+<pre><code class="language-text"># DURATION     TID     FUNCTION
+            [3413056] | rust_uftrace_demo::main() {
+            [3413056] |   rust_uftrace_demo::func_a() {
+            [3413056] |     rust_uftrace_demo::func_b() {
+   1.057 ms [3413056] |       rust_uftrace_demo::func_c();
+   3.120 ms [3413056] |     } /* rust_uftrace_demo::func_b */
+   6.185 ms [3413056] |   } /* rust_uftrace_demo::func_a */
+   6.202 ms [3413056] | } /* rust_uftrace_demo::main */
+</code></pre>
+<hr />
+<h3 id="125-觀察完整呼叫含標準庫"><a class="header" href="#125-觀察完整呼叫含標準庫">12.5 觀察完整呼叫（含標準庫）</a></h3>
+<p>若想觀察包含 Rust runtime 與標準庫的完整呼叫路徑，改用 <code>-P .</code>（追蹤所有函式）：</p>
+<pre><code class="language-bash">uftrace record -P . ./uftrace_rust
+uftrace replay
+</code></pre>
+<p>輸出會包含大量 <code>std::rt::*</code>、<code>core::fmt::*</code> 等內部函式，適合深入分析 I/O 路徑或分配行為。搭配時間門檻可降低雜訊：</p>
+<pre><code class="language-bash">uftrace record -P . -t 10us ./uftrace_rust
+uftrace replay
+</code></pre>
+<hr />
+<h3 id="126-注意事項"><a class="header" href="#126-注意事項">12.6 注意事項</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>情況</th><th>說明</th></tr></thead><tbody>
+<tr><td>函式名稱含 <code>::</code> 無法當作 <code>-P</code> 萬用字元</td><td>用 <code>crate名*</code> 而非 <code>crate::*</code>，uftrace 不支援 <code>::</code> 萬用字元</td></tr>
+<tr><td>函式太小無法插樁</td><td>動態插樁需要函式本體至少 ~16 bytes；純呼叫轉發的 8-byte 包裝函式可能被跳過，需有實際邏輯（println! / sleep / 計算）才能追蹤</td></tr>
+<tr><td><code>main</code> 函式不出現</td><td>Rust 的 <code>fn main()</code> 有時會被編譯為 ELF HIDDEN 符號，動態插樁無法觸及；可改觀察 <code>uftrace_rust::main</code>（crate 前綴版本）</td></tr>
+<tr><td>async fn 追蹤</td><td>async 函式會展開為 state machine，函式名稱會含 <code>_{{closure}}</code>，需用 <code>-P .</code> 才能看全貌</td></tr>
+<tr><td>泛型函式</td><td>每個具體型別會產生獨立符號，報表中會出現多個同名不同簽名的條目</td></tr>
+<tr><td>release build</td><td><code>cargo build --release</code> 會啟用 inlining，部分函式會消失，建議分析時用 <code>dev</code> profile</td></tr>
+<tr><td>package 名稱與 crate 名稱</td><td><code>Cargo.toml</code> 中 <code>name = "my-app"</code> 在追蹤時應用 <code>my_app*</code>（連字符轉底線）</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h3 id="127-快速驗證腳本rust"><a class="header" href="#127-快速驗證腳本rust">12.7 快速驗證腳本（Rust）</a></h3>
+<pre><code class="language-bash">#!/usr/bin/env bash
+set -e
+
+echo "=== Rust + uftrace 驗證 ==="
+rustc --version
+uftrace --version | head -1
+
+echo ""
+echo "=== 建立測試程式 ==="
+# 注意：函式需有實際邏輯（非純包裝），動態插樁才能成功（函式本體需 ≥ 16 bytes）
+cat &gt; /tmp/uft_rust_verify.rs &lt;&lt; 'EOF'
+use std::thread;
+use std::time::Duration;
+
+fn func_c() {
+    println!("inner");
+    thread::sleep(Duration::from_micros(500));
+}
+
+fn func_b() {
+    println!("middle");
+    thread::sleep(Duration::from_micros(500));
+    func_c();
+}
+
+fn func_a() {
+    println!("outer");
+    thread::sleep(Duration::from_micros(500));
+    func_b();
+}
+
+fn main() {
+    println!("start");
+    func_a();
+    println!("done");
+}
+EOF
+
+rustc -g /tmp/uft_rust_verify.rs -o /tmp/uft_rust_verify
+echo "編譯成功"
+
+echo ""
+echo "=== 動態插樁錄製 ==="
+cd /tmp
+uftrace record -P 'uft_rust_verify*' ./uft_rust_verify
+echo "錄製完成"
+
+echo ""
+echo "=== Replay ==="
+uftrace replay
+
+echo ""
+echo "=== Report ==="
+uftrace report
+
+echo ""
+echo "=== 驗證完成 ==="
+</code></pre>
+<pre><code class="language-bash">chmod +x verify_uftrace_rust.sh
+./verify_uftrace_rust.sh
+</code></pre>
+<p>實際輸出：</p>
+<pre><code class="language-text">=== Rust + uftrace 驗證 ===
+rustc 1.91.1 (ed61e7d7e 2025-11-07)
+uftrace v0.15 ( x86_64 dwarf python3 luajit tui perf sched dynamic kernel )
+
+=== 建立測試程式 ===
+編譯成功
+
+=== 動態插樁錄製 ===
+start
+outer
+middle
+inner
+done
+錄製完成
+
+=== Replay ===
+# DURATION     TID     FUNCTION
+            [3417831] | uft_rust_verify::main() {
+            [3417831] |   uft_rust_verify::func_a() {
+            [3417831] |     uft_rust_verify::func_b() {
+ 555.164 us [3417831] |       uft_rust_verify::func_c();
+   1.113 ms [3417831] |     } /* uft_rust_verify::func_b */
+   1.672 ms [3417831] |   } /* uft_rust_verify::func_a */
+   1.686 ms [3417831] | } /* uft_rust_verify::main */
+
+=== Report ===
+  Total time   Self time       Calls  Function
+  ==========  ==========  ==========  ====================
+    1.686 ms   13.496 us           1  uft_rust_verify::main
+    1.672 ms  559.061 us           1  uft_rust_verify::func_a
+    1.113 ms  558.289 us           1  uft_rust_verify::func_b
+  555.164 us  555.164 us           1  uft_rust_verify::func_c
+
+=== 驗證完成 ===
+</code></pre>
+<p>四個使用者函式均出現在報表中，呼叫鏈 <code>main → func_a → func_b → func_c</code> 正確呈現，即表示 Rust 動態追蹤正常運作。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tools/function-tracing-cpp-rust.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../tools/add-enter-and-exit-trace-for-your-function.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tools/function-tracing-cpp-rust.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../tools/add-enter-and-exit-trace-for-your-function.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
