@@ -214,8 +214,270 @@
 > - 使用者會貼 Rust code，或描述要實作的功能。  
 > - 請在 `SKILL.md` 裡列出詳細 checklist，並參考 tokio、serde、axum 的常見最佳實踐。  
 
+## Frontmatter 技術規格（官方限制）
+
+這部分很多教學沒有提到，但直接影響 Skill 能不能被正常載入。
+
+### `name` 欄位規則
+
+- 最多 **64 個字元**
+- 只能用小寫字母、數字、連字符（`-`）
+- 不能包含 XML 標籤
+- 不能包含保留字：`anthropic`、`claude`
+
+命名風格建議用動名詞形式（gerund），這樣一眼就能看出 Skill 的作用：
+
+```yaml
+name: reviewing-go-concurrency    # 動名詞，清楚
+name: go-code-reviewer             # 名詞片語，可接受
+name: helper                       # 太模糊，避免
+name: claude-tools                 # 含保留字，禁止
+```
+
+### `description` 欄位規則
+
+- 最多 **1024 個字元**
+- 不能為空
+- 不能包含 XML 標籤
+- **必須用第三人稱撰寫**（這是官方明確要求）
+
+```yaml
+# 正確：第三人稱
+description: Reviews Go source code for goroutine leaks, context propagation, and error wrapping. Use when analyzing Go concurrency or reviewing goroutine/channel usage.
+
+# 錯誤：第一人稱
+description: I can help you review Go code for goroutine issues.
+
+# 錯誤：第二人稱
+description: You can use this to review Go code.
+```
+
+---
+
+## Undertrigger 問題與 Description 寫法
+
+Claude 天生有**少觸發（undertrigger）**的傾向——明明應該用 Skill 的場合，它卻沒有觸發。這是因為 Skill 的選取完全依賴 LLM 推理，沒有任何演算法關鍵字比對，description 太模糊就會造成 false negative。
+
+### 對策：在 description 裡加入明確的觸發語言
+
+官方建議讓 description 稍微「強硬一點」（pushy），直接寫出觸發條件：
+
+```yaml
+# 弱觸發（容易被跳過）
+description: Helps with Go code quality.
+
+# 強觸發（明確觸發條件）
+description: Reviews Go source code for goroutine leaks, context propagation errors, and improper error wrapping. USE WHEN user asks to review, audit, or check Go code, or mentions goroutine, channel, context, or concurrency.
+```
+
+### 觸發優化數據
+
+根據實測，加入明確觸發語言可以把 Skill 啟用率從 20% 提升到 50%，再加上具體範例後可達 90%。
+
+### `when_to_use` 欄位（實驗性）
+
+codebase 裡存在一個未正式文件化的 `when_to_use` 字段，它的內容會被附加到 description 後面：
+
+```yaml
+---
+name: go-code-reviewer
+description: Reviews Go source code for concurrency and error handling issues.
+when_to_use: When user wants to review, debug, or audit Go code quality.
+---
+```
+
+效果等同於把觸發條件寫進 description，但因為這個欄位可能已被棄用，**建議直接把觸發條件寫進 description** 比較保險。
+
+---
+
+## `disable-model-invocation`（手動觸發模式）
+
+這個 frontmatter 欄位很少被提到，但對某些 Skill 非常重要。
+
+```yaml
+---
+name: deploy-production
+description: Deploys the application to production environment.
+disable-model-invocation: true
+---
+```
+
+設為 `true` 後，這個 Skill **不會出現**在 Claude 的自動選擇清單裡，只能透過明確的斜線指令觸發，例如 `/deploy-production`。
+
+適合使用的場景：
+
+- 有副作用的操作（部署、推送、傳送訊息）
+- 需要明確確認才能執行的流程（`/commit`、`/send-slack`）
+- 需要控制執行時機的互動式流程
+
+對於 Go/C++/Rust 的情境：
+
+```yaml
+# 自動觸發（適合 review、分析類）
+disable-model-invocation: false   # 預設值，可省略
+
+# 手動觸發（適合執行 cargo publish、go generate、cmake build 之類有副作用的動作）
+disable-model-invocation: true
+```
+
+---
+
+## Progressive Disclosure：檔案架構設計
+
+### SKILL.md 的大小限制
+
+SKILL.md 本體建議**不超過 500 行**。超過時要把內容拆到獨立的參考檔案。
+
+啟動時 Claude 只會預先載入 `name` 和 `description`；SKILL.md 本體只在 Skill 被選中時才讀取；其他參考檔案只在需要時才讀取。這表示即使你放了很大的參考文件，在用到它之前不會消耗 context token。
+
+### 推薦的目錄結構
+
+```text
+go-repo-reviewer/
+├── SKILL.md              # 主體，500 行以內，作為導覽索引
+├── concurrency.md        # goroutine、channel 詳細 checklist
+├── error-handling.md     # error wrapping 規則與範例
+├── performance.md        # pprof 解讀流程
+└── scripts/
+    ├── check_race.sh     # go race detector 腳本
+    └── run_vet.sh        # go vet 腳本
+```
+
+### 只做一層參考，不要巢狀
+
+```markdown
+# 正確：SKILL.md 直接連到所有參考檔
+**Concurrency**: See [concurrency.md](concurrency.md)
+**Error handling**: See [error-handling.md](error-handling.md)
+
+# 錯誤：巢狀兩層，Claude 可能只讀到一半
+# SKILL.md → advanced.md → details.md   ← 這樣不要做
+```
+
+### 超過 100 行的參考檔要加目錄
+
+```markdown
+# Go Concurrency Checklist
+
+## 目錄
+- Goroutine lifecycle
+- Channel patterns
+- Context propagation
+- Race condition detection
+
+## Goroutine lifecycle
+...
+```
+
+---
+
+## MCP 工具名稱格式
+
+如果 Skill 要呼叫 MCP 工具，必須用完整格式 `ServerName:tool_name`，否則當有多個 MCP server 時 Claude 可能找不到工具：
+
+```markdown
+# 正確
+Use GitHub:create_issue to file the bug report.
+Use BigQuery:bigquery_schema to check the table structure.
+
+# 錯誤（找不到工具）
+Use create_issue to file the bug report.
+```
+
+---
+
+## Evaluation-Driven 開發流程
+
+官方建議**先寫測試案例再寫 Skill**，這和 TDD 邏輯一樣。
+
+1. 不用 Skill，直接讓 Claude 做任務，記錄哪裡失敗
+2. 根據失敗點設計 3 個以上具體測試情境
+3. 建立基準（沒有 Skill 時的表現）
+4. 寫剛好夠通過測試的最小 SKILL.md
+5. 測試 → 觀察 Claude 的實際行為 → 迭代
+
+測試情境格式範例：
+
+```json
+{
+  "skills": ["go-code-reviewer"],
+  "query": "Review this Go file for goroutine leak risks",
+  "files": ["examples/worker_pool.go"],
+  "expected_behavior": [
+    "Identifies missing WaitGroup synchronization",
+    "Points out goroutine leak in error path",
+    "Suggests context.Done() handling"
+  ]
+}
+```
+
+建立「Claude A 設計 Skill」、「Claude B 測試 Skill」的雙角色迭代模式效果最好：Claude A 理解 Skill 格式，幫你設計；Claude B 拿真實任務測試，暴露缺漏。
+
+---
+
+## Scripts 的使用原則
+
+### 執行 vs. 讀取的差異
+
+```markdown
+# 執行腳本（不消耗 context，只有 output 計 token）
+Run `python scripts/check_goroutine.py` to analyze goroutine usage.
+
+# 讀取為參考（會把腳本內容載入 context）
+See `scripts/check_goroutine.py` for the analysis algorithm.
+```
+
+大多數情況用執行，只有在需要讓 Claude 理解演算法邏輯時才用讀取。
+
+### Rust/Go/C++ 適合放進 scripts/ 的工具
+
+```text
+go-reviewer/scripts/
+├── run_vet.sh          # go vet ./...
+├── run_race.sh         # go test -race ./...
+├── check_fmt.sh        # gofmt -l .
+
+cpp-reviewer/scripts/
+├── run_clang_tidy.sh   # clang-tidy with config
+├── run_asan.sh         # -fsanitize=address,undefined
+
+rust-reviewer/scripts/
+├── run_clippy.sh       # cargo clippy -- -D warnings
+├── run_fmt_check.sh    # cargo fmt --check
+├── run_tests.sh        # cargo test
+```
+
+---
+
+## Skill 發布前的完整 Checklist
+
+```
+### 基本品質
+- [ ] description 用第三人稱
+- [ ] description 包含「USE WHEN」或明確觸發條件
+- [ ] name 只有小寫字母、數字、連字符，不含保留字
+- [ ] SKILL.md 本體不超過 500 行
+- [ ] 參考檔案只有一層深度（不巢狀）
+- [ ] 較長的參考檔案（>100 行）有目錄
+
+### 系統語言特定
+- [ ] 語言核心規則明確寫入（goroutine leak / UB / borrow checker 等）
+- [ ] scripts/ 裡有對應的靜態分析工具腳本
+- [ ] 有真實程式碼範例作為測試 corpus
+
+### 進階
+- [ ] 有副作用的 Skill 設了 disable-model-invocation: true
+- [ ] MCP 工具呼叫使用完整格式 ServerName:tool_name
+- [ ] 至少有 3 個 evaluation 情境並跑過測試
+- [ ] 在多個 Claude 版本（Haiku/Sonnet/Opus）驗證過
+```
+
+---
+
 ## 結論
 
 如果你的目標是做出真正能落地的 Go、C++、Rust Skill，最重要的不是讓 `skill-creator` 幫你一次生出完整答案，而是先把 workflow 定義清楚，再用真實專案持續驗證。
 
 換句話說，`skill-creator` 最適合拿來快速建立骨架與迭代方向；而真正讓 Skill 變得有用的，是你補進去的語言實戰規則、失敗案例與驗證標準。
+
+技術細節上，記住幾個最容易被忽略的點：description 要用第三人稱並加入「USE WHEN」觸發語言、有副作用的 Skill 要加 `disable-model-invocation: true`、SKILL.md 不超過 500 行並用一層深度的 progressive disclosure、以及先寫 evaluation 再寫 Skill 內容。
