@@ -541,6 +541,7 @@
         - [大賺小賠交易心法](strategy/大賺小賠交易心法_供需策略與心態管理.md)
         - [巨人傑交易心法與實戰策略](strategy/巨人傑-交易心法與實戰策略精華.md)
         - [犀利媽選股與進出場邏輯](strategy/犀利媽選股與進出場邏輯.md)
+        - [雷老闆大戶選股的四大秘密](strategy/雷老闆大戶選股的四大秘密.md)
         - [Joeman vs 巨人傑：交易心法與 2026 產業趨勢對談](strategy/joeman_giant_jay_interview.md)
         - [15年交易經驗分享](strategy/trading_experience_and_strategies.md)
         - [如何成為股市天才讀書筆記](strategy/如何成為股市天才讀書筆記.md)
