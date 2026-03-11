@@ -39,6 +39,7 @@
         - [Claude Code 完整自動化開發指南](tools/claude_code_complete_guide.md)
         - [Claude Code 最佳實踐指南](tools/claude_code_best_practices.md)
         - [Claude Code 使用後感受](tools/claude_code_experience.md)
+        - [Claude Code Plugin 觸發機制完整說明](tools/trigger-mechanisms.md)
         - [Claude Code 效能測試與正確性驗證完整指南](tools/claude-code-performance-testing-guide.md)
         - [Claude Code Skills：常見誤解與補充整理](tools/claude_code_skills_常見誤解與補充整理.md)
         - [Claude Code Skills 完整教學](tools/claude-code-skills.md)
