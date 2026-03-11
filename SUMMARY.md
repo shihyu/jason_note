@@ -168,7 +168,7 @@ Successfully consolidated 8 Go-related source files into 3 comprehensive, produc
 ## 🎓 Content Categories
 
 ### Programming Languages (7 major languages)
-- **Go**: 3 complete guides + 20+ reference files
+- **Go**: 3 complete guides + 20+ reference files (incl. concurrency visualization tools)
 - **C++**: Smart pointers, STL, optimization, debugging
 - **Python**: 3 complete guides (async, web, ML)
 - **Rust**: System programming, async, performance
@@ -302,6 +302,7 @@ Visit repository and browse files directly in GitHub UI.
 - **Runtime Guide**: `src/go/Go_Runtime_Complete_Guide.md`
 - **Performance Guide**: `src/go/go_performance_complete_guide.md`
 - **Navigation**: `src/go/SUMMARY.md`
+- **Concurrency Visualization**: `src/go/go_concurrency_visualization_tools.md`
 
 ### System
 - **Kernel**: `src/kernel/`
