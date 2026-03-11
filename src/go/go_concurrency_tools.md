@@ -94,6 +94,35 @@ sched
 
 **可觀察：** Goroutine 生命週期、阻塞原因、Syscall、Channel 操作、GC 事件
 
+### 延伸：`gotrace` 3D WebGL goroutine 視覺化
+
+如果你想看更直覺、偏教學用途的 goroutine 動態視覺化，可以看 Ivan Daniluk 的 `gotrace`：
+
+- Demo：<https://divan.dev/demos/workers2/>
+- 文章：<https://divan.dev/posts/go_concurrency_visualize/>
+- 原始碼：<https://github.com/divan/gotrace>
+
+`gotrace` 不是另一套獨立追蹤格式，而是建立在 `go tool trace` 產生的 execution trace 之上，再把並發流程渲染成 3D WebGL 畫面。它特別適合拿來理解：
+
+- worker pool / fan-out / fan-in
+- ping-pong、timer、server handler 等常見並發模式
+- `GOMAXPROCS` 變化下的平行度差異
+- goroutine leak 長什麼樣子
+
+這組視覺化的價值在於，你可以直接看到 goroutine 建立、阻塞、喚醒、channel 傳遞與生命週期如何在時間軸上展開，比只看文字或靜態圖更容易建立直覺。
+
+要注意幾點：
+
+- 這個專案的主要目標是教學，不是取代內建 trace UI。
+- README 明確說它較適合小程式、短 trace；事件太多時 WebGL 視圖會變得混亂。
+- 依 README，用自己的程式餵給 `gotrace` 時，通常需要搭配 patched Go runtime 或專案提供的 docker 流程。
+- Repo 以 MIT license 釋出，適合拿來研究或延伸。
+
+實務上可以這樣分工：
+
+- 要做正式診斷、排查阻塞/GC/排程：先用 `go tool trace`
+- 要教學、展示並發模式、幫新人建立心智模型：再用 `gotrace`
+
 ---
 
 ## 2. `pprof` — 效能剖析

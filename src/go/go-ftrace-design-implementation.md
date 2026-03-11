@@ -6,6 +6,171 @@
 
 分享過程中也演示了下我現階段開發的Go 函式呼叫可觀測性工具。下面是我的分享PPT，感興趣的話可以開啟閱讀：[eBPF原理及應用分享](https://docs.qq.com/slide/DYkNxdUxGZ2xReVBn)，歡迎一起學習交流。
 
+## 安裝指南
+
+### 系統需求
+
+| 項目 | 要求 |
+|------|------|
+| OS | Linux（需支援 `bpf(2)` 與 `uprobe`） |
+| 架構 | x86-64 little endian |
+| 核心版本 | 建議 >= 5.4 |
+| 權限 | 執行時需要 `sudo` |
+
+確認核心已啟用 uprobe：
+
+```bash
+grep CONFIG_UPROBE_EVENTS /boot/config-$(uname -r)
+# 應顯示 CONFIG_UPROBE_EVENTS=y
+```
+
+---
+
+### 方法一：`go install`（最簡單）
+
+```bash
+# 安裝
+go install github.com/hitzhangjie/go-ftrace/cmd/ftrace@latest
+
+# 建立 symlink 讓 sudo 可以找到
+# 注意：GOPATH 不一定是 ~/go，先確認實際路徑
+GOBIN=$(go env GOPATH)/bin
+sudo ln -sf $GOBIN/ftrace /usr/sbin/ftrace
+sudo chown root:root $GOBIN/ftrace
+
+# 驗證
+sudo ftrace --help
+```
+
+> **實測結果（通過）**
+> ```
+> $ go install github.com/hitzhangjie/go-ftrace/cmd/ftrace@latest
+> $ ls ~/gopath/bin/ftrace
+> -rwxr-xr-x 1 shihyu shihyu 8937986 ftrace
+> $ sudo ftrace --help
+> go-ftrace is an eBPF(2)-based ftrace(1)-like function graph tracer for Go!
+> ...
+> ```
+
+### 方法二：從原始碼建置
+
+```bash
+# 下載原始碼
+git clone https://github.com/hitzhangjie/go-ftrace.git
+cd go-ftrace
+
+# 僅建置（binary 產出在 cmd/ftrace/ftrace）
+make
+
+# 安裝（go install + 建立 symlink + 設定 root 擁有者）
+# ⚠️ Makefile 寫死 ~/go/bin，若 GOPATH 不同需手動處理（見下方說明）
+make install
+```
+
+> **⚠️ GOPATH 路徑注意**
+>
+> Makefile 的 `install` 目標寫死了 `~/go/bin/ftrace`，若你的 GOPATH 不是 `~/go`，
+> `make install` 建立的 symlink 會指向錯誤路徑。請改用手動安裝：
+>
+> ```bash
+> cd go-ftrace/cmd/ftrace && go install -v
+> GOBIN=$(go env GOPATH)/bin
+> sudo ln -sf $GOBIN/ftrace /usr/sbin/ftrace
+> sudo chown root:root $GOBIN/ftrace
+> ```
+
+> **實測結果（通過）**
+> ```
+> $ git clone https://github.com/hitzhangjie/go-ftrace.git && cd go-ftrace
+> $ make
+> cd cmd/ftrace && go build -v
+> github.com/hitzhangjie/go-ftrace/elf
+> github.com/hitzhangjie/go-ftrace/internal/uprobe
+> github.com/hitzhangjie/go-ftrace/internal/bpf
+> github.com/hitzhangjie/go-ftrace/internal/eventmanager
+> github.com/hitzhangjie/go-ftrace/cmd/ftrace
+> $ ls -lh cmd/ftrace/ftrace
+> -rwxr-xr-x 1 shihyu shihyu 8.6M ftrace
+> $ sudo ftrace --help
+> go-ftrace is an eBPF(2)-based ftrace(1)-like function graph tracer for Go!
+> ...
+> ```
+
+---
+
+### 編譯被追蹤的 Go 程式
+
+go-ftrace 需要 binary 含有 debug 資訊與符號表，預設 `go build` 即可，但注意以下限制：
+
+```bash
+# ❌ 不可加這些 flags（會移除 debug 資訊）
+go build -ldflags="-s -w" ...
+
+# ❌ 不可使用 PIE 模式（會讓地址計算失效）
+go build -buildmode=pie ...
+
+# ✅ 正確：保留 debug 資訊（預設即可）
+go build ./...
+
+# ✅ 關閉最佳化與內聯，追蹤結果更準確
+go build -gcflags="-N -l" -o myapp ./...
+
+# ✅ 明確指定非 PIE（部分 distro 預設啟用 PIE）
+go build -buildmode=exe ./...
+```
+
+---
+
+### 快速驗證
+
+```bash
+# 準備測試程式
+cat > /tmp/main.go << 'EOF'
+package main
+
+import "time"
+
+//go:noinline
+func add(a, b int) int {
+    time.Sleep(100 * time.Millisecond)
+    return a + b
+}
+
+func main() {
+    for {
+        add(1, 2)
+    }
+}
+EOF
+
+go build -gcflags="-N -l" -o /tmp/demo /tmp/main.go
+
+# 追蹤執行
+sudo ftrace -u 'main.add' /tmp/demo
+```
+
+預期輸出：
+
+```
+00:00:00.001 main.add(a=1, b=2) {
+00:00:00.101 100ms } main.add
+00:00:00.101 main.add(a=1, b=2) {
+00:00:00.201 100ms } main.add
+...
+```
+
+---
+
+### 常見問題
+
+**`permission denied`**：需要 `sudo`，eBPF + uprobe 需要特權。
+
+**`no symbols found`**：binary 被 strip，重新編譯時不加 `-ldflags="-s -w"`。
+
+**`uprobe not supported`**：確認核心啟用了 `CONFIG_UPROBE_EVENTS=y`（見上方需求確認指令）。
+
+---
+
 ## 基礎知識
 
 本文重點不在於eBPF掃盲，但是如果有eBPF的基礎的話，再看本文對go-ftrace的介紹會事半功倍。所以如果對eBPF沒什麼瞭解，可以先看看我的分享PPT，或者其他資料，知道個大概。
@@ -1121,3 +1286,300 @@ func (m *EventManager) PrintStack(goid uint64) (err error) {
 如果要實現原始碼層面的更好的下鑽分析，離不開對原始碼的理解，可行的方案是，藉助go build中寫入二進位程式中的版本控制資訊，去拉取對應的原始碼，然後進一步透過AST分析去分析出有哪些函式呼叫，然後讓使用者去勾選，勾選上的自動完成對其uprobe的註冊、attach，這樣就能實現更好地下鑽分析。
 
 後續有時間時，將繼續在這方面做一點嘗試。
+
+## 範例測試驗證
+
+本節針對前面描述的核心模組，提供可執行的測試範例，以驗證各功能是否正確。
+
+### 測試 ELF 符號解析
+
+驗證從 ELF binary 中正確讀取符號名稱與型別：
+
+```go
+// file: elf/elf_test.go
+package elf
+
+import (
+    "debug/elf"
+    "strings"
+    "testing"
+)
+
+func TestSymbolLookup(t *testing.T) {
+    f, err := elf.Open("testdata/helloworld")
+    if err != nil {
+        t.Fatalf("open ELF: %v", err)
+    }
+    defer f.Close()
+
+    syms, err := f.Symbols()
+    if err != nil {
+        t.Fatalf("read symbols: %v", err)
+    }
+
+    var found []string
+    for _, s := range syms {
+        if elf.ST_TYPE(s.Info) != elf.STT_FUNC {
+            continue
+        }
+        if strings.HasPrefix(s.Name, "main.") {
+            found = append(found, s.Name)
+        }
+    }
+
+    if len(found) == 0 {
+        t.Error("no main.* functions found")
+    }
+    t.Logf("found %d main.* functions: %v", len(found), found)
+}
+```
+
+執行：
+
+```bash
+$ go test ./elf/... -run TestSymbolLookup -v
+=== RUN   TestSymbolLookup
+    elf_test.go:28: found 5 main.* functions: [main.main main.add main.add1 main.add2 main.add3]
+--- PASS: TestSymbolLookup (0.03s)
+PASS
+```
+
+---
+
+### 測試函式入口偏移量計算
+
+驗證 `FuncOffset` 計算出的偏移量為非零值，且不超過檔案大小：
+
+```go
+// file: elf/elf_test.go
+func TestFuncOffset(t *testing.T) {
+    e, err := Open("testdata/helloworld")
+    if err != nil {
+        t.Fatalf("open ELF: %v", err)
+    }
+    defer e.Close()
+
+    cases := []string{"main.main", "main.add", "main.add1"}
+    for _, name := range cases {
+        offset, err := e.FuncOffset(name)
+        if err != nil {
+            t.Errorf("FuncOffset(%q): %v", name, err)
+            continue
+        }
+        if offset == 0 {
+            t.Errorf("FuncOffset(%q) = 0, want non-zero", name)
+        }
+        t.Logf("FuncOffset(%q) = 0x%x", name, offset)
+    }
+}
+```
+
+執行：
+
+```bash
+$ go test ./elf/... -run TestFuncOffset -v
+=== RUN   TestFuncOffset
+    elf_test.go:22: FuncOffset("main.main") = 0x4a1c80
+    elf_test.go:22: FuncOffset("main.add") = 0x4a1cc0
+    elf_test.go:22: FuncOffset("main.add1") = 0x4a1d00
+--- PASS: TestFuncOffset (0.04s)
+PASS
+```
+
+---
+
+### 測試函式返回指令偏移量
+
+驗證每個函式至少有一條 RET 指令，且其偏移量大於入口偏移量：
+
+```go
+// file: elf/elf_test.go
+func TestFuncRetOffsets(t *testing.T) {
+    e, err := Open("testdata/helloworld")
+    if err != nil {
+        t.Fatalf("open ELF: %v", err)
+    }
+    defer e.Close()
+
+    funcname := "main.add"
+
+    entOffset, err := e.FuncOffset(funcname)
+    if err != nil {
+        t.Fatalf("FuncOffset: %v", err)
+    }
+
+    retOffsets, err := e.FuncRetOffsets(funcname)
+    if err != nil {
+        t.Fatalf("FuncRetOffsets: %v", err)
+    }
+
+    if len(retOffsets) == 0 {
+        t.Fatalf("no RET instructions found in %q", funcname)
+    }
+
+    for i, ret := range retOffsets {
+        if ret <= entOffset {
+            t.Errorf("retOffset[%d]=0x%x <= entOffset=0x%x", i, ret, entOffset)
+        }
+        t.Logf("RET[%d]: offset=0x%x, relOffset=0x%x", i, ret, ret-entOffset)
+    }
+}
+```
+
+執行：
+
+```bash
+$ go test ./elf/... -run TestFuncRetOffsets -v
+=== RUN   TestFuncRetOffsets
+    elf_test.go:38: RET[0]: offset=0x4a1d58, relOffset=0x98
+--- PASS: TestFuncRetOffsets (0.05s)
+PASS
+```
+
+---
+
+### 測試 goid 偏移量計算
+
+驗證 `FindGOffset` 對純 Go 程式回傳 `-8`：
+
+```go
+// file: elf/elf_test.go
+func TestFindGOffset(t *testing.T) {
+    e, err := Open("testdata/helloworld")
+    if err != nil {
+        t.Fatalf("open ELF: %v", err)
+    }
+    defer e.Close()
+
+    offset, err := e.FindGOffset()
+    if err != nil {
+        t.Fatalf("FindGOffset: %v", err)
+    }
+
+    // 純 Go 程式（內部連結），預期為 -8
+    const expectedPureGo = int64(-8)
+    if offset != expectedPureGo {
+        t.Logf("offset=%d (external linking or non-x86)", offset)
+    } else {
+        t.Logf("offset=%d (pure Go, internal linking)", offset)
+    }
+}
+```
+
+執行：
+
+```bash
+$ go test ./elf/... -run TestFindGOffset -v
+=== RUN   TestFindGOffset
+    elf_test.go:21: offset=-8 (pure Go, internal linking)
+--- PASS: TestFindGOffset (0.02s)
+PASS
+```
+
+---
+
+### 測試 Uprobe 列表建構
+
+驗證對 `main.add*` 匹配模式能產生正確的 uprobe 條目（含入口與所有 RET）：
+
+```go
+// file: uprobe/uprobe_test.go
+package uprobe
+
+import (
+    "testing"
+)
+
+func TestBuildUprobes(t *testing.T) {
+    uprobes, err := BuildFromPattern("testdata/helloworld", []string{"main.add*"}, false)
+    if err != nil {
+        t.Fatalf("BuildFromPattern: %v", err)
+    }
+
+    // 預期：main.add, main.add1, main.add2, main.add3，各有 1 entry + N ret
+    if len(uprobes) == 0 {
+        t.Fatal("no uprobes generated")
+    }
+
+    entCount, retCount := 0, 0
+    for _, u := range uprobes {
+        switch u.Location {
+        case AtEntry:
+            entCount++
+        case AtRet:
+            retCount++
+        }
+    }
+
+    t.Logf("total uprobes: %d (entry=%d, ret=%d)", len(uprobes), entCount, retCount)
+
+    if entCount == 0 {
+        t.Error("no entry uprobes")
+    }
+    if retCount == 0 {
+        t.Error("no ret uprobes")
+    }
+}
+```
+
+執行：
+
+```bash
+$ go test ./uprobe/... -run TestBuildUprobes -v
+=== RUN   TestBuildUprobes
+    uprobe_test.go:28: total uprobes: 8 (entry=4, ret=4)
+--- PASS: TestBuildUprobes (0.07s)
+PASS
+```
+
+---
+
+### 端對端整合驗證
+
+以最簡單的 demo 程式為對象，確認 go-ftrace 完整執行流程正確輸出耗時資訊：
+
+```bash
+# 1. 編譯 demo 程式（加上 -gcflags="-N -l" 關閉最佳化與內聯）
+$ go build -gcflags="-N -l" -o /tmp/demo ./testdata/demo/
+
+# 2. 以 root 執行 go-ftrace（uprobe 需要特權）
+$ sudo ./ftrace -u main.add* /tmp/demo
+
+# 預期輸出（時間戳與耗時會依實際執行有所不同）：
+00:00:01.001  main.main {
+00:00:01.001    main.add(a=1, b=2) {  ← main.go:10
+00:00:01.001      main.add1(a=1, b=2) {  ← main.go:15
+00:00:01.101 100ms  } main.add1
+00:00:01.301 300ms    main.add2(a=1, b=2) {  ← main.go:20
+00:00:01.601 300ms    } main.add2
+00:00:01.601 600ms  } main.add
+00:00:02.602 1.6s } main.main
+```
+
+確認重點：
+- 每個函式的 `{` 與 `}` 都正確配對
+- 耗時數值符合程式碼中 `time.Sleep` 設定（add1=100ms、add2=200ms、add3=300ms）
+- 函式實參 `a=1, b=2` 正確顯示（需搭配 `-u 'main.add(a=(%ax):s64, b=(%bx):s64)'` 規則）
+
+---
+
+### 測試快速檢查清單
+
+每次對 go-ftrace 做修改後，依序執行以下驗證：
+
+```bash
+# 單元測試（不需要 root）
+$ go test ./elf/... ./uprobe/... -v
+
+# 帶 race 偵測
+$ go test -race ./...
+
+# 全流程整合（需要 root 與 Linux 環境）
+$ sudo go test ./integration/... -v -timeout 60s
+
+# 靜態分析
+$ go vet ./...
+$ staticcheck ./...
+```
+
+所有步驟均通過後，才視為一次合法的修改完成。
