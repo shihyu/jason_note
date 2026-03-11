@@ -1,0 +1,622 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Go 並發視覺化工具整理 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="go-並發視覺化工具整理"><a class="header" href="#go-並發視覺化工具整理">Go 並發視覺化工具整理</a></h1>
+<p>Go 官方的 <code>go tool trace</code>、<code>go tool pprof</code>，加上社群的 <code>statsviz</code>、<code>gops</code>、<code>go-callvis</code>、<code>gotrace</code>，可以從不同角度觀察 goroutine 與並發結構。</p>
+<hr />
+<h2 id="go-tool-trace"><a class="header" href="#go-tool-trace"><code>go tool trace</code></a></h2>
+<p><code>runtime/trace</code> 搭配 <code>go tool trace</code> 產生時間軸，顯示每個 goroutine 何時執行、阻塞、等待排程，以及 GC、channel、syscall 等事件。</p>
+<h3 id="範例程式"><a class="header" href="#範例程式">範例程式</a></h3>
+<pre><code class="language-go">package main
+
+import (
+	"fmt"
+	"os"
+	"runtime/trace"
+	"sync"
+	"time"
+)
+
+func producer(ch chan&lt;- int, n int) {
+	for i := 0; i &lt; n; i++ {
+		ch &lt;- i
+		time.Sleep(1 * time.Millisecond)
+	}
+	close(ch)
+}
+
+func worker(id int, ch &lt;-chan int, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for v := range ch {
+		time.Sleep(time.Duration(v%3) * time.Millisecond)
+		_ = v * v
+	}
+	fmt.Printf("worker %d done\n", id)
+}
+
+func main() {
+	f, _ := os.Create("trace.out")
+	defer f.Close()
+	trace.Start(f)
+	defer trace.Stop()
+
+	ch := make(chan int, 10)
+	var wg sync.WaitGroup
+	for i := 0; i &lt; 4; i++ {
+		wg.Add(1)
+		go worker(i, ch, &amp;wg)
+	}
+	producer(ch, 40)
+	wg.Wait()
+}
+</code></pre>
+<h3 id="使用步驟"><a class="header" href="#使用步驟">使用步驟</a></h3>
+<pre><code class="language-bash"># 步驟 1：執行程式，產生 trace.out
+go run main.go
+
+# 步驟 2：用瀏覽器開啟 trace UI
+go tool trace trace.out
+# → 自動開啟 http://localhost:PORT/
+
+# 步驟 3：也可以指定 port 手動開啟
+go tool trace -http=:8080 trace.out
+</code></pre>
+<p>在測試中收集 trace：</p>
+<pre><code class="language-bash">go test -run TestXXX -trace trace.out ./pkg
+go tool trace trace.out
+</code></pre>
+<h3 id="ui-畫面"><a class="header" href="#ui-畫面">UI 畫面</a></h3>
+<p><strong>首頁</strong>：列出可用的視圖（時間軸、goroutine 分析、blocking profile 等）</p>
+<p><img src="images/viz-trace-home.png" alt="go tool trace 首頁" /></p>
+<p><strong>Goroutine analysis</strong>：點選 <code>main.worker</code> 可以看到每個 goroutine 的執行時間、Channel 阻塞時間、Scheduler 等待時間明細</p>
+<p><img src="images/viz-trace-goroutine-detail.png" alt="goroutine 分析頁面" /></p>
+<h3 id="適合用來找"><a class="header" href="#適合用來找">適合用來找</a></h3>
+<ul>
+<li>goroutine 排程延遲</li>
+<li>channel、鎖、syscall 導致的阻塞</li>
+<li>GC pause 時間</li>
+</ul>
+<hr />
+<h2 id="go-tool-pprof"><a class="header" href="#go-tool-pprof"><code>go tool pprof</code></a></h2>
+<p>pprof 是 Go 官方 profiling 工具，收集 CPU、記憶體、goroutine、mutex 等 profile，並以火焰圖或呼叫圖呈現。</p>
+<h3 id="範例程式-1"><a class="header" href="#範例程式-1">範例程式</a></h3>
+<p>在程式中加入 <code>_ "net/http/pprof"</code> 即可開啟 <code>/debug/pprof/</code> endpoint：</p>
+<pre><code class="language-go">package main
+
+import (
+	"math"
+	"net/http"
+	_ "net/http/pprof"
+	"runtime"
+	"sync"
+	"time"
+)
+
+func isPrime(n int) bool {
+	if n &lt; 2 { return false }
+	for i := 2; i &lt;= int(math.Sqrt(float64(n))); i++ {
+		if n%i == 0 { return false }
+	}
+	return true
+}
+
+func countPrimes(start, end int) int {
+	count := 0
+	for i := start; i &lt; end; i++ {
+		if isPrime(i) { count++ }
+	}
+	return count
+}
+
+func cpuWork() {
+	for {
+		var wg sync.WaitGroup
+		step := 50000
+		for i := 0; i &lt; runtime.NumCPU(); i++ {
+			wg.Add(1)
+			s := i * step
+			go func(s int) {
+				defer wg.Done()
+				_ = countPrimes(s, s+step)
+			}(s)
+		}
+		wg.Wait()
+		time.Sleep(50 * time.Millisecond)
+	}
+}
+
+func main() {
+	go cpuWork()
+	http.ListenAndServe(":6060", nil)
+}
+</code></pre>
+<h3 id="使用步驟-1"><a class="header" href="#使用步驟-1">使用步驟</a></h3>
+<pre><code class="language-bash"># 步驟 1：執行程式
+go run main.go
+
+# 步驟 2：瀏覽器開啟 pprof 端點，確認可用的 profile 類型
+# http://localhost:6060/debug/pprof/
+
+# 步驟 3a：收集 CPU profile 並開啟互動式火焰圖 Web UI（採樣 10 秒）
+go tool pprof -http=:8081 http://localhost:6060/debug/pprof/profile?seconds=10
+
+# 步驟 3b：收集 heap profile
+go tool pprof -http=:8081 http://localhost:6060/debug/pprof/heap
+
+# 步驟 3c：查看 goroutine stack（不需要 Web UI）
+curl http://localhost:6060/debug/pprof/goroutine?debug=2
+</code></pre>
+<p>在測試中收集 profile：</p>
+<pre><code class="language-bash">go test -run TestXXX -cpuprofile cpu.out ./pkg
+go tool pprof -http=:8081 cpu.out
+</code></pre>
+<h3 id="ui-畫面-1"><a class="header" href="#ui-畫面-1">UI 畫面</a></h3>
+<p><strong><code>/debug/pprof/</code> 端點</strong>：列出所有可用的 profile 類型</p>
+<p><img src="images/viz-pprof-index.png" alt="pprof 端點首頁" /></p>
+<p><strong>呼叫圖（Graph view）</strong>：方框大小代表 CPU 佔用比例，箭頭粗細代表呼叫頻率</p>
+<p><img src="images/viz-pprof-graph.png" alt="pprof 呼叫圖" /></p>
+<p><strong>火焰圖（Flamegraph view）</strong>：橫軸代表 CPU 時間佔比，縱軸代表呼叫深度</p>
+<p><img src="images/viz-pprof-flamegraph.png" alt="pprof 火焰圖" /></p>
+<h3 id="適合用來找-1"><a class="header" href="#適合用來找-1">適合用來找</a></h3>
+<ul>
+<li>CPU 熱點函式</li>
+<li>heap 記憶體洩漏</li>
+<li>goroutine leak（goroutine 數量異常增長）</li>
+<li>mutex 競爭</li>
+</ul>
+<hr />
+<h2 id="statsviz"><a class="header" href="#statsviz"><code>statsviz</code></a></h2>
+<p><a href="https://github.com/arl/statsviz">statsviz</a> 是輕量套件，整合後即可在瀏覽器即時看到 Go runtime 指標折線圖，無需主動觸發 profile。</p>
+<blockquote>
+<p><strong>需要 Go 1.23+</strong></p>
+</blockquote>
+<h3 id="安裝"><a class="header" href="#安裝">安裝</a></h3>
+<pre><code class="language-bash">go get github.com/arl/statsviz@latest
+</code></pre>
+<h3 id="範例程式-2"><a class="header" href="#範例程式-2">範例程式</a></h3>
+<pre><code class="language-go">package main
+
+import (
+	"fmt"
+	"net/http"
+	"runtime"
+	"sync"
+	"time"
+
+	"github.com/arl/statsviz"
+)
+
+func spawnWorkers(n int) func() {
+	var wg sync.WaitGroup
+	quit := make(chan struct{})
+	for i := 0; i &lt; n; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for {
+				select {
+				case &lt;-quit:
+					return
+				default:
+					data := make([]byte, 512)
+					_ = data
+					time.Sleep(10 * time.Millisecond)
+				}
+			}
+		}()
+	}
+	return func() { close(quit); wg.Wait() }
+}
+
+func main() {
+	mux := http.NewServeMux()
+	statsviz.Register(mux)
+	go http.ListenAndServe(":6060", mux)
+
+	fmt.Println("statsviz at http://localhost:6060/debug/statsviz/")
+
+	var stops []func()
+	for round := 0; ; round++ {
+		n := (round%5 + 1) * 10
+		stop := spawnWorkers(n)
+		stops = append(stops, stop)
+		fmt.Printf("round %d: goroutines=%d\n", round, runtime.NumGoroutine())
+		time.Sleep(3 * time.Second)
+		if len(stops) &gt; 2 {
+			stops[0]()
+			stops = stops[1:]
+		}
+	}
+}
+</code></pre>
+<h3 id="使用步驟-2"><a class="header" href="#使用步驟-2">使用步驟</a></h3>
+<pre><code class="language-bash"># 步驟 1：執行程式
+go run main.go
+
+# 步驟 2：瀏覽器開啟
+# http://localhost:6060/debug/statsviz/
+# → 圖表自動更新，不需要其他操作
+</code></pre>
+<h3 id="ui-畫面-2"><a class="header" href="#ui-畫面-2">UI 畫面</a></h3>
+<p>即時顯示 Goroutines 數量、GC Memory Summary、CPU 使用率、Heap 等多個指標</p>
+<p><img src="images/viz-statsviz.png" alt="statsviz 即時 runtime 監控" /></p>
+<h3 id="適合用來"><a class="header" href="#適合用來">適合用來</a></h3>
+<ul>
+<li>長時間觀察 goroutine 數量趨勢（是否洩漏）</li>
+<li>監控 GC 頻率與 heap 大小變化</li>
+<li>快速確認程式 runtime 健康狀況</li>
+</ul>
+<hr />
+<h2 id="gops"><a class="header" href="#gops"><code>gops</code></a></h2>
+<p><a href="https://github.com/google/gops">gops</a> 是 Google 開發的命令列工具，列出系統上所有 Go 程式，並可即時查看其 goroutine stack 與記憶體狀態。</p>
+<h3 id="安裝-1"><a class="header" href="#安裝-1">安裝</a></h3>
+<pre><code class="language-bash">go install github.com/google/gops@latest
+</code></pre>
+<h3 id="使用步驟不需要修改程式"><a class="header" href="#使用步驟不需要修改程式">使用步驟（不需要修改程式）</a></h3>
+<pre><code class="language-bash"># 步驟 1：列出所有 Go 程式（* 表示已嵌入 gops agent）
+gops
+</code></pre>
+<p>不需要嵌入 agent 就能看到程式清單。</p>
+<h3 id="深層查看需嵌入-agent"><a class="header" href="#深層查看需嵌入-agent">深層查看（需嵌入 agent）</a></h3>
+<p>在程式中加入 agent：</p>
+<pre><code class="language-go">package main
+
+import (
+	"log"
+	"net/http"
+	_ "net/http/pprof"
+	"sync"
+	"time"
+
+	"github.com/google/gops/agent"
+)
+
+func longRunningWorker(id int, quit &lt;-chan struct{}, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for {
+		select {
+		case &lt;-quit:
+			return
+		default:
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+}
+
+func main() {
+	// 啟動 gops agent
+	if err := agent.Listen(agent.Options{}); err != nil {
+		log.Fatal(err)
+	}
+
+	quit := make(chan struct{})
+	var wg sync.WaitGroup
+	for i := 0; i &lt; 8; i++ {
+		wg.Add(1)
+		go longRunningWorker(i, quit, &amp;wg)
+	}
+	go http.ListenAndServe(":6060", nil)
+	time.Sleep(60 * time.Second)
+	close(quit)
+	wg.Wait()
+}
+</code></pre>
+<pre><code class="language-bash"># 步驟 1：執行程式
+go run main.go
+
+# 步驟 2：找到 PID（帶 * 的就是有 agent 的程式）
+gops
+
+# 步驟 3：查看 goroutine stack
+gops stack &lt;PID&gt;
+
+# 步驟 4：查看記憶體統計
+gops memstats &lt;PID&gt;
+
+# 步驟 5：觸發 CPU profile
+gops pprof-cpu &lt;PID&gt;
+</code></pre>
+<h3 id="輸出範例"><a class="header" href="#輸出範例">輸出範例</a></h3>
+<p><img src="images/viz-gops-terminal.png" alt="gops 命令列輸出" /></p>
+<h3 id="適合用來-1"><a class="header" href="#適合用來-1">適合用來</a></h3>
+<ul>
+<li>快速確認某個程式的 goroutine 數量</li>
+<li>不重啟程式就能取得 goroutine stack snapshot</li>
+<li>排查 goroutine leak 的第一步</li>
+</ul>
+<hr />
+<h2 id="go-callvis"><a class="header" href="#go-callvis"><code>go-callvis</code></a></h2>
+<p><code>go-callvis</code> 透過 pointer analysis 建構 call graph，以 Graphviz 產生互動式 SVG 圖，適合理解專案結構與找 goroutine 啟動點。需要先安裝 <a href="https://graphviz.org/download/">Graphviz</a>。</p>
+<h3 id="安裝-2"><a class="header" href="#安裝-2">安裝</a></h3>
+<pre><code class="language-bash"># 安裝 go-callvis
+go install github.com/ofabry/go-callvis@latest
+
+# 安裝 Graphviz（Ubuntu/Debian）
+sudo apt install graphviz
+</code></pre>
+<h3 id="使用步驟-3"><a class="header" href="#使用步驟-3">使用步驟</a></h3>
+<pre><code class="language-bash"># 步驟 1：在專案目錄執行，自動開啟瀏覽器顯示互動式圖表
+go-callvis .
+
+# 步驟 2：或輸出成 PNG 靜態圖檔
+go-callvis -format=png -file=callgraph &lt;module-name&gt;
+
+# 步驟 3：指定特定 package
+go-callvis github.com/your/project/cmd/server
+</code></pre>
+<h3 id="輸出範例-1"><a class="header" href="#輸出範例-1">輸出範例</a></h3>
+<p>以下是一個 worker pool 程式的 call graph，圓形箭頭（<code>o→</code>）代表 goroutine 啟動：</p>
+<p><img src="images/viz-callvis-demo.png" alt="go-callvis 呼叫圖（worker pool 範例）" /></p>
+<h3 id="適合用來-2"><a class="header" href="#適合用來-2">適合用來</a></h3>
+<ul>
+<li>理解大型專案的函式呼叫關係</li>
+<li>找出哪些地方啟動了 goroutine</li>
+<li>確認 concurrent call 路徑</li>
+</ul>
+<hr />
+<h2 id="gotrace"><a class="header" href="#gotrace"><code>gotrace</code></a></h2>
+<p><code>gotrace</code> 是 3D WebGL 視覺化工具，把 goroutine 與 channel 互動轉成動畫，偏教學與展示用途。</p>
+<p><img src="images/gotrace-workers2.gif" alt="gotrace workers demo" /></p>
+<blockquote>
+<p>⚠️ <strong>相容性警告</strong>：gotrace 使用 Go 1.5-1.7 時代的 trace 格式，與 Go 1.8+ 產生的 trace.out <strong>不相容</strong>，且不支援 Go modules。目前<strong>無法在現代 Go 環境中實際執行</strong>，僅作為概念參考。若需要視覺化效果，建議改用 <code>go tool trace</code>。</p>
+</blockquote>
+<p>適合說明 worker pool、fan-out、fan-in 等並發模式，讓團隊直觀理解 goroutine 的建立與阻塞。</p>
+<hr />
+<h2 id="選擇建議"><a class="header" href="#選擇建議">選擇建議</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>工具</th><th>類型</th><th>適合用途</th><th>可用狀態</th></tr></thead><tbody>
+<tr><td><code>go tool trace</code></td><td>官方時間軸</td><td>排查 goroutine 排程延遲、channel/鎖阻塞、GC pause</td><td>✅</td></tr>
+<tr><td><code>go tool pprof</code></td><td>火焰圖 / 呼叫圖</td><td>CPU 熱點、記憶體洩漏、goroutine leak 深層分析</td><td>✅</td></tr>
+<tr><td><code>statsviz</code></td><td>即時折線圖</td><td>長時間監控 goroutine 數量、GC、heap 趨勢（需 Go 1.23+）</td><td>✅</td></tr>
+<tr><td><code>gops</code></td><td>命令列</td><td>快速診斷任意 Go 程式，不需事先埋點</td><td>✅</td></tr>
+<tr><td><code>go-callvis</code></td><td>呼叫圖</td><td>理解大型專案結構、找 goroutine 啟動點</td><td>✅</td></tr>
+<tr><td><code>gotrace</code></td><td>3D 動畫</td><td>教學、展示並發模式</td><td>❌ 不相容現代 Go</td></tr>
+</tbody></table>
+</div>
+<p><strong>建議使用順序：</strong></p>
+<ol>
+<li><code>gops</code>：不需改程式，先確認 goroutine 數量是否異常</li>
+<li><code>statsviz</code>：嵌入後長時間觀察 runtime 指標趨勢</li>
+<li><code>go tool pprof</code>：發現異常時深挖 CPU 或記憶體熱點</li>
+<li><code>go tool trace</code>：需要時間軸細節時使用</li>
+<li><code>go-callvis</code>：要理解整體呼叫結構時補充</li>
+</ol>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../go/go_concurrency_tools.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../go/go_godebug_runtime_debug_guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../go/go_concurrency_tools.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../go/go_godebug_runtime_debug_guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

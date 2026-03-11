@@ -1,0 +1,751 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Claude Code Plugin 觸發機制完整說明 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="claude-code-plugin-觸發機制完整說明"><a class="header" href="#claude-code-plugin-觸發機制完整說明">Claude Code Plugin 觸發機制完整說明</a></h1>
+<p>本文件說明 everything-claude-code plugin 中五種檔案類型的觸發方式與運作原理。</p>
+<hr />
+<h2 id="速查卡quick-reference"><a class="header" href="#速查卡quick-reference">速查卡（Quick Reference）</a></h2>
+<pre><code>想要…                             用這個
+────────────────────────────────────────────────────
+輸入一個指令立刻執行固定流程        Command   /code-review
+讓 Claude 自動感知情境套用知識      Skill     語意匹配
+讓 Claude 自動派出專門助手          Agent     自主委派
+強制 Claude 永遠遵守某個規定        Rule      永遠生效
+在工具呼叫前後自動執行腳本          Hook      事件觸發
+</code></pre>
+<hr />
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
+<ol>
+<li><a href="#%E4%BA%94%E7%A8%AE%E6%A9%9F%E5%88%B6%E6%A6%82%E8%A6%BD">五種機制概覽</a></li>
+<li><a href="#1-commands">Commands — 手動指令觸發</a></li>
+<li><a href="#2-skills">Skills — 語意自動匹配</a></li>
+<li><a href="#3-agents">Agents — Claude 主動委派</a></li>
+<li><a href="#4-rules">Rules — 永遠自動載入</a></li>
+<li><a href="#5-hooks">Hooks — 工具事件自動觸發</a></li>
+<li><a href="#%E5%AE%8C%E6%95%B4%E8%A7%B8%E7%99%BC%E6%B5%81%E7%A8%8B%E5%9C%96">完整觸發流程圖</a></li>
+<li><a href="#%E5%9F%B7%E8%A1%8C%E6%A8%A1%E5%9E%8B%E5%B0%8D%E6%AF%94">執行模型對比</a></li>
+<li><a href="#%E5%A6%82%E4%BD%95%E9%81%B8%E6%93%87%E6%B1%BA%E7%AD%96%E6%A8%B9">如何選擇？決策樹</a></li>
+<li><a href="#%E9%97%9C%E9%8D%B5%E5%B7%AE%E7%95%B0%E5%B0%8D%E7%85%A7%E8%A1%A8">關鍵差異對照表</a></li>
+</ol>
+<hr />
+<h2 id="五種機制概覽"><a class="header" href="#五種機制概覽">五種機制概覽</a></h2>
+<pre><code>┌────────────────────────────────────────────────────────────────┐
+│                    Claude Code Plugin 機制總覽                 │
+├──────────┬──────────────┬────────────┬──────────┬──────────────┤
+│          │  Commands    │   Skills   │  Agents  │    Rules     │
+│          │              │            │          │    Hooks     │
+├──────────┼──────────────┼────────────┼──────────┼──────────────┤
+│ 誰觸發   │    使用者    │ Claude自動 │  Claude  │  永遠/事件   │
+│ 怎麼觸發 │  /指令名稱   │ 語意匹配   │  自主判斷│ 自動/工具事件│
+│ 在哪執行 │  主對話      │ 主對話     │ 子執行緒 │ 系統層/主對話│
+│ 可否關閉 │ 不輸入即停   │ 可忽略     │ 可忽略   │  難以關閉    │
+└──────────┴──────────────┴────────────┴──────────┴──────────────┘
+</code></pre>
+<hr />
+<h2 id="1-commands"><a class="header" href="#1-commands">1. Commands</a></h2>
+<p><strong>位置</strong>：<code>commands/*.md</code>
+<strong>觸發方式</strong>：使用者手動輸入 <code>/指令名稱</code></p>
+<h3 id="運作原理"><a class="header" href="#運作原理">運作原理</a></h3>
+<pre><code>使用者輸入 /code-review
+        │
+        ▼
+Claude Code 找到 commands/code-review.md
+        │
+        ▼
+整個 md 內容當作 prompt，在主對話直接執行
+        │
+        ▼
+輸出結果給使用者
+</code></pre>
+<h3 id="觸發規則"><a class="header" href="#觸發規則">觸發規則</a></h3>
+<ul>
+<li>檔名即指令名稱，無需 frontmatter</li>
+<li>Claude 讀取整個 md 內容，作為 prompt 執行</li>
+<li>一對一對應：一個檔案 = 一個斜線指令</li>
+</ul>
+<h3 id="檔案結構範例"><a class="header" href="#檔案結構範例">檔案結構範例</a></h3>
+<pre><code>commands/
+├── code-review.md   →  /code-review
+├── tdd.md           →  /tdd
+├── plan.md          →  /plan
+├── e2e.md           →  /e2e
+├── build-fix.md     →  /build-fix
+└── verify.md        →  /verify
+</code></pre>
+<h3 id="檔案內容格式"><a class="header" href="#檔案內容格式">檔案內容格式</a></h3>
+<p>純指令說明文字，無 frontmatter：</p>
+<pre><code class="language-markdown"># Code Review
+
+Comprehensive security and quality review of uncommitted changes:
+
+1. Get changed files: git diff --name-only HEAD
+2. For each changed file, check for:
+   - Hardcoded credentials, API keys
+   - SQL injection vulnerabilities
+   ...
+</code></pre>
+<h3 id="使用方式"><a class="header" href="#使用方式">使用方式</a></h3>
+<pre><code>你：/code-review
+Claude：（執行 commands/code-review.md 的完整內容）
+</code></pre>
+<hr />
+<h2 id="2-skills"><a class="header" href="#2-skills">2. Skills</a></h2>
+<p><strong>位置</strong>：<code>skills/*/SKILL.md</code>
+<strong>觸發方式</strong>：語意自動匹配 或 Skill tool 手動呼叫</p>
+<h3 id="運作原理-1"><a class="header" href="#運作原理-1">運作原理</a></h3>
+<pre><code>使用者說「幫我用 TDD 寫這個功能」
+        │
+        ▼
+Claude 掃描所有已安裝 skill 的 description 欄位
+        │
+   ┌────┴─────────────────────────┐
+   │ 比對語意相似度               │
+   │ tdd-workflow: "Use when      │
+   │   writing new features..."   │
+   └────────────┬─────────────────┘
+               │ 匹配成功
+               ▼
+    載入 skills/tdd-workflow/SKILL.md
+               │
+               ▼
+    在當前主對話中執行（非子執行緒）
+</code></pre>
+<h3 id="skills-有-yaml-frontmatter"><a class="header" href="#skills-有-yaml-frontmatter">Skills 有 YAML frontmatter</a></h3>
+<pre><code class="language-yaml">---
+name: tdd-workflow
+description: Use this skill when writing new features, fixing bugs, or refactoring code.
+             Enforces test-driven development with 80%+ coverage including unit,
+             integration, and E2E tests.
+origin: ECC
+---
+</code></pre>
+<h3 id="a-語意自動匹配"><a class="header" href="#a-語意自動匹配">A. 語意自動匹配</a></h3>
+<p>Claude 讀取你的請求，跟所有已安裝 skill 的 <code>description</code> 做語意比對，自動選擇最符合的 skill：</p>
+<div class="table-wrapper"><table><thead><tr><th>使用者說</th><th>匹配 Skill</th></tr></thead><tbody>
+<tr><td>「幫我用 TDD 寫這個功能」</td><td><code>tdd-workflow</code></td></tr>
+<tr><td>「做一個安全審查」</td><td><code>security-review</code></td></tr>
+<tr><td>「幫我規劃後端架構」</td><td><code>backend-patterns</code></td></tr>
+<tr><td>「我需要驗證這段邏輯」</td><td><code>verification-loop</code></td></tr>
+</tbody></table>
+</div>
+<h3 id="b-手動呼叫skill-tool"><a class="header" href="#b-手動呼叫skill-tool">B. 手動呼叫（Skill tool）</a></h3>
+<pre><code>你：使用 Skill tool 執行 tdd-workflow
+Claude：（載入並執行 skills/tdd-workflow/SKILL.md）
+</code></pre>
+<h3 id="skills-的命名空間與衝突處理"><a class="header" href="#skills-的命名空間與衝突處理">Skills 的命名空間與衝突處理</a></h3>
+<p>Skills 來自兩個來源，用不同格式區隔：</p>
+<div class="table-wrapper"><table><thead><tr><th>來源</th><th>存放位置</th><th>識別格式</th><th>範例</th></tr></thead><tbody>
+<tr><td>用戶自建</td><td><code>~/.claude/skills/</code></td><td><code>skill-name</code></td><td><code>go-dev</code>、<code>finlab</code></td></tr>
+<tr><td>Plugin 安裝</td><td><code>~/.claude/plugins/...</code></td><td><code>plugin-name:skill-name</code></td><td><code>claude-mem:do</code>、<code>playground:playground</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>兩個 plugin 有相同 skill name 時</strong>，靠 plugin 名稱前綴區隔，完全不衝突：</p>
+<pre><code>claude-mem:do        ← claude-mem plugin 的 do skill
+openclaw:do          ← openclaw plugin 的 do skill
+</code></pre>
+<h3 id="已有-skills-清單"><a class="header" href="#已有-skills-清單">已有 Skills 清單</a></h3>
+<pre><code>skills/
+├── tdd-workflow/          → TDD 開發流程
+├── backend-patterns/      → 後端架構模式
+├── frontend-patterns/     → 前端架構模式
+├── security-review/       → 安全性審查
+├── coding-standards/      → 程式碼標準
+├── verification-loop/     → 驗證迴圈
+├── eval-harness/          → 評估框架
+└── strategic-compact/     → 策略規劃
+</code></pre>
+<hr />
+<h2 id="3-agents"><a class="header" href="#3-agents">3. Agents</a></h2>
+<p><strong>位置</strong>：<code>agents/*.md</code>
+<strong>觸發方式</strong>：Claude 在執行任務時，根據 <code>description</code> 自主決定委派給哪個 subagent</p>
+<h3 id="運作原理-2"><a class="header" href="#運作原理-2">運作原理</a></h3>
+<pre><code>使用者說「review my code」
+        │
+        ▼
+Claude 判斷：這個任務適合委派給專門的審查員
+        │
+        ▼
+啟動 agents/code-reviewer.md 作為獨立 subagent
+        │
+   ┌────┴─────────────────────────────────────┐
+   │          獨立子執行緒                     │
+   │  ┌──────────────────────────────────┐    │
+   │  │ tools: ["Read","Grep","Glob","Bash"]│  │
+   │  │ model: sonnet                    │    │
+   │  │ 執行 code-reviewer 的任務邏輯     │    │
+   │  └──────────────────────────────────┘    │
+   └────────────────────┬─────────────────────┘
+                        │ 結果回傳主對話
+                        ▼
+               使用者看到審查報告
+</code></pre>
+<h3 id="agents-有完整-frontmatter"><a class="header" href="#agents-有完整-frontmatter">Agents 有完整 frontmatter</a></h3>
+<pre><code class="language-yaml">---
+name: code-reviewer
+description: Expert code review specialist. Proactively reviews code for quality,
+             security, and maintainability. Use immediately after writing or
+             modifying code. MUST BE USED for all code changes.
+tools: ["Read", "Grep", "Glob", "Bash"]
+model: sonnet
+---
+</code></pre>
+<h3 id="自動委派邏輯"><a class="header" href="#自動委派邏輯">自動委派邏輯</a></h3>
+<p>Claude 分析任務需求，從 description 判斷哪個 agent 最合適：</p>
+<div class="table-wrapper"><table><thead><tr><th>使用者說</th><th>觸發 Agent</th></tr></thead><tbody>
+<tr><td>「review my code」</td><td><code>code-reviewer</code></td></tr>
+<tr><td>「fix this failing test」</td><td><code>tdd-guide</code></td></tr>
+<tr><td>「plan this new feature」</td><td><code>planner</code></td></tr>
+<tr><td>「clean up and refactor」</td><td><code>refactor-cleaner</code></td></tr>
+<tr><td>「check for security issues」</td><td><code>security-reviewer</code></td></tr>
+<tr><td>「update the docs」</td><td><code>doc-updater</code></td></tr>
+<tr><td>「design the database schema」</td><td><code>database-reviewer</code></td></tr>
+</tbody></table>
+</div>
+<h3 id="commands-與-agents-同名不衝突"><a class="header" href="#commands-與-agents-同名不衝突">Commands 與 Agents 同名不衝突</a></h3>
+<p>Commands 和 Agents 存在於<strong>不同命名空間</strong>，即使同名也不衝突：</p>
+<pre><code>commands/code-review.md  →  使用者輸入 /code-review 觸發（主對話執行）
+agents/code-reviewer.md  →  Claude 自主委派時觸發（子執行緒執行）
+</code></pre>
+<blockquote>
+<p><strong>功能相似，入口不同，互不呼叫。</strong></p>
+<ul>
+<li><code>/code-review</code> → 在主對話執行，你看到整個過程</li>
+<li><code>agents/code-reviewer.md</code> → 子執行緒，有 tools/model 限制，Claude 自己決定何時用</li>
+</ul>
+</blockquote>
+<h3 id="此-repo-的命名慣例"><a class="header" href="#此-repo-的命名慣例">此 repo 的命名慣例</a></h3>
+<p>作者刻意用<strong>動作名詞 vs 執行者名詞</strong>來區分，提升可讀性：</p>
+<div class="table-wrapper"><table><thead><tr><th>Commands（動作名詞）</th><th>Agents（執行者名詞，-er 後綴）</th></tr></thead><tbody>
+<tr><td><code>code-review.md</code></td><td><code>code-reviewer.md</code></td></tr>
+<tr><td><code>go-review.md</code></td><td><code>go-reviewer.md</code></td></tr>
+<tr><td><code>python-review.md</code></td><td><code>python-reviewer.md</code></td></tr>
+<tr><td><code>refactor-clean.md</code></td><td><code>refactor-cleaner.md</code></td></tr>
+</tbody></table>
+</div>
+<p>這是<strong>慣例選擇，非技術限制</strong>。</p>
+<h3 id="已有-agents-清單"><a class="header" href="#已有-agents-清單">已有 Agents 清單</a></h3>
+<pre><code>agents/
+├── code-reviewer.md       → 程式碼審查
+├── tdd-guide.md           → TDD 指導
+├── planner.md             → 任務規劃
+├── refactor-cleaner.md    → 重構清理
+├── security-reviewer.md   → 安全審查
+├── doc-updater.md         → 文件更新
+├── database-reviewer.md   → 資料庫設計
+├── architect.md           → 系統架構
+├── e2e-runner.md          → E2E 測試執行
+└── build-error-resolver.md → 建置錯誤修復
+</code></pre>
+<hr />
+<h2 id="4-rules"><a class="header" href="#4-rules">4. Rules</a></h2>
+<p><strong>位置</strong>：<code>rules/**/*.md</code>
+<strong>觸發方式</strong>：不需要觸發，安裝後每次對話永遠自動注入為背景指令</p>
+<h3 id="運作原理-3"><a class="header" href="#運作原理-3">運作原理</a></h3>
+<pre><code>任何對話開始
+      │
+      ▼
+Claude Code 自動載入 ~/.claude/rules/**/*.md
+      │
+      ▼
+所有 rule 內容注入 Claude 的系統 prompt
+      │
+      ▼
+Claude 整個對話期間都受這些規則約束
+      │
+   ┌──┴──────────────────────────────────────┐
+   │   rules/common/testing.md               │
+   │   → 「寫 code 前必須先寫測試」            │
+   │   rules/common/security.md              │
+   │   → 「禁止硬編碼 API Key」               │
+   │   rules/typescript/patterns.md          │
+   │   → 「使用 TypeScript 嚴格模式」         │
+   └─────────────────────────────────────────┘
+         全部同時生效，無法個別關閉
+</code></pre>
+<h3 id="觸發規則-1"><a class="header" href="#觸發規則-1">觸發規則</a></h3>
+<ul>
+<li>Rules 是純 Markdown，無 frontmatter</li>
+<li>安裝到 <code>~/.claude/rules/</code> 後，每次 Claude 啟動都自動載入</li>
+<li>作為<strong>行為準則</strong>存在，Claude 必須遵守</li>
+</ul>
+<h3 id="檔案結構"><a class="header" href="#檔案結構">檔案結構</a></h3>
+<pre><code>rules/
+├── common/
+│   ├── testing.md        ← 永遠生效：80% 覆蓋率要求
+│   ├── security.md       ← 永遠生效：禁止硬編碼金鑰
+│   ├── coding-style.md   ← 永遠生效：程式碼風格
+│   ├── patterns.md       ← 永遠生效：設計模式
+│   ├── performance.md    ← 永遠生效：效能要求
+│   ├── git-workflow.md   ← 永遠生效：Git 工作流
+│   └── hooks.md          ← 永遠生效：Hook 使用規範
+├── typescript/
+│   ├── patterns.md       ← TypeScript 專案自動套用
+│   └── testing.md
+├── python/
+│   └── patterns.md       ← Python 專案自動套用
+└── golang/
+    └── patterns.md       ← Go 專案自動套用
+</code></pre>
+<h3 id="rules-的特性"><a class="header" href="#rules-的特性">Rules 的特性</a></h3>
+<ul>
+<li>你<strong>不需要呼叫</strong> rules</li>
+<li>你<strong>無法關閉</strong>特定 rule（除非移除檔案）</li>
+<li>所有 rules 同時生效，形成完整的行為約束</li>
+</ul>
+<hr />
+<h2 id="5-hooks"><a class="header" href="#5-hooks">5. Hooks</a></h2>
+<p><strong>位置</strong>：<code>hooks/hooks.json</code>
+<strong>觸發方式</strong>：偵測到特定工具（Tool）被呼叫時，自動執行對應腳本</p>
+<h3 id="運作原理-4"><a class="header" href="#運作原理-4">運作原理</a></h3>
+<pre><code>Claude 準備呼叫 Bash 工具
+        │
+        ▼
+系統檢查 hooks.json 有無 PreToolUse/Bash 設定
+        │
+   ┌────┴──────────────────────────────────────┐
+   │  有 matcher 符合                           │
+   │  → 先執行 hooks 腳本                       │
+   │  → 腳本可輸出提示、警告，甚至阻止工具執行  │
+   └────────────────────┬──────────────────────┘
+                        │
+                        ▼
+              Bash 工具正式執行
+                        │
+                        ▼
+           PostToolUse hooks 執行（如有）
+</code></pre>
+<h3 id="hooksjson-格式"><a class="header" href="#hooksjson-格式">hooks.json 格式</a></h3>
+<pre><code class="language-json">{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [{
+          "type": "command",
+          "command": "node scripts/hooks/pre-bash-tmux-reminder.js"
+        }],
+        "description": "Reminder to use tmux for long-running commands"
+      },
+      {
+        "matcher": "Write",
+        "hooks": [{
+          "type": "command",
+          "command": "node scripts/hooks/doc-file-warning.js"
+        }],
+        "description": "Warn about non-standard documentation files"
+      }
+    ],
+    "PostToolUse": [...]
+  }
+}
+</code></pre>
+<h3 id="支援的事件類型"><a class="header" href="#支援的事件類型">支援的事件類型</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>事件</th><th>說明</th></tr></thead><tbody>
+<tr><td><code>PreToolUse</code></td><td>工具執行<strong>前</strong>觸發</td></tr>
+<tr><td><code>PostToolUse</code></td><td>工具執行<strong>後</strong>觸發</td></tr>
+<tr><td><code>Notification</code></td><td>Claude 發送通知時觸發</td></tr>
+<tr><td><code>SessionStart</code></td><td>對話開始時觸發</td></tr>
+<tr><td><code>Stop</code></td><td>Claude 停止回應時觸發</td></tr>
+</tbody></table>
+</div>
+<h3 id="matcher-範例"><a class="header" href="#matcher-範例">matcher 範例</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>matcher</th><th>觸發時機</th></tr></thead><tbody>
+<tr><td><code>"Bash"</code></td><td>每次 Claude 呼叫 Bash 工具</td></tr>
+<tr><td><code>"Write"</code></td><td>每次 Claude 寫入檔案</td></tr>
+<tr><td><code>"Edit"</code></td><td>每次 Claude 編輯檔案</td></tr>
+<tr><td><code>"Edit|Write"</code></td><td>Edit 或 Write 任一觸發</td></tr>
+<tr><td><code>".*"</code></td><td>任何工具都觸發</td></tr>
+</tbody></table>
+</div>
+<h3 id="常見-hooks-用途"><a class="header" href="#常見-hooks-用途">常見 Hooks 用途</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Hook 腳本</th><th>觸發時機</th><th>用途</th></tr></thead><tbody>
+<tr><td><code>pre-bash-tmux-reminder.js</code></td><td>Bash 執行前</td><td>提醒使用 tmux 執行長指令</td></tr>
+<tr><td><code>pre-bash-git-push-reminder.js</code></td><td>Bash 執行前</td><td>git push 前提醒確認</td></tr>
+<tr><td><code>doc-file-warning.js</code></td><td>Write 執行前</td><td>警告非標準文件檔案</td></tr>
+<tr><td><code>suggest-compact.js</code></td><td>Edit/Write 執行前</td><td>建議程式碼精簡</td></tr>
+<tr><td><code>session-persistence.js</code></td><td>SessionStart</td><td>載入上次對話記憶</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="完整觸發流程圖"><a class="header" href="#完整觸發流程圖">完整觸發流程圖</a></h2>
+<pre><code>┌─────────────────────────────────────────────────────────────────┐
+│                         使用者輸入                               │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+          ┌────────────────────┼────────────────────┐
+          │                    │                    │
+          ▼                    ▼                    ▼
+   ┌─────────────┐    ┌────────────────┐   ┌──────────────────┐
+   │ /code-review│    │「幫我 TDD 寫」 │   │「review my code」│
+   │  手動指令   │    │   自然語言     │   │   自然語言       │
+   └──────┬──────┘    └───────┬────────┘   └────────┬─────────┘
+          │                   │                     │
+          ▼                   ▼                     ▼
+   ┌─────────────┐    ┌────────────────┐   ┌──────────────────┐
+   │  commands/  │    │   skills/      │   │    agents/       │
+   │code-review  │    │ tdd-workflow/  │   │ code-reviewer    │
+   │   .md       │    │  SKILL.md      │   │    .md           │
+   └──────┬──────┘    └───────┬────────┘   └────────┬─────────┘
+          │                   │                     │
+          ▼                   ▼                     ▼
+   ┌─────────────┐    ┌────────────────┐   ┌──────────────────┐
+   │  主對話執行 │    │  主對話執行    │   │  子執行緒執行    │
+   │  直接輸出   │    │  知識/流程注入 │   │  tools/model限制 │
+   └─────────────┘    └────────────────┘   └──────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                         任何對話                                 │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+                               ▼
+                    ┌────────────────────┐
+                    │    rules/**/*.md   │
+                    │  永遠自動注入為    │
+                    │  系統 prompt 背景  │
+                    └────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    Claude 呼叫工具                               │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+          ┌────────────────────┼────────────────────┐
+          │                    │                    │
+          ▼                    ▼                    ▼
+   ┌─────────────┐    ┌────────────────┐   ┌──────────────────┐
+   │  呼叫 Bash  │    │  呼叫 Write    │   │  呼叫任何工具    │
+   └──────┬──────┘    └───────┬────────┘   └────────┬─────────┘
+          │                   │                     │
+          ▼                   ▼                     ▼
+   PreToolUse/Bash   PreToolUse/Write        PostToolUse/.*
+   腳本自動執行       腳本自動執行            腳本自動執行
+</code></pre>
+<hr />
+<h2 id="執行模型對比"><a class="header" href="#執行模型對比">執行模型對比</a></h2>
+<pre><code>┌──────────────────────────────────────────────────────────────────┐
+│                        執行位置與控制權                           │
+├──────────┬─────────────────────────────────────────────────────  │
+│          │                                                        │
+│ Command  │  [主對話]─────────────────────────────────────────►  │
+│          │  整個 md 內容直接在對話串中執行，使用者全程看到        │
+│          │                                                        │
+│  Skill   │  [主對話]─────────────────────────────────────────►  │
+│          │  知識/流程注入當前對話，Claude 用來指導自己的行為      │
+│          │                                                        │
+│  Agent   │  [主對話]──►[子執行緒]────────────────────────────►  │
+│          │              獨立空間，有 tools/model 限制             │
+│          │              完成後結果回傳主對話                       │
+│          │                                                        │
+│  Rule    │  [系統層]─────────────────────────────────────────►  │
+│          │  所有對話永遠都有效，Claude 無法「忽略」               │
+│          │                                                        │
+│  Hook    │  [系統層]──►[工具執行前/後]────────────────────────►  │
+│          │  攔截工具呼叫，腳本可輸出提示或阻止執行               │
+│          │                                                        │
+└──────────┴─────────────────────────────────────────────────────  ┘
+</code></pre>
+<hr />
+<h2 id="如何選擇決策樹"><a class="header" href="#如何選擇決策樹">如何選擇？決策樹</a></h2>
+<pre><code>我想達成什麼目的？
+│
+├─► 我要執行一個固定的工作流程，每次都一樣
+│       └─► Command  （/tdd, /plan, /code-review）
+│
+├─► 我要給 Claude 領域知識，讓它自動選擇適用時機
+│       └─► Skill  （description 寫清楚觸發情境）
+│
+├─► 我要 Claude 在複雜任務中派出「專門助手」處理子任務
+│       └─► Agent  （設定 tools 限制、model 指定）
+│
+├─► 我要強制 Claude 在所有情況下都遵守某個規定
+│       └─► Rule  （放入 rules/，永遠生效）
+│
+└─► 我要在 Claude 用某個工具的前後自動執行腳本
+        └─► Hook  （設定 matcher，腳本在工具呼叫前後觸發）
+</code></pre>
+<h3 id="常見組合模式"><a class="header" href="#常見組合模式">常見組合模式</a></h3>
+<pre><code>使用者需求                 最佳組合
+─────────────────────────────────────────────────────
+固定 code review 流程    Command(/code-review)
+                          + Agent(code-reviewer) 自動深入分析
+
+確保測試品質              Rule(testing.md) 永遠強制
+                          + Skill(tdd-workflow) 指引流程
+                          + Command(/tdd) 手動啟動
+
+保護 git 操作             Hook(PreToolUse/Bash) 攔截 git push
+                          + Rule(git-workflow.md) 規範流程
+</code></pre>
+<hr />
+<h2 id="關鍵差異對照表"><a class="header" href="#關鍵差異對照表">關鍵差異對照表</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>類型</th><th>位置</th><th>觸發方式</th><th>執行位置</th><th>關鍵欄位</th><th>使用場景</th></tr></thead><tbody>
+<tr><td><strong>Command</strong></td><td><code>commands/*.md</code></td><td><code>/name</code> 手動輸入</td><td>主對話</td><td>檔名即指令名</td><td>固定工作流程的一鍵執行</td></tr>
+<tr><td><strong>Skill</strong></td><td><code>skills/*/SKILL.md</code></td><td>語意自動或手動</td><td>主對話</td><td><code>description:</code></td><td>提供領域知識與流程指引</td></tr>
+<tr><td><strong>Agent</strong></td><td><code>agents/*.md</code></td><td>Claude 自主委派</td><td>子執行緒</td><td><code>description:</code> + <code>tools:</code> + <code>model:</code></td><td>獨立執行複雜任務</td></tr>
+<tr><td><strong>Rule</strong></td><td><code>rules/**/*.md</code></td><td>永遠自動</td><td>系統層</td><td>無（純內文）</td><td>強制行為約束</td></tr>
+<tr><td><strong>Hook</strong></td><td><code>hooks/hooks.json</code></td><td>工具事件</td><td>系統層</td><td><code>matcher:</code></td><td>工具呼叫前後的自動化</td></tr>
+</tbody></table>
+</div>
+<h3 id="skills-vs-agents-細部對比"><a class="header" href="#skills-vs-agents-細部對比">Skills vs Agents 細部對比</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>面向</th><th>Skills</th><th>Agents</th></tr></thead><tbody>
+<tr><td>執行方式</td><td>在當前對話執行</td><td>作為獨立 subagent 執行</td></tr>
+<tr><td>有無工具限制</td><td>無</td><td>有（<code>tools:</code> 欄位指定）</td></tr>
+<tr><td>有無 model 指定</td><td>無</td><td>有（<code>model:</code> 欄位指定）</td></tr>
+<tr><td>context 共享</td><td>完全共享主對話 context</td><td>有自己的獨立 context</td></tr>
+<tr><td>適合情境</td><td>提供知識/流程指引</td><td>需要獨立執行任務</td></tr>
+<tr><td>觸發控制</td><td>Claude 語意判斷</td><td>Claude 主動委派決策</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="安裝後的載入路徑"><a class="header" href="#安裝後的載入路徑">安裝後的載入路徑</a></h2>
+<pre><code>~/.claude/
+├── commands/        ← /斜線指令來源
+├── skills/          ← 語意匹配的技能庫
+├── agents/          ← subagent 定義
+├── rules/           ← 永遠生效的規則
+└── hooks/
+    └── hooks.json   ← 工具事件監聽設定
+</code></pre>
+<blockquote>
+<p>這些路徑是 Claude Code 的<strong>全域設定目錄</strong>，安裝到這裡的檔案對所有專案生效。
+若要只對特定專案生效，可改放在專案根目錄的 <code>.claude/</code> 下。</p>
+</blockquote>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tools/claude_code_experience.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../tools/claude-code-performance-testing-guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tools/claude_code_experience.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../tools/claude-code-performance-testing-guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
