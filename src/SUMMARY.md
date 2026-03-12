@@ -202,6 +202,7 @@
         - [Go 編碼風格指南](go/Go_編碼風格指南.md)
         - [Go 編程實戰派基礎入門](go/Go編程實戰派基礎入門.md)
         - [Go Modules](go/go_mod.md)
+        - [Go Module 與 Package 完整筆記](go/go_module_package_complete_notes.md)
         - [OO](go/oo.md)
         - [Interface](go/interface.md)
         - [Example](go/example.md)
