@@ -206,6 +206,7 @@
         - [OO](go/oo.md)
         - [Interface](go/interface.md)
         - [Example](go/example.md)
+        - [Go 語言常見陷阱與面試考點](go/go_pitfalls.md)
     - [並發編程與 GMP 模型](go/02_並發編程與GMP模型.md)
         - [Goroutine 與 GMP 原理全面分析](go/golang-goroutine.md)
         - [Go 語言 CPU、GMP 模型與多程式執行完整指南](go/go-cpu-gmp-guide.md)
