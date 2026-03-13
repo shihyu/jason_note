@@ -1599,6 +1599,56 @@ ctx = context.WithValue(ctx, "userID", 123)    // ❌ 不推薦傳業務數據
 ctx = context.WithValue(ctx, "page", 1)        // 應該用函數參數
 ```
 
+### WithTimeout / WithDeadline 的自動取消機制
+
+```go
+// WithTimeout 建立一個「3秒後自動取消」的 context
+ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+defer cancel()
+
+// 這裡的 cancel 有兩個觸發來源：
+// 1. 【自動】3 秒到了，runtime 內部的 timer 到期，自動觸發取消
+// 2. 【手動】你呼叫 cancel()，立即觸發取消
+//
+// 所以即使你完全不呼叫 cancel()，3 秒後 ctx.Done() 也會關閉。
+// 但仍然要 defer cancel()，原因是：
+// ✅ 如果 1 秒就完成了，不 cancel 會讓 timer 多跑 2 秒，浪費資源
+
+doWork(ctx) // 若 doWork 超過 3 秒，ctx.Done() 自動觸發
+```
+
+### WithTimeout vs WithDeadline vs WithCancel 比較
+
+```
+三種 context 建立方式：
+
+context.WithCancel(parent)
+  → 只能手動 cancel()，不會自動取消
+  → 適合：手動控制生命週期（如 Ctrl+C 信號）
+
+context.WithTimeout(parent, duration)
+  → 從「現在」起算，duration 後自動取消
+  → 等同於 WithDeadline(parent, time.Now().Add(duration))
+  → 適合：限制單次操作的最長等待時間
+
+context.WithDeadline(parent, t)
+  → 到達「絕對時間 t」時自動取消
+  → 適合：跨函數共用同一個截止時間點
+
+自動取消觸發條件：
+┌─────────────────────────────────────────────┐
+│  WithTimeout(ctx, 3s)                       │
+│                                             │
+│  3s timer ──► 到期 ──► ctx.Done() 關閉      │
+│                              │              │
+│  或 cancel() ──────────────► │              │
+│                              ▼              │
+│  或父 ctx 取消 ──────────────►              │
+│                                             │
+│  三者任一發生，Done() 立刻關閉              │
+└─────────────────────────────────────────────┘
+```
+
 ### ✅ 正確用法
 
 ```go
@@ -1614,8 +1664,10 @@ func doWork(ctx context.Context, data string) error {
 }
 
 // ✅ 永遠 defer cancel()
+// 即使 WithTimeout 會自動取消，還是要 defer cancel()
+// 原因：提前完成時可立即釋放 timer 資源，不用等到超時
 ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-defer cancel() // ✅ 即使提前完成也要 cancel，釋放資源
+defer cancel()
 
 ctx, cancel = context.WithCancel(context.Background())
 defer cancel()
@@ -1639,6 +1691,51 @@ func getTraceID(ctx context.Context) string {
 }
 ```
 
+### ❌ 更多容易搞壞的陷阱
+
+```go
+// 陷阱A：cancel() 呼叫多次（安全，但要知道）
+ctx, cancel := context.WithCancel(context.Background())
+cancel() // 第一次：取消
+cancel() // 第二次：無效果，不會 panic（這點是安全的）
+
+// 陷阱B：子 context 的 cancel 沒呼叫，父 cancel 了也沒用（資源問題）
+parent, parentCancel := context.WithCancel(context.Background())
+child, childCancel := context.WithCancel(parent)
+// 若只呼叫 parentCancel()，child 的 Done() 也會關閉（這是對的）
+// 但 child 自己的 cancel 函數產生的 goroutine 不會釋放，直到 GC
+// ✅ 兩個都要 defer cancel
+defer parentCancel()
+defer childCancel()
+
+// 陷阱C：誤以為 ctx.Err() 在 Done 前有意義
+ctx, cancel := context.WithCancel(context.Background())
+fmt.Println(ctx.Err()) // nil（還沒取消）
+cancel()
+fmt.Println(ctx.Err()) // context.Canceled（取消後才有值）
+
+// 陷阱D：在 goroutine 中使用已取消的 ctx 建立新 context
+func worker(ctx context.Context) {
+    // ❌ 若 ctx 已取消，子 context 建立後立刻就是取消狀態
+    subCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+    defer cancel()
+    // subCtx.Done() 立刻就關閉，不會等 10 秒
+    // 要先檢查父 ctx
+    if ctx.Err() != nil {
+        return // 父已取消，不繼續
+    }
+    doWork(subCtx)
+}
+
+// 陷阱E：context.Value 用 string 當 key，跨 package 可能衝突
+ctx = context.WithValue(ctx, "token", "abc") // ❌ string key
+// 不同 package 若也用 "token" 當 key，會互相覆蓋或誤讀
+
+// ✅ 用自訂型別避免衝突
+type myPkgKey struct{}
+ctx = context.WithValue(ctx, myPkgKey{}, "abc") // ✅ 型別唯一
+```
+
 ### context 傳播圖
 
 ```
@@ -1646,17 +1743,22 @@ context 層級與取消傳播
 
 context.Background()
     │
-    ├── WithCancel(...)  ← root ctx
-    │       │  cancel() 被呼叫或父 ctx 取消
-    │       ▼
-    │   WithTimeout(5s)  ← 子 ctx
-    │       │  5s 超時或父取消
-    │       ▼
-    │   WithValue(key, val)  ← 孫 ctx
+    ├── WithCancel(...)  ← root ctx（手動取消）
+    │       │
+    │       ▼  cancel() 或父取消
+    │   WithTimeout(3s) ← 子 ctx（3秒自動 OR 手動取消）
+    │       │
+    │       ▼  3秒到 OR cancel() OR 父取消（三者任一）
+    │   WithValue(key, val) ← 孫 ctx（繼承取消）
     │
     ▼
-取消傳播：父 ctx 取消 → 所有子孫 ctx 自動取消 ✓
-取消不上傳：子 ctx 取消 → 父 ctx 不受影響 ✓
+取消傳播方向：由上往下 ✓（父取消 → 所有子孫取消）
+取消不向上傳：子取消 → 父不受影響 ✓
+
+ctx.Err() 返回值：
+  nil                    → 尚未取消
+  context.Canceled       → 被 cancel() 手動取消
+  context.DeadlineExceeded → 超時自動取消
 
 context.Done() 使用模式：
 for {
@@ -1664,7 +1766,7 @@ for {
     case work := <-workCh:
         doWork(work)
     case <-ctx.Done():
-        return ctx.Err()  ← ctx.Canceled 或 DeadlineExceeded
+        return ctx.Err() // Canceled 或 DeadlineExceeded
     }
 }
 ```
