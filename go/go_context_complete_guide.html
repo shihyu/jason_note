@@ -1,0 +1,848 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Go Context 完整整理 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="go-context-完整整理"><a class="header" href="#go-context-完整整理">Go Context 完整整理</a></h1>
+<h2 id="1-context-是什麼"><a class="header" href="#1-context-是什麼">1. Context 是什麼</a></h2>
+<p>在 Go 中，<code>context</code> 用來控制 <strong>goroutine</strong> 與 <strong>請求</strong> 的生命週期。</p>
+<p>核心用途如下：</p>
+<ul>
+<li>Cancellation（取消任務）</li>
+<li>Timeout / Deadline（逾時控制）</li>
+<li>Propagation（跨 API 傳遞請求狀態）</li>
+<li>Metadata（傳遞請求資料）</li>
+</ul>
+<p>一句話總結：</p>
+<blockquote>
+<p><code>context</code> 就是 goroutine 與請求的生命週期管理器。</p>
+</blockquote>
+<hr />
+<h2 id="2-context-介面"><a class="header" href="#2-context-介面">2. Context 介面</a></h2>
+<pre><code class="language-go">type Context interface {
+    Done() &lt;-chan struct{}
+    Err() error
+    Deadline() (time.Time, bool)
+    Value(key any) any
+}
+</code></pre>
+<div class="table-wrapper"><table><thead><tr><th>方法</th><th>作用</th></tr></thead><tbody>
+<tr><td><code>Done()</code></td><td>回傳一個 channel；當 context 被取消時會關閉</td></tr>
+<tr><td><code>Err()</code></td><td>回傳取消原因</td></tr>
+<tr><td><code>Deadline()</code></td><td>回傳截止時間</td></tr>
+<tr><td><code>Value()</code></td><td>取得 context 內的值</td></tr>
+</tbody></table>
+</div>
+<h3 id="21-四個方法之間的關係"><a class="header" href="#21-四個方法之間的關係">2.1 四個方法之間的關係</a></h3>
+<pre><code class="language-text">┌──────────────────────────────────────────┐
+│              context.Context             │
+├──────────────────────────────────────────┤
+│ Done()      -&gt; 取消通知 channel          │
+│ Err()       -&gt; 取消原因                  │
+│ Deadline()  -&gt; 最晚何時必須停止          │
+│ Value()     -&gt; 傳遞請求範圍內的資料      │
+└──────────────────────────────────────────┘
+</code></pre>
+<h3 id="22-err-常見回傳值"><a class="header" href="#22-err-常見回傳值">2.2 <code>Err()</code> 常見回傳值</a></h3>
+<p>當 <code>&lt;-ctx.Done()</code> 被觸發後，通常會再檢查 <code>ctx.Err()</code>：</p>
+<pre><code class="language-go">if err := ctx.Err(); err != nil {
+    return err
+}
+</code></pre>
+<p>常見結果如下：</p>
+<div class="table-wrapper"><table><thead><tr><th>錯誤值</th><th>意義</th></tr></thead><tbody>
+<tr><td><code>context.Canceled</code></td><td>被主動取消</td></tr>
+<tr><td><code>context.DeadlineExceeded</code></td><td>超過 deadline 或 timeout</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="3-建立-context"><a class="header" href="#3-建立-context">3. 建立 Context</a></h2>
+<h3 id="31-background"><a class="header" href="#31-background">3.1 <code>Background</code></a></h3>
+<pre><code class="language-go">ctx := context.Background()
+</code></pre>
+<p>特性：</p>
+<ul>
+<li>是根 context</li>
+<li>永遠不會被取消</li>
+<li>永遠沒有截止時間</li>
+</ul>
+<h3 id="32-withcancel"><a class="header" href="#32-withcancel">3.2 <code>WithCancel</code></a></h3>
+<pre><code class="language-go">ctx, cancel := context.WithCancel(parent)
+defer cancel()
+</code></pre>
+<p>用途：手動取消。</p>
+<pre><code class="language-text">cancel()
+   │
+   ▼
+ctx.Done() 關閉
+</code></pre>
+<h3 id="33-withtimeout"><a class="header" href="#33-withtimeout">3.3 <code>WithTimeout</code></a></h3>
+<pre><code class="language-go">ctx, cancel := context.WithTimeout(parent, 3*time.Second)
+defer cancel()
+</code></pre>
+<p>效果：</p>
+<pre><code class="language-text">t0 -------- t0+3s
+   valid     timeout
+               │
+               ▼
+         ctx.Done()
+</code></pre>
+<p>逾時後 context 會自動取消。</p>
+<h3 id="34-withdeadline"><a class="header" href="#34-withdeadline">3.4 <code>WithDeadline</code></a></h3>
+<pre><code class="language-go">ctx, cancel := context.WithDeadline(parent, time.Now().Add(3*time.Second))
+defer cancel()
+</code></pre>
+<p><code>WithTimeout</code> 本質上只是 <code>WithDeadline</code> 的語法糖。</p>
+<h3 id="35-建立方式總覽"><a class="header" href="#35-建立方式總覽">3.5 建立方式總覽</a></h3>
+<pre><code class="language-text">context.Background()
+        │
+        ├── context.WithCancel(parent)
+        │       └── 手動呼叫 cancel()
+        │
+        ├── context.WithTimeout(parent, d)
+        │       └── 時間到自動取消
+        │
+        └── context.WithDeadline(parent, t)
+                └── 到達指定時間自動取消
+</code></pre>
+<hr />
+<h2 id="4-done-channel"><a class="header" href="#4-done-channel">4. <code>Done</code> Channel</a></h2>
+<pre><code class="language-go">select {
+case &lt;-ctx.Done():
+    return
+}
+</code></pre>
+<p>當 context 被取消時，可能來源如下：</p>
+<pre><code class="language-text">cancel()
+timeout
+parent cancel
+      │
+      ▼
+ctx.Done() 關閉
+</code></pre>
+<p>收到訊號後，goroutine 就能結束。</p>
+<h3 id="41-done--err-的典型配合"><a class="header" href="#41-done--err-的典型配合">4.1 <code>Done</code> + <code>Err</code> 的典型配合</a></h3>
+<pre><code class="language-go">select {
+case &lt;-ctx.Done():
+    return ctx.Err()
+case result := &lt;-resultCh:
+    return result
+}
+</code></pre>
+<p>這種寫法的重點是：</p>
+<ul>
+<li><code>Done()</code> 負責通知</li>
+<li><code>Err()</code> 負責說明原因</li>
+<li>兩者通常成對出現</li>
+</ul>
+<hr />
+<h2 id="5-goroutine-取消模式"><a class="header" href="#5-goroutine-取消模式">5. Goroutine 取消模式</a></h2>
+<p>常見寫法：</p>
+<pre><code class="language-go">func worker(ctx context.Context) {
+    for {
+        select {
+        case &lt;-ctx.Done():
+            return
+        default:
+            work()
+        }
+    }
+}
+</code></pre>
+<p>流程：</p>
+<pre><code class="language-text">cancel()
+   │
+   ▼
+ctx.Done()
+   │
+   ▼
+goroutine 結束
+</code></pre>
+<p>區塊示意圖：</p>
+<pre><code class="language-text">┌────────────┐      ┌────────────────┐      ┌─────────────────┐
+│ parent ctx │ ───&gt; │ worker select  │ ───&gt; │ work / return   │
+└────────────┘      └────────────────┘      └─────────────────┘
+        │                    │
+        │ cancel             │ listen ctx.Done()
+        ▼                    ▼
+  ctx.Done() 關閉        停止 goroutine
+</code></pre>
+<hr />
+<h2 id="6-timeout-使用情境"><a class="header" href="#6-timeout-使用情境">6. <code>Timeout</code> 使用情境</a></h2>
+<h3 id="http-request"><a class="header" href="#http-request">HTTP Request</a></h3>
+<pre><code class="language-go">ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+defer cancel()
+</code></pre>
+<p>如果後端太慢：</p>
+<pre><code class="language-text">2s timeout
+      │
+      ▼
+取消請求
+</code></pre>
+<p>完整流程示意：</p>
+<pre><code class="language-text">┌──────────────┐
+│ HTTP Client  │
+└──────┬───────┘
+       │ request
+       ▼
+┌──────────────┐
+│ HTTP Handler │
+└──────┬───────┘
+       │ 建立 timeout context
+       ▼
+┌──────────────┐
+│ Service      │
+└──────┬───────┘
+       │ 傳遞 ctx
+       ▼
+┌──────────────┐
+│ Repository   │
+└──────┬───────┘
+       │ QueryContext(ctx, ...)
+       ▼
+┌──────────────┐
+│ Database     │
+└──────────────┘
+
+超時後：
+Client / Handler / Service / DB query 一路收到取消訊號
+</code></pre>
+<h3 id="database-query"><a class="header" href="#database-query">Database Query</a></h3>
+<pre><code class="language-go">db.QueryContext(ctx, "SELECT * FROM users")
+</code></pre>
+<p>如果資料庫卡住：</p>
+<pre><code class="language-text">timeout
+   │
+   ▼
+查詢取消
+</code></pre>
+<p>實務上應優先使用支援 context 的 API，例如：</p>
+<ul>
+<li><code>http.NewRequestWithContext</code></li>
+<li><code>db.QueryContext</code></li>
+<li><code>db.ExecContext</code></li>
+<li><code>exec.CommandContext</code></li>
+</ul>
+<hr />
+<h2 id="7-context-傳遞"><a class="header" href="#7-context-傳遞">7. Context 傳遞</a></h2>
+<p><code>context</code> 會沿著呼叫鏈一路往下傳：</p>
+<pre><code class="language-text">HTTP handler
+      │
+      ▼
+服務層
+      │
+      ▼
+儲存層
+      │
+      ▼
+database
+</code></pre>
+<p>區塊示意圖：</p>
+<pre><code class="language-text">┌──────────────┐
+│ Handler      │
+└──────┬───────┘
+       │ ctx
+       ▼
+┌──────────────┐
+│ Service      │
+└──────┬───────┘
+       │ ctx
+       ▼
+┌──────────────┐
+│ Repository   │
+└──────┬───────┘
+       │ ctx
+       ▼
+┌──────────────┐
+│ Driver / DB  │
+└──────────────┘
+</code></pre>
+<p>範例：</p>
+<pre><code class="language-go">func handler(ctx context.Context) {
+    service(ctx)
+}
+
+func service(ctx context.Context) {
+    repo(ctx)
+}
+</code></pre>
+<p>如果請求被取消：</p>
+<pre><code class="language-text">ctx.Done()
+   │
+   ▼
+整條 call chain 停止
+</code></pre>
+<hr />
+<h2 id="8-context-tree"><a class="header" href="#8-context-tree">8. Context Tree</a></h2>
+<p><code>context</code> 本質上是一棵 <strong>取消樹</strong>。</p>
+<pre><code class="language-text">Background
+     │
+     ▼
+Request Context
+     │
+     ├── DB query goroutine
+     ├── cache goroutine
+     └── worker goroutine
+</code></pre>
+<p>如果請求被取消：</p>
+<pre><code class="language-text">cancel()
+   │
+   ▼
+所有子 context 一起取消
+</code></pre>
+<p>父子關係示意圖：</p>
+<pre><code class="language-text">Background
+   │
+   └── Request A
+       │
+       ├── cache lookup
+       ├── DB query
+       └── async worker
+            │
+            └── sub task
+
+Request A 被取消時：
+上面整個分支全部停止，但不影響其他 request。
+</code></pre>
+<hr />
+<h2 id="9-傳遞-metadata"><a class="header" href="#9-傳遞-metadata">9. 傳遞 Metadata</a></h2>
+<pre><code class="language-go">ctx = context.WithValue(ctx, "userID", 123)
+</code></pre>
+<p>取得方式：</p>
+<pre><code class="language-go">userID := ctx.Value("userID")
+</code></pre>
+<p>常見用途：</p>
+<ul>
+<li>請求 ID</li>
+<li>user ID</li>
+<li>trace ID</li>
+</ul>
+<p>注意：</p>
+<blockquote>
+<p>不建議在 context 中放大量資料。</p>
+</blockquote>
+<p>建議：</p>
+<ul>
+<li>放與單次請求強相關的資料，例如 request ID、trace ID、auth 資訊</li>
+<li>不要放可選參數、巨大物件、全域設定</li>
+<li>key 最好使用自定型別，避免碰撞</li>
+</ul>
+<p>範例：</p>
+<pre><code class="language-go">type contextKey string
+
+const userIDKey contextKey = "userID"
+
+ctx = context.WithValue(ctx, userIDKey, 123)
+</code></pre>
+<hr />
+<h2 id="10-官方最佳實務"><a class="header" href="#10-官方最佳實務">10. 官方最佳實務</a></h2>
+<h3 id="101-context-放在第一個參數"><a class="header" href="#101-context-放在第一個參數">10.1 <code>context</code> 放在第一個參數</a></h3>
+<pre><code class="language-go">func Query(ctx context.Context, sql string)
+</code></pre>
+<h3 id="102-不要把-context-存進-struct"><a class="header" href="#102-不要把-context-存進-struct">10.2 不要把 <code>context</code> 存進 struct</a></h3>
+<p>錯誤示範：</p>
+<pre><code class="language-go">type Service struct {
+    ctx context.Context
+}
+</code></pre>
+<p>正確做法：</p>
+<pre><code class="language-text">每個函式都顯式傳入 context
+</code></pre>
+<p>原因：避免 goroutine 的生命週期管理混亂。</p>
+<h3 id="103-一定要呼叫-cancel"><a class="header" href="#103-一定要呼叫-cancel">10.3 一定要呼叫 <code>cancel</code></a></h3>
+<pre><code class="language-go">ctx, cancel := context.WithTimeout(...)
+defer cancel()
+</code></pre>
+<p>原因如下：</p>
+<ul>
+<li>停止計時器</li>
+<li>釋放資源</li>
+</ul>
+<h3 id="104-不要把-context-當成可選參數容器"><a class="header" href="#104-不要把-context-當成可選參數容器">10.4 不要把 <code>context</code> 當成可選參數容器</a></h3>
+<p>不建議這樣做：</p>
+<pre><code class="language-go">ctx = context.WithValue(ctx, "limit", 100)
+ctx = context.WithValue(ctx, "sort", "desc")
+ctx = context.WithValue(ctx, "page", 2)
+</code></pre>
+<p>原因：</p>
+<ul>
+<li>參數語意不清楚</li>
+<li>呼叫端難追蹤</li>
+<li>型別不安全</li>
+</ul>
+<p>這類資料應直接用函式參數或結構體傳遞。</p>
+<hr />
+<h2 id="11-goroutine-leak-範例"><a class="header" href="#11-goroutine-leak-範例">11. Goroutine Leak 範例</a></h2>
+<p>錯誤示範：</p>
+<pre><code class="language-go">go func() {
+    val := &lt;-ch
+    fmt.Println(val)
+}()
+</code></pre>
+<p>如果一直沒有資料：</p>
+<pre><code class="language-text">goroutine 永遠阻塞
+</code></pre>
+<p>正確寫法：</p>
+<pre><code class="language-go">go func() {
+    select {
+    case val := &lt;-ch:
+        fmt.Println(val)
+    case &lt;-ctx.Done():
+        return
+    }
+}()
+</code></pre>
+<h3 id="111-常見錯誤模式"><a class="header" href="#111-常見錯誤模式">11.1 常見錯誤模式</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>錯誤模式</th><th>問題</th></tr></thead><tbody>
+<tr><td>建了 <code>WithTimeout</code> 卻沒 <code>cancel()</code></td><td>timer 與資源可能延後釋放</td></tr>
+<tr><td>開 goroutine 但不監聽 <code>ctx.Done()</code></td><td>容易出現 goroutine leak</td></tr>
+<tr><td>在深層重新建立 <code>Background()</code></td><td>取消鏈被截斷</td></tr>
+<tr><td>把大量業務資料塞進 <code>Value()</code></td><td>context 被濫用</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="12-進階-api"><a class="header" href="#12-進階-api">12. 進階 API</a></h2>
+<h3 id="121-signalnotifycontext"><a class="header" href="#121-signalnotifycontext">12.1 <code>signal.NotifyContext</code></a></h3>
+<p>這個 API 常用在 CLI、daemon、HTTP server 優雅停止。</p>
+<pre><code class="language-go">ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+defer stop()
+
+&lt;-ctx.Done()
+log.Println("收到停止訊號:", ctx.Err())
+</code></pre>
+<p>區塊示意圖：</p>
+<pre><code class="language-text">SIGINT / SIGTERM
+       │
+       ▼
+signal.NotifyContext(...)
+       │
+       ▼
+ctx.Done() 關閉
+       │
+       ▼
+main / server / worker 開始收尾
+</code></pre>
+<h3 id="122-contextwithoutcancel"><a class="header" href="#122-contextwithoutcancel">12.2 <code>context.WithoutCancel</code></a></h3>
+<p>當你需要保留 value，但不想被上游取消影響時可以使用。</p>
+<pre><code class="language-go">detached := context.WithoutCancel(parent)
+</code></pre>
+<p>適合情境：</p>
+<ul>
+<li>請求已結束，但還要寫審計日誌</li>
+<li>背景補償任務要延續執行</li>
+</ul>
+<p>注意：這會切斷取消鏈，不能亂用。</p>
+<h3 id="123-contextafterfunc"><a class="header" href="#123-contextafterfunc">12.3 <code>context.AfterFunc</code></a></h3>
+<p>可以在 context 被取消後觸發回呼。</p>
+<pre><code class="language-go">stop := context.AfterFunc(ctx, func() {
+    log.Println("context 已取消，執行清理")
+})
+defer stop()
+</code></pre>
+<p>常見用途：</p>
+<ul>
+<li>取消時釋放額外資源</li>
+<li>發送取消事件</li>
+<li>喚醒等待中的流程</li>
+</ul>
+<hr />
+<h2 id="13-http-middleware-實戰"><a class="header" href="#13-http-middleware-實戰">13. HTTP Middleware 實戰</a></h2>
+<h3 id="131-加上-timeout-middleware"><a class="header" href="#131-加上-timeout-middleware">13.1 加上 Timeout Middleware</a></h3>
+<pre><code class="language-go">func timeoutMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+        defer cancel()
+
+        next.ServeHTTP(w, r.WithContext(ctx))
+    })
+}
+</code></pre>
+<p>流程圖：</p>
+<pre><code class="language-text">Client
+  │
+  ▼
+Middleware 建立 timeout ctx
+  │
+  ▼
+Handler 使用 r.Context()
+  │
+  ▼
+Service / DB 沿路傳遞 ctx
+  │
+  ▼
+超時後整條鏈一起停止
+</code></pre>
+<h3 id="132-帶入-request-id"><a class="header" href="#132-帶入-request-id">13.2 帶入 Request ID</a></h3>
+<pre><code class="language-go">type contextKey string
+
+const requestIDKey contextKey = "requestID"
+
+func requestIDMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        requestID := uuid.NewString()
+        ctx := context.WithValue(r.Context(), requestIDKey, requestID)
+        next.ServeHTTP(w, r.WithContext(ctx))
+    })
+}
+</code></pre>
+<p>讀取方式：</p>
+<pre><code class="language-go">func handler(w http.ResponseWriter, r *http.Request) {
+    requestID, _ := r.Context().Value(requestIDKey).(string)
+    fmt.Fprintln(w, requestID)
+}
+</code></pre>
+<hr />
+<h2 id="14-worker-pool-與-background-job"><a class="header" href="#14-worker-pool-與-background-job">14. Worker Pool 與 Background Job</a></h2>
+<h3 id="141-worker-pool-正確接收取消訊號"><a class="header" href="#141-worker-pool-正確接收取消訊號">14.1 Worker Pool 正確接收取消訊號</a></h3>
+<pre><code class="language-go">func worker(ctx context.Context, jobs &lt;-chan int, results chan&lt;- int) {
+    for {
+        select {
+        case &lt;-ctx.Done():
+            return
+        case job, ok := &lt;-jobs:
+            if !ok {
+                return
+            }
+            results &lt;- job * 2
+        }
+    }
+}
+</code></pre>
+<p>示意圖：</p>
+<pre><code class="language-text">jobs channel ────────┐
+                     ▼
+               ┌──────────┐
+ctx.Done() ───&gt;│ worker   │───&gt; results channel
+               └──────────┘
+                     │
+                     └── 收到取消就退出
+</code></pre>
+<h3 id="142-背景任務不要誤用請求-context"><a class="header" href="#142-背景任務不要誤用請求-context">14.2 背景任務不要誤用請求 Context</a></h3>
+<p>錯誤做法：</p>
+<pre><code class="language-go">func handler(w http.ResponseWriter, r *http.Request) {
+    go sendEmail(r.Context())
+    w.WriteHeader(http.StatusAccepted)
+}
+</code></pre>
+<p>問題：HTTP 回應結束後，<code>r.Context()</code> 很快就可能被取消。</p>
+<p>較合理做法：</p>
+<pre><code class="language-go">func handler(w http.ResponseWriter, r *http.Request) {
+    detached := context.WithoutCancel(r.Context())
+    go sendEmail(detached)
+    w.WriteHeader(http.StatusAccepted)
+}
+</code></pre>
+<p>如果這個背景工作本身需要壽命限制，應再包一層 timeout：</p>
+<pre><code class="language-go">detached := context.WithoutCancel(r.Context())
+jobCtx, cancel := context.WithTimeout(detached, 10*time.Second)
+defer cancel()
+go sendEmail(jobCtx)
+</code></pre>
+<hr />
+<h2 id="15-測試-cancel-與-timeout"><a class="header" href="#15-測試-cancel-與-timeout">15. 測試 <code>cancel</code> 與 <code>timeout</code></a></h2>
+<h3 id="151-測試取消是否生效"><a class="header" href="#151-測試取消是否生效">15.1 測試取消是否生效</a></h3>
+<pre><code class="language-go">func TestWorkerStopsOnCancel(t *testing.T) {
+    ctx, cancel := context.WithCancel(context.Background())
+    done := make(chan struct{})
+
+    go func() {
+        defer close(done)
+        &lt;-ctx.Done()
+    }()
+
+    cancel()
+
+    select {
+    case &lt;-done:
+    case &lt;-time.After(time.Second):
+        t.Fatal("worker 沒有在取消後結束")
+    }
+}
+</code></pre>
+<h3 id="152-測試-timeout"><a class="header" href="#152-測試-timeout">15.2 測試 Timeout</a></h3>
+<pre><code class="language-go">func TestContextTimeout(t *testing.T) {
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+    defer cancel()
+
+    &lt;-ctx.Done()
+
+    if !errors.Is(ctx.Err(), context.DeadlineExceeded) {
+        t.Fatalf("預期 DeadlineExceeded，實際得到 %v", ctx.Err())
+    }
+}
+</code></pre>
+<h3 id="153-測試原則"><a class="header" href="#153-測試原則">15.3 測試原則</a></h3>
+<ul>
+<li>測試不要睡太久，避免整體測試變慢</li>
+<li>timeout 數值要短，但不要短到不穩定</li>
+<li>優先檢查 <code>ctx.Err()</code>，不要只檢查 channel 是否關閉</li>
+</ul>
+<hr />
+<h2 id="16-總結"><a class="header" href="#16-總結">16. 總結</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>功能</th><th>作用</th></tr></thead><tbody>
+<tr><td>Cancellation</td><td>停止 goroutine</td></tr>
+<tr><td>Timeout</td><td>任務時間限制</td></tr>
+<tr><td>Propagation</td><td>傳遞請求狀態</td></tr>
+<tr><td>Metadata</td><td>傳遞請求資料</td></tr>
+</tbody></table>
+</div>
+<p>一句話總結：</p>
+<pre><code class="language-text">context = goroutine lifecycle control
+</code></pre>
+<p>再補一個整體區塊圖：</p>
+<pre><code class="language-text">┌────────────────────────────────────────────────────┐
+│                    一次請求流程                    │
+├────────────────────────────────────────────────────┤
+│ Client                                             │
+│   │                                                │
+│   ▼                                                │
+│ Handler 建立 ctx / timeout                         │
+│   │                                                │
+│   ▼                                                │
+│ Service 傳遞 ctx                                   │
+│   │                                                │
+│   ▼                                                │
+│ Repository / DB / RPC 使用支援 context 的 API      │
+│   │                                                │
+│   ▼                                                │
+│ timeout / cancel -&gt; Done() 關閉 -&gt; 全鏈停止        │
+└────────────────────────────────────────────────────┘
+</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../go/go_concurrency_supplement_notes.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../go/mutex-rwmutex.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../go/go_concurrency_supplement_notes.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../go/mutex-rwmutex.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
