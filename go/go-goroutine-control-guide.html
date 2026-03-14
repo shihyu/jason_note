@@ -1,0 +1,919 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Go goroutine 控制方式指南：WaitGroup、channel、context 與 errgroup - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="go-goroutine-控制方式指南waitgroupchannelcontext-與-errgroup"><a class="header" href="#go-goroutine-控制方式指南waitgroupchannelcontext-與-errgroup">Go goroutine 控制方式指南：<code>WaitGroup</code>、<code>channel</code>、<code>context</code> 與 <code>errgroup</code></a></h1>
+<p><img src="images/go-context-package-logo.png" alt="Golang Logo" /></p>
+<p><a href="https://pkg.go.dev/context">context</a> 在 Go 1.7 才正式納入標準函式庫。初學 Go、開始撰寫 API 或處理併發程式時，常會在 <code>http handler</code> 或 service function 的第一個參數看到：</p>
+<pre><code class="language-go">ctx context.Context
+</code></pre>
+<p>很多人學 Go 併發時，會先碰到 goroutine，接著遇到幾個常見問題：</p>
+<ul>
+<li>怎麼等一批 goroutine 全部做完？</li>
+<li>怎麼通知 goroutine 停止？</li>
+<li>怎麼讓一整串流程在 timeout 時一起取消？</li>
+<li>怎麼做到「其中一個失敗，其他也跟著停」？</li>
+</ul>
+<p>這篇文章不只談 <code>context</code>，而是用實際例子把 <code>WaitGroup</code>、<code>channel</code>、<code>context</code> 與 <code>errgroup</code> 放在一起比較。你可以把它當成一份 goroutine 控制方式的入門地圖，先理解每種工具解決的問題，再決定實務上該怎麼組合使用。</p>
+<h2 id="先看結論怎麼選比較快"><a class="header" href="#先看結論怎麼選比較快">先看結論：怎麼選比較快</a></h2>
+<p>如果你現在手上就有 goroutine 控制需求，可以先看這張速查表：</p>
+<pre><code class="language-text">我要解決的問題                      優先考慮
+---------------------------------------------------------
+等全部 goroutine 做完                WaitGroup
+goroutine 之間傳資料                 channel
+通知單一或少量 worker 停止           channel
+整條呼叫鏈一起取消                   context
+限制執行時間                         context.WithTimeout
+任一 goroutine 失敗就全停            errgroup
+限制同時最多 N 個 goroutine 執行      buffered channel / semaphore
+程式關機時收尾                       signal.NotifyContext + WaitGroup
+</code></pre>
+<p>實務上最常見的組合通常不是四選一，而是：</p>
+<ul>
+<li><code>channel</code> 傳資料。</li>
+<li><code>context</code> 控制取消。</li>
+<li><code>WaitGroup</code> 等待收尾。</li>
+<li><code>errgroup</code> 處理平行任務的錯誤傳播。</li>
+</ul>
+<h2 id="這篇怎麼讀"><a class="header" href="#這篇怎麼讀">這篇怎麼讀</a></h2>
+<p>這篇文章會照下面的順序走：</p>
+<ol>
+<li>先看 goroutine 控制到底分成哪幾類問題。</li>
+<li>再理解 <code>context</code> 為什麼跟 <code>channel</code> 不完全一樣。</li>
+<li>最後分別看 <code>WaitGroup</code>、<code>channel</code>、<code>context</code>、<code>errgroup</code> 的範例。</li>
+</ol>
+<p>如果你是初學者，照順序看會最好懂；如果你只是想選工具，看到上面的速查表就可以先做第一輪判斷。</p>
+<h2 id="先把-goroutine-控制問題分好類"><a class="header" href="#先把-goroutine-控制問題分好類">先把 goroutine 控制問題分好類</a></h2>
+<p>先不要急著背 API，先把問題拆開看：</p>
+<pre><code class="language-text">goroutine 控制其實分成幾類：
+
+1. 等待完成       -&gt; WaitGroup
+2. 傳遞資料/訊號  -&gt; channel
+3. 取消/逾時      -&gt; context
+4. 錯誤傳播       -&gt; errgroup
+5. 限制併發數     -&gt; buffered channel / semaphore
+</code></pre>
+<p>如果你先分清楚你要控制的是哪一種問題，後面選工具就會很快。</p>
+<h2 id="先用一張圖理解-context-在解決什麼問題"><a class="header" href="#先用一張圖理解-context-在解決什麼問題">先用一張圖理解 <code>context</code> 在解決什麼問題</a></h2>
+<p>這裡說的「整條呼叫鏈」，意思不是只有一個 goroutine，而是同一次任務從上到下會經過的整串呼叫流程，例如：</p>
+<pre><code class="language-text">Client Request
+    │
+    v
+HTTP Handler
+    │
+    v
+Service
+    │
+    ├── Query DB
+    ├── Call Redis
+    └── Call External API
+</code></pre>
+<p>上面這整串就是一條呼叫鏈。</p>
+<ul>
+<li><code>Handler</code> 是入口。</li>
+<li><code>Service</code> 是業務邏輯。</li>
+<li><code>DB / Redis / External API</code> 是下游依賴。</li>
+</ul>
+<p>如果 <code>Handler</code> 拿到的 <code>ctx</code> 被取消，這個取消訊號就可以一路往下傳到 <code>Service</code>、<code>DB</code>、<code>Redis</code>、外部 API。這就是「整條呼叫鏈一起取消」。</p>
+<p>很多人第一次看到 <code>context.Context</code>，會以為它只是另一種 <code>channel</code>。其實它真正解決的是「跨函式、跨 goroutine 傳遞控制訊號」這件事，尤其適合 request-based 或多層呼叫的流程。</p>
+<pre><code class="language-text">HTTP Request
+    │
+    v
+Handler
+    │  建立 request context
+    v
+Service
+    │  往下傳遞同一個 ctx
+    v
+Repository
+    │
+    v
+DB / RPC / 外部 API
+
+取消來源可能是：
+1. 使用者中斷連線
+2. Server 主動 shutdown
+3. Timeout 到期
+
+一旦上層 ctx 被取消，下面整串流程都能收到通知。
+</code></pre>
+<p>再看一次取消是怎麼往下傳的：</p>
+<pre><code class="language-text">Client disconnect / timeout
+           │
+           v
+      cancel ctx
+           │
+           v
+HTTP Handler
+           │
+           v
+Service
+     ┌─────┼───────────┐
+     v     v           v
+    DB   Redis    External API
+
+結果：
+- Handler 不再等結果
+- Service 停止後續處理
+- DB / Redis / API 收到 ctx.Done() 後盡快中止
+</code></pre>
+<p>如果只靠函式回傳值，你得一層一層手動處理停止條件；如果只靠單一 <code>channel</code>，當流程跨了好幾層函式或好幾組 worker，管理成本就會快速變高。<code>context</code> 的價值就在這裡。</p>
+<h2 id="實務情境交易系統或訂票系統會長怎樣"><a class="header" href="#實務情境交易系統或訂票系統會長怎樣">實務情境：交易系統或訂票系統會長怎樣</a></h2>
+<p>很多人看到「整條呼叫鏈」時，會立刻想到這種問題：</p>
+<ul>
+<li>如果很多使用者同時下單，會不會全部混在同一個 <code>context</code>？</li>
+<li>如果很多人同時搶票，系統是不是把所有訂單集中在一起處理？</li>
+</ul>
+<p>答案是：</p>
+<ul>
+<li><code>context</code> 通常是「每一次請求一份」。</li>
+<li>訂單或票務資料可以「集中處理」，但那是業務資料流，不是把所有請求共用同一個 <code>context</code>。</li>
+</ul>
+<h3 id="先分清楚兩件事"><a class="header" href="#先分清楚兩件事">先分清楚兩件事</a></h3>
+<pre><code class="language-text">層次 A：請求控制
+- 誰發起請求
+- 這次請求多久 timeout
+- 使用者是否斷線
+- 這次請求要不要取消
+
+層次 B：業務資料處理
+- 訂單要不要進 queue
+- 庫存要不要鎖定
+- 撮合引擎怎麼排序
+- 哪些 worker 負責處理
+</code></pre>
+<p><code>context</code> 管的是層次 A，不是層次 B。</p>
+<h3 id="交易系統的常見樣子"><a class="header" href="#交易系統的常見樣子">交易系統的常見樣子</a></h3>
+<p>假設很多使用者同時送出買賣單：</p>
+<pre><code class="language-text">User A ---- HTTP/gRPC Request A ----&gt; Handler A ----&gt; Service A ----&gt; Order API / DB / Queue
+User B ---- HTTP/gRPC Request B ----&gt; Handler B ----&gt; Service B ----&gt; Order API / DB / Queue
+User C ---- HTTP/gRPC Request C ----&gt; Handler C ----&gt; Service C ----&gt; Order API / DB / Queue
+
+每個 Request 都有自己的 ctxA / ctxB / ctxC
+</code></pre>
+<p>這裡要注意兩件事：</p>
+<ol>
+<li><code>ctxA</code>、<code>ctxB</code>、<code>ctxC</code> 是分開的，因為它們代表不同使用者、不同請求的生命週期。</li>
+<li>這些請求最後可以把訂單寫進同一個集中式系統，例如同一個 queue、同一個 order book、同一個資料庫。</li>
+</ol>
+<p>也就是說：</p>
+<ul>
+<li><code>context</code> 不會把所有訂單「集中成一份」。</li>
+<li>訂單資料可以被系統「集中管理」。</li>
+</ul>
+<p>這兩件事不能混在一起看。</p>
+<h3 id="交易系統裡-context-真正管什麼"><a class="header" href="#交易系統裡-context-真正管什麼">交易系統裡 <code>context</code> 真正管什麼</a></h3>
+<p>假設使用者 A 下單後，流程可能是：</p>
+<pre><code class="language-text">Request A
+  │
+  v
+Create Order Handler
+  │
+  v
+Order Service
+  ├── 驗證使用者餘額
+  ├── 寫入 Order DB
+  ├── 發送到 Matching Queue
+  └── 記錄審計日誌
+</code></pre>
+<p>如果這時候：</p>
+<ul>
+<li>使用者連線斷掉</li>
+<li>API gateway timeout</li>
+<li>server 正在 shutdown</li>
+</ul>
+<p>那 <code>Request A</code> 對應的 <code>ctxA</code> 就可以通知這條流程停止，避免：</p>
+<ul>
+<li>DB 查詢還在白跑</li>
+<li>外部風控 API 還在等</li>
+<li>queue publish 一直卡住</li>
+</ul>
+<p>但是，已經成功寫入 queue 的訂單，之後要不要繼續被撮合，這是業務規則問題，不是 <code>context</code> 自己決定。</p>
+<h3 id="訂票系統也是一樣"><a class="header" href="#訂票系統也是一樣">訂票系統也是一樣</a></h3>
+<p>很多人搶同一場演唱會門票時，系統常常會把「搶票請求」跟「庫存處理」拆開。</p>
+<pre><code class="language-text">User A Request ----&gt; Ticket Handler ----&gt; Ticket Service ----&gt; Lock Seat / Create Order
+User B Request ----&gt; Ticket Handler ----&gt; Ticket Service ----&gt; Lock Seat / Create Order
+User C Request ----&gt; Ticket Handler ----&gt; Ticket Service ----&gt; Lock Seat / Create Order
+
+                    下游可能共用：
+                    - 同一個庫存系統
+                    - 同一個訂單資料庫
+                    - 同一個排隊機制
+</code></pre>
+<p>每個人搶票時，都有自己的 request context。某一個使用者頁面關掉，不代表其他人的請求也該取消。</p>
+<p>但在業務層面上，大家可能會一起競爭：</p>
+<ul>
+<li>同一批座位庫存</li>
+<li>同一個訂票 queue</li>
+<li>同一張活動場次表</li>
+</ul>
+<p>所以「請求是分開的」，但「資源可能是共享的」。</p>
+<h3 id="一張圖看懂request-context-跟集中處理不是同一層"><a class="header" href="#一張圖看懂request-context-跟集中處理不是同一層">一張圖看懂：request context 跟集中處理不是同一層</a></h3>
+<pre><code class="language-text">                    每個使用者都有自己的 request context
+
+User A -- ctxA --&gt; Handler A --&gt; Service A --+
+                                             |
+User B -- ctxB --&gt; Handler B --&gt; Service B --+--&gt; Shared DB / Queue / Inventory
+                                             |
+User C -- ctxC --&gt; Handler C --&gt; Service C --+
+
+左邊：
+- ctxA / ctxB / ctxC 各自控制各自的請求生命週期
+
+右邊：
+- Shared DB / Queue / Inventory 是集中管理的共享資源
+</code></pre>
+<p>這是實務上最常見的樣子。</p>
+<h3 id="什麼時候會用全系統共用的-context"><a class="header" href="#什麼時候會用全系統共用的-context">什麼時候會用「全系統共用」的 context</a></h3>
+<p>也不是完全沒有共享 <code>context</code>，只是共享的通常不是「所有使用者訂單共用一個 request context」，而是像這樣：</p>
+<pre><code class="language-text">serverCtx
+  ├── background matching engine
+  ├── settlement worker
+  ├── notification worker
+  └── metrics reporter
+</code></pre>
+<p>這種 <code>serverCtx</code> 通常是用來表示：</p>
+<ul>
+<li>整個服務正在 shutdown</li>
+<li>背景 worker 要一起停止</li>
+<li>程式生命週期結束</li>
+</ul>
+<p>也就是說：</p>
+<ul>
+<li><code>request ctx</code>：控制單次請求</li>
+<li><code>server ctx</code>：控制整個服務或某一批背景工作</li>
+</ul>
+<h2 id="一句話記住"><a class="header" href="#一句話記住">一句話記住</a></h2>
+<p>在交易系統或訂票系統裡，通常不是「所有訂單共用一個 <code>context</code>」，而是「每個請求有自己的 <code>context</code>，但它們可能共同操作同一批集中管理的資源」。</p>
+<h2 id="幾個工具的定位差在哪裡"><a class="header" href="#幾個工具的定位差在哪裡">幾個工具的定位差在哪裡</a></h2>
+<p>先記一個簡單判斷方式：</p>
+<ul>
+<li><code>WaitGroup</code>：等工作全部做完。</li>
+<li><code>channel</code>：傳資料或傳單一協調訊號。</li>
+<li><code>context</code>：傳遞取消、逾時、截止時間與 request 範圍內資訊。</li>
+<li><code>errgroup</code>：幫一組 goroutine 收錯誤，並在需要時一起取消。</li>
+</ul>
+<pre><code class="language-text">需求類型                     建議工具
+--------------------------------------------------
+等 3 個 goroutine 全部結束    WaitGroup
+通知 1 個 worker 停止         channel
+通知一整串流程停止            context
+其中 1 個 goroutine 失敗就全停 errgroup
+限制請求最多執行 2 秒         context.WithTimeout
+夾帶 request id 往下傳遞      context.WithValue
+</code></pre>
+<p>這三者不是互斥關係。實務上常見的組合是：</p>
+<ul>
+<li>用 <code>WaitGroup</code> 等待 goroutine 收尾。</li>
+<li>用 <code>context</code> 發出取消訊號。</li>
+<li>用 <code>channel</code> 傳遞結果或工作內容。</li>
+<li>用 <code>errgroup</code> 把錯誤處理與取消控制整合起來。</li>
+</ul>
+<h2 id="教學影片"><a class="header" href="#教學影片">教學影片</a></h2>
+<p>如果你對課程內容有興趣，可以參考以下資源：</p>
+<ul>
+<li><a href="https://www.udemy.com/course/golang-fight/?couponCode=202004">Go 語言基礎實戰（開發、測試及部署）</a></li>
+<li><a href="https://www.udemy.com/course/devops-oneday/?couponCode=202004">一天學會 DevOps 自動化測試及部署</a></li>
+<li><a href="https://www.udemy.com/course/docker-practice/?couponCode=202004">DOCKER 容器開發部署實戰</a></li>
+</ul>
+<p>如果需要搭配購買，請直接透過 <a href="http://facebook.com/appleboy46">FB 聯絡我</a>。</p>
+<h2 id="1-等全部做完waitgroup"><a class="header" href="#1-等全部做完waitgroup">1. 等全部做完：<code>WaitGroup</code></a></h2>
+<p>學 Go 時一定會碰到 goroutine，而 goroutine 的協調方式常見有兩種：一種是 <a href="https://pkg.go.dev/sync#WaitGroup">WaitGroup</a>，另一種是 <code>context</code>。</p>
+<p>那什麼時候該用 <code>WaitGroup</code>？很簡單，當你把同一件事拆成多個 job 並行執行，而且主程式必須等所有 job 都完成之後才能繼續，這時候就很適合使用 <code>WaitGroup</code>。</p>
+<pre><code class="language-go">package main
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+func main() {
+	var wg sync.WaitGroup
+
+	wg.Add(2)
+
+	go func() {
+		time.Sleep(2 * time.Second)
+		fmt.Println("job 1 done.")
+		wg.Done()
+	}()
+
+	go func() {
+		time.Sleep(1 * time.Second)
+		fmt.Println("job 2 done.")
+		wg.Done()
+	}()
+
+	wg.Wait()
+	fmt.Println("all done.")
+}
+</code></pre>
+<p>上面的例子中，主程式透過 <code>wg.Wait()</code> 等待所有 job 執行完成，最後才印出訊息。</p>
+<p>不過會有另一種情境：工作雖然拆成多個 job 丟到背景執行，但如果使用者想透過 UI 上的「停止」按鈕，或透過其他外部事件主動終止正在執行的 goroutine，該怎麼做？這時可以先用 <code>channel + select</code> 來處理。</p>
+<h3 id="waitgroup-的角色"><a class="header" href="#waitgroup-的角色"><code>WaitGroup</code> 的角色</a></h3>
+<p><code>WaitGroup</code> 很適合「等結束」，但它本身不負責「叫別人停下來」。也就是說，它解決的是同步收尾問題，不是取消控制問題。</p>
+<pre><code class="language-text">main goroutine
+    │
+    ├── worker 1
+    ├── worker 2
+    └── worker 3
+
+main 只做一件事：
+等待所有 worker 都呼叫 Done()
+</code></pre>
+<p>如果你的需求是「工作做到一半也可能被外部取消」，那 <code>WaitGroup</code> 通常還不夠。</p>
+<h2 id="2-通知停止或傳資料channel--select"><a class="header" href="#2-通知停止或傳資料channel--select">2. 通知停止或傳資料：<code>channel + select</code></a></h2>
+<pre><code class="language-go">package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	stop := make(chan bool)
+
+	go func() {
+		for {
+			select {
+			case &lt;-stop:
+				fmt.Println("got the stop channel")
+				return
+			default:
+				fmt.Println("still working")
+				time.Sleep(1 * time.Second)
+			}
+		}
+	}()
+
+	time.Sleep(5 * time.Second)
+	fmt.Println("stop the goroutine")
+	stop &lt;- true
+	time.Sleep(5 * time.Second)
+}
+</code></pre>
+<p>透過 <code>select + channel</code>，可以很直接地通知背景 goroutine 停止工作。只要在任何地方把值送進 <code>stop channel</code>，背景工作就會收到訊號並結束。</p>
+<h3 id="這種寫法什麼時候夠用"><a class="header" href="#這種寫法什麼時候夠用">這種寫法什麼時候夠用</a></h3>
+<p>當流程簡單、worker 數量少，而且停止訊號只在單一區域內使用時，<code>channel</code> 非常直接。</p>
+<pre><code class="language-text">main ----stop----&gt; worker
+</code></pre>
+<p>但如果背景不只一個 goroutine，而是很多個 goroutine，甚至 goroutine 裡面還會再啟動新的 goroutine，事情就會變得很複雜。像下圖這種層層展開的 worker 結構，就不太適合只靠單一 <code>channel</code> 來管理：</p>
+<p><img src="images/go-context-package-cancel-flow.png" alt="Context Cancel Flow" /></p>
+<p>這時候就輪到 <code>context</code> 登場了。</p>
+<h2 id="3-控制取消與逾時context"><a class="header" href="#3-控制取消與逾時context">3. 控制取消與逾時：<code>context</code></a></h2>
+<p>從上圖可以看到，主程式先建立一個根 <code>context.Background()</code>，接著讓每個 worker 依照需要延伸出自己的子 context。這樣一來，只要取消某個 context，就能讓該 context 之下的工作一併收到停止通知。</p>
+<p>先把前面的 <code>channel</code> 範例改寫成 <code>context</code>：</p>
+<pre><code class="language-go">package main
+
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
+func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case &lt;-ctx.Done():
+				fmt.Println("got the stop channel")
+				return
+			default:
+				fmt.Println("still working")
+				time.Sleep(1 * time.Second)
+			}
+		}
+	}()
+
+	time.Sleep(5 * time.Second)
+	fmt.Println("stop the goroutine")
+	cancel()
+	time.Sleep(5 * time.Second)
+}
+</code></pre>
+<p>可以看到，邏輯幾乎沒變，只是把原本的 <code>stop channel</code> 改成監聽 <code>ctx.Done()</code>。而這裡最關鍵的是：</p>
+<pre><code class="language-go">ctx, cancel := context.WithCancel(context.Background())
+</code></pre>
+<p><code>context.WithCancel</code> 會回傳一個新的 <code>context</code>，以及對應的 <code>cancel func</code>。這代表每個 worker 都可以有自己的取消控制點，開發者能在合適的地方呼叫 <code>cancel()</code>，決定要停止哪一段工作。</p>
+<h3 id="父子-context-的關係"><a class="header" href="#父子-context-的關係">父子 <code>context</code> 的關係</a></h3>
+<p><code>context</code> 最實用的地方，是它天然適合表達「父流程帶著子流程一起走」。</p>
+<pre><code class="language-text">context.Background()
+        │
+        └── requestCtx
+             │
+             ├── dbCtx
+             ├── cacheCtx
+             └── rpcCtx
+
+只要 requestCtx 被取消：
+- dbCtx 會收到取消
+- cacheCtx 會收到取消
+- rpcCtx 會收到取消
+</code></pre>
+<p>這很適合 HTTP request、批次任務、背景同步流程，因為你通常希望上層任務失效時，下游工作也同步停止，不要繼續浪費資源。</p>
+<h2 id="context-範例一次停止多個-worker"><a class="header" href="#context-範例一次停止多個-worker"><code>context</code> 範例：一次停止多個 worker</a></h2>
+<p>下面這個範例示範如何用同一個 <code>context</code> 同步停止多個 worker：</p>
+<pre><code class="language-go">package main
+
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
+func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go worker(ctx, "node01")
+	go worker(ctx, "node02")
+	go worker(ctx, "node03")
+
+	time.Sleep(5 * time.Second)
+	fmt.Println("stop the goroutine")
+	cancel()
+	time.Sleep(5 * time.Second)
+}
+
+func worker(ctx context.Context, name string) {
+	for {
+		select {
+		case &lt;-ctx.Done():
+			fmt.Println(name, "got the stop channel")
+			return
+		default:
+			fmt.Println(name, "still working")
+			time.Sleep(1 * time.Second)
+		}
+	}
+}
+</code></pre>
+<p>透過同一個 <code>context</code>，可以一次停止多個 worker。實務上我通常會把這種模式搭配 graceful shutdown 一起使用，例如停止背景 job、關閉資料庫連線，或中止正在等待的外部請求。</p>
+<h2 id="4-錯誤傳播加取消errgroup"><a class="header" href="#4-錯誤傳播加取消errgroup">4. 錯誤傳播加取消：<code>errgroup</code></a></h2>
+<p>如果你的需求是「開幾個 goroutine 並行做事，只要其中一個失敗，就取消其他 goroutine，最後把錯誤收斂回來」，那 <code>errgroup</code> 會比手動組合 <code>WaitGroup + channel + context</code> 更省事。</p>
+<p><code>errgroup</code> 來自 <code>golang.org/x/sync/errgroup</code>，常見於 fan-out/fan-in、平行查詢、聚合外部服務結果這類場景。</p>
+<pre><code class="language-go">package main
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"golang.org/x/sync/errgroup"
+)
+
+func main() {
+	g, ctx := errgroup.WithContext(context.Background())
+
+	g.Go(func() error {
+		return fetch(ctx, "db", 1*time.Second, false)
+	})
+
+	g.Go(func() error {
+		return fetch(ctx, "cache", 2*time.Second, true)
+	})
+
+	g.Go(func() error {
+		return fetch(ctx, "api", 3*time.Second, false)
+	})
+
+	if err := g.Wait(); err != nil {
+		fmt.Println("group failed:", err)
+	}
+}
+
+func fetch(ctx context.Context, name string, d time.Duration, fail bool) error {
+	select {
+	case &lt;-time.After(d):
+		if fail {
+			return fmt.Errorf("%s failed", name)
+		}
+		fmt.Println(name, "done")
+		return nil
+	case &lt;-ctx.Done():
+		return ctx.Err()
+	}
+}
+</code></pre>
+<p>上面這段程式的重點是：</p>
+<ul>
+<li><code>cache</code> 失敗後，<code>g.Wait()</code> 會回傳錯誤。</li>
+<li>同一時間，其它 goroutine 會因為共享的 <code>ctx</code> 被取消。</li>
+<li>你不需要自己再額外維護錯誤 channel。</li>
+</ul>
+<pre><code class="language-text">errgroup
+   │
+   ├── task 1 成功
+   ├── task 2 失敗 ----+
+   └── task 3 執行中   |
+                      v
+                cancel shared ctx
+                      │
+                      v
+                 其他 task 收到停止
+</code></pre>
+<h3 id="什麼時候用-errgroup"><a class="header" href="#什麼時候用-errgroup">什麼時候用 <code>errgroup</code></a></h3>
+<p>適合場景：</p>
+<ul>
+<li>同時查多個外部服務，任一失敗就整體失敗。</li>
+<li>一次併發處理多個步驟，但只接受全部成功。</li>
+<li>希望錯誤與取消邏輯寫得比 <code>WaitGroup</code> 更簡潔。</li>
+</ul>
+<p>不一定適合的場景：</p>
+<ul>
+<li>你只是單純想等所有 goroutine 結束，沒有錯誤傳播需求。</li>
+<li>任務彼此獨立，就算某個失敗也不需要取消其他人。</li>
+</ul>
+<h2 id="進一步理解-context-的實務用法"><a class="header" href="#進一步理解-context-的實務用法">進一步理解 <code>context</code> 的實務用法</a></h2>
+<p>前面的例子是 <code>WithCancel</code>，也就是手動取消。實務上還有兩種常見用法，理解後會更容易看懂 production code。</p>
+<h3 id="1-用-withtimeout-控制最長執行時間"><a class="header" href="#1-用-withtimeout-控制最長執行時間">1. 用 <code>WithTimeout</code> 控制最長執行時間</a></h3>
+<p>當你呼叫外部 API、資料庫，或任何可能卡住的操作時，通常都不該無限等待。</p>
+<pre><code class="language-go">package main
+
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
+func main() {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	if err := callRemoteAPI(ctx); err != nil {
+		fmt.Println("request failed:", err)
+	}
+}
+
+func callRemoteAPI(ctx context.Context) error {
+	select {
+	case &lt;-time.After(3 * time.Second):
+		fmt.Println("remote api done")
+		return nil
+	case &lt;-ctx.Done():
+		return ctx.Err()
+	}
+}
+</code></pre>
+<p>這段程式裡，外部呼叫需要 3 秒才完成，但 <code>context</code> 只給它 2 秒，所以最後會提早返回 <code>context deadline exceeded</code>。</p>
+<pre><code class="language-text">main
+  │
+  └── callRemoteAPI
+        │
+        ├── 2 秒內完成 -&gt; 回傳結果
+        └── 超過 2 秒 -&gt; ctx.Done() -&gt; 中止
+</code></pre>
+<p>適合場景：</p>
+<ul>
+<li>HTTP client 請求外部服務。</li>
+<li>SQL 查詢不希望卡太久。</li>
+<li>背景 job 中某個步驟必須有限時。</li>
+</ul>
+<h3 id="2-用-withvalue-傳遞-request-scoped-資訊"><a class="header" href="#2-用-withvalue-傳遞-request-scoped-資訊">2. 用 <code>WithValue</code> 傳遞 request-scoped 資訊</a></h3>
+<p><code>WithValue</code> 常用來往下傳遞 request id、trace id、登入使用者資訊等「跟這次請求綁定」的資料。</p>
+<pre><code class="language-go">package main
+
+import (
+	"context"
+	"fmt"
+)
+
+type contextKey string
+
+const requestIDKey contextKey = "request-id"
+
+func main() {
+	ctx := context.WithValue(context.Background(), requestIDKey, "req-123")
+	handle(ctx)
+}
+
+func handle(ctx context.Context) {
+	requestID, _ := ctx.Value(requestIDKey).(string)
+	fmt.Println("request id:", requestID)
+}
+</code></pre>
+<p>不過這裡要特別注意：<code>context</code> 不是萬用資料袋。不要把它拿來傳 service、database connection 或一堆可選參數，否則程式會變得很難維護。</p>
+<p>建議只放這類資料：</p>
+<ul>
+<li>request id</li>
+<li>trace id</li>
+<li>使用者身份資訊</li>
+<li>語系或權限這種 request 範圍資訊</li>
+</ul>
+<p>不建議放這類資料：</p>
+<ul>
+<li>logger 以外的大型依賴物件</li>
+<li>repository 或 service instance</li>
+<li>業務邏輯輸入參數</li>
+</ul>
+<h2 id="常見誤用"><a class="header" href="#常見誤用">常見誤用</a></h2>
+<p>初學者最容易踩到的不是語法，而是用法。</p>
+<h3 id="1-忘記呼叫-cancel"><a class="header" href="#1-忘記呼叫-cancel">1. 忘記呼叫 <code>cancel</code></a></h3>
+<p>像 <code>WithCancel</code>、<code>WithTimeout</code>、<code>WithDeadline</code> 這些 API 都會回傳 <code>cancel</code>。如果生命周期已經結束，通常要記得呼叫，讓內部資源能及早釋放。</p>
+<pre><code class="language-go">ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+defer cancel()
+</code></pre>
+<h3 id="2-把-context-存進-struct"><a class="header" href="#2-把-context-存進-struct">2. 把 <code>context</code> 存進 struct</a></h3>
+<p>通常不建議這樣做：</p>
+<pre><code class="language-go">type Service struct {
+	ctx context.Context
+}
+</code></pre>
+<p>比較好的方式是把 <code>ctx</code> 當成每次呼叫的參數傳入，因為 <code>context</code> 代表的是一次操作的生命週期，不是物件本身的固定狀態。</p>
+<h3 id="3-用-context-取代正常函式參數"><a class="header" href="#3-用-context-取代正常函式參數">3. 用 <code>context</code> 取代正常函式參數</a></h3>
+<p>下面這種就不是好用法：</p>
+<pre><code class="language-go">ctx := context.WithValue(context.Background(), "limit", 10)
+ctx = context.WithValue(ctx, "offset", 20)
+</code></pre>
+<p>如果 <code>limit</code>、<code>offset</code> 是業務邏輯必要參數，就應該直接寫在函式簽名裡，而不是塞進 <code>context</code>。</p>
+<h2 id="最後用一個完整例子串起來"><a class="header" href="#最後用一個完整例子串起來">最後用一個完整例子串起來</a></h2>
+<p>假設你正在寫一個 HTTP API：</p>
+<ol>
+<li>Handler 收到請求後拿到 <code>r.Context()</code>。</li>
+<li>Handler 呼叫 service，並把 <code>ctx</code> 往下傳。</li>
+<li>Service 用 <code>errgroup</code> 同時打 DB 與第三方 API。</li>
+<li>如果使用者提前中斷連線，或 API timeout，整串流程都會收到取消訊號。</li>
+</ol>
+<pre><code class="language-text">Client
+  │
+  v
+HTTP Handler
+  │ r.Context()
+  v
+Service
+  │
+  └── errgroup
+      ├── Query DB
+      └── Call External API
+
+Client disconnect / timeout
+  └── cancel ctx
+        ├── DB query stop
+        └── API call stop
+</code></pre>
+<p>如果再加上 <code>errgroup</code>，就能把「平行執行」、「錯誤回收」與「取消傳遞」放在同一套模型裡。這也是為什麼現在很多 Go 專案會把 <code>ctx context.Context</code> 放在函式第一個參數，因為它不是多餘樣板，而是在明確傳遞這次操作的生命週期控制權。</p>
+<h2 id="快速複習"><a class="header" href="#快速複習">快速複習</a></h2>
+<p>如果只記一句話，可以記這個版本：</p>
+<ul>
+<li>要等大家做完，用 <code>WaitGroup</code>。</li>
+<li>要傳資料或簡單停止訊號，用 <code>channel</code>。</li>
+<li>要讓一整串流程一起取消，用 <code>context</code>。</li>
+<li>要做到「一個失敗全部收掉」，用 <code>errgroup</code>。</li>
+</ul>
+<h2 id="心得"><a class="header" href="#心得">心得</a></h2>
+<p>剛開始學 Go、還不常用 goroutine 時，通常很難立刻理解 <code>context</code> 的價值。等到你開始寫背景工作、需要控制生命週期，或要處理一整串可以被取消的流程時，就會慢慢體會到 <code>context</code> 的重要性。</p>
+<p>當然，<code>context</code> 不只用在取消工作，也常拿來傳遞 deadline、timeout 與 request-scoped value。這些主題之後還可以再分開深入討論。</p>
+<h2 id="延伸閱讀"><a class="header" href="#延伸閱讀">延伸閱讀</a></h2>
+<ul>
+<li><a href="https://blog.wu-boy.com/2022/09/dependency-injection-in-go/">用 Google 團隊推出的 Wire 工具解決 Dependency Injection</a></li>
+<li><a href="https://blog.wu-boy.com/2022/08/three-grpc-testing-tool/">三種好用的 gRPC 測試工具</a></li>
+<li><a href="https://blog.wu-boy.com/2022/07/gatus-system-architecture/">監控服務 Gatus 系統架構</a></li>
+<li><a href="https://blog.wu-boy.com/2022/07/setup-and-teardown-with-unit-testing-in-golang/">在 Go 語言測試使用 Setup 及 Teardown</a></li>
+<li><a href="https://blog.wu-boy.com/2022/06/refactor-worker-pool-source-code/">優化重構 Worker Pool 程式碼</a></li>
+<li><a href="https://blog.wu-boy.com/2022/06/reuse-the-bytes-buffer-in-go/">在 Go 語言內使用 bytes.Buffer 注意事項</a></li>
+<li><a href="https://blog.wu-boy.com/2022/05/read-data-from-channel-in-go/">用 10 分鐘了解 Go 語言如何從 Channel 讀取資料</a></li>
+<li><a href="https://blog.wu-boy.com/2022/04/simple-publish-subscribe-pattern-in-golang/">用 Go 語言實作 Pub-Sub 模式</a></li>
+<li><a href="https://blog.wu-boy.com/2022/04/new-package-graceful-shutdown-in-golang/">Go 語言實作 Graceful Shutdown 套件</a></li>
+<li><a href="https://blog.wu-boy.com/2022/04/grant-access-to-user-specific-folders-in-amazone-s3-bucket/">使用 AWS IAM Policy 設定 S3 Bucket 底下特定目錄權限</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../go/go_concurrency_supplement_notes.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../go/go_context_complete_guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../go/go_concurrency_supplement_notes.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../go/go_context_complete_guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
