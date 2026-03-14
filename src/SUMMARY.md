@@ -215,6 +215,7 @@
         - [Go 併發](go/goroutine-and-channel.md)
         - [Go 並行機制完整指南](go/go_concurrency_guide.md)
         - [Go 並行補充筆記](go/go_concurrency_supplement_notes.md)
+        - [Go goroutine 控制方式指南：`WaitGroup`、`channel`、`context` 與 `errgroup`](go/go-goroutine-control-guide.md)
         - [Go Context 完整整理](go/go_context_complete_guide.md)
         - [sync.Mutex 和 sync.RWMutex](go/mutex-rwmutex.md)
     - [Runtime 與記憶體管理](go/03_Runtime與記憶體管理.md)
