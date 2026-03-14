@@ -1,0 +1,629 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Google OAuth、Gmail 應用程式密碼與 OAuth2 Proxy 實作 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="google-oauth-申請gmail-應用程式密碼與-oauth2-proxy-zero-trust-實作"><a class="header" href="#google-oauth-申請gmail-應用程式密碼與-oauth2-proxy-zero-trust-實作">Google OAuth 申請、Gmail 應用程式密碼與 OAuth2 Proxy Zero Trust 實作</a></h1>
+<h2 id="前言"><a class="header" href="#前言">前言</a></h2>
+<p>在 Zero Trust 持續被討論的這幾年，我自己過去其實比較常直接使用 Cloudflare Zero Trust 或 VPN，很少從零自建整套驗證入口。不過當部署環境的網路條件比較嚴格時，VPN 不一定總是可行，這時候把驗證邏輯收斂到 HTTP 入口，通常會更容易落地。</p>
+<p>OAuth2 Proxy 就是很適合這種場景的元件。它可以站在應用程式前面，接手登入、驗證與使用者識別，再把已經通過驗證的請求轉交給後端服務。本文以 Google 當成 OAuth 提供者，在 Linux 上結合 Nginx，示範如何建立一套簡單實用的 Zero Trust 存取入口，並補上 Gmail SMTP 需要的 Google 應用程式密碼設定方式。</p>
+<h2 id="google-帳號前置條件與差異"><a class="header" href="#google-帳號前置條件與差異">Google 帳號前置條件與差異</a></h2>
+<p>在開始之前，先把兩件常被混在一起的設定拆開：</p>
+<ul>
+<li><code>Google OAuth Client ID / Client Secret</code>：這是給 OAuth2 Proxy 或網站登入流程用的，必須在 Google Cloud Console 建立。</li>
+<li><code>Google 應用程式密碼</code>：這是給 Gmail SMTP、舊版郵件客戶端、掃描器或只接受帳號密碼的程式用的 16 位密碼，不是 OAuth 的 <code>Client Secret</code>。</li>
+</ul>
+<p>如果你的需求同時包含「網站登入」與「Gmail SMTP 寄信」，通常兩者都要準備：</p>
+<ol>
+<li>在 Google Cloud Console 建立 OAuth 憑證，給 OAuth2 Proxy 使用。</li>
+<li>在 Google 帳號安全性設定中開啟兩步驟驗證，之後另外產生 Gmail SMTP 專用的應用程式密碼。</li>
+</ol>
+<p>如果你用的是公司或學校的 Google Workspace 帳號，要先注意兩件事：</p>
+<ul>
+<li>Google 官方目前建議第三方郵件客戶端優先改用 OAuth。</li>
+<li>即使已開啟兩步驟驗證，<code>應用程式密碼</code> 也可能因為管理員政策、只允許安全金鑰，或 Advanced Protection 而不顯示。</li>
+</ul>
+<h2 id="架構概念"><a class="header" href="#架構概念">架構概念</a></h2>
+<p>這篇文章採用的是「Nginx 在最前面，OAuth2 Proxy 負責驗證，後端應用只接收已驗證流量」的做法。</p>
+<p><img src="images/oauth2-proxy-001.jpg" alt="OAuth2 Proxy 架構圖" /></p>
+<p>整體流程如下：</p>
+<ol>
+<li>使用者先連到受保護的網站。</li>
+<li>Nginx 先將請求送到 OAuth2 Proxy 做驗證。</li>
+<li>如果尚未登入，OAuth2 Proxy 會將使用者導向 Google 登入頁。</li>
+<li>使用者完成登入與授權後，Google 會把瀏覽器導回 <code>/oauth2/callback</code>。</li>
+<li>OAuth2 Proxy 建立登入 Session，並將請求交回 Nginx。</li>
+<li>Nginx 再把請求轉送到真正的後端服務。</li>
+</ol>
+<p>這種做法的好處是，後端應用程式本身不需要處理 OAuth 流程，只要信任來自反向代理層的使用者資訊即可。</p>
+<h2 id="前置設定"><a class="header" href="#前置設定">前置設定</a></h2>
+<p>本文使用 Google 作為 OAuth 提供者，因此第一步要先在 Google Cloud Console 建立 OAuth 用戶端。這一段處理的是「登入授權」，不是 Gmail SMTP 的應用程式密碼。</p>
+<p>先前往 <a href="https://console.developers.google.com/project">Google Cloud 建立專案</a>，建立一個新的專案，或直接使用現有專案。</p>
+<p><img src="images/oauth2-proxy-002.jpg" alt="建立 Google Cloud 專案" /></p>
+<p>接著前往「API 和服務」中的「<a href="https://console.cloud.google.com/apis/credentials">憑證</a>」，選擇建立「OAuth 用戶端 ID」。</p>
+<p><img src="images/oauth2-proxy-003.jpg" alt="建立 OAuth 用戶端 ID" /></p>
+<p>如果是第一次操作，畫面通常會先要求你設定「OAuth 同意畫面」。這一步要先完成，後面才有辦法建立 OAuth 用戶端。</p>
+<p><img src="images/oauth2-proxy-004.jpg" alt="設定 OAuth 同意畫面" /></p>
+<p>建立 OAuth 用戶端時，應用程式類型請選「網頁應用程式」。名稱可以自行決定，但重新導向 URI 必須填入你實際要保護的網域，並加上：</p>
+<pre><code class="language-text">https://你的網域/oauth2/callback
+</code></pre>
+<p>如果你目前還在內網測試，也可以先用測試網域或反向代理入口的正式網址來配置。</p>
+<p>這裡有兩個很重要，而且很容易填錯的規則：</p>
+<h3 id="1-javascript-來源只能填來源不能帶路徑"><a class="header" href="#1-javascript-來源只能填來源不能帶路徑">1. JavaScript 來源只能填來源，不能帶路徑</a></h3>
+<p>「已授權的 JavaScript 來源」只能填網站來源本身，不能包含 callback path。</p>
+<p>正確範例：</p>
+<pre><code class="language-text">http://localhost:8080
+</code></pre>
+<p>錯誤範例：</p>
+<pre><code class="language-text">http://localhost:8080/auth/google/callback
+</code></pre>
+<h3 id="2-重新導向-uri-必須填完整-callback-路徑"><a class="header" href="#2-重新導向-uri-必須填完整-callback-路徑">2. 重新導向 URI 必須填完整 callback 路徑</a></h3>
+<p>「已授權的重新導向 URI」必須填完整路徑，而且要和你程式中實際使用的 <code>redirect_uri</code> 完全一致。</p>
+<p>正確範例：</p>
+<pre><code class="language-text">http://localhost:8080/auth/google/callback
+</code></pre>
+<p>如果你的本機測試可能會在 <code>127.0.0.1</code> 與 <code>localhost</code> 之間切換，建議兩組都先加進去：</p>
+<p>已授權的 JavaScript 來源：</p>
+<pre><code class="language-text">http://localhost:8080
+http://127.0.0.1:8080
+</code></pre>
+<p>已授權的重新導向 URI：</p>
+<pre><code class="language-text">http://localhost:8080/auth/google/callback
+http://127.0.0.1:8080/auth/google/callback
+</code></pre>
+<p>如果這裡少填其中一組，實際測試時很容易出現「看起來網址差不多，但 Google 不接受」的情況。</p>
+<p><img src="images/oauth2-proxy-005.jpg" alt="填寫重新導向 URI" /></p>
+<p>建立完成後，請記錄以下資訊，後面設定 OAuth2 Proxy 時會用到：</p>
+<ul>
+<li><code>Client ID</code></li>
+<li><code>Client Secret</code></li>
+</ul>
+<p>你也可以直接下載 JSON 留存，但本文後續示範會直接把必要欄位寫進設定檔。</p>
+<p><img src="images/oauth2-proxy-006.jpg" alt="記錄 Client ID 與 Client Secret" /></p>
+<h2 id="gmail-smtp-的-google-應用程式密碼"><a class="header" href="#gmail-smtp-的-google-應用程式密碼">Gmail SMTP 的 Google 應用程式密碼</a></h2>
+<p>如果你的系統除了要做 Google OAuth 登入，還需要透過 Gmail SMTP 寄信，這裡要再做第二組設定。這組密碼是給 SMTP 驗證用，不是前面 Google Cloud Console 建出來的 <code>Client Secret</code>。</p>
+<h3 id="1-先開啟兩步驟驗證"><a class="header" href="#1-先開啟兩步驟驗證">1. 先開啟兩步驟驗證</a></h3>
+<p>Google 官方要求只有已開啟兩步驟驗證的帳號，才能建立應用程式密碼。若尚未開啟，先到 Google 帳戶的「安全性」頁面完成設定。</p>
+<h3 id="2-進入應用程式密碼頁面"><a class="header" href="#2-進入應用程式密碼頁面">2. 進入應用程式密碼頁面</a></h3>
+<p>目前介面比以前藏得更深，實務上有三種進法：</p>
+<ol>
+<li>直接開啟 <code>https://myaccount.google.com/apppasswords</code>。</li>
+<li>進入 Google 帳戶管理頁後，如果上方有搜尋欄，直接搜尋「應用程式密碼」。</li>
+<li>手動走 <code>安全性</code> -&gt; <code>兩步驟驗證</code>，然後往頁面下方找 <code>應用程式密碼</code>。</li>
+</ol>
+<p>如果你明明已開啟兩步驟驗證，卻還是看不到這個入口，常見原因有：</p>
+<ul>
+<li>帳號只允許使用安全金鑰做兩步驟驗證。</li>
+<li>你使用的是公司、學校或其他受管理的 Google Workspace 帳號。</li>
+<li>帳號已啟用 Advanced Protection。</li>
+</ul>
+<h3 id="3-建立-smtp-專用密碼"><a class="header" href="#3-建立-smtp-專用密碼">3. 建立 SMTP 專用密碼</a></h3>
+<p>建立時可以選 Mail / 其他自訂名稱。若你的程式是後端服務，建議名稱直接寫成服務名，例如：</p>
+<pre><code class="language-text">my-api-gmail-smtp
+</code></pre>
+<p>建立完成後，Google 會顯示一組 16 位密碼。這組密碼只會顯示一次，請立即保存到你的密碼管理工具或部署環境變數。</p>
+<h3 id="4-gmail-smtp-連線參數"><a class="header" href="#4-gmail-smtp-連線參數">4. Gmail SMTP 連線參數</a></h3>
+<p>常見設定如下：</p>
+<pre><code class="language-text">SMTP Host: smtp.gmail.com
+SMTP Port: 587
+Security: STARTTLS / TLS
+Username: 你的完整 Gmail 位址
+Password: 剛剛產生的 Google 應用程式密碼
+</code></pre>
+<p>如果你的程式要求 SSL 直連，也可改用：</p>
+<pre><code class="language-text">SMTP Host: smtp.gmail.com
+SMTP Port: 465
+Security: SSL
+Username: 你的完整 Gmail 位址
+Password: 剛剛產生的 Google 應用程式密碼
+</code></pre>
+<p>這裡有三個容易填錯的點：</p>
+<ul>
+<li><code>SMTP Password</code> 要填應用程式密碼，不是平常登入 Google 的主密碼。</li>
+<li><code>SMTP Password</code> 也不是前面 OAuth 用的 <code>Client Secret</code>。</li>
+<li>如果你的郵件元件支援 <code>Sign in with Google</code> 或完整 OAuth，優先改用 OAuth，安全性會比應用程式密碼更高。</li>
+</ul>
+<h3 id="5-最小可用範例"><a class="header" href="#5-最小可用範例">5. 最小可用範例</a></h3>
+<p>如果你的程式只接受帳號密碼登入 SMTP，環境變數通常會長這樣：</p>
+<pre><code class="language-bash">export SMTP_HOST="smtp.gmail.com"
+export SMTP_PORT="587"
+export SMTP_USERNAME="you@gmail.com"
+export SMTP_PASSWORD="你的16位應用程式密碼"
+</code></pre>
+<p>實際送信成功後，再把這組設定帶回你的應用程式或部署系統即可。</p>
+<h2 id="建立環境"><a class="header" href="#建立環境">建立環境</a></h2>
+<p>接下來在 Linux 主機上安裝 Nginx 與 OAuth2 Proxy。以下範例以 Debian 或 Ubuntu 系列環境為主。</p>
+<h3 id="1-安裝-nginx"><a class="header" href="#1-安裝-nginx">1. 安裝 Nginx</a></h3>
+<pre><code class="language-bash">sudo apt-get update
+sudo apt-get install -y nginx nginx-extras
+</code></pre>
+<p>安裝完成後，可以先確認 Nginx 服務狀態：</p>
+<pre><code class="language-bash">sudo systemctl status nginx
+</code></pre>
+<p>如果只是先確認服務有沒有起來，也可以直接測試設定檔是否有效：</p>
+<pre><code class="language-bash">sudo nginx -t
+</code></pre>
+<h3 id="2-下載-oauth2-proxy"><a class="header" href="#2-下載-oauth2-proxy">2. 下載 OAuth2 Proxy</a></h3>
+<p>前往 OAuth2 Proxy 的 <a href="https://github.com/oauth2-proxy/oauth2-proxy/releases">Releases 頁面</a> 找你要使用的版本。本文範例沿用原文版本 <code>v7.12.0</code>，實際部署前請自行確認你要的版本號。</p>
+<pre><code class="language-bash">cd /tmp
+sudo wget https://github.com/oauth2-proxy/oauth2-proxy/releases/download/v7.12.0/oauth2-proxy-v7.12.0.linux-amd64.tar.gz
+sudo tar zxvf oauth2-proxy-v7.12.0.linux-amd64.tar.gz
+</code></pre>
+<p>解壓縮後會得到一個 <code>oauth2-proxy-v7.12.0.linux-amd64</code> 目錄，裡面包含可執行檔 <code>oauth2-proxy</code>。</p>
+<h3 id="3-安置可執行檔"><a class="header" href="#3-安置可執行檔">3. 安置可執行檔</a></h3>
+<p>原文習慣把執行檔移到 <code>/etc/</code>，這裡保留同樣做法。如果你偏好更標準的路徑，也可以放到 <code>/usr/local/bin/</code>。</p>
+<pre><code class="language-bash">cd /tmp/oauth2-proxy-v7.12.0.linux-amd64
+sudo mv oauth2-proxy /etc/oauth2-proxy
+sudo chmod +x /etc/oauth2-proxy
+</code></pre>
+<p>確認版本：</p>
+<pre><code class="language-bash">/etc/oauth2-proxy --version
+</code></pre>
+<p><img src="images/oauth2-proxy-007.jpg" alt="OAuth2 Proxy 解壓縮結果" /></p>
+<h2 id="設定-oauth2-proxy"><a class="header" href="#設定-oauth2-proxy">設定 OAuth2 Proxy</a></h2>
+<p>接著建立 OAuth2 Proxy 需要的設定目錄與檔案。這裡使用 <code>/var/auth</code> 作為工作目錄。</p>
+<h3 id="1-建立設定目錄"><a class="header" href="#1-建立設定目錄">1. 建立設定目錄</a></h3>
+<pre><code class="language-bash">sudo mkdir -p /var/auth
+cd /var/auth
+</code></pre>
+<h3 id="2-建立-runcfg"><a class="header" href="#2-建立-runcfg">2. 建立 <code>run.cfg</code></a></h3>
+<p>建立 <code>run.cfg</code>，內容如下：</p>
+<pre><code class="language-ini">http_address = "127.0.0.1:4180"
+reverse_proxy = true
+upstreams = ["http://127.0.0.1:80/"]
+pass_basic_auth = true
+pass_user_headers = true
+pass_host_header = true
+set_xauthrequest = true
+client_id = "YOUR_CLIENT_ID.apps.googleusercontent.com"
+client_secret = "YOUR_CLIENT_SECRET"
+scope = "openid email profile"
+pass_access_token = false
+authenticated_emails_file = "/var/auth/email.txt"
+cookie_name = "_oauth2_proxy"
+cookie_secret = "YOUR_COOKIE_SECRET"
+cookie_expire = "2h"
+cookie_refresh = "1h"
+cookie_secure = true
+</code></pre>
+<p>這幾個欄位最重要：</p>
+<ul>
+<li><code>client_id</code> 與 <code>client_secret</code>：直接填入剛剛在 Google Cloud 建立的憑證。</li>
+<li><code>authenticated_emails_file</code>：允許登入的 Email 白名單。</li>
+<li><code>cookie_secret</code>：用來保護 Cookie，必須自行產生。</li>
+<li><code>cookie_secure = true</code>：表示只透過 HTTPS 傳送 Cookie，正式環境應維持開啟。</li>
+</ul>
+<h3 id="3-產生-cookie_secret"><a class="header" href="#3-產生-cookie_secret">3. 產生 <code>cookie_secret</code></a></h3>
+<p>可以用下面這個指令產生一組隨機字串：</p>
+<pre><code class="language-bash">dd if=/dev/urandom bs=32 count=1 2&gt;/dev/null | base64 | tr -d '\n' | tr '+/' '-_' ; echo
+</code></pre>
+<p>將輸出結果貼進 <code>cookie_secret</code>。</p>
+<h3 id="4-建立允許登入的-email-白名單"><a class="header" href="#4-建立允許登入的-email-白名單">4. 建立允許登入的 Email 白名單</a></h3>
+<p>建立 <code>email.txt</code>，每行放一個允許通過的 Email，例如：</p>
+<pre><code class="language-text">alice@example.com
+bob@example.com
+</code></pre>
+<p>這樣 OAuth2 Proxy 驗證成功後，只有在白名單中的帳號會被放行。</p>
+<p><img src="images/oauth2-proxy-008.jpg" alt="Email 白名單設定" /></p>
+<h3 id="5-建議先本地檢查設定檔"><a class="header" href="#5-建議先本地檢查設定檔">5. 建議先本地檢查設定檔</a></h3>
+<p>在正式掛成背景服務前，先用前景模式測一次，最容易看錯誤訊息：</p>
+<pre><code class="language-bash">sudo /etc/oauth2-proxy --config=/var/auth/run.cfg
+</code></pre>
+<p>如果設定沒問題，通常會看到服務啟動並監聽在 <code>127.0.0.1:4180</code>。這一步確認完成後，再按 <code>Ctrl+C</code> 停掉，繼續做 systemd 設定。</p>
+<h2 id="設定背景服務"><a class="header" href="#設定背景服務">設定背景服務</a></h2>
+<p>接著把 OAuth2 Proxy 掛成 systemd 服務，讓它能開機自動啟動，也比較方便查看狀態與日誌。</p>
+<h3 id="1-建立-service-檔"><a class="header" href="#1-建立-service-檔">1. 建立 service 檔</a></h3>
+<p>在 <code>/etc/systemd/system</code> 建立 <code>oauth2proxy.service</code>：</p>
+<pre><code class="language-bash">cd /etc/systemd/system
+sudo vim oauth2proxy.service
+</code></pre>
+<p>貼上以下內容：</p>
+<pre><code class="language-ini">[Unit]
+Description=Oauth2-Proxy Daemon Service
+After=network.target network-online.target nss-lookup.target basic.target
+Wants=network-online.target nss-lookup.target
+
+[Service]
+Type=simple
+ExecStart=/etc/oauth2-proxy --config=/var/auth/run.cfg
+WorkingDirectory=/var/auth
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+</code></pre>
+<h3 id="2-重新載入-systemd"><a class="header" href="#2-重新載入-systemd">2. 重新載入 systemd</a></h3>
+<pre><code class="language-bash">sudo systemctl daemon-reload
+</code></pre>
+<h3 id="3-啟動並設定開機自動啟動"><a class="header" href="#3-啟動並設定開機自動啟動">3. 啟動並設定開機自動啟動</a></h3>
+<pre><code class="language-bash">sudo systemctl start oauth2proxy
+sudo systemctl enable oauth2proxy
+</code></pre>
+<h3 id="4-確認服務真的有起來"><a class="header" href="#4-確認服務真的有起來">4. 確認服務真的有起來</a></h3>
+<pre><code class="language-bash">sudo systemctl status oauth2proxy
+</code></pre>
+<p>如果啟動失敗，可以立刻看日誌：</p>
+<pre><code class="language-bash">sudo journalctl -u oauth2proxy -n 100 --no-pager
+</code></pre>
+<p>若你正在調整設定檔，追即時日誌會更快：</p>
+<pre><code class="language-bash">sudo journalctl -u oauth2proxy -f
+</code></pre>
+<p>這一段建議一定要做，因為 <code>client_id</code>、<code>client_secret</code>、<code>cookie_secret</code>、白名單路徑只要任一處有誤，通常都會在這裡第一時間暴露。</p>
+<h2 id="設定-nginx"><a class="header" href="#設定-nginx">設定 Nginx</a></h2>
+<p>OAuth2 Proxy 本身只負責驗證，所以還需要 Nginx 負責把外部流量收進來，並在轉送到後端前先做驗證。</p>
+<h3 id="1-設定重點"><a class="header" href="#1-設定重點">1. 設定重點</a></h3>
+<p>這裡有三個關鍵位置：</p>
+<ul>
+<li><code>/oauth2/</code>：讓瀏覽器可以跟 OAuth2 Proxy 完成登入、登出與回呼流程。</li>
+<li><code>/oauth2/auth</code>：給 Nginx 的 <code>auth_request</code> 子請求使用。</li>
+<li><code>/</code>：真正受保護的應用入口，只有驗證成功才會被代理到後端。</li>
+</ul>
+<h3 id="2-範例設定"><a class="header" href="#2-範例設定">2. 範例設定</a></h3>
+<p>請依你的網域名稱、SSL 憑證路徑與後端位址修改：</p>
+<pre><code class="language-nginx">server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name www.example.com;
+
+    ssl_certificate /var/ssl/fullchain.pem;
+    ssl_certificate_key /var/ssl/privkey.pem;
+
+    server_tokens off;
+    more_set_headers Server;
+
+    location /oauth2/ {
+        proxy_pass http://127.0.0.1:4180;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Auth-Request-Redirect $scheme://$host$request_uri;
+    }
+
+    location = /oauth2/auth {
+        proxy_pass http://127.0.0.1:4180;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Uri $request_uri;
+        proxy_set_header Content-Length "";
+        proxy_pass_request_body off;
+    }
+
+    location = /oauth2/sign_out {
+        proxy_pass http://127.0.0.1:4180;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Uri $request_uri;
+    }
+
+    location / {
+        auth_request /oauth2/auth;
+        error_page 401 =403 /oauth2/sign_in;
+
+        auth_request_set $user $upstream_http_x_auth_request_user;
+        auth_request_set $email $upstream_http_x_auth_request_email;
+        auth_request_set $token $upstream_http_x_auth_request_access_token;
+        auth_request_set $auth_cookie $upstream_http_set_cookie;
+
+        proxy_set_header X-User $user;
+        proxy_set_header X-Email $email;
+        proxy_set_header X-Access-Token $token;
+        add_header Set-Cookie $auth_cookie;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Uri $request_uri;
+        proxy_pass http://192.168.1.2:80;
+    }
+}
+</code></pre>
+<h3 id="3-套用前先驗證設定"><a class="header" href="#3-套用前先驗證設定">3. 套用前先驗證設定</a></h3>
+<p>每次修改完 Nginx 設定，都先做語法檢查：</p>
+<pre><code class="language-bash">sudo nginx -t
+</code></pre>
+<p>確認沒問題後再重新載入：</p>
+<pre><code class="language-bash">sudo systemctl restart nginx
+</code></pre>
+<p>如果 Nginx 重啟失敗，可以直接看最近錯誤：</p>
+<pre><code class="language-bash">sudo journalctl -u nginx -n 100 --no-pager
+</code></pre>
+<h3 id="4-常見調整點"><a class="header" href="#4-常見調整點">4. 常見調整點</a></h3>
+<ul>
+<li>後端應用如果本身也要知道使用者身份，可以直接讀 <code>X-User</code> 與 <code>X-Email</code>。</li>
+<li>如果你的服務是跑在不同 port，請修改 <code>proxy_pass http://192.168.1.2:80;</code>。</li>
+<li>如果你是反向代理多個站點，建議每個站點各自維護一組對應的 Nginx server block。</li>
+<li>正式環境務必使用 HTTPS，否則 <code>cookie_secure = true</code> 會造成 Cookie 無法正常工作。</li>
+</ul>
+<h2 id="查看成果"><a class="header" href="#查看成果">查看成果</a></h2>
+<p>設定完成後，打開你的網站，第一次進入時應該會先看到 OAuth2 Proxy 的登入畫面。</p>
+<p><img src="images/oauth2-proxy-009.jpg" alt="OAuth2 Proxy 登入畫面" /></p>
+<p>點下登入之後，瀏覽器會被導向 Google 的登入與授權頁面。</p>
+<p><img src="images/oauth2-proxy-010.jpg" alt="Google 驗證畫面" /></p>
+<p>當驗證成功並回到原站後，你的應用程式才會真正出現。原文範例的後端是一個 AdGuard Home 頁面。</p>
+<p><img src="images/oauth2-proxy-011.jpg" alt="驗證成功後的應用畫面" /></p>
+<h2 id="驗證流程建議"><a class="header" href="#驗證流程建議">驗證流程建議</a></h2>
+<p>如果你想更有系統地確認整套流程有成功，可以照下面順序檢查：</p>
+<ol>
+<li><code>systemctl status oauth2proxy</code> 確認 OAuth2 Proxy 服務正常。</li>
+<li><code>systemctl status nginx</code> 確認 Nginx 正常。</li>
+<li><code>curl -I https://你的網域/oauth2/sign_in</code> 確認 OAuth2 Proxy 入口能回應。</li>
+<li>用瀏覽器開啟受保護頁面，確認會先跳轉登入。</li>
+<li>使用白名單中的 Google 帳號登入，確認可成功回到應用頁面。</li>
+<li>改用不在 <code>email.txt</code> 的帳號重試，確認應該被拒絕。</li>
+</ol>
+<h2 id="常見問題"><a class="header" href="#常見問題">常見問題</a></h2>
+<h3 id="登入後一直回到登入頁"><a class="header" href="#登入後一直回到登入頁">登入後一直回到登入頁</a></h3>
+<p>通常先檢查這幾個地方：</p>
+<ul>
+<li>Google Cloud 的重新導向 URI 是否與實際網址完全一致。</li>
+<li><code>cookie_secret</code> 是否正確。</li>
+<li>站點是否真的走 HTTPS。</li>
+<li><code>cookie_secure = true</code> 的情況下，是否誤用 HTTP 進行測試。</li>
+</ul>
+<h3 id="看不到-google-應用程式密碼入口"><a class="header" href="#看不到-google-應用程式密碼入口">看不到 Google 應用程式密碼入口</a></h3>
+<p>先依序檢查：</p>
+<ul>
+<li>兩步驟驗證是否真的已開啟。</li>
+<li>這個帳號是否是公司或學校帳號，且管理員禁用了 App Passwords。</li>
+<li>兩步驟驗證是否只設定安全金鑰。</li>
+<li>帳號是否啟用了 Advanced Protection。</li>
+</ul>
+<p>如果你是 Google Workspace 帳號，且要給第三方客戶端或裝置連 Gmail，Google 官方目前優先建議改用 OAuth。</p>
+<h3 id="oauth2-proxy-起不來"><a class="header" href="#oauth2-proxy-起不來">OAuth2 Proxy 起不來</a></h3>
+<p>優先看：</p>
+<pre><code class="language-bash">sudo journalctl -u oauth2proxy -n 100 --no-pager
+</code></pre>
+<p>最常見是設定檔路徑錯、白名單檔案不存在，或 <code>client_secret</code> 填錯。</p>
+<h3 id="nginx-驗證一直失敗"><a class="header" href="#nginx-驗證一直失敗">Nginx 驗證一直失敗</a></h3>
+<p>先確認：</p>
+<ul>
+<li><code>location = /oauth2/auth</code> 是否存在。</li>
+<li><code>auth_request /oauth2/auth;</code> 是否寫對。</li>
+<li><code>proxy_pass</code> 是否真的指向 <code>127.0.0.1:4180</code>。</li>
+<li><code>nginx -t</code> 是否通過。</li>
+</ul>
+<h2 id="參考資料"><a class="header" href="#參考資料">參考資料</a></h2>
+<ul>
+<li><a href="https://github.com/oauth2-proxy/oauth2-proxy">OAuth2 Proxy GitHub Repository</a></li>
+<li><a href="https://github.com/oauth2-proxy/oauth2-proxy/releases">OAuth2 Proxy Releases</a></li>
+<li><a href="https://console.cloud.google.com/">Google Cloud Console</a></li>
+<li><a href="https://support.google.com/accounts/answer/185833">Google Account Help: Sign in with app passwords</a></li>
+<li><a href="https://support.google.com/a/answer/9003945">Google Workspace Help: Set up Gmail with a third-party email client</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../web/AI-Skills-前端效率神器.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../web/01_Node.js與WebSocket.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../web/AI-Skills-前端效率神器.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../web/01_Node.js與WebSocket.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

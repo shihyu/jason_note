@@ -1,0 +1,445 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>ABI 相容性問題完整整理 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="abi-相容性問題完整整理"><a class="header" href="#abi-相容性問題完整整理">ABI 相容性問題完整整理</a></h1>
+<h2 id="什麼是-abi"><a class="header" href="#什麼是-abi">什麼是 ABI？</a></h2>
+<p>ABI（Application Binary Interface，應用程式二進位介面）定義了編譯後的二進位程式碼如何在執行時期互動，包含結構體記憶體佈局、函數呼叫慣例、符號命名規則等。ABI 相容性問題通常發生在軟體元件（庫、驅動程式）的編譯環境不一致時。</p>
+<hr />
+<h2 id="一根本原因"><a class="header" href="#一根本原因">一、根本原因</a></h2>
+<h3 id="1-結構體與資料佈局差異"><a class="header" href="#1-結構體與資料佈局差異">1. 結構體與資料佈局差異</a></h3>
+<p>若庫升版修改了結構體成員、調整了成員順序或變更了資料類型，編譯後的記憶體位移量（Offset）會改變。舊版主程式依據錯誤的 offset 讀取記憶體，導致資料損毀。</p>
+<pre><code>舊版庫 struct Foo          新版庫 struct Foo
+┌──────────────┐           ┌──────────────┐
+│ offset 0: a  │  (int)    │ offset 0: b  │  (double)
+├──────────────┤           ├──────────────┤
+│ offset 4: b  │ (double)  │ offset 8: a  │  (int)
+└──────────────┘           └──────────────┘
+     主程式以舊 offset 讀 → 讀到垃圾值
+</code></pre>
+<h3 id="2-函數簽名變更"><a class="header" href="#2-函數簽名變更">2. 函數簽名變更</a></h3>
+<p>函數名稱改變（Name Mangling）或參數類型變更，導致連結期（Link-time）或執行期（Run-time）無法找到對應的函數符號。</p>
+<h3 id="3-編譯器編譯選項不一致"><a class="header" href="#3-編譯器編譯選項不一致">3. 編譯器／編譯選項不一致</a></h3>
+<p>使用不同版本的編譯器（如 GCC vs. Clang，或不同版本 GCC），或設定不同的結構體對齊方式，導致即使程式碼相同，產生的機器碼指令和資料結構也不相容。</p>
+<h3 id="4-硬體架構模式衝突"><a class="header" href="#4-硬體架構模式衝突">4. 硬體架構／模式衝突</a></h3>
+<p>庫與應用程式針對不同 ABI 模式編譯（如 ARM32 與 ARM64，或 32-bit 與 64-bit），或軟體庫與運行的 CUDA／作業系統版本衝突。</p>
+<hr />
+<h2 id="二問題表現"><a class="header" href="#二問題表現">二、問題表現</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>症狀</th><th>說明</th></tr></thead><tbody>
+<tr><td>Segmentation Fault</td><td>存取虛擬函數表或錯誤記憶體位址時崩潰</td></tr>
+<tr><td>未定義行為（UB）</td><td>變數存取錯誤導致邏輯錯誤、資料損毀</td></tr>
+<tr><td>Linker Error</td><td>符號未找到（undefined reference）</td></tr>
+<tr><td>載入失敗</td><td>Runtime <code>dlopen</code> 錯誤，.so 無法載入</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="三跨語言-abi-風險比較"><a class="header" href="#三跨語言-abi-風險比較">三、跨語言 ABI 風險比較</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>語言</th><th>預設 ABI 穩定性</th><th>主要陷阱</th><th>安全做法</th></tr></thead><tbody>
+<tr><td>C</td><td>高（佈局可預測）</td><td><code>#pragma pack</code>、不同 <code>sizeof</code></td><td>固定標頭版本</td></tr>
+<tr><td>C++</td><td>低（Mangling + vtable）</td><td>跨編譯器、跨版本 vtable 錯位</td><td><code>extern "C"</code> 包裝</td></tr>
+<tr><td>Go</td><td>高（純 Go 內部）</td><td><code>cgo</code> 邊界 struct 佈局</td><td>顯式建立 C 型別</td></tr>
+<tr><td>Rust</td><td>低（<code>repr(Rust)</code> 可重排）</td><td>FFI 傳遞 struct</td><td><code>#[repr(C)]</code></td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="四實際程式碼範例"><a class="header" href="#四實際程式碼範例">四、實際程式碼範例</a></h2>
+<h3 id="c--c--結構體-offset-錯位"><a class="header" href="#c--c--結構體-offset-錯位">C / C++ — 結構體 offset 錯位</a></h3>
+<p><strong>問題：</strong> 庫升版時調換欄位順序，主程式沿用舊標頭。</p>
+<pre><code class="language-c">// libfoo_v1.h（舊版，主程式用這個編譯）
+typedef struct {
+    int    id;     // offset 0
+    double value;  // offset 8
+} Foo;
+
+// libfoo_v2.c（新版庫，成員順序對調）
+typedef struct {
+    double value;  // offset 0  ← 順序換了！
+    int    id;     // offset 8
+} Foo;
+
+void print_foo(Foo *f) {
+    printf("id=%d value=%f\n", f-&gt;id, f-&gt;value);
+    // 主程式傳來的 f-&gt;id 實際上是 double 的位元 → 垃圾值
+}
+</code></pre>
+<p><strong>修法：</strong> 用不透明指標（opaque pointer）固定對外介面，內部實作隨意改：</p>
+<pre><code class="language-c">// stable_api.h ← 對外穩定介面
+typedef struct FooHandle FooHandle;  // 不透明指標，外部看不到成員
+
+FooHandle* foo_create(int id, double value);
+int        foo_get_id(FooHandle*);
+double     foo_get_value(FooHandle*);
+void       foo_destroy(FooHandle*);
+</code></pre>
+<hr />
+<h3 id="c--name-mangling-與-vtable-問題"><a class="header" href="#c--name-mangling-與-vtable-問題">C++ — Name Mangling 與 vtable 問題</a></h3>
+<p><strong>問題：</strong> 在 vtable 中間插入新的 virtual function，導致 slot 全部錯位。</p>
+<pre><code class="language-cpp">// 庫用 GCC 12 編譯
+class Animal {
+public:
+    virtual void speak();    // vtable slot 0
+};
+
+// 升版後插入新 virtual，vtable slot 全錯位
+class Animal {
+public:
+    virtual void breathe();  // 新增！slot 0
+    virtual void speak();    // 現在是 slot 1
+};
+
+// 主程式呼叫 speak() → 實際跳到 breathe() → UB / crash
+</code></pre>
+<p><strong>修法：</strong> 在 ABI 邊界加 <code>extern "C"</code> 包裝，新 virtual 只能加在尾端：</p>
+<pre><code class="language-cpp">// stable_wrapper.h
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void* animal_create();
+void  animal_speak(void* handle);   // C 介面，不受 Name Mangling 影響
+void  animal_destroy(void* handle);
+
+#ifdef __cplusplus
+}
+#endif
+</code></pre>
+<hr />
+<h3 id="go--cgo-邊界的-abi-問題"><a class="header" href="#go--cgo-邊界的-abi-問題">Go — cgo 邊界的 ABI 問題</a></h3>
+<p>Go 純 Go 呼叫沒有 ABI 相容問題，但透過 <code>cgo</code> 呼叫 C 庫時需注意 struct 佈局。</p>
+<p><strong>問題：</strong> Go struct 與 C struct 佈局不一致，直接強轉 <code>unsafe.Pointer</code>。</p>
+<pre><code class="language-go">package main
+
+/*
+#include &lt;stdint.h&gt;
+typedef struct {
+    double  value;   // C: 8 bytes, offset 0
+    int32_t id;      // C: 4 bytes, offset 8
+} CFoo;
+void print_foo(CFoo* f);
+*/
+import "C"
+import "unsafe"
+
+type GoFoo struct {
+    ID    int32   // Go: 4 bytes, offset 0  ← 順序和 C 不同！
+    Value float64 // Go: 8 bytes, offset 8
+}
+
+func main() {
+    gf := GoFoo{ID: 1, Value: 3.14}
+    // 直接強轉 unsafe.Pointer → C 會讀到錯誤欄位
+    C.print_foo((*C.CFoo)(unsafe.Pointer(&amp;gf))) // BUG！
+}
+</code></pre>
+<p><strong>修法：</strong> 一律建立 <code>C.CFoo</code>，不靠 <code>unsafe.Pointer</code> 強轉：</p>
+<pre><code class="language-go">func main() {
+    cf := C.CFoo{
+        value: C.double(3.14),
+        id:    C.int32_t(1),
+    }
+    C.print_foo(&amp;cf)  // 欄位名稱對應，Go cgo 自動處理佈局
+}
+</code></pre>
+<hr />
+<h3 id="rust--reprrust-vs-reprc"><a class="header" href="#rust--reprrust-vs-reprc">Rust — <code>repr(Rust)</code> vs <code>repr(C)</code></a></h3>
+<p>Rust 預設編譯器可隨意重排欄位（<code>repr(Rust)</code>），跨 FFI 邊界必須用 <code>repr(C)</code>。</p>
+<p><strong>問題：</strong> 使用預設 <code>repr(Rust)</code>，欄位順序由編譯器決定，傳給 C 函式是 UB。</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 問題：預設 repr(Rust)，欄位順序編譯器決定
+struct Foo {
+    id: i32,
+    value: f64,
+}
+
+extern "C" {
+    fn c_print_foo(f: *const Foo);
+}
+
+unsafe { c_print_foo(&amp;foo); }  // UB！佈局未定義
+<span class="boring">}</span></code></pre></pre>
+<p><strong>修法：</strong> 加上 <code>#[repr(C)]</code> 保證與 C struct 佈局相同：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[repr(C)]          // ← 保證與 C struct 佈局相同
+struct Foo {
+    id:    i32,     // offset 0
+    value: f64,     // offset 8（自動 padding）
+}
+
+unsafe { c_print_foo(&amp;foo); }  // OK，佈局有保證
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="五常見場景與對應解法"><a class="header" href="#五常見場景與對應解法">五、常見場景與對應解法</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>場景</th><th>症狀</th><th>對應做法</th></tr></thead><tbody>
+<tr><td>Android 驅動</td><td><code>insmod</code> 失敗 / kernel panic</td><td>核對 <code>Module.symvers</code>，更新 <code>EXPORT_SYMBOL</code> 符號清單</td></tr>
+<tr><td>PyTorch C++ 擴展</td><td><code>import</code> 時 <code>.so</code> 載入報錯</td><td>加 <code>_GLIBCXX_USE_CXX11_ABI=0/1</code> 旗標重編</td></tr>
+<tr><td>跨版本升級</td><td>執行期隨機崩潰</td><td>版本化標頭 + <code>soname</code> 機制分隔新舊 ABI</td></tr>
+<tr><td>混用編譯器</td><td>連結期符號找不到</td><td>統一 compiler 版本與 flags</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="六通用排查步驟"><a class="header" href="#六通用排查步驟">六、通用排查步驟</a></h2>
+<pre><code>① 確認編譯器版本
+   gcc --version / clang --version / rustc --version
+
+② 比對編譯選項
+   CFLAGS / CXXFLAGS / ABI flag (-D_GLIBCXX_USE_CXX11_ABI)
+
+③ 檢查符號表
+   nm -D libfoo.so | grep foo_func
+   readelf -d libfoo.so | grep SONAME
+
+④ 重新編譯全部元件
+   統一工具鏈後全量重編，避免混用舊產物
+</code></pre>
+<hr />
+<h2 id="七解決核心原則"><a class="header" href="#七解決核心原則">七、解決核心原則</a></h2>
+<ol>
+<li><strong>統一工具鏈</strong> — 所有元件使用相同 compiler 版本與 flags</li>
+<li><strong>版本化介面</strong> — soname / symbol versioning 分隔新舊 ABI</li>
+<li><strong>穩定邊界</strong> — C ABI 包裝（<code>extern "C"</code>）或 FFI 層隔離 C++ 細節</li>
+<li><strong>靜態連結</strong> — 消除動態庫 ABI 差異（犧牲體積換穩定性）</li>
+<li><strong>不透明指標</strong> — 對外只暴露 handle，內部結構不外露</li>
+</ol>
+<hr />
+<p><em>整理日期：2026-03-15</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../linux_system/api_vs_abi_guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../linux_system/static_build.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../linux_system/api_vs_abi_guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../linux_system/static_build.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
