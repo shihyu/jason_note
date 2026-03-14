@@ -297,6 +297,349 @@ serverCtx
 - `request ctx`：控制單次請求
 - `server ctx`：控制整個服務或某一批背景工作
 
+### 在同一個交易系統裡，三種 `context` 怎麼分工
+
+如果把交易系統再拆細一點，常見會同時出現三種層級的 `context`：
+
+1. 下單 `request ctx`
+2. 撮合引擎 `server ctx`
+3. 清算 `worker ctx`
+
+它們不是互相取代，而是各自管不同生命週期。
+
+```text
+                    serverCtx
+                        │
+        ┌───────────────┼────────────────┐
+        │               │                │
+        v               v                v
+   Order API       Matching Engine   Settlement Worker Pool
+        │               │                │
+        │               │                └── workerCtx-1
+        │               │                └── workerCtx-2
+        │               │                └── workerCtx-3
+        │
+        ├── requestCtx-A  <- User A 下單
+        ├── requestCtx-B  <- User B 下單
+        └── requestCtx-C  <- User C 下單
+```
+
+如果你喜歡看更像系統架構圖的版本，可以看下面這張：
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                        Trading System                          │
+│                                                                 │
+│  ┌────────────────────┐                                         │
+│  │     serverCtx      │  控制整個服務生命週期                  │
+│  └─────────┬──────────┘                                         │
+│            │                                                    │
+│            ├──────────────> Matching Engine                     │
+│            │                 - 讀取 queue                       │
+│            │                 - 維護 order book                  │
+│            │                 - 產生成交事件                     │
+│            │                                                    │
+│            └──────────────> Settlement Worker Pool              │
+│                              - workerCtx-1                      │
+│                              - workerCtx-2                      │
+│                              - workerCtx-3                      │
+│                                                                 │
+│  ┌────────────────────┐                                         │
+│  │   requestCtx-A     │  控制 User A 這次下單 API              │
+│  └─────────┬──────────┘                                         │
+│            └──────────────> Order Handler -> Order Service      │
+│                                                                 │
+│  ┌────────────────────┐                                         │
+│  │   requestCtx-B     │  控制 User B 這次下單 API              │
+│  └─────────┬──────────┘                                         │
+│            └──────────────> Order Handler -> Order Service      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 1. 下單 `request ctx`
+
+這一層通常來自 HTTP 或 gRPC request。
+
+它負責控制：
+
+- 使用者這次下單請求是否還活著
+- 這次 API 呼叫有沒有 timeout
+- client 斷線後要不要繼續等待
+- 下單流程中的 DB、Redis、風控 API 是否該提早停止
+
+典型流程：
+
+```text
+User Request
+  │
+  v
+Create Order Handler
+  │
+  v
+Order Service
+  ├── 驗證參數
+  ├── 驗證餘額
+  ├── 寫入訂單
+  └── publish 到 queue
+```
+
+如果這個 request 已經 timeout，通常這條 API 流程就該收掉。
+
+但要注意：如果訂單已經成功寫入 queue，後面撮合是否繼續，不一定要跟著這個 `request ctx` 一起死。
+
+### 2. 撮合引擎 `server ctx`
+
+撮合引擎通常不是「某個使用者的 request 附屬 goroutine」，而是整個服務持續運轉的核心背景元件。
+
+所以它比較適合掛在 `server ctx` 底下，而不是某個 `request ctx`。
+
+它負責控制：
+
+- 服務 shutdown 時，撮合引擎整體停止
+- 撮合主迴圈停止拉 queue
+- 背景 goroutine 開始收尾
+
+可以把它想成：
+
+```text
+serverCtx
+  │
+  └── Matching Engine Main Loop
+       ├── 讀取 order queue
+       ├── 更新 order book
+       └── 產生成交事件
+```
+
+這裡的重點是：
+
+- 使用者 A 斷線，不應直接把整個撮合引擎停掉
+- 使用者 B 的 request timeout，也不該影響撮合引擎主程序
+
+所以撮合引擎通常綁的是服務級別的 `server ctx`。
+
+### 3. 清算 `worker ctx`
+
+清算、通知、對帳這類背景工作，常常會由 worker pool 處理。這時候每個 worker 可能會有自己的 `worker ctx`，或從 `server ctx` 衍生一層控制用的子 `context`。
+
+它負責控制：
+
+- 某一批清算 worker 是否要整組停止
+- 某個 worker 執行單筆任務時的 timeout
+- worker pool 重啟、縮容、切換版本時的收尾
+
+例如：
+
+```text
+serverCtx
+  │
+  └── settlementManagerCtx
+       ├── workerCtx-1 -> 處理成交單 A
+       ├── workerCtx-2 -> 處理成交單 B
+       └── workerCtx-3 -> 處理成交單 C
+```
+
+這裡常見兩種做法：
+
+- `worker ctx` 只負責 worker 生命週期，不直接綁單一使用者 request
+- 單筆清算任務內，再用 `context.WithTimeout` 控制步驟逾時
+
+### 實務上怎麼串起來
+
+把三者接在一起，大概會像這樣：
+
+```text
+User 下單
+  │
+  v
+requestCtx -> Order API -> 寫 DB / publish queue
+                              │
+                              v
+                         Matching Engine (serverCtx)
+                              │
+                              v
+                        Trade Event / Fill Event
+                              │
+                              v
+                     Settlement Worker (workerCtx)
+```
+
+再看一次更完整的流程圖：
+
+```text
+使用者下單
+    │
+    v
+┌──────────────────────┐
+│ requestCtx           │
+│ 單次 API 請求生命週期 │
+└──────────┬───────────┘
+           │
+           v
+    Order API / Handler
+           │
+           v
+      Order Service
+           │
+           ├── 寫 Order DB
+           └── publish 到 Order Queue
+                          │
+                          v
+                ┌──────────────────────┐
+                │ serverCtx            │
+                │ 交易服務整體生命週期 │
+                └──────────┬───────────┘
+                           │
+                           v
+                    Matching Engine
+                           │
+                           v
+                     Fill / Trade Event
+                           │
+                           v
+                ┌──────────────────────┐
+                │ workerCtx            │
+                │ 某批背景 worker 控制 │
+                └──────────┬───────────┘
+                           │
+                           v
+                    Settlement Worker
+                           │
+                           v
+                      清算 / 通知 / 對帳
+```
+
+這張圖的閱讀方式很簡單：
+
+- 最左上 `requestCtx` 只管「這次下單 API」。
+- 中間 `serverCtx` 管「整個撮合服務是否還在運作」。
+- 最下面 `workerCtx` 管「背景清算 worker 這一層」。
+
+分工邏輯是：
+
+- `request ctx`：只管這次下單 API 呼叫
+- `server ctx`：管整個撮合服務的存活
+- `worker ctx`：管某批背景 worker 或某筆背景任務
+
+### 最容易搞錯的地方
+
+最常見的錯誤是把這三層混成一層。
+
+例如：
+
+- 把撮合引擎綁在某個使用者 `request ctx` 上
+- 把清算 worker 也直接沿用前面 HTTP request 的 `ctx`
+
+這樣會導致：
+
+- 使用者一斷線，背景流程被錯誤取消
+- 訂單其實已經進系統，後續卻被 request timeout 連帶中止
+- 服務生命週期和單次請求生命週期混在一起，行為變得難預測
+
+### 錯誤示意圖：把 `request ctx` 錯誤沿用到背景流程
+
+下面這種接法看起來省事，實際上很危險：
+
+```text
+User 下單
+    │
+    v
+requestCtx
+    │
+    v
+Order API
+    │
+    v
+寫 DB / publish queue
+    │
+    v
+Matching Engine
+    │
+    v
+Settlement Worker
+```
+
+問題在於：整條鏈都還掛在同一個 `requestCtx` 上。
+
+只要發生下面任一情況：
+
+- 使用者關掉頁面
+- 手機網路斷線
+- API gateway timeout
+- 上游在 3 秒後主動 cancel request
+
+就可能變成：
+
+```text
+Client disconnect / request timeout
+                │
+                v
+         cancel requestCtx
+                │
+                v
+Order API stop
+                │
+                v
+Matching Engine stop
+                │
+                v
+Settlement Worker stop
+```
+
+這在交易系統或訂票系統裡通常不是你要的行為，因為：
+
+- 訂單可能已經成功進 queue
+- 撮合可能已經開始
+- 清算可能做到一半
+
+結果卻因為「單次 API request 結束」而把後面整個背景流程中止。
+
+### 錯誤會長什麼樣子
+
+```text
+正確期待：
+使用者斷線
+  -> API 回應中止
+  -> 但已進系統的訂單仍照業務規則繼續處理
+
+錯誤做法：
+使用者斷線
+  -> API 中止
+  -> 撮合引擎也停
+  -> 清算 worker 也停
+  -> 訂單卡在半套狀態
+```
+
+可能後果包括：
+
+- 訂單已落庫，但沒有完成後續撮合
+- 成交事件已產生，但清算沒做完
+- 庫存已鎖定，但通知流程被取消
+- queue 裡已有資料，但 consumer 因錯誤 context 提早退出
+
+### 正確分層應該長這樣
+
+```text
+User 下單
+    │
+    v
+requestCtx -> Order API -> 寫 DB / publish queue
+                              │
+                              ├── 到這裡 requestCtx 可以結束
+                              v
+                         serverCtx -> Matching Engine
+                                         │
+                                         v
+                                    workerCtx -> Settlement Worker
+```
+
+重點是：
+
+- `requestCtx` 只保護「下單 API 這次請求」
+- `serverCtx` 保護「長時間運作的撮合引擎」
+- `workerCtx` 保護「背景 worker 的任務處理」
+
+這樣即使使用者離線，只要訂單已經正式進系統，後面流程還是能依照業務規則完成。
+
 ## 一句話記住
 
 在交易系統或訂票系統裡，通常不是「所有訂單共用一個 `context`」，而是「每個請求有自己的 `context`，但它們可能共同操作同一批集中管理的資源」。
