@@ -303,6 +303,7 @@
 ## Web Development
 - [Web 開發資源](web/README.md)
     - [AI Skills：前端新的效率神器！](web/AI-Skills-前端效率神器.md)
+    - [Google OAuth、Gmail 應用程式密碼與 OAuth2 Proxy 實作](web/oauth2-proxy-zero-trust-access-control.md)
     - [Node.js 與 WebSocket](web/01_Node.js與WebSocket.md)
         - [Node.js 完整開發指南](web/nodejs-guide.md)
         - [Bun vs Node.js 完整效能比較指南](web/Bun-vs-NodeJS-完整比較.md)
@@ -368,6 +369,7 @@
     - [libbpf 架構解析與 xgotop 實作說明](linux_system/libbpf-explained.md)
     - [Linux 二進位分析工具完整指南](linux_system/linux-binary-tools-guide.md)
     - [API vs ABI 完整指南](linux_system/api_vs_abi_guide.md)
+    - [ABI 相容性問題完整整理](linux_system/ABI相容性問題整理.md)
     - [Linux 靜態連結編譯說明](linux_system/static_build.md)
     - [現代程式語言的靜態連結策略分析](linux_system/static-linking-comparison.md)
 - [Linux Kernel](kernel/linux_kernel.md)
