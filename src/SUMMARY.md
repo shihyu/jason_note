@@ -238,6 +238,7 @@
     - [Go Runtime 啟動流程與 Scheduler Trace 解析](go/go_runtime_schedinit_scheduler_trace.md)
     - [Golang 大殺器之跟蹤剖析 trace](go/trace.md)
     - [觀測 Go 函式呼叫：go-ftrace 設計實現](go/go-ftrace-design-implementation.md)
+    - [go-bpftrace-demo 架構與原理說明](go/go-bpftrace-architecture.md)
     - [Golang Debugger](go/golang_debugger.md)
     - [Go + MySQL 死鎖問題調查指南](go/go_mysql_deadlock_debug.md)
         - [GDB 調試 Go Runtime 指南](go/go-runtime-internals.md)
