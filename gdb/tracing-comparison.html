@@ -182,8 +182,10 @@
 <h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
 <ol>
 <li><a href="#%E6%8A%80%E8%A1%93%E6%A6%82%E8%A6%BD">技術概覽</a></li>
+<li><a href="#%E6%A0%B8%E5%BF%83%E5%B7%AE%E7%95%B0%E5%9F%B7%E8%A1%8C%E4%BD%8D%E7%BD%AE%E4%B8%8D%E5%90%8C">核心差異：執行位置不同</a></li>
 <li><a href="#ptrace">ptrace</a></li>
 <li><a href="#ebpf--uprobes">eBPF + uprobes</a></li>
+<li><a href="#uprobe-%E5%A6%82%E4%BD%95%E8%A7%A3%E6%9E%90%E5%87%BD%E6%95%B8%E5%90%8D%E7%A8%B1">uprobe 如何解析函數名稱</a></li>
 <li><a href="#kprobes">kprobes</a></li>
 <li><a href="#usdt">USDT (User Statically Defined Tracing)</a></li>
 <li><a href="#strace--ltrace">strace / ltrace</a></li>
@@ -234,6 +236,89 @@
 │  └─────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────┘
 </code></pre>
+<hr />
+<h2 id="核心差異執行位置不同"><a class="header" href="#核心差異執行位置不同">核心差異：執行位置不同</a></h2>
+<pre><code>┌─────────────────────────────────────────────────────┐
+│                   User Space                        │
+│                                                     │
+│   Target Process          Tracer Process            │
+│   ┌──────────┐            ┌──────────┐              │
+│   │ func()   │  ←─────── │ ptrace   │              │
+│   │  暫停！  │  signal   │  等待... │              │
+│   └──────────┘            └──────────┘              │
+└─────────────────────────────────────────────────────┘
+         ↕ context switch（昂貴！）
+┌─────────────────────────────────────────────────────┐
+│                   Kernel Space                      │
+│                                                     │
+│   ┌─────────────────────────────────────┐           │
+│   │  eBPF Program (在 kernel 裡執行)    │           │
+│   │  uprobe 觸發 → 直接執行 eBPF code   │           │
+│   │  → 寫入 ring buffer → 繼續執行      │           │
+│   └─────────────────────────────────────┘           │
+└─────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="ptrace-的開銷來源"><a class="header" href="#ptrace-的開銷來源">ptrace 的開銷來源</a></h3>
+<p>每次函數被追蹤，發生以下流程：</p>
+<pre><code>target 執行到 breakpoint
+        │
+        ▼
+kernel 發送 SIGTRAP → target 暫停
+        │
+        ▼
+kernel 喚醒 tracer process（context switch #1）
+        │
+        ▼
+tracer 讀取 registers：ptrace(PTRACE_GETREGS)（syscall #1）
+        │
+        ▼
+tracer 處理資料、決定下一步
+        │
+        ▼
+tracer 呼叫 ptrace(PTRACE_CONT)（syscall #2）
+        │
+        ▼
+kernel 恢復 target（context switch #2）
+        │
+        ▼
+target 繼續執行
+
+每次追蹤 = 2次 context switch + 2次 syscall
+</code></pre>
+<h3 id="ebpf--uprobe-的流程"><a class="header" href="#ebpf--uprobe-的流程">eBPF + uprobe 的流程</a></h3>
+<pre><code>target 執行到 uprobe 插入點
+        │
+        ▼
+CPU trap → 進入 kernel（已經在 kernel 了）
+        │
+        ▼
+直接執行 eBPF program（在 kernel 內，不切換 process）
+        │
+        ▼
+eBPF 寫資料到 ring buffer
+        │
+        ▼
+target 繼續執行（從未被暫停！）
+        │
+        ▼ （非同步）
+user space 程式從 ring buffer 讀資料
+
+每次追蹤 = 1次 kernel trap（target 不暫停，不切換 process）
+</code></pre>
+<h3 id="量化比較"><a class="header" href="#量化比較">量化比較</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>指標</th><th>ptrace</th><th>eBPF + uprobe</th></tr></thead><tbody>
+<tr><td>target 是否暫停</td><td><strong>是</strong>，每次都停</td><td><strong>否</strong></td></tr>
+<tr><td>context switch</td><td>每次 2 次</td><td>0 次</td></tr>
+<tr><td>syscall overhead</td><td>每次 2 次</td><td>0 次</td></tr>
+<tr><td>追蹤 1000 次函數呼叫</td><td>~ms 級延遲</td><td>~μs 級</td></tr>
+<tr><td>多 thread 支援</td><td>需手動 attach 每個 thread</td><td>自動，kernel 層處理</td></tr>
+<tr><td>target 感知到被追蹤</td><td>可以感知（timing 差異大）</td><td>幾乎無感</td></tr>
+</tbody></table>
+</div>
+<blockquote>
+<p><strong>ptrace</strong>：讓 target 暫停，切換到 tracer 處理，再切回來 — 像「紅綠燈」</p>
+<p><strong>eBPF</strong>：target 繼續跑，kernel 在旁邊插入一段代碼順便記錄 — 像「隱藏攝影機」</p>
+</blockquote>
 <hr />
 <h2 id="ptrace"><a class="header" href="#ptrace">ptrace</a></h2>
 <h3 id="工作原理"><a class="header" href="#工作原理">工作原理</a></h3>
@@ -386,6 +471,107 @@ Binary on disk:
   ❌ Go 程式因無 frame pointer 預設難以 stack unwinding
      （需加 -gcflags="-e" 或用 DWARF）
 </code></pre>
+<hr />
+<h2 id="uprobe-如何解析函數名稱"><a class="header" href="#uprobe-如何解析函數名稱">uprobe 如何解析函數名稱</a></h2>
+<h3 id="核心認知uprobe-完全不儲存函數名稱"><a class="header" href="#核心認知uprobe-完全不儲存函數名稱">核心認知：uprobe 完全不儲存函數名稱</a></h3>
+<pre><code>struct uprobe {          ← kernel 內部結構
+    struct inode  *inode;   // 哪個檔案
+    loff_t         offset;  // 檔案內第幾個 byte
+    // 沒有 name 欄位！
+}
+</code></pre>
+<p>函數名稱只存在於<strong>工具層</strong>，翻譯完成後即丟棄。</p>
+<h3 id="名稱--offset-的完整流程"><a class="header" href="#名稱--offset-的完整流程">名稱 → offset 的完整流程</a></h3>
+<pre><code>你輸入：
+  bpftrace 'uprobe:./myapp:main.processRequest'
+        │
+        │  bpftrace 在 user space 做的事：
+        ▼
+  1. 開啟 ./myapp（ELF 檔案）
+  2. 讀取 .symtab section
+     ┌──────────────────────────────────────┐
+     │  名稱                  offset        │
+     │  main.main             0x4a1000      │
+     │  main.processRequest   0x4b2c10  ◄───┤── 找到了
+     │  main.handleHTTP       0x4b3f20      │
+     └──────────────────────────────────────┘
+  3. 取出 offset = 0x4b2c10
+  4. 取出 inode（stat ./myapp 得到）
+        │
+        │  呼叫 kernel（此後名稱消失）：
+        ▼
+  5. 寫入 /sys/kernel/debug/tracing/uprobe_events：
+     "p:myprobe /path/to/myapp:0x4b2c10"
+                                  ↑
+                           只剩 offset，名稱沒了
+        │
+        ▼
+  kernel 登錄：inode=xxxxx, offset=0x4b2c10
+</code></pre>
+<h3 id="elf-符號表實際內容"><a class="header" href="#elf-符號表實際內容">ELF 符號表實際內容</a></h3>
+<pre><code class="language-bash">$ readelf -s ./myapp | grep processRequest
+
+Symbol table '.symtab':
+   Num:    Value（offset）  Size  Type    Name
+   157: 00000000004b2c10   234   FUNC    main.processRequest
+              │
+              └── 這個 offset 就是 uprobe 真正使用的值
+</code></pre>
+<h3 id="inode-vs-路徑"><a class="header" href="#inode-vs-路徑">inode vs 路徑</a></h3>
+<pre><code>路徑 /path/to/myapp 只是找到 inode 的手段，之後也丟棄：
+
+  /path/to/myapp ──► stat() ──► inode=12345 ──► kernel 用這個
+
+inode 的作用：識別「哪個檔案」
+  - 同一個 binary 被多個 process 載入 → 共用同一個 inode
+  - kernel 自動對所有載入此 inode 的 process 插入 int3
+  - 路徑改變（rename/symlink）不影響已登錄的 uprobe
+</code></pre>
+<h3 id="aslr-怎麼處理"><a class="header" href="#aslr-怎麼處理">ASLR 怎麼處理</a></h3>
+<pre><code>ASLR 每次執行載入基址不同：
+  執行 #1：myapp 載入到 0x555500000000
+  執行 #2：myapp 載入到 0x7f3a00000000
+
+uprobe 綁定的是 ELF 檔案內的固定 offset，不是虛擬位址：
+
+  offset（固定）+ 該 process 載入基址（每次不同）= 虛擬位址
+        │
+        ▼
+  kernel 在每次 mmap 此 inode 時自動計算正確虛擬位址
+  → ASLR 對 uprobe 透明，完全自動處理
+</code></pre>
+<h3 id="輸出時名稱從哪來"><a class="header" href="#輸出時名稱從哪來">輸出時名稱從哪來</a></h3>
+<pre><code>bpftrace 自己在 user space 維護一個 map：
+
+  offset 0x4b2c10  →  "main.processRequest"
+
+kernel 回傳事件時只攜帶 offset，
+bpftrace 查自己的 map 翻譯回名稱顯示給你。
+
+kernel 從頭到尾都不知道函數叫什麼。
+</code></pre>
+<h3 id="go-程式的特殊情況"><a class="header" href="#go-程式的特殊情況">Go 程式的特殊情況</a></h3>
+<pre><code class="language-bash"># 有符號表（預設 build）：直接用名稱
+go build -o myapp main.go
+bpftrace -e 'uprobe:./myapp:main.processRequest { ... }'   # ✅
+
+# strip 後（移除符號表）：只能用 offset
+go build -ldflags="-s -w" -o myapp main.go
+objdump -d myapp | grep -A5 "processRequest"               # 手動找 offset
+bpftrace -e 'uprobe:./myapp:0x4b2c10 { ... }'             # ✅
+</code></pre>
+<h3 id="各工具解析方式對比"><a class="header" href="#各工具解析方式對比">各工具解析方式對比</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>工具</th><th>解析來源</th><th>指定方式</th></tr></thead><tbody>
+<tr><td><strong>bpftrace</strong></td><td>ELF <code>.symtab</code> / <code>.dynsym</code></td><td><code>uprobe:binary:funcName</code></td></tr>
+<tr><td><strong>perf probe</strong></td><td>DWARF <code>.debug_info</code></td><td><code>perf probe -x binary funcName</code></td></tr>
+<tr><td><strong>BCC</strong></td><td>ELF + DWARF</td><td><code>b.attach_uprobe(name="binary", sym="func")</code></td></tr>
+<tr><td><strong>kernel 核心</strong></td><td>只認 inode + offset</td><td><code>/sys/kernel/debug/tracing/uprobe_events</code></td></tr>
+</tbody></table>
+</div>
+<blockquote>
+<p><strong>函數名稱是工具的便民功能，kernel 從不儲存它。</strong>
+uprobe 的本質是：「在這個檔案的第 N 個 byte 插入陷阱」，名稱只是幫你找到 N 的工具。</p>
+</blockquote>
 <hr />
 <h2 id="kprobes"><a class="header" href="#kprobes">kprobes</a></h2>
 <h3 id="工作原理-2"><a class="header" href="#工作原理-2">工作原理</a></h3>
