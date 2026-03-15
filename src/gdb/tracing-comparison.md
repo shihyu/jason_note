@@ -2,16 +2,18 @@
 
 ## 目錄
 1. [技術概覽](#技術概覽)
-2. [ptrace](#ptrace)
-3. [eBPF + uprobes](#ebpf--uprobes)
-4. [kprobes](#kprobes)
-5. [USDT (User Statically Defined Tracing)](#usdt)
-6. [strace / ltrace](#strace--ltrace)
-7. [perf](#perf)
-8. [Go 專屬方案](#go-專屬方案)
-9. [完整比較表](#完整比較表)
-10. [選擇指南](#選擇指南)
-11. [程式碼範例](#程式碼範例)
+2. [核心差異：執行位置不同](#核心差異執行位置不同)
+3. [ptrace](#ptrace)
+4. [eBPF + uprobes](#ebpf--uprobes)
+5. [uprobe 如何解析函數名稱](#uprobe-如何解析函數名稱)
+6. [kprobes](#kprobes)
+7. [USDT (User Statically Defined Tracing)](#usdt)
+8. [strace / ltrace](#strace--ltrace)
+9. [perf](#perf)
+10. [Go 專屬方案](#go-專屬方案)
+11. [完整比較表](#完整比較表)
+12. [選擇指南](#選擇指南)
+13. [程式碼範例](#程式碼範例)
 
 ---
 
@@ -57,6 +59,101 @@
 │  └─────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 核心差異：執行位置不同
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   User Space                        │
+│                                                     │
+│   Target Process          Tracer Process            │
+│   ┌──────────┐            ┌──────────┐              │
+│   │ func()   │  ←─────── │ ptrace   │              │
+│   │  暫停！  │  signal   │  等待... │              │
+│   └──────────┘            └──────────┘              │
+└─────────────────────────────────────────────────────┘
+         ↕ context switch（昂貴！）
+┌─────────────────────────────────────────────────────┐
+│                   Kernel Space                      │
+│                                                     │
+│   ┌─────────────────────────────────────┐           │
+│   │  eBPF Program (在 kernel 裡執行)    │           │
+│   │  uprobe 觸發 → 直接執行 eBPF code   │           │
+│   │  → 寫入 ring buffer → 繼續執行      │           │
+│   └─────────────────────────────────────┘           │
+└─────────────────────────────────────────────────────┘
+```
+
+### ptrace 的開銷來源
+
+每次函數被追蹤，發生以下流程：
+
+```
+target 執行到 breakpoint
+        │
+        ▼
+kernel 發送 SIGTRAP → target 暫停
+        │
+        ▼
+kernel 喚醒 tracer process（context switch #1）
+        │
+        ▼
+tracer 讀取 registers：ptrace(PTRACE_GETREGS)（syscall #1）
+        │
+        ▼
+tracer 處理資料、決定下一步
+        │
+        ▼
+tracer 呼叫 ptrace(PTRACE_CONT)（syscall #2）
+        │
+        ▼
+kernel 恢復 target（context switch #2）
+        │
+        ▼
+target 繼續執行
+
+每次追蹤 = 2次 context switch + 2次 syscall
+```
+
+### eBPF + uprobe 的流程
+
+```
+target 執行到 uprobe 插入點
+        │
+        ▼
+CPU trap → 進入 kernel（已經在 kernel 了）
+        │
+        ▼
+直接執行 eBPF program（在 kernel 內，不切換 process）
+        │
+        ▼
+eBPF 寫資料到 ring buffer
+        │
+        ▼
+target 繼續執行（從未被暫停！）
+        │
+        ▼ （非同步）
+user space 程式從 ring buffer 讀資料
+
+每次追蹤 = 1次 kernel trap（target 不暫停，不切換 process）
+```
+
+### 量化比較
+
+| 指標 | ptrace | eBPF + uprobe |
+|------|--------|---------------|
+| target 是否暫停 | **是**，每次都停 | **否** |
+| context switch | 每次 2 次 | 0 次 |
+| syscall overhead | 每次 2 次 | 0 次 |
+| 追蹤 1000 次函數呼叫 | ~ms 級延遲 | ~μs 級 |
+| 多 thread 支援 | 需手動 attach 每個 thread | 自動，kernel 層處理 |
+| target 感知到被追蹤 | 可以感知（timing 差異大） | 幾乎無感 |
+
+> **ptrace**：讓 target 暫停，切換到 tracer 處理，再切回來 — 像「紅綠燈」
+>
+> **eBPF**：target 繼續跑，kernel 在旁邊插入一段代碼順便記錄 — 像「隱藏攝影機」
 
 ---
 
@@ -234,6 +331,131 @@ eBPF Verifier 在載入時檢查：
   ❌ Go 程式因無 frame pointer 預設難以 stack unwinding
      （需加 -gcflags="-e" 或用 DWARF）
 ```
+
+---
+
+## uprobe 如何解析函數名稱
+
+### 核心認知：uprobe 完全不儲存函數名稱
+
+```
+struct uprobe {          ← kernel 內部結構
+    struct inode  *inode;   // 哪個檔案
+    loff_t         offset;  // 檔案內第幾個 byte
+    // 沒有 name 欄位！
+}
+```
+
+函數名稱只存在於**工具層**，翻譯完成後即丟棄。
+
+### 名稱 → offset 的完整流程
+
+```
+你輸入：
+  bpftrace 'uprobe:./myapp:main.processRequest'
+        │
+        │  bpftrace 在 user space 做的事：
+        ▼
+  1. 開啟 ./myapp（ELF 檔案）
+  2. 讀取 .symtab section
+     ┌──────────────────────────────────────┐
+     │  名稱                  offset        │
+     │  main.main             0x4a1000      │
+     │  main.processRequest   0x4b2c10  ◄───┤── 找到了
+     │  main.handleHTTP       0x4b3f20      │
+     └──────────────────────────────────────┘
+  3. 取出 offset = 0x4b2c10
+  4. 取出 inode（stat ./myapp 得到）
+        │
+        │  呼叫 kernel（此後名稱消失）：
+        ▼
+  5. 寫入 /sys/kernel/debug/tracing/uprobe_events：
+     "p:myprobe /path/to/myapp:0x4b2c10"
+                                  ↑
+                           只剩 offset，名稱沒了
+        │
+        ▼
+  kernel 登錄：inode=xxxxx, offset=0x4b2c10
+```
+
+### ELF 符號表實際內容
+
+```bash
+$ readelf -s ./myapp | grep processRequest
+
+Symbol table '.symtab':
+   Num:    Value（offset）  Size  Type    Name
+   157: 00000000004b2c10   234   FUNC    main.processRequest
+              │
+              └── 這個 offset 就是 uprobe 真正使用的值
+```
+
+### inode vs 路徑
+
+```
+路徑 /path/to/myapp 只是找到 inode 的手段，之後也丟棄：
+
+  /path/to/myapp ──► stat() ──► inode=12345 ──► kernel 用這個
+
+inode 的作用：識別「哪個檔案」
+  - 同一個 binary 被多個 process 載入 → 共用同一個 inode
+  - kernel 自動對所有載入此 inode 的 process 插入 int3
+  - 路徑改變（rename/symlink）不影響已登錄的 uprobe
+```
+
+### ASLR 怎麼處理
+
+```
+ASLR 每次執行載入基址不同：
+  執行 #1：myapp 載入到 0x555500000000
+  執行 #2：myapp 載入到 0x7f3a00000000
+
+uprobe 綁定的是 ELF 檔案內的固定 offset，不是虛擬位址：
+
+  offset（固定）+ 該 process 載入基址（每次不同）= 虛擬位址
+        │
+        ▼
+  kernel 在每次 mmap 此 inode 時自動計算正確虛擬位址
+  → ASLR 對 uprobe 透明，完全自動處理
+```
+
+### 輸出時名稱從哪來
+
+```
+bpftrace 自己在 user space 維護一個 map：
+
+  offset 0x4b2c10  →  "main.processRequest"
+
+kernel 回傳事件時只攜帶 offset，
+bpftrace 查自己的 map 翻譯回名稱顯示給你。
+
+kernel 從頭到尾都不知道函數叫什麼。
+```
+
+### Go 程式的特殊情況
+
+```bash
+# 有符號表（預設 build）：直接用名稱
+go build -o myapp main.go
+bpftrace -e 'uprobe:./myapp:main.processRequest { ... }'   # ✅
+
+# strip 後（移除符號表）：只能用 offset
+go build -ldflags="-s -w" -o myapp main.go
+objdump -d myapp | grep -A5 "processRequest"               # 手動找 offset
+bpftrace -e 'uprobe:./myapp:0x4b2c10 { ... }'             # ✅
+```
+
+### 各工具解析方式對比
+
+| 工具 | 解析來源 | 指定方式 |
+|------|----------|----------|
+| **bpftrace** | ELF `.symtab` / `.dynsym` | `uprobe:binary:funcName` |
+| **perf probe** | DWARF `.debug_info` | `perf probe -x binary funcName` |
+| **BCC** | ELF + DWARF | `b.attach_uprobe(name="binary", sym="func")` |
+| **kernel 核心** | 只認 inode + offset | `/sys/kernel/debug/tracing/uprobe_events` |
+
+> **函數名稱是工具的便民功能，kernel 從不儲存它。**
+> uprobe 的本質是：「在這個檔案的第 N 個 byte 插入陷阱」，名稱只是幫你找到 N 的工具。
 
 ---
 
