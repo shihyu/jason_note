@@ -8,8 +8,8 @@ import (
 	"time"
 )
 
-func TestDemoPrintsStepMessages(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func TestDemoPrintsAllMessages(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "./myapp")
@@ -23,18 +23,27 @@ func TestDemoPrintsStepMessages(t *testing.T) {
 		t.Fatalf("無法啟動程式: %v", err)
 	}
 
-	var sawStep1 bool
-	var sawStep2 bool
+	want := map[string]bool{
+		"執行步驟 1: Hello":    false,
+		"執行步驟 2，次數: 42":   false,
+		"分配記憶體: 256 bytes": false,
+		"Worker goroutine 執行中": false,
+	}
+
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if line == "執行步驟 1: Hello" {
-			sawStep1 = true
+		if _, ok := want[line]; ok {
+			want[line] = true
 		}
-		if line == "執行步驟 2，次數: 42" {
-			sawStep2 = true
+		allSeen := true
+		for _, v := range want {
+			if !v {
+				allSeen = false
+				break
+			}
 		}
-		if sawStep1 && sawStep2 {
+		if allSeen {
 			break
 		}
 	}
@@ -45,7 +54,9 @@ func TestDemoPrintsStepMessages(t *testing.T) {
 	if err := scanner.Err(); err != nil {
 		t.Fatalf("讀取輸出失敗: %v", err)
 	}
-	if !sawStep1 || !sawStep2 {
-		t.Fatalf("輸出不完整: step1=%t step2=%t", sawStep1, sawStep2)
+	for msg, seen := range want {
+		if !seen {
+			t.Errorf("未看到輸出: %q", msg)
+		}
 	}
 }
