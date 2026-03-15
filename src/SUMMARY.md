@@ -43,6 +43,7 @@
         - [Claude Code 效能測試與正確性驗證完整指南](tools/claude-code-performance-testing-guide.md)
         - [Claude Code Skills：常見誤解與補充整理](tools/claude_code_skills_常見誤解與補充整理.md)
         - [Claude Code Skills 完整教學](tools/claude-code-skills.md)
+        - [Claude Code Skills 與 Skill Creator：打造你的專屬 AI 工具包](tools/claude-code-skills-skill-creator-guide.md)
         - [Claude Code Skills & Plugins 知識指南](tools/claude_code_skills_guide.md)
         - [Claude Skill Creator 打造 Go、C++、Rust Skill 指南](tools/claude-skill-creator-go-cpp-rust-skills-guide.md)
         - [skill-creator Go Skill 指揮稿（Strict 版）](tools/skill-creator-go-skill-prompts-strict.md)
