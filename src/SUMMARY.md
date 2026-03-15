@@ -343,6 +343,7 @@
         - [GDB Tips 完整集](gdb/gdb-tips-complete.md)
         - [函數追蹤轉流程圖](gdb/gdb-function-trace-to-flowchart-guide.md)
         - [程式追蹤指南](gdb/program_trace_guide.md)
+        - [Linux 程式追蹤技術全面比較](gdb/tracing-comparison.md)
         - [SO 分析指南](gdb/gdb-so-analysis-guide.md)
     - [特定語言除錯](gdb/03_特定語言除錯.md)
         - [Rust GDB 除錯](gdb/rust-gdb-debugging-guide.md)
