@@ -593,6 +593,7 @@
         - [當沖隔日沖策略大全](strategy/台股當沖隔日沖策略大全.md)
         - [券商分點數據分析實戰](strategy/券商分點分析.md)
         - [處置股分析](strategy/台股處置股與注意股：條件分析與交易策略全解析.md)
+        - [台股處置股與注意股分析需求](strategy/台股處置股與注意股分析需求.md)
         - [抄底王策略](strategy/抄底王策略全解析：台股投資人的逆勢操作完整攻略.md)
         - [AI受惠股分析](strategy/Taiwan-AI-Stocks-Extended-Analysis.md)
         - [AI產業完整供應鏈架構圖](strategy/AI產業完整架構圖.md)
