@@ -1232,3 +1232,283 @@
 | **BTF** | kernel 的零件清單（struct 長什麼樣） |
 | **CO-RE** | 寫一次到處跑（自動適應不同 kernel） |
 | **bpf() syscall** | user space 跟 kernel 溝通的唯一窗口 |
+
+---
+
+## eBPF 為什麼開銷低？——與 utrace/ptrace 的對比
+
+### 核心原因：JIT 編譯直接執行於 Kernel Space
+
+eBPF 程式會被編譯成**原生機器碼（native machine code）**，直接在 kernel 內執行，不需要：
+
+- 切換到 user space
+- 系統呼叫的 context switch
+- 解釋執行的 overhead
+
+### 傳統 utrace / ptrace 的高開銷路徑
+
+傳統的 utrace 或基於 ptrace 的工具（如 `strace`）開銷極大，原因是每次事件都需要多次 context switch：
+
+```
+程式執行
+  → 觸發 trap
+  → 切換到 kernel space
+  → 通知 tracer process（user space）
+  → tracer 處理
+  → 切換回 kernel
+  → 回到被追蹤程式
+
+每次事件 = 多次 context switch，成本極高
+```
+
+### eBPF 的執行路徑
+
+```
+程式執行
+  → 觸發 probe（kprobe / uprobe）
+  → 直接執行 eBPF JIT 機器碼（在 kernel 內）
+  → 結束，繼續執行
+
+沒有 user space 往返，沒有 context switch
+```
+
+### 其他讓 eBPF 開銷低的設計機制
+
+| 機制 | 說明 |
+|------|------|
+| **Verifier** | 程式載入時靜態驗證安全性，執行時無需額外檢查 |
+| **BPF Maps** | 高效的 kernel 內資料結構，避免頻繁拷貝資料到 user space |
+| **Per-CPU Maps** | 避免 lock contention，每個 CPU 有獨立資料副本 |
+| **Tail Calls** | 類似 function call，但避免 stack 增長 |
+| **Ring Buffer** | 批次傳遞資料給 user space，減少中斷次數 |
+
+### 具體數字感受
+
+```
+用 strace 追蹤程式 → overhead 可能高達 10x ~ 100x 慢
+用 eBPF（如 bpftrace）→ 通常只有 1% ~ 5% 的額外開銷
+```
+
+---
+
+## 為什麼 bpftrace 能記錄 User Space 函數流程？
+
+> eBPF 不是運行在 kernel space 嗎？怎麼能追蹤 user space 的函數？
+
+### 關鍵機制：uprobes
+
+eBPF 透過 **uprobe（user-space probe）** 來探測 user space 函數。
+
+### 1. 插入斷點指令
+
+當你用 bpftrace 追蹤某個 user space 函數時，kernel 會在目標函數的**第一條指令**替換成 `int3`（x86 軟體中斷）：
+
+```
+原始指令:  55 48 89 e5  (push rbp; mov rbp, rsp)
+插入後:    CC 48 89 e5  (int3; mov rbp, rsp)
+```
+
+### 2. 觸發流程
+
+```
+user space 程式執行到該函數
+  → 執行到 int3
+  → CPU 觸發 trap，強制進入 kernel
+  → kernel 的 uprobe handler 被呼叫
+  → 執行掛載在這裡的 eBPF 程式（在 kernel space）
+  → eBPF 程式收集資料（stack trace、參數、時間戳等）
+  → 恢復原始指令，回到 user space 繼續執行
+```
+
+### 3. 為什麼能讀取 User Space 的資料？
+
+eBPF 程式雖然跑在 kernel space，但此時：
+
+- **context 還是原本的 process**——kernel 知道是哪個 process 觸發的
+- kernel 可以透過 `bpf_probe_read_user()` **安全地讀取**該 process 的記憶體
+- **registers**（如 `rdi`, `rsi`）還保留著函數的參數值
+
+```c
+// bpftrace 內部類似這樣讀取參數
+bpf_probe_read_user(&arg0, sizeof(arg0), (void *)PT_REGS_PARM1(ctx));
+```
+
+### 4. 完整架構圖
+
+```
+User Space                    Kernel Space
+──────────────────────────────────────────────────
+myapp::foo()
+  │
+  └─ int3 trap ──────────────→ uprobe handler
+                                    │
+                                    └─ eBPF program 執行
+                                         │ 讀 registers
+                                         │ bpf_probe_read_user()
+                                         │ 寫入 BPF Map / ring buffer
+                                         ↓
+  ←── 恢復原始指令，繼續執行 ──────────────
+
+                               bpftrace process
+                               (user space, 非同步讀取 BPF Map)
+```
+
+### 5. 符號解析怎麼做？
+
+bpftrace 在**載入階段**（不是執行時）：
+
+1. 解析 **ELF binary** 或 **DWARF debug info**
+2. 找到函數名稱對應的**記憶體位址（offset）**
+3. 告訴 kernel 在哪個位址插入 uprobe
+
+所以你寫 `uprobe:/usr/bin/bash:readline` 時，bpftrace 會先查出 `readline` 的 offset，再讓 kernel 在那裡插斷點。
+
+### 6. uprobe 從符號解析到斷點插入的完整示意圖
+
+```
+ 你輸入的 bpftrace 命令
+ ┌──────────────────────────────────────────────────────────┐
+ │  bpftrace -e 'uprobe:/usr/bin/bash:readline { ... }'    │
+ └──────────────┬───────────────────────────────────────────┘
+                │
+                │ 解析命令，拆出三個欄位：
+                │   probe 類型 = uprobe
+                │   目標檔案   = /usr/bin/bash
+                │   函數名稱   = readline
+                ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │  STEP 1：讀取 ELF 檔頭                                   │
+ │                                                          │
+ │  /usr/bin/bash (ELF binary)                              │
+ │  ┌──────────────────────────────────────────────┐        │
+ │  │  ELF Header                                  │        │
+ │  │    Type: ET_DYN (shared object / PIE)        │        │
+ │  │    Entry: 0x31e60                            │        │
+ │  ├──────────────────────────────────────────────┤        │
+ │  │  .dynsym (動態符號表)                         │        │
+ │  │  ┌────────────────────────────────────┐      │        │
+ │  │  │  readline    → offset 0x0b2a40    │ ◄─── 找到！   │
+ │  │  │  main        → offset 0x02e7c0    │      │        │
+ │  │  │  execute_cmd → offset 0x04a1e0    │      │        │
+ │  │  │  ...                              │      │        │
+ │  │  └────────────────────────────────────┘      │        │
+ │  ├──────────────────────────────────────────────┤        │
+ │  │  .symtab (靜態符號表，如果有的話)              │        │
+ │  ├──────────────────────────────────────────────┤        │
+ │  │  .debug_info (DWARF，如果有的話)              │        │
+ │  │    → 可取得參數型別、原始碼行號等              │        │
+ │  └──────────────────────────────────────────────┘        │
+ └──────────────┬───────────────────────────────────────────┘
+                │
+                │  得到 readline 的 file offset = 0x0b2a40
+                ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │  STEP 2：透過 perf_event_open() / bpf() 告訴 kernel     │
+ │                                                          │
+ │  bpftrace → kernel：                                     │
+ │    「請在 /usr/bin/bash 的 offset 0x0b2a40               │
+ │     插入一個 uprobe，觸發時執行我的 eBPF 程式」            │
+ │                                                          │
+ │  傳遞的資訊：                                             │
+ │    ┌─────────────────────────────────────┐               │
+ │    │  target  = "/usr/bin/bash"          │               │
+ │    │  offset  = 0x0b2a40                │               │
+ │    │  bpf_fd  = <eBPF 程式的 fd>         │               │
+ │    └─────────────────────────────────────┘               │
+ └──────────────┬───────────────────────────────────────────┘
+                │
+                ▼
+ ═══════════════════════════════════════════ KERNEL SPACE ═══
+                │
+                ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │  STEP 3：Kernel 修改目標程式的記憶體                      │
+ │                                                          │
+ │  找到所有正在執行 /usr/bin/bash 的 process，              │
+ │  在虛擬位址對應的位置修改指令：                             │
+ │                                                          │
+ │  bash process (PID 1234) 的記憶體：                       │
+ │                                                          │
+ │  位址           修改前              修改後                 │
+ │  ─────────────────────────────────────────────           │
+ │  0x5555_55b2a40:  55              →  CC  (int3)          │
+ │  0x5555_55b2a41:  48 89 e5           48 89 e5            │
+ │  0x5555_55b2a44:  41 57              41 57               │
+ │                   ~~                 ~~                   │
+ │                   push rbp           int3 (trap!)        │
+ │                   mov rbp,rsp        mov rbp,rsp         │
+ │                   push r15           push r15            │
+ │                                                          │
+ │  Kernel 同時記住原始指令 0x55，以便後續恢復               │
+ └──────────────┬───────────────────────────────────────────┘
+                │
+                ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │  STEP 4：程式執行到 readline() 時觸發                     │
+ │                                                          │
+ │  bash process 正常執行...                                 │
+ │       │                                                  │
+ │       ▼                                                  │
+ │  call readline()                                         │
+ │       │                                                  │
+ │       ▼  碰到 0xCC (int3)                                │
+ │  ┌────────────────────────────────┐                      │
+ │  │  CPU 觸發 #BP 異常 (trap)      │                      │
+ │  │  → 控制權交給 kernel           │                      │
+ │  └─────────────┬──────────────────┘                      │
+ │                │                                         │
+ │                ▼                                         │
+ │  ┌────────────────────────────────┐                      │
+ │  │  kernel uprobe handler         │                      │
+ │  │    1. 保存 registers 快照      │                      │
+ │  │    2. 執行 eBPF 程式           │ ← JIT 機器碼         │
+ │  │       ├─ 讀 rdi (第1個參數)    │                      │
+ │  │       ├─ 讀 rsi (第2個參數)    │                      │
+ │  │       ├─ ktime_get_ns() 時間戳 │                      │
+ │  │       └─ 寫入 ring buffer      │                      │
+ │  │    3. 恢復原始指令 (0x55)      │                      │
+ │  │    4. 單步執行原始指令         │                      │
+ │  │    5. 重新插入 int3            │                      │
+ │  │    6. 返回 user space          │                      │
+ │  └─────────────┬──────────────────┘                      │
+ │                │                                         │
+ │                ▼                                         │
+ │  bash 繼續執行 readline() 的後續指令                      │
+ │  （完全不知道剛才被攔截過）                                │
+ └──────────────────────────────────────────────────────────┘
+
+ 同時在另一側...
+ ┌──────────────────────────────────────────────────────────┐
+ │  bpftrace process (user space)                           │
+ │                                                          │
+ │  持續從 ring buffer 讀取事件                              │
+ │       │                                                  │
+ │       ▼                                                  │
+ │  輸出：readline 被呼叫了！                                │
+ │    timestamp=1679012345.123456                           │
+ │    pid=1234  comm=bash                                   │
+ └──────────────────────────────────────────────────────────┘
+```
+
+**時間軸摘要：**
+
+```
+bpftrace 啟動時（一次性）：
+  ELF 解析 → 取得 offset → perf_event_open() → kernel 插入 int3
+
+每次函數被呼叫時（重複）：
+  int3 trap → uprobe handler → 執行 eBPF → 恢復指令 → 單步執行 → 重插 int3 → 返回
+  (整個過程 < 1 微秒)
+
+bpftrace 結束時（一次性）：
+  移除 uprobe → kernel 恢復所有原始指令 → 一切回到原狀
+```
+
+### 總結
+
+| 問題 | 答案 |
+|------|------|
+| **誰插斷點？** | Kernel（透過 uprobe 機制） |
+| **eBPF 跑在哪？** | Kernel space |
+| **怎麼讀 user space 資料？** | `bpf_probe_read_user()` + 當下的 process context |
+| **user space 程式知道嗎？** | 不知道，完全透明執行 |
