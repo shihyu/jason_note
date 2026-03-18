@@ -65,13 +65,13 @@ binary（含 tracing，但原始碼零修改）
 ```
 trace_go_with_source/
 ├── hello.go                    # 使用者程式（追蹤目標）
-├── Makefile                    # build/run/trace/instrument/overlay-run/clean
+├── Makefile                    # build/run/trace/instrument/clean
 ├── go.mod                      # Go module 定義
 ├── tracer/
 │   └── tracer.go               # Trace() 函數：記錄進出、縮排、耗時
 ├── cmd/
 │   └── instrument/
-│       └── main.go             # AST 改寫工具（直接模式 + overlay 模式）
+│       └── main.go             # AST 改寫工具（支援 overlay 模式）
 ├── trace_go_with_source.sh     # bpftrace 追蹤腳本
 ├── bpftrace-introduction.html  # bpftrace 參考文件
 └── docs/

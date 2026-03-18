@@ -3,7 +3,7 @@
 追蹤 Go 程式的函數呼叫，提供兩種模式：
 
 - **bpftrace 模式**：用 kernel uprobe 從外部觀測，不改任何程式碼（需 sudo）
-- **instrument 模式**：AST 自動插樁，記錄函數進出與耗時（不需 sudo）
+- **instrument 模式**：AST 自動插樁，記錄函數進出與耗時（不需 sudo，不動原始碼）
 
 ## 快速開始
 
@@ -17,9 +17,8 @@ make run
 # bpftrace 追蹤（需 sudo）
 make trace
 
-# AST 插樁追蹤（兩種方式）
-make trace-run     # 產生 _instrumented.go 中間檔
-make overlay-run   # 不動原始碼，透過 compiler overlay 替換
+# AST 插樁追蹤（用 overlay 編譯，不動原始碼）
+make instrument
 ```
 
 ## 範例輸出
@@ -36,7 +35,7 @@ ORDER TIME(us)        FUNCTION                                           SOURCE
 59    2445            main.swap                                          hello.go:7
 ```
 
-### instrument 模式（`make overlay-run`）
+### instrument 模式（`make instrument`）
 
 ```
 --> main.main
