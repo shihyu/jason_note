@@ -1,0 +1,1663 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>bpftrace 入門：認識 eBPF 的四種追蹤機制 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="bpftrace-入門認識-ebpf-的四種追蹤機制"><a class="header" href="#bpftrace-入門認識-ebpf-的四種追蹤機制">bpftrace 入門：認識 eBPF 的四種追蹤機制</a></h1>
+<p><a href="https://github.com/bpftrace/bpftrace"><code>bpftrace</code></a> 是一個讓我們能快速實踐 eBPF 追蹤的工具。它本身是一種高階 eBPF 追蹤語言，具備以下特點：</p>
+<ul>
+<li>語法簡潔，類似 Linux 上常見的 <code>awk</code>，容易上手</li>
+<li>可即時執行，腳本會自動編譯成 eBPF bytecode，不需要手動編譯</li>
+<li>支援多種追蹤機制，包含 Tracepoints、Kprobes、Uprobes、USDT</li>
+<li>內建聚合函式，例如 <code>count()</code>、<code>hist()</code>、<code>avg()</code> 等統計功能</li>
+</ul>
+<p>如果不使用 <code>bpftrace</code>，又不想直接撰寫 bytecode，那麼以 C 搭配 <code>libbpf</code> 函式庫，也是常見的 eBPF 開發方式之一。相較之下，<code>bpftrace</code> 語法更精簡、開發速度更快，特別適合用於快速分析與除錯。本文也會以 <code>bpftrace</code> 作為 eBPF 操作範例。</p>
+<h2 id="安裝-bpftrace"><a class="header" href="#安裝-bpftrace">安裝 bpftrace</a></h2>
+<p>詳細的環境需求與安裝步驟，可以參考 <a href="https://github.com/bpftrace/bpftrace/blob/master/INSTALL.md">官方安裝文件</a>。本文以 Ubuntu 24.04 作為示範環境：</p>
+<pre><code class="language-bash">sudo apt-get install -y bpftrace
+</code></pre>
+<p>安裝完成後，就可以先用最簡單的指令確認 <code>bpftrace</code> 是否正常運作：</p>
+<pre><code class="language-bash">sudo bpftrace -e 'BEGIN { printf("Hello, bpftrace!\n"); }'
+</code></pre>
+<p>執行後，會看到 probe 被動態掛載，並印出 <code>Hello, bpftrace!</code>：</p>
+<pre><code class="language-text">Attaching 1 probe...
+Hello, bpftrace!
+</code></pre>
+<h2 id="bpftrace-語法參考"><a class="header" href="#bpftrace-語法參考">bpftrace 語法參考</a></h2>
+<p><code>bpftrace</code> 提供相當完整的語法與內建函式。若想進一步查詢特定語法，可參考：</p>
+<ul>
+<li><a href="https://github.com/bpftrace/bpftrace/blob/master/docs/reference_guide.md">Reference Guide</a></li>
+</ul>
+<p>此外，<code>bpftrace</code> 本身也提供實用的查詢指令：</p>
+<pre><code class="language-bash"># 查看所有可用的內建函式和變數
+man bpftrace
+
+# 列出所有 probe 類型
+sudo bpftrace -l
+
+# 查看特定 tracepoint 的參數
+sudo bpftrace -lv tracepoint:syscalls:sys_enter_openat
+</code></pre>
+<h2 id="ebpf-的四種追蹤機制"><a class="header" href="#ebpf-的四種追蹤機制">eBPF 的四種追蹤機制</a></h2>
+<p>eBPF 提供多種追蹤機制，讓我們能依不同情境選擇合適的追蹤方式：</p>
+<p><img src="images/bpftrace-tracing-mechanisms.png" alt="eBPF 的四種追蹤機制" /></p>
+<h3 id="1-kernel-tracepoint"><a class="header" href="#1-kernel-tracepoint">1. Kernel Tracepoint</a></h3>
+<p>Kernel Tracepoint 是核心開發者在程式碼中預先埋設的追蹤點。這些追蹤點允許 eBPF 程式掛載到特定的 kernel event，藉此捕獲相關資料，進行分析與監控。</p>
+<p>我們也可以透過 <code>bpftrace</code> 找出核心中已存在的 tracepoint：</p>
+<pre><code class="language-bash"># 列出所有 tracepoints
+sudo bpftrace -l 'tracepoint:*' | head
+
+# 查看 syscalls 相關 tracepoints
+sudo bpftrace -l 'tracepoint:syscalls:*' | head
+</code></pre>
+<h3 id="2-usdt-user-statically-defined-tracing"><a class="header" href="#2-usdt-user-statically-defined-tracing">2. USDT (User Statically Defined Tracing)</a></h3>
+<p>USDT 類似 Kernel Tracepoint，只是追蹤點是預先埋設在使用者空間程式中。例如 Python 就內建了一些 USDT probes，可用來追蹤函式呼叫、GC 事件等。</p>
+<h3 id="3-kprobes-kernel-probes"><a class="header" href="#3-kprobes-kernel-probes">3. Kprobes (Kernel Probes)</a></h3>
+<p>即使核心內部函式沒有預先埋入 tracepoint，也可以透過 Kprobes，將 eBPF 動態掛載到幾乎任何 kernel 函式上。若要確認有哪些函式可被動態掛載，可執行：</p>
+<pre><code class="language-bash">sudo bpftrace -l 'kprobe:*tcp*' | head
+</code></pre>
+<p>這會列出可用於 Kprobes 追蹤的函式，例如：</p>
+<pre><code class="language-text">kprobe:__arm64_sys_getcpu
+kprobe:__bpf_tcp_ca_init
+kprobe:__bpf_tcp_ca_release
+kprobe:__mptcp_check_push
+kprobe:__mptcp_clean_una
+kprobe:__mptcp_close
+kprobe:__mptcp_close_ssk
+kprobe:__mptcp_data_acked
+kprobe:__mptcp_destroy_sock
+kprobe:__mptcp_error_report
+</code></pre>
+<p>例如，我們可以把 Kprobe 掛載到 kernel 內部的 <code>tcp_connect</code> 函式上，以觀察比 syscall 層更深入的網路行為：</p>
+<pre><code class="language-bash">sudo bpftrace -e '
+kprobe:tcp_connect {
+    printf("%s (PID %d) initiated TCP connection\n", comm, pid);
+}'
+</code></pre>
+<p>在另一個終端機使用 <code>telnet</code> 發起 TCP 連線後，eBPF 就能捕捉到相關資訊：</p>
+<pre><code class="language-text">Attaching 1 probe...
+telnet (PID 2976) initiated TCP connection
+</code></pre>
+<h3 id="4-uprobes-user-probes"><a class="header" href="#4-uprobes-user-probes">4. Uprobes (User Probes)</a></h3>
+<p>Uprobes 與 Kprobes 類似，差別在於 Kprobes 掛載在 kernel space 的函式上，而 Uprobes 掛載在 user space 的函式上。因此，我們可以使用 Uprobes 追蹤應用程式或函式庫。</p>
+<p>常見的應用場景包括：</p>
+<ul>
+<li>追蹤資料庫查詢</li>
+<li>追蹤 OpenSSL 加密函式，以進行 SSL/TLS 監控</li>
+<li>追蹤 <code>malloc</code>、<code>free</code> 等函式，以進行記憶體分析</li>
+</ul>
+<p>例如，我們可以使用 Uprobe 追蹤 Bash 的 <code>readline</code> 函式，觀察使用者輸入的完整指令：</p>
+<pre><code class="language-bash">sudo bpftrace -e '
+uretprobe:/bin/bash:readline {
+    printf("Command: %s\n", str(retval));
+}'
+</code></pre>
+<p>當使用者在另一個終端機輸入指令時，Uprobe 便能成功捕捉：</p>
+<pre><code class="language-text">Attaching 1 probe...
+Command: ls
+Command: pwd
+</code></pre>
+<h2 id="bpftrace-語法深入"><a class="header" href="#bpftrace-語法深入">bpftrace 語法深入</a></h2>
+<h3 id="基本語法結構"><a class="header" href="#基本語法結構">基本語法結構</a></h3>
+<p><code>bpftrace</code> 的程式結構類似 <code>awk</code>，由 <strong>probe</strong> 與 <strong>action</strong> 組成：</p>
+<pre><code>probe /filter/ {
+    action
+}
+</code></pre>
+<ul>
+<li><strong>probe</strong>：指定掛載點（tracepoint、kprobe、uprobe 等）</li>
+<li><strong>filter</strong>：可選的條件過濾，只有條件為真時才執行 action</li>
+<li><strong>action</strong>：要執行的操作（列印、聚合、記錄等）</li>
+</ul>
+<p>一個 bpftrace 程式可以包含多個 probe 區塊，還有兩個特殊 probe：</p>
+<pre><code class="language-c">BEGIN {
+    // 程式開始時執行一次（初始化）
+}
+
+probe /filter/ {
+    // 每次事件觸發時執行
+}
+
+END {
+    // 程式結束時執行一次（清理、輸出統計）
+}
+</code></pre>
+<h3 id="變數系統"><a class="header" href="#變數系統">變數系統</a></h3>
+<p>bpftrace 有三種變數：</p>
+<pre><code class="language-c">// 1. 內建變數（唯讀，由系統提供）
+pid, tid, comm, uid, nsecs, kstack, ustack, arg0, arg1, ...
+
+// 2. Scratch 變數（以 $ 開頭，probe 內部的區域變數）
+$latency = nsecs;
+$filename = str(arg0);
+
+// 3. Map 變數（以 @ 開頭，全域持久化，跨 probe 共享）
+@start[pid] = nsecs;              // 以 pid 為 key 儲存時間戳
+@bytes = 0;                        // 全域計數器
+@hist_latency = hist($latency);   // 直方圖聚合
+</code></pre>
+<p>Map 變數是 bpftrace 最強大的功能之一，底層對應到 eBPF map，可以跨 probe 共享資料：</p>
+<pre><code class="language-bash">sudo bpftrace -e '
+tracepoint:syscalls:sys_enter_read {
+    @start[tid] = nsecs;
+}
+
+tracepoint:syscalls:sys_exit_read / @start[tid] / {
+    $duration_us = (nsecs - @start[tid]) / 1000;
+    @read_latency_us = hist($duration_us);
+    delete(@start[tid]);
+}
+
+END {
+    clear(@start);
+}'
+</code></pre>
+<h3 id="過濾器filter"><a class="header" href="#過濾器filter">過濾器（Filter）</a></h3>
+<p>過濾器用 <code>/ /</code> 包裹，支援多種條件：</p>
+<pre><code class="language-c">// 只追蹤特定 process
+kprobe:vfs_read / comm == "nginx" / { ... }
+
+// 只追蹤特定 PID
+kprobe:vfs_read / pid == 1234 / { ... }
+
+// 只追蹤特定 UID（非 root）
+kprobe:vfs_read / uid != 0 / { ... }
+
+// 組合條件
+kprobe:vfs_read / comm == "nginx" &amp;&amp; arg2 &gt; 4096 / { ... }
+
+// 只在 map 存在對應 key 時觸發
+tracepoint:syscalls:sys_exit_read / @start[tid] / { ... }
+</code></pre>
+<h3 id="聚合函式"><a class="header" href="#聚合函式">聚合函式</a></h3>
+<p>bpftrace 內建豐富的聚合函式，適合做統計分析：</p>
+<pre><code class="language-bash"># count() — 計數
+sudo bpftrace -e '
+tracepoint:syscalls:sys_enter_* {
+    @syscall_count[probe] = count();
+}'
+
+# hist() — 以 2 的冪次為區間的直方圖
+sudo bpftrace -e '
+tracepoint:syscalls:sys_exit_read / retval &gt; 0 / {
+    @read_size = hist(retval);
+}'
+
+# lhist() — 線性直方圖（自訂區間）
+sudo bpftrace -e '
+tracepoint:syscalls:sys_exit_read / retval &gt; 0 / {
+    @read_size = lhist(retval, 0, 10000, 1000);
+}'
+
+# sum() — 加總
+sudo bpftrace -e '
+tracepoint:syscalls:sys_exit_read / retval &gt; 0 / {
+    @total_bytes[comm] = sum(retval);
+}'
+
+# avg() / min() / max() — 平均值、最小值、最大值
+sudo bpftrace -e '
+tracepoint:syscalls:sys_exit_read / retval &gt; 0 / {
+    @avg_read[comm] = avg(retval);
+    @max_read[comm] = max(retval);
+}'
+
+# stats() — 同時輸出 count, avg, total
+sudo bpftrace -e '
+tracepoint:syscalls:sys_exit_read / retval &gt; 0 / {
+    @read_stats[comm] = stats(retval);
+}'
+</code></pre>
+<h3 id="字串與格式化輸出"><a class="header" href="#字串與格式化輸出">字串與格式化輸出</a></h3>
+<pre><code class="language-c">// str() — 將指標轉為字串
+printf("filename: %s\n", str(arg0));
+
+// buf() — 讀取指定長度的 buffer
+printf("data: %r\n", buf(arg0, 16));
+
+// printf 支援常見格式化
+printf("pid=%d comm=%s latency=%lld ns\n", pid, comm, $lat);
+
+// 時間戳記
+printf("%s %s\n", strftime("%H:%M:%S", nsecs), comm);
+</code></pre>
+<hr />
+<h2 id="bpftrace-內建變數完整指南"><a class="header" href="#bpftrace-內建變數完整指南">bpftrace 內建變數完整指南</a></h2>
+<h3 id="process-相關"><a class="header" href="#process-相關">Process 相關</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>變數</th><th>型別</th><th>說明</th></tr></thead><tbody>
+<tr><td><code>pid</code></td><td>uint64</td><td>Process ID</td></tr>
+<tr><td><code>tid</code></td><td>uint64</td><td>Thread ID</td></tr>
+<tr><td><code>uid</code></td><td>uint64</td><td>User ID</td></tr>
+<tr><td><code>gid</code></td><td>uint64</td><td>Group ID</td></tr>
+<tr><td><code>nsecs</code></td><td>uint64</td><td>當前時間戳（奈秒）</td></tr>
+<tr><td><code>elapsed</code></td><td>uint64</td><td>自 bpftrace 啟動以來的奈秒數</td></tr>
+<tr><td><code>comm</code></td><td>string</td><td>Process 名稱（最長 16 字元）</td></tr>
+<tr><td><code>curtask</code></td><td>uint64</td><td>當前 <code>task_struct</code> 指標</td></tr>
+<tr><td><code>cgroup</code></td><td>uint64</td><td>當前 cgroup ID</td></tr>
+<tr><td><code>cpu</code></td><td>uint32</td><td>當前 CPU 編號</td></tr>
+</tbody></table>
+</div>
+<h3 id="probe-相關"><a class="header" href="#probe-相關">Probe 相關</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>變數</th><th>型別</th><th>說明</th></tr></thead><tbody>
+<tr><td><code>probe</code></td><td>string</td><td>當前 probe 的完整名稱</td></tr>
+<tr><td><code>func</code></td><td>string</td><td>被追蹤的函式名稱</td></tr>
+<tr><td><code>arg0</code> ~ <code>argN</code></td><td>uint64</td><td>函式的第 N 個參數</td></tr>
+<tr><td><code>retval</code></td><td>uint64</td><td>函式的回傳值（僅 <code>*retprobe</code> 可用）</td></tr>
+<tr><td><code>args</code></td><td>struct</td><td>Tracepoint 的結構化參數</td></tr>
+</tbody></table>
+</div>
+<h3 id="stack-相關"><a class="header" href="#stack-相關">Stack 相關</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>變數</th><th>型別</th><th>說明</th></tr></thead><tbody>
+<tr><td><code>kstack</code></td><td>kstack</td><td>Kernel stack trace</td></tr>
+<tr><td><code>ustack</code></td><td>ustack</td><td>User space stack trace</td></tr>
+<tr><td><code>kstack(n)</code></td><td>kstack</td><td>限制 kernel stack 深度為 n</td></tr>
+<tr><td><code>ustack(n)</code></td><td>ustack</td><td>限制 user stack 深度為 n</td></tr>
+</tbody></table>
+</div>
+<h3 id="實用範例用-stack-trace-追蹤-kernel-記憶體配置"><a class="header" href="#實用範例用-stack-trace-追蹤-kernel-記憶體配置">實用範例：用 stack trace 追蹤 kernel 記憶體配置</a></h3>
+<pre><code class="language-bash">sudo bpftrace -e '
+kprobe:__kmalloc {
+    @alloc_stacks[kstack, comm] = count();
+}
+
+END {
+    print(@alloc_stacks, 10);
+}'
+</code></pre>
+<h3 id="實用範例用-ustack-追蹤應用程式的記憶體配置"><a class="header" href="#實用範例用-ustack-追蹤應用程式的記憶體配置">實用範例：用 ustack 追蹤應用程式的記憶體配置</a></h3>
+<pre><code class="language-bash">sudo bpftrace -e '
+uprobe:/lib/x86_64-linux-gnu/libc.so.6:malloc {
+    @malloc_stacks[ustack, comm] = count();
+}' -c "ls"
+</code></pre>
+<hr />
+<h2 id="實戰範例"><a class="header" href="#實戰範例">實戰範例</a></h2>
+<h3 id="範例一系統呼叫統計--找出最繁忙的-syscall"><a class="header" href="#範例一系統呼叫統計--找出最繁忙的-syscall">範例一：系統呼叫統計 — 找出最繁忙的 syscall</a></h3>
+<pre><code class="language-bash">sudo bpftrace -e '
+tracepoint:raw_syscalls:sys_enter {
+    @syscalls[comm, args.id] = count();
+}
+
+interval:s:5 {
+    print(@syscalls, 20);
+    clear(@syscalls);
+}'
+</code></pre>
+<p>搭配 syscall 編號對照表，找出哪些 process 發出最多系統呼叫。更直覺的做法：</p>
+<pre><code class="language-bash"># 直接列出每個 process 呼叫了哪些 syscall（以名稱顯示）
+sudo bpftrace -e '
+tracepoint:syscalls:sys_enter_* {
+    @[comm, probe] = count();
+}'
+</code></pre>
+<p>輸出範例：</p>
+<pre><code class="language-text">@[bash, tracepoint:syscalls:sys_enter_rt_sigprocmask]: 45
+@[bash, tracepoint:syscalls:sys_enter_write]: 23
+@[nginx, tracepoint:syscalls:sys_enter_epoll_wait]: 1502
+@[nginx, tracepoint:syscalls:sys_enter_read]: 1489
+@[nginx, tracepoint:syscalls:sys_enter_write]: 1401
+</code></pre>
+<h3 id="範例二檔案-io-追蹤--誰在讀寫哪些檔案"><a class="header" href="#範例二檔案-io-追蹤--誰在讀寫哪些檔案">範例二：檔案 I/O 追蹤 — 誰在讀寫哪些檔案</a></h3>
+<pre><code class="language-bash">sudo bpftrace -e '
+tracepoint:syscalls:sys_enter_openat {
+    printf("%-16s PID:%-6d %s\n", comm, pid, str(args.filename));
+}'
+</code></pre>
+<p>更進階 — 追蹤 read/write 延遲與大小：</p>
+<pre><code class="language-bash">sudo bpftrace -e '
+tracepoint:syscalls:sys_enter_read {
+    @start[tid] = nsecs;
+    @fd[tid] = args.fd;
+}
+
+tracepoint:syscalls:sys_exit_read / @start[tid] / {
+    $dur_us = (nsecs - @start[tid]) / 1000;
+    @read_latency_us[comm] = hist($dur_us);
+    @read_bytes[comm] = sum(retval &gt; 0 ? retval : 0);
+    delete(@start[tid]);
+    delete(@fd[tid]);
+}
+
+END {
+    clear(@start);
+    clear(@fd);
+}'
+</code></pre>
+<h3 id="範例三tcp-連線追蹤--觀察網路行為"><a class="header" href="#範例三tcp-連線追蹤--觀察網路行為">範例三：TCP 連線追蹤 — 觀察網路行為</a></h3>
+<pre><code class="language-bash">sudo bpftrace -e '
+kprobe:tcp_connect {
+    $sk = (struct sock *)arg0;
+    $daddr = ntop($sk-&gt;__sk_common.skc_daddr);
+    $dport = ($sk-&gt;__sk_common.skc_dport &gt;&gt; 8) |
+             (($sk-&gt;__sk_common.skc_dport &amp; 0xff) &lt;&lt; 8);
+    printf("%-16s PID:%-6d -&gt; %s:%d\n", comm, pid, $daddr, $dport);
+}'
+</code></pre>
+<h3 id="範例四追蹤-process-的生命週期"><a class="header" href="#範例四追蹤-process-的生命週期">範例四：追蹤 process 的生命週期</a></h3>
+<pre><code class="language-bash">sudo bpftrace -e '
+tracepoint:sched:sched_process_exec {
+    printf("[EXEC]  %s PID:%-6d %s\n",
+        strftime("%H:%M:%S", nsecs), pid, str(args.filename));
+}
+
+tracepoint:sched:sched_process_exit {
+    printf("[EXIT]  %s PID:%-6d %s\n",
+        strftime("%H:%M:%S", nsecs), pid, comm);
+}'
+</code></pre>
+<h3 id="範例五追蹤-dns-查詢"><a class="header" href="#範例五追蹤-dns-查詢">範例五：追蹤 DNS 查詢</a></h3>
+<pre><code class="language-bash">sudo bpftrace -e '
+uprobe:/lib/x86_64-linux-gnu/libc.so.6:getaddrinfo {
+    printf("%-16s PID:%-6d DNS lookup: %s\n", comm, pid, str(arg0));
+}'
+</code></pre>
+<hr />
+<h2 id="usdt-實作範例"><a class="header" href="#usdt-實作範例">USDT 實作範例</a></h2>
+<h3 id="什麼是-usdt"><a class="header" href="#什麼是-usdt">什麼是 USDT</a></h3>
+<p>USDT（User Statically Defined Tracing）是應用程式開發者在程式碼中預先埋設的追蹤點。與 Kprobes/Uprobes 不同，USDT 是<strong>靜態定義</strong>的，提供穩定的追蹤介面，不會因為程式碼重構而失效。</p>
+<h3 id="列出-usdt-probes"><a class="header" href="#列出-usdt-probes">列出 USDT probes</a></h3>
+<pre><code class="language-bash"># 列出 Python 的 USDT probes
+sudo bpftrace -l 'usdt:/usr/bin/python3:*'
+
+# 列出 Node.js 的 USDT probes
+sudo bpftrace -l 'usdt:/usr/bin/node:*'
+
+# 列出特定 PID 的 USDT probes（適用於動態語言執行中的 process）
+sudo bpftrace -lp &lt;PID&gt;
+</code></pre>
+<h3 id="範例追蹤-python-函式呼叫"><a class="header" href="#範例追蹤-python-函式呼叫">範例：追蹤 Python 函式呼叫</a></h3>
+<p>Python 3 內建了 USDT probes（需要編譯時啟用 <code>--with-dtrace</code>，Ubuntu 預設已啟用）：</p>
+<pre><code class="language-bash"># 確認 Python 是否支援 USDT
+sudo bpftrace -l 'usdt:/usr/bin/python3:*'
+</code></pre>
+<p>常見的 Python USDT probes：</p>
+<pre><code class="language-text">usdt:/usr/bin/python3:python:function__entry
+usdt:/usr/bin/python3:python:function__return
+usdt:/usr/bin/python3:python:gc__start
+usdt:/usr/bin/python3:python:gc__done
+usdt:/usr/bin/python3:python:import__find__load__start
+usdt:/usr/bin/python3:python:import__find__load__done
+</code></pre>
+<p>追蹤 Python 函式進出：</p>
+<pre><code class="language-bash">sudo bpftrace -e '
+usdt:/usr/bin/python3:python:function__entry {
+    printf("[CALL]   %s:%s:%d\n", str(arg0), str(arg1), arg2);
+}
+
+usdt:/usr/bin/python3:python:function__return {
+    printf("[RETURN] %s:%s:%d\n", str(arg0), str(arg1), arg2);
+}' -p $(pgrep -f your_script.py)
+</code></pre>
+<p>其中 <code>arg0</code> 是檔案名稱、<code>arg1</code> 是函式名稱、<code>arg2</code> 是行號。</p>
+<h3 id="範例追蹤-python-gc-事件"><a class="header" href="#範例追蹤-python-gc-事件">範例：追蹤 Python GC 事件</a></h3>
+<pre><code class="language-bash">sudo bpftrace -e '
+usdt:/usr/bin/python3:python:gc__start {
+    @gc_start = nsecs;
+    printf("GC started (generation %d)\n", arg0);
+}
+
+usdt:/usr/bin/python3:python:gc__done {
+    $dur_ms = (nsecs - @gc_start) / 1000000;
+    printf("GC finished: collected %lld objects in %lld ms\n", arg0, $dur_ms);
+    @gc_duration_ms = hist($dur_ms);
+}' -p $(pgrep -f your_script.py)
+</code></pre>
+<h3 id="範例追蹤-nodejs-http-請求"><a class="header" href="#範例追蹤-nodejs-http-請求">範例：追蹤 Node.js HTTP 請求</a></h3>
+<p>Node.js 也支援 USDT probes（需使用 <code>--enable-dtrace</code> 編譯，或使用帶 USDT 支援的 Node.js 版本）：</p>
+<pre><code class="language-bash">sudo bpftrace -e '
+usdt:/usr/bin/node:http:server:request {
+    printf("HTTP Request: %s %s\n", str(arg4), str(arg5));
+}' -p $(pgrep node)
+</code></pre>
+<h3 id="在-c-程式中自訂-usdt-probes"><a class="header" href="#在-c-程式中自訂-usdt-probes">在 C 程式中自訂 USDT probes</a></h3>
+<p>使用 <code>sys/sdt.h</code> 標頭檔在自己的程式中埋設 USDT probes：</p>
+<pre><code class="language-c">// my_app.c
+#include &lt;stdio.h&gt;
+#include &lt;sys/sdt.h&gt;
+#include &lt;unistd.h&gt;
+
+void process_request(int id, const char *data) {
+    DTRACE_PROBE2(my_app, request_start, id, data);
+
+    // 處理邏輯...
+    usleep(1000 * (id % 10));
+
+    DTRACE_PROBE1(my_app, request_end, id);
+}
+
+int main() {
+    for (int i = 0; i &lt; 100; i++) {
+        process_request(i, "hello");
+    }
+    return 0;
+}
+</code></pre>
+<p>編譯時需安裝 <code>systemtap-sdt-dev</code>：</p>
+<pre><code class="language-bash">sudo apt-get install -y systemtap-sdt-dev
+gcc -o my_app my_app.c
+</code></pre>
+<p>追蹤自訂 probes：</p>
+<pre><code class="language-bash"># 列出程式的 USDT probes
+sudo bpftrace -l 'usdt:./my_app:*'
+
+# 追蹤 request 延遲
+sudo bpftrace -e '
+usdt:./my_app:my_app:request_start {
+    @start[arg0] = nsecs;
+    printf("Request %d started: %s\n", arg0, str(arg1));
+}
+
+usdt:./my_app:my_app:request_end / @start[arg0] / {
+    $dur_us = (nsecs - @start[arg0]) / 1000;
+    printf("Request %d finished in %d us\n", arg0, $dur_us);
+    @latency = hist($dur_us);
+    delete(@start[arg0]);
+}' -c ./my_app
+</code></pre>
+<hr />
+<h2 id="進階用法"><a class="header" href="#進階用法">進階用法</a></h2>
+<h3 id="one-liner-集錦"><a class="header" href="#one-liner-集錦">One-liner 集錦</a></h3>
+<p>以下是實用的 bpftrace 一行腳本，可以直接複製使用：</p>
+<pre><code class="language-bash"># 1. 統計每秒的 syscall 數量
+sudo bpftrace -e 'tracepoint:raw_syscalls:sys_enter { @[comm] = count(); }
+  interval:s:1 { print(@, 10); clear(@); }'
+
+# 2. 追蹤所有 open 的檔案
+sudo bpftrace -e 'tracepoint:syscalls:sys_enter_openat {
+  printf("%-16s %s\n", comm, str(args.filename)); }'
+
+# 3. 統計 read 大小分佈
+sudo bpftrace -e 'tracepoint:syscalls:sys_exit_read / retval &gt; 0 / {
+  @size = hist(retval); }'
+
+# 4. 追蹤 process 建立（含完整命令列）
+sudo bpftrace -e 'tracepoint:syscalls:sys_enter_execve {
+  printf("%-6d %s", pid, str(args.filename));
+  join(args.argv); }'
+
+# 5. 每秒統計 context switch 次數
+sudo bpftrace -e 'tracepoint:sched:sched_switch { @[comm] = count(); }
+  interval:s:1 { print(@, 5); clear(@); }'
+
+# 6. 追蹤 block I/O 延遲
+sudo bpftrace -e 'tracepoint:block:block_rq_issue { @start[args.dev,
+  args.sector] = nsecs; }
+  tracepoint:block:block_rq_complete / @start[args.dev, args.sector] / {
+  @usecs = hist((nsecs - @start[args.dev, args.sector]) / 1000);
+  delete(@start[args.dev, args.sector]); }'
+
+# 7. 統計每個 CPU 的使用率（基於排程器事件）
+sudo bpftrace -e 'tracepoint:sched:sched_switch {
+  @cpu_usage[cpu, args.next_comm] = count(); }'
+
+# 8. 追蹤 signal 發送
+sudo bpftrace -e 'tracepoint:signal:signal_generate {
+  printf("%-16s (PID %d) sent signal %d to PID %d\n",
+    comm, pid, args.sig, args.pid); }'
+
+# 9. 追蹤 page fault
+sudo bpftrace -e 'software:page-faults:1 { @[comm, kstack(3)] = count(); }'
+
+# 10. 追蹤 TCP 重傳
+sudo bpftrace -e 'kprobe:tcp_retransmit_skb {
+  @retransmits[comm, pid] = count(); }'
+</code></pre>
+<h3 id="腳本檔案寫法"><a class="header" href="#腳本檔案寫法">腳本檔案寫法</a></h3>
+<p>對於較複雜的追蹤邏輯，建議寫成 <code>.bt</code> 腳本檔案：</p>
+<pre><code class="language-c">#!/usr/bin/env bpftrace
+// file_io_monitor.bt — 追蹤檔案 I/O 並統計延遲
+
+BEGIN {
+    printf("Tracing file I/O... Hit Ctrl+C to stop.\n");
+    printf("%-8s %-16s %-6s %-4s %8s %s\n",
+           "TIME", "COMM", "PID", "TYPE", "LAT(us)", "FILE");
+}
+
+tracepoint:syscalls:sys_enter_openat {
+    @filename[tid] = args.filename;
+}
+
+tracepoint:syscalls:sys_enter_read,
+tracepoint:syscalls:sys_enter_write {
+    @start[tid] = nsecs;
+}
+
+tracepoint:syscalls:sys_exit_read / @start[tid] / {
+    $dur = (nsecs - @start[tid]) / 1000;
+    printf("%-8s %-16s %-6d %-4s %8d\n",
+           strftime("%H:%M:%S", nsecs), comm, pid, "R", $dur);
+    @read_latency = hist($dur);
+    @read_bytes[comm] = sum(retval &gt; 0 ? retval : 0);
+    delete(@start[tid]);
+}
+
+tracepoint:syscalls:sys_exit_write / @start[tid] / {
+    $dur = (nsecs - @start[tid]) / 1000;
+    printf("%-8s %-16s %-6d %-4s %8d\n",
+           strftime("%H:%M:%S", nsecs), comm, pid, "W", $dur);
+    @write_latency = hist($dur);
+    @write_bytes[comm] = sum(retval &gt; 0 ? retval : 0);
+    delete(@start[tid]);
+}
+
+END {
+    printf("\n--- Read Latency (us) ---\n");
+    print(@read_latency);
+    printf("\n--- Write Latency (us) ---\n");
+    print(@write_latency);
+    printf("\n--- Read Bytes by Process ---\n");
+    print(@read_bytes, 10);
+    printf("\n--- Write Bytes by Process ---\n");
+    print(@write_bytes, 10);
+    clear(@start);
+    clear(@filename);
+}
+</code></pre>
+<p>執行方式：</p>
+<pre><code class="language-bash">chmod +x file_io_monitor.bt
+sudo ./file_io_monitor.bt
+# 或
+sudo bpftrace file_io_monitor.bt
+</code></pre>
+<h3 id="brendan-gregg-的-bpftrace-工具集"><a class="header" href="#brendan-gregg-的-bpftrace-工具集">Brendan Gregg 的 bpftrace 工具集</a></h3>
+<p><a href="https://github.com/bpftrace/bpftrace/tree/master/tools">bpftrace 官方工具集</a> 包含了 Brendan Gregg 等人開發的實用腳本，安裝 bpftrace 後通常會附帶這些工具：</p>
+<pre><code class="language-bash"># 常用工具一覽（通常安裝在 /usr/share/bpftrace/tools/）
+ls /usr/share/bpftrace/tools/
+
+# 熱門工具：
+bashreadline.bt    # 追蹤 bash 輸入的命令
+biolatency.bt      # Block I/O 延遲直方圖
+biosnoop.bt        # Block I/O 事件追蹤
+capable.bt         # 追蹤 security capability 檢查
+cpuwalk.bt         # 統計 process 在哪些 CPU 上執行
+dcsnoop.bt         # 追蹤 directory cache lookup
+execsnoop.bt       # 追蹤 process 執行（exec）
+gethostlatency.bt  # DNS 查詢延遲
+killsnoop.bt       # 追蹤 kill() 信號
+oomkill.bt         # 追蹤 OOM killer
+opensnoop.bt       # 追蹤 open() syscall
+runqlat.bt         # 排程器 run queue 延遲
+statsnoop.bt       # 追蹤 stat() syscall
+syncsnoop.bt       # 追蹤 sync() syscall
+tcpaccept.bt       # 追蹤 TCP accept
+tcpconnect.bt      # 追蹤 TCP connect
+tcpdrop.bt         # 追蹤 TCP 丟包
+tcpretrans.bt      # 追蹤 TCP 重傳
+vfsstat.bt         # VFS 操作統計
+</code></pre>
+<p>使用範例：</p>
+<pre><code class="language-bash"># Block I/O 延遲分析
+sudo bpftrace /usr/share/bpftrace/tools/biolatency.bt
+
+# 追蹤所有新建的 process
+sudo bpftrace /usr/share/bpftrace/tools/execsnoop.bt
+
+# 追蹤 TCP 連線建立
+sudo bpftrace /usr/share/bpftrace/tools/tcpconnect.bt
+</code></pre>
+<h3 id="搭配--c-參數追蹤特定命令"><a class="header" href="#搭配--c-參數追蹤特定命令">搭配 <code>-c</code> 參數追蹤特定命令</a></h3>
+<pre><code class="language-bash"># 追蹤 ls 命令的所有 syscall
+sudo bpftrace -e '
+tracepoint:raw_syscalls:sys_enter { @[comm] = count(); }
+' -c "ls -la /tmp"
+
+# 追蹤 curl 的 DNS 與 TCP 行為
+sudo bpftrace -e '
+uprobe:/lib/x86_64-linux-gnu/libc.so.6:getaddrinfo {
+    printf("DNS: %s\n", str(arg0));
+}
+kprobe:tcp_connect {
+    printf("TCP connect from %s PID %d\n", comm, pid);
+}' -c "curl -s https://example.com -o /dev/null"
+</code></pre>
+<h3 id="時間間隔觸發與定期輸出"><a class="header" href="#時間間隔觸發與定期輸出">時間間隔觸發與定期輸出</a></h3>
+<pre><code class="language-bash"># 每 3 秒輸出一次統計，追蹤 30 秒後自動結束
+sudo timeout 30 bpftrace -e '
+tracepoint:syscalls:sys_enter_read { @reads[comm] = count(); }
+tracepoint:syscalls:sys_enter_write { @writes[comm] = count(); }
+
+interval:s:3 {
+    printf("\n--- %s ---\n", strftime("%H:%M:%S", nsecs));
+    printf("Top Readers:\n");
+    print(@reads, 5);
+    printf("Top Writers:\n");
+    print(@writes, 5);
+    clear(@reads);
+    clear(@writes);
+}'
+</code></pre>
+<hr />
+<h2 id="效能分析場景"><a class="header" href="#效能分析場景">效能分析場景</a></h2>
+<h3 id="場景一cpu-profiling--找出-cpu-熱點"><a class="header" href="#場景一cpu-profiling--找出-cpu-熱點">場景一：CPU Profiling — 找出 CPU 熱點</a></h3>
+<p>使用 <code>profile</code> probe 以固定頻率對所有 CPU 取樣 stack trace：</p>
+<pre><code class="language-bash"># 以 99 Hz 取樣（避免與 timer 同步），追蹤 10 秒
+sudo bpftrace -e '
+profile:hz:99 {
+    @cpu_stacks[kstack] = count();
+}
+
+interval:s:10 {
+    exit();
+}
+
+END {
+    print(@cpu_stacks, 25);
+}'
+</code></pre>
+<p>若要以 Flame Graph 視覺化，可搭配 <a href="https://github.com/brendangregg/FlameGraph">FlameGraph 工具</a>：</p>
+<pre><code class="language-bash"># 輸出 folded stack format，再轉換為 flame graph
+sudo bpftrace -e '
+profile:hz:99 {
+    @[kstack] = count();
+}
+interval:s:30 { exit(); }
+' | awk '/^@\[/{gsub(/\n/,";"); print}' &gt; out.folded
+
+# 或更簡單的做法：使用 bpftrace 的 -f 選項
+sudo bpftrace -e 'profile:hz:99 { @[kstack] = count(); }
+  interval:s:30 { exit(); }' -f stacks &gt; stacks.out
+stackcollapse-bpftrace.pl &lt; stacks.out | flamegraph.pl &gt; flamegraph.svg
+</code></pre>
+<p>針對特定 process 的 user space profiling：</p>
+<pre><code class="language-bash">sudo bpftrace -e '
+profile:hz:99 / pid == '$TARGET_PID' / {
+    @[ustack] = count();
+}
+interval:s:10 { exit(); }
+'
+</code></pre>
+<h3 id="場景二記憶體分析--追蹤記憶體配置"><a class="header" href="#場景二記憶體分析--追蹤記憶體配置">場景二：記憶體分析 — 追蹤記憶體配置</a></h3>
+<pre><code class="language-bash"># 追蹤 kernel 記憶體配置（kmalloc）
+sudo bpftrace -e '
+tracepoint:kmem:kmalloc {
+    @kmalloc_size = hist(args.bytes_alloc);
+    @kmalloc_by_caller[kstack(3)] = sum(args.bytes_alloc);
+}'
+</code></pre>
+<p>追蹤 user space 的 malloc/free，偵測記憶體洩漏：</p>
+<pre><code class="language-bash">sudo bpftrace -e '
+uprobe:/lib/x86_64-linux-gnu/libc.so.6:malloc {
+    @malloc_req[tid] = arg0;
+}
+
+uretprobe:/lib/x86_64-linux-gnu/libc.so.6:malloc / @malloc_req[tid] / {
+    @active[retval] = @malloc_req[tid];
+    @malloc_bytes[comm] = sum(@malloc_req[tid]);
+    @malloc_sizes = hist(@malloc_req[tid]);
+    delete(@malloc_req[tid]);
+}
+
+uprobe:/lib/x86_64-linux-gnu/libc.so.6:free / arg0 != 0 / {
+    delete(@active[arg0]);
+}
+
+END {
+    printf("\n=== Potentially leaked allocations ===\n");
+    print(@active, 20);
+    clear(@malloc_req);
+}' -p $TARGET_PID
+</code></pre>
+<h3 id="場景三磁碟-io-延遲分析"><a class="header" href="#場景三磁碟-io-延遲分析">場景三：磁碟 I/O 延遲分析</a></h3>
+<pre><code class="language-bash">sudo bpftrace -e '
+tracepoint:block:block_rq_issue {
+    @io_start[args.dev, args.sector] = nsecs;
+}
+
+tracepoint:block:block_rq_complete / @io_start[args.dev, args.sector] / {
+    $dur_us = (nsecs - @io_start[args.dev, args.sector]) / 1000;
+
+    @io_latency_us = hist($dur_us);
+    @io_by_type[args.rwbs] = hist($dur_us);
+
+    if ($dur_us &gt; 10000) {
+        printf("SLOW IO: %s dev=%d sector=%lld dur=%lld us\n",
+               args.rwbs, args.dev, args.sector, $dur_us);
+    }
+
+    delete(@io_start[args.dev, args.sector]);
+}
+
+END {
+    printf("\n=== Overall I/O Latency (us) ===\n");
+    print(@io_latency_us);
+    printf("\n=== I/O Latency by Type ===\n");
+    print(@io_by_type);
+}'
+</code></pre>
+<h3 id="場景四排程器分析--run-queue-延遲"><a class="header" href="#場景四排程器分析--run-queue-延遲">場景四：排程器分析 — Run Queue 延遲</a></h3>
+<p>追蹤 process 從被喚醒到真正在 CPU 上執行的等待時間：</p>
+<pre><code class="language-bash">sudo bpftrace -e '
+tracepoint:sched:sched_wakeup {
+    @qstart[args.pid] = nsecs;
+}
+
+tracepoint:sched:sched_switch {
+    $prev_pid = args.prev_pid;
+    $next_pid = args.next_pid;
+
+    if (@qstart[$next_pid]) {
+        $wait_us = (nsecs - @qstart[$next_pid]) / 1000;
+        @runq_latency_us = hist($wait_us);
+        @runq_by_proc[args.next_comm] = hist($wait_us);
+
+        if ($wait_us &gt; 10000) {
+            printf("HIGH RUNQ LAT: %s PID:%d waited %lld us\n",
+                   args.next_comm, $next_pid, $wait_us);
+        }
+        delete(@qstart[$next_pid]);
+    }
+}
+
+END {
+    printf("\n=== Run Queue Latency (us) ===\n");
+    print(@runq_latency_us);
+    clear(@qstart);
+}'
+</code></pre>
+<h3 id="場景五lock-競爭分析"><a class="header" href="#場景五lock-競爭分析">場景五：Lock 競爭分析</a></h3>
+<p>追蹤 mutex lock 的等待時間，找出競爭最嚴重的鎖：</p>
+<pre><code class="language-bash"># 追蹤 kernel mutex 競爭
+sudo bpftrace -e '
+kprobe:mutex_lock {
+    @lock_start[tid] = nsecs;
+    @lock_addr[tid] = arg0;
+}
+
+kretprobe:mutex_lock / @lock_start[tid] / {
+    $wait_us = (nsecs - @lock_start[tid]) / 1000;
+    @lock_wait_us = hist($wait_us);
+    @lock_contention[@lock_addr[tid], kstack(5)] = sum($wait_us);
+    delete(@lock_start[tid]);
+    delete(@lock_addr[tid]);
+}
+
+END {
+    printf("\n=== Lock Wait Time (us) ===\n");
+    print(@lock_wait_us);
+    printf("\n=== Top Lock Contention Points ===\n");
+    print(@lock_contention, 10);
+}'
+</code></pre>
+<h3 id="場景六網路延遲分析--tcp-連線建立時間"><a class="header" href="#場景六網路延遲分析--tcp-連線建立時間">場景六：網路延遲分析 — TCP 連線建立時間</a></h3>
+<pre><code class="language-bash">sudo bpftrace -e '
+kprobe:tcp_v4_connect {
+    @connect_start[tid] = nsecs;
+}
+
+kretprobe:tcp_v4_connect / @connect_start[tid] / {
+    $dur_us = (nsecs - @connect_start[tid]) / 1000;
+    @connect_latency = hist($dur_us);
+    @connect_by_proc[comm] = stats($dur_us);
+    delete(@connect_start[tid]);
+}
+
+kprobe:tcp_rcv_state_process {
+    $sk = (struct sock *)arg0;
+    $state = $sk-&gt;__sk_common.skc_state;
+    // TCP_ESTABLISHED = 1
+    if ($state == 1) {
+        @tcp_established[comm] = count();
+    }
+}
+
+END {
+    printf("\n=== TCP Connect Latency (us) ===\n");
+    print(@connect_latency);
+    printf("\n=== Connect Stats by Process (us) ===\n");
+    print(@connect_by_proc);
+}'
+</code></pre>
+<hr />
+<h2 id="與其他工具比較"><a class="header" href="#與其他工具比較">與其他工具比較</a></h2>
+<h3 id="工具定位概覽"><a class="header" href="#工具定位概覽">工具定位概覽</a></h3>
+<pre><code>┌──────────────────────────────────────────────────────────────────┐
+│                     Linux 追蹤工具光譜                           │
+│                                                                  │
+│  簡單/快速                                          複雜/強大    │
+│  ◄─────────────────────────────────────────────────────────►    │
+│                                                                  │
+│  perf top    ftrace     bpftrace    BCC/libbpf    SystemTap     │
+│  perf stat   trace-cmd                             LTTng        │
+│                                                                  │
+│  [計數/取樣]  [kernel    [腳本式     [C/Python     [完整程式     │
+│               內建]      eBPF]       eBPF 開發]    語言追蹤]     │
+└──────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="詳細比較表"><a class="header" href="#詳細比較表">詳細比較表</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>bpftrace</th><th>perf</th><th>ftrace</th><th>BCC</th><th>SystemTap</th></tr></thead><tbody>
+<tr><td><strong>學習曲線</strong></td><td>低</td><td>低~中</td><td>中</td><td>中~高</td><td>高</td></tr>
+<tr><td><strong>語法</strong></td><td>AWK-like</td><td>命令列選項</td><td>寫入虛擬檔案</td><td>Python + C</td><td>自有語言</td></tr>
+<tr><td><strong>底層機制</strong></td><td>eBPF</td><td>PMU + eBPF</td><td>kernel ftrace</td><td>eBPF</td><td>kprobes + 核心模組</td></tr>
+<tr><td><strong>適用場景</strong></td><td>快速分析、原型驗證</td><td>CPU profiling、PMU 事件</td><td>kernel 函式追蹤</td><td>生產環境工具</td><td>複雜追蹤邏輯</td></tr>
+<tr><td><strong>安全性</strong></td><td>高（eBPF verifier）</td><td>高</td><td>高</td><td>高（eBPF verifier）</td><td>中（載入核心模組）</td></tr>
+<tr><td><strong>overhead</strong></td><td>低</td><td>極低</td><td>低</td><td>低</td><td>中</td></tr>
+<tr><td><strong>可程式化</strong></td><td>中（腳本）</td><td>低</td><td>低</td><td>高（Python + C）</td><td>高</td></tr>
+<tr><td><strong>生產環境</strong></td><td>適合短期分析</td><td>非常適合</td><td>適合</td><td>非常適合</td><td>適合</td></tr>
+<tr><td><strong>需要核心標頭</strong></td><td>否</td><td>否</td><td>否</td><td>是</td><td>是</td></tr>
+<tr><td><strong>輸出格式</strong></td><td>文字、直方圖</td><td>文字、火焰圖</td><td>文字</td><td>自訂（Python）</td><td>自訂</td></tr>
+</tbody></table>
+</div>
+<h3 id="什麼時候用哪個工具"><a class="header" href="#什麼時候用哪個工具">什麼時候用哪個工具？</a></h3>
+<p><strong>選擇 bpftrace 的場景：</strong></p>
+<ul>
+<li>需要快速驗證假說（「這個函式被誰呼叫？」「這個 syscall 的延遲分佈？」）</li>
+<li>一次性的探索式分析</li>
+<li>想用最少的程式碼獲得追蹤結果</li>
+<li>教學與學習 eBPF 概念</li>
+</ul>
+<p><strong>選擇 perf 的場景：</strong></p>
+<ul>
+<li>CPU profiling 與 PMU（Performance Monitoring Unit）事件</li>
+<li>需要極低 overhead 的取樣</li>
+<li>硬體效能計數器（cache miss、branch misprediction）</li>
+<li>已有成熟的 flame graph 工作流</li>
+</ul>
+<pre><code class="language-bash"># perf 典型用法
+sudo perf record -g -p $PID -- sleep 10
+sudo perf report
+# 或產生火焰圖
+sudo perf script | stackcollapse-perf.pl | flamegraph.pl &gt; perf.svg
+</code></pre>
+<p><strong>選擇 ftrace 的場景：</strong></p>
+<ul>
+<li>需要追蹤 kernel 內部函式呼叫鏈</li>
+<li>不想安裝額外工具（ftrace 是核心內建）</li>
+<li>開機早期階段的追蹤（eBPF 尚未初始化）</li>
+</ul>
+<pre><code class="language-bash"># ftrace 典型用法
+echo function_graph &gt; /sys/kernel/debug/tracing/current_tracer
+echo tcp_sendmsg &gt; /sys/kernel/debug/tracing/set_graph_function
+cat /sys/kernel/debug/tracing/trace_pipe
+</code></pre>
+<p><strong>選擇 BCC/libbpf 的場景：</strong></p>
+<ul>
+<li>需要建構長期運行的監控工具</li>
+<li>需要複雜的資料處理邏輯（用 Python 後處理）</li>
+<li>開發要打包部署的 eBPF 工具</li>
+<li>需要更精細的 eBPF map 控制</li>
+</ul>
+<pre><code class="language-python"># BCC 典型用法（Python）
+from bcc import BPF
+
+b = BPF(text="""
+int kprobe__tcp_sendmsg(struct pt_regs *ctx) {
+    bpf_trace_printk("tcp_sendmsg called\\n");
+    return 0;
+}
+""")
+b.trace_print()
+</code></pre>
+<p><strong>選擇 SystemTap 的場景：</strong></p>
+<ul>
+<li>需要非常複雜的追蹤邏輯（類似完整程式語言）</li>
+<li>已有 SystemTap 的腳本生態</li>
+<li>在不支援 eBPF 的舊核心上追蹤（SystemTap 可在 3.x 核心上運行）</li>
+</ul>
+<h3 id="工具組合使用的典型流程"><a class="header" href="#工具組合使用的典型流程">工具組合使用的典型流程</a></h3>
+<p>實際排查效能問題時，通常會組合使用多個工具：</p>
+<pre><code>效能排查典型流程
+================
+
+1. perf top / perf stat          ← 快速定位熱點（哪個函式最忙？）
+       │
+       ▼
+2. bpftrace one-liner            ← 驗證假說（這個函式的延遲分佈？）
+       │
+       ▼
+3. bpftrace 腳本                 ← 深入分析（延遲來自哪個路徑？）
+       │
+       ▼
+4. perf record + flame graph     ← 全局視角（整體 CPU 時間花在哪？）
+       │
+       ▼
+5. BCC/libbpf 工具               ← 持續監控（打包成生產環境工具）
+</code></pre>
+<p>實際範例 — 排查 Web Server 延遲問題：</p>
+<pre><code class="language-bash"># Step 1: perf stat 看整體概況
+sudo perf stat -p $(pgrep nginx) -- sleep 10
+
+# Step 2: bpftrace 看 syscall 延遲分佈
+sudo bpftrace -e '
+tracepoint:syscalls:sys_enter_read / comm == "nginx" / {
+    @start[tid] = nsecs;
+}
+tracepoint:syscalls:sys_exit_read / @start[tid] &amp;&amp; comm == "nginx" / {
+    @us = hist((nsecs - @start[tid]) / 1000);
+    delete(@start[tid]);
+}'
+
+# Step 3: 發現 read 延遲高，進一步看是哪個 fd
+sudo bpftrace -e '
+tracepoint:syscalls:sys_enter_read / comm == "nginx" / {
+    @start[tid] = nsecs;
+    @fd[tid] = args.fd;
+}
+tracepoint:syscalls:sys_exit_read / @start[tid] &amp;&amp; comm == "nginx" / {
+    $us = (nsecs - @start[tid]) / 1000;
+    if ($us &gt; 1000) {
+        printf("SLOW: fd=%d lat=%lld us bytes=%lld\n",
+               @fd[tid], $us, retval);
+    }
+    delete(@start[tid]);
+    delete(@fd[tid]);
+}'
+
+# Step 4: perf record 產生火焰圖做全局分析
+sudo perf record -g -p $(pgrep nginx) -- sleep 30
+sudo perf script | stackcollapse-perf.pl | flamegraph.pl &gt; nginx.svg
+</code></pre>
+<hr />
+<h2 id="實戰用-bpftrace--nm-追蹤-go-runtime-啟動流程"><a class="header" href="#實戰用-bpftrace--nm-追蹤-go-runtime-啟動流程">實戰：用 bpftrace + nm 追蹤 Go Runtime 啟動流程</a></h2>
+<p>一個簡單的 Go 程式 <code>fmt.Println("Hello, World!")</code> 背後，Go runtime 究竟做了多少事？本節透過 <code>nm</code>（符號表工具）和 <code>bpftrace</code>（uprobe 動態追蹤）完整揭露 Go 程式從進入點到 <code>main.main</code> 的每一步。</p>
+<h3 id="準備工作"><a class="header" href="#準備工作">準備工作</a></h3>
+<h4 id="步驟-1建立測試程式"><a class="header" href="#步驟-1建立測試程式">步驟 1：建立測試程式</a></h4>
+<pre><code class="language-go">// hello.go
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello, World!")
+}
+</code></pre>
+<h4 id="步驟-2編譯兩個版本"><a class="header" href="#步驟-2編譯兩個版本">步驟 2：編譯（兩個版本）</a></h4>
+<pre><code class="language-bash"># 版本 1：預設編譯
+go build -o hello hello.go
+
+# 版本 2：禁止內聯（讓所有函數都出現在符號表中，追蹤更完整）
+go build -gcflags='-l' -o hello_noinline hello.go
+</code></pre>
+<p><strong>為什麼需要禁止內聯？</strong> Go 編譯器預設會將小函數內聯（inline），這些函數在執行時不會產生獨立的函數呼叫，bpftrace 的 uprobe 就追蹤不到。禁止內聯後，所有函數都保留獨立的入口點，追蹤結果更完整。</p>
+<p>兩個版本的比較：</p>
+<div class="table-wrapper"><table><thead><tr><th>指標</th><th>hello（預設）</th><th>hello_noinline（禁止內聯）</th></tr></thead><tbody>
+<tr><td>檔案大小</td><td>2.2M</td><td>2.2M</td></tr>
+<tr><td>Text 符號總數</td><td>1761</td><td>1762</td></tr>
+<tr><td>runtime 符號數</td><td>1317</td><td>1317</td></tr>
+</tbody></table>
+</div>
+<h3 id="步驟-3用-nm-觀察符號表"><a class="header" href="#步驟-3用-nm-觀察符號表">步驟 3：用 nm 觀察符號表</a></h3>
+<p><code>nm</code> 是 GNU Binutils 中的工具，用來列出目標檔案或可執行檔中的符號。符號類型 <code>T</code> 表示位於 text section（程式碼段）的全域函數。</p>
+<pre><code class="language-bash"># 列出所有 text section 的 runtime 符號（前 20 個）
+$ nm hello_noinline | grep ' T ' | grep 'runtime\.' | head -20
+000000000046da40 T runtime.abort.abi0
+0000000000445400 T runtime.acquirep
+00000000004396a0 T runtime.acquireSudog
+0000000000424de0 T runtime.(*activeSweep).end
+000000000043dbc0 T runtime.addExtraM
+000000000042a220 T runtime.addfinalizer
+0000000000431100 T runtime.(*addrRanges).add
+0000000000431640 T runtime.(*addrRanges).cloneInto
+0000000000431000 T runtime.(*addrRanges).findAddrGreaterEqual
+0000000000430f20 T runtime.(*addrRanges).findSucc
+0000000000430e80 T runtime.(*addrRanges).init
+0000000000430da0 T runtime.addrRange.subtract
+0000000000429e00 T runtime.addspecial
+000000000044f600 T runtime.adjustctxt
+000000000044f640 T runtime.adjustdefers
+000000000044f3e0 T runtime.adjustframe
+000000000044f1e0 T runtime.adjustpointers
+000000000044c960 T runtime.adjustSignalStack
+000000000044cbe0 T runtime.adjustSignalStack2
+0000000000409920 T runtime.alginit
+</code></pre>
+<p>統計各 package 的符號數量：</p>
+<pre><code class="language-bash">$ nm hello_noinline | grep ' T ' | awk '{print $3}' | sed 's/\..*//' | sort | uniq -c | sort -rn | head -15
+   1288 runtime
+     78 type:
+     75 reflect
+     40 fmt
+     29 internal/poll
+     28 strconv
+     28 internal/runtime/maps
+     25 syscall
+     25 sync
+     18 os
+     18 internal/sync
+     17 internal/godebug
+     11 internal/abi
+     10 internal/reflectlite
+      8 sync/atomic
+</code></pre>
+<p>一個 Hello World 程式，光 runtime 就有 <strong>1288 個函數</strong>，其次是 reflect（75）、fmt（40）等。Go 二進位檔是靜態連結的，包含了完整的 runtime 和所有依賴的標準庫。</p>
+<h3 id="步驟-4用-bpftrace-追蹤-runtime-啟動流程"><a class="header" href="#步驟-4用-bpftrace-追蹤-runtime-啟動流程">步驟 4：用 bpftrace 追蹤 runtime 啟動流程</a></h3>
+<p>使用 <code>uprobe</code> 動態掛載到 Go 二進位檔中的所有函數，記錄首次呼叫的順序：</p>
+<pre><code class="language-bash">#!/usr/bin/env bpftrace
+// trace_go_runtime.bt — 追蹤 Go 程式的 runtime 啟動流程（去重）
+
+BEGIN
+{
+    printf("Tracing Go runtime functions (unique, ordered)...\n");
+    printf("%-6s %-15s %s\n", "ORDER", "TIME(us)", "FUNCTION");
+    @order = 0;
+}
+
+uprobe:./hello_noinline:*
+{
+    if (@seen[func] == 0) {
+        @seen[func] = 1;
+        @order++;
+        printf("%-6d %-15lu %s\n", @order, elapsed / 1000, func);
+    }
+}
+
+END
+{
+    printf("\n--- Total unique functions called: %d ---\n", @order);
+    clear(@seen);
+}
+</code></pre>
+<p>執行追蹤：</p>
+<pre><code class="language-bash">$ sudo bpftrace trace_go_runtime.bt -c ./hello_noinline
+</code></pre>
+<h3 id="完整追蹤結果與分析"><a class="header" href="#完整追蹤結果與分析">完整追蹤結果與分析</a></h3>
+<p>以下是實際追蹤到的 <strong>496 個不重複函數</strong>，按照執行時間順序排列，劃分為 12 個階段：</p>
+<h4 id="階段-1程式進入點-1-2"><a class="header" href="#階段-1程式進入點-1-2">階段 1：程式進入點 (#1-#2)</a></h4>
+<pre><code>#    TIME(us)     FUNCTION
+1    22927        _rt0_amd64_linux        ← Linux/amd64 入口
+2    22933        _rt0_amd64              ← 跳到通用 amd64 入口
+</code></pre>
+<p>這是 Go 程式在 Linux 上的真正入口。ELF 的 entry point 指向 <code>_rt0_amd64_linux</code>，它設定好 stack 後跳到 <code>_rt0_amd64</code>。</p>
+<h4 id="階段-2硬體與環境檢查-3-8"><a class="header" href="#階段-2硬體與環境檢查-3-8">階段 2：硬體與環境檢查 (#3-#8)</a></h4>
+<pre><code>3    22941        runtime.rt0_go.abi0     ← 核心啟動函數（彙編）
+4    22946        runtime.settls.abi0     ← 設定 Thread Local Storage
+5    22949        runtime.check.abi0      ← runtime 自我檢查
+6    22951        runtime.check           ← 檢查型別大小、原子操作
+7    22954        runtime.testAtomic64    ← 測試 64-bit 原子操作
+8    22956        runtime.checkASM.abi0   ← 檢查彙編常數正確性
+</code></pre>
+<p><code>rt0_go</code> 是 Go 啟動的核心彙編函數，它依序完成：設定 TLS → 自我檢查 → 初始化 → 建立 main goroutine → 啟動排程。</p>
+<h4 id="階段-3系統資訊收集-9-33"><a class="header" href="#階段-3系統資訊收集-9-33">階段 3：系統資訊收集 (#9-#33)</a></h4>
+<pre><code>9    22958        runtime.args.abi0       ← 保存命令列參數
+10   22959        runtime.args
+11   22961        runtime.sysargs         ← 解析 auxiliary vector
+12   22963        runtime.sysauxv         ← 讀取 Linux aux vector
+13   22965        runtime.vdsoauxv        ← 找 vDSO 位址
+14   22967        runtime.vdsoInitFromSysinfoEhdr  ← 初始化 vDSO
+15   22973        runtime.vdsoFindVersion ← 找 vDSO 版本
+16   22978        runtime.findnull        ← 字串操作
+17   22979        internal/bytealg.IndexByteString.abi0
+18   22981        indexbytebody
+19   22983        runtime.memequal
+20   22985        memeqbody
+21   22989        runtime.vdsoParseSymbols      ← 解析 vDSO 符號表
+22   22991        runtime.vdsoParseSymbols.func1
+</code></pre>
+<p><strong>什麼是 vDSO？</strong> Virtual Dynamic Shared Object 是 kernel 映射到 user space 的特殊記憶體區域，讓 <code>gettimeofday()</code> 等頻繁使用的系統呼叫不需要 context switch，直接在 user space 執行。Go runtime 啟動時就解析 vDSO，之後 <code>nanotime()</code> 等函數直接走 vDSO 快速路徑。</p>
+<h4 id="階段-4os-初始化-23-33"><a class="header" href="#階段-4os-初始化-23-33">階段 4：OS 初始化 (#23-#33)</a></h4>
+<pre><code>23   23053        runtime.osinit.abi0     ← OS 層初始化
+24   23054        runtime.osinit
+25   23057        runtime.getproccount    ← 取得 CPU 核心數
+26   23065        runtime.sched_getaffinity.abi0  ← syscall
+27   23068        runtime.getHugePageSize ← 讀取 huge page 大小
+28   23070        runtime.open.abi0       ← 讀 /sys/kernel/mm/transparent_hugepage
+29   23084        runtime.read.abi0
+30   23090        runtime.closefd.abi0
+31   23095        runtime.atoi64          ← 解析數字
+32   23097        runtime.vgetrandomInit  ← 初始化隨機數
+33   23099        runtime.vgetrandom1     ← 取得隨機種子
+</code></pre>
+<p>Go runtime 需要知道：有幾個 CPU → 決定 P 的數量；hugepage 大小 → 決定記憶體分配策略；隨機數 → 初始化 hash seed 防止 hash DoS。</p>
+<h4 id="階段-5排程器初始化-schedinit-34-67"><a class="header" href="#階段-5排程器初始化-schedinit-34-67">階段 5：排程器初始化 schedinit (#34-#67)</a></h4>
+<pre><code>34   23102        runtime.schedinit.abi0  ← 排程器初始化入口
+35   23104        runtime.schedinit       ← 排程器初始化
+36   23106        runtime.traceLockInit   ← 追蹤鎖初始化
+37   23108        runtime.lockVerifyMSize
+38   23110        runtime.(*ticksType).init  ← 高精度時鐘
+39   23112        runtime.lock2           ← 內部鎖
+40   23114        runtime.nanotime1.abi0  ← 取當前時間
+41   23124        runtime.cputicks.abi0   ← CPU tick 計數器
+42   23126        runtime.unlock2
+43   23128        runtime.(*mLockProfile).recordUnlock
+44   23131        runtime.moduledataverify1  ← 驗證模組資料
+45   23140        runtime.(*moduledata).textAddr
+</code></pre>
+<p><code>schedinit()</code> 是 Go runtime 初始化的心臟，它依序完成：鎖初始化 → 模組驗證 → 記憶體分配器初始化 → 排程器設定。</p>
+<h4 id="階段-6記憶體分配器初始化-mallocinit-46-67"><a class="header" href="#階段-6記憶體分配器初始化-mallocinit-46-67">階段 6：記憶體分配器初始化 mallocinit (#46-#67)</a></h4>
+<pre><code>46   23144        runtime.mallocinit          ← 記憶體分配器初始化
+47   23146        runtime.(*mheap).init       ← heap 初始化
+48   23149        runtime.(*fixalloc).init    ← 固定大小分配器（×9 個）
+49   23174        runtime.(*pageAlloc).init   ← 頁面分配器
+50   23176        runtime.(*addrRanges).init  ← 位址範圍管理
+51   23178        runtime.persistentalloc     ← 永久記憶體分配
+52   23179        runtime.systemstack.abi0    ← 切換到系統棧
+53   23180        runtime.persistentalloc.func1
+54   23182        runtime.persistentalloc1
+55   23186        runtime.sysAlloc            ← 向 OS 申請記憶體
+56   23187        runtime.(*sysMemStat).add   ← 記憶體統計
+57   23190        runtime.sysAllocOS
+58   23191        runtime.mmap                ← 底層 mmap 系統呼叫
+59   23192        runtime.sysMmap.abi0
+60   23203        runtime.(*pageAlloc).sysInit
+61   23206        runtime.sysReserve          ← 預留虛擬位址空間
+62   23238        runtime.(*scavengeIndex).init  ← 記憶體回收索引
+63   23240        runtime.(*scavengeIndex).sysInit
+64   23247        runtime.allocmcache         ← 分配 mcache（per-P 快取）
+65   23250        runtime.allocmcache.func1
+66   23253        runtime.(*fixalloc).alloc   ← 固定大小記憶體分配
+67   23273        runtime.fastexprand         ← 隨機指數分佈
+</code></pre>
+<p>Go 的記憶體分配器是三層架構，此時正在建立基礎設施：</p>
+<pre><code>  ┌──────────────────────────────────────────────┐
+  │  mcache (per-P)  ← 無鎖，每個 P 一份快取     │
+  ├──────────────────────────────────────────────┤
+  │  mcentral        ← 全域 span 管理，需要鎖     │
+  ├──────────────────────────────────────────────┤
+  │  mheap           ← 向 OS 申請記憶體 (mmap)    │
+  └──────────────────────────────────────────────┘
+</code></pre>
+<h4 id="階段-7cpu-偵測--隨機數初始化-68-152"><a class="header" href="#階段-7cpu-偵測--隨機數初始化-68-152">階段 7：CPU 偵測 &amp; 隨機數初始化 (#68-#152)</a></h4>
+<pre><code>68   23491        runtime.getGodebugEarly    ← 讀 GODEBUG 環境變數
+69   23565        internal/cpu.Initialize    ← CPU 特性偵測
+70   23567        internal/cpu.doinit
+...
+138  24164        internal/cpu.cpuid.abi0    ← 執行 CPUID 指令
+139  24172        internal/cpu.xgetbv.abi0   ← 讀 XCR0（AVX 支援）
+140  24180        internal/cpu.processOptions
+141  24183        runtime.randinit           ← 隨機數初始化
+142  24187        internal/chacha8rand.(*State).Init  ← ChaCha8 PRNG
+143  24189        internal/chacha8rand.block
+144  24197        runtime.alginit            ← hash 演算法初始化
+145  24200        runtime.bootstrapRand
+</code></pre>
+<p>Go 會使用 <code>CPUID</code> 指令偵測 CPU 支援的指令集（SSE、AVX 等），用來選擇最佳的 hash、memcpy 實作。隨機數使用 ChaCha8 演算法。</p>
+<h4 id="階段-8mg-建立--processor-初始化-146-221"><a class="header" href="#階段-8mg-建立--processor-初始化-146-221">階段 8：M/G 建立 &amp; Processor 初始化 (#146-#221)</a></h4>
+<pre><code>146  24306        runtime.mcommoninit        ← 初始化 M（系統線程）
+147  24311        runtime.mReserveID         ← 分配 M 的 ID
+148  24313        runtime.checkmcount        ← 檢查 M 數量限制
+149  24315        runtime.mrandinit          ← M 的隨機數
+153  24358        runtime.malg               ← 建立 G（goroutine）
+154  24370        runtime.malg.func1
+155  24372        runtime.stackalloc         ← 分配 goroutine 棧
+156  24379        runtime.(*mheap).allocManual  ← 手動記憶體分配
+158  24441        runtime.modulesinit        ← 模組初始化
+162  24698        runtime.typelinksinit      ← 型別連結初始化
+163  24701        runtime.itabsinit          ← interface table 初始化
+164  24706        runtime.itabAdd
+165  24708        runtime.(*itabTableType).add
+168  24768        runtime.goargs             ← Go 層參數處理
+170  24875        runtime.goenvs_unix        ← 環境變數處理
+176  25584        runtime.parsedebugvars     ← 解析 GODEBUG
+180  25616        runtime.mapaccess1_faststr ← map 操作
+182  25754        runtime.gcinit             ← GC 初始化
+185  25795        runtime.(*gcControllerState).init  ← GC 控制器
+189  25993        runtime.procresize         ← 建立 P 陣列
+192  26133        runtime.(*p).init          ← 初始化每個 P
+193  26137        runtime.(*wbBuf).reset     ← 寫屏障 buffer
+198  27442        runtime.acquirep           ← M 綁定 P
+199  27446        runtime.wirep
+</code></pre>
+<p>此階段建立 GMP 排程模型的基礎：</p>
+<pre><code>  ┌────────┐     ┌────────┐     ┌────────┐
+  │   G    │     │   G    │     │   G    │
+  │goroutine│     │goroutine│     │goroutine│
+  └───┬────┘     └───┬────┘     └───┬────┘
+      │              │              │
+  ┌───▼────┐     ┌───▼────┐     ┌───▼────┐
+  │   P    │     │   P    │     │   P    │
+  │processor│     │processor│     │processor│
+  │(runqueue)│     │(runqueue)│     │(runqueue)│
+  └───┬────┘     └───┬────┘     └───┬────┘
+      │              │              │
+  ┌───▼────┐     ┌───▼────┐
+  │   M    │     │   M    │
+  │ thread │     │ thread │
+  └────────┘     └────────┘
+</code></pre>
+<h4 id="階段-9建立-main-goroutine--啟動排程-208-249"><a class="header" href="#階段-9建立-main-goroutine--啟動排程-208-249">階段 9：建立 main goroutine &amp; 啟動排程 (#208-#249)</a></h4>
+<pre><code>208  27872        runtime.newproc.abi0       ← 建立新 goroutine
+209  27873        runtime.newproc            ← （runtime.main）
+210  27874        runtime.newproc.func1
+211  27875        runtime.newproc1           ← goroutine 建立核心邏輯
+212  27876        runtime.gfget             ← 嘗試取得空閒 G
+213  27884        runtime.stackcacherefill  ← 補充棧快取
+215  27910        runtime.casgstatus        ← 設定 G 狀態
+216  27911        runtime.allgadd           ← 加入全域 G 列表
+221  27945        runtime.runqput           ← 放入 P 的本地隊列
+222  27946        runtime.mstart.abi0       ← 啟動 M
+223  27947        runtime.mstart0.abi0
+224  27948        runtime.mstart0
+225  27948        runtime.mstart1           ← M 啟動核心
+226  27949        runtime.asminit.abi0
+227  27950        runtime.minit             ← M 初始化
+228  27951        runtime.minitSignals      ← 信號處理初始化
+229  27952        runtime.minitSignalStack
+230  27953        runtime.sigaltstack.abi0  ← 設定替代信號棧
+235  27961        runtime.initsig           ← 安裝信號處理器
+239  27964        runtime.setsig            ← 設定每個信號
+240  28143        runtime.schedule          ← 進入排程迴圈
+241  28145        runtime.findRunnable      ← 尋找可執行的 G
+244  28149        runtime.execute           ← 執行 G
+245  28150        runtime.gogo.abi0         ← 切換到 G 的上下文
+246  28151        gogo                      ← 彙編跳轉
+247  28152        runtime.main              ← 進入 runtime.main
+</code></pre>
+<p>此時排程器正式運轉，<code>schedule()</code> → <code>findRunnable()</code> → <code>execute()</code> → <code>gogo()</code> 切換到 <code>runtime.main</code>。</p>
+<h4 id="階段-10runtimemain--啟動背景服務-247-354"><a class="header" href="#階段-10runtimemain--啟動背景服務-247-354">階段 10：runtime.main — 啟動背景服務 (#247-#354)</a></h4>
+<pre><code>247  28152        runtime.main              ← runtime.main 開始
+249  28155        runtime.main.func1        ← 建立 sysmon goroutine
+250  28156        runtime.newm              ← 建立新的 M
+251  28157        runtime.allocm
+256  28258        runtime.newosproc         ← 建立 OS 線程
+259  28262        runtime.clone.abi0        ← Linux clone() 系統呼叫
+260  28282        runtime.doInit1           ← 執行 init() 函數
+278  28371        runtime.sysmon            ← 系統監控 goroutine 啟動
+289  28470        runtime.gcenable          ← 啟用 GC
+291  28471        runtime.makechan          ← 建立 channel
+322  28815        runtime.bgsweep           ← 背景 sweep goroutine
+348  29254        runtime.bgscavenge        ← 背景 scavenge goroutine
+349  29256        runtime.(*scavengerState).init
+</code></pre>
+<p><code>runtime.main</code> 做了三件關鍵的事：</p>
+<ol>
+<li><strong>啟動 sysmon</strong> — 獨立線程，負責搶佔式排程、network poller、force GC</li>
+<li><strong>執行 init 函數</strong> — 按 import 依賴順序執行所有 package 的 <code>init()</code></li>
+<li><strong>啟用 GC</strong> — 啟動 <code>bgsweep</code> 和 <code>bgscavenge</code> 兩個背景 goroutine</li>
+</ol>
+<h4 id="階段-11package-init-鏈-359-450"><a class="header" href="#階段-11package-init-鏈-359-450">階段 11：package init 鏈 (#359-#450)</a></h4>
+<pre><code>359  29357        math.init
+360  29360        errors.init
+363  29364        iter.init
+364  29396        sync.init.0
+365  29397        sync.runtime_registerPoolCleanup
+368  29401        internal/godebug.init.0
+371  29434        internal/godebug.update
+415  30127        syscall.init
+422  30179        time.init
+425  30184        internal/poll.init
+427  30235        os.init
+428  30236        os.NewFile              ← 建立 stdin/stdout/stderr
+429  30237        internal/syscall/unix.Fcntl
+432  30248        runtime.SetFinalizer    ← 為 File 設定 finalizer
+442  30380        unicode.init
+448  30466        reflect.init
+</code></pre>
+<p><code>init()</code> 函數鏈的執行順序由 import 依賴決定：</p>
+<pre><code>  fmt.Println("Hello, World!")
+       │
+       ▼ 依賴
+  fmt → os → syscall → sync → errors → math → ...
+       │
+       ▼ os.init() 做了什麼？
+  建立 os.Stdin, os.Stdout, os.Stderr (os.NewFile)
+  設定 Finalizer（GC 時自動關閉檔案）
+</code></pre>
+<h4 id="階段-12mainmain--你的程式碼終於執行了-451-482"><a class="header" href="#階段-12mainmain--你的程式碼終於執行了-451-482">階段 12：main.main — 你的程式碼終於執行了 (#451-#482)</a></h4>
+<pre><code>451  30473        main.main               ← 你的 main() 函數！
+452  30474        fmt.Println             ← 呼叫 Println
+453  30475        fmt.Fprintln            ← 實際實作
+454  30476        fmt.newPrinter          ← 從 sync.Pool 取得 printer
+455  30477        sync.(*Pool).Get        ← sync.Pool 操作
+456  30478        sync.(*Pool).pin
+457  30479        sync.runtime_procPin    ← Pin 到當前 P（避免搶佔）
+458  30479        sync.(*Pool).pinSlow
+459  30480        sync.runtime_procUnpin
+460  30486        runtime.GOMAXPROCS      ← 查詢 P 數量
+465  30567        fmt.init.func1          ← 建立新的 pp 物件
+466  30582        fmt.(*pp).doPrintln     ← 格式化輸出
+467  30586        fmt.(*pp).printArg      ← 處理引數
+468  30589        fmt.(*pp).fmtString     ← 格式化字串
+469  30591        fmt.(*fmt).fmtS         ← 寫入 buffer
+470  30594        fmt.(*fmt).padString    ← padding 處理
+471  30614        os.(*File).Write        ← 寫入 stdout
+472  30617        internal/poll.(*FD).Write  ← fd 層寫入
+473  30619        internal/poll.(*fdMutex).rwlock  ← fd 互斥鎖
+                  ─── Hello, World! 在這裡印出 ───
+474  30622        internal/poll.(*pollDesc).prepare
+475  30625        syscall.write           ← write 系統呼叫
+476  30628        syscall.Syscall
+477  30629        runtime.entersyscall    ← 通知排程器進入 syscall
+478  30631        runtime.getcallerfp
+479  30632        runtime.getfp
+480  30635        runtime.reentersyscall
+481  30636        runtime.save            ← 保存 goroutine 狀態
+</code></pre>
+<p><code>fmt.Println</code> 的完整呼叫鏈：</p>
+<pre><code>  main.main
+    └─ fmt.Println("Hello, World!")
+         └─ fmt.Fprintln(os.Stdout, ...)
+              ├─ fmt.newPrinter()              ← 從 sync.Pool 取得 printer
+              │    └─ sync.(*Pool).Get()
+              ├─ fmt.(*pp).doPrintln()         ← 格式化
+              │    └─ fmt.(*pp).printArg()
+              │         └─ fmt.(*pp).fmtString()
+              │              └─ fmt.(*fmt).fmtS()
+              │                   └─ fmt.(*fmt).padString()
+              └─ os.(*File).Write()            ← 寫入
+                   └─ internal/poll.(*FD).Write()
+                        └─ syscall.write()
+                             └─ runtime.entersyscall()
+                                  └─ Linux write(1, "Hello, World!\n", 14)
+</code></pre>
+<h3 id="追蹤統計總結"><a class="header" href="#追蹤統計總結">追蹤統計總結</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>指標</th><th>數值</th></tr></thead><tbody>
+<tr><td>nm 中的 runtime 符號總數</td><td>1288</td></tr>
+<tr><td>nm 中的 text 符號總數</td><td>1762</td></tr>
+<tr><td>bpftrace 追蹤到的不重複函數</td><td>496</td></tr>
+<tr><td>runtime 啟動時間（<code>_rt0_amd64_linux</code> → <code>main.main</code>）</td><td>~7.5 ms</td></tr>
+<tr><td><code>main.main</code> 執行時間</td><td>~2.2 ms</td></tr>
+<tr><td>各 package init() 函數數量</td><td>~15 個</td></tr>
+<tr><td>背景 goroutine 數量</td><td>3 個（sysmon, bgsweep, bgscavenge）</td></tr>
+<tr><td>mmap 呼叫次數</td><td>多次（記憶體預留）</td></tr>
+</tbody></table>
+</div>
+<h3 id="自己動手做"><a class="header" href="#自己動手做">自己動手做</a></h3>
+<h4 id="快速版只追蹤-runtime-函數去重"><a class="header" href="#快速版只追蹤-runtime-函數去重">快速版：只追蹤 runtime 函數（去重）</a></h4>
+<pre><code class="language-bash">sudo bpftrace -e '
+BEGIN { @order = 0; }
+uprobe:./hello_noinline:runtime.* {
+    if (@seen[func] == 0) {
+        @seen[func] = 1;
+        @order++;
+        printf("%-4d %-12lu %s\n", @order, elapsed/1000, func);
+    }
+}
+END { printf("\n--- Unique: %d ---\n", @order); clear(@seen); }
+' -c ./hello_noinline
+</code></pre>
+<h4 id="只看-mainmain-之後的呼叫鏈"><a class="header" href="#只看-mainmain-之後的呼叫鏈">只看 main.main 之後的呼叫鏈</a></h4>
+<pre><code class="language-bash">cat &lt;&lt;'EOF' &gt; trace_after_main.bt
+#!/usr/bin/env bpftrace
+
+BEGIN { @order = 0; @started = 0; }
+
+uprobe:./hello_noinline:main.main { @started = 1; }
+
+uprobe:./hello_noinline:fmt.*     / @started == 1 / { @order++; printf("%-4d %s\n", @order, func); }
+uprobe:./hello_noinline:sync.*    / @started == 1 / { @order++; printf("%-4d %s\n", @order, func); }
+uprobe:./hello_noinline:os.*      / @started == 1 / { @order++; printf("%-4d %s\n", @order, func); }
+uprobe:./hello_noinline:syscall.* / @started == 1 / { @order++; printf("%-4d %s\n", @order, func); }
+uprobe:./hello_noinline:runtime.* / @started == 1 / { @order++; printf("%-4d %s\n", @order, func); }
+
+END { printf("\n--- Calls after main.main: %d ---\n", @order); }
+EOF
+sudo bpftrace trace_after_main.bt -c ./hello_noinline
+</code></pre>
+<h4 id="統計-runtime-中各子系統的呼叫次數"><a class="header" href="#統計-runtime-中各子系統的呼叫次數">統計 runtime 中各子系統的呼叫次數</a></h4>
+<pre><code class="language-bash">sudo bpftrace -e '
+uprobe:./hello_noinline:runtime.* {
+    @calls[func] = count();
+}
+' -c ./hello_noinline
+</code></pre>
+<h3 id="小結"><a class="header" href="#小結">小結</a></h3>
+<p>一行 <code>fmt.Println("Hello, World!")</code> 的背後，Go runtime 做了這些事：</p>
+<pre><code>_rt0_amd64_linux (入口)
+  │
+  ├─ 硬體檢查：TLS、原子操作、彙編常數
+  ├─ 系統探測：vDSO、CPU 數量、hugepage、隨機數
+  ├─ schedinit：排程器 + 記憶體分配器 + GC 控制器
+  │    ├─ mallocinit：mheap → fixalloc → pageAlloc → mcache
+  │    ├─ CPU 偵測：CPUID → SSE/AVX 支援
+  │    ├─ 模組/型別/itab 初始化
+  │    └─ P 陣列建立 (procresize)
+  ├─ newproc：建立 main goroutine
+  ├─ mstart → schedule → gogo → runtime.main
+  │    ├─ 啟動 sysmon（獨立線程）
+  │    ├─ 執行 init() 鏈（math → errors → sync → os → reflect）
+  │    ├─ 啟用 GC（bgsweep + bgscavenge）
+  │    └─ 呼叫 main.main()
+  │         └─ fmt.Println → os.Stdout.Write → syscall.write
+  └─ exit
+</code></pre>
+<p><strong>496 個函數呼叫</strong>、<strong>~7.5 ms 的 runtime 啟動時間</strong> —— 這就是 Go 為你準備好 goroutine 排程、垃圾回收、記憶體管理所付出的代價。</p>
+<hr />
+<h2 id="結語"><a class="header" href="#結語">結語</a></h2>
+<p>透過 <code>bpftrace</code>，我們可以用簡潔的語法快速驗證想法，不需要自己寫 C，也不需要手動編譯。理解 eBPF 的各種追蹤機制後，就能根據不同場景選擇合適的方法，進一步分析系統行為。</p>
+<p>本文涵蓋了從基礎語法到進階效能分析的完整知識，重點整理如下：</p>
+<ul>
+<li><strong>語法基礎</strong>：probe/filter/action 結構、三種變數（內建、scratch、map）、聚合函式</li>
+<li><strong>四種追蹤機制</strong>：Tracepoint（靜態核心）、USDT（靜態使用者）、Kprobes（動態核心）、Uprobes（動態使用者）</li>
+<li><strong>實戰技巧</strong>：one-liner 集錦、腳本檔案寫法、搭配 Brendan Gregg 工具集</li>
+<li><strong>效能分析</strong>：CPU profiling、記憶體追蹤、磁碟 I/O、排程器延遲、Lock 競爭、網路延遲</li>
+<li><strong>工具選擇</strong>：根據場景在 bpftrace / perf / ftrace / BCC / SystemTap 間選擇</li>
+</ul>
+<p>下一篇可以接著探討如何把 <code>bpftrace</code> 收集到的資料轉換成 OTLP 格式，補上觀測資料輸出的最後一段流程。</p>
+<h2 id="參考資料"><a class="header" href="#參考資料">參考資料</a></h2>
+<ul>
+<li><a href="https://github.com/bpftrace/bpftrace">bpftrace</a></li>
+<li><a href="https://github.com/bpftrace/bpftrace/blob/master/docs/reference_guide.md">bpftrace Reference Guide</a></li>
+<li><a href="https://github.com/bpftrace/bpftrace/blob/master/docs/tutorial_one_liners.md">bpftrace One-Liner Tutorial</a></li>
+<li><a href="https://github.com/bpftrace/bpftrace/tree/master/tools">Brendan Gregg's bpftrace Tools</a></li>
+<li><a href="https://www.brendangregg.com/bpf-performance-tools-book.html">Brendan Gregg — BPF Performance Tools</a></li>
+<li><a href="https://xiaodongq.github.io/2024/06/06/ebpf_learn/">eBPF 學習實踐系列（一）: 初識 eBPF</a></li>
+<li><a href="https://xiaodongq.github.io/2024/06/28/ebpf-bpftrace-learn/">eBPF 學習實踐系列（六）: bpftrace 學習與使用</a></li>
+<li><a href="https://jvns.ca/blog/2017/07/05/linux-tracing-systems/">Linux Tracing Systems — bpftrace, perf, ftrace, BCC</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../linux_system/understanding-ebpf.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../linux_system/libbpf-explained.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../linux_system/understanding-ebpf.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../linux_system/libbpf-explained.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
