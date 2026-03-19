@@ -167,7 +167,7 @@ make run
 或指定期間：
 
 ```bash
-python3 src/main.py --start-date 2020-01-01 --end-date 2024-12-31 --debug
+python3 src/main.py --start-date 2010-01-01 --end-date 2024-12-31 --debug
 ```
 
 ## 回測邏輯範例

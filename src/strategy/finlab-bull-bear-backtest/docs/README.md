@@ -11,6 +11,8 @@ make test
 make run
 ```
 
+預設回測區間：`2010-01-01` 到 FinLab 目前可用最新資料。
+
 ## 回測規格
 
 - 市場狀態：`bull` / `top` / `bear` / `base`
@@ -26,5 +28,5 @@ make run
 ## 使用範例
 
 ```bash
-python3 src/main.py --start-date 2020-01-01 --debug
+python3 src/main.py --start-date 2010-01-01 --debug
 ```

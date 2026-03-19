@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class StrategyConfig:
-    start_date: str = "2020-01-01"
+    start_date: str = "2010-01-01"
     end_date: str | None = None
     ma_window: int = 30
     breakout_window: int = 20
