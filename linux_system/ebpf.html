@@ -735,58 +735,457 @@
 </code></pre>
 <hr />
 <h2 id="co-re-compile-once-run-everywhere-原理"><a class="header" href="#co-re-compile-once-run-everywhere-原理">CO-RE (Compile Once, Run Everywhere) 原理</a></h2>
-<pre><code>  問題：不同 kernel 版本的 struct 欄位位置不同
+<h3 id="先搞懂ebpf-的編譯到底產生了什麼"><a class="header" href="#先搞懂ebpf-的編譯到底產生了什麼">先搞懂：eBPF 的「編譯」到底產生了什麼？</a></h3>
+<pre><code>  ┌─────────────────────────────────────────────────────────────────┐
+  │  常見誤解：「eBPF 編譯成 bytecode，就像 Java 一樣到處跑」        │
+  │                                                                 │
+  │  事實是：bytecode 本身「不能」到處跑！                            │
+  │  CO-RE 的魔法不在 bytecode，而是在「載入時修補」                  │
+  └─────────────────────────────────────────────────────────────────┘
 
-  Kernel 5.4:                      Kernel 5.15:
-  struct task_struct {             struct task_struct {
-    ...                              ...
-    pid_t pid;     // offset 100     char new_field[8]; // 新增！
-    char comm[16]; // offset 104     pid_t pid;     // offset 108  ← 偏移變了！
-    ...                              char comm[16]; // offset 112
-  }                                }
+  讓我們一步一步看清楚：
+</code></pre>
+<h3 id="step-1你寫的-c-程式碼"><a class="header" href="#step-1你寫的-c-程式碼">Step 1：你寫的 C 程式碼</a></h3>
+<pre><code class="language-c">  // trace_pid.bpf.c
+  SEC("kprobe/do_fork")
+  int trace_fork(struct pt_regs *ctx) {
+      struct task_struct *task = (void *)bpf_get_current_task();
 
-  沒有 CO-RE 的話：
-  ┌─────────────────────────────────────────────┐
-  │  你的 eBPF 程式寫死 offset 100 去讀 pid      │
-  │  → 在 5.4 正常 ✓                             │
-  │  → 在 5.15 讀到垃圾 ✗                        │
-  │  → 每個 kernel 版本都要重新編譯 😢             │
-  └─────────────────────────────────────────────┘
+      pid_t pid = BPF_CORE_READ(task, pid);  // ← 關鍵！用 CO-RE 巨集讀欄位
+      //          ^^^^^^^^^^^^^^^^^^^^^^^^
+      //          不是寫 task-&gt;pid（這會寫死 offset）
+      //          而是說「我要讀 task_struct 裡叫 pid 的欄位」
 
-  有 CO-RE 的話：
-  ┌─────────────────────────────────────────────────────────┐
-  │                                                         │
-  │  編譯時     →  記錄「我要讀 task_struct.pid」             │
-  │                （不是記錄 offset 數字）                    │
-  │                存成 BTF relocation 資訊                   │
-  │                                                         │
-  │  載入時     →  libbpf 查看目標機器的 BTF                  │
-  │                (BTF = BPF Type Format，kernel 的結構描述) │
-  │                發現「在這台機器上 pid 在 offset 108」       │
-  │                自動改寫 eBPF 指令裡的 offset               │
-  │                                                         │
-  │  執行時     →  程式用的是正確的 offset                     │
-  │                在任何 kernel 版本都能跑 ✓                  │
-  │                                                         │
-  │  白話：就像寫信寫「寄給王先生」而不是「寄到三樓第五間」      │
-  │  搬家了也沒關係，查一下新地址就好                           │
-  └─────────────────────────────────────────────────────────┘
+      bpf_printk("fork pid=%d", pid);
+      return 0;
+  }
+</code></pre>
+<h3 id="step-2clang-編譯產出什麼"><a class="header" href="#step-2clang-編譯產出什麼">Step 2：Clang 編譯產出什麼？</a></h3>
+<pre><code>  clang -O2 -target bpf -g -c trace_pid.bpf.c -o trace_pid.bpf.o
+                    ^^^    ^^
+                    │      │
+                    │      └── -g 產生除錯資訊（BTF 需要）
+                    │
+                    └── 目標是 bpf，不是 x86，不是 ARM
+                         產出的是 eBPF bytecode
 
-  BTF 是什麼？
-  ┌──────────────────────────────────────────────┐
-  │  BTF = BPF Type Format                       │
-  │                                              │
-  │  就是 kernel 的「自我介紹文件」                │
-  │  裡面寫著：                                   │
-  │  - 每個 struct 有哪些欄位                     │
-  │  - 每個欄位的型別和 offset                    │
-  │  - 每個函式的參數型別                         │
-  │                                              │
-  │  存在 kernel image 裡面                       │
-  │  可以用 bpftool btf dump 查看                 │
-  │                                              │
-  │  白話：「kernel 的零件清單」                    │
-  └──────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                                                                 │
+  │  trace_pid.bpf.o（ELF 格式的目的檔）                             │
+  │                                                                 │
+  │  裡面裝了三樣東西：                                               │
+  │                                                                 │
+  │  ┌──────────────────────────────────────────────────────────┐   │
+  │  │  ① eBPF Bytecode（指令區段）                              │   │
+  │  │                                                          │   │
+  │  │  這是一連串 64-bit 指令，長這樣：                           │   │
+  │  │                                                          │   │
+  │  │  指令 0: r1 = bpf_get_current_task()                     │   │
+  │  │  指令 1: r2 = *(u32*)(r1 + 100)    ← offset 100（暫時的）│   │
+  │  │  指令 2: call bpf_printk                                 │   │
+  │  │  指令 3: r0 = 0                                          │   │
+  │  │  指令 4: exit                                            │   │
+  │  │                                                          │   │
+  │  │  注意：指令 1 裡的 offset 100 是用「編譯機器」的 kernel     │   │
+  │  │  算出來的。如果目標機器的 kernel 不同，100 就是錯的！       │   │
+  │  └──────────────────────────────────────────────────────────┘   │
+  │                                                                 │
+  │  ┌──────────────────────────────────────────────────────────┐   │
+  │  │  ② BTF 資訊（型別描述區段）                                │   │
+  │  │                                                          │   │
+  │  │  記錄了程式用到的所有型別：                                 │   │
+  │  │  - struct task_struct { pid_t pid; char comm[16]; ... }   │   │
+  │  │  - 每個欄位的名稱、型別、大小                               │   │
+  │  │                                                          │   │
+  │  │  白話：「我這個程式認識的 kernel 結構長什麼樣」               │   │
+  │  └──────────────────────────────────────────────────────────┘   │
+  │                                                                 │
+  │  ┌──────────────────────────────────────────────────────────┐   │
+  │  │  ③ CO-RE Relocation 記錄（重定位標記）                     │   │
+  │  │                                                          │   │
+  │  │  這是 CO-RE 的靈魂！記錄了：                                │   │
+  │  │                                                          │   │
+  │  │  「指令 1 的 offset 100，對應的是                           │   │
+  │  │    struct task_struct 裡面叫做 pid 的欄位」                 │   │
+  │  │                                                          │   │
+  │  │  白話：不是記「門牌號碼 100」，                              │   │
+  │  │        而是記「住在這條街上叫王先生的那戶」                   │   │
+  │  └──────────────────────────────────────────────────────────┘   │
+  │                                                                 │
+  └─────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="step-3載入時-libbpf-的修補魔法這才是-co-re-的核心"><a class="header" href="#step-3載入時-libbpf-的修補魔法這才是-co-re-的核心">Step 3：載入時 libbpf 的「修補魔法」（這才是 CO-RE 的核心！）</a></h3>
+<pre><code>  .bpf.o 檔案被搬到另一台機器（不同 kernel 版本）
+
+  ┌─ 你的程式（User Space）────────────────────────────────────────┐
+  │                                                                │
+  │  libbpf 載入 trace_pid.bpf.o                                   │
+  │     │                                                          │
+  │     │  Step A: 讀出 .bpf.o 裡的 eBPF bytecode                  │
+  │     │  Step B: 讀出 .bpf.o 裡的 BTF（程式認識的結構）             │
+  │     │  Step C: 讀出 .bpf.o 裡的 CO-RE relocation 記錄           │
+  │     │  Step D: 讀取目標機器的 kernel BTF  ←──────────────────┐  │
+  │     │          (在 /sys/kernel/btf/vmlinux)                 │  │
+  │     │                                                       │  │
+  │     ▼                                                       │  │
+  │  ┌─────────────────────────────────────────────────────┐    │  │
+  │  │  比對！                                              │    │  │
+  │  │                                                     │    │  │
+  │  │  程式的 BTF 說：                                     │    │  │
+  │  │    task_struct.pid 在 offset 100                    │    │  │
+  │  │                                                     │    │  │
+  │  │  目標機器的 kernel BTF 說：            ◄──────────────┘  │  │
+  │  │    task_struct.pid 在 offset 108（多了一個新欄位）       │  │
+  │  │                                                     │    │  │
+  │  │  差異：100 → 108，差了 8 bytes                       │    │  │
+  │  └──────────────────────────┬──────────────────────────┘    │  │
+  │                             │                               │  │
+  │                             ▼                               │  │
+  │  ┌─────────────────────────────────────────────────────┐    │  │
+  │  │  修補 bytecode！                                     │    │  │
+  │  │                                                     │    │  │
+  │  │  原本：指令 1: r2 = *(u32*)(r1 + 100)  ← 舊 offset  │    │  │
+  │  │                                                     │    │  │
+  │  │  改成：指令 1: r2 = *(u32*)(r1 + 108)  ← 新 offset  │    │  │
+  │  │                               ^^^                   │    │  │
+  │  │                          直接改 bytecode 裡的數字！   │    │  │
+  │  └──────────────────────────┬──────────────────────────┘    │  │
+  │                             │                               │  │
+  │                             ▼                               │  │
+  │                    bpf(BPF_PROG_LOAD, 修補後的 bytecode)     │  │
+  │                             │                               │  │
+  │ ════════════════════════════╪═══════════════════════════════ │  │
+  │                             │  KERNEL                       │  │
+  │                             ▼                               │  │
+  │                    Verifier → JIT → 執行                    │  │
+  │                    （用的是正確的 offset 108）                │  │
+  └────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="完整流程圖三個角色的分工"><a class="header" href="#完整流程圖三個角色的分工">完整流程圖：三個角色的分工</a></h3>
+<pre><code>  時間軸 ──────────────────────────────────────────────────────────────&gt;
+
+  ┌─────────────────┐  ┌───────────────────┐  ┌────────────────────┐
+  │  ① 開發者的電腦  │  │  ② 目標機器        │  │  ③ Kernel 內部     │
+  │  (編譯時)        │  │  (載入時)          │  │  (執行時)          │
+  └────────┬────────┘  └─────────┬─────────┘  └─────────┬──────────┘
+           │                     │                      │
+    寫 C 程式碼                   │                      │
+           │                     │                      │
+           ▼                     │                      │
+    clang 編譯                   │                      │
+    產出 .bpf.o：                │                      │
+    - bytecode                   │                      │
+    - BTF (型別資訊)              │                      │
+    - relocation (重定位記錄)     │                      │
+           │                     │                      │
+           │   把 .bpf.o         │                      │
+           │   複製過去           │                      │
+           ├────────────────────&gt;│                      │
+           │                     │                      │
+           │              libbpf 載入 .bpf.o            │
+           │                     │                      │
+           │              讀取本機 kernel BTF            │
+           │              (/sys/kernel/btf/vmlinux)     │
+           │                     │                      │
+           │              比對 BTF 差異                  │
+           │              修補 bytecode offset           │
+           │                     │                      │
+           │                     │  bpf() syscall       │
+           │                     ├─────────────────────&gt;│
+           │                     │  送出修補後的          │
+           │                     │  bytecode             │
+           │                     │                      │
+           │                     │                Verifier 驗證
+           │                     │                JIT 編譯
+           │                     │                掛載到 hook
+           │                     │                      │
+           │                     │                  每次事件觸發
+           │                     │                  用正確 offset
+           │                     │                  讀取 kernel 資料
+           │                     │                      │
+           │                     │  Maps/Ring Buffer    │
+           │                     │&lt;─────────────────────│
+           │                     │  回傳結果             │
+           │                     │                      │
+
+  白話總結：
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  CO-RE 的「到處跑」不是 bytecode 天生就能到處跑                   │
+  │  而是 libbpf 在載入的那一刻「臨場修補」bytecode                   │
+  │                                                                 │
+  │  更準確地說：                                                    │
+  │  - Compile Once → 編譯一次，產出 .bpf.o（含 bytecode + 修補線索）│
+  │  - Run Everywhere → libbpf 根據目標 kernel 的 BTF 即時修補       │
+  │                     修補完的 bytecode 才送進 kernel               │
+  └─────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="跟-java-的比較為什麼-ebpf-的到處跑不一樣"><a class="header" href="#跟-java-的比較為什麼-ebpf-的到處跑不一樣">跟 Java 的比較：為什麼 eBPF 的「到處跑」不一樣？</a></h3>
+<pre><code>  ┌─────────────────────────────┬──────────────────────────────────┐
+  │         Java                │         eBPF CO-RE               │
+  ├─────────────────────────────┼──────────────────────────────────┤
+  │                             │                                  │
+  │  .java → .class (bytecode)  │  .bpf.c → .bpf.o (bytecode)     │
+  │                             │                                  │
+  │  JVM 解釋/JIT 執行          │  kernel 的 eBPF VM + JIT 執行     │
+  │  bytecode                   │  bytecode                        │
+  │                             │                                  │
+  │  bytecode 本身就能跑        │  bytecode 本身「不能」跑 ✗        │
+  │  因為 Java API 是固定的     │  因為 kernel struct 會變          │
+  │                             │                                  │
+  │  不需要修補                  │  libbpf 載入時必須修補            │
+  │                             │  bytecode 裡的 offset            │
+  │                             │                                  │
+  │  到處跑 = JVM 負責抽象      │  到處跑 = libbpf 負責修補         │
+  │                             │         + BTF 提供結構資訊        │
+  │                             │                                  │
+  │  比喻：                      │  比喻：                           │
+  │  「萬國語言翻譯機」           │  「GPS 導航，到了當地               │
+  │  到哪都能翻譯                │    重新查地圖再出發」              │
+  │                             │                                  │
+  └─────────────────────────────┴──────────────────────────────────┘
+
+  為什麼 eBPF 不能像 Java 那樣直接跑？
+
+  因為 eBPF 程式直接操作 kernel 的記憶體結構！
+  ┌──────────────────────────────────────────────────────┐
+  │                                                      │
+  │  Java 程式：                                          │
+  │    String name = person.getName();                    │
+  │    → JVM 幫你處理物件在記憶體裡的位置                   │
+  │    → 你不用知道 name 在 offset 幾                     │
+  │                                                      │
+  │  eBPF 程式：                                          │
+  │    pid = *(u32*)(task_struct_ptr + offset);            │
+  │    → 你直接讀記憶體！offset 錯了就讀到垃圾！            │
+  │    → 不同 kernel 版本 offset 不同                     │
+  │    → 所以需要 CO-RE 在載入時修正 offset               │
+  │                                                      │
+  └──────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="沒有-co-re-之前怎麼辦bcc-的做法"><a class="header" href="#沒有-co-re-之前怎麼辦bcc-的做法">沒有 CO-RE 之前怎麼辦？（BCC 的做法）</a></h3>
+<pre><code>  ┌─────────────────────────────────────────────────────────────┐
+  │  BCC 的做法：每台機器上「現場編譯」                           │
+  │                                                             │
+  │  ┌──────────────┐                                           │
+  │  │ Python 程式   │  裡面嵌入 C 原始碼（字串）                 │
+  │  │ + 嵌入的 C    │                                           │
+  │  └──────┬───────┘                                           │
+  │         │                                                   │
+  │         ▼  每次執行時...                                     │
+  │  ┌──────────────┐                                           │
+  │  │ 現場呼叫      │  需要目標機器裝 clang + kernel headers     │
+  │  │ clang 編譯   │  編譯時直接用本機的 header → offset 一定對  │
+  │  └──────┬───────┘                                           │
+  │         │                                                   │
+  │         ▼                                                   │
+  │  ┌──────────────┐                                           │
+  │  │ 產出 bytecode │  這個 bytecode 是針對本機 kernel 編譯的    │
+  │  │ → 載入執行    │  所以 offset 一定正確                      │
+  │  └──────────────┘                                           │
+  │                                                             │
+  │  缺點：                                                     │
+  │  ┌──────────────────────────────────────────────────────┐   │
+  │  │  ❌ 每台機器都要裝 clang（幾百 MB）                    │   │
+  │  │  ❌ 每台機器都要裝 kernel-headers（要跟 kernel 版本配） │   │
+  │  │  ❌ 每次啟動都要重新編譯（幾秒到幾十秒）                │   │
+  │  │  ❌ 編譯可能失敗（header 版本不對、clang 版本不對）     │   │
+  │  │  ❌ 生產環境裝編譯器 = 增加攻擊面                      │   │
+  │  └──────────────────────────────────────────────────────┘   │
+  │                                                             │
+  │  vs CO-RE：                                                 │
+  │  ┌──────────────────────────────────────────────────────┐   │
+  │  │  ✅ 只需要一個 .bpf.o 檔案（幾十 KB）                 │   │
+  │  │  ✅ 不需要裝 clang                                    │   │
+  │  │  ✅ 不需要 kernel-headers                             │   │
+  │  │  ✅ 載入時修補只需幾毫秒                               │   │
+  │  │  ✅ kernel 內建 BTF 就夠（CONFIG_DEBUG_INFO_BTF=y）   │   │
+  │  └──────────────────────────────────────────────────────┘   │
+  └─────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="btf-深入理解"><a class="header" href="#btf-深入理解">BTF 深入理解</a></h3>
+<pre><code>  BTF = BPF Type Format（BPF 型別格式）
+
+  ┌─────────────────────────────────────────────────────────────┐
+  │                                                             │
+  │  BTF 存在兩個地方：                                          │
+  │                                                             │
+  │  ┌───────────────────────────────────┐                      │
+  │  │  ① Kernel BTF（目標機器提供）      │                      │
+  │  │                                   │                      │
+  │  │  位置：/sys/kernel/btf/vmlinux    │                      │
+  │  │                                   │                      │
+  │  │  內容：這個 kernel 所有的          │                      │
+  │  │  struct / union / enum / typedef  │                      │
+  │  │  的完整描述                       │                      │
+  │  │                                   │                      │
+  │  │  白話：kernel 的「身體檢查報告」   │                      │
+  │  │  每個器官在哪、多大、什麼形狀      │                      │
+  │  │                                   │                      │
+  │  │  啟用方式：                        │                      │
+  │  │  CONFIG_DEBUG_INFO_BTF=y          │                      │
+  │  │  (大多數現代發行版預設開啟)        │                      │
+  │  └───────────────────────────────────┘                      │
+  │                                                             │
+  │  ┌───────────────────────────────────┐                      │
+  │  │  ② 程式 BTF（.bpf.o 裡面）        │                      │
+  │  │                                   │                      │
+  │  │  內容：這個 eBPF 程式「以為」      │                      │
+  │  │  kernel struct 長什麼樣            │                      │
+  │  │  （根據編譯時的 vmlinux.h 產生）    │                      │
+  │  │                                   │                      │
+  │  │  白話：程式帶的「舊地圖」           │                      │
+  │  └───────────────────────────────────┘                      │
+  │                                                             │
+  │  CO-RE 做的事：                                              │
+  │                                                             │
+  │  ┌───────────────┐          ┌───────────────┐               │
+  │  │  程式的 BTF    │   比對   │  Kernel 的 BTF │               │
+  │  │  （舊地圖）    │ ◄─────► │  （新地圖）     │               │
+  │  └───────┬───────┘          └───────┬───────┘               │
+  │          │                          │                       │
+  │          │  task_struct.pid         │  task_struct.pid       │
+  │          │  offset = 100            │  offset = 108         │
+  │          │                          │                       │
+  │          └──────────┬───────────────┘                       │
+  │                     │                                       │
+  │                     ▼                                       │
+  │          差異：+8 bytes                                     │
+  │          → 修補 bytecode 裡所有                              │
+  │            引用 task_struct.pid 的指令                       │
+  │            把 100 改成 108                                   │
+  │                                                             │
+  └─────────────────────────────────────────────────────────────┘
+
+  實際查看 BTF：
+
+  $ bpftool btf dump file /sys/kernel/btf/vmlinux format c | grep -A5 "struct task_struct {"
+  struct task_struct {
+      struct thread_info thread_info;     // offset 0
+      unsigned int __state;               // offset 24
+      ...
+      pid_t pid;                          // offset 1224  ← 這台機器上的真實 offset
+      pid_t tgid;                         // offset 1228
+      ...
+  };
+</code></pre>
+<h3 id="co-re-能處理的不只是-offset-變化"><a class="header" href="#co-re-能處理的不只是-offset-變化">CO-RE 能處理的不只是 offset 變化</a></h3>
+<pre><code>  ┌─────────────────────────────────────────────────────────────────┐
+  │  CO-RE Relocation 能處理的情況：                                 │
+  │                                                                 │
+  │  ┌──────────────────────────────────────────────────────┐       │
+  │  │  ① 欄位 offset 改變（最常見）                         │       │
+  │  │     編譯時 pid 在 +100，目標機器在 +108               │       │
+  │  │     → 自動修補 offset                                │       │
+  │  └──────────────────────────────────────────────────────┘       │
+  │                                                                 │
+  │  ┌──────────────────────────────────────────────────────┐       │
+  │  │  ② 欄位大小改變                                      │       │
+  │  │     編譯時 pid 是 u32，目標機器改成 u64               │       │
+  │  │     → 自動修補讀取寬度 (4 bytes → 8 bytes)           │       │
+  │  └──────────────────────────────────────────────────────┘       │
+  │                                                                 │
+  │  ┌──────────────────────────────────────────────────────┐       │
+  │  │  ③ 欄位是否存在（搭配 bpf_core_field_exists）         │       │
+  │  │     「這個 kernel 版本有沒有這個欄位？」                │       │
+  │  │     → 程式可以寫 if/else 處理兩種情況                  │       │
+  │  └──────────────────────────────────────────────────────┘       │
+  │                                                                 │
+  │  ┌──────────────────────────────────────────────────────┐       │
+  │  │  ④ 型別是否存在（搭配 bpf_core_type_exists）          │       │
+  │  │     「這個 kernel 版本有沒有這個 struct？」             │       │
+  │  │     → 程式可以針對不同 kernel 版本走不同邏輯           │       │
+  │  └──────────────────────────────────────────────────────┘       │
+  │                                                                 │
+  │  ┌──────────────────────────────────────────────────────┐       │
+  │  │  ⑤ enum 值改變                                       │       │
+  │  │     某個 enum 常數從 3 變成 5                         │       │
+  │  │     → 自動修補比較值                                  │       │
+  │  └──────────────────────────────────────────────────────┘       │
+  │                                                                 │
+  │  白話：CO-RE 不只修補地址，還能修補大小、判斷欄位存不存在、        │
+  │        甚至讓程式自動適應不同 kernel 版本的結構差異。               │
+  │        它是一套完整的「跨版本適配系統」。                          │
+  └─────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="vmlinuxhco-re-的起點"><a class="header" href="#vmlinuxhco-re-的起點">vmlinux.h：CO-RE 的起點</a></h3>
+<pre><code>  ┌─────────────────────────────────────────────────────────────────┐
+  │                                                                 │
+  │  傳統做法：#include &lt;linux/sched.h&gt;  （需要安裝 kernel-headers） │
+  │                                                                 │
+  │  CO-RE 做法：#include "vmlinux.h"    （自帶！不需要 headers）    │
+  │                                                                 │
+  │  vmlinux.h 是什麼？                                              │
+  │  ┌──────────────────────────────────────────────────────┐       │
+  │  │                                                      │       │
+  │  │  $ bpftool btf dump file /sys/kernel/btf/vmlinux     │       │
+  │  │    format c &gt; vmlinux.h                              │       │
+  │  │                                                      │       │
+  │  │  把 kernel 的 BTF 轉成 C header 檔案                  │       │
+  │  │  裡面包含 kernel 所有的 struct/union/enum 定義         │       │
+  │  │  通常有 10 萬行以上                                   │       │
+  │  │                                                      │       │
+  │  │  白話：「把 kernel 的零件清單翻譯成 C 語言」             │       │
+  │  │                                                      │       │
+  │  │  重點：這個 vmlinux.h 是從「開發機器」的 kernel 產生的  │       │
+  │  │  目標機器的 kernel 可能不同 → 所以需要 CO-RE 修補      │       │
+  │  └──────────────────────────────────────────────────────┘       │
+  │                                                                 │
+  │  開發流程：                                                      │
+  │                                                                 │
+  │  開發機 (kernel 5.4)              目標機 (kernel 5.15)           │
+  │  ┌─────────────────┐             ┌─────────────────────┐       │
+  │  │ bpftool btf dump │             │                     │       │
+  │  │ → vmlinux.h      │             │  /sys/kernel/btf/   │       │
+  │  │                  │             │  vmlinux            │       │
+  │  │ 寫 .bpf.c       │             │  (kernel 自帶)       │       │
+  │  │ #include vmlinux │             │                     │       │
+  │  │                  │  複製 .o    │  libbpf 載入        │       │
+  │  │ clang 編譯       │────────────&gt;│  比對 BTF           │       │
+  │  │ → .bpf.o        │             │  修補 offset        │       │
+  │  └─────────────────┘             │  載入 kernel 執行    │       │
+  │                                   └─────────────────────┘       │
+  │                                                                 │
+  └─────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="最終理解編譯一次到處跑的精確含義"><a class="header" href="#最終理解編譯一次到處跑的精確含義">最終理解：「編譯一次，到處跑」的精確含義</a></h3>
+<pre><code>  ┌─────────────────────────────────────────────────────────────────┐
+  │                                                                 │
+  │  「編譯一次」=                                                   │
+  │    clang 把 C → eBPF bytecode，只做一次                         │
+  │    產出的 .bpf.o 檔案可以複製到任何機器                           │
+  │                                                                 │
+  │  「到處跑」≠                                                     │
+  │    bytecode 直接就能跑（這是 Java 的做法）                        │
+  │                                                                 │
+  │  「到處跑」=                                                     │
+  │    libbpf 在每台機器上「載入時自動修補」bytecode                   │
+  │    根據該機器的 kernel BTF 修正所有 struct offset                 │
+  │    修補後的 bytecode 才送進 kernel 執行                           │
+  │                                                                 │
+  │  ┌─────────────────────────────────────────────────────────┐    │
+  │  │                                                         │    │
+  │  │  精確的說法應該是：                                      │    │
+  │  │                                                         │    │
+  │  │  Compile Once,                                          │    │
+  │  │  Patch-at-Load-Time,     ← 這步是 CO-RE 偷偷幫你做的    │    │
+  │  │  Run Everywhere                                         │    │
+  │  │                                                         │    │
+  │  │  「編譯一次，載入時自動修補，到處都能跑」                  │    │
+  │  │                                                         │    │
+  │  └─────────────────────────────────────────────────────────┘    │
+  │                                                                 │
+  │  類比：                                                          │
+  │  ┌─────────────────────────────────────────────────────────┐    │
+  │  │                                                         │    │
+  │  │  Java:    寫信用「世界語」→ 翻譯機（JVM）到處都能讀        │    │
+  │  │                                                         │    │
+  │  │  CO-RE:   寫信用「中文」→ 信裡夾了一張標記紙               │    │
+  │  │           標記紙寫著「第 3 行的地址要查一下收件人最新住址」  │    │
+  │  │           郵差（libbpf）送信前先查地址，改好再送出         │    │
+  │  │                                                         │    │
+  │  └─────────────────────────────────────────────────────────┘    │
+  │                                                                 │
+  └─────────────────────────────────────────────────────────────────┘
 </code></pre>
 <hr />
 <h2 id="安全性模型ebpf-vs-傳統-kernel-module"><a class="header" href="#安全性模型ebpf-vs-傳統-kernel-module">安全性模型：eBPF vs 傳統 Kernel Module</a></h2>
@@ -910,6 +1309,602 @@
 <tr><td><strong>bpf() syscall</strong></td><td>user space 跟 kernel 溝通的唯一窗口</td></tr>
 </tbody></table>
 </div>
+<hr />
+<h2 id="ebpf-為什麼開銷低與-utraceptrace-的對比"><a class="header" href="#ebpf-為什麼開銷低與-utraceptrace-的對比">eBPF 為什麼開銷低？——與 utrace/ptrace 的對比</a></h2>
+<h3 id="核心原因jit-編譯直接執行於-kernel-space"><a class="header" href="#核心原因jit-編譯直接執行於-kernel-space">核心原因：JIT 編譯直接執行於 Kernel Space</a></h3>
+<p>eBPF 程式會被編譯成<strong>原生機器碼（native machine code）</strong>，直接在 kernel 內執行，不需要：</p>
+<ul>
+<li>切換到 user space</li>
+<li>系統呼叫的 context switch</li>
+<li>解釋執行的 overhead</li>
+</ul>
+<h3 id="傳統-utrace--ptrace-的高開銷路徑"><a class="header" href="#傳統-utrace--ptrace-的高開銷路徑">傳統 utrace / ptrace 的高開銷路徑</a></h3>
+<p>傳統的 utrace 或基於 ptrace 的工具（如 <code>strace</code>）開銷極大，原因是每次事件都需要多次 context switch：</p>
+<pre><code>程式執行
+  → 觸發 trap
+  → 切換到 kernel space
+  → 通知 tracer process（user space）
+  → tracer 處理
+  → 切換回 kernel
+  → 回到被追蹤程式
+
+每次事件 = 多次 context switch，成本極高
+</code></pre>
+<h3 id="ebpf-的執行路徑"><a class="header" href="#ebpf-的執行路徑">eBPF 的執行路徑</a></h3>
+<pre><code>程式執行
+  → 觸發 probe（kprobe / uprobe）
+  → 直接執行 eBPF JIT 機器碼（在 kernel 內）
+  → 結束，繼續執行
+
+沒有 user space 往返，沒有 context switch
+</code></pre>
+<h3 id="其他讓-ebpf-開銷低的設計機制"><a class="header" href="#其他讓-ebpf-開銷低的設計機制">其他讓 eBPF 開銷低的設計機制</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>機制</th><th>說明</th></tr></thead><tbody>
+<tr><td><strong>Verifier</strong></td><td>程式載入時靜態驗證安全性，執行時無需額外檢查</td></tr>
+<tr><td><strong>BPF Maps</strong></td><td>高效的 kernel 內資料結構，避免頻繁拷貝資料到 user space</td></tr>
+<tr><td><strong>Per-CPU Maps</strong></td><td>避免 lock contention，每個 CPU 有獨立資料副本</td></tr>
+<tr><td><strong>Tail Calls</strong></td><td>類似 function call，但避免 stack 增長</td></tr>
+<tr><td><strong>Ring Buffer</strong></td><td>批次傳遞資料給 user space，減少中斷次數</td></tr>
+</tbody></table>
+</div>
+<h3 id="具體數字感受"><a class="header" href="#具體數字感受">具體數字感受</a></h3>
+<pre><code>用 strace 追蹤程式 → overhead 可能高達 10x ~ 100x 慢
+用 eBPF（如 bpftrace）→ 通常只有 1% ~ 5% 的額外開銷
+</code></pre>
+<hr />
+<h2 id="為什麼-bpftrace-能記錄-user-space-函數流程"><a class="header" href="#為什麼-bpftrace-能記錄-user-space-函數流程">為什麼 bpftrace 能記錄 User Space 函數流程？</a></h2>
+<blockquote>
+<p>eBPF 不是運行在 kernel space 嗎？怎麼能追蹤 user space 的函數？</p>
+</blockquote>
+<h3 id="關鍵機制uprobes"><a class="header" href="#關鍵機制uprobes">關鍵機制：uprobes</a></h3>
+<p>eBPF 透過 <strong>uprobe（user-space probe）</strong> 來探測 user space 函數。</p>
+<h3 id="1-插入斷點指令"><a class="header" href="#1-插入斷點指令">1. 插入斷點指令</a></h3>
+<p>當你用 bpftrace 追蹤某個 user space 函數時，kernel 會在目標函數的<strong>第一條指令</strong>替換成 <code>int3</code>（x86 軟體中斷）：</p>
+<pre><code>原始指令:  55 48 89 e5  (push rbp; mov rbp, rsp)
+插入後:    CC 48 89 e5  (int3; mov rbp, rsp)
+</code></pre>
+<h3 id="2-觸發流程"><a class="header" href="#2-觸發流程">2. 觸發流程</a></h3>
+<pre><code>user space 程式執行到該函數
+  → 執行到 int3
+  → CPU 觸發 trap，強制進入 kernel
+  → kernel 的 uprobe handler 被呼叫
+  → 執行掛載在這裡的 eBPF 程式（在 kernel space）
+  → eBPF 程式收集資料（stack trace、參數、時間戳等）
+  → 恢復原始指令，回到 user space 繼續執行
+</code></pre>
+<h3 id="3-為什麼能讀取-user-space-的資料"><a class="header" href="#3-為什麼能讀取-user-space-的資料">3. 為什麼能讀取 User Space 的資料？</a></h3>
+<p>eBPF 程式雖然跑在 kernel space，但此時：</p>
+<ul>
+<li><strong>context 還是原本的 process</strong>——kernel 知道是哪個 process 觸發的</li>
+<li>kernel 可以透過 <code>bpf_probe_read_user()</code> <strong>安全地讀取</strong>該 process 的記憶體</li>
+<li><strong>registers</strong>（如 <code>rdi</code>, <code>rsi</code>）還保留著函數的參數值</li>
+</ul>
+<pre><code class="language-c">// bpftrace 內部類似這樣讀取參數
+bpf_probe_read_user(&amp;arg0, sizeof(arg0), (void *)PT_REGS_PARM1(ctx));
+</code></pre>
+<h3 id="4-完整架構圖"><a class="header" href="#4-完整架構圖">4. 完整架構圖</a></h3>
+<pre><code>User Space                    Kernel Space
+──────────────────────────────────────────────────
+myapp::foo()
+  │
+  └─ int3 trap ──────────────→ uprobe handler
+                                    │
+                                    └─ eBPF program 執行
+                                         │ 讀 registers
+                                         │ bpf_probe_read_user()
+                                         │ 寫入 BPF Map / ring buffer
+                                         ↓
+  ←── 恢復原始指令，繼續執行 ──────────────
+
+                               bpftrace process
+                               (user space, 非同步讀取 BPF Map)
+</code></pre>
+<h3 id="5-符號解析怎麼做"><a class="header" href="#5-符號解析怎麼做">5. 符號解析怎麼做？</a></h3>
+<p>bpftrace 在<strong>載入階段</strong>（不是執行時）：</p>
+<ol>
+<li>解析 <strong>ELF binary</strong> 或 <strong>DWARF debug info</strong></li>
+<li>找到函數名稱對應的<strong>記憶體位址（offset）</strong></li>
+<li>告訴 kernel 在哪個位址插入 uprobe</li>
+</ol>
+<p>所以你寫 <code>uprobe:/usr/bin/bash:readline</code> 時，bpftrace 會先查出 <code>readline</code> 的 offset，再讓 kernel 在那裡插斷點。</p>
+<h3 id="6-uprobe-從符號解析到斷點插入的完整示意圖"><a class="header" href="#6-uprobe-從符號解析到斷點插入的完整示意圖">6. uprobe 從符號解析到斷點插入的完整示意圖</a></h3>
+<pre><code> 你輸入的 bpftrace 命令
+ ┌──────────────────────────────────────────────────────────┐
+ │  bpftrace -e 'uprobe:/usr/bin/bash:readline { ... }'    │
+ └──────────────┬───────────────────────────────────────────┘
+                │
+                │ 解析命令，拆出三個欄位：
+                │   probe 類型 = uprobe
+                │   目標檔案   = /usr/bin/bash
+                │   函數名稱   = readline
+                ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │  STEP 1：讀取 ELF 檔頭                                   │
+ │                                                          │
+ │  /usr/bin/bash (ELF binary)                              │
+ │  ┌──────────────────────────────────────────────┐        │
+ │  │  ELF Header                                  │        │
+ │  │    Type: ET_DYN (shared object / PIE)        │        │
+ │  │    Entry: 0x31e60                            │        │
+ │  ├──────────────────────────────────────────────┤        │
+ │  │  .dynsym (動態符號表)                         │        │
+ │  │  ┌────────────────────────────────────┐      │        │
+ │  │  │  readline    → offset 0x0b2a40    │ ◄─── 找到！   │
+ │  │  │  main        → offset 0x02e7c0    │      │        │
+ │  │  │  execute_cmd → offset 0x04a1e0    │      │        │
+ │  │  │  ...                              │      │        │
+ │  │  └────────────────────────────────────┘      │        │
+ │  ├──────────────────────────────────────────────┤        │
+ │  │  .symtab (靜態符號表，如果有的話)              │        │
+ │  ├──────────────────────────────────────────────┤        │
+ │  │  .debug_info (DWARF，如果有的話)              │        │
+ │  │    → 可取得參數型別、原始碼行號等              │        │
+ │  └──────────────────────────────────────────────┘        │
+ └──────────────┬───────────────────────────────────────────┘
+                │
+                │  得到 readline 的 file offset = 0x0b2a40
+                ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │  STEP 2：透過 perf_event_open() / bpf() 告訴 kernel     │
+ │                                                          │
+ │  bpftrace → kernel：                                     │
+ │    「請在 /usr/bin/bash 的 offset 0x0b2a40               │
+ │     插入一個 uprobe，觸發時執行我的 eBPF 程式」            │
+ │                                                          │
+ │  傳遞的資訊：                                             │
+ │    ┌─────────────────────────────────────┐               │
+ │    │  target  = "/usr/bin/bash"          │               │
+ │    │  offset  = 0x0b2a40                │               │
+ │    │  bpf_fd  = &lt;eBPF 程式的 fd&gt;         │               │
+ │    └─────────────────────────────────────┘               │
+ └──────────────┬───────────────────────────────────────────┘
+                │
+                ▼
+ ═══════════════════════════════════════════ KERNEL SPACE ═══
+                │
+                ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │  STEP 3：Kernel 修改目標程式的記憶體                      │
+ │                                                          │
+ │  找到所有正在執行 /usr/bin/bash 的 process，              │
+ │  在虛擬位址對應的位置修改指令：                             │
+ │                                                          │
+ │  bash process (PID 1234) 的記憶體：                       │
+ │                                                          │
+ │  位址           修改前              修改後                 │
+ │  ─────────────────────────────────────────────           │
+ │  0x5555_55b2a40:  55              →  CC  (int3)          │
+ │  0x5555_55b2a41:  48 89 e5           48 89 e5            │
+ │  0x5555_55b2a44:  41 57              41 57               │
+ │                   ~~                 ~~                   │
+ │                   push rbp           int3 (trap!)        │
+ │                   mov rbp,rsp        mov rbp,rsp         │
+ │                   push r15           push r15            │
+ │                                                          │
+ │  Kernel 同時記住原始指令 0x55，以便後續恢復               │
+ └──────────────┬───────────────────────────────────────────┘
+                │
+                ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │  STEP 4：程式執行到 readline() 時觸發                     │
+ │                                                          │
+ │  bash process 正常執行...                                 │
+ │       │                                                  │
+ │       ▼                                                  │
+ │  call readline()                                         │
+ │       │                                                  │
+ │       ▼  碰到 0xCC (int3)                                │
+ │  ┌────────────────────────────────┐                      │
+ │  │  CPU 觸發 #BP 異常 (trap)      │                      │
+ │  │  → 控制權交給 kernel           │                      │
+ │  └─────────────┬──────────────────┘                      │
+ │                │                                         │
+ │                ▼                                         │
+ │  ┌────────────────────────────────┐                      │
+ │  │  kernel uprobe handler         │                      │
+ │  │    1. 保存 registers 快照      │                      │
+ │  │    2. 執行 eBPF 程式           │ ← JIT 機器碼         │
+ │  │       ├─ 讀 rdi (第1個參數)    │                      │
+ │  │       ├─ 讀 rsi (第2個參數)    │                      │
+ │  │       ├─ ktime_get_ns() 時間戳 │                      │
+ │  │       └─ 寫入 ring buffer      │                      │
+ │  │    3. 恢復原始指令 (0x55)      │                      │
+ │  │    4. 單步執行原始指令         │                      │
+ │  │    5. 重新插入 int3            │                      │
+ │  │    6. 返回 user space          │                      │
+ │  └─────────────┬──────────────────┘                      │
+ │                │                                         │
+ │                ▼                                         │
+ │  bash 繼續執行 readline() 的後續指令                      │
+ │  （完全不知道剛才被攔截過）                                │
+ └──────────────────────────────────────────────────────────┘
+
+ 同時在另一側...
+ ┌──────────────────────────────────────────────────────────┐
+ │  bpftrace process (user space)                           │
+ │                                                          │
+ │  持續從 ring buffer 讀取事件                              │
+ │       │                                                  │
+ │       ▼                                                  │
+ │  輸出：readline 被呼叫了！                                │
+ │    timestamp=1679012345.123456                           │
+ │    pid=1234  comm=bash                                   │
+ └──────────────────────────────────────────────────────────┘
+</code></pre>
+<p><strong>時間軸摘要：</strong></p>
+<pre><code>bpftrace 啟動時（一次性）：
+  ELF 解析 → 取得 offset → perf_event_open() → kernel 插入 int3
+
+每次函數被呼叫時（重複）：
+  int3 trap → uprobe handler → 執行 eBPF → 恢復指令 → 單步執行 → 重插 int3 → 返回
+  (整個過程 &lt; 1 微秒)
+
+bpftrace 結束時（一次性）：
+  移除 uprobe → kernel 恢復所有原始指令 → 一切回到原狀
+</code></pre>
+<h3 id="總結"><a class="header" href="#總結">總結</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>問題</th><th>答案</th></tr></thead><tbody>
+<tr><td><strong>誰插斷點？</strong></td><td>Kernel（透過 uprobe 機制）</td></tr>
+<tr><td><strong>eBPF 跑在哪？</strong></td><td>Kernel space</td></tr>
+<tr><td><strong>怎麼讀 user space 資料？</strong></td><td><code>bpf_probe_read_user()</code> + 當下的 process context</td></tr>
+<tr><td><strong>user space 程式知道嗎？</strong></td><td>不知道，完全透明執行</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="常見誤解與澄清"><a class="header" href="#常見誤解與澄清">常見誤解與澄清</a></h2>
+<h3 id="誤解-①ebpf-零開銷"><a class="header" href="#誤解-①ebpf-零開銷">誤解 ①：「eBPF 零開銷」</a></h3>
+<pre><code>  ┌─────────────────────────────────────────────────────────────────┐
+  │  ❌ 誤解：「eBPF 沒有額外開銷」                                  │
+  │  ✅ 事實：eBPF 有開銷，但開銷遠低於傳統工具。不同 probe 開銷差異很大 │
+  └─────────────────────────────────────────────────────────────────┘
+
+  各種 probe 類型的開銷比較（單次觸發）：
+
+  ┌──────────────┬──────────────┬──────────────────────────────────────┐
+  │  Probe 類型   │  單次開銷     │  為什麼？                             │
+  ├──────────────┼──────────────┼──────────────────────────────────────┤
+  │              │              │                                      │
+  │  fentry      │  ~5-20 ns    │  直接在函式入口 patch call 指令         │
+  │  /fexit      │  (最快)      │  不需要 trap，不需要單步執行             │
+  │              │              │  類似 function hooking                │
+  │              │              │                                      │
+  │  tracepoint  │  ~20-80 ns   │  靜態定義的觀測點，有 overhead 但穩定   │
+  │              │              │  kernel 編譯時就決定了位置              │
+  │              │              │                                      │
+  │  kprobe      │  ~50-150 ns  │  動態插 int3 在 kernel 函式            │
+  │              │              │  trap → handler → 單步 → 恢復         │
+  │              │              │  跟 uprobe 機制相同，但在 kernel space  │
+  │              │              │                                      │
+  │  uprobe      │  ~1-5 μs     │  int3 trap + user↔kernel 切換         │
+  │  (最慢)      │  (比 kprobe  │  + 單步執行 + 重插斷點                  │
+  │              │   慢 10x+)   │  每次觸發都涉及 page fault 級別的開銷   │
+  │              │              │                                      │
+  └──────────────┴──────────────┴──────────────────────────────────────┘
+
+  視覺化比較（對數刻度）：
+
+  fentry     ██                          ~10 ns
+  tracepoint ████                        ~50 ns
+  kprobe     ████████                    ~100 ns
+  uprobe     ████████████████████████    ~2000 ns (2 μs)
+  strace     ████████████████████████████████████████ ~50,000 ns (50 μs)
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  重點：                                                         │
+  │                                                                 │
+  │  • uprobe 追蹤 user space 函數，每次觸發約 1-5 微秒              │
+  │    → 如果函數每秒被呼叫 100 萬次，overhead 就是 1-5 秒/秒        │
+  │    → 對高頻函數（如 malloc）要非常小心！                          │
+  │                                                                 │
+  │  • fentry 追蹤 kernel 函數，每次只需 ~10 奈秒                    │
+  │    → 幾乎感覺不到                                               │
+  │                                                                 │
+  │  • 「eBPF 只有 1-5% overhead」這句話指的是                       │
+  │    整體系統效能影響，不是單次 probe 的開銷                         │
+  │    前提是你不要掛太多 probe 或追蹤太高頻的函數                     │
+  └─────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="誤解-②ebpf-可以做任何事"><a class="header" href="#誤解-②ebpf-可以做任何事">誤解 ②：「eBPF 可以做任何事」</a></h3>
+<pre><code>  ┌─────────────────────────────────────────────────────────────────┐
+  │  ❌ 誤解：「eBPF 跑在 kernel 裡面，所以什麼都能做」               │
+  │  ✅ 事實：eBPF 是被嚴格限制的，很多事它做不到                     │
+  └─────────────────────────────────────────────────────────────────┘
+
+  eBPF 的真實限制：
+
+  ┌────────────────────┬─────────────────────────────────────────────┐
+  │  限制               │  原因與影響                                  │
+  ├────────────────────┼─────────────────────────────────────────────┤
+  │                    │                                             │
+  │  Stack 只有        │  不能宣告大的 local 變數                      │
+  │  512 bytes         │  char buf[1024] 直接被 Verifier 拒絕         │
+  │                    │  → 解法：用 BPF Map 或 per-cpu array 當暫存  │
+  │                    │                                             │
+  │  不能 sleep        │  bpf 程式在中斷/軟中斷上下文執行               │
+  │                    │  不能呼叫任何可能 block 的函式                 │
+  │                    │  不能 mutex_lock、不能 kmalloc(GFP_KERNEL)   │
+  │                    │                                             │
+  │  迴圈必須有界      │  Verifier 必須在載入時證明迴圈會終止           │
+  │  (Linux &lt; 5.3      │  早期版本完全不允許迴圈                       │
+  │   完全禁止迴圈)    │  5.3+ 允許 bounded loop（有上限的迴圈）       │
+  │                    │                                             │
+  │  只能呼叫          │  不能呼叫任意 kernel function                 │
+  │  Helper functions  │  只能用 Verifier 允許的白名單 helper          │
+  │                    │  (Linux 5.13+ 有 kfunc 放寬了一些)           │
+  │                    │                                             │
+  │  不能直接分配      │  沒有 malloc / free                           │
+  │  記憶體            │  所有記憶體必須事先在 Map 裡定義好              │
+  │                    │                                             │
+  │  指令數上限        │  單一程式最多 100 萬條指令 (5.2+)             │
+  │                    │  Verifier 要走過每條可能路徑，太複雜會超時     │
+  │                    │                                             │
+  │  不能修改          │  不能改 kernel 的資料結構（除了特定場景）       │
+  │  kernel 狀態      │  只有 XDP/TC 可以改封包，LSM 可以做安全決策    │
+  │                    │  追蹤類的 eBPF 是「唯讀」的                   │
+  │                    │                                             │
+  └────────────────────┴─────────────────────────────────────────────┘
+
+  對比 Kernel Module：
+
+  ┌────────────────────────┬──────────────┬──────────────┐
+  │  能力                   │  eBPF        │  Kernel Module│
+  ├────────────────────────┼──────────────┼──────────────┤
+  │  分配記憶體             │  ❌           │  ✅           │
+  │  Sleep / Block          │  ❌           │  ✅           │
+  │  呼叫任意 kernel func   │  ❌           │  ✅           │
+  │  建立 /proc 檔案        │  ❌           │  ✅           │
+  │  註冊新的 syscall        │  ❌           │  ✅           │
+  │  註冊裝置驅動            │  ❌           │  ✅           │
+  │  無限迴圈               │  ❌           │  ✅(但會當機)  │
+  │  安全性保證             │  ✅ Verifier  │  ❌ 全憑自覺   │
+  │  動態載入卸載            │  ✅           │  ✅           │
+  │  不會 kernel panic      │  ✅           │  ❌           │
+  └────────────────────────┴──────────────┴──────────────┘
+</code></pre>
+<h3 id="誤解-③verifier-會幫你抓-bug"><a class="header" href="#誤解-③verifier-會幫你抓-bug">誤解 ③：「Verifier 會幫你抓 bug」</a></h3>
+<pre><code>  ┌─────────────────────────────────────────────────────────────────┐
+  │  ❌ 誤解：「程式通過 Verifier 就代表程式是正確的」                │
+  │  ✅ 事實：Verifier 保證安全性，不保證正確性                       │
+  └─────────────────────────────────────────────────────────────────┘
+
+  Verifier 做的事：                     Verifier 不做的事：
+
+  ┌──────────────────────────┐         ┌──────────────────────────┐
+  │  ✅ 保證程式會終止        │         │  ❌ 不檢查邏輯是否正確    │
+  │  ✅ 保證不會非法存取記憶體 │         │  ❌ 不檢查你讀的欄位對不對│
+  │  ✅ 保證不會搞壞 kernel   │         │  ❌ 不檢查 Map 的值合不合理│
+  │  ✅ 保證用的 helper 合法  │         │  ❌ 不幫你 debug 邏輯錯誤 │
+  │  ✅ 保證 stack 不會溢出   │         │  ❌ 不保證你追蹤的是對的  │
+  └──────────────────────────┘         └──────────────────────────┘
+
+  白話：
+  ┌──────────────────────────────────────────────────────────────┐
+  │  Verifier = 飛機起飛前的安全檢查                              │
+  │                                                              │
+  │  「機翼有鎖好嗎？」 ✅                                        │
+  │  「油有加滿嗎？」   ✅                                        │
+  │  「引擎能啟動嗎？」 ✅                                        │
+  │                                                              │
+  │  但它不會問你：                                               │
+  │  「你飛的方向對嗎？」 ← 這是你的問題                           │
+  │  「你該去紐約還是倫敦？」 ← Verifier 不管目的地               │
+  └──────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="誤解-④uprobe-的-offset-是虛擬位址"><a class="header" href="#誤解-④uprobe-的-offset-是虛擬位址">誤解 ④：「uprobe 的 offset 是虛擬位址」</a></h3>
+<pre><code>  ┌─────────────────────────────────────────────────────────────────┐
+  │  ❌ 誤解：「uprobe 用的是程式在記憶體中的虛擬位址」               │
+  │  ✅ 事實：uprobe 用的是 ELF 檔案內的 file offset                │
+  │          kernel 自己處理 ASLR 和 PIE 的位址轉換                 │
+  └─────────────────────────────────────────────────────────────────┘
+
+  現代程式都啟用 PIE（Position Independent Executable）+ ASLR：
+  每次執行時，程式被載入到隨機的虛擬位址。
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                                                                 │
+  │  ELF 檔案（磁碟上）：                                           │
+  │  ┌──────────────────────────────────────────┐                   │
+  │  │  .text section                            │                   │
+  │  │                                          │                   │
+  │  │  file offset 0x0b2a40: readline 函式     │ ← 這是固定的       │
+  │  │  file offset 0x02e7c0: main 函式         │                   │
+  │  └──────────────────────────────────────────┘                   │
+  │                                                                 │
+  │  第一次執行（PID 1234）：       第二次執行（PID 5678）：          │
+  │  ┌──────────────────────┐     ┌──────────────────────┐          │
+  │  │ 基底: 0x5555_5500_0000│     │ 基底: 0x7f12_3400_0000│          │
+  │  │                      │     │                      │          │
+  │  │ readline 在虛擬位址   │     │ readline 在虛擬位址   │          │
+  │  │ 0x5555_550b_2a40     │     │ 0x7f12_340b_2a40     │          │
+  │  │                      │     │                      │          │
+  │  │  ↑ 每次不同！         │     │  ↑ 每次不同！         │          │
+  │  └──────────────────────┘     └──────────────────────┘          │
+  │                                                                 │
+  │  但 file offset 永遠是 0x0b2a40                                 │
+  │                                                                 │
+  │  ┌──────────────────────────────────────────────────────────┐   │
+  │  │  uprobe 的註冊方式：                                      │   │
+  │  │                                                          │   │
+  │  │  kernel 記錄的是：                                        │   │
+  │  │    inode = /usr/bin/bash 的 inode 編號                    │   │
+  │  │    offset = 0x0b2a40（檔案內偏移）                        │   │
+  │  │                                                          │   │
+  │  │  不是記虛擬位址！                                         │   │
+  │  │                                                          │   │
+  │  │  當任何 process 載入這個 inode 的檔案時，                  │   │
+  │  │  kernel 自動計算：                                        │   │
+  │  │    虛擬位址 = 載入基底 + file offset                      │   │
+  │  │  然後在正確的虛擬位址插入 int3                             │   │
+  │  └──────────────────────────────────────────────────────────┘   │
+  │                                                                 │
+  │  這就是為什麼 uprobe 能自動追蹤：                                │
+  │  • 所有正在跑的 bash process（不管載入位址是多少）               │
+  │  • 未來新開的 bash process（kernel 在 mmap 時自動插 probe）     │
+  │  • 完全不受 ASLR 影響                                          │
+  │                                                                 │
+  └─────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="誤解-⑤kprobe-和-tracepoint-差不多"><a class="header" href="#誤解-⑤kprobe-和-tracepoint-差不多">誤解 ⑤：「kprobe 和 tracepoint 差不多」</a></h3>
+<pre><code>  ┌─────────────────────────────────────────────────────────────────┐
+  │  ❌ 誤解：「kprobe 和 tracepoint 都能追蹤 kernel，用哪個都行」   │
+  │  ✅ 事實：穩定性、效能、能力差很多，選錯會踩坑                    │
+  └─────────────────────────────────────────────────────────────────┘
+
+  Probe 選型決策圖：
+
+  你要追蹤什麼？
+       │
+       ├── User Space 程式的函數
+       │        │
+       │        └──→ uprobe / uretprobe
+       │             (唯一選擇，沒有替代方案)
+       │
+       └── Kernel 的函數
+                │
+                ├── 這個函數有 tracepoint 嗎？
+                │        │
+                │        ├── 有 → 優先用 tracepoint ✅
+                │        │     • 穩定 API，kernel 升級不會壞
+                │        │     • 效能最好（靜態定義）
+                │        │     • 有明確的參數格式
+                │        │
+                │        └── 沒有 → 你的 kernel ≥ 5.5 嗎？
+                │                      │
+                │                      ├── 是 → 優先用 fentry/fexit ✅
+                │                      │     • 比 kprobe 快 5-10x
+                │                      │     • 直接存取函數參數（型別安全）
+                │                      │     • 不需要 int3 trap
+                │                      │
+                │                      └── 否 → 用 kprobe/kretprobe
+                │                            • 最靈活，任何函數都能掛
+                │                            • 但不穩定：kernel 改了函數名
+                │                              或 inline 了，probe 就壞了
+                │                            • 效能中等
+
+  穩定性對比：
+
+  ┌──────────────┬──────────┬───────────────────────────────────────┐
+  │  類型         │  穩定性   │  kernel 升級時會發生什麼？              │
+  ├──────────────┼──────────┼───────────────────────────────────────┤
+  │  tracepoint  │  ⭐⭐⭐   │  幾乎不會壞。kernel 開發者承諾維護      │
+  │              │  最穩定   │  這些觀測點的介面不變                   │
+  │              │          │                                       │
+  │  fentry      │  ⭐⭐     │  函數被 rename/inline/刪除就會壞       │
+  │              │  中等     │  但比 kprobe 好，因為有型別檢查         │
+  │              │          │                                       │
+  │  kprobe      │  ⭐       │  最脆弱。函數 rename、參數順序改變、     │
+  │              │  最脆弱   │  被 inline 優化掉，都會導致 probe 失效  │
+  └──────────────┴──────────┴───────────────────────────────────────┘
+
+  效能對比（追蹤同一個 kernel 函數）：
+
+  tracepoint    ██████                     ~30 ns
+  fentry        ████████                   ~15 ns  (最快，但需 5.5+)
+  kprobe        ████████████████████       ~100 ns
+                ▲
+                │
+                為什麼 fentry 比 tracepoint 還快？
+                因為 fentry 直接 patch function prologue，
+                而 tracepoint 有一層間接呼叫。
+                但 tracepoint 贏在穩定性。
+</code></pre>
+<h3 id="誤解-⑥ebpf-程式離開就消失了"><a class="header" href="#誤解-⑥ebpf-程式離開就消失了">誤解 ⑥：「eBPF 程式離開就消失了」</a></h3>
+<pre><code>  ┌─────────────────────────────────────────────────────────────────┐
+  │  ❌ 誤解：「eBPF 程式只在載入它的 process 活著的時候才存在」      │
+  │  ✅ 事實：eBPF 程式的生命週期由 reference count 控制，            │
+  │          可以 pin 到 bpffs 讓它永久存活                          │
+  └─────────────────────────────────────────────────────────────────┘
+
+  eBPF 程式的生命週期：
+
+  情境 A：正常情況（最常見）
+  ┌──────────────────────────────────────────────────────┐
+  │  bpftrace 啟動                                       │
+  │    → 載入 eBPF 程式，取得 fd                          │
+  │    → 掛載到 hook point                               │
+  │    → 持續收集資料...                                  │
+  │                                                      │
+  │  bpftrace 結束（Ctrl+C）                              │
+  │    → fd 被 close                                     │
+  │    → reference count 歸零                             │
+  │    → kernel 自動卸載 eBPF 程式                        │
+  │    → 恢復所有 probe 點                                │
+  │    → 清理所有 Map                                     │
+  │                                                      │
+  │  白話：人走燈滅，自動收拾 ✅                           │
+  └──────────────────────────────────────────────────────┘
+
+  情境 B：Pin 到 bpffs（持久化）
+  ┌──────────────────────────────────────────────────────┐
+  │  載入程式                                             │
+  │    → bpf(BPF_OBJ_PIN, fd, "/sys/fs/bpf/my_prog")    │
+  │    → 程式被「釘」在 bpffs 檔案系統上                   │
+  │                                                      │
+  │  載入的 process 結束                                   │
+  │    → eBPF 程式繼續跑！因為 bpffs 持有 reference        │
+  │                                                      │
+  │  清理方式：                                           │
+  │    rm /sys/fs/bpf/my_prog                             │
+  │    → reference count 歸零                             │
+  │    → 程式才會被卸載                                    │
+  │                                                      │
+  │  用途：Cilium、Calico 等網路工具用這個方式               │
+  │       讓 eBPF 網路策略在 agent 重啟後仍然生效           │
+  └──────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="誤解-⑦bpf_probe_read-和-bpf_probe_read_user-一樣"><a class="header" href="#誤解-⑦bpf_probe_read-和-bpf_probe_read_user-一樣">誤解 ⑦：「bpf_probe_read 和 bpf_probe_read_user 一樣」</a></h3>
+<pre><code>  ┌─────────────────────────────────────────────────────────────────┐
+  │  ❌ 誤解：「都是讀記憶體，用哪個都行」                            │
+  │  ✅ 事實：讀錯空間會拿到垃圾資料或直接失敗                        │
+  └─────────────────────────────────────────────────────────────────┘
+
+  三個 helper 的正確用法：
+
+  ┌──────────────────────────┬──────────────────────────────────────┐
+  │  Helper                  │  用途                                 │
+  ├──────────────────────────┼──────────────────────────────────────┤
+  │                          │                                      │
+  │  bpf_probe_read_kernel() │  讀 kernel space 的記憶體             │
+  │                          │  用在 kprobe/tracepoint 裡讀          │
+  │                          │  kernel struct 的內容                 │
+  │                          │                                      │
+  │  bpf_probe_read_user()   │  讀 user space 的記憶體               │
+  │                          │  用在 uprobe 裡讀 user space          │
+  │                          │  程式的變數/參數/字串                  │
+  │                          │                                      │
+  │  bpf_probe_read()        │  舊版 API，自動猜測 kernel/user       │
+  │  (已棄用)                │  Linux 5.5+ 請改用上面兩個             │
+  │                          │  因為在某些架構上「猜」會猜錯           │
+  │                          │                                      │
+  └──────────────────────────┴──────────────────────────────────────┘
+
+  為什麼要區分？
+
+  ┌─────────────────────────────────────────────────────────────┐
+  │                                                             │
+  │  在 x86_64 上，kernel 和 user 共用同一個位址空間             │
+  │  但有不同的 page table 權限                                 │
+  │                                                             │
+  │  Virtual Address Space (x86_64):                            │
+  │                                                             │
+  │  0xFFFF_FFFF_FFFF_FFFF ┐                                   │
+  │                         │ Kernel Space                      │
+  │  0xFFFF_8000_0000_0000 ┘ ← 用 bpf_probe_read_kernel()      │
+  │                                                             │
+  │  ──── 巨大的未映射空洞 ────                                  │
+  │                                                             │
+  │  0x0000_7FFF_FFFF_FFFF ┐                                   │
+  │                         │ User Space                        │
+  │  0x0000_0000_0000_0000 ┘ ← 用 bpf_probe_read_user()        │
+  │                                                             │
+  │  用錯 helper 的後果：                                       │
+  │  • 最好情況：回傳 -EFAULT，讀到全 0                          │
+  │  • 最壞情況：在某些架構（如 ARM）讀到錯誤的資料               │
+  │              而且不會報錯，導致 debug 困難                    │
+  │                                                             │
+  └─────────────────────────────────────────────────────────────┘
+</code></pre>
+
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">

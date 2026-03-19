@@ -1,263 +1,201 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Go Bpftrace Architecture</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
-    <style>
-        /* 基本樣式 */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            line-height: 1.6;
-            color: #333;
-            background-color: #fafafa;
-        }
-        
-        /* 內容容器 */
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-        
-        /* 標題樣式 */
-        h1, h2, h3, h4, h5, h6 {
-            margin-top: 2rem;
-            margin-bottom: 1rem;
-            font-weight: 600;
-            line-height: 1.25;
-            color: #2c3e50;
-        }
-        
-        h1 {
-            font-size: 2.5rem;
-            border-bottom: 3px solid #3498db;
-            padding-bottom: 10px;
-            margin-bottom: 2rem;
-        }
-        
-        h2 {
-            font-size: 2rem;
-            border-bottom: 2px solid #ecf0f1;
-            padding-bottom: 8px;
-        }
-        
-        h3 {
-            font-size: 1.5rem;
-            color: #e74c3c;
-        }
-        
-        /* 段落和文字 */
-        p {
-            margin-bottom: 1rem;
-            text-align: justify;
-        }
-        
-        /* 程式碼樣式 */
-        code {
-            background: #f8f9fa;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
-            font-size: 0.9em;
-            color: #e74c3c;
-        }
-        
-        pre {
-            background: #2c3e50;
-            color: #ecf0f1;
-            padding: 20px;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 20px 0;
-            border-left: 4px solid #3498db;
-        }
-        
-        pre code {
-            background: transparent;
-            padding: 0;
-            color: #ecf0f1;
-            font-size: 0.9rem;
-        }
-        
-        /* 列表樣式 */
-        ul, ol {
-            margin-left: 2rem;
-            margin-bottom: 1rem;
-        }
-        
-        li {
-            margin-bottom: 0.5rem;
-        }
-        
-        /* 引用塊 */
-        blockquote {
-            border-left: 4px solid #3498db;
-            padding: 10px 20px;
-            margin: 20px 0;
-            background: #f8f9fa;
-            font-style: italic;
-            color: #555;
-        }
-        
-        /* 表格樣式 */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #ecf0f1;
-        }
-        
-        th {
-            background: #3498db;
-            color: white;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.9rem;
-            letter-spacing: 0.5px;
-        }
-        
-        tr:hover {
-            background: #f8f9fa;
-        }
-        
-        /* 連結樣式 */
-        a {
-            color: #3498db;
-            text-decoration: none;
-            border-bottom: 1px solid transparent;
-            transition: all 0.3s ease;
-        }
-        
-        a:hover {
-            color: #2980b9;
-            border-bottom-color: #2980b9;
-        }
-        
-        /* Mermaid 圖表容器 */
-        .mermaid {
-            text-align: center;
-            margin: 30px 0;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #e1e8ed;
-        }
-        
-        /* 水平線 */
-        hr {
-            border: none;
-            height: 2px;
-            background: linear-gradient(to right, transparent, #3498db, transparent);
-            margin: 2rem 0;
-        }
-        
-        /* 圖片樣式 */
-        img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            margin: 20px 0;
-        }
-        
-        /* 目錄樣式 */
-        .toc {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        
-        .toc ul {
-            list-style-type: none;
-            margin-left: 0;
-        }
-        
-        .toc a {
-            color: #495057;
-            text-decoration: none;
-        }
-        
-        /* 響應式設計 */
-        @media (max-width: 768px) {
-            body {
-                padding: 20px 10px;
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>go-bpftrace-demo 架構與原理說明 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
             }
-            
-            .container {
-                padding: 20px;
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
             }
-            
-            h1 {
-                font-size: 2rem;
-            }
-            
-            h2 {
-                font-size: 1.5rem;
-            }
-            
-            table {
-                font-size: 0.9rem;
-            }
-            
-            th, td {
-                padding: 8px 10px;
-            }
-        }
-        
-        /* 程式碼高亮樣式 */
-        .codehilite {
-            background: #2c3e50;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            overflow-x: auto;
-        }
-        
-        .codehilite pre {
-            background: transparent;
-            border: none;
-            margin: 0;
-            padding: 0;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1 id="go-bpftrace-demo">go-bpftrace-demo 架構與原理說明<a class="headerlink" href="#go-bpftrace-demo" title="Permanent link">&para;</a></h1>
-<h2 id="_1">目錄<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="go-bpftrace-demo-架構與原理說明"><a class="header" href="#go-bpftrace-demo-架構與原理說明">go-bpftrace-demo 架構與原理說明</a></h1>
+<h2 id="目錄"><a class="header" href="#目錄">目錄</a></h2>
 <ol>
-<li><a href="#bpftrace-是什麼">bpftrace 是什麼</a></li>
-<li><a href="#uprobe-原理">uprobe 原理</a></li>
-<li><a href="#go-函數與符號表">Go 函數與符號表</a></li>
-<li><a href="#防止-inline-的兩種方法">防止 inline 的兩種方法</a></li>
-<li><a href="#追蹤-go-runtime-函數">追蹤 Go Runtime 函數</a></li>
-<li><a href="#系統整體架構">系統整體架構</a></li>
-<li><a href="#資料流程">資料流程</a></li>
-<li><a href="#範例程式結構">範例程式結構</a></li>
-<li><a href="#makefile-目標說明">Makefile 目標說明</a></li>
-<li><a href="#詳細使用方法">詳細使用方法</a></li>
-<li><a href="#bpftrace-腳本語法詳解">bpftrace 腳本語法詳解</a></li>
-<li><a href="#輸出範例">輸出範例</a></li>
+<li><a href="#bpftrace-%E6%98%AF%E4%BB%80%E9%BA%BC">bpftrace 是什麼</a></li>
+<li><a href="#uprobe-%E5%8E%9F%E7%90%86">uprobe 原理</a></li>
+<li><a href="#go-%E5%87%BD%E6%95%B8%E8%88%87%E7%AC%A6%E8%99%9F%E8%A1%A8">Go 函數與符號表</a></li>
+<li><a href="#%E9%98%B2%E6%AD%A2-inline-%E7%9A%84%E5%85%A9%E7%A8%AE%E6%96%B9%E6%B3%95">防止 inline 的兩種方法</a></li>
+<li><a href="#%E8%BF%BD%E8%B9%A4-go-runtime-%E5%87%BD%E6%95%B8">追蹤 Go Runtime 函數</a></li>
+<li><a href="#%E7%B3%BB%E7%B5%B1%E6%95%B4%E9%AB%94%E6%9E%B6%E6%A7%8B">系統整體架構</a></li>
+<li><a href="#%E8%B3%87%E6%96%99%E6%B5%81%E7%A8%8B">資料流程</a></li>
+<li><a href="#%E7%AF%84%E4%BE%8B%E7%A8%8B%E5%BC%8F%E7%B5%90%E6%A7%8B">範例程式結構</a></li>
+<li><a href="#makefile-%E7%9B%AE%E6%A8%99%E8%AA%AA%E6%98%8E">Makefile 目標說明</a></li>
+<li><a href="#%E8%A9%B3%E7%B4%B0%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95">詳細使用方法</a></li>
+<li><a href="#bpftrace-%E8%85%B3%E6%9C%AC%E8%AA%9E%E6%B3%95%E8%A9%B3%E8%A7%A3">bpftrace 腳本語法詳解</a></li>
+<li><a href="#%E8%BC%B8%E5%87%BA%E7%AF%84%E4%BE%8B">輸出範例</a></li>
 </ol>
 <hr />
-<h2 id="bpftrace">bpftrace 是什麼<a class="headerlink" href="#bpftrace" title="Permanent link">&para;</a></h2>
+<h2 id="bpftrace-是什麼"><a class="header" href="#bpftrace-是什麼">bpftrace 是什麼</a></h2>
 <p><code>bpftrace</code> 是 Linux 上基於 <strong>eBPF (extended Berkeley Packet Filter)</strong> 的高階追蹤工具，讓你在不修改程式碼、不重新編譯、不重啟程式的情況下，動態觀察任何正在執行的程式。</p>
 <pre><code>傳統觀察方式（需要改動程式）：
   程式碼 ──&gt; 加 printf/log ──&gt; 重新編譯 ──&gt; 重啟程式 ──&gt; 觀察輸出
@@ -265,7 +203,7 @@
 bpftrace 方式（零侵入）：
   程式照常執行 ──&gt; bpftrace 掛載 probe ──&gt; 核心攔截函數 ──&gt; 輸出資訊
 </code></pre>
-<h3 id="ebpf">eBPF 核心機制<a class="headerlink" href="#ebpf" title="Permanent link">&para;</a></h3>
+<h3 id="ebpf-核心機制"><a class="header" href="#ebpf-核心機制">eBPF 核心機制</a></h3>
 <pre><code>使用者空間                        核心空間
 ┌──────────────────┐             ┌──────────────────────────────┐
 │                  │             │                              │
@@ -280,9 +218,9 @@ bpftrace 方式（零侵入）：
 └──────────────────┘             └──────────────────────────────┘
 </code></pre>
 <hr />
-<h2 id="uprobe">uprobe 原理<a class="headerlink" href="#uprobe" title="Permanent link">&para;</a></h2>
+<h2 id="uprobe-原理"><a class="header" href="#uprobe-原理">uprobe 原理</a></h2>
 <p><strong>uprobe (User-space Probe)</strong> 是 Linux 核心提供的機制，用來在使用者空間程式的任意位址插入「偵測點」。</p>
-<h3 id="_2">插入機制<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<h3 id="插入機制"><a class="header" href="#插入機制">插入機制</a></h3>
 <pre><code>程式二進位檔 (ELF)
 ┌─────────────────────────────────────┐
 │ .text section                       │
@@ -307,7 +245,7 @@ bpftrace 方式（零侵入）：
 │  3. 還原原始指令並繼續執行           │
 └─────────────────────────────────────┘
 </code></pre>
-<h3 id="uretprobe">uretprobe（函數返回點追蹤）<a class="headerlink" href="#uretprobe" title="Permanent link">&para;</a></h3>
+<h3 id="uretprobe函數返回點追蹤"><a class="header" href="#uretprobe函數返回點追蹤">uretprobe（函數返回點追蹤）</a></h3>
 <pre><code>函數執行時序：
 
   uprobe ──&gt; [函數開始]──────────────&gt;[函數結束] ──&gt; uretprobe
@@ -317,7 +255,7 @@ bpftrace 方式（零侵入）：
      └────────────── 耗時 = t2 - t1 ─────────────────────┘
 </code></pre>
 <hr />
-<h2 id="go">Go 函數與符號表<a class="headerlink" href="#go" title="Permanent link">&para;</a></h2>
+<h2 id="go-函數與符號表"><a class="header" href="#go-函數與符號表">Go 函數與符號表</a></h2>
 <p>Go 編譯後的二進位檔保留完整的函數符號，bpftrace 可以直接用函數名稱定位。</p>
 <pre><code>Go 原始碼                    編譯產物 (ELF)
 ┌─────────────────┐         ┌────────────────────────────┐
@@ -329,16 +267,16 @@ bpftrace 方式（零侵入）：
 │                 │         │                            │
 └─────────────────┘         └────────────────────────────┘
 </code></pre>
-<h3 id="gonoinline"><code>//go:noinline</code> 的重要性<a class="headerlink" href="#gonoinline" title="Permanent link">&para;</a></h3>
+<h3 id="gonoinline-的重要性"><a class="header" href="#gonoinline-的重要性"><code>//go:noinline</code> 的重要性</a></h3>
 <pre><code class="language-go">//go:noinline          // ← 關鍵指令
 func Step1(msg string) {
-    fmt.Println(&quot;執行步驟 1:&quot;, msg)
+    fmt.Println("執行步驟 1:", msg)
 }
 </code></pre>
 <pre><code>沒有 noinline（函數被內聯展開）：
   main.main:
-    ├── fmt.Println(&quot;執行步驟 1: Hello&quot;)  ← Step1 的程式碼被直接嵌入
-    └── fmt.Println(&quot;執行步驟 2，次數: 42&quot;)
+    ├── fmt.Println("執行步驟 1: Hello")  ← Step1 的程式碼被直接嵌入
+    └── fmt.Println("執行步驟 2，次數: 42")
 
   ↓ bpftrace 找不到 main.Step1 符號！
 
@@ -350,13 +288,13 @@ func Step1(msg string) {
   ↓ bpftrace 可以成功掛載 uprobe:./myapp:main.Step1
 </code></pre>
 <hr />
-<h2 id="inline">防止 inline 的兩種方法<a class="headerlink" href="#inline" title="Permanent link">&para;</a></h2>
+<h2 id="防止-inline-的兩種方法"><a class="header" href="#防止-inline-的兩種方法">防止 inline 的兩種方法</a></h2>
 <p>Go 編譯器預設會將小函數內聯展開（inline），導致函數符號從二進位檔消失，bpftrace 無法掛載 uprobe。有兩種方法可以防止這件事。</p>
-<h3 id="_3">實測驗證<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<h3 id="實測驗證"><a class="header" href="#實測驗證">實測驗證</a></h3>
 <p>以下測試移除 <code>//go:noinline</code> 後，分別用三種方式編譯，透過 <code>nm</code> 與 <code>bpftrace -l</code> 確認符號是否存在。</p>
 <p><strong>情況 1：有 <code>//go:noinline</code>（原始狀態）</strong></p>
 <pre><code class="language-bash">go build -o myapp_noinline .
-nm myapp_noinline | grep -E &quot;main\.(Step1|Step2)&quot;
+nm myapp_noinline | grep -E "main\.(Step1|Step2)"
 </code></pre>
 <pre><code>0000000000491de0 T main.Step1
 0000000000491e80 T main.Step2
@@ -366,65 +304,37 @@ nm myapp_noinline | grep -E &quot;main\.(Step1|Step2)&quot;
 # 輸出：
 #   ./main.go:8:6:  can inline Step1
 #   ./main.go:18:8: inlining call to Step1   ← 被展開進 main()
-nm myapp_inline | grep -E &quot;main\.(Step1|Step2)&quot;
+nm myapp_inline | grep -E "main\.(Step1|Step2)"
 # （無輸出）← 符號消失
 </code></pre>
 <p><strong>情況 3：無 <code>//go:noinline</code>，加 <code>-gcflags='-l'</code></strong></p>
 <pre><code class="language-bash">go build -gcflags='-l' -o myapp_gcflag .
-nm myapp_gcflag | grep -E &quot;main\.(Step1|Step2)&quot;
+nm myapp_gcflag | grep -E "main\.(Step1|Step2)"
 </code></pre>
 <pre><code>0000000000491e40 T main.Step1
 0000000000491ee0 T main.Step2
 </code></pre>
-<h3 id="bpftrace-probe">bpftrace probe 驗證結果<a class="headerlink" href="#bpftrace-probe" title="Permanent link">&para;</a></h3>
-<pre><code class="language-bash">sudo bpftrace -l 'uprobe:./myapp_noinline:main.*' | grep -E &quot;Step1|Step2&quot;
+<h3 id="bpftrace-probe-驗證結果"><a class="header" href="#bpftrace-probe-驗證結果">bpftrace probe 驗證結果</a></h3>
+<pre><code class="language-bash">sudo bpftrace -l 'uprobe:./myapp_noinline:main.*' | grep -E "Step1|Step2"
 # uprobe:./myapp_noinline:main.Step1
 # uprobe:./myapp_noinline:main.Step2   ✅
 
-sudo bpftrace -l 'uprobe:./myapp_inline:main.*' | grep -E &quot;Step1|Step2&quot;
+sudo bpftrace -l 'uprobe:./myapp_inline:main.*' | grep -E "Step1|Step2"
 # （無輸出）                            ❌ 無法追蹤
 
-sudo bpftrace -l 'uprobe:./myapp_gcflag:main.*' | grep -E &quot;Step1|Step2&quot;
+sudo bpftrace -l 'uprobe:./myapp_gcflag:main.*' | grep -E "Step1|Step2"
 # uprobe:./myapp_gcflag:main.Step1
 # uprobe:./myapp_gcflag:main.Step2     ✅
 </code></pre>
-<h3 id="_4">兩種方法比較<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th></th>
-<th><code>//go:noinline</code></th>
-<th><code>-gcflags='-l'</code></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>作用範圍</td>
-<td>僅指定函數</td>
-<td>全專案所有函數</td>
-</tr>
-<tr>
-<td>效能影響</td>
-<td>僅該函數略降</td>
-<td>整體效能下降</td>
-</tr>
-<tr>
-<td>修改原始碼</td>
-<td>需要</td>
-<td>不需要</td>
-</tr>
-<tr>
-<td>意圖明確性</td>
-<td>高（讀 code 即知）</td>
-<td>低（需看 build 指令）</td>
-</tr>
-<tr>
-<td>適合情境</td>
-<td>production + trace 並存</td>
-<td>臨時 debug / 分析</td>
-</tr>
-</tbody>
-</table>
+<h3 id="兩種方法比較"><a class="header" href="#兩種方法比較">兩種方法比較</a></h3>
+<div class="table-wrapper"><table><thead><tr><th></th><th><code>//go:noinline</code></th><th><code>-gcflags='-l'</code></th></tr></thead><tbody>
+<tr><td>作用範圍</td><td>僅指定函數</td><td>全專案所有函數</td></tr>
+<tr><td>效能影響</td><td>僅該函數略降</td><td>整體效能下降</td></tr>
+<tr><td>修改原始碼</td><td>需要</td><td>不需要</td></tr>
+<tr><td>意圖明確性</td><td>高（讀 code 即知）</td><td>低（需看 build 指令）</td></tr>
+<tr><td>適合情境</td><td>production + trace 並存</td><td>臨時 debug / 分析</td></tr>
+</tbody></table>
+</div>
 <pre><code>//go:noinline（精準）              -gcflags='-l'（全域）
 ────────────────────────────────   ────────────────────────────────
 只有目標函數保留符號                所有函數都保留符號（含標準函式庫）
@@ -435,22 +345,22 @@ sudo bpftrace -l 'uprobe:./myapp_gcflag:main.*' | grep -E &quot;Step1|Step2&quot
 <p><strong>結論</strong>：需要長期維護的程式用 <code>//go:noinline</code>；臨時追蹤不想動原始碼則用 <code>go build -gcflags='-l'</code>。</p>
 </blockquote>
 <hr />
-<h2 id="go-runtime">追蹤 Go Runtime 函數<a class="headerlink" href="#go-runtime" title="Permanent link">&para;</a></h2>
+<h2 id="追蹤-go-runtime-函數"><a class="header" href="#追蹤-go-runtime-函數">追蹤 Go Runtime 函數</a></h2>
 <p>Go 二進位檔靜態連結 runtime，編譯後包含 <strong>1291 個</strong> <code>runtime.*</code> 符號，全部都可用 uprobe 追蹤，無需任何額外設定。</p>
-<pre><code class="language-bash">nm ./myapp | grep -c &quot;T runtime.&quot;
+<pre><code class="language-bash">nm ./myapp | grep -c "T runtime."
 # 1291
 </code></pre>
-<h3 id="go-117-register-abi">Go 1.17+ Register ABI 注意事項<a class="headerlink" href="#go-117-register-abi" title="Permanent link">&para;</a></h3>
+<h3 id="go-117-register-abi-注意事項"><a class="header" href="#go-117-register-abi-注意事項">Go 1.17+ Register ABI 注意事項</a></h3>
 <p>Go 1.17 起改用暫存器傳遞參數（register-based calling convention），bpftrace 讀取函數參數時不能用 <code>arg0</code>，要改用 <code>reg("ax")</code>。</p>
 <pre><code>Go 1.16 以前（stack ABI）   Go 1.17 以後（register ABI）
 ────────────────────────    ────────────────────────────
-arg0 = 第一個參數            reg(&quot;ax&quot;) = 第一個整數參數
-arg1 = 第二個參數            reg(&quot;bx&quot;) = 第二個整數參數
+arg0 = 第一個參數            reg("ax") = 第一個整數參數
+arg1 = 第二個參數            reg("bx") = 第二個整數參數
 ...                          ...
 
-bpftrace: arg0 ✅            bpftrace: arg0 ❌ → reg(&quot;ax&quot;) ✅
+bpftrace: arg0 ✅            bpftrace: arg0 ❌ → reg("ax") ✅
 </code></pre>
-<h3 id="runtime">可追蹤的 Runtime 類別<a class="headerlink" href="#runtime" title="Permanent link">&para;</a></h3>
+<h3 id="可追蹤的-runtime-類別"><a class="header" href="#可追蹤的-runtime-類別">可追蹤的 Runtime 類別</a></h3>
 <pre><code>runtime.*  （1291 個符號）
 ├── goroutine  runtime.newproc / runtime.goexit0 / runtime.gopark / runtime.schedule
 ├── GC         runtime.gcStart / runtime.gcMarkTermination / runtime.mallocgc
@@ -461,11 +371,11 @@ bpftrace: arg0 ✅            bpftrace: arg0 ❌ → reg(&quot;ax&quot;) ✅
 time.*     （4 個符號）
 └── time.Sleep / time.Now / time.runtimeNano
 </code></pre>
-<h3 id="_5">實測範例<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
-<h4 id="1-goroutine">1. 追蹤 goroutine 排程<a class="headerlink" href="#1-goroutine" title="Permanent link">&para;</a></h4>
+<h3 id="實測範例"><a class="header" href="#實測範例">實測範例</a></h3>
+<h4 id="1-追蹤-goroutine-排程"><a class="header" href="#1-追蹤-goroutine-排程">1. 追蹤 goroutine 排程</a></h4>
 <pre><code class="language-bash">sudo bpftrace -e '
 uprobe:./myapp:runtime.schedule {
-    printf(&quot;schedule: tid=%d\n&quot;, curtask-&gt;pid);
+    printf("schedule: tid=%d\n", curtask-&gt;pid);
 }
 '
 </code></pre>
@@ -474,13 +384,13 @@ schedule: tid=1063282
 schedule: tid=1063286
 schedule: tid=1063287
 </code></pre>
-<h4 id="2-heap-mallocgc">2. 追蹤 Heap 記憶體分配（mallocgc）<a class="headerlink" href="#2-heap-mallocgc" title="Permanent link">&para;</a></h4>
+<h4 id="2-追蹤-heap-記憶體分配mallocgc"><a class="header" href="#2-追蹤-heap-記憶體分配mallocgc">2. 追蹤 Heap 記憶體分配（mallocgc）</a></h4>
 <blockquote>
 <p>Go 1.17+ 用 <code>reg("ax")</code> 讀取 size 參數</p>
 </blockquote>
 <pre><code class="language-bash">sudo bpftrace -e '
 uprobe:./myapp:runtime.mallocgc {
-    @alloc_size = hist(reg(&quot;ax&quot;));
+    @alloc_size = hist(reg("ax"));
 }
 END { print(@alloc_size); }
 '
@@ -490,10 +400,10 @@ END { print(@alloc_size); }
 [32, 64)               2 |@@@@@@@@@@@@@@@@@@@@                                |
 [128, 256)             2 |@@@@@@@@@@@@@@@@@@@@                                |
 </code></pre>
-<h4 id="3-timesleep">3. 追蹤 time.Sleep 實際參數<a class="headerlink" href="#3-timesleep" title="Permanent link">&para;</a></h4>
+<h4 id="3-追蹤-timesleep-實際參數"><a class="header" href="#3-追蹤-timesleep-實際參數">3. 追蹤 time.Sleep 實際參數</a></h4>
 <pre><code class="language-bash">sudo bpftrace -e '
 uprobe:./myapp:time.Sleep {
-    printf(&quot;[time.Sleep] duration=%lld ms\n&quot;, reg(&quot;ax&quot;) / 1000000);
+    printf("[time.Sleep] duration=%lld ms\n", reg("ax") / 1000000);
 }
 '
 </code></pre>
@@ -501,13 +411,13 @@ uprobe:./myapp:time.Sleep {
 [time.Sleep] duration=2000 ms
 [time.Sleep] duration=2000 ms
 </code></pre>
-<h4 id="4-app-runtime">4. 綜合追蹤：App 函數 + Runtime 統計<a class="headerlink" href="#4-app-runtime" title="Permanent link">&para;</a></h4>
+<h4 id="4-綜合追蹤app-函數--runtime-統計"><a class="header" href="#4-綜合追蹤app-函數--runtime-統計">4. 綜合追蹤：App 函數 + Runtime 統計</a></h4>
 <pre><code class="language-bash">sudo bpftrace -e '
-uprobe:./myapp:main.Step1       { printf(&quot;[app]     Step1  elapsed=%llu ms\n&quot;, elapsed/1000000); }
-uprobe:./myapp:main.Step2       { printf(&quot;[app]     Step2  elapsed=%llu ms\n&quot;, elapsed/1000000); }
-uprobe:./myapp:time.Sleep       { printf(&quot;[runtime] Sleep %lld ms\n&quot;, reg(&quot;ax&quot;)/1000000); }
+uprobe:./myapp:main.Step1       { printf("[app]     Step1  elapsed=%llu ms\n", elapsed/1000000); }
+uprobe:./myapp:main.Step2       { printf("[app]     Step2  elapsed=%llu ms\n", elapsed/1000000); }
+uprobe:./myapp:time.Sleep       { printf("[runtime] Sleep %lld ms\n", reg("ax")/1000000); }
 uprobe:./myapp:runtime.schedule { @sched_count = count(); }
-uprobe:./myapp:runtime.mallocgc { @alloc_bytes = sum(reg(&quot;ax&quot;)); }
+uprobe:./myapp:runtime.mallocgc { @alloc_bytes = sum(reg("ax")); }
 END {
     print(@sched_count);
     print(@alloc_bytes);
@@ -526,60 +436,20 @@ END {
 @sched_count: 5
 @alloc_bytes: 336
 </code></pre>
-<h3 id="runtime-probe">常用 Runtime Probe 速查表<a class="headerlink" href="#runtime-probe" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Probe</th>
-<th>說明</th>
-<th>參數（register ABI）</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>runtime.mallocgc</code></td>
-<td>heap 分配</td>
-<td><code>reg("ax")</code> = size (bytes)</td>
-</tr>
-<tr>
-<td><code>runtime.schedule</code></td>
-<td>goroutine 排程點</td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>runtime.newproc</code></td>
-<td>建立新 goroutine</td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>runtime.goexit0</code></td>
-<td>goroutine 結束</td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>runtime.gopark</code></td>
-<td>goroutine 進入等待</td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>runtime.gcStart</code></td>
-<td>GC 開始</td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>runtime.gcMarkTermination</code></td>
-<td>GC STW 結束</td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>time.Sleep</code></td>
-<td>程式呼叫 Sleep</td>
-<td><code>reg("ax")</code> = duration (ns)</td>
-</tr>
-</tbody>
-</table>
+<h3 id="常用-runtime-probe-速查表"><a class="header" href="#常用-runtime-probe-速查表">常用 Runtime Probe 速查表</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Probe</th><th>說明</th><th>參數（register ABI）</th></tr></thead><tbody>
+<tr><td><code>runtime.mallocgc</code></td><td>heap 分配</td><td><code>reg("ax")</code> = size (bytes)</td></tr>
+<tr><td><code>runtime.schedule</code></td><td>goroutine 排程點</td><td>—</td></tr>
+<tr><td><code>runtime.newproc</code></td><td>建立新 goroutine</td><td>—</td></tr>
+<tr><td><code>runtime.goexit0</code></td><td>goroutine 結束</td><td>—</td></tr>
+<tr><td><code>runtime.gopark</code></td><td>goroutine 進入等待</td><td>—</td></tr>
+<tr><td><code>runtime.gcStart</code></td><td>GC 開始</td><td>—</td></tr>
+<tr><td><code>runtime.gcMarkTermination</code></td><td>GC STW 結束</td><td>—</td></tr>
+<tr><td><code>time.Sleep</code></td><td>程式呼叫 Sleep</td><td><code>reg("ax")</code> = duration (ns)</td></tr>
+</tbody></table>
+</div>
 <hr />
-<h2 id="_6">系統整體架構<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
+<h2 id="系統整體架構"><a class="header" href="#系統整體架構">系統整體架構</a></h2>
 <pre><code>┌─────────────────────────────────────────────────────────────┐
 │                       使用者空間                             │
 │                                                             │
@@ -588,7 +458,7 @@ END {
 │  │                      │    │                          │  │
 │  │  main() ─────────────┼────┼──&gt; uprobe:main.main      │  │
 │  │    │                 │    │                          │  │
-│  │    ├── Step1(&quot;Hello&quot;)┼────┼──&gt; uprobe:main.Step1     │  │
+│  │    ├── Step1("Hello")┼────┼──&gt; uprobe:main.Step1     │  │
 │  │    │        │        │    │    uretprobe:main.Step1  │  │
 │  │    │      stdout     │    │                          │  │
 │  │    │                 │    │                          │  │
@@ -611,8 +481,8 @@ END {
 └─────────────────────────────────────────────────────────────┘
 </code></pre>
 <hr />
-<h2 id="_7">資料流程<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
-<h3 id="_8">正常執行流程<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<h2 id="資料流程"><a class="header" href="#資料流程">資料流程</a></h2>
+<h3 id="正常執行流程"><a class="header" href="#正常執行流程">正常執行流程</a></h3>
 <pre><code>make run
   │
   └──&gt; ./myapp 啟動
@@ -621,14 +491,14 @@ END {
     ┌────────────────────────┐
     │  main() 無限迴圈        │
     │  ┌──────────────────┐  │
-    │  │  1. Step1(&quot;Hello&quot;)│  │──&gt; stdout: &quot;執行步驟 1: Hello&quot;
-    │  │  2. Step2(42)    │  │──&gt; stdout: &quot;執行步驟 2，次數: 42&quot;
+    │  │  1. Step1("Hello")│  │──&gt; stdout: "執行步驟 1: Hello"
+    │  │  2. Step2(42)    │  │──&gt; stdout: "執行步驟 2，次數: 42"
     │  │  3. Sleep(2s)    │  │
     │  └──────────────────┘  │
     │         重複             │
     └────────────────────────┘
 </code></pre>
-<h3 id="bpftrace-trace-smoke">bpftrace trace-smoke 自動化流程<a class="headerlink" href="#bpftrace-trace-smoke" title="Permanent link">&para;</a></h3>
+<h3 id="bpftrace-trace-smoke-自動化流程"><a class="header" href="#bpftrace-trace-smoke-自動化流程">bpftrace trace-smoke 自動化流程</a></h3>
 <pre><code>make trace-smoke
   │
   ├──1. make run-bg ──&gt; ./myapp 在背景執行
@@ -646,7 +516,7 @@ END {
   │
   └──4. cat tmp/trace_smoke.log  ──&gt; 顯示 trace 結果
 </code></pre>
-<h3 id="trace-latency">耗時追蹤資料流 (trace-latency)<a class="headerlink" href="#trace-latency" title="Permanent link">&para;</a></h3>
+<h3 id="耗時追蹤資料流-trace-latency"><a class="header" href="#耗時追蹤資料流-trace-latency">耗時追蹤資料流 (trace-latency)</a></h3>
 <pre><code>Step1 函數進入
   │
   ├──&gt; uprobe 觸發
@@ -656,11 +526,11 @@ END {
   │
   └──&gt; uretprobe 觸發
           └──&gt; 耗時 = nsecs - @step1[tid]
-          └──&gt; printf(&quot;Step1 耗時: %llu us\n&quot;, 耗時 / 1000)
+          └──&gt; printf("Step1 耗時: %llu us\n", 耗時 / 1000)
           └──&gt; delete(@step1[tid])   (清除 map 條目)
 </code></pre>
 <hr />
-<h2 id="_9">範例程式結構<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<h2 id="範例程式結構"><a class="header" href="#範例程式結構">範例程式結構</a></h2>
 <pre><code>go-bpftrace-demo/
 ├── main.go              # 主程式：Step1/Step2/Allocate/Worker + goroutine
 ├── main_test.go         # 行為測試：驗證四個函數的輸出
@@ -672,30 +542,30 @@ END {
     ├── ARCHITECTURE.md  # 本文件：架構與原理
     └── (tmp/ 由 Makefile 在執行時自動建立)
 </code></pre>
-<h3 id="maingo">main.go 核心設計<a class="headerlink" href="#maingo" title="Permanent link">&para;</a></h3>
+<h3 id="maingo-核心設計"><a class="header" href="#maingo-核心設計">main.go 核心設計</a></h3>
 <p>每個函數都對應一個可觀察的 runtime 行為：</p>
 <pre><code class="language-go">//go:noinline  // 保留符號供 uprobe 使用
 func Step1(msg string) {
-    fmt.Println(&quot;執行步驟 1:&quot;, msg)       // → uprobe:main.Step1
+    fmt.Println("執行步驟 1:", msg)       // → uprobe:main.Step1
 }
 
 //go:noinline
 func Step2(count int) {
-    fmt.Println(&quot;執行步驟 2，次數:&quot;, count) // → uprobe:main.Step2
+    fmt.Println("執行步驟 2，次數:", count) // → uprobe:main.Step2
 }
 
 // Allocate 明確觸發 runtime.mallocgc，供 bpftrace 觀察 heap 分配
 //go:noinline
 func Allocate(n int) []byte {
     buf := make([]byte, n)               // → uprobe:runtime.mallocgc
-    fmt.Printf(&quot;分配記憶體: %d bytes\n&quot;, n)
+    fmt.Printf("分配記憶體: %d bytes\n", n)
     return buf
 }
 
 // Worker 在獨立 goroutine 執行，觸發 runtime.newproc 可被觀察
 //go:noinline
 func Worker() {
-    fmt.Println(&quot;Worker goroutine 執行中&quot;) // → uprobe:main.Worker
+    fmt.Println("Worker goroutine 執行中") // → uprobe:main.Worker
 }
 
 func main() {
@@ -708,218 +578,65 @@ func main() {
     }()
 
     for {
-        Step1(&quot;Hello&quot;)
+        Step1("Hello")
         Step2(42)
         _ = Allocate(256)               // → runtime.mallocgc size=256
         time.Sleep(2 * time.Second)     // → time.Sleep duration=2000ms
     }
 }
 </code></pre>
-<h3 id="runtime_1">函數 ↔ 可觀察 Runtime 事件對應表<a class="headerlink" href="#runtime_1" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>函數</th>
-<th>觸發的 Runtime 事件</th>
-<th>bpftrace probe</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>Step1</code></td>
-<td>—</td>
-<td><code>uprobe:main.Step1</code></td>
-</tr>
-<tr>
-<td><code>Step2</code></td>
-<td>—</td>
-<td><code>uprobe:main.Step2</code></td>
-</tr>
-<tr>
-<td><code>Allocate</code></td>
-<td>heap 分配</td>
-<td><code>uprobe:runtime.mallocgc</code></td>
-</tr>
-<tr>
-<td><code>Worker</code></td>
-<td>goroutine 執行</td>
-<td><code>uprobe:main.Worker</code></td>
-</tr>
-<tr>
-<td><code>go func(){}()</code></td>
-<td>goroutine 建立</td>
-<td><code>uprobe:runtime.newproc</code></td>
-</tr>
-<tr>
-<td><code>time.Sleep(2s/3s)</code></td>
-<td>goroutine 掛起</td>
-<td><code>uprobe:time.Sleep</code></td>
-</tr>
-<tr>
-<td>排程器</td>
-<td>goroutine 切換</td>
-<td><code>uprobe:runtime.schedule</code></td>
-</tr>
-</tbody>
-</table>
+<h3 id="函數--可觀察-runtime-事件對應表"><a class="header" href="#函數--可觀察-runtime-事件對應表">函數 ↔ 可觀察 Runtime 事件對應表</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>函數</th><th>觸發的 Runtime 事件</th><th>bpftrace probe</th></tr></thead><tbody>
+<tr><td><code>Step1</code></td><td>—</td><td><code>uprobe:main.Step1</code></td></tr>
+<tr><td><code>Step2</code></td><td>—</td><td><code>uprobe:main.Step2</code></td></tr>
+<tr><td><code>Allocate</code></td><td>heap 分配</td><td><code>uprobe:runtime.mallocgc</code></td></tr>
+<tr><td><code>Worker</code></td><td>goroutine 執行</td><td><code>uprobe:main.Worker</code></td></tr>
+<tr><td><code>go func(){}()</code></td><td>goroutine 建立</td><td><code>uprobe:runtime.newproc</code></td></tr>
+<tr><td><code>time.Sleep(2s/3s)</code></td><td>goroutine 掛起</td><td><code>uprobe:time.Sleep</code></td></tr>
+<tr><td>排程器</td><td>goroutine 切換</td><td><code>uprobe:runtime.schedule</code></td></tr>
+</tbody></table>
+</div>
 <hr />
-<h2 id="makefile">Makefile 目標說明<a class="headerlink" href="#makefile" title="Permanent link">&para;</a></h2>
-<h3 id="_10">基本操作<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>目標</th>
-<th>說明</th>
-<th>需要 sudo</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>make</code></td>
-<td>顯示說明</td>
-<td>否</td>
-</tr>
-<tr>
-<td><code>make build</code></td>
-<td>編譯成 <code>./myapp</code></td>
-<td>否</td>
-</tr>
-<tr>
-<td><code>make run</code></td>
-<td>前景執行</td>
-<td>否</td>
-</tr>
-<tr>
-<td><code>make test</code></td>
-<td>執行行為測試</td>
-<td>否</td>
-</tr>
-<tr>
-<td><code>make clean</code></td>
-<td>清除產物與暫存</td>
-<td>否</td>
-</tr>
-</tbody>
-</table>
-<h3 id="app">App 層追蹤<a class="headerlink" href="#app" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>目標</th>
-<th>說明</th>
-<th>需要 sudo</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>make trace-list</code></td>
-<td>列出所有 <code>main.*</code> probe 符號</td>
-<td>是</td>
-</tr>
-<tr>
-<td><code>make trace-main</code></td>
-<td>追蹤 <code>main.main</code></td>
-<td>是</td>
-</tr>
-<tr>
-<td><code>make trace-step1</code></td>
-<td>追蹤 <code>main.Step1</code></td>
-<td>是</td>
-</tr>
-<tr>
-<td><code>make trace-step2</code></td>
-<td>追蹤 <code>main.Step2</code></td>
-<td>是</td>
-</tr>
-<tr>
-<td><code>make trace-flow</code></td>
-<td>追蹤所有 <code>main.*</code> 函數</td>
-<td>是</td>
-</tr>
-<tr>
-<td><code>make trace-latency</code></td>
-<td>統計 Step1/Step2 微秒耗時</td>
-<td>是</td>
-</tr>
-<tr>
-<td><code>make trace-count</code></td>
-<td>統計函數命中次數（Ctrl+C 結束）</td>
-<td>是</td>
-</tr>
-<tr>
-<td><code>make trace-stack</code></td>
-<td>顯示 Step1 呼叫堆疊</td>
-<td>是</td>
-</tr>
-</tbody>
-</table>
-<h3 id="runtime_2">Runtime 層追蹤<a class="headerlink" href="#runtime_2" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>目標</th>
-<th>說明</th>
-<th>觀察對象</th>
-<th>需要 sudo</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>make trace-alloc</code></td>
-<td>heap 分配大小分佈 + Allocate 呼叫時間</td>
-<td><code>main.Allocate</code> + <code>runtime.mallocgc</code></td>
-<td>是</td>
-</tr>
-<tr>
-<td><code>make trace-goroutine</code></td>
-<td>goroutine 建立與 Worker 執行</td>
-<td><code>runtime.newproc</code> + <code>main.Worker</code> + <code>runtime.goexit0</code></td>
-<td>是</td>
-</tr>
-<tr>
-<td><code>make trace-sleep</code></td>
-<td>time.Sleep 實際 duration（區分兩個 goroutine）</td>
-<td><code>time.Sleep</code></td>
-<td>是</td>
-</tr>
-<tr>
-<td><code>make trace-runtime</code></td>
-<td>綜合：app 函數 + 排程次數 + 分配總量</td>
-<td>8 個 probe 同時</td>
-<td>是</td>
-</tr>
-</tbody>
-</table>
-<h3 id="_11">自動化<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>目標</th>
-<th>說明</th>
-<th>需要 sudo</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>make run-bg</code></td>
-<td>背景啟動並記錄 PID</td>
-<td>否</td>
-</tr>
-<tr>
-<td><code>make stop-bg</code></td>
-<td>停止背景程式</td>
-<td>否</td>
-</tr>
-<tr>
-<td><code>make trace-smoke</code></td>
-<td>自動化：啟動 + trace 5 秒 + 停止</td>
-<td>是</td>
-</tr>
-</tbody>
-</table>
+<h2 id="makefile-目標說明"><a class="header" href="#makefile-目標說明">Makefile 目標說明</a></h2>
+<h3 id="基本操作"><a class="header" href="#基本操作">基本操作</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>目標</th><th>說明</th><th>需要 sudo</th></tr></thead><tbody>
+<tr><td><code>make</code></td><td>顯示說明</td><td>否</td></tr>
+<tr><td><code>make build</code></td><td>編譯成 <code>./myapp</code></td><td>否</td></tr>
+<tr><td><code>make run</code></td><td>前景執行</td><td>否</td></tr>
+<tr><td><code>make test</code></td><td>執行行為測試</td><td>否</td></tr>
+<tr><td><code>make clean</code></td><td>清除產物與暫存</td><td>否</td></tr>
+</tbody></table>
+</div>
+<h3 id="app-層追蹤"><a class="header" href="#app-層追蹤">App 層追蹤</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>目標</th><th>說明</th><th>需要 sudo</th></tr></thead><tbody>
+<tr><td><code>make trace-list</code></td><td>列出所有 <code>main.*</code> probe 符號</td><td>是</td></tr>
+<tr><td><code>make trace-main</code></td><td>追蹤 <code>main.main</code></td><td>是</td></tr>
+<tr><td><code>make trace-step1</code></td><td>追蹤 <code>main.Step1</code></td><td>是</td></tr>
+<tr><td><code>make trace-step2</code></td><td>追蹤 <code>main.Step2</code></td><td>是</td></tr>
+<tr><td><code>make trace-flow</code></td><td>追蹤所有 <code>main.*</code> 函數</td><td>是</td></tr>
+<tr><td><code>make trace-latency</code></td><td>統計 Step1/Step2 微秒耗時</td><td>是</td></tr>
+<tr><td><code>make trace-count</code></td><td>統計函數命中次數（Ctrl+C 結束）</td><td>是</td></tr>
+<tr><td><code>make trace-stack</code></td><td>顯示 Step1 呼叫堆疊</td><td>是</td></tr>
+</tbody></table>
+</div>
+<h3 id="runtime-層追蹤"><a class="header" href="#runtime-層追蹤">Runtime 層追蹤</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>目標</th><th>說明</th><th>觀察對象</th><th>需要 sudo</th></tr></thead><tbody>
+<tr><td><code>make trace-alloc</code></td><td>heap 分配大小分佈 + Allocate 呼叫時間</td><td><code>main.Allocate</code> + <code>runtime.mallocgc</code></td><td>是</td></tr>
+<tr><td><code>make trace-goroutine</code></td><td>goroutine 建立與 Worker 執行</td><td><code>runtime.newproc</code> + <code>main.Worker</code> + <code>runtime.goexit0</code></td><td>是</td></tr>
+<tr><td><code>make trace-sleep</code></td><td>time.Sleep 實際 duration（區分兩個 goroutine）</td><td><code>time.Sleep</code></td><td>是</td></tr>
+<tr><td><code>make trace-runtime</code></td><td>綜合：app 函數 + 排程次數 + 分配總量</td><td>8 個 probe 同時</td><td>是</td></tr>
+</tbody></table>
+</div>
+<h3 id="自動化"><a class="header" href="#自動化">自動化</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>目標</th><th>說明</th><th>需要 sudo</th></tr></thead><tbody>
+<tr><td><code>make run-bg</code></td><td>背景啟動並記錄 PID</td><td>否</td></tr>
+<tr><td><code>make stop-bg</code></td><td>停止背景程式</td><td>否</td></tr>
+<tr><td><code>make trace-smoke</code></td><td>自動化：啟動 + trace 5 秒 + 停止</td><td>是</td></tr>
+</tbody></table>
+</div>
 <hr />
-<h2 id="_12">詳細使用方法<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
-<h3 id="_13">環境需求<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
+<h2 id="詳細使用方法"><a class="header" href="#詳細使用方法">詳細使用方法</a></h2>
+<h3 id="環境需求"><a class="header" href="#環境需求">環境需求</a></h3>
 <pre><code class="language-bash"># 確認 bpftrace 已安裝
 bpftrace --version
 
@@ -932,12 +649,12 @@ sudo apt install bpftrace
 # 安裝（RHEL/CentOS）
 sudo dnf install bpftrace
 </code></pre>
-<h3 id="1">步驟 1：編譯程式<a class="headerlink" href="#1" title="Permanent link">&para;</a></h3>
+<h3 id="步驟-1編譯程式"><a class="header" href="#步驟-1編譯程式">步驟 1：編譯程式</a></h3>
 <pre><code class="language-bash">make build
 # 輸出：go build -o myapp .
 # 產生 ./myapp
 </code></pre>
-<h3 id="2">步驟 2：前景執行並觀察基本輸出<a class="headerlink" href="#2" title="Permanent link">&para;</a></h3>
+<h3 id="步驟-2前景執行並觀察基本輸出"><a class="header" href="#步驟-2前景執行並觀察基本輸出">步驟 2：前景執行並觀察基本輸出</a></h3>
 <pre><code class="language-bash">make run
 </code></pre>
 <pre><code>執行步驟 1: Hello
@@ -946,7 +663,7 @@ sudo dnf install bpftrace
 執行步驟 2，次數: 42
 ...（Ctrl+C 中止）
 </code></pre>
-<h3 id="3-probe">步驟 3：列出可用 probe 符號<a class="headerlink" href="#3-probe" title="Permanent link">&para;</a></h3>
+<h3 id="步驟-3列出可用-probe-符號"><a class="header" href="#步驟-3列出可用-probe-符號">步驟 3：列出可用 probe 符號</a></h3>
 <pre><code class="language-bash">sudo make trace-list
 </code></pre>
 <pre><code>uprobe:./myapp:main.Step1
@@ -955,7 +672,7 @@ uprobe:./myapp:main.main
 uprobe:./myapp:main.init
 ...
 </code></pre>
-<h3 id="4">步驟 4：雙終端機手動追蹤<a class="headerlink" href="#4" title="Permanent link">&para;</a></h3>
+<h3 id="步驟-4雙終端機手動追蹤"><a class="header" href="#步驟-4雙終端機手動追蹤">步驟 4：雙終端機手動追蹤</a></h3>
 <p><strong>終端機 1</strong>（執行目標程式）：</p>
 <pre><code class="language-bash">make run
 </code></pre>
@@ -975,7 +692,7 @@ uprobe:./myapp:main.init
 時間: 5822 ms | 函數: uprobe:./myapp:main.main
 ...
 </code></pre>
-<h3 id="5">步驟 5：耗時統計<a class="headerlink" href="#5" title="Permanent link">&para;</a></h3>
+<h3 id="步驟-5耗時統計"><a class="header" href="#步驟-5耗時統計">步驟 5：耗時統計</a></h3>
 <pre><code class="language-bash"># 一個終端機執行 myapp，另一個終端機執行：
 sudo make trace-latency
 </code></pre>
@@ -984,7 +701,7 @@ Step2 耗時: 8 us
 Step1 耗時: 11 us
 Step2 耗時: 9 us
 </code></pre>
-<h3 id="6">步驟 6：命中次數統計<a class="headerlink" href="#6" title="Permanent link">&para;</a></h3>
+<h3 id="步驟-6命中次數統計"><a class="header" href="#步驟-6命中次數統計">步驟 6：命中次數統計</a></h3>
 <pre><code class="language-bash">sudo make trace-count
 # 執行一段時間後按 Ctrl+C
 </code></pre>
@@ -992,7 +709,7 @@ Step2 耗時: 9 us
 @[uprobe:./myapp:main.Step1]: 5
 @[uprobe:./myapp:main.Step2]: 5
 </code></pre>
-<h3 id="7">步驟 7：呼叫堆疊<a class="headerlink" href="#7" title="Permanent link">&para;</a></h3>
+<h3 id="步驟-7呼叫堆疊"><a class="header" href="#步驟-7呼叫堆疊">步驟 7：呼叫堆疊</a></h3>
 <pre><code class="language-bash">sudo make trace-stack
 </code></pre>
 <pre><code>命中 uprobe:./myapp:main.Step1
@@ -1002,8 +719,8 @@ Step2 耗時: 9 us
         runtime.main+277
         runtime.goexit.abi0+1
 </code></pre>
-<h3 id="8runtime">步驟 8：Runtime 追蹤<a class="headerlink" href="#8runtime" title="Permanent link">&para;</a></h3>
-<h4 id="trace-allocheap">trace-alloc：heap 分配觀察<a class="headerlink" href="#trace-allocheap" title="Permanent link">&para;</a></h4>
+<h3 id="步驟-8runtime-追蹤"><a class="header" href="#步驟-8runtime-追蹤">步驟 8：Runtime 追蹤</a></h3>
+<h4 id="trace-allocheap-分配觀察"><a class="header" href="#trace-allocheap-分配觀察">trace-alloc：heap 分配觀察</a></h4>
 <pre><code class="language-bash">sudo make trace-alloc
 </code></pre>
 <pre><code>Attaching 3 probes...
@@ -1019,7 +736,7 @@ Step2 耗時: 9 us
 <blockquote>
 <p>256-512 bucket 就是 <code>Allocate(256)</code> 的 256 bytes 分配，其他較小的是 <code>fmt.Printf</code> 的內部分配。</p>
 </blockquote>
-<h4 id="trace-goroutinegoroutine">trace-goroutine：goroutine 生命週期<a class="headerlink" href="#trace-goroutinegoroutine" title="Permanent link">&para;</a></h4>
+<h4 id="trace-goroutinegoroutine-生命週期"><a class="header" href="#trace-goroutinegoroutine-生命週期">trace-goroutine：goroutine 生命週期</a></h4>
 <pre><code class="language-bash">sudo make trace-goroutine
 </code></pre>
 <pre><code>Attaching 3 probes...
@@ -1027,7 +744,7 @@ Step2 耗時: 9 us
 [Worker]  goroutine 執行 elapsed=4946 ms
 [Worker]  goroutine 執行 elapsed=7946 ms
 </code></pre>
-<h4 id="trace-sleep-goroutine-sleep">trace-sleep：區分兩個 goroutine 的 Sleep<a class="headerlink" href="#trace-sleep-goroutine-sleep" title="Permanent link">&para;</a></h4>
+<h4 id="trace-sleep區分兩個-goroutine-的-sleep"><a class="header" href="#trace-sleep區分兩個-goroutine-的-sleep">trace-sleep：區分兩個 goroutine 的 Sleep</a></h4>
 <pre><code class="language-bash">sudo make trace-sleep
 </code></pre>
 <pre><code>Attaching 1 probe...
@@ -1039,7 +756,7 @@ Step2 耗時: 9 us
 <blockquote>
 <p>兩個不同 <code>tid</code> 對應兩個 goroutine，可清楚區分 2s 和 3s 的 Sleep。</p>
 </blockquote>
-<h4 id="trace-runtime8-probe">trace-runtime：綜合追蹤（8 個 probe）<a class="headerlink" href="#trace-runtime8-probe" title="Permanent link">&para;</a></h4>
+<h4 id="trace-runtime綜合追蹤8-個-probe"><a class="header" href="#trace-runtime綜合追蹤8-個-probe">trace-runtime：綜合追蹤（8 個 probe）</a></h4>
 <pre><code class="language-bash">sudo make trace-runtime
 </code></pre>
 <pre><code>Attaching 8 probes...
@@ -1056,7 +773,7 @@ Step2 耗時: 9 us
 @sched: 9
 @alloc_bytes: 1424
 </code></pre>
-<h3 id="9-smoke-test">步驟 9：自動化 Smoke Test<a class="headerlink" href="#9-smoke-test" title="Permanent link">&para;</a></h3>
+<h3 id="步驟-9自動化-smoke-test"><a class="header" href="#步驟-9自動化-smoke-test">步驟 9：自動化 Smoke Test</a></h3>
 <p>無需手動開兩個終端機，一鍵完成：</p>
 <pre><code class="language-bash">sudo make trace-smoke
 </code></pre>
@@ -1066,7 +783,7 @@ Step2 耗時: 9 us
 時間: 3026 ms | 函數: uprobe:./myapp:main.Step1
 已停止背景程式: 12345
 </code></pre>
-<h3 id="_14">執行測試<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h3>
+<h3 id="執行測試"><a class="header" href="#執行測試">執行測試</a></h3>
 <pre><code class="language-bash">make test
 </code></pre>
 <pre><code>=== RUN   TestDemoPrintsStepMessages
@@ -1074,109 +791,49 @@ Step2 耗時: 9 us
 PASS
 ok      go-bpftrace-demo        2.052s
 </code></pre>
-<h3 id="_15">清理<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
+<h3 id="清理"><a class="header" href="#清理">清理</a></h3>
 <pre><code class="language-bash">make clean
 # 刪除 ./myapp 與 tmp/ 目錄
 </code></pre>
 <hr />
-<h2 id="bpftrace_1">bpftrace 腳本語法詳解<a class="headerlink" href="#bpftrace_1" title="Permanent link">&para;</a></h2>
-<h3 id="_16">基本結構<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h3>
+<h2 id="bpftrace-腳本語法詳解"><a class="header" href="#bpftrace-腳本語法詳解">bpftrace 腳本語法詳解</a></h2>
+<h3 id="基本結構"><a class="header" href="#基本結構">基本結構</a></h3>
 <pre><code>probe名稱 / 篩選條件 / {
     動作
 }
 </code></pre>
-<h3 id="_17">本專案使用的語法元素<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>語法</th>
-<th>說明</th>
-<th>範例</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>uprobe:檔案:符號</code></td>
-<td>在函數入口掛載</td>
-<td><code>uprobe:./myapp:main.Step1</code></td>
-</tr>
-<tr>
-<td><code>uretprobe:檔案:符號</code></td>
-<td>在函數返回點掛載</td>
-<td><code>uretprobe:./myapp:main.Step1</code></td>
-</tr>
-<tr>
-<td><code>uprobe:檔案:前綴.*</code></td>
-<td>萬用字元，比對所有符合前綴的符號</td>
-<td><code>uprobe:./myapp:main.*</code></td>
-</tr>
-<tr>
-<td><code>probe</code></td>
-<td>當前命中的 probe 完整名稱</td>
-<td><code>printf("%s", probe)</code></td>
-</tr>
-<tr>
-<td><code>elapsed</code></td>
-<td>程式啟動後的奈秒數</td>
-<td><code>elapsed / 1000000</code> 換算毫秒</td>
-</tr>
-<tr>
-<td><code>nsecs</code></td>
-<td>系統啟動後的奈秒數</td>
-<td>用於計算耗時</td>
-</tr>
-<tr>
-<td><code>tid</code></td>
-<td>Thread ID</td>
-<td>用作 map key 追蹤耗時</td>
-</tr>
-<tr>
-<td><code>@map[key]</code></td>
-<td>eBPF map（關聯陣列）</td>
-<td><code>@step1[tid] = nsecs</code></td>
-</tr>
-<tr>
-<td><code>count()</code></td>
-<td>累計計數</td>
-<td><code>@[probe] = count()</code></td>
-</tr>
-<tr>
-<td><code>ustack()</code></td>
-<td>使用者空間呼叫堆疊</td>
-<td><code>print(ustack())</code></td>
-</tr>
-<tr>
-<td><code>/條件/</code></td>
-<td>篩選器（Guard）</td>
-<td><code>/@step1[tid]/</code> 確保 key 存在</td>
-</tr>
-<tr>
-<td><code>delete(@map[key])</code></td>
-<td>刪除 map 條目</td>
-<td><code>delete(@step1[tid])</code></td>
-</tr>
-<tr>
-<td><code>printf(格式, 參數...)</code></td>
-<td>格式化輸出</td>
-<td><code>printf("%llu us\n", 耗時)</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="trace-latency_1">trace-latency 腳本解析<a class="headerlink" href="#trace-latency_1" title="Permanent link">&para;</a></h3>
+<h3 id="本專案使用的語法元素"><a class="header" href="#本專案使用的語法元素">本專案使用的語法元素</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>語法</th><th>說明</th><th>範例</th></tr></thead><tbody>
+<tr><td><code>uprobe:檔案:符號</code></td><td>在函數入口掛載</td><td><code>uprobe:./myapp:main.Step1</code></td></tr>
+<tr><td><code>uretprobe:檔案:符號</code></td><td>在函數返回點掛載</td><td><code>uretprobe:./myapp:main.Step1</code></td></tr>
+<tr><td><code>uprobe:檔案:前綴.*</code></td><td>萬用字元，比對所有符合前綴的符號</td><td><code>uprobe:./myapp:main.*</code></td></tr>
+<tr><td><code>probe</code></td><td>當前命中的 probe 完整名稱</td><td><code>printf("%s", probe)</code></td></tr>
+<tr><td><code>elapsed</code></td><td>程式啟動後的奈秒數</td><td><code>elapsed / 1000000</code> 換算毫秒</td></tr>
+<tr><td><code>nsecs</code></td><td>系統啟動後的奈秒數</td><td>用於計算耗時</td></tr>
+<tr><td><code>tid</code></td><td>Thread ID</td><td>用作 map key 追蹤耗時</td></tr>
+<tr><td><code>@map[key]</code></td><td>eBPF map（關聯陣列）</td><td><code>@step1[tid] = nsecs</code></td></tr>
+<tr><td><code>count()</code></td><td>累計計數</td><td><code>@[probe] = count()</code></td></tr>
+<tr><td><code>ustack()</code></td><td>使用者空間呼叫堆疊</td><td><code>print(ustack())</code></td></tr>
+<tr><td><code>/條件/</code></td><td>篩選器（Guard）</td><td><code>/@step1[tid]/</code> 確保 key 存在</td></tr>
+<tr><td><code>delete(@map[key])</code></td><td>刪除 map 條目</td><td><code>delete(@step1[tid])</code></td></tr>
+<tr><td><code>printf(格式, 參數...)</code></td><td>格式化輸出</td><td><code>printf("%llu us\n", 耗時)</code></td></tr>
+</tbody></table>
+</div>
+<h3 id="trace-latency-腳本解析"><a class="header" href="#trace-latency-腳本解析">trace-latency 腳本解析</a></h3>
 <pre><code class="language-bpftrace">uprobe:./myapp:main.Step1 {
     @step1[tid] = nsecs;      // 函數入口：記錄當前時間到 map（key=thread ID）
 }
 
 uretprobe:./myapp:main.Step1
 /@step1[tid]/ {               // Guard：確保 @step1[tid] 存在（避免孤立的 uretprobe）
-    printf(&quot;Step1 耗時: %llu us\n&quot;,
+    printf("Step1 耗時: %llu us\n",
            (nsecs - @step1[tid]) / 1000);  // 計算耗時（奈秒 → 微秒）
     delete(@step1[tid]);      // 清除 map 避免記憶體洩漏
 }
 </code></pre>
 <hr />
-<h2 id="_18">輸出範例<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h2>
-<h3 id="myapp">myapp 正常輸出<a class="headerlink" href="#myapp" title="Permanent link">&para;</a></h3>
+<h2 id="輸出範例"><a class="header" href="#輸出範例">輸出範例</a></h2>
+<h3 id="myapp-正常輸出"><a class="header" href="#myapp-正常輸出">myapp 正常輸出</a></h3>
 <pre><code>執行步驟 1: Hello
 執行步驟 2，次數: 42
 分配記憶體: 256 bytes
@@ -1186,7 +843,7 @@ Worker goroutine 執行中
 分配記憶體: 256 bytes
 ...
 </code></pre>
-<h3 id="trace-flow">trace-flow 輸出<a class="headerlink" href="#trace-flow" title="Permanent link">&para;</a></h3>
+<h3 id="trace-flow-輸出"><a class="header" href="#trace-flow-輸出">trace-flow 輸出</a></h3>
 <pre><code>Attaching 8 probes...
 時間: 12043 ms | 函數: uprobe:./myapp:main.main
 時間: 12043 ms | 函數: uprobe:./myapp:main.Step1
@@ -1195,21 +852,21 @@ Worker goroutine 執行中
 時間: 14045 ms | 函數: uprobe:./myapp:main.Step1
 時間: 14046 ms | 函數: uprobe:./myapp:main.Step2
 </code></pre>
-<h3 id="trace-latency_2">trace-latency 輸出<a class="headerlink" href="#trace-latency_2" title="Permanent link">&para;</a></h3>
+<h3 id="trace-latency-輸出"><a class="header" href="#trace-latency-輸出">trace-latency 輸出</a></h3>
 <pre><code>Attaching 4 probes...
 Step1 耗時: 14 us
 Step2 耗時: 9 us
 Step1 耗時: 12 us
 Step2 耗時: 8 us
 </code></pre>
-<h3 id="trace-count-ctrlc">trace-count 輸出（Ctrl+C 後）<a class="headerlink" href="#trace-count-ctrlc" title="Permanent link">&para;</a></h3>
+<h3 id="trace-count-輸出ctrlc-後"><a class="header" href="#trace-count-輸出ctrlc-後">trace-count 輸出（Ctrl+C 後）</a></h3>
 <pre><code>Attaching 8 probes...
 ^C
 @[uprobe:./myapp:main.Step2]: 3
 @[uprobe:./myapp:main.Step1]: 3
 @[uprobe:./myapp:main.main]: 3
 </code></pre>
-<h3 id="trace-stack">trace-stack 輸出<a class="headerlink" href="#trace-stack" title="Permanent link">&para;</a></h3>
+<h3 id="trace-stack-輸出"><a class="header" href="#trace-stack-輸出">trace-stack 輸出</a></h3>
 <pre><code>Attaching 1 probe...
 命中 uprobe:./myapp:main.Step1
 
@@ -1218,18 +875,66 @@ Step2 耗時: 8 us
         runtime.main+277
         runtime.goexit.abi0+1
 </code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../go/go-ftrace-design-implementation.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../go/golang_debugger.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../go/go-ftrace-design-implementation.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../go/golang_debugger.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
     </div>
-    
-    <script>
-        // 初始化 Mermaid
-        mermaid.initialize({ 
-            startOnLoad: true,
-            theme: 'default',
-            themeVariables: {
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
-                fontSize: '16px'
-            }
-        });
-    </script>
-</body>
+    </body>
 </html>
