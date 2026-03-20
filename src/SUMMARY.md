@@ -509,6 +509,7 @@
         - [Ollama Ubuntu 指南](ml/ollama-ubuntu-guide.md)
         - [Ollama 指南](ml/ollama_guide_markdown.md)
     - [AutoML 自動化機器學習](ml/04_AutoML自動化機器學習.md)
+        - [Karpathy AutoResearch 完整解析](ml/Karpathy_AutoResearch_完整解析.md)
     - [高性能計算](ml/05_高性能計算.md)
         - [cuDF GPU 資料處理](ml/cudf.md)
 - [電腦視覺完整指南](cv/README.md)
