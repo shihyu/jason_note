@@ -607,6 +607,7 @@
         - [台股處置股與注意股分析需求](strategy/台股處置股與注意股分析需求.md)
         - [抄底王策略](strategy/抄底王策略全解析：台股投資人的逆勢操作完整攻略.md)
         - [AI受惠股分析](strategy/Taiwan-AI-Stocks-Extended-Analysis.md)
+        - [AI 股票產業與訂單分析 Prompt 模板](strategy/AI_stock_analysis_prompts.md)
         - [AI產業完整供應鏈架構圖](strategy/AI產業完整架構圖.md)
         - [台股族群輪動篩選整理](strategy/台股族群輪動篩選整理.md)
         - [Tick 數據買賣力道指標與橫切面 Quantile 分析](strategy/tick_買賣力道指標分析.md)
