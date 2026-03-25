@@ -326,6 +326,7 @@
         - [WASM 最佳化編譯測試](web/wasm-optimized-build-testing.md)
         - [雲服務效能陷阱完整指南](web/cloud-performance-pitfalls.md)
         - [Cloudflare Workers 完整指南：Python & Go](web/cloudflare-workers-guide.md)
+        - [不用再配伺服器了！這套 Next.js + Cloudflare 模板，一個人零成本搞定全端出海](web/nextjs-cloudflare-zero-cost-fullstack-guide.md)
         - [Cloudflare Edge RAG 與 MCP Worker 低成本架構實作](web/cloudflare-edge-rag-mcp-worker.md)
 
 ## System & Debug
