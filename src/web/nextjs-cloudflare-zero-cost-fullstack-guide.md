@@ -89,9 +89,195 @@
 
 ---
 
+## Cloudflare 前後端架設最佳實踐
+
+在 Cloudflare 架設前後端網站，最佳實踐是：**用 Cloudflare Pages 託管前端（React / Vue / Astro 等），用 Pages Functions 或 Cloudflare Workers 處理後端 API**，達成免伺服器、全域 CDN 加速、免費的高效能架構。
+
+```mermaid
+graph LR
+    subgraph Dev["本地開發"]
+        Code["前端專案\n(React / Vue / Astro\nNext.js...)"]
+        Fn["後端邏輯\n/functions 或\nWorker 腳本"]
+    end
+
+    subgraph Git["版本控制"]
+        GH["GitHub / GitLab"]
+    end
+
+    subgraph CF["☁️ Cloudflare"]
+        Pages["Pages\n前端靜態 / SSR\n自動 CI/CD"]
+        Functions["Pages Functions\n或 Workers\nEdge Runtime API"]
+        D1[("D1\nSQL 資料庫")]
+        KV[("KV\nNoSQL 快取")]
+        SSL["自動 SSL\n自訂網域"]
+    end
+
+    Code -->|git push| GH
+    Fn -->|git push| GH
+    GH -->|觸發建置| Pages
+    GH -->|自動部署| Functions
+    Pages --- Functions
+    Functions --> D1
+    Functions --> KV
+    Pages --> SSL
+```
+
+### 前後端架設步驟
+
+#### 步驟 1：準備代碼
+
+將前端專案 push 到 GitHub 或 GitLab。
+
+```bash
+git add .
+git commit -m "init project"
+git push origin main
+```
+
+#### 步驟 2：部署前端（Pages）
+
+1. 登入 Cloudflare，進入「**Workers & Pages**」>「**Create application**」>「**Pages**」>「**Connect to Git**」
+2. 選擇你的 Git 專案
+3. 依框架設定建構指令與輸出目錄：
+
+| 框架 | 建構指令 | 輸出目錄 |
+| --- | --- | --- |
+| React (Vite) | `npm run build` | `dist` |
+| Next.js | `npm run build` | `.next` / `out` |
+| Vue | `npm run build` | `dist` |
+| Astro | `npm run build` | `dist` |
+| SvelteKit | `npm run build` | `build` |
+
+4. 點擊「**Save and Deploy**」，Cloudflare 自動建置並部署。
+
+#### 步驟 3：配置後端（兩種方法）
+
+**方法 A（推薦）— Pages Functions**
+
+在專案根目錄建立 `/functions` 資料夾，檔案即路由，隨前端一起部署：
+
+```text
+my-project/
+├── src/               ← 前端源碼
+├── functions/
+│   ├── api/
+│   │   ├── hello.ts   → GET /api/hello
+│   │   └── users/
+│   │       └── index.ts → GET/POST /api/users
+│   └── _middleware.ts ← 全域中介軟體
+├── package.json
+└── wrangler.toml
+```
+
+```typescript
+// functions/api/hello.ts
+export const onRequest: PagesFunction = async (ctx) => {
+  return Response.json({ message: "Hello from Edge!" });
+};
+```
+
+**方法 B — 獨立 Cloudflare Workers**
+
+適用於需要與前端分離部署的獨立後端服務：
+
+```bash
+# 建立 Worker 專案
+npm create cloudflare@latest my-api -- --type=worker
+
+# 部署
+npx wrangler deploy
+```
+
+#### 步驟 4：整合資料庫
+
+```bash
+# 建立 D1 資料庫
+npx wrangler d1 create my-database
+
+# 在 wrangler.toml 綁定
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "my-database"
+# database_id = "xxxx-xxxx-xxxx"
+
+# 建立 KV 命名空間
+npx wrangler kv namespace create MY_KV
+```
+
+```typescript
+// 在 Functions 中使用 D1
+export const onRequest: PagesFunction<{ DB: D1Database }> = async (ctx) => {
+  const result = await ctx.env.DB.prepare("SELECT * FROM users").all();
+  return Response.json(result.results);
+};
+```
+
+#### 步驟 5：綁定自訂網域
+
+在 Pages 設定的「**Custom domains**」中加入你的網域，Cloudflare 會**自動處理 SSL 憑證**。
+
+```text
+your-domain.com        → Pages 前端
+your-domain.com/api/*  → Pages Functions 自動路由
+api.your-domain.com    → 獨立 Workers（方法 B）
+```
+
+---
+
+### 關鍵優勢
+
+| 優勢 | 說明 |
+| --- | --- |
+| **全域部署** | 內容自動分發至 200+ 邊緣節點，存取速度極快 |
+| **CI/CD 自動化** | Git Push 即觸發建置與部署，無需額外配置 |
+| **無伺服器** | 無需管理伺服器，自動擴縮容，零維運成本 |
+| **整合資料庫** | 搭配 D1（SQL）+ KV（NoSQL）實現真正無伺服器全棧 |
+| **自動 SSL** | 自訂網域自動頒發與續期 TLS 憑證 |
+| **免費起步** | Free Tier 即可跑真實全端應用，超量再升級 |
+
+---
+
 ## 完整的生態：不只是拼湊
 
 這個模板不是簡單把 Next.js 和 Cloudflare 拼在一起，而是把它們的原生生態串成一個有機整體。它已經為你規劃好每個元件的職責：
+
+```mermaid
+graph TB
+    User(["🌍 使用者"])
+
+    subgraph CF["☁️ Cloudflare 全球邊緣（200+ POP）"]
+        direction TB
+        subgraph App["Next.js on Cloudflare Pages"]
+            FE["📄 前端頁面\nApp Router · SSR / SSG / ISR\nTailwind CSS · TypeScript"]
+            BE["⚡ Edge API\nPages Functions · Edge Runtime\napp/api/* 路由"]
+        end
+        subgraph DataLayer["資料與儲存"]
+            D1[("🗄️ D1\nSQLite + Prisma ORM")]
+            KV[("⚡ KV\n鍵值快取 + 滑動視窗限流")]
+            R2[("📦 R2\n物件儲存 · 零出站費")]
+        end
+        subgraph Obs["可觀測性"]
+            AE["📊 Analytics Engine\n業務事件打點"]
+            LOG["📝 結構化日誌 pino\nJSON（正式）/ Pretty（開發）"]
+        end
+    end
+
+    subgraph Deploy["部署流程"]
+        GH["🐙 GitHub Actions\nCI / CD"]
+        WR["🔧 Wrangler CLI\n多環境部署"]
+    end
+
+    User -->|"就近接入（低延遲）"| FE
+    User <-->|"HTTPS API 請求"| BE
+    FE <-->|"SSR 資料"| BE
+    BE -->|"Prisma CRUD"| D1
+    BE <-->|"快取讀寫"| KV
+    BE -->|"上傳 / 下載"| R2
+    BE -.->|"事件打點"| AE
+    BE -.->|"請求 & 慢查詢日誌"| LOG
+    GH -->|"push / merge 觸發"| WR
+    WR -->|"deploy"| App
+```
 
 - **前端／頁面：** Next.js App Router 負責承載 UI，SSR、SSG、ISR 都具備，Tailwind CSS 也已配好。
 - **後端／API：** 執行在 Edge Runtime 上的 Next.js 路由（`app/api/*`）負責處理業務邏輯。
@@ -106,11 +292,238 @@
 
 ---
 
+## 跟傳統 VPS 有什麼不一樣？
+
+如果只用一句話總結：
+
+**傳統 VPS 是你自己養一台機器；Next.js + Cloudflare 則是把前端、API、快取、儲存等能力拆給平台代管。**
+
+### 架構對照
+
+#### 傳統 VPS
+
+```text
+   使用者
+     │
+     ▼
+  ┌──────┐
+  │ DNS  │
+  └──┬───┘
+     │
+     ▼
+  ┌──────────────────┐
+  │  Nginx / Apache  │  ← 反向代理，你自己管
+  └────────┬─────────┘
+           │
+           ▼
+  ┌──────────────────┐
+  │    App Server    │  ← 後端服務，你自己管
+  │ (Node / Go ...)  │
+  └──┬────────┬───┬──┘
+     │        │   │
+     ▼        ▼   ▼
+  ┌──────┐ ┌─────┐ ┌──────────────┐
+  │  DB  │ │Redis│ │ 本機 / S3    │
+  │(PG / │ │ 快取│ │  物件儲存    │
+  │MySQL)│ │     │ │              │
+  └──────┘ └─────┘ └──────────────┘
+
+  ⚠  單一機房、固定月費、維運全靠自己
+```
+
+#### Next.js + Cloudflare
+
+```text
+   使用者（全球各地）
+         │  就近接入 · 低延遲
+         ▼
+  ┌──────────────────────────────────────────────┐
+  │        Cloudflare 全球邊緣（200+ POP）         │
+  │                                              │
+  │  ┌────────────────────────────────────────┐  │
+  │  │      Pages（靜態資產 / SSR 頁面）        │  │
+  │  │   Next.js App Router · Tailwind CSS    │  │
+  │  └───────────────────┬────────────────────┘  │
+  │                      │                       │
+  │  ┌───────────────────▼────────────────────┐  │
+  │  │      Functions（Edge Runtime API）      │  │
+  │  │      Next.js app/api/* 路由             │  │
+  │  └────────┬────────────┬────────┬─────────┘  │
+  │           │            │        │             │
+  │      ┌────▼───┐   ┌────▼──┐ ┌───▼───┐        │
+  │      │   D1   │   │  KV   │ │  R2   │        │
+  │      │ 資料庫  │   │  快取 │ │  儲存 │        │
+  │      │(SQLite)│   │ (限流)│ │(零出站│        │
+  │      └────────┘   └───────┘ └───────┘        │
+  │                                              │
+  │      平台代管 · 自動擴展 · 全球分散              │
+  └──────────────────────────────────────────────┘
+
+  ✅  全球就近接入、按用量計費、零維運成本
+```
+
+### 核心差異比較
+
+| 面向 | 傳統 VPS | Next.js + Cloudflare |
+| --- | --- | --- |
+| 核心模型 | 一台或多台你自己管理的伺服器 | 平台代管的 Edge / Serverless 服務 |
+| 部署單位 | 主機、Container、Process | Pages、Functions、Workers |
+| 維運責任 | 幾乎都要自己處理 | 大部分交給平台 |
+| 擴充方式 | 加機器、配 Load Balancer、調 Nginx | 平台自動擴展為主 |
+| 延遲表現 | 通常集中在單區機房 | 可利用全球邊緣節點 |
+| 成本結構 | 固定月租 | 常見是低流量便宜、隨用量增加 |
+| 上手速度 | 要先配好整套主機環境 | 很快，但要接受平台規則 |
+| 自由度 | 很高 | 中高，但受平台限制 |
+| 除錯方式 | SSH 進機器直接查 | 主要依賴平台日誌與本地模擬 |
+| 狀態保存 | 本機磁碟、自己架 DB / Redis | D1、KV、R2、Durable Objects 等託管服務 |
+| 適合場景 | 長連線、特殊服務、自訂環境 | MVP、內容站、API、全球訪問產品 |
+| 主要風險 | 維運負擔、單點、備份遺漏 | 供應商綁定、執行限制較多 |
+
+### 金流、資料庫、背景任務、WebSocket 的差異
+
+| 面向 | 傳統 VPS | Next.js + Cloudflare |
+| --- | --- | --- |
+| 金流 | 後端可長駐，Webhook、排程、重試流程都自己掌控 | 能接金流 API 與 Webhook，但要配合無狀態、短生命週期的執行模型 |
+| 資料庫 | 常直接連 PostgreSQL / MySQL，自管或買託管 DB | 常搭 D1、外部託管 DB，或 HTTP 型資料服務；連線模型與延遲要重新設計 |
+| 背景任務 | 可用 `cron`、Supervisor、Queue Worker、Celery、Sidekiq 這類常駐 worker | 不適合傳統長駐 worker，通常改用 Queue、Cron Trigger、事件驅動拆小任務 |
+| WebSocket | 適合長連線、Socket Server、自管 session 與連線狀態 | 可做，但限制較多；若是大量即時連線，通常要靠 Durable Objects 或外部即時服務 |
+| 狀態管理 | 容易放在記憶體、本機檔案、Redis | 不能假設單機記憶體持久，狀態通常放 KV、D1、Durable Objects、R2 |
+| 排程與重試 | 很直覺，直接在主機上跑 | 要依賴平台提供的排程與佇列能力 |
+
+### 四個面向的直觀理解
+
+#### 1. 金流
+
+```text
+VPS
+┌────────┐   ┌──────────────┐   ┌──────────┐
+│  前端  │──>│   你的 API   │──>│  金流商  │
+└────────┘   └──────┬───────┘   └────┬─────┘
+                    │                │ Webhook
+              自己更新 DB      ───────▼────────
+              自己重試補單     │ 回打固定後端  │
+                               │ 更新 DB/重試 │
+                               └──────────────┘
+
+Cloudflare
+┌────────┐   ┌──────────────┐   ┌──────────┐
+│  前端  │──>│  Edge API    │──>│  金流商  │
+└────────┘   └──────────────┘   └────┬─────┘
+                                      │ Webhook
+                               ───────▼─────────────────
+                               │  Edge Function         │
+                               │  狀態寫入 D1 / KV      │
+                               │  重試靠 Queue / Trigger│
+                               └────────────────────────┘
+```
+
+#### 2. 資料庫
+
+```text
+VPS
+┌────────────┐                    ┌──────────────────┐
+│ App Server │◄──── 長連線 ───────►│ PostgreSQL/MySQL │
+└────────────┘                    └──────────────────┘
+  （持久連線池，低延遲）                （同機房，快）
+
+Cloudflare
+┌───────────────┐                 ┌─────────────────────────────┐
+│ Edge Function │──── 短請求 ────►│ D1 / HTTP DB / 外部託管 DB  │
+└───────────────┘                 └─────────────────────────────┘
+  （無狀態，每次請求建連）            （連線模型與延遲要重新設計）
+```
+
+#### 3. 背景任務
+
+```text
+VPS
+                ┌─────────────────────────┐
+Request ───────>│    App Server           │
+                └──────┬──────────────────┘
+                       │ 丟給常駐 Worker
+                       ▼
+                ┌──────────────┐
+                │ Worker 常駐  │──> 寄信 / 轉檔 / 同步
+                └──────────────┘     （慢慢跑完）
+
+Cloudflare
+                ┌─────────────────────────┐
+Request ───────>│    Edge Function        │
+                └──────┬──────────────────┘
+                       │ 寫入 Queue
+                       ▼
+                ┌──────────────────┐
+                │ Consumer /       │──> 分批小任務
+                │ Cron Trigger     │     （短生命週期）
+                └──────────────────┘
+```
+
+#### 4. WebSocket
+
+```text
+VPS
+┌────────┐                    ┌──────────────────┐
+│ Client │◄═══ 長連線 ════════►│ WebSocket Server │
+└────────┘                    └──────┬───────────┘
+                                     │
+                              ┌──────┴──────┐
+                              │ Redis Pub/  │
+                              │ Sub  &  DB  │
+                              └─────────────┘
+
+Cloudflare
+┌────────┐     ┌──────────────────────────────────────────┐
+│ Client │◄═══►│  Edge / Durable Objects / 第三方即時服務  │
+└────────┘     └──────────────────────────────────────────┘
+                 ⚠ 大量即時連線建議搭配 Durable Objects
+                   或外部即時服務（如 Pusher / Ably）
+```
+
+### 實務上的選型建議
+
+| 需求 | 較適合 |
+| --- | --- |
+| 官網、內容站、MVP、全球訪問 API | Cloudflare |
+| 複雜後台、重背景任務、長連線服務 | VPS |
+| 金流 + 一般 CRUD + 檔案上傳 | Cloudflare 可行 |
+| 大量 WebSocket、遊戲、即時協作核心服務 | VPS 或專門即時架構 |
+| 需要 root 權限、自訂系統套件 | VPS |
+
+簡單說，**VPS 比較像自己養基礎設施；Cloudflare 比較像把基礎設施外包給平台，自己專注在產品與功能。**
+
+---
+
 ## 為什麼說它適合「出海」？
 
 海外使用者最關心兩件事：**訪問速度**和**穩定性**。
 
 這套方案天生就是為全球訪問設計的：
+
+```text
+全球邊緣加速示意
+──────────────────────────────────────────────────────────
+  🇯🇵 日本 ────┐                         ┌──── 🇺🇸 美國
+  🇹🇼 台灣 ────┤                         ├──── 🇬🇧 英國
+  🇸🇬 新加坡 ──┼──────────────────────────┤──── 🇩🇪 德國
+  🇦🇺 澳洲 ────┘         就近接入         └──── 🌍 其他
+                              │
+                ┌─────────────▼─────────────┐
+                │   Cloudflare 全球 POP      │
+                │      200+ 個節點           │
+                │   （延遲通常 < 50ms）       │
+                └─────────────┬─────────────┘
+                              │
+                ┌─────────────▼─────────────┐
+                │        你的應用            │
+                │   Pages（前端）            │
+                │   Functions（API）        │
+                └──────┬──────┬──────┬──────┘
+                       │      │      │
+                  ┌────▼──┐ ┌─▼──┐ ┌─▼──────┐
+                  │  D1   │ │ KV │ │   R2   │
+                  │ 資料庫 │ │快取│ │ 零出站費│
+                  └───────┘ └────┘ └────────┘
+```
 
 1. **全球邊緣節點：** 你的應用和服務（Pages、Workers）都部署在 Cloudflare 的全球 POP 上，使用者可以就近接入，延遲自然更低。
 2. **D1 邊緣資料庫：** 很適合輕中量業務，能減少資料庫跨區查詢延遲。

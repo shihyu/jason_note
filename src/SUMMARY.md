@@ -491,6 +491,7 @@
     - [深度學習與 PyTorch](ml/02_深度學習與PyTorch.md)
         - [PyTorch 基礎](ml/pytorch.md)
         - [PyTorch 安裝設定](ml/pytorch_setup.md)
+        - [類神經網路運作原理](ml/類神經網路運作原理.md)
         - [從0手搓 Transformer 代碼拆解](ml/transformer-implementation-guide.md)
         - [Transformer 工作原理：600 行 Python 實現 self-attention](ml/transformers-from-scratch-zh.md)
         - [Transformer 工作基礎流程](ml/Transformer工作基礎流程.md)
