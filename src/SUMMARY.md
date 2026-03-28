@@ -583,6 +583,7 @@
     - [日本大神心法](strategy/05_國際交易大師心法.md)
         - [BNF](strategy/bnf.md)
         - [CIS](strategy/cis.md)
+        - [《主力的思維》CIS 交易哲學筆記](strategy/主力的思維_CIS交易哲學筆記.md)
         - [麻道明](strategy/麻道明/麻道明.md)
         - [張松允投資心法](strategy/張松允投資心法.md)
     - [技術分析策略大全](strategy/06_技術分析策略大全.md)
