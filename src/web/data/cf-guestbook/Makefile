@@ -5,12 +5,7 @@ PORT := 8788
 .PHONY: help
 help:  ## 顯示此說明訊息
 	@echo "可用目標："
-	@echo "  make install  - 安裝相依套件"
-	@echo "  make setup    - 建立 Cloudflare KV + D1，自動寫入 wrangler.toml（首次部署用）"
-	@echo "  make dev      - 啟動本地開發伺服器（KV + D1 模擬）"
-	@echo "  make test     - 執行 API curl 測試"
-	@echo "  make deploy   - 部署到 Cloudflare Pages"
-	@echo "  make clean    - 清理 node_modules 與 wrangler 本地狀態"
+	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  make %-15s - %s\n", $$1, $$2}'
 	@echo ""
 	@echo "首次部署流程："
 	@echo "  make install"
@@ -74,6 +69,33 @@ test:  ## 執行 API curl 測試（需先 make dev 啟動伺服器）
 .PHONY: deploy
 deploy:  ## 部署到 Cloudflare Pages（需先 wrangler login）
 	npx wrangler pages deploy public
+
+.PHONY: inspect-d1
+inspect-d1:  ## 查看 D1 資料庫 (Remote)
+	@echo "=== [D1] messages 資料表內容 (前 20 筆) ==="
+	npx wrangler d1 execute guestbook --remote --command "SELECT * FROM messages ORDER BY id DESC LIMIT 20;"
+
+.PHONY: inspect-kv
+inspect-kv:  ## 查看 KV 內容 (Remote)
+	$(eval KV_NS_ID := $(shell npx wrangler kv namespace list 2>/dev/null | python3 -c "import sys,json; ns=[x for x in json.load(sys.stdin) if x['title']=='VISITS']; print(ns[0]['id'] if ns else '')"))
+	@echo "=== [KV] 所有的 Key 列表 (namespace: $(KV_NS_ID)) ==="
+	@npx wrangler kv key list --namespace-id $(KV_NS_ID) --remote
+	@echo "=== [KV] 訪客計數 (visit_count) ==="
+	@val=$$(npx wrangler kv key get --namespace-id $(KV_NS_ID) "visit_count" --remote 2>&1); echo "$${val:-(尚未有資料)}"
+
+.PHONY: inspect
+inspect: inspect-d1 inspect-kv  ## 同時查看 D1 與 KV 內容 (Remote)
+
+.PHONY: diag
+diag:  ## 診斷 Cloudflare 設定與 ID (比對本地與雲端)
+	@echo "=== [Local] wrangler.toml 設定 ==="
+	@grep -E "id =|database_id =" wrangler.toml
+	@echo ""
+	@echo "=== [Remote] Cloudflare 實際現有的 KV 列表 ==="
+	npx wrangler kv namespace list
+	@echo ""
+	@echo "=== [Remote] Cloudflare 實際現有的 D1 列表 ==="
+	npx wrangler d1 list
 
 .PHONY: clean
 clean:  ## 清理 node_modules 與 wrangler 本地狀態
