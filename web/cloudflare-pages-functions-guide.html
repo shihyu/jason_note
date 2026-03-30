@@ -223,7 +223,7 @@
 </ul>
 <hr />
 <h2 id="實戰範例留言板前後端--kv--d1"><a class="header" href="#實戰範例留言板前後端--kv--d1">實戰範例：留言板（前後端 + KV + D1）</a></h2>
-<p>這是一個本地可直接驗證的完整範例：</p>
+<p>這是一個本地與正式環境均已驗證的完整範例：</p>
 <div class="table-wrapper"><table><thead><tr><th>層級</th><th>技術</th><th>用途</th></tr></thead><tbody>
 <tr><td>前端</td><td>HTML / JS</td><td>留言板 UI，由 Pages 托管</td></tr>
 <tr><td>後端</td><td>Cloudflare Functions</td><td><code>/api/visits</code>、<code>/api/messages</code></td></tr>
@@ -240,6 +240,7 @@
 │       ├── visits.js       # GET /api/visits → KV 訪客計數
 │       └── messages.js     # GET/POST /api/messages → D1 留言
 ├── wrangler.toml
+├── Makefile
 └── package.json
 </code></pre>
 <hr />
@@ -250,29 +251,103 @@ npm install --save-dev wrangler
 mkdir -p public functions/api
 </code></pre>
 <hr />
-<h3 id="步驟-2設定-wranglertoml"><a class="header" href="#步驟-2設定-wranglertoml">步驟 2：設定 <code>wrangler.toml</code></a></h3>
+<h3 id="步驟-2設定-wranglertoml先填佔位符"><a class="header" href="#步驟-2設定-wranglertoml先填佔位符">步驟 2：設定 <code>wrangler.toml</code>（先填佔位符）</a></h3>
 <pre><code class="language-toml">name = "cf-guestbook"
 pages_build_output_dir = "public"
 compatibility_date = "2024-01-01"
 
 [[kv_namespaces]]
 binding = "VISITS"
-id = "visits-kv"
+id = "visits-kv"        # 執行 make setup 後自動替換為真實 ID
 
 [[d1_databases]]
 binding = "DB"
 database_name = "guestbook"
-database_id = "guestbook-d1"
+database_id = "guestbook-d1"   # 執行 make setup 後自動替換為真實 ID
 </code></pre>
 <blockquote>
-<p><strong>說明</strong>：</p>
-<ul>
-<li><code>binding</code> 是程式碼中存取的變數名稱（<code>env.VISITS</code>、<code>env.DB</code>）</li>
-<li>本地開發時 id 可填任意值，wrangler 會自動建立本地模擬環境</li>
-</ul>
+<p><strong>重要</strong>：<code>binding</code> 是程式碼中存取的變數名稱（<code>env.VISITS</code>、<code>env.DB</code>）。
+<code>id</code> 與 <code>database_id</code> 需填入 Cloudflare 上真實資源的 ID，透過 <code>make setup</code> 自動取得並寫入。</p>
 </blockquote>
 <hr />
-<h3 id="步驟-3前端頁面-publicindexhtml"><a class="header" href="#步驟-3前端頁面-publicindexhtml">步驟 3：前端頁面 <code>public/index.html</code></a></h3>
+<h3 id="步驟-3makefile含自動化-setup"><a class="header" href="#步驟-3makefile含自動化-setup">步驟 3：Makefile（含自動化 setup）</a></h3>
+<pre><code class="language-makefile">PORT := 8788
+
+.DEFAULT_GOAL := help
+
+.PHONY: help
+help:
+	@echo "可用目標："
+	@echo "  make install  - 安裝相依套件"
+	@echo "  make setup    - 建立 Cloudflare KV + D1，自動寫入 wrangler.toml（首次部署用）"
+	@echo "  make dev      - 啟動本地開發伺服器（KV + D1 模擬）"
+	@echo "  make test     - 執行 API curl 測試"
+	@echo "  make deploy   - 部署到 Cloudflare Pages"
+	@echo "  make clean    - 清理 node_modules 與 wrangler 本地狀態"
+	@echo ""
+	@echo "首次部署流程："
+	@echo "  make install &amp;&amp; npx wrangler login &amp;&amp; make setup &amp;&amp; make deploy"
+
+.PHONY: install
+install:
+	npm install
+
+.PHONY: setup
+setup:  ## 建立 KV + D1，自動寫入 wrangler.toml
+	@echo "建立 KV Namespace: VISITS..."
+	$(eval KV_ID := $(shell npx wrangler kv namespace create VISITS 2&gt;&amp;1 | grep 'id = ' | sed 's/.*id = "\(.*\)"/\1/'))
+	@if [ -z "$(KV_ID)" ]; then echo "KV 已存在，從清單取得 ID..."; fi
+	$(eval KV_ID := $(or $(KV_ID), $(shell npx wrangler kv namespace list 2&gt;&amp;1 | python3 -c "import sys,json; ns=[x for x in json.load(sys.stdin) if x['title']=='VISITS']; print(ns[0]['id'] if ns else '')")))
+	@echo "KV ID: $(KV_ID)"
+	@echo "建立 D1 Database: guestbook..."
+	$(eval D1_ID := $(shell npx wrangler d1 create guestbook 2&gt;&amp;1 | grep 'database_id' | sed 's/.*database_id = "\(.*\)"/\1/'))
+	@if [ -z "$(D1_ID)" ]; then echo "D1 已存在，從清單取得 ID..."; fi
+	$(eval D1_ID := $(or $(D1_ID), $(shell npx wrangler d1 list 2&gt;&amp;1 | grep 'guestbook' | awk '{print $$2}')))
+	@echo "D1 ID: $(D1_ID)"
+	@echo "寫入 wrangler.toml..."
+	@sed -i "s|^id = .*|id = \"$(KV_ID)\"|" wrangler.toml
+	@sed -i "s|^database_id = .*|database_id = \"$(D1_ID)\"|" wrangler.toml
+	@echo "wrangler.toml 更新完成："
+	@grep -E "^id =|^database_id =" wrangler.toml
+
+.PHONY: dev
+dev:
+	@lsof -ti:$(PORT) | xargs -r kill -9 2&gt;/dev/null || true
+	npx wrangler pages dev public --kv VISITS --d1 DB --port $(PORT)
+
+.PHONY: test
+test:
+	@echo "=== [KV] GET /api/visits ==="
+	@curl -s http://localhost:$(PORT)/api/visits | python3 -m json.tool
+	@echo ""
+	@echo "=== [D1] POST /api/messages ==="
+	@curl -s -X POST http://localhost:$(PORT)/api/messages \
+		-H "Content-Type: application/json" \
+		-d '{"name":"測試者","message":"Hello from Makefile test!"}' | python3 -m json.tool
+	@echo ""
+	@echo "=== [D1] GET /api/messages ==="
+	@curl -s http://localhost:$(PORT)/api/messages | python3 -m json.tool
+	@echo ""
+	@echo "=== 空白輸入防護（預期 400）==="
+	@curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" \
+		-X POST http://localhost:$(PORT)/api/messages \
+		-H "Content-Type: application/json" \
+		-d '{"name":"","message":""}'
+	@echo ""
+	@echo "=== [KV] 第二次計數（應遞增）==="
+	@curl -s http://localhost:$(PORT)/api/visits | python3 -m json.tool
+
+.PHONY: deploy
+deploy:
+	npx wrangler pages deploy public
+
+.PHONY: clean
+clean:
+	rm -rf node_modules .wrangler
+	@echo "清理完成"
+</code></pre>
+<hr />
+<h3 id="步驟-4前端頁面-publicindexhtml"><a class="header" href="#步驟-4前端頁面-publicindexhtml">步驟 4：前端頁面 <code>public/index.html</code></a></h3>
 <pre><code class="language-html">&lt;!DOCTYPE html&gt;
 &lt;html lang="zh-TW"&gt;
 &lt;head&gt;
@@ -315,10 +390,7 @@ database_id = "guestbook-d1"
       const res = await fetch('/api/messages');
       const data = await res.json();
       const el = document.getElementById('messages');
-      if (!data.messages?.length) {
-        el.innerHTML = '&lt;p&gt;還沒有留言！&lt;/p&gt;';
-        return;
-      }
+      if (!data.messages?.length) { el.innerHTML = '&lt;p&gt;還沒有留言！&lt;/p&gt;'; return; }
       el.innerHTML = data.messages.map(m =&gt; `
         &lt;div class="msg-item"&gt;
           &lt;strong&gt;${escHtml(m.name)}&lt;/strong&gt;
@@ -333,7 +405,6 @@ database_id = "guestbook-d1"
       const message = document.getElementById('message').value.trim();
       const status = document.getElementById('status');
       if (!name || !message) { status.textContent = '請填寫名字與留言！'; return; }
-
       const res = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -361,7 +432,7 @@ database_id = "guestbook-d1"
 &lt;/html&gt;
 </code></pre>
 <hr />
-<h3 id="步驟-4kv-訪客計數-functionsapivisitsjs"><a class="header" href="#步驟-4kv-訪客計數-functionsapivisitsjs">步驟 4：KV 訪客計數 <code>functions/api/visits.js</code></a></h3>
+<h3 id="步驟-5kv-訪客計數-functionsapivisitsjs"><a class="header" href="#步驟-5kv-訪客計數-functionsapivisitsjs">步驟 5：KV 訪客計數 <code>functions/api/visits.js</code></a></h3>
 <pre><code class="language-js">/**
  * GET /api/visits
  * 每次呼叫從 KV 讀取並自動 +1
@@ -382,20 +453,19 @@ export async function onRequestGet({ env }) {
 <p><strong>重點</strong>：</p>
 <ul>
 <li><code>env.VISITS</code> 來自 <code>wrangler.toml</code> 的 <code>binding = "VISITS"</code></li>
-<li><code>VISITS.get(key)</code> / <code>VISITS.put(key, value)</code> 是 KV 的核心 API</li>
 <li>KV 適合高頻讀取、低頻寫入的場景（計數器、快取、設定值）</li>
 </ul>
 </blockquote>
 <hr />
-<h3 id="步驟-5d1-留言-crud-functionsapimessagesjs"><a class="header" href="#步驟-5d1-留言-crud-functionsapimessagesjs">步驟 5：D1 留言 CRUD <code>functions/api/messages.js</code></a></h3>
+<h3 id="步驟-6d1-留言-crud-functionsapimessagesjs"><a class="header" href="#步驟-6d1-留言-crud-functionsapimessagesjs">步驟 6：D1 留言 CRUD <code>functions/api/messages.js</code></a></h3>
 <pre><code class="language-js">/**
  * GET  /api/messages → 列出所有留言（D1）
  * POST /api/messages → 新增一則留言（D1）
  * Binding: env.DB (D1 Database)
  */
 
-// 確保資料表存在（第一次呼叫時自動建立）
 async function ensureTable(db) {
+  // 注意：D1 本地模擬不支援多行 exec()，改用單行 prepare().run()
   await db.prepare(
     "CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, message TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')))"
   ).run();
@@ -407,14 +477,12 @@ export async function onRequestGet({ env }) {
     const { results } = await env.DB.prepare(
       'SELECT id, name, message, created_at FROM messages ORDER BY id DESC LIMIT 50'
     ).all();
-
     return new Response(JSON.stringify({ messages: results }), {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      status: 500, headers: { 'Content-Type': 'application/json' },
     });
   }
 }
@@ -427,8 +495,7 @@ export async function onRequestPost({ request, env }) {
 
     if (!name || !message) {
       return new Response(JSON.stringify({ error: '名字與留言不可為空' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
+        status: 400, headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -442,8 +509,7 @@ export async function onRequestPost({ request, env }) {
     });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      status: 500, headers: { 'Content-Type': 'application/json' },
     });
   }
 }
@@ -452,80 +518,100 @@ export async function onRequestPost({ request, env }) {
 <p><strong>重點</strong>：</p>
 <ul>
 <li>D1 使用 <strong>Prepared Statement</strong>（<code>.prepare().bind().run()</code>）防止 SQL 注入</li>
-<li>本地開發時，wrangler 會在 <code>.wrangler/state/</code> 自動建立 SQLite 檔案模擬 D1</li>
-<li><code>exec()</code> 不支援多行 DDL，請改用單行 <code>prepare().run()</code></li>
+<li>本地開發時，wrangler 在 <code>.wrangler/state/</code> 自動建立 SQLite 模擬 D1</li>
+<li><code>db.exec()</code> 不支援多行 DDL，請改用單行 <code>prepare().run()</code></li>
 </ul>
 </blockquote>
 <hr />
-<h3 id="步驟-6本地執行驗證"><a class="header" href="#步驟-6本地執行驗證">步驟 6：本地執行驗證</a></h3>
-<pre><code class="language-bash"># 啟動本地開發伺服器（自動模擬 KV + D1）
-npx wrangler pages dev public --kv VISITS --d1 DB
+<h3 id="步驟-7取得-kv--d1-真實-id"><a class="header" href="#步驟-7取得-kv--d1-真實-id">步驟 7：取得 KV / D1 真實 ID</a></h3>
+<p>部署到 Cloudflare 前，必須先在帳號下建立真實資源，取得 ID 填入 <code>wrangler.toml</code>。</p>
+<h4 id="手動方式"><a class="header" href="#手動方式">手動方式</a></h4>
+<pre><code class="language-bash"># 建立 KV Namespace，輸出中包含真實 ID
+npx wrangler kv namespace create VISITS
+# → id = "329919071143484c91ebbf78c31ab721"  ← 複製這個
+
+# 建立 D1 Database，輸出中包含真實 ID
+npx wrangler d1 create guestbook
+# → database_id = "12e617bf-bbf1-43a6-918d-2446e01e56c2"  ← 複製這個
 </code></pre>
-<p>啟動後，瀏覽器開啟 <code>http://localhost:8788</code> 即可看到留言板 UI。</p>
-<p>也可以直接用 curl 測試 API：</p>
-<pre><code class="language-bash"># 1. 訪客計數（KV）
-curl http://localhost:8788/api/visits
-# → {"count":1}
+<p>兩個 ID 建立後<strong>永久固定</strong>，不會改變，除非手動刪除資源重建。</p>
+<h4 id="忘記-id-怎麼辦"><a class="header" href="#忘記-id-怎麼辦">忘記 ID 怎麼辦</a></h4>
+<pre><code class="language-bash"># 查詢現有 KV Namespace 列表
+npx wrangler kv namespace list
 
-# 2. 新增留言（D1）
-curl -X POST http://localhost:8788/api/messages \
-  -H "Content-Type: application/json" \
-  -d '{"name":"小明","message":"Hello from D1!"}'
-# → {"success":true}
-
-# 3. 列出留言（D1）
-curl http://localhost:8788/api/messages
-# → {"messages":[{"id":1,"name":"小明","message":"Hello from D1!","created_at":"..."}]}
-
-# 4. 空白防護驗證
-curl -X POST http://localhost:8788/api/messages \
-  -H "Content-Type: application/json" \
-  -d '{"name":"","message":""}'
-# → {"error":"名字與留言不可為空"}  (HTTP 400)
-
-# 5. 第二次訪客計數（應遞增）
-curl http://localhost:8788/api/visits
-# → {"count":2}
+# 查詢現有 D1 Database 列表
+npx wrangler d1 list
 </code></pre>
-<p><strong>實際測試輸出（本地驗證通過）</strong>：</p>
-<pre><code>=== [KV] GET /api/visits (第1次) ===
-{"count":1}
-
-=== [D1] POST /api/messages (新增留言1) ===
-{"success":true}
-
-=== [D1] POST /api/messages (新增留言2) ===
-{"success":true}
-
-=== [D1] GET /api/messages (列出所有留言) ===
-{
-    "messages": [
-        {"id": 2, "name": "小花", "message": "Cloudflare Pages + Functions 超好用！", "created_at": "2026-03-30 05:00:27"},
-        {"id": 1, "name": "小明", "message": "Hello from D1! 這是第一則留言", "created_at": "2026-03-30 05:00:27"}
-    ]
-}
-
-=== [KV] GET /api/visits (第2次，計數應遞增) ===
-{"count":2}
-
-=== 驗證空留言防護 ===
-{"error":"名字與留言不可為空"}
+<h4 id="自動化方式make-setup"><a class="header" href="#自動化方式make-setup">自動化方式（make setup）</a></h4>
+<p>執行 <code>make setup</code> 會自動完成：</p>
+<ol>
+<li>嘗試建立 KV / D1（首次）</li>
+<li>若已存在，改從清單查詢現有 ID</li>
+<li>直接用 <code>sed</code> 寫入 <code>wrangler.toml</code>，無需手動複製貼上</li>
+</ol>
+<pre><code class="language-bash">make setup
+# 輸出：
+# KV ID: 329919071143484c91ebbf78c31ab721
+# D1 ID: 12e617bf-bbf1-43a6-918d-2446e01e56c2
+# wrangler.toml 更新完成
 </code></pre>
 <hr />
-<h3 id="步驟-7部署到-cloudflare正式環境"><a class="header" href="#步驟-7部署到-cloudflare正式環境">步驟 7：部署到 Cloudflare（正式環境）</a></h3>
-<pre><code class="language-bash"># 1. 登入 Cloudflare
-npx wrangler login
+<h3 id="步驟-8本地執行驗證"><a class="header" href="#步驟-8本地執行驗證">步驟 8：本地執行驗證</a></h3>
+<pre><code class="language-bash"># 啟動本地開發伺服器（自動模擬 KV + D1，無需連線 Cloudflare）
+make dev
+</code></pre>
+<p>另開終端執行測試：</p>
+<pre><code class="language-bash">make test
+</code></pre>
+<p>預期輸出：</p>
+<pre><code>=== [KV] GET /api/visits ===
+{"count": 1}
 
-# 2. 建立 KV Namespace
-npx wrangler kv namespace create VISITS
-# 複製輸出的 id，填入 wrangler.toml 的 [[kv_namespaces]] id
+=== [D1] POST /api/messages ===
+{"success": true}
 
-# 3. 建立 D1 資料庫
-npx wrangler d1 create guestbook
-# 複製輸出的 database_id，填入 wrangler.toml 的 [[d1_databases]] database_id
+=== [D1] GET /api/messages ===
+{"messages": [{"id": 1, "name": "測試者", "message": "Hello from Makefile test!", ...}]}
 
-# 4. 部署
-npx wrangler pages deploy public
+=== 空白輸入防護（預期 400）===
+HTTP Status: 400
+
+=== [KV] 第二次計數（應遞增）===
+{"count": 2}
+</code></pre>
+<hr />
+<h3 id="步驟-9部署到-cloudflare-正式環境"><a class="header" href="#步驟-9部署到-cloudflare-正式環境">步驟 9：部署到 Cloudflare 正式環境</a></h3>
+<pre><code class="language-bash"># 首次部署完整流程
+make install
+npx wrangler login    # 瀏覽器授權一次（只需做一次）
+make setup            # 建立 KV + D1，自動寫入 wrangler.toml
+make deploy
+
+# 之後更新只需
+make deploy
+</code></pre>
+<p>部署成功後輸出：</p>
+<pre><code>✨ Deployment complete! Take a peek over at https://xxxx.cf-guestbook.pages.dev
+</code></pre>
+<p>正式網址：<code>https://cf-guestbook.pages.dev</code></p>
+<hr />
+<h3 id="正式環境驗證結果"><a class="header" href="#正式環境驗證結果">正式環境驗證結果</a></h3>
+<pre><code class="language-bash">BASE="https://cf-guestbook.pages.dev"
+
+curl "$BASE/api/visits"
+# → {"count":7}
+
+curl -X POST "$BASE/api/messages" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"全流程驗證","message":"clean→install→setup→test→deploy 全OK！"}'
+# → {"success":true}
+
+curl "$BASE/api/messages"
+# → {"messages":[{"id":5,"name":"全流程驗證","message":"clean→install→setup→test→deploy 全OK！",...},...]}
+
+curl -o /dev/null -w "%{http_code}" -X POST "$BASE/api/messages" \
+  -H "Content-Type: application/json" -d '{"name":"","message":""}'
+# → 400
 </code></pre>
 <hr />
 <h2 id="kv-vs-d1-選擇指南"><a class="header" href="#kv-vs-d1-選擇指南">KV vs D1 選擇指南</a></h2>
