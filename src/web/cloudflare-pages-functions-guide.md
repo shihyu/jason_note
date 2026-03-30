@@ -54,14 +54,14 @@ Cloudflare Pages 與 Functions 的關係，可以理解成**前端 + 後端**的
 
 ## 實戰範例：留言板（前後端 + KV + D1）
 
-這是一個本地可直接驗證的完整範例：
+這是一個本地與正式環境均已驗證的完整範例：
 
-| 層級     | 技術               | 用途                       |
-|----------|--------------------|-----------------------------|
-| 前端     | HTML / JS          | 留言板 UI，由 Pages 托管    |
-| 後端     | Cloudflare Functions | `/api/visits`、`/api/messages` |
-| DB 1     | **KV**             | 訪客計數器（key-value 快速讀寫）|
-| DB 2     | **D1（SQLite）**   | 留言資料（關聯式查詢）       |
+| 層級 | 技術 | 用途 |
+|------|------|------|
+| 前端 | HTML / JS | 留言板 UI，由 Pages 托管 |
+| 後端 | Cloudflare Functions | `/api/visits`、`/api/messages` |
+| DB 1 | **KV** | 訪客計數器（key-value 快速讀寫）|
+| DB 2 | **D1（SQLite）** | 留言資料（關聯式查詢）|
 
 ### 專案結構
 
@@ -74,6 +74,7 @@ cf-guestbook/
 │       ├── visits.js       # GET /api/visits → KV 訪客計數
 │       └── messages.js     # GET/POST /api/messages → D1 留言
 ├── wrangler.toml
+├── Makefile
 └── package.json
 ```
 
@@ -90,7 +91,7 @@ mkdir -p public functions/api
 
 ---
 
-### 步驟 2：設定 `wrangler.toml`
+### 步驟 2：設定 `wrangler.toml`（先填佔位符）
 
 ```toml
 name = "cf-guestbook"
@@ -99,21 +100,101 @@ compatibility_date = "2024-01-01"
 
 [[kv_namespaces]]
 binding = "VISITS"
-id = "visits-kv"
+id = "visits-kv"        # 執行 make setup 後自動替換為真實 ID
 
 [[d1_databases]]
 binding = "DB"
 database_name = "guestbook"
-database_id = "guestbook-d1"
+database_id = "guestbook-d1"   # 執行 make setup 後自動替換為真實 ID
 ```
 
-> **說明**：
-> - `binding` 是程式碼中存取的變數名稱（`env.VISITS`、`env.DB`）
-> - 本地開發時 id 可填任意值，wrangler 會自動建立本地模擬環境
+> **重要**：`binding` 是程式碼中存取的變數名稱（`env.VISITS`、`env.DB`）。
+> `id` 與 `database_id` 需填入 Cloudflare 上真實資源的 ID，透過 `make setup` 自動取得並寫入。
 
 ---
 
-### 步驟 3：前端頁面 `public/index.html`
+### 步驟 3：Makefile（含自動化 setup）
+
+```makefile
+PORT := 8788
+
+.DEFAULT_GOAL := help
+
+.PHONY: help
+help:
+	@echo "可用目標："
+	@echo "  make install  - 安裝相依套件"
+	@echo "  make setup    - 建立 Cloudflare KV + D1，自動寫入 wrangler.toml（首次部署用）"
+	@echo "  make dev      - 啟動本地開發伺服器（KV + D1 模擬）"
+	@echo "  make test     - 執行 API curl 測試"
+	@echo "  make deploy   - 部署到 Cloudflare Pages"
+	@echo "  make clean    - 清理 node_modules 與 wrangler 本地狀態"
+	@echo ""
+	@echo "首次部署流程："
+	@echo "  make install && npx wrangler login && make setup && make deploy"
+
+.PHONY: install
+install:
+	npm install
+
+.PHONY: setup
+setup:  ## 建立 KV + D1，自動寫入 wrangler.toml
+	@echo "建立 KV Namespace: VISITS..."
+	$(eval KV_ID := $(shell npx wrangler kv namespace create VISITS 2>&1 | grep 'id = ' | sed 's/.*id = "\(.*\)"/\1/'))
+	@if [ -z "$(KV_ID)" ]; then echo "KV 已存在，從清單取得 ID..."; fi
+	$(eval KV_ID := $(or $(KV_ID), $(shell npx wrangler kv namespace list 2>&1 | python3 -c "import sys,json; ns=[x for x in json.load(sys.stdin) if x['title']=='VISITS']; print(ns[0]['id'] if ns else '')")))
+	@echo "KV ID: $(KV_ID)"
+	@echo "建立 D1 Database: guestbook..."
+	$(eval D1_ID := $(shell npx wrangler d1 create guestbook 2>&1 | grep 'database_id' | sed 's/.*database_id = "\(.*\)"/\1/'))
+	@if [ -z "$(D1_ID)" ]; then echo "D1 已存在，從清單取得 ID..."; fi
+	$(eval D1_ID := $(or $(D1_ID), $(shell npx wrangler d1 list 2>&1 | grep 'guestbook' | awk '{print $$2}')))
+	@echo "D1 ID: $(D1_ID)"
+	@echo "寫入 wrangler.toml..."
+	@sed -i "s|^id = .*|id = \"$(KV_ID)\"|" wrangler.toml
+	@sed -i "s|^database_id = .*|database_id = \"$(D1_ID)\"|" wrangler.toml
+	@echo "wrangler.toml 更新完成："
+	@grep -E "^id =|^database_id =" wrangler.toml
+
+.PHONY: dev
+dev:
+	@lsof -ti:$(PORT) | xargs -r kill -9 2>/dev/null || true
+	npx wrangler pages dev public --kv VISITS --d1 DB --port $(PORT)
+
+.PHONY: test
+test:
+	@echo "=== [KV] GET /api/visits ==="
+	@curl -s http://localhost:$(PORT)/api/visits | python3 -m json.tool
+	@echo ""
+	@echo "=== [D1] POST /api/messages ==="
+	@curl -s -X POST http://localhost:$(PORT)/api/messages \
+		-H "Content-Type: application/json" \
+		-d '{"name":"測試者","message":"Hello from Makefile test!"}' | python3 -m json.tool
+	@echo ""
+	@echo "=== [D1] GET /api/messages ==="
+	@curl -s http://localhost:$(PORT)/api/messages | python3 -m json.tool
+	@echo ""
+	@echo "=== 空白輸入防護（預期 400）==="
+	@curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" \
+		-X POST http://localhost:$(PORT)/api/messages \
+		-H "Content-Type: application/json" \
+		-d '{"name":"","message":""}'
+	@echo ""
+	@echo "=== [KV] 第二次計數（應遞增）==="
+	@curl -s http://localhost:$(PORT)/api/visits | python3 -m json.tool
+
+.PHONY: deploy
+deploy:
+	npx wrangler pages deploy public
+
+.PHONY: clean
+clean:
+	rm -rf node_modules .wrangler
+	@echo "清理完成"
+```
+
+---
+
+### 步驟 4：前端頁面 `public/index.html`
 
 ```html
 <!DOCTYPE html>
@@ -158,10 +239,7 @@ database_id = "guestbook-d1"
       const res = await fetch('/api/messages');
       const data = await res.json();
       const el = document.getElementById('messages');
-      if (!data.messages?.length) {
-        el.innerHTML = '<p>還沒有留言！</p>';
-        return;
-      }
+      if (!data.messages?.length) { el.innerHTML = '<p>還沒有留言！</p>'; return; }
       el.innerHTML = data.messages.map(m => `
         <div class="msg-item">
           <strong>${escHtml(m.name)}</strong>
@@ -176,7 +254,6 @@ database_id = "guestbook-d1"
       const message = document.getElementById('message').value.trim();
       const status = document.getElementById('status');
       if (!name || !message) { status.textContent = '請填寫名字與留言！'; return; }
-
       const res = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -206,7 +283,7 @@ database_id = "guestbook-d1"
 
 ---
 
-### 步驟 4：KV 訪客計數 `functions/api/visits.js`
+### 步驟 5：KV 訪客計數 `functions/api/visits.js`
 
 ```js
 /**
@@ -228,12 +305,11 @@ export async function onRequestGet({ env }) {
 
 > **重點**：
 > - `env.VISITS` 來自 `wrangler.toml` 的 `binding = "VISITS"`
-> - `VISITS.get(key)` / `VISITS.put(key, value)` 是 KV 的核心 API
 > - KV 適合高頻讀取、低頻寫入的場景（計數器、快取、設定值）
 
 ---
 
-### 步驟 5：D1 留言 CRUD `functions/api/messages.js`
+### 步驟 6：D1 留言 CRUD `functions/api/messages.js`
 
 ```js
 /**
@@ -242,8 +318,8 @@ export async function onRequestGet({ env }) {
  * Binding: env.DB (D1 Database)
  */
 
-// 確保資料表存在（第一次呼叫時自動建立）
 async function ensureTable(db) {
+  // 注意：D1 本地模擬不支援多行 exec()，改用單行 prepare().run()
   await db.prepare(
     "CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, message TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')))"
   ).run();
@@ -255,14 +331,12 @@ export async function onRequestGet({ env }) {
     const { results } = await env.DB.prepare(
       'SELECT id, name, message, created_at FROM messages ORDER BY id DESC LIMIT 50'
     ).all();
-
     return new Response(JSON.stringify({ messages: results }), {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      status: 500, headers: { 'Content-Type': 'application/json' },
     });
   }
 }
@@ -275,8 +349,7 @@ export async function onRequestPost({ request, env }) {
 
     if (!name || !message) {
       return new Response(JSON.stringify({ error: '名字與留言不可為空' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
+        status: 400, headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -290,8 +363,7 @@ export async function onRequestPost({ request, env }) {
     });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      status: 500, headers: { 'Content-Type': 'application/json' },
     });
   }
 }
@@ -299,106 +371,145 @@ export async function onRequestPost({ request, env }) {
 
 > **重點**：
 > - D1 使用 **Prepared Statement**（`.prepare().bind().run()`）防止 SQL 注入
-> - 本地開發時，wrangler 會在 `.wrangler/state/` 自動建立 SQLite 檔案模擬 D1
-> - `exec()` 不支援多行 DDL，請改用單行 `prepare().run()`
+> - 本地開發時，wrangler 在 `.wrangler/state/` 自動建立 SQLite 模擬 D1
+> - `db.exec()` 不支援多行 DDL，請改用單行 `prepare().run()`
 
 ---
 
-### 步驟 6：本地執行驗證
+### 步驟 7：取得 KV / D1 真實 ID
+
+部署到 Cloudflare 前，必須先在帳號下建立真實資源，取得 ID 填入 `wrangler.toml`。
+
+#### 手動方式
 
 ```bash
-# 啟動本地開發伺服器（自動模擬 KV + D1）
-npx wrangler pages dev public --kv VISITS --d1 DB
+# 建立 KV Namespace，輸出中包含真實 ID
+npx wrangler kv namespace create VISITS
+# → id = "329919071143484c91ebbf78c31ab721"  ← 複製這個
+
+# 建立 D1 Database，輸出中包含真實 ID
+npx wrangler d1 create guestbook
+# → database_id = "12e617bf-bbf1-43a6-918d-2446e01e56c2"  ← 複製這個
 ```
 
-啟動後，瀏覽器開啟 `http://localhost:8788` 即可看到留言板 UI。
+兩個 ID 建立後**永久固定**，不會改變，除非手動刪除資源重建。
 
-也可以直接用 curl 測試 API：
+#### 忘記 ID 怎麼辦
 
 ```bash
-# 1. 訪客計數（KV）
-curl http://localhost:8788/api/visits
-# → {"count":1}
+# 查詢現有 KV Namespace 列表
+npx wrangler kv namespace list
 
-# 2. 新增留言（D1）
-curl -X POST http://localhost:8788/api/messages \
+# 查詢現有 D1 Database 列表
+npx wrangler d1 list
+```
+
+#### 自動化方式（make setup）
+
+執行 `make setup` 會自動完成：
+1. 嘗試建立 KV / D1（首次）
+2. 若已存在，改從清單查詢現有 ID
+3. 直接用 `sed` 寫入 `wrangler.toml`，無需手動複製貼上
+
+```bash
+make setup
+# 輸出：
+# KV ID: 329919071143484c91ebbf78c31ab721
+# D1 ID: 12e617bf-bbf1-43a6-918d-2446e01e56c2
+# wrangler.toml 更新完成
+```
+
+---
+
+### 步驟 8：本地執行驗證
+
+```bash
+# 啟動本地開發伺服器（自動模擬 KV + D1，無需連線 Cloudflare）
+make dev
+```
+
+另開終端執行測試：
+
+```bash
+make test
+```
+
+預期輸出：
+
+```
+=== [KV] GET /api/visits ===
+{"count": 1}
+
+=== [D1] POST /api/messages ===
+{"success": true}
+
+=== [D1] GET /api/messages ===
+{"messages": [{"id": 1, "name": "測試者", "message": "Hello from Makefile test!", ...}]}
+
+=== 空白輸入防護（預期 400）===
+HTTP Status: 400
+
+=== [KV] 第二次計數（應遞增）===
+{"count": 2}
+```
+
+---
+
+### 步驟 9：部署到 Cloudflare 正式環境
+
+```bash
+# 首次部署完整流程
+make install
+npx wrangler login    # 瀏覽器授權一次（只需做一次）
+make setup            # 建立 KV + D1，自動寫入 wrangler.toml
+make deploy
+
+# 之後更新只需
+make deploy
+```
+
+部署成功後輸出：
+
+```
+✨ Deployment complete! Take a peek over at https://xxxx.cf-guestbook.pages.dev
+```
+
+正式網址：`https://cf-guestbook.pages.dev`
+
+---
+
+### 正式環境驗證結果
+
+```bash
+BASE="https://cf-guestbook.pages.dev"
+
+curl "$BASE/api/visits"
+# → {"count":7}
+
+curl -X POST "$BASE/api/messages" \
   -H "Content-Type: application/json" \
-  -d '{"name":"小明","message":"Hello from D1!"}'
+  -d '{"name":"全流程驗證","message":"clean→install→setup→test→deploy 全OK！"}'
 # → {"success":true}
 
-# 3. 列出留言（D1）
-curl http://localhost:8788/api/messages
-# → {"messages":[{"id":1,"name":"小明","message":"Hello from D1!","created_at":"..."}]}
+curl "$BASE/api/messages"
+# → {"messages":[{"id":5,"name":"全流程驗證","message":"clean→install→setup→test→deploy 全OK！",...},...]}
 
-# 4. 空白防護驗證
-curl -X POST http://localhost:8788/api/messages \
-  -H "Content-Type: application/json" \
-  -d '{"name":"","message":""}'
-# → {"error":"名字與留言不可為空"}  (HTTP 400)
-
-# 5. 第二次訪客計數（應遞增）
-curl http://localhost:8788/api/visits
-# → {"count":2}
-```
-
-**實際測試輸出（本地驗證通過）**：
-
-```
-=== [KV] GET /api/visits (第1次) ===
-{"count":1}
-
-=== [D1] POST /api/messages (新增留言1) ===
-{"success":true}
-
-=== [D1] POST /api/messages (新增留言2) ===
-{"success":true}
-
-=== [D1] GET /api/messages (列出所有留言) ===
-{
-    "messages": [
-        {"id": 2, "name": "小花", "message": "Cloudflare Pages + Functions 超好用！", "created_at": "2026-03-30 05:00:27"},
-        {"id": 1, "name": "小明", "message": "Hello from D1! 這是第一則留言", "created_at": "2026-03-30 05:00:27"}
-    ]
-}
-
-=== [KV] GET /api/visits (第2次，計數應遞增) ===
-{"count":2}
-
-=== 驗證空留言防護 ===
-{"error":"名字與留言不可為空"}
-```
-
----
-
-### 步驟 7：部署到 Cloudflare（正式環境）
-
-```bash
-# 1. 登入 Cloudflare
-npx wrangler login
-
-# 2. 建立 KV Namespace
-npx wrangler kv namespace create VISITS
-# 複製輸出的 id，填入 wrangler.toml 的 [[kv_namespaces]] id
-
-# 3. 建立 D1 資料庫
-npx wrangler d1 create guestbook
-# 複製輸出的 database_id，填入 wrangler.toml 的 [[d1_databases]] database_id
-
-# 4. 部署
-npx wrangler pages deploy public
+curl -o /dev/null -w "%{http_code}" -X POST "$BASE/api/messages" \
+  -H "Content-Type: application/json" -d '{"name":"","message":""}'
+# → 400
 ```
 
 ---
 
 ## KV vs D1 選擇指南
 
-| 特性           | KV（Key-Value）              | D1（SQLite）                    |
-|----------------|------------------------------|---------------------------------|
-| 資料結構       | 鍵值對（字串 / 二進位）       | 關聯式資料表                    |
-| 查詢方式       | 只能用 key 查詢              | 支援 SQL（JOIN、WHERE、ORDER BY）|
-| 一致性         | 最終一致性（全球同步）        | 強一致性（單一區域寫入）         |
-| 適合場景       | 計數器、快取、Session、設定值 | 使用者資料、留言、訂單、記錄     |
-| 讀取延遲       | 極低（邊緣節點快取）          | 低（但比 KV 稍高）              |
+| 特性 | KV（Key-Value）| D1（SQLite）|
+|------|----------------|-------------|
+| 資料結構 | 鍵值對（字串 / 二進位）| 關聯式資料表 |
+| 查詢方式 | 只能用 key 查詢 | 支援 SQL（JOIN、WHERE、ORDER BY）|
+| 一致性 | 最終一致性（全球同步）| 強一致性（單一區域寫入）|
+| 適合場景 | 計數器、快取、Session、設定值 | 使用者資料、留言、訂單、記錄 |
+| 讀取延遲 | 極低（邊緣節點快取）| 低（但比 KV 稍高）|
 
 ---
 
