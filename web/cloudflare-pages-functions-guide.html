@@ -1,0 +1,606 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Cloudflare Pages 與 Functions：靜態網站 + 邊緣運算完整指南 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="cloudflare-pages-與-functions靜態網站--邊緣運算完整指南"><a class="header" href="#cloudflare-pages-與-functions靜態網站--邊緣運算完整指南">Cloudflare Pages 與 Functions：靜態網站 + 邊緣運算完整指南</a></h1>
+<p>在現代前端開發中，前後端的界線越來越模糊。<strong>前端靜態頁面</strong>和<strong>後端無伺服器運算</strong>的結合，讓開發者能以最少的基礎建設快速上線專案。Cloudflare 提供的 <strong>Pages</strong> 與 <strong>Functions</strong>，正是這種模式的最佳搭配。本文將帶你快速了解兩者的特性，以及如何結合使用。</p>
+<hr />
+<h2 id="cloudflare-pages前端靜態網站平台"><a class="header" href="#cloudflare-pages前端靜態網站平台">Cloudflare Pages：前端靜態網站平台</a></h2>
+<p>Cloudflare Pages 是一個<strong>靜態網站託管服務</strong>，支援從 GitHub/GitLab 自動部署。特色包括：</p>
+<ul>
+<li><strong>免費 &amp; 全球 CDN</strong>：內容自動分發到 Cloudflare 的邊緣節點，確保快速載入。</li>
+<li><strong>CI/CD 整合</strong>：每次推送（push）程式碼就會自動部署。</li>
+<li><strong>預覽部署（Preview Deployments）</strong>：每個 PR 都會產生預覽連結，方便團隊測試。</li>
+<li><strong>自訂網域</strong>：可以綁定自己的網域並自動支援 HTTPS。</li>
+<li><strong>環境變數支援</strong>：可在不同部署環境（Production / Preview / Dev）設定 API 金鑰、設定檔。</li>
+</ul>
+<p>適合用來部署：</p>
+<ul>
+<li>個人作品集</li>
+<li>前端框架專案（React、Vue、Next.js、Astro）</li>
+<li>文件網站或靜態部落格（Hugo、Jekyll）</li>
+</ul>
+<p>參考文件：<a href="https://developers.cloudflare.com/pages/framework-guides/">Cloudflare Pages Framework Guides</a></p>
+<hr />
+<h2 id="cloudflare-functions邊緣運算的後端"><a class="header" href="#cloudflare-functions邊緣運算的後端">Cloudflare Functions：邊緣運算的後端</a></h2>
+<p>Functions 是 Cloudflare 提供的<strong>無伺服器函式運算</strong>（類似 AWS Lambda、Vercel Functions），但運行在 Cloudflare 的邊緣節點。特色包括：</p>
+<ul>
+<li><strong>全球邊緣節點</strong>：程式碼在使用者最近的 Cloudflare 節點執行，延遲極低。</li>
+<li><strong>無伺服器</strong>：不需要維護伺服器，Cloudflare 會自動擴展。</li>
+<li><strong>事件驅動</strong>：支援 <code>fetch</code>、HTTP API 呼叫等事件觸發。</li>
+<li><strong>原生整合 Cloudflare 生態系</strong>：可與 KV、D1（資料庫）、R2（S3 物件儲存）結合。</li>
+<li><strong>語言支援</strong>：主要使用 JavaScript / TypeScript，並逐步支援更多生態系。</li>
+</ul>
+<p>適合用來處理：</p>
+<ul>
+<li>API Proxy（避免 CORS 問題）</li>
+<li>使用者驗證（Auth / JWT）</li>
+<li>表單處理與寄信</li>
+<li>輕量 API（查詢資料庫、KV、Redis）</li>
+</ul>
+<hr />
+<h2 id="pages--functions完美結合"><a class="header" href="#pages--functions完美結合">Pages + Functions：完美結合</a></h2>
+<p>Cloudflare Pages 與 Functions 的關係，可以理解成<strong>前端 + 後端</strong>的組合。</p>
+<ul>
+<li><strong>Pages</strong>：負責靜態資源（HTML / CSS / JS）的快速載入。</li>
+<li><strong>Functions</strong>：負責動態需求（API、商業邏輯、與資料庫互動）。</li>
+</ul>
+<hr />
+<h2 id="實戰範例留言板前後端--kv--d1"><a class="header" href="#實戰範例留言板前後端--kv--d1">實戰範例：留言板（前後端 + KV + D1）</a></h2>
+<p>這是一個本地可直接驗證的完整範例：</p>
+<div class="table-wrapper"><table><thead><tr><th>層級</th><th>技術</th><th>用途</th></tr></thead><tbody>
+<tr><td>前端</td><td>HTML / JS</td><td>留言板 UI，由 Pages 托管</td></tr>
+<tr><td>後端</td><td>Cloudflare Functions</td><td><code>/api/visits</code>、<code>/api/messages</code></td></tr>
+<tr><td>DB 1</td><td><strong>KV</strong></td><td>訪客計數器（key-value 快速讀寫）</td></tr>
+<tr><td>DB 2</td><td><strong>D1（SQLite）</strong></td><td>留言資料（關聯式查詢）</td></tr>
+</tbody></table>
+</div>
+<h3 id="專案結構"><a class="header" href="#專案結構">專案結構</a></h3>
+<pre><code>cf-guestbook/
+├── public/
+│   └── index.html          # 前端頁面（Pages 托管）
+├── functions/
+│   └── api/
+│       ├── visits.js       # GET /api/visits → KV 訪客計數
+│       └── messages.js     # GET/POST /api/messages → D1 留言
+├── wrangler.toml
+└── package.json
+</code></pre>
+<hr />
+<h3 id="步驟-1初始化專案"><a class="header" href="#步驟-1初始化專案">步驟 1：初始化專案</a></h3>
+<pre><code class="language-bash">mkdir cf-guestbook &amp;&amp; cd cf-guestbook
+npm init -y
+npm install --save-dev wrangler
+mkdir -p public functions/api
+</code></pre>
+<hr />
+<h3 id="步驟-2設定-wranglertoml"><a class="header" href="#步驟-2設定-wranglertoml">步驟 2：設定 <code>wrangler.toml</code></a></h3>
+<pre><code class="language-toml">name = "cf-guestbook"
+pages_build_output_dir = "public"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "VISITS"
+id = "visits-kv"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "guestbook"
+database_id = "guestbook-d1"
+</code></pre>
+<blockquote>
+<p><strong>說明</strong>：</p>
+<ul>
+<li><code>binding</code> 是程式碼中存取的變數名稱（<code>env.VISITS</code>、<code>env.DB</code>）</li>
+<li>本地開發時 id 可填任意值，wrangler 會自動建立本地模擬環境</li>
+</ul>
+</blockquote>
+<hr />
+<h3 id="步驟-3前端頁面-publicindexhtml"><a class="header" href="#步驟-3前端頁面-publicindexhtml">步驟 3：前端頁面 <code>public/index.html</code></a></h3>
+<pre><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html lang="zh-TW"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8" /&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0" /&gt;
+  &lt;title&gt;Cloudflare 留言板&lt;/title&gt;
+  &lt;style&gt;
+    body { font-family: sans-serif; padding: 2rem; background: #f0f4f8; }
+    .card { background: #fff; border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    input, textarea { width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 0.75rem; }
+    button { background: #e36209; color: #fff; border: none; border-radius: 6px; padding: 0.6rem 1.5rem; cursor: pointer; }
+    .msg-item { border-bottom: 1px solid #eee; padding: 0.75rem 0; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;Cloudflare 留言板&lt;/h1&gt;
+  &lt;p&gt;訪客人數（KV）：&lt;strong id="visit-count"&gt;載入中...&lt;/strong&gt;&lt;/p&gt;
+
+  &lt;div class="card"&gt;
+    &lt;h2&gt;留下訊息（D1）&lt;/h2&gt;
+    &lt;input id="name" type="text" placeholder="你的名字" /&gt;
+    &lt;textarea id="message" placeholder="留言內容..."&gt;&lt;/textarea&gt;
+    &lt;button onclick="submitMessage()"&gt;送出&lt;/button&gt;
+    &lt;div id="status"&gt;&lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class="card"&gt;
+    &lt;h2&gt;所有留言&lt;/h2&gt;
+    &lt;div id="messages"&gt;載入中...&lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;script&gt;
+    async function loadVisits() {
+      const res = await fetch('/api/visits');
+      const data = await res.json();
+      document.getElementById('visit-count').textContent = data.count;
+    }
+
+    async function loadMessages() {
+      const res = await fetch('/api/messages');
+      const data = await res.json();
+      const el = document.getElementById('messages');
+      if (!data.messages?.length) {
+        el.innerHTML = '&lt;p&gt;還沒有留言！&lt;/p&gt;';
+        return;
+      }
+      el.innerHTML = data.messages.map(m =&gt; `
+        &lt;div class="msg-item"&gt;
+          &lt;strong&gt;${escHtml(m.name)}&lt;/strong&gt;
+          &lt;small&gt; ${new Date(m.created_at).toLocaleString('zh-TW')}&lt;/small&gt;
+          &lt;p&gt;${escHtml(m.message)}&lt;/p&gt;
+        &lt;/div&gt;
+      `).join('');
+    }
+
+    async function submitMessage() {
+      const name = document.getElementById('name').value.trim();
+      const message = document.getElementById('message').value.trim();
+      const status = document.getElementById('status');
+      if (!name || !message) { status.textContent = '請填寫名字與留言！'; return; }
+
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, message }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        status.textContent = '留言成功！';
+        document.getElementById('name').value = '';
+        document.getElementById('message').value = '';
+        loadMessages();
+      } else {
+        status.textContent = '失敗：' + data.error;
+      }
+    }
+
+    function escHtml(str) {
+      return str.replace(/&amp;/g,'&amp;amp;').replace(/&lt;/g,'&amp;lt;').replace(/&gt;/g,'&amp;gt;');
+    }
+
+    loadVisits();
+    loadMessages();
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<hr />
+<h3 id="步驟-4kv-訪客計數-functionsapivisitsjs"><a class="header" href="#步驟-4kv-訪客計數-functionsapivisitsjs">步驟 4：KV 訪客計數 <code>functions/api/visits.js</code></a></h3>
+<pre><code class="language-js">/**
+ * GET /api/visits
+ * 每次呼叫從 KV 讀取並自動 +1
+ * Binding: env.VISITS (KV Namespace)
+ */
+export async function onRequestGet({ env }) {
+  const key = 'visit_count';
+  const raw = await env.VISITS.get(key);
+  const count = raw ? parseInt(raw, 10) + 1 : 1;
+  await env.VISITS.put(key, String(count));
+
+  return new Response(JSON.stringify({ count }), {
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+</code></pre>
+<blockquote>
+<p><strong>重點</strong>：</p>
+<ul>
+<li><code>env.VISITS</code> 來自 <code>wrangler.toml</code> 的 <code>binding = "VISITS"</code></li>
+<li><code>VISITS.get(key)</code> / <code>VISITS.put(key, value)</code> 是 KV 的核心 API</li>
+<li>KV 適合高頻讀取、低頻寫入的場景（計數器、快取、設定值）</li>
+</ul>
+</blockquote>
+<hr />
+<h3 id="步驟-5d1-留言-crud-functionsapimessagesjs"><a class="header" href="#步驟-5d1-留言-crud-functionsapimessagesjs">步驟 5：D1 留言 CRUD <code>functions/api/messages.js</code></a></h3>
+<pre><code class="language-js">/**
+ * GET  /api/messages → 列出所有留言（D1）
+ * POST /api/messages → 新增一則留言（D1）
+ * Binding: env.DB (D1 Database)
+ */
+
+// 確保資料表存在（第一次呼叫時自動建立）
+async function ensureTable(db) {
+  await db.prepare(
+    "CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, message TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')))"
+  ).run();
+}
+
+export async function onRequestGet({ env }) {
+  try {
+    await ensureTable(env.DB);
+    const { results } = await env.DB.prepare(
+      'SELECT id, name, message, created_at FROM messages ORDER BY id DESC LIMIT 50'
+    ).all();
+
+    return new Response(JSON.stringify({ messages: results }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
+
+export async function onRequestPost({ request, env }) {
+  try {
+    const body = await request.json();
+    const name    = (body.name    || '').trim().slice(0, 50);
+    const message = (body.message || '').trim().slice(0, 500);
+
+    if (!name || !message) {
+      return new Response(JSON.stringify({ error: '名字與留言不可為空' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    await ensureTable(env.DB);
+    await env.DB.prepare(
+      'INSERT INTO messages (name, message) VALUES (?, ?)'
+    ).bind(name, message).run();
+
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
+</code></pre>
+<blockquote>
+<p><strong>重點</strong>：</p>
+<ul>
+<li>D1 使用 <strong>Prepared Statement</strong>（<code>.prepare().bind().run()</code>）防止 SQL 注入</li>
+<li>本地開發時，wrangler 會在 <code>.wrangler/state/</code> 自動建立 SQLite 檔案模擬 D1</li>
+<li><code>exec()</code> 不支援多行 DDL，請改用單行 <code>prepare().run()</code></li>
+</ul>
+</blockquote>
+<hr />
+<h3 id="步驟-6本地執行驗證"><a class="header" href="#步驟-6本地執行驗證">步驟 6：本地執行驗證</a></h3>
+<pre><code class="language-bash"># 啟動本地開發伺服器（自動模擬 KV + D1）
+npx wrangler pages dev public --kv VISITS --d1 DB
+</code></pre>
+<p>啟動後，瀏覽器開啟 <code>http://localhost:8788</code> 即可看到留言板 UI。</p>
+<p>也可以直接用 curl 測試 API：</p>
+<pre><code class="language-bash"># 1. 訪客計數（KV）
+curl http://localhost:8788/api/visits
+# → {"count":1}
+
+# 2. 新增留言（D1）
+curl -X POST http://localhost:8788/api/messages \
+  -H "Content-Type: application/json" \
+  -d '{"name":"小明","message":"Hello from D1!"}'
+# → {"success":true}
+
+# 3. 列出留言（D1）
+curl http://localhost:8788/api/messages
+# → {"messages":[{"id":1,"name":"小明","message":"Hello from D1!","created_at":"..."}]}
+
+# 4. 空白防護驗證
+curl -X POST http://localhost:8788/api/messages \
+  -H "Content-Type: application/json" \
+  -d '{"name":"","message":""}'
+# → {"error":"名字與留言不可為空"}  (HTTP 400)
+
+# 5. 第二次訪客計數（應遞增）
+curl http://localhost:8788/api/visits
+# → {"count":2}
+</code></pre>
+<p><strong>實際測試輸出（本地驗證通過）</strong>：</p>
+<pre><code>=== [KV] GET /api/visits (第1次) ===
+{"count":1}
+
+=== [D1] POST /api/messages (新增留言1) ===
+{"success":true}
+
+=== [D1] POST /api/messages (新增留言2) ===
+{"success":true}
+
+=== [D1] GET /api/messages (列出所有留言) ===
+{
+    "messages": [
+        {"id": 2, "name": "小花", "message": "Cloudflare Pages + Functions 超好用！", "created_at": "2026-03-30 05:00:27"},
+        {"id": 1, "name": "小明", "message": "Hello from D1! 這是第一則留言", "created_at": "2026-03-30 05:00:27"}
+    ]
+}
+
+=== [KV] GET /api/visits (第2次，計數應遞增) ===
+{"count":2}
+
+=== 驗證空留言防護 ===
+{"error":"名字與留言不可為空"}
+</code></pre>
+<hr />
+<h3 id="步驟-7部署到-cloudflare正式環境"><a class="header" href="#步驟-7部署到-cloudflare正式環境">步驟 7：部署到 Cloudflare（正式環境）</a></h3>
+<pre><code class="language-bash"># 1. 登入 Cloudflare
+npx wrangler login
+
+# 2. 建立 KV Namespace
+npx wrangler kv namespace create VISITS
+# 複製輸出的 id，填入 wrangler.toml 的 [[kv_namespaces]] id
+
+# 3. 建立 D1 資料庫
+npx wrangler d1 create guestbook
+# 複製輸出的 database_id，填入 wrangler.toml 的 [[d1_databases]] database_id
+
+# 4. 部署
+npx wrangler pages deploy public
+</code></pre>
+<hr />
+<h2 id="kv-vs-d1-選擇指南"><a class="header" href="#kv-vs-d1-選擇指南">KV vs D1 選擇指南</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>KV（Key-Value）</th><th>D1（SQLite）</th></tr></thead><tbody>
+<tr><td>資料結構</td><td>鍵值對（字串 / 二進位）</td><td>關聯式資料表</td></tr>
+<tr><td>查詢方式</td><td>只能用 key 查詢</td><td>支援 SQL（JOIN、WHERE、ORDER BY）</td></tr>
+<tr><td>一致性</td><td>最終一致性（全球同步）</td><td>強一致性（單一區域寫入）</td></tr>
+<tr><td>適合場景</td><td>計數器、快取、Session、設定值</td><td>使用者資料、留言、訂單、記錄</td></tr>
+<tr><td>讀取延遲</td><td>極低（邊緣節點快取）</td><td>低（但比 KV 稍高）</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="結語"><a class="header" href="#結語">結語</a></h2>
+<p>Cloudflare Pages 與 Functions 提供了<strong>全靜態網站 + 輕量後端 API</strong> 的完整解決方案，開發者能夠用最少的基礎建設快速打造完整應用。無論是個人部落格、作品集，還是中小型 Web 應用程式，都可以透過 Pages + Functions 來實現高效、安全、可擴展的架構。</p>
+<p>如果你已經有一個 GitHub Repo 的靜態頁面，部署到 <strong>Pages</strong> 只要幾分鐘，而加上 <strong>Functions</strong> 後，你的靜態網站就瞬間升級成<strong>全端應用</strong>。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../web/vps-vs-cloudflare.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../gdb/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../web/vps-vs-cloudflare.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../gdb/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
