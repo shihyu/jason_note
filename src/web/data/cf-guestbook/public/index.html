@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cloudflare 留言板</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      color: #333;
+      padding: 2rem;
+    }
+    h1 { color: #e36209; margin-bottom: 0.25rem; }
+    .subtitle { color: #666; font-size: 0.9rem; margin-bottom: 2rem; }
+    .badge {
+      display: inline-block;
+      background: #e36209;
+      color: #fff;
+      border-radius: 999px;
+      padding: 0.2rem 0.75rem;
+      font-size: 0.85rem;
+      margin-bottom: 2rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    h2 { font-size: 1.1rem; margin-bottom: 1rem; color: #444; }
+    input, textarea {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    textarea { height: 80px; resize: vertical; }
+    button {
+      background: #e36209;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.6rem 1.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover { background: #c0510a; }
+    .msg-item {
+      border-bottom: 1px solid #f0f0f0;
+      padding: 0.75rem 0;
+    }
+    .msg-item:last-child { border-bottom: none; }
+    .msg-name { font-weight: 600; color: #e36209; }
+    .msg-time { font-size: 0.8rem; color: #999; margin-left: 0.5rem; }
+    .msg-text { margin-top: 0.3rem; color: #555; }
+    .db-tag {
+      font-size: 0.7rem;
+      border-radius: 4px;
+      padding: 0.1rem 0.4rem;
+      font-weight: 600;
+      margin-left: 0.4rem;
+    }
+    .kv-tag { background: #dbeafe; color: #1d4ed8; }
+    .d1-tag { background: #dcfce7; color: #15803d; }
+    #status { font-size: 0.9rem; color: #e36209; height: 1.2rem; margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Cloudflare 留言板</h1>
+  <p class="subtitle">Pages + Functions + KV + D1 完整示範</p>
+
+  <div class="badge">
+    訪客人數 <span class="kv-tag db-tag">KV</span>：
+    <strong id="visit-count">載入中...</strong>
+  </div>
+
+  <div class="card">
+    <h2>留下一則訊息 <span class="d1-tag db-tag">D1</span></h2>
+    <input id="name" type="text" placeholder="你的名字" maxlength="50" />
+    <textarea id="message" placeholder="留言內容..."></textarea>
+    <button onclick="submitMessage()">送出留言</button>
+    <div id="status"></div>
+  </div>
+
+  <div class="card">
+    <h2>所有留言</h2>
+    <div id="messages">載入中...</div>
+  </div>
+
+  <script>
+    async function loadVisits() {
+      const res = await fetch('/api/visits');
+      const data = await res.json();
+      document.getElementById('visit-count').textContent = data.count;
+    }
+
+    async function loadMessages() {
+      const res = await fetch('/api/messages');
+      const data = await res.json();
+      const el = document.getElementById('messages');
+      if (!data.messages || data.messages.length === 0) {
+        el.innerHTML = '<p style="color:#999">還沒有留言，快來第一個！</p>';
+        return;
+      }
+      el.innerHTML = data.messages.map(m => `
+        <div class="msg-item">
+          <span class="msg-name">${escHtml(m.name)}</span>
+          <span class="msg-time">${new Date(m.created_at).toLocaleString('zh-TW')}</span>
+          <div class="msg-text">${escHtml(m.message)}</div>
+        </div>
+      `).join('');
+    }
+
+    async function submitMessage() {
+      const name = document.getElementById('name').value.trim();
+      const message = document.getElementById('message').value.trim();
+      const status = document.getElementById('status');
+
+      if (!name || !message) {
+        status.textContent = '請填寫名字與留言內容！';
+        return;
+      }
+
+      status.textContent = '送出中...';
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, message }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        status.textContent = '留言成功！';
+        document.getElementById('name').value = '';
+        document.getElementById('message').value = '';
+        await loadMessages();
+      } else {
+        status.textContent = '留言失敗：' + (data.error || '未知錯誤');
+      }
+    }
+
+    function escHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    loadVisits();
+    loadMessages();
+  </script>
+</body>
+</html>

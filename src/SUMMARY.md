@@ -329,6 +329,7 @@
         - [不用再配伺服器了！這套 Next.js + Cloudflare 模板，一個人零成本搞定全端出海](web/nextjs-cloudflare-zero-cost-fullstack-guide.md)
         - [Cloudflare Edge RAG 與 MCP Worker 低成本架構實作](web/cloudflare-edge-rag-mcp-worker.md)
         - [VPS vs Cloudflare：部署與開發工作流比較](web/vps-vs-cloudflare.md)
+        - [Cloudflare Pages 與 Functions：靜態網站 + 邊緣運算完整指南](web/cloudflare-pages-functions-guide.md)
 
 ## System & Debug
 - [GDB 除錯完整指南](gdb/README.md)
