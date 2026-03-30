@@ -194,6 +194,48 @@
 </tbody></table>
 </div>
 <hr />
+<h2 id="serverless-vs-vps-核心概念"><a class="header" href="#serverless-vs-vps-核心概念">Serverless vs VPS 核心概念</a></h2>
+<h3 id="最核心的差異"><a class="header" href="#最核心的差異">最核心的差異</a></h3>
+<p>你可以把兩者想像成：</p>
+<ul>
+<li>
+<p><strong>VPS（24 小時運行）</strong>：像是一台開著不關的電腦。程式碼（Daemon）就像在背景跑的軟體，隨時都在吃記憶體、佔用 CPU，但也隨時準備好處理資料（例如 24 小時連著 Binance WSS）。</p>
+</li>
+<li>
+<p><strong>Cloudflare Workers（觸發式）</strong>：像是一個<strong>感應燈</strong>。只有有人走過（HTTP 請求）或鬧鐘響了（Cron Trigger），燈才會亮起（程式啟動），執行完任務後就立刻熄滅（釋放記憶體與 CPU）。</p>
+</li>
+</ul>
+<h3 id="為什麼-cloudflare-不能像-vps-那樣自己跑"><a class="header" href="#為什麼-cloudflare-不能像-vps-那樣自己跑">為什麼 Cloudflare 不能像 VPS 那樣「自己跑」？</a></h3>
+<ol>
+<li>
+<p><strong>沒有持續的記憶體居住</strong>：在 VPS 上，你的變數可以一直存在記憶體裡；在 Cloudflare，請求一結束，記憶體就會被清空。</p>
+</li>
+<li>
+<p><strong>計費邏輯不同</strong>：VPS 是按「時間」收費（租一個月多少錢）；Cloudflare 是按「次數」收費（執行一百萬次多少錢）。如果它讓你 24 小時佔用資源卻不間斷，那它就虧大了。</p>
+</li>
+<li>
+<p><strong>基礎架構限制</strong>：Cloudflare 的設計是為了處理極高併發（例如一秒鐘進來一萬個請求），而不是為了處理單個長時間的任務。</p>
+</li>
+</ol>
+<h3 id="除了點連結和cron還有什麼能觸發它"><a class="header" href="#除了點連結和cron還有什麼能觸發它">除了「點連結」和「Cron」，還有什麼能觸發它？</a></h3>
+<p>雖然它需要觸發，但觸發源其實很多：</p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">觸發方式</th><th style="text-align: left">說明</th></tr></thead><tbody>
+<tr><td style="text-align: left"><strong>HTTP 請求</strong></td><td style="text-align: left">你點連結，或是別的程式打 API 給它</td></tr>
+<tr><td style="text-align: left"><strong>Cron Triggers</strong></td><td style="text-align: left">設定排程（例如每分鐘執行）</td></tr>
+<tr><td style="text-align: left"><strong>Queue（隊列）</strong></td><td style="text-align: left">當有訊息進到 Cloudflare Queue 時觸發</td></tr>
+<tr><td style="text-align: left"><strong>Email</strong></td><td style="text-align: left">當有信件寄到特定地址時觸發</td></tr>
+</tbody></table>
+</div>
+<h3 id="需要-247-常駐的任務怎麼辦"><a class="header" href="#需要-247-常駐的任務怎麼辦">需要 24/7 常駐的任務怎麼辦？</a></h3>
+<p>如果你需要 24 小時連著 Binance WSS 報價，Cloudflare 會因為「沒有外部持續觸發」且「不允許長駐進程」而斷線。</p>
+<p><strong>最省錢的替代方案建議：</strong></p>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">方案</th><th style="text-align: left">說明</th><th style="text-align: left">限制</th></tr></thead><tbody>
+<tr><td style="text-align: left"><strong>Oracle Cloud 免費 VPS</strong></td><td style="text-align: left">免費方案提供 4 核心、24GB 記憶體，是目前最強的免費 24 小時 VPS</td><td style="text-align: left">需要申請，有時審核嚴格</td></tr>
+<tr><td style="text-align: left"><strong>GitHub Actions</strong></td><td style="text-align: left">雖然是觸發式，但一個 Task 最長可以跑 6 小時（非官方用途，有風險）</td><td style="text-align: left">不是設計來跑常駐服務的</td></tr>
+<tr><td style="text-align: left"><strong>Zeabur / Railway</strong></td><td style="text-align: left">這類平台有專門給「長駐程式（Background Worker）」跑的方案，比 Cloudflare 更適合跑機器人</td><td style="text-align: left">免費額度有限，超過需付費</td></tr>
+</tbody></table>
+</div>
+<hr />
 <h2 id="優缺點總覽"><a class="header" href="#優缺點總覽">優缺點總覽</a></h2>
 <h3 id="vps"><a class="header" href="#vps">VPS</a></h3>
 <p><strong>優點</strong></p>
