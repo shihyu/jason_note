@@ -722,6 +722,7 @@
     - [Agent Skill 的目錄組成結構說明與範本](ai_agent/agent_skill_structure.md)
     - [別再打造 Agent了打造 Skills 吧](ai_agent/別再打造Agent了打造Skills吧-Anthropic演講重點整理.md)
     - [Claude／OpenCode Skills 新手超詳細講解與知識整理](ai_agent/Claude與OpenCode的Skills新手超詳細講解與知識整理.md)
+    - [Claude Code — Plugins / Skills / MCP 整理](ai_agent/claude-plugins-skills-mcp.md)
     - [AI 寫程式的終極悖論：你越依賴它，越需要人類思考](ai_agent/ai-coding-paradox-rpi.md)
     - [用 AI 高效學習：避開 PDF 陷阱的 3 個方法](ai_agent/ai-pdf-learning-guide.md)
 
