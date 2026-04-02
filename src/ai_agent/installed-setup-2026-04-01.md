@@ -254,36 +254,3 @@
 | claude-plugins-official | anthropics/claude-plugins-official |
 | claude-plugin-suite | rohittcodes/claude-plugin-suite |
 | openai-codex | openai/codex-plugin-cc |
-
----
-
-## 清理記錄
-
-### 已移除 Plugins（3 個）
-- explanatory-output-style、github、huggingface-skills
-
-### 已啟用 LSPs（從停用變啟用）
-- gopls-lsp、rust-analyzer-lsp（配合 Go/Rust 開發需求）
-
-### 已移除 Marketplace
-- paddo-tools（與 codex 命名衝突）
-
-### 已移除 Skills（~60 個）
-- C++: cpp-coding-standards, cpp-testing
-- Kotlin: kotlin-coroutines-flows, kotlin-exposed-patterns, kotlin-ktor-patterns, kotlin-patterns, kotlin-testing
-- Java/Spring: java-coding-standards, jpa-patterns, springboot-patterns, springboot-security, springboot-tdd, springboot-verification
-- Swift/iOS: swift-actor-persistence, swift-concurrency-6-2, swift-protocol-di-testing, swiftui-patterns
-- Android: android-clean-architecture, compose-multiplatform-patterns, foundation-models-on-device
-- Django: django-patterns, django-security, django-tdd, django-verification
-- Laravel/PHP: laravel-patterns, laravel-security, laravel-tdd, laravel-verification, laravel-plugin-discovery
-- Perl: perl-patterns, perl-security, perl-testing
-- 供應鏈/物流: carrier-relationship-management, customs-trade-compliance, energy-procurement, inventory-demand-planning, logistics-exception-management, production-scheduling, quality-nonconformance, returns-reverse-logistics
-- 投資/商業: investor-materials, investor-outreach
-- 其他: clickhouse-io, liquid-glass-design, nanoclaw-repl, nutrient-document-processing, plankton-code-quality, project-guidelines-example, ralphinho-rfc-pipeline, skill-stocktake, visa-doc-translate
-- Superpowers 重複副本（14 個）: brainstorming, dispatching-parallel-agents, executing-plans, finishing-a-development-branch, receiving-code-review, requesting-code-review, subagent-driven-development, systematic-debugging, test-driven-development, using-git-worktrees, using-superpowers, verification-before-completion, writing-plans, writing-skills
-
-### 已移除 Agents（9 個）
-- flutter-reviewer, healthcare-reviewer, pytorch-build-resolver
-- java-build-resolver, java-reviewer
-- kotlin-build-resolver, kotlin-reviewer
-- cpp-build-resolver, cpp-reviewer
