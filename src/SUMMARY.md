@@ -573,6 +573,7 @@
         - [Joeman vs 巨人傑：交易心法與 2026 產業趨勢對談](strategy/joeman_giant_jay_interview.md)
         - [15年交易經驗分享](strategy/trading_experience_and_strategies.md)
         - [如何成為股市天才讀書筆記](strategy/如何成為股市天才讀書筆記.md)
+        - [空頭市場特徵與判讀指南](strategy/空頭市場特徵與判讀指南.md)
     - [phcebus菲式思考](strategy/02_台灣大師心法_phcebus菲式思考.md)
         - [phcebus](strategy/phcebus/phcebus.md)
         - [菲式思考](strategy/phcebus/菲式思考.md)
