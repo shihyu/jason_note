@@ -1,0 +1,468 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>DeepWiki-Open + Ollama：本機儲存庫分析安裝踩坑與穩定設定指南 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="deepwiki-open--ollama本機儲存庫分析安裝踩坑與穩定設定指南"><a class="header" href="#deepwiki-open--ollama本機儲存庫分析安裝踩坑與穩定設定指南">DeepWiki-Open + Ollama：本機儲存庫分析安裝踩坑與穩定設定指南</a></h1>
+<p><img src="images/deepwiki-open/deepwiki-open-banner.png" alt="DeepWiki-Open 橫幅" /></p>
+<p>最近常看到一些開源專案直接用 <a href="https://deepwiki.org/">DeepWiki</a> 產生互動式文件，輸入儲存庫之後就能自動整理架構、補說明、再加上對話式查詢介面，對讀程式碼非常方便。</p>
+<p>但 <code>deepwiki.org</code> 會把程式碼送到外部服務。對私有儲存庫或公司內部專案來說，這通常不是可接受的做法。</p>
+<p>因此我改用 MIT 授權的 <a href="https://github.com/AsyncFuncAI/deepwiki-open">DeepWiki-Open</a>，直接在本機自架。不過實際裝起來後，才發現從本機儲存庫掛載、Ollama 連線、Embedding、到模型設定一路都有坑。這篇就是把整套踩坑流程整理成可直接重現的版本。</p>
+<h2 id="環境概述"><a class="header" href="#環境概述">環境概述</a></h2>
+<ul>
+<li><strong>主機環境</strong>：macOS，本機儲存庫放在 <code>/Users/yourname/Projects/...</code></li>
+<li><strong>DeepWiki-Open</strong>：跑在 Docker 容器內</li>
+<li><strong>Ollama</strong>：跑在主機上，供容器透過 <code>http://host.docker.internal:11434</code> 存取</li>
+<li><strong>LLM</strong>：<code>minimax-m2:cloud</code></li>
+<li><strong>Embedding 模型</strong>：<code>nomic-embed-text</code></li>
+</ul>
+<p>選 <code>minimax-m2:cloud</code> 的原因，是它在 <a href="https://artificialanalysis.ai/models/minimax-m2">Artificial Analysis 的開源模型排行榜</a> 表現不錯，推論速度和程式碼任務表現都夠用。Embedding 則選 <code>nomic-embed-text</code>，主要是免費、輕量，而且 CPU 也能跑。</p>
+<h2 id="前置準備"><a class="header" href="#前置準備">前置準備</a></h2>
+<p>先確認你已經安裝好以下元件：</p>
+<ul>
+<li><a href="https://orbstack.dev/">OrbStack</a> 或 <a href="https://www.docker.com/products/docker-desktop/">Docker Desktop</a></li>
+<li><a href="https://ollama.com/download">Ollama</a></li>
+</ul>
+<p>Ollama 啟動後，先把模型抓下來：</p>
+<pre><code class="language-bash"># LLM
+ollama pull minimax-m2:cloud
+
+# Embedding
+ollama pull nomic-embed-text
+</code></pre>
+<h2 id="安裝-deepwiki-open"><a class="header" href="#安裝-deepwiki-open">安裝 DeepWiki-Open</a></h2>
+<p>先把專案抓下來：</p>
+<pre><code class="language-bash">git clone https://github.com/AsyncFuncAI/deepwiki-open.git
+cd deepwiki-open
+</code></pre>
+<p>接著修改 <code>docker-compose.yaml</code>。這份設定的重點只有兩個：</p>
+<ol>
+<li>把本機儲存庫掛載進容器</li>
+<li>讓容器能連到主機上的 Ollama</li>
+</ol>
+<pre><code class="language-yaml">services:
+  deepwiki:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001" # API
+      - "3000:3000" # UI
+    environment:
+      - DEEPWIKI_AUTH_MODE=false
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - DEEPWIKI_EMBEDDER_TYPE=ollama
+      - DEEPWIKI_GENERATOR_TYPE=ollama
+      - EMBEDDING_MODEL=nomic-embed-text
+      - LLM_MODEL=minimax-m2:cloud
+      - OPENAI_API_KEY=sk-fake-dummy
+      - OPENAI_BASE_URL=http://host.docker.internal:11434/v1
+    volumes:
+      - ~/.adalflow:/root/.adalflow
+      - /Users/yourname/Projects:/mnt/local-repos:rw
+      - ./api/config:/app/api/config:ro
+</code></pre>
+<p>啟動：</p>
+<pre><code class="language-bash">docker compose up -d
+</code></pre>
+<p><img src="images/deepwiki-open/deepwiki-open-interface.png" alt="DeepWiki-Open 主介面" /></p>
+<h2 id="踩坑-1本機儲存庫-404--directory-not-found"><a class="header" href="#踩坑-1本機儲存庫-404--directory-not-found">踩坑 1：本機儲存庫 404 / Directory not found</a></h2>
+<h3 id="症狀"><a class="header" href="#症狀">症狀</a></h3>
+<p>UI 輸入本機路徑後，直接報錯：</p>
+<pre><code class="language-text">Local repository API error (404): {"error":"Directory not found: /Users/yourname/Projects/"}
+</code></pre>
+<h3 id="原因"><a class="header" href="#原因">原因</a></h3>
+<p>DeepWiki 後端跑在容器裡，容器看不到主機上的 <code>/Users/...</code>。如果沒有事先掛載，直接輸入主機路徑一定會 404。這也是 <a href="https://github.com/AsyncFuncAI/deepwiki-open/issues/323">GitHub issue #323</a> 常見的問題。</p>
+<h3 id="解法"><a class="header" href="#解法">解法</a></h3>
+<p>先把主機路徑掛載到容器，例如：</p>
+<ul>
+<li>主機路徑：<code>/Users/yourname/Projects</code></li>
+<li>容器路徑：<code>/mnt/local-repos</code></li>
+</ul>
+<p>之後在 UI 裡要輸入的是容器內路徑：</p>
+<pre><code class="language-text">/mnt/local-repos/my-project
+</code></pre>
+<h2 id="踩坑-2docker-compose-驗證錯誤"><a class="header" href="#踩坑-2docker-compose-驗證錯誤">踩坑 2：<code>docker-compose</code> 驗證錯誤</a></h2>
+<h3 id="症狀-1"><a class="header" href="#症狀-1">症狀</a></h3>
+<pre><code class="language-text">services.deepwiki additional properties 'services' not allowed
+</code></pre>
+<h3 id="原因-1"><a class="header" href="#原因-1">原因</a></h3>
+<p>YAML 結構寫錯，把 <code>services:</code> 又巢狀放進 <code>services.deepwiki:</code> 裡面。這是 Docker Compose 常見的結構驗證錯誤。</p>
+<h3 id="解法-1"><a class="header" href="#解法-1">解法</a></h3>
+<p>把 <code>services:</code> 放回最外層，並用下面指令先驗證：</p>
+<pre><code class="language-bash">docker compose config
+</code></pre>
+<h2 id="踩坑-3failed-to-validate-the-authorization-code"><a class="header" href="#踩坑-3failed-to-validate-the-authorization-code">踩坑 3：<code>Failed to validate the authorization code</code></a></h2>
+<h3 id="症狀-2"><a class="header" href="#症狀-2">症狀</a></h3>
+<pre><code class="language-text">Failed to validate the authorization code
+</code></pre>
+<h3 id="原因-2"><a class="header" href="#原因-2">原因</a></h3>
+<p>服務開了驗證模式，UI 需要 auth code 才能產生文件。</p>
+<h3 id="解法-2"><a class="header" href="#解法-2">解法</a></h3>
+<p>如果是自己本機使用，直接關掉：</p>
+<pre><code class="language-yaml">- DEEPWIKI_AUTH_MODE=false
+</code></pre>
+<h2 id="踩坑-4明明選-ollama卻還是要求-openai_api_key"><a class="header" href="#踩坑-4明明選-ollama卻還是要求-openai_api_key">踩坑 4：明明選 Ollama，卻還是要求 <code>OPENAI_API_KEY</code></a></h2>
+<p>這是整個流程裡最容易卡住的一段。</p>
+<h3 id="症狀-a"><a class="header" href="#症狀-a">症狀 A</a></h3>
+<pre><code class="language-text">OPENAI_API_KEY environment variable is not set...
+</code></pre>
+<h3 id="症狀-b"><a class="header" href="#症狀-b">症狀 B</a></h3>
+<pre><code class="language-text">ValueError preparing retriever: Environment variable OPENAI_API_KEY must be set
+</code></pre>
+<h3 id="原因-3"><a class="header" href="#原因-3">原因</a></h3>
+<p>某些版本的 DeepWiki-Open，或它底層相依套件使用的 OpenAI 相容層，會在建立 Embedding 或 Retriever 時先硬檢查 <code>OPENAI_API_KEY</code>，即使你實際上要走的是 Ollama。這也是 <a href="https://github.com/AsyncFuncAI/deepwiki-open/issues/175">GitHub issue #175</a> 很多人碰到的問題。</p>
+<h3 id="解法-3"><a class="header" href="#解法-3">解法</a></h3>
+<p>最穩的做法是直接走 OpenAI 相容端點，讓 DeepWiki 以為自己在呼叫 OpenAI，但實際上全都打到 Ollama：</p>
+<pre><code class="language-yaml">- OPENAI_API_KEY=sk-fake-dummy
+- OPENAI_BASE_URL=http://host.docker.internal:11434/v1
+</code></pre>
+<p>如果只設環境變數還是失敗，補一份 <code>api/config/embedder.json</code>，強制指定 Embedding 用的客戶端：</p>
+<pre><code class="language-json">{
+  "embedder": {
+    "client_class": "OllamaClient",
+    "model_kwargs": {
+      "model": "nomic-embed-text"
+    }
+  }
+}
+</code></pre>
+<p>這樣可以直接覆蓋底層客戶端的選擇邏輯，避免流程又繞回 OpenAI。</p>
+<h2 id="踩坑-5模型不存在連帶出現-no-valid-xml-found-in-response"><a class="header" href="#踩坑-5模型不存在連帶出現-no-valid-xml-found-in-response">踩坑 5：模型不存在，連帶出現 <code>No valid XML found in response</code></a></h2>
+<h3 id="症狀-3"><a class="header" href="#症狀-3">症狀</a></h3>
+<pre><code class="language-text">POST http://host.docker.internal:11434/api/chat "HTTP/1.1 404 Not Found"
+Error: model 'qwen3:1.7b' not found (status code: 404)
+No valid XML found in response
+</code></pre>
+<h3 id="原因-4"><a class="header" href="#原因-4">原因</a></h3>
+<p>DeepWiki 的模型名稱可能同時來自三個地方：</p>
+<ul>
+<li><code>api/config/generator.json</code></li>
+<li><code>docker-compose.yaml</code> 的 <code>LLM_MODEL</code></li>
+<li>UI 前端的模型選擇器</li>
+</ul>
+<p>只要其中一處指定的模型名稱和 Ollama 實際拉下來的名稱不一致，Ollama 就會回 <code>404</code>。前端接不到預期回應格式時，就可能顯示 <code>No valid XML found in response</code>，這個訊息非常容易誤導。</p>
+<h3 id="解法-4"><a class="header" href="#解法-4">解法</a></h3>
+<p>先確認模型真的存在，而且名稱完全一致：</p>
+<pre><code class="language-bash"># 如果你要用 qwen3:1.7b
+ollama pull qwen3:1.7b
+
+# 如果你要用本文的設定
+ollama pull minimax-m2:cloud
+</code></pre>
+<p>再固定在 <code>docker-compose.yaml</code>：</p>
+<pre><code class="language-yaml">- LLM_MODEL=minimax-m2:cloud
+</code></pre>
+<p>如果你已經在環境變數指定模型，建議不要再用 UI 選擇器切來切去，避免設定來源混在一起。</p>
+<h2 id="踩坑-6embedding-遇到超大檔出現-context-length-exceeded"><a class="header" href="#踩坑-6embedding-遇到超大檔出現-context-length-exceeded">踩坑 6：Embedding 遇到超大檔，出現 <code>context length exceeded</code></a></h2>
+<h3 id="症狀-4"><a class="header" href="#症狀-4">症狀</a></h3>
+<p>日誌可能會看到大量訊息：</p>
+<pre><code class="language-text">Failed to get embedding for document '...babel-polyfill.min.js', skipping
+Failed to get embedding for document '...vuetify.min.js', skipping
+Failed to get embedding for document '...firebase-app.js', skipping
+</code></pre>
+<p>或者 Ollama 直接回：</p>
+<pre><code class="language-text">the input length exceeds the context length (status code: 500)
+</code></pre>
+<h3 id="原因-5"><a class="header" href="#原因-5">原因</a></h3>
+<p>這類壓縮後的前端資產或第三方套件檔案 token 數量太大，超過 Embedding 模型的 context window。DeepWiki 通常會直接跳過，或做退避重試。</p>
+<h3 id="解法-5"><a class="header" href="#解法-5">解法</a></h3>
+<p>大多數情況下，這不會影響主要結果，因為 DeepWiki 還是會替其他正常原始碼建立索引。若你想把雜訊降到最低，可以在 <code>api/config/repo.json</code> 主動排除大型目錄或壓縮後資產：</p>
+<pre><code class="language-json">{
+  "excluded_dirs": ["node_modules/", "vendor/", "dist/", "build/"],
+  "excluded_files": ["*.min.js", "*.min.css", "*.bundle.js"]
+}
+</code></pre>
+<p>第一次跑之前先整理排除規則，通常能讓索引過程更乾淨也更快。</p>
+<h2 id="踩坑-7檔案編碼不是-utf-8出現-unicodedecodeerror"><a class="header" href="#踩坑-7檔案編碼不是-utf-8出現-unicodedecodeerror">踩坑 7：檔案編碼不是 UTF-8，出現 <code>UnicodeDecodeError</code></a></h2>
+<h3 id="症狀-5"><a class="header" href="#症狀-5">症狀</a></h3>
+<pre><code class="language-text">'utf-8' codec can't decode byte 0xa5 ... invalid start byte
+</code></pre>
+<h3 id="原因-6"><a class="header" href="#原因-6">原因</a></h3>
+<p>舊專案裡有些 <code>.js</code>、<code>.txt</code> 或設定檔可能不是 UTF-8，常見像是 Big5、CP950 或 Windows-1252。DeepWiki 在匯入階段用 UTF-8 讀取時，就會直接失敗。</p>
+<h3 id="解法-6"><a class="header" href="#解法-6">解法</a></h3>
+<p>通常只有兩種實際做法：</p>
+<ol>
+<li>先把檔案轉成 UTF-8</li>
+<li>直接把這些歷史檔案排除在索引之外</li>
+</ol>
+<p>如果那些檔案本來就不是你想分析的核心內容，第二種通常比較省時間。</p>
+<h2 id="全流程檢查清單"><a class="header" href="#全流程檢查清單">全流程檢查清單</a></h2>
+<p>正式跑之前，建議依序確認：</p>
+<ol>
+<li><code>ollama list</code> 裡已經看得到 <code>nomic-embed-text</code> 和你要用的 LLM</li>
+<li><code>docker-compose.yaml</code> 裡有 <code>OPENAI_API_KEY=sk-fake-dummy</code></li>
+<li>UI 輸入的是容器內路徑，例如 <code>/mnt/local-repos/my-project</code></li>
+<li>啟動後，日誌有出現 <code>Embedding documents (X/Y)</code> 之類的進度訊息</li>
+</ol>
+<p>如果 Embedding 階段還是報錯，再補上 <code>api/config/embedder.json</code>，強制指定 <code>OllamaClient</code>。</p>
+<h2 id="怎麼判斷已完成而不是只是-ui-卡住"><a class="header" href="#怎麼判斷已完成而不是只是-ui-卡住">怎麼判斷「已完成」而不是「只是 UI 卡住」</a></h2>
+<p>DeepWiki 的 UI 有時候會讓人誤以為流程還沒結束，但真正可信的是後端日誌。</p>
+<h3 id="代表索引完成的關鍵日誌"><a class="header" href="#代表索引完成的關鍵日誌">代表索引完成的關鍵日誌</a></h3>
+<pre><code class="language-text">Loaded XXX documents from existing database
+Embedding validation complete: XXX/XXX
+Index built with XXX chunks
+FAISS retriever created successfully
+Retriever prepared for /mnt/local-repos/...
+</code></pre>
+<h3 id="ui-卡在驗證-wiki-結構怎麼辦"><a class="header" href="#ui-卡在驗證-wiki-結構怎麼辦">UI 卡在「驗證 Wiki 結構」怎麼辦</a></h3>
+<p>先確認三件事：</p>
+<ol>
+<li>日誌裡是否已出現 <code>Retriever prepared</code></li>
+<li>LLM 模型是否真的存在，而且 Ollama 可正常呼叫</li>
+<li>是否已開啟 OpenAI 相容模式，也就是 fake key 加上 <code>OPENAI_BASE_URL</code></li>
+</ol>
+<p>很多時候不是生成真的失敗，而是前端狀態沒有同步更新。</p>
+<h2 id="最終穩定設定"><a class="header" href="#最終穩定設定">最終穩定設定</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>項目</th><th>設定</th></tr></thead><tbody>
+<tr><td>Embedding 模型</td><td><code>nomic-embed-text</code></td></tr>
+<tr><td>LLM</td><td><code>minimax-m2:cloud</code></td></tr>
+<tr><td>相容設定</td><td><code>OPENAI_API_KEY=sk-fake-dummy</code> + <code>OPENAI_BASE_URL=http://host.docker.internal:11434/v1</code></td></tr>
+<tr><td>儲存庫路徑</td><td>一律使用容器內路徑 <code>/mnt/local-repos/...</code></td></tr>
+</tbody></table>
+</div>
+<h2 id="參考資料"><a class="header" href="#參考資料">參考資料</a></h2>
+<ul>
+<li><a href="https://github.com/AsyncFuncAI/deepwiki-open">DeepWiki-Open GitHub</a></li>
+<li><a href="https://github.com/AsyncFuncAI/deepwiki-open/issues/323">Can’t find local directory · Issue #323</a></li>
+<li><a href="https://github.com/AsyncFuncAI/deepwiki-open/issues/175">Local Ollama not working after last update · Issue #175</a></li>
+<li><a href="https://github.com/AsyncFuncAI/deepwiki-open/issues/248">The specified Ollama embedding model was not found · Issue #248</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../ai_agent/claude-code-config-sync.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../lifestyle/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../ai_agent/claude-code-config-sync.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../lifestyle/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
