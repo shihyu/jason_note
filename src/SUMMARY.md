@@ -733,6 +733,7 @@
     - [用 AI 高效學習：避開 PDF 陷阱的 3 個方法](ai_agent/ai-pdf-learning-guide.md)
     - [Claude Code 設定備份與跨機同步](ai_agent/claude-code-config-sync.md)
     - [DeepWiki-Open + Ollama：本機儲存庫分析安裝踩坑與穩定設定指南](ai_agent/deepwiki-open-ollama-local-repo-guide.md)
+    - [Karpathy LLM Wiki 知識庫管理筆記](ai_agent/karpathy-llm-wiki-知識庫管理筆記.md)
 
 ## Lifestyle & Resources
 - [台北生活指南](lifestyle/README.md)
