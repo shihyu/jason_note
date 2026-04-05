@@ -724,6 +724,7 @@
     - [2026年AI學習路徑與12項必備AI技能工具清單](ai_agent/2026年AI學習路徑與12項必備AI技能工具清單.md)
     - [Agent Skill 的目錄組成結構說明與範本](ai_agent/agent_skill_structure.md)
     - [別再打造 Agent了打造 Skills 吧](ai_agent/別再打造Agent了打造Skills吧-Anthropic演講重點整理.md)
+    - [Harness Engineering 重點整理（工程師版）](ai_agent/harness_engineering_summary.md)
     - [Claude／OpenCode Skills 新手超詳細講解與知識整理](ai_agent/Claude與OpenCode的Skills新手超詳細講解與知識整理.md)
     - [OpenCode & oh-my-opencode 完整指南](ai_agent/opencode-oh-my-opencode.md)
     - [Claude Code — Plugins / Skills / MCP 整理](ai_agent/claude-plugins-skills-mcp.md)
