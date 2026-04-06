@@ -11,8 +11,8 @@ import time
 
 BINANCE_URL = "https://fapi.binance.com"
 DOWNLOAD_DIR = Path("data/raw")
-REQUEST_DELAY = 0.2
-CONCURRENT = 15
+REQUEST_DELAY = 5
+CONCURRENT = 5
 
 COLS = [
     "open_time",
