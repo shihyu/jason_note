@@ -7,12 +7,11 @@ import aiohttp
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
-import time
 
 BINANCE_URL = "https://fapi.binance.com"
 DOWNLOAD_DIR = Path("data/raw")
 REQUEST_DELAY = 5
-CONCURRENT = 5
+CONCURRENT = 20
 
 COLS = [
     "open_time",
