@@ -12,6 +12,7 @@
 3. [已啟用 MCP Servers](#已啟用-mcp-servers)
 4. [建議安裝清單](#建議安裝清單)
 5. [安裝指令速查](#安裝指令速查)
+6. [社群資源 / Skills 市場平台](#社群資源--skills-市場平台)
 
 ---
 
@@ -306,6 +307,72 @@ claude mcp add docker -- npx -y @modelcontextprotocol/server-docker
 ```
 
 > **社群提示：** 同時開啟的 MCP 不要超過 5-6 個，太多會拖慢 Claude Code 啟動速度並增加 context 消耗。
+
+---
+
+---
+
+## 社群資源 / Skills 市場平台
+
+### ClawHub — Skills 市場平台
+
+**網址：** <https://clawhub.ai/skills>
+
+ClawHub 是目前最大的 Claude Code Skills 社群市場，收錄超過 **13,700+** 個 Skills，由 Peter Steinberger 建立，MIT 開源授權。支援 GitHub 帳號登入，提供 Staff Picks 精選推薦。
+
+**特色：**
+- 按下載數、分類瀏覽 Skills
+- VirusTotal + OpenClaw 安全掃描驗證
+- 社群貢獻 + 版本追蹤
+
+---
+
+### DennisLiuCk/claude-plugin-marketplace — 繁體中文插件市場
+
+**GitHub：** <https://github.com/DennisLiuCk/claude-plugin-marketplace>
+
+社群維護的**繁體中文** Claude Code 插件市場，精選 **20 個插件**，降低台灣 / 中文開發者的入門門檻。
+
+**分類：**
+
+| 類別 | 數量 | 包含內容 |
+|------|------|---------|
+| 開發工具 | 10 | Agent SDK、多階段功能開發、程式碼簡化、舊專案分析 |
+| 生產力工具 | 7 | Git 自動化、PR review、code review、SQL migration |
+| 安全 | 1 | 即時弱點偵測（編輯時自動掃描） |
+| 學習 | 2 | 教學型輸出模式、互動式學習 |
+
+**安裝方式：**
+```bash
+claude plugin install github:DennisLiuCk/claude-plugin-marketplace/plugins/<plugin-name>
+```
+
+---
+
+### 社群推薦文章：必裝 Skills 精選
+
+#### DataCamp — Best ClawHub Skills 完整指南
+
+**網址：** <https://www.datacamp.com/blog/best-clawhub-skills>
+
+由 Khalid Abdelaty 撰寫（2026-03-05），涵蓋如何安裝和管理 Skills、安全注意事項、常見設定錯誤排除。
+
+---
+
+#### CNBlogs — 10 個必裝 OpenClaw Skills（中文）
+
+**網址：** <https://www.cnblogs.com/informatics/p/19679935>
+
+作者 warm3snow 從 ClawHub 13,700+ Skills 中精選 10 個必裝項目，全部本地運行、不需外部 API key，分為四層：
+
+| 層級 | Skills | 功能 |
+|------|--------|------|
+| **生存層** | Agent Browser、Self-Improving Agent、Agent Memory | 瀏覽器自動化、錯誤學習、持久記憶 |
+| **效率層** | Agent Autopilot、Diagram Generator、Airpoint | 自主任務執行、視覺化生成、macOS 控制 |
+| **安全層** | ClawdStrike、Credential Manager | 安全稽核、本地憑證管理 |
+| **進階層** | Evolver、Adaptive Reasoning | 持續 AI 改進、智慧任務複雜度評估 |
+
+> **延伸資源：** [awesome-openclaw-skills](https://github.com/search?q=awesome-openclaw-skills)（5,494 個 Skills，32 個分類）
 
 ---
 
