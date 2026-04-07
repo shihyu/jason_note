@@ -153,6 +153,8 @@ Successfully consolidated 8 Go-related source files into 3 comprehensive, produc
 │   │   ├── speech_tech/  - Speech technology
 │   │   ├── chatgpt/      - ChatGPT integration
 │   │   ├── ai_agent/     - AI agent systems
+│   │   │   ├── llm-tools.md  - LLM tools整理 (2026-04-07)
+│   │   │   └── ...         - Other AI agent files
 │   │   ├── lifestyle/    - Lifestyle notes
 │   │   └── ...
 │   │
@@ -295,6 +297,30 @@ Visit repository and browse files directly in GitHub UI.
 
 ---
 
+## 🤖 AI / LLM Tools 完整指南 (2026-04-07)
+
+#### **a) LLM 常用工具整理**
+- **File**: `src/ai_agent/llm-tools.md`
+- **Size**: 122 lines
+- **Content**:
+  - 本地模型 / 推理：Ollama、llama.cpp、vLLM、LM Studio
+  - API Proxy / Router：LiteLLM
+  - Agent / Workflow / RAG Framework：LangGraph、LlamaIndex、AutoGen、Flowise、Dify、CrewAI、smolagents、Haystack
+  - UI / 知識庫：Open WebUI、AnythingLLM、browser-use、agent-browser
+  - 評測 / Tracing：Langfuse、Promptfoo、Phoenix
+  - Coding Agent：Aider、OpenHands、Continue、RTK、Cursor
+  - Agent Protocol：MCP (Model Context Protocol)
+  - Search / Research：Tavily
+  - Workflow Orchestration：n8n、Temporal
+- **Features**: 工具分類表、快速選型決策表、常用組合建議矩陣
+- **Time to Read**: 30-60 minutes
+
+#### **Navigation Guide**
+- **LLM Tools**: `src/ai_agent/llm-tools.md`
+- **AI Agent 目錄**: `src/ai_agent/`
+
+---
+
 ## 🔗 Quick Links
 
 ### Go Section
@@ -313,6 +339,8 @@ Visit repository and browse files directly in GitHub UI.
 - **Tools**: `src/tools/`
 - **Git**: `src/git/`
 - **Software Engineering**: `src/software_engineering/`
+- **AI / LLM Tools**: `src/ai_agent/llm-tools.md`
+- **AI Agent**: `src/ai_agent/`
 
 ---
 
