@@ -64,6 +64,7 @@
         - [Gemini CLI 安裝與使用指南](tools/gemini-cli-guide.md)
         - [Codex CLI 完整指南](tools/codex-guide.md)
         - [Thinking Protocol 中文指南](tools/thinking-protocol-zh-tw.md)
+        - [2026 年將佔據主導地位的頂級開源專案](tools/2026-top-open-source-projects.md)
     - [系統分析與效能工具](tools/02_系統分析與效能工具.md)
         - [程式分析與效能工具完整指南](tools/cpp-analysis-tools.md)
         - [C++/Rust 函數追蹤技術指南](tools/function-tracing-cpp-rust.md)
