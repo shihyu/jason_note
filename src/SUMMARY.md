@@ -715,6 +715,7 @@
 ## AI Agent
 - [AI Agent 自主系統開發](ai_agent/ai_agent.md)
     - [Ralph Loop 自動化循環系統](ai_agent/RALPH_GUIDE.md)
+    - [Ralph Wiggum Loop 完整指南：讓 AI 24 小時自動寫程式](ai_agent/ralph-wiggum-loop-guide.md)
     - [AutoContent Loop 內容生產系統](ai_agent/development_plan.md)
     - [我的 AI 是怎麼記錄我的寫文習慣的？](ai_agent/AI是怎麼記錄我的寫文習慣的.md)
     - [Clawdbot 完整使用指南](ai_agent/Clawdbot-Guide.md)
