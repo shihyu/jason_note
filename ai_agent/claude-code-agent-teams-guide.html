@@ -178,179 +178,185 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="派三個-ai-同時做事為什麼反而更慢"><a class="header" href="#派三個-ai-同時做事為什麼反而更慢">派三個 AI 同時做事，為什麼反而更慢？</a></h1>
-<p><strong>TL;DR</strong>
-掌握 Agent Teams 的三個關鍵：什麼時候不該用（線性流程）、怎麼開啟與關閉，以及遇到不確定時直接問 Claude。用對地方可以並行提速，用錯地方反而加重複雜度。</p>
-<p><strong>這篇文章適合：</strong></p>
+                        <h1 id="claude-code-agent-teams並行-ai-開發完全指南2026"><a class="header" href="#claude-code-agent-teams並行-ai-開發完全指南2026">Claude Code Agent Teams：並行 AI 開發完全指南（2026）</a></h1>
+<h2 id="什麼是-claude-code-agent-teams"><a class="header" href="#什麼是-claude-code-agent-teams">什麼是 Claude Code Agent Teams？</a></h2>
+<p><strong>2026 年 2 月 6 日</strong> — Claude Opus 4.6 引入了 <strong>Agent Teams</strong>，這是 AI 輔助開發的範式轉變。您現在可以編排多個自主協調、相互質疑發現並平行處理複雜程式碼庫的 Claude 實例，而不是讓單一 AI 助手按順序處理任務。</p>
+<p>本指南涵蓋您需要了解的一切：什麼是 Agent Teams、它們與 subagent 的區別、何時使用它們，以及逐步設定說明。</p>
+<hr />
+<h2 id="agent-teams-讓您可以啟動多個-claude-實例"><a class="header" href="#agent-teams-讓您可以啟動多個-claude-實例">Agent Teams 讓您可以啟動多個 Claude 實例：</a></h2>
 <ul>
-<li>已用過 Claude Code 基礎功能，想進一步提升效率的 PM 或設計師</li>
-<li>不確定自己的任務適不適合用 Teams，每次都要猜的人</li>
-<li>想了解 Teams 完整操作流程（從建立到關閉）的人</li>
+<li><strong>平行工作</strong>處理獨立子任務</li>
+<li><strong>直接相互發送訊息</strong>（不僅僅是向領導回報）</li>
+<li><strong>透過共享任務清單協調</strong>，具有自動依賴管理</li>
+<li><strong>質疑發現</strong>並驗證彼此的工作</li>
 </ul>
-<hr />
-<p>假設你是做 SaaS 產品的 PM。某天你盯著 Notion 上的 sprint 清單發呆：使用者訪談稿要整理、功能需求文件要更新、下一版的優先排序還沒做。</p>
-<p>你一直都是一件件丟給 Claude Code 做，一項做完換下一項。這天你突然想到：「有沒有辦法讓多個 Claude 同時幫我處理這些？」</p>
-<p>你查到了 Agent Teams 這個功能，興奮地建了 Team，派了三個 AI 同時出發。</p>
-<p>結果花了更多時間重工。</p>
-<p><strong>Agent Teams 不是加速鍵，是路線的改變。</strong> 用之前，你必須先搞清楚一件事。</p>
-<hr />
-<h2 id="1-agent-teams-是什麼"><a class="header" href="#1-agent-teams-是什麼">1. Agent Teams 是什麼？</a></h2>
-<p><strong>Agent Teams 是 Claude Code 的多 Agent 協作功能，讓你同時召喚多個 AI 並行工作、互相協調。</strong></p>
-<p>想像你在帶一個三人小組。你是組長，負責分配工作、整合成果；其他三個人各自做自己的部分，做完回來跟你報告。Agent Teams 的概念完全一樣——只不過這些「隊員」不是真人，<strong>而是同時運作的多個 Claude AI</strong>。你是 Team Lead，它們是 Teammates，各自獨立工作，完成後自動通知你。</p>
-<p>這些 Teammates 全部透過以下工具控制，直接在 Claude Code 的對話框輸入，不需要額外安裝任何東西：</p>
-<div class="table-wrapper"><table><thead><tr><th>工具</th><th>用途</th></tr></thead><tbody>
-<tr><td><code>TeamCreate</code></td><td>建立一個 Team（同時初始化共享 Task List）</td></tr>
-<tr><td><code>Task</code>（帶 <code>team_name</code>）</td><td>召喚一個 Teammate AI 加入 Team</td></tr>
-<tr><td><code>TaskCreate / TaskUpdate / TaskList</code></td><td>管理共享的任務清單</td></tr>
-<tr><td><code>SendMessage</code></td><td>你與 Teammates 之間的溝通</td></tr>
-<tr><td><code>TeamDelete</code></td><td>解散 Team、清理資源</td></tr>
+<p>這與傳統的 AI 編程助手有本質區別，後者是一個模型按順序處理所有事情。</p>
+<h3 id="三個組件"><a class="header" href="#三個組件">三個組件</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>組件</th><th>角色</th></tr></thead><tbody>
+<tr><td><strong>團隊領導</strong></td><td>您的主 Claude Code 會話。建立團隊、生成隊友、分配任務並綜合結果</td></tr>
+<tr><td><strong>隊友</strong></td><td>擁有自己上下文視窗的獨立 Claude 實例。獨立工作並可與其他隊友通訊</td></tr>
+<tr><td><strong>共享任務清單</strong></td><td>中心協調機制，具有待處理/進行中/已完成狀態和自動依賴解除阻塞</td></tr>
 </tbody></table>
 </div>
-<p>溝通是<strong>自動投遞</strong>的——Teammates 完成任務後，訊息會直接出現在你的對話中，你不需要主動去查看。</p>
-<blockquote>
-<p>「你負責決策，AI Teammates 負責執行——各司其職，互不等待。」</p>
-</blockquote>
 <hr />
-<h2 id="2-最重要的事什麼時候不適合用-teams"><a class="header" href="#2-最重要的事什麼時候不適合用-teams">2. 最重要的事：什麼時候不適合用 Teams</a></h2>
-<p><strong>線性流程、小任務，需要逐步審查的工作——這三種情境不適合用 Agent Teams。</strong></p>
-<p>這也是你可能踩到的坑。你的三件事是：訪談稿整理 → 需求文件更新 → 功能優先排序。三個 Agents 一起出發後，第二個 Agent 拿到的訪談稿還沒整理好，寫出了一堆無法對照真實用戶需求的文件；第三個 Agent 排序時用的是上一版功能列表，因為新文件還沒出來。</p>
-<p>問題出在哪裡？你的任務是<strong>線性的</strong>——訪談稿整理完才能更新文件，文件更新完才能做排序。這不是三條平行的線，而是一條環環相扣的鏈。</p>
-<h3 id="2-1-線性流程最常見的誤用"><a class="header" href="#2-1-線性流程最常見的誤用">2-1. 線性流程（最常見的誤用）</a></h3>
-<pre><code>整理訪談稿
-  → 需要訪談稿的輸出
-更新需求文件
-  → 需要文件的輸出
-功能優先排序
-</code></pre>
-<p>同時派多個 Agent 去做，它們只會互相等待，或用錯誤的前提開始工作。一個 Claude 按順序做完，反而更快更穩。</p>
-<p>套用到廚房就一目瞭然：切菜要等食材準備好，炒菜要等切完，裝盤要等炒完。這條流水線有嚴格的先後順序，同時派三個廚師站在不同位置等待，比一個廚師連貫做完還要慢。</p>
-<p><strong>差別不是人數多不多，而是任務能不能真的同時進行。</strong></p>
-<h3 id="2-2-任務太小太短"><a class="header" href="#2-2-任務太小太短">2-2. 任務太小，太短</a></h3>
-<p>建立 Team、召喚 Teammates、分配任務、等待結果、整合、關閉——這些 overhead 加起來需要幾個額外的 API 來回。如果你的任務本身只要幾分鐘，Teams 的成本比任務本身還高。</p>
-<p>這些任務直接叫一個 Claude 做就好：</p>
-<ul>
-<li>改一個措辭</li>
-<li>修一個錯誤</li>
-<li>補一段說明文字</li>
-<li>整理一份短文件</li>
-</ul>
-<h3 id="2-3-每一步都需要你審查決策"><a class="header" href="#2-3-每一步都需要你審查決策">2-3. 每一步都需要你審查決策</a></h3>
-<p>如果每個小步驟你都要介入、判斷，再給下一步指示，Teams 的並行優勢就消失了。Teams 最適合「交代清楚方向後，讓 Agents 自主完成」的任務。</p>
-<hr />
-<h2 id="3-什麼時候適合用-teams"><a class="header" href="#3-什麼時候適合用-teams">3. 什麼時候適合用 Teams</a></h2>
-<p><strong>任務互不依賴，工作量夠大，能清楚整合結果——符合這三個條件就適合。</strong></p>
-<p>假設你是 UI 設計師，接了一個 side project：做一個活動報名 landing page。設計稿定稿後，你需要同步搞定兩件事：<strong>文案撰寫</strong>和 <strong>HTML/CSS 切版</strong>。</p>
-<p>這兩件事互不干擾——文案不需要等 HTML 切好才能寫，HTML 也不需要等文案確定才能動。你事先定好頁面區塊，然後各自開工。</p>
-<pre><code>Agent A → 寫文案
-Agent B → 寫 HTML/CSS
-你 → 整合
-</code></pre>
-<p>一個 Agent 負責文案，一個負責切版，你只需要在最後整合。原本需要兩個小時的工作，並行之後省下了一半。</p>
-<p><strong>差別在哪裡？任務真的獨立，才能真的並行。</strong></p>
-<h3 id="3-1-真正可並行的獨立任務"><a class="header" href="#3-1-真正可並行的獨立任務">3-1. 真正可並行的獨立任務</a></h3>
-<p>工作拆成兩份以上、彼此不依賴彼此的輸出，就適合 Teams。前後端同步開發、文案和設計同步進行、多份獨立研究報告——都是這個模式。</p>
-<h3 id="3-2-大範圍掃描與研究"><a class="header" href="#3-2-大範圍掃描與研究">3-2. 大範圍掃描與研究</a></h3>
-<p>同時探索多個市場資料、搜尋多個競品分析、整理多份用戶訪談摘要——這些任務互不干擾，完全可以並行，比序列執行快上好幾倍。</p>
-<h3 id="3-3-大規模重構多個獨立模組"><a class="header" href="#3-3-大規模重構多個獨立模組">3-3. 大規模重構（多個獨立模組）</a></h3>
-<p>把多個互不依賴的模組交給不同 Agent 同時處理，安全並行，最後整合。</p>
-<hr />
-<h2 id="4-不確定要不要用直接問-claude"><a class="header" href="#4-不確定要不要用直接問-claude">4. 不確定要不要用？直接問 Claude</a></h2>
-<p>判斷原則是參考用的，但真實情況往往更複雜。當你拿到一個任務不確定時，最直接的方式是把任務描述給 Claude，然後問他：</p>
-<blockquote>
-<p>「你覺得我們這個案例，需不需要用 team agent？」</p>
-</blockquote>
-<p>假設你是產品設計師，剛接到一個需求：幫用戶建立一套週報範本系統。你直覺覺得這個任務「感覺有點大」，但說不清楚到底要不要開 Teams。</p>
-<p>你把需求描述給 Claude，問了上面那句話。Claude 分析後回答：「這個任務的核心是先設計範本結構，再根據結構產出內容——是序列的，不適合 Teams。一個 Claude 按順序做就夠了。」</p>
-<p>你省去了建立 Team 的麻煩，直接開始工作。</p>
-<p>Claude 知道 Teams 的成本與收益，會根據你的具體情況給建議。如果不適合，他會直接說不用；如果適合，他也能順帶幫你規劃怎麼拆分任務。</p>
-<hr />
-<h2 id="5-實戰完整操作流程"><a class="header" href="#5-實戰完整操作流程">5. 實戰：完整操作流程</a></h2>
-<p>以前面的「文案 + 切版並行開發」為例，走完完整的 Teams 生命週期。</p>
-<h3 id="5-1-step-1建立-team"><a class="header" href="#5-1-step-1建立-team">5-1. Step 1：建立 Team</a></h3>
-<pre><code>TeamCreate
-  team_name: "landing-page"
-  description: "活動報名頁文案 + HTML 切版（並行開發）"
-</code></pre>
-<h3 id="5-2-step-2建立任務清單"><a class="header" href="#5-2-step-2建立任務清單">5-2. Step 2：建立任務清單</a></h3>
-<pre><code>TaskCreate
-  title: "撰寫活動報名頁文案"
-  description: "包含 Hero、Feature、CTA 三個區塊，語氣輕鬆、行動導向"
-
-TaskCreate
-  title: "HTML/CSS 切版"
-  description: "依據設計稿切出三個區塊，RWD，暗色主題"
-</code></pre>
-<h3 id="5-3-step-3召喚-teammates"><a class="header" href="#5-3-step-3召喚-teammates">5-3. Step 3：召喚 Teammates</a></h3>
-<pre><code>Task（subagent_type: general-purpose）
-  team_name: "landing-page"
-  name: "copywriter"
-  prompt: "你負責活動頁文案。看 TaskList 找到你的任務，
-           完成後用 TaskUpdate 標記 completed，
-           再用 SendMessage 通知 team-lead。"
-
-Task（subagent_type: general-purpose）
-  team_name: "landing-page"
-  name: "frontend-dev"
-  prompt: "你負責 HTML/CSS 切版。看 TaskList 找到你的任務，
-           頁面區塊設計參考 TaskList 說明，
-           完成後通知 team-lead。"
-</code></pre>
-<p>兩個 Agents 同時開始工作，不需要等一個完成才召喚另一個。</p>
-<h3 id="5-4-step-4協調進行中的工作"><a class="header" href="#5-4-step-4協調進行中的工作">5-4. Step 4：協調進行中的工作</a></h3>
-<p>Teammates 工作時會進入 <strong>idle 狀態</strong>。</p>
-<p><strong>idle 不等於出錯</strong>：idle 表示 Agent 在等你的下一步指示，或等其他 Agent 的輸出。這是完全正常的等待狀態。</p>
-<p>當他們完成任務，訊息會自動出現在你的對話：</p>
-<pre><code>[copywriter] → team-lead
-Hero 文案：「讓你的活動，被更多人看見」
-Feature 區塊三點完成、CTA 完成。
-</code></pre>
-<p>如果 frontend-dev 需要文案才能繼續，你可以直接轉發：</p>
-<pre><code>SendMessage
-  type: "message"
-  recipient: "frontend-dev"
-  content: "文案已確認，Hero 標題：「讓你的活動，被更多人看見」
-            三個 Feature 區塊文案已完成，可以開始填入了。"
-</code></pre>
-<h3 id="5-5-step-5關閉-team"><a class="header" href="#5-5-step-5關閉-team">5-5. Step 5：關閉 Team</a></h3>
-<p>所有任務完成後，<strong>先關閉 Teammates，再刪除 Team</strong>。</p>
-<blockquote>
-<p><strong>注意順序</strong>：必須先讓所有 Teammates 回應 shutdown，才能執行 TeamDelete。若順序顛倒，TeamDelete 會失敗。如果沒有收到回應，重新發送一次 shutdown_request 即可。</p>
-</blockquote>
-<pre><code># 1. 向每個 Teammate 送出關閉請求
-SendMessage
-  type: "shutdown_request"
-  recipient: "copywriter"
-
-SendMessage
-  type: "shutdown_request"
-  recipient: "frontend-dev"
-
-# 2. 等 Teammates 各自回應 approve: true
-
-# 3. 刪除 Team
-TeamDelete
-</code></pre>
-<hr />
-<h2 id="6-快速判斷表"><a class="header" href="#6-快速判斷表">6. 快速判斷表</a></h2>
-<div class="table-wrapper"><table><thead><tr><th>問題</th><th>YES</th><th>NO</th></tr></thead><tbody>
-<tr><td>任務可以拆成 2 個以上互不依賴的部分嗎？</td><td>繼續看</td><td>用單一 Claude</td></tr>
-<tr><td>每個部分的工作量夠大嗎（幾分鐘以上）？</td><td>繼續看</td><td>overhead 不划算</td></tr>
-<tr><td>各部分完成後，你能清楚整合結果嗎？</td><td>適合用 Teams</td><td>先釐清整合方式</td></tr>
+<h2 id="agent-teams-與-subagent關鍵區別"><a class="header" href="#agent-teams-與-subagent關鍵區別">Agent Teams 與 Subagent：關鍵區別</a></h2>
+<p>在選擇方法之前，理解這一點至關重要：</p>
+<div class="table-wrapper"><table><thead><tr><th>特性</th><th>Subagent</th><th>Agent Teams</th></tr></thead><tbody>
+<tr><td><strong>通訊</strong></td><td>僅向主代理回報</td><td>直接相互發送訊息</td></tr>
+<tr><td><strong>上下文</strong></td><td>共享會話</td><td>每個代理獨立會話</td></tr>
+<tr><td><strong>協調</strong></td><td>主代理編排</td><td>自協調</td></tr>
+<tr><td><strong>最適合</strong></td><td>快速聚焦任務</td><td>複雜平行工作</td></tr>
+<tr><td><strong>Token 使用</strong></td><td>較低</td><td>顯著較高</td></tr>
 </tbody></table>
 </div>
-<p>三個 YES 才值得建 Team。拿不準的話，直接問 Claude。</p>
-<blockquote>
-<p><strong>試試看</strong>：把你手上一個任務描述給 Claude，問他「你覺得這個案例需不需要用 team agent？」答案可能比你預期的更精準。</p>
-</blockquote>
+<h3 id="何時使用哪種"><a class="header" href="#何時使用哪種">何時使用哪種</a></h3>
+<p><strong>使用 Subagent 當：</strong></p>
+<ul>
+<li>您需要快速、聚焦的工作者回報結果</li>
+<li>任務是順序的或有簡單的依賴關係</li>
+<li>「去研究 X 並告訴我你發現了什麼」</li>
+</ul>
+<p><strong>使用 Agent Teams 當：</strong></p>
+<ul>
+<li>工作者需要分享發現並相互質疑</li>
+<li>任務可以拆分為獨立的、讀取密集型工作</li>
+<li>您正在進行程式碼庫審查、多模組功能開發或競爭假設除錯</li>
+</ul>
 <hr />
-<h2 id="7-總結"><a class="header" href="#7-總結">7. 總結</a></h2>
-<p>回到開頭的場景。後來你搞清楚了——那三件事（訪談稿 → 文件 → 排序）是線性的，一個個做才是對的。但下個月你有另一個任務：同時做三份完全獨立的市場研究分析。這次你建了 Team，三個 Agents 並行處理，省了大半時間。</p>
-<blockquote>
-<p><strong>Teams 是為了並行而生的。如果你的任務本質上是序列的，加再多 AI 也只是讓複雜度上升，不會讓速度提升。</strong></p>
-</blockquote>
-<p><strong>用對地方</strong>：大範圍研究、多模組重構、互不依賴的任務同步開發。
-<strong>用錯地方</strong>：線性流程、小修改、每步都需要你審查。</p>
-<p><em>本文基於 Claude Code Agent SDK（2026）規格撰寫。</em></p>
+<h2 id="真實案例建構-c-編譯器"><a class="header" href="#真實案例建構-c-編譯器">真實案例：建構 C 編譯器</a></h2>
+<p>為了展示 Agent Teams 的規模化能力，一位開發者讓 <strong>16 個 Claude 代理</strong>從頭開始建構一個基於 Rust 的 C 編譯器——一個能夠編譯 Linux 核心的編譯器。</p>
+<h3 id="結果"><a class="header" href="#結果">結果</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>指標</th><th>值</th></tr></thead><tbody>
+<tr><td><strong>代理數</strong></td><td>16 個平行工作</td></tr>
+<tr><td><strong>會話數</strong></td><td>~2,000 個 Claude Code 會話</td></tr>
+<tr><td><strong>成本</strong></td><td>~$20,000 API 費用</td></tr>
+<tr><td><strong>產出</strong></td><td>100,000+ 行 Rust 程式碼</td></tr>
+<tr><td><strong>能力</strong></td><td>在 x86、ARM 和 RISC-V 上編譯 Linux 6.9</td></tr>
+</tbody></table>
+</div>
+<p>這個專案如果由人類團隊完成需要數月時間。使用 Agent Teams，代理自主協調——一個處理解析，另一個處理程式碼生成，另一個處理最佳化遍歷——全部相互通訊並驗證彼此的工作。</p>
+<hr />
+<h2 id="如何設定-agent-teams"><a class="header" href="#如何設定-agent-teams">如何設定 Agent Teams</a></h2>
+<h3 id="前提條件"><a class="header" href="#前提條件">前提條件</a></h3>
+<ol>
+<li>已安裝和設定 Claude Code</li>
+<li>Opus 4.6 模型存取權限（Agent Teams 是 Opus 4.6 功能）</li>
+<li>在設定中啟用研究預覽旗標</li>
+</ol>
+<h3 id="第一步啟用-agent-teams"><a class="header" href="#第一步啟用-agent-teams">第一步：啟用 Agent Teams</a></h3>
+<p>Agent Teams 目前是研究預覽版。在 Claude Code 設定中啟用它：</p>
+<pre><code class="language-json">{
+  "experimental": {
+    "agentTeams": true
+  }
+}
+</code></pre>
+<h3 id="第二步理解-teammatetool"><a class="header" href="#第二步理解-teammatetool">第二步：理解 TeammateTool</a></h3>
+<p><code>TeammateTool</code> 生成新隊友。每個隊友：</p>
+<ul>
+<li>獲得自己的上下文視窗</li>
+<li>載入專案上下文（CLAUDE.md、MCP 伺服器、技能）</li>
+<li>獨立工作但可以向其他隊友發送訊息</li>
+</ul>
+<h3 id="第三步設計任務分解"><a class="header" href="#第三步設計任務分解">第三步：設計任務分解</a></h3>
+<p>在生成團隊之前，規劃如何拆分工作：</p>
+<pre><code>好的分解：
+├── 代理 1：分析認證模組
+├── 代理 2：分析資料庫層
+├── 代理 3：分析 API 端點
+└── 代理 4：交叉引用發現並識別安全漏洞
+
+差的分解：
+├── 代理 1：修復所有 bug（太寬泛）
+└── 代理 2：等待代理 1（不必要的依賴）
+</code></pre>
+<h3 id="第四步生成團隊"><a class="header" href="#第四步生成團隊">第四步：生成團隊</a></h3>
+<p>在 Claude Code 中描述團隊結構：</p>
+<pre><code>建立一個代理團隊來審查此程式碼庫的安全漏洞。
+生成 4 個隊友：
+1. 認證審查員 - 專注於認證流程和會話處理
+2. 輸入驗證審查員 - 檢查所有使用者輸入
+3. 資料庫安全審查員 - 分析查詢和資料存取
+4. 整合審查員 - 查看 API 邊界和外部呼叫
+
+讓他們分享發現並質疑彼此的結論。
+</code></pre>
+<h3 id="第五步監控和協調"><a class="header" href="#第五步監控和協調">第五步：監控和協調</a></h3>
+<p>使用 <code>Shift+Up/Down</code> 或 tmux 整合在代理之間切換並監控進度。共享任務清單會在代理完成工作時自動更新。</p>
+<hr />
+<h2 id="agent-teams-最佳實踐"><a class="header" href="#agent-teams-最佳實踐">Agent Teams 最佳實踐</a></h2>
+<h3 id="1-從清晰的任務邊界開始"><a class="header" href="#1-從清晰的任務邊界開始">1. 從清晰的任務邊界開始</a></h3>
+<p>每個代理應該有明確定義的範圍。重疊會導致混亂和浪費 token。</p>
+<h3 id="2-使用共享任務清單"><a class="header" href="#2-使用共享任務清單">2. 使用共享任務清單</a></h3>
+<p>不要微觀管理。讓代理從共享清單中領取任務並自行協調。</p>
+<h3 id="3-啟用交叉驗證"><a class="header" href="#3-啟用交叉驗證">3. 啟用交叉驗證</a></h3>
+<p>Agent Teams 的強大之處在於代理相互質疑。鼓勵這一點：</p>
+<pre><code>在初步分析後，讓代理審查彼此的發現並標記任何分歧或其他問題。
+</code></pre>
+<h3 id="4-預算-token-使用"><a class="header" href="#4-預算-token-使用">4. 預算 Token 使用</a></h3>
+<p>Agent Teams 消耗的 token 顯著多於單會話。對於 C 編譯器專案，成本達到了 $20,000。相應規劃：</p>
+<ul>
+<li>初始測試從較小的團隊開始（2-4 個代理）</li>
+<li>了解 token 消耗模式後再擴大規模</li>
+<li>對於平行加速能帶來價值的高價值任務使用 Agent Teams</li>
+</ul>
+<h3 id="5-利用持久化記憶體"><a class="header" href="#5-利用持久化記憶體">5. 利用持久化記憶體</a></h3>
+<p>設定代理使用持久化記憶體範圍，以便跨會話建構知識：</p>
+<pre><code class="language-yaml">---
+name: security-reviewer
+memory: project
+---
+</code></pre>
+<hr />
+<h2 id="agent-teams-使用案例"><a class="header" href="#agent-teams-使用案例">Agent Teams 使用案例</a></h2>
+<h3 id="1-全面程式碼審查"><a class="header" href="#1-全面程式碼審查">1. 全面程式碼審查</a></h3>
+<p>將大型程式碼庫分配給多個審查員，每個專門負責不同方面（安全性、效能、可維護性）。讓他們交叉引用發現。</p>
+<h3 id="2-除錯複雜問題"><a class="header" href="#2-除錯複雜問題">2. 除錯複雜問題</a></h3>
+<p>生成具有競爭假設的代理。一個調查資料庫層，另一個調查 API，另一個調查前端。他們分享發現並比順序除錯更快地收斂到根本原因。</p>
+<h3 id="3-多模組功能實現"><a class="header" href="#3-多模組功能實現">3. 多模組功能實現</a></h3>
+<p>對於跨多個模組的功能，每個模組分配一個代理。他們透過共享任務清單協調並確保介面對齊。</p>
+<h3 id="4-大規模重構"><a class="header" href="#4-大規模重構">4. 大規模重構</a></h3>
+<p>將重構拆分為獨立的區塊。代理平行工作並驗證更改不會引入迴歸。</p>
+<h3 id="5-文件生成"><a class="header" href="#5-文件生成">5. 文件生成</a></h3>
+<p>多個代理分析程式碼庫的不同部分並生成文件，然後交叉引用以保持一致性。</p>
+<hr />
+<h2 id="限制和注意事項"><a class="header" href="#限制和注意事項">限制和注意事項</a></h2>
+<h3 id="目前限制"><a class="header" href="#目前限制">目前限制</a></h3>
+<ul>
+<li><strong>研究預覽版</strong>：Agent Teams 是實驗性的。預期會有粗糙的邊緣。</li>
+<li><strong>Token 成本</strong>：顯著高於單代理工作流程。</li>
+<li><strong>協調開銷</strong>：複雜的團隊動態有時會減慢進度。</li>
+</ul>
+<h3 id="何時不使用-agent-teams"><a class="header" href="#何時不使用-agent-teams">何時不使用 Agent Teams</a></h3>
+<ul>
+<li>簡單的順序任務</li>
+<li>快速的一次性問題</li>
+<li>上下文共享比平行執行更重要的任務</li>
+<li>預算受限的專案</li>
+</ul>
+<hr />
+<h2 id="ai-開發的未來"><a class="header" href="#ai-開發的未來">AI 開發的未來</a></h2>
+<p>Agent Teams 代表了我們對 AI 輔助開發思考方式的根本轉變。您現在可以存取一個協調的 AI 專家團隊，而不是單一助手。</p>
+<p>C 編譯器的例子證明這不僅僅是理論——16 個代理自主生產 100,000 行生產品質程式碼展示了其潛力。隨著技術成熟和成本降低，Agent Teams 可能會成為複雜軟體專案的預設選擇。</p>
+<p>對於希望在大型程式碼庫上最大化生產力的開發者，Agent Teams 提供了對這一未來的一瞥。</p>
+<hr />
+<h2 id="相關資源"><a class="header" href="#相關資源">相關資源</a></h2>
+<ul>
+<li><a href="https://www.nxcode.io/resources/news/claude-1m-token-context-codebase-analysis-guide-2026">如何使用 Claude 的 1M Token 上下文分析大型程式碼庫</a> — 用於在拆分任務之前處理整個程式碼庫</li>
+<li><a href="https://www.nxcode.io/resources/news/opencode-vs-claude-code-vs-cursor-2026">OpenCode vs Claude Code vs Cursor：完整比較</a> — 比較 AI 編程工具</li>
+<li><a href="https://www.nxcode.io/tools/ai-token-calculator">AI Token 計算器</a> — 估算您的 Agent Teams 成本</li>
+</ul>
+<hr />
+<h2 id="來源"><a class="header" href="#來源">來源</a></h2>
+<ul>
+<li><a href="https://www.anthropic.com/news/claude-opus-4-6">Anthropic: Introducing Claude Opus 4.6</a></li>
+<li><a href="https://techcrunch.com/2026/02/05/anthropic-releases-opus-4-6-with-new-agent-teams/">TechCrunch: Anthropic releases Opus 4.6 with new 'agent teams'</a></li>
+<li><a href="https://www.anthropic.com/engineering/building-c-compiler">Anthropic Engineering: Building a C compiler with a team of parallel Claudes</a></li>
+<li><a href="https://code.claude.com/docs/en/sub-agents">Claude Code Documentation: Create custom subagents</a></li>
+<li><a href="https://venturebeat.com/technology/anthropics-claude-opus-4-6-brings-1m-token-context-and-agent-teams-to-take">VentureBeat: Claude Opus 4.6 brings 1M token context and 'agent teams'</a></li>
+</ul>
+<hr />
+<p><em>由 NxCode 團隊撰寫。</em></p>
 
                     </main>
 
@@ -360,7 +366,7 @@ TeamDelete
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../ai_agent/crewAI_打造多Agent協作的任務指揮系統.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../ai_agent/claude-4-6-agent-teams-guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -374,7 +380,7 @@ TeamDelete
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../ai_agent/crewAI_打造多Agent協作的任務指揮系統.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../ai_agent/claude-4-6-agent-teams-guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
