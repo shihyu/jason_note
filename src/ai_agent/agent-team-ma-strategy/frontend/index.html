@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MA 黃金交叉策略回測系統</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.2.1/dist/chartjs-chart-financial.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
+  <style>
+    :root {
+      --primary: #1a1a2e;
+      --secondary: #16213e;
+      --accent: #0f3460;
+      --highlight: #e94560;
+      --success: #00d26a;
+      --danger: #ff4757;
+      --text: #eaeaea;
+      --text-muted: #8b8b8b;
+      --card-bg: #1f2937;
+      --border: #374151;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--success), #00b894);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .control-group label {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .control-group input,
+    .control-group select {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 1rem;
+      min-width: 150px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .control-group input:focus,
+    .control-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(15, 52, 96, 0.3);
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--highlight));
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 1.25rem;
+      border: 1px solid var(--border);
+      transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .stat-card .label {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-card .value {
+      font-size: 1.75rem;
+      font-weight: 700;
+    }
+
+    .stat-card .value.positive {
+      color: var(--success);
+    }
+
+    .stat-card .value.negative {
+      color: var(--danger);
+    }
+
+    .chart-container {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+
+    .chart-container h2 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 500px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .signals-table {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .signals-table h2 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    td {
+      font-size: 0.9375rem;
+    }
+
+    .signal-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .signal-badge.golden {
+      background: rgba(0, 210, 106, 0.2);
+      color: var(--success);
+    }
+
+    .signal-badge.death {
+      background: rgba(255, 71, 87, 0.2);
+      color: var(--danger);
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+    }
+
+    .loading.show {
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+
+      header h1 {
+        font-size: 1.75rem;
+      }
+
+      .controls {
+        flex-direction: column;
+      }
+
+      .control-group input,
+      .control-group select {
+        width: 100%;
+      }
+
+      .chart-wrapper {
+        height: 350px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>MA 黃金交叉策略回測系統</h1>
+      <p>移動平均線黃金交叉與死亡交叉策略分析</p>
+    </header>
+
+    <div class="controls">
+      <div class="control-group">
+        <label for="symbol">股票代碼</label>
+        <input type="text" id="symbol" value="2330.TW" placeholder="例如: 2330.TW, AAPL">
+      </div>
+      <div class="control-group">
+        <label for="startDate">開始日期</label>
+        <input type="date" id="startDate" value="2024-01-01">
+      </div>
+      <div class="control-group">
+        <label for="endDate">結束日期</label>
+        <input type="date" id="endDate" value="2024-12-31">
+      </div>
+      <button class="btn btn-primary" id="runBacktest">執行回測</button>
+    </div>
+
+    <div class="dashboard" id="dashboard">
+      <div class="stat-card">
+        <div class="label">總交易次數</div>
+        <div class="value" id="totalTrades">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">勝率</div>
+        <div class="value" id="winRate">0%</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">總獲利</div>
+        <div class="value" id="totalProfit">0%</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">最大回撤</div>
+        <div class="value negative" id="maxDrawdown">0%</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">黃金交叉次數</div>
+        <div class="value positive" id="goldenCount">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">死亡交叉次數</div>
+        <div class="value negative" id="deathCount">0</div>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <h2>K 線圖 + MA5 + MA20</h2>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-color" style="background: #00d26a;"></div>
+          <span>黃金交叉 (買入)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #ff4757;"></div>
+          <span>死亡交叉 (賣出)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #ffd700;"></div>
+          <span>MA5</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #00bfff;"></div>
+          <span>MA20</span>
+        </div>
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="klineChart"></canvas>
+      </div>
+    </div>
+
+    <div class="signals-table">
+      <h2>交易訊號記錄</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>訊號類型</th>
+            <th>價格</th>
+            <th>MA5</th>
+            <th>MA20</th>
+          </tr>
+        </thead>
+        <tbody id="signalsBody">
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted);">點擊「執行回測」載入資料</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Mock Data Generator
+    function generateMockData(symbol, startDate, endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const data = [];
+      const ma5 = [];
+      const ma20 = [];
+      const signals = [];
+
+      let basePrice = symbol === '2330.TW' ? 600 : 150;
+      let price = basePrice;
+
+      const currentDate = new Date(start);
+      while (currentDate <= end) {
+        if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
+          const change = (Math.random() - 0.48) * 15;
+          const open = price;
+          const close = price + change;
+          const high = Math.max(open, close) + Math.random() * 8;
+          const low = Math.min(open, close) - Math.random() * 8;
+          const volume = Math.floor(Math.random() * 50000000) + 10000000;
+
+          data.push({
+            date: currentDate.toISOString().split('T')[0],
+            x: currentDate.getTime(),
+            open: open,
+            high: high,
+            low: low,
+            close: close,
+            volume: volume
+          });
+
+          price = close;
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      // Calculate MA5 and MA20
+      for (let i = 0; i < data.length; i++) {
+        let ma5Sum = 0;
+        let ma20Sum = 0;
+
+        for (let j = 0; j < 5 && i - j >= 0; j++) {
+          ma5Sum += data[i - j].close;
+        }
+        ma5.push(ma5Sum / Math.min(i + 1, 5));
+
+        for (let j = 0; j < 20 && i - j >= 0; j++) {
+          ma20Sum += data[i - j].close;
+        }
+        ma20.push(ma20Sum / Math.min(i + 1, 20));
+
+        // Detect signals after we have enough data
+        if (i >= 20) {
+          const prevMa5 = ma5[i - 1];
+          const prevMa20 = ma20[i - 1];
+          const currMa5 = ma5[i];
+          const currMa20 = ma20[i];
+
+          if (prevMa5 <= prevMa20 && currMa5 > currMa20) {
+            signals.push({
+              date: data[i].date,
+              x: data[i].x,
+              type: 'golden_cross',
+              price: data[i].close,
+              ma5: currMa5,
+              ma20: currMa20
+            });
+          } else if (prevMa5 >= prevMa20 && currMa5 < currMa20) {
+            signals.push({
+              date: data[i].date,
+              x: data[i].x,
+              type: 'death_cross',
+              price: data[i].close,
+              ma5: currMa5,
+              ma20: currMa20
+            });
+          }
+        }
+      }
+
+      // Calculate backtest results
+      let totalTrades = signals.length;
+      let wins = 0;
+      let profits = 0;
+      let maxProfit = 0;
+      let maxDrawdown = 0;
+      let position = 0;
+      let entryPrice = 0;
+
+      for (const signal of signals) {
+        if (signal.type === 'golden_cross' && position === 0) {
+          position = 1;
+          entryPrice = signal.price;
+        } else if (signal.type === 'death_cross' && position === 1) {
+          position = 0;
+          const profit = (signal.price - entryPrice) / entryPrice * 100;
+          profits += profit;
+          if (profit > 0) wins++;
+          if (profit > maxProfit) maxProfit = profit;
+          if (profit < maxDrawdown) maxDrawdown = profit;
+        }
+      }
+
+      return {
+        symbol,
+        data,
+        ma5,
+        ma20,
+        signals,
+        backtest: {
+          totalTrades,
+          winRate: totalTrades > 0 ? (wins / Math.max(Math.floor(totalTrades / 2), 1) * 100).toFixed(2) : 0,
+          totalProfit: profits.toFixed(2),
+          maxDrawdown: maxDrawdown.toFixed(2),
+          goldenCount: signals.filter(s => s.type === 'golden_cross').length,
+          deathCount: signals.filter(s => s.type === 'death_cross').length
+        }
+      };
+    }
+
+    // Chart instance
+    let klineChart = null;
+
+    // Initialize Chart
+    function initChart() {
+      const ctx = document.getElementById('klineChart').getContext('2d');
+
+      klineChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          datasets: [
+            {
+              label: 'K線',
+              type: 'candlestick',
+              data: [],
+              color: {
+                up: '#00d26a',
+                down: '#ff4757',
+                unchanged: '#8b8b8b'
+              },
+              borderColor: {
+                up: '#00d26a',
+                down: '#ff4757',
+                unchanged: '#8b8b8b'
+              }
+            },
+            {
+              label: 'MA5',
+              type: 'line',
+              data: [],
+              borderColor: '#ffd700',
+              backgroundColor: 'rgba(255, 215, 0, 0.1)',
+              borderWidth: 2,
+              pointRadius: 0,
+              tension: 0.1,
+              order: 1
+            },
+            {
+              label: 'MA20',
+              type: 'line',
+              data: [],
+              borderColor: '#00bfff',
+              backgroundColor: 'rgba(0, 191, 255, 0.1)',
+              borderWidth: 2,
+              pointRadius: 0,
+              tension: 0.1,
+              order: 2
+            },
+            {
+              label: '黃金交叉',
+              type: 'scatter',
+              data: [],
+              backgroundColor: '#00d26a',
+              borderColor: '#00d26a',
+              pointStyle: 'triangle',
+              pointRadius: 10,
+              pointHoverRadius: 12,
+              order: -1
+            },
+            {
+              label: '死亡交叉',
+              type: 'scatter',
+              data: [],
+              backgroundColor: '#ff4757',
+              borderColor: '#ff4757',
+              pointStyle: 'triangle',
+              pointRadius: 10,
+              pointHoverRadius: 12,
+              rotation: 180,
+              order: -1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const dataPoint = context.raw;
+                  if (context.dataset.label === 'K線') {
+                    return [
+                      '開盤: ' + dataPoint.open.toFixed(2),
+                      '最高: ' + dataPoint.high.toFixed(2),
+                      '最低: ' + dataPoint.low.toFixed(2),
+                      '收盤: ' + dataPoint.close.toFixed(2)
+                    ];
+                  }
+                  if (context.dataset.label === 'MA5' || context.dataset.label === 'MA20') {
+                    return context.dataset.label + ': ' + dataPoint.y.toFixed(2);
+                  }
+                  return '';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              type: 'time',
+              time: {
+                unit: 'day',
+                displayFormats: {
+                  day: 'MM/dd'
+                }
+              },
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                color: '#8b8b8b'
+              }
+            },
+            y: {
+              position: 'right',
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                color: '#8b8b8b'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Update Chart with Data
+    function updateChart(mockData) {
+      const data = mockData.data;
+      const ma5 = mockData.ma5;
+      const ma20 = mockData.ma20;
+      const signals = mockData.signals;
+
+      // K-line data
+      klineChart.data.datasets[0].data = data.map(function(d) {
+        return {
+          x: d.x,
+          open: d.open,
+          high: d.high,
+          low: d.low,
+          close: d.close
+        };
+      });
+
+      // MA5 data
+      klineChart.data.datasets[1].data = data.map(function(d, i) {
+        return {
+          x: d.x,
+          y: ma5[i]
+        };
+      });
+
+      // MA20 data
+      klineChart.data.datasets[2].data = data.map(function(d, i) {
+        return {
+          x: d.x,
+          y: ma20[i]
+        };
+      });
+
+      // Golden cross markers
+      var goldenSignals = signals.filter(function(s) { return s.type === 'golden_cross'; });
+      klineChart.data.datasets[3].data = goldenSignals.map(function(s) {
+        return {
+          x: s.x,
+          y: s.price
+        };
+      });
+
+      // Death cross markers
+      var deathSignals = signals.filter(function(s) { return s.type === 'death_cross'; });
+      klineChart.data.datasets[4].data = deathSignals.map(function(s) {
+        return {
+          x: s.x,
+          y: s.price
+        };
+      });
+
+      klineChart.update();
+    }
+
+    // Update Dashboard
+    function updateDashboard(backtest) {
+      document.getElementById('totalTrades').textContent = backtest.totalTrades;
+      document.getElementById('winRate').textContent = backtest.winRate + '%';
+      document.getElementById('totalProfit').textContent = backtest.totalProfit + '%';
+      document.getElementById('maxDrawdown').textContent = backtest.maxDrawdown + '%';
+      document.getElementById('goldenCount').textContent = backtest.goldenCount;
+      document.getElementById('deathCount').textContent = backtest.deathCount;
+
+      // Color the profit/drawdown values
+      var totalProfitEl = document.getElementById('totalProfit');
+      totalProfitEl.className = 'value ' + (parseFloat(backtest.totalProfit) >= 0 ? 'positive' : 'negative');
+
+      var maxDrawdownEl = document.getElementById('maxDrawdown');
+      maxDrawdownEl.className = 'value ' + (parseFloat(backtest.maxDrawdown) >= 0 ? 'positive' : 'negative');
+    }
+
+    // Update Signals Table
+    function updateSignalsTable(signals) {
+      var tbody = document.getElementById('signalsBody');
+
+      if (signals.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">沒有交易訊號</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = signals.map(function(signal) {
+        return '<tr>' +
+          '<td>' + signal.date + '</td>' +
+          '<td><span class="signal-badge ' + (signal.type === 'golden_cross' ? 'golden' : 'death') + '">' +
+          (signal.type === 'golden_cross' ? '黃金交叉 (買入)' : '死亡交叉 (賣出)') +
+          '</span></td>' +
+          '<td>' + signal.price.toFixed(2) + '</td>' +
+          '<td>' + signal.ma5.toFixed(2) + '</td>' +
+          '<td>' + signal.ma20.toFixed(2) + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    // Run Backtest
+    function runBacktest() {
+      var symbol = document.getElementById('symbol').value;
+      var startDate = document.getElementById('startDate').value;
+      var endDate = document.getElementById('endDate').value;
+
+      if (!symbol || !startDate || !endDate) {
+        alert('請填寫所有欄位');
+        return;
+      }
+
+      var mockData = generateMockData(symbol, startDate, endDate);
+      updateChart(mockData);
+      updateDashboard(mockData.backtest);
+      updateSignalsTable(mockData.signals);
+    }
+
+    // Event Listeners
+    document.getElementById('runBacktest').addEventListener('click', runBacktest);
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', function() {
+      initChart();
+      // Run with default values on load
+      runBacktest();
+    });
+  </script>
+</body>
+</html>

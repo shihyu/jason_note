@@ -154,6 +154,7 @@ date,open,high,low,close,volume
 - **Teamate**：負責實際程式碼實作，完成後回報進度並協助解決問題
 - 每個成員完成任務後通知 Lead
 - **Bug 修復原則**：測試工程師（成員4）發現問題後回報 Lead，由 Lead 指派回原模組負責人修復，修復後由成員4 重新驗證
+- **Skill 使用原則**：開發過程中若有可用的 skill 適用於當前任務（如 TDD、code review、debugging、brainstorming 等），必須優先使用對應的 skill 來執行，以確保開發品質與流程一致性
 
 ---
 
