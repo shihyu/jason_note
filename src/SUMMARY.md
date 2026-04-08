@@ -742,6 +742,7 @@
     - [2026 年代理式開發最佳做法](ai_agent/2026年代理式開發最佳做法.md)
     - [2026 AI 術語詞典｜最新技術名詞完整解析](ai_agent/ai-terminology-glossary.md)
     - [搜尋 API 比較：Tavily / Serper / Exa / DuckDuckGo / Brave](ai_agent/search-api-comparison.md)
+    - [MA 黃金交叉策略回測系統 - Agent Team 開發計畫](ai_agent/agent-team-ma-strategy.md)
 
 ## Lifestyle & Resources
 - [台北生活指南](lifestyle/README.md)
