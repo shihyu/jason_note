@@ -738,6 +738,7 @@
     - [Karpathy LLM Wiki 知識庫管理筆記](ai_agent/karpathy-llm-wiki-知識庫管理筆記.md)
     - [LLM Wiki](ai_agent/llm-wiki.md)
     - [2026 年代理式開發最佳做法](ai_agent/2026年代理式開發最佳做法.md)
+    - [2026 AI 術語詞典｜最新技術名詞完整解析](ai_agent/ai-terminology-glossary.md)
 
 ## Lifestyle & Resources
 - [台北生活指南](lifestyle/README.md)
