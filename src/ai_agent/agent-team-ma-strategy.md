@@ -154,7 +154,22 @@ date,open,high,low,close,volume
 - **Teamate**：負責實際程式碼實作，完成後回報進度並協助解決問題
 - 每個成員完成任務後通知 Lead
 - **Bug 修復原則**：測試工程師（成員4）發現問題後回報 Lead，由 Lead 指派回原模組負責人修復，修復後由成員4 重新驗證
-- **Skill 使用原則**：開發過程中若有可用的 skill 適用於當前任務（如 TDD、code review、debugging、brainstorming 等），必須優先使用對應的 skill 來執行，以確保開發品質與流程一致性
+- **Skill 使用原則**：每位成員必須按照自己的任務職責，主動檢查並使用適合的 skill。這是強制要求，不可省略。具體規則如下：
+  - **開發前**：使用 `brainstorming` skill 進行方案構思，使用 `writing-plans` skill 撰寫實作計畫
+  - **實作中**：使用 `test-driven-development` skill 以 TDD 方式開發，確保先寫測試再寫實作
+  - **除錯時**：使用 `systematic-debugging` skill 進行系統化除錯，禁止盲目修改
+  - **完成後**：使用 `requesting-code-review` skill 提交程式碼審查，使用 `verification-before-completion` skill 驗證成果
+  - **各角色適用 skill 對照**：
+
+  | 成員 | 必須使用的 Skill |
+  |------|-----------------|
+  | 成員1（後端） | `brainstorming`、`writing-plans`、`test-driven-development`、`systematic-debugging` |
+  | 成員2（API） | `brainstorming`、`test-driven-development`、`systematic-debugging` |
+  | 成員3（前端） | `brainstorming`、`frontend-design`、`beautiful-ui` |
+  | 成員4（測試） | `test-driven-development`、`systematic-debugging`、`requesting-code-review` |
+
+  - **判斷原則**：即使只有 1% 的可能性某個 skill 適用於當前任務，也必須先調用該 skill 確認。寧可多查一次，不可遺漏
+  - **違反處理**：若成員未使用適當 skill 就提交成果，Lead 應退回並要求重做
 
 ---
 
