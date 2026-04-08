@@ -45,6 +45,7 @@
         - [Claude Code Skills 完整教學](tools/claude-code-skills.md)
         - [Claude Code Skills 與 Skill Creator：打造你的專屬 AI 工具包](tools/claude-code-skills-skill-creator-guide.md)
         - [Claude Code Skills & Plugins 知識指南](tools/claude_code_skills_guide.md)
+        - [16 個 AI Agent 協作從零寫出 C 編譯器，還能編譯 Linux 核心](ai_agent/claude-agent-teams-c-compiler-case-study.md)
         - [Claude Skill Creator 打造 Go、C++、Rust Skill 指南](tools/claude-skill-creator-go-cpp-rust-skills-guide.md)
         - [skill-creator Go Skill 指揮稿（Strict 版）](tools/skill-creator-go-skill-prompts-strict.md)
         - [skill-creator Go Skill 指揮稿（Manager Review 版）](tools/skill-creator-go-skill-prompts-manager-review.md)
