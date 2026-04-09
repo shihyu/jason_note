@@ -35,6 +35,13 @@ ma-golden-cross/
 │   │   ├── test_full_flow.py   — Playwright 端對端測試
 │   │   └── test_chart.py       — 前端圖表驗證測試
 │   └── playwright.config.py    — Playwright 配置
+├── logs/                       — Agent 對話紀錄（Lead 每個 Phase 匯出）
+│   ├── phase0_architect.log
+│   ├── phase1_backend.log
+│   ├── phase1_frontend.log
+│   ├── phase2_api.log
+│   ├── phase3_test.log
+│   └── phase4_e2e.log
 └── docs/
     └── architecture.md         — 架構師輸出的架構設計文件
 ```
@@ -196,7 +203,7 @@ ma-golden-cross/
   task(
     category="deep",
     run_in_background=false,
-    load_skills=["playwright", "systematic-debugging"],
+    load_skills=["e2e-verify", "systematic-debugging"],
     description="E2E verification with Playwright - final acceptance gate",
     prompt="Run Playwright E2E tests against the running system. Start Flask server, open browser, verify all 8 acceptance criteria. Screenshots on failure. This is the FINAL gate - do not pass until ALL tests are green with real browser verification."
   )
@@ -313,6 +320,17 @@ date,open,high,low,close,volume
 - 負責任務分配、協調、進度追蹤
 - 使用 `task()` 分派工作給各成員，設定適當的 `category` 和 `load_skills`
 - 可並行的任務使用 `run_in_background=true` 同時啟動
+- **協調記錄**：使用 `task_create` / `task_update` 記錄每個成員的進度狀態
+  - 每個成員啟動時建立 task（含 `blockedBy` 依賴）
+  - 完成時 `task_update(status="completed")`
+  - 失敗時記錄原因到 task description
+- **事後追溯**：所有 agent 對話自動記錄在 session 中，可用 `session_list` / `session_read` / `session_search` 查詢
+- **自動對話紀錄**：Lead 必須載入 `session-logger` skill，自動完成以下工作：
+  - 任務開始時建立 `logs/` 目錄
+  - 每個 Phase 完成後寫入 phase summary
+  - 每個 background task 完成後記錄到 `background_tasks.jsonl`
+  - 全部完成後自動匯出完整 session JSON + 生成可讀報告
+  - Log 檔集中在 `ma-golden-cross/logs/` 目錄，方便事後追查問題
 
 ### 執行流程
 
@@ -363,7 +381,7 @@ Phase 4: E2E 驗證（最終關卡）
 | 成員2（API） | `quick` | `brainstorming`、`test-driven-development`、`systematic-debugging` |
 | 成員3（前端） | `visual-engineering` | `brainstorming`、`frontend-design`、`beautiful-ui` |
 | 成員4（測試） | `deep` | `test-driven-development`、`systematic-debugging`、`requesting-code-review` |
-| 成員5（E2E 驗證） | `deep` | `playwright`、`systematic-debugging`、`verification-before-completion` |
+| 成員5（E2E 驗證） | `deep` | `e2e-verify`、`systematic-debugging`、`verification-before-completion` |
 
 - **判斷原則**：即使只有 1% 的可能性某個 skill 適用於當前任務，也必須先調用該 skill 確認
 - **違反處理**：若成員未使用適當 skill 就提交成果，Lead 應退回並要求重做
@@ -378,8 +396,9 @@ Phase 4: E2E 驗證（最終關卡）
 |------|------|------|
 | 全局 agent 配置 | `~/.config/opencode/oh-my-openagent.json` | 所有 agent/category 使用 MiniMax-M2.7-highspeed |
 | 全局 opencode 配置 | `~/.config/opencode/opencode.json` | plugin、MCP（Playwright、Tavily、Context7）|
-| 專案級配置 | `.opencode/oh-my-opencode.jsonc` | background agent 並行數、hook/skill 啟用 |
-| E2E 驗證 Skill | `.opencode/skills/e2e-verify/SKILL.md` | Playwright 端對端驗收測試 |
+| 專案級配置 | `.opencode/oh-my-opencode.jsonc` | background agent 並行數、task system 啟用 |
+| E2E 驗證 Skill | `~/.config/opencode/skills/e2e-verify/SKILL.md` | Playwright 端對端驗收測試（全局 skill，自動載入） |
+| Session Logger Skill | `~/.config/opencode/skills/session-logger/SKILL.md` | 自動匯出 agent 對話紀錄到 logs/（全局 skill） |
 | 工作守則 | `~/.config/opencode/AGENTS.md` | TDD 流程、Makefile 規範、驗證檢查清單 |
 
 ### Category → 模型映射（繼承全局配置）
@@ -407,11 +426,13 @@ Phase 4: E2E 驗證（最終關卡）
 
 ```
 閱讀 agent-team-ma-strategy.md，按照計畫的 Phase 順序執行：
-1. Phase 0: 先以 ultrabrain category 完成架構設計
-2. Phase 1: 並行啟動後端（deep）和前端 mock（visual-engineering）
-3. Phase 2: 等後端完成後啟動 API（quick）
-4. Phase 3: 啟動測試（deep）
-5. Phase 4: 最後用 e2e-verify skill 做 Playwright 驗收
+1. 載入 session-logger skill，在 ma-golden-cross/logs/ 自動記錄所有對話
+2. Phase 0: 先以 ultrabrain category 完成架構設計
+3. Phase 1: 並行啟動後端（deep）和前端 mock（visual-engineering）
+4. Phase 2: 等後端完成後啟動 API（quick）
+5. Phase 3: 啟動測試（deep）
+6. Phase 4: 最後用 e2e-verify skill 做 Playwright 驗收
+7. 全部完成後，匯出完整 session JSON 並生成可讀報告到 logs/
 所有程式碼集中在 ma-golden-cross/ 資料夾下。
 ```
 
