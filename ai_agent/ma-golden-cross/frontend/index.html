@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MA Golden Cross Backtest System</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js Core -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <!-- Chart.js Financial Plugin (Candlestick) -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.2.1/dist/chartjs-chart-financial.min.js"></script>
+    
+    <!-- Chart.js Annotation Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    
+    <!-- Luxon (required for Chart.js date handling) -->
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
+    
+    <style>
+        :root {
+            /* Backgrounds */
+            --color-bg: #0f172a;
+            --color-surface: #1e293b;
+            --color-surface-2: #334155;
+            --color-border: #475569;
+            --color-border-subtle: #1e293b;
+            
+            /* Text */
+            --color-text: #f1f5f9;
+            --color-text-muted: #94a3b8;
+            --color-text-faint: #475569;
+            
+            /* Accent */
+            --color-accent: #6366f1;
+            --color-accent-hover: #4f46e5;
+            --color-accent-light: #818cf8;
+            --color-accent-muted: #1e1b4b;
+            
+            /* Status */
+            --color-success: #22c55e;
+            --color-warning: #f59e0b;
+            --color-error: #ef4444;
+            --color-info: #38bdf8;
+            
+            /* Chart Colors */
+            --color-bullish: #22c55e;
+            --color-bearish: #ef4444;
+            --color-ma5: #f472b6;
+            --color-ma20: #38bdf8;
+            --color-golden-cross: #fbbf24;
+            --color-death-cross: #a855f7;
+            
+            /* Spacing */
+            --space-1: 0.25rem;
+            --space-2: 0.5rem;
+            --space-3: 0.75rem;
+            --space-4: 1rem;
+            --space-5: 1.25rem;
+            --space-6: 1.5rem;
+            --space-8: 2rem;
+            --space-10: 2.5rem;
+            --space-12: 3rem;
+            --space-16: 4rem;
+            
+            /* Border Radius */
+            --radius-sm: 0.25rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --radius-full: 9999px;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+            
+            /* Typography */
+            --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --text-xs: 0.75rem;
+            --text-sm: 0.875rem;
+            --text-base: 1rem;
+            --text-lg: 1.125rem;
+            --text-xl: 1.25rem;
+            --text-2xl: 1.5rem;
+            --text-3xl: 1.875rem;
+            --text-4xl: 2.25rem;
+        }
+        
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: var(--font-sans);
+            font-size: var(--text-base);
+            line-height: 1.5;
+            color: var(--color-text);
+            background: var(--color-bg);
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+        }
+        
+        /* App Shell */
+        .app-shell {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar / Input Panel */
+        .sidebar {
+            width: 320px;
+            flex-shrink: 0;
+            background: var(--color-surface);
+            border-right: 1px solid var(--color-border-subtle);
+            padding: var(--space-6);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-6);
+            overflow-y: auto;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+        }
+        
+        .sidebar-header {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-light) 100%);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--text-xl);
+        }
+        
+        .logo-text {
+            font-size: var(--text-lg);
+            font-weight: 700;
+            color: var(--color-text);
+        }
+        
+        .logo-subtitle {
+            font-size: var(--text-xs);
+            color: var(--color-text-muted);
+        }
+        
+        /* Form Styles */
+        .form-section {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+        }
+        
+        .form-section-title {
+            font-size: var(--text-sm);
+            font-weight: 600;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+        
+        .label {
+            font-size: var(--text-sm);
+            font-weight: 500;
+            color: var(--color-text);
+        }
+        
+        .input {
+            padding: var(--space-3) var(--space-4);
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            color: var(--color-text);
+            font-size: var(--text-sm);
+            font-family: inherit;
+            transition: border-color 150ms, box-shadow 150ms;
+        }
+        
+        .input::placeholder {
+            color: var(--color-text-faint);
+        }
+        
+        .input:focus {
+            outline: none;
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 3px rgb(99 102 241 / 0.2);
+        }
+        
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-3);
+        }
+        
+        .input-suffix {
+            position: relative;
+        }
+        
+        .input-suffix .input {
+            padding-right: var(--space-8);
+        }
+        
+        .input-suffix::after {
+            content: attr(data-suffix);
+            position: absolute;
+            right: var(--space-3);
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--color-text-muted);
+            font-size: var(--text-sm);
+            pointer-events: none;
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-4);
+            font-size: var(--text-sm);
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 150ms ease;
+            white-space: nowrap;
+        }
+        
+        .btn-primary {
+            background: var(--color-accent);
+            color: #fff;
+        }
+        
+        .btn-primary:hover {
+            background: var(--color-accent-hover);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .btn-ghost {
+            background: transparent;
+            color: var(--color-text-muted);
+            border-color: var(--color-border);
+        }
+        
+        .btn-ghost:hover {
+            background: var(--color-surface-2);
+            color: var(--color-text);
+        }
+        
+        .btn-full {
+            width: 100%;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .topbar {
+            height: 64px;
+            padding: 0 var(--space-6);
+            border-bottom: 1px solid var(--color-border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--color-surface);
+        }
+        
+        .topbar-title {
+            font-size: var(--text-lg);
+            font-weight: 600;
+        }
+        
+        .topbar-badge {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            background: var(--color-accent-muted);
+            color: var(--color-accent-light);
+            border-radius: var(--radius-full);
+            font-size: var(--text-xs);
+            font-weight: 500;
+        }
+        
+        .page-content {
+            flex: 1;
+            padding: var(--space-6);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-6);
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: var(--space-4);
+        }
+        
+        .stat-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+        
+        .stat-label {
+            font-size: var(--text-xs);
+            color: var(--color-text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .stat-value {
+            font-size: var(--text-2xl);
+            font-weight: 700;
+            color: var(--color-text);
+            font-family: var(--font-mono);
+        }
+        
+        .stat-change {
+            font-size: var(--text-xs);
+            font-weight: 500;
+        }
+        
+        .stat-change.positive {
+            color: var(--color-success);
+        }
+        
+        .stat-change.negative {
+            color: var(--color-error);
+        }
+        
+        /* Chart Container */
+        .chart-container {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+        }
+        
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .chart-title {
+            font-size: var(--text-lg);
+            font-weight: 600;
+        }
+        
+        .chart-legend {
+            display: flex;
+            gap: var(--space-4);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: var(--text-xs);
+            color: var(--color-text-muted);
+        }
+        
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .legend-dot.ma5 { background: var(--color-ma5); }
+        .legend-dot.ma20 { background: var(--color-ma20); }
+        .legend-dot.golden { background: var(--color-golden-cross); }
+        .legend-dot.death { background: var(--color-death-cross); }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+        
+        /* Results Panel */
+        .results-panel {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border-subtle);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+        
+        .results-header {
+            padding: var(--space-4) var(--space-5);
+            border-bottom: 1px solid var(--color-border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .results-title {
+            font-size: var(--text-base);
+            font-weight: 600;
+        }
+        
+        .results-count {
+            font-size: var(--text-xs);
+            color: var(--color-text-muted);
+            background: var(--color-surface-2);
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+        }
+        
+        /* Table */
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: var(--text-sm);
+        }
+        
+        thead {
+            background: var(--color-bg);
+        }
+        
+        th {
+            padding: var(--space-3) var(--space-4);
+            text-align: left;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            font-size: var(--text-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--color-border-subtle);
+            white-space: nowrap;
+        }
+        
+        td {
+            padding: var(--space-3) var(--space-4);
+            border-bottom: 1px solid var(--color-border-subtle);
+            color: var(--color-text);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tbody tr:hover {
+            background: var(--color-bg);
+        }
+        
+        .trade-type {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-sm);
+            font-size: var(--text-xs);
+            font-weight: 600;
+        }
+        
+        .trade-type.buy {
+            background: rgb(34 197 94 / 0.15);
+            color: var(--color-success);
+        }
+        
+        .trade-type.sell {
+            background: rgb(239 68 68 / 0.15);
+            color: var(--color-error);
+        }
+        
+        .profit-positive {
+            color: var(--color-success);
+            font-weight: 500;
+        }
+        
+        .profit-negative {
+            color: var(--color-error);
+            font-weight: 500;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-16);
+            text-align: center;
+            color: var(--color-text-muted);
+        }
+        
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: var(--space-4);
+            opacity: 0.5;
+        }
+        
+        .empty-state-title {
+            font-size: var(--text-lg);
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: var(--space-2);
+        }
+        
+        .empty-state-text {
+            font-size: var(--text-sm);
+            max-width: 300px;
+        }
+        
+        /* Loading State */
+        .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-16);
+            gap: var(--space-4);
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--color-border);
+            border-top-color: var(--color-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: var(--text-sm);
+            color: var(--color-text-muted);
+        }
+        
+        /* Error State */
+        .error-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-12);
+            text-align: center;
+            background: rgb(239 68 68 / 0.1);
+            border: 1px solid rgb(239 68 68 / 0.3);
+            border-radius: var(--radius-lg);
+        }
+        
+        .error-icon {
+            font-size: 2rem;
+            margin-bottom: var(--space-3);
+        }
+        
+        .error-title {
+            font-size: var(--text-base);
+            font-weight: 600;
+            color: var(--color-error);
+            margin-bottom: var(--space-2);
+        }
+        
+        .error-text {
+            font-size: var(--text-sm);
+            color: var(--color-text-muted);
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .app-shell {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 1px solid var(--color-border-subtle);
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .page-content {
+                padding: var(--space-4);
+            }
+        }
+        
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--color-bg);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--color-border);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--color-text-faint);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <!-- Sidebar / Input Form -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">📈</div>
+                    <div>
+                        <div class="logo-text">MA Cross</div>
+                        <div class="logo-subtitle">Golden Cross Backtest</div>
+                    </div>
+                </div>
+            </div>
+            
+            <form id="backtestForm" class="form-section">
+                <div class="form-section-title">Stock Parameters</div>
+                
+                <div class="field">
+                    <label class="label" for="symbol">Stock Symbol</label>
+                    <input 
+                        type="text" 
+                        id="symbol" 
+                        class="input" 
+                        placeholder="e.g., AAPL, 2330.TW"
+                        value="AAPL"
+                        required
+                    >
+                </div>
+                
+                <div class="input-row">
+                    <div class="field">
+                        <label class="label" for="startDate">Start Date</label>
+                        <input 
+                            type="date" 
+                            id="startDate" 
+                            class="input" 
+                            value="2024-01-01"
+                            required
+                        >
+                    </div>
+                    <div class="field">
+                        <label class="label" for="endDate">End Date</label>
+                        <input 
+                            type="date" 
+                            id="endDate" 
+                            class="input" 
+                            value="2024-12-31"
+                            required
+                        >
+                    </div>
+                </div>
+                
+                <div class="form-section-title">MA Configuration</div>
+                
+                <div class="input-row">
+                    <div class="field">
+                        <label class="label" for="shortMa">Short MA</label>
+                        <div class="input-suffix" data-suffix="days">
+                            <input 
+                                type="number" 
+                                id="shortMa" 
+                                class="input" 
+                                value="5"
+                                min="2"
+                                max="200"
+                                required
+                            >
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label" for="longMa">Long MA</label>
+                        <div class="input-suffix" data-suffix="days">
+                            <input 
+                                type="number" 
+                                id="longMa" 
+                                class="input" 
+                                value="20"
+                                min="5"
+                                max="500"
+                                required
+                            >
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="field">
+                    <label class="label" for="capital">Initial Capital</label>
+                    <div class="input-suffix" data-suffix="USD">
+                        <input 
+                            type="number" 
+                            id="capital" 
+                            class="input" 
+                            value="100000"
+                            min="1000"
+                            step="1000"
+                            required
+                        >
+                    </div>
+                </div>
+                
+                <button type="submit" id="submitBtn" class="btn btn-primary btn-full">
+                    <span>▶</span>
+                    Run Backtest
+                </button>
+                
+                <button type="button" id="loadMockBtn" class="btn btn-ghost btn-full">
+                    Load Mock Data
+                </button>
+            </form>
+            
+            <div style="margin-top: auto; padding-top: var(--space-6); border-top: 1px solid var(--color-border-subtle);">
+                <div style="font-size: var(--text-xs); color: var(--color-text-muted);">
+                    <strong>Golden Cross Strategy:</strong><br>
+                    MA5 crosses above MA20 → BUY<br>
+                    MA5 crosses below MA20 → SELL
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <h1 class="topbar-title">Backtest Results</h1>
+                <div class="topbar-badge">
+                    <span id="statusBadge">Ready</span>
+                </div>
+            </header>
+            
+            <div class="page-content">
+                <!-- Stats Grid -->
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card">
+                        <span class="stat-label">Net Profit</span>
+                        <span class="stat-value" id="statProfit">--</span>
+                        <span class="stat-change" id="statProfitChange">--</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Win Rate</span>
+                        <span class="stat-value" id="statWinRate">--</span>
+                        <span class="stat-change" id="statWinRateTrades">-- trades</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Total Trades</span>
+                        <span class="stat-value" id="statTrades">--</span>
+                        <span class="stat-change" id="statTradeDetails">--</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Max Drawdown</span>
+                        <span class="stat-value" id="statDrawdown">--</span>
+                        <span class="stat-change" id="statDrawdownInfo">--</span>
+                    </div>
+                </div>
+                
+                <!-- Chart -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Price Chart with MA Indicators</h2>
+                        <div class="chart-legend">
+                            <div class="legend-item">
+                                <span class="legend-dot ma5"></span>
+                                MA5
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot ma20"></span>
+                                MA20
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot golden"></span>
+                                Golden Cross
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot death"></span>
+                                Death Cross
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="priceChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Results Panel -->
+                <div class="results-panel">
+                    <div class="results-header">
+                        <h2 class="results-title">Trade History</h2>
+                        <span class="results-count" id="tradeCount">0 trades</span>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="tradeTable">
+                            <thead>
+                                <tr>
+                                    <th>Entry Date</th>
+                                    <th>Entry Price</th>
+                                    <th>Exit Date</th>
+                                    <th>Exit Price</th>
+                                    <th>Type</th>
+                                    <th>Holding Days</th>
+                                    <th>Profit</th>
+                                    <th>Return</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tradeTableBody">
+                                <tr>
+                                    <td colspan="8">
+                                        <div class="empty-state">
+                                            <div class="empty-state-icon">📊</div>
+                                            <div class="empty-state-title">No Trades Yet</div>
+                                            <div class="empty-state-text">Run a backtest to see trade history and performance metrics</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        // ========================================
+        // MOCK DATA (for testing without API)
+        // ========================================
+        const MOCK_DATA = {
+            symbol: "AAPL",
+            start_date: "2024-01-01",
+            end_date: "2024-12-31",
+            short_ma: 5,
+            long_ma: 20,
+            initial_capital: 100000.0,
+            final_capital: 112345.67,
+            summary: {
+                total_trades: 8,
+                winning_trades: 5,
+                losing_trades: 3,
+                win_rate: 0.625,
+                total_profit: 15000.0,
+                total_loss: -3000.0,
+                net_profit: 12000.0,
+                max_drawdown: 0.0523,
+                avg_holding_days: 15.5
+            },
+            trades: [
+                {
+                    entry_date: "2024-02-15",
+                    entry_price: 182.50,
+                    exit_date: "2024-03-01",
+                    exit_price: 188.20,
+                    trade_type: "buy",
+                    cross_type: "golden_cross",
+                    holding_days: 14,
+                    profit_pct: 0.0312,
+                    profit_amount: 571.0
+                },
+                {
+                    entry_date: "2024-04-10",
+                    entry_price: 190.00,
+                    exit_date: "2024-04-25",
+                    exit_price: 185.50,
+                    trade_type: "sell",
+                    cross_type: "death_cross",
+                    holding_days: 15,
+                    profit_pct: -0.0237,
+                    profit_amount: -450.0
+                },
+                {
+                    entry_date: "2024-06-03",
+                    entry_price: 192.80,
+                    exit_date: "2024-06-20",
+                    exit_price: 198.50,
+                    trade_type: "buy",
+                    cross_type: "golden_cross",
+                    holding_days: 17,
+                    profit_pct: 0.0296,
+                    profit_amount: 560.0
+                },
+                {
+                    entry_date: "2024-08-12",
+                    entry_price: 215.00,
+                    exit_date: "2024-08-28",
+                    exit_price: 220.50,
+                    trade_type: "sell",
+                    cross_type: "death_cross",
+                    holding_days: 16,
+                    profit_pct: 0.0256,
+                    profit_amount: 512.0
+                },
+                {
+                    entry_date: "2024-09-15",
+                    entry_price: 218.30,
+                    exit_date: "2024-10-02",
+                    exit_price: 225.80,
+                    trade_type: "buy",
+                    cross_type: "golden_cross",
+                    holding_days: 17,
+                    profit_pct: 0.0344,
+                    profit_amount: 685.0
+                },
+                {
+                    entry_date: "2024-11-01",
+                    entry_price: 227.50,
+                    exit_date: "2024-11-18",
+                    exit_price: 221.00,
+                    trade_type: "sell",
+                    cross_type: "death_cross",
+                    holding_days: 17,
+                    profit_pct: -0.0286,
+                    profit_amount: -572.0
+                },
+                {
+                    entry_date: "2024-11-25",
+                    entry_price: 228.20,
+                    exit_date: "2024-12-10",
+                    exit_price: 235.50,
+                    trade_type: "buy",
+                    cross_type: "golden_cross",
+                    holding_days: 15,
+                    profit_pct: 0.0320,
+                    profit_amount: 640.0
+                },
+                {
+                    entry_date: "2024-12-20",
+                    entry_price: 238.00,
+                    exit_date: "2024-12-31",
+                    exit_price: 245.30,
+                    trade_type: "sell",
+                    cross_type: "death_cross",
+                    holding_days: 11,
+                    profit_pct: 0.0307,
+                    profit_amount: 614.0
+                }
+            ],
+            equity_curve: [
+                { date: "2024-02-15", value: 100000.0 },
+                { date: "2024-03-01", value: 100571.0 },
+                { date: "2024-04-10", value: 100571.0 },
+                { date: "2024-04-25", value: 100121.0 },
+                { date: "2024-06-03", value: 100121.0 },
+                { date: "2024-06-20", value: 100681.0 },
+                { date: "2024-08-12", value: 100681.0 },
+                { date: "2024-08-28", value: 101193.0 },
+                { date: "2024-09-15", value: 101193.0 },
+                { date: "2024-10-02", value: 101878.0 },
+                { date: "2024-11-01", value: 101878.0 },
+                { date: "2024-11-18", value: 101306.0 },
+                { date: "2024-11-25", value: 101306.0 },
+                { date: "2024-12-10", value: 101946.0 },
+                { date: "2024-12-20", value: 101946.0 },
+                { date: "2024-12-31", value: 112345.67 }
+            ]
+        };
+        
+        // Generate mock kline data (60 days of AAPL-like data)
+        function generateMockKlineData() {
+            const kline = [];
+            let basePrice = 185.0;
+            const startDate = new Date('2024-01-02');
+            
+            for (let i = 0; i < 60; i++) {
+                const date = new Date(startDate);
+                date.setDate(date.getDate() + i);
+                
+                // Skip weekends
+                if (date.getDay() === 0 || date.getDay() === 6) continue;
+                
+                const change = (Math.random() - 0.48) * 5;
+                const open = basePrice;
+                const close = basePrice + change;
+                const high = Math.max(open, close) + Math.random() * 2;
+                const low = Math.min(open, close) - Math.random() * 2;
+                const volume = Math.floor(30000000 + Math.random() * 20000000);
+                
+                kline.push({
+                    date: date.toISOString().split('T')[0],
+                    open: parseFloat(open.toFixed(2)),
+                    high: parseFloat(high.toFixed(2)),
+                    low: parseFloat(low.toFixed(2)),
+                    close: parseFloat(close.toFixed(2)),
+                    volume: volume
+                });
+                
+                basePrice = close;
+            }
+            
+            return kline;
+        }
+        
+        // Generate mock MA data
+        function generateMockMAData(kline, shortPeriod, longPeriod) {
+            const ma5Values = [];
+            const ma20Values = [];
+            
+            for (let i = 0; i < kline.length; i++) {
+                // MA5
+                if (i < shortPeriod - 1) {
+                    ma5Values.push({ x: kline[i].date, y: null });
+                } else {
+                    const sum = kline.slice(i - shortPeriod + 1, i + 1).reduce((acc, d) => acc + d.close, 0);
+                    ma5Values.push({ x: kline[i].date, y: parseFloat((sum / shortPeriod).toFixed(2)) });
+                }
+                
+                // MA20
+                if (i < longPeriod - 1) {
+                    ma20Values.push({ x: kline[i].date, y: null });
+                } else {
+                    const sum = kline.slice(i - longPeriod + 1, i + 1).reduce((acc, d) => acc + d.close, 0);
+                    ma20Values.push({ x: kline[i].date, y: parseFloat((sum / longPeriod).toFixed(2)) });
+                }
+            }
+            
+            return { ma5Values, ma20Values };
+        }
+        
+        // ========================================
+        // GLOBAL STATE
+        // ========================================
+        let priceChart = null;
+        const API_BASE_URL = 'http://localhost:5000/api';
+        
+        // ========================================
+        // DOM ELEMENTS
+        // ========================================
+        const form = document.getElementById('backtestForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const loadMockBtn = document.getElementById('loadMockBtn');
+        const statusBadge = document.getElementById('statusBadge');
+        const tradeTableBody = document.getElementById('tradeTableBody');
+        const tradeCount = document.getElementById('tradeCount');
+        
+        // ========================================
+        // INITIALIZE
+        // ========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set default date range
+            const today = new Date();
+            const yearAgo = new Date();
+            yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+            
+            document.getElementById('startDate').value = formatDate(yearAgo);
+            document.getElementById('endDate').value = formatDate(today);
+            
+            // Initialize empty chart
+            initializeChart();
+        });
+        
+        // ========================================
+        // EVENT LISTENERS
+        // ========================================
+        form.addEventListener('submit', handleSubmit);
+        loadMockBtn.addEventListener('click', loadMockData);
+        
+        // ========================================
+        // FORM HANDLERS
+        // ========================================
+        async function handleSubmit(e) {
+            e.preventDefault();
+            
+            const params = getFormParams();
+            if (!validateParams(params)) return;
+            
+            setLoadingState(true);
+            updateStatus('Running backtest...');
+            
+            try {
+                const result = await fetchBacktest(params);
+                displayResults(result);
+                updateStatus('Completed');
+            } catch (error) {
+                showError(error.message);
+                updateStatus('Error');
+            } finally {
+                setLoadingState(false);
+            }
+        }
+        
+        function loadMockData() {
+            updateStatus('Loading mock data...');
+            displayResults(MOCK_DATA);
+            
+            // Generate and display mock kline chart
+            const kline = generateMockKlineData();
+            const { ma5Values, ma20Values } = generateMockMAData(kline, 5, 20);
+            
+            // Find crosses from mock trades
+            const crosses = MOCK_DATA.trades.map(trade => ({
+                x: trade.entry_date,
+                crossType: trade.cross_type === 'golden_cross' ? 'golden' : 'death',
+                price: trade.entry_price
+            }));
+            
+            updateChartWithData(kline, ma5Values, ma20Values, crosses);
+            updateStatus('Mock data loaded');
+        }
+        
+        function getFormParams() {
+            return {
+                symbol: document.getElementById('symbol').value.trim(),
+                start_date: document.getElementById('startDate').value,
+                end_date: document.getElementById('endDate').value,
+                short_ma: parseInt(document.getElementById('shortMa').value),
+                long_ma: parseInt(document.getElementById('longMa').value),
+                initial_capital: parseFloat(document.getElementById('capital').value)
+            };
+        }
+        
+        function validateParams(params) {
+            if (!params.symbol) {
+                showError('Please enter a stock symbol');
+                return false;
+            }
+            if (!params.start_date || !params.end_date) {
+                showError('Please select start and end dates');
+                return false;
+            }
+            if (new Date(params.start_date) >= new Date(params.end_date)) {
+                showError('Start date must be before end date');
+                return false;
+            }
+            if (params.short_ma >= params.long_ma) {
+                showError('Short MA must be less than Long MA');
+                return false;
+            }
+            return true;
+        }
+        
+        // ========================================
+        // API CALLS
+        // ========================================
+        async function fetchBacktest(params) {
+            const queryString = new URLSearchParams({
+                symbol: params.symbol,
+                start_date: params.start_date,
+                end_date: params.end_date,
+                short_ma: params.short_ma,
+                long_ma: params.long_ma,
+                initial_capital: params.initial_capital
+            }).toString();
+            
+            const response = await fetch(`${API_BASE_URL}/backtest?${queryString}`);
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || 'Failed to fetch backtest results');
+            }
+            
+            return await response.json();
+        }
+        
+        // ========================================
+        // DISPLAY RESULTS
+        // ========================================
+        function displayResults(result) {
+            displayStats(result.summary, result.initial_capital, result.final_capital);
+            displayTrades(result.trades);
+        }
+        
+        function displayStats(summary, initialCapital, finalCapital) {
+            const profit = finalCapital - initialCapital;
+            const profitPercent = ((finalCapital - initialCapital) / initialCapital * 100).toFixed(2);
+            const isProfitable = profit >= 0;
+            
+            document.getElementById('statProfit').textContent = formatCurrency(profit);
+            document.getElementById('statProfit').style.color = isProfitable ? 'var(--color-success)' : 'var(--color-error)';
+            document.getElementById('statProfitChange').textContent = `${profitPercent}% return`;
+            document.getElementById('statProfitChange').className = `stat-change ${isProfitable ? 'positive' : 'negative'}`;
+            
+            document.getElementById('statWinRate').textContent = `${(summary.win_rate * 100).toFixed(1)}%`;
+            document.getElementById('statWinRateTrades').textContent = `${summary.winning_trades}W / ${summary.losing_trades}L`;
+            
+            document.getElementById('statTrades').textContent = summary.total_trades;
+            document.getElementById('statTradeDetails').textContent = `${summary.avg_holding_days.toFixed(1)} avg days`;
+            
+            document.getElementById('statDrawdown').textContent = `${(summary.max_drawdown * 100).toFixed(2)}%`;
+            document.getElementById('statDrawdownInfo').textContent = 'max drawdown';
+        }
+        
+        function displayTrades(trades) {
+            tradeCount.textContent = `${trades.length} trades`;
+            
+            if (trades.length === 0) {
+                tradeTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📊</div>
+                                <div class="empty-state-title">No Trades</div>
+                                <div class="empty-state-text">No golden/death cross signals detected in this period</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tradeTableBody.innerHTML = trades.map(trade => `
+                <tr>
+                    <td>${trade.entry_date}</td>
+                    <td>${formatCurrency(trade.entry_price)}</td>
+                    <td>${trade.exit_date}</td>
+                    <td>${formatCurrency(trade.exit_price)}</td>
+                    <td>
+                        <span class="trade-type ${trade.trade_type}">
+                            ${trade.cross_type === 'golden_cross' ? '↑ BUY' : '↓ SELL'}
+                        </span>
+                    </td>
+                    <td>${trade.holding_days}d</td>
+                    <td class="${trade.profit_amount >= 0 ? 'profit-positive' : 'profit-negative'}">
+                        ${trade.profit_amount >= 0 ? '+' : ''}${formatCurrency(trade.profit_amount)}
+                    </td>
+                    <td class="${trade.profit_pct >= 0 ? 'profit-positive' : 'profit-negative'}">
+                        ${trade.profit_pct >= 0 ? '+' : ''}${(trade.profit_pct * 100).toFixed(2)}%
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // ========================================
+        // CHART
+        // ========================================
+        function initializeChart() {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            
+            priceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day',
+                                displayFormats: {
+                                    day: 'MMM d'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(71, 85, 105, 0.3)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(71, 85, 105, 0.3)'
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                callback: function(value) {
+                                    return '$' + value.toFixed(0);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateChartWithData(kline, ma5Values, ma20Values, crosses) {
+            if (priceChart) {
+                priceChart.destroy();
+            }
+            
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            
+            // Prepare candlestick data
+            const candlestickData = kline.map(d => ({
+                x: d.date,
+                o: d.open,
+                h: d.high,
+                l: d.low,
+                c: d.close
+            }));
+            
+            // Prepare MA line data (filter out null values)
+            const ma5Filtered = ma5Values.filter(d => d.y !== null);
+            const ma20Filtered = ma20Values.filter(d => d.y !== null);
+            
+            // Annotation for cross markers
+            const annotations = {};
+            crosses.forEach((cross, index) => {
+                const color = cross.crossType === 'golden' ? '#fbbf24' : '#a855f7';
+                annotations[`cross${index}`] = {
+                    type: 'point',
+                    xValue: cross.x,
+                    yValue: cross.price,
+                    backgroundColor: color,
+                    borderColor: color,
+                    borderWidth: 2,
+                    radius: 8,
+                    label: {
+                        display: true,
+                        content: cross.crossType === 'golden' ? 'BUY' : 'SELL',
+                        color: '#fff',
+                        font: {
+                            size: 10,
+                            weight: 'bold'
+                        },
+                        position: 'start',
+                        padding: 4
+                    }
+                };
+            });
+            
+            priceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Price',
+                            data: candlestickData,
+                            backgroundColor: candlestickData.map(d => d.c >= d.o ? 'rgba(34, 197, 94, 0.7)' : 'rgba(239, 68, 68, 0.7)'),
+                            borderColor: candlestickData.map(d => d.c >= d.o ? '#22c55e' : '#ef4444'),
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'MA5',
+                            data: ma5Filtered,
+                            type: 'line',
+                            borderColor: '#f472b6',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1,
+                            order: 1
+                        },
+                        {
+                            label: 'MA20',
+                            data: ma20Filtered,
+                            type: 'line',
+                            borderColor: '#38bdf8',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1,
+                            order: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.dataset.label === 'Price') {
+                                        const d = context.raw;
+                                        return [
+                                            `Open: $${d.o.toFixed(2)}`,
+                                            `High: $${d.h.toFixed(2)}`,
+                                            `Low: $${d.l.toFixed(2)}`,
+                                            `Close: $${d.c.toFixed(2)}`
+                                        ];
+                                    } else if (context.dataset.label === 'MA5' || context.dataset.label === 'MA20') {
+                                        return `${context.dataset.label}: $${context.raw.y.toFixed(2)}`;
+                                    }
+                                    return '';
+                                }
+                            }
+                        },
+                        annotation: {
+                            annotations: annotations
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day',
+                                displayFormats: {
+                                    day: 'MMM d'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(71, 85, 105, 0.3)'
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                maxTicksLimit: 12
+                            }
+                        },
+                        y: {
+                            position: 'right',
+                            grid: {
+                                color: 'rgba(71, 85, 105, 0.3)'
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                callback: function(value) {
+                                    return '$' + value.toFixed(0);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // ========================================
+        // UI HELPERS
+        // ========================================
+        function setLoadingState(loading) {
+            submitBtn.disabled = loading;
+            submitBtn.innerHTML = loading 
+                ? '<span class="spinner" style="width:16px;height:16px;border-width:2px;"></span> Running...'
+                : '<span>▶</span> Run Backtest';
+        }
+        
+        function updateStatus(status) {
+            statusBadge.textContent = status;
+        }
+        
+        function showError(message) {
+            tradeTableBody.innerHTML = `
+                <tr>
+                    <td colspan="8">
+                        <div class="error-state">
+                            <div class="error-icon">⚠️</div>
+                            <div class="error-title">Error</div>
+                            <div class="error-text">${message}</div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            tradeCount.textContent = '0 trades';
+        }
+        
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+        
+        function formatCurrency(value) {
+            const absValue = Math.abs(value);
+            const sign = value >= 0 ? '$' : '-$';
+            return sign + absValue.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+    </script>
+</body>
+</html>
