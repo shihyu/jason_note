@@ -725,6 +725,7 @@
     - [Claude Code Agent Teams 高效協作指南](ai_agent/claude-code-agent-teams-guide.md)
     - [Claude 4.6 Agent Teams 完整教學：開啟方法、觸發技巧與 5 大實戰場景](ai_agent/claude-4-6-agent-teams-guide.md)
     - [16 個 AI Agent 協作從零寫出 C 編譯器，還能編譯 Linux 核心](ai_agent/claude-agent-teams-c-compiler-case-study.md)
+    - [Multi-Agent 協作架構設計：從 16 個 Claude 造編譯器看多 Agent 架構設計](ai_agent/multi-agent-collaboration-design.md)
     - [crewAI：打造多Agent協作的任務指揮系統](ai_agent/crewAI_打造多Agent協作的任務指揮系統.md)
     - [crewAI (PyPI) 繁體中文翻譯](ai_agent/crewai_pypi_zh_tw.md)
     - [2026年AI學習路徑與12項必備AI技能工具清單](ai_agent/2026年AI學習路徑與12項必備AI技能工具清單.md)
