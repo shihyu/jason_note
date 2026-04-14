@@ -180,63 +180,461 @@
                     <main>
                         <h1 id="ma-黃金交叉策略回測系統---agent-team-開發計畫"><a class="header" href="#ma-黃金交叉策略回測系統---agent-team-開發計畫">MA 黃金交叉策略回測系統 - Agent Team 開發計畫</a></h1>
 <h2 id="專案目標"><a class="header" href="#專案目標">專案目標</a></h2>
-<p>建立 Agent Team 開發 MA 黃金交叉策略回測系統</p>
-<h2 id="目錄結構"><a class="header" href="#目錄結構">目錄結構</a></h2>
+<p>建立一個 Agent Team 來開發 MA 黃金交叉策略回測系統</p>
+<hr />
+<h2 id="專案目錄結構"><a class="header" href="#專案目錄結構">專案目錄結構</a></h2>
+<p>所有程式碼集中在 <code>ma-golden-cross/</code> 資料夾下：</p>
 <pre><code>ma-golden-cross/
 ├── backend/
-│   ├── data/fetcher.py       # yfinance 抓股数据
-│   ├── indicators/ma.py      # MA 指標計算
-│   ├── backtest/engine.py    # 回測引擎
-│   ├── api/routes.py         # API 路由
-│   ├── api/schemas.py        # Request/Response 格式
-│   ├── tests/                # 單元測試 (pytest)
-│   └── requirements.txt
-├── frontend/index.html       # Chart.js K線+MA線
-├── e2e/tests/               # Playwright E2E 測試
-└── logs/                    # Agent 對話紀錄
+│   ├── data/
+│   │   └── fetcher.py          — 使用 yfinance 抓取股票歷史數據
+│   ├── indicators/
+│   │   └── ma.py               — MA 指標計算模組
+│   ├── backtest/
+│   │   └── engine.py           — 回測引擎核心
+│   ├── api/
+│   │   ├── routes.py           — API 路由定義
+│   │   └── schemas.py          — Request/Response 格式
+│   ├── tests/
+│   │   ├── test_ma.py          — MA 指標計算測試
+│   │   ├── test_backtest.py    — 回測引擎測試
+│   │   ├── test_api.py         — API 路由測試
+│   │   ├── test_fetcher.py     — 數據抓取測試
+│   │   └── sample_data.csv     — 測試用範例 K 線數據（離線備用）
+│   └── requirements.txt        — Python 依賴
+├── frontend/
+│   └── index.html              — 前端頁面（HTML + CSS + JS）
+├── e2e/
+│   ├── tests/
+│   │   ├── test_full_flow.py   — Playwright 端對端測試
+│   │   └── test_chart.py       — 前端圖表驗證測試
+│   └── playwright.config.py    — Playwright 配置
+├── logs/                       — Agent 對話紀錄（Lead 每個 Phase 匯出）
+│   ├── phase0_architect.log
+│   ├── phase1_backend.log
+│   ├── phase1_frontend.log
+│   ├── phase2_api.log
+│   ├── phase3_test.log
+│   └── phase4_e2e.log
+└── docs/
+    └── architecture.md         — 架構師輸出的架構設計文件
 </code></pre>
-<h2 id="團隊成員"><a class="header" href="#團隊成員">團隊成員</a></h2>
-<div class="table-wrapper"><table><thead><tr><th>成員</th><th>角色</th><th>輸出</th><th>依賴</th></tr></thead><tbody>
-<tr><td>0</td><td>架構師</td><td>docs/architecture.md</td><td>無（最先執行）</td></tr>
-<tr><td>1</td><td>後端工程師</td><td>fetcher, ma, engine</td><td>成員0</td></tr>
-<tr><td>2</td><td>API 工程師</td><td>routes, schemas</td><td>成員0+1</td></tr>
-<tr><td>3</td><td>前端工程師</td><td>index.html</td><td>成員0（並行）</td></tr>
-<tr><td>4</td><td>測試工程師</td><td>pytest 測試</td><td>成員1+2</td></tr>
-<tr><td>5</td><td>E2E 驗證</td><td>Playwright 測試</td><td>全部完成後</td></tr>
-</tbody></table>
-</div>
-<h2 id="執行流程"><a class="header" href="#執行流程">執行流程</a></h2>
-<pre><code>Phase 0: 成員0 (架構) → 輸出 architecture.md
-Phase 1: 成員1 (後端) + 成員3 (前端) [並行]
-Phase 2: 成員2 (API) + 前端串接
-Phase 3: 成員4 (測試)
-Phase 4: 成員5 (E2E 驗證) ← 最終關卡
-</code></pre>
-<h2 id="技術規格"><a class="header" href="#技術規格">技術規格</a></h2>
+<hr />
+<h2 id="團隊成員與分工"><a class="header" href="#團隊成員與分工">團隊成員與分工</a></h2>
+<h3 id="成員0架構師最先開始規劃全局"><a class="header" href="#成員0架構師最先開始規劃全局">成員0：架構師（最先開始，規劃全局）</a></h3>
 <ul>
-<li><strong>數據</strong>: yfinance（台股 <code>2330.TW</code>、美股 <code>AAPL</code>）</li>
-<li><strong>後端</strong>: 純 Python MA 計算 + Flask API</li>
-<li><strong>前端</strong>: Chart.js（K線、MA線、交叉標記）</li>
-<li><strong>測試</strong>: pytest（單元）+ Playwright（E2E）</li>
+<li><strong>角色</strong>：系統架構設計、技術決策、介面規格定義</li>
+<li><strong>任務</strong>：在任何實作開始前，完成完整的架構規劃</li>
+<li><strong>輸出檔案</strong>：
+<ul>
+<li><code>ma-golden-cross/docs/architecture.md</code> — 完整架構設計文件</li>
 </ul>
-<h2 id="策略參數"><a class="header" href="#策略參數">策略參數</a></h2>
-<div class="table-wrapper"><table><thead><tr><th>參數</th><th>值</th></tr></thead><tbody>
-<tr><td>短期 MA</td><td>5 日</td></tr>
-<tr><td>長期 MA</td><td>20 日</td></tr>
-<tr><td>買入訊號</td><td>短期上穿長期（黃金交叉）</td></tr>
-<tr><td>賣出訊號</td><td>短期下穿長期（死亡交叉）</td></tr>
+</li>
+<li><strong>職責細節</strong>：
+<ol>
+<li><strong>需求分析</strong>：釐清 MA 黃金交叉策略的完整需求，包含參數、數據源、輸出格式</li>
+<li><strong>模組拆分</strong>：定義各模組的職責邊界、輸入/輸出介面規格</li>
+<li><strong>API 契約</strong>：設計 RESTful API 的完整規格（路由、參數、回應格式、錯誤處理）</li>
+<li><strong>數據流設計</strong>：繪製從數據抓取 → MA 計算 → 回測 → API → 前端的完整數據流</li>
+<li><strong>技術選型確認</strong>：確認各模組的技術棧（yfinance、Flask、Chart.js）及版本</li>
+<li><strong>測試策略</strong>：定義單元測試、整合測試、E2E 測試的範圍與工具</li>
+<li><strong>介面 Mock 定義</strong>：為前端提供 mock data 規格，使前端可並行開發</li>
+</ol>
+</li>
+<li><strong>oh-my-openagent 配置</strong>：
+<pre><code>task(
+  category="ultrabrain",
+  run_in_background=false,
+  load_skills=["brainstorming", "writing-plans"],
+  description="Architecture design for MA golden cross backtest system",
+  prompt="Design complete architecture for MA golden cross backtest system.
+          Define module boundaries, API contracts (Flask RESTful), data flow,
+          interface specs, mock data for frontend parallel dev.
+          Output to ma-golden-cross/docs/architecture.md.
+          Must include: fetcher.py interface, ma.py interface, engine.py interface,
+          API routes spec, Chart.js dataset format, error response format."
+)
+</code></pre>
+</li>
+<li><strong>依賴</strong>：無（最先執行，blocking — 其他成員等架構完成才開始）</li>
+</ul>
+<hr />
+<h3 id="成員1後端工程師核心實作"><a class="header" href="#成員1後端工程師核心實作">成員1：後端工程師（核心實作）</a></h3>
+<ul>
+<li><strong>任務</strong>：實做數據抓取、MA 指標計算和回測引擎</li>
+<li><strong>輸出檔案</strong>：
+<ul>
+<li><code>ma-golden-cross/backend/data/fetcher.py</code> — 使用 yfinance 抓取股票歷史數據</li>
+<li><code>ma-golden-cross/backend/indicators/ma.py</code> — MA 指標計算模組</li>
+<li><code>ma-golden-cross/backend/backtest/engine.py</code> — 回測引擎核心</li>
+<li><code>ma-golden-cross/backend/requirements.txt</code> — Python 依賴清單</li>
+</ul>
+</li>
+<li><strong>技術要求</strong>：
+<ul>
+<li>使用 <code>yfinance</code> 抓取真實股票數據（支援台股如 <code>2330.TW</code>、美股如 <code>AAPL</code>）</li>
+<li>純 Python 實作 MA 計算，不使用 TA-Lib</li>
+<li>嚴格遵循架構師定義的介面規格</li>
+</ul>
+</li>
+<li><strong>oh-my-openagent 配置</strong>：
+<pre><code>task(
+  category="deep",
+  run_in_background=true,
+  load_skills=["test-driven-development"],
+  description="Implement backend core: fetcher, MA indicator, backtest engine",
+  prompt="Follow architecture.md specs. Implement fetcher.py, ma.py, engine.py with TDD. All code under ma-golden-cross/backend/"
+)
+</code></pre>
+</li>
+<li><strong>依賴</strong>：成員0 完成架構設計後開始</li>
+</ul>
+<hr />
+<h3 id="成員2api-工程師"><a class="header" href="#成員2api-工程師">成員2：API 工程師</a></h3>
+<ul>
+<li><strong>任務</strong>：實做 RESTful API 供前端使用</li>
+<li><strong>輸出檔案</strong>：
+<ul>
+<li><code>ma-golden-cross/backend/api/routes.py</code> — API 路由定義</li>
+<li><code>ma-golden-cross/backend/api/schemas.py</code> — Request/Response 格式</li>
+</ul>
+</li>
+<li><strong>技術要求</strong>：使用 Flask 框架實作 RESTful API，嚴格遵循架構師定義的 API 契約</li>
+<li><strong>oh-my-openagent 配置</strong>：
+<pre><code>task(
+  category="quick",
+  run_in_background=true,
+  load_skills=["test-driven-development"],
+  description="Implement RESTful API routes and schemas",
+  prompt="Follow architecture.md API contract. Implement routes.py and schemas.py under ma-golden-cross/backend/api/"
+)
+</code></pre>
+</li>
+<li><strong>依賴</strong>：成員0 + 成員1 完成後開始（需 import 後端模組）</li>
+</ul>
+<hr />
+<h3 id="成員3前端工程師"><a class="header" href="#成員3前端工程師">成員3：前端工程師</a></h3>
+<ul>
+<li><strong>任務</strong>：實做前端介面顯示回測結果</li>
+<li><strong>輸出檔案</strong>：
+<ul>
+<li><code>ma-golden-cross/frontend/index.html</code> — 前端頁面（HTML + CSS + JS）</li>
+</ul>
+</li>
+<li><strong>技術要求</strong>：使用 Chart.js 畫 K 線和 MA 線，標記黃金交叉點</li>
+<li><strong>oh-my-openagent 配置</strong>：
+<pre><code>task(
+  category="visual-engineering",
+  run_in_background=true,
+  load_skills=["frontend-design", "beautiful-ui"],
+  description="Implement frontend UI with Chart.js",
+  prompt="Build frontend with Chart.js for K-line, MA lines, and golden cross markers. Use mock data from architecture.md first, then wire to real API. Output to ma-golden-cross/frontend/index.html"
+)
+</code></pre>
+</li>
+<li><strong>依賴</strong>：成員0 完成後可並行開發（使用架構師定義的 mock data），API 串接需等成員2 完成</li>
+</ul>
+<hr />
+<h3 id="成員4測試工程師單元測試--整合測試"><a class="header" href="#成員4測試工程師單元測試--整合測試">成員4：測試工程師（單元測試 + 整合測試）</a></h3>
+<ul>
+<li><strong>任務</strong>：實做單元測試和整合測試</li>
+<li><strong>輸出檔案</strong>：
+<ul>
+<li><code>ma-golden-cross/backend/tests/test_ma.py</code> — MA 指標計算測試</li>
+<li><code>ma-golden-cross/backend/tests/test_backtest.py</code> — 回測引擎測試</li>
+<li><code>ma-golden-cross/backend/tests/test_api.py</code> — API 路由測試</li>
+<li><code>ma-golden-cross/backend/tests/test_fetcher.py</code> — 數據抓取測試</li>
+<li><code>ma-golden-cross/backend/tests/sample_data.csv</code> — 測試用範例 K 線數據（離線備用）</li>
+</ul>
+</li>
+<li><strong>技術要求</strong>：
+<ul>
+<li>使用 pytest 框架</li>
+<li>用已驗證的數據確保正確性</li>
+</ul>
+</li>
+<li><strong>oh-my-openagent 配置</strong>：
+<pre><code>task(
+  category="deep",
+  run_in_background=true,
+  load_skills=["test-driven-development", "systematic-debugging"],
+  description="Implement unit and integration tests",
+  prompt="Write comprehensive tests for all backend modules. Use pytest. Verify against known data. Output to ma-golden-cross/backend/tests/"
+)
+</code></pre>
+</li>
+<li><strong>依賴</strong>：成員1 完成後開始單元測試，成員2 完成後開始 API 測試</li>
+</ul>
+<hr />
+<h3 id="成員5e2e-驗證工程師playwright最終驗收"><a class="header" href="#成員5e2e-驗證工程師playwright最終驗收">成員5：E2E 驗證工程師（Playwright，最終驗收）</a></h3>
+<ul>
+<li>
+<p><strong>角色</strong>：使用 Playwright 進行端對端自動化驗證</p>
+</li>
+<li>
+<p><strong>任務</strong>：透過真實瀏覽器操作驗證整個系統功能，確保每個功能點實際可用</p>
+</li>
+<li>
+<p><strong>輸出檔案</strong>：</p>
+<ul>
+<li><code>ma-golden-cross/e2e/tests/test_full_flow.py</code> — 完整端對端流程測試</li>
+<li><code>ma-golden-cross/e2e/tests/test_chart.py</code> — 前端圖表視覺驗證</li>
+<li><code>ma-golden-cross/e2e/playwright.config.py</code> — Playwright 配置</li>
+</ul>
+</li>
+<li>
+<p><strong>驗證項目</strong>（必須全部通過才算驗收成功）：</p>
+<div class="table-wrapper"><table><thead><tr><th>#</th><th>驗證項目</th><th>驗證方式</th></tr></thead><tbody>
+<tr><td>1</td><td>前端頁面可載入</td><td><code>page.goto()</code> + 確認無 console error</td></tr>
+<tr><td>2</td><td>輸入股票代碼並提交</td><td><code>page.fill()</code> + <code>page.click()</code></td></tr>
+<tr><td>3</td><td>API 回應正確</td><td><code>page.expect_response()</code> 攔截 API 呼叫，驗證 JSON 結構</td></tr>
+<tr><td>4</td><td>K 線圖表顯示</td><td><code>page.locator('canvas')</code> 確認 Chart.js canvas 存在且有繪製</td></tr>
+<tr><td>5</td><td>MA 線顯示</td><td>截圖比對或驗證 Chart.js dataset 數量</td></tr>
+<tr><td>6</td><td>黃金交叉標記存在</td><td>驗證交叉點標記元素或 dataset</td></tr>
+<tr><td>7</td><td>回測結果數據正確</td><td>驗證頁面顯示的交易次數、勝率等與 API 回傳一致</td></tr>
+<tr><td>8</td><td>錯誤處理</td><td>輸入無效股票代碼，確認顯示錯誤訊息而非白屏</td></tr>
+</tbody></table>
+</div></li>
+<li>
+<p><strong>為什麼需要 Playwright</strong>：</p>
+<blockquote>
+<p>Agent 宣稱「驗收測試通過」但實際內容不正確的問題，根本原因是單元測試只驗證邏輯正確性，
+無法驗證「整個系統串接起來後，使用者看到的結果是否正確」。
+Playwright 透過真實瀏覽器操作，模擬使用者行為，能捕捉到整合時的錯誤。</p>
+</blockquote>
+</li>
+<li>
+<p><strong>oh-my-openagent 配置</strong>：</p>
+<pre><code>task(
+  category="deep",
+  run_in_background=false,
+  load_skills=["e2e-verify", "systematic-debugging"],
+  description="E2E verification with Playwright - final acceptance gate",
+  prompt="Run Playwright E2E tests against the running system. Start Flask server, open browser, verify all 8 acceptance criteria. Screenshots on failure. This is the FINAL gate - do not pass until ALL tests are green with real browser verification."
+)
+</code></pre>
+</li>
+<li>
+<p><strong>依賴</strong>：所有其他成員完成後最後執行</p>
+</li>
+<li>
+<p><strong>驗收紀律</strong>：</p>
+<ul>
+<li>E2E 測試失敗時，回報具體失敗截圖與 DOM 狀態給 Lead</li>
+<li>Lead 指派回原模組負責人修復</li>
+<li>修復後必須重新執行全部 E2E 測試（不允許只跑單一測試）</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="策略參數定義"><a class="header" href="#策略參數定義">策略參數定義</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>參數</th><th>設定值</th><th>說明</th></tr></thead><tbody>
+<tr><td>短期 MA</td><td>5 日</td><td>快速均線</td></tr>
+<tr><td>長期 MA</td><td>20 日</td><td>慢速均線</td></tr>
+<tr><td>黃金交叉</td><td>短期 MA 上穿長期 MA</td><td>買入訊號</td></tr>
+<tr><td>死亡交叉</td><td>短期 MA 下穿長期 MA</td><td>賣出訊號</td></tr>
 </tbody></table>
 </div>
+<hr />
+<h2 id="數據來源"><a class="header" href="#數據來源">數據來源</a></h2>
+<p>使用 <code>yfinance</code> 套件抓取真實股票歷史數據：</p>
+<pre><code class="language-python">import yfinance as yf
+
+# 台股範例
+df = yf.download("2330.TW", start="2024-01-01", end="2024-12-31")
+
+# 美股範例
+df = yf.download("AAPL", start="2024-01-01", end="2024-12-31")
+</code></pre>
+<h3 id="backenddatafetcherpy-介面規格"><a class="header" href="#backenddatafetcherpy-介面規格"><code>backend/data/fetcher.py</code> 介面規格</a></h3>
+<pre><code class="language-python">def fetch_stock_data(symbol: str, start: str, end: str) -&gt; pd.DataFrame:
+    """
+    抓取股票歷史 K 線數據
+
+    Args:
+        symbol: 股票代碼（如 "2330.TW", "AAPL"）
+        start: 開始日期（如 "2024-01-01"）
+        end: 結束日期（如 "2024-12-31"）
+
+    Returns:
+        DataFrame with columns: date, open, high, low, close, volume
+    """
+</code></pre>
+<hr />
+<h2 id="數據格式"><a class="header" href="#數據格式">數據格式</a></h2>
+<h3 id="k-線數據dataframe"><a class="header" href="#k-線數據dataframe">K 線數據（DataFrame）</a></h3>
+<pre><code>date,open,high,low,close,volume
+2024-01-02,595.0,600.0,590.0,598.0,25000000
+...
+</code></pre>
+<h3 id="輸出回測結果"><a class="header" href="#輸出回測結果">輸出：回測結果</a></h3>
+<pre><code class="language-json">{
+  "total_trades": 10,
+  "win_rate": 0.6,
+  "total_profit": 1500.0,
+  "max_drawdown": 200.0,
+  "trades": [
+    {
+      "entry_date": "2024-01-05",
+      "entry_price": 101.0,
+      "exit_date": "2024-01-10",
+      "exit_price": 105.0,
+      "profit": 400.0,
+      "type": "golden_cross"
+    }
+  ]
+}
+</code></pre>
+<hr />
+<h2 id="任務依賴關係圖"><a class="header" href="#任務依賴關係圖">任務依賴關係圖</a></h2>
+<pre><code>成員0 (架構師) ──┬──&gt; 成員1 (後端) ──┬──&gt; 成員2 (API) ──┬──&gt; 成員5 (E2E 驗證)
+                │                  │                  │
+                ├──&gt; 成員3 (前端UI) │  [並行 mock 開發] │
+                │                  │                  │
+                │                  └──&gt; 成員4 (單元測試) │
+                │                                     │
+                └─────────────────────────────────────&gt;│
+</code></pre>
+<div class="table-wrapper"><table><thead><tr><th>成員</th><th>角色</th><th>依賴</th><th>說明</th></tr></thead><tbody>
+<tr><td>成員0</td><td>架構師</td><td>無</td><td>最先開始，輸出架構文件供所有人參考</td></tr>
+<tr><td>成員1</td><td>後端工程師</td><td>成員0</td><td>等架構設計完成</td></tr>
+<tr><td>成員2</td><td>API 工程師</td><td>成員0 + 成員1</td><td>等後端模組完成</td></tr>
+<tr><td>成員3</td><td>前端工程師</td><td>成員0</td><td>UI 可與成員1 並行（使用架構師的 mock data），串接需等 API</td></tr>
+<tr><td>成員4</td><td>測試工程師</td><td>成員1 + 成員2</td><td>單元測試等成員1，API 測試等成員2</td></tr>
+<tr><td>成員5</td><td>E2E 驗證工程師</td><td>全部</td><td>所有開發完成後，最終驗收關卡</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="執行模式"><a class="header" href="#執行模式">執行模式</a></h2>
+<h3 id="lead-職責"><a class="header" href="#lead-職責">Lead 職責</a></h3>
+<ul>
+<li>負責任務分配、協調、進度追蹤</li>
+<li>使用 <code>task()</code> 分派工作給各成員，設定適當的 <code>category</code> 和 <code>load_skills</code></li>
+<li>可並行的任務使用 <code>run_in_background=true</code> 同時啟動</li>
+<li><strong>協調記錄</strong>：使用 <code>task_create</code> / <code>task_update</code> 記錄每個成員的進度狀態
+<ul>
+<li>每個成員啟動時建立 task（含 <code>blockedBy</code> 依賴）</li>
+<li>完成時 <code>task_update(status="completed")</code></li>
+<li>失敗時記錄原因到 task description</li>
+</ul>
+</li>
+<li><strong>事後追溯</strong>：所有 agent 對話自動記錄在 session 中，可用 <code>session_list</code> / <code>session_read</code> / <code>session_search</code> 查詢</li>
+<li><strong>自動對話紀錄</strong>：Lead 必須載入 <code>session-logger</code> skill，自動完成以下工作：
+<ul>
+<li>任務開始時建立 <code>logs/</code> 目錄</li>
+<li>每個 Phase 完成後寫入 phase summary</li>
+<li>每個 background task 完成後記錄到 <code>background_tasks.jsonl</code></li>
+<li>全部完成後自動匯出完整 session JSON + 生成可讀報告</li>
+<li>Log 檔集中在 <code>ma-golden-cross/logs/</code> 目錄，方便事後追查問題</li>
+</ul>
+</li>
+</ul>
+<h3 id="執行流程"><a class="header" href="#執行流程">執行流程</a></h3>
+<pre><code>Phase 0: 架構設計
+  └─ 成員0 (架構師) — category="ultrabrain", blocking
+      輸出：architecture.md（含模組介面、API 契約、mock data）
+
+Phase 1: 核心開發（可並行）
+  ├─ 成員1 (後端) — category="deep", background
+  └─ 成員3 (前端 mock) — category="visual-engineering", background
+
+Phase 2: 整合開發
+  ├─ 成員2 (API) — category="quick", background（等成員1 完成）
+  └─ 成員3 (前端串接) — 等成員2 完成後串接真實 API
+
+Phase 3: 測試
+  └─ 成員4 (測試) — category="deep", background
+
+Phase 4: E2E 驗證（最終關卡）
+  └─ 成員5 (Playwright) — category="deep", blocking
+      啟動 Flask server → 開啟瀏覽器 → 逐項驗證 → 截圖存證
+</code></pre>
+<h3 id="teammate-職責"><a class="header" href="#teammate-職責">Teammate 職責</a></h3>
+<ul>
+<li>負責實際程式碼實作，完成後回報進度並協助解決問題</li>
+<li>每個成員完成任務後通知 Lead</li>
+</ul>
+<h3 id="bug-修復原則"><a class="header" href="#bug-修復原則">Bug 修復原則</a></h3>
+<ul>
+<li>成員4（測試）或成員5（E2E）發現問題後回報 Lead</li>
+<li>Lead 指派回原模組負責人修復</li>
+<li>修復後由成員4 重新驗證單元測試，成員5 重新執行 E2E 測試</li>
+</ul>
+<h3 id="skill-使用原則"><a class="header" href="#skill-使用原則">Skill 使用原則</a></h3>
+<p>每位成員必須按照自己的任務職責，主動檢查並使用適合的 skill。這是強制要求，不可省略：</p>
+<ul>
+<li><strong>開發前</strong>：使用 <code>brainstorming</code> skill 進行方案構思，使用 <code>writing-plans</code> skill 撰寫實作計畫</li>
+<li><strong>實作中</strong>：使用 <code>test-driven-development</code> skill 以 TDD 方式開發，確保先寫測試再寫實作</li>
+<li><strong>除錯時</strong>：使用 <code>systematic-debugging</code> skill 進行系統化除錯，禁止盲目修改</li>
+<li><strong>完成後</strong>：使用 <code>requesting-code-review</code> skill 提交程式碼審查，使用 <code>verification-before-completion</code> skill 驗證成果</li>
+</ul>
+<h3 id="各角色適用-skill-與-oh-my-openagent-category-對照"><a class="header" href="#各角色適用-skill-與-oh-my-openagent-category-對照">各角色適用 skill 與 oh-my-openagent category 對照</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>成員</th><th>category</th><th>必須使用的 Skill</th></tr></thead><tbody>
+<tr><td>成員0（架構師）</td><td><code>ultrabrain</code></td><td><code>brainstorming</code>、<code>writing-plans</code></td></tr>
+<tr><td>成員1（後端）</td><td><code>deep</code></td><td><code>brainstorming</code>、<code>writing-plans</code>、<code>test-driven-development</code>、<code>systematic-debugging</code></td></tr>
+<tr><td>成員2（API）</td><td><code>quick</code></td><td><code>brainstorming</code>、<code>test-driven-development</code>、<code>systematic-debugging</code></td></tr>
+<tr><td>成員3（前端）</td><td><code>visual-engineering</code></td><td><code>brainstorming</code>、<code>frontend-design</code>、<code>beautiful-ui</code></td></tr>
+<tr><td>成員4（測試）</td><td><code>deep</code></td><td><code>test-driven-development</code>、<code>systematic-debugging</code>、<code>requesting-code-review</code></td></tr>
+<tr><td>成員5（E2E 驗證）</td><td><code>deep</code></td><td><code>e2e-verify</code>、<code>systematic-debugging</code>、<code>verification-before-completion</code></td></tr>
+</tbody></table>
+</div>
+<ul>
+<li><strong>判斷原則</strong>：即使只有 1% 的可能性某個 skill 適用於當前任務，也必須先調用該 skill 確認</li>
+<li><strong>違反處理</strong>：若成員未使用適當 skill 就提交成果，Lead 應退回並要求重做</li>
+</ul>
+<hr />
+<h2 id="oh-my-openagent-配置"><a class="header" href="#oh-my-openagent-配置">oh-my-openagent 配置</a></h2>
+<h3 id="已配置的檔案"><a class="header" href="#已配置的檔案">已配置的檔案</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>檔案</th><th>位置</th><th>用途</th></tr></thead><tbody>
+<tr><td>全局 agent 配置</td><td><code>~/.config/opencode/oh-my-openagent.json</code></td><td>所有 agent/category 使用 MiniMax-M2.7-highspeed</td></tr>
+<tr><td>全局 opencode 配置</td><td><code>~/.config/opencode/opencode.json</code></td><td>plugin、MCP（Playwright、Tavily、Context7）</td></tr>
+<tr><td>專案級配置</td><td><code>.opencode/oh-my-opencode.jsonc</code></td><td>background agent 並行數、task system 啟用</td></tr>
+<tr><td>E2E 驗證 Skill</td><td><code>~/.config/opencode/skills/e2e-verify/SKILL.md</code></td><td>Playwright 端對端驗收測試（全局 skill，自動載入）</td></tr>
+<tr><td>Session Logger Skill</td><td><code>~/.config/opencode/skills/session-logger/SKILL.md</code></td><td>自動匯出 agent 對話紀錄到 logs/（全局 skill）</td></tr>
+<tr><td>工作守則</td><td><code>~/.config/opencode/AGENTS.md</code></td><td>TDD 流程、Makefile 規範、驗證檢查清單</td></tr>
+</tbody></table>
+</div>
+<h3 id="category--模型映射繼承全局配置"><a class="header" href="#category--模型映射繼承全局配置">Category → 模型映射（繼承全局配置）</a></h3>
+<p>所有 category 統一使用 <code>minimax/MiniMax-M2.7-highspeed</code>：</p>
+<div class="table-wrapper"><table><thead><tr><th>Category</th><th>用途</th><th>對應成員</th></tr></thead><tbody>
+<tr><td><code>ultrabrain</code></td><td>架構決策、複雜推理</td><td>成員0（架構師）</td></tr>
+<tr><td><code>deep</code></td><td>自主研究與深度執行</td><td>成員1（後端）、成員4（測試）、成員5（E2E）</td></tr>
+<tr><td><code>quick</code></td><td>單檔修改、簡單任務</td><td>成員2（API）</td></tr>
+<tr><td><code>visual-engineering</code></td><td>前端、UI/UX</td><td>成員3（前端）</td></tr>
+</tbody></table>
+</div>
+<h3 id="mcp-服務已在全局配置中啟用"><a class="header" href="#mcp-服務已在全局配置中啟用">MCP 服務（已在全局配置中啟用）</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>MCP</th><th>用途</th><th>使用場景</th></tr></thead><tbody>
+<tr><td><code>playwright</code></td><td>瀏覽器自動化</td><td>成員5 E2E 驗證</td></tr>
+<tr><td><code>tavily</code></td><td>網路搜尋</td><td>架構師查找技術方案</td></tr>
+<tr><td><code>context7</code></td><td>官方文件查詢</td><td>所有成員查 Flask/Chart.js/yfinance 文件</td></tr>
+</tbody></table>
+</div>
+<h3 id="如何在-opencode-中執行此計畫"><a class="header" href="#如何在-opencode-中執行此計畫">如何在 opencode 中執行此計畫</a></h3>
+<p>在 <code>src/ai_agent/</code> 目錄下啟動 opencode，輸入：</p>
+<pre><code>閱讀 agent-team-ma-strategy.md，按照計畫的 Phase 順序執行：
+1. 載入 session-logger skill，在 ma-golden-cross/logs/ 自動記錄所有對話
+2. Phase 0: 先以 ultrabrain category 完成架構設計
+3. Phase 1: 並行啟動後端（deep）和前端 mock（visual-engineering）
+4. Phase 2: 等後端完成後啟動 API（quick）
+5. Phase 3: 啟動測試（deep）
+6. Phase 4: 最後用 e2e-verify skill 做 Playwright 驗收
+7. 全部完成後，匯出完整 session JSON 並生成可讀報告到 logs/
+所有程式碼集中在 ma-golden-cross/ 資料夾下。
+</code></pre>
+<hr />
 <h2 id="驗收標準"><a class="header" href="#驗收標準">驗收標準</a></h2>
 <ol>
-<li>yfinance 可抓取台/美股數據</li>
-<li>MA 計算正確</li>
-<li>黃金/死亡交叉判斷正確</li>
-<li>回測結果格式正確</li>
-<li>API 可正常呼叫</li>
-<li>前端顯示 K線、MA線、交叉點</li>
-<li>單元測試全部通過</li>
-<li><strong>E2E 測試全部通過（Playwright）</strong></li>
+<li>可透過 yfinance 抓取真實股票數據（台股 <code>2330.TW</code>、美股 <code>AAPL</code> 皆可運行）</li>
+<li>MA 計算正確（5日、20日均線與預期一致）</li>
+<li>黃金交叉/死亡交叉判斷正確</li>
+<li>回測引擎輸出格式符合規格</li>
+<li>API 可正常呼叫並返回正確資料（支援傳入股票代碼與日期區間）</li>
+<li>前端可顯示 K 線、MA 線及交叉點標記</li>
+<li>所有單元測試通過（pytest）</li>
+<li><strong>所有 E2E 測試通過（Playwright，透過真實瀏覽器驗證）</strong></li>
+<li>端對端可運行：輸入股票代碼 → 抓取數據 → 計算 MA → 回測 → 前端顯示結果</li>
+<li><strong>E2E 截圖存證</strong>：驗證通過時保留最終截圖作為驗收證據</li>
 </ol>
 
                     </main>
