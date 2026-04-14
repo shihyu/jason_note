@@ -187,6 +187,7 @@ Successfully consolidated 8 Go-related source files into 3 comprehensive, produc
 
 ### Trading & Finance
 - **Strategy Development**: Backtesting, analysis, optimization
+  - [炒股養家心法實戰筆記](src/strategy/炒股養家心法實戰筆記.md) - 短線情緒與題材交易
 - **High-Frequency Trading**: Latency, execution, risk
 - **Cryptocurrency**: Trading, analysis, security
 - **Data Analysis**: FinMind, financial data processing
@@ -319,6 +320,47 @@ Visit repository and browse files directly in GitHub UI.
 - **LLM Tools**: `src/ai_agent/llm-tools.md`
 - **AI Agent 目錄**: `src/ai_agent/`
 
+#### **b) Claude Code 三大核心概念指南**
+- **File**: `src/ai_agent/claude-code-core-concepts.md`
+- **Size**: ~180 lines
+- **Content**:
+  - Subagents（獨立代理人）的概念與使用場景
+  - Commands（提示詞模板）的架構與應用
+  - Skills（知識模組）的自動觸發與客製化
+  - Hooks、MCP、Plugins、Memory 等延伸功能詳解
+  - 生態系架構圖與快速參考表
+- **Features**: ASCII 架構圖、用途分類表、使用範例
+- **Time to Read**: 15-20 minutes
+
+---
+
+## 🤖 Multi-Agent 協作架構設計 (2026-04-11)
+
+#### **a) Agent Teams 從 16 個 Claude 造編譯器看多 Agent 架構設計**
+- **File**: `src/ai_agent/multi-agent-collaboration-design.md`
+- **Size**: 168 lines
+- **Content**:
+  - 16 個 Claude 實例協作編譯 Linux 編譯器的實驗解析
+  - Docker 隔離、Git 檔案鎖、無限循環 harness 三合一架構
+  - 測試質量優先於 Prompt 質量的工程方法論
+  - Oracle 二分法將不可平行變可平行的技巧
+  - Orchestrator / Pipeline / Swarm / Hierarchical Teams 四種模式
+  - 2026 多 Agent 元年趨勢判斷
+- **Features**: 架構圖譜、五條法則、實操建議
+- **Time to Read**: 20-30 minutes
+
+#### **c) Harness / MCP / Skills / CLI 重點整理**
+- **File**: `src/ai_agent/harness_mcp_skills_cli_summary.md`
+- **Size**: 408 lines
+- **Content**:
+  - MCP / Skills / CLI 三層責任分工架構
+  - Execution Offloading：將確定性工作從 LLM 移到 CLI
+  - Progressive Disclosure 節省 Context 的技術
+  - Decision Table：何時用 MCP / Skills / CLI
+  - Tool Absorption 趨勢：工具被模型內化
+- **Core Message**: 高效 Agent 的關鍵不是更強的模型，而是把「確定答案」的工作從 LLM 移到 CLI / CPU
+- **Time to Read**: 10-15 minutes
+
 ---
 
 ## 🔗 Quick Links
@@ -340,6 +382,7 @@ Visit repository and browse files directly in GitHub UI.
 - **Git**: `src/git/`
 - **Software Engineering**: `src/software_engineering/`
 - **AI / LLM Tools**: `src/ai_agent/llm-tools.md`
+- **Claude Code Core Concepts**: `src/ai_agent/claude-code-core-concepts.md`
 - **AI Agent**: `src/ai_agent/`
 
 ---
