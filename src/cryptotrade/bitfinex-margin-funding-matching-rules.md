@@ -41,7 +41,7 @@
 ### FRR（Flash Return Rate）
 - 以所有活躍固定利率訂單的加權平均計算
 - 每小時更新一次
-- 用途：讓出借方不會因為市場利率上升而錯過機會
+- 用途：讓資金提供方可使用浮動利率
 
 ### FRR Delta Variable
 - 利率 = 當下 FRR + 你指定的差值（Delta）
@@ -53,8 +53,13 @@
 - **匹配前**：利率隨 FRR 變動
 - **匹配後**：利率固定，不再隨 FRR 更新
 
+### 官方 API 補充
+- 官方 API 文件中，`FRRDELTAVAR` 與 `FRRDELTAFIX` 是可提交的 funding offer type
+- 官方 API 文件另寫明：若要提交 **FRR offer**，可使用 `type = FRRDELTAVAR` 並將 `rate = 0`
+
 > 來源：[What is the Bitfinex Funding Flash Return Rate](https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate)
 > 來源：[What is the Bitfinex Funding FRR Delta](https://support.bitfinex.com/hc/en-us/articles/115003284729-What-is-the-Bitfinex-Funding-FRR-Delta)
+> 來源：[New Offer - Bitfinex API Docs](https://docs.bitfinex.com/reference/ws-auth-input-offer-new)
 
 ---
 
@@ -77,9 +82,11 @@
 | 項目 | 規則 |
 |------|------|
 | **最低單筆出借金額** | $150（或等值其他貨幣） |
-| **金額分配** | 訂單為完全匹配，不支援比例分配 |
+| **成交型態** | 官方 API 文件顯示 funding offer 可能為 `PARTIALLY FILLED`，代表可部分成交，未成交餘額可保留為剩餘數量或被取消 |
 
-> 來源：[What is Margin Funding](https://support.bitfinex.com/hc/en-us/articles/214441185-What-is-Margin-Funding)
+> 來源：[What is the minimum offer for Funding](https://support.bitfinex.com/hc/en-us/articles/213918949-What-is-the-minimum-offer-for-Funding)
+> 來源：[Offer Status - Bitfinex API Docs](https://docs.bitfinex.com/v1/reference/rest-auth-offer-status)
+> 來源：[Historical Offers - Bitfinex API Docs](https://docs.bitfinex.com/reference/ws-auth-historical-offers)
 
 ---
 
@@ -109,15 +116,12 @@
 
 以下問題**官方文件尚未明確回答**，需要直接聯繫 Bitfinex Support 確認：
 
-1. **FRR 與 FRR Delta Fixed / FRR Delta Variable 之間能否配對？**
-   - 官方只說「固定利率不能與 FRR 配對」
-   - 未說明 FRR 與 FRR 子類型之間的關係
+1. **`FRRDELTAVAR` 與 `FRRDELTAFIX` 彼此之間，除了一般 Rate / Period 規則外，是否還有額外配對限制？**
+   - 官方文件未明講
 
-2. **FRR Delta Fixed 與 FRR Delta Variable 之間能否配對？**
-   - 官方未提及
-
-3. **利率是否真的需要「完全相同」？**
-   - 官方說「Rate need to match」
-   - 但對 Period 有說明「Bid ≤ Offer」，對 Rate 沒有說明方向性
+2. **固定利率是否也不能與所有 variable-rate funding offers 配對？**
+   - 官方 Help Center 明確寫到「固定利率不能與 FRR 配對」
+   - 官方 `No Var Rates` flag 寫到可排除 `variable rate funding offers`
+   - 但 Help Center 沒有把 `FRRDELTAVAR / FRRDELTAFIX` 的配對矩陣完整列出
 
 **建議**：若要最高確定性，請直接聯繫 [Bitfinex Support](https://cs.bitfinex.com/) 確認以上問題。
