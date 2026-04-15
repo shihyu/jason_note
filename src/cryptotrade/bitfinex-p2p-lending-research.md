@@ -5,27 +5,32 @@
 
 ---
 
-## 一、官方文檔來源
+## 一、官方與參考來源
 
 | 來源 | URL |
 |------|-----|
 | Bitfinex Help Center — What is Margin Funding | https://support.bitfinex.com/hc/en-us/articles/214441185-What-is-Margin-Funding |
+| Bitfinex Help Center — How to reserve Funding on Bitfinex | https://support.bitfinex.com/hc/en-us/articles/900000898423-How-to-reserve-Funding-on-Bitfinex |
+| Bitfinex Help Center — What is the Bitfinex Funding Flash Return Rate | https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate |
+| Bitfinex Help Center — What is the Bitfinex Funding FRR Delta | https://support.bitfinex.com/hc/en-us/articles/115003284729-What-is-the-Bitfinex-Funding-FRR-Delta |
 | Bitfinex Blog — How to Earn with Margin Lending | https://blog.bitfinex.com/education/how-to-earn-with-margin-lending-on-bitfinex/ |
 | Bitfinex API Docs — Submit Funding Offer | https://docs.bitfinex.com/reference/rest-auth-submit-funding-offer |
+| Bitfinex API Docs — Flag Values | https://docs.bitfinex.com/docs/flag-values |
+| Bitfinex API Docs — Public Book | https://docs.bitfinex.com/reference/rest-public-book |
 | AltInvest — Bitfinex 匹配規則詳解 | https://altinvest.finance/blog/179 |
 
 ---
 
 ## 二、匹配規則核心邏輯
 
-### 2.1 優先順序：期限 Period（門檻）→ 利率 Rate（競價）
+### 2.1 官方可確認的匹配條件：Period + Rate
 
-**匹配公式（口語化）：**
-> 系統將 **願意支付最高利率** 的借款人，與 **接受最低利率** 的出借人進行配對。
+Bitfinex 官方 Help Center 明確寫的是：
+- Funding Bids 與 Offers 要成交，**Rate 與 Period 都要 match**
+- 如果 Bid 要 10 天，必須對到 **10 天或更長** 的 Offer
+- 系統在保證金借款時，會以 **best available rates** 自動保留 funding
 
-- 借款人掛 **Bid**（願意支付的利率）
-- 出借人掛 **Offer**（願意接受的利率）
-- 當 Bid ≥ Offer 時，可能成交
+> 注意：官方文件**沒有公開完整撮合引擎規則**，例如是否明文採用「price-time priority」。因此本文凡是「最低 offer 先成交 / 最高 bid 先成交」的描述，都應視為根據 order book 與 best available rates 的**高可信推論**，不是官方明文規則。
 
 ### 2.2 期限匹配條件
 
@@ -43,7 +48,7 @@
 | 類型 | 說明 |
 |------|------|
 | **固定利率（Fixed Rate）** | 明確寫死的利率，如 `0.05%` / 天 |
-| **FRR（Flash Return Rate）** | 動態利率，根據近期借貸成交加權平均計算，每小時更新 |
+| **FRR（Flash Return Rate）** | Bitfinex 的動態利率參考值，每小時更新 |
 
 **關鍵限制：**
 - 固定利率 Bid **無法** 與 FRR Offer 成交
@@ -57,15 +62,27 @@
 ## 三、FRR（Flash Return Rate）系統
 
 ### 3.1 FRR 是什麼？
-FRR 是 Bitfinex 的動態利率參考指標，根據過去一段時間內所有借貸成交的利率加權平均計算得出，**每小時更新一次**。
+FRR 是 Bitfinex 的動態利率參考指標，**每小時更新一次**。
+
+但官方來源對其精確定義有兩種說法：
+- Help Center：FRR 是 **all active fixed-rate fundings weighted by amount** 的平均
+- 官方 Blog：FRR 是 **the weighted average of the most recent funding trades**，並做平滑處理以避免尖峰
+
+因此較穩妥的寫法是：
+> **FRR 是 Bitfinex 用於 Funding 市場的動態參考利率，每小時更新；官方不同來源對其底層計算口徑描述不完全一致。**
 
 ### 3.2 FRR 訂單類型
 
 | 類型 | 說明 |
 |------|------|
-| **FRR LIMIT** | 直接以 FRR 為基準的限價單，利率固定不變 |
+| **FRR（UI 選項）** | 以成交當下的 FRR 為基準；成交後該筆 loan 利率固定 |
 | **FRRDELTAVAR** | 以 FRR + 溢價/折價掛單，匹配後利率會隨 FRR 調整而浮動 |
-| **FRRDELTAFIX** | 以 FRR + 溢價/折價掛單，**掛單當下** 的 FRR 為準，此後固定不變 |
+| **FRRDELTAFIX** | 以 FRR + 溢價/折價掛單；**成交前** 會跟 FRR 更新，**成交後** 固定 |
+
+> 補充：
+> - UI/Blog 用語有 `FRR`、`FRR Variable`、`FRR Fixed`
+> - API `submit funding offer` 文件明列的 `type` 是 `LIMIT`、`FRRDELTAVAR`、`FRRDELTAFIX`
+> - 因此 UI 名稱與 API 名稱並不是 1:1 逐字對應
 
 ---
 
@@ -89,8 +106,8 @@ FRR 是 Bitfinex 的動態利率參考指標，根據過去一段時間內所有
 ```
 本金 × rate% × (sec/86400) × 0.85
 = 1000 × 0.0005 × (15×86400 / 86400) × 0.85
-= 1000 × 0.0005 × 1 × 0.85
-= $0.425（15天總利息）
+= 1000 × 0.0005 × 15 × 0.85
+= $6.375（15天總利息）
 ```
 
 ### 4.2 手續費結構
@@ -112,16 +129,14 @@ Bitfinex 借貸的最低門檻為 **$150 USD 等值**。
 
 ## 五、Matching Rules 摘要
 
-### 匹配流程（兩階段）
+### 匹配流程（官方已證實 + 推論）
 
 ```
-第一步：期限審查（門檻）
-└── 借款人的請求期限 ≤ 出借人的最長期限？
-    ├── 否 → 直接淘汰
-    └── 是 → 進入利率競價
+第一步：檢查 Period 與 Rate 是否可匹配（官方明文）
+└── Bid 與 Offer 的 Rate / Period 不可衝突
 
-第二步：利率競價（排序）
-└── 在所有通過期限審查的訂單中，利率最優者優先成交
+第二步：系統以 best available rates 完成匹配（官方明文）
+└── book 呈現與一般 order book 一致，故可合理推論價格更優者優先
 ```
 
 ### 期限匹配條件
@@ -129,9 +144,10 @@ Bitfinex 借貸的最低門檻為 **$150 USD 等值**。
 - 例如：借款人要 15 天，出借人願借最長 30 天 → ✅ 匹配
 
 ### 利率匹配邏輯
-- 系統將**願意支付最高利率**的借款人，與**接受最低利率**的出借人進行配對
-- Bid ≥ Offer 時，可能成交（借款人願付 ≥ 出借人願收）
-- **期限審查通過後，利率最低的 Offer 優先成交**
+- 官方明文只有：**Rate 與 Period 需要 match**
+- 官方也明文表示：系統會以 **best available rates** 自動保留 funding
+- 因此可高可信推論：在滿足 Period 的前提下，**價格較優的一側更容易先成交**
+- 但 Bitfinex **未公開完整撮合規則**，故不應把「最低 Offer 一定先成交」寫成官方明文事實
 
 ### 利率競價範例
 
@@ -143,7 +159,7 @@ Bitfinex 借貸的最低門檻為 **$150 USD 等值**。
 | Lender B | 0.05% | 2️⃣ |
 | Lender C | 0.06% | 3️⃣ 最貴，後成交 |
 
-**成交利率：** 0.04%（市場最低利率成交，不是借款人的 0.06%）
+**較合理的推論：** 若 book 中存在符合 period 條件的 0.04% offer，系統大概率會先以更優價格成交，而不是直接用借款人的 0.06% 上限成交。
 
 > **實務意義：**
 > - 出借人利率設太低 → 優先成交，但賺得少
@@ -153,7 +169,7 @@ Bitfinex 借貸的最低門檻為 **$150 USD 等值**。
 | 類型 | 說明 |
 |------|------|
 | **固定利率（Fixed Rate）** | 明確寫死的利率，如 `0.05%` / 天 |
-| **FRR（Flash Return Rate）** | 動態利率，根據近期借貸成交加權平均計算，每小時更新 |
+| **FRR（Flash Return Rate）** | Bitfinex 的動態利率參考值，每小時更新 |
 
 **關鍵限制：**
 - 固定利率 Bid **無法**與 FRR Offer 成交
@@ -194,11 +210,11 @@ Bitfinex 借貸的最低門檻為 **$150 USD 等值**。
 ```
 本金 × rate% × (sec/86400) × 0.85
 = 1000 × 0.0005 × (15×86400 / 86400) × 0.85
-= 1000 × 0.0005 × 1 × 0.85
-= $0.425（15天總利息）
+= 1000 × 0.0005 × 15 × 0.85
+= $6.375（15天總利息）
 ```
-- **借款人應付利息：** $0.50（未扣手續費）
-- **Bitfinex 手續費：** $0.075（15%）
+- **借款人應付利息：** $7.50
+- **Bitfinex 手續費：** $1.125（15%）
 
 ### 期限匹配範例
 
@@ -332,29 +348,60 @@ Bitfinex 借貸的最低門檻為 **$150 USD 等值**。
 
 | 文檔 | URL | 驗證內容 |
 |------|-----|---------|
-| What is Margin Funding | https://support.bitfinex.com/hc/en-us/articles/214441185-What-is-Margin-Funding | 匹配規則、FRR 隔離、手續費、最低金額 |
+| What is Margin Funding | https://support.bitfinex.com/hc/en-us/articles/214441185-What-is-Margin-Funding | 匹配條件、FRR 隔離、手續費、最低金額 |
+| How to reserve Funding on Bitfinex | https://support.bitfinex.com/hc/en-us/articles/900000898423-How-to-reserve-Funding-on-Bitfinex | `best available rates`、Rate/Period match |
 | Margin Funding interest on Bitfinex | https://support.bitfinex.com/hc/en-us/articles/115004554309-Margin-Funding-interest-on-Bitfinex | 利息計算公式 |
 | How are Funding interest earnings and fees calculated | https://support.bitfinex.com/hc/en-us/articles/360024039494-How-are-the-Funding-interest-earnings-and-fees-calculated-at-Bitfinex | 利息公式驗證 |
 | Margin Funding on Bitfinex | https://support.bitfinex.com/hc/en-us/articles/115003428165-Margin-Funding-on-Bitfinex | 期限範圍 2-120 天 |
 | What is the minimum offer for Funding | https://support.bitfinex.com/hc/en-us/articles/213918949-What-is-the-minimum-offer-for-Funding | 最低金額 $150 |
+| What is the Bitfinex Funding Flash Return Rate | https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate | FRR 定義（Help Center 版本） |
+| What is the Bitfinex Funding FRR Delta | https://support.bitfinex.com/hc/en-us/articles/115003284729-What-is-the-Bitfinex-Funding-FRR-Delta | FRRDELTAFIX / FRRDELTAVAR 行為 |
 | How to Earn with Margin Lending | https://blog.bitfinex.com/education/how-to-earn-with-margin-lending-on-bitfinex/ | 官方 Blog |
 | Submit Funding Offer (API) | https://docs.bitfinex.com/reference/rest-auth-submit-funding-offer | API 端點 |
+| Flag Values | https://docs.bitfinex.com/docs/flag-values | `No Var Rates` 旗標 |
+| Public Book | https://docs.bitfinex.com/reference/rest-public-book | funding book 公開深度資料 |
 
 ---
 
-### ⚠️ 2026-04-14 驗證聲明
+### ⚠️ 2026-04-15 驗證聲明
 
-本文檔所有規則已通過 Bitfinex 官方 Support Center 與 API Docs 交叉驗證：
-- ✅ 匹配優先順序（期限門檻 → 利率競價）
+本文檔以下內容已通過 Bitfinex 官方 Support Center、API Docs 與即時公開 API 交叉驗證：
+- ✅ Rate 與 Period 都需要 match
+- ✅ 若 Bid 要 10 天，需對到 10 天或更長的 Offer
+- ✅ 系統會以 `best available rates` 自動保留 funding
 - ✅ FRR 與固定利率不能交叉匹配（但 FRR↔FRR、固定↔固定 可成交）
 - ✅ 利息計算公式：
   - 出借人：`amount × (rate/100) × (seconds/86400) × 0.85`
-  - 借款人：`amount × (rate/100) × (seconds/86400) − fee`
+  - 借款人：`amount × (rate/100) × (seconds/86400)`
 - ✅ 最低借貸金額：$150 USD 等值
 - ✅ 借貸期限：2–120 天
 - ✅ 手續費：普通 15%，Hidden Offer 18%
-- ✅ FRRDELTAFIX：掛單當下以 FRR ± offset 決定，此後固定
+- ✅ FRRDELTAFIX：**成交前** 會隨 FRR 更新，**成交後** 固定
 - ✅ API 端點：`POST /v2/auth/w/funding/offer/submit`
+
+以下內容僅能視為**高可信推論**，不是 Bitfinex 官方明文：
+- ⚠️ 滿足 period 條件後，較優價格（例如較低 offer）會優先成交
+- ⚠️ 「最高 bid 配最低 offer」屬 order book 與 `best available rates` 的自然解讀，但官方未公開完整撮合演算法
+
+### 2026-04-15 即時公開 API 快照
+
+抓取時間：`2026-04-15 09:14:35 UTC`
+
+- `GET /v2/ticker/fUSD`
+  - `FRR = 0.0004514821917808219`
+  - `best bid = 0.000165`, `bid_period = 120`, `bid_size = 20630355.96591695`
+  - `best ask = 0.000105`, `ask_period = 5`, `ask_size = 1554057.96882425`
+  - `last_price = 0.00015299`
+- `GET /v2/book/fUSD/P0?len=25`
+  - bid 範例：`[0.000165,120,1,-4947519.86764454]`
+  - bid 範例：`[0.000165,30,1,-3441996.67568403]`
+  - ask 範例：`[0.000106,5,1,4002]`
+  - ask 範例：`[0.00010698,2,2,1500]`
+
+這些即時數據至少證明：
+- Funding book 真的同時存在 `rate / period / amount`
+- 市場目前呈現典型 order book 結構：bid 在高端、ask 在低端
+- 不同 period 的單會同時存在於 book 中，period 確實是撮合條件之一
 
 ---
 
@@ -368,21 +415,18 @@ Bitfinex 借貸的最低門檻為 **$150 USD 等值**。
 | **期限設定** | 設最長天數（最大覆蓋範圍） |
 | **利率定價** | 觀察 FRR，設低於 FRR 才能優先成交 |
 | **匹配條件** | 借款人請求期限 ≤ 出借人最長期限 |
-| **成交優先** | 期限審查通過後，利率最低的 Offer 先成交 |
+| **成交優先** | 官方僅明說 `best available rates`；較優價格優先屬高可信推論 |
 | **實得利息** | `本金 × (利率/100) × (秒數/86400) × 0.85` |
 | **手續費** | 普通 Offer 15%，Hidden Offer 18% |
 
 ### 匹配核心邏輯
 
 ```
-1. 期限審查
-   借款人請求期限 ≤ 出借人最長期限？
-   └─ 否 → 淘汰
-   └─ 是 → 進入利率競價
+1. 檢查 Rate / Period 是否可匹配
+   Period 不足或 Rate 不合 → 不成交
 
-2. 利率競價（通過期限審查的訂單）
-   出借人：利率最低者優先成交
-   借款人：利率最高者優先成交
+2. 系統以 best available rates 成交
+   更細的排序規則官方未完整公開
 ```
 
 ### 關鍵限制
@@ -409,16 +453,16 @@ Bitfinex 借貸的最低門檻為 **$150 USD 等值**。
 | 類型 | 市場 | 利率特性 | 適合情境 |
 |------|------|---------|---------|
 | **固定利率（LIMIT）** | 固定市場 | 明確寫死，不會變 | 一般用戶、懶人策略 |
-| **FRR LIMIT** | FRR 市場 | 以 FRR 為基準，固定不動 | 進階用戶 |
+| **FRR（UI 選項）** | FRR 市場 | 成交當下以 FRR 定價，成交後固定 | 想直接跟市場 FRR |
 | **FRRDELTAVAR** | FRR 市場 | 隨 FRR 浮動調整 | 想跟隨市場動態調整 |
-| **FRRDELTAFIX** | FRR 市場 | 掛單時以 FRR ± 溢價，此後固定 | 進階玩家 |
+| **FRRDELTAFIX** | FRR 市場 | 成交前隨 FRR 更新，成交後固定 | 進階玩家 |
 
 ### 固定利率（LIMIT）與 FRR 市場隔離
 
 ```
 ┌─────────────────────────────────────┐
 │         FRR 市場                    │
-│  FRR LIMIT / FRRDELTAVAR / FIX     │
+│  FRR / FRRDELTAVAR / FRRDELTAFIX   │
 │  （浮動利率）                       │
 └─────────────────────────────────────┘
               ✖ 不能交叉匹配
