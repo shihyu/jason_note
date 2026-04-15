@@ -125,3 +125,50 @@
    - 但 Help Center 沒有把 `FRRDELTAVAR / FRRDELTAFIX` 的配對矩陣完整列出
 
 **建議**：若要最高確定性，請直接聯繫 [Bitfinex Support](https://cs.bitfinex.com/) 確認以上問題。
+
+---
+
+## 八、非官方資料補充（僅供交叉參考，不能取代官方文件）
+
+以下資料來自社群文章、GitHub 專案與第三方工具文件。這些來源**不是官方規則定義**，只能作為市場參與者對實務行為的觀察。
+
+### 1. 社群文章常把 Funding Book 視為類似 limit order book
+
+- **ALTINVEST / Medium（約 2025 年）**
+  - 觀察：文章將 Bitfinex funding matching 描述為雙邊撮合市場，並認為較低、較有競爭力的利率通常更容易先被撮合
+  - 可參考處：與官方「Rate / Period 要 match」不衝突，但其中「最低可接受利率優先」屬作者解讀，不是官方明文規則
+  - 來源：https://medium.com/@altinvestbot/how-bitfinex-matches-lending-funds-behind-the-scenes-of-the-p2p-funding-market-531e081fc34b
+
+- **Finvy Support / Medium（2026-04-08）**
+  - 觀察：文章直接把 funding book 描述為 `price-time priority order book`，並主張靜態掛單容易被更有競爭力的掛單蓋過
+  - 可參考處：這與一般 order book 經驗一致，但文章同時帶有產品導流與推薦連結，應視為商業內容
+  - 來源：https://medium.com/@support_32041/how-to-earn-10-17-passive-income-on-stablecoins-a-practical-guide-to-bitfinex-funding-in-2026-dbbbb5608a35
+
+### 2. Bot 作者的設計通常假設「貼近 funding book 最佳 ask」更容易成交
+
+- **BitfinexLendingBot / GitHub README**
+  - 觀察：README 提到若 `GapBottom = 0`，第一筆 offer 會掛在 funding book 的 `lowest ask`；另有策略會逐步降低未成交 offer 的利率
+  - 可參考處：這反映 bot 作者認為「靠近當前最有競爭力的 ask」更容易被市場吃到
+  - 限制：這是策略實作假設，不是 Bitfinex 官方對撮合引擎的正式說明
+  - 來源：https://github.com/eAndrius/BitfinexLendingBot
+
+- **aseaday / GitHub Gist `lend.py`（2017-11-20）**
+  - 觀察：作者描述 bot 會先掛高利率、再逐步往下調，直到被成交；同時提到 offer 可能出現「部分成交後，剩餘數量低於最小金額」的情況
+  - 可參考處：這與官方 API 可見的 `PARTIALLY FILLED` 狀態相容
+  - 限制：年代較久，且是個人 gist，只能視為早期使用者經驗
+  - 來源：https://gist.github.com/aseaday/92edefdef57de4d336ac6b9346d65dfd
+
+### 3. 第三方開發文件也把「variable rate funding offers」視為獨立匹配維度
+
+- **CCXT Wiki / Spec**
+  - 觀察：CCXT 文件保留了 Bitfinex 的 `No Var Rates` flag（`524288`）
+  - 可參考處：這表示第三方交易函式庫在實作 Bitfinex 介面時，也保留了「是否排除 variable-rate offers」這個參數
+  - 限制：CCXT 是第三方統整文件，本質上是對交易所 API 的封裝，不構成新的匹配規則證據
+  - 來源：https://github.com/ccxt/ccxt/wiki/Spec
+
+### 非官方資料可得出的保守結論
+
+- 社群與 bot 作者普遍把 Bitfinex funding market 視為**類似 order book 的競價撮合市場**
+- 實務上，較具競爭力的利率通常被認為更容易成交
+- `PARTIALLY FILLED` 在實務與 bot 設計中被視為正常情況，不是例外
+- 但「FRR / FRR Delta 各類型之間的完整配對矩陣」仍未見可靠非官方資料能完整證明

@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitfinex P2P Lending Research</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    <style>
+        /* 基本樣式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            line-height: 1.6;
+            color: #333;
+            background-color: #fafafa;
+        }
+        
+        /* 內容容器 */
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 標題樣式 */
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            line-height: 1.25;
+            color: #2c3e50;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 2rem;
+        }
+        
+        h2 {
+            font-size: 2rem;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 8px;
+        }
+        
+        h3 {
+            font-size: 1.5rem;
+            color: #e74c3c;
+        }
+        
+        /* 段落和文字 */
+        p {
+            margin-bottom: 1rem;
+            text-align: justify;
+        }
+        
+        /* 程式碼樣式 */
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            font-size: 0.9em;
+            color: #e74c3c;
+        }
+        
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border-left: 4px solid #3498db;
+        }
+        
+        pre code {
+            background: transparent;
+            padding: 0;
+            color: #ecf0f1;
+            font-size: 0.9rem;
+        }
+        
+        /* 列表樣式 */
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        /* 引用塊 */
+        blockquote {
+            border-left: 4px solid #3498db;
+            padding: 10px 20px;
+            margin: 20px 0;
+            background: #f8f9fa;
+            font-style: italic;
+            color: #555;
+        }
+        
+        /* 表格樣式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        th {
+            background: #3498db;
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        /* 連結樣式 */
+        a {
+            color: #3498db;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        a:hover {
+            color: #2980b9;
+            border-bottom-color: #2980b9;
+        }
+        
+        /* Mermaid 圖表容器 */
+        .mermaid {
+            text-align: center;
+            margin: 30px 0;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e1e8ed;
+        }
+        
+        /* 水平線 */
+        hr {
+            border: none;
+            height: 2px;
+            background: linear-gradient(to right, transparent, #3498db, transparent);
+            margin: 2rem 0;
+        }
+        
+        /* 圖片樣式 */
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+        }
+        
+        /* 目錄樣式 */
+        .toc {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .toc ul {
+            list-style-type: none;
+            margin-left: 0;
+        }
+        
+        .toc a {
+            color: #495057;
+            text-decoration: none;
+        }
+        
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 10px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+            }
+            
+            table {
+                font-size: 0.9rem;
+            }
+            
+            th, td {
+                padding: 8px 10px;
+            }
+        }
+        
+        /* 程式碼高亮樣式 */
+        .codehilite {
+            background: #2c3e50;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        
+        .codehilite pre {
+            background: transparent;
+            border: none;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="bitfinex-p2p-lending-margin-funding-matching-rules-research">Bitfinex P2P Lending (Margin Funding) — Matching Rules Research<a class="headerlink" href="#bitfinex-p2p-lending-margin-funding-matching-rules-research" title="Permanent link">&para;</a></h1>
+<h2 id="_1">研究目標<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>理解 Bitfinex P2P 借貸的利率匹配規則，特別是掛單（offer/bid）如何成交。</p>
+<hr />
+<h2 id="_2">一、官方與參考來源<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>來源</th>
+<th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bitfinex Help Center — What is Margin Funding</td>
+<td>https://support.bitfinex.com/hc/en-us/articles/214441185-What-is-Margin-Funding</td>
+</tr>
+<tr>
+<td>Bitfinex Help Center — How to reserve Funding on Bitfinex</td>
+<td>https://support.bitfinex.com/hc/en-us/articles/900000898423-How-to-reserve-Funding-on-Bitfinex</td>
+</tr>
+<tr>
+<td>Bitfinex Help Center — What is the Bitfinex Funding Flash Return Rate</td>
+<td>https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate</td>
+</tr>
+<tr>
+<td>Bitfinex Help Center — What is the Bitfinex Funding FRR Delta</td>
+<td>https://support.bitfinex.com/hc/en-us/articles/115003284729-What-is-the-Bitfinex-Funding-FRR-Delta</td>
+</tr>
+<tr>
+<td>Bitfinex Blog — How to Earn with Margin Lending</td>
+<td>https://blog.bitfinex.com/education/how-to-earn-with-margin-lending-on-bitfinex/</td>
+</tr>
+<tr>
+<td>Bitfinex API Docs — Submit Funding Offer</td>
+<td>https://docs.bitfinex.com/reference/rest-auth-submit-funding-offer</td>
+</tr>
+<tr>
+<td>Bitfinex API Docs — Flag Values</td>
+<td>https://docs.bitfinex.com/docs/flag-values</td>
+</tr>
+<tr>
+<td>Bitfinex API Docs — Public Book</td>
+<td>https://docs.bitfinex.com/reference/rest-public-book</td>
+</tr>
+<tr>
+<td>AltInvest — Bitfinex 匹配規則詳解</td>
+<td>https://altinvest.finance/blog/179</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_3">二、匹配規則核心邏輯<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<h3 id="21-period-rate">2.1 官方可確認的匹配條件：Period + Rate<a class="headerlink" href="#21-period-rate" title="Permanent link">&para;</a></h3>
+<p>Bitfinex 官方 Help Center 明確寫的是：
+- Funding Bids 與 Offers 要成交，<strong>Rate 與 Period 都要 match</strong>
+- 如果 Bid 要 10 天，必須對到 <strong>10 天或更長</strong> 的 Offer
+- 系統在保證金借款時，會以 <strong>best available rates</strong> 自動保留 funding</p>
+<blockquote>
+<p>注意：官方文件<strong>沒有公開完整撮合引擎規則</strong>，例如是否明文採用「price-time priority」。因此本文凡是「最低 offer 先成交 / 最高 bid 先成交」的描述，都應視為根據 order book 與 best available rates 的<strong>高可信推論</strong>，不是官方明文規則。</p>
+</blockquote>
+<h3 id="22">2.2 期限匹配條件<a class="headerlink" href="#22" title="Permanent link">&para;</a></h3>
+<p>借款人請求的期限（duration）<strong>必須</strong> ≤ 出借人設定的最長期限。</p>
+<p><strong>範例：</strong>
+| 借款人請求期限 | 出借人設定期限 | 是否匹配 |
+|--------------|--------------|--------|
+| 10 天 | 10 天以上 | ✅ 匹配 |
+| 10 天 | 5 天 | ❌ 不匹配（出借人不願借那麼久） |
+| 15 天 | 30 天 | ✅ 匹配（出借人願意借更久） |</p>
+<h3 id="23-frr">2.3 FRR 與固定利率 <strong>不能</strong> 交叉匹配<a class="headerlink" href="#23-frr" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>類型</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>固定利率（Fixed Rate）</strong></td>
+<td>明確寫死的利率，如 <code>0.05%</code> / 天</td>
+</tr>
+<tr>
+<td><strong>FRR（Flash Return Rate）</strong></td>
+<td>Bitfinex 的動態利率參考值，每小時更新</td>
+</tr>
+</tbody>
+</table>
+<p><strong>關鍵限制：</strong>
+- 固定利率 Bid <strong>無法</strong> 與 FRR Offer 成交
+- FRR Bid <strong>無法</strong> 與 固定利率 Offer 成交
+- FRR Bid 與 FRR Offer ✅ <strong>可以成交</strong>（同為 FRR 類型）</p>
+<blockquote>
+<p>官方規則：<em>"a fixed rate bid/offer cannot match with a Flash Return Rate (FRR) offer/bid"</em> — 防火牆只存在於「固定利率 ↔ FRR」之間，同屬 FRR 市場的雙方可正常匹配。</p>
+</blockquote>
+<hr />
+<h2 id="frrflash-return-rate">三、FRR（Flash Return Rate）系統<a class="headerlink" href="#frrflash-return-rate" title="Permanent link">&para;</a></h2>
+<h3 id="31-frr">3.1 FRR 是什麼？<a class="headerlink" href="#31-frr" title="Permanent link">&para;</a></h3>
+<p>FRR 是 Bitfinex 的動態利率參考指標，<strong>每小時更新一次</strong>。</p>
+<p>但官方來源對其精確定義有兩種說法：
+- Help Center：FRR 是 <strong>all active fixed-rate fundings weighted by amount</strong> 的平均
+- 官方 Blog：FRR 是 <strong>the weighted average of the most recent funding trades</strong>，並做平滑處理以避免尖峰</p>
+<p>因此較穩妥的寫法是：</p>
+<blockquote>
+<p><strong>FRR 是 Bitfinex 用於 Funding 市場的動態參考利率，每小時更新；官方不同來源對其底層計算口徑描述不完全一致。</strong></p>
+</blockquote>
+<h3 id="32-frr">3.2 FRR 訂單類型<a class="headerlink" href="#32-frr" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>類型</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>FRR（UI 選項）</strong></td>
+<td>以成交當下的 FRR 為基準；成交後該筆 loan 利率固定</td>
+</tr>
+<tr>
+<td><strong>FRRDELTAVAR</strong></td>
+<td>以 FRR + 溢價/折價掛單，匹配後利率會隨 FRR 調整而浮動</td>
+</tr>
+<tr>
+<td><strong>FRRDELTAFIX</strong></td>
+<td>以 FRR + 溢價/折價掛單；<strong>成交前</strong> 會跟 FRR 更新，<strong>成交後</strong> 固定</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>補充：
+- UI/Blog 用語有 <code>FRR</code>、<code>FRR Variable</code>、<code>FRR Fixed</code>
+- API <code>submit funding offer</code> 文件明列的 <code>type</code> 是 <code>LIMIT</code>、<code>FRRDELTAVAR</code>、<code>FRRDELTAFIX</code>
+- 因此 UI 名稱與 API 名稱並不是 1:1 逐字對應</p>
+</blockquote>
+<hr />
+<h2 id="_4">四、利息計算公式<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<h3 id="41-provider">4.1 出借人（Provider）實際所得<a class="headerlink" href="#41-provider" title="Permanent link">&para;</a></h3>
+<pre><code>實際所得 = 本金 × (利率/100) × (秒數 / 86400) × 0.85
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>參數</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>本金</code></td>
+<td>借貸金額</td>
+</tr>
+<tr>
+<td><code>利率</code></td>
+<td>日利率（%），如 <code>0.05</code> 表示 0.05% / 天</td>
+</tr>
+<tr>
+<td><code>秒數</code></td>
+<td>實際借貸秒數（精確到秒）</td>
+</tr>
+<tr>
+<td><code>86400</code></td>
+<td>一天的秒數</td>
+</tr>
+<tr>
+<td><code>0.85</code></td>
+<td>出借人實得比例（85%），Bitfinex 收取 15% 手續費</td>
+</tr>
+</tbody>
+</table>
+<p><strong>範例：</strong> 借 $1,000、利率 0.05%/天、借 15 天：</p>
+<pre><code>本金 × rate% × (sec/86400) × 0.85
+= 1000 × 0.0005 × (15×86400 / 86400) × 0.85
+= 1000 × 0.0005 × 15 × 0.85
+= $6.375（15天總利息）
+</code></pre>
+<h3 id="42">4.2 手續費結構<a class="headerlink" href="#42" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>訂單類型</th>
+<th>Bitfinex 手續費</th>
+<th>出借人實得</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>普通 Offer</td>
+<td>15%</td>
+<td><strong>85%</strong> (0.85)</td>
+</tr>
+<tr>
+<td>Hidden Offer</td>
+<td>18%</td>
+<td><strong>82%</strong> (0.82)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>⚠️ Hidden Offer 的 <code>0.85</code> 需改為 <code>0.82</code>，否則計算會多算。</p>
+</blockquote>
+<h3 id="43">4.3 最低借貸金額<a class="headerlink" href="#43" title="Permanent link">&para;</a></h3>
+<p>Bitfinex 借貸的最低門檻為 <strong>$150 USD 等值</strong>。</p>
+<h3 id="44">4.4 借貸期限範圍<a class="headerlink" href="#44" title="Permanent link">&para;</a></h3>
+<p>可借期限為 <strong>2 天 ～ 120 天</strong>。</p>
+<hr />
+<h2 id="matching-rules">五、Matching Rules 摘要<a class="headerlink" href="#matching-rules" title="Permanent link">&para;</a></h2>
+<h3 id="_5">匹配流程（官方已證實 + 推論）<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<pre><code>第一步：檢查 Period 與 Rate 是否可匹配（官方明文）
+└── Bid 與 Offer 的 Rate / Period 不可衝突
+
+第二步：系統以 best available rates 完成匹配（官方明文）
+└── book 呈現與一般 order book 一致，故可合理推論價格更優者優先
+</code></pre>
+<h3 id="_6">期限匹配條件<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>借款人請求的期限（duration）<strong>必須</strong> ≤ 出借人設定的最長期限</li>
+<li>例如：借款人要 15 天，出借人願借最長 30 天 → ✅ 匹配</li>
+</ul>
+<h3 id="_7">利率匹配邏輯<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>官方明文只有：<strong>Rate 與 Period 需要 match</strong></li>
+<li>官方也明文表示：系統會以 <strong>best available rates</strong> 自動保留 funding</li>
+<li>因此可高可信推論：在滿足 Period 的前提下，<strong>價格較優的一側更容易先成交</strong></li>
+<li>但 Bitfinex <strong>未公開完整撮合規則</strong>，故不應把「最低 Offer 一定先成交」寫成官方明文事實</li>
+</ul>
+<h3 id="_8">利率競價範例<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<p>情境：3 個出借人都掛 P30，借款人掛 Bid: 0.06%，請求 P15</p>
+<table>
+<thead>
+<tr>
+<th>出借人</th>
+<th>Offer 利率</th>
+<th>排序（從低到高）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lender A</td>
+<td>0.04%</td>
+<td>1️⃣ 最便宜，先成交</td>
+</tr>
+<tr>
+<td>Lender B</td>
+<td>0.05%</td>
+<td>2️⃣</td>
+</tr>
+<tr>
+<td>Lender C</td>
+<td>0.06%</td>
+<td>3️⃣ 最貴，後成交</td>
+</tr>
+</tbody>
+</table>
+<p><strong>較合理的推論：</strong> 若 book 中存在符合 period 條件的 0.04% offer，系統大概率會先以更優價格成交，而不是直接用借款人的 0.06% 上限成交。</p>
+<blockquote>
+<p><strong>實務意義：</strong>
+- 出借人利率設太低 → 優先成交，但賺得少
+- 出借人利率設太高 → 匹配不到，被市場更低的 Offer 擠掉</p>
+</blockquote>
+<h3 id="frr">FRR 與固定利率<strong>不能</strong>交叉匹配<a class="headerlink" href="#frr" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>類型</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>固定利率（Fixed Rate）</strong></td>
+<td>明確寫死的利率，如 <code>0.05%</code> / 天</td>
+</tr>
+<tr>
+<td><strong>FRR（Flash Return Rate）</strong></td>
+<td>Bitfinex 的動態利率參考值，每小時更新</td>
+</tr>
+</tbody>
+</table>
+<p><strong>關鍵限制：</strong>
+- 固定利率 Bid <strong>無法</strong>與 FRR Offer 成交
+- FRR Bid <strong>無法</strong>與固定利率 Offer 成交
+- FRR Bid 與 FRR Offer ✅ 可以成交（同屬 FRR 市場）
+- 防火牆只存在於「固定利率 ↔ FRR」之間，同類型之間可正常匹配</p>
+<h3 id="_9">手續費层级<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>訂單類型</th>
+<th>手續費</th>
+<th>出借人實得</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>普通 Offer</td>
+<td>15%</td>
+<td>85%</td>
+</tr>
+<tr>
+<td>Hidden Offer</td>
+<td>18%</td>
+<td>82%</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_10">六、實例說明<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<h3 id="_11">情境設定<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>角色</th>
+<th>掛單類型</th>
+<th>利率</th>
+<th>期限</th>
+<th>金額</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>出借人（Lender）</td>
+<td>Offer</td>
+<td>0.05% / 天</td>
+<td>最長 30 天</td>
+<td>$1,000 USD</td>
+</tr>
+<tr>
+<td>借款人（Borrower）</td>
+<td>Bid</td>
+<td>0.06% / 天</td>
+<td>請求 15 天</td>
+<td>$1,000 USD</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_12">匹配判斷<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>條件</th>
+<th>判斷</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>利率</td>
+<td>✅ 0.06% ≥ 0.05%</td>
+<td>借款人願付 ≥ 出借人願收</td>
+</tr>
+<tr>
+<td>期限</td>
+<td>✅ 15天 ≤ 30天</td>
+<td>借款期限被出借人最長期限覆蓋</td>
+</tr>
+<tr>
+<td>類型</td>
+<td>✅ 同為固定利率</td>
+<td>固定與 FRR 不能交叉匹配</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_13">成交結果<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>日利率：</strong> 0.05%（以出借人報價成交）</li>
+<li><strong>結算天數：</strong> 15 天</li>
+<li><strong>出借人實得利息：</strong></li>
+</ul>
+<pre><code>本金 × rate% × (sec/86400) × 0.85
+= 1000 × 0.0005 × (15×86400 / 86400) × 0.85
+= 1000 × 0.0005 × 15 × 0.85
+= $6.375（15天總利息）
+</code></pre>
+<ul>
+<li><strong>借款人應付利息：</strong> $7.50</li>
+<li><strong>Bitfinex 手續費：</strong> $1.125（15%）</li>
+</ul>
+<h3 id="_14">期限匹配範例<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h3>
+<p>出借人掛 <strong>P120（最長 120 天）</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>借款人掛的期限</th>
+<th>是否匹配</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P2</td>
+<td>✅</td>
+<td>2 ≤ 120</td>
+</tr>
+<tr>
+<td>P15</td>
+<td>✅</td>
+<td>15 ≤ 120</td>
+</tr>
+<tr>
+<td>P30</td>
+<td>✅</td>
+<td>30 ≤ 120</td>
+</tr>
+<tr>
+<td>P60</td>
+<td>✅</td>
+<td>60 ≤ 120</td>
+</tr>
+<tr>
+<td>P90</td>
+<td>✅</td>
+<td>90 ≤ 120</td>
+</tr>
+<tr>
+<td>P120</td>
+<td>✅</td>
+<td>120 ≤ 120</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>關鍵：借款人不需要掛跟出借人相同的期限。只要「請求期限 ≤ 出借人願借的最長期限」就會匹配。</strong></p>
+</blockquote>
+<hr />
+<h2 id="_15">七、出借期限策略分析<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h2>
+<h3 id="p60-p120">長期出借（P60 ～ P120）<a class="headerlink" href="#p60-p120" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>優點</th>
+<th>缺點</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>匹配成功率最高（覆蓋 2-120 天所有借款人）</td>
+<td>資金鎖定時間長，流動性低</td>
+</tr>
+<tr>
+<td>不需要頻繁重新掛單</td>
+<td>若市場利率上升，無法及時調整</td>
+</tr>
+<tr>
+<td>適合長期不動用的閒置資金</td>
+<td>借款人提前還款時，資金可能空等</td>
+</tr>
+</tbody>
+</table>
+<p><strong>適合情境：</strong> 閒置資金、不在乎短期流動性、懶人策略</p>
+<h3 id="p2-p15">短期出借（P2 ～ P15）<a class="headerlink" href="#p2-p15" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>優點</th>
+<th>缺點</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>資金回籠快，流動性高</td>
+<td>匹配成功率較低（只能匹配短期借款人）</td>
+</tr>
+<tr>
+<td>若市場利率上升，可快速重新掛單</td>
+<td>需要頻繁監控和調整掛單</td>
+</tr>
+<tr>
+<td>適合短期可能需要動用資金的場合</td>
+<td>可能出現資金空等期（掛單未匹配）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>適合情境：</strong> 資金短期有其他用途、預期利率會上升、願意頻繁操作</p>
+<h3 id="p30-p60">中期出借（P30 ～ P60）<a class="headerlink" href="#p30-p60" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>優點</th>
+<th>缺點</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>平衡流動性與匹配率</td>
+<td>各方面都中等，沒有特別突出</td>
+</tr>
+<tr>
+<td>不需頻繁操作</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p><strong>適合情境：</strong> 多數普通用戶的一般選擇</p>
+<h3 id="_16">實務建議<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>資金閒置且長期不看盤</strong> → 掛 P120，利率設市場均值，省心</li>
+<li><strong>資金可能短期動用</strong> → 掛 P15～P30，保持流動性</li>
+<li><strong>預期利率會上升</strong> → 掛短天期（如 P7～P15），到期後可重新以更高利率掛單</li>
+<li><strong>同時掛多筆</strong> → 可以分散風險，例如：</li>
+<li>$700 掛 P120（長期鎖定）</li>
+<li>$300 掛 P15（保持流動性）</li>
+</ol>
+<hr />
+<h2 id="p120">七之二、借款人期限策略（P120 能當萬用選項嗎？）<a class="headerlink" href="#p120" title="Permanent link">&para;</a></h2>
+<h3 id="_17">核心問題<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p>借款人是不是先借 P120 就好？可以隨時還，何必掛短天期？</p>
+</blockquote>
+<p><strong>結論：可以隨時還，但 P120 並不是「免費的最大彈性」，有隱性成本。</strong></p>
+<h3 id="_18">✅ 優點<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>上限彈性大</strong></td>
+<td>最多可用 120 天，不用擔心中途被系統強制到期</td>
+</tr>
+<tr>
+<td><strong>可提前還款</strong></td>
+<td>官方明確允許：<em>"borrowers can return funds at any time before the maximum lending period ends"</em></td>
+</tr>
+<tr>
+<td><strong>免展期麻煩</strong></td>
+<td>不需要每 2/7/30 天重新借一次，省掉重複競價、滑價風險</td>
+</tr>
+<tr>
+<td><strong>對沖不確定性</strong></td>
+<td>若持倉時間不確定（可能 3 天、也可能 2 個月），P120 一次解決</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_19">❌ 缺點（重點）<a class="headerlink" href="#_19" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>利率較貴</strong></td>
+<td>Funding book 裡長天期 offer 通常利率較高。出借人鎖資金越久風險越大，會要求溢價 → 借款人掛 P120 bid 配對到的實際成交利率會比 P2/P7 高</td>
+</tr>
+<tr>
+<td><strong>流動性差</strong></td>
+<td>短天期 offer 數量遠多於長天期，P120 可能掛很久才匹配到、或只能以市場最高利率成交</td>
+</tr>
+<tr>
+<td><strong>最低 1 小時利息</strong></td>
+<td>Bitfinex 對「手動提前歸還」收取最少 1 小時利息，防止刷量套利。即使你借 10 秒就還，也要付 1 小時的錢</td>
+</tr>
+<tr>
+<td><strong>被迫成交到高價 offer</strong></td>
+<td>長天期位在 order book 較稀疏的區間，容易被 FRR/高利率 offer 吃掉</td>
+</tr>
+<tr>
+<td><strong>無法縮短鎖定成本</strong></td>
+<td>雖然可以早還，但沒還之前利息照跳。若市場利率一路下跌，你被鎖在當初較高的成交利率上</td>
+</tr>
+<tr>
+<td><strong>沒有長期折扣</strong></td>
+<td>和傳統金融不同，crypto funding 沒有「長天期因為穩定所以打折」的概念，剛好相反</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_20">實務建議<a class="headerlink" href="#_20" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>情境</th>
+<th>建議期限</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>確定只借 1–3 天（短線操作）</td>
+<td><strong>P2 最便宜</strong>，利率通常最低</td>
+</tr>
+<tr>
+<td>中期持倉（約 1–2 週）</td>
+<td>P7 ~ P15，平衡流動性與利率</td>
+</tr>
+<tr>
+<td>持倉時間完全不確定、但最長不超過 1 個月</td>
+<td>P30</td>
+</tr>
+<tr>
+<td>真的要長期持有保證金、懶得管</td>
+<td>P120，但要接受高利率</td>
+</tr>
+<tr>
+<td>預期市場利率會下跌</td>
+<td><strong>絕對不要掛 P120</strong>，會被鎖在高利率</td>
+</tr>
+<tr>
+<td>預期市場利率會上漲</td>
+<td>可考慮 P120 鎖成本，但前提是當下利率不算高</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_21">關鍵觀念<a class="headerlink" href="#_21" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>「隨時能還」≠「免費的長期選擇權」。</strong>
+你為 P120 付出的溢價，就是這個「提前歸還權利」的價格。若你確定只借 3 天，掛 P3 或 P7 通常更划算。</p>
+</blockquote>
+<h3 id="vs">出借人 vs 借款人 期限邏輯對照<a class="headerlink" href="#vs" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>角色</th>
+<th>掛長天期（P120）</th>
+<th>掛短天期（P2~P15）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>出借人</strong></td>
+<td>優：匹配率最高、覆蓋所有借款人 ❌ 缺：資金被鎖、錯過利率上升</td>
+<td>優：流動性高、跟得上利率變化 ❌ 缺：匹配率低</td>
+</tr>
+<tr>
+<td><strong>借款人</strong></td>
+<td>優：最大彈性、免展期 ❌ 缺：利率貴、流動性差</td>
+<td>優：利率便宜、匹配快 ❌ 缺：需自己管理展期</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>雙方對長短天期的動機<strong>恰好相反</strong>：出借人希望長期鎖高利率，借款人希望短期拿低利率。Funding book 的均衡價就是從這個張力中產生的。</p>
+</blockquote>
+<hr />
+<h2 id="api">八、相關 API 端點<a class="headerlink" href="#api" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>API 端點</th>
+<th>認證</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>提交 Funding Offer / Bid</td>
+<td><code>POST /v2/auth/w/funding/offer/submit</code></td>
+<td>✅</td>
+</tr>
+<tr>
+<td>取消 Funding Offer</td>
+<td><code>POST /v2/auth/w/funding/offer/cancel</code></td>
+<td>✅</td>
+</tr>
+<tr>
+<td>查詢自己的 Active Offers</td>
+<td><code>POST /v2/auth/r/funding/offers/{symbol}</code></td>
+<td>✅</td>
+</tr>
+<tr>
+<td>查詢自己已放出的 Credits</td>
+<td><code>POST /v2/auth/r/funding/credits/{symbol}</code></td>
+<td>✅</td>
+</tr>
+<tr>
+<td>查詢 Funding Book（市場深度）</td>
+<td><code>GET /v2/book/{symbol}/P0</code></td>
+<td>❌ public</td>
+</tr>
+<tr>
+<td>查詢 FRR（在 Funding Ticker 中）</td>
+<td><code>GET /v2/tickers?symbols=fUSD</code></td>
+<td>❌ public</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>備註：借款人（margin trader）通常不直接掛 bid，系統會在借用保證金時自動吃掉 funding book 上的 offer。若要主動掛 Funding Bid（即 <code>amount</code> 為負值的 offer），仍是透過 <code>submit</code> 端點，只是 amount 帶負號。</p>
+</blockquote>
+<hr />
+<h2 id="_22">九、官方文檔索引<a class="headerlink" href="#_22" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>文檔</th>
+<th>URL</th>
+<th>驗證內容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>What is Margin Funding</td>
+<td>https://support.bitfinex.com/hc/en-us/articles/214441185-What-is-Margin-Funding</td>
+<td>匹配條件、FRR 隔離、手續費、最低金額</td>
+</tr>
+<tr>
+<td>How to reserve Funding on Bitfinex</td>
+<td>https://support.bitfinex.com/hc/en-us/articles/900000898423-How-to-reserve-Funding-on-Bitfinex</td>
+<td><code>best available rates</code>、Rate/Period match</td>
+</tr>
+<tr>
+<td>Margin Funding interest on Bitfinex</td>
+<td>https://support.bitfinex.com/hc/en-us/articles/115004554309-Margin-Funding-interest-on-Bitfinex</td>
+<td>利息計算公式</td>
+</tr>
+<tr>
+<td>How are Funding interest earnings and fees calculated</td>
+<td>https://support.bitfinex.com/hc/en-us/articles/360024039494-How-are-the-Funding-interest-earnings-and-fees-calculated-at-Bitfinex</td>
+<td>利息公式驗證</td>
+</tr>
+<tr>
+<td>Margin Funding on Bitfinex</td>
+<td>https://support.bitfinex.com/hc/en-us/articles/115003428165-Margin-Funding-on-Bitfinex</td>
+<td>期限範圍 2-120 天</td>
+</tr>
+<tr>
+<td>What is the minimum offer for Funding</td>
+<td>https://support.bitfinex.com/hc/en-us/articles/213918949-What-is-the-minimum-offer-for-Funding</td>
+<td>最低金額 $150</td>
+</tr>
+<tr>
+<td>What is the Bitfinex Funding Flash Return Rate</td>
+<td>https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate</td>
+<td>FRR 定義（Help Center 版本）</td>
+</tr>
+<tr>
+<td>What is the Bitfinex Funding FRR Delta</td>
+<td>https://support.bitfinex.com/hc/en-us/articles/115003284729-What-is-the-Bitfinex-Funding-FRR-Delta</td>
+<td>FRRDELTAFIX / FRRDELTAVAR 行為</td>
+</tr>
+<tr>
+<td>How to Earn with Margin Lending</td>
+<td>https://blog.bitfinex.com/education/how-to-earn-with-margin-lending-on-bitfinex/</td>
+<td>官方 Blog</td>
+</tr>
+<tr>
+<td>Submit Funding Offer (API)</td>
+<td>https://docs.bitfinex.com/reference/rest-auth-submit-funding-offer</td>
+<td>API 端點</td>
+</tr>
+<tr>
+<td>Flag Values</td>
+<td>https://docs.bitfinex.com/docs/flag-values</td>
+<td><code>No Var Rates</code> 旗標</td>
+</tr>
+<tr>
+<td>Public Book</td>
+<td>https://docs.bitfinex.com/reference/rest-public-book</td>
+<td>funding book 公開深度資料</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="2026-04-15">⚠️ 2026-04-15 驗證聲明<a class="headerlink" href="#2026-04-15" title="Permanent link">&para;</a></h3>
+<p>本文檔以下內容已通過 Bitfinex 官方 Support Center、API Docs 與即時公開 API 交叉驗證：
+- ✅ Rate 與 Period 都需要 match
+- ✅ 若 Bid 要 10 天，需對到 10 天或更長的 Offer
+- ✅ 系統會以 <code>best available rates</code> 自動保留 funding
+- ✅ FRR 與固定利率不能交叉匹配（但 FRR↔FRR、固定↔固定 可成交）
+- ✅ 利息計算公式：
+  - 出借人：<code>amount × (rate/100) × (seconds/86400) × 0.85</code>
+  - 借款人：<code>amount × (rate/100) × (seconds/86400)</code>
+- ✅ 最低借貸金額：$150 USD 等值
+- ✅ 借貸期限：2–120 天
+- ✅ 手續費：普通 15%，Hidden Offer 18%
+- ✅ FRRDELTAFIX：<strong>成交前</strong> 會隨 FRR 更新，<strong>成交後</strong> 固定
+- ✅ API 端點：<code>POST /v2/auth/w/funding/offer/submit</code></p>
+<p>以下內容僅能視為<strong>高可信推論</strong>，不是 Bitfinex 官方明文：
+- ⚠️ 滿足 period 條件後，較優價格（例如較低 offer）會優先成交
+- ⚠️ 「最高 bid 配最低 offer」屬 order book 與 <code>best available rates</code> 的自然解讀，但官方未公開完整撮合演算法</p>
+<h3 id="2026-04-15-api">2026-04-15 即時公開 API 快照<a class="headerlink" href="#2026-04-15-api" title="Permanent link">&para;</a></h3>
+<p>抓取時間：<code>2026-04-15 09:14:35 UTC</code></p>
+<ul>
+<li><code>GET /v2/ticker/fUSD</code></li>
+<li><code>FRR = 0.0004514821917808219</code></li>
+<li><code>best bid = 0.000165</code>, <code>bid_period = 120</code>, <code>bid_size = 20630355.96591695</code></li>
+<li><code>best ask = 0.000105</code>, <code>ask_period = 5</code>, <code>ask_size = 1554057.96882425</code></li>
+<li><code>last_price = 0.00015299</code></li>
+<li><code>GET /v2/book/fUSD/P0?len=25</code></li>
+<li>bid 範例：<code>[0.000165,120,1,-4947519.86764454]</code></li>
+<li>bid 範例：<code>[0.000165,30,1,-3441996.67568403]</code></li>
+<li>ask 範例：<code>[0.000106,5,1,4002]</code></li>
+<li>ask 範例：<code>[0.00010698,2,2,1500]</code></li>
+</ul>
+<p>這些即時數據至少證明：
+- Funding book 真的同時存在 <code>rate / period / amount</code>
+- 市場目前呈現典型 order book 結構：bid 在高端、ask 在低端
+- 不同 period 的單會同時存在於 book 中，period 確實是撮合條件之一</p>
+<hr />
+<h2 id="_23">十、規則總結<a class="headerlink" href="#_23" title="Permanent link">&para;</a></h2>
+<h3 id="lender">出借人（Lender）操作守則<a class="headerlink" href="#lender" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>規則</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>掛單類型</strong></td>
+<td>Offer（固定利率）或 FRR 系列</td>
+</tr>
+<tr>
+<td><strong>期限設定</strong></td>
+<td>設最長天數（最大覆蓋範圍）</td>
+</tr>
+<tr>
+<td><strong>利率定價</strong></td>
+<td>觀察 FRR，設低於 FRR 才能優先成交</td>
+</tr>
+<tr>
+<td><strong>匹配條件</strong></td>
+<td>借款人請求期限 ≤ 出借人最長期限</td>
+</tr>
+<tr>
+<td><strong>成交優先</strong></td>
+<td>官方僅明說 <code>best available rates</code>；較優價格優先屬高可信推論</td>
+</tr>
+<tr>
+<td><strong>實得利息</strong></td>
+<td><code>本金 × (利率/100) × (秒數/86400) × 0.85</code></td>
+</tr>
+<tr>
+<td><strong>手續費</strong></td>
+<td>普通 Offer 15%，Hidden Offer 18%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_24">匹配核心邏輯<a class="headerlink" href="#_24" title="Permanent link">&para;</a></h3>
+<pre><code>1. 檢查 Rate / Period 是否可匹配
+   Period 不足或 Rate 不合 → 不成交
+
+2. 系統以 best available rates 成交
+   更細的排序規則官方未完整公開
+</code></pre>
+<h3 id="_25">關鍵限制<a class="headerlink" href="#_25" title="Permanent link">&para;</a></h3>
+<ul>
+<li>❌ FRR 與固定利率<strong>不能</strong>交叉匹配</li>
+<li>❌ 借款期限<strong>不能超過</strong>出借人設定的最長期限</li>
+<li>❌ 利率設太高會<strong>匹配不到</strong>（被市場更低利率擠掉）</li>
+<li>❌ 期限設太短會<strong>匹配不到</strong>（覆蓋範圍不足）</li>
+</ul>
+<h3 id="_26">實務檢查清單<a class="headerlink" href="#_26" title="Permanent link">&para;</a></h3>
+<p>出借前確認：
+- [ ] 利率是否低於/等於市場 FRR？
+- [ ] 期限是否夠長（覆蓋目標借款人）？
+- [ ] 是否選擇正確的訂單類型（固定利率 vs FRR）？
+- [ ] 金額是否 ≥ $150 USD？</p>
+<hr />
+<h2 id="vs-frr">十一、固定利率 vs FRR 比較<a class="headerlink" href="#vs-frr" title="Permanent link">&para;</a></h2>
+<h3 id="_27">訂單類型總覽<a class="headerlink" href="#_27" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>類型</th>
+<th>市場</th>
+<th>利率特性</th>
+<th>適合情境</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>固定利率（LIMIT）</strong></td>
+<td>固定市場</td>
+<td>明確寫死，不會變</td>
+<td>一般用戶、懶人策略</td>
+</tr>
+<tr>
+<td><strong>FRR（UI 選項）</strong></td>
+<td>FRR 市場</td>
+<td>成交當下以 FRR 定價，成交後固定</td>
+<td>想直接跟市場 FRR</td>
+</tr>
+<tr>
+<td><strong>FRRDELTAVAR</strong></td>
+<td>FRR 市場</td>
+<td>隨 FRR 浮動調整</td>
+<td>想跟隨市場動態調整</td>
+</tr>
+<tr>
+<td><strong>FRRDELTAFIX</strong></td>
+<td>FRR 市場</td>
+<td>成交前隨 FRR 更新，成交後固定</td>
+<td>進階玩家</td>
+</tr>
+</tbody>
+</table>
+<h3 id="limit-frr">固定利率（LIMIT）與 FRR 市場隔離<a class="headerlink" href="#limit-frr" title="Permanent link">&para;</a></h3>
+<pre><code>┌─────────────────────────────────────┐
+│         FRR 市場                    │
+│  FRR / FRRDELTAVAR / FRRDELTAFIX   │
+│  （浮動利率）                       │
+└─────────────────────────────────────┘
+              ✖ 不能交叉匹配
+┌─────────────────────────────────────┐
+│       固定利率市場（LIMIT）           │
+│  固定 Bid  ←→  固定 Offer         │
+│  （明確寫死的利率）                  │
+└─────────────────────────────────────┘
+</code></pre>
+<p><strong>不能跨市場匹配：</strong>
+- ❌ FRR Bid 無法與 固定利率 Offer 成交
+- ❌ FRR Offer 無法與 固定利率 Bid 成交
+- ❌ 利率就算一模一樣也不行</p>
+<h3 id="lending-bot">lending-bot 屬於哪種？<a class="headerlink" href="#lending-bot" title="Permanent link">&para;</a></h3>
+<p><strong>lending-bot 使用的是「固定利率（LIMIT）」</strong></p>
+<pre><code class="language-python"># order_manager.py
+body = {
+    &quot;type&quot;: &quot;LIMIT&quot;,        # ← 固定利率
+    &quot;symbol&quot;: self.symbol,
+    &quot;amount&quot;: f&quot;{amount:.2f}&quot;,
+    &quot;rate&quot;: daily,           # 年化 % 轉成每日利率
+    &quot;period&quot;: period_days,
+}
+</code></pre>
+<p><strong>lending-bot 的掛單邏輯：</strong></p>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>訂單類型</td>
+<td><code>LIMIT</code>（固定利率）</td>
+</tr>
+<tr>
+<td>利率計算</td>
+<td>年化 % → 轉換成每日利率</td>
+</tr>
+<tr>
+<td>期限</td>
+<td>手動設定（short / long strategy）</td>
+</tr>
+<tr>
+<td>FRR 用途</td>
+<td>僅作為<strong>定價參考</strong>，不直接使用 FRR 掛單</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-python"># user_worker.py - 利率設定參考 FRR
+if self._frr_ann_pct &gt; 0:
+    return max(self.long_min_rate, self._frr_ann_pct)
+</code></pre>
+<h3 id="_28">實務意義<a class="headerlink" href="#_28" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>你的 lending-bot</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>觀察 FRR</td>
+<td>✅ Bot 會抓 FRR 來決定利率</td>
+</tr>
+<tr>
+<td>但掛 LIMIT</td>
+<td>✅ 實際掛出去的是固定利率單</td>
+</tr>
+<tr>
+<td>只能跟固定利率成交</td>
+<td>✅ 無法與 FRR 市場的人匹配</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>重點：lending-bot 屬於「固定利率」市場，只能跟另一個固定利率的借款人/出借人匹配，無法與 FRR 市場的人成交。</strong></p>
+</blockquote>
+    </div>
+    
+    <script>
+        // 初始化 Mermaid
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            themeVariables: {
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+                fontSize: '16px'
+            }
+        });
+    </script>
+</body>
+</html>
