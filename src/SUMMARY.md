@@ -97,6 +97,7 @@
         - [PyMuPDF4LLM 安裝與使用指南](tools/PDF_TO_MARKDOWN.md)
         - [Buttplug Python 安裝設置指南](tools/buttplug_python_setup.md)
         - [Buttplug Python 簡易指南](tools/buttplug_complete_guide.md)
+        - [Overmind 完整指南：簡化 Procfile 應用程式管理](tools/overmind-guide.md)
     - [其他實用工具](tools/05_其他實用工具.md)
         - [Rust CLI 工具集](tools/tools.md)
         - [Finmind](tools/finmind.md)
