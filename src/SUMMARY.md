@@ -63,6 +63,7 @@
         - [在 Cloudflare 上構建並部署遠端 MCP 伺服器](tools/cloudflare-remote-mcp.tw.md)
         - [Gemini CLI 安裝與使用指南](tools/gemini-cli-guide.md)
         - [Codex CLI 完整指南](tools/codex-guide.md)
+        - [GitHub CLI 與 Git 設定完整步驟](git/github-cli-setup.md)
         - [Git Worktree 平行代理編程：Claude Code 與 Cursor 實戰](git/git-worktree-parallel-agents.md)
         - [Thinking Protocol 中文指南](tools/thinking-protocol-zh-tw.md)
         - [2026 年將佔據主導地位的頂級開源專案](tools/2026-top-open-source-projects.md)
