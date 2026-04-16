@@ -332,6 +332,16 @@ Visit repository and browse files directly in GitHub UI.
 - **Features**: ASCII 架構圖、用途分類表、使用範例
 - **Time to Read**: 15-20 minutes
 
+#### **c) AI 時代的程式碼 Trace 工具整理**
+- **File**: `src/tools/ai-code-trace-tools.md`
+- **Size**: 183 lines
+- **Content**:
+  - AI 時代的程式碼 trace 工具整理
+  - Code graph、架構圖、互動視覺化工具
+  - 工具概觀表與快速選擇建議
+- **Features**: 工具比較表、適用情境分析
+- **Time to Read**: 15-20 minutes
+
 ---
 
 ## 🤖 Multi-Agent 協作架構設計 (2026-04-11)
