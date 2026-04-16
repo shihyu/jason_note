@@ -1,0 +1,512 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>AI 時代的程式碼 Trace 工具整理 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="ai-時代的程式碼結構--trace-工具整理"><a class="header" href="#ai-時代的程式碼結構--trace-工具整理">AI 時代的程式碼結構 / Trace 工具整理</a></h1>
+<p>本文整理幾個能在「AI 時代」幫你 trace code、理解程式架構的開源專案，重點放在：</p>
+<ul>
+<li>能為 LLM／AI 助手建立持久的 code graph 或語意索引</li>
+<li>能自動產生架構圖、互動視覺化或 Wiki / 文件</li>
+<li>盡量是 GitHub 上可自架的專案</li>
+</ul>
+<blockquote>
+<p>已知工具：<code>code-review-graph</code>、DeepWiki（SaaS）就不再重複介紹，只列出與之相關或可替代／互補的開源專案。</p>
+</blockquote>
+<hr />
+<h2 id="快速選擇建議"><a class="header" href="#快速選擇建議">快速選擇建議</a></h2>
+<ul>
+<li><strong>如果你已經大量用 Claude / Cursor 做 code review，且想把 token 花在真正相關的檔案上：</strong>
+<ul>
+<li>用 <code>better-code-review-graph</code>（code-review-graph 的強化版）。[web:12]</li>
+</ul>
+</li>
+<li><strong>如果你想要「一鍵把整個 repo 變成可查詢的 Wiki + Mermaid 架構圖」：</strong>
+<ul>
+<li>用 <code>deepwiki-open</code>。</li>
+</ul>
+</li>
+<li><strong>如果你只想快速把任一 GitHub repo 變成互動架構圖（適合看 OSS 或 onboarding）：</strong>
+<ul>
+<li>用 <code>GitDiagram</code> 或 <code>CodeBoarding</code>。</li>
+</ul>
+</li>
+<li><strong>如果你要的是「架構文件 + 多種層級的圖」並能做靜態分析 + AI 混合：</strong>
+<ul>
+<li>用 <code>code-architecture-mapper</code>。</li>
+</ul>
+</li>
+<li><strong>如果你想在 VS Code 裡直接從程式碼自動生出架構圖：</strong>
+<ul>
+<li>用 <code>Swark</code>。</li>
+</ul>
+</li>
+<li><strong>如果你更關心長期的 code metrics / 熱點分析：</strong>
+<ul>
+<li>用 <code>CodeCharta</code> 搭配 SonarQube 等工具。</li>
+</ul>
+</li>
+<li><strong>如果你只想在 README 裡自動放一張 repo 結構圖：</strong>
+<ul>
+<li>用 <code>githubocto/repo-visualizer</code>。</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="工具概觀表"><a class="header" href="#工具概觀表">工具概觀表</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>專案</th><th>主要定位</th><th>AI 整合方式</th><th>適用情境</th><th>語言／平台</th><th>GitHub 連結</th></tr></thead><tbody>
+<tr><td>better-code-review-graph</td><td>為 AI 助手建立本地 code graph，讓 review 只看相關檔案[web:12]</td><td>用作 Claude / Cursor 等工具的 MCP server，讓 LLM 查圖而不是掃全 repo[web:9][web:12]</td><td>Code review、影響範圍分析、減少 token 消耗</td><td>多語言（Tree-sitter 支援的主流語言）[web:1][web:4]</td><td>https://github.com/n24q02m/better-code-review-graph[web:12]</td></tr>
+<tr><td>deepwiki-open</td><td>把任意 GitHub/GitLab/Bitbucket repo 變成可對話的 Wiki，含 Mermaid 圖[web:35]</td><td>用 Gemini / OpenAI 等模型做 RAG，產生文件與回答問題[web:32][web:35]</td><td>快速理解陌生 repo、團隊 onboarding、為 AI agent 準備 context</td><td>任何能被 Git 提取的程式碼，後端自己 clone repo[web:32][web:35]</td><td>https://github.com/AsyncFuncAI/deepwiki-open[web:13][web:35]</td></tr>
+<tr><td>GitDiagram</td><td>將任一 GitHub repo 轉成可點擊的架構圖，直接連回原始碼[web:16][web:19]</td><td>以 GPT 家族模型分析檔案樹與 README，輸出 Mermaid 圖並可下載 PNG[web:19][web:16]</td><td>想快速看 OSS 專案架構、教學示意、初次閱讀大型專案</td><td>只要是 public GitHub repo 即可，支援自架與瀏覽器使用[web:16][web:19][web:25]</td><td>https://github.com/ahmedkhaleel2004/gitdiagram[web:19]</td></tr>
+<tr><td>CodeBoarding</td><td>將 codebase 變成可互動的多層級圖，結合靜態分析與 LLM[web:11][web:17][web:26]</td><td>先做 Control Flow Graph / 靜態分析，再用 LLM 產生成熟的 onboarding 圖與文件[web:11][web:17]</td><td>想看 AI 在寫什麼／改什麼、團隊 onboarding、長期維護大型專案</td><td>目前以 Python 為主，透過 LSP / 靜態分析，支援 web 與 VS Code 整合[web:11][web:17][web:26]</td><td>https://github.com/CodeBoarding/CodeBoarding[web:26]</td></tr>
+<tr><td>code-architecture-mapper</td><td>對 GitHub repo 做靜態分析 + LangGraph agent，產生架構說明與多種圖表[web:8]</td><td>利用 LangGraph agent 解讀靜態分析結果，寫 Markdown 架構說明與 Mermaid 圖，並自動修正圖錯誤[web:8]</td><td>想產出「正式一點」的架構文件（MD + 圖）、分析核心檔案與 centrality</td><td>目前重點在 Python、JS/TS（Grimp + Tree-sitter）[web:8]</td><td>https://github.com/shikhar1verma/code-architecture-mapper[web:8]</td></tr>
+<tr><td>Swark</td><td>VS Code extension，從程式碼自動產生架構圖，與 GitHub Copilot 整合[web:21]</td><td>透過 LLM 從檔案抽象出 architecture diagram，邏輯放在 LLM 而非硬編碼 parser[web:21]</td><td>想在編輯器內直接看架構圖，不想自己維護解析器</td><td>任意語言（理論上，只要 Copilot 能看懂）[web:21]</td><td>https://github.com/swark-io/swark[web:21]</td></tr>
+<tr><td>CodeCharta</td><td>將軟體架構與 code metrics 視覺化成「城市地圖」[web:31][web:34]</td><td>本身較偏靜態分析與 metrics，AI 可另外疊在其產生的資料上</td><td>想看複雜度、修改頻率、coverage 熱點等，協助重構與架構治理[web:34]</td><td>透過 SonarQube 等取得 metrics，支援 C/C++/C#/Java 等多種語言[web:34]</td><td>https://github.com/maibornwolff/codecharta[web:31][web:40]</td></tr>
+<tr><td>githubocto/repo-visualizer</td><td>GitHub Action，自動產生 repo 檔案結構的 SVG 圖[web:30][web:20]</td><td>本身不含 LLM，但可作為 AI agent 的「基礎視覺化輸入」</td><td>想在 README 裡自動附上專案結構圖，或做最基礎的結構可視化[web:30][web:37]</td><td>任何在 GitHub 上的 repo，透過 Action 執行[web:30][web:33]</td><td>https://github.com/githubocto/repo-visualizer[web:30]</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="個別專案簡介與使用情境"><a class="header" href="#個別專案簡介與使用情境">個別專案簡介與使用情境</a></h2>
+<h3 id="better-code-review-graph"><a class="header" href="#better-code-review-graph">better-code-review-graph</a></h3>
+<ul>
+<li><strong>定位</strong>：<code>code-review-graph</code> 的加強版 fork，針對原專案修正了關鍵 bug，加入可配置的 embeddings 與更完整的 CI/CD。[web:12]</li>
+<li><strong>核心想法</strong>：利用 Tree-sitter 建立函式、類別、import、呼叫關係等結構圖，存到本地 SQLite，讓 AI coding assistant 只讀「與這次改動有關」的檔案。[web:1][web:4][web:9]</li>
+<li><strong>適合情境</strong>：
+<ul>
+<li>你已經在用 Claude Code / Cursor / Windsurf 等工具，覺得「整 repo 掃太貴、太吵」。[web:9]</li>
+<li>想做 impact analysis（改這支 function 會炸到哪些 call site / test）。[web:1][web:4]</li>
+</ul>
+</li>
+<li><strong>優點</strong>：
+<ul>
+<li>完全本地、無雲端、無 telemetry，對公司 code 也較安心。[web:1][web:4]</li>
+<li>透過 MCP，可以很自然地接到多種 IDE / agent 流程。[web:9][web:12]</li>
+</ul>
+</li>
+<li><strong>可能缺點</strong>：
+<ul>
+<li>需要先建好 graph 並與你的 AI 工作流整合，初期要花點時間調教。</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h3 id="deepwiki-open"><a class="header" href="#deepwiki-open">deepwiki-open</a></h3>
+<ul>
+<li><strong>定位</strong>：DeepWiki 的開源後端／自架版，接 GitHub / GitLab / Bitbucket repo，自動產生 Wiki + 圖表 + 問答介面。[web:35]</li>
+<li><strong>功能重點</strong>：
+<ul>
+<li>解析程式碼結構，為每個 repo 建立 Wiki 章節與文件層級。[web:35][web:38]</li>
+<li>自動產生 Mermaid 架構與資料流圖，搭配互動式文件頁面。[web:35][web:10]</li>
+<li>內建 RAG API，支援 Google Gemini、OpenAI、OpenRouter、Ollama 等模型，提供串流回答。[web:32][web:35]</li>
+<li>支援私有 repo（個人 access token）、多語系 README 等。[web:35]</li>
+</ul>
+</li>
+<li><strong>適合情境</strong>：
+<ul>
+<li>團隊 onboarding：新人可以直接在 DeepWiki 問「認證流程怎麼走」、「這個 service 負責什麼」。[web:2][web:5]</li>
+<li>你在做 AI agent（例如 Sidekick、Cursor rules generator）時，想要一個穩定的「架構摘要 + 圖」來源。[web:5]</li>
+</ul>
+</li>
+<li><strong>優點</strong>：
+<ul>
+<li>完整的 API + 自架能力，方便整合到現有內部平台。[web:32][web:35]</li>
+<li>文件、架構圖、QA 一次到位，對「理解陌生大型 repo」很有效。[web:2][web:35][web:38]</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h3 id="gitdiagram"><a class="header" href="#gitdiagram">GitDiagram</a></h3>
+<ul>
+<li><strong>定位</strong>：一個「把 GitHub repo 轉成互動架構圖」的專案，支援直接把網址中的 <code>github.com</code> 改成 <code>gitdiagram.com</code> 來生成圖表。[web:16][web:19][web:25]</li>
+<li><strong>功能重點</strong>：
+<ul>
+<li>即時把 repo 檔案結構轉成系統設計／架構圖，可點擊節點回到原始碼位置。[web:16][web:19]</li>
+<li>使用 GPT-5 系列模型（或相容 API）分析檔案樹與 README，產出 Mermaid.js 圖，並可匯出 PNG 或複製 Mermaid 原始碼。[web:19][web:16]</li>
+<li>支援自架部署與未來的 CLI / MCP / 瀏覽器擴充等整合（issue 中已有相關討論）。[web:19]</li>
+</ul>
+</li>
+<li><strong>適合情境</strong>：
+<ul>
+<li>快速理解開源專案結構、寫部落格或投影片時需要簡單清楚的架構示意圖。[web:16]</li>
+<li>搭配 LLM：先用 GitDiagram 產生架構圖，再把 Mermaid 丟給模型當「高階 context」。</li>
+</ul>
+</li>
+<li><strong>優點與限制</strong>：
+<ul>
+<li>上手極快，新手也容易懂。[web:16]</li>
+<li>目前主要支援 GitHub repo，對私有 repo / 其他 git 提供者需要依照專案 roadmap 追蹤。[web:19]</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h3 id="codeboarding"><a class="header" href="#codeboarding">CodeBoarding</a></h3>
+<ul>
+<li><strong>定位</strong>：從靜態分析與 Control Flow Graph 出發，用 LLM 生成多層級互動圖與 onboarding 文件的工具。[web:11][web:17][web:23]</li>
+<li><strong>功能重點</strong>：
+<ul>
+<li>先透過 LSP / 靜態分析建立 CFG，再用 LLM 生成功能區塊、架構圖與步驟說明，而不是單純 prompt 要模型「隨便畫圖」。[web:11][web:17]</li>
+<li>產出的圖可以多層 drill-down：先看 20 個左右的高階 cluster，再往下展開內部結構。[web:11]</li>
+<li>已公開多個範例 onboarding（例如 opencv-python），並已完全開源。[web:17][web:23][web:26]</li>
+</ul>
+</li>
+<li><strong>適合情境</strong>：
+<ul>
+<li>你想要一套「能長期維護」的 codebase onboarding 文件，而不只是一次性的圖。[web:17][web:23]</li>
+<li>想搭配 AI 開發：在讓 agent 大改程式前，可以先看 CodeBoarding 產生的視覺化來確認方向。[web:23][web:29]</li>
+</ul>
+</li>
+<li><strong>優點</strong>：
+<ul>
+<li>靜態分析先行，可以避免 LLM 完全憑想像亂畫架構圖的問題。[web:11]</li>
+<li>本身就是為「人類 + AI」共用而設計，適合你的 agent pipeline。</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h3 id="code-architecture-mapper"><a class="header" href="#code-architecture-mapper">code-architecture-mapper</a></h3>
+<ul>
+<li><strong>定位</strong>：透過「靜態分析 + AI agent」的 hybrid 模式，從 GitHub repo 自動產出：架構說明 Markdown、Mermaid 圖、多種視角的架構視圖與 centrality 分析。[web:8]</li>
+<li><strong>功能重點</strong>：
+<ul>
+<li>clone 公開 GitHub repo，對 Python 使用 Grimp，對 JS/TS 使用 Tree-sitter 做依賴分析。[web:8]</li>
+<li>用 LangGraph agent 產生可讀性高的 Architecture Overview（Markdown），並產出多種模式的 Mermaid 圖：Overview / Grouped / Detailed / Structure。[web:8]</li>
+<li>自動修正模型產生的圖錯誤（例如 Mermaid 語法錯誤），並提供檔案 centrality（fan-in / fan-out）來找熱點。[web:8]</li>
+</ul>
+</li>
+<li><strong>適合情境</strong>：
+<ul>
+<li>想一次拿到「文字＋圖＋指標」的架構文件，用於設計 review 或 refactor 規劃。</li>
+<li>想為開源專案補齊 architecture.md 類型的文檔。</li>
+</ul>
+</li>
+<li><strong>優點</strong>：
+<ul>
+<li>挺適合作為內部「一鍵產出架構說明」的基礎服務，結果可以再進一步編輯。</li>
+<li>已經把「圖語法修正」這類瑣事包起來，減少你自己反覆 prompt 的工夫。[web:8]</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h3 id="swark"><a class="header" href="#swark">Swark</a></h3>
+<ul>
+<li><strong>定位</strong>：VS Code extension，利用 LLM 從程式碼自動產生架構圖，與 GitHub Copilot 深度整合。[web:21]</li>
+<li><strong>功能重點</strong>：
+<ul>
+<li>預設與 GitHub Copilot 整合，使用者不需另外設定 API key。[web:21]</li>
+<li>把「如何解析語言／框架」的邏輯交給 LLM，因此理論上可支援任何語言，不必逐一實作 parser。[web:21]</li>
+<li>完全開源，可以檢查實作細節或自行擴充。[web:21]</li>
+</ul>
+</li>
+<li><strong>適合情境</strong>：
+<ul>
+<li>你以 VS Code 為主力 IDE，又已經在用 Copilot，希望一鍵從現有專案生出架構圖。</li>
+<li>想要「隨開即用」的架構圖，而不是跑一堆 CLI 或額外服務。</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h3 id="codecharta"><a class="header" href="#codecharta">CodeCharta</a></h3>
+<ul>
+<li><strong>定位</strong>：專注在「軟體城市」視覺化的工具，把複雜度、變更頻率、測試覆蓋等 metrics 視覺化，輔助架構與重構決策。[web:31][web:34]</li>
+<li><strong>功能重點</strong>：
+<ul>
+<li>利用 SonarQube、SourceMonitor 等工具匯入 metrics，然後把專案畫成 city map，每個 building 代表檔案或模組，大小與顏色對應不同指標。[web:34]</li>
+<li>可以比較不同時間點的「城市」，看出哪些區域變得更複雜或改動頻繁。[web:34]</li>
+<li>提供桌面版、線上版與 Docker 部署方式，維護方便。[web:31][web:34]</li>
+</ul>
+</li>
+<li><strong>適合情境</strong>：
+<ul>
+<li>架構審查、技術債盤點、決定 refactor / rewrite 優先順序。[web:34]</li>
+<li>作為 AI agent 的輔助輸入：例如告訴 agent「先從這些複雜度最高的 building 開始看」。</li>
+</ul>
+</li>
+<li><strong>補充</strong>：
+<ul>
+<li>本身不是 LLM 工具，但非常適合作為 AI pipeline 的「可視化與指標層」，在 AI 時代仍然很有價值。[web:34][web:36]</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h3 id="githuboctorepo-visualizer"><a class="header" href="#githuboctorepo-visualizer">githubocto/repo-visualizer</a></h3>
+<ul>
+<li><strong>定位</strong>：GitHub Next 的實驗性專案，以 GitHub Action 產生 repo 檔案結構的 SVG 圖，常見做法是直接嵌在 README 裡。[web:30][web:20][web:37]</li>
+<li><strong>功能重點</strong>：
+<ul>
+<li>作為 Action 跑在 CI 中，每次 push 時更新 diagram.svg。[web:30][web:37]</li>
+<li>可以透過 <code>excluded_paths</code>、<code>excluded_globs</code> 等參數排除 node_modules、build 產物等雜訊。[web:30][web:33]</li>
+<li>產出的只是一張靜態 SVG，沒有 LLM 參與，但可以讓 AI 更容易理解 repo 結構（把圖餵給多模態模型）。</li>
+</ul>
+</li>
+<li><strong>適合情境</strong>：
+<ul>
+<li>想要「零互動」的簡單可視化，把專案結構直接展示在 README 或文件裡。[web:30][web:37]</li>
+<li>當作其他工具（例如 DeepWiki、GitDiagram）的輕量補充。</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="與你現有流程的搭配建議"><a class="header" href="#與你現有流程的搭配建議">與你現有流程的搭配建議</a></h2>
+<ul>
+<li><strong>搭配 Claude / Cursor 這種 IDE 內 AI 助手</strong>：
+<ul>
+<li>用 <code>better-code-review-graph</code> 建立本地 graph，讓 assistant 查圖再決定要載入哪些檔案，減少 token 消耗與噪音。[web:1][web:4][web:9][web:12]</li>
+</ul>
+</li>
+<li><strong>搭配你自己寫的 multi-agent／RAG 系統</strong>：
+<ul>
+<li>用 <code>deepwiki-open</code> 提供「架構 Wiki + 圖」層，讓其他 agent 直接 query；Sidekick 這類工具就是這樣用 DeepWiki 來產生 claude.md / cursorrules.md 等摘要。[web:5][web:32][web:35]</li>
+<li><code>code-architecture-mapper</code> 可以當成一個「一次性產生架構文件」的離線步驟，把結果存到 repo 或 knowledge base 裡。[web:8]</li>
+</ul>
+</li>
+<li><strong>作為人類開發者的「視覺輔助」</strong>：
+<ul>
+<li>Onboarding 新人或看 OSS：優先考慮 <code>GitDiagram</code>、<code>CodeBoarding</code>，視覺化程度高、成本低。[web:16][web:19][web:17][web:23]</li>
+<li>做 refactor / 架構治理：先用 <code>CodeCharta</code> 看熱點，再搭配 AI 工具寫實際 refactor 計畫。[web:34][web:31]</li>
+</ul>
+</li>
+<li><strong>IDE 內即時查看</strong>：
+<ul>
+<li>如果你主力是 VS Code + Copilot，可以試 Swark，把架構圖生成流程塞回到編輯器體驗裡。[web:21]</li>
+</ul>
+</li>
+</ul>
+<p>這幾個專案大多可以互補而不是互斥：你可以先用 <code>CodeCharta</code>、<code>code-architecture-mapper</code> 與 <code>deepwiki-open</code> 打好「架構與文件地基」，再讓 <code>better-code-review-graph</code>、<code>GitDiagram</code>、<code>CodeBoarding</code> 等工具服務日常 AI coding／review 流程。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tools/2026-top-open-source-projects.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../tools/02_系統分析與效能工具.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tools/2026-top-open-source-projects.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../tools/02_系統分析與效能工具.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
