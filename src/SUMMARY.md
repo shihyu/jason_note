@@ -632,6 +632,7 @@
         - [vectorbt配對交易](strategy/vectorbt_配對.md)
         - [MAE&MFE分析](strategy/display_mae_mfe_analysis.md)
         - [Tick 矩陣回測原理說明](strategy/tick_matrix_backtest_explained.md)
+        - [成交量分桶熵因子解析與回測](strategy/成交量分桶熵因子解析與回測.md)
     - [量化工具與數據源](strategy/11_量化工具與數據源.md)
         - [FinLab](strategy/finlab.md)
         - [yfinance](strategy/yf.md)
