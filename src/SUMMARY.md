@@ -70,6 +70,7 @@
         - [AI 時代的程式碼 Trace 工具整理](tools/ai-code-trace-tools.md)
     - [系統分析與效能工具](tools/02_系統分析與效能工具.md)
         - [程式分析與效能工具完整指南](tools/cpp-analysis-tools.md)
+        - [用 AI Agent 與 Ghidra MCP 做基礎逆向工程](tools/reverse-engineering-with-ai-ghidra-mcp.md)
         - [C++/Rust 函數追蹤技術指南](tools/function-tracing-cpp-rust.md)
         - [uftrace 使用指南](tools/uftrace-guide.md)
         - [addr2line](tools/add-enter-and-exit-trace-for-your-function.md)
