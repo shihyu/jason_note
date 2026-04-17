@@ -93,3 +93,37 @@ A: 執行 `gh auth switch` 切換，或重新 `gh auth login`。
 
 **Q: credential.helper 路徑不對？**
 A: 用 `which gh` 確認 gh 的安裝路徑，通常是 `/usr/bin/gh` 或 `~/.local/bin/gh`。
+
+## `gh auth setup-git`  vs  手動設定
+
+GitHub CLI 提供兩種設定方式：
+
+### 方式一：文件中的手動設定（步驟 3）
+
+```bash
+# 登入
+gh auth login
+
+# 手動設定 credential helper
+git config --global credential.helper "/usr/bin/gh auth git-credential"
+```
+
+### 方式二：`gh auth setup-git`（自動化）
+
+```bash
+# 登入
+gh auth login
+
+# 一條龍自動設定 credential helper
+gh auth setup-git
+```
+
+### 差異對照
+
+| | 手動設定 | `gh auth setup-git` |
+|---|---|---|
+| 安裝 gh | 需手動 | 需手動 |
+| 登入 | `gh auth login` | `gh auth login` |
+| 設定 credential.helper | 手動 `git config` | 全自動 |
+
+**結論**：`gh auth setup-git` 就是把手動 `git config` 步驟自動化，一個命令搞定。其餘（安裝、登入）兩種方式相同。
