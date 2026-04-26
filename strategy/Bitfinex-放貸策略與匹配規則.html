@@ -1,0 +1,375 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Bitfinex 放貸策略與匹配規則 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="bitfinex-放貸策略與匹配規則"><a class="header" href="#bitfinex-放貸策略與匹配規則">Bitfinex 放貸策略與匹配規則</a></h1>
+<blockquote>
+<p>資料來源：Bitfinex 官方文件、API Docs、支援中心
+整理時間：2026-04-23</p>
+</blockquote>
+<hr />
+<h2 id="一核心運作機制"><a class="header" href="#一核心運作機制">一、核心運作機制</a></h2>
+<p>Bitfinex 的保證金放貸（Margin Funding）是一個 <strong>點對點（P2P）借貸市場</strong>，連接：</p>
+<ul>
+<li><strong>放貸方（Lender）</strong>：提供資金，賺取利息</li>
+<li><strong>借貸方（Borrower）</strong>：借入資金進行槓桿交易</li>
+</ul>
+<p><strong>關鍵元件：</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>元件</th><th>說明</th></tr></thead><tbody>
+<tr><td>Funding Wallet</td><td>專用錢包，用於提供保證金借貸</td></tr>
+<tr><td>Funding Order Book</td><td>掛單帳本，記錄所有待成交的借貸報價</td></tr>
+<tr><td>自動撮合</td><td>當借貸双方的報價匹配時，資金自動提供並開始計息</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="二利率類型rate-types"><a class="header" href="#二利率類型rate-types">二、利率類型（Rate Types）</a></h2>
+<h3 id="21-flash-return-ratefrr"><a class="header" href="#21-flash-return-ratefrr">2.1 Flash Return Rate（FRR）</a></h3>
+<p>Bitfinex 的專利自動利率機制，根據所有活躍借貸報價的加權平均即時計算「公平利率」，每小時更新一次以避免突發波動。</p>
+<h3 id="22-利率選項"><a class="header" href="#22-利率選項">2.2 利率選項</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>利率類型</th><th>說明</th></tr></thead><tbody>
+<tr><td><strong>LIMIT</strong></td><td>手動設定固定利率（如 0.01 = 1%）</td></tr>
+<tr><td><strong>FRR</strong></td><td>以撮合時市場利率為準，整個借款期間固定</td></tr>
+<tr><td><strong>FRRDELTAFIX</strong></td><td>FRR + 偏移量，撮合後利率靜態不變</td></tr>
+<tr><td><strong>FRRDELTAVAR</strong></td><td>FRR + 偏移量，撮合後利率隨 FRR <strong>動態更新</strong>（偏移量必須為正）</td></tr>
+</tbody></table>
+</div>
+<h3 id="23-利息計算公式"><a class="header" href="#23-利息計算公式">2.3 利息計算公式</a></h3>
+<pre><code>放貸方收益：amount × rate% × (seconds/86400) × 0.85   （扣除 15% 費用）
+借貸方費用：amount × rate% × (seconds/86400)
+</code></pre>
+<p><strong>收益入帳時間</strong>：約 UTC 01:30 每日</p>
+<hr />
+<h2 id="三匹配規則matching-rules"><a class="header" href="#三匹配規則matching-rules">三、匹配規則（Matching Rules）</a></h2>
+<h3 id="31-撮合條件"><a class="header" href="#31-撮合條件">3.1 撮合條件</a></h3>
+<p>借方與貸方報價必須同時滿足以下條件才能撮合：</p>
+<h4 id="1-利率匹配rate-matching"><a class="header" href="#1-利率匹配rate-matching">1. 利率匹配（Rate Matching）</a></h4>
+<ul>
+<li>固定利率（LIMIT）<strong>只能</strong>與固定利率撮合</li>
+<li>FRR 系列報價<strong>無法</strong>與固定利率撮合</li>
+<li>較低利率的報價<strong>優先</strong>被撮合（rate-priority）</li>
+</ul>
+<h4 id="2-期限匹配period-compatibility"><a class="header" href="#2-期限匹配period-compatibility">2. 期限匹配（Period Compatibility）</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>參數</th><th>數值</th></tr></thead><tbody>
+<tr><td>最短期限</td><td><strong>2 天</strong></td></tr>
+<tr><td>最長期限</td><td><strong>120 天</strong></td></tr>
+<tr><td>期限要求</td><td>放貸方的最大期限 <strong>必須 ≥</strong> 借方的請求期限</td></tr>
+</tbody></table>
+</div>
+<p><strong>範例</strong>：借方請求 10 天，則放貸方必須設定 ≥10 天</p>
+<h3 id="32-frr-行為特性"><a class="header" href="#32-frr-行為特性">3.2 FRR 行為特性</a></h3>
+<ul>
+<li>FRR 報價會自動調整，但<strong>不保證立即撮合</strong></li>
+<li>僅當市場借貸利率 <strong>≥ FRR 水準</strong>時才會成交</li>
+</ul>
+<hr />
+<h2 id="四放貸策略lending-strategies"><a class="header" href="#四放貸策略lending-strategies">四、放貸策略（Lending Strategies）</a></h2>
+<h3 id="41-策略選擇矩陣"><a class="header" href="#41-策略選擇矩陣">4.1 策略選擇矩陣</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>目標</th><th>推薦方式</th></tr></thead><tbody>
+<tr><td>懶人設定</td><td>FRR 或 FRRDELTAVAR，自動追蹤市場利率</td></tr>
+<tr><td>可預期收入</td><td>FRR + 固定利差，期限 7-30 天</td></tr>
+<tr><td>更高報酬</td><td>FRR + 浮動利差（如 +0.002% 至 +0.005%）</td></tr>
+<tr><td>快速撮合</td><td>FRR 或低固定利率</td></tr>
+<tr><td>保留流動性</td><td>短期限（2-15 天），拆分成小額報價</td></tr>
+</tbody></table>
+</div>
+<h3 id="42-期限策略"><a class="header" href="#42-期限策略">4.2 期限策略</a></h3>
+<ul>
+<li><strong>較長期限</strong>：通常利率較高，但流動性受限</li>
+<li><strong>較短期限</strong>：流動性佳，但需更頻繁調整</li>
+</ul>
+<h3 id="43-自動化工具"><a class="header" href="#43-自動化工具">4.3 自動化工具</a></h3>
+<p>Bitfinex 原生「Lending Pro」已於 <strong>2024 年 8 月停用</strong>，目前常用第三方自動借貸機器人：</p>
+<ul>
+<li><strong>Fuly.ai</strong></li>
+<li><strong>EarnUSD</strong></li>
+</ul>
+<blockquote>
+<p>⚠️ 這些工具僅需 <strong>「讀取」+「交易」</strong> 權限的 API Key，<strong>不需提現權限</strong>。</p>
+</blockquote>
+<h3 id="44-建議最低金額"><a class="header" href="#44-建議最低金額">4.4 建議最低金額</a></h3>
+<p>約 <strong>$150 USD 等值</strong>以上較具效益</p>
+<hr />
+<h2 id="五報價參數funding-offer-parameters"><a class="header" href="#五報價參數funding-offer-parameters">五、報價參數（Funding Offer Parameters）</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>參數</th><th>說明</th></tr></thead><tbody>
+<tr><td><strong>Amount</strong></td><td>可提供的資金數量</td></tr>
+<tr><td><strong>Period</strong></td><td>期限：2-120 天</td></tr>
+<tr><td><strong>Rate</strong></td><td>利率（手動或 FRR 系列）</td></tr>
+<tr><td><strong>RENEW flag</strong></td><td>資金歸還時自動續借</td></tr>
+<tr><td><strong>NO_CLOSE flag</strong></td><td>當倉位關閉時是否同步關閉借貸</td></tr>
+<tr><td><strong>HIDDEN</strong></td><td>隱藏報價（費用 18%，而非 15%）</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="六風險與費用"><a class="header" href="#六風險與費用">六、風險與費用</a></h2>
+<h3 id="61-費用結構"><a class="header" href="#61-費用結構">6.1 費用結構</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>類型</th><th>費率</th></tr></thead><tbody>
+<tr><td>標準放貸收益</td><td><strong>15%</strong> 費用</td></tr>
+<tr><td>隱藏報價</td><td><strong>18%</strong> 費用</td></tr>
+<tr><td>最低計費</td><td>即使 1 小時內歸還，仍 <strong>收取 1 小時費用</strong></td></tr>
+<tr><td>精度要求</td><td>收益金額需 <strong>至少 8 位小數</strong></td></tr>
+</tbody></table>
+</div>
+<h3 id="62-風險保護機制"><a class="header" href="#62-風險保護機制">6.2 風險保護機制</a></h3>
+<ul>
+<li>所有借貸皆有 <strong>借款人倉位抵押</strong></li>
+<li>Bitfinex 僅在倉位需融資但借貸帳本已耗盡時，才作為<strong>最後貸款方</strong></li>
+<li>自動 <strong>清算機制</strong> 保護放貸方免受違約影響</li>
+</ul>
+<h3 id="63-主要風險"><a class="header" href="#63-主要風險">6.3 主要風險</a></h3>
+<ul>
+<li>市場下跌時的 <strong>利率波動</strong></li>
+<li>極端行情下的 <strong>流動性約束</strong></li>
+<li>借款人被清算時影響借款可用性</li>
+<li>資金在借款期滿或借款人還款前<strong>無法動用</strong></li>
+</ul>
+<hr />
+<h2 id="七官方資源"><a class="header" href="#七官方資源">七、官方資源</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>資源</th><th>連結</th></tr></thead><tbody>
+<tr><td>Bitfinex 支援中心 - Margin Funding</td><td>https://support.bitfinex.com/hc/en-us/articles/115003428165-Margin-Funding-on-Bitfinex</td></tr>
+<tr><td>Bitfinex API v2 文件</td><td>https://docs.bitfinex.com/</td></tr>
+<tr><td>Bitfinex API Reference - Submit Funding Offer</td><td>https://docs.bitfinex.com/reference/rest-auth-submit-funding-offer</td></tr>
+<tr><td>Bitfinex Blog - Margin Lending 教學</td><td>https://blog.bitfinex.com/education/how-to-earn-with-margin-lending-on-bitfinex/</td></tr>
+<tr><td>What is Margin Funding（支援文章）</td><td>https://support.bitfinex.com/hc/en-us/articles/214441185-What-is-Margin-Funding</td></tr>
+</tbody></table>
+</div>
+<hr />
+<p><em>本文件由 AI 根據 Bitfinex 官方公開資訊整理，僅供參考，不構成投資建議。</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../strategy/Bitfinex放貸策略開發心得.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../strategy/13_高頻與演算法交易.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../strategy/Bitfinex放貸策略開發心得.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../strategy/13_高頻與演算法交易.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
