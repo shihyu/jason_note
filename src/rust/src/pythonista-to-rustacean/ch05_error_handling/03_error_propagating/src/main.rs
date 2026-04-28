@@ -60,11 +60,16 @@
 use std::error::Error;
 use std::fs::File;
 use std::io::{self, Read};
+use std::path::PathBuf;
+
+fn config_path() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("sample-config.ini")
+}
 
 // 範例：從設定檔讀取一個值
 fn read_config_value() -> Result<String, io::Error> {
     // 第一步：嘗試開啟檔案
-    let file_result = File::open("config.ini");
+    let file_result = File::open(config_path());
     let mut file = match file_result {
         Ok(f) => f,
         Err(e) => return Err(e), // Failure: Propagate the error to the caller
@@ -79,7 +84,7 @@ fn read_config_value() -> Result<String, io::Error> {
 
 // '?' 運算子版本
 fn read_config_value_with_q() -> Result<String, io::Error> {
-    let mut file = File::open("config.ini")?; // 1. ?
+    let mut file = File::open(config_path())?; // 1. ?
     let mut content = String::new();
     file.read_to_string(&mut content)?; // 2. ?
     Ok(content)
@@ -88,6 +93,7 @@ fn read_config_value_with_q() -> Result<String, io::Error> {
 // 觀察 main 函式的簽章
 fn main() -> Result<(), Box<dyn Error>> {
     // 我們現在可以在 main 裡面使用 '?' 了！
+    let _config_from_match_version = read_config_value()?;
     let config = read_config_value_with_q()?;
     println!("Config value: {}", config);
     // 如果一切順利，我們回傳 Ok(())

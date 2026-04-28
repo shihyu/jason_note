@@ -61,7 +61,7 @@
 pub mod model; // 1. 宣告我們手動建立的 model 模組
 
 use burn::{
-    backend::Wgpu,
+    backend::NdArray,
     module::Module,
     record::{FullPrecisionSettings, Recorder}, // 引入 Recorder Trait
     tensor::Tensor,
@@ -70,7 +70,7 @@ use burn_import::safetensors::{LoadArgs, SafetensorsFileRecorder}; // 2. 引入 
 
 use model::FCN; // 3. 引入我們手動定義的 FCN
 
-type MyBackend = Wgpu<f32>;
+type MyBackend = NdArray<f32>;
 
 fn main() {
     let device = Default::default();
@@ -79,7 +79,9 @@ fn main() {
     //    <FullPrecisionSettings> 代表我們期望以 f32 載入
     let recorder = SafetensorsFileRecorder::<FullPrecisionSettings>::default();
 
-    let load_args = LoadArgs::new("simple_fcn.safetensors".into())
+    let weights_path =
+        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("simple_fcn.safetensors");
+    let load_args = LoadArgs::new(weights_path)
         .with_key_remap("model\\.(.*)", "$1")
         .with_debug_print(); // <--- 啟用除錯列印
 

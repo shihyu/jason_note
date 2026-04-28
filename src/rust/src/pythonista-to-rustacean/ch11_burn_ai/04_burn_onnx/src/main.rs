@@ -71,7 +71,7 @@
 // 1. 宣告我們剛剛建立的 `model.rs` 檔案為一個模組
 pub mod model;
 
-use burn::backend::Wgpu;
+use burn::backend::NdArray;
 use burn::tensor::Tensor;
 
 // 2. 引入由 burn-import 自動生成的 `Model` 結構體
@@ -79,8 +79,8 @@ use burn::tensor::Tensor;
 use model::my_resnet::Model;
 
 // 由於我們只是推論，不需要自動微分，
-// 這裡使用 Wgpu<f32> 而非 Autodiff<Wgpu<f32>>
-type MyBackend = Wgpu<f32>;
+// 這裡使用 NdArray<f32> CPU 後端，避免預設執行依賴 GPU。
+type MyBackend = NdArray<f32>;
 
 fn main() {
     // 3. 建立 WGPU 裝置
