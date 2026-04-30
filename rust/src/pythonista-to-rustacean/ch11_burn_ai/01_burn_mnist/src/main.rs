@@ -23,9 +23,11 @@ use crate::{model::ModelConfig, training::TrainingConfig};
 // 從 burn 套件引入所需的模組
 use burn::{
     backend::Autodiff,      // Autodiff 用於自動微分（訓練時需要）
-    backend::Wgpu,          // Wgpu 是 GPU 加速後端
+    backend::NdArray,       // NdArray 是 CPU 後端，適合預設 smoke run
     data::dataset::Dataset, // 資料集 trait
     optim::AdamConfig,      // Adam 優化器的設定（訓練時需要）
+    prelude::Backend,
+    tensor::Tensor,
 };
 
 // [新增] 引入 std::env 以讀取命令列參數
@@ -34,37 +36,48 @@ use std::env;
 // [新增] 為了推論範例，我們需要載入 MnistDataset
 use burn::data::dataset::vision::MnistDataset;
 
+fn print_usage() {
+    println!("用法: cargo run -- [COMMAND]");
+    println!("COMMANDS:");
+    println!("  smoke    建立模型並執行一次 CPU 前向傳播（預設）");
+    println!("  train    訓練新模型並儲存");
+    println!("  infer    載入模型並對範例進行推論");
+}
+
+fn run_smoke<B: Backend>(device: &B::Device) {
+    println!("=== 執行 smoke 模式 ===");
+    let model = ModelConfig::new(10, 512).init::<B>(device);
+    let input = Tensor::<B, 3>::zeros([1, 28, 28], device);
+    let output = model.forward(input);
+    println!("模型前向傳播完成，輸出 shape: {:?}", output.shape());
+}
+
 fn main() {
     // 定義後端類型
-    type MyBackend = Wgpu<f32, i32>;
+    type MyBackend = NdArray<f32, i32>;
     type MyAutodiffBackend = Autodiff<MyBackend>;
 
-    // 獲取預設的 Wgpu 設備
-    let device = burn::backend::wgpu::WgpuDevice::default();
+    // 獲取預設的 CPU 設備
+    let device = Default::default();
 
     // 設定儲存訓練成品的目錄
-    let artifact_dir = "./tmp/burn_mnist_artifact";
+    let artifact_dir = format!("{}/tmp/burn_mnist_artifact", env!("CARGO_MANIFEST_DIR"));
 
     // --- [修改] 根據命令列參數選擇執行區塊 ---
     let args: Vec<String> = env::args().collect();
 
-    // args[0] 是程式名稱，args[1] 才是第一個參數
-    if args.len() < 2 {
-        eprintln!("用法: cargo run -- [COMMAND]");
-        eprintln!("COMMANDS:");
-        eprintln!("  train    訓練新模型並儲存");
-        eprintln!("  infer    載入模型並對範例進行推論");
-        std::process::exit(1);
-    }
+    // args[0] 是程式名稱，args[1] 才是第一個參數；預設執行快速 smoke run。
+    let command = args.get(1).map(String::as_str).unwrap_or("smoke");
 
-    let command = &args[1];
-
-    match command.as_str() {
+    match command {
+        "smoke" => {
+            run_smoke::<MyBackend>(&device);
+        }
         "train" => {
             println!("=== 執行訓練模式 ===");
             // 呼叫訓練函數
             crate::training::train::<MyAutodiffBackend>(
-                artifact_dir,
+                &artifact_dir,
                 TrainingConfig::new(ModelConfig::new(10, 512), AdamConfig::new()),
                 device.clone(),
             );
@@ -80,12 +93,15 @@ fn main() {
                 .expect("無法從 MNIST 測試集取得項目 #44");
 
             // 呼叫推論函數 (原先被註解的區塊)
-            crate::inference::infer::<MyBackend>(artifact_dir, device, item);
+            crate::inference::infer::<MyBackend>(&artifact_dir, device, item);
             println!("=== 推論完成 ===");
+        }
+        "help" | "--help" | "-h" => {
+            print_usage();
         }
         _ => {
             eprintln!("錯誤: 未知的指令 '{}'", command);
-            eprintln!("請使用 'train' 或 'infer'");
+            print_usage();
             std::process::exit(1);
         }
     }

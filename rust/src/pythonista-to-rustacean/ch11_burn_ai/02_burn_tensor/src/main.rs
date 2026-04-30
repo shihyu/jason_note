@@ -55,10 +55,10 @@
 //! cargo run --release
 //! ```
 //!
-use burn::backend::Wgpu;
+use burn::backend::NdArray;
 use burn::prelude::*;
 
-type B = Wgpu;
+type B = NdArray<f32, i32>;
 
 fn main() {
     let device: <B as Backend>::Device = Default::default();
@@ -147,7 +147,7 @@ fn main() {
     let sum_value = sum.into_scalar();
     println!("\n推力總和: {}", sum_value);
     // as_mut_slice 修改資料（需要 mut）
-    let mut mutable_tensor = Tensor::<Wgpu, 1>::from_floats([1.0, 2.0, 3.0], &device);
+    let mut mutable_tensor = Tensor::<B, 1>::from_floats([1.0, 2.0, 3.0], &device);
     let mut mutable_data = mutable_tensor.to_data();
     if let Ok(slice) = mutable_data.as_mut_slice::<f32>() {
         slice[0] = 999.0;

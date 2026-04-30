@@ -79,7 +79,11 @@
 //! margherita = MargheritaPizza("Margherita Special", "10", True)
 //! ```
 //!
-use pymodule mod inheritance_example {
+use pyo3::prelude::*;
+
+#[pymodule]
+mod inheritance_example {
+    use pyo3::prelude::*;
 
     // 1. 在父類別 Food 加上 subclass 屬性，
     //    告訴 PyO3 它未來可能會被繼承。

@@ -57,15 +57,51 @@
 //! ```
 //!
 use anyhow::Result;
-use candle_core::{DType, Device};
+use candle_core::{DType, Device, Module, Tensor};
 use candle_nn::{VarBuilder, VarMap};
+use std::env;
 
 mod data;
 mod models;
 mod ops;
 mod training;
 
-fn main() -> Result<()> {
+fn print_usage() {
+    println!("用法: cargo run -- [COMMAND]");
+    println!("COMMANDS:");
+    println!("  smoke    建立模型並執行一次 CPU 前向傳播（預設）");
+    println!("  full     下載 MNIST 並執行完整訓練流程");
+}
+
+fn run_smoke() -> Result<()> {
+    println!("==================================================");
+    println!("          MNIST 分類器 smoke run          ");
+    println!("==================================================");
+
+    let computation_device = Device::Cpu;
+    let sample = Tensor::zeros((1, 28 * 28), DType::F32, &computation_device)?;
+
+    let parameter_storage = VarMap::new();
+    let variable_builder =
+        VarBuilder::from_varmap(&parameter_storage, DType::F32, &computation_device);
+    let model = models::linear_manual::MnistClassifier::new(variable_builder)?;
+    let logits = model.forward(&sample)?;
+    println!(
+        "> Linear 模型前向傳播完成，輸出 shape: {:?}",
+        logits.shape()
+    );
+
+    let parameter_storage = VarMap::new();
+    let variable_builder =
+        VarBuilder::from_varmap(&parameter_storage, DType::F32, &computation_device);
+    let model = models::cnn::MnistClassifierCNN::new(variable_builder)?;
+    let logits = model.forward(&sample)?;
+    println!("> CNN 模型前向傳播完成，輸出 shape: {:?}", logits.shape());
+
+    Ok(())
+}
+
+fn run_full() -> Result<()> {
     // --- 1. 全域初始化設定 (Global Initialization) ---
     println!("==================================================");
     println!("          MNIST 分類器訓練程式          ");
@@ -73,9 +109,7 @@ fn main() -> Result<()> {
 
     println!("\n[1] 正在從 Hugging Face Hub 拉取並載入 MNIST 原始資料集...");
     let dataset = data::MnistDataset::new()?;
-    // let computation_device = Device::Cpu;
-    let computation_device =
-        Device::new_metal(0).map_err(|e| anyhow::anyhow!("無法初始化 Metal 設備: {}", e))?;
+    let computation_device = Device::Cpu;
 
     println!("> 原始資料載入完成。");
     println!("    - 訓練集圖片 Shape: {:?}", dataset.train_images.shape());
@@ -157,4 +191,20 @@ fn main() -> Result<()> {
     println!("==================================================");
 
     Ok(())
+}
+
+fn main() -> Result<()> {
+    let command = env::args().nth(1).unwrap_or_else(|| "smoke".to_string());
+
+    match command.as_str() {
+        "smoke" => run_smoke(),
+        "full" => run_full(),
+        "help" | "--help" | "-h" => {
+            print_usage();
+            Ok(())
+        }
+        _ => {
+            anyhow::bail!("未知指令 '{command}'，請使用 smoke、full 或 help")
+        }
+    }
 }
