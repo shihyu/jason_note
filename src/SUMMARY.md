@@ -68,6 +68,7 @@
         - [Thinking Protocol 中文指南](tools/thinking-protocol-zh-tw.md)
         - [2026 年將佔據主導地位的頂級開源專案](tools/2026-top-open-source-projects.md)
         - [AI 時代的程式碼 Trace 工具整理](tools/ai-code-trace-tools.md)
+        - [Neovim LSP 全語言程式碼追蹤攻略](tools/neovim-lsp-trace-code-guide.md)
     - [系統分析與效能工具](tools/02_系統分析與效能工具.md)
         - [程式分析與效能工具完整指南](tools/cpp-analysis-tools.md)
         - [用 AI Agent 與 Ghidra MCP 做基礎逆向工程](tools/reverse-engineering-with-ai-ghidra-mcp.md)
