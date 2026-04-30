@@ -20253,6 +20253,294 @@ kcachegrind callgrind.out.*
 <li><a href="https://github.com/gperftools/gperftools">Google Performance Tools</a></li>
 <li><a href="http://www.brendangregg.com/linuxperf.html">Linux Performance</a></li>
 </ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="slickedit-破解--暴力找出-license-check-位置"><a class="header" href="#slickedit-破解--暴力找出-license-check-位置">SlickEdit 破解 — 暴力找出 License Check 位置</a></h1>
+<h2 id="目標-1"><a class="header" href="#目標-1">目標</a></h2>
+<p>透過逆向工程定位 <code>vs</code> binary 中的 license 驗證邏輯，找到並修改阻止軟體運行的關鍵位址。</p>
+<hr />
+<h2 id="方法一二進制比對static-diff"><a class="header" href="#方法一二進制比對static-diff">方法一：二進制比對（Static Diff）</a></h2>
+<h3 id="原理"><a class="header" href="#原理">原理</a></h3>
+<p>比對「原始 trial 版」與「已破解版」的 hex 差異，快速找出被修改的 bytes。</p>
+<h3 id="步驟"><a class="header" href="#步驟">步驟</a></h3>
+<pre><code class="language-bash"># 1. 備份原始 binary
+cp /opt/slickedit/bin/vs /opt/slickedit/bin/vs.original
+
+# 2. 取得已破解版本（或自己修改後）
+#    假設你從網路下載到 vs.cracked
+
+# 3. 導出 hex 格式
+hexdump -C vs.original &gt; original.hex
+hexdump -C vs.cracked &gt; cracked.hex
+
+# 4. 比對差異
+diff original.hex cracked.hex
+
+# 輸出範例：
+# &lt; 000190f0  0f b6 45 d7 83 c4 4c 5b 5e 5f 5d c3 8b 75 c4 c6  |....L[^_]..u..|
+# &gt; 000190f0  b0 01 90 90 83 c4 4c 5b 5e 5f 5d c3 8b 75 c4 c6  |......L[^_]..u..|
+</code></pre>
+<h3 id="工具"><a class="header" href="#工具">工具</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>工具</th><th>用途</th></tr></thead><tbody>
+<tr><td><code>hexdump -C</code></td><td>導出可讀的 hex dump</td></tr>
+<tr><td><code>diff</code></td><td>比對兩檔案差異</td></tr>
+<tr><td><code>bindiff</code></td><td>Binja/IDA 的 binary diff 插件</td></tr>
+<tr><td><code>diaphora</code></td><td>IDA Pro 的差異比對工具</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="方法二動態調試gdb-debugging"><a class="header" href="#方法二動態調試gdb-debugging">方法二：動態調試（gdb Debugging）</a></h2>
+<h3 id="原理-1"><a class="header" href="#原理-1">原理</a></h3>
+<p>在程式運行時，逐步追蹤 license check 的執行流程，觀察程式在哪裡拒絕運行。</p>
+<h3 id="常用除錯指令"><a class="header" href="#常用除錯指令">常用除錯指令</a></h3>
+<pre><code class="language-bash">gdb /opt/slickedit/bin/vs
+
+# 起始軟體
+run
+
+# 中斷在感興趣的 function
+break fopen          # 開啟 .lic 檔
+break strcmp         # 比對 license 字串
+break open           # 開啟檔案
+break access         # 檢查檔案是否存在
+
+# 假設找到懷疑的 address
+break *0x08049123
+
+# 單步執行
+ni    # 下一條指令（不進 function call）
+si    # 下一條指令（進入 function call）
+
+# 印出暫存器 / 記憶體
+info registers
+x/16x $esp          # 看 stack 上的資料
+x/s 0x08049000      # 以字串格式顯示記憶體內容
+
+# 繼續執行
+continue
+</code></pre>
+<h3 id="範例追蹤-license-檔讀取"><a class="header" href="#範例追蹤-license-檔讀取">範例：追蹤 license 檔讀取</a></h3>
+<pre><code class="language-bash"># 找出讀取 license 檔的 code
+gdb /opt/slickedit/bin/vs
+# 在 fopen 下斷點
+break fopen
+run
+
+# 當斷點觸發時，查看 call stack
+backtrace
+# 這會顯示 license 驗證的 call chain
+
+# 查看參數（fopen 的 filename）
+print (char*) $eax   # 回傳值
+print (char*) $esp+4 # 第一個參數 (filename)
+</code></pre>
+<h3 id="參考常見-license-check-pattern"><a class="header" href="#參考常見-license-check-pattern">參考：常見 License Check Pattern</a></h3>
+<pre><code>fopen("./slickedit.lic")  或  fopen("/opt/slickedit/slickedit.lic")
+  ↓
+讀取檔案內容
+  ↓
+strstr(內容, "EXP_DATE")    → 找日期欄位
+  ↓
+atoi(日期字串)              → 轉成數字
+  ↓
+和今日日期比較
+  ↓
+過期 → 彈出提示視窗 / 拒絕啟動
+</code></pre>
+<hr />
+<h2 id="方法三字串搜尋string-search"><a class="header" href="#方法三字串搜尋string-search">方法三：字串搜尋（String Search）</a></h2>
+<h3 id="原理-2"><a class="header" href="#原理-2">原理</a></h3>
+<p>License 驗證一定會用到某些關鍵字元串（檔名、錯誤訊息等），搜尋這些字串再反追 trace 到參考位置。</p>
+<h3 id="步驟-1"><a class="header" href="#步驟-1">步驟</a></h3>
+<pre><code class="language-bash"># 1. 抽出所有可讀字串
+strings /opt/slickedit/bin/vs &gt; vs.strings
+
+# 2. 找 license 相關字串
+grep -i license vs.strings
+grep -i expired vs.strings
+grep -i trial vs.strings
+grep -i "slickedit.lic" vs.strings
+grep -i "not found" vs.strings
+grep -i "evaluation" vs.strings
+
+# 3. 取得該字串的 offset
+strings -t x /opt/slickedit/bin/vs | grep -i license
+# 輸出：  1a3f20 License file not found
+
+# 4. 在 binary 中找到這個字串的 reference
+#    （需要 objdump 反組譯）
+objdump -d /opt/slickedit/bin/vs | grep -C3 1a3f20
+
+# 5. 用 addr2line 轉成 function 名稱
+addr2line -e /opt/slickedit/bin/vs 0x1a3f20
+</code></pre>
+<h3 id="常用-string-關鍵字參考"><a class="header" href="#常用-string-關鍵字參考">常用 string 關鍵字參考</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>類別</th><th>關鍵字</th></tr></thead><tbody>
+<tr><td>檔案</td><td><code>slickedit.lic</code>, <code>.lic</code>, <code>license.dat</code></td></tr>
+<tr><td>錯誤訊息</td><td><code>License not found</code>, <code>Evaluation expired</code>, <code>Trial period ended</code></td></tr>
+<tr><td>日期</td><td><code>EXP_DATE</code>, <code>EXPDATE</code>, <code>expiration</code></td></tr>
+<tr><td>比較</td><td><code>greater</code>, <code>less</code>, <code>today</code>, <code>current date</code></td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="方法四暴力-patch-script"><a class="header" href="#方法四暴力-patch-script">方法四：暴力 Patch Script</a></h2>
+<h3 id="原理-3"><a class="header" href="#原理-3">原理</a></h3>
+<p>直接暴力搜尋特定 hex pattern（文中的 machine code 序列），自動找出所有出現位置並替換。</p>
+<pre><code class="language-python">#!/usr/bin/env python3
+"""
+slickedit_patch.py — 暴力搜尋並修補 license check
+"""
+
+import sys
+
+def find_pattern(data, pattern):
+    """找出所有符合 pattern 的位置"""
+    pattern = bytes.fromhex(pattern.replace(' ', ''))
+    results = []
+    pos = 0
+    while True:
+        idx = data.find(pattern, pos)
+        if idx == -1:
+            break
+        results.append(idx)
+        pos = idx + 1
+    return results
+
+def patch_data(data, offset, new_bytes):
+    """在特定 offset 將舊 bytes 換成新 bytes"""
+    new_bytes = bytes.fromhex(new_bytes.replace(' ', ''))
+    return data[:offset] + new_bytes + data[offset + len(new_bytes):]
+
+def main():
+    binary_path = '/opt/slickedit/bin/vs'
+
+    with open(binary_path, 'rb') as f:
+        data = f.read()
+
+    print(f"Binary 大小: {len(data)} bytes")
+
+    # 1. 搜尋原始 machine code pattern (文中的例子)
+    original_pattern = '0F B6 45 D7 83 C4 4C 5B 5E 5F 5D C3 8B 75 C4 C6'
+    print(f"\n搜尋原始 pattern:\n  {original_pattern}")
+
+    found = find_pattern(data, original_pattern)
+    if found:
+        for offset in found:
+            print(f"  ✓ 找到於 offset: 0x{offset:x}")
+    else:
+        print("  ✗ 找不到（可能已被別的方式修補）")
+
+    # 2. 搜尋破解後的 pattern
+    patched_pattern = 'B0 01 90 90 83 C4 4C 5B 5E 5F 5D C3 8B 75 C4 C6'
+    print(f"\n搜尋破解後 pattern:\n  {patched_pattern}")
+
+    found2 = find_pattern(data, patched_pattern)
+    if found2:
+        for offset in found2:
+            print(f"  ✓ 找到於 offset: 0x{offset:x} (已修補)")
+    else:
+        print("  ✗ 找不到（尚未修補）")
+
+    # 3. 若要實際修補
+    #    把 offset 0x190f0 處的 0F B6 45 D7 換成 B0 01 90 90
+    if found:
+        offset = found[0]
+        print(f"\n正在修補 offset 0x{offset:x}...")
+        new_data = patch_data(data, offset, 'B0 01 90 90')
+
+        with open(binary_path, 'wb') as f:
+            f.write(new_data)
+        print("  ✓ 修補完成")
+
+if __name__ == '__main__':
+    main()
+</code></pre>
+<h3 id="使用方式-7"><a class="header" href="#使用方式-7">使用方式</a></h3>
+<pre><code class="language-bash">chmod +x slickedit_patch.py
+./slickedit_patch.py
+</code></pre>
+<hr />
+<h2 id="方法五hook-系統函式ld_preload"><a class="header" href="#方法五hook-系統函式ld_preload">方法五：Hook 系統函式（LD_PRELOAD）</a></h2>
+<h3 id="原理-4"><a class="header" href="#原理-4">原理</a></h3>
+<p>不直接修改 binary，而是攔截標準 library call（<code>fopen</code>, <code>open</code>, <code>access</code> 等），在授權檢查前提前返回成功。</p>
+<h3 id="範例hook-fopen"><a class="header" href="#範例hook-fopen">範例：Hook fopen</a></h3>
+<pre><code class="language-c">/*
+hook_license.c
+編譯：gcc -shared -fPIC -o hook_license.so hook_license.c -ldl
+*/
+
+#define _GNU_SOURCE
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+#include &lt;dlfcn.h&gt;
+
+// 攔截 fopen
+FILE* fopen(const char* path, const char* mode) {
+    static FILE* (*real_fopen)(const char*, const char*) = NULL;
+
+    if (!real_fopen) {
+        real_fopen = dlsym(RTLD_NEXT, "fopen");
+    }
+
+    // 當嘗試開啟 license 檔案時，直接回傳 NULL（視為不存在）
+    if (strstr(path, ".lic") || strstr(path, "license")) {
+        fprintf(stderr, "[hook] fopen 被攔截: %s\n", path);
+        return NULL;  // 讓軟體走「找不到 license」的分支
+    }
+
+    return real_fopen(path, mode);
+}
+</code></pre>
+<pre><code class="language-bash"># 編譯
+gcc -shared -fPIC -o hook_license.so hook_license.c -ldl
+
+# 用 LD_PRELOAD 注入
+LD_PRELOAD=$(pwd)/hook_license.so /opt/slickedit/bin/vs
+</code></pre>
+<hr />
+<h2 id="實用工具清單"><a class="header" href="#實用工具清單">實用工具清單</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>工具</th><th>安裝方式</th><th>用途</th></tr></thead><tbody>
+<tr><td><code>gdb</code></td><td><code>apt install gdb</code></td><td>動態調試</td></tr>
+<tr><td><code>objdump</code></td><td><code>apt install binutils</code></td><td>反組譯</td></tr>
+<tr><td><code>strings</code></td><td><code>apt install binutils</code></td><td>抽出可讀字串</td></tr>
+<tr><td><code>hexdump</code></td><td><code>apt install util-linux</code></td><td>Hex 檢視</td></tr>
+<tr><td><code>ghex</code></td><td><code>apt install ghex</code></td><td>圖形化 Hex 編輯</td></tr>
+<tr><td><code>radare2</code></td><td><code>apt install radare2</code></td><td>整合逆向框架</td></tr>
+<tr><td><code> IDA Free</code></td><td>官網下載</td><td>專業反組譯工具</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="執行範例完整流程"><a class="header" href="#執行範例完整流程">執行範例：完整流程</a></h2>
+<pre><code class="language-bash"># Step 1: 字串搜尋，找 license 相關關鍵字
+strings -t x /opt/slickedit/bin/vs | grep -i license
+
+# Step 2: 對感興趣的 address 反組譯
+objdump -d /opt/slickedit/bin/vs | grep -C5 "license"
+
+# Step 3: 在 gdb 中對關鍵 function 下斷點
+gdb /opt/slickedit/bin/vs
+(gdb) break fopen
+(gdb) run
+# ... 逐步追蹤 ...
+
+# Step 4: 確認要修補的位置後，用 Python script 自動修補
+./slickedit_patch.py
+
+# Step 5: 驗證修補結果
+ghex /opt/slickedit/bin/vs &amp;
+# 搜尋 "B0 01 90 90"，確認出現在 0x190f0
+</code></pre>
+<hr />
+<h2 id="破解原理速查表"><a class="header" href="#破解原理速查表">破解原理速查表</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>原始 Machine Code</th><th>修補後</th><th>效果</th></tr></thead><tbody>
+<tr><td><code>0F B6 45 D7</code> (movzx)</td><td><code>B0 01 90 90</code> (mov al,1 + nop)</td><td>強制返回 valid</td></tr>
+<tr><td><code>75</code> (jnz)</td><td><code>EB</code> (jmp)</td><td>無條件跳過檢查</td></tr>
+<tr><td><code>74</code> (jz)</td><td><code>EB</code> (jmp)</td><td>無條件跳過失敗分支</td></tr>
+<tr><td><code>0F 84 xx xx xx xx</code> (je)</td><td><code>90 90 ...</code> (nop)</td><td>移除條件跳轉</td></tr>
+</tbody></table>
+</div>
+<blockquote>
+<p><strong>核心概念</strong>：License check 通常是一連串 <code>cmp</code> + <code>je/jne</code> 指令。將「判斷過期就跳到拒絕」的 branch 淹沒（nop），或將「失敗時設 al=0」改成「al=1」，即可繞過檢查。</p>
+</blockquote>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="用-ai-agent-與-ghidra-mcp-做基礎逆向工程"><a class="header" href="#用-ai-agent-與-ghidra-mcp-做基礎逆向工程">用 AI Agent 與 Ghidra MCP 做基礎逆向工程</a></h1>
 <p>最近碰到一個場合，拿到一個 Golang HTTP server 的 binary，需要把它拆開進一步研究，找到通往下一步的線索。</p>
 <p>但逆向工程這件事，我其實很陌生。我只會把 binary 丟進 Ghidra，接著就什麼都不會了，連搜尋字串都不太會。</p>
@@ -28538,7 +28826,7 @@ echo "   make test      # 執行"
 echo "   make inspect   # 檢查連結資訊"
 echo "   make clean     # 清理"
 </code></pre>
-<h3 id="使用方式-7"><a class="header" href="#使用方式-7">使用方式</a></h3>
+<h3 id="使用方式-8"><a class="header" href="#使用方式-8">使用方式</a></h3>
 <pre><code class="language-bash"># 1. 儲存並執行建立腳本
 chmod +x setup_test.sh
 ./setup_test.sh
@@ -43375,7 +43663,7 @@ finally:
     for t in threads:
         t.join(timeout=0)
 </code></pre>
-<h3 id="步驟"><a class="header" href="#步驟">步驟</a></h3>
+<h3 id="步驟-2"><a class="header" href="#步驟-2">步驟</a></h3>
 <ol>
 <li>
 <p><strong>執行上述 Python 程式碼</strong>來創建多個執行緒。</p>
@@ -50708,7 +50996,7 @@ impl Foo&lt;'_&gt; {
 <p>接下來就要開始進入應用篇了，下一篇我要來介紹一些個人覺得常用或好用的 crate 。</p>
 <h1 id="crates-與工具"><a class="header" href="#crates-與工具">Crates 與工具</a></h1>
 <p>這篇主要是來介紹 Rust 的社群所提供的方便的工具與 crate ，為避免重覆，若之後有打算深入介紹的我就不在這邊做介紹了。</p>
-<h2 id="工具"><a class="header" href="#工具">工具</a></h2>
+<h2 id="工具-1"><a class="header" href="#工具-1">工具</a></h2>
 <h2 id="clippy"><a class="header" href="#clippy">Clippy</a></h2>
 <p>Clippy 是個 Rust 的 linter (程式碼的風格與錯誤檢查工具) ，可以直接用 <code>rustup</code> 安裝：</p>
 <pre><code class="language-shell">$ rustup component add clippy-preview
@@ -112897,7 +113185,7 @@ go-callvis -nostd .
 <blockquote>
 <p><strong>重點方法</strong>：程式實際跑的時候，記錄每個函數的進入/離開，產出精確的呼叫樹</p>
 </blockquote>
-<h3 id="原理"><a class="header" href="#原理">原理</a></h3>
+<h3 id="原理-5"><a class="header" href="#原理-5">原理</a></h3>
 <p>在每個函數開頭加一行 <code>defer tracer.Enter()()</code>，利用 <code>runtime.Callers()</code> 取得真實 call stack，記錄：</p>
 <ul>
 <li>函數名稱、誰呼叫了它</li>
@@ -113032,7 +113320,7 @@ func (s *OrderService) PlaceOrder(userID, product string, amount float64) *Order
 <blockquote>
 <p><strong>完全不改程式碼</strong>，用 kernel 層 uprobe 追蹤函數進入</p>
 </blockquote>
-<h3 id="步驟-1"><a class="header" href="#步驟-1">步驟</a></h3>
+<h3 id="步驟-3"><a class="header" href="#步驟-3">步驟</a></h3>
 <pre><code class="language-bash"># 1. 編譯時關閉 inlining
 go build -gcflags='-l' -o myapp .
 
@@ -161367,7 +161655,7 @@ async function fetchUser(id: number): Promise&lt;User&gt; {
 <li><strong>Fastify</strong> - 高效能框架</li>
 <li><strong>NestJS</strong> - 企業級框架（類似 Spring）</li>
 </ul>
-<h3 id="工具-1"><a class="header" href="#工具-1">工具</a></h3>
+<h3 id="工具-2"><a class="header" href="#工具-2">工具</a></h3>
 <ul>
 <li><strong>nodemon</strong> - 自動重啟（開發用）</li>
 <li><strong>pm2</strong> - Process Manager（生產環境）</li>
@@ -239855,7 +240143,7 @@ tar -xjf vits-piper-zh_CN-huayan-medium.tar.bz2
 wget https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-zh-aishell3.tar.bz2
 tar -xjf vits-zh-aishell3.tar.bz2
 </code></pre>
-<h3 id="使用方式-8"><a class="header" href="#使用方式-8">使用方式</a></h3>
+<h3 id="使用方式-9"><a class="header" href="#使用方式-9">使用方式</a></h3>
 <h4 id="方法-1-命令行模式推薦"><a class="header" href="#方法-1-命令行模式推薦">方法 1: 命令行模式（推薦）</a></h4>
 <pre><code class="language-bash"># 基本使用
 python src/sherpa_onnx/text_to_speech_cn.py -t "你好世界" -o hello.wav
@@ -254618,7 +254906,7 @@ firefox tests/comparison_report.html
 </ol>
 <hr />
 <h2 id="-模型已驗證可投入使用"><a class="header" href="#-模型已驗證可投入使用">🚀 模型已驗證，可投入使用！</a></h2>
-<h3 id="使用方式-9"><a class="header" href="#使用方式-9">使用方式</a></h3>
+<h3 id="使用方式-10"><a class="header" href="#使用方式-10">使用方式</a></h3>
 <h4 id="1-直接使用訓練好的模型"><a class="header" href="#1-直接使用訓練好的模型">1. 直接使用訓練好的模型</a></h4>
 <pre><code class="language-python">from ultralytics import YOLO
 
@@ -259695,7 +259983,7 @@ mask = cv2.inRange(hsv_image, lower_red, upper_red)
 <p>「讓影像變得更平均」</p>
 <h4 id="-正確理解-1"><a class="header" href="#-正確理解-1">✅ 正確理解</a></h4>
 <p>「讓直方圖變得更平均（拉伸對比度）」</p>
-<h3 id="原理-1"><a class="header" href="#原理-1">原理</a></h3>
+<h3 id="原理-6"><a class="header" href="#原理-6">原理</a></h3>
 <ol>
 <li>計算影像的灰度直方圖</li>
 <li>計算累積分佈函數（CDF）</li>
@@ -259940,7 +260228,7 @@ canny = cv2.Canny(img, 100, 200)
 </code></pre>
 <hr />
 <h3 id="2-影像壓縮jpeg"><a class="header" href="#2-影像壓縮jpeg">2. 影像壓縮（JPEG）</a></h3>
-<h4 id="原理-2"><a class="header" href="#原理-2">原理</a></h4>
+<h4 id="原理-7"><a class="header" href="#原理-7">原理</a></h4>
 <p>人眼對高頻細節不敏感 → 可以丟棄部分高頻資訊</p>
 <h4 id="過程"><a class="header" href="#過程">過程</a></h4>
 <pre><code>1. 將影像轉換到頻率域（DCT 變換）
@@ -290940,7 +291228,7 @@ EMA是否發散</li>
 <p>　　■ <a href="https://htm0606.pixnet.net/blog/post/406155194-%E6%8A%80%E8%A1%93%E9%9D%A2%E9%81%B8%E8%82%A1">技術面選股</a></p>
 <p>　　■ <a href="https://htm0606.pixnet.net/blog/post/405914183-%E4%BD%8E%E5%83%B9%E8%BD%89%E6%A9%9F%E8%82%A1">低價轉機股</a></p>
 <p>　　■</p>
-<h3 id="原理-3"><a class="header" href="#原理-3"><strong>原理</strong></a></h3>
+<h3 id="原理-8"><a class="header" href="#原理-8"><strong>原理</strong></a></h3>
 <p>　　■ <a href="https://htm0606.pixnet.net/blog/post/406158938-%E5%83%B9%E6%A0%BC%E8%B5%B0%E5%8B%A2%E6%89%8D%E6%98%AF%E7%B5%82%E6%A5%B5%E7%9C%9F%E7%90%86">價格走勢才是終極真理</a></p>
 <p>　　■ <a href="https://htm0606.pixnet.net/blog/post/405816291-%E7%82%BA%E4%BD%95%E9%9C%80%E8%A6%81%E5%A4%9A%E5%85%83%E7%B3%BB%E7%B5%B1">為何需要多元系統</a></p>
 <h2 id="技術分析"><a class="header" href="#技術分析"><strong>技術分析</strong></a></h2>
@@ -333473,7 +333761,7 @@ void log_event(LogBuffer *lb, uint32_t event_type, uint64_t order_id, uint32_t d
 <hr />
 <h2 id="關鍵技術"><a class="header" href="#關鍵技術">關鍵技術</a></h2>
 <h3 id="1-大頁記憶體-hugepages"><a class="header" href="#1-大頁記憶體-hugepages">1. 大頁記憶體 (Hugepages)</a></h3>
-<h4 id="原理-4"><a class="header" href="#原理-4">原理</a></h4>
+<h4 id="原理-9"><a class="header" href="#原理-9">原理</a></h4>
 <pre><code>標準頁：4KB → TLB 項目多 → 未命中率高
 大頁：2MB/1GB → TLB 項目少 → 未命中率低
 </code></pre>
@@ -338284,7 +338572,7 @@ Tested with:
 <li>"The Art of Multiprocessor Programming" by Maurice Herlihy</li>
 <li>"Computer Architecture: A Quantitative Approach" by Hennessy &amp; Patterson</li>
 </ul>
-<h3 id="工具-2"><a class="header" href="#工具-2">工具</a></h3>
+<h3 id="工具-3"><a class="header" href="#工具-3">工具</a></h3>
 <ul>
 <li>perf: Linux 效能分析工具</li>
 <li>valgrind: 記憶體除錯和 profiling</li>
@@ -339020,7 +339308,7 @@ Cache Miss 率 &lt; 5%</li>
 <li>《Systems Performance: Enterprise and the Cloud》 - Brendan Gregg</li>
 <li>《The Art of Multiprocessor Programming》 - Maurice Herlihy</li>
 </ul>
-<h3 id="工具-3"><a class="header" href="#工具-3">工具</a></h3>
+<h3 id="工具-4"><a class="header" href="#工具-4">工具</a></h3>
 <ul>
 <li><strong>perf</strong>：Linux 效能分析工具</li>
 <li><strong>valgrind/cachegrind</strong>：Cache 分析</li>
@@ -344085,7 +344373,7 @@ cat ~/.config/opencode/opencode.json  # 確認 plugin 陣列中有 "oh-my-openag
 </tbody></table>
 </div>
 <hr />
-<h2 id="使用方式-10"><a class="header" href="#使用方式-10">使用方式</a></h2>
+<h2 id="使用方式-11"><a class="header" href="#使用方式-11">使用方式</a></h2>
 <h3 id="呼叫專門-agent"><a class="header" href="#呼叫專門-agent">呼叫專門 Agent</a></h3>
 <pre><code class="language-plaintext">Ask @oracle to review this architecture design   # 架構分析
 Ask @librarian how is this feature implemented   # 文件/程式碼搜尋
