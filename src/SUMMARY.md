@@ -71,6 +71,7 @@
         - [Neovim LSP 全語言程式碼追蹤攻略](tools/neovim-lsp-trace-code-guide.md)
     - [系統分析與效能工具](tools/02_系統分析與效能工具.md)
         - [程式分析與效能工具完整指南](tools/cpp-analysis-tools.md)
+        - [SlickEdit Crack Analysis](tools/SlickEdit_Crack_Analysis.md)
         - [用 AI Agent 與 Ghidra MCP 做基礎逆向工程](tools/reverse-engineering-with-ai-ghidra-mcp.md)
         - [C++/Rust 函數追蹤技術指南](tools/function-tracing-cpp-rust.md)
         - [uftrace 使用指南](tools/uftrace-guide.md)

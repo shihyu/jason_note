@@ -389,6 +389,7 @@ Visit repository and browse files directly in GitHub UI.
 
 ### Development
 - **Tools**: `src/tools/`
+- **SlickEdit Crack Analysis**: `src/tools/SlickEdit_Crack_Analysis.md`
 - **Git**: `src/git/`
 - **Software Engineering**: `src/software_engineering/`
 - **AI / LLM Tools**: `src/ai_agent/llm-tools.md`
