@@ -371,6 +371,18 @@ Visit repository and browse files directly in GitHub UI.
 - **Core Message**: 高效 Agent 的關鍵不是更強的模型，而是把「確定答案」的工作從 LLM 移到 CLI / CPU
 - **Time to Read**: 10-15 minutes
 
+#### **d) Autonomous Dev Team 使用指南**
+- **File**: `src/ai_agent/autonomous-dev-team-usage_zh-TW.md`
+- **Size**: 302 lines
+- **Content**:
+  - AI 驅動的自動化開發團隊流程
+  - Issue → Dev Agent → Review Agent → 自動合併的狀態機
+  - 三個核心腳本：autonomous-dev.sh、autonomous-review.sh、dispatch-local.sh
+  - Git worktree 隔離、TDD 流程、design canvas 整合
+  - Label 狀態機：autonomous → pending-dev → in-progress → pending-review → reviewing → approved → merged
+- **Features**: ASCII 架構圖、狀態機流程圖、腳本說明
+- **Time to Read**: 10-15 minutes
+
 ---
 
 ## 🔗 Quick Links
