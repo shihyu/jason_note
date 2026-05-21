@@ -607,6 +607,7 @@
         - [張松允投資心法](strategy/張松允投資心法.md)
         - [Qullamaggie 交易方法整理](strategy/Qullamaggie交易方法整理.md)
         - [Qullamaggie HTF 交易策略完整解析](strategy/qullamaggie-htf-trading-strategy.md)
+        - [Qullamaggie 與 Pradeep 區間擴張交易策略](strategy/Qullamaggie_Pradeep區間擴張交易策略.md)
     - [技術分析策略大全](strategy/06_技術分析策略大全.md)
         - [海龜交易法則](strategy/海龜投資法則.md)
         - [動能投資法](strategy/賺贏大盤的動能投資法.md)
