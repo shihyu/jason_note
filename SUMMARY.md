@@ -188,6 +188,7 @@ Successfully consolidated 8 Go-related source files into 3 comprehensive, produc
 ### Trading & Finance
 - **Strategy Development**: Backtesting, analysis, optimization
   - [炒股養家心法實戰筆記](src/strategy/炒股養家心法實戰筆記.md) - 短線情緒與題材交易
+  - [交易悟道_防賣飛策略](src/strategy/交易悟道_防賣飛策略.md) - 波段交易如何避免太早獲利了結
 - **High-Frequency Trading**: Latency, execution, risk
 - **Cryptocurrency**: Trading, analysis, security
 - **Data Analysis**: FinMind, financial data processing
