@@ -762,6 +762,7 @@
     - [別再裸用 Claude Code 了！32 個親測 Skills + 7 個 MCP 完整指南](ai_agent/Claude-Code-Skills與MCP完整指南.md)
     - [Claude Code 三大核心概念：Subagents、Commands、Skills 完整指南](ai_agent/claude-code-core-concepts.md)
     - [AI 寫程式的終極悖論：你越依賴它，越需要人類思考](ai_agent/ai-coding-paradox-rpi.md)
+    - [我錯了，還是要讀程式碼：Dex Horthy 重新檢討 RPI（CRISPY 工作流）](ai_agent/rpi-to-crispy-workflow.md)
     - [用 AI 高效學習：避開 PDF 陷阱的 3 個方法](ai_agent/ai-pdf-learning-guide.md)
     - [Claude Code 設定備份與跨機同步](ai_agent/claude-code-config-sync.md)
     - [DeepWiki-Open + Ollama：本機儲存庫分析安裝踩坑與穩定設定指南](ai_agent/deepwiki-open-ollama-local-repo-guide.md)
