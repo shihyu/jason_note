@@ -639,6 +639,7 @@
         - [AI受惠股分析](strategy/Taiwan-AI-Stocks-Extended-Analysis.md)
         - [AI 股票產業與訂單分析 Prompt 模板](strategy/AI_stock_analysis_prompts.md)
         - [AI產業完整供應鏈架構圖](strategy/AI產業完整架構圖.md)
+        - [AI 伺服器原物料產業鏈](strategy/ai-server-materials-supply-chain.md)
         - [台積電先進封裝設備股分析](strategy/台積電先進封裝設備股分析.md)
         - [台股族群輪動篩選整理](strategy/台股族群輪動篩選整理.md)
         - [Tick 數據買賣力道指標與橫切面 Quantile 分析](strategy/tick_買賣力道指標分析.md)
