@@ -66,19 +66,31 @@ model:
   default: "glm-5.2"
 ```
 
-**方式三：Custom Provider（強制指定 endpoint）**
+**方式三：Custom Provider（OpenAI 相容代理 / 第三方 endpoint）**
+
+適用場景：使用 cmkey.cn、openrouter、或其他 OpenAI-compatible 代理。
+
+`~/.hermes/.env`：
+
+```bash
+GLM_API_KEY=sk-your-actual-api-key
+```
+
+`~/.hermes/config.yaml`：
 
 ```yaml
-custom_providers:
-  - name: glm
-    base_url: https://api.z.ai/api/coding/paas/v4
-    key_env: GLM_API_KEY
-    api_mode: chat_completions
-
 model:
   default: glm-5.2
   provider: custom:glm
+
+custom_providers:
+  - name: glm
+    base_url: https://cmkey.cn/v1
+    key_env: GLM_API_KEY
+    api_mode: chat_completions
 ```
+
+> `api_mode: chat_completions` 表示使用 OpenAI `/v1/chat/completions` 格式。Hermes 支援 `chat_completions` 和 `anthropic_messages` 兩種模式。
 
 ---
 
@@ -91,6 +103,7 @@ model:
 | 中國通用 | `https://open.bigmodel.cn/api/paas/v4` | 中國用戶 |
 | OpenAI 相容 | `https://api.z.ai/api/openai/v1` | OpenAI SDK 相容 |
 | Anthropic 相容 | `https://api.z.ai/api/anthropic` | Claude Code 相容 |
+| cmkey.cn（代理） | `https://cmkey.cn/v1` | OpenAI 相容代理 |
 
 ---
 
@@ -120,7 +133,7 @@ model:
 ### 5.1 基本對話測試
 
 ```bash
-hermes chat -p "Hello! What model are you running on? Reply with just the model name."
+hermes chat -q "Hello! What model are you running on? Reply with just the model name." --provider custom:glm --model glm-5.2
 ```
 
 預期看到回覆為 `GLM-5.2` 或類似內容。
@@ -128,13 +141,20 @@ hermes chat -p "Hello! What model are you running on? Reply with just the model 
 ### 5.2 檢查設定
 
 ```bash
-hermes config show | grep '^model\.'
+grep -E '^model\.|^custom_providers' ~/.hermes/config.yaml
 ```
 
 預期輸出：
 ```
-model.provider: zai
-model.default: glm-5.2
+model:
+  default: glm-5.2
+  provider: custom:glm
+
+custom_providers:
+  - name: glm
+    base_url: https://cmkey.cn/v1
+    key_env: GLM_API_KEY
+    api_mode: chat_completions
 ```
 
 ### 5.3 診斷檢查
@@ -148,7 +168,7 @@ hermes doctor
 ### 5.4 工具呼叫測試
 
 ```bash
-hermes chat -p "列出目前目錄的檔案" --tools file_operations
+hermes chat -q "列出目前目錄的檔案" --provider custom:glm --model glm-5.2
 ```
 
 如果 agent 自動執行了 `ls` 並回傳結果，代表整個 agent loop（provider + tools）正常運作。
@@ -156,7 +176,7 @@ hermes chat -p "列出目前目錄的檔案" --tools file_operations
 ### 5.5 除錯模式
 
 ```bash
-hermes chat --provider zai --model glm-5.2 --verbose
+hermes chat --provider custom:glm --model glm-5.2 --verbose
 ```
 
 查看 log：
@@ -173,9 +193,14 @@ tail -f ~/.hermes/logs/errors.log
 
 ```yaml
 model:
-  provider: "zai"
-  default: "glm-5.2"
-  # context_length: 1000000  # GLM-5.2 支援 1M tokens
+  default: glm-5.2
+  provider: custom:glm
+
+custom_providers:
+  - name: glm
+    base_url: https://cmkey.cn/v1
+    key_env: GLM_API_KEY
+    api_mode: chat_completions
 
 terminal:
   backend: local
@@ -194,12 +219,12 @@ GLM_API_KEY=sk-your-actual-api-key
 | 指令 | 說明 |
 |---|---|
 | `hermes chat` | 開始對話 |
-| `hermes chat -p "..."` | 單次提問 |
+| `hermes chat -q "..."` | 單次提問 |
 | `hermes model` | 互動式切換模型 |
 | `hermes doctor` | 系統診斷 |
 | `hermes config show` | 查看完整設定 |
 | `hermes config set KEY VALUE` | 設定 config 值 |
-| `/model glm-5.2 --provider zai` | 對話中切換模型 |
+| `/model glm-5.2 --provider custom:glm` | 對話中切換模型 |
 | `hermes dashboard` | 開啟 Web 儀表板（`http://127.0.0.1:9119`） |
 
 ---
@@ -213,3 +238,4 @@ GLM_API_KEY=sk-your-actual-api-key
 | API 呼叫失敗 | Z.AI 會自動探測 endpoint，查看 `~/.hermes/logs/agent.log` |
 | `glm-5.2` 不在模型清單 | 試 `glm-5.1` 或 `/model custom:glm:glm-5.2` 強制指定 |
 | Context window 太小 | GLM-5.2 支援 1M tokens，config 加 `context_length: 1000000` |
+| cmkey.cn 連線失敗 | 確認 `GLM_API_KEY` 有效，檢查 `~/.hermes/logs/agent.log` |
