@@ -1,0 +1,671 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Hermes Agent Self-Evolution 深度解析 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="ai-agent-如何自我進化hermes-agent-self-evolution-深度解析---itech"><a class="header" href="#ai-agent-如何自我進化hermes-agent-self-evolution-深度解析---itech">AI Agent 如何自我進化？Hermes Agent Self-Evolution 深度解析 - iTech</a></h1>
+<h2 id="ai-agent-如何自我進化hermes-agent-self-evolution-深度解析"><a class="header" href="#ai-agent-如何自我進化hermes-agent-self-evolution-深度解析">AI Agent 如何自我進化？Hermes Agent Self-Evolution 深度解析</a></h2>
+<p>如果 AI Agent 能夠自己改進自己，會是什麼樣子？</p>
+<p>這不是科幻小說，而是 Nous Research 正在實作的技術。他們剛剛開放原始碼了 <strong>Hermes Agent Self-Evolution</strong> 專案 —— 一個讓 AI Agent 透過進化演算法自動最佳化自身技能、工具描述、系統提示和程式碼的系統。</p>
+<p><strong>關鍵點</strong>：不需要 GPU 訓練，成本僅 $2-10 每次最佳化，透過 API 呼叫實作，所有改進都需要人工審查。</p>
+<p>今天深入拆解這個專案，看看 AI 自我進化的未來。</p>
+<hr />
+<h2 id="一核心概念什麼是-hermes-agent-self-evolution"><a class="header" href="#一核心概念什麼是-hermes-agent-self-evolution">一、核心概念：什麼是 Hermes Agent Self-Evolution？</a></h2>
+<p><strong>定義</strong>：一個獨立的最佳化管道，透過自動化最佳化迴圈系統性地改進 Hermes Agent 的效能。</p>
+<p><strong>工作原理</strong>：讀取 Agent 的技能檔案、工具描述、系統提示和程式碼 → 產生評估資料集 → 使用進化演算法產生變體 → 評估效能 → 選擇最佳版本 → 建立 PR 供人工審查。</p>
+<p><strong>三大引擎</strong>：</p>
+<div class="table-wrapper"><table><thead><tr><th>引擎</th><th>最佳化目標</th><th>許可證</th><th>整合方式</th></tr></thead><tbody>
+<tr><td><strong>DSPy + GEPA</strong></td><td>技能、提示、指令、工具描述</td><td>MIT</td><td>原生 Python，主引擎</td></tr>
+<tr><td><strong>Darwinian Evolver</strong></td><td>程式碼檔案、演算法、工具實作</td><td>AGPL v3</td><td>外部 CLI</td></tr>
+<tr><td><strong>DSPy MIPROv2</strong></td><td>Few-shot 範例、指令文字</td><td>MIT</td><td>原生 Python，備用最佳化器</td></tr>
+</tbody></table>
+</div>
+<p><strong>核心亮點</strong>：</p>
+<p>⚡ <strong>無需 GPU 訓練</strong>：所有操作透過 API 呼叫完成，DSPy+GEPA 和 MIPROv2 最佳化的是提示、指令和範例的文字，不是模型權重。</p>
+<p><strong>理解"為什麼"失敗</strong>：GEPA 讀取執行追蹤來理解為什麼失敗（不僅僅是失敗的事實），然後提出有針對性的改進。</p>
+<p><strong>低成本</strong>：每次最佳化執行成本約 $2-10，不是昂貴的 GPU 訓練。</p>
+<p><strong>安全可控</strong>：所有變化透過 PR 人工審查，永不直接提交到主分支。</p>
+<hr />
+<h2 id="二核心技術dspy--gepa"><a class="header" href="#二核心技術dspy--gepa">二、核心技術：DSPy + GEPA</a></h2>
+<h3 id="21-什麼是-gepa"><a class="header" href="#21-什麼是-gepa">2.1 什麼是 GEPA？</a></h3>
+<p><strong>GEPA (Genetic-Pareto Prompt Evolution)</strong> 是整合到 DSPy 中的進化式提示最佳化演算法，具有以下特點：</p>
+<ul>
+<li>✅ <strong>反射性分析</strong>：讀取執行追蹤，理解失敗原因</li>
+<li>✅ <strong>少樣本高效</strong>：僅需 3 個範例即可工作</li>
+<li>✅ <strong>超越 RL</strong>：效能優於強化學習和之前的 DSPy 最佳化器</li>
+<li>✅ <strong>ICLR 2026 Oral</strong>：已發表於頂級會議</li>
+</ul>
+<h3 id="22-gepa-如何工作"><a class="header" href="#22-gepa-如何工作">2.2 GEPA 如何工作？</a></h3>
+<pre><code class="language-bash">讀取當前 skill/prompt/tool
+         ↓
+   產生評估資料集
+         ↓
+   GEPA 最佳化器 ←── 執行追蹤
+     │    ▲
+     ▼    │
+  候選變體 ────→ 評估
+     │
+  約束門控（測試、大小限制、基準測試）
+     ↓
+  最佳變體 ────→ PR 到 hermes-agent
+</code></pre>
+<p><strong>關鍵創新</strong>：GEPA 不只是看到"失敗了"，而是透過執行追蹤理解<strong>為什麼</strong>失敗，然後提出有針對性的改進。</p>
+<p>例如，如果 Agent 在某個任務上總是錯誤地選擇了工具，GEPA 會分析執行追蹤，發現混淆點，然後修改工具描述來減少這種混淆。</p>
+<h3 id="23-dspy-在其中的作用"><a class="header" href="#23-dspy-在其中的作用">2.3 DSPy 在其中的作用</a></h3>
+<p>DSPy 為 Hermes Agent Self-Evolution 提供了：</p>
+<ul>
+<li><strong>模組化抽象</strong>：將技能、工具描述、提示包裝為 DSPy 模組</li>
+<li><strong>最佳化框架</strong>：統一的最佳化介面</li>
+<li><strong>評估管道</strong>：批次執行評估任務</li>
+<li><strong>追蹤收集</strong>：擷取執行過程用於反射分析</li>
+</ul>
+<hr />
+<h2 id="三五階段進化路線圖"><a class="header" href="#三五階段進化路線圖">三、五階段進化路線圖</a></h2>
+<p>Hermes Agent Self-Evolution 的實施分為 5 個階段，每個階段都建立在前一階段的基礎上。</p>
+<h3 id="phase-1-技能檔案最佳化skillmd-已實作"><a class="header" href="#phase-1-技能檔案最佳化skillmd-已實作">Phase 1: 技能檔案最佳化（SKILL.md）✅ 已實作</a></h3>
+<p><strong>目標</strong>：最佳化 Agent 技能檔案，這些是 Agent 遵循的程式化指令。</p>
+<p><strong>方法</strong>：</p>
+<ol>
+<li>將技能文字包裝為 DSPy 模組</li>
+<li>透過 batch_runner 在測試任務上評估</li>
+<li>使用 GEPA 進化最佳化</li>
+</ol>
+<p><strong>為什麼有效</strong>：</p>
+<ul>
+<li>技能是純文字，易於變異</li>
+<li>效能可直接測量（Agent 是否正確完成了任務）</li>
+<li>改進效果明顯且易於驗證</li>
+</ul>
+<p><strong>範例</strong>：進化 <code>github-code-review</code> 技能，透過測試已知良好程式碼審查的資料集，產生更好的程式碼審查。</p>
+<p><strong>進度</strong>：✅ 已實作</p>
+<hr />
+<h3 id="phase-2-工具描述最佳化-計劃中"><a class="header" href="#phase-2-工具描述最佳化-計劃中">Phase 2: 工具描述最佳化 計劃中</a></h3>
+<p><strong>目標</strong>：最佳化工具架構中的描述欄位（Agent 在決定使用哪個工具時看到的內容）。</p>
+<p><strong>方法</strong>：</p>
+<ul>
+<li>GEPA 進化描述</li>
+<li>評估 Agent 是否為給定任務選擇了正確的工具</li>
+</ul>
+<p><strong>為什麼有效</strong>：</p>
+<ul>
+<li>工具選擇是一個分類問題，非常適合 DSPy 最佳化</li>
+<li>描述的微小改進可以顯著提高選擇準確性</li>
+</ul>
+<p><strong>範例</strong>：進化 <code>search_files</code> 的描述，使 Agent 更可靠地選擇它而不是 <code>terminal(grep)</code>。</p>
+<p><strong>約束</strong>：</p>
+<ul>
+<li>每個工具描述最多 500 字元（每次 API 呼叫都傳送）</li>
+<li>每個引數描述最多 200 字元</li>
+<li>必須保持事實準確（不能聲稱工具做了它做不到的事）</li>
+<li>Schema 結構（引數名稱、型別、必填欄位）是<strong>凍結</strong>的 —— 只有文字進化</li>
+</ul>
+<p><strong>進度</strong>： 計劃中</p>
+<hr />
+<h3 id="phase-3-系統提示最佳化-計劃中"><a class="header" href="#phase-3-系統提示最佳化-計劃中">Phase 3: 系統提示最佳化 計劃中</a></h3>
+<p><strong>目標</strong>：最佳化系統提示的部分（人格、策略、格式說明）。</p>
+<p><strong>方法</strong>：</p>
+<ul>
+<li>將 <code>prompt_builder.py</code> 部分引數化為 DSPy Signatures</li>
+<li>使用 GEPA 最佳化</li>
+</ul>
+<p><strong>為什麼有效</strong>：</p>
+<ul>
+<li>系統提示品質直接決定 Agent 行為品質</li>
+<li>小的提示改進可以產生大的行為變化</li>
+</ul>
+<p><strong>風險</strong>：</p>
+<ul>
+<li>⚠️ 必須小心不要破壞提示快取 —— 只能離線最佳化，部署為新版本</li>
+</ul>
+<p><strong>範例</strong>：進化"工具使用指南"部分，減少不必要的工具呼叫。</p>
+<p><strong>進度</strong>： 計劃中</p>
+<hr />
+<h3 id="phase-4-工具程式碼最佳化-計劃中"><a class="header" href="#phase-4-工具程式碼最佳化-計劃中">Phase 4: 工具程式碼最佳化 計劃中</a></h3>
+<p><strong>目標</strong>：最佳化工具實作程式碼、輔助函式。</p>
+<p><strong>方法</strong>：</p>
+<ul>
+<li>Darwinian Evolver（外部 CLI）</li>
+<li>透過 pytest + batch_runner 測試</li>
+</ul>
+<p><strong>為什麼有效</strong>：</p>
+<ul>
+<li>某些工具實作有微妙的 bug 或低效</li>
+<li>進化搜尋可以找到這些問題</li>
+</ul>
+<p><strong>風險</strong>：</p>
+<ul>
+<li>⚠️ 程式碼更改可能破壞東西 —— 需要強大的測試套件作為護欄</li>
+</ul>
+<p><strong>範例</strong>：進化 <code>file_tools.py</code> 補丁匹配以處理更多邊緣情況。</p>
+<p><strong>進度</strong>： 計劃中</p>
+<hr />
+<h3 id="phase-5-持續改進迴圈-計劃中"><a class="header" href="#phase-5-持續改進迴圈-計劃中">Phase 5: 持續改進迴圈 計劃中</a></h3>
+<p><strong>目標</strong>：自動化管道，無人值守執行。</p>
+<p><strong>進度</strong>： 計劃中</p>
+<hr />
+<h2 id="四完整工作流程"><a class="header" href="#四完整工作流程">四、完整工作流程</a></h2>
+<h3 id="41-高層流程"><a class="header" href="#41-高層流程">4.1 高層流程</a></h3>
+<pre><code class="language-vbnet">┌─────────────────────────────────────────────┐
+│ 1. SELECT TARGET                            │
+│ - 選擇技能、提示部分或工具                   │
+│ - 載入當前版本作為基線                       │
+│                                              │
+│ 2. BUILD EVALUATION DATASET                 │
+│ - 從 session_db 挖掘真實使用範例             │
+│ - 或使用手工製作的測試用例                   │
+│ - 分割：訓練 / 驗證 / 測試                   │
+│                                              │
+│ 3. WRAP AS DSPy MODULE                      │
+│ - 技能文字 → dspy.Signature                 │
+│ - Agent 工作流 → dspy.ReAct                  │
+│ - 工具選擇 → dspy.Predict                   │
+│                                              │
+│ 4. RUN OPTIMIZER                            │
+│ - 主要：dspy.GEPA（反射性進化）             │
+│ - 備用：dspy.MIPROv2（貝葉斯最佳化）         │
+│ - 程式碼：Darwinian Evolver（外部 CLI）       │
+│                                              │
+│ 5. EVALUATE &amp; COMPARE                       │
+│ - 在保留測試上執行最佳化版本                   │
+│ - 比較：準確性、成本、延遲                   │
+│ - 統計顯著性檢驗                             │
+│                                              │
+│ 6. DEPLOY (with approval)                   │
+│ - Git 提交改進版本                           │
+│ - A/B 測試（可選）                           │
+│ - 透過 git revert 復原機制                   │
+└─────────────────────────────────────────────┘
+</code></pre>
+<h3 id="42-詳細架構"><a class="header" href="#42-詳細架構">4.2 詳細架構</a></h3>
+<pre><code class="language-markdown">SessionDB（真實對話）
+         │
+         ▼
+  評估資料集構建器
+         │
+         ├──► DSPy 模組包裝器（將技能/提示/工具包裝為可最佳化模組）
+         │   │
+         │   ▼
+         │   GEPA 最佳化器 ←── 執行追蹤（來自 batch_runner）
+         │     │ ▲
+         │     │ │
+         │     ▼ │
+         │     候選變體 ────► batch_runner（平行評估）
+         │     │
+         │     ├──► 約束驗證（測試、字元限制、快取相容性）
+         │     │
+         │     ▼
+         │     最佳有效變體
+         │     │
+         ▼     ▼
+  Git 分支 + PR（包含 diff、指標、前後對比）
+         │
+         ▼
+  人工審查與合併
+</code></pre>
+<hr />
+<h2 id="五評估資料來源"><a class="header" href="#五評估資料來源">五、評估資料來源</a></h2>
+<p>Hermes Agent Self-Evolution 支援四種評估資料來源：</p>
+<h3 id="source-a-合成產生主要引導"><a class="header" href="#source-a-合成產生主要引導">Source A: 合成產生（主要，引導）</a></h3>
+<p>使用強模型（如 Claude Opus）為技能產生測試用例：</p>
+<ol>
+<li>讀取技能檔案 → 理解它的作用</li>
+<li>產生 15-30 個真實的 <code>(task_input, expected_behavior)</code> 對</li>
+<li><code>expected_behavior</code> 是一個評分標準，不是確切文字 —— 例如，"應該識別第 42 行的 SQL 注入"而不是"輸出這個確切的字串"</li>
+<li>分割：10 訓練 / 5 驗證 / 5-10 保留</li>
+</ol>
+<p>GEPA 僅需 3 個範例即可工作，這足夠開始。</p>
+<h3 id="source-b-sessiondb-挖掘真實使用llm-as-judge-評分"><a class="header" href="#source-b-sessiondb-挖掘真實使用llm-as-judge-評分">Source B: SessionDB 挖掘（真實使用，LLM-as-judge 評分）</a></h3>
+<ol>
+<li>查詢 SessionDB 找到載入技能的會話（在訊息中搜尋技能名稱）</li>
+<li>提取使用者給出的任務和 Agent 的完整回應</li>
+<li>使用 LLM-as-judge 根據評分標準對每個 <code>(task, response)</code> 對評分</li>
+<li>高分對成為"好"範例；低分對成為 GEPA 反射分析的失敗案例</li>
+</ol>
+<p>隨著更多真實使用積累，這會逐漸改善。</p>
+<h3 id="source-c-手工製作的黃金集可選高價值技能"><a class="header" href="#source-c-手工製作的黃金集可選高價值技能">Source C: 手工製作的黃金集（可選，高價值技能）</a></h3>
+<p>手工編寫的測試用例和預期輸出，儲存為 JSONL：</p>
+<pre><code class="language-bash">~/.hermes/evolution/datasets/&lt;skill-name&gt;/golden.jsonl
+</code></pre>
+<p>最高品質的訊號，但需要人工努力 —— 保留給關鍵技能。</p>
+<h3 id="source-d-特定技能的自動評估適用時"><a class="header" href="#source-d-特定技能的自動評估適用時">Source D: 特定技能的自動評估（適用時）</a></h3>
+<ul>
+<li><strong>systematic-debugging</strong>：植入 bug，執行技能，檢查測試是否透過</li>
+<li><strong>arxiv</strong>：搜尋已知論文，檢查是否找到</li>
+<li><strong>github-code-review</strong>：建立包含植入問題的 PR，檢查是否被擷取</li>
+</ul>
+<p>不是所有技能都有自然的自動評估 —— 這是獎勵，不是要求。</p>
+<hr />
+<h2 id="六評分llm-as-judge-with-rubrics"><a class="header" href="#六評分llm-as-judge-with-rubrics">六、評分：LLM-as-judge with Rubrics</a></h2>
+<p>對於大多數技能，沒有明確的對/錯 —— 品質是主觀的。適應度函式使用 LLM 評分器根據評分標準評分：</p>
+<ul>
+<li><strong>Agent 是否遵循了技能的過程？</strong>（0-1）</li>
+<li><strong>輸出是否正確/有用？</strong>（0-1）</li>
+<li><strong>是否簡潔（在 token 預算內）？</strong>（0-1）</li>
+</ul>
+<p>評分標準是特定於技能的，並儲存在評估資料集旁邊。</p>
+<hr />
+<h2 id="七約束與護欄"><a class="header" href="#七約束與護欄">七、約束與護欄</a></h2>
+<p>每個進化變體必須透過：</p>
+<p>✅ <strong>完整測試套件</strong>：<code>pytest tests/ -q</code> 必須 100% 透過</p>
+<p>✅ <strong>大小限制</strong>：</p>
+<ul>
+<li>技能 ≤ 15KB</li>
+<li>工具描述 ≤ 500 字元</li>
+</ul>
+<p>✅ <strong>快取相容性</strong>：無對話中途更改</p>
+<p>✅ <strong>語義保持</strong>：不得偏離原始目的</p>
+<p>✅ <strong>PR 審查</strong>：所有更改都經過人工審查，從不直接提交</p>
+<hr />
+<h2 id="八專案結構"><a class="header" href="#八專案結構">八、專案結構</a></h2>
+<pre><code class="language-php">hermes-agent-self-evolution/  # 獨立倉庫
+├── PLAN.md                   # 本檔案
+├── README.md                 # 設定、使用、範例
+├── pyproject.toml            # 包設定 + 依賴（dspy, gepa）
+│
+├── evolution/                # 主包
+│   ├── core/                 # 共享基礎設施
+│   │   ├── __init__.py
+│   │   ├── dataset_builder.py      # 評估資料集產生
+│   │   ├── fitness.py              # 適應度函式
+│   │   ├── constraints.py          # 約束驗證器
+│   │   ├── benchmark_gate.py       # 基準門控
+│   │   └── pr_builder.py           # 自動產生 PR
+│   │
+│   ├── skills/               # Phase 1: 技能進化
+│   │   ├── evolve_skill.py         # 主入口
+│   │   └── skill_module.py         # 將 SKILL.md 包裝為 DSPy 模組
+│   │
+│   ├── tools/                # Phase 2: 工具描述進化
+│   ├── prompts/              # Phase 3: 系統提示進化
+│   ├── code/                 # Phase 4: 程式碼進化（Darwinian Evolver）
+│   └── monitor/              # Phase 5: 持續迴圈
+│
+├── datasets/                 # 產生的評估資料集（gitignored，本機）
+│   ├── skills/
+│   └── tools/
+│
+└── tests/                    # 測試套件
+</code></pre>
+<hr />
+<h2 id="九使用範例"><a class="header" href="#九使用範例">九、使用範例</a></h2>
+<h3 id="安裝"><a class="header" href="#安裝">安裝</a></h3>
+<pre><code class="language-bash"># 克隆並安裝
+git clone https://github.com/NousResearch/hermes-agent-self-evolution.git
+cd hermes-agent-self-evolution
+pip install -e ".[dev]"
+
+# 指向 hermes-agent 倉庫（從 ~/.hermes/hermes-agent 或環境變數自動檢測）
+export HERMES_AGENT_REPO=~/.hermes/hermes-agent
+</code></pre>
+<h3 id="phase-1-進化一個技能"><a class="header" href="#phase-1-進化一個技能">Phase 1: 進化一個技能</a></h3>
+<pre><code class="language-bash"># 使用會話歷史的自動產生評估資料
+python -m evolution.skills.evolve_skill \
+  --skill github-code-review \
+  --iterations 10 \
+  --eval-source sessiondb
+
+# 或使用合成評估資料
+python -m evolution.skills.evolve_skill \
+  --skill github-code-review \
+  --iterations 10 \
+  --eval-source synthetic
+</code></pre>
+<h3 id="phase-2-進化工具描述"><a class="header" href="#phase-2-進化工具描述">Phase 2: 進化工具描述</a></h3>
+<pre><code class="language-bash">python -m evolution.tools.evolve_tool_descriptions \
+  --iterations 5 \
+  --benchmark-gate tblite-fast
+</code></pre>
+<h3 id="phase-3-進化系統提示部分"><a class="header" href="#phase-3-進化系統提示部分">Phase 3: 進化系統提示部分</a></h3>
+<pre><code class="language-bash">python -m evolution.prompts.evolve_prompt_section \
+  --section MEMORY_GUIDANCE \
+  --iterations 5
+</code></pre>
+<h3 id="phase-4-進化工具程式碼"><a class="header" href="#phase-4-進化工具程式碼">Phase 4: 進化工具程式碼</a></h3>
+<pre><code class="language-bash">python -m evolution.code.evolve_tool_code \
+  --tool file_tools \
+  --bug-issue 742 \
+  --iterations 10
+</code></pre>
+<p><strong>所有命令都輸出針對 hermes-agent 的 PR 分支 + 摘要。人工合併。</strong></p>
+<hr />
+<h2 id="十關鍵設計決策"><a class="header" href="#十關鍵設計決策">十、關鍵設計決策</a></h2>
+<h3 id="101-為什麼獨立倉庫"><a class="header" href="#101-為什麼獨立倉庫">10.1 為什麼獨立倉庫？</a></h3>
+<p>Hermes Agent Self-Evolution 存在於自己的倉庫中，<strong>獨立於 hermes-agent</strong>。它：</p>
+<ul>
+<li>pip 安裝或克隆 hermes-agent 來存取其基礎設施</li>
+<li>將進化版本輸出到 git 分支</li>
+<li>建立 PR 供人工審查</li>
+</ul>
+<p><strong>hermes-agent 程式碼庫無需任何更改</strong>。</p>
+<h3 id="102-為什麼需要人工審查"><a class="header" href="#102-為什麼需要人工審查">10.2 為什麼需要人工審查？</a></h3>
+<p>所有變化都透過 PR 人工審查：</p>
+<ul>
+<li>安全性：防止惡意或錯誤的自我修改</li>
+<li>語義保持：確保進化不偏離原始目的</li>
+<li>品質控制：人工驗證改進是真實的</li>
+<li>可追溯性：完整的 Git 歷史記錄所有進化譜系</li>
+</ul>
+<h3 id="103-為什麼階段式實施"><a class="header" href="#103-為什麼階段式實施">10.3 為什麼階段式實施？</a></h3>
+<p>階段是順序的 —— 每個階段都建立在前一個階段的基礎設施上，並且必須在進入下一個階段之前證明自己。</p>
+<p><strong>流程</strong>：</p>
+<pre><code class="language-erlang">Phase 1 ──► 驗證門控 ──► Phase 2 ──► 驗證門控 ──► Phase 3 ──► ...
+  構建      是否真的       構建      是否有效       構建
+  &amp; 測試     有改進？      &amp; 測試     且沒有破壞     &amp; 測試
+</code></pre>
+<p>如果某個階段沒有產生有意義的改進（進化變體不比基線好），我們停止並重新評估再進入下一個階段。</p>
+<hr />
+<h2 id="十一實際影響與意義"><a class="header" href="#十一實際影響與意義">十一、實際影響與意義</a></h2>
+<h3 id="111-對-ai-agent-開發的意義"><a class="header" href="#111-對-ai-agent-開發的意義">11.1 對 AI Agent 開發的意義</a></h3>
+<p><strong>1. 持續改進</strong>：Agent 可以在人工監督下不斷自我改進</p>
+<p><strong>2. 低門檻最佳化</strong>：無需大規模 GPU 訓練，任何團隊都可以使用</p>
+<p><strong>3. 資料驅動</strong>：基於真實使用資料和評估指標最佳化，而非猜測</p>
+<p><strong>4. 可追溯性</strong>：完整的 Git 歷史記錄所有改進，可以復原</p>
+<h3 id="112-對-ai-安全的意義"><a class="header" href="#112-對-ai-安全的意義">11.2 對 AI 安全的意義</a></h3>
+<p><strong>1. 人工審查</strong>：所有改進都需要人工批准，防止不受控制的自我修改</p>
+<p><strong>2. 測試護欄</strong>：完整的測試套件確保改進不會破壞現有功能</p>
+<p><strong>3. 語義保持</strong>：約束確保進化不會偏離原始目的</p>
+<p><strong>4. 透明性</strong>：PR 中的 diff 清晰顯示所有更改</p>
+<h3 id="113-對-ai-研究的意義"><a class="header" href="#113-對-ai-研究的意義">11.3 對 AI 研究的意義</a></h3>
+<p><strong>1. 理論到實踐</strong>：將 ICLR 2026 Oral 論文 GEPA 應用於真實系統</p>
+<p><strong>2. 新正規化</strong>：探索 AI Agent 自我進化的新正規化</p>
+<p><strong>3. 可復現</strong>：開放原始碼實作，社群可以復現和擴充套件</p>
+<hr />
+<h2 id="十二侷限性"><a class="header" href="#十二侷限性">十二、侷限性</a></h2>
+<p><strong>1. 依賴評估資料品質</strong>：進化效果取決於評估資料集的品質和代表性</p>
+<p><strong>2. 計算成本</strong>：雖然比 GPU 訓練便宜，但多次迭代仍需 API 呼叫成本</p>
+<p><strong>3. 需要人工審查</strong>：每個改進都需要人工審查，可能成為瓶頸</p>
+<p><strong>4. 適用範圍</strong>：主要適用於基於文字的最佳化，不適用於所有型別的改進</p>
+<p><strong>5. 局部最優</strong>：進化演算法可能陷入局部最優，需要多次執行或隨機重啟</p>
+<hr />
+<h2 id="十三未來展望"><a class="header" href="#十三未來展望">十三、未來展望</a></h2>
+<h3 id="短期1-3-個月"><a class="header" href="#短期1-3-個月">短期（1-3 個月）</a></h3>
+<ul>
+<li>✅ 完成 Phase 1-3 的實施和驗證</li>
+<li>✅ 在多個技能上證明改進效果</li>
+<li>✅ 建立完整的評估和基準測試基礎設施</li>
+</ul>
+<h3 id="中期3-6-個月"><a class="header" href="#中期3-6-個月">中期（3-6 個月）</a></h3>
+<ul>
+<li>完成 Phase 4-5 的實施</li>
+<li>建立自動化持續改進管道</li>
+<li>擴充套件到更多 AI Agent 系統</li>
+</ul>
+<h3 id="長期6-12-個月"><a class="header" href="#長期6-12-個月">長期（6-12 個月）</a></h3>
+<ul>
+<li>探索跨 Agent 的知識共享</li>
+<li>開發更進階的進化策略</li>
+<li>建立社群貢獻的評估資料集</li>
+</ul>
+<hr />
+<h2 id="十四如何貢獻"><a class="header" href="#十四如何貢獻">十四、如何貢獻？</a></h2>
+<p>如果你想為 Hermes Agent Self-Evolution 做出貢獻：</p>
+<ol>
+<li><strong>報告問題</strong>：在 GitHub Issues 中報告 bug</li>
+<li><strong>提交 PR</strong>：改處理程式式碼、檔案或測試</li>
+<li><strong>貢獻評估資料</strong>：為特定技能貢獻高品質的測試用例</li>
+<li><strong>分享經驗</strong>：在你的專案中使用並分享經驗</li>
+</ol>
+<hr />
+<h2 id="十五相關資源"><a class="header" href="#十五相關資源">十五、相關資源</a></h2>
+<ul>
+<li><strong>GitHub 倉庫</strong>：https://github.com/NousResearch/hermes-agent-self-evolution</li>
+<li><strong>PLAN.md</strong>：完整的架構、評估資料策略、約束、基準測試整合和階段性時間表</li>
+<li><strong>DSPy</strong>：https://github.com/stanfordnlp/dspy</li>
+<li><strong>GEPA 論文</strong>：ICLR 2026 Oral（待釋出）</li>
+<li><strong>Nous Research</strong>：https://nousresearch.com/</li>
+</ul>
+<hr />
+<h2 id="十六總結"><a class="header" href="#十六總結">十六、總結</a></h2>
+<p>Hermes Agent Self-Evolution 代表了 AI Agent 自我進化的一個重要里程碑。透過結合 DSPy 和 GEPA，它實作了一個既安全又有效的自我改進系統。</p>
+<p><strong>核心優勢</strong>：</p>
+<ul>
+<li><strong>資料驅動</strong>：基於真實使用資料和評估指標</li>
+<li><strong>安全可控</strong>：所有改進需要人工審查</li>
+<li><strong>低成本</strong>：無需 GPU，僅 $2-10 每次最佳化</li>
+<li><strong>持續改進</strong>：自動化迴圈，無人值守執行</li>
+<li><strong>可追溯</strong>：完整的 Git 歷史記錄所有改進</li>
+</ul>
+<p><strong>未來展望</strong>：隨著更多階段的完成和社群的參與，我們有理由相信 AI Agent 的自我進化將成為一個標準能力，推動整個行業的發展。</p>
+<hr />
+<p><strong>作者</strong>: TheAIEra<br />
+<strong>來源</strong>: 公眾號：AI 人工智慧時代</p>
+<p><em>本文首發於 AI 人工智慧時代，轉載請註明出處。</em></p>
+<p><em>關注公眾號，獲取更多 AI 技術乾貨！</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../ai_agent/agent-team-ma-strategy.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../lifestyle/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../ai_agent/agent-team-ma-strategy.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../lifestyle/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
