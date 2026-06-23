@@ -573,6 +573,7 @@
         - [韭菜的自我修養](strategy/韭菜的自我修養核心要點.md)
         - [投資策略與複利增長](strategy/投資策略與複利增長完整指南.md)
         - [大賺小賠交易心法](strategy/大賺小賠交易心法_供需策略與心態管理.md)
+        - [為什麼你總是賣飛十倍股](strategy/為什麼你總是賣飛十倍股.md)
         - [多空操作祕笈：牛熊市場獲利心法](strategy/多空操作祕笈：牛熊市場獲利心法.md)
         - [巨人傑交易心法與實戰策略](strategy/巨人傑-交易心法與實戰策略精華.md)
         - [炒股養家乾貨合集](strategy/炒股養家乾貨合集.md)
@@ -777,6 +778,7 @@
     - [搜尋 API 比較：Tavily / Serper / Exa / DuckDuckGo / Brave](ai_agent/search-api-comparison.md)
     - [Claude Code 上下文工程：四層壓縮機制](ai_agent/claude-code-context-engineering.md)
     - [MA 黃金交叉策略回測系統 - Agent Team 開發計畫](ai_agent/agent-team-ma-strategy.md)
+    - [Hermes Agent Self-Evolution 深度解析](ai_agent/Hermes-Agent-Self-Evolution-深度解析.md)
 
 ## Lifestyle & Resources
 - [台北生活指南](lifestyle/README.md)
