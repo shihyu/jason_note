@@ -8,6 +8,7 @@
     - [GCP SSH](ubuntu/gcp.md)
     - [Wine](ubuntu/wine.md)
     - [Ubuntu 藍牙設備設定指南](ubuntu/ubuntu_bluetooth_setup.md)
+    - [Ubuntu 休眠喚醒後鍵盤無法輸入 — 修復記錄](ubuntu/ubuntu-suspend-keyboard-fix.md)
 - [操作系統學習筆記](os/os.md)
     - [xv6 操作系統分析與實踐](os/xv6_analysis.md)
     - [xv6 操作系統完整分析](os/full_xv6_analysis.md)
