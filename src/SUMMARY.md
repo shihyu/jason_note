@@ -593,6 +593,7 @@
         - [林睿閎風暴比投資策略](strategy/林睿閎風暴比投資策略.md)
         - [短線強勢股老三哲學操作策略](strategy/短線強勢股老三哲學操作策略.md)
         - [輝哥大盤訊號與選擇權避險心法](strategy/輝哥大盤訊號與選擇權避險心法.md)
+        - [鐘崑禎囤貨與暴利選股策略](strategy/鐘崑禎囤貨與暴利選股策略.md)
         - [Put 避險與碗型底選股心法](strategy/Put避險與碗型底選股心法.md)
     - [phcebus菲式思考](strategy/02_台灣大師心法_phcebus菲式思考.md)
         - [phcebus](strategy/phcebus/phcebus.md)
