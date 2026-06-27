@@ -818,7 +818,7 @@ hciconfig -a
 <li>公司網路環境可能有安全限制，需要管理員權限設定</li>
 <li>定期更新系統以獲得最新的藍牙驅動支援</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="ubuntu-休眠喚醒後鍵盤無法輸入--修復記錄"><a class="header" href="#ubuntu-休眠喚醒後鍵盤無法輸入--修復記錄">Ubuntu 休眠喚醒後鍵盤無法輸入 — 修復記錄</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="ubuntu-休眠喚醒後登入密碼框無法輸入--排查與修復記錄"><a class="header" href="#ubuntu-休眠喚醒後登入密碼框無法輸入--排查與修復記錄">Ubuntu 休眠喚醒後登入密碼框無法輸入 — 排查與修復記錄</a></h1>
 <h2 id="環境"><a class="header" href="#環境">環境</a></h2>
 <ul>
 <li>Ubuntu 24.04.4 LTS</li>
@@ -828,24 +828,110 @@ hciconfig -a
 <li>鍵盤：CX 2.4G Wireless Receiver（USB dongle 無線接收器）</li>
 </ul>
 <h2 id="症狀"><a class="header" href="#症狀">症狀</a></h2>
-<p>休眠喚醒後進入登入畫面，鍵盤完全無法輸入密碼。滑鼠正常。非每次都發生，偶發性。</p>
-<h2 id="原因"><a class="header" href="#原因">原因</a></h2>
+<p>休眠喚醒後進入登入或鎖定畫面，密碼框無法輸入。滑鼠正常。非每次都發生，偶發性。</p>
+<p>這次重點是：鍵盤確定可以使用，但登入密碼框不吃鍵盤輸入。</p>
+<p>先分兩類判斷：</p>
+<ol>
+<li><strong>鍵盤完全失效</strong>
+<ul>
+<li><code>Caps Lock</code> 燈不反應</li>
+<li><code>Ctrl+Alt+F3</code> 無法切到 TTY</li>
+<li>拔插 USB 接收器後才恢復</li>
+<li>較像 USB HID / 無線接收器 / autosuspend 問題</li>
+</ul>
+</li>
+<li><strong>鍵盤可用，但密碼框不能輸入</strong>
+<ul>
+<li><code>Caps Lock</code> 或其他按鍵有反應</li>
+<li><code>Ctrl+Alt+F3</code> 可以切 TTY</li>
+<li>只有 GDM/GNOME 登入或鎖定畫面的密碼框不吃字</li>
+<li>較像 GDM/GNOME lock screen focus、input method 或 session unlock 問題</li>
+</ul>
+</li>
+</ol>
+<h2 id="立即脫困流程"><a class="header" href="#立即脫困流程">立即脫困流程</a></h2>
+<p>按破壞性由低到高處理。</p>
+<h3 id="1-重新取得輸入焦點"><a class="header" href="#1-重新取得輸入焦點">1. 重新取得輸入焦點</a></h3>
+<p>在登入或鎖定畫面先試：</p>
+<ol>
+<li>按 <code>Esc</code></li>
+<li>用滑鼠點密碼框</li>
+<li>按 <code>Ctrl+Alt+F3</code> 切到 TTY</li>
+<li>再按 <code>Ctrl+Alt+F2</code> 或 <code>Ctrl+Alt+F1</code> 回到圖形畫面</li>
+</ol>
+<p>如果回到圖形畫面後密碼框恢復，主因比較可能是 lock screen / GDM focus 卡住。</p>
+<h3 id="2-從-tty-解鎖-session"><a class="header" href="#2-從-tty-解鎖-session">2. 從 TTY 解鎖 session</a></h3>
+<p>如果 <code>Ctrl+Alt+F3</code> 可用：</p>
+<pre><code class="language-bash">loginctl list-sessions
+loginctl unlock-sessions
+</code></pre>
+<p>然後按 <code>Ctrl+Alt+F2</code> 或 <code>Ctrl+Alt+F1</code> 回圖形畫面。</p>
+<h3 id="3-只在必要時重啟-gdm"><a class="header" href="#3-只在必要時重啟-gdm">3. 只在必要時重啟 GDM</a></h3>
+<p>如果圖形登入畫面仍卡住，且可以接受圖形 session 被中斷，才使用：</p>
+<pre><code class="language-bash">sudo systemctl restart gdm3
+</code></pre>
+<p>注意：這可能會關掉目前圖形 session，未儲存工作可能遺失。</p>
+<h3 id="4-usb-接收器分支"><a class="header" href="#4-usb-接收器分支">4. USB 接收器分支</a></h3>
+<p>如果鍵盤本身也失效，先拔掉 USB 接收器，重插後等 3 秒。若重插後恢復，才優先懷疑 USB autosuspend 或 USB 控制器 resume 問題。</p>
+<h2 id="可能原因"><a class="header" href="#可能原因">可能原因</a></h2>
 <p>USB 無線接收器在休眠時被 Linux USB autosuspend 斷電，喚醒時 RF 無線協定 handshake 未能自動重建，導致 HID 鍵盤端點無法正確註冊回輸入層。</p>
-<h2 id="解法"><a class="header" href="#解法">解法</a></h2>
+<p>但如果鍵盤確定可用，只是密碼框不能輸入，原因不一定是 USB。更可能是：</p>
+<ul>
+<li>GNOME lock screen 或 GDM greeter 的輸入焦點卡住</li>
+<li>input method / IBus 狀態異常</li>
+<li>resume 後圖形 session 與 lock screen 狀態不同步</li>
+</ul>
+<h2 id="debug-指令"><a class="header" href="#debug-指令">Debug 指令</a></h2>
+<h3 id="確認-usb-autosuspend-參數是否生效"><a class="header" href="#確認-usb-autosuspend-參數是否生效">確認 USB autosuspend 參數是否生效</a></h3>
+<pre><code class="language-bash">cat /proc/cmdline
+cat /sys/module/usbcore/parameters/autosuspend
+</code></pre>
+<p>若有套用 <code>usbcore.autosuspend=-1</code>，第二個指令通常會顯示 <code>-1</code>。</p>
+<h3 id="查-usb--hid--resume-log"><a class="header" href="#查-usb--hid--resume-log">查 USB / HID / resume log</a></h3>
+<p>目前這次開機：</p>
+<pre><code class="language-bash">journalctl -b -k --no-pager | rg -i 'usb|hid|xhci|suspend|resume|keyboard|input'
+</code></pre>
+<p>前一次開機：</p>
+<pre><code class="language-bash">journalctl -b -1 -k --no-pager | rg -i 'usb|hid|xhci|suspend|resume|keyboard|input'
+</code></pre>
+<h3 id="查-gdm--gnome--input-method-log"><a class="header" href="#查-gdm--gnome--input-method-log">查 GDM / GNOME / input method log</a></h3>
+<pre><code class="language-bash">journalctl -b --no-pager | rg -i 'gdm|gnome-shell|ibus|input|keyboard'
+</code></pre>
+<p>如果 USB/HID 沒有斷線或重新註冊失敗，但 GDM、GNOME shell 或 IBus 有錯誤，優先處理登入畫面/input method 分支。</p>
+<h2 id="永久修復選項"><a class="header" href="#永久修復選項">永久修復選項</a></h2>
+<h3 id="選項-ausb-autosuspend-修復"><a class="header" href="#選項-ausb-autosuspend-修復">選項 A：USB autosuspend 修復</a></h3>
 <p>關閉 USB 自動省電，防止接收器在休眠時斷電：</p>
 <pre><code class="language-bash">sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash usbcore.autosuspend=-1"/' /etc/default/grub
 sudo update-grub
 sudo reboot
 </code></pre>
 <p>重開機後永久生效。</p>
-<h2 id="副作用"><a class="header" href="#副作用">副作用</a></h2>
-<p>無。桌機不依賴電池，USB 不省電對功耗影響可忽略。</p>
-<h2 id="替代方案免重開自救"><a class="header" href="#替代方案免重開自救">替代方案（免重開自救）</a></h2>
-<p>下次發生時：</p>
-<ol>
-<li>拔掉 USB 接收器 → 重插 → 等 3 秒</li>
-<li>或 <code>Ctrl+Alt+F3</code> → 登入終端 → <code>sudo systemctl restart gdm3</code></li>
-</ol>
+<p>回滾：</p>
+<pre><code class="language-bash">sudo sed -i 's/ usbcore.autosuspend=-1//g' /etc/default/grub
+sudo update-grub
+sudo reboot
+</code></pre>
+<p>適用情境：</p>
+<ul>
+<li>鍵盤接收器拔插後恢復</li>
+<li>kernel log 有 USB/HID resume 異常</li>
+<li><code>Ctrl+Alt+F3</code> 也無法使用</li>
+</ul>
+<h3 id="選項-b登入畫面--鎖定畫面分支"><a class="header" href="#選項-b登入畫面--鎖定畫面分支">選項 B：登入畫面 / 鎖定畫面分支</a></h3>
+<p>如果鍵盤可用但密碼框不吃輸入，先不要把問題歸因為 USB。優先收集 GDM/GNOME log，並用「立即脫困流程」確認是否是 focus 或 lock screen 狀態問題。</p>
+<p>可觀察：</p>
+<ul>
+<li>切 TTY 再切回來是否恢復</li>
+<li><code>loginctl unlock-sessions</code> 是否能解鎖</li>
+<li>是否只有 suspend resume 後發生</li>
+<li>是否和輸入法切換、螢幕鎖定、外接螢幕喚醒順序有關</li>
+</ul>
+<h2 id="副作用與風險"><a class="header" href="#副作用與風險">副作用與風險</a></h2>
+<ul>
+<li><code>usbcore.autosuspend=-1</code> 會全域關閉 USB autosuspend。桌機通常影響很小；筆電可能增加耗電。</li>
+<li><code>sudo systemctl restart gdm3</code> 可能中斷目前圖形 session，未儲存工作可能遺失。</li>
+<li>如果根因是 GNOME lock screen/input focus，USB autosuspend 修復可能不會改善。</li>
+</ul>
 <h2 id="參考"><a class="header" href="#參考">參考</a></h2>
 <ul>
 <li><a href="https://askubuntu.com/questions/1418676/keyboard-not-working-after-suspend-on-ubuntu-22-04">Ask Ubuntu: Keyboard not working after suspend on Ubuntu 22.04</a></li>
@@ -260279,7 +260365,7 @@ canny = cv2.Canny(img, 100, 200)
 <h3 id="3-去摩爾紋"><a class="header" href="#3-去摩爾紋">3. 去摩爾紋</a></h3>
 <h4 id="問題"><a class="header" href="#問題">問題</a></h4>
 <p>用相機拍螢幕或網狀物時出現的波紋圖案</p>
-<h4 id="原因-1"><a class="header" href="#原因-1">原因</a></h4>
+<h4 id="原因"><a class="header" href="#原因">原因</a></h4>
 <p>摩爾紋是「特定頻率的干涉」現象</p>
 <h4 id="解決方法"><a class="header" href="#解決方法">解決方法</a></h4>
 <pre><code>1. 轉換到頻率域
@@ -290679,6 +290765,50 @@ anyfly 在 2012-08-24 13:45 發表<br />
 <li><strong>不要預設高點</strong>：不要因為指數到了 3 萬點或 4 萬點就預設是頂部。預設高點會讓人提早下車，錯失後續翻倍的報酬率。</li>
 <li><strong>不買債券或高股息</strong>：因為短期內大幅降息的機率較低，且通膨仍高，所以現階段不買進債券與高股息相關商品。</li>
 </ol>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="鐘崑禎囤貨與暴利選股策略"><a class="header" href="#鐘崑禎囤貨與暴利選股策略">鐘崑禎囤貨與暴利選股策略</a></h1>
+<p>根據摩爾證券投顧鐘崑禎分析師的觀點，近期進場心態與各類股選股策略可整理如下。</p>
+<h2 id="核心心態囤貨與暴利哲學"><a class="header" href="#核心心態囤貨與暴利哲學">核心心態：囤貨與暴利哲學</a></h2>
+<ul>
+<li><strong>真正的暴利時機</strong>：真正的暴利通常不是出現在大盤創高時。大盤創高比較像是準備收割獲利的時機；真正適合加碼的時點，往往落在大盤破底、震盪或拉回的時候，因為投資人才有機會用較便宜的價格買進更多部位。</li>
+<li><strong>換季大特價囤貨策略</strong>：現在買股票就像夏天買冬裝，應趁大盤急跌或震盪時，用便宜價格先囤貨，買進未來有機會上漲的股票。耐心等待台股日後創新高時，就能較從容地收割這波行情。</li>
+</ul>
+<h2 id="一大型權值股與市值型-etf無腦買進法"><a class="header" href="#一大型權值股與市值型-etf無腦買進法">一、大型權值股與市值型 ETF：無腦買進法</a></h2>
+<ul>
+<li><strong>選股邏輯</strong>：這類標的買的是高度穩定性，而不是短線爆發力。</li>
+<li><strong>推薦標的</strong>：
+<ul>
+<li><strong>權值股</strong>：台積電、鴻海（2317）、廣達（2382）。這類股票長線趨勢明確，且鴻海與廣達目前的預估本益比偏低，不到 15 倍，遇到大盤急跌時可分批承接。</li>
+<li><strong>市值型 ETF</strong>：0050、006208、0056 等，逢低也能相對安心低接。</li>
+</ul>
+</li>
+<li><strong>例外觀察：聯發科</strong>：同為權值股的聯發科目前本益比稍高，不建議直接無腦買進。較適合等跌深一點、出現下影線並開始築底轉強後，再慢慢切入。</li>
+</ul>
+<h2 id="二中小型股優先挑選有實質營收保護"><a class="header" href="#二中小型股優先挑選有實質營收保護">二、中小型股：優先挑選有實質營收保護</a></h2>
+<ul>
+<li><strong>選股邏輯</strong>：面對大盤震盪，挑選有實質營收保護的股票較安全。若盤勢破底，有基本面支撐的股票更有機會在後續重新走強。若手中已有這類獲利良好的持股，短線震盪期間可視為續抱觀察。</li>
+<li><strong>推薦族群與標的</strong>：
+<ul>
+<li><strong>電源供應</strong>：台達電（2308）等。</li>
+<li><strong>散熱</strong>：奇鋐（3017）、雙鴻（3324）、高力（8996）。</li>
+<li><strong>記憶體</strong>：華邦電（2344）、南亞科（2408）、威剛（3260）、群聯（8299）等。</li>
+<li><strong>被動元件</strong>：國巨（2327）、華新科（2492）等。</li>
+<li><strong>低位階面板</strong>：群創（3481）、友達（2409）等，目前月 K 線皆處於底部。</li>
+<li><strong>矽晶圓與成熟製程</strong>：環球晶（6488）、中美晶（5483）等；以及受惠於矽晶圓帶動的成熟製程，如聯電（2303）、世界先進（5347）。</li>
+<li><strong>ABF 載板</strong>：供需缺口持續放大，如南電（8046）、欣興（3037）、景碩（3189）。</li>
+</ul>
+</li>
+</ul>
+<h2 id="三題材股等待止穩或挑選本業加題材"><a class="header" href="#三題材股等待止穩或挑選本業加題材">三、題材股：等待止穩或挑選本業加題材</a></h2>
+<h3 id="純題材或高本益比股暫停追價"><a class="header" href="#純題材或高本益比股暫停追價">純題材或高本益比股：暫停追價</a></h3>
+<ul>
+<li><strong>選股邏輯</strong>：許多純 CPO 概念股或低軌衛星股，營收尚未跟上股價，本益比過高。買進這類股票更偏向買夢想，例如 SpaceX 題材，風險較大。</li>
+<li><strong>操作建議</strong>：華通（2313）、波若威（3163）、昇達科（3491）等，建議等大盤完全止穩、風險確認度過後，再尋找買點會比較安全。</li>
+</ul>
+<h3 id="進階選股法本業保護加未來題材"><a class="header" href="#進階選股法本業保護加未來題材">進階選股法：本業保護加未來題材</a></h3>
+<ul>
+<li><strong>選股邏輯</strong>：若想布局熱門題材，可優先挑選本身已有穩健本業，且未來計畫切入新題材，例如 CPO 的公司。這類股票同時具備基本面保護與題材想像空間，上漲穩定度相對較高。</li>
+<li><strong>推薦標的</strong>：聯電（2303）、全新（2455）、頎邦（6147，本業為驅動 IC 封測）、晶技（3042，本業為石英元件）。</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="put-避險與碗型底選股心法"><a class="header" href="#put-避險與碗型底選股心法">Put 避險與碗型底選股心法</a></h1>
 <h2 id="核心觀點-2"><a class="header" href="#核心觀點-2">核心觀點</a></h2>
 <p>投資人最矛盾的地方，往往是一邊擔心賣出後股票繼續上漲，另一邊又害怕帳上獲利突然大幅回吐。</p>
@@ -348609,9 +348739,9 @@ cd deepwiki-open
 <p>UI 輸入本機路徑後，直接報錯：</p>
 <pre><code class="language-text">Local repository API error (404): {"error":"Directory not found: /Users/yourname/Projects/"}
 </code></pre>
-<h3 id="原因-2"><a class="header" href="#原因-2">原因</a></h3>
+<h3 id="原因-1"><a class="header" href="#原因-1">原因</a></h3>
 <p>DeepWiki 後端跑在容器裡，容器看不到主機上的 <code>/Users/...</code>。如果沒有事先掛載，直接輸入主機路徑一定會 404。這也是 <a href="https://github.com/AsyncFuncAI/deepwiki-open/issues/323">GitHub issue #323</a> 常見的問題。</p>
-<h3 id="解法-1"><a class="header" href="#解法-1">解法</a></h3>
+<h3 id="解法"><a class="header" href="#解法">解法</a></h3>
 <p>先把主機路徑掛載到容器，例如：</p>
 <ul>
 <li>主機路徑：<code>/Users/yourname/Projects</code></li>
@@ -348624,9 +348754,9 @@ cd deepwiki-open
 <h3 id="症狀-2"><a class="header" href="#症狀-2">症狀</a></h3>
 <pre><code class="language-text">services.deepwiki additional properties 'services' not allowed
 </code></pre>
-<h3 id="原因-3"><a class="header" href="#原因-3">原因</a></h3>
+<h3 id="原因-2"><a class="header" href="#原因-2">原因</a></h3>
 <p>YAML 結構寫錯，把 <code>services:</code> 又巢狀放進 <code>services.deepwiki:</code> 裡面。這是 Docker Compose 常見的結構驗證錯誤。</p>
-<h3 id="解法-2"><a class="header" href="#解法-2">解法</a></h3>
+<h3 id="解法-1"><a class="header" href="#解法-1">解法</a></h3>
 <p>把 <code>services:</code> 放回最外層，並用下面指令先驗證：</p>
 <pre><code class="language-bash">docker compose config
 </code></pre>
@@ -348634,9 +348764,9 @@ cd deepwiki-open
 <h3 id="症狀-3"><a class="header" href="#症狀-3">症狀</a></h3>
 <pre><code class="language-text">Failed to validate the authorization code
 </code></pre>
-<h3 id="原因-4"><a class="header" href="#原因-4">原因</a></h3>
+<h3 id="原因-3"><a class="header" href="#原因-3">原因</a></h3>
 <p>服務開了驗證模式，UI 需要 auth code 才能產生文件。</p>
-<h3 id="解法-3"><a class="header" href="#解法-3">解法</a></h3>
+<h3 id="解法-2"><a class="header" href="#解法-2">解法</a></h3>
 <p>如果是自己本機使用，直接關掉：</p>
 <pre><code class="language-yaml">- DEEPWIKI_AUTH_MODE=false
 </code></pre>
@@ -348648,9 +348778,9 @@ cd deepwiki-open
 <h3 id="症狀-b"><a class="header" href="#症狀-b">症狀 B</a></h3>
 <pre><code class="language-text">ValueError preparing retriever: Environment variable OPENAI_API_KEY must be set
 </code></pre>
-<h3 id="原因-5"><a class="header" href="#原因-5">原因</a></h3>
+<h3 id="原因-4"><a class="header" href="#原因-4">原因</a></h3>
 <p>某些版本的 DeepWiki-Open，或它底層相依套件使用的 OpenAI 相容層，會在建立 Embedding 或 Retriever 時先硬檢查 <code>OPENAI_API_KEY</code>，即使你實際上要走的是 Ollama。這也是 <a href="https://github.com/AsyncFuncAI/deepwiki-open/issues/175">GitHub issue #175</a> 很多人碰到的問題。</p>
-<h3 id="解法-4"><a class="header" href="#解法-4">解法</a></h3>
+<h3 id="解法-3"><a class="header" href="#解法-3">解法</a></h3>
 <p>最穩的做法是直接走 OpenAI 相容端點，讓 DeepWiki 以為自己在呼叫 OpenAI，但實際上全都打到 Ollama：</p>
 <pre><code class="language-yaml">- OPENAI_API_KEY=sk-fake-dummy
 - OPENAI_BASE_URL=http://host.docker.internal:11434/v1
@@ -348672,7 +348802,7 @@ cd deepwiki-open
 Error: model 'qwen3:1.7b' not found (status code: 404)
 No valid XML found in response
 </code></pre>
-<h3 id="原因-6"><a class="header" href="#原因-6">原因</a></h3>
+<h3 id="原因-5"><a class="header" href="#原因-5">原因</a></h3>
 <p>DeepWiki 的模型名稱可能同時來自三個地方：</p>
 <ul>
 <li><code>api/config/generator.json</code></li>
@@ -348680,7 +348810,7 @@ No valid XML found in response
 <li>UI 前端的模型選擇器</li>
 </ul>
 <p>只要其中一處指定的模型名稱和 Ollama 實際拉下來的名稱不一致，Ollama 就會回 <code>404</code>。前端接不到預期回應格式時，就可能顯示 <code>No valid XML found in response</code>，這個訊息非常容易誤導。</p>
-<h3 id="解法-5"><a class="header" href="#解法-5">解法</a></h3>
+<h3 id="解法-4"><a class="header" href="#解法-4">解法</a></h3>
 <p>先確認模型真的存在，而且名稱完全一致：</p>
 <pre><code class="language-bash"># 如果你要用 qwen3:1.7b
 ollama pull qwen3:1.7b
@@ -348702,9 +348832,9 @@ Failed to get embedding for document '...firebase-app.js', skipping
 <p>或者 Ollama 直接回：</p>
 <pre><code class="language-text">the input length exceeds the context length (status code: 500)
 </code></pre>
-<h3 id="原因-7"><a class="header" href="#原因-7">原因</a></h3>
+<h3 id="原因-6"><a class="header" href="#原因-6">原因</a></h3>
 <p>這類壓縮後的前端資產或第三方套件檔案 token 數量太大，超過 Embedding 模型的 context window。DeepWiki 通常會直接跳過，或做退避重試。</p>
-<h3 id="解法-6"><a class="header" href="#解法-6">解法</a></h3>
+<h3 id="解法-5"><a class="header" href="#解法-5">解法</a></h3>
 <p>大多數情況下，這不會影響主要結果，因為 DeepWiki 還是會替其他正常原始碼建立索引。若你想把雜訊降到最低，可以在 <code>api/config/repo.json</code> 主動排除大型目錄或壓縮後資產：</p>
 <pre><code class="language-json">{
   "excluded_dirs": ["node_modules/", "vendor/", "dist/", "build/"],
@@ -348716,9 +348846,9 @@ Failed to get embedding for document '...firebase-app.js', skipping
 <h3 id="症狀-6"><a class="header" href="#症狀-6">症狀</a></h3>
 <pre><code class="language-text">'utf-8' codec can't decode byte 0xa5 ... invalid start byte
 </code></pre>
-<h3 id="原因-8"><a class="header" href="#原因-8">原因</a></h3>
+<h3 id="原因-7"><a class="header" href="#原因-7">原因</a></h3>
 <p>舊專案裡有些 <code>.js</code>、<code>.txt</code> 或設定檔可能不是 UTF-8，常見像是 Big5、CP950 或 Windows-1252。DeepWiki 在匯入階段用 UTF-8 讀取時，就會直接失敗。</p>
-<h3 id="解法-7"><a class="header" href="#解法-7">解法</a></h3>
+<h3 id="解法-6"><a class="header" href="#解法-6">解法</a></h3>
 <p>通常只有兩種實際做法：</p>
 <ol>
 <li>先把檔案轉成 UTF-8</li>

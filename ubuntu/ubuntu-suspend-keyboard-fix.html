@@ -178,7 +178,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="ubuntu-休眠喚醒後鍵盤無法輸入--修復記錄"><a class="header" href="#ubuntu-休眠喚醒後鍵盤無法輸入--修復記錄">Ubuntu 休眠喚醒後鍵盤無法輸入 — 修復記錄</a></h1>
+                        <h1 id="ubuntu-休眠喚醒後登入密碼框無法輸入--排查與修復記錄"><a class="header" href="#ubuntu-休眠喚醒後登入密碼框無法輸入--排查與修復記錄">Ubuntu 休眠喚醒後登入密碼框無法輸入 — 排查與修復記錄</a></h1>
 <h2 id="環境"><a class="header" href="#環境">環境</a></h2>
 <ul>
 <li>Ubuntu 24.04.4 LTS</li>
@@ -188,24 +188,110 @@
 <li>鍵盤：CX 2.4G Wireless Receiver（USB dongle 無線接收器）</li>
 </ul>
 <h2 id="症狀"><a class="header" href="#症狀">症狀</a></h2>
-<p>休眠喚醒後進入登入畫面，鍵盤完全無法輸入密碼。滑鼠正常。非每次都發生，偶發性。</p>
-<h2 id="原因"><a class="header" href="#原因">原因</a></h2>
+<p>休眠喚醒後進入登入或鎖定畫面，密碼框無法輸入。滑鼠正常。非每次都發生，偶發性。</p>
+<p>這次重點是：鍵盤確定可以使用，但登入密碼框不吃鍵盤輸入。</p>
+<p>先分兩類判斷：</p>
+<ol>
+<li><strong>鍵盤完全失效</strong>
+<ul>
+<li><code>Caps Lock</code> 燈不反應</li>
+<li><code>Ctrl+Alt+F3</code> 無法切到 TTY</li>
+<li>拔插 USB 接收器後才恢復</li>
+<li>較像 USB HID / 無線接收器 / autosuspend 問題</li>
+</ul>
+</li>
+<li><strong>鍵盤可用，但密碼框不能輸入</strong>
+<ul>
+<li><code>Caps Lock</code> 或其他按鍵有反應</li>
+<li><code>Ctrl+Alt+F3</code> 可以切 TTY</li>
+<li>只有 GDM/GNOME 登入或鎖定畫面的密碼框不吃字</li>
+<li>較像 GDM/GNOME lock screen focus、input method 或 session unlock 問題</li>
+</ul>
+</li>
+</ol>
+<h2 id="立即脫困流程"><a class="header" href="#立即脫困流程">立即脫困流程</a></h2>
+<p>按破壞性由低到高處理。</p>
+<h3 id="1-重新取得輸入焦點"><a class="header" href="#1-重新取得輸入焦點">1. 重新取得輸入焦點</a></h3>
+<p>在登入或鎖定畫面先試：</p>
+<ol>
+<li>按 <code>Esc</code></li>
+<li>用滑鼠點密碼框</li>
+<li>按 <code>Ctrl+Alt+F3</code> 切到 TTY</li>
+<li>再按 <code>Ctrl+Alt+F2</code> 或 <code>Ctrl+Alt+F1</code> 回到圖形畫面</li>
+</ol>
+<p>如果回到圖形畫面後密碼框恢復，主因比較可能是 lock screen / GDM focus 卡住。</p>
+<h3 id="2-從-tty-解鎖-session"><a class="header" href="#2-從-tty-解鎖-session">2. 從 TTY 解鎖 session</a></h3>
+<p>如果 <code>Ctrl+Alt+F3</code> 可用：</p>
+<pre><code class="language-bash">loginctl list-sessions
+loginctl unlock-sessions
+</code></pre>
+<p>然後按 <code>Ctrl+Alt+F2</code> 或 <code>Ctrl+Alt+F1</code> 回圖形畫面。</p>
+<h3 id="3-只在必要時重啟-gdm"><a class="header" href="#3-只在必要時重啟-gdm">3. 只在必要時重啟 GDM</a></h3>
+<p>如果圖形登入畫面仍卡住，且可以接受圖形 session 被中斷，才使用：</p>
+<pre><code class="language-bash">sudo systemctl restart gdm3
+</code></pre>
+<p>注意：這可能會關掉目前圖形 session，未儲存工作可能遺失。</p>
+<h3 id="4-usb-接收器分支"><a class="header" href="#4-usb-接收器分支">4. USB 接收器分支</a></h3>
+<p>如果鍵盤本身也失效，先拔掉 USB 接收器，重插後等 3 秒。若重插後恢復，才優先懷疑 USB autosuspend 或 USB 控制器 resume 問題。</p>
+<h2 id="可能原因"><a class="header" href="#可能原因">可能原因</a></h2>
 <p>USB 無線接收器在休眠時被 Linux USB autosuspend 斷電，喚醒時 RF 無線協定 handshake 未能自動重建，導致 HID 鍵盤端點無法正確註冊回輸入層。</p>
-<h2 id="解法"><a class="header" href="#解法">解法</a></h2>
+<p>但如果鍵盤確定可用，只是密碼框不能輸入，原因不一定是 USB。更可能是：</p>
+<ul>
+<li>GNOME lock screen 或 GDM greeter 的輸入焦點卡住</li>
+<li>input method / IBus 狀態異常</li>
+<li>resume 後圖形 session 與 lock screen 狀態不同步</li>
+</ul>
+<h2 id="debug-指令"><a class="header" href="#debug-指令">Debug 指令</a></h2>
+<h3 id="確認-usb-autosuspend-參數是否生效"><a class="header" href="#確認-usb-autosuspend-參數是否生效">確認 USB autosuspend 參數是否生效</a></h3>
+<pre><code class="language-bash">cat /proc/cmdline
+cat /sys/module/usbcore/parameters/autosuspend
+</code></pre>
+<p>若有套用 <code>usbcore.autosuspend=-1</code>，第二個指令通常會顯示 <code>-1</code>。</p>
+<h3 id="查-usb--hid--resume-log"><a class="header" href="#查-usb--hid--resume-log">查 USB / HID / resume log</a></h3>
+<p>目前這次開機：</p>
+<pre><code class="language-bash">journalctl -b -k --no-pager | rg -i 'usb|hid|xhci|suspend|resume|keyboard|input'
+</code></pre>
+<p>前一次開機：</p>
+<pre><code class="language-bash">journalctl -b -1 -k --no-pager | rg -i 'usb|hid|xhci|suspend|resume|keyboard|input'
+</code></pre>
+<h3 id="查-gdm--gnome--input-method-log"><a class="header" href="#查-gdm--gnome--input-method-log">查 GDM / GNOME / input method log</a></h3>
+<pre><code class="language-bash">journalctl -b --no-pager | rg -i 'gdm|gnome-shell|ibus|input|keyboard'
+</code></pre>
+<p>如果 USB/HID 沒有斷線或重新註冊失敗，但 GDM、GNOME shell 或 IBus 有錯誤，優先處理登入畫面/input method 分支。</p>
+<h2 id="永久修復選項"><a class="header" href="#永久修復選項">永久修復選項</a></h2>
+<h3 id="選項-ausb-autosuspend-修復"><a class="header" href="#選項-ausb-autosuspend-修復">選項 A：USB autosuspend 修復</a></h3>
 <p>關閉 USB 自動省電，防止接收器在休眠時斷電：</p>
 <pre><code class="language-bash">sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash usbcore.autosuspend=-1"/' /etc/default/grub
 sudo update-grub
 sudo reboot
 </code></pre>
 <p>重開機後永久生效。</p>
-<h2 id="副作用"><a class="header" href="#副作用">副作用</a></h2>
-<p>無。桌機不依賴電池，USB 不省電對功耗影響可忽略。</p>
-<h2 id="替代方案免重開自救"><a class="header" href="#替代方案免重開自救">替代方案（免重開自救）</a></h2>
-<p>下次發生時：</p>
-<ol>
-<li>拔掉 USB 接收器 → 重插 → 等 3 秒</li>
-<li>或 <code>Ctrl+Alt+F3</code> → 登入終端 → <code>sudo systemctl restart gdm3</code></li>
-</ol>
+<p>回滾：</p>
+<pre><code class="language-bash">sudo sed -i 's/ usbcore.autosuspend=-1//g' /etc/default/grub
+sudo update-grub
+sudo reboot
+</code></pre>
+<p>適用情境：</p>
+<ul>
+<li>鍵盤接收器拔插後恢復</li>
+<li>kernel log 有 USB/HID resume 異常</li>
+<li><code>Ctrl+Alt+F3</code> 也無法使用</li>
+</ul>
+<h3 id="選項-b登入畫面--鎖定畫面分支"><a class="header" href="#選項-b登入畫面--鎖定畫面分支">選項 B：登入畫面 / 鎖定畫面分支</a></h3>
+<p>如果鍵盤可用但密碼框不吃輸入，先不要把問題歸因為 USB。優先收集 GDM/GNOME log，並用「立即脫困流程」確認是否是 focus 或 lock screen 狀態問題。</p>
+<p>可觀察：</p>
+<ul>
+<li>切 TTY 再切回來是否恢復</li>
+<li><code>loginctl unlock-sessions</code> 是否能解鎖</li>
+<li>是否只有 suspend resume 後發生</li>
+<li>是否和輸入法切換、螢幕鎖定、外接螢幕喚醒順序有關</li>
+</ul>
+<h2 id="副作用與風險"><a class="header" href="#副作用與風險">副作用與風險</a></h2>
+<ul>
+<li><code>usbcore.autosuspend=-1</code> 會全域關閉 USB autosuspend。桌機通常影響很小；筆電可能增加耗電。</li>
+<li><code>sudo systemctl restart gdm3</code> 可能中斷目前圖形 session，未儲存工作可能遺失。</li>
+<li>如果根因是 GNOME lock screen/input focus，USB autosuspend 修復可能不會改善。</li>
+</ul>
 <h2 id="參考"><a class="header" href="#參考">參考</a></h2>
 <ul>
 <li><a href="https://askubuntu.com/questions/1418676/keyboard-not-working-after-suspend-on-ubuntu-22-04">Ask Ubuntu: Keyboard not working after suspend on Ubuntu 22.04</a></li>
