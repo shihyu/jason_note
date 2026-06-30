@@ -1,0 +1,31 @@
+# 翻譯術語表
+
+- Agentic Design Patterns：Agentic 設計模式 / 代理式設計模式
+- LLM：大型語言模型（LLM）
+- prompt chaining：提示鏈
+- routing：路由
+- parallelization：並行化
+- reflection：反思
+- tool use：工具使用
+- planning：規劃
+- multi-agent collaboration：多代理協作
+- memory management：記憶管理
+- learning and adaptation：學習與適應
+- Model Context Protocol (MCP)：模型上下文協定（MCP）
+- goal setting and monitoring：目標設定與監控
+- exception handling and recovery：例外處理與恢復
+- human in the loop：人機協同
+- knowledge retrieval (RAG)：知識檢索（RAG）
+- inter-agent communication (A2A)：代理間通訊（A2A）
+- resource-aware optimization：資源感知優化
+- reasoning techniques：推理技術
+- guardrails and safety patterns：護欄與安全模式
+- evaluation and monitoring：評估與監控
+- prioritization：優先排序
+- exploration and discovery：探索與發現
+- framework：框架
+- agent：代理
+- agents：代理
+- workflow：工作流程
+- prompt：提示
+- pattern：模式
