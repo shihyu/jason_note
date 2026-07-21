@@ -595,6 +595,7 @@
         - [輝哥大盤訊號與選擇權避險心法](strategy/輝哥大盤訊號與選擇權避險心法.md)
         - [鐘崑禎囤貨與暴利選股策略](strategy/鐘崑禎囤貨與暴利選股策略.md)
         - [Put 避險與碗型底選股心法](strategy/Put避險與碗型底選股心法.md)
+        - [台股回檔警訊與反彈選股策略](strategy/台股回檔警訊與反彈選股策略.md)
     - [phcebus菲式思考](strategy/02_台灣大師心法_phcebus菲式思考.md)
         - [phcebus](strategy/phcebus/phcebus.md)
         - [菲式思考](strategy/phcebus/菲式思考.md)
