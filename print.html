@@ -210877,6 +210877,263 @@ assert machine.get_state() == '出貨中'
 </ul>
 <hr />
 <p><strong>整理日期：</strong> 2026-01-01</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="本機單元測試與除錯器完整驗證指南"><a class="header" href="#本機單元測試與除錯器完整驗證指南">本機單元測試與除錯器完整驗證指南</a></h1>
+<p>在沒有 Kubernetes 權限時，仍可在本機建立可靠的驗證流程。核心組合是：</p>
+<blockquote>
+<p>單元測試負責以可重複的方式判定對錯；sanitizer、race detector 與
+fuzzing 主動找錯；GDB、Delve、PDB 負責觀察失敗當下的狀態並定位原因。</p>
+</blockquote>
+<p>除錯器與單元測試確實相輔相成，但除錯器本身不是測試框架。它不會自動增加
+測試案例、覆蓋率或驗收標準，也不應以一次手動除錯階段取代 CI 測試結果。</p>
+<h2 id="建議的本機驗證流程"><a class="header" href="#建議的本機驗證流程">建議的本機驗證流程</a></h2>
+<pre><code class="language-text">format / lint / type check
+          ↓
+unit test + boundary test
+          ↓
+property test / fuzz test
+          ↓
+sanitizer / race detector / leak check
+          ↓
+local integration test（真實 DB、queue、cache）
+          ↓
+以相同 container image 執行 system test
+          ↓
+失敗時才進入 GDB / Delve / PDB
+          ↓
+把失敗輸入固化成 regression test，再跑完整測試
+</code></pre>
+<p>「完整」不是每次都進入除錯器，而是讓多種工具檢查不同類型的錯誤，並將
+結果儲存為可重複執行的測試。</p>
+<h2 id="工具責任分工"><a class="header" href="#工具責任分工">工具責任分工</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>工具</th><th>能回答的問題</th><th>不能證明的事情</th></tr></thead><tbody>
+<tr><td>Unit test</td><td>給定輸入是否得到預期結果？邊界與錯誤處理是否正確？</td><td>未執行路徑、真實網路、排程與 production 設定是否正確</td></tr>
+<tr><td>Coverage</td><td>哪些程式碼被測試執行過？</td><td>執行過的程式碼是否真的驗證正確</td></tr>
+<tr><td>Fuzz/property test</td><td>隨機或生成輸入是否能造成 panic、crash 或違反 invariant？</td><td>所有可能輸入都已驗證</td></tr>
+<tr><td>Sanitizer/race detector</td><td>執行路徑中是否出現記憶體錯誤、UB 或 data race？</td><td>沒被執行的路徑沒有錯誤</td></tr>
+<tr><td>GDB/Delve/PDB</td><td>程式為什麼在這個狀態失敗？呼叫堆疊、執行緒及變數為何？</td><td>未來修改仍正確，或所有案例都通過</td></tr>
+<tr><td>本機整合／系統測試</td><td>多模組與外部服務是否可運作？</td><td>Kubernetes 控制平面、CNI、CSI、RBAC 與正式環境是否一致</td></tr>
+</tbody></table>
+</div>
+<h2 id="gounit-test--race--fuzz--delve"><a class="header" href="#gounit-test--race--fuzz--delve">Go：unit test + race + fuzz + Delve</a></h2>
+<p>先跑快速測試，再跑 race detector：</p>
+<pre><code class="language-bash">go test ./...
+go test -race ./...
+go test -coverprofile=tests/coverage.out ./...
+</code></pre>
+<p>對 fuzz target 執行限時 fuzzing：</p>
+<pre><code class="language-bash">go test ./path/to/pkg -fuzz='^FuzzParse$' -fuzztime=60s
+</code></pre>
+<p>只針對一個失敗測試進行除錯：</p>
+<pre><code class="language-bash">dlv test ./path/to/pkg -- -test.run '^TestParseInvalidInput$' -test.v
+</code></pre>
+<p>常用 Delve 指令：</p>
+<pre><code class="language-text">break package.Function
+condition 1 variable == unexpectedValue
+continue
+goroutines
+goroutine &lt;id&gt; stack
+locals
+args
+print variable
+</code></pre>
+<p>Go 優先使用 Delve，而不是 GDB。Delve 理解 goroutine、interface、channel 與
+Go runtime。若測試疑似 deadlock，先設定 timeout 以保留 goroutine dump，
+再用 Delve 檢查可重現案例：</p>
+<pre><code class="language-bash">go test ./... -run '^TestConcurrentFlow$' -count=100 -timeout=30s
+</code></pre>
+<p>不要因為 Delve 改變排程後問題消失，就判定 race 已修復。最終仍應以 <code>go test -race</code> 和可重複壓力測試驗收。</p>
+<h2 id="rustcargo-test--clippy--mirifuzz--gdb"><a class="header" href="#rustcargo-test--clippy--mirifuzz--gdb">Rust：cargo test + Clippy + Miri/fuzz + GDB</a></h2>
+<pre><code class="language-bash">cargo fmt --check
+cargo clippy --all-targets --all-features -- -D warnings
+cargo test --all-features
+</code></pre>
+<p>先編譯測試但不執行，Cargo 會列出測試 binary：</p>
+<pre><code class="language-bash">cargo test --no-run
+</code></pre>
+<p>使用 <code>rust-gdb</code> 啟動該測試 binary，並把測試名稱傳給 Rust test harness：</p>
+<pre><code class="language-bash">rust-gdb --args target/debug/deps/TEST_BINARY TestName --exact --nocapture
+</code></pre>
+<p>在可用的 nightly/toolchain 環境，可加入 Miri 檢查 unsafe 與未定義行為：</p>
+<pre><code class="language-bash">cargo +nightly miri test
+</code></pre>
+<p>也可對 parser、protocol、序列化或 unsafe 邊界加入 <code>cargo-fuzz</code>。Fuzzer 找到的
+最小失敗輸入應加入單元測試／迴歸測試語料庫。</p>
+<p>GDB 適合檢查原生程式崩潰、FFI、執行緒、堆疊框架與記憶體；Rust 所有權或
+生命週期錯誤應優先由編譯器、Clippy 與 Miri 處理。</p>
+<h2 id="ccunit-test--sanitizer--gdb"><a class="header" href="#ccunit-test--sanitizer--gdb">C/C++：unit test + sanitizer + GDB</a></h2>
+<p>一般 debug build：</p>
+<pre><code class="language-bash">cmake -S . -B build-debug \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_C_FLAGS='-g -O0' \
+  -DCMAKE_CXX_FLAGS='-g -O0'
+cmake --build build-debug
+ctest --test-dir build-debug --output-on-failure
+</code></pre>
+<p>記憶體與未定義行為檢查：</p>
+<pre><code class="language-bash">SANITIZER_FLAGS='-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer'
+cmake -S . -B build-asan \
+  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  -DCMAKE_C_FLAGS="$SANITIZER_FLAGS" \
+  -DCMAKE_CXX_FLAGS="$SANITIZER_FLAGS" \
+  -DCMAKE_EXE_LINKER_FLAGS='-fsanitize=address,undefined'
+cmake --build build-asan
+ctest --test-dir build-asan --output-on-failure
+</code></pre>
+<p>Data race 需建立另一個 TSan build；不要與 ASan 混在同一 binary：</p>
+<pre><code class="language-bash">cmake -S . -B build-tsan \
+  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  -DCMAKE_C_FLAGS='-O1 -g -fsanitize=thread' \
+  -DCMAKE_CXX_FLAGS='-O1 -g -fsanitize=thread' \
+  -DCMAKE_EXE_LINKER_FLAGS='-fsanitize=thread'
+cmake --build build-tsan
+ctest --test-dir build-tsan --output-on-failure
+</code></pre>
+<p>對指定 GoogleTest 案例進入 GDB：</p>
+<pre><code class="language-bash">gdb --args ./build-debug/tests/my_tests \
+  --gtest_filter='ParserTest.RejectsInvalidFrame'
+</code></pre>
+<p>若 sanitizer 已指出程式崩潰行數，GDB 可用來檢查呼叫堆疊、指標、執行緒和
+條件斷點；修正後仍需重新執行 sanitizer 測試套件。</p>
+<h2 id="pythonpytest--property-test--pdb"><a class="header" href="#pythonpytest--property-test--pdb">Python：pytest + property test + PDB</a></h2>
+<pre><code class="language-bash">python -m pytest tests/unit -q
+python -m pytest tests/system -q
+python -m pytest --cov=src --cov-report=term-missing
+</code></pre>
+<p>第一個失敗案例直接進入 post-mortem PDB：</p>
+<pre><code class="language-bash">python -m pytest -x --pdb tests/unit/test_parser.py
+</code></pre>
+<p>只重跑一個案例：</p>
+<pre><code class="language-bash">python -m pytest -vv \
+  tests/unit/test_parser.py::test_rejects_invalid_frame
+</code></pre>
+<p>Python 的 parser、資料轉換與狀態機可用 Hypothesis 產生大量輸入。將造成失敗的
+最小化案例保留為迴歸測試。若問題來自 C extension，先在 Python 層重現，
+再將 GDB 附加至 Python 行程，或直接以 GDB 啟動 Python。</p>
+<h2 id="沒有-kubernetes-權限時本機可以驗證什麼"><a class="header" href="#沒有-kubernetes-權限時本機可以驗證什麼">沒有 Kubernetes 權限時，本機可以驗證什麼？</a></h2>
+<p>不要只在主機上執行程式。應使用與部署相同的容器映像、進入點、環境變數名稱、
+非 root 使用者和唯讀檔案系統。</p>
+<h3 id="1-使用真實依賴不只使用-mock"><a class="header" href="#1-使用真實依賴不只使用-mock">1. 使用真實依賴，不只使用 mock</a></h3>
+<p>單元測試可模擬 port/interface；整合測試則啟動真實版本的 PostgreSQL、Redis、
+Kafka 或其他相依服務：</p>
+<pre><code class="language-bash">docker compose up -d --wait
+./test.sh
+docker compose down -v
+</code></pre>
+<p>測試資料必須隔離，不可連線至正式環境端點。</p>
+<h3 id="2-驗證正式容器映像"><a class="header" href="#2-驗證正式容器映像">2. 驗證正式容器映像</a></h3>
+<pre><code class="language-bash">docker build -t app:test .
+docker run --rm --read-only --user 10001:10001 \
+  --env-file tests/fixtures/test.env \
+  app:test
+</code></pre>
+<p>測試映像是否包含正確的執行檔、CA 憑證、時區資料、動態函式庫、資料庫遷移與
+健康檢查命令。</p>
+<h3 id="3-模擬資源限制與-linux-行為"><a class="header" href="#3-模擬資源限制與-linux-行為">3. 模擬資源限制與 Linux 行為</a></h3>
+<pre><code class="language-bash">docker run --rm \
+  --cpus=0.5 \
+  --memory=256m \
+  --pids-limit=128 \
+  app:test
+</code></pre>
+<p>另外測試 SIGTERM、優雅關閉、連線中斷、DNS 失敗、磁碟已滿、時鐘逾時與
+相依服務重新啟動。這些故障注入通常比手動逐行除錯更能擴大覆蓋範圍。</p>
+<h3 id="4-在本機容器中進行遠端除錯"><a class="header" href="#4-在本機容器中進行遠端除錯">4. 在本機容器中進行遠端除錯</a></h3>
+<p>Go 可在除錯映像中啟動無頭模式的 Delve：</p>
+<pre><code class="language-bash">dlv --headless --listen=127.0.0.1:40000 \
+  --api-version=2 --accept-multiclient \
+  exec /app/server
+</code></pre>
+<p>容器通常還需要 <code>SYS_PTRACE</code> 與較寬鬆的 seccomp 設定。只能在本機除錯容器中
+使用：</p>
+<pre><code class="language-bash">docker run --rm -p 127.0.0.1:40000:40000 \
+  --cap-add=SYS_PTRACE \
+  --security-opt seccomp=unconfined \
+  app:debug
+</code></pre>
+<p>除錯器連接埠只能綁定 <code>127.0.0.1</code>，不可暴露至公開網路。C/C++ 可用相同方式
+在除錯映像內執行 <code>gdbserver</code>。</p>
+<h2 id="如何將除錯器驗證結果固化"><a class="header" href="#如何將除錯器驗證結果固化">如何將除錯器驗證結果「固化」？</a></h2>
+<p>一次除錯階段不能由 CI 重播。每次找到問題後，至少固化一種證據：</p>
+<ul>
+<li>將失敗輸入加入 regression test。</li>
+<li>將 race/deadlock 的並行條件加入重複或壓力測試。</li>
+<li>將 protocol packet、fixture 或 fuzz corpus 放在 <code>tests/</code>。</li>
+<li>將 crash 的 stack trace、版本、compiler flags 與重現命令寫入測試紀錄。</li>
+<li>將需要觀察的 invariant 改寫成 assertion，而不是永久依賴 breakpoint。</li>
+</ul>
+<p>推薦循環：</p>
+<pre><code class="language-text">自動測試失敗
+  → 用 debugger 找 root cause
+  → 先新增或保留可重現測試
+  → 修正實作
+  → 單一測試通過
+  → 完整 unit/system/sanitizer suite 通過
+</code></pre>
+<h2 id="ai-時代的用法"><a class="header" href="#ai-時代的用法">AI 時代的用法</a></h2>
+<p>AI 適合協助：</p>
+<ul>
+<li>依規格生成 unit test 草稿與邊界輸入。</li>
+<li>根據失敗輸出提出 breakpoint 與 watch expression。</li>
+<li>分析 stack trace、core dump 摘要與 sanitizer report。</li>
+<li>把 debugger 找到的條件轉成 regression test。</li>
+</ul>
+<p>AI 不應自行宣稱測試預期結果正確。產生的 assertion 可能只是重述現有的錯誤
+實作。研究已開始讓 LLM 執行單元測試、讀取執行回饋，甚至操作具狀態的除錯器；
+這能提升定位能力，但不能取代規格、實際執行和人工審查。</p>
+<h2 id="本機驗收清單"><a class="header" href="#本機驗收清單">本機驗收清單</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+每個公開函式或類別有 unit test 與邊界條件。</li>
+<li><input disabled="" type="checkbox"/>
+有使用者視角的 system test，不只測內部函式。</li>
+<li><input disabled="" type="checkbox"/>
+Coverage 已檢查，但沒有把 coverage 百分比當作正確性證明。</li>
+<li><input disabled="" type="checkbox"/>
+Parser、協定或非信任輸入有 fuzz/property test。</li>
+<li><input disabled="" type="checkbox"/>
+Go 執行 <code>go test -race</code>；C/C++ 分別執行 ASan/UBSan 與 TSan。</li>
+<li><input disabled="" type="checkbox"/>
+Rust unsafe/FFI 邊界使用 Miri、sanitizer 或 fuzzing 中至少一項。</li>
+<li><input disabled="" type="checkbox"/>
+失敗案例可由單一命令重現並進入 debugger。</li>
+<li><input disabled="" type="checkbox"/>
+Debugger 找到的問題已固化為 regression test。</li>
+<li><input disabled="" type="checkbox"/>
+使用與部署相同的 container image 跑 system test。</li>
+<li><input disabled="" type="checkbox"/>
+已驗證 non-root、read-only filesystem、resource limit 與 SIGTERM。</li>
+<li><input disabled="" type="checkbox"/>
+測試沒有連到 production DB、queue 或 API。</li>
+<li><input disabled="" type="checkbox"/>
+所有驗收最終由自動化測試通過判定，不靠手動 debugger 結論。</li>
+</ul>
+<h2 id="仍然無法由本機完全驗證的部分"><a class="header" href="#仍然無法由本機完全驗證的部分">仍然無法由本機完全驗證的部分</a></h2>
+<p>即使上述全部通過，本機仍不能完全證明以下項目：</p>
+<ul>
+<li>Kubernetes RBAC、admission policy、CNI/CSI 與 service mesh 行為。</li>
+<li>叢集 DNS、跨 node 網路、autoscaling 與 eviction。</li>
+<li>Production cloud IAM、load balancer、儲存與真實流量模式。</li>
+<li>不同 kernel、CPU 架構或 production runtime 的差異。</li>
+</ul>
+<p>因此文件應將結論表達為「本機驗證已達到高度可信」，而不是「已完整證明
+Kubernetes 上必然正確」。</p>
+<h2 id="參考資料-14"><a class="header" href="#參考資料-14">參考資料</a></h2>
+<ul>
+<li><a href="https://github.com/go-delve/delve/blob/master/Documentation/usage/dlv_test.md">Delve：<code>dlv test</code></a></li>
+<li><a href="https://go.dev/doc/articles/race_detector">Go Data Race Detector</a></li>
+<li><a href="https://go.dev/doc/security/fuzz/">Go Fuzzing</a></li>
+<li><a href="https://go.dev/doc/diagnostics">Go Diagnostics</a></li>
+<li><a href="https://doc.rust-lang.org/cargo/commands/cargo-test.html">Cargo <code>test</code></a></li>
+<li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/">GDB 官方文件</a></li>
+<li><a href="https://clang.llvm.org/docs/AddressSanitizer.html">Clang AddressSanitizer</a></li>
+<li><a href="https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html">Clang UndefinedBehaviorSanitizer</a></li>
+<li><a href="https://clang.llvm.org/docs/ThreadSanitizer.html">Clang ThreadSanitizer</a></li>
+<li><a href="https://docs.python.org/3/library/pdb.html">Python <code>pdb</code></a></li>
+<li><a href="https://docs.pytest.org/en/stable/how-to/failures.html">pytest debugging</a></li>
+<li><a href="https://docs.github.com/en/copilot/tutorials/copilot-cookbook/testing-code/generate-unit-tests">GitHub Copilot：產生 unit tests</a></li>
+<li><a href="https://arxiv.org/abs/2502.01619">Learning to Generate Unit Tests for Automated Debugging</a></li>
+<li><a href="https://arxiv.org/abs/2510.18327">InspectCoder：LLM 與互動式 debugger 協作</a></li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="軟體開發方法論完整指南xxdd-系列"><a class="header" href="#軟體開發方法論完整指南xxdd-系列">軟體開發方法論完整指南（XXDD 系列）</a></h1>
 <blockquote>
 <p>2026 年軟體工程實踐趨勢 - AI Agent 應用專題</p>
@@ -250401,7 +250658,7 @@ subprocess.run(["gcc", "output.o", "test_harness.c", "-o", "benchmark"])
 <p>如果把 OpenEvolve 看成進化代理的第一代代表，那麼 LoongFlow 更像是往第二代邁進的嘗試。它保留了進化式搜尋的優點，但不再滿足於盲目變異，而是加入規劃、執行與反思這種更像研究流程的結構。</p>
 <p>這不代表暴力搜尋沒有價值。對某些問題來說，大量探索仍然有效，而且實作門檻較低。不過當任務變得更複雜、呼叫成本更高、週期更長時，只有不斷試錯通常不夠，系統必須從歷史中學到東西。</p>
 <p>LoongFlow 的核心價值就在這裡：它試圖把代理從「大量猜測」推向「基於經驗的推理」。如果這條路成立，未來的演化代理就不只是更快，而是更接近真正能累積知識的自動化研究夥伴。</p>
-<h2 id="參考資料-14"><a class="header" href="#參考資料-14">參考資料</a></h2>
+<h2 id="參考資料-15"><a class="header" href="#參考資料-15">參考資料</a></h2>
 <ul>
 <li>GitHub：<a href="https://github.com/baidu-baige/LoongFlow">https://github.com/baidu-baige/LoongFlow</a></li>
 <li>技術報告：<a href="https://arxiv.org/abs/2512.24077">https://arxiv.org/abs/2512.24077</a></li>
@@ -259237,7 +259494,7 @@ ollama run my-custom-model
 <p>Ollama 為開發者和 AI 愛好者提供了一個強大而靈活的工具，使本地運行大型語言模型變得前所未有的簡單。無論您是想要進行 AI 研究、開發智能應用，還是僅僅出於好奇想要探索 AI 的潛力，Ollama 都為您提供了一個理想的起點。</p>
 <p>隨著 AI 技術的不斷發展，Ollama 這樣的工具將在推動 AI 民主化和創新方面發揮越來越重要的作用。現在正是開始您的 Ollama 之旅的最佳時機，探索本地 AI 開發的無限可能！</p>
 <p>即刻前往教學程式碼 Repo，親自搭建屬於自己的 LLM Server 吧！別忘了給專案按個星星並持續關注更新，讓我們一起探索 AI 代理的新境界。</p>
-<h2 id="參考資料-15"><a class="header" href="#參考資料-15">參考資料</a></h2>
+<h2 id="參考資料-16"><a class="header" href="#參考資料-16">參考資料</a></h2>
 <p>最近消息是，可以直接從 HuggingFace 上拉 GGUF 格式檔案，不用額外建立 manifest，具體操作已經收錄在 HuggingFace blog 當中，可以做參考，未來有機會再行整理：<a href="https://huggingface.co/docs/hub/en/ollama">https://huggingface.co/docs/hub/en/ollama</a></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="automl-自動化機器學習"><a class="header" href="#automl-自動化機器學習">AutoML 自動化機器學習</a></h1>
 <blockquote>
@@ -266593,7 +266850,7 @@ TRAINED_MODEL_PATH = f"{HOME}/runs/detect/train/weights/best.pt"
 <pre><code class="language-bash">yolo export model=yolov8n.pt
 </code></pre>
 <hr />
-<h2 id="參考資料-16"><a class="header" href="#參考資料-16">參考資料</a></h2>
+<h2 id="參考資料-17"><a class="header" href="#參考資料-17">參考資料</a></h2>
 <ul>
 <li><a href="https://github.com/autodistill/autodistill">Autodistill GitHub</a></li>
 <li><a href="https://colab.research.google.com/github/roboflow-ai/notebooks/blob/main/notebooks/how-to-auto-train-yolov8-model-with-autodistill.ipynb">Roboflow 官方教學</a></li>
@@ -344781,7 +345038,7 @@ Use Sonnet for each teammate.
 <p>那麼 Agent Teams 很值得嘗試。</p>
 <p>如果任務只是單點查詢、一次性修正、或只需要快速拿到答案，Subagent 通常會更省成本。</p>
 <hr />
-<h2 id="參考資料-17"><a class="header" href="#參考資料-17">參考資料</a></h2>
+<h2 id="參考資料-18"><a class="header" href="#參考資料-18">參考資料</a></h2>
 <ul>
 <li><a href="https://code.claude.com/docs/en/agent-teams">Claude Code 文件：Agent Teams</a></li>
 <li><a href="https://www.anthropic.com/engineering/building-c-compiler">Anthropic Engineering：Building a C compiler with a team of parallel Claudes</a></li>
@@ -349098,7 +349355,7 @@ Retriever prepared for /mnt/local-repos/...
 <tr><td>儲存庫路徑</td><td>一律使用容器內路徑 <code>/mnt/local-repos/...</code></td></tr>
 </tbody></table>
 </div>
-<h2 id="參考資料-18"><a class="header" href="#參考資料-18">參考資料</a></h2>
+<h2 id="參考資料-19"><a class="header" href="#參考資料-19">參考資料</a></h2>
 <ul>
 <li><a href="https://github.com/AsyncFuncAI/deepwiki-open">DeepWiki-Open GitHub</a></li>
 <li><a href="https://github.com/AsyncFuncAI/deepwiki-open/issues/323">Can’t find local directory · Issue #323</a></li>
