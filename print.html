@@ -210175,6 +210175,22 @@ Go 具備記憶體安全設計（GC、指標限制），有效避免 C 常見的
 </ul>
 </li>
 </ul>
+<h3 id="只處理正在發生的變化"><a class="header" href="#只處理正在發生的變化">只處理正在發生的變化</a></h3>
+<p>不要為猜測中的未來需求預先建立大量彈性。較合適的重構時機有兩個：</p>
+<ul>
+<li>剛完成一個小功能、程式仍在腦中且測試全綠時。</li>
+<li>下一個需求已知，並已確定現有設計不利於這個需求時。</li>
+</ul>
+<p>這不是反對設計，而是要求設計決策有目前需求與測試提供的證據。長時間紅燈通常代表步驟切得太大；此時應縮小需求或測試案例，而不是繼續堆疊程式碼。</p>
+<h3 id="red-green-refactor-commit-實作循環"><a class="header" href="#red-green-refactor-commit-實作循環">Red-Green-Refactor-Commit 實作循環</a></h3>
+<ol>
+<li><strong>選擇最小案例</strong>：找出一個會迫使系統學會新行為的案例，而非機械式枚舉所有輸入。</li>
+<li><strong>Red</strong>：先執行新測試，確認它因目標能力尚未存在而失敗，不是因語法、環境或測錯對象而失敗。</li>
+<li><strong>Green</strong>：只加入足以通過目前案例的最小實作。硬編碼特例可以是刻意策略，下一個案例會迫使邏輯一般化。</li>
+<li><strong>Refactor</strong>：在全綠的保護下改善命名、責任分配與領域模型；重構後立刻重跑測試。</li>
+<li><strong>Commit</strong>：保存可回復的小步。提交邊界也是設計節奏與風險控制，不應完全交由 AI 決定。</li>
+</ol>
+<p>每個新測試至少要親眼看過一次由紅轉綠，才能證明它確實能抓到錯誤。若先有實作才補測試，應透過 mutation testing、故意破壞實作或其他等效方式，確認測試真的會失敗。</p>
 <hr />
 <h2 id="四實戰案例完全由-ai-撰寫的德州撲克比牌器"><a class="header" href="#四實戰案例完全由-ai-撰寫的德州撲克比牌器">四、實戰案例：完全由 AI 撰寫的德州撲克比牌器</a></h2>
 <p>KUMA 進行了一項嚴格的實驗：在開發德州撲克比牌器的過程中，<strong>自己不寫任何一行程式碼，所有程式碼與 Git Commit 全部交由 Claude Code 執行</strong>。</p>
@@ -210199,6 +210215,7 @@ Go 具備記憶體安全設計（GC、指標限制），有效避免 C 常見的
 <li><strong>散彈式修改（Shotgun Surgery）</strong>：處理牌型（<code>HandType</code>）時，新增順子等牌型必須同時修改 Enum 定義與內部判定邏輯。KUMA 指出這裡有輕微的散彈式修改後，AI 利用 Java 的函數式介面（Functional Interface）<code>Checker</code> 重構並收攏牌型判定邏輯，讓新增牌型只需修改單一位置。</li>
 <li><strong>反覆要求可讀性</strong>：當 AI 寫出複雜難懂的演算法，例如德州撲克七選五的組合，即使測試通過，KUMA 仍<strong>連續 8 次要求 AI「我看不懂，換一種寫法」</strong>，直到產出符合人類閱讀直覺的程式碼。</li>
 </ol>
+<p>測試通過只證明已描述的行為成立，不保證架構合理、領域模型精準、責任配置清楚或程式容易修改。測試提供重構安全網，但「看得懂、能維護」仍是人的驗收條件。</p>
 <hr />
 <h2 id="六sdd-的本質與規格撰寫技巧"><a class="header" href="#六sdd-的本質與規格撰寫技巧">六、SDD 的本質與規格撰寫技巧</a></h2>
 <ul>
@@ -210222,8 +210239,117 @@ Go 具備記憶體安全設計（GC、指標限制），有效避免 C 常見的
 </ul>
 </li>
 </ul>
+<h3 id="好規格的五項特徵"><a class="header" href="#好規格的五項特徵">好規格的五項特徵</a></h3>
+<ul>
+<li><strong>Precise</strong>：詞義精準，避免「快速、方便、簡單好用」等無法驗證的形容詞。</li>
+<li><strong>Concise</strong>：只保留當前功能需要的資訊。</li>
+<li><strong>Single-purpose</strong>：一張需求只處理一個可獨立驗收的行為。</li>
+<li><strong>Observable</strong>：結果能由測試或明確契約觀察。</li>
+<li><strong>Consistent</strong>：領域名詞跨文件、圖表與程式碼一致。</li>
+</ul>
+<p>Spec 與測試像模具，將非確定性的 AI 產出限制在可控範圍。測試與契約是可執行規格，違反時會明確失敗；只有描述、無法驗證的文件，限制力通常較弱。</p>
+<h3 id="行為優先不鏡像程式結構"><a class="header" href="#行為優先不鏡像程式結構">行為優先，不鏡像程式結構</a></h3>
+<p>測試應保護使用者可觀察的行為，而不是為每個 service、repository 或類別建立與實作一一對應的測試。以購物流程為例，應驗證「完成購買」，而非鎖死內部方法的呼叫順序。</p>
+<p>TDD、BDD、Cucumber 或一般單元測試都不是目的。只要測試能提供足夠保護、快速回饋，而且案例切得夠小，就是有價值的開發回饋機制。</p>
 <hr />
-<h2 id="七結論ai-是能力放大器"><a class="header" href="#七結論ai-是能力放大器">七、結論：AI 是能力放大器</a></h2>
+<h2 id="七ai-與人的責任邊界"><a class="header" href="#七ai-與人的責任邊界">七、AI 與人的責任邊界</a></h2>
+<h3 id="適合交給-ai-的工作"><a class="header" href="#適合交給-ai-的工作">適合交給 AI 的工作</a></h3>
+<ul>
+<li>依明確的輸入與預期輸出產生第一版測試。</li>
+<li>執行測試並回報失敗。</li>
+<li>撰寫最小實作、修正錯誤並重跑測試。</li>
+<li>依已辨識的壞味道或設計方向提出重構版本。</li>
+<li>產生提交訊息、樣板與重複性程式碼。</li>
+<li>根據明確範例套用團隊既有架構與程式風格。</li>
+</ul>
+<p>可以讓 AI 處理「自己做得出來，但不值得親手重複做」的工作；若產出完全看不懂，就無法有效審查，也無法承擔結果。</p>
+<h3 id="人不可外包的責任"><a class="header" href="#人不可外包的責任">人不可外包的責任</a></h3>
+<ul>
+<li>把大問題切成下一個可驗證的小行為。</li>
+<li>判斷測試是否真的測到需求，而非實作細節。</li>
+<li>確認紅燈原因正確、綠燈不是假通過。</li>
+<li>辨識程式碼壞味道與架構偏差。</li>
+<li>決定領域語言、模組邊界、責任分配與非功能需求。</li>
+<li>審查 AI 產出，判斷是否可理解、可維護、安全且符合團隊規範。</li>
+</ul>
+<h3 id="控制每輪輸出規模"><a class="header" href="#控制每輪輸出規模">控制每輪輸出規模</a></h3>
+<p>一次只讓 AI 處理：</p>
+<ol>
+<li>一個案例。</li>
+<li>一個失敗原因。</li>
+<li>一小段實作。</li>
+<li>一種重構意圖。</li>
+<li>一次測試與審查。</li>
+</ol>
+<hr />
+<h2 id="八常見陷阱"><a class="header" href="#八常見陷阱">八、常見陷阱</a></h2>
+<ul>
+<li><strong>把自己變成 AI 的傳令兵</strong>：需求、測試與審查都原封不動轉交 AI，人沒有提供專業判斷，也就無法建立可信任的品質門檻。</li>
+<li><strong>測試一開始就是綠燈</strong>：案例可能沒有引入新行為，或只是跟著既有實作寫；應確認目標行為缺失時它確實會失敗。</li>
+<li><strong>一次要求太多功能</strong>：多個獨立行為混在同一張需求，會增加走偏、狀態混淆與整批重做的機率。</li>
+<li><strong>用測試通過取代設計審查</strong>：功能正確不代表程式品質良好。</li>
+<li><strong>過早設計未來彈性</strong>：為尚未發生的需求建立抽象，會讓現在的步驟變大、紅燈變久。</li>
+<li><strong>規格名詞不一致</strong>：同一個概念使用不同名稱，會同時增加人與 AI 的理解成本。</li>
+</ul>
+<hr />
+<h2 id="九落地檢查表"><a class="header" href="#九落地檢查表">九、落地檢查表</a></h2>
+<h3 id="開始前"><a class="header" href="#開始前">開始前</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+能用一句話描述這一輪唯一要新增的行為。</li>
+<li><input disabled="" type="checkbox"/>
+案例足夠小，預期能在數分鐘內完成紅綠循環。</li>
+<li><input disabled="" type="checkbox"/>
+輸入、動作、輸出與邊界條件明確。</li>
+<li><input disabled="" type="checkbox"/>
+Spec 沒有混入不可驗證的形容詞。</li>
+<li><input disabled="" type="checkbox"/>
+領域名詞與現有文件一致。</li>
+</ul>
+<h3 id="red"><a class="header" href="#red">Red</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+已實際執行測試，且失敗原因正是缺少目標行為。</li>
+<li><input disabled="" type="checkbox"/>
+已閱讀 AI 產生的測試，沒有把實作細節當成需求。</li>
+<li><input disabled="" type="checkbox"/>
+測試先於目標能力存在，或已用等效方式證明它會失敗。</li>
+</ul>
+<h3 id="green"><a class="header" href="#green">Green</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+只加入足以通過目前案例的最小變更。</li>
+<li><input disabled="" type="checkbox"/>
+已實際重跑測試並看到綠燈。</li>
+<li><input disabled="" type="checkbox"/>
+沒有順手加入下一個需求。</li>
+<li><input disabled="" type="checkbox"/>
+AI 的每一項變更都能由人解釋。</li>
+</ul>
+<h3 id="refactor"><a class="header" href="#refactor">Refactor</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+重構前所有測試保持綠燈。</li>
+<li><input disabled="" type="checkbox"/>
+本輪只處理一個清楚的設計問題。</li>
+<li><input disabled="" type="checkbox"/>
+重構沒有改變外部行為，完成後已再次執行測試。</li>
+<li><input disabled="" type="checkbox"/>
+結果比原本更容易理解與修改，而不只是更抽象。</li>
+</ul>
+<h3 id="提交與下一輪"><a class="header" href="#提交與下一輪">提交與下一輪</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+提交內容小而單一，訊息能描述行為或設計意圖。</li>
+<li><input disabled="" type="checkbox"/>
+沒有把大量未審查的 AI 產出一起提交。</li>
+<li><input disabled="" type="checkbox"/>
+下一個案例帶來新的行為轉折，而非重複已證明的規則。</li>
+<li><input disabled="" type="checkbox"/>
+若步驟開始變慢，先切小再繼續。</li>
+</ul>
+<hr />
+<h2 id="十結論ai-是能力放大器"><a class="header" href="#十結論ai-是能力放大器">十、結論：AI 是能力放大器</a></h2>
 <ol>
 <li><strong>基本功與知識比以前更重要</strong>：
 <ul>
