@@ -418,6 +418,7 @@
     - [取代你的不是 AI，而是使用 AI 的人：程世嘉的 6 項關鍵思考](software_engineering/取代你的不是AI而是使用AI的人_程世嘉AI六項關鍵思考.md)
     - [黑箱測試方法與AI應用 - 課程筆記](software_engineering/黑箱測試方法與AI應用_課程筆記.md)
     - [黑箱測試方法詳細指南](software_engineering/testing_methods_guide.md)
+    - [TDD、競態條件與效能測試：五種語言的極致品質實戰指南](software_engineering/tdd-concurrency-performance-testing-guide.md)
     - [本機單元測試與除錯器完整驗證指南](software_engineering/local-unit-testing-debugging-guide.md)
     - [軟體開發方法論完整指南](software_engineering/software_development_methodologies_guide.md)
     - [系統設計機制完整比較指南](linux_system/system_design_comparisons.md)
