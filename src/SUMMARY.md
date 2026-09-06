@@ -662,6 +662,7 @@
         - [成交量分桶熵因子解析與回測](strategy/成交量分桶熵因子解析與回測.md)
     - [量化工具與數據源](strategy/11_量化工具與數據源.md)
         - [FinLab](strategy/finlab.md)
+        - [資訊係數（IC）：選股因子評估與應用](strategy/information-coefficient-ic.md)
         - [yfinance](strategy/yf.md)
         - [Shioaji](strategy/shioaji.md)
         - [Nansen](strategy/nansen.md)
