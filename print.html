@@ -210321,6 +210321,51 @@ QA                        → 驗收腳本自動執行
 <li>原始訪談：Matt Pocock 直播訪談 Robert C. Martin（Uncle Bob），2026-08-19</li>
 <li>PaulFun Blogger 原文：<a href="https://paulfun.net/articles/293">https://paulfun.net/articles/293</a></li>
 </ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="crap-指標工具地圖crap4clj-與跨語言生態"><a class="header" href="#crap-指標工具地圖crap4clj-與跨語言生態">CRAP 指標工具地圖：crap4clj 與跨語言生態</a></h1>
+<blockquote>
+<p>整理自與 Claude Code 的討論，起因是研究 <a href="https://github.com/unclebob/crap4clj">crap4clj</a> 這個 Robert C. Martin（Uncle Bob）維護的 Clojure 專案。內容涵蓋 crap4clj 的定位、它是否為「通用 agent skill」，以及 CRAP 指標在其他語言生態的實作現況。CRAP 分數的計算公式與應用原則另見〈<a href="software_engineering/uncle-bob-agent-workflow-crap-mutation-prompt-template.html">Uncle Bob 的 Agent 工作流操作層：CRAP、Mutation 與 Prompt Template</a>〉。</p>
+</blockquote>
+<h2 id="crap4clj-是什麼"><a class="header" href="#crap4clj-是什麼">crap4clj 是什麼</a></h2>
+<p><strong>crap4clj</strong> 是一個為 Clojure 專案計算 <strong>CRAP（Change Risk Anti-Pattern）指標</strong>的分析工具，結合「循環複雜度」與「測試覆蓋率」（來自 Cloverage），找出既複雜又缺乏測試的高風險函式。</p>
+<ul>
+<li>支援兩種啟動方式：Babashka（<code>bb crap</code>，推薦，啟動快）與 Clojure CLI（<code>clj -M:crap</code>，除錯用備援）</li>
+<li>原始碼發現範圍：<code>.clj</code>、<code>.cljc</code>、<code>.bb</code>（可分析獨立的 Babashka 腳本）</li>
+<li>架構（<code>src/crap4clj/</code>）：<code>core.cljc</code>（進入點）、<code>complexity.cljc</code>（複雜度計算）、<code>coverage.cljc</code>（覆蓋率解析）、<code>bb_coverage.cljc</code>（Babashka 覆蓋率蒐集）、<code>crap.cljc</code>（分數計算與報告）、<code>cli.cljc</code>（命令列參數）</li>
+<li>附有 <code>SKILL.md</code>，可作為 Claude Code skill 使用</li>
+</ul>
+<h2 id="它是通用-agent-skill嗎不是"><a class="header" href="#它是通用-agent-skill嗎不是">它是「通用 agent skill」嗎——不是</a></h2>
+<p>crap4clj 的 <code>SKILL.md</code> frontmatter 只在使用者要求「CRAP report」「cyclomatic complexity analysis」「code quality metrics」時觸發，屬於<strong>領域/工具特化型 skill</strong>，而非跨語言、跨任務類型的通用流程（對照 <code>superpowers:systematic-debugging</code> 這類真正通用的方法論 skill）。</p>
+<p>限制原因：</p>
+<div class="table-wrapper"><table><thead><tr><th>限制點</th><th>說明</th></tr></thead><tbody>
+<tr><td>語言解析</td><td><code>complexity.cljc</code> 是針對 Clojure 語法（<code>if</code>/<code>when</code>/<code>cond</code>/<code>and</code>/<code>or</code>/<code>loop</code>/<code>catch</code> 等）寫死的複雜度規則，不理解其他語言的語法樹</td></tr>
+<tr><td>覆蓋率工具綁定</td><td>依賴 Cloverage，讀取的是 Cloverage 專屬的 HTML/LCOV 報告格式</td></tr>
+<tr><td>專案設定綁定</td><td>需要 <code>deps.edn</code>（Clojure CLI）或 <code>bb.edn</code>（Babashka）並設好 <code>:cov</code>/<code>:crap</code> alias</td></tr>
+</tbody></table>
+</div>
+<h2 id="crap-指標在其他語言的實作"><a class="header" href="#crap-指標在其他語言的實作">CRAP 指標在其他語言的實作</a></h2>
+<p>CRAP 這個「複雜度 × (1-覆蓋率)³ + 複雜度」的公式本身語言中立，但因為覆蓋率工具本身就綁定各語言生態（Cloverage 只懂 Clojure、Istanbul 只懂 JS、JaCoCo 只懂 JVM），所以沒有單一工具能真正跨語言自動算覆蓋率這塊。實際生態是「一個公式、多個各語言獨立實作」：</p>
+<div class="table-wrapper"><table><thead><tr><th>語言</th><th>工具</th><th>特色</th></tr></thead><tbody>
+<tr><td>Java（原始版本）</td><td><a href="http://www.crap4j.org/">crap4j</a></td><td>Alberto Savoia 提出 CRAP 概念的原始實作</td></tr>
+<tr><td>Go</td><td><a href="https://github.com/unclebob/crap4go">crap4go</a></td><td>Uncle Bob 維護，跟 crap4clj 系出同源</td></tr>
+<tr><td>.NET/C#</td><td><a href="https://github.com/7Factor/crap4dotnet">crap4dotnet</a></td><td>JSON 輸出、CI 友善</td></tr>
+<tr><td>Rust</td><td><a href="https://github.com/minikin/cargo-crap">cargo-crap</a></td><td>Cargo 子指令形式</td></tr>
+<tr><td>TypeScript/JS</td><td><a href="https://github.com/sebassdc/crap4ts">crap4ts</a></td><td>支援 Istanbul 覆蓋率格式，附帶跨 agent 的 AI skill</td></tr>
+<tr><td>PHP</td><td><a href="https://github.com/nebbia-fitness/codecept-coverage-reporter">codecept-coverage-reporter</a></td><td>整合 Codeception</td></tr>
+<tr><td>Groovy</td><td><a href="https://dx42.github.io/gmetrics/metrics/CrapMetric.html">GMetrics（CrapMetric）</a></td><td>內建於 GMetrics 工具集</td></tr>
+</tbody></table>
+</div>
+<h3 id="較接近多語言的輔助工具"><a class="header" href="#較接近多語言的輔助工具">較接近「多語言」的輔助工具</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>工具</th><th>說明</th><th>限制</th></tr></thead><tbody>
+<tr><td><a href="https://github.com/terryyin/lizard">Lizard</a></td><td>支援 C/C++、Java、JS、Python、Go、Rust 等十幾種語言的複雜度計算</td><td>只算複雜度，不算覆蓋率也不算 CRAP 分數，需自行接覆蓋率再套公式</td></tr>
+<tr><td>SciTools Understand</td><td>商業工具，支援多語言的程式碼度量</td><td>付費，非專門的 CRAP 工具，需自訂 metric</td></tr>
+</tbody></table>
+</div>
+<h2 id="結論-19"><a class="header" href="#結論-19">結論</a></h2>
+<p>沒有一個真正「單一工具、原生支援任意語言」的 CRAP 分析工具存在，主因是覆蓋率工具天生綁定語言/測試框架。若專案橫跨多個語言（例如同時有 Clojure、Go、TypeScript），比較實際的做法是：</p>
+<ol>
+<li>各語言用各自的 CRAP 工具（上表列出的那些），統一輸出格式（例如都轉成同一份 JSON schema）方便彙總比較</li>
+<li>或自建 pipeline：Lizard 算複雜度 + 各語言原生覆蓋率工具 + 自己實作公式，但需要額外開發維護成本</li>
+</ol>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="bob-大叔ai-程式碼我完全不看"><a class="header" href="#bob-大叔ai-程式碼我完全不看">Bob 大叔：AI 程式碼我完全不看</a></h1>
 <blockquote>
 <p>Robert C. Martin ｜AI 程式設計 ｜AI Agent ｜程式碼整潔之道 ｜Clean Code ｜變異測試 ｜測試驅動開發 TDD</p>
@@ -239978,7 +240023,7 @@ endgenerate
 <li>串流處理（影像、網路封包）</li>
 <li>自定義運算架構</li>
 </ul>
-<h3 id="結論-19"><a class="header" href="#結論-19">結論</a></h3>
+<h3 id="結論-20"><a class="header" href="#結論-20">結論</a></h3>
 <p>C 語言多核心確實是平行運算，但它是<strong>任務級平行</strong>（task-level parallelism），而 FPGA 提供的是<strong>位元級平行</strong>（bit-level parallelism）和<strong>運算單元級平行</strong>。</p>
 <p>打個比方：</p>
 <ul>
@@ -245284,7 +245329,7 @@ ex:創建某個疾病的常見回答資料庫，並通過推理找到最合適�
 <h2 id="深度學習"><a class="header" href="#深度學習">深度學習</a></h2>
 <p>我們剛剛可以看到在機械學習中講到了許多深度學習的內容，因為深度學習是機械學習的分支，所以機械學習中的概念大多能套用至深度學習，而兩者最大的差異就在於是不是能<code>自動找到特徵</code>與<code>神經網路層</code>。</p>
 <p>在深度學習中我們只需要設定好各神經網路參數就能通過訓練自動截取特徵，並且通過不同神經網路的演算法找到一個最佳的結果，但機械學習中我們卻需要自行找到特徵，在把這個特徵放入的單一的演算法當中。</p>
-<h2 id="結論-20"><a class="header" href="#結論-20">結論</a></h2>
+<h2 id="結論-21"><a class="header" href="#結論-21">結論</a></h2>
 <p>今天看完了這些知識有沒有注意到，深度學習只是在AI這領域的一小部分，且我們在日常生活中也能看到這些模型的應用(車牌辨識、google翻譯、人臉辨識、物件檢測...等)，而且在AI比賽當中有時取得最佳成績的是機器學習的方式，所以我們明天來看一些機器學習的技術吧。</p>
 <h2 id="集成式學習--使用xgboost過濾垃圾郵件"><a class="header" href="#集成式學習--使用xgboost過濾垃圾郵件">集成式學習 &amp; 使用xgboost過濾垃圾郵件</a></h2>
 <h1 id="集成式學習ensemble-learning"><a class="header" href="#集成式學習ensemble-learning">集成式學習(Ensemble learning)</a></h1>
@@ -247025,7 +247070,7 @@ for epoch in range(20):
 <p>DBSCAN的分群方式是先隨便找到一點數據點，並通過設定的半徑畫圓來查看圓內的資料點有多少，若符合所設定的最低數據量，圓圈就會繼續往前移動，反之重新找到下一個未掃描的資料，一直到掃描完所有的資料點才會停止，我們可以看到下圖DBSCAN的分群結果(同顏色為一群，沒被匡列到的資料點為異常點)。
 <img src="https://ithelp.ithome.com.tw/upload/images/20220925/20152236ETozLlscgM.png" alt="https://ithelp.ithome.com.tw/upload/images/20220925/20152236ETozLlscgM.png" /></p>
 <p>從結果來看DBSCAN能幫助我們更詳細的找出相似的資料，但再圖片中卻可以發現一個問題，就是在密度較高的區塊(右上方)，有良好的分群效果，但在密度較低(左下方)的區塊，卻會被分類成較多群，這些密度較低群體之間可能也有一定的相似度，但DBSCAN卻會認為這幾組類別並不相同，這是因為DBSCAN若遇見<strong>密度差異大</strong>的資料集，就會導致效果會較差，這時只能去使用一些特徵分析的方式，將特徵較相似的群體合併在一起。</p>
-<h1 id="結論-21"><a class="header" href="#結論-21">結論</a></h1>
+<h1 id="結論-22"><a class="header" href="#結論-22">結論</a></h1>
 <p>從我們今天介紹了兩種分群演算法當中，可以發現到不同的分群演算法，能處理的資料集也都不相同，這就好比我們在深度學習中對圖片會使用CNN，對時間會使用LSTM，在分群演算法也是相同的道理，雖然不是不能做使用，但用錯方式得到的最終結果自然會不佳。</p>
 <h2 id="對google評論自動分群-hdbscan與sentence-bert上"><a class="header" href="#對google評論自動分群-hdbscan與sentence-bert上">對Google評論自動分群-HDBSCAN與Sentence-BERT(上)</a></h2>
 <p>DBSCAN的問題</p>
@@ -247082,7 +247127,7 @@ plt.show()
 S-BERT做了些實驗比較孿生網路與三重網路哪種方式較佳，而這一方面由孿生網路勝出，所以我們可以看到圖片中S-BERT的基礎架構其實就是，將原始的BERT加上一層池化層並更改成孿生網路的模式而已。</p>
 <p>在S-BERT的網路中池化層的功用非常的重要，因為輸入的token都不同，所以輸出的維度也就會不平均，於是就需要在BERT的輸出後面，加入一層mean pooling來取token的平均值，這樣子就可以取得BERT該有的embedding大小。</p>
 <p>通過這樣子的結果，我們就可以直接使用這個embedding來各句子之間的相似度，或是直接使用這個embedding來幫助我們對文字做分群。</p>
-<h1 id="結論-22"><a class="header" href="#結論-22">結論</a></h1>
+<h1 id="結論-23"><a class="header" href="#結論-23">結論</a></h1>
 <p>我們今天所講的兩個技術，都是在文字分群中相當重要的，因為我們在分群時最重要的就是準確率以及完成速度，若分群的速度過於緩慢，那不如自己手動分群。</p>
 <p>所以我們需要拋棄掉BERT的方式，改用S-BERT幫助我們完成分群的動作，並且利用HDBSCAN這種不容易受到資料影響的分群方式，讓我們能夠找到更仔細的群組，接下來就是看我們該如何把這些群組合併或是移除了，我們明天就來看看如何使用這兩個技術，對google評論分群的效果。</p>
 <h2 id="對google評論自動分群-hdbscan與sentence-bert下"><a class="header" href="#對google評論自動分群-hdbscan與sentence-bert下">對Google評論自動分群-HDBSCAN與Sentence-BERT(下)</a></h2>
@@ -247892,7 +247937,7 @@ print(XOR_model.predict(x),AND_model.predict(x),OR_model.predict(x),sep='\n\n')
 <p>但若是<strong>比較簡易的系統</strong>(例子1)就會採用Precision，這時Precision就會比較高(判斷到的基本上是大樓的住戶)，但recall卻會很低(大樓的住戶可能會被擋在外面)。</p>
 <h3 id="f1-score"><a class="header" href="#f1-score">F1 Score</a></h3>
 <p>但今天覺得Recall與Precision都很重要呢?這時候就要用F1 Score這個評估方式，這個公式的計算方式其實就是計算Recall與Precision的<code>調和平均數(harmonic mean)</code>，當這個分數越靠近1，我們系統的效能就會越好。</p>
-<h2 id="結論-23"><a class="header" href="#結論-23">結論</a></h2>
+<h2 id="結論-24"><a class="header" href="#結論-24">結論</a></h2>
 <p>在AI的模型中評估方式相當的重要，因為這直接代表了這個神經網路模型的好壞，而我們判斷一個神經網路模型，基本上不會只使用一個指標，因為如果只使用一種指標，只能代表這個評估方式與我們的神經網路模型相性很好，所以我們需要使用多樣評估方式，來評估神經網路的實際效能。</p>
 <h2 id="蒐集資料與訓練模型時會發生的常見問題--解決方式"><a class="header" href="#蒐集資料與訓練模型時會發生的常見問題--解決方式">蒐集資料與訓練模型時會發生的常見問題 &amp; 解決方式</a></h2>
 <p>今天是課程倒數第二天，我相信你在學習的過程中產生了很多的疑問，所以今天我要來統整在訓練時常見的問題與解決方式。但注意這些回答<strong>都是參考解答不一定是最佳解</strong>，因為在深度學習的技術中，我們沒有經過實驗是不會知道結果的。</p>
@@ -255954,7 +255999,7 @@ Bounding box的中心座標(x,y)是在特定grid cell的偏移(offset)，所以�
 <p>YOLO multi-part loss function定義如下，老實說一開始都很難看的懂(實際上真的很難看的懂@@):</p>
 <p><img src="ml/images/1*Df3BdBxUjneUVeuMRGGC9Q.png" alt="img" /></p>
 <p>如此一來此loss function只會針對物件如果有出現在某個grid cell下進行懲罰分類錯誤。並且只會針對有責任於偵測Ground truth box的預測者進行懲罰bounding box錯誤，也就是grid cell中有最高IOU的預測者。</p>
-<h2 id="結論-24"><a class="header" href="#結論-24"><strong>結論</strong></a></h2>
+<h2 id="結論-25"><a class="header" href="#結論-25"><strong>結論</strong></a></h2>
 <p>Performance 這部分直接看論文吧。</p>
 <p>這邊作者有提到YOLO的Limitations → 所以才有<a href="https://arxiv.org/abs/1612.08242">YOLOv2</a>出來啊。</p>
 <ol>
@@ -258205,7 +258250,7 @@ ONNX Runtime:        22-28 tokens/秒
 <li><strong>MNN</strong> (阿里巴巴)：移動端優化更好</li>
 <li><strong>NCNN</strong> (騰訊)：在某些 Android 設備上更快</li>
 </ul>
-<h3 id="結論-25"><a class="header" href="#結論-25">結論</a></h3>
+<h3 id="結論-26"><a class="header" href="#結論-26">結論</a></h3>
 <p>綜合考慮效能、穩定性、易用性，llama.cpp 仍是 CPU 推理的最佳選擇，但特定硬體平臺可能有更優選擇。</p>
 <hr />
 <h2 id="三rtx-3060-12gb-gpu-最佳方案"><a class="header" href="#三rtx-3060-12gb-gpu-最佳方案">三、RTX 3060 12GB GPU 最佳方案</a></h2>
@@ -260388,7 +260433,7 @@ ollama run my-custom-model
 <p><strong>專業提示</strong>：本文所有操作步驟都可以在這個 Github Repo 中找到，歡迎參考和實踐。</p>
 </blockquote>
 <p>通過實踐這些步驟，您不僅可以運行自定義模型，還可以深入瞭解模型轉換和優化的過程，為您的 AI 開發之旅增添新的維度。</p>
-<h2 id="結論-26"><a class="header" href="#結論-26">結論</a></h2>
+<h2 id="結論-27"><a class="header" href="#結論-27">結論</a></h2>
 <p>Ollama 為開發者和 AI 愛好者提供了一個強大而靈活的工具，使本地運行大型語言模型變得前所未有的簡單。無論您是想要進行 AI 研究、開發智能應用，還是僅僅出於好奇想要探索 AI 的潛力，Ollama 都為您提供了一個理想的起點。</p>
 <p>隨著 AI 技術的不斷發展，Ollama 這樣的工具將在推動 AI 民主化和創新方面發揮越來越重要的作用。現在正是開始您的 Ollama 之旅的最佳時機，探索本地 AI 開發的無限可能！</p>
 <p>即刻前往教學程式碼 Repo，親自搭建屬於自己的 LLM Server 吧！別忘了給專案按個星星並持續關注更新，讓我們一起探索 AI 代理的新境界。</p>
@@ -268231,7 +268276,7 @@ height = 200 / 640 = 0.3125
 <li><strong>情境感知警告</strong>：根據環境與交互模式提供個性化詐騙警示</li>
 </ol>
 <hr />
-<h2 id="結論-27"><a class="header" href="#結論-27">結論</a></h2>
+<h2 id="結論-28"><a class="header" href="#結論-28">結論</a></h2>
 <p><strong>目前現實</strong>：AR 眼鏡在詐騙防範中仍處於實驗階段。雖然在 QR 碼掃描、身份驗證、深偽檢測等領域展現了潛力，但硬體限制、算法挑戰與隱私問題使其尚未成為實用工具。</p>
 <p><strong>當下建議</strong>：臺灣用戶應該優先利用已成熟的工具——165 反詐騙專線、AI 防詐應用程式、雙因子認證與官方身份驗證機制。這些方法在現今已足以應對大多數詐騙情境。</p>
 <p><strong>長期展望</strong>：隨著 AR 硬體的進步與 AI 算法的突破，AR 眼鏡終將成為融合便利與安全的新一代詐騙防範工具。但在此之前，保持警覺、建立驗證習慣才是最有效的防詐策略。</p>
@@ -270817,7 +270862,7 @@ backbone / neck / head / loss 都可以自由組合，與其他 OpenMMLab 專案
 <li>大量開源範例程式碼 (ROS wrapper、Python bindings 等)</li>
 <li>視覺 SLAM 範例</li>
 </ul>
-<h3 id="結論-28"><a class="header" href="#結論-28">結論</a></h3>
+<h3 id="結論-29"><a class="header" href="#結論-29">結論</a></h3>
 <p>使用者可以<strong>免費使用和修改 librealsense 的開源程式碼</strong>來操作 RealSense 相機，但相機內部最關鍵的「深度計算」演算法是 Intel 預先燒錄在硬體中的閉源程式碼。</p>
 <hr />
 <h2 id="主要深度相機技術比較"><a class="header" href="#主要深度相機技術比較">主要深度相機技術比較</a></h2>
@@ -291560,7 +291605,7 @@ anyfly 在 2012-08-24 13:45 發表<br />
     └───────────────────────────────────────────┘
 </code></pre>
 <hr />
-<h2 id="結論-29"><a class="header" href="#結論-29">結論</a></h2>
+<h2 id="結論-30"><a class="header" href="#結論-30">結論</a></h2>
 <pre><code>╔═══════════════════════════════════════════════════════════════╗
 ║                    四本書核心投資哲學                         ║
 ╠═══════════════════════════════════════════════════════════════╣
@@ -292226,7 +292271,7 @@ anyfly 在 2012-08-24 13:45 發表<br />
 <li>**成本認定：**券商顯示的帳面成本，不一定等於申報所得時可直接採用的稅務成本。</li>
 <li>**損益資料：**應保留成交紀錄、費用、匯率與券商年度對帳單。</li>
 </ul>
-<h2 id="結論-30"><a class="header" href="#結論-30">結論</a></h2>
+<h2 id="結論-31"><a class="header" href="#結論-31">結論</a></h2>
 <p>若要把全部持股的帳面成本調整到接近目前市值，通常要全部賣出再全部買回。只處理部分持股，只能提高部分成本。</p>
 <p>不過，帳面成本提高不代表交易一定有利。實現損益、稅務影響、價格波動及交易費用，都應納入決策。</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="台灣大師心法---phcebus-菲式思考"><a class="header" href="#台灣大師心法---phcebus-菲式思考">台灣大師心法 - phcebus 菲式思考</a></h1>
@@ -295317,7 +295362,7 @@ Ch6. 活用基本分析與技術分析：</p>
 <p><img src="strategy/images/image-58.png" alt="img" /></p>
 <p><strong>Portfolio visualizer回測結果:</strong></p>
 <p><img src="strategy/images/image-46.png" alt="img" /></p>
-<h2 id="結論-31"><a class="header" href="#結論-31">結論</a></h2>
+<h2 id="結論-32"><a class="header" href="#結論-32">結論</a></h2>
 <p>在股票池裡隨機選股, 真的隨便都可以海放大盤ㄟ….</p>
 <p>這樣我想可以一定程度的證明動能策略的是有作用的, 在<strong>適當的股票池</strong>裡去隨機選股的確能幹掉大盤, 特別作者是有考慮到S&amp;P 500的持股變化, 那麼回測的效度就更高.</p>
 <p>但MTUM是每半年調一次持股, 這回持股121支中近3年上市(2019,2020,2021)的個股就有17支, 佔14.05%, 在這樣的狀況下, 2014年的MTUM持有的強勢股到底和現在有多大的不同無從得知, 只能說這個實驗是假設股票池從2014年就是一樣的, <strong>從裡面隨機挑股還是能夠有不錯的績效, 讓阿批確認了相對動能的有效性.</strong></p>
@@ -303451,7 +303496,7 @@ edge ratio時序圖走勢有很多種，若是開低走高，一開始都低於1
 <ul>
 <li>pdays_ratio:獲利交易日數/交易持有日數，中位數數值若大於0.5，代表多數交易持有期間都是獲利，操作起來更有彈性。若mfe高，但pdays_ratio低，代表若沒把握到衝高的少數時期，則會錯過理想報酬。</li>
 </ul>
-<h2 id="結論-32"><a class="header" href="#結論-32">結論</a></h2>
+<h2 id="結論-33"><a class="header" href="#結論-33">結論</a></h2>
 <p>是不是對波動分析更加瞭解了呢？一張圖表包山包海，完整分析出策略細節。</p>
 <p>若想更深入瞭解MAE/MFE最大幅度分析法。除了國外資源，中文內容推薦<a href="https://www.maemfe.org/search/label/%E4%BA%A4%E6%98%93-MAE%2FMFE%E6%9C%80%E5%A4%A7%E5%B9%85%E5%BA%A6%E5%88%86%E6%9E%90%5B%E5%BD%B1%E7%89%87%5D">藍月記事</a>，其對這方面的策略體質觀察、優化有全方位的影片教學內容，作者對量化分析與交易心理有獨道見解，推薦大家前往學習。</p>
 <hr />
@@ -304229,7 +304274,7 @@ if __name__ == "__main__":
   回傳 dict {date, symbol, price_enter, price_exit, ...}
 </code></pre>
 <hr />
-<h2 id="結論-33"><a class="header" href="#結論-33">結論</a></h2>
+<h2 id="結論-34"><a class="header" href="#結論-34">結論</a></h2>
 <p>Tick 回測能向量化的前提：</p>
 <blockquote>
 <p><strong>策略邏輯可以被表達為「DataFrame 上的條件過濾 + 取第一筆」，
@@ -304313,7 +304358,7 @@ if __name__ == "__main__":
 <p><img src="strategy/images/volume_bucket_entropy_13.jpg" alt="" /></p>
 <p><img src="strategy/images/volume_bucket_entropy_14.jpg" alt="" /></p>
 <p>分層回測結果同樣偏中性，單調性不算理想。除了因子值最高的一組明顯落後外，其餘各組之間的區分度沒有拉得很開，代表這個因子單獨使用時的排序能力有限。</p>
-<h2 id="結論-34"><a class="header" href="#結論-34">結論</a></h2>
+<h2 id="結論-35"><a class="header" href="#結論-35">結論</a></h2>
 <p>成交量分桶熵的優點是概念直觀、計算流程不複雜，也容易實作成日頻因子；但從 IC、迴歸與分層回測結果來看，它比較像是可納入因子池的輔助型訊號，而不是單獨就能撐起策略的核心因子。</p>
 <p>若要延伸使用，較合理的方向有兩個：</p>
 <ol>
@@ -308666,7 +308711,7 @@ if __name__ == '__main__':
 <li>Bitfinex 還有「秒借秒還」情況，成交後下一秒就被歸還，讓閒置問題更嚴重</li>
 </ul>
 <p>另外，高利率成交的天期常落在特殊位置。常見且成交量高的天期是 <code>2</code>、<code>30</code>、<code>60</code>、<code>120</code>，但也常出現像 <code>33</code>、<code>41</code>、<code>72</code> 這類非整數慣性區間。這些位置在掛單簿上常常是空的，僅靠掛單簿很難預測。</p>
-<h2 id="結論-35"><a class="header" href="#結論-35">結論</a></h2>
+<h2 id="結論-36"><a class="header" href="#結論-36">結論</a></h2>
 <p>如果時間維度沒有被好好設計，只使用固定組數，整體績效通常會被明顯限制。把時間維度做分散後，我的策略成效與收入穩定性都有改善。</p>
 <p>在確認自己不適合做高頻現貨操作後，最後還是選擇專注在利息收入這條路。</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="bitfinex-放貸策略與匹配規則"><a class="header" href="#bitfinex-放貸策略與匹配規則">Bitfinex 放貸策略與匹配規則</a></h1>
@@ -312260,7 +312305,7 @@ draw_candle_stick(stock_data_gb_month, "month")
 <li>流動性危機的連鎖反應</li>
 <li>衍生品市場的潛在風險</li>
 </ul>
-<h2 id="結論-36"><a class="header" href="#結論-36">結論</a></h2>
+<h2 id="結論-37"><a class="header" href="#結論-37">結論</a></h2>
 <p>美國經濟指標、Fed政策、利率、美債、美元和美股之間形成了複雜的互動網絡。理解這些關係需要：</p>
 <ol>
 <li><strong>動態思維</strong>：關係並非固定，會隨經濟週期和市場環境改變</li>
@@ -312395,7 +312440,7 @@ draw_candle_stick(stock_data_gb_month, "month")
 <h3 id="未來發展趨勢"><a class="header" href="#未來發展趨勢">未來發展趨勢</a></h3>
 <p>隨著金融科技發展，加碼策略將更加<strong>程式化和智能化</strong>。預期未來會有更多基於機器學習和大數據的加碼策略面世。</p>
 <p>同時，ESG投資理念的興起也可能影響加碼策略的選股標準。投資者在制定加碼策略時，需要考慮可持續性投資的相關因素。</p>
-<h2 id="結論-37"><a class="header" href="#結論-37">結論</a></h2>
+<h2 id="結論-38"><a class="header" href="#結論-38">結論</a></h2>
 <p>股票加碼策略作為提升投資績效的重要工具，在理論和實務上都已獲得充分驗證。從傳統的金字塔加碼法到現代的程式化抄底投策略，各種方法都能在適當的市場環境下創造超越市場的報酬。</p>
 <h3 id="核心成功要素"><a class="header" href="#核心成功要素">核心成功要素</a></h3>
 <ol>
@@ -316334,7 +316379,7 @@ Length of data feeds:        20000
 <p><strong>記憶體使用</strong>：（<code>600 M位元組</code>在最佳化<code>exactbars</code>模式下做同樣的事情只會消耗<code>60 M位元組</code>，但會增加執行時間，因為 <code>pypy</code>它本身不能最佳化這麼多）</p>
 <p>有了<strong>交易，記憶體使用量確實增加</strong>了。原因是對像是由代理建立、傳遞和保存的<code>Order和``Trade。</code></p>
 <p>還有該資料集包含隨機值，其產生數量龐大交叉的，因此有大量的訂單和交易。對於常規資料集，不會有類似的行為。</p>
-<h2 id="結論-38"><a class="header" href="#結論-38">結論</a></h2>
+<h2 id="結論-39"><a class="header" href="#結論-39">結論</a></h2>
 <ol>
 <li>
 <ol>
@@ -317244,7 +317289,7 @@ while True:
 <li>🛡️ <strong>風控</strong>：嚴格的風險管理機制</li>
 </ul>
 <hr />
-<h2 id="結論-39"><a class="header" href="#結論-39">結論</a></h2>
+<h2 id="結論-40"><a class="header" href="#結論-40">結論</a></h2>
 <p>加密貨幣套利看似簡單，但實際執行時利潤空間通常很小（通常 &lt; 0.5%），且需要：</p>
 <ul>
 <li>快速的執行系統</li>
@@ -320284,7 +320329,7 @@ tokio = { version = "1", features = ["net", "rt-multi-thread"] }
 </ul>
 </li>
 </ol>
-<h2 id="結論-40"><a class="header" href="#結論-40">結論</a></h2>
+<h2 id="結論-41"><a class="header" href="#結論-41">結論</a></h2>
 <p>Rust 在 HFT 領域是 C++ 的有力競爭者，提供了：</p>
 <ul>
 <li>✅ 相同的底層控制能力</li>
@@ -320783,7 +320828,7 @@ Rust + FFI:       99,800 次/秒
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
 <span class="boring">}</span></code></pre></pre>
-<h2 id="結論-41"><a class="header" href="#結論-41">結論</a></h2>
+<h2 id="結論-42"><a class="header" href="#結論-42">結論</a></h2>
 <ul>
 <li><strong>FFI 效能影響</strong>: &lt; 1%，可忽略</li>
 <li><strong>Rust 優勢</strong>: 記憶體安全、並發處理可能帶來整體效能提升</li>
@@ -335258,7 +335303,7 @@ sudo ./xdp_loader -n eth0 xdp_prog.o
 </code></pre>
 </li>
 </ol>
-<h2 id="結論-42"><a class="header" href="#結論-42">結論</a></h2>
+<h2 id="結論-43"><a class="header" href="#結論-43">結論</a></h2>
 <p>Kernel Bypass 技術提供了顯著的網路效能提升：</p>
 <ul>
 <li><strong>DPDK</strong>: 適合需要極致效能的專用系統</li>
@@ -340243,7 +340288,7 @@ C 使用 100 個連線：最大：0.69 ms，P99：0.58 ms
 <li>使用實際的並發層級進行效能分析和測試</li>
 <li>在性能測試期間監控系統指標（上下文切換、排程器延遲）</li>
 </ul>
-<h2 id="結論-43"><a class="header" href="#結論-43">結論</a></h2>
+<h2 id="結論-44"><a class="header" href="#結論-44">結論</a></h2>
 <p>執行緒池優化將 C 客戶端從擁有最差的 P99 延遲轉變為實現具有競爭力的性能。這證明瞭適當的並發管理對於高性能網路應用程式至關重要，無論使用哪種底層 HTTP 函式庫。</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="高頻交易-high-frequency-trading-hft"><a class="header" href="#高頻交易-high-frequency-trading-hft">高頻交易 (High Frequency Trading, HFT)</a></h1>
 <p>高頻交易是一種利用電腦程式進行大量、快速交易的投資策略。本章節整理了 HFT 系統開發的核心技術與最佳實踐。</p>
@@ -343346,7 +343391,7 @@ make run    # 執行完整驗證
 </ul>
 </li>
 </ol>
-<h2 id="結論-44"><a class="header" href="#結論-44">結論</a></h2>
+<h2 id="結論-45"><a class="header" href="#結論-45">結論</a></h2>
 <p><strong>沒有任何GitHub開源項目能完全實現表格中的所有優化技術</strong>。</p>
 <p>開源項目主要適合：</p>
 <ul>
@@ -350181,7 +350226,7 @@ ln -s "$HOME/dotfiles/claude" "$HOME/.claude"
 <tr><td>session history、debug logs</td><td>不同步</td></tr>
 </tbody></table>
 </div>
-<h2 id="結論-45"><a class="header" href="#結論-45">結論</a></h2>
+<h2 id="結論-46"><a class="header" href="#結論-46">結論</a></h2>
 <ul>
 <li>只搬一次 → 用 <code>tar</code> 或 <code>rsync</code></li>
 <li>多台機器長期維護 → <strong>方法二</strong>（<code>~/.claude</code> 直接 git repo）最簡潔</li>
