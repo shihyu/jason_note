@@ -411,6 +411,7 @@
     - [AI 時代寫程式：學習還是偷懶？](software_engineering/vibe-coding-vs-software-engineering.md)
     - [AI 協作開發實踐指南：避開六大盲區](software_engineering/AI協作開發實踐指南_避開六大盲區.md)
     - [《Clean Code》作者現在不看程式碼了，但他把規矩搬到了機器管得住的地方](software_engineering/clean-code-rules-for-ai-agents.md)
+    - [Uncle Bob 的 Agent 工作流操作層：CRAP、Mutation 與 Prompt Template](software_engineering/uncle-bob-agent-workflow-crap-mutation-prompt-template.md)
     - [Bob 大叔：AI 程式碼我完全不看](software_engineering/Bob大叔：AI代碼我完全不看.md)
     - [你只是在等紅燈而已：AI 輔助 TDD 實戰經驗](software_engineering/ai-assisted-tdd-practical-guide.md)
     - [Netflix 工程師談 Vibe Coding 副作用](software_engineering/Netflix工程師談VibeCoding副作用_理解萎縮危機與三步驟解方.md)
