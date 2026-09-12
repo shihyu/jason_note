@@ -604,6 +604,7 @@
         - [鐘崑禎囤貨與暴利選股策略](strategy/鐘崑禎囤貨與暴利選股策略.md)
         - [Put 避險與碗型底選股心法](strategy/Put避險與碗型底選股心法.md)
         - [美股複委託洗成本完整說明](strategy/美股複委託洗成本完整說明.md)
+        - [財報亮眼，股價為何下跌？估值與市場預期](strategy/財報亮眼股價卻下跌_估值與市場預期.md)
     - [phcebus菲式思考](strategy/02_台灣大師心法_phcebus菲式思考.md)
         - [phcebus](strategy/phcebus/phcebus.md)
         - [菲式思考](strategy/phcebus/菲式思考.md)
