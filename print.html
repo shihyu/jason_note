@@ -210720,6 +210720,516 @@ AI 的每一項變更都能由人解釋。</li>
 <li><strong>小時不讀書，長大被 AI 騙</strong>：KUMA 警示，如果工程師缺乏基本素養，AI 產出回傳 <code>200 OK</code> 卻內含錯誤碼的不良設計，或寫出具有嚴重資安漏洞的程式碼，工程師可能全盤接收，迅速做出品質不佳的系統。</li>
 <li><strong>工程師的核心責任未曾減少</strong>：AI 只是將開發起點往前推，人類不再需要把大量時間花在輸入基礎程式碼上。省下的時間應用來精進軟體架構、設計模式、領域模型（Domain Model）與溝通管理能力，主導並把關產品品質。</li>
 </ol>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="從規格證據到證明frama-c-mcp-白話指南"><a class="header" href="#從規格證據到證明frama-c-mcp-白話指南">從規格、證據到證明：frama-c-mcp 白話指南</a></h1>
+<!-- markdownlint-disable MD013 -->
+<blockquote>
+<p>資訊查核日期：2026-09-14<br />
+適用範圍：<code>frama-c-mcp</code> 目前的實作，以及 C、C++、Rust、Go、Python
+採用同類驗證流程的可行性。</p>
+</blockquote>
+<h2 id="先講結論-1"><a class="header" href="#先講結論-1">先講結論</a></h2>
+<p><code>frama-c-mcp</code> 是一個給 AI 代理程式使用的 C 程式正式驗證介面。「正式驗證」是把程式與
+數學化規格轉成邏輯問題，再由分析器或證明器檢查，而不只是執行幾組測試資料。它把
+<a href="https://www.frama-c.com/">Frama-C</a> 的下列能力包裝成 MCP 工具：</p>
+<ul>
+<li><strong>ACSL</strong>：寫在 C 程式旁的規格語言，用來描述呼叫條件、預期結果與可修改範圍。</li>
+<li><strong>annotation（註記）</strong>：用 ACSL 寫下的規格，例如 <code>requires</code>、<code>ensures</code> 與迴圈不變量。</li>
+<li><strong>EVA</strong>：以抽象解譯推估變數可能值與執行期錯誤，不必列舉每一個輸入。</li>
+<li><strong>WP</strong>：把程式與 ACSL 規格轉成必須證明的邏輯命題，再交給證明器處理。</li>
+<li><strong>E-ACSL</strong>：把可執行的 ACSL 規格轉成執行期檢查，實際執行程式以尋找違規案例。</li>
+<li><strong>MCP</strong>：讓 AI 模型以統一協定呼叫外部工具與取得結構化結果的通訊協定。</li>
+</ul>
+<p>因此，Claude、Codex 或其他 MCP 用戶端可以反覆執行：</p>
+<pre><code class="language-text">讀程式 → 寫／讀規格 → 分析風險 → 產生證明義務 → 嘗試證明
+       ↑                                           ↓
+       └──────── 根據未證明原因修正程式或輔助規格 ────────┘
+</code></pre>
+<p>它不是新的 theorem prover，也不會自動知道產品需求。真正解析與驗證 C 的是
+Frama-C，Alt-Ergo、Z3、CVC5 等 solver 負責嘗試解開 WP 產生的邏輯命題；本專案負責
+AI-friendly 的操作、狀態管理、隔離實驗、完整性判斷與 proof receipt。</p>
+<p>一句最精確的描述是：</p>
+<blockquote>
+<p>在指定原始碼、build configuration、machine model、ACSL specification、分析設定與
+明列 assumptions 下，蒐集 Frama-C evidence，並判斷要求的 proof obligations 是否
+全部成立且沒有未交代缺口。</p>
+</blockquote>
+<h2 id="閱讀前的特殊用詞速查"><a class="header" href="#閱讀前的特殊用詞速查">閱讀前的特殊用詞速查</a></h2>
+<p>以下用詞會在後文反覆出現。英文會保留，是因為工具輸出、設定名稱與錯誤訊息通常使用
+原文；中文解釋則用來說明它在本文扮演的角色。</p>
+<div class="table-wrapper"><table><thead><tr><th>用詞</th><th>白話解釋</th><th>不能直接推論什麼</th></tr></thead><tbody>
+<tr><td>Frama-C</td><td>分析與驗證 C 程式的平台；EVA、WP、E-ACSL 都是其分析元件</td><td>使用 Frama-C 不代表程式自動得到完整證明</td></tr>
+<tr><td>formal verification（正式驗證）</td><td>用數學模型與邏輯方法檢查程式是否符合規格</td><td>規格若寫錯，證明仍可能答非所問</td></tr>
+<tr><td>specification（規格）</td><td>對輸入條件、輸出結果與副作用的精確約定</td><td>不等同於程式目前碰巧呈現的行為</td></tr>
+<tr><td>ACSL</td><td>C 程式的行為規格語言，全名為 ANSI/ISO C Specification Language</td><td>ACSL 本身不是分析器或證明器</td></tr>
+<tr><td>annotation（註記）</td><td>附加在原始碼上的規格敘述</td><td>自動產生的註記不一定符合產品需求</td></tr>
+<tr><td>EVA</td><td>以抽象解譯推估值域、可達性及可能的執行期警報</td><td>沒有警報不必然等於完整功能正確性證明</td></tr>
+<tr><td>abstract interpretation（抽象解譯）</td><td>用有限的抽象值概括大量甚至無限種執行狀態</td><td>結果可能保守，因而產生誤報</td></tr>
+<tr><td>WP</td><td>使用最弱前置條件，把程式與規格轉為驗證條件</td><td>產生條件不代表條件已經被證明</td></tr>
+<tr><td>weakest precondition（最弱前置條件）</td><td>為保證執行後結果成立，反推執行前至少要成立的條件</td><td>「最弱」不表示安全要求較寬鬆</td></tr>
+<tr><td>proof obligation／VC</td><td>必須證明的邏輯命題；VC 是 verification condition 的縮寫</td><td>單一 VC 通過不代表所有義務都通過</td></tr>
+<tr><td>E-ACSL</td><td>將部分 ACSL 規格轉為可執行的執行期檢查</td><td>有限次執行不能取代所有輸入的靜態證明</td></tr>
+<tr><td>runtime check（執行期檢查）</td><td>程式執行到特定位置時，動態檢查規格是否成立</td><td>沒走到的路徑仍未受檢查</td></tr>
+<tr><td>MCP</td><td>Model Context Protocol，AI 模型與外部工具交換請求及結果的協定</td><td>MCP 只負責連接，不負責證明正確性</td></tr>
+<tr><td>JSON-RPC</td><td>以 JSON 表示方法呼叫、參數與回應的訊息格式</td><td>傳輸成功不代表分析成功</td></tr>
+<tr><td>AST</td><td>Abstract Syntax Tree，編譯器解析原始碼後得到的樹狀結構</td><td>AST 相同與否仍取決於前處理及編譯設定</td></tr>
+<tr><td>SMT solver</td><td>檢查邏輯公式可滿足性或有效性的自動求解器，例如 Z3、CVC5</td><td><code>unknown</code> 不表示命題為假</td></tr>
+<tr><td>prover（證明器）</td><td>嘗試證明驗證條件的自動或互動式工具</td><td><code>valid</code> 仍需檢查使用了哪些假設</td></tr>
+<tr><td>contract（契約）</td><td>函式呼叫者與實作者之間的規格約定</td><td>契約本身也可能不完整或不符合需求</td></tr>
+<tr><td>precondition／<code>requires</code>（前置條件）</td><td>呼叫函式前必須成立的條件</td><td>不能用不合理條件排除真實輸入來換取通過</td></tr>
+<tr><td>postcondition／<code>ensures</code>（後置條件）</td><td>函式正常結束後必須成立的結果</td><td>沒寫到的功能不會自動被驗證</td></tr>
+<tr><td>frame condition／<code>assigns</code></td><td>限制函式最多可以修改哪些記憶體位置</td><td>只限制寫入範圍，未必描述寫入後的值</td></tr>
+<tr><td>loop invariant（迴圈不變量）</td><td>進入迴圈與每輪結束時都必須保持成立的事實</td><td>寫下不變量不表示其初始化與保持性已證明</td></tr>
+<tr><td>sandbox（隔離環境）</td><td>用獨立程序測試註記，避免失敗實驗污染主要分析狀態</td><td>隔離環境通過後仍要回到完整專案重驗</td></tr>
+<tr><td>counterexample（反例）</td><td>能具體讓規格失敗的一組輸入或執行路徑</td><td>找不到反例不等於已完成數學證明</td></tr>
+<tr><td>proof receipt（證明收據）</td><td>記錄來源、設定、義務、結果與雜湊的可追蹤摘要</td><td>不是數位簽章，也不是可獨立重播的證明項</td></tr>
+<tr><td>fail-closed（失敗時保守關閉）</td><td>只要分析缺漏、逾時或狀態不明，就不宣告成功</td><td>不代表所有失敗都是程式錯誤</td></tr>
+<tr><td><code>incomplete[]</code></td><td>收集未完成分析、未證明義務與未交代假設的缺口清單</td><td>空清單仍只涵蓋工具已知並檢查的缺口種類</td></tr>
+<tr><td>assumption／hypothesis（假設）</td><td>證明過程暫時視為真的前提</td><td>未證明假設會縮小結論可信範圍</td></tr>
+<tr><td>bounded model checking（有界模型檢查）</td><td>在指定展開次數或狀態界限內搜尋反例</td><td>界限內無反例通常不等於無界證明</td></tr>
+<tr><td>symbolic execution（符號執行）</td><td>用符號值代表多組輸入並探索程式路徑</td><td>可能受路徑爆炸與逾時限制</td></tr>
+<tr><td>backend／adapter（後端／轉接器）</td><td>後端執行實際分析；轉接器把不同工具結果轉成共通格式</td><td>統一格式不代表不同後端提供相同保證</td></tr>
+<tr><td>call graph（呼叫圖）</td><td>描述哪些函式會呼叫哪些函式的關係圖</td><td>函式指標或動態呼叫可能讓關係不完整</td></tr>
+<tr><td>strongly connected component（強連通分量）</td><td>呼叫圖中彼此可達的一組節點，常代表直接或間接遞迴</td><td>不能將其中函式完全拆開、各自獨立推理</td></tr>
+<tr><td>trusted base（可信基礎）</td><td>證明必須先相信的編譯器、模型、工具、公理與外部規格</td><td>可信基礎越大，結論依賴的未驗證部分越多</td></tr>
+</tbody></table>
+</div>
+<h2 id="為什麼需要這個專案"><a class="header" href="#為什麼需要這個專案">為什麼需要這個專案</a></h2>
+<p>一般 AI code review 很擅長指出「這裡看起來可能越界」，但這只是合理推測。即使 AI 說
+「看起來沒問題」，也沒有列出它究竟考慮了哪些輸入、路徑或假設。</p>
+<p>Frama-C 有更嚴謹的分析能力，但它的專案狀態、AST、annotations、WP goals、prover
+configuration 與結果不適合讓 agent 只靠零散 shell commands 操作。<code>frama-c-mcp</code> 在
+兩者之間補上可反覆呼叫、可追蹤、失敗時能繼續調查的協定層。</p>
+<h2 id="系統架構-1"><a class="header" href="#系統架構-1">系統架構</a></h2>
+<pre class="mermaid">flowchart LR
+    U[使用者&lt;br/&gt;需求與信任邊界] --&gt; A[AI agent&lt;br/&gt;Claude / Codex / MCP client]
+    A &lt;--&gt;|MCP JSON-RPC&lt;br/&gt;stdio| M[frama-c-mcp&lt;br/&gt;Rust server]
+
+    subgraph S[frama-c-mcp session]
+      M --&gt; ST[專案狀態&lt;br/&gt;conclusions / receipts / lock]
+      M --&gt; R[tool router&lt;br/&gt;check / context / run_wp / ...]
+    end
+
+    R &lt;--&gt;|Unix socket&lt;br/&gt;Frama-C Server protocol| F[Frama-C main process]
+    F &lt;--&gt; P[ast-utils plugin&lt;br/&gt;AST / ACSL / extraction / VC details]
+    F --&gt; EVA[EVA&lt;br/&gt;abstract interpretation]
+    F --&gt; WP[WP&lt;br/&gt;weakest precondition]
+    WP --&gt; SMT[Alt-Ergo / Z3 / CVC5&lt;br/&gt;或互動式 prover]
+
+    R --&gt; SB[Sandbox registry]
+    SB --&gt; X1[獨立 Frama-C process&lt;br/&gt;experiment:function]
+    X1 &lt;--&gt; P1[ast-utils plugin]
+    X1 --&gt; SMT
+
+    R --&gt; E[E-ACSL&lt;br/&gt;instrument + compile + execute]
+    M --&gt; OUT[證據與結論&lt;br/&gt;缺口清單與證明收據]
+    OUT --&gt; A
+</pre>
+<h3 id="每一層負責什麼"><a class="header" href="#每一層負責什麼">每一層負責什麼</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>元件</th><th>責任</th><th>不負責什麼</th></tr></thead><tbody>
+<tr><td>使用者</td><td>提供需求、真正 build flags、目標函式，決定可接受的 specification</td><td>不需要手動控制 Frama-C protocol</td></tr>
+<tr><td>AI agent</td><td>導航程式、提出輔助 annotation、讀 evidence、安排下一次驗證</td><td>不應擅自弱化 <code>requires</code>/<code>ensures</code> 來換綠燈</td></tr>
+<tr><td>Rust MCP server</td><td>tools、session、budget、receipt、sandbox、fail-closed accounting</td><td>不自行證明 C semantics</td></tr>
+<tr><td><code>ast-utils</code></td><td>AST context、ACSL injection/validation、依賴抽取、VC details</td><td>不是獨立 solver</td></tr>
+<tr><td>EVA</td><td>用 abstract interpretation 推導值域、可達性與 runtime alarms</td><td>不等同於函式完整 functional-correctness proof</td></tr>
+<tr><td>WP</td><td>把 C + ACSL 轉成 verification conditions</td><td>不會替人決定 specification 應寫什麼</td></tr>
+<tr><td>SMT／proof assistant</td><td>對邏輯 goals 給出 valid、unknown、timeout 等結果</td><td><code>unknown</code> 不代表性質為假，<code>valid</code> 仍要看 assumptions</td></tr>
+<tr><td>E-ACSL</td><td>將可執行 ACSL 變成 runtime checks，尋找具體違反</td><td>跑過有限測資不構成所有輸入的靜態證明</td></tr>
+</tbody></table>
+</div>
+<p>詳細模組邊界與可靠的代理程式呼叫順序，應以 <code>frama-c-mcp</code> 專案內的
+<code>architecture.md</code> 與 <code>agent-playbook.md</code> 為準。</p>
+<h2 id="specificationevidenceproof-到底差在哪裡"><a class="header" href="#specificationevidenceproof-到底差在哪裡">Specification、Evidence、Proof 到底差在哪裡</a></h2>
+<h3 id="規格specification要守的約定"><a class="header" href="#規格specification要守的約定">規格（Specification）：要守的約定</a></h3>
+<p>Specification 描述「程式應該做到什麼」，而不是重述每一行怎麼做。C 路線使用
+<a href="https://frama-c.com/html/acsl.html">ACSL</a>：</p>
+<div class="table-wrapper"><table><thead><tr><th>ACSL 元素</th><th>白話意思</th><th>誰要負責成立</th></tr></thead><tbody>
+<tr><td><code>requires P</code></td><td>呼叫前 <code>P</code> 必須成立</td><td>每個 caller</td></tr>
+<tr><td><code>ensures Q</code></td><td>正常回傳後 <code>Q</code> 一定成立</td><td>function implementation</td></tr>
+<tr><td><code>assigns X</code></td><td>最多只會修改 <code>X</code></td><td>function implementation</td></tr>
+<tr><td><code>assert P</code></td><td>執行到這裡時 <code>P</code> 成立</td><td>到達該點的程式路徑</td></tr>
+<tr><td><code>loop invariant I</code></td><td>進迴圈前及每輪之後 <code>I</code> 都成立</td><td>初始化與 loop body</td></tr>
+<tr><td><code>loop assigns X</code></td><td>每輪最多修改 <code>X</code></td><td>loop body</td></tr>
+<tr><td><code>loop variant V</code></td><td><code>V</code> 非負且每輪嚴格下降</td><td>loop termination proof</td></tr>
+</tbody></table>
+</div>
+<p><code>propose_annotations</code> 可以從 AST 抄出部分 frame facts，例如 loop 寫了哪些 locations。
+但「加總的數學定義」「排序後保持 permutation」「權限檢查的產品政策」並不完整存在於
+程式語法中，仍需人或 agent 撰寫並由 reviewer 確認。</p>
+<h3 id="證據evidence工具實際看見什麼"><a class="header" href="#證據evidence工具實際看見什麼">證據（Evidence）：工具實際看見什麼</a></h3>
+<p>Evidence 是可供判斷的分析資料，不必然代表成功：</p>
+<ul>
+<li>source position 對應的 AST marker；</li>
+<li>EVA 的 before/after value sets 與 runtime alarms；</li>
+<li>WP 產生的 goal、status、prover、cache 狀態；</li>
+<li>未證明 VC 的 hypotheses、separator 與 conclusion；</li>
+<li>caller/callee contracts、assumed dependencies；</li>
+<li>parser diagnostics、timeout、unmodeled header；</li>
+<li>E-ACSL 執行時的具體 counterexample；</li>
+<li>本次驗證的 proof receipt。</li>
+</ul>
+<p>好 evidence 必須能回答：「哪個檔案、哪個函式、哪一個 goal、在什麼環境、依賴哪些
+假設，得到什麼結果？」只有一句「solver passed」是不夠的。</p>
+<h3 id="證明proof所有要求的義務都成立"><a class="header" href="#證明proof所有要求的義務都成立">證明（Proof）：所有要求的義務都成立</a></h3>
+<p>WP 使用 weakest-precondition calculus，把 specification 倒推成執行前必須成立的邏輯
+公式。外部 prover 再判斷這些 formulas 是否有效。</p>
+<p>例如要證明 <code>ensures \result &gt;= 0</code>，WP 不是執行幾個測資，而是根據每條控制流程推導：</p>
+<pre><code class="language-text">對所有滿足 requires 的輸入 n，
+如果 C 運算、memory model 與列出的 assumptions 成立，
+則每一條會正常回傳的路徑都滿足 result &gt;= 0。
+</code></pre>
+<p>本專案只有在要求的分析完成、goals 有效，而且 <code>incomplete[]</code> 為空時，才把整體 verdict
+稱為 <code>proved</code>。這就是 fail-closed：沒跑、沒看完、timeout 或倚賴未證明假設，都不能
+被「沒有報錯」包裝成成功。</p>
+<h3 id="證明收據proof-receipt這份證明針對哪個執行環境"><a class="header" href="#證明收據proof-receipt這份證明針對哪個執行環境">證明收據（Proof receipt）：這份證明針對哪個執行環境</a></h3>
+<p>每次 <code>check</code>／<code>run_wp</code> 的 receipt 會綁定：</p>
+<ul>
+<li>每個 source file 的 SHA-256 與整體 <code>source_hash</code>；</li>
+<li>正規化 AST 的 <code>ast_digest</code>；</li>
+<li>include paths、system include paths、defines、forced includes、machdep；</li>
+<li>function scope 與 contracts；</li>
+<li>有效 EVA/WP configuration；</li>
+<li>prover environment 與 per-goal statuses；</li>
+<li><code>incomplete[]</code> 的 count、codes 與 digest；</li>
+<li>整份內容的 SHA-256。</li>
+</ul>
+<p>所以「同一份 C 文字但 <code>-DNDEBUG</code> 不同」仍是不同驗證條件；source 或 AST 改變，也不能
+拿舊 receipt 冒充現在的證據。實作入口位於 <code>frama-c-mcp</code> 專案內的
+<code>src/mcp/receipt.rs</code>。</p>
+<p>receipt 是可重算、可比較的驗證紀錄，不是第三方數位簽章，也不是 Coq/Rocq kernel 可
+獨立重播的 proof term。它證明「這個 session 回報過哪些 evidence」，不憑空提高底層
+solver 或 memory model 的可信度。</p>
+<h2 id="完整驗證流程"><a class="header" href="#完整驗證流程">完整驗證流程</a></h2>
+<pre class="mermaid">flowchart TD
+    A[取得真正 sources 與 build configuration] --&gt; B[reload_project&lt;br/&gt;載入並建立 AST]
+    B --&gt; C{parse / plugin / environment&lt;br/&gt;是否完整？}
+    C -- 否 --&gt; C1[回報 incomplete 與 diagnostic&lt;br/&gt;不可假裝已驗證]
+    C -- 是 --&gt; D[讀 contract / call graph / AST context]
+    D --&gt; E{已有可信 contract？}
+    E -- 否 --&gt; F[propose_annotations&lt;br/&gt;先取得 code-determined frames]
+    F --&gt; G[人類或 agent 補 predicates&lt;br/&gt;requires / ensures / invariant]
+    E -- 是 --&gt; H[保留原始 requires / ensures]
+    G --&gt; I[dry-run ACSL validation]
+    H --&gt; I
+    I -- 語法或型別失敗 --&gt; G
+    I -- 合法 --&gt; J[create_sandbox&lt;br/&gt;抽取函式與依賴到獨立 process]
+    J --&gt; K[inject annotations]
+    K --&gt; L[EVA + WP]
+    L --&gt; M{所有 goals valid？}
+    M -- 否 --&gt; N[get_wp_goals&lt;br/&gt;alarm / investigation / VC]
+    N --&gt; O{原因}
+    O --&gt;|規格缺少輔助事實| G
+    O --&gt;|程式 bug| P[修改程式後重新載入]
+    O --&gt;|timeout/backend| Q[調整 prover 或拆 lemma]
+    P --&gt; B
+    Q --&gt; L
+    M -- 是 --&gt; R[合併已驗證 annotations 到 main]
+    R --&gt; S[main project 重新 run_wp/check]
+    S --&gt; T{缺口清單是否為空？}
+    T -- 否 --&gt; N
+    T -- 是 --&gt; U[verdict: proved&lt;br/&gt;產生 proof receipt]
+    U --&gt; V[store_function_conclusion&lt;br/&gt;供 bottom-up caller 驗證]
+</pre>
+<h3 id="為什麼要-sandbox"><a class="header" href="#為什麼要-sandbox">為什麼要 sandbox</a></h3>
+<p>錯誤 invariant 可能讓 WP 卡住，也可能污染同一個 Frama-C process 的 state。sandbox 會把
+目標函式、型別、globals 與 callee dependencies 抽成暫存 C 檔，啟動獨立 Frama-C
+process。實驗失敗即可刪除重建；成功後再明確 merge 回 main，最後仍需在完整 project
+重新證明。</p>
+<h3 id="為什麼要-bottom-up"><a class="header" href="#為什麼要-bottom-up">為什麼要 bottom-up</a></h3>
+<p>caller 通常使用 callee contract，而不是展開 callee body。若 callee 尚未證明，caller
+的綠色結果可能建立在「先相信 callee」上。因此 <code>verify_program_step</code> 依 call graph 讓
+callee 優先，保存 conclusion，再驗證 caller；遞迴 strongly connected component 則需
+當成群組處理。</p>
+<h2 id="一個具體-cacsl-範例"><a class="header" href="#一個具體-cacsl-範例">一個具體 C／ACSL 範例</a></h2>
+<p>以下函式計算前 <code>n</code> 個非負整數的總和。為了讓範例集中在 proof structure，先排除
+machine integer overflow；實務上還要補足能保證總和不超過 <code>INT_MAX</code> 的 bound。</p>
+<pre><code class="language-c">/*@
+  requires n &gt;= 0;
+  requires \valid_read(a + (0 .. n - 1));
+  requires \forall integer k; 0 &lt;= k &lt; n ==&gt; a[k] &gt;= 0;
+  assigns \nothing;
+  ensures \result &gt;= 0;
+*/
+int sum_nonnegative(const int *a, int n)
+{
+    int total = 0;
+
+    /*@
+      loop invariant 0 &lt;= i &lt;= n;
+      loop invariant total &gt;= 0;
+      loop assigns i, total;
+      loop variant n - i;
+    */
+    for (int i = 0; i &lt; n; ++i)
+        total += a[i];
+
+    return total;
+}
+</code></pre>
+<h3 id="規格如何分工"><a class="header" href="#規格如何分工">規格如何分工</a></h3>
+<ol>
+<li><code>n &gt;= 0</code> 排除負長度。</li>
+<li><code>\valid_read(...)</code> 保證每次 <code>a[i]</code> 都可讀。</li>
+<li>quantified <code>requires</code> 保證每個元素非負。</li>
+<li><code>assigns \nothing</code> 表示不改動 caller 可觀察的 memory；local variables 不必列入
+function frame。</li>
+<li><code>ensures</code> 是目標：回傳值非負。</li>
+<li><code>0 &lt;= i &lt;= n</code> 把 array-bound fact 帶過 loop boundary。</li>
+<li><code>total &gt;= 0</code> 把 postcondition 所需的中間事實帶到 loop exit。</li>
+<li><code>n - i</code> 用來證明終止。</li>
+</ol>
+<h3 id="wp-大致會產生哪些-obligations"><a class="header" href="#wp-大致會產生哪些-obligations">WP 大致會產生哪些 obligations</a></h3>
+<pre><code class="language-text">Loop invariant initialization:
+  requires  ==&gt;  0 &lt;= 0 &lt;= n  且  total(0) &gt;= 0
+
+Loop invariant preservation:
+  invariant 且 i &lt; n 且 element assumptions
+  ==&gt; 執行 total += a[i], i++ 後 invariant 仍成立
+
+Memory safety:
+  0 &lt;= i &lt; n 且 valid_read(a[0 .. n-1])
+  ==&gt; a[i] 可讀
+
+Loop variant:
+  n - i &gt;= 0，而且下一輪嚴格下降
+
+Postcondition:
+  invariant 且 !(i &lt; n)
+  ==&gt; total &gt;= 0
+</code></pre>
+<p>如果拿掉 <code>total &gt;= 0</code> invariant，函式直覺上仍然正確，但 WP 在 loop exit 未必保有足夠
+關係推出 postcondition。這叫「缺少 proof hint」，不一定是程式 bug。</p>
+<p>反過來，如果程式實際會 overflow，加入一條不真的成立的 invariant 也不能正當修復；
+它自己的 initialization/preservation obligations 應該失敗。正確處理是限制 <code>n</code>／元素
+大小、改用更寬型別，或改寫程式。</p>
+<h2 id="如何讀取成功失敗與不完整"><a class="header" href="#如何讀取成功失敗與不完整">如何讀取成功、失敗與不完整</a></h2>
+<pre class="mermaid">flowchart LR
+    G[某個 WP goal] --&gt; S{status}
+    S --&gt;|valid 且沒有異常依賴| P[局部 proof evidence]
+    S --&gt;|invalid / disproved| B[找到反例或規格衝突]
+    S --&gt;|unknown / timeout| U[尚未證明&lt;br/&gt;不等於為假]
+    P --&gt; C{所有要求的分析&lt;br/&gt;與 completeness checks}
+    C --&gt;|缺口清單為空| OK[整體 proved]
+    C --&gt;|有任何 gap code| NO[整體 incomplete]
+</pre>
+<p>常見阻擋項目：</p>
+<div class="table-wrapper"><table><thead><tr><th><code>incomplete[]</code> code</th><th>白話解釋</th><th>通常下一步</th></tr></thead><tbody>
+<tr><td><code>EVA_NOT_RUN</code> / <code>WP_NOT_RUN</code></td><td>分析根本沒完成</td><td>先排除啟動、parse、budget 問題</td></tr>
+<tr><td><code>ALARM_NOT_VALID</code></td><td>runtime safety alarm 尚未排除</td><td>查值域、pointer validity、overflow</td></tr>
+<tr><td><code>GOAL_NOT_VALID</code></td><td>WP obligation 未證明</td><td>讀 VC，而不是只看 goal 名稱</td></tr>
+<tr><td><code>PROVER_TIMEOUT</code></td><td>時間內沒有結論</td><td>拆 proof、補 invariant、換 prover；不可當成功</td></tr>
+<tr><td><code>VALID_UNDER_HYP</code></td><td>綠燈依賴未建立的 hypothesis</td><td>找到並證明上游 assumption</td></tr>
+<tr><td><code>ASSUMED_CALLEE_CONTRACT</code></td><td>使用了尚未證明的 callee contract</td><td>先驗證 callee</td></tr>
+<tr><td><code>ASSUMED_VALID</code></td><td>性質由 axiom 宣告而非證明</td><td>移除或明列 trusted base</td></tr>
+<tr><td><code>PROPERTY_DEAD</code></td><td>性質只在不可達程式上成立</td><td>檢查 requires 是否排除了真實使用情境</td></tr>
+<tr><td><code>PROPERTY_VACUOUS</code></td><td>hypotheses 不可滿足，proof 空泛成立</td><td>執行 smoke/vacuity checks，修正 contract</td></tr>
+<tr><td><code>UNCONSTRAINED_ASSIGNS</code></td><td>允許寫入卻沒描述寫入結果</td><td>加 postcondition 或縮小 frame</td></tr>
+<tr><td><code>WP_MEMORY_MODEL_HYPOTHESIS</code></td><td>proof 倚賴未由 caller 檢查的 separation</td><td>寫進 <code>requires</code>，讓 callers 逐一證明</td></tr>
+<tr><td><code>INDIRECT_CALL_UNRESOLVED</code></td><td>function pointer 的 callee set 不明</td><td>加 calls/target constraints 或縮小範圍</td></tr>
+</tbody></table>
+</div>
+<p>完整的代碼詞彙位於 <code>frama-c-mcp</code> 專案內的 <code>src/mcp/checkgaps.rs</code>，ACSL 修正指引則見
+該專案的 <code>writing-acsl.md</code>。</p>
+<h2 id="這套方法能不能用在其他語言"><a class="header" href="#這套方法能不能用在其他語言">這套方法能不能用在其他語言</a></h2>
+<p>可以沿用「方法」，但不能直接沿用目前「實作」。這套方法需要五個可替換介面：</p>
+<pre class="mermaid">flowchart LR
+    L[語言 front end&lt;br/&gt;parser / compiler IR] --&gt; SP[Specification adapter]
+    SP --&gt; VE[Verification engine&lt;br/&gt;AI / VC generator / model checker]
+    VE --&gt; EV[Evidence normalizer&lt;br/&gt;goals / traces / assumptions]
+    EV --&gt; RC[Receipt + completeness policy]
+    RC --&gt; AG[Agent orchestration&lt;br/&gt;sandbox / retry / dependency order]
+</pre>
+<p><code>frama-c-mcp</code> 現在的 front end、spec adapter 與 engine 都是 C-specific：Frama-C AST、
+ACSL、EVA/WP、<code>ast-utils</code> requests。因此把 <code>.rs</code>、<code>.go</code> 或 <code>.py</code> 路徑交給現有 server
+不會自動變成對應語言的 proof。要支援其他語言，應保留 orchestration、evidence schema、
+fail-closed 與 receipt 思路，再為每種 verifier 實作 adapter。</p>
+<h2 id="ccrustgopython-比較"><a class="header" href="#ccrustgopython-比較">C、C++、Rust、Go、Python 比較</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>語言</th><th>現有專案可直接用？</th><th>Specification 例子</th><th>可行工具鏈</th><th>主要 evidence / 保證</th><th>主要限制</th></tr></thead><tbody>
+<tr><td>C</td><td><strong>可以，原生目標</strong></td><td>ACSL <code>requires</code>、<code>ensures</code>、<code>assigns</code>、invariant</td><td>Frama-C EVA/WP/E-ACSL；亦可另用 CBMC</td><td>abstract interpretation alarms、VC、SMT verdict、runtime violations、receipt；可做 unbounded deductive verification，但相對於 models/assumptions</td><td>C front-end、headers、inline asm、function pointers、memory model 與 specs 完整度</td></tr>
+<tr><td>C++</td><td><strong>不直接支援</strong></td><td>ACSL++ 或 assertions/harnesses</td><td>Frama-Clang + ACSL++；CBMC/ESBMC 類 bounded model checking</td><td>Frama-Clang 路線接近 ACSL/WP；CBMC 常提供 property result 與 counterexample trace</td><td>Frama-Clang 主力仍偏 C++11，templates/STL/部分 ACSL++ 支援有限；bounded proof 只涵蓋給定展開界限／環境模型</td></tr>
+<tr><td>Rust</td><td><strong>不直接支援</strong></td><td>tool attributes/macros、pre/postconditions、proof functions、harnesses</td><td>Kani；Creusot + Why3；Verus；Prusti/Viper</td><td>Kani bit-precise bounded model checking；Creusot/Verus/Prusti 是 SMT-based deductive verification 路線</td><td>每套工具支援的 Rust subset、<code>unsafe</code>、traits、concurrency、stdlib model 與成熟度不同；不能因 Rust 型別安全就宣稱 functional correctness</td></tr>
+<tr><td>Go</td><td><strong>不直接支援</strong></td><td>Gobra pre/postconditions、permissions、loop invariants</td><td>Gobra → Viper → SMT</td><td>memory/crash safety、data-race freedom、partial correctness與 source-level failed assertions</td><td>支援 Go 的大型 subset 而非保證所有語言／runtime／library features；annotations 與 dependency specs 成本高</td></tr>
+<tr><td>Python</td><td><strong>不直接支援</strong></td><td>type hints + PEP 316、icontract、deal，或 Nagini specs</td><td>CrossHair + Z3；Nagini → Viper</td><td>CrossHair 擅長 symbolic path exploration 與 concrete counterexamples；Nagini較接近 modular deductive verification</td><td>動態語言、native extensions、reflection、I/O、monkey patching 與 path explosion 使完整 coverage 困難；CrossHair timeout/no counterexample 不等於一般性的完整 proof</td></tr>
+</tbody></table>
+</div>
+<h3 id="c最適合直接使用本專案"><a class="header" href="#c最適合直接使用本專案">C：最適合直接使用本專案</a></h3>
+<p>Frama-C 官方將 ACSL 定位為 C 的 formal behavioral specification language；WP 用 Hoare-style
+weakest preconditions 證明 ACSL properties，EVA 也可對 properties 與 runtime safety
+提供分析結果。這正是本 repository 已實作的路徑。</p>
+<p>適合：embedded、driver、parser、crypto primitives、memory-sensitive libraries，以及希望把
+proof progress 接進 agent workflow／CI 的 C 專案。</p>
+<h3 id="c概念接近但工程風險高於-c"><a class="header" href="#c概念接近但工程風險高於-c">C++：概念接近，但工程風險高於 C</a></h3>
+<p>Frama-C 生態有 Frama-Clang 與 ACSL++，所以在受控 C++ subset 上，可以建立很接近本文的
+流程。然而官方 manual 列出的限制包含 C++ feature coverage、templates robustness、標準庫
+specifications 與部分 ACSL++ constructs；不能因為底層仍是 Frama-C 就假定任意現代 C++
+專案可直接處理。</p>
+<p>另一條路是 <a href="https://www.cprover.org/cbmc/">CBMC</a> 類 bounded model checking。它對 C/C++
+assertions、memory safety 與有限 loop unwind 很實用，並能給 counterexample trace。但結論
+通常是「在這個 bound 與模型內找不到反例」，除非同時能證明 unwinding assertions／完整
+涵蓋，否則不能改寫成 unbounded correctness proof。</p>
+<p>建議：</p>
+<ul>
+<li>C-like、少 templates 的 C++ subset：評估 Frama-Clang/ACSL++。</li>
+<li>需要快速找低階 bug、可設定明確 bounds：優先 CBMC/ESBMC adapter。</li>
+<li>重度 templates、exceptions、coroutines、完整 STL：先做 capability probe，不能預設可驗證。</li>
+</ul>
+<h3 id="rust工具選擇最多但保證類型不同"><a class="header" href="#rust工具選擇最多但保證類型不同">Rust：工具選擇最多，但保證類型不同</a></h3>
+<ul>
+<li><a href="https://model-checking.github.io/kani/">Kani</a> 是 bit-precise Rust model checker，使用 proof
+harnesses，擅長 panic、overflow、unsafe interaction 與 bounded state spaces。</li>
+<li><a href="https://creusot.rs/">Creusot</a> 把 annotated Rust 轉為 Why3 的中間驗證語言並產生 VCs，
+很接近 ACSL/WP 的 deductive workflow。</li>
+<li><a href="https://verus-lang.github.io/verus/guide/">Verus</a> 提供 specifications 與 proof language，
+以 SMT 靜態驗證 executable Rust 對所有符合模型的執行滿足使用者規格。</li>
+<li><a href="https://viperproject.github.io/prusti-dev/user-guide/">Prusti</a> 基於 Viper，支援 contracts、
+predicates 與 loop invariants；官方文件也明列預設及 partial-correctness 邊界。</li>
+</ul>
+<p>Rust compiler 已提供 memory/type safety 的強大基線，但它不證明「排序真的排序」「餘額永不
+變負」「協定狀態機符合需求」。這些仍需要 specifications 與對應 verifier。</p>
+<p>若要做 Rust 版 MCP：Kani adapter 適合先做 counterexample-oriented MVP；Creusot 或 Verus
+adapter 更接近本專案的 specification/VC/proof/receipt 主軸。</p>
+<h3 id="gogobra-最接近此專案的-deductive-路線"><a class="header" href="#gogobra-最接近此專案的-deductive-路線">Go：Gobra 最接近此專案的 deductive 路線</a></h3>
+<p><a href="https://github.com/viperproject/gobra">Gobra</a> 是 Go 的 modular verifier，將 annotated Go
+翻譯到 Viper，再用 SMT backend 驗證。官方 tutorial 描述的目標包含 memory safety、crash
+safety、data-race freedom，以及依使用者規格的 partial correctness。</p>
+<p>它與此專案很容易建立概念映射：</p>
+<div class="table-wrapper"><table><thead><tr><th>frama-c-mcp / C</th><th>Go adapter</th></tr></thead><tbody>
+<tr><td>ACSL contract</td><td>Gobra contract / permissions</td></tr>
+<tr><td>WP VC</td><td>Viper verification obligation</td></tr>
+<tr><td>WP failed goal</td><td>Gobra source-level failed assertion</td></tr>
+<tr><td>callee contract dependency</td><td>imported package/interface specifications</td></tr>
+<tr><td>proof receipt</td><td>source/module/tool/config/obligation digest</td></tr>
+</tbody></table>
+</div>
+<p>困難在於 Go runtime、goroutines、channels、interfaces 與第三方 package specifications。Gobra
+能處理並行推理不代表不寫 permissions/invariants 就會自動證明任意 production service。</p>
+<h3 id="python最適合先從找反例開始"><a class="header" href="#python最適合先從找反例開始">Python：最適合先從「找反例」開始</a></h3>
+<p><a href="https://crosshair.readthedocs.io/">CrossHair</a> 會用帶有 Z3 expressions 的 symbolic objects
+實際呼叫 Python functions，探索路徑，支援 <code>assert</code>、PEP 316、icontract 與 deal。它非常
+適合以下 agent loop：</p>
+<pre><code class="language-text">加入 contract → symbolic exploration → 回傳具體 counterexample
+              → 修程式／contract → 重跑
+</code></pre>
+<p>但 Python 的動態行為與 native extensions 讓完整建模困難。CrossHair 自身也把定位描述為
+介於 testing 與 type systems 的分析工具；timeout 或沒找到 counterexample，不能普遍解讀成
+所有 Python executions 的 theorem。</p>
+<p><a href="https://github.com/marcoeilers/nagini">Nagini</a> 是基於 Viper 的 statically typed Python
+modular verifier，更接近 deductive verification，但適用 subset、annotations 與維護狀態都
+需要在採用前做 capability probe。</p>
+<p>建議 Python adapter 把結果分成：</p>
+<ul>
+<li><code>counterexample_found</code>：強 evidence，帶具體輸入與 trace；</li>
+<li><code>bounded_or_timed_search_clear</code>：指定 budget 內未找到；</li>
+<li><code>unsupported_semantics</code>：native/side-effect/dynamic feature 未建模；</li>
+<li><code>deductively_verified</code>：只能由明確具有此語意的 backend 產生。</li>
+</ul>
+<p>不要把前兩者標成 <code>proved</code>。</p>
+<h2 id="跨語言共用的-mcp-架構建議"><a class="header" href="#跨語言共用的-mcp-架構建議">跨語言共用的 MCP 架構建議</a></h2>
+<p>如果未來把這個專案擴充成多語言 verification MCP，建議不要把所有 backend 硬塞進相同
+<code>valid/invalid</code> 字串。應共用外框、保留 backend semantics：</p>
+<pre><code class="language-text">VerificationSubject
+  language, files, source_hash, build_identity, target
+
+SpecificationSet
+  language, syntax, clauses, trusted_clauses, spec_hash
+
+Obligation
+  stable_id, owner, kind, source_span, formula?, dependencies
+
+Evidence
+  backend, backend_version, method
+  status, assumptions, bounds, timeout, counterexample?, from_cache
+
+Completeness
+  requested_analyses, completed_analyses, unsupported_features, gaps[]
+
+Receipt
+  subject + specification + toolchain + obligations + completeness + sha256
+</code></pre>
+<p>其中 <code>method</code> 至少區分：</p>
+<ul>
+<li><code>abstract_interpretation</code></li>
+<li><code>deductive_verification</code></li>
+<li><code>bounded_model_checking</code></li>
+<li><code>symbolic_execution</code></li>
+<li><code>runtime_contract_checking</code></li>
+<li><code>proof_assistant_checked</code></li>
+</ul>
+<p>同一個 <code>status: valid</code> 在不同 method 下不是相同承諾。receipt 必須帶 bounds、unwind
+completeness、unsupported features、trusted axioms、solver result 和 cache provenance。</p>
+<h2 id="建議的導入順序"><a class="header" href="#建議的導入順序">建議的導入順序</a></h2>
+<h3 id="只驗證-c"><a class="header" href="#只驗證-c">只驗證 C</a></h3>
+<p>直接延伸目前專案：</p>
+<ol>
+<li>保存真實 compile database／preprocessor configuration。</li>
+<li>由安全性關鍵且依賴少的 leaf functions 開始。</li>
+<li>先建立 frame 與 runtime-safety specification。</li>
+<li>再加入 functional postconditions 與 loop invariants。</li>
+<li>CI 使用 fail-closed verdict、goal floor 與 receipt freshness。</li>
+<li>對外部函式、axioms 與未證明 callee 建 trusted-base inventory。</li>
+</ol>
+<h3 id="多語言但先求實用"><a class="header" href="#多語言但先求實用">多語言但先求實用</a></h3>
+<p>按「最容易得到有用 evidence」排序：</p>
+<ol>
+<li>C：既有 Frama-C backend。</li>
+<li>Rust：先接 Kani counterexamples，再視需求接 Creusot／Verus。</li>
+<li>Python：CrossHair counterexample workflow，但禁止把 search-clear 寫成 proof。</li>
+<li>Go：Gobra，適合願意投入 permissions/contracts 的關鍵 library。</li>
+<li>C++：先限定受支援 subset；依需求選 Frama-Clang 或 bounded model checker。</li>
+</ol>
+<h3 id="多語言且要求一致-proof-governance"><a class="header" href="#多語言且要求一致-proof-governance">多語言且要求一致 proof governance</a></h3>
+<p>先定義 backend-neutral receipt schema、completeness taxonomy 與 trust policy，再寫 adapters。
+真正需要共用的是「不完整不能冒充成功」與「結論必須綁定 source/spec/toolchain」，不是要求
+所有語言都回傳看似一致但語意不同的 <code>proved</code>。</p>
+<h2 id="這個專案證明了什麼沒有證明什麼"><a class="header" href="#這個專案證明了什麼沒有證明什麼">這個專案證明了什麼、沒有證明什麼</a></h2>
+<h3 id="能合理宣稱"><a class="header" href="#能合理宣稱">能合理宣稱</a></h3>
+<ul>
+<li>對 receipt 指定的 source、AST、configuration 與 specification，列出的 WP obligations
+得到了列出的 prover statuses。</li>
+<li><code>verdict: proved</code> 且 <code>incomplete[]</code> 為空時，本 server 沒有發現其已知 completeness gaps。</li>
+<li>EVA alarms、VC hypotheses、counterexamples 與 dependency assumptions 可被 agent 進一步調查。</li>
+<li>receipt hash 能偵測內容差異並支援 session 內比較。</li>
+</ul>
+<h3 id="不能單靠它宣稱"><a class="header" href="#不能單靠它宣稱">不能單靠它宣稱</a></h3>
+<ul>
+<li>specification 等同真正產品需求；</li>
+<li>compiler、Frama-C、plugin、solver 或硬體完全沒有 bug；</li>
+<li>未建模的 OS、I/O、assembly、foreign code 或 concurrency 行為正確；</li>
+<li><code>unknown</code>／timeout 代表程式錯誤；</li>
+<li>有限 runtime tests 沒失敗就代表所有輸入正確；</li>
+<li>bounded model checker 在某個 bound 沒找到反例就代表 unbounded proof；</li>
+<li>hash receipt 是第三方簽章或 independently checkable proof term；</li>
+<li>現有 <code>frama-c-mcp</code> 可以直接分析 C++、Rust、Go 或 Python。</li>
+</ul>
+<h2 id="信任邊界"><a class="header" href="#信任邊界">信任邊界</a></h2>
+<p>最後一個實務問題不是「proof 是不是數學」，而是「你相信哪一層」：</p>
+<pre class="mermaid">flowchart TB
+    REQ[真實需求] --&gt; SPEC[人工審查過的 specification]
+    SPEC --&gt; FRONT[語言 front end / semantics model]
+    FRONT --&gt; VC[VC generator / abstract domain]
+    VC --&gt; SOLVER[SMT solver / proof assistant]
+    SOLVER --&gt; SERVER[MCP evidence normalization]
+    SERVER --&gt; RECEIPT[receipt / CI policy]
+</pre>
+<p>自動 proof 最常見的失敗不是 solver 算錯，而是 specification 太弱、precondition 排除了真正
+輸入、build identity 不符、callee／library models 被默認信任，或 analysis 根本沒完整跑完。
+因此本專案最有價值的設計不只是「能呼叫 WP」，而是把 assumptions、<code>incomplete[]</code>、
+source identity 與 proof receipt 一起帶回來。</p>
+<h2 id="參考資料-14"><a class="header" href="#參考資料-14">參考資料</a></h2>
+<h3 id="官方與原始資料"><a class="header" href="#官方與原始資料">官方與原始資料</a></h3>
+<ul>
+<li><a href="https://frama-c.com/html/acsl.html">Frama-C：ACSL</a></li>
+<li><a href="https://www.frama-c.com/html/documentation.html">Frama-C documentation</a></li>
+<li><a href="https://www.frama-c.com/download/frama-clang-manual-0.0.8.pdf">Frama-Clang user manual</a></li>
+<li><a href="https://www.cprover.org/cbmc/">CBMC</a></li>
+<li><a href="https://model-checking.github.io/kani/">Kani Rust Verifier</a></li>
+<li><a href="https://creusot.rs/">Creusot</a></li>
+<li><a href="https://verus-lang.github.io/verus/guide/">Verus tutorial and reference</a></li>
+<li><a href="https://viperproject.github.io/prusti-dev/user-guide/">Prusti user guide</a></li>
+<li><a href="https://github.com/viperproject/gobra">Gobra repository and tutorial</a></li>
+<li><a href="https://viper.ethz.ch/tutorial/">Viper tutorial</a></li>
+<li><a href="https://crosshair.readthedocs.io/">CrossHair documentation</a></li>
+<li><a href="https://github.com/marcoeilers/nagini">Nagini repository</a></li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="當心vibe-coding副作用netflix工程師曝理解萎縮危機靠3步驟戒掉無腦寫code"><a class="header" href="#當心vibe-coding副作用netflix工程師曝理解萎縮危機靠3步驟戒掉無腦寫code">當心Vibe Coding副作用！Netflix工程師曝「理解萎縮」危機，靠3步驟戒掉無腦寫Code</a></h1>
 <p>在矽谷技術圈的聚光燈下，一場關於軟體工程本質的動搖正在發生。Netflix 資深工程師 <a href="https://www.arthropod.software/about">Jake Nations</a> 在一次公開演講中，以一席「告解」揭開序幕：<strong>「我發布了我不懂的程式碼，而且我敢打賭，你們也一樣。」</strong></p>
 <p>這不僅是一個人的疏忽，而是當代開發者普遍面臨的技術反差。透過生成式 AI，開發者得以在數小時內清掉原本需耗時數天的 Backlog。然而，在這種空前的開發速度（Speed）背後，隱藏著 <strong>理解深度（Understanding）的急速萎縮。</strong></p>
@@ -211834,7 +212344,7 @@ CI 與本機共用同一測試入口，失敗 artifacts 足以調查。</li>
 </ul>
 <h2 id="最終原則"><a class="header" href="#最終原則">最終原則</a></h2>
 <p>極致品質不是所有工具每次都跑，而是依風險分層：TDD 讓規格先於實作；邏輯測試與生成式測試找反例；排程探索和動態偵測器揭露併發缺陷；benchmark 以可靠樣本守住效能預算；系統測試確認真實邊界。任何工具的「沒有報錯」都不能單獨證明正確，真正可維持的品質來自可重現證據、清楚不變量與持續執行的品質閘門。</p>
-<h2 id="參考資料-14"><a class="header" href="#參考資料-14">參考資料</a></h2>
+<h2 id="參考資料-15"><a class="header" href="#參考資料-15">參考資料</a></h2>
 <ul>
 <li><a href="https://go.dev/doc/articles/race_detector">Go Data Race Detector</a></li>
 <li><a href="https://go.dev/doc/security/fuzz/">Go Fuzzing</a></li>
@@ -212093,7 +212603,7 @@ Debugger 找到的問題已固化為 regression test。</li>
 </ul>
 <p>因此文件應將結論表達為「本機驗證已達到高度可信」，而不是「已完整證明
 Kubernetes 上必然正確」。</p>
-<h2 id="參考資料-15"><a class="header" href="#參考資料-15">參考資料</a></h2>
+<h2 id="參考資料-16"><a class="header" href="#參考資料-16">參考資料</a></h2>
 <ul>
 <li><a href="https://github.com/go-delve/delve/blob/master/Documentation/usage/dlv_test.md">Delve：<code>dlv test</code></a></li>
 <li><a href="https://go.dev/doc/articles/race_detector">Go Data Race Detector</a></li>
@@ -251634,7 +252144,7 @@ subprocess.run(["gcc", "output.o", "test_harness.c", "-o", "benchmark"])
 <p>如果把 OpenEvolve 看成進化代理的第一代代表，那麼 LoongFlow 更像是往第二代邁進的嘗試。它保留了進化式搜尋的優點，但不再滿足於盲目變異，而是加入規劃、執行與反思這種更像研究流程的結構。</p>
 <p>這不代表暴力搜尋沒有價值。對某些問題來說，大量探索仍然有效，而且實作門檻較低。不過當任務變得更複雜、呼叫成本更高、週期更長時，只有不斷試錯通常不夠，系統必須從歷史中學到東西。</p>
 <p>LoongFlow 的核心價值就在這裡：它試圖把代理從「大量猜測」推向「基於經驗的推理」。如果這條路成立，未來的演化代理就不只是更快，而是更接近真正能累積知識的自動化研究夥伴。</p>
-<h2 id="參考資料-16"><a class="header" href="#參考資料-16">參考資料</a></h2>
+<h2 id="參考資料-17"><a class="header" href="#參考資料-17">參考資料</a></h2>
 <ul>
 <li>GitHub：<a href="https://github.com/baidu-baige/LoongFlow">https://github.com/baidu-baige/LoongFlow</a></li>
 <li>技術報告：<a href="https://arxiv.org/abs/2512.24077">https://arxiv.org/abs/2512.24077</a></li>
@@ -260470,7 +260980,7 @@ ollama run my-custom-model
 <p>Ollama 為開發者和 AI 愛好者提供了一個強大而靈活的工具，使本地運行大型語言模型變得前所未有的簡單。無論您是想要進行 AI 研究、開發智能應用，還是僅僅出於好奇想要探索 AI 的潛力，Ollama 都為您提供了一個理想的起點。</p>
 <p>隨著 AI 技術的不斷發展，Ollama 這樣的工具將在推動 AI 民主化和創新方面發揮越來越重要的作用。現在正是開始您的 Ollama 之旅的最佳時機，探索本地 AI 開發的無限可能！</p>
 <p>即刻前往教學程式碼 Repo，親自搭建屬於自己的 LLM Server 吧！別忘了給專案按個星星並持續關注更新，讓我們一起探索 AI 代理的新境界。</p>
-<h2 id="參考資料-17"><a class="header" href="#參考資料-17">參考資料</a></h2>
+<h2 id="參考資料-18"><a class="header" href="#參考資料-18">參考資料</a></h2>
 <p>最近消息是，可以直接從 HuggingFace 上拉 GGUF 格式檔案，不用額外建立 manifest，具體操作已經收錄在 HuggingFace blog 當中，可以做參考，未來有機會再行整理：<a href="https://huggingface.co/docs/hub/en/ollama">https://huggingface.co/docs/hub/en/ollama</a></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="automl-自動化機器學習"><a class="header" href="#automl-自動化機器學習">AutoML 自動化機器學習</a></h1>
 <blockquote>
@@ -267826,7 +268336,7 @@ TRAINED_MODEL_PATH = f"{HOME}/runs/detect/train/weights/best.pt"
 <pre><code class="language-bash">yolo export model=yolov8n.pt
 </code></pre>
 <hr />
-<h2 id="參考資料-18"><a class="header" href="#參考資料-18">參考資料</a></h2>
+<h2 id="參考資料-19"><a class="header" href="#參考資料-19">參考資料</a></h2>
 <ul>
 <li><a href="https://github.com/autodistill/autodistill">Autodistill GitHub</a></li>
 <li><a href="https://colab.research.google.com/github/roboflow-ai/notebooks/blob/main/notebooks/how-to-auto-train-yolov8-model-with-autodistill.ipynb">Roboflow 官方教學</a></li>
@@ -346305,7 +346815,7 @@ Use Sonnet for each teammate.
 <p>那麼 Agent Teams 很值得嘗試。</p>
 <p>如果任務只是單點查詢、一次性修正、或只需要快速拿到答案，Subagent 通常會更省成本。</p>
 <hr />
-<h2 id="參考資料-19"><a class="header" href="#參考資料-19">參考資料</a></h2>
+<h2 id="參考資料-20"><a class="header" href="#參考資料-20">參考資料</a></h2>
 <ul>
 <li><a href="https://code.claude.com/docs/en/agent-teams">Claude Code 文件：Agent Teams</a></li>
 <li><a href="https://www.anthropic.com/engineering/building-c-compiler">Anthropic Engineering：Building a C compiler with a team of parallel Claudes</a></li>
@@ -350622,7 +351132,7 @@ Retriever prepared for /mnt/local-repos/...
 <tr><td>儲存庫路徑</td><td>一律使用容器內路徑 <code>/mnt/local-repos/...</code></td></tr>
 </tbody></table>
 </div>
-<h2 id="參考資料-20"><a class="header" href="#參考資料-20">參考資料</a></h2>
+<h2 id="參考資料-21"><a class="header" href="#參考資料-21">參考資料</a></h2>
 <ul>
 <li><a href="https://github.com/AsyncFuncAI/deepwiki-open">DeepWiki-Open GitHub</a></li>
 <li><a href="https://github.com/AsyncFuncAI/deepwiki-open/issues/323">Can’t find local directory · Issue #323</a></li>
