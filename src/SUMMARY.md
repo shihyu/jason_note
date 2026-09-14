@@ -415,6 +415,7 @@
     - [CRAP 指標工具地圖：crap4clj 與跨語言生態](software_engineering/crap-metric-tools-across-languages.md)
     - [Bob 大叔：AI 程式碼我完全不看](software_engineering/Bob大叔：AI代碼我完全不看.md)
     - [你只是在等紅燈而已：AI 輔助 TDD 實戰經驗](software_engineering/ai-assisted-tdd-practical-guide.md)
+    - [從規格、證據到證明：frama-c-mcp 白話指南](software_engineering/frama-c-mcp-formal-verification-guide.md)
     - [Netflix 工程師談 Vibe Coding 副作用](software_engineering/Netflix工程師談VibeCoding副作用_理解萎縮危機與三步驟解方.md)
     - [Anthropic 研究：AI 輔助編程對初級工程師學習能力的影響](software_engineering/Anthropic研究_AI輔助編程對初級工程師學習能力的影響.md)
     - [OpenClaw 創始人 Peter Steinberger 的 AI 代理人工程核心開發思維](software_engineering/OpenClaw創始人Peter_Steinberger的AI代理人工程核心開發思維.md)
