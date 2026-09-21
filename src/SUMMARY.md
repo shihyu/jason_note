@@ -577,6 +577,7 @@
 ## Quantitative Trading
 - [策略文檔總覽](strategy/README.md)
     - [交易觀念與心法大全](strategy/01_交易觀念與心法大全.md)
+        - [37 部交易影片重點與完整逐字稿](strategy/37部交易影片重點與完整逐字稿.md)
         - [交易的行為與思維](strategy/交易的行為與思維分享.md)
         - [投資投機的觀念](strategy/投資投機的觀念與心得分享.md)
         - [韭菜的自我修養](strategy/韭菜的自我修養核心要點.md)
