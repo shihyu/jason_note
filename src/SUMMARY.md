@@ -648,6 +648,7 @@
     - [台股特殊情境策略](strategy/09_台股特殊情境策略.md)
         - [台股現貨交易規則整理](strategy/台股現貨交易規則整理.md)
         - [當沖隔日沖策略大全](strategy/台股當沖隔日沖策略大全.md)
+        - [台股當沖、隔日沖與處置股實戰手冊](strategy/taiwan_day_and_overnight_trading_strategy_guide.md)
         - [券商分點數據分析實戰](strategy/券商分點分析.md)
         - [券商分點籌碼分析完整指南](strategy/券商分點籌碼分析完整指南.md)
         - [處置股分析](strategy/台股處置股與注意股：條件分析與交易策略全解析.md)
