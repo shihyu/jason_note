@@ -632,6 +632,7 @@
         - [金包銀策略](strategy/金包銀策略.md)
         - [海龜交易法則](strategy/海龜投資法則.md)
         - [動能投資法](strategy/賺贏大盤的動能投資法.md)
+        - [FMTM 量化動能策略研究與美股／費半延伸分析](strategy/fmtm_momentum_strategy_research.md)
         - [配對交易](strategy/配對交易.md)
         - [落底四部曲](strategy/落底四部曲.md)
     - [選擇權完整攻略](strategy/07_選擇權完整攻略.md)
