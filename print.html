@@ -13736,6 +13736,309 @@ rust-reviewer/scripts/
 <p>如果你的目標是做出真正能落地的 Go、C++、Rust Skill，最重要的不是讓 <code>skill-creator</code> 幫你一次生出完整答案，而是先把 workflow 定義清楚，再用真實專案持續驗證。</p>
 <p>換句話說，<code>skill-creator</code> 最適合拿來快速建立骨架與迭代方向；而真正讓 Skill 變得有用的，是你補進去的語言實戰規則、失敗案例與驗證標準。</p>
 <p>技術細節上，記住幾個最容易被忽略的點：description 要用第三人稱並加入「USE WHEN」觸發語言、有副作用的 Skill 要加 <code>disable-model-invocation: true</code>、SKILL.md 不超過 500 行並用一層深度的 progressive disclosure、以及先寫 evaluation 再寫 Skill 內容。</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="讓含中文的-ascii-方框圖真正對齊原理與作法"><a class="header" href="#讓含中文的-ascii-方框圖真正對齊原理與作法">讓含中文的 ASCII 方框圖真正對齊：原理與作法</a></h1>
+<blockquote>
+<p>在 Markdown、終端機或程式註解裡畫 <code>┌─┐│</code> 方框圖，只要標籤含中文，右邊框幾乎一定會歪。本文說明為什麼會歪、怎麼用「腳本計算顯示寬度」來畫和驗證，以及我把這套流程包成 Claude Code skill <code>cjk-ascii-diagram</code> 的實作細節。</p>
+</blockquote>
+<hr />
+<h2 id="一問題長什麼樣"><a class="header" href="#一問題長什麼樣">一、問題長什麼樣</a></h2>
+<p>下面是一個很常見的錯誤：用「字數」決定框寬。<code>開始</code> 是 2 個字，<code>Start</code> 是 5 個字，程式或 AI 以為最寬 5、框寬 7，於是畫成這樣：</p>
+<pre><code class="language-plaintext">┌───────┐
+│ 開始    │
+│ Start │
+└───────┘
+</code></pre>
+<p>在終端機或等寬字型下，<code>開始</code> 實際佔 4 欄，第二行的右邊框被推到更右邊。正確的圖應該是：</p>
+<pre><code class="language-text">┌───────┐
+│ 開始  │
+│ Start │
+└───────┘
+</code></pre>
+<blockquote>
+<p>本文刻意把「錯誤示範」標成 <code>```plaintext</code>，讓後面介紹的 <code>md_check.py</code> 略過它們；正確的圖都標成 <code>```text</code>，而且都通過檢查。</p>
+</blockquote>
+<p>圖越大、中文越多，偏差就越明顯：每一行的中文字數不同，右邊框會像階梯一樣一路往右歪。手動用眼睛補空白只能救一時，改一個字就又歪了。</p>
+<hr />
+<h2 id="二原理"><a class="header" href="#二原理">二、原理</a></h2>
+<h3 id="21-字元數--顯示欄位數"><a class="header" href="#21-字元數--顯示欄位數">2.1 字元數 ≠ 顯示欄位數</a></h3>
+<p>終端機和等寬字型是用「欄位（cell）」排版的。英數字佔 1 欄，中日韓文字佔 2 欄。但大部分程式語言的字串長度算的是「字元數」：</p>
+<div class="table-wrapper"><table><thead><tr><th>字串</th><th><code>len()</code></th><th>實際顯示欄位（<code>wcswidth</code>）</th></tr></thead><tbody>
+<tr><td><code>開始</code></td><td>2</td><td>4</td></tr>
+<tr><td><code>Start</code></td><td>5</td><td>5</td></tr>
+<tr><td><code>中文abc</code></td><td>5</td><td>7</td></tr>
+<tr><td><code>，</code>（全形逗號）</td><td>1</td><td>2</td></tr>
+<tr><td><code>🚀</code></td><td>1</td><td>2</td></tr>
+</tbody></table>
+</div>
+<p>（上表由 Python <code>wcwidth</code> 0.8.1 實際計算。）</p>
+<p>用 <code>len()</code> 或 <code>str.ljust()</code> 補空白，中文每多一個字，那一行就多出 1 欄。這就是方框歪掉的根本原因。</p>
+<pre><code class="language-python">from wcwidth import wcswidth
+
+len("開始")       # 2
+wcswidth("開始")  # 4  ← 終端機實際佔的欄位
+</code></pre>
+<h3 id="22-unicode-east-asian-width字元寬度從哪來"><a class="header" href="#22-unicode-east-asian-width字元寬度從哪來">2.2 Unicode East Asian Width：字元寬度從哪來</a></h3>
+<p>每個 Unicode 字元都有一個 East Asian Width（UAX #11）屬性，終端機據此決定佔 1 欄還是 2 欄：</p>
+<div class="table-wrapper"><table><thead><tr><th>屬性</th><th>意義</th><th>例子</th><th>顯示寬度</th></tr></thead><tbody>
+<tr><td><code>W</code>（Wide）</td><td>寬字元</td><td>漢字、假名、諺文、多數 emoji</td><td>固定 2</td></tr>
+<tr><td><code>F</code>（Fullwidth）</td><td>全形</td><td><code>，。：（）！</code></td><td>固定 2</td></tr>
+<tr><td><code>Na</code>（Narrow）</td><td>窄字元</td><td>ASCII 英數</td><td>固定 1</td></tr>
+<tr><td><code>H</code>（Halfwidth）</td><td>半形</td><td>半形片假名</td><td>固定 1</td></tr>
+<tr><td><code>N</code>（Neutral）</td><td>中性</td><td>多數西方符號</td><td>1</td></tr>
+<tr><td><code>A</code>（Ambiguous）</td><td><strong>模糊</strong></td><td><code>─ │ ┌ → · × ▼ ★ ○</code>、希臘字母</td><td><strong>看終端機設定，1 或 2</strong></td></tr>
+</tbody></table>
+</div>
+<p><code>wcwidth</code> 這類函式庫就是把這張表實作出來：W／F 回傳 2，控制字元回傳 -1，其他回傳 1（模糊寬度預設當 1）。</p>
+<h3 id="23-模糊寬度ambiguous同一張圖在不同電腦長得不一樣"><a class="header" href="#23-模糊寬度ambiguous同一張圖在不同電腦長得不一樣">2.3 模糊寬度（Ambiguous）：同一張圖在不同電腦長得不一樣</a></h3>
+<p>最麻煩的是 <code>A</code> 類字元。在西方語系環境它們佔 1 欄，但很多 CJK 使用者會在終端機打開「模糊寬度字元顯示為雙寬」（iTerm2、GNOME Terminal、PuTTY、mintty 都有這個選項，或設定 <code>VTE_CJK_WIDTH</code>）。打開後，<code>→ · ×</code> 會變成 2 欄。</p>
+<p>所以就算你把欄位算得完全正確，只要框內有 <code>→</code>，在別人的終端機上還是會歪。實務上的結論：</p>
+<ul>
+<li><strong>線框字元 <code>─│┌┐└┘├┤┬┴┼</code> 與箭頭 <code>▼ ▲ ► ◄</code></strong>：雖然被歸在 <code>A</code> 類，但幾乎所有終端機都特別把它們當 1 欄處理，可以放心用。</li>
+<li><strong><code>→ ← · × ÷ § ° ± ★ ○ □</code>、希臘字母</strong>：不要放在會決定框寬或欄位的地方。<code>→</code> 改寫成 <code>-&gt;</code>，<code>×</code> 改 <code>x</code>，<code>·</code> 改 <code>/</code>。</li>
+<li><strong>emoji、ZWJ 組合字、變體選擇符（U+FE0F）</strong>：寬度依字型而定，完全不要放進圖裡。</li>
+</ul>
+<h3 id="24-字型欄位算對了還要字型配合"><a class="header" href="#24-字型欄位算對了還要字型配合">2.4 字型：欄位算對了，還要字型配合</a></h3>
+<p>欄位數正確只是第一步。中文字型的寬度如果不是英文的剛好 2 倍，畫面還是會有細微偏差。建議使用中英 2:1 的等寬字型，例如更紗黑體（Sarasa Mono）、Noto Sans Mono CJK。</p>
+<hr />
+<h2 id="三作法讓腳本當寬度的唯一依據"><a class="header" href="#三作法讓腳本當寬度的唯一依據">三、作法：讓腳本當寬度的唯一依據</a></h2>
+<p>核心想法只有一句：<strong>不要用眼睛估空白，所有欄位都交給腳本算；交付前一定跑檢查器，exit 0 才算完成。</strong></p>
+<pre><code class="language-text">┌─────────────────────────────────┐
+│ 1. 畫：generate.py 或 canvas.py │◄────┐
+│    （腳本依顯示寬度放字）       │     │
+└───────────┬─────────────────────┘     │ exit 1：依報告的
+            ▼                           │ 行號、欄位修正
+┌────────────────────────────────┐      │
+│ 2. 驗：align.py 或 md_check.py │──────┘
+└───────────┬────────────────────┘
+            │ exit 0
+            ▼
+┌───────────────────────┐
+│ 3. 交付：附上檢查輸出 │
+└───────────────────────┘
+</code></pre>
+<p>（這張圖本身就是用下面介紹的 <code>canvas.py</code> 畫的，並通過 <code>align.py</code> 檢查。）</p>
+<p>這套「生成 → 驗證迴圈」的想法與檢查器，來自 <a href="https://github.com/kouko/monkey-skills">kouko/monkey-skills</a> 的 <code>ascii-graph</code> skill（MIT 授權）。我在它的基礎上補了兩支工具：</p>
+<div class="table-wrapper"><table><thead><tr><th>工具</th><th>來源</th><th>用途</th></tr></thead><tbody>
+<tr><td><code>generate.py</code></td><td>上游</td><td>固定形狀的生成器：表格、直線流程、樹、長條圖、分層架構、時序圖</td></tr>
+<tr><td><code>align.py</code></td><td>上游</td><td>對齊檢查器（只報告，不修改）</td></tr>
+<tr><td><code>canvas.py</code></td><td>新增</td><td>任意方框＋箭頭圖的畫布，依顯示寬度放字</td></tr>
+<tr><td><code>md_check.py</code></td><td>新增</td><td>掃描整份 Markdown，檢查裡面的圖並回報原檔行號</td></tr>
+</tbody></table>
+</div>
+<h3 id="31-生成器固定形狀直接產生"><a class="header" href="#31-生成器固定形狀直接產生">3.1 生成器：固定形狀直接產生</a></h3>
+<p>形狀固定的圖，直接用生成器最省事，輸出保證對齊：</p>
+<pre><code class="language-bash">echo '{"steps":["收到訂單","驗證","出貨"]}' | python3 scripts/generate.py flow
+</code></pre>
+<pre><code class="language-text">┌──────────┐
+│ 收到訂單 │
+└──────────┘
+      │
+      ▼
+┌──────────┐
+│   驗證   │
+└──────────┘
+      │
+      ▼
+┌──────────┐
+│   出貨   │
+└──────────┘
+</code></pre>
+<p>支援的形狀與輸入格式（stdin 給 JSON）：</p>
+<div class="table-wrapper"><table><thead><tr><th>形狀</th><th>JSON</th></tr></thead><tbody>
+<tr><td><code>table</code></td><td><code>{"headers":[...],"rows":[[...]]}</code></td></tr>
+<tr><td><code>flow</code></td><td><code>{"steps":[...]}</code></td></tr>
+<tr><td><code>tree</code></td><td><code>{"node":{"label":...,"children":[...]}}</code></td></tr>
+<tr><td><code>bar</code></td><td><code>{"pairs":[["標籤",數值]],"width":20}</code></td></tr>
+<tr><td><code>arch</code></td><td><code>{"layers":[{"name":...,"components":[...]}]}</code></td></tr>
+<tr><td><code>seq</code></td><td><code>{"participants":[...],"messages":[{"from":..,"to":..,"label":..}]}</code></td></tr>
+</tbody></table>
+</div>
+<h3 id="32-畫布-canvaspy任意版面的圖"><a class="header" href="#32-畫布-canvaspy任意版面的圖">3.2 畫布 canvas.py：任意版面的圖</a></h3>
+<p>架構圖常常有分岔、橫向箭頭、回頭線，生成器畫不出來。這時用畫布：<strong>座標的 x 是顯示欄位，不是字元索引</strong>。</p>
+<pre><code class="language-python">from canvas import Canvas
+
+c = Canvas()
+_, b = c.box(0, 0, ["API 閘道"], bottom_tee=6)      # 回傳 (右邊框欄位, 底邊列號)
+c.put(b + 1, 6, "▼")
+r1, b1 = c.box(b + 2, 0, ["訂單服務"], bottom_tee=6)
+c.put(b + 3, r1 + 1, "──寫入──► ")
+c.box(b + 2, r1 + 11, ["Redis 佇列"])
+c.put(b1 + 1, 6, "▼")
+c.box(b1 + 2, 0, ["對帳服務"])
+print(c.render())
+</code></pre>
+<pre><code class="language-text">┌──────────┐
+│ API 閘道 │
+└─────┬────┘
+      ▼
+┌──────────┐          ┌────────────┐
+│ 訂單服務 │──寫入──► │ Redis 佇列 │
+└─────┬────┘          └────────────┘
+      ▼
+┌──────────┐
+│ 對帳服務 │
+└──────────┘
+</code></pre>
+<p><code>box()</code> 回傳右邊框的欄位與底邊列號，下一個元件就用這兩個數字計算位置，完全不用手數空白。也可以寫成 JSON 規格，用命令列執行：</p>
+<pre><code class="language-bash">cat &gt; spec.json &lt;&lt;'EOF'
+{"ops": [
+  {"op": "box", "y": 0, "x": 0, "lines": ["API 閘道"], "bottom_tee": 6},
+  {"op": "put", "y": 3, "x": 6, "text": "▼"}
+]}
+EOF
+python3 scripts/canvas.py spec.json
+</code></pre>
+<p><strong>畫布的實作原理</strong></p>
+<p>畫布是一張「列 → 欄 → 格子」的二維表。寫入一個字元時，先用 <code>wcwidth</code> 算寬度：</p>
+<ul>
+<li>寬度 1：佔 1 格。</li>
+<li>寬度 2：佔 2 格，第 2 格放一個「佔位記號」，輸出時跳過。</li>
+<li>寬度 ≤ 0（控制字元、零寬字元、Tab、換行）：直接拒絕。這些字元會讓欄位計算失準。</li>
+</ul>
+<p>以 <code>put(0, 0, "中ab")</code> 為例：</p>
+<div class="table-wrapper"><table><thead><tr><th>欄位</th><th>0</th><th>1</th><th>2</th><th>3</th></tr></thead><tbody>
+<tr><td>格子內容</td><td><code>中</code></td><td>佔位</td><td><code>a</code></td><td><code>b</code></td></tr>
+</tbody></table>
+</div>
+<p>最容易出錯的是「覆寫」：如果新字元寫到某個寬字元的前半格或後半格，就把整個寬字元清成空白，否則會剩下半個字，整行錯位。<code>render()</code> 逐列把格子接起來（跳過佔位記號），並去掉行尾空白。</p>
+<h3 id="33-檢查器-alignpy三種偏移檢查"><a class="header" href="#33-檢查器-alignpy三種偏移檢查">3.3 檢查器 align.py：三種偏移檢查</a></h3>
+<p><code>align.py</code> 讀入一張圖，先用 <code>wcwidth</code> 算出每個字元的顯示欄位，再做三種檢查。它<strong>只報告、不修改</strong>；修正由人或 AI 依報告處理。</p>
+<ol>
+<li><strong>垂直縫線（seam）</strong>：每個 <code>│</code> 的正上方或正下方（同一欄）都必須有結構字元，例如另一個 <code>│</code>、角落、<code>┬┴├┤</code>、<code>▼▲</code>。中文被當成 1 欄時，右邊框會被推到一個「上下都接不到東西」的欄位，立刻被抓到。</li>
+<li><strong>表格等寬（table）</strong>：同一個方框裡的每一行，顯示寬度必須一致。檢查器以多數行的寬度為準，標出不一樣的行。</li>
+<li><strong>折線與箭頭（kink / arrowhead）</strong>：連線在相鄰兩行之間偏移 1 欄，而且那裡沒有轉角字元，就算折線；<code>▼</code> 必須落在下一行方框的範圍內。</li>
+</ol>
+<p>拿第一節的錯誤示範去跑：</p>
+<pre><code class="language-bash">python3 scripts/align.py bad.txt
+</code></pre>
+<pre><code class="language-plaintext">  ln  width | content
+   1     9 | ┌───────┐
+   2    11 | │ 開始    │
+   3     9 | │ Start │
+   4     9 | └───────┘
+line 2: col 9: table line display width 11 differs from block width 9
+line 2: col 10: '│' at display-col 10 connects to nothing vertically
+</code></pre>
+<p>exit code 為 1，報告直接指出第 2 行寬度 11（應為 9），以及第 10 欄的 <code>│</code> 上下都接不到東西。修好後輸出 <code>✓ no drift</code>，exit 0。</p>
+<h3 id="34-文件掃描-md_checkpy直接檢查整份-markdown"><a class="header" href="#34-文件掃描-md_checkpy直接檢查整份-markdown">3.4 文件掃描 md_check.py：直接檢查整份 Markdown</a></h3>
+<p>修既有文件時，不需要先手動把圖剪出來：</p>
+<pre><code class="language-bash">python3 scripts/md_check.py docs/ARCH.md
+</code></pre>
+<pre><code class="language-plaintext">docs/ARCH.md:5:9: table line display width 11 differs from block width 9
+docs/ARCH.md:5:10: '│' at display-col 10 connects to nothing vertically
+</code></pre>
+<p>實作重點：</p>
+<ul>
+<li><strong>只檢查圖</strong>：只檢查 <code>```text</code> 與沒標語言的 code block。<code>json</code>、<code>bash</code>、<code>mermaid</code>、<code>plaintext</code> 等區塊一律略過，避免把程式碼誤判成圖。</li>
+<li><strong>依 CommonMark 規則辨識 fence</strong>：
+<ul>
+<li><code>```</code> 與 <code>~~~</code> 都算 fence，最多 3 個空白縮排（4 個以上算縮排程式碼，不是 fence）。</li>
+<li>結束 fence 必須是同一種字元，長度不得短於開頭；縮排的 fence 會從內容去掉同樣的縮排。</li>
+<li>沒有閉合的 fence 依規格延伸到檔尾，並額外回報「未閉合」。</li>
+</ul>
+</li>
+<li><strong>行號換算</strong>：把每個區塊在原檔的起始行號記下來，檢查結果的行號加上這個位移，回報的就是原檔行號，可以直接跳過去修。</li>
+<li><strong>只用 <code>\n</code> 切行</strong>：Python 的 <code>str.splitlines()</code> 也會把 <code>\v</code>、U+2028 等字元當換行，行號會跟編輯器對不上，所以不用它。</li>
+<li><strong>exit code</strong>：0 = 全部對齊；1 = 有偏移或未閉合的區塊；2 = 參數或讀檔錯誤。可以直接放進 CI 或 <code>test.sh</code>。</li>
+</ul>
+<hr />
+<h2 id="四實戰修一份架構文件的流程"><a class="header" href="#四實戰修一份架構文件的流程">四、實戰：修一份架構文件的流程</a></h2>
+<p>我第一次用這套方法，是修一份內部架構文件的系統總覽圖。過程如下：</p>
+<ol>
+<li><strong>量化問題</strong>：<code>md_check.py</code> 報出 31 處偏移。逐行計算右邊框位置後發現，有一個方框的右邊框從第 82 欄一路歪到第 89 欄，而且每多一個中文字就多歪 1 欄，正是「用字數補空白」的典型症狀。</li>
+<li><strong>找出隱性風險</strong>：框內用了 <code>→ · ×</code> 等模糊寬度字元。就算欄位算對，在 ambiguous=wide 的終端機上，同一行的寬度可能差到幾十欄。</li>
+<li><strong>重畫</strong>：用 <code>canvas.py</code> 按原圖內容逐一放置方框。方框寬度由內容自動計算，箭頭與 <code>┬</code> 放在同一欄，框內的 <code>→</code> 改成 <code>-&gt;</code>、<code>×</code> 改成 <code>x</code>、<code>·</code> 改成 <code>/</code>；文字內容不變。</li>
+<li><strong>驗證</strong>：<code>align.py</code> 回報 <code>✓ no drift</code>，再用 <code>md_check.py</code> 確認整份文件 exit 0。</li>
+<li><strong>只換圖</strong>：寫回文件時只替換那一個 code block，用 diff 確認其他內容一字未改。</li>
+</ol>
+<p>整個過程中沒有任何一個空白是用眼睛數的。</p>
+<hr />
+<h2 id="五包成-claude-code-skillcjk-ascii-diagram"><a class="header" href="#五包成-claude-code-skillcjk-ascii-diagram">五、包成 Claude Code skill：cjk-ascii-diagram</a></h2>
+<p>為了讓 Claude Code 以後畫圖時自動照這套流程走，我把它包成 skill，安裝在 <code>~/.claude/skills/cjk-ascii-diagram/</code>。</p>
+<h3 id="51-結構"><a class="header" href="#51-結構">5.1 結構</a></h3>
+<pre><code class="language-text">cjk-ascii-diagram/
+├── SKILL.md              觸發條件、流程、字元規則、輸出契約
+├── LICENSE               上游 MIT 授權
+├── ATTRIBUTION.md        上游來源 commit 與哪些檔案是複製的
+├── skill_lifecycle.yaml
+├── assets/evals/         觸發與功能測試案例
+├── references/           發版證據（readiness report）
+└── scripts/
+    ├── align.py          檢查器（上游）
+    ├── generate.py       生成器入口（上游）
+    ├── canvas.py         畫布（新增）
+    ├── md_check.py       Markdown 掃描（新增）
+    └── ...               width.py、glyphs.py、checks_*.py、gen_*.py
+</code></pre>
+<p>開發與測試放在 skill 資料夾<strong>外面</strong>，安裝時只複製 skill 資料夾，測試不會跟著進到 <code>~/.claude/skills/</code>：</p>
+<pre><code class="language-text">cjk-ascii-diagram-skill/
+├── Makefile              make build / run / test / install / clean
+├── test.sh               lint + 單元 + 系統 + skill gate 的單一入口
+├── cjk-ascii-diagram/    ← 要安裝的 skill
+└── tests/
+    ├── unit/             上游 90 個測試 + canvas + md_check
+    ├── system/           以子行程跑 CLI 的端對端測試
+    └── fixtures/         修正前後的架構圖
+</code></pre>
+<h3 id="52-skillmd-的設計重點"><a class="header" href="#52-skillmd-的設計重點">5.2 SKILL.md 的設計重點</a></h3>
+<ul>
+<li><strong>觸發</strong>：要畫或修「含中文的 ASCII 方框圖、架構圖、流程圖、表格」，或使用者說「圖沒對齊」「方框歪掉」。描述中同時放中文與英文觸發語。</li>
+<li><strong>不觸發／交棒</strong>：要 SVG／PNG 圖片時交給 Mermaid 渲染類 skill；class／ER／state／gantt 圖直接輸出 Mermaid 原始碼，因為 ASCII 無法可靠表達這類圖。</li>
+<li><strong>流程</strong>：確認輸入 → 修檔時先 <code>md_check.py</code> 定位 → 選生成器或畫布 → 遵守字元規則 → 驗證迴圈 → 只替換目標區塊。</li>
+<li><strong>硬規則</strong>：未通過檢查的圖不得當成完成品交付；驗證迴圈連續 3 輪失敗就停下回報。</li>
+</ul>
+<h3 id="53-測試與驗證"><a class="header" href="#53-測試與驗證">5.3 測試與驗證</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>層級</th><th>內容</th><th>結果</th></tr></thead><tbody>
+<tr><td>Lint</td><td><code>ruff check</code> 新增的腳本與測試</td><td>通過</td></tr>
+<tr><td>單元測試</td><td>上游 90 個（確認複製後行為不變）、canvas 34 個、md_check 20 個</td><td>144 passed</td></tr>
+<tr><td>系統測試</td><td>修正前的圖要被抓出、修正後要通過；canvas 重建的圖要與修正版逐字相同；各生成器輸出接 align；執行後不留 <code>__pycache__</code></td><td>11 passed</td></tr>
+<tr><td>Skill gate</td><td>skill-creator-advanced 的 format、create stage、draft release、路徑、孤兒檔案檢查</td><td>全部 PASS</td></tr>
+<tr><td>實際觸發</td><td>用 <code>claude -p</code> 開新 session 請它畫含中文的流程圖</td><td>自動載入 skill，產出的兩張圖都跑了 <code>align.py</code> 且 <code>✓ no drift</code></td></tr>
+</tbody></table>
+</div>
+<p>canvas 的單元測試特別涵蓋了幾個容易出錯的邊界：</p>
+<ul>
+<li>寫到寬字元的前半格或後半格時，整個寬字元要被清掉。</li>
+<li>寬字元蓋在兩個窄字元上時，兩格都要被取代。</li>
+<li>控制字元、零寬字元、負座標必須被拒絕。</li>
+<li><code>center</code> 置中時，左右空白不相等的話，多的那格放右邊。</li>
+</ul>
+<h3 id="54-使用方式"><a class="header" href="#54-使用方式">5.4 使用方式</a></h3>
+<p>安裝後不用手動呼叫。直接說「畫一張 ASCII 架構圖」「這份文件的區塊圖沒對齊」，Claude Code 就會載入 skill。也可以單獨使用腳本：</p>
+<pre><code class="language-bash">S=~/.claude/skills/cjk-ascii-diagram/scripts
+
+# 檢查文件裡的圖
+python3 $S/md_check.py docs/*.md
+
+# 生成器 + 驗證
+echo '{"headers":["項目","數量"],"rows":[["茶葉","100"]]}' | python3 $S/generate.py table
+
+# 檢查任意一張圖（stdin）
+python3 $S/align.py - &lt; diagram.txt
+</code></pre>
+<p>唯一的依賴是 <code>pip install wcwidth</code>。</p>
+<hr />
+<h2 id="六限制與常見問題"><a class="header" href="#六限制與常見問題">六、限制與常見問題</a></h2>
+<p><strong>Q：檢查通過，為什麼在某台電腦上還是歪？</strong>
+有兩個可能：字型的中英寬度不是 2:1；或那台終端機開了 ambiguous=wide，而圖裡有模糊寬度字元。前者換字型解決，後者照 2.3 節的規則把框內的 <code>→ · ×</code> 等字元換掉。<code>align.py</code> 只能保證欄位數正確，管不到字型。</p>
+<p><strong>Q：為什麼不全部改成 <code>+ - |</code> 純 ASCII 邊框？</strong>
+可以，這樣最保險，但沒有必要。線框字元在實務上幾乎所有終端機都當 1 欄處理；真正會出問題的是框內的 <code>→ · ×</code> 這類符號。</p>
+<p><strong>Q：網頁上（GitHub、mdBook）看會對齊嗎？</strong>
+只要 code block 用等寬字型，而且字型的中文寬度剛好是英文的 2 倍，就會對齊。很多網站的等寬字型沒有中文字形，會改用系統的中文字型顯示，寬度可能不是剛好 2 倍。這是瀏覽器字型設定的問題，不是圖的問題。</p>
+<p><strong>Q：時序圖（seq）為什麼不經過 align 檢查？</strong>
+時序圖是橫向箭頭穿過縱向生命線，跟 align 的「垂直縫線」模型不同，會產生誤報。上游的設計是由生成器的建構方式保證對齊，並有自己的結構測試。</p>
+<p><strong>Q：很複雜的圖怎麼辦？</strong>
+節點很多、線很密的圖，ASCII 本來就不適合。建議改用 Mermaid 原始碼，需要時再附一張標明「簡化版」的 ASCII 圖。</p>
+<p><strong>Q：用 <code>python -I</code> 執行時找不到 <code>width</code> 模組？</strong>
+隔離模式（<code>-I</code>）不會把腳本所在的資料夾加入 import 路徑。直接用 <code>python3 腳本路徑</code> 執行即可。</p>
+<hr />
+<h2 id="參考資料"><a class="header" href="#參考資料">參考資料</a></h2>
+<ul>
+<li><a href="https://github.com/kouko/monkey-skills">kouko/monkey-skills — ascii-graph-toolkit</a>：生成器與 <code>align.py</code> 的上游專案（MIT）</li>
+<li><a href="https://pypi.org/project/wcwidth/">wcwidth（PyPI）</a>：Python 顯示寬度計算</li>
+<li><a href="https://www.unicode.org/reports/tr11/">UAX #11: East Asian Width</a>：Unicode 字元寬度屬性規格</li>
+<li><a href="https://spec.commonmark.org/current/#fenced-code-blocks">CommonMark Spec — Fenced code blocks</a>：<code>md_check.py</code> 辨識 code fence 的依據</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="skill-creator-go-skill-指揮稿strict-版"><a class="header" href="#skill-creator-go-skill-指揮稿strict-版">skill-creator Go Skill 指揮稿（Strict 版）</a></h1>
 <p>這份文件是給「使用者」直接拿來下命令的。
 目標不是討論，而是強制 <code>skill-creator</code> 進入執行模式，直接把 Go skill 做出來、驗證、補 eval、跑 benchmark。</p>
@@ -16339,7 +16642,7 @@ A: 使用 <code>specify check</code> 檢查環境，確保工具已安裝</p>
 </ol>
 <p><strong>關鍵認知</strong>：軟體工程技能越強，從 LLM 得到的結果就越好越快</p>
 <hr />
-<h2 id="參考資料"><a class="header" href="#參考資料">參考資料</a></h2>
+<h2 id="參考資料-1"><a class="header" href="#參考資料-1">參考資料</a></h2>
 <ol>
 <li><a href="tools/%E6%96%87%E7%AB%A0%E9%80%A3%E7%B5%90">Spec-Driven Development: The Waterfall Strikes Back</a></li>
 <li><a href="tools/%E6%96%87%E7%AB%A0%E9%80%A3%E7%B5%90">Spec Driven Development - revenge of Waterfall or BDD taken to new level?</a></li>
@@ -45347,7 +45650,7 @@ public:
 </tbody></table>
 </div>
 <hr />
-<h2 id="參考資料-1"><a class="header" href="#參考資料-1">參考資料</a></h2>
+<h2 id="參考資料-2"><a class="header" href="#參考資料-2">參考資料</a></h2>
 <ul>
 <li><a href="https://en.cppreference.com/">C++ Reference</a></li>
 <li><a href="http://www.stroustrup.com/C++11FAQ.html">Bjarne Stroustrup's C++11 FAQ</a></li>
@@ -80409,7 +80712,7 @@ Contents of the .eh_frame section:
 ...
 </code></pre>
 <p>因為內容很長，我只有節錄一些，上面的資訊其實看不懂沒關係，因為還有其它的資訊我們在下一篇看到程式碼時才會一起提到，如果對上面的內容有興趣的話可以看一下參考資料的第一篇</p>
-<h2 id="參考資料-2"><a class="header" href="#參考資料-2">參考資料</a></h2>
+<h2 id="參考資料-3"><a class="header" href="#參考資料-3">參考資料</a></h2>
 <ul>
 <li>https://refspecs.linuxfoundation.org/LSB_3.0.0/LSB-PDA/LSB-PDA/ehframechpt.html</li>
 <li>https://docs.microsoft.com/zh-tw/cpp/cpp/exceptions-and-stack-unwinding-in-cpp?view=vs-2019</li>
@@ -81431,7 +81734,7 @@ fn main() {
     println!("cargo:rustc-link-search=."); // 等於rustc -L .
     println!("cargo:rustc-link-lib=dylib=add"); // 等於rustc -ladd
 }</code></pre></pre>
-<h2 id="參考資料-3"><a class="header" href="#參考資料-3">參考資料</a></h2>
+<h2 id="參考資料-4"><a class="header" href="#參考資料-4">參考資料</a></h2>
 <p>https://doc.rust-lang.org/cargo/reference/build-scripts.html</p>
 <p>https://zhuanlan.zhihu.com/p/70095462</p>
 <p>http://liufuyang.github.io/2020/02/02/call-c-in-rust.html</p>
@@ -123899,7 +124202,7 @@ main goroutine finished # main goroutine 解除阻塞並結束程式
 <p>Channel 傳回的第二個參數：<code>ok</code>，可以判斷此 Channel 是否已經關閉，並被 <code>range</code> 用在結束巡覽的判斷中。</p>
 <p>最後說明瞭 <code>select</code> 可以 Channel 在阻塞時讓 Goroutine 保持非阻塞的狀態避免卡頓。</p>
 <p>藉由 Goroutine 及 Channel 簡單的語法但是強大的能力使工程師開發多工程式的時候可以寫出優雅又易於維護的代碼，是 Go 語言的優勢之一。</p>
-<h2 id="參考資料-4"><a class="header" href="#參考資料-4">參考資料</a></h2>
+<h2 id="參考資料-5"><a class="header" href="#參考資料-5">參考資料</a></h2>
 <ul>
 <li><a href="https://tour.golang.org/concurrency">A tour of Go - Goroutines</a></li>
 <li><a href="https://medium.com/@trevor4e/learning-gos-concurrency-through-illustrations-8c4aff603b3">Trevor Forrey - Learning Go’s Concurrency Through Illustrations</a></li>
@@ -129218,7 +129521,7 @@ $ go run -race main.go
 <li><strong>spans</strong>：保存 <code>mspan</code> 的指標，讓 runtime 能快速定位實際管理的記憶體區塊。</li>
 </ol>
 <p><img src="go/images/go-memory-layout.jpg" alt="Go 記憶體配置區域" /></p>
-<h2 id="參考資料-5"><a class="header" href="#參考資料-5">參考資料</a></h2>
+<h2 id="參考資料-6"><a class="header" href="#參考資料-6">參考資料</a></h2>
 <ol>
 <li><a href="https://zhuanlan.zhihu.com/p/95056679">深入淺出 Golang Runtime</a></li>
 <li><a href="https://studygolang.com/articles/13994?fr=sidebar">golang 中的 runtime 包教程</a></li>
@@ -137719,7 +138022,7 @@ GDB 可正確載入 debug symbols</li>
 <li><input disabled="" type="checkbox" checked=""/>
 使用 step 可進入 runtime 程式碼</li>
 </ul>
-<h2 id="參考資料-6"><a class="header" href="#參考資料-6">參考資料</a></h2>
+<h2 id="參考資料-7"><a class="header" href="#參考資料-7">參考資料</a></h2>
 <ul>
 <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb/">GDB 官方文檔</a></li>
 <li><a href="https://github.com/golang/go/tree/master/src/runtime">Go Runtime Source</a></li>
@@ -149789,7 +150092,7 @@ uv tool list
 # 更新所有工具
 uv tool upgrade --all
 </code></pre>
-<h2 id="參考資料-7"><a class="header" href="#參考資料-7">參考資料</a></h2>
+<h2 id="參考資料-8"><a class="header" href="#參考資料-8">參考資料</a></h2>
 <ul>
 <li>原文：<a href="https://blog.miniasp.com/post/2025/10/20/uv-uvx-cheatsheet">uv &amp; uvx 指令完全教學速查表 - The Will Will Web</a></li>
 <li><a href="https://docs.astral.sh/uv/">uv 官方文件</a></li>
@@ -161089,7 +161392,7 @@ sudo systemctl enable oauth2proxy
 <li><code>proxy_pass</code> 是否真的指向 <code>127.0.0.1:4180</code>。</li>
 <li><code>nginx -t</code> 是否通過。</li>
 </ul>
-<h2 id="參考資料-8"><a class="header" href="#參考資料-8">參考資料</a></h2>
+<h2 id="參考資料-9"><a class="header" href="#參考資料-9">參考資料</a></h2>
 <ul>
 <li><a href="https://github.com/oauth2-proxy/oauth2-proxy">OAuth2 Proxy GitHub Repository</a></li>
 <li><a href="https://github.com/oauth2-proxy/oauth2-proxy/releases">OAuth2 Proxy Releases</a></li>
@@ -188009,7 +188312,7 @@ $ perf report
 <p>另外，使用 record 有可能會碰到的問題是取樣頻率太低，有些函式的訊息沒有沒顯示出來（沒取樣到），這時可以使用 <code>-F &lt;frequcncy&gt;</code>來調高取樣頻率，可以輸入以下查看最大值，要更改也沒問題，但能調到多大可能還要查一下。</p>
 <pre><code class="language-sh">$ cat /proc/sys/kernel/perf_event_max_sample_rate
 </code></pre>
-<h2 id="參考資料-9"><a class="header" href="#參考資料-9">參考資料</a></h2>
+<h2 id="參考資料-10"><a class="header" href="#參考資料-10">參考資料</a></h2>
 <ul>
 <li><a href="http://www.brendangregg.com/linuxperf.html">Linux Performance</a></li>
 <li><a href="https://perf.wiki.kernel.org/index.php/Tutorial#Sample_analysis_with_perf_report">Tutorial - Linux kernel profiling with perf</a> [Perf wiki]</li>
@@ -188353,7 +188656,7 @@ int main()  {
 Hello
 </code></pre>
 <p>關於dl的詳細內容請參閱 man dlopen</p>
-<h2 id="參考資料-10"><a class="header" href="#參考資料-10">參考資料:</a></h2>
+<h2 id="參考資料-11"><a class="header" href="#參考資料-11">參考資料:</a></h2>
 <p>Creating a shared and static library with the gnu compiler [gcc] http://www.adp-gmbh.ch/cpp/gcc/create_lib.html</p>
 <p>Program Library HOWTO http://tldp.org/HOWTO/Program-Library-HOWTO/index.html</p>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="1高性能程式設計關注點-1"><a class="header" href="#1高性能程式設計關注點-1">1、高性能程式設計關注點</a></h2>
@@ -196597,7 +196900,7 @@ uprobe:./hello_noinline:runtime.* {
 <li><strong>工具選擇</strong>：根據場景在 bpftrace / perf / ftrace / BCC / SystemTap 間選擇</li>
 </ul>
 <p>下一篇可以接著探討如何把 <code>bpftrace</code> 收集到的資料轉換成 OTLP 格式，補上觀測資料輸出的最後一段流程。</p>
-<h2 id="參考資料-11"><a class="header" href="#參考資料-11">參考資料</a></h2>
+<h2 id="參考資料-12"><a class="header" href="#參考資料-12">參考資料</a></h2>
 <ul>
 <li><a href="https://github.com/bpftrace/bpftrace">bpftrace</a></li>
 <li><a href="https://github.com/bpftrace/bpftrace/blob/master/docs/reference_guide.md">bpftrace Reference Guide</a></li>
@@ -201733,7 +202036,7 @@ upx --best myapp
 </ul>
 <p>在雲端時代，<strong>開發和部署效率</strong> &gt; <strong>幾 MB 的空間</strong>，這就是為什麼現代語言都選擇預設靜態連結！</p>
 <hr />
-<h2 id="參考資料-12"><a class="header" href="#參考資料-12">參考資料</a></h2>
+<h2 id="參考資料-13"><a class="header" href="#參考資料-13">參考資料</a></h2>
 <ul>
 <li><a href="https://github.com/johnthagen/min-sized-rust">Rust Binary Size Optimization</a></li>
 <li><a href="https://golang.org/doc/faq#Why_is_my_trivial_program_such_a_large_binary">Go Executable Size</a></li>
@@ -204557,7 +204860,7 @@ git@&lt;host_alias&gt;:&lt;accountname&gt;/&lt;reponame&gt;.git
 <p>設定完指令 alias 後，之後需要使用到公司的金鑰時，就可以輸入此指令，就可以存取公司專案了</p>
 <h2 id="在-sourcetree-指定不同的金鑰"><a class="header" href="#在-sourcetree-指定不同的金鑰">在 SourceTree 指定不同的金鑰</a></h2>
 <p><img src="ssh/./images/create_ssh_mac.gif" alt="" /></p>
-<h1 id="參考資料-13"><a class="header" href="#參考資料-13">參考資料</a></h1>
+<h1 id="參考資料-14"><a class="header" href="#參考資料-14">參考資料</a></h1>
 <ul>
 <li>https://kejyuntw.gitbooks.io/ubuntu-learning-notes/content/network/network-multiple-ssh-key-to-same-github-site.html</li>
 </ul>
@@ -211328,7 +211631,7 @@ completeness、unsupported features、trusted axioms、solver result 和 cache p
 輸入、build identity 不符、callee／library models 被默認信任，或 analysis 根本沒完整跑完。
 因此本專案最有價值的設計不只是「能呼叫 WP」，而是把 assumptions、<code>incomplete[]</code>、
 source identity 與 proof receipt 一起帶回來。</p>
-<h2 id="參考資料-14"><a class="header" href="#參考資料-14">參考資料</a></h2>
+<h2 id="參考資料-15"><a class="header" href="#參考資料-15">參考資料</a></h2>
 <h3 id="官方與原始資料"><a class="header" href="#官方與原始資料">官方與原始資料</a></h3>
 <ul>
 <li><a href="https://frama-c.com/html/acsl.html">Frama-C：ACSL</a></li>
@@ -212458,7 +212761,7 @@ CI 與本機共用同一測試入口，失敗 artifacts 足以調查。</li>
 </ul>
 <h2 id="最終原則"><a class="header" href="#最終原則">最終原則</a></h2>
 <p>極致品質不是所有工具每次都跑，而是依風險分層：TDD 讓規格先於實作；邏輯測試與生成式測試找反例；排程探索和動態偵測器揭露併發缺陷；benchmark 以可靠樣本守住效能預算；系統測試確認真實邊界。任何工具的「沒有報錯」都不能單獨證明正確，真正可維持的品質來自可重現證據、清楚不變量與持續執行的品質閘門。</p>
-<h2 id="參考資料-15"><a class="header" href="#參考資料-15">參考資料</a></h2>
+<h2 id="參考資料-16"><a class="header" href="#參考資料-16">參考資料</a></h2>
 <ul>
 <li><a href="https://go.dev/doc/articles/race_detector">Go Data Race Detector</a></li>
 <li><a href="https://go.dev/doc/security/fuzz/">Go Fuzzing</a></li>
@@ -212717,7 +213020,7 @@ Debugger 找到的問題已固化為 regression test。</li>
 </ul>
 <p>因此文件應將結論表達為「本機驗證已達到高度可信」，而不是「已完整證明
 Kubernetes 上必然正確」。</p>
-<h2 id="參考資料-16"><a class="header" href="#參考資料-16">參考資料</a></h2>
+<h2 id="參考資料-17"><a class="header" href="#參考資料-17">參考資料</a></h2>
 <ul>
 <li><a href="https://github.com/go-delve/delve/blob/master/Documentation/usage/dlv_test.md">Delve：<code>dlv test</code></a></li>
 <li><a href="https://go.dev/doc/articles/race_detector">Go Data Race Detector</a></li>
@@ -252258,7 +252561,7 @@ subprocess.run(["gcc", "output.o", "test_harness.c", "-o", "benchmark"])
 <p>如果把 OpenEvolve 看成進化代理的第一代代表，那麼 LoongFlow 更像是往第二代邁進的嘗試。它保留了進化式搜尋的優點，但不再滿足於盲目變異，而是加入規劃、執行與反思這種更像研究流程的結構。</p>
 <p>這不代表暴力搜尋沒有價值。對某些問題來說，大量探索仍然有效，而且實作門檻較低。不過當任務變得更複雜、呼叫成本更高、週期更長時，只有不斷試錯通常不夠，系統必須從歷史中學到東西。</p>
 <p>LoongFlow 的核心價值就在這裡：它試圖把代理從「大量猜測」推向「基於經驗的推理」。如果這條路成立，未來的演化代理就不只是更快，而是更接近真正能累積知識的自動化研究夥伴。</p>
-<h2 id="參考資料-17"><a class="header" href="#參考資料-17">參考資料</a></h2>
+<h2 id="參考資料-18"><a class="header" href="#參考資料-18">參考資料</a></h2>
 <ul>
 <li>GitHub：<a href="https://github.com/baidu-baige/LoongFlow">https://github.com/baidu-baige/LoongFlow</a></li>
 <li>技術報告：<a href="https://arxiv.org/abs/2512.24077">https://arxiv.org/abs/2512.24077</a></li>
@@ -261094,7 +261397,7 @@ ollama run my-custom-model
 <p>Ollama 為開發者和 AI 愛好者提供了一個強大而靈活的工具，使本地運行大型語言模型變得前所未有的簡單。無論您是想要進行 AI 研究、開發智能應用，還是僅僅出於好奇想要探索 AI 的潛力，Ollama 都為您提供了一個理想的起點。</p>
 <p>隨著 AI 技術的不斷發展，Ollama 這樣的工具將在推動 AI 民主化和創新方面發揮越來越重要的作用。現在正是開始您的 Ollama 之旅的最佳時機，探索本地 AI 開發的無限可能！</p>
 <p>即刻前往教學程式碼 Repo，親自搭建屬於自己的 LLM Server 吧！別忘了給專案按個星星並持續關注更新，讓我們一起探索 AI 代理的新境界。</p>
-<h2 id="參考資料-18"><a class="header" href="#參考資料-18">參考資料</a></h2>
+<h2 id="參考資料-19"><a class="header" href="#參考資料-19">參考資料</a></h2>
 <p>最近消息是，可以直接從 HuggingFace 上拉 GGUF 格式檔案，不用額外建立 manifest，具體操作已經收錄在 HuggingFace blog 當中，可以做參考，未來有機會再行整理：<a href="https://huggingface.co/docs/hub/en/ollama">https://huggingface.co/docs/hub/en/ollama</a></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="automl-自動化機器學習"><a class="header" href="#automl-自動化機器學習">AutoML 自動化機器學習</a></h1>
 <blockquote>
@@ -268450,7 +268753,7 @@ TRAINED_MODEL_PATH = f"{HOME}/runs/detect/train/weights/best.pt"
 <pre><code class="language-bash">yolo export model=yolov8n.pt
 </code></pre>
 <hr />
-<h2 id="參考資料-19"><a class="header" href="#參考資料-19">參考資料</a></h2>
+<h2 id="參考資料-20"><a class="header" href="#參考資料-20">參考資料</a></h2>
 <ul>
 <li><a href="https://github.com/autodistill/autodistill">Autodistill GitHub</a></li>
 <li><a href="https://colab.research.google.com/github/roboflow-ai/notebooks/blob/main/notebooks/how-to-auto-train-yolov8-model-with-autodistill.ipynb">Roboflow 官方教學</a></li>
@@ -297062,7 +297365,7 @@ Ch6. 活用基本分析與技術分析：</p>
 <p>⚠️ 上述量化參數（N、k、M、X）為整理者自訂，原作者未公開精確數值；「勝率八九成」為作者自述，未經獨立回測驗證。</p>
 </blockquote>
 <hr />
-<h2 id="參考資料-20"><a class="header" href="#參考資料-20">參考資料</a></h2>
+<h2 id="參考資料-21"><a class="header" href="#參考資料-21">參考資料</a></h2>
 <ul>
 <li>節目逐字稿：《1招抓飆股勝率九成！這訊號進場2個月賺400萬！》財經鈔能力 20261005（本資料夾 <code>.txt</code>）</li>
 <li><a href="https://news.tvbs.com.tw/money/4031871">TVBS 新聞：1招抓飆股勝率九成！這訊號進場2個月賺400萬！</a></li>
@@ -349111,7 +349414,7 @@ Use Sonnet for each teammate.
 <p>那麼 Agent Teams 很值得嘗試。</p>
 <p>如果任務只是單點查詢、一次性修正、或只需要快速拿到答案，Subagent 通常會更省成本。</p>
 <hr />
-<h2 id="參考資料-21"><a class="header" href="#參考資料-21">參考資料</a></h2>
+<h2 id="參考資料-22"><a class="header" href="#參考資料-22">參考資料</a></h2>
 <ul>
 <li><a href="https://code.claude.com/docs/en/agent-teams">Claude Code 文件：Agent Teams</a></li>
 <li><a href="https://www.anthropic.com/engineering/building-c-compiler">Anthropic Engineering：Building a C compiler with a team of parallel Claudes</a></li>
@@ -353428,7 +353731,7 @@ Retriever prepared for /mnt/local-repos/...
 <tr><td>儲存庫路徑</td><td>一律使用容器內路徑 <code>/mnt/local-repos/...</code></td></tr>
 </tbody></table>
 </div>
-<h2 id="參考資料-22"><a class="header" href="#參考資料-22">參考資料</a></h2>
+<h2 id="參考資料-23"><a class="header" href="#參考資料-23">參考資料</a></h2>
 <ul>
 <li><a href="https://github.com/AsyncFuncAI/deepwiki-open">DeepWiki-Open GitHub</a></li>
 <li><a href="https://github.com/AsyncFuncAI/deepwiki-open/issues/323">Can’t find local directory · Issue #323</a></li>

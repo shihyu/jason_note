@@ -1,0 +1,546 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>讓含中文的 ASCII 方框圖真正對齊：原理與作法 - Jason&#x27;s Notes</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Jason&#x27;s Notes</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/shihyu/jason_note" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="讓含中文的-ascii-方框圖真正對齊原理與作法"><a class="header" href="#讓含中文的-ascii-方框圖真正對齊原理與作法">讓含中文的 ASCII 方框圖真正對齊：原理與作法</a></h1>
+<blockquote>
+<p>在 Markdown、終端機或程式註解裡畫 <code>┌─┐│</code> 方框圖，只要標籤含中文，右邊框幾乎一定會歪。本文說明為什麼會歪、怎麼用「腳本計算顯示寬度」來畫和驗證，以及我把這套流程包成 Claude Code skill <code>cjk-ascii-diagram</code> 的實作細節。</p>
+</blockquote>
+<hr />
+<h2 id="一問題長什麼樣"><a class="header" href="#一問題長什麼樣">一、問題長什麼樣</a></h2>
+<p>下面是一個很常見的錯誤：用「字數」決定框寬。<code>開始</code> 是 2 個字，<code>Start</code> 是 5 個字，程式或 AI 以為最寬 5、框寬 7，於是畫成這樣：</p>
+<pre><code class="language-plaintext">┌───────┐
+│ 開始    │
+│ Start │
+└───────┘
+</code></pre>
+<p>在終端機或等寬字型下，<code>開始</code> 實際佔 4 欄，第二行的右邊框被推到更右邊。正確的圖應該是：</p>
+<pre><code class="language-text">┌───────┐
+│ 開始  │
+│ Start │
+└───────┘
+</code></pre>
+<blockquote>
+<p>本文刻意把「錯誤示範」標成 <code>```plaintext</code>，讓後面介紹的 <code>md_check.py</code> 略過它們；正確的圖都標成 <code>```text</code>，而且都通過檢查。</p>
+</blockquote>
+<p>圖越大、中文越多，偏差就越明顯：每一行的中文字數不同，右邊框會像階梯一樣一路往右歪。手動用眼睛補空白只能救一時，改一個字就又歪了。</p>
+<hr />
+<h2 id="二原理"><a class="header" href="#二原理">二、原理</a></h2>
+<h3 id="21-字元數--顯示欄位數"><a class="header" href="#21-字元數--顯示欄位數">2.1 字元數 ≠ 顯示欄位數</a></h3>
+<p>終端機和等寬字型是用「欄位（cell）」排版的。英數字佔 1 欄，中日韓文字佔 2 欄。但大部分程式語言的字串長度算的是「字元數」：</p>
+<div class="table-wrapper"><table><thead><tr><th>字串</th><th><code>len()</code></th><th>實際顯示欄位（<code>wcswidth</code>）</th></tr></thead><tbody>
+<tr><td><code>開始</code></td><td>2</td><td>4</td></tr>
+<tr><td><code>Start</code></td><td>5</td><td>5</td></tr>
+<tr><td><code>中文abc</code></td><td>5</td><td>7</td></tr>
+<tr><td><code>，</code>（全形逗號）</td><td>1</td><td>2</td></tr>
+<tr><td><code>🚀</code></td><td>1</td><td>2</td></tr>
+</tbody></table>
+</div>
+<p>（上表由 Python <code>wcwidth</code> 0.8.1 實際計算。）</p>
+<p>用 <code>len()</code> 或 <code>str.ljust()</code> 補空白，中文每多一個字，那一行就多出 1 欄。這就是方框歪掉的根本原因。</p>
+<pre><code class="language-python">from wcwidth import wcswidth
+
+len("開始")       # 2
+wcswidth("開始")  # 4  ← 終端機實際佔的欄位
+</code></pre>
+<h3 id="22-unicode-east-asian-width字元寬度從哪來"><a class="header" href="#22-unicode-east-asian-width字元寬度從哪來">2.2 Unicode East Asian Width：字元寬度從哪來</a></h3>
+<p>每個 Unicode 字元都有一個 East Asian Width（UAX #11）屬性，終端機據此決定佔 1 欄還是 2 欄：</p>
+<div class="table-wrapper"><table><thead><tr><th>屬性</th><th>意義</th><th>例子</th><th>顯示寬度</th></tr></thead><tbody>
+<tr><td><code>W</code>（Wide）</td><td>寬字元</td><td>漢字、假名、諺文、多數 emoji</td><td>固定 2</td></tr>
+<tr><td><code>F</code>（Fullwidth）</td><td>全形</td><td><code>，。：（）！</code></td><td>固定 2</td></tr>
+<tr><td><code>Na</code>（Narrow）</td><td>窄字元</td><td>ASCII 英數</td><td>固定 1</td></tr>
+<tr><td><code>H</code>（Halfwidth）</td><td>半形</td><td>半形片假名</td><td>固定 1</td></tr>
+<tr><td><code>N</code>（Neutral）</td><td>中性</td><td>多數西方符號</td><td>1</td></tr>
+<tr><td><code>A</code>（Ambiguous）</td><td><strong>模糊</strong></td><td><code>─ │ ┌ → · × ▼ ★ ○</code>、希臘字母</td><td><strong>看終端機設定，1 或 2</strong></td></tr>
+</tbody></table>
+</div>
+<p><code>wcwidth</code> 這類函式庫就是把這張表實作出來：W／F 回傳 2，控制字元回傳 -1，其他回傳 1（模糊寬度預設當 1）。</p>
+<h3 id="23-模糊寬度ambiguous同一張圖在不同電腦長得不一樣"><a class="header" href="#23-模糊寬度ambiguous同一張圖在不同電腦長得不一樣">2.3 模糊寬度（Ambiguous）：同一張圖在不同電腦長得不一樣</a></h3>
+<p>最麻煩的是 <code>A</code> 類字元。在西方語系環境它們佔 1 欄，但很多 CJK 使用者會在終端機打開「模糊寬度字元顯示為雙寬」（iTerm2、GNOME Terminal、PuTTY、mintty 都有這個選項，或設定 <code>VTE_CJK_WIDTH</code>）。打開後，<code>→ · ×</code> 會變成 2 欄。</p>
+<p>所以就算你把欄位算得完全正確，只要框內有 <code>→</code>，在別人的終端機上還是會歪。實務上的結論：</p>
+<ul>
+<li><strong>線框字元 <code>─│┌┐└┘├┤┬┴┼</code> 與箭頭 <code>▼ ▲ ► ◄</code></strong>：雖然被歸在 <code>A</code> 類，但幾乎所有終端機都特別把它們當 1 欄處理，可以放心用。</li>
+<li><strong><code>→ ← · × ÷ § ° ± ★ ○ □</code>、希臘字母</strong>：不要放在會決定框寬或欄位的地方。<code>→</code> 改寫成 <code>-&gt;</code>，<code>×</code> 改 <code>x</code>，<code>·</code> 改 <code>/</code>。</li>
+<li><strong>emoji、ZWJ 組合字、變體選擇符（U+FE0F）</strong>：寬度依字型而定，完全不要放進圖裡。</li>
+</ul>
+<h3 id="24-字型欄位算對了還要字型配合"><a class="header" href="#24-字型欄位算對了還要字型配合">2.4 字型：欄位算對了，還要字型配合</a></h3>
+<p>欄位數正確只是第一步。中文字型的寬度如果不是英文的剛好 2 倍，畫面還是會有細微偏差。建議使用中英 2:1 的等寬字型，例如更紗黑體（Sarasa Mono）、Noto Sans Mono CJK。</p>
+<hr />
+<h2 id="三作法讓腳本當寬度的唯一依據"><a class="header" href="#三作法讓腳本當寬度的唯一依據">三、作法：讓腳本當寬度的唯一依據</a></h2>
+<p>核心想法只有一句：<strong>不要用眼睛估空白，所有欄位都交給腳本算；交付前一定跑檢查器，exit 0 才算完成。</strong></p>
+<pre><code class="language-text">┌─────────────────────────────────┐
+│ 1. 畫：generate.py 或 canvas.py │◄────┐
+│    （腳本依顯示寬度放字）       │     │
+└───────────┬─────────────────────┘     │ exit 1：依報告的
+            ▼                           │ 行號、欄位修正
+┌────────────────────────────────┐      │
+│ 2. 驗：align.py 或 md_check.py │──────┘
+└───────────┬────────────────────┘
+            │ exit 0
+            ▼
+┌───────────────────────┐
+│ 3. 交付：附上檢查輸出 │
+└───────────────────────┘
+</code></pre>
+<p>（這張圖本身就是用下面介紹的 <code>canvas.py</code> 畫的，並通過 <code>align.py</code> 檢查。）</p>
+<p>這套「生成 → 驗證迴圈」的想法與檢查器，來自 <a href="https://github.com/kouko/monkey-skills">kouko/monkey-skills</a> 的 <code>ascii-graph</code> skill（MIT 授權）。我在它的基礎上補了兩支工具：</p>
+<div class="table-wrapper"><table><thead><tr><th>工具</th><th>來源</th><th>用途</th></tr></thead><tbody>
+<tr><td><code>generate.py</code></td><td>上游</td><td>固定形狀的生成器：表格、直線流程、樹、長條圖、分層架構、時序圖</td></tr>
+<tr><td><code>align.py</code></td><td>上游</td><td>對齊檢查器（只報告，不修改）</td></tr>
+<tr><td><code>canvas.py</code></td><td>新增</td><td>任意方框＋箭頭圖的畫布，依顯示寬度放字</td></tr>
+<tr><td><code>md_check.py</code></td><td>新增</td><td>掃描整份 Markdown，檢查裡面的圖並回報原檔行號</td></tr>
+</tbody></table>
+</div>
+<h3 id="31-生成器固定形狀直接產生"><a class="header" href="#31-生成器固定形狀直接產生">3.1 生成器：固定形狀直接產生</a></h3>
+<p>形狀固定的圖，直接用生成器最省事，輸出保證對齊：</p>
+<pre><code class="language-bash">echo '{"steps":["收到訂單","驗證","出貨"]}' | python3 scripts/generate.py flow
+</code></pre>
+<pre><code class="language-text">┌──────────┐
+│ 收到訂單 │
+└──────────┘
+      │
+      ▼
+┌──────────┐
+│   驗證   │
+└──────────┘
+      │
+      ▼
+┌──────────┐
+│   出貨   │
+└──────────┘
+</code></pre>
+<p>支援的形狀與輸入格式（stdin 給 JSON）：</p>
+<div class="table-wrapper"><table><thead><tr><th>形狀</th><th>JSON</th></tr></thead><tbody>
+<tr><td><code>table</code></td><td><code>{"headers":[...],"rows":[[...]]}</code></td></tr>
+<tr><td><code>flow</code></td><td><code>{"steps":[...]}</code></td></tr>
+<tr><td><code>tree</code></td><td><code>{"node":{"label":...,"children":[...]}}</code></td></tr>
+<tr><td><code>bar</code></td><td><code>{"pairs":[["標籤",數值]],"width":20}</code></td></tr>
+<tr><td><code>arch</code></td><td><code>{"layers":[{"name":...,"components":[...]}]}</code></td></tr>
+<tr><td><code>seq</code></td><td><code>{"participants":[...],"messages":[{"from":..,"to":..,"label":..}]}</code></td></tr>
+</tbody></table>
+</div>
+<h3 id="32-畫布-canvaspy任意版面的圖"><a class="header" href="#32-畫布-canvaspy任意版面的圖">3.2 畫布 canvas.py：任意版面的圖</a></h3>
+<p>架構圖常常有分岔、橫向箭頭、回頭線，生成器畫不出來。這時用畫布：<strong>座標的 x 是顯示欄位，不是字元索引</strong>。</p>
+<pre><code class="language-python">from canvas import Canvas
+
+c = Canvas()
+_, b = c.box(0, 0, ["API 閘道"], bottom_tee=6)      # 回傳 (右邊框欄位, 底邊列號)
+c.put(b + 1, 6, "▼")
+r1, b1 = c.box(b + 2, 0, ["訂單服務"], bottom_tee=6)
+c.put(b + 3, r1 + 1, "──寫入──► ")
+c.box(b + 2, r1 + 11, ["Redis 佇列"])
+c.put(b1 + 1, 6, "▼")
+c.box(b1 + 2, 0, ["對帳服務"])
+print(c.render())
+</code></pre>
+<pre><code class="language-text">┌──────────┐
+│ API 閘道 │
+└─────┬────┘
+      ▼
+┌──────────┐          ┌────────────┐
+│ 訂單服務 │──寫入──► │ Redis 佇列 │
+└─────┬────┘          └────────────┘
+      ▼
+┌──────────┐
+│ 對帳服務 │
+└──────────┘
+</code></pre>
+<p><code>box()</code> 回傳右邊框的欄位與底邊列號，下一個元件就用這兩個數字計算位置，完全不用手數空白。也可以寫成 JSON 規格，用命令列執行：</p>
+<pre><code class="language-bash">cat &gt; spec.json &lt;&lt;'EOF'
+{"ops": [
+  {"op": "box", "y": 0, "x": 0, "lines": ["API 閘道"], "bottom_tee": 6},
+  {"op": "put", "y": 3, "x": 6, "text": "▼"}
+]}
+EOF
+python3 scripts/canvas.py spec.json
+</code></pre>
+<p><strong>畫布的實作原理</strong></p>
+<p>畫布是一張「列 → 欄 → 格子」的二維表。寫入一個字元時，先用 <code>wcwidth</code> 算寬度：</p>
+<ul>
+<li>寬度 1：佔 1 格。</li>
+<li>寬度 2：佔 2 格，第 2 格放一個「佔位記號」，輸出時跳過。</li>
+<li>寬度 ≤ 0（控制字元、零寬字元、Tab、換行）：直接拒絕。這些字元會讓欄位計算失準。</li>
+</ul>
+<p>以 <code>put(0, 0, "中ab")</code> 為例：</p>
+<div class="table-wrapper"><table><thead><tr><th>欄位</th><th>0</th><th>1</th><th>2</th><th>3</th></tr></thead><tbody>
+<tr><td>格子內容</td><td><code>中</code></td><td>佔位</td><td><code>a</code></td><td><code>b</code></td></tr>
+</tbody></table>
+</div>
+<p>最容易出錯的是「覆寫」：如果新字元寫到某個寬字元的前半格或後半格，就把整個寬字元清成空白，否則會剩下半個字，整行錯位。<code>render()</code> 逐列把格子接起來（跳過佔位記號），並去掉行尾空白。</p>
+<h3 id="33-檢查器-alignpy三種偏移檢查"><a class="header" href="#33-檢查器-alignpy三種偏移檢查">3.3 檢查器 align.py：三種偏移檢查</a></h3>
+<p><code>align.py</code> 讀入一張圖，先用 <code>wcwidth</code> 算出每個字元的顯示欄位，再做三種檢查。它<strong>只報告、不修改</strong>；修正由人或 AI 依報告處理。</p>
+<ol>
+<li><strong>垂直縫線（seam）</strong>：每個 <code>│</code> 的正上方或正下方（同一欄）都必須有結構字元，例如另一個 <code>│</code>、角落、<code>┬┴├┤</code>、<code>▼▲</code>。中文被當成 1 欄時，右邊框會被推到一個「上下都接不到東西」的欄位，立刻被抓到。</li>
+<li><strong>表格等寬（table）</strong>：同一個方框裡的每一行，顯示寬度必須一致。檢查器以多數行的寬度為準，標出不一樣的行。</li>
+<li><strong>折線與箭頭（kink / arrowhead）</strong>：連線在相鄰兩行之間偏移 1 欄，而且那裡沒有轉角字元，就算折線；<code>▼</code> 必須落在下一行方框的範圍內。</li>
+</ol>
+<p>拿第一節的錯誤示範去跑：</p>
+<pre><code class="language-bash">python3 scripts/align.py bad.txt
+</code></pre>
+<pre><code class="language-plaintext">  ln  width | content
+   1     9 | ┌───────┐
+   2    11 | │ 開始    │
+   3     9 | │ Start │
+   4     9 | └───────┘
+line 2: col 9: table line display width 11 differs from block width 9
+line 2: col 10: '│' at display-col 10 connects to nothing vertically
+</code></pre>
+<p>exit code 為 1，報告直接指出第 2 行寬度 11（應為 9），以及第 10 欄的 <code>│</code> 上下都接不到東西。修好後輸出 <code>✓ no drift</code>，exit 0。</p>
+<h3 id="34-文件掃描-md_checkpy直接檢查整份-markdown"><a class="header" href="#34-文件掃描-md_checkpy直接檢查整份-markdown">3.4 文件掃描 md_check.py：直接檢查整份 Markdown</a></h3>
+<p>修既有文件時，不需要先手動把圖剪出來：</p>
+<pre><code class="language-bash">python3 scripts/md_check.py docs/ARCH.md
+</code></pre>
+<pre><code class="language-plaintext">docs/ARCH.md:5:9: table line display width 11 differs from block width 9
+docs/ARCH.md:5:10: '│' at display-col 10 connects to nothing vertically
+</code></pre>
+<p>實作重點：</p>
+<ul>
+<li><strong>只檢查圖</strong>：只檢查 <code>```text</code> 與沒標語言的 code block。<code>json</code>、<code>bash</code>、<code>mermaid</code>、<code>plaintext</code> 等區塊一律略過，避免把程式碼誤判成圖。</li>
+<li><strong>依 CommonMark 規則辨識 fence</strong>：
+<ul>
+<li><code>```</code> 與 <code>~~~</code> 都算 fence，最多 3 個空白縮排（4 個以上算縮排程式碼，不是 fence）。</li>
+<li>結束 fence 必須是同一種字元，長度不得短於開頭；縮排的 fence 會從內容去掉同樣的縮排。</li>
+<li>沒有閉合的 fence 依規格延伸到檔尾，並額外回報「未閉合」。</li>
+</ul>
+</li>
+<li><strong>行號換算</strong>：把每個區塊在原檔的起始行號記下來，檢查結果的行號加上這個位移，回報的就是原檔行號，可以直接跳過去修。</li>
+<li><strong>只用 <code>\n</code> 切行</strong>：Python 的 <code>str.splitlines()</code> 也會把 <code>\v</code>、U+2028 等字元當換行，行號會跟編輯器對不上，所以不用它。</li>
+<li><strong>exit code</strong>：0 = 全部對齊；1 = 有偏移或未閉合的區塊；2 = 參數或讀檔錯誤。可以直接放進 CI 或 <code>test.sh</code>。</li>
+</ul>
+<hr />
+<h2 id="四實戰修一份架構文件的流程"><a class="header" href="#四實戰修一份架構文件的流程">四、實戰：修一份架構文件的流程</a></h2>
+<p>我第一次用這套方法，是修一份內部架構文件的系統總覽圖。過程如下：</p>
+<ol>
+<li><strong>量化問題</strong>：<code>md_check.py</code> 報出 31 處偏移。逐行計算右邊框位置後發現，有一個方框的右邊框從第 82 欄一路歪到第 89 欄，而且每多一個中文字就多歪 1 欄，正是「用字數補空白」的典型症狀。</li>
+<li><strong>找出隱性風險</strong>：框內用了 <code>→ · ×</code> 等模糊寬度字元。就算欄位算對，在 ambiguous=wide 的終端機上，同一行的寬度可能差到幾十欄。</li>
+<li><strong>重畫</strong>：用 <code>canvas.py</code> 按原圖內容逐一放置方框。方框寬度由內容自動計算，箭頭與 <code>┬</code> 放在同一欄，框內的 <code>→</code> 改成 <code>-&gt;</code>、<code>×</code> 改成 <code>x</code>、<code>·</code> 改成 <code>/</code>；文字內容不變。</li>
+<li><strong>驗證</strong>：<code>align.py</code> 回報 <code>✓ no drift</code>，再用 <code>md_check.py</code> 確認整份文件 exit 0。</li>
+<li><strong>只換圖</strong>：寫回文件時只替換那一個 code block，用 diff 確認其他內容一字未改。</li>
+</ol>
+<p>整個過程中沒有任何一個空白是用眼睛數的。</p>
+<hr />
+<h2 id="五包成-claude-code-skillcjk-ascii-diagram"><a class="header" href="#五包成-claude-code-skillcjk-ascii-diagram">五、包成 Claude Code skill：cjk-ascii-diagram</a></h2>
+<p>為了讓 Claude Code 以後畫圖時自動照這套流程走，我把它包成 skill，安裝在 <code>~/.claude/skills/cjk-ascii-diagram/</code>。</p>
+<h3 id="51-結構"><a class="header" href="#51-結構">5.1 結構</a></h3>
+<pre><code class="language-text">cjk-ascii-diagram/
+├── SKILL.md              觸發條件、流程、字元規則、輸出契約
+├── LICENSE               上游 MIT 授權
+├── ATTRIBUTION.md        上游來源 commit 與哪些檔案是複製的
+├── skill_lifecycle.yaml
+├── assets/evals/         觸發與功能測試案例
+├── references/           發版證據（readiness report）
+└── scripts/
+    ├── align.py          檢查器（上游）
+    ├── generate.py       生成器入口（上游）
+    ├── canvas.py         畫布（新增）
+    ├── md_check.py       Markdown 掃描（新增）
+    └── ...               width.py、glyphs.py、checks_*.py、gen_*.py
+</code></pre>
+<p>開發與測試放在 skill 資料夾<strong>外面</strong>，安裝時只複製 skill 資料夾，測試不會跟著進到 <code>~/.claude/skills/</code>：</p>
+<pre><code class="language-text">cjk-ascii-diagram-skill/
+├── Makefile              make build / run / test / install / clean
+├── test.sh               lint + 單元 + 系統 + skill gate 的單一入口
+├── cjk-ascii-diagram/    ← 要安裝的 skill
+└── tests/
+    ├── unit/             上游 90 個測試 + canvas + md_check
+    ├── system/           以子行程跑 CLI 的端對端測試
+    └── fixtures/         修正前後的架構圖
+</code></pre>
+<h3 id="52-skillmd-的設計重點"><a class="header" href="#52-skillmd-的設計重點">5.2 SKILL.md 的設計重點</a></h3>
+<ul>
+<li><strong>觸發</strong>：要畫或修「含中文的 ASCII 方框圖、架構圖、流程圖、表格」，或使用者說「圖沒對齊」「方框歪掉」。描述中同時放中文與英文觸發語。</li>
+<li><strong>不觸發／交棒</strong>：要 SVG／PNG 圖片時交給 Mermaid 渲染類 skill；class／ER／state／gantt 圖直接輸出 Mermaid 原始碼，因為 ASCII 無法可靠表達這類圖。</li>
+<li><strong>流程</strong>：確認輸入 → 修檔時先 <code>md_check.py</code> 定位 → 選生成器或畫布 → 遵守字元規則 → 驗證迴圈 → 只替換目標區塊。</li>
+<li><strong>硬規則</strong>：未通過檢查的圖不得當成完成品交付；驗證迴圈連續 3 輪失敗就停下回報。</li>
+</ul>
+<h3 id="53-測試與驗證"><a class="header" href="#53-測試與驗證">5.3 測試與驗證</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>層級</th><th>內容</th><th>結果</th></tr></thead><tbody>
+<tr><td>Lint</td><td><code>ruff check</code> 新增的腳本與測試</td><td>通過</td></tr>
+<tr><td>單元測試</td><td>上游 90 個（確認複製後行為不變）、canvas 34 個、md_check 20 個</td><td>144 passed</td></tr>
+<tr><td>系統測試</td><td>修正前的圖要被抓出、修正後要通過；canvas 重建的圖要與修正版逐字相同；各生成器輸出接 align；執行後不留 <code>__pycache__</code></td><td>11 passed</td></tr>
+<tr><td>Skill gate</td><td>skill-creator-advanced 的 format、create stage、draft release、路徑、孤兒檔案檢查</td><td>全部 PASS</td></tr>
+<tr><td>實際觸發</td><td>用 <code>claude -p</code> 開新 session 請它畫含中文的流程圖</td><td>自動載入 skill，產出的兩張圖都跑了 <code>align.py</code> 且 <code>✓ no drift</code></td></tr>
+</tbody></table>
+</div>
+<p>canvas 的單元測試特別涵蓋了幾個容易出錯的邊界：</p>
+<ul>
+<li>寫到寬字元的前半格或後半格時，整個寬字元要被清掉。</li>
+<li>寬字元蓋在兩個窄字元上時，兩格都要被取代。</li>
+<li>控制字元、零寬字元、負座標必須被拒絕。</li>
+<li><code>center</code> 置中時，左右空白不相等的話，多的那格放右邊。</li>
+</ul>
+<h3 id="54-使用方式"><a class="header" href="#54-使用方式">5.4 使用方式</a></h3>
+<p>安裝後不用手動呼叫。直接說「畫一張 ASCII 架構圖」「這份文件的區塊圖沒對齊」，Claude Code 就會載入 skill。也可以單獨使用腳本：</p>
+<pre><code class="language-bash">S=~/.claude/skills/cjk-ascii-diagram/scripts
+
+# 檢查文件裡的圖
+python3 $S/md_check.py docs/*.md
+
+# 生成器 + 驗證
+echo '{"headers":["項目","數量"],"rows":[["茶葉","100"]]}' | python3 $S/generate.py table
+
+# 檢查任意一張圖（stdin）
+python3 $S/align.py - &lt; diagram.txt
+</code></pre>
+<p>唯一的依賴是 <code>pip install wcwidth</code>。</p>
+<hr />
+<h2 id="六限制與常見問題"><a class="header" href="#六限制與常見問題">六、限制與常見問題</a></h2>
+<p><strong>Q：檢查通過，為什麼在某台電腦上還是歪？</strong>
+有兩個可能：字型的中英寬度不是 2:1；或那台終端機開了 ambiguous=wide，而圖裡有模糊寬度字元。前者換字型解決，後者照 2.3 節的規則把框內的 <code>→ · ×</code> 等字元換掉。<code>align.py</code> 只能保證欄位數正確，管不到字型。</p>
+<p><strong>Q：為什麼不全部改成 <code>+ - |</code> 純 ASCII 邊框？</strong>
+可以，這樣最保險，但沒有必要。線框字元在實務上幾乎所有終端機都當 1 欄處理；真正會出問題的是框內的 <code>→ · ×</code> 這類符號。</p>
+<p><strong>Q：網頁上（GitHub、mdBook）看會對齊嗎？</strong>
+只要 code block 用等寬字型，而且字型的中文寬度剛好是英文的 2 倍，就會對齊。很多網站的等寬字型沒有中文字形，會改用系統的中文字型顯示，寬度可能不是剛好 2 倍。這是瀏覽器字型設定的問題，不是圖的問題。</p>
+<p><strong>Q：時序圖（seq）為什麼不經過 align 檢查？</strong>
+時序圖是橫向箭頭穿過縱向生命線，跟 align 的「垂直縫線」模型不同，會產生誤報。上游的設計是由生成器的建構方式保證對齊，並有自己的結構測試。</p>
+<p><strong>Q：很複雜的圖怎麼辦？</strong>
+節點很多、線很密的圖，ASCII 本來就不適合。建議改用 Mermaid 原始碼，需要時再附一張標明「簡化版」的 ASCII 圖。</p>
+<p><strong>Q：用 <code>python -I</code> 執行時找不到 <code>width</code> 模組？</strong>
+隔離模式（<code>-I</code>）不會把腳本所在的資料夾加入 import 路徑。直接用 <code>python3 腳本路徑</code> 執行即可。</p>
+<hr />
+<h2 id="參考資料"><a class="header" href="#參考資料">參考資料</a></h2>
+<ul>
+<li><a href="https://github.com/kouko/monkey-skills">kouko/monkey-skills — ascii-graph-toolkit</a>：生成器與 <code>align.py</code> 的上游專案（MIT）</li>
+<li><a href="https://pypi.org/project/wcwidth/">wcwidth（PyPI）</a>：Python 顯示寬度計算</li>
+<li><a href="https://www.unicode.org/reports/tr11/">UAX #11: East Asian Width</a>：Unicode 字元寬度屬性規格</li>
+<li><a href="https://spec.commonmark.org/current/#fenced-code-blocks">CommonMark Spec — Fenced code blocks</a>：<code>md_check.py</code> 辨識 code fence 的依據</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tools/claude-skill-creator-go-cpp-rust-skills-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../tools/skill-creator-go-skill-prompts-strict.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tools/claude-skill-creator-go-cpp-rust-skills-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../tools/skill-creator-go-skill-prompts-strict.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
