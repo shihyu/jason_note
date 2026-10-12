@@ -20964,6 +20964,74 @@ func Setup(db *sql.DB) *gin.Engine {
 <p>不過換個角度想，整體流程與 API endpoints 這些資訊，大致上又真的是對的，也算收穫不少。原本靠自己可能是 0 分，靠 AI 至少先拿到保底 60 分，怎麼想都很賺。</p>
 <p>時代在進化，工具在進步。這篇只是想記錄一下，我怎麼靠著這些工具，用 AI Agent 做一輪簡單的逆向工程。雖然最後跑出來的結果還是會有些錯誤，但對一個 web server 來說，拿到 binary 逆向後得到的內容，再結合動態測試去驗證，對整體測試流程還是很有幫助。</p>
 <p>這次跑完之後，我還是會覺得逆向工程很難，也還是會覺得真的懂逆向的人很厲害。畢竟這次跑的是比較小的 binary，更大的我就不確定會怎麼樣了。</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="ghidra-與-rea逆向工程框架與-ai-agent-逆向-mcp"><a class="header" href="#ghidra-與-rea逆向工程框架與-ai-agent-逆向-mcp">Ghidra 與 REA：逆向工程框架與 AI Agent 逆向 MCP</a></h1>
+<blockquote>
+<p>資料查核日期：2026-10-12（版本號以各 repo 最新 release 為準）</p>
+</blockquote>
+<div class="table-wrapper"><table><thead><tr><th>專案</th><th>定位</th><th>語言 / 授權</th><th>最新版本</th></tr></thead><tbody>
+<tr><td><a href="https://github.com/NationalSecurityAgency/ghidra">NationalSecurityAgency/ghidra</a></td><td>軟體逆向工程（SRE）框架</td><td>Java / Apache-2.0</td><td>Ghidra 12.1.4</td></tr>
+<tr><td><a href="https://github.com/morluto/rea">morluto/rea</a></td><td>讓 AI Agent 透過 MCP 做逆向分析</td><td>TypeScript / MIT</td><td>rea-agents 6.4.0</td></tr>
+</tbody></table>
+</div>
+<p>兩者的關係：<strong>Ghidra 是分析引擎，REA 是把 Ghidra（或 Hopper、IDA）接給 AI Agent 的橋樑</strong>。</p>
+<hr />
+<h2 id="ghidra"><a class="header" href="#ghidra">Ghidra</a></h2>
+<p>美國國家安全局（NSA）開源的軟體逆向工程框架。</p>
+<ul>
+<li><strong>反組譯 / 反編譯</strong>：支援 x86、ARM、MIPS、PowerPC、RISC-V 等多種處理器架構，可把機器碼還原成類 C 的偽代碼（pseudocode）。</li>
+<li><strong>GUI + Headless</strong>：除了 GUI 互動分析，也能用 <code>analyzeHeadless</code> 做批次自動化分析。</li>
+<li><strong>腳本擴充</strong>：可以用 Java 或 Python 撰寫腳本與 plugin。</li>
+<li><strong>協作</strong>：Ghidra Server 支援多人共用專案。</li>
+</ul>
+<pre><code class="language-bash"># 安裝：從 Releases 下載 zip，解壓後執行（需 JDK 21+）
+./ghidraRun
+
+# Headless 批次分析
+./support/analyzeHeadless /tmp/proj MyProj -import ./a.out
+</code></pre>
+<p>相關筆記：<a href="tools/reverse-engineering-with-ai-ghidra-mcp.html">用 AI Agent 與 Ghidra MCP 做基礎逆向工程</a></p>
+<hr />
+<h2 id="reareverse-engineer-anything"><a class="header" href="#reareverse-engineer-anything">REA（Reverse Engineer Anything）</a></h2>
+<p>官網：<a href="https://rea.tools">https://rea.tools</a></p>
+<p><strong>一個 MCP server，讓 Agent 逆向分析二進位檔、應用程式與執行期行為。</strong> 典型用法是：「看到某個 App 的功能 → 讓 Agent 在沒有原始碼的情況下分析它怎麼運作 → 附上證據 → 在自己的專案實作類似功能」。</p>
+<h3 id="運作方式"><a class="header" href="#運作方式">運作方式</a></h3>
+<p>Agent 透過 MCP 呼叫 REA 檢查目標，REA 回傳發現與其證據（程式碼、參照、未知處），Agent 再據此追問、解釋或實作。分析在本機執行，CLI 也走相同的流程。</p>
+<h3 id="可分析的目標節錄"><a class="header" href="#可分析的目標節錄">可分析的目標（節錄）</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>目標</th><th>回傳內容</th><th>需求</th></tr></thead><tbody>
+<tr><td>Native binaries</td><td>偽代碼、組合語言、strings、symbols、呼叫與參照</td><td>Hopper、Ghidra 或 IDA</td></tr>
+<tr><td>Go binaries</td><td>編譯器版本、modules、build settings</td><td>內建，不需安裝 Go</td></tr>
+<tr><td>JavaScript / Electron</td><td>modules、imports、source maps、IPC</td><td>Node.js、npm</td></tr>
+<tr><td>Websites</td><td>頁面結構、scripts、網路觀察、截圖</td><td>Chrome 系瀏覽器</td></tr>
+<tr><td>.NET assemblies</td><td>metadata、CIL 指令、native 相依</td><td>無（純靜態）</td></tr>
+<tr><td>Android APK</td><td>manifest、classes、反編譯 method</td><td>JADX + JDK</td></tr>
+<tr><td>Firmware</td><td>區段、解包結果</td><td>Binwalk / Unblob（Linux）</td></tr>
+<tr><td>WASM / EVM bytecode</td><td>區段、WAT、dispatch selectors</td><td>WABT / 本地檔案</td></tr>
+</tbody></table>
+</div>
+<h3 id="快速開始-1"><a class="header" href="#快速開始-1">快速開始</a></h3>
+<p>需要 Node.js 22.x（&gt;=22.19）、24.x（&gt;=24.11）或 26 以上版本。</p>
+<pre><code class="language-bash"># 註冊到 Agent（支援 Claude Code、Codex、Cursor、Gemini CLI 等）
+npx rea-agents setup
+
+# 直接在終端機分析 Electron app 目錄或 ASAR
+npx -y rea-agents@latest analyze-javascript-application /abs/path/to/app --json
+
+# 全域安裝 CLI
+npm install --global rea-agents
+rea --help
+rea update
+</code></pre>
+<p>對 Agent 的提問範例：</p>
+<pre><code class="language-text">Understand how search works in the Notes app, show me the evidence, and build a
+similar feature for my project.
+</code></pre>
+<hr />
+<h2 id="怎麼選"><a class="header" href="#怎麼選">怎麼選</a></h2>
+<ul>
+<li><strong>自己動手逆向、需要完整 GUI 與腳本能力</strong> → Ghidra。</li>
+<li><strong>想讓 Claude Code 等 Agent 自動追蹤、解釋功能並產出實作</strong> → REA（native 分析底層仍可以用 Ghidra）。</li>
+<li>只需要 CLI 工具鏈 → 參考 <a href="tools/reverse-engineering-tools-linux.html">Reverse Engineering CLI Tools</a>。</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="c-和-rust-函數追蹤技術完整指南"><a class="header" href="#c-和-rust-函數追蹤技術完整指南">C++ 和 Rust 函數追蹤技術完整指南</a></h1>
 <h2 id="目錄-5"><a class="header" href="#目錄-5">目錄</a></h2>
 <ul>
@@ -29025,7 +29093,7 @@ nm -D build/libmylib.so | grep " T "    # 只看已定義函數
 <p>FFI (Foreign Function Interface) 是一種讓不同程式語言之間能夠相互調用的機制。本文檔展示 C/C++、Rust 和 Python 三種語言之間的互操作範例。</p>
 <h2 id="完整範例專案"><a class="header" href="#完整範例專案">完整範例專案</a></h2>
 <p><strong>📁 完整可執行的範例代碼已放在 <code>data/ffi_examples/</code> 目錄中！</strong></p>
-<h3 id="快速開始-1"><a class="header" href="#快速開始-1">快速開始</a></h3>
+<h3 id="快速開始-2"><a class="header" href="#快速開始-2">快速開始</a></h3>
 <pre><code class="language-bash"># 進入範例目錄
 cd data/ffi_examples
 
@@ -34858,7 +34926,7 @@ test_endpoint() {
 <li><strong><code>.vscode/mcp.json</code></strong> - GitHub Copilot 的 MCP 配置</li>
 </ul>
 <p>這些配置允許 AI 工具訪問檔案系統、Git 倉庫、資料庫等外部資源。</p>
-<h2 id="快速開始-2"><a class="header" href="#快速開始-2">快速開始</a></h2>
+<h2 id="快速開始-3"><a class="header" href="#快速開始-3">快速開始</a></h2>
 <h3 id="安裝-2"><a class="header" href="#安裝-2">安裝</a></h3>
 <pre><code class="language-bash"># 全域安裝（推薦用於 CLI）
 npm install -g @intellectronica/ruler
@@ -101358,7 +101426,7 @@ runtime.SetGCPercent(p)     // 設置 GC 觸發阈值
 <hr />
 <h2 id="第六章gdb-調試-runtime-內部"><a class="header" href="#第六章gdb-調試-runtime-內部">第六章：GDB 調試 Runtime 內部</a></h2>
 <p>前面幾章從概念和原始碼層面介紹了 Runtime 的各個子系統。本章則提供一條實踐路線，透過 GDB 設置斷點、單步跟蹤，直接觀察 goroutine 創建、channel 收發等 Runtime 函數的執行過程。</p>
-<h3 id="快速開始-3"><a class="header" href="#快速開始-3">快速開始</a></h3>
+<h3 id="快速開始-4"><a class="header" href="#快速開始-4">快速開始</a></h3>
 <pre><code class="language-bash"># 編譯程式（帶 debug symbols）
 make build
 
@@ -137282,7 +137350,7 @@ func logWithRuntimeInfo() {
 <p>雖然 Go 的 goroutine 架構讓問題追蹤變複雜，但透過適當的日誌記錄和分析方法，還是可以有效定位和解決死鎖問題。</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="gdb-調試-go-runtime-指南"><a class="header" href="#gdb-調試-go-runtime-指南">GDB 調試 Go Runtime 指南</a></h1>
 <p>使用 GDB 調試 Go 程式，深入理解 goroutine 和 channel 的 runtime 實現。</p>
-<h2 id="快速開始-4"><a class="header" href="#快速開始-4">快速開始</a></h2>
+<h2 id="快速開始-5"><a class="header" href="#快速開始-5">快速開始</a></h2>
 <pre><code class="language-bash"># 編譯程式（帶 debug symbols）
 make build
 
@@ -155668,7 +155736,7 @@ export fn add(a: i32, b: i32) i32 {
 <li><a href="zig/zig_vs_c_complete_guide.html">Zig vs C 語言完整比較指南</a></li>
 </ul>
 <hr />
-<h2 id="快速開始-5"><a class="header" href="#快速開始-5">快速開始</a></h2>
+<h2 id="快速開始-6"><a class="header" href="#快速開始-6">快速開始</a></h2>
 <h3 id="安裝-10"><a class="header" href="#安裝-10">安裝</a></h3>
 <pre><code class="language-bash"># Linux/macOS
 curl https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz | tar -xJ
@@ -165544,7 +165612,7 @@ npm install
 # 安裝 wasm-bindgen-cli
 cargo install wasm-bindgen-cli
 </code></pre>
-<h2 id="快速開始-6"><a class="header" href="#快速開始-6">快速開始</a></h2>
+<h2 id="快速開始-7"><a class="header" href="#快速開始-7">快速開始</a></h2>
 <h3 id="方式一使用-makefile推薦"><a class="header" href="#方式一使用-makefile推薦">方式一：使用 Makefile（推薦）</a></h3>
 <pre><code class="language-bash"># 查看所有可用指令
 make help
@@ -176877,7 +176945,7 @@ jobs:
           *.md
 </code></pre>
 <h2 id="使用說明"><a class="header" href="#使用說明">使用說明</a></h2>
-<h3 id="快速開始-7"><a class="header" href="#快速開始-7">快速開始</a></h3>
+<h3 id="快速開始-8"><a class="header" href="#快速開始-8">快速開始</a></h3>
 <ol>
 <li>
 <p><strong>儲存所有檔案到同一目錄</strong></p>
@@ -231011,7 +231079,7 @@ IoT 裝置</li>
 <li><input disabled="" type="checkbox"/>
 術語表</li>
 </ul>
-<h2 id="快速開始-8"><a class="header" href="#快速開始-8">快速開始</a></h2>
+<h2 id="快速開始-9"><a class="header" href="#快速開始-9">快速開始</a></h2>
 <ol>
 <li><strong>入門者</strong>：從「嵌入式系統簡介」開始</li>
 <li><strong>有經驗者</strong>：直接查看特定平臺或技術主題</li>
@@ -233770,7 +233838,7 @@ adb devices
 </ol>
 <hr />
 <h2 id="使用方法-2"><a class="header" href="#使用方法-2">使用方法</a></h2>
-<h3 id="快速開始-9"><a class="header" href="#快速開始-9">快速開始</a></h3>
+<h3 id="快速開始-10"><a class="header" href="#快速開始-10">快速開始</a></h3>
 <pre><code class="language-bash"># 1. 進入專案目錄
 cd src/neon_tests/
 
@@ -253470,7 +253538,7 @@ A clean PyTorch re‑implementation of the Transformer architecture described in
 </ul>
 <pre><code class="language-bash"> pip install torch tqdm
 </code></pre>
-<h2 id="快速開始-10"><a class="header" href="#快速開始-10"><strong>快速開始</strong></a></h2>
+<h2 id="快速開始-11"><a class="header" href="#快速開始-11"><strong>快速開始</strong></a></h2>
 <pre><code class="language-python"> import torch
  from transformer.model import Transformer
  from transformer.mask import create_padding_mask
@@ -256873,7 +256941,7 @@ tar -czf guitar_train_results.tar.gz runs/detect/guitar_train/
 <em>By: YOLOv8 Guitar Detection Training Pipeline</em></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="yolov8-guitar-detection---使用指南"><a class="header" href="#yolov8-guitar-detection---使用指南">YOLOv8 Guitar Detection - 使用指南</a></h1>
 <p>這是一個基於 YOLOv8 的吉他物件偵測專案，提供完整的訓練、驗證、推論與視覺化流程。</p>
-<h2 id="快速開始-11"><a class="header" href="#快速開始-11">快速開始</a></h2>
+<h2 id="快速開始-12"><a class="header" href="#快速開始-12">快速開始</a></h2>
 <h3 id="1-環境設定"><a class="header" href="#1-環境設定">1. 環境設定</a></h3>
 <p>首次使用需要安裝依賴套件:</p>
 <pre><code class="language-bash">make setup
@@ -259413,7 +259481,7 @@ add_safety_guardrails(model, medical_guidelines)
 <li><a href="ml/ollama-ubuntu-guide.html#%E9%80%B2%E9%9A%8E%E8%A8%AD%E5%AE%9A">進階設定</a></li>
 <li><a href="ml/ollama-ubuntu-guide.html#api-%E5%8F%83%E8%80%83">API 參考</a></li>
 </ul>
-<h2 id="快速開始-12"><a class="header" href="#快速開始-12">快速開始</a></h2>
+<h2 id="快速開始-13"><a class="header" href="#快速開始-13">快速開始</a></h2>
 <pre><code class="language-bash"># 一鍵安裝
 curl -fsSL https://ollama.com/install.sh | sh
 
@@ -346362,7 +346430,7 @@ result = long_task()
 <li><a href="https://geminicli.com/docs/">Gemini CLI Documentation</a>: 官方文件</li>
 <li><a href="https://python-telegram-bot.org/">Python Telegram Bot</a>: Telegram 整合</li>
 </ul>
-<h2 id="快速開始-13"><a class="header" href="#快速開始-13">快速開始</a></h2>
+<h2 id="快速開始-14"><a class="header" href="#快速開始-14">快速開始</a></h2>
 <p>建議按照以下順序學習:</p>
 <ol>
 <li><strong>初學者</strong>: 先閱讀 RALPH_GUIDE.md,了解基礎的自主迭代機制</li>
