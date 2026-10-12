@@ -74,6 +74,7 @@
         - [程式分析與效能工具完整指南](tools/cpp-analysis-tools.md)
         - [SlickEdit Crack Analysis](tools/SlickEdit_Crack_Analysis.md)
         - [用 AI Agent 與 Ghidra MCP 做基礎逆向工程](tools/reverse-engineering-with-ai-ghidra-mcp.md)
+        - [Ghidra 與 REA：逆向工程框架與 AI Agent 逆向 MCP](tools/ghidra-and-rea-overview.md)
         - [C++/Rust 函數追蹤技術指南](tools/function-tracing-cpp-rust.md)
         - [uftrace 使用指南](tools/uftrace-guide.md)
         - [addr2line](tools/add-enter-and-exit-trace-for-your-function.md)
