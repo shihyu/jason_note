@@ -47,6 +47,7 @@
         - [Claude Code Skills 與 Skill Creator：打造你的專屬 AI 工具包](tools/claude-code-skills-skill-creator-guide.md)
         - [Claude Code Skills & Plugins 知識指南](tools/claude_code_skills_guide.md)
         - [Claude Skill Creator 打造 Go、C++、Rust Skill 指南](tools/claude-skill-creator-go-cpp-rust-skills-guide.md)
+        - [讓含中文的 ASCII 方框圖真正對齊：原理與作法](tools/cjk-ascii-diagram-alignment.md)
         - [skill-creator Go Skill 指揮稿（Strict 版）](tools/skill-creator-go-skill-prompts-strict.md)
         - [skill-creator Go Skill 指揮稿（Manager Review 版）](tools/skill-creator-go-skill-prompts-manager-review.md)
         - [skill-creator Go Skill 指揮稿（老闆下命令版）](tools/skill-creator-go-skill-prompts-boss.md)
