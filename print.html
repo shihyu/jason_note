@@ -21026,10 +21026,56 @@ rea update
 similar feature for my project.
 </code></pre>
 <hr />
-<h2 id="怎麼選"><a class="header" href="#怎麼選">怎麼選</a></h2>
+<h2 id="兩者差異"><a class="header" href="#兩者差異">兩者差異</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>面向</th><th>Ghidra</th><th>REA</th></tr></thead><tbody>
+<tr><td>本質</td><td>逆向工程<strong>分析引擎</strong>（反組譯、反編譯）</td><td><strong>MCP 橋接層</strong>：把各種分析工具接給 AI Agent</td></tr>
+<tr><td>操作者</td><td>人（GUI 點選、寫腳本）</td><td>AI Agent（自然語言提問），也可用 CLI</td></tr>
+<tr><td>分析範圍</td><td>以 native binary 為主（ELF、PE、Mach-O、firmware 映像）</td><td>native binary 之外，還支援 JS/Electron、網站、.NET、APK、WASM、EVM 等</td></tr>
+<tr><td>是否自帶反編譯器</td><td>有</td><td>沒有，native 分析要呼叫 Ghidra、Hopper 或 IDA</td></tr>
+<tr><td>輸出</td><td>偽代碼、函式圖、交叉參照，由人自己解讀</td><td>結論 + 證據（程式碼位置、參照）+ 未知處，Agent 可以接著實作</td></tr>
+<tr><td>深度與控制</td><td>高：可手動改型別、重新命名、patch、寫 plugin</td><td>由 Agent 決定追蹤路徑，深度受模型能力與 context 限制</td></tr>
+<tr><td>安裝需求</td><td>JDK</td><td>Node.js（native 分析另外需要 Ghidra/Hopper/IDA）</td></tr>
+</tbody></table>
+</div>
+<p>一句話：<strong>Ghidra 負責「看懂機器碼」，REA 負責「讓 Agent 去問 Ghidra 等工具並整理出答案」。</strong></p>
+<hr />
+<h2 id="使用場景"><a class="header" href="#使用場景">使用場景</a></h2>
+<h3 id="適合用-ghidra"><a class="header" href="#適合用-ghidra">適合用 Ghidra</a></h3>
+<ol>
+<li><strong>CTF / 漏洞研究</strong>：需要逐條指令看控制流程、手動修正型別與結構，找 buffer overflow 等漏洞。</li>
+<li><strong>惡意程式分析</strong>：樣本不能交給雲端模型，或需要精確掌握每個分支行為。</li>
+<li><strong>韌體 / 嵌入式</strong>：沒有符號的 ARM、MIPS 映像，需要手動設定記憶體映射（memory map）與載入位址。</li>
+<li><strong>大量批次分析</strong>：用 <code>analyzeHeadless</code> 加上腳本，對上百個 binary 抽取函式或特徵。</li>
+</ol>
+<pre><code class="language-bash"># 例：批次匯入並執行自訂腳本，輸出所有函式名稱
+./support/analyzeHeadless /tmp/proj Batch \
+  -import ./samples/*.elf \
+  -postScript ListFunctions.java \
+  -deleteProject
+</code></pre>
+<h3 id="適合用-rea"><a class="header" href="#適合用-rea">適合用 REA</a></h3>
+<ol>
+<li><strong>看到某個 App 的功能想抄概念</strong>：讓 Agent 追出功能的實作方式，並在自己的專案寫出類似版本。</li>
+<li><strong>Electron / JS 桌面 App</strong>：不需要反編譯器，直接分析 ASAR 的 modules、IPC、source maps。</li>
+<li><strong>跨格式的目標</strong>：同一個產品裡混著 JS、native add-on、.NET，由 REA 統一用一套 MCP 介面處理。</li>
+<li><strong>快速了解陌生 binary</strong>：先讓 Agent 掃一遍 strings、symbols、關鍵函式，產出摘要，再決定要不要進 Ghidra 深挖。</li>
+</ol>
+<pre><code class="language-bash"># 例：分析某個 Electron App 的結構（JSON 輸出，可以交給腳本處理）
+rea analyze-javascript-application /opt/SomeApp/resources/app.asar --json
+</code></pre>
+<pre><code class="language-text"># 例：在 Claude Code 對 Agent 提問（native 分析會透過已安裝的 Ghidra 進行）
+分析 /usr/bin/xxx 的 license 檢查流程，列出相關函式與證據，標出不確定的地方。
+</code></pre>
+<h3 id="搭配使用建議流程"><a class="header" href="#搭配使用建議流程">搭配使用（建議流程）</a></h3>
+<ol>
+<li><strong>REA 先探路</strong>：讓 Agent 定位關鍵函式、整理呼叫關係與證據。</li>
+<li><strong>Ghidra 深挖</strong>：根據 REA 給的函式位址，在 Ghidra GUI 裡修正型別、重新命名、確認細節。</li>
+<li><strong>回到 Agent 實作</strong>：把確認過的邏輯交給 Agent，在自己的專案重寫並測試。</li>
+</ol>
+<blockquote>
+<p>注意：只分析你有權分析的軟體，並遵守授權條款（EULA）與當地法規。</p>
+</blockquote>
 <ul>
-<li><strong>自己動手逆向、需要完整 GUI 與腳本能力</strong> → Ghidra。</li>
-<li><strong>想讓 Claude Code 等 Agent 自動追蹤、解釋功能並產出實作</strong> → REA（native 分析底層仍可以用 Ghidra）。</li>
 <li>只需要 CLI 工具鏈 → 參考 <a href="tools/reverse-engineering-tools-linux.html">Reverse Engineering CLI Tools</a>。</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="c-和-rust-函數追蹤技術完整指南"><a class="header" href="#c-和-rust-函數追蹤技術完整指南">C++ 和 Rust 函數追蹤技術完整指南</a></h1>
@@ -166456,7 +166502,7 @@ pub fn calculate_distance(x: i32, y: i32) -&gt; f64 {
 <li><del>沒標記的函數不會被編譯</del></li>
 <li><del>只有標記的代碼才在最終的 WASM 中</del></li>
 </ul>
-<h2 id="使用場景"><a class="header" href="#使用場景">使用場景</a></h2>
+<h2 id="使用場景-1"><a class="header" href="#使用場景-1">使用場景</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>場景</th><th>是否需要 <code>#[wasm_bindgen]</code></th><th>編譯結果</th><th>JS 可訪問</th></tr></thead><tbody>
 <tr><td>內部 Rust 函數</td><td>❌</td><td>✅ 編譯到 WASM</td><td>❌</td></tr>
 <tr><td>導出給 JS 的函數</td><td>✅</td><td>✅ 編譯到 WASM</td><td>✅</td></tr>
@@ -261299,7 +261345,7 @@ ollama run my-custom-model
 <li>支援大規模資料集</li>
 <li>整合 CUDA 生態系統</li>
 </ul>
-<h4 id="使用場景-1"><a class="header" href="#使用場景-1">使用場景</a></h4>
+<h4 id="使用場景-2"><a class="header" href="#使用場景-2">使用場景</a></h4>
 <ul>
 <li>大規模資料清理</li>
 <li>高速特徵工程</li>
@@ -275893,7 +275939,7 @@ const response = await fetch('https://blockchain.info/pushtx', {
 <li>可以廣播交易</li>
 <li>需要 API Key（有免費和付費方案）</li>
 </ul>
-<h4 id="使用場景-2"><a class="header" href="#使用場景-2">使用場景</a></h4>
+<h4 id="使用場景-3"><a class="header" href="#使用場景-3">使用場景</a></h4>
 <p>✅ 需要多鏈支持的應用<br />
 ✅ 不想自己運行多個節點的開發者<br />
 ✅ 錢包、DApp、交易所等需要節點服務的項目<br />
