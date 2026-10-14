@@ -184,36 +184,36 @@ Hermes Agent Self-Evolution 的實施分為 5 個階段，每個階段都建立�
 ### 4.1 高層流程
 
 ```vbnet
-┌─────────────────────────────────────────────┐
-│ 1. SELECT TARGET                            │
-│ - 選擇技能、提示部分或工具                   │
-│ - 載入當前版本作為基線                       │
-│                                              │
-│ 2. BUILD EVALUATION DATASET                 │
-│ - 從 session_db 挖掘真實使用範例             │
-│ - 或使用手工製作的測試用例                   │
-│ - 分割：訓練 / 驗證 / 測試                   │
-│                                              │
-│ 3. WRAP AS DSPy MODULE                      │
-│ - 技能文字 → dspy.Signature                 │
-│ - Agent 工作流 → dspy.ReAct                  │
-│ - 工具選擇 → dspy.Predict                   │
-│                                              │
-│ 4. RUN OPTIMIZER                            │
-│ - 主要：dspy.GEPA（反射性進化）             │
-│ - 備用：dspy.MIPROv2（貝葉斯最佳化）         │
-│ - 程式碼：Darwinian Evolver（外部 CLI）       │
-│                                              │
-│ 5. EVALUATE & COMPARE                       │
+┌────────────────────────────────────────────────┐
+│ 1. SELECT TARGET                               │
+│ - 選擇技能、提示部分或工具                     │
+│ - 載入當前版本作為基線                         │
+│                                                │
+│ 2. BUILD EVALUATION DATASET                    │
+│ - 從 session_db 挖掘真實使用範例               │
+│ - 或使用手工製作的測試用例                     │
+│ - 分割：訓練 / 驗證 / 測試                     │
+│                                                │
+│ 3. WRAP AS DSPy MODULE                         │
+│ - 技能文字 → dspy.Signature                    │
+│ - Agent 工作流 → dspy.ReAct                    │
+│ - 工具選擇 → dspy.Predict                      │
+│                                                │
+│ 4. RUN OPTIMIZER                               │
+│ - 主要：dspy.GEPA（反射性進化）                │
+│ - 備用：dspy.MIPROv2（貝葉斯最佳化）           │
+│ - 程式碼：Darwinian Evolver（外部 CLI）        │
+│                                                │
+│ 5. EVALUATE & COMPARE                          │
 │ - 在保留測試上執行最佳化版本                   │
-│ - 比較：準確性、成本、延遲                   │
-│ - 統計顯著性檢驗                             │
-│                                              │
-│ 6. DEPLOY (with approval)                   │
-│ - Git 提交改進版本                           │
-│ - A/B 測試（可選）                           │
-│ - 透過 git revert 復原機制                   │
-└─────────────────────────────────────────────┘
+│ - 比較：準確性、成本、延遲                     │
+│ - 統計顯著性檢驗                               │
+│                                                │
+│ 6. DEPLOY (with approval)                      │
+│ - Git 提交改進版本                             │
+│ - A/B 測試（可選）                             │
+│ - 透過 git revert 復原機制                     │
+└────────────────────────────────────────────────┘
 ```
 
 ### 4.2 詳細架構

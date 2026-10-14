@@ -19,38 +19,38 @@
 ### 核心定位
 
 ```
-┌─────────────────────────────────────────┐
-│         Your Application                │
+┌──────────────────────────────────────────┐
+│         Your Application                 │
 │         (xgotop Go 程式)                 │
 │  - 業務邏輯                              │
 │  - 資料處理                              │
 │  - UI/API                                │
-└────────────────┬────────────────────────┘
+└────────────────┬─────────────────────────┘
                  │
                  │ 使用 libbpf API
                  ↓
 ┌─────────────────────────────────────────┐
 │         libbpf Library                  │  ← 這裡！
-│  (xgotop 使用 cilium/ebpf - Go 版本)     │
+│  (xgotop 使用 cilium/ebpf - Go 版本)    │
 │                                         │
-│  功能：                                  │
-│  1. 載入 eBPF 程式到 kernel              │
-│  2. Attach probe 到函數                  │
-│  3. 管理 eBPF maps (kernel-user 通訊)    │
+│  功能：                                 │
+│  1. 載入 eBPF 程式到 kernel             │
+│  2. Attach probe 到函數                 │
+│  3. 管理 eBPF maps (kernel-user 通訊)   │
 │  4. 讀取 ringbuffer/perf buffer         │
-│  5. BTF 重定位 (CO-RE)                   │
+│  5. BTF 重定位 (CO-RE)                  │
 └────────────────┬────────────────────────┘
                  │
                  │ syscall: bpf()
                  ↓
-┌─────────────────────────────────────────┐
-│         Linux Kernel                    │
-│                                         │
+┌──────────────────────────────────────────┐
+│         Linux Kernel                     │
+│                                          │
 │  - eBPF 虛擬機執行程式                   │
 │  - eBPF maps 儲存                        │
-│  - Ringbuffer                           │
+│  - Ringbuffer                            │
 │  - Verifier (安全性驗證)                 │
-└─────────────────────────────────────────┘
+└──────────────────────────────────────────┘
 ```
 
 ---
@@ -61,50 +61,50 @@
 
 ```
 ┌─────────────── 開發時 ──────────────┐
-│                                    │
+│                                     │
 │  1. 生成 vmlinux.h                  │
-│     bpftool btf dump file          │
-│     /sys/kernel/btf/vmlinux        │
-│            ↓                       │
+│     bpftool btf dump file           │
+│     /sys/kernel/btf/vmlinux         │
+│            ↓                        │
 │  2. 編寫 eBPF C 程式                │
-│     #include "vmlinux.h"           │
-│     xgotop.bpf.c                   │
-│            ↓                       │
+│     #include "vmlinux.h"            │
+│     xgotop.bpf.c                    │
+│            ↓                        │
 │  3. 編譯成 .bpf.o                   │
-│     clang -target bpf              │
+│     clang -target bpf               │
 │     含 BTF 型別資訊                 │
-│            ↓                       │
+│            ↓                        │
 │  4. 產生 Go binding                 │
-│     bpf2go (cilium/ebpf)           │
+│     bpf2go (cilium/ebpf)            │
 │     生成 ebpfObjects 結構           │
-│                                    │
-└────────────────────────────────────┘
+│                                     │
+└─────────────────────────────────────┘
                  │
                  │ 部署
                  ↓
 ┌─────────────── 運行時 ──────────────┐
-│                                    │
+│                                     │
 │  1. libbpf 載入 .bpf.o              │
-│     loadEbpfObjects()              │
-│            ↓                       │
+│     loadEbpfObjects()               │
+│            ↓                        │
 │  2. BTF 重定位 (CO-RE)              │
-│     讀取 /sys/kernel/btf/vmlinux   │
+│     讀取 /sys/kernel/btf/vmlinux    │
 │     調整 offset                     │
-│            ↓                       │
+│            ↓                        │
 │  3. Kernel verifier 驗證            │
 │     安全性檢查                      │
-│            ↓                       │
+│            ↓                        │
 │  4. JIT 編譯並執行                  │
-│     eBPF bytecode → native code    │
-│            ↓                       │
-│  5. Attach probe                   │
-│     ex.Uprobe(symbol, prog)        │
-│            ↓                       │
+│     eBPF bytecode → native code     │
+│            ↓                        │
+│  5. Attach probe                    │
+│     ex.Uprobe(symbol, prog)         │
+│            ↓                        │
 │  6. 事件流動                        │
-│     Kernel → Ringbuffer → libbpf  │
-│            → Application           │
-│                                    │
-└────────────────────────────────────┘
+│     Kernel → Ringbuffer → libbpf    │
+│            → Application            │
+│                                     │
+└─────────────────────────────────────┘
 ```
 
 ### 2.2 資料流動
@@ -136,7 +136,7 @@ Go Runtime (目標程式)
          ↓
 ┌──────────────────────────┐
 │ eBPF Ringbuffer          │  ← Kernel space
-│ (環形緩衝區)              │
+│ (環形緩衝區)             │
 └────────┬─────────────────┘
          │
          │ libbpf 讀取
@@ -493,24 +493,24 @@ clang -target bpf -c xgotop.bpf.c -o xgotop.bpf.o
 **BCC：**
 ```
 運行時（目標機器）
-┌─────────────────────────────┐
+┌──────────────────────────────┐
 │ 1. Python 腳本執行           │
 │ 2. 讀取 kernel headers       │ ← 需要安裝
-│    /usr/include/linux/*     │
+│    /usr/include/linux/*      │
 │ 3. LLVM 即時編譯             │ ← 每次都編譯
 │ 4. 載入到 kernel             │
-└─────────────────────────────┘
+└──────────────────────────────┘
    啟動時間：5-10 秒
 ```
 
 **libbpf + CO-RE：**
 ```
 開發時（開發機器）              運行時（目標機器）
-┌─────────────────────┐       ┌──────────────────┐
+┌──────────────────────┐       ┌───────────────────┐
 │ 1. 生成 vmlinux.h    │       │ 1. 載入 .bpf.o    │
 │ 2. clang 編譯        │  ──>  │ 2. BTF 重定位     │ ← 自動適配
 │ 3. 產生 .bpf.o       │       │ 3. 執行           │
-└─────────────────────┘       └──────────────────┘
+└──────────────────────┘       └───────────────────┘
                                啟動時間：<1 秒
 ```
 
@@ -600,9 +600,9 @@ int BPF_KPROBE(uprobe_casgstatus,
 **CO-RE = Compile Once, Run Everywhere**
 
 ```
-┌─────────── 編譯時 ────────────┐
+┌─────────── 編譯時 ───────────┐
 │                              │
-│  vmlinux.h (開發機器)         │
+│  vmlinux.h (開發機器)        │
 │  struct task_struct {        │
 │      int pid;  // offset 123 │  ← BTF 記錄
 │  }                           │
@@ -616,21 +616,21 @@ int BPF_KPROBE(uprobe_casgstatus,
             │
             │ 部署
             ↓
-┌─────────── 運行時 ────────────┐
+┌─────────── 運行時 ───────────┐
 │                              │
 │  /sys/kernel/btf/vmlinux     │
-│  (目標機器實際 kernel)        │
+│  (目標機器實際 kernel)       │
 │  struct task_struct {        │
 │      long new_field;         │
 │      int pid;  // offset 456 │  ← 不同 offset！
 │  }                           │
 │         ↓                    │
-│  libbpf 重定位引擎            │
+│  libbpf 重定位引擎           │
 │         ↓                    │
-│  找到 "pid" 欄位              │
+│  找到 "pid" 欄位             │
 │  offset 123 → 456            │  ← 自動調整
 │         ↓                    │
-│  載入到 kernel                │
+│  載入到 kernel               │
 │                              │
 └──────────────────────────────┘
 ```

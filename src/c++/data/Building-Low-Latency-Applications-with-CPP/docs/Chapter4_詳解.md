@@ -435,17 +435,17 @@ void onMarketData(const MarketData& md) {
 
 ```
 ┌─────────────────┐         ┌──────────────────┐
-│  業務執行緒      │ pushValue│ Lock-Free Queue  │
+│  業務執行緒     │  pushValue│ Lock-Free Queue  │
 │  (Producer)     │────────→│  (8MB Buffer)    │
 └─────────────────┘         └──────────────────┘
                                        │
                                        │ getNextToRead()
                                        ↓
-                           ┌──────────────────┐
+                           ┌───────────────────┐
                            │  Logger 執行緒    │
-                           │  (Consumer)      │
-                           │  flushQueue()    │
-                           └──────────────────┘
+                           │  (Consumer)       │
+                           │  flushQueue()     │
+                           └───────────────────┘
                                        │
                                        ↓
                                   寫入檔案

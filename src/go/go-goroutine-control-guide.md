@@ -328,10 +328,10 @@ serverCtx
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Trading System                          │
+│                        Trading System                           │
 │                                                                 │
 │  ┌────────────────────┐                                         │
-│  │     serverCtx      │  控制整個服務生命週期                  │
+│  │     serverCtx      │  控制整個服務生命週期                   │
 │  └─────────┬──────────┘                                         │
 │            │                                                    │
 │            ├──────────────> Matching Engine                     │
@@ -345,12 +345,12 @@ serverCtx
 │                              - workerCtx-3                      │
 │                                                                 │
 │  ┌────────────────────┐                                         │
-│  │   requestCtx-A     │  控制 User A 這次下單 API              │
+│  │   requestCtx-A     │  控制 User A 這次下單 API               │
 │  └─────────┬──────────┘                                         │
 │            └──────────────> Order Handler -> Order Service      │
 │                                                                 │
 │  ┌────────────────────┐                                         │
-│  │   requestCtx-B     │  控制 User B 這次下單 API              │
+│  │   requestCtx-B     │  控制 User B 這次下單 API               │
 │  └─────────┬──────────┘                                         │
 │            └──────────────> Order Handler -> Order Service      │
 └─────────────────────────────────────────────────────────────────┘
@@ -469,10 +469,10 @@ requestCtx -> Order API -> 寫 DB / publish queue
 使用者下單
     │
     v
-┌──────────────────────┐
-│ requestCtx           │
+┌───────────────────────┐
+│ requestCtx            │
 │ 單次 API 請求生命週期 │
-└──────────┬───────────┘
+└──────────┬────────────┘
            │
            v
     Order API / Handler

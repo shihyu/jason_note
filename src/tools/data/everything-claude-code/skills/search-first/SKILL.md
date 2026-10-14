@@ -19,31 +19,31 @@ Use this skill when:
 ## Workflow
 
 ```
-┌─────────────────────────────────────────────┐
-│  1. NEED ANALYSIS                           │
+┌──────────────────────────────────────────────┐
+│  1. NEED ANALYSIS                            │
 │     Define what functionality is needed      │
 │     Identify language/framework constraints  │
-├─────────────────────────────────────────────┤
-│  2. PARALLEL SEARCH (researcher agent)      │
-│     ┌──────────┐ ┌──────────┐ ┌──────────┐  │
+├──────────────────────────────────────────────┤
+│  2. PARALLEL SEARCH (researcher agent)       │
+│     ┌──────────┐ ┌──────────┐ ┌──────────┐   │
 │     │  npm /   │ │  MCP /   │ │  GitHub / │  │
 │     │  PyPI    │ │  Skills  │ │  Web      │  │
-│     └──────────┘ └──────────┘ └──────────┘  │
-├─────────────────────────────────────────────┤
-│  3. EVALUATE                                │
-│     Score candidates (functionality, maint, │
-│     community, docs, license, deps)         │
-├─────────────────────────────────────────────┤
-│  4. DECIDE                                  │
-│     ┌─────────┐  ┌──────────┐  ┌─────────┐  │
+│     └──────────┘ └──────────┘ └──────────┘   │
+├──────────────────────────────────────────────┤
+│  3. EVALUATE                                 │
+│     Score candidates (functionality, maint,  │
+│     community, docs, license, deps)          │
+├──────────────────────────────────────────────┤
+│  4. DECIDE                                   │
+│     ┌─────────┐  ┌──────────┐  ┌─────────┐   │
 │     │  Adopt  │  │  Extend  │  │  Build   │  │
 │     │ as-is   │  │  /Wrap   │  │  Custom  │  │
-│     └─────────┘  └──────────┘  └─────────┘  │
-├─────────────────────────────────────────────┤
-│  5. IMPLEMENT                               │
-│     Install package / Configure MCP /       │
-│     Write minimal custom code               │
-└─────────────────────────────────────────────┘
+│     └─────────┘  └──────────┘  └─────────┘   │
+├──────────────────────────────────────────────┤
+│  5. IMPLEMENT                                │
+│     Install package / Configure MCP /        │
+│     Write minimal custom code                │
+└──────────────────────────────────────────────┘
 ```
 
 ## Decision Matrix

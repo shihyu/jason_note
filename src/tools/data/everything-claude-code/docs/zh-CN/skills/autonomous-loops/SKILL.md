@@ -148,13 +148,13 @@ CLAW_SESSION=my-project CLAW_SKILLS=tdd-workflow,security-review node scripts/cl
 
 ```
 PROMPT 1 (Orchestrator)              PROMPT 2 (Sub-Agents)
-┌─────────────────────┐             ┌──────────────────────┐
-│ Parse spec file      │             │ Receive full context  │
-│ Scan output dir      │  deploys   │ Read assigned number  │
-│ Plan iteration       │────────────│ Follow spec exactly   │
-│ Assign creative dirs │  N agents  │ Generate unique output │
-│ Manage waves         │             │ Save to output dir    │
-└─────────────────────┘             └──────────────────────┘
+┌──────────────────────┐             ┌────────────────────────┐
+│ Parse spec file      │             │ Receive full context   │
+│ Scan output dir      │  deploys    │ Read assigned number   │
+│ Plan iteration       │─────────────│ Follow spec exactly    │
+│ Assign creative dirs │  N agents   │ Generate unique output │
+│ Manage waves         │             │ Save to output dir     │
+└──────────────────────┘             └────────────────────────┘
 ```
 
 ### 模式
@@ -217,22 +217,22 @@ PROMPT 1 (Orchestrator)              PROMPT 2 (Sub-Agents)
 ### 核心循环
 
 ```
-┌─────────────────────────────────────────────────────┐
-│  CONTINUOUS CLAUDE ITERATION                        │
-│                                                     │
-│  1. Create branch (continuous-claude/iteration-N)   │
-│  2. Run claude -p with enhanced prompt              │
-│  3. (Optional) Reviewer pass — separate claude -p   │
-│  4. Commit changes (claude generates message)       │
-│  5. Push + create PR (gh pr create)                 │
-│  6. Wait for CI checks (poll gh pr checks)          │
-│  7. CI failure? → Auto-fix pass (claude -p)         │
-│  8. Merge PR (squash/merge/rebase)                  │
-│  9. Return to main → repeat                         │
-│                                                     │
-│  Limit by: --max-runs N | --max-cost $X             │
+┌──────────────────────────────────────────────────────┐
+│  CONTINUOUS CLAUDE ITERATION                         │
+│                                                      │
+│  1. Create branch (continuous-claude/iteration-N)    │
+│  2. Run claude -p with enhanced prompt               │
+│  3. (Optional) Reviewer pass — separate claude -p    │
+│  4. Commit changes (claude generates message)        │
+│  5. Push + create PR (gh pr create)                  │
+│  6. Wait for CI checks (poll gh pr checks)           │
+│  7. CI failure? → Auto-fix pass (claude -p)          │
+│  8. Merge PR (squash/merge/rebase)                   │
+│  9. Return to main → repeat                          │
+│                                                      │
+│  Limit by: --max-runs N | --max-cost $X              │
 │            --max-duration 2h | completion signal     │
-└─────────────────────────────────────────────────────┘
+└──────────────────────────────────────────────────────┘
 ```
 
 ### 安装
@@ -409,7 +409,7 @@ RFC/PRD Document
 │  └────────────────────────────────────────────────┘  │
 │                                                      │
 │  ┌── Merge Queue ─────────────────────────────────┐  │
-│  │  Rebase onto main → Run tests → Land or evict │  │
+│  │  Rebase onto main → Run tests → Land or evict  │  │
 │  │  Evicted units re-enter with conflict context  │  │
 │  └────────────────────────────────────────────────┘  │
 │                                                      │

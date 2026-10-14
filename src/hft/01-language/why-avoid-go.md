@@ -192,9 +192,9 @@ orders := make([]*Order, 10000) // 會觸發 GC
 
 ```
 ┌─────────────────────────────────────┐
-│      交易系統分層架構                 │
+│      交易系統分層架構               │
 ├─────────────────────────────────────┤
-│  交易引擎核心 (C++/Rust)             │ ← 微秒級延遲
+│  交易引擎核心 (C++/Rust)            │ ← 微秒級延遲
 │  ├─ Order matching                  │
 │  ├─ Risk checks                     │
 │  └─ Market data processing          │
@@ -204,12 +204,12 @@ orders := make([]*Order, 10000) // 會觸發 GC
 │  ├─ REST API                        │
 │  └─ Order routing                   │
 ├─────────────────────────────────────┤
-│  風控/監控 (Go)                      │ ← 秒級處理
+│  風控/監控 (Go)                     │ ← 秒級處理
 │  ├─ Position monitoring             │
 │  ├─ Alert system                    │
 │  └─ Dashboard                       │
 ├─────────────────────────────────────┤
-│  數據分析 (Python/Go)                │ ← 分鐘/小時級
+│  數據分析 (Python/Go)               │ ← 分鐘/小時級
 │  ├─ Strategy backtesting            │
 │  ├─ Performance analysis            │
 │  └─ Reporting                       │

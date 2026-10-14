@@ -35,15 +35,15 @@ Reference this skill when working on the specific project it's designed for. Pro
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                         Frontend                            │
-│  Next.js 15 + TypeScript + TailwindCSS                     │
-│  Deployed: Vercel / Cloud Run                              │
+│  Next.js 15 + TypeScript + TailwindCSS                      │
+│  Deployed: Vercel / Cloud Run                               │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                         Backend                             │
-│  FastAPI + Python 3.11 + Pydantic                          │
-│  Deployed: Cloud Run                                       │
+│  FastAPI + Python 3.11 + Pydantic                           │
+│  Deployed: Cloud Run                                        │
 └─────────────────────────────────────────────────────────────┘
                               │
               ┌───────────────┼───────────────┐

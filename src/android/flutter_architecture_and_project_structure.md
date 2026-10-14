@@ -7,33 +7,33 @@
 Flutter 採用分層架構設計，從上到下分為四個主要層級：
 
 ```
-┌─────────────────────────────────────────┐
-│              Flutter App                │  ← 開發者程式碼層
+┌──────────────────────────────────────────┐
+│              Flutter App                 │ ← 開發者程式碼層
 │  • Widget Tree (UI 元件樹)               │
 │  • Business Logic (業務邏輯)             │
 │  • State Management (狀態管理)           │
-└─────────────────────────────────────────┘
+└──────────────────────────────────────────┘
                      ↓
-┌─────────────────────────────────────────┐
-│           Flutter Framework             │  ← Flutter 框架層
+┌──────────────────────────────────────────┐
+│           Flutter Framework              │ ← Flutter 框架層
 │  • Widgets (UI 元件庫)                   │
 │  • Rendering (渲染系統)                  │
 │  • Animation & Gesture (動畫與手勢)      │
-│  • Material & Cupertino Design          │
-└─────────────────────────────────────────┘
+│  • Material & Cupertino Design           │
+└──────────────────────────────────────────┘
                      ↓
-┌─────────────────────────────────────────┐
-│            Flutter Engine               │  ← 引擎層 (C/C++)
+┌──────────────────────────────────────────┐
+│            Flutter Engine                │ ← 引擎層 (C/C++)
 │  • Skia Graphics Engine (繪圖引擎)       │
-│  • Dart Runtime (Dart 執行時)           │
+│  • Dart Runtime (Dart 執行時)            │
 │  • Platform Channels (平臺通道)          │
-│  • Text Layout & Input                  │
-└─────────────────────────────────────────┘
+│  • Text Layout & Input                   │
+└──────────────────────────────────────────┘
                      ↓
 ┌─────────────────────────────────────────┐
 │           Native Platform               │  ← 原生平臺層
-│  • Android (Java/Kotlin)               │
-│  • iOS (Objective-C/Swift)             │
+│  • Android (Java/Kotlin)                │
+│  • iOS (Objective-C/Swift)              │
 │  • Windows/macOS/Linux/Web              │
 └─────────────────────────────────────────┘
 ```

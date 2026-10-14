@@ -38,15 +38,15 @@ origin: ECC
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                         Frontend                            │
-│  Next.js 15 + TypeScript + TailwindCSS                     │
-│  Deployed: Vercel / Cloud Run                              │
+│  Next.js 15 + TypeScript + TailwindCSS                      │
+│  Deployed: Vercel / Cloud Run                               │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                         Backend                             │
-│  FastAPI + Python 3.11 + Pydantic                          │
-│  Deployed: Cloud Run                                       │
+│  FastAPI + Python 3.11 + Pydantic                           │
+│  Deployed: Cloud Run                                        │
 └─────────────────────────────────────────────────────────────┘
                               │
               ┌───────────────┼───────────────┐

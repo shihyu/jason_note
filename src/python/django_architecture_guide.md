@@ -15,37 +15,37 @@ Django 採用 MTV (Model-Template-View) 架構模式，實際上是 MVC 模式�
                      ↕️
 ┌─────────────────────────────────────────┐
 │            Web Server                   │  ← 網頁伺服器層
-│  • Apache/Nginx/Gunicorn               │
-│  • Static File Serving                 │
-│  • Load Balancing                      │
+│  • Apache/Nginx/Gunicorn                │
+│  • Static File Serving                  │
+│  • Load Balancing                       │
 └─────────────────────────────────────────┘
                      ↕️
 ┌─────────────────────────────────────────┐
 │           Django Framework              │  ← Django 框架層
-│  ┌─────────────────────────────────────┐ │
-│  │        URL Dispatcher               │ │  ← URLs 路由
-│  └─────────────────────────────────────┘ │
+│  ┌────────────────────────────────────┐ │
+│  │        URL Dispatcher              │ │  ← URLs 路由
+│  └────────────────────────────────────┘ │
 │                     ↓                   │
-│  ┌─────────────────────────────────────┐ │
-│  │           Views                     │ │  ← 控制邏輯
-│  │  • Function-based Views             │ │
-│  │  • Class-based Views                │ │
-│  │  • Business Logic                   │ │
-│  └─────────────────────────────────────┘ │
+│  ┌────────────────────────────────────┐ │
+│  │           Views                    │ │  ← 控制邏輯
+│  │  • Function-based Views            │ │
+│  │  • Class-based Views               │ │
+│  │  • Business Logic                  │ │
+│  └────────────────────────────────────┘ │
 │           ↙️                    ↘️        │
-│  ┌─────────────────┐  ┌─────────────────┐ │
-│  │     Models      │  │    Templates    │ │
-│  │  • ORM          │  │  • HTML + DTL   │ │  ← 資料層 & 呈現層
-│  │  • Database     │  │  • Jinja2       │ │
-│  │  • Validation   │  │  • Static Files │ │
-│  └─────────────────┘  └─────────────────┘ │
+│  ┌──────────────┐  ┌────────────────┐   │
+│  │     Models   │  │    Templates   │   │
+│  │  • ORM       │  │  • HTML + DTL  │   │  ← 資料層 & 呈現層
+│  │  • Database  │  │  • Jinja2      │   │
+│  │  • Validation│  │  • Static Files│   │
+│  └──────────────┘  └────────────────┘   │
 └─────────────────────────────────────────┘
                      ↕️
 ┌─────────────────────────────────────────┐
 │              Database                   │  ← 資料庫層
-│  • PostgreSQL/MySQL/SQLite             │
+│  • PostgreSQL/MySQL/SQLite              │
 │  • Redis (快取/Session)                 │
-│  • Elasticsearch (搜尋)                │
+│  • Elasticsearch (搜尋)                 │
 └─────────────────────────────────────────┘
 ```
 

@@ -475,12 +475,12 @@ go run runtime_stats.go
 ```
 TestLeakyFunc 執行：
   ┌─────────────────────────────┐
-  │ 測試開始                     │
+  │ 測試開始                    │
   │   go func() {               │
   │     time.Sleep(1 hour)  ←── │── 這個 goroutine 永遠不結束
   │   }()                       │
   │                             │
-  │ 測試結束                     │
+  │ 測試結束                    │
   │   goleak.VerifyNone(t) ←── 數人頭：還有 1 個沒結束！
   └─────────────────────────────┘
   ❌ FAIL：找到洩漏的 goroutine
@@ -488,7 +488,7 @@ TestLeakyFunc 執行：
 TestCleanFunc 執行：
   ┌─────────────────────────────┐
   │ go func() { close(done) }() │
-  │ <-done  ← 等 goroutine 結束  │
+  │ <-done  ← 等 goroutine 結束 │
   │ goleak.VerifyNone(t) ← 全部結束，OK
   └─────────────────────────────┘
   ✅ PASS

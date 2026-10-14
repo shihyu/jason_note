@@ -50,27 +50,27 @@ cf-guestbook/
 ## 請求生命週期
 
 ```
-瀏覽器              Pages CDN          Functions           KV          D1 (SQLite)
-  │                    │                   │                │               │
-  │── ① GET / ────────▶│                   │                │               │
-  │◀─ ② index.html ─── │                   │                │               │
-  │                    │                   │                │               │
-  │── ③ GET /api/visits ──────────────────▶│                │               │
-  │                    │                   │── get("visit_count") ─────────▶│
-  │                    │                   │◀─ "6" ─────────────────────────│
-  │                    │                   │── put("visit_count","7") ─────▶│
-  │◀─ {"count":7} ─────────────────────────│                │               │
-  │                    │                   │                │               │
-  │── ④ GET /api/messages ────────────────▶│                │               │
-  │                    │                   │── SELECT ... ORDER BY id DESC ─▶│
-  │                    │                   │◀─ [{id:5, name:"小花",...}] ─────│
-  │◀─ {"messages":[...]} ──────────────────│                │               │
-  │                    │                   │                │               │
-  │── ⑤ POST /api/messages ───────────────▶│                │               │
-  │   {"name":"Jason","message":"你好！"}  │── 驗證輸入     │               │
-  │                    │                   │── INSERT INTO messages (?,?) ──▶│
-  │                    │                   │◀─ success ──────────────────────│
-  │◀─ {"success":true} ─────────────────── │                │               │
+瀏覽器                Pages CDN            Functions            KV           D1 (SQLite)
+  │                    │                    │                 │                │
+  │── ① GET / ────────▶│                    │                 │                │
+  │◀─ ② index.html ─── │                    │                 │                │
+  │                    │                    │                 │                │
+  │── ③ GET /api/visits ───────────────────▶│                 │                │
+  │                    │                    │── get("visit_count") ───────────▶│
+  │                    │                    │◀─── "6" ─────────────────────────│
+  │                    │                    │── put("visit_count","7") ───────▶│
+  │◀── {"count":7} ─────────────────────────│                 │                │
+  │                    │                    │                 │                │
+  │── ④ GET /api/messages ─────────────────▶│                 │                │
+  │                    │                    │── SELECT ... ORDER BY id DESC ──▶│
+  │                    │                    │◀─ [{id:5, name:"小花",...}] ─────│
+  │◀── {"messages":[...]} ──────────────────│                 │                │
+  │                    │                    │                 │                │
+  │── ⑤ POST /api/messages ────────────────▶│                 │                │
+  │   {"name":"Jason","message":"你好！"}   │── 驗證輸入      │                │
+  │                    │                    │── INSERT INTO messages (?,?) ───▶│
+  │                    │                    │◀── success ──────────────────────│
+  │◀── {"success":true} ─────────────────── │                 │                │
 ```
 
 ---
