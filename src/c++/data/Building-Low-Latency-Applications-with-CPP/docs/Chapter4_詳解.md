@@ -435,7 +435,7 @@ void onMarketData(const MarketData& md) {
 
 ```
 ┌─────────────────┐         ┌──────────────────┐
-│  業務執行緒     │  pushValue│ Lock-Free Queue  │
+│  業務執行緒     │pushValue│ Lock-Free Queue  │
 │  (Producer)     │────────→│  (8MB Buffer)    │
 └─────────────────┘         └──────────────────┘
                                        │

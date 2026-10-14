@@ -1616,8 +1616,8 @@ $ size --format=sysv hello_noinline | grep -E "debug|\.text|Total"
   bpftrace uprobe   │ ✅ 正常運作     │     │ ✅ 正常運作  │  ← 只需 .symtab
   nm (符號表)       │ ✅ 函數名       │     │ ✅ 函數名    │  ← 只需 .symtab
   go tool objdump   │ ✅ 檔名+行號    │     │ ❌ 無法解析  │  ← 需要 DWARF
-  GDB 設斷點        │ ✅ 原始碼對應   │     │ ⚠️ 只能用位址 │  ← 需要 DWARF
-  perf record       │ ✅ 完整 stack   │     │ ⚠️ 部分 stack │  ← frame info
+  GDB 設斷點        │ ✅ 原始碼對應   │     │ ⚠️ 只能用位址│  ← 需要 DWARF
+  perf record       │ ✅ 完整 stack   │     │ ⚠️ 部分 stack│  ← frame info
   檔案大小          │ 較大（+30~50%） │     │ 較小         │
                     └─────────────────┘     └──────────────┘
 ```

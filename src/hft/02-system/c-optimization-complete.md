@@ -4779,7 +4779,7 @@ FPGA (Field-Programmable Gate Array) 是可程式化硬體,用於加速特定計
 ### 23.2 CPU-FPGA 通訊架構
 
 ```
-┌─────────────┐        PCIe        ┌─────────────┐
+┌─────────────┐        PCIe       ┌─────────────┐
 │             │ ◄───────────────► │             │
 │   CPU       │   DMA Transfer    │   FPGA      │
 │   (C code)  │                   │   (Verilog) │

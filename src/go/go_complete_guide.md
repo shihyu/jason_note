@@ -4312,14 +4312,14 @@ http.DefaultServeMux.Handle("/debug/fgprof", fgprof.Handler())
 開發階段                    壓測/上線前                    Production
    │                          │                            │
    ├─ go-callvis              ├─ statsviz                  ├─ pprof HTTP endpoint
-   │  靜態分析專案結構          │  即時觀察 runtime metrics    │  遠端抓 profile
+   │  靜態分析專案結構        │  即時觀察 runtime metrics  │  遠端抓 profile
    │                          │                            │
    ├─ dlv                     ├─ pprof + fgprof            ├─ runtime.NumGoroutine()
-   │  斷點 debug               │  找 CPU/Memory 瓶頸         │  goroutine leak 監控
-   │  goroutine 切換           │  火焰圖分析                 │
+   │  斷點 debug              │  找 CPU/Memory 瓶頸        │  goroutine leak 監控
+   │  goroutine 切換          │  火焰圖分析                │
    │                          │                            ├─ GODEBUG=schedtrace
-   └─ go run -race            └─ hey/vegeta 壓測            │  scheduler 行為觀察
-      Data race 檢測               搭配 pprof 一起看          │
+   └─ go run -race            └─ hey/vegeta 壓測           │  scheduler 行為觀察
+      Data race 檢測               搭配 pprof 一起看       │
                                                            └─ statsviz
                                                               即時儀表板
 ```

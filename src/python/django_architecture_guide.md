@@ -32,7 +32,7 @@ Django 採用 MTV (Model-Template-View) 架構模式，實際上是 MVC 模式�
 │  │  • Class-based Views               │ │
 │  │  • Business Logic                  │ │
 │  └────────────────────────────────────┘ │
-│           ↙️                    ↘️        │
+│           ↙️                    ↘️      │
 │  ┌──────────────┐  ┌────────────────┐   │
 │  │     Models   │  │    Templates   │   │
 │  │  • ORM       │  │  • HTML + DTL  │   │  ← 資料層 & 呈現層
@@ -326,16 +326,16 @@ isort .
 ┌──── Django Framework ────┐
 │                          │
 │  1. URL Dispatcher       │ ← urls.py 路由匹配
-│         ↓               │
-│  2. Middleware          │ ← 請求預處理
-│         ↓               │
-│  3. View Function       │ ← views.py 處理邏輯
-│    ↙️        ↘️         │
-│ Model      Template     │ ← 資料處理 & 渲染
-│    ↘️        ↙️         │
-│  4. HTTP Response       │ ← 回應生成
-│         ↓               │
-│  5. Middleware          │ ← 回應後處理
+│         ↓                │
+│  2. Middleware           │ ← 請求預處理
+│         ↓                │
+│  3. View Function        │ ← views.py 處理邏輯
+│    ↙️        ↘️          │
+│ Model      Template      │ ← 資料處理 & 渲染
+│    ↘️        ↙️          │
+│  4. HTTP Response        │ ← 回應生成
+│         ↓                │
+│  5. Middleware           │ ← 回應後處理
 └──────────────────────────┘
          ↓
     回傳給瀏覽器
