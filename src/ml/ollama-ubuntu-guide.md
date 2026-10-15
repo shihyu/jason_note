@@ -254,7 +254,7 @@ NC='\033[0m' # No Color
 show_header() {
     clear
     echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}║       Ollama 聊天機器人 v1.0          ║${NC}"
+    echo -e "${BLUE}║       Ollama 聊天機器人 v1.0           ║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
     echo -e "${YELLOW}模型: $MODEL${NC}"
     echo -e "${GREEN}指令: /help, /clear, /model, /save, /quit${NC}"

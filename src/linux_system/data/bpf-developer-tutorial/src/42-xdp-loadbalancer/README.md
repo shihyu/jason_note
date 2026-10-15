@@ -399,7 +399,7 @@ In summary, this userspace code is responsible for configuring and managing the 
 The topology represents a test environment where a local machine communicates with two backend nodes (h2 and h3) through a load balancer. The local machine is connected to the load balancer via virtual Ethernet pairs (veth0 to veth6), simulating network connections in a controlled environment. Each virtual interface has its own IP and MAC address to represent different entities.
 
 ```txt
-    +---------------------------+          
+    +----------------------------+
     |      Local Machine         |
     |  IP: 10.0.0.1 (veth0)      |
     |  MAC: DE:AD:BE:EF:00:01    |

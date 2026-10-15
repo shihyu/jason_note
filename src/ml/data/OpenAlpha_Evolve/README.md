@@ -249,7 +249,7 @@ LLM 不直接重寫整個程式，而是輸出 **搜尋/替換 diff**，再由�
 ```text
 +------------------------------------------------------------+
 |                           app.py                           |
-|       Gradio UI / input params / progress / trigger run     |
+|       Gradio UI / input params / progress / trigger run    |
 +------------------------+-----------------------------------+
                          |
                          v
