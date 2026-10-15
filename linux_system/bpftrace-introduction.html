@@ -989,10 +989,10 @@ END {
 │                     Linux 追蹤工具光譜                           │
 │                                                                  │
 │  簡單/快速                                          複雜/強大    │
-│  ◄─────────────────────────────────────────────────────────►    │
+│  ◄─────────────────────────────────────────────────────────►     │
 │                                                                  │
-│  perf top    ftrace     bpftrace    BCC/libbpf    SystemTap     │
-│  perf stat   trace-cmd                             LTTng        │
+│  perf top    ftrace     bpftrace    BCC/libbpf    SystemTap      │
+│  perf stat   trace-cmd                             LTTng         │
 │                                                                  │
 │  [計數/取樣]  [kernel    [腳本式     [C/Python     [完整程式     │
 │               內建]      eBPF]       eBPF 開發]    語言追蹤]     │
@@ -1388,23 +1388,23 @@ rm -f "$MAP_FILE"
 <p>在 Linux 上追蹤程式時，經常會碰到 <strong>ELF</strong> 和 <strong>DWARF</strong> 這兩個名詞。它們扮演完全不同的角色，但經常被混淆。</p>
 <h4 id="elf--執行檔的容器格式"><a class="header" href="#elf--執行檔的容器格式">ELF — 執行檔的「容器格式」</a></h4>
 <p><strong>ELF</strong>（Executable and Linkable Format）是 Linux 上二進位檔的標準格式，定義了<strong>檔案如何被作業系統載入和執行</strong>。可以把 ELF 想成一個「集裝箱」，裡面裝著程式運行所需的一切：</p>
-<pre><code class="language-text">┌─────────────────────────────────────────────┐
-│                 ELF 檔案                     │
-├─────────────────────────────────────────────┤
-│  ELF Header        檔案類型、目標架構、入口點  │
-├─────────────────────────────────────────────┤
+<pre><code class="language-text">┌─────────────────────────────────────────────────┐
+│                 ELF 檔案                        │
+├─────────────────────────────────────────────────┤
+│  ELF Header        檔案類型、目標架構、入口點   │
+├─────────────────────────────────────────────────┤
 │  .text             機器碼（程式的指令）         │
 │  .rodata           唯讀資料（字串常量等）       │
 │  .data             已初始化的全域變數           │
 │  .bss              未初始化的全域變數           │
 │  .symtab           符號表（函數名 → 位址）      │
-│  .strtab           字串表                     │
-├─────────────────────────────────────────────┤
-│  .debug_info       ← DWARF 除錯資訊          │
-│  .debug_line       ← DWARF 行號對照表        │
-│  .debug_abbrev     ← DWARF 縮寫表            │
-│  ...               ← 其他 DWARF sections     │
-└─────────────────────────────────────────────┘
+│  .strtab           字串表                       │
+├─────────────────────────────────────────────────┤
+│  .debug_info       ← DWARF 除錯資訊             │
+│  .debug_line       ← DWARF 行號對照表           │
+│  .debug_abbrev     ← DWARF 縮寫表               │
+│  ...               ← 其他 DWARF sections        │
+└─────────────────────────────────────────────────┘
 </code></pre>
 <p>ELF 的核心職責：</p>
 <ul>
@@ -1447,7 +1447,7 @@ rm -f "$MAP_FILE"
               │            │            │
               │      ┌─────┴─────┐      │
               │      │   ELF     │      │
-              │      │  容器格式  │      │
+              │      │  容器格式 │      │
               │      ├───────────┤      │
               │      │  .text    │◄─────┘ 機器碼
               │      │  .symtab  │ 符號表（函數名→位址）
@@ -1508,14 +1508,14 @@ $ size --format=sysv hello_noinline | grep -E "debug|\.text|Total"
 <h4 id="對追蹤工具的影響"><a class="header" href="#對追蹤工具的影響">對追蹤工具的影響</a></h4>
 <pre><code class="language-text">                         有 DWARF              無 DWARF
                      (go build)          (go build -ldflags="-s -w")
-                    ┌──────────────┐     ┌──────────────┐
-  bpftrace uprobe   │ ✅ 正常運作   │     │ ✅ 正常運作   │  ← 只需 .symtab
-  nm (符號表)        │ ✅ 函數名     │     │ ✅ 函數名     │  ← 只需 .symtab
-  go tool objdump   │ ✅ 檔名+行號  │     │ ❌ 無法解析   │  ← 需要 DWARF
-  GDB 設斷點        │ ✅ 原始碼對應  │     │ ⚠️ 只能用位址 │  ← 需要 DWARF
-  perf record       │ ✅ 完整 stack  │     │ ⚠️ 部分 stack │  ← frame info
-  檔案大小          │ 較大（+30~50%）│     │ 較小          │
-                    └──────────────┘     └──────────────┘
+                    ┌─────────────────┐     ┌──────────────┐
+  bpftrace uprobe   │ ✅ 正常運作     │     │ ✅ 正常運作  │  ← 只需 .symtab
+  nm (符號表)       │ ✅ 函數名       │     │ ✅ 函數名    │  ← 只需 .symtab
+  go tool objdump   │ ✅ 檔名+行號    │     │ ❌ 無法解析  │  ← 需要 DWARF
+  GDB 設斷點        │ ✅ 原始碼對應   │     │ ⚠️ 只能用位址│  ← 需要 DWARF
+  perf record       │ ✅ 完整 stack   │     │ ⚠️ 部分 stack│  ← frame info
+  檔案大小          │ 較大（+30~50%） │     │ 較小         │
+                    └─────────────────┘     └──────────────┘
 </code></pre>
 <blockquote>
 <p><strong>實務建議</strong>：開發和除錯時保留 DWARF（預設行為），正式部署時可用 <code>go build -ldflags="-s -w"</code> 移除以縮小二進位檔。但如果需要在生產環境進行 bpftrace 追蹤並想看到原始碼位置，就需要另外保存一份含 DWARF 的二進位檔，搭配本節的對照表方法使用。</p>
@@ -1608,13 +1608,13 @@ $ size --format=sysv hello_noinline | grep -E "debug|\.text|Total"
 67   23273        runtime.fastexprand         ← 隨機指數分佈
 </code></pre>
 <p>Go 的記憶體分配器是三層架構，此時正在建立基礎設施：</p>
-<pre><code>  ┌──────────────────────────────────────────────┐
-  │  mcache (per-P)  ← 無鎖，每個 P 一份快取     │
-  ├──────────────────────────────────────────────┤
+<pre><code>  ┌───────────────────────────────────────────────┐
+  │  mcache (per-P)  ← 無鎖，每個 P 一份快取      │
+  ├───────────────────────────────────────────────┤
   │  mcentral        ← 全域 span 管理，需要鎖     │
-  ├──────────────────────────────────────────────┤
+  ├───────────────────────────────────────────────┤
   │  mheap           ← 向 OS 申請記憶體 (mmap)    │
-  └──────────────────────────────────────────────┘
+  └───────────────────────────────────────────────┘
 </code></pre>
 <h4 id="階段-7cpu-偵測--隨機數初始化-68-152"><a class="header" href="#階段-7cpu-偵測--隨機數初始化-68-152">階段 7：CPU 偵測 &amp; 隨機數初始化 (#68-#152)</a></h4>
 <pre><code>68   23491        runtime.getGodebugEarly    ← 讀 GODEBUG 環境變數
@@ -1658,16 +1658,16 @@ $ size --format=sysv hello_noinline | grep -E "debug|\.text|Total"
 199  27446        runtime.wirep
 </code></pre>
 <p>此階段建立 GMP 排程模型的基礎：</p>
-<pre><code>  ┌────────┐     ┌────────┐     ┌────────┐
-  │   G    │     │   G    │     │   G    │
-  │goroutine│     │goroutine│     │goroutine│
-  └───┬────┘     └───┬────┘     └───┬────┘
+<pre><code> ┌──────────┐   ┌──────────┐   ┌──────────┐
+ │    G     │   │    G     │   │    G     │
+ │goroutine │   │goroutine │   │goroutine │
+ └────┬─────┘   └────┬─────┘   └────┬─────┘
       │              │              │
-  ┌───▼────┐     ┌───▼────┐     ┌───▼────┐
-  │   P    │     │   P    │     │   P    │
-  │processor│     │processor│     │processor│
-  │(runqueue)│     │(runqueue)│     │(runqueue)│
-  └───┬────┘     └───┬────┘     └───┬────┘
+ ┌────▼─────┐   ┌────▼─────┐   ┌────▼─────┐
+ │    P     │   │    P     │   │    P     │
+ │processor │   │processor │   │processor │
+ │(runqueue)│   │(runqueue)│   │(runqueue)│
+ └────┬─────┘   └────┬─────┘   └────┬─────┘
       │              │              │
   ┌───▼────┐     ┌───▼────┐
   │   M    │     │   M    │
