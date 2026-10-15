@@ -966,8 +966,8 @@ G1                         G2
 CAS(&x, 0, 1)              CAS(&x, 0, 2)
   ↓ 讀 x=0，比較相等          ↓ 讀 x=0，比較相等
   ↓ 寫 x=1（成功）            ↓ 此時 x 已是 1
-  ↓ return true              ↓ 比較失敗（1 ≠ 0）
-                             ↓ return false → 重試
+  ↓ return true               ↓ 比較失敗（1 ≠ 0）
+                              ↓ return false → 重試
 
 最終 x = 1（G1 成功），G2 需要重試 CAS(&x, 1, 2)
 ```
