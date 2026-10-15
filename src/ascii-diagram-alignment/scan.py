@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Report display-column drift in fenced Markdown text diagrams under a tree."""
+"""Report display-column drift in fenced and indented Markdown diagrams under a tree."""
 
 from __future__ import annotations
 
@@ -64,6 +64,40 @@ def parse_fences(text: str) -> list[FenceBlock]:
         if closed:
             index += 1
         blocks.append(FenceBlock(first_line, language, tuple(body), closed))
+    return blocks
+
+
+def parse_indented_blocks(text: str) -> list[FenceBlock]:
+    """Extract four-space or tab-indented code blocks outside fenced blocks."""
+    lines = text.splitlines()
+    fenced_lines: set[int] = set()
+    for block in parse_fences(text):
+        fenced_lines.update(
+            range(block.first_line - 1, block.first_line - 1 + len(block.lines))
+        )
+
+    def unindent(line: str) -> str | None:
+        if line.startswith("\t"):
+            return line[1:]
+        if line.startswith("    "):
+            return line[4:]
+        return None
+
+    blocks: list[FenceBlock] = []
+    index = 0
+    while index < len(lines):
+        if index in fenced_lines or unindent(lines[index]) is None:
+            index += 1
+            continue
+        first_line = index + 1
+        body: list[str] = []
+        while index < len(lines) and index not in fenced_lines:
+            content = unindent(lines[index])
+            if content is None:
+                break
+            body.append(content)
+            index += 1
+        blocks.append(FenceBlock(first_line, "indented", tuple(body)))
     return blocks
 
 
@@ -139,7 +173,11 @@ def scan_path(root: Path) -> tuple[int, int, list[tuple[Path, Issue]]]:
             continue
         file_count += 1
         text = path.read_text(encoding="utf-8")
-        for block in parse_fences(text):
+        blocks = sorted(
+            (*parse_fences(text), *parse_indented_blocks(text)),
+            key=lambda block: block.first_line,
+        )
+        for block in blocks:
             if not is_diagram(block):
                 continue
             diagram_count += 1

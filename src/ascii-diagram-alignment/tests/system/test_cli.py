@@ -24,6 +24,16 @@ class DiagramScanCliTest(unittest.TestCase):
         self.assertNotIn("sample.md:5:", result.stdout)
 
 
+    def test_check_reports_drift_in_indented_block_with_source_line(self):
+        result = subprocess.run(
+            [sys.executable, str(ROOT / "scan.py"), "--root", str(FIXTURES / "indented.md"), "--check"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("indented.md:4:", result.stdout)
+
     def test_scan_entire_src_tree_from_cli(self):
         result = subprocess.run(
             [sys.executable, str(ROOT / "scan.py"), "--root", str(ROOT.parent)],

@@ -50,6 +50,73 @@ class SkillCheckerTest(unittest.TestCase):
             issues,
         )
 
+    def test_open_flow_stems_can_end_at_text_nodes(self):
+        _, issues = analyze("│\n標籤\n│\n✓ 完成")
+        self.assertEqual(issues, [])
+
+    def test_single_row_box_with_cjk_overflow_is_reported(self):
+        _, issues = analyze("┌────┐\n│ 中文 │\n└────┘")
+        self.assertTrue(issues, issues)
+
+    def test_flow_labels_and_horizontal_arrows_are_not_seam_kinks(self):
+        _, issues = analyze(
+            "                  │   │    │              │  │   │\n"
+            "              STW掃描 並發 STW結束       前→後→存活  下次觸發門檻"
+        )
+        self.assertFalse(any("seam kink" in message for _, _, message in issues), issues)
+
+    def test_tapered_pyramid_walls_are_not_seam_kinks(self):
+        _, issues = analyze("  ┌───┐\n  │C/│\n │Rust│\n│Zig/C│")
+        self.assertEqual(issues, [])
+
+    def test_arrow_embedded_in_box_top_is_not_a_wall_kink(self):
+        _, issues = analyze(
+            "                       │      │        │\n"
+            "                  ┌────▼───┐ ┌▼────┐  ┌▼─────────┐\n"
+            "                  │  D1    │ │ KV  │  │   R2     │"
+        )
+        self.assertFalse(any("seam kink" in message for _, _, message in issues), issues)
+
+    def test_unjustified_vertical_run_shift_is_reported(self):
+        _, issues = analyze("│\n │\n │")
+        self.assertTrue(any("seam kink" in message for _, _, message in issues), issues)
+
+    def test_horizontal_exit_junction_preserves_frame_wall(self):
+        diagram = (
+            "┌───────────────────────────────┐\n"
+            "│ itab ────────────────┐        │\n"
+            "│                      ▼        │\n"
+            "│        ┌───────────────────┐  │\n"
+            "│        │ type: Dog         │  │\n"
+            "│        │ method table      │  │\n"
+            "│        │  Speak → func ptr │──┼──→ func(Dog) Speak\n"
+            "│        └───────────────────┘  │\n"
+            "│                               │\n"
+            "└───────────────────────────────┘"
+        )
+        _, issues = analyze(diagram)
+        self.assertFalse(any("frame right wall" in message for _, _, message in issues), issues)
+
+    def test_ascii_plus_table_cjk_overflow_is_reported(self):
+        _, issues = analyze("+------+\n| 中文  |\n+------+")
+        self.assertTrue(any("ASCII table" in message for _, _, message in issues), issues)
+
+    def test_ascii_staircase_rows_have_independent_left_edges(self):
+        _, issues = analyze("+----------+\n|main      |\n+--+-------+\n   |a     |\n   +--+---+")
+        self.assertEqual(issues, [])
+
+    def test_ascii_merged_cell_is_clean(self):
+        _, issues = analyze("+----+----+\n| header  |\n+----+----+")
+        self.assertEqual(issues, [])
+
+    def test_ascii_internal_separator_drift_is_reported(self):
+        _, issues = analyze("+----+----+\n| a   |b  |\n+----+----+")
+        self.assertTrue(any("ASCII table" in message for _, _, message in issues), issues)
+
+    def test_aligned_ascii_plus_table_is_clean(self):
+        _, issues = analyze("+------+\n| 中文 |\n+------+")
+        self.assertEqual(issues, [])
+
     def test_table_row_drift_is_still_reported(self):
         _, issues = analyze("┌──────┐\n│ text │\n│ 中文  │\n└──────┘")
         self.assertTrue(

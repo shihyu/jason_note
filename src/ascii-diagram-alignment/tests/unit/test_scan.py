@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scan import analyze_block, is_diagram, parse_fences  # noqa: E402
+from scan import analyze_block, is_diagram, parse_fences, parse_indented_blocks  # noqa: E402
 
 
 class DiagramScanUnitTest(unittest.TestCase):
@@ -24,6 +24,17 @@ class DiagramScanUnitTest(unittest.TestCase):
         tree = parse_fences("```text\nroot\n├─ child\n└─ leaf\n```")[0]
         self.assertFalse(is_diagram(plain))
         self.assertTrue(is_diagram(tree))
+
+    def test_parse_indented_blocks_finds_unfenced_diagram(self):
+        source = "# Heading\n\n    ┌────┐\n    │ 中文│\n    └────┘\n"
+        blocks = parse_indented_blocks(source)
+        self.assertEqual(len(blocks), 1)
+        self.assertEqual(blocks[0].first_line, 3)
+        self.assertEqual(blocks[0].lines, ("┌────┐", "│ 中文│", "└────┘"))
+
+    def test_parse_indented_blocks_skips_fenced_content(self):
+        source = "```text\n    ┌────┐\n    │ text│\n    └────┘\n```\n"
+        self.assertEqual(parse_indented_blocks(source), [])
 
     def test_parse_fences_marks_missing_closing_fence(self):
         block = parse_fences("```text\n┌──┐\n│ x│")[0]
