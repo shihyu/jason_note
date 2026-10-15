@@ -106,7 +106,9 @@ def is_diagram(block: FenceBlock) -> bool:
     content = "\n".join(block.lines)
     if any(char in content for char in BOX_CORNERS):
         return True
-    if any(line.lstrip().startswith(("+---", "+===")) for line in block.lines):
+    if any(line.lstrip().startswith(("+--", "+==")) for line in block.lines):
+        return True
+    if sum(line.count("↓") >= 2 for line in block.lines) >= 2:
         return True
     return any(char in content for char in "┬┴┼") and any(
         char in content for char in "├┤│"

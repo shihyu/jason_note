@@ -25,6 +25,22 @@ class DiagramScanUnitTest(unittest.TestCase):
         self.assertFalse(is_diagram(plain))
         self.assertTrue(is_diagram(tree))
 
+    def test_is_diagram_accepts_ascii_directory_tree(self):
+        block = parse_fences("```text\nroot/\n+-- child/\n|   +-- file\n```")[0]
+        self.assertTrue(is_diagram(block))
+
+    def test_is_diagram_accepts_parallel_arrow_stems(self):
+        source = (
+            "```text\n"
+            "G1       G2\n"
+            "  ↓       ↓\n"
+            "  ↓      ↓\n"
+            "```"
+        )
+        block = parse_fences(source)[0]
+        self.assertTrue(is_diagram(block))
+        self.assertTrue(any("seam kink" in issue.message for issue in analyze_block(block)))
+
     def test_parse_indented_blocks_finds_unfenced_diagram(self):
         source = "# Heading\n\n    ┌────┐\n    │ 中文│\n    └────┘\n"
         blocks = parse_indented_blocks(source)
