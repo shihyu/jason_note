@@ -579,6 +579,7 @@
 ## Quantitative Trading
 - [策略文檔總覽](strategy/README.md)
     - [交易觀念與心法大全](strategy/01_交易觀念與心法大全.md)
+        - [LINE 群組交易方法與風險控管整理](strategy/LINE群組交易方法與風險控管整理.md)
         - [37 部交易影片重點與完整逐字稿](strategy/37部交易影片重點與完整逐字稿.md)
         - [交易的行為與思維](strategy/交易的行為與思維分享.md)
         - [投資投機的觀念](strategy/投資投機的觀念與心得分享.md)
