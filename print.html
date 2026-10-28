@@ -16370,6 +16370,91 @@ A: 使用 <code>specify check</code> 檢查環境，確保工具已安裝</p>
 <p>MIT License - 開源免費使用</p>
 <hr />
 <p><strong>最後更新</strong>：2025-10-27</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="specula安裝使用與相關工具"><a class="header" href="#specula安裝使用與相關工具">Specula：安裝、使用與相關工具</a></h1>
+<blockquote>
+<p>查核日期：2026-10-28。本文以 <a href="https://github.com/specula-org/Specula">Specula 官方專案</a> 的 README、<a href="https://github.com/specula-org/Specula/blob/main/docs/Usage.md">Usage Guide</a> 和本地 1.2.0 原始碼為依據。指令與支援範圍可能隨版本改變，實際操作前可再執行 <code>specula --help</code>、<code>specula run --help</code>。</p>
+</blockquote>
+<h2 id="specula-是什麼"><a class="header" href="#specula-是什麼">Specula 是什麼？</a></h2>
+<p>Specula 是針對<strong>並行與分散式系統程式碼</strong>找深層錯誤的工具。它讓程式代理閱讀目標程式碼，建立描述系統行為與正確性條件的 TLA+ 模型，再用模型檢查器搜尋違反條件的執行路徑；找到候選問題後，還會嘗試用實際程式碼與測試環境重現。它適合檢查共識協定、狀態同步、併發控制、故障恢復等容易出現交錯執行錯誤的程式。<a href="https://github.com/specula-org/Specula#readme">來源：Specula README</a></p>
+<p>流程可簡化為：</p>
+<pre><code class="language-text">目標程式碼 → 分析與建模 → TLA+ 規格 → 產生執行 trace 的 harness
+           → trace 驗證與 TLC 模型檢查 → 程式碼層確認 → 嚴重度報告
+</code></pre>
+<p>這個流程結合抽象模型與程式碼驗證。<strong>模型檢查通過不等於整份程式碼已被證明正確</strong>：結果仍取決於建模範圍、抽象方式、檢查設定，以及 harness 能否呈現真實行為。候選錯誤也應閱讀重現證據，而非只看模型反例。<a href="https://arxiv.org/abs/2607.25333">來源：Specula 論文</a></p>
+<h2 id="安裝前準備"><a class="header" href="#安裝前準備">安裝前準備</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>必要項目</th><th>用途</th></tr></thead><tbody>
+<tr><td>Python 3.10+，含 <code>pip</code>、<code>venv</code></td><td>CLI 與 MCP 工具環境</td></tr>
+<tr><td><a href="https://docs.astral.sh/uv/">uv</a></td><td>安裝 <code>specula</code> 命令</td></tr>
+<tr><td>JDK 21+、Maven</td><td>TLA+ 檢查工具與 CFA 工具建置</td></tr>
+<tr><td>Git、Bash、<code>curl</code> 或 <code>wget</code></td><td>原始碼操作與初次下載</td></tr>
+<tr><td><a href="https://cli.github.com/">GitHub CLI (<code>gh</code>)</a></td><td>儲存庫及 issue 研究</td></tr>
+<tr><td>一種受支援的代理 CLI</td><td>執行分析流程，例如 Claude Code、Codex、Copilot CLI、OpenCode 或 Pi</td></tr>
+<tr><td>目標專案自己的建置與測試依賴</td><td>產生 harness 和重現錯誤</td></tr>
+</tbody></table>
+</div>
+<p><code>specula setup</code> <strong>不會安裝</strong>上表的系統依賴或代理 CLI。初次設定需能連到 GitHub、PyPI、Maven Central；代理執行時還需模型供應商的帳號或憑證。官方建議至少 32 GB RAM 與 100 GB 可用磁碟空間；模型檢查可能需要大量時間與記憶體。<a href="https://github.com/specula-org/Specula/blob/main/docs/Usage.md#getting-started">來源：Specula Usage Guide</a></p>
+<p>支援 Linux、macOS，以及在 <strong>WSL2 內</strong>執行的 Windows。macOS 還需 GNU coreutils，並將 <code>gnubin</code> 放進 <code>PATH</code>；Windows 原生終端目前不是官方支援的執行環境。<a href="https://github.com/specula-org/Specula/blob/main/docs/Usage.md#supported-platforms">來源：平台需求</a></p>
+<h3 id="安裝-specula"><a class="header" href="#安裝-specula">安裝 Specula</a></h3>
+<p>先自行安裝上述依賴與一種代理 CLI，接著執行：</p>
+<pre><code class="language-bash">git clone https://github.com/specula-org/Specula.git
+cd Specula
+uv tool install -e .
+specula setup
+specula --help
+</code></pre>
+<p>這裡的 <code>-e</code> 很重要：<code>specula</code> 命令會呼叫儲存庫內的腳本，所以安裝後要保留該 checkout。<code>specula setup</code> 會下載 TLA+ JAR、建置 CFA 工具、建立 MCP 工具環境，並詢問是否整合偵測到的代理。它不會執行完整的目標專案分析。<a href="https://github.com/specula-org/Specula/blob/main/docs/Usage.md#requirements">來源：安裝說明</a></p>
+<p>若使用 Codex，設定畫面可選 <code>y</code>（分別安裝 skills 與 MCP）或 <code>plugin</code>（安裝 <code>specula-codex@specula</code>）。Plugin 會作用於目前 Codex profile，可供該 profile 下各專案使用；這是設定時要留意的範圍。<a href="https://github.com/specula-org/Specula/blob/main/docs/Usage.md#requirements">來源：Codex 設定</a></p>
+<h2 id="第一次執行"><a class="header" href="#第一次執行">第一次執行</a></h2>
+<p>在 <strong>Specula checkout 根目錄</strong>執行，將 <code>/absolute/path/to/source</code> 換成已能正常建置的目標儲存庫絕對路徑：</p>
+<pre><code class="language-bash">specula run \
+  --agent=codex \
+  --artifact=/absolute/path/to/source \
+  --keep-original \
+  "mysys|owner/repository|Go|系統設計或參考演算法"
+</code></pre>
+<p><code>--agent=codex</code> 可改為 <code>claude-code</code>、<code>copilot-cli</code>、<code>opencode</code> 或 <code>pi</code>；若省略，預設使用 <code>claude-code</code>。最後的引號內依序是<strong>輸出名稱、GitHub 儲存庫、主要語言、參考設計</strong>，必須加引號，否則 <code>|</code> 會被 shell 當作管線。<code>--artifact</code> 指向要分析的原始碼。<a href="https://github.com/specula-org/Specula/blob/main/docs/Usage.md#first-run">來源：First run</a></p>
+<p><code>--keep-original</code> 會在私有副本中分析，保留原 checkout，並輸出可審閱的 <code>changes.patch</code>。若不加這個選項，harness 或重現工作<strong>可能直接修改</strong> <code>--artifact</code> 指向的原始碼。首次探索建議使用私有副本。<a href="https://github.com/specula-org/Specula/blob/main/docs/Usage.md#output-structure">來源：Output Structure</a></p>
+<p>需要把分析集中在特定模組或情境時，可先參考<a href="https://github.com/specula-org/Specula/blob/main/docs/modeling-guidance-template.md">建模指引範本</a>，再加上 <code>--guidance=/absolute/path/to/guidance.md</code>。這個檔案是建議項，不是安裝必要條件。<a href="https://github.com/specula-org/Specula/blob/main/docs/Usage.md#first-run">來源：First run</a></p>
+<h3 id="結果在哪裡"><a class="header" href="#結果在哪裡">結果在哪裡？</a></h3>
+<p>預設隔離模式把產物放在 Specula checkout 的 <code>runs/&lt;run-id&gt;/</code>；<code>runs/latest</code> 指向最新執行。先看：</p>
+<ol>
+<li><code>runs/latest/pipeline-summary.md</code>：整體狀態。</li>
+<li><code>runs/latest/index.md</code>：選擇目標並進入個別報告。</li>
+<li>目標的 <code>.specula-output/index.md</code>：摘要、確認結果、嚴重度及技術細節。</li>
+<li><code>pipeline.log</code>：流程出錯時的日誌；使用 <code>--keep-original</code> 時再查看 <code>changes.patch</code>。</li>
+</ol>
+<p>候選問題應逐一確認其重現結果與環境限制，不能把所有模型反例直接視為已證實的程式錯誤。<a href="https://github.com/specula-org/Specula/blob/main/docs/Usage.md#output-structure">來源：輸出結構</a></p>
+<h3 id="進階用法"><a class="header" href="#進階用法">進階用法</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>情境</th><th>命令或入口</th><th>說明</th></tr></thead><tbody>
+<tr><td>已有 TLA+ 模型</td><td>`specula run --byom=/absolute/path/to/model-or-assets --artifact=/absolute/path/to/source "mysys</td><td>owner/repository</td></tr>
+<tr><td>建立持續驗證基線</td><td>`specula run --ci-init --ci-dir=/work/mysys-ci --artifact=/absolute/path/to/source "mysys</td><td>owner/repository</td></tr>
+<tr><td>檢查後續程式碼變更</td><td><code>specula run --incremental --ci-dir=/work/mysys-ci</code></td><td>使用上述基線檢查新版本</td></tr>
+<tr><td>手動控制每個階段</td><td><code>code-analysis → spec-generation → harness-generation → validation-workflow → bug-confirmation</code></td><td>在代理中依序呼叫 skills；參閱 <a href="https://github.com/specula-org/Specula#interactive-mode">Interactive Mode</a></td></tr>
+</tbody></table>
+</div>
+<h2 id="相關工具怎麼選"><a class="header" href="#相關工具怎麼選">相關工具怎麼選？</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>工具</th><th>主要用途</th><th>與 Specula 的關係</th></tr></thead><tbody>
+<tr><td><a href="https://lamport.azurewebsites.net/tla/tools.html">TLA+ / TLC</a></td><td>手寫 TLA+ 模型，用 TLC 檢查狀態空間</td><td>Specula 以 TLA+ 與 TLC 為核心，額外串接代理、trace 與程式碼重現</td></tr>
+<tr><td><a href="https://lamport.azurewebsites.net/tla/toolbox.html">TLA+ Toolbox / PlusCal</a></td><td>編輯規格、把 PlusCal 演算法翻譯成 TLA+、查看 TLC 反例</td><td>適合手動建模、學習及審查 Specula 產生的模型</td></tr>
+<tr><td><a href="https://apalache-mc.org/">Apalache</a></td><td>使用 SMT 求解器對 TLA+ 模型做符號式、有限步數等檢查</td><td>可補充 TLC 的檢查視角；有限步數未找到反例不代表所有長度都安全</td></tr>
+<tr><td><a href="https://spinroot.com/spin/whatispin.html">SPIN</a></td><td>以 Promela 描述並行系統並進行模型檢查</td><td>同類形式驗證工具，但模型語言與工具鏈不同</td></tr>
+<tr><td><a href="https://alloytools.org/">Alloy</a></td><td>以 Alloy 語言建模並搜尋符合或違反約束的實例</td><td>適合研究結構關係與小範圍行為；需另寫 Alloy 模型</td></tr>
+<tr><td><a href="https://jepsen.io/analyses">Jepsen</a></td><td>對真實分散式系統施加故障並檢查操作歷史</td><td>偏向黑箱整合測試，可補足抽象模型與真實部署之間的落差</td></tr>
+</tbody></table>
+</div>
+<p>這些工具不保證可直接讀取彼此的模型。若重點是快速分析<strong>既有程式碼</strong>並追蹤模型反例到實作，可先試 Specula；若要完全控制規格與檢查設定，可先從 TLA+ / TLC 或其他模型檢查器開始。Jepsen 適合驗證真實叢集在故障條件下的外部行為。<a href="https://github.com/specula-org/Specula">來源：Specula</a>、<a href="https://lamport.azurewebsites.net/tla/tla.html">TLA+</a>、<a href="https://jepsen.io/analyses">Jepsen</a></p>
+<h2 id="常見問題-3"><a class="header" href="#常見問題-3">常見問題</a></h2>
+<p><strong>找不到 <code>specula</code> 命令？</strong> 確認 <code>uv tool install -e .</code> 已在 Specula checkout 執行，且 uv 的工具命令目錄位於 <code>PATH</code>。可先查 <code>uv tool list</code> 與 <code>specula --help</code>。<a href="https://docs.astral.sh/uv/concepts/tools/">uv 官方文件</a></p>
+<p><strong><code>specula setup</code> 後仍不能跑？</strong> 先確認 Python、Java、Maven、<code>gh</code>、代理 CLI 與目標專案工具鏈都能執行；<code>setup</code> 不負責安裝這些依賴。<a href="https://github.com/specula-org/Specula/blob/main/docs/Usage.md#requirements">需求清單</a></p>
+<p><strong>模型檢查很慢或記憶體不足？</strong> 先縮小建模範圍，檢查磁碟及 JVM 記憶體設定；進階參數見 <code>specula run --help</code> 與<a href="https://github.com/specula-org/Specula/blob/main/docs/Usage.md#output-structure">資源說明</a>。</p>
+<p><strong>可以只用其中一段流程嗎？</strong> 可以。CLI 提供 <code>analyze</code>、<code>specgen</code>、<code>harness</code>、<code>validate</code>、<code>confirm</code>、<code>classify</code> 等分段命令；詳細輸入輸出見 <a href="https://github.com/specula-org/Specula/blob/main/docs/Usage.md#individual-steps">Individual Steps</a>。</p>
+<h2 id="參考資料-1"><a class="header" href="#參考資料-1">參考資料</a></h2>
+<ul>
+<li><a href="https://github.com/specula-org/Specula">Specula 原始碼與 README</a></li>
+<li><a href="https://github.com/specula-org/Specula/blob/main/docs/Usage.md">Specula Usage Guide</a></li>
+<li><a href="https://arxiv.org/abs/2607.25333">Specula 論文</a></li>
+<li><a href="https://lamport.azurewebsites.net/tla/tools.html">TLA+ 工具</a>、<a href="https://apalache-mc.org/">Apalache</a>、<a href="https://spinroot.com/spin/whatispin.html">SPIN</a>、<a href="https://alloytools.org/">Alloy</a>、<a href="https://jepsen.io/">Jepsen</a></li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="spec-driven-development-sdd-深度分析整理"><a class="header" href="#spec-driven-development-sdd-深度分析整理">Spec-Driven Development (SDD) 深度分析整理</a></h1>
 <h2 id="什麼是-sdd"><a class="header" href="#什麼是-sdd">什麼是 SDD？</a></h2>
 <p>Spec-Driven Development (SDD) 是在用 AI 寫程式之前，先讓 LLM 生成一系列規格文件的開發方法：</p>
@@ -16642,7 +16727,7 @@ A: 使用 <code>specify check</code> 檢查環境，確保工具已安裝</p>
 </ol>
 <p><strong>關鍵認知</strong>：軟體工程技能越強，從 LLM 得到的結果就越好越快</p>
 <hr />
-<h2 id="參考資料-1"><a class="header" href="#參考資料-1">參考資料</a></h2>
+<h2 id="參考資料-2"><a class="header" href="#參考資料-2">參考資料</a></h2>
 <ol>
 <li><a href="tools/%E6%96%87%E7%AB%A0%E9%80%A3%E7%B5%90">Spec-Driven Development: The Waterfall Strikes Back</a></li>
 <li><a href="tools/%E6%96%87%E7%AB%A0%E9%80%A3%E7%B5%90">Spec Driven Development - revenge of Waterfall or BDD taken to new level?</a></li>
@@ -17652,7 +17737,7 @@ alias ccode="claude code"
 alias cmcp="claude mcp"
 </code></pre>
 <hr />
-<h2 id="常見問題-3"><a class="header" href="#常見問題-3">常見問題</a></h2>
+<h2 id="常見問題-4"><a class="header" href="#常見問題-4">常見問題</a></h2>
 <h3 id="q-如何確認套件是否存在"><a class="header" href="#q-如何確認套件是否存在">Q: 如何確認套件是否存在？</a></h3>
 <pre><code class="language-bash"># 方法 1: npm search
 npm search @modelcontextprotocol
@@ -18894,7 +18979,7 @@ gh auth status
 # 確認 git credential helper 設定
 git config --global --list | grep credential
 </code></pre>
-<h2 id="常見問題-4"><a class="header" href="#常見問題-4">常見問題</a></h2>
+<h2 id="常見問題-5"><a class="header" href="#常見問題-5">常見問題</a></h2>
 <p><strong>Q: 之後再開新的 terminal 還需要重新設定嗎？</strong>
 A: 不需要，設定存在 <code>~/.gitconfig</code> 和 <code>~/.config/gh/hosts.yml</code>，重開終端依然有效。</p>
 <p><strong>Q: 想切換另一個 GitHub 帳號？</strong>
@@ -25203,7 +25288,7 @@ guider top -X req@192.168.1.100:5555
 # -N: 設定報告地址
 guider top -N report@192.168.1.100:5555
 </code></pre>
-<h2 id="常見問題-5"><a class="header" href="#常見問題-5">常見問題</a></h2>
+<h2 id="常見問題-6"><a class="header" href="#常見問題-6">常見問題</a></h2>
 <h3 id="q1-如何在背景執行監控"><a class="header" href="#q1-如何在背景執行監控">Q1: 如何在背景執行監控？</a></h3>
 <pre><code class="language-bash">guider top -u -R 1:3600:auto -o /tmp/monitor.out
 # 實際輸出文件：/tmp/monitor.out_01:00:00
@@ -28615,7 +28700,7 @@ sudo nano /etc/logrotate.d/duckdns
 </code></pre>
 <hr />
 <h2 id="-故障排除"><a class="header" href="#-故障排除">🔍 故障排除</a></h2>
-<h3 id="常見問題-6"><a class="header" href="#常見問題-6">常見問題</a></h3>
+<h3 id="常見問題-7"><a class="header" href="#常見問題-7">常見問題</a></h3>
 <p><strong>1. DuckDNS 更新失敗</strong></p>
 <pre><code class="language-bash"># 檢查日誌
 cat ~/duckdns/duck.log
@@ -30480,7 +30565,7 @@ safe_get_password() {
 }
 </code></pre>
 <h2 id="故障排除-5"><a class="header" href="#故障排除-5">故障排除</a></h2>
-<h3 id="常見問題-7"><a class="header" href="#常見問題-7">常見問題</a></h3>
+<h3 id="常見問題-8"><a class="header" href="#常見問題-8">常見問題</a></h3>
 <pre><code class="language-bash"># 1. 忘記解鎖
 if bw status | grep -q "locked"; then
   export BW_SESSION="$(bw unlock --raw)"
@@ -30947,7 +31032,7 @@ for line in result:
         print("找到表格")
         print(line['res'])
 </code></pre>
-<h2 id="常見問題-8"><a class="header" href="#常見問題-8">常見問題</a></h2>
+<h2 id="常見問題-9"><a class="header" href="#常見問題-9">常見問題</a></h2>
 <h3 id="1-modulenotfounderror-no-module-named-paddle"><a class="header" href="#1-modulenotfounderror-no-module-named-paddle">1. ModuleNotFoundError: No module named 'paddle'</a></h3>
 <p><strong>解決方案</strong>: 先安裝 paddlepaddle</p>
 <pre><code class="language-bash">pip install paddlepaddle
@@ -31121,7 +31206,7 @@ md_text = pymupdf4llm.to_markdown(
 </ul>
 </li>
 </ol>
-<h2 id="常見問題-9"><a class="header" href="#常見問題-9">常見問題</a></h2>
+<h2 id="常見問題-10"><a class="header" href="#常見問題-10">常見問題</a></h2>
 <h3 id="q1-轉換後表格格式錯亂"><a class="header" href="#q1-轉換後表格格式錯亂">Q1: 轉換後表格格式錯亂？</a></h3>
 <p><strong>A</strong>: PyMuPDF4LLM 會盡力保留表格格式，但複雜表格可能需要手動調整。建議使用 Markdown 表格語法檢查工具。</p>
 <h3 id="q2-圖片無法顯示"><a class="header" href="#q2-圖片無法顯示">Q2: 圖片無法顯示？</a></h3>
@@ -38811,7 +38896,7 @@ g++ -std=c++17 -O3 test_c_benchmark.cpp algorithms.o -lbenchmark -pthread -o tes
 ./test_basic_benchmark --benchmark_format=json --benchmark_out=results.json
 </code></pre>
 <h2 id="疑難排解-2"><a class="header" href="#疑難排解-2">疑難排解</a></h2>
-<h3 id="常見問題-10"><a class="header" href="#常見問題-10">常見問題</a></h3>
+<h3 id="常見問題-11"><a class="header" href="#常見問題-11">常見問題</a></h3>
 <ol>
 <li>
 <p><strong>結果不穩定</strong></p>
@@ -45650,7 +45735,7 @@ public:
 </tbody></table>
 </div>
 <hr />
-<h2 id="參考資料-2"><a class="header" href="#參考資料-2">參考資料</a></h2>
+<h2 id="參考資料-3"><a class="header" href="#參考資料-3">參考資料</a></h2>
 <ul>
 <li><a href="https://en.cppreference.com/">C++ Reference</a></li>
 <li><a href="http://www.stroustrup.com/C++11FAQ.html">Bjarne Stroustrup's C++11 FAQ</a></li>
@@ -74714,7 +74799,7 @@ fn foo(c1: Rc&lt;RefCell&lt;Vec&lt;i32&gt;&gt;&gt;, c2: Rc&lt;RefCell&lt;Vec&lt;
     foo(c.clone(), c.clone()); // thread 'main' panicked at 'already borrowed: BorrowMutError'
 }</code></pre></pre>
 <p>執行時的錯誤訊息會清楚告訴你：在呼叫 <code>c2.borrow_mut()</code> 時，還存在另一個未消滅的 borrow，因此違反了 borrow checker 的規則。</p>
-<h3 id="常見問題-11"><a class="header" href="#常見問題-11">常見問題</a></h3>
+<h3 id="常見問題-12"><a class="header" href="#常見問題-12">常見問題</a></h3>
 <p><code>RefCell</code> 的使用對 Rust 初學者而言可說是一大挑戰。它使得型別變得很複雜，同時又需要額外操作才能接觸到真正的內容物件。另一個初學者常見的問題是這樣：</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -80712,7 +80797,7 @@ Contents of the .eh_frame section:
 ...
 </code></pre>
 <p>因為內容很長，我只有節錄一些，上面的資訊其實看不懂沒關係，因為還有其它的資訊我們在下一篇看到程式碼時才會一起提到，如果對上面的內容有興趣的話可以看一下參考資料的第一篇</p>
-<h2 id="參考資料-3"><a class="header" href="#參考資料-3">參考資料</a></h2>
+<h2 id="參考資料-4"><a class="header" href="#參考資料-4">參考資料</a></h2>
 <ul>
 <li>https://refspecs.linuxfoundation.org/LSB_3.0.0/LSB-PDA/LSB-PDA/ehframechpt.html</li>
 <li>https://docs.microsoft.com/zh-tw/cpp/cpp/exceptions-and-stack-unwinding-in-cpp?view=vs-2019</li>
@@ -81734,7 +81819,7 @@ fn main() {
     println!("cargo:rustc-link-search=."); // 等於rustc -L .
     println!("cargo:rustc-link-lib=dylib=add"); // 等於rustc -ladd
 }</code></pre></pre>
-<h2 id="參考資料-4"><a class="header" href="#參考資料-4">參考資料</a></h2>
+<h2 id="參考資料-5"><a class="header" href="#參考資料-5">參考資料</a></h2>
 <p>https://doc.rust-lang.org/cargo/reference/build-scripts.html</p>
 <p>https://zhuanlan.zhihu.com/p/70095462</p>
 <p>http://liufuyang.github.io/2020/02/02/call-c-in-rust.html</p>
@@ -124202,7 +124287,7 @@ main goroutine finished # main goroutine 解除阻塞並結束程式
 <p>Channel 傳回的第二個參數：<code>ok</code>，可以判斷此 Channel 是否已經關閉，並被 <code>range</code> 用在結束巡覽的判斷中。</p>
 <p>最後說明瞭 <code>select</code> 可以 Channel 在阻塞時讓 Goroutine 保持非阻塞的狀態避免卡頓。</p>
 <p>藉由 Goroutine 及 Channel 簡單的語法但是強大的能力使工程師開發多工程式的時候可以寫出優雅又易於維護的代碼，是 Go 語言的優勢之一。</p>
-<h2 id="參考資料-5"><a class="header" href="#參考資料-5">參考資料</a></h2>
+<h2 id="參考資料-6"><a class="header" href="#參考資料-6">參考資料</a></h2>
 <ul>
 <li><a href="https://tour.golang.org/concurrency">A tour of Go - Goroutines</a></li>
 <li><a href="https://medium.com/@trevor4e/learning-gos-concurrency-through-illustrations-8c4aff603b3">Trevor Forrey - Learning Go’s Concurrency Through Illustrations</a></li>
@@ -129521,7 +129606,7 @@ $ go run -race main.go
 <li><strong>spans</strong>：保存 <code>mspan</code> 的指標，讓 runtime 能快速定位實際管理的記憶體區塊。</li>
 </ol>
 <p><img src="go/images/go-memory-layout.jpg" alt="Go 記憶體配置區域" /></p>
-<h2 id="參考資料-6"><a class="header" href="#參考資料-6">參考資料</a></h2>
+<h2 id="參考資料-7"><a class="header" href="#參考資料-7">參考資料</a></h2>
 <ol>
 <li><a href="https://zhuanlan.zhihu.com/p/95056679">深入淺出 Golang Runtime</a></li>
 <li><a href="https://studygolang.com/articles/13994?fr=sidebar">golang 中的 runtime 包教程</a></li>
@@ -135424,7 +135509,7 @@ sudo ftrace -u 'main.add' /tmp/demo
 ...
 </code></pre>
 <hr />
-<h3 id="常見問題-12"><a class="header" href="#常見問題-12">常見問題</a></h3>
+<h3 id="常見問題-13"><a class="header" href="#常見問題-13">常見問題</a></h3>
 <p><strong><code>permission denied</code></strong>：需要 <code>sudo</code>，eBPF + uprobe 需要特權。</p>
 <p><strong><code>no symbols found</code></strong>：binary 被 strip，重新編譯時不加 <code>-ldflags="-s -w"</code>。</p>
 <p><strong><code>uprobe not supported</code></strong>：確認核心啟用了 <code>CONFIG_UPROBE_EVENTS=y</code>（見上方需求確認指令）。</p>
@@ -138022,7 +138107,7 @@ GDB 可正確載入 debug symbols</li>
 <li><input disabled="" type="checkbox" checked=""/>
 使用 step 可進入 runtime 程式碼</li>
 </ul>
-<h2 id="參考資料-7"><a class="header" href="#參考資料-7">參考資料</a></h2>
+<h2 id="參考資料-8"><a class="header" href="#參考資料-8">參考資料</a></h2>
 <ul>
 <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb/">GDB 官方文檔</a></li>
 <li><a href="https://github.com/golang/go/tree/master/src/runtime">Go Runtime Source</a></li>
@@ -140889,7 +140974,7 @@ ab -n 10000 -c 100 -p order.json -T application/json \
 <li>考慮使用 boost.beast</li>
 </ul>
 <h3 id="故障排除-6"><a class="header" href="#故障排除-6">故障排除</a></h3>
-<h4 id="常見問題-13"><a class="header" href="#常見問題-13">常見問題</a></h4>
+<h4 id="常見問題-14"><a class="header" href="#常見問題-14">常見問題</a></h4>
 <ol>
 <li>
 <p><strong>"Too many open files" 錯誤</strong></p>
@@ -150092,7 +150177,7 @@ uv tool list
 # 更新所有工具
 uv tool upgrade --all
 </code></pre>
-<h2 id="參考資料-8"><a class="header" href="#參考資料-8">參考資料</a></h2>
+<h2 id="參考資料-9"><a class="header" href="#參考資料-9">參考資料</a></h2>
 <ul>
 <li>原文：<a href="https://blog.miniasp.com/post/2025/10/20/uv-uvx-cheatsheet">uv &amp; uvx 指令完全教學速查表 - The Will Will Web</a></li>
 <li><a href="https://docs.astral.sh/uv/">uv 官方文件</a></li>
@@ -156685,7 +156770,7 @@ pub fn main() !void {
 <li>使用 <code>zigup</code> 管理多個版本</li>
 </ul>
 <hr />
-<h2 id="常見問題-14"><a class="header" href="#常見問題-14">常見問題</a></h2>
+<h2 id="常見問題-15"><a class="header" href="#常見問題-15">常見問題</a></h2>
 <h3 id="q-編譯錯誤-std-has-no-member-named-io"><a class="header" href="#q-編譯錯誤-std-has-no-member-named-io">Q: 編譯錯誤 "std has no member named 'io'"</a></h3>
 <p>A: 這通常出現在 Zig 0.16+ 開發版。使用 <code>std.debug.print()</code> 代替 <code>std.io.getStdOut()</code>。</p>
 <h3 id="q-如何選擇優化等級"><a class="header" href="#q-如何選擇優化等級">Q: 如何選擇優化等級？</a></h3>
@@ -161361,7 +161446,7 @@ sudo systemctl enable oauth2proxy
 <li>使用白名單中的 Google 帳號登入，確認可成功回到應用頁面。</li>
 <li>改用不在 <code>email.txt</code> 的帳號重試，確認應該被拒絕。</li>
 </ol>
-<h2 id="常見問題-15"><a class="header" href="#常見問題-15">常見問題</a></h2>
+<h2 id="常見問題-16"><a class="header" href="#常見問題-16">常見問題</a></h2>
 <h3 id="登入後一直回到登入頁"><a class="header" href="#登入後一直回到登入頁">登入後一直回到登入頁</a></h3>
 <p>通常先檢查這幾個地方：</p>
 <ul>
@@ -161392,7 +161477,7 @@ sudo systemctl enable oauth2proxy
 <li><code>proxy_pass</code> 是否真的指向 <code>127.0.0.1:4180</code>。</li>
 <li><code>nginx -t</code> 是否通過。</li>
 </ul>
-<h2 id="參考資料-9"><a class="header" href="#參考資料-9">參考資料</a></h2>
+<h2 id="參考資料-10"><a class="header" href="#參考資料-10">參考資料</a></h2>
 <ul>
 <li><a href="https://github.com/oauth2-proxy/oauth2-proxy">OAuth2 Proxy GitHub Repository</a></li>
 <li><a href="https://github.com/oauth2-proxy/oauth2-proxy/releases">OAuth2 Proxy Releases</a></li>
@@ -162951,7 +163036,7 @@ bun run dev  # 測試執行
 }
 </code></pre>
 <hr />
-<h2 id="常見問題-16"><a class="header" href="#常見問題-16">常見問題</a></h2>
+<h2 id="常見問題-17"><a class="header" href="#常見問題-17">常見問題</a></h2>
 <h3 id="q1-bun-能完全替代-nodejs-嗎"><a class="header" href="#q1-bun-能完全替代-nodejs-嗎">Q1: Bun 能完全替代 Node.js 嗎？</a></h3>
 <p><strong>A</strong>: 目前還不能。雖然 Bun 在很多方面表現優異，但：</p>
 <ul>
@@ -166275,7 +166360,7 @@ features = ["Window", "Document", "Node", "HtmlElement", "Element"]
 <li><code>cargo build</code> 編譯成 <code>.wasm</code> 檔案</li>
 <li>使用 <code>wasm-bindgen</code> <strong>工具</strong>處理 <code>.wasm</code> 檔案，生成 JavaScript 綁定</li>
 </ol>
-<h2 id="常見問題-17"><a class="header" href="#常見問題-17">常見問題</a></h2>
+<h2 id="常見問題-18"><a class="header" href="#常見問題-18">常見問題</a></h2>
 <h3 id="1-編譯錯誤找不到-wasm-bindgen"><a class="header" href="#1-編譯錯誤找不到-wasm-bindgen">1. 編譯錯誤：找不到 wasm-bindgen</a></h3>
 <p><strong>錯誤訊息：</strong></p>
 <pre><code>error: failed to run custom build command for `wasm-bindgen`
@@ -175803,7 +175888,7 @@ Delete all breakpoints? (y or n) y
 (gdb) watch $rsp
 (gdb) watch *(int *)($rsp + 8)
 </code></pre>
-<h2 id="常見問題-18"><a class="header" href="#常見問題-18">常見問題</a></h2>
+<h2 id="常見問題-19"><a class="header" href="#常見問題-19">常見問題</a></h2>
 <h3 id="q1-為什麼-watchpoint-顯示-hardware-watchpoint"><a class="header" href="#q1-為什麼-watchpoint-顯示-hardware-watchpoint">Q1: 為什麼 watchpoint 顯示 "Hardware watchpoint"？</a></h3>
 <p>GDB 優先使用硬體 watchpoint（由 CPU 支援），因為效能較好。如果硬體資源不足，會使用軟體 watchpoint。</p>
 <h3 id="q2-可以設定多少個-watchpoint"><a class="header" href="#q2-可以設定多少個-watchpoint">Q2: 可以設定多少個 watchpoint？</a></h3>
@@ -188312,7 +188397,7 @@ $ perf report
 <p>另外，使用 record 有可能會碰到的問題是取樣頻率太低，有些函式的訊息沒有沒顯示出來（沒取樣到），這時可以使用 <code>-F &lt;frequcncy&gt;</code>來調高取樣頻率，可以輸入以下查看最大值，要更改也沒問題，但能調到多大可能還要查一下。</p>
 <pre><code class="language-sh">$ cat /proc/sys/kernel/perf_event_max_sample_rate
 </code></pre>
-<h2 id="參考資料-10"><a class="header" href="#參考資料-10">參考資料</a></h2>
+<h2 id="參考資料-11"><a class="header" href="#參考資料-11">參考資料</a></h2>
 <ul>
 <li><a href="http://www.brendangregg.com/linuxperf.html">Linux Performance</a></li>
 <li><a href="https://perf.wiki.kernel.org/index.php/Tutorial#Sample_analysis_with_perf_report">Tutorial - Linux kernel profiling with perf</a> [Perf wiki]</li>
@@ -188656,7 +188741,7 @@ int main()  {
 Hello
 </code></pre>
 <p>關於dl的詳細內容請參閱 man dlopen</p>
-<h2 id="參考資料-11"><a class="header" href="#參考資料-11">參考資料:</a></h2>
+<h2 id="參考資料-12"><a class="header" href="#參考資料-12">參考資料:</a></h2>
 <p>Creating a shared and static library with the gnu compiler [gcc] http://www.adp-gmbh.ch/cpp/gcc/create_lib.html</p>
 <p>Program Library HOWTO http://tldp.org/HOWTO/Program-Library-HOWTO/index.html</p>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="1高性能程式設計關注點-1"><a class="header" href="#1高性能程式設計關注點-1">1、高性能程式設計關注點</a></h2>
@@ -195647,7 +195732,7 @@ usdt:./my_app:my_app:request_end / @start[arg0] / {
 }' -c ./my_app
 </code></pre>
 <hr />
-<h2 id="進階用法"><a class="header" href="#進階用法">進階用法</a></h2>
+<h2 id="進階用法-1"><a class="header" href="#進階用法-1">進階用法</a></h2>
 <h3 id="one-liner-集錦"><a class="header" href="#one-liner-集錦">One-liner 集錦</a></h3>
 <p>以下是實用的 bpftrace 一行腳本，可以直接複製使用：</p>
 <pre><code class="language-bash"># 1. 統計每秒的 syscall 數量
@@ -196900,7 +196985,7 @@ uprobe:./hello_noinline:runtime.* {
 <li><strong>工具選擇</strong>：根據場景在 bpftrace / perf / ftrace / BCC / SystemTap 間選擇</li>
 </ul>
 <p>下一篇可以接著探討如何把 <code>bpftrace</code> 收集到的資料轉換成 OTLP 格式，補上觀測資料輸出的最後一段流程。</p>
-<h2 id="參考資料-12"><a class="header" href="#參考資料-12">參考資料</a></h2>
+<h2 id="參考資料-13"><a class="header" href="#參考資料-13">參考資料</a></h2>
 <ul>
 <li><a href="https://github.com/bpftrace/bpftrace">bpftrace</a></li>
 <li><a href="https://github.com/bpftrace/bpftrace/blob/master/docs/reference_guide.md">bpftrace Reference Guide</a></li>
@@ -201628,7 +201713,7 @@ docker run --rm -v $(pwd):/app ubuntu:latest /app/tse_receiver
 docker run --rm -v $(pwd):/app centos:7 /app/tse_receiver
 </code></pre>
 <hr />
-<h2 id="常見問題-19"><a class="header" href="#常見問題-19">常見問題</a></h2>
+<h2 id="常見問題-20"><a class="header" href="#常見問題-20">常見問題</a></h2>
 <h3 id="q1-編譯時出現-cannot-find--lc-錯誤"><a class="header" href="#q1-編譯時出現-cannot-find--lc-錯誤">Q1: 編譯時出現 "cannot find -lc" 錯誤</a></h3>
 <pre><code class="language-bash">/usr/bin/ld: cannot find -lc
 collect2: error: ld returned 1 exit status
@@ -202036,7 +202121,7 @@ upx --best myapp
 </ul>
 <p>在雲端時代，<strong>開發和部署效率</strong> &gt; <strong>幾 MB 的空間</strong>，這就是為什麼現代語言都選擇預設靜態連結！</p>
 <hr />
-<h2 id="參考資料-13"><a class="header" href="#參考資料-13">參考資料</a></h2>
+<h2 id="參考資料-14"><a class="header" href="#參考資料-14">參考資料</a></h2>
 <ul>
 <li><a href="https://github.com/johnthagen/min-sized-rust">Rust Binary Size Optimization</a></li>
 <li><a href="https://golang.org/doc/faq#Why_is_my_trivial_program_such_a_large_binary">Go Executable Size</a></li>
@@ -204860,7 +204945,7 @@ git@&lt;host_alias&gt;:&lt;accountname&gt;/&lt;reponame&gt;.git
 <p>設定完指令 alias 後，之後需要使用到公司的金鑰時，就可以輸入此指令，就可以存取公司專案了</p>
 <h2 id="在-sourcetree-指定不同的金鑰"><a class="header" href="#在-sourcetree-指定不同的金鑰">在 SourceTree 指定不同的金鑰</a></h2>
 <p><img src="ssh/./images/create_ssh_mac.gif" alt="" /></p>
-<h1 id="參考資料-14"><a class="header" href="#參考資料-14">參考資料</a></h1>
+<h1 id="參考資料-15"><a class="header" href="#參考資料-15">參考資料</a></h1>
 <ul>
 <li>https://kejyuntw.gitbooks.io/ubuntu-learning-notes/content/network/network-multiple-ssh-key-to-same-github-site.html</li>
 </ul>
@@ -211630,7 +211715,7 @@ completeness、unsupported features、trusted axioms、solver result 和 cache p
 輸入、build identity 不符、callee／library models 被默認信任，或 analysis 根本沒完整跑完。
 因此本專案最有價值的設計不只是「能呼叫 WP」，而是把 assumptions、<code>incomplete[]</code>、
 source identity 與 proof receipt 一起帶回來。</p>
-<h2 id="參考資料-15"><a class="header" href="#參考資料-15">參考資料</a></h2>
+<h2 id="參考資料-16"><a class="header" href="#參考資料-16">參考資料</a></h2>
 <h3 id="官方與原始資料"><a class="header" href="#官方與原始資料">官方與原始資料</a></h3>
 <ul>
 <li><a href="https://frama-c.com/html/acsl.html">Frama-C：ACSL</a></li>
@@ -212348,7 +212433,7 @@ assert machine.get_state() == '出貨中'
   ├─ 複雜規則 → 決策表測試
   └─ 有狀態順序 → 狀態轉移測試
 </code></pre>
-<h2 id="常見問題-20"><a class="header" href="#常見問題-20">常見問題</a></h2>
+<h2 id="常見問題-21"><a class="header" href="#常見問題-21">常見問題</a></h2>
 <h3 id="q1可以混合使用多種方法嗎"><a class="header" href="#q1可以混合使用多種方法嗎">Q1：可以混合使用多種方法嗎？</a></h3>
 <p><strong>A：</strong> 可以！實際專案中常常需要組合使用。例如：</p>
 <ul>
@@ -212760,7 +212845,7 @@ CI 與本機共用同一測試入口，失敗 artifacts 足以調查。</li>
 </ul>
 <h2 id="最終原則"><a class="header" href="#最終原則">最終原則</a></h2>
 <p>極致品質不是所有工具每次都跑，而是依風險分層：TDD 讓規格先於實作；邏輯測試與生成式測試找反例；排程探索和動態偵測器揭露併發缺陷；benchmark 以可靠樣本守住效能預算；系統測試確認真實邊界。任何工具的「沒有報錯」都不能單獨證明正確，真正可維持的品質來自可重現證據、清楚不變量與持續執行的品質閘門。</p>
-<h2 id="參考資料-16"><a class="header" href="#參考資料-16">參考資料</a></h2>
+<h2 id="參考資料-17"><a class="header" href="#參考資料-17">參考資料</a></h2>
 <ul>
 <li><a href="https://go.dev/doc/articles/race_detector">Go Data Race Detector</a></li>
 <li><a href="https://go.dev/doc/security/fuzz/">Go Fuzzing</a></li>
@@ -213019,7 +213104,7 @@ Debugger 找到的問題已固化為 regression test。</li>
 </ul>
 <p>因此文件應將結論表達為「本機驗證已達到高度可信」，而不是「已完整證明
 Kubernetes 上必然正確」。</p>
-<h2 id="參考資料-17"><a class="header" href="#參考資料-17">參考資料</a></h2>
+<h2 id="參考資料-18"><a class="header" href="#參考資料-18">參考資料</a></h2>
 <ul>
 <li><a href="https://github.com/go-delve/delve/blob/master/Documentation/usage/dlv_test.md">Delve：<code>dlv test</code></a></li>
 <li><a href="https://go.dev/doc/articles/race_detector">Go Data Race Detector</a></li>
@@ -230746,7 +230831,7 @@ docker-compose restart
 docker-compose pull
 docker-compose up -d
 </code></pre>
-<h2 id="常見問題-21"><a class="header" href="#常見問題-21">常見問題</a></h2>
+<h2 id="常見問題-22"><a class="header" href="#常見問題-22">常見問題</a></h2>
 <h3 id="q1-記憶體不足錯誤"><a class="header" href="#q1-記憶體不足錯誤">Q1: 記憶體不足錯誤</a></h3>
 <pre><code class="language-bash"># 調整記憶體限制
 docker exec clickhouse-server clickhouse-client --query "
@@ -242270,7 +242355,7 @@ if __name__ == "__main__":
     main()
 </code></pre>
 <hr />
-<h2 id="常見問題-22"><a class="header" href="#常見問題-22">常見問題</a></h2>
+<h2 id="常見問題-23"><a class="header" href="#常見問題-23">常見問題</a></h2>
 <h3 id="q1-第一次執行很慢"><a class="header" href="#q1-第一次執行很慢">Q1: 第一次執行很慢？</a></h3>
 <p><strong>A:</strong> 是的，第一次需要下載模型檔案（100-300 MB），之後就會很快。</p>
 <h3 id="q2-模型下載到哪裡"><a class="header" href="#q2-模型下載到哪裡">Q2: 模型下載到哪裡？</a></h3>
@@ -252560,7 +252645,7 @@ subprocess.run(["gcc", "output.o", "test_harness.c", "-o", "benchmark"])
 <p>如果把 OpenEvolve 看成進化代理的第一代代表，那麼 LoongFlow 更像是往第二代邁進的嘗試。它保留了進化式搜尋的優點，但不再滿足於盲目變異，而是加入規劃、執行與反思這種更像研究流程的結構。</p>
 <p>這不代表暴力搜尋沒有價值。對某些問題來說，大量探索仍然有效，而且實作門檻較低。不過當任務變得更複雜、呼叫成本更高、週期更長時，只有不斷試錯通常不夠，系統必須從歷史中學到東西。</p>
 <p>LoongFlow 的核心價值就在這裡：它試圖把代理從「大量猜測」推向「基於經驗的推理」。如果這條路成立，未來的演化代理就不只是更快，而是更接近真正能累積知識的自動化研究夥伴。</p>
-<h2 id="參考資料-18"><a class="header" href="#參考資料-18">參考資料</a></h2>
+<h2 id="參考資料-19"><a class="header" href="#參考資料-19">參考資料</a></h2>
 <ul>
 <li>GitHub：<a href="https://github.com/baidu-baige/LoongFlow">https://github.com/baidu-baige/LoongFlow</a></li>
 <li>技術報告：<a href="https://arxiv.org/abs/2512.24077">https://arxiv.org/abs/2512.24077</a></li>
@@ -257404,7 +257489,7 @@ firefox tests/comparison_report.html
 </tbody></table>
 </div>
 <p>新訓練結果需在 ±5% 範圍內才算通過驗證。</p>
-<h2 id="常見問題-23"><a class="header" href="#常見問題-23">常見問題</a></h2>
+<h2 id="常見問題-24"><a class="header" href="#常見問題-24">常見問題</a></h2>
 <h3 id="q-訓練需要多久"><a class="header" href="#q-訓練需要多久">Q: 訓練需要多久?</a></h3>
 <p>A:</p>
 <ul>
@@ -261396,7 +261481,7 @@ ollama run my-custom-model
 <p>Ollama 為開發者和 AI 愛好者提供了一個強大而靈活的工具，使本地運行大型語言模型變得前所未有的簡單。無論您是想要進行 AI 研究、開發智能應用，還是僅僅出於好奇想要探索 AI 的潛力，Ollama 都為您提供了一個理想的起點。</p>
 <p>隨著 AI 技術的不斷發展，Ollama 這樣的工具將在推動 AI 民主化和創新方面發揮越來越重要的作用。現在正是開始您的 Ollama 之旅的最佳時機，探索本地 AI 開發的無限可能！</p>
 <p>即刻前往教學程式碼 Repo，親自搭建屬於自己的 LLM Server 吧！別忘了給專案按個星星並持續關注更新，讓我們一起探索 AI 代理的新境界。</p>
-<h2 id="參考資料-19"><a class="header" href="#參考資料-19">參考資料</a></h2>
+<h2 id="參考資料-20"><a class="header" href="#參考資料-20">參考資料</a></h2>
 <p>最近消息是，可以直接從 HuggingFace 上拉 GGUF 格式檔案，不用額外建立 manifest，具體操作已經收錄在 HuggingFace blog 當中，可以做參考，未來有機會再行整理：<a href="https://huggingface.co/docs/hub/en/ollama">https://huggingface.co/docs/hub/en/ollama</a></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="automl-自動化機器學習"><a class="header" href="#automl-自動化機器學習">AutoML 自動化機器學習</a></h1>
 <blockquote>
@@ -268752,7 +268837,7 @@ TRAINED_MODEL_PATH = f"{HOME}/runs/detect/train/weights/best.pt"
 <pre><code class="language-bash">yolo export model=yolov8n.pt
 </code></pre>
 <hr />
-<h2 id="參考資料-20"><a class="header" href="#參考資料-20">參考資料</a></h2>
+<h2 id="參考資料-21"><a class="header" href="#參考資料-21">參考資料</a></h2>
 <ul>
 <li><a href="https://github.com/autodistill/autodistill">Autodistill GitHub</a></li>
 <li><a href="https://colab.research.google.com/github/roboflow-ai/notebooks/blob/main/notebooks/how-to-auto-train-yolov8-model-with-autodistill.ipynb">Roboflow 官方教學</a></li>
@@ -284261,7 +284346,7 @@ totalBalance = total;  // 只寫一次 storage
 └─ NFT 現在屬於你 ✅
 </code></pre>
 <hr />
-<h2 id="常見問題-24"><a class="header" href="#常見問題-24">常見問題</a></h2>
+<h2 id="常見問題-25"><a class="header" href="#常見問題-25">常見問題</a></h2>
 <h3 id="q1-為什麼我的交易一直-pending"><a class="header" href="#q1-為什麼我的交易一直-pending">Q1: 為什麼我的交易一直 Pending？</a></h3>
 <pre><code>可能原因：
 
@@ -290506,6 +290591,52 @@ if hot_balance &lt; LOW_THRESHOLD:
 </ul>
 </li>
 </ol>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="楊雲翔台股資金輪動與交易紀律"><a class="header" href="#楊雲翔台股資金輪動與交易紀律">楊雲翔：台股資金輪動與交易紀律</a></h1>
+<p><img src="strategy/images/687722593_1516513256502332_3165622935855900801_n.jpg" alt="台股資金輪動與交易紀律" /></p>
+<p>台股今天正式站上 4 萬點，再創歷史新高。有些朋友幾個月前覺得資金不夠用，現在看指數越來越高，反而不敢進場。但以現況來說，我不太在意指數。</p>
+<p>台股本來就是一個百花齊放的市場，只要資金在，永遠都有機會。重點不是有沒有買在 2 萬點，而是現在有沒有找到對的方向。</p>
+<p>我觀察這一波行情，很明顯是資金在輪動：從 IC 設計、被動元件，到封測、設備股，甚至低軌衛星，每一段時間都有不同族群接棒。</p>
+<h2 id="操作重點"><a class="header" href="#操作重點">操作重點</a></h2>
+<ol>
+<li><strong>先用小部位測試盤感。</strong> 不要一開始就重壓，先確認自己的節奏有沒有跟上市場。</li>
+<li><strong>鎖定資金流向。</strong> 哪個族群開始轉強、量能開始放大，就去看那個族群。</li>
+<li><strong>找低位階剛轉強的股票。</strong> 不追已經漲了一段的股票，而是找整理後剛起漲的標的；比較買得下手，勝率也可能更高。</li>
+</ol>
+<h2 id="停損與停利"><a class="header" href="#停損與停利">停損與停利</a></h2>
+<p>停損一定要做。很多人最大的問題是不願意認錯。當型態破掉，例如跌破頸線或上升軌道，代表結構改變，我就會出場。不要期待它一定會回來；停損後轉去更強的股票，很多時候反而有更好的收益。</p>
+<p>短線操作也要有停利紀律。賺到一定幅度後，可以用「移動停利」鎖住利潤。假設已經有一段獲利，當股價從高點回檔一定比例，就先出場；如果繼續漲，就續抱，避免最後把獲利還回去。</p>
+<p>現階段就算指數在高檔，只要抓到節奏，一樣可以找到機會。市場永遠都在，重點是用什麼方式參與。</p>
+<h2 id="交易紀律的養成"><a class="header" href="#交易紀律的養成">交易紀律的養成</a></h2>
+<p>我今天在節目上分享了大徒弟的交易進化過程。十年前，她還靠聽消息操作，把在股市賺錢想得很輕鬆，結果賠得很慘。</p>
+<p>後來，她慢慢建立方法與紀律，從小資金開始做，尤其停損迅速果斷，穩定了好幾年，只缺爆發性。到現在單月獲利可以到千萬，這不是什麼奇蹟，而是紀律帶她一步一步走到現在。</p>
+<p>上個月我分享了兩篇大徒弟四月的交易狀況，留言區直接變成大型徒弟報名現場。其實她一開始不是來跟我學股票的。當初我經常在大陸，請她在台灣幫忙處理一些程式管理工作；後來她發現我做股票有一套自己的邏輯，就越問越多、越挖越深。</p>
+<p>很多我現在分享的觀念，甚至課程裡的一些細節，都是被她「問」出來的。如果你有興趣學習，小編會在粉絲專頁留言區放上目前的線上課程，可以看看內容是否符合自己的需求；課程內容和我教她的一樣。</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="楊雲翔大盤跌破季線後該減碼還是搶反彈"><a class="header" href="#楊雲翔大盤跌破季線後該減碼還是搶反彈">楊雲翔：大盤跌破季線後，該減碼還是搶反彈？</a></h1>
+<p><img src="strategy/images/744955733_1532691791312297_5839538629216164006_n.jpeg" alt="大盤跌破季線後的操作原則、警訊與選股重點" /></p>
+<h2 id="跌破季線後先降低持股水位"><a class="header" href="#跌破季線後先降低持股水位">跌破季線後，先降低持股水位</a></h2>
+<p>我的操作方式一直是順勢交易。</p>
+<p>大盤跌破月線，我會先降低持股水位；跌破季線，代表中期趨勢明顯轉弱。等到指數重新站回季線，趨勢出現改善，我才會考慮把水位加回來。</p>
+<h2 id="這波修正前的警訊"><a class="header" href="#這波修正前的警訊">這波修正前的警訊</a></h2>
+<p>這一波修正之前，市場其實已經出現幾個警訊。</p>
+<p>指數第二次挑戰高點時，成交量不但沒有增加，反而持續萎縮，形成量價背離。另一方面，外資持續賣超，融資餘額卻不斷增加，代表外資撤退時，散戶仍在高檔接手。</p>
+<p>外資賣、融資買、成交量縮，技術型態又有盤頭跡象，這種結構本來就必須提高警覺。</p>
+<h2 id="檢查個股的支撐基本面與融資"><a class="header" href="#檢查個股的支撐基本面與融資">檢查個股的支撐、基本面與融資</a></h2>
+<p>現在大盤跌破季線，我不會完全沒有持股，但會慎重檢查庫存，把資金放置在相對安全的標的。</p>
+<p>所謂的安全，不是保證不會下跌（誰能保證呢），而是股價距離底部較近、基本面有支撐、融資使用率偏低，沒有太大的融資斷頭壓力。</p>
+<p>例如部分低本益比、高殖利率，或仍維持上升軌道的公司，即使大盤修正，股價相對抗跌。這些股票過去可能被嫌漲得慢，但市場劇烈震盪時，反而可能成為資金的避風港。</p>
+<p>檢查股票時，不能只看融資維持率，還要搭配融資使用率。</p>
+<p>融資維持率看起來還很高，不代表股票沒有風險。因為維持率是所有融資部位的平均值，如果大量融資集中在近期高檔，股價一旦快速下跌，這些新增融資仍可能陸續面臨追繳與斷頭。</p>
+<p>當一檔股票的融資使用率接近兩成、三成，甚至超過四成，股價又出現連續跌停，就要特別小心多殺多的壓力。</p>
+<p>融資水位偏高、近期融資大量增加的股票，即使跌幅已經很深，我也不會急著搶反彈。股價看起來便宜，不代表賣壓已經結束。</p>
+<p>相反地，融資使用率低、股價回到長期支撐區，又出現長下影線的股票，代表低檔開始出現承接力道，搶反彈的安全性會相對高一些。</p>
+<h2 id="個股觀察"><a class="header" href="#個股觀察">個股觀察</a></h2>
+<p>以臺慶科來說，股價已經回到較大的支撐區，盤中也出現下影線，基本面仍有營收及獲利支撐。若以弱勢反彈的角度觀察，可以留意反彈至季線附近時可能面臨的壓力。</p>
+<p>台光電的融資使用率很低，即使股價跌破季線，也比較沒有融資斷頭造成的急殺賣壓。中美晶與環球晶的籌碼結構也相對穩定，若拉回重要均線附近，可以再觀察是否出現承接。</p>
+<p>合晶的情況就不同。前段漲勢較急，融資使用率又超過四成，高檔套牢融資較多，目前融資才剛開始下降，代表多殺多的壓力有可能還沒有完全釋放。</p>
+<p>國巨雖然融資不算高，但前波漲幅很大，持股者除了融資壓力，也可能因為擔心獲利全部回吐而賣出。這種股票不適合在跌停時急著接，至少要等跌停打開、出現長下影線，確認第一隻腳的位置後再判斷。</p>
+<h2 id="控制風險比猜最低點重要"><a class="header" href="#控制風險比猜最低點重要">控制風險比猜最低點重要</a></h2>
+<p>大盤跌破季線，不代表所有股票都要砍在最低點，也不代表每一檔大跌的股票都能搶反彈。</p>
+<p>先降低整體水位，再檢查個股的趨勢、股價位階、融資使用率、融資維持率與基本面。趨勢沒有站回來之前，控制風險永遠比猜最低點重要。</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="為什麼你總是賣飛十倍股因為你的研究停留在買進那一天給重壓後卻沒抱住的你-"><a class="header" href="#為什麼你總是賣飛十倍股因為你的研究停留在買進那一天給重壓後卻沒抱住的你-">《為什麼你總是賣飛十倍股？因為你的研究停留在買進那一天｜給重壓後卻沒抱住的你 》</a></h1>
 <blockquote>
 <p>原文來源：<a href="https://openbookandeasypoint.substack.com/p/ba3">美股送分題 - Substack</a>
@@ -294414,7 +294545,7 @@ anyfly 在 2012-08-24 13:45 發表<br />
 <h3 id="波段停損法"><a class="header" href="#波段停損法">波段停損法</a></h3>
 <p>若股價沒有如預期噴出，可設定跌破特定均線作為波段出場或停損點，
 例如跌破 23 日月均線時離場。</p>
-<h2 id="操作重點"><a class="header" href="#操作重點">操作重點</a></h2>
+<h2 id="操作重點-1"><a class="header" href="#操作重點-1">操作重點</a></h2>
 <ul>
 <li>先看市場是否有明確多頭環境與熱門族群。</li>
 <li>不追已大漲且估值偏高的龍頭，改找仍有補漲空間的二線、三線股。</li>
@@ -297889,7 +298020,7 @@ Ch6. 活用基本分析與技術分析：</p>
 <p>⚠️ 上述量化參數（N、k、M、X）為整理者自訂，原作者未公開精確數值；「勝率八九成」為作者自述，未經獨立回測驗證。</p>
 </blockquote>
 <hr />
-<h2 id="參考資料-21"><a class="header" href="#參考資料-21">參考資料</a></h2>
+<h2 id="參考資料-22"><a class="header" href="#參考資料-22">參考資料</a></h2>
 <ul>
 <li>節目逐字稿：《1招抓飆股勝率九成！這訊號進場2個月賺400萬！》財經鈔能力 20261005（本資料夾 <code>.txt</code>）</li>
 <li><a href="https://news.tvbs.com.tw/money/4031871">TVBS 新聞：1招抓飆股勝率九成！這訊號進場2個月賺400萬！</a></li>
@@ -298682,7 +298813,7 @@ FMTM 的 6 個月回溯期過短，每月 300%+ 的換手率帶來極大的滑�
 <li><strong>缺口</strong>：整理過程中出現向上跳空缺口，代表買盤開始主動推升。缺口位置可視為後續觀察強弱的重要分界。</li>
 <li><strong>起攻</strong>：若跳空缺口沒有被回補，行情通常可視為重新轉強。此時多方取得主導權，後續較有機會展開一段延續性攻勢。</li>
 </ol>
-<h2 id="操作重點-1"><a class="header" href="#操作重點-1">操作重點</a></h2>
+<h2 id="操作重點-2"><a class="header" href="#操作重點-2">操作重點</a></h2>
 <ul>
 <li>不要只因急跌就急著進場，必須等待盤底與缺口確認。</li>
 <li>缺口不回補是關鍵訊號；若缺口快速被回補，代表多方攻勢仍不穩。</li>
@@ -343027,7 +343158,7 @@ numactl --cpunodebind=0 --membind=0 ./build/l2fwd_test
 sudo sh -c 'echo 2 &gt; /proc/irq/24/smp_affinity'
 </code></pre>
 <hr />
-<h2 id="常見問題-25"><a class="header" href="#常見問題-25">常見問題</a></h2>
+<h2 id="常見問題-26"><a class="header" href="#常見問題-26">常見問題</a></h2>
 <h3 id="q1-找不到網卡"><a class="header" href="#q1-找不到網卡">Q1: 找不到網卡</a></h3>
 <pre><code class="language-bash"># 檢查網卡是否支援
 dpdk-devbind.py --status-dev net
@@ -349938,7 +350069,7 @@ Use Sonnet for each teammate.
 <p>那麼 Agent Teams 很值得嘗試。</p>
 <p>如果任務只是單點查詢、一次性修正、或只需要快速拿到答案，Subagent 通常會更省成本。</p>
 <hr />
-<h2 id="參考資料-22"><a class="header" href="#參考資料-22">參考資料</a></h2>
+<h2 id="參考資料-23"><a class="header" href="#參考資料-23">參考資料</a></h2>
 <ul>
 <li><a href="https://code.claude.com/docs/en/agent-teams">Claude Code 文件：Agent Teams</a></li>
 <li><a href="https://www.anthropic.com/engineering/building-c-compiler">Anthropic Engineering：Building a C compiler with a team of parallel Claudes</a></li>
@@ -350693,7 +350824,7 @@ crew.run()
 <p>上面的命令安裝基本包，並添加需要更多依賴項才能運行的額外元件。</p>
 <h3 id="依賴性故障排除"><a class="header" href="#依賴性故障排除">依賴性故障排除</a></h3>
 <p>如果您在安裝或使用過程中遇到問題，以下是一些常見的解決方案：</p>
-<h4 id="常見問題-26"><a class="header" href="#常見問題-26">常見問題</a></h4>
+<h4 id="常見問題-27"><a class="header" href="#常見問題-27">常見問題</a></h4>
 <ol>
 <li>
 <p><strong>ModuleNotFoundError：沒有名為「tiktoken」的模組</strong></p>
@@ -354255,7 +354386,7 @@ Retriever prepared for /mnt/local-repos/...
 <tr><td>儲存庫路徑</td><td>一律使用容器內路徑 <code>/mnt/local-repos/...</code></td></tr>
 </tbody></table>
 </div>
-<h2 id="參考資料-23"><a class="header" href="#參考資料-23">參考資料</a></h2>
+<h2 id="參考資料-24"><a class="header" href="#參考資料-24">參考資料</a></h2>
 <ul>
 <li><a href="https://github.com/AsyncFuncAI/deepwiki-open">DeepWiki-Open GitHub</a></li>
 <li><a href="https://github.com/AsyncFuncAI/deepwiki-open/issues/323">Can’t find local directory · Issue #323</a></li>
@@ -358073,7 +358204,7 @@ git submodule update --init --recursive
 git spull      # Pull 並更新 submodule
 </code></pre>
 <hr />
-<h2 id="常見問題-27"><a class="header" href="#常見問題-27">常見問題</a></h2>
+<h2 id="常見問題-28"><a class="header" href="#常見問題-28">常見問題</a></h2>
 <h3 id="q1-如何移除-submodule"><a class="header" href="#q1-如何移除-submodule">Q1: 如何移除 Submodule？</a></h3>
 <pre><code class="language-bash"># 1. 刪除 .gitmodules 中的相關條目
 git config -f .gitmodules --remove-section submodule.claude-plugins-official
