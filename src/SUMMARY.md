@@ -682,6 +682,7 @@
         - [量化交易的缺點與風險：FinLab 台股實證整理](strategy/quant-trading-risks.md)
     - [量化工具與數據源](strategy/11_量化工具與數據源.md)
         - [FinLab](strategy/finlab.md)
+        - [FinLab、Optuna、DEAP 與 Qlib：量化交易工具鏈指南](strategy/FinLab_Optuna_DEAP_Qlib量化工具鏈指南.md)
         - [資訊係數（IC）：選股因子評估與應用](strategy/information-coefficient-ic.md)
         - [yfinance](strategy/yf.md)
         - [Shioaji](strategy/shioaji.md)
