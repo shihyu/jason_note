@@ -308923,6 +308923,106 @@ if __name__ == "__main__":
 <li>與同一篇研究報告中的其他成交量分布類因子做組合。</li>
 <li>搭配流動性、波動度或事件型因子一起做橫截面排序。</li>
 </ol>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="如何降低交易策略失效風險"><a class="header" href="#如何降低交易策略失效風險">如何降低交易策略失效風險</a></h1>
+<p>雖然我不像 FinLab 財經實驗室的韓 P 那樣是資料科學專家，但隨著開發出來的策略失效次數增加，虧損的教訓也越來越多，應該可以稍微深入分享，我是怎麼盡量避免策略太快失效的。畢竟「三折肱成良醫」也不是沒有道理（？</p>
+<h2 id="策略為什麼會失效"><a class="header" href="#策略為什麼會失效">策略為什麼會失效？</a></h2>
+<p>策略失效有許多原因。若不自覺用到未來資料，會造成<strong>前視偏誤</strong>（look-ahead bias）。
+另一個更常見的問題是<strong>數據窺探偏誤</strong>（data-snooping bias）：過度優化參數，
+讓回測績效看起來比實際更好，卻無法保證未來也有類似表現。</p>
+<h2 id="降低偏誤的四種方法"><a class="header" href="#降低偏誤的四種方法">降低偏誤的四種方法</a></h2>
+<ol>
+<li>
+<p><strong>增加樣本量</strong><br />
+對低頻交易者來說，實務上不一定能取得更多資料。有人會用自助抽樣法（bootstrap）增加樣本，但考量市場交易機制的變動，以及資料在時間上的相依性，我認為實際能增加的有效樣本有限。因此，我自己主要用蒙地卡羅模擬來檢視較差的可能結果。</p>
+</li>
+<li>
+<p><strong>控制優化次數</strong><br />
+不要反覆修改參數，直到找到一組「剛好」表現好的設定。就像不會射飛鏢的人也可能碰巧射中紅心，這種結果未必能重現。</p>
+</li>
+<li>
+<p><strong>樣本外回測</strong><br />
+將歷史資料分成兩部分：先用第一部分優化參數，再用第二部分檢視回測效果。比較兩部分的表現，挑選在不同時段都相對穩健的參數，降低只貼合特定資料的風險。</p>
+</li>
+<li>
+<p><strong>敏感度分析</strong><br />
+也就是 Discord 論壇中常提到的「搖晃參數」。透過尋找<strong>參數高原</strong>，觀察參數稍微變動時，模型在不同樣本中的績效。我會先設定優化範圍，再評估敏感度，避免過早固定單一參數。理想情況下，參數微調不應讓各項指標大幅惡化。</p>
+</li>
+</ol>
+<h2 id="我的實務做法"><a class="header" href="#我的實務做法">我的實務做法</a></h2>
+<p>我會同時使用後三種方法：放寬篩選條件、適度優化參數，再上下微調參數，檢查策略在不同時間段的表現是否接近，盡量提高它對市場變動的適應力。</p>
+<p>優化時，我主要想提升<strong>風險報酬比</strong>，但也會一併檢視夏普比率、索提諾比率、歐米茄比率與最大回撤，朝多目標最佳化的方向評估。盲目追求回測中的最高績效，可能只是在追逐未來難以重現的數字；我更希望找到能持續穩健運行的方法。</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="量化交易的缺點與風險finlab-台股實證整理"><a class="header" href="#量化交易的缺點與風險finlab-台股實證整理">量化交易的缺點與風險：FinLab 台股實證整理</a></h1>
+<blockquote>
+<p>本文是自行撰寫的閱讀筆記，並非 FinLab 原文或獨立回測報告。數字與圖表均來自<a href="https://finlab.finance/blog/quant-trading-disadvantages-risks">原始文章</a>，過去績效不代表未來結果。</p>
+</blockquote>
+<ul>
+<li>來源：FinLab 量化研究團隊，〈量化交易的缺點與風險有哪些？2026 台股實證：過擬合、期間敏感與成本陷阱〉</li>
+<li>原文網址：https://finlab.finance/blog/quant-trading-disadvantages-risks</li>
+<li>原文標示最後更新：2026-10</li>
+<li>擷取日期：2026-11-02（Asia/Taipei）</li>
+</ul>
+<h2 id="核心結論-1"><a class="header" href="#核心結論-1">核心結論</a></h2>
+<p>量化交易能把決策寫成可檢查的規則，但回測績效仍可能受到研究方法、資料品質與實際成交條件影響。評估一套策略時，應同時看不同市場期間、含息基準、交易成本、流動性及樣本外表現；單看一條漂亮的歷史曲線，資訊不足。</p>
+<p><img src="strategy/images/dr-period-sensitivity.png" alt="同一套三因子策略在不同起始期間的夏普比率比較" /></p>
+<p>圖表來源：<a href="https://finlab.finance/blog/quant-trading-disadvantages-risks">FinLab 原文</a>；圖片檔為原站插圖的本機備份。</p>
+<h2 id="七類主要風險"><a class="header" href="#七類主要風險">七類主要風險</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>風險</th><th>回測可能出現的問題</th><th>檢查方式</th></tr></thead><tbody>
+<tr><td>過擬合</td><td>反覆挑因子、調參數後，選到碰巧適合歷史資料的規則</td><td>保留未參與研究的樣本外期間，記錄嘗試次數，檢查鄰近參數</td></tr>
+<tr><td>期間敏感</td><td>只選近年或多頭期間，績效被特定行情墊高</td><td>比較長期、空頭及震盪期間</td></tr>
+<tr><td>因子失效</td><td>直覺上合理的選股條件，可能沒有穩定的超額報酬</td><td>拆開測試各因子，與同期含息基準比較</td></tr>
+<tr><td>成本與滑價</td><td>換股越頻繁，手續費、稅與成交價偏差越容易侵蝕報酬</td><td>依實際條件扣成本，對費率和滑價做壓力測試</td></tr>
+<tr><td>流動性與容量</td><td>歷史價格看似能成交，較大部位卻可能推動市價</td><td>設成交金額門檻，估算持倉占成交量比例</td></tr>
+<tr><td>資料偏誤</td><td>漏掉下市股票或提前使用尚未公布的資料</td><td>納入歷史股票池，以資料實際可得日對齊訊號</td></tr>
+<tr><td>執行紀律</td><td>回撤時停用或臨時改動規則，實際結果偏離回測</td><td>事先訂出停用、檢討與風險控管條件</td></tr>
+</tbody></table>
+</div>
+<h2 id="文章中的台股回測數據"><a class="header" href="#文章中的台股回測數據">文章中的台股回測數據</a></h2>
+<h3 id="同一策略起始期間不同"><a class="header" href="#同一策略起始期間不同">同一策略，起始期間不同</a></h3>
+<p>FinLab 比較同一套三因子策略的兩段回測。原文報告口徑下，較短期間的夏普及年化報酬都較高：</p>
+<div class="table-wrapper"><table><thead><tr><th>回測期間</th><th style="text-align: right">夏普比率</th><th style="text-align: right">年化報酬</th></tr></thead><tbody>
+<tr><td>2020–2026</td><td style="text-align: right">1.48</td><td style="text-align: right">20.9%</td></tr>
+<tr><td>2007–2026</td><td style="text-align: right">0.99</td><td style="text-align: right">14.5%</td></tr>
+</tbody></table>
+</div>
+<p>這組對照說明，展示績效時必須交代起訖時間。原文後段另以<strong>預設交易成本、未扣無風險利率</strong>的日夏普口徑重算，兩段分別為 <strong>1.53</strong> 與 <strong>1.11</strong>；這兩組夏普不可直接當作相同口徑比較。<a href="https://finlab.finance/blog/quant-trading-disadvantages-risks">原文的口徑說明</a></p>
+<p><img src="strategy/images/dr-insample-equity.png" alt="三因子策略與含息 0050 的樣本內累積淨值比較" /></p>
+<p>圖表來源：<a href="https://finlab.finance/blog/quant-trading-disadvantages-risks">FinLab 原文</a>。樣本內淨值曲線只能呈現已知歷史的表現。</p>
+<h3 id="單因子未勝過同期含息-0050"><a class="header" href="#單因子未勝過同期含息-0050">單因子未勝過同期含息 0050</a></h3>
+<p>原文以 2013 年至 2026 年 8 月的台股資料，對每個因子分別做月頻選股回測。以下為該段的夏普比率；因子彼此及 0050 應在同一期間比較。</p>
+<div class="table-wrapper"><table><thead><tr><th>規則</th><th style="text-align: right">夏普比率</th></tr></thead><tbody>
+<tr><td>低波動</td><td style="text-align: right">0.84</td></tr>
+<tr><td>營收創新高</td><td style="text-align: right">0.71</td></tr>
+<tr><td>月營收年增率</td><td style="text-align: right">0.55</td></tr>
+<tr><td>低本益比</td><td style="text-align: right">0.14</td></tr>
+<tr><td>含息 0050 買進持有</td><td style="text-align: right">1.08</td></tr>
+</tbody></table>
+</div>
+<p>四個單因子在這次測試中都低於基準。這不能推論所有市場或所有參數下單因子都無效，但提醒使用者先查證單一訊號是否真的增加策略品質。</p>
+<p><img src="strategy/images/dr-single-factor-2026-10.png" alt="四個台股單因子與含息 0050 的夏普比率比較" /></p>
+<p>圖表來源：<a href="https://finlab.finance/blog/quant-trading-disadvantages-risks">FinLab 原文</a>。</p>
+<h3 id="交易成本會改變結論"><a class="header" href="#交易成本會改變結論">交易成本會改變結論</a></h3>
+<p>原文對月頻三因子策略調高手續費率，並以此代理額外滑價：當設定由 <strong>0%</strong> 升至 <strong>0.5%</strong>，2020 年 1 月至 2026 年 8 月的年化報酬由 <strong>22.5%</strong> 降至 <strong>15.7%</strong>。原文指出這五組情境都另扣賣出證交稅。實際成本仍依券商折扣、交易標的與成交情況而異。</p>
+<p><img src="strategy/images/dr-cost-erosion-2026-10.png" alt="提高交易費率後三因子策略年化報酬下降的壓力測試" /></p>
+<p>圖表來源：<a href="https://finlab.finance/blog/quant-trading-disadvantages-risks">FinLab 原文</a>。</p>
+<h3 id="鄰近參數與跨期驗證"><a class="header" href="#鄰近參數與跨期驗證">鄰近參數與跨期驗證</a></h3>
+<p>原文在 2026 年 10 月再檢查四個單因子：每個因子各試 9 組鄰近設定，共 <strong>36 組</strong>，在其全期比較中均未超過同期含息 0050 的日夏普 <strong>1.08</strong>。同篇文章也報告：三因子複合策略在其選定的 9 組鄰近設定、前後期比較及預設成本測試中通過指定門檻。這些是原文所述的回測驗證，仍不能保證未來表現。</p>
+<p><img src="strategy/images/dr-single-factor-validation-2026-10-30.png" alt="四個單因子共 36 組鄰近參數的日夏普熱圖" /></p>
+<p>圖表來源：<a href="https://finlab.finance/blog/quant-trading-disadvantages-risks">FinLab 原文</a>。</p>
+<h2 id="實作前的檢查清單"><a class="header" href="#實作前的檢查清單">實作前的檢查清單</a></h2>
+<ol>
+<li>先固定策略規則與比較基準，保留一段未用於調參的資料。</li>
+<li>記錄每次研究修改；檢查參數小幅變動後是否仍有相近結果。</li>
+<li>讓策略與含息 0050 使用相同期間及清楚標示的夏普口徑。</li>
+<li>將手續費、證交稅與滑價納入，測試成本上升後的變化。</li>
+<li>檢查歷史股票池、公告可得日、流動性及策略容量。</li>
+<li>預先規劃回撤期間的操作與定期複查方式。</li>
+</ol>
+<h2 id="資料來源與圖片授權"><a class="header" href="#資料來源與圖片授權">資料來源與圖片授權</a></h2>
+<ul>
+<li>文字依 <a href="https://finlab.finance/blog/quant-trading-disadvantages-risks">FinLab 原始文章</a> 改寫整理；文中數值均為來源文章的回測結果，未在本專案重新計算。</li>
+<li>上述 5 張圖片均下載自 FinLab 網站，著作權屬原權利人；保留本機檔案供這份筆記離線顯示，對外使用時應遵守原站授權條件。</li>
+<li>圖片原始位置：<a href="https://r2.finlab.finance/blog/quant-trading-disadvantages-risks/dr-period-sensitivity.png">期間敏感</a>、<a href="https://r2.finlab.finance/blog/quant-trading-disadvantages-risks/dr-insample-equity.png">樣本內淨值</a>、<a href="https://r2.finlab.finance/blog/quant-trading-disadvantages-risks/dr-single-factor-2026-10.png">單因子</a>、<a href="https://r2.finlab.finance/blog/quant-trading-disadvantages-risks/dr-cost-erosion-2026-10.png">成本測試</a>、<a href="https://r2.finlab.finance/blog/quant-trading-disadvantages-risks/dr-single-factor-validation-2026-10-30.png">參數驗證</a>。</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="量化工具與數據源"><a class="header" href="#量化工具與數據源">量化工具與數據源</a></h1>
 <blockquote>
 <p>整合 FinLab、yfinance、Shioaji 等量化交易工具與數據源。</p>
@@ -310494,6 +310594,77 @@ for a in range(100,200,20):
                     maxeq = eq
                     print(eq, a,b,c,d)
 </code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="finlaboptunadeap-與-qlib量化交易工具鏈指南"><a class="header" href="#finlaboptunadeap-與-qlib量化交易工具鏈指南">FinLab、Optuna、DEAP 與 Qlib：量化交易工具鏈指南</a></h1>
+<p>量化交易與機器學習的開發流程會用到不同工具。本文整理 FinLab、Optuna、DEAP 與微軟的 Qlib 各自的用途，以及適合使用的階段。</p>
+<h2 id="一工具核心定位總覽"><a class="header" href="#一工具核心定位總覽">一、工具核心定位總覽</a></h2>
+<pre><code class="language-text">【 策略起點：FinLab 】 ── 提供台美股資料與快速回測框架
+          │
+          ▼
+【 參數微調：Optuna 】 ── 搜尋已定義的參數空間（如：均線天數）
+          OR
+【 架構演化：DEAP 】   ── 演化自訂的策略公式或規則（如：因子公式）
+</code></pre>
+<p>這張圖表示一種選用方式，並非必須先用 FinLab 才能使用 Optuna 或 DEAP。Optuna 可搜尋整數、浮點及類別參數；「均線天數」是整數。多目標搜尋也不是 DEAP 獨有功能。選用工具時，應先確認要搜尋的是固定參數，還是自行定義的候選公式或規則結構。參考：<a href="https://optuna.readthedocs.io/en/stable/reference/generated/optuna.trial.Trial.html">Optuna Trial API</a>、<a href="https://optuna.readthedocs.io/en/stable/tutorial/20_recipes/002_multi_objective.html">Optuna 多目標教學</a>、<a href="https://deap.readthedocs.io/en/stable/tutorials/advanced/gp.html">DEAP GP 教學</a>。</p>
+<div class="table-wrapper"><table><thead><tr><th>工具</th><th>類型</th><th>主要用途</th><th>適用情境</th></tr></thead><tbody>
+<tr><td>FinLab</td><td>財經資料庫＋多因子回測引擎</td><td>策略起跑線：提供台美股資料與選股回測。</td><td>快速驗證基本面、籌碼面、簡單技術面想法時。</td></tr>
+<tr><td>Optuna</td><td>超參數最佳化（預設 TPE sampler）</td><td>智慧型參數微調：在指定的搜尋空間中反覆試驗參數組合。</td><td>參數範圍明確但組合過多，或需微調 AI 模型超參數時。</td></tr>
+<tr><td>DEAP</td><td>演化計算框架（含遺傳演算法與遺傳程式設計）</td><td>大範圍架構演化：透過選擇、交配與突變搜尋候選規則。</td><td>想讓電腦混搭已定義的指標與運算子，產生候選策略／因子時。</td></tr>
+<tr><td>Qlib</td><td>AI-oriented 一體化量化平台</td><td>AI 研究管線：整合資料處理、模型、策略與回測。</td><td>欲引進機器學習模型或進行可重複的 AI 量化實驗時。</td></tr>
+</tbody></table>
+</div>
+<p>Optuna 有多種取樣器（sampler），預設使用 TPE。搜尋結果取決於目標函式、搜尋空間與試驗預算，無法保證找到最理想的參數。參考：<a href="https://optuna.readthedocs.io/en/stable/tutorial/10_key_features/003_efficient_optimization_algorithms.html">Optuna 官方文件</a>。</p>
+<p>FinLab 的台股與美股資料及回測功能可參考<a href="https://studio.finlab.finance/docs/reference/data">資料 API</a>與<a href="https://studio.finlab.finance/docs/reference/market">市場物件文件</a>；可用欄位、頻率與市場規則仍須依實際資料集確認。</p>
+<h3 id="deap-補充它會演化什麼"><a class="header" href="#deap-補充它會演化什麼">DEAP 補充：它會演化什麼？</a></h3>
+<p>DEAP 不限定只能做固定參數的遺傳演算法。若把候選因子表示成樹，遺傳程式設計（GP）可以對公式結構做交配與突變；但使用者須先定義允許的輸入欄位、運算子、個體表示法及適應度函式。候選公式仍須經過獨立回測，不能把演化後的高分當成有效交易策略。<a href="https://deap.readthedocs.io/en/stable/">DEAP 官方總覽</a>、<a href="https://deap.readthedocs.io/en/stable/tutorials/advanced/gp.html">DEAP GP 教學</a></p>
+<h3 id="optuna-補充它如何微調"><a class="header" href="#optuna-補充它如何微調">Optuna 補充：它如何微調？</a></h3>
+<p>先寫出可回傳分數的 <code>objective</code>，再讓每個 trial 選取一組參數並執行評估。適合搜尋指標天數、<code>learning_rate</code>、<code>max_depth</code> 或持股數等已定義的變數。若訓練能提供中途分數，可另用 pruner 提前結束不理想的 trial；一般回測不一定能直接使用剪枝。<a href="https://optuna.readthedocs.io/en/stable/reference/generated/optuna.study.Study.html">Optuna Study API</a>、<a href="https://optuna.readthedocs.io/en/stable/tutorial/10_key_features/003_efficient_optimization_algorithms.html">Optuna 剪枝說明</a></p>
+<h2 id="二qlib-的核心工作流架構workflow"><a class="header" href="#二qlib-的核心工作流架構workflow">二、Qlib 的核心工作流架構（Workflow）</a></h2>
+<p>Qlib 將整個量化流程標準化（Pipeline 化）。實務上，研究員可以使用 YAML 設定檔與 <code>qrun</code> 執行資料處理、模型訓練、訊號分析及回測；執行前仍需準備資料、相依套件和適合市場的設定。<a href="https://github.com/microsoft/qlib/blob/main/docs/component/workflow.rst">Qlib Workflow 官方文件</a></p>
+<pre><code class="language-text">【 Data 】           ── 資料載入與轉換（Qlib .bin 格式與快取）
+   │
+   ▼
+【 Feature 】        ── 特徵處理（Alpha158 與 Alpha360 資料處理器）
+   │
+   ▼
+【 Forecast Model 】 ── 模型訓練與預測（滾動訓練須另外設定）
+   │
+   ▼
+【 Strategy 】       ── 預測訊號轉化為交易決策（例如 Top-k 選股）
+   │
+   ▼
+【 Backtest 】       ── 按設定的成交規則與成本模擬交易、評估績效
+</code></pre>
+<p>流程中的 Alpha158／Alpha360、模型與策略是可選範例，並非一份 YAML 會自動啟用的全部功能。Alpha158 偏向人工設計特徵，Alpha360 主要使用價量時序資料；Qlib 的一般 <code>qrun</code> 範例不等於自動執行滾動訓練。預測、交易與績效指標取決於資料切分、模型、策略、成本及報表設定；速度也取決於資料與運行環境。<a href="https://github.com/microsoft/qlib/blob/main/docs/component/data.rst">Qlib 資料層文件</a>、<a href="https://github.com/microsoft/qlib/blob/main/examples/benchmarks/README.md">Qlib 範例資料集說明</a>、<a href="https://qlib.readthedocs.io/en/latest/component/strategy.html">Qlib 策略與回測文件</a></p>
+<h2 id="三進階整合qlib-需要先做-optuna-嗎"><a class="header" href="#三進階整合qlib-需要先做-optuna-嗎">三、進階整合：Qlib 需要先做 Optuna 嗎？</a></h2>
+<p>不需要先做，而是可以「包在 Qlib 的工作流中一起跑」，或者在 Qlib 基礎流程確認可重現後再引入。</p>
+<h3 id="1-初期階段qlib-優先建立-baseline"><a class="header" href="#1-初期階段qlib-優先建立-baseline">1. 初期階段：Qlib 優先（建立 Baseline）</a></h3>
+<ul>
+<li><strong>做法</strong>：從 Qlib 範例 YAML 的設定起步，先確認資料源、訓練／驗證／測試區間、模型與策略可正常執行，再依研究問題調整參數。</li>
+<li><strong>目的</strong>：先跑通 Data 到 Backtest 的流程，檢查資料和特徵有無洩漏、對齊或品質問題。Baseline 不必先「確定能賺錢」；搜尋前需要可信的評估流程。</li>
+</ul>
+<h3 id="2-後期階段qlib--optuna-外部整合策略精進"><a class="header" href="#2-後期階段qlib--optuna-外部整合策略精進">2. 後期階段：Qlib + Optuna 外部整合（策略精進）</a></h3>
+<p>建立基準流程後，可用以下架構搜尋超參數（如：<code>learning_rate</code>、<code>max_depth</code>、Top-K）。應以<strong>驗證區間</strong>的指標作為搜尋分數，扣除適用的交易成本；獨立測試區間保留到搜尋完成後才使用。這種整合需要自行撰寫 <code>objective</code>，不是 Qlib YAML 範例內建的 Optuna 功能。<a href="https://optuna.readthedocs.io/en/stable/reference/generated/optuna.study.Study.html">Optuna Study API</a>、<a href="https://github.com/microsoft/qlib/blob/main/docs/component/workflow.rst">Qlib Workflow 官方文件</a></p>
+<pre><code class="language-text">【 Optuna 引擎 】── 建議候選超參數（如：learning_rate, max_depth, Top-K）
+       │
+       ▼ (傳遞參數組合)
+┌─────────────────────────────────────┐
+│ Qlib 工作流 (Objective Function)    │
+│ 1. 讀取 YAML 並更新參數             │
+│ 2. 訓練 AI 模型 (如 LightGBM / GRU) │
+│ 3. 跑交易模擬回測 (Backtest)        │
+│ 4. 輸出評分指標 (如：回測夏普值)    │
+└─────────────────────────────────────┘
+       │
+       ▼ (回傳夏普值)
+【 Optuna 引擎 】── 根據回傳結果，建議下一輪的候選參數
+</code></pre>
+<h3 id="deap-與-qlib-怎麼搭配"><a class="header" href="#deap-與-qlib-怎麼搭配">DEAP 與 Qlib 怎麼搭配？</a></h3>
+<p>若要搜尋的是公式或規則的<strong>結構</strong>，可讓 DEAP 產生候選因子，再自行撰寫串接程式，用 Qlib 的資料與回測流程評分；選出的候選因子仍須在未參與演化的測試區間驗證。若只有少量固定參數，Optuna 通常較容易建立可追蹤的試驗。兩者都要控制搜尋次數、資料洩漏與過度擬合。</p>
+<h2 id="四實作起點"><a class="header" href="#四實作起點">四、實作起點</a></h2>
+<ul>
+<li><strong>FinLab + Optuna</strong>：先建立可重現的選股與回測流程，再以 Optuna 搜尋技術指標天數。</li>
+<li><strong>Qlib 標準 YAML 範例</strong>：先熟悉資料、模型、策略與回測設定，再視需求加入參數搜尋。</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="資訊係數information-coefficientic是做什麼用的"><a class="header" href="#資訊係數information-coefficientic是做什麼用的">資訊係數（Information Coefficient，IC）是做什麼用的？</a></h1>
 <blockquote>
 <p>來源：<a href="https://finlab.finance/blog/information-coefficient-ic-quant-trading">FinLab：Information Coefficient（IC）與量化交易</a></p>
